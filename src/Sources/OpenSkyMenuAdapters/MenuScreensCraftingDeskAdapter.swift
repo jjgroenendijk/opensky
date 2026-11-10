@@ -49,7 +49,7 @@ extension MenuScreensCraftingDeskAdapter {
         }
     }
 
-    public var carriedBooks: [FormID] {
+    var carriedBooks: [FormID] {
         guard let runtime = game.inventory.runtime, let items else { return [] }
         return runtime.inventory.inventory(of: .player).stacks
             .map(\.item)
@@ -59,11 +59,11 @@ extension MenuScreensCraftingDeskAdapter {
 }
 
 extension MenuScreensCraftingDeskAdapter {
-    public var craftingStationName: String? {
+    var craftingStationName: String? {
         game.inventory.craftingSnapshot.stationName
     }
 
-    public var craftingRecipes: [CraftingMenuRecipe] {
+    var craftingRecipes: [CraftingMenuRecipe] {
         game.inventory.craftingSnapshot.recipes.filter(\.isOffered).map {
             CraftingMenuRecipe(id: $0.id, name: $0.name, canMake: $0.isEligible)
         }
@@ -77,7 +77,7 @@ extension MenuScreensCraftingDeskAdapter {
         game.inventory.closeCraftingSession()
     }
 
-    public var alchemyIngredients: [CraftingMenuIngredient]? {
+    var alchemyIngredients: [CraftingMenuIngredient]? {
         guard game.inventory.alchemySelection != nil else { return nil }
         return game.inventory.alchemyIngredients.map {
             CraftingMenuIngredient(

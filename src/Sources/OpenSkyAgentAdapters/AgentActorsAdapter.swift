@@ -1,8 +1,8 @@
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
-public import OpenSkyAgentControl
+import OpenSkyAgentControl
 import OpenSkyCombatInterface
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyPlayer
@@ -33,13 +33,13 @@ public protocol AgentActorsHost: AnyObject {
 }
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
-public struct AgentActorsAdapter {
-    public let hub: AgentHub
-    public let game: any AgentActorsHost
+struct AgentActorsAdapter {
+    let hub: AgentHub
+    let game: any AgentActorsHost
 }
 
 extension AgentActorsAdapter {
-    public func setDrunk(_ reference: String, drunk: Bool) throws(AgentFailure) -> AgentJSON {
+    func setDrunk(_ reference: String, drunk: Bool) throws(AgentFailure) -> AgentJSON {
         let actor = try hub.resolveReference(reference)
         let event = drunk ? ActorGraphNames.drunkStart : ActorGraphNames.drunkStop
         let taken: Bool
@@ -58,7 +58,7 @@ extension AgentActorsAdapter {
     }
 
     /// `debug perk`: the grant `Actor.AddPerk` makes, which also gives the perk's abilities.
-    public func setPlayerPerk(_ editorID: String, owned: Bool) throws(AgentFailure) -> AgentJSON {
+    func setPlayerPerk(_ editorID: String, owned: Bool) throws(AgentFailure) -> AgentJSON {
         guard
             let runtime = game.perks.runtime,
             let holder = game.actorWorld.actorValueHolder(for: .player)
@@ -76,7 +76,7 @@ extension AgentActorsAdapter {
         ]
     }
 
-    public func forceBeastForm(_ name: String) throws(AgentFailure) -> AgentJSON {
+    func forceBeastForm(_ name: String) throws(AgentFailure) -> AgentJSON {
         let forms: [String: PlayerBeastForm] = [
             "none": .none, "werewolf": .werewolf, "vampirelord": .vampireLord
         ]
@@ -89,7 +89,7 @@ extension AgentActorsAdapter {
         return ["form": .string(game.playerBeastForm.rawValue)]
     }
 
-    public func setEyes(_ reference: String, textureSet: String) throws(AgentFailure) -> AgentJSON {
+    func setEyes(_ reference: String, textureSet: String) throws(AgentFailure) -> AgentJSON {
         let actor = try hub.resolveReference(reference)
         guard let raw = FormID(hexText: textureSet)?.rawValue else {
             throw AgentFailure(.invalidArgument, "set must be a hex FormID")
@@ -105,7 +105,7 @@ extension AgentActorsAdapter {
         return ["ref": .formID(actor.formID.rawValue), "eyeTexture": eyeTexture(of: actor.key)]
     }
 
-    public func decapitate(_ reference: String) throws(AgentFailure) -> AgentJSON {
+    func decapitate(_ reference: String) throws(AgentFailure) -> AgentJSON {
         let actor = try hub.resolveReference(reference)
         guard game.worldState.component(ActorDeathState.self, for: actor.key)?.isDead == true
         else {
@@ -118,7 +118,7 @@ extension AgentActorsAdapter {
     }
 
     /// The cut of a decapitated actor: the node, and where its head is. Null while whole.
-    public func severedState(of key: ReferenceKey) -> AgentJSON {
+    func severedState(of key: ReferenceKey) -> AgentJSON {
         guard
             let node = game.worldState.component(ActorDeathState.self, for: key)?.severedNode
         else { return .null }
@@ -133,7 +133,7 @@ extension AgentActorsAdapter {
         ]
     }
 
-    public func eyeTexture(of key: ReferenceKey) -> AgentJSON {
+    func eyeTexture(of key: ReferenceKey) -> AgentJSON {
         if key == .player {
             return game.player.eyeTextureSet.map { .formID($0.rawValue) } ?? .null
         }
@@ -142,7 +142,7 @@ extension AgentActorsAdapter {
     }
 
     /// `debug link`: what `Game.AddHavokBallAndSocketConstraint` does, through its hook.
-    public func setRagdollLink(
+    func setRagdollLink(
         _ link: AgentRagdollLink,
         linked: Bool
     ) throws(AgentFailure) -> AgentJSON {
@@ -173,7 +173,7 @@ extension AgentActorsAdapter {
     }
 
     /// The script links and pins that hold `key`'s bodies.
-    public func physicsConstraints(of key: ReferenceKey) -> AgentJSON {
+    func physicsConstraints(of key: ReferenceKey) -> AgentJSON {
         let world = game.ragdoll.runtime?.world
         let links = (world?.links ?? []).filter {
             $0.first.reference == key || $0.second.reference == key

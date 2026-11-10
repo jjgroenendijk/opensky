@@ -33,7 +33,7 @@ public struct MessageCameraEffectsAdapter {
 }
 
 extension MessageCameraEffectsAdapter {
-    public var renderer: (any RendererPort)? {
+    var renderer: (any RendererPort)? {
         game.renderer
     }
 
@@ -41,7 +41,7 @@ extension MessageCameraEffectsAdapter {
         game.gameSession?.freeFlyCamera
     }
 
-    public var uiScene: UIScene {
+    var uiScene: UIScene {
         get { game.gameSession?.uiScene ?? .empty }
         nonmutating set { game.gameSession?.uiScene = newValue }
     }

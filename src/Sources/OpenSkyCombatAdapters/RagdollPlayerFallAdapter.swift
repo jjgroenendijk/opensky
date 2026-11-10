@@ -25,13 +25,13 @@ public protocol RagdollPlayerFallHost: AnyObject {
 }
 
 /// Part of `RagdollWorldAdapter`, over its own narrow host.
-public struct RagdollPlayerFallAdapter {
-    public let game: any RagdollPlayerFallHost
-    public let recovery: RagdollRecoveryAdapter
+struct RagdollPlayerFallAdapter {
+    let game: any RagdollPlayerFallHost
+    let recovery: RagdollRecoveryAdapter
 }
 
 extension RagdollPlayerFallAdapter {
-    public func advancePlayerDeath(delta: Float) {
+    func advancePlayerDeath(delta: Float) {
         guard let share = recovery.healthFraction(of: .player) else { return }
         let sample = PlayerHealthSample(
             share: share, isEssential: isPlayerEssential,

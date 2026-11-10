@@ -37,11 +37,11 @@ public struct CrimeJailAdapter {
 }
 
 extension CrimeJailAdapter {
-    public var gameSeconds: Double? {
+    var gameSeconds: Double? {
         game.gameSession?.gameClock.totalGameSeconds
     }
 
-    public var hourOfDay: Float? {
+    var hourOfDay: Float? {
         game.gameSession?.gameClock.hourOfDay
     }
 
@@ -53,7 +53,7 @@ extension CrimeJailAdapter {
         )
     }
 
-    public var playerFeet: SIMD3<Float>? {
+    var playerFeet: SIMD3<Float>? {
         game.gameSession?.locomotion.status.feetPosition
     }
 
@@ -92,7 +92,7 @@ extension CrimeJailAdapter {
         game.progression.loseJailProgress(days: days, maximumDays: maximumDays).count
     }
 
-    public var lockpickItem: FormID? {
+    var lockpickItem: FormID? {
         game.inventory.locks.lockpickItem
     }
 

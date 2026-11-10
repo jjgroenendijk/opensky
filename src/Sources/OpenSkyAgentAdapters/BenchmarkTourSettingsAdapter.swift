@@ -38,7 +38,7 @@ public struct BenchmarkTourSettingsAdapter {
 }
 
 extension BenchmarkTourSettingsAdapter {
-    public var activeSettings: [String: Double] {
+    var activeSettings: [String: Double] {
         let store = game.playerSettingsStore
         var values: [String: Double] = [:]
         for definition in store.catalog.definitions
@@ -107,7 +107,7 @@ extension BenchmarkTourSettingsAdapter {
         game.effects.applyGraphicsSettings(store)
     }
 
-    public var loadInputs: BenchmarkLoadInputs? {
+    var loadInputs: BenchmarkLoadInputs? {
         guard
             let root = game.agentWorld.dataRoot,
             let device = game.gameSession?.renderer.device

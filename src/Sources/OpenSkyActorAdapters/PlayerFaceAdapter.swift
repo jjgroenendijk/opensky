@@ -36,7 +36,7 @@ public struct PlayerFaceAdapter {
 }
 
 extension PlayerFaceAdapter {
-    public var faceMorphSubject: FormID? {
+    var faceMorphSubject: FormID? {
         guard let key = game.dialogueMenu.speakerOrTarget else { return nil }
         return game.streamer.referenceEntry(key: key)?.placedActor?.formID
     }
@@ -48,7 +48,7 @@ extension PlayerFaceAdapter {
         return game.renderer?.scene.faceMorphPlayback(for: actor)
     }
 
-    public var faceMorphPlaybacks: [FaceMorphPlayback] {
+    var faceMorphPlaybacks: [FaceMorphPlayback] {
         let scene = game.renderer?.scene.animations.compactMap { $0 as? FaceMorphPlayback }
         return (scene ?? []) + [state.playerFace()].compactMap(\.self)
     }
@@ -75,7 +75,7 @@ extension PlayerFaceAdapter {
     /// `Mood`, actor value 4.
     private static let moodActorValue: Int32 = 4
 
-    public var headTrackingSubjects: [HeadTrackingSubject] {
+    var headTrackingSubjects: [HeadTrackingSubject] {
         let streamer = game.streamer
         guard
             let renderer = game.renderer, let gameSession = game.gameSession else { return [] }

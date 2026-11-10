@@ -12,11 +12,11 @@ public protocol MapRecordsHost: AnyObject {
 
 /// Part of `MapWorldAdapter` that reads the map's records.
 public struct MapRecordsAdapter {
-    public let game: any MapRecordsHost
+    let game: any MapRecordsHost
 }
 
 extension MapRecordsAdapter {
-    public var records: MenuRecordData? {
+    var records: MenuRecordData? {
         game.menuRecords?.menuRecords
     }
 

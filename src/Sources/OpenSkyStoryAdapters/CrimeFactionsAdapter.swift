@@ -31,7 +31,7 @@ public struct CrimeFactionsAdapter {
 }
 
 extension CrimeFactionsAdapter {
-    public var hasFactionData: Bool {
+    var hasFactionData: Bool {
         game.factions.runtime != nil
     }
 

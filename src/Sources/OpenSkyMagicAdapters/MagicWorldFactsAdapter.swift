@@ -4,7 +4,7 @@ import OpenSkyCombatInterface
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyInventoryInterface
+import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyPlayer
@@ -37,15 +37,15 @@ public struct MagicWorldFactsAdapter {
 }
 
 extension MagicWorldFactsAdapter {
-    public var gameDaysPassed: Float {
+    var gameDaysPassed: Float {
         game.gameSession?.gameClock.daysPassed ?? 0
     }
 
-    public var inventory: (any InventoryAccess)? {
+    var inventory: (any InventoryAccess)? {
         game.inventory.runtime?.inventory
     }
 
-    public var equipment: (any EquipmentAccess)? {
+    var equipment: (any EquipmentAccess)? {
         game.inventory.equipment
     }
 

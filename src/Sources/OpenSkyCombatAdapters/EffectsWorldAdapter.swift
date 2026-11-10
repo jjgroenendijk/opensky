@@ -43,7 +43,7 @@ public protocol EffectsWorldHost: AnyObject {
 
 public final class EffectsWorldAdapter {
     /// A long frame steps as this, as for hazards.
-    public static let longestStep: Float = 0.25
+    static let longestStep: Float = 0.25
     // Base plugin of the streamed cells and the item and sound indexes.
 
     public let game: any EffectsWorldHost
@@ -63,7 +63,7 @@ public final class EffectsWorldAdapter {
         EffectsBodyImpulsesAdapter(game: bodyImpulsesHost, effects: effects, locator: locator)
     }
 
-    public var locator: EffectsLocatorAdapter {
+    var locator: EffectsLocatorAdapter {
         EffectsLocatorAdapter(game: locatorHost)
     }
 
@@ -103,7 +103,7 @@ public final class EffectsWorldAdapter {
         state.nextHazardKey()
     }
 
-    public var explosions: any ExplosionRuntimePort {
+    var explosions: any ExplosionRuntimePort {
         game.combat.explosions
     }
 

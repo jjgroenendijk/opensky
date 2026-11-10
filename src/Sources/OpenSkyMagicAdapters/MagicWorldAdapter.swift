@@ -39,7 +39,7 @@ public protocol MagicWorldHost: AnyObject {
 /// Answers `MagicWorld` from the session systems `game` owns.
 public final class MagicWorldAdapter {
     public let game: any MagicWorldHost
-    public let state = MagicPartState()
+    let state = MagicPartState()
 
     public let archetypeEffectsHost: any MagicArchetypeEffectsHost
     public let spellDeliveryHost: any MagicSpellDeliveryHost

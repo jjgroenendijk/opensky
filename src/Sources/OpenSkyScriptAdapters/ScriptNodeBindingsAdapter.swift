@@ -26,12 +26,12 @@ public struct ModelNodeWait {
     /// Above the menu and object-animation token ranges.
     public static let firstToken: UInt64 = 1 << 52
 
-    public let token: UInt64
-    public let path: String
-    public let node: String
-    public let toWorld: float4x4
-    public let then: (simd_float4x4?) -> PapyrusValue
-    public var answer: PapyrusValue?
+    let token: UInt64
+    let path: String
+    let node: String
+    let toWorld: float4x4
+    let then: (simd_float4x4?) -> PapyrusValue
+    var answer: PapyrusValue?
 }
 
 /// What `ScriptNodeBindingsAdapter` reads from the session.
@@ -86,7 +86,7 @@ extension ScriptNodeBindingsAdapter {
     }
 
     /// A node inside its parent node and in the world, if it can be read now.
-    public func readyNode(
+    func readyNode(
         of key: ReferenceKey, named name: String
     ) -> (local: simd_float4x4, world: simd_float4x4)? {
         guard let reference = game.scripts.bridge?.referenceState(for: key) else { return nil }
@@ -163,7 +163,7 @@ extension ScriptNodeBindingsAdapter {
         return transforms
     }
 
-    public func answerPathWaits() {
+    func answerPathWaits() {
         let streamer = game.streamer
         if !state.pathWaits.isEmpty {
             state.pathWaitAnswers

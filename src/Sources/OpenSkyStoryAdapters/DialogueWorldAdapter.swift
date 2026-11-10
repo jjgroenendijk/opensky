@@ -44,13 +44,13 @@ public protocol DialogueWorldHost: AnyObject {
 /// Answers `DialogueWorld` from the session systems `game` owns.
 public final class DialogueWorldAdapter {
     public let game: any DialogueWorldHost
-    public let voiceTypes = DialogueVoiceTypeCache()
+    let voiceTypes = DialogueVoiceTypeCache()
 
     public let cameraFocusHost: any DialogueCameraFocusHost
     public let speakersHost: any DialogueSpeakersHost
     public let outcomesHost: any DialogueOutcomesHost
 
-    public var cameraFocus: DialogueCameraFocusAdapter {
+    var cameraFocus: DialogueCameraFocusAdapter {
         DialogueCameraFocusAdapter(game: cameraFocusHost)
     }
 

@@ -4,7 +4,7 @@
 // See docs/engine/ess-import.md.
 
 public import Foundation
-public import OpenSkyAgentControl
+import OpenSkyAgentControl
 import OpenSkyFormatsCore
 import OpenSkyFormatsESS
 import OpenSkyGameData
@@ -67,7 +67,7 @@ public enum SkyrimSaveImport {
     }
 
     /// The written slot is named for the save, so importing it again replaces it.
-    public static func load(slot: String, game: any SkyrimSaveImportHost) async throws {
+    static func load(slot: String, game: any SkyrimSaveImportHost) async throws {
         let url = URL(filePath: String(slot.dropFirst(slotPrefix.count)))
         let file = try await ESSSaveFolder.readFile(at: url)
         let index = try await ESSPluginIndex.load(for: file, root: GameDataLocator.locate())
@@ -87,7 +87,7 @@ public enum SkyrimSaveImport {
     }
 
     /// An interior by its editor ID; an exterior by position in its worldspace.
-    nonisolated public static func teleportTarget(_ placement: ESSImportedPlacement)
+    nonisolated static func teleportTarget(_ placement: ESSImportedPlacement)
         -> AgentTeleportTarget?
     {
         if placement.isInterior {

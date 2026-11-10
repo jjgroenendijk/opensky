@@ -26,8 +26,8 @@ public protocol ScriptPhysicsBindingsHost: AnyObject {
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
 public struct ScriptPhysicsBindingsAdapter {
     public let game: any ScriptPhysicsBindingsHost
-    public let state: ScriptPartState
-    public let nodeBindings: ScriptNodeBindingsAdapter
+    let state: ScriptPartState
+    let nodeBindings: ScriptNodeBindingsAdapter
 }
 
 extension ScriptPhysicsBindingsAdapter {

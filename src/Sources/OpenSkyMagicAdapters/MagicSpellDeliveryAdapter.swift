@@ -188,7 +188,7 @@ extension MagicSpellDeliveryAdapter {
         game.combat.projectileTargets() + [playerTarget]
     }
 
-    public var isOutdoors: Bool {
+    var isOutdoors: Bool {
         !game.streamer.isInterior
     }
 
@@ -198,7 +198,7 @@ extension MagicSpellDeliveryAdapter {
     }
 
     /// The rune's `PROJ` explosion, as a spell projectile's impact sets it off.
-    public func detonateRune(_ payload: SpellPayload, at position: SIMD3<Float>) {
+    func detonateRune(_ payload: SpellPayload, at position: SIMD3<Float>) {
         let explosions = game.combat.explosions
         guard
             let link = payload.projectile,

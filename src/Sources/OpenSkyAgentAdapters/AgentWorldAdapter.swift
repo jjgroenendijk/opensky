@@ -76,11 +76,11 @@ public final class AgentWorldAdapter {
         hub.render
     }
 
-    public var actors: AgentActorsAdapter {
+    var actors: AgentActorsAdapter {
         hub.actors
     }
 
-    public var motion: AgentMotionAdapter {
+    var motion: AgentMotionAdapter {
         hub.motion
     }
 
@@ -96,7 +96,7 @@ public final class AgentWorldAdapter {
         hub.menuReadout
     }
 
-    public var screens: AgentScreensAdapter {
+    var screens: AgentScreensAdapter {
         hub.screens
     }
 

@@ -110,7 +110,7 @@ extension StorySocialSearchAdapter {
         return game.aiWorld.perceptionHasLineOfSight(from: eye, to: chest)
     }
 
-    public func run(_ commands: [SocialEventCommand]) {
+    func run(_ commands: [SocialEventCommand]) {
         for case let .reportStoryEvent(event) in commands {
             game.storyManager.fireLocated(event) { [game] in game.runtimeState.conditionContext() }
         }

@@ -37,7 +37,7 @@ public protocol RuntimeStateReferenceMotionHost: AnyObject {
 /// Part of `RuntimeStateWorldAdapter`, over its own narrow host.
 public struct RuntimeStateReferenceMotionAdapter {
     public let game: any RuntimeStateReferenceMotionHost
-    public let state: RuntimeStatePartState
+    let state: RuntimeStatePartState
 }
 
 extension RuntimeStateReferenceMotionAdapter {

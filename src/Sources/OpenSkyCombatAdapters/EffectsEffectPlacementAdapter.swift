@@ -17,7 +17,7 @@ public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 public import simd
@@ -43,7 +43,7 @@ public struct EffectsEffectPlacementAdapter {
 }
 
 extension EffectsEffectPlacementAdapter {
-    public var effectCamera: VisualEffectRuntime.CameraPose? {
+    var effectCamera: VisualEffectRuntime.CameraPose? {
         game.renderer.map { .init(eye: $0.camera.eye, target: $0.camera.target) }
     }
 
@@ -121,7 +121,7 @@ extension EffectsEffectPlacementAdapter {
         game.effects.resetHealthCues()
     }
 
-    public func stepHealthCues(_ seconds: Float, gameSession: GameSession) {
+    func stepHealthCues(_ seconds: Float, gameSession: GameSession) {
         guard let values = game.actorValues.runtime else { return }
         let director = game.audio.soundDirector
         let share = PlayerHealthCues.share(

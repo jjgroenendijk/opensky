@@ -7,7 +7,7 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 public import OpenSkyInventoryInterface
-public import OpenSkyMagicInterface
+import OpenSkyMagicInterface
 import OpenSkyMenusInterface
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
@@ -53,7 +53,7 @@ extension InventoryReadoutsAdapter {
         })
     }
 
-    public var isPlayerSneaking: Bool {
+    var isPlayerSneaking: Bool {
         game.player.isSneaking
     }
 
@@ -84,15 +84,15 @@ extension InventoryReadoutsAdapter {
         game.magic.enchantmentLine(of: item, on: game.actorWorld.actorValueHolder(for: owner))
     }
 
-    public var enchantmentCacheReadout: EnchantmentCacheReadout {
+    var enchantmentCacheReadout: EnchantmentCacheReadout {
         game.magic.enchantmentCacheReadout
     }
 
-    public var gameDaysPassed: Float? {
+    var gameDaysPassed: Float? {
         game.gameSession?.gameClock.daysPassed
     }
 
-    public var gameMonth: Int? {
+    var gameMonth: Int? {
         game.gameSession?.gameClock.month
     }
 

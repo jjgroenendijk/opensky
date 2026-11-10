@@ -61,7 +61,7 @@ extension AIPackageMovesAdapter {
         entry.placedActor?.placement.position ?? entry.placedReference?.placement.position
     }
 
-    public var packageDrivesPlayer: Bool {
+    var packageDrivesPlayer: Bool {
         game.vehicleWorld.isPlayerAIDriven
     }
 

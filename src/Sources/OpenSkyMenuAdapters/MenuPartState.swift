@@ -10,14 +10,14 @@ public final class MenuPartState {
     public var terminateApp: () -> Void = {}
     /// Set by the session scope, which owns the game view that reads the keys.
     public var applyViewBindings: (InputBindings) -> Void = { _ in }
-    public var perkSky: PerkSkySource?
+    var perkSky: PerkSkySource?
     /// The move a new game makes, polled each frame until the player stands.
     public var newGameTeleport: AgentWait?
     /// A chosen test cell opens the race menu when the move ends; a quest's move does not.
     public var raceMenuAfterTeleport = false
     /// The player's race before a script or a magic effect changed it. Not saved.
     public var originalPlayerRace: FormID?
-    public var startTickerInstalled = false
+    var startTickerInstalled = false
     /// The opening quest's player `MoveTo` loads a far cell, so it gets a loading screen.
     public var coverNextTeleport = false
     public var teleportCovered = false

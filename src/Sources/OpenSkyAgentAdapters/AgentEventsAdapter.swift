@@ -26,14 +26,14 @@ import OpenSkyWorldState
 public struct AgentEventTapState {
     public static let pendingLimit = 512
 
-    public var wired = false
+    var wired = false
     public var seeded = false
     public var pending: [(String, [String: AgentJSON])] = []
-    public var menus: [String] = []
-    public var dead: Set<ReferenceKey> = []
-    public var questStages: [String: UInt16] = [:]
-    public var hitCount = 0
-    public var scriptTick = 0
+    var menus: [String] = []
+    var dead: Set<ReferenceKey> = []
+    var questStages: [String: UInt16] = [:]
+    var hitCount = 0
+    var scriptTick = 0
     public var nextSlowPoll = 0.0
 
     public mutating func append(_ kind: String, _ data: [String: AgentJSON]) {
@@ -205,7 +205,7 @@ extension AgentEventsAdapter {
         hub.tap.scriptTick = scripts.tickCount
     }
 
-    public func changesState(limit: Int) -> AgentJSON {
+    func changesState(limit: Int) -> AgentJSON {
         let entries = game.worldState.journalEntries.suffix(max(0, limit))
         var fields: [String: AgentJSON] = [
             "changes": .array(entries.map(change))

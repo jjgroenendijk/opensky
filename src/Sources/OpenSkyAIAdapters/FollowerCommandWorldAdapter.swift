@@ -144,7 +144,7 @@ public final class FollowerCommandWorldAdapter {
     }
 
     /// The terrain test's step along the view ray, in units.
-    public static let terrainStep: Float = 32
+    static let terrainStep: Float = 32
 }
 
 extension FollowerCommandWorldAdapter: FollowerCommandWorld {

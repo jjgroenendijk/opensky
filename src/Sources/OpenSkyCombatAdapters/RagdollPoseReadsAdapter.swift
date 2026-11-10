@@ -11,7 +11,7 @@ public import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyMenusInterface
-public import OpenSkyPhysics
+import OpenSkyPhysics
 import OpenSkyPlayer
 public import OpenSkyRendering
 import OpenSkyScriptingInterface
@@ -38,7 +38,7 @@ public struct RagdollPoseReadsAdapter {
 }
 
 extension RagdollPoseReadsAdapter {
-    public var ragdollResidents: [RagdollResident] {
+    var ragdollResidents: [RagdollResident] {
         let streamer = game.streamer
         return streamer.residentActorEntries().compactMap { entry in
             entry.placedActor.map {
@@ -47,7 +47,7 @@ extension RagdollPoseReadsAdapter {
         }
     }
 
-    public var residentRagdollCells: Set<CellSceneLocation> {
+    var residentRagdollCells: Set<CellSceneLocation> {
         game.streamer.residentCellLocations
     }
 
@@ -133,7 +133,7 @@ extension RagdollPoseReadsAdapter {
     }
 
     /// The same static broadphase the player capsule queries.
-    public var ragdollStepWorld: DynamicStepWorld {
+    var ragdollStepWorld: DynamicStepWorld {
         let streamer = game.streamer
         return DynamicStepWorld(
             staticCandidates: { [weak streamer] bounds in

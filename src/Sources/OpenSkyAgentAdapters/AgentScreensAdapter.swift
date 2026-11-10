@@ -37,13 +37,13 @@ public protocol AgentScreensHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentScreensAdapter {
-    public let hub: AgentHub
-    public let game: any AgentScreensHost
+    let hub: AgentHub
+    let game: any AgentScreensHost
 }
 
 extension AgentScreensAdapter {
     /// The opening titles: shown, loaded, and the clip asked for last.
-    public var titlesState: AgentJSON {
+    var titlesState: AgentJSON {
         let titles = game.titleSequence
         return [
             "shown": .bool(titles.isShown), "loaded": .bool(titles.isLoaded),
@@ -70,7 +70,7 @@ extension AgentScreensAdapter {
     }
 
     /// The menu movie's focused clip, its frame label, controllers, and button-art platform.
-    public var movieFocusState: AgentJSON {
+    var movieFocusState: AgentJSON {
         guard let runtime = game.renderer?.swfRuntime else { return .null }
         let focus = runtime.focusTarget
         return [
@@ -82,7 +82,7 @@ extension AgentScreensAdapter {
     }
 
     /// `debug gamepad`: the reported gamepads change at once; presses arrive next frame.
-    public func driveGamepad(count: Int?, press: [String]) throws(AgentFailure) -> AgentJSON {
+    func driveGamepad(count: Int?, press: [String]) throws(AgentFailure) -> AgentJSON {
         let gamepads = game.menuRouter.gamepads
         var buttons: Set<GamepadButton> = []
         for name in press {
@@ -104,7 +104,7 @@ extension AgentScreensAdapter {
     ]
 
     /// The loading screen: whether it covers, which screen, and its movie.
-    public var loadingState: AgentJSON {
+    var loadingState: AgentJSON {
         let loading = game.loadingScreens
         let session = loading.session
         return [
@@ -119,7 +119,7 @@ extension AgentScreensAdapter {
     }
 
     /// The map's mode, selection, last result, and the custom marker on the map and compass.
-    public var mapState: AgentJSON {
+    var mapState: AgentJSON {
         let snapshot = game.mapMenu.snapshot
         let compass = game.hud.playerSetMarker.map { AgentJSON.array([.init($0.x), .init($0.y)]) }
         return [
@@ -131,7 +131,7 @@ extension AgentScreensAdapter {
         ]
     }
 
-    public var hudState: AgentJSON {
+    var hudState: AgentJSON {
         [
             "loaded": .bool(game.hud.isLoaded), "cartMode": .bool(game.hud.isCartMode),
             "modes": .array(game.hud.shownModes.map { .string($0.rawValue) }),
@@ -145,7 +145,7 @@ extension AgentScreensAdapter {
     }
 
     /// The marker is found by its map name; the map's refusals do not apply.
-    public func fastTravel(to name: String) throws(AgentFailure) -> AgentJSON {
+    func fastTravel(to name: String) throws(AgentFailure) -> AgentJSON {
         let wanted = name.lowercased()
         guard let site = game.mapWorld.mapMarkerSites().first(where: {
             $0.name.lowercased() == wanted

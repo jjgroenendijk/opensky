@@ -1,7 +1,7 @@
 import Foundation
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
-public import OpenSkyAgentControl
+import OpenSkyAgentControl
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -33,13 +33,13 @@ public protocol AgentMotionHost: AnyObject {
 }
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
-public struct AgentMotionAdapter {
-    public let hub: AgentHub
-    public let game: any AgentMotionHost
+struct AgentMotionAdapter {
+    let hub: AgentHub
+    let game: any AgentMotionHost
 }
 
 extension AgentMotionAdapter {
-    public func orderFlight(_ reference: String, order: AgentFlightOrder) throws(AgentFailure)
+    func orderFlight(_ reference: String, order: AgentFlightOrder) throws(AgentFailure)
         -> AgentJSON
     {
         let actor = try hub.resolveReference(reference)
@@ -61,7 +61,7 @@ extension AgentMotionAdapter {
         return ["ref": .formID(actor.formID.rawValue), "order": .string(order.rawValue)]
     }
 
-    public func flightState(reference: String?) throws(AgentFailure) -> AgentJSON {
+    func flightState(reference: String?) throws(AgentFailure) -> AgentJSON {
         if let reference {
             let actor = try hub.resolveReference(reference)
             var json = flightJSON(of: actor.key)
@@ -79,7 +79,7 @@ extension AgentMotionAdapter {
         ]
     }
 
-    public func mountState() -> AgentJSON {
+    func mountState() -> AgentJSON {
         let mounts = game.mounts
         guard let drive = mounts.drive else {
             return [
@@ -161,7 +161,7 @@ extension AgentMotionAdapter {
         ]
     }
 
-    public func impulsesState() -> AgentJSON {
+    func impulsesState() -> AgentJSON {
         guard let impulses = game.combat.impulses else { return ["available": .bool(false)] }
         let settings = impulses.settings
         return [
@@ -202,7 +202,7 @@ extension AgentMotionAdapter {
         ]
     }
 
-    public func knock(_ reference: String, damage: Float) throws(AgentFailure) -> AgentJSON {
+    func knock(_ reference: String, damage: Float) throws(AgentFailure) -> AgentJSON {
         let actor = try hub.resolveReference(reference)
         let knock = game.combat.forceKnockBack(actor.key, damage: damage)
         return [
@@ -213,7 +213,7 @@ extension AgentMotionAdapter {
         ]
     }
 
-    public func knockDebug(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
+    func knockDebug(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
         switch command {
         case let .knock(reference, damage): try knock(reference, damage: damage)
         case let .knockdown(reference, magnitude): try knockDown(reference, magnitude: magnitude)
@@ -221,7 +221,7 @@ extension AgentMotionAdapter {
         }
     }
 
-    public func knockDown(_ reference: String, magnitude: Float) throws(AgentFailure) -> AgentJSON {
+    func knockDown(_ reference: String, magnitude: Float) throws(AgentFailure) -> AgentJSON {
         let actor = try hub.resolveReference(reference)
         let source = game.combat.meleeAttacker.feet
         let knocked = game.effectsWorld.knockDown(actor.key, from: source, magnitude: magnitude)

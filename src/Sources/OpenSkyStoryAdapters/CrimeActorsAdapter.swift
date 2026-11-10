@@ -71,11 +71,11 @@ extension CrimeActorsAdapter {
         game.packages.resume(key)
     }
 
-    public var isDialogueOpen: Bool {
+    var isDialogueOpen: Bool {
         game.dialogueMenu.isOpen
     }
 
-    public var lastDialogueOutcome: String? {
+    var lastDialogueOutcome: String? {
         game.dialogue.lastOutcome
     }
 

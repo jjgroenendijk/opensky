@@ -72,7 +72,7 @@ extension AISeatingAdapter {
     }
 
     /// Farther than this from the seat, something else moved the seated player away.
-    public static let seatLeaveDistance: Float = 256
+    static let seatLeaveDistance: Float = 256
 
     /// A teleport or a cell change that took the seated or rising player away ends the seat.
     func releaseMovedPlayer() {

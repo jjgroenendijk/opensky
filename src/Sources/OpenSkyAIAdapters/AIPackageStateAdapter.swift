@@ -62,7 +62,7 @@ extension AIPackageStateAdapter {
         return game.streamer.residentActorEntries()
     }
 
-    public var packageClock: GameClock? {
+    var packageClock: GameClock? {
         game.gameSession?.gameClock
     }
 

@@ -77,7 +77,7 @@ extension AINavigationAdapter {
         game.vehicleWorld.vehicles.core.links[actor]?.carrier
     }
 
-    public var camera: AICameraPose? {
+    var camera: AICameraPose? {
         game.gameSession.map {
             AICameraPose(position: $0.freeFlyCamera.position, forward: $0.freeFlyCamera.forward)
         }
@@ -113,7 +113,7 @@ extension AINavigationAdapter {
         game.factions.setHostility(hostile ? .hostile : .neutral, on: actor)
     }
 
-    public var animationClips: ActorClipLoader? {
+    var animationClips: ActorClipLoader? {
         game.animationClips
     }
 }

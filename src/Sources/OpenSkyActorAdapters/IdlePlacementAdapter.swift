@@ -101,7 +101,7 @@ extension IdlePlacementAdapter {
         return actors + (player.map { [$0] } ?? [])
     }
 
-    public var idleAnimationTime: Float? {
+    var idleAnimationTime: Float? {
         game.renderer?.animationTime
     }
 

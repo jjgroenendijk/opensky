@@ -54,7 +54,7 @@ public final class MapWorldAdapter {
     public let travelHost: any MapTravelHost
     public let questsHost: any MapQuestsHost
 
-    public var mapRecords: MapRecordsAdapter {
+    var mapRecords: MapRecordsAdapter {
         MapRecordsAdapter(game: recordsHost)
     }
 

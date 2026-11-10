@@ -1,7 +1,7 @@
 // The condition views the live context keeps across frames, each with the inputs
 // it was built from. See docs/engine/runtime-state.md#caching-derived-views.
 
-public import OpenSkyActorsInterface
+import OpenSkyActorsInterface
 public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
@@ -11,19 +11,19 @@ public import OpenSkyWorldState
 
 @MainActor
 public final class ConditionViewCaches {
-    public let deaths = RevisionCache<DeathViewKey, DeathView>()
-    public let markers = RevisionCache<MarkerViewKey, Set<ReferenceKey>>()
+    let deaths = RevisionCache<DeathViewKey, DeathView>()
+    let markers = RevisionCache<MarkerViewKey, Set<ReferenceKey>>()
     public let inventory = RevisionCache<InventoryViewKey, InventoryConditionResolution>()
-    public let actors = RevisionCache<ActorViewKey, [ReferenceKey: ActorConditionState]>()
+    let actors = RevisionCache<ActorViewKey, [ReferenceKey: ActorConditionState]>()
 }
 
 /// A death is an `ActorDeathState` write. A spawned actor's base is known only while
 /// its cell is resident, so the resident cells are part of the key.
-public struct DeathViewKey: Hashable {
-    public let store: ObjectIdentifier
-    public let streamer: ObjectIdentifier?
-    public let cells: Set<CellSceneLocation>?
-    public let deaths: UInt64
+struct DeathViewKey: Hashable {
+    let store: ObjectIdentifier
+    let streamer: ObjectIdentifier?
+    let cells: Set<CellSceneLocation>?
+    let deaths: UInt64
 }
 
 public struct DeathView {
@@ -31,10 +31,10 @@ public struct DeathView {
     public var counts: [FormID: Int] = [:]
 }
 
-public struct MarkerViewKey: Hashable {
-    public let store: ObjectIdentifier
-    public let markers: UInt64
-    public let references: [ReferenceKey]
+struct MarkerViewKey: Hashable {
+    let store: ObjectIdentifier
+    let markers: UInt64
+    let references: [ReferenceKey]
 }
 
 /// Item stacks and equip flags are inventory writes; an actor's baseline equipment is
@@ -49,17 +49,17 @@ public struct InventoryViewKey: Hashable {
 
 /// The NPC states only: the player's also reads its gait, melee graph and race menu,
 /// so it is built fresh every frame.
-public struct ActorViewKey: Hashable {
-    public let store: ObjectIdentifier
-    public let writes: UInt64
-    public let playerLevel: Int
-    public let hasInventory: Bool
-    public let actors: [ActorViewMember]
+struct ActorViewKey: Hashable {
+    let store: ObjectIdentifier
+    let writes: UInt64
+    let playerLevel: Int
+    let hasInventory: Bool
+    let actors: [ActorViewMember]
     /// Nil without a combat loop, where an NPC reports no action at all.
-    public let phases: [ReferenceKey: CombatBehaviorPhase]?
+    let phases: [ReferenceKey: CombatBehaviorPhase]?
 }
 
-public struct ActorViewMember: Hashable {
-    public let holder: ActorValueHolder
-    public let isDead: Bool
+struct ActorViewMember: Hashable {
+    let holder: ActorValueHolder
+    let isDead: Bool
 }

@@ -17,7 +17,7 @@ public final class RuntimeStatePartState {
     /// Condition views kept until their inputs change.
     public let conditionCaches = ConditionViewCaches()
 
-    public init() {}
+    init() {}
 }
 
 /// Where resident references are, for one set of resident cells and reference count.

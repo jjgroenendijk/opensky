@@ -174,7 +174,7 @@ extension RuntimeStateCoreAdapter {
     }
 
     /// The location a resident cell belongs to; nil without location data.
-    public func location(of scene: any CellScenePort) -> ResolvedFormID? {
+    func location(of scene: any CellScenePort) -> ResolvedFormID? {
         location(of: scene.locationKey)
     }
 

@@ -122,9 +122,9 @@ extension MenuWorldAdapter {
 }
 
 /// The logo and its smoke, drawn in place of the world.
-public struct TitleBackdropScene {
-    public var placements: [RenderPlacement]
-    public var particles: [ParticlePlayback]
+struct TitleBackdropScene {
+    var placements: [RenderPlacement]
+    var particles: [ParticlePlayback]
 
-    public static let empty = TitleBackdropScene(placements: [], particles: [])
+    static let empty = TitleBackdropScene(placements: [], particles: [])
 }

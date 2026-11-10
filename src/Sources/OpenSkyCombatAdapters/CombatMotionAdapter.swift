@@ -164,7 +164,7 @@ extension CombatMotionAdapter {
 
     /// Dropping the whole delta, as `WorldItemRuntime.removeFromWorld` does,
     /// leaves nothing of a spawned object in the next save.
-    public var bodyTransients: CombatTransientCounts {
+    var bodyTransients: CombatTransientCounts {
         CombatTransientCounts(
             activeRagdolls: game.ragdoll.runtime?.world.ragdollCount ?? 0,
             awakeBodies: game.streamer.dynamicBodies.activeBodyCount

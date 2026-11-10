@@ -32,8 +32,8 @@ public protocol AgentItemsHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentItemsAdapter {
-    public let hub: AgentHub
-    public let game: any AgentItemsHost
+    let hub: AgentHub
+    let game: any AgentItemsHost
 }
 
 extension AgentItemsAdapter {
@@ -123,7 +123,7 @@ extension AgentItemsAdapter {
         }
     }
 
-    public func kill(_ text: String) throws(AgentFailure) -> AgentJSON {
+    func kill(_ text: String) throws(AgentFailure) -> AgentJSON {
         let reference = try hub.resolveReference(text)
         guard reference.key != .player else {
             throw AgentFailure(.unsupported, "the player cannot be killed from here")
@@ -139,7 +139,7 @@ extension AgentItemsAdapter {
 
     /// Clears the death record and refills the values. A ragdoll keeps its
     /// pose until the cell reloads.
-    public func resurrect(_ text: String) throws(AgentFailure) -> AgentJSON {
+    func resurrect(_ text: String) throws(AgentFailure) -> AgentJSON {
         guard let values = game.actorValues.runtime else {
             throw AgentFailure(.notReady, "actor values are not loaded")
         }

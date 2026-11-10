@@ -14,7 +14,7 @@ import OpenSkyRendering
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
-public import OpenSkyWorldInterface
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
@@ -49,7 +49,7 @@ public final class ObjectAnimationWorldAdapter {
     /// queued when its event fired. Retried each frame.
     private var pendingAnswers: [UInt64: Bool] = [:]
     /// Which scripted traps touch which actors.
-    public var trapContact = TrapContactTracker()
+    var trapContact = TrapContactTracker()
 
     /// The streamer's animated parts. The composition root sets these, so the host stays port-only.
     public var animatedObjects: () -> [CellAnimatedObject] = { [] }
@@ -199,7 +199,7 @@ extension ObjectAnimationWorldAdapter: SequenceDoorWorld {
         }
     }
 
-    public func run(_ commands: [SequenceDoorCommand]) {
+    func run(_ commands: [SequenceDoorCommand]) {
         for command in commands {
             switch command {
             case let .textKey(name, reference):

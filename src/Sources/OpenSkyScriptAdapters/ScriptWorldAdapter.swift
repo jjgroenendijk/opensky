@@ -80,18 +80,18 @@ public final class ScriptWorldAdapter {
         )
     }
 
-    public var playerBindings: ScriptPlayerBindingsAdapter {
+    var playerBindings: ScriptPlayerBindingsAdapter {
         ScriptPlayerBindingsAdapter(game: playerBindingsHost, physicsBindings: physicsBindings)
     }
 
-    public var referenceBindings: ScriptReferenceBindingsAdapter {
+    var referenceBindings: ScriptReferenceBindingsAdapter {
         ScriptReferenceBindingsAdapter(game: referenceBindingsHost, nodeBindings: nodeBindings)
     }
 
-    public private(set) lazy var soundBindings = ScriptSoundBindingsAdapter(
+    private(set) lazy var soundBindings = ScriptSoundBindingsAdapter(
         game: soundBindingsHost, state: state
     )
-    public var physicsBindings: ScriptPhysicsBindingsAdapter {
+    var physicsBindings: ScriptPhysicsBindingsAdapter {
         ScriptPhysicsBindingsAdapter(
             game: physicsBindingsHost, state: state, nodeBindings: nodeBindings
         )

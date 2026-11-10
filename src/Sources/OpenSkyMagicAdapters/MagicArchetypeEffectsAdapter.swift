@@ -35,8 +35,8 @@ public protocol MagicArchetypeEffectsHost: AnyObject {
 public struct MagicArchetypeEffectsAdapter {
     public let game: any MagicArchetypeEffectsHost
     public let state: MagicPartState
-    public let heldMagic: MagicHeldMagicAdapter
-    public let spellDelivery: MagicSpellDeliveryAdapter
+    let heldMagic: MagicHeldMagicAdapter
+    let spellDelivery: MagicSpellDeliveryAdapter
 }
 
 extension MagicArchetypeEffectsAdapter {
@@ -101,7 +101,7 @@ extension MagicArchetypeEffectsAdapter {
     }
 
     @discardableResult
-    public func spawnHazard(_ hazard: ReferenceKey, at key: ReferenceKey) -> Bool {
+    func spawnHazard(_ hazard: ReferenceKey, at key: ReferenceKey) -> Bool {
         game.effectsWorld.placeAtMe(hazard, at: key, count: 1) != nil
     }
 
@@ -194,7 +194,7 @@ extension MagicArchetypeEffectsAdapter {
         return listed.isEmpty || listed.contains { keywords.hasKeyword($0, on: id) == true }
     }
 
-    public func castingSound(_ sound: FormID, caster: ReferenceKey, starts: Bool) {
+    func castingSound(_ sound: FormID, caster: ReferenceKey, starts: Bool) {
         guard let director = game.gameSession?.soundDirector else { return }
         guard starts else {
             director.stopSound(formID: sound, source: caster)

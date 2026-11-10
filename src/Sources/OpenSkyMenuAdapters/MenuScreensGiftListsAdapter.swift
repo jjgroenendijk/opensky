@@ -26,7 +26,7 @@ public struct MenuScreensGiftListsAdapter {
 
 extension MenuScreensGiftListsAdapter {
     /// "All" first, then one tab per spell kind in the order the kinds first appear.
-    public var magicMenuCategories: [ItemListCategory] {
+    var magicMenuCategories: [ItemListCategory] {
         let spells = game.magic.magicMenuSpells.enumerated().map { index, spell in
             (kind: spell.typeName, row: ItemListRow(
                 tag: UInt32(index), name: spell.name, isEquipped: spell.isReadied
@@ -47,7 +47,7 @@ extension MenuScreensGiftListsAdapter {
 }
 
 extension MenuScreensGiftListsAdapter {
-    public var nearestActor: ReferenceKey? {
+    var nearestActor: ReferenceKey? {
         game.actorWorld.nearestActorValueHolder()?.key
     }
 

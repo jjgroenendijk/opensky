@@ -6,5 +6,5 @@ public import OpenSkyGameData
 public final class DialogueVoiceTypeCache {
     public var byRoll: [LeveledActorRollKey: FormID?] = [:]
 
-    public init() {}
+    init() {}
 }

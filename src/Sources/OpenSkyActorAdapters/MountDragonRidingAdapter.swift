@@ -62,7 +62,7 @@ extension MountDragonRidingAdapter {
     }
 
     /// The dragon's strongest breath shout, cast at the target as a named-target spell.
-    public func breathe(from mount: ReferenceKey, at target: ReferenceKey) {
+    func breathe(from mount: ReferenceKey, at target: ReferenceKey) {
         guard
             let holder = game.magicWorld.actorValueHolder(for: mount),
             let spell = game.magic.npcShouts(of: holder).lazy
