@@ -36,7 +36,7 @@ nonisolated struct DynamicBodyPair {
     let material: DynamicContactMaterial
 
     private var margin: Float {
-        DynamicBodyContacts.contactMargin
+        DynamicBody.contactMargin
     }
 
     func contacts(_ firstVolume: Int, _ secondVolume: Int) -> [DynamicContact] {

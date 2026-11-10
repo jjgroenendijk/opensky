@@ -74,7 +74,7 @@ struct NPCAIAcceptanceTests {
         #expect(arrived.state == .arrived)
         #expect(
             simd_distance(arrived.feetPosition, Chain.bedPosition)
-                <= NPCMovementRuntime.waypointTolerance
+                <= NPCMover.waypointTolerance
         )
         #expect(arrived.repathCount == 0, "a clear corridor should need no repath")
         // The hand-off writes a settle point in the cell the guard ended up in,

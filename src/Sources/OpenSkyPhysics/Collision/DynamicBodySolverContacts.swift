@@ -132,7 +132,7 @@ nonisolated extension DynamicBodySolver {
             moves[other] -= contact.normal * (excess * (1 - share))
         }
         for index in bodies.indices where !bodies[index].isSleeping {
-            let move = clamped(moves[index], to: maximumCorrectionDistance)
+            let move = moves[index].clampedLength(maximumCorrectionDistance)
             guard move != .zero else { continue }
             bodies[index].position += move
         }
@@ -151,7 +151,7 @@ nonisolated extension DynamicBodySolver {
         var impulse = (-closing + bounce) / effective
         let total = max(0, accumulated + impulse)
         impulse = total - accumulated
-        apply(impulse: normal * impulse, contact: contact, bodies: &bodies)
+        contact.apply(normal * impulse, to: &bodies)
         return total
     }
 
@@ -179,7 +179,7 @@ nonisolated extension DynamicBodySolver {
         if length > limit {
             total = length > Float.ulpOfOne ? total / length * limit : .zero
         }
-        apply(impulse: total - accumulated, contact: contact, bodies: &bodies)
+        contact.apply(total - accumulated, to: &bodies)
         return total
     }
 
@@ -217,16 +217,16 @@ nonisolated extension DynamicBodySolver {
         let rotated = body.worldInverseInertia * simd_cross(lever, normal)
         return simd_dot(simd_cross(rotated, lever), normal)
     }
+}
 
-    static func apply(
-        impulse: SIMD3<Float>,
-        contact: DynamicContact,
-        bodies: inout [DynamicBody]
-    ) {
+/// Contacts and the impulses each has taken so far in this substep.
+nonisolated extension DynamicContact {
+    /// Applies `impulse` at this contact: along it to the body, against it to the other.
+    func apply(_ impulse: SIMD3<Float>, to bodies: inout [DynamicBody]) {
         guard impulse.isFiniteVector else { return }
-        addVelocity(impulse, to: &bodies[contact.body], at: contact.point)
-        if let other = contact.other {
-            addVelocity(-impulse, to: &bodies[other], at: contact.point)
+        Self.addVelocity(impulse, to: &bodies[body], at: point)
+        if let other {
+            Self.addVelocity(-impulse, to: &bodies[other], at: point)
         }
     }
 
@@ -246,16 +246,12 @@ nonisolated extension DynamicBodySolver {
         body.linearVelocity += impulse * body.definition.inverseMass
         body.angularVelocity += body.worldInverseInertia
             * simd_cross(point - body.position, impulse)
-        body.linearVelocity = clamped(
-            body.linearVelocity, to: body.definition.maximumLinearSpeed
-        )
-        body.angularVelocity = clamped(
-            body.angularVelocity, to: body.definition.maximumAngularSpeed
-        )
+        body.linearVelocity = body.linearVelocity.clampedLength(body.definition.maximumLinearSpeed)
+        body.angularVelocity = body.angularVelocity
+            .clampedLength(body.definition.maximumAngularSpeed)
     }
 }
 
-/// Contacts and the impulses each has taken so far in this substep.
 nonisolated struct ContactSet {
     let contacts: [DynamicContact]
     var normal: [Float]

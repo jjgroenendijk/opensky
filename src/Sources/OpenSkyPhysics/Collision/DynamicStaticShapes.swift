@@ -22,7 +22,7 @@ nonisolated struct DynamicStaticShapes {
         let bounds = body.worldBounds
         if reach[index].map({ !$0.encloses(bounds) }) ?? true {
             let margin = simd_length(body.linearVelocity) * dt
-                + DynamicBodySolver.substepDistance(of: body)
+                + body.substepDistance
             let widened = ModelBounds(
                 min: bounds.min - SIMD3(repeating: margin),
                 max: bounds.max + SIMD3(repeating: margin)

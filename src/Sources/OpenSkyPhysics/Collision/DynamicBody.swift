@@ -289,6 +289,12 @@ nonisolated public struct DynamicBodyDefinition: Sendable {
 /// the point every impulse is measured against; `originPosition` recovers the
 /// reference's own origin for rendering and for persistence.
 nonisolated public struct DynamicBody: Sendable {
+    /// Collision margin every contact sample carries on top of its volume's own
+    /// skin. A hull vertex has no skin of its own, so without a margin a resting
+    /// box would generate contacts only while already interpenetrating and would
+    /// jitter between touching and free. Engine units.
+    public static let contactMargin: Float = 1.5
+
     /// Session-stable identity, and the solver's iteration order: bodies step
     /// in ascending key so that two runs of the same scene produce the same
     /// trajectories.
@@ -343,7 +349,7 @@ nonisolated public struct DynamicBody: Sendable {
     /// the contact margin, so a sphere resting in its margin keeps its floor.
     public var worldBounds: ModelBounds {
         let extent = SIMD3<Float>(
-            repeating: definition.boundingRadius + DynamicBodyContacts.contactMargin
+            repeating: definition.boundingRadius + DynamicBody.contactMargin
         )
         return ModelBounds(min: position - extent, max: position + extent)
     }

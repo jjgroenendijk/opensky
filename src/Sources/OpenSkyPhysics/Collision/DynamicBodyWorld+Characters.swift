@@ -34,7 +34,7 @@ nonisolated extension DynamicBodyWorld {
     public func characterCarry(
         capsule: PlayerCapsule, feetPosition: SIMD3<Float>
     ) -> SIMD3<Float> {
-        let reach = capsule.radius + DynamicBodyContacts.contactMargin * 2
+        let reach = capsule.radius + DynamicBody.contactMargin * 2
         let segment = (
             feetPosition + SIMD3<Float>(0, 0, capsule.radius),
             feetPosition + SIMD3<Float>(0, 0, capsule.height - capsule.radius)

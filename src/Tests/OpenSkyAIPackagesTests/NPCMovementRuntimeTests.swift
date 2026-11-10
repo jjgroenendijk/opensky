@@ -53,7 +53,7 @@ struct NPCMovementRuntimeTests {
 
         let readout = try #require(runtime.readouts().first)
         #expect(readout.state == .arrived)
-        #expect(simd_distance(readout.feetPosition, path.target) <= NPCMovementRuntime
+        #expect(simd_distance(readout.feetPosition, path.target) <= NPCMover
             .waypointTolerance)
         #expect(doors == [FormID(0xA00)])
         #expect(triggers.map(\.phase) == [.enter, .leave])

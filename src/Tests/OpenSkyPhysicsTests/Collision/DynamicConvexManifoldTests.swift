@@ -29,7 +29,7 @@ struct DynamicConvexManifoldTests {
             #expect(contact.normal.z > 0.99, "the lower box's top face gives the normal")
             #expect(contact.body == 1, "the upper box is pushed")
             #expect(abs(contact.point.z - 20) < 0.01, "points lie on the top face")
-            #expect(abs(contact.depth - (DynamicBodyContacts.contactMargin + 0.5)) < 0.01)
+            #expect(abs(contact.depth - (DynamicBody.contactMargin + 0.5)) < 0.01)
         }
         let xs = Set(contacts.map { Int($0.point.x.rounded()) })
         #expect(xs == [-7, 13], "the upper box's corners, clipped to nothing")
@@ -112,7 +112,7 @@ struct DynamicConvexManifoldTests {
         DynamicBodyScene.run(bodies: &bodies, world: world, steps: 600)
         // A resting contact keeps the margin less the slop between the boxes. The first
         // substep has no impulses to start from, so the top box may shift a little.
-        let gap = DynamicBodyContacts.contactMargin - DynamicBodySolver.penetrationSlop
+        let gap = DynamicBody.contactMargin - DynamicBodySolver.penetrationSlop
         for (level, body) in bodies.enumerated() {
             let expected = 10 + Float(level) * (20 + gap)
             #expect(abs(body.position.z - expected) < 1, "level \(level) at \(body.position)")
