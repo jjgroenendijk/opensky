@@ -49,7 +49,7 @@ nonisolated public struct ESSGlobalData: Equatable, Sendable {
         self.data = data
     }
 
-    public var knownType: ESSGlobalDataType? {
+    var knownType: ESSGlobalDataType? {
         ESSGlobalDataType(rawValue: type)
     }
 

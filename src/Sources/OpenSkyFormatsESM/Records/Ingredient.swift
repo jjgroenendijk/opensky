@@ -14,9 +14,9 @@ nonisolated public struct Ingredient: Sendable {
         }
 
         /// Ingredient value is authored rather than summed from the effects.
-        public static let noAutoCalc = Flags(rawValue: 0x0000_0001)
-        public static let food = Flags(rawValue: 0x0000_0002)
-        public static let referencesPersist = Flags(rawValue: 0x0000_0100)
+        static let noAutoCalc = Flags(rawValue: 0x0000_0001)
+        static let food = Flags(rawValue: 0x0000_0002)
+        static let referencesPersist = Flags(rawValue: 0x0000_0100)
     }
 
     public let formID: FormID

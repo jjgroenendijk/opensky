@@ -6,10 +6,10 @@ import Foundation
 import OpenSkyFormatsCore
 import simd
 
-nonisolated public enum NIFConstraintDecoder: Sendable {
+nonisolated enum NIFConstraintDecoder: Sendable {
     /// Constraint block types this decoder reads, keyed to the `hkConstraintType`
     /// the block's payload follows.
-    public static let types: [String: NIFConstraintType] = [
+    static let types: [String: NIFConstraintType] = [
         "bhkBallAndSocketConstraint": .ballAndSocket,
         "bhkHingeConstraint": .hinge,
         "bhkLimitedHingeConstraint": .limitedHinge,
@@ -20,12 +20,12 @@ nonisolated public enum NIFConstraintDecoder: Sendable {
     ]
 
     /// `bhkBreakableConstraint` wraps a joint of any type in `types`.
-    public static let breakableType = "bhkBreakableConstraint"
+    static let breakableType = "bhkBreakableConstraint"
 
     /// Every joint `block` holds: one, or one per link of a ball-and-socket chain.
     /// Throws `NIFError.unsupported` for a constraint class this decoder does not
     /// read, so the caller tallies it by block type and keeps the body.
-    public static func decodeAll(
+    static func decodeAll(
         block: NIFFile.Block,
         index: Int
     ) throws -> [NIFCollisionConstraint] {

@@ -17,7 +17,7 @@ nonisolated public struct Ingestible: Sendable {
         /// Gold value is authored, not derived from the effect costs.
         public static let noAutoCalc = Flags(rawValue: 0x0000_0001)
         public static let food = Flags(rawValue: 0x0000_0002)
-        public static let medicine = Flags(rawValue: 0x0001_0000)
+        static let medicine = Flags(rawValue: 0x0001_0000)
         public static let poison = Flags(rawValue: 0x0002_0000)
     }
 

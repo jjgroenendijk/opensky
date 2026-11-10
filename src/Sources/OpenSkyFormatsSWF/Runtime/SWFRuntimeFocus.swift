@@ -10,7 +10,7 @@ nonisolated extension SWFMovieRuntime {
     /// Key code to the `gfx.ui.NavigationCode` constant that names it. The
     /// *value* of each constant is read from the movie, so a movie that spells
     /// them differently still works.
-    public static let navigationConstants: [Int: String] = [
+    static let navigationConstants: [Int: String] = [
         SWFKeyCode.up: "UP", SWFKeyCode.down: "DOWN",
         SWFKeyCode.left: "LEFT", SWFKeyCode.right: "RIGHT",
         SWFKeyCode.enter: "ENTER", SWFKeyCode.escape: "ESCAPE",
@@ -20,12 +20,12 @@ nonisolated extension SWFMovieRuntime {
     ]
 
     /// `gfx.ui.NavigationCode`, or nil for a movie without CLIK.
-    public var navigationCodes: AS2Object? {
+    var navigationCodes: AS2Object? {
         globalPath(["gfx", "ui", "NavigationCode"])
     }
 
     /// The navigation string a key code maps to, as the movie spells it.
-    public func navigationEquivalent(forKey code: Int) -> String? {
+    func navigationEquivalent(forKey code: Int) -> String? {
         guard
             let name = SWFMovieRuntime.navigationConstants[code],
             case let .string(value) = navigationCodes?.lookup(name)?.property.value ?? .undefined
@@ -38,7 +38,7 @@ nonisolated extension SWFMovieRuntime {
     /// Whether the movie built CLIK's `InputDelegate`, which listens on `Key` and
     /// sends each key down the focus path itself. Read without the getter, which
     /// would create one.
-    public var hasLiveInputDelegate: Bool {
+    var hasLiveInputDelegate: Bool {
         globalPath(["gfx", "managers", "InputDelegate"])?.lookup("_instance")?.property.value
             .objectValue != nil
     }
@@ -46,7 +46,7 @@ nonisolated extension SWFMovieRuntime {
     /// `gfx.managers.FocusHandler.instance`. The singleton is behind a getter,
     /// so reading it means calling the accessor — and calling it is also what
     /// creates it, which is why this is not a plain property read.
-    public var focusHandler: AS2Object? {
+    var focusHandler: AS2Object? {
         guard let handlerClass = globalPath(["gfx", "managers", "FocusHandler"]) else {
             return nil
         }
@@ -57,7 +57,7 @@ nonisolated extension SWFMovieRuntime {
     /// `value` is the framework's own spelling of the phase: `keyDown`,
     /// `keyUp`, or `keyHold`.
     @discardableResult
-    public func routeToFocusHandler(code: Int, value: String) -> Bool {
+    func routeToFocusHandler(code: Int, value: String) -> Bool {
         guard
             let handler = focusHandler,
             let function = handler.lookup("handleInput")?.property.value.functionValue,
@@ -79,7 +79,7 @@ nonisolated extension SWFMovieRuntime {
     /// menus expect the host to call, because their own routing forwards down
     /// `pathToFocus` from there.
     @discardableResult
-    public func routeToMenuHandler(code: Int, value: String) -> Bool {
+    func routeToMenuHandler(code: Int, value: String) -> Bool {
         guard
             let node = menuInputHandler,
             let function = node.object.lookup("handleInput")?.property.value.functionValue,
@@ -109,7 +109,7 @@ nonisolated extension SWFMovieRuntime {
     /// clip sits one or two levels below `_root`, while the CLIK controls that
     /// also define `handleInput` sit deeper and are reached by the menu's own
     /// forwarding rather than by the engine.
-    public var menuInputHandler: SWFDisplayObject? {
+    var menuInputHandler: SWFDisplayObject? {
         var frontier = root.children.filter(\.isClip)
         var depth = 1
         while !frontier.isEmpty, depth <= SWFMovieRuntime.maximumHandlerDepth {
@@ -127,14 +127,14 @@ nonisolated extension SWFMovieRuntime {
     /// menu-handler search and by the focus-path filter, because the movie's own
     /// `handleInput` forwards down `pathToFocus[0]` and a clip without one drops
     /// the key.
-    public func definesHandleInput(_ node: SWFDisplayObject) -> Bool {
+    func definesHandleInput(_ node: SWFDisplayObject) -> Bool {
         node.object.lookup("handleInput")?.property.value.functionValue != nil
     }
 
     /// The clips between `node` and the focused object, outermost first. Empty
     /// when nothing has focus, which is what a menu that owns its own selection
     /// state expects.
-    public func focusChain(under node: SWFDisplayObject) -> [SWFDisplayObject] {
+    func focusChain(under node: SWFDisplayObject) -> [SWFDisplayObject] {
         var chain: [SWFDisplayObject] = []
         var current = focusTarget
         var steps = 0
@@ -150,7 +150,7 @@ nonisolated extension SWFMovieRuntime {
     /// field names and defaults come from the movie rather than from here. Falls
     /// back to a plain object carrying the same five fields when the class is
     /// absent, because a component only ever reads them by name.
-    public func makeInputDetails(code: Int, value: String) -> AS2Value? {
+    func makeInputDetails(code: Int, value: String) -> AS2Value? {
         let navigation = navigationEquivalent(forKey: code)
         let arguments: [AS2Value] = [
             .string("key"), .integer(code), .string(value),
@@ -176,14 +176,14 @@ nonisolated extension SWFMovieRuntime {
 
     /// Walks a dotted `_global` path without going through the interpreter, for
     /// the framework objects the engine needs by name.
-    public func globalPath(_ components: [String]) -> AS2Object? {
+    func globalPath(_ components: [String]) -> AS2Object? {
         components.reduce(AS2Object?.some(runtime.globalObject)) { object, name in
             object?.lookup(name)?.property.value.objectValue
         }
     }
 
     /// Reads a property that may be an accessor, invoking the getter when it is.
-    public func resolve(_ name: String, on object: AS2Object) -> AS2Value {
+    func resolve(_ name: String, on object: AS2Object) -> AS2Value {
         guard let found = object.lookup(name) else {
             return .undefined
         }
@@ -200,7 +200,7 @@ nonisolated extension SWFMovieRuntime {
 nonisolated extension AS2Runtime {
     /// `new constructor(arguments)` from Swift, for the engine-side halves of
     /// the framework protocol.
-    public func construct(_ constructor: AS2Object, arguments: [AS2Value] = []) -> AS2Value {
+    func construct(_ constructor: AS2Object, arguments: [AS2Value] = []) -> AS2Value {
         guard let function = constructor.lookup("prototype") != nil ? constructor : nil else {
             return .undefined
         }

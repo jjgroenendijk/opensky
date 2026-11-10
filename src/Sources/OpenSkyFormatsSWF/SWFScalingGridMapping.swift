@@ -15,16 +15,10 @@ nonisolated public struct SWFSceneScalingGrid: Equatable, Sendable {
     /// The sprite's scale on each axis, the amount the corners undo.
     public let scale: SIMD2<Float>
 
-    public init(grid: SIMD4<Float>, bounds: SIMD4<Float>, scale: SIMD2<Float>) {
-        self.grid = grid
-        self.bounds = bounds
-        self.scale = scale
-    }
-
     /// The grid for a shape placed in the sprite with `childMatrix`. Nil when
     /// the child is rotated or skewed, or the sprite has no size: Flash scales
     /// those normally too.
-    public static func make(
+    static func make(
         splitter: SWFRect,
         spriteBounds: SWFBoundsBox,
         spriteTransform: SWFTransform,
@@ -65,7 +59,7 @@ nonisolated public struct SWFSceneScalingGrid: Equatable, Sendable {
     }
 
     /// Where the scaling grid moves a shape-local point.
-    public func remap(_ point: SIMD2<Float>) -> SIMD2<Float> {
+    func remap(_ point: SIMD2<Float>) -> SIMD2<Float> {
         SIMD2(
             Self.remap(
                 point.x, span: SIMD2(bounds.x, bounds.z), grid: SIMD2(grid.x, grid.z),

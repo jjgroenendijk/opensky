@@ -108,5 +108,5 @@ nonisolated public struct NIFEffectMaterial: Hashable, Sendable {
     public var blend: NIFBlend?
     public var alphaTest: Float?
 
-    public init() {}
+    init() {}
 }

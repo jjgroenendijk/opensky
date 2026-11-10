@@ -16,14 +16,14 @@ nonisolated public struct FactionDecodeTally: Equatable, RankedSkipReport {
     }
 
     public private(set) var malformedFields: [FourCC: Int] = [:]
-    public private(set) var unknownFields: [FourCC: Int] = [:]
+    private(set) var unknownFields: [FourCC: Int] = [:]
     /// Bytes past the last whole element of a packed array, or past the last
     /// documented member of a struct that arrived longer than the spec.
-    public private(set) var trailingBytes: [FourCC: Int] = [:]
+    private(set) var trailingBytes: [FourCC: Int] = [:]
     /// VENV offset 6, which xEdit calls "Unknown 1" and UESP folds into a
     /// 32-bit radius. Counted whenever it is nonzero, because a nonzero word
     /// there is the only observation that could tell the two readings apart.
-    public private(set) var vendorRadiusHighWordSet = 0
+    private(set) var vendorRadiusHighWordSet = 0
 
     public var total: Int {
         malformedFields.values.reduce(0, +)
@@ -35,16 +35,16 @@ nonisolated public struct FactionDecodeTally: Equatable, RankedSkipReport {
         malformedFields[type, default: 0] += 1
     }
 
-    public mutating func noteUnknown(_ type: FourCC) {
+    mutating func noteUnknown(_ type: FourCC) {
         unknownFields[type, default: 0] += 1
     }
 
-    public mutating func noteTail(_ type: FourCC, bytes: Int) {
+    mutating func noteTail(_ type: FourCC, bytes: Int) {
         guard bytes > 0 else { return }
         trailingBytes[type, default: 0] += bytes
     }
 
-    public mutating func noteVendorRadiusHighWord() {
+    mutating func noteVendorRadiusHighWord() {
         vendorRadiusHighWordSet += 1
     }
 }
@@ -106,7 +106,7 @@ nonisolated public struct Faction: Equatable, Sendable {
     /// One XNAM, 12 bytes. The target is a FACT or a RACE — xEdit accepts both
     /// and vanilla authors both — so nothing here assumes the record type.
     public struct Relation: Equatable, Sendable {
-        public static let byteCount = 12
+        static let byteCount = 12
 
         public let faction: FormID
         /// Signed disposition modifier. xEdit notes the Creation Kit no longer
@@ -119,8 +119,8 @@ nonisolated public struct Faction: Equatable, Sendable {
     /// versions, so they are optional: the caller decides what an absent one
     /// means, instead of a silent zero.
     public struct CrimeValues: Equatable, Sendable {
-        public static let requiredByteCount = 12
-        public static let withStealMultiplierByteCount = 16
+        static let requiredByteCount = 12
+        static let withStealMultiplierByteCount = 16
         public static let fullByteCount = 20
 
         public let arrest: Bool
@@ -131,7 +131,7 @@ nonisolated public struct Faction: Equatable, Sendable {
         public let pickpocket: UInt16
         /// Offset 10. Both sources call it unused and observe nonzero values,
         /// so it is kept verbatim and never read as a gold amount.
-        public let unknown: UInt16
+        let unknown: UInt16
         public let stealMultiplier: Float?
         public let escape: UInt16?
         public let werewolf: UInt16?
@@ -151,7 +151,7 @@ nonisolated public struct Faction: Equatable, Sendable {
     /// (`FactionDecodeTally.vendorRadiusHighWordSet`), which is the observation
     /// that would distinguish them; the real-data suite reports the count.
     public struct VendorValues: Equatable, Sendable {
-        public static let byteCount = 12
+        static let byteCount = 12
 
         public let startHour: UInt16
         public let endHour: UInt16
@@ -163,7 +163,7 @@ nonisolated public struct Faction: Equatable, Sendable {
     /// PLVD, 12 bytes: where the vendor trades. The middle word's meaning
     /// depends on `type`, so it stays raw here.
     public struct VendorLocation: Equatable, Sendable {
-        public static let byteCount = 12
+        static let byteCount = 12
 
         public let type: Int32
         public let value: UInt32

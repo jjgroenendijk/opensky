@@ -74,10 +74,10 @@ nonisolated public struct HKPBoxShape: HKBClass, Equatable, Sendable {
 /// Decoded `hkpConvexTranslateShape` (size 80) or `hkpConvexTransformShape`
 /// (size 128): a child convex shape moved by a translation or a full transform.
 nonisolated public struct HKPConvexTransformShape: Equatable, Sendable {
-    public let header: HKPConvexHeader
-    public let childShape: HKXPointerTarget?
-    public let transform: HKTransform
-    public let unresolved: [HKXUnresolvedReference]
+    let header: HKPConvexHeader
+    let childShape: HKXPointerTarget?
+    let transform: HKTransform
+    let unresolved: [HKXUnresolvedReference]
 
     /// `hkpSingleShapeContainer` keeps a vtable at 0x28 and the child at 0x30.
     private static let childField = HKXField(0x30, "m_childShape.m_childShape")
@@ -110,7 +110,7 @@ nonisolated public struct HKPConvexTransformShape: Equatable, Sendable {
 }
 
 nonisolated public struct HKPConvexTranslateShape: HKBClass, Equatable, Sendable {
-    public let shape: HKPConvexTransformShape
+    let shape: HKPConvexTransformShape
 
     public static let className = "hkpConvexTranslateShape"
 
@@ -135,7 +135,7 @@ nonisolated public struct HKPConvexTranslateShape: HKBClass, Equatable, Sendable
 }
 
 nonisolated public struct HKPConvexTransformShapeObject: HKBClass, Equatable, Sendable {
-    public let shape: HKPConvexTransformShape
+    let shape: HKPConvexTransformShape
 
     public static let className = "hkpConvexTransformShape"
 

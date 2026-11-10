@@ -122,7 +122,7 @@ nonisolated public struct PexDecoder: Sendable {
 /// Sequential big-endian reader private to the PEX decoder.
 nonisolated public struct PexReader: Sendable {
     private let data: Data
-    public private(set) var offset = 0
+    private(set) var offset = 0
 
     public init(_ data: Data) {
         self.data = data
@@ -132,7 +132,7 @@ nonisolated public struct PexReader: Sendable {
         max(0, data.count - offset)
     }
 
-    public mutating func readUInt8() throws -> UInt8 {
+    mutating func readUInt8() throws -> UInt8 {
         try readBigEndian()
     }
 
@@ -144,22 +144,22 @@ nonisolated public struct PexReader: Sendable {
         try readBigEndian()
     }
 
-    public mutating func readUInt64() throws -> UInt64 {
+    mutating func readUInt64() throws -> UInt64 {
         try readBigEndian()
     }
 
-    public mutating func readInt32() throws -> Int32 {
+    mutating func readInt32() throws -> Int32 {
         try Int32(bitPattern: readUInt32())
     }
 
-    public mutating func readFloat32() throws -> Float {
+    mutating func readFloat32() throws -> Float {
         try Float(bitPattern: readUInt32())
     }
 
     /// Length-prefixed string table entry. Compiled scripts are usually ASCII,
     /// but a mod's compiler is free to emit anything, so this decodes under the
     /// engine-wide `GameText` policy rather than failing the file.
-    public mutating func readString() throws -> String {
+    mutating func readString() throws -> String {
         let length = try Int(readUInt16())
         return try GameText.decode(read(count: length))
     }

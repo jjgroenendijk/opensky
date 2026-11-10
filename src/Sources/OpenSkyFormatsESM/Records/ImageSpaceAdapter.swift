@@ -127,10 +127,10 @@ nonisolated public struct ImageSpaceAdapterHeader: Equatable, Sendable {
     public let isAnimatable: Bool
     public let duration: Float
     /// Keyframe counts per channel, as DNAM declares them.
-    public let counts: [ImageSpaceChannel: Int]
-    public let tintCount: Int
-    public let fadeCount: Int
-    public let radialBlurUsesTarget: Bool
+    let counts: [ImageSpaceChannel: Int]
+    let tintCount: Int
+    let fadeCount: Int
+    let radialBlurUsesTarget: Bool
     public let radialBlurCenter: SIMD2<Float>
     public let depthOfFieldUsesTarget: Bool
     /// 0x01 front mode, 0x02 back mode, 0x04 no sky.

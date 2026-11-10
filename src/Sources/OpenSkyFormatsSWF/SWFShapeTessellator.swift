@@ -29,7 +29,7 @@ nonisolated public struct SWFShapeMesh: Equatable, Sendable {
 nonisolated public enum SWFShapeTessellator: Sendable {
     /// Flattening tolerance in twips (1/20 px): the maximum distance a
     /// flattened chord may deviate from the true quadratic curve.
-    public static let curveToleranceTwips = 1.0
+    static let curveToleranceTwips = 1.0
 
     public static func tessellate(_ shape: SWFShapeDefinition) -> SWFShapeMesh {
         var usedFills: Set<Int> = []
@@ -227,7 +227,7 @@ nonisolated public final class SWFShapeCache {
 
     public init() {}
 
-    public var count: Int {
+    var count: Int {
         meshes.count
     }
 
@@ -242,7 +242,7 @@ nonisolated public final class SWFShapeCache {
         return mesh
     }
 
-    public func cachedMesh(forCharacterId characterId: UInt16) -> SWFShapeMesh? {
+    func cachedMesh(forCharacterId characterId: UInt16) -> SWFShapeMesh? {
         meshes[characterId]
     }
 }

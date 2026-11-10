@@ -5,7 +5,7 @@
 import Foundation
 public import simd
 
-nonisolated public enum HKASkeletonError: Error, Equatable, Sendable {
+nonisolated enum HKASkeletonError: Error, Equatable, Sendable {
     /// hkArray/hkStringPtr target runs past the section payload.
     case arrayOutOfBounds(field: String, offset: Int, needed: Int, available: Int)
     /// hkArray reports elements but carries no local fixup to their data.
@@ -77,7 +77,7 @@ nonisolated public struct HKASkeleton: Sendable {
         bones.map(\.name)
     }
 
-    public var lockTranslation: [Bool] {
+    var lockTranslation: [Bool] {
         bones.map(\.lockTranslation)
     }
 

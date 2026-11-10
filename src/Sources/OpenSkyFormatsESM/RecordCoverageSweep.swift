@@ -28,7 +28,7 @@ nonisolated public struct RecordCoverageSweep: Sendable {
     }
 
     /// Unread entries whose name starts with "unknown ", over every type.
-    public var unknownFieldTotal: Int {
+    var unknownFieldTotal: Int {
         unread.values.flatMap(\.self)
             .filter { $0.key.hasPrefix("unknown ") }
             .reduce(0) { $0 + $1.value }

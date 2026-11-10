@@ -20,7 +20,7 @@ nonisolated public enum SWFCharacter: Sendable {
 /// (nested placements resolved by depth like the main timeline, and the action
 /// blocks of every frame).
 nonisolated public struct SWFSprite: Sendable {
-    public let characterId: UInt16
+    let characterId: UInt16
     public let frameCount: UInt16
     public let timeline: SWFTimeline
     /// DefineScalingGrid (78): the nine-slice centre, in the sprite's twips.
@@ -37,11 +37,11 @@ nonisolated public struct SWFSprite: Sendable {
 nonisolated public struct SWFPlacedObject: Equatable, Sendable {
     public var depth: UInt16
     public var characterId: UInt16
-    public var matrix = SWFMatrix.identity
-    public var colorTransform = SWFColorTransform.identity
-    public var ratio: UInt16?
-    public var name: String?
-    public var clipDepth: UInt16?
+    var matrix = SWFMatrix.identity
+    var colorTransform = SWFColorTransform.identity
+    var ratio: UInt16?
+    var name: String?
+    var clipDepth: UInt16?
 }
 
 /// Feature counters accumulated while decoding a movie's display list —
@@ -124,7 +124,7 @@ nonisolated public struct SWFDisplayListBuilder: Sendable {
         byDepth.values.sorted { $0.depth < $1.depth }
     }
 
-    public mutating func apply(_ placement: SWFPlacement) {
+    mutating func apply(_ placement: SWFPlacement) {
         tally.filters += placement.filterCount
         if placement.blendMode != nil {
             tally.blendModes += 1
@@ -160,7 +160,7 @@ nonisolated public struct SWFDisplayListBuilder: Sendable {
         byDepth[placement.depth] = object
     }
 
-    public mutating func remove(_ removal: SWFRemoval) {
+    mutating func remove(_ removal: SWFRemoval) {
         tally.removals += 1
         byDepth.removeValue(forKey: removal.depth)
     }
@@ -333,7 +333,7 @@ nonisolated public struct SWFMovie: Sendable {
         return nil
     }
 
-    public func button(_ id: UInt16) -> SWFButton? {
+    func button(_ id: UInt16) -> SWFButton? {
         if case let .button(button) = characters[id] {
             return button
         }
@@ -352,7 +352,7 @@ nonisolated extension SWFDisplayListBuilder {
     /// Tally-only notes recorded by the timeline decoder alongside apply/remove.
     /// They live here because `tally` is `private(set)`, which limits its setter
     /// to this file.
-    public mutating func notePlaceObject(version: Int) {
+    mutating func notePlaceObject(version: Int) {
         switch version {
         case 1: tally.placeObject += 1
         case 2: tally.placeObject2 += 1
@@ -364,7 +364,7 @@ nonisolated extension SWFDisplayListBuilder {
         tally.showFrames += 1
     }
 
-    public mutating func noteDanglingPlacement() {
+    mutating func noteDanglingPlacement() {
         tally.danglingPlacements += 1
     }
 }

@@ -17,7 +17,7 @@ nonisolated public struct Land: Sendable {
     /// per-vertex deltas; `heights` is the fully accumulated, *8-scaled field.
     public struct HeightField: Sendable {
         /// Raw VHGT offset float — accumulation seed, before the *8 scale.
-        public let anchor: Float
+        let anchor: Float
         /// 1089 heights in game units, row-major south->north / west->east.
         public let heights: [Float]
     }

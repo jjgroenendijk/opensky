@@ -24,13 +24,13 @@ nonisolated public struct SWFDefineFunctionFlags: OptionSet, Equatable, Sendable
         self.rawValue = rawValue
     }
 
-    public static let preloadParent = SWFDefineFunctionFlags(rawValue: 0x8000)
-    public static let preloadRoot = SWFDefineFunctionFlags(rawValue: 0x4000)
-    public static let preloadSuper = SWFDefineFunctionFlags(rawValue: 0x1000)
-    public static let suppressArguments = SWFDefineFunctionFlags(rawValue: 0x0800)
-    public static let preloadArguments = SWFDefineFunctionFlags(rawValue: 0x0400)
-    public static let preloadThis = SWFDefineFunctionFlags(rawValue: 0x0100)
-    public static let preloadGlobal = SWFDefineFunctionFlags(rawValue: 0x0001)
+    static let preloadParent = SWFDefineFunctionFlags(rawValue: 0x8000)
+    static let preloadRoot = SWFDefineFunctionFlags(rawValue: 0x4000)
+    static let preloadSuper = SWFDefineFunctionFlags(rawValue: 0x1000)
+    static let suppressArguments = SWFDefineFunctionFlags(rawValue: 0x0800)
+    static let preloadArguments = SWFDefineFunctionFlags(rawValue: 0x0400)
+    static let preloadThis = SWFDefineFunctionFlags(rawValue: 0x0100)
+    static let preloadGlobal = SWFDefineFunctionFlags(rawValue: 0x0001)
 }
 
 /// Why an action stream stopped early or lost detail. Recorded, never thrown:
@@ -81,11 +81,11 @@ nonisolated public enum SWFActionValue: Equatable, Sendable {
 /// `ActionGetURL2` flag byte (spec "ActionGetURL2", p. 82).
 nonisolated public struct SWFGetURL2Flags: Equatable, Sendable {
     /// `SendVarsMethod`: 0 = none, 1 = HTTP GET, 2 = HTTP POST.
-    public let sendVarsMethod: UInt8
+    let sendVarsMethod: UInt8
     /// `LoadTargetFlag`: false = browser window, true = path to a sprite.
-    public let loadTarget: Bool
+    let loadTarget: Bool
     /// `LoadVariablesFlag`.
-    public let loadVariables: Bool
+    let loadVariables: Bool
 }
 
 /// `ActionDefineFunction` (spec p. 92) and `ActionDefineFunction2` (p. 111)
@@ -101,12 +101,12 @@ nonisolated public struct SWFActionFunction: Equatable, Sendable {
     /// `ActionDefineFunction2` REGISTERPARAM `Register` per parameter, in the
     /// same order as `parameterNames` (0 means "bind as a named variable").
     /// Empty for `ActionDefineFunction`, which has no register parameters.
-    public let parameterRegisters: [UInt8]
+    let parameterRegisters: [UInt8]
     /// `ActionDefineFunction2` `RegisterCount`; 0 for `ActionDefineFunction`.
-    public let registerCount: UInt8
+    let registerCount: UInt8
     /// `ActionDefineFunction2` preload/suppress flags; empty for
     /// `ActionDefineFunction`, which has none.
-    public let flags: SWFDefineFunctionFlags
+    let flags: SWFDefineFunctionFlags
     /// `codeSize`: how many bytes of the stream after this record form the body.
     public let bodySize: Int
 }
@@ -116,18 +116,18 @@ nonisolated public struct SWFActionFunction: Equatable, Sendable {
 /// by `trySize`, `catchSize`, and `finallySize` in that order.
 nonisolated public struct SWFActionTryBlock: Equatable, Sendable {
     /// `CatchInRegisterFlag`.
-    public let catchInRegister: Bool
+    let catchInRegister: Bool
     /// `FinallyBlockFlag`.
-    public let hasFinallyBlock: Bool
+    let hasFinallyBlock: Bool
     /// `CatchBlockFlag`.
-    public let hasCatchBlock: Bool
-    public let trySize: Int
-    public let catchSize: Int
-    public let finallySize: Int
+    let hasCatchBlock: Bool
+    let trySize: Int
+    let catchSize: Int
+    let finallySize: Int
     /// `CatchName`, present when `catchInRegister` is false; otherwise empty.
-    public let catchName: String
+    let catchName: String
     /// `CatchRegister`, present when `catchInRegister` is true; otherwise nil.
-    public let catchRegister: UInt8?
+    let catchRegister: UInt8?
 }
 
 /// Typed operands for the records this stage decodes. Every other record is
@@ -184,7 +184,7 @@ nonisolated public struct SWFActionRecord: Equatable, Sendable {
     public let endOffset: Int
     /// The operand payload verbatim; empty when `code` is below 0x80, which the
     /// spec defines as carrying no payload.
-    public let operandBytes: Data
+    let operandBytes: Data
     /// Typed decode of `operandBytes`, `.none` when this stage frames the
     /// opcode without interpreting it.
     public let operands: SWFActionOperands
@@ -200,7 +200,7 @@ nonisolated public struct SWFActionRecord: Equatable, Sendable {
     }
 
     /// An `ActionCode` at or above this value is followed by a UI16 `Length`.
-    public static let operandFlag: UInt8 = 0x80
+    static let operandFlag: UInt8 = 0x80
 }
 
 /// A parsed ACTIONRECORD stream — one DoAction/DoInitAction tag body, or one
@@ -213,7 +213,7 @@ nonisolated public struct SWFActionBlock: Equatable, Sendable {
     public let records: [SWFActionRecord]
     /// Bytes consumed from the source data, including the trailing
     /// `ActionEndFlag` byte when the stream had one.
-    public let byteCount: Int
+    let byteCount: Int
     /// Framing problems recorded instead of thrown. Non-empty means the stream
     /// stopped early or a record lost its typed operands.
     public let warnings: [SWFActionWarning]
@@ -240,7 +240,7 @@ nonisolated public struct SWFActionBlock: Equatable, Sendable {
     }
 
     /// The record starting exactly at `offset`, or nil.
-    public func record(atOffset offset: Int) -> SWFActionRecord? {
+    func record(atOffset offset: Int) -> SWFActionRecord? {
         index(atOffset: offset).map { records[$0] }
     }
 
@@ -263,6 +263,6 @@ nonisolated public struct SWFActionBlock: Equatable, Sendable {
 /// A DoInitAction (59) tag: the sprite whose first instantiation the actions
 /// precede, plus the actions themselves.
 nonisolated public struct SWFDoInitAction: Equatable, Sendable {
-    public let spriteId: UInt16
+    let spriteId: UInt16
     public let actions: SWFActionBlock
 }

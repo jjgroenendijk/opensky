@@ -18,11 +18,6 @@ nonisolated public struct ESSQuestStage: Equatable, Sendable {
 nonisolated public struct ESSQuestObjective: Equatable, Sendable {
     public let first: UInt32
     public let second: UInt32
-
-    public init(first: UInt32, second: UInt32) {
-        self.first = first
-        self.second = second
-    }
 }
 
 nonisolated public struct ESSQuestChange: Equatable, Sendable {
@@ -39,7 +34,7 @@ nonisolated public struct ESSQuestChange: Equatable, Sendable {
     private typealias Flag = ESSChangeFlag.Quest
 
     /// The highest stage marked done, which is the quest's current stage.
-    public var currentStage: Int16? {
+    var currentStage: Int16? {
         stages?.filter(\.isDone).map(\.index).max()
     }
 

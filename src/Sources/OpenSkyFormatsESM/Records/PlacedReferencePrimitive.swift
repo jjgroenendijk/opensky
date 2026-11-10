@@ -17,11 +17,11 @@ nonisolated extension PlacedReference {
         /// Editor wireframe color, stored 0...1 (UESP: "Color / 255"). Not
         /// rendered in game; kept because it distinguishes volume roles in
         /// the Creation Kit and costs nothing to carry.
-        public let color: SIMD3<Float>
+        let color: SIMD3<Float>
         /// Fourth `wbFloatRGBA` member, named "Alpha" by xEdit and left
         /// unknown by UESP. Preserved verbatim rather than interpreted; see
         /// the flagged uncertainty in docs/formats/placed-references.md.
-        public let unknown: Float
+        let unknown: Float
         /// Volume shape. `halfExtents` reads as a box's half-size for `.box`
         /// and `.portalBox`, and as a radius triple for `.sphere`.
         public let type: PrimitiveType
@@ -40,7 +40,7 @@ nonisolated extension PlacedReference {
     /// Decodes the XPRM payload. A length other than 32 or a type outside 0...4
     /// throws, because a guessed volume would have the wrong size or shape.
     /// Only that one reference is lost. Layout: docs/formats/placed-references.md.
-    nonisolated public static func decodePrimitive(
+    nonisolated static func decodePrimitive(
         _ field: ESMField,
         reference: FormID
     ) throws -> Primitive {

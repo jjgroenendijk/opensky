@@ -27,7 +27,7 @@ nonisolated public final class AS2Frame {
     public let target: AS2Object
     public var thisValue: AS2Value
 
-    public var stack: [AS2Value] = []
+    var stack: [AS2Value] = []
     public var registers: [AS2Value] = []
     /// Outermost first; the last entry is where `ActionDefineLocal` writes.
     public var scope: [AS2Object] = []
@@ -71,11 +71,11 @@ nonisolated public final class AS2Frame {
 
     /// Where `ActionDefineLocal` and `ActionDefineLocal2` write: the innermost
     /// scope, which is a function's activation object or the timeline target.
-    public var localScope: AS2Object {
+    var localScope: AS2Object {
         scope.last ?? target
     }
 
-    public func push(_ value: AS2Value) throws(AS2Fault) {
+    func push(_ value: AS2Value) throws(AS2Fault) {
         guard stack.count < stackLimit else {
             throw AS2Fault.stackOverflow(offset: currentOffset)
         }
@@ -87,7 +87,7 @@ nonisolated public final class AS2Frame {
     /// emits a join-point `ActionPop` that both branches reach with an empty
     /// stack, which occurs in 666 of the 1,180 vanilla action blocks. Treating
     /// it as a fault would abort more than half of them.
-    public func pop() -> AS2Value {
+    func pop() -> AS2Value {
         guard let value = stack.popLast() else {
             runtime.noteStackUnderflow()
             return .undefined
@@ -97,7 +97,7 @@ nonisolated public final class AS2Frame {
 
     /// The top of the stack without removing it — what `ActionStoreRegister`
     /// and `ActionPushDuplicate` read. Empty reads as `undefined`, like `pop`.
-    public func peek() -> AS2Value {
+    func peek() -> AS2Value {
         guard let value = stack.last else {
             runtime.noteStackUnderflow()
             return .undefined
@@ -105,13 +105,13 @@ nonisolated public final class AS2Frame {
         return value
     }
 
-    public func register(_ index: Int) -> AS2Value {
+    func register(_ index: Int) -> AS2Value {
         registers.indices.contains(index) ? registers[index] : .undefined
     }
 
     /// Writes a register, ignoring an index the function never allocated —
     /// malformed bytecode must not trap.
-    public func setRegister(_ index: Int, to value: AS2Value) {
+    func setRegister(_ index: Int, to value: AS2Value) {
         guard registers.indices.contains(index) else {
             return
         }
@@ -121,7 +121,7 @@ nonisolated public final class AS2Frame {
     /// Resolves an `ActionPush` constant-pool reference. An index past the end
     /// of the pool reads as `undefined`, which is what Flash does with a stale
     /// reference rather than failing the stream.
-    public func constant(_ index: Int) -> AS2Value {
+    func constant(_ index: Int) -> AS2Value {
         constantPool.indices.contains(index) ? .string(constantPool[index]) : .undefined
     }
 }

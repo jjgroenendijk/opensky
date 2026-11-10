@@ -102,13 +102,13 @@ nonisolated extension AS2Coercion {
     }
 
     /// ECMA-262 9.5.
-    public static func toInt32(_ value: Double) -> Int32 {
+    static func toInt32(_ value: Double) -> Int32 {
         let wrapped = wrappedTo32Bits(value)
         return Int32(truncatingIfNeeded: Int64(wrapped))
     }
 
     /// ECMA-262 9.6.
-    public static func toUInt32(_ value: Double) -> UInt32 {
+    static func toUInt32(_ value: Double) -> UInt32 {
         UInt32(truncatingIfNeeded: Int64(wrappedTo32Bits(value)))
     }
 

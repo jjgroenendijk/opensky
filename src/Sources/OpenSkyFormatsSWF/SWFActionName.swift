@@ -17,7 +17,7 @@ nonisolated public enum SWFActionName: Sendable {
     }
 
     /// Every opcode the Adobe specification names, code-ascending.
-    public static var knownCodes: [UInt8] {
+    static var knownCodes: [UInt8] {
         names.keys.sorted()
     }
 

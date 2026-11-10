@@ -46,13 +46,13 @@ nonisolated public struct ESSAliasInstance: Equatable, Sendable {
 nonisolated public struct ESSExtraDataList: Equatable, Sendable {
     public let entries: [ESSExtraData]
     /// The first entry type with no known layout. Every byte after it is unread.
-    public let blockedBy: UInt8?
+    let blockedBy: UInt8?
 
-    public var isComplete: Bool {
+    var isComplete: Bool {
         blockedBy == nil
     }
 
-    public func contains(_ type: UInt8) -> Bool {
+    func contains(_ type: UInt8) -> Bool {
         entries.contains { $0.type == type }
     }
 

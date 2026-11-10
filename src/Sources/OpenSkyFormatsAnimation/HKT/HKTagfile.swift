@@ -4,7 +4,7 @@
 
 public import Foundation
 
-nonisolated public enum HKTError: Error, Equatable, Sendable {
+nonisolated enum HKTError: Error, Equatable, Sendable {
     /// The first two u32s are not the tagfile magic pair.
     case badMagic(found0: UInt32, found1: UInt32)
     case truncated(offset: Int)
@@ -20,7 +20,7 @@ nonisolated public enum HKTError: Error, Equatable, Sendable {
 }
 
 /// The base kind of a member, from the low nibble of its type word.
-nonisolated public enum HKTBaseType: Int, Equatable, Sendable {
+nonisolated enum HKTBaseType: Int, Equatable, Sendable {
     case void = 0
     case byte = 1
     case int = 2
@@ -34,7 +34,7 @@ nonisolated public enum HKTBaseType: Int, Equatable, Sendable {
     case string = 10
 
     /// Float count of a vector kind, nil for every other kind.
-    public var vectorLength: Int? {
+    var vectorLength: Int? {
         switch self {
         case .vector4: 4
         case .vector8: 8
@@ -45,18 +45,18 @@ nonisolated public enum HKTBaseType: Int, Equatable, Sendable {
     }
 }
 
-nonisolated public struct HKTMemberType: Equatable, Sendable {
-    public let base: HKTBaseType
-    public let isArray: Bool
+nonisolated struct HKTMemberType: Equatable, Sendable {
+    let base: HKTBaseType
+    let isArray: Bool
     /// Fixed element count when the type word has the tuple bit.
-    public let tupleCount: Int?
+    let tupleCount: Int?
     /// The class an object or struct member names.
-    public let className: String?
+    let className: String?
 }
 
-nonisolated public struct HKTMember: Equatable, Sendable {
-    public let name: String
-    public let type: HKTMemberType
+nonisolated struct HKTMember: Equatable, Sendable {
+    let name: String
+    let type: HKTMemberType
 }
 
 /// One class definition. `parent` indexes `HKTagfile.classes`; members are the
@@ -64,8 +64,8 @@ nonisolated public struct HKTMember: Equatable, Sendable {
 nonisolated public struct HKTClass: Equatable, Sendable {
     public let name: String
     public let version: Int
-    public let parent: Int?
-    public let members: [HKTMember]
+    let parent: Int?
+    let members: [HKTMember]
 }
 
 /// A pointer member. A version 3 file names a remembered object by its index;
@@ -92,11 +92,6 @@ indirect nonisolated public enum HKTValue: Equatable, Sendable {
 nonisolated public struct HKTFields: Equatable, Sendable {
     public let classIndex: Int
     public let values: [(name: String, value: HKTValue)]
-
-    public init(classIndex: Int, values: [(name: String, value: HKTValue)]) {
-        self.classIndex = classIndex
-        self.values = values
-    }
 
     public subscript(name: String) -> HKTValue? {
         values.first { $0.name == name }?.value
@@ -144,7 +139,7 @@ nonisolated public struct HKTagfile: Sendable {
     }
 
     /// The object a reference names, or nil for null or a dangling index.
-    public func object(_ reference: HKTReference) -> HKTFields? {
+    func object(_ reference: HKTReference) -> HKTFields? {
         switch reference {
         case .null:
             return nil
@@ -159,7 +154,7 @@ nonisolated public struct HKTagfile: Sendable {
     }
 
     /// Own and inherited members of a class, base class first.
-    public func allMembers(ofClass index: Int) -> [HKTMember] {
+    func allMembers(ofClass index: Int) -> [HKTMember] {
         var chain: [HKTMember] = []
         var current: Int? = index
         var seen: Set<Int> = []

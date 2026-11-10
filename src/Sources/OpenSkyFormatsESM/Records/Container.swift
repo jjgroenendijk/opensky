@@ -15,13 +15,13 @@ nonisolated public struct Container: Sendable {
         /// Stack count. Signed on disk; vanilla never writes a negative.
         public let count: Int32
         /// COED owner — an NPC_ or FACT. Nil when the entry is unowned.
-        public let owner: FormID?
+        let owner: FormID?
         /// COED union word: a GLOB FormID for an NPC_ owner, a required
         /// faction rank for a FACT owner. Raw because the decoder cannot tell
         /// which without resolving `owner`'s record type.
-        public let ownerCondition: UInt32?
+        let ownerCondition: UInt32?
         /// COED item condition (health fraction).
-        public let condition: Float?
+        let condition: Float?
     }
 
     public struct Flags: OptionSet, Equatable, Sendable {
@@ -32,9 +32,9 @@ nonisolated public struct Container: Sendable {
         }
 
         /// Play the open/close sounds even though the model has an animation.
-        public static let allowSoundsWhenAnimation = Flags(rawValue: 0x01)
+        static let allowSoundsWhenAnimation = Flags(rawValue: 0x01)
         public static let respawns = Flags(rawValue: 0x02)
-        public static let showOwner = Flags(rawValue: 0x04)
+        static let showOwner = Flags(rawValue: 0x04)
     }
 
     /// The shared MSTT/TREE/FURN/ACTI/CONT/DOOR decode — name, model, sounds.
@@ -49,12 +49,12 @@ nonisolated public struct Container: Sendable {
     /// The fields neither `base` nor the contents run reads.
     public let skipped: FieldTally
 
-    public var formID: FormID {
+    var formID: FormID {
         base.formID
     }
 
     /// True when COCT is present and disagrees with the CNTO fields decoded.
-    public var entryCountMismatch: Bool {
+    var entryCountMismatch: Bool {
         guard let declaredEntryCount else { return false }
         return Int(declaredEntryCount) != entries.count
     }

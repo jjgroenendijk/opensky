@@ -10,7 +10,7 @@ nonisolated extension ScriptDataDecoder {
     /// consumed. A malformed tail is not fatal: the caller falls back to the
     /// recorded skip, so the primary scripts of a quest with a broken fragment
     /// table still reach the runtime (AGENTS.md mod-quirk rule).
-    public mutating func decodeQuestFragmentTail() -> Bool {
+    mutating func decodeQuestFragmentTail() -> Bool {
         let start = reader.offset
         do {
             let section = try decodeQuestFragments()
@@ -26,7 +26,7 @@ nonisolated extension ScriptDataDecoder {
         }
     }
 
-    public mutating func decodeQuestFragments() throws -> QuestFragmentSection {
+    mutating func decodeQuestFragments() throws -> QuestFragmentSection {
         let bindVersion = try Int8(bitPattern: reader.readUInt8())
         // 13 bytes is the shortest a fragment can be: 2 + 2 + 4 + 1 header
         // bytes plus two empty length-prefixed strings.
@@ -50,7 +50,7 @@ nonisolated extension ScriptDataDecoder {
         )
     }
 
-    public mutating func decodeQuestFragment() throws -> QuestFragment {
+    mutating func decodeQuestFragment() throws -> QuestFragment {
         let stageIndex = try reader.readUInt16()
         reader.skip(2) // always 0
         let logEntryIndex = try Int32(bitPattern: reader.readUInt32())
@@ -66,7 +66,7 @@ nonisolated extension ScriptDataDecoder {
     /// The alias-script array closes the section. It is absent rather than
     /// zero-length in a truncated tail, so an exhausted reader is treated as
     /// "no alias scripts" instead of a decode failure.
-    public mutating func decodeQuestAliasScripts() throws -> [QuestAliasScripts] {
+    mutating func decodeQuestAliasScripts() throws -> [QuestAliasScripts] {
         guard reader.bytesRemaining >= 2 else { return [] }
         // 14 bytes minimum: an 8-byte object, version, object format, count.
         let count = try checkedCount(
@@ -86,7 +86,7 @@ nonisolated extension ScriptDataDecoder {
     /// UESP records that both always match the primary header, but they are
     /// honoured rather than assumed: the script entries after them are read
     /// with whatever this alias declares, then the primary values are restored.
-    public mutating func decodeQuestAliasScript() throws -> QuestAliasScripts {
+    mutating func decodeQuestAliasScript() throws -> QuestAliasScripts {
         let object = try decodeObject(notingAlias: false)
         let outerVersion = version
         let outerFormat = objectFormat

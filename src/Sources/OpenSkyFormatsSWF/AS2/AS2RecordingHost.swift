@@ -20,15 +20,15 @@ nonisolated public final class AS2RecordingHost: AS2Host {
     /// Events kept; the oldest are dropped once the list is full.
     public let eventLimit: Int
 
-    public private(set) var events: [AS2HostEvent] = []
+    private(set) var events: [AS2HostEvent] = []
     /// Every event, including ones already dropped.
-    public private(set) var eventTotal = 0
+    private(set) var eventTotal = 0
 
     public init(eventLimit: Int = 1024) {
         self.eventLimit = max(1, eventLimit)
     }
 
-    public var timelineCommands: [AS2TimelineCommand] {
+    var timelineCommands: [AS2TimelineCommand] {
         events.compactMap {
             guard case let .timeline(command) = $0 else {
                 return nil

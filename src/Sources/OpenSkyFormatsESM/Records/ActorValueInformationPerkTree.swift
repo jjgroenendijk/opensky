@@ -26,10 +26,10 @@ nonisolated public struct PerkTreeNode: Equatable, Sendable {
     /// UESP records that the first node of a tree usually carries a very large
     /// value, so the raw word is kept and the boolean is derived from it rather
     /// than the other way round.
-    public let parentRequiredRaw: UInt32
+    let parentRequiredRaw: UInt32
     public let position: PerkGridPosition
     /// SNAM, the AVIF this node belongs to — normally the record carrying it.
-    public let associatedSkill: FormID?
+    let associatedSkill: FormID?
     /// Every CNAM in the node: the INAM of a box this one draws a line to.
     /// Zero, one or many, per the spec's repeated-field array.
     public let connections: [UInt32]
@@ -53,27 +53,27 @@ nonisolated public struct PerkTreeNode: Equatable, Sendable {
 ///
 /// Every field is optional while collecting: a record that omits one is a mod
 /// quirk to be tallied, not a parse that should throw away the whole record.
-nonisolated public struct PerkTreeNodeBuilder: Sendable {
-    public var perk: FormID?
-    public var parentRequiredRaw: UInt32?
-    public var column: UInt32?
-    public var row: UInt32?
-    public var horizontal: Float?
-    public var vertical: Float?
-    public var associatedSkill: FormID?
-    public var connections: [UInt32] = []
-    public var index: UInt32?
+nonisolated struct PerkTreeNodeBuilder: Sendable {
+    var perk: FormID?
+    var parentRequiredRaw: UInt32?
+    var column: UInt32?
+    var row: UInt32?
+    var horizontal: Float?
+    var vertical: Float?
+    var associatedSkill: FormID?
+    var connections: [UInt32] = []
+    var index: UInt32?
 
     /// Whether every field xEdit marks required was present. A false answer is
     /// reported through the record's tally; the node is still built.
-    public var isComplete: Bool {
+    var isComplete: Bool {
         parentRequiredRaw != nil && column != nil && row != nil
             && horizontal != nil && vertical != nil && index != nil
     }
 
     /// The node as decoded, with a missing numeric field standing in as zero
     /// so a quirky record still contributes a placed box.
-    public func build() -> PerkTreeNode {
+    func build() -> PerkTreeNode {
         PerkTreeNode(
             perk: perk,
             parentRequiredRaw: parentRequiredRaw ?? 0,
@@ -92,7 +92,7 @@ nonisolated public struct PerkTreeNodeBuilder: Sendable {
     /// Consumes one field of the node run. Returns false for a field type that
     /// is not part of a node, which is what tells the record decoder the run
     /// has ended.
-    public mutating func decode(_ field: ESMField) throws -> Bool {
+    mutating func decode(_ field: ESMField) throws -> Bool {
         switch field.type {
         case "PNAM": perk = try ActorValueInformationFieldReader.link(field)
         case "FNAM": parentRequiredRaw = try ActorValueInformationFieldReader.word(field)
@@ -111,23 +111,23 @@ nonisolated public struct PerkTreeNodeBuilder: Sendable {
 
 /// The four fixed-width reads AVIF fields need, each checking its own length so
 /// a truncated field throws instead of reading past the end.
-nonisolated public enum ActorValueInformationFieldReader: Sendable {
-    public static func word(_ field: ESMField) throws -> UInt32 {
+nonisolated enum ActorValueInformationFieldReader: Sendable {
+    static func word(_ field: ESMField) throws -> UInt32 {
         var reader = try BinaryReader(sized(field, bytes: 4))
         return try reader.readUInt32()
     }
 
-    public static func float(_ field: ESMField) throws -> Float {
+    static func float(_ field: ESMField) throws -> Float {
         var reader = try BinaryReader(sized(field, bytes: 4))
         return try reader.readFloat32()
     }
 
-    public static func link(_ field: ESMField) throws -> FormID? {
+    static func link(_ field: ESMField) throws -> FormID? {
         let id = try FormID(word(field))
         return id.isNull ? nil : id
     }
 
-    public static func zstring(_ field: ESMField) throws -> String {
+    static func zstring(_ field: ESMField) throws -> String {
         var reader = BinaryReader(field.data)
         return try reader.readZString()
     }

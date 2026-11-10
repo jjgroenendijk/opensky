@@ -15,7 +15,7 @@ nonisolated public final class SWFGlobalMouseHandlerRegistry: AS2ObjectMutationO
         [ObjectIdentifier: [ObjectIdentifier: SWFDisplayHandle]] = [:]
     private var dependenciesByNode: [ObjectIdentifier: Set<ObjectIdentifier>] = [:]
 
-    public var count: Int {
+    var count: Int {
         candidates.count
     }
 
@@ -38,7 +38,7 @@ nonisolated public final class SWFGlobalMouseHandlerRegistry: AS2ObjectMutationO
 
     /// Live candidates in the same highest-depth-first preorder as the former
     /// full-tree walk.
-    public func activeClips(in root: SWFDisplayObject) -> [SWFDisplayObject] {
+    func activeClips(in root: SWFDisplayObject) -> [SWFDisplayObject] {
         var active: [ActiveClip] = []
         var staleIdentifiers: [ObjectIdentifier] = []
         for (identifier, handle) in candidates {

@@ -20,7 +20,7 @@ nonisolated public struct Worldspace: Sendable {
         public static let useMapData = ParentFlags(rawValue: 0x0004)
         public static let useWaterData = ParentFlags(rawValue: 0x0008)
         public static let useClimateData = ParentFlags(rawValue: 0x0010)
-        public static let useSkyCell = ParentFlags(rawValue: 0x0040)
+        static let useSkyCell = ParentFlags(rawValue: 0x0040)
     }
 
     /// DATA field (uint8).
@@ -31,12 +31,12 @@ nonisolated public struct Worldspace: Sendable {
             self.rawValue = rawValue
         }
 
-        public static let smallWorld = Flags(rawValue: 0x01)
-        public static let noFastTravel = Flags(rawValue: 0x02)
+        static let smallWorld = Flags(rawValue: 0x01)
+        static let noFastTravel = Flags(rawValue: 0x02)
         public static let noLODWater = Flags(rawValue: 0x08)
-        public static let noLandscape = Flags(rawValue: 0x10)
+        static let noLandscape = Flags(rawValue: 0x10)
         public static let noSky = Flags(rawValue: 0x20)
-        public static let fixedDimensions = Flags(rawValue: 0x40)
+        static let fixedDimensions = Flags(rawValue: 0x40)
         public static let noGrass = Flags(rawValue: 0x80)
     }
 

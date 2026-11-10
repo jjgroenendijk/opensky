@@ -139,20 +139,20 @@ nonisolated extension SWFMovieRuntime {
     // MARK: - Matrix decomposition
 
     /// Length of the matrix's x basis vector, signed by `ScaleX`.
-    public static func horizontalScale(_ matrix: SWFMatrix) -> Float {
+    static func horizontalScale(_ matrix: SWFMatrix) -> Float {
         let length = (matrix.scaleX * matrix.scaleX + matrix.rotateSkew0 * matrix.rotateSkew0)
             .squareRoot()
         return matrix.scaleX < 0 ? -length : length
     }
 
     /// Length of the matrix's y basis vector, signed by `ScaleY`.
-    public static func verticalScale(_ matrix: SWFMatrix) -> Float {
+    static func verticalScale(_ matrix: SWFMatrix) -> Float {
         let length = (matrix.rotateSkew1 * matrix.rotateSkew1 + matrix.scaleY * matrix.scaleY)
             .squareRoot()
         return matrix.scaleY < 0 ? -length : length
     }
 
-    public static func rotationDegrees(_ matrix: SWFMatrix) -> Float {
+    static func rotationDegrees(_ matrix: SWFMatrix) -> Float {
         guard matrix.scaleX != 0 || matrix.rotateSkew0 != 0 else {
             return 0
         }

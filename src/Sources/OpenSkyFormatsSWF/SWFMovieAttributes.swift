@@ -8,16 +8,14 @@ import OpenSkyFormatsCore
 nonisolated public struct SWFFileAttributes: Equatable, Sendable {
     public static let tagCode: UInt16 = 69
 
-    public var usesDirectBlit = false
-    public var usesGPU = false
+    var usesDirectBlit = false
+    var usesGPU = false
     public var hasMetadata = false
     /// The movie's code is ActionScript 3 (DoABC), which the AS2 runtime cannot run.
     public var isActionScript3 = false
     public var usesNetwork = false
 
-    public init() {}
-
-    public static func parse(tag: SWFTag) throws -> SWFFileAttributes {
+    static func parse(tag: SWFTag) throws -> SWFFileAttributes {
         guard tag.code == tagCode else {
             throw SWFDisplayListError.unsupportedTag(tag.code)
         }
@@ -37,7 +35,7 @@ nonisolated public struct SWFFileAttributes: Equatable, Sendable {
 nonisolated public enum SWFMetadata: Sendable {
     public static let tagCode: UInt16 = 77
 
-    public static func parse(tag: SWFTag) throws -> String {
+    static func parse(tag: SWFTag) throws -> String {
         guard tag.code == tagCode else {
             throw SWFDisplayListError.unsupportedTag(tag.code)
         }
@@ -51,15 +49,10 @@ nonisolated public enum SWFMetadata: Sendable {
 nonisolated public struct SWFScalingGrid: Equatable, Sendable {
     public static let tagCode: UInt16 = 78
 
-    public let characterId: UInt16
-    public let splitter: SWFRect
+    let characterId: UInt16
+    let splitter: SWFRect
 
-    public init(characterId: UInt16, splitter: SWFRect) {
-        self.characterId = characterId
-        self.splitter = splitter
-    }
-
-    public static func parse(tag: SWFTag) throws -> SWFScalingGrid {
+    static func parse(tag: SWFTag) throws -> SWFScalingGrid {
         guard tag.code == tagCode else {
             throw SWFDisplayListError.unsupportedTag(tag.code)
         }

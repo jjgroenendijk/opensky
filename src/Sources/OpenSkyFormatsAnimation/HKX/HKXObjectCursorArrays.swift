@@ -64,7 +64,7 @@ nonisolated extension HKXObjectCursor {
     }
 
     /// Elements of an `hkArray<hkUint32>`.
-    public mutating func uint32Array(at field: HKXField) -> [UInt32]? {
+    mutating func uint32Array(at field: HKXField) -> [UInt32]? {
         elements(at: field, stride: 4) { $0.uint32(at: .element) }
     }
 

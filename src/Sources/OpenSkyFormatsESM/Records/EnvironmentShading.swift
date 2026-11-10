@@ -13,13 +13,13 @@ nonisolated public struct ShaderParticleGeometry: Equatable, Sendable {
         public let particleSize: SIMD2<Float>
         public let centerOffsetMinimum: Float
         public let centerOffsetMaximum: Float
-        public let initialRotationRange: Float
+        let initialRotationRange: Float
         public let subtextureCount: SIMD2<UInt32>
         /// 0 rain, 1 snow.
         public let type: UInt32
         public let boxSize: UInt32?
         public let particleDensity: Float?
-        public let size: Int
+        let size: Int
     }
 
     public let formID: FormID
@@ -109,11 +109,11 @@ nonisolated public struct MaterialObject: Equatable, Sendable {
         public let noiseUVScale: Float
         public let materialUVScale: Float
         public let projectionVector: SIMD3<Float>
-        public let normalDampener: Float?
+        let normalDampener: Float?
         public let singlePassColor: SIMD3<Float>?
         public let isSinglePass: Bool?
         public let isSnow: Bool?
-        public let size: Int
+        let size: Int
     }
 
     public let formID: FormID

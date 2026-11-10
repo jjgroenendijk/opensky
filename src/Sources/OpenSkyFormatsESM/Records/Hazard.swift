@@ -10,9 +10,9 @@ nonisolated public struct Hazard: Equatable, Sendable {
         public let limit: UInt32
         public let radius: Float
         public let lifetime: Float
-        public let imageSpaceRadius: Float
+        let imageSpaceRadius: Float
         public let targetInterval: Float
-        public let flags: UInt32
+        let flags: UInt32
         /// A SPEL or ENCH.
         public let spell: FormID?
         public let light: FormID?
@@ -23,19 +23,19 @@ nonisolated public struct Hazard: Equatable, Sendable {
             flags & 0x01 != 0
         }
 
-        public var inheritsDurationFromSpell: Bool {
+        var inheritsDurationFromSpell: Bool {
             flags & 0x02 != 0
         }
 
-        public var alignsToImpactNormal: Bool {
+        var alignsToImpactNormal: Bool {
             flags & 0x04 != 0
         }
 
-        public var inheritsRadiusFromSpell: Bool {
+        var inheritsRadiusFromSpell: Bool {
             flags & 0x08 != 0
         }
 
-        public var dropsToGround: Bool {
+        var dropsToGround: Bool {
             flags & 0x10 != 0
         }
 

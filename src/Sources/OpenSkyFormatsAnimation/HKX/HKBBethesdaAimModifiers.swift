@@ -108,9 +108,9 @@ nonisolated public struct BSLookAtBoneData: Equatable, Sendable {
     public let offGain: Float
     public let enabled: Bool
 
-    public static let stride = 64
+    static let stride = 64
 
-    public static func decode(
+    static func decode(
         _ element: inout HKXObjectCursor,
         member: String,
         index: Int

@@ -11,10 +11,10 @@ nonisolated public struct AS2Coercion: Sendable {
 
     /// Vanilla Skyrim menus are published well past SWF 7, so the ECMAScript
     /// rules apply unless a caller says otherwise.
-    public static let latest = AS2Coercion(swfVersion: 9)
+    static let latest = AS2Coercion(swfVersion: 9)
 
     /// The version from which Flash adopted the ECMAScript string rules.
-    public static let ecmaStringVersion: UInt8 = 7
+    static let ecmaStringVersion: UInt8 = 7
 
     private var usesECMAStrings: Bool {
         swfVersion >= AS2Coercion.ecmaStringVersion
@@ -115,7 +115,7 @@ nonisolated public struct AS2Coercion: Sendable {
     // MARK: - Comparison
 
     /// `ActionEquals2` (0x49). Both arguments must already be primitive.
-    public func equals(_ left: AS2Value, _ right: AS2Value) -> Bool {
+    func equals(_ left: AS2Value, _ right: AS2Value) -> Bool {
         switch (left, right) {
         case (.undefined, .undefined), (.null, .null),
              (.undefined, .null), (.null, .undefined):
@@ -138,7 +138,7 @@ nonisolated public struct AS2Coercion: Sendable {
     /// swapped. Both arguments must already be primitive. An undefined
     /// comparison result (either side NaN) is reported as false, which is what
     /// both opcodes push.
-    public func lessThan(_ left: AS2Value, _ right: AS2Value) -> Bool {
+    func lessThan(_ left: AS2Value, _ right: AS2Value) -> Bool {
         if case let .string(lhs) = left, case let .string(rhs) = right {
             return lhs.utf16.lexicographicallyPrecedes(rhs.utf16)
         }

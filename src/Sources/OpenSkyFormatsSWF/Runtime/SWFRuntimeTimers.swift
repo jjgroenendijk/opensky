@@ -6,18 +6,12 @@
 import Foundation
 
 /// What a timer calls: a function, or a method on a receiver, with its arguments.
-nonisolated public struct SWFTimerCall: Equatable {
+nonisolated struct SWFTimerCall: Equatable {
     /// The function to call, or the receiver when `method` names one.
-    public let callee: AS2Value
+    let callee: AS2Value
     /// Method name for the `setInterval(object, "name", ms)` form.
-    public let method: String?
-    public let arguments: [AS2Value]
-
-    public init(callee: AS2Value, method: String?, arguments: [AS2Value]) {
-        self.callee = callee
-        self.method = method
-        self.arguments = arguments
-    }
+    let method: String?
+    let arguments: [AS2Value]
 }
 
 /// Timers a running movie scheduled, keyed by the id `setInterval` handed back.
@@ -26,10 +20,10 @@ nonisolated public final class SWFRuntimeTimers {
     public struct Entry: Equatable {
         public let id: Int
         /// The function to call, or the receiver when `method` names one.
-        public let callee: AS2Value
+        let callee: AS2Value
         /// Method name for the `setInterval(object, "name", ms)` form.
-        public let method: String?
-        public let arguments: [AS2Value]
+        let method: String?
+        let arguments: [AS2Value]
         /// Ticks between fires, at least 1.
         public let period: Int
         /// Ticks left before the next fire.
@@ -42,21 +36,21 @@ nonisolated public final class SWFRuntimeTimers {
     private var nextID = 1
     /// Timers refused because the movie scheduled more than this. A runaway
     /// `setInterval` loop is counted rather than allowed to grow the list.
-    public private(set) var dropped = 0
+    private(set) var dropped = 0
 
     /// Live timers one movie may hold.
-    public static let maximumTimers = 256
+    static let maximumTimers = 256
 
-    public var count: Int {
+    var count: Int {
         entries.count
     }
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         entries.isEmpty
     }
 
     /// Schedules a timer and returns its id, or 0 when the list is full.
-    public func add(_ call: SWFTimerCall, period: Int, repeats: Bool) -> Int {
+    func add(_ call: SWFTimerCall, period: Int, repeats: Bool) -> Int {
         guard entries.count < SWFRuntimeTimers.maximumTimers else {
             dropped += 1
             return 0
@@ -108,7 +102,7 @@ nonisolated extension SWFMovieRuntime {
     /// Milliseconds to ticks against the movie's declared frame rate. A rate the
     /// header never set, or an interval below one frame, still costs one tick —
     /// a zero-tick timer would fire forever inside a single `advance()`.
-    public func timerTicks(milliseconds: Double) -> Int {
+    func timerTicks(milliseconds: Double) -> Int {
         let rate = movie.frameRate > 0 ? Double(movie.frameRate) : 30
         guard milliseconds.isFinite, milliseconds > 0 else {
             return 1

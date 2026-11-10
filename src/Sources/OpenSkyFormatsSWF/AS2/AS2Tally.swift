@@ -26,9 +26,9 @@ nonisolated public struct AS2Tally: Equatable, Sendable {
 
     /// Empty-stack reads. Flash tolerates these and vanilla bytecode relies on
     /// it, so they are counted rather than raised.
-    public private(set) var stackUnderflows = 0
-    public private(set) var actionsExecuted = 0
-    public private(set) var blocksExecuted = 0
+    private(set) var stackUnderflows = 0
+    private(set) var actionsExecuted = 0
+    private(set) var blocksExecuted = 0
     public private(set) var callsPerformed = 0
 
     public init(limits: AS2Limits = .standard) {
@@ -39,7 +39,7 @@ nonisolated public struct AS2Tally: Equatable, Sendable {
     /// An opcode the dispatch table has no implementation for. Vanilla movies
     /// use 56 opcodes and all 56 are implemented, so anything counted here came
     /// from a mod, a newer movie, or malformed bytes.
-    public mutating func noteUnimplemented(opcode: UInt8) {
+    mutating func noteUnimplemented(opcode: UInt8) {
         unimplementedTotal += 1
         if unimplementedOpcodes[opcode] != nil || unimplementedOpcodes.count < nameLimit {
             unimplementedOpcodes[opcode, default: 0] += 1
@@ -57,18 +57,18 @@ nonisolated public struct AS2Tally: Equatable, Sendable {
         }
     }
 
-    public mutating func noteStackUnderflow() {
+    mutating func noteStackUnderflow() {
         stackUnderflows += 1
     }
 
-    public mutating func note(fault: AS2Fault) {
+    mutating func note(fault: AS2Fault) {
         faultTotal += 1
         if faults.count < faultLimit {
             faults.append(fault)
         }
     }
 
-    public mutating func noteBlock(actions: Int) {
+    mutating func noteBlock(actions: Int) {
         blocksExecuted += 1
         actionsExecuted += actions
     }
@@ -77,7 +77,7 @@ nonisolated public struct AS2Tally: Equatable, Sendable {
         callsPerformed += 1
     }
 
-    public var isClean: Bool {
+    var isClean: Bool {
         unimplementedTotal == 0 && missingTotal == 0 && faultTotal == 0
     }
 
@@ -95,7 +95,7 @@ nonisolated public struct AS2Tally: Equatable, Sendable {
             .map { ($0.key, $0.value) }
     }
 
-    public static func opcodeName(_ code: UInt8) -> String {
+    static func opcodeName(_ code: UInt8) -> String {
         unsafe SWFActionName.name(forCode: code) ?? String(format: "0x%02X", code)
     }
 }
@@ -107,9 +107,9 @@ nonisolated public struct AS2TraceLog: Equatable, Sendable {
     public let entryLimit: Int
     public let messageLimit: Int
 
-    public private(set) var messages: [String] = []
+    private(set) var messages: [String] = []
     /// Every message traced, including ones already dropped.
-    public private(set) var total = 0
+    private(set) var total = 0
 
     public init(limits: AS2Limits = .standard) {
         entryLimit = limits.traceEntries
@@ -117,11 +117,11 @@ nonisolated public struct AS2TraceLog: Equatable, Sendable {
     }
 
     /// Messages dropped to stay inside `entryLimit`.
-    public var dropped: Int {
+    var dropped: Int {
         max(0, total - messages.count)
     }
 
-    public mutating func append(_ message: String) {
+    mutating func append(_ message: String) {
         total += 1
         let clipped = message.count > messageLimit
             ? String(message.prefix(messageLimit))

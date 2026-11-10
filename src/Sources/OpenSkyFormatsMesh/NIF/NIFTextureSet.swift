@@ -2,33 +2,33 @@
 // Vanilla paths vary in case, slashes, and prefixes, so `vfsKey(for:)`
 // normalizes them. Layout: docs/formats/nif-materials.md.
 
-public import Foundation
+import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct NIFShaderTextureSet: Sendable {
     /// Raw path strings in slot order, exactly as stored (lossy cp1252-style
     /// decode, same rationale as header strings).
-    public let paths: [String]
+    let paths: [String]
 
-    public var diffusePath: String? {
+    var diffusePath: String? {
         !paths.isEmpty ? Self.vfsKey(for: paths[0]) : nil
     }
 
-    public var normalPath: String? {
+    var normalPath: String? {
         paths.count > 1 ? Self.vfsKey(for: paths[1]) : nil
     }
 
     /// Slot 6, the FaceGen tint of a face shape.
-    public var faceTintPath: String? {
+    var faceTintPath: String? {
         path(slot: 6)
     }
 
     /// The VFS key in one slot, nil when the slot is missing or empty.
-    public func path(slot: Int) -> String? {
+    func path(slot: Int) -> String? {
         paths.indices.contains(slot) ? Self.vfsKey(for: paths[slot]) : nil
     }
 
-    public init(data: Data, header: NIFHeader) throws {
+    init(data: Data, header: NIFHeader) throws {
         _ = header // layout is stream-independent at 20.2.0.7
         var reader = BinaryReader(data)
         let count = try Int(reader.readUInt32())

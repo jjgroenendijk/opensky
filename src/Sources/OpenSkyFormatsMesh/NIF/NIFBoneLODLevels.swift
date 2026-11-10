@@ -22,11 +22,6 @@ nonisolated public struct NIFBoneLODLevels: Equatable, Sendable {
     public let levels: [[Int]]
     public let bones: [Bone]
 
-    public init(levels: [[Int]], bones: [Bone]) {
-        self.levels = levels
-        self.bones = bones
-    }
-
     /// The nodes that stop animating with the camera `distance` away: each named bone
     /// past its distance, and every node below it.
     public func frozenNodes(

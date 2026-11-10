@@ -34,9 +34,9 @@ nonisolated public struct CharacterClass: Equatable, Sendable {
     /// Skills with a weight of zero never increase." (UESP CLAS)
     public struct SkillWeights: Equatable, Sendable {
         /// Actor-value index of the first weight byte, `One-Handed`.
-        public static let firstActorValue: Int32 = 6
+        static let firstActorValue: Int32 = 6
         /// How many weight bytes DATA carries, one per skill.
-        public static let count = 18
+        static let count = 18
 
         /// One weight per skill, in actor-value index order from
         /// `firstActorValue`. Empty when DATA was too short to reach them.
@@ -52,7 +52,7 @@ nonisolated public struct CharacterClass: Equatable, Sendable {
 
         /// Weight of the skill at vanilla actor-value `index`, or nil when that
         /// index is not one of the eighteen skills.
-        public func weight(at index: Int32) -> UInt8? {
+        func weight(at index: Int32) -> UInt8? {
             let offset = Int(index - Self.firstActorValue)
             guard weights.indices.contains(offset) else { return nil }
             return weights[offset]
@@ -125,11 +125,6 @@ nonisolated public struct CharacterClass: Equatable, Sendable {
         /// The skill's actor value index. DATA stores it as the index minus 6.
         public let skill: Int32
         public let maximumLevel: Int
-
-        public init(skill: Int32, maximumLevel: Int) {
-            self.skill = skill
-            self.maximumLevel = maximumLevel
-        }
     }
 
     /// What one DATA field yields, gathered so the decoder can return more than

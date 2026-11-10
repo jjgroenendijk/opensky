@@ -34,7 +34,7 @@ nonisolated public struct ESSFile: Equatable, Sendable {
     public static let supportedFormVersions: ClosedRange<UInt8> = 57 ... 79
     public static let firstLightPluginFormVersion: UInt8 = 78
     /// Sanity cap on a decompressed body.
-    public static let maximumBodyLength = 1 << 30
+    static let maximumBodyLength = 1 << 30
 
     public init(data: Data) throws(ESSError) {
         let summary = try ESSSummary(data: data)

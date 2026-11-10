@@ -15,14 +15,14 @@ nonisolated public struct Package: Equatable, Sendable {
         /// UESP "Skyrim Mod:Mod File Format/PACK".
         public static let offersServices = GeneralFlags(rawValue: 0x0000_0001)
         public static let mustComplete = GeneralFlags(rawValue: 0x0000_0004)
-        public static let maintainSpeedAtGoal = GeneralFlags(rawValue: 0x0000_0008)
+        static let maintainSpeedAtGoal = GeneralFlags(rawValue: 0x0000_0008)
         public static let oncePerDay = GeneralFlags(rawValue: 0x0000_0400)
         public static let usesPreferredSpeed = GeneralFlags(rawValue: 0x0000_2000)
-        public static let alwaysSneak = GeneralFlags(rawValue: 0x0002_0000)
+        static let alwaysSneak = GeneralFlags(rawValue: 0x0002_0000)
         public static let ignoreCombat = GeneralFlags(rawValue: 0x0010_0000)
-        public static let weaponsUnequipped = GeneralFlags(rawValue: 0x0020_0000)
-        public static let weaponDrawn = GeneralFlags(rawValue: 0x0080_0000)
-        public static let wearSleepOutfit = GeneralFlags(rawValue: 0x2000_0000)
+        static let weaponsUnequipped = GeneralFlags(rawValue: 0x0020_0000)
+        static let weaponDrawn = GeneralFlags(rawValue: 0x0080_0000)
+        static let wearSleepOutfit = GeneralFlags(rawValue: 0x2000_0000)
     }
 
     public enum Kind: Equatable, Sendable {
@@ -30,7 +30,7 @@ nonisolated public struct Package: Equatable, Sendable {
         case template
         case unknown(UInt8)
 
-        public init(rawValue: UInt8) {
+        init(rawValue: UInt8) {
             switch rawValue {
             case 18: self = .package
             case 19: self = .template
@@ -46,7 +46,7 @@ nonisolated public struct Package: Equatable, Sendable {
         case fastWalk
         case unknown(UInt8)
 
-        public init(rawValue: UInt8) {
+        init(rawValue: UInt8) {
             switch rawValue {
             case 0: self = .walk
             case 1: self = .jog
@@ -59,8 +59,8 @@ nonisolated public struct Package: Equatable, Sendable {
 
     public struct GeneralData: Equatable, Sendable {
         public let flags: GeneralFlags
-        public let kind: Kind
-        public let interruptOverride: UInt8
+        let kind: Kind
+        let interruptOverride: UInt8
         public let preferredSpeed: PreferredSpeed
         public let interruptFlags: UInt16
     }
@@ -100,7 +100,7 @@ nonisolated public struct Package: Equatable, Sendable {
     }
 
     public struct Location: Equatable, Sendable {
-        public let rawKind: Int32
+        let rawKind: Int32
         public let value: UInt32
         public let radius: Int32
 
@@ -128,9 +128,9 @@ nonisolated public struct Package: Equatable, Sendable {
     }
 
     public struct Target: Equatable, Sendable {
-        public let rawKind: Int32
+        let rawKind: Int32
         public let value: UInt32
-        public let countOrDistance: Int32
+        let countOrDistance: Int32
 
         public var kind: TargetKind? {
             TargetKind(rawValue: rawKind)
@@ -149,7 +149,7 @@ nonisolated public struct Package: Equatable, Sendable {
 
     public struct DataInput: Equatable, Sendable {
         public let index: Int8?
-        public let type: String
+        let type: String
         public let value: DataValue
     }
 

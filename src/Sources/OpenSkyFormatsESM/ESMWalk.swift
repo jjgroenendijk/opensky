@@ -5,7 +5,7 @@
 // Shared by CLI record/cell commands and main-app Asset Browser catalog.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 
 nonisolated public enum ESMWalk: Sendable {
     private static let logger = EngineLogger(
@@ -38,7 +38,7 @@ nonisolated public enum ESMWalk: Sendable {
     }
 
     /// FormID -> record type over the whole plugin (headers only, fast).
-    public static func recordTypeIndex(in file: ESMFile) -> [UInt32: FourCC] {
+    static func recordTypeIndex(in file: ESMFile) -> [UInt32: FourCC] {
         var index: [UInt32: FourCC] = [:]
         forEachRecord(in: file) { record in
             index[record.formID] = record.type

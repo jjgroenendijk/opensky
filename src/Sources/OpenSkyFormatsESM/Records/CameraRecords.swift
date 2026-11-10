@@ -20,8 +20,8 @@ nonisolated public struct CameraShot: Equatable, Sendable {
         public let timeMultipliers: SIMD3<Float>?
         public let maxTime: Float?
         public let minTime: Float?
-        public let targetPercentBetweenActors: Float?
-        public let nearTargetDistance: Float?
+        let targetPercentBetweenActors: Float?
+        let nearTargetDistance: Float?
 
         init(_ reader: inout BinaryReader) throws {
             action = try reader.readUInt32()
@@ -71,7 +71,7 @@ nonisolated public struct CameraPath: Equatable, Sendable {
     public let skipped: FieldTally
 
     /// True when the zoom value says the path must have camera shots.
-    public var requiresShots: Bool {
+    var requiresShots: Bool {
         (zoom ?? 0) & 0x80 == 0
     }
 

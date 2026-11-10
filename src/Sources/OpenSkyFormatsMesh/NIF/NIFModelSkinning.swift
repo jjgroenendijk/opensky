@@ -9,7 +9,7 @@ import simd
 nonisolated extension NIFFile.Flattener {
     /// Gamebryo bind formula:
     /// rootParentToSkin * currentBoneToRootParent * skinToBoneBind.
-    public func resolveSkinnedGeometry(
+    func resolveSkinnedGeometry(
         shape: NIFTriShape,
         usesNodeReferencePose: Bool
     ) throws -> NIFFile.FlattenerShapeGeometry {
@@ -221,7 +221,7 @@ nonisolated extension NIFFile.Flattener {
         return result
     }
 
-    public func block(at index: Int) throws -> NIFFile.Block {
+    func block(at index: Int) throws -> NIFFile.Block {
         guard index < file.blocks.count else {
             throw NIFError.malformed(
                 "block ref \(index) out of range (\(file.blocks.count) blocks)"

@@ -53,7 +53,7 @@ nonisolated public struct ProjectedMaterial: Hashable, Sendable {
     }
 
     /// Part of a mesh cache key.
-    public var cacheKey: String {
+    var cacheKey: String {
         let numbers = [
             direction.x, direction.y, direction.z, maxAngle, falloffScale, falloffBias,
             noiseUVScale, materialUVScale, singlePassColor.x, singlePassColor.y, singlePassColor.z

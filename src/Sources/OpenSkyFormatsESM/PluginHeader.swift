@@ -39,7 +39,7 @@ nonisolated public struct PluginHeader: Sendable {
 
     /// Whether FormIDs in strings-bearing fields point into lstring tables
     /// (`Strings/<plugin>_<lang>.strings` etc.) instead of inline text.
-    public var isLocalized: Bool {
+    var isLocalized: Bool {
         flags.contains(.localized)
     }
 

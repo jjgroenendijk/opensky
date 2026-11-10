@@ -23,15 +23,15 @@ nonisolated public struct BSAArchive: Sendable {
             self.rawValue = rawValue
         }
 
-        public static let includeFolderNames = ArchiveFlags(rawValue: 1 << 0)
-        public static let includeFileNames = ArchiveFlags(rawValue: 1 << 1)
-        public static let compressedByDefault = ArchiveFlags(rawValue: 1 << 2)
+        static let includeFolderNames = ArchiveFlags(rawValue: 1 << 0)
+        static let includeFileNames = ArchiveFlags(rawValue: 1 << 1)
+        static let compressedByDefault = ArchiveFlags(rawValue: 1 << 2)
         public static let embeddedFileNames = ArchiveFlags(rawValue: 1 << 8)
     }
 
     public struct Entry: Sendable {
-        public let folder: String
-        public let name: String
+        let folder: String
+        let name: String
         /// Full lowercase path with backslash separators, as the game refers to files.
         public var path: String {
             folder.isEmpty ? name : "\(folder)\\\(name)"
@@ -42,7 +42,7 @@ nonisolated public struct BSAArchive: Sendable {
         public let isCompressed: Bool
     }
 
-    public static let supportedVersion: UInt32 = 105
+    static let supportedVersion: UInt32 = 105
 
     public let flags: ArchiveFlags
     public let entries: [Entry]
@@ -193,7 +193,7 @@ nonisolated public struct BSAArchive: Sendable {
     }
 
     /// Case-insensitive lookup; accepts `/` or `\` separators.
-    public func entry(forPath path: String) -> Entry? {
+    func entry(forPath path: String) -> Entry? {
         let key = path.lowercased().replacingOccurrences(of: "/", with: "\\")
         return entry(forNormalizedPath: key)
     }

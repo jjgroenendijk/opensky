@@ -14,12 +14,12 @@ nonisolated struct SWFPlatformCall {
 
 nonisolated extension SWFMovieRuntime {
     /// One focus group holds every controller, so one focus serves them all.
-    public static let focusGroupCount = 1
+    static let focusGroupCount = 1
     /// GFx reports at most four controllers.
     public static let maximumGamepads = 3
     /// `Shared.ButtonChange.PLATFORM_PC` and `PLATFORM_PC_GAMEPAD`, as the movies set them.
-    public static let keyboardPlatform = 0.0
-    public static let gamepadPlatform = 1.0
+    static let keyboardPlatform = 0.0
+    static let gamepadPlatform = 1.0
     static let setPlatformName = "SetPlatform"
 
     /// Keyboard and mouse plus each connected gamepad.
@@ -33,7 +33,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     /// The controllers in focus group 0, one bit each.
-    public var focusGroupControllerMask: Int {
+    var focusGroupControllerMask: Int {
         (1 << controllerCount) - 1
     }
 

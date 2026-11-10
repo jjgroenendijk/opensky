@@ -32,7 +32,7 @@ nonisolated public enum ActorAggression: Equatable, Sendable, CustomStringConver
         }
     }
 
-    public var rawValue: UInt8 {
+    var rawValue: UInt8 {
         switch self {
         case .unaggressive: 0
         case .aggressive: 1

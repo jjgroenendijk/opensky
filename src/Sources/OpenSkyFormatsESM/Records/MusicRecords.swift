@@ -19,9 +19,9 @@ nonisolated public struct MusicType: Sendable {
         public static let cycleTracks = Flags(rawValue: 0x0004)
         /// Only meaningful together with `cycleTracks` (UESP MUSC).
         public static let maintainTrackOrder = Flags(rawValue: 0x0008)
-        public static let ducksCurrentTrack = Flags(rawValue: 0x0020)
+        static let ducksCurrentTrack = Flags(rawValue: 0x0020)
         /// Skyrim Special Edition only; named "Unknown 6" in older games.
-        public static let doesNotQueue = Flags(rawValue: 0x0040)
+        static let doesNotQueue = Flags(rawValue: 0x0040)
     }
 
     public let formID: FormID
@@ -104,7 +104,7 @@ nonisolated public struct MusicTrack: Sendable {
         case silentTrack
         case unknown(UInt32)
 
-        public init(rawValue: UInt32) {
+        init(rawValue: UInt32) {
             switch rawValue {
             case 0x23F6_78C3: self = .palette
             case 0x6ED7_E048: self = .singleTrack
@@ -116,9 +116,9 @@ nonisolated public struct MusicTrack: Sendable {
 
     /// LNAM, a 12-byte struct.
     public struct LoopData: Equatable, Sendable {
-        public let beginSeconds: Float
-        public let endSeconds: Float
-        public let count: Int
+        let beginSeconds: Float
+        let endSeconds: Float
+        let count: Int
     }
 
     public let formID: FormID

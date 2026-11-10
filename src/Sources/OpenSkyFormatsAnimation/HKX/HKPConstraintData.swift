@@ -7,8 +7,8 @@ import Foundation
 /// The two joint frames every constraint data starts with
 /// (`hkpSetLocalTransformsConstraintAtom` at 0x20): the pivot in each body's space.
 nonisolated public struct HKPConstraintFrames: Equatable, Sendable {
-    public let transformA: HKTransform
-    public let transformB: HKTransform
+    let transformA: HKTransform
+    let transformB: HKTransform
 
     private static let member = "m_atoms.m_transforms"
 
@@ -22,9 +22,9 @@ nonisolated public struct HKPConstraintFrames: Equatable, Sendable {
 
 /// An angle range in radians, and whether the solver applies it.
 nonisolated public struct HKPAngleLimit: Equatable, Sendable {
-    public let isEnabled: Bool
-    public let minAngle: Float
-    public let maxAngle: Float
+    let isEnabled: Bool
+    let minAngle: Float
+    let maxAngle: Float
 
     static func decode(
         _ cursor: inout HKXObjectCursor, enabledAt enabled: Int, minAt minimum: Int,

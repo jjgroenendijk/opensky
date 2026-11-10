@@ -24,7 +24,7 @@ nonisolated public struct PlacedReference: Sendable {
     public struct TeleportDestination: Equatable, Sendable {
         public let door: FormID
         public let placement: Placement
-        public let flags: TeleportDestinationFlags
+        let flags: TeleportDestinationFlags
     }
 
     public struct TeleportDestinationFlags: OptionSet, Equatable, Sendable {
@@ -34,7 +34,7 @@ nonisolated public struct PlacedReference: Sendable {
             self.rawValue = rawValue
         }
 
-        public static let noAlarm = TeleportDestinationFlags(rawValue: 0x0000_0001)
+        static let noAlarm = TeleportDestinationFlags(rawValue: 0x0000_0001)
     }
 
     /// One XLKR linked-reference entry. A null or absent keyword reads as

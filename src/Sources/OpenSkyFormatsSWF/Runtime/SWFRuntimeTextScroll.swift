@@ -7,7 +7,7 @@ import Foundation
 nonisolated extension SWFMovieRuntime {
     /// Whether the field shows a window of its lines. GFx `textAutoSize` resizes the text
     /// to fit instead, so a field with it set draws every line.
-    public func windowsLines(_ node: SWFDisplayObject) -> Bool {
+    func windowsLines(_ node: SWFDisplayObject) -> Bool {
         guard
             let field = textField(of: node), field.flags.multiline, field.flags.wordWrap,
             !field.flags.autoSize
@@ -22,7 +22,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     /// `scroll`, clamped to `maxscroll` because the text may have shrunk since it was set.
-    public func textScroll(of node: SWFDisplayObject) -> Int {
+    func textScroll(of node: SWFDisplayObject) -> Int {
         min(max(1, node.textScroll), maxScroll(of: node))
     }
 

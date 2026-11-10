@@ -6,7 +6,7 @@ import Foundation
 nonisolated public struct PexVariable: Equatable, Sendable {
     public let name: String
     public let typeName: String
-    public let userFlags: UInt32
+    let userFlags: UInt32
     public let initialValue: PexValue
 }
 
@@ -30,8 +30,8 @@ nonisolated public struct PexPropertyFlags: OptionSet, Equatable, Sendable {
 nonisolated public struct PexProperty: Equatable, Sendable {
     public let name: String
     public let typeName: String
-    public let documentation: String
-    public let userFlags: UInt32
+    let documentation: String
+    let userFlags: UInt32
     public let flags: PexPropertyFlags
     public let automaticVariableName: String?
     public let readHandler: PexFunction?
@@ -46,8 +46,8 @@ nonisolated public struct PexState: Equatable, Sendable {
 nonisolated public struct PexObject: Equatable, Sendable {
     public let name: String
     public let parentClassName: String
-    public let documentation: String
-    public let userFlags: UInt32
+    let documentation: String
+    let userFlags: UInt32
     public let automaticStateName: String
     public let variables: [PexVariable]
     public let properties: [PexProperty]

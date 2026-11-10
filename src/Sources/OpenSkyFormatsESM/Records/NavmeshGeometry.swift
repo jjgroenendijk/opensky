@@ -12,7 +12,7 @@ import simd
 nonisolated public enum NavmeshDecoding: Sendable {
     /// uint32 element count, rejected when the array it introduces cannot fit
     /// in what is left of the payload.
-    public static func readCount(
+    static func readCount(
         _ reader: inout BinaryReader,
         elementSize: Int,
         of what: String
@@ -61,12 +61,12 @@ nonisolated public struct NavmeshGeometry: Sendable {
         public static let edge12Link = TriangleFlags(rawValue: 1 << 1)
         public static let edge20Link = TriangleFlags(rawValue: 1 << 2)
         public static let deleted = TriangleFlags(rawValue: 1 << 3)
-        public static let noLargeCreatures = TriangleFlags(rawValue: 1 << 4)
-        public static let overlapping = TriangleFlags(rawValue: 1 << 5)
-        public static let preferred = TriangleFlags(rawValue: 1 << 6)
+        static let noLargeCreatures = TriangleFlags(rawValue: 1 << 4)
+        static let overlapping = TriangleFlags(rawValue: 1 << 5)
+        static let preferred = TriangleFlags(rawValue: 1 << 6)
         public static let water = TriangleFlags(rawValue: 1 << 9)
-        public static let door = TriangleFlags(rawValue: 1 << 10)
-        public static let found = TriangleFlags(rawValue: 1 << 11)
+        static let door = TriangleFlags(rawValue: 1 << 10)
+        static let found = TriangleFlags(rawValue: 1 << 11)
     }
 
     /// One walkable face. `neighbors` holds the triangle bordering edge 0-1,
@@ -74,7 +74,7 @@ nonisolated public struct NavmeshGeometry: Sendable {
     /// the matching `TriangleFlags` edge bit is set the value indexes this
     /// navmesh's edge-link array instead, which is why it is not resolved here.
     public struct Triangle: Equatable, Sendable {
-        public static let encodedSize = 16
+        static let encodedSize = 16
 
         public let vertices: SIMD3<UInt16>
         public let neighbors: SIMD3<Int16>
@@ -82,7 +82,7 @@ nonisolated public struct NavmeshGeometry: Sendable {
         /// Cover nibbles packed two-edges-to-a-uint16. Retained raw: xEdit's
         /// own comment says the documented flag names are wrong and nothing
         /// in OpenSky reads cover yet.
-        public let coverFlags: UInt16
+        let coverFlags: UInt16
     }
 
     /// How an actor crosses from this navmesh into a neighbouring one.
@@ -94,11 +94,11 @@ nonisolated public struct NavmeshGeometry: Sendable {
     }
 
     public struct EdgeLink: Equatable, Sendable {
-        public static let encodedSize = 10
+        static let encodedSize = 10
 
         /// Nil for a value outside the documented set; `rawType` keeps it.
         public let type: EdgeLinkType?
-        public let rawType: UInt32
+        let rawType: UInt32
         /// The NAVM on the other side of the boundary.
         public let navmesh: FormID
         /// Triangle index inside `navmesh`, not in this mesh, so it cannot be
@@ -110,7 +110,7 @@ nonisolated public struct NavmeshGeometry: Sendable {
     /// A triangle standing at a door threshold, paired with the DOOR REFR an
     /// actor passing over it teleports through.
     public struct DoorLink: Equatable, Sendable {
-        public static let encodedSize = 10
+        static let encodedSize = 10
 
         public let triangle: Int16
         public let door: FormID

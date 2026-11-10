@@ -220,7 +220,7 @@ nonisolated public enum LZ4: Sendable {
 
     /// Decompress one raw LZ4 block, appending to `output`. Matches may
     /// reference bytes already in `output` (linked blocks).
-    public static func decompressBlock(
+    static func decompressBlock(
         _ block: Data,
         into output: inout [UInt8],
         sizeLimit: Int

@@ -82,12 +82,12 @@ nonisolated public struct ESMFormIDIndex: Sendable {
         entries = unique
     }
 
-    public var count: Int {
+    var count: Int {
         entries.count
     }
 
     /// First record with this FormID in file order (0 is the null sentinel -> nil).
-    public func record(withFormID formID: UInt32) -> ESMRecord? {
+    func record(withFormID formID: UInt32) -> ESMRecord? {
         guard formID != 0, let entry = entry(for: formID) else { return nil }
         let offset = Int(entry.offset)
         var reader = BinaryReader(data, offset: offset)

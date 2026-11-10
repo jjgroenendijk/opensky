@@ -13,19 +13,19 @@ nonisolated public struct Explosion: Equatable, Sendable {
         public let impactDataSet: FormID?
         /// Any base object the explosion places.
         public let placedObject: FormID?
-        public let spawnProjectile: FormID?
+        let spawnProjectile: FormID?
         public let force: Float
         public let damage: Float
         public let radius: Float
         public let imageSpaceRadius: Float
-        public let verticalOffsetMultiplier: Float?
+        let verticalOffsetMultiplier: Float?
         /// 0x02 world orientation, 0x04 always knock down, 0x08 knock down by
         /// formula, 0x10 ignore LOS, 0x20 push source only, 0x40 ignore image-space
         /// swap, 0x80 chain, 0x100 no controller vibration.
         public let flags: UInt32?
         /// 0 loud, 1 normal, 2 silent, 3 very loud.
-        public let soundLevel: UInt32?
-        public let size: Int
+        let soundLevel: UInt32?
+        let size: Int
     }
 
     public let formID: FormID
@@ -80,7 +80,7 @@ nonisolated public struct Debris: Equatable, Sendable {
     public struct Model: Equatable, Sendable {
         public let percentage: UInt8
         public let path: String
-        public let hasCollision: Bool
+        let hasCollision: Bool
         public var textureHashes: Data?
     }
 

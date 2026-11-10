@@ -41,7 +41,7 @@ nonisolated public struct ImageSpace: Equatable, Sendable {
 
         /// The word is the high half of a float 2 + 4n, n 0 to 15: n / 2 is the blur
         /// radius 0 to 7, and an odd n keeps the sky sharp (docs/formats/image-spaces.md).
-        public var blurCode: Int? {
+        var blurCode: Int? {
             guard let skyBlurRadius else { return nil }
             let value = Float(bitPattern: UInt32(skyBlurRadius) << 16)
             guard value.isFinite else { return nil }

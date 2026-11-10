@@ -19,7 +19,7 @@ nonisolated public struct MaterialTypeIndex: Sendable {
 
     public static let empty = MaterialTypeIndex(materials: [], landTextureMaterials: [:])
 
-    public init(file: ESMFile) {
+    init(file: ESMFile) {
         self.init(loadOrder: LoadOrderPlugins(file: file))
     }
 
@@ -69,7 +69,7 @@ nonisolated public struct MaterialTypeIndex: Sendable {
         }
     }
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         materials.isEmpty
     }
 

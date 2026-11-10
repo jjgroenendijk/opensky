@@ -2,17 +2,17 @@
 // xEdit `wbStruct(TRDT, 'Response Data', ...)` at dev-4.1.6 line 7871.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 
 nonisolated extension TopicInfo.Contents {
-    public func isResponseField(_ type: FourCC) -> Bool {
+    func isResponseField(_ type: FourCC) -> Bool {
         switch type {
         case "NAM1", "NAM2", "NAM3", "SNAM", "LNAM": true
         default: false
         }
     }
 
-    public mutating func beginResponse(_ field: ESMField) throws {
+    mutating func beginResponse(_ field: ESMField) throws {
         closeOpenResponse()
         guard field.data.count >= 24 else {
             throw BinaryReaderError.outOfBounds(
@@ -38,7 +38,7 @@ nonisolated extension TopicInfo.Contents {
         )
     }
 
-    public mutating func decodeResponseField(_ field: ESMField) throws {
+    mutating func decodeResponseField(_ field: ESMField) throws {
         guard var response = openResponse else {
             tally.note(.orphanResponseField(field.type))
             return

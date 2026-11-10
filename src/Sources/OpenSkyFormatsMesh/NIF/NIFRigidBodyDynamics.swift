@@ -19,7 +19,7 @@ nonisolated public enum NIFMotionSystem: UInt8, CaseIterable, Sendable {
 
     /// True where the body is integrated from forces rather than driven by
     /// animation or nailed to the world.
-    public var isSimulated: Bool {
+    var isSimulated: Bool {
         switch self {
         case .dynamic, .sphereInertia, .sphereStabilized,
              .boxInertia, .boxStabilized, .thinBox:
@@ -31,7 +31,7 @@ nonisolated public enum NIFMotionSystem: UInt8, CaseIterable, Sendable {
 }
 
 /// nif.xml `hkQualityType`: collision priority the solver gives the body.
-nonisolated public enum NIFCollisionQuality: UInt8, CaseIterable, Sendable {
+nonisolated enum NIFCollisionQuality: UInt8, CaseIterable, Sendable {
     case invalid = 0
     case fixed = 1
     case keyframed = 2
@@ -45,14 +45,14 @@ nonisolated public enum NIFCollisionQuality: UInt8, CaseIterable, Sendable {
 }
 
 /// nif.xml `hkDeactivatorType`.
-nonisolated public enum NIFDeactivatorType: UInt8, CaseIterable, Sendable {
+nonisolated enum NIFDeactivatorType: UInt8, CaseIterable, Sendable {
     case invalid = 0
     case never = 1
     case spatial = 2
 }
 
 /// nif.xml `hkSolverDeactivation`.
-nonisolated public enum NIFSolverDeactivation: UInt8, CaseIterable, Sendable {
+nonisolated enum NIFSolverDeactivation: UInt8, CaseIterable, Sendable {
     case invalid = 0
     case off = 1
     case low = 2
@@ -74,43 +74,43 @@ nonisolated public struct NIFRigidBodyDynamics: Sendable, BitwiseCopyable {
     /// Engine units, body-local.
     public let centerOfMass: SIMD3<Float>
     /// Metres per second, body-local. Vanilla static geometry stores zero.
-    public let linearVelocity: SIMD3<Float>
+    let linearVelocity: SIMD3<Float>
     /// Radians per second.
-    public let angularVelocity: SIMD3<Float>
+    let angularVelocity: SIMD3<Float>
     /// Fraction of linear velocity removed per second.
     public let linearDamping: Float
     /// Fraction of angular velocity removed per second.
     public let angularDamping: Float
-    public let timeFactor: Float
+    let timeFactor: Float
     public let gravityFactor: Float
     public let friction: Float
-    public let rollingFrictionMultiplier: Float
+    let rollingFrictionMultiplier: Float
     public let restitution: Float
     /// Metres per second.
     public let maxLinearVelocity: Float
     /// Radians per second.
     public let maxAngularVelocity: Float
     /// Metres of penetration the solver is allowed to tolerate.
-    public let penetrationDepth: Float
+    let penetrationDepth: Float
     /// Raw `hkMotionType` byte; `motionSystem` names it where the value is known.
-    public let rawMotionSystem: UInt8
-    public let rawDeactivatorType: UInt8
-    public let rawSolverDeactivation: UInt8
-    public let rawQualityType: UInt8
+    let rawMotionSystem: UInt8
+    let rawDeactivatorType: UInt8
+    let rawSolverDeactivation: UInt8
+    let rawQualityType: UInt8
 
-    public var motionSystem: NIFMotionSystem? {
+    var motionSystem: NIFMotionSystem? {
         NIFMotionSystem(rawValue: rawMotionSystem)
     }
 
-    public var deactivatorType: NIFDeactivatorType? {
+    var deactivatorType: NIFDeactivatorType? {
         NIFDeactivatorType(rawValue: rawDeactivatorType)
     }
 
-    public var solverDeactivation: NIFSolverDeactivation? {
+    var solverDeactivation: NIFSolverDeactivation? {
         NIFSolverDeactivation(rawValue: rawSolverDeactivation)
     }
 
-    public var qualityType: NIFCollisionQuality? {
+    var qualityType: NIFCollisionQuality? {
         NIFCollisionQuality(rawValue: rawQualityType)
     }
 

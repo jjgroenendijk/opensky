@@ -104,7 +104,7 @@ nonisolated public struct Global: Equatable, Sendable {
 
     /// Synthetic global, for tests and for callers assembling defaults without
     /// a plugin.
-    public init(formID: FormID, editorID: String?, value: GlobalValue, isConstant: Bool = false) {
+    init(formID: FormID, editorID: String?, value: GlobalValue, isConstant: Bool = false) {
         self.formID = formID
         self.editorID = editorID
         self.isConstant = isConstant

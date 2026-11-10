@@ -22,9 +22,9 @@ nonisolated public struct NIFHeader: Sendable {
     /// streams 83, SSE streams 100.
     public struct BSStream: Sendable {
         public let version: UInt32
-        public let author: String
-        public let processScript: String
-        public let exportScript: String
+        let author: String
+        let processScript: String
+        let exportScript: String
     }
 
     /// Newline-terminated text line, e.g. "Gamebryo File Format, Version

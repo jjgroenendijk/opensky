@@ -116,7 +116,7 @@ nonisolated public enum MagicEffectArchetype: Hashable, CustomStringConvertible,
     case vampireLord
     case unknown(raw: UInt32)
 
-    public init(rawValue: UInt32) {
+    init(rawValue: UInt32) {
         self = Self.known[rawValue] ?? .unknown(raw: rawValue)
     }
 

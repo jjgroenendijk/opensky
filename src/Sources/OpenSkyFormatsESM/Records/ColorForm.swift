@@ -40,7 +40,7 @@ nonisolated public struct Eyes: Equatable, Sendable {
     public let flags: UInt8
     public let skipped: FieldTally
 
-    public var isPlayable: Bool {
+    var isPlayable: Bool {
         flags & 0x01 != 0
     }
 

@@ -15,33 +15,33 @@ nonisolated public struct ModelBaseDetails: Equatable, Sendable {
     }
 
     /// FURN FNPR.
-    public struct MarkerEntryPoints: Equatable, Sendable {
+    struct MarkerEntryPoints: Equatable, Sendable {
         /// 0 none, 1 sit, 2 lay, 4 lean.
-        public let type: UInt16
-        public let entryPoints: UInt16
+        let type: UInt16
+        let entryPoints: UInt16
     }
 
     /// TREE CNAM: wind animation values.
     public struct TreeData: Equatable, Sendable {
-        public let trunkFlexibility: Float
-        public let branchFlexibility: Float
-        public let trunkAmplitude: Float
+        let trunkFlexibility: Float
+        let branchFlexibility: Float
+        let trunkAmplitude: Float
         public let frontAmplitude: Float
         public let backAmplitude: Float
         public let sideAmplitude: Float
         public let frontFrequency: Float
         public let backFrequency: Float
         public let sideFrequency: Float
-        public let leafFlexibility: Float
+        let leafFlexibility: Float
         public let leafAmplitude: Float
         public let leafFrequency: Float
     }
 
     public var bounds: ObjectBounds?
     public var model: ModelData?
-    public var destructible: Destructible?
+    var destructible: Destructible?
     /// PNAM on ACTI, FURN, and FLOR. TACT PNAM has the same 4 bytes, unnamed by xEdit.
-    public var markerColor: SIMD4<UInt8>?
+    var markerColor: SIMD4<UInt8>?
     /// FNAM on ACTI, FURN, FLOR, and TACT. DOOR FNAM is one byte and read by ModelBase.
     public var flags: UInt16?
     /// ACTI WNAM, a WATR.
@@ -49,14 +49,14 @@ nonisolated public struct ModelBaseDetails: Equatable, Sendable {
     /// FURN NAM1, a SPEL.
     public var associatedSpell: FormID?
     public var furnitureMarkers: [FurnitureMarker] = []
-    public var markerEntryPoints: [MarkerEntryPoints] = []
+    var markerEntryPoints: [MarkerEntryPoints] = []
     /// FURN XMRK, the marker model.
-    public var markerModelPath: String?
+    var markerModelPath: String?
     /// DOOR TNAM: random teleport destinations, each a CELL or WRLD.
-    public var randomTeleports: [FormID] = []
+    var randomTeleports: [FormID] = []
     public var treeData: TreeData?
     /// MSTT DATA: 0x01 on local map, 0x02 unknown, 0x04 static.
-    public var movableStaticFlags: UInt8?
+    var movableStaticFlags: UInt8?
 
     private static let markerColourTypes: Set<FourCC> = ["ACTI", "FURN", "FLOR", "TACT"]
 

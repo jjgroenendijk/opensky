@@ -26,9 +26,9 @@ nonisolated public struct QuestAliasScripts: Equatable, Sendable {
     /// cross-quest reference, so it is carried rather than assumed.
     public let object: ScriptObjectReference
     /// Restated per alias. UESP notes it always equals the primary version.
-    public let version: Int16
+    let version: Int16
     /// Restated per alias, likewise always the primary object format.
-    public let objectFormat: ScriptObjectFormat
+    let objectFormat: ScriptObjectFormat
     public let scripts: [AttachedScript]
 
     /// Alias slot on `object`, or nil when the section names a direct FormID
@@ -42,25 +42,25 @@ nonisolated public struct QuestAliasScripts: Equatable, Sendable {
 nonisolated public struct QuestFragmentSection: Equatable, Sendable {
     /// The leading int8. Always 2; anything else means the Creation Kit would
     /// have failed to load alias script data, so it is recorded, not enforced.
-    public let extraBindDataVersion: Int8
+    let extraBindDataVersion: Int8
     /// Generated fragment script, "QF_<editorID>_<formID>" by convention.
     public let fileName: String
     /// The authored count, kept for diagnostics the way COCT and KSIZ are.
-    public let declaredFragmentCount: Int
+    let declaredFragmentCount: Int
     public let fragments: [QuestFragment]
-    public let aliasScripts: [QuestAliasScripts]
+    let aliasScripts: [QuestAliasScripts]
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         fragments.isEmpty && aliasScripts.isEmpty
     }
 
     /// True when the authored count disagrees with the fragments decoded.
-    public var fragmentCountMismatch: Bool {
+    var fragmentCountMismatch: Bool {
         declaredFragmentCount != fragments.count
     }
 
     /// Fragments attached to `stage`, in file order.
-    public func fragments(forStage stage: UInt16) -> [QuestFragment] {
+    func fragments(forStage stage: UInt16) -> [QuestFragment] {
         fragments.filter { $0.stageIndex == stage }
     }
 }

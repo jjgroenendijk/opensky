@@ -17,7 +17,7 @@ nonisolated public struct Shout: Equatable, Sendable {
     }
 
     /// SNAM is a fixed 12-byte struct (UESP; xEdit `wbStruct(SNAM, ...)`).
-    public static let wordEntrySize = 12
+    static let wordEntrySize = 12
 
     public let formID: FormID
     public let editorID: String?

@@ -11,7 +11,7 @@ nonisolated public struct SWFFontConfig: Equatable, Sendable {
     public struct FontMap: Equatable, Sendable {
         public let alias: String
         public let fontName: String
-        public let styles: [String]
+        let styles: [String]
     }
 
     /// Movie file names from `fontlib` directives, in file order.

@@ -16,18 +16,18 @@ nonisolated public struct TopicInfo: Sendable {
         public static let goodbye = Flags(rawValue: 1 << 0)
         public static let random = Flags(rawValue: 1 << 1)
         public static let sayOnce = Flags(rawValue: 1 << 2)
-        public static let requiresPlayerActivation = Flags(rawValue: 1 << 3)
-        public static let infoRefusal = Flags(rawValue: 1 << 4)
+        static let requiresPlayerActivation = Flags(rawValue: 1 << 3)
+        static let infoRefusal = Flags(rawValue: 1 << 4)
         public static let randomEnd = Flags(rawValue: 1 << 5)
         public static let invisibleContinue = Flags(rawValue: 1 << 6)
         public static let walkAway = Flags(rawValue: 1 << 7)
         public static let walkAwayInvisibleInMenu = Flags(rawValue: 1 << 8)
-        public static let forceSubtitle = Flags(rawValue: 1 << 9)
-        public static let canMoveWhileGreeting = Flags(rawValue: 1 << 10)
-        public static let noLipFile = Flags(rawValue: 1 << 11)
-        public static let requiresPostProcessing = Flags(rawValue: 1 << 12)
-        public static let hasAudioOutputOverride = Flags(rawValue: 1 << 13)
-        public static let spendsFavorPoints = Flags(rawValue: 1 << 14)
+        static let forceSubtitle = Flags(rawValue: 1 << 9)
+        static let canMoveWhileGreeting = Flags(rawValue: 1 << 10)
+        static let noLipFile = Flags(rawValue: 1 << 11)
+        static let requiresPostProcessing = Flags(rawValue: 1 << 12)
+        static let hasAudioOutputOverride = Flags(rawValue: 1 << 13)
+        static let spendsFavorPoints = Flags(rawValue: 1 << 14)
     }
 
     public enum FavorLevel: Equatable, Sendable {
@@ -37,7 +37,7 @@ nonisolated public struct TopicInfo: Sendable {
         case large
         case unknown(UInt8)
 
-        public init(rawValue: UInt8) {
+        init(rawValue: UInt8) {
             switch rawValue {
             case 0: self = .none
             case 1: self = .small
@@ -52,11 +52,11 @@ nonisolated public struct TopicInfo: Sendable {
         public let emotion: ResponseEmotion
         public let emotionValue: UInt32
         public let number: UInt8
-        public let sound: FormID?
-        public let usesEmotionAnimation: Bool
+        let sound: FormID?
+        let usesEmotionAnimation: Bool
         public var text: LString?
-        public var scriptNotes: String?
-        public var edits: String?
+        var scriptNotes: String?
+        var edits: String?
         public var speakerIdle: FormID?
         public var listenerIdle: FormID?
     }
@@ -72,7 +72,7 @@ nonisolated public struct TopicInfo: Sendable {
         case puzzled
         case unknown(UInt32)
 
-        public init(rawValue: UInt32) {
+        init(rawValue: UInt32) {
             switch rawValue {
             case 0: self = .neutral
             case 1: self = .anger
@@ -127,13 +127,13 @@ nonisolated public struct TopicInfo: Sendable {
     /// Result-script fragments, from the VMAD tail rather than from a field of
     /// their own. Empty when the response carries no result script, and also
     /// when its fragment tail failed to decode (`script.skipped` records that).
-    public var fragments: [TopicInfoFragment] {
+    var fragments: [TopicInfoFragment] {
         script.infoFragments?.fragments ?? []
     }
 
     /// The generated result script, "TIF_<editorID>_<formID>" by convention, or
     /// nil when the response carries no fragment at all.
-    public var fragmentScriptName: String? {
+    var fragmentScriptName: String? {
         guard
             let section = script.infoFragments, !section.isEmpty,
             !section.fileName.isEmpty

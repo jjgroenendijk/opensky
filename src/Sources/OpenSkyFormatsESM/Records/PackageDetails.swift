@@ -11,24 +11,24 @@ nonisolated public struct PackageDetails: Equatable, Sendable {
         /// Bit 0 run in sequence, bit 2 do once, bit 4 ignored by sandbox.
         public internal(set) var flags: UInt8 = 0
         /// IDLC as written. Advisory; `animations` is what decoded.
-        public internal(set) var declaredCount: UInt8?
+        var declaredCount: UInt8?
         public internal(set) var timer: Float?
         public internal(set) var animations: [FormID] = []
     }
 
     /// PFO2: package flags a branch sets and clears while it runs.
-    public struct FlagsOverride: Equatable, Sendable {
-        public let setGeneralFlags: UInt32
-        public let clearGeneralFlags: UInt32
-        public let setInterruptFlags: UInt16
-        public let clearInterruptFlags: UInt16
-        public let preferredSpeed: UInt8
+    struct FlagsOverride: Equatable, Sendable {
+        let setGeneralFlags: UInt32
+        let clearGeneralFlags: UInt32
+        let setInterruptFlags: UInt16
+        let clearInterruptFlags: UInt16
+        let preferredSpeed: UInt8
     }
 
     /// One procedure-tree branch, opened by its ANAM type.
     public struct Branch: Equatable, Sendable {
         public let type: String
-        public internal(set) var conditionList = ConditionList()
+        var conditionList = ConditionList()
         /// PRCB root data.
         public internal(set) var branchCount: UInt32?
         /// PRCB flags: bit 0 repeat when complete.
@@ -38,9 +38,9 @@ nonisolated public struct PackageDetails: Equatable, Sendable {
         public internal(set) var successCompletesPackage = false
         /// PKC2 — indexes into the template's data inputs.
         public internal(set) var dataInputIndexes: [UInt8] = []
-        public internal(set) var flagsOverrides: [FlagsOverride] = []
+        var flagsOverrides: [FlagsOverride] = []
         /// PFOR payloads, which xEdit leaves unexplained, kept raw.
-        public internal(set) var unknownPFOR: [Data] = []
+        var unknownPFOR: [Data] = []
 
         public var conditions: [Condition] {
             conditionList.conditions
@@ -51,38 +51,38 @@ nonisolated public struct PackageDetails: Equatable, Sendable {
     public struct TemplateInput: Equatable, Sendable {
         public let index: Int8
         public internal(set) var name: String?
-        public internal(set) var isPublic = false
+        var isPublic = false
     }
 
     /// PDTO. Kind 0 names a DIAL; kind 1 holds a four-character topic subtype.
-    public struct TopicData: Equatable, Sendable {
-        public let kind: UInt32
-        public let value: UInt32
+    struct TopicData: Equatable, Sendable {
+        let kind: UInt32
+        let value: UInt32
 
-        public var topic: FormID? {
+        var topic: FormID? {
             kind == 0 ? FormID(value).nonNull : nil
         }
     }
 
     /// POBA, POEA, or POCA with the fields after it.
-    public struct Event: Equatable, Sendable {
-        public internal(set) var idle: FormID?
-        public internal(set) var topic: TopicData?
+    struct Event: Equatable, Sendable {
+        var idle: FormID?
+        var topic: TopicData?
         /// SCHR, SCDA, SCTX, QNAM, and TNAM left by older Creation Kit
         /// versions; xEdit marks them unused. Raw bytes, in file order.
-        public internal(set) var legacyFields: [Data] = []
+        var legacyFields: [Data] = []
     }
 
     public internal(set) var idleAnimations: IdleAnimations?
     /// CNAM in the header — combat style.
-    public internal(set) var combatStyle: FormID?
+    var combatStyle: FormID?
     /// QNAM in the header — the quest that owns the package.
     public internal(set) var ownerQuest: FormID?
     public internal(set) var branches: [Branch] = []
     public internal(set) var templateInputs: [TemplateInput] = []
-    public internal(set) var onBegin: Event?
-    public internal(set) var onEnd: Event?
-    public internal(set) var onChange: Event?
+    var onBegin: Event?
+    var onEnd: Event?
+    var onChange: Event?
 
     public init() {}
 }

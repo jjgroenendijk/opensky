@@ -184,7 +184,7 @@ nonisolated public struct ScriptDataDecoder: Sendable {
     /// - Parameter notingAlias: false for the object that opens a quest-alias
     ///   script section, where an alias slot is the whole point rather than a
     ///   deferred resolution the tally exists to count.
-    public mutating func decodeObject(notingAlias: Bool = true) throws -> ScriptObjectReference {
+    mutating func decodeObject(notingAlias: Bool = true) throws -> ScriptObjectReference {
         let formID: FormID
         let alias: Int16
         let unused: UInt16

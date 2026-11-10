@@ -34,7 +34,7 @@ nonisolated public enum ActorValueSkillCategory: Equatable, CustomStringConverti
     case stealth
     case unknown(raw: UInt32)
 
-    public init(rawValue: UInt32) {
+    init(rawValue: UInt32) {
         switch rawValue {
         case 0: self = .none
         case 1: self = .combat
@@ -58,14 +58,14 @@ nonisolated public enum ActorValueSkillCategory: Equatable, CustomStringConverti
 /// AVSK, the four floats that turn skill use into skill level. UESP names the
 /// second float "Skill Use Offset", xEdit "Skill Offset Mult"; the UESP name is kept.
 nonisolated public struct SkillUseParameters: Equatable, Sendable {
-    public static let byteCount = 16
+    static let byteCount = 16
 
     public let useMultiplier: Float
     public let useOffset: Float
     public let improveMultiplier: Float
     public let improveOffset: Float
 
-    public init(
+    init(
         useMultiplier: Float,
         useOffset: Float,
         improveMultiplier: Float,
@@ -77,7 +77,7 @@ nonisolated public struct SkillUseParameters: Equatable, Sendable {
         self.improveOffset = improveOffset
     }
 
-    public init(field: ESMField) throws {
+    init(field: ESMField) throws {
         guard field.data.count == Self.byteCount else {
             throw ESMError.malformed(
                 "AVIF AVSK has \(field.data.count) bytes, expected exactly \(Self.byteCount)"

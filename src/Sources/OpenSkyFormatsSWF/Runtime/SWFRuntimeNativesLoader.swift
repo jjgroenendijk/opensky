@@ -6,7 +6,7 @@ import Foundation
 import simd
 
 nonisolated extension SWFRuntimeNatives {
-    public static func installClipGeometry(_ runtime: AS2Runtime, prototype: AS2Object) {
+    static func installClipGeometry(_ runtime: AS2Runtime, prototype: AS2Object) {
         AS2Natives.method(runtime, on: prototype, name: "getBounds") { context in
             boundsObject(context)
         }
@@ -72,7 +72,7 @@ nonisolated extension SWFRuntimeNatives {
     /// `duplicateMovieClip(name, depth, [initObject])`: another instance of the
     /// same character in the same parent, which is how a vanilla level meter
     /// builds its row of dots.
-    public static func installDuplicate(_ runtime: AS2Runtime, prototype: AS2Object) {
+    static func installDuplicate(_ runtime: AS2Runtime, prototype: AS2Object) {
         AS2Natives.method(runtime, on: prototype, name: "duplicateMovieClip") { context in
             guard
                 let owner = movieRuntime(context), let node = node(context),

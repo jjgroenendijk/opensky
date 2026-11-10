@@ -18,33 +18,33 @@ nonisolated public enum SWFDisplayListError: Error, Equatable, Sendable {
 /// modify-vs-place semantics).
 nonisolated public struct SWFPlacement: Equatable, Sendable {
     public var depth: UInt16 = 0
-    public var isMove = false
+    var isMove = false
     public var characterId: UInt16?
-    public var matrix: SWFMatrix?
-    public var colorTransform: SWFColorTransform?
-    public var ratio: UInt16?
+    var matrix: SWFMatrix?
+    var colorTransform: SWFColorTransform?
+    var ratio: UInt16?
     public var name: String?
-    public var clipDepth: UInt16?
+    var clipDepth: UInt16?
     /// PlaceObject3 only.
-    public var className: String?
+    var className: String?
     /// PlaceObject3 BlendMode byte (0/1 = normal), recorded + ignored.
-    public var blendMode: UInt8?
+    var blendMode: UInt8?
     /// PlaceObject3 SurfaceFilterList entry count, recorded + ignored.
-    public var filterCount = 0
+    var filterCount = 0
     /// PlaceObject2/3 `PlaceFlagHasClipActions`.
-    public var hasClipActions = false
+    var hasClipActions = false
     /// The decoded CLIPACTIONS block, non-nil whenever `hasClipActions` is set.
     /// A block that could not be framed still lands here, carrying whatever
     /// handlers were read plus its warnings, so a malformed handler list never
     /// costs the tag its placement.
-    public var clipActions: SWFClipActions?
+    var clipActions: SWFClipActions?
 }
 
 /// One RemoveObject/RemoveObject2 tag. RemoveObject also names the character
 /// it expects at the depth; RemoveObject2 removes by depth alone.
 nonisolated public struct SWFRemoval: Equatable, Sendable {
-    public let depth: UInt16
-    public let characterId: UInt16?
+    let depth: UInt16
+    let characterId: UInt16?
 }
 
 nonisolated public enum SWFDisplayListParser: Sendable {
@@ -61,7 +61,7 @@ nonisolated public enum SWFDisplayListParser: Sendable {
     /// movie's SWF version, which sets the CLIPEVENTFLAGS width; it defaults to
     /// 6 because every vanilla Interface movie is SWF 8 or later, so the wide
     /// form is the norm.
-    public static func parsePlacement(tag: SWFTag, version: UInt8 = 6) throws -> SWFPlacement {
+    static func parsePlacement(tag: SWFTag, version: UInt8 = 6) throws -> SWFPlacement {
         switch tag.code {
         case placeObjectCode: try parsePlaceObject(tag.body)
         case placeObject2Code: try parsePlaceObject2(tag.body, version: version)
@@ -72,7 +72,7 @@ nonisolated public enum SWFDisplayListParser: Sendable {
 
     /// RemoveObject (5): CharacterId UI16 + Depth UI16.
     /// RemoveObject2 (28): Depth UI16.
-    public static func parseRemoval(tag: SWFTag) throws -> SWFRemoval {
+    static func parseRemoval(tag: SWFTag) throws -> SWFRemoval {
         var bits = SWFBitReader(tag.body)
         switch tag.code {
         case removeObjectCode:

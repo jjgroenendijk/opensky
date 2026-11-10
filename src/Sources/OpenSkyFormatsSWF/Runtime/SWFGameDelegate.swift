@@ -118,7 +118,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     /// Registered names, sorted so a report is stable.
-    public var hostFunctionNames: [String] {
+    var hostFunctionNames: [String] {
         hostFunctions.keys.sorted()
     }
 

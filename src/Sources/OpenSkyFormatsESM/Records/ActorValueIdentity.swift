@@ -105,7 +105,7 @@ nonisolated public enum ActorValueIdentity: Sendable {
 
     /// The skill whose experience the `Skill Advance` slot at `index` holds, or
     /// nil for every other index — the inverse of `skillAdvanceIndex(forSkill:)`.
-    public static func skillIndex(forAdvance index: Int32) -> Int32? {
+    static func skillIndex(forAdvance index: Int32) -> Int32? {
         let skill = firstSkillIndex + (index - firstSkillAdvanceIndex)
         guard isSkill(index: skill) else { return nil }
         return skill
@@ -160,7 +160,7 @@ nonisolated public enum ActorValueIdentity: Sendable {
     /// Older skill names that three vanilla AVIF editor IDs use, kept apart so
     /// `vanillaNames` stays a verbatim copy of `wbActorValueEnum`. Observed in
     /// Skyrim.esm; see docs/engine/actor-value-names.md.
-    public static let recordNameAliases: [String: String] = [
+    static let recordNameAliases: [String: String] = [
         "Marksman": "Archery",
         "Speechcraft": "Speech",
         "Mysticism": "Illusion"

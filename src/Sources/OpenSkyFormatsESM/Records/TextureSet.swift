@@ -12,9 +12,9 @@ nonisolated public struct TextureSet: Sendable {
             self.rawValue = rawValue
         }
 
-        public static let noSpecularMap = Flags(rawValue: 0x0001)
-        public static let faceGenTextures = Flags(rawValue: 0x0002)
-        public static let modelSpaceNormalMap = Flags(rawValue: 0x0004)
+        static let noSpecularMap = Flags(rawValue: 0x0001)
+        static let faceGenTextures = Flags(rawValue: 0x0002)
+        static let modelSpaceNormalMap = Flags(rawValue: 0x0004)
     }
 
     /// The TX00-TX07 slot names, from xEdit dev-4.1.6.
@@ -44,7 +44,7 @@ nonisolated public struct TextureSet: Sendable {
     }
 
     /// Test seam: a texture set with only a diffuse and decal data.
-    public init(formID: FormID, diffusePath: String?, decal: DecalData?) {
+    init(formID: FormID, diffusePath: String?, decal: DecalData?) {
         self.formID = formID
         editorID = nil
         bounds = nil

@@ -15,14 +15,14 @@ nonisolated public struct CombatStyle: Equatable, Sendable {
     }
 
     /// CSME members, in file order.
-    nonisolated public enum Melee: Int, CaseIterable, Sendable {
+    nonisolated enum Melee: Int, CaseIterable, Sendable {
         case attackStaggeredMultiplier, powerAttackStaggeredMultiplier
         case powerAttackBlockingMultiplier, bashMultiplier, bashRecoilMultiplier
         case bashAttackMultiplier, bashPowerAttackMultiplier, specialAttackMultiplier
     }
 
     /// CSCR members, in file order.
-    nonisolated public enum CloseRange: Int, CaseIterable, Sendable {
+    nonisolated enum CloseRange: Int, CaseIterable, Sendable {
         case circleMultiplier, fallbackMultiplier, flankDistance, stalkTime
     }
 
@@ -67,11 +67,11 @@ nonisolated public struct CombatStyle: Equatable, Sendable {
         member.rawValue < general.count ? general[member.rawValue] : nil
     }
 
-    public func value(_ member: Melee) -> Float? {
+    func value(_ member: Melee) -> Float? {
         member.rawValue < melee.count ? melee[member.rawValue] : nil
     }
 
-    public func value(_ member: CloseRange) -> Float? {
+    func value(_ member: CloseRange) -> Float? {
         member.rawValue < closeRange.count ? closeRange[member.rawValue] : nil
     }
 

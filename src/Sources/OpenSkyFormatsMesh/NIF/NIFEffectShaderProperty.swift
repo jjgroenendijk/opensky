@@ -2,42 +2,42 @@
 // effect shapes. Skyrim streams only; unlike BSLightingShaderProperty, no
 // shader type comes before the name. Layout: docs/formats/nif-materials.md.
 
-public import Foundation
+import Foundation
 public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct NIFEffectShaderProperty: Equatable, Sendable {
-    public let name: String?
+    let name: String?
     /// Raw SkyrimShaderPropertyFlags1/2; derived accessors below expose the
     /// bits the renderer consumes.
-    public let shaderFlags1: UInt32
-    public let shaderFlags2: UInt32
-    public let uvOffset: SIMD2<Float>
-    public let uvScale: SIMD2<Float>
+    let shaderFlags1: UInt32
+    let shaderFlags2: UInt32
+    let uvOffset: SIMD2<Float>
+    let uvScale: SIMD2<Float>
     /// Inline effect texture path (nif.xml SizedString), raw as stored. Empty
     /// -> nil. `sourceTexturePath` gives the VFS-normalized key.
-    public let sourceTexture: String?
+    let sourceTexture: String?
     /// nif.xml TexClampMode byte (0 clamp S/T … 3 wrap S/T).
-    public let textureClampMode: UInt8
+    let textureClampMode: UInt8
     /// nif.xml "Lighting Influence", 0 to 255: how much scene light reaches an
     /// effect-lit shape.
-    public let lightingInfluence: UInt8
+    let lightingInfluence: UInt8
     /// Cosine-of-angle falloff endpoints + their opacity multipliers; active
     /// when `usesFalloff` is set (SLSF1 Use_Falloff).
-    public let falloffStartAngle: Float
-    public let falloffStopAngle: Float
-    public let falloffStartOpacity: Float
-    public let falloffStopOpacity: Float
+    let falloffStartAngle: Float
+    let falloffStopAngle: Float
+    let falloffStartOpacity: Float
+    let falloffStopOpacity: Float
     /// nif.xml "Base Color" (Color4) — the effect's emissive color incl.
     /// alpha; scaled by `baseColorScale` ("Base Color Scale", RGB multiplier).
-    public let baseColor: SIMD4<Float>
-    public let baseColorScale: Float
+    let baseColor: SIMD4<Float>
+    let baseColorScale: Float
     /// Depth over which the soft-particle edge fades (nif.xml Soft Falloff
     /// Depth); used when `isSoftEffect` is set.
-    public let softFalloffDepth: Float
+    let softFalloffDepth: Float
     /// Greyscale palette texture (nif.xml SizedString), raw as stored. Feeds
     /// the greyscale-to-palette color/alpha paths. Empty -> nil.
-    public let greyscaleTexture: String?
+    let greyscaleTexture: String?
 
     /// VFS lookup key for the effect texture (see NIFShaderTextureSet.vfsKey).
     public var sourceTexturePath: String? {
@@ -45,64 +45,64 @@ nonisolated public struct NIFEffectShaderProperty: Equatable, Sendable {
     }
 
     /// VFS lookup key for the greyscale palette texture.
-    public var greyscaleTexturePath: String? {
+    var greyscaleTexturePath: String? {
         greyscaleTexture.flatMap(NIFShaderTextureSet.vfsKey(for:))
     }
 
     /// SLSF2 bit 4 Double_Sided -> cull mode none.
-    public var isDoubleSided: Bool {
+    var isDoubleSided: Bool {
         has(.doubleSided)
     }
 
     /// SLSF1 bit 30 Soft_Effect -> soft-particle depth fade.
-    public var isSoftEffect: Bool {
+    var isSoftEffect: Bool {
         has(.softEffect)
     }
 
     /// SLSF2 bit 30 Effect_Lighting takes the scene light. nif.xml says SLSF1 bit 22
     /// Own_Emit "will not absorb light", so it keeps the shape unlit.
-    public var isEffectLit: Bool {
+    var isEffectLit: Bool {
         has(.effectLighting) && !has(.ownEmit)
     }
 
     /// SLSF1 bit 4 Greyscale_To_PaletteColor -> RGB from palette texture.
-    public var usesGreyscaleToPaletteColor: Bool {
+    var usesGreyscaleToPaletteColor: Bool {
         has(.greyscaleToPaletteColor)
     }
 
     /// SLSF1 bit 5 Greyscale_To_PaletteAlpha -> alpha from palette texture.
-    public var usesGreyscaleToPaletteAlpha: Bool {
+    var usesGreyscaleToPaletteAlpha: Bool {
         has(.greyscaleToPaletteAlpha)
     }
 
     /// SLSF1 bit 6 Use_Falloff -> apply the angular falloff fields.
-    public var usesFalloff: Bool {
+    var usesFalloff: Bool {
         has(.useFalloff)
     }
 
     /// SLSF1 bit 3 Vertex_Alpha -> vertex-color alpha modulates opacity.
-    public var hasVertexAlpha: Bool {
+    var hasVertexAlpha: Bool {
         has(.vertexAlpha)
     }
 
     /// SLSF2 bit 5 Vertex_Colors -> vertex color tints the effect.
-    public var hasVertexColors: Bool {
+    var hasVertexColors: Bool {
         has(.vertexColors)
     }
 
     /// SLSF1 bit 31 ZBuffer_Test (nif.xml places ZBuffer_Test in flags 1, not
     /// flags 2) -> depth test enabled.
-    public var isZBufferTest: Bool {
+    var isZBufferTest: Bool {
         has(.zBufferTest)
     }
 
     /// SLSF2 bit 0 ZBuffer_Write cleared -> no depth writes (typical for
     /// additive/transparent effects).
-    public var isZBufferWriteDisabled: Bool {
+    var isZBufferWriteDisabled: Bool {
         !has(.zBufferWrite)
     }
 
-    public var drawState: MaterialDrawState {
+    var drawState: MaterialDrawState {
         var state = MaterialDrawState()
         state.depthTest = isZBufferTest
         state.depthWrite = !isZBufferWriteDisabled
@@ -114,7 +114,7 @@ nonisolated public struct NIFEffectShaderProperty: Equatable, Sendable {
         (flag.word == 1 ? shaderFlags1 : shaderFlags2) & (1 << flag.bit) != 0
     }
 
-    public init(data: Data, header: NIFHeader) throws {
+    init(data: Data, header: NIFHeader) throws {
         let streamVersion = header.bsStream?.version ?? 0
         guard streamVersion == 83 || streamVersion == 100 else {
             throw NIFError.unsupported(

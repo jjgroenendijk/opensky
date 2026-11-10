@@ -8,9 +8,9 @@ nonisolated extension TopicInfo {
     /// SCHR and QNAM, closed by NEXT: script leftovers from older Creation Kit
     /// versions. xEdit marks them unused, so they stay raw.
     public struct LegacyScriptBlock: Equatable, Sendable {
-        public var header: Data?
-        public var quest: Data?
-        public var isClosed = false
+        var header: Data?
+        var quest: Data?
+        var isClosed = false
     }
 
     public struct Contents: Sendable {
@@ -143,7 +143,7 @@ nonisolated extension TopicInfo {
             resetHours = Float(scaled) * 24 / Float(UInt16.max)
         }
 
-        public static func readReference(_ reader: inout BinaryReader) throws -> FormID? {
+        static func readReference(_ reader: inout BinaryReader) throws -> FormID? {
             let value = try FormID(reader.readUInt32())
             return value.isNull ? nil : value
         }

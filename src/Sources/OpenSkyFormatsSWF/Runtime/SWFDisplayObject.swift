@@ -36,10 +36,10 @@ nonisolated public final class SWFDisplayObject {
     /// The SWF depth. ActionScript sees `depth - scriptDepthBase`: author-time content sits
     /// below 0 and script-made clips from 0 up, so the two never collide.
     public var depth: UInt16
-    public static let scriptDepthBase = 16384
+    static let scriptDepthBase = 16384
 
     /// Script-made: a goto on the parent's timeline leaves it in place.
-    public var hasScriptDepth: Bool {
+    var hasScriptDepth: Bool {
         Int(depth) >= Self.scriptDepthBase
     }
 
@@ -48,7 +48,7 @@ nonisolated public final class SWFDisplayObject {
     public var matrix = SWFMatrix.identity
     public var colorTransform = SWFColorTransform.identity
     /// PlaceObject `ClipDepth`: this node masks depths (depth, clipDepth].
-    public var clipDepth: UInt16?
+    var clipDepth: UInt16?
     public var isVisible = true
     /// A DefineButton2 instance: its frames are its states, and its actions run
     /// on the parent timeline.
@@ -60,7 +60,7 @@ nonisolated public final class SWFDisplayObject {
     /// character's bounds.
     public var textBounds: SWFRect?
     /// `TextField.scroll`: the one-based first line shown.
-    public var textScroll = 1
+    var textScroll = 1
     /// CLIPACTIONS handlers the placement attached, if any.
     public var clipActions: SWFClipActions?
 
@@ -129,11 +129,11 @@ nonisolated public final class SWFDisplayObject {
         return sorted
     }
 
-    public var childCount: Int {
+    var childCount: Int {
         byDepth.count
     }
 
-    public func child(atDepth depth: UInt16) -> SWFDisplayObject? {
+    func child(atDepth depth: UInt16) -> SWFDisplayObject? {
         byDepth[depth]
     }
 
@@ -157,7 +157,7 @@ nonisolated public final class SWFDisplayObject {
     }
 
     @discardableResult
-    public func removeChild(atDepth depth: UInt16) -> SWFDisplayObject? {
+    func removeChild(atDepth depth: UInt16) -> SWFDisplayObject? {
         guard let removed = byDepth.removeValue(forKey: depth) else {
             return nil
         }
@@ -189,7 +189,7 @@ nonisolated public final class SWFDisplayObject {
     }
 
     /// Moves an existing child to a new depth, swapping with any occupant.
-    public func swapChild(_ child: SWFDisplayObject, toDepth depth: UInt16) {
+    func swapChild(_ child: SWFDisplayObject, toDepth depth: UInt16) {
         guard child.parent === self, child.depth != depth else {
             return
         }
@@ -207,7 +207,7 @@ nonisolated public final class SWFDisplayObject {
 
     /// Total nodes in this subtree, including self. Bounded by the tree-depth
     /// guard so a cycle cannot hang the walk.
-    public func nodeCount(remainingDepth: Int = SWFDisplayObject.maximumTreeDepth) -> Int {
+    func nodeCount(remainingDepth: Int = SWFDisplayObject.maximumTreeDepth) -> Int {
         guard remainingDepth > 0 else {
             return 1
         }

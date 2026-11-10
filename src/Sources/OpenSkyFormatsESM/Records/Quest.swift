@@ -19,8 +19,8 @@ nonisolated public struct Quest: Sendable {
 
         public static let startGameEnabled = Flags(rawValue: 1 << 0)
         /// Each `SetStage` of a stage runs its items again (UESP QUST `DNAM`).
-        public static let allowRepeatedStages = Flags(rawValue: 1 << 3)
-        public static let runOnce = Flags(rawValue: 1 << 8)
+        static let allowRepeatedStages = Flags(rawValue: 1 << 3)
+        static let runOnce = Flags(rawValue: 1 << 8)
     }
 
     /// DNAM's trailing uint32. Type 0 keeps the quest out of the journal
@@ -47,7 +47,7 @@ nonisolated public struct Quest: Sendable {
             .miscellaneous, .daedricQuests, .sideQuests, .civilWar, .vampire, .dragonborn
         ]
 
-        public init(rawValue: UInt32) {
+        init(rawValue: UInt32) {
             let index = Int(rawValue)
             self = index < Self.known.count ? Self.known[index] : .unknown(rawValue)
         }

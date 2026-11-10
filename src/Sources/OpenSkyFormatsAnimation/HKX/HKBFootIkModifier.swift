@@ -23,15 +23,15 @@ nonisolated extension HKBFootIkGains {
 /// One `hkbFootIkModifierLeg`, 160 bytes.
 nonisolated public struct HKBFootIkModifierLeg: Equatable, Sendable {
     public let kneeAxisLS: SIMD4<Float>
-    public let footEndLS: SIMD4<Float>
+    let footEndLS: SIMD4<Float>
     public let ungroundedEvent: HKBEventProperty
-    public let footPlantedAnkleHeightMS: Float
-    public let footRaisedAnkleHeightMS: Float
+    let footPlantedAnkleHeightMS: Float
+    let footRaisedAnkleHeightMS: Float
     public let maxAnkleHeightMS: Float
     public let minAnkleHeightMS: Float
-    public let maxKneeAngleDegrees: Float
-    public let minKneeAngleDegrees: Float
-    public let maxAnkleAngleDegrees: Float
+    let maxKneeAngleDegrees: Float
+    let minKneeAngleDegrees: Float
+    let maxAnkleAngleDegrees: Float
     public let hipIndex: Int
     public let kneeIndex: Int
     public let ankleIndex: Int

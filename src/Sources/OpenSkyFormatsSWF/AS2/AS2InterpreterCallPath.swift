@@ -99,7 +99,7 @@ nonisolated extension AS2Interpreter {
 
     /// Starts a call whose result belongs on `frame`'s operand stack — the
     /// shape every call opcode has.
-    public func callPushingResult(
+    func callPushingResult(
         _ function: AS2Object,
         _ site: AS2CallSite,
         frame: AS2Frame

@@ -65,12 +65,12 @@ nonisolated public struct ScriptProperty: Equatable, Sendable {
             self.rawValue = rawValue
         }
 
-        public static let edited = Flags(rawValue: 0x01)
+        static let edited = Flags(rawValue: 0x01)
         public static let removed = Flags(rawValue: 0x02)
     }
 
     public let name: String
-    public let type: UInt8
+    let type: UInt8
     public let flags: Flags
     public let value: ScriptPropertyValue
 }
@@ -83,8 +83,8 @@ nonisolated public struct AttachedScript: Equatable, Sendable {
             self.rawValue = rawValue
         }
 
-        public static let inherited = Flags(rawValue: 0x01)
-        public static let removed = Flags(rawValue: 0x02)
+        static let inherited = Flags(rawValue: 0x01)
+        static let removed = Flags(rawValue: 0x02)
     }
 
     public let name: String

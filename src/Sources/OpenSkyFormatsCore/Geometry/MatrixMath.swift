@@ -8,7 +8,7 @@ public import simd
 nonisolated public enum MatrixMath: Sendable {
     /// Basis change from Skyrim Z-up world axes to Metal-style y-up:
     /// (x, y, z) -> (x, z, -y). Proper rotation (det +1), no reflection.
-    public static let zUpToYUp = float4x4(columns: (
+    static let zUpToYUp = float4x4(columns: (
         SIMD4<Float>(1, 0, 0, 0),
         SIMD4<Float>(0, 0, -1, 0),
         SIMD4<Float>(0, 1, 0, 0),
@@ -26,7 +26,7 @@ nonisolated public enum MatrixMath: Sendable {
     }
 
     /// One whole turn, in radians.
-    public static let fullTurn: Float = 2 * .pi
+    static let fullTurn: Float = 2 * .pi
 
     /// Degrees in -180...180, for a readout of a heading that can wind past one turn.
     public static func signedDegrees(fromRadians radians: Float) -> Float {

@@ -62,7 +62,7 @@ nonisolated public struct AS2BytecodeBody {
     public let bodyOffset: Int
     /// True for `ActionDefineFunction2` (0x8E), which owns a register file and
     /// preload flags. `ActionDefineFunction` (0x9B) binds parameters by name.
-    public let usesRegisters: Bool
+    let usesRegisters: Bool
     /// The constant pool in force where the function was defined.
     public let constantPool: [String]
     /// The scope chain captured at definition time, outermost first.

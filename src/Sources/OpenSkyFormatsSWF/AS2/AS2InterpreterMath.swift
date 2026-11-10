@@ -5,7 +5,7 @@
 import Foundation
 
 nonisolated extension AS2Interpreter {
-    public func arithmeticOp(
+    func arithmeticOp(
         _ record: SWFActionRecord,
         frame: AS2Frame
     ) throws(AS2Fault) -> AS2Flow? {
@@ -70,7 +70,7 @@ nonisolated extension AS2Interpreter {
 }
 
 nonisolated extension AS2Interpreter {
-    public func comparisonOp(
+    func comparisonOp(
         _ record: SWFActionRecord,
         frame: AS2Frame
     ) throws(AS2Fault) -> AS2Flow? {
@@ -100,7 +100,7 @@ nonisolated extension AS2Interpreter {
         return .next
     }
 
-    public func bitwiseOp(
+    func bitwiseOp(
         _ record: SWFActionRecord,
         frame: AS2Frame
     ) throws(AS2Fault) -> AS2Flow? {

@@ -4,7 +4,7 @@
 
 public import Foundation
 
-nonisolated public enum BinaryWriterError: Error, Equatable, Sendable {
+nonisolated enum BinaryWriterError: Error, Equatable, Sendable {
     /// The string could not be represented in the requested encoding.
     case unencodableString(String)
     /// A zero-terminated string cannot contain an embedded NUL byte.
@@ -52,7 +52,7 @@ nonisolated public struct BinaryWriter: Sendable {
     }
 
     /// Zero-terminated string ("zstring"): encoded bytes plus a NUL terminator.
-    public mutating func writeZString(
+    mutating func writeZString(
         _ string: String,
         encoding: String.Encoding = .windowsCP1252
     ) throws {

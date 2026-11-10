@@ -33,7 +33,7 @@ nonisolated public struct AS2Property {
     public var getter: AS2Object?
     public var setter: AS2Object?
 
-    public var isVirtual: Bool {
+    var isVirtual: Bool {
         getter != nil || setter != nil
     }
 }
@@ -76,11 +76,11 @@ nonisolated public final class AS2Object {
     public var typeOverride: String?
     /// Set on a `super` binding: calls through this object bind `this` to the
     /// stored value instead of to the binding itself.
-    public var superThis: AS2Value?
+    var superThis: AS2Value?
     /// On a `super` binding: the prototype of the superclass constructor it
     /// calls. It becomes the called frame's `AS2Frame.basePrototype`, so the
     /// next `super` resolves one level higher.
-    public var superBase: AS2Object?
+    var superBase: AS2Object?
     /// Non-nil for array-like objects; one past the highest assigned index.
     public private(set) var arrayLength: Int?
 
@@ -105,7 +105,7 @@ nonisolated public final class AS2Object {
         hostPayload != nil
     }
 
-    public var typeName: String {
+    var typeName: String {
         if let typeOverride {
             return typeOverride
         }
@@ -121,7 +121,7 @@ nonisolated public final class AS2Object {
         table[name]
     }
 
-    public func hasOwnProperty(_ name: String) -> Bool {
+    func hasOwnProperty(_ name: String) -> Bool {
         table[name] != nil
     }
 
@@ -141,7 +141,7 @@ nonisolated public final class AS2Object {
         return nil
     }
 
-    public func hasProperty(_ name: String) -> Bool {
+    func hasProperty(_ name: String) -> Bool {
         lookup(name) != nil
     }
 
@@ -173,7 +173,7 @@ nonisolated public final class AS2Object {
     /// `Object.prototype.addProperty(name, getter, setter)`. A getter is
     /// mandatory in Flash; a nil setter makes the property read-only.
     @discardableResult
-    public func addAccessor(name: String, getter: AS2Object?, setter: AS2Object?) -> Bool {
+    func addAccessor(name: String, getter: AS2Object?, setter: AS2Object?) -> Bool {
         guard getter != nil || setter != nil else {
             return false
         }
@@ -186,7 +186,7 @@ nonisolated public final class AS2Object {
     }
 
     @discardableResult
-    public func removeProperty(_ name: String) -> Bool {
+    func removeProperty(_ name: String) -> Bool {
         guard let property = table[name] else {
             return false
         }
@@ -209,7 +209,7 @@ nonisolated public final class AS2Object {
     }
 
     /// Replaces a slot's attributes without touching its value.
-    public func setFlags(_ flags: AS2PropertyFlags, for name: String) {
+    func setFlags(_ flags: AS2PropertyFlags, for name: String) {
         guard var property = table[name] else {
             return
         }
@@ -233,7 +233,7 @@ nonisolated public final class AS2Object {
 
     /// A canonical array index: decimal digits with no sign, no leading zero
     /// beyond `"0"` itself, and inside `Int32` range.
-    public static func arrayIndex(_ name: String) -> Int? {
+    static func arrayIndex(_ name: String) -> Int? {
         guard !name.isEmpty, name.allSatisfy(\.isASCII), name.allSatisfy(\.isNumber) else {
             return nil
         }

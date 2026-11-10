@@ -5,8 +5,8 @@
 import Foundation
 import simd
 
-nonisolated public enum NIFCollisionConvexHull: Sendable {
-    public static func indices(vertices: [SIMD3<Float>], planes: [SIMD4<Float>]) -> [UInt32] {
+nonisolated enum NIFCollisionConvexHull: Sendable {
+    static func indices(vertices: [SIMD3<Float>], planes: [SIMD4<Float>]) -> [UInt32] {
         guard vertices.count >= 3, !planes.isEmpty else { return [] }
         let tolerance: Float = 0.02
         var result: [UInt32] = []

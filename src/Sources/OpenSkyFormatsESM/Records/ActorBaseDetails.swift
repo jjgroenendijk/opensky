@@ -38,20 +38,20 @@ nonisolated public struct ActorTintLayer: Equatable, Sendable {
     /// TINV, a percent.
     public var interpolation: UInt32?
     /// TIAS, a preset index.
-    public var preset: Int16?
+    var preset: Int16?
 }
 
 nonisolated public struct ActorBaseDetails: Equatable, Sendable {
-    public var bounds: ObjectBounds?
-    public var shortName: LString?
-    public var keywords: [FormID] = []
+    var bounds: ObjectBounds?
+    var shortName: LString?
+    var keywords: [FormID] = []
     public var inventory: [Container.Entry] = []
-    public var attacks: [RaceAttack] = []
-    public var destructible: Destructible?
+    var attacks: [RaceAttack] = []
+    var destructible: Destructible?
     /// INAM LVLI, ANAM ARMO, ATKR RACE, ZNAM CSTY, GNAM FLST, HCLF CLFM.
     public var deathItem: FormID?
-    public var farAwayModel: FormID?
-    public var attackRace: FormID?
+    var farAwayModel: FormID?
+    var attackRace: FormID?
     public var combatStyle: FormID?
     public var giftFilter: FormID?
     public var hairColor: FormID?
@@ -62,16 +62,16 @@ nonisolated public struct ActorBaseDetails: Equatable, Sendable {
     public var combatOverride: FormID?
     public var defaultPackageList: FormID?
     /// SOFT, an OTFT.
-    public var sleepingOutfit: FormID?
+    var sleepingOutfit: FormID?
     /// CSCR, an NPC_ whose sounds this one uses.
     public var inheritsSoundsFrom: FormID?
     public var soundTypes: [ActorSoundType] = []
     /// NAM5, two bytes xEdit leaves unnamed.
-    public var unknownNAM5: Data?
+    var unknownNAM5: Data?
     public var height: Float?
     public var weight: Float?
     /// NAM8: 0 loud, 1 normal, 2 silent, 3 very loud, 4 quiet.
-    public var soundLevel: UInt32?
+    var soundLevel: UInt32?
     /// FTST, a TXST.
     public var headTexture: FormID?
     /// QNAM, RGB 0 to 1.

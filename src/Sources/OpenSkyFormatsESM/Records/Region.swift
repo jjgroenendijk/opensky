@@ -85,8 +85,8 @@ nonisolated public struct Region: Sendable {
 
     /// One RPLI edge falloff with the RPLD outline points after it.
     public struct Area: Equatable, Sendable {
-        public let edgeFalloff: UInt32
-        public internal(set) var points: [SIMD2<Float>] = []
+        let edgeFalloff: UInt32
+        var points: [SIMD2<Float>] = []
     }
 
     public init(record: ESMRecord, localized: Bool = false) throws {

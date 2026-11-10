@@ -11,7 +11,7 @@ import OpenSkyFormatsCore
 nonisolated public struct HKXClassName: Equatable, Sendable {
     public let signature: UInt32
     public let name: String
-    public let nameOffset: Int
+    let nameOffset: Int
 }
 
 /// Object registration resolved against the class-name table: instance at
@@ -68,7 +68,7 @@ nonisolated public struct HKXFile: Sendable {
     }
 
     /// Class name at a section-local name-string offset (fixup target).
-    public func className(atOffset offset: Int) -> HKXClassName? {
+    func className(atOffset offset: Int) -> HKXClassName? {
         classNames.first { $0.nameOffset == offset }
     }
 

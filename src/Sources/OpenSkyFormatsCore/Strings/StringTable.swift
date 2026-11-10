@@ -23,7 +23,7 @@ nonisolated public struct StringTable: Sendable {
         case dlstrings
         case ilstrings
 
-        public init?(fileExtension: String) {
+        init?(fileExtension: String) {
             switch fileExtension.lowercased() {
             case "strings": self = .strings
             case "dlstrings": self = .dlstrings
@@ -43,11 +43,11 @@ nonisolated public struct StringTable: Sendable {
     /// first occurrence (mirrors first-wins lookup in xEdit).
     private let offsets: [UInt32: UInt32]
 
-    public var count: Int {
+    var count: Int {
         offsets.count
     }
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         offsets.isEmpty
     }
 

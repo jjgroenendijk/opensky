@@ -64,7 +64,7 @@ nonisolated public struct AS2Limits: Equatable, Sendable {
     public var stackDepth = 4096
     /// Registers a single `ActionDefineFunction2` may claim. The header field
     /// is a `UInt8`, and the deepest vanilla function uses 23.
-    public var registerCount = 256
+    var registerCount = 256
     /// Distinct names the tally keeps per category. Totals keep counting past
     /// it, so a capped tally still reports how much it did not name.
     public var tallyNames = 256
@@ -83,11 +83,11 @@ nonisolated public struct AS2ExecutionResult: Equatable {
     /// The value the stream returned; `undefined` for a timeline block.
     public let value: AS2Value
     /// Actions executed, including every nested call.
-    public let actionsExecuted: Int
+    let actionsExecuted: Int
     /// Non-nil when the invocation was aborted.
-    public let fault: AS2Fault?
+    let fault: AS2Fault?
 
-    public var completed: Bool {
+    var completed: Bool {
         fault == nil
     }
 

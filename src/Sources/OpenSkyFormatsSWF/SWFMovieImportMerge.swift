@@ -10,29 +10,29 @@ import Foundation
 /// `SWFMovieTally` / `AS2Tally` tradition: counted, never thrown.
 nonisolated public struct SWFImportMergeDiagnostics: Equatable, Sendable {
     /// Resolved paths named in `mergedPaths`; the counters keep counting past it.
-    public static let pathLimit = 32
+    static let pathLimit = 32
 
     /// Source movies whose characters were merged in.
-    public var mergedMovies = 0
+    var mergedMovies = 0
     /// Characters those movies contributed, after remapping.
-    public var mergedCharacters = 0
+    var mergedCharacters = 0
     /// Placeholder ids bound to a merged character.
-    public var boundPlaceholders = 0
+    var boundPlaceholders = 0
     /// Imported names the source movie does not export, so the placeholder
     /// stays unresolved.
-    public var unresolvedPlaceholders = 0
+    var unresolvedPlaceholders = 0
     /// Import URLs the resolver could not turn into a decoded movie.
-    public var missingSourceMovies = 0
+    var missingSourceMovies = 0
     /// Import URLs skipped as display-irrelevant (the font-import case).
-    public var skippedImports = 0
+    var skippedImports = 0
     /// Imports refused because the recursion bound was reached.
-    public var depthLimitHits = 0
+    var depthLimitHits = 0
     /// Imports refused because the source is already being merged (a cycle).
-    public var cyclicImports = 0
+    var cyclicImports = 0
     /// Source movies refused because their shifted ids would leave `UInt16`.
-    public var idSpaceOverflows = 0
+    var idSpaceOverflows = 0
     /// Individual references that saturated at `UInt16.max` while shifting.
-    public var saturatedReferences = 0
+    var saturatedReferences = 0
     /// Resolved VFS paths merged, in merge order, capped at `pathLimit`.
     public var mergedPaths: [String] = []
 
@@ -45,7 +45,7 @@ nonisolated public struct SWFImportMergeDiagnostics: Equatable, Sendable {
             + "\(cyclicImports) cyclic, \(idSpaceOverflows) id-space overflows"
     }
 
-    public mutating func note(path: String) {
+    mutating func note(path: String) {
         mergedMovies += 1
         if mergedPaths.count < Self.pathLimit {
             mergedPaths.append(path)
@@ -62,7 +62,7 @@ nonisolated public struct SWFMovieImportMerger {
 
     /// How many import hops deep the merge follows. Vanilla menus need two;
     /// the bound only exists so a malformed chain terminates.
-    public static let maximumDepth = 4
+    static let maximumDepth = 4
 
     private let resolve: Resolver
     private var movie: SWFMovie
@@ -254,7 +254,7 @@ nonisolated public struct SWFMovieImportMerger {
 
     /// The highest character id a movie names anywhere, which is how wide an
     /// id range it needs.
-    public static func highestId(of movie: SWFMovie) -> UInt16 {
+    static func highestId(of movie: SWFMovie) -> UInt16 {
         var highest: UInt16 = 0
         for id in movie.characters.keys {
             highest = max(highest, id)
@@ -275,7 +275,7 @@ nonisolated public struct SWFMovieImportMerger {
     /// placement in every timeline, main and sprite, plus its ExportAssets
     /// targets. An import naming none of these needs no merge — that is the
     /// font-import case, answered by substitution instead.
-    public static func displayIds(of movie: SWFMovie) -> Set<UInt16> {
+    static func displayIds(of movie: SWFMovie) -> Set<UInt16> {
         var ids = Set(movie.exportedNames.values)
         var timelines = [movie.timeline]
         for id in movie.characters.keys.sorted() {
@@ -300,7 +300,7 @@ nonisolated public struct SWFMovieImportMerger {
     /// `interface\inventorymenu.swf` is `interface\inventory
     /// components\itemcard.swf`). The result is a canonical VFS key: lowercase,
     /// backslash separated. nil when the URL names nothing.
-    public static func resolvedPath(for url: String, relativeTo importer: String) -> String? {
+    static func resolvedPath(for url: String, relativeTo importer: String) -> String? {
         var components = Self.split(importer)
         if !components.isEmpty {
             components.removeLast()
@@ -322,7 +322,7 @@ nonisolated public struct SWFMovieImportMerger {
 
     /// An export table read the other way. Duplicate exports of one id keep the
     /// alphabetically first name, matching `SWFMovie.exportedIds`.
-    public static func namesById(_ exports: [String: UInt16]) -> [UInt16: String] {
+    static func namesById(_ exports: [String: UInt16]) -> [UInt16: String] {
         var byId: [UInt16: String] = [:]
         for name in exports.keys.sorted() {
             guard let id = exports[name], byId[id] == nil else { continue }

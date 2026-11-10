@@ -275,20 +275,20 @@ nonisolated public struct PerkContents: Sendable {
 
 /// The fixed-width reads PERK fields need, each checking its own length so a
 /// truncated field throws instead of reading past the end.
-nonisolated public enum PerkFieldReader: Sendable {
-    public static func byte(_ field: ESMField) throws -> UInt8 {
+nonisolated enum PerkFieldReader: Sendable {
+    static func byte(_ field: ESMField) throws -> UInt8 {
         guard let first = field.data.first else {
             throw ESMError.malformed("PERK \(field.type) is empty, expected 1 byte")
         }
         return first
     }
 
-    public static func zstring(_ field: ESMField) throws -> String {
+    static func zstring(_ field: ESMField) throws -> String {
         var reader = BinaryReader(field.data)
         return try reader.readZString()
     }
 
-    public static func link(_ field: ESMField) throws -> FormID? {
+    static func link(_ field: ESMField) throws -> FormID? {
         guard field.data.count >= 4 else {
             throw ESMError.malformed(
                 "PERK \(field.type) has \(field.data.count) bytes, expected 4"
@@ -299,7 +299,7 @@ nonisolated public enum PerkFieldReader: Sendable {
         return id.isNull ? nil : id
     }
 
-    public static func scriptFlags(_ field: ESMField) throws -> PerkScriptFlags {
+    static func scriptFlags(_ field: ESMField) throws -> PerkScriptFlags {
         guard field.data.count >= PerkScriptFlags.byteCount else {
             throw ESMError.malformed(
                 "PERK EPF3 has \(field.data.count) bytes, expected \(PerkScriptFlags.byteCount)"

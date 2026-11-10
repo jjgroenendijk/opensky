@@ -26,7 +26,7 @@ nonisolated public final class SWFMovieRuntime {
     public private(set) var droppedInstantiations = 0
     /// Frame DoAction blocks skipped because a frame action re-entered its own
     /// clip past `maximumGotoDepth`.
-    public private(set) var droppedFrameActions = 0
+    private(set) var droppedFrameActions = 0
     /// True once `start()` has run.
     public private(set) var isStarted = false
     /// What `Selection.setFocus` last pointed at. An unconsumed key falls back
@@ -43,7 +43,7 @@ nonisolated public final class SWFMovieRuntime {
     /// Text fields `createTextField` made, by their runtime character id.
     var scriptEditTexts: [UInt16: SWFEditText] = [:]
     /// Nesting guard for a frame action that jumps the same clip again.
-    public var gotoDepth = 0
+    var gotoDepth = 0
     /// Instances placed in the current batch, waiting for their constructors.
     var pendingConstructions: [SWFDisplayObject] = []
     /// Live pointer and key state.
@@ -62,7 +62,7 @@ nonisolated public final class SWFMovieRuntime {
     public var lastHostArguments: [String: [AS2Value]] = [:]
     /// Placements that attached a key CLIPACTIONS handler. Zero across the whole
     /// vanilla install, which is what lets key dispatch skip the tree walk.
-    public private(set) var keyClipHandlers = 0
+    private(set) var keyClipHandlers = 0
     /// Clips that currently expose one of Flash's three global mouse handlers.
     public let globalMouseHandlers = SWFGlobalMouseHandlerRegistry()
 
@@ -70,12 +70,12 @@ nonisolated public final class SWFMovieRuntime {
     /// runaway `attachMovie` loop is what this stops.
     public static let maximumNodes = 4096
     /// How deep a `gotoAndStop` inside a frame action may re-enter.
-    public static let maximumGotoDepth = 8
+    static let maximumGotoDepth = 8
     /// How far below the root the engine looks for a menu's `handleInput`.
-    public static let maximumHandlerDepth = 3
+    static let maximumHandlerDepth = 3
     /// Longest interval a movie may schedule, in ticks. A minute at 60 frames
     /// per second, which is far past anything a menu waits for.
-    public static let maximumTimerTicks = 3600
+    static let maximumTimerTicks = 3600
 
     /// Every class preamble runs `if (!_global.gfx) _global.gfx = new Object()` for its
     /// package roots, and CLIK `UIComponent.onLoad` tests `_global.CLIK_loadCallback`.
@@ -94,7 +94,7 @@ nonisolated public final class SWFMovieRuntime {
         root.nodeCount()
     }
 
-    public var globalMouseHandlerClips: Int {
+    var globalMouseHandlerClips: Int {
         globalMouseHandlers.count
     }
 
@@ -179,7 +179,7 @@ nonisolated public final class SWFMovieRuntime {
         isDirty = true
     }
 
-    public func noteDroppedFrameActions(_ count: Int) {
+    func noteDroppedFrameActions(_ count: Int) {
         droppedFrameActions += count
     }
 
@@ -192,7 +192,7 @@ nonisolated public final class SWFMovieRuntime {
         invokeLog.clear()
     }
 
-    public func noteKeyClipHandler() {
+    func noteKeyClipHandler() {
         keyClipHandlers += 1
     }
 
@@ -252,7 +252,7 @@ nonisolated public final class SWFMovieRuntime {
     /// Runs the class registered against a placed character's linkage name,
     /// with the display object as `this`. This plus running DoInitAction first
     /// is the whole reason a vanilla menu comes alive.
-    public func constructRegisteredClass(for node: SWFDisplayObject) {
+    func constructRegisteredClass(for node: SWFDisplayObject) {
         guard
             let characterId = node.characterId,
             let linkage = movie.exportedIds[characterId],

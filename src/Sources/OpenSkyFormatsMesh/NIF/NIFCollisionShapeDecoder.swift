@@ -4,10 +4,10 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import simd
+import simd
 
 nonisolated extension NIFCollisionDecoder {
-    public mutating func decodeLeafShape(
+    mutating func decodeLeafShape(
         block: NIFFile.Block,
         parent: float4x4
     ) throws -> [NIFCollisionShape] {

@@ -12,7 +12,7 @@ nonisolated public struct ESSPapyrusWriter: Sendable {
     /// The VM version in the table header. Version 4 adds the queued unbind list.
     public static let vmVersion: UInt16 = 4
     /// The second part's version field. Unconfirmed: no open source gives the value.
-    public static let saveFileVersion: Int16 = 1
+    static let saveFileVersion: Int16 = 1
     /// Array counts in the table's second part, all written as zero.
     static let trailingCounts = 21
 

@@ -45,8 +45,8 @@ nonisolated public struct HeadPart: Equatable, Sendable {
         public static let playable = Flags(rawValue: 0x01)
         public static let male = Flags(rawValue: 0x02)
         public static let female = Flags(rawValue: 0x04)
-        public static let isExtraPart = Flags(rawValue: 0x08)
-        public static let usesSolidTint = Flags(rawValue: 0x10)
+        static let isExtraPart = Flags(rawValue: 0x08)
+        static let usesSolidTint = Flags(rawValue: 0x10)
     }
 
     public let formID: FormID

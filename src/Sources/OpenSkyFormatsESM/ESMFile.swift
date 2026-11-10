@@ -12,7 +12,7 @@ nonisolated public struct ESMFileStamp: Hashable, Sendable {
     /// Seconds since 1970.
     public let modified: Int64
 
-    public init(name: String, size: UInt64, modified: Int64) {
+    init(name: String, size: UInt64, modified: Int64) {
         self.name = name
         self.size = size
         self.modified = modified

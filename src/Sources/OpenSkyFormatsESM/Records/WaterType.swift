@@ -84,23 +84,23 @@ nonisolated public struct WaterType: Sendable {
 
 /// WATR fields beside DNAM. xEdit dev-4.1.6 `WATR`; docs/formats/water.md.
 nonisolated public struct WaterDetails: Equatable, Sendable {
-    public let name: LString?
+    let name: LString?
     /// NNAM x3 — noise textures from older versions.
-    public let oldNoiseTextures: [String]
+    let oldNoiseTextures: [String]
     /// ANAM — opacity, 0-100.
     public let opacity: UInt8?
     /// FNAM — bit 0 causes damage; SSE bit 3 enable flowmap, bit 4 blend normals.
     public let flags: UInt8
     /// MNAM — material ID xEdit marks unused, kept raw.
-    public let unusedMaterialID: Data?
-    public let material: FormID?
-    public let openSound: FormID?
-    public let spell: FormID?
+    let unusedMaterialID: Data?
+    let material: FormID?
+    let openSound: FormID?
+    let spell: FormID?
     public let imageSpace: FormID?
     /// DATA — damage per second.
-    public let damagePerSecond: UInt16?
+    let damagePerSecond: UInt16?
     /// GNAM — daytime, nighttime, and underwater waters; xEdit marks them unused.
-    public let relatedWaters: [FormID]
+    let relatedWaters: [FormID]
     /// NAM0/NAM1 — linear and angular velocity.
     public let linearVelocity: SIMD3<Float>?
     public let angularVelocity: SIMD3<Float>?

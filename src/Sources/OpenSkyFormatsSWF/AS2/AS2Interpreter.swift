@@ -38,7 +38,7 @@ nonisolated public final class AS2Interpreter {
     public var callDepth = 0
     /// Nested interpreter loops running underneath a Swift call.
     public var reentryDepth = 0
-    public private(set) var actionsExecuted = 0
+    private(set) var actionsExecuted = 0
 
     public init(runtime: AS2Runtime) {
         self.runtime = runtime
@@ -231,7 +231,7 @@ nonisolated public final class AS2Interpreter {
     /// lands in the middle of a record, or outside the body being executed, is
     /// a fault — Flash's own behavior there is undefined, and a wrong index
     /// would execute arbitrary operands as opcodes.
-    public func recordIndex(
+    func recordIndex(
         forByteOffset byteOffset: Int,
         frame: AS2Frame
     ) throws(AS2Fault) -> Int {
@@ -246,7 +246,7 @@ nonisolated public final class AS2Interpreter {
     }
 
     /// Runs a built-in, mapping its untyped `throws` back onto `AS2Fault`.
-    public func invokeNative(
+    func invokeNative(
         _ body: AS2NativeBody,
         context: AS2CallContext
     ) throws(AS2Fault) -> AS2Value {

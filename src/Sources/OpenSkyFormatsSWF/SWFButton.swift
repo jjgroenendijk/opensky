@@ -13,28 +13,28 @@ nonisolated public struct SWFButtonStates: OptionSet, Equatable, Sendable {
         self.rawValue = rawValue
     }
 
-    public static let up = SWFButtonStates(rawValue: 1 << 0)
-    public static let over = SWFButtonStates(rawValue: 1 << 1)
-    public static let down = SWFButtonStates(rawValue: 1 << 2)
-    public static let hitTest = SWFButtonStates(rawValue: 1 << 3)
+    static let up = SWFButtonStates(rawValue: 1 << 0)
+    static let over = SWFButtonStates(rawValue: 1 << 1)
+    static let down = SWFButtonStates(rawValue: 1 << 2)
+    static let hitTest = SWFButtonStates(rawValue: 1 << 3)
 }
 
 /// One BUTTONRECORD.
-nonisolated public struct SWFButtonRecord: Equatable, Sendable {
-    public let states: SWFButtonStates
-    public let characterId: UInt16
-    public let depth: UInt16
-    public let matrix: SWFMatrix
-    public let colorTransform: SWFColorTransform
+nonisolated struct SWFButtonRecord: Equatable, Sendable {
+    let states: SWFButtonStates
+    let characterId: UInt16
+    let depth: UInt16
+    let matrix: SWFMatrix
+    let colorTransform: SWFColorTransform
 }
 
 /// One BUTTONCONDACTION: the transitions that run it, and its action stream.
-nonisolated public struct SWFButtonCondition: Equatable, Sendable {
+nonisolated struct SWFButtonCondition: Equatable, Sendable {
     /// The transition flags as clip events (`press`, `release`, `rollOver`, ...).
-    public let events: SWFClipEventFlags
+    let events: SWFClipEventFlags
     /// `CondKeyPress`, or nil when the condition traps no key.
-    public let keyCode: UInt8?
-    public let actions: SWFActionBlock
+    let keyCode: UInt8?
+    let actions: SWFActionBlock
 }
 
 /// A decoded DefineButton2 (34) tag.
@@ -43,12 +43,12 @@ nonisolated public struct SWFButton: Equatable, Sendable {
     /// The frame labels of the synthesized state timeline, in frame order.
     public static let stateLabels = ["_up", "_over", "_down"]
 
-    public let characterId: UInt16
-    public let trackAsMenu: Bool
-    public let records: [SWFButtonRecord]
-    public let conditions: [SWFButtonCondition]
+    let characterId: UInt16
+    let trackAsMenu: Bool
+    let records: [SWFButtonRecord]
+    let conditions: [SWFButtonCondition]
 
-    public static func parse(tag: SWFTag) throws -> SWFButton {
+    static func parse(tag: SWFTag) throws -> SWFButton {
         guard tag.code == tagCode else {
             throw SWFDisplayListError.unsupportedTag(tag.code)
         }

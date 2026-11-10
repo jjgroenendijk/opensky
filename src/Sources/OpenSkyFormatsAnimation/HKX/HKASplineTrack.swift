@@ -5,52 +5,52 @@
 public import Foundation
 import simd
 
-nonisolated public struct HKASplineTransformMask: Sendable {
-    public let quantization: UInt8
-    public let position: UInt8
-    public let rotation: UInt8
-    public let scale: UInt8
+nonisolated struct HKASplineTransformMask: Sendable {
+    let quantization: UInt8
+    let position: UInt8
+    let rotation: UInt8
+    let scale: UInt8
 }
 
-nonisolated public struct HKASplineVectorDescriptor: Sendable {
-    public let typeMask: UInt8
-    public let quantization: Int
-    public let identity: Float
-    public let trackIndex: Int
-    public let component: String
+nonisolated struct HKASplineVectorDescriptor: Sendable {
+    let typeMask: UInt8
+    let quantization: Int
+    let identity: Float
+    let trackIndex: Int
+    let component: String
 }
 
-nonisolated public enum HKASplineSubTrackType: Sendable {
+nonisolated enum HKASplineSubTrackType: Sendable {
     case identity
     case constant
     case spline
 }
 
-nonisolated public struct HKASplineBounds: Sendable {
-    public let minimum: Float
-    public let maximum: Float
+nonisolated struct HKASplineBounds: Sendable {
+    let minimum: Float
+    let maximum: Float
 }
 
-nonisolated public struct HKASplineTransformTrack: Sendable {
-    public let translation: HKASplineVectorTrack
-    public let rotation: HKASplineQuaternionTrack
-    public let scale: HKASplineVectorTrack
+nonisolated struct HKASplineTransformTrack: Sendable {
+    let translation: HKASplineVectorTrack
+    let rotation: HKASplineQuaternionTrack
+    let scale: HKASplineVectorTrack
 }
 
-nonisolated public struct HKASplineVectorTrack: Sendable {
-    public let constants: SIMD3<Float>
-    public let types: [HKASplineSubTrackType]
-    public let header: HKASplineHeader?
-    public let controlPoints: [[Float]]
+nonisolated struct HKASplineVectorTrack: Sendable {
+    let constants: SIMD3<Float>
+    let types: [HKASplineSubTrackType]
+    let header: HKASplineHeader?
+    let controlPoints: [[Float]]
 
-    public init(constants: SIMD3<Float>) {
+    init(constants: SIMD3<Float>) {
         self.constants = constants
         types = [.constant, .constant, .constant]
         header = nil
         controlPoints = [[], [], []]
     }
 
-    public init(
+    init(
         constants: SIMD3<Float>,
         types: [HKASplineSubTrackType],
         header: HKASplineHeader,
@@ -62,7 +62,7 @@ nonisolated public struct HKASplineVectorTrack: Sendable {
         self.controlPoints = controlPoints
     }
 
-    public func value(at frame: Float) -> SIMD3<Float> {
+    func value(at frame: Float) -> SIMD3<Float> {
         guard let header else { return constants }
         var value = constants
         for axis in 0 ..< 3 where types[axis] == .spline {
@@ -72,12 +72,12 @@ nonisolated public struct HKASplineVectorTrack: Sendable {
     }
 }
 
-nonisolated public enum HKASplineQuaternionTrack: Sendable {
+nonisolated enum HKASplineQuaternionTrack: Sendable {
     case identity
     case constant(SIMD4<Float>)
     case spline(header: HKASplineHeader, controlPoints: [SIMD4<Float>])
 
-    public func value(at frame: Float) -> SIMD4<Float> {
+    func value(at frame: Float) -> SIMD4<Float> {
         switch self {
         case .identity:
             SIMD4(0, 0, 0, 1)
@@ -89,16 +89,16 @@ nonisolated public enum HKASplineQuaternionTrack: Sendable {
     }
 }
 
-nonisolated public struct HKASplineHeader: Sendable {
-    public let degree: Int
-    public let knots: [UInt8]
-    public let controlPointCount: Int
+nonisolated struct HKASplineHeader: Sendable {
+    let degree: Int
+    let knots: [UInt8]
+    let controlPointCount: Int
 
-    public func value(at frame: Float, controlPoints: [Float]) -> Float {
+    func value(at frame: Float, controlPoints: [Float]) -> Float {
         deBoor(at: frame, controlPoints: controlPoints) { (1 - $2) * $0 + $2 * $1 }
     }
 
-    public func value(at frame: Float, controlPoints: [SIMD4<Float>]) -> SIMD4<Float> {
+    func value(at frame: Float, controlPoints: [SIMD4<Float>]) -> SIMD4<Float> {
         deBoor(at: frame, controlPoints: controlPoints) { (1 - $2) * $0 + $2 * $1 }
     }
 
@@ -150,40 +150,40 @@ nonisolated public struct HKASplineHeader: Sendable {
     }
 }
 
-nonisolated public struct HKASplineCursor: Sendable {
-    public let data: Data
-    public let blockIndex: Int
-    public var offset: Int
-    public let limit: Int
+nonisolated struct HKASplineCursor: Sendable {
+    let data: Data
+    let blockIndex: Int
+    var offset: Int
+    let limit: Int
 
-    public mutating func readUInt8() throws -> UInt8 {
+    mutating func readUInt8() throws -> UInt8 {
         try require(1)
         defer { offset += 1 }
         return data[offset]
     }
 
-    public mutating func readUInt16() throws -> UInt16 {
+    mutating func readUInt16() throws -> UInt16 {
         let low = try UInt16(readUInt8())
         return try low | UInt16(readUInt8()) << 8
     }
 
-    public mutating func readUInt32() throws -> UInt32 {
+    mutating func readUInt32() throws -> UInt32 {
         let low = try UInt32(readUInt16())
         return try low | UInt32(readUInt16()) << 16
     }
 
-    public mutating func readFloat() throws -> Float {
+    mutating func readFloat() throws -> Float {
         try Float(bitPattern: readUInt32())
     }
 
     /// Some vanilla paired kill-move clips store a NaN on one track. The axis then
     /// keeps its identity, so the rest of the clip still plays (docs/formats/hka-animation.md).
-    public mutating func readFloat(orIdentity identity: Float) throws -> Float {
+    mutating func readFloat(orIdentity identity: Float) throws -> Float {
         let value = try readFloat()
         return value.isFinite ? value : identity
     }
 
-    public mutating func readSplineHeader(
+    mutating func readSplineHeader(
         trackIndex: Int,
         component: String
     ) throws -> HKASplineHeader {
@@ -214,7 +214,7 @@ nonisolated public struct HKASplineCursor: Sendable {
 
     /// Havok 40-bit quaternion: three signed 12-bit components scaled to
     /// [-1/sqrt(2), +1/sqrt(2)], 2-bit omitted-largest lane, 1-bit sign.
-    public mutating func readQuaternion40() throws -> SIMD4<Float> {
+    mutating func readQuaternion40() throws -> SIMD4<Float> {
         var bits: UInt64 = 0
         for byteIndex in 0 ..< 5 {
             try bits |= UInt64(readUInt8()) << UInt64(byteIndex * 8)
@@ -241,12 +241,12 @@ nonisolated public struct HKASplineCursor: Sendable {
         return output
     }
 
-    public mutating func skip(_ count: Int) throws {
+    mutating func skip(_ count: Int) throws {
         try require(count)
         offset += count
     }
 
-    public mutating func align(to alignment: Int) throws {
+    mutating func align(to alignment: Int) throws {
         let aligned = (offset + alignment - 1) & ~(alignment - 1)
         try skip(aligned - offset)
     }

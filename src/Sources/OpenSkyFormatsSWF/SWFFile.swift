@@ -3,7 +3,7 @@
 // "unknown". Layout and sources: docs/formats/swf.md.
 
 public import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 
 nonisolated public enum SWFError: Error, Equatable, Sendable {
     /// Signature is not one of the three SWF magics.
@@ -120,7 +120,7 @@ nonisolated public struct SWFFile: Sendable {
     /// length == 0x3F means the real length follows as a UI32 LE ("long" tag).
     /// The stream terminates at the End tag (code 0). Internal because
     /// DefineSprite (39) bodies carry the same nested tag framing (SWFMovie).
-    public static func parseTags(_ reader: inout BinaryReader) throws -> [SWFTag] {
+    static func parseTags(_ reader: inout BinaryReader) throws -> [SWFTag] {
         var tags: [SWFTag] = []
         while true {
             let recordHeader = try reader.readUInt16()

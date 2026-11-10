@@ -26,7 +26,7 @@ nonisolated public struct ParticleGravity: Equatable, Sendable {
     public var turbulenceScale: Float
     public var worldAligned: Bool
 
-    public init(
+    init(
         position: SIMD3<Float>, axis: SIMD3<Float>, decay: Float, strength: Float, force: Force,
         turbulence: Float = 0, turbulenceScale: Float = 1, worldAligned: Bool = false
     ) {
@@ -81,7 +81,7 @@ nonisolated public struct ParticleDrag: Equatable, Sendable {
     /// Drag fades to none over this distance past `range`.
     public var rangeFalloff: Float
 
-    public init(
+    init(
         position: SIMD3<Float>, axis: SIMD3<Float>, percentage: Float, range: Float,
         rangeFalloff: Float
     ) {
@@ -124,19 +124,6 @@ nonisolated public struct ParticleRotation: Equatable, Sendable {
     public var randomSpeedSign: Bool
     public var randomAxis: Bool
     public var axis: SIMD3<Float>
-
-    public init(
-        speed: Float, speedVariation: Float, angle: Float, angleVariation: Float,
-        randomSpeedSign: Bool, randomAxis: Bool, axis: SIMD3<Float>
-    ) {
-        self.speed = speed
-        self.speedVariation = speedVariation
-        self.angle = angle
-        self.angleVariation = angleVariation
-        self.randomSpeedSign = randomSpeedSign
-        self.randomAxis = randomAxis
-        self.axis = axis
-    }
 }
 
 /// `NiPSysSpawnModifier`: new particles born from one that dies or collides.
@@ -153,20 +140,6 @@ nonisolated public struct ParticleSpawn: Equatable, Sendable {
     public var directionVariation: Float
     public var lifeSpan: Float
     public var lifeSpanVariation: Float
-
-    public init(
-        generations: UInt16, percentage: Float, minimumCount: UInt16, maximumCount: UInt16,
-        speedVariation: Float, directionVariation: Float, lifeSpan: Float, lifeSpanVariation: Float
-    ) {
-        self.generations = generations
-        self.percentage = percentage
-        self.minimumCount = minimumCount
-        self.maximumCount = maximumCount
-        self.speedVariation = speedVariation
-        self.directionVariation = directionVariation
-        self.lifeSpan = lifeSpan
-        self.lifeSpanVariation = lifeSpanVariation
-    }
 }
 
 /// `BSPSysSubTexModifier`: each particle plays through the sub-texture frames.
@@ -181,19 +154,6 @@ nonisolated public struct ParticleSubTexture: Equatable, Sendable {
     /// Frames played over the particle's life.
     public var frameCount: Float
     public var frameCountFudge: Float
-
-    public init(
-        startFrame: Float, startFrameFudge: Float, endFrame: Float, loopStartFrame: Float,
-        loopStartFrameFudge: Float, frameCount: Float, frameCountFudge: Float
-    ) {
-        self.startFrame = startFrame
-        self.startFrameFudge = startFrameFudge
-        self.endFrame = endFrame
-        self.loopStartFrame = loopStartFrame
-        self.loopStartFrameFudge = loopStartFrameFudge
-        self.frameCount = frameCount
-        self.frameCountFudge = frameCountFudge
-    }
 
     /// The frame at `fraction` of the life, for a particle that drew its start, loop start,
     /// and frame count as `drawn.x`, `drawn.y`, and `drawn.z`. The result stays inside
@@ -222,10 +182,4 @@ nonisolated public struct ParticleInheritVelocity: Equatable, Sendable {
     public var objectNodes: [String] = []
     /// The inherit object's origin in the system's space.
     public var objectOrigin = SIMD3<Float>.zero
-
-    public init(chance: Float, multiplier: Float, variation: Float) {
-        self.chance = chance
-        self.multiplier = multiplier
-        self.variation = variation
-    }
 }

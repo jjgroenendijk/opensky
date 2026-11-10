@@ -2,12 +2,12 @@
 // helpers with NIFCollisionTriangleCollections.swift, so those are internal.
 // Source: NifTools nif.xml.
 
-public import Foundation
+import Foundation
 import OpenSkyFormatsCore
 import simd
 
 nonisolated extension NIFCollisionTriangleCollections {
-    public static func decodeTriStrips(data: Data, scale: SIMD3<Float>) throws -> Soup {
+    static func decodeTriStrips(data: Data, scale: SIMD3<Float>) throws -> Soup {
         var reader = BinaryReader(data)
         _ = try reader.readUInt32() // group ID
         let vertexCount = try Int(reader.readUInt16())

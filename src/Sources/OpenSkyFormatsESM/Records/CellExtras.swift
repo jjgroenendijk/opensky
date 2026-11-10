@@ -14,25 +14,25 @@ nonisolated public struct CellExtras: Equatable, Sendable {
     /// XCIM, an IMGS.
     public var imageSpace: FormID?
     /// XILL, a FLST or NPC_ whose members may use the cell's locks.
-    public var lockList: FormID?
+    var lockList: FormID?
     /// XCCM, a REGN whose sky and weather the interior shows.
-    public var skyRegion: FormID?
+    var skyRegion: FormID?
     /// XNAM.
-    public var waterNoiseTexture: String?
+    var waterNoiseTexture: String?
     /// XWEM.
-    public var waterEnvironmentMap: String?
+    var waterEnvironmentMap: String?
     /// XWCN or XWCS, the declared XWCU count.
-    public var waterVelocityCount: UInt32?
+    var waterVelocityCount: UInt32?
     /// XWCU.
-    public var waterVelocities: [WaterVelocity] = []
+    var waterVelocities: [WaterVelocity] = []
     /// MHDT: a float offset, then 32x32 uint8 heights. Kept raw.
-    public var maxHeightData: Data?
+    var maxHeightData: Data?
     /// TVDT occlusion data. xEdit leaves it unnamed.
-    public var occlusionData: Data?
+    var occlusionData: Data?
     /// LNAM, leftover flags that now live in XCLC.
-    public var legacyFlags: Data?
+    var legacyFlags: Data?
 
-    public init() {}
+    init() {}
 
     /// Decodes a field this struct owns. Returns false for any other field.
     mutating func decode(field: ESMField) throws -> Bool {

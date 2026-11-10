@@ -23,29 +23,29 @@ nonisolated public struct ESMRecord: Sendable {
         }
 
         /// TES4: ESM file, pinned to the top of the load order.
-        public static let esm = Flags(rawValue: 1 << 0)
-        public static let deleted = Flags(rawValue: 1 << 5)
+        static let esm = Flags(rawValue: 1 << 0)
+        static let deleted = Flags(rawValue: 1 << 5)
         /// TES4: strings live in .strings/.dlstrings/.ilstrings tables.
-        public static let localized = Flags(rawValue: 1 << 7)
+        static let localized = Flags(rawValue: 1 << 7)
         /// TES4: ESL (light) file, loaded into the 0xFE FormID space.
         public static let esl = Flags(rawValue: 1 << 9)
         /// REFR/ACHR: the reference stays in memory when its cell unloads (UESP 0x400).
         public static let persistent = Flags(rawValue: 1 << 10)
         /// REFR/ACHR: placed reference starts disabled until a script or
         /// quest enables it (UESP record-header flag 0x800).
-        public static let initiallyDisabled = Flags(rawValue: 1 << 11)
-        public static let ignored = Flags(rawValue: 1 << 12)
+        static let initiallyDisabled = Flags(rawValue: 1 << 11)
+        static let ignored = Flags(rawValue: 1 << 12)
         /// GLOB: the global is constant and the Creation Kit refuses to let a
         /// script write it (UESP GLOB record-header flag 0x40).
         public static let constantGlobal = Flags(rawValue: 1 << 6)
         /// Data is uint32 decompressedSize + zlib stream.
-        public static let compressed = Flags(rawValue: 1 << 18)
+        static let compressed = Flags(rawValue: 1 << 18)
         /// ACTI, DOOR, FURN, STAT: an editor-only marker the game does not draw.
-        public static let marker = Flags(rawValue: 1 << 23)
+        static let marker = Flags(rawValue: 1 << 23)
     }
 
     /// The record types whose header bit 23 means `Is Marker` (xEdit dev-4.1.6).
-    public static let markerFlagTypes: Set<FourCC> = ["ACTI", "DOOR", "FURN", "STAT"]
+    static let markerFlagTypes: Set<FourCC> = ["ACTI", "DOOR", "FURN", "STAT"]
 
     /// 24-byte SSE record header (Oblivion's is 20 — not supported).
     public struct Header: Sendable {

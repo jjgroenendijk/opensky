@@ -4,7 +4,7 @@
 
 import Foundation
 public import OpenSkyFormatsCore
-public import simd
+import simd
 
 nonisolated extension BinaryReader {
     public mutating func readNIFRef() throws -> Int32 {
@@ -15,7 +15,7 @@ nonisolated extension BinaryReader {
         try SIMD4(readFloat32(), readFloat32(), readFloat32(), readFloat32())
     }
 
-    public mutating func readCollisionFilter() throws -> NIFCollisionFilter {
+    mutating func readCollisionFilter() throws -> NIFCollisionFilter {
         try NIFCollisionFilter(
             layer: readUInt8(),
             flags: readUInt8(),
@@ -25,30 +25,30 @@ nonisolated extension BinaryReader {
 
     /// A Havok position stored as `Vector4`: XYZ converted to engine units,
     /// W discarded (nif.xml keeps it only for 16-byte alignment).
-    public mutating func readHavokPoint() throws -> SIMD3<Float> {
+    mutating func readHavokPoint() throws -> SIMD3<Float> {
         try readVector4().xyz * NIFCollisionModel.havokToEngineScale
     }
 
     /// A Havok direction stored as `Vector4`: unitless, so no conversion.
-    public mutating func readHavokAxis() throws -> SIMD3<Float> {
+    mutating func readHavokAxis() throws -> SIMD3<Float> {
         try readVector4().xyz
     }
 
     /// nif.xml `bool` is one byte from stream 4.1.0.1 on, which covers every
     /// Skyrim NIF. Any non-zero byte is true.
-    public mutating func readHavokBool() throws -> Bool {
+    mutating func readHavokBool() throws -> Bool {
         try readUInt8() != 0
     }
 
     /// nif.xml `hkMatrix3`: three rows of four floats, the fourth of each
     /// unused. Transposed on read so the result applies to column vectors,
     /// matching `NIFObjectPrefix.rotation` and MatrixMath.
-    public mutating func readHavokMatrix3() throws -> float3x3 {
+    mutating func readHavokMatrix3() throws -> float3x3 {
         let rows = try (readVector4().xyz, readVector4().xyz, readVector4().xyz)
         return float3x3(rows: [rows.0, rows.1, rows.2])
     }
 
-    public mutating func readCollisionMatrix() throws -> float4x4 {
+    mutating func readCollisionMatrix() throws -> float4x4 {
         var columns = try (
             readVector4(),
             readVector4(),
@@ -65,7 +65,7 @@ nonisolated extension BinaryReader {
         return float4x4(columns: columns)
     }
 
-    public mutating func readHavokTransform() throws -> float4x4 {
+    mutating func readHavokTransform() throws -> float4x4 {
         let translation = try readVector4()
         let quaternion = try readVector4()
         let length = simd_length(quaternion)

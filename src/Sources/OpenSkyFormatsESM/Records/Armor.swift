@@ -107,30 +107,30 @@ nonisolated public struct Armor: Sendable {
 /// ARMO fields beyond what equipping and rendering read. xEdit dev-4.1.6 names
 /// each one; docs/formats/armor.md.
 nonisolated public struct ArmorDetails: Equatable, Sendable {
-    public let bounds: ObjectBounds?
+    let bounds: ObjectBounds?
     /// DESC — inventory description.
-    public let description: LString?
+    let description: LString?
     /// MOD2 group with ICON/MICO — the male ground model and its icons.
     public let maleWorldModel: ModelData?
-    public let maleIconPath: String?
-    public let maleMessageIconPath: String?
+    let maleIconPath: String?
+    let maleMessageIconPath: String?
     /// MOD4 group with ICO2/MIC2 — the female ground model and its icons.
     public let femaleWorldModel: ModelData?
-    public let femaleIconPath: String?
-    public let femaleMessageIconPath: String?
+    let femaleIconPath: String?
+    let femaleMessageIconPath: String?
     /// TNAM — the ARMO this one copies its look and stats from.
-    public let template: FormID?
+    let template: FormID?
     /// YNAM/ZNAM — pickup and drop sounds.
-    public let pickupSound: FormID?
-    public let dropSound: FormID?
+    let pickupSound: FormID?
+    let dropSound: FormID?
     /// BMCT — ragdoll constraint template path.
-    public let ragdollConstraintTemplate: String?
+    let ragdollConstraintTemplate: String?
     public let equipType: FormID?
     /// BIDS — the IPDS a shield bash plays.
-    public let bashImpactDataSet: FormID?
+    let bashImpactDataSet: FormID?
     /// BAMT — the MATT a block hits instead of the armor's own.
-    public let alternateBlockMaterial: FormID?
-    public let destructible: Destructible?
+    let alternateBlockMaterial: FormID?
+    let destructible: Destructible?
     public let scriptData: ScriptData
 
     init(_ fields: inout RecordFields) {

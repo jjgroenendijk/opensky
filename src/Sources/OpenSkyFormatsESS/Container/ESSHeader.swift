@@ -38,9 +38,9 @@ nonisolated public struct ESSHeader: Equatable, Sendable {
 
     public static let magic = Data("TESV_SAVEGAME".utf8)
     public static let specialEditionVersion: UInt32 = 12
-    public static let supportedVersions: Set<UInt32> = [7, 8, 9, 12]
+    static let supportedVersions: Set<UInt32> = [7, 8, 9, 12]
     /// Largest screenshot side accepted, far above what the game writes.
-    public static let maximumScreenshotSide = 4096
+    static let maximumScreenshotSide = 4096
 
     public init(
         version: UInt32, saveNumber: UInt32, playerName: String, playerLevel: UInt32,
@@ -75,7 +75,7 @@ nonisolated public struct ESSHeader: Equatable, Sendable {
     }
 
     /// Bytes per screenshot pixel: RGB before Special Edition, RGBA after.
-    public var screenshotBytesPerPixel: Int {
+    var screenshotBytesPerPixel: Int {
         isSpecialEdition ? 4 : 3
     }
 

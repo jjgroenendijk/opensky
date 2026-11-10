@@ -15,21 +15,21 @@ nonisolated public struct MagicEffectFlags: OptionSet, Equatable, Sendable {
     public static let hostile = Self(rawValue: 1 << 0)
     public static let recover = Self(rawValue: 1 << 1)
     public static let detrimental = Self(rawValue: 1 << 2)
-    public static let snapToNavmesh = Self(rawValue: 1 << 3)
-    public static let noHitEvent = Self(rawValue: 1 << 4)
-    public static let dispelWithKeywords = Self(rawValue: 1 << 8)
+    static let snapToNavmesh = Self(rawValue: 1 << 3)
+    static let noHitEvent = Self(rawValue: 1 << 4)
+    static let dispelWithKeywords = Self(rawValue: 1 << 8)
     public static let noDuration = Self(rawValue: 1 << 9)
     public static let noMagnitude = Self(rawValue: 1 << 10)
-    public static let noArea = Self(rawValue: 1 << 11)
-    public static let effectsPersist = Self(rawValue: 1 << 12)
-    public static let goryVisuals = Self(rawValue: 1 << 14)
-    public static let hideInUI = Self(rawValue: 1 << 15)
+    static let noArea = Self(rawValue: 1 << 11)
+    static let effectsPersist = Self(rawValue: 1 << 12)
+    static let goryVisuals = Self(rawValue: 1 << 14)
+    static let hideInUI = Self(rawValue: 1 << 15)
     public static let noRecast = Self(rawValue: 1 << 17)
     public static let powerAffectsMagnitude = Self(rawValue: 1 << 21)
     public static let powerAffectsDuration = Self(rawValue: 1 << 22)
-    public static let painless = Self(rawValue: 1 << 26)
-    public static let noHitEffect = Self(rawValue: 1 << 27)
-    public static let noDeathDispel = Self(rawValue: 1 << 28)
+    static let painless = Self(rawValue: 1 << 26)
+    static let noHitEffect = Self(rawValue: 1 << 27)
+    static let noDeathDispel = Self(rawValue: 1 << 28)
 }
 
 nonisolated public struct MagicEffectSound: Equatable, Sendable {
@@ -57,16 +57,16 @@ nonisolated public struct MagicEffectData: Equatable, Sendable {
     public let associatedItem: FormID?
     public let magicSkill: Int32
     public let resistanceActorValue: Int32
-    public let counterEffectCount: UInt16
+    let counterEffectCount: UInt16
     public let castingLight: FormID?
-    public let taperWeight: Float
+    let taperWeight: Float
     public let hitShader: FormID?
-    public let enchantShader: FormID?
-    public let minimumSkillLevel: UInt32
-    public let spellmakingArea: UInt32
-    public let castingTime: Float
-    public let taperCurve: Float
-    public let taperDuration: Float
+    let enchantShader: FormID?
+    let minimumSkillLevel: UInt32
+    let spellmakingArea: UInt32
+    let castingTime: Float
+    let taperCurve: Float
+    let taperDuration: Float
     public let secondActorValueWeight: Float
     public let archetype: MagicEffectArchetype
     public let relatedActorValue: Int32
@@ -80,18 +80,18 @@ nonisolated public struct MagicEffectData: Equatable, Sendable {
     public let impactData: FormID?
     public let skillUsageMultiplier: Float
     public let dualCastArt: FormID?
-    public let dualCastScale: Float
+    let dualCastScale: Float
     public let enchantArt: FormID?
-    public let hitVisuals: FormID?
-    public let enchantVisuals: FormID?
-    public let equipAbility: FormID?
+    let hitVisuals: FormID?
+    let enchantVisuals: FormID?
+    let equipAbility: FormID?
     public let imageSpaceModifier: FormID?
     public let perkToApply: FormID?
     public let castingSoundLevel: UInt32
-    public let scriptAIScore: Float
-    public let scriptAIDelay: Float
+    let scriptAIScore: Float
+    let scriptAIDelay: Float
 
-    public var unknownEnumCount: Int {
+    var unknownEnumCount: Int {
         var count = 0
         if case .unknown = archetype {
             count += 1
@@ -105,7 +105,7 @@ nonisolated public struct MagicEffectData: Equatable, Sendable {
         return count
     }
 
-    public init(field: ESMField) throws {
+    init(field: ESMField) throws {
         guard field.data.count == 152 else {
             throw ESMError.malformed(
                 "MGEF DATA has \(field.data.count) bytes, expected exactly 152"

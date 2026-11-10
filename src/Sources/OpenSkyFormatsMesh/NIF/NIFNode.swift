@@ -21,7 +21,7 @@ nonisolated public struct NIFNode: Sendable {
     /// Child block refs in file order; -1 = empty slot (kept positional).
     public let children: [Int32]
 
-    public init(object: NIFObjectPrefix, children: [Int32]) {
+    init(object: NIFObjectPrefix, children: [Int32]) {
         self.object = object
         self.children = children
     }

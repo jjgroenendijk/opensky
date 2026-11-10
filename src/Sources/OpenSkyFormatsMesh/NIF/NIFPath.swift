@@ -15,7 +15,7 @@ nonisolated public struct NIFPath: Equatable, Sendable {
     /// The flags, bank, smoothing, and follow axis.
     public let interpolator: NIFPathInterpolator
     /// The largest bend along the path, the scale a bank is measured against.
-    public private(set) var maximumCurvature: Float = 0
+    private(set) var maximumCurvature: Float = 0
 
     /// The path of the `NiPathInterpolator` at `ref`; nil for another block type.
     init?(interpolatorRef ref: Int32, file: NIFFile) throws {

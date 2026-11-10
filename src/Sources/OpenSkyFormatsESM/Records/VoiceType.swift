@@ -13,8 +13,8 @@ nonisolated public struct VoiceType: Sendable {
             self.rawValue = rawValue
         }
 
-        public static let allowsDefaultDialogue = Flags(rawValue: 0x01)
-        public static let female = Flags(rawValue: 0x02)
+        static let allowsDefaultDialogue = Flags(rawValue: 0x01)
+        static let female = Flags(rawValue: 0x02)
     }
 
     public private(set) var formID: FormID

@@ -2,11 +2,11 @@
 // decode throws is noted in `SkippedRecords` instead of vanishing.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 
 nonisolated extension ESMFile {
     /// Live `type` records in file order. Deleted records are left out; a nil decode is dropped.
-    public func decodeRecords<Value>(
+    func decodeRecords<Value>(
         of type: FourCC,
         skipped: inout SkippedRecords,
         using decode: (ESMRecord) throws -> Value?
@@ -21,7 +21,7 @@ nonisolated extension ESMFile {
     }
 
     /// The same walk, keyed by each record's raw FormID.
-    public func indexRecords<Value>(
+    func indexRecords<Value>(
         of type: FourCC,
         skipped: inout SkippedRecords,
         using decode: (ESMRecord) throws -> Value?
@@ -36,7 +36,7 @@ nonisolated extension ESMFile {
     }
 
     /// Live `type` records, undecoded, for callers that decode them their own way.
-    public func liveRecords(of type: FourCC, skipped: inout SkippedRecords) -> [ESMRecord] {
+    func liveRecords(of type: FourCC, skipped: inout SkippedRecords) -> [ESMRecord] {
         var records: [ESMRecord] = []
         forEachLiveRecord(of: type, skipped: &skipped) { records.append($0) }
         return records

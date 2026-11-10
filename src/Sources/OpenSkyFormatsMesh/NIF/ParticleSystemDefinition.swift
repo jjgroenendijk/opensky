@@ -178,7 +178,7 @@ nonisolated public struct MeshEmitterSource: Equatable, Sendable {
         case edgeSurface = 4
     }
 
-    public let meshRefs: [Int32]
+    let meshRefs: [Int32]
     public let velocity: Velocity
     public let emitFrom: EmitFrom
     public let emissionAxis: SIMD3<Float>
@@ -188,7 +188,7 @@ nonisolated public struct MeshEmitterSource: Equatable, Sendable {
     /// Indices into `positions`.
     public var triangles: [SIMD3<UInt32>]
 
-    public init(
+    init(
         meshRefs: [Int32],
         velocity: Velocity,
         emitFrom: EmitFrom,
@@ -263,7 +263,7 @@ nonisolated public struct ParticleColourRamp: Equatable, Sendable {
     public let colour3Start: Float
     public let colours: [SIMD4<Float>]
 
-    public init(fades: SIMD2<Float>, stops: SIMD4<Float>, colours: [SIMD4<Float>]) {
+    init(fades: SIMD2<Float>, stops: SIMD4<Float>, colours: [SIMD4<Float>]) {
         fadeIn = fades.x
         fadeOut = fades.y
         colour1End = stops.x

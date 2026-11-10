@@ -45,10 +45,10 @@ nonisolated extension Quest {
         /// CNAM, the journal paragraph. Localized plugins hold a string ID.
         public var text: LString?
         /// NAM0, a QUST this entry hands off to.
-        public var nextQuest: FormID?
+        var nextQuest: FormID?
         /// SCHR, SCTX, and QNAM left by older Creation Kit versions; xEdit
         /// marks them unused. Raw bytes, in file order.
-        public var legacyFields: [Data] = []
+        var legacyFields: [Data] = []
     }
 
     public struct LogEntryFlags: OptionSet, Equatable, Sendable {
@@ -68,7 +68,7 @@ nonisolated extension Quest {
         /// QOBJ. By convention it matches a stage index, but nothing enforces
         /// that, and duplicates are legal.
         public var index: UInt16 = 0
-        public var flags = ObjectiveFlags()
+        var flags = ObjectiveFlags()
         /// NNAM, the objective text. Required by xEdit; absent only in
         /// malformed data.
         public var displayText: LString?
@@ -83,7 +83,7 @@ nonisolated extension Quest {
         }
 
         /// This objective is satisfied by itself or the previous one.
-        public static let oredWithPrevious = ObjectiveFlags(rawValue: 1 << 0)
+        static let oredWithPrevious = ObjectiveFlags(rawValue: 1 << 0)
     }
 
     /// One QSTA group: which alias the compass marker points at.
@@ -96,8 +96,8 @@ nonisolated extension Quest {
         /// The QSTA word. Read as the alias ID for an objective target and as
         /// a reference FormID for a record-level legacy target, which is why
         /// it is kept as the raw signed word plus the two typed accessors.
-        public var rawTarget: Int32 = 0
-        public var compassMarkerIgnoresLocks = false
+        var rawTarget: Int32 = 0
+        var compassMarkerIgnoresLocks = false
         public var conditions = ConditionList()
 
         /// Alias ID this target follows, for an objective target.
@@ -106,7 +106,7 @@ nonisolated extension Quest {
         }
 
         /// Reference this target points at, for a legacy record-level target.
-        public var reference: FormID {
+        var reference: FormID {
             FormID(UInt32(bitPattern: rawTarget))
         }
     }
@@ -131,17 +131,17 @@ nonisolated extension Quest {
         public var forcedLocation: FormID? // ALFL
         public var aliasReference: Int32? // ALFA
         public var referenceType: FormID? // ALRT
-        public var keyword: FormID? // KNAM
-        public var externalQuest: FormID? // ALEQ
-        public var externalAlias: Int32? // ALEA
+        var keyword: FormID? // KNAM
+        var externalQuest: FormID? // ALEQ
+        var externalAlias: Int32? // ALEA
         public var createdObject: FormID? // ALCO
         /// ALCA: low 16 bits are the alias to create at, high bit 0x8000
         /// switches "create at" to "create in".
         public var createAt: UInt32?
-        public var createLevel: UInt32? // ALCL
+        var createLevel: UInt32? // ALCL
         public var nearAlias: Int32? // ALNA
         public var nearType: UInt32? // ALNT
-        public var fromEvent: UInt32? // ALFE
+        var fromEvent: UInt32? // ALFE
         public var eventData: UInt32? // ALFD
 
         /// The CTDA run inside the alias — the "match conditions" the fill
@@ -153,15 +153,15 @@ nonisolated extension Quest {
         public var declaredItemCount: UInt32?
         /// CNTO: items given to the target for the quest's duration.
         public var items: [AliasItem] = []
-        public var spells: [FormID] = [] // ALSP
-        public var factions: [FormID] = [] // ALFC
+        var spells: [FormID] = [] // ALSP
+        var factions: [FormID] = [] // ALFC
         public var packages: [FormID] = [] // ALPC
-        public var displayName: FormID? // ALDN
-        public var voiceTypes: FormID? // VTCK
-        public var spectatorOverride: FormID? // SPOR
-        public var observeDeadBodyOverride: FormID? // OCOR
-        public var guardWarnOverride: FormID? // GWOR
-        public var combatOverride: FormID? // ECOR
+        var displayName: FormID? // ALDN
+        var voiceTypes: FormID? // VTCK
+        var spectatorOverride: FormID? // SPOR
+        var observeDeadBodyOverride: FormID? // OCOR
+        var guardWarnOverride: FormID? // GWOR
+        var combatOverride: FormID? // ECOR
 
         public init(id: UInt32, category: AliasCategory) {
             self.id = id

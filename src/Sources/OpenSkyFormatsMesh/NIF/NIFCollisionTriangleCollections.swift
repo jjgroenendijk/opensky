@@ -1,19 +1,19 @@
 // The bhkPackedNiTriStripsShape triangle store, plus the `Soup` and bounds
 // helpers it shares with NIFCollisionTriStrips.swift. Source: NifTools nif.xml.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 import simd
 
-nonisolated public enum NIFCollisionTriangleCollections: Sendable {
-    public struct Soup: Sendable {
-        public let vertices: [SIMD3<Float>]
-        public let indices: [UInt32]
+nonisolated enum NIFCollisionTriangleCollections: Sendable {
+    struct Soup: Sendable {
+        let vertices: [SIMD3<Float>]
+        let indices: [UInt32]
         /// `SkyrimHavokMaterial` for this soup, from its sub-shape. Nil when
         /// the block declares no sub-shapes.
-        public let material: UInt32?
+        let material: UInt32?
 
-        public init(vertices: [SIMD3<Float>], indices: [UInt32], material: UInt32? = nil) {
+        init(vertices: [SIMD3<Float>], indices: [UInt32], material: UInt32? = nil) {
             self.vertices = vertices
             self.indices = indices
             self.material = material
@@ -30,7 +30,7 @@ nonisolated public enum NIFCollisionTriangleCollections: Sendable {
     /// each sub-shape names its own material. The soups this returns are that
     /// partition: one per sub-shape that any triangle actually falls in, in
     /// sub-shape order, sharing the block's single vertex array.
-    public static func decodePacked(data: Data, scale: SIMD3<Float>) throws -> [Soup] {
+    static func decodePacked(data: Data, scale: SIMD3<Float>) throws -> [Soup] {
         var reader = BinaryReader(data)
         let triangleCount = try checkedCount(
             reader: &reader,
@@ -137,7 +137,7 @@ nonisolated public enum NIFCollisionTriangleCollections: Sendable {
         }
     }
 
-    public static func appendValidated(
+    static func appendValidated(
         _ triangle: [UInt16],
         vertexCount: Int,
         into output: inout [UInt32]
@@ -148,7 +148,7 @@ nonisolated public enum NIFCollisionTriangleCollections: Sendable {
         output.append(contentsOf: triangle.map(UInt32.init))
     }
 
-    public static func skip(
+    static func skip(
         reader: inout BinaryReader,
         count: Int,
         stride: Int,
@@ -160,7 +160,7 @@ nonisolated public enum NIFCollisionTriangleCollections: Sendable {
         reader.skip(count * stride)
     }
 
-    public static func checkedCount(
+    static func checkedCount(
         reader: inout BinaryReader,
         stride: Int,
         label: String

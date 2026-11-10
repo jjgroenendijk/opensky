@@ -14,7 +14,7 @@ nonisolated public struct AssociationType: Equatable, Sendable {
             self.rawValue = rawValue
         }
 
-        public static let familyAssociation = Flags(rawValue: 0x0000_0001)
+        static let familyAssociation = Flags(rawValue: 0x0000_0001)
     }
 
     public let formID: FormID

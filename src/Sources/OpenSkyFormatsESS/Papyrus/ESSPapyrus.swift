@@ -48,26 +48,26 @@ nonisolated public struct ESSPapyrusInstance: Equatable, Sendable {
 
 /// A struct-like object the VM keeps apart from scripts, such as a quest alias.
 nonisolated public struct ESSPapyrusReference: Equatable, Sendable {
-    public let id: UInt64
-    public let type: String
-    public internal(set) var variables: [ESSPapyrusValue] = []
+    let id: UInt64
+    let type: String
+    var variables: [ESSPapyrusValue] = []
 }
 
 nonisolated public struct ESSPapyrusArray: Equatable, Sendable {
-    public let id: UInt64
-    public let element: ESSPapyrusElementKind
-    public let length: Int
-    public internal(set) var elements: [ESSPapyrusValue] = []
+    let id: UInt64
+    let element: ESSPapyrusElementKind
+    let length: Int
+    var elements: [ESSPapyrusValue] = []
 }
 
 nonisolated public struct ESSPapyrusSuspendedStack: Equatable, Sendable {
-    public let id: UInt32
+    let id: UInt32
     public let scriptName: String?
 }
 
 nonisolated public struct ESSPapyrusActiveScript: Equatable, Sendable {
     public let id: UInt32
-    public let type: UInt8
+    let type: UInt8
 }
 
 nonisolated public struct ESSPapyrus: Equatable, Sendable {
@@ -119,7 +119,7 @@ nonisolated public struct ESSPapyrus: Equatable, Sendable {
         stackStatus = ESSPapyrusStacks.read(&reader, context, into: &self)
     }
 
-    public func instances(on form: ESSRefID) -> [ESSPapyrusInstance] {
+    func instances(on form: ESSRefID) -> [ESSPapyrusInstance] {
         instances.filter { $0.form == form }
     }
 

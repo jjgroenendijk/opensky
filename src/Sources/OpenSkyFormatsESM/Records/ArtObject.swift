@@ -20,7 +20,7 @@ nonisolated public enum ArtType: Equatable, Sendable {
         }
     }
 
-    public var rawValue: UInt32 {
+    var rawValue: UInt32 {
         switch self {
         case .magicCasting: 0
         case .magicHitEffect: 1

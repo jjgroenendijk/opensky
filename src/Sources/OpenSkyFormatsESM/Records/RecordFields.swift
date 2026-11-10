@@ -174,7 +174,7 @@ nonisolated extension RecordFields {
     }
 
     /// True when the record carries a field of `type`; used for empty marker fields.
-    public mutating func marker(_ type: FourCC) -> Bool {
+    mutating func marker(_ type: FourCC) -> Bool {
         read(type) { _ in true } ?? false
     }
 
@@ -243,7 +243,7 @@ nonisolated extension FormID {
 }
 
 nonisolated extension BinaryReader {
-    public mutating func readInt32() throws -> Int32 {
+    mutating func readInt32() throws -> Int32 {
         try Int32(bitPattern: readUInt32())
     }
 

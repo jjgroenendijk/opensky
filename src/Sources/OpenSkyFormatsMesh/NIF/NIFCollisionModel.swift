@@ -10,39 +10,39 @@ nonisolated public struct NIFCollisionFilter: Equatable, Sendable, BitwiseCopyab
     /// NifTools SkyrimLayer raw value.
     public let layer: UInt8
     /// NifTools CollisionFilterFlags: biped part + MOPP/no-collision/link bits.
-    public let flags: UInt8
-    public let group: UInt16
+    let flags: UInt8
+    let group: UInt16
 
     /// nif.xml `CollisionFilterFlags` is a bitfield over one byte: bits 0-4 are
     /// a `BipedPart`, bit 5 is `MOPP Scaled`, bit 6 is `No Collision`, bit 7 is
     /// `Linked Group`.
-    public static let bipedPartMask: UInt8 = 0x1F
-    public static let noCollisionFlag: UInt8 = 0x40
+    static let bipedPartMask: UInt8 = 0x1F
+    static let noCollisionFlag: UInt8 = 0x40
 
     /// The layers nif.xml says the biped part field is meaningful on: "Used
     /// only if the Layer is 8 (or 32/33 for Skyrim and later)" — `SKYL_BIPED`,
     /// `SKYL_DEADBIP` and `SKYL_BIPED_NO_CC`.
-    public static let bipedLayers: Set<UInt8> = [8, 32, 33]
+    static let bipedLayers: Set<UInt8> = [8, 32, 33]
 
-    public var isPlayerSolid: Bool {
+    var isPlayerSolid: Bool {
         // SkyrimLayer 12 = trigger, 15 = non-collidable.
         layer != 12 && layer != 15 && !hasNoCollision
     }
 
-    public var hasNoCollision: Bool {
+    var hasNoCollision: Bool {
         flags & Self.noCollisionFlag != 0
     }
 
     /// Which `BipedPart` this body is, or nil on a layer where the bits mean
     /// nothing. Not zero, because zero is `P_OTHER`, the neck.
-    public var bipedPart: UInt8? {
+    var bipedPart: UInt8? {
         Self.bipedLayers.contains(layer) ? flags & Self.bipedPartMask : nil
     }
 
     /// SkyrimLayer 12 (`SKYL_TRIGGER`) specifically. Not the negation of
     /// `isPlayerSolid`: layer 15 and the `No Collision` flag also fail that
     /// test without naming a trigger.
-    public var isTriggerVolume: Bool {
+    var isTriggerVolume: Bool {
         layer == 12
     }
 }
@@ -110,7 +110,7 @@ nonisolated public struct NIFCollisionBody: Sendable {
     }
 
     /// Raw `hkMotionType` byte. `dynamics.motionSystem` names it.
-    public var motionSystem: UInt8 {
+    var motionSystem: UInt8 {
         dynamics.rawMotionSystem
     }
 
@@ -264,7 +264,7 @@ nonisolated public struct NIFCollisionModel: Sendable {
 
     /// Rigid-body block index -> the name of the scene object it hangs off.
     /// On a character skeleton that is the bone name.
-    public var bodyNamesByBlock: [Int: String] {
+    var bodyNamesByBlock: [Int: String] {
         bodies.reduce(into: [:]) { names, body in
             names[body.bodyBlock] = body.targetName
         }
@@ -272,7 +272,7 @@ nonisolated public struct NIFCollisionModel: Sendable {
 
     /// The two bone names a joint binds, nil where the end points outside the
     /// decoded bodies or at an unnamed node.
-    public func boneNames(
+    func boneNames(
         of constraint: NIFCollisionConstraint
     ) -> (a: String?, b: String?) {
         let names = bodyNamesByBlock

@@ -2,23 +2,23 @@
 // model becomes `.unsupported(typeName:)` and does not throw; malformed bytes
 // in a known block do throw. Layout: docs/formats/nif-particles.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 import simd
 
-nonisolated public enum NIFParticleModifierDecoder: Sendable {
+nonisolated enum NIFParticleModifierDecoder: Sendable {
     /// nif.xml NiPSysEmitter subclasses used by Skyrim particle assets.
-    public static let emitterTypes: Set = [
+    static let emitterTypes: Set = [
         "NiPSysBoxEmitter", "NiPSysCylinderEmitter",
         "NiPSysSphereEmitter", "NiPSysMeshEmitter"
     ]
 
-    public static func isEmitter(_ typeName: String) -> Bool {
+    static func isEmitter(_ typeName: String) -> Bool {
         emitterTypes.contains(typeName)
     }
 
     /// Decodes a NiPSysEmitter subclass block into an engine emitter.
-    public static func emitter(
+    static func emitter(
         typeName: String,
         data: Data,
         header: NIFHeader
@@ -48,7 +48,7 @@ nonisolated public enum NIFParticleModifierDecoder: Sendable {
 
     /// Decodes a non-emitter NiPSysModifier subclass into an engine modifier.
     /// Unknown types return `.unsupported` without reading past the base.
-    public static func modifier(
+    static func modifier(
         typeName: String,
         data: Data,
         header: NIFHeader
@@ -57,7 +57,7 @@ nonisolated public enum NIFParticleModifierDecoder: Sendable {
         return try modifier(typeName: typeName, reader: &reader, header: header)
     }
 
-    public static func modifier(
+    static func modifier(
         typeName: String,
         reader: inout BinaryReader,
         header: NIFHeader
@@ -121,7 +121,7 @@ nonisolated public enum NIFParticleModifierDecoder: Sendable {
     }
 
     /// Every non-emitter modifier type `modifier(typeName:reader:header:)` reads.
-    public static let modifierTypes: Set = [
+    static let modifierTypes: Set = [
         "NiPSysAgeDeathModifier", NIFSpawnModifier.typeName, NIFGravityModifier.typeName,
         NIFRotationModifier.typeName, "NiPSysPositionModifier", "NiPSysBoundUpdateModifier",
         NIFDragModifier.typeName, NIFInheritVelocityModifier.typeName,
@@ -187,13 +187,13 @@ nonisolated public enum NIFParticleModifierDecoder: Sendable {
 }
 
 /// nif.xml `NiPSysModifier`: name, order, target system, and the active flag.
-nonisolated public struct NIFParticleModifierHeader: Equatable, Sendable {
-    public let name: String?
-    public let order: UInt32
-    public let targetRef: Int32
-    public let active: Bool
+nonisolated struct NIFParticleModifierHeader: Equatable, Sendable {
+    let name: String?
+    let order: UInt32
+    let targetRef: Int32
+    let active: Bool
 
-    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
         name = try reader.readNIFString(header)
         order = try reader.readUInt32()
         targetRef = try reader.readNIFRef()

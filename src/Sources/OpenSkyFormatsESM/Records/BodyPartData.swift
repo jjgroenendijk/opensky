@@ -7,35 +7,35 @@ public import OpenSkyFormatsCore
 
 /// BPND, 84 bytes.
 nonisolated public struct BodyPartNodeData: Equatable, Sendable {
-    public let damageMultiplier: Float
+    let damageMultiplier: Float
     /// 0x01 severable, 0x02 IK data, 0x04 IK biped data, 0x08 explodable,
     /// 0x10 IK is head, 0x20 IK headtracking, 0x40 absolute to-hit chance.
     public let flags: UInt8
     /// 0 torso, 1 head, 2 eye, 3 look-at, 4 fly grab, 5 saddle.
     public let partType: UInt8
-    public let healthPercent: UInt8
+    let healthPercent: UInt8
     /// An actor-value index, -1 for none.
-    public let actorValue: Int8
-    public let toHitChance: UInt8
-    public let explosionChance: UInt8
-    public let explodableDebrisCount: UInt16
-    public let explodableDebris: FormID?
-    public let explodableExplosion: FormID?
-    public let trackingMaxAngle: Float
-    public let explodableDebrisScale: Float
-    public let severableDebrisCount: Int32
-    public let severableDebris: FormID?
+    let actorValue: Int8
+    let toHitChance: UInt8
+    let explosionChance: UInt8
+    let explodableDebrisCount: UInt16
+    let explodableDebris: FormID?
+    let explodableExplosion: FormID?
+    let trackingMaxAngle: Float
+    let explodableDebrisScale: Float
+    let severableDebrisCount: Int32
+    let severableDebris: FormID?
     public let severableExplosion: FormID?
-    public let severableDebrisScale: Float
-    public let goreOffset: SIMD3<Float>
-    public let goreRotation: SIMD3<Float>
-    public let severableImpactDataSet: FormID?
-    public let explodableImpactDataSet: FormID?
-    public let severableDecalCount: UInt8
-    public let explodableDecalCount: UInt8
+    let severableDebrisScale: Float
+    let goreOffset: SIMD3<Float>
+    let goreRotation: SIMD3<Float>
+    let severableImpactDataSet: FormID?
+    let explodableImpactDataSet: FormID?
+    let severableDecalCount: UInt8
+    let explodableDecalCount: UInt8
     /// Two bytes xEdit leaves unnamed.
-    public let unknown: UInt16
-    public let limbReplacementScale: Float
+    let unknown: UInt16
+    let limbReplacementScale: Float
 
     init(_ reader: inout BinaryReader) throws {
         damageMultiplier = try reader.readFloat32()
@@ -67,22 +67,22 @@ nonisolated public struct BodyPartNodeData: Equatable, Sendable {
 
 nonisolated public struct BodyPart: Equatable, Sendable {
     /// BPTN, the display name.
-    public var name: LString?
+    var name: LString?
     /// PNAM, the pose-matching node.
-    public var poseMatching: String?
+    var poseMatching: String?
     /// BPNN, the skeleton node this part sits on.
     public var nodeName: String?
     /// BPNT, the VATS target node.
-    public var vatsTarget: String?
+    var vatsTarget: String?
     /// BPNI, the IK start node.
-    public var ikStartNode: String?
+    var ikStartNode: String?
     public var nodeData: BodyPartNodeData?
     /// NAM1, the limb that replaces the severed part.
-    public var limbReplacementModel: String?
+    var limbReplacementModel: String?
     /// NAM4, the bone the gore effects attach to.
-    public var goreTargetBone: String?
+    var goreTargetBone: String?
     /// NAM5 texture hashes, kept raw.
-    public var goreTextureHashes: Data?
+    var goreTextureHashes: Data?
 }
 
 nonisolated public struct BodyPartData: Equatable, Sendable {

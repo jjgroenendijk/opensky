@@ -94,7 +94,7 @@ nonisolated public struct BinaryReader: Sendable {
     }
 
     /// `count` little-endian floats in one bounds check.
-    public mutating func readFloat32s(count: Int) throws -> [Float] {
+    mutating func readFloat32s(count: Int) throws -> [Float] {
         try readIntegers(UInt32.self, count: count).map(Float.init(bitPattern:))
     }
 

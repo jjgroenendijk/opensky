@@ -65,7 +65,7 @@ nonisolated public struct HKBRootLevelContainer: Equatable, Sendable {
     }
 
     /// The payload of the first variant whose declared class name matches.
-    public func variant(ofClass name: String) -> HKXPointerTarget? {
+    func variant(ofClass name: String) -> HKXPointerTarget? {
         variants.first { $0.className == name }?.variant
     }
 }

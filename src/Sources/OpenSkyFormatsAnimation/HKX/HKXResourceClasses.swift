@@ -135,7 +135,7 @@ nonisolated public struct HKAInterleavedUncompressedAnimation: HKBClass, Equatab
     }
 
     /// Frames in the clip; the transforms hold one per track per frame.
-    public var frameCount: Int {
+    var frameCount: Int {
         transformTrackCount > 0 ? transforms.count / transformTrackCount : 0
     }
 
