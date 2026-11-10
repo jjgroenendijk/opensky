@@ -167,8 +167,8 @@ nonisolated public enum DynamicBodySolver: Sendable {
         }
         body.linearVelocity *= max(0, 1 - definition.linearDamping * dt)
         body.angularVelocity *= max(0, 1 - definition.angularDamping * dt)
-        body.linearVelocity = clamped(body.linearVelocity, to: definition.maximumLinearSpeed)
-        body.angularVelocity = clamped(body.angularVelocity, to: definition.maximumAngularSpeed)
+        body.linearVelocity = body.linearVelocity.clampedLength(definition.maximumLinearSpeed)
+        body.angularVelocity = body.angularVelocity.clampedLength(definition.maximumAngularSpeed)
     }
 
     private static func integratePose(
@@ -196,21 +196,11 @@ nonisolated public enum DynamicBodySolver: Sendable {
         }
     }
 
-    /// How far a body may move in one substep before a wall could be crossed
-    /// without ever being sampled: half the collision margin plus a fraction of
-    /// the body's own size, so a large crate substeps less often than a coin.
-    static func substepDistance(of body: DynamicBody) -> Float {
-        max(
-            DynamicBodyContacts.contactMargin,
-            body.definition.boundingRadius * 0.5
-        )
-    }
-
     private static func substepCount(bodies: [DynamicBody], dt: Float) -> Int {
         var required = 1
         for body in bodies where !body.isSleeping {
             let travel = simd_length(body.linearVelocity) * dt
-            let allowed = substepDistance(of: body)
+            let allowed = body.substepDistance
             guard allowed > 0, travel > allowed else { continue }
             required = max(required, Int((travel / allowed).rounded(.up)))
         }
@@ -269,13 +259,23 @@ nonisolated public enum DynamicBodySolver: Sendable {
         body.linearVelocity = .zero
         body.angularVelocity = .zero
     }
+}
 
-    /// Internal for the same reason `resolve` is: the contact half of this enum
-    /// clamps the velocities it writes.
-    public static func clamped(_ vector: SIMD3<Float>, to limit: Float) -> SIMD3<Float> {
-        guard vector.isFiniteVector else { return .zero }
-        let length = simd_length(vector)
-        return length > limit && length > Float.ulpOfOne ? vector / length * limit : vector
+nonisolated extension DynamicBody {
+    /// How far a body may move in one substep before a wall could be crossed
+    /// without ever being sampled: half the collision margin plus a fraction of
+    /// the body's own size, so a large crate substeps less often than a coin.
+    var substepDistance: Float {
+        max(DynamicBody.contactMargin, definition.boundingRadius * 0.5)
+    }
+}
+
+nonisolated extension SIMD3 where Scalar == Float {
+    /// This vector shortened to `limit` when longer; zero when not finite.
+    public func clampedLength(_ limit: Float) -> SIMD3<Float> {
+        guard isFiniteVector else { return .zero }
+        let length = simd_length(self)
+        return length > limit && length > Float.ulpOfOne ? self / length * limit : self
     }
 }
 

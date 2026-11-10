@@ -118,13 +118,6 @@ public struct NPCMovementRuntime {
     /// CPU budget for all NPC locomotion at the cap in a 16.67 ms frame. The real-data
     /// measurement checks the drive against it, and the frame ledger reads it.
     static let maximumCPUTimeMillisecondsAtCap: Double = 2
-    static let waypointTolerance: Float = 12
-    static let stuckTimeout: Float = 2
-    static let progressTolerance: Float = 1
-    static let runDistance: Float = 512
-    /// How fast an actor may turn, in radians per second. `nonisolated`, so the
-    /// in-place turn (`NPCFacingHold`) can use it without main-actor isolation.
-    nonisolated public static let maximumYawSpeed: Float = .pi * 2
 
     public var onDrive: ((NPCLocomotionDriveUpdate) -> Void)?
     public var onPersist: ((NPCMovementPersistence) -> Void)?

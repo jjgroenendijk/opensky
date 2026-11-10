@@ -1,6 +1,6 @@
 // Turning one actor in place to face a point. The movement authority
 // (`NPCMovementRuntime`) owns an actor's yaw, so a turn is a request to it, like
-// a walk. The turn rate is `NPCMovementRuntime.maximumYawSpeed`. The whole actor
+// a walk. The turn rate is `NPCMover.maximumYawSpeed`. The whole actor
 // turns; there is no head tracking or look-at IK.
 
 import OpenSkyFormatsCore
@@ -93,7 +93,7 @@ nonisolated public struct NPCFacingHold: Equatable, Sendable {
         yaw = NPCYawMath.turn(
             from: yaw,
             to: targetYaw,
-            maximum: NPCMovementRuntime.maximumYawSpeed * max(frameTime, 0)
+            maximum: NPCMover.maximumYawSpeed * max(frameTime, 0)
         )
         return NPCLocomotionDriveUpdate(
             actor: actor,

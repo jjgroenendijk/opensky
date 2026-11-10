@@ -9,6 +9,14 @@ public import OpenSkyWorldInterface
 import simd
 
 public struct NPCMover {
+    nonisolated static let waypointTolerance: Float = 12
+    nonisolated static let runDistance: Float = 512
+    nonisolated static let stuckTimeout: Float = 2
+    nonisolated static let progressTolerance: Float = 1
+    /// How fast an actor may turn, in radians per second. `nonisolated`, so the
+    /// in-place turn (`NPCFacingHold`) can use it without main-actor isolation.
+    nonisolated public static let maximumYawSpeed: Float = .pi * 2
+
     public let actor: ReferenceKey
     public let formID: FormID
     public let scale: Float
@@ -213,13 +221,13 @@ public struct NPCMover {
         emissions: inout NPCMoverEmissions
     ) {
         let distance = simd_distance(controller.feetPosition, path.waypoints[waypointIndex])
-        if distance + NPCMovementRuntime.progressTolerance < bestWaypointDistance {
+        if distance + NPCMover.progressTolerance < bestWaypointDistance {
             bestWaypointDistance = distance
             secondsWithoutProgress = 0
             return
         }
         secondsWithoutProgress += max(frameTime, 0)
-        guard secondsWithoutProgress >= NPCMovementRuntime.stuckTimeout else { return }
+        guard secondsWithoutProgress >= NPCMover.stuckTimeout else { return }
         guard repathCount == 0 else {
             finish(.gaveUp, reason: .giveUp, emissions: &emissions)
             return

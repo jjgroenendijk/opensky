@@ -46,7 +46,7 @@ extension NPCMover {
             velocity: SIMD3(sin(heading), cos(heading), 0) * (target == nil ? 0 : gaitSpeed),
             pathTarget: target,
             pathTargetSpeed: gaitSpeed,
-            pathTurnSpeed: NPCMovementRuntime.maximumYawSpeed
+            pathTurnSpeed: NPCMover.maximumYawSpeed
         )
     }
 

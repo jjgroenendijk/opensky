@@ -49,7 +49,7 @@ nonisolated struct DynamicLocalSamples: Sendable {
         else { return nil }
         let inverse = shape.transform.inverse
         points = samples.map { DynamicCollisionMath.transform($0.point, by: inverse) }
-        radii = samples.map { ($0.radius + DynamicBodyContacts.contactMargin) / scale }
+        radii = samples.map { ($0.radius + DynamicBody.contactMargin) / scale }
         orientation = DynamicSurfaceOrientation.of(shape.geometry)
         recovery = worldRecovery / scale
         guard points.allSatisfy(\.isFiniteVector) else { return nil }
@@ -96,12 +96,6 @@ nonisolated public struct DynamicContact: Sendable {
 }
 
 nonisolated public enum DynamicBodyContacts: Sendable {
-    /// Collision margin every contact sample carries on top of its volume's own
-    /// skin. A hull vertex has no skin of its own, so without a margin a resting
-    /// box would generate contacts only while already interpenetrating and would
-    /// jitter between touching and free. Engine units.
-    public static let contactMargin: Float = 1.5
-
     /// How far behind a surface a contact is still believed, in engine units.
     /// Past it the sample is taken to belong to different geometry rather than
     /// to a deep penetration of this one.
@@ -110,6 +104,6 @@ nonisolated public enum DynamicBodyContacts: Sendable {
     /// The same bound for one body: the smaller of `recoveryDepth` and the body's own
     /// reach. Scaling it down for small clutter was the largest saving in the step.
     static func recoveryDepth(of body: DynamicBody) -> Float {
-        min(recoveryDepth, max(contactMargin * 4, body.definition.boundingRadius))
+        min(recoveryDepth, max(DynamicBody.contactMargin * 4, body.definition.boundingRadius))
     }
 }

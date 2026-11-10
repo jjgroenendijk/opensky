@@ -43,7 +43,7 @@ nonisolated extension DynamicBodyContacts {
             for (sampleIndex, answer) in shapeAnswers.enumerated() {
                 guard let hit = answer.hit else { continue }
                 let sample = samples[sampleIndex]
-                let radius = sample.radius + contactMargin
+                let radius = sample.radius + DynamicBody.contactMargin
                 // Behind a face, a nearer face of another shape that the sample is
                 // outside of wins, as it does inside one shape: a jug standing on a
                 // board is not inside the board's underside.
@@ -86,7 +86,8 @@ nonisolated extension DynamicBodyContacts {
         case .sphere, .capsule:
             for (index, sample) in samples.enumerated() {
                 answers[index].hit = penetration(
-                    of: sample.point, radius: sample.radius + contactMargin, shape: shape
+                    of: sample.point, radius: sample.radius + DynamicBody.contactMargin,
+                    shape: shape
                 )
             }
             return answers

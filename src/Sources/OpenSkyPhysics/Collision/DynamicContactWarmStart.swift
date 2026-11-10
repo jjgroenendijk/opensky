@@ -16,7 +16,7 @@ nonisolated struct DynamicWarmImpulse: Sendable {
     let friction: SIMD3<Float>
 }
 
-nonisolated extension DynamicBodySolver {
+nonisolated extension ContactSet {
     /// A contact this close, in the body's frame, to one of the last substep is the same.
     static let warmMatchDistance: Float = 2
     /// The share of the last impulse a contact starts with. Less than all of it, so a
@@ -33,14 +33,14 @@ nonisolated extension ContactSet {
             guard !body.isSleeping else { continue }
             let other = contact.other.map { bodies[$0].key }
             let local = body.orientation.inverse.act(contact.point - body.position)
-            let limit = DynamicBodySolver.warmMatchDistance
+            let limit = Self.warmMatchDistance
             guard
                 let match = body.warmImpulses.first(where: {
                     $0.isPatch == isPatch && $0.other == other
                         && simd_distance_squared($0.localPoint, local) <= limit * limit
                 })
             else { continue }
-            let share = DynamicBodySolver.warmShare
+            let share = Self.warmShare
             let normal = match.normal * share
             var friction = body.orientation.act(match.friction) * share
             friction -= contact.normal * simd_dot(friction, contact.normal)
@@ -51,9 +51,7 @@ nonisolated extension ContactSet {
             }
             self.normal[index] = normal
             self.friction[index] = friction
-            DynamicBodySolver.apply(
-                impulse: contact.normal * normal + friction, contact: contact, bodies: &bodies
-            )
+            contact.apply(contact.normal * normal + friction, to: &bodies)
         }
     }
 

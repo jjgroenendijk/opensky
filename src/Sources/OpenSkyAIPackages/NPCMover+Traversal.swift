@@ -32,10 +32,10 @@ extension NPCMover {
         let flatWaypoint = SIMD2(waypoint.x, waypoint.y)
         // A swimmer floats over a waypoint on the bed below it.
         guard isSwimming || abs(feet.z - waypoint.z) <= capsule.height else { return false }
-        return simd_distance(flatFeet, flatWaypoint) <= NPCMovementRuntime.waypointTolerance
+        return simd_distance(flatFeet, flatWaypoint) <= NPCMover.waypointTolerance
             || NPCAvoidance.isTaken(
                 flatWaypoint, from: flatFeet,
-                within: (capsule.radius, NPCMovementRuntime.waypointTolerance),
+                within: (capsule.radius, NPCMover.waypointTolerance),
                 neighbours: neighbours
             )
     }
@@ -78,7 +78,7 @@ extension NPCMover {
             waypoint.y - controller.feetPosition.y
         )
         let distance = simd_length(delta)
-        let byLeg: LocomotionGait = distance > NPCMovementRuntime.runDistance ? .run : .walk
+        let byLeg: LocomotionGait = distance > NPCMover.runDistance ? .run : .walk
         let nextGait = isSwimming ? .swim : preferredGait ?? byLeg
         var speed = speed(of: nextGait)
         if let walkRunBlend, !isSwimming {
@@ -90,14 +90,14 @@ extension NPCMover {
             waypointIndex == path.waypoints.count - 1
         {
             speed *= runSlowdown.runSpeedScale(
-                remaining: distance, slowingDistance: NPCMovementRuntime.runDistance
+                remaining: distance, slowingDistance: NPCMover.runDistance
             )
         }
         let targetYaw = distance > 0 ? atan2f(delta.y, delta.x) : yaw
         let turnedYaw = NPCYawMath.turn(
             from: yaw,
             to: targetYaw,
-            maximum: NPCMovementRuntime.maximumYawSpeed * max(frameTime, 0)
+            maximum: NPCMover.maximumYawSpeed * max(frameTime, 0)
         )
         return NPCMoverStepPlan(
             speed: speed,

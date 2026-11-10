@@ -290,7 +290,7 @@ nonisolated public enum RagdollConstraintSolver: Sendable {
         }
         for index in bodies.indices {
             guard includeSleeping || !bodies[index].isSleeping else { continue }
-            let move = DynamicBodySolver.clamped(moves[index], to: maximumPositionCorrection)
+            let move = moves[index].clampedLength(maximumPositionCorrection)
             guard move != .zero, move.isFiniteVector else { continue }
             bodies[index].position += move
         }
@@ -323,12 +323,9 @@ nonisolated public enum RagdollConstraintSolver: Sendable {
     }
 
     private static func clampVelocities(of body: inout DynamicBody) {
-        body.linearVelocity = DynamicBodySolver.clamped(
-            body.linearVelocity, to: body.definition.maximumLinearSpeed
-        )
-        body.angularVelocity = DynamicBodySolver.clamped(
-            body.angularVelocity, to: body.definition.maximumAngularSpeed
-        )
+        body.linearVelocity = body.linearVelocity.clampedLength(body.definition.maximumLinearSpeed)
+        body.angularVelocity = body.angularVelocity
+            .clampedLength(body.definition.maximumAngularSpeed)
     }
 }
 
