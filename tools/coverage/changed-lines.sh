@@ -10,7 +10,8 @@
 # A file that imports a Metal framework is left out: only the GPU tests reach it, and
 # the CI runner has no Metal 4.
 #
-# A block git sees as moved unchanged is not new: rename detection for lines.
+# A block git sees as moved unchanged is not new: rename detection for lines. A line
+# that only gains or loses an access keyword, such as `public`, is not new either.
 #
 # Usage: tools/coverage/changed-lines.sh BASE DERIVED_DATA
 #        tools/coverage/changed-lines.sh --self-check
@@ -29,6 +30,7 @@ from swift_source import XCODE_ONLY, tested_wiring_modules, wiring_modules
 
 METAL_IMPORT = re.compile(r"^(?:@\w+\s+)*(?:(?:public|package|internal)\s+)?import\s+"
                           r"(?:Metal|MetalKit|MetalFX|MetalPerformanceShaders)\b", re.MULTILINE)
+ACCESS = re.compile(r"\b(?:public|open|package|internal|fileprivate|private)(?:\(set\))?\s+")
 HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 # The colours `git diff --color-moved` gets, so a moved added line is told apart.
@@ -45,22 +47,33 @@ def needs_metal(path):
         return False
 
 
+def without_access(text):
+    return " ".join(ACCESS.sub("", text).split())
+
+
 def changed_lines(diff, metal=needs_metal):
-    """{path: {line}} for the lines a coloured `git diff -U0` adds, without moved ones and
-    without files that import a Metal framework."""
-    changed, lines, number = {}, None, 0
+    """{path: {line}} for the lines a coloured `git diff -U0` adds, without moved ones, lines
+    whose only change in their hunk is an access keyword, and files that import Metal."""
+    changed, lines, number, removed = {}, None, 0, None
     skipped = XCODE_ONLY | (wiring_modules() - tested_wiring_modules())
     for raw in diff.splitlines():
         text = ANSI.sub("", raw)
-        if text.startswith("+++ "):
+        if text.startswith("diff "):
+            removed = None
+        elif text.startswith("+++ "):
             path = text[6:] if text.startswith("+++ b/") else ""
             usable = (path.startswith("src/Sources/") and path.endswith(".swift")
                       and path.split("/")[2] not in skipped and not metal(path))
             lines = changed.setdefault(path, set()) if usable else None
         elif (hunk := HUNK.match(text)):
-            number = int(hunk.group(1))
+            number, removed = int(hunk.group(1)), []
+        elif text.startswith("-") and removed is not None:
+            removed.append(without_access(text[1:]))
         elif text.startswith("+") and lines is not None:
-            if not raw.startswith(MOVED):
+            bare = without_access(text[1:])
+            if bare in removed:
+                removed.remove(bare)
+            elif not raw.startswith(MOVED):
                 lines.add(number)
             number += 1
     return changed
@@ -103,6 +116,8 @@ def self_check():
         "diff --git a/src/Sources/OpenSkyMagic/A.swift b/src/Sources/OpenSkyMagic/A.swift\n"
         "+++ b/src/Sources/OpenSkyMagic/A.swift\n@@ -0,0 +1,4 @@\n"
         f"{NEW}+a\n{NEW}+b\n{NEW}+c\n{MOVED}+moved\n"
+        "@@ -8,3 +8,3 @@\n-public func h() {\n-public private(set) var v = 1\n-public let w = 1\n"
+        f"{NEW}+func h() {{\n{NEW}+var v = 1\n{NEW}+let w = 2\n"
         "diff --git a/src/Sources/OpenSky/B.swift b/src/Sources/OpenSky/B.swift\n"
         "+++ b/src/Sources/OpenSky/B.swift\n@@ -0,0 +1,1 @@\n+b\n"
         f"diff --git a/src/Sources/{untested}/C.swift b/src/Sources/{untested}/C.swift\n"
@@ -111,7 +126,7 @@ def self_check():
         "+++ b/src/Sources/OpenSkyRendering/Pass.swift\n@@ -0,0 +1,1 @@\n+d\n"
     )
     changed = changed_lines(diff, metal=lambda path: path.endswith("Pass.swift"))
-    if changed != {"src/Sources/OpenSkyMagic/A.swift": {1, 2, 3}}:
+    if changed != {"src/Sources/OpenSkyMagic/A.swift": {1, 2, 3, 10}}:
         sys.exit(f"[ERROR] diff-coverage self-check: changed lines {changed}")
     files = {
         "src/Sources/OpenSkyMagic/A.swift": {
