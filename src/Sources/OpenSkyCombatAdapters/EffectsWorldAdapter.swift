@@ -48,8 +48,7 @@ public final class EffectsWorldAdapter {
 
     public let game: any EffectsWorldHost
     public let state = EffectsPartState()
-    /// Actors whose race abilities were looked at, so each is resolved once.
-    var raceChecked: Set<ReferenceKey> = []
+    lazy var frameLooks = EffectsFrameLooks(game: game, blastsHost: blastsHost, state: state)
     var lastFrame: Date?
     let now: () -> Date
 
@@ -109,11 +108,7 @@ public final class EffectsWorldAdapter {
 
     /// The visual, image-space, and sound side of one landed spell.
     public func handleSpellHit(_ event: SpellHitEvent) {
-        guard let gameSession = game.gameSession else { return }
-        effects.handleSpellHit(event, imageSpace: &gameSession.imageSpace)
-        effects.detonateAreaExplosions(of: event)
-        noteSpellHit(event.hit)
-        playHitSounds(of: event, director: gameSession.soundDirector)
+        spellHits.handleSpellHit(event)
     }
 
     /// The explosion runtime the combat coordinator owns. Without effect records it
@@ -127,6 +122,27 @@ public final class EffectsWorldAdapter {
         )
         explosions.impulses = bodyImpulses.makeImpulses(world: self)
         return explosions
+    }
+}
+
+extension EffectsWorldAdapter: ExplosionWorld {}
+
+extension EffectsWorldAdapter: EffectsWorld {}
+
+extension EffectsWorldAdapter: EffectsWorldPort {}
+
+/// The spell-hit side of `EffectsWorldAdapter`: ragdoll notes and hit sounds.
+struct EffectsSpellHits {
+    let game: any EffectsWorldHost
+    let effects: any EffectsPort
+    let effectPlacement: EffectsEffectPlacementAdapter
+
+    func handleSpellHit(_ event: SpellHitEvent) {
+        guard let gameSession = game.gameSession else { return }
+        effects.handleSpellHit(event, imageSpace: &gameSession.imageSpace)
+        effects.detonateAreaExplosions(of: event)
+        noteSpellHit(event.hit)
+        playHitSounds(of: event, director: gameSession.soundDirector)
     }
 
     /// A hostile spell's push on a body it kills: the sum of its magnitudes as the
@@ -152,7 +168,8 @@ public final class EffectsWorldAdapter {
         guard let director else { return }
         for sound in event.links.compactMap(\.hitSound) {
             for target in event.hit.targets {
-                guard let transform = effectTransform(of: target.key) else { continue }
+                guard let transform = effectPlacement.effectTransform(of: target.key)
+                else { continue }
                 let origin = transform.columns.3
                 director.forcePlaySound(
                     formID: sound,
@@ -161,7 +178,75 @@ public final class EffectsWorldAdapter {
             }
         }
     }
+}
 
+/// The race-ability looks and the extra models of the effects frame step.
+final class EffectsFrameLooks {
+    let game: any EffectsWorldHost
+    let blastsHost: any EffectsBlastsHost
+    let state: EffectsPartState
+    /// Actors whose race abilities were looked at, so each is resolved once.
+    var raceChecked: Set<ReferenceKey> = []
+
+    init(game: any EffectsWorldHost, blastsHost: any EffectsBlastsHost, state: EffectsPartState) {
+        self.game = game
+        self.blastsHost = blastsHost
+        self.state = state
+    }
+
+    var effects: any EffectsPort {
+        game.effects
+    }
+
+    var explosions: any ExplosionRuntimePort {
+        game.combat.explosions
+    }
+
+    var blasts: EffectsBlastsAdapter {
+        EffectsBlastsAdapter(game: blastsHost, state: state)
+    }
+
+    /// Debris pieces and the models of spawned hazards, drawn beside the effects.
+    func extraModels() -> [VisualEffectModel] {
+        let debris = explosions.debris.map {
+            VisualEffectModel(path: $0.path, transform: $0.transform)
+        }
+        let hazards = game.hazards.runtime.active.values
+            .filter { $0.source == .spawned }
+            .sorted { $0.id < $1.id }
+            .compactMap { hazard -> VisualEffectModel? in
+                guard let path = game.hazardWorld.hazardModelPath(for: hazard.spec.hazard) else {
+                    return nil
+                }
+                var transform = matrix_identity_float4x4
+                transform.columns.3 = SIMD4(hazard.position, 1)
+                return VisualEffectModel(path: path, transform: transform)
+            }
+        return debris + hazards + blasts.projectileModels()
+    }
+
+    /// Lasting race-ability looks for actors that arrived, and their removal for
+    /// actors that left.
+    func attachRaceEffects() {
+        let resident = game.streamer.residentActorEntries()
+        let keys = Set(resident.map(\.key))
+        for gone in raceChecked.subtracting(keys) {
+            effects.detachAll(from: gone)
+        }
+        raceChecked.formIntersection(keys)
+        for entry in resident where !raceChecked.contains(entry.key) {
+            guard let base = entry.placedActor?.base else { continue }
+            raceChecked.insert(entry.key)
+            effects.attachLasting(
+                game.magic.raceEffectLinks(base: base, actor: entry.key),
+                to: entry.key
+            )
+        }
+    }
+}
+
+/// The main-thread mesh library of the effects coordinator.
+public enum EffectsMeshes {
     /// A main-thread library of its own: the cell build queue owns the other one.
     public static func meshes(
         provider: any CombatRecordsPort,
@@ -178,8 +263,8 @@ public final class EffectsWorldAdapter {
     }
 }
 
-extension EffectsWorldAdapter: ExplosionWorld {}
-
-extension EffectsWorldAdapter: EffectsWorld {}
-
-extension EffectsWorldAdapter: EffectsWorldPort {}
+extension EffectsWorldAdapter {
+    var spellHits: EffectsSpellHits {
+        EffectsSpellHits(game: game, effects: effects, effectPlacement: effectPlacement)
+    }
+}
