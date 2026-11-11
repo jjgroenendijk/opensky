@@ -10,11 +10,11 @@ import OpenSkyRendering
 import OpenSkyWorldInterface
 import simd
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellObjectBuilder {
     /// The seats of one furniture reference, in marker order.
     func seats(of base: ModelBase, at ref: PlacedReference) -> [FurnitureSeat] {
         guard let modelPath = base.modelPath else { return [] }
-        let markers = meshes.furnitureMarkers(forPath: modelPath)
+        let markers = owner.meshes.furnitureMarkers(forPath: modelPath)
         guard !markers.isEmpty else { return [] }
         let transform = MatrixMath.placement(
             position: ref.placement.position, rotation: ref.placement.rotation, scale: ref.scale

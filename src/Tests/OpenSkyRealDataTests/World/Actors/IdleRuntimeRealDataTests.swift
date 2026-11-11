@@ -100,7 +100,8 @@ struct IdleRuntimeRealDataTests {
         var fallback: Pick?
         for (index, inn) in Self.inns.enumerated() where pick == nil || index == 0 {
             let cell = try #require(ESMWalk.record(withEditorID: inn, in: install.file))
-            let scene = try builder.buildInteriorScene(cellFormID: FormID(cell.formID))
+            let scene = try builder.interiorBuilder
+                .buildInteriorScene(cellFormID: FormID(cell.formID))
             let context = Self.conditionContext(scene: scene, builder: builder, file: install.file)
             let picks = try selectAtEveryMarker(in: context, store: store, resolver: resolver) {
                 lines.append("\(inn) \($0)")
@@ -166,7 +167,7 @@ struct IdleRuntimeRealDataTests {
         builder: CellSceneBuilder,
         file: ESMFile
     ) -> ConditionContext {
-        let resolvers = builder.actorResolversBuildingIfNeeded()
+        let resolvers = builder.actorBuilder.actorResolversBuildingIfNeeded()
         var states: [ReferenceKey: ActorConditionState] = [:]
         for entry in scene.references.sortedEntries() {
             guard let placed = entry.placedActor else { continue }
@@ -206,7 +207,7 @@ struct IdleRuntimeRealDataTests {
         logs: URL
     ) throws {
         let placed = try #require(pick.actor.placedActor)
-        let resolvers = builder.actorResolversBuildingIfNeeded()
+        let resolvers = builder.actorBuilder.actorResolversBuildingIfNeeded()
         let visual = try resolvers.visual.resolve(
             appearance: resolvers.template.resolve(base: placed.base)
         )
@@ -214,7 +215,7 @@ struct IdleRuntimeRealDataTests {
             placed: placed,
             visual: visual
         )
-        let playback = try builder.makeAnimationPlayback(assembly: assembly).get()
+        let playback = try builder.actorBuilder.makeAnimationPlayback(assembly: assembly).get()
         var scenes = [RenderScene(
             instances: assembly.renderPlacements(at: assembly.transform),
             animations: [playback]

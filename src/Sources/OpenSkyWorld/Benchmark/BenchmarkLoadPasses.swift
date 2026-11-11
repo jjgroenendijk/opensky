@@ -105,7 +105,7 @@ nonisolated public enum BenchmarkLoadPasses {
             }
             loads.append(timed("distant LOD") {
                 try builder.textures.batchLoads {
-                    _ = try builder.buildDistantLOD(
+                    _ = try builder.terrainBuilder.buildDistantLOD(
                         worldspaceEditorID: worldspace,
                         center: CellCoordinate(containing: SIMD3(x, y, 0)),
                         hiddenCells: Set(cells)
@@ -123,7 +123,7 @@ nonisolated public enum BenchmarkLoadPasses {
                     throw BenchmarkLoadPassError.noInterior(cell)
                 }
                 try builder.textures.batchLoads {
-                    _ = try builder.buildInteriorScene(cellFormID: formID)
+                    _ = try builder.interiorBuilder.buildInteriorScene(cellFormID: formID)
                 }
             }]
         }

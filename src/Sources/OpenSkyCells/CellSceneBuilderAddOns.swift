@@ -9,19 +9,19 @@ import OpenSkyGameData
 import OpenSkyRendering
 import simd
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellObjectBuilder {
     /// The add-on models of `instances`, each placed at its node.
     func addOnInstances(for instances: [ResolvedInstance]) -> [ResolvedInstance] {
         let plain = ModelSurfaceOverride(diffuseTexture: nil, normalTexture: nil, tint: nil)
         var added: [ResolvedInstance] = []
         for instance in instances {
-            let nodes = meshes.addOnNodes(forPath: instance.modelPath)
+            let nodes = owner.meshes.addOnNodes(forPath: instance.modelPath)
             guard !nodes.isEmpty else { continue }
             let models = addOnModelIndexBuildingIfNeeded()
             for node in nodes {
                 guard
                     let path = models[node.index],
-                    let model = attempt({ try meshes.model(path: path) })
+                    let model = attempt({ try owner.meshes.model(path: path) })
                 else { continue }
                 added.append(ResolvedInstance(
                     sortKey: attempt { try VirtualFileSystem.normalize(path) } ?? path,
@@ -37,16 +37,17 @@ nonisolated extension CellSceneBuilder {
     }
 
     func addOnModelIndexBuildingIfNeeded() -> [UInt32: String] {
-        if let addOnModelIndex {
+        if let addOnModelIndex = owner.addOnModelIndex {
             return addOnModelIndex
         }
-        let records = loadOrderRecords(of: "ADDN") { record, _ in try AddonNode(record: record) }
+        let records = owner.recordIndex
+            .loadOrderRecords(of: "ADDN") { record, _ in try AddonNode(record: record) }
         var index: [UInt32: String] = [:]
         for record in records.values.sorted(by: { $0.formID.rawValue < $1.formID.rawValue }) {
             guard let nodeIndex = record.nodeIndex, let path = record.model?.path else { continue }
             index[nodeIndex] = index[nodeIndex] ?? path
         }
-        addOnModelIndex = index
+        owner.addOnModelIndex = index
         return index
     }
 }

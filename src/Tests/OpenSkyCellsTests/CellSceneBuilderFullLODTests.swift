@@ -48,9 +48,12 @@ struct CellSceneBuilderFullLODTests: CellSceneBuilderFixture {
                 + refrRecord(formID: 0x201, base: 0x100)
         )
         let world = try builder.worldChildrenGroup(editorID: "Tamriel", localized: false)
-        #expect(builder.temporaryFullLODCells(in: world) == [CellCoordinate(x: 6, y: -2)])
+        #expect(builder.referenceBuilder.temporaryFullLODCells(in: world) == [CellCoordinate(
+            x: 6,
+            y: -2
+        )])
 
-        let distant = builder.temporaryFullLODPlacements(
+        let distant = builder.referenceBuilder.temporaryFullLODPlacements(
             worldspaceEditorID: "Tamriel", loadedCells: []
         )
         #expect(distant.placements.count == 1)
@@ -63,7 +66,7 @@ struct CellSceneBuilderFullLODTests: CellSceneBuilderFixture {
             formID: 0x200,
             base: 0x100
         )))
-        let distant = builder.temporaryFullLODPlacements(
+        let distant = builder.referenceBuilder.temporaryFullLODPlacements(
             worldspaceEditorID: "Tamriel", loadedCells: [CellCoordinate(x: 6, y: -2)]
         )
         #expect(distant.placements.isEmpty)
@@ -72,6 +75,6 @@ struct CellSceneBuilderFullLODTests: CellSceneBuilderFixture {
     @Test(.enabled(if: Self.hasDevice)) func anUnflaggedCellIsNotIndexed() throws {
         let builder = try makeBuilder(temporaryRefs: refrRecord(formID: 0x201, base: 0x100))
         let world = try builder.worldChildrenGroup(editorID: "Tamriel", localized: false)
-        #expect(builder.temporaryFullLODCells(in: world).isEmpty)
+        #expect(builder.referenceBuilder.temporaryFullLODCells(in: world).isEmpty)
     }
 }

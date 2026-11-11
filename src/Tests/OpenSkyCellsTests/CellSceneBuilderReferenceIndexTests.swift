@@ -120,7 +120,8 @@ struct CellSceneBuilderReferenceIndexTests {
             )
         )
         let builder = try fixtures.makeBuilder(pluginData: pluginData, device: device)
-        let scene = try builder.buildInteriorScene(cellFormID: FormID(interiorFormID))
+        let scene = try builder.interiorBuilder
+            .buildInteriorScene(cellFormID: FormID(interiorFormID))
         #expect(scene.references.count == 1)
         let entry = try #require(scene.references.entry(for: FormID(0x210)))
         #expect(entry.key == skyrimKey(0x210))

@@ -8,14 +8,19 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-nonisolated extension CellSceneBuilder {
+nonisolated struct CellRecordIndex {
+    let owner: CellSceneBuilder
+}
+
+nonisolated extension CellRecordIndex {
     /// The cell as the load order has it: the winning CELL values, and the first
     /// plugin's children group when that plugin has the cell.
     nonisolated func loadOrderCell(formID: FormID, base: FoundCell?) -> FoundCell? {
         guard
-            let winner = loadOrderIndexBuildingIfNeeded().record(withFormID: formID),
+            let winner = owner.interiorBuilder.loadOrderIndexBuildingIfNeeded()
+                .record(withFormID: formID),
             winner.record.type == "CELL", winner.position > 0, !winner.record.isDeleted,
-            let cell = decodeOrSkip(winner.record, using: { _ in
+            let cell = owner.decodeOrSkip(winner.record, using: { _ in
                 try winner.decode { try Cell(record: $0, localized: winner.localized) }
             })
         else { return base }
@@ -38,7 +43,7 @@ nonisolated extension CellSceneBuilder {
         } failed: { child in
             failures += 1
             let id = child.record.formID.description
-            Self.logger.warning("malformed REFR \(id, privacy: .public) skipped")
+            CellSceneBuilder.logger.warning("malformed REFR \(id, privacy: .public) skipped")
         }
         counts.malformedRefs += failures
         counts.totalRefs += merged.count - base.count + failures
@@ -61,7 +66,7 @@ nonisolated extension CellSceneBuilder {
         } failed: { child in
             let id = child.record.formID.description
             failed.append("ACHR \(id): malformed record")
-            Self.logger.warning("malformed ACHR \(id, privacy: .public) counted failed")
+            CellSceneBuilder.logger.warning("malformed ACHR \(id, privacy: .public) counted failed")
         }
         malformed += failed
         return merged
@@ -102,7 +107,7 @@ nonisolated extension CellSceneBuilder {
     }
 
     nonisolated func laterChildren(of cell: FormID, type: FourCC) -> [CellChildRecord] {
-        loadOrderIndexBuildingIfNeeded().laterChildren(ofCell: cell)
+        owner.interiorBuilder.loadOrderIndexBuildingIfNeeded().laterChildren(ofCell: cell)
             .filter { $0.record.record.type == type }
     }
 
@@ -113,12 +118,18 @@ nonisolated extension CellSceneBuilder {
         of type: FourCC,
         decode: @Sendable (ESMRecord, Bool) throws -> Value
     ) -> [UInt32: Value] {
-        let loadOrder = loadOrderIndexBuildingIfNeeded().loadOrder
-        return loadPhases.measure(.recordIndex) {
+        let loadOrder = owner.interiorBuilder.loadOrderIndexBuildingIfNeeded().loadOrder
+        return owner.loadPhases.measure(.recordIndex) {
             var skipped = SkippedRecords()
             let index = loadOrder.indexRecordsInParallel(of: type, skipped: &skipped, using: decode)
-            noteSkipped(skipped)
+            owner.noteSkipped(skipped)
             return index
         }
+    }
+}
+
+nonisolated extension CellSceneBuilder {
+    var recordIndex: CellRecordIndex {
+        CellRecordIndex(owner: self)
     }
 }

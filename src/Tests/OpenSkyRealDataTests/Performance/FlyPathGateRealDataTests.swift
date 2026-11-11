@@ -18,7 +18,7 @@ struct FlyPathGateRealDataTests {
         let worldspace = FirstRenderCell.worldspaceEditorID
         let builder = try StreamingGateSupport.makeBuilder()
         let weather = WeatherSystem(
-            loadOrder: builder.pluginLoadOrder,
+            loadOrder: builder.previewBuilder.pluginLoadOrder,
             worldspaceEditorID: worldspace
         )
         let lodPrebuild = builder.distantLODBuilder.map {

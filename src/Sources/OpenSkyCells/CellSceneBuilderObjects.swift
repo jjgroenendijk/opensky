@@ -14,7 +14,11 @@ import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyWorldInterface
 
-nonisolated extension CellSceneBuilder {
+nonisolated struct CellObjectBuilder {
+    let owner: CellSceneBuilder
+}
+
+nonisolated extension CellObjectBuilder {
     /// Base types whose meshes vanilla animates with a behaviour graph.
     static let animatedObjectTypes: Set<FourCC> = ["ACTI", "DOOR", "FURN", "CONT", "MSTT"]
 
@@ -22,10 +26,10 @@ nonisolated extension CellSceneBuilder {
     func objectBehavior(recordType: FourCC, modelPath: String) -> BehaviorProjectAsset? {
         guard
             Self.animatedObjectTypes.contains(recordType),
-            let fileSystem,
-            let project = meshes.behaviorProjectPath(forPath: modelPath)
+            let fileSystem = owner.fileSystem,
+            let project = owner.meshes.behaviorProjectPath(forPath: modelPath)
         else { return nil }
-        if let known = objectBehaviorAssets[project] {
+        if let known = owner.objectBehaviorAssets[project] {
             return known
         }
         var asset: BehaviorProjectAsset?
@@ -33,14 +37,14 @@ nonisolated extension CellSceneBuilder {
             asset = try BehaviorProjectAsset.load(fileSystem: fileSystem, projectPath: project)
         } catch {
             let reason = String(describing: error)
-            Self.logger.warning(
+            CellSceneBuilder.logger.warning(
                 """
                 [WARNING] object behaviour \(project, privacy: .public) did not load: \
                 \(reason, privacy: .public)
                 """
             )
         }
-        objectBehaviorAssets[project] = .some(asset)
+        owner.objectBehaviorAssets[project] = .some(asset)
         return asset
     }
 
@@ -81,5 +85,11 @@ nonisolated extension CellSceneBuilder {
             nodes: nodes, placement: instance.transform
         )
         return (object, playback)
+    }
+}
+
+nonisolated extension CellSceneBuilder {
+    var objectBuilder: CellObjectBuilder {
+        CellObjectBuilder(owner: self)
     }
 }

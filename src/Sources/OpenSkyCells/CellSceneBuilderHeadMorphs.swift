@@ -18,13 +18,15 @@ nonisolated struct AssembledHeadMorphs {
     var misses: [FaceMorphAssociationMiss] = []
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellActorBuilder {
     /// Every head part mesh with a TRI of its own vertex count gets one buffer.
     func assembledHeadMorphs(
         assembly: ActorAssembly<ActorRenderAsset>, face: PlayerAppearanceOverride
     ) -> AssembledHeadMorphs {
         var result = AssembledHeadMorphs()
-        guard let records = actorVisualResolver?.headParts, let fileSystem else { return result }
+        guard
+            let records = owner.actorVisualResolver?.headParts,
+            let fileSystem = owner.fileSystem else { return result }
         var fixed = ChargenMorphs.weights(morphs: face.faceMorphs, parts: face.faceParts)
         if let race = raceMorphTarget(face.race) {
             fixed[race] = 1
@@ -48,7 +50,7 @@ nonisolated extension CellSceneBuilder {
                     !fitting.isEmpty,
                     let buffer = attempt({
                         try FaceMorphBuffer(
-                            device: meshes.device, tris: fitting.map(\.1), mesh: mesh,
+                            device: owner.meshes.device, tris: fitting.map(\.1), mesh: mesh,
                             fixedWeights: fixed
                         )
                     })
@@ -63,7 +65,7 @@ nonisolated extension CellSceneBuilder {
 
     /// The race TRI target: the race's morph race (`NAM8`) by editor ID, else its own.
     private func raceMorphTarget(_ race: FormID) -> String? {
-        guard let races = actorVisualResolver?.races, let record = races[race.rawValue] else {
+        guard let races = owner.actorVisualResolver?.races, let record = races[race.rawValue] else {
             return nil
         }
         let morph = record.details.morphRace.flatMap { races[$0.rawValue] } ?? record

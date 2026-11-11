@@ -46,10 +46,14 @@ nonisolated enum WaterMeshBuilder: Sendable {
     }
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated struct CellWaterBuilder {
+    let owner: CellSceneBuilder
+}
+
+nonisolated extension CellWaterBuilder {
     /// Builds at most one water plane. CELL DATA has-water gates the feature;
     /// an explicit XCLW sentinel wins over every WRLD default.
-    nonisolated public func buildWater(found: FoundCell, worldspace: Worldspace?) -> WaterBuild? {
+    nonisolated func buildWater(found: FoundCell, worldspace: Worldspace?) -> WaterBuild? {
         guard
             found.cell.flags.contains(.hasWater),
             let grid = found.cell.grid,
@@ -93,8 +97,8 @@ nonisolated extension CellSceneBuilder {
     /// The per-cell flow map sits under the folder of the plugin that made it; the
     /// latest plugin with a file wins.
     nonisolated func flowMapPath(x: Int32, y: Int32) -> String? {
-        guard let fileSystem else { return nil }
-        for name in loadOrderPlugins.reversed().map(\.name) {
+        guard let fileSystem = owner.fileSystem else { return nil }
+        for name in owner.loadOrderPlugins.reversed().map(\.name) {
             let path = "textures\\water\\\(name.lowercased())\\flow.\(x).\(y).dds"
             if fileSystem.exists(path) {
                 return path
@@ -106,7 +110,7 @@ nonisolated extension CellSceneBuilder {
     /// An interior has no grid, so its plane spans the XY bounds of the placed
     /// geometry plus a margin. Every vanilla interior stores the editor default 0, and
     /// draws its water as placed meshes, so 0 draws nothing (docs/engine/sky-water.md).
-    nonisolated public func buildInteriorWater(
+    nonisolated func buildInteriorWater(
         found: FoundCell,
         instances: [ResolvedInstance]
     ) -> WaterBuild? {
@@ -147,7 +151,10 @@ nonisolated extension CellSceneBuilder {
         var result: ModelBounds?
         for instance in instances where Self.drawsWater(instance) == waterSurfaces {
             guard
-                let local = meshes.bounds(forPath: instance.modelPath, surface: instance.surface)
+                let local = owner.meshes.bounds(
+                    forPath: instance.modelPath,
+                    surface: instance.surface
+                )
             else { continue }
             let world = local.transformed(by: instance.transform)
             result = result.map { $0.union(world) } ?? world
@@ -163,7 +170,10 @@ nonisolated extension CellSceneBuilder {
         instances.contains { instance in
             guard
                 Self.drawsWater(instance),
-                let local = meshes.bounds(forPath: instance.modelPath, surface: instance.surface)
+                let local = owner.meshes.bounds(
+                    forPath: instance.modelPath,
+                    surface: instance.surface
+                )
             else { return false }
             let world = local.transformed(by: instance.transform)
             return world.min.z - 1 <= height && height <= world.max.z + 1
@@ -176,15 +186,15 @@ nonisolated extension CellSceneBuilder {
 
     /// The cached 4096 x 4096 quad every water plane scales and moves.
     nonisolated func sharedWaterPlane() -> RenderMesh? {
-        if let waterPlaneMesh {
+        if let waterPlaneMesh = owner.waterPlaneMesh {
             return waterPlaneMesh
         }
         do {
-            let uploaded = try meshes.renderMesh(WaterMeshBuilder.cellPlane())
-            waterPlaneMesh = uploaded
+            let uploaded = try owner.meshes.renderMesh(WaterMeshBuilder.cellPlane())
+            owner.waterPlaneMesh = uploaded
             return uploaded
         } catch {
-            Self.logger.warning("water plane upload failed, skipped")
+            CellSceneBuilder.logger.warning("water plane upload failed, skipped")
             return nil
         }
     }
@@ -201,20 +211,23 @@ nonisolated extension CellSceneBuilder {
     }
 
     nonisolated func worldspaceIndexBuildingIfNeeded() -> [UInt32: Worldspace] {
-        if let worldspaceIndex {
+        if let worldspaceIndex = owner.worldspaceIndex {
             return worldspaceIndex
         }
-        let index = loadOrderRecords(of: "WRLD") { try Worldspace(record: $0, localized: $1) }
-        worldspaceIndex = index
+        let index = owner.recordIndex.loadOrderRecords(of: "WRLD") {
+            try Worldspace(record: $0, localized: $1)
+        }
+        owner.worldspaceIndex = index
         return index
     }
 
     nonisolated func waterTypeIndexBuildingIfNeeded() -> [UInt32: WaterType] {
-        if let waterTypeIndex {
+        if let waterTypeIndex = owner.waterTypeIndex {
             return waterTypeIndex
         }
-        let index = loadOrderRecords(of: "WATR") { record, _ in try WaterType(record: record) }
-        waterTypeIndex = index
+        let index = owner.recordIndex
+            .loadOrderRecords(of: "WATR") { record, _ in try WaterType(record: record) }
+        owner.waterTypeIndex = index
         return index
     }
 
@@ -276,5 +289,11 @@ nonisolated extension CellSceneBuilder {
             surface.underwaterFogNear, surface.underwaterFogFar, surface.underwaterFogAmount
         )
         return shading
+    }
+}
+
+nonisolated extension CellSceneBuilder {
+    var waterBuilder: CellWaterBuilder {
+        CellWaterBuilder(owner: self)
     }
 }

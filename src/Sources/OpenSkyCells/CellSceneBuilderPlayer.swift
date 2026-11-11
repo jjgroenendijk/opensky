@@ -9,13 +9,13 @@ import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-public import OpenSkyPlayer
+import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyRuntimeState
-public import OpenSkyWorldInterface
+import OpenSkyWorldInterface
 import simd
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellActorBuilder {
     /// Runs on the build queue; the main actor binds the result to the live pose.
     public func assemblePlayerRig(
         _ request: PlayerRigRequest
@@ -91,7 +91,7 @@ nonisolated extension CellSceneBuilder {
                     skeletonPath: PlayerBehaviorGraph.firstPersonRigPath
                 )
             }
-            assembly = ActorAssembler(provider: meshes).assemble(
+            assembly = ActorAssembler(provider: owner.meshes).assemble(
                 actor: PlayerBody.actorFormID,
                 // Identity: `place` supplies the live transform every frame,
                 // and a stale one baked in here would place the first frame at
@@ -108,7 +108,7 @@ nonisolated extension CellSceneBuilder {
             ))
         }
         for skip in assembly.skips {
-            Self.logger.info(
+            CellSceneBuilder.logger.info(
                 "\(label, privacy: .public) skip: \(String(describing: skip), privacy: .public)"
             )
         }
@@ -120,8 +120,9 @@ nonisolated extension CellSceneBuilder {
     private func withSkinTone(_ override: PlayerAppearanceOverride) -> PlayerAppearanceOverride {
         var override = override
         let masks = raceTintMasks(override)
-        override.addDefaultSkinTone(masks: masks) { [actorVisualResolver] id in
-            actorVisualResolver?.colors[id.rawValue]?.color
+        let resolver = owner.actorVisualResolver
+        override.addDefaultSkinTone(masks: masks) { [resolver] id in
+            resolver?.colors[id.rawValue]?.color
         }
         override.skinTone = override.skinToneLayerColour(masks: masks)
         return override

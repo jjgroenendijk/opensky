@@ -34,7 +34,11 @@ nonisolated public struct PreviewSubject {
     }
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated public struct CellPreviewBuilder {
+    let owner: CellSceneBuilder
+}
+
+nonisolated extension CellPreviewBuilder {
     /// The FormID the preview gives its one placed copy; outside every plugin's range.
     public static let previewReference = FormID(0xFF0F_FFF0)
 
@@ -46,7 +50,7 @@ nonisolated extension CellSceneBuilder {
         let actor = PlacedActor(
             spawnedBase: base, placement: placement, scale: 1, formID: Self.previewReference
         )
-        let build = resolvedBuild(
+        let build = owner.actorBuilder.resolvedBuild(
             ([CollectedActor(actor: actor, isPersistent: false)], []),
             parents: ActorEnableParents(),
             deltas: [:],
@@ -76,7 +80,7 @@ nonisolated extension CellSceneBuilder {
     public func previewObject(
         base: FormID, placement: PlacedReference.Placement, scale: Float = 1
     ) -> PreviewSubject? {
-        if let light = lightIndexBuildingIfNeeded()[base.rawValue] {
+        if let light = owner.interiorBuilder.lightIndexBuildingIfNeeded()[base.rawValue] {
             let reference = PlacedReference(
                 spawnedBase: base, placement: placement, scale: scale, count: 1,
                 formID: Self.previewReference
@@ -84,14 +88,14 @@ nonisolated extension CellSceneBuilder {
             var subject = light.details.model.map {
                 previewMesh(path: $0.path, placement: placement, scale: scale)
             } ?? PreviewSubject()
-            subject.pointLights = resolvePointLights([reference])
+            subject.pointLights = owner.interiorBuilder.resolvePointLights([reference])
             return subject
         }
         guard
-            let resolved = resolveBase(
+            let resolved = owner.recordIndex.resolveBase(
                 formID: base.rawValue,
-                statIndex: statIndexBuildingIfNeeded(),
-                modelBaseIndex: modelBaseIndexBuildingIfNeeded()
+                statIndex: owner.recordIndex.statIndexBuildingIfNeeded(),
+                modelBaseIndex: owner.recordIndex.modelBaseIndexBuildingIfNeeded()
             )
         else { return nil }
         guard let path = resolved.modelPath else {
@@ -100,7 +104,7 @@ nonisolated extension CellSceneBuilder {
             return subject
         }
         return previewMesh(
-            path: path, surface: surface(for: resolved),
+            path: path, surface: owner.objectBuilder.surface(for: resolved),
             placement: placement, scale: scale
         )
     }
@@ -173,13 +177,13 @@ nonisolated extension CellSceneBuilder {
 
     /// The plugins this builder reads, for record lookups by name.
     public var pluginLoadOrder: LoadOrderPlugins {
-        loadOrderIndexBuildingIfNeeded().loadOrder
+        owner.interiorBuilder.loadOrderIndexBuildingIfNeeded().loadOrder
     }
 
     /// The cell that holds a placed reference. An exterior reference gives the grid its
     /// position falls in, because a persistent one is stored in no grid cell.
     public func previewCell(holding reference: FormID) -> CellDirectoryEntry? {
-        let index = loadOrderIndexBuildingIfNeeded()
+        let index = owner.interiorBuilder.loadOrderIndexBuildingIfNeeded()
         guard let cell = index.cellFormID(containing: reference) else { return nil }
         guard index.worldFormID(containing: reference) != nil else {
             return .interior(cell: cell, entryDoor: nil)
@@ -204,22 +208,29 @@ nonisolated extension CellSceneBuilder {
     ) -> PreviewSubject {
         var subject = PreviewSubject()
         subject.modelPath = path
-        let missingBefore = textures.missingPaths
+        let missingBefore = owner.textures.missingPaths
         let transform = MatrixMath.placement(
             position: placement.position, rotation: placement.rotation, scale: scale
         )
         do {
-            let model = try meshes.model(path: path, surface: surface)
+            let model = try owner.meshes.model(path: path, surface: surface)
             subject.placements = [RenderPlacement(
                 model: model,
                 transform: transform,
-                bounds: meshes.bounds(forPath: path, surface: surface)?.transformed(by: transform)
+                bounds: owner.meshes.bounds(forPath: path, surface: surface)?
+                    .transformed(by: transform)
             )]
         } catch {
             subject.failures.append("mesh \(path): \(String(describing: error))")
         }
-        subject.failures += textures.missingPaths.subtracting(missingBefore).sorted()
+        subject.failures += owner.textures.missingPaths.subtracting(missingBefore).sorted()
             .map { "texture \($0): missing" }
         return subject
+    }
+}
+
+nonisolated extension CellSceneBuilder {
+    public var previewBuilder: CellPreviewBuilder {
+        CellPreviewBuilder(owner: self)
     }
 }

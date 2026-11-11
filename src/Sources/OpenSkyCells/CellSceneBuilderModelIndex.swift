@@ -1,7 +1,7 @@
 // Cached STAT/ModelBase indexes and the exterior build-source lookup.
 
-public import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyPhysics
@@ -11,22 +11,22 @@ nonisolated public struct ExteriorBuildSource: Sendable {
     public let cell: FoundCell
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellRecordIndex {
     nonisolated public func exteriorBuildSource(
         worldspaceEditorID: String,
         gridX: Int32,
         gridY: Int32
     ) throws -> ExteriorBuildSource {
-        let world = try worldChildrenGroup(
+        let world = try owner.worldChildrenGroup(
             editorID: worldspaceEditorID,
-            localized: pluginLocalized
+            localized: owner.pluginLocalized
         )
         guard
             let found = findCell(
                 in: world,
                 gridX: gridX,
                 gridY: gridY,
-                localized: pluginLocalized
+                localized: owner.pluginLocalized
             ),
             let cell = loadOrderCell(formID: FormID(found.formID), base: found)
         else {
@@ -41,21 +41,21 @@ nonisolated extension CellSceneBuilder {
 
     /// Keyed in the load-order space, like the references that place them.
     nonisolated public func statIndexBuildingIfNeeded() -> [UInt32: StaticObject] {
-        if let statIndex {
+        if let statIndex = owner.statIndex {
             return statIndex
         }
         let index = loadOrderRecords(of: "STAT") { record, _ in try StaticObject(record: record) }
-        statIndex = index
+        owner.statIndex = index
         return index
     }
 
     /// TXST by FormID, for the MODS texture sets of placed models.
     nonisolated public func textureSetIndexBuildingIfNeeded() -> [UInt32: TextureSet] {
-        if let textureSetIndex {
+        if let textureSetIndex = owner.textureSetIndex {
             return textureSetIndex
         }
         let index = loadOrderRecords(of: "TXST") { record, _ in try TextureSet(record: record) }
-        textureSetIndex = index
+        owner.textureSetIndex = index
         return index
     }
 
@@ -84,7 +84,7 @@ nonisolated extension CellSceneBuilder {
 
     /// One cached index spans the six model-base top groups.
     nonisolated public func modelBaseIndexBuildingIfNeeded() -> [UInt32: ModelBase] {
-        if let modelBaseIndex {
+        if let modelBaseIndex = owner.modelBaseIndex {
             return modelBaseIndex
         }
         var index: [UInt32: ModelBase] = [:]
@@ -93,18 +93,19 @@ nonisolated extension CellSceneBuilder {
                 try ModelBase(record: record, localized: localized)
             }) { _, later in later }
         }
-        modelBaseIndex = index
+        owner.modelBaseIndex = index
         return index
     }
 
     /// A plugin without MATT gets an empty index, so it is not rebuilt per cell.
     nonisolated public func materialTypeIndexBuildingIfNeeded() -> MaterialTypeIndex {
-        if let materialTypeIndex {
+        if let materialTypeIndex = owner.materialTypeIndex {
             return materialTypeIndex
         }
-        let loadOrder = loadOrderIndexBuildingIfNeeded().loadOrder
-        let index = loadPhases.measure(.recordIndex) { MaterialTypeIndex(loadOrder: loadOrder) }
-        materialTypeIndex = index
+        let loadOrder = owner.interiorBuilder.loadOrderIndexBuildingIfNeeded().loadOrder
+        let index = owner.loadPhases
+            .measure(.recordIndex) { MaterialTypeIndex(loadOrder: loadOrder) }
+        owner.materialTypeIndex = index
         return index
     }
 

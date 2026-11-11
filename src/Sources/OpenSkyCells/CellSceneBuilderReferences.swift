@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// A decoded REFR plus the children group it was stored in.
 nonisolated public struct CollectedReference: Sendable {
@@ -22,30 +22,38 @@ nonisolated public struct CollectedActor: Sendable {
     var spawnKey: ReferenceKey?
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated struct CellReferenceBuilder {
+    let owner: CellSceneBuilder
+}
+
+nonisolated extension CellReferenceBuilder {
     /// Live REFRs of every plugin from the persistent and temporary children
     /// groups, tagged with their group. Other record types are not static
     /// placements and are not counted (docs/engine/cell-scene.md). A REFR that
     /// fails to decode is counted as malformed.
-    nonisolated public func collectTaggedReferences(
+    nonisolated func collectTaggedReferences(
         in cell: FoundCell?,
         counts: inout BuildCounts
     ) -> [CollectedReference] {
         guard let cell else { return [] }
         let base = collectBaseReferences(in: cell.children, counts: &counts)
-        return mergingLaterReferences(base, cell: FormID(cell.formID), counts: &counts)
+        return owner.recordIndex.mergingLaterReferences(
+            base,
+            cell: FormID(cell.formID),
+            counts: &counts
+        )
     }
 
     nonisolated private func collectBaseReferences(
         in cellChildren: ESMGroup?,
         counts: inout BuildCounts
     ) -> [CollectedReference] {
-        guard let cellChildren, let children = childrenOrSkip(cellChildren) else { return [] }
+        guard let cellChildren, let children = owner.childrenOrSkip(cellChildren) else { return [] }
         var refs: [CollectedReference] = []
         for case let .group(group) in children {
             guard
                 group.kind == .cellPersistentChildren || group.kind == .cellTemporaryChildren,
-                let records = childrenOrSkip(group)
+                let records = owner.childrenOrSkip(group)
             else { continue }
             let isPersistent = group.kind == .cellPersistentChildren
             for case let .record(record) in records where record.type == "REFR" {
@@ -58,7 +66,8 @@ nonisolated extension CellSceneBuilder {
                 } catch {
                     counts.malformedRefs += 1
                     let id = FormID(record.formID).description
-                    Self.logger.warning("malformed REFR \(id, privacy: .public) skipped")
+                    CellSceneBuilder.logger
+                        .warning("malformed REFR \(id, privacy: .public) skipped")
                 }
             }
         }
@@ -67,7 +76,7 @@ nonisolated extension CellSceneBuilder {
 
     /// Untagged collection for the render and collision paths, which place
     /// persistent and temporary records identically.
-    nonisolated public func collectReferences(
+    nonisolated func collectReferences(
         in cell: FoundCell?,
         counts: inout BuildCounts
     ) -> [PlacedReference] {
@@ -77,7 +86,7 @@ nonisolated extension CellSceneBuilder {
     /// Index entries for the references a finished cell placed. A reference from
     /// a local temporary group is temporary; everything else, including refs
     /// merged from the worldspace persistent CELL, is persistent.
-    nonisolated public func referenceEntries(
+    nonisolated func referenceEntries(
         refs: [PlacedReference],
         collected: [CollectedReference]
     ) -> [RuntimeReferenceEntry] {
@@ -116,13 +125,13 @@ nonisolated extension CellSceneBuilder {
     /// Nil when the FormID is null or otherwise unresolvable against the
     /// plugin's master list: an unkeyed record has no runtime identity, so it
     /// is left out of the index rather than given a placeholder key.
-    nonisolated public func runtimeEntry(
+    nonisolated func runtimeEntry(
         formID: FormID,
         isPersistent: Bool,
         record: RuntimeReferenceRecord,
         deltas: [ReferenceKey: ReferenceStateDelta] = [:]
     ) -> RuntimeReferenceEntry? {
-        guard let key = ReferenceKey.resolve(formID, using: formIDResolver) else {
+        guard let key = ReferenceKey.resolve(formID, using: owner.formIDResolver) else {
             return nil
         }
         return RuntimeReferenceEntry(
@@ -135,7 +144,7 @@ nonisolated extension CellSceneBuilder {
     nonisolated func leveledRoll(
         of key: ReferenceKey, base: FormID, deltas: [ReferenceKey: ReferenceStateDelta]
     ) -> LeveledRoll {
-        leveling.roll(
+        owner.leveling.roll(
             for: key, base: base, cell: nil,
             frozenLevel: deltas[key]?.component(LeveledRollState.self)?.playerLevel
         )
@@ -147,12 +156,19 @@ nonisolated extension CellSceneBuilder {
     ) -> [AttachedScript] {
         switch record {
         case let .reference(reference):
-            return modelBaseIndexBuildingIfNeeded()[reference.base.rawValue]?.scriptData
+            return owner.recordIndex.modelBaseIndexBuildingIfNeeded()[reference.base.rawValue]?
+                .scriptData
                 .scripts ?? []
         case let .actor(actor):
-            let templates = actorResolversBuildingIfNeeded().template
+            let templates = owner.actorBuilder.actorResolversBuildingIfNeeded().template
                 .rolling(leveledRoll(of: key, base: actor.base, deltas: deltas))
             return attempt { try templates.resolveScripts(base: actor.base).value } ?? []
         }
+    }
+}
+
+nonisolated extension CellSceneBuilder {
+    var referenceBuilder: CellReferenceBuilder {
+        CellReferenceBuilder(owner: self)
     }
 }

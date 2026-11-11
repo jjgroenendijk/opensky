@@ -29,12 +29,16 @@ nonisolated extension CellSceneBuilder {
                 return entry
             }
             if let reference = pool.references[formID] {
-                return self.runtimeEntry(
+                return self.referenceBuilder.runtimeEntry(
                     formID: formID, isPersistent: true, record: .reference(reference)
                 )
             }
             return pool.actors[formID].flatMap {
-                self.runtimeEntry(formID: formID, isPersistent: true, record: .actor($0))
+                self.referenceBuilder.runtimeEntry(
+                    formID: formID,
+                    isPersistent: true,
+                    record: .actor($0)
+                )
             }
         }
     }

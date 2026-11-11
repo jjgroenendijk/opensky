@@ -3,7 +3,7 @@ import Metal
 import MetalKit
 @testable import OpenSkyActorPresentation
 @testable import OpenSkyAudio
-import OpenSkyCells
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsAudio
 @testable import OpenSkyFormatsESM
@@ -33,7 +33,7 @@ struct HeimskrFace {
         let placed = try PlacedActor(record: #require(
             ESMWalk.record(withFormID: 0x0001_A682, in: install.file)
         ))
-        let resolvers = builder.actorResolversBuildingIfNeeded()
+        let resolvers = builder.actorBuilder.actorResolversBuildingIfNeeded()
         let appearance = try resolvers.template.resolve(base: placed.base)
         let visual = try resolvers.visual.resolve(appearance: appearance)
         let assembly = ActorAssembler(provider: install.meshes)
@@ -42,7 +42,7 @@ struct HeimskrFace {
             device: install.device,
             fileSystem: install.fileSystem,
             assembly: assembly,
-            playback: #require(builder.makeFaceMorphPlayback(assembly: assembly))
+            playback: #require(builder.actorBuilder.makeFaceMorphPlayback(assembly: assembly))
         )
     }
 

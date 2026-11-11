@@ -11,19 +11,19 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 public import OpenSkyWorldInterface
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellObjectBuilder {
     /// Rigs the wheels of each follower in `instances`, replacing its model with its
     /// own copy. A model without wheel nodes stays as it is.
     func animatedVehicles(
         _ instances: inout [ResolvedInstance], followers: Set<UInt32>
     ) -> [(vehicle: CellAnimatedVehicle, playback: any RenderAnimation)] {
-        guard !followers.isEmpty, let fileSystem else { return [] }
+        guard !followers.isEmpty, let fileSystem = owner.fileSystem else { return [] }
         var result: [(vehicle: CellAnimatedVehicle, playback: any RenderAnimation)] = []
         for (index, instance) in instances.enumerated()
             where followers.contains(instance.formID) && instance.animated == nil
         {
             guard
-                let key = attempt({ try meshes.meshKey(for: instance.modelPath) }),
+                let key = attempt({ try owner.meshes.meshKey(for: instance.modelPath) }),
                 let file = attempt({ try NIFFile(data: fileSystem.contents(forPath: key)) }),
                 let rig = attempt({ try VehicleWheelRig(file: file) }),
                 let copy = posedCopy(of: instance, skeleton: rig.skeleton)
@@ -42,7 +42,7 @@ nonisolated extension CellSceneBuilder {
         let bones = Set(skeleton.boneNames)
         guard
             let model = attempt({
-                try meshes.animatedObjectModel(
+                try owner.meshes.animatedObjectModel(
                     path: instance.modelPath, bones: bones,
                     reference: instance.formID, surface: instance.surface
                 )
@@ -67,7 +67,7 @@ nonisolated extension CellSceneBuilder {
         scene.hazards = hazards
         scene.vehicleCollision = collision.vehicles
         scene.doorCollision = collision.doors
-        scene.assets = drainTouchedAssets()
+        scene.assets = owner.assembler.drainTouchedAssets()
         return scene
     }
 }

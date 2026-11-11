@@ -9,7 +9,7 @@ import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyWorldInterface
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellActorBuilder {
     /// `severedHead` marks the cut head of a decapitated actor, posed apart from its body.
     nonisolated func makeAnimationPlayback(
         assembly: ActorAssembly<ActorRenderAsset>,
@@ -26,12 +26,12 @@ nonisolated extension CellSceneBuilder {
             female: assembly.visual.appearance.isFemale.value
         )
         let clip: ActorAnimationClip
-        if let cached = actorAnimationClips[key] {
+        if let cached = owner.actorAnimationClips[key] {
             clip = cached
         } else {
             do {
                 clip = try loadAnimationClip(key: key)
-                actorAnimationClips[key] = clip
+                owner.actorAnimationClips[key] = clip
             } catch let error as ActorAnimationLoadError {
                 return .failure(error)
             } catch {
@@ -55,15 +55,15 @@ nonisolated extension CellSceneBuilder {
     nonisolated func lagBoneRig(
         skeletonMeshPath path: String, clip: ActorAnimationClip
     ) -> ActorLagBoneRig? {
-        if let known = actorLagBoneRigs[path] {
+        if let known = owner.actorLagBoneRigs[path] {
             return known
         }
-        let file = fileSystem
+        let file = owner.fileSystem
             .flatMap { element in attempt { try NIFFile(data: element.contents(forPath: path)) } }
         let rig = file.flatMap {
             ActorLagBoneRig(file: $0, rigBones: Set(clip.skeleton.boneNames))
         }
-        actorLagBoneRigs[path] = .some(rig)
+        owner.actorLagBoneRigs[path] = .some(rig)
         return rig
     }
 
@@ -75,13 +75,16 @@ nonisolated extension CellSceneBuilder {
             animationPaths: ActorAnimationClipLoader.idleAnimationPaths(
                 skeletonMeshPath: key.skeletonPath, female: key.female
             ),
-            exists: { fileSystem?.exists($0) ?? false },
+            exists: { owner.fileSystem?.exists($0) ?? false },
             readHKX: readHKX
         )
     }
 
     nonisolated private func readHKX(path: String) throws -> HKXFile {
-        guard let fileSystem, let data = attempt({ try fileSystem.contents(forPath: path) }) else {
+        guard
+            let fileSystem = owner.fileSystem,
+            let data = attempt({ try fileSystem.contents(forPath: path) })
+        else {
             throw ActorAnimationLoadError.missing(path)
         }
         do {

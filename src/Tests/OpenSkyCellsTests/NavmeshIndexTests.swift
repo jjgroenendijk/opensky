@@ -159,7 +159,7 @@ struct NavmeshIndexTests {
                 + NavmeshFixture.navmRecord(
                     formID: 0x101, geometry: NavmeshFixture.twoTriangleMesh()
                 ))
-        let navmeshes = CellSceneBuilder.collectNavmeshes(in: group)
+        let navmeshes = CellReferenceBuilder.collectNavmeshes(in: group)
 
         #expect(navmeshes.map(\.formID) == [FormID(0x100), FormID(0x101)])
         #expect(navmeshes[0].geometry.triangles.count == 2)
@@ -178,12 +178,12 @@ struct NavmeshIndexTests {
                 + NavmeshFixture.navmRecord(
                     formID: 0x102, geometry: NavmeshFixture.twoTriangleMesh()
                 ))
-        let navmeshes = CellSceneBuilder.collectNavmeshes(in: group)
+        let navmeshes = CellReferenceBuilder.collectNavmeshes(in: group)
 
         #expect(navmeshes.map(\.formID) == [FormID(0x102)])
     }
 
     @Test func collectsNothingWithoutAChildrenGroup() {
-        #expect(CellSceneBuilder.collectNavmeshes(in: nil).isEmpty)
+        #expect(CellReferenceBuilder.collectNavmeshes(in: nil).isEmpty)
     }
 }

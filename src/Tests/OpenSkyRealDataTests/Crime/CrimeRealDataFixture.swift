@@ -187,7 +187,7 @@ extension CrimeRealDataTests {
             locateShop(in: file),
             "no CELL named \(CrimeRealDataTests.shopEditorID) in this load order"
         )
-        let scene = try builder.buildInteriorScene(cellFormID: shop)
+        let scene = try builder.interiorBuilder.buildInteriorScene(cellFormID: shop)
 
         let factions = FactionStoreLoader.load(root: root, baseFile: file)
         let locations = LocationStoreLoader.load(root: root, baseFile: file)

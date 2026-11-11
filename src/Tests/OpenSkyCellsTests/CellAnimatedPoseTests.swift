@@ -23,7 +23,7 @@ struct CellAnimatedPoseTests {
 
     @Test func anAnimatedObjectSharesItsPlaybackBuffer() throws {
         let asset = try BehaviorProjectFixture.asset()
-        let built = CellSceneBuilder.animatedObject(Self.instance(), asset: asset, nodes: nil)
+        let built = CellObjectBuilder.animatedObject(Self.instance(), asset: asset, nodes: nil)
         let playback = try #require(built.playback as? SkinnedPosePlayback)
         #expect(built.object.pose === playback.pose)
         #expect(built.object.reference == 0x500)

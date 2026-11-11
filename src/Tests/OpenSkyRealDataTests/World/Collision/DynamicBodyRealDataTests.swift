@@ -52,7 +52,8 @@ struct DynamicBodyRealDataTests {
     func settlesAndPushesVanillaClutter() throws {
         let builder = try RealDataInstall.load().sceneBuilder(readsLooseFiles: true)
         builder.simulatesDynamicBodies = true
-        let scene = try builder.buildInteriorScene(cellFormID: WalkPathRoute.farmInterior)
+        let scene = try builder.interiorBuilder
+            .buildInteriorScene(cellFormID: WalkPathRoute.farmInterior)
 
         let placements = scene.dynamicBodies
         #expect(!placements.isEmpty, "the vanilla farmhouse placed no simulated body")
