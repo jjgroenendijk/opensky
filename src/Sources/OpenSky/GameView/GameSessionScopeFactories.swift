@@ -176,7 +176,7 @@ extension GameSessionScopeFactories {
     }
 
     func makeNPCAnimation() -> NPCAnimationCoordinator {
-        let coordinator = NPCAnimationCoordinator(world: scope.aiWorld)
+        let coordinator = NPCAnimationCoordinator(world: scope.aiWorld.worlds)
         coordinator.actorPlayback = { [unowned scope] in scope.actorPlayback(for: $0) }
         return coordinator
     }

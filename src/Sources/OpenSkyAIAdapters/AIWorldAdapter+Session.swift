@@ -162,9 +162,9 @@ extension AIWorldAdapter {
 
     private func registerAIFurniture(stage: SessionStage) {
         let gameSession = stage.gameSession
-        gameSession.playerFurniture = self
+        gameSession.playerFurniture = worlds
         gameSession.worldTick.register(.furniture) { [weak self] _ in
-            self?.seating.releaseMovedPlayer()
+            self?.seating.poses.releaseMovedPlayer()
             self?.seating.game.furniture.advance()
         }
     }

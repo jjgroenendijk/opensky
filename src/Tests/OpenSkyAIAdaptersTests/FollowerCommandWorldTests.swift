@@ -66,7 +66,7 @@ struct FollowerCommandWorldTests {
         #expect(adapter.followerMorality(Self.follower) == FollowerCommandRules.lawfulMorality)
         #expect(adapter.followerCommandPlayerPosition == nil)
         _ = adapter.followerCommandSettings
-        adapter.bringFollowers(into: FakeCellScenePort())
+        adapter.doors.bringFollowers(into: FakeCellScenePort())
     }
 
     @Test func anUnknownTargetCannotBeCommanded() {

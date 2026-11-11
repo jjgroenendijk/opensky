@@ -101,7 +101,11 @@ extension AIPackageStateAdapter {
             return game.streamer.cellLocation(of: actor) == .interior(cell)
         }
         guard
-            let place = packageMoves.packagePlace(of: location, actor: actor, aliasQuest: nil),
+            let place = packageMoves.places.packagePlace(
+                of: location,
+                actor: actor,
+                aliasQuest: nil
+            ),
             let position = packageMoves.packageActorPosition(actor)
         else { return false }
         return simd_distance(place.point, position) <= Float(max(0, place.radius))

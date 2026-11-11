@@ -5,6 +5,7 @@ import AppKit
 import MetalKit
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
+import OpenSkyAIAdapters
 import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyCombatInterface
@@ -62,7 +63,7 @@ extension SessionPorts {
     }
 
     var aiWorld: any AIWorldPort {
-        scope.aiWorld
+        scope.aiWorld.worlds
     }
 
     func animatedPose(for key: ReferenceKey) -> [String: float4x4]? {

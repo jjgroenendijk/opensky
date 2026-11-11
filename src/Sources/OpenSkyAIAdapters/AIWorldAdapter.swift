@@ -2,7 +2,7 @@
 // gait clips, and perception. It wires them into the frame loop and answers
 // their ports from the session systems. See docs/engine/coordinators.md.
 
-public import OpenSkyActorPresentation
+import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 public import OpenSkyAIPackages
 import OpenSkyCells
@@ -16,7 +16,7 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyNavigation
-public import OpenSkyPerception
+import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
@@ -59,11 +59,11 @@ public final class AIWorldAdapter {
     public let packageActsHost: any AIPackageActsHost
     public let bumpsHost: any AIBumpsHost
 
-    public var seating: AISeatingAdapter {
+    var seating: AISeatingAdapter {
         AISeatingAdapter(game: seatingHost, packageMoves: packageMoves)
     }
 
-    public var detectionSense: AIDetectionSenseAdapter {
+    var detectionSense: AIDetectionSenseAdapter {
         AIDetectionSenseAdapter(game: detectionSenseHost)
     }
 
@@ -71,15 +71,15 @@ public final class AIWorldAdapter {
         AIPerceptionSenseAdapter(game: perceptionSenseHost, detectionSense: detectionSense)
     }
 
-    public var navigation: AINavigationAdapter {
+    var navigation: AINavigationAdapter {
         AINavigationAdapter(game: navigationHost)
     }
 
-    public var packageMoves: AIPackageMovesAdapter {
+    var packageMoves: AIPackageMovesAdapter {
         AIPackageMovesAdapter(game: packageMovesHost)
     }
 
-    public var packageState: AIPackageStateAdapter {
+    var packageState: AIPackageStateAdapter {
         AIPackageStateAdapter(game: packageStateHost, packageMoves: packageMoves)
     }
 
@@ -88,6 +88,8 @@ public final class AIWorldAdapter {
             game: packageActsHost, packageMoves: packageMoves, navigation: navigation
         )
     }
+
+    public private(set) lazy var worlds = Worlds(self)
 
     public var bumps: AIBumpsAdapter {
         AIBumpsAdapter(game: bumpsHost)
@@ -122,15 +124,3 @@ public final class AIWorldAdapter {
         return data
     }
 }
-
-extension AIWorldAdapter: PackageWorld {}
-
-extension AIWorldAdapter {}
-
-extension AIWorldAdapter: AINavigationWorld {}
-
-extension AIWorldAdapter: NPCAnimationWorld {}
-
-extension AIWorldAdapter: PerceptionSessionWorld {}
-
-extension AIWorldAdapter: AIWorldPort {}
