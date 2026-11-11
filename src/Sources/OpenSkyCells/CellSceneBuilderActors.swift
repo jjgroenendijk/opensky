@@ -76,10 +76,6 @@ nonisolated public struct ActorEnableParents {
     }
 }
 
-nonisolated struct CellActorBuilder {
-    let owner: CellSceneBuilder
-}
-
 nonisolated extension CellActorBuilder {
     /// Actors for one exterior cell: local ACHRs plus worldspace-persistent
     /// ACHRs whose physical position lies in this cell, resolved + assembled.

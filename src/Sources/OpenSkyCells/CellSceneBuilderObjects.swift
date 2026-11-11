@@ -14,10 +14,6 @@ import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyWorldInterface
 
-nonisolated struct CellObjectBuilder {
-    let owner: CellSceneBuilder
-}
-
 nonisolated extension CellObjectBuilder {
     /// Base types whose meshes vanilla animates with a behaviour graph.
     static let animatedObjectTypes: Set<FourCC> = ["ACTI", "DOOR", "FURN", "CONT", "MSTT"]

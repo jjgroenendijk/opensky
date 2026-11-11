@@ -46,10 +46,6 @@ nonisolated enum WaterMeshBuilder: Sendable {
     }
 }
 
-nonisolated struct CellWaterBuilder {
-    let owner: CellSceneBuilder
-}
-
 nonisolated extension CellWaterBuilder {
     /// Builds at most one water plane. CELL DATA has-water gates the feature;
     /// an explicit XCLW sentinel wins over every WRLD default.

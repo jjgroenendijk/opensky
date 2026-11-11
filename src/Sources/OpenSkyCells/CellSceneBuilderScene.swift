@@ -60,10 +60,6 @@ nonisolated public struct EnvironmentBuild {
     public let sky: SkyParameters?
 }
 
-nonisolated struct CellSceneAssembler {
-    let owner: CellSceneBuilder
-}
-
 nonisolated extension CellSceneAssembler {
     /// Terrain + water + procedural sky (suppressed for noSky worldspaces).
     nonisolated func buildEnvironment(
