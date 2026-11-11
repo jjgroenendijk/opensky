@@ -309,13 +309,13 @@ final class GameSessionScope {
     lazy var combat = factories.makeCombat()
     lazy var combatWorld = CombatWorldAdapter(game: ports, stage: stage)
     /// Live resident-actor package selection.
-    lazy var packages = PackageCoordinator(world: aiWorld, data: aiWorld.packageData())
+    lazy var packages = PackageCoordinator(world: aiWorld.worlds, data: aiWorld.packageData())
     /// The furniture seats the player and the packages share.
     lazy var furniture = factories.makeFurniture()
 
     /// The perception pass: view cones, line of sight, and per-pair detection levels.
     lazy var perception = PerceptionCoordinator(
-        world: aiWorld,
+        world: aiWorld.worlds,
         settings: worldData?.detectionSettings,
         stealthPoints: worldData.map { StealthPointSettings.resolve(store: $0.gameSettings) }
             ?? .vanilla

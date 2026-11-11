@@ -86,7 +86,7 @@ public final class FollowerCommandWorldAdapter {
         guard game.followerCommands.isChoosing else { return takeFollowerPress() }
         let picked = game.streamer.interactionTarget
             .flatMap { game.streamer.referenceEntry(formID: $0.interaction.reference)?.key }
-        let target = picked.flatMap(commandTarget) ?? (picked == nil ? groundTarget() : nil)
+        let target = picked.flatMap(commandTarget) ?? (picked == nil ? checks.groundTarget() : nil)
         game.followerCommands.command(target)
         return true
     }
@@ -123,26 +123,6 @@ public final class FollowerCommandWorldAdapter {
         }
     }
 
-    /// The first ground the view ray meets within the pick distance: collision or terrain.
-    private func groundTarget() -> FollowerCommandTarget? {
-        guard
-            let camera = game.gameSession?.freeFlyCamera,
-            let ray = InteractionRay(
-                origin: camera.position, direction: camera.forward, maximumDistance: pickReach
-            )
-        else { return nil }
-        let hit = game.streamer.nearestCollisionHit(ray: ray)
-        let reach = hit?.distance ?? ray.maximumDistance
-        let terrain = stride(from: Self.terrainStep, through: reach, by: Self.terrainStep)
-            .lazy.map { ray.origin + ray.direction * $0 }
-            .first { point in
-                game.streamer.sampleTerrain(at: SIMD2(point.x, point.y))
-                    .map { point.z <= $0.height } ?? false
-            }
-        guard let point = terrain ?? hit?.position else { return nil }
-        return FollowerCommandTarget(key: nil, kind: .ground, position: point)
-    }
-
     /// The terrain test's step along the view ray, in units.
     static let terrainStep: Float = 32
 }
@@ -154,15 +134,6 @@ extension FollowerCommandWorldAdapter: FollowerCommandWorld {
 
     public var followerCommandPlayerPosition: SIMD3<Float>? {
         game.gameSession?.walkController.feetPosition
-    }
-
-    public func followerMorality(_ follower: ReferenceKey) -> Float {
-        guard
-            let index = ActorValueIdentity.index(named: "Morality"),
-            let holder = game.actorWorld.actorValueHolder(for: follower)
-        else { return FollowerCommandRules.lawfulMorality }
-        return game.actorValues.runtime?.value(at: index, on: holder)
-            ?? FollowerCommandRules.lawfulMorality
     }
 
     public func sayFavorLine(_ subtype: FourCC, follower: ReferenceKey) {

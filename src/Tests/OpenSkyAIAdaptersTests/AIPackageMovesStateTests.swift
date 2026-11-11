@@ -25,13 +25,13 @@ struct AIPackageMovesStateTests {
         host.fakeStreamer.moveActorResult = .started
         host.fakeStreamer.stopActorResult = true
         host.fakeFactions.hostilityResult = .hostile
-        #expect(adapter.moveActor(Self.actor, to: .zero) == .started)
-        #expect(adapter.stopActor(Self.actor))
-        #expect(adapter.isHostile(Self.actor))
-        adapter.setHostile(false, actor: Self.actor)
+        #expect(adapter.worlds.moveActor(Self.actor, to: .zero) == .started)
+        #expect(adapter.worlds.stopActor(Self.actor))
+        #expect(adapter.worlds.isHostile(Self.actor))
+        adapter.worlds.setHostile(false, actor: Self.actor)
         #expect(host.fakeFactions.setHostilityCalls.map(\.hostility) == [.neutral])
-        #expect(adapter.camera == nil)
-        #expect(adapter.animationClips == nil)
+        #expect(adapter.worlds.camera == nil)
+        #expect(adapter.worlds.animationClips == nil)
     }
 
     @Test func actorCandidatesComeFromTheActorWorld() {
@@ -39,13 +39,13 @@ struct AIPackageMovesStateTests {
             key: Self.actor,
             feet: .one
         )]
-        #expect(adapter.actorCandidates().map(\.key) == [Self.actor])
-        #expect(adapter.actorCandidates().map(\.feet) == [.one])
+        #expect(adapter.worlds.actorCandidates().map(\.key) == [Self.actor])
+        #expect(adapter.worlds.actorCandidates().map(\.feet) == [.one])
     }
 
     @Test func aRiderWithoutAHorseLinkStaysOnFoot() {
-        #expect(adapter.mountPackageActor(Self.actor) == nil)
-        adapter.dismountPackageActor(Self.actor)
+        #expect(adapter.worlds.mountPackageActor(Self.actor) == nil)
+        adapter.worlds.dismountPackageActor(Self.actor)
         #expect(host.fakeVehicleWorld.detachCalls == [Self.actor])
         #expect(host.fakeNpcAnimation.dismountCalls == [Self.actor])
         #expect(host.fakeStreamer.stopActorCalls.isEmpty)
@@ -53,25 +53,25 @@ struct AIPackageMovesStateTests {
 
     @Test func aLiveTransformPlacesTheActor() {
         host.fakeStreamer.npcTransformResult = ReferenceTransformOverride(position: .one)
-        #expect(adapter.packageActorPosition(Self.actor) == .one)
-        #expect(adapter.packageActorPosition(.player) == nil)
-        #expect(adapter.furnitureActorPosition(Self.actor) == .one)
+        #expect(adapter.worlds.packageActorPosition(Self.actor) == .one)
+        #expect(adapter.worlds.packageActorPosition(.player) == nil)
+        #expect(adapter.worlds.furnitureActorPosition(Self.actor) == .one)
     }
 
     @Test func onlyAnExteriorPackageActorFlies() {
         host.fakeDragonFlightWorld.actorFliesPackagesResult = true
-        #expect(adapter.packageActorFlies(Self.actor))
-        #expect(!adapter.packageActorFlies(.player))
+        #expect(adapter.worlds.packageActorFlies(Self.actor))
+        #expect(!adapter.worlds.packageActorFlies(.player))
         host.fakeVehicleWorld.isPlayerAIDriven = true
-        #expect(adapter.packageDrivesPlayer)
+        #expect(adapter.worlds.packageDrivesPlayer)
     }
 
     @Test func sandboxEndsReleaseTheirMarkers() throws {
         let idles = try #require(host.fakeIdleWorld.idles as? FakeIdlePort)
         idles.holdsMarkerResult = true
-        #expect(adapter.packageActorHoldsIdleMarker(Self.actor))
-        adapter.packageSandboxActivityEnded(.idleMarker, actor: Self.actor)
-        adapter.packageSandboxActivityEnded(.wandering, actor: Self.actor)
+        #expect(adapter.worlds.packageActorHoldsIdleMarker(Self.actor))
+        adapter.worlds.packageSandboxActivityEnded(.idleMarker, actor: Self.actor)
+        adapter.worlds.packageSandboxActivityEnded(.wandering, actor: Self.actor)
         #expect(idles.leaveMarkerCalls.count == 1)
         #expect(idles.allowPreviousMarkerCalls == [Self.actor])
     }
@@ -79,36 +79,39 @@ struct AIPackageMovesStateTests {
     @Test func aMoveIsRecordedAndMapped() {
         host.fakeStreamer.moveActorResult = .started
         #expect(adapter
-            .movePackageActor(PackageMove(Self.actor, to: .one, direct: false)) == .started)
+            .worlds.movePackageActor(PackageMove(Self.actor, to: .one, direct: false)) == .started)
         host.fakeStreamer.moveActorResult = .moverCapReached
-        #expect(adapter.movePackageActor(PackageMove(Self.actor, to: .one, direct: true)) == .busy)
+        #expect(adapter.worlds
+            .movePackageActor(PackageMove(Self.actor, to: .one, direct: true)) == .busy)
         #expect(host.fakePackages.recordMoveCalls.map(\.actor) == [Self.actor, Self.actor])
         host.fakeFurniture.isLeavingSeatResult = true
-        #expect(adapter.movePackageActor(PackageMove(Self.actor, to: .one, direct: true)) == .busy)
-        #expect(adapter.movePackageActor(PackageMove(.player, to: .one, direct: true)) == .failed)
+        #expect(adapter.worlds
+            .movePackageActor(PackageMove(Self.actor, to: .one, direct: true)) == .busy)
+        #expect(adapter.worlds
+            .movePackageActor(PackageMove(.player, to: .one, direct: true)) == .failed)
     }
 
     @Test func withoutScriptsOrSessionPackageReadsAreEmpty() {
-        #expect(adapter.packageAliasStacks().isEmpty)
-        #expect(adapter.packageClock == nil)
-        #expect(adapter.packageResidents() == nil)
-        #expect(adapter.packageActorGait(.player) == nil)
-        #expect(adapter.packageLeveledRoll(of: Self.actor, base: FormID(0x40)) == nil)
-        #expect(!adapter.isAIDisabled(Self.actor))
+        #expect(adapter.worlds.packageAliasStacks().isEmpty)
+        #expect(adapter.worlds.packageClock == nil)
+        #expect(adapter.worlds.packageResidents() == nil)
+        #expect(adapter.worlds.packageActorGait(.player) == nil)
+        #expect(adapter.worlds.packageLeveledRoll(of: Self.actor, base: FormID(0x40)) == nil)
+        #expect(!adapter.worlds.isAIDisabled(Self.actor))
         #expect(adapter.packageData() == nil)
     }
 
     @Test func activityReadsDeathFirst() {
-        #expect(adapter.packageActorActivity(Self.actor) == .free)
+        #expect(adapter.worlds.packageActorActivity(Self.actor) == .free)
         host.fakeWorldState.componentResult = ActorDeathState(isDead: true)
-        #expect(adapter.packageActorActivity(Self.actor) == .dead)
+        #expect(adapter.worlds.packageActorActivity(Self.actor) == .dead)
     }
 
     @Test func theMoverAlwaysHasRoomForThePlayer() {
         let movement = host.fakeStreamer.npcMovement
         movement.hasRoomResult = false
-        #expect(adapter.packageMoverHasRoom(for: .player))
-        #expect(!adapter.packageMoverHasRoom(for: Self.actor))
+        #expect(adapter.worlds.packageMoverHasRoom(for: .player))
+        #expect(!adapter.worlds.packageMoverHasRoom(for: Self.actor))
     }
 }
 
@@ -121,6 +124,6 @@ struct AISessionReadsTests {
         session.freeFlyCameraValue = FreeFlyCamera(position: [1, 2, 3], yaw: 0, pitch: 0)
         host.gameSession = session
         let adapter = AIWorldAdapter(game: host, stage: nil)
-        #expect(adapter.camera?.position == [1, 2, 3])
+        #expect(adapter.worlds.camera?.position == [1, 2, 3])
     }
 }

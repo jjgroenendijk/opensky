@@ -121,7 +121,7 @@ extension GameSessionScopeFactories {
     }
 
     func makeFurniture() -> FurnitureCoordinator {
-        let furniture = FurnitureCoordinator(world: scope.aiWorld)
+        let furniture = FurnitureCoordinator(world: scope.aiWorld.worlds)
         guard scope.stage != nil else { return furniture }
         let store = scope.playerSettingsStore
         furniture.isEnabled = store.bool(.furniture)
@@ -140,7 +140,7 @@ extension GameSessionScopeFactories {
             clock: { Date() }
         )
         world.state.bringFollowers = { [weak scope] scene in
-            scope?.followerCommandWorld.bringFollowers(into: scene)
+            scope?.followerCommandWorld.doors.bringFollowers(into: scene)
         }
         return world
     }
