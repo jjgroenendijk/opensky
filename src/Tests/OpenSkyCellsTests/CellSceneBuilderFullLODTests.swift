@@ -77,4 +77,59 @@ struct CellSceneBuilderFullLODTests: CellSceneBuilderFixture {
         let world = try builder.worldChildrenGroup(editorID: "Tamriel", localized: false)
         #expect(builder.referenceBuilder.temporaryFullLODCells(in: world).isEmpty)
     }
+
+    /// The worldspace persistent CELL sits directly in the world children, outside any block.
+    private func persistentCell(holding refs: Data) -> Data {
+        ESMFixture.record("CELL", formID: 0x60, data: cellFields(
+            editorID: "Persistent", grid: (0, 0), flags: 0, waterHeightBits: nil, waterType: nil
+        )) + ESMFixture.childGroup(
+            parent: 0x60, groupType: 6,
+            contents: ESMFixture.childGroup(parent: 0x60, groupType: 8, contents: refs)
+        )
+    }
+
+    private func makeBuilder(persistentRefs: Data) throws -> CellSceneBuilder {
+        try writeLooseFile("meshes/arch/wall.nif", unitNIF())
+        let device = try #require(Self.device)
+        return try makeBuilder(
+            pluginData: plugin(
+                statRecords: statRecord(formID: 0x100, modelPath: "arch\\wall.nif"),
+                extraWorldChildren: persistentCell(holding: persistentRefs)
+            ),
+            device: device
+        )
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func drawsAFlaggedPersistentReferenceOutsideTheLoadedCells(
+    ) throws {
+        let builder = try makeBuilder(
+            persistentRefs: fullLOD(refrRecord(formID: 0x300, base: 0x100))
+                + refrRecord(formID: 0x301, base: 0x100)
+        )
+        let distant = builder.referenceBuilder.fullLODPlacements(
+            worldspaceEditorID: "Tamriel", loadedCells: []
+        )
+        #expect(distant.placements.count == 1)
+        #expect(distant.watchedObjectIDs == [0x300])
+        let loaded = builder.referenceBuilder.fullLODPlacements(
+            worldspaceEditorID: "Tamriel", loadedCells: [CellCoordinate(x: 0, y: 0)]
+        )
+        #expect(loaded.placements.isEmpty)
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func aWorldWithoutLargeReferencesDrawsNone() throws {
+        let builder = try makeBuilder(persistentRefs: Data())
+        let cells: Set = [CellCoordinate(x: 6, y: -2)]
+        for _ in 0 ..< 2 {
+            let large = builder.referenceBuilder.largeReferencePlacements(
+                worldspaceEditorID: "Tamriel", cells: cells
+            )
+            #expect(large.placements.isEmpty)
+        }
+        #expect(builder.largeReferenceIndex.count == 1)
+        let unknown = builder.referenceBuilder.fullLODPlacements(
+            worldspaceEditorID: "Nowhere", loadedCells: []
+        )
+        #expect(unknown.placements.isEmpty)
+    }
 }
