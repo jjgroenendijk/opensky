@@ -25,8 +25,7 @@ import OpenSkyWorldState
 extension MagicWorldAdapter {
     /// Without a stage, as in a test, it registers nothing.
     public convenience init(
-        game: some MagicWorldHost & MagicArchetypeEffectsHost & MagicSpellDeliveryHost &
-            MagicHeldMagicHost & MagicSummonedActorsHost & MagicWorldFactsHost,
+        game: some MagicWorldHosts,
         stage: SessionStage?
     ) {
         self.init(game: game)

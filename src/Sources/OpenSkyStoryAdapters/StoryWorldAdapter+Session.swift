@@ -28,8 +28,7 @@ import OpenSkyWorldState
 extension StoryWorldAdapter {
     /// Without a stage, as in a test, it registers nothing.
     public convenience init(
-        game: some StoryWorldHost & StoryAmbientTalkHost & StorySocialSearchHost &
-            StorySceneLinesHost & StorySceneCastHost,
+        game: some StoryWorldHosts,
         stage: SessionStage?,
         now: @escaping () -> Date
     ) {

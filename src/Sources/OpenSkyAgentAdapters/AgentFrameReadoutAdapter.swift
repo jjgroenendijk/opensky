@@ -180,6 +180,6 @@ extension AgentFrameReadoutAdapter {
 
 extension AgentFrameReadoutAdapter {
     private var render: AgentRenderAdapter {
-        AgentRenderAdapter(hub: hub, game: hub.renderHost)
+        AgentRenderAdapter(hub: hub, game: hub.hosts)
     }
 }

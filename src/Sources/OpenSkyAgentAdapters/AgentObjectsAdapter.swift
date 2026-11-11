@@ -365,6 +365,6 @@ extension AgentObjectsAdapter {
 
 extension AgentObjectsAdapter {
     private var behaviour: AgentBehaviourAdapter {
-        AgentBehaviourAdapter(hub: hub, game: hub.behaviourHost)
+        AgentBehaviourAdapter(hub: hub, game: hub.hosts)
     }
 }

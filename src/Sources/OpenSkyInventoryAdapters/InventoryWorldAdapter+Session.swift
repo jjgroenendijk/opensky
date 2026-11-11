@@ -27,8 +27,7 @@ import OpenSkyWorldState
 extension InventoryWorldAdapter {
     /// Without a stage, as in a test, it registers nothing.
     public convenience init(
-        game: some InventoryWorldHost & InventoryReadoutsHost & InventoryPickpocketHost &
-            InventoryPerksHost & InventoryRecipesHost & InventoryVendorHost & InventoryCommandsHost,
+        game: some InventoryWorldHosts,
         stage: SessionStage?
     ) {
         self.init(game: game)

@@ -45,60 +45,51 @@ public protocol CombatWorldHost: AnyObject, SendableMetatype {
 }
 
 /// Answers `CombatWorld` from the session systems `game` owns.
+/// Every host a `CombatWorldAdapter` part reads, all one object.
+public typealias CombatWorldHosts = CombatActorFactsHost & CombatGearHost &
+    CombatImpactEffectsHost &
+    CombatMotionHost & CombatOutcomesHost & CombatReportsHost & CombatSpellCastsHost &
+    CombatWorldHost
+
 public final class CombatWorldAdapter {
     public let game: any CombatWorldHost
     /// Rigs whose reaction clips were requested, because a room of actors shares one rig.
     private var warmedSkeletons: Set<String> = []
 
-    public let spellCastsHost: any CombatSpellCastsHost
-    public let impactEffectsHost: any CombatImpactEffectsHost
-    public let reportsHost: any CombatReportsHost
-    public let actorFactsHost: any CombatActorFactsHost
-    public let gearHost: any CombatGearHost
-    public let motionHost: any CombatMotionHost
-    public let outcomesHost: any CombatOutcomesHost
+    let hosts: any CombatWorldHosts
 
     public var spellCasts: CombatSpellCastsAdapter {
-        CombatSpellCastsAdapter(game: spellCastsHost)
+        CombatSpellCastsAdapter(game: hosts)
     }
 
     public var impactEffects: CombatImpactEffectsAdapter {
-        CombatImpactEffectsAdapter(game: impactEffectsHost)
+        CombatImpactEffectsAdapter(game: hosts)
     }
 
     public var reports: CombatReportsAdapter {
-        CombatReportsAdapter(game: reportsHost, actorFacts: actorFacts)
+        CombatReportsAdapter(game: hosts, actorFacts: actorFacts)
     }
 
     public var actorFacts: CombatActorFactsAdapter {
-        CombatActorFactsAdapter(game: actorFactsHost)
+        CombatActorFactsAdapter(game: hosts)
     }
 
     public var gear: CombatGearAdapter {
-        CombatGearAdapter(game: gearHost)
+        CombatGearAdapter(game: hosts)
     }
 
     public var motion: CombatMotionAdapter {
-        CombatMotionAdapter(game: motionHost, impactEffects: impactEffects)
+        CombatMotionAdapter(game: hosts, impactEffects: impactEffects)
     }
 
     public var outcomes: CombatOutcomesAdapter {
         CombatOutcomesAdapter(
-            game: outcomesHost, motion: motion, impactEffects: impactEffects
+            game: hosts, motion: motion, impactEffects: impactEffects
         )
     }
 
-    public init(game: some CombatWorldHost & CombatSpellCastsHost & CombatImpactEffectsHost &
-        CombatReportsHost & CombatActorFactsHost & CombatGearHost & CombatMotionHost &
-        CombatOutcomesHost)
-    {
-        spellCastsHost = game
-        impactEffectsHost = game
-        reportsHost = game
-        actorFactsHost = game
-        gearHost = game
-        motionHost = game
-        outcomesHost = game
+    public init(game: some CombatWorldHosts) {
+        hosts = game
         self.game = game
     }
 

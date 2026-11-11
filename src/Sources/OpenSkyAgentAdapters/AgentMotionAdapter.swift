@@ -198,7 +198,7 @@ extension AgentMotionAdapter {
 
 extension AgentMotionAdapter {
     private var behaviour: AgentBehaviourAdapter {
-        AgentBehaviourAdapter(hub: hub, game: hub.behaviourHost)
+        AgentBehaviourAdapter(hub: hub, game: hub.hosts)
     }
 }
 

@@ -37,53 +37,47 @@ public protocol MagicWorldHost: AnyObject, SendableMetatype {
 }
 
 /// Answers `MagicWorld` from the session systems `game` owns.
+/// Every host a `MagicWorldAdapter` part reads, all one object.
+public typealias MagicWorldHosts = MagicArchetypeEffectsHost & MagicHeldMagicHost &
+    MagicSpellDeliveryHost & MagicSummonedActorsHost & MagicWorldFactsHost & MagicWorldHost
+
 public final class MagicWorldAdapter {
     public let game: any MagicWorldHost
     let state = MagicPartState()
 
-    public let archetypeEffectsHost: any MagicArchetypeEffectsHost
-    public let spellDeliveryHost: any MagicSpellDeliveryHost
-    public let heldMagicHost: any MagicHeldMagicHost
-    public let summonedActorsHost: any MagicSummonedActorsHost
-    public let worldFactsHost: any MagicWorldFactsHost
+    let hosts: any MagicWorldHosts
 
     public var archetypeEffects: MagicArchetypeEffectsAdapter {
         MagicArchetypeEffectsAdapter(
-            game: archetypeEffectsHost, state: state, heldMagic: heldMagic,
+            game: hosts, state: state, heldMagic: heldMagic,
             spellDelivery: spellDelivery
         )
     }
 
     public var spellDelivery: MagicSpellDeliveryAdapter {
-        MagicSpellDeliveryAdapter(game: spellDeliveryHost
+        MagicSpellDeliveryAdapter(game: hosts
         )
     }
 
     public var heldMagic: MagicHeldMagicAdapter {
         MagicHeldMagicAdapter(
-            game: heldMagicHost, state: state, summonedActors: summonedActors,
+            game: hosts, state: state, summonedActors: summonedActors,
             spellDelivery: spellDelivery
         )
     }
 
     public var summonedActors: MagicSummonedActorsAdapter {
-        MagicSummonedActorsAdapter(game: summonedActorsHost
+        MagicSummonedActorsAdapter(game: hosts
         )
     }
 
     public var worldFacts: MagicWorldFactsAdapter {
-        MagicWorldFactsAdapter(game: worldFactsHost
+        MagicWorldFactsAdapter(game: hosts
         )
     }
 
-    public init(game: some MagicWorldHost & MagicArchetypeEffectsHost & MagicSpellDeliveryHost &
-        MagicHeldMagicHost & MagicSummonedActorsHost & MagicWorldFactsHost)
-    {
-        archetypeEffectsHost = game
-        spellDeliveryHost = game
-        heldMagicHost = game
-        summonedActorsHost = game
-        worldFactsHost = game
+    public init(game: some MagicWorldHosts) {
+        hosts = game
         self.game = game
     }
 

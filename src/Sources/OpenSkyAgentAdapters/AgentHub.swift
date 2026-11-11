@@ -30,6 +30,14 @@ import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
+/// Every host an `AgentWorldAdapter` part reads, all one object.
+public typealias AgentWorldHosts =
+    AgentActorReadoutHost & AgentActorsHost & AgentBehaviourHost & AgentCaptureHost &
+    AgentEventsHost & AgentFrameReadoutHost & AgentInputHost & AgentItemsHost &
+    AgentMenuReadoutHost &
+    AgentMotionHost & AgentObjectsHost & AgentPlayerReadoutHost & AgentRenderHost &
+    AgentScreensHost & AgentViewHost & AgentWorldHost
+
 /// What the parts of `AgentWorldAdapter` share: the hosts, the event tap state, and the
 /// reads every part uses. A value, so a part holds no reference back to its owner.
 public struct AgentHub {
@@ -43,46 +51,14 @@ public struct AgentHub {
         nonmutating set { state.tap = newValue }
     }
 
-    public let renderHost: any AgentRenderHost
-    public let actorsHost: any AgentActorsHost
-    public let motionHost: any AgentMotionHost
-    public let behaviourHost: any AgentBehaviourHost
-    public let objectsHost: any AgentObjectsHost
-    public let menuReadoutHost: any AgentMenuReadoutHost
-    public let screensHost: any AgentScreensHost
-    public let eventsHost: any AgentEventsHost
-    public let playerReadoutHost: any AgentPlayerReadoutHost
-    public let frameReadoutHost: any AgentFrameReadoutHost
-    public let actorReadoutHost: any AgentActorReadoutHost
-    public let itemsHost: any AgentItemsHost
-    public let viewHost: any AgentViewHost
-    public let inputHost: any AgentInputHost
-    public let captureHost: any AgentCaptureHost
+    let hosts: any AgentWorldHosts
 
     public init(
-        game: some AgentWorldHost & AgentRenderHost & AgentActorsHost & AgentMotionHost &
-            AgentBehaviourHost & AgentObjectsHost & AgentMenuReadoutHost & AgentScreensHost &
-            AgentEventsHost & AgentPlayerReadoutHost & AgentFrameReadoutHost &
-            AgentActorReadoutHost &
-            AgentItemsHost & AgentViewHost & AgentInputHost & AgentCaptureHost,
+        game: some AgentWorldHosts,
         now: @escaping () -> Date
     ) {
         self.now = now
-        renderHost = game
-        actorsHost = game
-        motionHost = game
-        behaviourHost = game
-        objectsHost = game
-        menuReadoutHost = game
-        screensHost = game
-        eventsHost = game
-        playerReadoutHost = game
-        frameReadoutHost = game
-        actorReadoutHost = game
-        itemsHost = game
-        viewHost = game
-        inputHost = game
-        captureHost = game
+        hosts = game
         self.game = game
     }
 

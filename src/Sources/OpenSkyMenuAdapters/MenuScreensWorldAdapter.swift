@@ -38,34 +38,31 @@ public protocol MenuScreensWorldHost: MenuInputConsumer, SendableMetatype {
     var streamer: any CellStreamerPort { get }
 }
 
+/// Every host a `MenuScreensWorldAdapter` part reads, all one object.
+public typealias MenuScreensWorldHosts = MenuScreensCraftingDeskHost & MenuScreensGiftListsHost &
+    MenuScreensGuidesHost & MenuScreensWorldHost
+
 public final class MenuScreensWorldAdapter {
     public let game: any MenuScreensWorldHost
 
-    public let craftingDeskHost: any MenuScreensCraftingDeskHost
-    public let guidesHost: any MenuScreensGuidesHost
-    public let giftListsHost: any MenuScreensGiftListsHost
+    let hosts: any MenuScreensWorldHosts
 
     public var craftingDesk: MenuScreensCraftingDeskAdapter {
-        MenuScreensCraftingDeskAdapter(game: craftingDeskHost
+        MenuScreensCraftingDeskAdapter(game: hosts
         )
     }
 
     public var guides: MenuScreensGuidesAdapter {
-        MenuScreensGuidesAdapter(game: guidesHost)
+        MenuScreensGuidesAdapter(game: hosts)
     }
 
     public var giftLists: MenuScreensGiftListsAdapter {
-        MenuScreensGiftListsAdapter(game: giftListsHost
+        MenuScreensGiftListsAdapter(game: hosts
         )
     }
 
-    public init(game: some MenuScreensWorldHost & MenuScreensCraftingDeskHost &
-        MenuScreensGuidesHost &
-        MenuScreensGiftListsHost)
-    {
-        craftingDeskHost = game
-        guidesHost = game
-        giftListsHost = game
+    public init(game: some MenuScreensWorldHosts) {
+        hosts = game
         self.game = game
     }
 

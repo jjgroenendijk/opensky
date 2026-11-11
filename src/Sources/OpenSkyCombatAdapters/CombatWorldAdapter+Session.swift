@@ -33,9 +33,7 @@ import OpenSkyWorldState
 extension CombatWorldAdapter {
     /// Without a stage, as in a test, it registers nothing.
     public convenience init(
-        game: some CombatWorldHost & CombatSpellCastsHost & CombatImpactEffectsHost &
-            CombatReportsHost & CombatActorFactsHost & CombatGearHost & CombatMotionHost &
-            CombatOutcomesHost,
+        game: some CombatWorldHosts,
         stage: SessionStage?
     ) {
         self.init(game: game)

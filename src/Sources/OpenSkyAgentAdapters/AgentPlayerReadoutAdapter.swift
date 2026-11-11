@@ -120,11 +120,11 @@ extension AgentPlayerReadoutAdapter {
 
 extension AgentPlayerReadoutAdapter {
     private var frameReadout: AgentFrameReadoutAdapter {
-        AgentFrameReadoutAdapter(hub: hub, game: hub.frameReadoutHost)
+        AgentFrameReadoutAdapter(hub: hub, game: hub.hosts)
     }
 
     private var actorReadout: AgentActorReadoutAdapter {
-        AgentActorReadoutAdapter(hub: hub, game: hub.actorReadoutHost)
+        AgentActorReadoutAdapter(hub: hub, game: hub.hosts)
     }
 }
 
@@ -223,10 +223,10 @@ struct AgentPlayerStatusReadout {
     }
 
     var render: AgentRenderAdapter {
-        AgentRenderAdapter(hub: hub, game: hub.renderHost)
+        AgentRenderAdapter(hub: hub, game: hub.hosts)
     }
 
     var actors: AgentActorsAdapter {
-        AgentActorsAdapter(hub: hub, game: hub.actorsHost)
+        AgentActorsAdapter(hub: hub, game: hub.hosts)
     }
 }

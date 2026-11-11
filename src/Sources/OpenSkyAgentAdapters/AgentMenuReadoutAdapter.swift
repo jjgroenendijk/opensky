@@ -158,7 +158,7 @@ extension AgentMenuReadoutAdapter {
 
 extension AgentMenuReadoutAdapter {
     private var screens: AgentScreensAdapter {
-        AgentScreensAdapter(hub: hub, game: hub.screensHost)
+        AgentScreensAdapter(hub: hub, game: hub.hosts)
     }
 }
 

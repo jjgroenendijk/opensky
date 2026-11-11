@@ -41,6 +41,11 @@ public protocol EffectsWorldHost: AnyObject, SendableMetatype {
     var streamer: any CellStreamerPort { get }
 }
 
+/// Every host an `EffectsWorldAdapter` part reads, all one object.
+public typealias EffectsWorldHosts = EffectsBlastsHost & EffectsBodyImpulsesHost &
+    EffectsEffectPlacementHost &
+    EffectsLocatorHost & EffectsTrapControlHost & EffectsWorldHost
+
 public final class EffectsWorldAdapter {
     /// A long frame steps as this, as for hazards.
     static let longestStep: Float = 0.25
@@ -48,49 +53,40 @@ public final class EffectsWorldAdapter {
 
     public let game: any EffectsWorldHost
     public let state = EffectsPartState()
-    lazy var frameLooks = EffectsFrameLooks(game: game, blastsHost: blastsHost, state: state)
+    lazy var frameLooks = EffectsFrameLooks(game: game, blastsHost: hosts, state: state)
     var lastFrame: Date?
     let now: () -> Date
 
-    public let bodyImpulsesHost: any EffectsBodyImpulsesHost
-    public let locatorHost: any EffectsLocatorHost
-    public let trapControlHost: any EffectsTrapControlHost
-    public let blastsHost: any EffectsBlastsHost
-    public let effectPlacementHost: any EffectsEffectPlacementHost
+    let hosts: any EffectsWorldHosts
 
     public var bodyImpulses: EffectsBodyImpulsesAdapter {
-        EffectsBodyImpulsesAdapter(game: bodyImpulsesHost, effects: effects, locator: locator)
+        EffectsBodyImpulsesAdapter(game: hosts, effects: effects, locator: locator)
     }
 
     var locator: EffectsLocatorAdapter {
-        EffectsLocatorAdapter(game: locatorHost)
+        EffectsLocatorAdapter(game: hosts)
     }
 
     public var trapControl: EffectsTrapControlAdapter {
         EffectsTrapControlAdapter(
-            game: trapControlHost, state: state, bodyImpulses: bodyImpulses, locator: locator
+            game: hosts, state: state, bodyImpulses: bodyImpulses, locator: locator
         )
     }
 
     public var blasts: EffectsBlastsAdapter {
-        EffectsBlastsAdapter(game: blastsHost, state: state)
+        EffectsBlastsAdapter(game: hosts, state: state)
     }
 
     public var effectPlacement: EffectsEffectPlacementAdapter {
-        EffectsEffectPlacementAdapter(game: effectPlacementHost, state: state)
+        EffectsEffectPlacementAdapter(game: hosts, state: state)
     }
 
     public init(
-        game: some EffectsWorldHost & EffectsBodyImpulsesHost & EffectsTrapControlHost &
-            EffectsBlastsHost & EffectsEffectPlacementHost & EffectsLocatorHost,
+        game: some EffectsWorldHosts,
         now: @escaping () -> Date
     ) {
         self.now = now
-        bodyImpulsesHost = game
-        locatorHost = game
-        trapControlHost = game
-        blastsHost = game
-        effectPlacementHost = game
+        hosts = game
         self.game = game
     }
 

@@ -48,23 +48,24 @@ public struct StartedAudio {
 }
 
 /// Answers `AudioWorld` from the session systems `game` owns.
+/// Every host an `AudioWorldAdapter` part reads, all one object.
+public typealias AudioWorldHosts = AudioListenerHost & AudioMixHost & AudioWorldHost
+
 public final class AudioWorldAdapter {
     public let game: any AudioWorldHost
 
-    public let listenerHost: any AudioListenerHost
-    public let mixHost: any AudioMixHost
+    let hosts: any AudioWorldHosts
 
     public var listener: AudioListenerAdapter {
-        AudioListenerAdapter(game: listenerHost)
+        AudioListenerAdapter(game: hosts)
     }
 
     public var mix: AudioMixAdapter {
-        AudioMixAdapter(game: mixHost)
+        AudioMixAdapter(game: hosts)
     }
 
-    public init(game: some AudioWorldHost & AudioListenerHost & AudioMixHost) {
-        listenerHost = game
-        mixHost = game
+    public init(game: some AudioWorldHosts) {
+        hosts = game
         self.game = game
     }
 }
