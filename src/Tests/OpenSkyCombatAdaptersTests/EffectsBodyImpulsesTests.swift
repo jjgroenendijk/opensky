@@ -36,6 +36,20 @@ struct EffectsBodyImpulsesTests {
         #expect(adapter.impulseActors().map(\.key) == [.player, Self.actor, Self.dead])
     }
 
+    @Test func aSplashShowsItsModelWithOrWithoutASound() {
+        for weight in [SplashWeight.silent, .heavy] {
+            adapter.showSplash(
+                SplashEvent(
+                    source: Self.actor,
+                    position: .zero,
+                    model: "splash.nif",
+                    weight: weight
+                )
+            )
+        }
+        #expect(host.fakeEffects.showModelCalls.count == 2)
+    }
+
     @Test func waterReadsComeFromTheStreamer() {
         host.fakeStreamer.sampleWaterHeightResult = 12
         #expect(adapter.waterHeight(at: SIMD2(1, 2)) == 12)
