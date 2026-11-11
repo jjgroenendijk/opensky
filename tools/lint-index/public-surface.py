@@ -5,8 +5,9 @@ no access levels, so the check reads the source line at each definition and find
 or `open` before the name, or a `public extension` around it. A declaration is used by
 another module when code in another module names it. A test file that imports the module
 with `@testable` sees internal declarations, so its use does not count. A declaration stays
-needed when another module uses one of its members or names it as a protocol witness, or when a needed declaration of its own
-module names it, such as a type in the signature of a used function. Protocol witnesses and
+needed when another module uses one of its members or names it as a protocol witness, or when a needed
+declaration of its own module names it, directly or through a non-public one, such as a type in
+the signature of a used function. Protocol witnesses and
 overrides take the access their requirement needs, so they are left out. With --gate it
 fails on any finding; without, it reports and passes.
 Usage: public-surface.py <DataStore> <repo> [--gate]. See docs/decisions/design-metrics.md.
@@ -84,15 +85,14 @@ def unused(public, references, witnesses):
     needed, inside = set(witnesses) & declared, collections.defaultdict(set)
     for user_module, testable, containers, usr in references:
         targets = owners(usr)
-        if not targets:
-            continue
-        home = public[targets[-1]][1]
+        home = public[targets[-1]][1] if targets else user_module
         if user_module != home and home not in testable:
             needed.update(targets)
         elif user_module == home:
+            # A non-public declaration passes the need on, such as a private table that a
+            # public one is built from.
             for container in containers:
-                if container in declared:
-                    inside[container].update(targets)
+                inside[container].update(targets + [usr])
     pending = list(needed)
     while pending:
         for target in inside.pop(pending.pop(), ()):
@@ -105,7 +105,8 @@ def unused(public, references, witnesses):
 def self_check():
     """A public helper that only its own module calls, from an internal function, is reported. A public function that
     another module calls is not, nor the public type in its signature, nor a type whose
-    member another module reads, nor a witness and the type in its signature."""
+    member another module reads, nor a witness and the type in its signature, nor a type that a
+    used function reaches through a private table."""
     used, helper = "s:3App4mainyyF", "s:3App6helperyyF"
     result, holder = "s:3App6ResultV", "s:3App6HolderV"
     public = {used: ("main", "App"), helper: ("helper", "App"), result: ("Result", "App"),
@@ -127,6 +128,9 @@ def self_check():
     base = "s:3App5LimitV8$current"
     projected = {base: "s:3App5LimitV7currentvpZ"}
     unwrapped = [wrapped(base + "vgZ", projected), wrapped("s:3App5LimitV4sizevp", projected)]
+    entry, rest = "s:3App5EntryV", "s:3App4restSayAA5EntryVGvpZ"
+    public[entry] = ("Entry", "App")
+    references += [("App", set(), [used], rest), ("App", set(), [rest], entry)]
     return (unused(public, references, {witness}) == {helper} and keyword == [True, False, True]
             and in_extension and generic == [True, False]
             and unwrapped == ["s:3App5LimitV7currentvpZ", "s:3App5LimitV4sizevp"])
