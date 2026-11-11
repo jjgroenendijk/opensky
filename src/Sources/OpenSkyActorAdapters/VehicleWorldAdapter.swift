@@ -97,7 +97,7 @@ extension VehicleWorldAdapter: VehicleWorld {
     }
 
     public func vehicleFormID(of key: ReferenceKey) -> UInt32? {
-        game.streamer.referenceEntry(key: key)?.formID.rawValue
+        reads.vehicleFormID(of: key)
     }
 
     public func run(_ commands: [VehicleCommand]) {
@@ -191,19 +191,8 @@ extension VehicleWorldAdapter: VehicleWorld {
         streamer.requestRebuild(of: .exterior(drawing))
     }
 
-    /// The player has no playback, so its bones come from the idle clip it plays.
     public func vehicleBone(of key: ReferenceKey, named bone: String) -> SIMD3<Float>? {
-        guard let playback = game.actorPlayback(for: key) else {
-            return game.idleWorld.idles.idleBone(of: key, named: bone)
-        }
-        guard
-            let renderer = game.renderer,
-            let pose = playback.skeletonPose(at: renderer.animationTime),
-            let index = pose.bones.index(of: bone),
-            pose.matrices.indices.contains(index)
-        else { return nil }
-        let origin = pose.matrices[index].columns.3
-        return SIMD3(origin.x, origin.y, origin.z)
+        reads.vehicleBone(of: key, named: bone)
     }
 
     public func vehicleBoneForward(of key: ReferenceKey, named bone: String) -> SIMD3<Float>? {
@@ -211,30 +200,15 @@ extension VehicleWorldAdapter: VehicleWorld {
     }
 
     public func vehicleHasBone(_ key: ReferenceKey, named bone: String) -> Bool {
-        game.actorPlayback(for: key)?.hasBone(named: bone) ?? false
+        reads.vehicleHasBone(key, named: bone)
     }
 
     public func vehicleGround(
         at point: SIMD3<Float>,
         excluding vehicles: Set<ReferenceKey>
     ) -> Float? {
-        let streamer = game.streamer
-        let terrain = streamer.sampleTerrain(at: SIMD2(point.x, point.y))?.height
-        let depth = point.z - (terrain ?? point.z - Self.groundSearchDepth) + 1
-        guard depth > 0 else { return terrain }
-        let query = ShapeSweepQuery.sphere(
-            center: point, radius: 1, direction: SIMD3(0, 0, -1), maximumDistance: depth
-        )
-        // A cart's own collision stays where it was placed, so it is not ground.
-        let linked = Set(vehicles.compactMap { streamer.referenceEntry(key: $0)?.formID })
-        let shapes = streamer.staticCollisionCandidates(overlapping: query.bounds)
-            .filter { !linked.contains($0.reference) }
-        let floor = ShapeSweeper.firstHit(query: query, shapes: shapes).map(\.position.z)
-        return [terrain, floor].compactMap(\.self).max()
+        reads.vehicleGround(at: point, excluding: vehicles)
     }
-
-    /// How far below the search point a floor counts where no terrain answers.
-    private static let groundSearchDepth: Float = 4096
 
     public func vehicleWheels(of key: ReferenceKey) -> [SIMD2<Float>]? {
         guard
@@ -249,14 +223,7 @@ extension VehicleWorldAdapter: VehicleWorld {
     }
 
     public func spinVehicleWheels(of key: ReferenceKey, turns: VehicleWheelTurns) {
-        let streamer = game.streamer
-        guard
-            let formID = vehicleFormID(of: key),
-            let vehicle = streamer.residentAnimatedVehicles().first(where: {
-                $0.reference == formID
-            })
-        else { return }
-        vehicle.pose.publish(vehicle.rig.pose(turns))
+        reads.spinVehicleWheels(of: key, turns: turns)
     }
 
     private func hitchCarrier(_ key: ReferenceKey, at pose: ReferenceTransformOverride) {
@@ -295,15 +262,13 @@ extension VehicleWorldAdapter: PapyrusActorAIBridge {
     }
 
     public func playIdle(_ idle: ResolvedFormID, on actor: ReferenceKey) -> Bool {
-        game.idleWorld.idles.fireIdle(idle, on: actor, ignoringConditions: true)?.chosen != nil
+        reads.playIdle(idle, on: actor)
     }
 
     public func playIdle(_ idle: ResolvedFormID, on actor: ReferenceKey, with target: ReferenceKey)
         -> Bool
     {
-        Self.played(game.idleWorld.idles.fireIdle(
-            idle, on: actor, target: target, ignoringConditions: true
-        ))
+        reads.playIdle(idle, on: actor, with: target)
     }
 
     /// The tree's conditions pick the variant, so they are not ignored.
@@ -312,22 +277,11 @@ extension VehicleWorldAdapter: PapyrusActorAIBridge {
         on actor: ReferenceKey,
         with target: ReferenceKey
     ) -> Bool {
-        let idles = game.idleWorld.idles
-        guard let idle = idles.store?.idles.record(editorID: editorID)?.id else { return false }
-        return Self.played(
-            idles.fireIdle(idle, on: actor, target: target, ignoringConditions: false)
-        )
-    }
-
-    /// A paired idle the lead's graph refused plays for no seconds; any other chosen idle
-    /// plays, now or once its clip loads.
-    private static func played(_ report: IdleReport?) -> Bool {
-        guard let report, report.chosen != nil else { return false }
-        return report.source != IdleCoordinator.pairedSource || report.seconds > 0
+        reads.playIdle(editorID: editorID, on: actor, with: target)
     }
 
     public func isInKillMove(_ actor: ReferenceKey) -> Bool {
-        game.idleWorld.idles.pairedAnimation(of: actor)?.isKillMove == true
+        reads.isInKillMove(actor)
     }
 
     public func linkDependentAnimation(
@@ -351,3 +305,105 @@ extension VehicleWorldAdapter: PapyrusActorAIBridge {
 }
 
 extension VehicleWorldAdapter: VehicleWorldPort {}
+
+/// The bone, ground, wheel, and idle reads of `VehicleWorldAdapter`.
+struct VehicleBodyReads {
+    let game: any VehicleWorldHost
+
+    func vehicleFormID(of key: ReferenceKey) -> UInt32? {
+        game.streamer.referenceEntry(key: key)?.formID.rawValue
+    }
+
+    /// The player has no playback, so its bones come from the idle clip it plays.
+    func vehicleBone(of key: ReferenceKey, named bone: String) -> SIMD3<Float>? {
+        guard let playback = game.actorPlayback(for: key) else {
+            return game.idleWorld.idles.idleBone(of: key, named: bone)
+        }
+        guard
+            let renderer = game.renderer,
+            let pose = playback.skeletonPose(at: renderer.animationTime),
+            let index = pose.bones.index(of: bone),
+            pose.matrices.indices.contains(index)
+        else { return nil }
+        let origin = pose.matrices[index].columns.3
+        return SIMD3(origin.x, origin.y, origin.z)
+    }
+
+    func vehicleHasBone(_ key: ReferenceKey, named bone: String) -> Bool {
+        game.actorPlayback(for: key)?.hasBone(named: bone) ?? false
+    }
+
+    func vehicleGround(
+        at point: SIMD3<Float>,
+        excluding vehicles: Set<ReferenceKey>
+    ) -> Float? {
+        let streamer = game.streamer
+        let terrain = streamer.sampleTerrain(at: SIMD2(point.x, point.y))?.height
+        let depth = point.z - (terrain ?? point.z - Self.groundSearchDepth) + 1
+        guard depth > 0 else { return terrain }
+        let query = ShapeSweepQuery.sphere(
+            center: point, radius: 1, direction: SIMD3(0, 0, -1), maximumDistance: depth
+        )
+        // A cart's own collision stays where it was placed, so it is not ground.
+        let linked = Set(vehicles.compactMap { streamer.referenceEntry(key: $0)?.formID })
+        let shapes = streamer.staticCollisionCandidates(overlapping: query.bounds)
+            .filter { !linked.contains($0.reference) }
+        let floor = ShapeSweeper.firstHit(query: query, shapes: shapes).map(\.position.z)
+        return [terrain, floor].compactMap(\.self).max()
+    }
+
+    /// How far below the search point a floor counts where no terrain answers.
+    static let groundSearchDepth: Float = 4096
+
+    func spinVehicleWheels(of key: ReferenceKey, turns: VehicleWheelTurns) {
+        let streamer = game.streamer
+        guard
+            let formID = vehicleFormID(of: key),
+            let vehicle = streamer.residentAnimatedVehicles().first(where: {
+                $0.reference == formID
+            })
+        else { return }
+        vehicle.pose.publish(vehicle.rig.pose(turns))
+    }
+
+    func playIdle(_ idle: ResolvedFormID, on actor: ReferenceKey) -> Bool {
+        game.idleWorld.idles.fireIdle(idle, on: actor, ignoringConditions: true)?.chosen != nil
+    }
+
+    func playIdle(_ idle: ResolvedFormID, on actor: ReferenceKey, with target: ReferenceKey)
+        -> Bool
+    {
+        Self.played(game.idleWorld.idles.fireIdle(
+            idle, on: actor, target: target, ignoringConditions: true
+        ))
+    }
+
+    func playIdle(
+        editorID: String,
+        on actor: ReferenceKey,
+        with target: ReferenceKey
+    ) -> Bool {
+        let idles = game.idleWorld.idles
+        guard let idle = idles.store?.idles.record(editorID: editorID)?.id else { return false }
+        return Self.played(
+            idles.fireIdle(idle, on: actor, target: target, ignoringConditions: false)
+        )
+    }
+
+    /// A paired idle the lead's graph refused plays for no seconds; any other chosen idle
+    /// plays, now or once its clip loads.
+    static func played(_ report: IdleReport?) -> Bool {
+        guard let report, report.chosen != nil else { return false }
+        return report.source != IdleCoordinator.pairedSource || report.seconds > 0
+    }
+
+    func isInKillMove(_ actor: ReferenceKey) -> Bool {
+        game.idleWorld.idles.pairedAnimation(of: actor)?.isKillMove == true
+    }
+}
+
+extension VehicleWorldAdapter {
+    var reads: VehicleBodyReads {
+        VehicleBodyReads(game: game)
+    }
+}
