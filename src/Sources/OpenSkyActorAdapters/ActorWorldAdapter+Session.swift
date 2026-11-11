@@ -35,8 +35,6 @@ extension ActorWorldAdapter {
     private func registerActorValues(stage: SessionStage) {
         let provider = stage.data
         let gameSession = stage.gameSession
-        baseNames = [:]
-        referenceNames = nil
         actorList = nil
         // The same test the coordinator makes before it builds its runtime.
         guard provider.actorValueBaselines != nil else { return }

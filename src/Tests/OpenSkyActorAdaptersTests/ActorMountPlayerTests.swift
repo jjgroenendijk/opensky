@@ -3,6 +3,7 @@
 import OpenSkyActorAdapters
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import Testing
@@ -100,5 +101,38 @@ struct ActorMountPlayerTests {
         let vehicles = VehicleWorldAdapter(game: host, stage: nil)
         #expect(vehicles.vehicleHasBone(Self.actor, named: "SaddleBone"))
         #expect(playback.hasBoneCalls == ["SaddleBone"])
+    }
+
+    @Test func aSprintingPlayerCarriesTheEquippedLoad() {
+        let actors = ActorWorldAdapter(game: host, stage: nil)
+        let session = FakeGameSessionPort()
+        session.locomotion.status.gaitValue = .sprint
+        session.locomotion.status.horizontalVelocity = SIMD2(2, 0)
+        host.gameSession = session
+        #expect(actors.playerSprintLoad() == 0)
+        session.locomotion.status.gaitValue = .walk
+        #expect(actors.playerSprintLoad() == nil)
+        actors.setPlayerSprintAllowed(true)
+        #expect(session.locomotion.isSprintAllowed)
+    }
+
+    @Test func anOverencumberedPlayerCannotRunAndIsTold() {
+        let actors = ActorWorldAdapter(game: host, stage: nil)
+        let session = FakeGameSessionPort()
+        host.gameSession = session
+        actors.setPlayerOverencumbered(false)
+        #expect(session.locomotion.isRunAllowed)
+        #expect(host.fakeHud.showNotificationCalls.isEmpty)
+        actors.setPlayerOverencumbered(true)
+        #expect(!session.locomotion.isRunAllowed)
+        #expect(host.fakeHud.showNotificationCalls == [
+            "You are carrying too much to be able to run."
+        ])
+    }
+
+    @Test func withoutActorRecordsAnActorHasNoName() {
+        let actors = ActorWorldAdapter(game: host, stage: nil)
+        #expect(actors.displayName(of: Self.actor, base: FormID(0x20)) == nil)
+        #expect(actors.displayName(of: Self.actor, base: FormID(0x20)) == nil)
     }
 }
