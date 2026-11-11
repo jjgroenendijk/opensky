@@ -59,11 +59,11 @@ extension EffectsWorldAdapter {
             let elapsed = lastFrame.map { Float(now.timeIntervalSince($0)) } ?? 0
             let seconds = paused ? 0 : min(elapsed, Self.longestStep)
             lastFrame = paused ? nil : now
-            attachRaceEffects()
+            frameLooks.attachRaceEffects()
             explosions.advance(seconds)
             effectPlacement.stepHealthCues(seconds, gameSession: gameSession)
             do {
-                try effects.step(seconds, extraModels: extraModels(), renderer: renderer)
+                try effects.step(seconds, extraModels: frameLooks.extraModels(), renderer: renderer)
             } catch {
                 Self.logger.error(
                     "[ERROR] effect draw lists: \(String(describing: error), privacy: .public)"
@@ -79,46 +79,7 @@ extension EffectsWorldAdapter {
     }
 }
 
-/// The per-frame helpers of the effects frame step.
 extension EffectsWorldAdapter {
-    /// Debris pieces and the models of spawned hazards, drawn beside the effects.
-    private func extraModels() -> [VisualEffectModel] {
-        let debris = explosions.debris.map {
-            VisualEffectModel(path: $0.path, transform: $0.transform)
-        }
-        let hazards = game.hazards.runtime.active.values
-            .filter { $0.source == .spawned }
-            .sorted { $0.id < $1.id }
-            .compactMap { hazard -> VisualEffectModel? in
-                guard let path = game.hazardWorld.hazardModelPath(for: hazard.spec.hazard) else {
-                    return nil
-                }
-                var transform = matrix_identity_float4x4
-                transform.columns.3 = SIMD4(hazard.position, 1)
-                return VisualEffectModel(path: path, transform: transform)
-            }
-        return debris + hazards + blasts.projectileModels()
-    }
-
-    /// Lasting race-ability looks for actors that arrived, and their removal for
-    /// actors that left.
-    private func attachRaceEffects() {
-        let resident = game.streamer.residentActorEntries()
-        let keys = Set(resident.map(\.key))
-        for gone in raceChecked.subtracting(keys) {
-            effects.detachAll(from: gone)
-        }
-        raceChecked.formIntersection(keys)
-        for entry in resident where !raceChecked.contains(entry.key) {
-            guard let base = entry.placedActor?.base else { continue }
-            raceChecked.insert(entry.key)
-            effects.attachLasting(
-                game.magic.raceEffectLinks(base: base, actor: entry.key),
-                to: entry.key
-            )
-        }
-    }
-
     private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "Effects"

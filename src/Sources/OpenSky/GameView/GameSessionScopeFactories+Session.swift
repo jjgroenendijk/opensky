@@ -87,7 +87,7 @@ extension GameSessionScopeFactories {
         let effects = provider.effectRecords.map { records in
             EffectsCoordinator(
                 records: records,
-                meshes: EffectsWorldAdapter.meshes(
+                meshes: EffectsMeshes.meshes(
                     provider: provider, renderer: stage.gameSession.renderer
                 ),
                 blood: BloodEffectSettings
