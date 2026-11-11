@@ -47,80 +47,58 @@ public protocol AIWorldHost: AnyObject, SendableMetatype {
     var worldState: any WorldStateStorePort { get }
 }
 
+/// Every host an `AIWorldAdapter` part reads, all one object.
+public typealias AIWorldHosts = AIBumpsHost & AIDetectionSenseHost & AINavigationHost &
+    AIPackageActsHost & AIPackageMovesHost & AIPackageStateHost &
+    AIPerceptionSenseHost & AISeatingHost & AIWorldHost
+
 public final class AIWorldAdapter {
     public let game: any AIWorldHost
 
-    public let seatingHost: any AISeatingHost
-    public let detectionSenseHost: any AIDetectionSenseHost
-    public let perceptionSenseHost: any AIPerceptionSenseHost
-    public let navigationHost: any AINavigationHost
-    public let packageMovesHost: any AIPackageMovesHost
-    public let packageStateHost: any AIPackageStateHost
-    public let packageActsHost: any AIPackageActsHost
-    public let bumpsHost: any AIBumpsHost
+    let hosts: any AIWorldHosts
 
     var seating: AISeatingAdapter {
-        AISeatingAdapter(game: seatingHost, packageMoves: packageMoves)
+        AISeatingAdapter(game: hosts, packageMoves: packageMoves)
     }
 
     var detectionSense: AIDetectionSenseAdapter {
-        AIDetectionSenseAdapter(game: detectionSenseHost)
+        AIDetectionSenseAdapter(game: hosts)
     }
 
     public var perceptionSense: AIPerceptionSenseAdapter {
-        AIPerceptionSenseAdapter(game: perceptionSenseHost, detectionSense: detectionSense)
+        AIPerceptionSenseAdapter(game: hosts, detectionSense: detectionSense)
     }
 
     var navigation: AINavigationAdapter {
-        AINavigationAdapter(game: navigationHost)
+        AINavigationAdapter(game: hosts)
     }
 
     var packageMoves: AIPackageMovesAdapter {
-        AIPackageMovesAdapter(game: packageMovesHost)
+        AIPackageMovesAdapter(game: hosts)
     }
 
     var packageState: AIPackageStateAdapter {
-        AIPackageStateAdapter(game: packageStateHost, packageMoves: packageMoves)
+        AIPackageStateAdapter(game: hosts, packageMoves: packageMoves)
     }
 
     public var packageActs: AIPackageActsAdapter {
         AIPackageActsAdapter(
-            game: packageActsHost, packageMoves: packageMoves, navigation: navigation
+            game: hosts, packageMoves: packageMoves, navigation: navigation
         )
     }
 
     public private(set) lazy var worlds = Worlds(self)
 
     public var bumps: AIBumpsAdapter {
-        AIBumpsAdapter(game: bumpsHost)
+        AIBumpsAdapter(game: hosts)
     }
 
-    public init(game: some AIWorldHost & AISeatingHost & AIDetectionSenseHost &
-        AIPerceptionSenseHost &
-        AINavigationHost & AIPackageMovesHost & AIPackageStateHost & AIPackageActsHost &
-        AIBumpsHost)
-    {
-        seatingHost = game
-        detectionSenseHost = game
-        perceptionSenseHost = game
-        navigationHost = game
-        packageMovesHost = game
-        packageStateHost = game
-        packageActsHost = game
-        bumpsHost = game
+    public init(game: some AIWorldHosts) {
+        hosts = game
         self.game = game
     }
 
     public func packageData() -> PackageSessionData? {
-        guard let provider = game.aiRecords, let store = provider.packageStore else {
-            return nil
-        }
-        let settings = provider.gameSettings
-        var data = PackageSessionData(store: store, conditionFunctions: .standard)
-        data.guardWarnings = GuardWarningSettings.resolve(store: settings)
-        data.sandboxSettings = SandboxSettings.resolve(store: settings)
-        data.bumpSettings = BumpReactionSettings.resolve(store: settings)
-        data.followSettings = FollowSettings.resolve(store: settings)
-        return data
+        records.packageData()
     }
 }
