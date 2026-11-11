@@ -37,9 +37,7 @@ import simd
 extension AIWorldAdapter {
     /// Without a stage, as in a test, it registers nothing.
     public convenience init(
-        game: some AIWorldHost & AISeatingHost & AIDetectionSenseHost & AIPerceptionSenseHost &
-            AINavigationHost & AIPackageMovesHost & AIPackageStateHost & AIPackageActsHost &
-            AIBumpsHost,
+        game: some AIWorldHosts,
         stage: SessionStage?
     ) {
         self.init(game: game)
@@ -53,22 +51,12 @@ extension AIWorldAdapter {
 
     /// Loads each skeleton's BBX half extents; nil when the script files are not loaded.
     public func bodyBoundsLoader() -> AssetLoader<String, SIMD3<Float>>? {
-        guard let fileSystem = game.aiRecords?.scriptFileSystem else { return nil }
-        return AssetLoader<String, SIMD3<Float>> { path in
-            let file = try NIFFile(data: fileSystem.contents(forPath: path))
-            for case let .bound(_, halfExtents) in file.rootExtraData.map(\.value) {
-                return halfExtents
-            }
-            throw AssetLoadFailure(reason: "\(path) has no BBX bound")
-        }
+        records.bodyBoundsLoader()
     }
 
     /// The speeds of the movement type the actor's graph is in.
     public func movementSpeeds(of actor: ReferenceKey) -> MovementType.Speeds? {
-        guard let name = game.actorGraphWorld.graphs.movementStateName(of: actor) else {
-            return nil
-        }
-        return game.aiRecords?.movementTypes.type(named: name)?.speeds
+        records.movementSpeeds(of: actor)
     }
 
     private func registerAIBodyShapes(stage: SessionStage) {
@@ -175,5 +163,47 @@ extension AIWorldAdapter {
             .register(identifier: "navigation") { [weak streamer] context, list in
                 streamer?.appendNavigationWorldOverlay(context: context, to: &list)
             }
+    }
+}
+
+/// The package data, body bounds, and movement speeds `AIWorldAdapter` reads from the records.
+struct AIRecordReads {
+    let game: any AIWorldHost
+
+    func packageData() -> PackageSessionData? {
+        guard let provider = game.aiRecords, let store = provider.packageStore else {
+            return nil
+        }
+        let settings = provider.gameSettings
+        var data = PackageSessionData(store: store, conditionFunctions: .standard)
+        data.guardWarnings = GuardWarningSettings.resolve(store: settings)
+        data.sandboxSettings = SandboxSettings.resolve(store: settings)
+        data.bumpSettings = BumpReactionSettings.resolve(store: settings)
+        data.followSettings = FollowSettings.resolve(store: settings)
+        return data
+    }
+
+    func bodyBoundsLoader() -> AssetLoader<String, SIMD3<Float>>? {
+        guard let fileSystem = game.aiRecords?.scriptFileSystem else { return nil }
+        return AssetLoader<String, SIMD3<Float>> { path in
+            let file = try NIFFile(data: fileSystem.contents(forPath: path))
+            for case let .bound(_, halfExtents) in file.rootExtraData.map(\.value) {
+                return halfExtents
+            }
+            throw AssetLoadFailure(reason: "\(path) has no BBX bound")
+        }
+    }
+
+    func movementSpeeds(of actor: ReferenceKey) -> MovementType.Speeds? {
+        guard let name = game.actorGraphWorld.graphs.movementStateName(of: actor) else {
+            return nil
+        }
+        return game.aiRecords?.movementTypes.type(named: name)?.speeds
+    }
+}
+
+extension AIWorldAdapter {
+    var records: AIRecordReads {
+        AIRecordReads(game: game)
     }
 }
