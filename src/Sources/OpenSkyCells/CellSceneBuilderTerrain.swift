@@ -51,7 +51,11 @@ nonisolated private struct TerrainItemBuild {
     var layerSkipCount = 0
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated public struct CellTerrainBuilder {
+    let owner: CellSceneBuilder
+}
+
+nonisolated extension CellTerrainBuilder {
     /// From LAND, else a flat plane at the WRLD DNAM height; nil if neither
     /// uploads. The south-west corner sits at (gridX*4096, gridY*4096)
     /// (docs/decisions/coordinates.md).
@@ -95,7 +99,7 @@ nonisolated extension CellSceneBuilder {
             let resolved = resolveTerrainLayers(patch.layers)
             built.layerSkipCount += resolved.skipped
             do {
-                let upload = try meshes.terrainMesh(
+                let upload = try owner.meshes.terrainMesh(
                     patch.mesh,
                     weights:
                     TerrainMeshBuilder.packWeights(
@@ -108,7 +112,7 @@ nonisolated extension CellSceneBuilder {
                 let baseNormalKey = patch.baseTexture.flatMap { terrainTextureKeys(for: $0) }?
                     .normal
                 let normals = TerrainNormalMaps(
-                    base: textures.texture(key: baseNormalKey, usage: .data),
+                    base: owner.textures.texture(key: baseNormalKey, usage: .data),
                     layers: resolved.normals
                 )
                 let baseSnow = patch.baseTexture.flatMap { terrainTextureKeys(for: $0) }?
@@ -118,7 +122,7 @@ nonisolated extension CellSceneBuilder {
                     weightsBuffer: upload.weightsBuffer,
                     material: RenderMaterial(
                         material: terrainBaseMaterial(for: patch.baseTexture),
-                        textureProvider: textures.provider
+                        textureProvider: owner.textures.provider
                     ),
                     layerTextures: resolved.textures,
                     normals: normals,
@@ -134,7 +138,7 @@ nonisolated extension CellSceneBuilder {
                 }
             } catch {
                 let reason = String(describing: error)
-                Self.logger.warning(
+                CellSceneBuilder.logger.warning(
                     "terrain patch upload failed (\(reason, privacy: .public)), skipped"
                 )
             }
@@ -160,7 +164,7 @@ nonisolated extension CellSceneBuilder {
                 hiddenQuadrants: quadFlags,
                 surfaceMaterials: TerrainSurfaceMaterials.build(
                     land: land,
-                    materialTypes: materialTypeIndexBuildingIfNeeded()
+                    materialTypes: owner.recordIndex.materialTypeIndexBuildingIfNeeded()
                 )
             )
             if let field {
@@ -170,7 +174,7 @@ nonisolated extension CellSceneBuilder {
                 )
             }
         }
-        let worlds = worldspaceIndexBuildingIfNeeded()
+        let worlds = owner.waterBuilder.worldspaceIndexBuildingIfNeeded()
         let landSource = worldspace?.source(of: .useLandData, in: worlds)
         if let height = landSource?.defaultLandHeight {
             let field = TerrainHeightField(
@@ -195,21 +199,22 @@ nonisolated extension CellSceneBuilder {
             guard let keys = terrainTextureKeys(for: layer.texture) else {
                 resolved.skipped += 1
                 let id = layer.texture.description
-                Self.logger.warning(
+                CellSceneBuilder.logger.warning(
                     "terrain layer LTEX \(id, privacy: .public) unresolvable, dropped"
                 )
                 continue
             }
             guard resolved.textures.count < TerrainConstant.maxLayers.rawValue else {
                 resolved.skipped += 1
-                Self.logger.warning("terrain quadrant over the layer cap, extra dropped")
+                CellSceneBuilder.logger
+                    .warning("terrain quadrant over the layer cap, extra dropped")
                 continue
             }
             if keys.isSnow {
                 resolved.snowLayers |= 1 << UInt32(resolved.textures.count)
             }
-            resolved.textures.append(textures.texture(key: keys.diffuse, usage: .color))
-            resolved.normals.append(textures.texture(key: keys.normal, usage: .data))
+            resolved.textures.append(owner.textures.texture(key: keys.diffuse, usage: .color))
+            resolved.normals.append(owner.textures.texture(key: keys.normal, usage: .data))
             resolved.resolvedNormals += keys.normal == nil ? 0 : 1
             resolved.opacities.append(layer.opacities)
         }
@@ -219,13 +224,13 @@ nonisolated extension CellSceneBuilder {
     /// The cell's LAND as the load order has it: the last plugin's decodable
     /// record wins, as for every other cell child.
     nonisolated public func landRecord(in found: FoundCell) -> Land? {
-        let later = laterChildren(of: FormID(stored: found.formID), type: "LAND")
+        let later = owner.recordIndex.laterChildren(of: FormID(stored: found.formID), type: "LAND")
         for child in later.reversed() {
             if child.record.record.isDeleted {
                 return nil
             }
             if
-                let land = decodeOrSkip(child.record.record, using: { _ in
+                let land = owner.decodeOrSkip(child.record.record, using: { _ in
                     try child.record.decode(Land.init(record:))
                 })
             {
@@ -242,24 +247,34 @@ nonisolated extension CellSceneBuilder {
             return land
         }
         guard let worldspace, let grid = found.cell.grid else { return nil }
-        let source = worldspace.source(of: .useLandData, in: worldspaceIndexBuildingIfNeeded())
+        let source = worldspace.source(
+            of: .useLandData,
+            in: owner.waterBuilder.worldspaceIndexBuildingIfNeeded()
+        )
         guard source.formID != worldspace.formID else { return nil }
         let parent = FoundWorld(
-            children: baseWorldChildren(of: source.formID), worldspace: source,
+            children: owner.recordIndex.baseWorldChildren(of: source.formID), worldspace: source,
             formID: source.formID
         )
-        return findCell(in: parent, gridX: grid.x, gridY: grid.y, localized: pluginLocalized)
-            .flatMap { landRecord(in: $0) }
+        return owner.recordIndex.findCell(
+            in: parent,
+            gridX: grid.x,
+            gridY: grid.y,
+            localized: owner.pluginLocalized
+        )
+        .flatMap { landRecord(in: $0) }
     }
 
     /// The first decodable LAND in the cell's temporary-children group (UESP Groups).
     nonisolated public func landRecord(in cellChildren: ESMGroup?) -> Land? {
-        guard let cellChildren, let children = childrenOrSkip(cellChildren) else { return nil }
+        guard
+            let cellChildren,
+            let children = owner.childrenOrSkip(cellChildren) else { return nil }
         for case let .group(group) in children where group.kind == .cellTemporaryChildren {
-            guard let records = childrenOrSkip(group) else { continue }
+            guard let records = owner.childrenOrSkip(group) else { continue }
             for case let .record(record) in records where record.type == "LAND" {
                 guard !record.isDeleted else { continue }
-                if let land = decodeOrSkip(record, using: Land.init(record:)) {
+                if let land = owner.decodeOrSkip(record, using: Land.init(record:)) {
                     return land
                 }
             }
@@ -270,11 +285,11 @@ nonisolated extension CellSceneBuilder {
     /// LTEX TNAM -> TXST TX00 and TX01, normalized like NIF materials. Nil on any
     /// broken link or a missing diffuse (docs/engine/terrain.md).
     nonisolated func terrainTextureKeys(for ltexID: FormID) -> TerrainTextureKeys? {
-        if let cached = terrainTextureKeyCache[ltexID.rawValue] {
+        if let cached = owner.terrainTextureKeyCache[ltexID.rawValue] {
             return cached
         }
         let keys = uncachedTerrainTextureKeys(for: ltexID)
-        terrainTextureKeyCache[ltexID.rawValue] = .some(keys)
+        owner.terrainTextureKeyCache[ltexID.rawValue] = .some(keys)
         return keys
     }
 
@@ -283,7 +298,7 @@ nonisolated extension CellSceneBuilder {
         guard
             let ltex = landTextureIndexBuildingIfNeeded()[ltexID.rawValue],
             let textureSet = ltex.textureSet,
-            let txst = textureSetIndexBuildingIfNeeded()[textureSet.rawValue],
+            let txst = owner.recordIndex.textureSetIndexBuildingIfNeeded()[textureSet.rawValue],
             let diffuse = txst.diffusePath.flatMap({ NIFShaderTextureSet.vfsKey(for: $0) })
         else { return nil }
         return TerrainTextureKeys(
@@ -312,5 +327,11 @@ nonisolated extension CellSceneBuilder {
             alphaBlend: false,
             alphaTestThreshold: nil
         )
+    }
+}
+
+nonisolated extension CellSceneBuilder {
+    public var terrainBuilder: CellTerrainBuilder {
+        CellTerrainBuilder(owner: self)
     }
 }

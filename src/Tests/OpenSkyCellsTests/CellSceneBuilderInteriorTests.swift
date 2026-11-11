@@ -37,7 +37,7 @@ extension CellSceneBuilderTests {
         )
         let device = try #require(Self.device)
         let builder = try makeBuilder(pluginData: bytes, device: device)
-        let scene = try builder.buildInteriorScene(cellFormID: FormID(interiorID))
+        let scene = try builder.interiorBuilder.buildInteriorScene(cellFormID: FormID(interiorID))
 
         #expect(scene.location == .interior(FormID(interiorID)))
         #expect(scene.summary.drawnRefCount == 1)
@@ -92,14 +92,14 @@ extension CellSceneBuilderTests {
         )
         #expect(exterior.doors.map(\.reference) == [FormID(0x200)])
 
-        let enter = try builder.buildDoorTransition(
+        let enter = try builder.interiorBuilder.buildDoorTransition(
             from: FormID(0x200), worldspaceEditorID: "Tamriel"
         )
         #expect(enter.destinationDoor == FormID(0x300))
         #expect(enter.destinationPlacement.position == SIMD3(100, 200, 300))
         #expect(enter.scene.location == .interior(FormID(interiorID)))
 
-        let leave = try builder.buildDoorTransition(
+        let leave = try builder.interiorBuilder.buildDoorTransition(
             from: FormID(0x300), worldspaceEditorID: "Tamriel"
         )
         #expect(leave.destinationDoor == FormID(0x200))

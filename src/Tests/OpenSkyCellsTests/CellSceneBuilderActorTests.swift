@@ -180,7 +180,7 @@ extension CellSceneBuilderTests {
         )
         let device = try #require(Self.device)
         let builder = try makeBuilder(pluginData: bytes, device: device)
-        let scene = try builder.buildInteriorScene(cellFormID: FormID(interiorID))
+        let scene = try builder.interiorBuilder.buildInteriorScene(cellFormID: FormID(interiorID))
         #expect(scene.summary.actorCount == 1)
         #expect(scene.summary.actorDrawnCount == 1)
         #expect(scene.summary.actorAccountingIsExact)

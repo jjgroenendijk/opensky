@@ -11,7 +11,7 @@ public import OpenSkyPhysics
 public import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRenderResources
-public import OpenSkyTerrain
+import OpenSkyTerrain
 public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 import simd
@@ -60,17 +60,21 @@ nonisolated public struct EnvironmentBuild {
     public let sky: SkyParameters?
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated struct CellSceneAssembler {
+    let owner: CellSceneBuilder
+}
+
+nonisolated extension CellSceneAssembler {
     /// Terrain + water + procedural sky (suppressed for noSky worldspaces).
-    nonisolated public func buildEnvironment(
+    nonisolated func buildEnvironment(
         found: FoundCell,
         worldspace: Worldspace?
     ) -> EnvironmentBuild {
-        let terrain = buildTerrain(found: found, worldspace: worldspace)
-        let water = buildWater(found: found, worldspace: worldspace)
+        let terrain = owner.terrainBuilder.buildTerrain(found: found, worldspace: worldspace)
+        let water = owner.waterBuilder.buildWater(found: found, worldspace: worldspace)
         return EnvironmentBuild(
             terrain: terrain,
-            grass: buildGrass(
+            grass: owner.terrainBuilder.buildGrass(
                 found: found,
                 worldspace: worldspace,
                 terrain: terrain,
@@ -83,8 +87,8 @@ nonisolated extension CellSceneBuilder {
 
     /// Keeps only REFRs whose base resolves to DOOR and whose XTEL decoded.
     /// Interaction metadata independently includes non-teleport doors.
-    nonisolated public func resolveDoors(refs: [PlacedReference]) -> [PlacedDoor] {
-        let modelBaseIndex = modelBaseIndexBuildingIfNeeded()
+    nonisolated func resolveDoors(refs: [PlacedReference]) -> [PlacedDoor] {
+        let modelBaseIndex = owner.recordIndex.modelBaseIndexBuildingIfNeeded()
         return refs.compactMap { ref in
             guard
                 modelBaseIndex[ref.base.rawValue]?.recordType == "DOOR",
@@ -101,10 +105,10 @@ nonisolated extension CellSceneBuilder {
     /// Retains named use-key targets beside collision geometry. Every
     /// interaction-capable base uses the generic activation action except
     /// doors, whose typed open action can additionally drive XTEL.
-    nonisolated public func resolveInteractions(
+    nonisolated func resolveInteractions(
         refs: [PlacedReference]
     ) -> [FormID: PlacedInteraction] {
-        let modelBaseIndex = modelBaseIndexBuildingIfNeeded()
+        let modelBaseIndex = owner.recordIndex.modelBaseIndexBuildingIfNeeded()
         var interactions: [FormID: PlacedInteraction] = [:]
         for ref in refs {
             guard
@@ -116,7 +120,8 @@ nonisolated extension CellSceneBuilder {
                 .flatMap { $0.isEmpty ? nil : $0 }
             let name = resolvedText(base.name)
                 .flatMap { $0.isEmpty ? nil : $0 }
-            let seats = base.recordType == "FURN" ? seats(of: base, at: ref) : []
+            let seats = base.recordType == "FURN" ? owner.objectBuilder
+                .seats(of: base, at: ref) : []
             // The game's verbs are string settings; `ActivationPrompt` lays them on at run time.
             let isBed = seats.contains { $0.animationType == FurnitureSeat.sleepAnimation }
             var interaction = PlacedInteraction(
@@ -189,20 +194,20 @@ nonisolated extension CellSceneBuilder {
         if case let .inline(value) = text {
             return value
         }
-        return localizedStrings?.resolve(text)
+        return owner.localizedStrings?.resolve(text)
     }
 
     /// Every build path starts here, so `drainTouchedAssets` reports one cell's
     /// working set for streaming unload.
-    nonisolated public func resetTouchedAssets() {
+    nonisolated func resetTouchedAssets() {
         _ = drainTouchedAssets()
     }
 
-    nonisolated public func drainTouchedAssets() -> CellAssets {
+    nonisolated func drainTouchedAssets() -> CellAssets {
         CellAssets(
-            meshKeys: meshes.drainTouchedKeys()
-                .union(collisionModels?.drainTouchedKeys() ?? []),
-            textureKeys: textures.drainTouchedKeys()
+            meshKeys: owner.meshes.drainTouchedKeys()
+                .union(owner.collisionModels?.drainTouchedKeys() ?? []),
+            textureKeys: owner.textures.drainTouchedKeys()
         )
     }
 
@@ -242,17 +247,18 @@ nonisolated extension CellSceneBuilder {
         found.cell.encounterZone ?? geometry.world?.worldspace?.encounterZone
     }
 
-    nonisolated public func makeScene(
+    nonisolated func makeScene(
         cell: (found: FoundCell, grid: (x: Int32, y: Int32)),
         instances: [ResolvedInstance],
         geometry: CellGeometryBuild,
         counts: BuildCounts
     ) -> CellScene {
-        var instances = instances + addOnInstances(for: instances)
-        let vehicles = animatedVehicles(&instances, followers: geometry.vehicleFollowers)
-        let doors = animatedDoors(&instances)
-        var nodes = animatedNodes(&instances)
-        let objects = animatedObjects(instances)
+        var instances = instances + owner.objectBuilder.addOnInstances(for: instances)
+        let vehicles = owner.objectBuilder
+            .animatedVehicles(&instances, followers: geometry.vehicleFollowers)
+        let doors = owner.objectBuilder.animatedDoors(&instances)
+        var nodes = owner.objectBuilder.animatedNodes(&instances)
+        let objects = owner.objectBuilder.animatedObjects(instances)
         let actors = geometry.actors
         let particles = particlePlaybacks(instances: instances, nodes: &nodes)
         // A simulated reference draws at its live pose, so it keeps its FormID.
@@ -275,8 +281,7 @@ nonisolated extension CellSceneBuilder {
             rooms: geometry.rooms
         )
         let summary = makeSummary(
-            cell: cell, instanceCount: instances.count,
-            geometry: geometry, counts: counts
+            cell: cell, instanceCount: instances.count, geometry: geometry, counts: counts
         )
         var scene = CellScene(
             renderScene: renderScene,
@@ -290,7 +295,7 @@ nonisolated extension CellSceneBuilder {
             musicType: cell.found.cell.musicType,
             owner: RecordOwnership(cell: cell.found.cell),
             locationLink: cell.found.cell.location,
-            ownerPluginName: pluginName,
+            ownerPluginName: owner.pluginName,
             worldspaceMusicType: geometry.world?.worldspace?.musicType,
             worldspace: geometry.world?.formID,
             terrainHeightField: geometry.terrain?.heightField,
@@ -337,7 +342,7 @@ nonisolated extension CellSceneBuilder {
             var placement = RenderPlacement(
                 model: instance.model,
                 transform: instance.transform,
-                bounds: meshes.bounds(forPath: instance.modelPath, surface: instance.surface)?
+                bounds: owner.meshes.bounds(forPath: instance.modelPath, surface: instance.surface)?
                     .transformed(by: instance.transform),
                 referenceFormID: simulated.contains(instance.formID) ? instance.formID : 0
             )
@@ -353,7 +358,7 @@ nonisolated extension CellSceneBuilder {
         var result: [(reference: UInt32, playbacks: [ParticlePlayback])] = []
         for instance in instances {
             do {
-                try result.append((instance.formID, meshes.particlePlaybacks(
+                try result.append((instance.formID, owner.meshes.particlePlaybacks(
                     path: instance.modelPath,
                     surface: instance.surface,
                     placementTransform: instance.transform,
@@ -364,7 +369,7 @@ nonisolated extension CellSceneBuilder {
                 let reason = String(describing: error)
                 let source = instance.modelPath
                 let message = "particle playback \(source) failed: \(reason)"
-                Self.logger.warning("\(message, privacy: .public)")
+                CellSceneBuilder.logger.warning("\(message, privacy: .public)")
             }
         }
         return result
@@ -388,9 +393,9 @@ nonisolated extension CellSceneBuilder {
             markerSkipCount: counts.markers,
             modelFailureSkipCount: counts.modelFailures,
             malformedRefSkipCount: counts.malformedRefs,
-            modelCount: meshes.loadedCount,
-            textureCount: textures.loadedCount,
-            missingTextureCount: textures.missingCount,
+            modelCount: owner.meshes.loadedCount,
+            textureCount: owner.textures.loadedCount,
+            missingTextureCount: owner.textures.missingCount,
             terrainQuadrantCount: geometry.terrain?.quadrantCount ?? 0,
             terrainLayerCount: geometry.terrain?.layerCount ?? 0,
             terrainLayerSkipCount: geometry.terrain?.layerSkipCount ?? 0,
@@ -416,8 +421,14 @@ nonisolated extension CellSceneBuilder {
         summary.actorAnimationFailureCount = actors.counts.animationFailures
         summary.actorAnimationFailureReasons = actors.counts.animationFailureReasons
         summary.actorAppearanceSkipReasons = actors.counts.appearanceSkipReasons
-        summary.skippedRecords = skippedRecords
-        Self.logger.info("\(summary.summaryLine, privacy: .public)")
+        summary.skippedRecords = owner.skippedRecords
+        CellSceneBuilder.logger.info("\(summary.summaryLine, privacy: .public)")
         return summary
+    }
+}
+
+nonisolated extension CellSceneBuilder {
+    var assembler: CellSceneAssembler {
+        CellSceneAssembler(owner: self)
     }
 }

@@ -24,7 +24,7 @@ struct CellSceneBuilderActorFloorTests {
     )
 
     @Test func anActorInsideARoadRisesOntoIt() throws {
-        let lifted = try CellSceneBuilder.standingOnFloors(
+        let lifted = try CellActorBuilder.standingOnFloors(
             [Self.actor(at: SIMD3(10, 10, 5))], collision: Self.road
         )
         #expect(lifted.first?.actor.placement.position == SIMD3(10, 10, 20))
@@ -32,15 +32,15 @@ struct CellSceneBuilderActorFloorTests {
 
     @Test func anActorAboveOrBesideTheRoadKeepsItsHeight() throws {
         let actors = try [Self.actor(at: SIMD3(10, 10, 30)), Self.actor(at: SIMD3(300, 0, 5))]
-        let kept = CellSceneBuilder.standingOnFloors(actors, collision: Self.road)
+        let kept = CellActorBuilder.standingOnFloors(actors, collision: Self.road)
         let positions = kept.map(\.actor.placement.position)
         #expect(positions == [SIMD3(10, 10, 30), SIMD3(300, 0, 5)])
     }
 
     /// A floor far above the feet is a roof or a bridge, not the ground.
     @Test func anActorUnderABridgeStaysUnderIt() throws {
-        let deep = SIMD3<Float>(10, 10, 20 - CellSceneBuilder.actorFloorReach - 10)
-        let kept = try CellSceneBuilder.standingOnFloors(
+        let deep = SIMD3<Float>(10, 10, 20 - CellActorBuilder.actorFloorReach - 10)
+        let kept = try CellActorBuilder.standingOnFloors(
             [Self.actor(at: deep)],
             collision: Self.road
         )

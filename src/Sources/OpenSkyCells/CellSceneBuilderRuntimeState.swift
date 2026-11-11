@@ -6,7 +6,7 @@
 import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 public import OpenSkyWorldState
 
 /// One cell's references as a build should place them: the index entries every
@@ -38,7 +38,7 @@ nonisolated public struct EffectiveReferences: Sendable {
     }
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellReferenceBuilder {
     /// Keys `entries` by the FormID a placement was authored under.
     nonisolated public func entriesByFormID(
         _ entries: [RuntimeReferenceEntry]
@@ -63,7 +63,11 @@ nonisolated extension CellSceneBuilder {
         counts: inout BuildCounts
     ) -> EffectiveReferences {
         let (refs, collected) = references
-        let spawned = spawnedReferences(in: location, state: state, counts: &counts)
+        let spawned = owner.actorBuilder.spawnedReferences(
+            in: location,
+            state: state,
+            counts: &counts
+        )
         let deltas = state.deltasByKey()
         let placed = relocating(refs, into: location, deltas: deltas)
         let entries = referenceEntries(refs: placed, collected: collected) + spawned.entries
@@ -92,7 +96,11 @@ nonisolated extension CellSceneBuilder {
     ) -> [PlacedReference] {
         guard !refs.isEmpty else { return refs }
         let entriesByFormID = entriesByFormID(entries)
-        let enable = enableResolver(entries: entriesByFormID, pool: parentPool, deltas: deltas)
+        let enable = owner.enableResolver(
+            entries: entriesByFormID,
+            pool: parentPool,
+            deltas: deltas
+        )
         var effective: [PlacedReference] = []
         effective.reserveCapacity(refs.count)
         for ref in refs {
@@ -106,7 +114,7 @@ nonisolated extension CellSceneBuilder {
             }
             guard !resolved.deletion.isDeleted else {
                 counts.runtimeDeleted += 1
-                Self.logger.info(
+                CellSceneBuilder.logger.info(
                     "REFR \(ref.formID.description, privacy: .public): deleted at runtime, skipped"
                 )
                 continue

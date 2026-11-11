@@ -203,13 +203,13 @@ nonisolated extension CellSceneBuilder {
         motionTypes: [FormID: ReferenceMotionType] = [:]
     ) -> [CellCollisionPlacement] {
         guard !refs.isEmpty else { return [] }
-        let statIndex = statIndexBuildingIfNeeded()
-        let modelBaseIndex = modelBaseIndexBuildingIfNeeded()
-        let lightIndex = lightIndexBuildingIfNeeded()
+        let statIndex = recordIndex.statIndexBuildingIfNeeded()
+        let modelBaseIndex = recordIndex.modelBaseIndexBuildingIfNeeded()
+        let lightIndex = interiorBuilder.lightIndexBuildingIfNeeded()
         return refs.compactMap { ref in
             guard
                 lightIndex[ref.base.rawValue] == nil,
-                let base = resolveBase(
+                let base = recordIndex.resolveBase(
                     formID: ref.base.rawValue,
                     statIndex: statIndex,
                     modelBaseIndex: modelBaseIndex
@@ -247,7 +247,7 @@ nonisolated extension CellSceneBuilder {
         let localized = file.isLocalized
         let world = try worldChildrenGroup(editorID: worldspaceEditorID, localized: localized)
         guard
-            let found = findCell(
+            let found = recordIndex.findCell(
                 in: world, gridX: gridX, gridY: gridY, localized: localized
             )
         else {
@@ -258,9 +258,9 @@ nonisolated extension CellSceneBuilder {
             )
         }
         var counts = BuildCounts()
-        let localRefs = collectReferences(in: found, counts: &counts)
+        let localRefs = referenceBuilder.collectReferences(in: found, counts: &counts)
         let coordinate = CellCoordinate(x: gridX, y: gridY)
-        let refs = exteriorReferences(
+        let refs = interiorBuilder.exteriorReferences(
             local: localRefs,
             world: world,
             coordinate: coordinate,
@@ -315,7 +315,7 @@ nonisolated extension CellSceneBuilder {
             ))
         }
         let started = Stopwatch()
-        let materialTypes = materialTypeIndexBuildingIfNeeded()
+        let materialTypes = recordIndex.materialTypeIndexBuildingIfNeeded()
         loadPhases.measure(.collision) {
             collisionModels.predecode(paths: placements.map(\.modelPath))
         }

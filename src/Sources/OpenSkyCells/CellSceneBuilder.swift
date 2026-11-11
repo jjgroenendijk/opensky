@@ -238,44 +238,44 @@ nonisolated public final class CellSceneBuilder {
         state: WorldStateSnapshot = .empty
     ) throws -> CellScene {
         // The touched keys drive unload eviction (docs/engine/cell-streaming.md).
-        resetTouchedAssets()
-        let source = try exteriorBuildSource(
+        assembler.resetTouchedAssets()
+        let source = try recordIndex.exteriorBuildSource(
             worldspaceEditorID: worldspaceEditorID, gridX: gridX, gridY: gridY
         )
         let (world, found) = (source.world, source.cell)
         var counts = BuildCounts()
-        let collected = collectTaggedReferences(in: found, counts: &counts)
+        let collected = referenceBuilder.collectTaggedReferences(in: found, counts: &counts)
         let coordinate = CellCoordinate(x: gridX, y: gridY)
-        let refs = exteriorReferences(
+        let refs = interiorBuilder.exteriorReferences(
             local: collected.map(\.reference), world: world,
             coordinate: coordinate, localized: pluginLocalized
         )
         counts.totalRefs = refs.count + counts.malformedRefs
         let location = CellSceneLocation.exterior(coordinate)
-        let parents = persistentParentPool(in: world, localized: pluginLocalized)
-        let resolved = effectiveReferences(
+        let parents = interiorBuilder.persistentParentPool(in: world, localized: pluginLocalized)
+        let resolved = referenceBuilder.effectiveReferences(
             (refs, collected), state: state, location: location,
             parentPool: parents, counts: &counts
         )
         let effective = resolved.references
         let collision = buildCollision(resolved: resolved, location: location)
         let instances = resolveInstances(refs: effective, counts: &counts)
-        let actors = buildExteriorActors(
+        let actors = actorBuilder.buildExteriorActors(
             cell: found, world: world, coordinate: coordinate, localized: pluginLocalized,
             deltas: resolved.deltas, collision: collision.staticCollision,
             parents: ActorEnableParents(
-                references: entriesByFormID(resolved.entries),
+                references: referenceBuilder.entriesByFormID(resolved.entries),
                 pool: parents
             )
         )
-        let environment = buildEnvironment(found: found, worldspace: world.worldspace)
-        let scene = makeScene(
+        let environment = assembler.buildEnvironment(found: found, worldspace: world.worldspace)
+        let scene = assembler.makeScene(
             cell: (found, (x: gridX, y: gridY)),
             instances: instances,
             geometry: CellGeometryBuild(
                 location: location,
-                doors: resolveDoors(refs: effective),
-                interactions: resolveInteractions(refs: effective),
+                doors: assembler.resolveDoors(refs: effective),
+                interactions: assembler.resolveInteractions(refs: effective),
                 terrain: environment.terrain,
                 grass: environment.grass,
                 water: environment.water,
@@ -285,18 +285,19 @@ nonisolated public final class CellSceneBuilder {
                 staticCollision: collision.staticCollision,
                 triggerVolumes: collision.triggerVolumes,
                 dynamicBodies: collision.dynamicBodies,
-                navmeshes: collectNavmeshes(in: found),
+                navmeshes: referenceBuilder.collectNavmeshes(in: found),
                 actors: actors,
                 world: world,
                 referenceEntries: resolved.entries,
                 stateSequence: state.sequence,
                 vehicleFollowers: resolved.vehicleFollowers,
-                waterVolumes: waterVolumes(effective, found: found, in: environment)
+                waterVolumes: waterBuilder.waterVolumes(effective, found: found, in: environment)
             ),
             counts: counts
         )
-        let hazards = collectHazards(in: found, resolved: resolved, parentPool: parents)
-        return finished(scene, hazards: hazards, collision: collision)
+        let hazards = objectBuilder
+            .collectHazards(in: found, resolved: resolved, parentPool: parents)
+        return objectBuilder.finished(scene, hazards: hazards, collision: collision)
     }
 }
 
@@ -378,23 +379,6 @@ nonisolated extension CellSceneBuilder {
         let found = try uncachedWorldChildrenGroup(editorID: editorID, localized: localized)
         worldChildrenGroups[editorID] = found
         return found
-    }
-
-    /// The winning WRLD with that editor ID in the whole load order, and the
-    /// first plugin's children group for it.
-    nonisolated private func uncachedWorldChildrenGroup(
-        editorID: String,
-        localized _: Bool
-    ) throws -> FoundWorld {
-        guard
-            let match = worldspaceIndexBuildingIfNeeded()
-                .filter({ $0.value.editorID == editorID })
-                .min(by: { $0.key < $1.key })
-        else { throw CellSceneError.worldspaceNotFound(editorID: editorID) }
-        let formID = FormID(stored: match.key)
-        return FoundWorld(
-            children: baseWorldChildren(of: formID), worldspace: match.value, formID: formID
-        )
     }
 
     /// Every exterior CELL under `group` by grid. One full walk costs about as much
@@ -487,23 +471,23 @@ nonisolated extension CellSceneBuilder {
         counts: inout BuildCounts
     ) -> [ResolvedInstance] {
         guard !refs.isEmpty else { return [] }
-        let statIndex = statIndexBuildingIfNeeded()
-        let modelBaseIndex = modelBaseIndexBuildingIfNeeded()
-        let lightIndex = lightIndexBuildingIfNeeded()
+        let statIndex = recordIndex.statIndexBuildingIfNeeded()
+        let modelBaseIndex = recordIndex.modelBaseIndexBuildingIfNeeded()
+        let lightIndex = interiorBuilder.lightIndexBuildingIfNeeded()
         meshes.predecode(paths: refs.lazy.compactMap { ref -> String? in
             guard lightIndex[ref.base.rawValue] == nil else { return nil }
-            let resolved = self.resolveBase(
+            let resolved = self.recordIndex.resolveBase(
                 formID: ref.base.rawValue, statIndex: statIndex, modelBaseIndex: modelBaseIndex
             )
             return resolved?.isEditorMarker == false ? resolved?.modelPath : nil
         })
         defer { meshes.dropPredecoded() }
-        let doors = sequenceDoors(in: refs)
+        let doors = objectBuilder.sequenceDoors(in: refs)
         var instances: [ResolvedInstance] = []
         for ref in refs where lightIndex[ref.base.rawValue] == nil {
             let id = ref.formID.description
             guard
-                let resolved = resolveBase(
+                let resolved = recordIndex.resolveBase(
                     formID: ref.base.rawValue, statIndex: statIndex, modelBaseIndex: modelBaseIndex
                 )
             else {
@@ -529,11 +513,12 @@ nonisolated extension CellSceneBuilder {
                 )
                 continue
             }
-            let surface = surface(for: resolved)
+            let surface = objectBuilder.surface(for: resolved)
             if
                 var instance = loadInstance(
                     ref: ref, model: (modelPath, surface),
-                    behavior: objectBehavior(recordType: resolved.recordType, modelPath: modelPath),
+                    behavior: objectBuilder
+                        .objectBehavior(recordType: resolved.recordType, modelPath: modelPath),
                     counts: &counts
                 )
             {
@@ -559,7 +544,8 @@ nonisolated extension CellSceneBuilder {
                 attempt {
                     try meshes.animatedObjectModel(
                         path: modelPath,
-                        bones: Set(objectPoseRig(modelPath: modelPath, asset: asset)?.skeleton
+                        bones: Set(objectBuilder.objectPoseRig(modelPath: modelPath, asset: asset)?
+                            .skeleton
                             .boneNames ?? asset.skeleton.boneNames),
                         reference: ref.formID.rawValue,
                         surface: surface
@@ -578,7 +564,7 @@ nonisolated extension CellSceneBuilder {
                     scale: ref.scale
                 ),
                 animated: animated == nil ? nil : behavior,
-                emittance: emittanceSource(of: ref)
+                emittance: interiorBuilder.emittanceSource(of: ref)
             )
         } catch MeshLibraryError.editorMarkerOnly {
             counts.markers += 1

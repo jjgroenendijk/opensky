@@ -71,7 +71,10 @@ extension CellSceneBuilderTests {
         let builder = try makeBuilder(pluginData: bytes, device: device)
 
         #expect {
-            _ = try builder.buildDoorTransition(from: FormID(0x300), worldspaceEditorID: "Tamriel")
+            _ = try builder.interiorBuilder.buildDoorTransition(
+                from: FormID(0x300),
+                worldspaceEditorID: "Tamriel"
+            )
         } throws: { error in
             guard case let .malformedRecord(type, formID, reason) = error as? CellSceneError else {
                 return false

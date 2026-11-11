@@ -14,7 +14,7 @@ import OpenSkyRenderResources
 import OpenSkyRuntimeState
 import OpenSkyWorldInterface
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellActorBuilder {
     /// Assembles the head from parts and gives the face part a face tint built from
     /// the tint layers. A race without head parts keeps the baked head.
     func chargenVisual(
@@ -36,13 +36,15 @@ nonisolated extension CellSceneBuilder {
 
     /// The tint masks of the player's race and sex.
     func raceTintMasks(_ appearance: PlayerAppearanceOverride) -> [RaceTintMask] {
-        let head = actorVisualResolver?.races[appearance.race.rawValue]?.details.headData
+        let head = owner.actorVisualResolver?.races[appearance.race.rawValue]?.details.headData
         return (appearance.isFemale ? head?.female : head?.male)?.tintMasks ?? []
     }
 
     /// A key named after the tint layers, so the same face reuses one upload.
     private func faceTintKey(_ appearance: PlayerAppearanceOverride) -> String? {
-        guard actorVisualResolver != nil, let fileSystem else { return nil }
+        guard
+            owner.actorVisualResolver != nil,
+            let fileSystem = owner.fileSystem else { return nil }
         let masks = raceTintMasks(appearance)
         let layers = appearance.tints.compactMap { tint -> (String, PlayerAppearanceTint)? in
             let mask = masks.first { $0.index == tint.maskIndex }
@@ -52,18 +54,21 @@ nonisolated extension CellSceneBuilder {
         let identity = layers.map { "\($0.0)|\($0.1.color)|\($0.1.strength)" }
             .joined(separator: ";")
         let key = "textures/opensky/facetint/\(Self.fnv1a(identity)).dds"
-        if faceTintTextures[key] == nil {
+        if owner.faceTintTextures[key] == nil {
             do {
-                faceTintTextures[key] = try Self.faceTint(layers: layers, fileSystem: fileSystem)
+                owner.faceTintTextures[key] = try Self.faceTint(
+                    layers: layers,
+                    fileSystem: fileSystem
+                )
             } catch {
-                Self.logger.warning(
+                CellSceneBuilder.logger.warning(
                     "face tint: \(String(describing: error), privacy: .public)"
                 )
                 return nil
             }
         }
-        if let dds = faceTintTextures[key] {
-            meshes.textures.register(dds: dds, key: key, usage: .color)
+        if let dds = owner.faceTintTextures[key] {
+            owner.meshes.textures.register(dds: dds, key: key, usage: .color)
         }
         return key
     }

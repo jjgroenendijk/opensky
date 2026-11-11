@@ -34,7 +34,8 @@ enum PreviewCommand {
         let frames = try PreviewRenderJob.render(
             scene, request: request,
             sources: PreviewRenderSources(
-                device: device, loadOrder: builder.pluginLoadOrder, fileSystem: builder.fileSystem
+                device: device, loadOrder: builder.previewBuilder.pluginLoadOrder,
+                fileSystem: builder.fileSystem
             )
         ) { renderer in
             for setting in shadingOff {

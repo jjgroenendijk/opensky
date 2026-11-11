@@ -4,19 +4,20 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellReferenceBuilder {
     /// The cell's NAVM records of every plugin in the load order.
     nonisolated public func collectNavmeshes(in cell: FoundCell) -> [Navmesh] {
         let base = Self.collectNavmeshes(in: cell.children)
-        return mergingLater(
-            (base, laterChildren(of: FormID(cell.formID), type: "NAVM")), formID: \.formID
+        return owner.recordIndex.mergingLater(
+            (base, owner.recordIndex.laterChildren(of: FormID(cell.formID), type: "NAVM")),
+            formID: \.formID
         ) {
             try $0.record.decode(Navmesh.init(record:))
         } failed: { child in
             let id = child.record.formID.description
-            Self.logger.warning("malformed NAVM \(id, privacy: .public) skipped")
+            CellSceneBuilder.logger.warning("malformed NAVM \(id, privacy: .public) skipped")
         }
     }
 
@@ -24,12 +25,14 @@ nonisolated extension CellSceneBuilder {
     /// record that fails to decode is logged and skipped. Static, so a test can
     /// decode a synthetic cell without a mesh library or device.
     nonisolated public static func collectNavmeshes(in cellChildren: ESMGroup?) -> [Navmesh] {
-        guard let cellChildren, let children = loggedChildren(cellChildren) else { return [] }
+        guard
+            let cellChildren,
+            let children = CellSceneBuilder.loggedChildren(cellChildren) else { return [] }
         var navmeshes: [Navmesh] = []
         for case let .group(group) in children {
             guard
                 group.kind == .cellPersistentChildren || group.kind == .cellTemporaryChildren,
-                let records = Self.loggedChildren(group)
+                let records = CellSceneBuilder.loggedChildren(group)
             else { continue }
             for case let .record(record) in records where record.type == "NAVM" {
                 guard !record.isDeleted else { continue }
@@ -37,7 +40,8 @@ nonisolated extension CellSceneBuilder {
                     try navmeshes.append(Navmesh(record: record))
                 } catch {
                     let id = FormID(record.formID).description
-                    Self.logger.warning("malformed NAVM \(id, privacy: .public) skipped")
+                    CellSceneBuilder.logger
+                        .warning("malformed NAVM \(id, privacy: .public) skipped")
                 }
             }
         }

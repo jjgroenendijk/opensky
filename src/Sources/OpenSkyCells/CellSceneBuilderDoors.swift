@@ -12,7 +12,7 @@ import OpenSkyObjectAnimation
 import OpenSkyRenderCore
 import OpenSkyRendering
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellObjectBuilder {
     struct SequenceDoorBase {
         let ref: PlacedReference
         let modelPath: String
@@ -25,14 +25,14 @@ nonisolated extension CellSceneBuilder {
 
     /// The references in `refs` that are sequence doors, with their rigs.
     func sequenceDoors(in refs: [PlacedReference]) -> [FormID: SequenceDoorBase] {
-        let bases = modelBaseIndexBuildingIfNeeded()
+        let bases = owner.recordIndex.modelBaseIndexBuildingIfNeeded()
         var doors: [FormID: SequenceDoorBase] = [:]
         for ref in refs {
             guard
                 let base = bases[ref.base.rawValue],
                 Self.sequenceDoorTypes.contains(base.recordType),
                 let path = base.modelPath,
-                meshes.behaviorProjectPath(forPath: path) == nil,
+                owner.meshes.behaviorProjectPath(forPath: path) == nil,
                 let rig = sequenceDoorRig(modelPath: path)
             else { continue }
             let kind: CellSequenceDoor.Kind = base.recordType == "CONT" ? .containerLid
@@ -45,14 +45,14 @@ nonisolated extension CellSceneBuilder {
     /// The rig of a door mesh, read once per mesh. Nil for a mesh without both sequences.
     func sequenceDoorRig(modelPath: String) -> SequenceDoorRig? {
         guard
-            let fileSystem,
-            let key = attempt({ try meshes.meshKey(for: modelPath) }) else { return nil }
-        if let known = sequenceDoorRigs[key] {
+            let fileSystem = owner.fileSystem,
+            let key = attempt({ try owner.meshes.meshKey(for: modelPath) }) else { return nil }
+        if let known = owner.sequenceDoorRigs[key] {
             return known
         }
         let rig = attempt { try NIFFile(data: fileSystem.contents(forPath: key)) }
             .flatMap { element in attempt { try SequenceDoorRig(file: element) } }
-        sequenceDoorRigs[key] = .some(rig)
+        owner.sequenceDoorRigs[key] = .some(rig)
         return rig
     }
 

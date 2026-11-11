@@ -11,7 +11,7 @@ import OpenSkyImageKernels
 import OpenSkyRenderCore
 import OpenSkyTerrain
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellTerrainBuilder {
     /// One worldspace's generated terrain, built on the cell build queue.
     final class LoadOrderTerrainLOD: TerrainLODGenerating {
         private unowned let builder: CellSceneBuilder
@@ -28,7 +28,7 @@ nonisolated extension CellSceneBuilder {
             guard let source = source(for: block) else { return nil }
             let edge = TerrainLODGenerator.textureEdge(level: block.level)
             let diffuse = TerrainLODGenerator.diffuse(source) {
-                self.builder.terrainLODTexture($0, edge: edge)
+                self.builder.terrainBuilder.terrainLODTexture($0, edge: edge)
             }
             let normal = TerrainLODGenerator.normalMap(source)
             let side = TerrainLODGenerator.textureSize
@@ -52,11 +52,11 @@ nonisolated extension CellSceneBuilder {
             cells.reserveCapacity(Int(block.level * block.level))
             for row in 0 ..< block.level {
                 for column in 0 ..< block.level {
-                    let found = builder.findCell(
+                    let found = builder.recordIndex.findCell(
                         in: world, gridX: block.origin.x + column, gridY: block.origin.y + row,
                         localized: builder.pluginLocalized
                     )
-                    cells.append(found.flatMap { builder.landRecord(in: $0) }
+                    cells.append(found.flatMap { builder.terrainBuilder.landRecord(in: $0) }
                         .flatMap(TerrainLODLand.init(land:)))
                 }
             }
@@ -68,23 +68,23 @@ nonisolated extension CellSceneBuilder {
     }
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellTerrainBuilder {
     /// The generator for the LOD worldspace, or nil when generated terrain is off or the
     /// worldspace is not in the load order.
     nonisolated func loadOrderTerrainLOD(lodWorldspace: String) -> LoadOrderTerrainLOD? {
         guard
-            let store = distantLODBuilder?.configurationStore,
+            let store = owner.distantLODBuilder?.configurationStore,
             store.snapshot().configuration.generatedTerrain,
             let world = attempt({
-                try worldChildrenGroup(
+                try owner.worldChildrenGroup(
                     editorID: lodWorldspace,
-                    localized: pluginLocalized
+                    localized: owner.pluginLocalized
                 )
             })
         else { return nil }
-        let worlds = worldspaceIndexBuildingIfNeeded()
+        let worlds = owner.waterBuilder.worldspaceIndexBuildingIfNeeded()
         let height = world.worldspace?.source(of: .useLandData, in: worlds).defaultLandHeight
-        return LoadOrderTerrainLOD(builder: self, world: world, defaultHeight: height ?? -2048)
+        return LoadOrderTerrainLOD(builder: owner, world: world, defaultHeight: height ?? -2048)
     }
 
     /// A land texture at the mip whose edge is closest above `edge`; nil when its chain
@@ -92,15 +92,15 @@ nonisolated extension CellSceneBuilder {
     nonisolated func terrainLODTexture(_ ltexID: FormID, edge: Int) -> TerrainLODTexture? {
         guard let path = terrainTextureKeys(for: ltexID)?.diffuse else { return nil }
         let key = "\(path)|\(edge)"
-        if let cached = terrainLODTextures[key] {
+        if let cached = owner.terrainLODTextures[key] {
             return cached
         }
-        let image = attempt { try fileSystem?.contents(forPath: path) }
+        let image = attempt { try owner.fileSystem?.contents(forPath: path) }
             .flatMap { element in attempt { try DDSDecoder.smallLevel(element, edge: edge) } }
         let texture = image.flatMap {
             TerrainLODTexture(width: $0.width, height: $0.height, rgba: $0.rgba)
         }
-        terrainLODTextures[key] = .some(texture)
+        owner.terrainLODTextures[key] = .some(texture)
         return texture
     }
 }

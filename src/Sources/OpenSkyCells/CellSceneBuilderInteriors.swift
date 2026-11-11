@@ -21,20 +21,24 @@ nonisolated public struct DoorTransition: Sendable {
     public var worldspaceEditorID: String?
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated public struct CellInteriorBuilder {
+    let owner: CellSceneBuilder
+}
+
+nonisolated extension CellInteriorBuilder {
     /// Lightweight door probe over WRLD persistent refs. Their storage is the
     /// persistent CELL; physical REFR position supplies streamed-cell ownership.
     nonisolated public func exteriorDoors(
         worldspaceEditorID: String
     ) throws -> [(coordinate: CellCoordinate, door: PlacedDoor)] {
-        let localized = file.isLocalized
-        let world = try worldChildrenGroup(
+        let localized = owner.file.isLocalized
+        let world = try owner.worldChildrenGroup(
             editorID: worldspaceEditorID, localized: localized
         )
         return persistentReferences(in: world, localized: localized)
             .filter { $0.teleportDestination != nil }
             .flatMap { ref -> [(coordinate: CellCoordinate, door: PlacedDoor)] in
-                let doors = resolveDoors(refs: [ref])
+                let doors = owner.assembler.resolveDoors(refs: [ref])
                 let coordinate = CellGridManager.cellCoordinate(for: ref.placement.position)
                 return doors.map { (coordinate, $0) }
             }
@@ -75,20 +79,20 @@ nonisolated extension CellSceneBuilder {
         localized: Bool
     ) -> EnableParentPool {
         let key = world.formID.rawValue
-        if let cached = exteriorPersistentPools[key] {
+        if let cached = owner.exteriorPersistentPools[key] {
             return cached
         }
-        let pool = loadPhases.measure(.cellLookup) {
+        let pool = owner.loadPhases.measure(.cellLookup) {
             var pool = EnableParentPool()
             for ref in persistentReferences(in: world, localized: localized) {
                 pool.references[ref.formID] = ref
             }
-            for actor in persistentActors(in: world, localized: localized) {
+            for actor in owner.actorBuilder.persistentActors(in: world, localized: localized) {
                 pool.actors[actor.formID] = actor
             }
             return pool
         }
-        exteriorPersistentPools[key] = pool
+        owner.exteriorPersistentPools[key] = pool
         return pool
     }
 
@@ -97,14 +101,14 @@ nonisolated extension CellSceneBuilder {
         localized: Bool
     ) -> [PlacedReference] {
         let key = world.formID.rawValue
-        if let cached = exteriorPersistentRefs[key] {
+        if let cached = owner.exteriorPersistentRefs[key] {
             return cached
         }
         var counts = BuildCounts()
-        let refs = persistentCell(in: world, localized: localized).map {
-            collectReferences(in: $0, counts: &counts)
+        let refs = owner.recordIndex.persistentCell(in: world, localized: localized).map {
+            owner.referenceBuilder.collectReferences(in: $0, counts: &counts)
         } ?? []
-        exteriorPersistentRefs[key] = refs
+        owner.exteriorPersistentRefs[key] = refs
         return refs
     }
 
@@ -113,44 +117,45 @@ nonisolated extension CellSceneBuilder {
         cellFormID: FormID,
         state: WorldStateSnapshot = .empty
     ) throws -> CellScene {
-        resetTouchedAssets()
-        let localized = file.isLocalized
+        owner.assembler.resetTouchedAssets()
+        let localized = owner.file.isLocalized
         guard let found = findInteriorCell(formID: cellFormID, localized: localized) else {
             throw CellSceneError.interiorCellNotFound(formID: cellFormID)
         }
         var counts = BuildCounts()
-        let collected = collectTaggedReferences(in: found, counts: &counts)
+        let collected = owner.referenceBuilder.collectTaggedReferences(in: found, counts: &counts)
         let refs = collected.map(\.reference)
         let location = CellSceneLocation.interior(cellFormID)
-        let resolved = effectiveReferences(
+        let resolved = owner.referenceBuilder.effectiveReferences(
             (refs, collected), state: state, location: location, counts: &counts
         )
         let effective = resolved.references
-        let collision = buildCollision(resolved: resolved, location: location)
-        let instances = resolveInstances(refs: effective, counts: &counts)
-        let actors = buildInteriorActors(
+        let collision = owner.buildCollision(resolved: resolved, location: location)
+        let instances = owner.resolveInstances(refs: effective, counts: &counts)
+        let actors = owner.actorBuilder.buildInteriorActors(
             cell: found, location: location, localized: localized,
             deltas: resolved.deltas, collision: collision.staticCollision,
-            parents: ActorEnableParents(references: entriesByFormID(resolved.entries))
+            parents: ActorEnableParents(references: owner.referenceBuilder
+                .entriesByFormID(resolved.entries))
         )
         let lighting = buildInteriorLighting(cell: found.cell, references: effective)
-        var scene = makeScene(
+        var scene = owner.assembler.makeScene(
             cell: (found, (x: 0, y: 0)),
             instances: instances,
             geometry: CellGeometryBuild(
                 location: location,
-                doors: resolveDoors(refs: effective),
-                interactions: resolveInteractions(refs: effective),
+                doors: owner.assembler.resolveDoors(refs: effective),
+                interactions: owner.assembler.resolveInteractions(refs: effective),
                 terrain: nil,
                 grass: nil,
-                water: buildInteriorWater(found: found, instances: instances),
+                water: owner.waterBuilder.buildInteriorWater(found: found, instances: instances),
                 sky: nil,
                 lighting: lighting?.lighting,
                 pointLights: lighting?.pointLights ?? [],
                 staticCollision: collision.staticCollision,
                 triggerVolumes: collision.triggerVolumes,
                 dynamicBodies: collision.dynamicBodies,
-                navmeshes: collectNavmeshes(in: found),
+                navmeshes: owner.referenceBuilder.collectNavmeshes(in: found),
                 actors: actors,
                 referenceEntries: resolved.entries,
                 stateSequence: state.sequence,
@@ -160,11 +165,12 @@ nonisolated extension CellSceneBuilder {
             counts: counts
         )
         scene.imageSpace = found.cell.extras.imageSpace
-        scene.waterVolumes = buildWaterVolumes(
+        scene.waterVolumes = owner.waterBuilder.buildWaterVolumes(
             refs: effective, cellWater: nil, grid: nil, terrain: nil
         )
-        return finished(
-            scene, hazards: collectHazards(in: found, resolved: resolved), collision: collision
+        return owner.objectBuilder.finished(
+            scene, hazards: owner.objectBuilder.collectHazards(in: found, resolved: resolved),
+            collision: collision
         )
     }
 
@@ -202,13 +208,16 @@ nonisolated extension CellSceneBuilder {
 
         let scene: CellScene
         var worldspace: String?
-        if let interior = placedRecords.interiorCell(holding: destinationID) {
+        if
+            let interior = owner.referenceBuilder.placedRecords
+                .interiorCell(holding: destinationID)
+        {
             scene = try buildInteriorScene(cellFormID: interior, state: state)
         } else {
             let world = worldspaceName(holding: destinationID, in: index)
                 ?? worldspaceEditorID
             let grid = CellGridManager.cellCoordinate(for: destination.placement.position)
-            scene = try buildScene(
+            scene = try owner.buildScene(
                 worldspaceEditorID: world,
                 gridX: grid.x,
                 gridY: grid.y,
@@ -231,11 +240,11 @@ nonisolated extension CellSceneBuilder {
         in index: LoadOrderRecordIndex
     ) -> String? {
         index.worldFormID(containing: formID)
-            .flatMap { worldspaceIndexBuildingIfNeeded()[$0.rawValue]?.editorID }
+            .flatMap { owner.waterBuilder.worldspaceIndexBuildingIfNeeded()[$0.rawValue]?.editorID }
     }
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellInteriorBuilder {
     nonisolated private static func placedReference(
         _ found: LoadOrderRecord
     ) throws -> PlacedReference {
@@ -258,7 +267,7 @@ nonisolated extension CellSceneBuilder {
     ) -> FoundCell? {
         let block = Int32(formID.objectID % 10)
         let subBlock = Int32((formID.objectID / 10) % 10)
-        let base = file.topGroup(of: "CELL").flatMap { top in
+        let base = owner.file.topGroup(of: "CELL").flatMap { top in
             findInteriorCell(
                 in: top,
                 formID: formID.rawValue,
@@ -266,7 +275,9 @@ nonisolated extension CellSceneBuilder {
                 localized: localized
             )
         }
-        guard let found = loadOrderCell(formID: formID, base: base), found.cell.isInterior
+        guard
+            let found = owner.recordIndex.loadOrderCell(formID: formID, base: base),
+            found.cell.isInterior
         else { return nil }
         return found
     }
@@ -277,12 +288,12 @@ nonisolated extension CellSceneBuilder {
         expected: (block: Int32, subBlock: Int32),
         localized: Bool
     ) -> FoundCell? {
-        guard let children = childrenOrSkip(group) else { return nil }
+        guard let children = owner.childrenOrSkip(group) else { return nil }
         for (index, child) in children.enumerated() {
             guard
                 case let .record(record) = child, record.type == "CELL",
                 record.formID == formID,
-                let cell = decodeOrSkip(record, using: {
+                let cell = owner.decodeOrSkip(record, using: {
                     try Cell(record: $0, localized: localized)
                 }),
                 cell.isInterior
@@ -290,7 +301,7 @@ nonisolated extension CellSceneBuilder {
             return FoundCell(
                 cell: cell,
                 formID: record.formID,
-                children: cellChildrenGroup(
+                children: owner.cellChildrenGroup(
                     following: index, in: children, cellFormID: record.formID
                 )
             )
@@ -338,14 +349,24 @@ nonisolated extension CellSceneBuilder {
     }
 
     nonisolated func loadOrderIndexBuildingIfNeeded() -> LoadOrderRecordIndex {
-        if let loadOrderIndex {
+        if let loadOrderIndex = owner.loadOrderIndex {
             return loadOrderIndex
         }
-        let store = LoadOptimisations.isOn(.recordIndexCache) ? formIDIndexStore : nil
-        let index = loadPhases.measure(.recordIndex) {
-            LoadOrderRecordIndex(plugins: loadOrderPlugins, space: formIDResolver, store: store)
+        let store = LoadOptimisations.isOn(.recordIndexCache) ? owner.formIDIndexStore : nil
+        let index = owner.loadPhases.measure(.recordIndex) {
+            LoadOrderRecordIndex(
+                plugins: owner.loadOrderPlugins,
+                space: owner.formIDResolver,
+                store: store
+            )
         }
-        loadOrderIndex = index
+        owner.loadOrderIndex = index
         return index
+    }
+}
+
+nonisolated extension CellSceneBuilder {
+    public var interiorBuilder: CellInteriorBuilder {
+        CellInteriorBuilder(owner: self)
     }
 }

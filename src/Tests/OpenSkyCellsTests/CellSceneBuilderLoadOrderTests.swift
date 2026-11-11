@@ -66,7 +66,8 @@ struct CellSceneBuilderLoadOrderTests {
     @Test(.enabled(if: CellSceneBuilderTests.hasDevice))
     func aLaterPluginOverridesAddsAndDeletesReferences() throws {
         let builder = try makeBuilder(device: #require(CellSceneBuilderTests.device))
-        let scene = try builder.buildInteriorScene(cellFormID: FormID(Self.interior))
+        let scene = try builder.interiorBuilder
+            .buildInteriorScene(cellFormID: FormID(Self.interior))
         #expect(scene.references.count == 2)
         #expect(scene.summary.totalRefCount == 2)
         let moved = try #require(scene.references.entry(for: FormID(0x210)))
@@ -80,18 +81,20 @@ struct CellSceneBuilderLoadOrderTests {
     @Test(.enabled(if: CellSceneBuilderTests.hasDevice))
     func aCellOnlyALaterPluginDefinesBuilds() throws {
         let builder = try makeBuilder(device: #require(CellSceneBuilderTests.device))
-        let scene = try builder.buildInteriorScene(cellFormID: FormID(Self.modInterior))
+        let scene = try builder.interiorBuilder
+            .buildInteriorScene(cellFormID: FormID(Self.modInterior))
         #expect(scene.references.entry(for: FormID(0x0200_0801)) != nil)
     }
 
     @Test(.enabled(if: CellSceneBuilderTests.hasDevice))
     func anUnloadedReferenceOfALaterPluginIsFound() throws {
         let builder = try makeBuilder(device: #require(CellSceneBuilderTests.device))
-        let lookup = builder.placedRecords
+        let lookup = builder.referenceBuilder.placedRecords
         let entry = try #require(lookup.entry(for: .plugin(name: "mod.esp", objectID: 0x801)))
         #expect(entry.formID == FormID(0x0200_0801))
         #expect(lookup.interiorCell(holding: entry.formID) == FormID(Self.modInterior))
-        #expect(builder.statIndexBuildingIfNeeded()[0x0200_0900]?.modelPath == "mod.nif")
+        #expect(builder.recordIndex.statIndexBuildingIfNeeded()[0x0200_0900]?
+            .modelPath == "mod.nif")
     }
 
     /// `World.esp` has no masters, so its own records move from `00xxxxxx` to `03xxxxxx`.

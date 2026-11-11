@@ -161,11 +161,13 @@ extension RenderCommand {
             weatherPlugin: "skyrim.esm"
         )
         try applyWeather(
-            options.weather, to: gameSession, loadOrder: scene.builder.pluginLoadOrder,
+            options.weather, to: gameSession,
+            loadOrder: scene.builder.previewBuilder.pluginLoadOrder,
             worldspace: scene.worldspace
         )
         try gameSession.attachOffscreenSky(
-            loadOrder: scene.builder.pluginLoadOrder, fileSystem: scene.context.makeFileSystem()
+            loadOrder: scene.builder.previewBuilder.pluginLoadOrder,
+            fileSystem: scene.context.makeFileSystem()
         )
         if let name = options.imageSpace {
             guard let space = records.imageSpaces.record(editorID: name) else {

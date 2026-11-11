@@ -7,7 +7,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellRecordIndex {
     /// The exterior cell at the grid as the load order has it. A cell only a
     /// later plugin defines has no children group; its records come from
     /// `laterChildren(of:type:)`.
@@ -26,16 +26,17 @@ nonisolated extension CellSceneBuilder {
         localized: Bool
     ) -> [SIMD2<Int32>: FoundCell] {
         let key = world.formID.rawValue
-        if let cached = loadOrderExteriorCells[key] {
+        if let cached = owner.loadOrderExteriorCells[key] {
             return cached
         }
-        let later = loadOrderIndexBuildingIfNeeded().laterCells(ofWorld: world.formID)
+        let later = owner.interiorBuilder.loadOrderIndexBuildingIfNeeded()
+            .laterCells(ofWorld: world.formID)
             .filter { !$0.isPersistent }
-        let index = loadPhases.measure(.cellLookup) {
-            let base = world.children.map { exteriorCellIndex(of: $0, localized: localized) }
+        let index = owner.loadPhases.measure(.cellLookup) {
+            let base = world.children.map { owner.exteriorCellIndex(of: $0, localized: localized) }
             return mergingLaterCells(base ?? [:], later: later)
         }
-        loadOrderExteriorCells[key] = index
+        owner.loadOrderExteriorCells[key] = index
         return index
     }
 
@@ -43,14 +44,15 @@ nonisolated extension CellSceneBuilder {
     /// later plugin's.
     nonisolated func persistentCell(in world: FoundWorld, localized: Bool) -> FoundCell? {
         if
-            let children = world.children, let base = persistentCell(
+            let children = world.children, let base = owner.persistentCell(
                 in: children,
                 localized: localized
             )
         {
             return base
         }
-        let later = loadOrderIndexBuildingIfNeeded().laterCells(ofWorld: world.formID)
+        let later = owner.interiorBuilder.loadOrderIndexBuildingIfNeeded()
+            .laterCells(ofWorld: world.formID)
         guard let last = later.last(where: \.isPersistent), !last.record.record.isDeleted
         else { return nil }
         return decodeCell(last.record).map {
@@ -61,8 +63,8 @@ nonisolated extension CellSceneBuilder {
     /// The first plugin's world children group of `world`.
     nonisolated func baseWorldChildren(of world: FormID) -> ESMGroup? {
         guard
-            let base = loadOrderIndexBuildingIfNeeded().plugins.first,
-            let top = file.topGroup(of: "WRLD"), let children = childrenOrSkip(top)
+            let base = owner.interiorBuilder.loadOrderIndexBuildingIfNeeded().plugins.first,
+            let top = owner.file.topGroup(of: "WRLD"), let children = owner.childrenOrSkip(top)
         else { return nil }
         for case let .group(group) in children where group.kind == .worldChildren {
             if let parent = group.parentFormID, base.translation(FormID(stored: parent)) == world {
@@ -99,7 +101,7 @@ nonisolated extension CellSceneBuilder {
     }
 
     nonisolated private func decodeCell(_ record: LoadOrderRecord) -> Cell? {
-        decodeOrSkip(record.record, using: { _ in
+        owner.decodeOrSkip(record.record, using: { _ in
             try record.decode { try Cell(record: $0, localized: record.localized) }
         })
     }

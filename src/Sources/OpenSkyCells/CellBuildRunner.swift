@@ -159,7 +159,7 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
         state: WorldStateSnapshot
     ) throws -> DistantLODScene? {
         try builder.textures.batchLoads {
-            try builder.buildDistantLOD(
+            try builder.terrainBuilder.buildDistantLOD(
                 worldspaceEditorID: worldspace,
                 center: center,
                 hiddenCells: hiddenCells,
@@ -174,7 +174,7 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
     ) throws -> DoorTransition {
         let current = worldspace
         let transition = try builder.textures.batchLoads {
-            try builder.buildDoorTransition(
+            try builder.interiorBuilder.buildDoorTransition(
                 from: sourceDoor,
                 worldspaceEditorID: current,
                 state: state
@@ -202,7 +202,7 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
     }
 
     public func drainTouchedAssets() -> CellAssets {
-        builder.drainTouchedAssets()
+        builder.assembler.drainTouchedAssets()
     }
 
     public func loadActorProp(_ request: ActorPropRequest) throws -> RenderModel {
@@ -215,7 +215,7 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
     public func assemblePlayerRig(
         _ request: PlayerRigRequest
     ) -> Result<PlayerRenderRig, PlayerBodyError> {
-        builder.assemblePlayerRig(request)
+        builder.actorBuilder.assemblePlayerRig(request)
     }
 }
 

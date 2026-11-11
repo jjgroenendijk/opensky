@@ -46,7 +46,7 @@ nonisolated public struct PreviewSceneBuilder {
     }
 
     private var loadOrder: LoadOrderPlugins {
-        builder.pluginLoadOrder
+        builder.previewBuilder.pluginLoadOrder
     }
 
     public func build(_ request: PreviewRequest) throws(PreviewError) -> PreviewScene {
@@ -84,7 +84,7 @@ nonisolated public struct PreviewSceneBuilder {
     ) throws(PreviewError) -> (PreviewSubject, PreviewResolvedTarget) {
         switch target {
         case let .mesh(path):
-            let subject = builder.previewMesh(path: path, placement: origin)
+            let subject = builder.previewBuilder.previewMesh(path: path, placement: origin)
             var resolved = PreviewResolvedTarget(kind: "mesh")
             resolved.modelPath = path
             return (subject, resolved)
@@ -157,7 +157,7 @@ nonisolated public struct PreviewSceneBuilder {
         let name = ESMWalk.editorID(of: record.record) ?? record.formID.description
         switch type {
         case "NPC_":
-            return builder.previewActor(base: record.formID, placement: placement)
+            return builder.previewBuilder.previewActor(base: record.formID, placement: placement)
         case "ARMO":
             let armor = attempt {
                 try record.decode { try Armor(record: $0, localized: record.localized) }
@@ -166,10 +166,14 @@ nonisolated public struct PreviewSceneBuilder {
             guard let path = model?.path else {
                 throw .unsupportedRecord(type: type.description, name: name)
             }
-            return builder.previewMesh(path: path, placement: placement, scale: scale)
+            return builder.previewBuilder.previewMesh(
+                path: path,
+                placement: placement,
+                scale: scale
+            )
         default:
             guard
-                let subject = builder.previewObject(
+                let subject = builder.previewBuilder.previewObject(
                     base: record.formID, placement: placement, scale: scale
                 )
             else { throw .unsupportedRecord(type: type.description, name: name) }

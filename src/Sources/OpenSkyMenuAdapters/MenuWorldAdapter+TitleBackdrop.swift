@@ -84,7 +84,7 @@ final class MenuTitleBackdrop {
     /// The game draws the logo in `MainMenuCell`, so it takes that cell's light.
     var titleLighting: RenderLighting? {
         game.menuRecords?.menuRecords?.mainMenuLighting.flatMap {
-            CellSceneBuilder.renderLighting(cell: $0.cell, template: $0.template)
+            CellInteriorBuilder.renderLighting(cell: $0.cell, template: $0.template)
         }
     }
 

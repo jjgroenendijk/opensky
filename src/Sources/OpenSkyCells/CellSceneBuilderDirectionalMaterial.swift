@@ -14,10 +14,10 @@ nonisolated struct DirectionalMaterialCache {
     var resolved: [String: ProjectedMaterial?] = [:]
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellObjectBuilder {
     /// The base's MODS textures, with its directional material laid over them.
     nonisolated public func surface(for base: ResolvedBase) -> ModelSurfaceOverride {
-        let alternates = surface(for: base.alternateTextures)
+        let alternates = owner.recordIndex.surface(for: base.alternateTextures)
         guard let projected = base.directionalMaterial.flatMap(projectedMaterial(for:)) else {
             return alternates
         }
@@ -33,13 +33,14 @@ nonisolated extension CellSceneBuilder {
     ) -> ProjectedMaterial? {
         guard let id = directional.material else { return nil }
         let key = "\(id.rawValue):\(directional.maxAngle)"
-        if let known = directionalMaterials.resolved[key] {
+        if let known = owner.directionalMaterials.resolved[key] {
             return known
         }
-        let index = directionalMaterials.index ?? loadOrderRecords(of: "MATO") { record, _ in
-            try MaterialObject(record: record)
-        }
-        directionalMaterials.index = index
+        let index = owner.directionalMaterials.index ?? owner.recordIndex
+            .loadOrderRecords(of: "MATO") { record, _ in
+                try MaterialObject(record: record)
+            }
+        owner.directionalMaterials.index = index
         var projected: ProjectedMaterial?
         if let object = index[id.rawValue], let properties = object.properties {
             let singlePass = properties.isSinglePass ?? false
@@ -59,7 +60,7 @@ nonisolated extension CellSceneBuilder {
                 isSnow: properties.isSnow ?? false
             )
         }
-        directionalMaterials.resolved[key] = .some(projected)
+        owner.directionalMaterials.resolved[key] = .some(projected)
         return projected
     }
 
@@ -71,7 +72,8 @@ nonisolated extension CellSceneBuilder {
     /// The first textured material of a model, read straight from its NIF.
     private func modelTextures(path: String?) -> Material? {
         guard
-            let path, let fileSystem, let key = attempt({ try meshes.meshKey(for: path) }),
+            let path, let fileSystem = owner.fileSystem,
+            let key = attempt({ try owner.meshes.meshKey(for: path) }),
             let data = attempt({ try fileSystem.contents(forPath: key) }),
             let model = attempt({ try NIFFile(data: data).model() })
         else { return nil }

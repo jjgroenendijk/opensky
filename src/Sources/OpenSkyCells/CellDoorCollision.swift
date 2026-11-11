@@ -85,7 +85,7 @@ nonisolated extension CellSceneBuilder {
     ) -> (fixed: StaticCollisionSet, doors: [CellDoorCollision]) {
         let sources = movingCollisionSources(in: refs)
         guard !sources.isEmpty, let library = collisionModels else { return (set, []) }
-        let materials = materialTypeIndexBuildingIfNeeded()
+        let materials = recordIndex.materialTypeIndexBuildingIfNeeded()
         let fixed = StaticCollisionSet(
             location: set.location,
             shapes: set.shapes.filter { sources[$0.reference] == nil },
@@ -128,18 +128,21 @@ nonisolated extension CellSceneBuilder {
     private func movingCollisionSources(
         in refs: [PlacedReference]
     ) -> [FormID: MovingCollisionSource] {
-        var sources = sequenceDoors(in: refs).mapValues { door in
+        var sources = objectBuilder.sequenceDoors(in: refs).mapValues { door in
             MovingCollisionSource(
                 ref: door.ref, modelPath: door.modelPath,
                 partCount: door.rig.skeleton.bones.count,
                 part: { door.rig.leaf(ofBlock: $0) }, movingParts: nil
             )
         }
-        let bases = modelBaseIndexBuildingIfNeeded()
+        let bases = recordIndex.modelBaseIndexBuildingIfNeeded()
         for ref in refs where sources[ref.formID] == nil {
             guard
                 let base = bases[ref.base.rawValue], let path = base.modelPath,
-                let asset = objectBehavior(recordType: base.recordType, modelPath: path),
+                let asset = objectBuilder.objectBehavior(
+                    recordType: base.recordType,
+                    modelPath: path
+                ),
                 let rig = movingPartRig(modelPath: path, boneNames: asset.skeleton.boneNames)
             else { continue }
             sources[ref.formID] = MovingCollisionSource(

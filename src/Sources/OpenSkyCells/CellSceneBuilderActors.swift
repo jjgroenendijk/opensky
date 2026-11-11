@@ -4,13 +4,13 @@
 // Resolution documented in docs/engine/actor-resolution.md.
 
 import Foundation
-public import OpenSkyActorPresentation
+import OpenSkyActorPresentation
 import OpenSkyActorsInterface
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 import OpenSkyInventoryInterface
-public import OpenSkyPhysics
+import OpenSkyPhysics
 import OpenSkyPlayer
 public import OpenSkyRenderCore
 public import OpenSkyRendering
@@ -76,10 +76,14 @@ nonisolated public struct ActorEnableParents {
     }
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated struct CellActorBuilder {
+    let owner: CellSceneBuilder
+}
+
+nonisolated extension CellActorBuilder {
     /// Actors for one exterior cell: local ACHRs plus worldspace-persistent
     /// ACHRs whose physical position lies in this cell, resolved + assembled.
-    nonisolated public func buildExteriorActors(
+    nonisolated func buildExteriorActors(
         cell: FoundCell?,
         world: FoundWorld,
         coordinate: CellCoordinate,
@@ -97,11 +101,11 @@ nonisolated extension CellSceneBuilder {
         // Records stored in the worldspace persistent CELL are persistent by
         // definition, whichever children group inside it holds them.
         for actor in persistentActors(in: world, localized: localized) {
-            let owner = CellGridManager.cellCoordinate(for: actor.placement.position)
-            guard owner == coordinate else { continue }
+            let actorCell = CellGridManager.cellCoordinate(for: actor.placement.position)
+            guard actorCell == coordinate else { continue }
             byID[actor.formID.rawValue] = CollectedActor(actor: actor, isPersistent: true)
         }
-        let collected = Self.standingOnFloors(relocating(
+        let collected = Self.standingOnFloors(owner.referenceBuilder.relocating(
             byID.values.sorted { $0.actor.formID.rawValue < $1.actor.formID.rawValue },
             into: .exterior(coordinate),
             deltas: deltas
@@ -117,7 +121,7 @@ nonisolated extension CellSceneBuilder {
 
     /// Actors for one interior cell — local children groups only; interiors
     /// have no worldspace persistent cell to map in.
-    nonisolated public func buildInteriorActors(
+    nonisolated func buildInteriorActors(
         cell: FoundCell?,
         location: CellSceneLocation,
         localized _: Bool,
@@ -127,7 +131,7 @@ nonisolated extension CellSceneBuilder {
     ) -> CellActorBuild {
         let started = Stopwatch()
         var malformed: [String] = []
-        let collected = Self.standingOnFloors(relocating(
+        let collected = Self.standingOnFloors(owner.referenceBuilder.relocating(
             decodeActors(in: cell, malformed: &malformed), into: location, deltas: deltas
         ) + spawnedActors(in: location, deltas: deltas), collision: collision)
         recordLeveledPlacements(collected, location: location, zone: cell?.cell.encounterZone)
@@ -142,10 +146,10 @@ nonisolated extension CellSceneBuilder {
     nonisolated func recordLeveledPlacements(
         _ collected: [CollectedActor], location: CellSceneLocation, zone: FormID?
     ) {
-        let zones = encounterZones ?? EncounterZoneStore(plugins: loadOrderPlugins)
-        encounterZones = zones
-        let cellZone = zone.flatMap { zones.resolve($0, fromPlugin: pluginName)?.zone }
-        leveling.placements.record(cell: location, zone: cellZone)
+        let zones = owner.encounterZones ?? EncounterZoneStore(plugins: owner.loadOrderPlugins)
+        owner.encounterZones = zones
+        let cellZone = zone.flatMap { zones.resolve($0, fromPlugin: owner.pluginName)?.zone }
+        owner.leveling.placements.record(cell: location, zone: cellZone)
         for collectedActor in collected {
             let actor = collectedActor.actor
             let own = actor.details.links["XEZN"].flatMap {
@@ -155,11 +159,11 @@ nonisolated extension CellSceneBuilder {
                 zone: own ?? cellZone,
                 difficulty: LeveledActorDifficulty(levelModifier: actor.details.levelModifier)
             )
-            leveling.placements.record(actor: actor.base, placement)
+            owner.leveling.placements.record(actor: actor.base, placement)
             let key = collectedActor.spawnKey
-                ?? ReferenceKey.resolve(actor.formID, using: formIDResolver)
+                ?? ReferenceKey.resolve(actor.formID, using: owner.formIDResolver)
             if let key {
-                leveling.placements.record(reference: key, placement)
+                owner.leveling.placements.record(reference: key, placement)
             }
         }
     }
@@ -174,12 +178,13 @@ nonisolated extension CellSceneBuilder {
         let (collected, malformed) = scan
         var build = CellActorBuild()
         let actors = collected.map(\.actor)
-        build.entries = actorEntries(collected, deltas: deltas)
+        build.entries = owner.referenceBuilder.actorEntries(collected, deltas: deltas)
         build.counts.discovered = actors.count + malformed.count
         build.counts.failures = malformed.count
         build.counts.failureReasons = malformed
-        let enable = enableResolver(
-            entries: parents.references.merging(entriesByFormID(build.entries)) { $1 },
+        let enable = owner.enableResolver(
+            entries: parents.references
+                .merging(owner.referenceBuilder.entriesByFormID(build.entries)) { $1 },
             pool: parents.pool, deltas: deltas
         )
         resolveActors(actors, into: &build, deltas: deltas, enable: enable)
@@ -197,21 +202,25 @@ nonisolated extension CellSceneBuilder {
     ) -> [CollectedActor] {
         guard let cell else { return [] }
         let base = decodeBaseActors(in: cell.children, malformed: &malformed)
-        return mergingLaterActors(base, cell: FormID(cell.formID), malformed: &malformed)
+        return owner.recordIndex.mergingLaterActors(
+            base,
+            cell: FormID(cell.formID),
+            malformed: &malformed
+        )
     }
 
     nonisolated private func decodeBaseActors(
         in cellChildren: ESMGroup?,
         malformed: inout [String]
     ) -> [CollectedActor] {
-        guard let cellChildren, let children = childrenOrSkip(cellChildren) else {
+        guard let cellChildren, let children = owner.childrenOrSkip(cellChildren) else {
             return []
         }
         var actors: [CollectedActor] = []
         for case let .group(group) in children {
             guard
                 group.kind == .cellPersistentChildren || group.kind == .cellTemporaryChildren,
-                let records = childrenOrSkip(group)
+                let records = owner.childrenOrSkip(group)
             else { continue }
             let isPersistent = group.kind == .cellPersistentChildren
             for case let .record(record) in records where record.type == "ACHR" {
@@ -223,7 +232,8 @@ nonisolated extension CellSceneBuilder {
                 } catch {
                     let id = FormID(record.formID).description
                     malformed.append("ACHR \(id): malformed record")
-                    Self.logger.warning("malformed ACHR \(id, privacy: .public) counted failed")
+                    CellSceneBuilder.logger
+                        .warning("malformed ACHR \(id, privacy: .public) counted failed")
                 }
             }
         }
@@ -238,16 +248,16 @@ nonisolated extension CellSceneBuilder {
         localized: Bool
     ) -> [PlacedActor] {
         let key = world.formID.rawValue
-        if let cached = exteriorPersistentActors[key] {
+        if let cached = owner.exteriorPersistentActors[key] {
             return cached
         }
         var actors: [PlacedActor] = []
-        if let persistent = persistentCell(in: world, localized: localized) {
+        if let persistent = owner.recordIndex.persistentCell(in: world, localized: localized) {
             var malformed: [String] = []
             actors = decodeActors(in: persistent, malformed: &malformed)
                 .map(\.actor)
         }
-        exteriorPersistentActors[key] = actors
+        owner.exteriorPersistentActors[key] = actors
         return actors
     }
 
@@ -261,14 +271,14 @@ nonisolated extension CellSceneBuilder {
         enable: EnableParentResolver
     ) {
         guard !actors.isEmpty else { return }
-        let indexed = entriesByFormID(build.entries)
+        let indexed = owner.referenceBuilder.entriesByFormID(build.entries)
         let steps = actors.map { actor in
             resolveStep(actor, entry: indexed[actor.formID], deltas: deltas, enable: enable)
         }
         // Every look is known before the first assembly, so the part files load on every core.
-        meshes.preparse(paths: steps.flatMap(\.modelPaths))
-        defer { meshes.dropPreparsed() }
-        let assembler = ActorAssembler(provider: meshes)
+        owner.meshes.preparse(paths: steps.flatMap(\.modelPaths))
+        defer { owner.meshes.dropPreparsed() }
+        let assembler = ActorAssembler(provider: owner.meshes)
         for (actor, step) in zip(actors, steps) {
             let id = actor.formID.description
             switch step {
@@ -277,7 +287,8 @@ nonisolated extension CellSceneBuilder {
                 if let key {
                     build.disabledKeys.insert(key)
                 }
-                Self.logger.info("ACHR \(id, privacy: .public): \(skip, privacy: .public), skipped")
+                CellSceneBuilder.logger
+                    .info("ACHR \(id, privacy: .public): \(skip, privacy: .public), skipped")
             case let .resolved(placed, visual, head):
                 record(assembler.assemble(placed: placed, visual: visual), id: id, into: &build)
                 if let head {
@@ -288,7 +299,7 @@ nonisolated extension CellSceneBuilder {
             case let .failed(reason):
                 build.counts.failures += 1
                 build.counts.failureReasons.append("ACHR \(id): unresolved (\(reason))")
-                Self.logger.warning(
+                CellSceneBuilder.logger.warning(
                     """
                     ACHR \(id, privacy: .public): unresolved \
                     (\(reason, privacy: .public)), failed
@@ -310,7 +321,9 @@ nonisolated extension CellSceneBuilder {
         }
         let resolvers = actorResolversBuildingIfNeeded()
         do {
-            let roll = entry.map { leveledRoll(of: $0.key, base: actor.base, deltas: deltas) }
+            let roll = entry.map {
+                owner.referenceBuilder.leveledRoll(of: $0.key, base: actor.base, deltas: deltas)
+            }
             let templates = resolvers.template.rolling(roll)
             let appearance = try templates.resolve(base: actor.base)
             var visual = try resolvers.visual.resolve(
@@ -370,7 +383,7 @@ nonisolated extension CellSceneBuilder {
             build.counts.failureReasons.append(
                 "ACHR \(id): no renderable geometry (\(reasons))"
             )
-            Self.logger.warning(
+            CellSceneBuilder.logger.warning(
                 """
                 ACHR \(id, privacy: .public): no renderable geometry \
                 (\(reasons, privacy: .public)), failed
@@ -466,7 +479,7 @@ nonisolated extension CellSceneBuilder {
         guard let entry else {
             return actor.isInitiallyDisabled ? "initially disabled" : nil
         }
-        let resolved = resolvedRuntimeState(for: entry, deltas: deltas)
+        let resolved = owner.referenceBuilder.resolvedRuntimeState(for: entry, deltas: deltas)
         if resolved.deletion.isDeleted {
             return "deleted at runtime"
         }
@@ -482,21 +495,21 @@ nonisolated extension CellSceneBuilder {
     /// because the player body resolves through the same pair
     /// (CellSceneBuilderPlayer.swift) and must not force a second copy of two
     /// plugin-wide indexes into memory.
-    nonisolated public func actorResolversBuildingIfNeeded()
+    nonisolated func actorResolversBuildingIfNeeded()
         -> (template: ActorTemplateResolver, visual: ActorVisualResolver)
     {
-        if let template = actorTemplateResolver, let visual = actorVisualResolver {
+        if let template = owner.actorTemplateResolver, let visual = owner.actorVisualResolver {
             return (template, visual)
         }
-        let loadOrder = loadOrderIndexBuildingIfNeeded().loadOrder
-        let (template, visual) = loadPhases.measure(.actorIndex) {
+        let loadOrder = owner.interiorBuilder.loadOrderIndexBuildingIfNeeded().loadOrder
+        let (template, visual) = owner.loadPhases.measure(.actorIndex) {
             (
-                ActorTemplateResolver.build(from: loadOrder, leveling: leveling),
-                ActorVisualResolver.build(from: loadOrder, leveling: leveling)
+                ActorTemplateResolver.build(from: loadOrder, leveling: owner.leveling),
+                ActorVisualResolver.build(from: loadOrder, leveling: owner.leveling)
             )
         }
-        actorTemplateResolver = template
-        actorVisualResolver = visual
+        owner.actorTemplateResolver = template
+        owner.actorVisualResolver = visual
         return (template, visual)
     }
 }
@@ -518,5 +531,11 @@ nonisolated private enum ActorBuildStep {
                 + visual.attachments.map(\.modelPath) + visual.headParts.parts.map(\.modelPath)
                 + [visual.faceGenMeshPath].compactMap(\.self)
         }
+    }
+}
+
+nonisolated extension CellSceneBuilder {
+    var actorBuilder: CellActorBuilder {
+        CellActorBuilder(owner: self)
     }
 }

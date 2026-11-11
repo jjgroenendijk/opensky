@@ -6,7 +6,7 @@
 import Foundation
 import Metal
 @testable import OpenSkyActorPresentation
-import OpenSkyCells
+@testable import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import OpenSkyPlayer
@@ -28,7 +28,7 @@ struct HeadAssemblyRenderRealDataTests {
         let placed = try PlacedActor(record: #require(
             ESMWalk.record(withFormID: 0x0001_A682, in: install.file)
         ))
-        let resolvers = builder.actorResolversBuildingIfNeeded()
+        let resolvers = builder.actorBuilder.actorResolversBuildingIfNeeded()
         let visual = try resolvers.visual.resolve(
             appearance: resolvers.template.resolve(base: placed.base)
         )

@@ -176,7 +176,7 @@ nonisolated extension CellProviderIndexes {
             builder.prepareIndexes(worldspace: FirstRenderCell.worldspaceEditorID)
         }
         let formIDResolver = builder.formIDResolver
-        let placedRecords = builder.placedRecords
+        let placedRecords = builder.referenceBuilder.placedRecords
         let lodPrebuild = builder.distantLODBuilder.map {
             DistantLODPrebuild(of: $0, worldspace: FirstRenderCell.worldspaceEditorID)
         }

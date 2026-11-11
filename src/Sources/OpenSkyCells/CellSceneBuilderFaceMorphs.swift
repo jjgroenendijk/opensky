@@ -7,7 +7,7 @@ import OpenSkyActorPresentation
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
-public import OpenSkyRendering
+import OpenSkyRendering
 public import OpenSkyRenderResources
 import OpenSkyRuntimeState
 public import OpenSkyWorldInterface
@@ -18,11 +18,13 @@ nonisolated private struct FaceMorphAssociationState {
     var misses: [FaceMorphAssociationMiss] = []
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellActorBuilder {
     public func makeFaceMorphPlayback(
         assembly: ActorAssembly<ActorRenderAsset>
     ) -> FaceMorphPlayback? {
-        guard let resolver = actorVisualResolver, let fileSystem else { return nil }
+        guard
+            let resolver = owner.actorVisualResolver,
+            let fileSystem = owner.fileSystem else { return nil }
         if assembly.visual.headSource == .assembled {
             return assembledFacePlayback(assembly: assembly)
         }
@@ -105,7 +107,7 @@ nonisolated extension CellSceneBuilder {
             guard state.bindings[key] == nil else { continue }
             do {
                 state.bindings[key] = try FaceMorphBuffer(
-                    device: self.meshes.device,
+                    device: owner.meshes.device,
                     tri: tri,
                     mesh: mesh
                 )
@@ -130,12 +132,12 @@ nonisolated extension CellSceneBuilder {
     func faceMorphFile(
         _ path: String, fileSystem: any GameFileSource
     ) -> Result<TRIFile, AssetLoadFailure> {
-        if let known = faceMorphFiles[path] {
+        if let known = owner.faceMorphFiles[path] {
             return known
         }
         let loaded = Result { try TRIFile(data: fileSystem.contents(forPath: path)) }
             .mapError(AssetLoadFailure.init)
-        faceMorphFiles[path] = loaded
+        owner.faceMorphFiles[path] = loaded
         return loaded
     }
 }

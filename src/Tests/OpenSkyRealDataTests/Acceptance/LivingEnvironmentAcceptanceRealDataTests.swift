@@ -51,7 +51,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         )
         let exteriorEvidence = try verifyExterior(exterior, weather: harness.weather)
 
-        let interior = try harness.builder.buildInteriorScene(
+        let interior = try harness.builder.interiorBuilder.buildInteriorScene(
             cellFormID: WalkPathRoute.farmInterior
         )
         let interiorEvidence = try verifyInterior(interior)

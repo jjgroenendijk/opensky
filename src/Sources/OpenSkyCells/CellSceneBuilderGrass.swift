@@ -13,7 +13,7 @@ nonisolated public struct GrassBuild {
     public let typeSkipCount: Int
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellTerrainBuilder {
     nonisolated public func buildGrass(
         found: FoundCell,
         worldspace: Worldspace?,
@@ -52,7 +52,8 @@ nonisolated extension CellSceneBuilder {
         )
         let skipped = referencedGrassIDs.count - usable.count
         if skipped > 0 {
-            Self.logger.warning("\(skipped) referenced grass types unresolvable, dropped")
+            CellSceneBuilder.logger
+                .warning("\(skipped) referenced grass types unresolvable, dropped")
         }
         let renderPlacements = makeGrassRenderPlacements(placements)
         return GrassBuild(
@@ -77,15 +78,15 @@ nonisolated extension CellSceneBuilder {
                 continue
             }
             do {
-                let model = try meshes.model(path: first.modelPath)
-                let bounds = meshes.bounds(forPath: first.modelPath)
+                let model = try owner.meshes.model(path: first.modelPath)
+                let bounds = owner.meshes.bounds(forPath: first.modelPath)
                 result += typePlacements.map {
                     GrassRenderPlacement(placement: $0, model: model, modelBounds: bounds)
                 }
             } catch {
                 let id = grassID.description
                 let reason = String(describing: error)
-                Self.logger.warning(
+                CellSceneBuilder.logger.warning(
                     "grass \(id, privacy: .public) model failed: \(reason, privacy: .public)"
                 )
             }
@@ -94,21 +95,23 @@ nonisolated extension CellSceneBuilder {
     }
 
     nonisolated func landTextureIndexBuildingIfNeeded() -> [UInt32: LandTexture] {
-        if let landTextureIndex {
+        if let landTextureIndex = owner.landTextureIndex {
             return landTextureIndex
         }
-        let textures = loadOrderRecords(of: "LTEX") { record, _ in try LandTexture(record: record) }
+        let textures = owner.recordIndex
+            .loadOrderRecords(of: "LTEX") { record, _ in try LandTexture(record: record) }
         let index = LandTexture.index(textures.sorted { $0.key < $1.key }.map(\.value))
-        landTextureIndex = index
+        owner.landTextureIndex = index
         return index
     }
 
     nonisolated func grassIndexBuildingIfNeeded() -> [UInt32: Grass] {
-        if let grassIndex {
+        if let grassIndex = owner.grassIndex {
             return grassIndex
         }
-        let index = loadOrderRecords(of: "GRAS") { record, _ in try Grass(record: record) }
-        grassIndex = index
+        let index = owner.recordIndex
+            .loadOrderRecords(of: "GRAS") { record, _ in try Grass(record: record) }
+        owner.grassIndex = index
         return index
     }
 }

@@ -5,15 +5,15 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
-public import OpenSkyWorldInterface
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellReferenceBuilder {
     /// Built from the load-order index the door transitions use.
     nonisolated public var placedRecords: PlacedRecordLookup {
         PlacedRecordLookup(
-            index: loadOrderIndexBuildingIfNeeded(),
-            templates: actorResolversBuildingIfNeeded().template
+            index: owner.interiorBuilder.loadOrderIndexBuildingIfNeeded(),
+            templates: owner.actorBuilder.actorResolversBuildingIfNeeded().template
         )
     }
 
@@ -49,7 +49,7 @@ nonisolated extension CellSceneBuilder {
         guard deltas.values.contains(where: { $0.component(ReferenceRelocation.self) != nil })
         else { return items }
         return items.filter { item in
-            guard let key = ReferenceKey.resolve(formID(item), using: formIDResolver) else {
+            guard let key = ReferenceKey.resolve(formID(item), using: owner.formIDResolver) else {
                 return true
             }
             return !(deltas[key]?.relocatesAway(from: location) ?? false)

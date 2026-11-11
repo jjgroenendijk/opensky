@@ -5,7 +5,7 @@
 import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 public import OpenSkyWorldState
 
 /// The spawned half of one build's reference set.
@@ -16,7 +16,7 @@ nonisolated public struct SpawnedReferenceBuild: Sendable {
     public static let empty = SpawnedReferenceBuild(references: [], entries: [])
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellActorBuilder {
     /// Every spawned object `state` places in `location`, in `ReferenceKey` order. A spawn
     /// past the 24-bit object ID has no FormID, so it is dropped and counted.
     nonisolated public func spawnedReferences(
@@ -34,7 +34,7 @@ nonisolated extension CellSceneBuilder {
             else { continue }
             guard let formID = SpawnedReferenceIdentity.formID(for: entry.key) else {
                 counts.unaddressableSpawns += 1
-                Self.logger.warning(
+                CellSceneBuilder.logger.warning(
                     """
                     [WARNING] spawned reference \(entry.key.description, privacy: .public): \
                     no FormID available, skipped
@@ -59,7 +59,7 @@ nonisolated extension CellSceneBuilder {
     }
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellActorBuilder {
     /// A spawn whose base is an `NPC_` is an actor, built with the cell's ACHRs.
     nonisolated func spawnsActor(_ spawn: ReferenceSpawnState) -> Bool {
         actorResolversBuildingIfNeeded().template.actors[spawn.base.rawValue] != nil

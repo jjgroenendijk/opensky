@@ -60,7 +60,7 @@ extension CellSceneBuilderTests {
             )
         )
         let builder = try makeBuilder(pluginData: bytes, device: #require(Self.device))
-        return try builder.buildInteriorScene(cellFormID: FormID(Self.interiorID))
+        return try builder.interiorBuilder.buildInteriorScene(cellFormID: FormID(Self.interiorID))
     }
 
     @Test(.enabled(if: Self.hasDevice)) func interiorWaterSpansThePlacedGeometry() throws {

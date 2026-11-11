@@ -45,7 +45,8 @@ final class TrapCellSession {
 
     private init(root: GameDataRoot, install: RealDataInstall) throws {
         builder = install.sceneBuilder()
-        scene = try builder.buildInteriorScene(cellFormID: TrapCellRealDataTests.cell)
+        scene = try builder.interiorBuilder
+            .buildInteriorScene(cellFormID: TrapCellRealDataTests.cell)
         references = CrimeRealDataTests.SceneReferences(scene: scene)
         bridge = PapyrusWorldStateBridge(worldState: worldState, references: references)
         world = PapyrusWorldRuntime(runtime: PapyrusRuntime(

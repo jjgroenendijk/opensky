@@ -167,7 +167,7 @@ enum RenderCommand {
             }
             return nil
         })
-        let lod = try builder.buildDistantLOD(
+        let lod = try builder.terrainBuilder.buildDistantLOD(
             worldspaceEditorID: worldspace,
             center: center,
             hiddenCells: built

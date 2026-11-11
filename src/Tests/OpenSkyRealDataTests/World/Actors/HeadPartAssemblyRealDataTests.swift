@@ -4,7 +4,7 @@
 
 import Foundation
 @testable import OpenSkyActorPresentation
-import OpenSkyCells
+@testable import OpenSkyCells
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -18,7 +18,7 @@ struct HeadPartAssemblyRealDataTests {
     @MainActor
     func everyNPCResolvesItsHeadParts() throws {
         let install = try RealDataInstall.load()
-        let resolvers = install.sceneBuilder().actorResolversBuildingIfNeeded()
+        let resolvers = install.sceneBuilder().actorBuilder.actorResolversBuildingIfNeeded()
         var npcs: [FormID] = []
         ESMWalk.forEachRecord(in: install.file) { record in
             if record.type == "NPC_" {
