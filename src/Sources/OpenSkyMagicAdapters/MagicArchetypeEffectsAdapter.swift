@@ -150,6 +150,48 @@ extension MagicArchetypeEffectsAdapter {
     }
 
     public func actorHasKeyword(_ editorID: String, on holder: ActorValueHolder) -> Bool {
+        keywordChecks.actorHasKeyword(editorID, on: holder)
+    }
+
+    public func itemHasKeyword(_ editorID: String, on item: FormID) -> Bool {
+        guard
+            let keywords = game.worldRecords?.locationKeywords,
+            let keyword = keywords.keyword(editorID: editorID)?.id,
+            let id = keywords.resolvedID(item, fromPlugin: FormIDResolver.loadOrderSpaceName)
+        else { return false }
+        return keywords.hasKeyword(keyword, on: id) == true
+    }
+
+    /// An item fits when it has a keyword the base's worn restriction list names.
+    public func enchantment(_ base: ResolvedEnchantment, fits item: FormID) -> Bool {
+        keywordChecks.enchantment(base, fits: item)
+    }
+
+    func castingSound(_ sound: FormID, caster: ReferenceKey, starts: Bool) {
+        guard let director = game.gameSession?.soundDirector else { return }
+        guard starts else {
+            director.stopSound(formID: sound, source: caster)
+            return
+        }
+        let combat = game.combat
+        let feet = caster == .player
+            ? combat.meleeAttacker.feet : combat.combatActor(key: caster)?.feet
+        guard let feet else { return }
+        director.playSound(formID: sound, source: caster, at: feet)
+    }
+}
+
+extension MagicArchetypeEffectsAdapter {
+    var keywordChecks: MagicKeywordChecks {
+        MagicKeywordChecks(game: game, state: state)
+    }
+}
+
+struct MagicKeywordChecks {
+    let game: any MagicArchetypeEffectsHost
+    let state: MagicPartState
+
+    func actorHasKeyword(_ editorID: String, on holder: ActorValueHolder) -> Bool {
         guard
             let keywords = game.worldRecords?.locationKeywords,
             let keyword = keywords.keyword(editorID: editorID)?.id,
@@ -172,17 +214,8 @@ extension MagicArchetypeEffectsAdapter {
         return answer
     }
 
-    public func itemHasKeyword(_ editorID: String, on item: FormID) -> Bool {
-        guard
-            let keywords = game.worldRecords?.locationKeywords,
-            let keyword = keywords.keyword(editorID: editorID)?.id,
-            let id = keywords.resolvedID(item, fromPlugin: FormIDResolver.loadOrderSpaceName)
-        else { return false }
-        return keywords.hasKeyword(keyword, on: id) == true
-    }
-
     /// An item fits when it has a keyword the base's worn restriction list names.
-    public func enchantment(_ base: ResolvedEnchantment, fits item: FormID) -> Bool {
+    func enchantment(_ base: ResolvedEnchantment, fits item: FormID) -> Bool {
         guard
             let list = base.data?.wornRestrictions,
             let lists = game.worldRecords?.formListStore,
@@ -192,18 +225,5 @@ extension MagicArchetypeEffectsAdapter {
         else { return true }
         let listed = lists.flattened(listID)?.entries.compactMap(\.self) ?? []
         return listed.isEmpty || listed.contains { keywords.hasKeyword($0, on: id) == true }
-    }
-
-    func castingSound(_ sound: FormID, caster: ReferenceKey, starts: Bool) {
-        guard let director = game.gameSession?.soundDirector else { return }
-        guard starts else {
-            director.stopSound(formID: sound, source: caster)
-            return
-        }
-        let combat = game.combat
-        let feet = caster == .player
-            ? combat.meleeAttacker.feet : combat.combatActor(key: caster)?.feet
-        guard let feet else { return }
-        director.playSound(formID: sound, source: caster, at: feet)
     }
 }

@@ -48,13 +48,7 @@ extension MagicHeldMagicAdapter {
     }
 
     public func livingActors(near key: ReferenceKey, radius: Float) -> [ReferenceKey] {
-        guard let center = feet(of: key) else { return [] }
-        let player = [MeleeTarget(key: .player, feet: game.combat.meleeAttacker.feet)]
-        let others = game.actorWorld.combatActors().filter { !$0.isDead }
-            .map { MeleeTarget(key: $0.key, feet: $0.feet) }
-        return (player + others)
-            .filter { $0.key != key && simd_distance($0.feet, center) <= radius }
-            .map(\.key)
+        guides.livingActors(near: key, radius: radius)
     }
 
     public func changeRace(of key: ReferenceKey, to race: FormID) -> Bool {
@@ -148,17 +142,7 @@ extension MagicHeldMagicAdapter {
 
     /// The player's nearest tracked quest target, reached over the navmesh.
     public func guidePath(for caster: ReferenceKey) -> MagicGuidePath {
-        guard caster == .player, let start = feet(of: .player) else { return .noMarker }
-        let targets = game.mapWorld.questTargets.map(\.position)
-        guard let target = targets.min(by: { simd_distance($0, start) < simd_distance($1, start) })
-        else { return .noMarker }
-        let query = NavigationPathQuery(
-            start: start, target: target, capsuleRadius: PlayerCapsule.standard.radius
-        )
-        guard case let .path(path) = game.streamer.findPath(query) else {
-            return .noPath
-        }
-        return .path([start] + path.waypoints + [target])
+        guides.guidePath(for: caster)
     }
 
     @discardableResult
@@ -226,9 +210,7 @@ extension MagicHeldMagicAdapter {
     }
 
     private func feet(of key: ReferenceKey) -> SIMD3<Float>? {
-        guard key != .player else { return game.gameSession?.walkController.feetPosition }
-        return game.streamer.npcTransform(for: key)?.position
-            ?? game.scripts.bridge?.referenceState(for: key)?.transform.position
+        guides.feet(of: key)
     }
 
     /// A let-go actor lands at the height of the caster's ground: the player's feet.
@@ -245,5 +227,46 @@ extension MagicHeldMagicAdapter {
             guard let formID = game.streamer.referenceEntry(key: entry.key)?.formID else { return }
             byFormID[formID.rawValue] = entry.value
         }
+    }
+}
+
+extension MagicHeldMagicAdapter {
+    var guides: MagicGuideReadout {
+        MagicGuideReadout(game: game)
+    }
+}
+
+struct MagicGuideReadout {
+    let game: any MagicHeldMagicHost
+
+    /// The player's nearest tracked quest target, reached over the navmesh.
+    func guidePath(for caster: ReferenceKey) -> MagicGuidePath {
+        guard caster == .player, let start = feet(of: .player) else { return .noMarker }
+        let targets = game.mapWorld.questTargets.map(\.position)
+        guard let target = targets.min(by: { simd_distance($0, start) < simd_distance($1, start) })
+        else { return .noMarker }
+        let query = NavigationPathQuery(
+            start: start, target: target, capsuleRadius: PlayerCapsule.standard.radius
+        )
+        guard case let .path(path) = game.streamer.findPath(query) else {
+            return .noPath
+        }
+        return .path([start] + path.waypoints + [target])
+    }
+
+    func livingActors(near key: ReferenceKey, radius: Float) -> [ReferenceKey] {
+        guard let center = feet(of: key) else { return [] }
+        let player = [MeleeTarget(key: .player, feet: game.combat.meleeAttacker.feet)]
+        let others = game.actorWorld.combatActors().filter { !$0.isDead }
+            .map { MeleeTarget(key: $0.key, feet: $0.feet) }
+        return (player + others)
+            .filter { $0.key != key && simd_distance($0.feet, center) <= radius }
+            .map(\.key)
+    }
+
+    func feet(of key: ReferenceKey) -> SIMD3<Float>? {
+        guard key != .player else { return game.gameSession?.walkController.feetPosition }
+        return game.streamer.npcTransform(for: key)?.position
+            ?? game.scripts.bridge?.referenceState(for: key)?.transform.position
     }
 }
