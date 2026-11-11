@@ -103,9 +103,7 @@ extension EffectsBodyImpulsesAdapter {
 
     /// The living: a corpse lies in its ragdoll.
     public func impulseActors() -> [MeleeTarget] {
-        game.hazardWorld.hazardCandidates().filter { target in
-            target.key == .player || game.actorWorld.combatActor(key: target.key)?.isDead == false
-        }
+        splashesAndActors.impulseActors()
     }
 
     public func waterContacts(_ contacts: [WaterSample]) {
@@ -210,6 +208,21 @@ extension EffectsBodyImpulsesAdapter {
     }
 
     public func showSplash(_ splash: SplashEvent) {
+        splashesAndActors.showSplash(splash)
+    }
+}
+
+extension EffectsBodyImpulsesAdapter {
+    var splashesAndActors: EffectsSplashesAndActors {
+        EffectsSplashesAndActors(game: game, effects: effects)
+    }
+}
+
+struct EffectsSplashesAndActors {
+    let game: any EffectsBodyImpulsesHost
+    let effects: any EffectsPort
+
+    func showSplash(_ splash: SplashEvent) {
         effects.showModel(splash.model, at: .point(splash.position), cause: .impact)
         game.renderer?.addWaterRipple(
             at: splash.position, strength: splash.weight.rippleStrength
@@ -218,5 +231,12 @@ extension EffectsBodyImpulsesAdapter {
         game.audio.soundDirector?.playAnimationSound(
             editorID: sound, source: splash.source ?? .player, at: splash.position
         )
+    }
+
+    /// The living: a corpse lies in its ragdoll.
+    func impulseActors() -> [MeleeTarget] {
+        game.hazardWorld.hazardCandidates().filter { target in
+            target.key == .player || game.actorWorld.combatActor(key: target.key)?.isDead == false
+        }
     }
 }

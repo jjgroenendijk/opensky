@@ -144,19 +144,7 @@ extension CombatActorFactsAdapter {
 
     /// ZNAM after template inheritance, read through the load-order CSTY store.
     public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
-        guard
-            case let .actor(base)? = game.actorWorld.actorValueHolder(for: key)?.subject,
-            let resolver = game.combatRecords?.actorValueBaselines?
-                .resolver,
-            let link = attempt({ try resolver.templates
-                    .rolling(game.worldState.leveledRoll(
-                        of: key, base: base, with: resolver.templates.leveling
-                    ))
-                    .resolveCombatStyle(base: base).value }),
-            let style = game.combatRecords?.presentationRecords?
-                .combatStyles.resolve(link, fromPlugin: resolver.pluginName)
-        else { return nil }
-        return CombatStyleTuning(style: style.record)
+        styleReader.combatStyle(of: key)
     }
 
     public func health(of key: ReferenceKey) -> (current: Float, maximum: Float)? {
@@ -211,5 +199,32 @@ extension CombatActorFactsAdapter {
 
     public func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction? {
         game.factions.reaction(of: observer, toward: target)
+    }
+}
+
+extension CombatActorFactsAdapter {
+    var styleReader: CombatStyleReader {
+        CombatStyleReader(game: game)
+    }
+}
+
+struct CombatStyleReader {
+    let game: any CombatActorFactsHost
+
+    /// ZNAM after template inheritance, read through the load-order CSTY store.
+    func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
+        guard
+            case let .actor(base)? = game.actorWorld.actorValueHolder(for: key)?.subject,
+            let resolver = game.combatRecords?.actorValueBaselines?
+                .resolver,
+            let link = attempt({ try resolver.templates
+                    .rolling(game.worldState.leveledRoll(
+                        of: key, base: base, with: resolver.templates.leveling
+                    ))
+                    .resolveCombatStyle(base: base).value }),
+            let style = game.combatRecords?.presentationRecords?
+                .combatStyles.resolve(link, fromPlugin: resolver.pluginName)
+        else { return nil }
+        return CombatStyleTuning(style: style.record)
     }
 }
