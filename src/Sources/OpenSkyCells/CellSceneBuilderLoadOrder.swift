@@ -8,10 +8,6 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-nonisolated struct CellRecordIndex {
-    let owner: CellSceneBuilder
-}
-
 nonisolated extension CellRecordIndex {
     /// The cell as the load order has it: the winning CELL values, and the first
     /// plugin's children group when that plugin has the cell.

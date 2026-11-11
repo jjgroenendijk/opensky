@@ -22,10 +22,6 @@ nonisolated public struct CollectedActor: Sendable {
     var spawnKey: ReferenceKey?
 }
 
-nonisolated struct CellReferenceBuilder {
-    let owner: CellSceneBuilder
-}
-
 nonisolated extension CellReferenceBuilder {
     /// Live REFRs of every plugin from the persistent and temporary children
     /// groups, tagged with their group. Other record types are not static

@@ -51,10 +51,6 @@ nonisolated private struct TerrainItemBuild {
     var layerSkipCount = 0
 }
 
-nonisolated public struct CellTerrainBuilder {
-    let owner: CellSceneBuilder
-}
-
 nonisolated extension CellTerrainBuilder {
     /// From LAND, else a flat plane at the WRLD DNAM height; nil if neither
     /// uploads. The south-west corner sits at (gridX*4096, gridY*4096)

@@ -21,10 +21,6 @@ nonisolated public struct DoorTransition: Sendable {
     public var worldspaceEditorID: String?
 }
 
-nonisolated public struct CellInteriorBuilder {
-    let owner: CellSceneBuilder
-}
-
 nonisolated extension CellInteriorBuilder {
     /// Lightweight door probe over WRLD persistent refs. Their storage is the
     /// persistent CELL; physical REFR position supplies streamed-cell ownership.

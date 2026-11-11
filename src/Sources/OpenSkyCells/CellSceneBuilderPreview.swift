@@ -34,10 +34,6 @@ nonisolated public struct PreviewSubject {
     }
 }
 
-nonisolated public struct CellPreviewBuilder {
-    let owner: CellSceneBuilder
-}
-
 nonisolated extension CellPreviewBuilder {
     /// The FormID the preview gives its one placed copy; outside every plugin's range.
     public static let previewReference = FormID(0xFF0F_FFF0)
