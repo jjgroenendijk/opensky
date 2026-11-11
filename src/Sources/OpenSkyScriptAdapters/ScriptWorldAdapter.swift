@@ -47,84 +47,69 @@ public protocol ScriptWorldHost: AnyObject, SendableMetatype {
     var mountWorld: any MountWorldPort { get }
 }
 
+/// Every host a `ScriptWorldAdapter` part reads, all one object.
+public typealias ScriptWorldHosts = ScriptActorBindingsHost & ScriptFeatureBindingsHost &
+    ScriptNodeBindingsHost &
+    ScriptPerkBindingsHost & ScriptPhysicsBindingsHost & ScriptPlayerBindingsHost &
+    ScriptReferenceBindingsHost & ScriptSessionBindingsHost & ScriptSkyBindingsHost &
+    ScriptSoundBindingsHost & ScriptWorldHost
+
 public final class ScriptWorldAdapter {
     public let game: any ScriptWorldHost
     public let state = ScriptPartState()
 
-    public let actorBindingsHost: any ScriptActorBindingsHost
-    public let perkBindingsHost: any ScriptPerkBindingsHost
-    public let sessionBindingsHost: any ScriptSessionBindingsHost
-    public let playerBindingsHost: any ScriptPlayerBindingsHost
-    public let referenceBindingsHost: any ScriptReferenceBindingsHost
-    public let soundBindingsHost: any ScriptSoundBindingsHost
-    public let physicsBindingsHost: any ScriptPhysicsBindingsHost
-    public let nodeBindingsHost: any ScriptNodeBindingsHost
-    public let skyBindingsHost: any ScriptSkyBindingsHost
-    public let featureBindingsHost: any ScriptFeatureBindingsHost
+    let hosts: any ScriptWorldHosts
 
     public var actorBindings: ScriptActorBindingsAdapter {
         ScriptActorBindingsAdapter(
-            game: actorBindingsHost, skyBindings: skyBindings, physicsBindings: physicsBindings
+            game: hosts, skyBindings: skyBindings, physicsBindings: physicsBindings
         )
     }
 
     public var perkBindings: ScriptPerkBindingsAdapter {
-        ScriptPerkBindingsAdapter(game: perkBindingsHost)
+        ScriptPerkBindingsAdapter(game: hosts)
     }
 
     public var sessionBindings: ScriptSessionBindingsAdapter {
         ScriptSessionBindingsAdapter(
-            game: sessionBindingsHost, state: state, playerBindings: playerBindings,
+            game: hosts, state: state, playerBindings: playerBindings,
             referenceBindings: referenceBindings, soundBindings: soundBindings,
             nodeBindings: nodeBindings
         )
     }
 
     var playerBindings: ScriptPlayerBindingsAdapter {
-        ScriptPlayerBindingsAdapter(game: playerBindingsHost, physicsBindings: physicsBindings)
+        ScriptPlayerBindingsAdapter(game: hosts, physicsBindings: physicsBindings)
     }
 
     var referenceBindings: ScriptReferenceBindingsAdapter {
-        ScriptReferenceBindingsAdapter(game: referenceBindingsHost, nodeBindings: nodeBindings)
+        ScriptReferenceBindingsAdapter(game: hosts, nodeBindings: nodeBindings)
     }
 
     private(set) lazy var soundBindings = ScriptSoundBindingsAdapter(
-        game: soundBindingsHost, state: state
+        game: hosts, state: state
     )
     var physicsBindings: ScriptPhysicsBindingsAdapter {
         ScriptPhysicsBindingsAdapter(
-            game: physicsBindingsHost, state: state, nodeBindings: nodeBindings
+            game: hosts, state: state, nodeBindings: nodeBindings
         )
     }
 
     public var nodeBindings: ScriptNodeBindingsAdapter {
-        ScriptNodeBindingsAdapter(game: nodeBindingsHost, state: state)
+        ScriptNodeBindingsAdapter(game: hosts, state: state)
     }
 
     public private(set) lazy var skyBindings = ScriptSkyBindingsAdapter(
-        game: skyBindingsHost, state: state
+        game: hosts, state: state
     )
     public var featureBindings: ScriptFeatureBindingsAdapter {
         ScriptFeatureBindingsAdapter(
-            game: featureBindingsHost, skyBindings: skyBindings, soundBindings: soundBindings
+            game: hosts, skyBindings: skyBindings, soundBindings: soundBindings
         )
     }
 
-    public init(game: some ScriptWorldHost & ScriptActorBindingsHost & ScriptPerkBindingsHost &
-        ScriptSessionBindingsHost & ScriptPlayerBindingsHost & ScriptReferenceBindingsHost &
-        ScriptSoundBindingsHost & ScriptPhysicsBindingsHost & ScriptNodeBindingsHost &
-        ScriptSkyBindingsHost & ScriptFeatureBindingsHost)
-    {
-        actorBindingsHost = game
-        perkBindingsHost = game
-        sessionBindingsHost = game
-        playerBindingsHost = game
-        referenceBindingsHost = game
-        soundBindingsHost = game
-        physicsBindingsHost = game
-        nodeBindingsHost = game
-        skyBindingsHost = game
-        featureBindingsHost = game
+    public init(game: some ScriptWorldHosts) {
+        hosts = game
         self.game = game
     }
 
@@ -164,28 +149,12 @@ public final class ScriptWorldAdapter {
 
     /// The natives that reach the player's mount, sneak state, and HUD.
     public func fillPlayerNatives(bridge: PapyrusWorldStateBridge) {
-        bridge.sessionNatives.leveledEdits = { [weak game] in
-            game?.worldRecords?.leveledScriptEdits
-        }
-        bridge.playerNatives
-            .playersLastMount = { [weak game] in game?.vehicleWorld.vehicles.playersLastMount }
-        bridge.playerNatives.dismount = { [weak game] actor in
-            game?.mountWorld.dismount(actor) ?? false
-        }
-        bridge.playerNatives
-            .togglePlayerSneaking = { [weak game] in game?.player.isSneaking.toggle() }
-        bridge.playerNatives
-            .toggleMenus = { [weak game] in game?.hud.update { $0.layerEnabled.toggle() } }
+        playerNatives.fillPlayerNatives(bridge: bridge)
     }
 
     /// An `AttachAshPile` pile opens its actor's inventory, as activating the body would.
     func searchAshPileOwner(of event: InteractionEvent, bridge: PapyrusWorldStateBridge) {
-        guard
-            let entry = game.streamer.referenceEntry(formID: event.target.interaction.reference),
-            let actor = bridge.ashPileOwner(of: entry.key),
-            game.ragdoll.searchCorpse(actor)
-        else { return }
-        game.containerMenu.open()
+        playerNatives.searchAshPileOwner(of: event, bridge: bridge)
     }
 
     /// Decoded once per base form, because each equip asks again.
@@ -206,23 +175,74 @@ public final class ScriptWorldAdapter {
 
 extension ScriptWorldAdapter: ScriptWorld {
     public var crosshairReference: FormID? {
-        game.hud.interactionTarget?.interaction.reference
+        playerNatives.crosshairReference
     }
 
     public func referenceKey(formID: FormID) -> ReferenceKey? {
-        game.streamer.referenceEntry(formID: formID)?.key
+        playerNatives.referenceKey(formID: formID)
     }
 
     public var gameClock: GameClock? {
-        game.gameSession?.gameClock
+        playerNatives.gameClock
     }
 
     public var playerLocation: ResolvedFormID?? {
+        playerNatives.playerLocation
+    }
+}
+
+/// The player natives and the crosshair, clock, and location reads of `ScriptWorldAdapter`.
+struct ScriptPlayerNatives {
+    let game: any ScriptWorldHost
+
+    func fillPlayerNatives(bridge: PapyrusWorldStateBridge) {
+        bridge.sessionNatives.leveledEdits = { [weak game] in
+            game?.worldRecords?.leveledScriptEdits
+        }
+        bridge.playerNatives
+            .playersLastMount = { [weak game] in game?.vehicleWorld.vehicles.playersLastMount }
+        bridge.playerNatives.dismount = { [weak game] actor in
+            game?.mountWorld.dismount(actor) ?? false
+        }
+        bridge.playerNatives
+            .togglePlayerSneaking = { [weak game] in game?.player.isSneaking.toggle() }
+        bridge.playerNatives
+            .toggleMenus = { [weak game] in game?.hud.update { $0.layerEnabled.toggle() } }
+    }
+
+    func searchAshPileOwner(of event: InteractionEvent, bridge: PapyrusWorldStateBridge) {
+        guard
+            let entry = game.streamer.referenceEntry(formID: event.target.interaction.reference),
+            let actor = bridge.ashPileOwner(of: entry.key),
+            game.ragdoll.searchCorpse(actor)
+        else { return }
+        game.containerMenu.open()
+    }
+
+    var crosshairReference: FormID? {
+        game.hud.interactionTarget?.interaction.reference
+    }
+
+    func referenceKey(formID: FormID) -> ReferenceKey? {
+        game.streamer.referenceEntry(formID: formID)?.key
+    }
+
+    var gameClock: GameClock? {
+        game.gameSession?.gameClock
+    }
+
+    var playerLocation: ResolvedFormID?? {
         let streamer = game.streamer
         guard
             let current = streamer.currentCellLocation,
             let scene = streamer.residentScene(at: current)
         else { return nil }
         return .some(game.runtimeStateWorld.location(of: scene.locationKey))
+    }
+}
+
+extension ScriptWorldAdapter {
+    var playerNatives: ScriptPlayerNatives {
+        ScriptPlayerNatives(game: game)
     }
 }

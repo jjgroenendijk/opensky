@@ -31,10 +31,7 @@ import simd
 extension ScriptWorldAdapter {
     /// Without a stage, as in a test, it registers nothing.
     public convenience init(
-        game: some ScriptWorldHost & ScriptActorBindingsHost & ScriptPerkBindingsHost &
-            ScriptSessionBindingsHost & ScriptPlayerBindingsHost & ScriptReferenceBindingsHost &
-            ScriptSoundBindingsHost & ScriptPhysicsBindingsHost & ScriptNodeBindingsHost &
-            ScriptSkyBindingsHost & ScriptFeatureBindingsHost,
+        game: some ScriptWorldHosts,
         stage: SessionStage?
     ) {
         self.init(game: game)
