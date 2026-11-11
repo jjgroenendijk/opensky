@@ -1235,7 +1235,8 @@ targets += composition(
     tests: [
         "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActorsInterface",
         "OpenSkyCombatInterface", "OpenSkyConditions", "OpenSkyFormatsESM", "OpenSkyGameData",
-        "OpenSkyPlayer", "OpenSkyRendering", "OpenSkySessionInterface", "OpenSkySessionTesting",
+        "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyRendering", "OpenSkySessionInterface",
+        "OpenSkySessionTesting",
         "OpenSkyWorldInterface", "OpenSkyWorldState", "OpenSkyWorldTesting"
     ]
 )

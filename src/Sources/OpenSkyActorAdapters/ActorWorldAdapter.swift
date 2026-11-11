@@ -46,16 +46,14 @@ public protocol ActorWorldHost: AnyObject, SendableMetatype {
 /// Answers `ActorValueWorld` and the resident-actor reads from the streamer.
 public final class ActorWorldAdapter {
     public let game: any ActorWorldHost
-    /// NPC_ base raw FormID -> resolved FULL, or nil when none resolves.
-    var baseNames: [LeveledActorRollKey: String?] = [:]
-    /// Each reference's name, kept until a leveled roll is written or the strings load.
-    var referenceNames: (key: ReferenceNamesKey, names: [ReferenceKey: String?])?
+    let names: ActorDisplayNames
     /// `combatActors()` and what it was built from. A death, a move, or a residency
     /// change advances one of the revisions, so the next read builds it again.
     var actorList: (key: ActorListKey, actors: [CombatActorObservation])?
 
     public init(game: any ActorWorldHost) {
         self.game = game
+        names = ActorDisplayNames(game: game)
     }
 
     /// Drowning costs health once the breath runs out; the `Water Breathing` actor value
@@ -145,37 +143,7 @@ public final class ActorWorldAdapter {
     /// The FULL name of the actor `key` of `base` after template inheritance, its
     /// leveled template picked by its own roll, as the crosshair shows it.
     public func displayName(of key: ReferenceKey, base: FormID) -> String? {
-        let namesKey = ReferenceNamesKey(
-            rolls: game.worldState.revision(of: [.leveledRoll]),
-            namesResolve: game.journal.strings != nil
-        )
-        if referenceNames?.key != namesKey {
-            referenceNames = (namesKey, [:])
-        }
-        if let cached = referenceNames?.names[key] {
-            return cached
-        }
-        let name = resolveDisplayName(of: key, base: base)
-        referenceNames?.names[key] = .some(name)
-        return name
-    }
-
-    private func resolveDisplayName(of key: ReferenceKey, base: FormID) -> String? {
-        guard
-            let templates = game.actorRecords?
-                .actorValueBaselines?.resolver?.templates,
-            let strings = game.journal.strings
-        else { return nil }
-        let roll = game.worldState.leveledRoll(of: key, base: base, with: templates.leveling)
-        let rollKey = LeveledActorRollKey(base: base, roll: roll)
-        if let cached = baseNames[rollKey] {
-            return cached
-        }
-        let name = attempt { try templates.rolling(roll).resolveName(base: base) }
-            .flatMap { strings.resolve($0.value) }
-            .flatMap { $0.isEmpty ? nil : $0 }
-        baseNames[rollKey] = .some(name)
-        return name
+        names.displayName(of: key, base: base)
     }
 
     func publishHUDMeters(gameSession: GameSession?) {
@@ -234,31 +202,19 @@ extension ActorWorldAdapter: ActorValueWorld {
     }
 
     public func isCasting(_ key: ReferenceKey) -> Bool {
-        game.magic.caster?.isCasting(key) == true
+        motion.isCasting(key)
     }
 
     public func isInCombat(_ key: ReferenceKey) -> Bool {
-        guard let loop = game.combat.loop else { return false }
-        return key == .player ? loop.isPlayerInCombat : loop.activity(of: key) != .notFighting
+        motion.isInCombat(key)
     }
 
-    /// Standing still with the sprint key held costs nothing. A rider's horse sprints.
     public func playerSprintLoad() -> Float? {
-        guard
-            !game.mounts.isActive,
-            let status = game.gameSession?.locomotion.status,
-            status.gait == .sprint,
-            simd_length(status.horizontalVelocity) > 1
-        else { return nil }
-        guard let equipment = game.inventory.equipment, let items = game.combat.items
-        else { return 0 }
-        return equipment.equipped(on: .player).reduce(Float(0)) {
-            $0 + (items.definition($1)?.weight ?? 0)
-        }
+        motion.playerSprintLoad()
     }
 
     public func setPlayerSprintAllowed(_ allowed: Bool) {
-        game.gameSession?.locomotion.isSprintAllowed = allowed
+        motion.setPlayerSprintAllowed(allowed)
     }
 
     public func riddenHorse() -> ActorValueHolder? {
@@ -267,8 +223,7 @@ extension ActorWorldAdapter: ActorValueWorld {
     }
 
     public func isRiddenHorseSprinting() -> Bool {
-        guard let drive = game.mounts.drive, drive.kind == .horse else { return false }
-        return drive.motion.isSprinting && drive.motion.isMoving
+        motion.isRiddenHorseSprinting()
     }
 
     public func setRiddenHorseSprintAllowed(_ allowed: Bool) {
@@ -280,12 +235,7 @@ extension ActorWorldAdapter: ActorValueWorld {
     }
 
     public func setPlayerOverencumbered(_ overencumbered: Bool) {
-        game.gameSession?.locomotion.isRunAllowed = !overencumbered
-        guard overencumbered else { return }
-        game.hud.showNotification(
-            game.mapWorld.text(game.mapWorld.records?.menuTexts["sOverEncumbered"])
-                ?? "You are carrying too much to be able to run."
-        )
+        motion.setPlayerOverencumbered(overencumbered)
     }
 }
 
@@ -304,3 +254,103 @@ struct ActorListKey: Hashable {
 }
 
 extension ActorWorldAdapter: ActorWorldPort {}
+
+/// The display-name caches of `ActorWorldAdapter`, one per session.
+final class ActorDisplayNames {
+    let game: any ActorWorldHost
+    /// NPC_ base raw FormID -> resolved FULL, or nil when none resolves.
+    var baseNames: [LeveledActorRollKey: String?] = [:]
+    /// Each reference's name, kept until a leveled roll is written or the strings load.
+    var referenceNames: (key: ReferenceNamesKey, names: [ReferenceKey: String?])?
+
+    init(game: any ActorWorldHost) {
+        self.game = game
+    }
+
+    func displayName(of key: ReferenceKey, base: FormID) -> String? {
+        let namesKey = ReferenceNamesKey(
+            rolls: game.worldState.revision(of: [.leveledRoll]),
+            namesResolve: game.journal.strings != nil
+        )
+        if referenceNames?.key != namesKey {
+            referenceNames = (namesKey, [:])
+        }
+        if let cached = referenceNames?.names[key] {
+            return cached
+        }
+        let name = resolveDisplayName(of: key, base: base)
+        referenceNames?.names[key] = .some(name)
+        return name
+    }
+
+    func resolveDisplayName(of key: ReferenceKey, base: FormID) -> String? {
+        guard
+            let templates = game.actorRecords?
+                .actorValueBaselines?.resolver?.templates,
+            let strings = game.journal.strings
+        else { return nil }
+        let roll = game.worldState.leveledRoll(of: key, base: base, with: templates.leveling)
+        let rollKey = LeveledActorRollKey(base: base, roll: roll)
+        if let cached = baseNames[rollKey] {
+            return cached
+        }
+        let name = attempt { try templates.rolling(roll).resolveName(base: base) }
+            .flatMap { strings.resolve($0.value) }
+            .flatMap { $0.isEmpty ? nil : $0 }
+        baseNames[rollKey] = .some(name)
+        return name
+    }
+}
+
+/// The player's combat, casting, sprint, and load reads of `ActorWorldAdapter`.
+struct ActorPlayerMotion {
+    let game: any ActorWorldHost
+
+    func isCasting(_ key: ReferenceKey) -> Bool {
+        game.magic.caster?.isCasting(key) == true
+    }
+
+    func isInCombat(_ key: ReferenceKey) -> Bool {
+        guard let loop = game.combat.loop else { return false }
+        return key == .player ? loop.isPlayerInCombat : loop.activity(of: key) != .notFighting
+    }
+
+    /// Standing still with the sprint key held costs nothing. A rider's horse sprints.
+    func playerSprintLoad() -> Float? {
+        guard
+            !game.mounts.isActive,
+            let status = game.gameSession?.locomotion.status,
+            status.gait == .sprint,
+            simd_length(status.horizontalVelocity) > 1
+        else { return nil }
+        guard let equipment = game.inventory.equipment, let items = game.combat.items
+        else { return 0 }
+        return equipment.equipped(on: .player).reduce(Float(0)) {
+            $0 + (items.definition($1)?.weight ?? 0)
+        }
+    }
+
+    func setPlayerSprintAllowed(_ allowed: Bool) {
+        game.gameSession?.locomotion.isSprintAllowed = allowed
+    }
+
+    func isRiddenHorseSprinting() -> Bool {
+        guard let drive = game.mounts.drive, drive.kind == .horse else { return false }
+        return drive.motion.isSprinting && drive.motion.isMoving
+    }
+
+    func setPlayerOverencumbered(_ overencumbered: Bool) {
+        game.gameSession?.locomotion.isRunAllowed = !overencumbered
+        guard overencumbered else { return }
+        game.hud.showNotification(
+            game.mapWorld.text(game.mapWorld.records?.menuTexts["sOverEncumbered"])
+                ?? "You are carrying too much to be able to run."
+        )
+    }
+}
+
+extension ActorWorldAdapter {
+    var motion: ActorPlayerMotion {
+        ActorPlayerMotion(game: game)
+    }
+}
