@@ -40,43 +40,38 @@ public protocol RagdollWorldHost: AnyObject, SendableMetatype {
 }
 
 /// Answers `RagdollSessionWorld` from the session systems `game` owns.
+/// Every host a `RagdollWorldAdapter` part reads, all one object.
+public typealias RagdollWorldHosts = RagdollDeathsHost &
+    RagdollPlayerFallHost & RagdollPoseReadsHost & RagdollRecoveryHost & RagdollRemainsHost &
+    RagdollWorldHost
+
 public final class RagdollWorldAdapter {
     public let game: any RagdollWorldHost
 
-    public let recoveryHost: any RagdollRecoveryHost
-    public let remainsHost: any RagdollRemainsHost
-    public let playerFallHost: any RagdollPlayerFallHost
-    public let poseReadsHost: any RagdollPoseReadsHost
-    public let deathsHost: any RagdollDeathsHost
+    let hosts: any RagdollWorldHosts
 
     public var recovery: RagdollRecoveryAdapter {
-        RagdollRecoveryAdapter(game: recoveryHost, poseReads: poseReads)
+        RagdollRecoveryAdapter(game: hosts, poseReads: poseReads)
     }
 
     public var remains: RagdollRemainsAdapter {
-        RagdollRemainsAdapter(game: remainsHost, poseReads: poseReads)
+        RagdollRemainsAdapter(game: hosts, poseReads: poseReads)
     }
 
     var playerFall: RagdollPlayerFallAdapter {
-        RagdollPlayerFallAdapter(game: playerFallHost, recovery: recovery)
+        RagdollPlayerFallAdapter(game: hosts, recovery: recovery)
     }
 
     public var poseReads: RagdollPoseReadsAdapter {
-        RagdollPoseReadsAdapter(game: poseReadsHost)
+        RagdollPoseReadsAdapter(game: hosts)
     }
 
     public var deaths: RagdollDeathsAdapter {
-        RagdollDeathsAdapter(game: deathsHost, poseReads: poseReads)
+        RagdollDeathsAdapter(game: hosts, poseReads: poseReads)
     }
 
-    public init(game: some RagdollWorldHost & RagdollRecoveryHost & RagdollRemainsHost &
-        RagdollPlayerFallHost & RagdollPoseReadsHost & RagdollDeathsHost)
-    {
-        recoveryHost = game
-        remainsHost = game
-        playerFallHost = game
-        poseReadsHost = game
-        deathsHost = game
+    public init(game: some RagdollWorldHosts) {
+        hosts = game
         self.game = game
     }
 

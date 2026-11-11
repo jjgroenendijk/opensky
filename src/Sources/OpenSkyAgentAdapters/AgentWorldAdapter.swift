@@ -62,74 +62,70 @@ public final class AgentWorldAdapter {
     private static let replyDrainSeconds = 0.2
 
     public init(
-        game: some AgentWorldHost & AgentRenderHost & AgentActorsHost & AgentMotionHost &
-            AgentBehaviourHost & AgentObjectsHost & AgentMenuReadoutHost & AgentScreensHost &
-            AgentEventsHost & AgentPlayerReadoutHost & AgentFrameReadoutHost &
-            AgentActorReadoutHost &
-            AgentItemsHost & AgentViewHost & AgentInputHost & AgentCaptureHost,
+        game: some AgentWorldHosts,
         now: @escaping () -> Date
     ) {
         hub = AgentHub(game: game, now: now)
     }
 
     public var render: AgentRenderAdapter {
-        AgentRenderAdapter(hub: hub, game: hub.renderHost)
+        AgentRenderAdapter(hub: hub, game: hub.hosts)
     }
 
     var actors: AgentActorsAdapter {
-        AgentActorsAdapter(hub: hub, game: hub.actorsHost)
+        AgentActorsAdapter(hub: hub, game: hub.hosts)
     }
 
     var motion: AgentMotionAdapter {
-        AgentMotionAdapter(hub: hub, game: hub.motionHost)
+        AgentMotionAdapter(hub: hub, game: hub.hosts)
     }
 
     public var behaviour: AgentBehaviourAdapter {
-        AgentBehaviourAdapter(hub: hub, game: hub.behaviourHost)
+        AgentBehaviourAdapter(hub: hub, game: hub.hosts)
     }
 
     public var objects: AgentObjectsAdapter {
-        AgentObjectsAdapter(hub: hub, game: hub.objectsHost)
+        AgentObjectsAdapter(hub: hub, game: hub.hosts)
     }
 
     public var menuReadout: AgentMenuReadoutAdapter {
-        AgentMenuReadoutAdapter(hub: hub, game: hub.menuReadoutHost)
+        AgentMenuReadoutAdapter(hub: hub, game: hub.hosts)
     }
 
     var screens: AgentScreensAdapter {
-        AgentScreensAdapter(hub: hub, game: hub.screensHost)
+        AgentScreensAdapter(hub: hub, game: hub.hosts)
     }
 
     public var events: AgentEventsAdapter {
-        AgentEventsAdapter(hub: hub, game: hub.eventsHost)
+        AgentEventsAdapter(hub: hub, game: hub.hosts)
     }
 
     public var playerReadout: AgentPlayerReadoutAdapter {
-        AgentPlayerReadoutAdapter(hub: hub, game: hub.playerReadoutHost)
+        AgentPlayerReadoutAdapter(hub: hub, game: hub.hosts)
     }
 
     public var frameReadout: AgentFrameReadoutAdapter {
-        AgentFrameReadoutAdapter(hub: hub, game: hub.frameReadoutHost)
+        AgentFrameReadoutAdapter(hub: hub, game: hub.hosts)
     }
 
     public var actorReadout: AgentActorReadoutAdapter {
-        AgentActorReadoutAdapter(hub: hub, game: hub.actorReadoutHost)
+        AgentActorReadoutAdapter(hub: hub, game: hub.hosts)
     }
 
     public var items: AgentItemsAdapter {
-        AgentItemsAdapter(hub: hub, game: hub.itemsHost)
+        AgentItemsAdapter(hub: hub, game: hub.hosts)
     }
 
     public var view: AgentViewAdapter {
-        AgentViewAdapter(hub: hub, game: hub.viewHost)
+        AgentViewAdapter(hub: hub, game: hub.hosts)
     }
 
     public var input: AgentInputAdapter {
-        AgentInputAdapter(hub: hub, game: hub.inputHost)
+        AgentInputAdapter(hub: hub, game: hub.hosts)
     }
 
     public var capture: AgentCaptureAdapter {
-        AgentCaptureAdapter(hub: hub, game: hub.captureHost)
+        AgentCaptureAdapter(hub: hub, game: hub.hosts)
     }
 
     public var dataRoot: GameDataRoot? {

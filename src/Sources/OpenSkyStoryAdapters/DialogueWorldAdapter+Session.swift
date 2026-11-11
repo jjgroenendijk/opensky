@@ -31,8 +31,7 @@ import simd
 extension DialogueWorldAdapter {
     /// Without a stage, as in a test, it registers nothing.
     public convenience init(
-        game: some DialogueWorldHost & DialogueCameraFocusHost & DialogueSpeakersHost &
-            DialogueOutcomesHost,
+        game: some DialogueWorldHosts,
         stage: SessionStage?
     ) {
         self.init(game: game)

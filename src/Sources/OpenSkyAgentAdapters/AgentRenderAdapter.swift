@@ -411,6 +411,6 @@ extension AgentRenderAdapter {
 
 extension AgentRenderAdapter {
     private var screens: AgentScreensAdapter {
-        AgentScreensAdapter(hub: hub, game: hub.screensHost)
+        AgentScreensAdapter(hub: hub, game: hub.hosts)
     }
 }

@@ -25,7 +25,7 @@ import simd
 extension AudioWorldAdapter {
     /// Without a stage, as in a test, it registers nothing.
     public convenience init(
-        game: some AudioWorldHost & AudioListenerHost & AudioMixHost,
+        game: some AudioWorldHosts,
         stage: SessionStage?
     ) {
         self.init(game: game)

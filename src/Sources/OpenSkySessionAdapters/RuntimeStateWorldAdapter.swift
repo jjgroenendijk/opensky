@@ -50,31 +50,31 @@ public protocol RuntimeStateWorldHost: AnyObject, SendableMetatype {
     var worldState: any WorldStateStorePort { get }
 }
 
+/// Every host a `RuntimeStateWorldAdapter` part reads, all one object.
+public typealias RuntimeStateWorldHosts =
+    RuntimeStateConditionReadsHost & RuntimeStateInventoryFactsHost &
+    RuntimeStateLiveSeamsHost & RuntimeStateReferenceMotionHost & RuntimeStateSaveContentsHost &
+    RuntimeStateSessionClockHost & RuntimeStateSessionLoadHost & RuntimeStateWorldHost
+
 public final class RuntimeStateWorldAdapter {
     public let game: any RuntimeStateWorldHost
     let state = RuntimeStatePartState()
     public let now: () -> Date
 
-    public let sessionClockHost: any RuntimeStateSessionClockHost
-    public let conditionReadsHost: any RuntimeStateConditionReadsHost
-    public let saveContentsHost: any RuntimeStateSaveContentsHost
-    public let sessionLoadHost: any RuntimeStateSessionLoadHost
-    public let liveSeamsHost: any RuntimeStateLiveSeamsHost
-    public let referenceMotionHost: any RuntimeStateReferenceMotionHost
-    public let inventoryFactsHost: any RuntimeStateInventoryFactsHost
+    let hosts: any RuntimeStateWorldHosts
 
     public var core: RuntimeStateCoreAdapter {
         RuntimeStateCoreAdapter(game: game, state: state, inventoryFacts: inventoryFacts)
     }
 
     public var sessionClock: RuntimeStateSessionClockAdapter {
-        RuntimeStateSessionClockAdapter(game: sessionClockHost
+        RuntimeStateSessionClockAdapter(game: hosts
         )
     }
 
     public var conditionReads: RuntimeStateConditionReadsAdapter {
         RuntimeStateConditionReadsAdapter(
-            game: conditionReadsHost,
+            game: hosts,
             core: core,
             liveSeams: liveSeams
         )
@@ -82,7 +82,7 @@ public final class RuntimeStateWorldAdapter {
 
     public var saveContents: RuntimeStateSaveContentsAdapter {
         RuntimeStateSaveContentsAdapter(
-            game: saveContentsHost,
+            game: hosts,
             core: core,
             sessionClock: sessionClock,
             now: now
@@ -91,7 +91,7 @@ public final class RuntimeStateWorldAdapter {
 
     public var sessionLoad: RuntimeStateSessionLoadAdapter {
         RuntimeStateSessionLoadAdapter(
-            game: sessionLoadHost,
+            game: hosts,
             core: core,
             saveContents: saveContents
         )
@@ -99,36 +99,26 @@ public final class RuntimeStateWorldAdapter {
 
     public var liveSeams: RuntimeStateLiveSeamsAdapter {
         RuntimeStateLiveSeamsAdapter(
-            game: liveSeamsHost,
+            game: hosts,
             inventoryFacts: inventoryFacts,
             referenceMotion: referenceMotion
         )
     }
 
     public var referenceMotion: RuntimeStateReferenceMotionAdapter {
-        RuntimeStateReferenceMotionAdapter(game: referenceMotionHost, state: state)
+        RuntimeStateReferenceMotionAdapter(game: hosts, state: state)
     }
 
     public var inventoryFacts: RuntimeStateInventoryFactsAdapter {
-        RuntimeStateInventoryFactsAdapter(game: inventoryFactsHost, state: state)
+        RuntimeStateInventoryFactsAdapter(game: hosts, state: state)
     }
 
     public init(
-        game: some RuntimeStateWorldHost & RuntimeStateSessionClockHost &
-            RuntimeStateConditionReadsHost & RuntimeStateSaveContentsHost &
-            RuntimeStateSessionLoadHost &
-            RuntimeStateLiveSeamsHost & RuntimeStateReferenceMotionHost &
-            RuntimeStateInventoryFactsHost,
+        game: some RuntimeStateWorldHosts,
         now: @escaping () -> Date
     ) {
         self.now = now
-        sessionClockHost = game
-        conditionReadsHost = game
-        saveContentsHost = game
-        sessionLoadHost = game
-        liveSeamsHost = game
-        referenceMotionHost = game
-        inventoryFactsHost = game
+        hosts = game
         self.game = game
     }
 }

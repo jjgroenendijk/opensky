@@ -28,8 +28,7 @@ import simd
 extension EffectsWorldAdapter {
     /// Without a stage, as in a test, it registers nothing.
     public convenience init(
-        game: some EffectsWorldHost & EffectsBodyImpulsesHost & EffectsTrapControlHost &
-            EffectsBlastsHost & EffectsEffectPlacementHost & EffectsLocatorHost,
+        game: some EffectsWorldHosts,
         stage: SessionStage?,
         now: @escaping () -> Date
     ) {

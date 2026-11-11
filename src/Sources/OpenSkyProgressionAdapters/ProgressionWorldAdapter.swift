@@ -33,27 +33,27 @@ public protocol ProgressionWorldHost: AnyObject, SendableMetatype {
 }
 
 /// Answers `PerkWorld` and `ProgressionWorld` from the session systems `game` owns.
+/// Every host a `ProgressionWorldAdapter` part reads, all one object.
+public typealias ProgressionWorldHosts =
+    ProgressionEffectsHost & ProgressionTrainingHost & ProgressionWorldHost
+
 public final class ProgressionWorldAdapter {
     public let game: any ProgressionWorldHost
 
-    public let trainingHost: any ProgressionTrainingHost
-    public let effectsHost: any ProgressionEffectsHost
+    let hosts: any ProgressionWorldHosts
 
     public var training: ProgressionTrainingAdapter {
-        ProgressionTrainingAdapter(game: trainingHost
+        ProgressionTrainingAdapter(game: hosts
         )
     }
 
     public var effects: ProgressionEffectsAdapter {
-        ProgressionEffectsAdapter(game: effectsHost
+        ProgressionEffectsAdapter(game: hosts
         )
     }
 
-    public init(game: some ProgressionWorldHost & ProgressionTrainingHost &
-        ProgressionEffectsHost)
-    {
-        trainingHost = game
-        effectsHost = game
+    public init(game: some ProgressionWorldHosts) {
+        hosts = game
         self.game = game
     }
 

@@ -27,8 +27,7 @@ import simd
 extension RagdollWorldAdapter {
     /// Without a stage, as in a test, it registers nothing.
     public convenience init(
-        game: some RagdollWorldHost & RagdollRecoveryHost & RagdollRemainsHost &
-            RagdollPlayerFallHost & RagdollPoseReadsHost & RagdollDeathsHost,
+        game: some RagdollWorldHosts,
         stage: SessionStage?
     ) {
         self.init(game: game)

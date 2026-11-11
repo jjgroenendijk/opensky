@@ -36,58 +36,55 @@ public protocol MenuWorldHost: MenuInputConsumer, SendableMetatype {
     var menuRecords: (any MenuRecordsPort)? { get }
 }
 
+/// Every host a `MenuWorldAdapter` part reads, all one object.
+public typealias MenuWorldHosts = MenuWorldHost & MenuWorldNewGameHost & MenuWorldScriptMenusHost &
+    MenuWorldSettingsApplyHost &
+    MenuWorldSkillsRaceHost &
+    MenuWorldTeleportsHost
+
 public final class MenuWorldAdapter {
     public let game: any MenuWorldHost
     public let state: MenuPartState
     lazy var titleBackdrop = MenuTitleBackdrop(game: game)
 
-    public let settingsApplyHost: any MenuWorldSettingsApplyHost
-    public let skillsRaceHost: any MenuWorldSkillsRaceHost
-    public let newGameHost: any MenuWorldNewGameHost
-    public let scriptMenusHost: any MenuWorldScriptMenusHost
-    public let teleportsHost: any MenuWorldTeleportsHost
+    let hosts: any MenuWorldHosts
 
     public var settingsApply: MenuWorldSettingsApplyAdapter {
         MenuWorldSettingsApplyAdapter(
-            game: settingsApplyHost, state: state
+            game: hosts, state: state
         )
     }
 
     public var skillsRace: MenuWorldSkillsRaceAdapter {
         MenuWorldSkillsRaceAdapter(
-            game: skillsRaceHost, state: state
+            game: hosts, state: state
         )
     }
 
     public var newGame: MenuWorldNewGameAdapter {
         MenuWorldNewGameAdapter(
-            game: newGameHost, state: state, teleports: teleports
+            game: hosts, state: state, teleports: teleports
         )
     }
 
     public var scriptMenus: MenuWorldScriptMenusAdapter {
         MenuWorldScriptMenusAdapter(
-            game: scriptMenusHost, state: state, skillsRace: skillsRace, teleports: teleports
+            game: hosts, state: state, skillsRace: skillsRace, teleports: teleports
         )
     }
 
     public var teleports: MenuWorldTeleportsAdapter {
         MenuWorldTeleportsAdapter(
-            game: teleportsHost, state: state
+            game: hosts, state: state
         )
     }
 
     public init(
-        game: some MenuWorldHost & MenuWorldSettingsApplyHost & MenuWorldSkillsRaceHost &
-            MenuWorldNewGameHost & MenuWorldScriptMenusHost & MenuWorldTeleportsHost,
+        game: some MenuWorldHosts,
         now: @escaping () -> Date
     ) {
         state = MenuPartState(now: now)
-        settingsApplyHost = game
-        skillsRaceHost = game
-        newGameHost = game
-        scriptMenusHost = game
-        teleportsHost = game
+        hosts = game
         self.game = game
     }
 

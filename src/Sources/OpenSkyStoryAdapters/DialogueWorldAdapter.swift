@@ -42,32 +42,30 @@ public protocol DialogueWorldHost: AnyObject, SendableMetatype {
 }
 
 /// Answers `DialogueWorld` from the session systems `game` owns.
+/// Every host a `DialogueWorldAdapter` part reads, all one object.
+public typealias DialogueWorldHosts = DialogueCameraFocusHost & DialogueOutcomesHost &
+    DialogueSpeakersHost & DialogueWorldHost
+
 public final class DialogueWorldAdapter {
     public let game: any DialogueWorldHost
     let voiceTypes = DialogueVoiceTypeCache()
 
-    public let cameraFocusHost: any DialogueCameraFocusHost
-    public let speakersHost: any DialogueSpeakersHost
-    public let outcomesHost: any DialogueOutcomesHost
+    let hosts: any DialogueWorldHosts
 
     var cameraFocus: DialogueCameraFocusAdapter {
-        DialogueCameraFocusAdapter(game: cameraFocusHost)
+        DialogueCameraFocusAdapter(game: hosts)
     }
 
     public var speakers: DialogueSpeakersAdapter {
-        DialogueSpeakersAdapter(game: speakersHost, voiceTypes: voiceTypes)
+        DialogueSpeakersAdapter(game: hosts, voiceTypes: voiceTypes)
     }
 
     public var outcomes: DialogueOutcomesAdapter {
-        DialogueOutcomesAdapter(game: outcomesHost)
+        DialogueOutcomesAdapter(game: hosts)
     }
 
-    public init(game: some DialogueWorldHost & DialogueCameraFocusHost & DialogueSpeakersHost &
-        DialogueOutcomesHost)
-    {
-        cameraFocusHost = game
-        speakersHost = game
-        outcomesHost = game
+    public init(game: some DialogueWorldHosts) {
+        hosts = game
         self.game = game
     }
 }

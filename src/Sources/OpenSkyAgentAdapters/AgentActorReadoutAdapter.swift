@@ -189,10 +189,10 @@ extension AgentActorReadoutAdapter {
 
 extension AgentActorReadoutAdapter {
     private var render: AgentRenderAdapter {
-        AgentRenderAdapter(hub: hub, game: hub.renderHost)
+        AgentRenderAdapter(hub: hub, game: hub.hosts)
     }
 
     private var actors: AgentActorsAdapter {
-        AgentActorsAdapter(hub: hub, game: hub.actorsHost)
+        AgentActorsAdapter(hub: hub, game: hub.hosts)
     }
 }

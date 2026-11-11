@@ -39,51 +39,45 @@ public protocol InventoryWorldHost: AnyObject, SendableMetatype {
 }
 
 /// Answers `InventoryWorld` and `VendorWorld` from the session systems `game` owns.
+/// Every host an `InventoryWorldAdapter` part reads, all one object.
+public typealias InventoryWorldHosts =
+    InventoryCommandsHost & InventoryPerksHost &
+    InventoryPickpocketHost & InventoryReadoutsHost & InventoryRecipesHost & InventoryVendorHost &
+    InventoryWorldHost
+
 public final class InventoryWorldAdapter {
     public let game: any InventoryWorldHost
 
-    public let readoutsHost: any InventoryReadoutsHost
-    public let pickpocketHost: any InventoryPickpocketHost
-    public let perksHost: any InventoryPerksHost
-    public let recipesHost: any InventoryRecipesHost
-    public let vendorHost: any InventoryVendorHost
-    public let commandsHost: any InventoryCommandsHost
+    let hosts: any InventoryWorldHosts
 
     public var readouts: InventoryReadoutsAdapter {
-        InventoryReadoutsAdapter(game: readoutsHost
+        InventoryReadoutsAdapter(game: hosts
         )
     }
 
     public var pickpocket: InventoryPickpocketAdapter {
-        InventoryPickpocketAdapter(game: pickpocketHost
+        InventoryPickpocketAdapter(game: hosts
         )
     }
 
     public var perks: InventoryPerksAdapter {
-        InventoryPerksAdapter(game: perksHost)
+        InventoryPerksAdapter(game: hosts)
     }
 
     public var recipes: InventoryRecipesAdapter {
-        InventoryRecipesAdapter(game: recipesHost)
+        InventoryRecipesAdapter(game: hosts)
     }
 
     public var vendor: InventoryVendorAdapter {
-        InventoryVendorAdapter(game: vendorHost)
+        InventoryVendorAdapter(game: hosts)
     }
 
     public var papyrus: InventoryPapyrusAdapter {
-        InventoryPapyrusAdapter(game: commandsHost)
+        InventoryPapyrusAdapter(game: hosts)
     }
 
-    public init(game: some InventoryWorldHost & InventoryReadoutsHost & InventoryPickpocketHost &
-        InventoryPerksHost & InventoryRecipesHost & InventoryVendorHost & InventoryCommandsHost)
-    {
-        readoutsHost = game
-        pickpocketHost = game
-        perksHost = game
-        recipesHost = game
-        vendorHost = game
-        commandsHost = game
+    public init(game: some InventoryWorldHosts) {
+        hosts = game
         self.game = game
     }
 
@@ -215,7 +209,7 @@ extension InventoryWorldAdapter: InventoryWorld {
 
 extension InventoryWorldAdapter {
     public var commands: InventoryCommandRunner {
-        InventoryCommandRunner(game: commandsHost)
+        InventoryCommandRunner(game: hosts)
     }
 
     /// Runs the commands an inventory or lock action returned, then hands back its answer.

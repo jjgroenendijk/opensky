@@ -41,6 +41,9 @@ public protocol MapWorldHost: MenuInputConsumer, SendableMetatype {
     var worldState: any WorldStateStorePort { get }
 }
 
+/// Every host a `MapWorldAdapter` part reads, all one object.
+public typealias MapWorldHosts = MapQuestsHost & MapRecordsHost & MapTravelHost & MapWorldHost
+
 public final class MapWorldAdapter {
     public let game: any MapWorldHost
     /// Marker names and places are fixed for a session, so they resolve once.
@@ -50,12 +53,10 @@ public final class MapWorldAdapter {
     /// The map camera, so the map movie can place markers where the view sees them.
     public private(set) var mapViewPose: CinematicCameraPose?
 
-    public let recordsHost: any MapRecordsHost
-    public let travelHost: any MapTravelHost
-    public let questsHost: any MapQuestsHost
+    let hosts: any MapWorldHosts
 
     var mapRecords: MapRecordsAdapter {
-        MapRecordsAdapter(game: recordsHost)
+        MapRecordsAdapter(game: hosts)
     }
 
     public var records: MenuRecordData? {
@@ -71,17 +72,15 @@ public final class MapWorldAdapter {
     }
 
     public var travel: MapTravelAdapter {
-        MapTravelAdapter(game: travelHost, mapRecords: mapRecords)
+        MapTravelAdapter(game: hosts, mapRecords: mapRecords)
     }
 
     public var quests: MapQuestsAdapter {
-        MapQuestsAdapter(game: questsHost)
+        MapQuestsAdapter(game: hosts)
     }
 
-    public init(game: some MapWorldHost & MapRecordsHost & MapTravelHost & MapQuestsHost) {
-        recordsHost = game
-        travelHost = game
-        questsHost = game
+    public init(game: some MapWorldHosts) {
+        hosts = game
         self.game = game
     }
 

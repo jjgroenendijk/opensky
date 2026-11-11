@@ -169,6 +169,6 @@ extension AgentInputAdapter {
 
 extension AgentInputAdapter {
     private var menuReadout: AgentMenuReadoutAdapter {
-        AgentMenuReadoutAdapter(hub: hub, game: hub.menuReadoutHost)
+        AgentMenuReadoutAdapter(hub: hub, game: hub.hosts)
     }
 }

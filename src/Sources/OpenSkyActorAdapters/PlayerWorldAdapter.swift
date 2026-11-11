@@ -38,27 +38,28 @@ public protocol PlayerWorldHost: AnyObject, SendableMetatype {
 }
 
 /// Answers `PlayerWorld` and `FaceMorphWorld` from the session systems `game` owns.
+/// Every host a `PlayerWorldAdapter` part reads, all one object.
+public typealias PlayerWorldHosts = PlayerFaceHost & PlayerFirstPersonHost & PlayerWorldHost
+
 public final class PlayerWorldAdapter {
     public let game: any PlayerWorldHost
     public let state = PlayerPartState()
 
-    public let firstPersonHost: any PlayerFirstPersonHost
-    public let faceHost: any PlayerFaceHost
+    let hosts: any PlayerWorldHosts
 
     public var firstPerson: PlayerFirstPersonAdapter {
         PlayerFirstPersonAdapter(
-            game: firstPersonHost,
+            game: hosts,
             state: state
         )
     }
 
     public var face: PlayerFaceAdapter {
-        PlayerFaceAdapter(game: faceHost, state: state)
+        PlayerFaceAdapter(game: hosts, state: state)
     }
 
-    public init(game: some PlayerWorldHost & PlayerFirstPersonHost & PlayerFaceHost) {
-        firstPersonHost = game
-        faceHost = game
+    public init(game: some PlayerWorldHosts) {
+        hosts = game
         self.game = game
     }
 

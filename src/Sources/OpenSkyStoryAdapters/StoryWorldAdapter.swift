@@ -42,6 +42,10 @@ public protocol StoryWorldHost: AnyObject, SendableMetatype {
     var scripts: any ScriptPort { get }
 }
 
+/// Every host a `StoryWorldAdapter` part reads, all one object.
+public typealias StoryWorldHosts = StoryAmbientTalkHost & StorySceneCastHost &
+    StorySceneLinesHost & StorySocialSearchHost & StoryWorldHost
+
 public final class StoryWorldAdapter {
     public let game: any StoryWorldHost
     public let state = StoryPartState()
@@ -63,40 +67,33 @@ public final class StoryWorldAdapter {
         game.storyManager
     }
 
-    public let ambientTalkHost: any StoryAmbientTalkHost
-    public let socialSearchHost: any StorySocialSearchHost
-    public let sceneLinesHost: any StorySceneLinesHost
-    public let sceneCastHost: any StorySceneCastHost
+    let hosts: any StoryWorldHosts
 
     public var ambientTalk: StoryAmbientTalkAdapter {
         StoryAmbientTalkAdapter(
-            game: ambientTalkHost, state: state, sceneCast: sceneCast, sceneLines: sceneLines
+            game: hosts, state: state, sceneCast: sceneCast, sceneLines: sceneLines
         )
     }
 
     public var socialSearch: StorySocialSearchAdapter {
-        StorySocialSearchAdapter(game: socialSearchHost, sceneCast: sceneCast)
+        StorySocialSearchAdapter(game: hosts, sceneCast: sceneCast)
     }
 
     public var sceneLines: StorySceneLinesAdapter {
-        StorySceneLinesAdapter(game: sceneLinesHost, state: state, sceneCast: sceneCast, now: now)
+        StorySceneLinesAdapter(game: hosts, state: state, sceneCast: sceneCast, now: now)
     }
 
     public var sceneCast: StorySceneCastAdapter {
-        StorySceneCastAdapter(game: sceneCastHost)
+        StorySceneCastAdapter(game: hosts)
     }
 
     /// `now` is the wall clock the subtitles time their lines on.
     public init(
-        game: some StoryWorldHost & StoryAmbientTalkHost & StorySocialSearchHost &
-            StorySceneLinesHost & StorySceneCastHost,
+        game: some StoryWorldHosts,
         now: @escaping () -> Date
     ) {
         self.now = now
-        ambientTalkHost = game
-        socialSearchHost = game
-        sceneLinesHost = game
-        sceneCastHost = game
+        hosts = game
         self.game = game
     }
 

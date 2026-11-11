@@ -23,7 +23,7 @@ import simd
 extension PlayerWorldAdapter {
     /// Without a stage, as in a test, it registers nothing.
     public convenience init(
-        game: some PlayerWorldHost & PlayerFirstPersonHost & PlayerFaceHost,
+        game: some PlayerWorldHosts,
         stage: SessionStage?
     ) {
         self.init(game: game)
