@@ -47,80 +47,7 @@ public struct AgentMenuReadoutAdapter {
 extension AgentMenuReadoutAdapter {
     /// Nil when no menu is open or the top menu has no row list.
     public func menuRows() -> AgentMenuRows? {
-        guard let top = game.menuMode.topMenu else { return nil }
-        switch top {
-        case .inventoryMenu:
-            let snapshot = game.inventoryMenu.snapshot
-            return AgentMenuRows(
-                menu: top.name,
-                rows: snapshot.entryLines,
-                selected: snapshot.selectedIndex
-            )
-        case .containerMenu, .barterMenu:
-            let snapshot = game.containerMenu.snapshot
-            return AgentMenuRows(
-                menu: top.name,
-                rows: snapshot.entryLines,
-                selected: snapshot.selectedIndex
-            )
-        case .journalMenu:
-            let snapshot = game.journalMenu.snapshot
-            return AgentMenuRows(
-                menu: top.name,
-                rows: snapshot.rows.map(\.title),
-                selected: snapshot.selectedIndex
-            )
-        case .dialogueMenu:
-            let snapshot = game.dialogueMenu.snapshot
-            return AgentMenuRows(
-                menu: top.name,
-                rows: snapshot.rows.map(\.text),
-                selected: snapshot.selectedIndex
-            )
-        case MenuIdentifier.titleMenu:
-            return titleMenuRows(top)
-        case MenuIdentifier.systemMenu:
-            let menu = game.systemMenu
-            let page = menu.movieMainPage ?? menu.snapshot.page
-            return AgentMenuRows(menu: top.name, rows: page.rows, selected: page.selectedIndex)
-        case MenuIdentifier.raceMenu:
-            let snapshot = game.raceMenu.snapshot
-            return AgentMenuRows(
-                menu: top.name,
-                rows: snapshot.rows,
-                selected: snapshot.selectedIndex
-            )
-        case MenuIdentifier.statsMenu:
-            let snapshot = game.skillsMenu.snapshot
-            return AgentMenuRows(
-                menu: top.name,
-                rows: snapshot.rows,
-                selected: snapshot.selectedIndex ?? -1
-            )
-        case MenuIdentifier.messageBoxMenu:
-            guard let box = game.messages.presentation else { return nil }
-            return AgentMenuRows(
-                menu: top.name,
-                rows: box.request.buttons.map(\.text),
-                selected: box.selection
-            )
-        default:
-            return nil
-        }
-    }
-
-    private func titleMenuRows(_ top: MenuIdentifier) -> AgentMenuRows {
-        let snapshot = game.titleMenu.snapshot
-        guard snapshot.movie.isLoaded, !snapshot.isLoadPageOpen else {
-            return AgentMenuRows(
-                menu: top.name, rows: snapshot.rows, selected: snapshot.selectedIndex
-            )
-        }
-        return AgentMenuRows(
-            menu: top.name,
-            rows: snapshot.movie.rows,
-            selected: snapshot.movie.selectedIndex ?? -1
-        )
+        rowsReadout.menuRows()
     }
 
     public var menuState: AgentJSON {
@@ -232,5 +159,93 @@ extension AgentMenuReadoutAdapter {
 extension AgentMenuReadoutAdapter {
     private var screens: AgentScreensAdapter {
         AgentScreensAdapter(hub: hub, game: hub.screensHost)
+    }
+}
+
+extension AgentMenuReadoutAdapter {
+    var rowsReadout: AgentMenuRowsReadout {
+        AgentMenuRowsReadout(game: game)
+    }
+}
+
+struct AgentMenuRowsReadout {
+    let game: any AgentMenuReadoutHost
+
+    /// Nil when no menu is open or the top menu has no row list.
+    func menuRows() -> AgentMenuRows? {
+        guard let top = game.menuMode.topMenu else { return nil }
+        switch top {
+        case .inventoryMenu:
+            let snapshot = game.inventoryMenu.snapshot
+            return AgentMenuRows(
+                menu: top.name,
+                rows: snapshot.entryLines,
+                selected: snapshot.selectedIndex
+            )
+        case .containerMenu, .barterMenu:
+            let snapshot = game.containerMenu.snapshot
+            return AgentMenuRows(
+                menu: top.name,
+                rows: snapshot.entryLines,
+                selected: snapshot.selectedIndex
+            )
+        case .journalMenu:
+            let snapshot = game.journalMenu.snapshot
+            return AgentMenuRows(
+                menu: top.name,
+                rows: snapshot.rows.map(\.title),
+                selected: snapshot.selectedIndex
+            )
+        case .dialogueMenu:
+            let snapshot = game.dialogueMenu.snapshot
+            return AgentMenuRows(
+                menu: top.name,
+                rows: snapshot.rows.map(\.text),
+                selected: snapshot.selectedIndex
+            )
+        case MenuIdentifier.titleMenu:
+            return titleMenuRows(top)
+        case MenuIdentifier.systemMenu:
+            let menu = game.systemMenu
+            let page = menu.movieMainPage ?? menu.snapshot.page
+            return AgentMenuRows(menu: top.name, rows: page.rows, selected: page.selectedIndex)
+        case MenuIdentifier.raceMenu:
+            let snapshot = game.raceMenu.snapshot
+            return AgentMenuRows(
+                menu: top.name,
+                rows: snapshot.rows,
+                selected: snapshot.selectedIndex
+            )
+        case MenuIdentifier.statsMenu:
+            let snapshot = game.skillsMenu.snapshot
+            return AgentMenuRows(
+                menu: top.name,
+                rows: snapshot.rows,
+                selected: snapshot.selectedIndex ?? -1
+            )
+        case MenuIdentifier.messageBoxMenu:
+            guard let box = game.messages.presentation else { return nil }
+            return AgentMenuRows(
+                menu: top.name,
+                rows: box.request.buttons.map(\.text),
+                selected: box.selection
+            )
+        default:
+            return nil
+        }
+    }
+
+    func titleMenuRows(_ top: MenuIdentifier) -> AgentMenuRows {
+        let snapshot = game.titleMenu.snapshot
+        guard snapshot.movie.isLoaded, !snapshot.isLoadPageOpen else {
+            return AgentMenuRows(
+                menu: top.name, rows: snapshot.rows, selected: snapshot.selectedIndex
+            )
+        }
+        return AgentMenuRows(
+            menu: top.name,
+            rows: snapshot.movie.rows,
+            selected: snapshot.movie.selectedIndex ?? -1
+        )
     }
 }

@@ -162,44 +162,7 @@ extension AgentMotionAdapter {
     }
 
     func impulsesState() -> AgentJSON {
-        guard let impulses = game.combat.impulses else { return ["available": .bool(false)] }
-        let settings = impulses.settings
-        return [
-            "available": .bool(true),
-            "settings": [
-                "knockbackDamageMult": .init(settings.knockbackDamageMult),
-                "knockbackDamageBase": .init(settings.knockbackDamageBase),
-                "knockdownChance": .init(settings.knockdownChance),
-                "gameplayImpulseScale": .init(settings.gameplayImpulseScale),
-                "explosionMaxImpulse": .init(settings.explosionMaxImpulse),
-                "splashTimer": .init(impulses.water.splashTimer),
-                "knockbackForceMax": .init(settings.knockbackForceMax),
-                "knockbackTime": .init(settings.knockbackTime),
-                "knockdownCurrentHealthThreshold": .init(settings.knockdownCurrentHealthThreshold),
-                "explosionSourceRefMult": .init(settings.explosionSourceRefMult),
-                "projectileKnockBiped": .init(settings.projectileKnock.biped),
-                "splashModel": .string(impulses.water.splashModel),
-                "waterKnockdownVelocity": .init(impulses.water.knockdownVelocity)
-            ],
-            "knockdowns": knockdownsJSON(),
-            "splashCount": .init(impulses.splashCount),
-            "waterRings": .init(game.renderer?.waterRipples.ripples.count ?? 0),
-            "playerWater": playerWaterJSON(),
-            "events": .array(impulses.events.map(eventJSON))
-        ]
-    }
-
-    /// The water over the player's feet and what its current added to the last step.
-    private func playerWaterJSON() -> AgentJSON {
-        guard let plan = game.gameSession?.locomotion.status.lastPlan, let water = plan.water
-        else { return .null }
-        return [
-            "surface": .init(water.surface),
-            "current": .init(water.current),
-            "push": .init(plan.waterPush),
-            "dangerous": .bool(water.isDangerous),
-            "waterType": water.waterType.map { .formID($0.rawValue) } ?? .null
-        ]
+        impulseReadout.impulsesState()
     }
 
     func knock(_ reference: String, damage: Float) throws(AgentFailure) -> AgentJSON {
@@ -231,8 +194,66 @@ extension AgentMotionAdapter {
             "ragdoll": .bool(game.ragdoll.knockdowns.isKnockedDown(actor.key))
         ]
     }
+}
 
-    private func knockdownsJSON() -> AgentJSON {
+extension AgentMotionAdapter {
+    private var behaviour: AgentBehaviourAdapter {
+        AgentBehaviourAdapter(hub: hub, game: hub.behaviourHost)
+    }
+}
+
+extension AgentMotionAdapter {
+    var impulseReadout: AgentImpulseReadout {
+        AgentImpulseReadout(game: game, behaviour: behaviour)
+    }
+}
+
+struct AgentImpulseReadout {
+    let game: any AgentMotionHost
+    let behaviour: AgentBehaviourAdapter
+
+    func impulsesState() -> AgentJSON {
+        guard let impulses = game.combat.impulses else { return ["available": .bool(false)] }
+        let settings = impulses.settings
+        return [
+            "available": .bool(true),
+            "settings": [
+                "knockbackDamageMult": .init(settings.knockbackDamageMult),
+                "knockbackDamageBase": .init(settings.knockbackDamageBase),
+                "knockdownChance": .init(settings.knockdownChance),
+                "gameplayImpulseScale": .init(settings.gameplayImpulseScale),
+                "explosionMaxImpulse": .init(settings.explosionMaxImpulse),
+                "splashTimer": .init(impulses.water.splashTimer),
+                "knockbackForceMax": .init(settings.knockbackForceMax),
+                "knockbackTime": .init(settings.knockbackTime),
+                "knockdownCurrentHealthThreshold": .init(settings.knockdownCurrentHealthThreshold),
+                "explosionSourceRefMult": .init(settings.explosionSourceRefMult),
+                "projectileKnockBiped": .init(settings.projectileKnock.biped),
+                "splashModel": .string(impulses.water.splashModel),
+                "waterKnockdownVelocity": .init(impulses.water.knockdownVelocity)
+            ],
+            "knockdowns": knockdownsJSON(),
+            "splashCount": .init(impulses.splashCount),
+            "waterRings": .init(game.renderer?.waterRipples.ripples.count ?? 0),
+            "playerWater": playerWaterJSON(),
+            "events": .array(impulses.events.map(eventJSON))
+        ]
+    }
+
+    /// The water over the player's feet and what its current added to the last step.
+    func playerWaterJSON() -> AgentJSON {
+        guard let plan = game.gameSession?.locomotion.status.lastPlan, let water = plan.water
+        else { return .null }
+        return [
+            "surface": .init(water.surface),
+            "current": .init(water.current),
+            "push": .init(plan.waterPush),
+            "dangerous": .bool(water.isDangerous),
+            "waterType": water.waterType.map { .formID($0.rawValue) } ?? .null
+        ]
+    }
+
+    func knockdownsJSON() -> AgentJSON {
         let phases = game.ragdoll.knockdowns.phases
         return .array(phases.keys.sorted().compactMap { key in
             switch phases[key] {
@@ -248,7 +269,7 @@ extension AgentMotionAdapter {
         })
     }
 
-    private func eventJSON(_ event: ImpulseEvent) -> AgentJSON {
+    func eventJSON(_ event: ImpulseEvent) -> AgentJSON {
         switch event {
         case let .knock(key, speed, knockdown, cause):
             [
@@ -283,13 +304,7 @@ extension AgentMotionAdapter {
         }
     }
 
-    private func reference(_ key: ReferenceKey) -> AgentJSON {
+    func reference(_ key: ReferenceKey) -> AgentJSON {
         key == .player ? .string("player") : behaviour.formID(of: key) ?? .string("\(key)")
-    }
-}
-
-extension AgentMotionAdapter {
-    private var behaviour: AgentBehaviourAdapter {
-        AgentBehaviourAdapter(hub: hub, game: hub.behaviourHost)
     }
 }

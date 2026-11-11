@@ -71,8 +71,6 @@ public final class BenchmarkWorldAdapter {
     /// The frames a tour waits after its last screenshot request, so the capture lands.
     private static let screenshotFrames = 30
     private static let millisecondsPerSecond = 1000.0
-    /// A probe pushed farther than this, in units, started inside something.
-    private static let pushedOut: Float = 0.01
     public let game: any BenchmarkWorldHost
     public var tour: any BenchmarkTourPort {
         game.benchmarkTour
@@ -306,56 +304,27 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
     }
 
     public func groundHeight(x: Float, y: Float) -> Float? {
-        game.streamer.sampleTerrain(at: SIMD2(x, y))?.height
+        measurements.groundHeight(x: x, y: y)
     }
 
     public func isBlocked(_ point: SIMD3<Float>, radius: Float) -> Bool {
-        guard let query = game.gameSession?.collisionQuery else { return false }
-        let capsule = PlayerCapsule.ball(radius: radius)
-        let bottom = point - SIMD3(0, 0, radius)
-        let probe = CapsuleWorldCollider(capsule: capsule)
-            .move(from: bottom, displacement: .zero, query: query)
-        return probe.hasUnresolvedPenetration || simd_distance(probe.position, bottom) > Self
-            .pushedOut
-            || probe.contacts.contains { $0.depth > 0 }
+        measurements.isBlocked(point, radius: radius)
     }
 
     public func crossesCollision(from start: SIMD3<Float>, to end: SIMD3<Float>) -> Bool {
-        let line = end - start
-        let streamer = game.streamer
-        guard
-            let ray = InteractionRay(
-                origin: start, direction: line, maximumDistance: simd_length(line)
-            )
-        else { return false }
-        return streamer.nearestCollisionHit(ray: ray) != nil
+        measurements.crossesCollision(from: start, to: end)
     }
 
     public func setHour(_ hour: Float) {
-        game.runtimeState.setGameClockHour(hour)
+        measurements.setHour(hour)
     }
 
     public func setWeather(_ editorID: String?) -> Bool {
-        guard let weather = game.gameSession?.weather else { return false }
-        // A scene without a weather shows its own place's, not the last scene's.
-        guard let editorID else {
-            weather.resumeAutomatic()
-            return true
-        }
-        let match = weather.store.selectableWeathers().first {
-            $0.editorID?.caseInsensitiveCompare(editorID) == .orderedSame
-        }
-        guard let match else { return false }
-        weather.forceWeather(match.formID, transition: .instant)
-        return true
+        measurements.setWeather(editorID)
     }
 
     public func setCamera(_ pose: BenchmarkCameraPose) {
-        game.gameSession?.freeFlyCamera = FreeFlyCamera(
-            position: pose.eye,
-            yaw: pose.yaw,
-            pitch: pose.pitch
-        )
+        measurements.setCamera(pose)
     }
 
     public func stepFixedFrame(seconds: Double) {
@@ -363,37 +332,19 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
     }
 
     public func frameSample() -> BenchmarkFrameSample {
-        guard let session = game.gameSession else {
-            return BenchmarkFrameSample(cpuMS: [:], drawCalls: 0, drawnInstances: 0)
-        }
-        let renderer = session.renderer
-        let stats = renderer.lastDrawStats
-        return BenchmarkFrameSample(
-            cpuMS: [
-                .simulation: session.lastSimulationMS, .animation: renderer.lastAnimationUpdateMS,
-                .shadows: renderer.lastShadowUpdateMS, .encode: renderer.lastEncodeMS,
-                .scripts: session.lastScriptUpdateMS, .audio: session.lastAudioUpdateMS
-            ],
-            drawCalls: stats.drawCalls, drawnInstances: stats.drawnInstances
-        )
+        measurements.frameSample()
     }
 
     public func takeGPUFrameTimes() -> GPUFrameReport {
-        game.gameSession?.renderer.gpuFrameLog?.take() ?? GPUFrameReport()
+        measurements.takeGPUFrameTimes()
     }
 
     public func takePassTimes() -> [[GPUPass: Double]] {
-        game.gameSession?.renderer.passTimer?.take() ?? []
+        measurements.takePassTimes()
     }
 
     public func gpuMemory() -> GPUMemoryUsage {
-        var usage = game.gameSession?.renderer.gpuMemoryUsage() ?? GPUMemoryUsage()
-        usage.processBytes = MemoryFootprint.physFootprintBytes().map { Int($0) } ?? 0
-        if let cached = game.streamer.cachedAssetCounts {
-            usage.cachedTextures = cached.textures
-            usage.cachedModels = cached.models
-        }
-        return usage
+        measurements.gpuMemory()
     }
 
     public func resetArrivalPhases() {
@@ -401,18 +352,14 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
     }
 
     public func arrivalPhases() -> LoadPhaseTimes? {
-        game.benchmarkLoadPhases?.snapshot()
+        measurements.arrivalPhases()
     }
 
     public func captureFrame(
         to url: URL,
         done: @escaping (Result<URL, FrameCaptureError>) -> Void
     ) {
-        guard let renderer = game.gameSession?.renderer else {
-            done(.failure(.notEnabled))
-            return
-        }
-        renderer.captureNextFrame(to: url, done: done)
+        measurements.captureFrame(to: url, done: done)
     }
 
     public func saveScreenshot(to url: URL) {
@@ -446,3 +393,117 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
 }
 
 extension BenchmarkWorldAdapter: BenchmarkWorldPort {}
+
+extension BenchmarkWorldAdapter {
+    var measurements: BenchmarkMeasurements {
+        BenchmarkMeasurements(game: game)
+    }
+}
+
+struct BenchmarkMeasurements {
+    /// A probe pushed farther than this, in units, started inside something.
+    private static let pushedOut: Float = 0.01
+    let game: any BenchmarkWorldHost
+
+    func groundHeight(x: Float, y: Float) -> Float? {
+        game.streamer.sampleTerrain(at: SIMD2(x, y))?.height
+    }
+
+    func isBlocked(_ point: SIMD3<Float>, radius: Float) -> Bool {
+        guard let query = game.gameSession?.collisionQuery else { return false }
+        let capsule = PlayerCapsule.ball(radius: radius)
+        let bottom = point - SIMD3(0, 0, radius)
+        let probe = CapsuleWorldCollider(capsule: capsule)
+            .move(from: bottom, displacement: .zero, query: query)
+        return probe.hasUnresolvedPenetration || simd_distance(probe.position, bottom) > Self
+            .pushedOut
+            || probe.contacts.contains { $0.depth > 0 }
+    }
+
+    func crossesCollision(from start: SIMD3<Float>, to end: SIMD3<Float>) -> Bool {
+        let line = end - start
+        let streamer = game.streamer
+        guard
+            let ray = InteractionRay(
+                origin: start, direction: line, maximumDistance: simd_length(line)
+            )
+        else { return false }
+        return streamer.nearestCollisionHit(ray: ray) != nil
+    }
+
+    func setHour(_ hour: Float) {
+        game.runtimeState.setGameClockHour(hour)
+    }
+
+    func setWeather(_ editorID: String?) -> Bool {
+        guard let weather = game.gameSession?.weather else { return false }
+        // A scene without a weather shows its own place's, not the last scene's.
+        guard let editorID else {
+            weather.resumeAutomatic()
+            return true
+        }
+        let match = weather.store.selectableWeathers().first {
+            $0.editorID?.caseInsensitiveCompare(editorID) == .orderedSame
+        }
+        guard let match else { return false }
+        weather.forceWeather(match.formID, transition: .instant)
+        return true
+    }
+
+    func setCamera(_ pose: BenchmarkCameraPose) {
+        game.gameSession?.freeFlyCamera = FreeFlyCamera(
+            position: pose.eye,
+            yaw: pose.yaw,
+            pitch: pose.pitch
+        )
+    }
+
+    func frameSample() -> BenchmarkFrameSample {
+        guard let session = game.gameSession else {
+            return BenchmarkFrameSample(cpuMS: [:], drawCalls: 0, drawnInstances: 0)
+        }
+        let renderer = session.renderer
+        let stats = renderer.lastDrawStats
+        return BenchmarkFrameSample(
+            cpuMS: [
+                .simulation: session.lastSimulationMS, .animation: renderer.lastAnimationUpdateMS,
+                .shadows: renderer.lastShadowUpdateMS, .encode: renderer.lastEncodeMS,
+                .scripts: session.lastScriptUpdateMS, .audio: session.lastAudioUpdateMS
+            ],
+            drawCalls: stats.drawCalls, drawnInstances: stats.drawnInstances
+        )
+    }
+
+    func takeGPUFrameTimes() -> GPUFrameReport {
+        game.gameSession?.renderer.gpuFrameLog?.take() ?? GPUFrameReport()
+    }
+
+    func takePassTimes() -> [[GPUPass: Double]] {
+        game.gameSession?.renderer.passTimer?.take() ?? []
+    }
+
+    func gpuMemory() -> GPUMemoryUsage {
+        var usage = game.gameSession?.renderer.gpuMemoryUsage() ?? GPUMemoryUsage()
+        usage.processBytes = MemoryFootprint.physFootprintBytes().map { Int($0) } ?? 0
+        if let cached = game.streamer.cachedAssetCounts {
+            usage.cachedTextures = cached.textures
+            usage.cachedModels = cached.models
+        }
+        return usage
+    }
+
+    func arrivalPhases() -> LoadPhaseTimes? {
+        game.benchmarkLoadPhases?.snapshot()
+    }
+
+    func captureFrame(
+        to url: URL,
+        done: @escaping (Result<URL, FrameCaptureError>) -> Void
+    ) {
+        guard let renderer = game.gameSession?.renderer else {
+            done(.failure(.notEnabled))
+            return
+        }
+        renderer.captureNextFrame(to: url, done: done)
+    }
+}

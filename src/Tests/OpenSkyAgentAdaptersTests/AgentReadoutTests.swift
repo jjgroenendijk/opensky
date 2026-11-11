@@ -60,6 +60,19 @@ struct AgentReadoutTests {
         #expect(object(screenState)["loading"] != nil)
     }
 
+    @Test func theTitleMenuRowsComeFromTheMovieOnceItLoads() {
+        host.fakeMenuMode.topMenu = .titleMenu
+        let movie = TitleMenuMovieSnapshot(isLoaded: true, rows: ["Continue"], selectedIndex: 0)
+        host.fakeTitleMenu.snapshotValue = TitleMenuSnapshot(
+            rows: ["New"], selectedIndex: 0, isLoadPageOpen: false, lastResult: nil
+        )
+        #expect(world.menuReadout.menuRows()?.rows == ["New"])
+        host.fakeTitleMenu.snapshotValue = TitleMenuSnapshot(
+            rows: ["New"], selectedIndex: 0, isLoadPageOpen: false, lastResult: nil, movie: movie
+        )
+        #expect(world.menuReadout.menuRows()?.rows == ["Continue"])
+    }
+
     @Test func eachFlyingDragonIsListed() throws {
         host.fakeDragonFlightWorld.flyingStates = [.generated(7): 1]
         let state = try object(world.query(.flight(reference: nil)))
