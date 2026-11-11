@@ -87,10 +87,10 @@ extension AgentPlayerReadoutAdapter {
         let cloak = game.actorWorld.actorValueHolder(for: .player)
             .flatMap(game.magic.cloakIsRunning)
         result["cloak"] = .string(cloak.map { $0 ? "running" : "suspended" } ?? "none")
-        result["firstPerson"] = firstPersonState(gameSession: gameSession)
-        result["melee"] = meleeState()
-        result.merge(playerStatusState()) { _, new in new }
-        result.merge(playerWeaponState(gameSession: gameSession)) { _, new in new }
+        result["firstPerson"] = statusReadout.firstPersonState(gameSession: gameSession)
+        result["melee"] = statusReadout.meleeState()
+        result.merge(statusReadout.playerStatusState()) { _, new in new }
+        result.merge(statusReadout.playerWeaponState(gameSession: gameSession)) { _, new in new }
         let status = gameSession.locomotion.status
         result["graph"] = [
             "attached": .bool(status.graphAvailable),
@@ -116,9 +116,30 @@ extension AgentPlayerReadoutAdapter {
         ]
         return .object(result)
     }
+}
+
+extension AgentPlayerReadoutAdapter {
+    private var frameReadout: AgentFrameReadoutAdapter {
+        AgentFrameReadoutAdapter(hub: hub, game: hub.frameReadoutHost)
+    }
+
+    private var actorReadout: AgentActorReadoutAdapter {
+        AgentActorReadoutAdapter(hub: hub, game: hub.actorReadoutHost)
+    }
+}
+
+extension AgentPlayerReadoutAdapter {
+    var statusReadout: AgentPlayerStatusReadout {
+        AgentPlayerStatusReadout(hub: hub, game: game)
+    }
+}
+
+struct AgentPlayerStatusReadout {
+    let hub: AgentHub
+    let game: any AgentPlayerReadoutHost
 
     /// The held staff and the bow zoom.
-    private func playerWeaponState(gameSession: any GameSessionPort) -> [String: AgentJSON] {
+    func playerWeaponState(gameSession: any GameSessionPort) -> [String: AgentJSON] {
         var result: [String: AgentJSON] = [:]
         result["staff"] = game.magic.playerStaff().map { held in
             [
@@ -141,7 +162,7 @@ extension AgentPlayerReadoutAdapter {
     }
 
     /// The last fall and rumble, the death phase, and the locked controls.
-    private func playerStatusState() -> [String: AgentJSON] {
+    func playerStatusState() -> [String: AgentJSON] {
         let locks = game.playerControlLocks
         return [
             "lastFall": game.combat.lastFall.map { fall in
@@ -175,7 +196,7 @@ extension AgentPlayerReadoutAdapter {
     }
 
     /// `attackState` is the `GetAttackState` value conditions read.
-    private func meleeState() -> AgentJSON {
+    func meleeState() -> AgentJSON {
         guard let melee = game.combat.melee else { return .null }
         return [
             "attackPhase": .string(melee.state.attackPhase.rawValue),
@@ -185,7 +206,7 @@ extension AgentPlayerReadoutAdapter {
         ]
     }
 
-    private func firstPersonState(gameSession: any GameSessionPort) -> AgentJSON {
+    func firstPersonState(gameSession: any GameSessionPort) -> AgentJSON {
         let snapshot = game.player.firstPersonSnapshot
         let rig = gameSession.playerFirstPersonRig
         return [
@@ -200,22 +221,12 @@ extension AgentPlayerReadoutAdapter {
             "missingVariables": .array(snapshot.missingVariables.map(AgentJSON.string))
         ]
     }
-}
 
-extension AgentPlayerReadoutAdapter {
-    private var render: AgentRenderAdapter {
+    var render: AgentRenderAdapter {
         AgentRenderAdapter(hub: hub, game: hub.renderHost)
     }
 
-    private var actors: AgentActorsAdapter {
+    var actors: AgentActorsAdapter {
         AgentActorsAdapter(hub: hub, game: hub.actorsHost)
-    }
-
-    private var frameReadout: AgentFrameReadoutAdapter {
-        AgentFrameReadoutAdapter(hub: hub, game: hub.frameReadoutHost)
-    }
-
-    private var actorReadout: AgentActorReadoutAdapter {
-        AgentActorReadoutAdapter(hub: hub, game: hub.actorReadoutHost)
     }
 }
