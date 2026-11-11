@@ -148,4 +148,18 @@ struct ActorMountPlayerTests {
         #expect(host.fakeStreamer.takeRiddenActorCalls == [Self.actor])
         #expect(mounts.dismountOffset(of: Self.actor) == SIMD3(-50, 0, 65))
     }
+
+    @Test func withoutPlaybackOrIdlesAVehicleReadsNothing() {
+        let vehicles = VehicleWorldAdapter(game: host, stage: nil)
+        #expect(vehicles.vehicleBone(of: .player, named: "NPC Head [Head]") == nil)
+        host.playbacks[Self.actor] = FakeActorAnimationPlaybackPort()
+        #expect(vehicles.vehicleBone(of: Self.actor, named: "NPC Head [Head]") == nil)
+        #expect(vehicles.vehicleGround(at: SIMD3(0, 0, 100), excluding: [Self.actor]) == nil)
+        vehicles.spinVehicleWheels(of: Self.actor, turns: VehicleWheelTurns())
+        #expect(host.fakeStreamer.residentAnimatedVehiclesCallCount == 0)
+        let idle = ResolvedFormID(plugin: "base.esm", objectID: 0x30)
+        #expect(!vehicles.playIdle(idle, on: Self.actor))
+        #expect(!vehicles.playIdle(idle, on: Self.actor, with: .player))
+        #expect(!vehicles.playIdle(editorID: "IdleCartDriver", on: Self.actor, with: .player))
+    }
 }
