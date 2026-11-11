@@ -41,7 +41,7 @@ extension MenuScreensGuidesAdapter {
         )
     }
 
-    public var helpTopicEditorIDs: [String] {
+    var helpTopicEditorIDs: [String] {
         game.messageWorld.messageEditorIDs.filter(HelpTopic.isTopic(editorID:))
     }
 
@@ -70,7 +70,7 @@ extension MenuScreensGuidesAdapter {
 }
 
 extension MenuScreensGuidesAdapter {
-    public var nearestTrainer: ReferenceKey? {
+    var nearestTrainer: ReferenceKey? {
         game.progressionWorld.nearestTrainer()?.trainer
     }
 

@@ -16,6 +16,31 @@ import simd
 
 extension MenuWorldAdapter {
     public func showTitleBackdrop(_ shown: Bool) {
+        titleBackdrop.showTitleBackdrop(shown)
+    }
+
+    public func refreshTitleBackdrop() {
+        titleBackdrop.refreshTitleBackdrop()
+    }
+
+    public var titleLighting: RenderLighting? {
+        titleBackdrop.titleLighting
+    }
+}
+
+/// The title backdrop and the state it keeps between frames.
+final class MenuTitleBackdrop {
+    let game: any MenuWorldHost
+    /// Built on first use, because it walks the install.
+    var titleMeshes: MeshLibrary?
+    /// The camera the logo was placed for, while the title backdrop shows.
+    var titleLogoView: (eye: SIMD3<Float>, forward: SIMD3<Float>)?
+
+    init(game: any MenuWorldHost) {
+        self.game = game
+    }
+
+    func showTitleBackdrop(_ shown: Bool) {
         titleLogoView = nil
         guard let gameSession = game.gameSession else { return }
         place(shown ? backdrop(gameSession: gameSession) : nil, gameSession: gameSession)
@@ -23,7 +48,7 @@ extension MenuWorldAdapter {
 
     /// The camera settles after the title opens, so the logo follows it. The loading
     /// screen owns the cover while it shows.
-    public func refreshTitleBackdrop() {
+    func refreshTitleBackdrop() {
         guard
             !game.loadingScreens.isCovering,
             let view = titleLogoView, let gameSession = game.gameSession else { return }
@@ -57,7 +82,7 @@ extension MenuWorldAdapter {
     }
 
     /// The game draws the logo in `MainMenuCell`, so it takes that cell's light.
-    public var titleLighting: RenderLighting? {
+    var titleLighting: RenderLighting? {
         game.menuRecords?.menuRecords?.mainMenuLighting.flatMap {
             CellSceneBuilder.renderLighting(cell: $0.cell, template: $0.template)
         }

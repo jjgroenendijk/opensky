@@ -6,12 +6,10 @@ public import Foundation
 import OpenSkyAudio
 import OpenSkyCamera
 import OpenSkyCells
-import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
-import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
@@ -60,39 +58,11 @@ public final class MessageWorldAdapter {
     private var presentation: PresentationRecordStore? {
         game.menuRecords?.presentationRecords
     }
-
-    /// The MESG's QNAM owner, whose aliases the text's tags name.
-    private func quest(of message: ResolvedRecord<GameMessage>) -> Quest? {
-        guard
-            let store = presentation,
-            let link = store.messages.link(message.record.quest, from: message), !link.isDangling,
-            let quests = game.menuRecords?.questStore,
-            let id = quests.formID(for: ReferenceKey(resolved: link.target))
-        else { return nil }
-        return quests.quest(id)
-    }
-
-    /// A message's text IDs point into the tables of the plugin whose record won.
-    private func builder(plugin: String) -> MessageTextBuilder {
-        let naming = game.journalMenu.currentAliasNaming
-        return MessageTextBuilder(
-            strings: game.journal.strings?.scoped(to: plugin),
-            naming: naming ?? .none
-        )
-    }
 }
 
 extension MessageWorldAdapter: MessageWorld {
     public func buildMessage(_ key: ReferenceKey, arguments: [Float]) -> BuiltMessage? {
-        guard let message = presentation?.messages.record(key) else { return nil }
-        var context = game.runtimeState.conditionContext()
-        context.subject = .player
-        return builder(plugin: message.sourcePlugin).build(
-            message.record,
-            arguments: arguments,
-            quest: quest(of: message),
-            buttonVisible: MessageTextBuilder.conditionCheck(ConditionEvaluator(context: context))
-        )
+        text.buildMessage(key, arguments: arguments)
     }
 
     public func answerMessage(token: UInt64, buttonIndex: Int) {

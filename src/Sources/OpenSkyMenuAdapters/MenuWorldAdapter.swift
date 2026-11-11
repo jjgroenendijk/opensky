@@ -39,10 +39,7 @@ public protocol MenuWorldHost: MenuInputConsumer, SendableMetatype {
 public final class MenuWorldAdapter {
     public let game: any MenuWorldHost
     public let state: MenuPartState
-    /// Built on first use, because it walks the install.
-    var titleMeshes: MeshLibrary?
-    /// The camera the logo was placed for, while the title backdrop shows.
-    public var titleLogoView: (eye: SIMD3<Float>, forward: SIMD3<Float>)?
+    lazy var titleBackdrop = MenuTitleBackdrop(game: game)
 
     public let settingsApplyHost: any MenuWorldSettingsApplyHost
     public let skillsRaceHost: any MenuWorldSkillsRaceHost

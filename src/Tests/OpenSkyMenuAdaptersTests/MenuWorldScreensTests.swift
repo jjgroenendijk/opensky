@@ -6,7 +6,7 @@ import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyLaunch
-import OpenSkyMenuAdapters
+@testable import OpenSkyMenuAdapters
 import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkySessionTesting
@@ -50,6 +50,15 @@ struct MenuWorldScreensTests {
         let menus = MenuWorldAdapter(game: host, now: { Date(timeIntervalSinceReferenceDate: 0) })
         #expect(!menus.fastTravel(to: Self.marker))
         #expect(host.fakeMapMenu.travelToSelectedCallCount == 0)
+    }
+
+    @Test func withoutASessionTheTitleBackdropPlacesNothing() {
+        let menus = MenuWorldAdapter(game: host, now: { Date(timeIntervalSinceReferenceDate: 0) })
+        menus.showTitleBackdrop(true)
+        menus.refreshTitleBackdrop()
+        host.fakeLoadingScreens.isCovering = true
+        menus.refreshTitleBackdrop()
+        #expect(menus.titleBackdrop.titleLogoView == nil)
     }
 
     @Test func onlyThePlayerChangesRace() {
