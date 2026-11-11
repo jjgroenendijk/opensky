@@ -86,67 +86,79 @@ nonisolated public struct NIFBoneLOD: Equatable, Sendable {
 }
 
 nonisolated extension NIFBlockDecoders {
-    static let extraData: [String: Decode] = [
-        "NiIntegerExtraData": extra { reader, _ in try .integer(reader.readUInt32()) },
-        "BSXFlags": extra { reader, _ in try .flags(NIFBSXFlags(rawValue: reader.readUInt32())) },
-        "NiFloatExtraData": extra { reader, _ in try .float(reader.readFloat32()) },
-        "NiBooleanExtraData": extra { reader, _ in try .boolean(reader.readUInt8() != 0) },
-        "NiStringsExtraData": extra { reader, _ in
-            let count = try reader.readNIFCount(stride: 4, label: "string")
-            return try .strings((0 ..< count).map { _ in try reader.readNIFSizedString() })
-        },
-        "NiBinaryExtraData": extra { reader, _ in
-            let count = try reader.readNIFCount(stride: 1, label: "byte")
-            return try .binary(reader.read(count: count))
-        },
-        "BSInvMarker": extra { reader, _ in
-            let raw = try SIMD3<Float>(
-                Float(reader.readUInt16()), Float(reader.readUInt16()), Float(reader.readUInt16())
-            )
-            return try .inventoryMarker(NIFInventoryMarker(
-                rotation: raw / 1000, zoom: reader.readFloat32()
-            ))
-        },
-        "BSBound": extra { reader, _ in
-            try .bound(center: reader.readVector3(), halfExtents: reader.readVector3())
-        },
-        "BSDistantObjectLargeRefExtraData": extra { reader, _ in
-            try .largeReference(reader.readUInt8() != 0)
-        },
-        "BSDecalPlacementVectorExtraData": extra { reader, _ in try decalPlacement(&reader) },
-        "BSBoneLODExtraData": extra { reader, header in
-            let count = try reader.readNIFCount(stride: 8, label: "bone LOD")
-            return try .boneLOD((0 ..< count).map { _ in
-                try NIFBoneLOD(
-                    distance: reader.readUInt32(),
-                    boneName: reader.readNIFString(header)
+    enum ExtraData {
+        static let extraData: [String: Decode] = [
+            "NiIntegerExtraData": extra { reader, _ in try .integer(reader.readUInt32()) },
+            "BSXFlags": extra { reader, _ in
+                try .flags(NIFBSXFlags(rawValue: reader.readUInt32()))
+            },
+            "NiFloatExtraData": extra { reader, _ in try .float(reader.readFloat32()) },
+            "NiBooleanExtraData": extra { reader, _ in try .boolean(reader.readUInt8() != 0) },
+            "NiStringsExtraData": extra { reader, _ in
+                let count = try reader.readNIFCount(stride: 4, label: "string")
+                return try .strings((0 ..< count).map { _ in try reader.readNIFSizedString() })
+            },
+            "NiBinaryExtraData": extra { reader, _ in
+                let count = try reader.readNIFCount(stride: 1, label: "byte")
+                return try .binary(reader.read(count: count))
+            },
+            "BSInvMarker": extra { reader, _ in
+                let raw = try SIMD3<Float>(
+                    Float(reader.readUInt16()), Float(reader.readUInt16()),
+                    Float(reader.readUInt16())
                 )
-            })
-        }
-    ]
+                return try .inventoryMarker(NIFInventoryMarker(
+                    rotation: raw / 1000, zoom: reader.readFloat32()
+                ))
+            },
+            "BSBound": extra { reader, _ in
+                try .bound(center: reader.readVector3(), halfExtents: reader.readVector3())
+            },
+            "BSDistantObjectLargeRefExtraData": extra { reader, _ in
+                try .largeReference(reader.readUInt8() != 0)
+            },
+            "BSDecalPlacementVectorExtraData": extra { reader, _ in try decalPlacement(&reader) },
+            "BSBoneLODExtraData": extra { reader, header in
+                let count = try reader.readNIFCount(stride: 8, label: "bone LOD")
+                return try .boneLOD((0 ..< count).map { _ in
+                    try NIFBoneLOD(
+                        distance: reader.readUInt32(),
+                        boneName: reader.readNIFString(header)
+                    )
+                })
+            }
+        ]
 
-    /// Every extra data block starts with its name.
-    private static func extra(
-        _ value: @escaping @Sendable (inout BinaryReader, NIFHeader) throws -> NIFExtraData.Value
-    ) -> Decode {
-        { reader, header in
-            let name = try reader.readNIFString(header)
-            return try NIFExtraData(name: name, value: value(&reader, header))
+        /// Every extra data block starts with its name.
+        private static func extra(
+            _ value: @escaping @Sendable (inout BinaryReader, NIFHeader) throws -> NIFExtraData
+                .Value
+        ) -> Decode {
+            { reader, header in
+                let name = try reader.readNIFString(header)
+                return try NIFExtraData(name: name, value: value(&reader, header))
+            }
         }
-    }
 
-    /// An `NiFloatExtraData` value, then blocks of points with their normals.
-    private static func decalPlacement(_ reader: inout BinaryReader) throws -> NIFExtraData.Value {
-        let value = try reader.readFloat32()
-        let blocks = try reader.readNIFShortCount(stride: 2, label: "decal vector block")
-        var points: [SIMD3<Float>] = []
-        var normals: [SIMD3<Float>] = []
-        for _ in 0 ..< blocks {
-            let count = try reader.readNIFShortCount(stride: 24, label: "decal vector")
-            points += try (0 ..< count).map { _ in try reader.readVector3() }
-            normals += try (0 ..< count).map { _ in try reader.readVector3() }
+        /// An `NiFloatExtraData` value, then blocks of points with their normals.
+        private static func decalPlacement(_ reader: inout BinaryReader) throws -> NIFExtraData
+            .Value
+        {
+            let value = try reader.readFloat32()
+            let blocks = try reader.readNIFShortCount(stride: 2, label: "decal vector block")
+            var points: [SIMD3<Float>] = []
+            var normals: [SIMD3<Float>] = []
+            for _ in 0 ..< blocks {
+                let count = try reader.readNIFShortCount(stride: 24, label: "decal vector")
+                points += try (0 ..< count).map { _ in try reader.readVector3() }
+                normals += try (0 ..< count).map { _ in try reader.readVector3() }
+            }
+            return .decalPlacement(NIFDecalPlacement(
+                value: value,
+                points: points,
+                normals: normals
+            ))
         }
-        return .decalPlacement(NIFDecalPlacement(value: value, points: points, normals: normals))
     }
 }
 

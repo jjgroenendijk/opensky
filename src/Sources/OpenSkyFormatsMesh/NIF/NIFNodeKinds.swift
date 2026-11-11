@@ -67,12 +67,15 @@ nonisolated public struct NIFMasterParticleSystem: Sendable {
 }
 
 nonisolated extension NIFBlockDecoders {
-    static let nodes: [String: Decode] = [
-        NIFValueNode.typeName: { try NIFValueNode(reader: &$0, header: $1) },
-        NIFRangeNode.blastType: { try NIFRangeNode(reader: &$0, header: $1) },
-        NIFRangeNode.damageStageType: { try NIFRangeNode(reader: &$0, header: $1) },
-        NIFMasterParticleSystem.typeName: { try NIFMasterParticleSystem(reader: &$0, header: $1) }
-    ]
+    enum Nodes {
+        static let nodes: [String: Decode] = [
+            NIFValueNode.typeName: { try NIFValueNode(reader: &$0, header: $1) },
+            NIFRangeNode.blastType: { try NIFRangeNode(reader: &$0, header: $1) },
+            NIFRangeNode.damageStageType: { try NIFRangeNode(reader: &$0, header: $1) },
+            NIFMasterParticleSystem
+                .typeName: { try NIFMasterParticleSystem(reader: &$0, header: $1) }
+        ]
+    }
 }
 
 /// One add-on node: the `ADDN` index and where it sits in the model.

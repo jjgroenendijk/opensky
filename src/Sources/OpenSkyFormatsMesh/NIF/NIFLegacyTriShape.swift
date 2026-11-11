@@ -130,15 +130,17 @@ nonisolated extension NIFTriShape {
 }
 
 nonisolated extension NIFBlockDecoders {
-    static let geometry: [String: Decode] = [
-        NIFLegacyTriShape.typeName: {
-            try NIFLegacyTriShape(reader: &$0, header: $1, isLOD: false)
-        },
-        NIFLegacyTriShape.lodTypeName: {
-            try NIFLegacyTriShape(reader: &$0, header: $1, isLOD: true)
-        },
-        NIFTriShapeData.typeName: { reader, _ in try NIFTriShapeData(reader: &reader) }
-    ]
+    enum Geometry {
+        static let geometry: [String: Decode] = [
+            NIFLegacyTriShape.typeName: {
+                try NIFLegacyTriShape(reader: &$0, header: $1, isLOD: false)
+            },
+            NIFLegacyTriShape.lodTypeName: {
+                try NIFLegacyTriShape(reader: &$0, header: $1, isLOD: true)
+            },
+            NIFTriShapeData.typeName: { reader, _ in try NIFTriShapeData(reader: &reader) }
+        ]
+    }
 }
 
 nonisolated extension NIFFile {

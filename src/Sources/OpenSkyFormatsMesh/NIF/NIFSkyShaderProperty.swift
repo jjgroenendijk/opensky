@@ -68,7 +68,9 @@ nonisolated struct NIFSkyShaderProperty: Equatable, Sendable {
 }
 
 nonisolated extension NIFBlockDecoders {
-    static let shaders: [String: Decode] = [
-        NIFSkyShaderProperty.typeName: { try NIFSkyShaderProperty(reader: &$0, header: $1) }
-    ]
+    enum Shaders {
+        static let shaders: [String: Decode] = [
+            NIFSkyShaderProperty.typeName: { try NIFSkyShaderProperty(reader: &$0, header: $1) }
+        ]
+    }
 }

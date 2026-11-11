@@ -39,7 +39,27 @@ nonisolated public enum HKBClassRegistry: Sendable {
     ]
 
     public static let decoders: [String: Decoder] = Dictionary(
-        uniqueKeysWithValues: [
+        uniqueKeysWithValues: Graph.entries + Modifiers.entries + BethesdaModifiers.entries
+            + Physics.entries
+    )
+
+    public static func decoder(for className: String) -> Decoder? {
+        decoders[className]
+    }
+
+    /// Decodes the object at `target`, looking its class up in the packfile's
+    /// inventory. Nil when the location registers no class, when no decoder
+    /// exists for it, or when the object's bytes are unreadable.
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+        -> (any HKBClass)?
+    {
+        guard let className = graph.className(at: target) else { return nil }
+        return decoders[className]?(target, graph)
+    }
+
+    /// The graph nodes: bindings, state machines, generators, and conditions.
+    private enum Graph {
+        static let entries: [(String, Decoder)] = [
             // Bindable leaves and payloads.
             entry(HKBVariableBindingSet.decode),
             entry(HKBBoneWeightArray.decode),
@@ -64,7 +84,13 @@ nonisolated public enum HKBClassRegistry: Sendable {
             entry(HKBExpressionCondition.decode),
             entry(HKBStringCondition.decode),
             entry(HKBExpressionDataArray.decode),
-            entry(HKBEventRangeDataArray.decode),
+            entry(HKBEventRangeDataArray.decode)
+        ]
+    }
+
+    /// The stock modifiers and the Bethesda generators.
+    private enum Modifiers {
+        static let entries: [(String, Decoder)] = [
             // Stock modifiers.
             entry(HKBModifierList.decode),
             entry(HKBEventDrivenModifier.decode),
@@ -88,7 +114,13 @@ nonisolated public enum HKBClassRegistry: Sendable {
             entry(BSBoneSwitchGenerator.decode),
             entry(BSBoneSwitchGeneratorBoneData.decode),
             entry(BSCyclicBlendTransitionGenerator.decode),
-            entry(BSOffsetAnimationGenerator.decode),
+            entry(BSOffsetAnimationGenerator.decode)
+        ]
+    }
+
+    /// The Bethesda modifiers and the character helpers.
+    private enum BethesdaModifiers {
+        static let entries: [(String, Decoder)] = [
             // Bethesda modifiers.
             entry(BSIsActiveModifier.decode),
             entry(BSEventEveryNEventsModifier.decode),
@@ -110,7 +142,13 @@ nonisolated public enum HKBClassRegistry: Sendable {
             entry(BGSGamebryoSequenceGenerator.decode),
             // Character helpers.
             entry(HKBMirroredSkeletonInfo.decode),
-            entry(HKBFootIkDriverInfo.decode),
+            entry(HKBFootIkDriverInfo.decode)
+        ]
+    }
+
+    /// Ragdoll and physics classes, resources, and animation extras.
+    private enum Physics {
+        static let entries: [(String, Decoder)] = [
             // Ragdoll and physics (docs/formats/hkx-physics.md).
             entry(HKARagdollInstance.decode),
             entry(HKASkeletonMapper.decode),
@@ -138,19 +176,5 @@ nonisolated public enum HKBClassRegistry: Sendable {
             entry(HKAInterleavedUncompressedAnimation.decode),
             entry(HKAAnnotationTrackObject.decode)
         ]
-    )
-
-    public static func decoder(for className: String) -> Decoder? {
-        decoders[className]
-    }
-
-    /// Decodes the object at `target`, looking its class up in the packfile's
-    /// inventory. Nil when the location registers no class, when no decoder
-    /// exists for it, or when the object's bytes are unreadable.
-    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
-        -> (any HKBClass)?
-    {
-        guard let className = graph.className(at: target) else { return nil }
-        return decoders[className]?(target, graph)
     }
 }

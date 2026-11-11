@@ -108,30 +108,41 @@ nonisolated public enum RecordTextDump: Sendable {
         // Inventory families live in RecordTextDumpItems.swift so this switch
         // stays inside the strict-lint complexity cap.
         default:
-            try magicSummary(
+            try Magic.magicSummary(
                 record: record,
                 localized: localized,
                 lists: lists,
                 magicContext: magicContext
             )
-                ?? referenceRecordSummary(
+                ?? References.referenceRecordSummary(
                     record: record,
                     localized: localized,
                     keywordContext: lists.keyword,
                     formListContext: lists.formList
                 )
-                ?? itemSummary(
-                    record: record,
-                    localized: localized,
-                    keywordContext: lists.keyword,
-                    magicContext: magicContext
-                )
-                ?? progressionSummary(record, localized, magicContext)
-                ?? factionSummary(record, localized) ?? relationshipSummary(record)
-                ?? craftingSummary(record, localized, lists.keyword)
-                ?? trapSummary(record, localized) ?? storySummary(record)
-                ?? characterSummary(record, localized)
+                ?? inventorySummary(record, localized, lists, magicContext)
+                ?? Progression.progressionSummary(record, localized, magicContext)
+                ?? Factions.factionSummary(record, localized) ?? Relationships
+                .relationshipSummary(record)
+                ?? Crafting.craftingSummary(record, localized, lists.keyword)
+                ?? Traps.trapSummary(record, localized) ?? Story.storySummary(record)
+                ?? Characters.characterSummary(record, localized)
         }
+    }
+
+    private static func inventorySummary(
+        _ record: ESMRecord,
+        _ localized: Bool,
+        _ lists: (keyword: KeywordContext?, formList: FormListContext?),
+        _ magicContext: MagicContext?
+    ) throws -> String? {
+        let item = try Items.itemSummary(
+            record: record,
+            localized: localized,
+            keywordContext: lists.keyword,
+            magicContext: magicContext
+        )
+        return try item ?? MinorItems.minorItemSummary(record, localized, lists.keyword)
     }
 
     private static func worldSummary(record: ESMRecord, localized: Bool) throws -> String? {
@@ -140,7 +151,7 @@ nonisolated public enum RecordTextDump: Sendable {
         return "decoded WRLD: editorID \(world.editorID ?? "-"), "
             + "parent \(parent), "
             + "flags 0x\(String(world.flags.rawValue, radix: 16))"
-            + (mapDataText(world).map { "\n" + $0 } ?? "")
+            + (Chargen.mapDataText(world).map { "\n" + $0 } ?? "")
     }
 
     private static func cellSummary(record: ESMRecord, localized: Bool) throws -> String? {
@@ -165,8 +176,8 @@ nonisolated public enum RecordTextDump: Sendable {
         return "decoded REFR: base \(ref.base), position "
             + "\(vector(ref.placement.position)), rotation "
             + "\(vector(ref.placement.rotation)), scale \(ref.scale)"
-            + teleport + lockText(ref.lock) + enableParentText(ref.enableParent)
-            + markerText(ref.mapMarker)
+            + teleport + Traps.lockText(ref.lock) + Traps.enableParentText(ref.enableParent)
+            + Chargen.markerText(ref.mapMarker)
     }
 
     static func vector(_ value: SIMD3<Float>) -> String {

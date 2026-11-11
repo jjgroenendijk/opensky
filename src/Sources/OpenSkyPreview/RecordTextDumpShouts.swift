@@ -8,162 +8,165 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated extension RecordTextDump {
-    static func shoutFamilySummary(
-        record: ESMRecord,
-        localized: Bool,
-        magicContext: MagicContext?
-    ) throws -> String? {
-        switch record.type {
-        case "SHOU": try shoutSummary(record, localized, magicContext)
-        case "WOOP": try wordOfPowerSummary(record, localized)
-        case "LVSP": try leveledSpellSummary(record, magicContext)
-        case "DUAL": try dualCastSummary(record)
-        case "EQUP": try equipSlotSummary(record, magicContext)
-        default: nil
-        }
-    }
-
-    /// SHOU: the header links plus the SNAM word run. Without a magic context
-    /// the words still print, by raw FormID, because the names live in the
-    /// WOOP and SPEL records the context indexes.
-    private static func shoutSummary(
-        _ record: ESMRecord,
-        _ localized: Bool,
-        _ context: MagicContext?
-    ) throws -> String? {
-        let shout = try Shout(record: record, localized: localized)
-        var line = "decoded SHOU: editorID \(shout.editorID ?? "-"), "
-            + "name \(displayText(shout.name)), "
-            + "description \(displayText(shout.description)), "
-            + "menu display object \(shout.menuDisplayObject?.description ?? "NULL"), "
-            + "equip type \(shout.equipType?.description ?? "NULL"), "
-            + "\(shout.words.count) words, skipped \(shout.skipped.total)"
-        let rows: [String] = if let context {
-            context.shouts
-                .join(shout: shout, sourcePlugin: context.sourcePlugin, spells: context.spells)
-                .map { word in
-                    unsafe String(
-                        format: "    %@ — spell %@, recovery %.2fs",
-                        word.wordName,
-                        word.spellName,
-                        word.entry.recoveryTime
-                    )
-                }
-        } else {
-            shout.words.map { entry in
-                unsafe String(
-                    format: "    %@ — spell %@, recovery %.2fs",
-                    entry.word?.description ?? "NULL",
-                    entry.spell?.description ?? "NULL",
-                    entry.recoveryTime
-                )
+    enum Shouts {
+        static func shoutFamilySummary(
+            record: ESMRecord,
+            localized: Bool,
+            magicContext: MagicContext?
+        ) throws -> String? {
+            switch record.type {
+            case "SHOU": try shoutSummary(record, localized, magicContext)
+            case "WOOP": try wordOfPowerSummary(record, localized)
+            case "LVSP": try leveledSpellSummary(record, magicContext)
+            case "DUAL": try dualCastSummary(record)
+            case "EQUP": try equipSlotSummary(record, magicContext)
+            default: nil
             }
         }
-        line += "\n  words (\(rows.count)):"
-        return ([line] + rows).joined(separator: "\n")
-    }
 
-    private static func wordOfPowerSummary(
-        _ record: ESMRecord,
-        _ localized: Bool
-    ) throws -> String? {
-        let word = try WordOfPower(record: record, localized: localized)
-        return "decoded WOOP: editorID \(word.editorID ?? "-"), "
-            + "word \(displayText(word.name)), "
-            + "translation \(displayText(word.translation)), "
-            + "skipped \(word.skipped.total)"
-    }
+        /// SHOU: the header links plus the SNAM word run. Without a magic context
+        /// the words still print, by raw FormID, because the names live in the
+        /// WOOP and SPEL records the context indexes.
+        private static func shoutSummary(
+            _ record: ESMRecord,
+            _ localized: Bool,
+            _ context: MagicContext?
+        ) throws -> String? {
+            let shout = try Shout(record: record, localized: localized)
+            var line = "decoded SHOU: editorID \(shout.editorID ?? "-"), "
+                + "name \(displayText(shout.name)), "
+                + "description \(displayText(shout.description)), "
+                + "menu display object \(shout.menuDisplayObject?.description ?? "NULL"), "
+                + "equip type \(shout.equipType?.description ?? "NULL"), "
+                + "\(shout.words.count) words, skipped \(shout.skipped.total)"
+            let rows: [String] = if let context {
+                context.shouts
+                    .join(shout: shout, sourcePlugin: context.sourcePlugin, spells: context.spells)
+                    .map { word in
+                        unsafe String(
+                            format: "    %@ — spell %@, recovery %.2fs",
+                            word.wordName,
+                            word.spellName,
+                            word.entry.recoveryTime
+                        )
+                    }
+            } else {
+                shout.words.map { entry in
+                    unsafe String(
+                        format: "    %@ — spell %@, recovery %.2fs",
+                        entry.word?.description ?? "NULL",
+                        entry.spell?.description ?? "NULL",
+                        entry.recoveryTime
+                    )
+                }
+            }
+            line += "\n  words (\(rows.count)):"
+            return ([line] + rows).joined(separator: "\n")
+        }
 
-    /// LVSP through the same leveled-list decoder LVLN and LVLI use; the
-    /// entries name a SPEL or another LVSP, so the spell store names them.
-    private static func leveledSpellSummary(
-        _ record: ESMRecord,
-        _ context: MagicContext?
-    ) throws -> String? {
-        let list = try LeveledList(record: record)
-        let flagsText = unsafe String(format: "%02X", list.flags.rawValue)
-        let line = "decoded LVSP: editorID \(list.editorID ?? "-"), "
-            + "chance none \(list.chanceNone)%, flags 0x"
-            + flagsText
-            + ", \(list.entries.count) entries"
-        let rows = list.entries.map { entry in
-            let name = context.map {
-                $0.spells.displayString(for: entry.reference, fromPlugin: $0.sourcePlugin)
-            } ?? entry.reference.description
-            return "    level \(entry.level) — \(name) × \(entry.count)"
+        private static func wordOfPowerSummary(
+            _ record: ESMRecord,
+            _ localized: Bool
+        ) throws -> String? {
+            let word = try WordOfPower(record: record, localized: localized)
+            return "decoded WOOP: editorID \(word.editorID ?? "-"), "
+                + "word \(displayText(word.name)), "
+                + "translation \(displayText(word.translation)), "
+                + "skipped \(word.skipped.total)"
         }
-        return ([line + "\n  entries (\(rows.count)):"] + rows).joined(separator: "\n")
-    }
 
-    /// DUAL: the five art links stay raw. The dump has no store for PROJ, EXPL,
-    /// EFSH, ARTO, or IPDS, and a FormID beats an invented name.
-    private static func dualCastSummary(_ record: ESMRecord) throws -> String? {
-        let dual = try DualCastData(record: record)
-        var line = "decoded DUAL: editorID \(dual.editorID ?? "-")"
-        guard let art = dual.art else {
-            return line + ", DATA malformed, skipped \(dual.skipped.total)"
+        /// LVSP through the same leveled-list decoder LVLN and LVLI use; the
+        /// entries name a SPEL or another LVSP, so the spell store names them.
+        private static func leveledSpellSummary(
+            _ record: ESMRecord,
+            _ context: MagicContext?
+        ) throws -> String? {
+            let list = try LeveledList(record: record)
+            let flagsText = unsafe String(format: "%02X", list.flags.rawValue)
+            let line = "decoded LVSP: editorID \(list.editorID ?? "-"), "
+                + "chance none \(list.chanceNone)%, flags 0x"
+                + flagsText
+                + ", \(list.entries.count) entries"
+            let rows = list.entries.map { entry in
+                let name = context.map {
+                    $0.spells.displayString(for: entry.reference, fromPlugin: $0.sourcePlugin)
+                } ?? entry.reference.description
+                return "    level \(entry.level) — \(name) × \(entry.count)"
+            }
+            return ([line + "\n  entries (\(rows.count)):"] + rows).joined(separator: "\n")
         }
-        line += ", projectile \(art.projectile?.description ?? "NULL")"
-        line += ", explosion \(art.explosion?.description ?? "NULL")"
-        line += ", effect shader \(art.effectShader?.description ?? "NULL")"
-        line += ", hit effect art \(art.hitEffectArt?.description ?? "NULL")"
-        line += ", impact data set \(art.impactDataSet?.description ?? "NULL")"
-        line += ", inherit scale [\(inheritScaleText(art.inheritScale))]"
-        return line + ", skipped \(dual.skipped.total)"
-    }
 
-    /// EQUP: the parent slots by name and the hands the slot resolves to,
-    /// which is exactly what `EquipmentCatalog` reads it for.
-    private static func equipSlotSummary(
-        _ record: ESMRecord,
-        _ context: MagicContext?
-    ) throws -> String? {
-        let slot = try EquipSlot(record: record)
-        let parents = slot.parents.map { parent in
-            context.map { $0.equipSlots.displayString(for: parent, fromPlugin: $0.sourcePlugin) }
-                ?? parent.description
+        /// DUAL: the five art links stay raw. The dump has no store for PROJ, EXPL,
+        /// EFSH, ARTO, or IPDS, and a FormID beats an invented name.
+        private static func dualCastSummary(_ record: ESMRecord) throws -> String? {
+            let dual = try DualCastData(record: record)
+            var line = "decoded DUAL: editorID \(dual.editorID ?? "-")"
+            guard let art = dual.art else {
+                return line + ", DATA malformed, skipped \(dual.skipped.total)"
+            }
+            line += ", projectile \(art.projectile?.description ?? "NULL")"
+            line += ", explosion \(art.explosion?.description ?? "NULL")"
+            line += ", effect shader \(art.effectShader?.description ?? "NULL")"
+            line += ", hit effect art \(art.hitEffectArt?.description ?? "NULL")"
+            line += ", impact data set \(art.impactDataSet?.description ?? "NULL")"
+            line += ", inherit scale [\(inheritScaleText(art.inheritScale))]"
+            return line + ", skipped \(dual.skipped.total)"
         }
-        var line = "decoded EQUP: editorID \(slot.editorID ?? "-"), "
-            + "parents [\(parents.joined(separator: ", "))], "
-            + "use all parents \(slot.usesAllParents)"
-        if let context {
-            let hands = context.equipSlots.hands(
-                of: slot.formID,
-                fromPlugin: context.sourcePlugin
-            ) ?? EquipSlotHands.hands(of: slot) { _ in nil }
-            line += ", hands \(handSlotsText(hands))"
-        }
-        return line + ", skipped \(slot.skipped.total)"
-    }
 
-    private static func inheritScaleText(_ scale: DualCastData.InheritScale) -> String {
-        var names: [String] = []
-        if scale.contains(.hitEffectArt) {
-            names.append("hit effect art")
+        /// EQUP: the parent slots by name and the hands the slot resolves to,
+        /// which is exactly what `EquipmentCatalog` reads it for.
+        private static func equipSlotSummary(
+            _ record: ESMRecord,
+            _ context: MagicContext?
+        ) throws -> String? {
+            let slot = try EquipSlot(record: record)
+            let parents = slot.parents.map { parent in
+                context
+                    .map { $0.equipSlots.displayString(for: parent, fromPlugin: $0.sourcePlugin) }
+                    ?? parent.description
+            }
+            var line = "decoded EQUP: editorID \(slot.editorID ?? "-"), "
+                + "parents [\(parents.joined(separator: ", "))], "
+                + "use all parents \(slot.usesAllParents)"
+            if let context {
+                let hands = context.equipSlots.hands(
+                    of: slot.formID,
+                    fromPlugin: context.sourcePlugin
+                ) ?? EquipSlotHands.hands(of: slot) { _ in nil }
+                line += ", hands \(handSlotsText(hands))"
+            }
+            return line + ", skipped \(slot.skipped.total)"
         }
-        if scale.contains(.projectile) {
-            names.append("projectile")
-        }
-        if scale.contains(.explosion) {
-            names.append("explosion")
-        }
-        return names.isEmpty ? "none" : names.joined(separator: ", ")
-    }
 
-    static func handSlotsText(_ hands: HandSlots) -> String {
-        switch hands {
-        case .bothHands: "both"
-        case .rightHand: "right"
-        case .leftHand: "left"
-        default: "none"
+        private static func inheritScaleText(_ scale: DualCastData.InheritScale) -> String {
+            var names: [String] = []
+            if scale.contains(.hitEffectArt) {
+                names.append("hit effect art")
+            }
+            if scale.contains(.projectile) {
+                names.append("projectile")
+            }
+            if scale.contains(.explosion) {
+                names.append("explosion")
+            }
+            return names.isEmpty ? "none" : names.joined(separator: ", ")
         }
-    }
 
-    static func displayText(_ value: LString?) -> String {
-        switch value {
-        case let .inline(text): "\"\(text)\""
-        case let .tableID(id), let .pluginTableID(id, _): "string #\(id)"
-        case nil: "-"
+        static func handSlotsText(_ hands: HandSlots) -> String {
+            switch hands {
+            case .bothHands: "both"
+            case .rightHand: "right"
+            case .leftHand: "left"
+            default: "none"
+            }
+        }
+
+        static func displayText(_ value: LString?) -> String {
+            switch value {
+            case let .inline(text): "\"\(text)\""
+            case let .tableID(id), let .pluginTableID(id, _): "string #\(id)"
+            case nil: "-"
+            }
         }
     }
 }

@@ -136,43 +136,7 @@ extension GapsGatherer {
     }
 
     func behavior() -> [GapSection] {
-        let sweep = BehaviorGapSweep.run(fileSystem: fileSystem)
-        let tally = sweep.tally
-        let missing = sweep.foldersWithoutSkeleton
-        let note = "\(sweep.graphCount) graphs, \(sweep.eventsFired) events fired, "
-            + "\(sweep.failures.count) files failed, "
-            + "no skeleton: \(missing.isEmpty ? "none" : missing.joined(separator: ", "))"
-        let bindings = tally.rankedUnappliedBindings.map { entry in
-            (name: "binding not applied: \(entry.name)", count: entry.count)
-        }
-        let clips = tally.rankedUnresolvedClips.map { entry in
-            (name: "clip not found: \(entry.name)", count: entry.count)
-        }
-        let features = tally.rankedFeatureGaps + bindings + clips
-        let unreached = sweep.unreachedClasses.map { entry in
-            (name: "not reached: \(entry.name)", count: entry.count)
-        }
-        return [
-            GapSection(
-                title: "Behavior node classes",
-                unit: "node classes",
-                done: sweep.doneClasses.count,
-                left: Self.ranked(sweep.leftClasses + unreached),
-                usesUnit: "graph nodes",
-                notes: [
-                    note, "done means reached by the sweep with no gap noted",
-                    "not reached: no update reached it, so whether it works is unknown"
-                ]
-            ),
-            GapSection(
-                title: "Behavior features ignored",
-                unit: "features",
-                done: nil,
-                left: Self.ranked(features),
-                usesUnit: "hits",
-                notes: tally.rankedGapTexts.map { "\($0.count)x \($0.name)" }
-            )
-        ]
+        AnimationSections(gatherer: self).behavior()
     }
 
     func swf() -> [GapSection] {

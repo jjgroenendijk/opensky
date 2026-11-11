@@ -71,95 +71,7 @@ extension GapsGatherer {
     }
 
     func animations() -> [GapSection] {
-        var census = HKXGapCensus()
-        let unread = forEachFile(suffixes: [".hkx"]) { census.record(data: $1, path: $0) }
-        let handledEvents = engineHandledEvents()
-        let footsteps = footstepTags()
-        let scripts = scriptAnimationCensus()
-        let ownHandled = handledEvents.union(footsteps).union(census.hearing.heardEvents())
-            .union(scripts.registeredEvents).union(effectGraphEvents(census.hearing))
-        // A paired half's `2_` and `NPC` events act without the prefix.
-        let handled = ownHandled.union(ownHandled.flatMap { name in
-            PairedAnimationCore.eventPrefixes.map { $0.lowercased() + name }
-        })
-        let boundVariables = Set(
-            (CombatGraphNames.variables + CombatGraphNames.loopVariables
-                + ArcheryGraphNames.variables
-                + LocomotionGraphNames.variables + LocomotionGraphNames.perspectiveVariables
-                + ActorStateGraphNames.inputs + ActorStateGraphNames.outputs
-                + ActorGraphState.allCases.map(\.variableName) + perkGraphVariables()
-                + DragonFlightGraphNames.variables)
-                .map { $0.lowercased() }
-        )
-        let note = "\(census.fileCount) .hkx files, \(unread) did not read, "
-            + "\(census.failures.total) did not decode"
-        return [
-            GapSection(
-                title: "Havok classes", unit: "classes", counts: census.classes,
-                handled: HKXGapCensus.decoded.contains, usesUnit: "objects",
-                notes: [note] + GapCounts.ranked(census.failures.uses).prefix(5)
-                    .map { "\($0.count) files: \($0.name)" }
-            ),
-            GapSection(
-                title: "Animation events", unit: "events", counts: census.annotations,
-                handled: {
-                    handled.contains($0.lowercased())
-                        || FootstepStore.isUnanswered(tag: $0, known: footsteps)
-                },
-                usesUnit: "clips",
-                notes: [
-                    "done means engine code reacts to it, a script registers for it, "
-                        + "a graph of the clip's own folder or of an effect art waits for it, "
-                        + "or the game was seen to ignore it"
-                ]
-            ),
-            GapSection(
-                title: "Behavior graph variables", unit: "variables",
-                counts: census.graphVariables,
-                handled: { name in
-                    boundVariables.contains(name.lowercased())
-                        || scripts.writtenVariables.contains(name.lowercased())
-                        || Self.role(of: name, census, scripts: scripts) != .engineInput
-                },
-                usesUnit: "graphs",
-                notes: Self.variableNotes(census, scripts: scripts, boundVariables: boundVariables)
-            )
-        ]
-    }
-
-    /// How the done variables split: set by the engine, or one of the other roles.
-    private static func variableNotes(
-        _ census: HKXGapCensus, scripts: PapyrusAnimationCensus, boundVariables: Set<String>
-    ) -> [String] {
-        var counts: [String: Int] = [:]
-        for name in census.graphVariables.uses.keys {
-            let kind = role(of: name, census, scripts: scripts)
-            if boundVariables.contains(name.lowercased()) {
-                counts["set by the engine", default: 0] += 1
-            } else if scripts.writtenVariables.contains(name.lowercased()) {
-                counts["set by scripts", default: 0] += 1
-            } else if kind != .engineInput {
-                counts[kind.rawValue, default: 0] += 1
-            }
-        }
-        let order = ["set by the engine", "set by scripts"] + BehaviorVariableRole.allCases
-            .filter { $0 != .engineInput }.map(\.rawValue)
-        return [
-            "done means engine code or a script sets it, or the engine need not: the graph "
-                + "computes it, authors it, or nothing reads it",
-            order.map { "\(counts[$0] ?? 0) \($0)" }.joined(separator: ", ")
-        ]
-    }
-
-    private static func role(
-        of name: String, _ census: HKXGapCensus, scripts: PapyrusAnimationCensus
-    ) -> BehaviorVariableRole {
-        BehaviorVariableRoles.role(
-            of: name,
-            uses: census.variableUses[name] ?? [],
-            isAuthored: census.authoredVariables.contains(name),
-            isScriptRead: scripts.readVariables.contains(name.lowercased())
-        )
+        AnimationSections(gatherer: self).sections()
     }
 
     func audio() -> [GapSection] {
@@ -222,73 +134,227 @@ extension GapsGatherer {
             return "fails: " + GapCounts.failureKind("\(error)")
         }
     }
+}
 
-    /// The graph variables perk effects set, which the combat runtime writes.
-    private func perkGraphVariables() -> [String] {
-        var skipped = SkippedRecords()
-        let perks = (try? requirePlugins().decodeRecords(of: "PERK", skipped: &skipped) {
-            try Perk(record: $0, localized: $1)
-        }) ?? []
-        return Array(PerkGapCensus(perks: perks).graphVariables)
-    }
+extension GapsGatherer {
+    /// The Havok classes, animation events, and graph variables the install's clips use.
+    struct AnimationSections {
+        let gatherer: GapsGatherer
 
-    /// The animation events a script registers for; `OnAnimationEvent` handles them.
-    private func scriptAnimationCensus() -> PapyrusAnimationCensus {
-        let loader = PexScriptLoader(fileSystem: fileSystem)
-        let files = loader.scriptPaths().compactMap { try? loader.load($0) }
-        return PapyrusAnimationCensus(files: files)
-    }
-
-    /// The events that take an animation object off its actor (`ANIO` `BNAM`).
-    private func animationObjectUnloadEvents() -> [String] {
-        var skipped = SkippedRecords()
-        let objects = (try? requirePlugins().decodeRecords(of: "ANIO", skipped: &skipped) {
-            try AnimatedObject(record: $0)
-        }) ?? []
-        return objects.compactMap(\.unloadEvent)
-    }
-
-    /// The events the graphs of `ARTO` and `ARMA` models wait for. An actor's events
-    /// reach the graphs of the effects and armour addons on it (docs/engine/effect-graphs.md).
-    private func effectGraphEvents(_ hearing: HKXAnnotationHearing) -> Set<String> {
-        var skipped = SkippedRecords()
-        let arts = (try? requirePlugins().decodeRecords(of: "ARTO", skipped: &skipped) {
-            try ArtObject(record: $0)
-        }) ?? []
-        let addons = (try? requirePlugins().decodeRecords(of: "ARMA", skipped: &skipped) {
-            try ArmorAddon(record: $0)
-        }) ?? []
-        let models = arts.compactMap(\.modelPath)
-            + addons.flatMap { [$0.maleModelPath, $0.femaleModelPath].compactMap(\.self) }
-        var projects = Set<String>()
-        for model in Set(models.map { $0.lowercased() }) {
-            let path = model.hasPrefix("meshes\\") ? model : "meshes\\" + model
-            guard
-                let data = try? fileSystem.contents(forPath: path),
-                let file = try? NIFFile(data: data),
-                let project = NIFBehaviorGraphExtraData.projectPath(in: file)
-            else { continue }
-            projects.insert(HKXAnnotationHearing.project(of: project))
+        func sections() -> [GapSection] {
+            var census = HKXGapCensus()
+            let unread = gatherer
+                .forEachFile(suffixes: [".hkx"]) { census.record(data: $1, path: $0) }
+            let handledEvents = engineHandledEvents()
+            let footsteps = footstepTags()
+            let scripts = scriptAnimationCensus()
+            let ownHandled = handledEvents.union(footsteps).union(census.hearing.heardEvents())
+                .union(scripts.registeredEvents).union(effectGraphEvents(census.hearing))
+            // A paired half's `2_` and `NPC` events act without the prefix.
+            let handled = ownHandled.union(ownHandled.flatMap { name in
+                PairedAnimationCore.eventPrefixes.map { $0.lowercased() + name }
+            })
+            let boundVariables = Set(
+                (CombatGraphNames.variables + CombatGraphNames.loopVariables
+                    + ArcheryGraphNames.variables
+                    + LocomotionGraphNames.variables + LocomotionGraphNames.perspectiveVariables
+                    + ActorStateGraphNames.inputs + ActorStateGraphNames.outputs
+                    + ActorGraphState.allCases.map(\.variableName) + perkGraphVariables()
+                    + DragonFlightGraphNames.variables)
+                    .map { $0.lowercased() }
+            )
+            let note = "\(census.fileCount) .hkx files, \(unread) did not read, "
+                + "\(census.failures.total) did not decode"
+            return [
+                GapSection(
+                    title: "Havok classes", unit: "classes", counts: census.classes,
+                    handled: HKXGapCensus.decoded.contains, usesUnit: "objects",
+                    notes: [note] + GapCounts.ranked(census.failures.uses).prefix(5)
+                        .map { "\($0.count) files: \($0.name)" }
+                ),
+                GapSection(
+                    title: "Animation events", unit: "events", counts: census.annotations,
+                    handled: {
+                        handled.contains($0.lowercased())
+                            || FootstepStore.isUnanswered(tag: $0, known: footsteps)
+                    },
+                    usesUnit: "clips",
+                    notes: [
+                        "done means engine code reacts to it, a script registers for it, "
+                            + "a graph of the clip's own folder or of an effect art waits for it, "
+                            + "or the game was seen to ignore it"
+                    ]
+                ),
+                GapSection(
+                    title: "Behavior graph variables", unit: "variables",
+                    counts: census.graphVariables,
+                    handled: { name in
+                        boundVariables.contains(name.lowercased())
+                            || scripts.writtenVariables.contains(name.lowercased())
+                            || Self.role(of: name, census, scripts: scripts) != .engineInput
+                    },
+                    usesUnit: "graphs",
+                    notes: Self.variableNotes(
+                        census,
+                        scripts: scripts,
+                        boundVariables: boundVariables
+                    )
+                )
+            ]
         }
-        return hearing.listenedEvents(inProjects: projects)
-    }
 
-    /// Footstep tags (`FSTP` `ANAM`): annotation events the footstep sounds answer.
-    /// The events some OpenSky system reacts to, or the game was seen to ignore.
-    private func engineHandledEvents() -> Set<String> {
-        Set(
-            (CombatGraphNames.observedEvents + ArcheryGraphNames.observedEvents
-                + ShoutGraphNames.observedEvents + SpellFireGraphNames.observedEvents
-                + RagdollGraphNames.handOffEvents + AnimationEventAction.handledEvents
-                + AnimationObjectEvent.handledEvents + animationObjectUnloadEvents()
-                + DragonFlightGraphNames.observedEvents + PairedAnimationCore.endEvents
-                + IgnoredAnimationEvents.names)
-                .map { $0.lowercased() }
-        )
-    }
+        /// How the done variables split: set by the engine, or one of the other roles.
+        private static func variableNotes(
+            _ census: HKXGapCensus, scripts: PapyrusAnimationCensus, boundVariables: Set<String>
+        ) -> [String] {
+            var counts: [String: Int] = [:]
+            for name in census.graphVariables.uses.keys {
+                let kind = role(of: name, census, scripts: scripts)
+                if boundVariables.contains(name.lowercased()) {
+                    counts["set by the engine", default: 0] += 1
+                } else if scripts.writtenVariables.contains(name.lowercased()) {
+                    counts["set by scripts", default: 0] += 1
+                } else if kind != .engineInput {
+                    counts[kind.rawValue, default: 0] += 1
+                }
+            }
+            let order = ["set by the engine", "set by scripts"] + BehaviorVariableRole.allCases
+                .filter { $0 != .engineInput }.map(\.rawValue)
+            return [
+                "done means engine code or a script sets it, or the engine need not: the graph "
+                    + "computes it, authors it, or nothing reads it",
+                order.map { "\(counts[$0] ?? 0) \($0)" }.joined(separator: ", ")
+            ]
+        }
 
-    private func footstepTags() -> Set<String> {
-        let store = FootstepStore(loadOrder: plugins)
-        return Set(store.footsteps.values.compactMap { $0.tag?.lowercased() })
+        private static func role(
+            of name: String, _ census: HKXGapCensus, scripts: PapyrusAnimationCensus
+        ) -> BehaviorVariableRole {
+            BehaviorVariableRoles.role(
+                of: name,
+                uses: census.variableUses[name] ?? [],
+                isAuthored: census.authoredVariables.contains(name),
+                isScriptRead: scripts.readVariables.contains(name.lowercased())
+            )
+        }
+
+        /// The graph variables perk effects set, which the combat runtime writes.
+        private func perkGraphVariables() -> [String] {
+            var skipped = SkippedRecords()
+            let perks = (try? gatherer.requirePlugins().decodeRecords(
+                of: "PERK",
+                skipped: &skipped
+            ) {
+                try Perk(record: $0, localized: $1)
+            }) ?? []
+            return Array(PerkGapCensus(perks: perks).graphVariables)
+        }
+
+        /// The animation events a script registers for; `OnAnimationEvent` handles them.
+        private func scriptAnimationCensus() -> PapyrusAnimationCensus {
+            let loader = PexScriptLoader(fileSystem: gatherer.fileSystem)
+            let files = loader.scriptPaths().compactMap { try? loader.load($0) }
+            return PapyrusAnimationCensus(files: files)
+        }
+
+        /// The events that take an animation object off its actor (`ANIO` `BNAM`).
+        private func animationObjectUnloadEvents() -> [String] {
+            var skipped = SkippedRecords()
+            let objects = (try? gatherer.requirePlugins().decodeRecords(
+                of: "ANIO",
+                skipped: &skipped
+            ) {
+                try AnimatedObject(record: $0)
+            }) ?? []
+            return objects.compactMap(\.unloadEvent)
+        }
+
+        /// The events the graphs of `ARTO` and `ARMA` models wait for. An actor's events
+        /// reach the graphs of the effects and armour addons on it (docs/engine/effect-graphs.md).
+        private func effectGraphEvents(_ hearing: HKXAnnotationHearing) -> Set<String> {
+            var skipped = SkippedRecords()
+            let arts = (try? gatherer.requirePlugins()
+                .decodeRecords(of: "ARTO", skipped: &skipped) {
+                    try ArtObject(record: $0)
+                }) ?? []
+            let addons = (try? gatherer.requirePlugins().decodeRecords(
+                of: "ARMA",
+                skipped: &skipped
+            ) {
+                try ArmorAddon(record: $0)
+            }) ?? []
+            let models = arts.compactMap(\.modelPath)
+                + addons.flatMap { [$0.maleModelPath, $0.femaleModelPath].compactMap(\.self) }
+            var projects = Set<String>()
+            for model in Set(models.map { $0.lowercased() }) {
+                let path = model.hasPrefix("meshes\\") ? model : "meshes\\" + model
+                guard
+                    let data = try? gatherer.fileSystem.contents(forPath: path),
+                    let file = try? NIFFile(data: data),
+                    let project = NIFBehaviorGraphExtraData.projectPath(in: file)
+                else { continue }
+                projects.insert(HKXAnnotationHearing.project(of: project))
+            }
+            return hearing.listenedEvents(inProjects: projects)
+        }
+
+        /// Footstep tags (`FSTP` `ANAM`): annotation events the footstep sounds answer.
+        /// The events some OpenSky system reacts to, or the game was seen to ignore.
+        private func engineHandledEvents() -> Set<String> {
+            Set(
+                (CombatGraphNames.observedEvents + ArcheryGraphNames.observedEvents
+                    + ShoutGraphNames.observedEvents + SpellFireGraphNames.observedEvents
+                    + RagdollGraphNames.handOffEvents + AnimationEventAction.handledEvents
+                    + AnimationObjectEvent.handledEvents + animationObjectUnloadEvents()
+                    + DragonFlightGraphNames.observedEvents + PairedAnimationCore.endEvents
+                    + IgnoredAnimationEvents.names)
+                    .map { $0.lowercased() }
+            )
+        }
+
+        private func footstepTags() -> Set<String> {
+            let store = FootstepStore(loadOrder: gatherer.plugins)
+            return Set(store.footsteps.values.compactMap { $0.tag?.lowercased() })
+        }
+
+        func behavior() -> [GapSection] {
+            let sweep = BehaviorGapSweep.run(fileSystem: gatherer.fileSystem)
+            let tally = sweep.tally
+            let missing = sweep.foldersWithoutSkeleton
+            let note = "\(sweep.graphCount) graphs, \(sweep.eventsFired) events fired, "
+                + "\(sweep.failures.count) files failed, "
+                + "no skeleton: \(missing.isEmpty ? "none" : missing.joined(separator: ", "))"
+            let bindings = tally.rankedUnappliedBindings.map { entry in
+                (name: "binding not applied: \(entry.name)", count: entry.count)
+            }
+            let clips = tally.rankedUnresolvedClips.map { entry in
+                (name: "clip not found: \(entry.name)", count: entry.count)
+            }
+            let features = tally.rankedFeatureGaps + bindings + clips
+            let unreached = sweep.unreachedClasses.map { entry in
+                (name: "not reached: \(entry.name)", count: entry.count)
+            }
+            return [
+                GapSection(
+                    title: "Behavior node classes",
+                    unit: "node classes",
+                    done: sweep.doneClasses.count,
+                    left: GapsGatherer.ranked(sweep.leftClasses + unreached),
+                    usesUnit: "graph nodes",
+                    notes: [
+                        note, "done means reached by the sweep with no gap noted",
+                        "not reached: no update reached it, so whether it works is unknown"
+                    ]
+                ),
+                GapSection(
+                    title: "Behavior features ignored",
+                    unit: "features",
+                    done: nil,
+                    left: GapsGatherer.ranked(features),
+                    usesUnit: "hits",
+                    notes: tally.rankedGapTexts.map { "\($0.count)x \($0.name)" }
+                )
+            ]
+        }
     }
 }
