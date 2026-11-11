@@ -40,41 +40,35 @@ public protocol CrimeWorldHost: AnyObject, SendableMetatype {
 }
 
 /// Answers `CrimeSessionWorld` from the session systems `game` owns.
+/// Every host a `CrimeWorldAdapter` part reads, all one object.
+public typealias CrimeWorldHosts =
+    CrimeActorsHost & CrimeFactionsHost & CrimeJailHost & CrimeWorldHost
+
 public final class CrimeWorldAdapter {
     public let game: any CrimeWorldHost
 
-    public let factionsHost: any CrimeFactionsHost
-    public let jailHost: any CrimeJailHost
-    public let actorsHost: any CrimeActorsHost
+    let hosts: any CrimeWorldHosts
 
     public var factions: CrimeFactionsAdapter {
-        CrimeFactionsAdapter(game: factionsHost)
+        CrimeFactionsAdapter(game: hosts)
     }
 
     public var jail: CrimeJailAdapter {
-        CrimeJailAdapter(game: jailHost)
+        CrimeJailAdapter(game: hosts)
     }
 
     public var actors: CrimeActorsAdapter {
-        CrimeActorsAdapter(game: actorsHost)
+        CrimeActorsAdapter(game: hosts)
     }
 
-    public init(game: some CrimeWorldHost & CrimeFactionsHost & CrimeJailHost & CrimeActorsHost) {
-        factionsHost = game
-        jailHost = game
-        actorsHost = game
+    public init(game: some CrimeWorldHosts) {
+        hosts = game
         self.game = game
     }
 
     /// Perception is built first: its pass answers "did anybody see it" for every crime.
     public func witnesses() -> PerceptionCrimeWitnesses {
-        let store = game.worldState
-        return PerceptionCrimeWitnesses(
-            perception: game.perception.runtime,
-            isAlive: { [weak store] key in
-                store?.component(ActorDeathState.self, for: key)?.isDead != true
-            }
-        )
+        sessionReads.witnesses()
     }
 
     /// Ownership reads the same FACT store as the hostility derivation.
@@ -99,30 +93,7 @@ public final class CrimeWorldAdapter {
     }
 
     public func run(_ commands: [CrimeCommand]) {
-        for command in commands {
-            switch command {
-            case let .showNotice(text): game.hud.showNotification(text)
-            case let .applyGuardHostility(hostility): game.factions.setCrimeHostility(hostility)
-            case let .incrementStat(name, amount): game.worldState.incrementMiscStat(
-                    name,
-                    by: amount
-                )
-            case let .stoleFromFaction(faction, value, witnessed):
-                game.scripts.bridge?.noteStolenValue(value, from: faction, witnessed: witnessed)
-            case let .settlePickpocketCatches(faction, forgotten):
-                game.inventoryWorld.settlePickpocketCatches(
-                    chargedTo: faction,
-                    forgotten: forgotten
-                )
-            case let .speakTrespassWarning(witness):
-                game.storyWorld.sayTopic("TRES", speaker: witness, lookAt: .player)
-            case let .raiseStat(name, value):
-                let current = game.worldState.miscStats.value(name)
-                if value > current {
-                    game.worldState.incrementMiscStat(name, by: value - current)
-                }
-            }
-        }
+        sessionReads.run(commands)
     }
 }
 
@@ -138,22 +109,17 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     }
 
     public func cellOwnership(at location: CellSceneLocation) -> RecordOwnership? {
-        game.streamer.residentScene(at: location)?.owner
+        sessionReads.cellOwnership(at: location)
     }
 
     public func cellTrespassFlags(at location: CellSceneLocation) -> CellTrespassFlags {
-        game.streamer.residentScene(at: location)?.trespass ?? CellTrespassFlags()
+        sessionReads.cellTrespassFlags(at: location)
     }
 
     public func cellLocationLink(at location: CellSceneLocation)
         -> (link: FormID, plugin: String)?
     {
-        guard
-            let scene = game.streamer.residentScene(at: location),
-            let link = scene.locationLink,
-            let plugin = scene.ownerPluginName
-        else { return nil }
-        return (link, plugin)
+        sessionReads.cellLocationLink(at: location)
     }
 
     public func itemValue(of item: FormID) -> Int64 {
@@ -181,10 +147,7 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     }
 
     public func stolenPlayerStacks() -> [ItemStackReadout] {
-        guard let runtime = game.inventory.runtime else { return [] }
-        return game.inventory.readout(
-            runtime.inventory.inventory(of: runtime.player).stacks.filter(\.stolen)
-        )
+        sessionReads.stolenPlayerStacks()
     }
 
     public func vendor(faction key: ReferenceKey) -> Vendor? {
@@ -201,3 +164,77 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
 }
 
 extension CrimeWorldAdapter: CrimeWorldPort {}
+
+/// The witnesses, commands, cell, and stolen-item reads of `CrimeWorldAdapter`.
+struct CrimeSessionReads {
+    let game: any CrimeWorldHost
+
+    func witnesses() -> PerceptionCrimeWitnesses {
+        let store = game.worldState
+        return PerceptionCrimeWitnesses(
+            perception: game.perception.runtime,
+            isAlive: { [weak store] key in
+                store?.component(ActorDeathState.self, for: key)?.isDead != true
+            }
+        )
+    }
+
+    func run(_ commands: [CrimeCommand]) {
+        for command in commands {
+            switch command {
+            case let .showNotice(text): game.hud.showNotification(text)
+            case let .applyGuardHostility(hostility): game.factions.setCrimeHostility(hostility)
+            case let .incrementStat(name, amount): game.worldState.incrementMiscStat(
+                    name,
+                    by: amount
+                )
+            case let .stoleFromFaction(faction, value, witnessed):
+                game.scripts.bridge?.noteStolenValue(value, from: faction, witnessed: witnessed)
+            case let .settlePickpocketCatches(faction, forgotten):
+                game.inventoryWorld.settlePickpocketCatches(
+                    chargedTo: faction,
+                    forgotten: forgotten
+                )
+            case let .speakTrespassWarning(witness):
+                game.storyWorld.sayTopic("TRES", speaker: witness, lookAt: .player)
+            case let .raiseStat(name, value):
+                let current = game.worldState.miscStats.value(name)
+                if value > current {
+                    game.worldState.incrementMiscStat(name, by: value - current)
+                }
+            }
+        }
+    }
+
+    func cellOwnership(at location: CellSceneLocation) -> RecordOwnership? {
+        game.streamer.residentScene(at: location)?.owner
+    }
+
+    func cellTrespassFlags(at location: CellSceneLocation) -> CellTrespassFlags {
+        game.streamer.residentScene(at: location)?.trespass ?? CellTrespassFlags()
+    }
+
+    func cellLocationLink(at location: CellSceneLocation)
+        -> (link: FormID, plugin: String)?
+    {
+        guard
+            let scene = game.streamer.residentScene(at: location),
+            let link = scene.locationLink,
+            let plugin = scene.ownerPluginName
+        else { return nil }
+        return (link, plugin)
+    }
+
+    func stolenPlayerStacks() -> [ItemStackReadout] {
+        guard let runtime = game.inventory.runtime else { return [] }
+        return game.inventory.readout(
+            runtime.inventory.inventory(of: runtime.player).stacks.filter(\.stolen)
+        )
+    }
+}
+
+extension CrimeWorldAdapter {
+    var sessionReads: CrimeSessionReads {
+        CrimeSessionReads(game: game)
+    }
+}
