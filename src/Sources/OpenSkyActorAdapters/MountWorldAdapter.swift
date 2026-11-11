@@ -88,8 +88,7 @@ public final class MountWorldAdapter {
 
     /// The player's dragon while it flies, for `IsOnFlyingMount`.
     public var flyingMounts: Set<ReferenceKey> {
-        guard let drive = mounts.drive, drive.flight?.phase.isFlying == true else { return [] }
-        return [drive.mount]
+        candidates.flyingMounts
     }
 
     /// `sRide` on an actor the player can mount, else nil.
@@ -163,69 +162,21 @@ public final class MountWorldAdapter {
             answer: answered
         )
     }
-
-    private func saddleBone(of key: ReferenceKey) -> String? {
-        MountGraphNames.saddleBones.first { game.vehicleWorld.vehicleHasBone(key, named: $0) }
-    }
-
-    private func race(of key: ReferenceKey) -> Race? {
-        guard
-            let base = game.streamer.residentActorEntry(key: key)?.placedActor?.base,
-            let resolver = game.actorRecords?.actorValueBaselines?.resolver
-        else { return nil }
-        let identity = ActorIdentityRecords(resolver: resolver)
-        return identity.race(ofBase: base).flatMap { identity.races[$0.rawValue] }
-    }
-
-    private func allowMountActor(on key: ReferenceKey) -> Float {
-        game.perks.modified(
-            0,
-            at: .allowMountActor,
-            on: .player,
-            subjects: { _ in PerkEvaluationSubjects(owner: .player, target: key) },
-            seams: ConditionContext()
-        )
-    }
 }
 
 extension MountWorldAdapter: MountWorld {
     public func mountCandidate(_ key: ReferenceKey) -> MountCandidate? {
-        guard key != .player, let actor = game.actorWorld.combatActor(key: key) else {
-            return nil
-        }
-        var candidate = MountCandidate()
-        candidate.isDead = actor.isDead
-        candidate.saddleBone = saddleBone(of: key)
-        guard candidate.saddleBone != nil else { return candidate }
-        candidate.isDragon = game.magicWorld.actorValueHolder(for: key).map {
-            game.magicWorld.actorHasKeyword(ActorTypeKeyword.dragon, on: $0)
-        } ?? false
-        if candidate.isDragon {
-            candidate.allowMountActor = allowMountActor(on: key)
-        }
-        let carried = game.vehicleWorld.vehicles.core.links
-        candidate.isRidden = carried.contains { $0.key != .player && $0.value.carrier == key }
-        if game.crime.ownershipVerdict(on: key).isTheft {
-            candidate.ownership = .other
-        }
-        return candidate
+        candidates.mountCandidate(key)
     }
 
     public func takeMount(_ key: ReferenceKey, kind: MountKind, saddleBone: String)
         -> PlayerMountDriveStart?
     {
-        guard let hold = game.streamer.takeRiddenActor(key) else { return nil }
-        let loan = game.actorGraphWorld.graphs.lend(key)
-        return PlayerMountDriveStart(
-            mount: key, kind: kind, saddleBone: saddleBone, feet: hold.feetPosition,
-            yaw: hold.yaw, graph: loan?.instance, pose: loan?.pose ?? SkinnedPoseBuffer(),
-            configuration: game.actorRecords?.mountMovementConfiguration ?? .synthetic
-        )
+        candidates.takeMount(key, kind: kind, saddleBone: saddleBone)
     }
 
     public func dismountOffset(of key: ReferenceKey) -> SIMD3<Float> {
-        race(of: key)?.details.properties?.mountOffsets?.dismount
-            ?? RaceProperties.MountOffsets.fallbackDismount
+        candidates.dismountOffset(of: key)
     }
 }
 
@@ -259,3 +210,81 @@ extension MountWorldAdapter: PlayerMountDriving {
 }
 
 extension MountWorldAdapter: MountWorldPort {}
+
+/// The mount candidate, take, dismount, and flight reads of `MountWorldAdapter`.
+struct MountCandidateReads {
+    let game: any MountWorldHost
+
+    var flyingMounts: Set<ReferenceKey> {
+        guard let drive = game.mounts.drive, drive.flight?.phase.isFlying == true else { return [] }
+        return [drive.mount]
+    }
+
+    private func saddleBone(of key: ReferenceKey) -> String? {
+        MountGraphNames.saddleBones.first { game.vehicleWorld.vehicleHasBone(key, named: $0) }
+    }
+
+    private func race(of key: ReferenceKey) -> Race? {
+        guard
+            let base = game.streamer.residentActorEntry(key: key)?.placedActor?.base,
+            let resolver = game.actorRecords?.actorValueBaselines?.resolver
+        else { return nil }
+        let identity = ActorIdentityRecords(resolver: resolver)
+        return identity.race(ofBase: base).flatMap { identity.races[$0.rawValue] }
+    }
+
+    private func allowMountActor(on key: ReferenceKey) -> Float {
+        game.perks.modified(
+            0,
+            at: .allowMountActor,
+            on: .player,
+            subjects: { _ in PerkEvaluationSubjects(owner: .player, target: key) },
+            seams: ConditionContext()
+        )
+    }
+
+    func mountCandidate(_ key: ReferenceKey) -> MountCandidate? {
+        guard key != .player, let actor = game.actorWorld.combatActor(key: key) else {
+            return nil
+        }
+        var candidate = MountCandidate()
+        candidate.isDead = actor.isDead
+        candidate.saddleBone = saddleBone(of: key)
+        guard candidate.saddleBone != nil else { return candidate }
+        candidate.isDragon = game.magicWorld.actorValueHolder(for: key).map {
+            game.magicWorld.actorHasKeyword(ActorTypeKeyword.dragon, on: $0)
+        } ?? false
+        if candidate.isDragon {
+            candidate.allowMountActor = allowMountActor(on: key)
+        }
+        let carried = game.vehicleWorld.vehicles.core.links
+        candidate.isRidden = carried.contains { $0.key != .player && $0.value.carrier == key }
+        if game.crime.ownershipVerdict(on: key).isTheft {
+            candidate.ownership = .other
+        }
+        return candidate
+    }
+
+    func takeMount(_ key: ReferenceKey, kind: MountKind, saddleBone: String)
+        -> PlayerMountDriveStart?
+    {
+        guard let hold = game.streamer.takeRiddenActor(key) else { return nil }
+        let loan = game.actorGraphWorld.graphs.lend(key)
+        return PlayerMountDriveStart(
+            mount: key, kind: kind, saddleBone: saddleBone, feet: hold.feetPosition,
+            yaw: hold.yaw, graph: loan?.instance, pose: loan?.pose ?? SkinnedPoseBuffer(),
+            configuration: game.actorRecords?.mountMovementConfiguration ?? .synthetic
+        )
+    }
+
+    func dismountOffset(of key: ReferenceKey) -> SIMD3<Float> {
+        race(of: key)?.details.properties?.mountOffsets?.dismount
+            ?? RaceProperties.MountOffsets.fallbackDismount
+    }
+}
+
+extension MountWorldAdapter {
+    var candidates: MountCandidateReads {
+        MountCandidateReads(game: game)
+    }
+}

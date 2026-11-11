@@ -4,6 +4,7 @@ import OpenSkyActorAdapters
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import Testing
@@ -134,5 +135,17 @@ struct ActorMountPlayerTests {
         let actors = ActorWorldAdapter(game: host, stage: nil)
         #expect(actors.displayName(of: Self.actor, base: FormID(0x20)) == nil)
         #expect(actors.displayName(of: Self.actor, base: FormID(0x20)) == nil)
+    }
+
+    @Test func anActorWithoutASaddleIsACandidateThatCannotBeRidden() {
+        let mounts = MountWorldAdapter(game: host, stage: nil)
+        host.fakeActorWorld.combatActorResult = CombatActorObservation(key: Self.actor, feet: .one)
+        let candidate = mounts.mountCandidate(Self.actor)
+        #expect(candidate != nil)
+        #expect(candidate?.saddleBone == nil)
+        #expect(mounts.mountCandidate(.player) == nil)
+        #expect(mounts.takeMount(Self.actor, kind: .horse, saddleBone: "SaddleBone") == nil)
+        #expect(host.fakeStreamer.takeRiddenActorCalls == [Self.actor])
+        #expect(mounts.dismountOffset(of: Self.actor) == SIMD3(-50, 0, 65))
     }
 }
