@@ -19,7 +19,13 @@ from index_store import (REL_CONTAINED_BY, ROLE_DEFINITION, ROLE_REFERENCE, TYPE
 
 LIMIT = 40
 # Building the object graph is their job (design rule 2).
-WIRING = {"GameViewController", "GameSessionScope", "GameSessionScopeFactories", "SessionPorts"}
+WIRING = {
+    "GameViewController",
+    "GameSessionScope",
+    "GameSessionScopeBuild",
+    "GameSessionScopeFactories",
+    "SessionPorts",
+}
 SHOWN_LIMITS = (10, 20, 30, 40)
 
 
