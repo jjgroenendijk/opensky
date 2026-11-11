@@ -16,6 +16,17 @@ struct NIFBlockDecoderTests {
         return try NIFBlockDecoders.decode(file.blocks[0], header: file.header)
     }
 
+    @Test func everyDecoderRunsOnAnEmptyBlock() {
+        let names = NIFBlockDecoders.decodedTypeNames
+        #expect(names.contains("BSXFlags"))
+        for name in names {
+            let outcome = Result { try decode(name, Data()) }
+            if case let .success(value) = outcome {
+                #expect(value != nil, "\(name)")
+            }
+        }
+    }
+
     @Test func decodesScalarExtraData() throws {
         let integer = try decode("NiIntegerExtraData", NIFBlockFixture.extraData(
             nameIndex: 0, NIFBlockFixture.uint32(7)

@@ -178,37 +178,46 @@ nonisolated struct NIFPlainController: Equatable, Sendable {
 }
 
 nonisolated extension NIFBlockDecoders {
-    static let controllers: [String: Decode] = shaderControllers
-        .merging(plainControllers) { first, _ in first }
-        .merging([
-            NIFExtraDataController
-                .typeName: { try NIFExtraDataController(reader: &$0, header: $1) },
-            NIFLagBoneController
-                .typeName: { reader, _ in try NIFLagBoneController(reader: &reader) },
-            NIFLightningController.typeName: { reader, _ in
-                try NIFLightningController(reader: &reader)
-            },
-            NIFBoneLODController
-                .typeName: { reader, _ in try NIFBoneLODController(reader: &reader) },
-            NIFControllerManager
-                .typeName: { reader, _ in try NIFControllerManager(reader: &reader) },
-            NIFObjectPalette.typeName: { reader, _ in try NIFObjectPalette(reader: &reader) }
-        ]) { first, _ in first }
-        .merging(interpolators) { first, _ in first }
+    enum Controllers {
+        static let controllers = NIFBlockDecoders.joined([
+            ownControllers,
+            Interpolators.interpolators
+        ])
 
-    private static let shaderControllers = Dictionary(
-        uniqueKeysWithValues: NIFShaderPropertyController.Kind.allCases.map { kind in
-            (kind.rawValue, { reader, _ in
-                try NIFShaderPropertyController(kind: kind, reader: &reader)
-            } as Decode)
-        }
-    )
+        private static let ownControllers: [String: Decode] = shaderControllers
+            .merging(plainControllers) { first, _ in first }
+            .merging([
+                NIFExtraDataController
+                    .typeName: { try NIFExtraDataController(reader: &$0, header: $1) },
+                NIFLagBoneController
+                    .typeName: { reader, _ in try NIFLagBoneController(reader: &reader) },
+                NIFLightningController.typeName: { reader, _ in
+                    try NIFLightningController(reader: &reader)
+                },
+                NIFBoneLODController
+                    .typeName: { reader, _ in try NIFBoneLODController(reader: &reader) },
+                NIFControllerManager
+                    .typeName: { reader, _ in try NIFControllerManager(reader: &reader) },
+                NIFObjectPalette.typeName: { reader, _ in try NIFObjectPalette(reader: &reader) }
+            ]) { first, _ in first }
 
-    private static let plainControllers = Dictionary(
-        uniqueKeysWithValues: NIFPlainController.Kind.allCases.map { kind in
-            (kind.rawValue, { reader, _ in
-                try NIFPlainController(kind: kind, base: NIFInterpolatedController(reader: &reader))
-            } as Decode)
-        }
-    )
+        private static let shaderControllers = Dictionary(
+            uniqueKeysWithValues: NIFShaderPropertyController.Kind.allCases.map { kind in
+                (kind.rawValue, { reader, _ in
+                    try NIFShaderPropertyController(kind: kind, reader: &reader)
+                } as Decode)
+            }
+        )
+
+        private static let plainControllers = Dictionary(
+            uniqueKeysWithValues: NIFPlainController.Kind.allCases.map { kind in
+                (kind.rawValue, { reader, _ in
+                    try NIFPlainController(
+                        kind: kind,
+                        base: NIFInterpolatedController(reader: &reader)
+                    )
+                } as Decode)
+            }
+        )
+    }
 }

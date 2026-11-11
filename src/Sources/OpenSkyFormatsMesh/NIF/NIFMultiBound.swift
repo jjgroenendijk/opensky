@@ -75,13 +75,15 @@ nonisolated struct NIFMultiBoundBox: Equatable, Sendable {
 }
 
 nonisolated extension NIFBlockDecoders {
-    static let bounds: [String: Decode] = [
-        NIFMultiBound.typeName: { reader, _ in try reader.readNIFRef() },
-        NIFMultiBoundBox.alignedType: { reader, _ in
-            try NIFMultiBoundBox(reader: &reader, oriented: false)
-        },
-        NIFMultiBoundBox.orientedType: { reader, _ in
-            try NIFMultiBoundBox(reader: &reader, oriented: true)
-        }
-    ]
+    enum Bounds {
+        static let bounds: [String: Decode] = [
+            NIFMultiBound.typeName: { reader, _ in try reader.readNIFRef() },
+            NIFMultiBoundBox.alignedType: { reader, _ in
+                try NIFMultiBoundBox(reader: &reader, oriented: false)
+            },
+            NIFMultiBoundBox.orientedType: { reader, _ in
+                try NIFMultiBoundBox(reader: &reader, oriented: true)
+            }
+        ]
+    }
 }

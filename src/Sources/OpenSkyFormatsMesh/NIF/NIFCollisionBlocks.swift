@@ -173,19 +173,21 @@ nonisolated struct NIFBallSocketChain: Sendable {
 }
 
 nonisolated extension NIFBlockDecoders {
-    static let collision: [String: Decode] = [
-        NIFCollisionObjectBlock
-            .phantomType: { reader, _ in try NIFCollisionObjectBlock(reader: &reader) },
-        NIFShapePhantom.typeName: { reader, _ in try NIFShapePhantom(reader: &reader) },
-        NIFCylinderShape.typeName: { reader, _ in try NIFCylinderShape(reader: &reader) },
-        NIFPlaneShape.typeName: { reader, _ in try NIFPlaneShape(reader: &reader) },
-        NIFBallSocketChain.typeName: { reader, _ in try NIFBallSocketChain(reader: &reader) },
-        NIFConstraintDecoder.breakableType: { reader, _ in
-            try NIFConstraintDecoder.decode(
-                reader: &reader,
-                typeName: NIFConstraintDecoder.breakableType,
-                index: -1
-            )
-        }
-    ]
+    enum Collision {
+        static let collision: [String: Decode] = [
+            NIFCollisionObjectBlock
+                .phantomType: { reader, _ in try NIFCollisionObjectBlock(reader: &reader) },
+            NIFShapePhantom.typeName: { reader, _ in try NIFShapePhantom(reader: &reader) },
+            NIFCylinderShape.typeName: { reader, _ in try NIFCylinderShape(reader: &reader) },
+            NIFPlaneShape.typeName: { reader, _ in try NIFPlaneShape(reader: &reader) },
+            NIFBallSocketChain.typeName: { reader, _ in try NIFBallSocketChain(reader: &reader) },
+            NIFConstraintDecoder.breakableType: { reader, _ in
+                try NIFConstraintDecoder.decode(
+                    reader: &reader,
+                    typeName: NIFConstraintDecoder.breakableType,
+                    index: -1
+                )
+            }
+        ]
+    }
 }

@@ -164,17 +164,19 @@ nonisolated struct NIFLookAtInterpolator: Equatable, Sendable {
 }
 
 nonisolated extension NIFBlockDecoders {
-    static let interpolators: [String: Decode] = [
-        NIFBlendInterpolator.floatType: { reader, _ in
-            try NIFBlendInterpolator(reader: &reader, typeName: NIFBlendInterpolator.floatType)
-        },
-        NIFBlendInterpolator.boolType: { reader, _ in
-            try NIFBlendInterpolator(reader: &reader, typeName: NIFBlendInterpolator.boolType)
-        },
-        NIFBlendInterpolator.point3Type: { reader, _ in
-            try NIFBlendInterpolator(reader: &reader, typeName: NIFBlendInterpolator.point3Type)
-        },
-        NIFPathInterpolator.typeName: { reader, _ in try NIFPathInterpolator(reader: &reader) },
-        NIFLookAtInterpolator.typeName: { try NIFLookAtInterpolator(reader: &$0, header: $1) }
-    ]
+    enum Interpolators {
+        static let interpolators: [String: Decode] = [
+            NIFBlendInterpolator.floatType: { reader, _ in
+                try NIFBlendInterpolator(reader: &reader, typeName: NIFBlendInterpolator.floatType)
+            },
+            NIFBlendInterpolator.boolType: { reader, _ in
+                try NIFBlendInterpolator(reader: &reader, typeName: NIFBlendInterpolator.boolType)
+            },
+            NIFBlendInterpolator.point3Type: { reader, _ in
+                try NIFBlendInterpolator(reader: &reader, typeName: NIFBlendInterpolator.point3Type)
+            },
+            NIFPathInterpolator.typeName: { reader, _ in try NIFPathInterpolator(reader: &reader) },
+            NIFLookAtInterpolator.typeName: { try NIFLookAtInterpolator(reader: &$0, header: $1) }
+        ]
+    }
 }

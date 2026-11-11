@@ -167,6 +167,16 @@ struct RecordDetailTests {
         }
     }
 
+    @Test func everyDecoderRunsOnAnEmptyRecord() throws {
+        for type in RecordDecoders.decodedTypes {
+            let record = try Fixture.record(type.description, fields: [])
+            let outcome = Result { try RecordDecoders.decode(record, localized: false) }
+            if case let .failure(error) = outcome {
+                #expect(!"\(error)".contains("no decoder"), "\(type)")
+            }
+        }
+    }
+
     private static let raceFields: [(String, Data)] = {
         var data = Data(count: 0x40) + Fixture.u32(1) + Data(count: 0x7C - 0x44) + Fixture.u32(0)
         data = data.prefix(0x80)

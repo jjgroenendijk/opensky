@@ -8,17 +8,24 @@ import OpenSkyFormatsCore
 nonisolated public enum NIFBlockDecoders: Sendable {
     typealias Decode = @Sendable (inout BinaryReader, NIFHeader) throws -> any Sendable
 
-    private static let all: [String: Decode] = extraData
-        .merging(nodes) { first, _ in first }
-        .merging(controllers) { first, _ in first }
-        .merging(particles) { first, _ in first }
-        .merging(collision) { first, _ in first }
-        .merging(geometry) { first, _ in first }
-        .merging(shaders) { first, _ in first }
-        .merging(bounds) { first, _ in first }
+    private static let all = joined([
+        ExtraData.extraData, Nodes.nodes, Controllers.controllers, Particles.particles,
+        Collision.collision, Geometry.geometry, Shaders.shaders, Bounds.bounds
+    ])
+
+    static var decodedTypeNames: Set<String> {
+        Set(all.keys)
+    }
 
     static func decoder(for typeName: String) -> Decode? {
         all[typeName]
+    }
+
+    /// Tables that share no block type; a shared one stops the table from building.
+    static func joined(_ tables: [[String: Decode]]) -> [String: Decode] {
+        Dictionary(uniqueKeysWithValues: tables.flatMap { table in
+            table.map { ($0.key, $0.value) }
+        })
     }
 
     /// The decoded value of `block`, or nil when no whole-block decoder reads its type.

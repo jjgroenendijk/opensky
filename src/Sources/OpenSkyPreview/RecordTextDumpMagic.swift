@@ -60,233 +60,235 @@ nonisolated extension RecordTextDump {
         )
     }
 
-    static func magicSummary(
-        record: ESMRecord,
-        localized: Bool,
-        lists: (keyword: KeywordContext?, formList: FormListContext?),
-        magicContext: MagicContext?
-    ) throws -> String? {
-        let (keywordContext, formListContext) = (lists.keyword, lists.formList)
-        return switch record.type {
-        case "MGEF": try magicEffectSummary(record, localized, keywordContext, magicContext)
-        case "SPEL": try spellSummary(record, localized, magicContext)
-        case "SCRL": try scrollSummary(record, localized, magicContext)
-        case "ENCH": try enchantmentSummary(record, localized, formListContext, magicContext)
-        // The shout family lives in RecordTextDumpShouts.swift so both files
-        // stay inside the strict-lint file-length cap.
-        default:
-            try shoutFamilySummary(
-                record: record,
-                localized: localized,
-                magicContext: magicContext
+    enum Magic {
+        static func magicSummary(
+            record: ESMRecord,
+            localized: Bool,
+            lists: (keyword: KeywordContext?, formList: FormListContext?),
+            magicContext: MagicContext?
+        ) throws -> String? {
+            let (keywordContext, formListContext) = (lists.keyword, lists.formList)
+            return switch record.type {
+            case "MGEF": try magicEffectSummary(record, localized, keywordContext, magicContext)
+            case "SPEL": try spellSummary(record, localized, magicContext)
+            case "SCRL": try scrollSummary(record, localized, magicContext)
+            case "ENCH": try enchantmentSummary(record, localized, formListContext, magicContext)
+            // The shout family lives in RecordTextDumpShouts.swift so both files
+            // stay inside the strict-lint file-length cap.
+            default:
+                try Shouts.shoutFamilySummary(
+                    record: record,
+                    localized: localized,
+                    magicContext: magicContext
+                )
+            }
+        }
+
+        private static func magicEffectSummary(
+            _ record: ESMRecord,
+            _ localized: Bool,
+            _ keywordContext: KeywordContext?,
+            _ magicContext: MagicContext?
+        ) throws -> String? {
+            let effect = try MagicEffect(record: record, localized: localized)
+            let name = display(effect.name)
+            let keywords = if let keywordContext {
+                effect.keywords.displayStrings(
+                    fromPlugin: keywordContext.sourcePlugin,
+                    using: keywordContext.store
+                )
+            } else {
+                effect.keywords.keywords.map(\.description)
+            }
+            guard let data = effect.data else {
+                return "decoded MGEF: editorID \(effect.editorID ?? "-"), name \(name), "
+                    + "DATA malformed, skipped \(effect.skipped.total)"
+            }
+            return unsafe String(
+                format: "decoded MGEF: editorID %@, name %@, archetype %@, casting %@, "
+                    + "delivery %@, cost %.3f, related actor value %@, resistance %@, "
+                    + "perk %@, keywords [%@], skipped %d",
+                effect.editorID ?? "-",
+                name,
+                data.archetype.description,
+                data.castingType.description,
+                data.delivery.description,
+                data.baseCost,
+                ActorValueIdentity.description(of: data.relatedActorValue),
+                ActorValueIdentity.description(of: data.resistanceActorValue),
+                perkText(data.perkToApply, magicContext),
+                keywords.joined(separator: ", "),
+                effect.skipped.total
             )
         }
-    }
 
-    private static func magicEffectSummary(
-        _ record: ESMRecord,
-        _ localized: Bool,
-        _ keywordContext: KeywordContext?,
-        _ magicContext: MagicContext?
-    ) throws -> String? {
-        let effect = try MagicEffect(record: record, localized: localized)
-        let name = display(effect.name)
-        let keywords = if let keywordContext {
-            effect.keywords.displayStrings(
-                fromPlugin: keywordContext.sourcePlugin,
-                using: keywordContext.store
+        /// A PERK link as text. Named through the store when the dump was given
+        /// one, and printed raw otherwise, so a caller without a PERK store still
+        /// sees the link rather than nothing.
+        static func perkText(_ id: FormID?, _ context: MagicContext?) -> String {
+            guard let id else { return "-" }
+            guard let perks = context?.perks else { return id.description }
+            return perks.displayString(for: id, fromPlugin: context?.sourcePlugin ?? "")
+        }
+
+        private static func spellSummary(
+            _ record: ESMRecord,
+            _ localized: Bool,
+            _ context: MagicContext?
+        ) throws -> String? {
+            let spell = try Spell(record: record, localized: localized)
+            return castingSummary(.spell(spell), context: context)
+        }
+
+        private static func scrollSummary(
+            _ record: ESMRecord,
+            _ localized: Bool,
+            _ context: MagicContext?
+        ) throws -> String? {
+            let scroll = try Scroll(record: record, localized: localized)
+            let value = unsafe String(
+                format: ", value %d, weight %.2f",
+                Int(scroll.itemValue.value),
+                scroll.itemValue.weight
             )
-        } else {
-            effect.keywords.keywords.map(\.description)
+            return castingSummary(.scroll(scroll), context: context, suffix: value)
         }
-        guard let data = effect.data else {
-            return "decoded MGEF: editorID \(effect.editorID ?? "-"), name \(name), "
-                + "DATA malformed, skipped \(effect.skipped.total)"
+
+        /// Header line plus the effect table, shared by SPEL and SCRL. Without a
+        /// magic context the effects still print, by raw FormID and without costs,
+        /// because the base costs live in the MGEF definitions.
+        private static func castingSummary(
+            _ record: MagicCastingRecord,
+            context: MagicContext?,
+            suffix: String = ""
+        ) -> String {
+            var line = "decoded \(record.recordType): editorID \(record.editorID ?? "-"), "
+                + "name \(display(record.name))"
+            if let data = record.data {
+                unsafe line += String(
+                    format: ", type %@, casting %@, delivery %@, charge time %.2f, range %.1f, "
+                        + "half-cost perk %@",
+                    data.type.description,
+                    data.castingType.description,
+                    data.delivery.description,
+                    data.chargeTime,
+                    data.range,
+                    perkText(data.halfCostPerk, context)
+                )
+            } else {
+                line += ", SPIT malformed"
+            }
+            line += suffix
+            guard let context else {
+                let names = record.effects.map(\.effect.description)
+                return line + ", \(names.count) effects [\(names.joined(separator: ", "))]"
+                    + ", skipped \(record.skipped.total)"
+            }
+            let effects = SpellStore.resolvedEffects(
+                of: record,
+                fromPlugin: context.sourcePlugin,
+                effects: context.effects
+            )
+            let cost = SpellStore.cost(of: record, effects: effects)
+            line += ", cost \(costText(cost)), skipped \(record.skipped.total)"
+            return ([line] + effectTable(effects)).joined(separator: "\n")
         }
-        return unsafe String(
-            format: "decoded MGEF: editorID %@, name %@, archetype %@, casting %@, "
-                + "delivery %@, cost %.3f, related actor value %@, resistance %@, "
-                + "perk %@, keywords [%@], skipped %d",
-            effect.editorID ?? "-",
-            name,
-            data.archetype.description,
-            data.castingType.description,
-            data.delivery.description,
-            data.baseCost,
-            ActorValueIdentity.description(of: data.relatedActorValue),
-            ActorValueIdentity.description(of: data.resistanceActorValue),
-            perkText(data.perkToApply, magicContext),
-            keywords.joined(separator: ", "),
-            effect.skipped.total
-        )
-    }
 
-    /// A PERK link as text. Named through the store when the dump was given
-    /// one, and printed raw otherwise, so a caller without a PERK store still
-    /// sees the link rather than nothing.
-    static func perkText(_ id: FormID?, _ context: MagicContext?) -> String {
-        guard let id else { return "-" }
-        guard let perks = context?.perks else { return id.description }
-        return perks.displayString(for: id, fromPlugin: context?.sourcePlugin ?? "")
-    }
+        /// ENCH: the ENIT header, the two links it carries, and the same resolved
+        /// effect table SPEL prints. Without a magic context the effects still
+        /// print by raw FormID, because the base costs live in the MGEF records.
+        private static func enchantmentSummary(
+            _ record: ESMRecord,
+            _ localized: Bool,
+            _ formListContext: FormListContext?,
+            _ context: MagicContext?
+        ) throws -> String? {
+            let enchantment = try Enchantment(record: record, localized: localized)
+            var line = "decoded ENCH: editorID \(enchantment.editorID ?? "-"), "
+                + "name \(display(enchantment.name))"
+            if let data = enchantment.data {
+                line += enchantmentDataText(data, formListContext, context)
+            } else {
+                line += ", ENIT malformed"
+            }
+            guard let context else {
+                let names = enchantment.effects.map(\.effect.description)
+                return line + ", \(names.count) effects [\(names.joined(separator: ", "))]"
+                    + ", skipped \(enchantment.skipped.total)"
+            }
+            let effects = EnchantmentStore.resolvedEffects(
+                of: enchantment,
+                fromPlugin: context.sourcePlugin,
+                effects: context.effects
+            )
+            let cost = EnchantmentStore.cost(of: enchantment, effects: effects)
+            line += ", cost \(costText(cost)), skipped \(enchantment.skipped.total)"
+            return ([line] + effectTable(effects)).joined(separator: "\n")
+        }
 
-    private static func spellSummary(
-        _ record: ESMRecord,
-        _ localized: Bool,
-        _ context: MagicContext?
-    ) throws -> String? {
-        let spell = try Spell(record: record, localized: localized)
-        return castingSummary(.spell(spell), context: context)
-    }
-
-    private static func scrollSummary(
-        _ record: ESMRecord,
-        _ localized: Bool,
-        _ context: MagicContext?
-    ) throws -> String? {
-        let scroll = try Scroll(record: record, localized: localized)
-        let value = unsafe String(
-            format: ", value %d, weight %.2f",
-            Int(scroll.itemValue.value),
-            scroll.itemValue.weight
-        )
-        return castingSummary(.scroll(scroll), context: context, suffix: value)
-    }
-
-    /// Header line plus the effect table, shared by SPEL and SCRL. Without a
-    /// magic context the effects still print, by raw FormID and without costs,
-    /// because the base costs live in the MGEF definitions.
-    private static func castingSummary(
-        _ record: MagicCastingRecord,
-        context: MagicContext?,
-        suffix: String = ""
-    ) -> String {
-        var line = "decoded \(record.recordType): editorID \(record.editorID ?? "-"), "
-            + "name \(display(record.name))"
-        if let data = record.data {
-            unsafe line += String(
-                format: ", type %@, casting %@, delivery %@, charge time %.2f, range %.1f, "
-                    + "half-cost perk %@",
+        /// The ENIT fields, with the base-enchantment and worn-restrictions links
+        /// named through the stores that own them.
+        private static func enchantmentDataText(
+            _ data: EnchantmentItemData,
+            _ formListContext: FormListContext?,
+            _ context: MagicContext?
+        ) -> String {
+            var text = unsafe String(
+                format: ", type %@, casting %@, delivery %@, charge time %.2f, amount %d",
                 data.type.description,
                 data.castingType.description,
                 data.delivery.description,
                 data.chargeTime,
-                data.range,
-                perkText(data.halfCostPerk, context)
+                Int(data.amount)
             )
-        } else {
-            line += ", SPIT malformed"
+            if let base = data.baseEnchantment {
+                let name = context.map {
+                    $0.enchantments.displayString(for: base, fromPlugin: $0.sourcePlugin)
+                } ?? base.description
+                text += ", base enchantment \(name)"
+            }
+            if let restrictions = data.wornRestrictions {
+                let name = formListContext.map {
+                    $0.store.displayString(for: restrictions, fromPlugin: $0.sourcePlugin)
+                } ?? restrictions.description
+                text += ", worn restrictions \(name)"
+            }
+            return text
         }
-        line += suffix
-        guard let context else {
-            let names = record.effects.map(\.effect.description)
-            return line + ", \(names.count) effects [\(names.joined(separator: ", "))]"
-                + ", skipped \(record.skipped.total)"
-        }
-        let effects = SpellStore.resolvedEffects(
-            of: record,
-            fromPlugin: context.sourcePlugin,
-            effects: context.effects
-        )
-        let cost = SpellStore.cost(of: record, effects: effects)
-        line += ", cost \(costText(cost)), skipped \(record.skipped.total)"
-        return ([line] + effectTable(effects)).joined(separator: "\n")
-    }
 
-    /// ENCH: the ENIT header, the two links it carries, and the same resolved
-    /// effect table SPEL prints. Without a magic context the effects still
-    /// print by raw FormID, because the base costs live in the MGEF records.
-    private static func enchantmentSummary(
-        _ record: ESMRecord,
-        _ localized: Bool,
-        _ formListContext: FormListContext?,
-        _ context: MagicContext?
-    ) throws -> String? {
-        let enchantment = try Enchantment(record: record, localized: localized)
-        var line = "decoded ENCH: editorID \(enchantment.editorID ?? "-"), "
-            + "name \(display(enchantment.name))"
-        if let data = enchantment.data {
-            line += enchantmentDataText(data, formListContext, context)
-        } else {
-            line += ", ENIT malformed"
-        }
-        guard let context else {
-            let names = enchantment.effects.map(\.effect.description)
-            return line + ", \(names.count) effects [\(names.joined(separator: ", "))]"
-                + ", skipped \(enchantment.skipped.total)"
-        }
-        let effects = EnchantmentStore.resolvedEffects(
-            of: enchantment,
-            fromPlugin: context.sourcePlugin,
-            effects: context.effects
-        )
-        let cost = EnchantmentStore.cost(of: enchantment, effects: effects)
-        line += ", cost \(costText(cost)), skipped \(enchantment.skipped.total)"
-        return ([line] + effectTable(effects)).joined(separator: "\n")
-    }
-
-    /// The ENIT fields, with the base-enchantment and worn-restrictions links
-    /// named through the stores that own them.
-    private static func enchantmentDataText(
-        _ data: EnchantmentItemData,
-        _ formListContext: FormListContext?,
-        _ context: MagicContext?
-    ) -> String {
-        var text = unsafe String(
-            format: ", type %@, casting %@, delivery %@, charge time %.2f, amount %d",
-            data.type.description,
-            data.castingType.description,
-            data.delivery.description,
-            data.chargeTime,
-            Int(data.amount)
-        )
-        if let base = data.baseEnchantment {
-            let name = context.map {
-                $0.enchantments.displayString(for: base, fromPlugin: $0.sourcePlugin)
-            } ?? base.description
-            text += ", base enchantment \(name)"
-        }
-        if let restrictions = data.wornRestrictions {
-            let name = formListContext.map {
-                $0.store.displayString(for: restrictions, fromPlugin: $0.sourcePlugin)
-            } ?? restrictions.description
-            text += ", worn restrictions \(name)"
-        }
-        return text
-    }
-
-    private static func costText(_ cost: SpellCostResult) -> String {
-        let source = cost.isManual ? "manual" : "auto-calc"
-        let unresolved = cost.unresolvedEffects > 0
-            ? ", \(cost.unresolvedEffects) unresolved"
-            : ""
-        return unsafe String(
-            format: "%d (%@, formula %.2f%@)",
-            Int(cost.cost),
-            source,
-            cost.autoCalculated,
-            unresolved
-        )
-    }
-
-    private static func effectTable(_ effects: [ResolvedSpellEffect]) -> [String] {
-        ["  effects (\(effects.count)):"] + effects.map { effect in
-            unsafe String(
-                format: "    %@ — magnitude %.2f, area %d, duration %ds, cost %.2f",
-                effect.displayName,
-                effect.item.magnitude,
-                Int(effect.item.area),
-                Int(effect.item.duration),
-                effect.cost
+        private static func costText(_ cost: SpellCostResult) -> String {
+            let source = cost.isManual ? "manual" : "auto-calc"
+            let unresolved = cost.unresolvedEffects > 0
+                ? ", \(cost.unresolvedEffects) unresolved"
+                : ""
+            return unsafe String(
+                format: "%d (%@, formula %.2f%@)",
+                Int(cost.cost),
+                source,
+                cost.autoCalculated,
+                unresolved
             )
         }
-    }
 
-    private static func display(_ value: LString?) -> String {
-        switch value {
-        case let .inline(text): "\"\(text)\""
-        case let .tableID(id), let .pluginTableID(id, _): "string #\(id)"
-        case nil: "-"
+        private static func effectTable(_ effects: [ResolvedSpellEffect]) -> [String] {
+            ["  effects (\(effects.count)):"] + effects.map { effect in
+                unsafe String(
+                    format: "    %@ — magnitude %.2f, area %d, duration %ds, cost %.2f",
+                    effect.displayName,
+                    effect.item.magnitude,
+                    Int(effect.item.area),
+                    Int(effect.item.duration),
+                    effect.cost
+                )
+            }
+        }
+
+        private static func display(_ value: LString?) -> String {
+            switch value {
+            case let .inline(text): "\"\(text)\""
+            case let .tableID(id), let .pluginTableID(id, _): "string #\(id)"
+            case nil: "-"
+            }
         }
     }
 }
