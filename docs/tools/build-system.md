@@ -320,6 +320,20 @@ build. `tools/xcodebuild.sh` does this for xcodebuild, in the tree's `Build/`.
 `make compile` and `make test-package` do it for `swift build`, in `.build/out`. The cost
 is one full compile of each failed target, and only after a failure.
 
+### Signing files left by a stopped build
+
+`codesign` writes the signed binary to a temporary `<binary>.cstemp` beside the binary, then
+renames it over the binary. When a build stops on an error, it kills the `codesign` tasks that
+still run, and their half-written `.cstemp` files stay inside the bundles. The next `codesign`
+of such a bundle reads the file as a broken part of the bundle and fails with
+`invalid or unsupported format for signature`, with no compiler error. Seen on 2026-11-11 in
+`make compile`, after runs that stopped on Swift errors while test bundles were being signed.
+
+A finished `codesign` leaves no `.cstemp`, so `tools/drop-signing-temp.sh` deletes every one in the
+products folder before a build starts: `tools/xcodebuild.sh` in the tree's `Build/Products`, and
+`make compile` and `make test-package` in `.build/out/Products`. `make compile` prints a failed
+`CodeSign` task with its reason, because that task has no compiler error to show.
+
 ## Warnings are errors
 
 `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES` is in `src/config/Build/Base.xcconfig`, next to

@@ -31,6 +31,7 @@ run="$("$root/tools/run-dir.sh" test-package)"
 log="$run/test-package.log"
 list="$run/test-list.txt"
 status=0
+"$root/tools/drop-signing-temp.sh" "$root/src/.build/out/Products"
 echo "[INFO] swift test list"
 swift test --package-path src list >"$list" 2>"$log" || status=$?
 if [ "$status" -ne 0 ]; then
