@@ -60,7 +60,7 @@ extension StoryFrameSteps {
         let questStore = provider.questStore
         if
             let dialogue = provider.dialogueStore,
-            let files = game.audioFileSystem
+            let files = hosts.audioFileSystem
         {
             let locator = VoiceLineLocator(dialogue: dialogue, quests: questStore)
             state.voiceLocator = locator
@@ -76,8 +76,8 @@ extension StoryFrameSteps {
         gameSession.worldTick.register(.story) { [weak self] _ in
             self?.state.voiceTimer?.drain()
             self?.ambientTalk.tickAmbientSpeech()
-            self?.sceneLines.run(self?.scenes.tick() ?? [])
-            self?.socialSearch.run(self?.storyManager.social.tick() ?? [])
+            self?.sceneLines.run(self?.hosts.scenes.tick() ?? [])
+            self?.socialSearch.run(self?.hosts.storyManager.social.tick() ?? [])
             self?.events.checkPlayerLocation()
         }
     }

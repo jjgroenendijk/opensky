@@ -13,7 +13,7 @@ import simd
 import Testing
 
 @MainActor
-private final class PairedIdleWorld: IdleWorld {
+final class PairedIdleWorld: IdleWorld {
     var takesEvent: Set<ReferenceKey> = []
     var raised: [(event: String, actor: ReferenceKey)] = []
     var poses: [ReferenceKey: PairedActorPose] = [:]

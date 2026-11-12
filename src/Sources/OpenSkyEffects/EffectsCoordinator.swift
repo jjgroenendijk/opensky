@@ -65,10 +65,6 @@ public final class EffectsCoordinator {
 
     let drawing: EffectModelDrawing
 
-    var failedModels: Set<String> {
-        drawing.failedModels
-    }
-
     /// Blood that lasts: on the screen after the player is hit, and on weapons.
     public internal(set) var screenBlood = ScreenBloodRuntime()
     public internal(set) var weaponBlood = WeaponBloodRuntime()

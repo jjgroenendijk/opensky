@@ -164,4 +164,23 @@ struct EffectsCoordinatorShellTests {
         effects.detonateAreaExplosions(of: Self.hit(links: links))
         #expect(world.detonations.isEmpty)
     }
+
+    @Test func thePoserIsHandedToTheModelDrawing() {
+        let effects = EffectsCoordinator()
+        let poser = StillEffectPoser()
+        effects.posing = poser
+        #expect(effects.posing === poser)
+        #expect(effects.drawing.posing === poser)
+    }
+}
+
+/// A poser that moves nothing.
+private final class StillEffectPoser: EffectModelPosing {
+    func pose(_: [VisualEffectModel], deltaTime _: Float) -> [Int: PosedEffectModel] {
+        [:]
+    }
+
+    func playedSequence(ofEffect _: Int) -> String? {
+        nil
+    }
 }

@@ -338,18 +338,6 @@ final class StoryFrameSteps {
         events = StoryLocationEvents(game: hosts)
     }
 
-    var game: any StoryWorldHost {
-        hosts
-    }
-
-    var scenes: any ScenePort {
-        game.scenes
-    }
-
-    var storyManager: any StoryManagerPort {
-        game.storyManager
-    }
-
     var ambientTalk: StoryAmbientTalkAdapter {
         StoryAmbientTalkAdapter(
             game: hosts, state: state, sceneCast: sceneCast, sceneLines: sceneLines
