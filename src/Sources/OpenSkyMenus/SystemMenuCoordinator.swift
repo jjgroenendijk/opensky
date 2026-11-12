@@ -186,22 +186,22 @@ public final class SystemMenuCoordinator {
             activationTicks: SystemMenuMovieBridge.activationTicks,
             prepare: SystemMenuMovieBridge.prepare(runtime:)
         ) { [weak self] runtime in
-                SystemMenuMovieBridge.activate(runtime: runtime, buttonName: { [weak self] event in
-                    self?.settings.buttonName(forUserEvent: event)
-                }, onClose: { [weak self] in
-                    self?.close()
-                })
-                SettingsMovieBridge.register(runtime: runtime) { [weak self] group in
-                    self?.openSettingsCategory(group)
-                }
-                SystemMenuMovieBridge.registerCalls(runtime: runtime) { [weak self] call in
-                    self?.pendingMovieCalls.append(call)
-                }
-                SystemMenuMovieBridge.registerTopics(
-                    runtime: runtime,
-                    topics: { [weak self] page in self?.showTopicPage(page)?.topics ?? [] },
-                    open: { [weak self] index in self?.openTopic(index) }
-                )
+            SystemMenuMovieBridge.activate(runtime: runtime, buttonName: { [weak self] event in
+                self?.settings.buttonName(forUserEvent: event)
+            }, onClose: { [weak self] in
+                self?.close()
+            })
+            SettingsMovieBridge.register(runtime: runtime) { [weak self] group in
+                self?.openSettingsCategory(group)
+            }
+            SystemMenuMovieBridge.registerCalls(runtime: runtime) { [weak self] call in
+                self?.pendingMovieCalls.append(call)
+            }
+            SystemMenuMovieBridge.registerTopics(
+                runtime: runtime,
+                topics: { [weak self] page in self?.showTopicPage(page)?.topics ?? [] },
+                open: { [weak self] index in self?.openTopic(index) }
+            )
         }
     }
 

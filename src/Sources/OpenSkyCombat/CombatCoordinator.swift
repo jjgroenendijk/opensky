@@ -13,8 +13,8 @@ public final class CombatCoordinator {
     let meleeWorld: CombatMeleeWorldPart
     let projectileWorld: CombatProjectileWorldPart
     let loopWorld: CombatLoopWorldPart
-    var lastMeleeAction = MeleeActionOutcome.idle
-    var lastArcheryAction = ArcheryActionOutcome.idle
+    /// The readout's forced attacks and shots, and the combat switches.
+    public let panels: CombatPanelControls
 
     /// Builds the melee, archery, and combat-loop runtimes. Without `data` all
     /// three stay nil.
@@ -28,6 +28,7 @@ public final class CombatCoordinator {
         meleeWorld = CombatMeleeWorldPart(shared: shared)
         projectileWorld = CombatProjectileWorldPart(shared: shared)
         loopWorld = CombatLoopWorldPart(shared: shared)
+        panels = CombatPanelControls(shared: shared)
         guard let data else { return }
         shared.melee = meleeWorld.makeRuntime(data)
         shared.archery = projectileWorld.makeRuntime(data)
@@ -114,11 +115,5 @@ public final class CombatCoordinator {
     public func takeCommands() -> [CombatCommand] {
         defer { shared.pendingCommands = [] }
         return shared.pendingCommands
-    }
-
-    /// The name `residentActors()` gives `key`, so the readouts agree.
-    func actorName(_ key: ReferenceKey?) -> String {
-        guard let key else { return "—" }
-        return shared.world.residentActors().first { $0.key == key }?.name ?? key.description
     }
 }

@@ -26,11 +26,11 @@ struct CombatCoordinatorTests {
     @Test func theConfidenceAndAssistanceSwitchFollowsTheSavedSetting() {
         let coordinator = CombatCoordinator(world: FakeCoordinatorWorld(), data: nil)
         let store = PlayerSettingsStore(persistence: nil)
-        coordinator.load(settings: store)
-        #expect(coordinator.usesCombatTemperament)
+        coordinator.panels.load(settings: store)
+        #expect(coordinator.panels.usesCombatTemperament)
         store.set(.combatTemperament, to: 0)
-        coordinator.load(settings: store)
-        #expect(!coordinator.usesCombatTemperament)
+        coordinator.panels.load(settings: store)
+        #expect(!coordinator.panels.usesCombatTemperament)
     }
 
     @Test func aCombatEventOnAnNPCReachesThatNPCsGraph() {
@@ -49,8 +49,9 @@ struct CombatCoordinatorTests {
         let coordinator = CombatCoordinator(world: FakeCoordinatorWorld(), data: nil)
         #expect(coordinator.meleeCombatSnapshot == .unavailable)
         #expect(coordinator.combatLoopSnapshot == .unavailable)
-        #expect(coordinator.requestMeleeAttack().text == "Melee unavailable: no game data loaded.")
-        #expect(coordinator.spawnDevProjectile()
+        #expect(coordinator.panels.requestMeleeAttack()
+            .text == "Melee unavailable: no game data loaded.")
+        #expect(coordinator.panels.spawnDevProjectile()
             .text == "Archery unavailable: no game data loaded.")
     }
 
@@ -205,10 +206,10 @@ struct CombatCoordinatorTests {
         let world = FakeCoordinatorWorld()
         world.casting[Self.guardKey] = CombatCastingFacts(magicka: 50, spells: [])
         let coordinator = Self.coordinator(world)
-        coordinator.isActorCastingEnabled = false
+        coordinator.panels.isActorCastingEnabled = false
         #expect(coordinator.loopWorld.combatCasting(of: Self.guardKey) == .none)
         #expect(world.castingQueries.isEmpty)
-        coordinator.isActorCastingEnabled = true
+        coordinator.panels.isActorCastingEnabled = true
         #expect(coordinator.loopWorld.combatCasting(of: Self.guardKey).magicka == 50)
         #expect(world.castingQueries == [Self.guardKey])
     }
@@ -256,13 +257,13 @@ struct CombatCoordinatorTests {
         let world = FakeCoordinatorWorld()
         world.actors = [CombatActorObservation(key: Self.guardKey, feet: SIMD3(), name: "Guard")]
         let coordinator = Self.coordinator(world)
-        coordinator.selectedActorIsHostile = true
+        coordinator.panels.selectedActorIsHostile = true
         #expect(coordinator.combatLoopSnapshot.lastActionText
             == "Hostility: no resident actor to act on.")
         world.selected = Self.guardKey
-        coordinator.selectedActorIsHostile = true
+        coordinator.panels.selectedActorIsHostile = true
         #expect(world.hostilities[Self.guardKey] == .hostile)
-        #expect(coordinator.selectedActorIsHostile)
+        #expect(coordinator.panels.selectedActorIsHostile)
         #expect(coordinator.combatLoopSnapshot.lastActionText == "Hostility: Guard is now hostile.")
     }
 }

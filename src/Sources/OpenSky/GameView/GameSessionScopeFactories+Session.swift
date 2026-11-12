@@ -115,11 +115,11 @@ extension GameSessionScopeFactories {
         )
         guard scope.stage != nil else { return combat }
         let store = scope.playerSettingsStore
-        combat.load(settings: store)
+        combat.panels.load(settings: store)
         // The launcher page writes the switch while a session runs.
         store.observe { [weak combat, weak store] id in
             guard id == .combatTemperament || id == .combatGameSettings, let store else { return }
-            combat?.load(settings: store)
+            combat?.panels.load(settings: store)
         }
         return combat
     }
