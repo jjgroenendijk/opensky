@@ -344,14 +344,14 @@ extension IdleCoordinator {
         }
         let chosen = store?.inheritingBehaviorFile(picked) ?? picked
         let waiting = Waiting(selection: selection, source: source, timer: timer, variant: variant)
-        let plan: IdlePlaybackPlan
-        switch plans.state(of: IdlePlanKey(chosen, from: positions[actor], variant: variant)) {
-        case let .ready(ready): plan = ready
-        case .loading: return wait(waiting, on: actor, chosen: chosen, plan: nil)
-        case let .failed(failure):
+        let loaded = plans.plan(for: IdlePlanKey(chosen, from: positions[actor], variant: variant))
+        guard let plan = loaded.plan else {
+            guard let failure = loaded.failure else {
+                return wait(waiting, on: actor, chosen: chosen, plan: nil)
+            }
             return finish(IdleReport(
                 actor: actor, source: source, trace: selection.trace,
-                chosen: chosen.record.editorID, plan: nil, seconds: 0, failure: failure.reason
+                chosen: chosen.record.editorID, plan: nil, seconds: 0, failure: failure
             ), timer: timer, now: now)
         }
         let skeleton = actorPlayback(actor)?.clip.skeletonMeshPath

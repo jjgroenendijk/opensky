@@ -273,6 +273,17 @@ nonisolated public struct IdlePlanKey: Hashable, Sendable {
 
 public typealias IdlePlanLoader = AssetLoader<IdlePlanKey, IdlePlaybackPlan>
 
+extension AssetLoader where Key == IdlePlanKey, Value == IdlePlaybackPlan {
+    /// The loaded plan, or why it failed. Both are nil while the plan loads.
+    func plan(for key: IdlePlanKey) -> (plan: IdlePlaybackPlan?, failure: String?) {
+        switch state(of: key) {
+        case let .ready(plan): (plan, nil)
+        case .loading: (nil, nil)
+        case let .failed(failure): (nil, failure.reason)
+        }
+    }
+}
+
 nonisolated extension IdlePlaybackResolver {
     /// The plan decode a worker runs. The resolver and its graph caches live on the worker.
     public static func planLoad(
