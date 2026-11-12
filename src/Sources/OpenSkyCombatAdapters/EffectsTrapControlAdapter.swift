@@ -108,44 +108,10 @@ extension EffectsTrapControlAdapter {
         return true
     }
 
-    /// The CK wiki "Fire - Weapon": a shot from a non-actor needs `akAmmo`, spends no
-    /// ammunition, and leaves along the source's heading. Its damage is the weapon's
-    /// plus the arrow's, with no skill or perk, and the weapon's enchantment applies.
     public func fireWeapon(
         _ weapon: ReferenceKey, from source: ReferenceKey, ammunition: ReferenceKey?
     ) -> Bool {
-        guard
-            let items = game.combat.items, let bridge = game.scripts.bridge,
-            let runtime = game.combat.archery,
-            let weaponID = bridge.localFormID(of: weapon), let bow = items.weapon(weaponID),
-            let ammunitionID = ammunition.flatMap(bridge.localFormID(of:)),
-            let arrow = items.archeryAmmunition(ammunitionID),
-            let shooter = shooter(at: source)
-        else { return false }
-        var payload = ArrowPayload(
-            damage: ArcheryDamage.resolve(
-                bowDamage: Float(bow.damage), arrowDamage: arrow.damage, skill: 0
-            ),
-            weapon: weaponID,
-            ammunition: arrow.item,
-            enchantment: game.magic.enchantmentProfile(of: weaponID)
-        )
-        payload.spendsAmmunition = false
-        let shot = ProjectileShot(profile: arrow.profile, payload: .arrow(payload))
-        return runtime.projectiles.fire(shot, from: shooter) != nil
-    }
-
-    private func shooter(at source: ReferenceKey) -> ProjectileShooter? {
-        guard let transform = game.scripts.bridge?.referenceState(for: source)?.transform else {
-            return nil
-        }
-        return ProjectileShooter(
-            key: source,
-            origin: transform.position,
-            aim: ProjectileShooter.headingAim(zRotation: transform.rotation.z),
-            isFirstPerson: false,
-            location: game.streamer.cellLocation(of: source)
-        )
+        EffectsTrapWeapon(game: game).fireWeapon(weapon, from: source, ammunition: ammunition)
     }
 }
 
@@ -253,5 +219,51 @@ extension EffectsTrapControlAdapter {
     public func removeImageSpaceModifier(_ modifier: ReferenceKey, fadeSeconds: Float) {
         guard let gameSession = game.gameSession else { return }
         game.effects.stopModifier(modifier, fadeOut: fadeSeconds, on: &gameSession.imageSpace)
+    }
+}
+
+/// A weapon a script fires from an object, such as a trap's bow, for
+/// `EffectsTrapControlAdapter`.
+struct EffectsTrapWeapon {
+    let game: any EffectsTrapControlHost
+
+    /// The CK wiki "Fire - Weapon": a shot from a non-actor needs `akAmmo`, spends no
+    /// ammunition, and leaves along the source's heading. Its damage is the weapon's
+    /// plus the arrow's, with no skill or perk, and the weapon's enchantment applies.
+    func fireWeapon(
+        _ weapon: ReferenceKey, from source: ReferenceKey, ammunition: ReferenceKey?
+    ) -> Bool {
+        guard
+            let items = game.combat.items, let bridge = game.scripts.bridge,
+            let runtime = game.combat.archery,
+            let weaponID = bridge.localFormID(of: weapon), let bow = items.weapon(weaponID),
+            let ammunitionID = ammunition.flatMap(bridge.localFormID(of:)),
+            let arrow = items.archeryAmmunition(ammunitionID),
+            let shooter = shooter(at: source)
+        else { return false }
+        var payload = ArrowPayload(
+            damage: ArcheryDamage.resolve(
+                bowDamage: Float(bow.damage), arrowDamage: arrow.damage, skill: 0
+            ),
+            weapon: weaponID,
+            ammunition: arrow.item,
+            enchantment: game.magic.enchantmentProfile(of: weaponID)
+        )
+        payload.spendsAmmunition = false
+        let shot = ProjectileShot(profile: arrow.profile, payload: .arrow(payload))
+        return runtime.projectiles.fire(shot, from: shooter) != nil
+    }
+
+    private func shooter(at source: ReferenceKey) -> ProjectileShooter? {
+        guard let transform = game.scripts.bridge?.referenceState(for: source)?.transform else {
+            return nil
+        }
+        return ProjectileShooter(
+            key: source,
+            origin: transform.position,
+            aim: ProjectileShooter.headingAim(zRotation: transform.rotation.z),
+            isFirstPerson: false,
+            location: game.streamer.cellLocation(of: source)
+        )
     }
 }
