@@ -310,8 +310,7 @@ public struct DialogueRuntime: DialogueAccess {
 
     /// `GameDaysPassed`, or nil in a context with no clock.
     var currentDay: Double? {
-        context.globals.floatValue(editorID: GameClock.TimeGlobal.gameDaysPassed.editorID)
-            .map(Double.init)
+        DialogueContextReads.currentDay(in: context)
     }
 
     /// Whether the topic's owning quest is running. A topic naming no quest is
@@ -324,6 +323,20 @@ public struct DialogueRuntime: DialogueAccess {
     /// Whether `speaker` is a placement of the NPC_ record an INFO's ANAM names. A
     /// speaker with no indexed record passes, so it is not silenced for no reason.
     private func speaks(_ speaker: ReferenceKey, as forced: FormID) -> Bool {
+        DialogueContextReads.speaks(speaker, as: forced, in: context)
+    }
+}
+
+/// The clock and reference reads a dialogue choice makes on its condition context.
+enum DialogueContextReads {
+    static func currentDay(in context: ConditionContext) -> Double? {
+        context.globals.floatValue(editorID: GameClock.TimeGlobal.gameDaysPassed.editorID)
+            .map(Double.init)
+    }
+
+    static func speaks(
+        _ speaker: ReferenceKey, as forced: FormID, in context: ConditionContext
+    ) -> Bool {
         guard let entry = context.references[speaker] else { return true }
         return ConditionFunctions.baseForm(of: entry) == forced
     }

@@ -28,11 +28,7 @@ extension PlayerCoordinator {
             tally: bridge.graph?.tally,
             bodyFailureReason: failureReason
         )
-        snapshot.actorState = bridge.graph?.variable(named: ActorStateGraphNames.state).map {
-            ActorStateGraphCore.stateName(
-                of: Int32(truncatingIfNeeded: $0.intValue), constants: bridge.actorStateConstants
-            )
-        }
+        snapshot.actorState = PlayerPanelReads.actorState(of: bridge)
         return snapshot
     }
 
@@ -96,5 +92,17 @@ extension PlayerCoordinator {
     var firstPersonArmsEnabled: Bool {
         get { world?.firstPersonArmsEnabled ?? true }
         set { world?.setFirstPersonArmsEnabled(newValue) }
+    }
+}
+
+/// Reads for the player panels that need the behavior graph's own names.
+enum PlayerPanelReads {
+    /// The player's actor state by name, as its graph holds it now.
+    static func actorState(of bridge: LocomotionBridge) -> String? {
+        bridge.graph?.variable(named: ActorStateGraphNames.state).map {
+            ActorStateGraphCore.stateName(
+                of: Int32(truncatingIfNeeded: $0.intValue), constants: bridge.actorStateConstants
+            )
+        }
     }
 }
