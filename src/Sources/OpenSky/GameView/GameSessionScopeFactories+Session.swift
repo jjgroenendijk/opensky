@@ -73,7 +73,10 @@ extension GameSessionScopeFactories {
         let world = scope.magicWorld
         guard let stage = scope.stage else { return MagicCoordinator(world: world) }
         let magic = MagicCoordinator(
-            world: world, data: world.sessionData(provider: stage.data, store: scope.worldState),
+            world: world, data: world.sessions.sessionData(
+                provider: stage.data,
+                store: scope.worldState
+            ),
             storyEvents: scope.storyWorld
         )
         // `Mod Spell Cost` folds through the caster's own copy of the perks.

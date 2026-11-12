@@ -105,48 +105,16 @@ extension MagicArchetypeEffectsAdapter {
         game.effectsWorld.placeAtMe(hazard, at: key, count: 1) != nil
     }
 
-    /// Cloak spells "will not damage followers or friendly NPCs, only ones who are
-    /// hostile to you" (<https://en.uesp.net/wiki/Skyrim:Cloak>). An NPC's cloak
-    /// reaches only the player, the one target an NPC fights.
     public func cloakTargets(around key: ReferenceKey, radius: Float) -> [ReferenceKey] {
-        let living = game.actorWorld.combatActors().filter { !$0.isDead }
-        let playerFeet = game.combat.meleeAttacker.feet
-        guard key != .player else {
-            return living
-                .filter { simd_distance($0.feet, playerFeet) <= radius }
-                .filter { game.factions.hostility(of: $0.key) == .hostile }
-                .map(\.key)
-        }
-        guard
-            let caster = living.first(where: { $0.key == key }),
-            game.factions.hostility(of: key) == .hostile,
-            simd_distance(caster.feet, playerFeet) <= radius
-        else { return [] }
-        return [.player]
+        MagicCloakReach(game: game).cloakTargets(around: key, radius: radius)
     }
 
-    /// Knocks each target down, as `PushActorAway` does, at the projectile's push.
     public func knock(
         _ targets: [ReferenceKey],
         awayFrom source: ReferenceKey,
         by payload: SpellPayload
     ) {
-        guard
-            let link = payload.projectile,
-            let projectile = game.combat.items?.projectiles[link.rawValue]
-        else { return }
-        let speed = CloakKnock.speed(
-            impactForce: projectile.impactForce,
-            bipedMultiplier: game.worldRecords?.gameSettings
-                .number("fProjectileKnockMultBiped") ?? 0,
-            havokScale: NIFCollisionModel.havokToEngineScale
-        )
-        guard speed > 0 else { return }
-        for target in targets {
-            _ = game.effectsWorld.knockDownActor(
-                target, awayFrom: source, magnitude: speed / NIFCollisionModel.havokToEngineScale
-            )
-        }
+        MagicCloakReach(game: game).knock(targets, awayFrom: source, by: payload)
     }
 
     public func actorHasKeyword(_ editorID: String, on holder: ActorValueHolder) -> Bool {
@@ -154,12 +122,7 @@ extension MagicArchetypeEffectsAdapter {
     }
 
     public func itemHasKeyword(_ editorID: String, on item: FormID) -> Bool {
-        guard
-            let keywords = game.worldRecords?.locationKeywords,
-            let keyword = keywords.keyword(editorID: editorID)?.id,
-            let id = keywords.resolvedID(item, fromPlugin: FormIDResolver.loadOrderSpaceName)
-        else { return false }
-        return keywords.hasKeyword(keyword, on: id) == true
+        keywordChecks.itemHasKeyword(editorID, on: item)
     }
 
     /// An item fits when it has a keyword the base's worn restriction list names.
@@ -214,6 +177,15 @@ struct MagicKeywordChecks {
         return answer
     }
 
+    func itemHasKeyword(_ editorID: String, on item: FormID) -> Bool {
+        guard
+            let keywords = game.worldRecords?.locationKeywords,
+            let keyword = keywords.keyword(editorID: editorID)?.id,
+            let id = keywords.resolvedID(item, fromPlugin: FormIDResolver.loadOrderSpaceName)
+        else { return false }
+        return keywords.hasKeyword(keyword, on: id) == true
+    }
+
     /// An item fits when it has a keyword the base's worn restriction list names.
     func enchantment(_ base: ResolvedEnchantment, fits item: FormID) -> Bool {
         guard
@@ -225,5 +197,54 @@ struct MagicKeywordChecks {
         else { return true }
         let listed = lists.flattened(listID)?.entries.compactMap(\.self) ?? []
         return listed.isEmpty || listed.contains { keywords.hasKeyword($0, on: id) == true }
+    }
+}
+
+/// Whom a cloak reaches, and the knock its projectile gives them.
+struct MagicCloakReach {
+    let game: any MagicArchetypeEffectsHost
+
+    /// Cloak spells "will not damage followers or friendly NPCs, only ones who are
+    /// hostile to you" (<https://en.uesp.net/wiki/Skyrim:Cloak>). An NPC's cloak
+    /// reaches only the player, the one target an NPC fights.
+    func cloakTargets(around key: ReferenceKey, radius: Float) -> [ReferenceKey] {
+        let living = game.actorWorld.combatActors().filter { !$0.isDead }
+        let playerFeet = game.combat.meleeAttacker.feet
+        guard key != .player else {
+            return living
+                .filter { simd_distance($0.feet, playerFeet) <= radius }
+                .filter { game.factions.hostility(of: $0.key) == .hostile }
+                .map(\.key)
+        }
+        guard
+            let caster = living.first(where: { $0.key == key }),
+            game.factions.hostility(of: key) == .hostile,
+            simd_distance(caster.feet, playerFeet) <= radius
+        else { return [] }
+        return [.player]
+    }
+
+    /// Knocks each target down, as `PushActorAway` does, at the projectile's push.
+    func knock(
+        _ targets: [ReferenceKey],
+        awayFrom source: ReferenceKey,
+        by payload: SpellPayload
+    ) {
+        guard
+            let link = payload.projectile,
+            let projectile = game.combat.items?.projectiles[link.rawValue]
+        else { return }
+        let speed = CloakKnock.speed(
+            impactForce: projectile.impactForce,
+            bipedMultiplier: game.worldRecords?.gameSettings
+                .number("fProjectileKnockMultBiped") ?? 0,
+            havokScale: NIFCollisionModel.havokToEngineScale
+        )
+        guard speed > 0 else { return }
+        for target in targets {
+            _ = game.effectsWorld.knockDownActor(
+                target, awayFrom: source, magnitude: speed / NIFCollisionModel.havokToEngineScale
+            )
+        }
     }
 }
