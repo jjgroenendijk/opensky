@@ -48,9 +48,9 @@ extension CrimeCoordinator {
     /// One tick: notes the arrival in the cell, and an escape once the player leaves it.
     public func advanceJail() {
         guard var stay = jailStay else { return }
-        let step = stay.step(playerCell: world.currentCellLocation)
+        let escaped = stay.escapes(playerCell: world.currentCellLocation)
         jailStay = stay
-        if step == .escaped {
+        if escaped {
             escape(stay)
         }
     }
@@ -114,5 +114,12 @@ extension StoryEventReporting {
 
     func reportEscape(_ stay: JailStay) {
         reportStoryEvent(.escapeJail(location: nil, crimeFaction: stay.faction))
+    }
+}
+
+nonisolated extension JailStay {
+    /// One tick of `step`: true when the player has just left the jail cell.
+    mutating func escapes(playerCell: CellSceneLocation?) -> Bool {
+        step(playerCell: playerCell) == .escaped
     }
 }

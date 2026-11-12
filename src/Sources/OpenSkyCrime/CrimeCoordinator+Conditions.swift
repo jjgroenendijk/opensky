@@ -21,45 +21,56 @@ extension CrimeCoordinator {
         return conditionCache.value(
             revisions: (conditionRevision, scriptedOwnerRevision?()), runtime: reporter.runtime,
             scope: (world.currentCellLocation, references)
-        ) { freshConditionResolution(owning: references) }
+        ) { CrimeConditionResolution(crime: self, owning: references) }
     }
+}
 
-    func freshConditionResolution(owning references: [ReferenceKey]) -> CrimeConditionResolution {
-        guard let reporter else { return .empty }
+/// The seam, built from the coordinator's state. Only the player's ledger travels.
+extension CrimeConditionResolution {
+    @MainActor
+    init(crime: CrimeCoordinator, owning references: [ReferenceKey]) {
+        guard let reporter = crime.reporter else {
+            self = .empty
+            return
+        }
         let ledger = reporter.runtime.ledger()
-        return CrimeConditionResolution(
+        self.init(
             factions: reporter.runtime.factions,
-            sourcePlugin: pluginName,
-            currentCrimeFaction: crimeFaction(in: world.currentCellLocation),
+            sourcePlugin: crime.pluginName,
+            currentCrimeFaction: crime.crimeFaction(in: crime.world.currentCellLocation),
             ledgers: ledger.isEmpty ? [:] : [.player: ledger],
-            situation: situation(ledger: ledger, references: references)
+            situation: Self.situation(of: crime, ledger: ledger, references: references)
         )
     }
 
-    private func situation(ledger: CrimeLedgerState, references: [ReferenceKey]) -> CrimeSituation {
-        var alarmed = Set(pursuitTargets.keys)
+    @MainActor
+    private static func situation(
+        of crime: CrimeCoordinator, ledger: CrimeLedgerState, references: [ReferenceKey]
+    ) -> CrimeSituation {
+        var alarmed = Set(crime.pursuitTargets.keys)
         var arresting: ReferenceKey?
-        if case let .confront(guardKey, _, _) = guards.active {
+        if case let .confront(guardKey, _, _) = crime.guards.active {
             alarmed.insert(guardKey)
             arresting = guardKey
         }
-        let payable = ledger.entries.map(\.faction).filter { canPayCrimeGold(to: $0) == true }
+        let payable = ledger.entries.map(\.faction).filter { crime.canPayCrimeGold(to: $0) == true }
         var owners: [ReferenceKey: ReferenceOwner] = [:]
         for key in references {
-            owners[key] = crimeOwner(of: key)
+            owners[key] = crime.crimeOwner(of: key)
         }
         return CrimeSituation(
-            guardFaction: reporter?.runtime.factions.guardFactionKey,
-            victims: assaultedActors.union(murders.keys),
-            trespassers: isPlayerTrespassing ? [.player] : [],
+            guardFaction: crime.reporter?.runtime.factions.guardFactionKey,
+            victims: crime.assaultedActors.union(crime.murders.keys),
+            trespassers: crime.isPlayerTrespassing ? [.player] : [],
             alarmed: alarmed,
             arrestingGuard: arresting,
             payableFactions: Set(payable),
-            lastSentenceDays: lastSentenceDays,
+            lastSentenceDays: crime.lastSentenceDays,
             owners: owners
         )
     }
 }
+
 
 /// The crime condition seam, built again only when something it reads changed.
 final class CrimeConditionCache {

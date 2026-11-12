@@ -239,22 +239,19 @@ public final class CrimeCoordinator {
                 && owners.cellOwner(at: location).map { !crimeActor(.player).mayUse($0) } == true
         }
         guard isPlayerTrespassing, let reporter else { return }
-        let step = trespassWatch.step(
+        let step = trespassWatch.advance(
             seconds: seconds,
             seen: reporter.witnesses.isWitnessed(.player),
             offLimits: world.isOffLimits(location),
             settings: reporter.runtime.settings
         )
-        switch step {
-        case .none:
-            break
-        case let .warn(remaining):
+        if let remaining = step.warning {
             lastCrime = .trespassWarning(secondsLeft: Int(remaining.rounded(.up)))
             pendingCommands.append(.showNotice(crimeTexts.trespassWarning))
             if let witness = reporter.witnesses.witnesses(of: .player).first {
                 pendingCommands.append(.speakTrespassWarning(by: witness))
             }
-        case .charge:
+        } else if step.charges {
             reportTrespass(in: location)
         }
     }
