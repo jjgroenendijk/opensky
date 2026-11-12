@@ -12,7 +12,7 @@ extension ProgressionCoordinator {
     var beastTree: BeastPerkTree? {
         guard
             let tree = world.playerBeastTree(),
-            skillInformation(tree.actorValueIndex)?.information.hasPerkTree == true
+            treeReader.hasPerkTree(tree.actorValueIndex)
         else { return nil }
         return tree
     }
@@ -23,7 +23,7 @@ extension ProgressionCoordinator {
         let next = world.globalValue(editorID: tree.nextPerkGlobal) ?? 0
         return SkillsMenuSkill(
             index: tree.actorValueIndex,
-            name: displaySkillName(tree.actorValueIndex),
+            name: treeReader.displaySkillName(tree.actorValueIndex),
             description: "",
             level: world.globalValue(editorID: tree.perkPointsGlobal) ?? 0,
             progress: next > 0 ? min(1, max(0, progress / next)) : 0,
@@ -37,19 +37,15 @@ extension ProgressionCoordinator {
         let points = world.globalValue(editorID: tree.perkPointsGlobal) ?? 0
         guard points >= 1 else { return .refused("No perk points.") }
         guard
-            let head = perkKey(node: node, forSkill: tree.actorValueIndex),
-            let runtime = perks.runtime,
-            let resolved = runtime.perks.perk(key: head),
-            let next = runtime.perks.rankChain(from: resolved.id)
-                .map({ ReferenceKey(resolved: $0.id) })
-                .first(where: { !runtime.owns($0, on: .player) })
+            let head = treeReader.perkKey(node: node, forSkill: tree.actorValueIndex),
+            let next = treeReader.nextRank(of: head)
         else { return .refused("Every rank is owned.") }
-        if let refusal = perkSpendRefusal(for: next) {
+        if let refusal = treeReader.perkSpendRefusal(for: next) {
             return .refused(ProgressionControlReadout.description(of: refusal))
         }
         guard perks.add(next, to: .player) else { return .refused("Every rank is owned.") }
         world.setGlobalValue(points - 1, editorID: tree.perkPointsGlobal)
-        treeCounts.invalidate()
+        treeReader.invalidateCounts()
         return .done("Perk added.")
     }
 }

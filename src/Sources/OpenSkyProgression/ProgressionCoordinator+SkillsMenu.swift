@@ -24,9 +24,9 @@ extension ProgressionCoordinator: SkillsMenuSource {
             race: identity.race,
             level: state.level,
             levelProgress: needed > 0 ? min(1, max(0, state.experience / needed)) : 0,
-            health: meter(.health, leveling.values),
-            magicka: meter(.magicka, leveling.values),
-            stamina: meter(.stamina, leveling.values),
+            health: SkillsMenuPlayer.Meter(.health, of: leveling.values),
+            magicka: SkillsMenuPlayer.Meter(.magicka, of: leveling.values),
+            stamina: SkillsMenuPlayer.Meter(.stamina, of: leveling.values),
             perkPoints: beastTree.map { Int(world.globalValue(editorID: $0.perkPointsGlobal) ?? 0) }
                 ?? state.perkPoints,
             pendingAttributePicks: state.pendingAttributePicks
@@ -41,10 +41,8 @@ extension ProgressionCoordinator: SkillsMenuSource {
             let experience = skills.experience(forSkill: index, on: .player)
             return SkillsMenuSkill(
                 index: index,
-                name: displaySkillName(index),
-                description: skillInformation(index).flatMap {
-                    text($0.information.description, plugin: $0.sourcePlugin, kind: .dlstrings)
-                } ?? "",
+                name: treeReader.displaySkillName(index),
+                description: treeReader.skillDescription(index),
                 level: skills.values.value(at: index, on: .player) ?? 0,
                 progress: threshold > 0 ? min(1, max(0, experience / threshold)) : 0,
                 legendaryCount: state.legendaryCount(ofSkill: index),
@@ -54,35 +52,7 @@ extension ProgressionCoordinator: SkillsMenuSource {
     }
 
     public func skillsMenuPerks(forSkill index: Int32) -> [SkillsMenuPerk] {
-        guard let record = skillInformation(index), let runtime = perks.runtime else { return [] }
-        return record.information.perkTree.compactMap { node in
-            guard
-                let link = node.perk,
-                let resolved = runtime.perks.resolve(link, fromPlugin: record.sourcePlugin)
-            else { return nil }
-            let key = ReferenceKey(resolved: resolved.id)
-            let chain = runtime.perks.rankChain(from: resolved.id)
-            let owned = runtime.rank(inChainFrom: key, on: .player)
-            let shown = chain.indices.contains(owned) ? chain[owned] : resolved
-            return SkillsMenuPerk(
-                node: node.index,
-                name: text(resolved.record.name, plugin: resolved.sourcePlugin, kind: .strings)
-                    ?? resolved.displayName,
-                description: text(
-                    shown.record.description,
-                    plugin: shown.sourcePlugin,
-                    kind: .dlstrings
-                )
-                    ?? "",
-                requirement: requirement(of: shown),
-                gridX: Float(node.position.column) + node.position.horizontal,
-                gridY: Float(node.position.row) + node.position.vertical,
-                connections: node.connections,
-                ownedRank: owned,
-                rankCount: chain.count,
-                refusal: refusalText(forChainFrom: key)
-            )
-        }
+        treeReader.skillsMenuPerks(forSkill: index)
     }
 
     public func skillsMenuChooseAttribute(_ kind: ActorValueKind) -> SkillsMenuOutcome {
@@ -98,12 +68,15 @@ extension ProgressionCoordinator: SkillsMenuSource {
         if let tree = BeastPerkTree(actorValueIndex: index) {
             return buyBeastPerk(node: node, in: tree)
         }
-        guard let head = perkKey(node: node, forSkill: index), let next = nextRank(of: head) else {
+        guard
+            let head = treeReader.perkKey(node: node, forSkill: index),
+            let next = treeReader.nextRank(of: head)
+        else {
             return .refused("Every rank is owned.")
         }
         switch spendPerkPoint(on: next) {
         case .success:
-            treeCounts.invalidate()
+            treeReader.invalidateCounts()
             return .done("Perk added.")
         case let .failure(.perkRefused(refusal)):
             return .refused(ProgressionControlReadout.description(of: refusal))
@@ -115,64 +88,18 @@ extension ProgressionCoordinator: SkillsMenuSource {
         switch makeSkillLegendary(index) {
         case let .success(report):
             .done(
-                "\(displaySkillName(index)) is legendary. "
+                "\(treeReader.displaySkillName(index)) is legendary. "
                     + "\(report.refundedPoints) perk point(s) refunded."
             )
         case let .failure(refusal): .refused(String(describing: refusal))
         }
     }
+}
 
-    // MARK: - Private
-
-    /// The first rank of the chain the player lacks, or nil when all are owned.
-    private func nextRank(of head: ReferenceKey) -> ReferenceKey? {
-        guard
-            let runtime = perks.runtime,
-            let resolved = runtime.perks.perk(key: head) else { return nil }
-        return runtime.perks.rankChain(from: resolved.id)
-            .map { ReferenceKey(resolved: $0.id) }
-            .first { !runtime.owns($0, on: .player) }
-    }
-
-    private func refusalText(forChainFrom head: ReferenceKey) -> String? {
-        guard let next = nextRank(of: head) else { return "owned" }
-        return perkSpendRefusal(for: next).map(ProgressionControlReadout.description(of:))
-    }
-
-    /// The perk's own `GetBaseActorValue <skill> >= N` condition, as the card shows it.
-    private func requirement(of perk: ResolvedPerk) -> String {
-        for condition in perk.record.conditions.conditions where condition.functionIndex == 277 {
-            let skill = condition.parameter1.asInt32
-            guard
-                ActorValueIdentity.isSkill(index: skill),
-                condition.comparison == .greaterThanOrEqual,
-                case let .value(level) = condition.comparisonValue
-            else { continue }
-            return "Requires \(displaySkillName(skill)) \(Int(level))"
-        }
-        return ""
-    }
-
-    func displaySkillName(_ index: Int32) -> String {
-        let information = skillInformation(index)
-        let name = information.flatMap { info in
-            text(info.information.name, plugin: info.sourcePlugin, kind: .strings)
-        }
-        return name ?? skillName(index)
-    }
-
-    /// Inline text needs no tables, so a session without them still shows it.
-    private func text(_ value: LString?, plugin: String, kind: StringTable.Kind) -> String? {
-        if case let .inline(string)? = value {
-            return string
-        }
-        return strings?.scoped(to: plugin).resolve(value, kind: kind)
-    }
-
-    private func meter(_ kind: ActorValueKind, _ values: any ActorValueAccess) -> SkillsMenuPlayer
-        .Meter
-    {
-        SkillsMenuPlayer.Meter(
+@MainActor
+extension SkillsMenuPlayer.Meter {
+    init(_ kind: ActorValueKind, of values: any ActorValueAccess) {
+        self.init(
             current: values.current(of: .player)[kind],
             maximum: values.maximums(of: .player)[kind]
         )

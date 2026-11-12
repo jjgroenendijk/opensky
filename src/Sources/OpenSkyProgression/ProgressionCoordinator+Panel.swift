@@ -8,34 +8,13 @@ public import OpenSkyProgressionInterface
 
 extension ProgressionCoordinator {
     var snapshot: ProgressionControlSnapshot {
-        guard let leveling, let skills else { return .unavailable }
-        let state = leveling.state
-        // Built first: it fills the count cache that `perkTreeCache` describes.
-        let skillReadouts = skillReadouts(runtime: skills)
-        return ProgressionControlSnapshot(
-            isAvailable: true,
-            level: state.level,
-            experience: state.experience,
-            experienceForNextLevel: leveling.experienceForNextLevel,
-            perkPoints: state.perkPoints,
-            pendingAttributePicks: state.pendingAttributePicks,
-            attributePicks: state.attributePicks,
-            skillIncreases: state.skillIncreases,
-            ownedPerkCount: perks.runtime?.state(of: .player).owned.count ?? 0,
-            skills: skillReadouts,
-            perkTreeCache: treeCounts.readout,
-            selectedSkill: skillSelection,
-            treeNodes: perkTreeNodes(forSkill: skillSelection),
-            selectedNode: nodeSelection,
-            perk: perkInspection(node: nodeSelection, forSkill: skillSelection),
-            lastActionText: lastActionText,
-            experienceRate: perks.skillUseMultiplier(
-                SkillUsageConditionResolution(skill: skillSelection)
-            )
+        ProgressionControlSnapshot(
+            reading: treeReader,
+            runtimes: leveling.flatMap { leveling in skills.map { (leveling, $0) } },
+            selection: (skillSelection, nodeSelection),
+            lastActionText: lastActionText
         )
     }
-
-    // MARK: - Skills
 
     // MARK: - Character level
 
@@ -43,7 +22,7 @@ extension ProgressionCoordinator {
     public func awardCharacterExperience(_ amount: Float) -> ProgressionActionOutcome {
         guard let leveling else { return .unavailable }
         let report = leveling.award(characterExperience: amount)
-        reportLevel(report)
+        notices.reportLevel(report)
         return record(.experienceAwarded(
             amount, report, nextLevelAt: leveling.experienceForNextLevel
         ))
@@ -60,10 +39,11 @@ extension ProgressionCoordinator {
     @discardableResult
     func spendPointOnSelectedPerk() -> ProgressionActionOutcome {
         guard leveling != nil else { return .unavailable }
-        guard let key = selectedPerkKey() else { return record(.noPerk) }
+        guard let key = treeReader.perkKey(node: nodeSelection, forSkill: skillSelection)
+        else { return record(.noPerk) }
         return switch spendPerkPoint(on: key) {
         case let .success(state):
-            record(.perkPointSpent(perk: perkName(key), left: state.perkPoints))
+            record(.perkPointSpent(perk: treeReader.perkName(key), left: state.perkPoints))
         case let .failure(error):
             record(.progressRefused(error))
         }
@@ -92,14 +72,15 @@ extension ProgressionCoordinator {
 
     // MARK: - Private
 
-    private func perkName(_ key: ReferenceKey) -> String {
-        perks.runtime?.record(key)?.displayName ?? key.description
-    }
-
     private func changeSelectedPerk(granting: Bool) -> ProgressionActionOutcome {
         guard perks.runtime != nil else { return .unavailable }
-        guard let key = selectedPerkKey() else { return record(.noPerk) }
+        guard let key = treeReader.perkKey(node: nodeSelection, forSkill: skillSelection)
+        else { return record(.noPerk) }
         let changed = granting ? perks.add(key, to: .player) : perks.remove(key, from: .player)
-        return record(.perkChanged(perk: perkName(key), granted: granting, changed: changed))
+        return record(.perkChanged(
+            perk: treeReader.perkName(key),
+            granted: granting,
+            changed: changed
+        ))
     }
 }

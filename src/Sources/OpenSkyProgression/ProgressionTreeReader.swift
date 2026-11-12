@@ -1,15 +1,61 @@
-// The progression reading half: the skill lines, the
-// selected skill's AVIF perk tree, and the PERK record behind the selected box.
+// The progression reads: the skill lines, a skill's AVIF perk tree, the PERK record
+// behind a box, and whether a point can be spent on it.
 // `PerkTreeIndex` answers "which box grants this perk?". The readout asks the
 // opposite, so it reads the AVIF node run in `INAM` order directly.
 
+import Foundation
 import OpenSkyActorsInterface
-public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyConditions
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyProgressionInterface
 
-extension ProgressionCoordinator {
-    public func skillInformation(_ index: Int32) -> ResolvedActorValueInformation? {
+/// Part of `ProgressionCoordinator`: answers from the AVIF index, the perk runtime, and
+/// the string tables, and changes nothing but its caches.
+@MainActor
+final class ProgressionTreeReader {
+    let perks: PerkCoordinator
+    /// The AVIF index the readout browses a skill's perk tree out of.
+    let information: ActorValueInformationStore?
+    /// Where each perk sits in a skill's tree. Empty without game data, and
+    /// every spend is then refused with `.notInPerkTree`.
+    let trees: PerkTreeIndex
+    private let world: any ProgressionWorld
+    /// The readout asks twice a second; walking eighteen trees each time is
+    /// about nine hundred record lookups for numbers that rarely move.
+    private var treeCounts = PerkTreeCountCache()
+    private var cachedStrings: LocalizedStrings??
+
+    init(
+        perks: PerkCoordinator, world: any ProgressionWorld,
+        data: (information: ActorValueInformationStore, perks: PerkStore)?
+    ) {
+        self.perks = perks
+        self.world = world
+        information = data?.information
+        trees = data.map { PerkTreeIndex(information: $0.information, perks: $0.perks) } ?? .empty
+    }
+
+    /// Loaded on first use, because loading reads every table file.
+    var strings: LocalizedStrings? {
+        if let cachedStrings {
+            return cachedStrings
+        }
+        let loaded = world.localizedStrings()
+        cachedStrings = .some(loaded)
+        return loaded
+    }
+
+    var countsReadout: PerkTreeCacheReadout {
+        treeCounts.readout
+    }
+
+    func invalidateCounts() {
+        treeCounts.invalidate()
+    }
+
+    func skillInformation(_ index: Int32) -> ResolvedActorValueInformation? {
         if let tree = BeastPerkTree(actorValueIndex: index) {
             return information?.information(editorID: tree.informationEditorID)
         }
@@ -17,12 +63,14 @@ extension ProgressionCoordinator {
     }
 
     /// Falls back to the vanilla table, so a line always names something.
-    public func skillName(_ index: Int32) -> String {
+    func skillName(_ index: Int32) -> String {
         skillInformation(index)?.displayName ?? ActorValueIdentity.description(of: index)
     }
 
     /// The eighteen skills, in actor-value index order.
-    func skillReadouts(runtime: SkillAdvancementRuntime) -> [SkillProgressReadout] {
+    func skillReadouts(
+        runtime: SkillAdvancementRuntime, progress: PlayerProgressState?
+    ) -> [SkillProgressReadout] {
         // A local copy, so the tree closure's reads do not overlap the
         // mutating call's access to `treeCounts`.
         var counts = treeCounts
@@ -38,7 +86,7 @@ extension ProgressionCoordinator {
                 threshold: runtime.threshold(forSkill: index, on: .player),
                 ownedPerks: tree.owned,
                 treePerks: tree.total,
-                legendaryCount: leveling?.state.legendaryCount(ofSkill: index) ?? 0
+                legendaryCount: progress?.legendaryCount(ofSkill: index) ?? 0
             )
         }
         treeCounts = counts
@@ -89,11 +137,11 @@ extension ProgressionCoordinator {
             conditions: resolved.record.conditions.conditions.map {
                 world.conditionText($0)
             },
-            effects: resolved.effects.map(Self.effectText)
+            effects: resolved.effects.map(\.readoutText)
         )
     }
 
-    public func perkKey(node: UInt32, forSkill index: Int32) -> ReferenceKey? {
+    func perkKey(node: UInt32, forSkill index: Int32) -> ReferenceKey? {
         guard
             let record = skillInformation(index),
             let entry = record.information.perkTree.first(where: { $0.index == node }),
@@ -103,15 +151,9 @@ extension ProgressionCoordinator {
         return ReferenceKey(resolved: resolved.id)
     }
 
-    func selectedPerkKey() -> ReferenceKey? {
-        perkKey(node: nodeSelection, forSkill: skillSelection)
-    }
-
     func firstNode(forSkill index: Int32) -> UInt32 {
         skillInformation(index)?.information.perkTree.first?.index ?? 0
     }
-
-    // MARK: - Private
 
     /// Every perk a skill's tree grants, in node order.
     func perkKeys(forSkill index: Int32) -> [ReferenceKey] {
@@ -140,8 +182,50 @@ extension ProgressionCoordinator {
         )
     }
 
+    /// Every owned rank of every box in the tree, rank by rank.
+    func ownedTreePerks(ofSkill index: Int32) -> [ReferenceKey] {
+        guard let runtime = perks.runtime else { return [] }
+        let owned = Set(runtime.state(of: .player).owned)
+        return perkKeys(forSkill: index).flatMap { head -> [ReferenceKey] in
+            guard let resolved = runtime.perks.perk(key: head) else { return [] }
+            return runtime.perks.rankChain(from: resolved.id)
+                .map { ReferenceKey(resolved: $0.id) }
+                .filter(owned.contains)
+        }
+    }
+
+    /// The perk's name, or the key when the runtime has no record of it.
+    func perkName(_ key: ReferenceKey) -> String {
+        perks.runtime?.record(key)?.displayName ?? key.description
+    }
+
+    func hasPerkTree(_ index: Int32) -> Bool {
+        skillInformation(index)?.information.hasPerkTree == true
+    }
+
+    /// Nil when the player can buy `perk` now.
+    func perkSpendRefusal(for perk: ReferenceKey) -> PerkSpendRefusal? {
+        spendRefusal(for: perk, on: .player)
+    }
+
+    func spendRefusal(
+        for perk: ReferenceKey,
+        on holder: ActorValueHolder
+    ) -> PerkSpendRefusal? {
+        guard let runtime = perks.runtime else { return .unresolvedPerk }
+        let validator = PerkTreeSpendValidator(
+            runtime: runtime, trees: trees, conditionRegistry: runtime.conditions.functions
+        )
+        return validator.refusal(
+            for: perk, on: holder, conditions: world.conditionContext()
+        )
+    }
+}
+
+nonisolated extension ResolvedPerkEffect {
     /// The spell is the store's resolved name, not the raw link.
-    private static func effectText(_ effect: ResolvedPerkEffect) -> String {
+    var readoutText: String {
+        let effect = self
         var text = "\(effect.effect.type) rank \(effect.effect.displayRank)"
         switch effect.effect.data {
         case let .quest(quest, stage):

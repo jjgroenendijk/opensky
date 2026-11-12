@@ -49,14 +49,7 @@ public final class ProgressionCoordinator {
     public private(set) var skills: SkillAdvancementRuntime?
     /// Nil without actor values.
     public let leveling: PlayerLevelRuntime?
-    /// Where each perk sits in a skill's tree. Empty without game data, and
-    /// every spend is then refused with `.notInPerkTree`.
-    public let trees: PerkTreeIndex
-    /// The AVIF index the readout browses a skill's perk tree out of.
-    public let information: ActorValueInformationStore?
-    /// The readout asks twice a second; walking eighteen trees each time is
-    /// about nine hundred record lookups for numbers that rarely move.
-    var treeCounts = PerkTreeCountCache()
+    let treeReader: ProgressionTreeReader
     /// By vanilla actor-value index. Change it with `selectSkill(_:)`.
     public private(set) var skillSelection = ActorValueIdentity.firstSkillIndex
     /// The selected box of that skill's tree, by `INAM`.
@@ -64,15 +57,9 @@ public final class ProgressionCoordinator {
     var lastAction = ProgressionActionOutcome.idle
     /// Cost, per-level cap, and refusal notices.
     public let training: TrainingSettings
-    public let texts: ProgressionTexts
 
     let world: any ProgressionWorld
-    var pendingCommands: [ProgressionCommand] = []
-    /// Earned levels the HUD has announced, so each shows its notice once.
-    var announcedLevelsReady = 0
-    private var cachedStrings: LocalizedStrings??
-    /// Takes `SKIL` and `LEVL`.
-    public weak let storyEvents: (any StoryEventReporting)?
+    let notices: ProgressionNotices
 
     /// Builds the skill runtime over the leveling runtime, so a skill use banks
     /// into it from the first call.
@@ -84,47 +71,37 @@ public final class ProgressionCoordinator {
     ) {
         self.perks = perks
         self.world = world
-        self.storyEvents = storyEvents
         training = data?.training ?? .vanilla
-        texts = data?.texts ?? .vanilla
+        notices = ProgressionNotices(texts: data?.texts ?? .vanilla, storyEvents: storyEvents)
         let leveling = data.map {
             PlayerLevelRuntime(values: $0.values, settings: $0.levelSettings)
         }
         self.leveling = leveling
-        if leveling != nil, let perkStore = data?.perkStore, let information = data?.information {
-            trees = PerkTreeIndex(information: information, perks: perkStore)
-            self.information = information
-        } else {
-            trees = .empty
-            information = nil
-        }
-        guard let data, let information = data.information else { return }
-        var runtime = SkillAdvancementRuntime(
-            values: data.values,
-            parameters: SkillUseParameterSource(store: information),
-            settings: data.skillSettings
+        treeReader = ProgressionTreeReader(
+            perks: perks, world: world,
+            data: leveling == nil ? nil : data.flatMap { data in
+                data.information.flatMap { information in
+                    data.perkStore.map { (information, $0) }
+                }
+            }
         )
+        guard let data, let information = data.information else { return }
+        var runtime = SkillAdvancementRuntime(data, information: information)
         runtime.wornArmor = { [weak self] key in self?.world.wornArmor(of: key) ?? .none }
         runtime.useMultiplier = { [weak self] usage in self?.perks.skillUseMultiplier(usage) ?? 1 }
         runtime.leveling = leveling
         skills = runtime
-        nodeSelection = firstNode(forSkill: skillSelection)
+        nodeSelection = treeReader.firstNode(forSkill: skillSelection)
     }
 
     /// Notices and stats raised since the last call; the app runs them once a frame.
     public func takeCommands() -> [ProgressionCommand] {
-        defer { pendingCommands = [] }
-        return pendingCommands
+        notices.take()
     }
 
-    /// Loaded on first use, because loading reads every table file.
-    var strings: LocalizedStrings? {
-        if let cachedStrings {
-            return cachedStrings
-        }
-        let loaded = world.localizedStrings()
-        cachedStrings = .some(loaded)
-        return loaded
+    /// Falls back to the vanilla table, so a line always names something.
+    func skillName(_ index: Int32) -> String {
+        treeReader.skillName(index)
     }
 
     /// Ignores an index that is not a skill. The old box means nothing in the
@@ -132,7 +109,7 @@ public final class ProgressionCoordinator {
     func selectSkill(_ index: Int32) {
         guard ActorValueIdentity.isSkill(index: index), index != skillSelection else { return }
         skillSelection = index
-        nodeSelection = firstNode(forSkill: index)
+        nodeSelection = treeReader.firstNode(forSkill: index)
     }
 
     // MARK: - Skills
@@ -155,12 +132,8 @@ public final class ProgressionCoordinator {
     public func reportSpeechCheckWon() -> Float {
         guard let skills, let speech = ActorValueIdentity.index(named: "Speech") else { return 0 }
         let level = skills.level(ofSkill: speech, on: skills.player)
-        return reportSkillUse(SkillUseEvent(
-            actor: .player, action: .speechCheck, amount: Self.speechCheckUse * level
-        ))
+        return reportSkillUse(.speechCheckWon(speech: level))
     }
-
-    static let speechCheckUse: Float = 75
 
     /// `Game.AdvanceSkill`. Returns whether the skill took it.
     @discardableResult
@@ -204,18 +177,13 @@ public final class ProgressionCoordinator {
         guard
             let leveling, perks.runtime != nil,
             leveling.perkPoints > 0 else { return .failure(.noPerkPoints) }
-        if let refusal = spendRefusal(for: perk, on: leveling.holder) {
+        if let refusal = treeReader.spendRefusal(for: perk, on: leveling.holder) {
             return .failure(.perkRefused(refusal))
         }
         guard perks.add(perk, to: leveling.holder) else {
             return .failure(.perkRefused(.alreadyOwned))
         }
         return leveling.spendPerkPoint()
-    }
-
-    /// Nil when the player can buy `perk` now.
-    func perkSpendRefusal(for perk: ReferenceKey) -> PerkSpendRefusal? {
-        spendRefusal(for: perk, on: .player)
     }
 
     /// `Game.ModPerkPoints`. A zero delta is the read behind `Game.GetPerkPoints`.
@@ -225,43 +193,10 @@ public final class ProgressionCoordinator {
         leveling?.modifyPerkPoints(by: delta).perkPoints
     }
 
-    private func spendRefusal(
-        for perk: ReferenceKey,
-        on holder: ActorValueHolder
-    ) -> PerkSpendRefusal? {
-        guard let runtime = perks.runtime else { return .unresolvedPerk }
-        let validator = PerkTreeSpendValidator(
-            runtime: runtime, trees: trees, conditionRegistry: runtime.conditions.functions
-        )
-        return validator.refusal(
-            for: perk, on: holder, conditions: world.conditionContext()
-        )
-    }
-
     func store(_ runtime: SkillAdvancementRuntime, report: SkillAdvanceReport?) {
         skills = runtime
         guard let report else { return }
-        if report.didAdvance {
-            storyEvents?.reportStoryEvent(.skillIncrease(skill: report.skill))
-            pendingCommands.append(.showNotification(
-                texts.skillIncreasedText(skill: skillName(report.skill), level: Int(report.level))
-            ))
-        }
-        if let levelUp = report.levelUp {
-            reportLevel(levelUp)
-        }
-    }
-
-    /// The level-up notice shows once per level earned, not once per skill point
-    /// banked while the level waits.
-    func reportLevel(_ report: PlayerLevelUpReport) {
-        if report.didLevel {
-            storyEvents?.reportStoryEvent(.levelIncrease(level: report.level))
-        }
-        if report.levelsReady > announcedLevelsReady {
-            pendingCommands.append(.showNotification(texts.levelUpAvailable))
-        }
-        announcedLevelsReady = report.levelsReady
+        notices.report(report, skillName: skillName(report.skill))
     }
 
     /// Applies the levels banked experience has earned. The skills menu calls it as it
@@ -271,10 +206,29 @@ public final class ProgressionCoordinator {
         guard let leveling else { return nil }
         let report = leveling.applyEarnedLevels()
         skills?.noteCharacterLevels(report.levelsGained)
-        reportLevel(report)
+        notices.reportLevel(report)
         return report
     }
 }
 
 /// Crafting reports through the same method combat's adapters call.
 extension ProgressionCoordinator: SkillUseReporting {}
+
+extension SkillAdvancementRuntime {
+    init(_ data: ProgressionSessionData, information: ActorValueInformationStore) {
+        self.init(
+            values: data.values,
+            parameters: SkillUseParameterSource(store: information),
+            settings: data.skillSettings
+        )
+    }
+}
+
+nonisolated extension SkillUseEvent {
+    private static let speechCheckUse: Float = 75
+
+    /// The player's use for a won speech check, by their base Speech.
+    static func speechCheckWon(speech level: Float) -> SkillUseEvent {
+        SkillUseEvent(actor: .player, action: .speechCheck, amount: speechCheckUse * level)
+    }
+}

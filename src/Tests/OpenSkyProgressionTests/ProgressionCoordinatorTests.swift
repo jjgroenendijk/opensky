@@ -51,7 +51,8 @@ struct ProgressionCoordinatorTests {
         let coordinator = try coordinator(world: world)
 
         #expect(coordinator.skillSelection == oneHanded)
-        #expect(coordinator.nodeSelection == coordinator.perkTreeNodes(forSkill: oneHanded)[0].node)
+        #expect(coordinator.nodeSelection == coordinator.treeReader
+            .perkTreeNodes(forSkill: oneHanded)[0].node)
     }
 
     @Test func aNonSkillIndexIsIgnored() throws {
@@ -129,7 +130,8 @@ struct ProgressionCoordinatorTests {
     @Test func theTreeEntryGrantsNoPerk() throws {
         let world = FakeProgressionWorld()
         let coordinator = try coordinator(world: world)
-        coordinator.nodeSelection = coordinator.perkTreeNodes(forSkill: oneHanded)[0].node
+        coordinator.nodeSelection = coordinator.treeReader.perkTreeNodes(forSkill: oneHanded)[0]
+            .node
 
         #expect(coordinator.grantSelectedPerk()
             .text(training: .vanilla) == "This box grants no perk.")
@@ -141,7 +143,10 @@ struct ProgressionCoordinatorTests {
         let world = FakeProgressionWorld()
         let coordinator = try coordinator(world: world)
 
-        let inspection = coordinator.perkInspection(node: Self.damageNode, forSkill: oneHanded)
+        let inspection = coordinator.treeReader.perkInspection(
+            node: Self.damageNode,
+            forSkill: oneHanded
+        )
 
         #expect(inspection?.name == "Damage Rank 1")
         #expect(inspection?.conditions.allSatisfy { $0.hasPrefix("function ") } == true)
