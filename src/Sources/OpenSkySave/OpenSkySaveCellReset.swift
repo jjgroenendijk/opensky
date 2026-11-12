@@ -12,7 +12,7 @@ nonisolated struct SaveCellResetLedger: Equatable, Sendable {
     let ledger: CellResetLedger
 }
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveCellResetWriter {
     /// The player's departures, ordered by cell. No departure writes no chunk.
     static func writeCellResets(
         _ entries: [WorldStateSnapshotEntry],

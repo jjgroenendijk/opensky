@@ -6,7 +6,7 @@ public import OpenSkyActorsInterface
 import OpenSkyFormatsCore
 public import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveDeathsWriter {
     /// One actor's death paired with the snapshot entry it came from.
     private struct SavedDeath {
         let entry: WorldStateSnapshotEntry

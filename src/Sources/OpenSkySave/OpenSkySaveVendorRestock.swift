@@ -14,7 +14,7 @@ nonisolated struct SaveVendorRestockLedger: Equatable, Sendable {
     let ledger: VendorRestockLedger
 }
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveVendorRestockWriter {
     /// The player's stocking hours, ordered by chest. No entry writes no chunk.
     static func writeVendorRestocks(
         _ entries: [WorldStateSnapshotEntry],

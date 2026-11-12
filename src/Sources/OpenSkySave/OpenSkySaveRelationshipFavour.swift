@@ -20,7 +20,7 @@ nonisolated struct SaveRelationshipFavourEntry: Equatable, Sendable {
     let rows: [Row]
 }
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveRelationshipFavourWriter {
     /// The `RELF` chunk, in the snapshot's `ReferenceKey` order.
     static func writeRelationshipFavour(
         _ entries: [WorldStateSnapshotEntry],

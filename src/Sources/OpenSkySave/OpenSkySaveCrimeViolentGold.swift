@@ -20,7 +20,7 @@ nonisolated struct SaveViolentCrimeGoldEntry: Equatable, Sendable {
     let rows: [Row]
 }
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveCrimeViolentGoldWriter {
     /// The `CRVG` chunk, in the snapshot's `ReferenceKey` order.
     static func writeViolentCrimeGold(
         _ entries: [WorldStateSnapshotEntry],

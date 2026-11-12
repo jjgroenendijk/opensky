@@ -5,13 +5,13 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySavePlayerRulesWriter {
     /// Standard switches leave no component, so they write no chunk.
     static func writePlayerRules(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
-        writeStory(
+        OpenSkySaveStoryWriter.writeStory(
             (PlayerRuleSwitches.self, OpenSkySaveFormat.ChunkTag.playerRules), entries, &writer
         ) { state, payload in
             payload.writeUInt8(state.godMode ? 1 : 0)

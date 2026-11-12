@@ -6,13 +6,13 @@ import OpenSkyFormatsCore
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveHelpMessagesWriter {
     /// Events in name order, so the same state writes the same bytes.
     static func writeHelpMessages(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
-        writeStory(
+        OpenSkySaveStoryWriter.writeStory(
             (HelpMessageState.self, OpenSkySaveFormat.ChunkTag.helpMessages), entries, &writer
         ) { state, payload in
             payload.writeUInt32(UInt32(clamping: state.records.count))

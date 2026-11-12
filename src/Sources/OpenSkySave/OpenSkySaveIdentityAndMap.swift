@@ -31,38 +31,44 @@ nonisolated extension OpenSkySaveFormat {
     static let minimumPlayerMarkerEntrySize = 21
 }
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveIdentityAndMapWriter {
     static func writeIdentityAndMap(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
         let identityTag = OpenSkySaveFormat.ChunkTag.playerIdentity
-        writeStory((PlayerIdentityState.self, identityTag), entries, &writer) { state, payload in
+        OpenSkySaveStoryWriter.writeStory(
+            (PlayerIdentityState.self, identityTag),
+            entries,
+            &writer
+        ) { state, payload in
             payload.writeUInt32(state.race.rawValue)
             payload.writeUInt8(state.isFemale ? 1 : 0)
             payload.writeString(state.name)
             writeFace(state.face, into: &payload)
         }
-        writeComplexions(entries, into: &writer)
+        OpenSkySaveComplexionWriter.writeComplexions(entries, into: &writer)
         let markerTag = OpenSkySaveFormat.ChunkTag.mapMarkers
-        writeStory((MapMarkerState.self, markerTag), entries, &writer) { state, payload in
-            let flags = (state.isVisible ? 1 : 0) | (state.isDiscovered ? 2 : 0)
-                | (state.canTravelTo ? 4 : 0)
-            payload.writeUInt8(UInt8(flags))
-        }
+        OpenSkySaveStoryWriter
+            .writeStory((MapMarkerState.self, markerTag), entries, &writer) { state, payload in
+                let flags = (state.isVisible ? 1 : 0) | (state.isDiscovered ? 2 : 0)
+                    | (state.canTravelTo ? 4 : 0)
+                payload.writeUInt8(UInt8(flags))
+            }
         let fogTag = OpenSkySaveFormat.ChunkTag.localMapFog
-        writeStory((LocalMapFogState.self, fogTag), entries, &writer) { state, payload in
-            let rows = state.explored.sorted {
-                $0.key.saveOrder.lexicographicallyPrecedes($1.key.saveOrder)
+        OpenSkySaveStoryWriter
+            .writeStory((LocalMapFogState.self, fogTag), entries, &writer) { state, payload in
+                let rows = state.explored.sorted {
+                    $0.key.saveOrder.lexicographicallyPrecedes($1.key.saveOrder)
+                }
+                payload.writeUInt32(UInt32(clamping: rows.count))
+                for (cell, mask) in rows {
+                    payload.writeCell(cell)
+                    payload.writeUInt64(mask)
+                }
             }
-            payload.writeUInt32(UInt32(clamping: rows.count))
-            for (cell, mask) in rows {
-                payload.writeCell(cell)
-                payload.writeUInt64(mask)
-            }
-        }
         let playerMarkerTag = OpenSkySaveFormat.ChunkTag.playerSetMarker
-        writeStory(
+        OpenSkySaveStoryWriter.writeStory(
             (PlayerSetMapMarker.self, playerMarkerTag),
             entries,
             &writer

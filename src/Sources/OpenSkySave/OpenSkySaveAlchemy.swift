@@ -8,14 +8,14 @@ import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveAlchemyWriter {
     /// Per potion: FormID, name, poison byte, value, then each effect's MGEF,
     /// magnitude, area, and duration.
     static func writeCreatedPotions(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
-        writeStory(
+        OpenSkySaveStoryWriter.writeStory(
             (CreatedPotionState.self, OpenSkySaveFormat.ChunkTag.createdPotions),
             entries, &writer
         ) { state, payload in
@@ -41,7 +41,7 @@ nonisolated extension OpenSkySaveEncoder {
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
-        writeStory(
+        OpenSkySaveStoryWriter.writeStory(
             (IngredientKnowledgeState.self, OpenSkySaveFormat.ChunkTag.ingredientKnowledge),
             entries, &writer
         ) { state, payload in
@@ -59,7 +59,7 @@ nonisolated extension OpenSkySaveEncoder {
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
-        writeStory(
+        OpenSkySaveStoryWriter.writeStory(
             (WeaponPoisonState.self, OpenSkySaveFormat.ChunkTag.weaponPoisons),
             entries, &writer
         ) { state, payload in

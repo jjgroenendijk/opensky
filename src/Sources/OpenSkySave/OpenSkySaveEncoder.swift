@@ -79,7 +79,7 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
             }
         }
         if let playerPlace {
-            writePlayerPlace(playerPlace, into: &writer)
+            OpenSkySavePlayerPlaceWriter.writePlayerPlace(playerPlace, into: &writer)
         }
         writeComponentChunks(snapshot.entries, into: &writer)
         return writer.data

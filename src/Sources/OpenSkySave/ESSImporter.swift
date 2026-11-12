@@ -4,12 +4,12 @@
 // See docs/engine/ess-import.md.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 public import OpenSkyFormatsESS
 import OpenSkyGameData
 public import OpenSkySaveInterface
-public import OpenSkyScriptingInterface
-public import OpenSkyWorldState
+import OpenSkyScriptingInterface
+import OpenSkyWorldState
 
 nonisolated public struct ESSImportResult: Sendable {
     public let contents: OpenSkySaveContents
@@ -17,7 +17,7 @@ nonisolated public struct ESSImportResult: Sendable {
     public let placement: ESSImportedPlacement?
 }
 
-nonisolated public struct ESSImporter {
+nonisolated public final class ESSImporter {
     let file: ESSFile
     let records: any ESSImportRecords
     let mapping: ESSLoadOrderMapping
@@ -37,12 +37,13 @@ nonisolated public struct ESSImporter {
     public static func run(
         _ file: ESSFile, records: any ESSImportRecords, appVersion: String
     ) -> ESSImportResult {
-        var importer = ESSImporter(file: file, records: records)
+        let importer = ESSImporter(file: file, records: records)
         importer.importGlobals()
-        importer.importPlayer()
-        importer.importChangeForms()
-        importer.importPapyrus()
-        importer.importCreatedObjects()
+        ESSPlayerImport(importer: importer).importPlayer()
+        ESSChangeFormImport(importer: importer).importChangeForms()
+        let papyrus = ESSPapyrusImport(importer: importer)
+        papyrus.importPapyrus()
+        papyrus.importCreatedObjects()
         return importer.finish(appVersion: appVersion)
     }
 
@@ -59,7 +60,7 @@ nonisolated public struct ESSImporter {
 
     /// The session key of a form, or the reason it has none. A created form gets the
     /// next generated key.
-    mutating func key(for ref: ESSRefID) -> Result<ReferenceKey, ESSImportDrop> {
+    func key(for ref: ESSRefID) -> Result<ReferenceKey, ESSImportDrop> {
         switch mapping.resolve(ref) {
         case .null:
             return .failure(.null)
@@ -102,13 +103,13 @@ nonisolated public struct ESSImporter {
         }
     }
 
-    mutating func add(_ value: some WorldStateComponent, to key: ReferenceKey) {
+    func add(_ value: some WorldStateComponent, to key: ReferenceKey) {
         components[key, default: []].append(WorldStateComponentValue(value))
     }
 
     // MARK: - Globals and clock
 
-    mutating func importGlobals() {
+    func importGlobals() {
         let decoded: [ESSGlobalVariable]
         do {
             decoded = try file.globalVariables()
@@ -145,7 +146,7 @@ nonisolated public struct ESSImporter {
 
     /// `GameDaysPassed` holds the whole date and hour; the calendar globals are the
     /// fallback when it is missing.
-    private mutating func importClock(_ time: [GameClock.TimeGlobal: Float]) {
+    private func importClock(_ time: [GameClock.TimeGlobal: Float]) {
         if let days = time[.gameDaysPassed] {
             var value = GameClock()
             value.setProjectedValue(days, for: .gameDaysPassed)
@@ -190,6 +191,21 @@ nonisolated public struct ESSImporter {
         )
         return ESSImportResult(contents: contents, report: report, placement: placement)
     }
+}
+
+/// The player part of an import: identity, spells, factions, and placement.
+nonisolated struct ESSPlayerImport {
+    let importer: ESSImporter
+}
+
+/// The change-form part of an import: references, spawns, inventories, quests, and topics.
+nonisolated struct ESSChangeFormImport {
+    let importer: ESSImporter
+}
+
+/// The Papyrus part of an import: script instances and the created objects.
+nonisolated struct ESSPapyrusImport {
+    let importer: ESSImporter
 }
 
 /// Why one decoded value was not brought over.

@@ -19,7 +19,7 @@ nonisolated extension OpenSkySaveFormat {
     static let minimumComplexionEntrySize = 11
 }
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveComplexionWriter {
     static func writeComplexions(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter

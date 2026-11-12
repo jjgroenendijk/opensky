@@ -7,12 +7,13 @@ import OpenSkyFormatsESS
 import OpenSkySaveInterface
 import OpenSkyScriptingInterface
 
-nonisolated extension ESSExporter {
-    mutating func exportScripts() {
+nonisolated extension ESSScriptExport {
+    func exportScripts() {
         var defined: Set<String> = []
-        for state in contents.scripts {
+        for state in exporter.contents.scripts {
             guard let chain = scriptChain(state.key.scriptName) else {
-                report.update("scripts") { $0.drop("script \(state.key.scriptName) not found") }
+                exporter.report
+                    .update("scripts") { $0.drop("script \(state.key.scriptName) not found") }
                 continue
             }
             guard let instance = instance(state, chain: chain) else { continue }
@@ -20,14 +21,14 @@ nonisolated extension ESSExporter {
                 let members = script.variables.map {
                     ESSPapyrusMember(name: $0.name, type: $0.typeName)
                 }
-                papyrus.scripts.append(
+                exporter.papyrus.scripts.append(
                     ESSPapyrusScript(name: script.name, parent: script.parent, members: members)
                 )
             }
-            papyrus.instances.append(instance)
+            exporter.papyrus.instances.append(instance)
         }
-        let timers = contents.timers.count
-        report.update("scripts") { $0.drop("pending update timers", count: timers) }
+        let timers = exporter.contents.timers.count
+        exporter.report.update("scripts") { $0.drop("pending update timers", count: timers) }
     }
 
     /// The script and its parents, the root first, or nil when one is missing.
@@ -35,27 +36,27 @@ nonisolated extension ESSExporter {
         var chain: [ESSExportScript] = []
         var next = name
         while !next.isEmpty, chain.count < 32 {
-            guard let script = records.script(named: next) else { return nil }
+            guard let script = exporter.records.script(named: next) else { return nil }
             chain.insert(script, at: 0)
             next = script.parent
         }
         return chain
     }
 
-    private mutating func instance(
+    private func instance(
         _ state: PapyrusInstanceState, chain: [ESSExportScript]
     ) -> ESSPapyrusInstance? {
         let variables = chain.flatMap { script in script.variables.map { (script.name, $0) } }
         if variables.contains(where: \.1.holdsHandle) {
-            report.update("scripts") { $0.drop("script with object or array variables") }
+            exporter.report.update("scripts") { $0.drop("script with object or array variables") }
             return nil
         }
         guard state.hasFiredOnInit else {
-            report.update("scripts") { $0.drop("script whose OnInit has not run") }
+            exporter.report.update("scripts") { $0.drop("script whose OnInit has not run") }
             return nil
         }
-        guard let form = forms.ref(state.key.reference) else {
-            report.update("scripts") { $0.drop("script on a form the save cannot name") }
+        guard let form = exporter.forms.ref(state.key.reference) else {
+            exporter.report.update("scripts") { $0.drop("script on a form the save cannot name") }
             return nil
         }
         var saved: [String: PapyrusValue] = [:]
@@ -65,14 +66,14 @@ nonisolated extension ESSExporter {
         let values = variables.map { owner, variable in
             Self.value(saved[Self.variableKey(owner, variable.name)] ?? variable.initial)
         }
-        report.update("scripts") { category in
+        exporter.report.update("scripts") { category in
             category.written += state.variables.count
             if !state.activeState.isEmpty {
                 category.drop("script state name (not written)")
             }
         }
         return ESSPapyrusInstance(
-            id: UInt64(papyrus.instances.count + 1),
+            id: UInt64(exporter.papyrus.instances.count + 1),
             scriptName: chain.last?.name ?? state.key.scriptName, form: form, variables: values
         )
     }

@@ -154,7 +154,7 @@ struct ESSExporterTests {
         #expect(inventory?.isEquipped(FormID(Fixture.sword)) == true)
         let place = try #require(imported.placement)
         #expect(place.isInterior && place.position == SIMD3(100, 200, 50))
-        #expect(place.heading == ESSExporter.heading(fromYaw: 0.5))
+        #expect(place.heading == ESSPlayerExport.heading(fromYaw: 0.5))
     }
 
     @Test func worldStateComesBackEqual() throws {

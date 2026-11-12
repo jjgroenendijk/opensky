@@ -7,7 +7,7 @@ import OpenSkyFormatsESM
 public import OpenSkyInventoryInterface
 public import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveInventoryWriter {
     /// One owner's inventory paired with the snapshot entry it came from.
     private struct OwnedInventory {
         let entry: WorldStateSnapshotEntry

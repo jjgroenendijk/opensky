@@ -7,7 +7,7 @@ import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveQuestJournalLogsWriter {
     /// Every quest state with a log entry, in the snapshot's key order.
     static func writeQuestJournalLogs(
         _ entries: [WorldStateSnapshotEntry],

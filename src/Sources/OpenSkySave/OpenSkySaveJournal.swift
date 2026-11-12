@@ -7,7 +7,7 @@ import OpenSkyFormatsCore
 import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveJournalWriter {
     static func writeJournal(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
@@ -20,8 +20,8 @@ nonisolated extension OpenSkySaveEncoder {
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
-        writeScenes(entries, into: &writer)
-        writeScenePauses(entries, into: &writer)
+        OpenSkySaveStoryWriter.writeScenes(entries, into: &writer)
+        OpenSkySaveStoryWriter.writeScenePauses(entries, into: &writer)
     }
 
     /// Stats in name order, so the same state writes the same bytes.
@@ -29,7 +29,7 @@ nonisolated extension OpenSkySaveEncoder {
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
-        writeStory(
+        OpenSkySaveStoryWriter.writeStory(
             (MiscStatsState.self, OpenSkySaveFormat.ChunkTag.miscStats), entries, &writer
         ) { state, payload in
             payload.writeUInt32(UInt32(clamping: state.values.count))
@@ -44,7 +44,7 @@ nonisolated extension OpenSkySaveEncoder {
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
-        writeStory(
+        OpenSkySaveStoryWriter.writeStory(
             (QuestTrackingState.self, OpenSkySaveFormat.ChunkTag.questTracking),
             entries, &writer
         ) { state, payload in

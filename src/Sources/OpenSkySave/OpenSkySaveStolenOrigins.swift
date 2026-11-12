@@ -8,13 +8,13 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveStolenOriginsWriter {
     /// Per row: the owning faction's key, the item FormID, and the count.
     static func writeStolenOrigins(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
-        writeStory(
+        OpenSkySaveStoryWriter.writeStory(
             (StolenOriginsState.self, OpenSkySaveFormat.ChunkTag.stolenOrigins), entries, &writer
         ) { state, payload in
             payload.writeUInt32(UInt32(clamping: state.origins.count))

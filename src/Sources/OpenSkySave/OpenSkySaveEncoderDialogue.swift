@@ -6,7 +6,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveDialogueWriter {
     private typealias SavedState = (key: ReferenceKey, state: DialogueRuntimeState)
 
     /// The `DLGS` chunk: every non-baseline dialogue component, in key order. The

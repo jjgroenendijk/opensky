@@ -7,7 +7,7 @@ import OpenSkyFormatsCore
 public import OpenSkyMagicInterface
 public import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveEnchantedItemsWriter {
     /// One owner's enchanted-item state paired with the snapshot entry it came
     /// from.
     private struct SavedEnchantedItems {

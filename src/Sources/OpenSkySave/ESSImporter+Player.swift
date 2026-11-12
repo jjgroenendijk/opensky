@@ -10,17 +10,18 @@ import OpenSkyFormatsESS
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 
-nonisolated extension ESSImporter {
-    mutating func importPlayer() {
+nonisolated extension ESSPlayerImport {
+    func importPlayer() {
         let base = playerBase()
         importIdentity(base)
-        add(
+        importer.add(
             PlayerProgressState(
-                level: Int(file.header.playerLevel), experience: file.header.experience
+                level: Int(importer.file.header.playerLevel),
+                experience: importer.file.header.experience
             ),
             to: .player
         )
-        report.update("player") { category in
+        importer.report.update("player") { category in
             category.imported += 1
             category.skip("perk points, skills, and perks (actor data is undocumented)")
         }
@@ -32,28 +33,28 @@ nonisolated extension ESSImporter {
     }
 
     private func playerBase() -> ESSActorBaseChange? {
-        let form = file.changeForms.first {
+        let form = importer.file.changeForms.first {
             $0.type?.signature == "NPC_" && $0.form == ESSActorBaseChange.playerBase
         }
         return form.flatMap { element in attempt { try ESSActorBaseChange(element) } }
     }
 
-    private mutating func importIdentity(_ base: ESSActorBaseChange?) {
+    private func importIdentity(_ base: ESSActorBaseChange?) {
         let race = base?.race.flatMap { race in
-            attempt { try form(race, signature: ["RACE"]).get() }
+            attempt { try importer.form(race, signature: ["RACE"]).get() }
         }
-            ?? records.race(editorID: file.header.playerRaceEditorID)
-        guard let race, let raceID = mapping.currentFormID(race) else {
-            let missing = "race \(file.header.playerRaceEditorID) not found"
-            report.update("player") { $0.drop(missing) }
+            ?? importer.records.race(editorID: importer.file.header.playerRaceEditorID)
+        guard let race, let raceID = importer.mapping.currentFormID(race) else {
+            let missing = "race \(importer.file.header.playerRaceEditorID) not found"
+            importer.report.update("player") { $0.drop(missing) }
             return
         }
         let identity = PlayerIdentityState(
-            race: raceID, isFemale: base?.isFemale ?? file.header.isFemale,
-            name: file.header.playerName, face: face(base?.face)
+            race: raceID, isFemale: base?.isFemale ?? importer.file.header.isFemale,
+            name: importer.file.header.playerName, face: face(base?.face)
         )
-        add(identity, to: .player)
-        report.update("player") { category in
+        importer.add(identity, to: .player)
+        importer.report.update("player") { category in
             category.imported += 1
             category.skip("face tint layers (not in the save's face block)")
         }
@@ -69,20 +70,20 @@ nonisolated extension ESSImporter {
     }
 
     func currentFormID(_ ref: ESSRefID) -> FormID? {
-        guard case let .form(form) = mapping.resolve(ref) else { return nil }
-        return mapping.currentFormID(form)
+        guard case let .form(form) = importer.mapping.resolve(ref) else { return nil }
+        return importer.mapping.currentFormID(form)
     }
 
-    private mutating func importSpells(_ base: ESSActorBaseChange) {
+    private func importSpells(_ base: ESSActorBaseChange) {
         var known: [ReferenceKey] = []
         for spell in base.spells ?? [] {
-            switch form(spell, signature: ["SPEL"]) {
+            switch importer.form(spell, signature: ["SPEL"]) {
             case let .success(form): known.append(ReferenceKey(resolved: form))
-            case let .failure(reason): report
+            case let .failure(reason): importer.report
                 .update("player") { $0.drop("spell: \(reason.description)") }
             }
         }
-        report.update("player") { category in
+        importer.report.update("player") { category in
             category.imported += known.count
             category.drop(
                 "shout (OpenSky keeps no known-shout list)",
@@ -91,48 +92,49 @@ nonisolated extension ESSImporter {
             category.drop("leveled spell", count: base.leveledSpells?.count ?? 0)
         }
         guard !known.isEmpty else { return }
-        add(SpellbookState(known: known), to: .player)
+        importer.add(SpellbookState(known: known), to: .player)
     }
 
-    private mutating func importFactions(_ base: ESSActorBaseChange) {
+    private func importFactions(_ base: ESSActorBaseChange) {
         var memberships: [ActorFactionMembership] = []
         for entry in base.factions ?? [] {
-            switch form(entry.faction, signature: ["FACT"]) {
+            switch importer.form(entry.faction, signature: ["FACT"]) {
             case let .success(form):
                 memberships.append(
                     ActorFactionMembership(faction: ReferenceKey(resolved: form), rank: entry.rank)
                 )
             case let .failure(reason):
-                report.update("player") { $0.drop("faction: \(reason.description)") }
+                importer.report.update("player") { $0.drop("faction: \(reason.description)") }
             }
         }
-        report.update("player") { $0.imported += memberships.count }
+        importer.report.update("player") { $0.imported += memberships.count }
         guard !memberships.isEmpty else { return }
-        add(ActorFactionState(memberships: memberships), to: .player)
+        importer.add(ActorFactionState(memberships: memberships), to: .player)
     }
 
-    private mutating func importPlacement() {
-        guard let location = attempt({ try file.playerLocation() }) else {
-            report.update("player") { $0.skip("player location table") }
+    private func importPlacement() {
+        guard let location = attempt({ try importer.file.playerLocation() }) else {
+            importer.report.update("player") { $0.skip("player location table") }
             return
         }
-        switch form(location.space, signature: ["CELL", "WRLD"]) {
+        switch importer.form(location.space, signature: ["CELL", "WRLD"]) {
         case let .failure(reason):
-            report.update("player") { $0.drop("saved place: \(reason.description)") }
+            importer.report.update("player") { $0.drop("saved place: \(reason.description)") }
         case let .success(space):
-            let isInterior = records.signature(of: space) == "CELL"
-            placement = ESSImportedPlacement(
-                space: space, isInterior: isInterior, spaceEditorID: records.editorID(of: space),
+            let isInterior = importer.records.signature(of: space) == "CELL"
+            importer.placement = ESSImportedPlacement(
+                space: space, isInterior: isInterior,
+                spaceEditorID: importer.records.editorID(of: space),
                 position: location.position, heading: playerHeading(),
                 cell: isInterior ? nil : location.cell
             )
-            report.update("player") { $0.imported += 1 }
+            importer.report.update("player") { $0.imported += 1 }
         }
     }
 
     private func playerHeading() -> Float? {
-        let player = file.changeForms.first {
-            $0.form == ESSRefID(kind: .default, value: Self.playerReference.objectID)
+        let player = importer.file.changeForms.first {
+            $0.form == ESSRefID(kind: .default, value: ESSImporter.playerReference.objectID)
                 && $0.type?.signature == "ACHR"
         }
         return player.flatMap { element in attempt { try ESSReferenceChange(element) } }?
