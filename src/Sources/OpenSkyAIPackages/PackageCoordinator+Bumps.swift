@@ -8,11 +8,11 @@ extension PackageCoordinator {
     /// Starts reactions for this frame's contacts and moves the running ones on. A
     /// reacting actor is suspended; the app speaks and moves for the returned commands.
     public func advanceBumps(_ contacts: [BumpContact], now: Double) -> [BumpCommand] {
-        let started = bumps.note(contacts, now: now, settings: bumpSettings)
+        let started = bumps.note(contacts, now: now, settings: settings.bump)
         for case let .speak(actor) in started {
             suspend(actor)
         }
-        let (moves, finished) = bumps.advance(now: now, settings: bumpSettings)
+        let (moves, finished) = bumps.advance(now: now, settings: settings.bump)
         for actor in finished {
             resume(actor)
         }

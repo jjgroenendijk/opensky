@@ -175,6 +175,11 @@ nonisolated public struct ActorPackageRuntime {
         return nil
     }
 
+    /// The quest whose alias holds the actor's package, if one does.
+    func holdingQuest(for actor: ReferenceKey) -> FormID? {
+        hold(for: actor)?.aliasQuest
+    }
+
     /// On-demand seam for the AI gate readout.
     public mutating func forceReevaluate(
         actor: ReferenceKey,

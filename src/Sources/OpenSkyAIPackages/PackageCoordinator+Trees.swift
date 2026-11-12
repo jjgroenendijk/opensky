@@ -38,7 +38,7 @@ extension PackageCoordinator {
     func syncExecution(_ actor: ReferenceKey) {
         guard
             let runtime, let world, let current = runtime.currentPackage(for: actor),
-            runsTree(actor, package: current.package)
+            runsTree(actor, package: current)
         else {
             leaveExecution(of: actor)
             return
@@ -56,19 +56,17 @@ extension PackageCoordinator {
         updateMount(actor, rides: execution.ridesHorse)
         let commands = execution.runner.start(host: &session)
         executions[actor] = execution
-        if fromSchedule, current.package.general.flags.contains(.mustComplete) {
+        if fromSchedule, runtime.mustComplete(current) {
             self.runtime?.setCompleting(current.package.formID, actor: actor)
         }
-        world.packageProcedure(PackageScriptEvent(
-            kind: .begin, actor: actor, package: current.package
-        ))
+        world.reportProcedure(.begin, actor: actor, package: current.package)
         apply(commands, actor: actor, endsBefore: 0)
     }
 
     /// A scene or alias package runs unless a follower command holds the actor. The
     /// actor's own package also waits while a conversation or arrest holds the actor, and
     /// while it fights or is dead.
-    private func runsTree(_ actor: ReferenceKey, package: Package) -> Bool {
+    private func runsTree(_ actor: ReferenceKey, package: ResolvedPackage) -> Bool {
         guard let runtime, let world, !commandedActors.contains(actor) else { return false }
         if runtime.hold(for: actor) != nil {
             return true
@@ -77,8 +75,7 @@ extension PackageCoordinator {
         switch world.packageActorActivity(actor) {
         case .free: return true
         case .fighting:
-            return package.general.flags.contains(.ignoreCombat)
-                || runtime.source(for: actor) == .situation(.combat)
+            return runtime.fights(actor, running: package)
         case .dead, .aiDisabled: return false
         }
     }
@@ -89,10 +86,7 @@ extension PackageCoordinator {
         guard
             var runtime, let world, let clock = world.packageClock,
             let execution = executions[actor], execution.fromSchedule,
-            execution.runner.outcome != nil,
-            let package = runtime.currentPackage(for: actor)?.package,
-            runtime.completing(for: actor) == package.formID
-            || package.general.flags.contains(.oncePerDay)
+            execution.runner.outcome != nil, runtime.releasesWhenEnded(actor)
         else { return }
         runtime.packageEnded(
             actor: actor, clock: clock, context: conditionContext(clock: clock)
@@ -103,8 +97,7 @@ extension PackageCoordinator {
     /// Drops the actor's tree and runs the change fragment of the package it left. A
     /// schedule walk stops with it, unless a fight now moves the actor.
     func leaveExecution(of actor: ReferenceKey) {
-        waitingMoves[actor] = nil
-        paces[actor] = nil
+        movement.forget(actor)
         guard let execution = executions.removeValue(forKey: actor) else { return }
         if runtime?.completing(for: actor) == execution.package {
             runtime?.setCompleting(nil, actor: actor)
@@ -118,9 +111,7 @@ extension PackageCoordinator {
         // A seat reserved on the walk there is freed too, though the actor never sat.
         world?.unseatPackageActor(actor, from: execution.seat)
         if let package = attempt({ try store?.resolve(execution.package).package }) {
-            world?.packageProcedure(
-                PackageScriptEvent(kind: .change, actor: actor, package: package)
-            )
+            world?.reportProcedure(.change, actor: actor, package: package)
         }
     }
 
@@ -134,7 +125,7 @@ extension PackageCoordinator {
             $0.package == current.package.formID ? $0 : nil
         }
         var session = PackageTreeSession(
-            world: world, actor: actor, aliasQuest: runtime.hold(for: actor)?.aliasQuest,
+            world: world, actor: actor, aliasQuest: runtime.holdingQuest(for: actor),
             package: current,
             values: execution?.values ?? PackageOverrideExecution.values(of: current),
             clock: clock,
@@ -144,17 +135,15 @@ extension PackageCoordinator {
                 self?.conditionContext(clock: clock) ?? world.packageConditionContext(clock: clock)
             }
         )
-        session.guardWarnings = guardWarnings
-        session.sandboxSettings = sandboxSettings
+        session.guardWarnings = settings.guardWarnings
+        session.sandboxSettings = settings.sandbox
         return session
     }
 
     /// True while the actor's current package has the Ignore Combat flag, or came from
     /// its combat override list, which runs in place of combat.
     public func ignoresCombat(_ actor: ReferenceKey) -> Bool {
-        guard let runtime else { return false }
-        let flags = runtime.currentPackage(for: actor)?.package.general.flags ?? []
-        return flags.contains(.ignoreCombat) || runtime.source(for: actor) == .situation(.combat)
+        runtime?.ignoresCombat(actor) ?? false
     }
 
     /// Picks the actor's package again and starts its tree from the root, as the AI
@@ -168,44 +157,17 @@ extension PackageCoordinator {
     /// Scene and alias walks take a free slot first, then the others in the order
     /// they asked, so no actor waits for ever.
     func retryWaitingMoves() {
-        let queue = waitingMoves.sorted { lhs, rhs in
-            let left = runtime?.hold(for: lhs.key) != nil
-            let right = runtime?.hold(for: rhs.key) != nil
-            return left == right ? lhs.value.ticket < rhs.value.ticket : left
-        }
-        for (actor, pending) in queue {
-            requestMove(actor, to: pending.point)
+        for (actor, point) in movement.queue(held: { runtime?.hold(for: $0) != nil }) {
+            requestMove(actor, to: point)
         }
     }
 
-    /// A move that finds every mover slot taken waits in the queue. The room check comes
-    /// first, because a refused move would still pay for its path search.
     func requestMove(_ actor: ReferenceKey, to point: SIMD3<Float>) {
-        if world?.packageActorFlies(actor) == true {
-            requestFlight(actor, to: point)
-            return
-        }
-        let execution = executions[actor]
-        let walker = mounts[actor] ?? actor
-        let result = world.map { world in
-            world.packageMoverHasRoom(for: walker)
-                ? world.movePackageActor(PackageMove(
-                    walker, to: point,
-                    direct: execution?.isDirect ?? false,
-                    gait: paces[actor] ?? execution?.gait,
-                    walkRunBlend: paces[actor] == nil ? execution?.walkRunBlend : nil
-                ))
-                : .busy
-        }
-        if result == .busy {
-            let ticket = waitingMoves[actor]?.ticket ?? nextMoveTicket
-            nextMoveTicket = max(nextMoveTicket, ticket + 1)
-            waitingMoves[actor] = PackagePendingMove(point: point, ticket: ticket)
-        } else {
-            waitingMoves[actor] = nil
-        }
-        if result == .failed || result == nil {
-            movementSettled(actor: actor, reason: .giveUp)
-        }
+        movement.request(
+            actor,
+            to: point,
+            execution: executions[actor],
+            walker: mounts[actor] ?? actor
+        )
     }
 }

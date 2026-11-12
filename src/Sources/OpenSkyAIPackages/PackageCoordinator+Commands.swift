@@ -29,18 +29,18 @@ extension PackageCoordinator {
                 let machine, machine.watchesTarget, let watched = machine.setup.watched,
                 var senses = session.senses(watching: watched)
             {
-                if machine.kind == .follow || machine.kind == .followTo {
+                if machine.follows {
                     senses.fellows = fellowFollowers(of: watched, excluding: actor)
-                    senses.followerSpacing = followSettings.spaceBetweenFollowers
+                    senses.followerSpacing = settings.follow.spaceBetweenFollowers
                 }
                 step(actor, with: .sensed(senses), leaf: leaf)
             }
-            if machine?.kind == .sandbox, let hours {
+            if machine?.isSandbox == true, let hours {
                 step(actor, with: .clock(hours: hours), leaf: leaf)
             }
             // The idle runtime can give a marker after the walk ended.
             if
-                executions[actor]?.runner.running[leaf]?.machine.state == .sandboxing(.wandering),
+                executions[actor]?.runner.running[leaf]?.machine.isWandering == true,
                 arrivesAtIdleMarker(actor, leaf: leaf)
             {
                 step(actor, with: .arrivedAtIdleMarker, leaf: leaf)
@@ -62,21 +62,17 @@ extension PackageCoordinator {
                     requestMove(actor, to: point)
                 }
             case .sit:
-                let runner = executions[actor]?.runner
-                let running = runner?.running[tagged.leaf]
-                let seat = running.map { $0.machine.sandbox.seat ?? $0.setup.seat }
-                    ?? runner?.finishedSeats[tagged.leaf]
-                guard let seat else { continue }
+                guard let seat = executions[actor]?.seat(of: tagged.leaf) else { continue }
                 executions[actor]?.seat = seat
                 world?.seatPackageActor(actor, in: seat)
             case let .act(action):
                 let result = world?.packageAction(action, actor: actor) ?? .failed
                 step(actor, with: .acted(result), leaf: tagged.leaf)
             case .stop:
-                waitingMoves[actor] = nil
+                movement.waiting[actor] = nil
                 world?.stopPackageActor(mounts[actor] ?? actor)
             case let .pace(gait):
-                paces[actor] = gait
+                movement.paces[actor] = gait
             case .playLoop:
                 continue
             case let .endActivity(activity):
@@ -95,9 +91,7 @@ extension PackageCoordinator {
 
     /// A sandboxing actor that holds an idle marker uses it as its next activity.
     func arrivesAtIdleMarker(_ actor: ReferenceKey, leaf: Int) -> Bool {
-        let running = executions[actor]?.runner.running[leaf]
-        return running?.leaf.kind == .sandbox
-            && running?.setup.setup.sandbox?.usesIdleMarkers != false
+        executions[actor]?.takesIdleMarkers(leaf) == true
             && world?.packageActorHoldsIdleMarker(actor) == true
     }
 }
