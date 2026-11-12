@@ -49,21 +49,25 @@ struct CellSceneBuilderPreviewTests: CellSceneBuilderFixture {
     }
 
     @Test(.enabled(if: Self.hasDevice)) func anUnknownBaseHasNoPreview() throws {
-        let preview = try makeBuilder().previewBuilder
+        let builder = try makeBuilder()
+        let preview = builder.previewBuilder
         #expect(preview.previewObject(base: FormID(0x999), placement: spot) == nil)
-        #expect(preview.previewEntryEye(door: FormID(0x999)) == nil)
+        #expect(builder.previewPlaces.previewEntryEye(door: FormID(0x999)) == nil)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func aPlacedReferenceDrawsAtItsOwnSpot() throws {
         let builder = try makeBuilder()
         let scene = try builder.buildScene(worldspaceEditorID: "Tamriel", gridX: 6, gridY: -2)
         let preview = builder.previewBuilder
-        let placement = try #require(preview.previewPlacement(of: FormID(0x200), in: scene))
+        let placement = try #require(builder.previewPlaces.previewPlacement(
+            of: FormID(0x200),
+            in: scene
+        ))
         #expect(placement.position == SIMD3(5, 5, 0))
         #expect(preview.previewSubject(of: FormID(0x200), in: scene)?.placements.count == 1)
         #expect(preview.previewSubject(of: FormID(0x999), in: scene) == nil)
-        #expect(preview.previewPlacement(of: FormID(0x999), in: scene) == nil)
+        #expect(builder.previewPlaces.previewPlacement(of: FormID(0x999), in: scene) == nil)
         let center = CellGridManager.cellCenter(of: CellCoordinate(x: 6, y: -2))
-        #expect(preview.previewSpot(in: scene).position.x == center.x)
+        #expect(builder.previewPlaces.previewSpot(in: scene).position.x == center.x)
     }
 }

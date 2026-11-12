@@ -174,7 +174,7 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
     ) throws -> DoorTransition {
         let current = worldspace
         let transition = try builder.textures.batchLoads {
-            try builder.interiorBuilder.buildDoorTransition(
+            try builder.doorTransitions.buildDoorTransition(
                 from: sourceDoor,
                 worldspaceEditorID: current,
                 state: state

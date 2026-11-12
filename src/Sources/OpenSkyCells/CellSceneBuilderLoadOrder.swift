@@ -128,4 +128,8 @@ nonisolated extension CellSceneBuilder {
     var recordIndex: CellRecordIndex {
         CellRecordIndex(owner: self)
     }
+
+    var modelIndex: CellModelIndex {
+        CellModelIndex(owner: self)
+    }
 }

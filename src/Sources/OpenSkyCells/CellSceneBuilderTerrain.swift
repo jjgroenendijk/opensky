@@ -160,7 +160,7 @@ nonisolated extension CellTerrainBuilder {
                 hiddenQuadrants: quadFlags,
                 surfaceMaterials: TerrainSurfaceMaterials.build(
                     land: land,
-                    materialTypes: owner.recordIndex.materialTypeIndexBuildingIfNeeded()
+                    materialTypes: owner.modelIndex.materialTypeIndexBuildingIfNeeded()
                 )
             )
             if let field {
@@ -294,7 +294,7 @@ nonisolated extension CellTerrainBuilder {
         guard
             let ltex = landTextureIndexBuildingIfNeeded()[ltexID.rawValue],
             let textureSet = ltex.textureSet,
-            let txst = owner.recordIndex.textureSetIndexBuildingIfNeeded()[textureSet.rawValue],
+            let txst = owner.modelIndex.textureSetIndexBuildingIfNeeded()[textureSet.rawValue],
             let diffuse = txst.diffusePath.flatMap({ NIFShaderTextureSet.vfsKey(for: $0) })
         else { return nil }
         return TerrainTextureKeys(

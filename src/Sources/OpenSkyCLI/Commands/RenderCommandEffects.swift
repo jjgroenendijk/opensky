@@ -150,11 +150,11 @@ enum RenderEffects {
         )
         try applyWeather(
             options.weather, to: gameSession,
-            loadOrder: scene.builder.previewBuilder.pluginLoadOrder,
+            loadOrder: scene.builder.previewPlaces.pluginLoadOrder,
             worldspace: scene.worldspace
         )
         try gameSession.attachOffscreenSky(
-            loadOrder: scene.builder.previewBuilder.pluginLoadOrder,
+            loadOrder: scene.builder.previewPlaces.pluginLoadOrder,
             fileSystem: scene.context.makeFileSystem()
         )
         if let name = options.imageSpace {

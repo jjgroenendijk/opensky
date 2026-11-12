@@ -85,7 +85,7 @@ nonisolated extension CellSceneBuilder {
     ) -> (fixed: StaticCollisionSet, doors: [CellDoorCollision]) {
         let sources = movingCollisionSources(in: refs)
         guard !sources.isEmpty, let library = collisionModels else { return (set, []) }
-        let materials = recordIndex.materialTypeIndexBuildingIfNeeded()
+        let materials = modelIndex.materialTypeIndexBuildingIfNeeded()
         let fixed = StaticCollisionSet(
             location: set.location,
             shapes: set.shapes.filter { sources[$0.reference] == nil },
@@ -135,7 +135,7 @@ nonisolated extension CellSceneBuilder {
                 part: { door.rig.leaf(ofBlock: $0) }, movingParts: nil
             )
         }
-        let bases = recordIndex.modelBaseIndexBuildingIfNeeded()
+        let bases = modelIndex.modelBaseIndexBuildingIfNeeded()
         for ref in refs where sources[ref.formID] == nil {
             guard
                 let base = bases[ref.base.rawValue], let path = base.modelPath,

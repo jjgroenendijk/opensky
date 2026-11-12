@@ -292,4 +292,8 @@ nonisolated extension CellSceneBuilder {
     var waterBuilder: CellWaterBuilder {
         CellWaterBuilder(owner: self)
     }
+
+    var waterVolumeBuilder: CellWaterVolumeBuilder {
+        CellWaterVolumeBuilder(owner: self)
+    }
 }

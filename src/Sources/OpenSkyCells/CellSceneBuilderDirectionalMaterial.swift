@@ -17,7 +17,7 @@ nonisolated struct DirectionalMaterialCache {
 nonisolated extension CellObjectBuilder {
     /// The base's MODS textures, with its directional material laid over them.
     nonisolated public func surface(for base: ResolvedBase) -> ModelSurfaceOverride {
-        let alternates = owner.recordIndex.surface(for: base.alternateTextures)
+        let alternates = owner.modelIndex.surface(for: base.alternateTextures)
         guard let projected = base.directionalMaterial.flatMap(projectedMaterial(for:)) else {
             return alternates
         }

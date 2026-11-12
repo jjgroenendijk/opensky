@@ -11,7 +11,7 @@ nonisolated public struct InteriorLightingBuild: Sendable {
     public let pointLights: [RenderPointLight]
 }
 
-nonisolated extension CellInteriorBuilder {
+nonisolated extension CellInteriorLighting {
     nonisolated public func buildInteriorLighting(
         cell: Cell,
         references: [PlacedReference]

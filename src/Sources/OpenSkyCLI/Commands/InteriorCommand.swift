@@ -53,7 +53,7 @@ enum InteriorCommand {
         guard case let .interior(interiorID)? = transition.scene.location else {
             throw CLIError.failure("selected destination is not an interior cell")
         }
-        let reverse = try builder.interiorBuilder.buildDoorTransition(
+        let reverse = try builder.doorTransitions.buildDoorTransition(
             from: transition.destinationDoor,
             worldspaceEditorID: worldspace
         )
@@ -90,7 +90,7 @@ enum InteriorCommand {
         radius: Int32
     ) -> Candidate? {
         guard
-            let allDoors = try? builder.interiorBuilder
+            let allDoors = try? builder.doorTransitions
                 .exteriorDoors(worldspaceEditorID: worldspace)
         else { return nil }
         let doors = allDoors.filter {
@@ -102,7 +102,7 @@ enum InteriorCommand {
         }
         for entry in doors {
             guard
-                let transition = try? builder.interiorBuilder.buildDoorTransition(
+                let transition = try? builder.doorTransitions.buildDoorTransition(
                     from: entry.door.reference,
                     worldspaceEditorID: worldspace
                 ),

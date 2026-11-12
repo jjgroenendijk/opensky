@@ -203,13 +203,13 @@ nonisolated extension CellSceneBuilder {
         motionTypes: [FormID: ReferenceMotionType] = [:]
     ) -> [CellCollisionPlacement] {
         guard !refs.isEmpty else { return [] }
-        let statIndex = recordIndex.statIndexBuildingIfNeeded()
-        let modelBaseIndex = recordIndex.modelBaseIndexBuildingIfNeeded()
-        let lightIndex = interiorBuilder.lightIndexBuildingIfNeeded()
+        let statIndex = modelIndex.statIndexBuildingIfNeeded()
+        let modelBaseIndex = modelIndex.modelBaseIndexBuildingIfNeeded()
+        let lightIndex = interiorLighting.lightIndexBuildingIfNeeded()
         return refs.compactMap { ref in
             guard
                 lightIndex[ref.base.rawValue] == nil,
-                let base = recordIndex.resolveBase(
+                let base = modelIndex.resolveBase(
                     formID: ref.base.rawValue,
                     statIndex: statIndex,
                     modelBaseIndex: modelBaseIndex
@@ -260,7 +260,7 @@ nonisolated extension CellSceneBuilder {
         var counts = BuildCounts()
         let localRefs = referenceBuilder.collectReferences(in: found, counts: &counts)
         let coordinate = CellCoordinate(x: gridX, y: gridY)
-        let refs = interiorBuilder.exteriorReferences(
+        let refs = doorTransitions.exteriorReferences(
             local: localRefs,
             world: world,
             coordinate: coordinate,
@@ -315,7 +315,7 @@ nonisolated extension CellSceneBuilder {
             ))
         }
         let started = Stopwatch()
-        let materialTypes = recordIndex.materialTypeIndexBuildingIfNeeded()
+        let materialTypes = modelIndex.materialTypeIndexBuildingIfNeeded()
         loadPhases.measure(.collision) {
             collisionModels.predecode(paths: placements.map(\.modelPath))
         }

@@ -92,14 +92,14 @@ extension CellSceneBuilderTests {
         )
         #expect(exterior.doors.map(\.reference) == [FormID(0x200)])
 
-        let enter = try builder.interiorBuilder.buildDoorTransition(
+        let enter = try builder.doorTransitions.buildDoorTransition(
             from: FormID(0x200), worldspaceEditorID: "Tamriel"
         )
         #expect(enter.destinationDoor == FormID(0x300))
         #expect(enter.destinationPlacement.position == SIMD3(100, 200, 300))
         #expect(enter.scene.location == .interior(FormID(interiorID)))
 
-        let leave = try builder.interiorBuilder.buildDoorTransition(
+        let leave = try builder.doorTransitions.buildDoorTransition(
             from: FormID(0x300), worldspaceEditorID: "Tamriel"
         )
         #expect(leave.destinationDoor == FormID(0x200))

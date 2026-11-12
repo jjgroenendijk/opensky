@@ -46,7 +46,7 @@ nonisolated public struct PreviewSceneBuilder {
     }
 
     private var loadOrder: LoadOrderPlugins {
-        builder.previewBuilder.pluginLoadOrder
+        builder.previewPlaces.pluginLoadOrder
     }
 
     public func build(_ request: PreviewRequest) throws(PreviewError) -> PreviewScene {
