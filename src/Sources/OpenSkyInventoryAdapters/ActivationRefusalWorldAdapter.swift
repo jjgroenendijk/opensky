@@ -53,7 +53,10 @@ public final class ActivationRefusalWorldAdapter {
             return facts
         }
         if interaction.action == .talk {
-            facts.actor = actorState(of: key, name: interaction.name)
+            facts.actor = ActorActivationReads(game: game).actorState(
+                of: key,
+                name: interaction.name
+            )
         }
         if !interaction.seats.isEmpty {
             let holders = game.furniture.ledger.holders(of: key).values.filter { $0 != .player }
@@ -66,8 +69,13 @@ public final class ActivationRefusalWorldAdapter {
         }
         return facts
     }
+}
 
-    private func actorState(of key: ReferenceKey, name: String) -> ActorActivationState {
+/// What a talk target is doing, for the refusals that name the actor's state.
+struct ActorActivationReads {
+    let game: any ActivationRefusalWorldHost
+
+    func actorState(of key: ReferenceKey, name: String) -> ActorActivationState {
         var state = ActorActivationState(name: name)
         if let holder = game.ragdollWorld.holder(of: key) {
             state.isCreature = !game.magicWorld.actorHasKeyword("ActorTypeNPC", on: holder)

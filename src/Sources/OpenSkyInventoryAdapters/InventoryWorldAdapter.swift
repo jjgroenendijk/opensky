@@ -76,21 +76,67 @@ public final class InventoryWorldAdapter {
         InventoryPapyrusAdapter(game: hosts)
     }
 
+    /// Builds the session's item runtime, texts, and vendors from the loaded data.
+    public var sessions: InventorySessionBuilder {
+        InventorySessionBuilder(game: game)
+    }
+
+    let interactions: InventoryInteractions
+
     public init(game: some InventoryWorldHosts) {
         hosts = game
         self.game = game
+        interactions = InventoryInteractions(hosts: game)
+    }
+}
+
+extension InventoryWorldAdapter: InventoryWorld {
+    public var crosshairInteraction: PlacedInteraction? {
+        interactions.crosshairInteraction
     }
 
-    func askToServeSentence() {
-        let words = game.mapWorld.settingTexts(MessageBoxText.self)
-        game.messages.presentChoices(
-            title: nil, text: game.crime.crimeTexts.serveSentenceQuestion,
-            buttons: [words[.yes], words[.no]]
-        ) { [weak self] answer in
-            guard answer == 0, let self else { return }
-            game.crime.serveSentence()
-        }
+    public func isBook(_ base: FormID) -> Bool {
+        interactions.isBook(base)
     }
+
+    public func pickpocketSkill(of key: ReferenceKey) -> Float? {
+        pickpocket.pickpocketSkill(of: key)
+    }
+
+    public func carryWeight(of key: ReferenceKey) -> Float? {
+        pickpocket.carryWeight(of: key)
+    }
+}
+
+extension InventoryWorldAdapter {
+    public var commands: InventoryCommandRunner {
+        InventoryCommandRunner(game: hosts)
+    }
+
+    /// Runs the commands an inventory or lock action returned, then hands back its answer.
+    @discardableResult
+    public func run<Value>(_ result: InventoryResult<Value>) -> Value {
+        commands.run(result)
+    }
+
+    public func run(_ commands: [InventoryCommand]) {
+        self.commands.run(commands)
+    }
+}
+
+extension InventoryWorldAdapter: RecipeConditionChecking {}
+
+extension InventoryWorldAdapter: VendorWorld {}
+
+extension InventoryWorldAdapter: PapyrusInventoryBridge {}
+
+extension InventoryWorldAdapter: PapyrusAlchemyBridge {}
+
+extension InventoryWorldAdapter: InventoryWorldPort {}
+
+/// Builds the inventory session data from the loaded data stores.
+public struct InventorySessionBuilder {
+    let game: any InventoryWorldHost
 
     /// Nil without inventory baselines: then there is no item runtime.
     public func sessionData(
@@ -133,20 +179,6 @@ public final class InventoryWorldAdapter {
         return texts
     }
 
-    /// A chair or a bench seats the player. A crafting station keeps its menu, and a bed
-    /// its rest menu. False while the furniture switch is off.
-    func useFurniture(_ interaction: PlacedInteraction) -> Bool {
-        guard
-            !interaction.seats.isEmpty,
-            (interaction.station?.workbench.benchType ?? WorkbenchType.none) == WorkbenchType.none,
-            let key = game.streamer.referenceEntry(formID: interaction.reference)?.key
-        else { return false }
-        if case .failure(.disabled) = game.furniture.use(key, by: .player) {
-            return false
-        }
-        return true
-    }
-
     /// The lab's notices, from the load order's strings.
     private var alchemyTexts: AlchemyTexts {
         let records = game.mapWorld.records
@@ -161,20 +193,6 @@ public final class InventoryWorldAdapter {
         )
     }
 
-    /// A book is read where it lies, as in the game; its bar offers to take it.
-    func openBook(_ interaction: PlacedInteraction) -> Bool {
-        let book = game.menuScreens.book
-        guard book.isBook(interaction.base), let runtime = game.inventory.runtime else {
-            return false
-        }
-        let offer = BookTakeOffer(
-            isTheft: runtime.isTheft(interaction), reference: interaction.reference
-        ) { [game] in
-            game.inventory.take(interaction)
-        }
-        return book.open(item: interaction.base, takeOffer: offer)
-    }
-
     /// Nil without a FACT and FLST index. The memberships are read at call time.
     public static func vendorCore(provider: WorldDataStores) -> VendorCore? {
         guard
@@ -187,48 +205,3 @@ public final class InventoryWorldAdapter {
         )
     }
 }
-
-extension InventoryWorldAdapter: InventoryWorld {
-    public var crosshairInteraction: PlacedInteraction? {
-        game.hud.interactionTarget?.interaction
-    }
-
-    public func isBook(_ base: FormID) -> Bool {
-        game.menuScreens.book.isBook(base)
-    }
-
-    public func pickpocketSkill(of key: ReferenceKey) -> Float? {
-        guard let index = ActorValueIdentity.index(named: "Pickpocket") else { return nil }
-        return pickpocket.actorValue(index, of: key)
-    }
-
-    public func carryWeight(of key: ReferenceKey) -> Float? {
-        pickpocket.actorValue(ActorValueIdentity.carryWeightIndex, of: key)
-    }
-}
-
-extension InventoryWorldAdapter {
-    public var commands: InventoryCommandRunner {
-        InventoryCommandRunner(game: hosts)
-    }
-
-    /// Runs the commands an inventory or lock action returned, then hands back its answer.
-    @discardableResult
-    public func run<Value>(_ result: InventoryResult<Value>) -> Value {
-        commands.run(result)
-    }
-
-    public func run(_ commands: [InventoryCommand]) {
-        self.commands.run(commands)
-    }
-}
-
-extension InventoryWorldAdapter: RecipeConditionChecking {}
-
-extension InventoryWorldAdapter: VendorWorld {}
-
-extension InventoryWorldAdapter: PapyrusInventoryBridge {}
-
-extension InventoryWorldAdapter: PapyrusAlchemyBridge {}
-
-extension InventoryWorldAdapter: InventoryWorldPort {}
