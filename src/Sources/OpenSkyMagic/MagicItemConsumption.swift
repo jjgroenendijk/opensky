@@ -40,33 +40,42 @@ extension ActiveEffectRuntime {
         scaling: ([MagicItemEffect], ReferenceKey) -> [MagicItemEffect] = { entries, _ in entries }
     ) throws -> MagicItemConsumeOutcome {
         let (holder, target) = use
-        guard let use = inventory.baselines.items.magicItemUse(item) else {
-            throw MagicItemConsumeError.notConsumable(item)
-        }
-        guard inventory.count(of: item, in: holder) > 0 else {
-            throw MagicItemConsumeError.noneCarried(item)
-        }
-        try inventory.remove(item, count: 1, from: holder)
+        let (kind, entries) = try inventory.takeMagicItem(item, from: holder)
         let source = ActiveEffectSource(
-            kind: use.kind, record: sourceKey(of: item, fallbackPlugin: pluginName)
+            kind: kind, record: effects.sourceKey(of: item, fallbackPlugin: pluginName)
         )
         let stored = apply(
-            scaling(use.effects, source.record),
+            scaling(entries, source.record),
             fromPlugin: pluginName,
             source: source,
             on: target
         )
-        return MagicItemConsumeOutcome(
-            kind: use.kind,
-            entryCount: use.effects.count,
-            stored: stored
-        )
+        return MagicItemConsumeOutcome(kind: kind, entryCount: entries.count, stored: stored)
     }
+}
 
+nonisolated extension MagicEffectStore {
     /// The plugin that defines `item`, which sits in the load-order FormID space.
     func sourceKey(of item: FormID, fallbackPlugin pluginName: String) -> ReferenceKey {
-        effects.resolvedID(item, fromPlugin: FormIDResolver.loadOrderSpaceName)
+        resolvedID(item, fromPlugin: FormIDResolver.loadOrderSpaceName)
             .map(ReferenceKey.init(resolved:))
             ?? .plugin(name: pluginName.lowercased(), objectID: item.objectID)
+    }
+}
+
+extension InventoryAccess {
+    /// Removes one unit of a potion or ingredient and returns what it applies.
+    /// - Throws: `MagicItemConsumeError`, plus the inventory's removal errors.
+    func takeMagicItem(
+        _ item: FormID, from holder: InventoryHolder
+    ) throws -> (kind: ActiveEffectSourceKind, effects: [MagicItemEffect]) {
+        guard let use = baselines.items.magicItemUse(item) else {
+            throw MagicItemConsumeError.notConsumable(item)
+        }
+        guard count(of: item, in: holder) > 0 else {
+            throw MagicItemConsumeError.noneCarried(item)
+        }
+        try remove(item, count: 1, from: holder)
+        return (use.kind, use.effects)
     }
 }

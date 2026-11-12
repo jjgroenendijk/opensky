@@ -150,7 +150,7 @@ struct PerkRuntimeRealDataTests {
         #expect(abs(halved - full / 2) < 0.001)
         // Not a quarter: the header link and the entry point are one discount.
         #expect(halved > full / 4)
-        #expect(CasterRuntime.reducesSpellCost(perk))
+        #expect(SpellCostRules.reducesSpellCost(perk))
         print(
             "[INFO] \(flames.displayName) cost \(full) -> \(halved) with "
                 + "\(perk.editorID ?? perk.id.description)"

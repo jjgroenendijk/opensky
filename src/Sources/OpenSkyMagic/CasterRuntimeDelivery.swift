@@ -29,14 +29,13 @@ extension CasterRuntime {
             tally.noteProjectile()
             return 0
         case .aimed, .targetActor:
-            return applyAtAim(
+            return world.applyAtAim(
                 payload,
                 range: spell.data?.range ?? 0,
-                caster: caster.key,
-                world: world
+                caster: caster.key
             )
         case .touch:
-            return applyAtAim(payload, range: world.touchReach, caster: caster.key, world: world)
+            return world.applyAtAim(payload, range: world.touchReach, caster: caster.key)
         case .targetLocation:
             return world.deliverToLocation(payload, spell: spell, caster: caster)
         case .selfTarget, .unknown:
@@ -47,19 +46,20 @@ extension CasterRuntime {
             return 0
         }
     }
+}
 
+extension CasterWorld {
     /// Applies `payload` to whatever the caster's aim ray reaches.
     ///
     /// A ray that reaches nobody applies nothing and is not an error: sweeping
     /// a beam off a target between two applications is ordinary play, and the
     /// cast keeps running and keeps costing.
-    private func applyAtAim(
+    func applyAtAim(
         _ payload: SpellPayload,
         range: Float,
-        caster: ReferenceKey,
-        world: any CasterWorld
+        caster: ReferenceKey
     ) -> Int {
-        let aim = world.aimedSpellTarget(within: range, for: caster)
+        let aim = aimedSpellTarget(within: range, for: caster)
         let targets = SpellHitTargeting.targets(
             of: payload,
             landing: (aim.position, aim.target),
@@ -67,7 +67,7 @@ extension CasterRuntime {
             excluding: payload.caster
         )
         guard !targets.isEmpty else { return 0 }
-        let report = world.applySpellHit(SpellHit(
+        let report = applySpellHit(SpellHit(
             payload: payload, targets: targets, impact: aim.position
         ))
         return report.storedCount
@@ -78,13 +78,12 @@ extension CasterRuntime {
     func applyFromSelf(
         _ payload: SpellPayload,
         spell: ResolvedSpell,
-        caster: ActorValueHolder,
-        world: any CasterWorld
+        caster: ActorValueHolder
     ) -> Int {
         let onCaster = payload.entries.filter { $0.area == 0 }
         var stored = 0
         if !onCaster.isEmpty {
-            stored = world.applyCastEffects(
+            stored = applyCastEffects(
                 onCaster,
                 origin: (spell.sourcePlugin, ActiveEffectSource(kind: .spell, record: spell.key)),
                 caster: caster.key,
@@ -92,14 +91,14 @@ extension CasterRuntime {
             )
         }
         guard onCaster.count < payload.entries.count else { return stored }
-        let candidates = world.spellHitCandidates()
+        let candidates = spellHitCandidates()
         guard let centre = candidates.first(where: { $0.key == caster.key }) else { return stored }
         let position = centre.feet + SIMD3(0, 0, centre.capsule.height / 2)
         let targets = SpellHitTargeting.targets(
             of: payload, landing: (position, nil), candidates: candidates, excluding: caster.key
         )
         guard !targets.isEmpty else { return stored }
-        let report = world.applySpellHit(SpellHit(
+        let report = applySpellHit(SpellHit(
             payload: payload, targets: targets, impact: position
         ))
         return stored + report.storedCount
