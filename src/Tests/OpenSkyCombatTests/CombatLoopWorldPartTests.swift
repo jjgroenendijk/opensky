@@ -145,6 +145,18 @@ struct CombatSharedPartTests {
         part.spellLanded(payload, at: .zero)
         part.applyWeaponPoison(WeaponPoisonHit(attacker: .player, weapon: nil, target: Self.foe))
         #expect(part.applyWeaponEnhancement(attacker: .player, target: Self.foe) == 0)
+        let profile = ItemEnchantmentProfile(
+            item: FormID(0x800), enchantment: .plugin(name: "base.esm", objectID: 0x801),
+            sourcePlugin: "base.esm", entries: [], name: "Fiery Sword",
+            castingType: .fireAndForget, delivery: .touch, type: .enchantment,
+            capacity: 100, costPerUse: 10, wornRestriction: nil
+        )
+        let hit = WeaponEnchantmentHit(profile: profile, attacker: .player, target: Self.foe)
+        #expect(part.applyWeaponEnchantment(hit) == nil)
+    }
+
+    @Test func aCoordinatorWithoutDataHasNoArchery() {
+        #expect(CombatCoordinator(world: FakeCoordinatorWorld(), data: nil).archery == nil)
     }
 
     @Test func thePlayerGraphTakesAnEventAndAVariableWithoutATarget() {

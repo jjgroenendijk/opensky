@@ -30,10 +30,6 @@ public enum FavourAllowance {
 }
 
 extension CrimeCoordinator {
-    public func favourAllowance(in faction: ReferenceKey) -> Int32? {
-        owners.favourAllowance(in: faction)
-    }
-
     /// Clears the stolen flag on what the player stole from a friend's faction, when
     /// the friend's allowance covers it. Runs every tick, and acts only when a
     /// relationship, a membership, or the record of stolen items changed.
