@@ -93,7 +93,8 @@ struct WorldAudioTransitionAcceptanceTests {
             // Exactly the three subscriptions the game controller makes.
             streamer.onAmbienceContextChanged = { soundDirector.handleAmbienceContext($0) }
             streamer.onMusicContextChanged = { musicDirector.handleMusicContext($0) }
-            streamer.onInteraction.register(.audio) { soundDirector.handleInteraction($0) }
+            streamer.onInteraction
+                .register(.audio) { soundDirector.handleInteraction($0) }
         }
 
         /// Step 1: the center cell arrives carrying one region and one cell

@@ -26,7 +26,7 @@ extension WorldAudioSoundDirector {
         }
         guard sfxEnabled, engine.isRunning else { return true }
         guard Self.loops(descriptor) else {
-            playResolved(id: descriptor.formID, at: position, kind: "animation sound")
+            playback.playResolved(id: descriptor.formID, at: position, kind: "animation sound")
             return true
         }
         let key = AnimationSoundKey(source: source, editorID: editorID.lowercased())
@@ -34,7 +34,7 @@ extension WorldAudioSoundDirector {
         nextLoopToken += 1
         let token = nextLoopToken
         animationLoopTokens[key] = token
-        playResolved(
+        playback.playResolved(
             id: descriptor.formID, at: position, kind: "animation loop", loops: true
         ) { [weak self] sourceID in
             guard let self, animationLoopTokens[key] == token else { return false }
