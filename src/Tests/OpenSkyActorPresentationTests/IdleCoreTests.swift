@@ -49,6 +49,18 @@ struct IdleCoreTests {
         #expect(first != last)
     }
 
+    @Test @MainActor func aPlanStillLoadingHasNeitherAPlanNorAFailure() throws {
+        let idle = try IdleAnimation(record: ESMFixture.record("IDLE", formID: 1, fields: []))
+        let record = ResolvedRecord(
+            id: ResolvedFormID(plugin: "Test.esm", objectID: 1), record: idle,
+            sourcePlugin: "Test.esm"
+        )
+        let loader = IdlePlanLoader { _ in throw AssetLoadFailure(reason: "no clip") }
+        let loaded = loader.plan(for: IdlePlanKey(record))
+        #expect(loaded.plan == nil)
+        #expect(loaded.failure == nil)
+    }
+
     @Test func sandboxAndTheIdleMarkerProcedureUseMarkers() {
         #expect(IdleCore.usesMarkers(.sandbox))
         #expect(IdleCore.usesMarkers(.useIdleMarker))
