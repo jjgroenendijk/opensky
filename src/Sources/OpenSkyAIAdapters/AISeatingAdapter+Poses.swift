@@ -133,3 +133,25 @@ extension AISeatingAdapter {
         }
     }
 }
+
+extension AISeatingAdapter {
+    func placeSeated(_ actor: ReferenceKey, in occupancy: FurnitureOccupancy) {
+        poses.placeSeated(actor, in: occupancy)
+    }
+
+    func placeStanding(_ actor: ReferenceKey, from occupancy: FurnitureOccupancy) {
+        poses.placeStanding(actor, from: occupancy)
+    }
+
+    func furnitureMotion(of actor: ReferenceKey) -> FurnitureMotionSample? {
+        poses.furnitureMotion(of: actor)
+    }
+
+    func moveFurnitureActor(_ actor: ReferenceKey, to pose: FurniturePose) {
+        poses.moveFurnitureActor(actor, to: pose)
+    }
+
+    func finishStanding(_ actor: ReferenceKey, at pose: FurniturePose) {
+        poses.finishStanding(actor, at: pose)
+    }
+}

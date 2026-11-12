@@ -123,3 +123,21 @@ extension AIPackageMovesAdapter {
         }
     }
 }
+
+extension AIPackageMovesAdapter {
+    func packagePlace(
+        of location: Package.Location, actor: ReferenceKey, aliasQuest: FormID?
+    ) -> PackagePlace? {
+        places.packagePlace(of: location, actor: actor, aliasQuest: aliasQuest)
+    }
+
+    func packageAliasStacks() -> [ReferenceKey: PackageAliasStack] {
+        places.packageAliasStacks()
+    }
+
+    func packagePatrolPath(
+        from start: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
+    ) -> [SIMD3<Float>]? {
+        places.packagePatrolPath(from: start, actor: actor, aliasQuest: aliasQuest)
+    }
+}

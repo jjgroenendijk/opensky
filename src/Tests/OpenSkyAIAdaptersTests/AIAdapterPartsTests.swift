@@ -49,7 +49,7 @@ struct AIAdapterPartsTests {
     }
 
     @Test func aPlayerAtRestMakesNoActionSound() {
-        let traits = adapter.detectionSense.playerDetectionTraits(at: .zero, eyeHeight: 120)
+        let traits = adapter.frames.detectionSense.playerDetectionTraits(at: .zero, eyeHeight: 120)
         #expect(traits.actionSound == 0)
     }
 
