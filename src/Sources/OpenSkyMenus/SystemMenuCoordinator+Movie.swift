@@ -53,18 +53,7 @@ extension SystemMenuCoordinator {
 
     /// Steps the movie, so its fades and timers run, then answers its calls.
     public func tick(now: Double) {
-        guard movieLoaded, let renderer else {
-            framePacer = MenuMovieFramePacer()
-            return
-        }
-        let rate = Double(renderer.swfRuntime?.movie.frameRate ?? 0)
-        do {
-            for _ in 0 ..< framePacer.ticks(at: now, frameRate: rate) where movieLoaded {
-                try renderer.advanceSWFRuntime()
-            }
-        } catch {
-            movie.record(error)
-        }
+        guard movie.advance(now: now) else { return }
         answerMovieCalls()
         followMovieState()
     }
