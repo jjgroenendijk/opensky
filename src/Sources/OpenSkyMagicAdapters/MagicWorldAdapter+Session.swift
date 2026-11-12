@@ -35,7 +35,7 @@ extension MagicWorldAdapter {
 
     private func registerMagic(stage: SessionStage) {
         let gameSession = stage.gameSession
-        registerEffects(gameSession: gameSession)
-        registerCasting(gameSession: gameSession)
+        frames.registerEffects(gameSession: gameSession)
+        frames.registerCasting(gameSession: gameSession)
     }
 }

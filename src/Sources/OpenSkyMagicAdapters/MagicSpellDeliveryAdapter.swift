@@ -125,11 +125,55 @@ extension MagicSpellDeliveryAdapter {
         return player.feet + SIMD3(0, 0, player.capsule.centreHeight)
     }
 
-    /// How far the wall ray starts from the impact, so the surface a projectile hit
-    /// does not count as the wall.
-    public static let sightStartOffset: Float = 2
+    public func keyword(editorID: String) -> ReferenceKey? {
+        game.worldRecords?.locationKeywords?.keyword(editorID: editorID)
+            .map { ReferenceKey(resolved: $0.id) }
+    }
 
     public func actor(_ target: ReferenceKey, faces source: ReferenceKey) -> Bool {
+        MagicSightChecks(game: game).actor(target, faces: source)
+    }
+
+    public func point(_ point: SIMD3<Float>, canSee target: ReferenceKey) -> Bool {
+        MagicSightChecks(game: game).point(point, canSee: target)
+    }
+
+    public func runeTriggers(for caster: ReferenceKey) -> [MeleeTarget] {
+        MagicRuneReads(game: game).runeTriggers(for: caster)
+    }
+
+    public func spellHitCandidates() -> [MeleeTarget] {
+        MagicRuneReads(game: game).spellHitCandidates()
+    }
+
+    public func projectileProximity(of payload: SpellPayload) -> Float {
+        MagicRuneReads(game: game).projectileProximity(of: payload)
+    }
+
+    func detonateRune(_ payload: SpellPayload, at position: SIMD3<Float>) {
+        MagicRuneReads(game: game).detonateRune(payload, at: position)
+    }
+
+    var isOutdoors: Bool {
+        !game.streamer.isInterior
+    }
+}
+
+private struct StandingActor {
+    let feet: SIMD3<Float>
+    let facing: Float
+    let height: Float
+}
+
+/// Whether a ward faces its source, and whether a point sees an actor past the walls.
+struct MagicSightChecks {
+    let game: any MagicSpellDeliveryHost
+
+    /// How far the wall ray starts from the impact, so the surface a projectile hit
+    /// does not count as the wall.
+    static let sightStartOffset: Float = 2
+
+    func actor(_ target: ReferenceKey, faces source: ReferenceKey) -> Bool {
         guard let holder = standing(target), let caster = standing(source) else { return true }
         return WardArc.covers(
             holder: SIMD2(holder.feet.x, holder.feet.y), facing: holder.facing,
@@ -137,7 +181,7 @@ extension MagicSpellDeliveryAdapter {
         )
     }
 
-    public func point(_ point: SIMD3<Float>, canSee target: ReferenceKey) -> Bool {
+    func point(_ point: SIMD3<Float>, canSee target: ReferenceKey) -> Bool {
         guard let actor = standing(target) else { return true }
         let centre = actor.feet + SIMD3(0, 0, PlayerCapsule.centreHeight(height: actor.height))
         let path = centre - point
@@ -166,14 +210,14 @@ extension MagicSpellDeliveryAdapter {
             feet: actor.feet, facing: actor.facing, height: actor.capsule.height * actor.scale
         )
     }
+}
 
-    public func keyword(editorID: String) -> ReferenceKey? {
-        game.worldRecords?.locationKeywords?.keyword(editorID: editorID)
-            .map { ReferenceKey(resolved: $0.id) }
-    }
+/// The targets a rune or a spell hit can strike, and the rune's explosion.
+struct MagicRuneReads {
+    let game: any MagicSpellDeliveryHost
 
     /// The player's runes wait for hostile NPCs; an NPC's rune waits for the player.
-    public func runeTriggers(for caster: ReferenceKey) -> [MeleeTarget] {
+    func runeTriggers(for caster: ReferenceKey) -> [MeleeTarget] {
         let living = Set(game.actorWorld.combatActors().filter { !$0.isDead }.map(\.key))
         guard caster != .player else {
             return game.combat.projectileTargets().filter {
@@ -184,15 +228,15 @@ extension MagicSpellDeliveryAdapter {
         return [playerTarget]
     }
 
-    public func spellHitCandidates() -> [MeleeTarget] {
+    func spellHitCandidates() -> [MeleeTarget] {
         game.combat.projectileTargets() + [playerTarget]
     }
 
-    var isOutdoors: Bool {
-        !game.streamer.isInterior
+    private var playerTarget: MeleeTarget {
+        MeleeTarget(key: .player, feet: game.combat.meleeAttacker.feet)
     }
 
-    public func projectileProximity(of payload: SpellPayload) -> Float {
+    func projectileProximity(of payload: SpellPayload) -> Float {
         guard let link = payload.projectile else { return 0 }
         return game.combat.items?.projectileProfile(link)?.explosionProximity ?? 0
     }
@@ -207,14 +251,4 @@ extension MagicSpellDeliveryAdapter {
         else { return }
         explosions.detonate(spec, at: position, cause: .spell)
     }
-
-    private var playerTarget: MeleeTarget {
-        MeleeTarget(key: .player, feet: game.combat.meleeAttacker.feet)
-    }
-}
-
-private struct StandingActor {
-    let feet: SIMD3<Float>
-    let facing: Float
-    let height: Float
 }

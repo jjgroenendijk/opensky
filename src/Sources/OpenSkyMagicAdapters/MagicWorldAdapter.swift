@@ -45,41 +45,75 @@ public final class MagicWorldAdapter {
     public let game: any MagicWorldHost
     let state = MagicPartState()
 
-    let hosts: any MagicWorldHosts
+    let frames: MagicFrameSteps
 
     public var archetypeEffects: MagicArchetypeEffectsAdapter {
-        MagicArchetypeEffectsAdapter(
-            game: hosts, state: state, heldMagic: heldMagic,
-            spellDelivery: spellDelivery
-        )
+        frames.archetypeEffects
     }
 
     public var spellDelivery: MagicSpellDeliveryAdapter {
-        MagicSpellDeliveryAdapter(game: hosts
-        )
+        frames.spellDelivery
     }
 
     public var heldMagic: MagicHeldMagicAdapter {
-        MagicHeldMagicAdapter(
-            game: hosts, state: state, summonedActors: summonedActors,
-            spellDelivery: spellDelivery
-        )
+        frames.heldMagic
     }
 
     public var summonedActors: MagicSummonedActorsAdapter {
-        MagicSummonedActorsAdapter(game: hosts
-        )
+        frames.summonedActors
     }
 
     public var worldFacts: MagicWorldFactsAdapter {
-        MagicWorldFactsAdapter(game: hosts
-        )
+        frames.worldFacts
+    }
+
+    /// Builds the session's magic runtimes, rules, and texts from the loaded data.
+    public var sessions: MagicSessionBuilder {
+        MagicSessionBuilder(game: game)
     }
 
     public init(game: some MagicWorldHosts) {
-        hosts = game
         self.game = game
+        frames = MagicFrameSteps(hosts: game, state: state)
     }
+
+    /// A hit from outside the magic frame steps runs its commands at once, so the
+    /// hit effects and the ragdoll's push land in the same frame as the damage.
+    @discardableResult
+    public func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
+        let report = game.magic.applySpellHit(hit)
+        archetypeEffects.run(game.magic.takeCommands())
+        return report
+    }
+
+    public func noteSpellCast(_ spell: ReferenceKey, by caster: ReferenceKey) {
+        game.scripts.runtime?.queueSpellCast(spell, by: caster)
+    }
+
+    /// Only the player rides.
+    public func isOnFlyingMount(_ key: ReferenceKey) -> Bool {
+        key == .player && !game.mountWorld.flyingMounts.isEmpty
+    }
+
+    public func forgetPickpocketCatch(of key: ReferenceKey) {
+        game.inventoryWorld.forgetPickpocketCatch(of: key)
+    }
+}
+
+extension MagicWorldAdapter: MagicWorld {}
+extension MagicWorldAdapter: SpellHitApplying {}
+
+/// One keyword asked of an actor's race and base form.
+public struct ActorKeywordQuery: Hashable {
+    public let keyword: ResolvedFormID
+    public let forms: [FormID]
+}
+
+extension MagicWorldAdapter: MagicWorldPort {}
+
+/// Builds the magic session data from the loaded data stores.
+public struct MagicSessionBuilder {
+    let game: any MagicWorldHost
 
     public func sessionData(
         provider: WorldDataStores,
@@ -129,6 +163,50 @@ public final class MagicWorldAdapter {
         data.texts.souls = SoulTexts.resolve(store: settings) { [game] in game.mapWorld.text($0) }
         return data
     }
+}
+
+/// The magic parts over one host, and the frame steps that advance effects and casting.
+final class MagicFrameSteps {
+    let hosts: any MagicWorldHosts
+    let state: MagicPartState
+
+    init(hosts: any MagicWorldHosts, state: MagicPartState) {
+        self.hosts = hosts
+        self.state = state
+    }
+
+    var game: any MagicWorldHost {
+        hosts
+    }
+
+    var archetypeEffects: MagicArchetypeEffectsAdapter {
+        MagicArchetypeEffectsAdapter(
+            game: hosts, state: state, heldMagic: heldMagic,
+            spellDelivery: spellDelivery
+        )
+    }
+
+    var spellDelivery: MagicSpellDeliveryAdapter {
+        MagicSpellDeliveryAdapter(game: hosts
+        )
+    }
+
+    var heldMagic: MagicHeldMagicAdapter {
+        MagicHeldMagicAdapter(
+            game: hosts, state: state, summonedActors: summonedActors,
+            spellDelivery: spellDelivery
+        )
+    }
+
+    var summonedActors: MagicSummonedActorsAdapter {
+        MagicSummonedActorsAdapter(game: hosts
+        )
+    }
+
+    var worldFacts: MagicWorldFactsAdapter {
+        MagicWorldFactsAdapter(game: hosts
+        )
+    }
 
     /// Chained after regeneration and the Papyrus VM, on the same delta.
     func registerEffects(gameSession: GameSession) {
@@ -176,37 +254,4 @@ public final class MagicWorldAdapter {
             ))
         }
     }
-
-    /// A hit from outside the magic frame steps runs its commands at once, so the
-    /// hit effects and the ragdoll's push land in the same frame as the damage.
-    @discardableResult
-    public func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
-        let report = game.magic.applySpellHit(hit)
-        archetypeEffects.run(game.magic.takeCommands())
-        return report
-    }
-
-    public func noteSpellCast(_ spell: ReferenceKey, by caster: ReferenceKey) {
-        game.scripts.runtime?.queueSpellCast(spell, by: caster)
-    }
-
-    /// Only the player rides.
-    public func isOnFlyingMount(_ key: ReferenceKey) -> Bool {
-        key == .player && !game.mountWorld.flyingMounts.isEmpty
-    }
-
-    public func forgetPickpocketCatch(of key: ReferenceKey) {
-        game.inventoryWorld.forgetPickpocketCatch(of: key)
-    }
 }
-
-extension MagicWorldAdapter: MagicWorld {}
-extension MagicWorldAdapter: SpellHitApplying {}
-
-/// One keyword asked of an actor's race and base form.
-public struct ActorKeywordQuery: Hashable {
-    public let keyword: ResolvedFormID
-    public let forms: [FormID]
-}
-
-extension MagicWorldAdapter: MagicWorldPort {}
