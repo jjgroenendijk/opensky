@@ -16,13 +16,15 @@ struct SkySettingsTests {
             "iMasserSize": .integer(120),
             "fAutoraFadeIn": .float(21),
             "fStarsRotateYAxis": .float(0.5),
-            "fWeatherTransAccel": .float(8)
+            "fWeatherTransAccel": .float(8),
+            "fWeatherCloudSpeedMax": .float(0.4)
         ])
         let settings = SkySettings.resolve(store: GameSettingStore(plugins: [("Sky.esp", file)]))
         #expect(settings.masser.size == 120)
         #expect(settings.auroraFadeIn == 21)
         #expect(settings.starsRotateAxis.y == 0.5)
         #expect(settings.weatherTransAccel == 8)
+        #expect(settings.weatherCloudSpeedMax == 0.4)
         #expect(settings.secunda.size == SkySettings.vanilla.secunda.size)
         #expect(settings.sunXExtreme == 400)
     }

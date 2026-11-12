@@ -93,6 +93,10 @@ nonisolated extension AgentJSON {
         self = value.map(AgentJSON.string) ?? .null
     }
 
+    public init(_ vector: SIMD2<Float>) {
+        self = .array([.init(vector.x), .init(vector.y)])
+    }
+
     public init(_ vector: SIMD3<Float>) {
         self = .array([.init(vector.x), .init(vector.y), .init(vector.z)])
     }

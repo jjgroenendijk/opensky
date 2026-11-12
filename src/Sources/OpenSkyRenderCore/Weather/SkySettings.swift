@@ -1,4 +1,5 @@
-// The GMSTs that place and fade the sun, the moons, the stars, and the aurora.
+// The GMSTs that place and fade the sun, the moons, the stars, and the aurora, and that
+// time weather changes and cloud drift.
 // Fallbacks are the values the Creation Kit settings list gives
 // (https://ck.uesp.net/wiki/Category:Settings). See docs/engine/celestial-sky.md.
 
@@ -30,6 +31,8 @@ nonisolated public struct SkySettings: Equatable, Sendable {
     public var auroraFadeOut: Float = 6
     /// How many times faster an accelerated weather change runs.
     public var weatherTransAccel: Float = 16
+    /// Scales every cloud layer's drift; no vanilla plugin sets it (docs/engine/weather.md#clouds).
+    public var weatherCloudSpeedMax: Float = 0.1
 
     public static let vanilla = SkySettings()
 
@@ -69,6 +72,7 @@ nonisolated public struct SkySettings: Equatable, Sendable {
         read("fAuroraFadeOutStart", \.auroraFadeOutStart)
         read("fAutoraFadeOut", \.auroraFadeOut)
         read("fWeatherTransAccel", \.weatherTransAccel)
+        read("fWeatherCloudSpeedMax", \.weatherCloudSpeedMax)
         return settings
     }
 }

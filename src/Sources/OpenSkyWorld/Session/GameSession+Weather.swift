@@ -60,6 +60,7 @@ extension GameSession {
             renderer.regionEmittance = [:]
             return
         }
+        weather.cloudSpeedMax = skySettings.weatherCloudSpeedMax
         weather.update(hour: timeOfDay, elapsedGameHours: consumeElapsedGameHours())
         renderer.regionEmittance = weather.regionEmittance(
             for: renderer.emittanceRegions, hour: timeOfDay

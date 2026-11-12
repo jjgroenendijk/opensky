@@ -19,7 +19,7 @@ import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScriptingInterface
@@ -72,6 +72,14 @@ extension AgentFrameReadoutAdapter {
     private func skyState() -> AgentJSON {
         guard let sky = game.gameSession?.celestialSky else { return .null }
         let drawn = game.renderer?.skyCelestial?.drawnObjectCount
+        let clouds: AgentJSON = if let skyClouds = game.renderer?.skyClouds {
+            Self.cloudState(
+                velocities: game.gameSession?.currentResolvedWeather?.cloudVelocities ?? [],
+                drift: skyClouds.drift, drawnLayers: skyClouds.drawnLayerCount
+            )
+        } else {
+            .null
+        }
         return [
             "sunDirection": .init(sky.sunDirection), "lightDirection": .init(sky.lightDirection),
             "sunAlpha": .init(sky.sunAlpha), "glareScale": .init(sky.glareScale),
@@ -87,7 +95,24 @@ extension AgentFrameReadoutAdapter {
             "auroras": .array(sky.auroras.map { aurora in
                 ["model": .string(aurora.model), "alpha": .init(aurora.alpha)]
             }),
-            "drawnObjects": drawn.map { .init($0) } ?? .null
+            "drawnObjects": drawn.map { .init($0) } ?? .null,
+            "clouds": clouds
+        ]
+    }
+
+    /// Each cloud layer index the weather moves: its drift speed and texture offset.
+    public static func cloudState(
+        velocities: [SIMD2<Float>], drift: CloudDrift, drawnLayers: Int
+    ) -> AgentJSON {
+        let moving = velocities.indices.filter { velocities[$0] != .zero }
+        return [
+            "drawnLayers": .init(drawnLayers),
+            "layers": .array(moving.map { layer in
+                [
+                    "layer": .init(layer), "velocity": .init(velocities[layer]),
+                    "offset": .init(drift.offset(layer: layer))
+                ]
+            })
         ]
     }
 

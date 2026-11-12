@@ -247,6 +247,8 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
     public var precipitation: PrecipitationState
     /// Both weathers' layers during a transition, each faded by its weight.
     public var clouds: [ResolvedCloudLayer] = []
+    /// Texture units per second for each cloud layer index, blended through a transition.
+    public var cloudVelocities: [SIMD2<Float>] = []
     /// `NAM0` index 16, "Moon Glare": the colour each moon's texture is added in. White
     /// when the weather has no such colour, so its moons still show.
     public var moonGlare: SIMD3<Float> = SIMD3(repeating: 1)
@@ -254,7 +256,8 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
     /// Resolves one weather at `hour` under `timing`. Missing NAM0/FNAM/DALC
     /// fields resolve to zero/disabled rather than throwing (mod-quirk rule).
     public static func resolve(
-        _ weather: Weather, hour: Float, timing: Climate.Timing?
+        _ weather: Weather, hour: Float, timing: Climate.Timing?,
+        cloudSpeedMax: Float = SkySettings.vanilla.weatherCloudSpeedMax
     ) -> ResolvedWeather {
         let weights = TimeOfDayWeights(hour: hour, timing: timing)
         func color(_ component: Weather.Component) -> SIMD3<Float> {
@@ -284,7 +287,10 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
             ),
             wind: WindState.from(weather.data),
             precipitation: PrecipitationState(weather.data?.precipitation ?? .none),
-            clouds: ResolvedCloudLayer.layers(of: weather.sky, weights: weights)
+            clouds: ResolvedCloudLayer.layers(of: weather.sky, weights: weights),
+            cloudVelocities: ResolvedCloudLayer.velocities(
+                of: weather.sky, speedMax: cloudSpeedMax
+            )
         )
         if weather.colors(for: .moonGlare) != nil {
             resolved.moonGlare = color(.moonGlare)
@@ -325,10 +331,26 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
             precipitation: PrecipitationState.blend(
                 lhs.precipitation, rhs.precipitation, time
             ),
-            clouds: lhs.clouds.map { $0.fading(1 - time) } + rhs.clouds.map { $0.fading(time) }
+            clouds: lhs.clouds.map { $0.fading(1 - time) } + rhs.clouds.map { $0.fading(time) },
+            cloudVelocities: Self.blendCloudVelocities(
+                lhs.cloudVelocities, rhs.cloudVelocities, time
+            )
         )
         blended.moonGlare = mix(lhs.moonGlare, rhs.moonGlare)
         return blended
+    }
+
+    /// A layer index one weather lacks counts as still.
+    private static func blendCloudVelocities(
+        _ lhs: [SIMD2<Float>], _ rhs: [SIMD2<Float>], _ time: Float
+    ) -> [SIMD2<Float>] {
+        (0 ..< max(lhs.count, rhs.count)).map { layer in
+            simd_mix(
+                lhs.indices.contains(layer) ? lhs[layer] : .zero,
+                rhs.indices.contains(layer) ? rhs[layer] : .zero,
+                SIMD2(repeating: time)
+            )
+        }
     }
 
     /// Extra storm attenuation over the authored WTHR palette. Kept in the

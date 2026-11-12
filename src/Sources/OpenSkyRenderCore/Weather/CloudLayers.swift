@@ -1,4 +1,5 @@
-// The weather's cloud layers at one hour: texture, tint, opacity and drift per layer.
+// The weather's cloud layers at one hour: texture, tint, and opacity per layer, the drift
+// speed per layer index, and the drift offset the frame keeps.
 // Field layout: docs/formats/weather.md. How the layers draw: docs/engine/weather.md.
 
 public import OpenSkyFormatsESM
@@ -11,27 +12,31 @@ nonisolated public struct ResolvedCloudLayer: Equatable, Sendable {
     public let texture: String
     public var color: SIMD3<Float>
     public var alpha: Float
-    /// Texture coordinates per second.
-    public let velocity: SIMD2<Float>
 
-    public init(
-        layer: Int, texture: String, color: SIMD3<Float>, alpha: Float, velocity: SIMD2<Float>
-    ) {
+    public init(layer: Int, texture: String, color: SIMD3<Float>, alpha: Float) {
         self.layer = layer
         self.texture = texture
         self.color = color
         self.alpha = alpha
-        self.velocity = velocity
     }
 
-    /// The game's built-in `fWeatherCloudSpeedMax`; no vanilla plugin sets it.
-    public static let speedMax: Float = 0.1
-
-    /// Texture units per second: a tenth of `speedMax` times `raw / 127 - 1`, so 127 is
-    /// still (docs/engine/weather.md#clouds).
-    public static func speed(_ raw: UInt8?) -> Float {
+    /// Texture units per second: a tenth of `fWeatherCloudSpeedMax` times `raw / 127 - 1`,
+    /// so 127 is still (docs/engine/weather.md#clouds).
+    public static func speed(_ raw: UInt8?, speedMax: Float) -> Float {
         guard let raw else { return 0 }
         return 0.1 * speedMax * (Float(raw) / 127 - 1)
+    }
+
+    /// One drift per layer index, textured or not: the other weather of a change may
+    /// draw that index.
+    public static func velocities(of sky: WeatherSky, speedMax: Float) -> [SIMD2<Float>] {
+        var velocities = [SIMD2<Float>](repeating: .zero, count: sky.cloudLayers.count)
+        for layer in sky.cloudLayers where velocities.indices.contains(layer.index) {
+            velocities[layer.index] = SIMD2(
+                speed(layer.speedX, speedMax: speedMax), speed(layer.speedY, speedMax: speedMax)
+            )
+        }
+        return velocities
     }
 
     /// The layers that have a texture, are not disabled, and are under the LNAM limit.
@@ -52,8 +57,7 @@ nonisolated public struct ResolvedCloudLayer: Equatable, Sendable {
             } ?? SIMD3(repeating: 1)
             return ResolvedCloudLayer(
                 layer: layer.index, texture: texture, color: color,
-                alpha: simd_clamp(alpha, 0, 1),
-                velocity: SIMD2(speed(layer.speedX), speed(layer.speedY))
+                alpha: simd_clamp(alpha, 0, 1)
             )
         }
     }
@@ -66,5 +70,42 @@ nonisolated public struct ResolvedCloudLayer: Equatable, Sendable {
 
     private static func rgb(_ bytes: SIMD4<UInt8>) -> SIMD3<Float> {
         SIMD3(Float(bytes.x), Float(bytes.y), Float(bytes.z)) / 255
+    }
+}
+
+/// The texture offset of each cloud layer index. Both weathers of a change draw a layer
+/// index at one offset, which moves at their blended speed.
+nonisolated public struct CloudDrift: Equatable, Sendable {
+    public private(set) var offsets: [SIMD2<Float>] = []
+
+    public init() {}
+
+    public func offset(layer: Int) -> SIMD2<Float> {
+        offsets.indices.contains(layer) ? offsets[layer] : .zero
+    }
+
+    public mutating func advance(seconds: Float, velocities: [SIMD2<Float>]) {
+        guard seconds > 0 else { return }
+        grow(to: velocities.count)
+        for (layer, velocity) in velocities.enumerated() {
+            offsets[layer] = Self.wrapped(offsets[layer] + velocity * seconds)
+        }
+    }
+
+    /// The offsets after `seconds` at constant `velocities`, for a frame rendered at an
+    /// exact time.
+    public mutating func seek(seconds: Float, velocities: [SIMD2<Float>]) {
+        offsets = velocities.map { Self.wrapped($0 * seconds) }
+    }
+
+    private mutating func grow(to count: Int) {
+        if offsets.count < count {
+            offsets += Array(repeating: .zero, count: count - offsets.count)
+        }
+    }
+
+    /// Wrapped to one texture repeat, so a long session keeps float precision.
+    private static func wrapped(_ offset: SIMD2<Float>) -> SIMD2<Float> {
+        offset - offset.rounded(.down)
     }
 }
