@@ -75,6 +75,15 @@ extension InventoryPickpocketAdapter {
         }
     }
 
+    func pickpocketSkill(of key: ReferenceKey) -> Float? {
+        guard let index = ActorValueIdentity.index(named: "Pickpocket") else { return nil }
+        return actorValue(index, of: key)
+    }
+
+    func carryWeight(of key: ReferenceKey) -> Float? {
+        actorValue(ActorValueIdentity.carryWeightIndex, of: key)
+    }
+
     public func actorValue(_ index: Int32, of key: ReferenceKey) -> Float? {
         guard
             let runtime = game.actorValues.runtime,

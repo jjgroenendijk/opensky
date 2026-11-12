@@ -44,14 +44,14 @@ extension GameSessionScopeFactories {
         let world = scope.inventoryWorld
         guard
             let stage = scope.stage,
-            var data = world.sessionData(
+            var data = world.sessions.sessionData(
                 provider: stage.data, streamer: stage.streamer, store: scope.worldState
             )
         else {
             return InventoryCoordinator(world: world, lockWorld: scope.lockWorld, data: nil)
         }
         let provider = stage.data
-        data.vendors = InventoryWorldAdapter.vendorCore(provider: provider).map { core in
+        data.vendors = InventorySessionBuilder.vendorCore(provider: provider).map { core in
             VendorCoordinator(
                 core: core,
                 world: world,

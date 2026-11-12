@@ -61,9 +61,9 @@ struct InventoryWorldAdapterTests {
         book.isBookResult = true
         #expect(adapter.crosshairInteraction == target.interaction)
         #expect(adapter.isBook(Self.item))
-        #expect(!adapter.openBook(target.interaction))
+        #expect(!adapter.interactions.openBook(target.interaction))
         book.isBookResult = false
-        #expect(!adapter.openBook(target.interaction))
+        #expect(!adapter.interactions.openBook(target.interaction))
         #expect(book.openCalls.isEmpty)
     }
 
@@ -71,20 +71,24 @@ struct InventoryWorldAdapterTests {
         let chair = InventoryAdapterFixture.interaction(
             .activate, seats: [InventoryAdapterFixture.seat()]
         )
-        #expect(!adapter.useFurniture(InventoryAdapterFixture.interaction(.activate)))
-        #expect(!adapter.useFurniture(chair))
+        #expect(!adapter.interactions.useFurniture(InventoryAdapterFixture.interaction(.activate)))
+        #expect(!adapter.interactions.useFurniture(chair))
         host.fakeStreamer.referenceEntryFormIDResult = try InventoryAdapterFixture.referenceEntry()
         host.fakeFurniture.useResult = .failure(.disabled)
-        #expect(!adapter.useFurniture(chair))
+        #expect(!adapter.interactions.useFurniture(chair))
         host.fakeFurniture.useResult = .failure(.noFreeSeat)
-        #expect(adapter.useFurniture(chair))
+        #expect(adapter.interactions.useFurniture(chair))
         #expect(host.fakeFurniture.useCalls.map(\.actor) == [.player, .player])
+    }
+
+    @Test func theSessionBuilderReadsTheSameHost() {
+        #expect(adapter.sessions.game === host)
     }
 
     @Test func anInmateIsAskedToServeTheSentence() {
         host.fakeMapWorld.settingTextsResult = GameSettingTexts<MessageBoxText>()
         host.fakeCrime.crimeTextsValue = CrimeTexts()
-        adapter.askToServeSentence()
+        adapter.interactions.askToServeSentence()
         let call = host.fakeMessages.presentChoicesCalls.first
         #expect(call?.text == CrimeTexts().serveSentenceQuestion)
         #expect(call?.buttons.count == 2)
