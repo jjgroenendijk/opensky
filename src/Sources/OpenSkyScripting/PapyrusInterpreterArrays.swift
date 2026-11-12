@@ -71,7 +71,11 @@ extension PapyrusRuntime.Interpreter {
     ) throws(PapyrusFault) -> PapyrusFlow {
         let operands = try requireOperands(3, instruction: instruction)
         guard let array = try noneOrArray(operands[1], frame: frame) else {
-            try write(nativeReturnType(operands[0]).defaultValue, to: operands[0], frame: frame)
+            try write(
+                natives.nativeReturnType(operands[0]).defaultValue,
+                to: operands[0],
+                frame: frame
+            )
             return .next
         }
         let index = try arrayIndex(operands[2], frame: frame)

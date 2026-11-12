@@ -5,7 +5,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
-extension PapyrusRuntime.Interpreter {
+extension PapyrusNativeCalls {
     func suspend(
         call: PapyrusNativeCall,
         request: PapyrusNativeSuspension,
@@ -13,13 +13,13 @@ extension PapyrusRuntime.Interpreter {
         holdsInstance: Bool = false
     ) -> SuspendedCall {
         let id = runtime.allocateSuspensionID()
-        pendingResume = (id, target)
+        interpreter.pendingResume = (id, target)
         runtime.tally.noteSuspension()
         return SuspendedCall(
             id: id,
             nativeCall: call,
             request: request,
-            continuation: PapyrusContinuation(resume: resume(id:returning:)),
+            continuation: PapyrusContinuation(resume: interpreter.resume(id:returning:)),
             holdsInstance: holdsInstance
         )
     }
@@ -61,10 +61,10 @@ extension PapyrusRuntime.Interpreter {
         if let delayed = delay(typedCall, returning: value, target: .assign(destination)) {
             return .suspended(delayed)
         }
-        guard let frame = frames.last else {
+        guard let frame = interpreter.frames.last else {
             return .returned(value)
         }
-        try write(value, to: destination, frame: frame)
+        try interpreter.write(value, to: destination, frame: frame)
         return .next
     }
 
@@ -122,7 +122,7 @@ extension PapyrusRuntime.Interpreter {
             call.scriptName.caseInsensitiveCompare("Debug") == .orderedSame,
             call.functionName.caseInsensitiveCompare("TraceStack") == .orderedSame
         else { return call }
-        let lines = frames.reversed().map { frame in
+        let lines = interpreter.frames.reversed().map { frame in
             "  \(frame.ownerScript.name) at instruction \(max(0, frame.instructionIndex - 1))"
         }
         var arguments = Array(call.arguments.prefix(2))
@@ -141,10 +141,10 @@ extension PapyrusRuntime.Interpreter {
     }
 
     func nativeReturnType(_ destination: PexValue) -> PapyrusType {
-        guard let frame = frames.last else { return .none }
+        guard let frame = interpreter.frames.last else { return .none }
         if case let .identifier(name) = destination, frame.compiled.binding(for: name).isDiscard {
             return .none
         }
-        return attempt { try destinationType(destination, frame: frame) } ?? .none
+        return attempt { try interpreter.destinationType(destination, frame: frame) } ?? .none
     }
 }
