@@ -166,7 +166,9 @@ extension CombatLoopRuntime {
         }
         if step.startedAttack {
             world.playCombatClip(.attack, on: actor.key)
-            world.applyCombatSwingSpell(blow(by: actor.key, weapon: weapon), at: target.key)
+            world.applyCombatSwingSpell(
+                CombatNPCBlowLanding.blow(by: actor.key, weapon: weapon), at: target.key
+            )
         }
         resolveCast(step, actor: actor.key, world: world)
         if step.reachedContact, !influence.isEthereal {
@@ -235,9 +237,8 @@ extension CombatLoopRuntime {
         world: any CombatLoopWorld
     ) -> Bool {
         guard reaches(actor: actor, weapon: weapon, target: target) else { return false }
-        let blow = blow(by: actor.key, weapon: weapon)
-        let damage = damage(of: blow, weapon: weapon, on: target.key, world: world)
-        return world.startCombatKillMove(by: actor.key, on: target.key, damage: damage.applied)
+        let damage = landing(world).appliedDamage(by: actor.key, weapon: weapon, on: target.key)
+        return world.startCombatKillMove(by: actor.key, on: target.key, damage: damage)
     }
 
     private func reaches(
@@ -253,130 +254,29 @@ extension CombatLoopRuntime {
             .isEmpty
     }
 
-    private func damage(
-        of blow: CombatBlow, weapon: MeleeWeaponProfile, on target: ReferenceKey,
-        world: any CombatLoopWorld
-    ) -> MeleeDamageResult {
-        MeleeDamage.resolve(
-            weapon: weapon,
-            block: world.combatBlock(of: target),
-            settings: settings,
-            blockSkill: world.combatBlockSkill(of: target),
-            bonusMultiplier: world.combatBlockMultiplier(of: target),
-            strike: world.combatStrike(blow, on: target)
-        )
-    }
-
-    /// One landed blow: the pinned 15.4 damage formula, the health write, and,
-    /// on the player, the hit reaction and the trace.
+    /// One landed blow. On the player it also plays the hit reaction, can recoil the
+    /// attacker, and joins the trace.
     private func apply(
         from actor: CombatActorObservation,
         weapon: MeleeWeaponProfile,
         to target: ReferenceKey,
         world: any CombatLoopWorld
     ) {
-        let blow = blow(by: actor.key, weapon: weapon)
-        let damage = damage(of: blow, weapon: weapon, on: target, world: world)
-        let landed = world.applyCombatBlow(damage.applied, to: target, blow: blow)
-        if landed {
-            world.applyCombatHitSpell(blow, on: target)
-        }
-        if damage.wasBlocked {
-            world.applyCombatBlockStamina(damage, to: target)
-        }
-        // The reverse of the player's own swing dispatch: the target's scripts get
-        // `OnHit` with this actor as `akAggressor`.
-        world.reportScriptHit(ScriptHitEvent(
-            target: target,
-            aggressor: actor.key,
-            source: weapon.weapon,
-            isBlocked: damage.wasBlocked,
-            damage: landed ? damage.applied : 0
-        ))
-        guard target == world.combatPlayer.key else { return }
-        noteSkillUse(from: actor, weapon: weapon, result: (damage, landed), world: world)
-        if damage.wasBlocked {
-            noteBlockRecoil(of: actor.key, blockedBy: target, world: world)
-        }
-        // The magnitude is written before the event so the recoil behavior
-        // reads this blow's number rather than the previous one's, which is the
-        // same write-then-raise order the melee runtime uses for a stagger.
-        let played = damage.applied > 0
-            && (raiseStagger(weapon: weapon, damage: damage, world: world)
-                || raiseRecoil(magnitude: damage.applied, world: world))
-        append(CombatIncomingHit(
-            damage: damage,
-            playedReaction: played
-        ))
-    }
-
-    private func blow(by actor: ReferenceKey, weapon: MeleeWeaponProfile) -> CombatBlow {
-        CombatBlow(
-            attacker: actor,
-            weapon: weapon.weapon,
-            handType: weapon.handType,
-            baseDamage: weapon.damage
-        )
-    }
-
-    /// The reverse of the player's own swing report. NPC blows are plain swings, and
-    /// progression decides who advances (the player only).
-    private func noteSkillUse(
-        from actor: CombatActorObservation,
-        weapon: MeleeWeaponProfile,
-        result: (damage: MeleeDamageResult, landed: Bool),
-        world: any CombatLoopWorld
-    ) {
-        let (damage, landed) = result
-        let blow = MeleeSkillUseBlow(
-            attacker: actor.key,
-            target: world.combatPlayer.key,
-            handType: weapon.handType,
-            damage: damage,
-            landed: landed
-        )
-        for use in MeleeSkillUses.events(for: blow, settings: skillUses) {
-            world.reportSkillUse(use)
-        }
-    }
-
-    /// Raises the census-named hit reaction on the player's graph, magnitude
-    /// first.
-    ///
-    /// - Returns: whether the graph declared the event, which is the graph's own
-    ///   answer rather than an assumption about it.
-    /// An NPC blow staggers the player by `StaggerRule`, the player's mass included.
-    private func raiseStagger(
-        weapon: MeleeWeaponProfile, damage: MeleeDamageResult, world: any CombatLoopWorld
-    ) -> Bool {
-        var hit = StaggerHit(weaponStagger: weapon.stagger)
-        hit.perkMultiplier = damage.strike.staggerMultiplier
-        hit.wasBlocked = damage.wasBlocked
-        hit.isPlayerTarget = true
-        let magnitude = StaggerRule.magnitude(hit, settings: staggers)
-        let roll = staggerRandom.percent()
-        guard StaggerRule.staggers(magnitude: magnitude, roll: roll, settings: staggers)
-        else { return false }
-        world.writeCombatVariable(.real(magnitude), named: CombatGraphNames.staggerMagnitude)
-        return world.raiseCombatEvent(CombatGraphNames.staggerStart, on: nil)
-    }
-
-    /// A swing the player blocked recoils its attacker by the player's Block skill.
-    private func noteBlockRecoil(
-        of attacker: ReferenceKey, blockedBy blocker: ReferenceKey, world: any CombatLoopWorld
-    ) {
-        let magnitude = StaggerRule.blockRecoil(
-            blockerSkill: world.combatBlockSkill(of: blocker), settings: staggers
-        )
-        let roll = staggerRandom.percent()
-        guard StaggerRule.staggers(magnitude: magnitude, roll: roll, settings: staggers)
+        guard
+            let reaction = landing(world).land(
+                from: actor.key, weapon: weapon, to: target, random: &staggerRandom
+            )
         else { return }
-        noteStagger(of: attacker)
+        if reaction.recoils {
+            noteStagger(of: actor.key)
+        }
+        append(reaction.hit)
     }
 
-    private func raiseRecoil(magnitude: Float, world: any CombatLoopWorld) -> Bool {
-        world.writeCombatVariable(.real(magnitude), named: CombatGraphNames.recoilMagnitude)
-        return world.raiseCombatEvent(CombatGraphNames.recoilStart, on: nil)
+    private func landing(_ world: any CombatLoopWorld) -> CombatNPCBlowLanding {
+        CombatNPCBlowLanding(
+            world: world, settings: settings, skillUses: skillUses, staggers: staggers
+        )
     }
 
     /// Radians from where `actor` faces to `point`, in -pi...pi.

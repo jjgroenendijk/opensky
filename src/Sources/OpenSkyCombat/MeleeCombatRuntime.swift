@@ -310,39 +310,11 @@ public final class MeleeCombatRuntime {
         hitThisSwing.insert(hit.target)
         hitCount += 1
         let damage = resolveDamage(on: hit.target, world: world)
-        let landed = world.applyMeleeDamage(damage.applied, to: hit.target)
-        if damage.wasBlocked {
-            world.applyBlockStamina(damage, to: hit.target)
-        }
-        noteSkillUse(hit, damage: damage, landed: landed, world: world)
-        if landed {
-            world.applyMeleeHitSpell(blow(world: world), on: hit.target)
-            applyWeaponRiders(on: hit.target, world: world)
-        }
-        applyEnchantment(hit, world: world)
-        // After the damage, so an `OnHit` script sees the new health. `abHitBlocked`
-        // comes from the damage formula's block term.
-        world.reportScriptHit(ScriptHitEvent(
-            target: hit.target,
-            aggressor: world.meleeAttacker.key,
-            source: weapon.weapon,
-            isPowerAttack: strikeKind.isPowerAttack,
-            isSneakAttack: damage.strike.isSneakAttack,
-            isBashAttack: strikeKind.isBash,
-            isBlocked: damage.wasBlocked,
-            damage: landed ? damage.applied : 0
-        ))
-        let staggered = stagger(hit.target, damage: damage, world: world)
-        // A swing only strikes actors; the race's impact material picks the entry.
-        var impact = impacts?.resolve(
-            weapon: weapon, material: world.impactMaterial(of: hit.target)
+        let landing = MeleeBlowLanding(
+            world: world, weapon: weapon, kind: strikeKind,
+            skillUses: skillUses, staggers: staggers, impacts: impacts
         )
-        impact?.target = hit.target
-        if let impact {
-            world.playMeleeImpact(impact, at: hit.position)
-        } else {
-            world.showDefaultBlood(on: hit.target, at: hit.position, melee: true)
-        }
+        let staggered = landing.land(hit, damage: damage, random: &staggerRandom)
         let record = MeleeHitRecord(
             target: hit.target,
             damage: damage,
@@ -354,59 +326,6 @@ public final class MeleeCombatRuntime {
             trace.removeFirst(trace.count - Self.traceLimit)
         }
         return record
-    }
-}
-
-extension MeleeCombatRuntime {
-    /// Reports what this blow taught both characters (`MeleeSkillUses`).
-    private func noteSkillUse(
-        _ hit: MeleeHit,
-        damage: MeleeDamageResult,
-        landed: Bool,
-        world: any MeleeCombatWorld
-    ) {
-        let blow = MeleeSkillUseBlow(
-            attacker: world.meleeAttacker.key,
-            target: hit.target,
-            handType: weapon.handType,
-            kind: strikeKind,
-            damage: damage,
-            landed: landed,
-            bashedWithShield: strikeKind.isBash && world.meleeBashSource().shieldRating != nil,
-            weapon: world.meleeResolvedWeapon(weapon.weapon)
-        )
-        for use in MeleeSkillUses.events(for: blow, settings: skillUses) {
-            world.reportSkillUse(use)
-        }
-    }
-
-    /// Fires the weapon's enchantment at the contact point. Only a contact
-    /// enchantment fires. The world seam owns the charge, so a dry weapon returns a
-    /// report that says so.
-    private func applyEnchantment(
-        _ hit: MeleeHit,
-        world: any MeleeCombatWorld
-    ) {
-        guard let profile = weapon.enchantment, profile.isContact else { return }
-        _ = world.applyWeaponEnchantment(WeaponEnchantmentHit(
-            profile: profile,
-            attacker: world.meleeAttacker.key,
-            struck: hit.target,
-            at: hit.position,
-            candidates: world.meleeTargets()
-        ))
-    }
-}
-
-extension MeleeCombatRuntime {
-    /// A landed hit carries the weapon's poison and any Enhance Weapon enchantment.
-    private func applyWeaponRiders(on target: ReferenceKey, world: any MeleeCombatWorld) {
-        world.applyWeaponPoison(WeaponPoisonHit(
-            attacker: world.meleeAttacker.key, weapon: weapon.weapon, target: target
-        ))
-        if weapon.weapon != nil {
-            world.applyWeaponEnhancement(attacker: world.meleeAttacker.key, target: target)
-        }
     }
 }
 

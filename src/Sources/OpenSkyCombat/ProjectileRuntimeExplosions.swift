@@ -1,5 +1,5 @@
-// A projectile's explosion: on impact, or in the air when the PROJ alternate
-// trigger's timer or proximity fires. A satellite of `ProjectileRuntime`.
+// When a projectile's PROJ alternate trigger sets off its explosion in the air: by
+// timer or by proximity. A satellite of `ProjectileRuntime`.
 // See docs/formats/explosions.md.
 
 import Foundation
@@ -26,39 +26,5 @@ extension ProjectileRuntime {
         return ProjectileImpact(
             distance: 0, position: projectile.position, target: nil, reference: nil
         )
-    }
-
-    /// Sets off the projectile's explosion at `position`. A spell's projectile is a spell
-    /// cause; anything else is a projectile cause.
-    @discardableResult
-    func detonateExplosion(
-        of projectile: LiveProjectile,
-        at position: SIMD3<Float>,
-        source: FormID? = nil
-    ) -> ExplosionReport? {
-        guard
-            let explosions,
-            let spec = explosions.spec(itemLink: projectile.profile.explosion)
-        else { return nil }
-        return explosions.detonate(
-            spec, at: position, cause: projectile.payload.spell == nil ? .projectile : .spell,
-            source: source
-        )
-    }
-
-    /// Pushes the loose body a projectile struck by its `PROJ` impact force, along its flight.
-    func pushStruckBody(_ projectile: LiveProjectile, impact: ProjectileImpact) {
-        guard
-            !impact.isActor, let reference = impact.reference,
-            let impulses = explosions?.impulses, let world = impulses.world,
-            let body = world.impulseBodies().first(where: { $0.reference == reference }),
-            let push = GameplayImpulse.projectile(
-                impactForce: projectile.profile.impactForce,
-                impact: (projectile.state.velocity, impact.position), body: body,
-                settings: impulses.settings
-            )
-        else { return }
-        world.applyBodyImpulse(push)
-        impulses.record(.push(body.key, impulse: simd_length(push.linear), cause: .projectile))
     }
 }
