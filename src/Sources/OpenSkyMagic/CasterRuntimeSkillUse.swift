@@ -9,14 +9,26 @@ import OpenSkyGameData
 import OpenSkyProgressionInterface
 
 extension CasterRuntime {
+    func noteSkillUse(of spell: ResolvedSpell, amount: Float, caster: ActorValueHolder) {
+        world?.reportSkillUses(of: spell, amount: amount, caster: caster)
+    }
+
+    /// The spell's authored base cost, which is what a cast is worth in skill
+    /// uses regardless of what the caster was charged.
+    func baseSkillUseAmount(of spell: ResolvedSpell) -> Float {
+        Float(spell.cost.cost)
+    }
+}
+
+extension CasterWorld {
     /// Reports one cast's skill uses, one per effect that names a magic skill.
     ///
     /// - Parameters:
     ///   - amount: the magicka the use is measured in — the spell's authored
     ///     base cost for a fire-and-forget cast, the magicka drained for one
     ///     step of a maintained one.
-    func noteSkillUse(of spell: ResolvedSpell, amount: Float, caster: ActorValueHolder) {
-        guard let world, amount.isFinite, amount > 0, !spell.isStaff else { return }
+    func reportSkillUses(of spell: ResolvedSpell, amount: Float, caster: ActorValueHolder) {
+        guard amount.isFinite, amount > 0, !spell.isStaff else { return }
         for entry in spell.effects {
             // A healing effect reports the health it restores instead (`MagicHealingUse`).
             guard
@@ -25,18 +37,12 @@ extension CasterRuntime {
             let multiplier = data.skillUsageMultiplier.isFinite
                 ? max(0, data.skillUsageMultiplier) : 0
             guard multiplier > 0 else { continue }
-            world.reportSkillUse(SkillUseEvent(
+            reportSkillUse(SkillUseEvent(
                 actor: caster.key,
                 action: .spellEffect(skill: data.magicSkill),
                 amount: amount * multiplier,
                 object: spell.id
             ))
         }
-    }
-
-    /// The spell's authored base cost, which is what a cast is worth in skill
-    /// uses regardless of what the caster was charged.
-    func baseSkillUseAmount(of spell: ResolvedSpell) -> Float {
-        Float(spell.cost.cost)
     }
 }

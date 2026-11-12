@@ -134,15 +134,8 @@ public struct ActiveEffectRuntime {
                 tally.noteConditionSkipped()
                 continue
             }
-            let outcome = MagicEffectPlanner.plan(
-                effect: resolved,
-                entry: entry,
-                isConstant: isConstant,
-                valueAndParts: valueAndParts,
-                resolveKeyword: { link in
-                    effects.resolvedID(link, fromPlugin: resolved.sourcePlugin)
-                        .map(ReferenceKey.init(resolved:))
-                }
+            let outcome = effects.plan(
+                resolved, entry: entry, isConstant: isConstant, valueAndParts: valueAndParts
             )
             switch outcome {
             case let .skip(reason):
@@ -157,7 +150,7 @@ public struct ActiveEffectRuntime {
                 }
                 if application.isInstant {
                     tally.noteInstant()
-                    if !resolved.effect.scriptData.scripts.isEmpty {
+                    if resolved.hasScripts {
                         pulse(application, source: source, caster: caster, on: target)
                     }
                 } else if
@@ -233,10 +226,9 @@ public struct ActiveEffectRuntime {
         context.subject = target.key
         context.target = target.key
         context[resolution: MagicApplicationContext.self] = application
-        var evaluator = ConditionEvaluator(context: context)
-        let outcome = evaluator.evaluate(list)
-        conditions.random = evaluator.context.random
-        return outcome.isTrue
+        let holds = context.holds(list)
+        conditions.random = context.random
+        return holds
     }
 
     /// Stores a timed effect, applying the stacking rules first.
@@ -343,11 +335,7 @@ public struct ActiveEffectRuntime {
     /// actor whose effects all expired stops being dirty for this slot.
     /// Internal for the reason `release` is.
     public func write(_ state: ActiveEffectState, for holder: ActorValueHolder) {
-        if state.isEmpty {
-            store.reset(.activeEffects, for: holder.key)
-        } else {
-            store.set(state, for: holder.key, in: holder.cell)
-        }
+        store.writeActiveEffects(state, for: holder)
     }
 }
 
@@ -368,5 +356,52 @@ extension ActiveEffectRuntime {
         )
         write(state.adding(effect), for: target)
         write(state, for: target)
+    }
+}
+
+extension WorldStateStore {
+    /// Drops the whole component once it is empty, so an actor whose effects all
+    /// expired stops being dirty for this slot.
+    func writeActiveEffects(_ state: ActiveEffectState, for holder: ActorValueHolder) {
+        if state.isEmpty {
+            reset(.activeEffects, for: holder.key)
+        } else {
+            set(state, for: holder.key, in: holder.cell)
+        }
+    }
+}
+
+nonisolated extension MagicEffectStore {
+    /// What one effect entry does, with its keywords resolved from the effect's plugin.
+    func plan(
+        _ resolved: ResolvedMagicEffect, entry: MagicItemEffect, isConstant: Bool,
+        valueAndParts: MagicValueAndPartsScale
+    ) -> MagicEffectPlanner.Outcome {
+        MagicEffectPlanner.plan(
+            effect: resolved,
+            entry: entry,
+            isConstant: isConstant,
+            valueAndParts: valueAndParts,
+            resolveKeyword: { link in
+                self.resolvedID(link, fromPlugin: resolved.sourcePlugin)
+                    .map(ReferenceKey.init(resolved:))
+            }
+        )
+    }
+}
+
+nonisolated extension ResolvedMagicEffect {
+    var hasScripts: Bool {
+        !effect.scriptData.scripts.isEmpty
+    }
+}
+
+nonisolated extension ConditionContext {
+    /// Evaluates `list` in this context, keeping the random draws it made.
+    mutating func holds(_ list: ConditionList) -> Bool {
+        var evaluator = ConditionEvaluator(context: self)
+        let outcome = evaluator.evaluate(list)
+        random = evaluator.context.random
+        return outcome.isTrue
     }
 }

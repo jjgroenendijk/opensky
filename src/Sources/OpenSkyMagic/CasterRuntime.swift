@@ -403,7 +403,7 @@ public final class CasterRuntime {
         defer { isApplyingDualCast = false }
         let payload = spell.payload(caster: caster.key).dualCast(dual ? entries : nil)
         guard delivery != .selfTarget else {
-            return applyFromSelf(payload, spell: spell, caster: caster, world: world)
+            return world.applyFromSelf(payload, spell: spell, caster: caster)
         }
         return deliverAway(payload, spell: spell, caster: caster, world: world)
     }

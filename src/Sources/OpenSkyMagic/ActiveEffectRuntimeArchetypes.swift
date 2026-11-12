@@ -123,7 +123,7 @@ extension ActiveEffectRuntime {
             return reason
         }
         if rule.capsTargetLevel {
-            let level = Float(values.baseline(of: target).level)
+            let level = Float(values.level(of: target))
             if level > application.magnitude {
                 return .aboveLevelCap(application.archetype)
             }
@@ -288,5 +288,11 @@ extension ActiveEffectRuntime {
             owned[value.index] = wanted
         }
         return owned.isEmpty ? effect : effect.owningModifiers(owned)
+    }
+}
+
+extension ActorValueAccess {
+    func level(of holder: ActorValueHolder) -> Int {
+        baseline(of: holder).level
     }
 }

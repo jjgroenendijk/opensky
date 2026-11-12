@@ -84,7 +84,7 @@ extension MagicCoordinator: WeaponEnchantmentApplying {
             scaled.entries,
             fromPlugin: plugin,
             source: ActiveEffectSource(
-                kind: .potion, record: runtime.sourceKey(of: id, fallbackPlugin: plugin)
+                kind: .potion, record: runtime.effects.sourceKey(of: id, fallbackPlugin: plugin)
             ),
             caster: caster,
             on: target

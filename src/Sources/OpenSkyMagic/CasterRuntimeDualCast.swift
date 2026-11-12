@@ -18,39 +18,9 @@ extension SpellHand {
 }
 
 extension CasterRuntime {
-    /// The `SPIT` charge time, scaled by `fMagicDualCastingTimeMult` for a dual cast.
-    func chargeTime(of spell: ResolvedSpell, dual: Bool) -> Float {
-        let single = max(0, spell.data?.chargeTime ?? 0)
-        return dual ? single * max(0, costSettings.dualCastTimeMult) : single
-    }
-
-    static let canDualCastEntryPoint = PerkEntryPoint.canDualCastSpell
     /// How long after the first hand the second may begin and still join it.
     /// OpenSky's choice: no record states a window.
     static let dualCastWindowSeconds: Float = 0.25
-
-    /// Whether `caster` may dual cast `spell`: a spell rather than a power, and a
-    /// perk whose `Can Dual Cast Spell` entry passes for it.
-    func canDualCast(_ spell: ResolvedSpell, caster: ActorValueHolder) -> Bool {
-        guard
-            spell.spellType == .spell, spell.data?.castingType != .constantEffect,
-            var perks
-        else { return false }
-        perks
-            .conditions[resolution: SpellEvaluationResolution.self] =
-            SpellEvaluationResolution(spell: spell)
-        let outcome = perks.modify(
-            0,
-            at: Self.canDualCastEntryPoint,
-            on: caster,
-            subjects: PerkEvaluationSubjects(owner: caster.key)
-                .binding(.spell, to: spellbook.spells.conditionSubject(of: spell)),
-            actorValue: { [values] index in values.value(at: index, on: caster) }
-        )
-        perks.conditions.clear(SpellEvaluationResolution.self)
-        self.perks = perks
-        return outcome.value > 0
-    }
 
     /// Joins `hand` to a young cast of the same spell in the other hand. Returns
     /// false when the two stay single casts.
@@ -85,29 +55,29 @@ extension CasterRuntime {
         casts[slot(hand.other, caster)] = SpellCastState()
     }
 
-    /// The cost of one cast or one second of `spell`, dual or single.
-    func castCost(of spell: ResolvedSpell, dual: Bool, caster: ActorValueHolder) -> Float {
-        let single = cost(of: spell, caster: caster)
-        return dual ? single * max(0, costSettings.dualCastCostMult) : single
+    var costRules: SpellCostRules {
+        SpellCostRules(values: values, spellbook: spellbook, settings: costSettings)
     }
 
-    /// The entries a dual cast applies. An entry grows only where its MGEF lets
-    /// power change magnitude or duration, and not at all for a spell flagged
-    /// "No Dual Cast Modifications".
+    func chargeTime(of spell: ResolvedSpell, dual: Bool) -> Float {
+        costRules.chargeTime(of: spell, dual: dual)
+    }
+
+    func canDualCast(_ spell: ResolvedSpell, caster: ActorValueHolder) -> Bool {
+        costRules.canDualCast(spell, caster: caster, perks: &perks)
+    }
+
+    /// The cost of one cast or one second of `spell`, dual or single.
+    func castCost(of spell: ResolvedSpell, dual: Bool, caster: ActorValueHolder) -> Float {
+        costRules.castCost(of: spell, dual: dual, caster: caster, perks: &perks)
+    }
+
+    /// What casting `spell` costs `caster` right now, in magicka.
+    func cost(of spell: ResolvedSpell, caster: ActorValueHolder) -> Float {
+        costRules.cost(of: spell, caster: caster, perks: &perks)
+    }
+
     public func dualCastEntries(of spell: ResolvedSpell) -> [MagicItemEffect] {
-        guard spell.data?.flags.contains(.noDualCastModifications) != true else {
-            return spell.record.effects
-        }
-        let power = costSettings.dualCastEffectiveness
-        return spell.effects.map { resolved in
-            let flags = resolved.effect?.effect.data?.flags ?? []
-            let entry = resolved.item
-            return entry.with(
-                magnitude: entry.magnitude
-                    * (flags.contains(.powerAffectsMagnitude) ? power : 1),
-                duration: Float(entry.duration)
-                    * (flags.contains(.powerAffectsDuration) ? power : 1)
-            )
-        }
+        costRules.dualCastEntries(of: spell)
     }
 }
