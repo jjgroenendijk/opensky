@@ -50,7 +50,7 @@ struct ProgressionPerkResetTests {
 
         #expect(report.refundedPoints == 1)
         #expect(report.legendaryCount == 0)
-        #expect(coordinator.ownedTreePerks(ofSkill: oneHanded).isEmpty)
+        #expect(coordinator.treeReader.ownedTreePerks(ofSkill: oneHanded).isEmpty)
     }
 
     @Test func theSkillsMenuBuysTheNextRankOfABox() throws {

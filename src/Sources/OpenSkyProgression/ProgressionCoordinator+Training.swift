@@ -22,17 +22,17 @@ extension ProgressionCoordinator {
                 gold: world.playerGold()
             )
         {
-            pendingCommands.append(.showNotification(training.text(for: refusal)))
+            notices.show(training.text(for: refusal))
             return .refused(refusal)
         }
         guard world.payTrainer(cost, to: offer.trainer) else {
-            pendingCommands.append(.showNotification(training.insufficientGoldText))
+            notices.show(training.insufficientGoldText)
             return .refused(.insufficientGold)
         }
         let report = skills.train(skill: offer.skill, on: skills.player)
         store(skills, report: report)
         leveling.noteTrainingSession()
-        pendingCommands.append(.incrementStat("Training Sessions"))
+        notices.incrementStat("Training Sessions")
         return .trained(skill: offer.skill, level: level + 1, gold: cost)
     }
 

@@ -18,21 +18,55 @@ nonisolated public struct PerkTreeResetReport: Equatable, Sendable {
 public typealias PerkTreeResetResult = Result<PerkTreeResetReport, PerkTreeResetRefusal>
 
 extension ProgressionCoordinator {
-    /// The base level a skill must reach before it can be made legendary.
-    public static let legendaryLevel = SkillAdvancement.skillCeiling
-
     /// Nil when `index` can be made legendary now.
     public func legendaryRefusal(forSkill index: Int32) -> PerkTreeResetRefusal? {
-        guard ActorValueIdentity.isSkill(index: index) else { return .notASkill }
-        guard let leveling else { return .noProgression }
-        let base = leveling.values.baseValue(at: index, on: .player) ?? 0
-        return base >= Self.legendaryLevel ? nil : .belowLegendaryLevel(base)
+        perkReset.legendaryRefusal(forSkill: index)
     }
 
     /// Drops the skill to the reset level, clears its experience, and refunds every
     /// perk of its tree. Character level and experience stay.
     @discardableResult
     public func makeSkillLegendary(_ index: Int32) -> PerkTreeResetResult {
+        let result = perkReset.makeLegendary(index)
+        if case let .success(report) = result {
+            record(.madeLegendary(skill: skillName(index), refunded: report.refundedPoints))
+        }
+        return result
+    }
+
+    /// The Dragonborn altar: one dragon soul clears one tree and refunds its points.
+    @discardableResult
+    func resetPerkTree(_ index: Int32) -> PerkTreeResetResult {
+        let result = perkReset.resetTree(index)
+        if case let .success(report) = result {
+            record(.treeReset(skill: skillName(index), refunded: report.refundedPoints))
+        }
+        return result
+    }
+
+    var perkReset: PerkTreeReset {
+        PerkTreeReset(leveling: leveling, perks: perks, reader: treeReader)
+    }
+}
+
+/// Part of `ProgressionCoordinator`: clears one skill's tree and refunds its points.
+@MainActor
+struct PerkTreeReset {
+    let leveling: PlayerLevelRuntime?
+    let perks: PerkCoordinator
+    let reader: ProgressionTreeReader
+
+    /// The base level a skill must reach before it can be made legendary.
+    static let legendaryLevel = SkillAdvancement.skillCeiling
+
+    func legendaryRefusal(forSkill index: Int32) -> PerkTreeResetRefusal? {
+        guard ActorValueIdentity.isSkill(index: index) else { return .notASkill }
+        guard let leveling else { return .noProgression }
+        let base = leveling.values.baseValue(at: index, on: .player) ?? 0
+        return base >= Self.legendaryLevel ? nil : .belowLegendaryLevel(base)
+    }
+
+    func makeLegendary(_ index: Int32) -> PerkTreeResetResult {
         if let refusal = legendaryRefusal(forSkill: index) {
             return .failure(refusal)
         }
@@ -44,50 +78,34 @@ extension ProgressionCoordinator {
             leveling.values.setBase(at: slot, to: 0, on: .player)
         }
         leveling.noteLegendary(skill: index)
-        let report = finish(index, refunded: refunded)
-        record(.madeLegendary(skill: skillName(index), refunded: refunded))
-        return .success(report)
+        return .success(finish(index, refunded: refunded))
     }
 
-    /// The Dragonborn altar: one dragon soul clears one tree and refunds its points.
-    @discardableResult
-    func resetPerkTree(_ index: Int32) -> PerkTreeResetResult {
+    func resetTree(_ index: Int32) -> PerkTreeResetResult {
         guard ActorValueIdentity.isSkill(index: index) else { return .failure(.notASkill) }
         guard let leveling, perks.runtime != nil else { return .failure(.noProgression) }
-        guard !ownedTreePerks(ofSkill: index).isEmpty else { return .failure(.noPerksInTree) }
+        guard !reader.ownedTreePerks(ofSkill: index).isEmpty else {
+            return .failure(.noPerksInTree)
+        }
         guard
             let souls = ActorValueIdentity.index(named: "Dragon Souls"),
             (leveling.values.value(at: souls, on: .player) ?? 0) >= 1
         else { return .failure(.noDragonSoul) }
         leveling.values.addModifier(-1, to: .permanent, at: souls, on: .player)
-        let refunded = clearTree(ofSkill: index)
-        record(.treeReset(skill: skillName(index), refunded: refunded))
-        return .success(finish(index, refunded: refunded))
-    }
-
-    /// Every owned rank of every box in the tree, rank by rank.
-    func ownedTreePerks(ofSkill index: Int32) -> [ReferenceKey] {
-        guard let runtime = perks.runtime else { return [] }
-        let owned = Set(runtime.state(of: .player).owned)
-        return perkKeys(forSkill: index).flatMap { head -> [ReferenceKey] in
-            guard let resolved = runtime.perks.perk(key: head) else { return [] }
-            return runtime.perks.rankChain(from: resolved.id)
-                .map { ReferenceKey(resolved: $0.id) }
-                .filter(owned.contains)
-        }
+        return .success(finish(index, refunded: clearTree(ofSkill: index)))
     }
 
     // MARK: - Private
 
     private func clearTree(ofSkill index: Int32) -> Int {
         var refunded = 0
-        for perk in ownedTreePerks(ofSkill: index) where perks.remove(perk, from: .player) {
+        for perk in reader.ownedTreePerks(ofSkill: index) where perks.remove(perk, from: .player) {
             refunded += 1
         }
         if refunded > 0 {
             _ = leveling?.modifyPerkPoints(by: refunded)
         }
-        treeCounts.invalidate()
+        reader.invalidateCounts()
         return refunded
     }
 
