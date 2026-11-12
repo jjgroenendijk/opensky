@@ -15,7 +15,7 @@ nonisolated extension CellObjectBuilder {
         let plain = ModelSurfaceOverride(diffuseTexture: nil, normalTexture: nil, tint: nil)
         var added: [ResolvedInstance] = []
         for instance in instances {
-            let nodes = owner.meshes.addOnNodes(forPath: instance.modelPath)
+            let nodes = owner.meshes.extraData.addOnNodes(forPath: instance.modelPath)
             guard !nodes.isEmpty else { continue }
             let models = addOnModelIndexBuildingIfNeeded()
             for node in nodes {

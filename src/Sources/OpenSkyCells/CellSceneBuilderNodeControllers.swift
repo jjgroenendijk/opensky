@@ -33,7 +33,7 @@ nonisolated extension CellObjectBuilder {
             return known
         }
         var rig: NodeControllerRig?
-        let lagOnly = owner.meshes.behaviorProjectPath(forPath: modelPath) != nil
+        let lagOnly = owner.meshes.extraData.behaviorProjectPath(forPath: modelPath) != nil
         if
             let data = attempt({ try fileSystem.contents(forPath: key) }),
             Self.nodeControllerMarkers.contains(where: { data.range(of: $0) != nil })

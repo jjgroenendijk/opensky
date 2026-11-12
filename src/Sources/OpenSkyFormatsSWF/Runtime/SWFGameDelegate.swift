@@ -63,6 +63,23 @@ nonisolated public struct SWFInvokeLog: Equatable, Sendable {
         }
     }
 
+    /// A movie call to the engine; a nil `result` is one no handler answered.
+    mutating func noteToEngine(_ name: String, arguments: [AS2Value], result: AS2Value?) {
+        append(SWFInvokeEntry(
+            direction: .movieToEngine, name: name, arguments: summary(arguments),
+            result: result.map { summary($0) } ?? "undefined", isHandled: result != nil
+        ))
+    }
+
+    mutating func noteToMovie(
+        _ name: String, arguments: [AS2Value], result: (value: AS2Value, handled: Bool)
+    ) {
+        append(SWFInvokeEntry(
+            direction: .engineToMovie, name: name, arguments: summary(arguments),
+            result: summary(result.value), isHandled: result.handled
+        ))
+    }
+
     public mutating func clear() {
         entries.removeAll()
         total = 0
@@ -149,24 +166,12 @@ nonisolated extension SWFMovieRuntime {
     public func callHost(_ name: String, arguments: [AS2Value]) -> AS2Value? {
         guard let handler = hostFunctions[name] else {
             runtime.noteMissing(name)
-            noteInvoke(
-                SWFInvokeEntry(
-                    direction: .movieToEngine, name: name,
-                    arguments: invokeLog.summary(arguments),
-                    result: "undefined", isHandled: false
-                )
-            )
+            invokeLog.noteToEngine(name, arguments: arguments, result: nil)
             return nil
         }
         lastHostArguments[name] = arguments
         let result = handler(SWFMovieRuntime.HostCall(arguments: arguments, movie: self))
-        noteInvoke(
-            SWFInvokeEntry(
-                direction: .movieToEngine, name: name,
-                arguments: invokeLog.summary(arguments),
-                result: invokeLog.summary(result ?? .undefined), isHandled: true
-            )
-        )
+        invokeLog.noteToEngine(name, arguments: arguments, result: result ?? .undefined)
         return result
     }
 
@@ -224,13 +229,7 @@ nonisolated extension SWFMovieRuntime {
         } else {
             runtime.noteMissing(name)
         }
-        noteInvoke(
-            SWFInvokeEntry(
-                direction: .engineToMovie, name: name,
-                arguments: invokeLog.summary(arguments),
-                result: invokeLog.summary(result), isHandled: handled
-            )
-        )
+        invokeLog.noteToMovie(name, arguments: arguments, result: (result, handled))
         return result
     }
 
@@ -297,15 +296,7 @@ nonisolated extension SWFMovieRuntime {
         result: AS2Value,
         handled: Bool
     ) {
-        noteInvoke(
-            SWFInvokeEntry(
-                direction: .engineToMovie,
-                name: name,
-                arguments: invokeLog.summary(arguments),
-                result: invokeLog.summary(result),
-                isHandled: handled
-            )
-        )
+        invokeLog.noteToMovie(name, arguments: arguments, result: (result, handled))
     }
 
     @discardableResult

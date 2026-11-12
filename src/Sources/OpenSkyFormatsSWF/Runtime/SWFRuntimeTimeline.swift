@@ -77,18 +77,15 @@ nonisolated extension SWFMovieRuntime {
     // MARK: - Frame execution
 
     private func apply(frame: SWFTimelineFrame, to node: SWFDisplayObject) {
-        for step in frame.steps {
-            switch step {
-            case let .place(placement):
-                place(placement, into: node)
-            case let .remove(removal):
-                // Unload is dispatched while the child is still attached, so
-                // `_root` and `_parent` still resolve inside the handler.
-                if let removed = node.child(atDepth: removal.depth) {
-                    dispatchPlacementLifecycle(removed, phase: .unloaded)
-                }
-                node.removeChild(atDepth: removal.depth)
+        frame.forEachStep { placement in
+            place(placement, into: node)
+        } remove: { depth in
+            // Unload is dispatched while the child is still attached, so
+            // `_root` and `_parent` still resolve inside the handler.
+            if let removed = node.child(atDepth: depth) {
+                dispatchPlacementLifecycle(removed, phase: .unloaded)
             }
+            node.removeChild(atDepth: depth)
         }
     }
 

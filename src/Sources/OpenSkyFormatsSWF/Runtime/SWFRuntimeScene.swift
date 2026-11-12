@@ -10,7 +10,7 @@ nonisolated extension SWFMovieRuntime {
     /// dirty flag.
     public func makeScene() -> SWFScene {
         var builder = SceneBuilder(runtime: self)
-        builder.walk(node: root, parent: .root)
+        builder.walk(node: root)
         clearDirty()
         return SWFScene(commands: builder.commands, skippedPlacements: builder.skipped)
     }
@@ -40,7 +40,7 @@ nonisolated extension SWFMovieRuntime {
         /// Set by `emit` for the clip it walks next; `walk` takes it at entry.
         var pendingGrid: SWFRuntimeGridContext?
 
-        mutating func walk(node: SWFDisplayObject, parent: SWFWalkState) {
+        mutating func walk(node: SWFDisplayObject, parent: SWFWalkState = .root) {
             let grid = pendingGrid
             pendingGrid = nil
             var active: [(clipDepth: UInt16, masks: [SWFSceneItem])] = []

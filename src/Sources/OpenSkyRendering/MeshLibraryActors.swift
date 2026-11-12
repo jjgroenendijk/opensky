@@ -97,10 +97,7 @@ nonisolated extension MeshLibrary {
         if preparsed[key] == nil, !actorDecodedPaths.contains(key) {
             preparsed[key] = file
         }
-        let bone = file.flatMap { file in
-            file.blocks.contains { $0.typeName.hasSuffix("SkinInstance") }
-                ? nil : NIFStringExtraData.parentBone(in: file)
-        }
+        let bone = MeshExtraData.parentBone(of: file)
         rigidParentBones[key] = .some(bone)
         return bone
     }

@@ -40,8 +40,7 @@ nonisolated extension SWFMovieRuntime {
         created.object.prototype = textFieldPrototype
         created.object.typeOverride = nil
         created.name = name
-        created.matrix.translateX = frame.xMin
-        created.matrix.translateY = frame.yMin
+        created.moveTo(twipsX: frame.xMin, twipsY: frame.yMin)
         parent.addChild(created, atDepth: depth)
         markDirty()
         return created

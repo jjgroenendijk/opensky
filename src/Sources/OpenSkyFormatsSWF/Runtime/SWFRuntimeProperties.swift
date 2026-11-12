@@ -24,14 +24,14 @@ nonisolated extension SWFMovieRuntime {
         of node: SWFDisplayObject
     ) -> AS2Value? {
         switch property {
-        case .positionX: .number(Double(Float(node.matrix.translateX) / Self.twipsPerPixel))
-        case .positionY: .number(Double(Float(node.matrix.translateY) / Self.twipsPerPixel))
-        case .scaleX: .number(Double(Self.horizontalScale(node.matrix) * 100))
-        case .scaleY: .number(Double(Self.verticalScale(node.matrix) * 100))
+        case .positionX: .number(Double(node.translation.x / Self.twipsPerPixel))
+        case .positionY: .number(Double(node.translation.y / Self.twipsPerPixel))
+        case .scaleX: .number(Double(node.basisScale.x * 100))
+        case .scaleY: .number(Double(node.basisScale.y * 100))
         case .width: .number(Double(parentBounds(of: node).width / Self.twipsPerPixel))
         case .height: .number(Double(parentBounds(of: node).height / Self.twipsPerPixel))
-        case .rotation: .number(Double(Self.rotationDegrees(node.matrix)))
-        case .alpha: .number(Double(node.colorTransform.multiply.w * 100))
+        case .rotation: .number(Double(node.rotationDegrees))
+        case .alpha: .number(Double(node.alpha * 100))
         case .visible: .boolean(node.isVisible)
         case .mouseX: .number(Double(mousePosition(in: node).x))
         case .mouseY: .number(Double(mousePosition(in: node).y))
@@ -76,15 +76,15 @@ nonisolated extension SWFMovieRuntime {
         let number = runtime.coercion.toNumber(value)
         switch property {
         case .positionX:
-            node.matrix.translateX = Self.twips(number)
+            node.moveTo(twipsX: Self.twips(number), twipsY: nil)
         case .positionY:
-            node.matrix.translateY = Self.twips(number)
+            node.moveTo(twipsX: nil, twipsY: Self.twips(number))
         case .scaleX:
-            Self.setHorizontalScale(&node.matrix, to: Float(number) / 100)
+            node.setBasisScale(Float(number) / 100, horizontal: true)
         case .scaleY:
-            Self.setVerticalScale(&node.matrix, to: Float(number) / 100)
+            node.setBasisScale(Float(number) / 100, horizontal: false)
         case .alpha:
-            node.colorTransform.multiply.w = Self.finite(Float(number) / 100)
+            node.alpha = Self.finite(Float(number) / 100)
         case .visible:
             node.isVisible = runtime.coercion.toBoolean(value)
         case .width:
@@ -92,7 +92,7 @@ nonisolated extension SWFMovieRuntime {
         case .height:
             setExtent(of: node, to: Float(number), horizontal: false)
         case .rotation:
-            Self.setRotation(&node.matrix, degrees: Float(number))
+            node.setRotation(degrees: Float(number))
         case .name:
             node.name = runtime.coercion.toString(value)
             node.parent?.bindName(of: node)
@@ -118,14 +118,7 @@ nonisolated extension SWFMovieRuntime {
         guard current > 0, target.isFinite, target >= 0 else {
             return
         }
-        let factor = target / current
-        if horizontal {
-            node.matrix.scaleX *= factor
-            node.matrix.rotateSkew0 *= factor
-        } else {
-            node.matrix.rotateSkew1 *= factor
-            node.matrix.scaleY *= factor
-        }
+        node.scaleBasis(by: target / current, horizontal: horizontal)
     }
 
     /// The box with its right or bottom side moved so it is `twips` wide or tall.
@@ -134,74 +127,6 @@ nonisolated extension SWFMovieRuntime {
         return horizontal
             ? SWFRect(xMin: box.xMin, xMax: box.xMin &+ end, yMin: box.yMin, yMax: box.yMax)
             : SWFRect(xMin: box.xMin, xMax: box.xMax, yMin: box.yMin, yMax: box.yMin &+ end)
-    }
-
-    // MARK: - Matrix decomposition
-
-    /// Length of the matrix's x basis vector, signed by `ScaleX`.
-    static func horizontalScale(_ matrix: SWFMatrix) -> Float {
-        let length = (matrix.scaleX * matrix.scaleX + matrix.rotateSkew0 * matrix.rotateSkew0)
-            .squareRoot()
-        return matrix.scaleX < 0 ? -length : length
-    }
-
-    /// Length of the matrix's y basis vector, signed by `ScaleY`.
-    static func verticalScale(_ matrix: SWFMatrix) -> Float {
-        let length = (matrix.rotateSkew1 * matrix.rotateSkew1 + matrix.scaleY * matrix.scaleY)
-            .squareRoot()
-        return matrix.scaleY < 0 ? -length : length
-    }
-
-    static func rotationDegrees(_ matrix: SWFMatrix) -> Float {
-        guard matrix.scaleX != 0 || matrix.rotateSkew0 != 0 else {
-            return 0
-        }
-        return atan2(matrix.rotateSkew0, matrix.scaleX) * 180 / .pi
-    }
-
-    private static func setHorizontalScale(_ matrix: inout SWFMatrix, to scale: Float) {
-        let current = horizontalScale(matrix)
-        guard scale.isFinite else {
-            return
-        }
-        if abs(current) > .ulpOfOne {
-            let factor = scale / current
-            matrix.scaleX *= factor
-            matrix.rotateSkew0 *= factor
-        } else {
-            matrix.scaleX = scale
-            matrix.rotateSkew0 = 0
-        }
-    }
-
-    private static func setVerticalScale(_ matrix: inout SWFMatrix, to scale: Float) {
-        let current = verticalScale(matrix)
-        guard scale.isFinite else {
-            return
-        }
-        if abs(current) > .ulpOfOne {
-            let factor = scale / current
-            matrix.rotateSkew1 *= factor
-            matrix.scaleY *= factor
-        } else {
-            matrix.scaleY = scale
-            matrix.rotateSkew1 = 0
-        }
-    }
-
-    /// Rebuilds the linear part at `degrees` while preserving both basis
-    /// lengths — the decomposition Flash's `_rotation` setter performs.
-    private static func setRotation(_ matrix: inout SWFMatrix, degrees: Float) {
-        guard degrees.isFinite else {
-            return
-        }
-        let radians = degrees * .pi / 180
-        let scaleX = horizontalScale(matrix)
-        let scaleY = verticalScale(matrix)
-        matrix.scaleX = cos(radians) * scaleX
-        matrix.rotateSkew0 = sin(radians) * scaleX
-        matrix.rotateSkew1 = -sin(radians) * scaleY
-        matrix.scaleY = cos(radians) * scaleY
     }
 
     /// Pixels to twips, clamped into the `Int32` translation domain so a NaN or
@@ -216,5 +141,129 @@ nonisolated extension SWFMovieRuntime {
 
     private static func finite(_ value: Float) -> Float {
         value.isFinite ? value : 0
+    }
+}
+
+/// The matrix decomposition Flash's `_xscale`, `_yscale`, and `_rotation` read and write.
+nonisolated extension SWFMatrix {
+    /// Length of the matrix's x basis vector, signed by `ScaleX`.
+    var horizontalScale: Float {
+        let length = (scaleX * scaleX + rotateSkew0 * rotateSkew0)
+            .squareRoot()
+        return scaleX < 0 ? -length : length
+    }
+
+    /// Length of the matrix's y basis vector, signed by `ScaleY`.
+    var verticalScale: Float {
+        let length = (rotateSkew1 * rotateSkew1 + scaleY * scaleY)
+            .squareRoot()
+        return scaleY < 0 ? -length : length
+    }
+
+    var rotationDegrees: Float {
+        guard scaleX != 0 || rotateSkew0 != 0 else {
+            return 0
+        }
+        return atan2(rotateSkew0, scaleX) * 180 / .pi
+    }
+
+    mutating func setHorizontalScale(_ scale: Float) {
+        let current = horizontalScale
+        guard scale.isFinite else {
+            return
+        }
+        if abs(current) > .ulpOfOne {
+            let factor = scale / current
+            scaleX *= factor
+            rotateSkew0 *= factor
+        } else {
+            scaleX = scale
+            rotateSkew0 = 0
+        }
+    }
+
+    mutating func setVerticalScale(_ scale: Float) {
+        let current = verticalScale
+        guard scale.isFinite else {
+            return
+        }
+        if abs(current) > .ulpOfOne {
+            let factor = scale / current
+            rotateSkew1 *= factor
+            scaleY *= factor
+        } else {
+            scaleY = scale
+            rotateSkew1 = 0
+        }
+    }
+
+    /// Rebuilds the linear part at `degrees` while preserving both basis
+    /// lengths — the decomposition Flash's `_rotation` setter performs.
+    mutating func setRotation(degrees: Float) {
+        guard degrees.isFinite else {
+            return
+        }
+        let radians = degrees * .pi / 180
+        let xLength = horizontalScale
+        let yLength = verticalScale
+        scaleX = cos(radians) * xLength
+        rotateSkew0 = sin(radians) * xLength
+        rotateSkew1 = -sin(radians) * yLength
+        scaleY = cos(radians) * yLength
+    }
+}
+
+/// The display properties a node answers from its own matrix and colour transform.
+nonisolated extension SWFDisplayObject {
+    /// The position in the parent, in twips.
+    var translation: SIMD2<Float> {
+        SIMD2(Float(matrix.translateX), Float(matrix.translateY))
+    }
+
+    /// The lengths of the two basis vectors, each signed by its scale.
+    var basisScale: SIMD2<Float> {
+        SIMD2(matrix.horizontalScale, matrix.verticalScale)
+    }
+
+    var rotationDegrees: Float {
+        matrix.rotationDegrees
+    }
+
+    var alpha: Float {
+        get { colorTransform.multiply.w }
+        set { colorTransform.multiply.w = newValue }
+    }
+
+    /// Moves the node in its parent. A nil coordinate stays where it is.
+    func moveTo(twipsX: Int32?, twipsY: Int32?) {
+        if let twipsX {
+            matrix.translateX = twipsX
+        }
+        if let twipsY {
+            matrix.translateY = twipsY
+        }
+    }
+
+    func setBasisScale(_ scale: Float, horizontal: Bool) {
+        if horizontal {
+            matrix.setHorizontalScale(scale)
+        } else {
+            matrix.setVerticalScale(scale)
+        }
+    }
+
+    func setRotation(degrees: Float) {
+        matrix.setRotation(degrees: degrees)
+    }
+
+    /// Scales one basis vector by `factor`, which stretches the transformed box.
+    func scaleBasis(by factor: Float, horizontal: Bool) {
+        if horizontal {
+            matrix.scaleX *= factor
+            matrix.rotateSkew0 *= factor
+        } else {
+            matrix.rotateSkew1 *= factor
+            matrix.scaleY *= factor
+        }
     }
 }

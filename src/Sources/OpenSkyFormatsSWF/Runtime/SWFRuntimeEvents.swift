@@ -57,16 +57,13 @@ nonisolated extension SWFMovieRuntime {
         on node: SWFDisplayObject,
         keyCode: UInt8?
     ) -> Bool {
-        guard let records = node.clipActions?.records, !records.isEmpty else {
+        guard let actions = node.clipActions?.actions(for: event, keyCode: keyCode) else {
             return false
         }
         var ran = false
-        for record in records where record.events.contains(event) {
-            if event == .keyPress, let trapped = record.keyCode, trapped != keyCode {
-                continue
-            }
+        for block in actions {
             let target = node.isButton ? (node.parent ?? node) : node
-            AS2Interpreter.execute(in: runtime, record.actions, target: target.object)
+            AS2Interpreter.execute(in: runtime, block, target: target.object)
             ran = true
         }
         if ran {
@@ -192,5 +189,18 @@ nonisolated extension SWFClipEventFlags {
 
     public static func handlerName(for event: SWFClipEventFlags) -> String? {
         handlerNames[event.rawValue]
+    }
+}
+
+nonisolated extension SWFClipActions {
+    /// The action blocks `event` runs, in order. A key press runs only the blocks
+    /// that trap no key or trap `keyCode`. Nil when the clip has no records.
+    func actions(for event: SWFClipEventFlags, keyCode: UInt8?) -> [SWFActionBlock]? {
+        guard !records.isEmpty else { return nil }
+        return records.filter { record in
+            guard record.events.contains(event) else { return false }
+            guard event == .keyPress, let trapped = record.keyCode else { return true }
+            return trapped == keyCode
+        }.map(\.actions)
     }
 }

@@ -16,12 +16,7 @@ nonisolated public struct ReferenceRecordInspector: Sendable {
     private let shouts: ShoutStore
     private let equipSlots: EquipSlotStore
     private let perks: PerkStore
-    private let locations: LocationStore
-    private let encounterZones: EncounterZoneStore
-    private let collisionLayers: CollisionLayerStore
-    private let defaultObjects: DefaultObjectStore
-    private let factions: FactionStore
-    private let keywordUsage: [ResolvedFormID: [String]]
+    private let chains: ReferenceRecordChains
     /// Records the inspector's stores dropped, so malformed data shows in the Asset Browser.
     public let skippedRecords: SkippedRecords
 
@@ -38,19 +33,15 @@ nonisolated public struct ReferenceRecordInspector: Sendable {
         shouts = ShoutStore(index: index, spells: spellStore)
         equipSlots = EquipSlotStore(index: index)
         perks = PerkStore(index: index, spells: spellStore)
-        locations = LocationStore(index: index)
-        encounterZones = EncounterZoneStore(index: index)
-        collisionLayers = CollisionLayerStore(index: index)
-        defaultObjects = DefaultObjectStore(index: index)
-        factions = FactionStore(index: index)
-        keywordUsage = Self.buildKeywordUsage(index: index, keywords: keywordStore)
-        skippedRecords = [
+        chains = ReferenceRecordChains(
+            index: index,
+            stores: (keywordStore, formLists), magic: (enchantments, perks)
+        )
+        skippedRecords = ([
             keywords.skippedRecords, formLists.skippedRecords, magicEffects.skippedRecords,
             spells.skippedRecords, enchantments.skippedRecords, shouts.skippedRecords,
-            equipSlots.skippedRecords, perks.skippedRecords, locations.skippedRecords,
-            encounterZones.skippedRecords, collisionLayers.skippedRecords,
-            defaultObjects.skippedRecords, factions.skippedRecords
-        ].reduce(SkippedRecords()) { $0.merging($1) }
+            equipSlots.skippedRecords, perks.skippedRecords
+        ] + chains.skippedRecords).reduce(SkippedRecords()) { $0.merging($1) }
     }
 
     public func text(for preview: PreviewRecord) -> String {
@@ -74,7 +65,7 @@ nonisolated public struct ReferenceRecordInspector: Sendable {
             sections.insert(resolved, at: 2)
         }
         let decoded = DecodedValueDump.lines(record: preview.record, localized: preview.localized) {
-            link($0, fromPlugin: preview.sourcePlugin)
+            chains.link($0, fromPlugin: preview.sourcePlugin)
         }
         sections.append(decoded.joined(separator: "\n"))
         return sections.joined(separator: "\n\n")
@@ -82,17 +73,95 @@ nonisolated public struct ReferenceRecordInspector: Sendable {
 
     private func resolvedDetail(_ preview: PreviewRecord) -> String? {
         guard let id = preview.resolvedID ?? resolvedIdentity(preview).value else { return nil }
-        switch preview.record.type {
-        case "KYWD": return keywordUsers(id)
-        case "FLST": return flattenedList(id)
-        case "LCTN": return locationChain(id)
-        case "ECZN": return encounterZone(id)
-        case "COLL": return collisionLayer(id)
-        case "DOBJ": return defaultObjectTable()
-        case "ENCH": return enchantmentChain(id)
-        case "PERK": return perkRankChain(id)
-        case "FACT": return factionRelations(id)
-        default: return nil
+        return chains.detail(of: preview.record.type, id: id)
+    }
+
+    private func resolvedIdentity(_ preview: PreviewRecord) -> OptionalDescription<ResolvedFormID> {
+        switch index.resolve(FormID(preview.record.formID), fromPlugin: preview.sourcePlugin) {
+        case let .resolved(id): OptionalDescription(value: id, description: id.description)
+        case .nullReference: OptionalDescription(value: nil, description: "NULL")
+        case let .unavailablePlugin(name):
+            OptionalDescription(value: nil, description: "[UNRESOLVED source \(name)]")
+        }
+    }
+}
+
+nonisolated extension ReferenceRecordInspector {
+    private func metadata(_ preview: PreviewRecord) -> String {
+        let identity = preview.resolvedID?.description ?? resolvedIdentity(preview).description
+        let type = preview.record.type
+        var lines = [
+            "resolved inspector:",
+            "  winner plugin: \(preview.sourcePlugin)",
+            "  identity: \(identity)",
+            "  skipped \(type) records: \(skippedRecords.count(of: type))",
+            "  skipped records, all types: \(skippedRecords.total)"
+        ]
+        if let first = skippedRecords.byType[type]?.firstError {
+            lines.append("  first \(type) skip: \(first)")
+        }
+        return lines.joined(separator: "\n")
+    }
+}
+
+nonisolated private struct OptionalDescription<Value> {
+    let value: Value?
+    let description: String
+}
+
+/// The resolved chains the inspector shows under a record: keyword users, form list
+/// members, location parents, enchantment bases, perk ranks, and faction relations.
+nonisolated struct ReferenceRecordChains: Sendable {
+    private let index: RecordIndex
+    private let keywords: KeywordStore
+    private let formLists: FormListStore
+    private let enchantments: EnchantmentStore
+    private let perks: PerkStore
+    private let locations: LocationStore
+    private let encounterZones: EncounterZoneStore
+    private let collisionLayers: CollisionLayerStore
+    private let defaultObjects: DefaultObjectStore
+    private let factions: FactionStore
+    private let keywordUsage: [ResolvedFormID: [String]]
+
+    init(
+        index: RecordIndex,
+        stores: (KeywordStore, FormListStore), magic: (EnchantmentStore, PerkStore)
+    ) {
+        self.index = index
+        keywords = stores.0
+        formLists = stores.1
+        enchantments = magic.0
+        perks = magic.1
+        locations = LocationStore(index: index)
+        encounterZones = EncounterZoneStore(index: index)
+        collisionLayers = CollisionLayerStore(index: index)
+        defaultObjects = DefaultObjectStore(index: index)
+        factions = FactionStore(index: index)
+        keywordUsage = Self.buildKeywordUsage(index: index, keywords: stores.0)
+    }
+
+    /// The skipped records of the stores only the chains read.
+    var skippedRecords: [SkippedRecords] {
+        [
+            locations.skippedRecords, encounterZones.skippedRecords,
+            collisionLayers.skippedRecords, defaultObjects.skippedRecords,
+            factions.skippedRecords
+        ]
+    }
+
+    func detail(of type: FourCC, id: ResolvedFormID) -> String? {
+        switch type {
+        case "KYWD": keywordUsers(id)
+        case "FLST": flattenedList(id)
+        case "LCTN": locationChain(id)
+        case "ECZN": encounterZone(id)
+        case "COLL": collisionLayer(id)
+        case "DOBJ": defaultObjectTable()
+        case "ENCH": enchantmentChain(id)
+        case "PERK": perkRankChain(id)
+        case "FACT": factionRelations(id)
+        default: nil
         }
     }
 
@@ -212,7 +281,7 @@ nonisolated public struct ReferenceRecordInspector: Sendable {
         return cappedLines(title: "merged default-object table", values: values)
     }
 
-    private func link(_ raw: FormID?, fromPlugin plugin: String) -> String {
+    func link(_ raw: FormID?, fromPlugin plugin: String) -> String {
         guard let raw else { return "NULL" }
         switch index.resolve(raw, fromPlugin: plugin) {
         case .nullReference: return "NULL"
@@ -233,15 +302,6 @@ nonisolated public struct ReferenceRecordInspector: Sendable {
     private func displayName(_ id: ResolvedFormID, indexed: IndexedRecord) -> String {
         let editorID = ReferenceRecordCatalog.editorID(in: indexed.record) ?? id.description
         return "\(editorID) — \(indexed.sourcePlugin) — \(id)"
-    }
-
-    private func resolvedIdentity(_ preview: PreviewRecord) -> OptionalDescription<ResolvedFormID> {
-        switch index.resolve(FormID(preview.record.formID), fromPlugin: preview.sourcePlugin) {
-        case let .resolved(id): OptionalDescription(value: id, description: id.description)
-        case .nullReference: OptionalDescription(value: nil, description: "NULL")
-        case let .unavailablePlugin(name):
-            OptionalDescription(value: nil, description: "[UNRESOLVED source \(name)]")
-        }
     }
 
     private func cappedLines(title: String, values: [String]) -> String {
@@ -278,27 +338,4 @@ nonisolated public struct ReferenceRecordInspector: Sendable {
             $0.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
         }
     }
-}
-
-nonisolated extension ReferenceRecordInspector {
-    private func metadata(_ preview: PreviewRecord) -> String {
-        let identity = preview.resolvedID?.description ?? resolvedIdentity(preview).description
-        let type = preview.record.type
-        var lines = [
-            "resolved inspector:",
-            "  winner plugin: \(preview.sourcePlugin)",
-            "  identity: \(identity)",
-            "  skipped \(type) records: \(skippedRecords.count(of: type))",
-            "  skipped records, all types: \(skippedRecords.total)"
-        ]
-        if let first = skippedRecords.byType[type]?.firstError {
-            lines.append("  first \(type) skip: \(first)")
-        }
-        return lines.joined(separator: "\n")
-    }
-}
-
-nonisolated private struct OptionalDescription<Value> {
-    let value: Value?
-    let description: String
 }

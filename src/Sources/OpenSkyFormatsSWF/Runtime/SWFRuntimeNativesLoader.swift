@@ -151,21 +151,13 @@ nonisolated extension SWFMovieRuntime {
         guard
             let owner = movieRuntime(context), let loader = context.thisObject,
             case let .string(url) = context.argument(0), url.hasPrefix(imageScheme),
-            let slot = owner.movie.imageSlots[String(url.dropFirst(imageScheme.count))],
+            let shape = owner.movie.imageShape(named: String(url.dropFirst(imageScheme.count))),
             let target = SWFDisplayObject.resolve(context.argument(1).objectValue),
-            let picture = owner.makeDisplayObject(characterId: slot.shapeId)
+            let picture = owner.makeDisplayObject(characterId: shape)
         else { return nil }
         target.addChild(picture, atDepth: 0)
         owner.markDirty()
-        _ = owner.timers.add(
-            SWFTimerCall(
-                callee: .object(loader),
-                method: "onDeferredLoadInit",
-                arguments: [context.argument(1)]
-            ),
-            period: 1,
-            repeats: false
-        )
+        owner.timers.addOnce("onDeferredLoadInit", on: loader, arguments: [context.argument(1)])
         return .boolean(true)
     }
 
@@ -179,15 +171,7 @@ nonisolated extension SWFMovieRuntime {
         }
         owner.runtime.noteMissing("MovieClipLoader.loadClip")
         let target = context.argument(1)
-        _ = owner.timers.add(
-            SWFTimerCall(
-                callee: .object(loader),
-                method: "onDeferredLoadError",
-                arguments: [target]
-            ),
-            period: 1,
-            repeats: false
-        )
+        owner.timers.addOnce("onDeferredLoadError", on: loader, arguments: [target])
         return .boolean(false)
     }
 }

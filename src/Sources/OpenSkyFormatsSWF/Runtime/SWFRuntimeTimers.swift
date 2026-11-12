@@ -49,6 +49,22 @@ nonisolated public final class SWFRuntimeTimers {
         entries.isEmpty
     }
 
+    /// Schedules a call of `method` on `callee`; see `add(_:period:repeats:)`.
+    func add(
+        _ callee: AS2Value, method: String?, arguments: [AS2Value],
+        every: (period: Int, repeats: Bool)
+    ) -> Int {
+        add(
+            SWFTimerCall(callee: callee, method: method, arguments: arguments),
+            period: every.period, repeats: every.repeats
+        )
+    }
+
+    /// Calls `method` on `object` at the next tick, once.
+    func addOnce(_ method: String, on object: AS2Object, arguments: [AS2Value]) {
+        _ = add(.object(object), method: method, arguments: arguments, every: (1, false))
+    }
+
     /// Schedules a timer and returns its id, or 0 when the list is full.
     func add(_ call: SWFTimerCall, period: Int, repeats: Bool) -> Int {
         guard entries.count < SWFRuntimeTimers.maximumTimers else {
@@ -193,13 +209,9 @@ nonisolated extension SWFMovieRuntime {
         }
         let milliseconds = try context.interpreter.toNumber(context.argument(intervalIndex))
         let identifier = owner.timers.add(
-            SWFTimerCall(
-                callee: callee,
-                method: method,
-                arguments: Array(context.arguments.dropFirst(intervalIndex + 1))
-            ),
-            period: owner.timerTicks(milliseconds: milliseconds),
-            repeats: repeats
+            callee, method: method,
+            arguments: Array(context.arguments.dropFirst(intervalIndex + 1)),
+            every: (owner.timerTicks(milliseconds: milliseconds), repeats)
         )
         return .integer(identifier)
     }

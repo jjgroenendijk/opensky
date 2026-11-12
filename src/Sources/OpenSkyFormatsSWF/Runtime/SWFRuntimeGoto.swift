@@ -6,11 +6,47 @@
 import Foundation
 
 nonisolated extension SWFMovieRuntime {
+    /// Brings a clip's children to the destination frame's state: instances the
+    /// destination keeps are kept and re-applied, instances it does not are
+    /// unloaded, and depths it introduces are instantiated and brought up.
+    /// Script-made children stay, as in Flash.
+    func reconcile(to index: Int, of node: SWFDisplayObject, frames: [SWFTimelineFrame]) {
+        let target = SWFTimelineFrame.accumulatedPlacements(to: index, frames: frames)
+        for child in node.children where target[child.depth] == nil && !child.hasScriptDepth {
+            dispatchPlacementLifecycle(child, phase: .unloaded)
+            node.removeChild(atDepth: child.depth)
+        }
+        for depth in target.keys.sorted() {
+            guard let placement = target[depth] else {
+                continue
+            }
+            let existing = node.child(atDepth: depth)
+            if let existing, existing.characterId == placement.characterId {
+                apply(placement, to: existing)
+                continue
+            }
+            if let existing {
+                dispatchPlacementLifecycle(existing, phase: .unloaded)
+            }
+            guard
+                let characterId = placement.characterId,
+                let fresh = makeDisplayObject(characterId: characterId)
+            else {
+                continue
+            }
+            apply(placement, to: fresh)
+            node.addChild(fresh, atDepth: depth)
+            placeSubtree(fresh)
+        }
+    }
+}
+
+nonisolated extension SWFTimelineFrame {
     /// The cumulative display-list state at `index`, keyed by depth. This is the
     /// same accumulation `SWFDisplayListBuilder` performs for frame 1, kept as
     /// `SWFPlacement` rather than `SWFPlacedObject` so a placement's CLIPACTIONS
     /// handlers survive the walk.
-    func accumulatedPlacements(
+    static func accumulatedPlacements(
         to index: Int,
         frames: [SWFTimelineFrame]
     ) -> [UInt16: SWFPlacement] {
@@ -33,7 +69,7 @@ nonisolated extension SWFMovieRuntime {
     /// starts a fresh instance; one that carries both replaces the character and
     /// keeps the occupant's state, which is the behavior the frame-1 builder
     /// already implements.
-    private func merge(_ placement: SWFPlacement, into state: inout [UInt16: SWFPlacement]) {
+    private static func merge(_ placement: SWFPlacement, into state: inout [UInt16: SWFPlacement]) {
         guard var existing = state[placement.depth] else {
             if placement.characterId != nil {
                 state[placement.depth] = placement
@@ -65,37 +101,15 @@ nonisolated extension SWFMovieRuntime {
         state[placement.depth] = existing
     }
 
-    /// Brings a clip's children to the destination frame's state: instances the
-    /// destination keeps are kept and re-applied, instances it does not are
-    /// unloaded, and depths it introduces are instantiated and brought up.
-    /// Script-made children stay, as in Flash.
-    func reconcile(to index: Int, of node: SWFDisplayObject, frames: [SWFTimelineFrame]) {
-        let target = accumulatedPlacements(to: index, frames: frames)
-        for child in node.children where target[child.depth] == nil && !child.hasScriptDepth {
-            dispatchPlacementLifecycle(child, phase: .unloaded)
-            node.removeChild(atDepth: child.depth)
-        }
-        for depth in target.keys.sorted() {
-            guard let placement = target[depth] else {
-                continue
+    /// Calls `place` or `remove` for each step of the frame, in order.
+    func forEachStep(place: (SWFPlacement) -> Void, remove: (UInt16) -> Void) {
+        for step in steps {
+            switch step {
+            case let .place(placement):
+                place(placement)
+            case let .remove(removal):
+                remove(removal.depth)
             }
-            let existing = node.child(atDepth: depth)
-            if let existing, existing.characterId == placement.characterId {
-                apply(placement, to: existing)
-                continue
-            }
-            if let existing {
-                dispatchPlacementLifecycle(existing, phase: .unloaded)
-            }
-            guard
-                let characterId = placement.characterId,
-                let fresh = makeDisplayObject(characterId: characterId)
-            else {
-                continue
-            }
-            apply(placement, to: fresh)
-            node.addChild(fresh, atDepth: depth)
-            placeSubtree(fresh)
         }
     }
 }
