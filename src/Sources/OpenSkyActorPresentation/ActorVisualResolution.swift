@@ -90,6 +90,17 @@ nonisolated public struct ActorVisualResolver: Sendable {
     /// CSTY records, whose Equipment Score Mults pick a carried weapon.
     public var combatStyles: [UInt32: CombatStyle] = [:]
 
+    var outfitter: ActorOutfitResolver {
+        ActorOutfitResolver(
+            armors: armors, outfits: outfits, leveledItems: leveledItems,
+            equipment: equipment, leveling: leveling, combatStyles: combatStyles
+        )
+    }
+
+    var skinTextures: ActorSkinTextureReads {
+        ActorSkinTextureReads(armorAddons: armorAddons, textureSets: textureSets)
+    }
+
     public init(
         races: [UInt32: Race],
         armors: [UInt32: Armor],
@@ -191,14 +202,13 @@ nonisolated public struct ActorVisualResolver: Sendable {
             skips.append(AppearanceSkip(subject: race.formID, reason: .noSkeletonForGender))
         }
 
-        let worn: WornEquipment = if let equipped {
-            wornEquipment(equipped: equipped, skips: &skips)
-        } else {
-            try defaultEquipment(of: appearance, roll: roll, carried: carried, skips: &skips)
-        }
+        let worn = try equipped.map { outfitter.wornEquipment(equipped: $0, skips: &skips) }
+            ?? outfitter.defaultEquipment(
+                of: appearance, roll: roll, carried: carried, skips: &skips
+            )
         let equippedSlots = Self.slotMask(of: worn.armors, skips: &skips)
         var seenArmatures: Set<UInt32> = []
-        let wornSplit = heldArmour(wornParts(
+        let wornSplit = outfitter.heldArmour(wornParts(
             worn.armors, for: (raceID, female), seen: &seenArmatures, skips: &skips
         ))
         var parts = wornSplit.parts
@@ -217,7 +227,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
         parts += bodyParts(
             of: skin, selection: skinSelection, seen: &seenArmatures, skips: &skips
         ).map(\.part)
-        parts = withSkinTextures(parts, skin: skin, race: raceID, female: female)
+        parts = skinTextures.withSkinTextures(parts, skin: skin, race: raceID, female: female)
 
         // FaceGen assets belong to the NPC_ that provides character-gen data
         // — the traits source (head parts ride the traits flag). Gated on
@@ -249,23 +259,6 @@ nonisolated public struct ActorVisualResolver: Sendable {
                 .withFaceTextures(complexion(appearance, race: race, female: female))
         }
         return visual
-    }
-
-    /// The union of worn ARMO body slots — the mask that hides covered skin.
-    /// An ARMO with no BOD2/BODT contributes nothing and says so.
-    private static func slotMask(
-        of armors: [Armor],
-        skips: inout [AppearanceSkip]
-    ) -> BodySlots {
-        var mask = BodySlots()
-        for armor in armors {
-            if let slots = armor.bodyTemplate?.slots {
-                mask.formUnion(slots)
-            } else {
-                skips.append(AppearanceSkip(subject: armor.formID, reason: .missingBodySlots))
-            }
-        }
-        return mask
     }
 
     /// Every worn piece's race-compatible armatures, in ARMA DNAM draw order.
@@ -350,7 +343,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
                         female: selection.female
                     ),
                     slots: slots,
-                    textureSwaps: textureSwaps(of: armature, female: selection.female)
+                    textureSwaps: skinTextures.textureSwaps(of: armature, female: selection.female)
                 ),
                 priority: armature.priority(female: selection.female)
             ))
@@ -363,6 +356,23 @@ nonisolated public struct ActorVisualResolver: Sendable {
 }
 
 nonisolated extension ActorVisualResolver {
+    /// The union of worn ARMO body slots — the mask that hides covered skin.
+    /// An ARMO with no BOD2/BODT contributes nothing and says so.
+    private static func slotMask(
+        of armors: [Armor],
+        skips: inout [AppearanceSkip]
+    ) -> BodySlots {
+        var mask = BodySlots()
+        for armor in armors {
+            if let slots = armor.bodyTemplate?.slots {
+                mask.formUnion(slots)
+            } else {
+                skips.append(AppearanceSkip(subject: armor.formID, reason: .missingBodySlots))
+            }
+        }
+        return mask
+    }
+
     public var headPartResolver: HeadPartResolver {
         HeadPartResolver(
             headParts: headParts, formLists: formLists, textureSets: textureSets, colors: colors
@@ -373,8 +383,7 @@ nonisolated extension ActorVisualResolver {
     func complexion(
         _ appearance: ResolvedActorAppearance, race: Race, female: Bool
     ) -> TextureSet? {
-        let head = female ? race.details.headData.female : race.details.headData.male
-        let complexion = appearance.faceTexture ?? head.defaultFaceTexture
+        let complexion = appearance.faceTexture ?? race.defaultFaceTexture(female: female)
         return complexion.flatMap { textureSets[$0.rawValue] }
     }
 
@@ -398,5 +407,12 @@ nonisolated extension ActorVisualResolver {
             }
             return part
         }
+    }
+}
+
+nonisolated extension Race {
+    /// The race's `DFTM` or `DFTF` face texture set.
+    func defaultFaceTexture(female: Bool) -> FormID? {
+        (female ? details.headData.female : details.headData.male).defaultFaceTexture
     }
 }

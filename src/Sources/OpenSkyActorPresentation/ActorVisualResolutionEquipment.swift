@@ -58,7 +58,16 @@ nonisolated public struct WornEquipment: Sendable {
     }
 }
 
-nonisolated extension ActorVisualResolver {
+/// The part of `ActorVisualResolver` that picks what an actor wears and holds: the
+/// outfit chain, the carried picks, and the hand attachments.
+nonisolated struct ActorOutfitResolver: Sendable {
+    let armors: [UInt32: Armor]
+    let outfits: [UInt32: Outfit]
+    let leveledItems: [UInt32: LeveledList]
+    let equipment: EquipmentCatalog
+    let leveling: LeveledListRoller
+    let combatStyles: [UInt32: CombatStyle]
+
     /// DOFT -> OTFT -> INAM entries, each an ARMO or an LVLI rolled by `roll` (else for
     /// the base), as `InventoryBaselineResolver.outfitStacks` rolls it. Any unusable
     /// link throws: the gate forbids silently rendering the actor naked.
@@ -132,7 +141,7 @@ nonisolated extension ActorVisualResolver {
     /// sorted by FormID — so two stores that reached the same equipped set
     /// resolve to the same part list in the same order.
     /// A second one-handed weapon goes to the left hand, which is dual wield.
-    public func wornEquipment(
+    func wornEquipment(
         equipped: [FormID],
         skips: inout [AppearanceSkip]
     ) -> WornEquipment {
@@ -174,33 +183,9 @@ nonisolated extension ActorVisualResolver {
         }
         return WornEquipment(armors: armors, attachments: attachments)
     }
+}
 
-    /// The swaps of the model `female` wears, with the same cross-gender
-    /// fallback as the model path.
-    func textureSwaps(
-        of armature: ArmorAddon, female: Bool
-    ) -> [ModelSurfaceOverride.ShapeTextures] {
-        let model = (female ? armature.femaleModel : armature.maleModel)
-            ?? armature.maleModel ?? armature.femaleModel
-        return textureSwaps(model?.alternateTextures ?? [])
-    }
-
-    /// ARMA alternate textures as per-shape textures. An entry whose TXST is
-    /// missing keeps the shape's own textures, as `MODS` does on a static.
-    func textureSwaps(
-        _ alternates: [ModelData.AlternateTexture]
-    ) -> [ModelSurfaceOverride.ShapeTextures] {
-        alternates.compactMap { alternate in
-            textureSets[alternate.textureSet.rawValue].map { set in
-                ModelSurfaceOverride.ShapeTextures(
-                    shapeName: alternate.shapeName,
-                    diffuseTexture: set.diffusePath.flatMap(NIFShaderTextureSet.vfsKey(for:)),
-                    normalTexture: set.normalPath.flatMap(NIFShaderTextureSet.vfsKey(for:))
-                )
-            }
-        }
-    }
-
+nonisolated extension ActorVisualResolver {
     /// Worn parts in ARMA DNAM draw order: ascending priority, ties in resolve order.
     /// `enumerated()` gives a stable tie-break, since `sorted(by:)` is not stable.
     static func inDrawOrder(_ parts: [PrioritizedPart]) -> [ResolvedBodyPart] {

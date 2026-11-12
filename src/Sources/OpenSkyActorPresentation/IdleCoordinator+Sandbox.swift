@@ -9,11 +9,11 @@ extension IdleCoordinator {
         guard let marker = sessions[actor]?.marker else { return }
         endIdle(of: actor)
         sessions[actor] = nil
-        previousMarkers[actor] = marker
+        markerClaims.previous[actor] = marker
     }
 
     /// After an activity away from markers, the last marker may be taken again.
     public func allowPreviousMarker(_ actor: ReferenceKey) {
-        previousMarkers[actor] = nil
+        markerClaims.previous[actor] = nil
     }
 }

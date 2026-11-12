@@ -22,7 +22,7 @@ nonisolated public struct CarriedItems: Sendable {
     }
 }
 
-nonisolated extension ActorVisualResolver {
+nonisolated extension ActorOutfitResolver {
     /// Deepest leveled-list nesting a carried entry follows, as the inventory baseline.
     static let maximumCarriedDepth = 8
 

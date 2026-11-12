@@ -69,6 +69,14 @@ public struct IdleSessionData {
     }
 }
 
+extension IdleSessionData {
+    /// The loader of idle plans, on the session's worker or a serial one.
+    func planLoader() -> IdlePlanLoader {
+        let load = IdlePlaybackResolver.planLoad(files: files, animatedObjects: store.animatedObjects)
+        return IdlePlanLoader(worker: planWorker ?? SerialAssetLoadWorker(load: load))
+    }
+}
+
 @MainActor
 public final class IdleCoordinator {
     /// Each actor's animation playback; the composition root answers it from the streamer.
@@ -145,19 +153,16 @@ public final class IdleCoordinator {
     /// The paired animations playing now, oldest first.
     public internal(set) var pairs: [PairedAnimationPlay] = []
     var reports: [ReferenceKey: IdleReport] = [:]
-    /// Markers an actor could not path to, so it does not retry every frame.
-    private var unreachable: [ReferenceKey: Set<ReferenceKey>] = [:]
-    /// The marker each sandboxing actor last left, which it does not take again at once.
-    var previousMarkers: [ReferenceKey: IdleMarkerPlacement] = [:]
-    private(set) var markers: [IdleMarkerPlacement] = []
-    private var markersRefreshAt: Float = 0
+    let markerClaims = IdleMarkerClaims()
     /// The world context one `advance` shares between its actors.
     var passContext: (sequence: UInt64, context: ConditionContext)?
     var isAdvancing = false
     var usesIdleMarkers = true
     /// The player has no playback, so a player idle only times its events with this rig.
-    static let playerSkeletonPath = ActorAnimationClipLoader.characterRoot
-        + "character assets\\skeleton.nif"
+    static var playerSkeletonPath: String {
+        ActorClipLoader.playerSkeletonPath
+    }
+
     /// The event that returns a graph from a held idle, as `Debug.SendAnimationEvent` sends it.
     static let defaultStateEvent = "IdleForceDefaultState"
     let random: (Int) -> Int
@@ -176,12 +181,7 @@ public final class IdleCoordinator {
         store = data?.store
         clips = data?.clips
         conditionFunctions = data?.conditionFunctions ?? ConditionFunctionRegistry()
-        plans = data.map { data in
-            let load = IdlePlaybackResolver.planLoad(
-                files: data.files, animatedObjects: data.store.animatedObjects
-            )
-            return IdlePlanLoader(worker: data.planWorker ?? SerialAssetLoadWorker(load: load))
-        }
+        plans = data?.planLoader()
     }
 
     /// Takes finished idle plans in. The frame calls it at its asset drain point.
@@ -190,16 +190,13 @@ public final class IdleCoordinator {
     }
 
     public func advance() {
-        guard let world, store != nil, let now = world.idleAnimationTime else { return }
+        guard let world, let store, let now = world.idleAnimationTime else { return }
         isAdvancing = true
         defer {
             isAdvancing = false
             passContext = nil
         }
-        if now >= markersRefreshAt || now < markersRefreshAt - 10 {
-            markers = resolveMarkers(world.idleReferencePlacements() ?? [])
-            markersRefreshAt = now + 1
-        }
+        markerClaims.refresh(now: now, store: store) { world.idleReferencePlacements() }
         let actors = Dictionary(
             world.idleActors().map { ($0.key, $0) }, uniquingKeysWith: { first, _ in first }
         )
@@ -216,21 +213,6 @@ public final class IdleCoordinator {
     }
 
     // MARK: - Markers
-
-    private func resolveMarkers(_ placements: [IdleReferencePlacement]) -> [IdleMarkerPlacement] {
-        guard let store else { return [] }
-        return placements.compactMap { placement in
-            store.markers.resolve(placement.base, fromPlugin: placement.plugin).map {
-                IdleMarkerPlacement(
-                    reference: placement.reference,
-                    marker: $0,
-                    position: placement.position,
-                    heading: placement.heading
-                )
-            }
-        }
-        .sorted { $0.reference < $1.reference }
-    }
 
     /// An actor that left, died, or changed package lets go of its marker.
     private func releaseDeparted(actors: [ReferenceKey: IdleActorPresence], now: Float) {
@@ -250,35 +232,11 @@ public final class IdleCoordinator {
 
     private func claimMarkers(actors: [ReferenceKey: IdleActorPresence]) {
         guard usesIdleMarkers, let world else { return }
-        var claimed = Set(sessions.values.compactMap { $0.marker?.reference })
-        for key in actors.keys.sorted() {
-            guard
-                let actor = actors[key], sessions[key]?.marker == nil, !actor.isDead,
-                IdleCore.usesMarkers(actor.procedure), actor.area?.allowsMarkers != false
-            else { continue }
-            let previous = previousMarkers[key]
-            var area = actor.area
-            area?.previous = previous?.position
-            guard
-                let marker = IdleCore.nearestFreeMarker(
-                    to: actor.feet, among: markers, claimed: claimed,
-                    excluded: (unreachable[key] ?? []).union(previous.map { [$0.reference] } ?? []),
-                    area: area
-                )
-            else { continue }
-            let arrived = simd_distance(actor.feet, marker.position) <= IdleCore.arrivalRadius
-            if !arrived, world.moveActor(key, to: marker.position) != .started {
-                unreachable[key, default: []].insert(marker.reference)
-                continue
-            }
-            claimed.insert(marker.reference)
-            previousMarkers[key] = nil
-            var session = sessions[key] ?? Session()
-            session.marker = marker
-            session.arrived = arrived
-            session.faced = false
-            sessions[key] = session
-        }
+        markerClaims.claim(actors: actors, sessions: &sessions, world: world)
+    }
+
+    var markers: [IdleMarkerPlacement] {
+        markerClaims.markers
     }
 
     // MARK: - Playing
@@ -395,35 +353,24 @@ extension IdleCoordinator {
         }
         let skeleton = actorPlayback(actor)?.clip.skeletonMeshPath
             ?? (actor == .player ? Self.playerSkeletonPath : nil)
-        let clipStates = skeleton.map { skeleton in
-            plan.clipPaths.map { clip($0, skeleton: skeleton) }
-        } ?? []
-        if clipStates.contains(where: Self.isLoading) {
+        if let skeleton, clips?.isLoading(plan, skeleton: skeleton) == true {
             return wait(waiting, on: actor, chosen: chosen, plan: plan)
         }
         var failure: String?
         var seconds: Float = 0
-        if let first = clipStates.first??.value {
-            let chain = Self.segments(of: plan, clips: clipStates.dropFirst().map { $0?.value })
-            let holds = IdleCore.holds(plan, properties: chosen.record.properties)
-            seconds = chain.isEmpty
+        let holds = IdleCore.holds(plan, properties: chosen.record.properties)
+        if let skeleton, let chain = clips?.chain(of: plan, skeleton: skeleton, holds: holds) {
+            seconds = chain.followUps.isEmpty
                 ? (holds ? .infinity : IdleCore.playSeconds(
-                    clipDuration: first.animation.duration,
+                    clipDuration: chain.first.duration,
                     properties: chosen.record.properties,
                     random: random
                 ))
-                : first.animation.duration
-            start(
-                Chain(
-                    first: Segment(clip: first, triggers: plan.triggers),
-                    followUps: chain, holdsLast: holds
-                ),
-                plan: plan, on: actor, at: (now, seconds)
-            )
+                : chain.first.duration
+            start(chain, plan: plan, on: actor, at: (now, seconds))
             positions[actor] = plan.position
-            if !chain.isEmpty {
-                seconds = holds ? .infinity : chain
-                    .reduce(seconds) { $0 + $1.clip.animation.duration }
+            if !chain.followUps.isEmpty {
+                seconds = holds ? .infinity : chain.followUps.reduce(seconds) { $0 + $1.duration }
             }
         } else {
             failure = plan.clipPath == nil ? "no clip" : "the clip did not load"
@@ -498,13 +445,13 @@ extension IdleCoordinator {
         if !graphPlays {
             playback?.play(clip, startingAt: now, forSeconds: seconds)
         }
-        let prop = playback == nil ? nil : Self.attachment(plan.prop)
+        let prop = playback == nil ? nil : Playing.attachment(plan.prop)
         if prop != nil || sessions[actor]?.playing?.hasProp == true {
             world?.setProp(prop, on: actor)
         }
         let held = !seconds.isFinite
-        let duration = clip.animation.duration
-        let marks = Self.marks(of: segment)
+        let duration = segment.duration
+        let marks = segment.marks
         let lastExit = held || !chain.followUps.isEmpty
         let events = IdleCore.playEvents(
             marks: marks,

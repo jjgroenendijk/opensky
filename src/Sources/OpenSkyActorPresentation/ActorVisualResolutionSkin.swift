@@ -9,7 +9,12 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyWorldInterface
 
-nonisolated extension ActorVisualResolver {
+/// The part of `ActorVisualResolver` that reads skin and texture swaps from ARMA and
+/// TXST records.
+nonisolated struct ActorSkinTextureReads: Sendable {
+    let armorAddons: [UInt32: ArmorAddon]
+    let textureSets: [UInt32: TextureSet]
+
     private struct SkinArmature {
         let armature: FormID
         let slots: BodySlots
@@ -67,5 +72,31 @@ nonisolated extension ActorVisualResolver {
         return ModelSurfaceOverride.SkinTextures(
             diffuse: key(0), normal: key(1), lightMask: key(3), specular: key(7)
         )
+    }
+
+    /// The swaps of the model `female` wears, with the same cross-gender
+    /// fallback as the model path.
+    func textureSwaps(
+        of armature: ArmorAddon, female: Bool
+    ) -> [ModelSurfaceOverride.ShapeTextures] {
+        let model = (female ? armature.femaleModel : armature.maleModel)
+            ?? armature.maleModel ?? armature.femaleModel
+        return textureSwaps(model?.alternateTextures ?? [])
+    }
+
+    /// ARMA alternate textures as per-shape textures. An entry whose TXST is
+    /// missing keeps the shape's own textures, as `MODS` does on a static.
+    func textureSwaps(
+        _ alternates: [ModelData.AlternateTexture]
+    ) -> [ModelSurfaceOverride.ShapeTextures] {
+        alternates.compactMap { alternate in
+            textureSets[alternate.textureSet.rawValue].map { set in
+                ModelSurfaceOverride.ShapeTextures(
+                    shapeName: alternate.shapeName,
+                    diffuseTexture: set.diffusePath.flatMap(NIFShaderTextureSet.vfsKey(for:)),
+                    normalTexture: set.normalPath.flatMap(NIFShaderTextureSet.vfsKey(for:))
+                )
+            }
+        }
     }
 }

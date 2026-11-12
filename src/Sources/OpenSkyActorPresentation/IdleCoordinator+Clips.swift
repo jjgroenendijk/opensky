@@ -24,11 +24,87 @@ extension IdleCoordinator.Playing {
     }
 }
 
+extension IdleCoordinator.Playing {
+    /// The object change an annotation makes: nil when it changes nothing, else the
+    /// prop to show, or a nil prop to remove the one shown. The player has no playback,
+    /// so no prop.
+    mutating func applyAnimationObject(_ name: String) -> (prop: ActorPropAttachment?)? {
+        guard
+            playback != nil,
+            let change = IdleCore.objectChange(
+                for: name, objects: animationObjects, shown: shownObject
+            )
+        else { return nil }
+        switch change {
+        case let .show(object):
+            guard let prop = Self.attachment(object.prop) else { return nil }
+            hasProp = true
+            shownObject = object
+            return (prop)
+        case .remove:
+            hasProp = false
+            shownObject = nil
+            return (nil)
+        }
+    }
+
+    static func attachment(_ prop: IdleProp) -> ActorPropAttachment? {
+        guard case let .attached(_, modelPath, bone) = prop else { return nil }
+        return ActorPropAttachment(modelPath: modelPath, bone: bone)
+    }
+
+    /// A bone of the clip at `now`, in the actor's root frame.
+    func boneMatrix(named bone: String, at now: Float) -> float4x4? {
+        guard
+            now < end,
+            let pose = clip.worldPose(at: max(0, now - start)),
+            let index = pose.bones.index(of: bone),
+            pose.matrices.indices.contains(index)
+        else { return nil }
+        return pose.matrices[index]
+    }
+
+    func bone(named bone: String, at now: Float) -> SIMD3<Float>? {
+        boneMatrix(named: bone, at: now).map { matrix in
+            SIMD3(matrix.columns.3.x, matrix.columns.3.y, matrix.columns.3.z)
+        }
+    }
+
+    /// Where the bone faces: the bind pose faces +Y, so this is +Y turned as the clip
+    /// turns the bone away from its bind pose.
+    func boneForward(named bone: String, at now: Float) -> SIMD3<Float>? {
+        guard
+            let posed = boneMatrix(named: bone, at: now),
+            let index = clip.boneIndex.index(of: bone)
+        else { return nil }
+        let bind = clip.bindWorldMatrices
+        guard bind.indices.contains(index) else { return nil }
+        let turn = posed * bind[index].inverse
+        let forward = turn * SIMD4<Float>(0, 1, 0, 0)
+        return SIMD3(forward.x, forward.y, forward.z)
+    }
+}
+
+extension ConditionContext {
+    /// The name of the first function whose condition fails, or nil when all pass.
+    func firstFailingFunction(in conditions: [Condition]) -> String? {
+        var evaluator = ConditionEvaluator(context: self)
+        return evaluator.firstFailure(in: conditions).map(evaluator.functionName(of:))
+    }
+
+    /// Sets one attack and whether it kills, for `ShouldAttackKill`.
+    mutating func setAttack(attacker: ReferenceKey, target: ReferenceKey, kills: Bool) {
+        attackKills = AttackKillResolution(attacks: [
+            AttackKillResolution.Attack(attacker: attacker, target: target, kills: kills)
+        ])
+    }
+}
+
 extension IdleCoordinator {
     func conditionContext(for actor: ReferenceKey) -> ConditionContext {
         var context = worldConditionContext()
         context.subject = actor
-        context.furniture = FurnitureConditionResolution(uses: furnitureUses, isAvailable: true)
+        context.furniture = furnitureResolution
         // A furniture idle tests the furniture as its Target, such as its keywords.
         context.target = furnitureUses[actor]?.furniture
         // An actor whose graph does not run reads 0 for every variable.
@@ -75,8 +151,7 @@ extension IdleCoordinator {
             }
             base = context
             context.functions = self?.conditionFunctions ?? .empty
-            var evaluator = ConditionEvaluator(context: context)
-            return evaluator.firstFailure(in: idle.conditions).map(evaluator.functionName(of:))
+            return context.firstFailingFunction(in: idle.conditions)
         }
         guard let store else {
             return IdleSelector(children: { _ in [] }, check: check)
@@ -92,30 +167,11 @@ extension IdleCoordinator {
         return skeleton.flatMap(IdleCore.graphProject(skeletonMeshPath:))
     }
 
-    static func attachment(_ prop: IdleProp) -> ActorPropAttachment? {
-        guard case let .attached(_, modelPath, bone) = prop else { return nil }
-        return ActorPropAttachment(modelPath: modelPath, bone: bone)
-    }
-
     /// Shows or removes the object an annotation names. It replaces the graph's prop,
-    /// because an actor carries one prop. The player has no playback, so no prop.
+    /// because an actor carries one prop.
     func applyAnimationObject(_ name: String, to playing: inout Playing, on actor: ReferenceKey) {
-        guard
-            playing.playback != nil,
-            let change = IdleCore.objectChange(
-                for: name, objects: playing.animationObjects, shown: playing.shownObject
-            )
-        else { return }
-        switch change {
-        case let .show(object):
-            guard let prop = Self.attachment(object.prop) else { return }
-            world?.setProp(prop, on: actor)
-            playing.hasProp = true
-            playing.shownObject = object
-        case .remove:
-            world?.setProp(nil, on: actor)
-            playing.hasProp = false
-            playing.shownObject = nil
+        if let change = playing.applyAnimationObject(name) {
+            world?.setProp(change.prop, on: actor)
         }
     }
 
@@ -137,44 +193,20 @@ extension IdleCoordinator {
     /// A bone of the clip `actor` plays now, in the actor's root frame. The player's
     /// seat idle places its eye this way.
     public func idleBone(of actor: ReferenceKey, named bone: String) -> SIMD3<Float>? {
-        idleBoneMatrix(of: actor, named: bone).map { matrix in
-            SIMD3(matrix.columns.3.x, matrix.columns.3.y, matrix.columns.3.z)
-        }
+        guard let now = world?.idleAnimationTime else { return nil }
+        return sessions[actor]?.playing?.bone(named: bone, at: now)
     }
 
     /// Where the bone faces in the actor's root frame: the bind pose faces +Y, so this
     /// is +Y turned as the clip turns the bone away from its bind pose.
     public func idleBoneForward(of actor: ReferenceKey, named bone: String) -> SIMD3<Float>? {
-        guard
-            let clip = sessions[actor]?.playing?.clip,
-            let posed = idleBoneMatrix(of: actor, named: bone),
-            let index = clip.boneIndex.index(of: bone)
-        else { return nil }
-        let bind = clip.bindWorldMatrices
-        guard bind.indices.contains(index) else { return nil }
-        let turn = posed * bind[index].inverse
-        let forward = turn * SIMD4<Float>(0, 1, 0, 0)
-        return SIMD3(forward.x, forward.y, forward.z)
+        guard let now = world?.idleAnimationTime else { return nil }
+        return sessions[actor]?.playing?.boneForward(named: bone, at: now)
     }
 
     /// The start of the idle `actor` plays now, so a caller acts once per idle.
     public func idleStart(of actor: ReferenceKey) -> Float? {
         sessions[actor]?.playing?.start
-    }
-
-    private func idleBoneMatrix(of actor: ReferenceKey, named bone: String) -> float4x4? {
-        guard
-            let playing = sessions[actor]?.playing,
-            let now = world?.idleAnimationTime, now < playing.end,
-            let pose = playing.clip.worldPose(at: max(0, now - playing.start)),
-            let index = pose.bones.index(of: bone),
-            pose.matrices.indices.contains(index)
-        else { return nil }
-        return pose.matrices[index]
-    }
-
-    func clip(_ path: String, skeleton: String) -> AssetLoadState<ActorAnimationClip>? {
-        clips?.state(of: ActorClipKey(skeletonMeshPath: skeleton, animationPath: path))
     }
 
     func failed(_ actor: ReferenceKey, source: String, _ reason: String) -> IdleReport {

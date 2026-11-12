@@ -13,15 +13,7 @@ extension IdleCoordinator {
         )
         return IdleControlSnapshot(
             isAvailable: true,
-            markers: markers.map { placement in
-                let idles = store.idles(of: placement.marker)
-                let record = placement.marker.record
-                return IdleMarkerReadout(
-                    editorID: record.editorID ?? placement.marker.id.description,
-                    idles: idles.map { $0.record.editorID ?? $0.id.description },
-                    claimedBy: holders[placement.reference]
-                )
-            },
+            markers: store.markerReadouts(markers, holders: holders),
             idlingActorCount: sessions.values.count { $0.arrived },
             report: actor.flatMap { reports[$0] }
         )
@@ -80,5 +72,22 @@ extension IdleCoordinator {
             )
         }
         return report
+    }
+}
+
+extension IdleStore {
+    /// One readout per placed marker, with its idles and the actor that holds it.
+    func markerReadouts(
+        _ markers: [IdleMarkerPlacement], holders: [ReferenceKey: ReferenceKey]
+    ) -> [IdleMarkerReadout] {
+        markers.map { placement in
+            let idles = idles(of: placement.marker)
+            let record = placement.marker.record
+            return IdleMarkerReadout(
+                editorID: record.editorID ?? placement.marker.id.description,
+                idles: idles.map { $0.record.editorID ?? $0.id.description },
+                claimedBy: holders[placement.reference]
+            )
+        }
     }
 }
