@@ -59,7 +59,7 @@ struct CellProviderIndexesTests {
         #expect(provider.globalStore != nil)
         #expect(provider.dialogueStore != nil)
         #expect(provider.inventoryBaselines != nil)
-        #expect(provider.equipmentCatalog != nil)
+        #expect(provider.rules.equipmentCatalog != nil)
         #expect(provider.movementConfiguration.walkSpeed.value == 100)
         #expect(provider.movementConfiguration.runSpeed.value == 370)
     }

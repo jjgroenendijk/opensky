@@ -176,38 +176,38 @@ nonisolated public struct CellProviderIndexes {
             dialogueStore: records.dialogue,
             packageStore: records.packages,
             inventoryBaselines: inventoryBaselines,
-            equipmentCatalog: records.equipment,
             actorValueBaselines: records.actorValueBaselines,
             magicEffectStore: magic.effects,
             magicItemPluginName: magicItemPluginName,
-            spellStore: magic.spells,
-            equipSlotStore: magic.equipSlots,
-            enchantmentStore: magic.enchantments,
-            perkStore: magic.perks,
             factionStore: records.world.factions,
-            relationshipStore: records.world.relationships,
             formListStore: records.world.formLists,
-            actorValueInformation: magic.actorValues,
-            skillAdvancementSettings: tuning.skillAdvancement,
-            characterLevelSettings: tuning.characterLevel,
             movementConfiguration: tuning.movement,
-            barterPricing: tuning.barter,
             combatSettings: tuning.combat,
-            archerySettings: tuning.archery,
-            detectionSettings: tuning.detection
+            archerySettings: tuning.archery
         )
-        stores.craftingCatalog = craftingCatalog.with(formLists: records.world.formLists)
+        stores.rules.detectionSettings = tuning.detection
+        stores.rules.equipmentCatalog = records.equipment
+        stores.progression.spellStore = magic.spells
+        stores.progression.equipSlotStore = magic.equipSlots
+        stores.progression.enchantmentStore = magic.enchantments
+        stores.progression.perkStore = magic.perks
+        stores.rules.relationshipStore = records.world.relationships
+        stores.progression.actorValueInformation = magic.actorValues
+        stores.progression.skillAdvancementSettings = tuning.skillAdvancement
+        stores.progression.characterLevelSettings = tuning.characterLevel
+        stores.rules.barterPricing = tuning.barter
+        stores.rules.craftingCatalog = craftingCatalog.with(formLists: records.world.formLists)
         stores.shoutStore = magic.shouts
         stores.placedRecords = placedRecords
-        stores.lockTrapData = records.scripted.lockTrap
+        stores.rules.lockTrapData = records.scripted.lockTrap
         stores.storyData = records.scripted.story
         stores.idleStore = records.loadOrder.idles
         stores.effectRecords = records.loadOrder.effects
         stores.presentationRecords = records.loadOrder.presentation
         stores.menuRecords = records.loadOrder.menus
         stores.difficultySettings = tuning.difficulty
-        stores.cellResetSettings = tuning.cellReset
-        stores.encounterZoneStore = records.world.encounterZones
+        stores.rules.cellResetSettings = tuning.cellReset
+        stores.rules.encounterZoneStore = records.world.encounterZones
         stores.speechCheckSettings = tuning.speechChecks
         stores.gameSettings = tuning.store
         stores.mountMovementConfiguration = tuning.mountMovement

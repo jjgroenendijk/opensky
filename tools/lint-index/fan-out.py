@@ -23,6 +23,7 @@ WIRING = {
     "GameViewController",
     "GameSessionScope",
     "GameSessionScopeBuild",
+    "GameSessionScopeCellReset",
     "GameSessionScopeFactories",
     "SessionPorts",
 }

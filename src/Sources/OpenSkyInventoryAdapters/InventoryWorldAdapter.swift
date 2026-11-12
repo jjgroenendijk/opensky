@@ -150,10 +150,10 @@ public struct InventorySessionBuilder {
             references: streamer,
             crime: game.crime.reporter
         ))
-        data.equipment = provider.equipmentCatalog
-        data.crafting = provider.craftingCatalog
-        data.rules.barterPricing = provider.barterPricing
-        data.rules.cellReset = provider.cellResetSettings
+        data.equipment = provider.rules.equipmentCatalog
+        data.crafting = provider.rules.craftingCatalog
+        data.rules.barterPricing = provider.rules.barterPricing
+        data.rules.cellReset = provider.rules.cellResetSettings
         data.rules.pickpocket = PickpocketSettings.resolve(store: settings)
         data.rules.craftingSkillUse = CraftingSkillUseSettings.resolve(store: settings)
         data.texts = texts(provider: provider)
@@ -161,8 +161,8 @@ public struct InventorySessionBuilder {
         data.alchemy.pluginName = provider.magicItemPluginName ?? FormIDResolver.loadOrderSpaceName
         data.alchemy.settings = AlchemySettings.resolve(store: settings)
         data.alchemy.texts = alchemyTexts
-        data.locks.settings = provider.lockTrapData.lockpicking
-        data.locks.lockpickItem = provider.lockTrapData.lockpickItem
+        data.locks.settings = provider.rules.lockTrapData.lockpicking
+        data.locks.lockpickItem = provider.rules.lockTrapData.lockpickItem
         data.locks.texts = LockTexts.resolve(store: settings) { [game] in game.mapWorld.text($0) }
         return data
     }

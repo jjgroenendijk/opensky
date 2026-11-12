@@ -132,8 +132,8 @@ public struct MagicSessionBuilder {
         }
         if
             let values = game.actorValues.runtime,
-            let spells = provider.spellStore,
-            let equipSlots = provider.equipSlotStore
+            let spells = provider.progression.spellStore,
+            let equipSlots = provider.progression.equipSlotStore
         {
             data.casting = MagicCastingData(
                 spellbook: SpellbookRuntime(
@@ -148,7 +148,7 @@ public struct MagicSessionBuilder {
                     .map { ActorSpellBaselineResolver(actorValues: $0) }
             )
         }
-        data.enchantments = provider.enchantmentStore
+        data.enchantments = provider.progression.enchantmentStore
         data.shouts = provider.shoutStore
         data.rules.spellCost = SpellCostSettings.resolve(store: settings)
         data.rules.soulTrap = SoulTrapSettings.resolve(store: settings)

@@ -7,7 +7,7 @@ public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
-public import OpenSkyPerceptionInterface
+import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 public import OpenSkyPlayer
 public import OpenSkyWeather
@@ -51,13 +51,6 @@ nonisolated public struct WorldDataStores {
     /// Item/container/leveled-list indexes; nil when the session
     /// was built without them, which is every synthetic scene.
     public var inventoryBaselines: InventoryBaselineResolver?
-    /// Equippable-item slot index; nil on the same synthetic
-    /// scenes, and then equipping reports itself unavailable.
-    public var equipmentCatalog: EquipmentCatalog?
-    /// Load-order recipes and the item plugin's stations; nil on a synthetic scene.
-    public var craftingCatalog: CraftingCatalog?
-    /// Lockpicking tuning, the lockpick item, and hazards; defaults on a synthetic scene.
-    public var lockTrapData = LockTrapData()
     public var storyData = StoryData()
     /// Load-order idle records; nil on a synthetic scene, and then no actor idles.
     public var idleStore: IdleStore?
@@ -67,10 +60,6 @@ nonisolated public struct WorldDataStores {
     public var presentationRecords: PresentationRecordStore?
     /// The `fDiffMult*` GMSTs; the documented defaults on a synthetic scene.
     public var difficultySettings = DifficultySettings.synthetic
-    /// `iHoursToRespawnCell` and `iHoursToRespawnCellCleared`.
-    public var cellResetSettings = CellResetSettings.vanilla
-    /// ECZN records, for the encounter zone's "never resets" flag.
-    public var encounterZoneStore: EncounterZoneStore?
     /// The bribe and intimidation settings; OpenSky's fallbacks on a synthetic scene.
     public var speechCheckSettings = SpeechCheckSettings.fallback
     /// Every GMST of the load order, which each subsystem resolves its settings from
@@ -86,38 +75,14 @@ nonisolated public struct WorldDataStores {
     public var magicEffectStore: MagicEffectStore?
     /// Plugin every magic item's EFID links are relative to.
     public var magicItemPluginName: String?
-    /// Load-order SPEL and SCRL index; nil on the same synthetic
-    /// scenes, and then the spellbook reports itself unavailable.
-    public var spellStore: SpellStore?
     /// Load-order SHOU index, which an AI Shout procedure casts from.
     public var shoutStore: ShoutStore?
-    /// Load-order EQUP index, which answers which hands a readied
-    /// spell takes.
-    public var equipSlotStore: EquipSlotStore?
-    /// Load-order ENCH index; nil on the same synthetic scenes, and
-    /// then an enchanted item applies nothing and the readout says so.
-    public var enchantmentStore: EnchantmentStore?
-    /// Load-order PERK index; nil on the same synthetic scenes,
-    /// and then the perk runtime reports itself unavailable.
-    public var perkStore: PerkStore?
     /// Load-order FACT index; nil on the same synthetic scenes,
     /// and then every actor derives as neutral toward everyone.
     public var factionStore: FactionStore?
-    /// Load-order RELA and ASTP index; nil on the same synthetic
-    /// scenes, and then no pair overrides its factions.
-    public var relationshipStore: RelationshipStore?
     /// Load-order FLST index; nil on the same synthetic scenes,
     /// and then vendors trade without their keyword lists.
     public var formListStore: FormListStore?
-    /// Load-order AVIF index; nil on the same synthetic scenes,
-    /// and then skill advancement has no parameters and reports the drop.
-    public var actorValueInformation: ActorValueInformationStore?
-    /// GMST-derived skill-use curve and per-rank character experience, defaulting to
-    /// the documented numbers on a synthetic scene.
-    public var skillAdvancementSettings: SkillAdvancementSettings = .documentedDefaults
-    /// GMST-derived level curve and level-up rewards, defaulting
-    /// to the documented numbers on a synthetic scene.
-    public var characterLevelSettings: CharacterLevelSettings = .documentedDefaults
     /// GMST-derived walk/run values plus explicit documented fallbacks.
     public var movementConfiguration: PlayerMovementConfiguration = .synthetic
     /// Every `MOVT` record, which an actor's graph state picks its speeds from.
@@ -126,18 +91,17 @@ nonisolated public struct WorldDataStores {
     public var mountMovementConfiguration: PlayerMovementConfiguration = .synthetic
     /// A dragon's flight, from the dragon movement types.
     public var dragonFlightSettings: DragonFlightSettings = .standard
-    /// GMST-derived `fBarterMin` and `fBarterMax` at the milestone's fixed
-    /// Speech value, defaulting to the documented vanilla numbers.
-    public var barterPricing: BarterPricing = .vanilla
     /// GMST-derived combat distance and block factors,
     /// defaulting to the documented vanilla numbers on a synthetic scene.
     public var combatSettings: CombatSettings = .synthetic
     /// GMST-derived arrow tilt-up angles and visible-move distance, defaulting to the
     /// UESP-documented numbers on a synthetic scene.
     public var archerySettings: ArcherySettings = .synthetic
-    /// GMST-derived detection ranges, noise weights, and thresholds, defaulting to
-    /// the documented numbers on a synthetic scene.
-    public var detectionSettings: DetectionSettings = .synthetic
+
+    /// The spell, perk, and skill records the progression and magic runtimes start from.
+    public var progression = WorldProgressionStores()
+    /// The trade, lock, reset, relationship, and detection records.
+    public var rules = WorldRuleStores()
 
     public init(
         scriptFormIDResolver: FormIDResolver,
@@ -154,25 +118,14 @@ nonisolated public struct WorldDataStores {
         dialogueStore: DialogueStore? = nil,
         packageStore: PackageStore? = nil,
         inventoryBaselines: InventoryBaselineResolver? = nil,
-        equipmentCatalog: EquipmentCatalog? = nil,
         actorValueBaselines: ActorValueBaselineResolver? = nil,
         magicEffectStore: MagicEffectStore? = nil,
         magicItemPluginName: String? = nil,
-        spellStore: SpellStore? = nil,
-        equipSlotStore: EquipSlotStore? = nil,
-        enchantmentStore: EnchantmentStore? = nil,
-        perkStore: PerkStore? = nil,
         factionStore: FactionStore? = nil,
-        relationshipStore: RelationshipStore? = nil,
         formListStore: FormListStore? = nil,
-        actorValueInformation: ActorValueInformationStore? = nil,
-        skillAdvancementSettings: SkillAdvancementSettings = .documentedDefaults,
-        characterLevelSettings: CharacterLevelSettings = .documentedDefaults,
         movementConfiguration: PlayerMovementConfiguration = .synthetic,
-        barterPricing: BarterPricing = .vanilla,
         combatSettings: CombatSettings = .synthetic,
-        archerySettings: ArcherySettings = .synthetic,
-        detectionSettings: DetectionSettings = .synthetic
+        archerySettings: ArcherySettings = .synthetic
     ) {
         self.scriptFileSystem = scriptFileSystem
         self.scriptFormIDResolver = scriptFormIDResolver
@@ -188,24 +141,13 @@ nonisolated public struct WorldDataStores {
         self.dialogueStore = dialogueStore
         self.packageStore = packageStore
         self.inventoryBaselines = inventoryBaselines
-        self.equipmentCatalog = equipmentCatalog
         self.actorValueBaselines = actorValueBaselines
         self.magicEffectStore = magicEffectStore
         self.magicItemPluginName = magicItemPluginName
-        self.spellStore = spellStore
-        self.equipSlotStore = equipSlotStore
-        self.enchantmentStore = enchantmentStore
-        self.perkStore = perkStore
         self.factionStore = factionStore
-        self.relationshipStore = relationshipStore
         self.formListStore = formListStore
-        self.actorValueInformation = actorValueInformation
-        self.skillAdvancementSettings = skillAdvancementSettings
-        self.characterLevelSettings = characterLevelSettings
         self.movementConfiguration = movementConfiguration
-        self.barterPricing = barterPricing
         self.combatSettings = combatSettings
         self.archerySettings = archerySettings
-        self.detectionSettings = detectionSettings
     }
 }
