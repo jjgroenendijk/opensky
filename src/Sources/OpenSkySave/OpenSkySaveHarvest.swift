@@ -21,7 +21,7 @@ nonisolated struct SaveHarvestDayEntry: Equatable, Sendable {
     let day: Float
 }
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveHarvestWriter {
     /// Every harvested reference, in snapshot order. Nothing harvested writes no chunk.
     static func writeHarvests(
         _ entries: [WorldStateSnapshotEntry],

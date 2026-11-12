@@ -14,7 +14,7 @@ nonisolated struct SaveRelocationEntry: Equatable, Sendable {
     let relocation: ReferenceRelocation
 }
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveRelocationWriter {
     /// Every moved reference, in snapshot order. No move writes no chunk.
     static func writeRelocations(
         _ entries: [WorldStateSnapshotEntry],

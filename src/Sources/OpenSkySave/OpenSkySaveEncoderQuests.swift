@@ -7,7 +7,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveQuestsWriter {
     /// One quest's runtime state paired with the snapshot entry it came from.
     private struct SavedQuest {
         let key: ReferenceKey

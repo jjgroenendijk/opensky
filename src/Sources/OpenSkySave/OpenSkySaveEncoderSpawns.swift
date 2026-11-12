@@ -5,7 +5,7 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveSpawnsWriter {
     /// One spawned object paired with the snapshot entry it came from.
     private struct SpawnedObject {
         let key: ReferenceKey

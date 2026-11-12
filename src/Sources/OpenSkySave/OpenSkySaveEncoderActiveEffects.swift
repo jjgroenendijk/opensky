@@ -9,7 +9,7 @@ import OpenSkyFormatsESM
 public import OpenSkyMagicInterface
 public import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveActiveEffectsWriter {
     /// One actor's effects paired with the snapshot entry they came from.
     private struct SavedActiveEffects {
         let entry: WorldStateSnapshotEntry

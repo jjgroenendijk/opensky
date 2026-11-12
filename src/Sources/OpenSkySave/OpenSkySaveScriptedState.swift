@@ -7,13 +7,13 @@ import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveScriptedStateWriter {
     /// Names in sorted order, so the same state writes the same bytes.
     static func writeScriptedStates(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
-        writeStory(
+        OpenSkySaveStoryWriter.writeStory(
             (ScriptedReferenceState.self, OpenSkySaveFormat.ChunkTag.scriptedStates),
             entries, &writer
         ) { state, payload in

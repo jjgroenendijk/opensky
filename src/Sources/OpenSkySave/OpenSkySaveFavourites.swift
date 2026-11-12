@@ -7,13 +7,13 @@ import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveFavouritesWriter {
     /// The item count and FormIDs, then the hotkey count and each slot byte and item.
     static func writeFavourites(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
-        writeStory(
+        OpenSkySaveStoryWriter.writeStory(
             (FavouritesState.self, OpenSkySaveFormat.ChunkTag.favourites), entries, &writer
         ) { state, payload in
             payload.writeUInt32(UInt32(clamping: state.items.count))

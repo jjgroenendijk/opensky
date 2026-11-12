@@ -6,7 +6,7 @@ public import OpenSkyActorsInterface
 import OpenSkyFormatsCore
 public import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveCombatWriter {
     /// One actor's hostility paired with the snapshot entry it came from.
     private struct SavedCombatState {
         let entry: WorldStateSnapshotEntry

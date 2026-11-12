@@ -27,7 +27,7 @@ nonisolated extension SaveStoryEntry: SaveDeltaComponentEntry {
     }
 }
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveStoryWriter {
     /// Every playing scene. No scene writes no chunk.
     static func writeScenes(
         _ entries: [WorldStateSnapshotEntry],

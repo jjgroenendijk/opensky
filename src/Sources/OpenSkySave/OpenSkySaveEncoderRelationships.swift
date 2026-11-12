@@ -6,7 +6,7 @@ public import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveRelationshipsWriter {
     /// One actor's relationship overrides paired with the snapshot entry they
     /// came from.
     private struct SavedRelationships {

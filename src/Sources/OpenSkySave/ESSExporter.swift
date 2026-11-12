@@ -4,8 +4,8 @@
 // See docs/engine/ess-export.md.
 
 public import Foundation
-public import OpenSkyFormatsESM
-public import OpenSkyFormatsESS
+import OpenSkyFormatsESM
+import OpenSkyFormatsESS
 public import OpenSkySaveInterface
 import OpenSkyWorldState
 
@@ -14,7 +14,7 @@ nonisolated public struct ESSExportResult: Sendable {
     public let report: ESSExportReport
 }
 
-nonisolated public struct ESSExporter {
+nonisolated public final class ESSExporter {
     let contents: OpenSkySaveContents
     let records: any ESSExportRecords
     let header: ESSExportHeader
@@ -34,11 +34,11 @@ nonisolated public struct ESSExporter {
     public static func run(
         _ contents: OpenSkySaveContents, records: any ESSExportRecords, header: ESSExportHeader
     ) throws(ESSExportError) -> ESSExportResult {
-        var exporter = try ESSExporter(contents: contents, records: records, header: header)
-        try exporter.exportPlayer()
-        try exporter.exportEntries()
+        let exporter = try ESSExporter(contents: contents, records: records, header: header)
+        try ESSPlayerExport(exporter: exporter).exportPlayer()
+        try ESSReferenceExport(exporter: exporter).exportEntries()
         exporter.exportGlobals()
-        exporter.exportScripts()
+        ESSScriptExport(exporter: exporter).exportScripts()
         return try exporter.finish()
     }
 
@@ -64,7 +64,7 @@ nonisolated public struct ESSExporter {
 
     // MARK: - Globals and clock
 
-    mutating func exportGlobals() {
+    func exportGlobals() {
         var written: Set<ESSRefID> = []
         for entry in contents.snapshot.globals {
             guard let ref = forms.ref(entry.key) else {
@@ -129,7 +129,8 @@ nonisolated public struct ESSExporter {
         table3[1] = try papyrus.table()
         let picture = screenshot()
         return try ESSFileContents(
-            header: fileHeader(picture), screenshot: picture, plugins: forms.plugins,
+            header: ESSPlayerExport(exporter: self).fileHeader(picture), screenshot: picture,
+            plugins: forms.plugins,
             lightPlugins: forms.lightPlugins, globalData1: table1,
             globalData2: ESSGlobalData.group2Types.map(ESSEmptyTable.table),
             changeForms: changeForms, globalData3: table3, formIDArray: forms.formIDArray,
@@ -144,4 +145,19 @@ nonisolated public struct ESSExporter {
         }
         return ESSScreenshot(width: thumbnail.width, height: thumbnail.height, rgba: thumbnail.rgba)
     }
+}
+
+/// The player part of an export: identity, spells, factions, place, and the file header.
+nonisolated struct ESSPlayerExport {
+    let exporter: ESSExporter
+}
+
+/// The reference part of an export: flags, moves, spawns, inventories, quests, and topics.
+nonisolated struct ESSReferenceExport {
+    let exporter: ESSExporter
+}
+
+/// The Papyrus part of an export: script instances and their variables.
+nonisolated struct ESSScriptExport {
+    let exporter: ESSExporter
 }

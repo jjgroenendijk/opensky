@@ -8,7 +8,7 @@ import OpenSkyFormatsESM
 public import OpenSkyMagicInterface
 public import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveSpellbookWriter {
     /// One actor's spellbook paired with the snapshot entry it came from.
     private struct SavedSpellbook {
         let entry: WorldStateSnapshotEntry

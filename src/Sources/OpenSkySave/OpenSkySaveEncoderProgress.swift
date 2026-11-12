@@ -8,7 +8,7 @@ import OpenSkyGameData
 import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveProgressWriter {
     /// The `PLVL` chunk: every snapshot entry carrying character-level
     /// progress, in the snapshot's `ReferenceKey` order. A session that never
     /// levelled writes no chunk.

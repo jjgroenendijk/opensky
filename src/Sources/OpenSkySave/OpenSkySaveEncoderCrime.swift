@@ -9,7 +9,7 @@ import OpenSkyFormatsESM
 public import OpenSkyInventoryInterface
 public import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveCrimeWriter {
     /// One actor's ledger paired with the snapshot entry it came from.
     private struct SavedLedger {
         let entry: WorldStateSnapshotEntry

@@ -8,57 +8,62 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsESS
 import OpenSkyScriptingInterface
 
-nonisolated extension ESSImporter {
-    mutating func importPapyrus() {
+nonisolated extension ESSPapyrusImport {
+    func importPapyrus() {
         let papyrus: ESSPapyrus
         do {
-            guard let decoded = try file.papyrus() else {
-                report.update("scripts") { $0.skip("no Papyrus table") }
+            guard let decoded = try importer.file.papyrus() else {
+                importer.report.update("scripts") { $0.skip("no Papyrus table") }
                 return
             }
             papyrus = decoded
         } catch {
-            report.update("scripts") { $0.skip("Papyrus table: \(error)") }
+            importer.report.update("scripts") { $0.skip("Papyrus table: \(error)") }
             return
         }
         for instance in papyrus.instances {
             importInstance(instance, papyrus: papyrus)
         }
-        report.update("scripts") { category in
+        importer.report.update("scripts") { category in
             category.drop("alias and other reference objects", count: papyrus.references.count)
             if let blocked = papyrus.stackStatus.blockedBy {
                 category.skip(blocked)
             }
         }
         for active in papyrus.activeScripts {
-            report.droppedStacks[papyrus.activeScriptNames[active.id] ?? "unnamed", default: 0] += 1
+            importer.report.droppedStacks[
+                papyrus.activeScriptNames[active.id] ?? "unnamed",
+                default: 0
+            ] += 1
         }
         for stack in papyrus.suspendedStacks {
-            report.droppedStacks[stack.scriptName ?? "unnamed suspended", default: 0] += 1
+            importer.report.droppedStacks[stack.scriptName ?? "unnamed suspended", default: 0] += 1
         }
     }
 
-    private mutating func importInstance(_ instance: ESSPapyrusInstance, papyrus: ESSPapyrus) {
-        guard case let .success(key) = key(for: instance.form) else {
-            report.update("scripts") { $0.drop("instance on an unmapped form") }
+    private func importInstance(_ instance: ESSPapyrusInstance, papyrus: ESSPapyrus) {
+        guard case let .success(key) = importer.key(for: instance.form) else {
+            importer.report.update("scripts") { $0.drop("instance on an unmapped form") }
             return
         }
-        guard let declared = records.declaredVariables(ofScript: instance.scriptName) else {
-            report.update("scripts") { $0.drop("script \(instance.scriptName) not found") }
+        guard let declared = importer.records.declaredVariables(ofScript: instance.scriptName)
+        else {
+            importer.report.update("scripts") { $0.drop("script \(instance.scriptName) not found") }
             return
         }
         guard let names = memberNames(of: instance, papyrus: papyrus) else {
-            report.update("scripts") { $0.drop("variable count differs from the definition") }
+            importer.report
+                .update("scripts") { $0.drop("variable count differs from the definition") }
             return
         }
         var variables: [PapyrusVariableState] = []
         for (name, value) in zip(names, instance.variables) {
             guard let owner = declared[name.lowercased()] else {
-                report.update("scripts") { $0.drop("undeclared variable") }
+                importer.report.update("scripts") { $0.drop("undeclared variable") }
                 continue
             }
             guard let converted = Self.value(value) else {
-                report
+                importer.report
                     .update("scripts") {
                         $0.drop("\(value.kindName) value (handles do not cross VMs)")
                     }
@@ -70,13 +75,13 @@ nonisolated extension ESSImporter {
                 value: converted
             ))
         }
-        scripts.append(PapyrusInstanceState(
+        importer.scripts.append(PapyrusInstanceState(
             key: PapyrusInstanceKey(reference: key, scriptName: instance.scriptName),
             activeState: "",
             variables: variables.sorted(by: Self.variableOrder),
             hasFiredOnInit: true
         ))
-        report.update("scripts") { category in
+        importer.report.update("scripts") { category in
             category.imported += variables.count
             category.skip("script state name (undocumented)")
         }
@@ -116,13 +121,13 @@ nonisolated extension ESSImporter {
         }
     }
 
-    mutating func importCreatedObjects() {
-        guard let objects = attempt({ try file.createdObjects() }) else {
-            report.update("created forms") { $0.skip("created objects table") }
+    func importCreatedObjects() {
+        guard let objects = attempt({ try importer.file.createdObjects() }) else {
+            importer.report.update("created forms") { $0.skip("created objects table") }
             return
         }
         for object in objects {
-            report.update("created forms") { $0.drop("created \(object.kind.rawValue)") }
+            importer.report.update("created forms") { $0.drop("created \(object.kind.rawValue)") }
         }
     }
 }

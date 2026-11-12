@@ -7,7 +7,7 @@ import OpenSkyFormatsCore
 import OpenSkyGameData
 public import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveActorValuesWriter {
     /// One actor's values paired with the snapshot entry they came from.
     private struct SavedActorValues {
         let entry: WorldStateSnapshotEntry

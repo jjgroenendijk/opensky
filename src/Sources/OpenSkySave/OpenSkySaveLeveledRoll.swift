@@ -15,7 +15,7 @@ nonisolated struct SaveLeveledRollEntry: Equatable, Sendable {
     let playerLevel: Int
 }
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveLeveledRollWriter {
     /// Every reference with a frozen level, in snapshot order. None writes no chunk.
     static func writeLeveledRolls(
         _ entries: [WorldStateSnapshotEntry],

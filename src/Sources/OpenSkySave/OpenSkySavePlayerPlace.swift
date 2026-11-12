@@ -11,7 +11,7 @@ nonisolated extension OpenSkySaveFormat.ChunkTag {
     static let playerPlace = "PLOC"
 }
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySavePlayerPlaceWriter {
     static func writePlayerPlace(_ place: SavePlayerPlace, into writer: inout BinaryWriter) {
         writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.playerPlace) { payload in
             payload.writeCell(place.cell)

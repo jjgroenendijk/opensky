@@ -14,7 +14,7 @@ nonisolated struct SaveMotionTypeEntry: Equatable, Sendable {
     let motionType: ReferenceMotionType
 }
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveMotionTypeWriter {
     /// Every reference a script set a motion type on, in snapshot order. None writes no chunk.
     static func writeMotionTypes(
         _ entries: [WorldStateSnapshotEntry],

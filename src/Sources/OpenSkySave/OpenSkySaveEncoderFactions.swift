@@ -6,7 +6,7 @@ public import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveFactionsWriter {
     /// One actor's memberships paired with the snapshot entry they came from.
     private struct SavedFactions {
         let entry: WorldStateSnapshotEntry

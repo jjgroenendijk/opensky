@@ -13,50 +13,70 @@ nonisolated extension OpenSkySaveEncoder {
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
-        writeInventories(entries, into: &writer)
-        writeSpawnedReferences(entries, into: &writer)
-        writeQuestStates(entries, into: &writer)
-        writeQuestAliases(entries, into: &writer)
-        writeQuestLocationAliases(entries, into: &writer)
-        writeQuestJournalLogs(entries, into: &writer)
-        writeActorValues(entries, into: &writer)
-        writeActorValueOverrides(entries, into: &writer)
-        writeDeaths(entries, into: &writer)
-        writeCombatStates(entries, into: &writer)
-        writeDialogueStates(entries, into: &writer)
-        writeActiveEffects(entries, into: &writer)
-        writeSpellbooks(entries, into: &writer)
-        writeEnchantedItems(entries, into: &writer)
-        writePerks(entries, into: &writer)
-        writeFactionMemberships(entries, into: &writer)
-        writeRelationshipRanks(entries, into: &writer)
-        writeRelationshipFavour(entries, into: &writer)
-        writeProgressChunks(entries, into: &writer)
-        writeCrimeLedgers(entries, into: &writer)
-        writeStolenGoods(entries, into: &writer)
+        OpenSkySaveActorChunks.write(entries, into: &writer)
+        OpenSkySaveItemAndWorldChunks.write(entries, into: &writer)
+    }
+}
+
+/// The first component chunks: inventories, quests, actor state, and crime.
+nonisolated enum OpenSkySaveActorChunks {
+    static func write(
+        _ entries: [WorldStateSnapshotEntry],
+        into writer: inout BinaryWriter
+    ) {
+        OpenSkySaveInventoryWriter.writeInventories(entries, into: &writer)
+        OpenSkySaveSpawnsWriter.writeSpawnedReferences(entries, into: &writer)
+        OpenSkySaveQuestsWriter.writeQuestStates(entries, into: &writer)
+        OpenSkySaveQuestsWriter.writeQuestAliases(entries, into: &writer)
+        OpenSkySaveQuestsWriter.writeQuestLocationAliases(entries, into: &writer)
+        OpenSkySaveQuestJournalLogsWriter.writeQuestJournalLogs(entries, into: &writer)
+        OpenSkySaveActorValuesWriter.writeActorValues(entries, into: &writer)
+        OpenSkySaveActorValuesWriter.writeActorValueOverrides(entries, into: &writer)
+        OpenSkySaveDeathsWriter.writeDeaths(entries, into: &writer)
+        OpenSkySaveCombatWriter.writeCombatStates(entries, into: &writer)
+        OpenSkySaveDialogueWriter.writeDialogueStates(entries, into: &writer)
+        OpenSkySaveActiveEffectsWriter.writeActiveEffects(entries, into: &writer)
+        OpenSkySaveSpellbookWriter.writeSpellbooks(entries, into: &writer)
+        OpenSkySaveEnchantedItemsWriter.writeEnchantedItems(entries, into: &writer)
+        OpenSkySavePerksWriter.writePerks(entries, into: &writer)
+        OpenSkySaveFactionsWriter.writeFactionMemberships(entries, into: &writer)
+        OpenSkySaveRelationshipsWriter.writeRelationshipRanks(entries, into: &writer)
+        OpenSkySaveRelationshipFavourWriter.writeRelationshipFavour(entries, into: &writer)
+        OpenSkySaveProgressWriter.writeProgressChunks(entries, into: &writer)
+        OpenSkySaveCrimeWriter.writeCrimeLedgers(entries, into: &writer)
+        OpenSkySaveCrimeWriter.writeStolenGoods(entries, into: &writer)
+    }
+}
+
+/// The later component chunks: item copies, world objects, story, and the player.
+nonisolated enum OpenSkySaveItemAndWorldChunks {
+    static func write(
+        _ entries: [WorldStateSnapshotEntry],
+        into writer: inout BinaryWriter
+    ) {
         OpenSkySaveTemperedItems.write(entries, into: &writer)
         OpenSkySaveItemCopies.write(entries, into: &writer)
-        writeCreatedPotions(entries, into: &writer)
-        writeIngredientKnowledge(entries, into: &writer)
-        writeWeaponPoisons(entries, into: &writer)
-        writeFavourites(entries, into: &writer)
-        writeEnchanting(entries, into: &writer)
-        writeStolenOrigins(entries, into: &writer)
-        writeViolentCrimeGold(entries, into: &writer)
-        writeHarvests(entries, into: &writer)
-        writeLocks(entries, into: &writer)
-        writeCellResets(entries, into: &writer)
-        writeVendorRestocks(entries, into: &writer)
-        writeRelocations(entries, into: &writer)
-        writeMotionTypes(entries, into: &writer)
-        writeLeveledRolls(entries, into: &writer)
-        writeSceneChunks(entries, into: &writer)
-        writeStoryManagerQuests(entries, into: &writer)
-        writeDialogueBranches(entries, into: &writer)
-        writeHelpMessages(entries, into: &writer)
-        writePlayerRules(entries, into: &writer)
-        writeScriptedStates(entries, into: &writer)
-        writeJournal(entries, into: &writer)
-        writeIdentityAndMap(entries, into: &writer)
+        OpenSkySaveAlchemyWriter.writeCreatedPotions(entries, into: &writer)
+        OpenSkySaveAlchemyWriter.writeIngredientKnowledge(entries, into: &writer)
+        OpenSkySaveAlchemyWriter.writeWeaponPoisons(entries, into: &writer)
+        OpenSkySaveFavouritesWriter.writeFavourites(entries, into: &writer)
+        OpenSkySaveEnchantingWriter.writeEnchanting(entries, into: &writer)
+        OpenSkySaveStolenOriginsWriter.writeStolenOrigins(entries, into: &writer)
+        OpenSkySaveCrimeViolentGoldWriter.writeViolentCrimeGold(entries, into: &writer)
+        OpenSkySaveHarvestWriter.writeHarvests(entries, into: &writer)
+        OpenSkySaveLockWriter.writeLocks(entries, into: &writer)
+        OpenSkySaveCellResetWriter.writeCellResets(entries, into: &writer)
+        OpenSkySaveVendorRestockWriter.writeVendorRestocks(entries, into: &writer)
+        OpenSkySaveRelocationWriter.writeRelocations(entries, into: &writer)
+        OpenSkySaveMotionTypeWriter.writeMotionTypes(entries, into: &writer)
+        OpenSkySaveLeveledRollWriter.writeLeveledRolls(entries, into: &writer)
+        OpenSkySaveJournalWriter.writeSceneChunks(entries, into: &writer)
+        OpenSkySaveStoryWriter.writeStoryManagerQuests(entries, into: &writer)
+        OpenSkySaveStoryWriter.writeDialogueBranches(entries, into: &writer)
+        OpenSkySaveHelpMessagesWriter.writeHelpMessages(entries, into: &writer)
+        OpenSkySavePlayerRulesWriter.writePlayerRules(entries, into: &writer)
+        OpenSkySaveScriptedStateWriter.writeScriptedStates(entries, into: &writer)
+        OpenSkySaveJournalWriter.writeJournal(entries, into: &writer)
+        OpenSkySaveIdentityAndMapWriter.writeIdentityAndMap(entries, into: &writer)
     }
 }

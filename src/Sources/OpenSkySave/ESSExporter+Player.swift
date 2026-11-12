@@ -15,17 +15,17 @@ import OpenSkyProgressionInterface
 import OpenSkySaveInterface
 import OpenSkyWorldState
 
-nonisolated extension ESSExporter {
+nonisolated extension ESSPlayerExport {
     var playerDelta: ReferenceStateDelta? {
-        contents.snapshot.entries.first { $0.key == .player }?.delta
+        exporter.contents.snapshot.entries.first { $0.key == .player }?.delta
     }
 
-    mutating func exportPlayer() throws(ESSExportError) {
+    func exportPlayer() throws(ESSExportError) {
         var base = ESSActorBaseChange(form: ESSActorBaseChange.playerBase)
         if let identity = playerDelta?.component(PlayerIdentityState.self) {
             exportIdentity(identity, into: &base)
         } else {
-            report.update("player") { $0.drop("no player identity") }
+            exporter.report.update("player") { $0.drop("no player identity") }
         }
         if let spellbook = playerDelta?.component(SpellbookState.self) {
             exportSpells(spellbook, into: &base)
@@ -33,9 +33,10 @@ nonisolated extension ESSExporter {
         if let factions = playerDelta?.component(ActorFactionState.self) {
             exportFactions(factions, into: &base)
         }
-        try changeForms.append(Self.encode { () throws(ESSError) in try base.changeForm() })
+        try exporter.changeForms
+            .append(ESSExporter.encode { () throws(ESSError) in try base.changeForm() })
         if let progress = playerDelta?.component(PlayerProgressState.self), !progress.isEmpty {
-            report.update("player") { category in
+            exporter.report.update("player") { category in
                 category.written += 1
                 category.drop("perk points, attribute picks, and skill counts (not in the save)")
             }
@@ -43,19 +44,20 @@ nonisolated extension ESSExporter {
         exportPlace()
     }
 
-    private mutating func exportIdentity(
+    private func exportIdentity(
         _ identity: PlayerIdentityState, into base: inout ESSActorBaseChange
     ) {
-        base.race = forms.ref(loadOrder: identity.race)
+        base.race = exporter.forms.ref(loadOrder: identity.race)
         base.isFemale = identity.isFemale
         base.name = identity.name
         let face = identity.face
         base.face = ESSFace(
-            hairColor: face.hairColor.flatMap { forms.ref(loadOrder: $0) } ?? ESSRefID(raw: 0),
-            headParts: face.headParts.compactMap { forms.ref(loadOrder: $0) },
+            hairColor: face.hairColor
+                .flatMap { exporter.forms.ref(loadOrder: $0) } ?? ESSRefID(raw: 0),
+            headParts: face.headParts.compactMap { exporter.forms.ref(loadOrder: $0) },
             morphs: face.morphs, presets: face.parts
         )
-        report.update("player") { category in
+        exporter.report.update("player") { category in
             category.written += 1
             if base.race == nil {
                 category.drop("race from a plugin not loaded")
@@ -67,13 +69,13 @@ nonisolated extension ESSExporter {
         }
     }
 
-    private mutating func exportSpells(
+    private func exportSpells(
         _ spellbook: SpellbookState, into base: inout ESSActorBaseChange
     ) {
         var spells: [ESSRefID] = []
         for key in spellbook.known {
-            guard let ref = forms.ref(key) else {
-                report.update("player") { $0.drop("spell from a plugin not loaded") }
+            guard let ref = exporter.forms.ref(key) else {
+                exporter.report.update("player") { $0.drop("spell from a plugin not loaded") }
                 continue
             }
             spells.append(ref)
@@ -81,52 +83,55 @@ nonisolated extension ESSExporter {
         base.spells = spells
         base.leveledSpells = []
         base.shouts = []
-        report.update("player") { category in
+        exporter.report.update("player") { category in
             category.written += spells.count
             category.drop("read books", count: spellbook.readBooks.count)
             category.drop("greater power cooldowns", count: spellbook.powerDays.count)
         }
     }
 
-    private mutating func exportFactions(
+    private func exportFactions(
         _ state: ActorFactionState, into base: inout ESSActorBaseChange
     ) {
         var ranks: [ESSFactionRank] = []
         for membership in state.memberships {
-            guard let ref = forms.ref(membership.faction) else {
-                report.update("player") { $0.drop("faction from a plugin not loaded") }
+            guard let ref = exporter.forms.ref(membership.faction) else {
+                exporter.report.update("player") { $0.drop("faction from a plugin not loaded") }
                 continue
             }
             ranks.append(ESSFactionRank(faction: ref, rank: membership.rank))
         }
         base.factions = ranks
-        report.update("player") { $0.written += ranks.count }
+        exporter.report.update("player") { $0.written += ranks.count }
     }
 
     /// The player's reference carries the facing and the inventory; the location table
     /// carries the cell.
-    private mutating func exportPlace() {
+    private func exportPlace() {
         var player = ESSReferenceChange(form: ESSRefID(kind: .default, value: 0x14), isActor: true)
         if let inventory = playerDelta?.component(ReferenceInventoryState.self) {
-            player.inventory = inventoryChanges(inventory, key: .player)
+            player.inventory = ESSReferenceExport(exporter: exporter).inventoryChanges(
+                inventory,
+                key: .player
+            )
         }
-        guard let place = contents.playerPlace, let space = placeSpace(place) else {
-            report.update("player") { $0.drop("no saved place") }
-            references[.player] = player
+        guard let place = exporter.contents.playerPlace, let space = placeSpace(place) else {
+            exporter.report.update("player") { $0.drop("no saved place") }
+            exporter.references[.player] = player
             return
         }
         let heading = Self.heading(fromYaw: place.yaw)
         player.placement = ESSPlacement(
             space: space.ref, position: place.feet, rotation: SIMD3(0, 0, heading)
         )
-        references[.player] = player
+        exporter.references[.player] = player
         let cell = CellCoordinate(containing: place.feet)
-        location = ESSPlayerLocation(
+        exporter.location = ESSPlayerLocation(
             nextObjectID: 0, worldspace: space.isInterior ? ESSRefID(raw: 0) : space.ref,
             cell: space.isInterior ? .zero : SIMD2(cell.x, cell.y), space: space.ref,
             position: place.feet
         )
-        report.update("player") { $0.written += 1 }
+        exporter.report.update("player") { $0.written += 1 }
     }
 
     /// The camera's yaw counts from +X toward +Y; a placement's z rotation counts
@@ -136,22 +141,22 @@ nonisolated extension ESSExporter {
         return heading < 0 ? heading + 2 * .pi : heading
     }
 
-    private mutating func placeSpace(
+    private func placeSpace(
         _ place: SavePlayerPlace
     ) -> (ref: ESSRefID, isInterior: Bool)? {
         switch place.cell {
         case let .interior(cell):
-            return forms.ref(loadOrder: cell).map { ($0, true) }
+            return exporter.forms.ref(loadOrder: cell).map { ($0, true) }
         case .exterior:
             guard
                 let name = place.worldspace,
-                let worldspace = records.form(editorID: name, signature: "WRLD"),
-                let ref = forms.ref(worldspace)
+                let worldspace = exporter.records.form(editorID: name, signature: "WRLD"),
+                let ref = exporter.forms.ref(worldspace)
             else { return nil }
-            if let id = forms.runtimeFormID(worldspace) {
-                visitedWorldspaces = [id]
+            if let id = exporter.forms.runtimeFormID(worldspace) {
+                exporter.visitedWorldspaces = [id]
             }
-            playerWorldspace = ref
+            exporter.playerWorldspace = ref
             return (ref, false)
         }
     }
@@ -159,17 +164,18 @@ nonisolated extension ESSExporter {
     func fileHeader(_ picture: ESSScreenshot) -> ESSHeader {
         let identity = playerDelta?.component(PlayerIdentityState.self)
         let progress = playerDelta?.component(PlayerProgressState.self) ?? PlayerProgressState()
-        let race = identity.flatMap { forms.loadOrder.resolve($0.race) }
-            .flatMap { records.editorID(of: $0) }
+        let race = identity.flatMap { exporter.forms.loadOrder.resolve($0.race) }
+            .flatMap { exporter.records.editorID(of: $0) }
         return ESSHeader(
-            version: ESSHeader.specialEditionVersion, saveNumber: header.saveNumber,
-            playerName: identity?.name ?? contents.summary?.characterName ?? "",
+            version: ESSHeader.specialEditionVersion, saveNumber: exporter.header.saveNumber,
+            playerName: identity?.name ?? exporter.contents.summary?.characterName ?? "",
             playerLevel: UInt32(clamping: progress.level),
-            playerLocation: contents.summary?.locationName ?? "", gameDate: header.gameDate,
-            playerRaceEditorID: race ?? contents.summary?.raceName ?? "",
+            playerLocation: exporter.contents.summary?.locationName ?? "",
+            gameDate: exporter.header.gameDate,
+            playerRaceEditorID: race ?? exporter.contents.summary?.raceName ?? "",
             isFemale: identity?.isFemale ?? false, experience: progress.experience,
-            experienceForNextLevel: header.experienceForNextLevel,
-            fileTime: ESSHeader.fileTime(of: header.savedAt),
+            experienceForNextLevel: exporter.header.experienceForNextLevel,
+            fileTime: ESSHeader.fileTime(of: exporter.header.savedAt),
             screenshotWidth: picture.width, screenshotHeight: picture.height, compression: .lz4
         )
     }

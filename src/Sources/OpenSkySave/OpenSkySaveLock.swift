@@ -15,7 +15,7 @@ nonisolated struct SaveLockEntry: Equatable, Sendable {
     let state: ReferenceLockState
 }
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveLockWriter {
     /// Every changed lock, in snapshot order. No change writes no chunk.
     static func writeLocks(
         _ entries: [WorldStateSnapshotEntry],

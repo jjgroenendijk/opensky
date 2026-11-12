@@ -6,7 +6,7 @@ import OpenSkyFormatsCore
 public import OpenSkyProgressionInterface
 public import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySavePerksWriter {
     /// One actor's owned perks paired with the snapshot entry they came from.
     private struct SavedPerks {
         let entry: WorldStateSnapshotEntry

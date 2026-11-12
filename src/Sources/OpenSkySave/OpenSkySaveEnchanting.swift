@@ -8,14 +8,14 @@ import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import OpenSkyWorldState
 
-nonisolated extension OpenSkySaveEncoder {
+nonisolated enum OpenSkySaveEnchantingWriter {
     /// The known keys; then per made enchantment its id, name, capacity, cost per use,
     /// and each base key with its power.
     static func writeEnchanting(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
-        writeStory(
+        OpenSkySaveStoryWriter.writeStory(
             (EnchantingState.self, OpenSkySaveFormat.ChunkTag.enchanting), entries, &writer
         ) { state, payload in
             payload.writeUInt32(UInt32(clamping: state.known.count))
