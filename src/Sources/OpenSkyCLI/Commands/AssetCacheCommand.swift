@@ -13,7 +13,7 @@ import OpenSkyRenderResources
 import OpenSkySession
 
 enum AssetCacheCommand {
-    private struct Options {
+    fileprivate struct Options {
         var settings: AssetCacheSettings
         var width: Int?
         /// Only these paths, one per line in the `--paths` file, instead of the whole install.
@@ -51,7 +51,7 @@ enum AssetCacheCommand {
         case .extract:
             try extract(files: files, options: options, install: context.root.installURL)
         case .ioBench:
-            try ioBench(
+            try AssetCacheBench.ioBench(
                 reader: reader,
                 files: files,
                 options: options,
@@ -90,63 +90,6 @@ enum AssetCacheCommand {
         }
         let folder = out.path(percentEncoded: false)
         print("extracted \(paths.count) files, \(bytes >> 20) MiB -> \(folder)")
-    }
-
-    /// Compares two captures of the same view, such as the benchmark frame with the cache off and
-    /// on.
-    static func compare(arguments: AssetCacheArguments.Compare) throws {
-        let reference = arguments.reference
-        let candidate = arguments.candidate
-        let difference = try TextureImageDifference.compare(
-            reference: TexturePixels(contentsOf: URL(filePath: reference)),
-            candidate: TexturePixels(contentsOf: URL(filePath: candidate)), normals: false
-        )
-        unsafe print(String(
-            format: "rgb PSNR %.2f dB, max channel error %d",
-            difference.rgbPSNR,
-            difference.maxChannelError
-        ))
-    }
-
-    /// Loads the `--paths` textures as one batch each way, cold and then warm.
-    private static func ioBench(
-        reader: AssetCacheReader, files: VirtualFileSystem, options: Options, dataURL: URL
-    ) throws {
-        guard let paths = options.paths
-        else { throw CLIError.usage("io-bench needs --paths <file>") }
-        guard let device = MTLCreateSystemDefaultDevice()
-        else { throw CLIError.failure("no Metal GPU") }
-        let bench = try TextureBatchLoadBenchmark(
-            device: device,
-            files: files,
-            reader: reader,
-            paths: paths
-        )
-        guard bench.textureCount > 0
-        else { throw CLIError.failure("no listed texture has a cache entry") }
-        let copies = reader.store.root.appending(path: "io-bench-lz4", directoryHint: .isDirectory)
-        defer { try? FileManager.default.removeItem(at: copies) }
-        try bench.prepareCompressedCopies(in: copies)
-        let lz4Bytes = bench.compressedURLs
-            .reduce(0) { $0 + ((try? $1.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0) }
-        print("[INFO] \(bench.textureCount) textures; LZ4 copies \(lz4Bytes >> 20) MiB")
-        print("method\tpass\ttextures\tMiB\twall ms\tcpu ms")
-        for method in TextureBatchLoadMethod.allCases {
-            for pass in ["cold", "warm"] {
-                if pass == "cold" {
-                    PageCacheEviction.evict(folders: [dataURL, copies])
-                    for url in bench.entryURLs {
-                        PageCacheEviction.evict(file: url)
-                    }
-                }
-                let timing = try bench.run(method)
-                unsafe print(String(
-                    format: "%@\t%@\t%d\t%d\t%.1f\t%.1f", timing.method.rawValue, pass,
-                    timing.textures,
-                    timing.bytes >> 20, timing.wallMS, timing.cpuMS
-                ))
-            }
-        }
     }
 
     /// The shared settings, with `--texture-quality`, `--max-texture-side`, `--folder`, and
@@ -277,6 +220,68 @@ enum AssetCacheCommand {
         }
         for warning in reader.store.locationWarnings(neededBytes: 0) {
             print("warning\t\(warning.message)")
+        }
+    }
+}
+
+/// The cache's measuring tools: a capture comparison and a texture load benchmark.
+enum AssetCacheBench {
+    fileprivate typealias Options = AssetCacheCommand.Options
+
+    /// Compares two captures of the same view, such as the benchmark frame with the cache off and
+    /// on.
+    static func compare(arguments: AssetCacheArguments.Compare) throws {
+        let reference = arguments.reference
+        let candidate = arguments.candidate
+        let difference = try TextureImageDifference.compare(
+            reference: TexturePixels(contentsOf: URL(filePath: reference)),
+            candidate: TexturePixels(contentsOf: URL(filePath: candidate)), normals: false
+        )
+        unsafe print(String(
+            format: "rgb PSNR %.2f dB, max channel error %d",
+            difference.rgbPSNR,
+            difference.maxChannelError
+        ))
+    }
+
+    /// Loads the `--paths` textures as one batch each way, cold and then warm.
+    fileprivate static func ioBench(
+        reader: AssetCacheReader, files: VirtualFileSystem, options: Options, dataURL: URL
+    ) throws {
+        guard let paths = options.paths
+        else { throw CLIError.usage("io-bench needs --paths <file>") }
+        guard let device = MTLCreateSystemDefaultDevice()
+        else { throw CLIError.failure("no Metal GPU") }
+        let bench = try TextureBatchLoadBenchmark(
+            device: device,
+            files: files,
+            reader: reader,
+            paths: paths
+        )
+        guard bench.textureCount > 0
+        else { throw CLIError.failure("no listed texture has a cache entry") }
+        let copies = reader.store.root.appending(path: "io-bench-lz4", directoryHint: .isDirectory)
+        defer { try? FileManager.default.removeItem(at: copies) }
+        try bench.prepareCompressedCopies(in: copies)
+        let lz4Bytes = bench.compressedURLs
+            .reduce(0) { $0 + ((try? $1.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0) }
+        print("[INFO] \(bench.textureCount) textures; LZ4 copies \(lz4Bytes >> 20) MiB")
+        print("method\tpass\ttextures\tMiB\twall ms\tcpu ms")
+        for method in TextureBatchLoadMethod.allCases {
+            for pass in ["cold", "warm"] {
+                if pass == "cold" {
+                    PageCacheEviction.evict(folders: [dataURL, copies])
+                    for url in bench.entryURLs {
+                        PageCacheEviction.evict(file: url)
+                    }
+                }
+                let timing = try bench.run(method)
+                unsafe print(String(
+                    format: "%@\t%@\t%d\t%d\t%.1f\t%.1f", timing.method.rawValue, pass,
+                    timing.textures,
+                    timing.bytes >> 20, timing.wallMS, timing.cpuMS
+                ))
+            }
         }
     }
 }

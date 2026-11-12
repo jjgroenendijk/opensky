@@ -79,7 +79,8 @@ final class CellScenePerceptionWorld: PerceptionWorld {
     }
 }
 
-extension RenderCommand {
+/// The detection runtime a render warms and prints.
+enum RenderDetection {
     /// Fixed steps run before the frame, so the levels have converged and the
     /// cones are drawn in the colour they settle at. Two seconds.
     static let detectionWarmupSteps = 120

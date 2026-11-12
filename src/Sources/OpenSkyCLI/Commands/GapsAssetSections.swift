@@ -21,6 +21,19 @@ import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 
 extension GapsGatherer {
+    var assets: GapsAssetSections {
+        GapsAssetSections(fileSystem: fileSystem)
+    }
+
+    func animations() -> [GapSection] {
+        AnimationSections(gatherer: self).sections()
+    }
+}
+
+/// The sections read from asset files alone: meshes, textures, sound, and SWF tags.
+struct GapsAssetSections {
+    let fileSystem: VirtualFileSystem
+
     func meshes() -> [GapSection] {
         var census = NIFMeshGapCensus()
         let unread = forEachFile(suffixes: [".nif", ".btr", ".bto"]) { census.record(data: $1) }
@@ -68,10 +81,6 @@ extension GapsGatherer {
             handled: DDSGapCensus.isRead, usesUnit: "textures",
             notes: ["\(count) textures, \(unread) did not read"]
         )]
-    }
-
-    func animations() -> [GapSection] {
-        AnimationSections(gatherer: self).sections()
     }
 
     func audio() -> [GapSection] {
@@ -144,7 +153,7 @@ extension GapsGatherer {
         func sections() -> [GapSection] {
             var census = HKXGapCensus()
             let unread = gatherer
-                .forEachFile(suffixes: [".hkx"]) { census.record(data: $1, path: $0) }
+                .assets.forEachFile(suffixes: [".hkx"]) { census.record(data: $1, path: $0) }
             let handledEvents = engineHandledEvents()
             let footsteps = footstepTags()
             let scripts = scriptAnimationCensus()

@@ -256,7 +256,7 @@ extension AssetCacheActionArguments {
 
 extension AssetCacheArguments.Compare: CLIRunnable {
     func execute() throws {
-        try AssetCacheCommand.compare(arguments: self)
+        try AssetCacheBench.compare(arguments: self)
     }
 }
 
