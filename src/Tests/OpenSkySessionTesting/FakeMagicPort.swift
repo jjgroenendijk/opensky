@@ -2,62 +2,42 @@
 
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
-public import OpenSkyProgressionInterface
 public import OpenSkySessionInterface
 
 /// Stores each property and records each call to `MagicPort`.
 nonisolated public final class FakeMagicPort: MagicPort {
+    public typealias FrameStep = FakeMagicFrameStepPort
+    public typealias ItemUse = FakeMagicItemUsePort
+    public typealias WeaponEnchantments = FakeMagicWeaponEnchantmentsPort
+    public typealias ShoutVoice = FakeMagicShoutVoicePort
+    public typealias SoulTrapping = FakeMagicSoulTrappingPort
+    public typealias MenuLines = FakeMagicMenuLinesPort
+    public typealias MagicMenu = FakeMagicMenuListPort
+    public typealias WorldArchetypeActions = FakeMagicWorldArchetypesPort
+    public typealias ArchetypeActions = FakeMagicArchetypeActionsPort
     public typealias ActiveEffectRuntime = FakeActiveEffectRuntimePort
     public typealias ShoutMachine = FakeShoutMachinePort
     public typealias CasterRuntime = FakeCasterRuntimePort
-    public var reconcilePerkAbilitiesCalls: [(holder: ActorValueHolder, perks: any PerkAccess)] = []
-    public var reconcilePerkAbilitiesResult = false
-    public var dispelEffectsCalls: [ActorValueHolder] = []
-    public var dispelEffectsResult = 0
-    public var applyPlacedPoisonCalls: [ApplyPlacedPoisonCall] = []
-    public var applyPlacedPoisonResult: Int?
+    public var frameStep: FrameStep = FakeMagicFrameStepPort()
+    public var itemUse: ItemUse = FakeMagicItemUsePort()
+    public var weaponEnchantments: WeaponEnchantments = FakeMagicWeaponEnchantmentsPort()
+    public var shoutVoice: ShoutVoice = FakeMagicShoutVoicePort()
+    public var soulTrapping: SoulTrapping = FakeMagicSoulTrappingPort()
+    public var menuLines: MenuLines = FakeMagicMenuLinesPort()
+    public var magicMenu: MagicMenu = FakeMagicMenuListPort()
+    public var worldArchetypeActions: WorldArchetypeActions = FakeMagicWorldArchetypesPort()
+    public var archetypeActions: ArchetypeActions = FakeMagicArchetypeActionsPort()
     public var applySpellHitCalls: [SpellHit] = []
     public var applySpellHitResult: SpellHitReport?
-    public var applyWeaponEnchantmentCalls: [WeaponEnchantmentHit] = []
-    public var applyWeaponEnchantmentResult: WeaponEnchantmentReport?
-    public var applyWeaponEnhancementCalls: [(attacker: ReferenceKey, target: ReferenceKey)] = []
-    public var applyWeaponEnhancementResult = 0
-    public var applyWeaponPoisonCalls: [WeaponPoisonHit] = []
     public var caster: CasterRuntime?
-    public var cloakIsRunningCalls: [ActorValueHolder] = []
-    public var cloakIsRunningResult: Bool?
     public var commanded: [CommandedActor] = []
-    public var consumeMagicItemCalls: [FormID] = []
-    public var consumeMagicItemResult: MagicEffectActionOutcome?
     public var effects: ActiveEffectRuntime?
-    public var elapseRestTimeCalls: [Double] = []
-    public var enchantmentCacheReadoutValue: EnchantmentCacheReadout?
-    public var enchantmentLineCalls: [(item: FormID, holder: ActorValueHolder?)] = []
-    public var enchantmentLineResult: String?
-    public var enchantmentProfileCalls: [(item: FormID, holder: InventoryHolder?)] = []
-    public var enchantmentProfileResult: ItemEnchantmentProfile?
-    public var equipmentChangedCalls: [InventoryHolder] = []
-    public var equipmentChangedResult: WornEnchantmentReport?
-    public var grantAuthoredSpellsCalls: [ActorValueHolder] = []
-    public var hasReadiedSpellCalls: [SpellHand] = []
-    public var hasReadiedSpellResult = false
     public var holdSettingsValue: MagicHoldSettings?
-    public var influenceCalls: [ReferenceKey] = []
-    public var influenceResult: ActorMagicInfluence?
-    public var isPlayerTakingHealthDamage = false
     public var magicConditionResolutionCallCount = 0
     public var magicConditionResolutionResult: MagicConditionResolution?
     public var magicLights: [MagicLight] = []
-    public var magicMenuSpells: [MagicMenuSpell] = []
-    public var noteDeathCalls: [(victim: ReferenceKey, killer: ReferenceKey?)] = []
-    public var noteDeathResult: SoulTrapOutcome?
     public var noteEffectsRestoredCallCount = 0
-    public var npcShoutCalls: [(spell: ReferenceKey, holder: ActorValueHolder)] = []
-    public var npcShoutResult = false
-    public var npcShoutsCalls: [ActorValueHolder] = []
-    public var npcShoutsResult: [ResolvedShout] = []
     public var playerGrabbedReference: ReferenceKey?
     public var playerKnownSpellsCallCount = 0
     public var playerKnownSpellsResult: [ResolvedSpell] = []
@@ -65,25 +45,9 @@ nonisolated public final class FakeMagicPort: MagicPort {
     public var playerStaffResult: (staff: HeldStaff, charge: EnchantmentCharge)?
     public var raceEffectLinksCalls: [(base: FormID, actor: ReferenceKey)] = []
     public var raceEffectLinksResult: [SpellHitEffectLinks] = []
-    public var readBookLineCalls: [FormID] = []
-    public var readBookLineResult: String?
-    public var readyKnownSpellLineCalls: [(index: Int, hand: SpellHand)] = []
-    public var readyKnownSpellLineResult = ""
-    public var restoreShoutCooldownCalls: [Float] = []
     public var shoutMachine: ShoutMachine = FakeShoutMachinePort()
     public var shouts: [ReferenceKey: ResolvedShout] = [:]
-    public var spellLandedCalls: [(payload: SpellPayload, point: SIMD3<Float>)] = []
     public var summonFades: [ReferenceKey: Float] = [:]
-    public var takeCommandsCallCount = 0
-    public var takeCommandsResult: [MagicCommand] = []
-    public var trapSoulCalls: [(victim: ReferenceKey, caster: ReferenceKey)] = []
-    public var trapSoulResult: SoulTrapOutcome?
-    public var advanceCastingCalls: [AdvanceCastingCall] = []
-    public var advanceCastingResult: [MagicCommand] = []
-    public var advanceEffectsCalls: [Float] = []
-    public var advanceEffectsResult: [MagicCommand] = []
-    public var advanceShoutCalls: [AdvanceShoutCall] = []
-    public var advanceShoutResult: [MagicCommand] = []
     public var timeScalesValue: MagicTimeScales?
     public var wantsCastCalls: [SpellHand] = []
     public var wantsCastResult = false
@@ -91,86 +55,7 @@ nonisolated public final class FakeMagicPort: MagicPort {
     public init() {}
 }
 
-extension FakeMagicPort {
-    nonisolated public struct ApplyPlacedPoisonCall: CustomStringConvertible {
-        public let poison: FormID
-        public let caster: ReferenceKey
-        public let target: ReferenceKey
-
-        public var description: String {
-            [
-                "poison: " + String(describing: poison),
-                "caster: " + String(describing: caster),
-                "target: " + String(describing: target)
-            ].joined(separator: ", ")
-        }
-    }
-
-    nonisolated public struct AdvanceCastingCall: CustomStringConvertible {
-        public let intent: CastingIntent
-        public let isPlayerControlled: Bool
-        public let events: [String]
-        public let weaponsDrawn: Bool?
-
-        public var description: String {
-            [
-                "intent: " + String(describing: intent),
-                "isPlayerControlled: " + String(describing: isPlayerControlled),
-                "events: " + String(describing: events),
-                "weaponsDrawn: " + String(describing: weaponsDrawn)
-            ].joined(separator: ", ")
-        }
-    }
-
-    nonisolated public struct AdvanceShoutCall: CustomStringConvertible {
-        public let held: Bool
-        public let delta: Float
-        public let events: [String]
-        public let isPlayerControlled: Bool
-
-        public var description: String {
-            [
-                "held: " + String(describing: held),
-                "delta: " + String(describing: delta),
-                "events: " + String(describing: events),
-                "isPlayerControlled: " + String(describing: isPlayerControlled)
-            ].joined(separator: ", ")
-        }
-    }
-}
-
 nonisolated extension FakeMagicPort {
-    @discardableResult
-    public func reconcilePerkAbilities(
-        on holder: ActorValueHolder,
-        perks: any PerkAccess
-    ) -> Bool {
-        reconcilePerkAbilitiesCalls.append((holder: holder, perks: perks))
-        return reconcilePerkAbilitiesResult
-    }
-
-    public func dispelEffects(
-        on holder: ActorValueHolder,
-        where predicate: (ActiveEffect) -> Bool
-    ) -> Int {
-        dispelEffectsCalls.append(holder)
-        return dispelEffectsResult
-    }
-
-    @discardableResult
-    public func applyPlacedPoison(
-        _ poison: FormID,
-        by caster: ReferenceKey,
-        on target: ReferenceKey
-    ) -> Int? {
-        applyPlacedPoisonCalls.append(ApplyPlacedPoisonCall(
-            poison: poison,
-            caster: caster,
-            target: target
-        ))
-        return applyPlacedPoisonResult
-    }
-
     @discardableResult
     public func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
         applySpellHitCalls.append(hit)
@@ -178,85 +63,6 @@ nonisolated extension FakeMagicPort {
             preconditionFailure("FakeMagicPort.applySpellHit has no result")
         }
         return applySpellHitResult
-    }
-
-    @discardableResult
-    public func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit)
-        -> WeaponEnchantmentReport?
-    {
-        applyWeaponEnchantmentCalls.append(hit)
-        return applyWeaponEnchantmentResult
-    }
-
-    @discardableResult
-    public func applyWeaponEnhancement(
-        attacker: ReferenceKey,
-        target: ReferenceKey
-    ) -> Int {
-        applyWeaponEnhancementCalls.append((attacker: attacker, target: target))
-        return applyWeaponEnhancementResult
-    }
-
-    public func applyWeaponPoison(_ hit: WeaponPoisonHit) {
-        applyWeaponPoisonCalls.append(hit)
-    }
-
-    public func cloakIsRunning(on holder: ActorValueHolder) -> Bool? {
-        cloakIsRunningCalls.append(holder)
-        return cloakIsRunningResult
-    }
-
-    @discardableResult
-    public func consumeMagicItem(_ item: FormID) -> MagicEffectActionOutcome {
-        consumeMagicItemCalls.append(item)
-        guard let consumeMagicItemResult else {
-            preconditionFailure("FakeMagicPort.consumeMagicItem has no result")
-        }
-        return consumeMagicItemResult
-    }
-
-    public func elapseRestTime(seconds: Double) {
-        elapseRestTimeCalls.append(seconds)
-    }
-
-    public var enchantmentCacheReadout: EnchantmentCacheReadout {
-        get {
-            guard let enchantmentCacheReadoutValue
-            else { preconditionFailure("FakeMagicPort.enchantmentCacheReadout is unset") }
-            return enchantmentCacheReadoutValue
-        }
-        set { enchantmentCacheReadoutValue = newValue }
-    }
-
-    public func enchantmentLine(of item: FormID, on holder: ActorValueHolder?) -> String? {
-        enchantmentLineCalls.append((item: item, holder: holder))
-        return enchantmentLineResult
-    }
-
-    public func enchantmentProfile(
-        of item: FormID,
-        on holder: InventoryHolder?
-    ) -> ItemEnchantmentProfile? {
-        enchantmentProfileCalls.append((item: item, holder: holder))
-        return enchantmentProfileResult
-    }
-
-    @discardableResult
-    public func equipmentChanged(on holder: InventoryHolder) -> WornEnchantmentReport {
-        equipmentChangedCalls.append(holder)
-        guard let equipmentChangedResult else {
-            preconditionFailure("FakeMagicPort.equipmentChanged has no result")
-        }
-        return equipmentChangedResult
-    }
-
-    public func grantAuthoredSpells(to holder: ActorValueHolder) {
-        grantAuthoredSpellsCalls.append(holder)
-    }
-
-    public func hasReadiedSpell(in hand: SpellHand) -> Bool {
-        hasReadiedSpellCalls.append(hand)
-        return hasReadiedSpellResult
     }
 
     public var holdSettings: MagicHoldSettings {
@@ -268,14 +74,6 @@ nonisolated extension FakeMagicPort {
         set { holdSettingsValue = newValue }
     }
 
-    public func influence(of key: ReferenceKey) -> ActorMagicInfluence {
-        influenceCalls.append(key)
-        guard let influenceResult else {
-            preconditionFailure("FakeMagicPort.influence has no result")
-        }
-        return influenceResult
-    }
-
     public func magicConditionResolution() -> MagicConditionResolution {
         magicConditionResolutionCallCount += 1
         guard let magicConditionResolutionResult else {
@@ -284,28 +82,8 @@ nonisolated extension FakeMagicPort {
         return magicConditionResolutionResult
     }
 
-    @discardableResult
-    public func noteDeath(
-        of victim: ReferenceKey,
-        killer: ReferenceKey?
-    ) -> SoulTrapOutcome? {
-        noteDeathCalls.append((victim: victim, killer: killer))
-        return noteDeathResult
-    }
-
     public func noteEffectsRestored() {
         noteEffectsRestoredCallCount += 1
-    }
-
-    @discardableResult
-    public func npcShout(_ spell: ReferenceKey, by holder: ActorValueHolder) -> Bool {
-        npcShoutCalls.append((spell: spell, holder: holder))
-        return npcShoutResult
-    }
-
-    public func npcShouts(of holder: ActorValueHolder) -> [ResolvedShout] {
-        npcShoutsCalls.append(holder)
-        return npcShoutsResult
     }
 
     public func playerKnownSpells() -> [ResolvedSpell] {
@@ -321,76 +99,6 @@ nonisolated extension FakeMagicPort {
     public func raceEffectLinks(base: FormID, actor: ReferenceKey) -> [SpellHitEffectLinks] {
         raceEffectLinksCalls.append((base: base, actor: actor))
         return raceEffectLinksResult
-    }
-
-    public func readBookLine(_ item: FormID) -> String? {
-        readBookLineCalls.append(item)
-        return readBookLineResult
-    }
-
-    public func readyKnownSpellLine(at index: Int, in hand: SpellHand) -> String {
-        readyKnownSpellLineCalls.append((index: index, hand: hand))
-        return readyKnownSpellLineResult
-    }
-
-    public func restoreShoutCooldown(_ seconds: Float) {
-        restoreShoutCooldownCalls.append(seconds)
-    }
-
-    public func spellLanded(_ payload: SpellPayload, at point: SIMD3<Float>) {
-        spellLandedCalls.append((payload: payload, point: point))
-    }
-
-    public func takeCommands() -> [MagicCommand] {
-        takeCommandsCallCount += 1
-        return takeCommandsResult
-    }
-
-    @discardableResult
-    public func trapSoul(
-        of victim: ReferenceKey,
-        by caster: ReferenceKey
-    ) -> SoulTrapOutcome {
-        trapSoulCalls.append((victim: victim, caster: caster))
-        guard let trapSoulResult else {
-            preconditionFailure("FakeMagicPort.trapSoul has no result")
-        }
-        return trapSoulResult
-    }
-
-    public func advanceCasting(
-        _ intent: CastingIntent,
-        isPlayerControlled: Bool,
-        events: [String],
-        weaponsDrawn: Bool?
-    ) -> [MagicCommand] {
-        advanceCastingCalls.append(AdvanceCastingCall(
-            intent: intent,
-            isPlayerControlled: isPlayerControlled,
-            events: events,
-            weaponsDrawn: weaponsDrawn
-        ))
-        return advanceCastingResult
-    }
-
-    public func advanceEffects(delta: Float) -> [MagicCommand] {
-        advanceEffectsCalls.append(delta)
-        return advanceEffectsResult
-    }
-
-    public func advanceShout(
-        held: Bool,
-        delta: Float,
-        events: [String],
-        isPlayerControlled: Bool
-    ) -> [MagicCommand] {
-        advanceShoutCalls.append(AdvanceShoutCall(
-            held: held,
-            delta: delta,
-            events: events,
-            isPlayerControlled: isPlayerControlled
-        ))
-        return advanceShoutResult
     }
 
     public var timeScales: MagicTimeScales {

@@ -63,10 +63,10 @@ struct CombatWorldFactsTests {
     }
 
     @Test func gearReadsTheMagicAndInventoryPorts() {
-        host.fakeMagic.influenceResult = ActorMagicInfluence()
-        host.fakeMagic.hasReadiedSpellResult = true
+        host.fakeMagic.archetypeActions.influenceResult = ActorMagicInfluence()
+        host.fakeMagic.itemUse.hasReadiedSpellResult = true
         _ = adapter.gearReads.magicInfluence(of: Self.foe)
-        #expect(host.fakeMagic.influenceCalls == [Self.foe])
+        #expect(host.fakeMagic.archetypeActions.influenceCalls == [Self.foe])
         #expect(adapter.gearReads.hasReadiedSpell(in: .left))
         #expect(adapter.gearReads.enchantmentProfile(of: FormID(0x500)) == nil)
         #expect(adapter.gearReads.equipment == nil)

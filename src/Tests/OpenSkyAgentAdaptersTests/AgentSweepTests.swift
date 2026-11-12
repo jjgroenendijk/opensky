@@ -26,7 +26,7 @@ struct AgentSweepTests {
         host.fakeMovies.readout = MoviePlaybackReadout(loading: false, interruptible: true)
         host.fakeScenes.sceneSnapshot = SceneControlSnapshot(playing: [], trace: [], lines: [])
         host.fakeScripts.scriptsSnapshot = .empty
-        host.fakeMagic.enchantmentCacheReadout = .empty
+        host.fakeMagic.weaponEnchantments.enchantmentCacheReadout = .empty
         host.fakeJournalMenu.snapshot = .empty
         host.fakeDialogueMenu.snapshot = .empty
         host.fakeFollowerCommands.phase = .idle

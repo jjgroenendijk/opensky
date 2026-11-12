@@ -82,7 +82,7 @@ public final class MagicWorldAdapter {
     @discardableResult
     public func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
         let report = game.magic.applySpellHit(hit)
-        archetypeEffects.run(game.magic.takeCommands())
+        archetypeEffects.run(game.magic.frameStep.takeCommands())
         return report
     }
 
@@ -214,10 +214,10 @@ final class MagicFrameSteps {
         worldTick.register(.magicEffects) { [weak self, weak gameSession] delta in
             let coordinator = self?.game.magic
             guard coordinator?.effects != nil else { return }
-            self?.archetypeEffects.run(coordinator?.advanceEffects(delta: delta) ?? [])
+            self?.archetypeEffects.run(coordinator?.frameStep.advanceEffects(delta: delta) ?? [])
             self?.heldMagic.publishMagicLights()
             self?.heldMagic.publishSummonFades()
-            gameSession?.isPlayerParalysed = coordinator?.influence(of: .player)
+            gameSession?.isPlayerParalysed = coordinator?.archetypeActions.influence(of: .player)
                 .isParalysed ?? false
             let scales = coordinator?.timeScales ?? .normal
             gameSession?.magicTimeScale = scales.world
@@ -235,7 +235,7 @@ final class MagicFrameSteps {
             let isPlayerControlled = gameSession.movementMode.isPlayerControlled
             let delta = locomotion.archeryIntent.deltaTime
             let events = locomotion.graphEvents.drain(locomotion.magicEventConsumer)
-            let commands = coordinator.advanceCasting(
+            let commands = coordinator.frameStep.advanceCasting(
                 CastingIntent(
                     leftHeld: locomotion.meleeIntent.block,
                     rightHeld: locomotion.archeryIntent.drawing,
@@ -246,7 +246,7 @@ final class MagicFrameSteps {
                 weaponsDrawn: self?.game.combat.meleeWeaponInHand
             )
             self?.archetypeEffects.run(commands)
-            self?.archetypeEffects.run(coordinator.advanceShout(
+            self?.archetypeEffects.run(coordinator.shoutVoice.advanceShout(
                 held: locomotion.isShoutHeld,
                 delta: delta,
                 events: events,

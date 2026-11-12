@@ -40,46 +40,14 @@ nonisolated enum EnchantingOutcome: Equatable, Sendable {
     case unavailable
 }
 
-extension MagicCoordinator {
-    var enchantingState: EnchantingState {
-        effects?.store.component(EnchantingState.self, for: .player) ?? EnchantingState()
-    }
-
+extension MagicCoordinator.EnchantingTable {
     /// Entry point 80: Extra Effect sets 2.
     var appliedEnchantmentsAllowed: Int {
-        let allowed = world.perkModified(
+        let allowed = coordinator.world.perkModified(
             1, at: .modAppliedEnchantmentsAllowed, on: .player,
             subjects: PerkEvaluationSubjects(owner: .player), seams: ConditionContext()
         )
         return max(1, Int(allowed.rounded(.down)))
-    }
-
-    /// Destroys one `item` and teaches the root of its enchantment's base chain.
-    @discardableResult
-    func disenchant(_ item: FormID) -> EnchantingOutcome {
-        guard let store = enchantmentStore, let inventory = world.inventory else {
-            return noteEnchanting(.unavailable)
-        }
-        guard inventory.count(of: item, in: .player) > 0 else {
-            return noteEnchanting(.refused(.notCarried))
-        }
-        guard
-            let profile = enchantmentProfile(of: item),
-            let base = rootBase(of: profile),
-            let root = store.enchantment(key: base)
-        else { return noteEnchanting(.refused(.notEnchanted)) }
-        guard !profile.isStaff, !world.itemHasKeyword("MagicDisallowEnchanting", on: item) else {
-            return noteEnchanting(.refused(.cannotDisenchant))
-        }
-        let state = enchantingState
-        guard !state.knows(base) else { return noteEnchanting(.refused(.alreadyKnown)) }
-        let items = inventory.baselines.items
-        let worth = items.gameValue(of: item) - (items.definition(item)?.value ?? 0)
-        let itemName = world.itemName(item)
-        _ = attempt { try inventory.remove(item, count: 1, from: .player) }
-        writeEnchanting(state.learning(base))
-        reportEnchantingUse(enchantingSettings.disenchantExperience(worth: worth))
-        return noteEnchanting(.learned(item: itemName, base: root.displayName))
     }
 
     /// Puts `bases` on the best plain copy of `item`, spending `gem`.
@@ -87,13 +55,14 @@ extension MagicCoordinator {
     func enchant(
         _ item: FormID, with bases: [ReferenceKey], gem: SoulGemCandidate, name: String? = nil
     ) -> EnchantingOutcome {
-        guard let inventory = world.inventory else { return noteEnchanting(.unavailable) }
+        guard let inventory = coordinator.world.inventory
+        else { return coordinator.enchantingRecords.noteEnchanting(.unavailable) }
         switch preview(item, with: bases, gem: gem, name: name) {
         case let .failure(refusal):
-            return noteEnchanting(.refused(refusal))
+            return coordinator.enchantingRecords.noteEnchanting(.refused(refusal))
         case let .success(made):
-            let (state, id) = enchantingState.making(made)
-            writeEnchanting(state)
+            let (state, id) = coordinator.enchantingRecords.enchantingState.making(made)
+            coordinator.enchantingRecords.writeEnchanting(state)
             inventory.editCopy(
                 of: item,
                 in: .player,
@@ -101,14 +70,14 @@ extension MagicCoordinator {
                 Self.making(id)
             )
             spendGem(gem, in: inventory)
-            reportEnchantingUse(EnchantingRules.enchantExperience)
-            refreshWornEnchantments(on: .player)
+            coordinator.enchantingRecords.reportEnchantingUse(EnchantingRules.enchantExperience)
+            coordinator.weaponEnchantments.refreshWornEnchantments(on: .player)
             let charge = EnchantmentCharge(
                 capacity: made.capacity,
                 costPerUse: made.costPerUse(atSkill: enchantingSkill(of: .player))
             )
-            return noteEnchanting(.enchanted(
-                item: world.itemName(item), name: made.name, charge: charge
+            return coordinator.enchantingRecords.noteEnchanting(.enchanted(
+                item: coordinator.world.itemName(item), name: made.name, charge: charge
             ))
         }
     }
@@ -117,19 +86,21 @@ extension MagicCoordinator {
     func preview(
         _ item: FormID, with bases: [ReferenceKey], gem: SoulGemCandidate, name: String? = nil
     ) -> Result<MadeEnchantment, EnchantingRefusal> {
-        guard let store = enchantmentStore, let inventory = world.inventory, inventory.count(
-            of: item,
-            in: .player
-        ) > 0 else { return .failure(.notCarried) }
+        guard
+            let store = coordinator.enchantmentStore, let inventory = coordinator.world.inventory,
+            inventory.count(
+                of: item,
+                in: .player
+            ) > 0 else { return .failure(.notCarried) }
         guard let isWeapon = enchantableKind(of: item) else { return .failure(.notEnchantable) }
         guard
-            enchantmentProfile(of: item) == nil,
+            coordinator.weaponEnchantments.enchantmentProfile(of: item) == nil,
             inventory.copies(of: item, in: .player).contains(where: { $0.enchantment == nil })
         else { return .failure(.alreadyEnchanted) }
         guard !bases.isEmpty else { return .failure(.noBase) }
         let allowed = appliedEnchantmentsAllowed
         guard bases.count <= allowed else { return .failure(.tooManyBases(allowed: allowed)) }
-        let state = enchantingState
+        let state = coordinator.enchantingRecords.enchantingState
         let records = bases.compactMap { state.knows($0) ? store.enchantment(key: $0) : nil }
         guard records.count == bases.count else { return .failure(.unknownBase) }
         if let misfit = records.first(where: { !fits($0, item: item, isWeapon: isWeapon) }) {
@@ -157,35 +128,12 @@ extension MagicCoordinator {
         ))
     }
 
-    /// The profile of the made enchantment on `holder`'s best copy of `item`, or nil.
-    func madeProfile(of item: FormID, on holder: InventoryHolder) -> ItemEnchantmentProfile? {
-        guard
-            let store = enchantmentStore,
-            let id = world.inventory?.copies(of: item, in: holder).first?.enchantment,
-            EnchantingState.isMade(id),
-            let made = enchantingState.made[id]
-        else { return nil }
-        let wielder = world.actorValueHolder(for: holder.key)
-        return ItemEnchantmentProfile.made(
-            made, item: item, using: store, skill: wielder.map(enchantingSkill(of:)) ?? 0
-        )
-    }
-
-    /// The last link of `profile`'s base chain, which disenchanting teaches.
-    func rootBase(of profile: ItemEnchantmentProfile) -> ReferenceKey? {
-        guard
-            let store = enchantmentStore,
-            case let .plugin(name, objectID) = profile.enchantment,
-            let root = store.baseChain(of: ResolvedFormID(plugin: name, objectID: objectID)).last
-        else { return nil }
-        return ReferenceKey(resolved: root.id)
-    }
-
     /// True for a weapon, false for apparel, nil for anything an enchanter refuses.
     private func enchantableKind(of item: FormID) -> Bool? {
         guard
-            let items = world.inventory?.baselines.items, let definition = items.definition(item),
-            !world.itemHasKeyword(
+            let items = coordinator.world.inventory?.baselines.items,
+            let definition = items.definition(item),
+            !coordinator.world.itemHasKeyword(
                 "MagicDisallowEnchanting",
                 on: item
             ) else { return nil }
@@ -206,7 +154,7 @@ extension MagicCoordinator {
         guard base.data?.type != .staffEnchantment, Self.isWeaponBase(base) == isWeapon else {
             return false
         }
-        return world.enchantment(base, fits: item)
+        return coordinator.world.enchantment(base, fits: item)
     }
 
     private static func isWeaponBase(_ base: ResolvedEnchantment) -> Bool {
@@ -217,8 +165,8 @@ extension MagicCoordinator {
     private func enchantmentPower(
         of base: ResolvedEnchantment, on item: FormID, using store: EnchantmentStore
     ) -> Float {
-        let subject = world.inventory?.baselines.items.conditionSubject(of: item)
-        return world.perkModified(
+        let subject = coordinator.world.inventory?.baselines.items.conditionSubject(of: item)
+        return coordinator.world.perkModified(
             1, at: .modEnchantmentPower, on: .player,
             subjects: PerkEvaluationSubjects(owner: .player)
                 .binding(.enchantment, to: store.conditionSubject(of: base))
@@ -228,33 +176,9 @@ extension MagicCoordinator {
     }
 
     /// The Enchanting value as it is now, so a Fortify Enchanting potion counts.
-    private func enchantingSkill(of player: ActorValueHolder) -> Float {
+    func enchantingSkill(of player: ActorValueHolder) -> Float {
         guard let index = ActorValueIdentity.index(named: "Enchanting") else { return 0 }
-        return effects?.values.value(at: index, on: player) ?? 0
-    }
-
-    func reportEnchantingUse(_ amount: Float) {
-        guard amount > 0, let skill = ActorValueIdentity.index(named: "Enchanting") else { return }
-        world.reportSkillUse(SkillUseEvent(
-            actor: .player,
-            action: .craft(skill: skill),
-            amount: amount
-        ))
-    }
-
-    private func writeEnchanting(_ state: EnchantingState) {
-        guard let store = effects?.store else { return }
-        if state.isEmpty {
-            store.reset(.enchanting, for: .player)
-        } else {
-            store.set(state, for: .player)
-        }
-    }
-
-    @discardableResult
-    private func noteEnchanting(_ outcome: EnchantingOutcome) -> EnchantingOutcome {
-        lastEnchanting = outcome
-        return outcome
+        return coordinator.effects?.values.value(at: index, on: player) ?? 0
     }
 
     /// Puts the made enchantment on a copy; the copy's old charge belongs to nothing now.
@@ -263,5 +187,21 @@ extension MagicCoordinator {
             copy.enchantment = id
             copy.charge = nil
         }
+    }
+}
+
+extension MagicCoordinator.EnchantingTable {
+    /// A reusable gem, such as Azura's Star, empties and stays; any other gem is used up.
+    func spendGem(_ gem: SoulGemCandidate, in inventory: any InventoryAccess) {
+        if gem.copy.soul != 0 {
+            inventory.editCopy(
+                of: gem.item,
+                in: .player,
+                where: { $0 == gem.copy },
+                { $0.soul = 0 }
+            )
+        }
+        guard !coordinator.world.itemHasKeyword("ReusableSoulGem", on: gem.item) else { return }
+        _ = attempt { try inventory.remove(gem.item, count: 1, from: .player) }
     }
 }

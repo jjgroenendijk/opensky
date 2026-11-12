@@ -32,7 +32,7 @@ extension MenuScreensWorldAdapter {
                 context.bedOwnedByOther = game.crime.ownershipVerdict(on: key).isTheft
             }
             context.inAir = !(game.gameSession?.walkController.isGrounded ?? true)
-            context.takingHealthDamage = game.magic.isPlayerTakingHealthDamage
+            context.takingHealthDamage = game.magic.magicMenu.isPlayerTakingHealthDamage
             context.waitingDisabled = game.scripts.bridge?.playerControlLocks
                 .waitingDisabled ?? false
             context.cellForbidsWaiting = game.streamer.currentCellLocation

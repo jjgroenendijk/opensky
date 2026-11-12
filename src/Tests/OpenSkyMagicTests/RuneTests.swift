@@ -122,24 +122,24 @@ struct RuneTests {
     @Test func aRuneSpellWaitsWhereTheCasterAims() throws {
         let coordinator = try makeCoordinator()
         let aim = SpellAim(target: nil, position: SIMD3(300, 0, 0), candidates: [])
-        #expect(coordinator.land(Self.payload(), at: aim) == 0)
-        #expect(coordinator.runes.map(\.position) == [SIMD3(300, 0, 0)])
-        #expect(coordinator.runes.first?.proximity == RuneCore.defaultProximity)
+        #expect(coordinator.runePlacement.land(Self.payload(), at: aim) == 0)
+        #expect(coordinator.runeState.runes.map(\.position) == [SIMD3(300, 0, 0)])
+        #expect(coordinator.runeState.runes.first?.proximity == RuneCore.defaultProximity)
     }
 
     @Test func aHostileActorSetsTheRuneOff() throws {
         let coordinator = try makeCoordinator()
         let aim = SpellAim(target: nil, position: SIMD3(300, 0, 0), candidates: [])
-        coordinator.land(Self.payload(), at: aim)
-        coordinator.advanceRunes(delta: 1)
-        #expect(coordinator.runes.count == 1)
+        coordinator.runePlacement.land(Self.payload(), at: aim)
+        coordinator.runePlacement.advanceRunes(delta: 1)
+        #expect(coordinator.runeState.runes.count == 1)
 
         world.runeTargets = [MeleeTarget(key: Self.victim, feet: SIMD3(350, 0, 0))]
-        coordinator.advanceRunes(delta: 1)
-        #expect(coordinator.runes.isEmpty)
-        #expect(coordinator.detonatedRunes == 1)
+        coordinator.runePlacement.advanceRunes(delta: 1)
+        #expect(coordinator.runeState.runes.isEmpty)
+        #expect(coordinator.runeState.detonatedRunes == 1)
         let detonation = MagicCommand.detonateRune(Self.payload(), at: SIMD3(300, 0, 0))
-        let commands = coordinator.takeCommands()
+        let commands = coordinator.frameStep.takeCommands()
         #expect(commands.last == detonation)
         guard case let .spellHit(hit)? = commands.first else {
             Issue.record("The rune's hit leaves as a command: \(commands)")
@@ -153,8 +153,8 @@ struct RuneTests {
         let coordinator = try makeCoordinator()
         world.keywords = [:]
         let aim = SpellAim(target: nil, position: SIMD3(300, 0, 0), candidates: [])
-        coordinator.land(Self.payload(), at: aim)
-        #expect(coordinator.runes.isEmpty)
+        coordinator.runePlacement.land(Self.payload(), at: aim)
+        #expect(coordinator.runeState.runes.isEmpty)
     }
 
     @Test func runeAndSummonSettingsReadTheirGameSettings() throws {

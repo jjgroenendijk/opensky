@@ -25,8 +25,8 @@ struct ScriptRecordBindingsTests {
 
     @Test func spellNativesReachTheMagicPorts() {
         host.fakeFactionWorld.papyrusNativesResult = PapyrusFactionNatives()
-        host.fakeMagic.dispelEffectsResult = 2
-        host.fakeMagic.trapSoulResult = .notFilled
+        host.fakeMagic.itemUse.dispelEffectsResult = 2
+        host.fakeMagic.soulTrapping.trapSoulResult = .notFilled
         host.fakeMagic.commanded = []
         adapter.perkBindings.fillSpellNatives(bridge: bridge, provider: records)
         let natives = bridge.magicNatives
@@ -36,7 +36,7 @@ struct ScriptRecordBindingsTests {
         #expect(natives.trapSoul?(Self.actor, .player) == false)
         #expect(bridge.magicEffectStore == nil)
         #expect(bridge.keywordStore == nil)
-        #expect(host.fakeMagic.trapSoulCalls.map(\.victim) == [Self.actor])
+        #expect(host.fakeMagic.soulTrapping.trapSoulCalls.map(\.victim) == [Self.actor])
     }
 
     @Test func theSeamsHandOverEachFeatureWorld() {

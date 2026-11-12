@@ -5,21 +5,21 @@
 
 import OpenSkyConditions
 import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyWorldState
 
-extension MagicCoordinator {
+extension MagicCoordinator.AbilityReconciler {
     /// How often every resident actor's abilities are reconciled, so a spell a
     /// script added or removed takes effect without a hook on every path.
     static let abilityReconcileSeconds: Float = 1
 
     /// Applies the abilities `holder` knows and removes the ones it forgot.
     @discardableResult
-    public func reconcileAbilities(on holder: ActorValueHolder) -> AbilityReconcileReport {
-        guard let caster else { return .none }
+    func reconcileAbilities(on holder: ActorValueHolder) -> AbilityReconcileReport {
+        guard let caster = coordinator.caster else { return .none }
         let known = caster.knownAbilities(of: holder)
-        return withEffects { runtime in
+        return coordinator.withEffects { runtime in
             SpellAbilityApplication.reconcile(known: known, on: holder, using: &runtime)
         } ?? .none
     }
@@ -28,12 +28,12 @@ extension MagicCoordinator {
     /// rebuilds the modifiers of actors that came back from a save.
     func maintainCarriedEffects(delta: Float) {
         guard delta.isFinite, delta > 0 else { return }
-        let holders = world.regeneratingHolders()
+        let holders = coordinator.world.regeneratingHolders()
         rebuildLoadedModifiers(over: holders)
-        recoverWards(delta: delta, over: holders)
-        abilityClock += delta
-        guard abilityClock >= Self.abilityReconcileSeconds else { return }
-        abilityClock = 0
+        coordinator.wardShields.recoverWards(delta: delta, over: holders)
+        coordinator.abilityClock += delta
+        guard coordinator.abilityClock >= Self.abilityReconcileSeconds else { return }
+        coordinator.abilityClock = 0
         for holder in holders {
             reconcileAbilities(on: holder)
         }
@@ -42,19 +42,19 @@ extension MagicCoordinator {
     /// Marks every actor other than the player that a load gave timed effects.
     /// `AVOV` keeps no temporary modifier, and an NPC has no holder until its
     /// cell streams in, so each one is rebuilt when it next becomes resident.
-    public func noteEffectsRestored() {
-        guard let store = effects?.store else { return }
-        pendingModifierRebuild = Set(store.sortedDirtyKeys().filter { key in
+    func noteEffectsRestored() {
+        guard let store = coordinator.effects?.store else { return }
+        coordinator.pendingModifierRebuild = Set(store.sortedDirtyKeys().filter { key in
             key != .player && store.component(ActiveEffectState.self, for: key)?.isEmpty == false
         })
-        withEffects { $0.reestablishModifiers(on: .player) }
+        coordinator.withEffects { $0.reestablishModifiers(on: .player) }
     }
 
     private func rebuildLoadedModifiers(over holders: [ActorValueHolder]) {
-        guard !pendingModifierRebuild.isEmpty else { return }
-        for holder in holders where pendingModifierRebuild.contains(holder.key) {
-            pendingModifierRebuild.remove(holder.key)
-            withEffects { $0.reestablishModifiers(on: holder) }
+        guard !coordinator.pendingModifierRebuild.isEmpty else { return }
+        for holder in holders where coordinator.pendingModifierRebuild.contains(holder.key) {
+            coordinator.pendingModifierRebuild.remove(holder.key)
+            coordinator.withEffects { $0.reestablishModifiers(on: holder) }
         }
     }
 
@@ -71,9 +71,9 @@ extension MagicCoordinator {
         guard let id = source.record.resolvedID else { return nil }
         switch source.kind {
         case .spell, .perk, .ability:
-            return caster?.spellbook.spells.spell(id)?.effects
+            return coordinator.caster?.spellbook.spells.spell(id)?.effects
         case .enchantment:
-            return enchantmentStore?.enchantment(id)?.effects
+            return coordinator.enchantmentStore?.enchantment(id)?.effects
         case .potion, .ingredient:
             return nil
         }

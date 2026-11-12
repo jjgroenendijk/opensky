@@ -6,49 +6,53 @@ import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-extension MagicCoordinator {
+extension MagicCoordinator.ShoutReadout {
     /// Teaches and unlocks every word, the way the Greybeards' words arrive unlocked.
     @discardableResult
     func learnShout(_ shout: ReferenceKey) -> ShoutOutcome {
-        guard let resolved = shouts[shout] else { return noteShout(.refused(.unknownShout)) }
-        world.changeShoutKnowledge(.addShout(shout))
-        for word in wordKeys(of: resolved).compactMap(\.self) {
-            world.changeShoutKnowledge(.teachWord(word))
-            world.changeShoutKnowledge(.unlockWord(word))
+        guard let resolved = coordinator.shouts[shout]
+        else { return coordinator.shoutVoice.noteShout(.refused(.unknownShout)) }
+        coordinator.world.changeShoutKnowledge(.addShout(shout))
+        for word in coordinator.shoutVoice.wordKeys(of: resolved).compactMap(\.self) {
+            coordinator.world.changeShoutKnowledge(.teachWord(word))
+            coordinator.world.changeShoutKnowledge(.unlockWord(word))
         }
-        return noteShout(.learned(shout: resolved.displayName))
+        return coordinator.shoutVoice.noteShout(.learned(shout: resolved.displayName))
     }
 
     @discardableResult
     func equipShout(_ shout: ReferenceKey) -> ShoutOutcome {
-        guard let resolved = shouts[shout] else { return noteShout(.refused(.unknownShout)) }
-        world.changeShoutKnowledge(.equip(shout))
-        return noteShout(.equipped(shout: resolved.displayName))
+        guard let resolved = coordinator.shouts[shout]
+        else { return coordinator.shoutVoice.noteShout(.refused(.unknownShout)) }
+        coordinator.world.changeShoutKnowledge(.equip(shout))
+        return coordinator.shoutVoice.noteShout(.equipped(shout: resolved.displayName))
     }
 
     /// Spends one dragon soul on the first learned word that is still locked.
     @discardableResult
     func unlockNextWord(of shout: ReferenceKey) -> ShoutOutcome {
-        guard let resolved = shouts[shout] else { return noteShout(.refused(.unknownShout)) }
-        let knowledge = world.shoutKnowledge
-        let unlocked = unlockedWordCount(of: resolved)
-        let words = wordKeys(of: resolved)
+        guard let resolved = coordinator.shouts[shout]
+        else { return coordinator.shoutVoice.noteShout(.refused(.unknownShout)) }
+        let knowledge = coordinator.world.shoutKnowledge
+        let unlocked = coordinator.shoutVoice.unlockedWordCount(of: resolved)
+        let words = coordinator.shoutVoice.wordKeys(of: resolved)
         guard words.indices.contains(unlocked), let word = words[unlocked] else {
-            return noteShout(.refused(.wordAlreadyUnlocked))
+            return coordinator.shoutVoice.noteShout(.refused(.wordAlreadyUnlocked))
         }
-        guard knowledge.knownWords.contains(word) else { return noteShout(.refused(.wordNotKnown)) }
+        guard knowledge.knownWords.contains(word)
+        else { return coordinator.shoutVoice.noteShout(.refused(.wordNotKnown)) }
         guard dragonSouls >= 1, let index = Self.dragonSoulsIndex else {
-            return noteShout(.refused(.noDragonSoul))
+            return coordinator.shoutVoice.noteShout(.refused(.noDragonSoul))
         }
-        effects?.values.addModifier(-1, to: .permanent, at: index, on: .player)
-        world.changeShoutKnowledge(.unlockWord(word))
+        coordinator.effects?.values.addModifier(-1, to: .permanent, at: index, on: .player)
+        coordinator.world.changeShoutKnowledge(.unlockWord(word))
         let name = resolved.words[unlocked].wordName
-        return noteShout(.unlocked(word: name, soulsLeft: dragonSouls))
+        return coordinator.shoutVoice.noteShout(.unlocked(word: name, soulsLeft: dragonSouls))
     }
 
     var dragonSouls: Int {
         guard let index = Self.dragonSoulsIndex else { return 0 }
-        return Int((effects?.values.value(at: index, on: .player) ?? 0).rounded(.down))
+        return Int((coordinator.effects?.values.value(at: index, on: .player) ?? 0).rounded(.down))
     }
 
     static let dragonSoulsIndex = ActorValueIdentity.index(named: "Dragon Souls")

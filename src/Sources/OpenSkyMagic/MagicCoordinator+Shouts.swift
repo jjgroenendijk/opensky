@@ -46,7 +46,7 @@ nonisolated enum ShoutOutcome: Equatable, Sendable {
     case equipped(shout: String)
 }
 
-extension MagicCoordinator {
+extension MagicCoordinator.ShoutVoice {
     static func shoutsByKey(_ store: ShoutStore?) -> [ReferenceKey: ResolvedShout] {
         var byKey: [ReferenceKey: ResolvedShout] = [:]
         for (id, shout) in store?.shouts ?? [:] {
@@ -57,9 +57,13 @@ extension MagicCoordinator {
 
     /// The shouts on an NPC's own and race spell lists (`SPLO` entries that name a `SHOU`).
     public func npcShouts(of holder: ActorValueHolder) -> [ResolvedShout] {
-        guard let shoutStore, let spellBaselines, let spellPluginName else { return [] }
+        guard
+            let shoutStore = coordinator.shoutStore,
+            let spellBaselines = coordinator.spellBaselines,
+            let spellPluginName = coordinator.spellPluginName else { return [] }
         let roll = spellBaselines.templates.leveling.roll(
-            of: holder, frozenLevel: caster?.spellbook.store.frozenLeveledLevel(of: holder.key)
+            of: holder,
+            frozenLevel: coordinator.caster?.spellbook.store.frozenLeveledLevel(of: holder.key)
         )
         return spellBaselines.baseline(for: holder.subject, roll: roll).all.compactMap {
             shoutStore.resolve($0, fromPlugin: spellPluginName)
@@ -71,31 +75,32 @@ extension MagicCoordinator {
     @discardableResult
     public func npcShout(_ spell: ReferenceKey, by holder: ActorValueHolder) -> Bool {
         guard
-            let caster,
-            let word = shouts.values.lazy.flatMap(\.words).first(where: { $0.spell?.key == spell }),
+            let caster = coordinator.caster,
+            let word = coordinator.shouts.values.lazy.flatMap(\.words)
+                .first(where: { $0.spell?.key == spell }),
             let resolved = word.spell
         else { return false }
         _ = caster.apply(resolved, caster: holder)
-        spellWasCast(spell, by: holder.key)
+        coordinator.casterBridge.spellWasCast(spell, by: holder.key)
         return true
     }
 
     /// Entry point 82 on a base of 0: `AllowShoutingPerk` adds 1 once its quest stage is done.
     var isShoutAllowed: Bool {
-        world.perkModified(
+        coordinator.world.perkModified(
             0, at: .modShoutOK, on: .player,
             subjects: PerkEvaluationSubjects(owner: .player), seams: ConditionContext()
         ) > 0
     }
 
     var equippedShout: ResolvedShout? {
-        world.shoutKnowledge.equipped.flatMap { shouts[$0] }
+        coordinator.world.shoutKnowledge.equipped.flatMap { coordinator.shouts[$0] }
     }
 
-    public func unlockedWordCount(of shout: ResolvedShout) -> Int {
+    func unlockedWordCount(of shout: ResolvedShout) -> Int {
         ShoutCore.unlockedWordCount(
             wordKeys(of: shout),
-            unlocked: world.shoutKnowledge.unlockedWords
+            unlocked: coordinator.world.shoutKnowledge.unlockedWords
         )
     }
 
@@ -108,24 +113,29 @@ extension MagicCoordinator {
         held: Bool, delta: Float, events: [String], isPlayerControlled: Bool
     ) -> [MagicCommand] {
         let keyHeld = held && isPlayerControlled
-        if keyHeld, !wasShoutHeld, shoutMachine.isIdle {
+        if keyHeld, !coordinator.shoutState.wasShoutHeld, coordinator.shoutMachine.isIdle {
             beginShout()
         }
-        wasShoutHeld = keyHeld
-        let panelHeld = (panelShoutHold ?? 0) > 0
-        panelShoutHold = panelShoutHold.map { $0 - delta }.flatMap { $0 > 0 ? $0 : nil }
+        coordinator.shoutState.wasShoutHeld = keyHeld
+        let panelHeld = (coordinator.shoutState.panelShoutHold ?? 0) > 0
+        coordinator.shoutState.panelShoutHold = coordinator.shoutState.panelShoutHold
+            .map { $0 - delta }
+            .flatMap { $0 > 0 ? $0 : nil }
         let held = keyHeld || panelHeld
         let fired = events
             .contains { $0.caseInsensitiveCompare(ShoutGraphNames.spellFire) == .orderedSame }
-        let unlocked = voicedShout.flatMap { shouts[$0] }.map(unlockedWordCount) ?? 0
-        switch shoutMachine.advance(
-            input: (held, fired), delta: delta, unlockedWords: unlocked, settings: shoutSettings
+        let unlocked = coordinator.shoutState.voicedShout.flatMap { coordinator.shouts[$0] }
+            .map(unlockedWordCount) ?? 0
+        switch coordinator.shoutMachine.advance(
+            input: (held, fired), delta: delta, unlockedWords: unlocked,
+            settings: coordinator.rules.shouts
         ) {
         case .none: break
-        case .release: pendingCommands.append(.playerGraphEvent(ShoutGraphNames.release))
+        case .release: coordinator.pendingCommands
+            .append(.playerGraphEvent(ShoutGraphNames.release))
         case let .fire(words): fireShout(words: words)
         }
-        return takeCommands()
+        return coordinator.frameStep.takeCommands()
     }
 
     /// The press: every refusal is checked here, so a held key that was refused stays quiet.
@@ -133,54 +143,58 @@ extension MagicCoordinator {
     func beginShout() -> ShoutOutcome {
         if let refusal = shoutRefusal() {
             if refusal == .casting {
-                pendingCommands.append(.notice(castNotices[.shoutWhileCasting]))
+                coordinator.pendingCommands
+                    .append(.notice(coordinator.texts.castNotices[.shoutWhileCasting]))
             }
             return noteShout(.refused(refusal))
         }
-        voicedShout = world.shoutKnowledge.equipped
-        shoutMachine.begin()
-        return lastShout
+        coordinator.shoutState.voicedShout = coordinator.world.shoutKnowledge.equipped
+        coordinator.shoutMachine.begin()
+        return coordinator.shoutState.lastShout
     }
 
     func shoutRefusal() -> ShoutRefusal? {
         guard isShoutAllowed else { return .notAllowed }
-        guard shoutMachine.cooldown <= 0 else { return .recovering(seconds: shoutMachine.cooldown) }
+        guard coordinator.shoutMachine.cooldown <= 0
+        else { return .recovering(seconds: coordinator.shoutMachine.cooldown) }
         guard let shout = equippedShout else { return .noShoutEquipped }
         guard unlockedWordCount(of: shout) > 0 else { return .noWordUnlocked }
-        let casting = SpellHand.allCases.contains { caster?.phase(of: $0).isCasting ?? false }
+        let casting = SpellHand.allCases
+            .contains { coordinator.caster?.phase(of: $0).isCasting ?? false }
         return casting ? .casting : nil
     }
 
     private func fireShout(words: Int) {
-        defer { voicedShout = nil }
+        defer { coordinator.shoutState.voicedShout = nil }
         guard
-            let key = voicedShout, let shout = shouts[key],
+            let key = coordinator.shoutState.voicedShout, let shout = coordinator.shouts[key],
             shout.words.indices.contains(words - 1),
             let spell = shout.words[words - 1].spell,
-            let caster, let holder = world.actorValueHolder(for: .player)
+            let caster = coordinator.caster,
+            let holder = coordinator.world.actorValueHolder(for: .player)
         else { return }
         _ = caster.apply(spell, caster: holder)
-        spellWasCast(spell.key, by: .player)
+        coordinator.casterBridge.spellWasCast(spell.key, by: .player)
         let multiplier = ActorValueIdentity.index(named: "Shout Recovery Mult")
-            .flatMap { effects?.values.value(at: $0, on: .player) } ?? 1
+            .flatMap { coordinator.effects?.values.value(at: $0, on: .player) } ?? 1
         let cooldown = ShoutCore.cooldown(
             recovery: shout.words[words - 1].entry.recoveryTime, multiplier: multiplier
         )
-        shoutMachine.startCooldown(cooldown)
-        pendingCommands.append(.playerShouted(words: words))
+        coordinator.shoutMachine.startCooldown(cooldown)
+        coordinator.pendingCommands.append(.playerShouted(words: words))
         noteShout(.shouted(shout: shout.displayName, words: words, cooldown: cooldown))
     }
 
     @discardableResult
     func noteShout(_ outcome: ShoutOutcome) -> ShoutOutcome {
-        lastShout = outcome
+        coordinator.shoutState.lastShout = outcome
         return outcome
     }
 }
 
-extension MagicCoordinator {
+extension MagicCoordinator.ShoutVoice {
     /// The player's shout cooldown a save brought back, in seconds.
     public func restoreShoutCooldown(_ seconds: Float) {
-        shoutMachine.startCooldown(seconds)
+        coordinator.shoutMachine.startCooldown(seconds)
     }
 }

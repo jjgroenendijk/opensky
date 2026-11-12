@@ -31,19 +31,19 @@ extension CombatSpellCastsAdapter {
             let values = game.actorValues.runtime,
             let holder = game.actorWorld.actorValueHolder(for: key)
         else { return nil }
-        game.magic.grantAuthoredSpells(to: holder)
+        game.magic.itemUse.grantAuthoredSpells(to: holder)
         return CombatCastingFacts(
             magicka: values.current(of: holder).magicka,
             spells: runtime.spellbook.knownSpells(of: holder)
                 .map { candidate($0, runtime: runtime) },
-            shouts: game.magic.npcShouts(of: holder).compactMap(shoutOption)
+            shouts: game.magic.shoutVoice.npcShouts(of: holder).compactMap(shoutOption)
         )
     }
 
     @discardableResult
     public func shout(_ spell: ReferenceKey, by key: ReferenceKey) -> Bool {
         guard let holder = game.actorWorld.actorValueHolder(for: key) else { return false }
-        return game.magic.npcShout(spell, by: holder)
+        return game.magic.shoutVoice.npcShout(spell, by: holder)
     }
 
     /// A shout as its strongest word with a spell. An NPC has no Shout Recovery Mult, so

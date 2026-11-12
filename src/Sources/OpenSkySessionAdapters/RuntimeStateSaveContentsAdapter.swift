@@ -146,7 +146,7 @@ extension RuntimeStateSaveContentsAdapter {
     public func restoreRuntimeExtras() {
         guard let bridge = game.scripts.bridge else { return }
         let state = bridge.scriptedState(of: .player)
-        game.magic.restoreShoutCooldown(state.value(Extra.shoutCooldown) ?? 0)
+        game.magic.shoutVoice.restoreShoutCooldown(state.value(Extra.shoutCooldown) ?? 0)
         guard
             let faction = state.form(Extra.jailFaction),
             let marker = state.form(Extra.jailMarker)

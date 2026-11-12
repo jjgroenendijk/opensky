@@ -7,7 +7,7 @@
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
-public import OpenSkyMagicInterface
+import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 
 nonisolated enum SlowTimeRule {
@@ -33,10 +33,13 @@ nonisolated enum SlowTimeRule {
     }
 }
 
-extension MagicCoordinator {
+extension MagicCoordinator.SlowTimeClock {
     /// The time scales the player's Slow Time effects set this frame.
-    public var timeScales: MagicTimeScales {
-        guard let runtime = effects, let player = world.actorValueHolder(for: .player) else {
+    var timeScales: MagicTimeScales {
+        guard
+            let runtime = coordinator.effects,
+            let player = coordinator.world.actorValueHolder(for: .player)
+        else {
             return .normal
         }
         let slowing = runtime.active(on: player).filter {
@@ -55,14 +58,14 @@ extension MagicCoordinator {
         var seams = ConditionContext()
         if
             effect.source.kind == .spell,
-            let spells = caster?.spellbook.spells,
+            let spells = coordinator.caster?.spellbook.spells,
             let spell = spells.spell(key: effect.source.record)
         {
             subjects = subjects.binding(.spell, to: spells.conditionSubject(of: spell))
             seams[resolution: SpellEvaluationResolution.self] =
                 SpellEvaluationResolution(spell: spell)
         }
-        return world.perkModified(
+        return coordinator.world.perkModified(
             SlowTimeRule.playerShare, at: .modPlayerMagicSlowdown, on: .player,
             subjects: subjects, seams: seams
         )

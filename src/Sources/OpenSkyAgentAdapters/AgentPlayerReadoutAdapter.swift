@@ -85,7 +85,7 @@ extension AgentPlayerReadoutAdapter {
             game.actorWorld.actorValueHolder(for: .player).map { runtime.ownedPerks(of: $0) }
         } ?? []).map { .string($0.editorID ?? "\($0.id)") })
         let cloak = game.actorWorld.actorValueHolder(for: .player)
-            .flatMap(game.magic.cloakIsRunning)
+            .flatMap(game.magic.archetypeActions.cloakIsRunning)
         result["cloak"] = .string(cloak.map { $0 ? "running" : "suspended" } ?? "none")
         result["firstPerson"] = statusReadout.firstPersonState(gameSession: gameSession)
         result["melee"] = statusReadout.meleeState()

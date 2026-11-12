@@ -37,7 +37,7 @@ struct MagicCoordinatorRaceEffectTests {
             )
         )
         let coordinator = MagicCoordinator(world: FakeMagicWorld(), data: data)
-        let links = coordinator.raceEffectLinks(
+        let links = coordinator.raceEffects.raceEffectLinks(
             base: FormID(Self.villager), actor: SpellbookFixture.key(Self.villager)
         )
         // Resist Fire has two entries; Dragonskin's entries are left out.

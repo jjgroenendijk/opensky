@@ -7,7 +7,7 @@ import Testing
 struct CloakKnockTests {
     /// Shield Charge's cloak has magnitude 6: 6 feet, which is 128 units.
     @Test func aCloakOfSixFeetReaches128Units() {
-        #expect(abs(6 * MagicCoordinator.unitsPerFoot - 128) < 0.001)
+        #expect(abs(6 * MagicCoordinator.CloakPulses.unitsPerFoot - 128) < 0.001)
     }
 
     @Test func thePushIsTheImpactForceScaledForBipeds() {

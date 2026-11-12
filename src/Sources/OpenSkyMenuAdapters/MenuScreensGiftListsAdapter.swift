@@ -27,7 +27,7 @@ public struct MenuScreensGiftListsAdapter {
 extension MenuScreensGiftListsAdapter {
     /// "All" first, then one tab per spell kind in the order the kinds first appear.
     var magicMenuCategories: [ItemListCategory] {
-        let spells = game.magic.magicMenuSpells.enumerated().map { index, spell in
+        let spells = game.magic.magicMenu.magicMenuSpells.enumerated().map { index, spell in
             (kind: spell.typeName, row: ItemListRow(
                 tag: UInt32(index), name: spell.name, isEquipped: spell.isReadied
             ))
@@ -42,7 +42,7 @@ extension MenuScreensGiftListsAdapter {
     }
 
     public func readySpell(at index: Int, leftHand: Bool) -> String {
-        game.magic.readyKnownSpellLine(at: index, in: leftHand ? .left : .right)
+        game.magic.menuLines.readyKnownSpellLine(at: index, in: leftHand ? .left : .right)
     }
 }
 

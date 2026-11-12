@@ -48,7 +48,7 @@ extension RagdollDeathsAdapter {
             game.storyWorld.reportKill(victim: key, killer: killer)
         }
         game.scripts.bridge?.recordKill(victim: key, killer: killer)
-        game.magic.noteDeath(of: key, killer: killer)
+        game.magic.soulTrapping.noteDeath(of: key, killer: killer)
         clearLocations(afterDeathOf: key)
         grantDeathItem(to: key)
         return game.scripts.runtime?.queueActorDeath(actor: key, killer: killer) ?? 0

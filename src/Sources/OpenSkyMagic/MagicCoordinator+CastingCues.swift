@@ -5,18 +5,18 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
-public import OpenSkyMagicInterface
+import OpenSkyMagicInterface
 
-extension MagicCoordinator {
+extension MagicCoordinator.CastingCueTracker {
     /// The hold each of the player's hands gets: a released hand waits for its event.
     func latched(_ intent: CastingIntent, events: [String]) -> CastingIntent {
-        guard let caster else { return intent }
+        guard let caster = coordinator.caster else { return intent }
         var latched = intent
         for hand in SpellHand.allCases {
-            let names = heldStaff(of: .player, in: hand) == nil
+            let names = coordinator.heldStaves.heldStaff(of: .player, in: hand) == nil
                 ? [SpellFireGraphNames.event(of: hand)]
                 : [SpellFireGraphNames.event(of: hand), SpellFireGraphNames.staff]
-            let held = releaseLatch.hold(
+            let held = coordinator.castingState.releaseLatch.hold(
                 hand,
                 state: (intent.isHeld(hand), caster.phase(of: hand)),
                 fired: events.contains { event in
@@ -34,14 +34,16 @@ extension MagicCoordinator {
 
     /// What the player's graph hears as `bWantCastLeft` or `bWantCastRight`: a hand
     /// whose release waits no longer wants to cast, so the graph throws the spell.
-    public func wantsCast(_ hand: SpellHand) -> Bool {
-        (caster?.phase(of: hand).isCasting ?? false) && !releaseLatch.isWaiting(hand)
+    func wantsCast(_ hand: SpellHand) -> Bool {
+        (coordinator.caster?.phase(of: hand).isCasting ?? false) && !coordinator.castingState
+            .releaseLatch
+            .isWaiting(hand)
     }
 
     func advanceCastingCues(weaponsDrawn: Bool?) {
-        guard let caster else { return }
+        guard let caster = coordinator.caster else { return }
         let completed = caster.takeCompletedCasts()
-        var slots = Set(castingViews.keys)
+        var slots = Set(coordinator.castingState.castingViews.keys)
         for key in caster.castingActors + [.player] {
             for hand in SpellHand.allCases {
                 slots.insert(CastSlot(caster: key, hand: hand))
@@ -53,33 +55,37 @@ extension MagicCoordinator {
         for slot in ordered {
             let new = view(of: caster.state(of: slot.hand, on: slot.caster))
             let cues = CastingCueRule.cues(
-                from: castingViews[slot] ?? CastingHandView(),
+                from: coordinator.castingState.castingViews[slot] ?? CastingHandView(),
                 to: new,
                 cast: completed.last { $0.slot == slot }?.spell
             )
             emit(cues, by: slot.caster)
-            castingViews[slot] = new.phase == .idle ? nil : new
+            coordinator.castingState.castingViews[slot] = new.phase == .idle ? nil : new
         }
-        let readied = world.actorValueHolder(for: .player).map { holder in
+        let readied = coordinator.world.actorValueHolder(for: .player).map { holder in
             SpellHand.allCases.compactMap { caster.spellbook.state(of: holder).spell(in: $0) }
         } ?? []
         emit(
-            CastingCueRule.drawCues(drawn: wasWeaponsDrawn, now: weaponsDrawn, readied: readied),
+            CastingCueRule.drawCues(
+                drawn: coordinator.castingState.wasWeaponsDrawn,
+                now: weaponsDrawn,
+                readied: readied
+            ),
             by: .player
         )
-        if wasWeaponsDrawn == true, weaponsDrawn == false {
-            dismissBoundWeaponsOnSheathe(of: .player)
+        if coordinator.castingState.wasWeaponsDrawn == true, weaponsDrawn == false {
+            coordinator.weaponArchetypes.dismissBoundWeaponsOnSheathe(of: .player)
         }
-        wasWeaponsDrawn = weaponsDrawn
+        coordinator.castingState.wasWeaponsDrawn = weaponsDrawn
     }
 
     /// The readout line: how many cues went out, the last one, and a waiting release.
     var castingCueText: String {
-        let last = lastCastingCue.map { "; last: \($0)" } ?? ""
-        let waiting = SpellHand.allCases.filter(releaseLatch.isWaiting)
+        let last = coordinator.castingState.lastCastingCue.map { "; last: \($0)" } ?? ""
+        let waiting = SpellHand.allCases.filter(coordinator.castingState.releaseLatch.isWaiting)
             .map { "; release waits for \(SpellFireGraphNames.event(of: $0))" }
             .joined()
-        return "Casting cues: \(castingCueCount)\(last)\(waiting)"
+        return "Casting cues: \(coordinator.castingState.castingCueCount)\(last)\(waiting)"
     }
 
     private func view(of state: SpellCastState) -> CastingHandView {
@@ -88,26 +94,28 @@ extension MagicCoordinator {
             spell: state.spell,
             isDualCast: state.isDualCast,
             isConcentration: state.spell
-                .flatMap { caster?.spellbook.record($0)?.data?.castingType } == .concentration
+                .flatMap { coordinator.caster?.spellbook.record($0)?.data?.castingType } ==
+                .concentration
         )
     }
 
     private func emit(_ cues: [CastingCue], by key: ReferenceKey) {
         for cue in cues {
             guard
-                let spell = caster?.spellbook.record(cue.spell),
+                let spell = coordinator.caster?.spellbook.record(cue.spell),
                 let effect = spell.effects.max(by: { $0.cost < $1.cost })?.effect
             else { continue }
             if case .art = cue.what, let light = effect.effect.data?.castingLight {
-                pendingCommands.append(.castingLight(
+                coordinator.pendingCommands.append(.castingLight(
                     light, plugin: effect.sourcePlugin, caster: key, starts: cue.starts
                 ))
             }
             guard let command = command(for: cue, effect: effect, caster: key) else { continue }
-            pendingCommands.append(command)
-            castingCueCount += 1
+            coordinator.pendingCommands.append(command)
+            coordinator.castingState.castingCueCount += 1
             if cue.starts {
-                lastCastingCue = "\(Self.name(of: cue.what)) of \(spell.displayName)"
+                coordinator.castingState.lastCastingCue =
+                    "\(Self.name(of: cue.what)) of \(spell.displayName)"
             }
         }
     }
@@ -118,7 +126,7 @@ extension MagicCoordinator {
         switch cue.what {
         case let .sound(kind):
             guard
-                let store = effects?.effects,
+                let store = coordinator.effects?.effects,
                 let descriptor = effect.effect.sounds.first(where: { $0.kind == kind.rawValue })?
                     .descriptor,
                 let id = store.resolvedID(descriptor, fromPlugin: effect.sourcePlugin),

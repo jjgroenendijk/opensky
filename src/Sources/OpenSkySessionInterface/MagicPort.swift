@@ -6,71 +6,53 @@ public import OpenSkyProgressionInterface
 
 /// What the world adapters use of `MagicCoordinator`.
 public protocol MagicPort: AnyObject {
-    @discardableResult func reconcilePerkAbilities(
-        on holder: ActorValueHolder,
-        perks: any PerkAccess
-    ) -> Bool
-    func dispelEffects(on holder: ActorValueHolder, where predicate: (ActiveEffect) -> Bool) -> Int
+    associatedtype FrameStep: MagicFrameStepPort
+    var frameStep: FrameStep { get }
+    associatedtype ItemUse: MagicItemUsePort
+    var itemUse: ItemUse { get }
+    associatedtype WeaponEnchantments: MagicWeaponEnchantmentsPort
+    var weaponEnchantments: WeaponEnchantments { get }
+    associatedtype ShoutVoice: MagicShoutVoicePort
+    var shoutVoice: ShoutVoice { get }
+    associatedtype SoulTrapping: MagicSoulTrappingPort
+    var soulTrapping: SoulTrapping { get }
+    associatedtype MenuLines: MagicMenuLinesPort
+    var menuLines: MenuLines { get }
+    associatedtype MagicMenu: MagicMenuListPort
+    var magicMenu: MagicMenu { get }
+    associatedtype WorldArchetypeActions: MagicWorldArchetypesPort
+    var worldArchetypeActions: WorldArchetypeActions { get }
+    associatedtype ArchetypeActions: MagicArchetypeActionsPort
+    var archetypeActions: ArchetypeActions { get }
+
     associatedtype ActiveEffectRuntime: ActiveEffectRuntimePort
     associatedtype ShoutMachine: ShoutMachinePort
     associatedtype CasterRuntime: CasterRuntimePort
-    @discardableResult func applyPlacedPoison(
-        _ poison: FormID,
-        by caster: ReferenceKey,
-        on target: ReferenceKey
-    ) -> Int?
     @discardableResult func applySpellHit(_ hit: SpellHit) -> SpellHitReport
-    @discardableResult func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit)
-        -> WeaponEnchantmentReport?
-    @discardableResult func applyWeaponEnhancement(
-        attacker: ReferenceKey,
-        target: ReferenceKey
-    ) -> Int
-    func applyWeaponPoison(_ hit: WeaponPoisonHit)
     var caster: CasterRuntime? { get }
-    func cloakIsRunning(on holder: ActorValueHolder) -> Bool?
     var commanded: [CommandedActor] { get }
-    @discardableResult func consumeMagicItem(_ item: FormID) -> MagicEffectActionOutcome
     var effects: ActiveEffectRuntime? { get }
-    func elapseRestTime(seconds: Double)
-    var enchantmentCacheReadout: EnchantmentCacheReadout { get }
-    func enchantmentLine(of item: FormID, on holder: ActorValueHolder?) -> String?
-    func enchantmentProfile(of item: FormID, on holder: InventoryHolder?) -> ItemEnchantmentProfile?
-    @discardableResult func equipmentChanged(on holder: InventoryHolder) -> WornEnchantmentReport
-    func grantAuthoredSpells(to holder: ActorValueHolder)
-    func hasReadiedSpell(in hand: SpellHand) -> Bool
     var holdSettings: MagicHoldSettings { get }
-    func influence(of key: ReferenceKey) -> ActorMagicInfluence
-    var isPlayerTakingHealthDamage: Bool { get }
     func magicConditionResolution() -> MagicConditionResolution
     var magicLights: [MagicLight] { get }
-    var magicMenuSpells: [MagicMenuSpell] { get }
-    @discardableResult func noteDeath(
-        of victim: ReferenceKey,
-        killer: ReferenceKey?
-    ) -> SoulTrapOutcome?
     func noteEffectsRestored()
-    @discardableResult func npcShout(_ spell: ReferenceKey, by holder: ActorValueHolder) -> Bool
-    func npcShouts(of holder: ActorValueHolder) -> [ResolvedShout]
     var playerGrabbedReference: ReferenceKey? { get }
     func playerKnownSpells() -> [ResolvedSpell]
     func playerStaff() -> (staff: HeldStaff, charge: EnchantmentCharge)?
     func raceEffectLinks(base: FormID, actor: ReferenceKey) -> [SpellHitEffectLinks]
-    /// Reads `item` and gives the line the outcome shows, or nil for no spell tome.
-    func readBookLine(_ item: FormID) -> String?
-    /// Readies a known spell and gives the line the outcome shows.
-    func readyKnownSpellLine(at index: Int, in hand: SpellHand) -> String
-    func restoreShoutCooldown(_ seconds: Float)
     var shoutMachine: ShoutMachine { get }
     var shouts: [ReferenceKey: ResolvedShout] { get }
-    func spellLanded(_ payload: SpellPayload, at point: SIMD3<Float>)
     var summonFades: [ReferenceKey: Float] { get }
-    func takeCommands() -> [MagicCommand]
-    @discardableResult func trapSoul(
-        of victim: ReferenceKey,
-        by caster: ReferenceKey
-    ) -> SoulTrapOutcome
 
+    var timeScales: MagicTimeScales { get }
+
+    func wantsCast(_ hand: SpellHand) -> Bool
+}
+
+/// The frame step: effects, casting, and the commands they leave.
+public protocol MagicFrameStepPort {
+    func elapseRestTime(seconds: Double)
+    func takeCommands() -> [MagicCommand]
     func advanceCasting(
         _ intent: CastingIntent,
         isPlayerControlled: Bool,
@@ -78,20 +60,92 @@ public protocol MagicPort: AnyObject {
         weaponsDrawn: Bool?
     ) -> [MagicCommand]
     func advanceEffects(delta: Float) -> [MagicCommand]
+}
 
+/// Consuming magic items, authored spells, and dispelling.
+public protocol MagicItemUsePort {
+    @discardableResult func reconcilePerkAbilities(
+        on holder: ActorValueHolder,
+        perks: any PerkAccess
+    ) -> Bool
+    func dispelEffects(on holder: ActorValueHolder, where predicate: (ActiveEffect) -> Bool) -> Int
+    @discardableResult func consumeMagicItem(_ item: FormID) -> MagicEffectActionOutcome
+    func grantAuthoredSpells(to holder: ActorValueHolder)
+    func hasReadiedSpell(in hand: SpellHand) -> Bool
+}
+
+/// Weapon and worn enchantments, and poisons.
+public protocol MagicWeaponEnchantmentsPort {
+    @discardableResult func applyPlacedPoison(
+        _ poison: FormID,
+        by caster: ReferenceKey,
+        on target: ReferenceKey
+    ) -> Int?
+    @discardableResult func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit)
+        -> WeaponEnchantmentReport?
+    func applyWeaponPoison(_ hit: WeaponPoisonHit)
+    var enchantmentCacheReadout: EnchantmentCacheReadout { get }
+    func enchantmentLine(of item: FormID, on holder: ActorValueHolder?) -> String?
+    func enchantmentProfile(of item: FormID, on holder: InventoryHolder?) -> ItemEnchantmentProfile?
+    @discardableResult func equipmentChanged(on holder: InventoryHolder) -> WornEnchantmentReport
+}
+
+/// Shouts the player and NPCs voice.
+public protocol MagicShoutVoicePort {
+    @discardableResult func npcShout(_ spell: ReferenceKey, by holder: ActorValueHolder) -> Bool
+    func npcShouts(of holder: ActorValueHolder) -> [ResolvedShout]
+    func restoreShoutCooldown(_ seconds: Float)
     func advanceShout(
         held: Bool,
         delta: Float,
         events: [String],
         isPlayerControlled: Bool
     ) -> [MagicCommand]
-    var timeScales: MagicTimeScales { get }
+}
 
-    func wantsCast(_ hand: SpellHand) -> Bool
+/// Deaths and the souls they fill gems with.
+public protocol MagicSoulTrappingPort {
+    @discardableResult func noteDeath(
+        of victim: ReferenceKey,
+        killer: ReferenceKey?
+    ) -> SoulTrapOutcome?
+    @discardableResult func trapSoul(
+        of victim: ReferenceKey,
+        by caster: ReferenceKey
+    ) -> SoulTrapOutcome
+}
+
+/// The lines a menu shows for a read book or a readied spell.
+public protocol MagicMenuLinesPort {
+    /// Reads `item` and gives the line the outcome shows, or nil for no spell tome.
+    func readBookLine(_ item: FormID) -> String?
+    /// Readies a known spell and gives the line the outcome shows.
+    func readyKnownSpellLine(at index: Int, in hand: SpellHand) -> String
+}
+
+/// What the Magic menu lists.
+public protocol MagicMenuListPort {
+    var isPlayerTakingHealthDamage: Bool { get }
+    var magicMenuSpells: [MagicMenuSpell] { get }
+}
+
+/// Effects that act on the world when a spell or a weapon lands.
+public protocol MagicWorldArchetypesPort {
+    @discardableResult func applyWeaponEnhancement(
+        attacker: ReferenceKey,
+        target: ReferenceKey
+    ) -> Int
+    func spellLanded(_ payload: SpellPayload, at point: SIMD3<Float>)
+}
+
+/// What the running effects do to an actor.
+public protocol MagicArchetypeActionsPort {
+    func cloakIsRunning(on holder: ActorValueHolder) -> Bool?
+    func influence(of key: ReferenceKey) -> ActorMagicInfluence
 }
 
 /// The default arguments a protocol requirement cannot carry.
-extension MagicPort {
+extension MagicWeaponEnchantmentsPort {
     @discardableResult public func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile? {
         enchantmentProfile(of: item, on: nil)
     }

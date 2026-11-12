@@ -4,12 +4,12 @@
 // actor. The rules live in `SummonCore`. See docs/engine/magic-archetypes.md.
 
 import OpenSkyConditions
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 
-extension MagicCoordinator {
+extension MagicCoordinator.SummonCommands {
     func performCommanding(_ action: MagicWorldAction) {
         switch action.phase {
         case .began where action.archetype == .summon: summon(action)
@@ -20,7 +20,7 @@ extension MagicCoordinator {
 
     /// How many actors `caster` may command at once.
     func commandLimit(of caster: ReferenceKey) -> Int {
-        let limit = world.perkModified(
+        let limit = coordinator.world.perkModified(
             SummonCore.baseCommandLimit, at: .modCommandedActorLimit, on: caster,
             subjects: PerkEvaluationSubjects(owner: caster), seams: ConditionContext()
         )
@@ -30,55 +30,44 @@ extension MagicCoordinator {
     /// "On death, the creature automatically fades out": a fallen actor ends its effect,
     /// and the end sends it away.
     func advanceCommanded(delta: Float) {
-        for actor in commanded where world.isActorDead(actor.actor) {
+        for actor in coordinator.commanded where coordinator.world.isActorDead(actor.actor) {
             dispel(actor.sequence, on: actor.holder)
         }
         let step = delta.isFinite ? max(delta, 0) : 0
-        fadingSummons = fadingSummons.map { ($0.actor, $0.seconds - step) }
-        for gone in fadingSummons where gone.seconds <= 0 {
-            world.releaseCommandedActor(gone.actor)
+        coordinator.fadingSummons = coordinator.fadingSummons.map { ($0.actor, $0.seconds - step) }
+        for gone in coordinator.fadingSummons where gone.seconds <= 0 {
+            coordinator.world.releaseCommandedActor(gone.actor)
         }
-        fadingSummons.removeAll { $0.seconds <= 0 }
+        coordinator.fadingSummons.removeAll { $0.seconds <= 0 }
     }
 
     /// A summon stays `fSummonedCreatureFadeOutSeconds` before it goes; a raised corpse
     /// falls at once.
     private func send(_ actor: CommandedActor) {
-        guard actor.kind == .summoned, summonSettings.fadeOutSeconds > 0 else {
-            world.releaseCommandedActor(actor)
+        guard actor.kind == .summoned, coordinator.rules.summons.fadeOutSeconds > 0 else {
+            coordinator.world.releaseCommandedActor(actor)
             return
         }
-        world.stopCommandedActor(actor.actor)
-        fadingSummons.append((actor, summonSettings.fadeOutSeconds))
+        coordinator.world.stopCommandedActor(actor.actor)
+        coordinator.fadingSummons.append((actor, coordinator.rules.summons.fadeOutSeconds))
     }
 
     /// How far each dismissed summon has faded, 0 to 1, over `fSummonedCreatureFadeOutSeconds`.
-    public var summonFades: [ReferenceKey: Float] {
-        let total = summonSettings.fadeOutSeconds
+    var summonFades: [ReferenceKey: Float] {
+        let total = coordinator.rules.summons.fadeOutSeconds
         guard total > 0 else { return [:] }
-        return fadingSummons.reduce(into: [:]) { fades, entry in
+        return coordinator.fadingSummons.reduce(into: [:]) { fades, entry in
             fades[entry.actor.actor] = min(max(1 - entry.seconds / total, 0), 1)
         }
-    }
-
-    /// The readout line: who the player commands, against the limit, and who is fading.
-    var commandedText: String {
-        let mine = commanded.filter { $0.caster == .player }
-        let names = mine.compactMap { world.actorValueHolder(for: $0.actor) }
-            .map(world.actorName)
-        let list = names.isEmpty ? "" : ": " + names.joined(separator: ", ")
-        let fading = summonFades.values.map { "\(Int(($0 * 100).rounded()))%" }.sorted()
-        let fades = fading.isEmpty ? "" : "; fading \(fading.joined(separator: ", "))"
-        return "Commanded: \(mine.count) of \(commandLimit(of: .player))\(list)\(fades)"
     }
 
     private func summon(_ action: MagicWorldAction) {
         let caster = action.caster ?? action.target.key
         guard
-            let item = associatedItem(of: action.effect),
-            let base = effects?.effects.loadOrderFormID(item),
-            let actor = world.summonActor(
-                base, at: summonPoints.removeValue(forKey: caster), for: caster
+            let item = coordinator.associatedItem(of: action.effect),
+            let base = coordinator.effects?.effects.loadOrderFormID(item),
+            let actor = coordinator.world.summonActor(
+                base, at: coordinator.summonPoints.removeValue(forKey: caster), for: caster
             )
         else { return }
         command(CommandedActor(
@@ -91,7 +80,7 @@ extension MagicCoordinator {
     private func reanimate(_ action: MagicWorldAction) {
         let corpse = action.target.key
         let caster = action.caster ?? .player
-        guard world.reanimate(corpse, for: caster) else {
+        guard coordinator.world.reanimate(corpse, for: caster) else {
             dispel(action.sequence, on: corpse)
             return
         }
@@ -105,13 +94,13 @@ extension MagicCoordinator {
     /// Dark Souls: the caster's chosen spell lands on the actor it raised.
     private func applyReanimateSpell(caster: ReferenceKey, on actor: ReferenceKey) {
         guard
-            let spell = world.perkChoices(
+            let spell = coordinator.world.perkChoices(
                 at: .applyReanimateSpell, on: caster,
                 subjects: PerkEvaluationSubjects(owner: caster, target: actor),
                 seams: ConditionContext()
             ).lazy.compactMap(\.spell).first
         else { return }
-        applySpellHit(SpellHit(
+        coordinator.casterBridge.applySpellHit(SpellHit(
             payload: spell.payload(caster: caster), targets: [SpellHitTarget(key: actor)]
         ))
     }
@@ -119,9 +108,9 @@ extension MagicCoordinator {
     /// Past the limit the caster's oldest actor goes, and the effect that held it ends.
     private func command(_ actor: CommandedActor) {
         let outcome = SummonCore.commanding(
-            actor, in: commanded, limit: commandLimit(of: actor.caster)
+            actor, in: coordinator.commanded, limit: commandLimit(of: actor.caster)
         )
-        commanded = outcome.kept
+        coordinator.commanded = outcome.kept
         for old in outcome.released {
             send(old)
             dispel(old.sequence, on: old.holder)
@@ -129,13 +118,17 @@ extension MagicCoordinator {
     }
 
     private func release(_ action: MagicWorldAction) {
-        guard let index = SummonCore.ending(action.sequence, on: action.target.key, in: commanded)
+        guard let index = SummonCore.ending(
+            action.sequence,
+            on: action.target.key,
+            in: coordinator.commanded
+        )
         else { return }
-        send(commanded.remove(at: index))
+        send(coordinator.commanded.remove(at: index))
     }
 
     private func dispel(_ sequence: UInt64, on key: ReferenceKey) {
-        guard let holder = world.actorValueHolder(for: key) else { return }
-        withEffects { $0.dispel(on: holder) { $0.sequence == sequence } }
+        guard let holder = coordinator.world.actorValueHolder(for: key) else { return }
+        coordinator.withEffects { $0.dispel(on: holder) { $0.sequence == sequence } }
     }
 }

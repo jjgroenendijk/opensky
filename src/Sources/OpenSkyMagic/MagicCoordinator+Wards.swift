@@ -7,12 +7,13 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyConditions
-public import OpenSkyFormatsESM
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 
-extension MagicCoordinator {
+extension MagicCoordinator.WardShields {
     /// Ward strength restored per second. OpenSky's choice: Lesser Ward's magnitude,
     /// so a ward refills in about a second, as it charges.
     static let wardRecoveryPerSecond: Float = 40
@@ -23,21 +24,27 @@ extension MagicCoordinator {
 
     /// `IsWardState` values. Taken from the `OnWardHit` statuses; the condition's own
     /// page gives none.
-    public enum WardState: Int32, Sendable {
+    enum WardState: Int32, Sendable {
         case none = 0
         case absorbing = 1
         case broken = 2
     }
 
+    /// The absorption roll, in 0 ..< 100, from a fixed seed. A test replaces it.
+    static func seededDefenceRoll() -> () -> Float {
+        { [stream = RandomStream(seed: 0x5350_4446)] in stream.float(in: 0 ..< 100) }
+    }
+
     func spellHitDefences() -> SpellHitDefences {
         var defences = SpellHitDefences()
-        defences.absorptionRoll = spellDefenceRoll
-        defences.wardFaces = { [world] target, caster in world.actor(target, faces: caster) }
-        defences.reaches = { [world] target, impact in world.point(impact, canSee: target) }
-        defences.wardPowerCap = { [weak self] holder in
-            self?.wardPowerCap(of: holder) ?? .infinity
+        defences.absorptionRoll = coordinator.spellDefenceRoll
+        let world = coordinator.world
+        defences.wardFaces = { target, caster in world.actor(target, faces: caster) }
+        defences.reaches = { target, impact in world.point(impact, canSee: target) }
+        defences.wardPowerCap = { [weak coordinator] holder in
+            coordinator?.wardShields.wardPowerCap(of: holder) ?? .infinity
         }
-        defences.wardMagickaShare = { [world] holder in
+        defences.wardMagickaShare = { holder in
             world.perkModified(
                 0, at: .modWardMagickaAbsorptionPct, on: holder,
                 subjects: PerkEvaluationSubjects(owner: holder), seams: ConditionContext()
@@ -49,18 +56,18 @@ extension MagicCoordinator {
     /// A broken ward staggers its holder and ends the holder's casts.
     func breakWards(_ holders: [ReferenceKey]) {
         for key in holders {
-            brokenWardSeconds[key] = Self.brokenWardSeconds
-            pendingCommands.append(.stagger(key, magnitude: Self.wardBreakStagger))
-            guard let holder = world.actorValueHolder(for: key) else { continue }
+            coordinator.brokenWardSeconds[key] = Self.brokenWardSeconds
+            coordinator.pendingCommands.append(.stagger(key, magnitude: Self.wardBreakStagger))
+            guard let holder = coordinator.world.actorValueHolder(for: key) else { continue }
             for hand in SpellHand.allCases {
-                caster?.cancel(hand, on: holder)
+                coordinator.caster?.cancel(hand, on: holder)
             }
         }
     }
 
     /// Restores lost ward strength and runs the broken-ward clocks.
     func recoverWards(delta: Float, over holders: [ActorValueHolder]) {
-        guard delta > 0, let effects else { return }
+        guard delta > 0, let effects = coordinator.effects else { return }
         for holder in holders {
             effects.values.restore(
                 at: SpellHitApplication.wardPowerActorValue,
@@ -68,14 +75,14 @@ extension MagicCoordinator {
                 on: holder
             )
         }
-        brokenWardSeconds = brokenWardSeconds
+        coordinator.brokenWardSeconds = coordinator.brokenWardSeconds
             .mapValues { $0 - delta }
             .filter { $0.value > 0 }
     }
 
     /// The most ward power `holder` may use: a share of its strongest running ward.
     func wardPowerCap(of holder: ActorValueHolder) -> Float {
-        guard let effects else { return .infinity }
+        guard let effects = coordinator.effects else { return .infinity }
         let strongest = effects.active(on: holder)
             .filter { effects.rule(of: $0) == .accumulate }
             .flatMap(\.values)
@@ -85,17 +92,17 @@ extension MagicCoordinator {
         guard let strongest else { return .infinity }
         let skill = ActorValueIdentity.index(named: "Restoration")
             .flatMap { effects.values.value(at: $0, on: holder) } ?? 0
-        return worldSettings.wardPowerCap(strongest: strongest, skill: skill)
+        return coordinator.rules.world.wardPowerCap(strongest: strongest, skill: skill)
     }
 
     /// The ward state of `key` as `IsWardState` reads it.
-    public func wardState(of key: ReferenceKey) -> WardState {
-        if brokenWardSeconds[key] != nil {
+    func wardState(of key: ReferenceKey) -> WardState {
+        if coordinator.brokenWardSeconds[key] != nil {
             return .broken
         }
         guard
-            let holder = world.actorValueHolder(for: key),
-            let power = effects?.values.value(
+            let holder = coordinator.world.actorValueHolder(for: key),
+            let power = coordinator.effects?.values.value(
                 at: SpellHitApplication.wardPowerActorValue,
                 on: holder
             )

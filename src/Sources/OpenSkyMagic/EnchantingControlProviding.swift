@@ -19,13 +19,16 @@ nonisolated struct EnchantingControlSnapshot: Equatable, Sendable {
     let gems: [EnchantingGemReadout]
 }
 
-extension MagicCoordinator {
+extension MagicCoordinator.EnchantingReadout {
     var enchantingSnapshot: EnchantingControlSnapshot {
-        guard effects != nil, enchantmentStore != nil, let inventory = world.inventory else {
+        guard
+            coordinator.effects != nil, coordinator.enchantmentStore != nil,
+            let inventory = coordinator.world.inventory
+        else {
             return .unavailable
         }
         return EnchantingControlSnapshot(
-            gems: carriedGems(inventory).filter { $0.soul != .empty }.map {
+            gems: coordinator.soulTrapping.carriedGems(inventory).filter { $0.soul != .empty }.map {
                 EnchantingGemReadout(gem: $0)
             }
         )

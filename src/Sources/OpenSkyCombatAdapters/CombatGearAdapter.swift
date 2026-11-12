@@ -48,11 +48,11 @@ extension CombatGearAdapter {
     }
 
     public func magicInfluence(of key: ReferenceKey) -> ActorMagicInfluence {
-        game.magic.influence(of: key)
+        game.magic.archetypeActions.influence(of: key)
     }
 
     public func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile? {
-        game.magic.enchantmentProfile(of: item, on: .player)
+        game.magic.weaponEnchantments.enchantmentProfile(of: item, on: .player)
     }
 
     public func temperLevel(of item: FormID) -> Int32 {
@@ -72,7 +72,7 @@ extension CombatGearAdapter {
     }
 
     public func hasReadiedSpell(in hand: SpellHand) -> Bool {
-        game.magic.hasReadiedSpell(in: hand)
+        game.magic.itemUse.hasReadiedSpell(in: hand)
     }
 
     public func playerCarriedItems() -> [FormID] {

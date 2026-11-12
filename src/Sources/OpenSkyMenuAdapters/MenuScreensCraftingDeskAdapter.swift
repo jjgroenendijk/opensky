@@ -37,7 +37,7 @@ extension MenuScreensCraftingDeskAdapter {
     }
 
     public func readBook(_ item: FormID) -> String? {
-        game.magic.readBookLine(item)
+        game.magic.menuLines.readBookLine(item)
     }
 
     public func noteBookRead(_ item: FormID, reference: FormID?) {

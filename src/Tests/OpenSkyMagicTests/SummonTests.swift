@@ -64,10 +64,10 @@ struct SummonTests {
         #expect(coordinator.commanded.map(\.kind) == [.summoned])
 
         for _ in 0 ..< 610 {
-            _ = coordinator.advanceEffects(delta: 0.1)
+            _ = coordinator.frameStep.advanceEffects(delta: 0.1)
         }
         #expect(coordinator.commanded.isEmpty)
-        coordinator.advanceCommanded(delta: 2)
+        coordinator.summonCommands.advanceCommanded(delta: 2)
         #expect(world.releasedActors.map(\.actor) == [.generated(1)])
     }
 
@@ -76,22 +76,22 @@ struct SummonTests {
         let coordinator = try makeCoordinator()
         Self.cast(Archetype.summon, on: .player, coordinator)
         world.dead = [.generated(1)]
-        coordinator.advanceCommanded(delta: 0)
-        #expect(coordinator.summonFades == [.generated(1): 0])
-        coordinator.advanceCommanded(delta: 0.75)
-        #expect(abs((coordinator.summonFades[.generated(1)] ?? 0) - 0.5) < 0.001)
-        coordinator.advanceCommanded(delta: 0.75)
-        #expect(coordinator.summonFades.isEmpty)
+        coordinator.summonCommands.advanceCommanded(delta: 0)
+        #expect(coordinator.summonCommands.summonFades == [.generated(1): 0])
+        coordinator.summonCommands.advanceCommanded(delta: 0.75)
+        #expect(abs((coordinator.summonCommands.summonFades[.generated(1)] ?? 0) - 0.5) < 0.001)
+        coordinator.summonCommands.advanceCommanded(delta: 0.75)
+        #expect(coordinator.summonCommands.summonFades.isEmpty)
     }
 
     @Test func aSummonThatDiesFadesAndItsEffectEnds() throws {
         let coordinator = try makeCoordinator()
         Self.cast(Archetype.summon, on: .player, coordinator)
         world.dead = [.generated(1)]
-        coordinator.advanceCommanded(delta: 0)
+        coordinator.summonCommands.advanceCommanded(delta: 0)
         #expect(coordinator.commanded.isEmpty)
         #expect(world.releasedActors.isEmpty)
-        coordinator.advanceCommanded(delta: 2)
+        coordinator.summonCommands.advanceCommanded(delta: 2)
         #expect(world.releasedActors.map(\.actor) == [.generated(1)])
         #expect(coordinator.effects?.active(on: .player).isEmpty == true)
     }
@@ -102,7 +102,7 @@ struct SummonTests {
         Self.cast(Archetype.summon, on: .player, coordinator)
         Self.cast(Archetype.summon, on: .player, coordinator)
         #expect(coordinator.commanded.map(\.actor) == [.generated(2)])
-        coordinator.advanceCommanded(delta: 2)
+        coordinator.summonCommands.advanceCommanded(delta: 2)
         #expect(world.releasedActors.map(\.actor) == [.generated(1)])
         #expect(coordinator.effects?.active(on: .player).count == 1)
     }
@@ -112,7 +112,7 @@ struct SummonTests {
         world.perkValues[.modCommandedActorLimit] = 2
         Self.cast(Archetype.summon, on: .player, coordinator)
         Self.cast(Archetype.summon, on: .player, coordinator)
-        #expect(coordinator.commandLimit(of: .player) == 2)
+        #expect(coordinator.summonCommands.commandLimit(of: .player) == 2)
         #expect(coordinator.commanded.count == 2)
         #expect(world.releasedActors.isEmpty)
     }

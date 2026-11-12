@@ -97,7 +97,7 @@ struct RagdollWorldTests {
     @Test func aDeathIsReportedToTheStoryAndMagic() {
         #expect(adapter.queueActorDeathEvents(for: Self.actor, killer: .player) == 0)
         #expect(host.fakeStoryWorld.reportKillCalls.map(\.victim) == [Self.actor])
-        #expect(host.fakeMagic.noteDeathCalls.map(\.victim) == [Self.actor])
+        #expect(host.fakeMagic.soulTrapping.noteDeathCalls.map(\.victim) == [Self.actor])
         #expect(adapter.selectedRagdollActor == nil)
         #expect(adapter.playerFeetPosition == nil)
         #expect(!adapter.searchCorpse(Self.actor))

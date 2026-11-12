@@ -45,13 +45,13 @@ struct InventoryWorldAdapterTests {
         host.fakePlayer.isSneaking = true
         host.fakeStreamer.appearanceSkipReasonsResult = ["no skeleton"]
         host.fakeCrime.theftBountyResult = 40
-        host.fakeMagic.enchantmentLineResult = "Fire Damage"
+        host.fakeMagic.weaponEnchantments.enchantmentLineResult = "Fire Damage"
         #expect(adapter.isPlayerSneaking)
         #expect(adapter.appearanceSkipReasons(forActor: Self.item) == ["no skeleton"])
         #expect(adapter.theftBounty(of: Self.item, from: Self.key) == 40)
         #expect(adapter.enchantmentLine(of: Self.item, on: Self.key) == "Fire Damage")
         #expect(host.fakeActorWorld.actorValueHolderCalls == [Self.key])
-        #expect(host.fakeMagic.enchantmentLineCalls.map(\.item) == [Self.item])
+        #expect(host.fakeMagic.weaponEnchantments.enchantmentLineCalls.map(\.item) == [Self.item])
     }
 
     @Test func theCrosshairAndBooksComeFromTheHUDAndTheBookMenu() throws {
@@ -122,9 +122,12 @@ struct InventoryWorldAdapterTests {
 
     @Test func aPlacedPoisonIsAppliedByThePlayer() {
         #expect(!adapter.applyPlacedPoison(Self.item, on: Self.key))
-        host.fakeMagic.applyPlacedPoisonResult = 1
+        host.fakeMagic.weaponEnchantments.applyPlacedPoisonResult = 1
         #expect(adapter.applyPlacedPoison(Self.item, on: Self.key))
-        #expect(host.fakeMagic.applyPlacedPoisonCalls.map(\.caster) == [.player, .player])
+        #expect(host.fakeMagic.weaponEnchantments.applyPlacedPoisonCalls.map(\.caster) == [
+            .player,
+            .player
+        ])
     }
 
     @Test func perksModifyValuesAndLabels() throws {

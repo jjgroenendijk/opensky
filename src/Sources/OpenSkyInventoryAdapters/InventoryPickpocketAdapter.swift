@@ -97,6 +97,6 @@ extension InventoryPickpocketAdapter {
     }
 
     public func applyPlacedPoison(_ poison: FormID, on target: ReferenceKey) -> Bool {
-        game.magic.applyPlacedPoison(poison, by: .player, on: target) != nil
+        game.magic.weaponEnchantments.applyPlacedPoison(poison, by: .player, on: target) != nil
     }
 }

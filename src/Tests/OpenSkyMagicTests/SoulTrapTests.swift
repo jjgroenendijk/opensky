@@ -101,7 +101,7 @@ struct SoulTrapTests {
     /// A level 1 creature's petty soul goes into the petty gem, which keeps it per copy.
     @Test func aDeathUnderTheEffectFillsTheSmallestGem() throws {
         let trap = try session([Gems.common, Gems.petty])
-        let outcome = trap.coordinator.noteDeath(of: Self.victim)
+        let outcome = trap.coordinator.soulTrapping.noteDeath(of: Self.victim)
         #expect(outcome == .trapped(TrappedSoul(size: .petty, isBlack: false), gem: Gems.petty))
         #expect(trap.inventory.copies(of: Gems.petty, in: .player) == [ItemCopy(soul: 1)])
         #expect(trap.inventory.copies(of: Gems.common, in: .player) == [.plain])
@@ -112,7 +112,7 @@ struct SoulTrapTests {
     @Test func anNPCsSoulFillsABlackGemAndSwapsItsRecord() throws {
         let trap = try session([Gems.grand, Gems.black])
         trap.world.npcs = [Self.victim]
-        trap.coordinator.noteDeath(of: Self.victim)
+        trap.coordinator.soulTrapping.noteDeath(of: Self.victim)
         #expect(trap.inventory.count(of: Gems.black, in: .player) == 0)
         #expect(trap.inventory.count(of: Gems.blackFilled, in: .player) == 1)
         #expect(trap.inventory.count(of: Gems.grand, in: .player) == 1)
@@ -121,9 +121,12 @@ struct SoulTrapTests {
     @Test func noGemLargeEnoughFillsNothing() throws {
         let trap = try session([Gems.grand])
         trap.world.npcs = [Self.victim]
-        #expect(trap.coordinator.noteDeath(of: Self.victim)
+        #expect(trap.coordinator.soulTrapping.noteDeath(of: Self.victim)
             == .noGem(TrappedSoul(size: .grand, isBlack: true)))
         #expect(trap.world.notifications == ["No soul gem large enough"])
-        #expect(trap.coordinator.noteDeath(of: .plugin(name: "base.esm", objectID: 0x0901)) == nil)
+        #expect(trap.coordinator.soulTrapping.noteDeath(of: .plugin(
+            name: "base.esm",
+            objectID: 0x0901
+        )) == nil)
     }
 }

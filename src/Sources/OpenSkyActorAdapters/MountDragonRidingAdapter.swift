@@ -65,7 +65,7 @@ extension MountDragonRidingAdapter {
     func breathe(from mount: ReferenceKey, at target: ReferenceKey) {
         guard
             let holder = game.magicWorld.actorValueHolder(for: mount),
-            let spell = game.magic.npcShouts(of: holder).lazy
+            let spell = game.magic.shoutVoice.npcShouts(of: holder).lazy
                 .compactMap({ $0.words.last(where: { $0.spell != nil })?.spell }).first
         else { return }
         game.scripts.bridge?.castSpell(spell.key, from: mount, at: target, blame: nil)
