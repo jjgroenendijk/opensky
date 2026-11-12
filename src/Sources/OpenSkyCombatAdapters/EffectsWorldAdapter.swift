@@ -97,10 +97,6 @@ public final class EffectsWorldAdapter {
         state.nextHazardKey()
     }
 
-    var explosions: any ExplosionRuntimePort {
-        game.combat.explosions
-    }
-
     /// The visual, image-space, and sound side of one landed spell.
     public func handleSpellHit(_ event: SpellHitEvent) {
         spellHits.handleSpellHit(event)

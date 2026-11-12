@@ -100,10 +100,6 @@ extension SystemMenuCoordinator {
         saving.quicksave()
     }
 
-    func save(slot: String?, running: String = "Saving") {
-        saving.save(slot: slot, running: running)
-    }
-
     /// Asks before deleting the selected save, as the Delete key does in vanilla.
     func requestDeleteSelectedSave() {
         saveLoadPage?.requestDelete()

@@ -49,7 +49,6 @@ public typealias StoryWorldHosts = StoryAmbientTalkHost & StorySceneCastHost &
 public final class StoryWorldAdapter {
     public let game: any StoryWorldHost
     public let state = StoryPartState()
-    public let now: () -> Date
     let quests: StoryQuestStarts
     let frames: StoryFrameSteps
 
@@ -61,15 +60,11 @@ public final class StoryWorldAdapter {
         game.storyManager
     }
 
-    let hosts: any StoryWorldHosts
-
     /// `now` is the wall clock the subtitles time their lines on.
     public init(
         game: some StoryWorldHosts,
         now: @escaping () -> Date
     ) {
-        self.now = now
-        hosts = game
         self.game = game
         quests = StoryQuestStarts(game: game)
         frames = StoryFrameSteps(hosts: game, state: state, now: now)

@@ -14,7 +14,7 @@ import Testing
 struct CrimeStoryReportsTests {
     private static let faction = CrimeFixture.key(CrimeFixture.Factions.shopkeepers)
 
-    @Test func anArrestAndAServedSentenceEachRaiseOneEvent() {
+    @Test func anArrestWithASentenceAndTheServedTimeRaiseThreeEvents() {
         let recorder = StoryEventRecorder()
         let settlement = ArrestSettlement(
             faction: Self.faction, bounty: 40, goldPaid: 0, confiscated: [],
@@ -25,7 +25,8 @@ struct CrimeStoryReportsTests {
             faction: Self.faction, nonViolentGold: 40, violentGold: 0, sentenceDays: 1,
             exteriorMarker: .generated(4), belongings: nil, outfit: [], arrestedIn: nil
         ))
-        #expect(recorder.events.count == 2)
+        #expect(recorder.events.count == 3)
+        #expect(["ARRT", "JAIL", "STIJ"].map { recorder.events($0).count } == [1, 1, 1])
     }
 
     @Test func aScriptedOwnerIsKeptAndRaisesTheRevision() throws {

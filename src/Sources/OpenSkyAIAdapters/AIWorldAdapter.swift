@@ -106,10 +106,6 @@ final class AIFrameSteps {
         self.hosts = hosts
     }
 
-    var records: AIRecordReads {
-        AIRecordReads(game: hosts)
-    }
-
     var seating: AISeatingAdapter {
         AISeatingAdapter(game: hosts, packageMoves: packageMoves)
     }

@@ -16,7 +16,7 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyInventoryInterface
-public import OpenSkyMagicInterface
+import OpenSkyMagicInterface
 import OpenSkyMenusInterface
 import OpenSkyNavigation
 import OpenSkyPerceptionInterface
@@ -89,10 +89,6 @@ extension CombatWorldAdapter {
 
     public var gearReads: any CombatGearReads {
         gear
-    }
-
-    public func spellLanded(_ payload: SpellPayload, at point: SIMD3<Float>) {
-        reports.spellLanded(payload, at: point)
     }
 
     public var playerAttacker: MeleeAttacker? {
