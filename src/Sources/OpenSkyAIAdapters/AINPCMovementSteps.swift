@@ -14,12 +14,26 @@ import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 
+/// The cell streamer's NPC movement hooks, so a test can register them on a stand-in.
+protocol NPCMovementHooks: AnyObject {
+    var onNPCMovementPersist: ((NPCMovementPersistence) -> Void)? { get set }
+    var onNPCCellHandoff: ((NPCMovementPersistence) -> Void)? { get set }
+    var onNPCLocomotionDrive: ((NPCLocomotionDriveUpdate) -> Void)? { get set }
+    var onNPCLanding: ((ReferenceKey, WalkLanding) -> Void)? { get set }
+    var npcStandingActors: (() -> [NPCNeighbour])? { get set }
+    var npcMovementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)? { get set }
+    var npcBodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)? { get set }
+    func cellLocation(of key: ReferenceKey) -> CellSceneLocation?
+    func requestRebuild(of location: CellSceneLocation)
+}
+
+extension CellStreamer: NPCMovementHooks {}
+
 /// Registers the NPC movement hooks of one session.
 struct AINPCMovementSteps {
     let hosts: any AIWorldHosts
 
-    private func registerBodyShapes(stage: SessionStage) {
-        let streamer = stage.streamer
+    private func registerBodyShapes(on streamer: any NPCMovementHooks) {
         guard let bounds = AIRecordReads(game: hosts).bodyBoundsLoader() else { return }
         streamer.npcBodyHalfExtents = { [weak hosts] actor in
             guard let skeleton = hosts?.effectsWorld.race(of: actor)?.maleSkeletonPath else {
@@ -30,17 +44,13 @@ struct AINPCMovementSteps {
         }
     }
 
-    private func registerMovementTypes(stage: SessionStage) {
-        let streamer = stage.streamer
+    private func registerMovementTypes(on streamer: any NPCMovementHooks) {
         streamer.npcMovementSpeeds = { [weak hosts] actor in
             hosts.flatMap { AIRecordReads(game: $0).movementSpeeds(of: actor) }
         }
     }
 
-    func register(stage: SessionStage) {
-        let gameSession = stage.gameSession
-        let streamer = stage.streamer
-        streamer.npcMovementConfiguration = gameSession.locomotion.configuration.forActors
+    func register(on streamer: any NPCMovementHooks) {
         let worldState = hosts.worldState
         streamer.onNPCMovementPersist = { [weak hosts] persistence in
             worldState.set(persistence.transform, for: persistence.actor, in: persistence.cell)
@@ -48,20 +58,11 @@ struct AINPCMovementSteps {
             hosts?.followerCommands
                 .movementSettled(actor: persistence.actor, reason: persistence.reason)
         }
-        gameSession.onPlayerWalkArrived = { [weak hosts] in
-            hosts?.packages.movementSettled(actor: .player, reason: .arrival)
-        }
-        streamer.onNPCPosesChanged = { [weak gameSession] deltas in
-            gameSession?.instancePoses.npcDeltas = deltas
-        }
         streamer.npcStandingActors = { [weak hosts] in
             hosts.map { AIBumpsAdapter(game: $0).standingActors() } ?? []
         }
-        registerBodyShapes(stage: stage)
-        registerMovementTypes(stage: stage)
-        streamer.npcWaterPushRace = { [weak hosts] actor in
-            hosts?.effectsWorld.waterPushRace(of: actor) ?? .normal
-        }
+        registerBodyShapes(on: streamer)
+        registerMovementTypes(on: streamer)
         // A walker drawn by the cell it left would vanish when that cell unloads, so
         // it moves into the cell it entered, and the cell it left drops it.
         streamer.onNPCCellHandoff = { [weak hosts, weak streamer] persistence in

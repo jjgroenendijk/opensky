@@ -42,10 +42,23 @@ extension AIWorldAdapter {
     ) {
         self.init(game: game)
         guard let stage else { return }
-        frames.registerAINPCMovement(stage: stage)
+        let gameSession = stage.gameSession
+        let streamer = stage.streamer
+        streamer.npcMovementConfiguration = gameSession.locomotion.configuration.forActors
+        gameSession.onPlayerWalkArrived = { [weak game] in
+            game?.packages.movementSettled(actor: .player, reason: .arrival)
+        }
+        streamer.onNPCPosesChanged = { [weak gameSession] deltas in
+            gameSession?.instancePoses.npcDeltas = deltas
+        }
+        streamer.npcWaterPushRace = { [weak game] actor in
+            game?.effectsWorld.waterPushRace(of: actor) ?? .normal
+        }
+        AINPCMovementSteps(hosts: game).register(on: streamer)
+        gameSession.playerFurniture = worlds
         frames.registerAIPackages(stage: stage)
         frames.registerAIPerception(stage: stage)
-        frames.registerAIFurniture(stage: stage, worlds: worlds)
+        frames.registerAIFurniture(stage: stage)
         frames.registerAIOverlay(stage: stage)
     }
 
@@ -103,10 +116,6 @@ extension AIWorldAdapter {
 }
 
 extension AIFrameSteps {
-    func registerAINPCMovement(stage: SessionStage) {
-        AINPCMovementSteps(hosts: hosts).register(stage: stage)
-    }
-
     func registerAIPackages(stage: SessionStage) {
         let gameSession = stage.gameSession
         gameSession.worldTick.register(.packages) { [weak self] delta in
@@ -137,9 +146,8 @@ extension AIFrameSteps {
             }
     }
 
-    func registerAIFurniture(stage: SessionStage, worlds: AIWorldAdapter.Worlds) {
+    func registerAIFurniture(stage: SessionStage) {
         let gameSession = stage.gameSession
-        gameSession.playerFurniture = worlds
         gameSession.worldTick.register(.furniture) { [weak self] _ in
             self?.seating.poses.releaseMovedPlayer()
             self?.seating.game.furniture.advance()

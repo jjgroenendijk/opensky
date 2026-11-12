@@ -9,7 +9,7 @@ import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 import OpenSkySessionTesting
-import OpenSkyStoryAdapters
+@testable import OpenSkyStoryAdapters
 import Testing
 
 @MainActor
@@ -35,6 +35,14 @@ struct StoryWorldTests {
         #expect(throws: (any Error).self) { try adapter.startQuest(FormID(0x90), event: nil) }
         adapter.questFailed(FormID(0x90))
         #expect(host.fakeHud.showNotificationCalls.count == 1)
+    }
+
+    @Test func theSocialTickRunsOncePerFrame() {
+        let social = FakeSocialEventPort()
+        host.fakeStoryManager.social = social
+        adapter.socialSearch.tick()
+        #expect(social.tickCallCount == 1)
+        #expect(host.fakeStoryManager.fireCalls.isEmpty)
     }
 
     @Test func aKillIsReportedAsMurderAndAStoryEvent() {
