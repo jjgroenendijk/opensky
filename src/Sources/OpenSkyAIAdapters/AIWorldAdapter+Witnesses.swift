@@ -36,7 +36,6 @@ extension AIWorldAdapter {
     /// parts, so the coordinators reach only the part they need.
     public final class Worlds {
         let seating: AISeatingAdapter
-        let detectionSense: AIDetectionSenseAdapter
         let perceptionSense: AIPerceptionSenseAdapter
         let navigation: AINavigationAdapter
         let packageMoves: AIPackageMovesAdapter
@@ -45,7 +44,6 @@ extension AIWorldAdapter {
 
         init(_ adapter: AIWorldAdapter) {
             seating = adapter.seating
-            detectionSense = adapter.detectionSense
             perceptionSense = adapter.perceptionSense
             navigation = adapter.navigation
             packageMoves = adapter.packageMoves
@@ -98,11 +96,11 @@ extension AIWorldAdapter {
         }
 
         public func placeSeated(_ actor: ReferenceKey, in occupancy: FurnitureOccupancy) {
-            seating.poses.placeSeated(actor, in: occupancy)
+            seating.placeSeated(actor, in: occupancy)
         }
 
         public func placeStanding(_ actor: ReferenceKey, from occupancy: FurnitureOccupancy) {
-            seating.poses.placeStanding(actor, from: occupancy)
+            seating.placeStanding(actor, from: occupancy)
         }
 
         public func furnitureExitIsLoading(_ actor: ReferenceKey) -> Bool {
@@ -110,15 +108,15 @@ extension AIWorldAdapter {
         }
 
         public func furnitureMotion(of actor: ReferenceKey) -> FurnitureMotionSample? {
-            seating.poses.furnitureMotion(of: actor)
+            seating.furnitureMotion(of: actor)
         }
 
         public func moveFurnitureActor(_ actor: ReferenceKey, to pose: FurniturePose) {
-            seating.poses.moveFurnitureActor(actor, to: pose)
+            seating.moveFurnitureActor(actor, to: pose)
         }
 
         public func finishStanding(_ actor: ReferenceKey, at pose: FurniturePose) {
-            seating.poses.finishStanding(actor, at: pose)
+            seating.finishStanding(actor, at: pose)
         }
 
         public func residentFurniture() -> [ReferenceKey] {
@@ -146,7 +144,7 @@ extension AIWorldAdapter {
         }
 
         public func lightLevel(at position: SIMD3<Float>) -> Float {
-            detectionSense.lightLevel(at: position)
+            perceptionSense.lightLevel(at: position)
         }
 
         public func perceptionCandidates() -> [PerceptionCandidate] {
@@ -218,7 +216,7 @@ extension AIWorldAdapter {
         public func packagePlace(
             of location: Package.Location, actor: ReferenceKey, aliasQuest: FormID?
         ) -> PackagePlace? {
-            packageMoves.places.packagePlace(of: location, actor: actor, aliasQuest: aliasQuest)
+            packageMoves.packagePlace(of: location, actor: actor, aliasQuest: aliasQuest)
         }
 
         public func packageActorHoldsIdleMarker(_ actor: ReferenceKey) -> Bool {
@@ -238,13 +236,13 @@ extension AIWorldAdapter {
         }
 
         public func packageAliasStacks() -> [ReferenceKey: PackageAliasStack] {
-            packageMoves.places.packageAliasStacks()
+            packageMoves.packageAliasStacks()
         }
 
         public func packagePatrolPath(
             from start: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
         ) -> [SIMD3<Float>]? {
-            packageMoves.places.packagePatrolPath(from: start, actor: actor, aliasQuest: aliasQuest)
+            packageMoves.packagePatrolPath(from: start, actor: actor, aliasQuest: aliasQuest)
         }
 
         public func packageProcedure(_ event: PackageScriptEvent) {
@@ -294,7 +292,7 @@ extension AIWorldAdapter {
         public func packageReference(
             _ target: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
         ) -> ReferenceKey? {
-            packageActs.references.packageReference(target, actor: actor, aliasQuest: aliasQuest)
+            packageActs.packageReference(target, actor: actor, aliasQuest: aliasQuest)
         }
 
         public func stopPackageActor(_ actor: ReferenceKey) {

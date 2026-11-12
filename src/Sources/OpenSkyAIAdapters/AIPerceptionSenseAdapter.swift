@@ -120,3 +120,9 @@ extension AIPerceptionSenseAdapter {
         }
     }
 }
+
+extension AIPerceptionSenseAdapter {
+    func lightLevel(at position: SIMD3<Float>) -> Float {
+        detectionSense.lightLevel(at: position)
+    }
+}

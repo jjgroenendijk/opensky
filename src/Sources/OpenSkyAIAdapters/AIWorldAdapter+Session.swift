@@ -42,11 +42,11 @@ extension AIWorldAdapter {
     ) {
         self.init(game: game)
         guard let stage else { return }
-        registerAINPCMovement(stage: stage)
-        registerAIPackages(stage: stage)
-        registerAIPerception(stage: stage)
-        registerAIFurniture(stage: stage)
-        registerAIOverlay(stage: stage)
+        frames.registerAINPCMovement(stage: stage)
+        frames.registerAIPackages(stage: stage)
+        frames.registerAIPerception(stage: stage)
+        frames.registerAIFurniture(stage: stage, worlds: worlds)
+        frames.registerAIOverlay(stage: stage)
     }
 
     /// Loads each skeleton's BBX half extents; nil when the script files are not loaded.
@@ -57,112 +57,6 @@ extension AIWorldAdapter {
     /// The speeds of the movement type the actor's graph is in.
     public func movementSpeeds(of actor: ReferenceKey) -> MovementType.Speeds? {
         records.movementSpeeds(of: actor)
-    }
-
-    private func registerAIBodyShapes(stage: SessionStage) {
-        let streamer = stage.streamer
-        guard let bounds = bodyBoundsLoader() else { return }
-        streamer.npcBodyHalfExtents = { [weak game = self.game] actor in
-            guard let skeleton = game?.effectsWorld.race(of: actor)?.maleSkeletonPath else {
-                return nil
-            }
-            _ = bounds.drain()
-            return bounds.value(for: ActorGraphCore.projectPath(modelPath: skeleton))
-        }
-    }
-
-    private func registerAIMovementTypes(stage: SessionStage) {
-        let streamer = stage.streamer
-        streamer.npcMovementSpeeds = { [weak self] actor in self?.movementSpeeds(of: actor) }
-    }
-
-    private func registerAINPCMovement(stage: SessionStage) {
-        let gameSession = stage.gameSession
-        let streamer = stage.streamer
-        streamer.npcMovementConfiguration = gameSession.locomotion.configuration.forActors
-        let worldState = game.worldState
-        streamer.onNPCMovementPersist = { [weak game = self.game] persistence in
-            worldState.set(persistence.transform, for: persistence.actor, in: persistence.cell)
-            game?.packages.movementSettled(actor: persistence.actor, reason: persistence.reason)
-            game?.followerCommands
-                .movementSettled(actor: persistence.actor, reason: persistence.reason)
-        }
-        gameSession.onPlayerWalkArrived = { [weak game = self.game] in
-            game?.packages.movementSettled(actor: .player, reason: .arrival)
-        }
-        streamer.onNPCPosesChanged = { [weak gameSession] deltas in
-            gameSession?.instancePoses.npcDeltas = deltas
-        }
-        streamer.npcStandingActors = { [weak self] in self?.bumps.standingActors() ?? [] }
-        registerAIBodyShapes(stage: stage)
-        registerAIMovementTypes(stage: stage)
-        streamer.npcWaterPushRace = { [weak game = self.game] actor in
-            game?.effectsWorld.waterPushRace(of: actor) ?? .normal
-        }
-        // A walker drawn by the cell it left would vanish when that cell unloads, so
-        // it moves into the cell it entered, and the cell it left drops it.
-        streamer.onNPCCellHandoff = { [weak game = self.game, weak streamer] persistence in
-            guard let cell = persistence.cell, let streamer else { return }
-            let drawing = streamer.cellLocation(of: persistence.actor)
-            game?.scripts.bridge?.relocate(persistence.actor, to: cell)
-            if let drawing, drawing != cell {
-                streamer.requestRebuild(of: drawing)
-            }
-        }
-        streamer.onNPCLocomotionDrive = { [weak game = self.game] update in
-            game?.actorGraphWorld.drive(update)
-            game?.npcAnimation.drive(update)
-        }
-        streamer.onNPCLanding = { [weak game = self.game] actor, landing in
-            game?.combat.applyFall(height: landing.height, speed: landing.speed, to: actor)
-        }
-    }
-
-    private func registerAIPackages(stage: SessionStage) {
-        let gameSession = stage.gameSession
-        gameSession.worldTick.register(.packages) { [weak self] delta in
-            guard let self, game.packages.runtime != nil else { return }
-            game.packages.advance(by: Float(delta))
-            bumps.advanceBumps()
-        }
-    }
-
-    private func registerAIPerception(stage: SessionStage) {
-        let gameSession = stage.gameSession
-        let renderer = gameSession.renderer
-        gameSession.worldTick.register(.perception) { [weak self] delta in
-            guard let adapter = self?.perceptionSense else { return }
-            adapter.run(adapter.game.perception.advance(by: delta))
-            // After the pass, so a trespass is judged against this frame's detection.
-            adapter.game.crime.advanceTrespass(by: Double(delta))
-            adapter.game.crime.advanceFavour()
-            adapter.game.crime.advanceReports()
-            adapter.game.crime.advanceJail()
-            // After the trespass, so the guards see a bounty charged this frame.
-            adapter.game.crimeWorld.run(adapter.game.crime.advanceGuardResponse())
-        }
-        renderer.worldOverlaySources
-            .register(identifier: "detection") { [weak self] context, list in
-                self?.perceptionSense.game.perception
-                    .appendWorldOverlay(context: context, to: &list)
-            }
-    }
-
-    private func registerAIFurniture(stage: SessionStage) {
-        let gameSession = stage.gameSession
-        gameSession.playerFurniture = worlds
-        gameSession.worldTick.register(.furniture) { [weak self] _ in
-            self?.seating.poses.releaseMovedPlayer()
-            self?.seating.game.furniture.advance()
-        }
-    }
-
-    private func registerAIOverlay(stage: SessionStage) {
-        let streamer = stage.streamer
-        stage.gameSession.renderer.worldOverlaySources
-            .register(identifier: "navigation") { [weak streamer] context, list in
-                streamer?.appendNavigationWorldOverlay(context: context, to: &list)
-            }
     }
 }
 
@@ -205,5 +99,58 @@ struct AIRecordReads {
 extension AIWorldAdapter {
     var records: AIRecordReads {
         AIRecordReads(game: game)
+    }
+}
+
+extension AIFrameSteps {
+    func registerAINPCMovement(stage: SessionStage) {
+        AINPCMovementSteps(hosts: hosts).register(stage: stage)
+    }
+
+    func registerAIPackages(stage: SessionStage) {
+        let gameSession = stage.gameSession
+        gameSession.worldTick.register(.packages) { [weak self] delta in
+            guard let self, game.packages.runtime != nil else { return }
+            game.packages.advance(by: Float(delta))
+            bumps.advanceBumps()
+        }
+    }
+
+    func registerAIPerception(stage: SessionStage) {
+        let gameSession = stage.gameSession
+        let renderer = gameSession.renderer
+        gameSession.worldTick.register(.perception) { [weak self] delta in
+            guard let adapter = self?.perceptionSense else { return }
+            adapter.run(adapter.game.perception.advance(by: delta))
+            // After the pass, so a trespass is judged against this frame's detection.
+            adapter.game.crime.advanceTrespass(by: Double(delta))
+            adapter.game.crime.advanceFavour()
+            adapter.game.crime.advanceReports()
+            adapter.game.crime.advanceJail()
+            // After the trespass, so the guards see a bounty charged this frame.
+            adapter.game.crimeWorld.run(adapter.game.crime.advanceGuardResponse())
+        }
+        renderer.worldOverlaySources
+            .register(identifier: "detection") { [weak self] context, list in
+                self?.perceptionSense.game.perception
+                    .appendWorldOverlay(context: context, to: &list)
+            }
+    }
+
+    func registerAIFurniture(stage: SessionStage, worlds: AIWorldAdapter.Worlds) {
+        let gameSession = stage.gameSession
+        gameSession.playerFurniture = worlds
+        gameSession.worldTick.register(.furniture) { [weak self] _ in
+            self?.seating.poses.releaseMovedPlayer()
+            self?.seating.game.furniture.advance()
+        }
+    }
+
+    func registerAIOverlay(stage: SessionStage) {
+        let streamer = stage.streamer
+        stage.gameSession.renderer.worldOverlaySources
+            .register(identifier: "navigation") { [weak streamer] context, list in
+                streamer?.appendNavigationWorldOverlay(context: context, to: &list)
+            }
     }
 }

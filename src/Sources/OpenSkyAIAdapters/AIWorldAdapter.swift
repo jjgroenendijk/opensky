@@ -55,7 +55,64 @@ public typealias AIWorldHosts = AIBumpsHost & AIDetectionSenseHost & AINavigatio
 public final class AIWorldAdapter {
     public let game: any AIWorldHost
 
+    let frames: AIFrameSteps
+
+    var seating: AISeatingAdapter {
+        frames.seating
+    }
+
+    public var perceptionSense: AIPerceptionSenseAdapter {
+        frames.perceptionSense
+    }
+
+    var navigation: AINavigationAdapter {
+        frames.navigation
+    }
+
+    var packageMoves: AIPackageMovesAdapter {
+        frames.packageMoves
+    }
+
+    var packageState: AIPackageStateAdapter {
+        frames.packageState
+    }
+
+    public var packageActs: AIPackageActsAdapter {
+        frames.packageActs
+    }
+
+    public private(set) lazy var worlds = Worlds(self)
+
+    public var bumps: AIBumpsAdapter {
+        frames.bumps
+    }
+
+    public init(game: some AIWorldHosts) {
+        self.game = game
+        frames = AIFrameSteps(hosts: game)
+    }
+
+    public func packageData() -> PackageSessionData? {
+        records.packageData()
+    }
+}
+
+/// The AI parts over one host, and the frame steps that move NPCs, run packages and
+/// perception, and seat actors.
+final class AIFrameSteps {
     let hosts: any AIWorldHosts
+
+    init(hosts: any AIWorldHosts) {
+        self.hosts = hosts
+    }
+
+    var game: any AIWorldHost {
+        hosts
+    }
+
+    var records: AIRecordReads {
+        AIRecordReads(game: game)
+    }
 
     var seating: AISeatingAdapter {
         AISeatingAdapter(game: hosts, packageMoves: packageMoves)
@@ -65,7 +122,7 @@ public final class AIWorldAdapter {
         AIDetectionSenseAdapter(game: hosts)
     }
 
-    public var perceptionSense: AIPerceptionSenseAdapter {
+    var perceptionSense: AIPerceptionSenseAdapter {
         AIPerceptionSenseAdapter(game: hosts, detectionSense: detectionSense)
     }
 
@@ -81,24 +138,13 @@ public final class AIWorldAdapter {
         AIPackageStateAdapter(game: hosts, packageMoves: packageMoves)
     }
 
-    public var packageActs: AIPackageActsAdapter {
+    var packageActs: AIPackageActsAdapter {
         AIPackageActsAdapter(
             game: hosts, packageMoves: packageMoves, navigation: navigation
         )
     }
 
-    public private(set) lazy var worlds = Worlds(self)
-
-    public var bumps: AIBumpsAdapter {
+    var bumps: AIBumpsAdapter {
         AIBumpsAdapter(game: hosts)
-    }
-
-    public init(game: some AIWorldHosts) {
-        hosts = game
-        self.game = game
-    }
-
-    public func packageData() -> PackageSessionData? {
-        records.packageData()
     }
 }

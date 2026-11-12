@@ -190,3 +190,11 @@ extension AIPackageActsAdapter {
         }
     }
 }
+
+extension AIPackageActsAdapter {
+    func packageReference(
+        _ target: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
+    ) -> ReferenceKey? {
+        references.packageReference(target, actor: actor, aliasQuest: aliasQuest)
+    }
+}
