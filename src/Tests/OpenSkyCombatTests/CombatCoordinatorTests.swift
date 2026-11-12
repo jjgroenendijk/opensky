@@ -53,6 +53,12 @@ struct CombatCoordinatorTests {
             .text == "Melee unavailable: no game data loaded.")
         #expect(coordinator.panels.spawnDevProjectile()
             .text == "Archery unavailable: no game data loaded.")
+        #expect(coordinator.playerActionFacts == nil)
+    }
+
+    @Test func anIdlePlayerReadsNoAttackState() {
+        let facts = Self.coordinator(FakeCoordinatorWorld()).playerActionFacts
+        #expect(facts?.attackState == ActorAttackState.none)
     }
 
     @Test func theLoopReadsTheStyleTheWorldResolves() {

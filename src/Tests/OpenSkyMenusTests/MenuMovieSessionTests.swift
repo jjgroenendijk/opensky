@@ -20,6 +20,7 @@ struct MenuMovieSessionTests {
         #expect(!session.isLoaded)
         #expect(!session.holdsLayer)
         #expect(session.error == "No game data located.")
+        #expect(!session.advance(now: 0))
     }
 
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
