@@ -50,8 +50,8 @@ struct KillMoveTests {
 
     @Test func theAttackKillsWhenItsHitTakesHealthToZero() {
         let (coordinator, world) = Self.coordinator(health: 20)
-        #expect(coordinator.startMeleeKillMove(on: Self.npc, damage: 30, power: true))
-        #expect(coordinator.startMeleeKillMove(on: Self.npc, damage: 5, power: false))
+        #expect(coordinator.meleeWorld.startMeleeKillMove(on: Self.npc, damage: 30, power: true))
+        #expect(coordinator.meleeWorld.startMeleeKillMove(on: Self.npc, damage: 5, power: false))
         #expect(world.killMoves.map(\.kills) == [true, false])
         #expect(world.killMoves.map(\.action) == [
             KillMoveAttempt.powerAttackAction, KillMoveAttempt.attackAction
@@ -61,25 +61,25 @@ struct KillMoveTests {
     @Test func anUnkillableOrDeadTargetIsNotKilled() {
         let (coordinator, world) = Self.coordinator(health: 20)
         world.unkillable = [Self.npc]
-        coordinator.startMeleeKillMove(on: Self.npc, damage: 30, power: false)
+        coordinator.meleeWorld.startMeleeKillMove(on: Self.npc, damage: 30, power: false)
         world.unkillable = []
         world.healths[Self.npc] = (0, 100)
-        coordinator.startMeleeKillMove(on: Self.npc, damage: 30, power: false)
+        coordinator.meleeWorld.startMeleeKillMove(on: Self.npc, damage: 30, power: false)
         #expect(world.killMoves.map(\.kills) == [false, false])
     }
 
     @Test func anNPCKillMoveNeverTakesThePlayer() {
         let (coordinator, world) = Self.coordinator(health: 20)
         world.healths[.player] = (1, 100)
-        #expect(!coordinator.startCombatKillMove(by: Self.npc, on: .player, damage: 30))
+        #expect(!coordinator.loopWorld.startCombatKillMove(by: Self.npc, on: .player, damage: 30))
         #expect(world.killMoves.isEmpty)
     }
 
     @Test func anActorInAKillMoveTakesTenfoldDamageAndLeavesTheFight() {
         let (coordinator, world) = Self.coordinator(health: 100)
         world.inKillMove = [Self.npc]
-        coordinator.applyHealthDamage(2, to: Self.npc, attacker: nil)
+        coordinator.shared.damage.applyHealthDamage(2, to: Self.npc, attacker: nil)
         #expect(world.damage.map(\.amount) == [20])
-        #expect(coordinator.combatIgnoredByPackage(Self.npc))
+        #expect(coordinator.loopWorld.combatIgnoredByPackage(Self.npc))
     }
 }

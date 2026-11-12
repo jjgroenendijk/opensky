@@ -39,7 +39,7 @@ struct CombatPerkTermsTests {
         world.perkFactors[.modAttackDamage] = 1.5
         world.perkFactors[.modIncomingDamage] = 0.5
         world.perkAddends[.calculateWeaponDamage] = 20
-        let strike = Self.coordinator(world).strike(Self.sword, on: Self.guardKey)
+        let strike = Self.coordinator(world).shared.strikes.strike(Self.sword, on: Self.guardKey)
 
         #expect(strike.perkMultiplier == 0.75)
         #expect(strike.weaponDamageBonus == 20)
@@ -53,11 +53,11 @@ struct CombatPerkTermsTests {
     @Test func aCriticalNeedsAPerkAndAddsItsDamage() {
         let world = Self.detected()
         let coordinator = Self.coordinator(world)
-        #expect(!coordinator.strike(Self.sword, on: Self.guardKey).isCritical)
+        #expect(!coordinator.shared.strikes.strike(Self.sword, on: Self.guardKey).isCritical)
 
         world.perkAddends[.calculateCriticalChance] = 100
         world.perkAddends[.calculateCriticalDamage] = 7
-        let strike = coordinator.strike(Self.sword, on: Self.guardKey)
+        let strike = coordinator.shared.strikes.strike(Self.sword, on: Self.guardKey)
 
         #expect(strike.isCritical)
         #expect(strike.damage(base: 10) == 17)
@@ -71,7 +71,7 @@ struct CombatPerkTermsTests {
         world.perkAddends[.calculateCriticalChance] = 100
         var bash = Self.sword
         bash.kind = .bash
-        let strike = Self.coordinator(world).strike(bash, on: Self.guardKey)
+        let strike = Self.coordinator(world).shared.strikes.strike(bash, on: Self.guardKey)
 
         #expect(strike.bashMultiplier == 2)
         #expect(strike.perkMultiplier == 1)
@@ -85,7 +85,7 @@ struct CombatPerkTermsTests {
         world.perkFactors[.modIncomingStagger] = 0.25
         var power = Self.sword
         power.kind = .power
-        let strike = Self.coordinator(world).strike(power, on: Self.guardKey)
+        let strike = Self.coordinator(world).shared.strikes.strike(power, on: Self.guardKey)
 
         #expect(strike.powerMultiplier == 1.25)
         #expect(strike.staggerMultiplier == 0.5)
@@ -98,9 +98,12 @@ struct CombatPerkTermsTests {
         world.values[Self.guardKey] = [damageResist: 100]
         let items = try ItemDefinitionStore(file: SpellStoreFixture.plugin(records: []))
         let coordinator = Self.coordinator(world, items: items)
-        let full = coordinator.armorFraction(of: Self.guardKey, against: Self.sword)
+        let full = coordinator.shared.strikes.armorFraction(of: Self.guardKey, against: Self.sword)
         world.perkFactors[.modTargetDamageResistance] = 0.5
-        let halved = coordinator.armorFraction(of: Self.guardKey, against: Self.sword)
+        let halved = coordinator.shared.strikes.armorFraction(
+            of: Self.guardKey,
+            against: Self.sword
+        )
 
         #expect(full > 0)
         #expect(abs(halved - full / 2) < 0.0001)
@@ -109,13 +112,13 @@ struct CombatPerkTermsTests {
     @Test func sweepIsAPerkAndASwingSpellLandsOnTheOwner() throws {
         let world = Self.detected()
         let coordinator = Self.coordinator(world)
-        #expect(!coordinator.perkSweeps(Self.sword))
+        #expect(!coordinator.shared.perks.perkSweeps(Self.sword))
         world.perkAddends[.setSweepAttack] = 1
-        #expect(coordinator.perkSweeps(Self.sword))
+        #expect(coordinator.shared.perks.perkSweeps(Self.sword))
 
         let spell = try Self.spell()
         world.perkSpells[.applyWeaponSwingSpell] = spell
-        coordinator.applyPerkSwingSpell(
+        coordinator.shared.perks.applyPerkSwingSpell(
             CombatBlow(attacker: Self.guardKey, handType: .sword), at: .player
         )
         #expect(world.spellHits.map(\.targets.first?.key) == [.player])
@@ -128,11 +131,11 @@ struct CombatPerkTermsTests {
         world.perkSpells[.applyCombatHitSpell] = try Self.spell()
         let coordinator = Self.coordinator(world)
 
-        coordinator.applyPerkHitSpell(Self.sword, on: Self.guardKey)
+        coordinator.shared.perks.applyPerkHitSpell(Self.sword, on: Self.guardKey)
         #expect(world.spellHits.isEmpty)
         var armed = Self.sword
         armed.weapon = FormID(0x0123)
-        coordinator.applyPerkHitSpell(armed, on: Self.guardKey)
+        coordinator.shared.perks.applyPerkHitSpell(armed, on: Self.guardKey)
         #expect(world.spellHits.map(\.targets.first?.key) == [Self.guardKey])
         #expect(world.spellHits.first?.payload.caster == .player)
     }

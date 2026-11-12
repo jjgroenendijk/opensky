@@ -38,7 +38,7 @@ struct CombatCoordinatorTests {
         let coordinator = CombatCoordinator(world: world, data: nil)
         let npc = ReferenceKey.generated(9)
         let magnitude = CombatGraphNames.staggerMagnitude
-        coordinator.writeCombatVariable(.real(0.5), named: magnitude, on: npc)
+        coordinator.meleeWorld.writeCombatVariable(.real(0.5), named: magnitude, on: npc)
         #expect(coordinator.raiseCombatEvent(CombatGraphNames.staggerStart, on: npc))
         #expect(world.actorGraphEvents[npc] == [CombatGraphNames.staggerStart])
         #expect(world.actorGraphVariables[npc]?[magnitude] == .real(0.5))
@@ -62,8 +62,8 @@ struct CombatCoordinatorTests {
         )
         world.styles[Self.guardKey] = style
         let coordinator = Self.coordinator(world)
-        #expect(coordinator.combatStyle(of: Self.guardKey) == style)
-        #expect(coordinator.combatStyle(of: .player) == nil)
+        #expect(coordinator.loopWorld.combatStyle(of: Self.guardKey) == style)
+        #expect(coordinator.loopWorld.combatStyle(of: .player) == nil)
     }
 
     /// The HUD names the actor the player last hurt while it lives and stays
@@ -73,11 +73,11 @@ struct CombatCoordinatorTests {
         world.actors = [CombatActorObservation(key: Self.guardKey, feet: SIMD3(10, 0, 0))]
         let coordinator = Self.coordinator(world)
         #expect(coordinator.engagedEnemy(playerFeet: .zero) == nil)
-        coordinator.applyHealthDamage(5, to: Self.guardKey, attacker: nil)
+        coordinator.shared.damage.applyHealthDamage(5, to: Self.guardKey, attacker: nil)
         #expect(coordinator.engagedEnemy(playerFeet: .zero) == nil)
-        coordinator.applyHealthDamage(5, to: Self.guardKey, attacker: .player)
+        coordinator.shared.damage.applyHealthDamage(5, to: Self.guardKey, attacker: .player)
         #expect(coordinator.engagedEnemy(playerFeet: .zero)?.key == Self.guardKey)
-        let far = SIMD3<Float>(CombatCoordinator.enemyBarRange + 100, 0, 0)
+        let far = SIMD3<Float>(CombatLoopWorldPart.enemyBarRange + 100, 0, 0)
         #expect(coordinator.engagedEnemy(playerFeet: far) == nil)
         world.actors = [
             CombatActorObservation(key: Self.guardKey, feet: SIMD3(10, 0, 0), isDead: true)
@@ -88,7 +88,7 @@ struct CombatCoordinatorTests {
     @Test func meleeTargetsAreTheResidentActors() {
         let world = FakeCoordinatorWorld()
         world.actors = [CombatActorObservation(key: Self.guardKey, feet: SIMD3(10, 0, 0))]
-        let targets = Self.coordinator(world).meleeTargets()
+        let targets = Self.coordinator(world).meleeWorld.meleeTargets()
         #expect(targets.map(\.key) == [Self.guardKey])
         #expect(targets.first?.feet == SIMD3(10, 0, 0))
     }
@@ -97,28 +97,28 @@ struct CombatCoordinatorTests {
     @Test func theAttackMultiplierFoldsFortify() throws {
         let world = FakeCoordinatorWorld()
         let coordinator = Self.coordinator(world)
-        #expect(coordinator.meleeAttackMultiplier(handType: .sword) == 1)
+        #expect(coordinator.meleeWorld.meleeAttackMultiplier(handType: .sword) == 1)
         let oneHanded = try #require(CombatFortifyBonus.oneHandedIndices.first)
         world.values[.player] = [oneHanded: 50]
         world.perkFactors[.modAttackDamage] = 2
-        #expect(coordinator.meleeAttackMultiplier(handType: .sword) == 1.5)
+        #expect(coordinator.meleeWorld.meleeAttackMultiplier(handType: .sword) == 1.5)
     }
 
     @Test func anUnawareTargetTakesASneakAttack() {
         let world = FakeCoordinatorWorld()
         let coordinator = Self.coordinator(world)
-        #expect(coordinator.strike(
+        #expect(coordinator.shared.strikes.strike(
             CombatBlow(attacker: .player, handType: .dagger),
             on: Self.guardKey
         )
         .sneakMultiplier == 3)
         world.detects[Self.guardKey] = [.player]
-        #expect(!coordinator.strike(
+        #expect(!coordinator.shared.strikes.strike(
             CombatBlow(attacker: .player, handType: .dagger),
             on: Self.guardKey
         )
         .isSneakAttack)
-        #expect(!coordinator.strike(
+        #expect(!coordinator.shared.strikes.strike(
             CombatBlow(attacker: Self.guardKey, handType: .dagger),
             on: .player
         )
@@ -129,18 +129,18 @@ struct CombatCoordinatorTests {
     @Test func aSneakAttackGivesSneakExperienceAndANotice() {
         let world = FakeCoordinatorWorld()
         let coordinator = Self.coordinator(world)
-        _ = coordinator.meleeStrike(
+        _ = coordinator.meleeWorld.meleeStrike(
             CombatBlow(attacker: .player, handType: .dagger),
             on: Self.guardKey
         )
-        coordinator.applyProjectileDamage(5, to: Self.guardKey, from: .player)
+        coordinator.projectileWorld.applyProjectileDamage(5, to: Self.guardKey, from: .player)
 
         #expect(world.skillUses.map(\.action) == [.sneakAttack, .sneakAttack])
         #expect(world.skillUses.map(\.amount) == [30, 2.5])
         #expect(coordinator.takeCommands().first
             == .showNotification("sSuccessfulSneakAttackMain3.0sSuccessfulSneakAttackEnd"))
         world.detects[Self.guardKey] = [.player]
-        _ = coordinator.meleeStrike(
+        _ = coordinator.meleeWorld.meleeStrike(
             CombatBlow(attacker: .player, handType: .dagger),
             on: Self.guardKey
         )
@@ -154,12 +154,12 @@ struct CombatCoordinatorTests {
         let twoHanded = try #require(ActorValueIdentity.index(named: "Two-Handed"))
         world.values[.player] = [twoHanded: 100]
         world.values[Self.guardKey] = [twoHanded: 100]
-        #expect(coordinator.strike(
+        #expect(coordinator.shared.strikes.strike(
             CombatBlow(attacker: .player, handType: .battleaxe),
             on: Self.guardKey
         )
         .skillMultiplier == 1.5)
-        #expect(coordinator.strike(
+        #expect(coordinator.shared.strikes.strike(
             CombatBlow(attacker: Self.guardKey, handType: .battleaxe),
             on: .player
         )
@@ -172,7 +172,7 @@ struct CombatCoordinatorTests {
         let blocked = MeleeDamageResult(
             base: 20, blockedFraction: 0.5, applied: 10, attackMultiplier: 2
         )
-        coordinator.applyBlockStamina(blocked, to: .player)
+        coordinator.meleeWorld.applyBlockStamina(blocked, to: .player)
         #expect(world.staminaDamage.map(\.amount) == [10])
         #expect(world.staminaDamage.map(\.key) == [.player])
     }
@@ -180,8 +180,8 @@ struct CombatCoordinatorTests {
     @Test func zeroDamageNeverReachesTheWorld() {
         let world = FakeCoordinatorWorld()
         let coordinator = Self.coordinator(world)
-        #expect(!coordinator.applyMeleeDamage(0, to: Self.guardKey))
-        #expect(coordinator.applyMeleeDamage(5, to: Self.guardKey))
+        #expect(!coordinator.meleeWorld.applyMeleeDamage(0, to: Self.guardKey))
+        #expect(coordinator.meleeWorld.applyMeleeDamage(5, to: Self.guardKey))
         #expect(world.damage.map(\.amount) == [5])
     }
 
@@ -189,7 +189,7 @@ struct CombatCoordinatorTests {
         let world = FakeCoordinatorWorld()
         let coordinator = Self.coordinator(world)
         #expect(coordinator.raiseCombatEvent("staggerStart", on: .player))
-        #expect(coordinator.raiseArcheryEvent("bowAttackStart"))
+        #expect(coordinator.projectileWorld.raiseArcheryEvent("bowAttackStart"))
         #expect(world.raisedEvents == ["staggerStart", "bowAttackStart"])
     }
 
@@ -197,8 +197,8 @@ struct CombatCoordinatorTests {
         let world = FakeCoordinatorWorld()
         world.healths[Self.guardKey] = (current: 30, maximum: 120)
         let coordinator = Self.coordinator(world)
-        #expect(coordinator.combatHealthFraction(of: Self.guardKey) == 0.25)
-        #expect(coordinator.combatHealthFraction(of: .generated(2)) == 1)
+        #expect(coordinator.loopWorld.combatHealthFraction(of: Self.guardKey) == 0.25)
+        #expect(coordinator.loopWorld.combatHealthFraction(of: .generated(2)) == 1)
     }
 
     @Test func turningCastingOffAnswersNoSpellsWithoutAsking() {
@@ -206,10 +206,10 @@ struct CombatCoordinatorTests {
         world.casting[Self.guardKey] = CombatCastingFacts(magicka: 50, spells: [])
         let coordinator = Self.coordinator(world)
         coordinator.isActorCastingEnabled = false
-        #expect(coordinator.combatCasting(of: Self.guardKey) == .none)
+        #expect(coordinator.loopWorld.combatCasting(of: Self.guardKey) == .none)
         #expect(world.castingQueries.isEmpty)
         coordinator.isActorCastingEnabled = true
-        #expect(coordinator.combatCasting(of: Self.guardKey).magicka == 50)
+        #expect(coordinator.loopWorld.combatCasting(of: Self.guardKey).magicka == 50)
         #expect(world.castingQueries == [Self.guardKey])
     }
 
@@ -217,10 +217,10 @@ struct CombatCoordinatorTests {
         let world = FakeCoordinatorWorld()
         let coordinator = Self.coordinator(world)
         let option = CombatSpellOption(spell: .generated(3), cost: 10, range: 1000)
-        #expect(coordinator.releaseCombatCast(option, by: Self.guardKey))
+        #expect(coordinator.loopWorld.releaseCombatCast(option, by: Self.guardKey))
         world.finishesCasts = false
-        #expect(!coordinator.releaseCombatCast(option, by: Self.guardKey))
-        #expect(coordinator.actorCastCount == 1)
+        #expect(!coordinator.loopWorld.releaseCombatCast(option, by: Self.guardKey))
+        #expect(coordinator.shared.actorCastCount == 1)
         #expect(coordinator.combatLoopSnapshot.actorCastCount == 1)
     }
 
@@ -232,11 +232,11 @@ struct CombatCoordinatorTests {
             base: FormID(0x1397D), location: cell,
             position: SIMD3(1, 2, 3), rotation: SIMD3(), host: nil
         )
-        let key = try #require(coordinator.spawnStuckProjectile(arrow))
+        let key = try #require(coordinator.projectileWorld.spawnStuckProjectile(arrow))
         #expect(world.spawned.map(\.base) == [FormID(0x1397D)])
-        coordinator.removeStuckProjectile(.generated(9999))
-        coordinator.removeStuckProjectile(key)
-        coordinator.removeStuckProjectile(key)
+        coordinator.projectileWorld.removeStuckProjectile(.generated(9999))
+        coordinator.projectileWorld.removeStuckProjectile(key)
+        coordinator.projectileWorld.removeStuckProjectile(key)
         #expect(coordinator.takeCommands() == [.removeReference(key)])
     }
 
@@ -245,10 +245,10 @@ struct CombatCoordinatorTests {
         world.bodyTransients = CombatTransientCounts(activeRagdolls: 2, awakeBodies: 5)
         world.trimmedBodies = CombatTransientCounts(activeRagdolls: 1, awakeBodies: 3)
         let coordinator = Self.coordinator(world)
-        #expect(coordinator.combatTransients == CombatTransientCounts(
+        #expect(coordinator.loopWorld.combatTransients == CombatTransientCounts(
             activeRagdolls: 2, awakeBodies: 5
         ))
-        let removed = coordinator.trimCombatTransients(to: .standard)
+        let removed = coordinator.loopWorld.trimCombatTransients(to: .standard)
         #expect(removed == CombatTransientCounts(activeRagdolls: 1, awakeBodies: 3))
     }
 
