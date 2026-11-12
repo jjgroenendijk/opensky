@@ -248,22 +248,6 @@ public final class RagdollCoordinator {
         definitions[cacheKey] = definition
         return definition
     }
-
-    static func definitionLoader(_ library: NIFCollisionLibrary) -> DefinitionLoader {
-        { path, skeleton, scale in
-            guard
-                let model = attempt({ try library.model(path: path) }),
-                let bind = attempt({
-                    try SkeletonPoseMath.worldMatrices(
-                        skeleton: skeleton, localPoses: skeleton.referencePose
-                    )
-                })
-            else { return nil }
-            return RagdollDefinition(
-                model: model, boneNames: skeleton.boneNames, bindMatrices: bind, scale: scale
-            )
-        }
-    }
 }
 
 extension RagdollCoordinator: RagdollWorldSeam {
@@ -324,7 +308,7 @@ public struct RagdollSessionData {
 
     public init(collisionModels: NIFCollisionLibrary?, deathSettings: DeathSettings = .vanilla) {
         self.init(
-            loadDefinition: collisionModels.map(RagdollCoordinator.definitionLoader),
+            loadDefinition: collisionModels.map(RagdollDefinitionLoading.definitionLoader),
             deathSettings: deathSettings
         )
     }
@@ -343,5 +327,26 @@ extension RagdollCoordinator {
         by delta: Float, health: PlayerHealthSample
     ) -> [PlayerDeathCommand] {
         playerDeath.advance(by: delta, health: health)
+    }
+}
+
+/// Builds ragdoll definitions from the collision models and an actor's skeleton.
+enum RagdollDefinitionLoading {
+    static func definitionLoader(
+        _ library: NIFCollisionLibrary
+    ) -> RagdollCoordinator.DefinitionLoader {
+        { path, skeleton, scale in
+            guard
+                let model = attempt({ try library.model(path: path) }),
+                let bind = attempt({
+                    try SkeletonPoseMath.worldMatrices(
+                        skeleton: skeleton, localPoses: skeleton.referencePose
+                    )
+                })
+            else { return nil }
+            return RagdollDefinition(
+                model: model, boneNames: skeleton.boneNames, bindMatrices: bind, scale: scale
+            )
+        }
     }
 }

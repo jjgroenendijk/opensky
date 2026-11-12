@@ -111,13 +111,7 @@ extension RagdollCoordinator {
                 animated: animated, worldToActor: pose.actorToWorld.inverse
             ) ?? drawnRagdollBones[key]
         else { return animated }
-        let names = pose.skeleton.bones.map(\.name)
-        let base = SkeletonPose(
-            bones: SkeletonBoneIndex(names: names),
-            matrices: names.map { animated[$0] ?? matrix_identity_float4x4 }
-        )
-        let posed = base.overriding(simulated, parents: pose.skeleton.parentIndices).named
-        return animated.merging(posed) { _, drawn in drawn }
+        return RagdollPoseBlend.drawn(simulated, over: animated, skeleton: pose.skeleton)
     }
 
     /// Steps every head, and keeps where a head came to rest in its body's death state.
@@ -205,5 +199,21 @@ nonisolated enum ExcessDeadRule {
         return oldest.prefix(dead.count - limit)
             .filter { now - $0.diedAt >= settings.excessDeadSeconds }
             .map(\.key)
+    }
+}
+
+/// Lays ragdoll bones over a clip's pose, and carries their children along.
+enum RagdollPoseBlend {
+    static func drawn(
+        _ simulated: [String: float4x4], over animated: [String: float4x4],
+        skeleton: HKASkeleton
+    ) -> [String: float4x4] {
+        let names = skeleton.bones.map(\.name)
+        let base = SkeletonPose(
+            bones: SkeletonBoneIndex(names: names),
+            matrices: names.map { animated[$0] ?? matrix_identity_float4x4 }
+        )
+        let posed = base.overriding(simulated, parents: skeleton.parentIndices).named
+        return animated.merging(posed) { _, drawn in drawn }
     }
 }

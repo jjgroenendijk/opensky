@@ -115,10 +115,7 @@ extension LockCoordinator {
     }
 
     private func report(uses: Float, action: SkillAdvanceAction) -> Float {
-        guard uses > 0, let items else { return 0 }
-        return world.reportSkillUse(SkillUseEvent(
-            actor: items.player.key, action: .lockpick, amount: uses, advanceAction: action
-        ))
+        reads.report(uses: uses, action: action)
     }
 
     private func finish(opened: Bool, keyRewarded: Bool) {

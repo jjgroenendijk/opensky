@@ -91,6 +91,10 @@ public final class LockCoordinator {
     /// The selected lock.
     var selectedLock: FormID?
 
+    var reads: LockReads {
+        LockReads(world: world, items: items)
+    }
+
     public init(
         world: any LockWorld,
         items: WorldItemRuntime?,
@@ -111,17 +115,7 @@ public final class LockCoordinator {
     /// leveled lock scales only while it keeps its authored level; Papyrus
     /// `SetLockLevel` fixes it.
     public func lock(of interaction: PlacedInteraction) -> ResolvedLock? {
-        guard let items, let entry = items.references?.referenceEntry(formID: interaction.reference)
-        else { return nil }
-        let delta = items.store.component(ReferenceLockState.self, for: entry.key)
-        guard let state = ReferenceLockState.resolve(baseline: interaction.lock, delta: delta)
-        else { return nil }
-        let baseline = interaction.lock
-        let isLeveled = baseline?.isLeveled == true && baseline?.level.rawValue == state.level
-        let shown = isLeveled
-            ? LockCore.leveledLevel(authored: state.level, playerLevel: world.playerLevel)
-            : state.level
-        return ResolvedLock(key: entry.key, state: state, shownLevel: shown, isLeveled: isLeveled)
+        reads.lock(of: interaction)
     }
 
     public func carriesKey(_ key: FormID?) -> Bool {
@@ -136,10 +130,7 @@ public final class LockCoordinator {
     /// The use-key gate. A Filter Activation perk blocks the press first, as a
     /// werewolf cannot open doors. A carried key unlocks the target and lets it through.
     public func gate(_ target: InteractionTarget) -> InventoryResult<ActivationRefusal?> {
-        if
-            let entry = items?.references?.referenceEntry(formID: target.interaction.reference),
-            world.activationFilter(of: entry.key) != 0
-        {
+        if reads.filtersActivation(of: target.interaction) {
             lastAction = .blockedByPerk(name: target.interaction.name)
             return InventoryResult(.filteredByPerk)
         }
@@ -196,11 +187,7 @@ public final class LockCoordinator {
     func write(
         _ state: ReferenceLockState, locked: Bool, for key: ReferenceKey
     ) -> [InventoryCommand] {
-        guard let items else { return [] }
-        var updated = state
-        updated.isLocked = locked
-        items.store.set(updated, for: key, in: items.references?.cellLocation(of: key))
-        return [.refreshInteractionTarget]
+        reads.write(state, locked: locked, for: key)
     }
 
     @discardableResult
@@ -227,7 +214,7 @@ public final class LockCoordinator {
         guard difficulty.isPickable else { throw .requiresKey }
         let picks = lockpickCount
         guard picks > 0 else { throw .noLockpicks }
-        let perks = perkValues(lock: lock.key, level: lock.shownLevel)
+        let perks = reads.perkValues(lock: lock.key, level: lock.shownLevel)
         let parameters = LockpickingParameters.make(
             difficulty: difficulty,
             skill: world.lockpickingSkill,
@@ -248,8 +235,45 @@ public final class LockCoordinator {
         sessionExperience = 0
         lastAction = .picking(name: target.interaction.name, difficulty: difficulty)
     }
+}
 
-    private func perkValues(lock: ReferenceKey, level: UInt8) -> LockpickingPerkValues {
+/// The lock state, perk, and skill reads of `LockCoordinator`, over its world and items.
+struct LockReads {
+    let world: any LockWorld
+    let items: WorldItemRuntime?
+
+    func lock(of interaction: PlacedInteraction) -> ResolvedLock? {
+        guard let items, let entry = items.references?.referenceEntry(formID: interaction.reference)
+        else { return nil }
+        let delta = items.store.component(ReferenceLockState.self, for: entry.key)
+        guard let state = ReferenceLockState.resolve(baseline: interaction.lock, delta: delta)
+        else { return nil }
+        let baseline = interaction.lock
+        let isLeveled = baseline?.isLeveled == true && baseline?.level.rawValue == state.level
+        let shown = isLeveled
+            ? LockCore.leveledLevel(authored: state.level, playerLevel: world.playerLevel)
+            : state.level
+        return ResolvedLock(key: entry.key, state: state, shownLevel: shown, isLeveled: isLeveled)
+    }
+
+    func write(
+        _ state: ReferenceLockState, locked: Bool, for key: ReferenceKey
+    ) -> [InventoryCommand] {
+        guard let items else { return [] }
+        var updated = state
+        updated.isLocked = locked
+        items.store.set(updated, for: key, in: items.references?.cellLocation(of: key))
+        return [.refreshInteractionTarget]
+    }
+
+    /// Whether a Filter Activation perk blocks the press, as a werewolf cannot open doors.
+    func filtersActivation(of interaction: PlacedInteraction) -> Bool {
+        guard let entry = items?.references?.referenceEntry(formID: interaction.reference)
+        else { return false }
+        return world.activationFilter(of: entry.key) != 0
+    }
+
+    func perkValues(lock: ReferenceKey, level: UInt8) -> LockpickingPerkValues {
         func value(_ start: Float, _ point: PerkEntryPoint) -> Float {
             world.perkValue(start, at: point, lock: lock, level: level)
         }
@@ -260,5 +284,12 @@ public final class LockCoordinator {
             keyRewardChance: value(0, LockpickingEntryPoint.keyReward),
             crimeChance: value(1, LockpickingEntryPoint.crimeChance)
         )
+    }
+
+    func report(uses: Float, action: SkillAdvanceAction) -> Float {
+        guard uses > 0, let items else { return 0 }
+        return world.reportSkillUse(SkillUseEvent(
+            actor: items.player.key, action: .lockpick, amount: uses, advanceAction: action
+        ))
     }
 }
