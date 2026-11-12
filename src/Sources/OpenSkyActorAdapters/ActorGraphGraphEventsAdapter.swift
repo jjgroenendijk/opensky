@@ -82,6 +82,16 @@ extension ActorGraphGraphEventsAdapter {
     }
 
     public func actorSoundSources() -> [ActorSoundSource] {
+        ActorGraphSoundReads(game: game, state: state).actorSoundSources()
+    }
+}
+
+/// The sounds each resident actor makes, for `ActorGraphGraphEventsAdapter`.
+struct ActorGraphSoundReads {
+    let game: any ActorGraphGraphEventsHost
+    let state: ActorGraphPartState
+
+    func actorSoundSources() -> [ActorSoundSource] {
         let streamer = game.streamer
         return game.actorWorld.combatActors().compactMap { actor in
             guard

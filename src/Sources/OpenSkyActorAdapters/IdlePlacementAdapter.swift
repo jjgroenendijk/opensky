@@ -38,39 +38,12 @@ public struct IdlePlacementAdapter {
 }
 
 extension IdlePlacementAdapter {
-    /// FormIDs inside a package are relative to its plugin when that plugin's move.
     public func packageIdleList(_ package: FormID) -> IdlePackageList? {
-        guard
-            let store = game.actorRecords?.packageStore,
-            let idles = store.package(package)?.details.idleAnimations,
-            let resolver = store.translation(of: package)?.source ?? game.scripts.bridge?
-                .formIDResolver
-        else { return nil }
-        return IdlePackageList(
-            package: package, idles: idles.animations.compactMap(resolver.resolve),
-            flags: idles.flags, timer: idles.timer
-        )
+        IdleSceneReads(game: game).packageIdleList(package)
     }
 
     public func idleReferencePlacements() -> [IdleReferencePlacement]? {
-        let streamer = game.streamer
-        guard game.renderer != nil else { return nil }
-        let scenes = streamer.interiorScene.map { [$0] }
-            ?? streamer.composition.cells.values
-            .sorted { $0.summary.cellName < $1.summary.cellName }
-        return scenes.flatMap { scene in
-            scene.references.sortedEntries().compactMap { entry in
-                entry.placedReference.map {
-                    IdleReferencePlacement(
-                        reference: entry.key,
-                        base: $0.base,
-                        plugin: scene.ownerPluginName ?? "Skyrim.esm",
-                        position: $0.placement.position,
-                        heading: $0.placement.rotation.z
-                    )
-                }
-            }
-        }
+        IdleSceneReads(game: game).idleReferencePlacements()
     }
 
     public func idleActors() -> [IdleActorPresence] {
@@ -158,5 +131,46 @@ extension IdlePlacementAdapter {
         }
         game.player.playIdle(named: name, state: state)
         return true
+    }
+}
+
+/// The idle lists of packages and the places of resident references, for
+/// `IdlePlacementAdapter`.
+struct IdleSceneReads {
+    let game: any IdlePlacementHost
+
+    /// FormIDs inside a package are relative to its plugin when that plugin's move.
+    func packageIdleList(_ package: FormID) -> IdlePackageList? {
+        guard
+            let store = game.actorRecords?.packageStore,
+            let idles = store.package(package)?.details.idleAnimations,
+            let resolver = store.translation(of: package)?.source ?? game.scripts.bridge?
+                .formIDResolver
+        else { return nil }
+        return IdlePackageList(
+            package: package, idles: idles.animations.compactMap(resolver.resolve),
+            flags: idles.flags, timer: idles.timer
+        )
+    }
+
+    func idleReferencePlacements() -> [IdleReferencePlacement]? {
+        let streamer = game.streamer
+        guard game.renderer != nil else { return nil }
+        let scenes = streamer.interiorScene.map { [$0] }
+            ?? streamer.composition.cells.values
+            .sorted { $0.summary.cellName < $1.summary.cellName }
+        return scenes.flatMap { scene in
+            scene.references.sortedEntries().compactMap { entry in
+                entry.placedReference.map {
+                    IdleReferencePlacement(
+                        reference: entry.key,
+                        base: $0.base,
+                        plugin: scene.ownerPluginName ?? "Skyrim.esm",
+                        position: $0.placement.position,
+                        heading: $0.placement.rotation.z
+                    )
+                }
+            }
+        }
     }
 }

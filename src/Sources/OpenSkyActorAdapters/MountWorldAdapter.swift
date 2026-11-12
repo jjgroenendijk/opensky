@@ -48,6 +48,7 @@ public final class MountWorldAdapter {
     }
 
     public let dragonRidingHost: any MountDragonRidingHost
+    let doorGate: MountDoorGate
 
     public var dragonRiding: MountDragonRidingAdapter {
         MountDragonRidingAdapter(game: dragonRidingHost)
@@ -56,6 +57,7 @@ public final class MountWorldAdapter {
     public init(game: some MountWorldHost & MountDragonRidingHost) {
         dragonRidingHost = game
         self.game = game
+        doorGate = MountDoorGate(game: game)
     }
 
     /// The use key while a mount is under the player: a seated rider dismounts. True
@@ -176,7 +178,7 @@ extension MountWorldAdapter: MountWorld {
     }
 
     public func dismountOffset(of key: ReferenceKey) -> SIMD3<Float> {
-        candidates.dismountOffset(of: key)
+        MountDismountReads(game: game).dismountOffset(of: key)
     }
 }
 
@@ -224,15 +226,6 @@ struct MountCandidateReads {
         MountGraphNames.saddleBones.first { game.vehicleWorld.vehicleHasBone(key, named: $0) }
     }
 
-    private func race(of key: ReferenceKey) -> Race? {
-        guard
-            let base = game.streamer.residentActorEntry(key: key)?.placedActor?.base,
-            let resolver = game.actorRecords?.actorValueBaselines?.resolver
-        else { return nil }
-        let identity = ActorIdentityRecords(resolver: resolver)
-        return identity.race(ofBase: base).flatMap { identity.races[$0.rawValue] }
-    }
-
     private func allowMountActor(on key: ReferenceKey) -> Float {
         game.perks.modified(
             0,
@@ -276,15 +269,29 @@ struct MountCandidateReads {
             configuration: game.actorRecords?.mountMovementConfiguration ?? .synthetic
         )
     }
-
-    func dismountOffset(of key: ReferenceKey) -> SIMD3<Float> {
-        race(of: key)?.details.properties?.mountOffsets?.dismount
-            ?? RaceProperties.MountOffsets.fallbackDismount
-    }
 }
 
 extension MountWorldAdapter {
     var candidates: MountCandidateReads {
         MountCandidateReads(game: game)
+    }
+}
+
+/// Where a rider steps off each mount, from its race, for `MountWorldAdapter`.
+struct MountDismountReads {
+    let game: any MountWorldHost
+
+    private func race(of key: ReferenceKey) -> Race? {
+        guard
+            let base = game.streamer.residentActorEntry(key: key)?.placedActor?.base,
+            let resolver = game.actorRecords?.actorValueBaselines?.resolver
+        else { return nil }
+        let identity = ActorIdentityRecords(resolver: resolver)
+        return identity.race(ofBase: base).flatMap { identity.races[$0.rawValue] }
+    }
+
+    func dismountOffset(of key: ReferenceKey) -> SIMD3<Float> {
+        race(of: key)?.details.properties?.mountOffsets?.dismount
+            ?? RaceProperties.MountOffsets.fallbackDismount
     }
 }
