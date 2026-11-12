@@ -38,7 +38,7 @@ extension CrimeCoordinator {
                 guardFaction: reporter?.runtime.factions.guardFactionKey
             ),
             bounty: { ledger.entry(for: $0) },
-            values: { runtime.factions.faction(key: $0)?.faction.crimeValues },
+            values: { runtime.factions.crimeValues(of: $0) },
             settings: runtime.settings,
             now: now
         )
@@ -202,5 +202,12 @@ extension CrimeSessionWorld {
 
     func isOffLimits(_ location: CellSceneLocation?) -> Bool {
         location.map { cellTrespassFlags(at: $0).isOffLimits } ?? false
+    }
+}
+
+nonisolated extension FactionStore {
+    /// The crime values of the faction `key` names, or nil.
+    func crimeValues(of key: ReferenceKey) -> Faction.CrimeValues? {
+        faction(key: key)?.faction.crimeValues
     }
 }

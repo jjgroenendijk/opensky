@@ -235,7 +235,7 @@ struct CrimeCoordinatorTests {
         let coordinator = try Self.coordinator(world)
         func expectFresh() {
             let cached = coordinator.conditionResolution(owning: [Self.victim])
-            let fresh = coordinator.freshConditionResolution(owning: [Self.victim])
+            let fresh = CrimeConditionResolution(crime: coordinator, owning: [Self.victim])
             #expect(cached.situation == fresh.situation)
             #expect(cached.currentCrimeFaction == fresh.currentCrimeFaction)
         }

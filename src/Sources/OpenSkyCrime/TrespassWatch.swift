@@ -69,3 +69,17 @@ nonisolated public struct TrespassWatch: Equatable, Sendable {
         return .warn(remaining: max(grace - since, callDelay))
     }
 }
+
+nonisolated extension TrespassWatch {
+    /// One tick, as `step` runs it: the seconds left when the player is warned now, and
+    /// whether the trespass is charged now.
+    mutating func advance(
+        seconds: Double, seen: Bool, offLimits: Bool, settings: CrimeSettings
+    ) -> (warning: Double?, charges: Bool) {
+        switch step(seconds: seconds, seen: seen, offLimits: offLimits, settings: settings) {
+        case .none: (nil, false)
+        case let .warn(remaining): (remaining, false)
+        case .charge: (nil, true)
+        }
+    }
+}
