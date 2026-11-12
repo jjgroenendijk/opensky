@@ -190,21 +190,21 @@ struct CrimeCoordinatorTests {
     @Test func thePanelMovesAndClearsTheSelectedBounty() throws {
         let world = FakeCrimeSessionWorld()
         let coordinator = try Self.coordinator(world)
-        coordinator.bountyFactionSelection = Self.hold
-        coordinator.modifySelectedBounty(by: 1500, violent: true)
+        coordinator.factionPanel.bountyFaction = Self.hold
+        coordinator.factionPanel.modifySelectedBounty(by: 1500, violent: true)
         #expect(coordinator.crimeGold(of: Self.hold) == 1500)
         #expect(Self.hostility(coordinator.takeCommands())?.bounties
             .mapValues(\.gold) == [Self.hold: 1500])
 
-        let text = coordinator.clearSelectedBounty().text
+        let text = coordinator.factionPanel.clearSelectedBounty().text
         #expect(text == "Cleared 1500 gold owed to CrimeFactionHold.")
-        #expect(coordinator.crimeFactionSnapshot.lastActionText == text)
+        #expect(coordinator.factionPanel.snapshot.lastActionText == text)
     }
 
     @Test func resistingTurnsTheHoldsGuardsAgainstThePlayer() throws {
         let world = FakeCrimeSessionWorld()
         let coordinator = try Self.coordinator(world)
-        let text = coordinator.resistArrestWithSelectedFaction().text
+        let text = coordinator.factionPanel.resistArrestWithSelectedFaction().text
         #expect(text == "Resisted arrest with CrimeFactionHold.")
         #expect(coordinator.guards.resisted == [Self.hold])
         #expect(Self.hostility(coordinator.takeCommands())?.resisted == [Self.hold])
@@ -213,19 +213,20 @@ struct CrimeCoordinatorTests {
     @Test func joinAndLeaveActOnThePlayerByDefault() throws {
         let world = FakeCrimeSessionWorld()
         let coordinator = try Self.coordinator(world)
-        coordinator.membershipFactionSelection = Self.guards
-        #expect(coordinator.joinSelectedFaction(rank: 1).text
+        coordinator.factionPanel.membershipFaction = Self.guards
+        #expect(coordinator.factionPanel.joinSelectedFaction(rank: 1).text
             == "The player is in GuardFaction at rank 1.")
         #expect(world.memberships[.player]?.isMember(of: Self.guards) == true)
-        #expect(coordinator.leaveSelectedFaction().text == "The player left GuardFaction.")
+        #expect(coordinator.factionPanel.leaveSelectedFaction()
+            .text == "The player left GuardFaction.")
     }
 
     @Test func withoutFactionDataThePanelIsUnavailable() throws {
         let world = FakeCrimeSessionWorld()
         world.hasFactionData = false
         let coordinator = try Self.coordinator(world)
-        #expect(!coordinator.crimeFactionSnapshot.isAvailable)
-        #expect(coordinator.joinSelectedFaction(rank: 0).text
+        #expect(!coordinator.factionPanel.snapshot.isAvailable)
+        #expect(coordinator.factionPanel.joinSelectedFaction(rank: 0).text
             == CrimeFactionControlSnapshot.unavailable.lastActionText)
     }
 

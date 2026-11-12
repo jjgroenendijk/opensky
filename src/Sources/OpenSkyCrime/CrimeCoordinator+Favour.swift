@@ -31,30 +31,46 @@ public enum FavourAllowance {
 
 extension CrimeCoordinator {
     public func favourAllowance(in faction: ReferenceKey) -> Int32? {
-        guard let runtime = reporter?.runtime else { return nil }
-        return FavourAllowance.gold(
-            in: faction,
-            playerRelationships: runtime.relationships(of: .player),
-            memberships: { [world] in world.factionMemberships(of: $0) },
-            settings: runtime.settings
-        )
+        owners.favourAllowance(in: faction)
     }
 
     /// Clears the stolen flag on what the player stole from a friend's faction, when
     /// the friend's allowance covers it. Runs every tick, and acts only when a
     /// relationship, a membership, or the record of stolen items changed.
     public func advanceFavour() {
-        guard let runtime = reporter?.runtime, let inventory = world.inventory else { return }
-        let revision = runtime.revision(of: [.relationships, .factions, .stolenOrigins])
-        guard revision != favourRevision else { return }
-        favourRevision = revision
-        for origin in runtime.stolenOrigins().origins {
+        guard let runtime = reporter?.runtime else { return }
+        favourRevision = runtime.forgiveFavouredThefts(since: favourRevision, world: world)
+    }
+}
+
+extension CrimeRuntime {
+    func favourAllowance(
+        in faction: ReferenceKey, memberships: (ReferenceKey) -> ActorFactionState?
+    ) -> Int32? {
+        FavourAllowance.gold(
+            in: faction,
+            playerRelationships: relationships(of: .player),
+            memberships: memberships,
+            settings: settings
+        )
+    }
+
+    /// Clears what the friends' allowances cover. Returns the revision it acted on, or
+    /// `seen` when nothing changed since.
+    func forgiveFavouredThefts(since seen: UInt64?, world: any CrimeSessionWorld) -> UInt64? {
+        guard let inventory = world.inventory else { return seen }
+        let revision = revision(of: [.relationships, .factions, .stolenOrigins])
+        guard revision != seen else { return seen }
+        for origin in stolenOrigins().origins {
             guard
-                let allowance = favourAllowance(in: origin.owner),
+                let allowance = favourAllowance(
+                    in: origin.owner, memberships: { world.factionMemberships(of: $0) }
+                ),
                 world.itemValue(of: origin.item) <= Int64(allowance)
             else { continue }
             inventory.clearStolen(origin.item, count: origin.count, in: .player)
-            runtime.forgetStolen(origin.item, from: origin.owner)
+            forgetStolen(origin.item, from: origin.owner)
         }
+        return revision
     }
 }

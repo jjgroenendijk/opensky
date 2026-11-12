@@ -12,19 +12,6 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
-/// What the readout has selected. A nil selection falls back to the first
-/// option the snapshot offers, which is what the popups show.
-struct CrimeFactionPanelState {
-    var bountyFaction: ReferenceKey?
-    var membershipFaction: ReferenceKey?
-    var vendorOverride: ReferenceKey?
-    /// The actor the membership and vendor controls act on; nil is the player.
-    var subject: ReferenceKey?
-    var lastAction = CrimeFactionActionOutcome.idle
-    /// Built once per load order.
-    var options: CrimeFactionOptions?
-}
-
 /// The load order's crime data. `locations` is nil when the provider carries
 /// no LCTN index; then no place has a crime faction.
 public struct CrimeSessionData {
@@ -55,13 +42,17 @@ public final class CrimeCoordinator {
     /// The owner a script set on a reference with `SetActorOwner` or `SetFactionOwner`.
     /// `.some(nil)` means a script cleared the owner; nil means no script set one.
     public var scriptedOwner: ((ReferenceKey) -> ReferenceOwner??)? {
-        didSet { conditionRevision &+= 1 }
+        get { owners.scriptedOwner }
+        set {
+            owners.scriptedOwner = newValue
+            conditionRevision &+= 1
+        }
     }
 
     /// Rises whenever a script sets or clears an owner, so the crime seam is rebuilt.
     public var scriptedOwnerRevision: (() -> UInt64)?
-    let ownership: OwnershipResolver?
-    let crimeFactions: CrimeFactionResolver?
+    /// The reporter's world: who owns what, and which faction polices where.
+    let owners: CrimeOwnershipWorld
     let pluginName: String?
 
     /// Actors the player struck first. A later death counts as murder. Session
@@ -108,7 +99,7 @@ public final class CrimeCoordinator {
     var favourRevision: UInt64?
     /// Rises on every change of the in-memory state the crime condition seam reads.
     private(set) var conditionRevision: UInt64 = 0
-    let conditionCache = RevisionCache<CrimeConditionKey, CrimeConditionResolution>()
+    let conditionCache = CrimeConditionCache()
     /// Where each pursuing guard was last sent.
     var pursuitTargets: [ReferenceKey: SIMD3<Float>] = [:] {
         didSet { conditionRevision &+= 1 }
@@ -124,7 +115,7 @@ public final class CrimeCoordinator {
     /// The crime names the bounty readout uses.
     public let crimeTexts: CrimeTexts
     public internal(set) var lastGuard = GuardNote.idle
-    var panel = CrimeFactionPanelState()
+    let factionPanel: CrimeFactionPanel
 
     let world: any CrimeSessionWorld
     /// What crime asked of the app. The guard step returns and empties it.
@@ -139,19 +130,14 @@ public final class CrimeCoordinator {
         storyEvents: (any StoryEventReporting)?
     ) {
         self.world = world
+        factionPanel = CrimeFactionPanel(world: world)
         self.storyEvents = storyEvents
         crimeTexts = data?.texts ?? .vanilla
         pluginName = data?.pluginName
-        ownership = data.map {
-            OwnershipResolver(factions: $0.runtime.factions, pluginName: $0.pluginName)
-        }
-        crimeFactions = data.flatMap { data in
-            data.locations.map {
-                CrimeFactionResolver(locations: $0, factions: data.runtime.factions)
-            }
-        }
+        owners = CrimeOwnershipWorld(world: world, data: data)
+        factionPanel.host = self
         guard let data else { return }
-        let reporter = CrimeReporter(runtime: data.runtime, world: self)
+        let reporter = CrimeReporter(runtime: data.runtime, world: owners)
         reporter.storyEvents = storyEvents
         if let witnesses {
             reporter.witnesses = witnesses
@@ -249,15 +235,14 @@ public final class CrimeCoordinator {
         if lastPlayerCell != location {
             lastPlayerCell = location
             trespassWatch.enterNewCell()
-            let flags = location.map(world.cellTrespassFlags(at:)) ?? CellTrespassFlags()
-            isPlayerTrespassing = !flags.isPublicArea
-                && cellOwner(at: location).map { !crimeActor(.player).mayUse($0) } == true
+            isPlayerTrespassing = !world.isPublicArea(location)
+                && owners.cellOwner(at: location).map { !crimeActor(.player).mayUse($0) } == true
         }
         guard isPlayerTrespassing, let reporter else { return }
         let step = trespassWatch.step(
             seconds: seconds,
             seen: reporter.witnesses.isWitnessed(.player),
-            offLimits: location.map { world.cellTrespassFlags(at: $0).isOffLimits } ?? false,
+            offLimits: world.isOffLimits(location),
             settings: reporter.runtime.settings
         )
         switch step {
@@ -276,7 +261,7 @@ public final class CrimeCoordinator {
 
     public func reportTrespass(in location: CellSceneLocation?) {
         guard
-            let reporter, let owner = cellOwner(at: location),
+            let reporter, let owner = owners.cellOwner(at: location),
             !crimeActor(.player).mayUse(owner) else { return }
         note(reporter.reportTrespass(in: location, owner: owner), as: "Trespass")
     }
@@ -303,66 +288,22 @@ public final class CrimeCoordinator {
     private func note(_ outcome: CrimeOutcome, as label: String) {
         lastCrime = .recorded(outcome, label: label, faction: outcome.faction.map(factionName))
     }
-
-    private func cellOwner(at location: CellSceneLocation?) -> ReferenceOwner? {
-        guard let location, let ownership = world.cellOwnership(at: location) else { return nil }
-        return self.ownership?.owner(of: ownership)
-    }
 }
 
-extension CrimeCoordinator: CrimeWorld {
-    /// A script-set owner first, then the reference's own `XOWN`, then the owner of the
-    /// cell it stands in.
+extension CrimeCoordinator {
     public func crimeOwner(of key: ReferenceKey) -> ReferenceOwner? {
-        if let scripted = scriptedOwner?(key) {
-            return scripted
-        }
-        guard let ownership else { return nil }
-        let reference = world.references?.referenceEntry(key: key)?.placedReference
-        let cell = crimeCell(of: key).flatMap { world.cellOwnership(at: $0) }
-        return ownership.owner(
-            reference: reference.flatMap(RecordOwnership.init(reference:)),
-            cell: cell
-        )
+        owners.crimeOwner(of: key)
     }
 
     public func crimeFaction(in cell: CellSceneLocation?) -> ReferenceKey? {
-        guard
-            let cell,
-            let link = world.cellLocationLink(at: cell),
-            let resolvers = crimeFactions,
-            let location = resolvers.locations.resolve(link.link, fromPlugin: link.plugin),
-            let faction = resolvers.crimeFaction(of: location)
-        else { return nil }
-        return ReferenceKey(resolved: faction.id)
+        owners.crimeFaction(in: cell)
     }
 
-    public func crimeCell(of key: ReferenceKey) -> CellSceneLocation? {
-        world.references?.cellLocation(of: key)
+    func crimeCell(of key: ReferenceKey) -> CellSceneLocation? {
+        owners.crimeCell(of: key)
     }
 
-    public func crimeItemValue(of item: FormID) -> Int64 {
-        world.itemValue(of: item)
-    }
-
-    /// The player has no `NPC_` base here, so a base-owned reference is never
-    /// theirs. Memberships are seeded first, so an actor nobody asked about
-    /// answers from its authored `SNAM` run.
     public func crimeActor(_ key: ReferenceKey) -> CrimeActor {
-        CrimeActor(
-            base: actorBaseKey(of: key),
-            memberships: world.factionMemberships(of: key) ?? ActorFactionState()
-        )
-    }
-
-    /// The runtime identity of the `NPC_` record `key` was placed from, which
-    /// is what an `XOWN` actor link names.
-    private func actorBaseKey(of key: ReferenceKey) -> ReferenceKey? {
-        guard
-            let base = world.references?.referenceEntry(key: key)?.placedActor?.base,
-            let pluginName,
-            let resolved = reporter?.runtime.factions.resolvedID(base, fromPlugin: pluginName)
-        else { return nil }
-        return ReferenceKey(resolved: resolved)
+        owners.crimeActor(key)
     }
 }
