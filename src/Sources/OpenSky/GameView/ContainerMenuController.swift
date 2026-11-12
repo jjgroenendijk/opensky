@@ -68,11 +68,15 @@ final class ContainerMenuController {
     private(set) var movieEnabled = true
     let movie: MenuMovieSession
 
+    var deals: ContainerMenuDeals {
+        ContainerMenuDeals(game: game)
+    }
+
     init(game: any ContainerMenuHost) {
         self.game = game
         movie = MenuMovieSession(
             movies: game.swfMovies, hud: game.hud, label: "container menu movie",
-            logger: Self.logger
+            logger: ContainerMenuLog.logger
         ) { [unowned game] in game.renderer }
     }
 
@@ -138,7 +142,7 @@ final class ContainerMenuController {
 
     /// The vanilla menus show no action line, so the outcome goes to the log.
     func noteAction(_ text: String) {
-        Self.logger.info("\(text, privacy: .public)")
+        ContainerMenuLog.note(text)
     }
 
     private func resolveTarget() -> Bool {
@@ -273,14 +277,19 @@ final class ContainerMenuController {
 
     private func equipSelection() {
         guard let entry = model.selectedEntry else { return }
-        noteAction(entry.isEquipped
-            ? game.inventoryWorld.run(game.inventory.unequipItem(entry.item, on: .player)).text
-            : game.inventoryWorld.run(game.inventory.equipItem(entry.item, on: .player)).text)
+        noteAction(deals.toggleEquip(entry))
         refreshModel()
     }
+}
 
+/// The container menu's log, which takes the outcome lines the vanilla menus do not show.
+enum ContainerMenuLog {
     static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "ContainerMenu"
     )
+
+    static func note(_ text: String) {
+        logger.info("\(text, privacy: .public)")
+    }
 }

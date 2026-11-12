@@ -18,7 +18,10 @@ extension InventoryMenuController {
     // MARK: - Favourites and hotkeys
 
     func toggleFavouriteSelection() {
-        perform { refusal(.favourite, of: $0.item) ?? game.inventory.toggleFavourite($0.item).text }
+        perform {
+            itemActions.refusal(.favourite, of: $0.item)
+                ?? game.inventory.toggleFavourite($0.item).text
+        }
     }
 
     /// A number key in play: equips or unequips the bound item, or uses a potion,
@@ -29,30 +32,16 @@ extension InventoryMenuController {
             lastActionText = outcome.text
         case let .success(item):
             // A refusal shows its own notice.
-            let request = request(for: game.inventory.use(of: item), item: item)
-            if let refused = refusal(request, of: item) {
+            let request = itemActions.request(for: game.inventory.use(of: item), item: item)
+            if let refused = itemActions.refusal(request, of: item) {
                 lastActionText = refused
                 return
             }
-            lastActionText = use(item)
+            lastActionText = itemActions.use(item)
         }
         game.hud.showNotification(lastActionText ?? "")
         if isOpen {
             refreshModel()
-        }
-    }
-
-    func use(_ item: FormID) -> String {
-        let inventory = game.inventory
-        let use = inventory.use(of: item)
-        if let refused = refusal(request(for: use, item: item), of: item) {
-            return refused
-        }
-        switch use {
-        case .applyPoison: return inventory.applyPoison(item).text(game.mapWorld.settingTexts())
-        case .consume: return game.magic.consumeMagicItem(item).text
-        case .unequip: return game.inventoryWorld.run(inventory.unequipItem(item, on: .player)).text
-        case .equip: return game.inventoryWorld.run(inventory.equipItem(item, on: .player)).text
         }
     }
 

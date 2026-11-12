@@ -223,12 +223,12 @@ final class InventoryMenuController {
             books.open(item: entry.item)
             return
         }
-        perform { use($0.item) }
+        perform { itemActions.use($0.item) }
     }
 
     func dropSelection(count: Int32 = 1) {
         perform { entry in
-            refusal(.drop, of: entry.item)
+            itemActions.refusal(.drop, of: entry.item)
                 ?? game.inventory.dropPlayerItem(entry.item, count: count).text
         }
     }

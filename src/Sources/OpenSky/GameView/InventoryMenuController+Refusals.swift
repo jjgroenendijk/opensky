@@ -7,12 +7,22 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPlayer
 import OpenSkySessionInterface
 import OpenSkyWorld
 
 extension InventoryMenuController {
+    var itemActions: InventoryItemActions {
+        InventoryItemActions(game: game)
+    }
+}
+
+/// Uses and refuses the inventory menu's items. It holds the host, not the menu.
+struct InventoryItemActions {
+    let game: any InventoryMenuHost
+
     /// The refusal notice of `request` on `item`, shown on the HUD, or nil to go on.
     func refusal(_ request: ItemRequest, of item: FormID) -> String? {
         guard let text = ItemRefusalRule.refusal(request, facts(for: item)) else { return nil }
@@ -52,4 +62,18 @@ extension InventoryMenuController {
     private static let favouriteFamilies: Set<ItemDefinition.Family> = [
         .armor, .ammunition, .ingestible, .ingredient, .scroll, .weapon
     ]
+
+    func use(_ item: FormID) -> String {
+        let inventory = game.inventory
+        let use = inventory.use(of: item)
+        if let refused = refusal(request(for: use, item: item), of: item) {
+            return refused
+        }
+        switch use {
+        case .applyPoison: return inventory.applyPoison(item).text(game.mapWorld.settingTexts())
+        case .consume: return game.magic.consumeMagicItem(item).text
+        case .unequip: return game.inventoryWorld.run(inventory.unequipItem(item, on: .player)).text
+        case .equip: return game.inventoryWorld.run(inventory.equipItem(item, on: .player)).text
+        }
+    }
 }
