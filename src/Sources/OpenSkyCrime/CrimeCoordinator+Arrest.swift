@@ -21,7 +21,7 @@ extension CrimeCoordinator: CrimeArrestSession {
     ) -> Result<ArrestSettlement, ArrestRefusal>? {
         guard let arrest = crimeArrest() else { return nil }
         let owed = arrest.crime.ledger().entry(for: faction)
-        let evidence = arrest.evidenceChest(of: faction).map(chestHolder)
+        let evidence = arrest.evidenceChest(of: faction).map(world.chestHolder)
         let result: Result<ArrestSettlement, ArrestRefusal> = switch outcome {
         case let .pay(removeStolen, goToJail):
             Result { () throws(ArrestRefusal) in
@@ -47,20 +47,6 @@ extension CrimeCoordinator: CrimeArrestSession {
     public func crimeArrest() -> CrimeArrest? {
         guard let runtime = reporter?.runtime, let inventory = world.inventory else { return nil }
         return CrimeArrest(crime: runtime, inventory: inventory)
-    }
-
-    /// The resident chest when it is streamed in, so its own `CNTO` baseline
-    /// is kept, and a baseline-free holder under the same key otherwise. Every
-    /// `STOL` and `PLCN` chest in `Skyrim.esm` authors no `CNTO`.
-    func chestHolder(_ key: ReferenceKey) -> InventoryHolder {
-        if let placed = world.references?.referenceEntry(key: key)?.placedReference {
-            return InventoryHolder(
-                key: key,
-                owner: .container(base: placed.base),
-                cell: world.references?.cellLocation(of: key)
-            )
-        }
-        return InventoryHolder(key: key, owner: .generated)
     }
 
     /// The guards stood down, and the player either in the jail cell or, without
@@ -109,13 +95,25 @@ extension CrimeCoordinator: CrimeArrestSession {
             case let .confront(guardKey, faction, _) = guards.active,
             faction == settlement.faction
         else { return }
-        storyEvents?.reportStoryEvent(.arrest(
-            guardActor: guardKey, criminal: .player, location: nil,
-            crime: reporter?.lastCrimeTypes[faction] ?? .steal
+        storyEvents?.reportArrest(
+            by: guardKey, settlement: settlement, crime: reporter?.lastCrimeTypes[faction]
+        )
+    }
+}
+
+extension StoryEventReporting {
+    /// `ARRT`, and `JAIL` when the player serves time. Without a known crime, `ARRT`
+    /// names theft.
+    func reportArrest(
+        by guardKey: ReferenceKey, settlement: ArrestSettlement, crime: StoryCrimeType?
+    ) {
+        reportStoryEvent(.arrest(
+            guardActor: guardKey, criminal: .player, location: nil, crime: crime ?? .steal
         ))
         guard settlement.sentenceDays > 0 else { return }
-        storyEvents?.reportStoryEvent(.jail(
-            location: nil, guardActor: guardKey, crimeFaction: faction, gold: settlement.bounty
+        reportStoryEvent(.jail(
+            location: nil, guardActor: guardKey, crimeFaction: settlement.faction,
+            gold: settlement.bounty
         ))
     }
 }

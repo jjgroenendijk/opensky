@@ -34,7 +34,9 @@ extension CrimeCoordinator {
             return
         }
         let actions = guards.actions(
-            guards: guardCandidates(),
+            guards: world.guardCandidates(
+                guardFaction: reporter?.runtime.factions.guardFactionKey
+            ),
             bounty: { ledger.entry(for: $0) },
             values: { runtime.factions.faction(key: $0)?.faction.crimeValues },
             settings: runtime.settings,
@@ -67,28 +69,6 @@ extension CrimeCoordinator {
     }
 
     // MARK: - Private
-
-    /// Every detecting observer that polices a faction, with its distance.
-    private func guardCandidates() -> [GuardCandidate] {
-        guard
-            let guardFaction = reporter?.runtime.factions.guardFactionKey,
-            let player = world.playerFeet
-        else { return [] }
-        return world.actorsDetectingPlayer().compactMap { observer in
-            guard
-                let profile = world.socialProfile(of: observer.key),
-                let faction = GuardRecognition.policedFaction(
-                    of: profile, guardFaction: guardFaction
-                )
-            else { return nil }
-            return GuardCandidate(
-                guardKey: observer.key,
-                crimeFaction: faction,
-                detectsPlayer: true,
-                distance: simd_distance(observer.feet, player)
-            )
-        }
-    }
 
     private func carryOut(_ action: GuardAction, now: Double) {
         switch action {
@@ -181,17 +161,46 @@ extension CrimeCoordinator {
             actorFirstStrikes.insert(strike).inserted,
             policedFaction(of: aggressor) == nil,
             let faction = crimeFaction(in: crimeCell(of: target) ?? world.currentCellLocation),
-            target == .player || protects(faction, target)
+            target == .player || world.protects(faction, target)
         else { return }
         actorCriminals[faction, default: []].insert(aggressor)
         lastGuard = .actorCriminal(name: world.actorName(aggressor), faction: factionName(faction))
         refreshGuardHostility()
     }
+}
+
+extension CrimeSessionWorld {
+    /// Every detecting observer that polices a faction, with its distance.
+    func guardCandidates(guardFaction: ReferenceKey?) -> [GuardCandidate] {
+        guard let guardFaction, let player = playerFeet else { return [] }
+        return actorsDetectingPlayer().compactMap { observer in
+            guard
+                let profile = socialProfile(of: observer.key),
+                let faction = GuardRecognition.policedFaction(
+                    of: profile, guardFaction: guardFaction
+                )
+            else { return nil }
+            return GuardCandidate(
+                guardKey: observer.key,
+                crimeFaction: faction,
+                detectsPlayer: true,
+                distance: simd_distance(observer.feet, player)
+            )
+        }
+    }
 
     /// A faction protects its members and the people of the places it polices.
-    private func protects(_ faction: ReferenceKey, _ target: ReferenceKey) -> Bool {
-        guard let profile = world.socialProfile(of: target) else { return false }
+    func protects(_ faction: ReferenceKey, _ target: ReferenceKey) -> Bool {
+        guard let profile = socialProfile(of: target) else { return false }
         return profile.crimeFaction == faction
-            || world.factionMemberships(of: target)?.isMember(of: faction) == true
+            || factionMemberships(of: target)?.isMember(of: faction) == true
+    }
+
+    func isPublicArea(_ location: CellSceneLocation?) -> Bool {
+        location.map { cellTrespassFlags(at: $0).isPublicArea } ?? false
+    }
+
+    func isOffLimits(_ location: CellSceneLocation?) -> Bool {
+        location.map { cellTrespassFlags(at: $0).isOffLimits } ?? false
     }
 }

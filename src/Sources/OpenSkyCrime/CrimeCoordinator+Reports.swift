@@ -50,7 +50,11 @@ extension CrimeCoordinator {
                 showBountyNotice(gold: removed, added: false, faction: report.faction)
                 return false
             }
-            guard let witness = carrier(of: report, among: alive, living: living, distance) else {
+            guard
+                let witness = report.carrier(
+                    among: alive, living: living, within: distance, polices: policedFaction
+                )
+            else {
                 return true
             }
             lastCrime = .reportDelivered(
@@ -60,12 +64,19 @@ extension CrimeCoordinator {
         }
     }
 
+    /// The crime faction `key` polices as a guard, or nil.
+    func policedFaction(of key: ReferenceKey) -> ReferenceKey? {
+        world.policedFaction(of: key, guardFaction: reporter?.runtime.factions.guardFactionKey)
+    }
+}
+
+nonisolated extension PendingCrimeReport {
     /// The first living witness that stands near a guard of the report's faction.
-    private func carrier(
-        of report: PendingCrimeReport, among alive: [ReferenceKey],
-        living: [CrimeObserver], _ distance: Float
+    func carrier(
+        among alive: [ReferenceKey], living: [CrimeObserver], within distance: Float,
+        polices: (ReferenceKey) -> ReferenceKey?
     ) -> ReferenceKey? {
-        let guards = living.filter { policedFaction(of: $0.key) == report.faction }
+        let guards = living.filter { polices($0.key) == faction }
         guard !guards.isEmpty else { return nil }
         let positions = Dictionary(living.map { ($0.key, $0.feet) }) { first, _ in first }
         return alive.first { witness in
@@ -73,13 +84,12 @@ extension CrimeCoordinator {
             return guards.contains { simd_distance($0.feet, feet) <= distance }
         }
     }
+}
 
+extension CrimeSessionWorld {
     /// The crime faction `key` polices as a guard, or nil.
-    func policedFaction(of key: ReferenceKey) -> ReferenceKey? {
-        guard
-            let guardFaction = reporter?.runtime.factions.guardFactionKey,
-            let profile = world.socialProfile(of: key)
-        else { return nil }
+    func policedFaction(of key: ReferenceKey, guardFaction: ReferenceKey?) -> ReferenceKey? {
+        guard let guardFaction, let profile = socialProfile(of: key) else { return nil }
         return GuardRecognition.policedFaction(of: profile, guardFaction: guardFaction)
     }
 }

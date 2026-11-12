@@ -23,7 +23,7 @@ extension CrimeCoordinator {
         guard world.enterJail(through: marker) else { return false }
         let belongings = arrest.belongingsChest(of: settlement.faction)
         if let belongings {
-            moveAll(from: .player, to: chestHolder(belongings), keeping: world.lockpickItem)
+            world.storeBelongings(in: belongings, keeping: world.lockpickItem)
         }
         let outfit = arrest.jailOutfit(of: settlement.faction).map(world.wearJailOutfit) ?? []
         jailStay = JailStay(
@@ -66,14 +66,11 @@ extension CrimeCoordinator {
             days: stay.sentenceDays,
             maximumDays: reporter?.runtime.settings.maximumJailDays ?? stay.sentenceDays
         )
-        giveBack(stay)
+        world.returnBelongings(of: stay)
         let moved = world.leaveJail(to: stay.exteriorMarker)
             || world.movePlayer(toMarker: stay.exteriorMarker)
         pendingCommands.append(.incrementStat("Days Jailed", by: Int32(stay.sentenceDays)))
-        storyEvents?.reportStoryEvent(.servedTime(
-            location: nil, crimeFaction: stay.faction,
-            gold: stay.nonViolentGold + stay.violentGold, days: stay.sentenceDays
-        ))
+        storyEvents?.reportServedTime(stay)
         lastGuard = .served(
             days: stay.sentenceDays, skills: skills, faction: factionName(stay.faction),
             moved: moved
@@ -89,7 +86,7 @@ extension CrimeCoordinator {
         reporter.modifyCrimeGold(by: stay.nonViolentGold, violent: false, of: stay.faction)
         let price = reporter.reportEscape(from: stay.faction).gold
         let gold = stay.violentGold + stay.nonViolentGold + price
-        storyEvents?.reportStoryEvent(.escapeJail(location: nil, crimeFaction: stay.faction))
+        storyEvents?.reportEscape(stay)
         pendingCommands.append(.incrementStat("Jail Escapes", by: 1))
         // The escape price shows its own notice as it is charged.
         showBountyNotice(
@@ -98,45 +95,24 @@ extension CrimeCoordinator {
         lastGuard = .escaped(gold: gold, faction: factionName(stay.faction))
         refreshGuardHostility()
     }
-
-    // MARK: - Private
-
-    private func giveBack(_ stay: JailStay) {
-        guard let inventory = world.inventory else { return }
-        for piece in stay.outfit where inventory.count(of: piece, in: .player) > 0 {
-            _ = attempt { try inventory.remove(piece, count: 1, from: .player) }
-        }
-        if let belongings = stay.belongings {
-            moveAll(from: chestHolder(belongings), to: .player, keeping: nil)
-        }
-    }
-
-    /// Every stack but one of `kept` moves; a failed move leaves the stack where it is.
-    private func moveAll(
-        from source: InventoryHolder,
-        to target: InventoryHolder,
-        keeping kept: FormID?
-    ) {
-        guard let inventory = world.inventory else { return }
-        var keptOne = false
-        for stack in inventory.inventory(of: source).stacks {
-            var count = stack.count
-            if stack.item == kept, !keptOne {
-                keptOne = true
-                count -= 1
-            }
-            guard
-                count > 0,
-                attempt({ try inventory.remove(stack.item, count: count, from: source) }) != nil
-            else { continue }
-            _ = attempt { try inventory.add(stack.item, count: count, to: target) }
-        }
-    }
 }
 
 extension CrimeCoordinator {
     /// A stay a save brought back. The jail cell is found again from the player's cell.
     public func restoreJailStay(_ stay: JailStay?) {
         jailStay = stay
+    }
+}
+
+extension StoryEventReporting {
+    func reportServedTime(_ stay: JailStay) {
+        reportStoryEvent(.servedTime(
+            location: nil, crimeFaction: stay.faction,
+            gold: stay.nonViolentGold + stay.violentGold, days: stay.sentenceDays
+        ))
+    }
+
+    func reportEscape(_ stay: JailStay) {
+        reportStoryEvent(.escapeJail(location: nil, crimeFaction: stay.faction))
     }
 }

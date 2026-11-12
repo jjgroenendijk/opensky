@@ -10,14 +10,6 @@ import OpenSkyWorldState
 
 /// What the crime seam was built from: the coordinator's own state, the store kinds
 /// it reads, where the player stands, and the run-ons asked about.
-struct CrimeConditionKey: Hashable {
-    let coordinator: UInt64
-    let store: UInt64
-    let scriptedOwners: UInt64?
-    let cell: CellSceneLocation?
-    let references: [ReferenceKey]
-}
-
 extension CrimeCoordinator {
     /// Only the player's ledger travels: nothing gives an NPC a bounty, so a
     /// whole table would be a per-frame walk for rows that are all empty.
@@ -26,20 +18,11 @@ extension CrimeCoordinator {
         -> CrimeConditionResolution
     {
         guard let reporter else { return .empty }
-        let key = CrimeConditionKey(
-            coordinator: conditionRevision,
-            store: reporter.runtime.revision(of: Self.conditionKinds),
-            scriptedOwners: scriptedOwnerRevision?(),
-            cell: world.currentCellLocation,
-            references: references
-        )
-        return conditionCache.value(for: key) { freshConditionResolution(owning: references) }
+        return conditionCache.value(
+            revisions: (conditionRevision, scriptedOwnerRevision?()), runtime: reporter.runtime,
+            scope: (world.currentCellLocation, references)
+        ) { freshConditionResolution(owning: references) }
     }
-
-    /// The ledger, the gold that pays it, and faction memberships.
-    private static let conditionKinds: [WorldStateComponentKind] = [
-        .crimeLedger, .inventory, .factions
-    ]
 
     func freshConditionResolution(owning references: [ReferenceKey]) -> CrimeConditionResolution {
         guard let reporter else { return .empty }
@@ -76,4 +59,37 @@ extension CrimeCoordinator {
             owners: owners
         )
     }
+}
+
+/// The crime condition seam, built again only when something it reads changed.
+final class CrimeConditionCache {
+    private let cache = RevisionCache<CrimeConditionKey, CrimeConditionResolution>()
+
+    /// The ledger, the gold that pays it, and faction memberships.
+    private static let kinds: [WorldStateComponentKind] = [.crimeLedger, .inventory, .factions]
+
+    /// `revisions` are the coordinator's own and the scripted owners'; `scope` is the
+    /// player's cell and the references `IsOwner` may ask about.
+    func value(
+        revisions: (coordinator: UInt64, scriptedOwners: UInt64?), runtime: CrimeRuntime,
+        scope: (cell: CellSceneLocation?, references: [ReferenceKey]),
+        build: () -> CrimeConditionResolution
+    ) -> CrimeConditionResolution {
+        let key = CrimeConditionKey(
+            coordinator: revisions.coordinator,
+            store: runtime.revision(of: Self.kinds),
+            scriptedOwners: revisions.scriptedOwners,
+            cell: scope.cell,
+            references: scope.references
+        )
+        return cache.value(for: key, build: build)
+    }
+}
+
+struct CrimeConditionKey: Hashable {
+    let coordinator: UInt64
+    let store: UInt64
+    let scriptedOwners: UInt64?
+    let cell: CellSceneLocation?
+    let references: [ReferenceKey]
 }
