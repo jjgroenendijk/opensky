@@ -7,6 +7,7 @@ import OpenSkyAgentAdapters
 import OpenSkyAgentControl
 import OpenSkyCombatInterface
 import OpenSkyDialogueInterface
+import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyMenusInterface
 import OpenSkyRenderCore
@@ -107,5 +108,23 @@ struct AgentSweepTests {
             _ = handles(command)
         }
         #expect(!handles(.setQuestStage(quest: "NoSuchQuest", stage: 10)))
+    }
+}
+
+@MainActor
+struct AgentEventTapTests {
+    private let host = AgentHost()
+
+    @Test func theFirstPollTapsTheStreamersEvents() {
+        let seam = FakeActivationGateSeamPort()
+        seam.refusals = FrameSchedule()
+        host.fakeStreamer.activationGate = seam
+        host.fakeStreamer.onCellDetached = FrameSchedule()
+        host.fakeStreamer.onInteraction = FrameSchedule()
+        host.fakeScripts.scriptsSnapshot = .empty
+        host.fakeCombat.meleeCombatSnapshot = .unavailable
+        let world = AgentWorldAdapter(game: host, now: { Date(timeIntervalSinceReferenceDate: 0) })
+        world.pollEvents { _, _ in }
+        #expect(host.fakeStreamer.registerCellAttachedCalls.count == 1)
     }
 }

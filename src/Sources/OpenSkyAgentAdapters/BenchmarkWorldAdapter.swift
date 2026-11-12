@@ -62,15 +62,10 @@ public struct BenchmarkRun {
 }
 
 public final class BenchmarkWorldAdapter {
-    private static let logger = EngineLogger(
-        subsystem: "nl.jjgroenendijk.opensky",
-        category: "Benchmark"
-    )
     /// The overlay redraws every this many frames, so drawing it costs the tour little.
     private static let overlayFrames = 6
     /// The frames a tour waits after its last screenshot request, so the capture lands.
     private static let screenshotFrames = 30
-    private static let millisecondsPerSecond = 1000.0
     public let game: any BenchmarkWorldHost
     public var tour: any BenchmarkTourPort {
         game.benchmarkTour
@@ -94,12 +89,6 @@ public final class BenchmarkWorldAdapter {
     public var onRunningChange: ((Bool) -> Void)?
     public var onFinish: ((BenchmarkRun) -> Void)?
 
-    public var arrival: (any AgentTeleportJobPort)? {
-        get { state.arrival }
-        set { state.arrival = newValue }
-    }
-
-    private var arrivalStep: AgentWaitStep?
     var request: BenchmarkRequest {
         get { state.request }
         set { state.request = newValue }
@@ -113,8 +102,10 @@ public final class BenchmarkWorldAdapter {
     }
 
     private var plugins: Set<String> = []
-    /// PNGs the tour asked for; the first one waits for its window copy.
-    private var screenshots: [URL] = []
+    private lazy var capture = BenchmarkScreenshots(game: game)
+    private lazy var arrivalTracker = BenchmarkArrivalTracker(
+        game: game, state: state, mediaClock: mediaClock
+    )
     /// A finished run waits for its last PNGs, so a quit right after it keeps them.
     private var finishing: (result: BenchmarkTourResult, framesLeft: Int)?
 
@@ -163,7 +154,7 @@ public final class BenchmarkWorldAdapter {
             pendingRequest = nil
             begin(request)
         }
-        writeReadyScreenshot()
+        capture.writeReadyScreenshot()
         drainFinish()
         guard tour.isRunning else { return }
         // A loading screen or a door shows the HUD again when it ends.
@@ -177,14 +168,15 @@ public final class BenchmarkWorldAdapter {
 
     private func begin(_ request: BenchmarkRequest) {
         self.request = request
-        plugins =
-            Set((game.agentWorld.dataRoot.map { PluginLoadOrder.resolve(root: $0).entries } ?? [])
-                    .map { $0.name.lowercased() })
+        let inputs = BenchmarkRunInputs(game: game, wallClock: wallClock)
+        plugins = inputs.plugins()
         view?.attachOverlay(enabled: request.overlay)
-        let device = game.gameSession?.renderer.device
-        let machine = BenchmarkMachine.current(gpu: device?.name ?? "unknown")
+        let appStart = reportsAppStart ? inputs.appStart() : nil
+        if appStart != nil {
+            reportsAppStart = false
+        }
         do {
-            try tour.start(request, machine: machine, appStart: takeAppStart())
+            try tour.start(request, machine: inputs.machine(), appStart: appStart)
             onRunningChange?(true)
             view?.applyWindowMode(request)
         } catch {
@@ -192,18 +184,8 @@ public final class BenchmarkWorldAdapter {
         }
     }
 
-    private func takeAppStart() -> BenchmarkAppStart? {
-        guard reportsAppStart, let report = game.worldLoadReport else { return nil }
-        reportsAppStart = false
-        let sinceStart = BenchmarkAppStart.processStart()
-            .map { wallClock().timeIntervalSince($0) * Self.millisecondsPerSecond }
-        return BenchmarkAppStart(
-            report: report, session: game.sessionStartTiming, processToWorldReadyMS: sinceStart
-        )
-    }
-
     public func finishAfterScreenshots(_ result: BenchmarkTourResult) {
-        guard !screenshots.isEmpty else {
+        guard !capture.screenshots.isEmpty else {
             finish(result)
             return
         }
@@ -212,15 +194,11 @@ public final class BenchmarkWorldAdapter {
 
     private func drainFinish() {
         guard let (result, framesLeft) = finishing else { return }
-        guard screenshots.isEmpty || framesLeft == 0 else {
+        guard capture.screenshots.isEmpty || framesLeft == 0 else {
             finishing = (result, framesLeft - 1)
             return
         }
-        if !screenshots.isEmpty {
-            let count = screenshots.count
-            Self.logger.error("[ERROR] benchmark PNGs not written: \(count, privacy: .public)")
-            screenshots = []
-        }
+        capture.dropUnwritten()
         finishing = nil
         finish(result)
     }
@@ -263,38 +241,11 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
     }
 
     public func startArrival(at place: BenchmarkPlace) {
-        let target: AgentTeleportTarget = switch place {
-        case let .exterior(worldspace, x, y):
-            {
-                let cell = CellCoordinate(containing: SIMD3(x, y, 0))
-                return .grid(x: cell.x, y: cell.y, worldspace: worldspace)
-            }()
-        case let .interior(cell):
-            .cell(cell)
-        }
-        arrivalStep = nil
-        do {
-            arrival = try game.agentWorld.teleportJob(to: target)
-        } catch {
-            arrival = nil
-            arrivalStep = .done(.failure(error))
-        }
+        arrivalTracker.startArrival(at: place)
     }
 
     public func arrivalProgress() -> BenchmarkArrival {
-        if arrivalStep?.finish == nil, let arrival {
-            arrivalStep = arrival.wait.poll(now)
-        }
-        switch arrivalStep?.finish {
-        case nil:
-            return .moving
-        case let .failure(error)?:
-            return .failed(error.message)
-        case .success?:
-            guard let session = game.gameSession else { return .failed("the world closed") }
-            let eye = session.walkController.capsule.eyeHeight
-            return .arrived(feet: session.freeFlyCamera.position - SIMD3(0, 0, eye))
-        }
+        arrivalTracker.arrivalProgress()
     }
 
     public var isStreamingSettled: Bool {
@@ -363,32 +314,7 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
     }
 
     public func saveScreenshot(to url: URL) {
-        screenshots.append(url)
-        if screenshots.count == 1 {
-            game.gameSession?.renderer.requestWindowCapture()
-        }
-    }
-
-    /// The copy is readable a frame or two after it was encoded.
-    private func writeReadyScreenshot() {
-        guard
-            let url = screenshots.first,
-            let renderer = game.gameSession?.renderer,
-            let texture = renderer.takeWindowCapture()
-        else { return }
-        screenshots.removeFirst()
-        do {
-            try FileManager.default.createDirectory(
-                at: url.deletingLastPathComponent(), withIntermediateDirectories: true
-            )
-            try FrameScreenshot.write(texture: texture, to: url)
-        } catch {
-            let reason = "\(url.lastPathComponent): \(error)"
-            Self.logger.error("[ERROR] benchmark screenshot: \(reason, privacy: .public)")
-        }
-        if !screenshots.isEmpty {
-            renderer.requestWindowCapture()
-        }
+        capture.saveScreenshot(to: url)
     }
 }
 
@@ -505,5 +431,145 @@ struct BenchmarkMeasurements {
             return
         }
         renderer.captureNextFrame(to: url, done: done)
+    }
+}
+
+/// Where a tour scene's teleport is, for `BenchmarkWorldAdapter`.
+final class BenchmarkArrivalTracker {
+    let game: any BenchmarkWorldHost
+    let state: BenchmarkPartState
+    let mediaClock: () -> Double
+    private var arrivalStep: AgentWaitStep?
+
+    init(
+        game: any BenchmarkWorldHost,
+        state: BenchmarkPartState,
+        mediaClock: @escaping () -> Double
+    ) {
+        self.game = game
+        self.state = state
+        self.mediaClock = mediaClock
+    }
+
+    private var now: Double {
+        mediaClock()
+    }
+
+    private var arrival: (any AgentTeleportJobPort)? {
+        get { state.arrival }
+        set { state.arrival = newValue }
+    }
+
+    func startArrival(at place: BenchmarkPlace) {
+        let target: AgentTeleportTarget = switch place {
+        case let .exterior(worldspace, x, y):
+            {
+                let cell = CellCoordinate(containing: SIMD3(x, y, 0))
+                return .grid(x: cell.x, y: cell.y, worldspace: worldspace)
+            }()
+        case let .interior(cell):
+            .cell(cell)
+        }
+        arrivalStep = nil
+        do {
+            arrival = try game.agentWorld.teleportJob(to: target)
+        } catch {
+            arrival = nil
+            arrivalStep = .done(.failure(error))
+        }
+    }
+
+    func arrivalProgress() -> BenchmarkArrival {
+        if arrivalStep?.finish == nil, let arrival {
+            arrivalStep = arrival.wait.poll(now)
+        }
+        switch arrivalStep?.finish {
+        case nil:
+            return .moving
+        case let .failure(error)?:
+            return .failed(error.message)
+        case .success?:
+            guard let session = game.gameSession else { return .failed("the world closed") }
+            let eye = session.walkController.capsule.eyeHeight
+            return .arrived(feet: session.freeFlyCamera.position - SIMD3(0, 0, eye))
+        }
+    }
+}
+
+/// The PNGs a tour asked for, written as the window copies land, for `BenchmarkWorldAdapter`.
+final class BenchmarkScreenshots {
+    private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "Benchmark"
+    )
+    let game: any BenchmarkWorldHost
+    /// PNGs the tour asked for; the first one waits for its window copy.
+    private(set) var screenshots: [URL] = []
+
+    init(game: any BenchmarkWorldHost) {
+        self.game = game
+    }
+
+    func dropUnwritten() {
+        if !screenshots.isEmpty {
+            let count = screenshots.count
+            Self.logger.error("[ERROR] benchmark PNGs not written: \(count, privacy: .public)")
+            screenshots = []
+        }
+    }
+
+    func saveScreenshot(to url: URL) {
+        screenshots.append(url)
+        if screenshots.count == 1 {
+            game.gameSession?.renderer.requestWindowCapture()
+        }
+    }
+
+    /// The copy is readable a frame or two after it was encoded.
+    func writeReadyScreenshot() {
+        guard
+            let url = screenshots.first,
+            let renderer = game.gameSession?.renderer,
+            let texture = renderer.takeWindowCapture()
+        else { return }
+        screenshots.removeFirst()
+        do {
+            try FileManager.default.createDirectory(
+                at: url.deletingLastPathComponent(), withIntermediateDirectories: true
+            )
+            try FrameScreenshot.write(texture: texture, to: url)
+        } catch {
+            let reason = "\(url.lastPathComponent): \(error)"
+            Self.logger.error("[ERROR] benchmark screenshot: \(reason, privacy: .public)")
+        }
+        if !screenshots.isEmpty {
+            renderer.requestWindowCapture()
+        }
+    }
+}
+
+/// The machine, plugins, and app start a tour reports, for `BenchmarkWorldAdapter`.
+struct BenchmarkRunInputs {
+    private static let millisecondsPerSecond = 1000.0
+    let game: any BenchmarkWorldHost
+    let wallClock: () -> Date
+
+    func plugins() -> Set<String> {
+        Set((game.agentWorld.dataRoot.map { PluginLoadOrder.resolve(root: $0).entries } ?? [])
+            .map { $0.name.lowercased() })
+    }
+
+    func machine() -> BenchmarkMachine {
+        let device = game.gameSession?.renderer.device
+        return BenchmarkMachine.current(gpu: device?.name ?? "unknown")
+    }
+
+    func appStart() -> BenchmarkAppStart? {
+        guard let report = game.worldLoadReport else { return nil }
+        let sinceStart = BenchmarkAppStart.processStart()
+            .map { wallClock().timeIntervalSince($0) * Self.millisecondsPerSecond }
+        return BenchmarkAppStart(
+            report: report, session: game.sessionStartTiming, processToWorldReadyMS: sinceStart
+        )
     }
 }

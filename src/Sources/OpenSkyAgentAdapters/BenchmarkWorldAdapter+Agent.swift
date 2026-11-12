@@ -8,6 +8,20 @@ import OpenSkyWorldInterface
 
 extension BenchmarkWorldAdapter {
     public func start(_ agent: AgentBenchmarkRequest) throws(AgentFailure) {
+        pendingRequest = try BenchmarkAgentRequests.request(from: agent)
+        frame()
+    }
+
+    public var lastRunJSON: AgentJSON? {
+        lastRun.map(BenchmarkAgentRequests.json)
+    }
+}
+
+/// A tour request from the agent's arguments, and a finished run as the agent's reply.
+enum BenchmarkAgentRequests {
+    static func request(from agent: AgentBenchmarkRequest) throws(AgentFailure)
+        -> BenchmarkRequest
+    {
         var request = BenchmarkRequest()
         if let preset = agent.preset {
             guard let parsed = BenchmarkPreset(rawValue: preset.lowercased()) else {
@@ -29,18 +43,15 @@ extension BenchmarkWorldAdapter {
                 let (id, value) = try BenchmarkRequest.parseSetting(pair)
                 request.settings[id] = value
             }
+            _ = try request.scenes()
+            _ = try request.settingOverrides()
         } catch {
             throw AgentFailure(.invalidArgument, error.description)
         }
-        do {
-            try start(request)
-        } catch {
-            throw AgentFailure(.invalidArgument, error.description)
-        }
+        return request
     }
 
-    public var lastRunJSON: AgentJSON? {
-        guard let run = lastRun else { return nil }
+    static func json(_ run: BenchmarkRun) -> AgentJSON {
         let result = run.result
         return [
             "folder": .string(run.folder.path(percentEncoded: false)),

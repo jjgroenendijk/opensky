@@ -66,7 +66,7 @@ extension AgentEventsAdapter {
     public static let slowPollSeconds = 0.25
 
     public func pollEvents(_ emit: (String, [String: AgentJSON]) -> Void) {
-        wireEventCallbacks()
+        AgentStreamerEvents(hub: hub, game: game).tapStreamerEvents()
         diffMenus()
         let now = hub.now().timeIntervalSinceReferenceDate
         if now >= hub.tap.nextSlowPoll {
@@ -85,60 +85,6 @@ extension AgentEventsAdapter {
             emit(kind, data)
         }
         hub.tap.pending.removeAll()
-    }
-
-    private func wireEventCallbacks() {
-        let streamer = game.streamer
-        guard !hub.tap.wired else { return }
-        hub.tap.wired = true
-        streamer.registerCellAttached(.agentEvents) { [weak state = hub.state] attachment in
-            // A rebuild of the same cell after a state change is not a new load.
-            guard attachment.isFirstIntegration else { return }
-            state?.tap.append(AgentEventKind.cellLoaded, Self.cellData(attachment.scene))
-        }
-        streamer.onCellDetached.register(.agentEvents) { [weak state = hub.state] location in
-            state?.tap.append(AgentEventKind.cellUnloaded, Self.locationData(location))
-        }
-        streamer.onInteraction.register(.agentEvents) { [weak state = hub.state] event in
-            state?.tap.append(
-                AgentEventKind.activation,
-                Self.interactionData(event.target.interaction)
-            )
-        }
-        streamer.activationGate.refusals.register(.agentEvents) { [weak state = hub.state] event in
-            var data = Self.interactionData(event.target.interaction)
-            if case let .locked(level, _) = event.refusal {
-                data["reason"] = "locked"
-                data["lockLevel"] = .init(Int(level))
-            } else if event.refusal == .filteredByPerk {
-                data["reason"] = "perk"
-            } else if event.refusal == .mounted {
-                data["reason"] = "mounted"
-            }
-            state?.tap.append(AgentEventKind.activationRefused, data)
-        }
-    }
-
-    private static func cellData(_ scene: any CellScenePort) -> [String: AgentJSON] {
-        var data = scene.location.map(locationData) ?? [:]
-        data["name"] = .string(scene.summary.cellName)
-        return data
-    }
-
-    private static func locationData(_ location: CellSceneLocation) -> [String: AgentJSON] {
-        switch location {
-        case let .exterior(grid):
-            ["interior": false, "x": .init(Int(grid.x)), "y": .init(Int(grid.y))]
-        case let .interior(cell):
-            ["interior": true, "cell": .formID(cell.rawValue)]
-        }
-    }
-
-    private static func interactionData(_ interaction: PlacedInteraction) -> [String: AgentJSON] {
-        [
-            "ref": .formID(interaction.reference.rawValue), "name": .string(interaction.name),
-            "action": .string(interaction.actionLabel)
-        ]
     }
 
     private func diffMenus() {
@@ -257,5 +203,65 @@ extension AgentEventsAdapter {
         } catch {
             throw AgentFailure(.invalidArgument, "stage refused: \(error)")
         }
+    }
+}
+
+/// The cell, activation, and refusal events the streamer reports, for `AgentEventsAdapter`.
+struct AgentStreamerEvents {
+    let hub: AgentHub
+    let game: any AgentEventsHost
+
+    func tapStreamerEvents() {
+        let streamer = game.streamer
+        guard !hub.tap.wired else { return }
+        hub.tap.wired = true
+        streamer.registerCellAttached(.agentEvents) { [weak state = hub.state] attachment in
+            // A rebuild of the same cell after a state change is not a new load.
+            guard attachment.isFirstIntegration else { return }
+            state?.tap.append(AgentEventKind.cellLoaded, Self.cellData(attachment.scene))
+        }
+        streamer.onCellDetached.register(.agentEvents) { [weak state = hub.state] location in
+            state?.tap.append(AgentEventKind.cellUnloaded, Self.locationData(location))
+        }
+        streamer.onInteraction.register(.agentEvents) { [weak state = hub.state] event in
+            state?.tap.append(
+                AgentEventKind.activation,
+                Self.interactionData(event.target.interaction)
+            )
+        }
+        streamer.activationGate.refusals.register(.agentEvents) { [weak state = hub.state] event in
+            var data = Self.interactionData(event.target.interaction)
+            if case let .locked(level, _) = event.refusal {
+                data["reason"] = "locked"
+                data["lockLevel"] = .init(Int(level))
+            } else if event.refusal == .filteredByPerk {
+                data["reason"] = "perk"
+            } else if event.refusal == .mounted {
+                data["reason"] = "mounted"
+            }
+            state?.tap.append(AgentEventKind.activationRefused, data)
+        }
+    }
+
+    private static func cellData(_ scene: any CellScenePort) -> [String: AgentJSON] {
+        var data = scene.location.map(locationData) ?? [:]
+        data["name"] = .string(scene.summary.cellName)
+        return data
+    }
+
+    private static func locationData(_ location: CellSceneLocation) -> [String: AgentJSON] {
+        switch location {
+        case let .exterior(grid):
+            ["interior": false, "x": .init(Int(grid.x)), "y": .init(Int(grid.y))]
+        case let .interior(cell):
+            ["interior": true, "cell": .formID(cell.rawValue)]
+        }
+    }
+
+    private static func interactionData(_ interaction: PlacedInteraction) -> [String: AgentJSON] {
+        [
+            "ref": .formID(interaction.reference.rawValue), "name": .string(interaction.name),
+            "action": .string(interaction.actionLabel)
+        ]
     }
 }

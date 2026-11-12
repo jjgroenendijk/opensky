@@ -141,6 +141,23 @@ extension AgentActorsAdapter {
             .map { .formID($0.rawValue) } ?? .null
     }
 
+    func setRagdollLink(
+        _ link: AgentRagdollLink,
+        linked: Bool
+    ) throws(AgentFailure) -> AgentJSON {
+        try AgentRagdollLinks(hub: hub, game: game).setRagdollLink(link, linked: linked)
+    }
+
+    func physicsConstraints(of key: ReferenceKey) -> AgentJSON {
+        AgentRagdollLinks(hub: hub, game: game).physicsConstraints(of: key)
+    }
+}
+
+/// The script links and pins between ragdoll bodies, for `AgentActorsAdapter`.
+struct AgentRagdollLinks {
+    let hub: AgentHub
+    let game: any AgentActorsHost
+
     /// `debug link`: what `Game.AddHavokBallAndSocketConstraint` does, through its hook.
     func setRagdollLink(
         _ link: AgentRagdollLink,
