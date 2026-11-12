@@ -48,15 +48,15 @@ nonisolated extension OpenSkySaveDecoder {
     ) throws -> Bool {
         switch tag {
         case OpenSkySaveFormat.ChunkTag.playerIdentity:
-            body.identities = try OpenSkySaveStoryDecoder.decodeIdentities(payload)
+            body.side.identities = try OpenSkySaveStoryDecoder.decodeIdentities(payload)
         case OpenSkySaveFormat.ChunkTag.playerComplexion:
-            body.complexions = try OpenSkySaveStoryDecoder.decodeComplexions(payload)
+            body.side.complexions = try OpenSkySaveStoryDecoder.decodeComplexions(payload)
         case OpenSkySaveFormat.ChunkTag.mapMarkers:
-            body.markers = try OpenSkySaveStoryDecoder.decodeMarkers(payload)
+            body.side.markers = try OpenSkySaveStoryDecoder.decodeMarkers(payload)
         case OpenSkySaveFormat.ChunkTag.localMapFog:
-            body.fog = try OpenSkySaveStoryDecoder.decodeFog(payload)
+            body.side.fog = try OpenSkySaveStoryDecoder.decodeFog(payload)
         case OpenSkySaveFormat.ChunkTag.playerSetMarker:
-            body.playerMarkers = try OpenSkySaveStoryDecoder.decodePlayerMarkers(payload)
+            body.side.playerMarkers = try OpenSkySaveStoryDecoder.decodePlayerMarkers(payload)
         default:
             return false
         }

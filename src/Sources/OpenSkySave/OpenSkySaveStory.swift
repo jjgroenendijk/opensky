@@ -240,25 +240,26 @@ nonisolated extension OpenSkySaveDecoder {
     static func applyStory(tag: String, payload: Data, to body: inout Body) throws {
         switch tag {
         case OpenSkySaveFormat.ChunkTag.scenes:
-            body.scenes = try OpenSkySaveStoryDecoder.decodeScenes(payload)
+            body.side.scenes = try OpenSkySaveStoryDecoder.decodeScenes(payload)
         case OpenSkySaveFormat.ChunkTag.scenePauses:
-            body.scenePauses = try OpenSkySaveStoryDecoder.decodeScenePauses(payload)
+            body.side.scenePauses = try OpenSkySaveStoryDecoder.decodeScenePauses(payload)
         case OpenSkySaveFormat.ChunkTag.storyManagerQuests:
-            body.storyManagerQuests = try OpenSkySaveStoryDecoder.decodeStoryManagerQuests(payload)
+            body.side.storyManagerQuests = try OpenSkySaveStoryDecoder
+                .decodeStoryManagerQuests(payload)
         case OpenSkySaveFormat.ChunkTag.dialogueBranches:
-            body.dialogueBranches = try OpenSkySaveStoryDecoder.decodeDialogueBranches(payload)
+            body.side.dialogueBranches = try OpenSkySaveStoryDecoder.decodeDialogueBranches(payload)
         case OpenSkySaveFormat.ChunkTag.helpMessages:
-            body.helpMessages = try OpenSkySaveStoryDecoder.decodeHelpMessages(payload)
+            body.side.helpMessages = try OpenSkySaveStoryDecoder.decodeHelpMessages(payload)
         case OpenSkySaveFormat.ChunkTag.playerRules:
-            body.playerRules = try OpenSkySaveStoryDecoder.decodePlayerRules(payload)
+            body.side.playerRules = try OpenSkySaveStoryDecoder.decodePlayerRules(payload)
         case OpenSkySaveFormat.ChunkTag.scriptedStates:
-            body.scriptedStates = try OpenSkySaveStoryDecoder.decodeScriptedStates(payload)
+            body.side.scriptedStates = try OpenSkySaveStoryDecoder.decodeScriptedStates(payload)
         case OpenSkySaveFormat.ChunkTag.playerPlace:
             body.playerPlace = try decodePlayerPlace(payload)
         case OpenSkySaveFormat.ChunkTag.temperedItems:
-            body.temperedItems = try OpenSkySaveTemperedItems.decode(payload)
+            body.side.temperedItems = try OpenSkySaveTemperedItems.decode(payload)
         case OpenSkySaveFormat.ChunkTag.itemCopies:
-            body.itemCopies = try OpenSkySaveItemCopies.decode(payload)
+            body.side.itemCopies = try OpenSkySaveItemCopies.decode(payload)
         default:
             if
                 try !applyPlayerItems(tag: tag, payload: payload, to: &body),

@@ -88,11 +88,13 @@ nonisolated extension OpenSkySaveDecoder {
         }
 
         /// `PLVL` with its `PLGD` and `PTRN` siblings laid on.
-        static func progress(of body: OpenSkySaveDecoder.Body) -> [SavePlayerProgressEntry] {
-            let progress = merge(body.legendarySkills, into: body.playerProgress) {
-                $0.withLegendaryCounts($1)
-            }
-            return merge(body.trainingSessions, into: progress) { $0.withTrainingSessions($1) }
+        static func progress(
+            _ levels: [SavePlayerProgressEntry],
+            legendary: [ReferenceKey: [Int32: Int]],
+            training: [ReferenceKey: Int]
+        ) -> [SavePlayerProgressEntry] {
+            let progress = merge(legendary, into: levels) { $0.withLegendaryCounts($1) }
+            return merge(training, into: progress) { $0.withTrainingSessions($1) }
         }
 
         /// Lays a sibling chunk's values onto each holder's `PLVL` progress; a holder
