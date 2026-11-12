@@ -11,7 +11,7 @@ nonisolated public struct ExteriorBuildSource: Sendable {
     public let cell: FoundCell
 }
 
-nonisolated extension CellRecordIndex {
+nonisolated extension CellModelIndex {
     nonisolated public func exteriorBuildSource(
         worldspaceEditorID: String,
         gridX: Int32,
@@ -22,13 +22,13 @@ nonisolated extension CellRecordIndex {
             localized: owner.pluginLocalized
         )
         guard
-            let found = findCell(
+            let found = owner.recordIndex.findCell(
                 in: world,
                 gridX: gridX,
                 gridY: gridY,
                 localized: owner.pluginLocalized
             ),
-            let cell = loadOrderCell(formID: FormID(found.formID), base: found)
+            let cell = owner.recordIndex.loadOrderCell(formID: FormID(found.formID), base: found)
         else {
             throw CellSceneError.cellNotFound(
                 worldspaceEditorID: worldspaceEditorID,
@@ -44,7 +44,8 @@ nonisolated extension CellRecordIndex {
         if let statIndex = owner.statIndex {
             return statIndex
         }
-        let index = loadOrderRecords(of: "STAT") { record, _ in try StaticObject(record: record) }
+        let index = owner.recordIndex
+            .loadOrderRecords(of: "STAT") { record, _ in try StaticObject(record: record) }
         owner.statIndex = index
         return index
     }
@@ -54,7 +55,8 @@ nonisolated extension CellRecordIndex {
         if let textureSetIndex = owner.textureSetIndex {
             return textureSetIndex
         }
-        let index = loadOrderRecords(of: "TXST") { record, _ in try TextureSet(record: record) }
+        let index = owner.recordIndex
+            .loadOrderRecords(of: "TXST") { record, _ in try TextureSet(record: record) }
         owner.textureSetIndex = index
         return index
     }
@@ -89,7 +91,7 @@ nonisolated extension CellRecordIndex {
         }
         var index: [UInt32: ModelBase] = [:]
         for type in ModelBase.supportedTypes {
-            index.merge(loadOrderRecords(of: type) { record, localized in
+            index.merge(owner.recordIndex.loadOrderRecords(of: type) { record, localized in
                 try ModelBase(record: record, localized: localized)
             }) { _, later in later }
         }

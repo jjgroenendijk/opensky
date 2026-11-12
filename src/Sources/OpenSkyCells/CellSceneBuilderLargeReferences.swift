@@ -52,7 +52,7 @@ nonisolated extension CellReferenceBuilder {
         for cell in cells.sorted(by: { ($0.x, $0.y) < ($1.x, $1.y) }) {
             guard
                 let source = attempt({
-                    try owner.recordIndex.exteriorBuildSource(
+                    try owner.modelIndex.exteriorBuildSource(
                         worldspaceEditorID: worldspaceEditorID, gridX: cell.x, gridY: cell.y
                     )
                 })
@@ -60,7 +60,7 @@ nonisolated extension CellReferenceBuilder {
             let collected = collectTaggedReferences(in: source.cell, counts: &counts)
             let wanted = pick(cell, collected)
             guard !wanted.isEmpty else { continue }
-            let placed = owner.interiorBuilder.exteriorReferences(
+            let placed = owner.doorTransitions.exteriorReferences(
                 local: collected.map(\.reference), world: source.world,
                 coordinate: cell, localized: owner.pluginLocalized
             ).filter { wanted.contains($0.formID.rawValue) }
@@ -69,7 +69,7 @@ nonisolated extension CellReferenceBuilder {
                 refs: placed,
                 entries: referenceEntries(refs: placed, collected: collected),
                 deltas: deltas,
-                parentPool: owner.interiorBuilder.persistentParentPool(
+                parentPool: owner.doorTransitions.persistentParentPool(
                     in: source.world,
                     localized: owner.pluginLocalized
                 ),
@@ -148,7 +148,7 @@ nonisolated extension CellReferenceBuilder {
                 )
             })
         else { return result }
-        let wanted = owner.interiorBuilder.persistentReferences(
+        let wanted = owner.doorTransitions.persistentReferences(
             in: world,
             localized: owner.pluginLocalized
         ).filter {
@@ -163,7 +163,7 @@ nonisolated extension CellReferenceBuilder {
         }
         let enabled = applyRuntimeState(
             refs: wanted, entries: entries, deltas: state.deltasByKey(),
-            parentPool: owner.interiorBuilder.persistentParentPool(
+            parentPool: owner.doorTransitions.persistentParentPool(
                 in: world,
                 localized: owner.pluginLocalized
             ),

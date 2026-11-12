@@ -9,12 +9,12 @@ nonisolated extension CellSceneBuilder {
     /// worldspace's cell lookups and its terrain LOD brightness.
     public func prepareIndexes(worldspace: String?) {
         _ = interiorBuilder.loadOrderIndexBuildingIfNeeded()
-        _ = recordIndex.statIndexBuildingIfNeeded()
-        _ = recordIndex.textureSetIndexBuildingIfNeeded()
-        _ = recordIndex.modelBaseIndexBuildingIfNeeded()
-        _ = recordIndex.materialTypeIndexBuildingIfNeeded()
-        _ = interiorBuilder.lightingTemplateIndexBuildingIfNeeded()
-        _ = interiorBuilder.lightIndexBuildingIfNeeded()
+        _ = modelIndex.statIndexBuildingIfNeeded()
+        _ = modelIndex.textureSetIndexBuildingIfNeeded()
+        _ = modelIndex.modelBaseIndexBuildingIfNeeded()
+        _ = modelIndex.materialTypeIndexBuildingIfNeeded()
+        _ = interiorLighting.lightingTemplateIndexBuildingIfNeeded()
+        _ = interiorLighting.lightIndexBuildingIfNeeded()
         _ = terrainBuilder.landTextureIndexBuildingIfNeeded()
         _ = terrainBuilder.grassIndexBuildingIfNeeded()
         _ = objectBuilder.addOnModelIndexBuildingIfNeeded()
@@ -31,7 +31,7 @@ nonisolated extension CellSceneBuilder {
             })
         else { return }
         _ = recordIndex.findCell(in: world, gridX: 0, gridY: 0, localized: pluginLocalized)
-        _ = interiorBuilder.persistentParentPool(in: world, localized: pluginLocalized)
+        _ = doorTransitions.persistentParentPool(in: world, localized: pluginLocalized)
         _ = terrainBuilder
             .terrainLODBrightness(lodWorldspace: terrainBuilder.lodWorldspace(of: worldspace))
     }

@@ -9,7 +9,7 @@ import OpenSkyPhysics
 import OpenSkyRenderCore
 import simd
 
-nonisolated extension CellWaterBuilder {
+nonisolated extension CellWaterVolumeBuilder {
     /// How deep a cell's water box reaches when the cell has no land to measure.
     static let cellWaterFallbackDepth: Float = 4096
 
@@ -52,7 +52,8 @@ nonisolated extension CellWaterBuilder {
         let centre = SIMD3(
             Float(grid.x) * size + half.x, Float(grid.y) * size + half.y, floor + half.z
         )
-        let type = water.waterType.flatMap { waterTypeIndexBuildingIfNeeded()[$0.rawValue] }
+        let type = water.waterType
+            .flatMap { owner.waterBuilder.waterTypeIndexBuildingIfNeeded()[$0.rawValue] }
         let currents = type.map { [Self.cellCurrent($0.details)] } ?? []
         return WaterVolume(
             transform: MatrixMath.translation(centre), halfExtents: half, surface: water.height,
@@ -72,8 +73,8 @@ nonisolated extension CellWaterBuilder {
     /// Placed water and current planes, from each reference's root collision.
     private func placedWaterVolumes(refs: [PlacedReference]) -> [WaterVolume] {
         guard let collisionModels = owner.collisionModels else { return [] }
-        let bases = owner.recordIndex.modelBaseIndexBuildingIfNeeded()
-        let types = waterTypeIndexBuildingIfNeeded()
+        let bases = owner.modelIndex.modelBaseIndexBuildingIfNeeded()
+        let types = owner.waterBuilder.waterTypeIndexBuildingIfNeeded()
         let byFormID = Dictionary(
             refs.map { ($0.formID, $0) },
             uniquingKeysWith: { first, _ in first }

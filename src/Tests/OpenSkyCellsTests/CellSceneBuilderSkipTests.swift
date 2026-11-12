@@ -71,7 +71,7 @@ extension CellSceneBuilderTests {
         let builder = try makeBuilder(pluginData: bytes, device: device)
 
         #expect {
-            _ = try builder.interiorBuilder.buildDoorTransition(
+            _ = try builder.doorTransitions.buildDoorTransition(
                 from: FormID(0x300),
                 worldspaceEditorID: "Tamriel"
             )

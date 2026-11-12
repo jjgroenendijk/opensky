@@ -152,7 +152,7 @@ nonisolated extension CellReferenceBuilder {
     ) -> [AttachedScript] {
         switch record {
         case let .reference(reference):
-            return owner.recordIndex.modelBaseIndexBuildingIfNeeded()[reference.base.rawValue]?
+            return owner.modelIndex.modelBaseIndexBuildingIfNeeded()[reference.base.rawValue]?
                 .scriptData
                 .scripts ?? []
         case let .actor(actor):

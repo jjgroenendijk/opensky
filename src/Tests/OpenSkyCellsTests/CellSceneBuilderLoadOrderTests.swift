@@ -93,7 +93,7 @@ struct CellSceneBuilderLoadOrderTests {
         let entry = try #require(lookup.entry(for: .plugin(name: "mod.esp", objectID: 0x801)))
         #expect(entry.formID == FormID(0x0200_0801))
         #expect(lookup.interiorCell(holding: entry.formID) == FormID(Self.modInterior))
-        #expect(builder.recordIndex.statIndexBuildingIfNeeded()[0x0200_0900]?
+        #expect(builder.modelIndex.statIndexBuildingIfNeeded()[0x0200_0900]?
             .modelPath == "mod.nif")
     }
 

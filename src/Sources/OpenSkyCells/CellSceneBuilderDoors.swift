@@ -25,7 +25,7 @@ nonisolated extension CellObjectBuilder {
 
     /// The references in `refs` that are sequence doors, with their rigs.
     func sequenceDoors(in refs: [PlacedReference]) -> [FormID: SequenceDoorBase] {
-        let bases = owner.recordIndex.modelBaseIndexBuildingIfNeeded()
+        let bases = owner.modelIndex.modelBaseIndexBuildingIfNeeded()
         var doors: [FormID: SequenceDoorBase] = [:]
         for ref in refs {
             guard

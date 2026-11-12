@@ -172,20 +172,20 @@ nonisolated public final class CellSceneBuilder {
     ) throws -> CellScene {
         // The touched keys drive unload eviction (docs/engine/cell-streaming.md).
         assembler.resetTouchedAssets()
-        let source = try recordIndex.exteriorBuildSource(
+        let source = try modelIndex.exteriorBuildSource(
             worldspaceEditorID: worldspaceEditorID, gridX: gridX, gridY: gridY
         )
         let (world, found) = (source.world, source.cell)
         var counts = BuildCounts()
         let collected = referenceBuilder.collectTaggedReferences(in: found, counts: &counts)
         let coordinate = CellCoordinate(x: gridX, y: gridY)
-        let refs = interiorBuilder.exteriorReferences(
+        let refs = doorTransitions.exteriorReferences(
             local: collected.map(\.reference), world: world,
             coordinate: coordinate, localized: pluginLocalized
         )
         counts.totalRefs = refs.count + counts.malformedRefs
         let location = CellSceneLocation.exterior(coordinate)
-        let parents = interiorBuilder.persistentParentPool(in: world, localized: pluginLocalized)
+        let parents = doorTransitions.persistentParentPool(in: world, localized: pluginLocalized)
         let resolved = referenceBuilder.effectiveReferences(
             (refs, collected), state: state, location: location,
             parentPool: parents, counts: &counts
@@ -196,12 +196,10 @@ nonisolated public final class CellSceneBuilder {
         let actors = actorBuilder.buildExteriorActors(
             cell: found, world: world, coordinate: coordinate, localized: pluginLocalized,
             deltas: resolved.deltas, collision: collision.staticCollision,
-            parents: ActorEnableParents(
-                references: referenceBuilder.entriesByFormID(resolved.entries),
-                pool: parents
-            )
+            parents: enableParents(resolved, pool: parents)
         )
         let environment = assembler.buildEnvironment(found: found, worldspace: world.worldspace)
+        let volumes = waterVolumeBuilder.waterVolumes(effective, found: found, in: environment)
         let scene = assembler.makeScene(
             cell: (found, (x: gridX, y: gridY)),
             instances: instances,
@@ -224,7 +222,7 @@ nonisolated public final class CellSceneBuilder {
                 referenceEntries: resolved.entries,
                 stateSequence: state.sequence,
                 vehicleFollowers: resolved.vehicleFollowers,
-                waterVolumes: waterBuilder.waterVolumes(effective, found: found, in: environment)
+                waterVolumes: volumes
             ),
             counts: counts
         )
@@ -235,6 +233,16 @@ nonisolated public final class CellSceneBuilder {
 }
 
 nonisolated extension CellSceneBuilder {
+    private func enableParents(
+        _ resolved: EffectiveReferences,
+        pool: EnableParentPool
+    ) -> ActorEnableParents {
+        ActorEnableParents(
+            references: referenceBuilder.entriesByFormID(resolved.entries),
+            pool: pool
+        )
+    }
+
     /// Adds the skips of a load-order decode, which counts them itself.
     func noteSkipped(_ skipped: SkippedRecords) {
         guard !skipped.isEmpty else { return }
@@ -404,12 +412,12 @@ nonisolated extension CellSceneBuilder {
         counts: inout BuildCounts
     ) -> [ResolvedInstance] {
         guard !refs.isEmpty else { return [] }
-        let statIndex = recordIndex.statIndexBuildingIfNeeded()
-        let modelBaseIndex = recordIndex.modelBaseIndexBuildingIfNeeded()
-        let lightIndex = interiorBuilder.lightIndexBuildingIfNeeded()
+        let statIndex = modelIndex.statIndexBuildingIfNeeded()
+        let modelBaseIndex = modelIndex.modelBaseIndexBuildingIfNeeded()
+        let lightIndex = interiorLighting.lightIndexBuildingIfNeeded()
         meshes.predecode(paths: refs.lazy.compactMap { ref -> String? in
             guard lightIndex[ref.base.rawValue] == nil else { return nil }
-            let resolved = self.recordIndex.resolveBase(
+            let resolved = self.modelIndex.resolveBase(
                 formID: ref.base.rawValue, statIndex: statIndex, modelBaseIndex: modelBaseIndex
             )
             return resolved?.isEditorMarker == false ? resolved?.modelPath : nil
@@ -420,7 +428,7 @@ nonisolated extension CellSceneBuilder {
         for ref in refs where lightIndex[ref.base.rawValue] == nil {
             let id = ref.formID.description
             guard
-                let resolved = recordIndex.resolveBase(
+                let resolved = modelIndex.resolveBase(
                     formID: ref.base.rawValue, statIndex: statIndex, modelBaseIndex: modelBaseIndex
                 )
             else {
@@ -497,7 +505,7 @@ nonisolated extension CellSceneBuilder {
                     scale: ref.scale
                 ),
                 animated: animated == nil ? nil : behavior,
-                emittance: interiorBuilder.emittanceSource(of: ref)
+                emittance: interiorLighting.emittanceSource(of: ref)
             )
         } catch MeshLibraryError.editorMarkerOnly {
             counts.markers += 1
@@ -525,6 +533,11 @@ nonisolated struct CellRecordIndex {
     let owner: CellSceneBuilder
 }
 
+/// The model, texture-set, and material indexes and the exterior build source.
+nonisolated struct CellModelIndex {
+    let owner: CellSceneBuilder
+}
+
 nonisolated struct CellReferenceBuilder {
     let owner: CellSceneBuilder
 }
@@ -533,7 +546,22 @@ nonisolated public struct CellInteriorBuilder {
     let owner: CellSceneBuilder
 }
 
+/// The lighting of an interior cell: its template, fog, and lights.
+nonisolated public struct CellInteriorLighting {
+    let owner: CellSceneBuilder
+}
+
+/// The door transitions and a worldspace's exterior doors and persistent references.
+nonisolated public struct CellDoorTransitionBuilder {
+    let owner: CellSceneBuilder
+}
+
 nonisolated public struct CellPreviewBuilder {
+    let owner: CellSceneBuilder
+}
+
+/// Where a preview stands, and the cell that holds a previewed reference.
+nonisolated public struct CellPreviewPlaces {
     let owner: CellSceneBuilder
 }
 
@@ -550,5 +578,10 @@ nonisolated struct CellSceneAssembler {
 }
 
 nonisolated struct CellWaterBuilder {
+    let owner: CellSceneBuilder
+}
+
+/// The water volumes of a cell: their collision planes and currents.
+nonisolated struct CellWaterVolumeBuilder {
     let owner: CellSceneBuilder
 }

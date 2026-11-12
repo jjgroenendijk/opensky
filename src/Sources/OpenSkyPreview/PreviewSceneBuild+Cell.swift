@@ -29,7 +29,7 @@ nonisolated extension PreviewSceneBuilder {
         case .record, .mesh:
             let spot = try request.focus.map { name throws(PreviewError) in
                 try focusPlacement(name, in: cell)
-            } ?? builder.previewBuilder.previewSpot(in: cell)
+            } ?? builder.previewPlaces.previewSpot(in: cell)
             let (subject, resolved) = try studioSubject(request.target, at: spot)
             guard !subject.placements.isEmpty else {
                 throw .nothingToDraw(Self.name(of: request.target), reasons: subject.failures)
@@ -51,7 +51,7 @@ nonisolated extension PreviewSceneBuilder {
                 let reference = try record(named: name).formID
                 focus = builder.previewBuilder.previewSubject(of: reference, in: cell)?.bounds
             } else if case let .interior(_, door?) = place {
-                entry = builder.previewBuilder.previewEntryEye(door: door)
+                entry = builder.previewPlaces.previewEntryEye(door: door)
             }
         }
         target.cell = cellName(place)
@@ -73,7 +73,7 @@ nonisolated extension PreviewSceneBuilder {
         switch request.target {
         case let .reference(name):
             let reference = try record(named: name).formID
-            guard let entry = builder.previewBuilder.previewCell(holding: reference) else {
+            guard let entry = builder.previewPlaces.previewCell(holding: reference) else {
                 throw .referenceNotPlaced(name)
             }
             return Self.place(entry)
@@ -92,7 +92,7 @@ nonisolated extension PreviewSceneBuilder {
         case let .interiorCell(name):
             guard let entry = CellDirectory.find(
                 editorID: name,
-                in: builder.previewBuilder.pluginLoadOrder
+                in: builder.previewPlaces.pluginLoadOrder
             )
             else { throw .notFound(name) }
             return Self.place(entry)
@@ -138,7 +138,7 @@ nonisolated extension PreviewSceneBuilder {
         _ name: String, in cell: CellScene
     ) throws(PreviewError) -> PlacedReference.Placement {
         let reference = try record(named: name).formID
-        guard let placement = builder.previewBuilder.previewPlacement(of: reference, in: cell)
+        guard let placement = builder.previewPlaces.previewPlacement(of: reference, in: cell)
         else {
             throw .referenceNotPlaced(name)
         }
@@ -148,7 +148,7 @@ nonisolated extension PreviewSceneBuilder {
     private func cellName(_ place: PreviewCellPlace) -> String {
         switch place {
         case let .interior(cell, _):
-            let record = builder.previewBuilder.pluginLoadOrder.record(withFormID: cell)
+            let record = builder.previewPlaces.pluginLoadOrder.record(withFormID: cell)
             return record.flatMap { ESMWalk.editorID(of: $0.record) } ?? cell.description
         case let .exterior(worldspace, grid):
             return "\(worldspace) (\(grid.x),\(grid.y))"

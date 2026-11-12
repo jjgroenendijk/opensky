@@ -117,7 +117,7 @@ struct CellSceneBuilderPreviewPlacesTests: CellSceneBuilderFixture {
     }
 
     @Test(.enabled(if: Self.hasDevice)) func theCellOfAReferenceIsFoundInsideOrOutside() throws {
-        let preview = try makeBuilder().previewBuilder
+        let preview = try makeBuilder().previewPlaces
         #expect(preview.previewCell(holding: FormID(0x200)) == .exterior(
             cell: FormID(0x2B), worldspace: "Tamriel", grid: CellCoordinate(x: 0, y: 0)
         ))
@@ -128,7 +128,7 @@ struct CellSceneBuilderPreviewPlacesTests: CellSceneBuilderFixture {
     }
 
     @Test(.enabled(if: Self.hasDevice)) func aDoorGivesTheEyeOfAnArrivingPlayer() throws {
-        let preview = try makeBuilder().previewBuilder
+        let preview = try makeBuilder().previewPlaces
         let eye = try #require(preview.previewEntryEye(door: FormID(0x201)))
         #expect(eye.position.x == 1)
         #expect(eye.position.y == 2)
@@ -141,13 +141,13 @@ struct CellSceneBuilderPreviewPlacesTests: CellSceneBuilderFixture {
         let builder = try makeBuilder()
         let scene = try builder.interiorBuilder.buildInteriorScene(cellFormID: FormID(room))
         let bounds = try #require(scene.bounds)
-        let placement = builder.previewBuilder.previewSpot(in: scene)
+        let placement = builder.previewPlaces.previewSpot(in: scene)
         let middle = (bounds.min + bounds.max) * 0.5
         #expect(placement.position.x == middle.x)
         #expect(placement.position.y == middle.y)
         #expect(placement.position.z == bounds.min.z)
 
         let empty = try builder.interiorBuilder.buildInteriorScene(cellFormID: FormID(emptyRoom))
-        #expect(builder.previewBuilder.previewSpot(in: empty).position == .zero)
+        #expect(builder.previewPlaces.previewSpot(in: empty).position == .zero)
     }
 }

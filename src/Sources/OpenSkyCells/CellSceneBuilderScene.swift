@@ -84,7 +84,7 @@ nonisolated extension CellSceneAssembler {
     /// Keeps only REFRs whose base resolves to DOOR and whose XTEL decoded.
     /// Interaction metadata independently includes non-teleport doors.
     nonisolated func resolveDoors(refs: [PlacedReference]) -> [PlacedDoor] {
-        let modelBaseIndex = owner.recordIndex.modelBaseIndexBuildingIfNeeded()
+        let modelBaseIndex = owner.modelIndex.modelBaseIndexBuildingIfNeeded()
         return refs.compactMap { ref in
             guard
                 modelBaseIndex[ref.base.rawValue]?.recordType == "DOOR",
@@ -104,7 +104,7 @@ nonisolated extension CellSceneAssembler {
     nonisolated func resolveInteractions(
         refs: [PlacedReference]
     ) -> [FormID: PlacedInteraction] {
-        let modelBaseIndex = owner.recordIndex.modelBaseIndexBuildingIfNeeded()
+        let modelBaseIndex = owner.modelIndex.modelBaseIndexBuildingIfNeeded()
         var interactions: [FormID: PlacedInteraction] = [:]
         for ref in refs {
             guard

@@ -34,7 +34,7 @@ enum PreviewCommand {
         let frames = try PreviewRenderJob.render(
             scene, request: request,
             sources: PreviewRenderSources(
-                device: device, loadOrder: builder.previewBuilder.pluginLoadOrder,
+                device: device, loadOrder: builder.previewPlaces.pluginLoadOrder,
                 fileSystem: builder.fileSystem
             )
         ) { renderer in

@@ -46,7 +46,7 @@ struct LightingRecordDecoderTests {
             hasInheritFlags: false
         ))
 
-        let resolved = try #require(CellInteriorBuilder.resolvedLighting(
+        let resolved = try #require(CellInteriorLighting.resolvedLighting(
             cell: local,
             template: template
         ))
@@ -61,10 +61,13 @@ struct LightingRecordDecoderTests {
         var data = ESMFixture.cellLightingData(inherits: 0)
         data.replaceSubrange(12 ..< 20, with: floatBytes(0) + floatBytes(0))
         let values = try #require(try CellLightingValues.decode(data, hasInheritFlags: true))
-        let lighting = try #require(CellInteriorBuilder.renderLighting(cell: values, template: nil))
+        let lighting = try #require(CellInteriorLighting.renderLighting(
+            cell: values,
+            template: nil
+        ))
         #expect(lighting.fog == nil)
         #expect(lighting.ambientColor == color(10, 20, 30))
-        #expect(CellInteriorBuilder.renderLighting(cell: nil, template: nil) == nil)
+        #expect(CellInteriorLighting.renderLighting(cell: nil, template: nil) == nil)
     }
 
     @Test func lightDecodesExactDATAAndFNAM() throws {
