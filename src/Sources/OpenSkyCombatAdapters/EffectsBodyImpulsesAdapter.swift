@@ -58,40 +58,11 @@ extension EffectsBodyImpulsesAdapter {
     }
 
     public func impulseBodies() -> [ImpulseBody] {
-        (game.streamer.dynamicBodies.bodies).map { body in
-            var impulseBody = ImpulseBody(
-                key: body.key, reference: body.reference, position: body.position,
-                velocity: body.linearVelocity, mass: body.definition.mass,
-                boundingRadius: body.definition.boundingRadius,
-                kind: ImpulseBodyKind(collisionLayer: body.definition.collisionLayer),
-                material: body.definition.material
-            )
-            impulseBody.surfaceMaterial = surfaceMaterial(of: body.lastSurface)
-            return impulseBody
-        }
+        contacts.impulseBodies()
     }
 
-    /// A shape without a `MATT`, such as the land, takes the land texture's under the point.
-    private func surfaceMaterial(of touch: DynamicSurfaceTouch?) -> FormID? {
-        guard let touch else { return nil }
-        if let material = touch.material {
-            return material
-        }
-        return game.streamer.sampleTerrain(at: SIMD2(touch.point.x, touch.point.y))?.material
-    }
-
-    /// The body's material names the impact data set; the surface it hit picks the entry,
-    /// as a weapon's impact does.
     public func playCollision(_ collision: BodyCollision) {
-        guard
-            let store = game.combatRecords?.footstepStore,
-            let dataSet = store.materialParents.impactDataSet(of: collision.material),
-            let impact = MeleeImpactResolver(footsteps: store).resolve(
-                dataSet: dataSet,
-                material: collision.surface
-            )
-        else { return }
-        game.combatWorld.playImpact(impact, at: collision.position, gain: collision.gain)
+        contacts.playCollision(collision)
     }
 
     public func applyBodyImpulse(_ impulse: BodyImpulse) {
@@ -127,37 +98,19 @@ extension EffectsBodyImpulsesAdapter {
     }
 
     public func raceSize(of actor: ReferenceKey) -> Int {
-        race(of: actor)?.details.properties.map { Int($0.size) } ?? 1
+        races.raceSize(of: actor)
     }
 
-    /// How a current pushes `actor`: its race size and whether it only swims.
     public func waterPushRace(of actor: ReferenceKey) -> WaterPushRace {
-        let water = game.combat.impulses?.water ?? .vanilla
-        let race = race(of: actor)
-        guard
-            let strong = WaterImpacts.strongCurrent(
-                raceSize: race?.details.properties.map { Int($0.size) } ?? 1, settings: water
-            )
-        else { return .normal }
-        let flags = race?.flags ?? []
-        return WaterPushRace(
-            strongCurrent: strong,
-            isSwimOnly: flags.contains(.swims) && flags.isDisjoint(with: [.walks, .flies])
-        )
+        races.waterPushRace(of: actor)
     }
 
     public func isPushable(_ actor: ReferenceKey) -> Bool {
-        !(race(of: actor)?.flags.contains(.notPushable) ?? false)
+        races.isPushable(actor)
     }
 
     public func race(of actor: ReferenceKey) -> Race? {
-        guard
-            let base = actor == .player ? nil : game.streamer.residentActorEntry(key: actor)?
-                .placedActor?.base,
-            let resolver = game.combatRecords?.actorValueBaselines?.resolver
-        else { return nil }
-        let identity = ActorIdentityRecords(resolver: resolver)
-        return identity.race(ofBase: base).flatMap { identity.races[$0.rawValue] }
+        races.race(of: actor)
     }
 
     public func actorHealth(of actor: ReferenceKey) -> (current: Float, maximum: Float)? {
@@ -172,7 +125,7 @@ extension EffectsBodyImpulsesAdapter {
         magnitude: Float
     ) -> Bool {
         guard magnitude.isFinite, magnitude != 0 else { return false }
-        if race(of: actor)?.flags.contains(.noKnockdowns) == true {
+        if races.hasNoKnockdowns(actor) {
             return game.magicWorld.staggerActor(actor, magnitude: 1)
         }
         let downTime = game.combat.impulses?.settings.knockdownTime
@@ -213,6 +166,14 @@ extension EffectsBodyImpulsesAdapter {
 }
 
 extension EffectsBodyImpulsesAdapter {
+    var contacts: EffectsBodyContacts {
+        EffectsBodyContacts(game: game)
+    }
+
+    var races: EffectsRaceReads {
+        EffectsRaceReads(game: game)
+    }
+
     var splashesAndActors: EffectsSplashesAndActors {
         EffectsSplashesAndActors(game: game, effects: effects)
     }
@@ -238,5 +199,92 @@ struct EffectsSplashesAndActors {
         game.hazardWorld.hazardCandidates().filter { target in
             target.key == .player || game.actorWorld.combatActor(key: target.key)?.isDead == false
         }
+    }
+}
+
+/// The dynamic bodies the impulses push and the sounds their hits make, for
+/// `EffectsBodyImpulsesAdapter`.
+struct EffectsBodyContacts {
+    let game: any EffectsBodyImpulsesHost
+
+    func impulseBodies() -> [ImpulseBody] {
+        (game.streamer.dynamicBodies.bodies).map { body in
+            var impulseBody = ImpulseBody(
+                key: body.key, reference: body.reference, position: body.position,
+                velocity: body.linearVelocity, mass: body.definition.mass,
+                boundingRadius: body.definition.boundingRadius,
+                kind: ImpulseBodyKind(collisionLayer: body.definition.collisionLayer),
+                material: body.definition.material
+            )
+            impulseBody.surfaceMaterial = surfaceMaterial(of: body.lastSurface)
+            return impulseBody
+        }
+    }
+
+    /// A shape without a `MATT`, such as the land, takes the land texture's under the point.
+    private func surfaceMaterial(of touch: DynamicSurfaceTouch?) -> FormID? {
+        guard let touch else { return nil }
+        if let material = touch.material {
+            return material
+        }
+        return game.streamer.sampleTerrain(at: SIMD2(touch.point.x, touch.point.y))?.material
+    }
+
+    /// The body's material names the impact data set; the surface it hit picks the entry,
+    /// as a weapon's impact does.
+    func playCollision(_ collision: BodyCollision) {
+        guard
+            let store = game.combatRecords?.footstepStore,
+            let dataSet = store.materialParents.impactDataSet(of: collision.material),
+            let impact = MeleeImpactResolver(footsteps: store).resolve(
+                dataSet: dataSet,
+                material: collision.surface
+            )
+        else { return }
+        game.combatWorld.playImpact(impact, at: collision.position, gain: collision.gain)
+    }
+}
+
+/// What an actor's race says about water, pushes, and knockdowns, for
+/// `EffectsBodyImpulsesAdapter`.
+struct EffectsRaceReads {
+    let game: any EffectsBodyImpulsesHost
+
+    func raceSize(of actor: ReferenceKey) -> Int {
+        race(of: actor)?.details.properties.map { Int($0.size) } ?? 1
+    }
+
+    /// How a current pushes `actor`: its race size and whether it only swims.
+    func waterPushRace(of actor: ReferenceKey) -> WaterPushRace {
+        let water = game.combat.impulses?.water ?? .vanilla
+        let race = race(of: actor)
+        guard
+            let strong = WaterImpacts.strongCurrent(
+                raceSize: race?.details.properties.map { Int($0.size) } ?? 1, settings: water
+            )
+        else { return .normal }
+        let flags = race?.flags ?? []
+        return WaterPushRace(
+            strongCurrent: strong,
+            isSwimOnly: flags.contains(.swims) && flags.isDisjoint(with: [.walks, .flies])
+        )
+    }
+
+    func isPushable(_ actor: ReferenceKey) -> Bool {
+        !(race(of: actor)?.flags.contains(.notPushable) ?? false)
+    }
+
+    func race(of actor: ReferenceKey) -> Race? {
+        guard
+            let base = actor == .player ? nil : game.streamer.residentActorEntry(key: actor)?
+                .placedActor?.base,
+            let resolver = game.combatRecords?.actorValueBaselines?.resolver
+        else { return nil }
+        let identity = ActorIdentityRecords(resolver: resolver)
+        return identity.race(ofBase: base).flatMap { identity.races[$0.rawValue] }
+    }
+
+    func hasNoKnockdowns(_ actor: ReferenceKey) -> Bool {
+        race(of: actor)?.flags.contains(.noKnockdowns) == true
     }
 }

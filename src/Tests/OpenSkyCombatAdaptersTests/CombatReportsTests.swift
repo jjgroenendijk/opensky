@@ -5,6 +5,7 @@ import OpenSkyActorsInterface
 import OpenSkyCamera
 import OpenSkyCombatAdapters
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyProgressionInterface
@@ -68,6 +69,7 @@ struct CombatReportsTests {
         let camera = cinematic
         #expect(camera.anchorPosition(of: Self.foe) == nil)
         #expect(camera.cinematicAnchor(of: .player) == nil)
+        #expect(camera.cameraShotFacts(attacker: .player, target: Self.foe) == .empty)
         #expect(camera.playerPosition == nil)
         #expect(camera.cameraPaths == nil)
         #expect(camera.cameraTrack(model: "Cameras/KillCam.nif") == nil)

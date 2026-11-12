@@ -94,6 +94,54 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
         attacker: ReferenceKey,
         target: ReferenceKey?
     ) -> CameraConditionResolution {
+        anchors.cameraShotFacts(attacker: attacker, target: target)
+    }
+
+    public func cameraTrack(model: String) -> NIFCameraTrack? {
+        tracks?.value(for: model)
+    }
+
+    public func cinematicAnchor(of key: ReferenceKey) -> CinematicAnchor? {
+        anchors.cinematicAnchor(of: key)
+    }
+
+    public var playerPosition: SIMD3<Float>? {
+        game.gameSession?.locomotion.status.feetPosition
+    }
+
+    func apply(_ frame: CinematicFrame) {
+        guard let gameSession = game.gameSession else { return }
+        gameSession.worldTimeScale = frame.timeScale
+        guard
+            frame.pose != nil || frame.shake != .zero || gameSession.isCinematicCameraEngaged
+            || gameSession.cinematicCameraState.shakeOffset != .zero
+        else { return }
+        gameSession.setCinematicCamera(frame.pose, shakeOffset: frame.shake)
+    }
+
+    public func startImageSpaceModifier(_ key: ReferenceKey) -> Bool {
+        guard let gameSession = game.gameSession else { return false }
+        return game.effects.startModifier(key, strength: 1, on: &gameSession.imageSpace)
+    }
+}
+
+extension CinematicCameraWorldAdapter: CinematicCameraWorldPort {}
+
+extension CinematicCameraWorldAdapter {
+    var anchors: CinematicAnchorReads {
+        CinematicAnchorReads(game: game)
+    }
+}
+
+/// Where a shot's actors stand and what the shot's conditions read, for
+/// `CinematicCameraWorldAdapter`.
+struct CinematicAnchorReads {
+    let game: any CinematicCameraWorldHost
+
+    func cameraShotFacts(
+        attacker: ReferenceKey,
+        target: ReferenceKey?
+    ) -> CameraConditionResolution {
         guard
             let gameSession = game.gameSession,
             let anchor = cinematicAnchor(of: attacker) else { return .empty }
@@ -123,13 +171,9 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
         return facts
     }
 
-    public func cameraTrack(model: String) -> NIFCameraTrack? {
-        tracks?.value(for: model)
-    }
-
     /// The player stands where the capsule is and faces the player's own view,
     /// not the shot's.
-    public func cinematicAnchor(of key: ReferenceKey) -> CinematicAnchor? {
+    func cinematicAnchor(of key: ReferenceKey) -> CinematicAnchor? {
         guard let gameSession = game.gameSession else { return nil }
         if key == .player {
             let view = gameSession.dialogueRestorePose ?? gameSession.freeFlyCamera
@@ -146,25 +190,4 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
             focusHeight: CinematicAnchor.chestHeight * actor.scale
         )
     }
-
-    public var playerPosition: SIMD3<Float>? {
-        game.gameSession?.locomotion.status.feetPosition
-    }
-
-    func apply(_ frame: CinematicFrame) {
-        guard let gameSession = game.gameSession else { return }
-        gameSession.worldTimeScale = frame.timeScale
-        guard
-            frame.pose != nil || frame.shake != .zero || gameSession.isCinematicCameraEngaged
-            || gameSession.cinematicCameraState.shakeOffset != .zero
-        else { return }
-        gameSession.setCinematicCamera(frame.pose, shakeOffset: frame.shake)
-    }
-
-    public func startImageSpaceModifier(_ key: ReferenceKey) -> Bool {
-        guard let gameSession = game.gameSession else { return false }
-        return game.effects.startModifier(key, strength: 1, on: &gameSession.imageSpace)
-    }
 }
-
-extension CinematicCameraWorldAdapter: CinematicCameraWorldPort {}
