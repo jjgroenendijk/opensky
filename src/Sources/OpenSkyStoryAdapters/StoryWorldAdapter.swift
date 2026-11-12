@@ -50,14 +50,8 @@ public final class StoryWorldAdapter {
     public let game: any StoryWorldHost
     public let state = StoryPartState()
     public let now: () -> Date
-    /// Quests the session-start pass started, whose stages wait for one script attach.
-    private var deferredStarts: [FormID]?
-    var sessionStartLists: [PluginQuestList] = []
-    /// Nil until the first check; then the player's last known location, or none.
-    private var lastPlayerLocation: ResolvedFormID??
-    private var framesSinceLocationCheck = 0
-    /// Frames between location checks, because each builds a condition context.
-    static let locationCheckInterval = 30
+    let quests: StoryQuestStarts
+    let frames: StoryFrameSteps
 
     public var scenes: any ScenePort {
         game.scenes
@@ -69,24 +63,6 @@ public final class StoryWorldAdapter {
 
     let hosts: any StoryWorldHosts
 
-    public var ambientTalk: StoryAmbientTalkAdapter {
-        StoryAmbientTalkAdapter(
-            game: hosts, state: state, sceneCast: sceneCast, sceneLines: sceneLines
-        )
-    }
-
-    public var socialSearch: StorySocialSearchAdapter {
-        StorySocialSearchAdapter(game: hosts, sceneCast: sceneCast)
-    }
-
-    public var sceneLines: StorySceneLinesAdapter {
-        StorySceneLinesAdapter(game: hosts, state: state, sceneCast: sceneCast, now: now)
-    }
-
-    public var sceneCast: StorySceneCastAdapter {
-        StorySceneCastAdapter(game: hosts)
-    }
-
     /// `now` is the wall clock the subtitles time their lines on.
     public init(
         game: some StoryWorldHosts,
@@ -95,6 +71,55 @@ public final class StoryWorldAdapter {
         self.now = now
         hosts = game
         self.game = game
+        quests = StoryQuestStarts(game: game)
+        frames = StoryFrameSteps(hosts: game, state: state, now: now)
+    }
+
+    public var ambientTalk: StoryAmbientTalkAdapter {
+        frames.ambientTalk
+    }
+
+    public var socialSearch: StorySocialSearchAdapter {
+        frames.socialSearch
+    }
+
+    public var sceneLines: StorySceneLinesAdapter {
+        frames.sceneLines
+    }
+
+    public var sceneCast: StorySceneCastAdapter {
+        frames.sceneCast
+    }
+
+    var sessionStartLists: [PluginQuestList] {
+        frames.sessionStartLists
+    }
+
+    /// Its start-up stage moves the player to the opening, so it runs last.
+    /// False when the quest is missing or did not start.
+    @discardableResult
+    public func startOpeningQuest() -> Bool {
+        quests.startOpeningQuest()
+    }
+
+    /// Starts every listed quest, then attaches scripts once and runs the start-up stages.
+    public func runSessionStart(lists: [PluginQuestList]) {
+        quests.runSessionStart(lists: lists)
+    }
+
+    /// `KILL`. The murder is settled first, so the crime status can say whether
+    /// it was reported. The rank is unchanged by the death.
+    public func reportKill(victim: ReferenceKey, killer: ReferenceKey?) {
+        frames.events.reportKill(victim: victim, killer: killer)
+    }
+
+    public var questRuntime: QuestRuntime? {
+        quests.questRuntime
+    }
+
+    /// The HUD names a quest a Fail Quest stage item failed.
+    public func questFailed(_ quest: FormID) {
+        quests.questFailed(quest)
     }
 
     /// A new game starts the same listed quests again over the cleared state.
@@ -102,114 +127,11 @@ public final class StoryWorldAdapter {
         storyManager.social.reset()
         runSessionStart(lists: sessionStartLists)
     }
-
-    /// Its start-up stage moves the player to the opening, so it runs last.
-    /// False when the quest is missing or did not start.
-    @discardableResult
-    public func startOpeningQuest() -> Bool {
-        guard let quest = questRuntime?.quests.formID(editorID: NewGameStart.openingQuest) else {
-            game.hud.showNotification("New game: no \(NewGameStart.openingQuest) quest")
-            return false
-        }
-        do {
-            try startQuest(quest, event: nil)
-            return true
-        } catch {
-            game.hud.showNotification("New game: \(NewGameStart.openingQuest) did not start")
-            return false
-        }
-    }
-
-    /// Starts every listed quest, then attaches scripts once and runs the start-up stages.
-    public func runSessionStart(lists: [PluginQuestList]) {
-        deferredStarts = []
-        storyManager.runSessionStart(lists: lists)
-        let started = deferredStarts ?? []
-        deferredStarts = nil
-        game.scripts.bridge?.attachRunningQuestScripts()
-        for quest in started {
-            finishStart(quest)
-        }
-    }
-
-    /// `KILL`. The murder is settled first, so the crime status can say whether
-    /// it was reported. The rank is unchanged by the death.
-    public func reportKill(victim: ReferenceKey, killer: ReferenceKey?) {
-        game.crime.reportMurder(of: victim)
-        var rank: Int8 = 0
-        if
-            let killer, let known = game.scripts.bridge?.relationshipRank(
-                of: victim,
-                toward: killer
-            )
-        {
-            rank = known ?? 0
-        }
-        storyManager.fire(.kill(
-            (killer, victim),
-            location: game.runtimeState.conditionContext().data.currentLocation(of: victim),
-            status: game.crime.killStatus(of: victim, by: killer),
-            rankBeforeDeath: rank
-        ))
-    }
-
-    /// `CLOC` when the player's location changes: actor, old location, new location.
-    func checkPlayerLocation() {
-        framesSinceLocationCheck += 1
-        guard framesSinceLocationCheck >= Self.locationCheckInterval else { return }
-        framesSinceLocationCheck = 0
-        let current = game.runtimeState.conditionContext().data.currentLocation(of: .player)
-        defer { lastPlayerLocation = .some(current) }
-        guard let previous = lastPlayerLocation, previous != current else { return }
-        var event = StoryEventData(event: "CLOC")
-        event.actor1 = .player
-        event.location1 = previous
-        event.location2 = current
-        storyManager.fire(event)
-    }
-
-    public var questRuntime: QuestRuntime? {
-        game.scripts.bridge?.questRuntime as? QuestRuntime
-    }
-
-    /// Sets the start-up stage through the bridge, so its fragments queue, then
-    /// starts the quest's begin-on-start scenes.
-    private func finishStart(_ quest: FormID) {
-        if
-            let runtime = questRuntime,
-            let record = runtime.quests.quest(quest),
-            let stage = record.stages.first(where: { $0.flags.contains(.startUpStage) }),
-            let key = runtime.quests.key(for: quest)
-        {
-            _ = attempt { try game.scripts.bridge?.setQuestStage(stage.index, for: key) }
-        }
-        scenes.questDidStart(quest)
-    }
-}
-
-extension StoryWorldAdapter {
-    /// The HUD names a quest a Fail Quest stage item failed. The game's own quest
-    /// update banner is not built, so this is a notification.
-    public func questFailed(_ quest: FormID) {
-        guard let record = questRuntime?.quests.quest(quest) else { return }
-        let name = game.mapWorld.text(record.name) ?? record.editorID ?? "Quest"
-        game.hud.showNotification("\(name) failed")
-    }
 }
 
 extension StoryWorldAdapter: QuestStarting {
     public func startQuest(_ quest: FormID, event: StoryEventData?) throws {
-        guard let runtime = questRuntime else { throw QuestError.unknownQuest(quest) }
-        try runtime.startQuest(quest, event: event)
-        if deferredStarts != nil {
-            deferredStarts?.append(quest)
-            return
-        }
-        game.scripts.bridge?.attachScripts(ofQuest: quest)
-        if let event {
-            game.scripts.bridge?.queueStoryStartEvent(quest: quest, event: event)
-        }
-        finishStart(quest)
+        try quests.startQuest(quest, event: event)
     }
 }
 
@@ -257,3 +179,192 @@ extension StoryWorldAdapter: PapyrusStoryBridge {
 }
 
 extension StoryWorldAdapter: StoryWorldPort {}
+
+/// Starts quests: the opening quest, the session-start lists, and one quest with its
+/// scripts and start-up stage.
+final class StoryQuestStarts {
+    let game: any StoryWorldHost
+    /// Quests the session-start pass started, whose stages wait for one script attach.
+    private var deferredStarts: [FormID]?
+
+    init(game: any StoryWorldHost) {
+        self.game = game
+    }
+
+    var scenes: any ScenePort {
+        game.scenes
+    }
+
+    private var storyManager: any StoryManagerPort {
+        game.storyManager
+    }
+
+    /// Its start-up stage moves the player to the opening, so it runs last.
+    /// False when the quest is missing or did not start.
+    @discardableResult
+    func startOpeningQuest() -> Bool {
+        guard let quest = questRuntime?.quests.formID(editorID: NewGameStart.openingQuest) else {
+            game.hud.showNotification("New game: no \(NewGameStart.openingQuest) quest")
+            return false
+        }
+        do {
+            try startQuest(quest, event: nil)
+            return true
+        } catch {
+            game.hud.showNotification("New game: \(NewGameStart.openingQuest) did not start")
+            return false
+        }
+    }
+
+    /// Starts every listed quest, then attaches scripts once and runs the start-up stages.
+    func runSessionStart(lists: [PluginQuestList]) {
+        deferredStarts = []
+        storyManager.runSessionStart(lists: lists)
+        let started = deferredStarts ?? []
+        deferredStarts = nil
+        game.scripts.bridge?.attachRunningQuestScripts()
+        for quest in started {
+            finishStart(quest)
+        }
+    }
+
+    var questRuntime: QuestRuntime? {
+        game.scripts.bridge?.questRuntime as? QuestRuntime
+    }
+
+    /// Sets the start-up stage through the bridge, so its fragments queue, then
+    /// starts the quest's begin-on-start scenes.
+    private func finishStart(_ quest: FormID) {
+        if
+            let runtime = questRuntime,
+            let record = runtime.quests.quest(quest),
+            let stage = record.stages.first(where: { $0.flags.contains(.startUpStage) }),
+            let key = runtime.quests.key(for: quest)
+        {
+            _ = attempt { try game.scripts.bridge?.setQuestStage(stage.index, for: key) }
+        }
+        scenes.questDidStart(quest)
+    }
+
+    /// The HUD names a quest a Fail Quest stage item failed. The game's own quest
+    /// update banner is not built, so this is a notification.
+    func questFailed(_ quest: FormID) {
+        guard let record = questRuntime?.quests.quest(quest) else { return }
+        let name = game.mapWorld.text(record.name) ?? record.editorID ?? "Quest"
+        game.hud.showNotification("\(name) failed")
+    }
+
+    func startQuest(_ quest: FormID, event: StoryEventData?) throws {
+        guard let runtime = questRuntime else { throw QuestError.unknownQuest(quest) }
+        try runtime.startQuest(quest, event: event)
+        if deferredStarts != nil {
+            deferredStarts?.append(quest)
+            return
+        }
+        game.scripts.bridge?.attachScripts(ofQuest: quest)
+        if let event {
+            game.scripts.bridge?.queueStoryStartEvent(quest: quest, event: event)
+        }
+        finishStart(quest)
+    }
+}
+
+/// The story events the world reports: a kill, and the player's change of location.
+final class StoryLocationEvents {
+    let game: any StoryWorldHost
+    /// Nil until the first check; then the player's last known location, or none.
+    private var lastPlayerLocation: ResolvedFormID??
+    private var framesSinceLocationCheck = 0
+    /// Frames between location checks, because each builds a condition context.
+    static let locationCheckInterval = 30
+
+    init(game: any StoryWorldHost) {
+        self.game = game
+    }
+
+    private var storyManager: any StoryManagerPort {
+        game.storyManager
+    }
+
+    /// `KILL`. The murder is settled first, so the crime status can say whether
+    /// it was reported. The rank is unchanged by the death.
+    func reportKill(victim: ReferenceKey, killer: ReferenceKey?) {
+        game.crime.reportMurder(of: victim)
+        var rank: Int8 = 0
+        if
+            let killer, let known = game.scripts.bridge?.relationshipRank(
+                of: victim,
+                toward: killer
+            )
+        {
+            rank = known ?? 0
+        }
+        storyManager.fire(.kill(
+            (killer, victim),
+            location: game.runtimeState.conditionContext().data.currentLocation(of: victim),
+            status: game.crime.killStatus(of: victim, by: killer),
+            rankBeforeDeath: rank
+        ))
+    }
+
+    /// `CLOC` when the player's location changes: actor, old location, new location.
+    func checkPlayerLocation() {
+        framesSinceLocationCheck += 1
+        guard framesSinceLocationCheck >= Self.locationCheckInterval else { return }
+        framesSinceLocationCheck = 0
+        let current = game.runtimeState.conditionContext().data.currentLocation(of: .player)
+        defer { lastPlayerLocation = .some(current) }
+        guard let previous = lastPlayerLocation, previous != current else { return }
+        var event = StoryEventData(event: "CLOC")
+        event.actor1 = .player
+        event.location1 = previous
+        event.location2 = current
+        storyManager.fire(event)
+    }
+}
+
+/// The story parts over one host, and the world tick that drives scenes, talk, and events.
+final class StoryFrameSteps {
+    let hosts: any StoryWorldHosts
+    let state: StoryPartState
+    let now: () -> Date
+    let events: StoryLocationEvents
+    var sessionStartLists: [PluginQuestList] = []
+
+    init(hosts: any StoryWorldHosts, state: StoryPartState, now: @escaping () -> Date) {
+        self.hosts = hosts
+        self.state = state
+        self.now = now
+        events = StoryLocationEvents(game: hosts)
+    }
+
+    var game: any StoryWorldHost {
+        hosts
+    }
+
+    var scenes: any ScenePort {
+        game.scenes
+    }
+
+    var storyManager: any StoryManagerPort {
+        game.storyManager
+    }
+
+    var ambientTalk: StoryAmbientTalkAdapter {
+        StoryAmbientTalkAdapter(
+            game: hosts, state: state, sceneCast: sceneCast, sceneLines: sceneLines
+        )
+    }
+
+    var socialSearch: StorySocialSearchAdapter {
+        StorySocialSearchAdapter(game: hosts, sceneCast: sceneCast)
+    }
+
+    var sceneLines: StorySceneLinesAdapter {
+        StorySceneLinesAdapter(game: hosts, state: state, sceneCast: sceneCast, now: now)
+    }
+
+    var sceneCast: StorySceneCastAdapter {
+        StorySceneCastAdapter(game: hosts)
+    }
+}
