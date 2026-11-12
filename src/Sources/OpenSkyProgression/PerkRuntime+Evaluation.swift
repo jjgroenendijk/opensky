@@ -116,7 +116,8 @@ extension PerkRuntime {
         let bound = subjects.boundReferences + [holder.key]
         var context = liveConditions.map { $0(bound).overlaid(by: conditions) } ?? conditions
         context.random = conditions.random
-        context.formSubjects = FormSubjectResolution(forms: Array(subjects.forms.values))
+        context[resolution: FormSubjectResolution.self] =
+            FormSubjectResolution(forms: Array(subjects.forms.values))
         let owned = ownership(of: bound)
         var passing: [PassingPerkEffect] = []
         for candidate in candidates {

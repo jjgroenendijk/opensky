@@ -29,7 +29,7 @@ nonisolated extension ConditionContext {
     }
 }
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsLock {
     public static func installLock(_ registry: inout ConditionFunctionRegistry) {
         // "Returns the lock level of the calling reference."
         // (<https://ck.uesp.net/wiki/GetLockLevel>)

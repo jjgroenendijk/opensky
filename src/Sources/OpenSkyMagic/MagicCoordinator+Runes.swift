@@ -101,7 +101,7 @@ extension MagicCoordinator {
         guard let spells = self.caster?.spellbook.spells
         else { return RuneCore.reach(range: range) }
         var seams = ConditionContext()
-        seams.spellEvaluation = SpellEvaluationResolution(spell: spell)
+        seams[resolution: SpellEvaluationResolution.self] = SpellEvaluationResolution(spell: spell)
         let subjects = PerkEvaluationSubjects(owner: caster)
             .binding(.spell, to: spells.conditionSubject(of: spell))
         return RuneCore.reach(range: world.perkModified(

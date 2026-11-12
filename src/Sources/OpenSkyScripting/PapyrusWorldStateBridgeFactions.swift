@@ -102,7 +102,7 @@ extension PapyrusWorldStateBridge {
     public func factionReaction(of actor: ReferenceKey, toward other: ReferenceKey) -> Int? {
         guard let reaction = factionNatives.socialDecision(actor, other)?.factionReaction
         else { return nil }
-        return ConditionFunctions.factionRelationValue(of: reaction)
+        return ConditionFunctionsFaction.factionRelationValue(of: reaction)
     }
 
     public func isHostile(_ actor: ReferenceKey, toward other: ReferenceKey) -> Bool? {
@@ -114,7 +114,7 @@ extension PapyrusWorldStateBridge {
             let relations = factionNatives.relationIndex(),
             let reaction = relations.reaction(of: faction, toward: other)
         else { return nil }
-        return ConditionFunctions.factionRelationValue(of: reaction)
+        return ConditionFunctionsFaction.factionRelationValue(of: reaction)
     }
 
     /// The `NPC_` identity a `RELA` record would name for one reference, which is

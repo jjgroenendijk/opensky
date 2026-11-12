@@ -98,10 +98,12 @@ struct ConditionInventoryFunctionTests {
         var context = ConditionContext(subject: .player)
         var unknown = ConditionEvaluator(context: context.using(.standard))
         #expect(unknown.evaluate(plainOnly).failures == [.unavailableData(.inventory)])
-        context.tempering = TemperingConditionResolution(isEnchanted: false)
+        context[resolution: TemperingConditionResolution.self] =
+            TemperingConditionResolution(isEnchanted: false)
         var plain = ConditionEvaluator(context: context.using(.standard))
         #expect(plain.evaluate(plainOnly).isTrue)
-        context.tempering = TemperingConditionResolution(isEnchanted: true)
+        context[resolution: TemperingConditionResolution.self] =
+            TemperingConditionResolution(isEnchanted: true)
         var enchanted = ConditionEvaluator(context: context.using(.standard))
         #expect(!enchanted.evaluate(plainOnly).isTrue)
         #expect(enchanted.functionName(of: plainOnly) == "EPTemperingItemIsEnchanted")

@@ -31,14 +31,7 @@ nonisolated public struct SkillUsageConditionResolution: Sendable {
 
 nonisolated extension SkillUsageConditionResolution: ConditionResolution {}
 
-nonisolated extension ConditionContext {
-    public var skillUsage: SkillUsageConditionResolution {
-        get { self[resolution: SkillUsageConditionResolution.self] }
-        set { self[resolution: SkillUsageConditionResolution.self] = newValue }
-    }
-}
-
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsSkillUsage {
     public static func installSkillUsage(_ registry: inout ConditionFunctionRegistry) {
         // `doomWarriorPerk` passes when the skill is one of five combat skills,
         // each written as `== 1` in an OR group.
@@ -50,10 +43,11 @@ nonisolated extension ConditionFunctions {
             guard let parameter = call.parameter1 else {
                 return .failure(.unresolvedParameter(681))
             }
-            guard let skill = call.context.skillUsage.skill else {
+            guard let skill = call.context[resolution: SkillUsageConditionResolution.self].skill
+            else {
                 return .failure(.unavailableData(.skillUsage))
             }
-            return .success(Self.isTrue(skill == parameter.asInt32))
+            return .success(ConditionFunctions.isTrue(skill == parameter.asInt32))
         })
         registry.register(ConditionFunction(
             index: 691,
@@ -64,14 +58,14 @@ nonisolated extension ConditionFunctions {
                 return .failure(.unresolvedParameter(691))
             }
             guard
-                call.context.skillUsage.skill != nil,
-                let object = call.context.skillUsage.object,
+                call.context[resolution: SkillUsageConditionResolution.self].skill != nil,
+                let object = call.context[resolution: SkillUsageConditionResolution.self].object,
                 let store = call.context.data.keywords,
                 let sourcePlugin = call.context.data.sourcePlugin,
                 let keyword = store.resolvedID(parameter.asFormID, fromPlugin: sourcePlugin),
                 let answer = store.hasKeyword(keyword, on: object)
             else { return .failure(.unavailableData(.skillUsage)) }
-            return .success(Self.isTrue(answer))
+            return .success(ConditionFunctions.isTrue(answer))
         })
         registry.register(ConditionFunction(
             index: 692,
@@ -81,11 +75,12 @@ nonisolated extension ConditionFunctions {
             guard let parameter = call.parameter1 else {
                 return .failure(.unresolvedParameter(692))
             }
-            guard call.context.skillUsage.skill != nil else {
+            guard call.context[resolution: SkillUsageConditionResolution.self].skill != nil else {
                 return .failure(.unavailableData(.skillUsage))
             }
-            return .success(Self
-                .isTrue(call.context.skillUsage.action.rawValue == parameter.asInt32))
+            return .success(ConditionFunctions
+                .isTrue(call.context[resolution: SkillUsageConditionResolution.self].action
+                    .rawValue == parameter.asInt32))
         })
     }
 }

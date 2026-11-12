@@ -14,7 +14,7 @@ struct ConditionMotionFunctionTests {
     static let registry: ConditionFunctionRegistry = {
         var registry = ConditionFunctionRegistry()
         ConditionFunctions.installCore(into: &registry)
-        ConditionFunctions.installMotion(&registry)
+        ConditionFunctionsMotion.installMotion(&registry)
         return registry
     }()
 

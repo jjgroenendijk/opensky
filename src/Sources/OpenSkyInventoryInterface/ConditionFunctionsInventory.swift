@@ -112,14 +112,9 @@ nonisolated extension ConditionContext {
         get { self[resolution: InventoryConditionResolution.self] }
         set { self[resolution: InventoryConditionResolution.self] = newValue }
     }
-
-    public var tempering: TemperingConditionResolution {
-        get { self[resolution: TemperingConditionResolution.self] }
-        set { self[resolution: TemperingConditionResolution.self] = newValue }
-    }
 }
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsInventory {
     public static func installInventory(_ registry: inout ConditionFunctionRegistry) {
         // "Returns the number of the specified item in the inventory of the
         // calling reference." (<https://ck.uesp.net/wiki/GetItemCount>)
@@ -143,13 +138,16 @@ nonisolated extension ConditionFunctions {
             index: 659,
             name: "EPTemperingItemIsEnchanted"
         ) { call in
-            guard let enchanted = call.context.tempering.isEnchanted else {
+            guard
+                let enchanted = call.context[resolution: TemperingConditionResolution.self]
+                    .isEnchanted
+            else {
                 return .failure(.unavailableData(.inventory))
             }
             return .success(enchanted ? 1 : 0)
         })
         installGoldAndEquipment(&registry)
-        installEquipment(&registry)
+        ConditionFunctionsEquipment.installEquipment(&registry)
     }
 
     /// `Gold001`, the septim, in `Skyrim.esm` (UESP "Skyrim:Gold").
@@ -173,7 +171,7 @@ nonisolated extension ConditionFunctions {
             return call.referenceKey().flatMap { holder in
                 guard let equipped = call.context.inventory.isEquipped(item.asFormID, on: holder)
                 else { return .failure(.unavailableData(.inventory)) }
-                return .success(Self.isTrue(equipped))
+                return .success(ConditionFunctions.isTrue(equipped))
             }
         })
     }

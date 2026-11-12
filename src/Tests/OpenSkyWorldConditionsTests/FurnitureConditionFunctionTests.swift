@@ -67,9 +67,9 @@ struct FurnitureConditionFunctionTests {
         var context = ConditionContext()
         #expect(try Self.returns(675, value: 0, context: context, name: "bInJumpState")
             .failures == [.unavailableData(.graphVariable)])
-        context.graphVariables.values[Self.actor] = [:]
+        context[resolution: GraphVariableResolution.self].values[Self.actor] = [:]
         #expect(try Self.returns(675, value: 0, context: context, name: "bInJumpState").isTrue)
-        context.graphVariables.values[Self.actor] = ["bInJumpState": 1]
+        context[resolution: GraphVariableResolution.self].values[Self.actor] = ["bInJumpState": 1]
         #expect(try !Self.returns(675, value: 0, context: context, name: "bInJumpState").isTrue)
     }
 
@@ -77,15 +77,18 @@ struct FurnitureConditionFunctionTests {
         var context = ConditionContext()
         #expect(try Self.returns(447, value: 0, context: context, name: "Speed")
             .failures == [.unavailableData(.graphVariable)])
-        context.graphVariables.floats[Self.actor] = ["Speed": 2.5]
+        context[resolution: GraphVariableResolution.self].floats[Self.actor] = ["Speed": 2.5]
         #expect(try Self.returns(447, value: 2.5, context: context, name: "Speed").isTrue)
         #expect(try Self.returns(447, value: 0, context: context, name: "Direction").isTrue)
     }
 
     @Test func aRunningGraphAnswersBeforeTheListedTable() throws {
         var context = ConditionContext()
-        context.graphVariables.values[Self.actor] = ["iState": 1]
-        context.graphVariables.graphs[Self.actor] = StubGraph(ints: ["iState": 3], floats: [:])
+        context[resolution: GraphVariableResolution.self].values[Self.actor] = ["iState": 1]
+        context[resolution: GraphVariableResolution.self].graphs[Self.actor] = StubGraph(
+            ints: ["iState": 3],
+            floats: [:]
+        )
         #expect(try Self.returns(675, value: 3, context: context, name: "iState").isTrue)
         #expect(try Self.returns(675, value: 0, context: context, name: "iMissing").isTrue)
     }

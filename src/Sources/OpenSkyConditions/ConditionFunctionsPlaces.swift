@@ -5,7 +5,7 @@
 import Foundation
 import OpenSkyFormatsESM
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsPlaces {
     public static func installPlaces(_ registry: inout ConditionFunctionRegistry) {
         // "The cell must be an exact match" (<https://ck.uesp.net/wiki/GetInCell>).
         registry.register(ConditionFunction(
@@ -14,7 +14,8 @@ nonisolated extension ConditionFunctions {
             guard let parameter = call.parameter1 else {
                 return .failure(.unresolvedParameter(67))
             }
-            return Self.referenceCell(call).map { Self.isTrue($0.cell == parameter.asFormID) }
+            return Self.referenceCell(call)
+                .map { ConditionFunctions.isTrue($0.cell == parameter.asFormID) }
         })
 
         // "Always returns 0 if the actor is in an interior cell."
@@ -26,7 +27,7 @@ nonisolated extension ConditionFunctions {
                 return .failure(.unresolvedParameter(310))
             }
             return Self.referenceCell(call).map {
-                Self.isTrue($0.worldspace == parameter.asFormID)
+                ConditionFunctions.isTrue($0.worldspace == parameter.asFormID)
             }
         })
 
@@ -35,13 +36,13 @@ nonisolated extension ConditionFunctions {
         registry.register(ConditionFunction(
             index: 32, name: "GetInSameCell", parameter1: .formID
         ) { call in
-            guard let other = Self.parameterKey(call, call.parameter1) else {
+            guard let other = ConditionFunctions.parameterKey(call, call.parameter1) else {
                 return .failure(.unresolvedParameter(32))
             }
             guard let otherCell = call.context.data.cell(of: other) else {
                 return .failure(.unavailableData(.cell))
             }
-            return Self.referenceCell(call).map { Self.isTrue($0 == otherCell) }
+            return Self.referenceCell(call).map { ConditionFunctions.isTrue($0 == otherCell) }
         })
     }
 

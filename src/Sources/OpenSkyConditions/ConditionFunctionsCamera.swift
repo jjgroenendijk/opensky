@@ -50,7 +50,7 @@ nonisolated extension ConditionContext {
     }
 }
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsCamera {
     /// `GetVATSValue` members by xEdit's parameter-1 index.
     private enum VATSValue: UInt32 {
         case weapon = 0
@@ -75,19 +75,22 @@ nonisolated extension ConditionFunctions {
             if selector == .targetDistance {
                 return .success(camera.targetDistance ?? 0)
             }
-            return .success(isTrue(vatsValue(selector, camera) == call.condition.parameter2
+            return .success(ConditionFunctions
+                .isTrue(vatsValue(selector, camera) == call.condition.parameter2
                     .rawValue))
         })
         registry.register(ConditionFunction(index: 391, name: "IsPC1stPerson") { call in
             let camera = call.context.camera
             guard camera.isAvailable else { return .failure(.unavailableData(.camera)) }
-            return .success(isTrue(camera.playerIsFirstPerson))
+            return .success(ConditionFunctions.isTrue(camera.playerIsFirstPerson))
         })
         for function in SideFunction.areaFree {
             register(function, &registry) { .success($0.freeDistance[$1] ?? 0) }
         }
         for function in SideFunction.targetVisible {
-            register(function, &registry) { .success(isTrue($0.targetVisibleSides.contains($1))) }
+            register(function, &registry) {
+                .success(ConditionFunctions.isTrue($0.targetVisibleSides.contains($1)))
+            }
         }
     }
 

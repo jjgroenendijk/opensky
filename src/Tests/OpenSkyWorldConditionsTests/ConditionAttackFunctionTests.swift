@@ -19,7 +19,7 @@ struct ConditionAttackFunctionTests {
     ) throws -> ConditionOutcome {
         var context = try ConditionEvaluatorFixture.populatedContext()
         if let kills {
-            context.attackKills = AttackKillResolution(attacks: [
+            context[resolution: AttackKillResolution.self] = AttackKillResolution(attacks: [
                 AttackKillResolution.Attack(attacker: subject, target: target, kills: kills)
             ])
         }

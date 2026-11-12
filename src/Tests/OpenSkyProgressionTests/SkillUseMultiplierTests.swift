@@ -17,7 +17,7 @@ struct SkillUseMultiplierTests {
 
     private static var registry: ConditionFunctionRegistry {
         var registry = ConditionFunctionRegistry.empty
-        ConditionFunctions.installSkillUsage(&registry)
+        ConditionFunctionsSkillUsage.installSkillUsage(&registry)
         return registry
     }
 
@@ -61,7 +61,10 @@ struct SkillUseMultiplierTests {
 
     @Test func theConditionsReadTheUseBeingCredited() {
         var context = ConditionContext()
-        context.skillUsage = SkillUsageConditionResolution(skill: 9, action: .bash)
+        context[resolution: SkillUsageConditionResolution.self] = SkillUsageConditionResolution(
+            skill: 9,
+            action: .bash
+        )
 
         #expect(value(681, parameter: 9, context: context) == .success(1))
         #expect(value(681, parameter: 10, context: context) == .success(0))

@@ -30,7 +30,8 @@ struct CraftingRealDataTests {
             temperingEnchanted: Bool?
         ) -> String? {
             var context = ConditionContext(subject: .player)
-            context.tempering = TemperingConditionResolution(isEnchanted: temperingEnchanted)
+            context[resolution: TemperingConditionResolution.self] =
+                TemperingConditionResolution(isEnchanted: temperingEnchanted)
             let stacks = inventory.inventory(of: .player).stacks
             context.inventory = InventoryConditionResolution(counts: [
                 .player: stacks.reduce(into: [:]) { $0[$1.item, default: 0] += $1.count }

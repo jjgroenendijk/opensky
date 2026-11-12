@@ -34,7 +34,9 @@ extension CasterRuntime {
         {
             cost /= 2
         }
-        perks.conditions.spellEvaluation = SpellEvaluationResolution(spell: spell)
+        perks
+            .conditions[resolution: SpellEvaluationResolution.self] =
+            SpellEvaluationResolution(spell: spell)
         let outcome = perks.modify(
             cost,
             at: Self.spellCostEntryPoint,

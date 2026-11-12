@@ -36,7 +36,9 @@ extension CasterRuntime {
             spell.spellType == .spell, spell.data?.castingType != .constantEffect,
             var perks
         else { return false }
-        perks.conditions.spellEvaluation = SpellEvaluationResolution(spell: spell)
+        perks
+            .conditions[resolution: SpellEvaluationResolution.self] =
+            SpellEvaluationResolution(spell: spell)
         let outcome = perks.modify(
             0,
             at: Self.canDualCastEntryPoint,

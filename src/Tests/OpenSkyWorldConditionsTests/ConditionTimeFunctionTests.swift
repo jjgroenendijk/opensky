@@ -74,10 +74,10 @@ struct ConditionTimeFunctionTests {
 
     @Test func getDayOfWeekAdvancesOncePerDayAndWraps() {
         var clock = GameClock(year: 201, month: 8, day: 17, hour: 0)
-        let start = ConditionFunctions.dayOfWeek(of: clock)
+        let start = ConditionFunctionsTime.dayOfWeek(of: clock)
         // The vanilla start date is a Sundas, index 0, per UESP
         // `Skyrim:Calendar` and the Creation Kit's GetDayOfWeek table.
-        #expect(start == ConditionFunctions.vanillaStartWeekday)
+        #expect(start == ConditionFunctionsTime.vanillaStartWeekday)
         #expect(start == 0)
         for step in 1 ... 8 {
             // One game day at timescale 1 is 86400 wall seconds, fed in whole
@@ -85,17 +85,17 @@ struct ConditionTimeFunctionTests {
             for _ in 0 ..< 24 {
                 clock.advance(wallDelta: 3600, timescale: 1)
             }
-            #expect(ConditionFunctions.dayOfWeek(of: clock) == (start + step) % 7)
+            #expect(ConditionFunctionsTime.dayOfWeek(of: clock) == (start + step) % 7)
         }
-        #expect(ConditionFunctions.weekdayNames.count == 7)
-        #expect(ConditionFunctions.weekdayNames.first == "Sundas")
-        #expect(ConditionFunctions.weekdayNames.last == "Loredas")
+        #expect(ConditionFunctionsTime.weekdayNames.count == 7)
+        #expect(ConditionFunctionsTime.weekdayNames.first == "Sundas")
+        #expect(ConditionFunctionsTime.weekdayNames.last == "Loredas")
     }
 
     @Test func getDayOfWeekIsReadableAsACondition() throws {
         let clock = GameClock(year: 201, month: 8, day: 17, hour: 12)
         var evaluator = try ConditionEvaluatorFixture.evaluator(clock: clock)
-        let expected = Float(ConditionFunctions.dayOfWeek(of: clock))
+        let expected = Float(ConditionFunctionsTime.dayOfWeek(of: clock))
         let condition = try ConditionEvaluatorFixture.comparing(
             functionIndex: Self.getDayOfWeek, 0, expected
         )

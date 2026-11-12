@@ -197,7 +197,7 @@ struct ConditionFunctionsDataTests {
         var context = try makeFixture().context()
         let form = ConditionFormSubject(id: resolved(FixtureID.subjectBase))
         context.subject = form.key
-        context.formSubjects = FormSubjectResolution(forms: [form])
+        context[resolution: FormSubjectResolution.self] = FormSubjectResolution(forms: [form])
 
         let answers = try [
             DataCase(560, FixtureID.keyword), DataCase(560, FixtureID.otherKeyword),
@@ -219,7 +219,7 @@ struct ConditionFunctionsDataTests {
             id: resolved(FixtureID.targetBase), effectKeywords: [keyword]
         )
         context.subject = form.key
-        context.formSubjects = FormSubjectResolution(forms: [form])
+        context[resolution: FormSubjectResolution.self] = FormSubjectResolution(forms: [form])
 
         let carried = try evaluate(DataCase(560, FixtureID.otherKeyword), context: context)
         let missing = try evaluate(DataCase(560, FixtureID.keyword), context: context)

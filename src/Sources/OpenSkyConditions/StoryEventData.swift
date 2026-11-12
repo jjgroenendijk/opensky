@@ -69,7 +69,7 @@ nonisolated public struct StoryEventData: Equatable, Sendable {
     }
 }
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsEventData {
     /// 576 `GetEventData`. Parameter 1 packs the event function (low 16 bits) and
     /// the member (high 16 bits); parameter 2 is the data form.
     /// (<https://ck.uesp.net/wiki/GetEventData>, xEdit `wbEventFunctionEnum`.)
@@ -88,7 +88,9 @@ nonisolated extension ConditionFunctions {
             switch word & 0xFFFF {
             case 0: return eventIsID(call, event: event, member: member, data: data)
             case 2: return eventValue(event: event, member: member)
-            case 3 where member == .keyword: return .success(isTrue(event.keyword == data))
+            case 3
+                where member ==
+                .keyword: return .success(ConditionFunctions.isTrue(event.keyword == data))
             default: return .failure(.unresolvedParameter(576))
             }
         })
@@ -104,10 +106,11 @@ nonisolated extension ConditionFunctions {
             guard let entry = call.context.references[key] else {
                 return .failure(.unresolvedReference(.eventData))
             }
-            return .success(isTrue(baseForm(of: entry) == data))
+            return .success(ConditionFunctions
+                .isTrue(ConditionFunctions.baseForm(of: entry) == data))
         }
         if let form = event.formID(member) {
-            return .success(isTrue(form == data))
+            return .success(ConditionFunctions.isTrue(form == data))
         }
         return .failure(.unresolvedParameter(576))
     }

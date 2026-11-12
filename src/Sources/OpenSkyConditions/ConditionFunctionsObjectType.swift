@@ -8,7 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 
-nonisolated extension ConditionFunctions {
+nonisolated enum ConditionFunctionsObjectType {
     /// `wbFormTypeEnum` values for the base types a placed reference can have.
     static let objectTypes: [Int32: FourCC] = {
         let names: [Int32: String] = [
@@ -35,12 +35,12 @@ nonisolated extension ConditionFunctions {
             guard let wanted = call.parameter1.flatMap({ objectTypes[$0.asInt32] }) else {
                 return .failure(.unresolvedParameter(432))
             }
-            return baseRecordType(call).map { isTrue($0 == wanted) }
+            return baseRecordType(call).map { ConditionFunctions.isTrue($0 == wanted) }
         })
         registry.register(ConditionFunction(index: 487, name: "IsCarryable") { call in
             baseRecordType(call).flatMap { type in
                 guard type != "LIGH" else { return .failure(.unavailableData(.keyword)) }
-                return .success(isTrue(carryableTypes.contains(type)))
+                return .success(ConditionFunctions.isTrue(carryableTypes.contains(type)))
             }
         })
     }
@@ -57,7 +57,8 @@ nonisolated extension ConditionFunctions {
             guard
                 let store = call.context.data.keywords,
                 let base = store.resolvedID(
-                    baseForm(of: entry), fromPlugin: basePlugin(of: entry.key)
+                    ConditionFunctions.baseForm(of: entry),
+                    fromPlugin: ConditionFunctionsData.basePlugin(of: entry.key)
                 ),
                 let type = store.recordType(of: base)
             else { return .failure(.unavailableData(.keyword)) }

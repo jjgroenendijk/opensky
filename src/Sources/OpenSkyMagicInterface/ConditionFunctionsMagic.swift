@@ -9,12 +9,12 @@ public import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsMagic {
     public static func installMagic(_ registry: inout ConditionFunctionRegistry) {
         installSpellKnowledge(&registry)
         installEffectPresence(&registry)
         installCastingState(&registry)
-        installSpellProperties(&registry)
+        ConditionFunctionsSpell.installSpellProperties(&registry)
     }
 
     // MARK: - Knowing a spell, and being its target
@@ -31,7 +31,7 @@ nonisolated extension ConditionFunctions {
             parameter1: .formID
         ) { call in
             Self.magicParameter(call, index: 264) { state, spell in
-                .success(Self.isTrue(state.knownSpells.contains(spell)))
+                .success(ConditionFunctions.isTrue(state.knownSpells.contains(spell)))
             }
         })
 
@@ -47,7 +47,7 @@ nonisolated extension ConditionFunctions {
             parameter1: .formID
         ) { call in
             Self.magicParameter(call, index: 223) { state, record in
-                .success(Self.isTrue(state.effectSources.contains(record)))
+                .success(ConditionFunctions.isTrue(state.effectSources.contains(record)))
             }
         })
     }
@@ -64,7 +64,7 @@ nonisolated extension ConditionFunctions {
             parameter1: .formID
         ) { call in
             Self.magicParameter(call, index: 214) { state, effect in
-                .success(Self.isTrue(state.canApply(effect)))
+                .success(ConditionFunctions.isTrue(state.canApply(effect)))
             }
         })
 
@@ -81,7 +81,7 @@ nonisolated extension ConditionFunctions {
                 guard
                     let answer = call.context.magic.hasEffectKeyword(keyword, on: state)
                 else { return .failure(.unavailableMagic(.record)) }
-                return .success(Self.isTrue(answer))
+                return .success(ConditionFunctions.isTrue(answer))
             }
         })
     }
@@ -98,7 +98,7 @@ nonisolated extension ConditionFunctions {
             parameter1: .integer
         ) { call in
             Self.castingSource(call, index: 570) { state, hand in
-                .success(Self.isTrue(state.handSpells[hand] != nil))
+                .success(ConditionFunctions.isTrue(state.handSpells[hand] != nil))
             }
         })
 
@@ -137,7 +137,7 @@ nonisolated extension ConditionFunctions {
             index: 632,
             name: "IsCasting"
         ) { call in
-            Self.magicState(call).map { Self.isTrue($0.isCasting) }
+            Self.magicState(call).map { ConditionFunctions.isTrue($0.isCasting) }
         })
     }
 

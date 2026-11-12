@@ -10,7 +10,7 @@ import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-nonisolated extension ConditionFunctions {
+nonisolated enum ConditionFunctionsRelationship {
     /// The `ParentChild` association type, which gives `parent` and `child` a direction.
     static let parentChildAssociation = "ParentChild"
 
@@ -18,15 +18,15 @@ nonisolated extension ConditionFunctions {
         registry.register(ConditionFunction(
             index: 132, name: "GetPCInFaction", parameter1: .formID
         ) { call in
-            factionQuery(call, index: 132) { seam, _, faction in
-                seam.isMember(.player, of: faction).map(Self.isTrue)
+            ConditionFunctionsFaction.factionQuery(call, index: 132) { seam, _, faction in
+                seam.isMember(.player, of: faction).map(ConditionFunctions.isTrue)
             }
         })
         registry.register(ConditionFunction(
             index: 66, name: "GetShouldAttack", parameter1: .formID
         ) { call in
-            actorPair(call, index: 66) { seam, actor, other in
-                seam.isHostile(actor, toward: other).map(Self.isTrue)
+            ConditionFunctionsFaction.actorPair(call, index: 66) { seam, actor, other in
+                seam.isHostile(actor, toward: other).map(ConditionFunctions.isTrue)
             }
         })
         registry.register(ConditionFunction(
@@ -37,16 +37,16 @@ nonisolated extension ConditionFunctions {
                     return .failure(.unavailableFactions)
                 }
                 let rank = call.context.factions.relationshipRank(of: actor, toward: .player)
-                return .success(Self.isTrue((rank ?? 0) >= 1))
+                return .success(ConditionFunctions.isTrue((rank ?? 0) >= 1))
             }
         })
         registry.register(ConditionFunction(
             index: 652, name: "GetInSharedCrimeFaction", parameter1: .formID
         ) { call in
-            actorPair(call, index: 652) { seam, actor, other in
+            ConditionFunctionsFaction.actorPair(call, index: 652) { seam, actor, other in
                 guard let mine = seam.profile(of: actor), let theirs = seam.profile(of: other)
                 else { return nil }
-                return Self
+                return ConditionFunctions
                     .isTrue(mine.crimeFaction != nil && mine.crimeFaction == theirs.crimeFaction)
             }
         })
@@ -62,14 +62,14 @@ nonisolated extension ConditionFunctions {
             guard let wanted = call.parameter2 else { return .failure(.unresolvedParameter(258)) }
             return relationshipRecord(call, index: 258) { record, _, store, plugin in
                 let type = store.resolvedID(wanted.asFormID, fromPlugin: plugin)
-                return Self.isTrue(type != nil && record?.associationType?.id == type)
+                return ConditionFunctions.isTrue(type != nil && record?.associationType?.id == type)
             }
         })
         registry.register(ConditionFunction(
             index: 259, name: "HasFamilyRelationship", parameter1: .formID
         ) { call in
             relationshipRecord(call, index: 259) { record, _, _, _ in
-                Self.isTrue(record?.associationType?.isFamilyAssociation == true)
+                ConditionFunctions.isTrue(record?.associationType?.isFamilyAssociation == true)
             }
         })
         registry.register(ConditionFunction(
@@ -78,7 +78,7 @@ nonisolated extension ConditionFunctions {
             relationshipRecord(call, index: 261) { record, base, _, _ in
                 guard let record, record.associationType?.editorID == parentChildAssociation
                 else { return 0 }
-                return Self.isTrue(record.parent == base)
+                return ConditionFunctions.isTrue(record.parent == base)
             }
         })
         registry.register(ConditionFunction(index: 616, name: "GetLowestRelationshipRank") { call in
@@ -102,7 +102,7 @@ nonisolated extension ConditionFunctions {
         index: UInt16,
         read: (ResolvedRelationship?, ResolvedFormID, RelationshipStore, String) -> Float
     ) -> Result<Float, ConditionFailure> {
-        actorPair(call, index: index) { seam, actor, other in
+        ConditionFunctionsFaction.actorPair(call, index: index) { seam, actor, other in
             guard
                 let store = seam.derivation?.relationships,
                 let plugin = seam.facts.sourcePlugin,

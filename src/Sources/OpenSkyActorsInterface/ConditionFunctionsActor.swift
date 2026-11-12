@@ -8,7 +8,7 @@ import Foundation
 public import OpenSkyConditions
 import OpenSkyFormatsESM
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsActor {
     public static func installActor(_ registry: inout ConditionFunctionRegistry) {
         // "Returns the current, modified value of the specified stat."
         // (<https://ck.uesp.net/wiki/GetActorValue>)
@@ -45,7 +45,7 @@ nonisolated extension ConditionFunctions {
             index: 46,
             name: "GetDead"
         ) { call in
-            call.actorState().map { Self.isTrue($0.isDead) }
+            call.actorState().map { ConditionFunctions.isTrue($0.isDead) }
         })
 
         // "0 - no weapon drawn. 1 - only fists out. 2 - a weapon in either hand."
@@ -76,11 +76,11 @@ nonisolated extension ConditionFunctions {
         })
 
         installLevelAndBaseValue(&registry)
-        installActorBody(&registry)
-        installActorIdentity(&registry)
-        installActorAction(&registry)
-        installActorSituation(&registry)
-        installSpeechCheck(&registry)
+        ConditionFunctionsActorBody.installActorBody(&registry)
+        ConditionFunctionsActorIdentity.installActorIdentity(&registry)
+        ConditionFunctionsActorAction.installActorAction(&registry)
+        ConditionFunctionsActorSituation.installActorSituation(&registry)
+        ConditionFunctionsSpeechCheck.installSpeechCheck(&registry)
     }
 
     /// Vanilla perk requirements use these: `Armsman20` reads

@@ -18,7 +18,7 @@ struct ConditionReferenceStateFunctionTests {
         parameter1: UInt32 = 0
     ) throws -> ConditionOutcome {
         var context = try ConditionEvaluatorFixture.populatedContext()
-        context.referenceFacts = ReferenceConditionResolution(
+        context[resolution: ReferenceConditionResolution.self] = ReferenceConditionResolution(
             facts: facts.map { [subject: $0] } ?? [:]
         )
         var evaluator = ConditionEvaluator(context: context.using(.standard))

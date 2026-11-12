@@ -86,7 +86,7 @@ extension DialogueWorldAdapter: DialogueWorld {
             speakerInDialogue: context.dialogue.speakerInDialogue,
             line: context.dialogue.line
         )
-        context.speechChecks = outcomes.speechCheckResolution()
+        context[resolution: SpeechCheckResolution.self] = outcomes.speechCheckResolution()
         return context
     }
 

@@ -9,14 +9,14 @@ import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-nonisolated extension ConditionFunctions {
+nonisolated enum ConditionFunctionsActorSituation {
     static func installActorSituation(_ registry: inout ConditionFunctionRegistry) {
         registry.register(ConditionFunction(index: 734, name: "IsOverEncumbered") { call in
             call.actorState().flatMap { state in
                 guard let isOver = state.isOverEncumbered else {
                     return .failure(.unavailableActorState)
                 }
-                return .success(Self.isTrue(isOver))
+                return .success(ConditionFunctions.isTrue(isOver))
             }
         })
         // A combat group is every living actor that fights the same target. An actor with
@@ -35,7 +35,7 @@ nonisolated extension ConditionFunctions {
         })
         // The CK wiki: the graph's `Injured`, set below the race's injured health share.
         registry.register(ConditionFunction(index: 645, name: "GetIsInjured") { call in
-            call.actorState().map { Self.isTrue($0.isInjured) }
+            call.actorState().map { ConditionFunctions.isTrue($0.isInjured) }
         })
         installAttackType(&registry)
         // OpenSky has no item use by an actor, no reaction to a player action, and no bump
@@ -59,8 +59,8 @@ nonisolated extension ConditionFunctions {
                 let parameter = call.parameter1,
                 let keyword = store.resolve(parameter.asFormID, fromPlugin: plugin)
             else { return .failure(.unavailableData(.keyword)) }
-            return Self.action(call) { action in
-                Self.isTrue(action.attackTypeKeyword == keyword.keyword.editorID)
+            return ConditionFunctionsActorAction.action(call) { action in
+                ConditionFunctions.isTrue(action.attackTypeKeyword == keyword.keyword.editorID)
             }
         })
     }

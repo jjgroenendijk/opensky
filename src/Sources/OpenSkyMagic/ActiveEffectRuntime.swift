@@ -232,7 +232,7 @@ public struct ActiveEffectRuntime {
         var context = conditions
         context.subject = target.key
         context.target = target.key
-        context.magicApplication = application
+        context[resolution: MagicApplicationContext.self] = application
         var evaluator = ConditionEvaluator(context: context)
         let outcome = evaluator.evaluate(list)
         conditions.random = evaluator.context.random

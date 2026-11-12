@@ -38,25 +38,21 @@ nonisolated public struct AttackKillResolution: Sendable {
 
 nonisolated extension AttackKillResolution: ConditionResolution {}
 
-nonisolated extension ConditionContext {
-    public var attackKills: AttackKillResolution {
-        get { self[resolution: AttackKillResolution.self] }
-        set { self[resolution: AttackKillResolution.self] = newValue }
-    }
-}
-
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsAttack {
     public static func installAttack(_ registry: inout ConditionFunctionRegistry) {
         registry.register(ConditionFunction(
             index: 678, name: "ShouldAttackKill", parameter1: .formID
         ) { call in
             let named = (call.parameter1?.rawValue ?? 0) != 0
-            let target = named ? parameterReference(call) : nil
+            let target = named ? ConditionFunctions.parameterReference(call) : nil
             if named, target == nil {
                 return .failure(.unresolvedParameter(678))
             }
             return call.referenceKey().flatMap { attacker in
-                guard let kills = call.context.attackKills.kills(attacker, target) else {
+                guard let kills = call.context[resolution: AttackKillResolution.self].kills(
+                    attacker,
+                    target
+                ) else {
                     return .failure(.unavailableData(.attack))
                 }
                 return .success(kills ? 1 : 0)

@@ -5,11 +5,11 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsDataLocations {
     public static func installLocationData(_ registry: inout ConditionFunctionRegistry) {
         installDirectLocations(&registry)
         installLocationAliases(&registry)
-        installSameLocation(&registry)
+        ConditionFunctions.installSameLocation(&registry)
         installCellFacts(&registry)
     }
 
@@ -21,7 +21,7 @@ nonisolated extension ConditionFunctions {
                 guard let interior = call.context.data.isInInterior(reference) else {
                     return .failure(.unavailableData(.location))
                 }
-                return .success(Self.isTrue(interior))
+                return .success(ConditionFunctions.isTrue(interior))
             }
         })
         // xEdit index 555, `HasLoaded3D`, no parameters. Returns 1 when the reference
@@ -29,7 +29,7 @@ nonisolated extension ConditionFunctions {
         // phase waits on it for the player (<https://ck.uesp.net/wiki/HasLoaded3D>).
         registry.register(ConditionFunction(index: 555, name: "HasLoaded3D") { call in
             call.referenceKey().map { reference in
-                Self.isTrue(call.context.data.isInInterior(reference) != nil)
+                ConditionFunctions.isTrue(call.context.data.isInInterior(reference) != nil)
             }
         })
     }
@@ -40,23 +40,23 @@ nonisolated extension ConditionFunctions {
         // xEdit index 359, `GetInCurrentLoc`, parameter 1 `ptLocation`.
         // Returns 1 when the current location is the supplied location or a
         // child of it. (<https://ck.uesp.net/wiki/GetInCurrentLoc>)
-        registry.register(locationParameterFunction(
+        registry.register(ConditionFunctions.locationParameterFunction(
             index: 359,
             name: "GetInCurrentLoc",
             answer: { store, current, parameter in
-                Self.isTrue(store.isWithin(current, ancestor: parameter))
+                ConditionFunctions.isTrue(store.isWithin(current, ancestor: parameter))
             }
         ))
 
         // xEdit index 565, `GetIsEditorLocation`, parameter 1 `ptLocation`.
         // Same containment rule as `GetIsEditorLocAlias`, with a Location
         // parameter. (<https://ck.uesp.net/wiki/GetIsEditorLocation>)
-        registry.register(locationParameterFunction(
+        registry.register(ConditionFunctions.locationParameterFunction(
             index: 565,
             name: "GetIsEditorLocation",
-            location: { call in Self.editorLocation(call) },
+            location: { call in ConditionFunctions.editorLocation(call) },
             answer: { store, editor, parameter in
-                Self.isTrue(store.isWithin(editor, ancestor: parameter))
+                ConditionFunctions.isTrue(store.isWithin(editor, ancestor: parameter))
             }
         ))
 
@@ -77,10 +77,10 @@ nonisolated extension ConditionFunctions {
                 let listID = lists.resolvedID(parameter.asFormID, fromPlugin: sourcePlugin),
                 let flattened = lists.flattened(listID)
             else { return .failure(.unavailableData(.formList)) }
-            return Self.currentLocation(call).flatMap { store, current in
+            return ConditionFunctions.currentLocation(call).flatMap { store, current in
                 guard let answer = store.isWithinAny(current, locations: flattened.entries)
                 else { return .failure(.unavailableData(.location)) }
-                return .success(Self.isTrue(answer))
+                return .success(ConditionFunctions.isTrue(answer))
             }
         })
 
@@ -96,7 +96,7 @@ nonisolated extension ConditionFunctions {
             guard let parameter = call.parameter1 else {
                 return .failure(.unresolvedParameter(562))
             }
-            return Self.currentLocation(call).flatMap { store, current in
+            return ConditionFunctions.currentLocation(call).flatMap { store, current in
                 guard
                     let sourcePlugin = call.context.data.sourcePlugin,
                     let keyword = store.keyword(
@@ -104,7 +104,7 @@ nonisolated extension ConditionFunctions {
                         fromPlugin: sourcePlugin
                     )
                 else { return .failure(.unavailableData(.keyword)) }
-                return .success(Self.isTrue(store.hasKeyword(keyword, in: current)))
+                return .success(ConditionFunctions.isTrue(store.hasKeyword(keyword, in: current)))
             }
         })
     }
@@ -115,23 +115,23 @@ nonisolated extension ConditionFunctions {
         // xEdit index 360, `GetInCurrentLocAlias`, parameter 1 `ptAlias`.
         // Returns 1 when current location is the filled location or its child.
         // (<https://ck.uesp.net/wiki/GetInCurrentLocAlias>)
-        registry.register(locationAliasFunction(
+        registry.register(ConditionFunctions.locationAliasFunction(
             index: 360,
             name: "GetInCurrentLocAlias",
             answer: { store, current, alias in
-                Self.isTrue(store.isWithin(current, ancestor: alias))
+                ConditionFunctions.isTrue(store.isWithin(current, ancestor: alias))
             }
         ))
 
         // xEdit index 567, `GetIsEditorLocAlias`, parameter 1 `ptAlias`.
         // Returns 1 when editor location is the filled location or its child.
         // (<https://ck.uesp.net/wiki/GetIsEditorLocAlias>)
-        registry.register(locationAliasFunction(
+        registry.register(ConditionFunctions.locationAliasFunction(
             index: 567,
             name: "GetIsEditorLocAlias",
-            location: { call in Self.editorLocation(call) },
+            location: { call in ConditionFunctions.editorLocation(call) },
             answer: { store, editor, alias in
-                Self.isTrue(store.isWithin(editor, ancestor: alias))
+                ConditionFunctions.isTrue(store.isWithin(editor, ancestor: alias))
             }
         ))
 
@@ -157,7 +157,7 @@ nonisolated extension ConditionFunctions {
                 ),
                 store.location(location) != nil
             else { return .failure(.unavailableData(.location)) }
-            return .success(Self.isTrue(alias == location))
+            return .success(ConditionFunctions.isTrue(alias == location))
         })
 
         // xEdit index 610, `LocAliasHasKeyword`: parameter 1 `ptAlias`,
@@ -182,7 +182,7 @@ nonisolated extension ConditionFunctions {
                     fromPlugin: sourcePlugin
                 )
             else { return .failure(.unavailableData(.location)) }
-            return .success(Self.isTrue(store.hasKeyword(keyword, in: alias)))
+            return .success(ConditionFunctions.isTrue(store.hasKeyword(keyword, in: alias)))
         })
     }
 }

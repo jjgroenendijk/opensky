@@ -16,7 +16,7 @@ struct ConditionPlaceFunctionTests {
     static let registry: ConditionFunctionRegistry = {
         var registry = ConditionFunctionRegistry()
         ConditionFunctions.installCore(into: &registry)
-        ConditionFunctions.installWorldPlaces(&registry)
+        ConditionFunctionsPlace.installWorldPlaces(&registry)
         return registry
     }()
 
@@ -54,7 +54,7 @@ struct ConditionPlaceFunctionTests {
             locations: locations(), sourcePlugin: plugin,
             currentLocations: [subject: townID, .player: townID]
         )
-        context.places = places
+        context[resolution: PlaceConditionResolution.self] = places
         var evaluator = ConditionEvaluator(context: context.using(Self.registry))
         return try evaluator.evaluate(ConditionEvaluatorFixture.condition(
             comparisonValue: value.bitPattern, functionIndex: function,

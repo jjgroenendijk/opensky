@@ -7,10 +7,12 @@ import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
 
-nonisolated extension ConditionFunctions {
+nonisolated enum ConditionFunctionsDialogueLine {
     static func installDialogueLine(_ registry: inout ConditionFunctionRegistry) {
         registry.register(lineRead(141, "IsTalking") { _ in 1 })
-        registry.register(lineRead(123, "IsGreetingPlayer") { isTrue($0.isGreeting) })
+        registry
+            .register(lineRead(123, "IsGreetingPlayer") { ConditionFunctions.isTrue($0.isGreeting)
+            })
         registry.register(lineRead(434, "GetDialogueEmotion") { Float($0.emotion) })
         registry.register(lineRead(435, "GetDialogueEmotionValue") { Float($0.emotionValue) })
     }

@@ -29,26 +29,19 @@ nonisolated public struct SpeechCheckResolution: ConditionResolution, Equatable 
     }
 }
 
-nonisolated extension ConditionContext {
-    public var speechChecks: SpeechCheckResolution {
-        get { self[resolution: SpeechCheckResolution.self] }
-        set { self[resolution: SpeechCheckResolution.self] = newValue }
-    }
-}
-
-nonisolated extension ConditionContext {
+nonisolated extension SpeechCheckResolution {
     /// The gold `actor` asks as a bribe, with the player's perk factor. Nil without the
     /// settings or either actor's values.
-    public func bribeAmount(of actor: ReferenceKey) -> Float? {
+    public func bribeAmount(of actor: ReferenceKey, actors: ActorStateResolution) -> Float? {
         guard
-            let settings = speechChecks.settings,
+            let settings,
             let npc = actors.state(for: actor),
             let player = actors.state(for: .player)
         else { return nil }
         let values = SpeechCheckValues.actors(
             player: player, playerLevel: player.level, npc: npc, npcLevel: npc.level
         )
-        return settings.bribeAmount(values) * speechChecks.bribeFactor
+        return settings.bribeAmount(values) * bribeFactor
     }
 }
 
@@ -73,18 +66,22 @@ nonisolated public enum SpeechCheckValues {
     }
 }
 
-nonisolated extension ConditionFunctions {
+nonisolated enum ConditionFunctionsSpeechCheck {
     static func installSpeechCheck(_ registry: inout ConditionFunctionRegistry) {
         // The player can pay what this actor asks.
         registry.register(ConditionFunction(index: 654, name: "GetBribeSuccess") { call in
             speechCheck(call) { checks, settings, actors in
                 guard let gold = checks.playerGold else { return nil }
-                return isTrue(Float(gold) >= settings.bribeAmount(actors) * checks.bribeFactor)
+                return ConditionFunctions
+                    .isTrue(Float(gold) >= settings.bribeAmount(actors) * checks.bribeFactor)
             }
         })
         registry.register(ConditionFunction(index: 655, name: "GetIntimidateSuccess") { call in
             speechCheck(call) { checks, settings, actors in
-                isTrue(settings.intimidates(actors, playerFactor: checks.intimidationFactor))
+                ConditionFunctions.isTrue(settings.intimidates(
+                    actors,
+                    playerFactor: checks.intimidationFactor
+                ))
             }
         })
     }
@@ -94,7 +91,7 @@ nonisolated extension ConditionFunctions {
         _ call: ConditionCall,
         read: (SpeechCheckResolution, SpeechCheckSettings, SpeechCheckActors) -> Float?
     ) -> Result<Float, ConditionFailure> {
-        let checks = call.context.speechChecks
+        let checks = call.context[resolution: SpeechCheckResolution.self]
         guard let settings = checks.settings else { return .failure(.unavailableData(.speech)) }
         return call.actorState().flatMap { npc in
             guard let player = call.context.actors.state(for: .player) else {

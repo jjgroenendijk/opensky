@@ -45,12 +45,14 @@ public struct RuntimeStateLiveSeamsAdapter {
 
 extension RuntimeStateLiveSeamsAdapter {
     public func addLiveSeams(to context: inout ConditionContext) {
-        context.scriptVariables = game.scripts.runtime?.scriptVariableResolution() ?? .empty
+        context[resolution: ScriptVariableResolution.self] = game.scripts.runtime?
+            .scriptVariableResolution() ?? .empty
         context.scriptedState = game.scripts.bridge?.scriptedStateResolution() ?? .empty
         context.scenes = game.scenes.conditionResolution(aliases: context.aliases)
         context.weather = weatherResolution()
         context.furniture = game.idleWorld.idles.furnitureResolution
-        context.graphVariables = game.actorGraphWorld.graphVariableResolution()
+        context[resolution: GraphVariableResolution.self] = game.actorGraphWorld
+            .graphVariableResolution()
         let warnings = game.packages.trespassWarnings
         if !warnings.isEmpty {
             context.crime.situation?.trespassWarnings = warnings
@@ -58,9 +60,11 @@ extension RuntimeStateLiveSeamsAdapter {
         if let inventory = inventoryFacts.inventoryResolution(context: context) {
             context.inventory = inventory
         }
-        context.referenceFacts = referenceMotion.referenceFacts(of: context.references)
+        context[resolution: ReferenceConditionResolution.self] = referenceMotion
+            .referenceFacts(of: context.references)
         context.motion = referenceMotion.motionResolution(references: context.references)
-        context.places = referenceMotion.placeResolution(references: context.references)
+        context[resolution: PlaceConditionResolution.self] = referenceMotion
+            .placeResolution(references: context.references)
         referenceMotion.addMountSeams(to: &context)
         context.menus = MenuConditionResolution(
             isMenuOpen: game.menuMode.topMenu != nil,

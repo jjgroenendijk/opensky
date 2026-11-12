@@ -102,23 +102,18 @@ nonisolated extension ConditionContext {
         get { self[resolution: FurnitureConditionResolution.self] }
         set { self[resolution: FurnitureConditionResolution.self] = newValue }
     }
-
-    public var graphVariables: GraphVariableResolution {
-        get { self[resolution: GraphVariableResolution.self] }
-        set { self[resolution: GraphVariableResolution.self] = newValue }
-    }
 }
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsFurniture {
     public static func installFurniture(_ registry: inout ConditionFunctionRegistry) {
         registerFurniture(&registry, index: 159, name: "GetSitting") { use, _ in
             Float(use?.sitState.rawValue ?? 0)
         }
         registerFurniture(&registry, index: 613, name: "IsFurnitureAnimType") { use, call in
-            isTrue(use?.animationType == call.condition.parameter1.rawValue)
+            ConditionFunctions.isTrue(use?.animationType == call.condition.parameter1.rawValue)
         }
         registerFurniture(&registry, index: 614, name: "IsFurnitureEntryType") { use, call in
-            isTrue(use?.entry == call.condition.parameter1.rawValue)
+            ConditionFunctions.isTrue(use?.entry == call.condition.parameter1.rawValue)
         }
         // OpenSky has no quick entry or exit and no instant exit, so these read 0.
         for (index, name) in [
@@ -128,7 +123,7 @@ nonisolated extension ConditionFunctions {
             registerFurniture(&registry, index: UInt16(index), name: name) { _, _ in 0 }
         }
         registerFurniture(&registry, index: 644, name: "IsInFurnitureState") { use, call in
-            isTrue(
+            ConditionFunctions.isTrue(
                 use?.sitState == .sitting
                     && use?.animationType == call.condition.parameter1.rawValue
             )
@@ -158,7 +153,11 @@ nonisolated extension ConditionFunctions {
             return .failure(.unresolvedParameter(index))
         }
         return call.referenceKey().flatMap { actor in
-            guard let value = read(call.context.graphVariables, actor, name) else {
+            guard let value = read(
+                call.context[resolution: GraphVariableResolution.self],
+                actor,
+                name
+            ) else {
                 return .failure(.unavailableData(.graphVariable))
             }
             return .success(value)
@@ -170,15 +169,15 @@ nonisolated extension ConditionFunctions {
         registry.register(ConditionFunction(
             index: 162, name: "IsCurrentFurnitureRef", parameter1: .formID
         ) { call in
-            guard let wanted = parameterKey(call, call.parameter1) else {
+            guard let wanted = ConditionFunctions.parameterKey(call, call.parameter1) else {
                 return .failure(.unresolvedParameter(162))
             }
-            return currentFurniture(call).map { isTrue($0 == wanted) }
+            return currentFurniture(call).map { ConditionFunctions.isTrue($0 == wanted) }
         })
         registry.register(ConditionFunction(
             index: 163, name: "IsCurrentFurnitureObj", parameter1: .formID
         ) { call in
-            guard let wanted = parameterKey(call, call.parameter1) else {
+            guard let wanted = ConditionFunctions.parameterKey(call, call.parameter1) else {
                 return .failure(.unresolvedParameter(163))
             }
             return currentFurniture(call).flatMap { furniture in
@@ -187,9 +186,10 @@ nonisolated extension ConditionFunctions {
                 }
                 guard
                     let base = call.context.data.keywords?.resolvedID(
-                        baseForm(of: entry), fromPlugin: basePlugin(of: entry.key)
+                        ConditionFunctions.baseForm(of: entry),
+                        fromPlugin: ConditionFunctionsData.basePlugin(of: entry.key)
                     ) else { return .failure(.unavailableData(.keyword)) }
-                return .success(isTrue(ReferenceKey(resolved: base) == wanted))
+                return .success(ConditionFunctions.isTrue(ReferenceKey(resolved: base) == wanted))
             }
         })
     }

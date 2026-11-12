@@ -166,7 +166,7 @@ public final class PerkCoordinator {
     /// skill improves. Rested, Lover's Comfort and the Guardian Stones work through it.
     public func skillUseMultiplier(_ usage: SkillUsageConditionResolution) -> Float {
         var seams = ConditionContext()
-        seams.skillUsage = usage
+        seams[resolution: SkillUsageConditionResolution.self] = usage
         return modified(
             1,
             at: Self.skillUseEntryPoint,
