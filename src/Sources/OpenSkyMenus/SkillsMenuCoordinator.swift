@@ -44,7 +44,7 @@ public final class SkillsMenuCoordinator {
     /// Buttons the level-up movie pressed, applied after it returns.
     var pendingChoices: [ActorValueKind] = []
     var levelUpShown = false
-    var sky = PerkSkyState()
+    var sky = SkillsMenuCoordinator.PerkSkyState()
     let movies: (any MenuMovieLoading)?
     let hud: (any MenuLayerOwner)?
     private let menuMode: MenuModeController

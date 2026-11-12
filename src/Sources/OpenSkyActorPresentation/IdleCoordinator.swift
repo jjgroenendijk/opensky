@@ -156,7 +156,7 @@ public final class IdleCoordinator {
     /// The paired animations playing now, oldest first.
     public internal(set) var pairs: [PairedAnimationPlay] = []
     var reports: [ReferenceKey: IdleReport] = [:]
-    let markerClaims = IdleMarkerClaims()
+    let markerClaims = IdleCoordinator.IdleMarkerClaims()
     /// The world context one `advance` shares between its actors.
     var passContext: (sequence: UInt64, context: ConditionContext)?
     var isAdvancing = false

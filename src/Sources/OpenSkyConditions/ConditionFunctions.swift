@@ -16,13 +16,13 @@ nonisolated extension ConditionFunctionRegistry {
         /// identity, globals, and story-event data. The record-data family (`installData`) is core
         /// too; the whole-game registry installs it in its own place.
         public static func installCore(into registry: inout ConditionFunctionRegistry) {
-            ConditionFunctionsTime.installTime(&registry)
+            ConditionFunctions.ConditionFunctionsTime.installTime(&registry)
             installReference(&registry)
             installGlobals(&registry)
-            ConditionFunctionsEventData.installEventData(&registry)
-            ConditionFunctionsWeather.installWeather(&registry)
-            ConditionFunctionsScriptVariables.installScriptVariables(&registry)
-            ConditionFunctionsMenuMode.installMenuMode(&registry)
+            ConditionFunctions.ConditionFunctionsEventData.installEventData(&registry)
+            ConditionFunctions.ConditionFunctionsWeather.installWeather(&registry)
+            ConditionFunctions.ConditionFunctionsScriptVariables.installScriptVariables(&registry)
+            ConditionFunctions.ConditionFunctionsMenuMode.installMenuMode(&registry)
         }
 
         // MARK: - Reference identity

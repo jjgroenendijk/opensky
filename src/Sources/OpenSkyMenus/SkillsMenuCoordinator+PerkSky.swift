@@ -51,21 +51,23 @@ struct PerkSkyTreeDraws {
     var openTree: [PerkSkyStar] = []
 }
 
-/// What the sky keeps between frames while the menu is open.
-struct PerkSkyState {
-    var trees: [Int32: [SkillsMenuPerk]] = [:]
-    var motion: PerkSkyMotion?
-    var stars = PerkSkyAnimator<PerkStarKey>()
-    var lines = PerkSkyAnimator<PerkLineKey>()
-    var anchors: [SIMD3<Float>] = []
-    var openedAt: Double?
-    /// When `CameraOutro` started, after a close.
-    var closedAt: Double?
-    var lastTick: Double?
-    var movieAlpha: Float?
-    var namePoints: [UInt32: SIMD2<Float>] = [:]
-    var isShown = false
-    var drawCount = 0
+extension SkillsMenuCoordinator {
+    /// What the sky keeps between frames while the menu is open.
+    struct PerkSkyState {
+        var trees: [Int32: [SkillsMenuPerk]] = [:]
+        var motion: PerkSkyMotion?
+        var stars = PerkSkyAnimator<PerkStarKey>()
+        var lines = PerkSkyAnimator<PerkLineKey>()
+        var anchors: [SIMD3<Float>] = []
+        var openedAt: Double?
+        /// When `CameraOutro` started, after a close.
+        var closedAt: Double?
+        var lastTick: Double?
+        var movieAlpha: Float?
+        var namePoints: [UInt32: SIMD2<Float>] = [:]
+        var isShown = false
+        var drawCount = 0
+    }
 }
 
 extension SkillsMenuCoordinator {
@@ -97,7 +99,7 @@ extension SkillsMenuCoordinator {
     func hideSky() {
         let shown = sky.isShown
         let trees = sky.trees
-        sky = PerkSkyState()
+        sky = SkillsMenuCoordinator.PerkSkyState()
         sky.trees = trees
         guard shown, let renderer = world?.renderer else { return }
         renderer.setMenuScene(nil)

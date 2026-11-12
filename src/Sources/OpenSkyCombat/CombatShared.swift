@@ -46,16 +46,16 @@ final class CombatShared {
         perks = CombatPerkTerms(world: world, items: data?.items, staggers: staggers)
     }
 
-    var strikes: CombatStrikes {
-        CombatStrikes(shared: self)
+    var strikes: CombatShared.CombatStrikes {
+        CombatShared.CombatStrikes(shared: self)
     }
 
-    var damage: CombatDamage {
-        CombatDamage(shared: self)
+    var damage: CombatShared.CombatDamage {
+        CombatShared.CombatDamage(shared: self)
     }
 
-    var gear: CombatGear {
-        CombatGear(shared: self)
+    var gear: CombatShared.CombatGear {
+        CombatShared.CombatGear(shared: self)
     }
 
     /// The player's place, or the origin facing +Y before the world places one.

@@ -69,60 +69,63 @@ nonisolated public struct StoryEventData: Equatable, Sendable {
     }
 }
 
-nonisolated public enum ConditionFunctionsEventData {
-    /// 576 `GetEventData`. Parameter 1 packs the event function (low 16 bits) and
-    /// the member (high 16 bits); parameter 2 is the data form.
-    /// (<https://ck.uesp.net/wiki/GetEventData>, xEdit `wbEventFunctionEnum`.)
-    public static func installEventData(_ registry: inout ConditionFunctionRegistry) {
-        registry.register(ConditionFunction(
-            index: 576, name: "GetEventData", parameter1: .integer, parameter2: .formID
-        ) { call in
-            let word = call.condition.parameter1.rawValue
-            guard
-                let event = call.context.event,
-                let member = StoryEventData.Member(rawValue: UInt16(truncatingIfNeeded: word >> 16))
-            else {
-                return .failure(.unresolvedParameter(576))
-            }
-            let data = call.condition.parameter2.asFormID
-            switch word & 0xFFFF {
-            case 0: return eventIsID(call, event: event, member: member, data: data)
-            case 2: return eventValue(event: event, member: member)
-            case 3
-                where member ==
-                .keyword: return .success(ConditionFunctions.isTrue(event.keyword == data))
-            default: return .failure(.unresolvedParameter(576))
-            }
-        })
-    }
-
-    private static func eventIsID(
-        _ call: ConditionCall,
-        event: StoryEventData,
-        member: StoryEventData.Member,
-        data: FormID
-    ) -> Result<Float, ConditionFailure> {
-        if let key = event.reference(member) {
-            guard let entry = call.context.references[key] else {
-                return .failure(.unresolvedReference(.eventData))
-            }
-            return .success(ConditionFunctions
-                .isTrue(ConditionFunctions.baseForm(of: entry) == data))
+nonisolated extension ConditionFunctions {
+    nonisolated public enum ConditionFunctionsEventData {
+        /// 576 `GetEventData`. Parameter 1 packs the event function (low 16 bits) and
+        /// the member (high 16 bits); parameter 2 is the data form.
+        /// (<https://ck.uesp.net/wiki/GetEventData>, xEdit `wbEventFunctionEnum`.)
+        public static func installEventData(_ registry: inout ConditionFunctionRegistry) {
+            registry.register(ConditionFunction(
+                index: 576, name: "GetEventData", parameter1: .integer, parameter2: .formID
+            ) { call in
+                let word = call.condition.parameter1.rawValue
+                guard
+                    let event = call.context.event,
+                    let member = StoryEventData
+                        .Member(rawValue: UInt16(truncatingIfNeeded: word >> 16))
+                else {
+                    return .failure(.unresolvedParameter(576))
+                }
+                let data = call.condition.parameter2.asFormID
+                switch word & 0xFFFF {
+                case 0: return eventIsID(call, event: event, member: member, data: data)
+                case 2: return eventValue(event: event, member: member)
+                case 3
+                    where member ==
+                    .keyword: return .success(ConditionFunctions.isTrue(event.keyword == data))
+                default: return .failure(.unresolvedParameter(576))
+                }
+            })
         }
-        if let form = event.formID(member) {
-            return .success(ConditionFunctions.isTrue(form == data))
-        }
-        return .failure(.unresolvedParameter(576))
-    }
 
-    private static func eventValue(
-        event: StoryEventData,
-        member: StoryEventData.Member
-    ) -> Result<Float, ConditionFailure> {
-        switch member {
-        case .value1: .success(event.value1)
-        case .value2: .success(event.value2)
-        default: .failure(.unresolvedParameter(576))
+        private static func eventIsID(
+            _ call: ConditionCall,
+            event: StoryEventData,
+            member: StoryEventData.Member,
+            data: FormID
+        ) -> Result<Float, ConditionFailure> {
+            if let key = event.reference(member) {
+                guard let entry = call.context.references[key] else {
+                    return .failure(.unresolvedReference(.eventData))
+                }
+                return .success(ConditionFunctions
+                    .isTrue(ConditionFunctions.baseForm(of: entry) == data))
+            }
+            if let form = event.formID(member) {
+                return .success(ConditionFunctions.isTrue(form == data))
+            }
+            return .failure(.unresolvedParameter(576))
+        }
+
+        private static func eventValue(
+            event: StoryEventData,
+            member: StoryEventData.Member
+        ) -> Result<Float, ConditionFailure> {
+            switch member {
+            case .value1: .success(event.value1)
+            case .value2: .success(event.value2)
+            default: .failure(.unresolvedParameter(576))
+            }
         }
     }
 }

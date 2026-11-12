@@ -104,118 +104,128 @@ nonisolated extension ConditionContext {
     }
 }
 
-nonisolated public enum ConditionFunctionsFurniture {
-    public static func installFurniture(_ registry: inout ConditionFunctionRegistry) {
-        registerFurniture(&registry, index: 159, name: "GetSitting") { use, _ in
-            Float(use?.sitState.rawValue ?? 0)
-        }
-        registerFurniture(&registry, index: 613, name: "IsFurnitureAnimType") { use, call in
-            ConditionFunctions.isTrue(use?.animationType == call.condition.parameter1.rawValue)
-        }
-        registerFurniture(&registry, index: 614, name: "IsFurnitureEntryType") { use, call in
-            ConditionFunctions.isTrue(use?.entry == call.condition.parameter1.rawValue)
-        }
-        // OpenSky has no quick entry or exit and no instant exit, so these read 0.
-        for (index, name) in [
-            (631, "IsEnteringInteractionQuick"), (637, "IsExitingInstant"),
-            (703, "IsExitingInteractionQuick")
-        ] {
-            registerFurniture(&registry, index: UInt16(index), name: name) { _, _ in 0 }
-        }
-        registerFurniture(&registry, index: 644, name: "IsInFurnitureState") { use, call in
-            ConditionFunctions.isTrue(
-                use?.sitState == .sitting
-                    && use?.animationType == call.condition.parameter1.rawValue
-            )
-        }
-        registry.register(ConditionFunction(index: 675, name: "GetGraphVariableInt") { call in
-            graphVariable(call, index: 675) { graph, actor, name in
-                graph.int(name, of: actor)
+nonisolated extension ConditionFunctions {
+    nonisolated public enum ConditionFunctionsFurniture {
+        public static func installFurniture(_ registry: inout ConditionFunctionRegistry) {
+            registerFurniture(&registry, index: 159, name: "GetSitting") { use, _ in
+                Float(use?.sitState.rawValue ?? 0)
             }
-        })
-        registry.register(ConditionFunction(
-            index: 447, name: "GetGraphVariableFloat"
-        ) { call in
-            graphVariable(call, index: 447) { graph, actor, name in
-                graph.float(name, of: actor)
+            registerFurniture(&registry, index: 613, name: "IsFurnitureAnimType") { use, call in
+                ConditionFunctions.isTrue(use?.animationType == call.condition.parameter1.rawValue)
             }
-        })
-        installCurrentFurniture(&registry)
-    }
-
-    /// `CIS1` names the variable. `read` answers nil for an actor with no graph snapshot.
-    private static func graphVariable(
-        _ call: ConditionCall,
-        index: UInt16,
-        read: (GraphVariableResolution, ReferenceKey, String) -> Float?
-    ) -> Result<Float, ConditionFailure> {
-        guard let name = call.condition.parameter1Name else {
-            return .failure(.unresolvedParameter(index))
-        }
-        return call.referenceKey().flatMap { actor in
-            guard let value = read(
-                call.context[resolution: GraphVariableResolution.self],
-                actor,
-                name
-            ) else {
-                return .failure(.unavailableData(.graphVariable))
+            registerFurniture(&registry, index: 614, name: "IsFurnitureEntryType") { use, call in
+                ConditionFunctions.isTrue(use?.entry == call.condition.parameter1.rawValue)
             }
-            return .success(value)
-        }
-    }
-
-    /// `ptReference` names the furniture reference; `ptFurniture` names its base form.
-    private static func installCurrentFurniture(_ registry: inout ConditionFunctionRegistry) {
-        registry.register(ConditionFunction(
-            index: 162, name: "IsCurrentFurnitureRef", parameter1: .formID
-        ) { call in
-            guard let wanted = ConditionFunctions.parameterKey(call, call.parameter1) else {
-                return .failure(.unresolvedParameter(162))
+            // OpenSky has no quick entry or exit and no instant exit, so these read 0.
+            for (index, name) in [
+                (631, "IsEnteringInteractionQuick"), (637, "IsExitingInstant"),
+                (703, "IsExitingInteractionQuick")
+            ] {
+                registerFurniture(&registry, index: UInt16(index), name: name) { _, _ in 0 }
             }
-            return currentFurniture(call).map { ConditionFunctions.isTrue($0 == wanted) }
-        })
-        registry.register(ConditionFunction(
-            index: 163, name: "IsCurrentFurnitureObj", parameter1: .formID
-        ) { call in
-            guard let wanted = ConditionFunctions.parameterKey(call, call.parameter1) else {
-                return .failure(.unresolvedParameter(163))
+            registerFurniture(&registry, index: 644, name: "IsInFurnitureState") { use, call in
+                ConditionFunctions.isTrue(
+                    use?.sitState == .sitting
+                        && use?.animationType == call.condition.parameter1.rawValue
+                )
             }
-            return currentFurniture(call).flatMap { furniture in
-                guard let entry = furniture.flatMap({ call.context.references[$0] }) else {
-                    return .success(0)
+            registry.register(ConditionFunction(index: 675, name: "GetGraphVariableInt") { call in
+                graphVariable(call, index: 675) { graph, actor, name in
+                    graph.int(name, of: actor)
                 }
-                guard
-                    let base = call.context.data.keywords?.resolvedID(
-                        ConditionFunctions.baseForm(of: entry),
-                        fromPlugin: ConditionFunctionsData.basePlugin(of: entry.key)
-                    ) else { return .failure(.unavailableData(.keyword)) }
-                return .success(ConditionFunctions.isTrue(ReferenceKey(resolved: base) == wanted))
-            }
-        })
-    }
-
-    /// The furniture reference the run-on uses, nil when it uses none.
-    private static func currentFurniture(
-        _ call: ConditionCall
-    ) -> Result<ReferenceKey?, ConditionFailure> {
-        let furniture = call.context.furniture
-        guard furniture.isAvailable else { return .failure(.unavailableData(.furniture)) }
-        return call.referenceKey().map { furniture.uses[$0]?.furniture }
-    }
-
-    private static func registerFurniture(
-        _ registry: inout ConditionFunctionRegistry,
-        index: UInt16,
-        name: String,
-        value: @escaping @Sendable (FurnitureUse?, ConditionCall) -> Float
-    ) {
-        let parameter: ConditionParameterType = [613, 614, 644].contains(index) ? .integer : .unused
-        registry
-            .register(ConditionFunction(index: index, name: name, parameter1: parameter) { call in
-                let furniture = call.context.furniture
-                guard furniture.isAvailable else { return .failure(.unavailableData(.furniture)) }
-                let snapshot = call
-                return call.referenceKey().map { value(furniture.uses[$0], snapshot) }
             })
+            registry.register(ConditionFunction(
+                index: 447, name: "GetGraphVariableFloat"
+            ) { call in
+                graphVariable(call, index: 447) { graph, actor, name in
+                    graph.float(name, of: actor)
+                }
+            })
+            installCurrentFurniture(&registry)
+        }
+
+        /// `CIS1` names the variable. `read` answers nil for an actor with no graph snapshot.
+        private static func graphVariable(
+            _ call: ConditionCall,
+            index: UInt16,
+            read: (GraphVariableResolution, ReferenceKey, String) -> Float?
+        ) -> Result<Float, ConditionFailure> {
+            guard let name = call.condition.parameter1Name else {
+                return .failure(.unresolvedParameter(index))
+            }
+            return call.referenceKey().flatMap { actor in
+                guard let value = read(
+                    call.context[resolution: GraphVariableResolution.self],
+                    actor,
+                    name
+                ) else {
+                    return .failure(.unavailableData(.graphVariable))
+                }
+                return .success(value)
+            }
+        }
+
+        /// `ptReference` names the furniture reference; `ptFurniture` names its base form.
+        private static func installCurrentFurniture(_ registry: inout ConditionFunctionRegistry) {
+            registry.register(ConditionFunction(
+                index: 162, name: "IsCurrentFurnitureRef", parameter1: .formID
+            ) { call in
+                guard let wanted = ConditionFunctions.parameterKey(call, call.parameter1) else {
+                    return .failure(.unresolvedParameter(162))
+                }
+                return currentFurniture(call).map { ConditionFunctions.isTrue($0 == wanted) }
+            })
+            registry.register(ConditionFunction(
+                index: 163, name: "IsCurrentFurnitureObj", parameter1: .formID
+            ) { call in
+                guard let wanted = ConditionFunctions.parameterKey(call, call.parameter1) else {
+                    return .failure(.unresolvedParameter(163))
+                }
+                return currentFurniture(call).flatMap { furniture in
+                    guard let entry = furniture.flatMap({ call.context.references[$0] }) else {
+                        return .success(0)
+                    }
+                    guard
+                        let base = call.context.data.keywords?.resolvedID(
+                            ConditionFunctions.baseForm(of: entry),
+                            fromPlugin: ConditionFunctions.ConditionFunctionsData
+                                .basePlugin(of: entry.key)
+                        ) else { return .failure(.unavailableData(.keyword)) }
+                    return .success(ConditionFunctions
+                        .isTrue(ReferenceKey(resolved: base) == wanted))
+                }
+            })
+        }
+
+        /// The furniture reference the run-on uses, nil when it uses none.
+        private static func currentFurniture(
+            _ call: ConditionCall
+        ) -> Result<ReferenceKey?, ConditionFailure> {
+            let furniture = call.context.furniture
+            guard furniture.isAvailable else { return .failure(.unavailableData(.furniture)) }
+            return call.referenceKey().map { furniture.uses[$0]?.furniture }
+        }
+
+        private static func registerFurniture(
+            _ registry: inout ConditionFunctionRegistry,
+            index: UInt16,
+            name: String,
+            value: @escaping @Sendable (FurnitureUse?, ConditionCall) -> Float
+        ) {
+            let parameter: ConditionParameterType = [613, 614, 644]
+                .contains(index) ? .integer : .unused
+            registry
+                .register(ConditionFunction(
+                    index: index,
+                    name: name,
+                    parameter1: parameter
+                ) { call in
+                    let furniture = call.context.furniture
+                    guard furniture.isAvailable
+                    else { return .failure(.unavailableData(.furniture)) }
+                    let snapshot = call
+                    return call.referenceKey().map { value(furniture.uses[$0], snapshot) }
+                })
+        }
     }
 }

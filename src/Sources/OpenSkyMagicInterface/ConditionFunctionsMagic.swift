@@ -14,7 +14,7 @@ nonisolated public enum ConditionFunctionsMagic {
         installSpellKnowledge(&registry)
         installEffectPresence(&registry)
         installCastingState(&registry)
-        ConditionFunctionsSpell.installSpellProperties(&registry)
+        ConditionFunctionsMagic.ConditionFunctionsSpell.installSpellProperties(&registry)
     }
 
     // MARK: - Knowing a spell, and being its target

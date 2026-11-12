@@ -55,128 +55,136 @@ nonisolated extension ResolvedSpell {
     }
 }
 
-nonisolated enum ConditionFunctionsSpell {
-    static func installSpellProperties(_ registry: inout ConditionFunctionRegistry) {
-        registry.register(ConditionFunction(
-            index: 596, name: "SpellHasKeyword", parameter1: .integer, parameter2: .formID
-        ) { call in
-            ConditionFunctionsMagic.castingSource(call, index: 596) { state, hand in
-                guard let spellKey = state.handSpells[hand] else { return .success(0) }
-                return spellKeyword(call, spell: call.context.magic.spells?.spell(key: spellKey))
-            }
-        })
-        registry.register(ConditionFunction(
-            index: 693, name: "EPMagic_SpellHasKeyword", parameter1: .formID
-        ) { call in
-            if
-                let potion = call.context[resolution: SpellEvaluationResolution.self]
-                    .potionKeywords
-            {
-                return call.parameter1.flatMap { call.context.magic.key(of: $0.asFormID) }
-                    .map { .success(ConditionFunctions.isTrue(potion.contains($0))) }
-                    ?? .failure(.unavailableMagic(.record))
-            }
-            return evaluatedSpell(call) { spell in
-                spellKeyword(call, spell: spell, parameter: call.parameter1)
-            }
-        })
-        registry.register(ConditionFunction(
-            index: 696, name: "EPMagic_SpellHasSkill", parameter1: .integer
-        ) { call in
-            evaluatedSpell(call) { spell in
-                .success(ConditionFunctions
-                    .isTrue(call.parameter1.map { spell.magicSkill == $0.asInt32 } ?? false))
-            }
-        })
-        registry.register(ConditionFunction(
-            index: 713, name: "SpellHasCastingPerk", parameter1: .formID
-        ) { call in
-            guard let perk = call.parameter1.flatMap({ call.context.magic.key(of: $0.asFormID) })
-            else {
-                return .failure(.unavailableMagic(.record))
-            }
-            return evaluatedSpell(call) { spell in
-                let own = spell.data?.halfCostPerk.flatMap { link in
-                    call.context.magic.spells?.resolvedID(link, fromPlugin: spell.sourcePlugin)
-                }
-                return .success(ConditionFunctions
-                    .isTrue(own.map(ReferenceKey.init(resolved:)) == perk))
-            }
-        })
-        registry.register(ConditionFunction(index: 39, name: "GetDisease") { call in
-            ConditionFunctionsMagic.magicState(call).map { state in
-                let spells = call.context.magic.spells
-                return ConditionFunctions
-                    .isTrue(state.knownSpells
-                        .contains { spells?.spell(key: $0)?.spellType == .disease })
-            }
-        })
-        installCastStateMagic(&registry)
-    }
-
-    /// `IsDualCasting` and `IsWardState` read the run-on's magic; `EffectWasDualCast`
-    /// reads the cast behind the effect whose conditions are being checked.
-    private static func installCastStateMagic(_ registry: inout ConditionFunctionRegistry) {
-        registry.register(ConditionFunction(index: 627, name: "IsDualCasting") { call in
-            ConditionFunctionsMagic.magicState(call)
-                .map { ConditionFunctions.isTrue($0.isDualCasting) }
-        })
-        registry.register(ConditionFunction(index: 724, name: "EffectWasDualCast") { call in
-            .success(ConditionFunctions
-                .isTrue(call.context[resolution: MagicApplicationContext.self].isDualCast))
-        })
-        registry
-            .register(ConditionFunction(
-                index: 602,
-                name: "IsWardState",
-                parameter1: .integer
+nonisolated extension ConditionFunctionsMagic {
+    nonisolated enum ConditionFunctionsSpell {
+        static func installSpellProperties(_ registry: inout ConditionFunctionRegistry) {
+            registry.register(ConditionFunction(
+                index: 596, name: "SpellHasKeyword", parameter1: .integer, parameter2: .formID
             ) { call in
-                ConditionFunctionsMagic.magicState(call)
-                    .map { ConditionFunctions.isTrue(call.parameter1?.asInt32 == $0.wardState) }
-            })
-        for (index, name) in [(UInt16(500), "EPAlchemyGetMakingPoison"), (721, "IsPoison")] {
-            registry.register(ConditionFunction(index: index, name: name) { call in
-                guard let isPoison = call.context.alchemy.isPoison else {
-                    return .failure(.unavailableData(.alchemy))
+                ConditionFunctionsMagic.castingSource(call, index: 596) { state, hand in
+                    guard let spellKey = state.handSpells[hand] else { return .success(0) }
+                    return spellKeyword(
+                        call,
+                        spell: call.context.magic.spells?.spell(key: spellKey)
+                    )
                 }
-                return .success(ConditionFunctions.isTrue(isPoison))
+            })
+            registry.register(ConditionFunction(
+                index: 693, name: "EPMagic_SpellHasKeyword", parameter1: .formID
+            ) { call in
+                if
+                    let potion = call.context[resolution: SpellEvaluationResolution.self]
+                        .potionKeywords
+                {
+                    return call.parameter1.flatMap { call.context.magic.key(of: $0.asFormID) }
+                        .map { .success(ConditionFunctions.isTrue(potion.contains($0))) }
+                        ?? .failure(.unavailableMagic(.record))
+                }
+                return evaluatedSpell(call) { spell in
+                    spellKeyword(call, spell: spell, parameter: call.parameter1)
+                }
+            })
+            registry.register(ConditionFunction(
+                index: 696, name: "EPMagic_SpellHasSkill", parameter1: .integer
+            ) { call in
+                evaluatedSpell(call) { spell in
+                    .success(ConditionFunctions
+                        .isTrue(call.parameter1.map { spell.magicSkill == $0.asInt32 } ?? false))
+                }
+            })
+            registry.register(ConditionFunction(
+                index: 713, name: "SpellHasCastingPerk", parameter1: .formID
+            ) { call in
+                guard
+                    let perk = call.parameter1
+                        .flatMap({ call.context.magic.key(of: $0.asFormID) })
+                else {
+                    return .failure(.unavailableMagic(.record))
+                }
+                return evaluatedSpell(call) { spell in
+                    let own = spell.data?.halfCostPerk.flatMap { link in
+                        call.context.magic.spells?.resolvedID(link, fromPlugin: spell.sourcePlugin)
+                    }
+                    return .success(ConditionFunctions
+                        .isTrue(own.map(ReferenceKey.init(resolved:)) == perk))
+                }
+            })
+            registry.register(ConditionFunction(index: 39, name: "GetDisease") { call in
+                ConditionFunctionsMagic.magicState(call).map { state in
+                    let spells = call.context.magic.spells
+                    return ConditionFunctions
+                        .isTrue(state.knownSpells
+                            .contains { spells?.spell(key: $0)?.spellType == .disease })
+                }
+            })
+            installCastStateMagic(&registry)
+        }
+
+        /// `IsDualCasting` and `IsWardState` read the run-on's magic; `EffectWasDualCast`
+        /// reads the cast behind the effect whose conditions are being checked.
+        private static func installCastStateMagic(_ registry: inout ConditionFunctionRegistry) {
+            registry.register(ConditionFunction(index: 627, name: "IsDualCasting") { call in
+                ConditionFunctionsMagic.magicState(call)
+                    .map { ConditionFunctions.isTrue($0.isDualCasting) }
+            })
+            registry.register(ConditionFunction(index: 724, name: "EffectWasDualCast") { call in
+                .success(ConditionFunctions
+                    .isTrue(call.context[resolution: MagicApplicationContext.self].isDualCast))
+            })
+            registry
+                .register(ConditionFunction(
+                    index: 602,
+                    name: "IsWardState",
+                    parameter1: .integer
+                ) { call in
+                    ConditionFunctionsMagic.magicState(call)
+                        .map { ConditionFunctions.isTrue(call.parameter1?.asInt32 == $0.wardState) }
+                })
+            for (index, name) in [(UInt16(500), "EPAlchemyGetMakingPoison"), (721, "IsPoison")] {
+                registry.register(ConditionFunction(index: index, name: name) { call in
+                    guard let isPoison = call.context.alchemy.isPoison else {
+                        return .failure(.unavailableData(.alchemy))
+                    }
+                    return .success(ConditionFunctions.isTrue(isPoison))
+                })
+            }
+            registry.register(ConditionFunction(
+                index: 501, name: "EPAlchemyEffectHasKeyword", parameter1: .formID
+            ) { call in
+                guard
+                    let effect = call.context.alchemy.effect,
+                    let store = call.context.magic.effects,
+                    let keyword = call.parameter1
+                        .flatMap({ call.context.magic.key(of: $0.asFormID) })
+                else { return .failure(.unavailableData(.alchemy)) }
+                return .success(ConditionFunctions
+                    .isTrue(store.keywordKeys(of: effect).contains(keyword)))
             })
         }
-        registry.register(ConditionFunction(
-            index: 501, name: "EPAlchemyEffectHasKeyword", parameter1: .formID
-        ) { call in
-            guard
-                let effect = call.context.alchemy.effect,
-                let store = call.context.magic.effects,
-                let keyword = call.parameter1.flatMap({ call.context.magic.key(of: $0.asFormID) })
-            else { return .failure(.unavailableData(.alchemy)) }
-            return .success(ConditionFunctions
-                .isTrue(store.keywordKeys(of: effect).contains(keyword)))
-        })
-    }
 
-    private static func evaluatedSpell(
-        _ call: ConditionCall,
-        read: (ResolvedSpell) -> Result<Float, ConditionFailure>
-    ) -> Result<Float, ConditionFailure> {
-        guard let spell = call.context[resolution: SpellEvaluationResolution.self].spell else {
-            return .failure(.unavailableMagic(.equippedSpell))
+        private static func evaluatedSpell(
+            _ call: ConditionCall,
+            read: (ResolvedSpell) -> Result<Float, ConditionFailure>
+        ) -> Result<Float, ConditionFailure> {
+            guard let spell = call.context[resolution: SpellEvaluationResolution.self].spell else {
+                return .failure(.unavailableMagic(.equippedSpell))
+            }
+            return read(spell)
         }
-        return read(spell)
-    }
 
-    /// Whether any effect of `spell` carries the keyword parameter.
-    private static func spellKeyword(
-        _ call: ConditionCall,
-        spell: ResolvedSpell?,
-        parameter: Condition.Parameter? = nil
-    ) -> Result<Float, ConditionFailure> {
-        guard
-            let spell,
-            let store = call.context.magic.effects,
-            let keyword = (parameter ?? call.parameter2)
-                .flatMap({ call.context.magic.key(of: $0.asFormID) })
-        else { return .failure(.unavailableMagic(.record)) }
-        return .success(ConditionFunctions.isTrue(spell.hasEffectKeyword(keyword, in: store)))
+        /// Whether any effect of `spell` carries the keyword parameter.
+        private static func spellKeyword(
+            _ call: ConditionCall,
+            spell: ResolvedSpell?,
+            parameter: Condition.Parameter? = nil
+        ) -> Result<Float, ConditionFailure> {
+            guard
+                let spell,
+                let store = call.context.magic.effects,
+                let keyword = (parameter ?? call.parameter2)
+                    .flatMap({ call.context.magic.key(of: $0.asFormID) })
+            else { return .failure(.unavailableMagic(.record)) }
+            return .success(ConditionFunctions.isTrue(spell.hasEffectKeyword(keyword, in: store)))
+        }
     }
 }

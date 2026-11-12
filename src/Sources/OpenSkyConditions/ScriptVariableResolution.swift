@@ -22,33 +22,35 @@ nonisolated public struct ScriptVariableResolution: ConditionResolution, Sendabl
     }
 }
 
-nonisolated public enum ConditionFunctionsScriptVariables {
-    public static func installScriptVariables(_ registry: inout ConditionFunctionRegistry) {
-        // Parameter 1 names the object; `CIS2` names the variable, such as
-        // "::bAllTargetsInTrigger_var" (<https://ck.uesp.net/wiki/GetVMScriptVariable>).
-        registry.register(ConditionFunction(
-            index: 630, name: "GetVMScriptVariable", parameter1: .formID
-        ) { call in
-            guard let owner = ConditionFunctions.parameterKey(call, call.parameter1) else {
-                return .failure(.unresolvedParameter(630))
-            }
-            return Self.scriptVariable(call, on: owner)
-        })
-    }
+nonisolated extension ConditionFunctions {
+    nonisolated public enum ConditionFunctionsScriptVariables {
+        public static func installScriptVariables(_ registry: inout ConditionFunctionRegistry) {
+            // Parameter 1 names the object; `CIS2` names the variable, such as
+            // "::bAllTargetsInTrigger_var" (<https://ck.uesp.net/wiki/GetVMScriptVariable>).
+            registry.register(ConditionFunction(
+                index: 630, name: "GetVMScriptVariable", parameter1: .formID
+            ) { call in
+                guard let owner = ConditionFunctions.parameterKey(call, call.parameter1) else {
+                    return .failure(.unresolvedParameter(630))
+                }
+                return Self.scriptVariable(call, on: owner)
+            })
+        }
 
-    /// The variable `CIS2` names on `owner`. The raw parameter word is not a name.
-    public static func scriptVariable(
-        _ call: ConditionCall, on owner: ReferenceKey
-    ) -> Result<Float, ConditionFailure> {
-        guard let name = call.condition.parameter2Name else {
-            return .failure(.unresolvedParameter(call.condition.functionIndex))
+        /// The variable `CIS2` names on `owner`. The raw parameter word is not a name.
+        public static func scriptVariable(
+            _ call: ConditionCall, on owner: ReferenceKey
+        ) -> Result<Float, ConditionFailure> {
+            guard let name = call.condition.parameter2Name else {
+                return .failure(.unresolvedParameter(call.condition.functionIndex))
+            }
+            guard let value = call.context[resolution: ScriptVariableResolution.self].value(
+                named: name,
+                on: owner
+            ) else {
+                return .failure(.unavailableData(.scriptVariable))
+            }
+            return .success(value)
         }
-        guard let value = call.context[resolution: ScriptVariableResolution.self].value(
-            named: name,
-            on: owner
-        ) else {
-            return .failure(.unavailableData(.scriptVariable))
-        }
-        return .success(value)
     }
 }

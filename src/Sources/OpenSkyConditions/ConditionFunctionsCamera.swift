@@ -50,82 +50,72 @@ nonisolated extension ConditionContext {
     }
 }
 
-nonisolated public enum ConditionFunctionsCamera {
-    /// `GetVATSValue` members by xEdit's parameter-1 index.
-    private enum VATSValue: UInt32 {
-        case weapon = 0
-        case target = 2
-        case targetDistance = 4
-        case action = 6
-        case weaponType = 15
-        case projectileType = 18
-        case delivery = 19
-        case castingType = 20
-    }
-
-    public static func installCamera(_ registry: inout ConditionFunctionRegistry) {
-        registry.register(ConditionFunction(
-            index: 407, name: "GetVATSValue", parameter1: .integer, parameter2: .integer
-        ) { call in
-            let camera = call.context.camera
-            guard camera.isAvailable else { return .failure(.unavailableData(.camera)) }
-            guard let selector = VATSValue(rawValue: call.condition.parameter1.rawValue) else {
-                return .failure(.unresolvedParameter(407))
+nonisolated extension ConditionFunctions {
+    nonisolated public enum ConditionFunctionsCamera {
+        public static func installCamera(_ registry: inout ConditionFunctionRegistry) {
+            registry.register(ConditionFunction(
+                index: 407, name: "GetVATSValue", parameter1: .integer, parameter2: .integer
+            ) { call in
+                let camera = call.context.camera
+                guard camera.isAvailable else { return .failure(.unavailableData(.camera)) }
+                guard let selector = VATSValue(rawValue: call.condition.parameter1.rawValue) else {
+                    return .failure(.unresolvedParameter(407))
+                }
+                if selector == .targetDistance {
+                    return .success(camera.targetDistance ?? 0)
+                }
+                return .success(ConditionFunctions
+                    .isTrue(vatsValue(selector, camera) == call.condition.parameter2
+                        .rawValue))
+            })
+            registry.register(ConditionFunction(index: 391, name: "IsPC1stPerson") { call in
+                let camera = call.context.camera
+                guard camera.isAvailable else { return .failure(.unavailableData(.camera)) }
+                return .success(ConditionFunctions.isTrue(camera.playerIsFirstPerson))
+            })
+            for function in SideFunction.areaFree {
+                register(function, &registry) { .success($0.freeDistance[$1] ?? 0) }
             }
-            if selector == .targetDistance {
-                return .success(camera.targetDistance ?? 0)
-            }
-            return .success(ConditionFunctions
-                .isTrue(vatsValue(selector, camera) == call.condition.parameter2
-                    .rawValue))
-        })
-        registry.register(ConditionFunction(index: 391, name: "IsPC1stPerson") { call in
-            let camera = call.context.camera
-            guard camera.isAvailable else { return .failure(.unavailableData(.camera)) }
-            return .success(ConditionFunctions.isTrue(camera.playerIsFirstPerson))
-        })
-        for function in SideFunction.areaFree {
-            register(function, &registry) { .success($0.freeDistance[$1] ?? 0) }
-        }
-        for function in SideFunction.targetVisible {
-            register(function, &registry) {
-                .success(ConditionFunctions.isTrue($0.targetVisibleSides.contains($1)))
+            for function in SideFunction.targetVisible {
+                register(function, &registry) {
+                    .success(ConditionFunctions.isTrue($0.targetVisibleSides.contains($1)))
+                }
             }
         }
-    }
 
-    private static func vatsValue(
-        _ selector: VATSValue,
-        _ camera: CameraConditionResolution
-    ) -> UInt32? {
-        switch selector {
-        case .targetDistance: nil
-        case .weapon: camera.weapon?.rawValue
-        case .target: camera.targetBase?.rawValue
-        case .action: camera.action
-        case .weaponType: camera.weaponType
-        case .projectileType: camera.projectileType
-        case .delivery: camera.delivery
-        case .castingType: camera.castingType
+        private static func vatsValue(
+            _ selector: VATSValue,
+            _ camera: CameraConditionResolution
+        ) -> UInt32? {
+            switch selector {
+            case .targetDistance: nil
+            case .weapon: camera.weapon?.rawValue
+            case .target: camera.targetBase?.rawValue
+            case .action: camera.action
+            case .weaponType: camera.weaponType
+            case .projectileType: camera.projectileType
+            case .delivery: camera.delivery
+            case .castingType: camera.castingType
+            }
         }
-    }
 
-    private static func register(
-        _ function: SideFunction,
-        _ registry: inout ConditionFunctionRegistry,
-        value: @escaping @Sendable (CameraConditionResolution, CameraConditionResolution.Side)
-            -> Result<Float, ConditionFailure>
-    ) {
-        let entry = ConditionFunction(
-            index: function.index,
-            name: function.name,
-            parameter1: .formID
-        ) { call in
-            let camera = call.context.camera
-            guard camera.isAvailable else { return .failure(.unavailableData(.camera)) }
-            return value(camera, function.side)
+        private static func register(
+            _ function: SideFunction,
+            _ registry: inout ConditionFunctionRegistry,
+            value: @escaping @Sendable (CameraConditionResolution, CameraConditionResolution.Side)
+                -> Result<Float, ConditionFailure>
+        ) {
+            let entry = ConditionFunction(
+                index: function.index,
+                name: function.name,
+                parameter1: .formID
+            ) { call in
+                let camera = call.context.camera
+                guard camera.isAvailable else { return .failure(.unavailableData(.camera)) }
+                return value(camera, function.side)
+            }
+            registry.register(entry)
         }
-        registry.register(entry)
     }
 }
 
@@ -145,4 +135,18 @@ nonisolated private struct SideFunction: Sendable {
         SideFunction(index: 522, name: "GetVATSRightTargetVisible", side: .right),
         SideFunction(index: 523, name: "GetVATSLeftTargetVisible", side: .left)
     ]
+}
+
+nonisolated extension ConditionFunctions.ConditionFunctionsCamera {
+    /// `GetVATSValue` members by xEdit's parameter-1 index.
+    private enum VATSValue: UInt32 {
+        case weapon = 0
+        case target = 2
+        case targetDistance = 4
+        case action = 6
+        case weaponType = 15
+        case projectileType = 18
+        case delivery = 19
+        case castingType = 20
+    }
 }

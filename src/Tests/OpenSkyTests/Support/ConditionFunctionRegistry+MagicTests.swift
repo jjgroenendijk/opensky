@@ -12,7 +12,7 @@ nonisolated extension ConditionFunctionRegistry {
         var registry = ConditionFunctionRegistry()
         ConditionFunctions.installCore(into: &registry)
         ConditionFunctionsActor.installActor(&registry)
-        ConditionFunctionsData.installData(&registry)
+        ConditionFunctions.ConditionFunctionsData.installData(&registry)
         ConditionFunctionsMagic.installMagic(&registry)
         ConditionFunctionsPerk.installPerk(&registry)
         return registry

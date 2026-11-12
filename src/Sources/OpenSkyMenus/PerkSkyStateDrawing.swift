@@ -9,7 +9,7 @@ import OpenSkyProgressionInterface
 import OpenSkyRendering
 import simd
 
-extension PerkSkyState {
+extension SkillsMenuCoordinator.PerkSkyState {
     /// Steps the sky to `clock.now` and returns its scene and the open tree's stars.
     /// Nil once the closing move has ended.
     mutating func draw(

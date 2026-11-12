@@ -26,36 +26,40 @@ nonisolated extension ConditionContext {
     }
 }
 
-nonisolated public enum ConditionFunctionsWeather {
-    public static func installWeather(_ registry: inout ConditionFunctionRegistry) {
-        // "this will return true as soon as the weather starts transitioning into the
-        // specified weather" (<https://ck.uesp.net/wiki/GetIsCurrentWeather>).
-        registry.register(ConditionFunction(
-            index: 149, name: "GetIsCurrentWeather", parameter1: .formID
-        ) { call in
-            guard let parameter = call.parameter1 else {
-                return .failure(.unresolvedParameter(149))
-            }
-            return Self.currentWeather(call)
-                .map { ConditionFunctions.isTrue($0.weather == parameter.asFormID) }
-        })
-        registry.register(ConditionFunction(index: 266, name: "IsPleasant") { call in
-            Self.currentWeather(call)
-                .map { ConditionFunctions.isTrue($0.precipitation == .pleasant) }
-        })
-        registry.register(ConditionFunction(index: 62, name: "IsRaining") { call in
-            Self.currentWeather(call).map { ConditionFunctions.isTrue($0.precipitation == .rainy) }
-        })
-        registry.register(ConditionFunction(index: 75, name: "IsSnowing") { call in
-            Self.currentWeather(call).map { ConditionFunctions.isTrue($0.precipitation == .snow) }
-        })
-    }
+nonisolated extension ConditionFunctions {
+    nonisolated public enum ConditionFunctionsWeather {
+        public static func installWeather(_ registry: inout ConditionFunctionRegistry) {
+            // "this will return true as soon as the weather starts transitioning into the
+            // specified weather" (<https://ck.uesp.net/wiki/GetIsCurrentWeather>).
+            registry.register(ConditionFunction(
+                index: 149, name: "GetIsCurrentWeather", parameter1: .formID
+            ) { call in
+                guard let parameter = call.parameter1 else {
+                    return .failure(.unresolvedParameter(149))
+                }
+                return Self.currentWeather(call)
+                    .map { ConditionFunctions.isTrue($0.weather == parameter.asFormID) }
+            })
+            registry.register(ConditionFunction(index: 266, name: "IsPleasant") { call in
+                Self.currentWeather(call)
+                    .map { ConditionFunctions.isTrue($0.precipitation == .pleasant) }
+            })
+            registry.register(ConditionFunction(index: 62, name: "IsRaining") { call in
+                Self.currentWeather(call)
+                    .map { ConditionFunctions.isTrue($0.precipitation == .rainy) }
+            })
+            registry.register(ConditionFunction(index: 75, name: "IsSnowing") { call in
+                Self.currentWeather(call)
+                    .map { ConditionFunctions.isTrue($0.precipitation == .snow) }
+            })
+        }
 
-    private static func currentWeather(
-        _ call: ConditionCall
-    ) -> Result<WeatherConditionResolution, ConditionFailure> {
-        let weather = call.context.weather
-        guard weather.weather != nil else { return .failure(.unavailableData(.weather)) }
-        return .success(weather)
+        private static func currentWeather(
+            _ call: ConditionCall
+        ) -> Result<WeatherConditionResolution, ConditionFailure> {
+            let weather = call.context.weather
+            guard weather.weather != nil else { return .failure(.unavailableData(.weather)) }
+            return .success(weather)
+        }
     }
 }

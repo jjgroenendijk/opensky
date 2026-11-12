@@ -29,17 +29,19 @@ nonisolated extension ConditionContext {
     }
 }
 
-nonisolated public enum ConditionFunctionsLock {
-    public static func installLock(_ registry: inout ConditionFunctionRegistry) {
-        // "Returns the lock level of the calling reference."
-        // (<https://ck.uesp.net/wiki/GetLockLevel>)
-        registry.register(ConditionFunction(index: 65, name: "GetLockLevel") { call in
-            call.referenceKey().flatMap { key in
-                guard let level = call.context.locks.level(of: key) else {
-                    return .failure(.unavailableData(.lock))
+nonisolated extension ConditionFunctions {
+    nonisolated public enum ConditionFunctionsLock {
+        public static func installLock(_ registry: inout ConditionFunctionRegistry) {
+            // "Returns the lock level of the calling reference."
+            // (<https://ck.uesp.net/wiki/GetLockLevel>)
+            registry.register(ConditionFunction(index: 65, name: "GetLockLevel") { call in
+                call.referenceKey().flatMap { key in
+                    guard let level = call.context.locks.level(of: key) else {
+                        return .failure(.unavailableData(.lock))
+                    }
+                    return .success(Float(level))
                 }
-                return .success(Float(level))
-            }
-        })
+            })
+        }
     }
 }

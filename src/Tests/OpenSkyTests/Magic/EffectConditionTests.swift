@@ -18,7 +18,7 @@ import Testing
 struct EffectConditionTests {
     private static let registry: ConditionFunctionRegistry = {
         var registry = ConditionFunctionRegistry()
-        ConditionFunctionsCamera.installCamera(&registry)
+        ConditionFunctions.ConditionFunctionsCamera.installCamera(&registry)
         ConditionFunctionsMagic.installMagic(&registry)
         return registry
     }()
