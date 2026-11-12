@@ -30,7 +30,7 @@ struct ArmorTextureSwapTests {
     }
 
     @Test func aSwapWithAKnownTextureSetBecomesShapeTextures() throws {
-        let swaps = try resolver().textureSwaps([
+        let swaps = try resolver().skinTextures.textureSwaps([
             ModelData.AlternateTexture(
                 shapeName: "Cuirass",
                 textureSet: FormID(0x60),

@@ -93,7 +93,7 @@ nonisolated extension ActorVisualResolver {
         )
         return bodyParts(of: armor, selection: selection, seen: &seen, skips: &skips).map {
             var part = $0.part
-            part.skinTextures = ownSkinTextures(of: part.armature, female: female)
+            part.skinTextures = skinTextures.ownSkinTextures(of: part.armature, female: female)
             return part
         }
     }
