@@ -34,10 +34,26 @@ extension StoryWorldAdapter {
     ) {
         self.init(game: game, now: now)
         guard let stage else { return }
-        registerStory(stage: stage)
+        frames.registerStory(stage: stage)
     }
 
-    private func registerStory(stage: SessionStage) {
+    /// The story half of the Papyrus bridge's natives; the scope fills them as it builds
+    /// the bridge.
+    public func fillStoryNatives(
+        _ story: inout PapyrusStoryNatives, _ session: inout PapyrusSessionNatives
+    ) {
+        quests.fillStoryNatives(&story, &session)
+    }
+
+    /// Runs each plugin's start-game-enabled quests, once the session has started.
+    public func runSessionStartLists() {
+        guard !sessionStartLists.isEmpty else { return }
+        runSessionStart(lists: sessionStartLists)
+    }
+}
+
+extension StoryFrameSteps {
+    func registerStory(stage: SessionStage) {
         let provider = stage.data
         let gameSession = stage.gameSession
         // The quest store's space, so a DLC scene names its quest as the runtime does.
@@ -62,13 +78,15 @@ extension StoryWorldAdapter {
             self?.ambientTalk.tickAmbientSpeech()
             self?.sceneLines.run(self?.scenes.tick() ?? [])
             self?.socialSearch.run(self?.storyManager.social.tick() ?? [])
-            self?.checkPlayerLocation()
+            self?.events.checkPlayerLocation()
         }
     }
+}
 
+extension StoryQuestStarts {
     /// The story half of the Papyrus bridge's natives; the scope fills them as it builds
     /// the bridge.
-    public func fillStoryNatives(
+    func fillStoryNatives(
         _ story: inout PapyrusStoryNatives, _ session: inout PapyrusSessionNatives
     ) {
         story.questStarted = { [weak self] quest in
@@ -82,14 +100,9 @@ extension StoryWorldAdapter {
         }
         session.conditionEvaluator = { [weak self] in
             ConditionEvaluator(
-                context: self?.conditionContext() ?? ConditionContext(functions: .standard)
+                context: self?.game.dialogueWorld.conditionContext()
+                    ?? ConditionContext(functions: .standard)
             )
         }
-    }
-
-    /// Runs each plugin's start-game-enabled quests, once the session has started.
-    public func runSessionStartLists() {
-        guard !sessionStartLists.isEmpty else { return }
-        runSessionStart(lists: sessionStartLists)
     }
 }
