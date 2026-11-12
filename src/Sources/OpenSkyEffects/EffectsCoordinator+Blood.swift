@@ -65,15 +65,7 @@ extension EffectsCoordinator {
         if impactModelsEnabled, !model.isEmpty {
             showModel(model, at: .point(position), cause: .impact)
         }
-        guard
-            let key = NIFShaderTextureSet.vfsKey(for: bloodSettings.decalTexture),
-            let look = DecalLook(
-                texture: key,
-                decal: DecalData(
-                    width: Self.defaultBloodDecalSize, height: Self.defaultBloodDecalSize
-                )
-            )
-        else { return }
+        guard let look = bloodSettings.decalLook(size: Self.defaultBloodDecalSize) else { return }
         let feet = world?.effectTransform(of: actor)?.columns.3
         let ground = SIMD3(position.x, position.y, feet?.z ?? position.z)
         if decals.place(look, at: ground, normal: SIMD3(0, 0, 1)) != nil {
@@ -102,15 +94,17 @@ extension EffectsCoordinator {
             return screenBloodTextures
         }
         guard let textures = meshes?.textures else { return nil }
-        func load(_ path: String) -> any MTLTexture {
-            textures.texture(key: NIFShaderTextureSet.vfsKey(for: path), usage: .color)
-        }
-        let loaded = ScreenBloodTextures(
-            color: load(bloodSettings.splatterColorTexture),
-            alpha: load(bloodSettings.splatterAlphaTexture),
-            flare: load(bloodSettings.flareTexture)
-        )
+        let loaded = ScreenBloodTextures.load(from: textures, settings: bloodSettings)
         screenBloodTextures = loaded
         return loaded
+    }
+}
+
+nonisolated extension BloodEffectSettings {
+    /// The default blood decal; nil without a texture.
+    func decalLook(size: ClosedRange<Float>) -> DecalLook? {
+        NIFShaderTextureSet.vfsKey(for: decalTexture).flatMap {
+            DecalLook(texture: $0, decal: DecalData(width: size, height: size))
+        }
     }
 }
