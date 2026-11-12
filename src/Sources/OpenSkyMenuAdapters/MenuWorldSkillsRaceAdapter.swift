@@ -101,6 +101,50 @@ extension MenuWorldSkillsRaceAdapter {
     }
 
     var playableRaces: [RaceChoice] {
+        races.playableRaces
+    }
+
+    var raceMenuLabels: RaceMenuLabels {
+        races.raceMenuLabels
+    }
+
+    public func raceMenuOptions(race: FormID, isFemale: Bool) -> RaceMenuOptions {
+        races.raceMenuOptions(race: race, isFemale: isFemale)
+    }
+
+    public func applyPlayerIdentity(_ identity: PlayerIdentityState) {
+        game.worldState.set(identity, for: .player)
+        game.player.refreshBody()
+    }
+
+    public func racePresets(race: FormID, isFemale: Bool) -> [RacePreset] {
+        races.racePresets(race: race, isFemale: isFemale)
+    }
+
+    public func raceMenuClosed() {
+        game.scripts.runtime?.queueRaceSwitchComplete(actor: .player)
+    }
+}
+
+extension MenuWorldSkillsRaceAdapter {
+    var races: RaceMenuReads {
+        RaceMenuReads(game: game)
+    }
+
+    public var identityRecords: ActorIdentityRecords? {
+        races.identityRecords
+    }
+
+    var recordIdentity: PlayerIdentityState? {
+        races.recordIdentity
+    }
+}
+
+/// The playable races, their head options, and the identities the race menu starts from.
+struct RaceMenuReads {
+    let game: any MenuWorldSkillsRaceHost
+
+    var playableRaces: [RaceChoice] {
         (game.mapWorld.records?.playableRaces ?? []).map {
             RaceChoice(
                 formID: $0.formID,
@@ -118,7 +162,7 @@ extension MenuWorldSkillsRaceAdapter {
         return RaceMenuLabels(texts: texts, genders: game.mapWorld.settingTexts(GenderText.self))
     }
 
-    public func raceMenuOptions(race: FormID, isFemale: Bool) -> RaceMenuOptions {
+    func raceMenuOptions(race: FormID, isFemale: Bool) -> RaceMenuOptions {
         guard
             let records = game.mapWorld.records,
             let record = records.playableRaces.first(where: { $0.formID == race })
@@ -135,12 +179,7 @@ extension MenuWorldSkillsRaceAdapter {
         return options
     }
 
-    public func applyPlayerIdentity(_ identity: PlayerIdentityState) {
-        game.worldState.set(identity, for: .player)
-        game.player.refreshBody()
-    }
-
-    public func racePresets(race: FormID, isFemale: Bool) -> [RacePreset] {
+    func racePresets(race: FormID, isFemale: Bool) -> [RacePreset] {
         guard let record = game.mapWorld.records?.playableRaces.first(where: { $0.formID == race })
         else {
             return []
@@ -157,13 +196,7 @@ extension MenuWorldSkillsRaceAdapter {
         }
     }
 
-    public func raceMenuClosed() {
-        game.scripts.runtime?.queueRaceSwitchComplete(actor: .player)
-    }
-}
-
-extension MenuWorldSkillsRaceAdapter {
-    public var identityRecords: ActorIdentityRecords? {
+    var identityRecords: ActorIdentityRecords? {
         game.menuRecords?.actorValueBaselines?.resolver
             .map(ActorIdentityRecords.init(resolver:))
     }

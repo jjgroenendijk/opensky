@@ -38,7 +38,7 @@ public protocol MessageWorldHost: MenuInputConsumer, SendableMetatype {
 
 public final class MessageWorldAdapter {
     public let game: any MessageWorldHost
-    var cachedEditorIDs: [String]?
+    let records: MessageRecordReads
 
     public let cameraEffectsHost: any MessageCameraEffectsHost
 
@@ -53,10 +53,7 @@ public final class MessageWorldAdapter {
         self.now = now
         cameraEffectsHost = game
         self.game = game
-    }
-
-    private var presentation: PresentationRecordStore? {
-        game.menuRecords?.presentationRecords
+        records = MessageRecordReads(game: game)
     }
 }
 
@@ -93,16 +90,11 @@ extension MessageWorldAdapter: MessageWorld {
     }
 
     public var messageEditorIDs: [String] {
-        if let cachedEditorIDs {
-            return cachedEditorIDs
-        }
-        let names = presentation?.messages.records.compactMap(\.record.editorID).sorted() ?? []
-        cachedEditorIDs = names
-        return names
+        records.messageEditorIDs
     }
 
     public func messageKey(editorID: String) -> ReferenceKey? {
-        presentation?.messages.record(editorID: editorID).map { ReferenceKey(resolved: $0.id) }
+        records.messageKey(editorID: editorID)
     }
 
     public var menuInputConsumer: (any MenuInputConsumer)? {
@@ -111,3 +103,30 @@ extension MessageWorldAdapter: MessageWorld {
 }
 
 extension MessageWorldAdapter: MessageWorldPort {}
+
+/// The MESG editor IDs, read once a session, and the System page topics.
+final class MessageRecordReads {
+    let game: any MessageWorldHost
+    var cachedEditorIDs: [String]?
+
+    init(game: any MessageWorldHost) {
+        self.game = game
+    }
+
+    private var presentation: PresentationRecordStore? {
+        game.menuRecords?.presentationRecords
+    }
+
+    var messageEditorIDs: [String] {
+        if let cachedEditorIDs {
+            return cachedEditorIDs
+        }
+        let names = presentation?.messages.records.compactMap(\.record.editorID).sorted() ?? []
+        cachedEditorIDs = names
+        return names
+    }
+
+    func messageKey(editorID: String) -> ReferenceKey? {
+        presentation?.messages.record(editorID: editorID).map { ReferenceKey(resolved: $0.id) }
+    }
+}

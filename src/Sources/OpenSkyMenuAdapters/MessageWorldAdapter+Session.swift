@@ -35,7 +35,6 @@ extension MessageWorldAdapter {
 
     private func registerMessage(stage: SessionStage) {
         let gameSession = stage.gameSession
-        cachedEditorIDs = nil
         // Frame steps run under a menu too, so notifications keep real time.
         gameSession.frameSteps.register(.messages) { [weak game = self.game, now] _ in
             game.map { Self.tick($0, now: now) }

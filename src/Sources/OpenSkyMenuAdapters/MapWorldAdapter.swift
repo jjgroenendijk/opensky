@@ -46,10 +46,7 @@ public typealias MapWorldHosts = MapQuestsHost & MapRecordsHost & MapTravelHost 
 
 public final class MapWorldAdapter {
     public let game: any MapWorldHost
-    /// Marker names and places are fixed for a session, so they resolve once.
-    /// Marker sites per map worldspace, read once each.
-    private var baseSites: [ResolvedFormID: [MapMarkerSite]] = [:]
-    private var strings: LocalizedStrings?
+    let sites: MapSiteReads
     /// The map camera, so the map movie can place markers where the view sees them.
     public private(set) var mapViewPose: CinematicCameraPose?
 
@@ -82,20 +79,159 @@ public final class MapWorldAdapter {
     public init(game: some MapWorldHosts) {
         hosts = game
         self.game = game
+        sites = MapSiteReads(hosts: game)
     }
 
     /// `DESC` text lives in the `.dlstrings` table, names in `.strings`.
     public func text(_ value: LString?, kind: StringTable.Kind = .strings) -> String? {
-        loadedStrings?.resolve(value, kind: kind)
+        sites.text(value, kind: kind)
     }
 
     /// A plugin that overrides a string setting brings its own string table.
     public func text(_ setting: ResolvedGameText) -> String? {
-        loadedStrings?.scoped(to: setting.sourcePlugin).resolve(setting.text)
+        sites.text(setting)
     }
 
     /// One feature's string settings, or its fallbacks before the data has loaded.
     public func settingTexts<Key: GameSettingTextKey>(_: Key.Type = Key
+        .self) -> GameSettingTexts<Key>
+    {
+        sites.settingTexts()
+    }
+}
+
+extension MapWorldAdapter: MapMenuWorld {
+    public var menuInputConsumer: (any MenuInputConsumer)? {
+        game
+    }
+
+    public var playerPosition: SIMD3<Float>? {
+        sites.playerPosition
+    }
+
+    public var playerCell: CellSceneLocation? {
+        game.streamer.currentCellLocation
+    }
+
+    public func mapMarkerSites() -> [MapMarkerSite] {
+        sites.mapMarkerSites()
+    }
+
+    public var mapMarkerWorldspaces: [MapWorldspaceChoice] {
+        sites.mapMarkerWorldspaces
+    }
+
+    public func mapMarkerSites(in worldspace: ResolvedFormID) -> [MapMarkerSite] {
+        sites.mapMarkerSites(in: worldspace)
+    }
+
+    public func storeMarkerState(_ state: MapMarkerState, for key: ReferenceKey) {
+        game.worldState.set(state, for: key)
+    }
+
+    public var worldMapLimits: WorldMapLimits? {
+        sites.worldMapLimits
+    }
+
+    public func setMapView(eye: SIMD3<Float>, lookAt: SIMD3<Float>) {
+        let pose = CinematicCameraPose(eye: eye, lookAt: lookAt, avoidsGeometry: false)
+        mapViewPose = pose
+        game.gameSession?.setCinematicCamera(pose)
+    }
+
+    public func clearMapView() {
+        mapViewPose = nil
+        game.gameSession?.setCinematicCamera(nil)
+    }
+
+    public var localMapFog: LocalMapFogState {
+        get { game.worldState.component(LocalMapFogState.self, for: .player) ?? LocalMapFogState() }
+        set { game.worldState.set(newValue, for: .player) }
+    }
+
+    public func showNotification(_ text: String) {
+        game.hud.showNotification(text)
+    }
+
+    public func showWorldNotice(_ notice: WorldNotice) {
+        game.messages.postWorldNotice(notice)
+    }
+
+    public func playDiscoveryMusic(markerType: UInt8) {
+        game.audio.musicDirector?.playDiscoveryMusic(markerType: markerType)
+    }
+
+    public func incrementStat(_ name: String) {
+        game.worldState.incrementMiscStat(name)
+    }
+
+    public func showQuestMarkers(_ positions: [SIMD3<Float>]) {
+        game.hud.updateQuestTargets(positions)
+    }
+
+    public var mapWorldspaceName: String? {
+        mapWorldspace?.editorID
+    }
+
+    public var playerSetMarker: PlayerSetMapMarker? {
+        get { sites.playerSetMarker }
+        set { sites.playerSetMarker = newValue }
+    }
+
+    public var playerMarkerTexts: GameSettingTexts<PlayerMarkerText> {
+        settingTexts()
+    }
+
+    public func ask(_ text: String, buttons: [String], answer: @escaping (Int) -> Void) {
+        game.messages.presentChoices(title: nil, text: text, buttons: buttons, answer: answer)
+    }
+
+    public func showPlayerSetMarker(_ position: SIMD3<Float>?) {
+        game.hud.updatePlayerSetMarker(position)
+    }
+
+    public func refusalText(_ refusal: FastTravelRefusal) -> String {
+        text(records?.menuTexts[refusal.rawValue]) ?? refusal.rawValue
+    }
+}
+
+extension MapWorldAdapter: MapWorldPort {}
+
+/// The marker sites and string texts of the map. Marker names and places are fixed for a
+/// session, so they resolve once, per map worldspace.
+final class MapSiteReads {
+    let hosts: any MapWorldHosts
+    private var baseSites: [ResolvedFormID: [MapMarkerSite]] = [:]
+    private var strings: LocalizedStrings?
+
+    init(hosts: any MapWorldHosts) {
+        self.hosts = hosts
+    }
+
+    var game: any MapWorldHost {
+        hosts
+    }
+
+    private var records: MenuRecordData? {
+        MapRecordsAdapter(game: hosts).records
+    }
+
+    private var mapWorldspace: Worldspace? {
+        MapRecordsAdapter(game: hosts).mapWorldspace
+    }
+
+    /// `DESC` text lives in the `.dlstrings` table, names in `.strings`.
+    func text(_ value: LString?, kind: StringTable.Kind = .strings) -> String? {
+        loadedStrings?.resolve(value, kind: kind)
+    }
+
+    /// A plugin that overrides a string setting brings its own string table.
+    func text(_ setting: ResolvedGameText) -> String? {
+        loadedStrings?.scoped(to: setting.sourcePlugin).resolve(setting.text)
+    }
+
+    /// One feature's string settings, or its fallbacks before the data has loaded.
+    func settingTexts<Key: GameSettingTextKey>(_: Key.Type = Key
         .self) -> GameSettingTexts<Key>
     {
         game.menuRecords.map {
@@ -144,26 +280,16 @@ public final class MapWorldAdapter {
             return site
         }
     }
-}
 
-extension MapWorldAdapter: MapMenuWorld {
-    public var menuInputConsumer: (any MenuInputConsumer)? {
-        game
-    }
-
-    public var playerPosition: SIMD3<Float>? {
+    var playerPosition: SIMD3<Float>? {
         game.gameSession?.walkController.feetPosition
     }
 
-    public var playerCell: CellSceneLocation? {
-        game.streamer.currentCellLocation
-    }
-
-    public func mapMarkerSites() -> [MapMarkerSite] {
+    func mapMarkerSites() -> [MapMarkerSite] {
         withSavedStates(sites())
     }
 
-    public var mapMarkerWorldspaces: [MapWorldspaceChoice] {
+    var mapMarkerWorldspaces: [MapWorldspaceChoice] {
         guard let records else { return [] }
         let names = Dictionary(records.worldspaceIDs.map { ($1, $0) }) { first, _ in first }
         return records.markers.countsByWorldspace.keys.map { world in
@@ -174,62 +300,18 @@ extension MapWorldAdapter: MapMenuWorld {
         }.sorted { $0.name < $1.name }
     }
 
-    public func mapMarkerSites(in worldspace: ResolvedFormID) -> [MapMarkerSite] {
+    func mapMarkerSites(in worldspace: ResolvedFormID) -> [MapMarkerSite] {
         withSavedStates(baseSites(in: worldspace))
     }
 
-    public func storeMarkerState(_ state: MapMarkerState, for key: ReferenceKey) {
-        game.worldState.set(state, for: key)
-    }
-
-    public var worldMapLimits: WorldMapLimits? {
+    var worldMapLimits: WorldMapLimits? {
         guard game.streamer.interiorScene == nil, let map = mapWorldspace?.details.map else {
             return nil
         }
         return WorldMapLimits(map: map)
     }
 
-    public func setMapView(eye: SIMD3<Float>, lookAt: SIMD3<Float>) {
-        let pose = CinematicCameraPose(eye: eye, lookAt: lookAt, avoidsGeometry: false)
-        mapViewPose = pose
-        game.gameSession?.setCinematicCamera(pose)
-    }
-
-    public func clearMapView() {
-        mapViewPose = nil
-        game.gameSession?.setCinematicCamera(nil)
-    }
-
-    public var localMapFog: LocalMapFogState {
-        get { game.worldState.component(LocalMapFogState.self, for: .player) ?? LocalMapFogState() }
-        set { game.worldState.set(newValue, for: .player) }
-    }
-
-    public func showNotification(_ text: String) {
-        game.hud.showNotification(text)
-    }
-
-    public func showWorldNotice(_ notice: WorldNotice) {
-        game.messages.postWorldNotice(notice)
-    }
-
-    public func playDiscoveryMusic(markerType: UInt8) {
-        game.audio.musicDirector?.playDiscoveryMusic(markerType: markerType)
-    }
-
-    public func incrementStat(_ name: String) {
-        game.worldState.incrementMiscStat(name)
-    }
-
-    public func showQuestMarkers(_ positions: [SIMD3<Float>]) {
-        game.hud.updateQuestTargets(positions)
-    }
-
-    public var mapWorldspaceName: String? {
-        mapWorldspace?.editorID
-    }
-
-    public var playerSetMarker: PlayerSetMapMarker? {
+    var playerSetMarker: PlayerSetMapMarker? {
         get { game.worldState.component(PlayerSetMapMarker.self, for: .player) }
         set {
             if let newValue {
@@ -239,24 +321,4 @@ extension MapWorldAdapter: MapMenuWorld {
             }
         }
     }
-
-    public var playerMarkerTexts: GameSettingTexts<PlayerMarkerText> {
-        settingTexts()
-    }
-
-    public func ask(_ text: String, buttons: [String], answer: @escaping (Int) -> Void) {
-        game.messages.presentChoices(title: nil, text: text, buttons: buttons, answer: answer)
-    }
-
-    public func showPlayerSetMarker(_ position: SIMD3<Float>?) {
-        game.hud.updatePlayerSetMarker(position)
-    }
-
-    public func refusalText(_ refusal: FastTravelRefusal) -> String {
-        text(records?.menuTexts[refusal.rawValue]) ?? refusal.rawValue
-    }
 }
-
-extension MapWorldAdapter {}
-
-extension MapWorldAdapter: MapWorldPort {}
