@@ -228,3 +228,5 @@ struct CombatStyleReader {
         return CombatStyleTuning(style: style.record)
     }
 }
+
+extension CombatActorFactsAdapter: CombatPerkReads {}

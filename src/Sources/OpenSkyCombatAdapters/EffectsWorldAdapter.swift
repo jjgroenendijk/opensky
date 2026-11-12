@@ -47,17 +47,15 @@ public typealias EffectsWorldHosts = EffectsBlastsHost & EffectsBodyImpulsesHost
     EffectsLocatorHost & EffectsTrapControlHost & EffectsWorldHost
 
 public final class EffectsWorldAdapter {
-    /// A long frame steps as this, as for hazards.
-    static let longestStep: Float = 0.25
-    // Base plugin of the streamed cells and the item and sound indexes.
-
     public let game: any EffectsWorldHost
-    public let state = EffectsPartState()
-    lazy var frameLooks = EffectsFrameLooks(game: game, blastsHost: hosts, state: state)
-    var lastFrame: Date?
-    let now: () -> Date
+    public let state: EffectsPartState
+    let frames: EffectsFrameStep
 
     let hosts: any EffectsWorldHosts
+
+    var frameLooks: EffectsFrameLooks {
+        frames.frameLooks
+    }
 
     public var bodyImpulses: EffectsBodyImpulsesAdapter {
         EffectsBodyImpulsesAdapter(game: hosts, effects: effects, locator: locator)
@@ -85,9 +83,10 @@ public final class EffectsWorldAdapter {
         game: some EffectsWorldHosts,
         now: @escaping () -> Date
     ) {
-        self.now = now
         hosts = game
         self.game = game
+        state = EffectsPartState()
+        frames = EffectsFrameStep(hosts: game, state: state, now: now)
     }
 
     public var effects: any EffectsPort {
@@ -126,6 +125,41 @@ extension EffectsWorldAdapter: ExplosionWorld {}
 extension EffectsWorldAdapter: EffectsWorld {}
 
 extension EffectsWorldAdapter: EffectsWorldPort {}
+
+/// The effects frame step: race looks, explosions, health cues, and body impulses.
+final class EffectsFrameStep {
+    /// A long frame steps as this, as for hazards.
+    static let longestStep: Float = 0.25
+
+    let hosts: any EffectsWorldHosts
+    let state: EffectsPartState
+    let frameLooks: EffectsFrameLooks
+    var lastFrame: Date?
+    let now: () -> Date
+
+    init(hosts: any EffectsWorldHosts, state: EffectsPartState, now: @escaping () -> Date) {
+        self.hosts = hosts
+        self.state = state
+        self.now = now
+        frameLooks = EffectsFrameLooks(game: hosts, blastsHost: hosts, state: state)
+    }
+
+    var game: any EffectsWorldHost {
+        hosts
+    }
+
+    var effects: any EffectsPort {
+        game.effects
+    }
+
+    var explosions: any ExplosionRuntimePort {
+        game.combat.explosions
+    }
+
+    var effectPlacement: EffectsEffectPlacementAdapter {
+        EffectsEffectPlacementAdapter(game: hosts, state: state)
+    }
+}
 
 /// The spell-hit side of `EffectsWorldAdapter`: ragdoll notes and hit sounds.
 struct EffectsSpellHits {

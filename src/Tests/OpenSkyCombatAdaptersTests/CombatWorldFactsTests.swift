@@ -58,23 +58,23 @@ struct CombatWorldFactsTests {
 
     @Test func perkValuesComeFromThePerkPort() {
         host.fakePerks.multiplierResult = 1.5
-        #expect(adapter.perkMultiplier(at: .modAttackDamage, on: .player) == 1.5)
+        #expect(adapter.perks.perkMultiplier(at: .modAttackDamage, on: .player) == 1.5)
         #expect(host.fakePerks.multiplierCalls.count == 1)
     }
 
     @Test func gearReadsTheMagicAndInventoryPorts() {
         host.fakeMagic.influenceResult = ActorMagicInfluence()
         host.fakeMagic.hasReadiedSpellResult = true
-        _ = adapter.magicInfluence(of: Self.foe)
+        _ = adapter.gearReads.magicInfluence(of: Self.foe)
         #expect(host.fakeMagic.influenceCalls == [Self.foe])
-        #expect(adapter.hasReadiedSpell(in: .left))
-        #expect(adapter.enchantmentProfile(of: FormID(0x500)) == nil)
-        #expect(adapter.equipment == nil)
-        #expect(adapter.temperLevel(of: FormID(0x500)) == 0)
-        #expect(adapter.equippedItems(of: .player).isEmpty)
-        #expect(adapter.playerCarriedItems().isEmpty)
-        #expect(!adapter.addItem(FormID(0x500), count: 1, to: Self.foe))
-        #expect(!adapter.removeOneFromPlayer(FormID(0x500)))
+        #expect(adapter.gearReads.hasReadiedSpell(in: .left))
+        #expect(adapter.gearReads.enchantmentProfile(of: FormID(0x500)) == nil)
+        #expect(adapter.gearReads.equipment == nil)
+        #expect(adapter.gearReads.temperLevel(of: FormID(0x500)) == 0)
+        #expect(adapter.gearReads.equippedItems(of: .player).isEmpty)
+        #expect(adapter.gearReads.playerCarriedItems().isEmpty)
+        #expect(!adapter.gearReads.addItem(FormID(0x500), count: 1, to: Self.foe))
+        #expect(!adapter.gearReads.removeOneFromPlayer(FormID(0x500)))
     }
 
     @Test func spellCastsNeedACasterRuntime() {

@@ -32,11 +32,60 @@ nonisolated public struct CombatCastingFacts: Equatable, Sendable {
     }
 }
 
+/// Script hits, skill uses, spell hits, and weapon enchantments, which a fight reports.
+public typealias CombatReporting = ScriptHitReporting & SkillUseReporting & SpellHitApplying
+    & WeaponEnchantmentApplying
+
+/// What a fighter's perks make of a value, and the spells they pick.
+public protocol CombatPerkReads {
+    func perkMultiplier(at entryPoint: PerkEntryPoint, on key: ReferenceKey) -> Float
+    /// What `key`'s perks make of `value`, with `subjects` bound and `seams` laid over
+    /// the live conditions.
+    func perkModified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        given conditions: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
+    ) -> Float
+    /// `key`'s passing effects at an entry point that picks a spell, highest priority first.
+    func perkChoices(
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams: ConditionContext
+    ) -> [PerkEntryPointChoice]
+}
+
+/// What a fighter wears, carries, and has readied.
+public protocol CombatGearReads {
+    /// The player's equipment. Nil without an equipment runtime.
+    var equipment: (any EquipmentAccess)? { get }
+    func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile?
+    /// The quality level of the player's best copy of `item`. Zero when plain.
+    func temperLevel(of item: FormID) -> Int32
+    /// What `key` wears, each item with its tempering level. Empty when unknown.
+    func equippedItems(of key: ReferenceKey) -> [(item: FormID, temperLevel: Int32)]
+    func hasReadiedSpell(in hand: SpellHand) -> Bool
+    /// The items the player carries, in the inventory's stable stack order.
+    func playerCarriedItems() -> [FormID]
+    @discardableResult
+    func removeOneFromPlayer(_ item: FormID) -> Bool
+    /// What `key`'s running magic effects force on it, such as Calm or Etherealize.
+    func magicInfluence(of key: ReferenceKey) -> ActorMagicInfluence
+    /// Adds `count` of `item` to `key`'s inventory. False where it holds none.
+    @discardableResult
+    func addItem(_ item: FormID, count: Int32, to key: ReferenceKey) -> Bool
+}
+
 /// What `CombatCoordinator` reads from the running world. The hit, skill,
 /// enchantment and spell reports pass through to the session's own runtimes.
-public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitApplying,
-    WeaponEnchantmentApplying
-{
+public protocol CombatWorld: AnyObject {
+    /// Where the fight's script hits, skill uses, and spell and weapon hits go.
+    var reporter: any CombatReporting { get }
+    /// What the fighters' perks make of a value, and the spells they pick.
+    var perks: any CombatPerkReads { get }
+    /// What the fighters wear, carry, and have readied.
+    var gearReads: any CombatGearReads { get }
     /// The player's capsule pose. Nil without a renderer.
     var playerAttacker: MeleeAttacker? { get }
     /// Where a player shot leaves from and which way. Nil without a renderer.
@@ -60,22 +109,6 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     /// Reads `key`'s actor values by AVIF index. Nil when the session has no
     /// actor-value runtime or `key` is not resident.
     func actorValues(of key: ReferenceKey) -> ((Int32) -> Float?)?
-    func perkMultiplier(at entryPoint: PerkEntryPoint, on key: ReferenceKey) -> Float
-    /// What `key`'s perks make of `value`, with `subjects` bound and `seams` laid over
-    /// the live conditions.
-    func perkModified(
-        _ value: Float,
-        at entryPoint: PerkEntryPoint,
-        on key: ReferenceKey,
-        given conditions: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
-    ) -> Float
-    /// `key`'s passing effects at an entry point that picks a spell, highest priority first.
-    func perkChoices(
-        at entryPoint: PerkEntryPoint,
-        on key: ReferenceKey,
-        subjects: PerkEvaluationSubjects,
-        seams: ConditionContext
-    ) -> [PerkEntryPointChoice]
     /// Current and maximum health. Nil when `key` has no actor values.
     func health(of key: ReferenceKey) -> (current: Float, maximum: Float)?
     @discardableResult
@@ -87,19 +120,6 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     func recordHealthHit(_ hit: CombatHitRecord, on key: ReferenceKey)
     /// Whether `key` owns the perk with `editorID`.
     func ownsPerk(editorID: String, on key: ReferenceKey) -> Bool
-
-    /// The player's equipment. Nil without an equipment runtime.
-    var equipment: (any EquipmentAccess)? { get }
-    func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile?
-    /// The quality level of the player's best copy of `item`. Zero when plain.
-    func temperLevel(of item: FormID) -> Int32
-    /// What `key` wears, each item with its tempering level. Empty when unknown.
-    func equippedItems(of key: ReferenceKey) -> [(item: FormID, temperLevel: Int32)]
-    func hasReadiedSpell(in hand: SpellHand) -> Bool
-    /// The items the player carries, in the inventory's stable stack order.
-    func playerCarriedItems() -> [FormID]
-    @discardableResult
-    func removeOneFromPlayer(_ item: FormID) -> Bool
 
     /// Nil when `key` cannot cast in this session.
     func castingFacts(of key: ReferenceKey) -> CombatCastingFacts?
@@ -150,8 +170,6 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     var bodyTransients: CombatTransientCounts { get }
     /// Trims ragdolls and awake bodies, and returns how many of each went.
     func trimBodyTransients(to limits: CombatTransientLimits) -> CombatTransientCounts
-    /// What `key`'s running magic effects force on it, such as Calm or Etherealize.
-    func magicInfluence(of key: ReferenceKey) -> ActorMagicInfluence
     /// True while `key`'s current AI package has the Ignore Combat flag.
     func packageIgnoresCombat(_ key: ReferenceKey) -> Bool
     /// True while `key` lies knocked down or gets up.
@@ -160,9 +178,6 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     func level(of key: ReferenceKey) -> Int?
     /// What `observer` makes of `target` through factions and relationships.
     func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction?
-    /// Adds `count` of `item` to `key`'s inventory. False where it holds none.
-    @discardableResult
-    func addItem(_ item: FormID, count: Int32, to key: ReferenceKey) -> Bool
     /// False for an actor zero health does not kill: essential, or protected from all
     /// but the player.
     func canBeKilled(_ target: ReferenceKey, by attacker: ReferenceKey) -> Bool
@@ -170,6 +185,72 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     func startKillMove(_ attempt: KillMoveAttempt) -> Bool
     /// True while `key` plays either half of a kill move.
     func isInKillMove(_ key: ReferenceKey) -> Bool
+}
+
+extension CombatWorld where Self: CombatPerkReads {
+    public var perks: any CombatPerkReads {
+        self
+    }
+}
+
+extension CombatWorld where Self: CombatGearReads {
+    public var gearReads: any CombatGearReads {
+        self
+    }
+}
+
+extension CombatPerkReads {
+    public func perkModified(
+        _ value: Float,
+        at _: PerkEntryPoint,
+        on _: ReferenceKey,
+        given _: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
+    ) -> Float {
+        value
+    }
+
+    /// `key`'s perks applied to `value`, under `subjects` and, unless given, empty seams.
+    func perkModified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams: ConditionContext = ConditionContext()
+    ) -> Float {
+        perkModified(value, at: entryPoint, on: key, given: (subjects, seams))
+    }
+
+    public func perkChoices(
+        at _: PerkEntryPoint,
+        on _: ReferenceKey,
+        subjects _: PerkEvaluationSubjects,
+        seams _: ConditionContext
+    ) -> [PerkEntryPointChoice] {
+        []
+    }
+}
+
+extension CombatGearReads {
+    /// A session with no magic forces no behaviour.
+    public func magicInfluence(of _: ReferenceKey) -> ActorMagicInfluence {
+        .none
+    }
+
+    @discardableResult
+    public func addItem(_: FormID, count _: Int32, to _: ReferenceKey) -> Bool {
+        false
+    }
+
+    /// A session with no equipment wears nothing, so no armour stops a blow.
+    public func equippedItems(of _: ReferenceKey) -> [(item: FormID, temperLevel: Int32)] {
+        []
+    }
+}
+
+extension CombatWorld where Self: CombatReporting {
+    public var reporter: any CombatReporting {
+        self
+    }
 }
 
 extension CombatWorld {
@@ -210,11 +291,6 @@ extension CombatWorld {
         false
     }
 
-    /// A session with no magic forces no behaviour.
-    public func magicInfluence(of _: ReferenceKey) -> ActorMagicInfluence {
-        .none
-    }
-
     /// A session with no packages ignores nothing.
     public func level(of _: ReferenceKey) -> Int? {
         nil
@@ -252,47 +328,8 @@ extension CombatWorld {
 
     public func recordHealthHit(_: CombatHitRecord, on _: ReferenceKey) {}
 
-    @discardableResult
-    public func addItem(_: FormID, count _: Int32, to _: ReferenceKey) -> Bool {
-        false
-    }
-
     /// A session with no perks owns none.
     public func ownsPerk(editorID _: String, on _: ReferenceKey) -> Bool {
         false
-    }
-
-    public func perkModified(
-        _ value: Float,
-        at _: PerkEntryPoint,
-        on _: ReferenceKey,
-        given _: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
-    ) -> Float {
-        value
-    }
-
-    /// `key`'s perks applied to `value`, under `subjects` and, unless given, empty seams.
-    func perkModified(
-        _ value: Float,
-        at entryPoint: PerkEntryPoint,
-        on key: ReferenceKey,
-        subjects: PerkEvaluationSubjects,
-        seams: ConditionContext = ConditionContext()
-    ) -> Float {
-        perkModified(value, at: entryPoint, on: key, given: (subjects, seams))
-    }
-
-    public func perkChoices(
-        at _: PerkEntryPoint,
-        on _: ReferenceKey,
-        subjects _: PerkEvaluationSubjects,
-        seams _: ConditionContext
-    ) -> [PerkEntryPointChoice] {
-        []
-    }
-
-    /// A session with no equipment wears nothing, so no armour stops a blow.
-    public func equippedItems(of _: ReferenceKey) -> [(item: FormID, temperLevel: Int32)] {
-        []
     }
 }

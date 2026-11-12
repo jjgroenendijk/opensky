@@ -7,7 +7,7 @@ import OpenSkyCamera
 import OpenSkyCells
 public import OpenSkyCombat
 public import OpenSkyCombatInterface
-public import OpenSkyConditions
+import OpenSkyConditions
 import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
 import OpenSkyEffects
@@ -15,14 +15,14 @@ import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyInventoryInterface
+import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
 import OpenSkyMenusInterface
 import OpenSkyNavigation
 import OpenSkyPerceptionInterface
 public import OpenSkyPhysics
 import OpenSkyPlayer
-public import OpenSkyProgressionInterface
+import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScriptingInterface
@@ -79,33 +79,16 @@ extension CombatWorldAdapter {
         impactEffects.isInKillMove(key)
     }
 
-    @discardableResult
-    public func reportScriptHit(_ hit: ScriptHitEvent) -> Int {
-        reports.reportScriptHit(hit)
+    public var reporter: any CombatReporting {
+        reports
     }
 
-    @discardableResult
-    public func reportSkillUse(_ use: SkillUseEvent) -> Float {
-        reports.reportSkillUse(use)
+    public var perks: any CombatPerkReads {
+        actorFacts
     }
 
-    @discardableResult
-    public func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
-        reports.applySpellHit(hit)
-    }
-
-    @discardableResult
-    public func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
-        reports.applyWeaponEnchantment(hit)
-    }
-
-    public func applyWeaponPoison(_ hit: WeaponPoisonHit) {
-        reports.applyWeaponPoison(hit)
-    }
-
-    @discardableResult
-    public func applyWeaponEnhancement(attacker: ReferenceKey, target: ReferenceKey) -> Int {
-        reports.applyWeaponEnhancement(attacker: attacker, target: target)
+    public var gearReads: any CombatGearReads {
+        gear
     }
 
     public func spellLanded(_ payload: SpellPayload, at point: SIMD3<Float>) {
@@ -152,28 +135,6 @@ extension CombatWorldAdapter {
         actorFacts.actorValues(of: key)
     }
 
-    public func perkMultiplier(at entryPoint: PerkEntryPoint, on key: ReferenceKey) -> Float {
-        actorFacts.perkMultiplier(at: entryPoint, on: key)
-    }
-
-    public func perkModified(
-        _ value: Float,
-        at entryPoint: PerkEntryPoint,
-        on key: ReferenceKey,
-        given conditions: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
-    ) -> Float {
-        actorFacts.perkModified(value, at: entryPoint, on: key, given: conditions)
-    }
-
-    public func perkChoices(
-        at entryPoint: PerkEntryPoint,
-        on key: ReferenceKey,
-        subjects: PerkEvaluationSubjects,
-        seams: ConditionContext
-    ) -> [PerkEntryPointChoice] {
-        actorFacts.perkChoices(at: entryPoint, on: key, subjects: subjects, seams: seams)
-    }
-
     public var isInInterior: Bool {
         actorFacts.isInInterior
     }
@@ -209,44 +170,6 @@ extension CombatWorldAdapter {
 
     public func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction? {
         actorFacts.reaction(of: observer, toward: target)
-    }
-
-    public var equipment: (any EquipmentAccess)? {
-        gear.equipment
-    }
-
-    public func magicInfluence(of key: ReferenceKey) -> ActorMagicInfluence {
-        gear.magicInfluence(of: key)
-    }
-
-    public func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile? {
-        gear.enchantmentProfile(of: item)
-    }
-
-    public func temperLevel(of item: FormID) -> Int32 {
-        gear.temperLevel(of: item)
-    }
-
-    public func equippedItems(of key: ReferenceKey) -> [(item: FormID, temperLevel: Int32)] {
-        gear.equippedItems(of: key)
-    }
-
-    public func hasReadiedSpell(in hand: SpellHand) -> Bool {
-        gear.hasReadiedSpell(in: hand)
-    }
-
-    public func playerCarriedItems() -> [FormID] {
-        gear.playerCarriedItems()
-    }
-
-    @discardableResult
-    public func addItem(_ item: FormID, count: Int32, to key: ReferenceKey) -> Bool {
-        gear.addItem(item, count: count, to: key)
-    }
-
-    @discardableResult
-    public func removeOneFromPlayer(_ item: FormID) -> Bool {
-        gear.removeOneFromPlayer(item)
     }
 
     public func packageIgnoresCombat(_ key: ReferenceKey) -> Bool {

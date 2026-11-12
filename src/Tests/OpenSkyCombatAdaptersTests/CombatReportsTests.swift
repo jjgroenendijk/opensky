@@ -8,6 +8,7 @@ import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 import OpenSkySessionTesting
 import Testing
@@ -33,22 +34,22 @@ struct CombatReportsTests {
 
     @Test func aHitIsReportedAsAnAssaultAndAsksForCombatLines() {
         let hit = ScriptHitEvent(target: Self.foe, aggressor: .player, damage: 30)
-        #expect(adapter.reportScriptHit(hit) == 0)
+        #expect(adapter.reporter.reportScriptHit(hit) == 0)
         #expect(host.fakeCrime.reportAssaultCalls.count == 1)
         #expect(host.fakeDialogue.combatLineCalls.map(\.speaker) == [Self.foe])
         let back = ScriptHitEvent(target: .player, aggressor: Self.foe, damage: 30)
-        adapter.reportScriptHit(back)
+        adapter.reporter.reportScriptHit(back)
         #expect(host.fakeDialogue.combatLineCalls.map(\.speaker) == [Self.foe, Self.foe])
     }
 
     @Test func skillUsesAndWeaponMagicGoToTheirPorts() {
         host.fakeProgression.reportSkillUseResult = 2
-        #expect(adapter.reportSkillUse(SkillUseEvent(
+        #expect(adapter.reporter.reportSkillUse(SkillUseEvent(
             actor: .player,
             action: .blockedBlow,
             amount: 5
         )) == 2)
-        #expect(adapter.applyWeaponEnhancement(attacker: .player, target: Self.foe) == 0)
+        #expect(adapter.reporter.applyWeaponEnhancement(attacker: .player, target: Self.foe) == 0)
         #expect(host.fakeMagic.applyWeaponEnhancementCalls.count == 1)
     }
 

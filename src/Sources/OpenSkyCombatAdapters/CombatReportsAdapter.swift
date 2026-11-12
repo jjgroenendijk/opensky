@@ -44,10 +44,18 @@ public protocol CombatReportsHost: AnyObject, SendableMetatype {
 }
 
 /// Part of `CombatWorldAdapter`, over its own narrow host.
-public struct CombatReportsAdapter {
+public final class CombatReportsAdapter {
     public let game: any CombatReportsHost
     public let actorFacts: CombatActorFactsAdapter
+
+    init(game: any CombatReportsHost, actorFacts: CombatActorFactsAdapter) {
+        self.game = game
+        self.actorFacts = actorFacts
+    }
 }
+
+extension CombatReportsAdapter: ScriptHitReporting, SkillUseReporting, SpellHitApplying,
+    WeaponEnchantmentApplying {}
 
 extension CombatReportsAdapter {
     /// Every landed blow passes here, so assault is noticed in one place.

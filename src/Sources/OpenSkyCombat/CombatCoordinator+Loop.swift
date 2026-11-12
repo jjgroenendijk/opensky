@@ -64,7 +64,7 @@ extension CombatCoordinator: CombatLoopWorld {
     }
 
     public func combatInfluence(of key: ReferenceKey) -> ActorMagicInfluence {
-        world.magicInfluence(of: key)
+        world.gearReads.magicInfluence(of: key)
     }
 
     /// A package that ignores combat, a knockdown, or a kill move holds the actor out of
