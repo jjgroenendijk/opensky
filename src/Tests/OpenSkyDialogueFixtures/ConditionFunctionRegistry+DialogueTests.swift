@@ -10,9 +10,9 @@ nonisolated extension ConditionFunctionRegistry {
     public static let dialogueTests: ConditionFunctionRegistry = {
         var registry = ConditionFunctionRegistry()
         ConditionFunctions.installCore(into: &registry)
-        ConditionFunctions.installData(&registry)
-        ConditionFunctions.installQuest(&registry)
-        ConditionFunctions.installDialogue(&registry)
+        ConditionFunctionsData.installData(&registry)
+        ConditionFunctionsQuest.installQuest(&registry)
+        ConditionFunctionsDialogue.installDialogue(&registry)
         return registry
     }()
 }

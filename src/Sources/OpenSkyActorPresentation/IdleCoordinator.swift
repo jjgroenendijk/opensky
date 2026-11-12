@@ -72,7 +72,10 @@ public struct IdleSessionData {
 extension IdleSessionData {
     /// The loader of idle plans, on the session's worker or a serial one.
     func planLoader() -> IdlePlanLoader {
-        let load = IdlePlaybackResolver.planLoad(files: files, animatedObjects: store.animatedObjects)
+        let load = IdlePlaybackResolver.planLoad(
+            files: files,
+            animatedObjects: store.animatedObjects
+        )
         return IdlePlanLoader(worker: planWorker ?? SerialAssetLoadWorker(load: load))
     }
 }
@@ -398,7 +401,8 @@ extension IdleCoordinator {
 
     /// An actor that runs its own graph rolls there; one without plays a rolled variant.
     private func planVariant(for actor: ReferenceKey) -> Int {
-        let runsGraph = worldConditionContext().graphVariables.graphs[actor] != nil
+        let runsGraph = worldConditionContext()[resolution: GraphVariableResolution.self]
+            .graphs[actor] != nil
         return runsGraph || actor == .player ? 0 : random(IdlePlanKey.variants)
     }
 

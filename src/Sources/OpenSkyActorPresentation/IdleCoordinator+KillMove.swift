@@ -18,7 +18,9 @@ extension IdleCoordinator {
         let roots = store.roots(underAction: action)
         guard !roots.isEmpty else { return false }
         let selection = selector(for: attacker, target: target) { context in
-            context.setAttack(attacker: attacker, target: target, kills: kills)
+            context[resolution: AttackKillResolution.self] = IdleConditionChecks.attack(
+                attacker: attacker, target: target, kills: kills
+            )
         }.select(roots: roots)
         guard
             let chosen = selection.chosen,

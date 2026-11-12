@@ -17,10 +17,3 @@ nonisolated public struct MagicApplicationContext: Equatable, Sendable {
 nonisolated extension MagicApplicationContext: ConditionResolution {
     public static let empty = MagicApplicationContext()
 }
-
-nonisolated extension ConditionContext {
-    public var magicApplication: MagicApplicationContext {
-        get { self[resolution: MagicApplicationContext.self] }
-        set { self[resolution: MagicApplicationContext.self] = newValue }
-    }
-}

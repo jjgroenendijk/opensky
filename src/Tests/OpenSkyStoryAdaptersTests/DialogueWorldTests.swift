@@ -46,9 +46,9 @@ struct DialogueWorldTests {
         host.fakeDialogue.conversationSpeaker = Self.speaker
         host.fakePerks.multiplierResult = 2
         let context = adapter.conditionContext()
-        #expect(context.speechChecks.intimidationFactor == 2)
-        #expect(context.speechChecks.bribeFactor == 2)
-        #expect(context.speechChecks.playerGold == nil)
+        #expect(context[resolution: SpeechCheckResolution.self].intimidationFactor == 2)
+        #expect(context[resolution: SpeechCheckResolution.self].bribeFactor == 2)
+        #expect(context[resolution: SpeechCheckResolution.self].playerGold == nil)
         #expect(host.fakePerks.multiplierCalls.map(\.target) == [Self.speaker, Self.speaker])
     }
 

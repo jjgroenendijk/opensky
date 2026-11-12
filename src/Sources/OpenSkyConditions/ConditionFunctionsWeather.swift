@@ -26,7 +26,7 @@ nonisolated extension ConditionContext {
     }
 }
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsWeather {
     public static func installWeather(_ registry: inout ConditionFunctionRegistry) {
         // "this will return true as soon as the weather starts transitioning into the
         // specified weather" (<https://ck.uesp.net/wiki/GetIsCurrentWeather>).
@@ -36,16 +36,18 @@ nonisolated extension ConditionFunctions {
             guard let parameter = call.parameter1 else {
                 return .failure(.unresolvedParameter(149))
             }
-            return Self.currentWeather(call).map { Self.isTrue($0.weather == parameter.asFormID) }
+            return Self.currentWeather(call)
+                .map { ConditionFunctions.isTrue($0.weather == parameter.asFormID) }
         })
         registry.register(ConditionFunction(index: 266, name: "IsPleasant") { call in
-            Self.currentWeather(call).map { Self.isTrue($0.precipitation == .pleasant) }
+            Self.currentWeather(call)
+                .map { ConditionFunctions.isTrue($0.precipitation == .pleasant) }
         })
         registry.register(ConditionFunction(index: 62, name: "IsRaining") { call in
-            Self.currentWeather(call).map { Self.isTrue($0.precipitation == .rainy) }
+            Self.currentWeather(call).map { ConditionFunctions.isTrue($0.precipitation == .rainy) }
         })
         registry.register(ConditionFunction(index: 75, name: "IsSnowing") { call in
-            Self.currentWeather(call).map { Self.isTrue($0.precipitation == .snow) }
+            Self.currentWeather(call).map { ConditionFunctions.isTrue($0.precipitation == .snow) }
         })
     }
 

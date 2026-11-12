@@ -11,7 +11,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsActorAction {
     public static func installActorAction(_ registry: inout ConditionFunctionRegistry) {
         let flags: [String: (index: UInt16, read: @Sendable (ActorActionFacts) -> Bool)] = [
             "GetWantBlocking": (0, { $0.wantsBlocking }),
@@ -24,7 +24,7 @@ nonisolated extension ConditionFunctions {
         ]
         for (name, (index, read)) in flags.sorted(by: { $0.key < $1.key }) {
             registry.register(ConditionFunction(index: index, name: name) { call in
-                Self.action(call) { Self.isTrue(read($0)) }
+                Self.action(call) { ConditionFunctions.isTrue(read($0)) }
             })
         }
         registry.register(ConditionFunction(index: 574, name: "GetAttackState") { call in
@@ -40,7 +40,7 @@ nonisolated extension ConditionFunctions {
                 guard let drawState = state.weaponDrawState else {
                     return .failure(.unavailableActorState)
                 }
-                return .success(Self.isTrue(drawState.isWeaponInHand))
+                return .success(ConditionFunctions.isTrue(drawState.isWeaponInHand))
             }
         })
         installCombatTarget(&registry)
@@ -51,10 +51,10 @@ nonisolated extension ConditionFunctions {
         registry.register(ConditionFunction(
             index: 513, name: "IsCombatTarget", parameter1: .formID
         ) { call in
-            guard let other = Self.parameterKey(call, call.parameter1) else {
+            guard let other = ConditionFunctions.parameterKey(call, call.parameter1) else {
                 return .failure(.unresolvedParameter(513))
             }
-            return call.actorState().map { Self.isTrue($0.combatTarget == other) }
+            return call.actorState().map { ConditionFunctions.isTrue($0.combatTarget == other) }
         })
         // The target's base `KWDA` or its race's keywords, as `HasKeyword` on an actor.
         registry.register(ConditionFunction(
@@ -76,9 +76,10 @@ nonisolated extension ConditionFunctions {
                 }
                 guard let entry = call.context.references[target] else { return .success(0) }
                 let base = store.resolvedID(
-                    Self.baseForm(of: entry), fromPlugin: Self.basePlugin(of: entry.key)
+                    ConditionFunctions.baseForm(of: entry),
+                    fromPlugin: ConditionFunctionsData.basePlugin(of: entry.key)
                 )
-                return .success(Self
+                return .success(ConditionFunctions
                     .isTrue(base.flatMap { store.hasKeyword(keyword, on: $0) } == true))
             }
         })

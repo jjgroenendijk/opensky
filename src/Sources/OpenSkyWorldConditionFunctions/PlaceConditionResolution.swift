@@ -29,10 +29,3 @@ nonisolated public struct PlaceConditionResolution: ConditionResolution, Sendabl
         self.visibleMarkers = visibleMarkers
     }
 }
-
-nonisolated extension ConditionContext {
-    public var places: PlaceConditionResolution {
-        get { self[resolution: PlaceConditionResolution.self] }
-        set { self[resolution: PlaceConditionResolution.self] = newValue }
-    }
-}

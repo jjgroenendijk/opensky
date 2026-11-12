@@ -110,7 +110,7 @@ nonisolated public enum ScriptedStateName: Sendable {
     }
 }
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsScriptState {
     public static func installScriptState(_ registry: inout ConditionFunctionRegistry) {
         // The run-on's flag, false until a script sets it, as the matching native reads.
         let flags: [String: (index: UInt16, flag: String)] = [
@@ -128,7 +128,8 @@ nonisolated extension ConditionFunctions {
         for (name, entry) in flags.sorted(by: { $0.key < $1.key }) {
             registry.register(ConditionFunction(index: entry.index, name: name) { call in
                 call.referenceKey().flatMap { key in
-                    Self.scriptState(call, of: key).map { Self.isTrue($0.flag(entry.flag) == true) }
+                    Self.scriptState(call, of: key)
+                        .map { ConditionFunctions.isTrue($0.flag(entry.flag) == true) }
                 }
             })
         }
@@ -136,16 +137,16 @@ nonisolated extension ConditionFunctions {
         registry.register(ConditionFunction(
             index: 250, name: "GetLocationCleared", parameter1: .formID
         ) { call in
-            guard let location = Self.parameterKey(call, call.parameter1) else {
+            guard let location = ConditionFunctions.parameterKey(call, call.parameter1) else {
                 return .failure(.unresolvedParameter(250))
             }
             return Self.scriptState(call, of: location).map {
-                Self.isTrue($0.flag(ScriptedStateName.cleared) == true)
+                ConditionFunctions.isTrue($0.flag(ScriptedStateName.cleared) == true)
             }
         })
         installKeywordData(&registry)
         installShout(&registry)
-        installRecordedEvents(&registry)
+        ConditionFunctionsRecordedEvents.installRecordedEvents(&registry)
     }
 
     private static func installShout(_ registry: inout ConditionFunctionRegistry) {
@@ -153,12 +154,13 @@ nonisolated extension ConditionFunctions {
         registry.register(ConditionFunction(
             index: 579, name: "GetEquippedShout", parameter1: .formID
         ) { call in
-            guard let shout = Self.parameterKey(call, call.parameter1) else {
+            guard let shout = ConditionFunctions.parameterKey(call, call.parameter1) else {
                 return .failure(.unresolvedParameter(579))
             }
             return call.referenceKey().flatMap { key in
                 Self.scriptState(call, of: key).map { _ in
-                    Self.isTrue(call.context.scriptedState.equippedShout(of: key) == shout)
+                    ConditionFunctions
+                        .isTrue(call.context.scriptedState.equippedShout(of: key) == shout)
                 }
             }
         })
@@ -181,7 +183,11 @@ nonisolated extension ConditionFunctions {
             index: 606, name: "GetKeywordDataForLocation", parameter1: .formID,
             parameter2: .formID
         ) { call in
-            keywordData(call, index: 606, location: Self.parameterKey(call, call.parameter1))
+            keywordData(
+                call,
+                index: 606,
+                location: ConditionFunctions.parameterKey(call, call.parameter1)
+            )
         })
         // Parameter 1 is a location alias of the owning quest.
         registry.register(ConditionFunction(

@@ -9,7 +9,7 @@ import Foundation
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsDetection {
     public static func installDetection(_ registry: inout ConditionFunctionRegistry) {
         // "Returns the distance between the calling reference and the specified
         // reference." (<https://ck.uesp.net/wiki/GetDistance>) World units, the
@@ -36,7 +36,7 @@ nonisolated extension ConditionFunctions {
         ) { call in
             Self.detectionPair(call, index: 27) { context, subject, other in
                 context.detection.pair(observer: subject, target: other)
-                    .map { Self.isTrue($0.hasLineOfSight) }
+                    .map { ConditionFunctions.isTrue($0.hasLineOfSight) }
             }
         })
 
@@ -51,7 +51,7 @@ nonisolated extension ConditionFunctions {
         ) { call in
             Self.detectionPair(call, index: 45) { context, subject, other in
                 context.detection.pair(observer: subject, target: other)
-                    .map { Self.isTrue($0.isDetected) }
+                    .map { ConditionFunctions.isTrue($0.isDetected) }
             }
         })
     }
@@ -66,7 +66,7 @@ nonisolated extension ConditionFunctions {
         index: UInt16,
         read: (ConditionContext, ReferenceKey, ReferenceKey) -> Float?
     ) -> Result<Float, ConditionFailure> {
-        guard let other = parameterReference(call) else {
+        guard let other = ConditionFunctions.parameterReference(call) else {
             return .failure(.unresolvedParameter(index))
         }
         return call.referenceKey().flatMap { subject in

@@ -48,13 +48,13 @@ nonisolated extension ConditionContext {
     }
 }
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsScene {
     public static func installScene(_ registry: inout ConditionFunctionRegistry) {
         registry.register(ConditionFunction(
             index: 248, name: "IsScenePlaying", parameter1: .formID
         ) { call in
             guard let scene = call.parameter1 else { return .failure(.unresolvedParameter(248)) }
-            return Self.scenes(call).map { Self.isTrue($0.isPlaying(scene.asFormID)) }
+            return Self.scenes(call).map { ConditionFunctions.isTrue($0.isPlaying(scene.asFormID)) }
         })
 
         // "IsSceneActionComplete SceneID SceneActionID": the ID is the action's `INAM`
@@ -66,13 +66,13 @@ nonisolated extension ConditionFunctions {
                 return .failure(.unresolvedParameter(550))
             }
             return Self.scenes(call).map {
-                Self.isTrue($0.isActionComplete(action.rawValue, in: scene.asFormID))
+                ConditionFunctions.isTrue($0.isActionComplete(action.rawValue, in: scene.asFormID))
             }
         })
 
         registry.register(ConditionFunction(index: 590, name: "IsInScene") { call in
             call.referenceKey().flatMap { key in
-                Self.scenes(call).map { Self.isTrue($0.isInScene(key)) }
+                Self.scenes(call).map { ConditionFunctions.isTrue($0.isInScene(key)) }
             }
         })
     }

@@ -6,7 +6,7 @@ import OpenSkyFormatsESM
 import OpenSkyWorldInterface
 import simd
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsMotion {
     public static func installMotion(_ registry: inout ConditionFunctionRegistry) {
         registry
             .register(ConditionFunction(index: 6, name: "GetPos", parameter1: .integer) { call in
@@ -23,7 +23,7 @@ nonisolated extension ConditionFunctions {
                 return motion(call) { facts in axis.map { facts.velocity[$0] } }
             })
         registry.register(ConditionFunction(index: 25, name: "IsMoving") { call in
-            motion(call) { Self.isTrue($0.movementDirection != 0) }
+            motion(call) { ConditionFunctions.isTrue($0.movementDirection != 0) }
         })
         registry.register(ConditionFunction(index: 589, name: "GetMovementDirection") { call in
             motion(call) { $0.movementDirection }
@@ -34,7 +34,7 @@ nonisolated extension ConditionFunctions {
             })
         }
         registry.register(ConditionFunction(index: 704, name: "IsPathing") { call in
-            motion(call) { Self.isTrue($0.pathTarget != nil) }
+            motion(call) { ConditionFunctions.isTrue($0.pathTarget != nil) }
         })
         registry.register(ConditionFunction(index: 621, name: "GetPathingTargetSpeed") { call in
             motion(call) { $0.pathTarget == nil ? 0 : $0.pathTargetSpeed }
@@ -95,7 +95,7 @@ nonisolated extension ConditionFunctions {
         ) { call in
             let limit = call.parameter2?.asFloat ?? 0
             return motionPair(call, index: 639) { facts, other in
-                Self.isTrue(simd_distance(facts.position, other.position) <= limit)
+                ConditionFunctions.isTrue(simd_distance(facts.position, other.position) <= limit)
             }
         })
         registry.register(ConditionFunction(
@@ -137,7 +137,7 @@ nonisolated extension ConditionFunctions {
         index: UInt16,
         read: (ReferenceMotionFacts, ReferenceMotionFacts) -> Float
     ) -> Result<Float, ConditionFailure> {
-        guard let other = parameterReference(call) else {
+        guard let other = ConditionFunctions.parameterReference(call) else {
             return .failure(.unresolvedParameter(index))
         }
         return call.referenceKey().flatMap { key in

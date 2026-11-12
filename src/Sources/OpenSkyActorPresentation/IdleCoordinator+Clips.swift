@@ -28,7 +28,7 @@ extension IdleCoordinator.Playing {
     /// The object change an annotation makes: nil when it changes nothing, else the
     /// prop to show, or a nil prop to remove the one shown. The player has no playback,
     /// so no prop.
-    mutating func applyAnimationObject(_ name: String) -> (prop: ActorPropAttachment?)? {
+    mutating func applyAnimationObject(_ name: String) -> ActorPropAttachment?? {
         guard
             playback != nil,
             let change = IdleCore.objectChange(
@@ -40,11 +40,11 @@ extension IdleCoordinator.Playing {
             guard let prop = Self.attachment(object.prop) else { return nil }
             hasProp = true
             shownObject = object
-            return (prop)
+            return .some(prop)
         case .remove:
             hasProp = false
             shownObject = nil
-            return (nil)
+            return .some(nil)
         }
     }
 
@@ -85,16 +85,21 @@ extension IdleCoordinator.Playing {
     }
 }
 
-extension ConditionContext {
+/// The condition checks the idle selector runs.
+enum IdleConditionChecks {
     /// The name of the first function whose condition fails, or nil when all pass.
-    func firstFailingFunction(in conditions: [Condition]) -> String? {
-        var evaluator = ConditionEvaluator(context: self)
+    static func firstFailingFunction(
+        in conditions: [Condition], context: ConditionContext
+    ) -> String? {
+        var evaluator = ConditionEvaluator(context: context)
         return evaluator.firstFailure(in: conditions).map(evaluator.functionName(of:))
     }
 
-    /// Sets one attack and whether it kills, for `ShouldAttackKill`.
-    mutating func setAttack(attacker: ReferenceKey, target: ReferenceKey, kills: Bool) {
-        attackKills = AttackKillResolution(attacks: [
+    /// One attack and whether it kills, for `ShouldAttackKill`.
+    static func attack(
+        attacker: ReferenceKey, target: ReferenceKey, kills: Bool
+    ) -> AttackKillResolution {
+        AttackKillResolution(attacks: [
             AttackKillResolution.Attack(attacker: attacker, target: target, kills: kills)
         ])
     }
@@ -108,9 +113,12 @@ extension IdleCoordinator {
         // A furniture idle tests the furniture as its Target, such as its keywords.
         context.target = furnitureUses[actor]?.furniture
         // An actor whose graph does not run reads 0 for every variable.
-        if context.graphVariables.graphs[actor] == nil, actor != .player {
-            context.graphVariables.values[actor] = [:]
-            context.graphVariables.floats[actor] = [:]
+        if
+            context[resolution: GraphVariableResolution.self].graphs[actor] == nil,
+            actor != .player
+        {
+            context[resolution: GraphVariableResolution.self].values[actor] = [:]
+            context[resolution: GraphVariableResolution.self].floats[actor] = [:]
         }
         return context
     }
@@ -151,7 +159,7 @@ extension IdleCoordinator {
             }
             base = context
             context.functions = self?.conditionFunctions ?? .empty
-            return context.firstFailingFunction(in: idle.conditions)
+            return IdleConditionChecks.firstFailingFunction(in: idle.conditions, context: context)
         }
         guard let store else {
             return IdleSelector(children: { _ in [] }, check: check)
@@ -171,7 +179,7 @@ extension IdleCoordinator {
     /// because an actor carries one prop.
     func applyAnimationObject(_ name: String, to playing: inout Playing, on actor: ReferenceKey) {
         if let change = playing.applyAnimationObject(name) {
-            world?.setProp(change.prop, on: actor)
+            world?.setProp(change, on: actor)
         }
     }
 

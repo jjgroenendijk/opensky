@@ -44,7 +44,8 @@ extension InventoryRecipesAdapter {
     ) -> String? {
         var context = game.runtimeState.conditionContext()
         context.subject = .player
-        context.tempering = TemperingConditionResolution(isEnchanted: temperingEnchanted)
+        context[resolution: TemperingConditionResolution.self] =
+            TemperingConditionResolution(isEnchanted: temperingEnchanted)
         var evaluator = ConditionEvaluator(context: context)
         return evaluator.firstFailure(in: conditions.conditions).map(evaluator.functionName(of:))
     }

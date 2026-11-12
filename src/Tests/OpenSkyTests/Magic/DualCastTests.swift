@@ -98,8 +98,9 @@ struct DualCastTests {
 
     @Test func dualCastEffectsAnswerEffectWasDualCast() {
         var context = ConditionContext()
-        context.magicApplication = MagicApplicationContext(isDualCast: true)
-        #expect(context.magicApplication.isDualCast)
+        context[resolution: MagicApplicationContext.self] =
+            MagicApplicationContext(isDualCast: true)
+        #expect(context[resolution: MagicApplicationContext.self].isDualCast)
         let payload = SpellPayload(
             spell: .player, sourcePlugin: "", caster: .player, entries: [],
             isHostile: false, ignoresResistance: false, projectile: nil, name: "x"

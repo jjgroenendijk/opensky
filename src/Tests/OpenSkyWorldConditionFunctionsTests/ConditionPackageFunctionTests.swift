@@ -14,7 +14,7 @@ struct ConditionPackageFunctionTests {
     static let registry: ConditionFunctionRegistry = {
         var registry = ConditionFunctionRegistry()
         ConditionFunctions.installCore(into: &registry)
-        ConditionFunctions.installPackage(&registry)
+        ConditionFunctionsPackage.installPackage(&registry)
         return registry
     }()
 

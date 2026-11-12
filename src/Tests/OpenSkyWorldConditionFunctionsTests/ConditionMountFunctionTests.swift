@@ -12,7 +12,7 @@ struct ConditionMountFunctionTests {
     static let registry: ConditionFunctionRegistry = {
         var registry = ConditionFunctionRegistry()
         ConditionFunctions.installCore(into: &registry)
-        ConditionFunctions.installMounts(&registry)
+        ConditionFunctionsMount.installMounts(&registry)
         return registry
     }()
 

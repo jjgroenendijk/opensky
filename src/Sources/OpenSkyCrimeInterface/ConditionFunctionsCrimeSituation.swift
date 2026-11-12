@@ -8,7 +8,7 @@ public import OpenSkyConditions
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsCrimeSituation {
     public static func installCrimeSituation(_ registry: inout ConditionFunctionRegistry) {
         typealias Read = @Sendable (CrimeSituation, ReferenceKey) -> Bool
         let membership: [String: (index: UInt16, read: Read)] = [
@@ -20,7 +20,7 @@ nonisolated extension ConditionFunctions {
         ]
         for (name, (index, read)) in membership.sorted(by: { $0.key < $1.key }) {
             registry.register(ConditionFunction(index: index, name: name) { call in
-                situation(call) { Self.isTrue(read($0, $1)) }
+                situation(call) { ConditionFunctions.isTrue(read($0, $1)) }
             })
         }
         registry.register(ConditionFunction(index: 144, name: "GetTrespassWarningLevel") { call in
@@ -30,11 +30,11 @@ nonisolated extension ConditionFunctions {
             situation(call) { situation, _ in Float(situation.lastSentenceDays) }
         })
         registry.register(ConditionFunction(index: 125, name: "IsGuard") { call in
-            policedFaction(call) { faction, _ in Self.isTrue(faction != nil) }
+            policedFaction(call) { faction, _ in ConditionFunctions.isTrue(faction != nil) }
         })
         registry.register(ConditionFunction(index: 497, name: "CanPayCrimeGold") { call in
             policedFaction(call) { faction, situation in
-                Self.isTrue(faction.map(situation.payableFactions.contains) ?? false)
+                ConditionFunctions.isTrue(faction.map(situation.payableFactions.contains) ?? false)
             }
         })
         registry
@@ -44,7 +44,7 @@ nonisolated extension ConditionFunctions {
                     let owner = call.context.crime.facts.resolvedKey(of: parameter.asFormID)
                 else { return .failure(.unresolvedParameter(278)) }
                 return situation(call) { situation, reference in
-                    Self.isTrue(situation.owners[reference]?.key == owner)
+                    ConditionFunctions.isTrue(situation.owners[reference]?.key == owner)
                 }
             })
     }

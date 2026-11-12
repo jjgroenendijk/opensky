@@ -9,7 +9,7 @@ import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-nonisolated extension ConditionFunctions {
+nonisolated enum ConditionFunctionsEquipment {
     static func installEquipment(_ registry: inout ConditionFunctionRegistry) {
         registry.register(ConditionFunction(
             index: 597, name: "GetEquippedItemType", parameter1: .integer
@@ -36,7 +36,9 @@ nonisolated extension ConditionFunctions {
             index: 109, name: "IsWeaponSkillType", parameter1: .integer
         ) { call in
             let skill = call.parameter1?.asInt32
-            return equipment(call) { Self.isTrue(skill != nil && $0.rightWeapon?.skill == skill) }
+            return equipment(call) {
+                ConditionFunctions.isTrue(skill != nil && $0.rightWeapon?.skill == skill)
+            }
         })
         // The worn value of armour and clothing together.
         registry.register(ConditionFunction(index: 41, name: "GetClothingValue") { call in
@@ -54,7 +56,7 @@ nonisolated extension ConditionFunctions {
             guard let keyword = call.parameter1?.asFormID else {
                 return .failure(.unresolvedParameter(682))
             }
-            return equipment(call) { Self.isTrue($0.apparel(with: keyword) > 0) }
+            return equipment(call) { ConditionFunctions.isTrue($0.apparel(with: keyword) > 0) }
         })
         registry.register(ConditionFunction(
             index: 722, name: "WornApparelHasKeywordCount", parameter1: .formID
@@ -90,7 +92,8 @@ nonisolated extension ConditionFunctions {
                 let weapon = facts.rightWeapon.flatMap {
                     store.resolvedID($0.item, fromPlugin: plugin)
                 }
-                return Self.isTrue(weapon.map { store.contains($0, in: list) } ?? false)
+                return ConditionFunctions
+                    .isTrue(weapon.map { store.contains($0, in: list) } ?? false)
             }
         })
     }

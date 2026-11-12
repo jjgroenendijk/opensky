@@ -9,7 +9,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldConditionFunctions
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsPlace {
     public static func installWorldPlaces(_ registry: inout ConditionFunctionRegistry) {
         registry
             .register(ConditionFunction(
@@ -19,27 +19,34 @@ nonisolated extension ConditionFunctions {
             ) { call in
                 guard let base = call.parameter1?.asFormID
                 else { return .failure(.unresolvedParameter(84)) }
-                guard call.context.places.deadReferences != nil
+                guard call.context[resolution: PlaceConditionResolution.self].deadReferences != nil
                 else { return .failure(.unavailableActorState) }
-                return .success(Float(call.context.places.deadCounts[base] ?? 0))
+                return .success(Float(call.context[resolution: PlaceConditionResolution.self]
+                        .deadCounts[base] ?? 0))
             })
         registry.register(ConditionFunction(
             index: 117,
             name: "IsPlayerInRegion",
             parameter1: .formID
         ) { call in
-            guard let regions = call.context.places.playerRegions else {
+            guard
+                let regions = call.context[resolution: PlaceConditionResolution.self]
+                    .playerRegions
+            else {
                 return .failure(.unavailableData(.cell))
             }
-            return .success(Self
+            return .success(ConditionFunctions
                 .isTrue(call.parameter1.map { regions.contains($0.asFormID) } ?? false))
         })
         registry.register(ConditionFunction(index: 491, name: "GetMapMarkerVisible") { call in
             call.referenceKey().flatMap { key in
-                guard let markers = call.context.places.visibleMarkers else {
+                guard
+                    let markers = call.context[resolution: PlaceConditionResolution.self]
+                        .visibleMarkers
+                else {
                     return .failure(.unavailableData(.reference))
                 }
-                return .success(Self.isTrue(markers.contains(key)))
+                return .success(ConditionFunctions.isTrue(markers.contains(key)))
             }
         })
         registry.register(ConditionFunction(
@@ -49,7 +56,8 @@ nonisolated extension ConditionFunctions {
         ) { call in
             locationParameter(call, call.parameter1) { store, location in
                 let current = call.context.data.currentLocation(of: .player)
-                return Self.isTrue(current.map { store.isWithin($0, ancestor: location) } ?? false)
+                return ConditionFunctions
+                    .isTrue(current.map { store.isWithin($0, ancestor: location) } ?? false)
             }
         })
         installRefTypes(&registry)
@@ -64,7 +72,7 @@ nonisolated extension ConditionFunctions {
                     return .failure(.unavailableData(.location))
                 }
                 return refTypeCount(call, type: call.parameter1, in: current, aliveOnly: false)
-                    .map { Self.isTrue($0 > 0) }
+                    .map { ConditionFunctions.isTrue($0 > 0) }
             }
         })
         registry.register(ConditionFunction(
@@ -104,7 +112,7 @@ nonisolated extension ConditionFunctions {
             let plugin = call.context.data.sourcePlugin,
             let type = parameter.flatMap({ store.resolvedID($0.asFormID, fromPlugin: plugin) })
         else { return .failure(.unavailableData(.location)) }
-        let dead = call.context.places.deadReferences ?? []
+        let dead = call.context[resolution: PlaceConditionResolution.self].deadReferences ?? []
         let listed = store.specialReferences(ofType: ReferenceKey(resolved: type), in: location)
         return .success(Float(listed.count { !aliveOnly || !dead.contains($0) }))
     }

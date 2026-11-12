@@ -54,26 +54,21 @@ nonisolated public struct ReferenceConditionResolution: ConditionResolution, Sen
     }
 }
 
-nonisolated extension ConditionContext {
-    public var referenceFacts: ReferenceConditionResolution {
-        get { self[resolution: ReferenceConditionResolution.self] }
-        set { self[resolution: ReferenceConditionResolution.self] = newValue }
-    }
-}
-
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsReferenceState {
     public static func installReferenceState(_ registry: inout ConditionFunctionRegistry) {
         registry.register(ConditionFunction(index: 5, name: "GetLocked") { call in
-            referenceFacts(call) { Self.isTrue($0.lock?.isLocked == true) }
+            referenceFacts(call) { ConditionFunctions.isTrue($0.lock?.isLocked == true) }
         })
         registry.register(ConditionFunction(index: 157, name: "GetOpenState") { call in
             referenceFacts(call) { $0.openState }
         })
         registry.register(ConditionFunction(index: 718, name: "IsUnlockedDoor") { call in
-            referenceFacts(call) { Self.isTrue($0.isDoor && $0.lock?.isLocked != true) }
+            referenceFacts(call) {
+                ConditionFunctions.isTrue($0.isDoor && $0.lock?.isLocked != true)
+            }
         })
         registry.register(ConditionFunction(index: 726, name: "DoesNotExist") { call in
-            referenceFacts(call) { Self.isTrue($0.isDeleted) }
+            referenceFacts(call) { ConditionFunctions.isTrue($0.isDeleted) }
         })
         // An item a container holds is a count, never a reference, so no placed
         // reference is inside a container.
@@ -91,7 +86,10 @@ nonisolated extension ConditionFunctions {
         read: (ReferenceConditionFacts) -> Float
     ) -> Result<Float, ConditionFailure> {
         call.referenceKey().flatMap { key in
-            guard let facts = call.context.referenceFacts.facts(of: key) else {
+            guard
+                let facts = call.context[resolution: ReferenceConditionResolution.self]
+                    .facts(of: key)
+            else {
                 return .failure(.unavailableData(.reference))
             }
             return .success(read(facts))

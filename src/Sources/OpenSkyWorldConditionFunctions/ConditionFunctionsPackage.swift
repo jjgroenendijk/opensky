@@ -40,7 +40,7 @@ nonisolated extension Package.DataValue {
     }
 }
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsPackage {
     public static func installPackage(_ registry: inout ConditionFunctionRegistry) {
         registry.register(ConditionFunction(
             index: 161, name: "GetIsCurrentPackage", parameter1: .formID
@@ -48,20 +48,22 @@ nonisolated extension ConditionFunctions {
             guard let parameter = call.parameter1 else {
                 return .failure(.unresolvedParameter(161))
             }
-            return packageFacts(call) { Self.isTrue($0?.package == parameter.asFormID) }
+            return packageFacts(call) {
+                ConditionFunctions.isTrue($0?.package == parameter.asFormID)
+            }
         })
         registry.register(ConditionFunction(
             index: 325, name: "GetWithinPackageLocation", parameter1: .integer
         ) { call in
             dataInput(call, index: 325) { facts, index in
-                Self.isTrue(facts.withinLocations.contains(index))
+                ConditionFunctions.isTrue(facts.withinLocations.contains(index))
             }
         })
         registry.register(ConditionFunction(
             index: 611, name: "IsNullPackageData", parameter1: .integer
         ) { call in
             dataInput(call, index: 611) { facts, index in
-                Self.isTrue(facts.dataInputs[index]?.isNull ?? true)
+                ConditionFunctions.isTrue(facts.dataInputs[index]?.isNull ?? true)
             }
         })
         registry.register(ConditionFunction(
@@ -93,11 +95,14 @@ nonisolated extension ConditionFunctions {
             packageFacts(call) { $0?.procedure == .sleep ? 3 : 0 }
         })
         registry.register(ConditionFunction(index: 255, name: "GetOffersServicesNow") { call in
-            packageFacts(call) { Self.isTrue($0?.flags.contains(.offersServices) == true) }
+            packageFacts(call) {
+                ConditionFunctions.isTrue($0?.flags.contains(.offersServices) == true)
+            }
         })
         registry.register(ConditionFunction(index: 503, name: "GetAllowWorldInteractions") { call in
             packageFacts(call) { facts in
-                Self.isTrue((facts?.interruptFlags ?? 0) & ActorPackageFacts.worldInteractions != 0)
+                ConditionFunctions
+                    .isTrue((facts?.interruptFlags ?? 0) & ActorPackageFacts.worldInteractions != 0)
             }
         })
     }

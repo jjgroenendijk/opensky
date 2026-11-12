@@ -43,16 +43,16 @@ nonisolated extension ConditionContext {
     }
 }
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsMount {
     public static func installMounts(_ registry: inout ConditionFunctionRegistry) {
         registry.register(ConditionFunction(index: 327, name: "IsRidingMount") { call in
-            mount(call) { mounts, key, _ in Self.isTrue(mounts[key] != nil) }
+            mount(call) { mounts, key, _ in ConditionFunctions.isTrue(mounts[key] != nil) }
         })
         registry.register(ConditionFunction(index: 714, name: "IsBeingRidden") { call in
-            mount(call) { mounts, key, _ in Self.isTrue(mounts.values.contains(key)) }
+            mount(call) { mounts, key, _ in ConditionFunctions.isTrue(mounts.values.contains(key)) }
         })
         registry.register(ConditionFunction(index: 339, name: "IsPlayersLastRiddenMount") { call in
-            mount(call) { _, key, last in Self.isTrue(last == key) }
+            mount(call) { _, key, last in ConditionFunctions.isTrue(last == key) }
         })
         // The CK wiki: "This function is a no-op and always returns 0."
         registry.register(ConditionFunction(index: 282, name: "IsHorseStolen") { _ in
@@ -61,7 +61,7 @@ nonisolated extension ConditionFunctions {
         registry.register(ConditionFunction(index: 730, name: "IsOnFlyingMount") { call in
             let flying = call.context.mounts.flyingMounts
             return mount(call) { mounts, key, _ in
-                Self.isTrue(mounts[key].map(flying.contains) ?? false)
+                ConditionFunctions.isTrue(mounts[key].map(flying.contains) ?? false)
             }
         })
         // 0 not flying, 1 taking off, 2 cruising, 3 hovering, 4 landing, 5 perched (CK
@@ -72,15 +72,15 @@ nonisolated extension ConditionFunctions {
         })
         registry.register(ConditionFunction(index: 731, name: "CanFlyHere") { call in
             let canFly = call.context.mounts.canFlyHere
-            return mount(call) { _, _, _ in Self.isTrue(canFly) }
+            return mount(call) { _, _, _ in ConditionFunctions.isTrue(canFly) }
         })
         registry.register(ConditionFunction(index: 646, name: "GetIsCrashLandRequest") { call in
             let requests = call.context.mounts.crashLandRequests
-            return mount(call) { _, key, _ in Self.isTrue(requests.contains(key)) }
+            return mount(call) { _, key, _ in ConditionFunctions.isTrue(requests.contains(key)) }
         })
         registry.register(ConditionFunction(index: 647, name: "GetIsHastyLandRequest") { call in
             let requests = call.context.mounts.hastyLandRequests
-            return mount(call) { _, key, _ in Self.isTrue(requests.contains(key)) }
+            return mount(call) { _, key, _ in ConditionFunctions.isTrue(requests.contains(key)) }
         })
         // OpenSky has no flying patrol or fast travel.
         let flight: [String: UInt16] = [

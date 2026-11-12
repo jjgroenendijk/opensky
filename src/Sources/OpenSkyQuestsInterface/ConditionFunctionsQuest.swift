@@ -9,7 +9,7 @@ import Foundation
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsQuest {
     public static func installQuest(_ registry: inout ConditionFunctionRegistry) {
         // "Gets the highest completed quest stage. For example, if stages 10,
         // 30, and 75 were completed, GetStage would return 75."
@@ -38,7 +38,7 @@ nonisolated extension ConditionFunctions {
             }
             return Self.questState(call, index: 59).map { state in
                 guard let index = UInt16(exactly: stage.asInt32) else { return 0 }
-                return Self.isTrue(state.isStageDone(index))
+                return ConditionFunctions.isTrue(state.isStageDone(index))
             }
         })
 
@@ -49,7 +49,7 @@ nonisolated extension ConditionFunctions {
             name: "GetQuestRunning",
             parameter1: .formID
         ) { call in
-            Self.questState(call, index: 56).map { Self.isTrue($0.isRunning) }
+            Self.questState(call, index: 56).map { ConditionFunctions.isTrue($0.isRunning) }
         })
 
         // "Returns 0 if a quest has not yet been completed, 1 if it has."
@@ -60,7 +60,7 @@ nonisolated extension ConditionFunctions {
             name: "GetQuestCompleted",
             parameter1: .formID
         ) { call in
-            Self.questState(call, index: 543).map { Self.isTrue($0.isCompleted) }
+            Self.questState(call, index: 543).map { ConditionFunctions.isTrue($0.isCompleted) }
         })
 
         // A `Conditional` property of the quest's script; `CIS2` names its variable,
@@ -77,7 +77,7 @@ nonisolated extension ConditionFunctions {
                 guard let quest = call.context.quests.key(for: parameter.asFormID) else {
                     return .failure(.unresolvedQuest(parameter.asFormID))
                 }
-                return Self.scriptVariable(call, on: quest)
+                return ConditionFunctionsScriptVariables.scriptVariable(call, on: quest)
             })
         }
     }

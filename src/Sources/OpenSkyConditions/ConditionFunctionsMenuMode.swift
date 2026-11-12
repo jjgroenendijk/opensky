@@ -27,7 +27,7 @@ nonisolated extension ConditionContext {
     }
 }
 
-nonisolated extension ConditionFunctions {
+nonisolated enum ConditionFunctionsMenuMode {
     static func installMenuMode(_ registry: inout ConditionFunctionRegistry) {
         registry.register(ConditionFunction(
             index: 36, name: "MenuMode", parameter1: .integer
@@ -36,7 +36,7 @@ nonisolated extension ConditionFunctions {
             guard let isOpen = call.context.menus.isMenuOpen else {
                 return .failure(.unavailableData(.menu))
             }
-            return .success(isTrue(isOpen))
+            return .success(ConditionFunctions.isTrue(isOpen))
         })
         registry.register(ConditionFunction(
             index: 358, name: "IsPlayerMovingIntoNewSpace"
@@ -44,7 +44,7 @@ nonisolated extension ConditionFunctions {
             guard let isLoading = call.context.menus.isLoading else {
                 return .failure(.unavailableData(.menu))
             }
-            return .success(isTrue(isLoading))
+            return .success(ConditionFunctions.isTrue(isLoading))
         })
     }
 }

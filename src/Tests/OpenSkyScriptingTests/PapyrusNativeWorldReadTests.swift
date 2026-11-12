@@ -100,7 +100,10 @@ struct PapyrusNativeWorldReadTests {
         let npc = Self.actor(level: 10, speech: 20)
         var context = ConditionContext()
         context.actors = ActorStateResolution(states: [.player: player, fixture.key: npc])
-        context.speechChecks = SpeechCheckResolution(settings: .fallback, bribeFactor: 0.5)
+        context[resolution: SpeechCheckResolution.self] = SpeechCheckResolution(
+            settings: .fallback,
+            bribeFactor: 0.5
+        )
         let priced = context
         fixture.session.bridge.sessionNatives.conditionEvaluator = {
             ConditionEvaluator(context: priced.using(ConditionFunctionRegistry()))

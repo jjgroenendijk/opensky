@@ -35,18 +35,11 @@ nonisolated public struct FormSubjectResolution: ConditionResolution, Sendable {
     }
 }
 
-nonisolated extension ConditionContext {
-    public var formSubjects: FormSubjectResolution {
-        get { self[resolution: FormSubjectResolution.self] }
-        set { self[resolution: FormSubjectResolution.self] = newValue }
-    }
-}
-
 nonisolated extension ConditionCall {
     /// The base form the run-on names, or nil when it names a placed reference.
     public func formSubject() -> ConditionFormSubject? {
         guard case let .success(key) = referenceKey() else { return nil }
-        return context.formSubjects.forms[key]
+        return context[resolution: FormSubjectResolution.self].forms[key]
     }
 
     /// `parameter` as a form in the load-order stores, or nil when it does not resolve.

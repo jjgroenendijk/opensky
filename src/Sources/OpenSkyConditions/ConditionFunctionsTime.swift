@@ -4,7 +4,7 @@
 import Foundation
 public import OpenSkyWorldState
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsTime {
     public static func installTime(_ registry: inout ConditionFunctionRegistry) {
         registry.register(ConditionFunction(
             index: 18,

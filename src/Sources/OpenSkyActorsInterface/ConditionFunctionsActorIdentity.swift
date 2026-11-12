@@ -8,7 +8,7 @@ public import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsActorIdentity {
     public static func installActorIdentity(_ registry: inout ConditionFunctionRegistry) {
         // xEdit `ptSex`: 0 male, 1 female (<https://ck.uesp.net/wiki/GetIsSex>).
         registry.register(ConditionFunction(
@@ -34,14 +34,14 @@ nonisolated extension ConditionFunctions {
             }
             return Self.playerState(call).flatMap { state in
                 guard let race = state.race else { return .failure(.unavailableActorState) }
-                return .success(Self.isTrue(race == parameter.asFormID))
+                return .success(ConditionFunctions.isTrue(race == parameter.asFormID))
             }
         })
 
         // "Returns 1 if the actor is currently in combat." Searching is still combat,
         // as `GetCombatState` 2 is (<https://ck.uesp.net/wiki/IsInCombat>).
         registry.register(ConditionFunction(index: 289, name: "IsInCombat") { call in
-            call.actorState().map { Self.isTrue($0.combatStateValue != 0) }
+            call.actorState().map { ConditionFunctions.isTrue($0.combatStateValue != 0) }
         })
 
         // Health over its maximum, 0 to 1; vanilla compares it with 0.25 to 1.
@@ -63,13 +63,13 @@ nonisolated extension ConditionFunctions {
             registry.register(ConditionFunction(index: index, name: name) { call in
                 call.actorState().flatMap { state in
                     guard let value = read(state) else { return .failure(.unavailableActorState) }
-                    return .success(Self.isTrue(value))
+                    return .success(ConditionFunctions.isTrue(value))
                 }
             })
         }
         // A summon or a raised corpse while its effect runs, as the `Actor` native answers.
         registry.register(ConditionFunction(index: 700, name: "IsCommandedActor") { call in
-            call.actorState().map { Self.isTrue($0.isCommanded) }
+            call.actorState().map { ConditionFunctions.isTrue($0.isCommanded) }
         })
         installRecordFlags(&registry)
     }
@@ -89,7 +89,7 @@ nonisolated extension ConditionFunctions {
                     guard let recordFlags = state.recordFlags else {
                         return .failure(.unavailableActorState)
                     }
-                    return .success(Self.isTrue(recordFlags.contains(flag)))
+                    return .success(ConditionFunctions.isTrue(recordFlags.contains(flag)))
                 }
             })
         }
@@ -104,7 +104,7 @@ nonisolated extension ConditionFunctions {
             return .failure(.unresolvedParameter(index))
         }
         guard let isFemale = state.isFemale else { return .failure(.unavailableActorState) }
-        return .success(Self.isTrue(isFemale == (parameter.asInt32 == 1)))
+        return .success(ConditionFunctions.isTrue(isFemale == (parameter.asInt32 == 1)))
     }
 
     private static func playerState(

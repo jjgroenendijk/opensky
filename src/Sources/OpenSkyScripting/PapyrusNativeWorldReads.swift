@@ -55,9 +55,11 @@ extension PapyrusNativeFunctions {
             return .returned(.float(mass(key) ?? 0))
         }
         scriptState("Actor", "GetBribeAmount", into: &registry) { call, bridge, key in
+            let context = bridge.sessionNatives.conditionEvaluator?().context
             guard
-                let amount = bridge.sessionNatives.conditionEvaluator?().context
-                    .bribeAmount(of: key)
+                let context,
+                let amount = context[resolution: SpeechCheckResolution.self]
+                    .bribeAmount(of: key, actors: context.actors)
             else {
                 return failure(call, "GetBribeAmount needs both actors' values and the settings")
             }

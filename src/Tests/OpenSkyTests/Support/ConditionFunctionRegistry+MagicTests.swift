@@ -11,10 +11,10 @@ nonisolated extension ConditionFunctionRegistry {
     static let magicTests: ConditionFunctionRegistry = {
         var registry = ConditionFunctionRegistry()
         ConditionFunctions.installCore(into: &registry)
-        ConditionFunctions.installActor(&registry)
-        ConditionFunctions.installData(&registry)
-        ConditionFunctions.installMagic(&registry)
-        ConditionFunctions.installPerk(&registry)
+        ConditionFunctionsActor.installActor(&registry)
+        ConditionFunctionsData.installData(&registry)
+        ConditionFunctionsMagic.installMagic(&registry)
+        ConditionFunctionsPerk.installPerk(&registry)
         return registry
     }()
 }

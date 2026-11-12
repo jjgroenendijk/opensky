@@ -8,7 +8,7 @@ public import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsActorBody {
     public static func installActorBody(_ registry: inout ConditionFunctionRegistry) {
         // 1 when the actor holds a torch out.
         registry.register(ConditionFunction(index: 102, name: "IsTorchOut") { call in
@@ -22,7 +22,7 @@ nonisolated extension ConditionFunctions {
 
         // 1 when the actor's race has the `DATA` child flag (xEdit 0x04).
         registry.register(ConditionFunction(index: 365, name: "IsChild") { call in
-            call.actorState().map { Self.isTrue($0.isChild) }
+            call.actorState().map { ConditionFunctions.isTrue($0.isChild) }
         })
 
         registry.register(ConditionFunction(
@@ -33,17 +33,17 @@ nonisolated extension ConditionFunctions {
             }
             return call.actorState().flatMap { state in
                 guard let race = state.race else { return .failure(.unavailableActorState) }
-                return .success(Self.isTrue(race == parameter.asFormID))
+                return .success(ConditionFunctions.isTrue(race == parameter.asFormID))
             }
         })
 
         // 1 while the actor plays a paired animation, such as a kill move.
         registry.register(ConditionFunction(index: 313, name: "GetPairedAnimation") { call in
-            call.actorState().map { Self.isTrue($0.isInPairedAnimation) }
+            call.actorState().map { ConditionFunctions.isTrue($0.isInPairedAnimation) }
         })
 
         registry.register(ConditionFunction(index: 594, name: "GetIsFlying") { call in
-            call.actorState().map { Self.isTrue($0.isFlying) }
+            call.actorState().map { ConditionFunctions.isTrue($0.isFlying) }
         })
 
         // The race carries `ActorTypeUndead`, as draugr and skeletons do.
@@ -55,7 +55,7 @@ nonisolated extension ConditionFunctions {
                     let plugin = call.context.data.sourcePlugin,
                     let undead = store.keyword(editorID: "ActorTypeUndead")?.id
                 else { return .failure(.unavailableActorState) }
-                return .success(Self.isTrue(keywords.contains {
+                return .success(ConditionFunctions.isTrue(keywords.contains {
                     store.resolvedID($0, fromPlugin: plugin) == undead
                 }))
             }
@@ -69,7 +69,7 @@ nonisolated extension ConditionFunctions {
     ) -> Result<Float, ConditionFailure> {
         call.actorState().flatMap { state in
             guard let hand = state.leftHandOut else { return .failure(.unavailableActorState) }
-            return .success(Self.isTrue(test(hand)))
+            return .success(ConditionFunctions.isTrue(test(hand)))
         }
     }
 }

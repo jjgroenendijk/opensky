@@ -8,11 +8,11 @@ public import OpenSkyConditions
 import OpenSkyFormatsESM
 public import OpenSkyGameData
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsFaction {
     public static func installFaction(_ registry: inout ConditionFunctionRegistry) {
         installMemberships(&registry)
         installRelations(&registry)
-        installRelationshipRecords(&registry)
+        ConditionFunctionsRelationship.installRelationshipRecords(&registry)
     }
 
     /// The three membership functions, all `ptFaction` on the run-on actor.
@@ -25,7 +25,7 @@ nonisolated extension ConditionFunctions {
             parameter1: .formID
         ) { call in
             factionQuery(call, index: 71) { seam, actor, faction in
-                seam.isMember(actor, of: faction).map(Self.isTrue)
+                seam.isMember(actor, of: faction).map(ConditionFunctions.isTrue)
             }
         })
 
@@ -53,7 +53,7 @@ nonisolated extension ConditionFunctions {
             parameter1: .formID,
             parameter2: .formID
         ) { call in
-            guard let other = parameterReference(call, call.parameter2) else {
+            guard let other = ConditionFunctions.parameterReference(call, call.parameter2) else {
                 return .failure(.unresolvedParameter(60))
             }
             return factionQuery(call, index: 60) { seam, actor, faction in
@@ -109,7 +109,7 @@ nonisolated extension ConditionFunctions {
             parameter1: .formID
         ) { call in
             actorPair(call, index: 719) { seam, actor, other in
-                seam.isHostile(actor, toward: other).map(Self.isTrue)
+                seam.isHostile(actor, toward: other).map(ConditionFunctions.isTrue)
             }
         })
     }
@@ -156,7 +156,7 @@ nonisolated extension ConditionFunctions {
         index: UInt16,
         read: (FactionConditionResolution, ReferenceKey, ReferenceKey) -> Float?
     ) -> Result<Float, ConditionFailure> {
-        guard let other = parameterReference(call) else {
+        guard let other = ConditionFunctions.parameterReference(call) else {
             return .failure(.unresolvedParameter(index))
         }
         return call.referenceKey().flatMap { actor in

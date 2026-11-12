@@ -41,7 +41,7 @@ struct ConditionWorldFactFunctionTests {
         let found = try Self.evaluate(
             630, equals: 1, parameter1: ConditionEvaluatorFixture.targetFormID,
             parameter2Name: "::bAllIn_var"
-        ) { $0.scriptVariables = variables }
+        ) { $0[resolution: ScriptVariableResolution.self] = variables }
         #expect(found == .true)
         let empty = try Self.evaluate(
             630, equals: 1, parameter1: ConditionEvaluatorFixture.targetFormID,
@@ -111,7 +111,7 @@ struct ConditionWorldFactFunctionTests {
     @Test func goldAndEquipmentReadTheInventorySeam() throws {
         let item: UInt32 = 0x0700
         let inventory = InventoryConditionResolution(
-            counts: [Self.subject: [ConditionFunctions.goldItem: 250]],
+            counts: [Self.subject: [ConditionFunctionsInventory.goldItem: 250]],
             equipped: [Self.subject: [FormID(item)]]
         )
         let set = { (context: inout ConditionContext) in context.inventory = inventory }

@@ -200,7 +200,7 @@ struct QuestConditionFunctionTests {
 
     @Test func getVMQuestVariableReadsTheQuestScriptByItsCIS2Name() throws {
         var context = try context()
-        context.scriptVariables = ScriptVariableResolution(values: [
+        context[resolution: ScriptVariableResolution.self] = ScriptVariableResolution(values: [
             GlobalFixture.key(0x0100): ["::markarthmarket_var": 2]
         ])
         var condition = try condition(629, quest: mainQuest, equals: 2)
@@ -215,7 +215,7 @@ struct QuestConditionFunctionTests {
 
     @Test func getQuestVariableReadsTheSameScriptVariable() throws {
         var context = try context()
-        context.scriptVariables = ScriptVariableResolution(values: [
+        context[resolution: ScriptVariableResolution.self] = ScriptVariableResolution(values: [
             GlobalFixture.key(0x0100): ["::markarthmarket_var": 2]
         ])
         var condition = try condition(79, quest: mainQuest, equals: 2)

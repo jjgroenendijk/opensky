@@ -93,7 +93,10 @@ struct ConditionActorSituationFunctionTests {
             SpeechCheckValues.morality: 3
         ])
         context.actors = ActorStateResolution(states: [.player: player, Self.subject: npc])
-        context.speechChecks = SpeechCheckResolution(settings: .fallback, playerGold: gold)
+        context[resolution: SpeechCheckResolution.self] = SpeechCheckResolution(
+            settings: .fallback,
+            playerGold: gold
+        )
     }
 
     @Test func intimidationComparesScarinessAndAFoolhardyActorNeverYields() throws {

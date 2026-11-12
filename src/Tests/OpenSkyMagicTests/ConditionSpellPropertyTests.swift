@@ -35,12 +35,12 @@ struct ConditionSpellPropertyTests {
             spells: spells, effects: effects, sourcePlugin: SpellbookFixture.pluginName,
             states: [subject: state]
         )
-        context.spellEvaluation = SpellEvaluationResolution(
+        context[resolution: SpellEvaluationResolution.self] = SpellEvaluationResolution(
             spell: spell.flatMap { spells.spell(key: SpellbookFixture.key($0)) },
             potionKeywords: potionKeywords
         )
         var registry = ConditionFunctionRegistry()
-        ConditionFunctions.installMagic(&registry)
+        ConditionFunctionsMagic.installMagic(&registry)
         var evaluator = ConditionEvaluator(context: context.using(registry))
         return try evaluator.evaluate(ConditionEvaluatorFixture.condition(
             comparisonValue: value.bitPattern, functionIndex: function,

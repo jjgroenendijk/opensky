@@ -8,7 +8,7 @@ import Foundation
 public import OpenSkyConditions
 import OpenSkyFormatsESM
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsCrime {
     public static func installCrime(_ registry: inout ConditionFunctionRegistry) {
         // "Returns the amount of crime gold the player owes the specified
         // faction." The run-on names the actor whose ledger is read, and
@@ -20,7 +20,7 @@ nonisolated extension ConditionFunctions {
         registerCrimeGold(
             index: 376, name: "GetCrimeGoldNonviolent", violent: false, into: &registry
         )
-        installCrimeSituation(&registry)
+        ConditionFunctionsCrimeSituation.installCrimeSituation(&registry)
     }
 
     /// One crime-gold reader: the whole bounty when `violent` is nil, one half

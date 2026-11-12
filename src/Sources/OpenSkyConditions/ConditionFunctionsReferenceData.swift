@@ -7,17 +7,18 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsReferenceData {
     public static func installReferenceData(_ registry: inout ConditionFunctionRegistry) {
         // "Returns 1 if the calling object is the specified reference."
         // (<https://ck.uesp.net/wiki/GetIsReference>)
         registry.register(ConditionFunction(
             index: 136, name: "GetIsReference", parameter1: .formID
         ) { call in
-            guard let parameter = Self.parameterKey(call, call.parameter1) else {
+            guard let parameter = ConditionFunctions.parameterKey(call, call.parameter1) else {
                 return .failure(.unresolvedParameter(136))
             }
-            return call.referenceKey().map { Self.isTrue($0.namingPlayer == parameter) }
+            return call.referenceKey()
+                .map { ConditionFunctions.isTrue($0.namingPlayer == parameter) }
         })
 
         // "Returns 1 if the calling object is an Actor." (<https://ck.uesp.net/wiki/IsActor>)
@@ -29,12 +30,12 @@ nonisolated extension ConditionFunctions {
                 guard let entry = call.context.references[key] else {
                     return .failure(.unresolvedReference(call.condition.runOn))
                 }
-                return .success(Self.isTrue(entry.placedActor != nil))
+                return .success(ConditionFunctions.isTrue(entry.placedActor != nil))
             }
         })
 
         installLinkedReferences(&registry)
-        installObjectType(&registry)
+        ConditionFunctionsObjectType.installObjectType(&registry)
 
         // "HasRefType returns 1 if the calling ref has been flagged as being the
         // specified location ref type." (<https://ck.uesp.net/wiki/HasRefType>)
@@ -45,7 +46,7 @@ nonisolated extension ConditionFunctions {
                 return .failure(.unresolvedParameter(561))
             }
             return call.reference().flatMap { entry in
-                Self.refTypes(of: entry, call).map { Self.isTrue($0.contains(type)) }
+                Self.refTypes(of: entry, call).map { ConditionFunctions.isTrue($0.contains(type)) }
             }
         })
     }
@@ -61,7 +62,7 @@ nonisolated extension ConditionFunctions {
             }
             return call.reference().flatMap { entry in
                 Self.linkedReferences(of: entry, keyword: keyword, call)
-                    .map { Self.isTrue(!$0.isEmpty) }
+                    .map { ConditionFunctions.isTrue(!$0.isEmpty) }
             }
         })
 
@@ -71,12 +72,12 @@ nonisolated extension ConditionFunctions {
             index: 650, name: "IsLinkedTo", parameter1: .formID, parameter2: .formID
         ) { call in
             guard
-                let target = Self.parameterKey(call, call.parameter1),
+                let target = ConditionFunctions.parameterKey(call, call.parameter1),
                 case let .some(keyword) = Self.optionalRecordKey(call, call.parameter2)
             else { return .failure(.unresolvedParameter(650)) }
             return call.reference().flatMap { entry in
                 Self.linkedReferences(of: entry, keyword: keyword, call)
-                    .map { Self.isTrue($0.contains(target)) }
+                    .map { ConditionFunctions.isTrue($0.contains(target)) }
             }
         })
     }
@@ -115,7 +116,7 @@ nonisolated extension ConditionFunctions {
         guard let store = call.context.data.keywords else {
             return .failure(.unavailableData(.reference))
         }
-        let plugin = basePlugin(of: entry.key)
+        let plugin = ConditionFunctionsData.basePlugin(of: entry.key)
         let key = { (id: FormID) in
             store.resolvedID(id, fromPlugin: plugin).map(ReferenceKey.init(resolved:))
         }
@@ -135,7 +136,7 @@ nonisolated extension ConditionFunctions {
         guard let store = call.context.data.keywords else {
             return .failure(.unavailableData(.reference))
         }
-        let plugin = basePlugin(of: entry.key)
+        let plugin = ConditionFunctionsData.basePlugin(of: entry.key)
         let details = entry.placedReference?.details ?? entry.placedActor?.details
         var types = Set((details?.locationRefTypes ?? []).compactMap {
             store.resolvedID($0, fromPlugin: plugin).map(ReferenceKey.init(resolved:))

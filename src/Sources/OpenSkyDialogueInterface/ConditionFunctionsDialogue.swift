@@ -9,9 +9,9 @@ public import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsDialogue {
     public static func installDialogue(_ registry: inout ConditionFunctionRegistry) {
-        installDialogueLine(&registry)
+        ConditionFunctionsDialogueLine.installDialogueLine(&registry)
         // "Returns true if the actor's voice type matches the specified voice type."
         // A FormList parameter is true when the voice type is in the list.
         // (<https://ck.uesp.net/wiki/GetIsVoiceType>) An actor with no resolved voice
@@ -28,10 +28,14 @@ nonisolated extension ConditionFunctions {
                 guard let voice = call.context.dialogue.voiceType(of: key) else {
                     return .failure(.unavailableDialogue)
                 }
-                if let inList = Self.isVoice(voice, inList: parameter.asFormID, call.context) {
-                    return .success(Self.isTrue(inList))
+                if let inList = ConditionFunctionsDialogue.isVoice(
+                    voice,
+                    inList: parameter.asFormID,
+                    call.context
+                ) {
+                    return .success(ConditionFunctions.isTrue(inList))
                 }
-                return .success(Self.isTrue(voice == parameter.asFormID))
+                return .success(ConditionFunctions.isTrue(voice == parameter.asFormID))
             }
         })
 
@@ -50,7 +54,7 @@ nonisolated extension ConditionFunctions {
             else {
                 return .failure(.unresolvedParameter(566))
             }
-            return call.referenceKey().map { Self.isTrue($0 == filled) }
+            return call.referenceKey().map { ConditionFunctions.isTrue($0 == filled) }
         })
 
         // "Returns true if the actor is currently in dialogue with the player."
@@ -61,13 +65,13 @@ nonisolated extension ConditionFunctions {
             name: "IsInDialogueWithPlayer"
         ) { call in
             call.referenceKey().map {
-                Self.isTrue(call.context.dialogue.isInDialogueWithPlayer($0))
+                ConditionFunctions.isTrue(call.context.dialogue.isInDialogueWithPlayer($0))
             }
         })
     }
 }
 
-nonisolated extension ConditionFunctions {
+nonisolated extension ConditionFunctionsDialogue {
     /// Nil when `list` names no FLST in the context's data seam, so the caller
     /// compares it as a single voice type.
     static func isVoice(

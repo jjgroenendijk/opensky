@@ -59,7 +59,8 @@ extension MagicCoordinator {
             let spell = spells.spell(key: effect.source.record)
         {
             subjects = subjects.binding(.spell, to: spells.conditionSubject(of: spell))
-            seams.spellEvaluation = SpellEvaluationResolution(spell: spell)
+            seams[resolution: SpellEvaluationResolution.self] =
+                SpellEvaluationResolution(spell: spell)
         }
         return world.perkModified(
             SlowTimeRule.playerShare, at: .modPlayerMagicSlowdown, on: .player,

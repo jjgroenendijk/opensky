@@ -7,12 +7,12 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsData {
     public static func installData(_ registry: inout ConditionFunctionRegistry) {
         installKeywordAndFormList(&registry)
-        installLocationData(&registry)
-        installPlaces(&registry)
-        installReferenceData(&registry)
+        ConditionFunctionsDataLocations.installLocationData(&registry)
+        ConditionFunctionsPlaces.installPlaces(&registry)
+        ConditionFunctionsReferenceData.installReferenceData(&registry)
     }
 
     private static func installKeywordAndFormList(
@@ -36,17 +36,17 @@ nonisolated extension ConditionFunctions {
                 store.keyword(keyword) != nil
             else { return .failure(.unavailableData(.keyword)) }
             if let form = call.formSubject() {
-                return Self.formHasKeyword(form, keyword: keyword, store: store)
+                return ConditionFunctions.formHasKeyword(form, keyword: keyword, store: store)
             }
             return call.reference().flatMap { entry in
                 guard
                     let base = store.resolvedID(
-                        Self.baseForm(of: entry),
-                        fromPlugin: Self.basePlugin(of: entry.key)
+                        ConditionFunctions.baseForm(of: entry),
+                        fromPlugin: ConditionFunctionsData.basePlugin(of: entry.key)
                     ),
                     let answer = store.hasKeyword(keyword, on: base)
                 else { return .failure(.unavailableData(.keyword)) }
-                return .success(Self.isTrue(answer))
+                return .success(ConditionFunctions.isTrue(answer))
             }
         })
 
@@ -69,22 +69,22 @@ nonisolated extension ConditionFunctions {
                 store.formList(listID) != nil
             else { return .failure(.unavailableData(.formList)) }
             if let form = call.formSubject() {
-                return .success(Self.isTrue(store.contains(form.id, in: listID)))
+                return .success(ConditionFunctions.isTrue(store.contains(form.id, in: listID)))
             }
             return call.reference().flatMap { entry in
                 guard
                     let base = store.resolvedID(
-                        Self.baseForm(of: entry),
-                        fromPlugin: Self.basePlugin(of: entry.key)
+                        ConditionFunctions.baseForm(of: entry),
+                        fromPlugin: ConditionFunctionsData.basePlugin(of: entry.key)
                     )
                 else { return .failure(.unavailableData(.formList)) }
-                return .success(Self.isTrue(store.contains(base, in: listID)))
+                return .success(ConditionFunctions.isTrue(store.contains(base, in: listID)))
             }
         })
     }
 }
 
-nonisolated extension ConditionFunctions {
+nonisolated extension ConditionFunctionsData {
     /// The plugin a reference's base FormID is spelled in. A reference made at run
     /// time names its base in load-order space.
     public static func basePlugin(of key: ReferenceKey) -> String {

@@ -7,7 +7,7 @@ import Foundation
 public import OpenSkyConditions
 import OpenSkyFormatsESM
 
-nonisolated extension ConditionFunctions {
+nonisolated public enum ConditionFunctionsPerk {
     public static func installPerk(_ registry: inout ConditionFunctionRegistry) {
         // "Returns whether the actor has the specified perk."
         // (<https://ck.uesp.net/wiki/HasPerk>) The run-on names the actor, and
@@ -28,7 +28,7 @@ nonisolated extension ConditionFunctions {
                 guard let owns = call.context.perks.owns(perk, on: actor) else {
                     return .failure(.unavailablePerks)
                 }
-                return .success(Self.isTrue(owns))
+                return .success(ConditionFunctions.isTrue(owns))
             }
         })
     }

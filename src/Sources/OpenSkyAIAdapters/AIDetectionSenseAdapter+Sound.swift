@@ -57,7 +57,8 @@ extension AIDetectionSenseAdapter {
             let spells = caster.spellbook.spells
             let resolved = spell.flatMap { spells.spell(key: $0) }
             var seams = ConditionContext()
-            seams.spellEvaluation = SpellEvaluationResolution(spell: resolved)
+            seams[resolution: SpellEvaluationResolution.self] =
+                SpellEvaluationResolution(spell: resolved)
             let factor = game.perks.modified(
                 1,
                 at: .modSpellCastingSoundEvent,

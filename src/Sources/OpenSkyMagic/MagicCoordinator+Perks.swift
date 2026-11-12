@@ -23,7 +23,8 @@ extension MagicCoordinator {
             let resolved = spells.spell(key: spell)
         else { return entries }
         var seams = ConditionContext()
-        seams.spellEvaluation = SpellEvaluationResolution(spell: resolved)
+        seams[resolution: SpellEvaluationResolution.self] =
+            SpellEvaluationResolution(spell: resolved)
         return perkScaled(
             entries, spell: (spells.conditionSubject(of: resolved), seams),
             caster: caster, on: target
@@ -45,7 +46,10 @@ extension MagicCoordinator {
             store.resolve(entry.effect, fromPlugin: pluginName).map(store.keywordKeys(of:)) ?? []
         }
         var seams = ConditionContext()
-        seams.spellEvaluation = SpellEvaluationResolution(spell: nil, potionKeywords: Set(keywords))
+        seams[resolution: SpellEvaluationResolution.self] = SpellEvaluationResolution(
+            spell: nil,
+            potionKeywords: Set(keywords)
+        )
         return perkScaled(
             entries,
             spell: (
