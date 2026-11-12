@@ -82,13 +82,15 @@ extension SystemMenuCoordinator {
     private func answer(_ call: SystemMenuMovieBridge.Call) {
         switch call.request {
         case .quicksave: quicksave()
-        case .saveList, .loadList: fillSaveList(saving: call.request == .saveList)
-        case .characters, .characterSelected: answerCharacters(call)
-        case .screenshot: showScreenshot(row: movieRow(call.index))
+        case .saveList, .loadList:
+            saving.fillSaveList(saving: call.request == .saveList, update: updateMovie)
+        case .characters, .characterSelected: saving.answerCharacters(call, update: updateMovie)
+        case .screenshot:
+            saving.showScreenshot(index: call.index, renderer: renderer, update: updateMovie)
         case .confirmLoad: updateMovie { $0.callMovie("ConfirmOKToLoad") }
-        case .saveGame: saveFromMovie(listIndex: call.index)
-        case .loadGame: loadFromMovie(row: movieRow(call.index))
-        case .deleteSave: deleteFromMovie(index: call.index)
+        case .saveGame: saving.saveFromMovie(listIndex: call.index)
+        case .loadGame: saving.loadFromMovie(index: call.index) { [weak self] in self?.close() }
+        case .deleteSave: saving.deleteFromMovie(index: call.index)
         case .inputMappings, .resetControls: answerMappings(call.request)
         case .startRemap: beginMovieRemap(call.text)
         case .quitToMainMenu:
@@ -98,75 +100,6 @@ extension SystemMenuCoordinator {
             close()
             world?.quitApplication()
         }
-    }
-
-    // MARK: - Save and Load
-
-    private func fillSaveList(saving: Bool) {
-        let rows = saves?.saveRows ?? []
-        movieListSaving = saving
-        movieSaveRows = SaveLoadPageModel.sorted(saving ? rows.filter { !$0.isImport } : rows)
-        let request: SystemMenuMovieBridge.Request = saving ? .saveList : .loadList
-        let shown = movieSaveRows
-        updateMovie { SystemMenuMovieBridge.fillSaveList(shown, request: request, runtime: $0) }
-    }
-
-    private func answerCharacters(_ call: SystemMenuMovieBridge.Call) {
-        let rows = saves?.saveRows ?? []
-        let names = TitleMenuLoadBridge.characters(rows)
-        let path = SystemMenuMovieBridge.saveLoadListPath
-        guard call.request == .characterSelected else {
-            updateMovie { TitleMenuLoadBridge.fillCharacters(names, runtime: $0, listPath: path) }
-            return
-        }
-        let name = call.index.flatMap { names.indices.contains($0) ? names[$0] : nil }
-        movieListSaving = false
-        movieSaveRows = name.map { TitleMenuLoadBridge.saves(of: $0, in: rows) } ?? []
-        let shown = movieSaveRows
-        updateMovie { TitleMenuLoadBridge.fillSaves(shown, runtime: $0, listPath: path) }
-    }
-
-    /// A row of the list as the movie numbers it, without its New Save row.
-    private func movieRow(_ index: Int?) -> SaveSlotRow? {
-        index.flatMap { movieSaveRows.indices.contains($0) ? movieSaveRows[$0] : nil }
-    }
-
-    private func showScreenshot(row: SaveSlotRow?) {
-        renderer?.replaceSWFImage(
-            TitleMenuLoadBridge.screenshotSlot,
-            rgba: TitleMenuLoadBridge.screenshotPixels(row?.picture),
-            width: TitleMenuLoadBridge.screenshotWidth,
-            height: TitleMenuLoadBridge.screenshotHeight
-        )
-        updateMovie { $0.callMovie("ScreenshotReady") }
-    }
-
-    /// `SaveGame` passes the list row, and row 0 is New Save.
-    private func saveFromMovie(listIndex: Int?) {
-        guard let listIndex else { return }
-        let slot = listIndex == 0 ? nil : movieRow(listIndex - 1)?.slot
-        guard listIndex == 0 || slot != nil else { return }
-        save(slot: slot)
-    }
-
-    private func loadFromMovie(row: SaveSlotRow?) {
-        guard let row, row.error == nil else { return }
-        load(slot: row.slot)
-    }
-
-    /// The movie already took the row out of its list.
-    private func deleteFromMovie(index: Int?) {
-        guard let row = movieRow(index), !row.isImport else { return }
-        movieSaveRows.removeAll { $0.slot == row.slot }
-        perform("Deleting", done: saveTexts.deleted) {
-            try await $0.deleteSave(slot: row.slot)
-        }
-    }
-
-    // MARK: - Controls
-
-    private var mappingRows: [[String: AS2Value]] {
-        SystemMenuMovieBridge.mappingRows(settings.bindings, keyName: settings.keyName)
     }
 
     private func answerMappings(_ request: SystemMenuMovieBridge.Request) {
@@ -180,7 +113,7 @@ extension SystemMenuCoordinator {
     /// The movie sorts and redraws the list itself after a remap; after a plain
     /// request it has already drawn the empty list, so it is redrawn here.
     func refreshMovieMappings(_ request: SystemMenuMovieBridge.Request) {
-        let rows = mappingRows
+        let rows = SystemMenuMovieBridge.mappingRows(settings.bindings, keyName: settings.keyName)
         updateMovie { runtime in
             SystemMenuMovieBridge.fillMappings(rows, request: request, runtime: runtime)
             if request != .startRemap {
@@ -212,7 +145,7 @@ extension SystemMenuCoordinator {
             let state = SystemMenuMovieBridge.pageState(runtime: runtime)
         else { return }
         let page: SystemMenuPage? = Self.movieSaveLoadStates.contains(state)
-            ? (movieListSaving ? .save : .load)
+            ? (saving.movieListSaving ? .save : .load)
             : Self.moviePages[state]
         if
             Self.movieTopicListStates.contains(state), let last = lastMovieState, last != state,
@@ -236,8 +169,7 @@ extension SystemMenuCoordinator {
             model.showMain()
         case .save, .load:
             model.show(page)
-            let mode: SaveLoadMode = page == .save ? .save : .load
-            saveLoadPage = SaveLoadPageModel(mode: mode, rows: movieSaveRows, texts: saveTexts)
+            saving.followPage(saving: page == .save)
         case .quit:
             model.show(page)
             quitPage = ConfirmationModel(question: "Quit", options: Self.quitOptions)
@@ -251,11 +183,7 @@ extension SystemMenuCoordinator {
     /// The movie's `SystemPage` state and its script faults, for the readout.
     public var movieDiagnostics: SystemMenuMovieDiagnostics? {
         guard movieLoaded, let runtime = renderer?.swfRuntime else { return nil }
-        return SystemMenuMovieDiagnostics(
-            state: SystemMenuMovieBridge.pageState(runtime: runtime),
-            faults: runtime.tally.faultTotal,
-            missingNames: runtime.tally.missingNames.keys.sorted()
-        )
+        return SystemMenuMovieDiagnostics(runtime)
     }
 
     /// The System rows the movie shows, by engine title, and its highlighted row.
@@ -274,5 +202,15 @@ extension SystemMenuCoordinator {
     private func updateMovie(_ body: (SWFMovieRuntime) -> Void) {
         guard movieLoaded, let renderer else { return }
         attempt { try renderer.updateSWFRuntime(body) }
+    }
+}
+
+extension SystemMenuMovieDiagnostics {
+    init(_ runtime: SWFMovieRuntime) {
+        self.init(
+            state: SystemMenuMovieBridge.pageState(runtime: runtime),
+            faults: runtime.tally.faultTotal,
+            missingNames: runtime.tally.missingNames.keys.sorted()
+        )
     }
 }
