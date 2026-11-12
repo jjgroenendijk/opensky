@@ -82,7 +82,7 @@ extension CombatCoordinator {
 
     /// The base armour rating of the shield `key` wears, or nil without one.
     public func shieldRating(of key: ReferenceKey) -> Float? {
-        world.equippedItems(of: key).lazy.compactMap { worn -> Float? in
+        world.gearReads.equippedItems(of: key).lazy.compactMap { worn -> Float? in
             guard
                 let armor = self.items?.armor[worn.item.rawValue],
                 armor.bodyTemplate?.slots.contains(.shield) ?? false
@@ -105,23 +105,24 @@ extension CombatCoordinator {
     /// wearer's `Mod Armor Rating`, and the sum the attacker's `Mod Target Damage Resistance`.
     public func armorFraction(of target: ReferenceKey, against blow: CombatBlow? = nil) -> Float {
         guard let items else { return 0 }
-        let pieces = world.equippedItems(of: target).compactMap { worn -> WornArmorPiece? in
-            guard
-                let armor = items.armor[worn.item.rawValue],
-                let type = armor.bodyTemplate?.armorType
-            else { return nil }
-            let isBody = armor.bodyTemplate?.slots.contains(.body) ?? false
-            let tempered = Float(armor.armorRating & 0xFFFF) / 100
-                + Tempering.bonus(level: worn.temperLevel, isBodyArmor: isBody)
-            let rating = perkValue(
-                tempered,
-                at: .modArmorRating,
-                on: target,
-                subjects: PerkEvaluationSubjects(owner: target)
-                    .binding(.item, to: items.conditionSubject(of: worn.item))
-            )
-            return WornArmorPiece(rating: rating, type: type)
-        }
+        let pieces = world.gearReads.equippedItems(of: target)
+            .compactMap { worn -> WornArmorPiece? in
+                guard
+                    let armor = items.armor[worn.item.rawValue],
+                    let type = armor.bodyTemplate?.armorType
+                else { return nil }
+                let isBody = armor.bodyTemplate?.slots.contains(.body) ?? false
+                let tempered = Float(armor.armorRating & 0xFFFF) / 100
+                    + Tempering.bonus(level: worn.temperLevel, isBodyArmor: isBody)
+                let rating = perkValue(
+                    tempered,
+                    at: .modArmorRating,
+                    on: target,
+                    subjects: PerkEvaluationSubjects(owner: target)
+                        .binding(.item, to: items.conditionSubject(of: worn.item))
+                )
+                return WornArmorPiece(rating: rating, type: type)
+            }
         let values = world.actorValues(of: target)
         let read = { (name: String) -> Float in
             ActorValueIdentity.index(named: name).flatMap { values?($0) } ?? 0

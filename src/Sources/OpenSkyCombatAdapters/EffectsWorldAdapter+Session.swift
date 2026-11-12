@@ -34,10 +34,12 @@ extension EffectsWorldAdapter {
     ) {
         self.init(game: game, now: now)
         guard let stage else { return }
-        registerEffects(stage: stage)
+        frames.registerEffects(stage: stage)
     }
+}
 
-    private func registerEffects(stage: SessionStage) {
+extension EffectsFrameStep {
+    func registerEffects(stage: SessionStage) {
         let provider = stage.data
         let streamer = stage.streamer
         let gameSession = stage.gameSession
@@ -78,7 +80,7 @@ extension EffectsWorldAdapter {
     }
 }
 
-extension EffectsWorldAdapter {
+extension EffectsFrameStep {
     private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "Effects"

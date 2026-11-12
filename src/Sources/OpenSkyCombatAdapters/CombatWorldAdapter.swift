@@ -53,45 +53,57 @@ public typealias CombatWorldHosts = CombatActorFactsHost & CombatGearHost &
 
 public final class CombatWorldAdapter {
     public let game: any CombatWorldHost
-    /// Rigs whose reaction clips were requested, because a room of actors shares one rig.
-    private var warmedSkeletons: Set<String> = []
-
-    let hosts: any CombatWorldHosts
+    let frames: CombatFrameSteps
+    let reactions: CombatReactionClips
 
     public var spellCasts: CombatSpellCastsAdapter {
-        CombatSpellCastsAdapter(game: hosts)
+        frames.spellCasts
     }
 
     public var impactEffects: CombatImpactEffectsAdapter {
-        CombatImpactEffectsAdapter(game: hosts)
+        frames.impactEffects
     }
 
     public var reports: CombatReportsAdapter {
-        CombatReportsAdapter(game: hosts, actorFacts: actorFacts)
+        frames.reports
     }
 
     public var actorFacts: CombatActorFactsAdapter {
-        CombatActorFactsAdapter(game: hosts)
+        frames.actorFacts
     }
 
     public var gear: CombatGearAdapter {
-        CombatGearAdapter(game: hosts)
+        frames.gear
     }
 
     public var motion: CombatMotionAdapter {
-        CombatMotionAdapter(game: hosts, impactEffects: impactEffects)
+        frames.motion
     }
 
     public var outcomes: CombatOutcomesAdapter {
-        CombatOutcomesAdapter(
-            game: hosts, motion: motion, impactEffects: impactEffects
-        )
+        frames.outcomes
+    }
+
+    public var sessions: CombatSessionBuilder {
+        CombatSessionBuilder(game: game)
     }
 
     public init(game: some CombatWorldHosts) {
-        hosts = game
         self.game = game
+        frames = CombatFrameSteps(hosts: game)
+        reactions = CombatReactionClips(game: game)
     }
+
+    public func playReaction(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool {
+        reactions.playReaction(clip, on: key)
+    }
+}
+
+extension CombatWorldAdapter: CombatWorldPort {}
+
+/// Builds the combat session data from the game's records.
+public struct CombatSessionBuilder {
+    let game: any CombatWorldHost
 
     /// Nil without game data: the runtimes stay nil, and no fight starts with
     /// invented numbers.
@@ -118,6 +130,57 @@ public final class CombatWorldAdapter {
         return data
     }
 
+    private static func items(_ provider: any CombatRecordsPort) -> ItemDefinitionStore? {
+        provider.inventoryBaselines?.items
+    }
+
+    private static func impacts(_ provider: any CombatRecordsPort) -> MeleeImpactResolver? {
+        provider.footstepStore.map { MeleeImpactResolver(footsteps: $0) }
+    }
+}
+
+/// The parts of `CombatWorldAdapter`, and the frame steps that drive the fight.
+final class CombatFrameSteps {
+    let hosts: any CombatWorldHosts
+
+    init(hosts: any CombatWorldHosts) {
+        self.hosts = hosts
+    }
+
+    var game: any CombatWorldHost {
+        hosts
+    }
+
+    var spellCasts: CombatSpellCastsAdapter {
+        CombatSpellCastsAdapter(game: hosts)
+    }
+
+    var impactEffects: CombatImpactEffectsAdapter {
+        CombatImpactEffectsAdapter(game: hosts)
+    }
+
+    var reports: CombatReportsAdapter {
+        CombatReportsAdapter(game: hosts, actorFacts: actorFacts)
+    }
+
+    var actorFacts: CombatActorFactsAdapter {
+        CombatActorFactsAdapter(game: hosts)
+    }
+
+    var gear: CombatGearAdapter {
+        CombatGearAdapter(game: hosts)
+    }
+
+    var motion: CombatMotionAdapter {
+        CombatMotionAdapter(game: hosts, impactEffects: impactEffects)
+    }
+
+    var outcomes: CombatOutcomesAdapter {
+        CombatOutcomesAdapter(
+            game: hosts, motion: motion, impactEffects: impactEffects
+        )
+    }
+
     /// Only the player has a graph with a draw state, so an NPC draws while it fights.
     func updateNPCDrawStates() {
         guard let loop = game.combat.loop else { return }
@@ -126,18 +189,21 @@ public final class CombatWorldAdapter {
                 .activity(of: actor.key) == .fighting
         }
     }
+}
 
-    private static func items(_ provider: any CombatRecordsPort) -> ItemDefinitionStore? {
-        provider.inventoryBaselines?.items
-    }
+/// Plays the hit and stagger reactions, and warms each rig's clips once.
+final class CombatReactionClips {
+    let game: any CombatWorldHost
+    /// Rigs whose reaction clips were requested, because a room of actors shares one rig.
+    private var warmedSkeletons: Set<String> = []
 
-    private static func impacts(_ provider: any CombatRecordsPort) -> MeleeImpactResolver? {
-        provider.footstepStore.map { MeleeImpactResolver(footsteps: $0) }
+    init(game: any CombatWorldHost) {
+        self.game = game
     }
 
     /// Plays one reaction clip on a resident actor. False when the actor has
     /// no playback or its rig has no such animation.
-    public func playReaction(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool {
+    func playReaction(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool {
         guard
             let renderer = game.renderer,
             let playback = game.actorPlayback(for: key),
@@ -176,5 +242,3 @@ public final class CombatWorldAdapter {
         )
     }
 }
-
-extension CombatWorldAdapter: CombatWorldPort {}

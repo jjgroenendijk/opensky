@@ -4,7 +4,7 @@ import OpenSkyAIPackages
 import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCells
-import OpenSkyCombat
+public import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrimeInterface
@@ -13,7 +13,7 @@ import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
 import OpenSkyNavigation
 import OpenSkyPerceptionInterface
@@ -43,7 +43,7 @@ public struct CombatGearAdapter {
 }
 
 extension CombatGearAdapter {
-    var equipment: (any EquipmentAccess)? {
+    public var equipment: (any EquipmentAccess)? {
         game.inventory.equipment
     }
 
@@ -95,3 +95,5 @@ extension CombatGearAdapter {
         return attempt { try runtime.inventory.remove(item, count: 1, from: runtime.player) } != nil
     }
 }
+
+extension CombatGearAdapter: CombatGearReads {}

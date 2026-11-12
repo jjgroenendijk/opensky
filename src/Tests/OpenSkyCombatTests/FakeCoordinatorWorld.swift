@@ -16,7 +16,9 @@ import OpenSkyConditions
 import simd
 
 @MainActor
-final class FakeCoordinatorWorld: CombatWorld {
+final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
+    CombatGearReads
+{
     var actors: [CombatActorObservation] = []
     var selected: ReferenceKey?
     var hostilities: [ReferenceKey: ActorHostility] = [:]

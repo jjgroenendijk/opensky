@@ -36,7 +36,7 @@ struct CombatRecordsTests {
     }
 
     @Test func recordsGiveTheCombatAndRagdollSessionData() {
-        let combat = CombatWorldAdapter(game: host).sessionData()
+        let combat = CombatWorldAdapter(game: host).sessions.sessionData()
         #expect(combat?.items == nil)
         #expect(combat?.impacts == nil)
         #expect(RagdollWorldAdapter(game: host).sessionData() != nil)

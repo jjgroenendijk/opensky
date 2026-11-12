@@ -19,35 +19,35 @@ extension CombatCoordinator: ScriptHitReporting, SkillUseReporting, SpellHitAppl
 {
     @discardableResult
     public func reportScriptHit(_ hit: ScriptHitEvent) -> Int {
-        world.reportScriptHit(hit)
+        world.reporter.reportScriptHit(hit)
     }
 
     @discardableResult
     public func reportSkillUse(_ use: SkillUseEvent) -> Float {
-        world.reportSkillUse(use)
+        world.reporter.reportSkillUse(use)
     }
 
     @discardableResult
     public func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
-        world.applySpellHit(hit)
+        world.reporter.applySpellHit(hit)
     }
 
     @discardableResult
     public func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
-        world.applyWeaponEnchantment(hit)
+        world.reporter.applyWeaponEnchantment(hit)
     }
 
     public func applyWeaponPoison(_ hit: WeaponPoisonHit) {
-        world.applyWeaponPoison(hit)
+        world.reporter.applyWeaponPoison(hit)
     }
 
     @discardableResult
     public func applyWeaponEnhancement(attacker: ReferenceKey, target: ReferenceKey) -> Int {
-        world.applyWeaponEnhancement(attacker: attacker, target: target)
+        world.reporter.applyWeaponEnhancement(attacker: attacker, target: target)
     }
 
     public func spellLanded(_ payload: SpellPayload, at point: SIMD3<Float>) {
-        world.spellLanded(payload, at: point)
+        world.reporter.spellLanded(payload, at: point)
     }
 
     /// Only the player carries a behavior graph, so an event on an NPC
@@ -111,7 +111,7 @@ extension CombatCoordinator: MeleeCombatWorld {
     public func meleeBlockMultiplier(of target: ReferenceKey) -> Float {
         guard let values = world.actorValues(of: target) else { return 1 }
         return CombatFortifyBonus.block(reading: values)
-            * world.perkMultiplier(at: CombatCore.percentBlockedEntryPoint, on: target)
+            * world.perks.perkMultiplier(at: CombatCore.percentBlockedEntryPoint, on: target)
     }
 
     public func meleeStrike(_ blow: CombatBlow, on target: ReferenceKey) -> WeaponStrike {
@@ -208,7 +208,7 @@ extension CombatCoordinator: MeleeCombatWorld {
     }
 
     private func isEthereal(_ key: ReferenceKey) -> Bool {
-        world.magicInfluence(of: key).isEthereal
+        world.gearReads.magicInfluence(of: key).isEthereal
     }
 
     public func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
@@ -283,7 +283,7 @@ extension CombatCoordinator: ProjectileWorld {
     /// False on an empty quiver, which is ordinary play: the shot does not happen.
     @discardableResult
     public func consumeArrow(_ ammunition: FormID) -> Bool {
-        world.removeOneFromPlayer(ammunition)
+        world.gearReads.removeOneFromPlayer(ammunition)
     }
 
     /// A stuck arrow is a spawned AMMO model at the impact point. It does not
@@ -324,7 +324,7 @@ extension CombatCoordinator: ProjectileWorld {
 
     @discardableResult
     public func giveRecoveredArrow(_ ammunition: FormID, to target: ReferenceKey) -> Bool {
-        world.addItem(ammunition, count: 1, to: target)
+        world.gearReads.addItem(ammunition, count: 1, to: target)
     }
 
     public func showArcheryNotice(_ text: String) {
@@ -333,6 +333,6 @@ extension CombatCoordinator: ProjectileWorld {
 
     /// Hunter's Discipline doubles the chance through this entry point.
     public func arrowRecoveryMultiplier(of shooter: ReferenceKey) -> Float {
-        world.perkMultiplier(at: .modRecoverArrowChance, on: shooter)
+        world.perks.perkMultiplier(at: .modRecoverArrowChance, on: shooter)
     }
 }

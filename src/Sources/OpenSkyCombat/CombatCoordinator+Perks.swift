@@ -19,7 +19,7 @@ extension CombatCoordinator {
         on key: ReferenceKey,
         subjects: PerkEvaluationSubjects
     ) -> Float {
-        world.perkModified(
+        world.perks.perkModified(
             value, at: entryPoint, on: key, subjects: subjects, seams: ConditionContext()
         )
     }
@@ -149,7 +149,7 @@ extension CombatCoordinator {
     /// `Set Boolean Graph Variable`: the player's graph flags that changed since the
     /// last frame. A perk that stops passing, as Ranger when sneaking, clears its flag.
     public func perkGraphFlagChanges() -> [String: Bool] {
-        let now = Set(world.perkChoices(
+        let now = Set(world.perks.perkChoices(
             at: .setBooleanGraphVariable,
             on: .player,
             subjects: PerkEvaluationSubjects(owner: .player),
@@ -181,7 +181,7 @@ extension CombatCoordinator {
     /// shield. The chance is capped at 100. The vanilla perk's own condition asks for a block.
     func deflectsArrow(_ target: ReferenceKey) -> Bool {
         guard let items else { return false }
-        let hasShield = world.equippedItems(of: target).contains { worn in
+        let hasShield = world.gearReads.equippedItems(of: target).contains { worn in
             items.armor[worn.item.rawValue]?.bodyTemplate?.slots.contains(.shield) ?? false
         }
         guard hasShield else { return false }
@@ -203,7 +203,7 @@ extension CombatCoordinator {
     ) -> SpellHitReport? {
         let (owner, subjects) = perk
         guard
-            let spell = world.perkChoices(
+            let spell = world.perks.perkChoices(
                 at: entryPoint, on: owner, subjects: subjects, seams: ConditionContext()
             ).lazy.compactMap(\.spell).first
         else { return nil }
@@ -212,7 +212,7 @@ extension CombatCoordinator {
         if disarms, strikeRandom.percent() >= disarmChance {
             return nil
         }
-        return world.applySpellHit(SpellHit(
+        return world.reporter.applySpellHit(SpellHit(
             payload: spell.payload(caster: caster), targets: [SpellHitTarget(key: target)]
         ))
     }

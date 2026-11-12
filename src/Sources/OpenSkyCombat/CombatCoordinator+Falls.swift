@@ -26,7 +26,7 @@ extension CombatCoordinator {
     func fallDamage(height: Float, speed: Float, to actor: ReferenceKey) -> Float {
         let isPlayer = actor == .player
         let base = falls.damage(height: height, speed: speed, isPlayer: isPlayer)
-        let influence = world.magicInfluence(of: actor)
+        let influence = world.gearReads.magicInfluence(of: actor)
         guard base > 0, !influence.isEthereal, !influence.isParalysed else { return 0 }
         let perked = perkValue(
             base, at: .modFallingDamage, on: actor,

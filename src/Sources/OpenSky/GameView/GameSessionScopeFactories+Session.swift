@@ -110,7 +110,8 @@ extension GameSessionScopeFactories {
     func makeCombat() -> CombatCoordinator {
         let world = scope.combatWorld
         let combat = CombatCoordinator(
-            world: world, data: world.sessionData(), explosions: scope.effectsWorld.makeExplosions()
+            world: world, data: world.sessions.sessionData(),
+            explosions: scope.effectsWorld.makeExplosions()
         )
         guard scope.stage != nil else { return combat }
         let store = scope.playerSettingsStore

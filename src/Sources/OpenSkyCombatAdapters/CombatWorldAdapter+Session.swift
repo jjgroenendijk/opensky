@@ -38,12 +38,14 @@ extension CombatWorldAdapter {
     ) {
         self.init(game: game)
         guard let stage else { return }
-        registerCombatMelee(stage: stage)
-        registerCombatArchery(stage: stage)
-        registerCombatLoop(stage: stage)
+        frames.registerCombatMelee(stage: stage)
+        frames.registerCombatArchery(stage: stage)
+        frames.registerCombatLoop(stage: stage)
     }
+}
 
-    private func registerCombatMelee(stage: SessionStage) {
+extension CombatFrameSteps {
+    func registerCombatMelee(stage: SessionStage) {
         let gameSession = stage.gameSession
         // A frame step, not the audio tick: a swing must resolve with audio off.
         let frameSteps = gameSession.frameSteps
@@ -65,11 +67,11 @@ extension CombatWorldAdapter {
                 intent: locomotion.meleeIntent,
                 isPlayerControlled: gameSession.movementMode.isPlayerControlled
             )
-            run(commands)
+            outcomes.run(commands)
         }
     }
 
-    private func registerCombatArchery(stage: SessionStage) {
+    func registerCombatArchery(stage: SessionStage) {
         let gameSession = stage.gameSession
         // The world tick delivers a zero delta on a menu-paused frame, so an
         // arrow hangs in the air behind an open menu.
@@ -87,15 +89,15 @@ extension CombatWorldAdapter {
             )
             gameSession.bowZoomTimeScale = combat.bowZoomTimeScale
             gameSession.bowZoomViewShare = combat.archery?.zoom.viewShare ?? 1
-            run(commands)
+            outcomes.run(commands)
         }
     }
 
-    private func registerCombatLoop(stage: SessionStage) {
+    func registerCombatLoop(stage: SessionStage) {
         let gameSession = stage.gameSession
         gameSession.worldTick.register(.combatLoop) { [weak self] delta in
             guard let self else { return }
-            run(game.combat.advanceLoop(by: delta))
+            outcomes.run(game.combat.advanceLoop(by: delta))
             updateNPCDrawStates()
         }
     }

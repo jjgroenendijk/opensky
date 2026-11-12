@@ -229,18 +229,18 @@ public final class CombatCoordinator {
 
     func readiedHands() -> ReadiedHands {
         ReadiedHands(
-            right: world.hasReadiedSpell(in: .right),
-            left: world.hasReadiedSpell(in: .left)
+            right: world.gearReads.hasReadiedSpell(in: .right),
+            left: world.gearReads.hasReadiedSpell(in: .left)
         )
     }
 
     func wornItems() -> [CombatWornItem] {
-        guard let equipment = world.equipment, let items else { return [] }
+        guard let equipment = world.gearReads.equipment, let items else { return [] }
         return equipment.equipped(on: .player).map { item in
             if let weapon = items.weapon(item) {
-                let enchantment = world.enchantmentProfile(of: item)
+                let enchantment = world.gearReads.enchantmentProfile(of: item)
                 return .weapon(MeleeWeaponProfile(weapon: weapon, enchantment: enchantment)
-                    .tempered(level: world.temperLevel(of: item)))
+                    .tempered(level: world.gearReads.temperLevel(of: item)))
             }
             return equipment.occupancy(of: item).slots.contains(.shield) ? .shield : .other
         }
@@ -248,15 +248,15 @@ public final class CombatCoordinator {
 
     /// The first weapon the player has equipped, or nil when unarmed.
     public func playerWeapon() -> Weapon? {
-        guard let equipment = world.equipment, let items else { return nil }
+        guard let equipment = world.gearReads.equipment, let items else { return nil }
         return equipment.equipped(on: .player).lazy.compactMap { items.weapon($0) }.first
     }
 
     func selectedArrow() -> ArcheryAmmunition? {
         guard let items else { return nil }
         return CombatCore.arrow(
-            equipped: world.equipment?.equipped(on: .player) ?? [],
-            carried: world.playerCarriedItems(),
+            equipped: world.gearReads.equipment?.equipped(on: .player) ?? [],
+            carried: world.gearReads.playerCarriedItems(),
             resolve: items.archeryAmmunition
         )
     }
