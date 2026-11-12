@@ -64,7 +64,7 @@ enum InteriorCommand {
             throw CLIError.failure("return door does not target the source door")
         }
 
-        let render = try RenderCommand.renderOffscreen(
+        let render = try OffscreenRender.renderOffscreen(
             device: device,
             scene: transition.scene.renderScene,
             camera: .teleport(placement: transition.destinationPlacement),

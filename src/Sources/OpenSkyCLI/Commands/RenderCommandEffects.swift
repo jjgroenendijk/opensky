@@ -102,7 +102,8 @@ struct EffectCaptureScene {
     let membraneOwner: UInt32?
 }
 
-extension RenderCommand {
+/// The weather, image space, membranes, and sun of an effect capture.
+enum RenderEffects {
     /// Turns `camera` toward the sun the weather placed, with the sun off the centre so
     /// the flare ghosts spread along the screen.
     static func faceSun(_ gameSession: GameSession, from camera: SceneCamera) {
@@ -119,19 +120,6 @@ extension RenderCommand {
             ambientColor: camera.ambientColor
         ))
         print("[INFO] face sun: camera turned to the sun at \(toSun)")
-    }
-
-    /// The saved settings file with `overrides` set over it; nil keeps the INI defaults.
-    static func savedSettings(overriddenBy overrides: [PlayerSettingID: Double]) -> Data? {
-        let saved = PlayerSettingsFile.savedData()
-        guard !overrides.isEmpty else { return saved }
-        let catalog = PlayerSettingsCatalog.vanilla
-        var model = saved.flatMap { try? PlayerSettingsModel(decoding: $0, catalog: catalog) }
-            ?? PlayerSettingsModel()
-        for (id, value) in overrides {
-            model.set(id, to: value, in: catalog)
-        }
-        return model.encoded()
     }
 
     /// Applies `options` to a renderer built for one capture.
@@ -222,7 +210,10 @@ extension RenderCommand {
         let peak = max(look.fill.fadeIn, look.edge.fadeIn) + 0.01
         try renderer.setMembranes([look.draw(on: .actor(owner), at: peak)])
     }
+}
 
+/// The effect state a render prints after its frame.
+enum RenderEffectsReadout {
     /// One evidence line per capture, so a log shows what the frame held.
     static func printEffectState(_ gameSession: GameSession) {
         let renderer = gameSession.renderer
@@ -267,5 +258,21 @@ extension RenderCommand {
                 + "flow maps [\(flowMaps.joined(separator: ", "))], "
                 + "failed \(renderer.recordTextures?.failedPaths ?? [])"
         )
+    }
+}
+
+/// The settings file a render saves for the app to read.
+enum RenderSettingsFile {
+    /// The saved settings file with `overrides` set over it; nil keeps the INI defaults.
+    static func savedSettings(overriddenBy overrides: [PlayerSettingID: Double]) -> Data? {
+        let saved = PlayerSettingsFile.savedData()
+        guard !overrides.isEmpty else { return saved }
+        let catalog = PlayerSettingsCatalog.vanilla
+        var model = saved.flatMap { try? PlayerSettingsModel(decoding: $0, catalog: catalog) }
+            ?? PlayerSettingsModel()
+        for (id, value) in overrides {
+            model.set(id, to: value, in: catalog)
+        }
+        return model.encoded()
     }
 }

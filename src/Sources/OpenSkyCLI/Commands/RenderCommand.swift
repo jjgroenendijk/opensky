@@ -49,12 +49,12 @@ enum RenderCommand {
         let built = try buildRenderScene(builder: builder, options: options)
         let (cellScenes, scene) = (built.cellScenes, built.scene)
         let detection = options.detectionOverlay
-            ? warmedDetection(cellScenes, context: context)
+            ? RenderDetection.warmedDetection(cellScenes, context: context)
             : nil
         let framesActor = options.effects.membrane != nil || arguments.effects.frameActor
         let membrane = framesActor ? MembraneSubject(scene: scene) : nil
         let camera = membrane?.camera ?? SceneCamera.framing(bounds: built.bounds)
-        let render = try renderOffscreen(
+        let render = try OffscreenRender.renderOffscreen(
             device: device,
             scene: scene,
             camera: zoomed(camera, zoom: options.zoom),
@@ -68,21 +68,25 @@ enum RenderCommand {
                 : options.effects.frames,
             afterFirstFrame: { gameSession in
                 if options.effects.faceSun {
-                    faceSun(gameSession, from: camera)
+                    RenderEffects.faceSun(gameSession, from: camera)
                 }
             },
             configure: { gameSession in
-                try applyEffects(options.effects, to: gameSession, scene: EffectCaptureScene(
-                    context: context, builder: builder,
-                    worldspace: options.worldspace, membraneOwner: membrane?.owner
-                ))
+                try RenderEffects.applyEffects(
+                    options.effects,
+                    to: gameSession,
+                    scene: EffectCaptureScene(
+                        context: context, builder: builder,
+                        worldspace: options.worldspace, membraneOwner: membrane?.owner
+                    )
+                )
             },
-            inspect: printEffectState
+            inspect: RenderEffectsReadout.printEffectState
         )
         if let detection {
-            printDetectionStats(detection.runtime)
+            RenderDetection.printDetectionStats(detection.runtime)
         }
-        try report(
+        try RenderReporting.report(
             render,
             scene: scene,
             output: options.output,
@@ -227,7 +231,7 @@ enum RenderCommand {
             device: device, recorder: nil,
             terrainLOD: ColdCellBuilder.terrainLODStore(
                 root: context.root,
-                settings: savedSettings(overriddenBy: settings)
+                settings: RenderSettingsFile.savedSettings(overriddenBy: settings)
             )
         )
     }

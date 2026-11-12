@@ -54,8 +54,8 @@ final class GapsGatherer {
             "conditions": { try [self.conditions()] }, "records": { try [self.records()] },
             "settings": { try [self.settings()] }, "magic": { try [self.magic()] },
             "perks": perks, "packages": packages, "behavior": behavior,
-            "animations": animations, "meshes": meshes, "textures": textures,
-            "audio": audio, "swf": swf
+            "animations": animations, "meshes": assets.meshes, "textures": assets.textures,
+            "audio": assets.audio, "swf": swf
         ]
     }
 

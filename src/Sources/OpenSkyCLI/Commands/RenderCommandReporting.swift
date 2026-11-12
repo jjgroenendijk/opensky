@@ -6,7 +6,8 @@ import Metal
 import OpenSkyRendering
 import OpenSkyRenderResources
 
-extension RenderCommand {
+/// The draw counts and coverage a render prints.
+enum RenderReporting {
     static func report(
         _ render: OffscreenFrame,
         scene: RenderScene,
@@ -14,10 +15,10 @@ extension RenderCommand {
         overlays: (ui: Bool, world: Bool)
     ) throws {
         if overlays.ui {
-            printUIOverlayStats(render.uiStats)
+            OffscreenRender.printUIOverlayStats(render.uiStats)
         }
         if overlays.world {
-            printWorldOverlayStats(render.worldOverlayStats)
+            OffscreenRender.printWorldOverlayStats(render.worldOverlayStats)
         }
         // Instancing evidence (3.2): draw calls collapse below draw-item count
         // only via culling; instances >> draws means repeated models batched.

@@ -18,7 +18,8 @@ struct OffscreenFrame {
     let worldOverlayStats: WorldOverlayDrawStats
 }
 
-extension RenderCommand {
+/// Offscreen frames of a built scene, and their overlay counts.
+enum OffscreenRender {
     /// Probe-stable overlay evidence line (tools/probe.sh greps it).
     static func printUIOverlayStats(_ stats: UIDrawStats) {
         print(

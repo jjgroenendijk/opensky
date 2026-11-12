@@ -163,7 +163,7 @@ extension GapsGatherer {
                     "a name a movie reads before it sets it also counts, so not every row is a gap"
                 ]
             ),
-            swfTags()
+            assets.swfTags()
         ]
     }
 
