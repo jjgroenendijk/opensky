@@ -6,6 +6,9 @@ import OpenSkyRenderCore
 extension Renderer {
     public func updateAnimations(deltaTime: Float) {
         animationTime += max(deltaTime, 0)
+        skyClouds?.drift.advance(
+            seconds: deltaTime, velocities: frameInput.weather?.cloudVelocities ?? []
+        )
         let started = DispatchTime.now().uptimeNanoseconds
         let sceneBones = if actorAnimationsEnabled {
             scene.updateAnimations(at: animationTime)

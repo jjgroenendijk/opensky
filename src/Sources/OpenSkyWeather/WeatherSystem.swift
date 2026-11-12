@@ -17,6 +17,8 @@ nonisolated public final class WeatherSystem {
     public let store: WeatherStore
     /// `fWeatherTransAccel`: how many times faster an accelerated change fades.
     public var transitionAcceleration = SkySettings.vanilla.weatherTransAccel
+    /// `fWeatherCloudSpeedMax`: scales every cloud layer's drift.
+    public var cloudSpeedMax = SkySettings.vanilla.weatherCloudSpeedMax
     public private(set) var worldspaceFormID: UInt32?
 
     // MARK: Tuning constants (documented in docs/engine/weather.md)
@@ -279,7 +281,9 @@ nonisolated public final class WeatherSystem {
             return
         }
         let timing = climateTiming()
-        let target = ResolvedWeather.resolve(toRecord, hour: hour, timing: timing)
+        let target = ResolvedWeather.resolve(
+            toRecord, hour: hour, timing: timing, cloudSpeedMax: cloudSpeedMax
+        )
         guard
             transitionProgress < 1,
             let fromWeather,
@@ -288,7 +292,9 @@ nonisolated public final class WeatherSystem {
             resolvedWeather = target
             return
         }
-        let source = ResolvedWeather.resolve(fromRecord, hour: hour, timing: timing)
+        let source = ResolvedWeather.resolve(
+            fromRecord, hour: hour, timing: timing, cloudSpeedMax: cloudSpeedMax
+        )
         // Smoothstep the blend factor for an eased cross-fade.
         let time = transitionProgress * transitionProgress * (3 - 2 * transitionProgress)
         resolvedWeather = ResolvedWeather.blend(source, target, time)

@@ -25,6 +25,7 @@ public final class FakeRendererPort: RendererPort {
 
     public let device: any MTLDevice
     public var skyCelestial: SkyCelestial?
+    public var skyClouds: SkyClouds?
     public var swfScale: Float = 1
     public var swfMainMovieHidden = false
     public var swfGamepadCount = 0

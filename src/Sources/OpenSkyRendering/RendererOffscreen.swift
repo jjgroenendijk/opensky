@@ -283,6 +283,9 @@ extension Renderer {
         )
         updateAnimations(deltaTime: 0)
         seekParticles(to: animationTime)
+        skyClouds?.drift.seek(
+            seconds: animationTime, velocities: frameInput.weather?.cloudVelocities ?? []
+        )
         let (color, depth) = try makeOffscreenTargets(width: width, height: height)
         residencySet.addAllocation(color)
         residencySet.commit()

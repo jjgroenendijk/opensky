@@ -37,6 +37,24 @@ struct AgentReadoutTests {
         return fields
     }
 
+    @Test func theCloudStateListsEachMovingLayerWithItsOffset() {
+        var drift = CloudDrift()
+        let velocities: [SIMD2<Float>] = [.zero, SIMD2(0.01, -0.02)]
+        drift.advance(seconds: 10, velocities: velocities)
+        let state = object(AgentFrameReadoutAdapter.cloudState(
+            velocities: velocities, drift: drift, drawnLayers: 2
+        ))
+        #expect(state["drawnLayers"] == .init(2))
+        guard case let .array(layers) = state["layers"], let layer = layers.first else {
+            Issue.record("no moving layer")
+            return
+        }
+        #expect(layers.count == 1)
+        #expect(object(layer)["layer"] == .init(1))
+        #expect(object(layer)["velocity"] == .init(SIMD2<Float>(0.01, -0.02)))
+        #expect(object(layer)["offset"] == .init(drift.offset(layer: 1)))
+    }
+
     @Test func theMenuStateShowsEachScreen() throws {
         let state = try object(world.query(.menu))
         for screen in ["hud", "loading", "movie", "bink", "titles", "map"] {

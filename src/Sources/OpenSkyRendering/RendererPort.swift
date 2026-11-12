@@ -9,6 +9,7 @@ public import simd
 /// What the world adapters and the menus use of `Renderer`.
 public protocol RendererPort: AnyObject {
     var skyCelestial: SkyCelestial? { get }
+    var skyClouds: SkyClouds? { get }
     func advanceSWFRuntime() throws
     @discardableResult func sendSWFInput(_ event: SWFInputEvent) throws -> Bool
     func startMenuMovie(

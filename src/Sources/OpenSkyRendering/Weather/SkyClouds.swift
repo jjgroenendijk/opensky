@@ -6,7 +6,7 @@ public import Metal
 public import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 public import OpenSkyGameData
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
@@ -95,7 +95,8 @@ public final class SkyClouds {
     private var uniformsResident = false
     let uniforms: any MTLBuffer
     /// Layers drawn in the last frame.
-    var drawnLayerCount = 0
+    public internal(set) var drawnLayerCount = 0
+    public internal(set) var drift = CloudDrift()
     private(set) var failedPaths: [String] = []
 
     /// `immediate` loads inside the request, for offscreen frames and tests.

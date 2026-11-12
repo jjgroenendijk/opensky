@@ -36,7 +36,7 @@ extension Renderer {
                 * (state.slot * SkyClouds.maximumDraws + drawn)
             var uniforms = CloudLayerUniforms(
                 colorAlpha: SIMD4(layer.color, layer.alpha),
-                uvOffset: Self.cloudOffset(layer.velocity, seconds: animationTime),
+                uvOffset: skyClouds.drift.offset(layer: layer.layer),
                 lift: lightScales.skyLift,
                 padding: 0
             )
@@ -60,11 +60,5 @@ extension Renderer {
             state.stats.drawCalls += 1
         }
         skyClouds.drawnLayerCount = drawn
-    }
-
-    /// Wrapped to one texture repeat, so a long session keeps float precision.
-    nonisolated static func cloudOffset(_ velocity: SIMD2<Float>, seconds: Float) -> SIMD2<Float> {
-        let moved = velocity * seconds
-        return moved - moved.rounded(.down)
     }
 }

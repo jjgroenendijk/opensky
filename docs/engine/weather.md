@@ -170,14 +170,17 @@ draw, each faded by its share of the blend.
 
 A layer's texture moves `0.1 * fWeatherCloudSpeedMax * (raw / 127 - 1)` texture units per
 second of real time, across by its `QNAM` byte and along by its `RNAM` byte. The setting is 0.1
-and no vanilla plugin sets it, so a layer moves at most 0.01 units a second. Wind does not move
-clouds. OpenSky wraps the offset at one repeat. Behaviour described from a clean-room read of
-`SkyrimSE.exe` 1.7.104.0 on 2026-11-06.
+and no vanilla plugin sets it, so a layer moves at most 0.01 units a second. A plugin that sets
+it changes every layer's speed. Wind does not move clouds. Behaviour described from a
+clean-room read of `SkyrimSE.exe` 1.7.104.0 on 2026-11-06.
 
-The game keeps one offset per layer index and, during a transition, moves it at the two
-weathers' speeds blended by the transition. OpenSky moves each weather's layers at their own
-speed and fades them, so two layers cross-fade instead of sharing one drift. OpenSky also uses
-the built-in value of `fWeatherCloudSpeedMax` and does not read a plugin's override.
+There is one texture offset per layer index, not per weather. During a transition both
+weathers draw a layer index at that one offset, and it moves at the two weathers' speeds,
+blended by the transition. So the old and the new cloud sheet of a layer move as one sheet
+while they cross-fade. A layer index one weather does not use counts as still for it.
+OpenSky wraps the offset at one texture repeat, so a long session keeps float precision.
+`openskycli game state time` shows each moving layer's `velocity` and `offset` under
+`sky.clouds`.
 
 The dome draws right after the sky, with alpha blending and no depth writes, at the far end of
 the depth range. The dome and the textures load off the main actor; until they land, the sky

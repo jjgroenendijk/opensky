@@ -1,5 +1,5 @@
 // Cloud layer resolve over a synthetic WTHR record: textures, tint, opacity, drift,
-// the disabled and LNAM limits, and the transition fade.
+// the disabled and LNAM limits, the transition fade, and the shared drift per layer index.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -13,11 +13,12 @@ import Testing
 
 struct CloudLayersTests {
     @Test func speedByteCentresOnStill() {
-        #expect(ResolvedCloudLayer.speed(127) == 0)
+        #expect(ResolvedCloudLayer.speed(127, speedMax: 0.1) == 0)
         // fWeatherCloudSpeedMax 0.1 times a tenth: at most 0.01 texture units per second.
-        #expect(abs(ResolvedCloudLayer.speed(254) - 0.01) < 1e-7)
-        #expect(abs(ResolvedCloudLayer.speed(0) + 0.01) < 1e-7)
-        #expect(ResolvedCloudLayer.speed(nil) == 0)
+        #expect(abs(ResolvedCloudLayer.speed(254, speedMax: 0.1) - 0.01) < 1e-7)
+        #expect(abs(ResolvedCloudLayer.speed(0, speedMax: 0.1) + 0.01) < 1e-7)
+        #expect(abs(ResolvedCloudLayer.speed(254, speedMax: 0.4) - 0.04) < 1e-7)
+        #expect(ResolvedCloudLayer.speed(nil, speedMax: 0.1) == 0)
     }
 
     @Test func layersCarryTextureTintAlphaAndDrift() throws {
@@ -30,8 +31,19 @@ struct CloudLayersTests {
         #expect(first.texture == "Sky\\Upper.dds")
         #expect(first.color == SIMD3(1, 0, 0))
         #expect(first.alpha == 0.5)
-        #expect(first.velocity.x == 0)
-        #expect(abs(first.velocity.y - 0.01) < 1e-7)
+    }
+
+    @Test func everyLayerIndexHasADriftEvenWithoutATexture() throws {
+        let resolved = try ResolvedWeather.resolve(Self.weather(), hour: 12, timing: nil)
+        #expect(resolved.cloudVelocities.count == 32)
+        #expect(resolved.cloudVelocities[0].x == 0)
+        #expect(abs(resolved.cloudVelocities[0].y - 0.01) < 1e-7)
+        // Layer 1 has no texture, yet its RNAM byte still gives it a speed.
+        #expect(abs(resolved.cloudVelocities[1].y + 0.01) < 1e-7)
+        let faster = try ResolvedWeather.resolve(
+            Self.weather(), hour: 12, timing: nil, cloudSpeedMax: 0.4
+        )
+        #expect(abs(faster.cloudVelocities[0].y - 0.04) < 1e-7)
     }
 
     @Test func nightPicksTheNightKeyframe() throws {
@@ -51,10 +63,33 @@ struct CloudLayersTests {
         #expect(blend.clouds[2].alpha == 0.5 * 0.25)
     }
 
+    @Test func transitionBlendsTheSpeedOfEachLayerIndex() throws {
+        let slow = try ResolvedWeather.resolve(Self.weather(), hour: 12, timing: nil)
+        let fast = try ResolvedWeather.resolve(
+            Self.weather(), hour: 12, timing: nil, cloudSpeedMax: 0.5
+        )
+        let blend = ResolvedWeather.blend(slow, fast, 0.25)
+        // 0.01 and 0.05 units a second, a quarter of the way: 0.02.
+        #expect(abs(blend.cloudVelocities[0].y - 0.02) < 1e-7)
+    }
+
+    @Test func bothWeathersOfAChangeShareOneOffsetPerLayer() {
+        var drift = CloudDrift()
+        drift.advance(seconds: 10, velocities: [SIMD2(0.01, 0), SIMD2(0, 0.02)])
+        // The weather changes: layer 0 now moves at 0.03 units a second.
+        drift.advance(seconds: 10, velocities: [SIMD2(0.03, 0)])
+        #expect(abs(drift.offset(layer: 0).x - 0.4) < 1e-5)
+        #expect(abs(drift.offset(layer: 1).y - 0.2) < 1e-5)
+        #expect(drift.offset(layer: 7) == .zero)
+    }
+
     @Test func offsetWrapsToOneRepeat() {
-        let offset = Renderer.cloudOffset(SIMD2(0.1, -0.1), seconds: 25)
-        #expect(abs(offset.x - 0.5) < 1e-4)
-        #expect(abs(offset.y - 0.5) < 1e-4)
+        var drift = CloudDrift()
+        drift.seek(seconds: 25, velocities: [SIMD2(0.1, -0.1)])
+        #expect(abs(drift.offset(layer: 0).x - 0.5) < 1e-4)
+        #expect(abs(drift.offset(layer: 0).y - 0.5) < 1e-4)
+        drift.advance(seconds: 0, velocities: [SIMD2(1, 1)])
+        #expect(abs(drift.offset(layer: 0).x - 0.5) < 1e-4)
     }
 
     @Test func domeKeepsShapeOrderAndRebasesIndices() {
@@ -80,6 +115,7 @@ struct CloudLayersTests {
         let texture = { (path: String) in ESMFixture.zstring(path) }
         var speedY = Data(repeating: 127, count: 32)
         speedY[0] = 254
+        speedY[1] = 0
         var colors = Data(count: 512)
         var alphas = Data(count: 512)
         for layer in 0 ..< 32 {
