@@ -6,7 +6,7 @@
 
 import Foundation
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 public import OpenSkyMagicInterface
 
 /// One MGEF entry resolved into an application the runtime can carry out.
@@ -100,7 +100,7 @@ nonisolated public enum MagicEffectPlanner: Sendable {
     /// `isConstant` marks a worn enchantment, whose zero duration means "while
     /// worn". `resolveKeyword` turns the plugin-relative keyword link into a key,
     /// so the planner stays pure.
-    public static func plan(
+    static func plan(
         effect: ResolvedMagicEffect,
         entry: MagicItemEffect,
         isConstant: Bool = false,

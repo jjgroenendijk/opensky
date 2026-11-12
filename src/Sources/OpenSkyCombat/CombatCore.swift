@@ -71,7 +71,7 @@ nonisolated public struct CombatSpellCandidate: Equatable, Sendable {
 /// The combat rules over plain values. It reads no world state.
 nonisolated public enum CombatCore {
     /// `Mod Percent Blocked` (39): Shield Wall.
-    public static let percentBlockedEntryPoint = PerkEntryPoint.modPercentBlocked
+    static let percentBlockedEntryPoint = PerkEntryPoint.modPercentBlocked
 
     /// A readied spell wins, because readying it unequipped that hand. A
     /// two-handed weapon fills both hands, a second weapon is the off-hand one,
@@ -146,14 +146,14 @@ nonisolated public enum CombatCore {
     }
 
     /// Health as a fraction in 0...1. Full when the maximum is not positive.
-    public static func healthFraction(current: Float, maximum: Float) -> Float {
+    static func healthFraction(current: Float, maximum: Float) -> Float {
         guard maximum > 0 else { return 1 }
         return min(1, max(0, current / maximum))
     }
 
     /// Nil unless the spell is a hostile, deliverable, hand-cast spell aimed
     /// at someone else (docs/engine/ai-spell-use.md).
-    public static func spellOption(_ candidate: CombatSpellCandidate) -> CombatSpellOption? {
+    static func spellOption(_ candidate: CombatSpellCandidate) -> CombatSpellOption? {
         guard
             candidate.isSpell,
             !candidate.targetsSelf,
@@ -166,7 +166,7 @@ nonisolated public enum CombatCore {
 
     /// Nil unless the spell is a deliverable, hand-cast heal the caster aims at itself
     /// (docs/engine/combat-behavior.md#game-settings).
-    public static func healOption(_ candidate: CombatSpellCandidate) -> CombatSpellOption? {
+    static func healOption(_ candidate: CombatSpellCandidate) -> CombatSpellOption? {
         guard
             candidate.isSpell,
             candidate.targetsSelf,
@@ -180,7 +180,7 @@ nonisolated public enum CombatCore {
         return option
     }
 
-    public static func castingProfile(_ facts: CombatCastingFacts) -> CombatCastingProfile {
+    static func castingProfile(_ facts: CombatCastingFacts) -> CombatCastingProfile {
         CombatCastingProfile(
             magicka: facts.magicka,
             options: facts.spells.compactMap(spellOption).sorted { $0.spell < $1.spell },

@@ -19,7 +19,7 @@ public typealias PerkTreeResetResult = Result<PerkTreeResetReport, PerkTreeReset
 
 extension ProgressionCoordinator {
     /// Nil when `index` can be made legendary now.
-    public func legendaryRefusal(forSkill index: Int32) -> PerkTreeResetRefusal? {
+    func legendaryRefusal(forSkill index: Int32) -> PerkTreeResetRefusal? {
         perkReset.legendaryRefusal(forSkill: index)
     }
 
