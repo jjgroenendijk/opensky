@@ -23,17 +23,12 @@ public final class SystemMenuCoordinator {
 
     public internal(set) var model = SystemMenuModel()
     public internal(set) var settingsPage: SettingsPageModel
-    var saveLoadPage: SaveLoadPageModel?
     public internal(set) var controlsPage = ControlsPageModel()
     var quitPage: ConfirmationModel?
     /// The Help or Installed Content page while one is up.
     public internal(set) var topicPage: SystemMenuTopicPageModel?
     /// Set by the app; nil leaves both topic pages empty.
     public weak var topicSource: (any SystemMenuTopicSource)?
-    /// The result of the last save, load, or remap, for the readout.
-    var lastMessage: String?
-    /// The running save, load, or delete; one at a time.
-    var saveWork: Task<Void, Never>?
     public let settings: PlayerSettingsCoordinator
     public weak let saves: any SaveGameService?
     /// On by default, so play mode draws the menu. The HUD is suspended while
@@ -41,9 +36,6 @@ public final class SystemMenuCoordinator {
     public private(set) var movieEnabled = true
     /// Calls the movie made during the last event or frame, answered after it.
     var pendingMovieCalls: [SystemMenuMovieBridge.Call] = []
-    /// The movie's save list in its own order, without the New Save row.
-    var movieSaveRows: [SaveSlotRow] = []
-    var movieListSaving = false
     var framePacer = MenuMovieFramePacer()
     /// The movie's `SystemPage` state at the last check, to see a topic's text close.
     var lastMovieState: Int?
@@ -56,6 +48,7 @@ public final class SystemMenuCoordinator {
     private let movies: any MenuMovieLoading
     let hud: HUDCoordinator
     weak let world: any SystemMenuWorld?
+    let saving: SystemMenuSaveWork
 
     public init(
         menuMode: MenuModeController,
@@ -72,6 +65,22 @@ public final class SystemMenuCoordinator {
         self.saves = saves
         self.world = world
         settingsPage = SettingsPageModel(catalog: settings.store.catalog)
+        saving = SystemMenuSaveWork(saves: saves, hud: hud)
+    }
+
+    var saveLoadPage: SaveLoadPageModel? {
+        get { saving.page }
+        set { saving.page = newValue }
+    }
+
+    /// The result of the last save, load, or remap, for the readout.
+    var lastMessage: String? {
+        get { saving.message }
+        set { saving.message = newValue }
+    }
+
+    var saveWork: Task<Void, Never>? {
+        saving.work
     }
 
     lazy var movie = MenuMovieSession(
@@ -132,8 +141,8 @@ public final class SystemMenuCoordinator {
 
     /// The settings store owns the value; this reads and writes through it.
     var masterVolume: Float {
-        get { Float(settings.store.value(.masterVolume)) }
-        set { settings.store.set(.masterVolume, to: Double(newValue)) }
+        get { settings.masterVolume }
+        set { settings.masterVolume = newValue }
     }
 
     /// On the main page the movie moves its own highlight, and accept opens the
@@ -179,16 +188,6 @@ public final class SystemMenuCoordinator {
         return dataRoot
     }
 
-    static func dataRootSourceLabel(_ source: GameDataRoot.Source) -> String {
-        switch source {
-        case .commandLine: "command line"
-        case .environment: "\(GameDataLocator.environmentKey) environment variable"
-        case .userDefaults: "Settings"
-        case .steamDefault: "Steam default"
-        case .steamLibrary: "Steam library"
-        }
-    }
-
     // MARK: - Movie
 
     /// A missing install or a movie the AS2 subset cannot run degrades to a
@@ -223,7 +222,7 @@ public final class SystemMenuCoordinator {
     public var snapshot: SystemMenuControlSnapshot {
         SystemMenuControlSnapshot(
             dataRootPath: dataRootValue?.installURL.path(percentEncoded: false),
-            dataRootSource: dataRootValue.map { Self.dataRootSourceLabel($0.source) },
+            dataRootSource: dataRootValue?.sourceLabel,
             audioEnabled: world?.audioEnabled ?? false,
             movieEnabled: movieEnabled,
             page: pageSnapshot
@@ -234,4 +233,17 @@ public final class SystemMenuCoordinator {
         subsystem: "nl.jjgroenendijk.opensky",
         category: "SystemMenu"
     )
+}
+
+extension GameDataRoot {
+    /// Where the readout says the data root came from.
+    var sourceLabel: String {
+        switch source {
+        case .commandLine: "command line"
+        case .environment: "\(GameDataLocator.environmentKey) environment variable"
+        case .userDefaults: "Settings"
+        case .steamDefault: "Steam default"
+        case .steamLibrary: "Steam library"
+        }
+    }
 }

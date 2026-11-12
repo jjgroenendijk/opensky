@@ -87,3 +87,12 @@ nonisolated enum SettingsMovieBridge: Sendable {
         )
     }
 }
+
+extension PlayerSettingsStore {
+    /// The rows the Settings list shows for `ids`, each with its definition and value.
+    func movieRows(
+        _ ids: [PlayerSettingID]
+    ) -> [(definition: PlayerSettingDefinition, value: Double)] {
+        ids.compactMap { id in catalog.definition(id).map { (definition: $0, value: value(id)) } }
+    }
+}

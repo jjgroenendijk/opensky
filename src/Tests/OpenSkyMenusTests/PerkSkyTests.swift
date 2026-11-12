@@ -144,7 +144,7 @@ struct PerkSkyTests {
     }
 
     @Test func aLineStretchesFromItsLowerStarToItsUpperStar() {
-        let basis = SkillsMenuCoordinator.lineBasis(
+        let basis = PerkSkyState.lineBasis(
             from: [1, 2, 3], to: [1, 2, 13], meshLength: 5, width: 0.5
         )
         let end = basis * SIMD4<Float>(0, 5, 0, 1)

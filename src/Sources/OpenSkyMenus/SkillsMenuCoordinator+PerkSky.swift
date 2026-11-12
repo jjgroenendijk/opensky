@@ -114,36 +114,81 @@ extension SkillsMenuCoordinator {
             }
             return
         }
-        if !sky.isShown {
-            sky.isShown = true
-            sky.openedAt = now
-            sky.anchors = model.skills.indices.map { slot in
+        let drawn = sky.draw(
+            model, models: models, clock: (now, isClosing),
+            output: (world.perkSkySettings, renderer)
+        )
+        guard let drawn else {
+            finishClose()
+            return
+        }
+        renderer.setMenuScene(drawn.scene)
+        updateNames(model, scene: drawn.scene, selectedStars: drawn.openTree, renderer: renderer)
+    }
+
+    /// Sends the selected tree's names where their stars land, when they moved.
+    private func updateNames(
+        _ model: SkillsMenuModel, scene: MenuScene, selectedStars: [PerkSkyStar],
+        renderer: any RendererPort
+    ) {
+        var points: [UInt32: SIMD2<Float>] = [:]
+        for star in selectedStars {
+            points[star.node] = scene.screenPoint(
+                star.position, aspectRatio: renderer.drawableAspectRatio
+            )
+        }
+        let moved = points.count != sky.namePoints.count || points.contains { node, point in
+            sky.namePoints[node].map { simd_distance($0, point) > Self.nameTolerance } ?? true
+        }
+        guard moved else { return }
+        sky.namePoints = points
+        guard movieLoaded, model.isInTree else { return }
+        attempt {
+            try renderer.updateSWFRuntime { runtime in
+                StatsMenuMovieBridge.publishPerkNames(model, points: points, runtime: runtime)
+            }
+        }
+    }
+}
+
+extension PerkSkyState {
+    /// Steps the sky to `clock.now` and returns its scene and the open tree's stars.
+    /// Nil once the closing move has ended.
+    mutating func draw(
+        _ model: SkillsMenuModel, models: PerkSkySource.Models,
+        clock: (now: Double, isClosing: Bool),
+        output: (settings: PerkSkySettings, renderer: any RendererPort)
+    ) -> (scene: MenuScene, openTree: [PerkSkyStar])? {
+        let (now, isClosing) = clock
+        let (settings, renderer) = output
+        if !isShown {
+            isShown = true
+            openedAt = now
+            anchors = model.skills.indices.map { slot in
                 models.dome.nodePosition(PerkSkyLayout.anchorName(slot: slot), playing: [])
                     ?? PerkSkyLayout.defaultAnchor(slot: slot)
             }
             attempt { try renderer.setLoadingCover([]) }
         }
-        if isClosing, sky.closedAt == nil {
-            sky.closedAt = now
+        if isClosing, closedAt == nil {
+            closedAt = now
         }
-        let settings = world.perkSkySettings
-        let elapsed = now - (sky.openedAt ?? now)
-        var motion = sky.motion ?? PerkSkyMotion(slot: model.skillPosition)
+        let elapsed = now - (openedAt ?? now)
+        var moving = motion ?? PerkSkyMotion(slot: model.skillPosition)
         let intro = models.dome.sequence(PerkSkyDome.introSequence)
         let introSeconds = Double(intro?.duration ?? 0)
-        let clock = introSeconds > 0 ? Float(elapsed / introSeconds) : 1
-        motion.introAlpha = min(1, max(0, sky.movieAlpha ?? clock))
-        motion.update(
+        let introClock = introSeconds > 0 ? Float(elapsed / introSeconds) : 1
+        moving.introAlpha = min(1, max(0, movieAlpha ?? introClock))
+        moving.update(
             now: now, ring: (model.skillPosition, model.skills.count),
             inTree: model.isInTree, settings: settings
         )
-        sky.motion = motion
-        guard let pose = domePose(models.dome, elapsed: elapsed, now: now, motion: motion) else {
-            finishClose()
-            return
+        motion = moving
+        guard let pose = domePose(models.dome, elapsed: elapsed, now: now, motion: moving) else {
+            return nil
         }
         let camera = PerkSkyLayout.camera(
-            yawDegrees: motion.yawDegrees, treeBlend: motion.treeBlend,
+            yawDegrees: moving.yawDegrees, treeBlend: moving.treeBlend,
             introOffset: pose.lift, settings: settings
         )
         var scene = MenuScene(
@@ -158,21 +203,20 @@ extension SkillsMenuCoordinator {
             models: models, settings: settings, now: now, camera: camera,
             beamLength: models.line.nodePosition("BeamEnd", playing: []).map(simd_length) ?? 0
         )
-        let trees = treeDraws(model, frame)
+        let trees = treeDraws(model, frame, soundPlayer: renderer.swfSoundPlayer)
         scene.draws += trees.lines + trees.stars
-        sky.lastTick = now
-        sky.drawCount = scene.draws.count
-        renderer.setMenuScene(scene)
-        updateNames(model, scene: scene, selectedStars: trees.openTree, renderer: renderer)
+        lastTick = now
+        drawCount = scene.draws.count
+        return (scene, trees.openTree)
     }
 
     /// The dome sequence at this moment and the camera lift from its `CameraPosition`:
     /// `CameraIntro` on open, then `Idle`, and `CameraOutro` after a close. Nil once
     /// the closing move has ended.
-    private func domePose(
+    func domePose(
         _ dome: MenuSceneModel, elapsed: Double, now: Double, motion: PerkSkyMotion
     ) -> PerkSkyDomePose? {
-        if let closedAt = sky.closedAt {
+        if let closedAt {
             guard let outro = dome.sequence(PerkSkyDome.outroSequence) else { return nil }
             let seconds = Float(now - closedAt)
             guard seconds < outro.duration else { return nil }
@@ -199,15 +243,17 @@ extension SkillsMenuCoordinator {
         dome.nodePosition(PerkSkyDome.cameraNode, playing: [playing]) ?? .zero
     }
 
-    private func treeDraws(_ model: SkillsMenuModel, _ frame: PerkSkyFrame) -> PerkSkyTreeDraws {
+    mutating func treeDraws(
+        _ model: SkillsMenuModel, _ frame: PerkSkyFrame, soundPlayer: ((String) -> Void)?
+    ) -> PerkSkyTreeDraws {
         var draws = PerkSkyTreeDraws()
         var starKeys = Set<PerkStarKey>()
         var lineKeys = Set<PerkLineKey>()
-        for (slot, skill) in model.skills.enumerated() where sky.anchors.indices.contains(slot) {
+        for (slot, skill) in model.skills.enumerated() where anchors.indices.contains(slot) {
             let isOpenTree = slot == model.skillPosition && model.isInTree
-            let perks = isOpenTree ? model.perks : sky.trees[skill.index] ?? []
+            let perks = isOpenTree ? model.perks : trees[skill.index] ?? []
             let stars = PerkSkyLayout.stars(
-                perks, at: (slot, sky.anchors[slot]),
+                perks, at: (slot, anchors[slot]),
                 selected: isOpenTree ? model.selectedPerk?.node : nil, settings: frame.settings
             )
             if isOpenTree {
@@ -216,7 +262,7 @@ extension SkillsMenuCoordinator {
             for star in stars {
                 let key = PerkStarKey(skill: skill.index, node: star.node)
                 starKeys.insert(key)
-                draws.stars += starDraw(star, key: key, frame)
+                draws.stars += starDraw(star, key: key, frame, soundPlayer: soundPlayer)
             }
             for line in PerkSkyLayout.lines(perks, stars: stars) {
                 let key = PerkLineKey(skill: skill.index, parent: line.parent, child: line.child)
@@ -224,23 +270,24 @@ extension SkillsMenuCoordinator {
                 draws.lines += lineDraw(line, key: key, frame)
             }
         }
-        sky.stars.keep(starKeys)
-        sky.lines.keep(lineKeys)
+        stars.keep(starKeys)
+        lines.keep(lineKeys)
         return draws
     }
 
-    private func starDraw(
-        _ star: PerkSkyStar, key: PerkStarKey, _ frame: PerkSkyFrame
+    private mutating func starDraw(
+        _ star: PerkSkyStar, key: PerkStarKey, _ frame: PerkSkyFrame,
+        soundPlayer: ((String) -> Void)?
     ) -> [MenuSceneDraw] {
         let mesh = frame.models.star
         let now = frame.now
-        let playback = sky.stars.playback(
+        let playback = stars.playback(
             key, state: star.state.rawValue,
             transition: { PerkStarState(rawValue: $0)?.transition(to: star.state) },
             at: (now, { mesh.sequence($0)?.duration })
         )
         guard let sequence = mesh.sequence(playback.sequence) else { return [] }
-        playSounds(sequence, playback: playback, now: now)
+        playSounds(sequence, playback: playback, at: (now, soundPlayer))
         let placement = Self.translation(star.position) * Self.scale(frame.settings.starScale)
         return mesh.draws(
             playing: [.init(sequence, seconds: playback.seconds(at: now))],
@@ -248,13 +295,13 @@ extension SkillsMenuCoordinator {
         )
     }
 
-    private func lineDraw(
+    private mutating func lineDraw(
         _ line: PerkSkyLine, key: PerkLineKey, _ frame: PerkSkyFrame
     ) -> [MenuSceneDraw] {
         let mesh = frame.models.line
         let now = frame.now
         let length = frame.beamLength
-        let playback = sky.lines.playback(
+        let playback = lines.playback(
             key, state: line.state.rawValue,
             transition: { PerkLineState(rawValue: $0)?.transition(to: line.state) },
             at: (now, { mesh.sequence($0)?.duration })
@@ -270,37 +317,19 @@ extension SkillsMenuCoordinator {
     }
 
     /// Plays the `SoundPlay.` text keys a transition passed since the last frame.
-    private func playSounds(_ sequence: NIFSequence, playback: PerkSkyPlayback, now: Double) {
-        guard playback.next != nil, let player = world?.renderer?.swfSoundPlayer else { return }
-        let last = sky.lastTick ?? now
-        for key in sequence.textKeys where key.value.hasPrefix(Self.soundKeyPrefix) {
+    private func playSounds(
+        _ sequence: NIFSequence, playback: PerkSkyPlayback,
+        at moment: (now: Double, player: ((String) -> Void)?)
+    ) {
+        let now = moment.now
+        guard playback.next != nil, let player = moment.player else { return }
+        let last = lastTick ?? now
+        for key in sequence.textKeys
+            where key.value.hasPrefix(SkillsMenuCoordinator.soundKeyPrefix)
+        {
             let time = playback.started + Double(key.time)
             guard time > last, time <= now else { continue }
-            player(String(key.value.dropFirst(Self.soundKeyPrefix.count)))
-        }
-    }
-
-    /// Sends the selected tree's names where their stars land, when they moved.
-    private func updateNames(
-        _ model: SkillsMenuModel, scene: MenuScene, selectedStars: [PerkSkyStar],
-        renderer: any RendererPort
-    ) {
-        var points: [UInt32: SIMD2<Float>] = [:]
-        for star in selectedStars {
-            points[star.node] = scene.screenPoint(
-                star.position, aspectRatio: renderer.drawableAspectRatio
-            )
-        }
-        let moved = points.count != sky.namePoints.count || points.contains { node, point in
-            sky.namePoints[node].map { simd_distance($0, point) > Self.nameTolerance } ?? true
-        }
-        guard moved else { return }
-        sky.namePoints = points
-        guard movieLoaded, model.isInTree else { return }
-        attempt {
-            try renderer.updateSWFRuntime { runtime in
-                StatsMenuMovieBridge.publishPerkNames(model, points: points, runtime: runtime)
-            }
+            player(String(key.value.dropFirst(SkillsMenuCoordinator.soundKeyPrefix.count)))
         }
     }
 

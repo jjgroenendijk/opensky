@@ -23,11 +23,7 @@ extension SystemMenuCoordinator {
         case .controls:
             controlsPage = ControlsPageModel()
         case .save, .load:
-            saveLoadPage = SaveLoadPageModel(
-                mode: page == .save ? .save : .load, rows: saves?.saveRows ?? [],
-                texts: saveTexts
-            )
-            refreshSaveRows()
+            saving.openPage(saving: page == .save)
         case .quit:
             quitPage = ConfirmationModel(question: "Quit", options: Self.quitOptions)
         case .installedContent, .help:
@@ -61,7 +57,9 @@ extension SystemMenuCoordinator {
         case .controls:
             routeControls(controlsPage.handle(event))
         case .save, .load:
-            routeSaveLoad(event)
+            if saving.route(event, close: { [weak self] in self?.close() }) {
+                showPage(.main)
+            }
         case .quit:
             routeQuit(event)
         case .installedContent, .help:
@@ -87,7 +85,7 @@ extension SystemMenuCoordinator {
         let action = controlsPage.capture(scanCode: scanCode)
         routeControls(action)
         if case let .rebind(rebound, code) = action {
-            finishMovieRemap(succeeded: settings.bindings.scanCode(for: rebound) == code)
+            finishMovieRemap(succeeded: settings.binds(rebound, to: code))
         } else {
             finishMovieRemap(succeeded: true)
         }
@@ -98,34 +96,12 @@ extension SystemMenuCoordinator {
         model.isOpen && model.page == .controls && controlsPage.waitingForKey
     }
 
-    var saveTexts: SaveTexts {
-        saves?.saveTexts ?? .vanilla
-    }
-
     public func quicksave() {
-        save(slot: AutosavePolicy.quicksaveSlot, running: saveTexts.quickSaving)
+        saving.quicksave()
     }
 
-    /// Writes `slot`, or a new slot for nil, unless `SetInChargen` turned saving off.
     func save(slot: String?, running: String = "Saving") {
-        guard saves?.isSavingDisabled != true else {
-            report(saveTexts.cannotSaveNow)
-            return
-        }
-        let done = slot == AutosavePolicy.quicksaveSlot ? saveTexts.quickSaved : saveTexts.saved
-        perform(running, done: done) { _ = try await $0.saveGame(slot: slot) }
-    }
-
-    /// Loads `slot`. A changed load order asks `sSaveGameContentIsMissing` first.
-    func load(slot: String, acceptingChangedContent: Bool = false) {
-        perform(saveTexts.loading, done: "Loaded", closes: true, slot: slot) {
-            try await $0.loadGame(slot: slot, acceptingChangedContent: acceptingChangedContent)
-        }
-    }
-
-    private func report(_ message: String) {
-        lastMessage = message
-        hud.showNotification(message)
+        saving.save(slot: slot, running: running)
     }
 
     /// Asks before deleting the selected save, as the Delete key does in vanilla.
@@ -157,34 +133,11 @@ extension SystemMenuCoordinator {
     private func routeControls(_ action: ControlsPageAction?) {
         switch action {
         case let .rebind(action, scanCode):
-            lastMessage = Self.message(for: settings.rebind(action, to: scanCode), action: action)
+            lastMessage = settings.rebindMessage(action, to: scanCode)
         case .resetAll:
             settings.resetBindings()
             lastMessage = "Controls reset"
         case .back:
-            showPage(.main)
-        case nil:
-            break
-        }
-    }
-
-    private func routeSaveLoad(_ event: MenuInputEvent) {
-        guard var page = saveLoadPage else { return }
-        let action = page.handle(event)
-        saveLoadPage = page
-        switch action {
-        case let .save(slot):
-            save(slot: slot)
-        case let .load(slot):
-            load(slot: slot)
-        case let .loadChangedContent(slot):
-            load(slot: slot, acceptingChangedContent: true)
-        case let .delete(slot):
-            perform("Deleting", done: saveTexts.deleted) { try await $0.deleteSave(slot: slot) }
-        case .exportSkyrim:
-            perform("Exporting", done: "Exported") { _ = try await $0.exportSkyrimSave() }
-        case .back:
-            saveLoadPage = nil
             showPage(.main)
         case nil:
             break
@@ -210,54 +163,6 @@ extension SystemMenuCoordinator {
         }
     }
 
-    private func refreshSaveRows() {
-        guard let saves else { return }
-        Task {
-            let rows = await saves.refreshSaveRows()
-            self.saveLoadPage?.replaceRows(rows)
-        }
-    }
-
-    /// Shows `running` until the file work ends. A finished load closes the menu.
-    func perform(
-        _ running: String, done: String, closes: Bool = false, slot: String? = nil,
-        _ body: @escaping @MainActor (any SaveGameService) async throws -> Void
-    ) {
-        guard let saves else {
-            lastMessage = "Saving unavailable"
-            return
-        }
-        guard saveWork == nil else { return }
-        lastMessage = running
-        saveWork = Task {
-            do {
-                try await body(saves)
-                self.lastMessage = done
-                if closes {
-                    self.close()
-                }
-            } catch let failure as SaveFailure {
-                self.report(self.saveTexts.text(for: failure))
-                if failure == .contentMissing, let slot {
-                    self.saveLoadPage?.askToLoadChangedContent(slot: slot)
-                }
-            } catch {
-                self.lastMessage = "\(self.saveTexts.saveFailed) \(error)"
-            }
-            self.saveWork = nil
-            self.refreshSaveRows()
-        }
-    }
-
-    private static func message(for result: InputRebindResult, action: GameInputAction) -> String {
-        switch result {
-        case .bound: "Bound \(action.rawValue)"
-        case let .swapped(other): "Bound \(action.rawValue), swapped with \(other.rawValue)"
-        case .notRemappable: "\(action.rawValue) cannot be remapped"
-        case .unknownKey: "That key cannot be bound"
-        }
-    }
-
     // MARK: - Movie mirror
 
     private func mirrorMovie(_ state: String) {
@@ -271,10 +176,7 @@ extension SystemMenuCoordinator {
 
     private func publishSettingsRows() {
         guard movieLoaded, let renderer, settingsPage.openGroup != nil else { return }
-        let store = settings.store
-        let rows = settingsPage.rows.compactMap { id in
-            store.catalog.definition(id).map { (definition: $0, value: store.value(id)) }
-        }
+        let rows = settings.store.movieRows(settingsPage.rows)
         let selected = settingsPage.rowIndex
         attempt {
             try renderer.updateSWFRuntime { runtime in
@@ -291,16 +193,10 @@ extension SystemMenuCoordinator {
         case .main:
             return page(rows: model.entries.map(\.title), selected: model.selectedIndex)
         case .settings:
-            return settingsSnapshot
+            let shown = settings.settingsRows(settingsPage)
+            return page(rows: shown.rows, selected: shown.selected)
         case .controls:
-            let bindings = settings.bindings
-            let rows = InputBindings.slots.map { slot in
-                let key = bindings.scanCode(for: slot.action)
-                    .map { self.settings.keyName($0) }
-                    ?? "none"
-                return "\(slot.event): \(key)"
-            } + [ControlsPageModel.resetTitle]
-            return page(rows: rows, selected: controlsPage.selectedIndex)
+            return page(rows: settings.controlsRows, selected: controlsPage.selectedIndex)
         case .save, .load:
             return page(
                 rows: saveLoadPage?.titles ?? [], selected: saveLoadPage?.selectedIndex ?? 0
@@ -314,32 +210,6 @@ extension SystemMenuCoordinator {
             return page(
                 rows: topicPage?.topics.map(\.title) ?? [], selected: topicPage?.selectedIndex ?? 0
             )
-        }
-    }
-
-    private var settingsSnapshot: SystemMenuPageSnapshot {
-        let store = settings.store
-        guard settingsPage.openGroup != nil else {
-            return page(
-                rows: SettingsPageModel.categories.map(\.title),
-                selected: SettingsPageModel.categories
-                    .firstIndex(of: settingsPage.selectedCategory) ?? 0
-            )
-        }
-        let rows = settingsPage.rows.map { id in
-            let definition = store.catalog.definition(id)
-            let value = Self.valueText(store.value(id), definition: definition)
-            return "\(definition?.title ?? id.rawValue): \(value)"
-        }
-        return page(rows: rows, selected: settingsPage.rowIndex)
-    }
-
-    static func valueText(_ value: Double, definition: PlayerSettingDefinition?) -> String {
-        switch definition?.kind {
-        case .toggle: value >= 0.5 ? "On" : "Off"
-        case let .choice(options):
-            options.indices.contains(Int(value)) ? options[Int(value)] : "\(Int(value))"
-        default: unsafe String(format: "%.2f", value)
         }
     }
 
