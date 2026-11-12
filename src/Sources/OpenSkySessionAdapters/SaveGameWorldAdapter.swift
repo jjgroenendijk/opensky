@@ -251,34 +251,16 @@ public final class SaveGameWorldAdapter: SaveGameService {
         return "Save \(number)"
     }
 
-    private func summary() -> SaveSummary {
-        let identity = game.menuWorld.playerNameAndRace
-        return SaveSummary(
-            characterName: identity.name, level: game.progression.leveling?.level ?? 1,
-            raceName: identity.race, locationName: locationName(),
-            playSeconds: playSecondsBefore + now().timeIntervalSince(sessionStart)
-        )
+    private var snapshot: SaveSnapshot {
+        SaveSnapshot(game: game)
     }
 
-    private func locationName() -> String {
-        let texts = saveTexts
-        return switch game.streamer.currentCellLocation {
-        case let .exterior(cell): "\(texts.wilderness) \(cell.x), \(cell.y)"
-        case let .interior(formID): "Interior \(formID)"
-        case nil: texts.unknownLocation
-        }
+    private func summary() -> SaveSummary {
+        snapshot.summary(playSeconds: playSecondsBefore + now().timeIntervalSince(sessionStart))
     }
 
     private func thumbnail() -> SaveThumbnail? {
-        guard
-            let texture = attempt({ try game.renderer?.renderOffscreen(
-                width: Self.thumbnailSize.width, height: Self.thumbnailSize.height
-            ) })
-        else { return nil }
-        return SaveThumbnail(
-            width: texture.width, height: texture.height,
-            rgba: FrameScreenshot.rgbaBytes(from: texture)
-        )
+        snapshot.thumbnail()
     }
 
     private static let logger = EngineLogger(
@@ -291,12 +273,59 @@ extension SaveGameWorldAdapter: SaveGameWorldPort {}
 
 extension SaveGameWorldAdapter {
     public var saveTexts: SaveTexts {
+        snapshot.saveTexts
+    }
+
+    public static func row(
+        _ listing: OpenSkySaveSlotListing, texts: SaveTexts = .vanilla
+    ) -> SaveSlotRow {
+        SaveSnapshot.row(listing, texts: texts)
+    }
+}
+
+/// What a save records about the moment it is taken: the summary, the place, the picture,
+/// and the menu row of a listed save.
+struct SaveSnapshot {
+    let game: any SaveGameWorldHost
+
+    var saveTexts: SaveTexts {
         game.sessionRecords.map {
             SaveTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
         } ?? .vanilla
     }
 
-    public static func row(
+    func summary(playSeconds: Double) -> SaveSummary {
+        let identity = game.menuWorld.playerNameAndRace
+        return SaveSummary(
+            characterName: identity.name, level: game.progression.leveling?.level ?? 1,
+            raceName: identity.race, locationName: locationName(),
+            playSeconds: playSeconds
+        )
+    }
+
+    private func locationName() -> String {
+        let texts = saveTexts
+        return switch game.streamer.currentCellLocation {
+        case let .exterior(cell): "\(texts.wilderness) \(cell.x), \(cell.y)"
+        case let .interior(formID): "Interior \(formID)"
+        case nil: texts.unknownLocation
+        }
+    }
+
+    func thumbnail() -> SaveThumbnail? {
+        guard
+            let texture = attempt({ try game.renderer?.renderOffscreen(
+                width: SaveGameWorldAdapter.thumbnailSize.width,
+                height: SaveGameWorldAdapter.thumbnailSize.height
+            ) })
+        else { return nil }
+        return SaveThumbnail(
+            width: texture.width, height: texture.height,
+            rgba: FrameScreenshot.rgbaBytes(from: texture)
+        )
+    }
+
+    static func row(
         _ listing: OpenSkySaveSlotListing, texts: SaveTexts = .vanilla
     ) -> SaveSlotRow {
         let summary = listing.summary?.summary

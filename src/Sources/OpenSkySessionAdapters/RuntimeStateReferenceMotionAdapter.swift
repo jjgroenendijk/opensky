@@ -42,38 +42,14 @@ public struct RuntimeStateReferenceMotionAdapter {
 
 extension RuntimeStateReferenceMotionAdapter {
     public func addMountSeams(to context: inout ConditionContext) {
-        let vehicles = game.vehicleWorld.vehicles
-        context.mounts = MountConditionResolution(
-            mounts: vehicles.core.mounts, playersLastMount: vehicles.playersLastMount,
-            flyingMounts: game.mountWorld.flyingMounts
-        )
-        context.mounts.flyingStates = game.dragonFlightWorld.flyingStates
-        context.mounts.canFlyHere = game.streamer.interiorScene == nil
-        let requests = game.dragonFlight.landingRequests
-        context.mounts.crashLandRequests = Set(requests.filter { $0.value == .crash }.keys)
-        context.mounts.hastyLandRequests = Set(requests.filter { $0.value == .hasty }.keys)
+        ReferenceConditionReads(game: game).addMountSeams(to: &context)
     }
 
     /// Lock, open, and deletion state of every reference a run-on can name.
     public func referenceFacts(of references: RuntimeReferenceIndex)
         -> ReferenceConditionResolution
     {
-        var facts: [ReferenceKey: ReferenceConditionFacts] = [:]
-        for entry in references.sortedEntries() {
-            let state = game.worldState.resolvedState(for: entry)
-            let action = game.streamer.residentInteraction(reference: entry.formID)?.action
-            facts[entry.key] = ReferenceConditionFacts(
-                lock: ReferenceLockState.resolve(
-                    baseline: entry.placedReference?.lock,
-                    delta: game.worldState.component(ReferenceLockState.self, for: entry.key)
-                ),
-                isOpen: state.activation.isOpen,
-                isDoor: action == .open,
-                isDeleted: state.deletion.isDeleted,
-                canOpen: action == .open || action == .search
-            )
-        }
-        return ReferenceConditionResolution(facts: facts)
+        ReferenceConditionReads(game: game).referenceFacts(of: references)
     }
 
     public func motionResolution(references: RuntimeReferenceIndex) -> MotionConditionResolution {
@@ -154,5 +130,45 @@ extension RuntimeStateReferenceMotionAdapter {
             }
             return markers
         }
+    }
+}
+
+/// The mount and reference facts a condition run-on reads.
+struct ReferenceConditionReads {
+    let game: any RuntimeStateReferenceMotionHost
+
+    func addMountSeams(to context: inout ConditionContext) {
+        let vehicles = game.vehicleWorld.vehicles
+        context.mounts = MountConditionResolution(
+            mounts: vehicles.core.mounts, playersLastMount: vehicles.playersLastMount,
+            flyingMounts: game.mountWorld.flyingMounts
+        )
+        context.mounts.flyingStates = game.dragonFlightWorld.flyingStates
+        context.mounts.canFlyHere = game.streamer.interiorScene == nil
+        let requests = game.dragonFlight.landingRequests
+        context.mounts.crashLandRequests = Set(requests.filter { $0.value == .crash }.keys)
+        context.mounts.hastyLandRequests = Set(requests.filter { $0.value == .hasty }.keys)
+    }
+
+    /// Lock, open, and deletion state of every reference a run-on can name.
+    func referenceFacts(of references: RuntimeReferenceIndex)
+        -> ReferenceConditionResolution
+    {
+        var facts: [ReferenceKey: ReferenceConditionFacts] = [:]
+        for entry in references.sortedEntries() {
+            let state = game.worldState.resolvedState(for: entry)
+            let action = game.streamer.residentInteraction(reference: entry.formID)?.action
+            facts[entry.key] = ReferenceConditionFacts(
+                lock: ReferenceLockState.resolve(
+                    baseline: entry.placedReference?.lock,
+                    delta: game.worldState.component(ReferenceLockState.self, for: entry.key)
+                ),
+                isOpen: state.activation.isOpen,
+                isDoor: action == .open,
+                isDeleted: state.deletion.isDeleted,
+                canOpen: action == .open || action == .search
+            )
+        }
+        return ReferenceConditionResolution(facts: facts)
     }
 }

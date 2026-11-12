@@ -36,53 +36,22 @@ public struct RuntimeStateCoreAdapter {
     public let game: any RuntimeStateWorldHost
     public let state: RuntimeStatePartState
     public let inventoryFacts: RuntimeStateInventoryFactsAdapter
+
+    var conditions: ActorConditionReads {
+        ActorConditionReads(game: game, inventoryFacts: inventoryFacts)
+    }
 }
 
-extension RuntimeStateCoreAdapter {
-    /// Every resident actor plus the player, with the combat loop's fight
-    /// filled in both directions.
-    public func actorResolution() -> ActorStateResolution {
-        guard let values = game.actorValues.runtime else { return .empty }
-        var player = actorConditionState(holder: .player, values: values)
-        inventoryFacts.playerConditionTraits(&player)
-        var states = residentActorStates(values: values)
-        states[.player] = player
-        return ActorStateResolution.fight(
-            states: states, playerKey: .player, playerTarget: game.combat.loop?.state.target
-        )
-    }
-
-    /// Actor values, death and equipment are store writes; the fight is each machine's phase.
-    private func residentActorStates(values: any ActorValueRuntimePort)
-        -> [ReferenceKey: ActorConditionState]
-    {
-        let members = game.actorWorld.combatActors().compactMap { observation in
-            game.actorWorld.actorValueHolder(for: observation.key).map {
-                ActorViewMember(holder: $0, isDead: observation.isDead)
-            }
-        }
-        let key = ActorViewKey(
-            store: ObjectIdentifier(game.worldState),
-            writes: game.worldState.revision(of: [.actorValues, .inventory]),
-            playerLevel: values.baselines.playerLevel.level,
-            hasInventory: game.inventory.equipment != nil,
-            actors: members,
-            phases: game.combat.loop?.behaviors.mapValues(\.phase)
-        )
-        return state.conditionCaches.actors.value(for: key) {
-            members.reduce(into: [:]) { states, member in
-                states[member.holder.key] = actorConditionState(
-                    holder: member.holder, values: values, isDead: member.isDead
-                )
-            }
-        }
-    }
+/// One actor's condition state: its values, fight, equipment, and flags.
+struct ActorConditionReads {
+    let game: any RuntimeStateWorldHost
+    let inventoryFacts: RuntimeStateInventoryFactsAdapter
 
     /// Only the player has a graph that tracks a draw state, so every other
     /// actor carries nil and `IsWeaponOut` reports the gap. OpenSky draws no
     /// torch, and a shield comes out only with a drawn weapon, so a sheathed or
     /// peaceful actor holds nothing out.
-    private func actorConditionState(
+    func actorConditionState(
         holder: ActorValueHolder,
         values: any ActorValueRuntimePort,
         isDead: Bool = false
@@ -132,6 +101,47 @@ extension RuntimeStateCoreAdapter {
         guard let loop = game.combat.loop else { return nil }
         guard !isDead, let facts = loop.actionFacts(of: key) else { return .still }
         return facts
+    }
+}
+
+extension RuntimeStateCoreAdapter {
+    /// Every resident actor plus the player, with the combat loop's fight
+    /// filled in both directions.
+    public func actorResolution() -> ActorStateResolution {
+        guard let values = game.actorValues.runtime else { return .empty }
+        var player = conditions.actorConditionState(holder: .player, values: values)
+        inventoryFacts.playerConditionTraits(&player)
+        var states = residentActorStates(values: values)
+        states[.player] = player
+        return ActorStateResolution.fight(
+            states: states, playerKey: .player, playerTarget: game.combat.loop?.state.target
+        )
+    }
+
+    /// Actor values, death and equipment are store writes; the fight is each machine's phase.
+    private func residentActorStates(values: any ActorValueRuntimePort)
+        -> [ReferenceKey: ActorConditionState]
+    {
+        let members = game.actorWorld.combatActors().compactMap { observation in
+            game.actorWorld.actorValueHolder(for: observation.key).map {
+                ActorViewMember(holder: $0, isDead: observation.isDead)
+            }
+        }
+        let key = ActorViewKey(
+            store: ObjectIdentifier(game.worldState),
+            writes: game.worldState.revision(of: [.actorValues, .inventory]),
+            playerLevel: values.baselines.playerLevel.level,
+            hasInventory: game.inventory.equipment != nil,
+            actors: members,
+            phases: game.combat.loop?.behaviors.mapValues(\.phase)
+        )
+        return state.conditionCaches.actors.value(for: key) {
+            members.reduce(into: [:]) { states, member in
+                states[member.holder.key] = conditions.actorConditionState(
+                    holder: member.holder, values: values, isDead: member.isDead
+                )
+            }
+        }
     }
 
     public func store() async throws -> OpenSkySaveStore {
