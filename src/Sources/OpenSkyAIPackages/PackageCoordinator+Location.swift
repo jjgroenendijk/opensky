@@ -8,21 +8,10 @@ extension PackageCoordinator {
     /// The running procedure's destination or centre, else the first location input
     /// of the package the actor would run now. Nil when neither resolves.
     public func packageLocation(of actor: ReferenceKey) -> SIMD3<Float>? {
-        if
-            let leaf = executions[actor]?.runner.running
-                .min(by: { $0.key < $1.key })?.value
-        {
-            return leaf.setup.setup.destination ?? leaf.setup.setup.center
+        if executions[actor]?.runner.running.isEmpty == false {
+            return executions[actor]?.runningPlace
         }
         guard let world, let package = runtime?.currentPackage(for: actor) else { return nil }
-        let values = PackageOverrideExecution(package: package).values
-        for index in values.keys.sorted() {
-            guard
-                case let .location(location)? = values[index],
-                let place = world.packagePlace(of: location, actor: actor, aliasQuest: nil)
-            else { continue }
-            return place.point
-        }
-        return nil
+        return world.firstLocation(of: package, actor: actor)
     }
 }

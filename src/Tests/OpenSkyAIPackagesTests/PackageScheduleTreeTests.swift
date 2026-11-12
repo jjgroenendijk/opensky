@@ -120,13 +120,13 @@ struct PackageScheduleTreeTests {
         world.hasRoom = false
         coordinator.advance()
         #expect(world.moves.isEmpty)
-        #expect(coordinator.waitingMoves.count == 2)
+        #expect(coordinator.movement.waiting.count == 2)
 
         #expect(coordinator.runOverride(Self.scene, actor: Self.otherKey) == .running)
         world.hasRoom = true
         coordinator.advance(by: 0.1)
         #expect(world.movers == [Self.otherKey, Self.guardKey])
-        #expect(coordinator.waitingMoves.isEmpty)
+        #expect(coordinator.movement.waiting.isEmpty)
     }
 
     @Test func aSandboxAtAnIdleMarkerLeavesTheWalkToTheIdleRuntime() throws {

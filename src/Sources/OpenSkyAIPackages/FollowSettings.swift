@@ -13,10 +13,7 @@ extension PackageCoordinator {
         executions.keys.sorted().compactMap { other in
             guard
                 other != actor,
-                executions[other]?.runner.running.values.contains(where: {
-                    ($0.machine.kind == .follow || $0.machine.kind == .followTo)
-                        && $0.machine.setup.watched == leader
-                }) == true
+                executions[other]?.follows(leader) == true
             else { return nil }
             return world?.packageActorPosition(other)
         }
@@ -24,6 +21,6 @@ extension PackageCoordinator {
 
     /// The running slowdown floor for a follower's walk, or nil for an actor with no pace.
     public func followRunSlowdown(for actor: ReferenceKey) -> FollowSettings? {
-        paces[actor] == nil ? nil : followSettings
+        movement.paces[actor] == nil ? nil : settings.follow
     }
 }

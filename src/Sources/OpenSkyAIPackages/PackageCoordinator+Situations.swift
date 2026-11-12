@@ -26,28 +26,11 @@ extension PackageCoordinator {
         context: () -> ConditionContext
     ) {
         guard let world else { return }
-        let listed = registeredActors.keys.sorted().filter {
-            runtime.packageLists(for: $0)?.overrides.isEmpty == false
-        }
+        let listed = runtime.actorsWithOverrideLists(among: registeredActors.keys.sorted())
         guard !listed.isEmpty else { return }
-        let situations = world.packageSituations(of: listed)
-        for actor in listed {
-            let situation = guardWarnSituation(of: actor, runtime: runtime) ?? situations[actor]
-            runtime.setSituation(situation, actor: actor, clock: clock, context: context)
-        }
-    }
-
-    /// A guard warns while its machine has warned; a guard warn package then runs
-    /// until its tree ends.
-    private func guardWarnSituation(
-        of actor: ReferenceKey, runtime: ActorPackageRuntime
-    ) -> PackageSituation? {
-        let execution = executions[actor]
-        if execution?.runner.running.values.contains(where: \.machine.isWarning) == true {
-            return .guardWarn
-        }
-        let holds = runtime.source(for: actor) == .situation(.guardWarn)
-            && execution?.runner.outcome == nil
-        return holds ? .guardWarn : nil
+        runtime.setSituations(
+            (listed, world.packageSituations(of: listed)), execution: { executions[$0] },
+            clock: clock, context: context
+        )
     }
 }

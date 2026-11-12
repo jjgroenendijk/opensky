@@ -229,20 +229,8 @@ public final class PackageCoordinator {
     public internal(set) var executions: [ReferenceKey: PackageOverrideExecution] = [:]
     /// Each rider's horse, which walks the rider's package for it.
     public private(set) var mounts: [ReferenceKey: ReferenceKey] = [:]
-    /// Walks that found no free mover slot, by actor.
-    var waitingMoves: [ReferenceKey: PackagePendingMove] = [:]
-    /// Where each flying actor's package sends it.
-    var flights: [ReferenceKey: PackageFlight] = [:]
-    /// A follower's gait, which overrides its package's preferred speed.
-    var paces: [ReferenceKey: LocomotionGait] = [:]
-    var nextMoveTicket = 0
-    /// The Guard procedure's warnings.
-    public let guardWarnings: GuardWarningSettings
-    public let sandboxSettings: SandboxSettings
-    /// How a bumped NPC steps aside.
-    public let bumpSettings: BumpReactionSettings
-    /// Follower spacing and slowdown.
-    public let followSettings: FollowSettings
+    let movement: PackageMovement
+    let settings: PackageSettings
     public internal(set) var bumps = BumpReactions()
     /// The newest move result per actor, for `state packages`.
     public private(set) var lastMoves: [ReferenceKey: NPCMoveCommandResult] = [:]
@@ -271,10 +259,11 @@ public final class PackageCoordinator {
         runtime = data.map {
             ActorPackageRuntime(store: $0.store, conditionFunctions: $0.conditionFunctions)
         }
-        guardWarnings = data?.guardWarnings ?? .vanilla
-        sandboxSettings = data?.sandboxSettings ?? .vanilla
-        bumpSettings = data?.bumpSettings ?? .vanilla
-        followSettings = data?.followSettings ?? .vanilla
+        settings = PackageSettings(data)
+        movement = PackageMovement(world: world)
+        movement.settled = { [weak self] actor, reason in
+            self?.movementSettled(actor: actor, reason: reason)
+        }
     }
 
     /// Reconciles residency, then evaluates scheduled boundaries. An actor
@@ -301,8 +290,7 @@ public final class PackageCoordinator {
             registeredActors.removeValue(forKey: actor)
             executions.removeValue(forKey: actor)
             mounts.removeValue(forKey: actor)
-            waitingMoves.removeValue(forKey: actor)
-            flights.removeValue(forKey: actor)
+            movement.drop(actor)
         }
         for arrival in change.arrived {
             let roll = world.packageLeveledRoll(of: arrival.actor, base: arrival.base)
@@ -323,7 +311,9 @@ public final class PackageCoordinator {
         aliasRefreshSeconds -= delta
         if aliasRefreshSeconds <= 0 || !change.arrived.isEmpty {
             aliasRefreshSeconds = Self.aliasRefreshInterval
-            applyAliasStacks(world.packageAliasStacks(), to: &runtime, clock: clock)
+            runtime.setAliasStacks(
+                world.packageAliasStacks(), actors: registeredActors.keys.sorted(), clock: clock
+            ) { self.conditionContext(clock: clock) }
         }
         applySituations(to: &runtime, clock: clock, context: live)
         runtime.advance(clock: clock) { _ in live() }
@@ -361,31 +351,14 @@ public final class PackageCoordinator {
             var runtime, let world, let clock = world.packageClock,
             registeredActors[actor] != nil
         else { return }
-        applyAliasStacks(world.packageAliasStacks(), to: &runtime, clock: clock)
+        runtime.setAliasStacks(
+            world.packageAliasStacks(), actors: registeredActors.keys.sorted(), clock: clock
+        ) { self.conditionContext(clock: clock) }
         runtime.forceReevaluate(
             actor: actor, clock: clock, context: world.packageConditionContext(clock: clock)
         )
         self.runtime = runtime
         syncExecution(actor)
-    }
-
-    private func applyAliasStacks(
-        _ stacks: [ReferenceKey: PackageAliasStack],
-        to runtime: inout ActorPackageRuntime,
-        clock: GameClock
-    ) {
-        // The loop changes only this local runtime, so every actor reads one context.
-        var shared: ConditionContext?
-        for actor in registeredActors.keys.sorted() {
-            runtime.setAliasStack(stacks[actor], actor: actor, clock: clock) {
-                if let shared {
-                    return shared
-                }
-                let live = self.conditionContext(clock: clock)
-                shared = live
-                return live
-            }
-        }
     }
 
     /// The frame's shared context inside `advance(by:)`, else a fresh one.
@@ -458,7 +431,7 @@ public final class PackageCoordinator {
             let execution = executions[actor], execution.ends > before,
             let package = attempt({ try store?.resolve(execution.package).package })
         else { return }
-        world?.packageProcedure(PackageScriptEvent(kind: .end, actor: actor, package: package))
+        world?.reportProcedure(.end, actor: actor, package: package)
     }
 
     func updateMount(_ actor: ReferenceKey, rides: Bool) {

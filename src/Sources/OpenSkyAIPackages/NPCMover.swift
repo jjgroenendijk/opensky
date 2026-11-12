@@ -234,12 +234,11 @@ public struct NPCMover {
         }
         repathCount = 1
         state = .awaitingRepath
-        let result = world.repath(NavigationPathQuery(
-            start: controller.feetPosition,
-            target: path.target,
-            capsuleRadius: capsule.radius
-        ))
-        guard case let .path(replacement) = result else {
+        guard
+            let replacement = world.newPath(
+                from: controller.feetPosition, to: path.target, radius: capsule.radius
+            )
+        else {
             finish(.gaveUp, reason: .giveUp, emissions: &emissions)
             return
         }
@@ -265,9 +264,7 @@ public struct NPCMover {
             gait: .walk
         )
         emissions.persistence.append(persistence(reason: reason))
-        emissions.triggers += occupiedTriggers.sorted().map {
-            TriggerTransitionEvent(reference: $0, phase: .leave, actor: actor)
-        }
+        emissions.noteTriggers(entered: [], left: occupiedTriggers, by: actor)
         occupiedTriggers.removeAll()
     }
 }
@@ -277,17 +274,45 @@ extension NPCMover {
         world: NPCMovementWorld,
         into emissions: inout NPCMoverEmissions
     ) {
-        let current = world.triggersAt(PlayerCapsuleState(
-            capsule: capsule, feetPosition: controller.feetPosition
-        ))
-        let entered = current.subtracting(occupiedTriggers)
-        let left = occupiedTriggers.subtracting(current)
+        let current = world.triggers(around: capsule, feet: controller.feetPosition)
+        emissions.noteTriggers(
+            entered: current.subtracting(occupiedTriggers),
+            left: occupiedTriggers.subtracting(current), by: actor
+        )
         occupiedTriggers = current
-        emissions.triggers += entered.sorted().map {
+    }
+}
+
+extension NPCMoverEmissions {
+    /// The trigger edges one actor crossed, entered ones first, each set sorted.
+    mutating func noteTriggers(
+        entered: Set<ReferenceKey>, left: Set<ReferenceKey>, by actor: ReferenceKey
+    ) {
+        triggers += entered.sorted().map {
             TriggerTransitionEvent(reference: $0, phase: .enter, actor: actor)
         }
-        emissions.triggers += left.sorted().map {
+        triggers += left.sorted().map {
             TriggerTransitionEvent(reference: $0, phase: .leave, actor: actor)
         }
+    }
+}
+
+extension NPCMovementWorld {
+    /// A new path to `target`, or nil when none is found.
+    func newPath(
+        from start: SIMD3<Float>, to target: SIMD3<Float>, radius: Float
+    ) -> NavigationPath? {
+        let result = repath(NavigationPathQuery(
+            start: start,
+            target: target,
+            capsuleRadius: radius
+        ))
+        guard case let .path(replacement) = result else { return nil }
+        return replacement
+    }
+
+    /// The trigger volumes the capsule stands in.
+    func triggers(around capsule: PlayerCapsule, feet: SIMD3<Float>) -> Set<ReferenceKey> {
+        triggersAt(PlayerCapsuleState(capsule: capsule, feetPosition: feet))
     }
 }

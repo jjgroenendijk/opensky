@@ -8,17 +8,34 @@ import OpenSkyWorldInterface
 import simd
 
 extension NPCMover {
+    func staticFloorSampler(world: NPCMovementWorld) -> WalkController.GroundSampler {
+        let legEnd = path.waypoints.indices.contains(waypointIndex)
+            ? path.waypoints[waypointIndex] : legStart
+        return NPCStaticFloor(
+            capsule: capsule, feetHeight: controller.feetPosition.z,
+            step: configuration.stepHeight.value, leg: (legStart, legEnd)
+        ).sampler(world: world, query: world.collisionQuery(for: actor))
+    }
+}
+
+/// The floor of a walk that ignores statics, along one leg of its path.
+struct NPCStaticFloor {
+    let capsule: PlayerCapsule
+    let feetHeight: Float
+    let step: Float
+    let leg: (start: SIMD3<Float>, end: SIMD3<Float>)
+
     /// A walk that ignores statics passes through walls, but still stands on a road or a
     /// bridge in reach of a step. The floor must also lie within a step of the leg's
     /// line, so a walk through a rock arch does not climb its ledges onto the roof.
-    func staticFloorSampler(world: NPCMovementWorld) -> WalkController.GroundSampler {
-        let reach = controller.feetPosition.z + configuration.stepHeight.value
+    func sampler(
+        world: NPCMovementWorld, query: @escaping WalkController.CollisionQuery
+    ) -> WalkController.GroundSampler {
+        let reach = feetHeight + step
         let collider = CapsuleWorldCollider(capsule: capsule)
-        let legEnd = path.waypoints.indices.contains(waypointIndex)
-            ? path.waypoints[waypointIndex] : legStart
-        let step = configuration.stepHeight.value
-        let start = legStart
-        let query = world.collisionQuery(for: actor)
+        let (start, legEnd) = leg
+        let step = step
+        let capsule = capsule
         return { position in
             let terrain = world.sampleGround(position)
             let line = Self.lineHeight(at: position, from: start, to: legEnd) + step
