@@ -61,7 +61,7 @@ public final class HazardWorldAdapter {
     public convenience init(_ dependencies: HazardWorldDependencies, stage: SessionStage?) {
         self.init(dependencies)
         guard let stage else { return }
-        store = stage.data.lockTrapData.hazards
+        store = stage.data.rules.lockTrapData.hazards
         stage.streamer.cellHazards.register(.hazards) { [weak self] event in
             self?.load(event)
         }

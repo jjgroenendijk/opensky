@@ -316,7 +316,7 @@ final class GameSessionScope {
     /// The perception pass: view cones, line of sight, and per-pair detection levels.
     lazy var perception = PerceptionCoordinator(
         world: aiWorld.worlds,
-        settings: worldData?.detectionSettings,
+        settings: worldData?.rules.detectionSettings,
         stealthPoints: worldData.map { StealthPointSettings.resolve(store: $0.gameSettings) }
             ?? .vanilla
     )

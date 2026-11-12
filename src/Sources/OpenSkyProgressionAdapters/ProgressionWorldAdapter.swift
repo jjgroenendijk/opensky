@@ -60,7 +60,7 @@ public final class ProgressionWorldAdapter {
     /// The caster takes the runtime when its cast loop is built. The live
     /// conditions carry the globals, so no snapshot of them is kept.
     public func perkRuntime(store worldState: WorldStateStore) -> PerkRuntime? {
-        guard let store = game.worldData?.perkStore else { return nil }
+        guard let store = game.worldData?.progression.perkStore else { return nil }
         var runtime = PerkRuntime(
             store: worldState, perks: store, conditions: ConditionContext(functions: .standard)
         )
@@ -76,10 +76,10 @@ public final class ProgressionWorldAdapter {
             game.actorValues.runtime.map { values in
                 ProgressionSessionData(
                     values: values,
-                    information: provider.actorValueInformation,
-                    perkStore: provider.perkStore,
-                    skillSettings: provider.skillAdvancementSettings,
-                    levelSettings: provider.characterLevelSettings,
+                    information: provider.progression.actorValueInformation,
+                    perkStore: provider.progression.perkStore,
+                    skillSettings: provider.progression.skillAdvancementSettings,
+                    levelSettings: provider.progression.characterLevelSettings,
                     training: TrainingSettings
                         .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) },
                     texts: ProgressionTexts

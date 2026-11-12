@@ -48,7 +48,7 @@ public final class FactionWorldAdapter {
         guard
             let provider,
             let factionStore = provider.factionStore,
-            let relationshipStore = provider.relationshipStore
+            let relationshipStore = provider.rules.relationshipStore
         else { return nil }
         return FactionSessionData(
             factions: factionStore,

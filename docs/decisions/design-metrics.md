@@ -51,10 +51,11 @@ it uses (`tools/lint-index/fan-out.py`).
   frameworks do not, because every type uses them.
 - A type's nested types, and the type it is nested in, do not count.
 - The composition root and the session scope are left out by name: `GameViewController`,
-  `GameSessionScope`, `GameSessionScopeBuild`, `GameSessionScopeFactories`, and
-  `SessionPorts`. Building the object graph is their job. `GameSessionScopeBuild` is the
-  second stage of the session scope: it builds every adapter and coordinator over the
-  started session.
+  `GameSessionScope`, `GameSessionScopeBuild`, `GameSessionScopeCellReset`,
+  `GameSessionScopeFactories`, and `SessionPorts`. Building the object graph is their job.
+  `GameSessionScopeBuild` is the second stage of the session scope: it builds every adapter
+  and coordinator over the started session. `GameSessionScopeCellReset` builds the cell
+  reset over the load-order stores in the same way.
 
 | Limit | Value | Findings when set (2026-11-10) | Reason |
 | --- | --- | --- | --- |

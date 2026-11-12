@@ -28,7 +28,7 @@ enum GameSessionScopeCellReset {
             guard let zone = scene.encounterZone, let plugin = scene.ownerPluginName else {
                 return false
             }
-            return provider.encounterZoneStore?.resolve(zone, fromPlugin: plugin)?
+            return provider.rules.encounterZoneStore?.resolve(zone, fromPlugin: plugin)?
                 .zone.flags.contains(.neverResets) ?? false
         }
         queries.isCleared = { [weak store] scene in
@@ -50,7 +50,7 @@ enum GameSessionScopeCellReset {
             return items.contains { inventory.count(of: $0) > 0 }
         }
         let reset = CellResetCoordinator(
-            store: store, settings: provider.cellResetSettings, queries: queries
+            store: store, settings: provider.rules.cellResetSettings, queries: queries
         ) { [weak gameSession] in gameSession?.gameTime.clock }
         gameSession.cellReset = reset
         // The prepare step hands its keys to the enqueue step of the same attach.
