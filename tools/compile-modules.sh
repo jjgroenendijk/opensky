@@ -76,6 +76,7 @@ tops="$(awk -v wanted="$wanted" '
 count="$(printf '%s\n' "$tops" | wc -l | tr -d ' ')"
 
 log="$run_dir/compile.log"
+"$root/tools/drop-signing-temp.sh" "$root/src/.build/out/Products"
 status=0
 if [ "$count" -gt "${OPENSKY_COMPILE_MAX:-12}" ]; then
     printf '[INFO] %s top targets depend on %s; building the whole package\n' "$count" "$wanted"
@@ -87,9 +88,14 @@ else
     done
 fi
 # swift build adds a source excerpt under each error and a long compiler
-# command line per failed file; the error lines alone say the same.
-grep -E '(error|warning): ' "$log" | grep -vE 'nonzero exit code|^error: Build failed' \
-    | sed "s|$root/||" | awk '!seen[$0]++' | head -n 40 || true
+# command line per failed file; the error lines alone say the same. A failed
+# task with no compiler error, such as CodeSign, keeps its name and the reason
+# its tool printed above it.
+{
+    grep -E '(error|warning): ' "$log" | grep -vE 'nonzero exit code|^error: Build failed' || true
+    grep -B2 -E '^error: (CodeSign|Ld) .* nonzero exit code' "$log" \
+        | sed -E 's/ failed with a nonzero exit code.*/ failed/' | grep -v '^--$' || true
+} | sed "s|$root/||" | awk '!seen[$0]++' | head -n 40
 [ "$status" -eq 0 ] || "$root/tools/failed-build-records.sh" -d "$log" "$root/src/.build/out"
 printf '[INFO] full transcript: %s\n' "$log"
 if [ "$status" -ne 0 ]; then

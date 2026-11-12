@@ -55,6 +55,7 @@ if [ -n "$compiles" ]; then
         COMPILATION_CACHE_CAS_PATH="$OPENSKY_COMPILATION_CACHE" \
         SDK_EXPLICIT_MODULES_OUTPUT_PATH="$OPENSKY_SDK_MODULES" \
         -IDEBuildingContinueBuildingAfterErrors=YES
+    "$root/tools/drop-signing-temp.sh" "$derived_data/Build/Products"
 fi
 echo "[INFO] transcript: $log"
 
