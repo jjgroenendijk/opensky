@@ -5,13 +5,30 @@
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
 import OpenSkyConditions
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
-public import OpenSkyMagicInterface
+import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 
-extension CombatCoordinator {
+/// The perk entry points of combat, and the rolls they make.
+final class CombatPerkTerms {
+    let world: any CombatWorld
+    let items: ItemDefinitionStore?
+    let staggers: StaggerSettings
+    /// The critical-hit, arrow-deflect, knock, and reflect rolls.
+    var random = ConditionRandom()
+    /// The player's crouch last frame, so a sneak entry casts its perk spell once.
+    var wasPlayerSneaking = false
+    /// The graph flags the player's perks set true last frame.
+    var perkGraphFlags: Set<String> = []
+
+    init(world: any CombatWorld, items: ItemDefinitionStore?, staggers: StaggerSettings) {
+        self.world = world
+        self.items = items
+        self.staggers = staggers
+    }
+
     /// `key`'s perks at `entryPoint` applied to `value`. Without a world, `value`.
     func perkValue(
         _ value: Float,
@@ -84,7 +101,7 @@ extension CombatCoordinator {
         let chance = perkValue(
             base, at: .calculateCriticalChance, on: blow.attacker, subjects: subjects
         ) * (critical?.percentMultiplier ?? 1)
-        guard chance > 0, Float(strikeRandom.percent()) < chance else { return }
+        guard chance > 0, Float(random.percent()) < chance else { return }
         strike.isCritical = true
         strike.criticalDamage = perkValue(
             Float(critical?.damage ?? 0),
@@ -98,7 +115,7 @@ extension CombatCoordinator {
     /// `Apply Bashing Spell` for a bash, lands on the target. An unarmed hit is not a
     /// combat hit (CK wiki "Perk Entry Point").
     @discardableResult
-    public func applyPerkHitSpell(_ blow: CombatBlow, on target: ReferenceKey) -> SpellHitReport? {
+    func applyPerkHitSpell(_ blow: CombatBlow, on target: ReferenceKey) -> SpellHitReport? {
         let entryPoint: PerkEntryPoint
         let subjects: PerkEvaluationSubjects
         if blow.kind.isBash {
@@ -120,7 +137,7 @@ extension CombatCoordinator {
     /// `Apply Weapon Swing Spell`: an enemy's swing at `target` lands the spell of
     /// `target`'s own perk on `target`, before the swing makes contact.
     @discardableResult
-    public func applyPerkSwingSpell(
+    func applyPerkSwingSpell(
         _ blow: CombatBlow,
         at target: ReferenceKey
     ) -> SpellHitReport? {
@@ -135,7 +152,7 @@ extension CombatCoordinator {
     /// `Apply Sneaking Spell`: entering sneak casts the chosen spell on the player,
     /// as Shadow Warrior's invisibility in combat.
     @discardableResult
-    public func notePlayerSneaking(_ isSneaking: Bool) -> SpellHitReport? {
+    func notePlayerSneaking(_ isSneaking: Bool) -> SpellHitReport? {
         defer { wasPlayerSneaking = isSneaking }
         guard isSneaking, !wasPlayerSneaking else { return nil }
         return applyChosenSpell(
@@ -148,7 +165,7 @@ extension CombatCoordinator {
 
     /// `Set Boolean Graph Variable`: the player's graph flags that changed since the
     /// last frame. A perk that stops passing, as Ranger when sneaking, clears its flag.
-    public func perkGraphFlagChanges() -> [String: Bool] {
+    func perkGraphFlagChanges() -> [String: Bool] {
         let now = Set(world.perks.perkChoices(
             at: .setBooleanGraphVariable,
             on: .player,
@@ -167,7 +184,7 @@ extension CombatCoordinator {
     }
 
     /// `Set Sweep Attack`: a swing that sweeps strikes every actor in its arc.
-    public func perkSweeps(_ blow: CombatBlow) -> Bool {
+    func perkSweeps(_ blow: CombatBlow) -> Bool {
         perkValue(
             0,
             at: .setSweepAttack,
@@ -191,7 +208,7 @@ extension CombatCoordinator {
             on: target,
             subjects: PerkEvaluationSubjects(owner: target)
         ))
-        return chance > 0 && Float(strikeRandom.percent()) < chance
+        return chance > 0 && Float(random.percent()) < chance
     }
 
     private func applyChosenSpell(
@@ -209,11 +226,51 @@ extension CombatCoordinator {
         else { return nil }
         // `iPerkAttackDisarmChance` and `iPerkBlockDisarmChance` gate a disarm spell.
         let disarms = spell.effects.contains { $0.effect?.effect.data?.archetype == .disarm }
-        if disarms, strikeRandom.percent() >= disarmChance {
+        if disarms, random.percent() >= disarmChance {
             return nil
         }
         return world.reporter.applySpellHit(SpellHit(
             payload: spell.payload(caster: caster), targets: [SpellHitTarget(key: target)]
         ))
+    }
+
+    /// `Mod Power Attack Stamina`, with the swung weapon bound.
+    func powerAttackStamina(_ cost: Float, weapon: FormID?) -> Float {
+        perkValue(
+            cost,
+            at: .modPowerAttackStamina,
+            on: .player,
+            subjects: PerkEvaluationSubjects(owner: .player)
+                .binding(.weapon, to: items?.conditionSubject(of: weapon))
+        )
+    }
+
+    /// `Mod Bow Zoom`: the share of the view a zoom keeps.
+    func bowZoomViewShare(bow: FormID?) -> Float {
+        perkValue(
+            1, at: .modBowZoom, on: .player,
+            subjects: PerkEvaluationSubjects(owner: .player)
+                .binding(.weapon, to: items?.conditionSubject(of: bow))
+        )
+    }
+
+    /// `Mod Falling Damage` of `actor` applied to `damage`.
+    func fallingDamage(_ damage: Float, on actor: ReferenceKey) -> Float {
+        perkValue(
+            damage, at: .modFallingDamage, on: actor,
+            subjects: PerkEvaluationSubjects(owner: actor)
+        )
+    }
+
+    /// Hunter's Discipline doubles the chance through this entry point.
+    func arrowRecoveryMultiplier(of shooter: ReferenceKey) -> Float {
+        world.perks.perkMultiplier(at: .modRecoverArrowChance, on: shooter)
+    }
+
+    /// The blocker's fortify term times `Mod Percent Blocked`.
+    func blockMultiplier(of target: ReferenceKey) -> Float {
+        guard let values = world.actorValues(of: target) else { return 1 }
+        return CombatFortifyBonus.block(reading: values)
+            * world.perks.perkMultiplier(at: CombatCore.percentBlockedEntryPoint, on: target)
     }
 }

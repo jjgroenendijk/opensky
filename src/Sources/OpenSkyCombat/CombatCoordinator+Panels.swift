@@ -11,12 +11,12 @@ import simd
 
 extension CombatCoordinator {
     public var isWeaponDrawn: Bool {
-        get { melee?.state.drawState.isWeaponInHand ?? false }
-        set { melee?.setWeaponDrawn(newValue) }
+        get { shared.melee?.state.drawState.isWeaponInHand ?? false }
+        set { shared.melee?.setWeaponDrawn(newValue) }
     }
 
     public var meleeCombatSnapshot: MeleeCombatSnapshot {
-        guard let melee else { return .unavailable }
+        guard let melee = shared.melee else { return .unavailable }
         return MeleeCombatSnapshot(
             hitCount: melee.hitCount,
             trace: melee.trace.map(Self.readout)
@@ -29,7 +29,7 @@ extension CombatCoordinator {
     }
 
     private func requestMelee(power: Bool) -> MeleeActionOutcome {
-        guard let melee else { return .unavailable }
+        guard let melee = shared.melee else { return .unavailable }
         guard melee.state.drawState.canAttack else {
             lastMeleeAction = .cannotAttack(melee.state.drawState)
             return lastMeleeAction
@@ -56,8 +56,8 @@ extension CombatCoordinator {
     /// forced shot is the same downstream as a player shot.
     @discardableResult
     func spawnDevProjectile() -> ArcheryActionOutcome {
-        guard let archery else { return .unavailable }
-        archery.arrow = selectedArrow()
+        guard let archery = shared.archery else { return .unavailable }
+        archery.arrow = shared.gear.selectedArrow()
         guard archery.arrow != nil else {
             lastArcheryAction = .noAmmunition
             return lastArcheryAction
@@ -75,40 +75,67 @@ extension CombatCoordinator {
 
 extension CombatCoordinator {
     public var combatLoopSnapshot: CombatLoopSnapshot {
-        guard let loop else { return .unavailable }
+        guard let loop = shared.loop else { return .unavailable }
         var snapshot = CombatLoopSnapshot(
             isPlayerInCombat: loop.state.isPlayerInCombat,
             hostileCount: loop.state.hostileCount,
-            actorCastCount: actorCastCount,
+            actorCastCount: shared.actorCastCount,
             lastActionText: loop.lastAction.text
         )
-        snapshot.usesTemperament = usesTemperament
-        snapshot.combatAI = combatAI
-        snapshot.isInInterior = world.isInInterior
+        snapshot.usesTemperament = shared.usesTemperament
+        snapshot.combatAI = shared.combatAI
+        snapshot.isInInterior = shared.world.isInInterior
         return snapshot
     }
 
     /// Reads the persisted Confidence and Assistance and game combat settings switches.
     public func load(settings store: PlayerSettingsStore) {
-        usesTemperament = store.bool(.combatTemperament)
-        appliesCombatGameSettings = store.bool(.combatGameSettings)
+        shared.usesTemperament = store.bool(.combatTemperament)
+        shared.appliesCombatGameSettings = store.bool(.combatGameSettings)
+        shared.loop?.applyingGameSettings = shared.appliesCombatGameSettings
     }
 
     var usesCombatTemperament: Bool {
-        get { usesTemperament }
-        set { usesTemperament = newValue }
+        get { shared.usesTemperament }
+        set { shared.usesTemperament = newValue }
     }
 
     var selectedActorIsHostile: Bool {
         get {
-            guard let loop, let key = world.selectedActor() else { return false }
+            guard
+                let loop = shared.loop,
+                let key = shared.world.selectedActor() else { return false }
             return loop.hostility(of: key) == .hostile
         }
         set { setSelectedActorHostile(newValue) }
     }
 
     var isActorCastingEnabled: Bool {
-        get { allowsActorCasting }
+        get { shared.allowsActorCasting }
         set { setActorCasting(newValue) }
+    }
+}
+
+extension CombatCoordinator {
+    /// Turning casting off drops every cast in flight, so no charge is left
+    /// that nothing will release.
+    func setActorCasting(_ allowed: Bool) {
+        shared.allowsActorCasting = allowed
+        guard !allowed, let loop = shared.loop else { return }
+        for key in loop.behaviors.keys.sorted() {
+            shared.world.cancelCast(by: key)
+        }
+        loop.record(.castingDisallowed)
+    }
+
+    /// Sets hostility on the readout's selected actor and records the outcome.
+    func setSelectedActorHostile(_ hostile: Bool) {
+        guard let loop = shared.loop else { return }
+        guard let key = shared.world.selectedActor() else {
+            loop.record(.noHostilityTarget)
+            return
+        }
+        loop.setHostility(hostile ? .hostile : .neutral, on: key)
+        loop.record(.hostility(actor: actorName(key), hostile: hostile))
     }
 }

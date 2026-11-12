@@ -1,90 +1,104 @@
 // The skill, sneak-attack, and armour terms of one weapon hit, read from the
 // world. The arithmetic lives in `WeaponStrikeRules`; the perk terms are in
-// `CombatCoordinator+Perks.swift`.
+// `CombatPerkTerms`.
 
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
 
-extension CombatCoordinator {
+/// The terms of one weapon hit on a target, and the block and stamina reads around it.
+struct CombatStrikes {
+    let shared: CombatShared
+
     /// The terms of `blow` on `target`, perks of both sides included.
-    public func strike(_ blow: CombatBlow, on target: ReferenceKey) -> WeaponStrike {
+    func strike(_ blow: CombatBlow, on target: ReferenceKey) -> WeaponStrike {
         var strike = WeaponStrike()
-        let attack = attackSubjects(blow, on: target)
+        let attack = shared.perks.attackSubjects(blow, on: target)
         if
             blow.attacker == .player,
             let index = SkillUseAction.weaponHit(blow.handType).skillIndex,
-            let skill = world.actorValues(of: .player)?(index)
+            let skill = shared.world.actorValues(of: .player)?(index)
         {
             strike.skillMultiplier = WeaponStrikeRules.playerSkillMultiplier(
-                skill: skill, settings: weaponDamage
+                skill: skill, settings: shared.weaponDamage
             )
         }
         if isSneakAttack(by: blow.attacker, on: target) {
             let family = WeaponStrikeRules.sneakMultiplier(
-                handType: blow.handType, settings: weaponDamage
+                handType: blow.handType, settings: shared.weaponDamage
             )
-            strike.sneakMultiplier = perkValue(
+            strike.sneakMultiplier = shared.perks.perkValue(
                 family, at: .modSneakAttackMult, on: blow.attacker, subjects: attack
             )
         }
         strike.armorFraction = armorFraction(of: target, against: blow)
-        if let mult = world.actorValues(of: blow.attacker)?(ActorValueIndex.attackDamageMult) {
+        if
+            let mult = shared.world
+                .actorValues(of: blow.attacker)?(ActorValueIndex.attackDamageMult)
+        {
             strike.attackDamageMultiplier = mult
         }
-        applyPerkTerms(to: &strike, blow: blow, on: target)
+        shared.perks.applyPerkTerms(to: &strike, blow: blow, on: target)
         return strike
     }
 
     /// A sneak attack the player landed: Sneak experience and the HUD notice.
     func reportSneakAttack(_ strike: WeaponStrike, ranged: Bool) {
         guard strike.isSneakAttack else { return }
-        let amount = ranged ? weaponDamage.sneakSkillUseRanged : weaponDamage.sneakSkillUseMelee
-        _ = reportSkillUse(SkillUseEvent(actor: .player, action: .sneakAttack, amount: amount))
-        pendingCommands.append(
-            .showNotification(weaponDamage.sneakNotice(multiplier: strike.sneakMultiplier))
+        let amount = ranged ? shared.weaponDamage.sneakSkillUseRanged : shared.weaponDamage
+            .sneakSkillUseMelee
+        _ = shared.world.reporter.reportSkillUse(SkillUseEvent(
+            actor: .player,
+            action: .sneakAttack,
+            amount: amount
+        ))
+        shared.pendingCommands.append(
+            .showNotification(shared.weaponDamage.sneakNotice(multiplier: strike.sneakMultiplier))
         )
     }
 
     /// The blow before the block, so a stronger hit costs more to stop.
-    public func applyBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey) {
+    func applyBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey) {
         let incoming = damage.strike.damage(base: damage.base, attack: damage.attackMultiplier)
-        world.damageStamina(by: stamina.blockCost(incomingDamage: incoming), of: blocker)
+        shared.world.damageStamina(
+            by: shared.stamina.blockCost(incomingDamage: incoming),
+            of: blocker
+        )
     }
 
     /// UESP "Skyrim:Combat": a power attack needs at least one point of stamina.
-    public func payMeleeStamina(_ cost: Float) -> Bool {
+    func payMeleeStamina(_ cost: Float) -> Bool {
         guard
             let index = ActorValueIdentity.index(named: "Stamina"),
-            let stamina = world.actorValues(of: .player)?(index)
+            let stamina = shared.world.actorValues(of: .player)?(index)
         else { return true }
         guard stamina >= 1 else { return false }
-        world.damageStamina(by: cost, of: .player)
+        shared.world.damageStamina(by: cost, of: .player)
         return true
     }
 
-    public func canPowerBash() -> Bool {
-        world.ownsPerk(editorID: "PowerBash", on: .player)
+    func canPowerBash() -> Bool {
+        shared.world.ownsPerk(editorID: "PowerBash", on: .player)
     }
 
-    public func combatBlockSkill(of key: ReferenceKey) -> Float {
+    func combatBlockSkill(of key: ReferenceKey) -> Float {
         ActorValueIdentity.index(named: "Block")
-            .flatMap { world.actorValues(of: key)?($0) } ?? MeleeDamage.defaultBlockSkill
+            .flatMap { shared.world.actorValues(of: key)?($0) } ?? MeleeDamage.defaultBlockSkill
     }
 
     /// UESP "Skyrim:Block": a shield bash uses the shield's base rating, without tempering.
-    public func meleeBashSource() -> (blockSkill: Float, shieldRating: Float?) {
+    func meleeBashSource() -> (blockSkill: Float, shieldRating: Float?) {
         (combatBlockSkill(of: .player), shieldRating(of: .player))
     }
 
     /// The base armour rating of the shield `key` wears, or nil without one.
-    public func shieldRating(of key: ReferenceKey) -> Float? {
-        world.gearReads.equippedItems(of: key).lazy.compactMap { worn -> Float? in
+    func shieldRating(of key: ReferenceKey) -> Float? {
+        shared.world.gearReads.equippedItems(of: key).lazy.compactMap { worn -> Float? in
             guard
-                let armor = self.items?.armor[worn.item.rawValue],
+                let armor = shared.items?.armor[worn.item.rawValue],
                 armor.bodyTemplate?.slots.contains(.shield) ?? false
             else { return nil }
             return Float(armor.armorRating & 0xFFFF) / 100
@@ -95,17 +109,17 @@ extension CombatCoordinator {
     /// NPC. A target already fighting the player knows where the player is.
     func isSneakAttack(by attacker: ReferenceKey, on target: ReferenceKey) -> Bool {
         guard attacker == .player, target != .player else { return false }
-        if let loop, loop.activity(of: target) != .notFighting {
+        if let loop = shared.loop, loop.activity(of: target) != .notFighting {
             return false
         }
-        return !world.awareness(of: target, toward: attacker).isDetected
+        return !shared.world.awareness(of: target, toward: attacker).isDetected
     }
 
     /// The fraction of a blow `target`'s worn armour stops. Each piece passes the
     /// wearer's `Mod Armor Rating`, and the sum the attacker's `Mod Target Damage Resistance`.
-    public func armorFraction(of target: ReferenceKey, against blow: CombatBlow? = nil) -> Float {
-        guard let items else { return 0 }
-        let pieces = world.gearReads.equippedItems(of: target)
+    func armorFraction(of target: ReferenceKey, against blow: CombatBlow? = nil) -> Float {
+        guard let items = shared.items else { return 0 }
+        let pieces = shared.world.gearReads.equippedItems(of: target)
             .compactMap { worn -> WornArmorPiece? in
                 guard
                     let armor = items.armor[worn.item.rawValue],
@@ -114,7 +128,7 @@ extension CombatCoordinator {
                 let isBody = armor.bodyTemplate?.slots.contains(.body) ?? false
                 let tempered = Float(armor.armorRating & 0xFFFF) / 100
                     + Tempering.bonus(level: worn.temperLevel, isBodyArmor: isBody)
-                let rating = perkValue(
+                let rating = shared.perks.perkValue(
                     tempered,
                     at: .modArmorRating,
                     on: target,
@@ -123,7 +137,7 @@ extension CombatCoordinator {
                 )
                 return WornArmorPiece(rating: rating, type: type)
             }
-        let values = world.actorValues(of: target)
+        let values = shared.world.actorValues(of: target)
         let read = { (name: String) -> Float in
             ActorValueIdentity.index(named: name).flatMap { values?($0) } ?? 0
         }
@@ -132,20 +146,36 @@ extension CombatCoordinator {
             skills: ArmorSkills(light: read("Light Armor"), heavy: read("Heavy Armor")),
             isPlayer: target == .player,
             extra: read("Damage Resist"),
-            settings: weaponDamage
+            settings: shared.weaponDamage
         )
         if let blow {
-            rating = perkValue(
+            rating = shared.perks.perkValue(
                 rating,
                 at: .modTargetDamageResistance,
                 on: blow.attacker,
-                subjects: attackSubjects(blow, on: target)
+                subjects: shared.perks.attackSubjects(blow, on: target)
             )
         }
         return WeaponStrikeRules.armorFraction(
             rating: rating,
             pieces: pieces,
-            settings: weaponDamage
+            settings: shared.weaponDamage
         )
+    }
+
+    func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {
+        let isBlocking = target == .player && shared.melee?.state.isBlocking == true
+        return CombatCore.block(
+            of: target,
+            playerIsBlocking: isBlocking,
+            playerShieldRating: isBlocking ? meleeBashSource().shieldRating : nil,
+            machineBlock: target == .player ? nil : npcBlock(of: target)
+        )
+    }
+
+    /// An NPC with a shield blocks with it, so the shield formula applies (UESP "Skyrim:Block").
+    func npcBlock(of target: ReferenceKey) -> MeleeBlockKind? {
+        guard let kind = shared.loop?.blockKind(of: target) else { return nil }
+        return shieldRating(of: target).map { MeleeBlockKind.shield(baseArmorRating: $0) } ?? kind
     }
 }

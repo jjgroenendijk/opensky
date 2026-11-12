@@ -1,338 +1,95 @@
-// `CombatCoordinator` as the world of its three runtimes. Each answer reads
-// another runtime it owns, a `CombatCore` rule, or one `CombatWorld` member.
+// The calls the session makes on `CombatCoordinator` outside a frame step. Each
+// forwards to the part that answers it.
 
 public import OpenSkyActorsInterface
 public import OpenSkyBehavior
 public import OpenSkyCombatInterface
-import OpenSkyConditions
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
-import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
 public import OpenSkyPhysics
 public import OpenSkyProgressionInterface
-import OpenSkyWorldState
-import simd
 
-extension CombatCoordinator: ScriptHitReporting, SkillUseReporting, SpellHitApplying,
-    WeaponEnchantmentApplying
-{
-    @discardableResult
-    public func reportScriptHit(_ hit: ScriptHitEvent) -> Int {
-        world.reporter.reportScriptHit(hit)
+extension CombatCoordinator {
+    public var meleeAttacker: MeleeAttacker {
+        shared.meleeAttacker
     }
 
-    @discardableResult
-    public func reportSkillUse(_ use: SkillUseEvent) -> Float {
-        world.reporter.reportSkillUse(use)
+    public var projectileShooter: ProjectileShooter {
+        projectileWorld.projectileShooter
     }
 
-    @discardableResult
-    public func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
-        world.reporter.applySpellHit(hit)
+    public func projectileTargets() -> [MeleeTarget] {
+        projectileWorld.projectileTargets()
     }
 
-    @discardableResult
-    public func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
-        world.reporter.applyWeaponEnchantment(hit)
+    public func sweepProjectile(_ query: ShapeSweepQuery) -> ShapeSweepHit? {
+        projectileWorld.sweepProjectile(query)
     }
 
-    public func applyWeaponPoison(_ hit: WeaponPoisonHit) {
-        world.reporter.applyWeaponPoison(hit)
+    public func combatActor(key: ReferenceKey) -> CombatActorObservation? {
+        loopWorld.combatActor(key: key)
     }
 
-    @discardableResult
-    public func applyWeaponEnhancement(attacker: ReferenceKey, target: ReferenceKey) -> Int {
-        world.reporter.applyWeaponEnhancement(attacker: attacker, target: target)
+    public func engagedEnemy(playerFeet: SIMD3<Float>) -> CombatActorObservation? {
+        loopWorld.engagedEnemy(playerFeet: playerFeet)
     }
 
-    public func spellLanded(_ payload: SpellPayload, at point: SIMD3<Float>) {
-        world.reporter.spellLanded(payload, at: point)
+    public func combatHostility(of key: ReferenceKey) -> ActorHostility {
+        loopWorld.combatHostility(of: key)
     }
 
-    /// Only the player carries a behavior graph, so an event on an NPC
-    /// answers false.
     @discardableResult
     public func raiseCombatEvent(_ name: String, on target: ReferenceKey?) -> Bool {
-        guard let target, target != .player else { return world.raisePlayerGraphEvent(name) }
-        return world.raiseActorGraphEvent(name, on: target)
+        loopWorld.raiseCombatEvent(name, on: target)
     }
 
     public func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {
-        world.writePlayerGraphVariable(value, named: name)
+        loopWorld.writeCombatVariable(value, named: name)
     }
 
-    public func writeCombatVariable(
-        _ value: BehaviorVariableValue, named name: String, on target: ReferenceKey?
-    ) {
-        guard let target, target != .player else {
-            world.writePlayerGraphVariable(value, named: name)
-            return
-        }
-        world.writeActorGraphVariable(value, named: name, on: target)
-    }
-}
-
-extension CombatCoordinator: MeleeCombatWorld {
-    public var meleeAttacker: MeleeAttacker {
-        world.playerAttacker ?? MeleeAttacker(key: .player, feet: SIMD3<Float>(), facing: 0)
-    }
-
-    public func meleeAttackMultiplier(handType: CombatHandType) -> Float {
-        guard let values = world.actorValues(of: .player) else { return 1 }
-        return CombatFortifyBonus.melee(handType: handType, reading: values)
-    }
-
-    public func meleeTargets() -> [MeleeTarget] {
-        world.residentActors().map { MeleeTarget(key: $0.key, feet: $0.feet) }
-    }
-
-    public func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {
-        let isBlocking = target == .player && melee?.state.isBlocking == true
-        return CombatCore.block(
-            of: target,
-            playerIsBlocking: isBlocking,
-            playerShieldRating: isBlocking ? meleeBashSource().shieldRating : nil,
-            machineBlock: target == .player ? nil : npcBlock(of: target)
-        )
-    }
-
-    /// An NPC with a shield blocks with it, so the shield formula applies (UESP "Skyrim:Block").
-    func npcBlock(of target: ReferenceKey) -> MeleeBlockKind? {
-        guard let kind = loop?.blockKind(of: target) else { return nil }
-        return shieldRating(of: target).map { MeleeBlockKind.shield(baseArmorRating: $0) } ?? kind
-    }
-
-    public func meleeBlockSkill(of target: ReferenceKey) -> Float {
-        combatBlockSkill(of: target)
-    }
-
-    /// The blocker's fortify term times `Mod Percent Blocked`.
-    public func meleeBlockMultiplier(of target: ReferenceKey) -> Float {
-        guard let values = world.actorValues(of: target) else { return 1 }
-        return CombatFortifyBonus.block(reading: values)
-            * world.perks.perkMultiplier(at: CombatCore.percentBlockedEntryPoint, on: target)
-    }
-
-    public func meleeStrike(_ blow: CombatBlow, on target: ReferenceKey) -> WeaponStrike {
-        let strike = strike(blow, on: target)
-        reportSneakAttack(strike, ranged: false)
-        return strike
-    }
-
-    public func meleeResolvedWeapon(_ weapon: FormID?) -> ResolvedFormID? {
-        items?.conditionSubject(of: weapon)?.id
-    }
-
-    public func meleeSweeps(_ blow: CombatBlow) -> Bool {
-        perkSweeps(blow)
-    }
-
-    public func applyMeleeHitSpell(_ blow: CombatBlow, on target: ReferenceKey) {
-        applyPerkHitSpell(blow, on: target)
-    }
-
-    /// `Mod Power Attack Stamina`, with the swung weapon bound.
-    public func meleePowerAttackStamina(_ cost: Float, weapon: FormID?) -> Float {
-        perkValue(
-            cost,
-            at: .modPowerAttackStamina,
-            on: .player,
-            subjects: PerkEvaluationSubjects(owner: .player)
-                .binding(.weapon, to: items?.conditionSubject(of: weapon))
-        )
-    }
-
-    /// The player's own swing: the melee runtime only ever swings for the player.
-    @discardableResult
-    public func applyMeleeDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
-        let standingPower = melee?.strikeKind == .power && melee?.powerDirection == .inPlace
-        let severs = standingPower && melee.map { canSever(handType: $0.weapon.handType) } == true
-        return applyHealthDamage(
-            amount, to: target, attacker: meleeAttacker.key, kind: .melee, canSever: severs
-        )
-    }
-
-    /// Every weapon, arrow, and explosion hit passes here, so difficulty scales
-    /// health damage at one point. A nil attacker is never the player. An ethereal
-    /// actor deals and takes none.
     @discardableResult
     public func applyHealthDamage(
         _ amount: Float,
         to target: ReferenceKey,
         attacker: ReferenceKey?,
-        kind: CombatHitKind = .other,
-        canSever: Bool = false
+        canSever: Bool
     ) -> Bool {
-        guard amount > 0, !isEthereal(target), !(attacker.map(isEthereal) ?? false)
-        else { return false }
-        let scaled = DifficultyDamage.scaled(
-            amount, attackerIsPlayer: attacker == .player, targetIsPlayer: target == .player,
-            multipliers: difficultyMultipliers
-        ) * (world.isInKillMove(target) ? KillMoveAttempt.damageMultiplier : 1)
-        let health = world.health(of: target)
-        let landed = world.damageHealth(by: scaled, of: target)
-        if landed, let health, let attacker {
-            knockBack(target, damage: scaled, health: health, by: (attacker, kind))
-        }
-        if landed, attacker == .player, target != .player {
-            playerStruckTarget = target
-        }
-        if landed {
-            let hit = CombatHitRecord(
-                damage: scaled, kind: kind, attacker: attacker, canSever: canSever
-            )
-            world.recordHealthHit(hit, on: target)
-            if kind != .other {
-                pendingCommands.append(.drewBlood(hit, target: target))
-            }
-            if kind == .melee, let attacker {
-                reflectMeleeDamage(amount, from: target, to: attacker)
-            }
-        }
-        return landed
-    }
-
-    /// UESP "Skyrim:One-handed" and "Skyrim:Two-handed": Savage Strike and Devastating
-    /// Blow let a standing power attack decapitate. Maces and warhammers count, as in
-    /// the unpatched game.
-    func canSever(handType: CombatHandType, attacker: ReferenceKey = .player) -> Bool {
-        switch handType {
-        case .sword, .dagger, .axe, .mace:
-            world.ownsPerk(editorID: "SavageStrike", on: attacker)
-        case .greatsword, .battleaxe:
-            world.ownsPerk(editorID: "DevastatingBlow", on: attacker)
-        default:
-            false
-        }
-    }
-
-    private func isEthereal(_ key: ReferenceKey) -> Bool {
-        world.gearReads.magicInfluence(of: key).isEthereal
-    }
-
-    public func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
-        pendingCommands.append(.playImpact(impact, at: position))
-    }
-
-    public func showDefaultBlood(on target: ReferenceKey, at position: SIMD3<Float>, melee: Bool) {
-        pendingCommands.append(.showDefaultBlood(on: target, at: position, melee: melee))
-    }
-
-    public func impactMaterial(of target: ReferenceKey) -> FormID? {
-        world.impactMaterial(of: target)
-    }
-}
-
-extension CombatCoordinator: ProjectileWorld {
-    public var projectileShooter: ProjectileShooter {
-        world.playerShooter ?? ProjectileShooter(
-            key: .player, origin: SIMD3(), aim: SIMD3(1, 0, 0),
-            isFirstPerson: true, location: nil
-        )
-    }
-
-    public func projectileTargets() -> [MeleeTarget] {
-        meleeTargets()
-    }
-
-    public func sweepProjectile(_ query: ShapeSweepQuery) -> ShapeSweepHit? {
-        world.sweep(query)
-    }
-
-    /// A shot no wielder fired, such as a dart trap's, takes no perks or sneak bonus.
-    @discardableResult
-    public func applyProjectileDamage(
-        _ amount: Float, to target: ReferenceKey, from shooter: ReferenceKey
-    ) -> Bool {
-        guard !deflectsArrow(target) else { return false }
-        guard shooter == projectileShooter.key else {
-            return applyHealthDamage(amount, to: target, attacker: shooter, kind: .ranged)
-        }
-        let blow = CombatBlow(
-            attacker: shooter, weapon: playerWeapon()?.formID, handType: .bow, baseDamage: amount
-        )
-        let strike = strike(blow, on: target)
-        reportSneakAttack(strike, ranged: true)
-        let landed = applyHealthDamage(
-            strike.damage(base: amount), to: target, attacker: shooter, kind: .ranged
-        )
-        if landed {
-            applyPerkHitSpell(blow, on: target)
-        }
-        return landed
-    }
-
-    public func projectileIsSneakAttack(by shooter: ReferenceKey, on target: ReferenceKey) -> Bool {
-        isSneakAttack(by: shooter, on: target)
-    }
-
-    public func projectileLaunched(_ projectile: LiveProjectile) {
-        let visuals = projectile.profile.visuals
-        guard visuals.hasMuzzleFlash else { return }
-        pendingCommands.append(.muzzleFlash(
-            visuals, at: projectile.launchPosition, along: projectile.launchDirection
-        ))
-    }
-
-    public func playProjectileImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
-        pendingCommands.append(.playImpact(impact, at: position))
-        pendingCommands.append(.detectionEvent(owner: .player, at: position))
-    }
-
-    /// False on an empty quiver, which is ordinary play: the shot does not happen.
-    @discardableResult
-    public func consumeArrow(_ ammunition: FormID) -> Bool {
-        world.gearReads.removeOneFromPlayer(ammunition)
-    }
-
-    /// A stuck arrow is a spawned AMMO model at the impact point. It does not
-    /// follow the bone of the actor it hit.
-    @discardableResult
-    public func spawnStuckProjectile(_ arrow: StuckProjectile) -> ReferenceKey? {
-        let spawn = ReferenceSpawnState(
-            base: arrow.base,
-            location: arrow.location,
-            placement: PlacedReference.Placement(
-                position: arrow.position,
-                rotation: arrow.rotation
-            ),
-            count: 1
-        )
-        guard let key = world.spawn(spawn, in: arrow.location) else { return nil }
-        stuckKeys.insert(key)
-        return key
-    }
-
-    public func removeStuckProjectile(_ key: ReferenceKey) {
-        guard stuckKeys.remove(key) != nil else { return }
-        pendingCommands.append(.removeReference(key))
-    }
-
-    public func residentProjectileCells() -> Set<CellSceneLocation> {
-        world.residentCells()
+        shared.damage.applyHealthDamage(amount, to: target, attacker: attacker, canSever: canSever)
     }
 
     @discardableResult
-    public func raiseArcheryEvent(_ name: String) -> Bool {
-        raiseCombatEvent(name, on: nil)
-    }
-
-    public func writeArcheryVariable(_ value: BehaviorVariableValue, named name: String) {
-        writeCombatVariable(value, named: name)
+    public func applyFall(height: Float, speed: Float, to actor: ReferenceKey) -> Float {
+        shared.damage.applyFall(height: height, speed: speed, to: actor)
     }
 
     @discardableResult
-    public func giveRecoveredArrow(_ ammunition: FormID, to target: ReferenceKey) -> Bool {
-        world.gearReads.addItem(ammunition, count: 1, to: target)
+    public func forceKnockBack(_ target: ReferenceKey, damage: Float) -> HitKnock? {
+        shared.damage.forceKnockBack(target, damage: damage)
     }
 
-    public func showArcheryNotice(_ text: String) {
-        pendingCommands.append(.showNotification(text))
+    public var impulses: ImpulseRuntime? {
+        shared.explosions.impulses
     }
 
-    /// Hunter's Discipline doubles the chance through this entry point.
-    public func arrowRecoveryMultiplier(of shooter: ReferenceKey) -> Float {
-        world.perks.perkMultiplier(at: .modRecoverArrowChance, on: shooter)
+    public func adjustingForDifficulty(_ use: SkillUseEvent) -> SkillUseEvent {
+        shared.damage.adjustingForDifficulty(use)
+    }
+
+    @discardableResult
+    public func notePlayerSneaking(_ isSneaking: Bool) -> SpellHitReport? {
+        shared.perks.notePlayerSneaking(isSneaking)
+    }
+
+    public func perkGraphFlagChanges() -> [String: Bool] {
+        shared.perks.perkGraphFlagChanges()
+    }
+
+    /// The first weapon the player has equipped, or nil when unarmed.
+    public func playerWeapon() -> Weapon? {
+        shared.gear.playerWeapon()
+    }
+
+    public var bowZoomTimeScale: Float {
+        shared.gear.bowZoomTimeScale
     }
 }
