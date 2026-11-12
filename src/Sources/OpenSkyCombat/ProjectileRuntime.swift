@@ -238,20 +238,21 @@ public final class ProjectileRuntime {
         detonated: Bool = false
     ) -> ProjectileTrace {
         impactCount += 1
-        let applied = applyArrow(projectile, impact: impact)
-        let spellHit = applySpell(projectile, impact: impact)
-        playImpact(of: impact, payload: projectile.payload)
-        pushStruckBody(projectile, impact: impact)
-        detonateExplosion(of: projectile, at: impact.position, source: impact.reference)
+        let landing = ProjectilePayloadLanding(
+            world: world, areaSettings: areaSettings, impacts: impacts, explosions: explosions
+        ).land(projectile, impact: impact)
+        if let world, let kept = landing.keptArrow {
+            recoverArrow(kept.arrow, from: projectile.shooter, into: kept.target, world: world)
+        }
         let didStick = !detonated && stick(projectile, at: impact)
         return record(
             projectile,
             outcome: detonated ? .detonated : (impact.isActor ? .hitActor : .hitStatic),
             at: impact.position,
             impact: impact,
-            appliedDamage: applied,
+            appliedDamage: landing.appliedDamage,
             stuck: didStick,
-            spellHit: spellHit
+            spellHit: landing.spellHit
         )
     }
 
