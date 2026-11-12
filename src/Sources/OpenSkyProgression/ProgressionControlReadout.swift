@@ -5,9 +5,9 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-public import OpenSkyProgressionInterface
+import OpenSkyProgressionInterface
 
-nonisolated public enum ProgressionControlReadout: Sendable {
+nonisolated enum ProgressionControlReadout: Sendable {
     /// Column width the skill lines pad their names to. Wide enough for
     /// "Enchanting"; a longer modded name pushes its own line out rather than
     /// being truncated, because a cut-off name is worse than a ragged column.
@@ -166,19 +166,7 @@ nonisolated public enum ProgressionControlReadout: Sendable {
         // node, or a dangling `PNAM`. No point is ever spent on either.
         guard !node.grantsNoPerk else { return "grants no perk" }
         guard let refusal = node.refusal else { return "available" }
-        return description(of: refusal)
-    }
-
-    public static func description(of refusal: PerkSpendRefusal) -> String {
-        switch refusal {
-        case .unresolvedPerk: "perk not found"
-        case .notPlayable: "not playable"
-        case .alreadyOwned: "owned"
-        case .notInPerkTree: "in no perk tree"
-        case let .previousRankMissing(perk): "needs the rank below (\(perk))"
-        case .parentMissing: "needs an owned parent"
-        case .unmetCondition: "conditions not met"
-        }
+        return refusal.readoutText
     }
 
     /// A box's place in its `NNAM` rank chain, printed only for a chain longer
@@ -187,5 +175,20 @@ nonisolated public enum ProgressionControlReadout: Sendable {
     private static func rankText(_ node: PerkTreeNodeReadout) -> String {
         guard node.rankCount > 1 else { return "" }
         return " (rank \(node.ownedRank)/\(node.rankCount))"
+    }
+}
+
+nonisolated extension PerkSpendRefusal {
+    /// The reason the readout prints after a refused spend.
+    var readoutText: String {
+        switch self {
+        case .unresolvedPerk: "perk not found"
+        case .notPlayable: "not playable"
+        case .alreadyOwned: "owned"
+        case .notInPerkTree: "in no perk tree"
+        case let .previousRankMissing(perk): "needs the rank below (\(perk))"
+        case .parentMissing: "needs an owned parent"
+        case .unmetCondition: "conditions not met"
+        }
     }
 }

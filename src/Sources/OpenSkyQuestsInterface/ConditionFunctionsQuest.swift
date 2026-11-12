@@ -77,7 +77,10 @@ nonisolated public enum ConditionFunctionsQuest {
                 guard let quest = call.context.quests.key(for: parameter.asFormID) else {
                     return .failure(.unresolvedQuest(parameter.asFormID))
                 }
-                return ConditionFunctionsScriptVariables.scriptVariable(call, on: quest)
+                return ConditionFunctions.ConditionFunctionsScriptVariables.scriptVariable(
+                    call,
+                    on: quest
+                )
             })
         }
     }

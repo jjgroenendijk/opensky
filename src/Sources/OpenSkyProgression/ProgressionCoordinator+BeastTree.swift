@@ -41,7 +41,7 @@ extension ProgressionCoordinator {
             let next = treeReader.nextRank(of: head)
         else { return .refused("Every rank is owned.") }
         if let refusal = treeReader.perkSpendRefusal(for: next) {
-            return .refused(ProgressionControlReadout.description(of: refusal))
+            return .refused(refusal.readoutText)
         }
         guard perks.add(next, to: .player) else { return .refused("Every rank is owned.") }
         world.setGlobalValue(points - 1, editorID: tree.perkPointsGlobal)

@@ -94,7 +94,7 @@ nonisolated extension ProgressionActionOutcome {
         case .noAttributePickOwed: "No attribute pick is owed: gain a level first."
         case .noPerkPoints: "No perk points to spend."
         case let .perkRefused(refusal):
-            "Refused: \(ProgressionControlReadout.description(of: refusal))."
+            "Refused: \(refusal.readoutText)."
         }
     }
 }

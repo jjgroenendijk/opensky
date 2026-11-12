@@ -146,7 +146,8 @@ nonisolated public enum ConditionFunctionsScriptState {
         })
         installKeywordData(&registry)
         installShout(&registry)
-        ConditionFunctionsRecordedEvents.installRecordedEvents(&registry)
+        ConditionFunctionsScriptState.ConditionFunctionsRecordedEvents
+            .installRecordedEvents(&registry)
     }
 
     private static func installShout(_ registry: inout ConditionFunctionRegistry) {

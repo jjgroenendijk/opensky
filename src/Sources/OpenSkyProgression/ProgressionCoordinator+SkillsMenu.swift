@@ -79,7 +79,7 @@ extension ProgressionCoordinator: SkillsMenuSource {
             treeReader.invalidateCounts()
             return .done("Perk added.")
         case let .failure(.perkRefused(refusal)):
-            return .refused(ProgressionControlReadout.description(of: refusal))
+            return .refused(refusal.readoutText)
         case let .failure(error): return .refused(String(describing: error))
         }
     }

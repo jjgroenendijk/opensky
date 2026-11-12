@@ -153,7 +153,8 @@ struct CombatRulePartsTests {
         coordinator.difficulty = .legendary
         #expect(coordinator.difficulty == .legendary)
         let use = SkillUseEvent(
-            actor: .player, action: .spellEffect(skill: CombatDamage.destructionIndex), amount: 10
+            actor: .player, action: .spellEffect(skill: CombatShared.CombatDamage.destructionIndex),
+            amount: 10
         )
         #expect(coordinator.adjustingForDifficulty(use).actor == .player)
         let other = SkillUseEvent(actor: Self.foe, action: .sneakAttack, amount: 10)

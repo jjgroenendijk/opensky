@@ -61,7 +61,7 @@ extension ProgressionTreeReader {
 
     private func refusalText(forChainFrom head: ReferenceKey) -> String? {
         guard let next = nextRank(of: head) else { return "owned" }
-        return perkSpendRefusal(for: next).map(ProgressionControlReadout.description(of:))
+        return perkSpendRefusal(for: next).map(\.readoutText)
     }
 
     private func requirement(of perk: ResolvedPerk) -> String {

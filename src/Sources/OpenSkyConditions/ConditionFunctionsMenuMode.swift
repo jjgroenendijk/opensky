@@ -27,24 +27,27 @@ nonisolated extension ConditionContext {
     }
 }
 
-nonisolated enum ConditionFunctionsMenuMode {
-    static func installMenuMode(_ registry: inout ConditionFunctionRegistry) {
-        registry.register(ConditionFunction(
-            index: 36, name: "MenuMode", parameter1: .integer
-        ) { call in
-            guard call.parameter1?.rawValue == 0 else { return .failure(.unresolvedParameter(36)) }
-            guard let isOpen = call.context.menus.isMenuOpen else {
-                return .failure(.unavailableData(.menu))
-            }
-            return .success(ConditionFunctions.isTrue(isOpen))
-        })
-        registry.register(ConditionFunction(
-            index: 358, name: "IsPlayerMovingIntoNewSpace"
-        ) { call in
-            guard let isLoading = call.context.menus.isLoading else {
-                return .failure(.unavailableData(.menu))
-            }
-            return .success(ConditionFunctions.isTrue(isLoading))
-        })
+nonisolated extension ConditionFunctions {
+    nonisolated enum ConditionFunctionsMenuMode {
+        static func installMenuMode(_ registry: inout ConditionFunctionRegistry) {
+            registry.register(ConditionFunction(
+                index: 36, name: "MenuMode", parameter1: .integer
+            ) { call in
+                guard call.parameter1?.rawValue == 0
+                else { return .failure(.unresolvedParameter(36)) }
+                guard let isOpen = call.context.menus.isMenuOpen else {
+                    return .failure(.unavailableData(.menu))
+                }
+                return .success(ConditionFunctions.isTrue(isOpen))
+            })
+            registry.register(ConditionFunction(
+                index: 358, name: "IsPlayerMovingIntoNewSpace"
+            ) { call in
+                guard let isLoading = call.context.menus.isLoading else {
+                    return .failure(.unavailableData(.menu))
+                }
+                return .success(ConditionFunctions.isTrue(isLoading))
+            })
+        }
     }
 }

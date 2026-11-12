@@ -77,7 +77,7 @@ nonisolated public enum ConditionFunctionsActorAction {
                 guard let entry = call.context.references[target] else { return .success(0) }
                 let base = store.resolvedID(
                     ConditionFunctions.baseForm(of: entry),
-                    fromPlugin: ConditionFunctionsData.basePlugin(of: entry.key)
+                    fromPlugin: ConditionFunctions.ConditionFunctionsData.basePlugin(of: entry.key)
                 )
                 return .success(ConditionFunctions
                     .isTrue(base.flatMap { store.hasKeyword(keyword, on: $0) } == true))

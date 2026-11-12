@@ -86,26 +86,26 @@ struct ProgressionReadoutTests {
     func everyRefusalSpellsItsOwnRule() {
         let perk = ReferenceKey.plugin(name: "test.esm", objectID: 0x0100)
         #expect(
-            ProgressionControlReadout.description(of: .notPlayable) == "not playable"
+            PerkSpendRefusal.notPlayable.readoutText == "not playable"
         )
-        #expect(ProgressionControlReadout.description(of: .alreadyOwned) == "owned")
+        #expect(PerkSpendRefusal.alreadyOwned.readoutText == "owned")
         #expect(
-            ProgressionControlReadout.description(of: .notInPerkTree) == "in no perk tree"
+            PerkSpendRefusal.notInPerkTree.readoutText == "in no perk tree"
         )
         #expect(
-            ProgressionControlReadout.description(of: .parentMissing)
+            PerkSpendRefusal.parentMissing.readoutText
                 == "needs an owned parent"
         )
         #expect(
-            ProgressionControlReadout.description(of: .unmetCondition)
+            PerkSpendRefusal.unmetCondition.readoutText
                 == "conditions not met"
         )
         #expect(
-            ProgressionControlReadout.description(of: .previousRankMissing(perk))
+            PerkSpendRefusal.previousRankMissing(perk).readoutText
                 .hasPrefix("needs the rank below")
         )
         #expect(
-            ProgressionControlReadout.description(of: .unresolvedPerk)
+            PerkSpendRefusal.unresolvedPerk.readoutText
                 == "perk not found"
         )
     }

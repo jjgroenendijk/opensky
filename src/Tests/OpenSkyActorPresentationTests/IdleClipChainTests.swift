@@ -70,7 +70,7 @@ struct IdleClipChainTests {
 
     @Test func withoutMarkersNothingIsClaimedOrShown() {
         let store = IdleStore(plugins: [])
-        let claims = IdleMarkerClaims()
+        let claims = IdleCoordinator.IdleMarkerClaims()
         claims.refresh(now: 0, store: store) { [] }
         var sessions: [ReferenceKey: IdleCoordinator.Session] = [:]
         claims.claim(actors: [:], sessions: &sessions, world: PairedIdleWorld())

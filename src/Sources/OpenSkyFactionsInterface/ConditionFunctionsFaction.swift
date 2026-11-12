@@ -12,7 +12,8 @@ nonisolated public enum ConditionFunctionsFaction {
     public static func installFaction(_ registry: inout ConditionFunctionRegistry) {
         installMemberships(&registry)
         installRelations(&registry)
-        ConditionFunctionsRelationship.installRelationshipRecords(&registry)
+        ConditionFunctionsFaction.ConditionFunctionsRelationship
+            .installRelationshipRecords(&registry)
     }
 
     /// The three membership functions, all `ptFaction` on the run-on actor.
