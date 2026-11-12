@@ -25,7 +25,8 @@ struct SoulRechargeTests {
         let inventory: FakeInventory
 
         var charge: Float {
-            coordinator.enchantmentCharge(of: Gems.enchantedBlade, on: .player)?.remaining ?? -1
+            coordinator.weaponEnchantments.enchantmentCharge(of: Gems.enchantedBlade, on: .player)?
+                .remaining ?? -1
         }
     }
 
@@ -64,7 +65,8 @@ struct SoulRechargeTests {
         )
         data.enchantments = enchantments
         let coordinator = MagicCoordinator(world: world, data: data)
-        let profile = try #require(coordinator.enchantmentProfile(of: Gems.enchantedBlade))
+        let profile = try #require(coordinator.weaponEnchantments
+            .enchantmentProfile(of: Gems.enchantedBlade))
         coordinator.withEffects { runtime in
             let ledger = EnchantmentLedger(store: runtime.store, inventory: inventory)
             for _ in 0 ..< hits {
@@ -80,7 +82,7 @@ struct SoulRechargeTests {
             hits: 2, gems: [Gems.petty, Gems.grandFilled], souls: [Gems.petty: 1]
         )
         #expect(trial.charge == Gems.bladeCapacity - 2 * Gems.bladeCostPerUse)
-        let outcome = trial.coordinator.rechargeEquippedWeapon()
+        let outcome = trial.coordinator.weaponRecharge.rechargeEquippedWeapon()
         guard case let .recharged(item, gem, charge) = outcome else {
             Issue.record("expected a recharge, got \(outcome)")
             return
@@ -98,7 +100,7 @@ struct SoulRechargeTests {
     @Test func soulSqueezerAddsToTheSoul() throws {
         let trial = try session(hits: 10, gems: [Gems.petty], souls: [Gems.petty: 1])
         trial.world.perkFactors[.modSoulGemRecharge] = 2
-        trial.coordinator.rechargeEquippedWeapon()
+        trial.coordinator.weaponRecharge.rechargeEquippedWeapon()
         #expect(trial.charge == 1400)
         #expect(trial.world.perkOwners[.modSoulGemRecharge] == .player)
     }
@@ -106,24 +108,24 @@ struct SoulRechargeTests {
     @Test func aReusableGemEmptiesAndStays() throws {
         let trial = try session(hits: 2, gems: [Gems.petty], souls: [Gems.petty: 1])
         trial.world.reusableGems = [Gems.petty]
-        trial.coordinator.rechargeEquippedWeapon()
+        trial.coordinator.weaponRecharge.rechargeEquippedWeapon()
         #expect(trial.inventory.copies(of: Gems.petty, in: .player) == [.plain])
-        #expect(trial.coordinator.rechargeEquippedWeapon() == .nothingToRecharge)
+        #expect(trial.coordinator.weaponRecharge.rechargeEquippedWeapon() == .nothingToRecharge)
     }
 
     @Test func noFilledGemRechargesNothing() throws {
         let trial = try session(hits: 2, gems: [Gems.petty])
-        #expect(trial.coordinator.rechargeEquippedWeapon() == .noFilledGem)
+        #expect(trial.coordinator.weaponRecharge.rechargeEquippedWeapon() == .noFilledGem)
         #expect(trial.inventory.count(of: Gems.petty, in: .player) == 1)
     }
 
     /// A level 1 creature has a petty soul of 250; Soul Siphon's 0.05 of it is 12.5.
     @Test func soulSiphonFeedsTheKillersWeapon() throws {
         let trial = try session(hits: 10, gems: [])
-        trial.coordinator.noteDeath(of: Self.victim, killer: .player)
+        trial.coordinator.soulTrapping.noteDeath(of: Self.victim, killer: .player)
         #expect(trial.charge == 900)
         trial.world.perkValues[.modSoulPctCapturedToWeapon] = 0.05
-        trial.coordinator.noteDeath(of: Self.victim, killer: .player)
+        trial.coordinator.soulTrapping.noteDeath(of: Self.victim, killer: .player)
         #expect(trial.charge == 912.5)
         #expect(trial.world.perkOwners[.modSoulPctCapturedToWeapon] == .player)
     }

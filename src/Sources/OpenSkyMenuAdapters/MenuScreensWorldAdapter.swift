@@ -112,7 +112,7 @@ extension MenuScreensWorldAdapter: SleepWaitWorld {
             game.scripts.advanceRestStep()
             // Effect durations are real seconds: game seconds over the timescale.
             let skipped = gameSession.gameClock.totalGameSeconds - before
-            game.magic.elapseRestTime(seconds: skipped / timescale)
+            game.magic.frameStep.elapseRestTime(seconds: skipped / timescale)
         }
         if sleeping {
             game.scripts.reportSleep(

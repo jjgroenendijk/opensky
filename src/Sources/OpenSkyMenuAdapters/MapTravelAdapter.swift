@@ -57,7 +57,7 @@ extension MapTravelAdapter {
         context.hostilesNear = combat.hostileCount > 0
         context.inAir = !(game.gameSession?.walkController.isGrounded ?? true)
         context.alarmed = game.crime.isPlayerPursued
-        context.takingHealthDamage = game.magic.isPlayerTakingHealthDamage
+        context.takingHealthDamage = game.magic.magicMenu.isPlayerTakingHealthDamage
         if game.inventory.runtime != nil {
             context.overencumbered = FastTravelRule.isOverencumbered(
                 carried: game.inventory.playerCarriedWeight,

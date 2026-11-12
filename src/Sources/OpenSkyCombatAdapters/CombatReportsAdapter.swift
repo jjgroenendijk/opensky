@@ -120,19 +120,19 @@ extension CombatReportsAdapter {
 
     @discardableResult
     public func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
-        game.magic.applyWeaponEnchantment(hit)
+        game.magic.weaponEnchantments.applyWeaponEnchantment(hit)
     }
 
     public func applyWeaponPoison(_ hit: WeaponPoisonHit) {
-        game.magic.applyWeaponPoison(hit)
+        game.magic.weaponEnchantments.applyWeaponPoison(hit)
     }
 
     @discardableResult
     public func applyWeaponEnhancement(attacker: ReferenceKey, target: ReferenceKey) -> Int {
-        game.magic.applyWeaponEnhancement(attacker: attacker, target: target)
+        game.magic.worldArchetypeActions.applyWeaponEnhancement(attacker: attacker, target: target)
     }
 
     public func spellLanded(_ payload: SpellPayload, at point: SIMD3<Float>) {
-        game.magic.spellLanded(payload, at: point)
+        game.magic.worldArchetypeActions.spellLanded(payload, at: point)
     }
 }

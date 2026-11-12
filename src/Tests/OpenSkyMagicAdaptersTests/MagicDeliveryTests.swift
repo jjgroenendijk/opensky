@@ -110,7 +110,7 @@ struct MagicDeliveryTests {
 
     @Test func aHitFromOutsideRunsItsCommandsAtOnce() {
         host.fakeMagic.applySpellHitResult = SpellHitReport()
-        host.fakeMagic.takeCommandsResult = [.notice("Hit")]
+        host.fakeMagic.frameStep.takeCommandsResult = [.notice("Hit")]
         _ = adapter.applySpellHit(SpellHit(payload: Self.payload, targets: []))
         #expect(host.fakeMagic.applySpellHitCalls.count == 1)
         #expect(host.fakeHUD.showNotificationCalls == ["Hit"])

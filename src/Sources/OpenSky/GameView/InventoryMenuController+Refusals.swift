@@ -71,7 +71,7 @@ struct InventoryItemActions {
         }
         switch use {
         case .applyPoison: return inventory.applyPoison(item).text(game.mapWorld.settingTexts())
-        case .consume: return game.magic.consumeMagicItem(item).text
+        case .consume: return game.magic.itemUse.consumeMagicItem(item).text
         case .unequip: return game.inventoryWorld.run(inventory.unequipItem(item, on: .player)).text
         case .equip: return game.inventoryWorld.run(inventory.equipItem(item, on: .player)).text
         }

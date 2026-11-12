@@ -30,7 +30,7 @@ struct EnchantingTests {
         }
 
         func gem(_ item: FormID) throws -> SoulGemCandidate {
-            let snapshot = coordinator.enchantingSnapshot
+            let snapshot = coordinator.enchantingReadout.enchantingSnapshot
             return try #require(snapshot.gems.first { $0.gem.item == item }?.gem)
         }
 
@@ -102,12 +102,13 @@ struct EnchantingTests {
 
     @Test func disenchantingTeachesTheRootBaseAndDestroysTheItem() throws {
         let trial = try session(carrying: [Records.fireSword])
-        let outcome = trial.coordinator.disenchant(Records.fireSword)
+        let outcome = trial.coordinator.enchantingRecords.disenchant(Records.fireSword)
         guard case .learned = outcome else {
             Issue.record("expected a learned base, got \(outcome)")
             return
         }
-        #expect(trial.coordinator.enchantingState.known == [trial.key(Records.fireBase)])
+        #expect(trial.coordinator.enchantingRecords.enchantingState
+            .known == [trial.key(Records.fireBase)])
         #expect(trial.inventory.count(of: Records.fireSword, in: .player) == 0)
         // 100 + 0.12 * 1000 + 8 * 30 = 460 gold, 360 of it the enchantment's.
         #expect(trial.world.skillUses.map(\.amount) == [0.9])
@@ -116,7 +117,8 @@ struct EnchantingTests {
     @Test func aKnownBaseIsNotLearnedTwice() throws {
         let trial = try session(carrying: [Records.fireSword])
         trial.knowing([Records.fireBase])
-        #expect(trial.coordinator.disenchant(Records.fireSword) == .refused(.alreadyKnown))
+        #expect(trial.coordinator.enchantingRecords
+            .disenchant(Records.fireSword) == .refused(.alreadyKnown))
         #expect(trial.inventory.count(of: Records.fireSword, in: .player) == 1)
     }
 
@@ -124,14 +126,14 @@ struct EnchantingTests {
     @Test func aRingTakesAnApparelBaseScaledBySkillAndSoul() throws {
         let trial = try session(carrying: [Records.ring, Gems.grandFilled])
         trial.knowing([Records.healthBase])
-        let outcome = try trial.coordinator.enchant(
+        let outcome = try trial.coordinator.enchantingTable.enchant(
             Records.ring, with: [trial.key(Records.healthBase)], gem: trial.gem(Gems.grandFilled)
         )
         guard case .enchanted = outcome else {
             Issue.record("expected an enchanted ring, got \(outcome)")
             return
         }
-        let profile = try #require(trial.coordinator.enchantmentProfile(
+        let profile = try #require(trial.coordinator.weaponEnchantments.enchantmentProfile(
             of: Records.ring,
             on: .player
         ))
@@ -148,10 +150,10 @@ struct EnchantingTests {
         let trial = try session(carrying: [Records.ring, Gems.grandFilled])
         trial.knowing([Records.healthBase])
         trial.world.perkFactors[.modEnchantmentPower] = 2
-        try trial.coordinator.enchant(
+        try trial.coordinator.enchantingTable.enchant(
             Records.ring, with: [trial.key(Records.healthBase)], gem: trial.gem(Gems.grandFilled)
         )
-        let profile = try #require(trial.coordinator.enchantmentProfile(
+        let profile = try #require(trial.coordinator.weaponEnchantments.enchantmentProfile(
             of: Records.ring,
             on: .player
         ))
@@ -162,18 +164,24 @@ struct EnchantingTests {
     @Test func aWeaponGetsTheSoulAsItsCharge() throws {
         let trial = try session(carrying: [Records.ironSword, Gems.grandFilled])
         trial.knowing([Records.fireBase])
-        try trial.coordinator.enchant(
+        try trial.coordinator.enchantingTable.enchant(
             Records.ironSword, with: [trial.key(Records.fireBase)], gem: trial.gem(Gems.grandFilled)
         )
         let charge = try #require(
-            trial.coordinator.enchantmentCharge(of: Records.ironSword, on: .player)
+            trial.coordinator.weaponEnchantments.enchantmentCharge(
+                of: Records.ironSword,
+                on: .player
+            )
         )
         #expect(charge.capacity == 3000)
         let fullCost = 3 * pow(Float(100), 1.1)
         let expected = fullCost * (1 - Float(0.5).squareRoot())
         #expect(abs(charge.costPerUse - expected) < 0.01)
         let profile = try #require(
-            trial.coordinator.enchantmentProfile(of: Records.ironSword, on: .player)
+            trial.coordinator.weaponEnchantments.enchantmentProfile(
+                of: Records.ironSword,
+                on: .player
+            )
         )
         #expect(profile.isContact)
         #expect(profile.entries.map(\.magnitude) == [12])
@@ -182,7 +190,7 @@ struct EnchantingTests {
     @Test func aBaseMustFitTheItem() throws {
         let trial = try session(carrying: [Records.ring, Gems.grandFilled])
         trial.knowing([Records.fireBase])
-        let outcome = try trial.coordinator.enchant(
+        let outcome = try trial.coordinator.enchantingTable.enchant(
             Records.ring, with: [trial.key(Records.fireBase)], gem: trial.gem(Gems.grandFilled)
         )
         #expect(outcome == .refused(.baseDoesNotFit("Fire Damage")))
@@ -195,11 +203,11 @@ struct EnchantingTests {
         trial.knowing([Records.healthBase, Records.magickaBase])
         let bases = [trial.key(Records.healthBase), trial.key(Records.magickaBase)]
         let gem = try trial.gem(Gems.grandFilled)
-        #expect(trial.coordinator.enchant(Records.ring, with: bases, gem: gem)
+        #expect(trial.coordinator.enchantingTable.enchant(Records.ring, with: bases, gem: gem)
             == .refused(.tooManyBases(allowed: 1)))
         trial.world.perkValues[.modAppliedEnchantmentsAllowed] = 2
-        trial.coordinator.enchant(Records.ring, with: bases, gem: gem)
-        let profile = try #require(trial.coordinator.enchantmentProfile(
+        trial.coordinator.enchantingTable.enchant(Records.ring, with: bases, gem: gem)
+        let profile = try #require(trial.coordinator.weaponEnchantments.enchantmentProfile(
             of: Records.ring,
             on: .player
         ))

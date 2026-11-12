@@ -3,23 +3,23 @@
 // mark is the spellbook's, so a book counts once per save.
 
 import OpenSkyConditions
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
-public import OpenSkyMagicInterface
+import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 
-extension MagicCoordinator {
+extension MagicCoordinator.SpellTomes {
     /// What reading `item` does: a skill book raises its skill, a spell tome teaches its
     /// spell. Nil for a book that teaches nothing.
     @discardableResult
-    public func readBook(_ item: FormID) -> CastingActionOutcome? {
-        guard let items = world.inventory?.baselines.items else { return nil }
+    func readBook(_ item: FormID) -> CastingActionOutcome? {
+        guard let items = coordinator.world.inventory?.baselines.items else { return nil }
         if let skill = items.teachesSkill(item) {
             return readSkillBook(item, skill: skill)
         }
         if let spell = items.teachesSpell(item) {
-            return readSpellTome(item, spell: spell)
+            return coordinator.controlPanels.readSpellTome(item, spell: spell)
         }
         return nil
     }
@@ -27,29 +27,32 @@ extension MagicCoordinator {
     /// Marks `item` read and raises `skill`. A book read before raises nothing.
     @discardableResult
     func readSkillBook(_ item: FormID, skill: Int32) -> CastingActionOutcome {
-        let name = world.itemName(item)
-        guard let caster, let key = bookKey(item) else {
-            return recordCasting(.unresolvedBook(name))
+        let name = coordinator.world.itemName(item)
+        guard let caster = coordinator.caster, let key = bookKey(item) else {
+            return coordinator.recordCasting(.unresolvedBook(name))
         }
         guard !caster.spellbook.read(book: key, teaching: nil, on: .player).alreadyRead else {
-            return recordCasting(.bookAlreadyRead(name))
+            return coordinator.recordCasting(.bookAlreadyRead(name))
         }
-        let subject = world.inventory?.baselines.items.conditionSubject(of: item)
-        let points = world.perkModified(
+        let subject = coordinator.world.inventory?.baselines.items.conditionSubject(of: item)
+        let points = coordinator.world.perkModified(
             1,
             at: .adjustBookSkillPoints,
             on: .player,
             subjects: PerkEvaluationSubjects(owner: .player).binding(.item, to: subject),
             seams: ConditionContext()
         )
-        let raised = world.raiseSkillFromBook(
+        let raised = coordinator.world.raiseSkillFromBook(
             skill, points: points.isFinite ? Int(max(0, points.rounded(.down))) : 1
         )
-        return recordCasting(.readSkillBook(name, levelsRaised: raised))
+        return coordinator.recordCasting(.readSkillBook(name, levelsRaised: raised))
     }
 
     private func bookKey(_ item: FormID) -> ReferenceKey? {
-        caster?.spellbook.spells.resolvedID(item, fromPlugin: spellPluginName ?? pluginName)
-            .map(ReferenceKey.init(resolved:))
+        coordinator.caster?.spellbook.spells.resolvedID(
+            item,
+            fromPlugin: coordinator.spellPluginName ?? coordinator.pluginName
+        )
+        .map(ReferenceKey.init(resolved:))
     }
 }

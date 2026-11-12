@@ -9,8 +9,8 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
-public import OpenSkyPhysics
-public import OpenSkyProgressionInterface
+import OpenSkyPhysics
+import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
 /// Owns the magic runtimes and reads the world through `MagicWorld`.
@@ -18,10 +18,11 @@ import OpenSkyWorldState
 public final class MagicCoordinator {
     /// Nil without an MGEF index. A value over a shared store, so every change
     /// goes through `withEffects`.
-    public private(set) var effects: ActiveEffectRuntime?
+    public internal(set) var effects: ActiveEffectRuntime?
     /// Nil without a SPEL index. Set once in the initializer, because it reads
     /// the world through this coordinator.
     public private(set) var caster: CasterRuntime?
+    private(set) lazy var casterBridge = CasterBridge(coordinator: self)
     /// The plugin every magic item's EFID links are relative to.
     public let pluginName: String
     /// The plugin an actor's `SPLO` links are relative to.
@@ -34,12 +35,6 @@ public final class MagicCoordinator {
     var pendingCommands: [MagicCommand] = []
     /// Takes `CAST`.
     public weak let storyEvents: (any StoryEventReporting)?
-    /// The spell words the spellcasting readout shows.
-    public let magicTexts: MagicTexts
-    public let castNotices: GameSettingTexts<CastNoticeText>
-    /// The hands pressed last frame, so a press during a shout is refused once.
-    var castPressed: Set<SpellHand> = []
-    public let spellCostSettings: SpellCostSettings
 
     /// Owned here, not by the runtime, because the runtime is a value and a
     /// per-copy accumulator would split the simulation.
@@ -55,57 +50,36 @@ public final class MagicCoordinator {
     /// Seconds each broken ward stays in `IsWardState` 2.
     var brokenWardSeconds: [ReferenceKey: Float] = [:]
     /// The absorption roll, in 0 ..< 100. A test fixes it.
-    var spellDefenceRoll: () -> Float = { [stream = RandomStream(seed: 0x5350_4446)] in
-        stream.float(in: 0 ..< 100)
-    }
+    var spellDefenceRoll = WardShields.seededDefenceRoll()
 
-    public let soulTrapSettings: SoulTrapSettings
-    public let enchantingSettings: EnchantingSettings
-    var lastEnchanting = EnchantingOutcome.idle
     /// Every SHOU in the load order, by key.
     public let shouts: [ReferenceKey: ResolvedShout]
     /// The load order's shouts, for an NPC's spell list.
     let shoutStore: ShoutStore?
-    public let shoutSettings: ShoutSettings
     public internal(set) var shoutMachine = ShoutMachine()
-    var wasShoutHeld = false
-    /// Seconds the readout's Shout button still holds the key.
-    var panelShoutHold: Float?
-    /// The shout the machine is voicing, fixed at the press.
-    var voicedShout: ReferenceKey?
-    var lastShout = ShoutOutcome.idle
-    /// Each casting hand as the cues saw it last frame; an idle hand is left out.
-    var castingViews: [CastSlot: CastingHandView] = [:]
-    public internal(set) var releaseLatch = SpellReleaseLatch()
-    var wasWeaponsDrawn: Bool?
-    var castingCueCount = 0
-    var lastCastingCue: String?
-    /// Runes waiting on the ground, oldest first. Not saved.
-    var runes: [PlacedRune] = []
-    public let runeSettings: RuneSettings
-    public let summonSettings: SummonSettings
-    public let worldSettings: MagicWorldSettings
     /// Dismissed summons and the seconds before each goes.
     var fadingSummons: [(actor: CommandedActor, seconds: Float)] = []
-    var detonatedRunes = 0
     /// Summoned and reanimated actors, oldest first. Not saved.
     public internal(set) var commanded: [CommandedActor] = []
     /// Detect Life paint, Telekinesis and Grab Actor holds, and Guide trails. Not saved.
     var holds: [MagicHold] = []
     /// Lights the Light archetype placed. Not saved.
     public internal(set) var magicLights: [MagicLight] = []
-    public let holdSettings: MagicHoldSettings
+    /// Each system's game settings, as the session read them.
+    let rules: MagicRules
+    /// The words the readouts and notices show.
+    let texts: MagicSessionTexts
+    var castingState = CastingState()
+    var shoutState = ShoutState()
+    var runeState = RuneState()
+    var enchantingMemory = EnchantingMemory()
 
     /// Where each caster aimed its last target-location summon.
     var summonPoints: [ReferenceKey: SIMD3<Float>] = [:]
-    var profiles = ItemEnchantmentProfileCache()
     let spellBaselines: ActorSpellBaselineResolver?
     /// Actors whose authored spell list was granted, so it happens once.
     var grantedActors: Set<ReferenceKey> = []
-    /// An index into the player's known spells. Clamped on read.
-    var selection = 0
     var lastEffectAction = MagicEffectActionOutcome.idle
-    var lastCastingAction = CastingActionOutcome.idle
 
     /// Without data there is no game: every runtime is nil, and each action says so.
     public init(
@@ -123,26 +97,18 @@ public final class MagicCoordinator {
         spellBaselines = data.casting?.baselines
         enchantmentStore = data.enchantments
         shoutStore = data.shouts
-        shouts = Self.shoutsByKey(data.shouts)
-        magicTexts = data.texts.magic
-        castNotices = data.texts.castNotices
-        spellCostSettings = data.rules.spellCost
-        soulTrapSettings = data.rules.soulTrap
-        holdSettings = data.rules.holds
-        enchantingSettings = data.rules.enchanting
-        shoutSettings = data.rules.shouts
-        runeSettings = data.rules.runes
-        summonSettings = data.rules.summons
-        worldSettings = data.rules.world
+        shouts = MagicCoordinator.ShoutVoice.shoutsByKey(data.shouts)
+        rules = data.rules
+        texts = data.texts
         if let casting = data.casting {
             let runtime = CasterRuntime(
-                spellbook: casting.spellbook, values: casting.values, world: self
+                spellbook: casting.spellbook, values: casting.values, world: casterBridge
             )
-            runtime.costSettings = spellCostSettings
+            runtime.costSettings = rules.spellCost
             caster = runtime
-            runtime.staffs = self
+            runtime.staffs = casterBridge
         }
-        prepareArchetypeLookups()
+        archetypeLookups.prepareArchetypeLookups()
     }
 
     /// Runs one change on the effect runtime and stores it back. Nil without one.
@@ -154,146 +120,9 @@ public final class MagicCoordinator {
         // Written back on a throw too, as an `inout` argument would be.
         defer {
             effects = runtime
-            performWorldActions()
+            archetypeActions.performWorldActions()
         }
         return try body(&runtime)
-    }
-
-    /// Takes the world actions the runtime queued, leaving none.
-    func takeWorldActions() -> [MagicWorldAction] {
-        guard var runtime = effects, !runtime.worldActions.isEmpty else { return [] }
-        let actions = runtime.worldActions
-        runtime.worldActions = []
-        effects = runtime
-        return actions
-    }
-
-    /// Takes the actors a calm from around its caster reached, leaving none.
-    func takeHealing() -> [MagicHealingUse] {
-        guard var runtime = effects, !runtime.healing.isEmpty else { return [] }
-        let healing = runtime.healing
-        runtime.healing = []
-        effects = runtime
-        return healing
-    }
-
-    func takeCalmedAround() -> [ReferenceKey] {
-        guard var runtime = effects, !runtime.calmedAround.isEmpty else { return [] }
-        let calmed = runtime.calmedAround
-        runtime.calmedAround = []
-        effects = runtime
-        return calmed
-    }
-
-    /// Whole effect steps for the delta this frame simulated, over the player
-    /// and the resident actors. A menu-paused frame delivers delta 0.
-    public func advanceEffects(delta: Float) -> [MagicCommand] {
-        guard var runtime = effects else { return takeCommands() }
-        let holders = world.regeneratingHolders()
-        let scales = timeScales
-        if scales.isSlowed {
-            // The player's effects run on the player's clock, so Slow Time ends on time.
-            let split = Dictionary(grouping: holders) { $0.key == .player }
-            runtime.advance(delta: delta, accumulator: &accumulator, over: split[false] ?? [])
-            runtime.advance(
-                delta: delta * scales.player / scales.world,
-                accumulator: &playerAccumulator,
-                over: split[true] ?? []
-            )
-        } else {
-            runtime.advance(delta: delta, accumulator: &accumulator, over: holders)
-            playerAccumulator = accumulator
-        }
-        effects = runtime
-        performWorldActions()
-        maintainCarriedEffects(delta: delta)
-        pulseCloaks(delta: delta)
-        advanceHolds(delta: delta)
-        advanceLights(delta: delta)
-        return takeCommands()
-    }
-
-    /// Runs the effects through `seconds` of real time a rest skipped. The commands
-    /// they raise leave with the next frame.
-    public func elapseRestTime(seconds: Double) {
-        guard var runtime = effects else { return }
-        runtime.elapse(seconds: seconds, over: world.regeneratingHolders())
-        effects = runtime
-        performWorldActions()
-    }
-
-    /// Returns and empties what the effects asked of the app. A command raised
-    /// outside a frame step, such as by a script, also leaves with the next one.
-    public func takeCommands() -> [MagicCommand] {
-        defer { pendingCommands = [] }
-        return pendingCommands
-    }
-
-    /// One frame of casting. A frame in a menu or in free-fly charges nothing
-    /// for the player, but NPC casts still advance. `events` are the player graph's.
-    public func advanceCasting(
-        _ intent: CastingIntent,
-        isPlayerControlled: Bool,
-        events: [String] = [],
-        weaponsDrawn: Bool? = nil
-    ) -> [MagicCommand] {
-        guard let caster else { return takeCommands() }
-        let playerIntent = isPlayerControlled
-            ? refusingCastsDuringShout(latched(intent, events: events)) : .still
-        caster.acceptFrame(playerIntent, on: .player)
-        for failure in caster.takePlayerFailures() {
-            if let text = CastNoticeText.notice(for: failure) {
-                pendingCommands.append(.notice(castNotices[text]))
-            }
-        }
-        advanceActorCasts(delta: intent.deltaTime)
-        advanceRunes(delta: intent.deltaTime)
-        advanceCommanded(delta: intent.deltaTime)
-        advanceCastingCues(weaponsDrawn: weaponsDrawn)
-        return takeCommands()
-    }
-
-    /// Every NPC cast in flight, charged on the player's clock.
-    func advanceActorCasts(delta: Float) {
-        guard let caster, delta > 0 else { return }
-        for key in caster.castingActors where key != .player {
-            guard let holder = world.actorValueHolder(for: key) else { continue }
-            caster.advance(delta: delta, on: holder)
-        }
-    }
-
-    /// Whether `hand` holds a readied spell, which routes its button to the
-    /// cast loop instead of to melee.
-    public func hasReadiedSpell(in hand: SpellHand) -> Bool {
-        caster?.spellbook.state(of: .player).spell(in: hand) != nil
-    }
-
-    /// Consumes `item` from the player and applies it to the player. The menu
-    /// and the readout both call this, and show the line of the outcome it returns.
-    @discardableResult
-    public func consumeMagicItem(_ item: FormID) -> MagicEffectActionOutcome {
-        guard effects != nil, let inventory = world.inventory else {
-            return recordEffect(.unavailable)
-        }
-        let name = inventory.baselines.items.definition(item)?.editorID ?? item.description
-        do {
-            let plugin = pluginName
-            let outcome = try withEffects { runtime in
-                try runtime.consume(
-                    item, use: (.player, .player), inventory: inventory, fromPlugin: plugin
-                ) { entries, source in
-                    self.perkScaledPotion(
-                        entries, of: source, fromPlugin: plugin, drinker: .player
-                    )
-                }
-            }
-            if outcome?.kind == .ingredient {
-                world.playerAteIngredient(item)
-            }
-            return recordEffect(.consumed(item: name, outcome))
-        } catch {
-            return recordEffect(.consumeFailed(item: name, reason: String(describing: error)))
-        }
     }
 
     @discardableResult
@@ -304,197 +133,314 @@ public final class MagicCoordinator {
 
     @discardableResult
     func recordCasting(_ outcome: CastingActionOutcome) -> CastingActionOutcome {
-        lastCastingAction = outcome
+        castingState.lastCastingAction = outcome
         return outcome
     }
-
-    /// Grants `holder`'s authored spell list on first ask, so townsfolk who
-    /// never fight write no spellbook into the save.
-    public func grantAuthoredSpells(to holder: ActorValueHolder) {
-        guard
-            let caster,
-            let spellBaselines,
-            let spellPluginName,
-            !grantedActors.contains(holder.key)
-        else { return }
-        grantedActors.insert(holder.key)
-        let roll = spellBaselines.templates.leveling.roll(
-            of: holder, frozenLevel: caster.spellbook.store.frozenLeveledLevel(of: holder.key)
-        )
-        let baseline = spellBaselines.baseline(for: holder.subject, roll: roll)
-        caster.spellbook.grant(
-            caster.spellbook.resolve(baseline.all, fromPlugin: spellPluginName),
-            to: holder
-        )
-        reconcileAbilities(on: holder)
-    }
-
-    /// The carried items, in FormID order, that `transform` maps to a value.
-    func carriedItems<Value>(_ transform: (ItemDefinitionStore, FormID) -> Value?) -> [Value] {
-        guard let inventory = world.inventory else { return [] }
-        let items = inventory.baselines.items
-        return inventory.inventory(of: .player).stacks
-            .map(\.item)
-            .sorted { $0.rawValue < $1.rawValue }
-            .compactMap { transform(items, $0) }
-    }
 }
 
-extension MagicCoordinator: CasterWorld {
-    public var castingGameDay: Int32 {
-        MagicCore.gameDay(world.gameDaysPassed)
-    }
-
-    public func castsFromFlyingMount(key: ReferenceKey) -> Bool {
-        world.isOnFlyingMount(key)
-    }
-
-    @discardableResult
-    public func reportSkillUse(_ use: SkillUseEvent) -> Float {
-        world.reportSkillUse(use)
-    }
-
-    public func applyCastEffects(
-        _ entries: [MagicItemEffect],
-        origin: (plugin: String, source: ActiveEffectSource),
-        caster: ReferenceKey,
-        on target: ActorValueHolder
-    ) -> Int {
-        let (pluginName, source) = origin
-        let scaled = source.kind == .spell
-            ? perkScaled(entries, of: source.record, caster: caster, on: target.key)
-            : entries
-        let isDualCast = self.caster?.isApplyingDualCast == true
-        let stored = withEffects { runtime in
-            runtime.application.isDualCast = isDualCast
-            defer { runtime.application = MagicApplicationContext() }
-            return runtime.apply(
-                scaled, fromPlugin: pluginName, source: source, caster: caster, on: target
-            )
+extension MagicCoordinator {
+    func associatedItem(of effect: ReferenceKey) -> ResolvedFormID? {
+        guard let store = effects?.effects, let resolved = store.effect(key: effect) else {
+            return nil
         }
-        return stored?.count ?? 0
-    }
-
-    @discardableResult
-    public func fireSpellProjectile(_ payload: SpellPayload) -> Bool {
-        world.fireSpellProjectile(payload)
-    }
-
-    public func aimedSpellTarget(within range: Float, for caster: ReferenceKey) -> SpellAim {
-        world.aimedSpellTarget(within: range, for: caster)
-    }
-
-    /// Casting breaks the caster's invisibility. The wiki says only the player's
-    /// casts count as a story event.
-    public func spellWasCast(_ spell: ReferenceKey, by caster: ReferenceKey) {
-        world.noteSpellCast(spell, by: caster)
-        breakInvisibility(of: caster)
-        guard caster == .player, let storyEvents else { return }
-        storyEvents.reportStoryEvent(.castMagic(
-            caster: caster,
-            target: aimedSpellTarget(within: 0, for: caster).target,
-            location: nil,
-            spell: StoryEventData.form(of: spell)
-        ))
-    }
-
-    public func spellHitCandidates() -> [MeleeTarget] {
-        world.spellHitCandidates()
-    }
-
-    /// A projectile hit and a direct cast take this one path, so the effects
-    /// readout's tally counts both.
-    @discardableResult
-    public func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
-        let holders = residentHolders(of: hit.targets)
-        guard
-            let report = withEffects({ runtime in
-                runtime.application.isDualCast = hit.payload.isDualCast
-                defer { runtime.application = MagicApplicationContext() }
-                return SpellHitApplication
-                    .apply(
-                        hit, holders: holders, using: &runtime, defences: spellHitDefences()
-                    ) { entries, target in
-                        self.perkScaled(
-                            entries, of: hit.payload.spell, caster: hit.payload.caster, on: target
-                        )
-                    }
-            })
-        else { return .none }
-        breakWards(report.brokenWards)
-        for wardHit in report.wardHits {
-            pendingCommands.append(
-                .wardHit(wardHit, caster: hit.payload.caster, spell: hit.payload.spell)
-            )
-        }
-        if !hit.targets.isEmpty, let store = effects?.effects {
-            pendingCommands.append(
-                .spellHit(SpellHitEvent(hit: hit, links: store.hitEffectLinks(of: hit.payload)))
-            )
-        }
-        return report
-    }
-
-    /// The holder of each target still resident. A target that left is absent.
-    func residentHolders(of targets: [SpellHitTarget]) -> [ReferenceKey: ActorValueHolder] {
-        var holders: [ReferenceKey: ActorValueHolder] = [:]
-        for target in targets {
-            holders[target.key] = world.actorValueHolder(for: target.key)
-        }
-        return holders
+        return store.associatedItem(of: resolved)
     }
 }
 
 extension MagicCoordinator {
-    /// A hand pressed while the player shouts does not begin its cast, and a new press
-    /// says why. A cast already running is left to finish.
-    func refusingCastsDuringShout(_ intent: CastingIntent) -> CastingIntent {
-        var refused = intent
-        let shouting = !shoutMachine.isIdle
-        for hand in SpellHand.allCases {
-            let pressed = intent.isHeld(hand)
-            defer {
-                if pressed {
-                    castPressed.insert(hand)
-                } else {
-                    castPressed.remove(hand)
-                }
-            }
-            guard
-                shouting, pressed, hasReadiedSpell(in: hand),
-                !(caster?.phase(of: hand).isCasting ?? false)
-            else { continue }
-            if !castPressed.contains(hand) {
-                pendingCommands.append(.notice(castNotices[.castWhileShouting]))
-            }
-            switch hand {
-            case .left: refused.leftHeld = false
-            case .right: refused.rightHeld = false
-            }
+    var abilityReconciler: AbilityReconciler {
+        AbilityReconciler(coordinator: self)
+    }
+
+    public var archetypeActions: ArchetypeActions {
+        ArchetypeActions(coordinator: self)
+    }
+
+    var archetypeLookups: ArchetypeLookups {
+        ArchetypeLookups(coordinator: self)
+    }
+
+    var cloakPulses: CloakPulses {
+        CloakPulses(coordinator: self)
+    }
+
+    var castingCues: CastingCueTracker {
+        CastingCueTracker(coordinator: self)
+    }
+
+    var conditionReads: ConditionReads {
+        ConditionReads(coordinator: self)
+    }
+
+    var enchantingTable: EnchantingTable {
+        EnchantingTable(coordinator: self)
+    }
+
+    var enchantingRecords: EnchantingRecords {
+        EnchantingRecords(coordinator: self)
+    }
+
+    var holdEffects: HoldEffects {
+        HoldEffects(coordinator: self)
+    }
+
+    public var menuLines: MenuLines {
+        MenuLines(coordinator: self)
+    }
+
+    public var magicMenu: MagicMenu {
+        MagicMenu(coordinator: self)
+    }
+
+    var controlPanels: ControlPanels {
+        ControlPanels(coordinator: self)
+    }
+
+    var effectsPanel: EffectsPanel {
+        EffectsPanel(coordinator: self)
+    }
+
+    var perkEffects: PerkEffects {
+        PerkEffects(coordinator: self)
+    }
+
+    var raceEffects: RaceEffects {
+        RaceEffects(coordinator: self)
+    }
+
+    var weaponRecharge: WeaponRecharge {
+        WeaponRecharge(coordinator: self)
+    }
+
+    var runePlacement: RunePlacement {
+        RunePlacement(coordinator: self)
+    }
+
+    public var shoutVoice: ShoutVoice {
+        ShoutVoice(coordinator: self)
+    }
+
+    var spellTomes: SpellTomes {
+        SpellTomes(coordinator: self)
+    }
+
+    var slowTimeClock: SlowTimeClock {
+        SlowTimeClock(coordinator: self)
+    }
+
+    public var soulTrapping: SoulTrapping {
+        SoulTrapping(coordinator: self)
+    }
+
+    var summonCommands: SummonCommands {
+        SummonCommands(coordinator: self)
+    }
+
+    var wardShields: WardShields {
+        WardShields(coordinator: self)
+    }
+
+    public var worldArchetypeActions: WorldArchetypeActions {
+        WorldArchetypeActions(coordinator: self)
+    }
+
+    var weaponArchetypes: WeaponArchetypes {
+        WeaponArchetypes(coordinator: self)
+    }
+
+    var shoutReadout: ShoutReadout {
+        ShoutReadout(coordinator: self)
+    }
+
+    var enchantingReadout: EnchantingReadout {
+        EnchantingReadout(coordinator: self)
+    }
+
+    /// Keeps each actor's race, perk and authored abilities applied.
+    struct AbilityReconciler {
+        let coordinator: MagicCoordinator
+    }
+
+    /// Runs the world actions effect archetypes ask for, and the cloak pulses.
+    public struct ArchetypeActions {
+        let coordinator: MagicCoordinator
+    }
+
+    /// The lookups the effect runtime asks at load: source categories and undead actors.
+    struct ArchetypeLookups {
+        let coordinator: MagicCoordinator
+    }
+
+    /// Cloaks: each running cloak casts its spell on the actors near its holder.
+    struct CloakPulses {
+        let coordinator: MagicCoordinator
+    }
+
+    /// Turns each casting hand's changes into the cues the behaviour graph hears.
+    struct CastingCueTracker {
+        let coordinator: MagicCoordinator
+    }
+
+    /// The magic facts that condition functions read.
+    struct ConditionReads {
+        let coordinator: MagicCoordinator
+    }
+
+    /// The enchanting table: learning, disenchanting and enchanting items.
+    struct EnchantingTable {
+        let coordinator: MagicCoordinator
+    }
+
+    /// The player's enchanting state: learnt bases, made items, and disenchanting.
+    struct EnchantingRecords {
+        let coordinator: MagicCoordinator
+    }
+
+    /// Detect Life paint, Telekinesis and Grab Actor holds, and Guide trails.
+    struct HoldEffects {
+        let coordinator: MagicCoordinator
+    }
+
+    /// The one-line outcomes the menus show.
+    public struct MenuLines {
+        let coordinator: MagicCoordinator
+    }
+
+    /// The spells and powers the Magic menu lists.
+    public struct MagicMenu {
+        let coordinator: MagicCoordinator
+    }
+
+    /// The readout panels' snapshots and forced actions.
+    struct ControlPanels {
+        let coordinator: MagicCoordinator
+    }
+
+    /// The Magic Effects readout and its actions.
+    struct EffectsPanel {
+        let coordinator: MagicCoordinator
+    }
+
+    /// The perk entry points magic reads.
+    struct PerkEffects {
+        let coordinator: MagicCoordinator
+    }
+
+    /// The effects an actor's race adds to a spell hit.
+    struct RaceEffects {
+        let coordinator: MagicCoordinator
+    }
+
+    /// Recharging an enchanted weapon from a soul gem.
+    struct WeaponRecharge {
+        let coordinator: MagicCoordinator
+    }
+
+    /// Runes on the ground and their detonation.
+    struct RunePlacement {
+        let coordinator: MagicCoordinator
+    }
+
+    /// Voicing shouts: the press, the words and the cooldown.
+    public struct ShoutVoice {
+        let coordinator: MagicCoordinator
+    }
+
+    /// Reading spell tomes and skill books.
+    struct SpellTomes {
+        let coordinator: MagicCoordinator
+    }
+
+    /// The clocks Slow Time splits.
+    struct SlowTimeClock {
+        let coordinator: MagicCoordinator
+    }
+
+    /// Soul Trap, soul gems and Soul Siphon.
+    public struct SoulTrapping {
+        let coordinator: MagicCoordinator
+    }
+
+    /// Summoned and reanimated actors, and their fading.
+    struct SummonCommands {
+        let coordinator: MagicCoordinator
+    }
+
+    /// Wards: absorbing spell damage and breaking.
+    struct WardShields {
+        let coordinator: MagicCoordinator
+    }
+
+    /// The world archetypes: light, race change, bound and enhanced weapons.
+    public struct WorldArchetypeActions {
+        let coordinator: MagicCoordinator
+    }
+
+    /// Bound weapons and weapon enhancement, and when the world refuses them.
+    struct WeaponArchetypes {
+        let coordinator: MagicCoordinator
+    }
+
+    /// The shout readout's snapshot.
+    struct ShoutReadout {
+        let coordinator: MagicCoordinator
+    }
+
+    /// The enchanting readout's snapshot.
+    struct EnchantingReadout {
+        let coordinator: MagicCoordinator
+    }
+}
+
+extension MagicCoordinator {
+    public var frameStep: FrameStep {
+        FrameStep(coordinator: self)
+    }
+
+    public var itemUse: ItemUse {
+        ItemUse(coordinator: self)
+    }
+
+    public var weaponEnchantments: WeaponEnchantments {
+        WeaponEnchantments(coordinator: self)
+    }
+
+    /// The frame step: effects, casting, and the commands they leave for the app.
+    public struct FrameStep {
+        let coordinator: MagicCoordinator
+    }
+
+    /// Consuming magic items, granting authored spells, and dispelling.
+    public struct ItemUse {
+        let coordinator: MagicCoordinator
+    }
+
+    /// Weapon and worn enchantments, poisons, and their readouts.
+    public struct WeaponEnchantments {
+        let coordinator: MagicCoordinator
+    }
+
+    /// Poison doses landing on their target.
+    enum PoisonDoses {}
+
+    /// The world the caster runtime casts in, and the staffs it charges. A class,
+    /// because the runtime holds both weakly; the coordinator keeps it alive.
+    final class CasterBridge: CasterWorld, StaffCharging {
+        unowned let coordinator: MagicCoordinator
+
+        init(coordinator: MagicCoordinator) {
+            self.coordinator = coordinator
         }
-        return refused
+    }
+
+    /// The staffs actors hold, read from their equipment.
+    struct HeldStaves {
+        let coordinator: MagicCoordinator
     }
 }
 
 extension MagicCoordinator {
-    /// - Returns: how many effects were removed.
-    public func dispelEffects(
-        on holder: ActorValueHolder, where predicate: (ActiveEffect) -> Bool
-    ) -> Int {
-        withEffects { $0.dispel(on: holder, where: predicate) } ?? 0
-    }
-}
-
-extension MagicCoordinator {
-    /// Adds and removes the abilities the actor's perks grant. False when no caster or
-    /// effect runtime is wired.
-    @discardableResult
-    public func reconcilePerkAbilities(on holder: ActorValueHolder, perks: any PerkAccess) -> Bool {
-        guard let spells = caster?.spellbook.spells else { return false }
-        return withEffects { effects in
-            _ = PerkAbilityApplication.reconcile(
-                on: holder, perks: perks, spells: spells, using: &effects
-            )
-        } != nil
+    var heldStaves: HeldStaves {
+        HeldStaves(coordinator: self)
     }
 }

@@ -50,7 +50,7 @@ struct CombatReportsTests {
             amount: 5
         )) == 2)
         #expect(adapter.reporter.applyWeaponEnhancement(attacker: .player, target: Self.foe) == 0)
-        #expect(host.fakeMagic.applyWeaponEnhancementCalls.count == 1)
+        #expect(host.fakeMagic.worldArchetypeActions.applyWeaponEnhancementCalls.count == 1)
     }
 
     @Test func aHostileDeathStartsAKillCamWithTheHostilesLeft() {

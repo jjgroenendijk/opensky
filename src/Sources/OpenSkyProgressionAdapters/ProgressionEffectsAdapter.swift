@@ -64,7 +64,7 @@ extension ProgressionEffectsAdapter {
     }
 
     public func reconcileAbilities(on holder: ActorValueHolder, perks: PerkRuntime) {
-        game.magic.reconcilePerkAbilities(on: holder, perks: perks)
+        game.magic.itemUse.reconcilePerkAbilities(on: holder, perks: perks)
     }
 
     public func playerBeastTree() -> BeastPerkTree? {

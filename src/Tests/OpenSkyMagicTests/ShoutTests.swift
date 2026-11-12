@@ -30,15 +30,15 @@ struct ShoutTests {
             var commands: [MagicCommand] = []
             var held: Float = 0
             repeat {
-                commands += coordinator.advanceShout(
+                commands += coordinator.shoutVoice.advanceShout(
                     held: true, delta: ShoutTests.frame, events: [], isPlayerControlled: true
                 )
                 held += ShoutTests.frame
             } while held < seconds
-            commands += coordinator.advanceShout(
+            commands += coordinator.shoutVoice.advanceShout(
                 held: false, delta: ShoutTests.frame, events: [], isPlayerControlled: true
             )
-            commands += coordinator.advanceShout(
+            commands += coordinator.shoutVoice.advanceShout(
                 held: false, delta: ShoutTests.frame, events: fire ? [ShoutTests.fire] : [],
                 isPlayerControlled: true
             )
@@ -64,8 +64,8 @@ struct ShoutTests {
         data.shouts = ShoutStore(plugins: [(Self.plugin, file)])
         let coordinator = MagicCoordinator(world: world, data: data)
         let shout = try #require(coordinator.shouts.keys.first)
-        coordinator.learnShout(shout)
-        coordinator.equipShout(shout)
+        coordinator.shoutReadout.learnShout(shout)
+        coordinator.shoutReadout.equipShout(shout)
         return Session(coordinator: coordinator, world: world, shout: shout)
     }
 
@@ -96,7 +96,7 @@ struct ShoutTests {
         var trial = try session()
         _ = trial.shout(holding: 0.5)
         #expect(trial.world.spellCasts == [spell(ShoutPluginFixture.Form.spell2)])
-        #expect(trial.coordinator.lastShout == .shouted(
+        #expect(trial.coordinator.shoutState.lastShout == .shouted(
             shout: "Fire Breath",
             words: 2,
             cooldown: 45
@@ -105,11 +105,11 @@ struct ShoutTests {
 
     @Test func theGraphHearsTheWishOnlyWhileInhaling() throws {
         let trial = try session()
-        _ = trial.coordinator.advanceShout(
+        _ = trial.coordinator.shoutVoice.advanceShout(
             held: true, delta: Self.frame, events: [], isPlayerControlled: true
         )
         #expect(trial.coordinator.shoutMachine.wantsVoice)
-        _ = trial.coordinator.advanceShout(
+        _ = trial.coordinator.shoutVoice.advanceShout(
             held: false, delta: Self.frame, events: [], isPlayerControlled: true
         )
         #expect(!trial.coordinator.shoutMachine.wantsVoice)
@@ -119,8 +119,11 @@ struct ShoutTests {
         var trial = try session()
         _ = trial.shout(holding: Self.frame)
         _ = trial.shout(holding: Self.frame)
-        guard case .refused(.recovering) = trial.coordinator.lastShout else {
-            Issue.record("expected a recovering refusal, got \(trial.coordinator.lastShout)")
+        guard case .refused(.recovering) = trial.coordinator.shoutState.lastShout else {
+            Issue
+                .record(
+                    "expected a recovering refusal, got \(trial.coordinator.shoutState.lastShout)"
+                )
             return
         }
     }
@@ -130,7 +133,7 @@ struct ShoutTests {
         var trial = try session(allowed: false)
         let commands = trial.shout(holding: Self.frame)
         #expect(commands.isEmpty)
-        #expect(trial.coordinator.lastShout == .refused(.notAllowed))
+        #expect(trial.coordinator.shoutState.lastShout == .refused(.notAllowed))
     }
 
     /// With no graph, the spell still leaves once the wait runs out.
@@ -138,7 +141,7 @@ struct ShoutTests {
         var trial = try session()
         _ = trial.shout(holding: Self.frame, fire: false)
         #expect(trial.world.spellCasts.isEmpty)
-        _ = trial.coordinator.advanceShout(
+        _ = trial.coordinator.shoutVoice.advanceShout(
             held: false, delta: 2, events: [], isPlayerControlled: true
         )
         #expect(trial.world.spellCasts.count == 1)
@@ -149,12 +152,13 @@ struct ShoutTests {
         let file = try ShoutPluginFixture.plugin()
         var data = MagicSessionData()
         data.shouts = ShoutStore(plugins: [(Self.plugin, file)])
-        #expect(trial.coordinator.unlockNextWord(of: trial.shout) == .refused(.wordAlreadyUnlocked))
+        #expect(trial.coordinator.shoutReadout
+            .unlockNextWord(of: trial.shout) == .refused(.wordAlreadyUnlocked))
         let fresh = MagicCoordinator(world: FakeMagicWorld(), data: data)
         let world = try #require(fresh.world as? FakeMagicWorld)
         world.changeShoutKnowledge(.teachWord(.plugin(
             name: Self.plugin.lowercased(), objectID: ShoutPluginFixture.Form.word1
         )))
-        #expect(fresh.unlockNextWord(of: trial.shout) == .refused(.noDragonSoul))
+        #expect(fresh.shoutReadout.unlockNextWord(of: trial.shout) == .refused(.noDragonSoul))
     }
 }

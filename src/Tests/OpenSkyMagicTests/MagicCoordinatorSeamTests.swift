@@ -43,9 +43,9 @@ struct MagicCoordinatorSeamTests {
     @Test func perkAbilitiesReconcileOnlyWithCastingAndEffectsWired() throws {
         let holder = ActorValueHolder.player
         #expect(!MagicCoordinator(world: FakeMagicWorld())
-            .reconcilePerkAbilities(on: holder, perks: NoPerks()))
+            .itemUse.reconcilePerkAbilities(on: holder, perks: NoPerks()))
         #expect(try !MagicCoordinatorTests.effectsWired(FakeMagicWorld())
-            .reconcilePerkAbilities(on: holder, perks: NoPerks()))
+            .itemUse.reconcilePerkAbilities(on: holder, perks: NoPerks()))
         let file = try ActiveEffectFixture.plugin(records: ActiveEffectFixture.effectRecords)
         var data = MagicSessionData()
         data.effects = MagicEffectsData(
@@ -61,25 +61,25 @@ struct MagicCoordinatorSeamTests {
             baselines: nil
         )
         let wired = MagicCoordinator(world: FakeMagicWorld(), data: data)
-        #expect(wired.reconcilePerkAbilities(on: holder, perks: NoPerks()))
+        #expect(wired.itemUse.reconcilePerkAbilities(on: holder, perks: NoPerks()))
     }
 
     @Test func dispellingByPredicateCountsNothingWithoutEffects() throws {
         let holder = ActorValueHolder.player
-        #expect(MagicCoordinator(world: FakeMagicWorld()).dispelEffects(on: holder) { _ in
+        #expect(MagicCoordinator(world: FakeMagicWorld()).itemUse.dispelEffects(on: holder) { _ in
             true
         } == 0)
         let wired = try MagicCoordinatorTests.effectsWired(FakeMagicWorld())
-        #expect(wired.dispelEffects(on: holder) { _ in true } == 0)
+        #expect(wired.itemUse.dispelEffects(on: holder) { _ in true } == 0)
     }
 
     /// Without a wired equipment seam, no hand holds a staff.
     @Test func aHeldStaffPairsAStaffEnchantmentWithItsSpell() throws {
         let coordinator = try MagicCoordinatorTests.castingWired(FakeMagicWorld())
-        #expect(coordinator.heldStaff(of: .player, in: .right) == nil)
+        #expect(coordinator.heldStaves.heldStaff(of: .player, in: .right) == nil)
         let caster = try #require(coordinator.caster)
         caster.spellbook.grant([SpellbookFixture.key(SpellbookFixture.Spell.healing)], to: .player)
-        let spell = try #require(coordinator.playerKnownSpells().first)
+        let spell = try #require(coordinator.controlPanels.playerKnownSpells().first)
         let profile = ItemEnchantmentProfile(
             item: FormID(0x800), enchantment: .plugin(name: "base.esm", objectID: 0x801),
             sourcePlugin: "Base.esm", entries: [], name: "Staff of Healing",

@@ -1,18 +1,19 @@
 // The visual links of the abilities a race grants, such as a glow or a lasting
 // membrane. See docs/rendering/visual-effects.md.
 
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
-public import OpenSkyMagicInterface
+import OpenSkyMagicInterface
 
-extension MagicCoordinator {
+extension MagicCoordinator.RaceEffects {
     /// The hit-shader and art links of each ability in the `SPLO` list of the
     /// race of `base`. A racial power, such as Dragonskin, shows its look only
     /// while it is cast, so it is left out.
-    public func raceEffectLinks(base: FormID, actor: ReferenceKey) -> [SpellHitEffectLinks] {
+    func raceEffectLinks(base: FormID, actor: ReferenceKey) -> [SpellHitEffectLinks] {
         guard
-            let caster, let spellBaselines, let spellPluginName,
-            let store = effects?.effects
+            let caster = coordinator.caster, let spellBaselines = coordinator.spellBaselines,
+            let spellPluginName = coordinator.spellPluginName,
+            let store = coordinator.effects?.effects
         else {
             return []
         }

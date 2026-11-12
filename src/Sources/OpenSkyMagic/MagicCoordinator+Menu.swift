@@ -6,14 +6,14 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyMagicInterface
 
-extension MagicCoordinator {
+extension MagicCoordinator.MagicMenu {
     public var magicMenuSpells: [MagicMenuSpell] {
-        guard let caster else { return [] }
+        guard let caster = coordinator.caster else { return [] }
         let book = caster.spellbook.state(of: .player)
-        return playerKnownSpells().map { spell in
+        return coordinator.controlPanels.playerKnownSpells().map { spell in
             MagicMenuSpell(
                 name: spell.displayName,
-                typeName: magicTexts.name(of: spell.spellType),
+                typeName: coordinator.texts.magic.name(of: spell.spellType),
                 isReadied: !book.hands(of: spell.key).isEmpty
             )
         }
@@ -21,20 +21,22 @@ extension MagicCoordinator {
 
     /// Selects the known spell at `index` and readies it in `hand`.
     @discardableResult
-    public func readyKnownSpell(at index: Int, in hand: SpellHand) -> CastingActionOutcome {
-        guard playerKnownSpells().indices.contains(index) else {
-            return recordCasting(.noSpellSelected)
+    func readyKnownSpell(at index: Int, in hand: SpellHand) -> CastingActionOutcome {
+        guard coordinator.controlPanels.playerKnownSpells().indices.contains(index) else {
+            return coordinator.recordCasting(.noSpellSelected)
         }
-        selection = index
-        return readySelectedSpell(in: hand)
+        coordinator.castingState.selection = index
+        return coordinator.controlPanels.readySelectedSpell(in: hand)
     }
 }
 
-extension MagicCoordinator {
+extension MagicCoordinator.MagicMenu {
     /// A harmful effect drains the player's health each second, such as poison or fire.
     /// The game then refuses rest (`sNoWaitTakingHealthDamage`).
     public var isPlayerTakingHealthDamage: Bool {
-        guard let runtime = effects, let health = ActorValueIdentity.index(named: "Health")
+        guard
+            let runtime = coordinator.effects,
+            let health = ActorValueIdentity.index(named: "Health")
         else { return false }
         return runtime.active(on: .player).contains { effect in
             effect.isDetrimental && effect.mode == .perSecond

@@ -64,7 +64,7 @@ struct LockAndRefusalAdapterTests {
         let refusal = ActivationRefusalWorldAdapter(game: host, stage: nil)
         host.fakeStreamer.referenceEntryFormIDResult = try InventoryAdapterFixture.actorEntry()
         host.fakeRagdollWorld.holderResult = .player
-        host.fakeMagic.influenceResult = ActorMagicInfluence(isCalmed: true)
+        host.fakeMagic.archetypeActions.influenceResult = ActorMagicInfluence(isCalmed: true)
         host.fakeScenes.actorsInScenesResult = [Self.key]
         let talk = InventoryAdapterFixture.target(InventoryAdapterFixture.interaction(.talk))
         let actor = try #require(refusal.facts(for: talk).actor)

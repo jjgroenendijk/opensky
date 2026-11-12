@@ -247,7 +247,7 @@ struct EffectsTrapWeapon {
             ),
             weapon: weaponID,
             ammunition: arrow.item,
-            enchantment: game.magic.enchantmentProfile(of: weaponID)
+            enchantment: game.magic.weaponEnchantments.enchantmentProfile(of: weaponID)
         )
         payload.spendsAmmunition = false
         let shot = ProjectileShot(profile: arrow.profile, payload: .arrow(payload))

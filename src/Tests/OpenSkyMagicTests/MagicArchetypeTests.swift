@@ -143,8 +143,8 @@ struct MagicArchetypeTests {
     @Test func calmUpToItsLevelCalmsTheTarget() throws {
         let coordinator = try makeCoordinator()
         Self.cast(Archetype.calm, magnitude: 9, duration: 30, on: coordinator)
-        #expect(coordinator.influence(of: .player).isCalmed)
-        #expect(coordinator.influence(of: .player).refusesCombat)
+        #expect(coordinator.archetypeActions.influence(of: .player).isCalmed)
+        #expect(coordinator.archetypeActions.influence(of: .player).refusesCombat)
     }
 
     /// UESP "Skyrim:Pickpocket": Harmony, a calm cast from self over an area, makes its
@@ -173,27 +173,27 @@ struct MagicArchetypeTests {
     @Test func calmAboveItsLevelCapIsRefused() throws {
         let coordinator = try makeCoordinator()
         Self.cast(Archetype.calm, magnitude: 0.5, duration: 30, on: coordinator)
-        #expect(coordinator.influence(of: .player).isNone)
+        #expect(coordinator.archetypeActions.influence(of: .player).isNone)
         #expect(coordinator.effects?.tally.skips[.aboveLevelCap(.calm)] == 1)
     }
 
     @Test func turnUndeadNeedsTheUndeadKeyword() throws {
         let coordinator = try makeCoordinator()
         Self.cast(Archetype.turnUndead, magnitude: 20, duration: 30, on: coordinator)
-        #expect(!coordinator.influence(of: .player).isFrightened)
+        #expect(!coordinator.archetypeActions.influence(of: .player).isFrightened)
         #expect(coordinator.effects?.tally.skips[.notUndead] == 1)
 
         world.undead = [.player]
         Self.cast(Archetype.turnUndead, magnitude: 20, duration: 30, on: coordinator)
-        #expect(coordinator.influence(of: .player).flees)
+        #expect(coordinator.archetypeActions.influence(of: .player).flees)
     }
 
     @Test func rallyOutweighsFear() throws {
         let coordinator = try makeCoordinator()
         Self.cast(Archetype.demoralize, magnitude: 20, duration: 30, on: coordinator)
-        #expect(coordinator.influence(of: .player).flees)
+        #expect(coordinator.archetypeActions.influence(of: .player).flees)
         Self.cast(Archetype.rally, magnitude: 20, duration: 30, on: coordinator)
-        #expect(!coordinator.influence(of: .player).flees)
+        #expect(!coordinator.archetypeActions.influence(of: .player).flees)
     }
 
     // MARK: - Dispels
@@ -201,7 +201,7 @@ struct MagicArchetypeTests {
     @Test func dispelRemovesTimedEffects() throws {
         let coordinator = try makeCoordinator()
         Self.cast(Archetype.frenzy, magnitude: 20, duration: 30, on: coordinator)
-        #expect(coordinator.influence(of: .player).isFrenzied)
+        #expect(coordinator.archetypeActions.influence(of: .player).isFrenzied)
         Self.cast(Archetype.dispel, magnitude: 1, on: coordinator)
         #expect(coordinator.effects?.active(on: .player).isEmpty == true)
     }
@@ -210,10 +210,10 @@ struct MagicArchetypeTests {
         let coordinator = try makeCoordinator()
         Self.cast(ActiveEffectFixture.paralyze, magnitude: 1, duration: 10, on: coordinator)
         Self.cast(Archetype.frenzy, magnitude: 20, duration: 30, on: coordinator)
-        #expect(coordinator.influence(of: .player).isParalysed)
+        #expect(coordinator.archetypeActions.influence(of: .player).isParalysed)
         Self.cast(Archetype.cureParalysis, magnitude: 1, on: coordinator)
-        #expect(!coordinator.influence(of: .player).isParalysed)
-        #expect(coordinator.influence(of: .player).isFrenzied)
+        #expect(!coordinator.archetypeActions.influence(of: .player).isParalysed)
+        #expect(coordinator.archetypeActions.influence(of: .player).isFrenzied)
     }
 
     /// The Script archetype "has no effect other than any Papyrus Scripts", so it
@@ -222,7 +222,7 @@ struct MagicArchetypeTests {
         let coordinator = try makeCoordinator()
         let stored = Self.cast(Archetype.script, magnitude: 0, duration: 10, on: coordinator)
         #expect(stored.count == 1)
-        #expect(coordinator.influence(of: .player).isNone)
+        #expect(coordinator.archetypeActions.influence(of: .player).isNone)
         #expect(coordinator.effects?.worldActions.isEmpty == true)
     }
 
@@ -233,7 +233,7 @@ struct MagicArchetypeTests {
         let coordinator = try makeCoordinator()
         Self.cast(Archetype.stagger, magnitude: 0.5, duration: 2, on: coordinator)
         Self.cast(Archetype.stagger, magnitude: 0.5, duration: 2, on: coordinator)
-        #expect(coordinator.takeCommands() == [.stagger(.player, magnitude: 0.5)])
+        #expect(coordinator.frameStep.takeCommands() == [.stagger(.player, magnitude: 0.5)])
     }
 
     @Test func spawnHazardPlacesTheAssociatedHazard() throws {
@@ -242,7 +242,7 @@ struct MagicArchetypeTests {
         let hazard = ReferenceKey(resolved: ResolvedFormID(
             plugin: ActiveEffectFixture.pluginName, objectID: Archetype.hazard
         ))
-        #expect(coordinator.takeCommands() == [.spawnHazard(hazard, at: .player)])
+        #expect(coordinator.frameStep.takeCommands() == [.spawnHazard(hazard, at: .player)])
     }
 
     /// "You may only have one cloak spell active at any given time."
@@ -259,9 +259,9 @@ struct MagicArchetypeTests {
     /// UESP "Skyrim:Slow Time": the world runs at the magnitude, the player at 70%.
     @Test func slowTimeSlowsTheWorldMoreThanThePlayer() throws {
         let coordinator = try makeCoordinator()
-        #expect(coordinator.timeScales == .normal)
+        #expect(coordinator.slowTimeClock.timeScales == .normal)
         Self.cast(Archetype.slowTime, magnitude: 0.3, duration: 8, on: coordinator)
-        #expect(coordinator.timeScales == MagicTimeScales(world: 0.3, player: 0.7))
+        #expect(coordinator.slowTimeClock.timeScales == MagicTimeScales(world: 0.3, player: 0.7))
     }
 
     /// Quick Reflexes sets entry point 70 to 1: the player is not slowed at all.
@@ -269,7 +269,7 @@ struct MagicArchetypeTests {
         let coordinator = try makeCoordinator()
         world.perkValues[.modPlayerMagicSlowdown] = 1
         Self.cast(Archetype.slowTime, magnitude: 0.05, duration: 1, on: coordinator)
-        #expect(coordinator.timeScales == MagicTimeScales(world: 0.05, player: 1))
+        #expect(coordinator.slowTimeClock.timeScales == MagicTimeScales(world: 0.05, player: 1))
     }
 
     @Test func slowTimeEffectsStack() {
@@ -287,9 +287,9 @@ struct MagicArchetypeTests {
         Self.cast(Archetype.slowTime, magnitude: 0.3, duration: 8, on: coordinator)
         // 4 s of world time in small frames: 9.3 s on the player's clock.
         for _ in 0 ..< 200 {
-            _ = coordinator.advanceEffects(delta: 0.02)
+            _ = coordinator.frameStep.advanceEffects(delta: 0.02)
         }
-        #expect(coordinator.timeScales == .normal)
+        #expect(coordinator.slowTimeClock.timeScales == .normal)
         #expect(coordinator.effects?.active(on: .player).isEmpty == true)
     }
 
@@ -298,7 +298,7 @@ struct MagicArchetypeTests {
     @Test func theReadoutNamesAnArchetypeWithNoActorValue() throws {
         let coordinator = try makeCoordinator()
         Self.cast(Archetype.calm, magnitude: 9, duration: 30, on: coordinator)
-        let snapshot = coordinator.magicEffectControlSnapshot
+        let snapshot = coordinator.effectsPanel.magicEffectControlSnapshot
         let line = snapshot.playerEffects.first?.line ?? ""
         #expect(line.contains("calm: \(MagicArchetypeRule.influence(.calm).summary)"))
         #expect(line.contains("at magnitude 9.0"))

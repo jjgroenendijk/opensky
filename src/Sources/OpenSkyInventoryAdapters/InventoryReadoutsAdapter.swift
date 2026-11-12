@@ -81,11 +81,14 @@ extension InventoryReadoutsAdapter {
     }
 
     public func enchantmentLine(of item: FormID, on owner: ReferenceKey) -> String? {
-        game.magic.enchantmentLine(of: item, on: game.actorWorld.actorValueHolder(for: owner))
+        game.magic.weaponEnchantments.enchantmentLine(
+            of: item,
+            on: game.actorWorld.actorValueHolder(for: owner)
+        )
     }
 
     var enchantmentCacheReadout: EnchantmentCacheReadout {
-        game.magic.enchantmentCacheReadout
+        game.magic.weaponEnchantments.enchantmentCacheReadout
     }
 
     var gameDaysPassed: Float? {

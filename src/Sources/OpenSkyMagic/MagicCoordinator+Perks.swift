@@ -9,7 +9,7 @@ import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 
-extension MagicCoordinator {
+extension MagicCoordinator.PerkEffects {
     /// `entries` of `spell`, cast by `caster`, as they land on `target`. A spell the
     /// spell store does not hold lands as authored.
     func perkScaled(
@@ -19,7 +19,7 @@ extension MagicCoordinator {
         on target: ReferenceKey
     ) -> [MagicItemEffect] {
         guard
-            let spells = self.caster?.spellbook.spells,
+            let spells = coordinator.caster?.spellbook.spells,
             let resolved = spells.spell(key: spell)
         else { return entries }
         var seams = ConditionContext()
@@ -39,7 +39,10 @@ extension MagicCoordinator {
         fromPlugin pluginName: String,
         drinker: ReferenceKey
     ) -> [MagicItemEffect] {
-        guard let store = effects?.effects, case let .plugin(plugin, objectID) = item else {
+        guard
+            let store = coordinator.effects?.effects,
+            case let .plugin(plugin, objectID) = item
+        else {
             return entries
         }
         let keywords = entries.flatMap { entry in
@@ -76,11 +79,11 @@ extension MagicCoordinator {
         let cast = PerkEvaluationSubjects(owner: caster, target: target ?? caster)
             .binding(.spell, to: subject)
         return entries.map { entry in
-            var magnitude = world.perkModified(
+            var magnitude = coordinator.world.perkModified(
                 entry.magnitude, at: .modSpellMagnitude, on: caster, subjects: cast, seams: seams
             )
             if let target {
-                magnitude = world.perkModified(
+                magnitude = coordinator.world.perkModified(
                     magnitude,
                     at: .modIncomingSpellMagnitude,
                     on: target,
@@ -88,7 +91,7 @@ extension MagicCoordinator {
                     seams: seams
                 )
             }
-            let duration = world.perkModified(
+            let duration = coordinator.world.perkModified(
                 Float(entry.duration), at: .modSpellDuration, on: caster, subjects: cast,
                 seams: seams
             )

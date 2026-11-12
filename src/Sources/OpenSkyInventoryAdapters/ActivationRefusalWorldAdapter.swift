@@ -80,7 +80,7 @@ struct ActorActivationReads {
         if let holder = game.ragdollWorld.holder(of: key) {
             state.isCreature = !game.magicWorld.actorHasKeyword("ActorTypeNPC", on: holder)
         }
-        state.isCalmed = game.magic.influence(of: key).isCalmed
+        state.isCalmed = game.magic.archetypeActions.influence(of: key).isCalmed
         state.isFleeing = game.combat.loop?.actionFacts(of: key)?.isFleeing == true
         state.isUnconscious = game.scripts.bridge?.scriptedState(of: key)
             .flag(ScriptedStateName.unconscious) == true

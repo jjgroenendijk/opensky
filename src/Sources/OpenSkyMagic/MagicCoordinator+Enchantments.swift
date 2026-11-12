@@ -8,19 +8,19 @@ public import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
 import OpenSkyWorldState
 
-extension MagicCoordinator: WeaponEnchantmentApplying {
+extension MagicCoordinator.WeaponEnchantments {
     @discardableResult
     public func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
-        let owner = world.actorValueHolder(for: hit.attacker)
-        let holders = residentHolders(of: hit.targets)
-        let inventory = world.inventory
-        let report = withEffects { runtime in
+        let owner = coordinator.world.actorValueHolder(for: hit.attacker)
+        let holders = coordinator.casterBridge.residentHolders(of: hit.targets)
+        let inventory = coordinator.world.inventory
+        let report = coordinator.withEffects { runtime in
             WeaponEnchantmentApplication.apply(
                 hit, owner: owner, holders: holders, using: &runtime, inventory: inventory
             )
         }.flatMap(\.self)
         if let notice = CastNoticeText.notice(after: report, by: hit.attacker) {
-            pendingCommands.append(.notice(castNotices[notice]))
+            coordinator.pendingCommands.append(.notice(coordinator.texts.castNotices[notice]))
         }
         return report
     }
@@ -30,11 +30,12 @@ extension MagicCoordinator: WeaponEnchantmentApplying {
     public func applyWeaponPoison(_ hit: WeaponPoisonHit) {
         guard
             let weapon = hit.weapon,
-            let items = world.inventory?.baselines.items,
-            let target = residentHolders(of: [SpellHitTarget(key: hit.target)])[hit.target]
+            let items = coordinator.world.inventory?.baselines.items,
+            let target = coordinator.casterBridge
+                .residentHolders(of: [SpellHitTarget(key: hit.target)])[hit.target]
         else { return }
-        let plugin = pluginName
-        withEffects { runtime in
+        let plugin = coordinator.pluginName
+        coordinator.withEffects { runtime in
             let poisons = runtime.store.component(WeaponPoisonState.self, for: hit.attacker)
             guard let poisons else { return }
             let (left, spent) = poisons.spendingDose(of: weapon)
@@ -44,7 +45,7 @@ extension MagicCoordinator: WeaponEnchantmentApplying {
             } else {
                 runtime.store.set(left, for: hit.attacker)
             }
-            _ = Self.land(
+            _ = MagicCoordinator.PoisonDoses.land(
                 PoisonDose(potion: potion, id: spent, plugin: plugin),
                 caster: hit.attacker, on: target, using: &runtime
             )
@@ -58,51 +59,31 @@ extension MagicCoordinator: WeaponEnchantmentApplying {
         _ poison: FormID, by caster: ReferenceKey, on target: ReferenceKey
     ) -> Int? {
         guard
-            let potion = world.inventory?.baselines.items.ingestibles[poison.rawValue],
-            let holder = residentHolders(of: [SpellHitTarget(key: target)])[target]
+            let potion = coordinator.world.inventory?.baselines.items.ingestibles[poison.rawValue],
+            let holder = coordinator.casterBridge
+                .residentHolders(of: [SpellHitTarget(key: target)])[target]
         else { return nil }
-        let plugin = pluginName
-        return withEffects { runtime in
-            Self.land(
+        let plugin = coordinator.pluginName
+        return coordinator.withEffects { runtime in
+            MagicCoordinator.PoisonDoses.land(
                 PoisonDose(potion: potion, id: poison, plugin: plugin),
                 caster: caster, on: holder, using: &runtime
             )
         }
     }
-
-    /// A poison's effects on `target`, scaled by its resistances like a hostile spell.
-    private static func land(
-        _ dose: PoisonDose, caster: ReferenceKey,
-        on target: ActorValueHolder, using runtime: inout ActiveEffectRuntime
-    ) -> Int {
-        let (potion, id, plugin) = (dose.potion, dose.id, dose.plugin)
-        let scaled = SpellHitApplication.scale(
-            potion.effects, source: (plugin, false),
-            on: target, using: runtime, resistances: .documentedDefaults
-        )
-        return runtime.apply(
-            scaled.entries,
-            fromPlugin: plugin,
-            source: ActiveEffectSource(
-                kind: .potion, record: runtime.effects.sourceKey(of: id, fallbackPlugin: plugin)
-            ),
-            caster: caster,
-            on: target
-        ).count
-    }
 }
 
 /// One poison and the plugin its effects resolve through.
-private struct PoisonDose {
+struct PoisonDose {
     let potion: Ingestible
     let id: FormID
     let plugin: String
 }
 
-extension MagicCoordinator {
+extension MagicCoordinator.WeaponEnchantments {
     /// What the inventory readout shows about the profile cache.
     public var enchantmentCacheReadout: EnchantmentCacheReadout {
-        profiles.readout
+        coordinator.enchantingMemory.profiles.readout
     }
 
     /// One carried item's enchantment, or nil when it has none or the session
@@ -110,27 +91,27 @@ extension MagicCoordinator {
     public func enchantmentProfile(
         of item: FormID, on holder: InventoryHolder? = nil
     ) -> ItemEnchantmentProfile? {
-        if let holder, let made = madeProfile(of: item, on: holder) {
+        if let holder, let made = coordinator.enchantingRecords.madeProfile(of: item, on: holder) {
             return made
         }
-        let store = enchantmentStore
-        let items = world.inventory?.baselines.items
-        return profiles.profile(of: item) { item in
+        let store = coordinator.enchantmentStore
+        let items = coordinator.world.inventory?.baselines.items
+        return coordinator.enchantingMemory.profiles.profile(of: item) { item in
             guard let store, let definition = items?.definition(item) else { return nil }
             return ItemEnchantmentProfile.resolve(definition, using: store)
         }
     }
 
     /// What `item` has left on `holder`, or nil when it carries no enchantment.
-    public func enchantmentCharge(
+    func enchantmentCharge(
         of item: FormID,
         on holder: ActorValueHolder
     ) -> EnchantmentCharge? {
         guard
-            let runtime = effects,
+            let runtime = coordinator.effects,
             let profile = enchantmentProfile(of: item, on: InventoryHolder(actor: holder))
         else { return nil }
-        return EnchantmentLedger(store: runtime.store, inventory: world.inventory)
+        return EnchantmentLedger(store: runtime.store, inventory: coordinator.world.inventory)
             .charge(of: profile, on: holder)
     }
 
@@ -138,11 +119,14 @@ extension MagicCoordinator {
     /// leave the hands a worn item holds, then worn enchantments are re-read.
     @discardableResult
     public func equipmentChanged(on holder: InventoryHolder) -> WornEnchantmentReport {
-        if let caster, let values = world.actorValueHolder(for: holder.key) {
+        if
+            let caster = coordinator.caster,
+            let values = coordinator.world.actorValueHolder(for: holder.key)
+        {
             caster.spellbook.releaseHands(wornBy: holder, on: values)
         }
-        if let values = world.actorValueHolder(for: holder.key) {
-            endWeaponEnhancement(on: values)
+        if let values = coordinator.world.actorValueHolder(for: holder.key) {
+            coordinator.weaponArchetypes.endWeaponEnhancement(on: values)
         }
         return refreshWornEnchantments(on: holder)
     }
@@ -150,15 +134,15 @@ extension MagicCoordinator {
     /// Brings `holder`'s worn constant effects in line with what it wears. An
     /// owner with no actor values, such as a container, changes nothing.
     @discardableResult
-    public func refreshWornEnchantments(on holder: InventoryHolder) -> WornEnchantmentReport {
+    func refreshWornEnchantments(on holder: InventoryHolder) -> WornEnchantmentReport {
         guard
-            let equipment = world.equipment,
-            let values = world.actorValueHolder(for: holder.key)
+            let equipment = coordinator.world.equipment,
+            let values = coordinator.world.actorValueHolder(for: holder.key)
         else { return .none }
         let worn = equipment.equipped(on: holder).compactMap {
             enchantmentProfile(of: $0, on: holder)
         }
-        return withEffects { runtime in
+        return coordinator.withEffects { runtime in
             WornEnchantmentApplication.reconcile(worn: worn, on: values, using: &runtime)
         } ?? .none
     }

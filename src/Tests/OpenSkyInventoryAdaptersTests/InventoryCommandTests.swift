@@ -24,10 +24,10 @@ struct InventoryCommandTests {
         let target = InventoryAdapterFixture.target(InventoryAdapterFixture.interaction(.open))
         let holder = InventoryHolder(key: Self.actor, owner: .actor(base: FormID(0x20)))
         host.fakeStreamer.interactionTarget = target
-        host.fakeMagic.equipmentChangedResult = WornEnchantmentReport.none
+        host.fakeMagic.weaponEnchantments.equipmentChangedResult = WornEnchantmentReport.none
         host.fakeInventory.labelledResult = InventoryAdapterFixture.interaction(.take)
         adapter.run([.equipmentChanged(holder), .refreshInteractionTarget, .showNotice("Locked")])
-        #expect(host.fakeMagic.equipmentChangedCalls == [holder])
+        #expect(host.fakeMagic.weaponEnchantments.equipmentChangedCalls == [holder])
         #expect(host.fakeInventory.labelledCalls == [target.interaction])
         #expect(host.fakeHUD.updateTargetCalls.first??.interaction.action == .take)
         #expect(host.fakeHUD.showNotificationCalls == ["Locked"])

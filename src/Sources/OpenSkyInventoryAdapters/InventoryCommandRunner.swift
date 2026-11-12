@@ -32,7 +32,7 @@ public struct InventoryCommandRunner {
         for command in commands {
             switch command {
             case let .equipmentChanged(holder):
-                game.magic.equipmentChanged(on: holder)
+                game.magic.weaponEnchantments.equipmentChanged(on: holder)
             case .refreshInteractionTarget:
                 // The streamer's raw target: the HUD's copy is already labelled, and a
                 // lock label appends to the name, so labelling it twice repeats the band.

@@ -114,7 +114,7 @@ struct MagicWorldArchetypeTests {
 
         Self.cast(Effect.banish, on: Self.summon, by: Self.rival, coordinator)
         #expect(coordinator.commanded.isEmpty)
-        coordinator.advanceCommanded(delta: 2)
+        coordinator.summonCommands.advanceCommanded(delta: 2)
         #expect(world.releasedActors.map(\.actor) == [Self.summon])
     }
 
@@ -170,16 +170,16 @@ struct MagicWorldArchetypeTests {
         let coordinator = try makeCoordinator()
         world.aimRays[.player] = MagicAimRay(origin: .zero, direction: SIMD3(0, 1, 0))
         Self.cast(Effect.grab, on: Self.victim, coordinator)
-        #expect(coordinator.isGrabbed(Self.victim))
-        #expect(coordinator.influence(of: Self.victim).isParalysed)
+        #expect(coordinator.holdEffects.isGrabbed(Self.victim))
+        #expect(coordinator.archetypeActions.influence(of: Self.victim).isParalysed)
 
-        _ = coordinator.advanceEffects(delta: 0.1)
+        _ = coordinator.frameStep.advanceEffects(delta: 0.1)
         #expect(world.actorHolds.last?.point == SIMD3(0, 120, 0))
 
         for _ in 0 ..< 20 {
-            _ = coordinator.advanceEffects(delta: 0.1)
+            _ = coordinator.frameStep.advanceEffects(delta: 0.1)
         }
-        #expect(!coordinator.isGrabbed(Self.victim))
+        #expect(!coordinator.holdEffects.isGrabbed(Self.victim))
         #expect(world.actorHolds.last?.actor == Self.victim)
         #expect(world.actorHolds.last.map { $0.point == nil } == true)
     }
@@ -190,7 +190,7 @@ struct MagicWorldArchetypeTests {
         let coordinator = try makeCoordinator()
         world.guide = .noMarker
         Self.cast(Effect.guide, on: .player, coordinator)
-        #expect(coordinator.takeCommands()
+        #expect(coordinator.frameStep.takeCommands()
             .contains {
                 if case .notice = $0 {
                     true

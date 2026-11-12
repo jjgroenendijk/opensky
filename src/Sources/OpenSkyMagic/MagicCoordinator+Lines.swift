@@ -1,12 +1,12 @@
 public import OpenSkyFormatsESM
 public import OpenSkyMagicInterface
 
-extension MagicCoordinator {
+extension MagicCoordinator.MenuLines {
     public func readBookLine(_ item: FormID) -> String? {
-        readBook(item)?.text
+        coordinator.spellTomes.readBook(item)?.text
     }
 
     public func readyKnownSpellLine(at index: Int, in hand: SpellHand) -> String {
-        readyKnownSpell(at: index, in: hand).text
+        coordinator.magicMenu.readyKnownSpell(at: index, in: hand).text
     }
 }

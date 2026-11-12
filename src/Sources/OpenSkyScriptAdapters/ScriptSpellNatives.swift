@@ -37,13 +37,14 @@ extension ScriptPerkBindingsAdapter {
         bridge.formListStore = provider.formListStore
         bridge.keywordStore = provider.locationKeywords
         bridge.magicNatives.dispelEffects = { [weak game = self.game] holder, predicate in
-            game?.magic.dispelEffects(on: holder, where: predicate) ?? 0
+            game?.magic.itemUse.dispelEffects(on: holder, where: predicate) ?? 0
         }
         bridge.magicNatives.applySpellHit = { [weak game = self.game] hit in
             game?.magicWorld.applySpellHit(hit) ?? .none
         }
         bridge.magicNatives.trapSoul = { [weak game = self.game] victim, caster in
-            guard case .trapped = game?.magic.trapSoul(of: victim, by: caster) else { return false }
+            guard case .trapped = game?.magic.soulTrapping.trapSoul(of: victim, by: caster)
+            else { return false }
             return true
         }
         fillPerkNatives(bridge: bridge)

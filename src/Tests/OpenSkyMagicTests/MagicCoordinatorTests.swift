@@ -44,45 +44,48 @@ struct MagicCoordinatorTests {
 
     @Test func anUnwiredCoordinatorReportsItselfUnavailable() {
         let coordinator = MagicCoordinator(world: FakeMagicWorld())
-        #expect(coordinator.magicEffectControlSnapshot == .unavailable)
-        #expect(coordinator.castingControlSnapshot == .unavailable)
-        #expect(coordinator.dispelPlayerMagicEffects().text == MagicCore.effectsUnavailableText)
-        #expect(coordinator.consumeFirstCarriedMagicItem().text == MagicCore.effectsUnavailableText)
-        #expect(coordinator.castReadiedSpell(in: .right).text == MagicCore.castingUnavailableText)
-        #expect(!coordinator.hasReadiedSpell(in: .right))
-        #expect(coordinator.magicConditionResolution().state(of: .player) == nil)
+        #expect(coordinator.effectsPanel.magicEffectControlSnapshot == .unavailable)
+        #expect(coordinator.controlPanels.castingControlSnapshot == .unavailable)
+        #expect(coordinator.effectsPanel.dispelPlayerMagicEffects().text == MagicCore
+            .effectsUnavailableText)
+        #expect(coordinator.effectsPanel.consumeFirstCarriedMagicItem().text == MagicCore
+            .effectsUnavailableText)
+        #expect(coordinator.controlPanels.castReadiedSpell(in: .right).text == MagicCore
+            .castingUnavailableText)
+        #expect(!coordinator.itemUse.hasReadiedSpell(in: .right))
+        #expect(coordinator.conditionReads.magicConditionResolution().state(of: .player) == nil)
         #expect(coordinator.withEffects { _ in true } == nil)
-        #expect(coordinator.enchantmentProfile(of: FormID(1)) == nil)
+        #expect(coordinator.weaponEnchantments.enchantmentProfile(of: FormID(1)) == nil)
     }
 
     /// Under one 1/60 s step, so the whole delta stays in the accumulator. A
     /// tick that changed a throwaway copy would leave it at zero.
     @Test func tickingCarriesTheRemainderInTheAccumulator() throws {
         let coordinator = try Self.effectsWired(FakeMagicWorld())
-        _ = coordinator.advanceEffects(delta: 0.004)
+        _ = coordinator.frameStep.advanceEffects(delta: 0.004)
         #expect(coordinator.accumulator > 0.003)
         #expect(coordinator.accumulator < 0.005)
-        _ = coordinator.advanceEffects(delta: 0.02)
+        _ = coordinator.frameStep.advanceEffects(delta: 0.02)
         #expect(coordinator.accumulator < ActiveEffectRuntime.fixedStepSeconds)
         #expect(coordinator.accumulator > 0)
     }
 
     @Test func tickingWithoutARuntimeDoesNothing() {
         let coordinator = MagicCoordinator(world: FakeMagicWorld())
-        _ = coordinator.advanceEffects(delta: 0.004)
+        _ = coordinator.frameStep.advanceEffects(delta: 0.004)
         #expect(coordinator.accumulator == 0)
     }
 
     @Test func dispellingAnUntouchedPlayerSaysSo() throws {
         let coordinator = try Self.effectsWired(FakeMagicWorld())
-        #expect(coordinator.dispelPlayerMagicEffects()
+        #expect(coordinator.effectsPanel.dispelPlayerMagicEffects()
             .text == "No effect was acting on the player.")
-        #expect(coordinator.magicEffectControlSnapshot.isAvailable)
+        #expect(coordinator.effectsPanel.magicEffectControlSnapshot.isAvailable)
     }
 
     @Test func consumingWithoutAnInventoryIsRefused() throws {
         let coordinator = try Self.effectsWired(FakeMagicWorld())
-        #expect(coordinator.consumeMagicItem(FormID(1)).text
+        #expect(coordinator.itemUse.consumeMagicItem(FormID(1)).text
             == MagicCore.effectsUnavailableText)
     }
 
@@ -90,9 +93,10 @@ struct MagicCoordinatorTests {
         let world = FakeMagicWorld()
         let coordinator = try Self.castingWired(world)
         world.gameDaysPassed = 3.7
-        #expect(coordinator.castingGameDay == 3)
+        #expect(coordinator.casterBridge.castingGameDay == 3)
         world.aim = SpellAim(target: .player)
-        #expect(coordinator.aimedSpellTarget(within: 250, for: .player).target == .player)
+        #expect(coordinator.casterBridge.aimedSpellTarget(within: 250, for: .player)
+            .target == .player)
         #expect(world.aimRequests.map(\.range) == [250])
     }
 
@@ -104,8 +108,8 @@ struct MagicCoordinatorTests {
         world.aim = SpellAim(target: target)
         let flames = SpellbookFixture.key(SpellbookFixture.Spell.flames)
 
-        coordinator.spellWasCast(flames, by: target)
-        coordinator.spellWasCast(flames, by: .player)
+        coordinator.casterBridge.spellWasCast(flames, by: target)
+        coordinator.casterBridge.spellWasCast(flames, by: .player)
 
         let cast = recorder.events("CAST")
         #expect(cast.map(\.actor1) == [.player])
@@ -115,30 +119,32 @@ struct MagicCoordinatorTests {
 
     @Test func theMagicMenuListsTheKnownSpellsAndWhichIsReadied() throws {
         let coordinator = try Self.castingWired(FakeMagicWorld())
-        #expect(coordinator.magicMenuSpells.isEmpty)
+        #expect(coordinator.magicMenu.magicMenuSpells.isEmpty)
         let caster = try #require(coordinator.caster)
         caster.spellbook.grant([SpellbookFixture.key(SpellbookFixture.Spell.healing)], to: .player)
-        let spells = coordinator.magicMenuSpells
-        #expect(spells.map(\.name) == coordinator.playerKnownSpells().map(\.displayName))
+        let spells = coordinator.magicMenu.magicMenuSpells
+        #expect(spells.map(\.name) == coordinator.controlPanels.playerKnownSpells()
+            .map(\.displayName))
         #expect(spells.map(\.isReadied) == [false])
-        #expect(!coordinator.readyKnownSpellLine(at: 0, in: .right).isEmpty)
-        #expect(coordinator.magicMenuSpells.map(\.isReadied) == [true])
-        #expect(coordinator.readBookLine(FormID(0x0700)) == nil)
-        #expect(MagicCoordinator(world: FakeMagicWorld()).magicMenuSpells.isEmpty)
+        #expect(!coordinator.menuLines.readyKnownSpellLine(at: 0, in: .right).isEmpty)
+        #expect(coordinator.magicMenu.magicMenuSpells.map(\.isReadied) == [true])
+        #expect(coordinator.menuLines.readBookLine(FormID(0x0700)) == nil)
+        #expect(MagicCoordinator(world: FakeMagicWorld()).magicMenu.magicMenuSpells.isEmpty)
     }
 
     @Test func selectionCyclesOverTheKnownSpells() throws {
         let coordinator = try Self.castingWired(FakeMagicWorld())
-        #expect(coordinator.selectNextKnownSpell().text == "The player knows no spells to select.")
+        #expect(coordinator.controlPanels.selectNextKnownSpell()
+            .text == "The player knows no spells to select.")
         let spells = [SpellbookFixture.Spell.healing, SpellbookFixture.Spell.flames]
         let caster = try #require(coordinator.caster)
         caster.spellbook.grant(spells.map(SpellbookFixture.key), to: .player)
-        let known = coordinator.playerKnownSpells().map(\.displayName)
+        let known = coordinator.controlPanels.playerKnownSpells().map(\.displayName)
         #expect(known.count == 2)
-        coordinator.selectNextKnownSpell()
-        #expect(coordinator.selectedKnownSpell()?.displayName == known[1])
-        coordinator.selectNextKnownSpell()
-        #expect(coordinator.selectedKnownSpell()?.displayName == known[0])
+        coordinator.controlPanels.selectNextKnownSpell()
+        #expect(coordinator.controlPanels.selectedKnownSpell()?.displayName == known[1])
+        coordinator.controlPanels.selectNextKnownSpell()
+        #expect(coordinator.controlPanels.selectedKnownSpell()?.displayName == known[0])
     }
 
     /// The equip path: a spell readied in the right hand, then a one-handed sword
@@ -161,7 +167,7 @@ struct MagicCoordinatorTests {
         try spellbook.equip(healing, in: .right, on: .player)
 
         equipment.worn = [FakeHandEquipment.oneHandedSword]
-        coordinator.equipmentChanged(on: .player)
+        coordinator.weaponEnchantments.equipmentChanged(on: .player)
 
         #expect(spellbook.state(of: .player).rightHand == nil)
     }
@@ -171,10 +177,10 @@ struct MagicCoordinatorTests {
         let guardKey = ReferenceKey.generated(7)
         world.residents = [guardKey, .player]
         let coordinator = try Self.castingWired(world)
-        let resolution = coordinator.magicConditionResolution()
+        let resolution = coordinator.conditionReads.magicConditionResolution()
         #expect(resolution.state(of: .player) != nil)
         #expect(resolution.state(of: guardKey) != nil)
-        let lines = coordinator.castingControlSnapshot.conditionLines
+        let lines = coordinator.controlPanels.castingControlSnapshot.conditionLines
         #expect(lines.count == 8)
         #expect(world.probedFunctions == [214, 223, 264, 570, 571, 572, 632, 699])
         #expect(lines.first == "HasMagicEffect(first effect of no readied spell) -> probed")
@@ -192,7 +198,7 @@ struct MagicCoordinatorTests {
         let spell = try #require(coordinator.caster?.spellbook.spells.spell(key: firebolt))
         let target = ReferenceKey.generated(7)
 
-        let scaled = coordinator.perkScaled(
+        let scaled = coordinator.perkEffects.perkScaled(
             spell.record.effects, of: firebolt, caster: .player, on: target
         )
 
@@ -215,7 +221,7 @@ struct MagicCoordinatorTests {
             duration: 10, conditions: ConditionList()
         )
 
-        let scaled = coordinator.perkScaledPotion(
+        let scaled = coordinator.perkEffects.perkScaledPotion(
             [entry], of: potion, fromPlugin: ActiveEffectFixture.pluginName, drinker: .player
         )
 
@@ -231,8 +237,9 @@ struct MagicCoordinatorTests {
         let coordinator = try Self.castingWired(world)
         let book = FormID(0x0700)
 
-        coordinator.readSkillBook(book, skill: 12)
-        #expect(coordinator.readSkillBook(book, skill: 12).text.hasSuffix("was already read."))
+        coordinator.spellTomes.readSkillBook(book, skill: 12)
+        #expect(coordinator.spellTomes.readSkillBook(book, skill: 12).text
+            .hasSuffix("was already read."))
 
         #expect(world.bookRaises.map(\.skill) == [12])
         #expect(world.bookRaises.map(\.points) == [2])
