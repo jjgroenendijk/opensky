@@ -17,22 +17,14 @@ extension EffectsCoordinator {
     ) -> HeartbeatChange? {
         guard seconds > 0 else { return nil }
         let change = healthCues.healthChanged(share: share, heartbeatPlaying: heartbeatPlaying)
-        if
-            let strength = healthCues.advance(seconds),
-            let key = records.lowHealthModifier,
-            let adapter = records.imageSpaceAdapters.record(key)
-        {
-            imageSpace.modifiers.start(
-                adapter.record, key: key, strength: strength,
-                strengthLimit: PlayerHealthCues.strongestPulse, stacks: true
-            )
+        if let strength = healthCues.advance(seconds) {
+            records.startLowHealthPulse(strength: strength, on: &imageSpace)
         }
         return change
     }
 
     /// The load-order sound of `heartbeat`, for the sound director.
     public func heartbeatSound(_ heartbeat: Heartbeat) -> FormID? {
-        let key = heartbeat == .slow ? records.slowHeartbeat : records.fastHeartbeat
-        return key.flatMap(records.loadOrderFormID)
+        records.heartbeatSound(heartbeat)
     }
 }

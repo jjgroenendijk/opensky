@@ -31,10 +31,8 @@ extension EffectsCoordinator {
         impactCount += 1
         lastImpact = (impact, decal)
         let normal = surfaceNormal(surface)
-        if impactModelsEnabled, let path = impact.model?.path, !path.isEmpty {
-            // Orientation 0 turns the model to the surface; the others follow the
-            // projectile, which a contact point does not carry, so they stand upright.
-            let anchor: EffectAnchor = impact.effect?.orientation == 0
+        if impactModelsEnabled, let path = impact.modelPath {
+            let anchor: EffectAnchor = impact.facesSurface
                 ? .surface(position, normal: normal) : .point(position)
             visualEffects.attach(
                 VisualEffectSpec(name: path, artModel: path, membrane: nil),
@@ -43,11 +41,7 @@ extension EffectsCoordinator {
                 duration: Self.instantArtDuration
             )
         }
-        guard
-            let decal,
-            let key = NIFShaderTextureSet.vfsKey(for: decal.diffusePath),
-            let look = DecalLook(texture: key, decal: decal.decal)
-        else { return }
+        guard let look = decal?.look else { return }
         if
             case let .actor(key) = surface, skinDecals.decals.enabled,
             let frame = world?.effectTransform(of: key)
@@ -135,95 +129,35 @@ extension EffectsCoordinator {
         ))
     }
 
-    /// Starts the particle systems of new effects, moves the emitters of moving ones, and
-    /// drops those of effects that ended.
-    func syncParticles(
-        _ models: [VisualEffectModel], posed: [Int: PosedEffectModel] = [:], renderer: Renderer
-    ) throws {
-        guard let meshes else { return }
-        var live: [Int: EffectParticles] = [:]
-        var changed = false
-        for model in models {
-            guard let id = model.instanceID else { continue }
-            defer {
-                if let sequence = posing?.playedSequence(ofEffect: id) {
-                    live[id]?.playbacks.forEach { $0.play(sequence: sequence) }
-                }
-            }
-            if var existing = effectParticles[id] {
-                if let nodes = posed[id]?.nodeDeltas {
-                    // A posed model's nodes move each frame, so its emitters follow them.
-                    for playback in existing.playbacks {
-                        playback.move(to: model.transform, nodeDeltas: nodes)
-                    }
-                    existing.placement = model.transform
-                } else if existing.placement != model.transform {
-                    existing.playbacks.forEach { $0.move(to: model.transform) }
-                    existing.placement = model.transform
-                }
-                live[id] = existing
-                continue
-            }
-            let playbacks = attempt {
-                try meshes.particlePlaybacks(
-                    path: model.path, placementTransform: model.transform, formID: UInt32(id)
-                )
-            } ?? []
-            live[id] = EffectParticles(playbacks: playbacks, placement: model.transform)
-            changed = changed || !playbacks.isEmpty
-        }
-        changed = changed || effectParticles.keys.contains { id in
-            live[id] == nil && effectParticles[id]?.playbacks.isEmpty == false
-        }
-        effectParticles = live
-        if changed {
-            try renderer
-                .setEffectParticles(live.keys.sorted().flatMap { live[$0]?.playbacks ?? [] })
-        }
-    }
-
     /// Hands the renderer the decals, one batch per texture, after a change.
     /// Skin decals move with their actors, so a frame with any rebuilds the batches.
     func syncDecals(renderer: Renderer) throws {
-        let onActors = skinDecals.worldDecals { [world] key in
-            world.map { world in
-                SkinDecalFrames(
-                    feet: world.effectTransform(of: key),
-                    bones: world.effectBones(of: key)
-                )
-            }
-        }
+        let onActors = skinDecals.worldDecals { [world] key in world?.skinDecalFrames(of: key) }
         guard decalsChanged || !onActors.isEmpty, let meshes else { return }
         decalsChanged = !onActors.isEmpty
-        var order: [DecalBatchKey] = []
-        var byKey: [DecalBatchKey: [DecalInstance]] = [:]
         let placed = decals.decals.map { ($0, false) } + onActors.map { ($0, true) }
-        for (decal, projected) in placed {
-            let key = DecalBatchKey(texture: decal.look.texture, projected: projected)
-            if byKey[key] == nil {
-                order.append(key)
-            }
-            // A skin decal's box reaches as deep as its widest side, to wrap a limb.
-            let depth = projected ? max(simd_length(decal.axisU), simd_length(decal.axisV)) : 0
-            byKey[key, default: []].append(DecalInstance(
-                center: SIMD4(decal.center, depth),
-                axisU: SIMD4(decal.axisU, 0),
-                axisV: SIMD4(decal.axisV, 0),
-                color: SIMD4(decal.look.color, 1),
-                uvRect: decal.uvRect
-            ))
-        }
-        try renderer.setDecals(order.map { key in
-            DecalBatch(
-                texture: meshes.textures.texture(key: key.texture, usage: .color),
-                instances: byKey[key] ?? [],
-                projected: key.projected
-            )
-        })
+        try renderer.setDecals(EffectDecalBatches.batches(placed, textures: meshes.textures))
     }
 }
 
-private struct DecalBatchKey: Hashable {
-    let texture: String
-    let projected: Bool
+nonisolated extension Impact {
+    /// Nil when the impact shows no model.
+    var modelPath: String? {
+        model.map(\.path).flatMap { $0.isEmpty ? nil : $0 }
+    }
+
+    /// Orientation 0 turns the model to the surface; the others follow the
+    /// projectile, which a contact point does not carry, so they stand upright.
+    var facesSurface: Bool {
+        effect?.orientation == 0
+    }
+}
+
+nonisolated extension ImpactDecal {
+    /// Nil without a texture or a positive size.
+    var look: DecalLook? {
+        NIFShaderTextureSet.vfsKey(for: diffusePath).flatMap {
+            DecalLook(texture: $0, decal: decal)
+        }
+    }
 }

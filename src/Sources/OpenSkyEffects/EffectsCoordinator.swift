@@ -44,7 +44,6 @@ public final class EffectsCoordinator {
     public private(set) var spellHitCount = 0
     public private(set) var lastSpellHit = "No spell hit yet."
     /// Model paths that failed to load, so a bad path is tried once.
-    private(set) var failedModels: Set<String> = []
     /// Marks impacts leave on surfaces.
     public internal(set) var decals = DecalRuntime()
     /// Marks on actors, which move with them.
@@ -56,12 +55,20 @@ public final class EffectsCoordinator {
     public internal(set) var lastImpact: (impact: Impact, decal: ImpactDecal?)?
     var decalsChanged = false
     /// The particle systems of each live effect, by instance id.
-    var effectParticles: [Int: EffectParticles] = [:]
     /// A library only the main thread uses; nil draws membranes only.
     public let meshes: MeshLibrary?
     /// Poses the effect models whose nodes move; nil draws every model as authored.
-    public weak var posing: (any EffectModelPosing)?
-    private var drewModels = false
+    public var posing: (any EffectModelPosing)? {
+        get { drawing.posing }
+        set { drawing.posing = newValue }
+    }
+
+    let drawing: EffectModelDrawing
+
+    var failedModels: Set<String> {
+        drawing.failedModels
+    }
+
     /// Blood that lasts: on the screen after the player is hit, and on weapons.
     public internal(set) var screenBlood = ScreenBloodRuntime()
     public internal(set) var weaponBlood = WeaponBloodRuntime()
@@ -82,6 +89,7 @@ public final class EffectsCoordinator {
     ) {
         self.records = records
         self.meshes = meshes
+        drawing = EffectModelDrawing(meshes: meshes)
         self.world = world
         bloodSettings = blood
         screenBlood.settings = blood
@@ -150,18 +158,16 @@ public final class EffectsCoordinator {
         fadeIn: Float = 0,
         on imageSpace: inout ImageSpaceState
     ) -> Bool {
-        guard let adapter = records.imageSpaceAdapters.record(key) else { return false }
-        imageSpace.modifiers.start(
-            adapter.record, key: key, strength: strength, looping: looping, fadeIn: fadeIn
+        records.startModifier(
+            key, on: &imageSpace, strength: strength, fade: (looping, fadeIn)
         )
-        return true
     }
 
     /// Stops every running instance of the `IMAD` `key` on `imageSpace`, over `fadeOut` s.
     public func stopModifier(
         _ key: ReferenceKey, fadeOut: Float = 0, on imageSpace: inout ImageSpaceState
     ) {
-        imageSpace.modifiers.stop(key: key, fadeOut: fadeOut)
+        imageSpace.stopModifier(key, fadeOut: fadeOut)
     }
 
     /// One landed spell: the modifier when the player was hit, and the hit shader and art
@@ -212,27 +218,7 @@ public final class EffectsCoordinator {
         let effectModels = visualEffects.models(camera: world?.effectCamera) { anchor in
             Self.locate(anchor, world: world)
         }
-        let posed = posing?.pose(effectModels, deltaTime: seconds) ?? [:]
-        let models = effectModels + extraModels
-        try syncParticles(models, posed: posed, renderer: renderer)
-        let meshParticles = effectParticles.keys.sorted()
-            .flatMap { effectParticles[$0]?.playbacks ?? [] }
-            .flatMap { $0.meshPlacements() }
-        if !models.isEmpty || drewModels {
-            let placements = effectModels.compactMap { model -> RenderPlacement? in
-                if let id = model.instanceID, let copy = posed[id] {
-                    return RenderPlacement(
-                        model: copy.model, transform: model.transform,
-                        castsShadows: false, layer: .particles
-                    )
-                }
-                return placement(model)
-            } + extraModels.compactMap(placement) + meshParticles
-            try renderer.setEffectPlacements(
-                placements, animations: posed.keys.sorted().compactMap { posed[$0]?.animation }
-            )
-            drewModels = !models.isEmpty
-        }
+        try drawing.draw((effectModels, extraModels), seconds: seconds, renderer: renderer)
         try syncDecals(renderer: renderer)
         try renderer.setMembranes(visualEffects.membranes { anchor in
             guard case let .actor(key) = anchor else { return nil }
@@ -283,21 +269,6 @@ public final class EffectsCoordinator {
         else { return }
         let center = transform.columns.3
         world?.detonateEffectExplosion(explosion, at: SIMD3(center.x, center.y, center.z))
-    }
-
-    private func placement(_ model: VisualEffectModel) -> RenderPlacement? {
-        guard let meshes, !failedModels.contains(model.path) else { return nil }
-        do {
-            return try RenderPlacement(
-                model: meshes.model(path: model.path),
-                transform: model.transform,
-                castsShadows: false,
-                layer: .particles
-            )
-        } catch {
-            failedModels.insert(model.path)
-            return nil
-        }
     }
 
     static func locate(_ anchor: EffectAnchor, world: (any EffectsWorld)?) -> float4x4? {
