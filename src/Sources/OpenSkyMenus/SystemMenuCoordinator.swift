@@ -36,13 +36,9 @@ public final class SystemMenuCoordinator {
     public private(set) var movieEnabled = true
     /// Calls the movie made during the last event or frame, answered after it.
     var pendingMovieCalls: [SystemMenuMovieBridge.Call] = []
-    var framePacer = MenuMovieFramePacer()
     /// The movie's `SystemPage` state at the last check, to see a topic's text close.
     var lastMovieState: Int?
-    /// Called once; finding the data root walks the file system.
-    var locateDataRoot: () -> GameDataRoot? = { attempt { try GameDataLocator.locate() } }
-    private var dataRoot: GameDataRoot?
-    private var dataRootResolved = false
+    let dataRoot = SystemMenuDataRoot()
 
     private let menuMode: MenuModeController
     private let movies: any MenuMovieLoading
@@ -84,7 +80,7 @@ public final class SystemMenuCoordinator {
     }
 
     lazy var movie = MenuMovieSession(
-        movies: movies, hud: hud, label: "system menu movie", logger: Self.logger
+        movies: movies, hud: hud, label: "system menu movie", logCategory: "SystemMenu"
     ) { [weak self] in self?.world?.renderer }
 
     public var movieLoaded: Bool {
@@ -180,27 +176,21 @@ public final class SystemMenuCoordinator {
         }
     }
 
-    var dataRootValue: GameDataRoot? {
-        if !dataRootResolved {
-            dataRoot = locateDataRoot()
-            dataRootResolved = true
-        }
-        return dataRoot
-    }
-
     // MARK: - Movie
 
     /// A missing install or a movie the AS2 subset cannot run degrades to a
     /// readout, never to a thrown error out of a control action.
     private func startMovie() {
-        movie.start(MenuMovie(
+        movie.start(
             path: SystemMenuMovieBridge.moviePath,
             activationTicks: SystemMenuMovieBridge.activationTicks,
-            prepare: SystemMenuMovieBridge.prepare(runtime:),
-            activate: { [weak self] runtime in
-                SystemMenuMovieBridge.activate(runtime: runtime) { [weak self] in
+            prepare: SystemMenuMovieBridge.prepare(runtime:)
+        ) { [weak self] runtime in
+                SystemMenuMovieBridge.activate(runtime: runtime, buttonName: { [weak self] event in
+                    self?.settings.buttonName(forUserEvent: event)
+                }, onClose: { [weak self] in
                     self?.close()
-                }
+                })
                 SettingsMovieBridge.register(runtime: runtime) { [weak self] group in
                     self?.openSettingsCategory(group)
                 }
@@ -212,38 +202,17 @@ public final class SystemMenuCoordinator {
                     topics: { [weak self] page in self?.showTopicPage(page)?.topics ?? [] },
                     open: { [weak self] index in self?.openTopic(index) }
                 )
-                MenuMovieButtonArt.register(runtime: runtime) { [weak self] event in
-                    self?.settings.buttonName(forUserEvent: event)
-                }
-            }
-        ))
+        }
     }
 
     public var snapshot: SystemMenuControlSnapshot {
-        SystemMenuControlSnapshot(
-            dataRootPath: dataRootValue?.installURL.path(percentEncoded: false),
-            dataRootSource: dataRootValue?.sourceLabel,
+        let root = dataRoot.readout
+        return SystemMenuControlSnapshot(
+            dataRootPath: root.path,
+            dataRootSource: root.source,
             audioEnabled: world?.audioEnabled ?? false,
             movieEnabled: movieEnabled,
             page: pageSnapshot
         )
-    }
-
-    private static let logger = EngineLogger(
-        subsystem: "nl.jjgroenendijk.opensky",
-        category: "SystemMenu"
-    )
-}
-
-extension GameDataRoot {
-    /// Where the readout says the data root came from.
-    var sourceLabel: String {
-        switch source {
-        case .commandLine: "command line"
-        case .environment: "\(GameDataLocator.environmentKey) environment variable"
-        case .userDefaults: "Settings"
-        case .steamDefault: "Steam default"
-        case .steamLibrary: "Steam library"
-        }
     }
 }

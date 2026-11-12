@@ -61,6 +61,7 @@ public final class MenuMovieSession {
     private let renderer: () -> (any RendererPort)?
     private let label: String
     private let logger: EngineLogger?
+    private var framePacer = MenuMovieFramePacer()
 
     public init(
         movies: (any MenuMovieLoading)?,
@@ -74,6 +75,18 @@ public final class MenuMovieSession {
         self.label = label
         self.logger = logger
         self.renderer = renderer
+    }
+
+    /// A session that logs its failures under `logCategory`.
+    convenience init(
+        movies: (any MenuMovieLoading)?,
+        hud: (any MenuLayerOwner)?,
+        label: String,
+        logCategory: String,
+        renderer: @escaping () -> (any RendererPort)?
+    ) {
+        let logger = EngineLogger(subsystem: "nl.jjgroenendijk.opensky", category: logCategory)
+        self.init(movies: movies, hud: hud, label: label, logger: logger, renderer: renderer)
     }
 
     /// The renderer while the movie is up, for sending it input.
@@ -105,6 +118,37 @@ public final class MenuMovieSession {
             guard isWanted() else { return }
             self?.show(result, movie: movie)
         })
+    }
+
+    /// Starts the movie at `path` with these bring-up steps.
+    func start(
+        path: String,
+        activationTicks: Int,
+        prepare: ((SWFMovieRuntime) -> Void)?,
+        activate: @escaping (SWFMovieRuntime) throws -> Void
+    ) {
+        start(MenuMovie(
+            path: path, activationTicks: activationTicks, prepare: prepare, activate: activate
+        ))
+    }
+
+    /// Steps the loaded movie at its own frame rate, so its fades and timers run.
+    /// False without a loaded movie; the pacer then starts over.
+    @discardableResult
+    func advance(now: Double) -> Bool {
+        guard let renderer = loadedRenderer else {
+            framePacer = MenuMovieFramePacer()
+            return false
+        }
+        let rate = Double(renderer.swfRuntime?.movie.frameRate ?? 0)
+        do {
+            for _ in 0 ..< framePacer.ticks(at: now, frameRate: rate) where isLoaded {
+                try renderer.advanceSWFRuntime()
+            }
+        } catch {
+            record(error)
+        }
+        return true
     }
 
     /// Cancels a pending movie and gives the layer back to the HUD.

@@ -92,6 +92,16 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
         showSystemPage(runtime: runtime)
     }
 
+    /// `activate(runtime:onClose:)`, with the button art the movie asks for by user event.
+    static func activate(
+        runtime: SWFMovieRuntime,
+        buttonName: @escaping @MainActor @Sendable (String) -> String?,
+        onClose: @escaping @MainActor @Sendable () -> Void
+    ) {
+        activate(runtime: runtime, onClose: onClose)
+        MenuMovieButtonArt.register(runtime: runtime, buttonName: buttonName)
+    }
+
     /// Routes the toolkit-free engine menu event into the Flash key model.
     /// Pointer deltas have no absolute stage position, so they remain
     /// unsupported here and fall back to the engine selector.

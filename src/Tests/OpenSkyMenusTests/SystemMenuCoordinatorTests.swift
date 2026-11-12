@@ -312,7 +312,7 @@ struct SystemMenuCoordinatorTests {
     func dataRootIsLocatedOnce() {
         let harness = Harness()
         var calls = 0
-        harness.menu.locateDataRoot = {
+        harness.menu.dataRoot.locate = {
             calls += 1
             return GameDataRoot(
                 installURL: URL(filePath: "/tmp/Skyrim"),
