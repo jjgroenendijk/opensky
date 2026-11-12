@@ -124,6 +124,36 @@ extension ScriptNodeBindingsAdapter {
         return game.objectAnimationWorld.objects.bone(of: formID.rawValue, named: name)
     }
 
+    func answerNodeWaits() {
+        ScriptModelNodeLoader(game: game, state: state).answerNodeWaits()
+    }
+
+    func sees(
+        viewer: ReferenceKey, target: ReferenceKey, bridge: PapyrusWorldStateBridge
+    ) -> Bool? {
+        ScriptSightCheck(game: game).sees(viewer: viewer, target: target, bridge: bridge)
+    }
+
+    func answerPathWaits() {
+        let streamer = game.streamer
+        if !state.pathWaits.isEmpty {
+            state.pathWaitAnswers
+                .merge(state.pathWaits.settle(streamer.npcMovementReadouts())) { first, _ in
+                    first
+                }
+        }
+        guard let scheduler = game.scripts.runtime?.scheduler else { return }
+        state.pathWaitAnswers = state.pathWaitAnswers.filter { token, arrived in
+            !scheduler.answer(token, returning: .boolean(arrived))
+        }
+    }
+}
+
+/// Loads the rest transforms of a model's nodes, and answers the lookups that waited for them.
+struct ScriptModelNodeLoader {
+    let game: any ScriptNodeBindingsHost
+    let state: ScriptPartState
+
     /// Runs each waiting lookup whose model is in, then hands its answer to the
     /// scheduler, which takes it once the waiting call is queued.
     func answerNodeWaits() {
@@ -162,20 +192,12 @@ extension ScriptNodeBindingsAdapter {
         }
         return transforms
     }
+}
 
-    func answerPathWaits() {
-        let streamer = game.streamer
-        if !state.pathWaits.isEmpty {
-            state.pathWaitAnswers
-                .merge(state.pathWaits.settle(streamer.npcMovementReadouts())) { first, _ in
-                    first
-                }
-        }
-        guard let scheduler = game.scripts.runtime?.scheduler else { return }
-        state.pathWaitAnswers = state.pathWaitAnswers.filter { token, arrived in
-            !scheduler.answer(token, returning: .boolean(arrived))
-        }
-    }
+/// Whether a viewer sees a target: the player through the camera's view, an NPC through
+/// its detection.
+struct ScriptSightCheck {
+    let game: any ScriptNodeBindingsHost
 
     /// How far short of the target the trace stops, so the target's own collision
     /// does not hide it. About half a metre.

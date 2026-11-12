@@ -25,9 +25,16 @@ import simd
 extension ScriptNodeBindingsAdapter {
     /// Fills these natives as the bridge is built.
     public func fillModelNodes(provider: WorldDataStores, gameSession: GameSession) {
+        ScriptModelNodeLoader(game: game, state: state)
+            .fillModelNodes(provider: provider, gameSession: gameSession)
+    }
+}
+
+extension ScriptModelNodeLoader {
+    func fillModelNodes(provider: WorldDataStores, gameSession: GameSession) {
         guard let files = provider.scriptFileSystem else { return }
         let nodes = AssetLoader<String, [String: PosedBone]> { path in
-            try ScriptNodeBindingsAdapter
+            try ScriptModelNodeLoader
                 .nodeTransforms(in: NIFFile(data: files.contents(forPath: path)))
         }
         state.modelNodes = nodes
