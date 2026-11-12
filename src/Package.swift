@@ -921,7 +921,7 @@ targets += domain(
         "OpenSkyWorldInterface", "OpenSkyWorldState", "OpenSkyRenderCore",
         "OpenSkyRenderResources", "OpenSkyNavigation", "OpenSkyTerrain",
         "OpenSkyActorPresentation", "OpenSkyObjectAnimation", "OpenSkyPlayer",
-        "OpenSkyAIPackages"
+        "OpenSkyAIPackages", "OpenSkyRuntimeState"
     ]
 )
 // The whole-game condition set: every feature's functions in one registry. It
