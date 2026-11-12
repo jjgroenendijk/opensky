@@ -66,11 +66,11 @@ nonisolated extension OpenSkySaveDecoder {
     static func applyPlacement(tag: String, payload: Data, to body: inout Body) throws -> Bool {
         switch tag {
         case OpenSkySaveFormat.ChunkTag.relocations:
-            body.relocations = try OpenSkySaveRelocationDecoder.decodeRelocations(payload)
+            body.side.relocations = try OpenSkySaveRelocationDecoder.decodeRelocations(payload)
         case OpenSkySaveFormat.ChunkTag.motionTypes:
-            body.motionTypes = try OpenSkySaveMotionTypeDecoder.decodeMotionTypes(payload)
+            body.side.motionTypes = try OpenSkySaveMotionTypeDecoder.decodeMotionTypes(payload)
         case OpenSkySaveFormat.ChunkTag.leveledRolls:
-            body.leveledRolls = try OpenSkySaveLeveledRollDecoder.decodeLeveledRolls(payload)
+            body.side.leveledRolls = try OpenSkySaveLeveledRollDecoder.decodeLeveledRolls(payload)
         default:
             return false
         }

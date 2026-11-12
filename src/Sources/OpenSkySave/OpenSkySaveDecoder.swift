@@ -26,7 +26,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
             metadata: metadata,
             fingerprint: fingerprint,
             snapshot: WorldStateSnapshot(
-                entries: mergedEntries(of: body),
+                entries: Body.mergedEntries(of: body),
                 nextGeneratedSequence: body.nextGeneratedSequence,
                 globals: body.globals,
                 sequence: 0
@@ -37,79 +37,6 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
             timers: body.timers,
             playerPlace: body.playerPlace
         )
-    }
-
-    /// The `RDLT` entries with every side-chunk laid back over them. Each merge
-    /// fills its own component slot, so only the commented steps depend on order.
-    private static func mergedEntries(of body: Body) -> [WorldStateSnapshotEntry] {
-        // A repeated `RDLT` key keeps its last entry, as every merge below does.
-        let deltas = OpenSkySaveDeltaMerge.sorted(OpenSkySaveDeltaMerge.index(body.entries))
-        var entries = OpenSkySaveDeltaMerge.merge(body.inventories, into: deltas)
-        entries = OpenSkySaveDeltaMerge.merge(body.spawns, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(
-            OpenSkySaveQuestDecoder.applying(body.questJournalLogs, to: body.quests),
-            into: entries
-        )
-        entries = OpenSkySaveDeltaMerge.merge(body.questAliases, into: entries)
-        entries = OpenSkySaveQuestDecoder.mergeLocationAliases(
-            body.questLocationAliases,
-            into: entries
-        )
-        // `AVOV` lays onto the `AVAL` entries before those reach the deltas, so
-        // an actor's primaries and its general table arrive as one component.
-        let actorValues = OpenSkySaveActorValueDecoder.mergeOverrides(
-            body.actorValueOverrides,
-            into: body.actorValues
-        )
-        entries = OpenSkySaveDeltaMerge.merge(actorValues, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.deaths, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.combatStates, into: entries)
-        let dialogue = DialogueDecoder.withSaidDays(body.dialogueSaidDays, in: body.dialogue)
-        entries = OpenSkySaveDeltaMerge.merge(dialogue, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.activeEffects, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.spellbooks, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.enchantedItems, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.perks, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.factions, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(relationships(of: body), into: entries)
-        // `PLGD` and `PTRN` lay onto `PLVL`, the way `AVOV` lays onto `AVAL`.
-        entries = OpenSkySaveDeltaMerge.merge(ProgressDecoder.progress(of: body), into: entries)
-        // `CRVG` splits the `CRIM` totals before those reach the deltas, the
-        // way `AVOV` lays onto `AVAL`.
-        let ledgers = OpenSkySaveCrimeDecoder.splittingViolent(
-            body.violentCrimeGold,
-            in: body.crimeLedgers
-        )
-        entries = OpenSkySaveDeltaMerge.merge(ledgers, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.harvests, into: entries)
-        // After `HRVS`: a day only times a harvest `HRVS` already restored.
-        let harvested = Set(body.harvests.map(\.key))
-        entries = OpenSkySaveDeltaMerge.merge(
-            body.harvestDays.filter { harvested.contains($0.key) },
-            into: entries
-        )
-        entries = OpenSkySaveDeltaMerge.merge(body.locks, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.relocations, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.motionTypes, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.leveledRolls, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.pausedScenes, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.storyManagerQuests, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.dialogueBranches, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.helpMessages, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.scriptedStates, into: entries)
-        entries = mergeJournal(body, into: entries)
-        let identities = OpenSkySaveStoryDecoder.mergeComplexions(
-            body.complexions, into: body.identities
-        )
-        entries = OpenSkySaveDeltaMerge.merge(identities, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.markers, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.fog, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.temperedItems, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.itemCopies, into: entries)
-        entries = mergePlayerState(body, into: entries)
-        // After `INVN`: `STOL` re-flags stacks the inventory merge has already
-        // restored, so it cannot run before those totals are in place.
-        return OpenSkySaveCrimeDecoder.mergeStolen(body.stolenGoods, into: entries)
     }
 
     // MARK: - Header
@@ -254,9 +181,10 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
             body.deaths = try OpenSkySaveDeathDecoder.decodeDeaths(payload)
         case OpenSkySaveFormat.ChunkTag.combatStates:
             body.combatStates = try OpenSkySaveCombatDecoder.decodeCombatStates(payload)
-        case OpenSkySaveFormat.ChunkTag.dialogueStates,
-             OpenSkySaveFormat.ChunkTag.dialogueSaidDays:
-            try OpenSkySaveDecoder.DialogueDecoder.apply(tag: tag, payload: payload, to: &body)
+        case OpenSkySaveFormat.ChunkTag.dialogueStates:
+            body.dialogue = try OpenSkySaveDecoder.DialogueDecoder.decodeDialogueStates(payload)
+        case OpenSkySaveFormat.ChunkTag.dialogueSaidDays:
+            body.dialogueSaidDays = try OpenSkySaveDecoder.DialogueDecoder.decodeSaidDays(payload)
         case OpenSkySaveFormat.ChunkTag.activeEffects:
             body.activeEffects = try OpenSkySaveActiveEffectDecoder.decodeActiveEffects(payload)
         case OpenSkySaveFormat.ChunkTag.spellbooks:
@@ -303,13 +231,13 @@ nonisolated extension OpenSkySaveDecoder {
         case OpenSkySaveFormat.ChunkTag.stolenGoods:
             body.stolenGoods = try OpenSkySaveCrimeDecoder.decodeStolenGoods(payload)
         case OpenSkySaveFormat.ChunkTag.violentCrimeGold:
-            body.violentCrimeGold = try OpenSkySaveCrimeDecoder.decodeViolentGold(payload)
+            body.side.violentCrimeGold = try OpenSkySaveCrimeDecoder.decodeViolentGold(payload)
         case OpenSkySaveFormat.ChunkTag.harvests:
-            body.harvests = try OpenSkySaveHarvestDecoder.decodeHarvests(payload)
+            body.side.harvests = try OpenSkySaveHarvestDecoder.decodeHarvests(payload)
         case OpenSkySaveFormat.ChunkTag.harvestDays:
-            body.harvestDays = try OpenSkySaveHarvestDecoder.decodeHarvestDays(payload)
+            body.side.harvestDays = try OpenSkySaveHarvestDecoder.decodeHarvestDays(payload)
         case OpenSkySaveFormat.ChunkTag.locks:
-            body.locks = try OpenSkySaveLockDecoder.decodeLocks(payload)
+            body.side.locks = try OpenSkySaveLockDecoder.decodeLocks(payload)
         default:
             try applyStory(tag: tag, payload: payload, to: &body)
         }
@@ -333,5 +261,98 @@ nonisolated extension OpenSkySaveDecoder {
             )
         }
         return GameClock(totalGameSeconds: seconds)
+    }
+}
+
+nonisolated extension OpenSkySaveDecoder.Body {
+    /// The `RDLT` entries with every side-chunk laid back over them. Each merge
+    /// fills its own component slot, so only the commented steps depend on order.
+    static func mergedEntries(of body: Self) -> [WorldStateSnapshotEntry] {
+        // A repeated `RDLT` key keeps its last entry, as every merge below does.
+        let deltas = OpenSkySaveDeltaMerge.sorted(OpenSkySaveDeltaMerge.index(body.entries))
+        var entries = OpenSkySaveDeltaMerge.merge(body.inventories, into: deltas)
+        entries = OpenSkySaveDeltaMerge.merge(body.spawns, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(
+            OpenSkySaveQuestDecoder.applying(body.questJournalLogs, to: body.quests),
+            into: entries
+        )
+        entries = OpenSkySaveDeltaMerge.merge(body.questAliases, into: entries)
+        entries = OpenSkySaveQuestDecoder.mergeLocationAliases(
+            body.questLocationAliases,
+            into: entries
+        )
+        // `AVOV` lays onto the `AVAL` entries before those reach the deltas, so
+        // an actor's primaries and its general table arrive as one component.
+        let actorValues = OpenSkySaveActorValueDecoder.mergeOverrides(
+            body.actorValueOverrides,
+            into: body.actorValues
+        )
+        entries = OpenSkySaveDeltaMerge.merge(actorValues, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.deaths, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.combatStates, into: entries)
+        let dialogue = OpenSkySaveDecoder.DialogueDecoder.withSaidDays(
+            body.dialogueSaidDays,
+            in: body.dialogue
+        )
+        entries = OpenSkySaveDeltaMerge.merge(dialogue, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.activeEffects, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.spellbooks, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.enchantedItems, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.perks, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.factions, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(relationships(of: body), into: entries)
+        // `PLGD` and `PTRN` lay onto `PLVL`, the way `AVOV` lays onto `AVAL`.
+        entries = OpenSkySaveDeltaMerge.merge(
+            OpenSkySaveDecoder.ProgressDecoder.progress(
+                body.playerProgress,
+                legendary: body.legendarySkills,
+                training: body.trainingSessions
+            ),
+            into: entries
+        )
+        // `CRVG` splits the `CRIM` totals before those reach the deltas, the
+        // way `AVOV` lays onto `AVAL`.
+        let ledgers = OpenSkySaveCrimeDecoder.splittingViolent(
+            body.side.violentCrimeGold,
+            in: body.crimeLedgers
+        )
+        entries = OpenSkySaveDeltaMerge.merge(ledgers, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.harvests, into: entries)
+        // After `HRVS`: a day only times a harvest `HRVS` already restored.
+        let harvested = Set(body.side.harvests.map(\.key))
+        entries = OpenSkySaveDeltaMerge.merge(
+            body.side.harvestDays.filter { harvested.contains($0.key) },
+            into: entries
+        )
+        return mergedSideEntries(of: body, into: entries)
+    }
+
+    /// The second half of `mergedEntries`: the side chunks, then `STOL`.
+    private static func mergedSideEntries(
+        of body: Self,
+        into merged: [WorldStateSnapshotEntry]
+    ) -> [WorldStateSnapshotEntry] {
+        var entries = OpenSkySaveDeltaMerge.merge(body.side.locks, into: merged)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.relocations, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.motionTypes, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.leveledRolls, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.pausedScenes, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.storyManagerQuests, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.dialogueBranches, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.helpMessages, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.scriptedStates, into: entries)
+        entries = mergeJournal(body, into: entries)
+        let identities = OpenSkySaveStoryDecoder.mergeComplexions(
+            body.side.complexions, into: body.side.identities
+        )
+        entries = OpenSkySaveDeltaMerge.merge(identities, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.markers, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.fog, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.temperedItems, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.itemCopies, into: entries)
+        entries = mergePlayerState(body, into: entries)
+        // After `INVN`: `STOL` re-flags stacks the inventory merge has already
+        // restored, so it cannot run before those totals are in place.
+        return OpenSkySaveCrimeDecoder.mergeStolen(body.stolenGoods, into: entries)
     }
 }

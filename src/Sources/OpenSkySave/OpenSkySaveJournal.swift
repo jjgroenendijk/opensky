@@ -89,30 +89,32 @@ nonisolated extension OpenSkySaveDecoder {
     static func applyJournal(tag: String, payload: Data, to body: inout Body) throws {
         switch tag {
         case OpenSkySaveFormat.ChunkTag.miscStats:
-            body.miscStats = try OpenSkySaveStoryDecoder.decodeMiscStats(payload)
+            body.side.miscStats = try OpenSkySaveStoryDecoder.decodeMiscStats(payload)
         case OpenSkySaveFormat.ChunkTag.questTracking:
-            body.questTracking = try OpenSkySaveStoryDecoder.decodeQuestTracking(payload)
+            body.side.questTracking = try OpenSkySaveStoryDecoder.decodeQuestTracking(payload)
         case OpenSkySaveFormat.ChunkTag.cellResets:
-            body.cellResets = try [OpenSkySaveCellResetDecoder.decode(payload)]
+            body.side.cellResets = try [OpenSkySaveCellResetDecoder.decode(payload)]
         case OpenSkySaveFormat.ChunkTag.vendorRestocks:
-            body.vendorRestocks = try [OpenSkySaveVendorRestockDecoder.decode(payload)]
+            body.side.vendorRestocks = try [OpenSkySaveVendorRestockDecoder.decode(payload)]
         default:
             break
         }
     }
-
-    static func mergeJournal(
-        _ body: Body,
-        into entries: [WorldStateSnapshotEntry]
-    ) -> [WorldStateSnapshotEntry] {
-        let merged = OpenSkySaveDeltaMerge.merge(body.miscStats, into: entries)
-        let tracked = OpenSkySaveDeltaMerge.merge(body.questTracking, into: merged)
-        let reset = OpenSkySaveDeltaMerge.merge(body.cellResets, into: tracked)
-        return OpenSkySaveDeltaMerge.merge(body.vendorRestocks, into: reset)
-    }
 }
 
 nonisolated extension OpenSkySaveDecoder.Body {
+    static func mergeJournal(
+        _ body: Self,
+        into entries: [WorldStateSnapshotEntry]
+    ) -> [WorldStateSnapshotEntry] {
+        let merged = OpenSkySaveDeltaMerge.merge(body.side.miscStats, into: entries)
+        let tracked = OpenSkySaveDeltaMerge.merge(body.side.questTracking, into: merged)
+        let reset = OpenSkySaveDeltaMerge.merge(body.side.cellResets, into: tracked)
+        return OpenSkySaveDeltaMerge.merge(body.side.vendorRestocks, into: reset)
+    }
+}
+
+nonisolated extension OpenSkySaveSideChunks {
     /// `SCNS` scenes with their `SCNP` pause times laid on.
     var pausedScenes: [SaveStoryEntry<SceneRuntimeState>] {
         OpenSkySaveStoryDecoder.applying(scenePauses, to: scenes)

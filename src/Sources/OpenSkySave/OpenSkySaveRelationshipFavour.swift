@@ -121,20 +121,22 @@ nonisolated extension OpenSkySaveRelationshipDecoder {
 }
 
 nonisolated extension OpenSkySaveDecoder {
-    /// `RELS` with `RELF` laid on.
-    static func relationships(of body: Body) -> [SaveRelationshipEntry] {
-        OpenSkySaveRelationshipDecoder.layingFavour(
-            body.relationshipFavour, onto: body.relationships
-        )
-    }
-
     static func applyRelationships(tag: String, payload: Data, to body: inout Body) throws {
         if tag == OpenSkySaveFormat.ChunkTag.relationshipFavour {
-            body.relationshipFavour = try OpenSkySaveRelationshipDecoder
+            body.side.relationshipFavour = try OpenSkySaveRelationshipDecoder
                 .decodeRelationshipFavour(payload)
         } else {
             body.relationships = try OpenSkySaveRelationshipDecoder
                 .decodeRelationshipRanks(payload)
         }
+    }
+}
+
+nonisolated extension OpenSkySaveDecoder.Body {
+    /// `RELS` with `RELF` laid on.
+    static func relationships(of body: Self) -> [SaveRelationshipEntry] {
+        OpenSkySaveRelationshipDecoder.layingFavour(
+            body.side.relationshipFavour, onto: body.relationships
+        )
     }
 }

@@ -166,37 +166,39 @@ nonisolated extension OpenSkySaveDecoder {
     static func applyPlayerItems(tag: String, payload: Data, to body: inout Body) throws -> Bool {
         switch tag {
         case OpenSkySaveFormat.ChunkTag.createdPotions:
-            body.createdPotions = try OpenSkySaveStoryDecoder.decodeCreatedPotions(payload)
+            body.side.createdPotions = try OpenSkySaveStoryDecoder.decodeCreatedPotions(payload)
         case OpenSkySaveFormat.ChunkTag.ingredientKnowledge:
-            body.ingredientKnowledge = try OpenSkySaveStoryDecoder
+            body.side.ingredientKnowledge = try OpenSkySaveStoryDecoder
                 .decodeIngredientKnowledge(payload)
         case OpenSkySaveFormat.ChunkTag.weaponPoisons:
-            body.weaponPoisons = try OpenSkySaveStoryDecoder.decodeWeaponPoisons(payload)
+            body.side.weaponPoisons = try OpenSkySaveStoryDecoder.decodeWeaponPoisons(payload)
         case OpenSkySaveFormat.ChunkTag.favourites:
-            body.favourites = try OpenSkySaveStoryDecoder.decodeFavourites(payload)
+            body.side.favourites = try OpenSkySaveStoryDecoder.decodeFavourites(payload)
         case OpenSkySaveFormat.ChunkTag.enchanting:
-            body.enchanting = try OpenSkySaveStoryDecoder.decodeEnchanting(payload)
+            body.side.enchanting = try OpenSkySaveStoryDecoder.decodeEnchanting(payload)
         case OpenSkySaveFormat.ChunkTag.stolenOrigins:
-            body.stolenOrigins = try OpenSkySaveStoryDecoder.decodeStolenOrigins(payload)
+            body.side.stolenOrigins = try OpenSkySaveStoryDecoder.decodeStolenOrigins(payload)
         default:
             return false
         }
         return true
     }
+}
 
+nonisolated extension OpenSkySaveDecoder.Body {
     /// `CPOT`, `INGK`, `WPSN`, `FAVS`, `PRUL`, `ENCK`, and `STOF`: state of the player and
     /// its items.
     static func mergePlayerState(
-        _ body: Body,
+        _ body: Self,
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {
-        var entries = OpenSkySaveDeltaMerge.merge(body.createdPotions, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.ingredientKnowledge, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.weaponPoisons, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.favourites, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.playerRules, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.stolenOrigins, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.playerMarkers, into: entries)
-        return OpenSkySaveDeltaMerge.merge(body.enchanting, into: entries)
+        var entries = OpenSkySaveDeltaMerge.merge(body.side.createdPotions, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.ingredientKnowledge, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.weaponPoisons, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.favourites, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.playerRules, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.stolenOrigins, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.playerMarkers, into: entries)
+        return OpenSkySaveDeltaMerge.merge(body.side.enchanting, into: entries)
     }
 }

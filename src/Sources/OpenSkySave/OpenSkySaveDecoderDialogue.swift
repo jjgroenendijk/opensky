@@ -15,18 +15,6 @@ nonisolated struct SaveDialogueEntry: Equatable, Sendable {
 
 nonisolated extension OpenSkySaveDecoder {
     enum DialogueDecoder: Sendable {
-        static func apply(
-            tag: String,
-            payload: Data,
-            to body: inout OpenSkySaveDecoder.Body
-        ) throws {
-            if tag == OpenSkySaveFormat.ChunkTag.dialogueSaidDays {
-                body.dialogueSaidDays = try decodeSaidDays(payload)
-            } else {
-                body.dialogue = try decodeDialogueStates(payload)
-            }
-        }
-
         static func decodeSaidDays(
             _ payload: Data
         ) throws -> [ReferenceKey: [ReferenceKey: Double]] {
