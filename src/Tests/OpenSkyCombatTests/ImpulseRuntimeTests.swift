@@ -9,7 +9,7 @@ import simd
 import Testing
 
 @MainActor
-private final class FakeImpulseWorld: ImpulseWorld, ExplosionWorld {
+final class FakeImpulseWorld: ImpulseWorld, ExplosionWorld {
     var bodies: [ImpulseBody] = []
     var actors: [MeleeTarget] = []
     var surface: Float? = 0

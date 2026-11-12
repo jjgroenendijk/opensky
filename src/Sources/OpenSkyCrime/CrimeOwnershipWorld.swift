@@ -24,10 +24,6 @@ final class CrimeOwnershipWorld: CrimeWorld {
     /// `.some(nil)` means a script cleared the owner; nil means no script set one.
     var scriptedOwner: ((ReferenceKey) -> ReferenceOwner??)?
 
-    private var factions: FactionStore? {
-        runtime?.factions
-    }
-
     init(world: any CrimeSessionWorld, data: CrimeSessionData?) {
         self.world = world
         pluginName = data?.pluginName
@@ -101,7 +97,7 @@ final class CrimeOwnershipWorld: CrimeWorld {
         guard
             let base = world.references?.referenceEntry(key: key)?.placedActor?.base,
             let pluginName,
-            let resolved = factions?.resolvedID(base, fromPlugin: pluginName)
+            let resolved = runtime?.factions.resolvedID(base, fromPlugin: pluginName)
         else { return nil }
         return ReferenceKey(resolved: resolved)
     }

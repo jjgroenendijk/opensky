@@ -143,22 +143,6 @@ final class EffectsFrameStep {
         self.now = now
         frameLooks = EffectsFrameLooks(game: hosts, blastsHost: hosts, state: state)
     }
-
-    var game: any EffectsWorldHost {
-        hosts
-    }
-
-    var effects: any EffectsPort {
-        game.effects
-    }
-
-    var explosions: any ExplosionRuntimePort {
-        game.combat.explosions
-    }
-
-    var effectPlacement: EffectsEffectPlacementAdapter {
-        EffectsEffectPlacementAdapter(game: hosts, state: state)
-    }
 }
 
 /// The spell-hit side of `EffectsWorldAdapter`: ragdoll notes and hit sounds.

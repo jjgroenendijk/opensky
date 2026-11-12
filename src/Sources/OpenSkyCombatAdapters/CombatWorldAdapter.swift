@@ -147,10 +147,6 @@ final class CombatFrameSteps {
         self.hosts = hosts
     }
 
-    var game: any CombatWorldHost {
-        hosts
-    }
-
     var spellCasts: CombatSpellCastsAdapter {
         CombatSpellCastsAdapter(game: hosts)
     }
@@ -183,9 +179,9 @@ final class CombatFrameSteps {
 
     /// Only the player has a graph with a draw state, so an NPC draws while it fights.
     func updateNPCDrawStates() {
-        guard let loop = game.combat.loop else { return }
-        for actor in game.actorWorld.combatActors() {
-            game.actorPlayback(for: actor.key)?.weaponsDrawn = loop
+        guard let loop = hosts.combat.loop else { return }
+        for actor in hosts.actorWorld.combatActors() {
+            hosts.actorPlayback(for: actor.key)?.weaponsDrawn = loop
                 .activity(of: actor.key) == .fighting
         }
     }

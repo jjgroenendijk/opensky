@@ -1,7 +1,9 @@
 // How the effect models reach the renderer: posed copies, plain placements, and the
-// particle systems their meshes carry.
+// particle systems their meshes carry. Only the GPU tests reach it: each call hands its
+// draws to the Metal renderer.
 
 import Foundation
+@preconcurrency @unsafe import Metal
 import OpenSkyAudio
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM

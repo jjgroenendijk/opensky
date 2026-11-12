@@ -34,7 +34,7 @@ private final class FakeSystemMenuWorld: @MainActor SystemMenuWorld {
 }
 
 @MainActor
-private final class FakeSaves: SaveGameService {
+final class FakeSaves: SaveGameService {
     var saveRows: [SaveSlotRow] = []
     var saved: [String?] = []
     var loaded: [String] = []
@@ -362,5 +362,13 @@ struct SystemMenuCoordinatorTests {
         harness.open(.installedContent)
         #expect(harness.menu.model.page == .installedContent)
         #expect(harness.menu.snapshot.page.rows == ["Skyrim.esm"])
+    }
+
+    @Test @MainActor
+    func theMenuVolumeIsTheSettingsVolume() {
+        let harness = Harness()
+        harness.menu.masterVolume = 0.5
+        #expect(harness.settings.masterVolume == 0.5)
+        #expect(harness.menu.masterVolume == 0.5)
     }
 }

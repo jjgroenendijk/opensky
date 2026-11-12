@@ -110,8 +110,8 @@ extension AIFrameSteps {
     func registerAIPackages(stage: SessionStage) {
         let gameSession = stage.gameSession
         gameSession.worldTick.register(.packages) { [weak self] delta in
-            guard let self, game.packages.runtime != nil else { return }
-            game.packages.advance(by: Float(delta))
+            guard let self, hosts.packages.runtime != nil else { return }
+            hosts.packages.advance(by: Float(delta))
             bumps.advanceBumps()
         }
     }

@@ -1,5 +1,6 @@
 // The Script binding parts read the session ports, and answer nothing without a session.
 
+import OpenSkyEngineTesting
 import OpenSkyFormatsESM
 import OpenSkyPhysics
 @testable import OpenSkyScriptAdapters
@@ -61,6 +62,18 @@ struct ScriptBindingsTests {
         nodes.answerPathWaits()
         nodes.answerNodeWaits()
         #expect(adapter.state.pathWaitAnswers.isEmpty)
+    }
+
+    @Test func theModelNodeLoaderSchedulesItsDrainOnlyWithFiles() {
+        let state = adapter.state
+        let loader = ScriptModelNodeLoader(game: host, state: state)
+        var drains: [() -> Void] = []
+        loader.fillModelNodes(files: nil) { drains.append($0) }
+        #expect(drains.isEmpty)
+        loader.fillModelNodes(files: InMemoryFileSource()) { drains.append($0) }
+        #expect(drains.count == 1)
+        #expect(state.modelNodes != nil)
+        drains.forEach { $0() }
     }
 
     @Test func anAshPileOfNoKnownReferenceOpensNothing() {

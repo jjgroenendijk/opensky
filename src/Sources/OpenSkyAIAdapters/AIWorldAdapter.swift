@@ -106,12 +106,8 @@ final class AIFrameSteps {
         self.hosts = hosts
     }
 
-    var game: any AIWorldHost {
-        hosts
-    }
-
     var records: AIRecordReads {
-        AIRecordReads(game: game)
+        AIRecordReads(game: hosts)
     }
 
     var seating: AISeatingAdapter {

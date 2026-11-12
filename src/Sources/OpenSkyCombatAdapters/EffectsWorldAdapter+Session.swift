@@ -61,10 +61,17 @@ extension EffectsFrameStep {
             let seconds = paused ? 0 : min(elapsed, Self.longestStep)
             lastFrame = paused ? nil : now
             frameLooks.attachRaceEffects()
-            explosions.advance(seconds)
-            effectPlacement.stepHealthCues(seconds, gameSession: gameSession)
+            hosts.combat.explosions.advance(seconds)
+            EffectsEffectPlacementAdapter(game: hosts, state: state).stepHealthCues(
+                seconds,
+                gameSession: gameSession
+            )
             do {
-                try effects.step(seconds, extraModels: frameLooks.extraModels(), renderer: renderer)
+                try hosts.effects.step(
+                    seconds,
+                    extraModels: frameLooks.extraModels(),
+                    renderer: renderer
+                )
             } catch {
                 Self.logger.error(
                     "[ERROR] effect draw lists: \(String(describing: error), privacy: .public)"
@@ -74,7 +81,7 @@ extension EffectsFrameStep {
             let delta = Float(uptime - (state.lastImpulseStep ?? uptime))
             state.lastImpulseStep = uptime
             if gameSession.movementMode.isPlayerControlled {
-                game.combat.impulses?.advance(deltaTime: delta)
+                hosts.combat.impulses?.advance(deltaTime: delta)
             }
         }
     }

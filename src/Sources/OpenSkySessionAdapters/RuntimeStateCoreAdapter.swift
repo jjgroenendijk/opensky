@@ -36,10 +36,6 @@ public struct RuntimeStateCoreAdapter {
     public let game: any RuntimeStateWorldHost
     public let state: RuntimeStatePartState
     public let inventoryFacts: RuntimeStateInventoryFactsAdapter
-
-    var conditions: ActorConditionReads {
-        ActorConditionReads(game: game, inventoryFacts: inventoryFacts)
-    }
 }
 
 /// One actor's condition state: its values, fight, equipment, and flags.
@@ -109,7 +105,8 @@ extension RuntimeStateCoreAdapter {
     /// filled in both directions.
     public func actorResolution() -> ActorStateResolution {
         guard let values = game.actorValues.runtime else { return .empty }
-        var player = conditions.actorConditionState(holder: .player, values: values)
+        var player = ActorConditionReads(game: game, inventoryFacts: inventoryFacts)
+            .actorConditionState(holder: .player, values: values)
         inventoryFacts.playerConditionTraits(&player)
         var states = residentActorStates(values: values)
         states[.player] = player
@@ -137,7 +134,9 @@ extension RuntimeStateCoreAdapter {
         )
         return state.conditionCaches.actors.value(for: key) {
             members.reduce(into: [:]) { states, member in
-                states[member.holder.key] = conditions.actorConditionState(
+                states[member.holder.key] = ActorConditionReads(
+                    game: game, inventoryFacts: inventoryFacts
+                ).actorConditionState(
                     holder: member.holder, values: values, isDead: member.isDead
                 )
             }

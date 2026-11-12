@@ -51,10 +51,10 @@ extension CombatFrameSteps {
         let frameSteps = gameSession.frameSteps
         frameSteps.register(.melee) { [weak self, weak gameSession] _ in
             guard let self, let gameSession else { return }
-            let combat = game.combat
+            let combat = hosts.combat
             let locomotion = gameSession.locomotion
             if gameSession.movementMode.isPlayerControlled {
-                combat.notePlayerSneaking(game.player.isSneaking)
+                combat.notePlayerSneaking(hosts.player.isSneaking)
             }
             if let landing = gameSession.walkController.takeLanding() {
                 combat.applyFall(height: landing.height, speed: landing.speed, to: .player)
@@ -78,7 +78,7 @@ extension CombatFrameSteps {
         let worldTick = gameSession.worldTick
         worldTick.register(.archery) { [weak self, weak gameSession] delta in
             guard let self, let gameSession else { return }
-            let combat = game.combat
+            let combat = hosts.combat
             let locomotion = gameSession.locomotion
             combat.isTimeSlowed = gameSession.magicTimeScale < 1
             let commands = combat.advanceArchery(
@@ -97,7 +97,7 @@ extension CombatFrameSteps {
         let gameSession = stage.gameSession
         gameSession.worldTick.register(.combatLoop) { [weak self] delta in
             guard let self else { return }
-            outcomes.run(game.combat.advanceLoop(by: delta))
+            outcomes.run(hosts.combat.advanceLoop(by: delta))
             updateNPCDrawStates()
         }
     }
