@@ -12,14 +12,17 @@ enum SequenceDoorFixture {
     ]
 
     /// Blocks: 0 root, 1 leaf, 2 to 5 the two interpolators and their keys, 6 the open
-    /// text keys, 7 `Open`, 8 `Close`.
-    static func file(withClose: Bool = true) -> Data {
+    /// text keys, 7 `Open`, 8 `Close`. `leafShape` makes the shape under the leaf from the
+    /// index of its shader block; the shape and the shader follow the sequences.
+    static func file(withClose: Bool = true, leafShape: ((Int32) -> Data)? = nil) -> Data {
+        let shapeIndex: Int32 = withClose ? 9 : 8
         var blocks = [
             NIFFixture.Block("NiNode", NIFFixture.niNode(
                 prefix: NIFFixture.avObjectPrefix(nameIndex: 0), children: [1]
             )),
             NIFFixture.Block("NiNode", NIFFixture.niNode(
-                prefix: NIFFixture.avObjectPrefix(nameIndex: 1, translation: [10, 0, 0])
+                prefix: NIFFixture.avObjectPrefix(nameIndex: 1, translation: [10, 0, 0]),
+                children: leafShape == nil ? [] : [shapeIndex]
             )),
             NIFFixture.Block("NiTransformInterpolator", interpolator(data: 3)),
             NIFFixture.Block("NiTransformData", rise(from: 0, to: 100)),
@@ -31,6 +34,12 @@ enum SequenceDoorFixture {
         if withClose {
             blocks.append(NIFFixture.Block(
                 "NiControllerSequence", sequence(name: 3, interpolator: 4, keys: -1)
+            ))
+        }
+        if let leafShape {
+            blocks.append(NIFFixture.Block("BSTriShape", leafShape(shapeIndex + 1)))
+            blocks.append(NIFFixture.Block(
+                "BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty()
             ))
         }
         return NIFFixture.file(blocks: blocks, strings: strings)
