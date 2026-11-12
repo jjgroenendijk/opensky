@@ -112,6 +112,23 @@ extension PlayerWorldAdapter: PlayerWorld {
     }
 
     public var playerAppearanceOverride: PlayerAppearanceOverride? {
+        PlayerIdentityReads(game: game).playerAppearanceOverride
+    }
+
+    public var playerBehaviorProject: String? {
+        PlayerIdentityReads(game: game).playerBehaviorProject
+    }
+}
+
+extension PlayerWorldAdapter: FaceMorphWorld {}
+
+extension PlayerWorldAdapter: HeadTrackingWorld {}
+
+/// The player's chosen look and behaviour graph, for `PlayerWorldAdapter`.
+struct PlayerIdentityReads {
+    let game: any PlayerWorldHost
+
+    var playerAppearanceOverride: PlayerAppearanceOverride? {
         game.worldState.component(PlayerIdentityState.self, for: .player).map { identity in
             var appearance = PlayerAppearanceOverride(
                 race: identity.race, isFemale: identity.isFemale,
@@ -134,7 +151,7 @@ extension PlayerWorldAdapter: PlayerWorld {
 
     /// The race's graph for the player's sex: `defaultfemale.hkx` for a female human, or a
     /// beast race's own project.
-    public var playerBehaviorProject: String? {
+    var playerBehaviorProject: String? {
         guard
             let identity = game.worldState.component(PlayerIdentityState.self, for: .player),
             let race = game.actorRecords?.actorValueBaselines?.resolver?
@@ -147,7 +164,3 @@ extension PlayerWorldAdapter: PlayerWorld {
         return ActorGraphCore.projectPath(modelPath: model.path)
     }
 }
-
-extension PlayerWorldAdapter: FaceMorphWorld {}
-
-extension PlayerWorldAdapter: HeadTrackingWorld {}

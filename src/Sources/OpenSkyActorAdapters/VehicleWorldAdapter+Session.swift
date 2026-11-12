@@ -37,7 +37,7 @@ extension VehicleWorldAdapter {
         let wheels = AssetLoader<String, [SIMD2<Float>]> { path in
             try VehicleWheels.contacts(in: NIFFile(data: files.contents(forPath: path)))
         }
-        self.wheels = wheels
+        wheelContacts.wheels = wheels
         gameSession.assetDrains.register(.vehicleWheels) { _ in wheels.drain() }
     }
 

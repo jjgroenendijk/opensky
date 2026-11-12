@@ -48,8 +48,7 @@ public final class ObjectAnimationWorldAdapter {
     /// Answers the scheduler did not take yet, because the waiting call was not
     /// queued when its event fired. Retried each frame.
     private var pendingAnswers: [UInt64: Bool] = [:]
-    /// Which scripted traps touch which actors.
-    var trapContact = TrapContactTracker()
+    private lazy var trapContact = ObjectTrapContactStep(game: game)
 
     /// The streamer's animated parts. The composition root sets these, so the host stays port-only.
     public var animatedObjects: () -> [CellAnimatedObject] = { [] }
@@ -68,7 +67,7 @@ public final class ObjectAnimationWorldAdapter {
         run(doors.tick(deltaTime: delta))
         game.nodeControllers.sync()
         game.nodeControllers.tick(deltaTime: delta)
-        advanceTrapContact(delta)
+        trapContact.advanceTrapContact(delta)
         guard let scheduler = game.scripts.runtime?.scheduler else { return }
         for (token, fired) in pendingAnswers
             where scheduler.answer(token, returning: .boolean(fired))

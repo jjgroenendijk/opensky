@@ -15,9 +15,19 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
-extension ObjectAnimationWorldAdapter {
+/// The trap contact pass of `ObjectAnimationWorldAdapter`.
+final class ObjectTrapContactStep {
+    let game: any ObjectAnimationWorldHost
+    /// Which scripted traps touch which actors.
+    private var trapContact = TrapContactTracker()
+
+    init(game: any ObjectAnimationWorldHost) {
+        self.game = game
+    }
+
     func advanceTrapContact(_ delta: Float) {
         let streamer = game.streamer
+        let objects = game.objectBehaviors
         guard let runtime = game.scripts.runtime else { return }
         var resident: Set<ReferenceKey> = []
         let targets = trapTargets()

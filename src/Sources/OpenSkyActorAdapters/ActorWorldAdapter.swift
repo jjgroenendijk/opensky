@@ -47,6 +47,7 @@ public protocol ActorWorldHost: AnyObject, SendableMetatype {
 public final class ActorWorldAdapter {
     public let game: any ActorWorldHost
     let names: ActorDisplayNames
+    let breathStep: ActorBreathStep
     /// `combatActors()` and what it was built from. A death, a move, or a residency
     /// change advances one of the revisions, so the next read builds it again.
     var actorList: (key: ActorListKey, actors: [CombatActorObservation])?
@@ -54,28 +55,7 @@ public final class ActorWorldAdapter {
     public init(game: any ActorWorldHost) {
         self.game = game
         names = ActorDisplayNames(game: game)
-    }
-
-    /// Drowning costs health once the breath runs out; the `Water Breathing` actor value
-    /// above 0 keeps the breath full.
-    func advanceBreath(delta: Float, gameSession: GameSession) {
-        guard delta > 0 else { return }
-        let runtime = game.actorValues.runtime
-        let status = gameSession.locomotion.status
-        let eyeZ = gameSession.walkController.feetPosition.z
-            + gameSession.walkController.capsule.eyeHeight
-        let submerged = gameSession.movementMode.isPlayerControlled
-            && PlayerBreath.isSubmerged(eyeZ: eyeZ, waterSurface: status.waterSurfaceHeight)
-        let waterBreathing = ActorValueIdentity.index(named: "Water Breathing")
-            .flatMap { runtime?.value(at: $0, on: .player) }
-            .map { $0 > 0 } ?? false
-        let damage = gameSession.breath.advance(
-            seconds: delta, submerged: submerged, waterBreathing: waterBreathing,
-            maximumHealth: runtime?.maximums(of: .player).health ?? 0
-        )
-        if damage > 0 {
-            game.combat.applyHealthDamage(damage, to: .player, attacker: nil)
-        }
+        breathStep = ActorBreathStep(game: game)
     }
 
     // MARK: - Resident actors
@@ -144,31 +124,6 @@ public final class ActorWorldAdapter {
     /// leveled template picked by its own roll, as the crosshair shows it.
     public func displayName(of key: ReferenceKey, base: FormID) -> String? {
         names.displayName(of: key, base: base)
-    }
-
-    func publishHUDMeters(gameSession: GameSession?) {
-        guard let gameSession, game.hud.isLoaded, let runtime = game.actorValues.runtime else {
-            return
-        }
-        var meters = runtime.fractions(of: .player)
-        if let horse = riddenHorse() {
-            meters.stamina = runtime.fractions(of: horse).stamina
-        }
-        let enemy = game.hud.shows(.enemyHealth)
-            ? engagedEnemyHealth(runtime: runtime, gameSession: gameSession) : nil
-        game.hud.publishMeters(meters, enemy: enemy)
-    }
-
-    private func engagedEnemyHealth(
-        runtime: any ActorValueRuntimePort, gameSession: GameSession
-    ) -> HUDEnemyHealth? {
-        guard
-            let actor = game.combat.engagedEnemy(playerFeet: gameSession.freeFlyCamera.position),
-            let holder = actorValueHolder(for: actor.key)
-        else { return nil }
-        let name = game.streamer.residentActorPlacement(key: actor.key)
-            .flatMap { displayName(of: actor.key, base: $0.base) } ?? ""
-        return HUDEnemyHealth(name: name, health: runtime.fractions(of: holder).health)
     }
 }
 
@@ -352,5 +307,67 @@ struct ActorPlayerMotion {
 extension ActorWorldAdapter {
     var motion: ActorPlayerMotion {
         ActorPlayerMotion(game: game)
+    }
+
+    var hudMeters: ActorHUDMeters {
+        ActorHUDMeters(game: game, world: self)
+    }
+}
+
+/// The player's breath under water, for `ActorWorldAdapter`.
+struct ActorBreathStep {
+    let game: any ActorWorldHost
+
+    /// Drowning costs health once the breath runs out; the `Water Breathing` actor value
+    /// above 0 keeps the breath full.
+    func advanceBreath(delta: Float, gameSession: GameSession) {
+        guard delta > 0 else { return }
+        let runtime = game.actorValues.runtime
+        let status = gameSession.locomotion.status
+        let eyeZ = gameSession.walkController.feetPosition.z
+            + gameSession.walkController.capsule.eyeHeight
+        let submerged = gameSession.movementMode.isPlayerControlled
+            && PlayerBreath.isSubmerged(eyeZ: eyeZ, waterSurface: status.waterSurfaceHeight)
+        let waterBreathing = ActorValueIdentity.index(named: "Water Breathing")
+            .flatMap { runtime?.value(at: $0, on: .player) }
+            .map { $0 > 0 } ?? false
+        let damage = gameSession.breath.advance(
+            seconds: delta, submerged: submerged, waterBreathing: waterBreathing,
+            maximumHealth: runtime?.maximums(of: .player).health ?? 0
+        )
+        if damage > 0 {
+            game.combat.applyHealthDamage(damage, to: .player, attacker: nil)
+        }
+    }
+}
+
+/// The HUD's health, magicka, and stamina meters, for `ActorWorldAdapter`.
+struct ActorHUDMeters {
+    let game: any ActorWorldHost
+    let world: any ActorValueWorld & ActorWorldPort
+
+    func publishHUDMeters(gameSession: GameSession?) {
+        guard let gameSession, game.hud.isLoaded, let runtime = game.actorValues.runtime else {
+            return
+        }
+        var meters = runtime.fractions(of: .player)
+        if let horse = world.riddenHorse() {
+            meters.stamina = runtime.fractions(of: horse).stamina
+        }
+        let enemy = game.hud.shows(.enemyHealth)
+            ? engagedEnemyHealth(runtime: runtime, gameSession: gameSession) : nil
+        game.hud.publishMeters(meters, enemy: enemy)
+    }
+
+    private func engagedEnemyHealth(
+        runtime: any ActorValueRuntimePort, gameSession: GameSession
+    ) -> HUDEnemyHealth? {
+        guard
+            let actor = game.combat.engagedEnemy(playerFeet: gameSession.freeFlyCamera.position),
+            let holder = world.actorValueHolder(for: actor.key)
+        else { return nil }
+        let name = game.streamer.residentActorPlacement(key: actor.key)
+            .flatMap { world.displayName(of: actor.key, base: $0.base) } ?? ""
+        return HUDEnemyHealth(name: name, health: runtime.fractions(of: holder).health)
     }
 }

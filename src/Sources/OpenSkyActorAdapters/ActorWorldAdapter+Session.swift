@@ -45,12 +45,12 @@ extension ActorWorldAdapter {
             game?.actorValues.advance(delta: delta)
         }
         gameSession.frameSteps.register(.actorValues) { [weak self, weak gameSession] _ in
-            self?.publishHUDMeters(gameSession: gameSession)
+            self?.hudMeters.publishHUDMeters(gameSession: gameSession)
         }
         gameSession.breath = PlayerBreath(settings: BreathSettings.resolve(store: settings))
         gameSession.worldTick.register(.breath) { [weak self, weak gameSession] delta in
             guard let gameSession else { return }
-            self?.advanceBreath(delta: delta, gameSession: gameSession)
+            self?.breathStep.advanceBreath(delta: delta, gameSession: gameSession)
         }
     }
 }

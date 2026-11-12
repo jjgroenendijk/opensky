@@ -45,17 +45,11 @@ public final class VehicleWorldAdapter {
 
     /// True after `SetPlayerAIDriven(true)`: the player's packages move the player.
     public private(set) var isPlayerAIDriven = false
-    /// The cell each follower is moving into while its old cell still draws it.
-    private var crossings: [ReferenceKey: CellCoordinate] = [:]
+    lazy var crossings = VehicleFollowerCrossings(game: game)
     /// The vehicle seated the player on the last step.
     var ridesPlayer = false
-    /// The start of the seat idle the player's view was last turned for.
-    private var facedIdleStart: Float?
-    /// The way the player's seat faces, and the `SetSittingRotation` turn from it.
-    private var seatYaw: Float?
-    private var sittingRotation: Float = 0
-    /// Wheel contacts by model path, read off the main actor.
-    var wheels: AssetLoader<String, [SIMD2<Float>]>?
+    lazy var seatView = VehicleSeatView(game: game)
+    lazy var wheelContacts = VehicleWheelContacts(game: game)
 
     public init(game: any VehicleWorldHost) {
         self.game = game
@@ -79,11 +73,6 @@ public final class VehicleWorldAdapter {
             game.scripts.bridge?.killActor(actor, killer: nil)
         }
     }
-}
-
-extension VehicleWorldAdapter {
-    /// A head bone pointing straight up or down gives no seat yaw.
-    static let uprightForward: Float = 0.001
 }
 
 extension VehicleWorldAdapter: VehicleWorld {
@@ -121,74 +110,16 @@ extension VehicleWorldAdapter: VehicleWorld {
         run(vehicles.detach(follower))
     }
 
-    /// The player's root sits on the vehicle, as every rider's does. While the player
-    /// plays a seat idle, the eye goes to the clip's head bone, so the view sits in the seat.
     public func placePlayer(at pose: ReferenceTransformOverride) {
-        guard let gameSession = game.gameSession else { return }
-        let head = game.idleWorld.idles.idleBone(of: .player, named: DialogueCamera.headBoneName)
-        let root = MatrixMath.placement(position: pose.position, rotation: pose.rotation, scale: 1)
-        gameSession.seatPlayer(at: root, head: head)
-        if head != nil {
-            faceSeat(root: root)
-        }
+        seatView.placePlayer(at: pose)
     }
 
-    /// A new seat idle turns the view the way the seat's head faces, once; the player
-    /// may look around after.
-    private func faceSeat(root: float4x4) {
-        let idles = game.idleWorld.idles
-        guard
-            let start = idles.idleStart(of: .player), start != facedIdleStart,
-            let forward = idles.idleBoneForward(of: .player, named: DialogueCamera.headBoneName)
-        else { return }
-        facedIdleStart = start
-        let world = root * SIMD4(forward, 0)
-        guard abs(world.x) + abs(world.y) > Self.uprightForward else { return }
-        seatYaw = atan2(world.y, world.x)
-        turnSeatView()
-    }
-
-    /// `Game.SetSittingRotation` on a cart seat: degrees from the seat's facing, negative
-    /// looks left. Standing up resets it, as the game sets it to 0 off a seat.
     public func setSittingRotation(degrees: Float) {
-        sittingRotation = degrees
-        turnSeatView()
+        seatView.setSittingRotation(degrees: degrees)
     }
 
-    private func turnSeatView() {
-        guard
-            game.vehicles.core.links[.player] != nil, let seatYaw,
-            let gameSession = game.gameSession
-        else {
-            seatYaw = nil
-            sittingRotation = 0
-            return
-        }
-        let offset = FurnitureCoordinator.sittingOffset(degrees: sittingRotation)
-        gameSession.freeFlyCamera.yaw = seatYaw - offset
-    }
-
-    /// A follower drawn by a cell it left moves into the cell it is now in, so it does
-    /// not vanish when the old cell unloads. The old cell drops it.
     public func vehicleFollowerMoved(_ key: ReferenceKey, to pose: ReferenceTransformOverride) {
-        if let formID = game.streamer.referenceEntry(key: key)?.formID {
-            game.streamer.setVehiclePose(VehicleCore.matrix(pose), for: formID)
-        }
-        let streamer = game.streamer
-        guard
-            case let .exterior(drawing)? = streamer.cellLocation(of: key)
-        else { return }
-        let now = CellGridManager.cellCoordinate(for: pose.position)
-        guard now != drawing, streamer.composition.cells[now] != nil else {
-            crossings[key] = nil
-            return
-        }
-        // Until the rebuild lands, the old cell still draws it: write once per crossing.
-        guard crossings[key] != now else { return }
-        crossings[key] = now
-        game.worldState.set(pose, for: key, in: .exterior(now))
-        game.scripts.bridge?.relocate(key, to: .exterior(now))
-        streamer.requestRebuild(of: .exterior(drawing))
+        crossings.vehicleFollowerMoved(key, to: pose)
     }
 
     public func vehicleBone(of key: ReferenceKey, named bone: String) -> SIMD3<Float>? {
@@ -211,15 +142,7 @@ extension VehicleWorldAdapter: VehicleWorld {
     }
 
     public func vehicleWheels(of key: ReferenceKey) -> [SIMD2<Float>]? {
-        guard
-            let wheels,
-            let path = game.streamer.placedRecords?.baseModelPath(for: key)
-        else { return [] }
-        switch wheels.state(of: path) {
-        case .loading: return nil
-        case let .ready(contacts): return contacts
-        case .failed: return []
-        }
+        wheelContacts.vehicleWheels(of: key)
     }
 
     public func spinVehicleWheels(of key: ReferenceKey, turns: VehicleWheelTurns) {
@@ -305,6 +228,127 @@ extension VehicleWorldAdapter: PapyrusActorAIBridge {
 }
 
 extension VehicleWorldAdapter: VehicleWorldPort {}
+
+/// The player's view in a vehicle seat, for `VehicleWorldAdapter`.
+final class VehicleSeatView {
+    let game: any VehicleWorldHost
+    /// The start of the seat idle the player's view was last turned for.
+    private var facedIdleStart: Float?
+    /// The way the player's seat faces, and the `SetSittingRotation` turn from it.
+    private var seatYaw: Float?
+    private var sittingRotation: Float = 0
+
+    init(game: any VehicleWorldHost) {
+        self.game = game
+    }
+
+    /// A head bone pointing straight up or down gives no seat yaw.
+    static let uprightForward: Float = 0.001
+
+    /// The player's root sits on the vehicle, as every rider's does. While the player
+    /// plays a seat idle, the eye goes to the clip's head bone, so the view sits in the seat.
+    func placePlayer(at pose: ReferenceTransformOverride) {
+        guard let gameSession = game.gameSession else { return }
+        let head = game.idleWorld.idles.idleBone(of: .player, named: DialogueCamera.headBoneName)
+        let root = MatrixMath.placement(position: pose.position, rotation: pose.rotation, scale: 1)
+        gameSession.seatPlayer(at: root, head: head)
+        if head != nil {
+            faceSeat(root: root)
+        }
+    }
+
+    /// A new seat idle turns the view the way the seat's head faces, once; the player
+    /// may look around after.
+    private func faceSeat(root: float4x4) {
+        let idles = game.idleWorld.idles
+        guard
+            let start = idles.idleStart(of: .player), start != facedIdleStart,
+            let forward = idles.idleBoneForward(of: .player, named: DialogueCamera.headBoneName)
+        else { return }
+        facedIdleStart = start
+        let world = root * SIMD4(forward, 0)
+        guard abs(world.x) + abs(world.y) > Self.uprightForward else { return }
+        seatYaw = atan2(world.y, world.x)
+        turnSeatView()
+    }
+
+    /// `Game.SetSittingRotation` on a cart seat: degrees from the seat's facing, negative
+    /// looks left. Standing up resets it, as the game sets it to 0 off a seat.
+    func setSittingRotation(degrees: Float) {
+        sittingRotation = degrees
+        turnSeatView()
+    }
+
+    private func turnSeatView() {
+        guard
+            game.vehicles.core.links[.player] != nil, let seatYaw,
+            let gameSession = game.gameSession
+        else {
+            seatYaw = nil
+            sittingRotation = 0
+            return
+        }
+        let offset = FurnitureCoordinator.sittingOffset(degrees: sittingRotation)
+        gameSession.freeFlyCamera.yaw = seatYaw - offset
+    }
+}
+
+/// The cells that vehicle followers move between, for `VehicleWorldAdapter`.
+final class VehicleFollowerCrossings {
+    let game: any VehicleWorldHost
+    /// The cell each follower is moving into while its old cell still draws it.
+    private var crossings: [ReferenceKey: CellCoordinate] = [:]
+
+    init(game: any VehicleWorldHost) {
+        self.game = game
+    }
+
+    /// A follower drawn by a cell it left moves into the cell it is now in, so it does
+    /// not vanish when the old cell unloads. The old cell drops it.
+    func vehicleFollowerMoved(_ key: ReferenceKey, to pose: ReferenceTransformOverride) {
+        if let formID = game.streamer.referenceEntry(key: key)?.formID {
+            game.streamer.setVehiclePose(VehicleCore.matrix(pose), for: formID)
+        }
+        let streamer = game.streamer
+        guard
+            case let .exterior(drawing)? = streamer.cellLocation(of: key)
+        else { return }
+        let now = CellGridManager.cellCoordinate(for: pose.position)
+        guard now != drawing, streamer.composition.cells[now] != nil else {
+            crossings[key] = nil
+            return
+        }
+        // Until the rebuild lands, the old cell still draws it: write once per crossing.
+        guard crossings[key] != now else { return }
+        crossings[key] = now
+        game.worldState.set(pose, for: key, in: .exterior(now))
+        game.scripts.bridge?.relocate(key, to: .exterior(now))
+        streamer.requestRebuild(of: .exterior(drawing))
+    }
+}
+
+/// The wheel contacts of each vehicle model, for `VehicleWorldAdapter`.
+final class VehicleWheelContacts {
+    let game: any VehicleWorldHost
+    /// Wheel contacts by model path, read off the main actor.
+    var wheels: AssetLoader<String, [SIMD2<Float>]>?
+
+    init(game: any VehicleWorldHost) {
+        self.game = game
+    }
+
+    func vehicleWheels(of key: ReferenceKey) -> [SIMD2<Float>]? {
+        guard
+            let wheels,
+            let path = game.streamer.placedRecords?.baseModelPath(for: key)
+        else { return [] }
+        switch wheels.state(of: path) {
+        case .loading: return nil
+        case let .ready(contacts): return contacts
+        case .failed: return []
+        }
+    }
+}
 
 /// The bone, ground, wheel, and idle reads of `VehicleWorldAdapter`.
 struct VehicleBodyReads {
