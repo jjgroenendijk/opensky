@@ -93,15 +93,10 @@ nonisolated extension SWFMovieRuntime {
         remainingDepth: Int = SWFDisplayObject.maximumTreeDepth
     ) -> SWFBoundsBox {
         switch node.content {
-        case let .shape(id):
-            return movie.shape(id).map { SWFBoundsBox(rect: $0.bounds) } ?? .empty
+        case .shape, .staticText:
+            return movie.characterBounds(of: node.content) ?? .empty
         case .editText:
             return textField(of: node).map { SWFBoundsBox(rect: $0.bounds) } ?? .empty
-        case let .staticText(id):
-            guard let text = movie.staticText(id) else {
-                return .empty
-            }
-            return SWFBoundsBox(rect: text.bounds)
         case .clip:
             guard remainingDepth > 0 else {
                 return .empty
@@ -119,5 +114,20 @@ nonisolated extension SWFMovieRuntime {
     /// report.
     func parentBounds(of node: SWFDisplayObject) -> SWFBoundsBox {
         localBounds(of: node).transformed(by: SWFTransform(matrix: node.matrix))
+    }
+}
+
+nonisolated extension SWFMovie {
+    /// The bounds a shape or static text declares, in its own twip space. Nil for
+    /// any other content, or a character the movie does not define.
+    func characterBounds(of content: SWFDisplayObject.Content) -> SWFBoundsBox? {
+        switch content {
+        case let .shape(id):
+            shape(id).map { SWFBoundsBox(rect: $0.bounds) }
+        case let .staticText(id):
+            staticText(id).map { SWFBoundsBox(rect: $0.bounds) }
+        default:
+            nil
+        }
     }
 }

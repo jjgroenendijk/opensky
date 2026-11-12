@@ -194,7 +194,7 @@ nonisolated public final class ItemDefinitionStore {
         var definitions: [UInt32: ItemDefinition] = [:]
         for family in ItemDefinition.Family.allCases {
             let decoded = Self.decodeAll(family.recordType, in: loadOrder, skipped: &skipped) {
-                try Self.definition(
+                try ItemDefinitionViews.definition(
                     record: $0,
                     family: family,
                     localized: $1,
@@ -278,7 +278,7 @@ nonisolated public final class ItemDefinitionStore {
         guard createdPotions.contains(raw) || definitions[raw] == nil else { return }
         createdPotions.insert(raw)
         ingestibles[raw] = potion
-        definitions[raw] = Self.view(potion)
+        definitions[raw] = ItemDefinitionViews.view(potion)
     }
 
     /// Drops every brewed potion, before a save's own list is registered.
@@ -346,7 +346,21 @@ nonisolated public final class ItemDefinitionStore {
         return resolver.store.enchantment(resolvedID)
     }
 
-    private static func definition(
+    private static func decodeAll<Value>(
+        _ type: FourCC,
+        in loadOrder: LoadOrderPlugins,
+        skipped: inout SkippedRecords,
+        using decode: (ESMRecord, Bool) throws -> Value
+    ) -> [UInt32: Value] {
+        loadOrder.indexRecords(of: type, skipped: &skipped, using: decode)
+    }
+}
+
+/// Per-family projections into `ItemDefinition`. Static functions in one
+/// enum rather than an `ItemViewConvertible` protocol: the record structs
+/// are plain decoders and none of them should grow a store-shaped conformance.
+nonisolated enum ItemDefinitionViews {
+    static func definition(
         record: ESMRecord,
         family: ItemDefinition.Family,
         localized: Bool,
@@ -380,20 +394,6 @@ nonisolated public final class ItemDefinitionStore {
         }
     }
 
-    private static func decodeAll<Value>(
-        _ type: FourCC,
-        in loadOrder: LoadOrderPlugins,
-        skipped: inout SkippedRecords,
-        using decode: (ESMRecord, Bool) throws -> Value
-    ) -> [UInt32: Value] {
-        loadOrder.indexRecords(of: type, skipped: &skipped, using: decode)
-    }
-}
-
-/// Per-family projections into `ItemDefinition`. Free functions in one
-/// extension rather than an `ItemViewConvertible` protocol: the record structs
-/// are plain decoders and none of them should grow a store-shaped conformance.
-nonisolated extension ItemDefinitionStore {
     fileprivate static func view(
         _ armor: Armor,
         _ enchantments: ItemEnchantmentResolver?

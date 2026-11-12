@@ -51,7 +51,7 @@ nonisolated public final class SWFMovieRuntime {
     /// `setInterval` / `setTimeout` callbacks, fired from `advance()`.
     public let timers = SWFRuntimeTimers()
     /// Both directions of the `GameDelegate` bridge, bounded.
-    public private(set) var invokeLog = SWFInvokeLog()
+    public internal(set) var invokeLog = SWFInvokeLog()
     /// Resolves a `$TOKEN` text when a field is read, as Scaleform's translator does.
     /// Nil shows every text as written.
     public var textTranslator: ((String) -> String)?
@@ -186,11 +186,6 @@ nonisolated public final class SWFMovieRuntime {
         droppedFrameActions += count
     }
 
-    /// Records one bridge call. The log is bounded and drops oldest first.
-    public func noteInvoke(_ entry: SWFInvokeEntry) {
-        invokeLog.append(entry)
-    }
-
     public func clearInvokeLog() {
         invokeLog.clear()
     }
@@ -215,41 +210,14 @@ nonisolated public final class SWFMovieRuntime {
             droppedInstantiations += 1
             return nil
         }
-        switch movie.characters[characterId] {
-        case let .sprite(sprite):
-            let node = SWFDisplayObject(
-                content: .clip(characterId),
-                timeline: sprite.timeline,
-                frameCount: max(1, Int(sprite.frameCount))
-            )
-            node.object.prototype = movieClipPrototype
+        let node = movie.displayObject(
+            characterId: characterId,
+            prototypes: (clip: movieClipPrototype, textField: textFieldPrototype)
+        )
+        if let node, case .clip = node.content, !node.isButton {
             globalMouseHandlers.observe(node)
-            return node
-        case let .button(button):
-            let node = SWFDisplayObject(
-                content: .clip(characterId),
-                timeline: button.stateTimeline,
-                frameCount: SWFButton.stateLabels.count
-            )
-            node.isButton = true
-            node.isPlaying = false
-            node.clipActions = button.clipActions
-            return node
-        case .shape:
-            return SWFDisplayObject(content: .shape(characterId))
-        case .staticText:
-            return SWFDisplayObject(content: .staticText(characterId))
-        case let .editText(text):
-            let node = SWFDisplayObject(content: .editText(characterId))
-            node.object.prototype = textFieldPrototype
-            node.object.typeOverride = nil
-            if !text.variableName.isEmpty {
-                node.object.define(.string(text.variableName), for: "variable")
-            }
-            return node
-        default:
-            return nil
         }
+        return node
     }
 
     /// Runs the class registered against a placed character's linkage name,
@@ -293,5 +261,48 @@ nonisolated public final class SWFMovieRuntime {
         bringUp(node)
         markDirty()
         return node
+    }
+}
+
+nonisolated extension SWFMovie {
+    /// A fresh display node for the character `characterId` places, or nil for a
+    /// character with no node. The runtime counts and tracks it.
+    func displayObject(
+        characterId: UInt16, prototypes: (clip: AS2Object, textField: AS2Object)
+    ) -> SWFDisplayObject? {
+        switch characters[characterId] {
+        case let .sprite(sprite):
+            let node = SWFDisplayObject(
+                content: .clip(characterId),
+                timeline: sprite.timeline,
+                frameCount: max(1, Int(sprite.frameCount))
+            )
+            node.object.prototype = prototypes.clip
+            return node
+        case let .button(button):
+            let node = SWFDisplayObject(
+                content: .clip(characterId),
+                timeline: button.stateTimeline,
+                frameCount: SWFButton.stateLabels.count
+            )
+            node.isButton = true
+            node.isPlaying = false
+            node.clipActions = button.clipActions
+            return node
+        case .shape:
+            return SWFDisplayObject(content: .shape(characterId))
+        case .staticText:
+            return SWFDisplayObject(content: .staticText(characterId))
+        case let .editText(text):
+            let node = SWFDisplayObject(content: .editText(characterId))
+            node.object.prototype = prototypes.textField
+            node.object.typeOverride = nil
+            if !text.variableName.isEmpty {
+                node.object.define(.string(text.variableName), for: "variable")
+            }
+            return node
+        default:
+            return nil
+        }
     }
 }

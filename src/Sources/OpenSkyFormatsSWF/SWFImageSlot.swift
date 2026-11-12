@@ -61,3 +61,10 @@ nonisolated extension SWFMovieScene {
         )
     }
 }
+
+nonisolated extension SWFMovie {
+    /// The shape that shows the image slot `name`, if the movie has one.
+    func imageShape(named name: String) -> UInt16? {
+        imageSlots[name]?.shapeId
+    }
+}

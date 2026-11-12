@@ -61,13 +61,17 @@ nonisolated extension SWFMovieRuntime {
     }
 
     private func textLines(of node: SWFDisplayObject) -> (count: Int, visible: Int)? {
-        guard
-            windowsLines(node), let field = textField(of: node),
-            let font = movieScene.resolvedFont(for: field)
-        else { return nil }
-        let layout = SWFTextLayout.editText(
-            field, font: font, content: text(of: node) ?? "", firstLine: 0
-        )
+        guard windowsLines(node), let field = textField(of: node) else { return nil }
+        return movieScene.lineCounts(of: field, content: text(of: node) ?? "")
+    }
+}
+
+nonisolated extension SWFMovieScene {
+    /// How many lines `content` lays out to in `field`, and how many show at once.
+    /// Nil when the field's font does not resolve.
+    func lineCounts(of field: SWFEditText, content: String) -> (count: Int, visible: Int)? {
+        guard let font = resolvedFont(for: field) else { return nil }
+        let layout = SWFTextLayout.editText(field, font: font, content: content, firstLine: 0)
         return (layout.lineCount, layout.visibleLineCount)
     }
 }

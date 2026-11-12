@@ -23,7 +23,7 @@ nonisolated extension CellObjectBuilder {
         guard
             Self.animatedObjectTypes.contains(recordType),
             let fileSystem = owner.fileSystem,
-            let project = owner.meshes.behaviorProjectPath(forPath: modelPath)
+            let project = owner.meshes.extraData.behaviorProjectPath(forPath: modelPath)
         else { return nil }
         if let known = owner.objectBehaviorAssets[project] {
             return known

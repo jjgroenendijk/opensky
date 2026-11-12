@@ -47,11 +47,8 @@ nonisolated public final class MeshLibrary {
     /// Mesh keys resolved since the last drain, so a cell build can record its
     /// mesh working set (for eviction keep-sets). Build-queue confined.
     var touchedKeys: Set<String> = []
-    /// The behaviour project each object mesh names; nil inside means none.
-    var behaviorProjects: [String: String?] = [:]
-    /// The furniture markers of each furniture mesh read so far.
-    var furnitureMarkerSets: [String: [NIFFurnitureMarker]] = [:]
-    var addOnNodeSets: [String: [NIFAddOnNode]] = [:]
+    /// The behaviour projects, furniture markers, and add-on nodes of the meshes read so far.
+    public let extraData: MeshExtraData
     var rigidParentBones: [String: String?] = [:]
     // Internal rather than private: the actor-facing loaders live in
     // MeshLibraryActors.swift (split for the type-body length cap) and a Swift
@@ -85,6 +82,7 @@ nonisolated public final class MeshLibrary {
         self.fileSystem = fileSystem
         self.device = device
         self.textures = textures
+        extraData = MeshExtraData(fileSystem: fileSystem)
     }
 
     /// Loads (or returns the cached) RenderModel for a MODL-style path such as
@@ -183,7 +181,7 @@ nonisolated public final class MeshLibrary {
                 model = surface.applied(to: model)
             }
             if let attachmentBone {
-                model = Self.riding(model, bone: attachmentBone, skeleton: actorSkeleton)
+                model = MeshExtraData.riding(model, bone: attachmentBone, skeleton: actorSkeleton)
             }
             // A fire effect can hold only particles beside its editor marker.
             guard !model.meshes.isEmpty || !decodedParticles.isEmpty else {
@@ -200,18 +198,6 @@ nonisolated public final class MeshLibrary {
             loadedCount += 1
             return render
         }
-    }
-
-    private static func riding(
-        _ model: Model, bone: String, skeleton: ActorSkeletonAsset?
-    ) -> Model {
-        RigidAttachment.skinned(
-            model,
-            to: bone,
-            restTransform: skeleton?.skeleton.transform(forBoneNamed: bone)
-                ?? matrix_identity_float4x4,
-            actorHasBone: { skeleton?.skeleton.transform(forBoneNamed: $0) != nil }
-        )
     }
 
     /// A cached model whose mesh bytes the fast loader reads straight into GPU buffers.
@@ -350,10 +336,7 @@ nonisolated public final class MeshLibrary {
     /// Normalizes a MODL-style path and prepends the "meshes\\" root when the
     /// record omitted it. Rejects empty/escaping paths as not-found.
     public func meshKey(for path: String) throws -> String {
-        guard let normalized = attempt({ try VirtualFileSystem.normalize(path) }) else {
-            throw MeshLibraryError.fileNotFound(path: path)
-        }
-        return normalized.hasPrefix("meshes\\") ? normalized : "meshes\\" + normalized
+        try MeshExtraData.meshKey(for: path)
     }
 }
 
@@ -520,44 +503,6 @@ nonisolated extension MeshLibrary {
 }
 
 nonisolated extension MeshLibrary {
-    /// The behaviour project an object mesh names, or nil. Each path is read once.
-    public func behaviorProjectPath(forPath path: String) -> String? {
-        guard let pathKey = attempt({ try meshKey(for: path) }) else { return nil }
-        if let known = behaviorProjects[pathKey] {
-            return known
-        }
-        let project = attempt { try fileSystem.contents(forPath: pathKey) }
-            .flatMap { element in attempt { try NIFFile(data: element) } }
-            .flatMap(NIFBehaviorGraphExtraData.projectPath(in:))
-        behaviorProjects[pathKey] = .some(project)
-        return project
-    }
-
-    /// The furniture markers a mesh holds. Each path is read once.
-    public func furnitureMarkers(forPath path: String) -> [NIFFurnitureMarker] {
-        guard let pathKey = attempt({ try meshKey(for: path) }) else { return [] }
-        if let known = furnitureMarkerSets[pathKey] {
-            return known
-        }
-        let markers = attempt { try fileSystem.contents(forPath: pathKey) }
-            .flatMap { element in attempt { try NIFFile(data: element) } }
-            .map(NIFFurnitureMarker.markers(in:)) ?? []
-        furnitureMarkerSets[pathKey] = markers
-        return markers
-    }
-
-    /// The add-on nodes a mesh holds. Each path is read once.
-    public func addOnNodes(forPath path: String) -> [NIFAddOnNode] {
-        guard let pathKey = attempt({ try meshKey(for: path) }) else { return [] }
-        if let known = addOnNodeSets[pathKey] {
-            return known
-        }
-        let nodes = attempt { try fileSystem.contents(forPath: pathKey) }
-            .flatMap { element in attempt { try NIFFile(data: element).addOnNodes() } } ?? []
-        addOnNodeSets[pathKey] = nodes
-        return nodes
-    }
-
     /// One reference's own copy of an animated object, with the meshes under
     /// `bones` skinned to them. Own copy, because each object poses its palette.
     public func animatedObjectModel(

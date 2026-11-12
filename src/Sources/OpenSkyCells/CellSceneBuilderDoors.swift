@@ -32,7 +32,7 @@ nonisolated extension CellObjectBuilder {
                 let base = bases[ref.base.rawValue],
                 Self.sequenceDoorTypes.contains(base.recordType),
                 let path = base.modelPath,
-                owner.meshes.behaviorProjectPath(forPath: path) == nil,
+                owner.meshes.extraData.behaviorProjectPath(forPath: path) == nil,
                 let rig = sequenceDoorRig(modelPath: path)
             else { continue }
             let kind: CellSequenceDoor.Kind = base.recordType == "CONT" ? .containerLid
