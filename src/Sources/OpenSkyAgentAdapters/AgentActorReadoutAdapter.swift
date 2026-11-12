@@ -95,9 +95,10 @@ extension AgentActorReadoutAdapter {
         guard distance <= radius else { return nil }
         let entry = game.streamer.referenceEntry(key: actor.key)
         let formID = entry?.formID
-        let graph: AgentJSON = game.actorGraphs.readout(for: actor.key).map(graphState) ?? .null
+        let graph: AgentJSON = game.actorGraphs.readout(for: actor.key)
+            .map(details.graphState) ?? .null
         return (distance, [
-            "leveled": leveledState(of: actor.key, base: entry?.placedActor?.base),
+            "leveled": details.leveledState(of: actor.key, base: entry?.placedActor?.base),
             "ref": formID.map { .formID($0.rawValue) } ?? .null,
             "name": .string(game.dialogueWorld.speakerLabel(for: actor.key)),
             "position": .init(actor.feet),
@@ -124,7 +125,43 @@ extension AgentActorReadoutAdapter {
         ])
     }
 
-    private func graphState(_ graph: ActorGraphReadout) -> AgentJSON {
+    public func actorValueState(_ text: String, name: String) throws(AgentFailure) -> AgentJSON {
+        guard let values = game.actorValues.runtime else {
+            throw AgentFailure(.notReady, "actor values are not loaded")
+        }
+        let reference = try hub.resolveReference(text)
+        let holder = try hub.actorValueHolder(for: reference)
+        let index = try hub.actorValueIndex(name)
+        guard let value = values.value(at: index, on: holder) else {
+            throw AgentFailure(.notFound, "\(name) has no value on this actor")
+        }
+        return [
+            "ref": .formID(reference.formID.rawValue),
+            "name": .string(name),
+            "value": .init(value)
+        ]
+    }
+}
+
+extension AgentActorReadoutAdapter {
+    private var details: AgentActorDetails {
+        AgentActorDetails(game: game)
+    }
+
+    private var render: AgentRenderAdapter {
+        AgentRenderAdapter(hub: hub, game: hub.hosts)
+    }
+
+    private var actors: AgentActorsAdapter {
+        AgentActorsAdapter(hub: hub, game: hub.hosts)
+    }
+}
+
+/// An actor's behaviour graph and leveled roll, for `AgentActorReadoutAdapter`.
+struct AgentActorDetails {
+    let game: any AgentActorReadoutHost
+
+    func graphState(_ graph: ActorGraphReadout) -> AgentJSON {
         [
             "status": .string(graph.status),
             "project": .string(graph.project),
@@ -147,7 +184,7 @@ extension AgentActorReadoutAdapter {
 
     /// The `LVLN` hops of an actor's template chain, the entry each rolled, and the
     /// encounter level and difficulty the roll read (docs/engine/leveled-lists.md).
-    private func leveledState(of key: ReferenceKey, base: FormID?) -> AgentJSON {
+    func leveledState(of key: ReferenceKey, base: FormID?) -> AgentJSON {
         guard
             let base, let templates = game.actorValues.runtime?.baselines.resolver?.templates
         else { return .null }
@@ -167,32 +204,5 @@ extension AgentActorReadoutAdapter {
             "encounterLevel": .init(roll.encounterLevel),
             "difficulty": .string("\(roll.difficulty)")
         ]
-    }
-
-    public func actorValueState(_ text: String, name: String) throws(AgentFailure) -> AgentJSON {
-        guard let values = game.actorValues.runtime else {
-            throw AgentFailure(.notReady, "actor values are not loaded")
-        }
-        let reference = try hub.resolveReference(text)
-        let holder = try hub.actorValueHolder(for: reference)
-        let index = try hub.actorValueIndex(name)
-        guard let value = values.value(at: index, on: holder) else {
-            throw AgentFailure(.notFound, "\(name) has no value on this actor")
-        }
-        return [
-            "ref": .formID(reference.formID.rawValue),
-            "name": .string(name),
-            "value": .init(value)
-        ]
-    }
-}
-
-extension AgentActorReadoutAdapter {
-    private var render: AgentRenderAdapter {
-        AgentRenderAdapter(hub: hub, game: hub.hosts)
-    }
-
-    private var actors: AgentActorsAdapter {
-        AgentActorsAdapter(hub: hub, game: hub.hosts)
     }
 }
