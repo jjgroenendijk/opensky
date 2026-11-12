@@ -1209,7 +1209,7 @@ targets += composition(
         "OpenSkyPerceptionInterface",
         "OpenSkyProgressionInterface", "OpenSkyRenderCore",
         "OpenSkyRendering", "OpenSkySessionInterface", "OpenSkySessionTesting",
-        "OpenSkyWorldInterface", "OpenSkyWorldState"
+        "OpenSkyPlayer", "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 
