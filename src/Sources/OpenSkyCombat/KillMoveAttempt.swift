@@ -7,7 +7,7 @@ public import OpenSkyFormatsESM
 /// One attack that may play a kill move: the idle tree under `action` tests `kills`.
 nonisolated public struct KillMoveAttempt: Equatable, Sendable {
     public static let attackAction = "ActionRightAttack"
-    public static let powerAttackAction = "ActionRightPowerAttack"
+    static let powerAttackAction = "ActionRightPowerAttack"
     /// An actor in a kill move takes ten times the damage of any other hit.
     public static let damageMultiplier: Float = 10
 

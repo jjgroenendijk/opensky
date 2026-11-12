@@ -1,14 +1,14 @@
 // What consuming an item applies, read from the item index. It lives in the
 // magic feature because the result names an `ActiveEffectSourceKind`.
 
-public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyMagicInterface
 
 nonisolated extension ItemDefinitionStore {
     /// What consuming `id` applies, or nil when it is not something an actor can eat
     /// or drink.
-    public func magicItemUse(_ id: FormID) -> MagicItemUse? {
+    func magicItemUse(_ id: FormID) -> MagicItemUse? {
         if let ingestible = ingestibles[id.rawValue] {
             return MagicItemUse(
                 kind: .potion,

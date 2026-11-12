@@ -64,7 +64,7 @@ public final class CombatWorldAdapter {
         frames.impactEffects
     }
 
-    public var reports: CombatReportsAdapter {
+    var reports: CombatReportsAdapter {
         frames.reports
     }
 
@@ -72,7 +72,7 @@ public final class CombatWorldAdapter {
         frames.actorFacts
     }
 
-    public var gear: CombatGearAdapter {
+    var gear: CombatGearAdapter {
         frames.gear
     }
 

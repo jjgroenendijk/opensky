@@ -4,9 +4,9 @@
 // (docs/engine/combat-behavior.md, "Confidence and Assistance").
 
 import Foundation
-public import OpenSkyCombatInterface
-public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyCombatInterface
+import OpenSkyFormatsESM
+import OpenSkyGameData
 
 nonisolated public struct CombatTemperament: Equatable, Sendable {
     /// `Confidence` actor value: 0 cowardly through 4 foolhardy.
@@ -18,7 +18,7 @@ nonisolated public struct CombatTemperament: Equatable, Sendable {
 
     /// `modifier` is a per-actor nudge in `fCombatConfidenceModifierMin` to `...Max`,
     /// so a crowd of one record does not break off at one moment.
-    public init(
+    init(
         confidence: Float, modifier: Float = 0, strengthRatio: Float,
         settings: CombatAISettings = .vanilla
     ) {
@@ -27,7 +27,7 @@ nonisolated public struct CombatTemperament: Equatable, Sendable {
         breakOffStrength = settings.breakOffStrength(confidence: confidence + modifier)
     }
 
-    public static let modifierRange = CombatAISettings.vanilla.confidenceModifierRange
+    static let modifierRange = CombatAISettings.vanilla.confidenceModifierRange
 
     /// Cowardly "will always flee", foolhardy "will never flee". Between them the actor
     /// breaks off below its `breakOffStrength`: 0.375 cautious, 0.15 average, 0.0375 brave.
@@ -44,7 +44,7 @@ nonisolated public struct CombatTemperament: Equatable, Sendable {
 
     /// The level ratio is clamped to 0.5 through 2 and softened by its square root, so
     /// a level-1 wolf at full health still fights a level-30 player, as in the game.
-    public static func strengthRatio(
+    static func strengthRatio(
         level: Int, healthFraction: Float, targetLevel: Int, targetHealthFraction: Float
     ) -> Float {
         let levels = min(max(Float(max(level, 1)) / Float(max(targetLevel, 1)), 0.5), 2)
@@ -54,7 +54,7 @@ nonisolated public struct CombatTemperament: Equatable, Sendable {
 
     /// A fixed value per actor, spread over `modifierRange`. Built from the key's own
     /// numbers, because `hashValue` changes between launches.
-    public static func modifier(
+    static func modifier(
         for key: ReferenceKey, range: ClosedRange<Float> = modifierRange
     ) -> Float {
         let seed: UInt64 = switch key {
@@ -70,12 +70,12 @@ nonisolated public struct CombatTemperament: Equatable, Sendable {
 }
 
 /// `Assistance` actor value: whom the actor joins a fight to help.
-nonisolated public enum CombatAssistance: Equatable, Sendable {
+nonisolated enum CombatAssistance: Equatable, Sendable {
     case helpsNobody
     case helpsAllies
     case helpsFriendsAndAllies
 
-    public init(value: Float) {
+    init(value: Float) {
         switch value {
         case ..<0.5: self = .helpsNobody
         case ..<1.5: self = .helpsAllies
@@ -84,7 +84,7 @@ nonisolated public enum CombatAssistance: Equatable, Sendable {
     }
 
     /// Whether this actor helps one it regards with `reaction`.
-    public func helps(_ reaction: ActorReaction) -> Bool {
+    func helps(_ reaction: ActorReaction) -> Bool {
         switch self {
         case .helpsNobody: false
         case .helpsAllies: reaction == .ally

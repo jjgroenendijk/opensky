@@ -10,16 +10,16 @@ public import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
 
 /// What consuming one item applies.
-nonisolated public struct MagicItemUse: Equatable, Sendable {
+nonisolated struct MagicItemUse: Equatable, Sendable {
     /// Which source kind the resulting effects are attributed to.
-    public let kind: ActiveEffectSourceKind
+    let kind: ActiveEffectSourceKind
     /// The effect entries one unit applies, already narrowed by the ingredient
     /// rule where it applies.
-    public let effects: [MagicItemEffect]
+    let effects: [MagicItemEffect]
 }
 
 /// Why a consume attempt did nothing.
-nonisolated public enum MagicItemConsumeError: Equatable, Error {
+nonisolated enum MagicItemConsumeError: Equatable, Error {
     /// The item is not an ALCH or an INGR, or no loaded plugin describes it.
     case notConsumable(FormID)
     /// The holder carries none of it.

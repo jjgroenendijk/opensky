@@ -4,7 +4,7 @@
 // Documented in docs/engine/item-enchantments.md.
 
 import Foundation
-public import OpenSkyActorsInterface
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 
 /// The fortify multipliers the damage formulas take.
@@ -17,13 +17,13 @@ nonisolated public enum CombatFortifyBonus: Sendable {
     public static let pointsPerWhole: Float = 100
 
     /// One-Handed Modifier and One-Handed Power Modifier.
-    public static let oneHandedIndices = indices("One-Handed Modifier", "One-Handed Power Modifier")
+    static let oneHandedIndices = indices("One-Handed Modifier", "One-Handed Power Modifier")
     /// Two-Handed Modifier and Two-Handed Power Modifier.
-    public static let twoHandedIndices = indices("Two-Handed Modifier", "Two-Handed Power Modifier")
+    static let twoHandedIndices = indices("Two-Handed Modifier", "Two-Handed Power Modifier")
     /// Marksman Modifier and Marksman Power Modifier, which is what a bow reads.
     public static let archeryIndices = indices("Marksman Modifier", "Marksman Power Modifier")
     /// Block Modifier and Block Power Modifier.
-    public static let blockIndices = indices("Block Modifier", "Block Power Modifier")
+    static let blockIndices = indices("Block Modifier", "Block Power Modifier")
 
     /// The multiplier a melee swing with `handType` earns.
     ///
@@ -31,7 +31,7 @@ nonisolated public enum CombatFortifyBonus: Sendable {
     /// because that is the only thing this engine knows about a swing that
     /// distinguishes one-handed from two-handed. An empty hand reads neither: an
     /// unarmed hit is neither a one-handed nor a two-handed attack.
-    public static func melee(handType: CombatHandType, reading value: (Int32) -> Float?) -> Float {
+    static func melee(handType: CombatHandType, reading value: (Int32) -> Float?) -> Float {
         switch handType {
         case .sword, .dagger, .axe, .mace: multiplier(of: oneHandedIndices, reading: value)
         case .greatsword, .battleaxe: multiplier(of: twoHandedIndices, reading: value)
@@ -46,7 +46,7 @@ nonisolated public enum CombatFortifyBonus: Sendable {
     }
 
     /// The multiplier a block earns, which multiplies the blocked fraction.
-    public static func block(reading value: (Int32) -> Float?) -> Float {
+    static func block(reading value: (Int32) -> Float?) -> Float {
         multiplier(of: blockIndices, reading: value)
     }
 

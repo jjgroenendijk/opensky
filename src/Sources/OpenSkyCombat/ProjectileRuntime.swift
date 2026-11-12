@@ -139,7 +139,7 @@ public final class ProjectileRuntime {
     /// carry an arrow through a door and land it in the wrong cell — and on a
     /// world-state reload, which is what makes an in-flight projectile a thing
     /// that does not survive a save/load.
-    public func despawnAll() {
+    func despawnAll() {
         for projectile in live {
             record(projectile, outcome: .cancelled, at: projectile.position, impact: nil)
         }
@@ -155,7 +155,7 @@ public final class ProjectileRuntime {
     /// Drops the first `count` live projectiles without recording anything.
     /// Internal for `ProjectileRuntimeBounds.swift`, which records them itself
     /// before calling this; `live` stays `private(set)` so nothing else can.
-    public func removeOldestLive(_ count: Int) {
+    func removeOldestLive(_ count: Int) {
         live.removeFirst(min(max(0, count), live.count))
     }
 

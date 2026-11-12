@@ -113,7 +113,7 @@ public final class StoryWorldAdapter {
     }
 
     /// The HUD names a quest a Fail Quest stage item failed.
-    public func questFailed(_ quest: FormID) {
+    func questFailed(_ quest: FormID) {
         quests.questFailed(quest)
     }
 

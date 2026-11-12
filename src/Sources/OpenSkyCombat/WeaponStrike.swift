@@ -89,30 +89,20 @@ nonisolated public struct CombatBlow: Equatable, Sendable {
 }
 
 /// One worn piece, with its tempering already added to the rating.
-nonisolated public struct WornArmorPiece: Equatable, Sendable {
-    public let rating: Float
-    public let type: ArmorType
-
-    public init(rating: Float, type: ArmorType) {
-        self.rating = rating
-        self.type = type
-    }
+nonisolated struct WornArmorPiece: Equatable, Sendable {
+    let rating: Float
+    let type: ArmorType
 }
 
 /// The armour skills of the wearer, 0 through 100.
-nonisolated public struct ArmorSkills: Equatable, Sendable {
-    public var light: Float
-    public var heavy: Float
-
-    public init(light: Float, heavy: Float) {
-        self.light = light
-        self.heavy = heavy
-    }
+nonisolated struct ArmorSkills: Equatable, Sendable {
+    var light: Float
+    var heavy: Float
 }
 
-nonisolated public enum WeaponStrikeRules: Sendable {
+nonisolated enum WeaponStrikeRules: Sendable {
     /// The player's damage factor for `skill`: 1 at 0, `fDamagePCSkillMax` at 100.
-    public static func playerSkillMultiplier(
+    static func playerSkillMultiplier(
         skill: Float,
         settings: WeaponDamageSettings
     ) -> Float {
@@ -121,7 +111,7 @@ nonisolated public enum WeaponStrikeRules: Sendable {
 
     /// The sneak-attack factor of a weapon family, before perks. A bow has no
     /// setting and stays at 2 (UESP "Skyrim:Sneak").
-    public static func sneakMultiplier(
+    static func sneakMultiplier(
         handType: CombatHandType, settings: WeaponDamageSettings
     ) -> Float {
         let family: Float = switch handType {
@@ -140,7 +130,7 @@ nonisolated public enum WeaponStrikeRules: Sendable {
 
     /// The summed rating of the worn pieces, each scaled by its armour skill.
     /// `extra` is the `Damage Resist` actor value, which spells such as Oakflesh raise.
-    public static func armorRating(
+    static func armorRating(
         pieces: [WornArmorPiece],
         skills: ArmorSkills,
         isPlayer: Bool,
@@ -167,7 +157,7 @@ nonisolated public enum WeaponStrikeRules: Sendable {
 
     /// The stopped fraction: rating times `fArmorScalingFactor` percent, plus
     /// `fArmorBaseFactor` per light or heavy piece, capped at `fMaxArmorRating`.
-    public static func armorFraction(
+    static func armorFraction(
         rating: Float, pieces: [WornArmorPiece], settings: WeaponDamageSettings
     ) -> Float {
         let armored = pieces.count { $0.type != .clothing }
