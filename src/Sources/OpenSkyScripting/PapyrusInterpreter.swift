@@ -50,6 +50,10 @@ extension PapyrusRuntime {
             remainingBudget = runtime.limits.instructionBudget
         }
 
+        var natives: PapyrusNativeCalls {
+            PapyrusNativeCalls(interpreter: self)
+        }
+
         var instructionIndex: Int {
             frames.last.map { max(0, $0.instructionIndex - 1) } ?? 0
         }
@@ -79,7 +83,7 @@ extension PapyrusRuntime {
                         arguments: arguments,
                         returnType: PapyrusType(name: resolved.function.returnTypeName)
                     )
-                    return nativeOutcome(call, target: .root)
+                    return natives.nativeOutcome(call, target: .root)
                 }
                 try pushFrame(
                     resolved,
@@ -147,7 +151,7 @@ extension PapyrusRuntime {
                         arguments: arguments,
                         returnType: PapyrusType(name: resolved.function.returnTypeName)
                     )
-                    return nativeOutcome(call, target: .root)
+                    return natives.nativeOutcome(call, target: .root)
                 }
                 try pushFrame(
                     resolved,
@@ -203,7 +207,7 @@ extension PapyrusRuntime {
                     }
                     let index = frame.instructionIndex
                     guard remainingBudget > 0, runtime.stepInstructionsLeft > 0 else {
-                        return .suspended(yieldSlice())
+                        return .suspended(natives.yieldSlice())
                     }
                     remainingBudget -= 1
                     runtime.stepInstructionsLeft -= 1
@@ -286,6 +290,15 @@ extension PapyrusRuntime {
             runtime.tally.noteFault(fault, in: place)
             return .faulted(fault)
         }
+    }
+}
+
+/// The interpreter's native calls: dispatch, game-timing delay, and suspension.
+struct PapyrusNativeCalls {
+    let interpreter: PapyrusRuntime.Interpreter
+
+    var runtime: PapyrusRuntime {
+        interpreter.runtime
     }
 }
 

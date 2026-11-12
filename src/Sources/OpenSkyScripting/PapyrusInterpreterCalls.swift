@@ -33,7 +33,11 @@ extension PapyrusRuntime.Interpreter {
         if receiverValue == .none {
             // The game logs "Cannot call ... on a None object" and the script goes on.
             runtime.tally.noteNoneReceiver()
-            try write(nativeReturnType(operands[2]).defaultValue, to: operands[2], frame: frame)
+            try write(
+                natives.nativeReturnType(operands[2]).defaultValue,
+                to: operands[2],
+                frame: frame
+            )
             return .next
         }
         guard case let .object(value) = receiverValue else {
@@ -72,7 +76,7 @@ extension PapyrusRuntime.Interpreter {
             )
         }
         let root = instance.rootScriptName
-        return try nativeFlow(
+        return try natives.nativeFlow(
             nativeCall(
                 kind: .method, script: (root, runtime.index(named: root)?.key), function: function,
                 call: (handle, arguments)
@@ -112,7 +116,7 @@ extension PapyrusRuntime.Interpreter {
                 )
                 return .next
             }
-            return try nativeFlow(
+            return try natives.nativeFlow(
                 nativeCall(
                     kind: .parent,
                     script: (resolved.script.name, resolved.owner.key),
@@ -122,7 +126,7 @@ extension PapyrusRuntime.Interpreter {
                 destination: operands[1]
             )
         }
-        return try nativeFlow(
+        return try natives.nativeFlow(
             nativeCall(
                 kind: .parent,
                 script: (parentName, runtime.index(named: parentName)?.key),
@@ -157,7 +161,7 @@ extension PapyrusRuntime.Interpreter {
             )
             return .next
         }
-        return try nativeFlow(
+        return try natives.nativeFlow(
             nativeCall(
                 kind: .staticFunction,
                 script: (scriptName, function.scriptKey),
@@ -344,7 +348,7 @@ extension PapyrusRuntime.Interpreter {
             call: (receiver, arguments),
             frame: frame
         )
-        return try nativeFlow(call, destination: operands[2])
+        return try natives.nativeFlow(call, destination: operands[2])
     }
 
     /// A function written in Papyrus on the receiver's declared type, such as
@@ -399,7 +403,7 @@ extension PapyrusRuntime.Interpreter {
             function: function,
             call: (receiver, arguments)
         )
-        return try nativeFlow(call, destination: destination)
+        return try natives.nativeFlow(call, destination: destination)
     }
 
     private func receiverScriptName(

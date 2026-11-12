@@ -34,7 +34,11 @@ extension PapyrusRuntime.Interpreter {
             return flow
         }
         guard let instance = try propertyInstance(operands[1], frame: frame) else {
-            try write(nativeReturnType(operands[2]).defaultValue, to: operands[2], frame: frame)
+            try write(
+                natives.nativeReturnType(operands[2]).defaultValue,
+                to: operands[2],
+                frame: frame
+            )
             return .next
         }
         guard let resolved = try resolveProperty(propertyName, instance: instance) else {
