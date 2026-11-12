@@ -108,10 +108,16 @@ nonisolated extension ArcheryShotPhase {
 }
 
 extension CombatCoordinator {
-    /// A shot in progress decides the attack state; otherwise the melee graph does.
     public var playerActionFacts: ActorActionFacts? {
-        guard var facts = shared.melee?.actionFacts else { return nil }
-        if let phase = shared.archery?.state.phase, phase != .idle {
+        shared.melee?.playerActionFacts(archery: shared.archery)
+    }
+}
+
+extension MeleeCombatRuntime {
+    /// A shot in progress decides the attack state; otherwise the melee graph does.
+    func playerActionFacts(archery: ArcheryRuntime?) -> ActorActionFacts {
+        var facts = actionFacts
+        if let phase = archery?.state.phase, phase != .idle {
             facts.attackState = phase.attackState
         }
         return facts

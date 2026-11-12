@@ -195,10 +195,10 @@ struct CombatRulePartsTests {
 
     @Test func thePanelSwitchesWriteTheSharedState() {
         let coordinator = Self.coordinator(FakeCoordinatorWorld())
-        coordinator.usesCombatTemperament = false
+        coordinator.panels.usesCombatTemperament = false
         #expect(!coordinator.shared.usesTemperament)
-        coordinator.isActorCastingEnabled = false
-        #expect(!coordinator.isActorCastingEnabled)
+        coordinator.panels.isActorCastingEnabled = false
+        #expect(!coordinator.panels.isActorCastingEnabled)
     }
 
     @Test func theCoordinatorAnswersForTheWorldsActors() {

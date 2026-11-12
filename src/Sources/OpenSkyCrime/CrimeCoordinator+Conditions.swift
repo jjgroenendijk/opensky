@@ -26,8 +26,8 @@ extension CrimeCoordinator {
 }
 
 /// The seam, built from the coordinator's state. Only the player's ledger travels.
+@MainActor
 extension CrimeConditionResolution {
-    @MainActor
     init(crime: CrimeCoordinator, owning references: [ReferenceKey]) {
         guard let reporter = crime.reporter else {
             self = .empty
@@ -43,7 +43,6 @@ extension CrimeConditionResolution {
         )
     }
 
-    @MainActor
     private static func situation(
         of crime: CrimeCoordinator, ledger: CrimeLedgerState, references: [ReferenceKey]
     ) -> CrimeSituation {
@@ -70,7 +69,6 @@ extension CrimeConditionResolution {
         )
     }
 }
-
 
 /// The crime condition seam, built again only when something it reads changed.
 final class CrimeConditionCache {
