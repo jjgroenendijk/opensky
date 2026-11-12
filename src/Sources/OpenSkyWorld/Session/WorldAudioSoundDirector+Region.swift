@@ -68,19 +68,25 @@ extension WorldAudioSoundDirector {
     /// A loop whose file arrives after the scheduler stopped it does not start.
     private func startRegionSound(_ sound: FormID, loops: Bool) {
         let generation = ambienceGeneration
-        playResolved(id: sound, at: nil, kind: "ambience", loops: loops) { [weak self] source in
-            guard let self, generation == ambienceGeneration, ambienceEnabled else {
-                return false
-            }
-            guard loops else {
-                ambienceOneShotSources.append(source)
+        playback
+            .playResolved(
+                id: sound,
+                at: nil,
+                kind: "ambience",
+                loops: loops
+            ) { [weak self] source in
+                guard let self, generation == ambienceGeneration, ambienceEnabled else {
+                    return false
+                }
+                guard loops else {
+                    ambienceOneShotSources.append(source)
+                    return true
+                }
+                guard regionSounds.playingLoops.contains(sound), ambienceLoopSources[sound] == nil
+                else { return false }
+                ambienceLoopSources[sound] = source
                 return true
             }
-            guard regionSounds.playingLoops.contains(sound), ambienceLoopSources[sound] == nil
-            else { return false }
-            ambienceLoopSources[sound] = source
-            return true
-        }
     }
 
     private func retireAmbience() {

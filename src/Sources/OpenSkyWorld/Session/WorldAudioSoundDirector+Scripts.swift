@@ -18,7 +18,7 @@ extension WorldAudioSoundDirector {
             let descriptor = attempt({ try soundStore?.resolveAny(formID).descriptor })
         else { return 0 }
         let id = scriptSounds.begin(waitToken: waitToken)
-        playResolved(
+        playback.playResolved(
             id: formID, at: position, kind: "Script",
             loops: Self.loops(descriptor),
             adopt: { [weak self] source in

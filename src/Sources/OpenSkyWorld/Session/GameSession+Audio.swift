@@ -75,7 +75,7 @@ extension GameSession {
         var inputs = soundMixInputs?() ?? SoundMixInputs()
         inputs.submerged = breath.isSubmerged
         worldAudio.advanceSoundMix(inputs, seconds: seconds)
-        let levels = worldSimPaused ? .silent : soundDirector?.rumbleLevels() ?? .silent
+        let levels = worldSimPaused ? .silent : soundDirector?.playback.rumbleLevels() ?? .silent
         soundRumble?(levels)
     }
 

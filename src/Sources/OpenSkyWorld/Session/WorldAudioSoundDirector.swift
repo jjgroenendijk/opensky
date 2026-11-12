@@ -11,25 +11,6 @@ public import OpenSkyGameData
 public import OpenSkyWorldInterface
 import simd
 
-private struct ResolvedSoundFile {
-    let path: String
-    let category: AudioCategory
-    let outputModel: FormID?
-    let soundCategory: FormID?
-    let rumbleSend: SoundDescriptor.RumbleSend?
-}
-
-/// One sound waiting for its file: where it plays, and whether it is still wanted.
-private struct PendingSound {
-    let resolved: ResolvedSoundFile
-    /// Nil plays the sound without a position, as region sounds do.
-    let position: SIMD3<Float>?
-    let kind: String
-    let loops: Bool
-    let adopt: ((Int) -> Bool)?
-    let failed: (() -> Void)?
-}
-
 @MainActor
 public final class WorldAudioSoundDirector {
     static let logger = EngineLogger(
@@ -57,7 +38,7 @@ public final class WorldAudioSoundDirector {
     var soundConditionsPass: ([Condition]) -> Bool = { _ in true }
     /// The request each interaction loop is for. A loop that arrives after its door
     /// closed finds another token, or none, and does not start.
-    private var interactionLoopTokens: [FormID: Int] = [:]
+    var interactionLoopTokens: [FormID: Int] = [:]
     var nextLoopToken = 0
     /// Animation loops by source and descriptor, like the interaction loops above.
     var animationLoopTokens: [AnimationSoundKey: Int] = [:]
@@ -75,7 +56,7 @@ public final class WorldAudioSoundDirector {
     /// the control writes back here.
     public var sfxEnabled = true
     /// The rumble send of each playing source whose output model allows rumble.
-    private var rumbleSends: [Int: SoundDescriptor.RumbleSend] = [:]
+    var rumbleSends: [Int: SoundDescriptor.RumbleSend] = [:]
     /// Continuous ambience bed. Same default policy as `sfxEnabled`. Toggling
     /// it takes effect immediately: switching off retires the playing bed,
     /// switching back on restarts the bed the last context resolved.
@@ -93,10 +74,10 @@ public final class WorldAudioSoundDirector {
     /// Authored motion loops by placed reference. A close or cancelled
     /// animation boundary retires exactly its loop without touching ambience
     /// or unrelated effects.
-    private var interactionLoopSourceIDs: [FormID: Int] = [:]
+    var interactionLoopSourceIDs: [FormID: Int] = [:]
 
     /// Most recent SFX outcome, surfaced through the audio readout.
-    private(set) var lastSFXDescription: String?
+    var lastSFXDescription: String?
     public internal(set) var lastSFXError: String?
     /// Resolves an SNDR's raw `ONAM` link; nil leaves the channel-count rule in charge.
     public let outputModels: ((FormID) -> OutputModelProfile?)?
@@ -140,64 +121,23 @@ public final class WorldAudioSoundDirector {
         reverbs = nil
     }
 
-    // MARK: - Streamer event hooks
+    var playback: WorldAudioPlayback {
+        WorldAudioPlayback(director: self)
+    }
 
-    /// CellStreamer.onInteraction subscriber. Plays the activator's activation
-    /// sound (DOOR.SNAM, ACTI.VNAM, CONT.SNAM) at the placed position.
+    var interactionSounds: WorldAudioInteractionSounds {
+        WorldAudioInteractionSounds(director: self)
+    }
+
     public func handleInteraction(_ event: InteractionEvent) {
-        guard
-            sfxEnabled, engine.isRunning,
-            let sounds = event.target.interaction.sounds,
-            let activationID = sounds.activation
-        else { return }
-        playResolved(
-            id: activationID,
-            at: event.target.interaction.position,
-            kind: "SFX"
-        )
+        interactionSounds.handleInteraction(event)
     }
 
-    /// Door-animation lifecycle subscriber. Movement starts the authored loop;
-    /// close and cancellation both retire it, while only close plays the
-    /// authored one-shot. The same event also supports a future container
-    /// animation because DOOR.ANAM and CONT.QNAM share `sounds.close`.
     public func handleInteractionAnimation(_ event: InteractionAnimationEvent) {
-        let interaction = event.interaction
-        switch event.phase {
-        case .motionStarted:
-            retireInteractionLoop(reference: interaction.reference)
-            guard
-                sfxEnabled,
-                engine.isRunning,
-                let loopID = interaction.sounds?.loop
-            else { return }
-            nextLoopToken += 1
-            let token = nextLoopToken
-            let reference = interaction.reference
-            interactionLoopTokens[reference] = token
-            playResolved(
-                id: loopID, at: interaction.position, kind: "interaction loop", loops: true
-            ) { [weak self] sourceID in
-                guard let self, interactionLoopTokens[reference] == token else { return false }
-                interactionLoopSourceIDs[reference] = sourceID
-                return true
-            }
-        case .closed:
-            retireInteractionLoop(reference: interaction.reference)
-            guard
-                sfxEnabled,
-                engine.isRunning,
-                let closeID = interaction.sounds?.close
-            else { return }
-            playResolved(
-                id: closeID,
-                at: interaction.position,
-                kind: "interaction close"
-            )
-        case .cancelled:
-            retireInteractionLoop(reference: interaction.reference)
-        }
+        interactionSounds.handleInteractionAnimation(event)
     }
+
+    // MARK: - Streamer event hooks
 
     /// CellStreamer.onAmbienceContextChanged subscriber. Resolves the new bed
     /// and, when it differs from the last resolved one, retires the previous
@@ -235,121 +175,16 @@ public final class WorldAudioSoundDirector {
             lastSFXError = "engine not running"
             return
         }
-        playResolved(id: formID, at: position, kind: "SFX")
-    }
-
-    // MARK: - Internals
-
-    /// Starts the sound when its file is loaded. `adopt` gets the new source's id and
-    /// returns false for a sound no longer wanted, which then stops at once.
-    func playResolved(
-        id: FormID,
-        at position: SIMD3<Float>?,
-        kind: String,
-        loops: Bool = false,
-        adopt: ((Int) -> Bool)? = nil,
-        failed: (() -> Void)? = nil
-    ) {
-        guard let resolved = resolveSound(id: id) else {
-            lastSFXError = "unresolved \(id.description)"
-            Self.logger.debug(
-                "[INFO] \(kind, privacy: .public) unresolved: \(id.description, privacy: .public)"
-            )
-            failed?()
-            return
-        }
-        let pending = PendingSound(
-            resolved: resolved, position: position, kind: kind, loops: loops, adopt: adopt,
-            failed: failed
-        )
-        assets.request(resolved.path) { [weak self] result in
-            self?.start(result, pending)
-        }
-    }
-
-    private func retireInteractionLoop(reference: FormID) {
-        interactionLoopTokens[reference] = nil
-        guard let sourceID = interactionLoopSourceIDs.removeValue(forKey: reference) else {
-            return
-        }
-        engine.stopSource(id: sourceID)
+        playback.playResolved(id: formID, at: position, kind: "SFX")
     }
 }
 
-/// Starting a sound once its file arrives.
-extension WorldAudioSoundDirector {
-    private func start(
-        _ result: Result<AudioFileAsset, AssetLoadFailure>,
-        _ pending: PendingSound
-    ) {
-        let resolved = pending.resolved
-        do {
-            let asset = try result.get()
-            let profile = resolved.outputModel.flatMap { outputModels?($0) }
-            var request = AudioPlayRequest(
-                name: resolved.path,
-                category: resolved.category,
-                worldPosition: pending.position ?? .zero,
-                loops: pending.loops,
-                soundCategory: resolved.soundCategory
-            )
-            request.outputModel = profile
-            let routing = pending.position == nil ? .nonPositional : AudioRoutingDecision.routing(
-                profile: profile,
-                channelCount: profile == nil ? asset.channelCount : nil
-            )
-            let sourceID = try routing == .positional
-                ? engine.playPositional(asset: asset, request: request)
-                : engine.playNonPositional(asset: asset, request: request)
-            if let adopt = pending.adopt, !adopt(sourceID) {
-                engine.stopSource(id: sourceID)
-                return
-            }
-            if profile?.allowsRumble == true, let send = resolved.rumbleSend {
-                rumbleSends[sourceID] = send
-            }
-            lastSFXDescription = resolved.path
-            lastSFXError = nil
-        } catch {
-            pending.failed?()
-            let reason = String(describing: error)
-            lastSFXError = reason
-            let kind = pending.kind
-            Self.logger.warning(
-                "[WARNING] \(kind, privacy: .public) play failed: \(reason, privacy: .public)"
-            )
-        }
-    }
+/// Starting a sound: resolving its descriptor, loading its file, and routing it.
+struct WorldAudioPlayback {
+    let director: WorldAudioSoundDirector
+}
 
-    /// This frame's rumble bus levels: each rumbling sound's send times the level the
-    /// listener hears of it now. Ended sources drop out.
-    func rumbleLevels() -> SoundRumble {
-        guard !rumbleSends.isEmpty else { return .silent }
-        var small: Float = 0
-        var big: Float = 0
-        for source in engine.sources {
-            guard let send = rumbleSends[source.id] else { continue }
-            let level = engine.effectiveGain(of: source) * source.distanceGain
-            small += send.small * level
-            big += send.big * level
-        }
-        let playing = Set(engine.sources.map(\.id))
-        rumbleSends = rumbleSends.filter { playing.contains($0.key) }
-        return SoundRumble(small: small, big: big)
-    }
-
-    /// A descriptor with several files plays one of them at random, as the game does.
-    private func resolveSound(id: FormID) -> ResolvedSoundFile? {
-        guard
-            let soundStore, let resolved = attempt({ try soundStore.resolveAny(id) }),
-            !resolved.filePaths.isEmpty else { return nil }
-        let path = resolved.filePaths[regionSounds.pick(count: resolved.filePaths.count)]
-        return ResolvedSoundFile(
-            path: path,
-            category: resolved.audioCategory ?? .effects,
-            outputModel: resolved.descriptor.outputModel,
-            soundCategory: resolved.descriptor.category,
-            rumbleSend: resolved.descriptor.rumbleSend
-        )
-    }
+/// Door and activator sounds: the activation one-shot and a door animation's sounds.
+struct WorldAudioInteractionSounds {
+    let director: WorldAudioSoundDirector
 }
