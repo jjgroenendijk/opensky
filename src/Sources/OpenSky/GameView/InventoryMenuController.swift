@@ -33,7 +33,6 @@ protocol InventoryMenuHost: MenuInputConsumer, SendableMetatype {
     var inventory: any InventoryPort { get }
     var menuMode: any MenuModePort { get }
     var menuScreens: any MenuScreensPort { get }
-    var messages: any MessageCoordinatorPort { get }
     var renderer: (any RendererPort)? { get }
     var swfMovies: any SWFMovieSourcePort { get }
 }
@@ -45,6 +44,7 @@ final class InventoryMenuController {
     static let activationTicks = 20
 
     unowned let game: any InventoryMenuHost
+    let messages: any MessageCoordinatorPort
     private(set) var isOpen = false
     var model = InventoryMenuModel.empty
     /// On by default, so play mode draws the menu. The HUD is suspended while
@@ -58,8 +58,9 @@ final class InventoryMenuController {
     var previewSource: InventoryItemPreviewSource?
     var previewShown = false
 
-    init(game: any InventoryMenuHost) {
+    init(game: any InventoryMenuHost, messages: any MessageCoordinatorPort) {
         self.game = game
+        self.messages = messages
         movie = MenuMovieSession(
             movies: game.swfMovies, hud: game.hud, label: "inventory menu movie",
             logger: Self.logger
@@ -115,10 +116,12 @@ final class InventoryMenuController {
 
     private func publishModel() {
         let model = model
-        let card = model.selectedEntry.flatMap { game.inventory.itemCards.itemCard(for: $0.item) }
+        let item = model.selectedEntry?.item
+        let card = item.flatMap { game.inventory.itemCards.itemCard(for: $0) }
+        let charge = item.flatMap { game.magic.weaponEnchantments.chargePercent(of: $0) }
         movie.publish {
             InventoryMenuMovieBridge.publish(model, runtime: $0)
-            InventoryMenuMovieBridge.publishItemCard(card, runtime: $0)
+            InventoryMenuMovieBridge.publishItemCard(card, charge: charge, runtime: $0)
         }
     }
 
@@ -213,6 +216,10 @@ final class InventoryMenuController {
         case let .drop(index):
             model.select(index)
             requestDrop()
+        case .showSoulGems:
+            showSoulGems()
+        case let .chooseCardListEntry(index):
+            chooseSoulGem(index)
         }
     }
 
@@ -240,7 +247,7 @@ final class InventoryMenuController {
             let question = consumables.poisonQuestion(item, texts: game.mapWorld.settingTexts())
         else { return false }
         let words = game.mapWorld.settingTexts(MessageBoxText.self)
-        game.messages.presentChoices(
+        messages.presentChoices(
             title: nil, text: question, buttons: [words[.yes], words[.no]]
         ) { [weak self] choice in
             guard let self, choice == 0, isOpen, model.selectedEntry?.item == item else { return }

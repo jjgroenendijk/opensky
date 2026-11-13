@@ -6,6 +6,7 @@
 import Foundation
 public import OpenSkyFormatsSWF
 public import OpenSkyInventoryInterface
+public import OpenSkyMagicInterface
 
 nonisolated extension InventoryMenuMovieBridge {
     public static let itemCardCallback = "UpdateItemCardInfo"
@@ -55,9 +56,40 @@ nonisolated extension InventoryMenuMovieBridge {
         return info
     }
 
-    /// Sends the selected row's card to the movie, or hides the card with no row.
-    public static func publishItemCard(_ card: InventoryItemCard?, runtime: SWFMovieRuntime) {
-        let info = card.map(itemCardInfo) ?? ["type": .integer(0)]
+    /// Sends the selected row's card to the movie, or hides the card with no row. A
+    /// `charge` in percent fills the weapon's meter, which the Charge button reads.
+    public static func publishItemCard(
+        _ card: InventoryItemCard?, charge: Float? = nil, runtime: SWFMovieRuntime
+    ) {
+        var info = card.map(itemCardInfo) ?? ["type": .integer(0)]
+        if card != nil, let charge {
+            info["charge"] = .number(Double(charge))
+        }
+        send(info, runtime: runtime)
+    }
+
+    /// `ICT_LIST`: the card becomes a list of soul gems, each with the charge it adds.
+    public static func publishSoulGemList(
+        _ offer: RechargeOffer, title: String, runtime: SWFMovieRuntime
+    ) {
+        let rows = offer.gems.map { gem in
+            let row = runtime.runtime.makeObject()
+            row.assign(.string(gem.name), for: "text")
+            row.assign(.number(Double(gem.addedPercent)), for: "chargeAdded")
+            return AS2Value.object(row)
+        }
+        send([
+            "type": .integer(soulGemListType),
+            "name": .string(title),
+            "currentCharge": .number(Double(offer.currentPercent)),
+            "listItems": .object(runtime.runtime.makeArray(rows))
+        ], runtime: runtime)
+    }
+
+    /// `ICT_LIST` in the movie's `InventoryDefines`.
+    public static let soulGemListType = 14
+
+    private static func send(_ info: [String: AS2Value], runtime: SWFMovieRuntime) {
         let object = runtime.runtime.makeObject()
         for name in info.keys.sorted() {
             object.assign(info[name] ?? .undefined, for: name)

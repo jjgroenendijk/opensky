@@ -180,10 +180,23 @@ installed `itemcard.swf` and its `InventoryDefines`:
 | `damage`, `armor` | the weapon and armour numbers |
 | `effects` | the effect text of a potion, food, weapon, or armour piece |
 | `itemEffect0` to `itemEffect3`, `numItemEffects` | an ingredient's known effects; the movie shows `$UNKNOWN` for an index below `numItemEffects` that has no name |
+| `charge` | a weapon's charge left, in percent; the Charge button reads it |
 
 OpenSky sends the card after each change it writes to the lists. A scroll uses the potion page,
-which lists effects; the game's page for a scroll is not confirmed. The card's charge meter,
-warmth, skill text, and book description are not filled.
+which lists effects; the game's page for a scroll is not confirmed. The card's warmth, skill
+text, and book description are not filled.
+
+### Recharging
+
+The movie's Charge button calls `AttemptChargeItem`. When the card's `charge` is below 100 it
+calls `GameDelegate` `ShowSoulGemList`. OpenSky then sends a card of type `ICT_LIST` (14) with
+`name` set to `sChooseSoulGem` ("Choose Soul Gem to Use"), `currentCharge` in percent, and
+`listItems`: one object per filled soul gem the player carries, with `text`, such as
+"Grand Soul Gem (Petty)", and `chargeAdded` in percent. A press on a row calls
+`ItemCardListCallback` with its index, and that gem recharges the weapon as described in
+[item enchantments](/engine/item-enchantments.md#recharging). With no filled gem, the HUD shows
+`sNoChargeItems` ("No items to charge enchantment") instead. A worn piece has no charge, so
+only weapons and staves offer it. Where the game puts the title is not confirmed.
 
 ## Item preview
 

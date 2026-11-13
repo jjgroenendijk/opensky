@@ -90,6 +90,9 @@ public protocol MagicWeaponEnchantmentsPort {
     func enchantmentLine(of item: FormID, on holder: ActorValueHolder?) -> String?
     func enchantmentProfile(of item: FormID, on holder: InventoryHolder?) -> ItemEnchantmentProfile?
     @discardableResult func equipmentChanged(on holder: InventoryHolder) -> WornEnchantmentReport
+    func chargePercent(of item: FormID) -> Float?
+    func rechargeOffer(for item: FormID) -> RechargeOffer?
+    @discardableResult func recharge(_ item: FormID, gemIndex: Int) -> Bool
 }
 
 /// Shouts the player and NPCs voice.

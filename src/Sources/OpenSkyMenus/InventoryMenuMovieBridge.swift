@@ -13,6 +13,10 @@ nonisolated public enum InventoryMenuAction: Equatable, Sendable {
     /// Equip or unequip the row at this index of the current category.
     case equip(index: Int)
     case drop(index: Int)
+    /// The Charge button on an enchanted weapon below full charge.
+    case showSoulGems
+    /// A press on the card's list: the soul gem at this index.
+    case chooseCardListEntry(index: Int)
     case close
 }
 
@@ -66,7 +70,9 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
     /// The outbound calls that reach an engine action, registered in `activate`
     /// because each needs the caller's callback. Only `CloseMenu` has been seen
     /// in a run; `ItemSelect` and `DropItem` come from the movie's bytecode.
-    public static let actionHostFunctions = ["CloseMenu", "ItemSelect", "DropItem"]
+    public static let actionHostFunctions = [
+        "CloseMenu", "ItemSelect", "DropItem", "ShowSoulGemList", "ItemCardListCallback"
+    ]
 
     /// Scaleform's UI-sound hook, reached as a plain `_global` function rather
     /// than through `GameDelegate`. OpenSky has no UI sound bank yet, so it is a
