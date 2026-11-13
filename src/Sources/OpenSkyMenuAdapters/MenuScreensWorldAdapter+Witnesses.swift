@@ -45,6 +45,14 @@ extension MenuScreensWorldAdapter {
         craftingDesk.craftingStationName
     }
 
+    public var craftingStation: CraftingStationInfo? {
+        craftingDesk.craftingStation
+    }
+
+    public var craftingButtonTexts: GameSettingTexts<CraftingButtonText> {
+        craftingDesk.craftingButtonTexts
+    }
+
     public var craftingRecipes: [CraftingMenuRecipe] {
         craftingDesk.craftingRecipes
     }

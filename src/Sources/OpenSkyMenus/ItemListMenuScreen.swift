@@ -56,8 +56,9 @@ public class ItemListMenuScreen: MenuScreen<ItemListMovieEvent> {
         case .move(.right): model.moveCategory(by: 1)
         case .button(.accept): chooseSelected(alternate: false)
         case .button(.xButton): chooseSelected(alternate: true)
-        case .button(.cancel): close()
-        case .button(.yButton), .pointer, .release: return
+        case .button(.cancel): requestClose()
+        case .button(.yButton): runAuxiliary()
+        case .pointer, .release: return
         }
     }
 
@@ -73,8 +74,16 @@ public class ItemListMenuScreen: MenuScreen<ItemListMovieEvent> {
             }
             chooseSelected(alternate: false)
         case .close:
-            close()
+            requestClose()
+        case .aux:
+            runAuxiliary()
         }
+    }
+
+    private func runAuxiliary() {
+        guard let text = auxiliary() else { return }
+        lastResult = text
+        reload()
     }
 
     private func chooseSelected(alternate: Bool) {
@@ -116,6 +125,16 @@ public class ItemListMenuScreen: MenuScreen<ItemListMovieEvent> {
 
     func loadCategories() -> [ItemListCategory] {
         []
+    }
+
+    /// The third button's action; nil when the screen has none.
+    func auxiliary() -> String? {
+        nil
+    }
+
+    /// The cancel key and the movie's close; a screen that asks first overrides it.
+    func requestClose() {
+        close()
     }
 
     /// Acts on `row`; the text for the readout. `alternate` is the second action key.

@@ -48,6 +48,8 @@ nonisolated public struct CraftingMenuIngredient: Equatable, Sendable {
 public protocol CraftingMenuWorld: MenuScreenWorld {
     /// The open station's name, or nil when no station is open.
     var craftingStationName: String? { get }
+    var craftingStation: CraftingStationInfo? { get }
+    var craftingButtonTexts: GameSettingTexts<CraftingButtonText> { get }
     var craftingRecipes: [CraftingMenuRecipe] { get }
     /// Makes one of `recipe`; the outcome text.
     func craft(_ recipe: ResolvedFormID) -> String
@@ -75,10 +77,12 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
     public static let identifier: MenuIdentifier = "Crafting Menu"
     public static let hint = "W/S: row   A/D: tab   E: make or choose   R: brew   Esc: leave"
 
-    private var recipes: [ResolvedFormID] = []
-    private var ingredients: [FormID] = []
+    private var recipes: [CraftingMenuRecipe] = []
+    private var ingredients: [CraftingMenuIngredient] = []
     var enchanting = CraftingMenuEnchanting()
     private weak var world: (any CraftingMenuWorld)?
+    /// Where the player types an enchanted item's name.
+    public weak var nameEntry: TextEntryMenuCoordinator?
 
     public init(
         menuMode: MenuModeController,
@@ -124,7 +128,7 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
         }
         ingredients = []
         let all = world?.craftingRecipes ?? []
-        recipes = all.map(\.id)
+        recipes = all
         let rows = all.enumerated().map { index, recipe in
             ItemListRow(tag: UInt32(index), name: recipe.name, isEquipped: recipe.canMake)
         }
@@ -149,7 +153,7 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
     /// A chosen ingredient shows as equipped, as the vanilla lab marks it.
     private func ingredientCategories(_ carried: [CraftingMenuIngredient]) -> [ItemListCategory] {
         recipes = []
-        ingredients = carried.map(\.id)
+        ingredients = carried
         let rows = carried.enumerated().map { index, ingredient in
             ItemListRow(tag: UInt32(index), name: ingredient.name, isEquipped: ingredient.isChosen)
         }
@@ -170,10 +174,103 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
                 return world?.brewChosenIngredients() ?? "No game"
             }
             guard ingredients.indices.contains(Int(row.tag)) else { return "No ingredient" }
-            return world?.toggleIngredient(ingredients[Int(row.tag)]) ?? "No game"
+            return world?.toggleIngredient(ingredients[Int(row.tag)].id) ?? "No game"
         }
-        guard recipes.indices.contains(Int(row.tag)) else { return "No recipe" }
-        return world?.craft(recipes[Int(row.tag)]) ?? "No game"
+        guard let world, recipes.indices.contains(Int(row.tag)) else { return "No recipe" }
+        let mode = self.mode
+        if mode == .create, alternate {
+            return "Nothing to craft"
+        }
+        return make(recipes[Int(row.tag)], improving: mode == .improve, world: world)
+    }
+
+    /// Asks before a recipe the player can make; a refused one shows the game's notice.
+    private func make(
+        _ recipe: CraftingMenuRecipe, improving: Bool, world: any CraftingMenuWorld
+    ) -> String {
+        guard recipe.canMake else {
+            let refusal = world.craft(recipe.id)
+            world.showHUDNotification(refusal)
+            return refusal
+        }
+        let texts = world.craftingButtonTexts
+        world.confirm(texts[improving ? .confirmImprove : .confirmCreate]) { [weak self] yes in
+            guard yes else { return }
+            self?.lastResult = world.craft(recipe.id)
+            self?.reload()
+        }
+        return "Asked to make \(recipe.name)"
+    }
+
+    var mode: CraftingMenuMode {
+        if world?.enchanterChoices != nil {
+            return .enchanting
+        }
+        if world?.alchemyIngredients != nil {
+            return .alchemy
+        }
+        return world?.craftingStation?.improves == true ? .improve : .create
+    }
+
+    var buttons: CraftingMenuButtons {
+        let mode = self.mode
+        var state = CraftingMenuButtons.State(mode: mode, hasRow: model.selected != nil)
+        switch mode {
+        case .alchemy:
+            state.rowIsMarked = model.selected?.isEquipped == true
+            state.chosenCount = ingredients.count { $0.isChosen }
+        case .enchanting:
+            state.rowIsMarked = model.selected.map(enchanting.isDestroyRow) ?? false
+            state.onDisenchantTab = model.selectedCategory == 0
+            state.canRename = enchanting.selection.isComplete
+        case .create, .improve:
+            break
+        }
+        return CraftingMenuButtons.make(state, texts: world?.craftingButtonTexts ?? .vanilla)
+    }
+
+    /// Alchemy clears the chosen ingredients; enchanting names the item to make.
+    override func auxiliary() -> String? {
+        guard let world else { return nil }
+        switch mode {
+        case .alchemy:
+            let chosen = ingredients.filter(\.isChosen)
+            guard !chosen.isEmpty else { return nil }
+            for ingredient in chosen {
+                _ = world.toggleIngredient(ingredient.id)
+            }
+            return "Cleared the chosen ingredients"
+        case .enchanting:
+            guard enchanting.selection.isComplete, model.selectedCategory != 0 else { return nil }
+            let title = world.craftingButtonTexts[.enterItemName]
+            nameEntry?.open(title: title) { [weak self] name in
+                self?.enchanting.rename(name)
+            }
+            return "Naming the item"
+        case .create, .improve:
+            return nil
+        }
+    }
+
+    /// The lab asks every time; the enchanter asks once something is chosen.
+    override func requestClose() {
+        guard let world else { return close() }
+        let question: CraftingButtonText? = switch mode {
+        case .alchemy: .quitAlchemy
+        case .enchanting: enchanting.hasChoice ? .quitEnchanting : nil
+        case .create, .improve: nil
+        }
+        guard let question else { return close() }
+        world.confirm(world.craftingButtonTexts[question]) { [weak self] yes in
+            if yes {
+                self?.close()
+            }
+        }
+    }
+
+    override func publishMovie(_ runtime: SWFMovieRuntime) {
+        super.publishMovie(runtime)
+        CraftingMenuMovieBridge.publish(buttons, runtime: runtime)
     }
 
     override func prepareMovie(
@@ -185,7 +282,7 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
 
     override func activateMovie(_ runtime: SWFMovieRuntime) {
         let station = world?.craftingStationName ?? ""
-        CraftingMenuMovieBridge.activate(station: station, runtime: runtime)
+        CraftingMenuMovieBridge.activate(station: station, buttons: buttons, runtime: runtime)
     }
 
     override func didClose() {

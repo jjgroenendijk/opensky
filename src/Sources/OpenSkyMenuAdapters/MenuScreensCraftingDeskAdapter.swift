@@ -66,6 +66,14 @@ extension MenuScreensCraftingDeskAdapter {
         game.inventory.craftingReadout.craftingSnapshot.header
     }
 
+    var craftingStation: CraftingStationInfo? {
+        game.inventory.craftingReadout.craftingSnapshot.station
+    }
+
+    var craftingButtonTexts: GameSettingTexts<CraftingButtonText> {
+        game.mapWorld.settingTexts()
+    }
+
     var craftingRecipes: [CraftingMenuRecipe] {
         let titles: GameSettingTexts<CraftingCategoryText> = game.mapWorld.settingTexts()
         return game.inventory.craftingReadout.craftingSnapshot.recipes.filter(\.isOffered).map {

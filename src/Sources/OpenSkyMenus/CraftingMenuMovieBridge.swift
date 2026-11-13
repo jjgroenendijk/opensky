@@ -11,11 +11,11 @@ nonisolated public enum CraftingMenuMovieBridge: Sendable {
     static let menuPath = "/Menu"
     static let layout = ItemListMovieLayout(listsPath: "\(menuPath)/InventoryLists")
     static let menuNamePath = "\(menuPath)/MenuNameHolder/MenuName"
-    /// Calls that change nothing in OpenSky: the 3D item view, renaming, and the
-    /// enchanting charge slider.
+    /// Calls that change nothing in OpenSky: the 3D item view, the movie's own rename
+    /// field, and the enchanting charge slider.
     static let sinkHostFunctions = [
         "PlaySound", "myLog", "SetSelectedItem", "SetSelectedCategory", "ChooseItem",
-        "ShowItem3D", "StartMouseRotation", "StopMouseRotation", "AuxButtonPress",
+        "ShowItem3D", "StartMouseRotation", "StopMouseRotation",
         "CanFadeItemInfo", "EndItemRename", "CalculateCharge", "SliderClose"
     ]
 
@@ -32,6 +32,10 @@ nonisolated public enum CraftingMenuMovieBridge: Sendable {
                 return .undefined
             }
         }
+        runtime.registerHostFunction("AuxButtonPress") { _ in
+            MainActor.assumeIsolated { onEvent(.aux) }
+            return .undefined
+        }
         runtime.registerHostFunction("CloseMenu") { _ in
             MainActor.assumeIsolated { onEvent(.close) }
             return .undefined
@@ -39,15 +43,27 @@ nonisolated public enum CraftingMenuMovieBridge: Sendable {
     }
 
     /// `Initialize` builds the lists and the bottom bar; `bCanCraft` labels the button.
-    static func activate(station: String, runtime: SWFMovieRuntime) {
+    static func activate(station: String, buttons: CraftingMenuButtons, runtime: SWFMovieRuntime) {
         runtime.callMovie("Initialize", atPath: menuPath)
         runtime.callMovie(
             "SetPlatform",
             arguments: [.number(SystemMenuMovieBridge.pcPlatform), .boolean(false)]
         )
         MenuMovieText.set(station, atPath: menuNamePath, runtime: runtime)
+        publish(buttons, runtime: runtime)
+    }
+
+    /// The `bCanCraft` setter runs `UpdateButtonText`, which reads `ButtonText`.
+    static func publish(_ buttons: CraftingMenuButtons, runtime: SWFMovieRuntime) {
+        let labels = runtime.runtime.makeArray(buttons.labels.map(AS2Value.string))
         MenuMovieText.assign(
-            .boolean(true), member: "bCanCraft", atPath: menuPath, runtime: runtime
+            .object(labels),
+            member: "ButtonText",
+            atPath: menuPath,
+            runtime: runtime
+        )
+        MenuMovieText.assign(
+            .boolean(buttons.canCraft), member: "bCanCraft", atPath: menuPath, runtime: runtime
         )
     }
 }

@@ -39,6 +39,8 @@ nonisolated public enum EnchantingMenuText: String, GameSettingTextKey {
 nonisolated public struct EnchanterItem: Equatable, Sendable {
     public let id: FormID
     public let name: String
+    /// A disenchant row whose enchantment the player knows already.
+    public var isKnown = false
 
     public init(id: FormID, name: String) {
         self.id = id

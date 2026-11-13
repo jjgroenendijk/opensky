@@ -36,6 +36,8 @@ final class FakeMenuScreenWorld: MenuScreenWorld, MenuInputConsumer {
 
     var craftingStationName: String?
     var craftingRecipes: [CraftingMenuRecipe] = []
+    var craftingStation: CraftingStationInfo?
+    var craftingButtonTexts = GameSettingTexts<CraftingButtonText>.vanilla
     var alchemyIngredients: [CraftingMenuIngredient]?
     var enchanterChoices: EnchanterChoices?
     var enchantingTexts = GameSettingTexts<EnchantingMenuText>.vanilla

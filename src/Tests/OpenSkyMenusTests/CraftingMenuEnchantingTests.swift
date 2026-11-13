@@ -28,10 +28,13 @@ struct CraftingMenuEnchantingTests {
         #expect(menu.panel.lines.count == 1)
     }
 
-    @Test func destroyingAnItemAsksFirstAndThenShowsTheLesson() {
+    @Test func destroyingAnItemAsksFirstAndThenShowsTheLesson() throws {
         let world = world()
         var enchanting = CraftingMenuEnchanting()
-        let tabs = enchanting.categories(world.enchanterChoices!, texts: world.enchantingTexts)
+        let tabs = try enchanting.categories(
+            #require(world.enchanterChoices),
+            texts: world.enchantingTexts
+        )
         _ = enchanting.choose(tabs[0].rows[0], alternate: false, world: world) {}
         #expect(world.questions.map(\.text) == [EnchantingMenuText.confirmDisenchant.fallback])
         world.questions[0].answer(true)
@@ -39,10 +42,13 @@ struct CraftingMenuEnchantingTests {
         #expect(world.boxes == ["Learned"])
     }
 
-    @Test func makingNeedsEveryPartAndAsksBeforeItEnchants() {
+    @Test func makingNeedsEveryPartAndAsksBeforeItEnchants() throws {
         let world = world()
         var enchanting = CraftingMenuEnchanting()
-        let tabs = enchanting.categories(world.enchanterChoices!, texts: world.enchantingTexts)
+        let tabs = try enchanting.categories(
+            #require(world.enchanterChoices),
+            texts: world.enchantingTexts
+        )
         world.enchantRefusalText = EnchantingMenuText.mustChoose.fallback
         _ = enchanting.choose(tabs[1].rows[0], alternate: true, world: world) {}
         #expect(world.hudLines == [EnchantingMenuText.mustChoose.fallback])
@@ -55,5 +61,32 @@ struct CraftingMenuEnchantingTests {
         world.questions.last?.answer(true)
         #expect(world.actions == ["enchant 2 1"])
         #expect(!enchanting.selection.isComplete)
+    }
+
+    @Test func aKnownEnchantmentIsNotDestroyed() throws {
+        let world = world()
+        world.enchanterChoices?.disenchantable[0].isKnown = true
+        var enchanting = CraftingMenuEnchanting()
+        let tabs = try enchanting.categories(
+            #require(world.enchanterChoices),
+            texts: world.enchantingTexts
+        )
+        _ = enchanting.choose(tabs[0].rows[0], alternate: false, world: world) {}
+        #expect(world.questions.isEmpty)
+        #expect(world.hudLines == [EnchantingMenuText.alreadyKnown.fallback])
+    }
+
+    @Test func leavingWithAChoiceAsksFirst() {
+        let world = world()
+        let menu = CraftingMenuCoordinator(menuMode: MenuModeController(), world: world)
+        menu.open()
+        menu.route(.button(.cancel))
+        #expect(!menu.isOpen)
+        menu.open()
+        menu.route(.move(.right))
+        menu.route(.button(.accept))
+        menu.route(.button(.cancel))
+        #expect(world.questions.map(\.text) == [CraftingButtonText.quitEnchanting.fallback])
+        #expect(menu.isOpen)
     }
 }
