@@ -31,6 +31,9 @@ nonisolated enum MapMenuMovieBridge: Sendable {
     /// `PlayerSetMarker` in the movie's `IconTypes`, after the 60 `TNAM` types and the
     /// door and quest icons.
     static let playerSetIconType = 65
+    /// `YouAreHereMarker`, the last of `IconTypes`. The movie gives the marker of this type
+    /// its `YouAreHereMarker` clip once `PlayerLocationMarkerType` names it.
+    static let currentLocationIconType = 66
     static let sinkHostFunctions = [
         "PlaySound", "myLog", "ClickCallback", "SetLocalMapExtents"
     ]
@@ -72,6 +75,9 @@ nonisolated enum MapMenuMovieBridge: Sendable {
     }
 
     static func create(_ markers: [MapMovieMarker], runtime: SWFMovieRuntime) {
+        worldMap(runtime: runtime)?.assign(
+            .integer(currentLocationIconType), for: "PlayerLocationMarkerType"
+        )
         call("SetNumMarkers", arguments: [.integer(markers.count)], runtime: runtime)
         writeMarkerData(markers.flatMap { marker in
             [

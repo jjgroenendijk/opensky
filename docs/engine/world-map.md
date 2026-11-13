@@ -89,6 +89,11 @@ menu is open. The key aims at the map centre, because OpenSky keeps the mouse fo
 The 5% aim and the order of the two questions are OpenSky's choice
 ([unverified values](/engine/unverified-values.md)).
 
+The map movie also shows the player's own position as the last marker, labelled
+`sCurrentLocation` ("Current Location"), on the world map and the local map, as observed in
+the game. Its icon type is 66, `YouAreHereMarker`, and the engine names that type in the
+movie's `PlayerLocationMarkerType` so the movie uses its you-are-here clip.
+
 The map movie draws the marker with its `PlayerSetMarker` icon, number 65 in `IconTypes`,
 after the location markers. The HUD compass shows it as `CompassMarkerPlayerSet`, at every
 distance, like a quest target.
