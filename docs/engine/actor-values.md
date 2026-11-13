@@ -52,7 +52,8 @@ additional 5 points per level, regardless of the class weights". The Creation Ki
 constants: "all Actors gain 10 points to distribute per level (this value comes from the
 iAVDhmsLevelUp game setting) ... NPC's get a bonus amount of health per level as set by the
 fNPCHealthLevelBonus game setting; by default this is 5." (<https://ck.uesp.net/wiki/Class>)
-`Skyrim.esm` sets both to these defaults.
+`Skyrim.esm` sets both to these defaults. The player's base takes `fPCHealthLevelBonus` in place of
+`fNPCHealthLevelBonus`. The install sets it to 0.
 
 The level is the `ACBS` level word. A `PC Level Mult` actor multiplies the player's level by that
 word over 1000, then clamps to Calc Min and Calc Max (<https://ck.uesp.net/wiki/Stats_Tab>). A zero
