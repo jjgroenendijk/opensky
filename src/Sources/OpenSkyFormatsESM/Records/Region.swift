@@ -53,6 +53,8 @@ nonisolated public struct Region: Sendable {
 
     public let formID: FormID
     public let editorID: String?
+    /// Record flag 0x40, "Border Region" in xEdit: the player cannot walk out of its areas.
+    public let isBorder: Bool
     /// WNAM worldspace this region belongs to; nil when absent.
     public let worldspace: FormID?
     /// RCLR editor map color; nil when absent.
@@ -86,7 +88,7 @@ nonisolated public struct Region: Sendable {
     /// One RPLI edge falloff with the RPLD outline points after it.
     public struct Area: Equatable, Sendable {
         let edgeFalloff: UInt32
-        var points: [SIMD2<Float>] = []
+        public internal(set) var points: [SIMD2<Float>] = []
     }
 
     public init(record: ESMRecord, localized: Bool = false) throws {
@@ -94,6 +96,7 @@ nonisolated public struct Region: Sendable {
             throw ESMError.malformed("expected REGN record, got \(record.type)")
         }
         formID = FormID(record.formID)
+        isBorder = record.flags.rawValue & 0x40 != 0
 
         var fields = RegionFields()
         var extra = RegionAreaFields()

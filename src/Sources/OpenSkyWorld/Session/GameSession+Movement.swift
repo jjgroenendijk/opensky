@@ -242,6 +242,7 @@ extension GameSession.MovementSteps {
         session.walkController.carryVelocity = session.motion.characterCarry?(
             session.walkController.capsule, session.walkController.feetPosition
         ) ?? .zero
+        session.walkController.mayMove = session.motion.borderCheck
         session.walkController.update(
             camera: &session.freeFlyCamera,
             input: frameInput,
@@ -249,6 +250,11 @@ extension GameSession.MovementSteps {
             collisionQuery: walkCollisionQuery,
             plan: { [locomotion = session.locomotion] state in locomotion.plan(state) }
         )
+        let atBorder = session.walkController.isHeldAtEdge
+        if atBorder, !session.motion.wasAtBorder {
+            session.motion.onBorderReached?()
+        }
+        session.motion.wasAtBorder = atBorder
         // The view follows the drawn capsule, blended between steps.
         session.freeFlyCamera.position = session.walkController.drawnCameraPosition
         guard session.movementMode == .thirdPerson else { return }

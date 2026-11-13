@@ -58,6 +58,15 @@ nonisolated public final class WeatherStore {
     public let worldspaceByEditorID: [String: UInt32]
     public let skippedRecords: SkippedRecords
 
+    /// The outlines of the border regions of the worldspace with this load-order FormID.
+    public func borderOutlines(worldspace: UInt32) -> [[SIMD2<Float>]] {
+        regions.values
+            .filter { $0.isBorder && $0.worldspace?.rawValue == worldspace }
+            .sorted { $0.formID.rawValue < $1.formID.rawValue }
+            .flatMap { $0.areas.map(\.points) }
+            .filter { $0.count >= 3 }
+    }
+
     public convenience init(file: ESMFile) {
         self.init(loadOrder: LoadOrderPlugins(file: file))
     }

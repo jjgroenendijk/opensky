@@ -219,7 +219,18 @@ struct GameSessionScopeBuild {
         scope.streamer.events.onWorldspaceChanged
             .register(.weather) { [weak gameSession] editorID in
                 gameSession?.weather?.setWorldspace(editorID: editorID)
+                guard let gameSession, let store = gameSession.weather?.store else { return }
+                let outlines = store.worldspaceByEditorID[editorID]
+                    .map { store.borderOutlines(worldspace: $0) } ?? []
+                gameSession.motion.borderCheck = outlines.isEmpty ? nil : { from, to in
+                    BorderRegionRule.allows(from: from, to: to, outlines: outlines)
+                }
             }
+        gameSession.motion.onBorderReached = { [weak scope] in
+            guard let scope else { return }
+            let texts = scope.mapWorld.settingTexts(WorldRefusalText.self)
+            _ = scope.messages.postNotification(texts[.leavingBorderRegion])
+        }
     }
 
     /// Settings, key bindings, menu text, sounds, and the frame tick that every menu movie
