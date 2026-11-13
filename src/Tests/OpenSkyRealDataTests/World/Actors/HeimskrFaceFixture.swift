@@ -33,7 +33,7 @@ struct HeimskrFace {
         let placed = try PlacedActor(record: #require(
             ESMWalk.record(withFormID: 0x0001_A682, in: install.file)
         ))
-        let resolvers = builder.actorBuilder.actorResolversBuildingIfNeeded()
+        let resolvers = builder.actorBuilder.resolver.actorResolversBuildingIfNeeded()
         let appearance = try resolvers.template.resolve(base: placed.base)
         let visual = try resolvers.visual.resolve(appearance: appearance)
         let assembly = ActorAssembler(provider: install.meshes)
@@ -42,7 +42,8 @@ struct HeimskrFace {
             device: install.device,
             fileSystem: install.fileSystem,
             assembly: assembly,
-            playback: #require(builder.actorBuilder.makeFaceMorphPlayback(assembly: assembly))
+            playback: #require(builder.actorBuilder.morphs
+                .makeFaceMorphPlayback(assembly: assembly))
         )
     }
 

@@ -149,7 +149,7 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
     ) {
         builder.meshes.evict(dropping: meshKeys)
         builder.collisionModels?.evict(dropping: meshKeys)
-        builder.evictCollisionPartitions(dropping: meshKeys)
+        builder.collisionBuilder.evictCollisionPartitions(dropping: meshKeys)
         builder.textures.evict(dropping: textureKeys)
     }
 
@@ -159,7 +159,7 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
         state: WorldStateSnapshot
     ) throws -> DistantLODScene? {
         try builder.textures.batchLoads {
-            try builder.terrainBuilder.buildDistantLOD(
+            try builder.terrainBuilder.distantLOD.buildDistantLOD(
                 worldspaceEditorID: worldspace,
                 center: center,
                 hiddenCells: hiddenCells,
@@ -202,7 +202,7 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
     }
 
     public func drainTouchedAssets() -> CellAssets {
-        builder.assembler.drainTouchedAssets()
+        builder.assembler.renderParts.drainTouchedAssets()
     }
 
     public func loadActorProp(_ request: ActorPropRequest) throws -> RenderModel {
@@ -215,7 +215,7 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
     public func assemblePlayerRig(
         _ request: PlayerRigRequest
     ) -> Result<PlayerRenderRig, PlayerBodyError> {
-        builder.actorBuilder.assemblePlayerRig(request)
+        builder.actorBuilder.playerRig.assemblePlayerRig(request)
     }
 }
 

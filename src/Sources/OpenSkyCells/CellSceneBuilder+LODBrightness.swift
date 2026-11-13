@@ -10,20 +10,20 @@ import OpenSkyImageKernels
 public import OpenSkyRenderCore
 import OpenSkyTerrain
 
-nonisolated extension CellTerrainBuilder {
+nonisolated extension CellSceneBuilder.CellTerrainLODBuilder {
     /// About 1000 cells: enough for a stable median, cheap enough for the build queue.
     static let brightnessSampleBlocks = 64
 
     /// The vanilla curve when the worldspace has too few painted cells with LOD.
     nonisolated public func terrainLODBrightness(lodWorldspace: String) -> TerrainLODBrightness {
         let key = lodWorldspace.lowercased()
-        if let cached = owner.terrainLODBrightnessByWorld[key] {
+        if let cached = owner.caches.terrainLODBrightnessByWorld[key] {
             return cached
         }
         let curve = owner.loadPhases.measure(.lodBrightness) {
             TerrainLODBrightness.fitted(samples: brightnessSamples(lodWorldspace))
         }
-        owner.terrainLODBrightnessByWorld[key] = curve
+        owner.caches.terrainLODBrightnessByWorld[key] = curve
         return curve
     }
 
@@ -34,7 +34,7 @@ nonisolated extension CellTerrainBuilder {
                 worldspace: worldspace, maximum: Self.brightnessSampleBlocks
             ),
             let world = attempt({
-                try owner.worldChildrenGroup(
+                try owner.records.worldChildrenGroup(
                     editorID: worldspace,
                     localized: owner.pluginLocalized
                 )
@@ -48,7 +48,7 @@ nonisolated extension CellTerrainBuilder {
                     let found = owner.recordIndex.findCell(
                         in: world, gridX: cell.x, gridY: cell.y, localized: owner.pluginLocalized
                     ),
-                    let land = landRecord(in: found),
+                    let land = owner.terrainBuilder.landRecord(in: found),
                     let albedo = TerrainCellAlbedo.mean(land: land, textureMean: textureMean)
                 else { continue }
                 samples.append(SIMD2(
@@ -61,8 +61,9 @@ nonisolated extension CellTerrainBuilder {
 
     /// Read from a small mip: its mean matches the full texture's to within a percent.
     nonisolated private func textureMean(_ ltexID: FormID) -> SIMD3<Float>? {
-        guard let path = terrainTextureKeys(for: ltexID)?.diffuse else { return nil }
-        if let cached = owner.terrainTextureMeans[path] {
+        guard let path = owner.terrainBuilder.textures.terrainTextureKeys(for: ltexID)?.diffuse
+        else { return nil }
+        if let cached = owner.caches.terrainTextureMeans[path] {
             return cached
         }
         let mean = owner.distantLODBuilder.flatMap { builder in
@@ -70,7 +71,7 @@ nonisolated extension CellTerrainBuilder {
                 .flatMap { element in attempt { try DDSDecoder.smallLevel(element, edge: 4) } }
                 .map(Self.meanColour)
         }
-        owner.terrainTextureMeans[path] = .some(mean)
+        owner.caches.terrainTextureMeans[path] = .some(mean)
         return mean
     }
 

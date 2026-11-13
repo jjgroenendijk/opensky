@@ -14,7 +14,7 @@ import OpenSkyRenderResources
 import OpenSkyRuntimeState
 import OpenSkyWorldInterface
 
-nonisolated extension CellActorBuilder {
+nonisolated extension CellSceneBuilder.CellChargenBuilder {
     /// Assembles the head from parts and gives the face part a face tint built from
     /// the tint layers. A race without head parts keeps the baked head.
     func chargenVisual(
@@ -41,7 +41,7 @@ nonisolated extension CellActorBuilder {
     }
 
     /// A key named after the tint layers, so the same face reuses one upload.
-    private func faceTintKey(_ appearance: PlayerAppearanceOverride) -> String? {
+    func faceTintKey(_ appearance: PlayerAppearanceOverride) -> String? {
         guard
             owner.actorVisualResolver != nil,
             let fileSystem = owner.fileSystem else { return nil }
@@ -54,9 +54,9 @@ nonisolated extension CellActorBuilder {
         let identity = layers.map { "\($0.0)|\($0.1.color)|\($0.1.strength)" }
             .joined(separator: ";")
         let key = "textures/opensky/facetint/\(Self.fnv1a(identity)).dds"
-        if owner.faceTintTextures[key] == nil {
+        if owner.caches.faceTintTextures[key] == nil {
             do {
-                owner.faceTintTextures[key] = try Self.faceTint(
+                owner.caches.faceTintTextures[key] = try Self.faceTint(
                     layers: layers,
                     fileSystem: fileSystem
                 )
@@ -67,7 +67,7 @@ nonisolated extension CellActorBuilder {
                 return nil
             }
         }
-        if let dds = owner.faceTintTextures[key] {
+        if let dds = owner.caches.faceTintTextures[key] {
             owner.meshes.textures.register(dds: dds, key: key, usage: .color)
         }
         return key
@@ -75,7 +75,7 @@ nonisolated extension CellActorBuilder {
 
     /// The layers composed at the first mask's size, as the game bakes an NPC's
     /// `facetint` texture.
-    private static func faceTint(
+    static func faceTint(
         layers: [(String, PlayerAppearanceTint)], fileSystem: any GameFileSource
     ) throws -> Data {
         let images = try layers.map { path, _ in
@@ -95,7 +95,7 @@ nonisolated extension CellActorBuilder {
         return DDSEncoder.rgba8888(DecodedImage(width: width, height: height, rgba: rgba))
     }
 
-    private static func fnv1a(_ text: String) -> String {
+    static func fnv1a(_ text: String) -> String {
         var hash: UInt64 = 0xCBF2_9CE4_8422_2325
         for byte in text.utf8 {
             hash = (hash ^ UInt64(byte)) &* 0x0000_0100_0000_01B3

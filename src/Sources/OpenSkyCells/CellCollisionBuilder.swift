@@ -166,7 +166,7 @@ nonisolated public enum CellCollisionGridProbe: Sendable {
                 do {
                     try entries.append(CellCollisionGridEntry(
                         coordinate: coordinate,
-                        collision: builder.buildStaticCollision(
+                        collision: builder.collisionBuilder.buildStaticCollision(
                             worldspaceEditorID: worldspaceEditorID,
                             gridX: x,
                             gridY: y
@@ -194,7 +194,9 @@ nonisolated extension CellSceneBuilder {
             collisionModels?.decodesInParallel = newValue
         }
     }
+}
 
+nonisolated extension CellSceneBuilder.CellCollisionBuilder {
     /// Resolves model-bearing placements independently of render load.
     /// Collision-only NIFs stay physical when no drawable mesh uploads.
     nonisolated public func resolveCollisionPlacements(
@@ -203,13 +205,13 @@ nonisolated extension CellSceneBuilder {
         motionTypes: [FormID: ReferenceMotionType] = [:]
     ) -> [CellCollisionPlacement] {
         guard !refs.isEmpty else { return [] }
-        let statIndex = modelIndex.statIndexBuildingIfNeeded()
-        let modelBaseIndex = modelIndex.modelBaseIndexBuildingIfNeeded()
-        let lightIndex = interiorLighting.lightIndexBuildingIfNeeded()
+        let statIndex = owner.modelIndex.statIndexBuildingIfNeeded()
+        let modelBaseIndex = owner.modelIndex.modelBaseIndexBuildingIfNeeded()
+        let lightIndex = owner.interiorLighting.lightIndexBuildingIfNeeded()
         return refs.compactMap { ref in
             guard
                 lightIndex[ref.base.rawValue] == nil,
-                let base = modelIndex.resolveBase(
+                let base = owner.modelIndex.resolveBase(
                     formID: ref.base.rawValue,
                     statIndex: statIndex,
                     modelBaseIndex: modelBaseIndex
@@ -243,11 +245,14 @@ nonisolated extension CellSceneBuilder {
         gridX: Int32,
         gridY: Int32
     ) throws -> StaticCollisionSet {
-        _ = collisionModels?.drainTouchedKeys()
-        let localized = file.isLocalized
-        let world = try worldChildrenGroup(editorID: worldspaceEditorID, localized: localized)
+        _ = owner.collisionModels?.drainTouchedKeys()
+        let localized = owner.file.isLocalized
+        let world = try owner.records.worldChildrenGroup(
+            editorID: worldspaceEditorID,
+            localized: localized
+        )
         guard
-            let found = recordIndex.findCell(
+            let found = owner.recordIndex.findCell(
                 in: world, gridX: gridX, gridY: gridY, localized: localized
             )
         else {
@@ -258,9 +263,9 @@ nonisolated extension CellSceneBuilder {
             )
         }
         var counts = BuildCounts()
-        let localRefs = referenceBuilder.collectReferences(in: found, counts: &counts)
+        let localRefs = owner.referenceBuilder.collectReferences(in: found, counts: &counts)
         let coordinate = CellCoordinate(x: gridX, y: gridY)
-        let refs = doorTransitions.exteriorReferences(
+        let refs = owner.doorTransitions.exteriorReferences(
             local: localRefs,
             world: world,
             coordinate: coordinate,
@@ -307,7 +312,7 @@ nonisolated extension CellSceneBuilder {
         placements: [CellCollisionPlacement],
         location: CellSceneLocation
     ) -> CellCollisionProducts {
-        guard let collisionModels else {
+        guard let collisionModels = owner.collisionModels else {
             return CellCollisionProducts(collision: StaticCollisionSet(
                 location: location,
                 shapes: [],
@@ -315,15 +320,15 @@ nonisolated extension CellSceneBuilder {
             ))
         }
         let started = Stopwatch()
-        let materialTypes = modelIndex.materialTypeIndexBuildingIfNeeded()
-        loadPhases.measure(.collision) {
+        let materialTypes = owner.modelIndex.materialTypeIndexBuildingIfNeeded()
+        owner.loadPhases.measure(.collision) {
             collisionModels.predecode(paths: placements.map(\.modelPath))
         }
         defer { collisionModels.dropPredecoded() }
         var accumulator = CellCollisionAccumulator()
         accumulator.stats.modelReferenceCount = placements.count
         for placement in placements {
-            route(
+            router.route(
                 placement: placement,
                 library: collisionModels,
                 materialTypes: materialTypes,
@@ -345,152 +350,7 @@ nonisolated extension CellSceneBuilder {
         )
     }
 
-    /// Loads one placement's collision model and routes its solid bodies to the
-    /// dynamic world or to the immutable shape list.
-    nonisolated private func route(
-        placement: CellCollisionPlacement,
-        library: NIFCollisionLibrary,
-        materialTypes: MaterialTypeIndex,
-        into accumulator: inout CellCollisionAccumulator
-    ) {
-        guard
-            let model = loadCollisionModel(
-                placement.modelPath, library: library, stats: &accumulator.stats
-            ) else { return }
-        accumulator.record(model: model)
-        let solid = model.bodies.enumerated().filter(\.element.isPlayerSolid)
-        let modelKey = library.canonicalKey(for: placement.modelPath)
-        // Only the *simulated* bodies leave the immutable set. A model routinely
-        // mixes the two — a shelf whose plank is fixed and whose contents are
-        // not — and the real-data probe measured the cost of getting this wrong:
-        // routing a whole model to the dynamic world because one of its bodies
-        // was movable took the shelf away with it, and everything resting on the
-        // shelf fell through the world.
-        let simulates = Self.simulates(under: placement.motionType)
-        let simulated = simulatesDynamicBodies ? solid.filter { simulates($0.element) } : []
-        let dynamic = dynamicPlacement(
-            bodies: simulated.map(\.element),
-            placement: placement,
-            materialTypes: materialTypes
-        )
-        if let dynamic {
-            accumulator.dynamicBodies.append(dynamic)
-        }
-        let remaining = dynamic == nil ? solid : solid.filter { !simulates($0.element) }
-        for (bodyIndex, body) in remaining {
-            for (shapeIndex, shape) in body.shapes.enumerated() {
-                place(
-                    shape: shape,
-                    placement: ShapePlacement(
-                        key: CellCollisionPartitionKey(modelKey, bodyIndex, shapeIndex),
-                        transform: placement.transform * body.transform * shape.transform,
-                        reference: placement.reference
-                    ),
-                    materialTypes: materialTypes,
-                    into: &accumulator
-                )
-            }
-        }
-    }
-
-    /// Which bodies simulate: the model's own choice, every body with mass after
-    /// `SetMotionType(Motion_Dynamic)`, or none after `Motion_Keyframed`.
-    nonisolated private static func simulates(
-        under motionType: ReferenceMotionType?
-    ) -> (NIFCollisionBody) -> Bool {
-        switch motionType {
-        case nil: { $0.dynamics.isSimulated }
-        case .dynamic: { $0.dynamics.hasMass }
-        case .keyframed: { _ in false }
-        }
-    }
-
-    /// One placed reference's simulated body, or nil where the whole reference stays
-    /// static. A model whose simulated bodies are joined by constraints stays static:
-    /// without a solver, a hanging rack would fall out of the world.
-    nonisolated private func dynamicPlacement(
-        bodies: [NIFCollisionBody],
-        placement: CellCollisionPlacement,
-        materialTypes: MaterialTypeIndex
-    ) -> DynamicBodyPlacement? {
-        guard
-            let key = placement.key,
-            bodies.allSatisfy(\.constraints.isEmpty),
-            let definition = DynamicBodyDefinition(
-                bodies: bodies, referenceScale: placement.scale, materials: materialTypes,
-                forcesSimulation: placement.motionType == .dynamic
-            )
-        else { return nil }
-        return DynamicBodyPlacement(
-            key: key,
-            reference: placement.reference,
-            definition: definition,
-            originPosition: placement.placement.position,
-            orientation: simd_quatf(MatrixMath.placement(
-                position: .zero, rotation: placement.placement.rotation, scale: 1
-            ))
-        )
-    }
-
-    /// Places one decoded shape into the cell's shape list: its broadphase
-    /// partitions through the cache, its world transform, and the MATT its
-    /// Havok material resolves to. One logical shape stays one
-    /// stats entry however many broadphase leaves it splits into.
-    nonisolated private func place(
-        shape: NIFCollisionShape,
-        placement: ShapePlacement,
-        materialTypes: MaterialTypeIndex,
-        into accumulator: inout CellCollisionAccumulator
-    ) {
-        let partitioning = collisionPartitionCache.partitions(
-            key: placement.key,
-            geometry: shape.geometry
-        )
-        accumulator.stats.decodeFailureCount += partitioning.failureCount
-        guard !partitioning.partitions.isEmpty else { return }
-        let placed = StaticCollisionShape.placed(
-            reference: placement.reference,
-            transform: placement.transform,
-            partitions: partitioning.partitions,
-            material: shape.material.flatMap(materialTypes.material(forHavokMaterial:))
-        )
-        accumulator.shapes.append(contentsOf: placed)
-        accumulator.stats.shapeCount += 1
-        accumulator.stats.triangleCount += placed.reduce(0) { $0 + $1.triangleCount }
-        accumulator.stats.estimatedBytes += Self.estimatedBytes(of: shape.geometry)
-    }
-
     nonisolated public func evictCollisionPartitions(dropping keys: Set<String>) {
-        collisionPartitionCache.evict(dropping: keys)
-    }
-
-    nonisolated private func loadCollisionModel(
-        _ path: String,
-        library: NIFCollisionLibrary,
-        stats: inout StaticCollisionStats
-    ) -> NIFCollisionModel? {
-        do {
-            return try library.model(path: path)
-        } catch {
-            stats.loadFailureCount += 1
-            let reason = String(describing: error)
-            Self.logger.warning(
-                "collision model \(path, privacy: .public) failed: \(reason, privacy: .public)"
-            )
-            return nil
-        }
-    }
-
-    nonisolated private static func estimatedBytes(of geometry: NIFCollisionGeometry) -> Int {
-        switch geometry {
-        case let .triangleSoup(vertices, indices):
-            vertices.count * MemoryLayout<SIMD3<Float>>.stride
-                + indices.count * MemoryLayout<UInt32>.stride
-        case let .convexVertices(vertices, hullIndices):
-            vertices.count * MemoryLayout<SIMD3<Float>>.stride
-                + hullIndices.count * MemoryLayout<UInt32>.stride
-        case .box, .sphere, .capsule:
-            0
-        }
+        owner.collisionPartitionCache.evict(dropping: keys)
     }
 }

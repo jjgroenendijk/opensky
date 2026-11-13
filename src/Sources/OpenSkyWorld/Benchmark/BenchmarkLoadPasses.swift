@@ -105,7 +105,7 @@ nonisolated public enum BenchmarkLoadPasses {
             }
             loads.append(timed("distant LOD") {
                 try builder.textures.batchLoads {
-                    _ = try builder.terrainBuilder.buildDistantLOD(
+                    _ = try builder.terrainBuilder.distantLOD.buildDistantLOD(
                         worldspaceEditorID: worldspace,
                         center: CellCoordinate(containing: SIMD3(x, y, 0)),
                         hiddenCells: Set(cells)

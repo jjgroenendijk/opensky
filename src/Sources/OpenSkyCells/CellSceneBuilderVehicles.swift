@@ -11,7 +11,7 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 public import OpenSkyWorldInterface
 
-nonisolated extension CellObjectBuilder {
+nonisolated extension CellSceneBuilder.CellHazardBuilder {
     /// Rigs the wheels of each follower in `instances`, replacing its model with its
     /// own copy. A model without wheel nodes stays as it is.
     func animatedVehicles(
@@ -67,7 +67,7 @@ nonisolated extension CellObjectBuilder {
         scene.hazards = hazards
         scene.vehicleCollision = collision.vehicles
         scene.doorCollision = collision.doors
-        scene.assets = owner.assembler.drainTouchedAssets()
+        scene.assets = owner.assembler.renderParts.drainTouchedAssets()
         return scene
     }
 }

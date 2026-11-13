@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
-nonisolated extension CellReferenceBuilder {
+nonisolated extension CellSceneBuilder.CellReferenceBuilder {
     /// The cell's NAVM records of every plugin in the load order.
     nonisolated public func collectNavmeshes(in cell: FoundCell) -> [Navmesh] {
         let base = Self.collectNavmeshes(in: cell.children)
@@ -27,12 +27,13 @@ nonisolated extension CellReferenceBuilder {
     nonisolated public static func collectNavmeshes(in cellChildren: ESMGroup?) -> [Navmesh] {
         guard
             let cellChildren,
-            let children = CellSceneBuilder.loggedChildren(cellChildren) else { return [] }
+            let children = CellSceneBuilder.CellRecordWalker.loggedChildren(cellChildren)
+        else { return [] }
         var navmeshes: [Navmesh] = []
         for case let .group(group) in children {
             guard
                 group.kind == .cellPersistentChildren || group.kind == .cellTemporaryChildren,
-                let records = CellSceneBuilder.loggedChildren(group)
+                let records = CellSceneBuilder.CellRecordWalker.loggedChildren(group)
             else { continue }
             for case let .record(record) in records where record.type == "NAVM" {
                 guard !record.isDeleted else { continue }

@@ -182,7 +182,7 @@ extension CellSceneBuilderTests {
         )
         builder.simulatesDynamicBodies = true
 
-        let collision = try builder.buildStaticCollision(
+        let collision = try builder.collisionBuilder.buildStaticCollision(
             worldspaceEditorID: "Tamriel", gridX: 6, gridY: -2
         )
 
@@ -218,7 +218,7 @@ extension CellSceneBuilderTests {
                 transform: matrix_identity_float4x4, key: .generated(1)
             )
             placement.motionType = motionType
-            return builder.buildCollisionProducts(
+            return builder.collisionBuilder.buildCollisionProducts(
                 placements: [placement], location: .exterior(CellCoordinate(x: 6, y: -2))
             )
         }

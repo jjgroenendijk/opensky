@@ -13,7 +13,7 @@ nonisolated public struct GrassBuild {
     public let typeSkipCount: Int
 }
 
-nonisolated extension CellTerrainBuilder {
+nonisolated extension CellSceneBuilder.CellGrassBuilder {
     nonisolated public func buildGrass(
         found: FoundCell,
         worldspace: Worldspace?,
@@ -23,7 +23,7 @@ nonisolated extension CellTerrainBuilder {
         guard
             worldspace?.flags.contains(.noGrass) != true,
             let terrain,
-            let land = landRecord(in: found, worldspace: worldspace)
+            let land = owner.terrainBuilder.landRecord(in: found, worldspace: worldspace)
         else { return nil }
 
         let textures = landTextureIndexBuildingIfNeeded()
@@ -95,23 +95,23 @@ nonisolated extension CellTerrainBuilder {
     }
 
     nonisolated func landTextureIndexBuildingIfNeeded() -> [UInt32: LandTexture] {
-        if let landTextureIndex = owner.landTextureIndex {
+        if let landTextureIndex = owner.caches.landTextureIndex {
             return landTextureIndex
         }
         let textures = owner.recordIndex
             .loadOrderRecords(of: "LTEX") { record, _ in try LandTexture(record: record) }
         let index = LandTexture.index(textures.sorted { $0.key < $1.key }.map(\.value))
-        owner.landTextureIndex = index
+        owner.caches.landTextureIndex = index
         return index
     }
 
     nonisolated func grassIndexBuildingIfNeeded() -> [UInt32: Grass] {
-        if let grassIndex = owner.grassIndex {
+        if let grassIndex = owner.caches.grassIndex {
             return grassIndex
         }
         let index = owner.recordIndex
             .loadOrderRecords(of: "GRAS") { record, _ in try Grass(record: record) }
-        owner.grassIndex = index
+        owner.caches.grassIndex = index
         return index
     }
 }

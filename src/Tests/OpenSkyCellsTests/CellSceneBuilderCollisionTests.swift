@@ -64,7 +64,7 @@ extension CellSceneBuilderTests {
             ),
             device: device
         )
-        let collision = try builder.buildStaticCollision(
+        let collision = try builder.collisionBuilder.buildStaticCollision(
             worldspaceEditorID: "Tamriel",
             gridX: 6,
             gridY: -2

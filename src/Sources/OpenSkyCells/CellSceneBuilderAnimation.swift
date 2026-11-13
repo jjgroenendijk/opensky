@@ -9,7 +9,7 @@ import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyWorldInterface
 
-nonisolated extension CellActorBuilder {
+nonisolated extension CellSceneBuilder.CellActorAnimationBuilder {
     /// `severedHead` marks the cut head of a decapitated actor, posed apart from its body.
     nonisolated func makeAnimationPlayback(
         assembly: ActorAssembly<ActorRenderAsset>,
@@ -26,12 +26,12 @@ nonisolated extension CellActorBuilder {
             female: assembly.visual.appearance.isFemale.value
         )
         let clip: ActorAnimationClip
-        if let cached = owner.actorAnimationClips[key] {
+        if let cached = owner.caches.actorAnimationClips[key] {
             clip = cached
         } else {
             do {
                 clip = try loadAnimationClip(key: key)
-                owner.actorAnimationClips[key] = clip
+                owner.caches.actorAnimationClips[key] = clip
             } catch let error as ActorAnimationLoadError {
                 return .failure(error)
             } catch {
@@ -55,7 +55,7 @@ nonisolated extension CellActorBuilder {
     nonisolated func lagBoneRig(
         skeletonMeshPath path: String, clip: ActorAnimationClip
     ) -> ActorLagBoneRig? {
-        if let known = owner.actorLagBoneRigs[path] {
+        if let known = owner.caches.actorLagBoneRigs[path] {
             return known
         }
         let file = owner.fileSystem
@@ -63,7 +63,7 @@ nonisolated extension CellActorBuilder {
         let rig = file.flatMap {
             ActorLagBoneRig(file: $0, rigBones: Set(clip.skeleton.boneNames))
         }
-        owner.actorLagBoneRigs[path] = .some(rig)
+        owner.caches.actorLagBoneRigs[path] = .some(rig)
         return rig
     }
 

@@ -13,7 +13,7 @@ import OpenSkyObjectAnimation
 import OpenSkyRenderCore
 import OpenSkyRendering
 
-nonisolated extension CellObjectBuilder {
+nonisolated extension CellSceneBuilder.CellAnimatedObjectBuilder {
     /// Block types that can move a node on its own clock or turn it to the camera. A mesh
     /// without one is not parsed.
     static let nodeControllerMarkers = [
@@ -29,7 +29,7 @@ nonisolated extension CellObjectBuilder {
         guard
             let fileSystem = owner.fileSystem,
             let key = attempt({ try owner.meshes.meshKey(for: modelPath) }) else { return nil }
-        if let known = owner.nodeControllerRigs[key] {
+        if let known = owner.caches.nodeControllerRigs[key] {
             return known
         }
         var rig: NodeControllerRig?
@@ -44,7 +44,7 @@ nonisolated extension CellObjectBuilder {
                     attempt { try NodeControllerRig(file: element, lagOnly: lagOnly) }
                 }
         }
-        owner.nodeControllerRigs[key] = .some(rig)
+        owner.caches.nodeControllerRigs[key] = .some(rig)
         return rig
     }
 
@@ -58,7 +58,10 @@ nonisolated extension CellObjectBuilder {
         {
             guard
                 let rig = nodeControllerRig(modelPath: instance.modelPath),
-                let copy = posedCopy(of: instance, skeleton: rig.skeleton)
+                let copy = owner.objectBuilder.hazards.posedCopy(
+                    of: instance,
+                    skeleton: rig.skeleton
+                )
             else { continue }
             instances[index] = copy.instance
             let mesh = CellNodeAnimation(

@@ -38,7 +38,7 @@ nonisolated public struct EffectiveReferences: Sendable {
     }
 }
 
-nonisolated extension CellReferenceBuilder {
+nonisolated extension CellSceneBuilder.CellReferenceStateBuilder {
     /// Keys `entries` by the FormID a placement was authored under.
     nonisolated public func entriesByFormID(
         _ entries: [RuntimeReferenceEntry]
@@ -63,14 +63,15 @@ nonisolated extension CellReferenceBuilder {
         counts: inout BuildCounts
     ) -> EffectiveReferences {
         let (refs, collected) = references
-        let spawned = owner.actorBuilder.spawnedReferences(
+        let spawned = owner.actorBuilder.spawns.spawnedReferences(
             in: location,
             state: state,
             counts: &counts
         )
         let deltas = state.deltasByKey()
         let placed = relocating(refs, into: location, deltas: deltas)
-        let entries = referenceEntries(refs: placed, collected: collected) + spawned.entries
+        let entries = owner.referenceBuilder
+            .referenceEntries(refs: placed, collected: collected) + spawned.entries
         return EffectiveReferences(
             entries: entries,
             deltas: deltas,

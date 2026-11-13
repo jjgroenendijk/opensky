@@ -12,7 +12,7 @@ import OpenSkyTerrain
 import OpenSkyWorldInterface
 public import OpenSkyWorldState
 
-nonisolated extension CellInteriorBuilder {
+nonisolated extension CellSceneBuilder.CellInteriorBuilder {
     /// - Parameter state: runtime changes, applied as in the exterior build.
     nonisolated public func buildInteriorScene(
         cellFormID: FormID,
@@ -27,29 +27,28 @@ nonisolated extension CellInteriorBuilder {
         let collected = owner.referenceBuilder.collectTaggedReferences(in: found, counts: &counts)
         let refs = collected.map(\.reference)
         let location = CellSceneLocation.interior(cellFormID)
-        let resolved = owner.referenceBuilder.effectiveReferences(
+        let resolved = owner.referenceBuilder.states.effectiveReferences(
             (refs, collected), state: state, location: location, counts: &counts
         )
         let effective = resolved.references
-        let collision = owner.buildCollision(resolved: resolved, location: location)
-        let instances = owner.resolveInstances(refs: effective, counts: &counts)
+        let collision = owner.collisionBuilder.triggers
+            .buildCollision(resolved: resolved, location: location)
+        let instances = owner.records.instances.resolveInstances(refs: effective, counts: &counts)
         let actors = owner.actorBuilder.buildInteriorActors(
             cell: found, location: location, localized: localized,
             deltas: resolved.deltas, collision: collision.staticCollision,
             parents: ActorEnableParents(references: owner.referenceBuilder
-                .entriesByFormID(resolved.entries))
+                .states.entriesByFormID(resolved.entries))
         )
-        let lighting = owner.interiorLighting.buildInteriorLighting(
-            cell: found.cell,
-            references: effective
-        )
+        let lighting = owner.interiorLighting
+            .buildInteriorLighting(cell: found.cell, references: effective)
         var scene = owner.assembler.makeScene(
             cell: (found, (x: 0, y: 0)),
             instances: instances,
             geometry: CellGeometryBuild(
                 location: location,
-                doors: owner.assembler.resolveDoors(refs: effective),
-                interactions: owner.assembler.resolveInteractions(refs: effective),
+                doors: owner.assembler.interactions.resolveDoors(refs: effective),
+                interactions: owner.assembler.interactions.resolveInteractions(refs: effective),
                 terrain: nil,
                 grass: nil,
                 water: owner.waterBuilder.buildInteriorWater(found: found, instances: instances),
@@ -72,14 +71,15 @@ nonisolated extension CellInteriorBuilder {
         scene.waterVolumes = owner.waterVolumeBuilder.buildWaterVolumes(
             refs: effective, cellWater: nil, grid: nil, terrain: nil
         )
-        return owner.objectBuilder.finished(
-            scene, hazards: owner.objectBuilder.collectHazards(in: found, resolved: resolved),
+        return owner.objectBuilder.hazards.finished(
+            scene,
+            hazards: owner.objectBuilder.hazards.collectHazards(in: found, resolved: resolved),
             collision: collision
         )
     }
 }
 
-nonisolated extension CellInteriorBuilder {
+nonisolated extension CellSceneBuilder.CellInteriorBuilder {
     /// Groups whose labels match the object ID's ones and tens digits run first.
     /// The rest still run, because UESP warns labels may be stale.
     nonisolated private func findInteriorCell(
@@ -109,12 +109,12 @@ nonisolated extension CellInteriorBuilder {
         expected: (block: Int32, subBlock: Int32),
         localized: Bool
     ) -> FoundCell? {
-        guard let children = owner.childrenOrSkip(group) else { return nil }
+        guard let children = owner.records.childrenOrSkip(group) else { return nil }
         for (index, child) in children.enumerated() {
             guard
                 case let .record(record) = child, record.type == "CELL",
                 record.formID == formID,
-                let cell = owner.decodeOrSkip(record, using: {
+                let cell = owner.records.decodeOrSkip(record, using: {
                     try Cell(record: $0, localized: localized)
                 }),
                 cell.isInterior
@@ -122,7 +122,7 @@ nonisolated extension CellInteriorBuilder {
             return FoundCell(
                 cell: cell,
                 formID: record.formID,
-                children: owner.cellChildrenGroup(
+                children: owner.records.cellChildrenGroup(
                     following: index, in: children, cellFormID: record.formID
                 )
             )
@@ -168,34 +168,18 @@ nonisolated extension CellInteriorBuilder {
         default: false
         }
     }
-
-    nonisolated func loadOrderIndexBuildingIfNeeded() -> LoadOrderRecordIndex {
-        if let loadOrderIndex = owner.loadOrderIndex {
-            return loadOrderIndex
-        }
-        let store = LoadOptimisations.isOn(.recordIndexCache) ? owner.formIDIndexStore : nil
-        let index = owner.loadPhases.measure(.recordIndex) {
-            LoadOrderRecordIndex(
-                plugins: owner.loadOrderPlugins,
-                space: owner.formIDResolver,
-                store: store
-            )
-        }
-        owner.loadOrderIndex = index
-        return index
-    }
 }
 
 nonisolated extension CellSceneBuilder {
-    public var interiorBuilder: CellInteriorBuilder {
-        CellInteriorBuilder(owner: self)
+    public var interiorBuilder: CellSceneBuilder.CellInteriorBuilder {
+        CellSceneBuilder.CellInteriorBuilder(owner: self)
     }
 
-    var interiorLighting: CellInteriorLighting {
-        CellInteriorLighting(owner: self)
+    var interiorLighting: CellSceneBuilder.CellInteriorLighting {
+        CellSceneBuilder.CellInteriorLighting(owner: self)
     }
 
-    public var doorTransitions: CellDoorTransitionBuilder {
-        CellDoorTransitionBuilder(owner: self)
+    public var doorTransitions: CellSceneBuilder.CellDoorTransitionBuilder {
+        CellSceneBuilder.CellDoorTransitionBuilder(owner: self)
     }
 }

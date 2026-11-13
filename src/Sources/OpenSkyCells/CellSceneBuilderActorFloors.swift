@@ -6,7 +6,7 @@ import OpenSkyFormatsESM
 import OpenSkyPhysics
 import simd
 
-nonisolated extension CellActorBuilder {
+nonisolated extension CellSceneBuilder.CellActorSpawnBuilder {
     /// How far below a floor's top an actor's feet may be and still rise onto it. Half
     /// the capsule: a deeper floor is a roof or a bridge over the actor.
     static let actorFloorReach: Float = PlayerCapsule.standard.height / 2

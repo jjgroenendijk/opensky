@@ -11,7 +11,7 @@ import OpenSkyImageKernels
 import OpenSkyRenderCore
 import OpenSkyTerrain
 
-nonisolated extension CellTerrainBuilder {
+nonisolated extension CellSceneBuilder.CellTerrainLODBuilder {
     /// One worldspace's generated terrain, built on the cell build queue.
     final class LoadOrderTerrainLOD: TerrainLODGenerating {
         private unowned let builder: CellSceneBuilder
@@ -28,7 +28,7 @@ nonisolated extension CellTerrainBuilder {
             guard let source = source(for: block) else { return nil }
             let edge = TerrainLODGenerator.textureEdge(level: block.level)
             let diffuse = TerrainLODGenerator.diffuse(source) {
-                self.builder.terrainBuilder.terrainLODTexture($0, edge: edge)
+                self.builder.terrainBuilder.terrainLOD.terrainLODTexture($0, edge: edge)
             }
             let normal = TerrainLODGenerator.normalMap(source)
             let side = TerrainLODGenerator.textureSize
@@ -68,7 +68,7 @@ nonisolated extension CellTerrainBuilder {
     }
 }
 
-nonisolated extension CellTerrainBuilder {
+nonisolated extension CellSceneBuilder.CellTerrainLODBuilder {
     /// The generator for the LOD worldspace, or nil when generated terrain is off or the
     /// worldspace is not in the load order.
     nonisolated func loadOrderTerrainLOD(lodWorldspace: String) -> LoadOrderTerrainLOD? {
@@ -76,7 +76,7 @@ nonisolated extension CellTerrainBuilder {
             let store = owner.distantLODBuilder?.configurationStore,
             store.snapshot().configuration.generatedTerrain,
             let world = attempt({
-                try owner.worldChildrenGroup(
+                try owner.records.worldChildrenGroup(
                     editorID: lodWorldspace,
                     localized: owner.pluginLocalized
                 )
@@ -90,9 +90,10 @@ nonisolated extension CellTerrainBuilder {
     /// A land texture at the mip whose edge is closest above `edge`; nil when its chain
     /// is broken or the CPU cannot decode it.
     nonisolated func terrainLODTexture(_ ltexID: FormID, edge: Int) -> TerrainLODTexture? {
-        guard let path = terrainTextureKeys(for: ltexID)?.diffuse else { return nil }
+        guard let path = owner.terrainBuilder.textures.terrainTextureKeys(for: ltexID)?.diffuse
+        else { return nil }
         let key = "\(path)|\(edge)"
-        if let cached = owner.terrainLODTextures[key] {
+        if let cached = owner.caches.terrainLODTextures[key] {
             return cached
         }
         let image = attempt { try owner.fileSystem?.contents(forPath: path) }
@@ -100,7 +101,7 @@ nonisolated extension CellTerrainBuilder {
         let texture = image.flatMap {
             TerrainLODTexture(width: $0.width, height: $0.height, rgba: $0.rgba)
         }
-        owner.terrainLODTextures[key] = .some(texture)
+        owner.caches.terrainLODTextures[key] = .some(texture)
         return texture
     }
 }

@@ -16,7 +16,7 @@ nonisolated public struct SpawnedReferenceBuild: Sendable {
     public static let empty = SpawnedReferenceBuild(references: [], entries: [])
 }
 
-nonisolated extension CellActorBuilder {
+nonisolated extension CellSceneBuilder.CellActorSpawnBuilder {
     /// Every spawned object `state` places in `location`, in `ReferenceKey` order. A spawn
     /// past the 24-bit object ID has no FormID, so it is dropped and counted.
     nonisolated public func spawnedReferences(
@@ -59,10 +59,11 @@ nonisolated extension CellActorBuilder {
     }
 }
 
-nonisolated extension CellActorBuilder {
+nonisolated extension CellSceneBuilder.CellActorSpawnBuilder {
     /// A spawn whose base is an `NPC_` is an actor, built with the cell's ACHRs.
     nonisolated func spawnsActor(_ spawn: ReferenceSpawnState) -> Bool {
-        actorResolversBuildingIfNeeded().template.actors[spawn.base.rawValue] != nil
+        owner.actorBuilder.resolver.actorResolversBuildingIfNeeded().template
+            .actors[spawn.base.rawValue] != nil
     }
 
     /// The actors the running game created in `location`, in key order.

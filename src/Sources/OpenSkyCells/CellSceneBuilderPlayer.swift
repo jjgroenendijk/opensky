@@ -15,7 +15,7 @@ import OpenSkyRuntimeState
 import OpenSkyWorldInterface
 import simd
 
-nonisolated extension CellActorBuilder {
+nonisolated extension CellSceneBuilder.CellPlayerRigBuilder {
     /// Runs on the build queue; the main actor binds the result to the live pose.
     public func assemblePlayerRig(
         _ request: PlayerRigRequest
@@ -26,7 +26,8 @@ nonisolated extension CellActorBuilder {
                 return PlayerRigAssembly(
                     assembly: assembly,
                     faceMorphs: morphs.map {
-                        assembledHeadMorphs(assembly: assembly, face: $0).bindings
+                        owner.actorBuilder.morphs.assembledHeadMorphs(assembly: assembly, face: $0)
+                            .bindings
                     } ?? [:]
                 )
             }
@@ -62,13 +63,13 @@ nonisolated extension CellActorBuilder {
 
     /// Resolves the player's appearance once and assembles both rigs. The arms are the
     /// third-person answer through `firstPersonProjection`, so the rigs cannot disagree.
-    private func assemblePlayer(
+    func assemblePlayer(
         _ request: PlayerRigRequest
     ) -> Result<ActorAssembly<ActorRenderAsset>, PlayerBodyError> {
         let (equipped, eyeTextureSet) = (request.equipped, request.eyeTextureSet)
         let firstPerson = request.firstPerson
         let label = firstPerson ? "player arms" : "player body"
-        let resolvers = actorResolversBuildingIfNeeded()
+        let resolvers = owner.actorBuilder.resolver.actorResolversBuildingIfNeeded()
         let override = request.appearance.map(withSkinTone)
         let assembly: ActorAssembly<ActorRenderAsset>
         do {
@@ -84,7 +85,7 @@ nonisolated extension CellActorBuilder {
                 textureSets: resolvers.visual.textureSets
             )
             if let override, !firstPerson {
-                visual = chargenVisual(visual, appearance: override)
+                visual = owner.actorBuilder.chargen.chargenVisual(visual, appearance: override)
             }
             if firstPerson {
                 visual = visual.firstPersonProjection(
@@ -117,9 +118,9 @@ nonisolated extension CellActorBuilder {
 
     /// The face takes the race's default skin tone when it has no layer of its own,
     /// and the body takes the colour of that layer.
-    private func withSkinTone(_ override: PlayerAppearanceOverride) -> PlayerAppearanceOverride {
+    func withSkinTone(_ override: PlayerAppearanceOverride) -> PlayerAppearanceOverride {
         var override = override
-        let masks = raceTintMasks(override)
+        let masks = owner.actorBuilder.chargen.raceTintMasks(override)
         let resolver = owner.actorVisualResolver
         override.addDefaultSkinTone(masks: masks) { [resolver] id in
             resolver?.colors[id.rawValue]?.color

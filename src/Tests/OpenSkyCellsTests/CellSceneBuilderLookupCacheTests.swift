@@ -22,7 +22,7 @@ struct CellSceneBuilderLookupCacheTests: CellSceneBuilderFixture {
         let builder = try makeBuilder(extraWorldChildren: block(
             cellFormID: 0x50, editorID: "EarlierCell", grid: (6, -2)
         ))
-        let world = try builder.worldChildrenGroup(editorID: "Tamriel", localized: false)
+        let world = try builder.records.worldChildrenGroup(editorID: "Tamriel", localized: false)
         for _ in 0 ..< 2 {
             let found = builder.recordIndex.findCell(
                 in: world,
@@ -38,7 +38,7 @@ struct CellSceneBuilderLookupCacheTests: CellSceneBuilderFixture {
         let builder = try makeBuilder(extraWorldChildren: block(
             cellFormID: 0x50, editorID: "OtherCell", grid: (-40, 33)
         ))
-        let world = try builder.worldChildrenGroup(editorID: "Tamriel", localized: false)
+        let world = try builder.records.worldChildrenGroup(editorID: "Tamriel", localized: false)
         let other = builder.recordIndex.findCell(in: world, gridX: -40, gridY: 33, localized: false)
         let target = builder.recordIndex.findCell(in: world, gridX: 6, gridY: -2, localized: false)
         #expect(other?.formID == 0x50)
@@ -54,7 +54,7 @@ struct CellSceneBuilderLookupCacheTests: CellSceneBuilderFixture {
             editorID: "Persistent", grid: (0, 0), flags: 0, waterHeightBits: nil, waterType: nil
         ))
         let builder = try makeBuilder(extraWorldChildren: persistent)
-        let world = try builder.worldChildrenGroup(editorID: "Tamriel", localized: false)
+        let world = try builder.records.worldChildrenGroup(editorID: "Tamriel", localized: false)
         #expect(builder.recordIndex
             .findCell(in: world, gridX: 0, gridY: 0, localized: false) == nil)
         #expect(builder.recordIndex.persistentCell(in: world, localized: false)?.formID == 0x60)

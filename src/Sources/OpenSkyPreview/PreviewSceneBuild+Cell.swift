@@ -123,7 +123,7 @@ nonisolated extension PreviewSceneBuilder {
                 let scene = try builder.buildScene(
                     worldspaceEditorID: worldspace, gridX: grid.x, gridY: grid.y
                 )
-                let lod = try builder.terrainBuilder.buildDistantLOD(
+                let lod = try builder.terrainBuilder.distantLOD.buildDistantLOD(
                     worldspaceEditorID: worldspace, center: grid, hiddenCells: [grid]
                 )
                 let render = lod.map { RenderScene(merging: [scene.renderScene, $0.renderScene]) }
