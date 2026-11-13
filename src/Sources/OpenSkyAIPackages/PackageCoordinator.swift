@@ -241,6 +241,8 @@ public final class PackageCoordinator {
     let store: PackageStore?
     /// Real seconds until the alias stacks are read again.
     private var aliasRefreshSeconds: Float = 0
+    /// Actors that keep watching a fight that just ended.
+    var spectators = SpectatorMemory()
     private static let aliasRefreshInterval: Float = 1
     /// A walking actor leaves residency for a few frames while it moves into the next
     /// cell. A shorter absence keeps its package and procedure.
@@ -260,6 +262,7 @@ public final class PackageCoordinator {
             ActorPackageRuntime(store: $0.store, conditionFunctions: $0.conditionFunctions)
         }
         settings = PackageSettings(data)
+        spectators = SpectatorMemory(rememberSeconds: settings.sandbox.spectatorRememberSeconds)
         movement = PackageMovement(world: world)
         movement.settled = { [weak self] actor, reason in
             self?.movementSettled(actor: actor, reason: reason)
@@ -315,7 +318,7 @@ public final class PackageCoordinator {
                 world.packageAliasStacks(), actors: registeredActors.keys.sorted(), clock: clock
             ) { self.conditionContext(clock: clock) }
         }
-        applySituations(to: &runtime, clock: clock, context: live)
+        applySituations(to: &runtime, clock: clock, delta: delta, context: live)
         runtime.advance(clock: clock) { _ in live() }
         self.runtime = runtime
         advanceTrees(by: delta)

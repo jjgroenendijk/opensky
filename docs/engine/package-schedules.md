@@ -53,7 +53,7 @@ ranges are OpenSky's:
 | Situation | When |
 | --- | --- |
 | Combat | The actor is engaged, or runs its combat override package and is still hostile |
-| Spectator | Another actor fights within 2,048 units, and this one does not |
+| Spectator | Another actor fights within 2,048 units, and this one does not. It keeps watching for `fAISpectatorRememberThreatTimer` (5 s) after the fight ends |
 | Observe dead body | A dead actor lies within 1,024 units |
 | Guard warn | Its Guard procedure has warned, until the warn package's tree ends |
 
