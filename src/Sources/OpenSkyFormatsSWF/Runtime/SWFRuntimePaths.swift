@@ -67,7 +67,7 @@ nonisolated extension SWFMovieRuntime {
             return node.parent.map { .object($0.object) }
         case "text", "htmlText":
             return textMember(of: node)
-        case "scroll", "maxscroll", "bottomScroll":
+        case "scroll", "maxscroll", "bottomScroll", "numLines":
             return scrollMember(name, of: node)
         case "selectable":
             if case let .editText(id) = node.content, let field = editText(id) {
