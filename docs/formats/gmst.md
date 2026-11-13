@@ -93,8 +93,9 @@ them, for example `sVDSGManual`: "Unused UI string from Fallout 3's loading scre
 | Favour points | `iFavorPointsRestore` | The wiki gives it no description, and its vanilla value is 0. UESP [Skyrim:Disposition](https://en.uesp.net/wiki/Skyrim:Disposition) says disposition "is no longer visible" and changes by relationship rank, -4 to 4, which quests set. No points exist to restore |
 | Ground flight | `fMoveFlyRunMult` | A flier's speed as a multiple of its ground gaits. Every vanilla flier has its own flying movement type, such as `Dragon_Flying_MT` |
 | Swim jump | `fJumpSwimmingMult` | A swimmer cannot jump. The jump key raises it toward the surface |
-| Ingredient uses | `iIngredientAlchemyUses` | The install adds 0 uses per brew, so the count never teaches an effect |
+| Ingredient uses | `iIngredientAlchemyUses`, `iIngredientWortcraftUses` | The install adds 0 uses per brew and 0 per bite, so the count never teaches an effect |
 | Never read | `fConcussionTimer`, `sSeasonWinter`, `sArmorWeightHeavy` | The game holds them, but no code path reads them, as OpenSky observed. Some sit in name tables (armour weights, seasons, spell and projectile types) that nothing reads |
+| Preload only | `sImpactParticleWoodDefault` | The game loads the model once at start and never places it, as OpenSky observed |
 
 A setting on this list counts as done in the [gap report](/tools/gaps.md). A setting the wiki
 does not mark, and whose system Skyrim has, stays off the list even if OpenSky lacks the system.
