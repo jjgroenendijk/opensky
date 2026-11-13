@@ -15,9 +15,9 @@ VOLATILE = {
 }
 # Physics and float maths may move a value in its last digits between runs.
 TOLERANCE = 0.01
-# A walking actor moves about 1.2 units a frame, and the app runs a frame or two between
-# worldReady and the tour's pause, so places match within 2 units.
-KEY_TOLERANCE = {"position": 2.0, "distance": 2.0, "feet": 2.0}
+# A walking actor moves about 1.3 units a frame, and the app runs a frame or two between
+# worldReady and the tour's pause, so places match within two frames of walking.
+KEY_TOLERANCE = {"position": 3.0, "distance": 3.0, "feet": 3.0}
 
 
 def steps(script):
