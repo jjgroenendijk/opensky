@@ -1,6 +1,7 @@
 // The verb the crosshair shows for a use-key target, from the `sTake`, `sSearch`, and
-// related string settings. A theft shows the red `sSteal` or `sStealFrom` verb, and a
-// sneaking player sees `sPickpocket` on an actor. See docs/engine/interaction.md.
+// related string settings. A theft shows the red `sSteal` or `sStealFrom` verb, a
+// sneaking player sees `sPickpocket` on an actor, and an open door `sClose`.
+// See docs/engine/interaction.md.
 
 public import OpenSkyGameData
 public import OpenSkyWorldInterface
@@ -8,6 +9,10 @@ public import OpenSkyWorldInterface
 nonisolated public enum ActivationText: String, GameSettingTextKey {
     case activate = "sActivate"
     case open = "sOpen"
+    case close = "sClose"
+    case use = "sUse"
+    /// Put after the name of a bed someone else owns.
+    case owned = "sOwned"
     case search = "sSearch"
     case harvest = "sHarvest"
     case take = "sTake"
@@ -24,6 +29,9 @@ nonisolated public enum ActivationText: String, GameSettingTextKey {
         switch self {
         case .activate: "Activate"
         case .open: "Open"
+        case .close: "Close"
+        case .use: "Use"
+        case .owned: "Owned"
         case .search: "Search"
         case .harvest: "Harvest"
         case .take: "Take"
@@ -44,11 +52,17 @@ nonisolated public struct ActivationPromptContext: Equatable, Sendable {
     /// Taking the item, or from the container, would be a theft.
     public var isTheft = false
     public var isPlayerSneaking = false
+    /// A door or other openable target that is open now.
+    public var isOpen = false
 
-    public init(isBook: Bool = false, isTheft: Bool = false, isPlayerSneaking: Bool = false) {
+    public init(
+        isBook: Bool = false, isTheft: Bool = false, isPlayerSneaking: Bool = false,
+        isOpen: Bool = false
+    ) {
         self.isBook = isBook
         self.isTheft = isTheft
         self.isPlayerSneaking = isPlayerSneaking
+        self.isOpen = isOpen
     }
 }
 
@@ -65,14 +79,14 @@ nonisolated public enum ActivationPrompt {
             }
             return context.isBook ? .read : .take
         case .search: return context.isTheft ? .stealFrom : .search
-        case .open: return .open
+        case .open: return context.isOpen ? .close : .open
         case .harvest: return .harvest
         case .talk: return context.isPlayerSneaking ? .pickpocket : .talk
         case .use:
             if interaction.isBed {
                 return .sleep
             }
-            return interaction.seats.isEmpty ? .activate : .sit
+            return interaction.seats.isEmpty ? .use : .sit
         case .activate: return .activate
         }
     }
@@ -84,6 +98,11 @@ nonisolated public enum ActivationPrompt {
         texts: GameSettingTexts<ActivationText>
     ) -> PlacedInteraction {
         guard let text = text(for: interaction, context: context) else { return interaction }
+        if text == .sleep, context.isTheft {
+            return interaction.relabelled(
+                texts[text], name: "\(interaction.name) (\(texts[.owned]))"
+            )
+        }
         return interaction.relabelled(texts[text])
     }
 }

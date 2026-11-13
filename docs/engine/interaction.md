@@ -232,7 +232,9 @@ string setting, chosen at run time:
 | An item or a container that is not the player's to take | `sSteal`, `sStealFrom` |
 | A book | `sRead` |
 | An actor while the player sneaks | `sPickpocket` |
-| A bed, a seat, other furniture | `sFurnitureSleep`, `sSit`, `sActivate` |
+| A bed, a seat, other furniture | `sFurnitureSleep`, `sSit`, `sUse` |
+| A bed someone else owns | `sFurnitureSleep`, and `(<sOwned>)` after the name |
+| A door or other openable that is open | `sClose` |
 | Anything else | `sTake`, `sSearch`, `sOpen`, `sHarvest`, `sTalk`, `sActivate` |
 
 The steal texts carry their own red `<font>` markup, which the HUD movie's crosshair text field
