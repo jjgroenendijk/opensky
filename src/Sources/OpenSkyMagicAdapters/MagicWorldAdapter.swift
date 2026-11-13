@@ -160,6 +160,7 @@ public struct MagicSessionBuilder {
         data.rules.world = MagicWorldSettings.resolve(store: settings)
         data.texts.magic = MagicTexts.resolve(store: settings) { [game] in game.mapWorld.text($0) }
         data.texts.castNotices = game.mapWorld.settingTexts()
+        data.texts.hitNotices = game.mapWorld.settingTexts()
         data.texts.enchanting = game.mapWorld.settingTexts()
         data.texts.souls = SoulTexts.resolve(store: settings) { [game] in game.mapWorld.text($0) }
         return data

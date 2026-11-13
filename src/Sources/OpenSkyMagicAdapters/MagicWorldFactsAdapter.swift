@@ -74,6 +74,11 @@ extension MagicWorldFactsAdapter {
         holder.readoutName
     }
 
+    public func displayName(of holder: ActorValueHolder) -> String? {
+        guard case let .actor(base) = holder.subject else { return nil }
+        return game.actorWorld.displayName(of: holder.key, base: base)
+    }
+
     public func itemName(_ item: FormID) -> String {
         game.inventory.name(of: item)
     }

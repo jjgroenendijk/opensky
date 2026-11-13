@@ -58,6 +58,7 @@ nonisolated let neverReadTextSettings = [
     "sLoadingLOD",
     "sLocked",
     "sLow",
+    "sMagicCastRangedUnderwater",
     "sMagicDeliveryStrike",
     "sMagicEffectItemAbsorb",
     "sMagicEffectItemCreateLock",
@@ -150,5 +151,6 @@ nonisolated let neverReadTextSettings = [
     "sWeaponEnchantments",
     "sWeight",
     "sYesRestart",
+    "sYesToAllText",
     "sYour"
 ]

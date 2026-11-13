@@ -214,6 +214,10 @@ public final class CasterRuntime {
                 spell: key, chargeTime: max(0, chargeTime(of: spell, dual: true) - lead.charged)
             ))
         }
+        let otherHand = state(of: hand.other, on: caster.key).phase.isCasting
+        if MultiCastRule.refuses(spell, otherHandCasting: otherHand) {
+            return record(hand, on: caster, .failed(.castingAnother))
+        }
         var state = SpellCastState()
         state.beginCharge(key)
         casts[slot(hand, caster)] = state

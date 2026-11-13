@@ -35,6 +35,8 @@ public struct ActiveEffectRuntime {
     /// half lives in `ActiveEffectRuntimeTick.swift` and a file-private setter
     /// would put it out of reach there.
     public var tally = ActiveEffectTally()
+    /// What the last `apply` did with its entries, for the caster's notices.
+    public private(set) var lastApplication = EffectApplicationTally()
     /// The tick walks holders in key order; this keeps that order between frames.
     /// Internal, because the tick half reads it from another file.
     var holderOrder = ReferenceKeyOrder()
@@ -116,6 +118,7 @@ public struct ActiveEffectRuntime {
         on target: ActorValueHolder
     ) -> [ActiveEffect] {
         var stored: [ActiveEffect] = []
+        lastApplication = EffectApplicationTally()
         for entry in entries {
             guard let resolved = effects.resolve(entry, fromPlugin: pluginName) else {
                 tally.noteUnresolvedEffect()
@@ -143,8 +146,10 @@ public struct ActiveEffectRuntime {
             case let .apply(application):
                 if let reason = refusal(of: application, on: target) {
                     tally.note(reason)
+                    lastApplication.note(reason)
                     continue
                 }
+                lastApplication.landed += 1
                 if entryHolds {
                     actOnce(application, caster: caster, on: target)
                 }

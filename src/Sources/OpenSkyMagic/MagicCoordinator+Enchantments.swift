@@ -35,11 +35,11 @@ extension MagicCoordinator.WeaponEnchantments {
                 .residentHolders(of: [SpellHitTarget(key: hit.target)])[hit.target]
         else { return }
         let plugin = coordinator.pluginName
-        coordinator.withEffects { runtime in
+        let landed = coordinator.withEffects { runtime -> Bool in
             let poisons = runtime.store.component(WeaponPoisonState.self, for: hit.attacker)
-            guard let poisons else { return }
+            guard let poisons else { return false }
             let (left, spent) = poisons.spendingDose(of: weapon)
-            guard let spent, let potion = items.ingestibles[spent.rawValue] else { return }
+            guard let spent, let potion = items.ingestibles[spent.rawValue] else { return false }
             if left.isEmpty {
                 runtime.store.reset(WeaponPoisonState.componentKind, for: hit.attacker)
             } else {
@@ -49,6 +49,10 @@ extension MagicCoordinator.WeaponEnchantments {
                 PoisonDose(potion: potion, id: spent, plugin: plugin),
                 caster: hit.attacker, on: target, using: &runtime
             )
+            return runtime.lastApplication.landed > 0
+        }
+        if landed == true, hit.target == .player {
+            coordinator.pendingCommands.append(.notice(coordinator.texts.hitNotices[.poisoned]))
         }
     }
 
