@@ -14,6 +14,8 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
         case skills
         case perks
         case legendary(ConfirmationModel)
+        /// The second legendary question, after a Yes to the first.
+        case legendaryAgain(ConfirmationModel)
         /// The question before a perk is bought.
         case perkConfirm(ConfirmationModel)
     }
@@ -112,7 +114,8 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
         case .levelUp: handleLevelUp(event)
         case .skills: handleSkills(event)
         case .perks: handlePerks(event)
-        case let .legendary(confirmation): handleLegendary(event, confirmation)
+        case let .legendary(confirmation): handleLegendary(event, confirmation, isSecond: false)
+        case let .legendaryAgain(confirmation): handleLegendary(event, confirmation, isSecond: true)
         case let .perkConfirm(confirmation): handlePerkConfirm(event, confirmation)
         }
     }
@@ -185,12 +188,15 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
     }
 
     private mutating func handleLegendary(
-        _ event: MenuInputEvent, _ confirmation: ConfirmationModel
+        _ event: MenuInputEvent, _ confirmation: ConfirmationModel, isSecond: Bool
     ) -> Action? {
         var confirmation = confirmation
         switch confirmation.handle(event) {
         case nil:
-            page = .legendary(confirmation)
+            page = isSecond ? .legendaryAgain(confirmation) : .legendary(confirmation)
+            return nil
+        case .chose(0) where !isSecond:
+            page = .legendaryAgain(ConfirmationModel(question: texts[.legendarySecondConfirm]))
             return nil
         case .chose(0):
             page = .skills
