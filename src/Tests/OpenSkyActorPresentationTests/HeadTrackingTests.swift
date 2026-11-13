@@ -37,7 +37,8 @@ struct HeadTrackingTests {
         let goal = HeadLook(yaw: 1, pitch: -0.2)
         let step = HeadTrackingCore.approach(.forward, goal, step: 0.1)
         #expect(abs(step.yaw - 0.1) < 0.0001)
-        #expect(abs(step.pitch + 0.1) < 0.0001)
+        // The smaller axis moves by the same share, so both arrive together.
+        #expect(abs(step.pitch + 0.02) < 0.0001)
         #expect(HeadTrackingCore.approach(goal, goal, step: 0.1) == goal)
     }
 

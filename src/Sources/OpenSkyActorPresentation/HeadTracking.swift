@@ -107,12 +107,15 @@ nonisolated public enum HeadTrackingCore {
         low + (high - low) * amount
     }
 
-    /// `current` moved toward `goal` by at most `step` radians on each axis.
+    /// `current` moved toward `goal`: the axis with more to turn moves by at most `step`
+    /// radians, and the other by the same share of its own turn, so both arrive together.
     public static func approach(_ current: HeadLook, _ goal: HeadLook, step: Float) -> HeadLook {
-        func move(_ from: Float, _ to: Float) -> Float {
-            from + min(max(to - from, -step), step)
-        }
-        return HeadLook(yaw: move(current.yaw, goal.yaw), pitch: move(current.pitch, goal.pitch))
+        let yaw = goal.yaw - current.yaw
+        let pitch = goal.pitch - current.pitch
+        let larger = max(abs(yaw), abs(pitch))
+        guard larger > step, larger > 0 else { return HeadLook(yaw: goal.yaw, pitch: goal.pitch) }
+        let share = max(step, 0) / larger
+        return HeadLook(yaw: current.yaw + yaw * share, pitch: current.pitch + pitch * share)
     }
 
     /// `pose` with the neck and head turned by `look`. `parents` is the skeleton's
