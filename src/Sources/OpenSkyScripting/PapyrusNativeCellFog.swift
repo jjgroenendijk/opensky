@@ -40,8 +40,8 @@ extension PapyrusNativeFunctions.CellFogNatives {
     ) {
         scriptState("Cell", name, into: &registry) { call, bridge, key in
             guard
-                let apply = bridge.sessionNatives.cellFog,
-                let word = bridge.loadOrderWord(of: key)
+                let apply = bridge.natives.session.cellFog,
+                let word = bridge.conditionTwins.loadOrderWord(of: key)
             else {
                 return failure(call, "\(name) needs the renderer and a cell")
             }

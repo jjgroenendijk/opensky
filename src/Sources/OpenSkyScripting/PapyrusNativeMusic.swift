@@ -7,7 +7,7 @@ import OpenSkyScriptingInterface
 extension PapyrusNativeFunctions.MusicNatives {
     static func installMusic(into registry: inout PapyrusNativeRegistry) {
         scriptState("MusicType", "Add", into: &registry) { call, bridge, key in
-            guard let music = bridge.music else {
+            guard let music = bridge.ports.music else {
                 return failure(call, "Add needs the music director")
             }
             guard music.addMusic(key) else {
@@ -16,7 +16,7 @@ extension PapyrusNativeFunctions.MusicNatives {
             return .returned(.none)
         }
         scriptState("MusicType", "Remove", into: &registry) { call, bridge, key in
-            guard let music = bridge.music else {
+            guard let music = bridge.ports.music else {
                 return failure(call, "Remove needs the music director")
             }
             music.removeMusic(key)

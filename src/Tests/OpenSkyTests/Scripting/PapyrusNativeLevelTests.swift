@@ -34,10 +34,10 @@ struct PapyrusNativeLevelTests {
                 )
             )
         )
-        session.bridge.actorNatives.actorValueRuntime = { values }
+        session.bridge.natives.actor.actorValueRuntime = { values }
         let levels = PlayerLevelRuntime(values: values)
         if wired {
-            session.bridge.progressionNatives.modifyPerkPoints = { delta in
+            session.bridge.natives.progression.modifyPerkPoints = { delta in
                 levels.modifyPerkPoints(by: delta).perkPoints
             }
         }

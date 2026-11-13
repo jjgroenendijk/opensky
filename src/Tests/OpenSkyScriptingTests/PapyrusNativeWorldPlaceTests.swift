@@ -52,7 +52,7 @@ struct PapyrusNativeWorldPlaceTests {
     @Test func distanceAndHeadingUseTheLivePosition() throws {
         let fixture = try Fixture.make()
         let other = Fixture.key(Fixture.doorID)
-        fixture.session.bridge.perceptionNatives
+        fixture.session.bridge.natives.perception
             .livePosition = { $0 == other ? SIMD3(4, 6, 3) : nil }
         let argument: [PapyrusValue] = [.object(fixture.handle(Fixture.doorID))]
 
@@ -69,9 +69,9 @@ struct PapyrusNativeWorldPlaceTests {
     @Test func distanceAcrossTwoInteriorsIsOutOfAnyRange() throws {
         let fixture = try Fixture.make()
         let other = Fixture.key(Fixture.doorID)
-        fixture.session.bridge.perceptionNatives
+        fixture.session.bridge.natives.perception
             .livePosition = { $0 == other ? SIMD3(1, 2, 3) : nil }
-        fixture.session.bridge.sessionNatives.conditionData = {
+        fixture.session.bridge.natives.session.conditionData = {
             ConditionDataResolution(cells: [
                 fixture.key: ReferenceCell(cell: FormID(Self.cellID), worldspace: nil),
                 other: ReferenceCell(cell: FormID(Self.cellID + 1), worldspace: nil)
@@ -88,7 +88,7 @@ struct PapyrusNativeWorldPlaceTests {
     @Test func locationCellAndWorldspaceComeFromThePlaceSnapshot() throws {
         let fixture = try Fixture.make()
         fixture.session.bridge.formIDResolver = PapyrusWorldFixture.resolver
-        fixture.session.bridge.sessionNatives.conditionData = {
+        fixture.session.bridge.natives.session.conditionData = {
             ConditionDataResolution(
                 currentLocations: [fixture.key: ResolvedFormID(
                     plugin: "Skyrim.esm", objectID: Self.townID
@@ -111,7 +111,7 @@ struct PapyrusNativeWorldPlaceTests {
 
     @Test func placeReadsAreNoneForAnUnplacedReference() throws {
         let fixture = try Fixture.make()
-        fixture.session.bridge.sessionNatives.conditionData = { .empty }
+        fixture.session.bridge.natives.session.conditionData = { .empty }
         for name in ["GetCurrentLocation", "GetParentCell", "GetWorldSpace"] {
             #expect(fixture.call(name, returnType: .object("Form")) == .returned(.none))
         }
@@ -125,7 +125,7 @@ struct PapyrusNativeWorldPlaceTests {
                 + LocationFixture.recordBytes(Self.townID, "Town", parent: Self.holdID)
         ))
         let store = LocationStore(plugins: [("Skyrim.esm", file)])
-        fixture.session.bridge.sessionNatives
+        fixture.session.bridge.natives.session
             .conditionData = { ConditionDataResolution(locations: store) }
         let hold = fixture.handle(Self.holdID)
         let town = fixture.handle(Self.townID)
@@ -138,7 +138,7 @@ struct PapyrusNativeWorldPlaceTests {
     @Test func gameTimeReadsTheDaysPassed() throws {
         let fixture = try Fixture.make()
         let clock = GameClock()
-        fixture.session.bridge.sessionNatives.clockSource = { clock }
+        fixture.session.bridge.natives.session.clockSource = { clock }
         let result = fixture.registry.invoke(PapyrusWorldFixture.methodCall(
             "Utility", "GetCurrentGameTime", receiver: nil, returnType: .float
         ))
@@ -147,7 +147,7 @@ struct PapyrusNativeWorldPlaceTests {
 
     @Test func realTimeReadsTheShellsClock() throws {
         let fixture = try Fixture.make()
-        fixture.session.bridge.sessionNatives.realTimeSource = { 12.5 }
+        fixture.session.bridge.natives.session.realTimeSource = { 12.5 }
         let result = fixture.registry.invoke(PapyrusWorldFixture.methodCall(
             "Utility", "GetCurrentRealTime", receiver: nil, returnType: .float
         ))

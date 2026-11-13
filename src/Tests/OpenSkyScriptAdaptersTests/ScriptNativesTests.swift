@@ -29,19 +29,19 @@ struct ScriptNativesTests {
         host.fakeAIWorld.lightLevelResult = 0.25
         host.fakePackages.templateResult = FormID(0x50)
         adapter.actorBindings.fillActorNatives(bridge: bridge)
-        let natives = bridge.actorNatives
+        let natives = bridge.natives.actor
         #expect(natives.actorValueRuntime?() == nil)
         #expect(natives.ragdollRuntime?() == nil)
         #expect(natives.combatRuntime?() == nil)
         #expect(natives.weaponDrawState?(Self.actor) == nil)
         #expect(natives.weaponDrawState?(.player) == nil)
-        _ = bridge.sessionNatives.conditionData?()
-        _ = bridge.perceptionNatives.detection?()
-        #expect(bridge.sessionNatives.currentPackage?(Self.actor) == nil)
-        #expect(bridge.sessionNatives.packageTemplate?(FormID(0x40)) == FormID(0x50))
-        #expect(bridge.perceptionNatives.lightLevel?(.zero) == 0.25)
-        #expect(bridge.perceptionNatives.livePosition?(.player) == nil)
-        #expect(bridge.perceptionNatives.livePosition?(Self.actor) == nil)
+        _ = bridge.natives.session.conditionData?()
+        _ = bridge.natives.perception.detection?()
+        #expect(bridge.natives.session.currentPackage?(Self.actor) == nil)
+        #expect(bridge.natives.session.packageTemplate?(FormID(0x40)) == FormID(0x50))
+        #expect(bridge.natives.perception.lightLevel?(.zero) == 0.25)
+        #expect(bridge.natives.perception.livePosition?(.player) == nil)
+        #expect(bridge.natives.perception.livePosition?(Self.actor) == nil)
         #expect(host.fakeRuntimeStateWorld.conditionDataCallCount == 1)
         #expect(host.fakePerception.perceptionResolutionCallCount == 1)
         #expect(host.fakeActorWorld.combatActorCalls == [Self.actor])
@@ -54,14 +54,14 @@ struct ScriptNativesTests {
         host.fakeProgression.incrementSkillResult = true
         host.fakeProgression.modifyPerkPointsResult = 2
         adapter.perkBindings.fillPerkNatives(bridge: bridge)
-        let natives = bridge.progressionNatives
+        let natives = bridge.natives.progression
         #expect(natives.mutatePerks?(.add, Self.actor, .player) == true)
         #expect(natives.mutatePerks?(.remove, Self.actor, .player) == false)
         #expect(natives.perkOwnership?(Self.actor) == nil)
         #expect(natives.advanceSkill?(.increment, 10, 1) == true)
         #expect(natives.modifyPerkPoints?(0) == 2)
-        #expect(bridge.crimeNatives.crimeReporter?() == nil)
-        #expect(bridge.crimeNatives.showBarterMenu?(Self.actor) == nil)
+        #expect(bridge.natives.crime.crimeReporter?() == nil)
+        #expect(bridge.natives.crime.showBarterMenu?(Self.actor) == nil)
         #expect(host.fakePerks.addCalls.count == 1)
         #expect(host.fakePerks.removeCalls.count == 1)
         #expect(host.fakeProgression.incrementSkillCalls == [10])
@@ -70,35 +70,35 @@ struct ScriptNativesTests {
     @Test func playerNativesReachMountSneakAndHUD() {
         host.fakeMountWorld.dismountResult = true
         adapter.fillPlayerNatives(bridge: bridge)
-        #expect(bridge.sessionNatives.leveledEdits?() == nil)
-        #expect(bridge.playerNatives.dismount?(.player) == true)
-        bridge.playerNatives.togglePlayerSneaking?()
-        bridge.playerNatives.toggleMenus?()
-        _ = bridge.playerNatives.playersLastMount?()
+        #expect(bridge.natives.session.leveledEdits?() == nil)
+        #expect(bridge.natives.player.dismount?(.player) == true)
+        bridge.natives.player.togglePlayerSneaking?()
+        bridge.natives.player.toggleMenus?()
+        _ = bridge.natives.player.playersLastMount?()
         #expect(host.fakePlayer.isSneaking)
         #expect(host.fakeMountWorld.dismountCalls == [.player])
     }
 
     @Test func skyNativesNeedASession() {
         adapter.skyBindings.fillSky(bridge: bridge)
-        #expect(bridge.sessionNatives.towardSun?() == nil)
-        #expect(bridge.sessionNatives.playerView?() == nil)
-        #expect(bridge.sessionNatives.skyMode?() == ScriptSkyBindingsAdapter.SkyMode.full)
+        #expect(bridge.natives.session.towardSun?() == nil)
+        #expect(bridge.natives.session.playerView?() == nil)
+        #expect(bridge.natives.session.skyMode?() == ScriptSkyBindingsAdapter.SkyMode.full)
         host.fakeStreamer.isInterior = true
-        #expect(bridge.sessionNatives.skyMode?() == ScriptSkyBindingsAdapter.SkyMode.interior)
+        #expect(bridge.natives.session.skyMode?() == ScriptSkyBindingsAdapter.SkyMode.interior)
     }
 
     @Test func anActorSeesThroughPerception() {
         host.fakePerception.perceptionResolutionResult = .empty
         adapter.nodeBindings.fillLineOfSight(bridge: bridge)
-        #expect(bridge.perceptionNatives.seesTarget?(Self.actor, .player) == nil)
-        #expect(bridge.perceptionNatives.seesTarget?(.player, Self.actor) == nil)
+        #expect(bridge.natives.perception.seesTarget?(Self.actor, .player) == nil)
+        #expect(bridge.natives.perception.seesTarget?(.player, Self.actor) == nil)
     }
 
     @Test func fogMassAndPosesNeedTheirWorlds() {
         host.fakeStreamer.dynamicBodiesValue = DynamicBodyWorld()
         adapter.actorBindings.fillActorNatives(bridge: bridge)
-        let natives = bridge.sessionNatives
+        let natives = bridge.natives.session
         #expect(natives.cellFog?(FormID(0x20), .power(2)) == false)
         #expect(natives.havokMass?(Self.actor) == nil)
         natives.publishTranslationPoses?([:])

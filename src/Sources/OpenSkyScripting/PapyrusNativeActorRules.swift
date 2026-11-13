@@ -30,14 +30,14 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
     private static func installDeferredKill(into registry: inout PapyrusNativeRegistry) {
         for (name, deferred) in [("StartDeferredKill", true), ("EndDeferredKill", false)] {
             scriptState("Actor", name, into: &registry) { _, bridge, key in
-                bridge.updateScriptedState(of: key) {
+                bridge.scriptState.updateScriptedState(of: key) {
                     $0.setFlag(ScriptedStateName.deferredKill, deferred ? true : nil)
                 }
                 return .returned(.none)
             }
         }
         scriptState("Actor", "IsInKillMove", into: &registry) { _, bridge, key in
-            .returned(.boolean(bridge.actorAI?.isInKillMove(key) ?? false))
+            .returned(.boolean(bridge.ports.actorAI?.isInKillMove(key) ?? false))
         }
     }
 
@@ -53,15 +53,17 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
                 let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
             else { return failure(call, "StartVampireFeed needs a target") }
             bridge.world?.queueVampireFeed(feeder: key, target: target)
-            _ = bridge.actorAI?.playIdle(editorID: vampireFeedIdle, on: key, with: target)
+            _ = bridge.ports.actorAI?.playIdle(editorID: vampireFeedIdle, on: key, with: target)
             return .returned(.none)
         }
         scriptState("Actor", "StartCannibal", into: &registry) { call, bridge, key in
             guard
                 let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
             else { return failure(call, "StartCannibal needs a target") }
-            bridge.updateScriptedState(of: target) { $0.setFlag(ScriptedStateName.eaten, true) }
-            _ = bridge.actorAI?.playIdle(editorID: cannibalFeedIdle, on: key, with: target)
+            bridge.scriptState.updateScriptedState(of: target) {
+                $0.setFlag(ScriptedStateName.eaten, true)
+            }
+            _ = bridge.ports.actorAI?.playIdle(editorID: cannibalFeedIdle, on: key, with: target)
             return .returned(.none)
         }
     }
@@ -74,7 +76,7 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
                 let spell = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)),
                 let target = objectArgument(call, at: 1).flatMap(bridge.referenceKey(for:))
             else { return failure(call, "DoCombatSpellApply needs a spell and a target") }
-            guard bridge.castSpell(spell, from: key, at: target) else {
+            guard bridge.magicBridge.castSpell(spell, from: key, at: target) else {
                 return failure(call, "DoCombatSpellApply has no caster runtime or no such spell")
             }
             return .returned(.none)
@@ -83,19 +85,19 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
         // actor's combat target, and with neither it plays alone.
         scriptState("Actor", "PlayIdleWithTarget", into: &registry) { call, bridge, key in
             guard
-                let ai = bridge.actorAI,
+                let ai = bridge.ports.actorAI,
                 case let .plugin(plugin, objectID)? = objectArgument(call, at: 0)
                     .flatMap(bridge.referenceKey(for:))
             else { return failure(call, "PlayIdleWithTarget needs an idle and the actor AI") }
             let idle = ResolvedFormID(plugin: plugin, objectID: objectID)
             guard
                 let target = objectArgument(call, at: 1).flatMap(bridge.referenceKey(for:))
-                ?? bridge.actorNatives.combatRuntime?()?.combatTarget(of: key)
+                ?? bridge.natives.actor.combatRuntime?()?.combatTarget(of: key)
             else { return .returned(.boolean(ai.playIdle(idle, on: key))) }
             return .returned(.boolean(ai.playIdle(idle, on: key, with: target)))
         }
         scriptState("Actor", "ClearArrested", into: &registry) { _, bridge, key in
-            bridge.updateScriptedState(of: key) {
+            bridge.scriptState.updateScriptedState(of: key) {
                 $0.setFlag("resistingArrest", nil)
                 $0.setFlag("arrested", nil)
             }
@@ -105,7 +107,7 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
             guard let point = bridge.gameNatives.packageLocation?(key) else {
                 return failure(call, "MoveToPackageLocation found no package location")
             }
-            bridge.move(key, to: point)
+            bridge.referenceRules.move(key, to: point)
             return .returned(.none)
         }
         scriptState("Actor", "ClearExtraArrows", into: &registry) { call, bridge, key in
@@ -136,11 +138,11 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
         scriptState("Actor", "AttachAshPile", into: &registry) { call, bridge, key in
             let base = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
                 ?? defaultAshPile
-            guard let pile = bridge.trapWorld?.placeAtMe(base, at: key, count: 1) else {
+            guard let pile = bridge.ports.trapWorld?.placeAtMe(base, at: key, count: 1) else {
                 return failure(call, "AttachAshPile could not place the pile")
             }
-            bridge.updateScriptedState(of: key) { $0.setForm(ashPileName, pile) }
-            bridge.updateScriptedState(of: pile) {
+            bridge.scriptState.updateScriptedState(of: key) { $0.setForm(ashPileName, pile) }
+            bridge.scriptState.updateScriptedState(of: pile) {
                 $0.setForm(PapyrusWorldStateBridge.ashPileOwnerName, key)
             }
             return .returned(.none)
@@ -155,8 +157,8 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
     private static func installOwnedDoors(into registry: inout PapyrusNativeRegistry) {
         scriptState("Actor", "UnLockOwnedDoorsInCell", into: &registry) { _, bridge, key in
             let cell = bridge.cellLocation(of: key)
-            let base = bridge.resolvedBase(of: key)
-            for entry in bridge.references?.residentEntries() ?? [] {
+            let base = bridge.formLists.resolvedBase(of: key)
+            for entry in bridge.ports.references?.residentEntries() ?? [] {
                 guard
                     let placed = entry.placedReference, placed.teleportDestination != nil,
                     bridge.cellLocation(of: entry.key) == cell,
@@ -173,7 +175,7 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
     private static func owner(
         of key: ReferenceKey, _ placed: PlacedReference, _ bridge: PapyrusWorldStateBridge
     ) -> ReferenceKey? {
-        if let scripted = bridge.scriptedOwner(of: key) {
+        if let scripted = bridge.stateLinks.scriptedOwner(of: key) {
             guard case let .actor(actor)? = scripted else { return nil }
             return actor
         }
@@ -189,7 +191,7 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
                 let radius = float(call, at: 1), radius.isFinite,
                 let centre = PapyrusNativeFunctions.WorldPlaceNatives.position(of: key, bridge)
             else { return failure(call, "KnockAreaEffect needs a magnitude and a radius") }
-            guard let trapWorld = bridge.trapWorld else { return .deviated(.none, .stubbed) }
+            guard let trapWorld = bridge.ports.trapWorld else { return .deviated(.none, .stubbed) }
             let knock = min(max(magnitude, 0), 1) * knockAreaMagnitude
             let actors = PapyrusNativeFunctions.FindReferencesNatives.findCandidates(
                 bridge, filter: .actors, bases: [], around: (centre, radius)

@@ -18,30 +18,31 @@ extension PapyrusNativeFunctions.StoryNatives {
         for (name, returnsStarted) in [("SendStoryEvent", false), ("SendStoryEventAndWait", true)] {
             registerStory(&registry, script: "Keyword", name) { call, world, keyword in
                 let event = storyEvent(call, world: world, keyword: keyword)
-                let started = world.story?.sendStoryEvent(event) ?? false
+                let started = world.ports.story?.sendStoryEvent(event) ?? false
                 return .returned(returnsStarted ? .boolean(started) : .none)
             }
         }
         // `Start()` and `ForceStart()` (<https://ck.uesp.net/wiki/Scene_Script>).
         for (name, force) in [("Start", false), ("ForceStart", true)] {
             registerStory(&registry, script: "Scene", name) { _, world, scene in
-                _ = world.story?.startScene(scene, force: force)
+                _ = world.ports.story?.startScene(scene, force: force)
                 return .returned(.none)
             }
         }
         registerStory(&registry, script: "Scene", "Stop") { _, world, scene in
-            world.story?.stopScene(scene)
+            world.ports.story?.stopScene(scene)
             return .returned(.none)
         }
         registerStory(&registry, script: "Scene", "IsPlaying") { _, world, scene in
-            .returned(.boolean(world.story?.isScenePlaying(scene) ?? false))
+            .returned(.boolean(world.ports.story?.isScenePlaying(scene) ?? false))
         }
         // `Scene GetCurrentScene()` (<https://ck.uesp.net/wiki/GetCurrentScene_-_ObjectReference>).
         registry.register(PapyrusNativeFunction(
             scriptName: "ObjectReference", functionName: "GetCurrentScene"
         ) { call, context in
             guard
-                let world = context.world as? PapyrusWorldStateBridge, let story = world.story,
+                let world = context.world as? PapyrusWorldStateBridge,
+                let story = world.ports.story,
                 let key = call.receiver.flatMap(world.referenceKey(for:))
             else { return failure(call, "GetCurrentScene needs a reference and the scene runtime") }
             return .returned(story.currentScene(of: key)

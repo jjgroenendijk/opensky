@@ -36,7 +36,7 @@ extension PapyrusNativeFunctions.ActorNatives {
             else {
                 return failure(call, "StartCombat needs a target actor")
             }
-            guard actor.world.startActorCombat(actor.key, target: target) else {
+            guard actor.world.actorBridge.startActorCombat(actor.key, target: target) else {
                 return failure(
                     call,
                     "StartCombat fights the player alone; OpenSky simulates no "
@@ -52,7 +52,7 @@ extension PapyrusNativeFunctions.ActorNatives {
             guard let actor = actorTarget(call, context) else {
                 return needsActor(call)
             }
-            actor.world.stopActorCombat(actor.key)
+            actor.world.actorBridge.stopActorCombat(actor.key)
             return .returned(.none)
         })
     }
@@ -80,7 +80,7 @@ extension PapyrusNativeFunctions.ActorNatives {
                 guard let index = actorValueIndex(call, at: 0) else {
                     return unknownActorValue(call, at: 0)
                 }
-                guard let state = actor.world.actorState(for: actor.key) else {
+                guard let state = actor.world.actorBridge.actorState(for: actor.key) else {
                     return needsActor(call)
                 }
                 guard let value = read(state, index) else {
@@ -101,10 +101,10 @@ extension PapyrusNativeFunctions.ActorNatives {
             @MainActor @Sendable (any PapyrusWorldBridge, Int32, Float, ReferenceKey) -> Void
         )] = [
             ("DamageActorValue", { world, index, amount, key in
-                world.damageActorValue(at: index, by: amount, on: key)
+                world.actorBridge.damageActorValue(at: index, by: amount, on: key)
             }),
             ("RestoreActorValue", { world, index, amount, key in
-                world.restoreActorValue(at: index, by: amount, on: key)
+                world.actorBridge.restoreActorValue(at: index, by: amount, on: key)
             })
         ]
         for (functionName, write) in writes {
@@ -145,7 +145,7 @@ extension PapyrusNativeFunctions.ActorNatives {
             ) { call, context in
                 guard
                     let actor = actorTarget(call, context),
-                    let state = actor.world.actorState(for: actor.key)
+                    let state = actor.world.actorBridge.actorState(for: actor.key)
                 else {
                     return needsActor(call)
                 }
@@ -168,18 +168,18 @@ extension PapyrusNativeFunctions.ActorNatives {
             }
             let killer = objectArgument(call, at: 0)
                 .flatMap { actor.world.referenceKey(for: $0) }
-            actor.world.killActor(actor.key, killer: killer)
+            actor.world.actorBridge.killActor(actor.key, killer: killer)
             return .returned(.none)
         })
         // `KillSilent(Actor akKiller = None)` kills "without a kill event", and
         // `Resurrect()` brings the actor back (Creation Kit wiki, Actor Script).
         withBridgeActor("KillSilent", into: &registry) { call, bridge, key in
             let killer = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
-            bridge.killActorSilently(key, killer: killer)
+            bridge.actorValues.killActorSilently(key, killer: killer)
             return .returned(.none)
         }
         withBridgeActor("Resurrect", into: &registry) { call, bridge, key in
-            guard bridge.resurrectActor(key) else {
+            guard bridge.actorValues.resurrectActor(key) else {
                 return failure(call, "Resurrect needs an actor with actor values")
             }
             return .returned(.none)

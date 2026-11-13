@@ -64,7 +64,7 @@ struct PapyrusNativeAlchemyTests {
         alchemy.ingredients = [item]
         alchemy.hostile[item] = true
         if bridged {
-            fixture.session.bridge.alchemy = alchemy
+            fixture.session.bridge.ports.alchemy = alchemy
         }
         return Harness(
             session: fixture.session, registry: fixture.registry, alchemy: alchemy

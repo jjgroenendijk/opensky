@@ -36,7 +36,7 @@ struct PapyrusWorldInventoryEventsTests {
 
     private static func run(_ fixture: Fixture) -> [String] {
         let before = fixture.session.dispatch.notes.count
-        fixture.session.bridge.queueInventoryEvents()
+        fixture.session.bridge.inventoryEvents.queueInventoryEvents()
         PapyrusWorldFixture.drain(fixture.session.world)
         return Array(fixture.session.dispatch.notes.dropFirst(before))
     }
@@ -78,14 +78,14 @@ struct PapyrusWorldInventoryEventsTests {
             ("OnCombatStateChanged", PapyrusWorldFixture.probeBody(note: "combat"))
         ])
         let combat = FakeCombat()
-        fixture.session.bridge.actorNatives.combatRuntime = { combat }
+        fixture.session.bridge.natives.actor.combatRuntime = { combat }
         let bridge = fixture.session.bridge
-        #expect(bridge.queueCombatStateEvents() == 0)
+        #expect(bridge.combatEvents.queueCombatStateEvents() == 0)
         combat.activity = .fighting
-        #expect(bridge.queueCombatStateEvents() == 1)
-        #expect(bridge.queueCombatStateEvents() == 0)
+        #expect(bridge.combatEvents.queueCombatStateEvents() == 1)
+        #expect(bridge.combatEvents.queueCombatStateEvents() == 0)
         combat.activity = .notFighting
-        #expect(bridge.queueCombatStateEvents() == 1)
+        #expect(bridge.combatEvents.queueCombatStateEvents() == 1)
         PapyrusWorldFixture.drain(fixture.session.world)
         #expect(fixture.session.dispatch.notes == ["combat", "combat"])
     }
@@ -94,7 +94,7 @@ struct PapyrusWorldInventoryEventsTests {
         let fixture = try Fixture.make(events: ["OnEquipped", "OnUnequipped"].map {
             ($0, PapyrusWorldFixture.probeBody(note: $0.lowercased()))
         })
-        fixture.session.bridge.sessionNatives.itemScripts = { _ in
+        fixture.session.bridge.natives.session.itemScripts = { _ in
             [AttachedScript(name: "Lever", flags: [], properties: [])]
         }
         Self.write(fixture, [(Self.sword, 1)])
@@ -103,7 +103,7 @@ struct PapyrusWorldInventoryEventsTests {
         Self.write(fixture, [(Self.sword, 1)], equipped: [Self.sword])
         #expect(Self.run(fixture) == ["onequipped"])
 
-        fixture.session.bridge.noteScriptedEquip(on: fixture.key)
+        fixture.session.bridge.inventoryEvents.noteScriptedEquip(on: fixture.key)
         Self.write(fixture, [(Self.sword, 1)])
         #expect(Self.run(fixture).isEmpty)
 
@@ -115,7 +115,7 @@ struct PapyrusWorldInventoryEventsTests {
         let fixture = try Fixture.make(events: [
             ("OnRead", PapyrusWorldFixture.probeBody(note: "read"))
         ])
-        fixture.session.bridge.sessionNatives.itemScripts = { _ in
+        fixture.session.bridge.natives.session.itemScripts = { _ in
             [AttachedScript(name: "Lever", flags: [], properties: [])]
         }
         fixture.session.bridge.queueItemRead(base: fixture.key)
@@ -127,7 +127,7 @@ struct PapyrusWorldInventoryEventsTests {
         let fixture = try Self.fixture()
         _ = Self.run(fixture)
         Self.write(fixture, [(Self.ingot, 5)])
-        fixture.session.bridge.skipInventoryJournal()
+        fixture.session.bridge.inventoryEvents.skipInventoryJournal()
         #expect(Self.run(fixture).isEmpty)
     }
 }

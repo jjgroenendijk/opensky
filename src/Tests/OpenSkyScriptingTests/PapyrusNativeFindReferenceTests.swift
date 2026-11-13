@@ -33,11 +33,11 @@ struct PapyrusNativeFindReferenceTests {
         let file = try KeywordFixture.plugin(formLists: [
             FormListFixture.recordBytes(formID: listID, entries: [leverBase])
         ])
-        session.bridge.keywordStore = KeywordStore(index: RecordIndex(
+        session.bridge.stores.keywordStore = KeywordStore(index: RecordIndex(
             plugins: [("Skyrim.esm", file)], recordTypes: RecordIndex.referenceRecordTypes
         ))
-        session.bridge.formListStore = FormListStore(plugins: [("Skyrim.esm", file)])
-        session.bridge.perceptionNatives.livePosition = { $0 == .player ? SIMD3(1000, 0, 0) : nil }
+        session.bridge.stores.formListStore = FormListStore(plugins: [("Skyrim.esm", file)])
+        session.bridge.natives.perception.livePosition = { $0 == .player ? SIMD3(1000, 0, 0) : nil }
         return session
     }
 

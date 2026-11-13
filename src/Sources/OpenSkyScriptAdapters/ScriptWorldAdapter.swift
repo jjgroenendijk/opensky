@@ -124,15 +124,15 @@ public final class ScriptWorldAdapter {
     ) -> PapyrusWorldStateBridge {
         let bridge = PapyrusWorldStateBridge(
             worldState: worldState, references: streamer,
-            globals: game.runtimeState.globalStore,
             seams: featureBindings.seams(provider: provider, worldState: worldState)
         )
+        bridge.stores.globals = game.runtimeState.globalStore
         state.bridge = bridge
-        bridge.sessionNatives.clockSource = { [weak gameSession] in gameSession?.gameClock }
+        bridge.natives.session.clockSource = { [weak gameSession] in gameSession?.gameClock }
         // The game counts real time from its launch, without frozen time (CK wiki
         // "GetCurrentRealTime - Utility"): the time before this session, then its frames.
         let beforeSession = BenchmarkAppStart.processStart().map { -$0.timeIntervalSinceNow } ?? 0
-        bridge.sessionNatives.realTimeSource = { [weak gameSession] in
+        bridge.natives.session.realTimeSource = { [weak gameSession] in
             beforeSession + (gameSession?.gameTime.realSecondsRun ?? 0)
         }
         actorBindings.fillActorNatives(bridge: bridge)
@@ -141,7 +141,7 @@ public final class ScriptWorldAdapter {
         skyBindings.fillSky(bridge: bridge)
         nodeBindings.fillModelNodes(provider: provider, gameSession: gameSession)
         sessionBindings.fillGameNatives(bridge: bridge)
-        bridge.sessionNatives.itemScripts = Self.itemScripts(provider.placedRecords)
+        bridge.natives.session.itemScripts = Self.itemScripts(provider.placedRecords)
         bridge.formIDResolver = provider.scriptFormIDResolver
         fillPlayerNatives(bridge: bridge)
         return bridge
@@ -196,17 +196,17 @@ struct ScriptPlayerNatives {
     let game: any ScriptWorldHost
 
     func fillPlayerNatives(bridge: PapyrusWorldStateBridge) {
-        bridge.sessionNatives.leveledEdits = { [weak game] in
+        bridge.natives.session.leveledEdits = { [weak game] in
             game?.worldRecords?.leveledScriptEdits
         }
-        bridge.playerNatives
+        bridge.natives.player
             .playersLastMount = { [weak game] in game?.vehicleWorld.vehicles.playersLastMount }
-        bridge.playerNatives.dismount = { [weak game] actor in
+        bridge.natives.player.dismount = { [weak game] actor in
             game?.mountWorld.dismount(actor) ?? false
         }
-        bridge.playerNatives
+        bridge.natives.player
             .togglePlayerSneaking = { [weak game] in game?.player.isSneaking.toggle() }
-        bridge.playerNatives
+        bridge.natives.player
             .toggleMenus = { [weak game] in game?.hud.update { $0.layerEnabled.toggle() } }
     }
 

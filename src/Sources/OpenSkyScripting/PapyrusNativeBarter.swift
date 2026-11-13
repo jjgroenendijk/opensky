@@ -19,8 +19,7 @@ public protocol PapyrusWorldBarterBridge {
 
 extension PapyrusWorldStateBridge {
     public func showBarterMenu(for actor: ReferenceKey) -> (opened: Bool, text: String)? {
-        guard let showBarterMenu = crimeNatives.showBarterMenu else { return nil }
-        return showBarterMenu(actor)
+        crime.showBarterMenu(for: actor)
     }
 }
 

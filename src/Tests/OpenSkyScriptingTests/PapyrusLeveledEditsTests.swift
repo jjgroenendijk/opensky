@@ -14,7 +14,7 @@ struct PapyrusLeveledEditsTests {
         edits.setAddedEntries([FormID(0x10): []])
         let before = edits.revision
         let bridge = PapyrusWorldStateBridge(worldState: WorldStateStore())
-        bridge.sessionNatives.leveledEdits = { edits }
+        bridge.natives.session.leveledEdits = { edits }
 
         bridge.publishLeveledEdits()
 
@@ -24,6 +24,6 @@ struct PapyrusLeveledEditsTests {
     @Test func aSessionWithoutLeveledListsPublishesNothing() {
         let bridge = PapyrusWorldStateBridge(worldState: WorldStateStore())
         bridge.publishLeveledEdits()
-        #expect(bridge.sessionNatives.leveledEdits == nil)
+        #expect(bridge.natives.session.leveledEdits == nil)
     }
 }

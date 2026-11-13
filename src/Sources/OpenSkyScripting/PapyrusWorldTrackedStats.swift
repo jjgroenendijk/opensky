@@ -22,20 +22,24 @@ extension PapyrusWorldRuntime {
     }
 }
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.TrackedStats {
     /// Queues one event per changed stat on each live listener. The first call only sets
     /// the cursor. Returns how many events were queued.
     @discardableResult
     public func queueTrackedStatEvents() -> Int {
-        let next = worldState.nextJournalSequence
-        defer { statsJournalCursor = next }
-        guard let cursor = statsJournalCursor, cursor < next, let world else { return 0 }
+        let next = bridge.worldState.nextJournalSequence
+        defer { bridge.runState.statsJournalCursor = next }
+        guard
+            let cursor = bridge.runState.statsJournalCursor, cursor < next,
+            let world = bridge.world else { return 0 }
         world.trackedStatListeners = world.trackedStatListeners.filter {
             world.instancesByKey[$0] != nil
         }
         guard !world.trackedStatListeners.isEmpty else { return 0 }
         var changes: [(name: String, value: Int32)] = []
-        for entry in worldState.journalEntries(since: cursor) where entry.kind == .miscStats {
+        for entry in bridge.worldState.journalEntries(since: cursor)
+            where entry.kind == .miscStats
+        {
             let old = entry.oldValue.flatMap(MiscStatsState.init(erased:))?.values ?? [:]
             let new = entry.newValue.flatMap(MiscStatsState.init(erased:))?.values ?? [:]
             for (name, value) in new.sorted(by: { $0.key < $1.key }) where old[name] != value {
@@ -58,7 +62,7 @@ extension PapyrusWorldStateBridge {
 
     /// Starts the next read at the journal's end, so a load is not read as stat changes.
     public func skipTrackedStatJournal() {
-        statsJournalCursor = worldState.nextJournalSequence
+        bridge.runState.statsJournalCursor = bridge.worldState.nextJournalSequence
     }
 }
 

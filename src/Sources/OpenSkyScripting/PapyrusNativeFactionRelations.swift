@@ -31,8 +31,8 @@ extension PapyrusNativeFunctions.FactionRelationsNatives {
                     .softened : pair.base
                 let theirs = boolean(call, at: 2, default: false) ? pair
                     .softened : pair.base
-                bridge.setFactionReaction(mine, of: faction, toward: other)
-                bridge.setFactionReaction(theirs, of: other, toward: faction)
+                bridge.scriptState.setFactionReaction(mine, of: faction, toward: other)
+                bridge.scriptState.setFactionReaction(theirs, of: other, toward: faction)
                 return .returned(.none)
             }
         }
@@ -44,15 +44,15 @@ extension PapyrusNativeFunctions.FactionRelationsNatives {
                 let code = integer(call, at: 1), code >= 0,
                 let reaction = ActorReaction(Faction.CombatReaction(rawValue: UInt32(code)))
             else { return failure(call, "SetReaction needs a faction and a reaction from 0 to 3") }
-            bridge.setFactionReaction(reaction, of: faction, toward: other)
+            bridge.scriptState.setFactionReaction(reaction, of: faction, toward: other)
             return .returned(.none)
         }
         // `SetPlayerEnemy(bool abIsEnemy = true)`: enemies of the player's faction, or
         // neutral to it again.
         scriptState("Faction", "SetPlayerEnemy", into: &registry) { call, bridge, faction in
             let reaction: ActorReaction = boolean(call, at: 0, default: true) ? .enemy : .neutral
-            bridge.setFactionReaction(reaction, of: faction, toward: playerFaction)
-            bridge.setFactionReaction(reaction, of: playerFaction, toward: faction)
+            bridge.scriptState.setFactionReaction(reaction, of: faction, toward: playerFaction)
+            bridge.scriptState.setFactionReaction(reaction, of: playerFaction, toward: faction)
             return .returned(.none)
         }
         // `SendAssaultAlarm()` "finds a nearby member of this faction" and has it react as
@@ -62,7 +62,7 @@ extension PapyrusNativeFunctions.FactionRelationsNatives {
                 return failure(call, "SendAssaultAlarm needs a session with a faction runtime")
             }
             guard let witness = members.first else { return .returned(.none) }
-            guard bridge.sendAssaultAlarm(witness: witness, criminal: bridge.playerKey) != nil
+            guard bridge.crime.sendAssaultAlarm(witness: witness, criminal: bridge.playerKey) != nil
             else { return failure(call, "SendAssaultAlarm needs a session with a crime runtime") }
             return .returned(.none)
         }
@@ -72,12 +72,13 @@ extension PapyrusNativeFunctions.FactionRelationsNatives {
     private static func residentMembers(
         of faction: ReferenceKey, _ bridge: PapyrusWorldStateBridge
     ) -> [ReferenceKey]? {
-        let actors = (bridge.references?.residentEntries() ?? []).compactMap { entry in
+        let actors = (bridge.ports.references?.residentEntries() ?? []).compactMap { entry in
             entry.placedActor == nil ? nil : entry.key
         }
         var members: [ReferenceKey] = []
         for actor in actors {
-            guard let isMember = bridge.isInFaction(actor, faction: faction) else { return nil }
+            guard let isMember = bridge.factions.isInFaction(actor, faction: faction)
+            else { return nil }
             if isMember {
                 members.append(actor)
             }

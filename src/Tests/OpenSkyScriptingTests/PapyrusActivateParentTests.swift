@@ -64,11 +64,11 @@ struct PapyrusActivateParentTests {
 
         let outcome = session.bridge.activate(key(Self.plateID), by: .player, togglesOpen: false)
         #expect(outcome.queuedEvents == 0)
-        #expect(session.bridge.advanceDelayedActivations(by: 1) == 0)
+        #expect(session.bridge.activationDelays.advanceDelayedActivations(by: 1) == 0)
         #expect(trapActivations(session) == nil)
-        #expect(session.bridge.advanceDelayedActivations(by: 0.5) == 1)
+        #expect(session.bridge.activationDelays.advanceDelayedActivations(by: 0.5) == 1)
         #expect(trapActivations(session) == 1)
-        #expect(session.bridge.delayedActivations.isEmpty)
+        #expect(session.bridge.runState.delayedActivations.isEmpty)
         PapyrusWorldFixture.drain(session.world)
         #expect(session.dispatch.notes == ["trap.onactivate"])
     }

@@ -18,13 +18,13 @@ struct PapyrusWorldReferenceEventsTests {
         let fixture = try Fixture.make(events: [
             "OnOpen", "OnClose", "OnLockStateChanged", "OnContainerChanged"
         ].map { ($0, PapyrusWorldFixture.probeBody(note: $0.lowercased())) })
-        fixture.session.bridge.queueReferenceStateEvents()
+        fixture.session.bridge.referenceEvents.queueReferenceStateEvents()
         return fixture
     }
 
     private static func run(_ fixture: Fixture) -> [String] {
         let before = fixture.session.dispatch.notes.count
-        fixture.session.bridge.queueReferenceStateEvents()
+        fixture.session.bridge.referenceEvents.queueReferenceStateEvents()
         PapyrusWorldFixture.drain(fixture.session.world)
         return Array(fixture.session.dispatch.notes.dropFirst(before))
     }

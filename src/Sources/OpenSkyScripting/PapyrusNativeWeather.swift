@@ -64,7 +64,7 @@ extension PapyrusNativeFunctions.WeatherNatives {
         let native: PapyrusNativeFunction.Body = { call, context in
             guard
                 let bridge = context.world as? PapyrusWorldStateBridge,
-                let sky = bridge.weather
+                let sky = bridge.ports.weather
             else { return failure(call, "\(name) needs a session with weather") }
             let key = call.receiver.flatMap(bridge.referenceKey(for:))
             return body(call, sky, key, bridge)

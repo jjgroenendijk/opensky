@@ -35,7 +35,7 @@ extension GameSessionScopeFactories {
             provider: stage.data, gameSession: stage.gameSession, streamer: stage.streamer,
             worldState: scope.worldState
         )
-        scope.storyWorld.fillStoryNatives(&bridge.storyNatives, &bridge.sessionNatives)
+        scope.storyWorld.fillStoryNatives(&bridge.natives.story, &bridge.natives.session)
         return ScriptCoordinator(world: world, bridge: bridge, fileSystem: fileSystem)
     }
 

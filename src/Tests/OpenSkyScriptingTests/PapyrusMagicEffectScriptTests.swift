@@ -47,8 +47,8 @@ struct PapyrusMagicEffectScriptTests {
             entries: [lever]
         )
         PapyrusWorldFixture.drain(session.world)
-        session.bridge.magicEffectStore = try Self.store()
-        session.bridge.queueMagicEffectEvents()
+        session.bridge.stores.magicEffectStore = try Self.store()
+        session.bridge.effectEvents.queueMagicEffectEvents()
         registry = PapyrusWorldFixture.registry(for: session)
     }
 
@@ -87,7 +87,7 @@ struct PapyrusMagicEffectScriptTests {
         } else {
             session.worldState.set(ActiveEffectState(effects: effects), for: key)
         }
-        session.bridge.queueMagicEffectEvents()
+        session.bridge.effectEvents.queueMagicEffectEvents()
         PapyrusWorldFixture.drain(session.world)
     }
 
@@ -135,7 +135,7 @@ struct PapyrusMagicEffectScriptTests {
             )
             session.worldState.reset(.activeEffects, for: .player)
         }
-        session.bridge.queueMagicEffectEvents()
+        session.bridge.effectEvents.queueMagicEffectEvents()
         PapyrusWorldFixture.drain(session.world)
         for note in ["oninit", "oneffectstart", "oneffectfinish"] {
             #expect(session.dispatch.notes.filter { $0 == note }.count == 2)
@@ -158,7 +158,7 @@ struct PapyrusMagicEffectScriptTests {
     @Test func dispelRemovesOnlyThisEffect() {
         write([Self.effect(sequence: 1)])
         var removed: [UInt64] = []
-        session.bridge.magicNatives.dispelEffects = { _, predicate in
+        session.bridge.natives.magic.dispelEffects = { _, predicate in
             let doomed = [Self.effect(sequence: 1), Self.effect(sequence: 7)].filter(predicate)
             removed = doomed.map(\.sequence)
             return doomed.count

@@ -100,7 +100,7 @@ struct PapyrusNativeEffectsWeatherTests {
     @Test func effectsPlayOnTheirTargetUntilStopped() throws {
         let fixture = try Fixture.make()
         let effects = FakeEffects()
-        fixture.session.bridge.effectPresenter = effects
+        fixture.session.bridge.ports.effectPresenter = effects
         let effect = fixture.handle(Fixture.doorID)
         let lever: [PapyrusValue] = [.object(fixture.receiver)]
 
@@ -119,7 +119,7 @@ struct PapyrusNativeEffectsWeatherTests {
     @Test func aCrossFadeIsHeldUntilRemoved() throws {
         let fixture = try Fixture.make()
         let effects = FakeEffects()
-        fixture.session.bridge.effectPresenter = effects
+        fixture.session.bridge.ports.effectPresenter = effects
         let modifier = Fixture.key(Fixture.doorID)
         let handle = fixture.handle(Fixture.doorID)
 
@@ -140,7 +140,7 @@ struct PapyrusNativeEffectsWeatherTests {
         let sky = FakeSky()
         let rainy = Fixture.key(Fixture.doorID)
         sky.codes = [rainy: 2, fixture.key: 0]
-        fixture.session.bridge.weather = sky
+        fixture.session.bridge.ports.weather = sky
         let rain = fixture.handle(Fixture.doorID)
 
         #expect(call(fixture, "Weather", "SetActive", on: rain, [.boolean(true)])
@@ -170,7 +170,7 @@ struct PapyrusNativeEffectsWeatherTests {
     @Test func aBlendReportsTheOutgoingWeatherAndItsProgress() throws {
         let fixture = try Fixture.make()
         let sky = FakeSky()
-        fixture.session.bridge.weather = sky
+        fixture.session.bridge.ports.weather = sky
         #expect(call(
             fixture,
             "Weather",

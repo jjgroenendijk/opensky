@@ -37,7 +37,7 @@ struct PapyrusNativeBarterTests {
         }
 
         var asked: [ReferenceKey] = []
-        session.bridge.crimeNatives.showBarterMenu = { actor in
+        session.bridge.natives.crime.showBarterMenu = { actor in
             asked.append(actor)
             return (asked.count == 1, asked.count == 1 ? "opened" : "not a merchant")
         }

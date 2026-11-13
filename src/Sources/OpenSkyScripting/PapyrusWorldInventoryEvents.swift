@@ -5,21 +5,23 @@
 import Foundation
 public import OpenSkyFormatsESM
 public import OpenSkyInventoryInterface
-public import OpenSkyScriptingInterface
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.InventoryEvents {
     /// Queues `OnItemAdded`, `OnItemRemoved`, `OnObjectEquipped`, and `OnObjectUnequipped`
     /// for the inventory writes since the last call. The first call only sets the cursor.
     @discardableResult
     public func queueInventoryEvents() -> Int {
-        let next = worldState.nextJournalSequence
+        let next = bridge.worldState.nextJournalSequence
         defer {
-            inventoryJournalCursor = next
-            scriptedEquipHolders = []
+            bridge.runState.inventoryJournalCursor = next
+            bridge.runState.scriptedEquipHolders = []
         }
-        guard let cursor = inventoryJournalCursor, cursor < next, let world else { return 0 }
-        let changes = worldState.journalEntries(since: cursor)
+        guard
+            let cursor = bridge.runState.inventoryJournalCursor, cursor < next,
+            let world = bridge.world else { return 0 }
+        let changes = bridge.worldState.journalEntries(since: cursor)
             .filter { $0.kind == .inventory }
             .compactMap(inventoryChange)
         var queued = 0
@@ -44,8 +46,8 @@ extension PapyrusWorldStateBridge {
         _ name: String, base: ReferenceKey, arguments: [PapyrusValue]
     ) -> Int {
         guard
-            let world, let formIDResolver,
-            let scripts = sessionNatives.itemScripts?(base), !scripts.isEmpty
+            let world = bridge.world, let formIDResolver = bridge.formIDResolver,
+            let scripts = bridge.natives.session.itemScripts?(base), !scripts.isEmpty
         else { return 0 }
         return world.queueItemEvent(
             (name, arguments), base: base, scripts: scripts,
@@ -56,7 +58,7 @@ extension PapyrusWorldStateBridge {
     /// Marks `holder`'s next equip changes as a script's, so the items' own scripts hear
     /// nothing of them. An item the script's equip pushes out of its slot counts too.
     func noteScriptedEquip(on holder: ReferenceKey) {
-        scriptedEquipHolders.insert(holder)
+        bridge.runState.scriptedEquipHolders.insert(holder)
     }
 
     /// `OnEquipped(Actor akActor)` and `OnUnequipped(Actor akActor)` on the item's own
@@ -65,7 +67,7 @@ extension PapyrusWorldStateBridge {
     private func queueItemEquipEvents(
         _ change: InventoryChange, in world: PapyrusWorldRuntime
     ) -> Int {
-        guard !scriptedEquipHolders.contains(change.holder) else { return 0 }
+        guard !bridge.runState.scriptedEquipHolders.contains(change.holder) else { return 0 }
         let old = Set(change.old.equipped)
         let new = Set(change.new.equipped)
         let actor = PapyrusValue.object(world.objectHandle(for: change.holder))
@@ -84,12 +86,14 @@ extension PapyrusWorldStateBridge {
 
     /// Starts the next read at the journal's end, so a load is not read as item moves.
     public func skipInventoryJournal() {
-        inventoryJournalCursor = worldState.nextJournalSequence
-        scriptedEquipHolders = []
+        bridge.runState.inventoryJournalCursor = bridge.worldState.nextJournalSequence
+        bridge.runState.scriptedEquipHolders = []
     }
 
     private func inventoryChange(_ entry: WorldStateJournalEntry) -> InventoryChange? {
-        let baseline = { [inventory] in inventory?.baselineInventory(of: entry.key) }
+        let baseline = { [inventory = bridge.ports.inventory] in
+            inventory?.baselineInventory(of: entry.key)
+        }
         guard
             let old = entry.oldValue.flatMap(ReferenceInventoryState.init(erased:)) ?? baseline(),
             let new = entry.newValue.flatMap(ReferenceInventoryState.init(erased:)) ?? baseline()
@@ -158,7 +162,7 @@ extension PapyrusWorldStateBridge {
     }
 
     private func itemKey(_ item: FormID) -> ReferenceKey? {
-        formIDResolver.flatMap { ReferenceKey.resolve(item, using: $0) }
+        bridge.formIDResolver.flatMap { ReferenceKey.resolve(item, using: $0) }
     }
 
     private func formValue(_ item: FormID, in world: PapyrusWorldRuntime) -> PapyrusValue {

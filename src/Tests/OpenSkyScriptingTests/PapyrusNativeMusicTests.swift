@@ -39,7 +39,7 @@ struct PapyrusNativeMusicTests {
         }
 
         let music = FakeMusic()
-        fixture.session.bridge.music = music
+        fixture.session.bridge.ports.music = music
         #expect(invoke("Add") == .returned(.none))
         #expect(music.stack == [key])
         #expect(invoke("Remove") == .returned(.none))

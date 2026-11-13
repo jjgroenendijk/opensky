@@ -29,13 +29,13 @@ struct ScriptRecordBindingsTests {
         host.fakeMagic.soulTrapping.trapSoulResult = .notFilled
         host.fakeMagic.commanded = []
         adapter.perkBindings.fillSpellNatives(bridge: bridge, provider: records)
-        let natives = bridge.magicNatives
+        let natives = bridge.natives.magic
         #expect(natives.casterRuntime?() == nil)
         #expect(natives.isCommandedActor?(Self.actor) == false)
         #expect(natives.dispelEffects?(.player) { _ in true } == 2)
         #expect(natives.trapSoul?(Self.actor, .player) == false)
-        #expect(bridge.magicEffectStore == nil)
-        #expect(bridge.keywordStore == nil)
+        #expect(bridge.stores.magicEffectStore == nil)
+        #expect(bridge.stores.keywordStore == nil)
         #expect(host.fakeMagic.soulTrapping.trapSoulCalls.map(\.victim) == [Self.actor])
     }
 
@@ -52,7 +52,7 @@ struct ScriptRecordBindingsTests {
     @Test func theLeveledEditsComeFromTheRecords() {
         host.worldRecords = records
         adapter.fillPlayerNatives(bridge: bridge)
-        #expect(bridge.sessionNatives.leveledEdits?() == nil)
+        #expect(bridge.natives.session.leveledEdits?() == nil)
     }
 
     @Test func theWorldAnswersFromTheHUDAndTheStreamer() {

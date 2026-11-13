@@ -43,7 +43,7 @@ struct PapyrusNativeLatentHooksTests {
         let waiting = call(fixture, "Sound", "PlayAndWait", [source.value], returnType: .boolean)
         let token = try #require(plays.last?.token)
         #expect(waiting == .suspended(.external(token)))
-        #expect(token >= PapyrusWorldStateBridge.firstLatentWaitToken)
+        #expect(token >= PapyrusWorldStateBridge.Sounds.firstLatentWaitToken)
         #expect(plays.first?.source == source.key)
         #expect(plays.first?.token == nil)
         instance = 0
@@ -99,7 +99,7 @@ struct PapyrusNativeLatentHooksTests {
             Issue.record("expected a latent wait, got \(result)")
             return
         }
-        #expect(token >= PapyrusWorldStateBridge.firstLatentWaitToken)
+        #expect(token >= PapyrusWorldStateBridge.Sounds.firstLatentWaitToken)
         #expect(walks.first?.actor == fixture.key)
         #expect(walks.first?.target == target.key)
         #expect(walks.first?.speed == 0.5)
@@ -116,7 +116,7 @@ struct PapyrusNativeLatentHooksTests {
     @Test func anAshPileDefaultsAndPassesActivationToItsOwner() throws {
         let fixture = try Fixture.make()
         let trapWorld = FakeTrapWorld()
-        fixture.session.bridge.trapWorld = trapWorld
+        fixture.session.bridge.ports.trapWorld = trapWorld
         #expect(call(fixture, "Actor", "AttachAshPile", [.none]) == .returned(.none))
         #expect(trapWorld.placed.first?.base == PapyrusNativeFunctions.ActorRulesNatives
             .defaultAshPile)

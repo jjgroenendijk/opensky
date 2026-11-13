@@ -7,41 +7,47 @@ import Foundation
 public import OpenSkyDialogueInterface
 public import OpenSkyFormatsESM
 
-@MainActor
-extension PapyrusWorldStateBridge: DialogueFragmentDispatching {
-    @discardableResult
-    public func runTopicInfoFragments(
-        of info: TopicInfo,
-        key: ReferenceKey,
-        phase: TopicInfoFragmentPhase,
-        context: TopicInfoFragmentContext
-    ) -> [String] {
-        guard let world else { return [] }
-        return world.queueTopicInfoFragment(
-            of: info,
-            key: key,
-            phase: phase,
-            context: context,
-            formIDResolver: formIDResolver ?? FormIDResolver(pluginName: "", masters: [])
-        )
-    }
-}
+extension PapyrusWorldStateBridge {
+    /// The dialogue and scene fragment dispatcher. A class, because the dialogue
+    /// runtime holds its dispatcher as an object; weak, because the bridge owns it.
+    public final class Fragments: DialogueFragmentDispatching, SceneFragmentDispatching {
+        weak var bridge: PapyrusWorldStateBridge?
 
-@MainActor
-extension PapyrusWorldStateBridge: SceneFragmentDispatching {
-    @discardableResult
-    public func runSceneFragment(
-        of scene: Scene,
-        key: ReferenceKey,
-        scriptName: String,
-        functionName: String
-    ) -> Bool {
-        guard let world else { return false }
-        return world.queueSceneFragment(
-            of: scene,
-            key: key,
-            fragment: (scriptName, functionName),
-            formIDResolver: formIDResolver ?? FormIDResolver(pluginName: "", masters: [])
-        )
+        init(bridge: PapyrusWorldStateBridge) {
+            self.bridge = bridge
+        }
+
+        @discardableResult
+        public func runTopicInfoFragments(
+            of info: TopicInfo,
+            key: ReferenceKey,
+            phase: TopicInfoFragmentPhase,
+            context: TopicInfoFragmentContext
+        ) -> [String] {
+            guard let bridge, let world = bridge.world else { return [] }
+            return world.queueTopicInfoFragment(
+                of: info,
+                key: key,
+                phase: phase,
+                context: context,
+                formIDResolver: bridge.formIDResolver ?? FormIDResolver(pluginName: "", masters: [])
+            )
+        }
+
+        @discardableResult
+        public func runSceneFragment(
+            of scene: Scene,
+            key: ReferenceKey,
+            scriptName: String,
+            functionName: String
+        ) -> Bool {
+            guard let bridge, let world = bridge.world else { return false }
+            return world.queueSceneFragment(
+                of: scene,
+                key: key,
+                fragment: (scriptName, functionName),
+                formIDResolver: bridge.formIDResolver ?? FormIDResolver(pluginName: "", masters: [])
+            )
+        }
     }
 }

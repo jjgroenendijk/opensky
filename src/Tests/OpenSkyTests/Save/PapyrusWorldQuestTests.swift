@@ -44,13 +44,13 @@ struct PapyrusWorldQuestTests {
         let session = PapyrusQuestFixture.session(quest: quest)
         #expect(session.world.questInstanceKeys.isEmpty)
 
-        try session.bridge.startQuest(for: PapyrusQuestFixture.questKey)
+        try session.bridge.questScripts.startQuest(for: PapyrusQuestFixture.questKey)
         PapyrusWorldFixture.drain(session.world)
         #expect(session.dispatch.notes.filter { $0 == "quest.oninit" }.count == 1)
 
         // Starting a running quest is a no-op: no second instance, no second
         // `OnInit`.
-        try session.bridge.startQuest(for: PapyrusQuestFixture.questKey)
+        try session.bridge.questScripts.startQuest(for: PapyrusQuestFixture.questKey)
         PapyrusWorldFixture.drain(session.world)
         #expect(session.world.questInstanceKeys.count == 2)
         #expect(session.dispatch.notes.filter { $0 == "quest.oninit" }.count == 1)
@@ -76,8 +76,10 @@ struct PapyrusWorldQuestTests {
     @Test func attachingOneQuestCreatesItsInstances() throws {
         let quest = try PapyrusQuestFixture.quest()
         let session = PapyrusQuestFixture.session(quest: quest, attachQuests: false)
-        #expect(session.bridge.attachScripts(ofQuest: PapyrusQuestFixture.questFormID) == 2)
-        #expect(session.bridge.attachScripts(ofQuest: PapyrusQuestFixture.questFormID) == 0)
+        #expect(session.bridge.questScripts
+            .attachScripts(ofQuest: PapyrusQuestFixture.questFormID) == 2)
+        #expect(session.bridge.questScripts
+            .attachScripts(ofQuest: PapyrusQuestFixture.questFormID) == 0)
         #expect(session.world.questInstanceKeys.count == 2)
     }
 
@@ -214,7 +216,7 @@ struct PapyrusWorldQuestTests {
         #expect(session.world.instancesByKey.isEmpty)
         #expect(session.world.persistentKeys.isEmpty)
 
-        try session.bridge.startQuest(for: PapyrusQuestFixture.questKey)
+        try session.bridge.questScripts.startQuest(for: PapyrusQuestFixture.questKey)
         PapyrusWorldFixture.drain(session.world)
         #expect(session.world.questInstanceKeys.count == 2)
         #expect(session.dispatch.notes.filter { $0 == "quest.oninit" }.count == 2)

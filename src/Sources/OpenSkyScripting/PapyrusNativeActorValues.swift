@@ -31,7 +31,12 @@ extension PapyrusNativeFunctions.ActorValuesNatives {
                     return failure(call, "\(write.rawValue) needs a finite value")
                 }
                 guard
-                    actor.world.writeActorValue(write, at: index, to: value, on: actor.key) != nil
+                    actor.world.actorBridge.writeActorValue(
+                        write,
+                        at: index,
+                        to: value,
+                        on: actor.key
+                    ) != nil
                 else {
                     return needsActor(call)
                 }

@@ -8,19 +8,21 @@ import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.CombatEvents {
     /// Queues the event on each instance whose actor's activity changed since the last
     /// call. Returns the count.
     @discardableResult
     public func queueCombatStateEvents() -> Int {
-        guard let world, actorNatives.combatRuntime?() != nil else { return 0 }
+        guard
+            let world = bridge.world,
+            bridge.natives.actor.combatRuntime?() != nil else { return 0 }
         let name = PapyrusEngineEvents.onCombatStateChanged
         let keys: [PapyrusInstanceKey]
-        if let cached = combatEventKeys, cached.revision == world.instanceRevision {
+        if let cached = bridge.runState.combatEventKeys, cached.revision == world.instanceRevision {
             keys = cached.keys
         } else {
             keys = world.instancesByKey.keys.filter { world.handlesEvent(name, key: $0) }.sorted()
-            combatEventKeys = (world.instanceRevision, keys)
+            bridge.runState.combatEventKeys = (world.instanceRevision, keys)
         }
         var activities: [ReferenceKey: ActorCombatActivity] = [:]
         var queued = 0
@@ -28,7 +30,8 @@ extension PapyrusWorldStateBridge {
             guard let activity = activities[key.reference] ?? combatActivity(of: key.reference)
             else { continue }
             activities[key.reference] = activity
-            guard activity != lastCombatActivity[key.reference] ?? .notFighting else { continue }
+            guard activity != bridge.runState.lastCombatActivity[key.reference] ?? .notFighting
+            else { continue }
             let target: PapyrusValue = activity == .notFighting || key.reference == .player
                 ? .none : .object(world.objectHandle(for: .player))
             world.enqueue(PapyrusScriptEvent(
@@ -37,7 +40,7 @@ extension PapyrusWorldStateBridge {
             ))
             queued += 1
         }
-        lastCombatActivity = activities
+        bridge.runState.lastCombatActivity = activities
         return queued
     }
 }

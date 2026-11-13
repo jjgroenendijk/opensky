@@ -13,11 +13,25 @@ public import OpenSkyWorldState
 /// actor, magic, crime, faction, and guard bridges, and the barter operation, so
 /// natives reach everything through `context.world`.
 @MainActor
-public protocol PapyrusWorldBridge:
-    PapyrusWorldQuestBridge, PapyrusWorldActorBridge, PapyrusWorldMagicBridge,
-    PapyrusWorldCrimeBridge, PapyrusWorldFactionBridge, PapyrusWorldGuardBridge,
-    PapyrusWorldBarterBridge
-{
+public protocol PapyrusWorldBridge: PapyrusWorldBarterBridge, Sendable {
+    /// Quest stages, objectives, and the tracked stats.
+    var questBridge: any PapyrusWorldQuestBridge { get }
+
+    /// Actor values, combat, perks, skills, and death.
+    var actorBridge: any PapyrusWorldActorBridge { get }
+
+    /// Spells: the spellbook, equipped spells, dispels, and casts.
+    var magicBridge: any PapyrusWorldMagicBridge { get }
+
+    /// Crime gold and the alarms witnesses raise.
+    var crimeBridge: any PapyrusWorldCrimeBridge { get }
+
+    /// Faction membership, ranks, relationships, and reactions.
+    var factionBridge: any PapyrusWorldFactionBridge { get }
+
+    /// Guards, arrests, and jail time.
+    var guardBridge: any PapyrusWorldGuardBridge { get }
+
     /// Session-stable identity of the player; see `ReferenceKey.player`.
     var playerKey: ReferenceKey { get }
 

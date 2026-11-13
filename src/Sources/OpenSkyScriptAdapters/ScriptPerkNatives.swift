@@ -29,7 +29,7 @@ import simd
 extension ScriptPerkBindingsAdapter {
     /// Fills these natives as the bridge is built.
     public func fillPerkNatives(bridge: PapyrusWorldStateBridge) {
-        bridge.progressionNatives
+        bridge.natives.progression
             .mutatePerks = { [weak game = self.game] mutation, perk, actor in
                 guard let game, let holder = game.actorWorld.actorValueHolder(for: actor) else {
                     return false
@@ -39,10 +39,10 @@ extension ScriptPerkBindingsAdapter {
                 case .remove: game.perks.remove(perk, from: holder)
                 }
             }
-        bridge.progressionNatives.perkOwnership = { [weak game = self.game] key in
+        bridge.natives.progression.perkOwnership = { [weak game = self.game] key in
             game?.perks.ownership(of: key)
         }
-        bridge.progressionNatives
+        bridge.natives.progression
             .advanceSkill = { [weak game = self.game] advance, index, magnitude in
                 guard let progression = game?.progression else { return false }
                 return switch advance {
@@ -51,22 +51,23 @@ extension ScriptPerkBindingsAdapter {
                 }
             }
         // A zero delta is the read `Game.GetPerkPoints` makes.
-        bridge.progressionNatives.modifyPerkPoints = { [weak game = self.game] delta in
+        bridge.natives.progression.modifyPerkPoints = { [weak game = self.game] delta in
             game?.progression.modifyPerkPoints(by: delta)
         }
-        bridge.crimeNatives.crimeReporter = { [weak game = self.game] in game?.crime.reporter }
-        bridge.crimeNatives.arrestSession = { [weak game = self.game] in game?.crime }
-        game.crime.scriptedOwner = { [weak bridge] key in bridge?.scriptedOwner(of: key) }
+        bridge.natives.crime.crimeReporter = { [weak game = self.game] in game?.crime.reporter }
+        bridge.natives.crime.arrestSession = { [weak game = self.game] in game?.crime }
+        game.crime
+            .scriptedOwner = { [weak bridge] key in bridge?.stateLinks.scriptedOwner(of: key) }
         let worldState = game.worldState
         game.crime.scriptedOwnerRevision = { [weak worldState] in
             worldState?.revision(of: [.scriptedState]) ?? 0
         }
-        bridge.crimeNatives.showBarterMenu = { [weak game = self.game] actor in
+        bridge.natives.crime.showBarterMenu = { [weak game = self.game] actor in
             guard let game, game.inventory.vendors != nil else { return nil }
             let text = game.containerMenu.openBarter(with: actor)
             return (game.containerMenu.isOpen && game.containerMenu.vendor != nil, text)
         }
-        bridge.factionNatives = game.factionWorld.papyrusNatives()
-        bridge.publishFactionReactions()
+        bridge.natives.faction = game.factionWorld.papyrusNatives()
+        bridge.scriptState.publishFactionReactions()
     }
 }

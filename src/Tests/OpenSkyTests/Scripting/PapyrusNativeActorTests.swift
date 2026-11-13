@@ -80,16 +80,16 @@ struct PapyrusNativeActorTests {
         let values = ActorValueRuntime(
             store: session.worldState, baselines: ActorValueBaselineResolver()
         )
-        session.bridge.actorNatives.actorValueRuntime = { values }
-        session.bridge.actorNatives.ragdollRuntime = { [weak ragdoll] in ragdoll }
-        session.bridge.actorNatives.weaponDrawState = { _ in weaponDrawState }
+        session.bridge.natives.actor.actorValueRuntime = { values }
+        session.bridge.natives.actor.ragdollRuntime = { [weak ragdoll] in ragdoll }
+        session.bridge.natives.actor.weaponDrawState = { _ in weaponDrawState }
         // A real combat loop over a recording world, so a scripted fight is the
         // same fight the player can walk into rather than a flag this test set.
         let combatWorld = FakeCombatWorld()
         combatWorld.actors = [CombatActorObservation(key: entry.key, feet: SIMD3(60, 0, 0))]
         combatWorld.awareness[entry.key] = .detected(at: SIMD3<Float>())
         let combat = CombatLoopRuntime(settings: .synthetic, world: combatWorld)
-        session.bridge.actorNatives.combatRuntime = { [weak combat] in combat }
+        session.bridge.natives.actor.combatRuntime = { [weak combat] in combat }
         return Fixture(
             session: session,
             registry: PapyrusWorldFixture.registry(for: session),

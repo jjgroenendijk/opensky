@@ -90,7 +90,7 @@ nonisolated public struct PapyrusActorState: ActorValueReadable, Equatable, Send
 
 /// Actor state and mutations a Papyrus native may perform.
 @MainActor
-public protocol PapyrusWorldActorBridge: AnyObject, Sendable {
+public protocol PapyrusWorldActorBridge: Sendable {
     /// One observation of the actor `key` names, or nil when this session
     /// tracks no actor there — no actor-value runtime attached, or a key no
     /// resident cell resolves to a placed actor.

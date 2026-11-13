@@ -103,7 +103,7 @@ struct QuestAcceptanceChain {
         streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
         // From here on the streamer answers every world lookup, so cell
         // attribution is the engine's answer rather than the fixture's.
-        session.bridge.references = streamer
+        session.bridge.ports.references = streamer
         let recorder = recorder
         session.dispatch.probeHandler = { call, _ in
             guard PapyrusRuntime.matches(call.functionName, "Seen") else { return nil }
@@ -111,7 +111,7 @@ struct QuestAcceptanceChain {
             return .returned(.none)
         }
         streamer.onInteraction.register(.scripts) { [weak bridge = session.bridge] event in
-            bridge?.handleInteraction(event)
+            bridge?.activations.handleInteraction(event)
         }
         integrateCell()
     }
@@ -139,7 +139,7 @@ struct QuestAcceptanceChain {
     /// Step 1 — the quest starts. Its aliases fill, its scripts instantiate and
     /// their `OnInit` fires.
     func startQuest() throws {
-        try session.bridge.startQuest(for: Self.questKey)
+        try session.bridge.questScripts.startQuest(for: Self.questKey)
         PapyrusWorldFixture.drain(session.world)
     }
 

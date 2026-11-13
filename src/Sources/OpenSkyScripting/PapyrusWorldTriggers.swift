@@ -45,27 +45,27 @@ extension PapyrusWorldRuntime {
     }
 }
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.Triggers {
     /// `CellStreamer.onTriggerTransition` scripts step: one event per script of the volume's
     /// reference, with the player as `akActionRef`. The event already has a `ReferenceKey`.
     @discardableResult
     public func handleTriggerTransition(_ event: TriggerTransitionEvent) -> Int {
-        let actor = event.actor ?? playerKey
+        let actor = event.actor ?? bridge.playerKey
         switch event.phase {
         case .enter:
-            triggerOccupants[event.reference, default: []].insert(actor)
-            return world?.queueOnTriggerEnter(volume: event.reference, actor: actor) ?? 0
+            bridge.runState.triggerOccupants[event.reference, default: []].insert(actor)
+            return bridge.world?.queueOnTriggerEnter(volume: event.reference, actor: actor) ?? 0
         case .leave:
-            triggerOccupants[event.reference]?.remove(actor)
-            if triggerOccupants[event.reference]?.isEmpty == true {
-                triggerOccupants[event.reference] = nil
+            bridge.runState.triggerOccupants[event.reference]?.remove(actor)
+            if bridge.runState.triggerOccupants[event.reference]?.isEmpty == true {
+                bridge.runState.triggerOccupants[event.reference] = nil
             }
-            return world?.queueOnTriggerLeave(volume: event.reference, actor: actor) ?? 0
+            return bridge.world?.queueOnTriggerLeave(volume: event.reference, actor: actor) ?? 0
         }
     }
 }
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.Triggers {
     /// "Approximately two times a second" while a reference stays inside
     /// (<https://ck.uesp.net/wiki/OnTrigger_-_ObjectReference>).
     public static let triggerRepeatSeconds: Float = 0.5
@@ -74,16 +74,18 @@ extension PapyrusWorldStateBridge {
     /// that has not run the last one yet gets no new one, so a slow handler cannot pile up.
     @discardableResult
     public func queueTriggerRepeats(after seconds: Float) -> Int {
-        guard let world, !triggerOccupants.isEmpty, seconds.isFinite, seconds > 0 else { return 0 }
-        triggerRepeatElapsed += seconds
-        guard triggerRepeatElapsed >= Self.triggerRepeatSeconds else { return 0 }
-        triggerRepeatElapsed = triggerRepeatElapsed
+        guard
+            let world = bridge.world, !bridge.runState.triggerOccupants.isEmpty, seconds.isFinite,
+            seconds > 0 else { return 0 }
+        bridge.runState.triggerRepeatElapsed += seconds
+        guard bridge.runState.triggerRepeatElapsed >= Self.triggerRepeatSeconds else { return 0 }
+        bridge.runState.triggerRepeatElapsed = bridge.runState.triggerRepeatElapsed
             .truncatingRemainder(dividingBy: Self.triggerRepeatSeconds)
         let name = PapyrusEngineEvents.onTrigger
         let waiting = Set(world.eventQueue.filter { $0.functionName == name }.map(\.target))
         var queued = 0
-        for volume in triggerOccupants.keys.sorted() {
-            let actors = (triggerOccupants[volume] ?? []).sorted()
+        for volume in bridge.runState.triggerOccupants.keys.sorted() {
+            let actors = (bridge.runState.triggerOccupants[volume] ?? []).sorted()
             for key in world.instanceKeys(on: volume)
                 where !waiting.contains(key) && world.handlesEvent(name, key: key)
             {

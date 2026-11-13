@@ -25,7 +25,7 @@ import simd
 extension ScriptNodeBindingsAdapter {
     /// Fills these natives as the bridge is built.
     public func fillLineOfSight(bridge: PapyrusWorldStateBridge) {
-        bridge.perceptionNatives.seesTarget = { viewer, target in
+        bridge.natives.perception.seesTarget = { viewer, target in
             self.sees(viewer: viewer, target: target, bridge: bridge)
         }
     }

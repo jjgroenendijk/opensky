@@ -49,7 +49,7 @@ extension PapyrusNativeFunctions.TrapMotionNatives {
                 let handle = objectArgument(call, at: 0),
                 let source = world.referenceKey(for: handle)
             else { return failure(call, "Fire needs a source reference") }
-            guard let trapWorld = world.trapWorld else {
+            guard let trapWorld = world.ports.trapWorld else {
                 context.log.append("Stubbed \(call.qualifiedName)")
                 return .deviated(.none, .stubbed)
             }

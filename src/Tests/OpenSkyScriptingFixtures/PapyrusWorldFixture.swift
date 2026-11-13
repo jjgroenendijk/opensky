@@ -225,8 +225,9 @@ public enum PapyrusWorldFixture {
     ) -> Session {
         let references = FakeWorldReferences(entries: entries, cell: cell)
         let bridge = PapyrusWorldStateBridge(
-            worldState: worldState, references: references, globals: globals
+            worldState: worldState, references: references
         )
+        bridge.stores.globals = globals
         bridge.formIDResolver = resolver
         let dispatch = PapyrusWorldProbeDispatch(
             context: PapyrusNativeContext(world: bridge)

@@ -27,7 +27,8 @@ extension PapyrusNativeFunctions.FurnitureNatives {
         registry.register(PapyrusNativeFunction(
             scriptName: "Game", functionName: "SetSittingRotation"
         ) { call, context in
-            guard let furniture = (context.world as? PapyrusWorldStateBridge)?.furniture else {
+            guard let furniture = (context.world as? PapyrusWorldStateBridge)?.ports.furniture
+            else {
                 return needsWorld(call)
             }
             guard let degrees = float(call, at: 0) else {
@@ -42,7 +43,8 @@ extension PapyrusNativeFunctions.FurnitureNatives {
         _ call: PapyrusNativeCall, _ context: PapyrusNativeContext, marker: Int?, ignoreIndex: Int
     ) -> PapyrusNativeResult {
         guard
-            let world = context.world as? PapyrusWorldStateBridge, let furniture = world.furniture,
+            let world = context.world as? PapyrusWorldStateBridge,
+            let furniture = world.ports.furniture,
             let receiver = call.receiver, let key = world.referenceKey(for: receiver)
         else { return needsWorld(call) }
         let ignoringReserved = boolean(call, at: ignoreIndex, default: false)

@@ -11,7 +11,7 @@ import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyInventoryInterface
+import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 public import OpenSkyQuestsInterface
 public import OpenSkyScriptingInterface
@@ -26,126 +26,52 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// this bridge already lives inside.
     public weak var world: PapyrusWorldRuntime? {
         didSet {
-            combatEventKeys = nil
-            world?.attachOnUse = { [weak self] in self?.attachOnUse($0) ?? false }
-            world?.scriptsOfTarget = { [weak self] in self?.scriptsOfTarget($0) ?? [] }
-            world?.isQuestRunning = { [weak self] key in self?.isQuestRunning(key) ?? false }
+            runState.combatEventKeys = nil
+            world?.attachOnUse = { [weak self] in self?.questScripts.attachOnUse($0) ?? false }
+            world?.scriptsOfTarget = { [weak self] in self?.questScripts.scriptsOfTarget($0) ?? [] }
+            world?
+                .isQuestRunning = { [weak self] key in
+                    self?.questScripts.isQuestRunning(key) ?? false
+                }
         }
     }
 
-    public weak var references: (any PapyrusWorldReferenceSource)?
-    /// Plugin GLOB defaults. Nil in a synthetic session, where only overrides
-    /// already recorded in the store are visible.
-    public var globals: GlobalStore?
     /// Quest mutation API for the `Quest` natives. Nil without QUST data, where they fail
     /// with `PapyrusQuestBridgeError.noQuestData`. See `PapyrusWorldStateBridgeQuests.swift`.
     public var questRuntime: (any QuestAccess)?
-    /// Quests whose alias fill failed while scripts were attached at wire-up. Counted,
-    /// not thrown: a quest running from its DNAM flag has no `Start` call to refuse.
-    public var questAliasFillFailures = 0
-    /// Who stands in each trigger volume, kept from the enter and leave events.
-    public internal(set) var triggerOccupants: [ReferenceKey: Set<ReferenceKey>] = [:]
-    /// Seconds since the last `OnTrigger` repeat.
-    var triggerRepeatElapsed: Float = 0
-    /// Activate children still waiting out their `XAPR` delay, in the order they were queued.
-    public internal(set) var delayedActivations: [DelayedActivation] = []
-    /// The actor `KillSilent` is killing, so the host skips the story-manager `KILL` event.
-    public internal(set) var silentDeath: ReferenceKey?
-    public var factionNatives = PapyrusFactionNatives()
-    public var actorNatives = PapyrusActorNatives()
-    public var magicNatives = PapyrusMagicNatives()
-    public var progressionNatives = PapyrusProgressionNatives()
-    public var crimeNatives = PapyrusCrimeNatives()
-    public var playerNatives = PapyrusPlayerNatives()
-    public var perceptionNatives = PapyrusPerceptionNatives()
-    public var sessionNatives = PapyrusSessionNatives()
-    public var storyNatives = PapyrusStoryNatives()
-    public var gameNatives = PapyrusGameNatives()
-    /// Load-order MGEF lookup, for `HasMagicEffectWithKeyword`. Nil in a
-    /// synthetic session with no record index.
-    public var magicEffectStore: MagicEffectStore?
-    /// Load-order FLST lookup, for the `FormList` natives. Nil fails them.
-    public var formListStore: FormListStore?
-    /// Load-order KYWD and `KWDA` lookup, for `HasKeyword`. Nil fails it.
-    public var keywordStore: KeywordStore?
+    public internal(set) var runState = RunState()
+    public var natives = Natives()
+    public var stores = Stores()
     /// Master-list resolver for the FormIDs written inside decoded records —
     /// XLKR links and their keywords. Nil in a synthetic session, which falls
     /// back to the reference index.
     public var formIDResolver: FormIDResolver?
-    /// The story manager and scenes, for the `Keyword` and `Scene` natives.
-    public weak var story: (any PapyrusStoryBridge)?
-    /// The race menu, map markers, fast travel, and the player's identity.
-    public weak var menus: (any PapyrusMenuBridge)?
-    /// Hazards and explosions that `PlaceAtMe` places.
-    public weak var trapWorld: (any PapyrusTrapWorldBridge)?
-    /// Object behaviour graphs, for the animation natives. Nil paces them.
-    public weak var objectAnimation: (any PapyrusObjectAnimationBridge)?
-    /// Notifications, message boxes, and camera effects. Nil in a headless session.
-    public weak var presenter: (any PapyrusPresenting)?
-    public var itemNotices: ItemNoticeTexts
-    /// Visual effects, effect shaders, and image-space modifiers. Nil in a headless session.
-    public weak var effectPresenter: (any PapyrusEffectPresenting)?
-    /// The sky, for the `Weather` natives. Nil in a headless session.
-    public weak var weather: (any PapyrusWeatherControlling)?
-    public weak var music: (any PapyrusMusicControlling)?
-    /// Packages, vehicles, and idles for the actor AI natives.
-    public weak var actorAI: (any PapyrusActorAIBridge)?
-    /// Furniture seats, for `IsFurnitureInUse` and `SetSittingRotation`.
-    public weak var furniture: (any PapyrusFurnitureBridge)?
-    /// Inventories and equipment, for the item natives.
-    public weak var inventory: (any PapyrusInventoryBridge)?
-    /// Ingredient knowledge, for the `Ingredient` and `Potion` natives.
-    public weak var alchemy: (any PapyrusAlchemyBridge)?
-    /// The first journal entry `queueInventoryEvents` has not read; nil before its first call.
-    var inventoryJournalCursor: UInt64?
-    /// The next `Sound.PlayAndWait` token.
-    var latentWaitToken = PapyrusWorldStateBridge.firstLatentWaitToken
-    /// Holders a script equipped or unequipped since the last `queueInventoryEvents`.
-    var scriptedEquipHolders: Set<ReferenceKey> = []
-    /// The first journal entry `queueMagicEffectEvents` has not read; nil before its first call.
-    var effectJournalCursor: UInt64?
-    /// The first journal entry `queueReferenceStateEvents` has not read.
-    var referenceJournalCursor: UInt64?
-    var statsJournalCursor: UInt64?
-    /// Each scripted actor's combat activity at the last `queueCombatStateEvents`.
-    var lastCombatActivity: [ReferenceKey: ActorCombatActivity] = [:]
-    /// The instances with an `OnCombatStateChanged`, sorted, at one instance revision.
-    var combatEventKeys: (revision: UInt64, keys: [PapyrusInstanceKey])?
-    /// `Game.SetSunGazeImageSpaceModifier`'s modifier, or nil for none.
-    public internal(set) var sunGazeModifier: ReferenceKey?
-    var wasSunGazing = false
-    /// Scripted moves in progress. See `PapyrusWorldTranslations.swift`.
-    public internal(set) var translations: [ReferenceKey: PapyrusTranslation] = [:]
-
-    /// Lazily built reverse map for the global lookups, which are keyed by
-    /// `ReferenceKey` on the Papyrus side and by `FormID` on the store side.
-    private var globalFormIDsByKey: [ReferenceKey: FormID]?
+    public var ports = Ports()
+    private(set) lazy var fragments = Fragments(bridge: self)
 
     public init(
         worldState: WorldStateStore,
         world: PapyrusWorldRuntime? = nil,
         references: (any PapyrusWorldReferenceSource)? = nil,
-        globals: GlobalStore? = nil,
         seams: PapyrusBridgeSeams = PapyrusBridgeSeams()
     ) {
         self.worldState = worldState
         self.world = world
-        self.references = references
-        self.globals = globals
+        ports.references = references
         questRuntime = seams.quests
-        inventory = seams.inventory
-        alchemy = seams.alchemy
-        actorAI = seams.actorAI
-        furniture = seams.furniture
-        objectAnimation = seams.objectAnimation
-        story = seams.story
-        menus = seams.menus
-        trapWorld = seams.trapWorld
-        presenter = seams.presenter
-        itemNotices = seams.itemNotices
-        effectPresenter = seams.effectPresenter
-        weather = seams.weather
-        music = seams.music
+        ports.inventory = seams.inventory
+        ports.alchemy = seams.alchemy
+        ports.actorAI = seams.actorAI
+        ports.furniture = seams.furniture
+        ports.objectAnimation = seams.objectAnimation
+        ports.story = seams.story
+        ports.menus = seams.menus
+        ports.trapWorld = seams.trapWorld
+        ports.presenter = seams.presenter
+        stores.itemNotices = seams.itemNotices
+        ports.effectPresenter = seams.effectPresenter
+        ports.weather = seams.weather
+        ports.music = seams.music
     }
 
     public var playerKey: ReferenceKey {
@@ -164,170 +90,12 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
 
     // MARK: - Reading
 
-    /// The enabled flag follows a resident `XESP` parent, as the cell build does. A
-    /// scripted move shows its live pose.
-    public func referenceState(for key: ReferenceKey) -> ReferenceState? {
-        guard let entry = references?.referenceEntry(key: key) else { return nil }
-        var state = worldState.resolvedState(for: entry)
-        if let move = translations[key] {
-            state.transform = move.pose(scale: state.transform.scale)
-        }
-        guard entry.enableParent != nil else { return state }
-        let store = worldState
-        let resolver = EnableParentResolver(
-            delta: { store.delta(for: $0) },
-            parent: { [references] in references?.referenceEntry(formID: $0) }
-        )
-        state.enableState = ReferenceEnableState(isEnabled: resolver.isEnabled(entry))
-        return state
-    }
-
-    /// Resolves through the session's master-list resolver, then the reference index for
-    /// synthetic sessions. One resolver per session, as in the cell builder, so another
-    /// plugin's FormID spelling resolves wrongly.
-    /// The load-order FormID of `key`, or nil for a key outside the load order.
-    public func localFormID(of key: ReferenceKey) -> FormID? {
-        guard case let .plugin(plugin, objectID) = key else { return nil }
-        return formIDResolver?.localFormID(of: ResolvedFormID(plugin: plugin, objectID: objectID))
-    }
-
-    public func referenceKey(forFormID formID: FormID) -> ReferenceKey? {
-        if let formIDResolver, let key = ReferenceKey.resolve(formID, using: formIDResolver) {
-            return key
-        }
-        return references?.referenceEntry(formID: formID)?.key
-    }
-
-    public func placedReference(for key: ReferenceKey) -> PlacedReference? {
-        references?.referenceEntry(key: key)?.placedReference
-    }
-
-    /// An ACHR keeps its links in its details, a REFR in its own field.
-    public func linkedReferences(of key: ReferenceKey) -> [LinkedReference] {
-        guard let entry = references?.referenceEntry(key: key) else { return [] }
-        return entry.placedReference?.linkedReferences
-            ?? entry.placedActor?.details.linkedReferences ?? []
-    }
-
-    public func baseObject(of key: ReferenceKey) -> FormID? {
-        guard let entry = references?.referenceEntry(key: key) else { return nil }
-        return entry.placedReference?.base ?? entry.placedActor?.base
-    }
-
     public func triggerObjectCount(for key: ReferenceKey) -> Int {
-        triggerOccupants[key]?.count ?? 0
-    }
-
-    public func lockState(for key: ReferenceKey) -> ReferenceLockState? {
-        ReferenceLockState.resolve(
-            baseline: placedReference(for: key)?.lock,
-            delta: worldState.component(ReferenceLockState.self, for: key)
-        )
+        runState.triggerOccupants[key]?.count ?? 0
     }
 
     public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
-        references?.cellLocation(of: key)
-    }
-
-    // MARK: - Writing
-
-    /// Stores a component the VM holds. A spawn uses its own cell; quests, aliases and
-    /// dialogue have none; placed state uses the reference's cell. Gameplay natives use
-    /// their runtimes instead. Spellbook, enchantment, perk, faction, progress and
-    /// crime kinds are refused. A transform write ends a scripted move.
-    @discardableResult
-    public func write(
-        _ component: WorldStateComponentValue, for key: ReferenceKey
-    ) -> Bool {
-        switch component.kind {
-        case .spawn:
-            guard let spawn = component.value(as: ReferenceSpawnState.self) else { return false }
-            return worldState.set(spawn, for: key, in: spawn.location)
-        case .quest, .questAliases, .dialogue:
-            return worldState.set(component.base, for: key)
-        case .transform:
-            endTranslation(of: key)
-            return worldState.set(component.base, for: key, in: cellLocation(of: key))
-        case .enableState, .activation, .deletion, .inventory,
-             .actorValues, .death, .combat, .activeEffects, .lock:
-            return worldState.set(component.base, for: key, in: cellLocation(of: key))
-        default:
-            return false
-        }
-    }
-
-    // MARK: - Activation
-
-    /// The actor an `AttachAshPile` pile stands for; nil for anything else.
-    public func ashPileOwner(of key: ReferenceKey) -> ReferenceKey? {
-        scriptedState(of: key).form(PapyrusWorldStateBridge.ashPileOwnerName)
-    }
-
-    /// Records one activation, queues `OnActivate` on the target's scripts, and
-    /// passes it to the target's `XAPR` activate children, each activated by its
-    /// parent. A child with a delay waits for `advanceDelayedActivations`. Each
-    /// reference is activated at most once per call, so a cycle ends.
-    @discardableResult
-    public func activate(
-        _ target: ReferenceKey,
-        by activator: ReferenceKey,
-        togglesOpen: Bool
-    ) -> PapyrusActivationOutcome {
-        let outcome = activateOne(target, by: activator, togglesOpen: togglesOpen)
-        guard !outcome.cappedByRecursion else { return outcome }
-        var queuedEvents = outcome.queuedEvents
-        var visited: Set = [target]
-        if let actor = ashPileOwner(of: target), visited.insert(actor).inserted {
-            queuedEvents += activateOne(actor, by: activator, togglesOpen: false).queuedEvents
-        }
-        var parents = [target]
-        while let parent = parents.popLast() {
-            for child in references?.activateChildren(of: parent) ?? []
-                where visited.insert(child.key).inserted
-            {
-                guard child.delay <= 0 else {
-                    delayedActivations.append(DelayedActivation(
-                        child: child.key, parent: parent, remaining: child.delay
-                    ))
-                    continue
-                }
-                queuedEvents += activateOne(child.key, by: parent, togglesOpen: false)
-                    .queuedEvents
-                parents.append(child.key)
-            }
-        }
-        return PapyrusActivationOutcome(
-            recorded: outcome.recorded, queuedEvents: queuedEvents, cappedByRecursion: false
-        )
-    }
-
-    /// The recursion cap is consulted first: a refused activation writes no
-    /// state either, so a script pair activating each other cannot keep
-    /// incrementing `activationCount` forever.
-    private func activateOne(
-        _ target: ReferenceKey,
-        by activator: ReferenceKey,
-        togglesOpen: Bool
-    ) -> PapyrusActivationOutcome {
-        let queued = world?.queueOnActivate(target: target, activator: activator)
-            ?? .none
-        guard !queued.cappedByRecursion else { return queued }
-        let current = worldState.component(ReferenceActivationState.self, for: target)
-            ?? referenceState(for: target)?.activation
-            ?? .untouched
-        let recorded = write(
-            current.activated(
-                by: activator,
-                togglesOpen: togglesOpen && !isActivationBlocked(target)
-            )
-            .erased,
-            for: target
-        )
-        return PapyrusActivationOutcome(
-            recorded: recorded,
-            queuedEvents: queued.queuedEvents,
-            cappedByRecursion: false
-        )
+        ports.references?.cellLocation(of: key)
     }
 
     // MARK: - Update timers
@@ -346,70 +114,382 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     ) {
         world?.unregisterUpdateTimers(handle: handle, family: family)
     }
-
-    /// `CellStreamer.onInteraction` subscriber: records one activation and queues one
-    /// `OnActivate` per script. An unknown reference is dropped. A door-style `open` sets
-    /// `togglesOpen`, which drives `ReferenceActivationState.isOpen`.
-    @discardableResult
-    public func handleInteraction(_ event: InteractionEvent) -> PapyrusActivationOutcome {
-        let interaction = event.target.interaction
-        guard
-            let entry = references?.referenceEntry(formID: interaction.reference)
-        else { return .none }
-        return activate(
-            entry.key,
-            by: playerKey,
-            togglesOpen: interaction.action == .open
-        )
-    }
-}
-
-extension PapyrusWorldStateBridge {
-    func isQuestRunning(_ key: ReferenceKey) -> Bool {
-        guard let resolved = attempt({ try resolveQuest(key) }) else { return false }
-        let state = attempt { try resolved.runtime.state(of: resolved.quest.formID) }
-        return state?.isRunning ?? false
-    }
-
-    public func globalValue(for key: ReferenceKey) -> GlobalValue? {
-        guard let globals, let id = globalFormID(for: key) else {
-            return worldState.globalValue(for: key)
-        }
-        return worldState
-            .globalResolution(defaults: globals, clock: sessionNatives.clockSource?())
-            .value(for: id)
-    }
-
-    /// A write with no GLOB record behind it — a synthetic session, or a key
-    /// the loaded plugins do not define — keeps whatever type an existing
-    /// override declared and otherwise treats the value as a float, rather
-    /// than inventing a `short`/`long` rounding rule the plugin never stated.
-    @discardableResult
-    public func setGlobal(_ raw: Float, for key: ReferenceKey) -> Bool {
-        if let globals, let id = globalFormID(for: key) {
-            return worldState.setGlobal(raw, formID: id, defaults: globals)
-        }
-        let type = worldState.globalValue(for: key)?.type ?? .float
-        return worldState.setGlobal(raw, type: type, for: key)
-    }
-
-    private func globalFormID(for key: ReferenceKey) -> FormID? {
-        if let globalFormIDsByKey {
-            return globalFormIDsByKey[key]
-        }
-        var map: [ReferenceKey: FormID] = [:]
-        for global in globals?.sortedGlobals() ?? [] {
-            guard let globalKey = globals?.key(for: global.formID) else { continue }
-            map[globalKey] = global.formID
-        }
-        globalFormIDsByKey = map
-        return map[key]
-    }
 }
 
 extension PapyrusWorldStateBridge {
     /// Retires the scripts on the cell's references as the cell leaves the scene.
     public func detachScripts(from cell: CellSceneLocation) {
         world?.detach(cell: cell)
+    }
+}
+
+extension PapyrusWorldStateBridge {
+    public var activations: Activations {
+        Activations(bridge: self)
+    }
+
+    var globalReads: Globals {
+        Globals(bridge: self)
+    }
+
+    var referenceReads: ReferenceReads {
+        ReferenceReads(bridge: self)
+    }
+
+    var questScripts: QuestScripts {
+        QuestScripts(bridge: self)
+    }
+
+    var storyEvents: StoryEvents {
+        StoryEvents(bridge: self)
+    }
+
+    var actorValues: ActorValueCalls {
+        ActorValueCalls(bridge: self)
+    }
+
+    var spellEffects: SpellEffects {
+        SpellEffects(bridge: self)
+    }
+
+    var effectEvents: EffectEvents {
+        EffectEvents(bridge: self)
+    }
+
+    var referenceEvents: ReferenceEvents {
+        ReferenceEvents(bridge: self)
+    }
+
+    public var referencePlacement: Placements {
+        Placements(bridge: self)
+    }
+
+    var conditionTwins: ConditionTwins {
+        ConditionTwins(bridge: self)
+    }
+
+    var inventoryEvents: InventoryEvents {
+        InventoryEvents(bridge: self)
+    }
+
+    var factions: Factions {
+        Factions(bridge: self)
+    }
+
+    var guards: Guards {
+        Guards(bridge: self)
+    }
+
+    var crime: Crime {
+        Crime(bridge: self)
+    }
+
+    public var scriptState: ScriptState {
+        ScriptState(bridge: self)
+    }
+
+    var formLists: FormLists {
+        FormLists(bridge: self)
+    }
+
+    var scriptedMoves: ScriptedMoves {
+        ScriptedMoves(bridge: self)
+    }
+
+    var sounds: Sounds {
+        Sounds(bridge: self)
+    }
+
+    public var triggers: Triggers {
+        Triggers(bridge: self)
+    }
+
+    var trackedStats: TrackedStats {
+        TrackedStats(bridge: self)
+    }
+
+    var leveledEdits: LeveledEdits {
+        LeveledEdits(bridge: self)
+    }
+
+    var combatEvents: CombatEvents {
+        CombatEvents(bridge: self)
+    }
+
+    var itemNoticeLines: ItemNoticeLines {
+        ItemNoticeLines(bridge: self)
+    }
+
+    var recordReads: RecordReads {
+        RecordReads(bridge: self)
+    }
+
+    var lineOfSight: LineOfSight {
+        LineOfSight(bridge: self)
+    }
+
+    var sunGaze: SunGaze {
+        SunGaze(bridge: self)
+    }
+
+    public var stateLinks: StateLinks {
+        StateLinks(bridge: self)
+    }
+
+    var referenceRules: ReferenceRules {
+        ReferenceRules(bridge: self)
+    }
+
+    var activationDelays: ActivationDelays {
+        ActivationDelays(bridge: self)
+    }
+
+    public struct Activations {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    struct Globals {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    struct ReferenceReads {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Quest stages, aliases, objectives, and the scripts a quest attaches.
+    struct QuestScripts: Sendable {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Story manager starts and the package and perk fragments they run.
+    struct StoryEvents {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Actor values, death, and the actor flags scripts change.
+    struct ActorValueCalls: Sendable {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Spells, active effects, and casting for the magic natives.
+    struct SpellEffects: Sendable {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// The magic effect events queued from the effect journal.
+    struct EffectEvents {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// The reference state events queued from the journal, and destruction.
+    struct ReferenceEvents {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Placing, moving, and spawning references.
+    public struct Placements {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Natives that answer through a condition function.
+    struct ConditionTwins {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// The inventory events queued from the journal, and their filters.
+    struct InventoryEvents {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Faction membership, ranks, and reactions.
+    struct Factions: Sendable {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Guards recognising the player and arrests.
+    struct Guards: Sendable {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Crimes, bounties, and ownership.
+    struct Crime: Sendable {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// The state scripts keep on references, and the equipped shout.
+    public struct ScriptState {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Form lists and keywords.
+    struct FormLists {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Scripted moves in progress, such as TranslateTo.
+    struct ScriptedMoves {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Latent sound waits.
+    struct Sounds {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Trigger volumes and who stands in them.
+    public struct Triggers {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// The tracked stats events queued from the journal.
+    struct TrackedStats {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Script edits to leveled lists.
+    struct LeveledEdits {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Combat state changes and the actor combat reads.
+    struct CombatEvents {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// The added and removed item notices.
+    struct ItemNoticeLines {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Record reads and script hit events.
+    struct RecordReads {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Line of sight between references.
+    struct LineOfSight {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// The sun gaze image-space modifier.
+    struct SunGaze {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Player controls and the links scripts keep between references.
+    public struct StateLinks {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Reference rules: distance, angle, and motion.
+    struct ReferenceRules {
+        let bridge: PapyrusWorldStateBridge
+    }
+
+    /// Activate children waiting out their delay.
+    struct ActivationDelays {
+        let bridge: PapyrusWorldStateBridge
+    }
+}
+
+extension PapyrusWorldStateBridge {
+    /// The host's native hooks, one table per area.
+    public struct Natives {
+        public var faction = PapyrusFactionNatives()
+        public var actor = PapyrusActorNatives()
+        public var magic = PapyrusMagicNatives()
+        public var progression = PapyrusProgressionNatives()
+        public var crime = PapyrusCrimeNatives()
+        public var player = PapyrusPlayerNatives()
+        public var perception = PapyrusPerceptionNatives()
+        public var session = PapyrusSessionNatives()
+        public var story = PapyrusStoryNatives()
+        public var game = PapyrusGameNatives()
+    }
+
+    /// The record stores the natives read. Each is nil in a synthetic session.
+    public struct Stores {
+        /// Plugin GLOB defaults. Nil in a synthetic session, where only overrides
+        /// already recorded in the store are visible.
+        public var globals: GlobalStore?
+        /// Load-order MGEF lookup, for `HasMagicEffectWithKeyword`. Nil in a
+        /// synthetic session with no record index.
+        public var magicEffectStore: MagicEffectStore?
+        /// Load-order FLST lookup, for the `FormList` natives. Nil fails them.
+        public var formListStore: FormListStore?
+        /// Load-order KYWD and `KWDA` lookup, for `HasKeyword`. Nil fails it.
+        public var keywordStore: KeywordStore?
+        /// Lazily built reverse map for the global lookups, which are keyed by
+        /// `ReferenceKey` on the Papyrus side and by `FormID` on the store side.
+        var globalFormIDsByKey: [ReferenceKey: FormID]?
+        /// The words of the item notices, such as "added".
+        public var itemNotices = ItemNoticeTexts()
+    }
+
+    /// The host systems the natives call. Weak, because the session owns them.
+    public struct Ports {
+        public weak var references: (any PapyrusWorldReferenceSource)?
+        /// The story manager and scenes, for the `Keyword` and `Scene` natives.
+        public weak var story: (any PapyrusStoryBridge)?
+        /// The race menu, map markers, fast travel, and the player's identity.
+        public weak var menus: (any PapyrusMenuBridge)?
+        /// Hazards and explosions that `PlaceAtMe` places.
+        public weak var trapWorld: (any PapyrusTrapWorldBridge)?
+        /// Object behaviour graphs, for the animation natives. Nil paces them.
+        public weak var objectAnimation: (any PapyrusObjectAnimationBridge)?
+        /// Notifications, message boxes, and camera effects. Nil in a headless session.
+        public weak var presenter: (any PapyrusPresenting)?
+        /// Visual effects, effect shaders, and image-space modifiers. Nil in a headless session.
+        public weak var effectPresenter: (any PapyrusEffectPresenting)?
+        /// The sky, for the `Weather` natives. Nil in a headless session.
+        public weak var weather: (any PapyrusWeatherControlling)?
+        public weak var music: (any PapyrusMusicControlling)?
+        /// Packages, vehicles, and idles for the actor AI natives.
+        public weak var actorAI: (any PapyrusActorAIBridge)?
+        /// Furniture seats, for `IsFurnitureInUse` and `SetSittingRotation`.
+        public weak var furniture: (any PapyrusFurnitureBridge)?
+        /// Inventories and equipment, for the item natives.
+        public weak var inventory: (any PapyrusInventoryBridge)?
+        /// Ingredient knowledge, for the `Ingredient` and `Potion` natives.
+        public weak var alchemy: (any PapyrusAlchemyBridge)?
+    }
+}
+
+extension PapyrusWorldStateBridge {
+    /// What the parts keep between frames: journal cursors, trigger occupants,
+    /// delayed activations, and moves in progress.
+    public struct RunState {
+        /// Quests whose alias fill failed while scripts were attached at wire-up. Counted,
+        /// not thrown: a quest running from its DNAM flag has no `Start` call to refuse.
+        public var questAliasFillFailures = 0
+        /// Who stands in each trigger volume, kept from the enter and leave events.
+        public var triggerOccupants: [ReferenceKey: Set<ReferenceKey>] = [:]
+        /// Seconds since the last `OnTrigger` repeat.
+        public var triggerRepeatElapsed: Float = 0
+        /// Activate children still waiting out their `XAPR` delay, in the order they were queued.
+        public var delayedActivations: [DelayedActivation] = []
+        /// The actor `KillSilent` is killing, so the host skips the story-manager `KILL` event.
+        public var silentDeath: ReferenceKey?
+        /// The first journal entry `queueInventoryEvents` has not read; nil before its first call.
+        public var inventoryJournalCursor: UInt64?
+        /// The next `Sound.PlayAndWait` token.
+        public var latentWaitToken = PapyrusWorldStateBridge.Sounds.firstLatentWaitToken
+        /// Holders a script equipped or unequipped since the last `queueInventoryEvents`.
+        public var scriptedEquipHolders: Set<ReferenceKey> = []
+        /// The first journal entry `queueMagicEffectEvents` has not read; nil before its first
+        /// call.
+        public var effectJournalCursor: UInt64?
+        /// The first journal entry `queueReferenceStateEvents` has not read.
+        public var referenceJournalCursor: UInt64?
+        public var statsJournalCursor: UInt64?
+        /// Each scripted actor's combat activity at the last `queueCombatStateEvents`.
+        var lastCombatActivity: [ReferenceKey: ActorCombatActivity] = [:]
+        /// The instances with an `OnCombatStateChanged`, sorted, at one instance revision.
+        var combatEventKeys: (revision: UInt64, keys: [PapyrusInstanceKey])?
+        /// `Game.SetSunGazeImageSpaceModifier`'s modifier, or nil for none.
+        public var sunGazeModifier: ReferenceKey?
+        public var wasSunGazing = false
+        /// Scripted moves in progress. See `PapyrusWorldTranslations.swift`.
+        public var translations: [ReferenceKey: PapyrusTranslation] = [:]
     }
 }

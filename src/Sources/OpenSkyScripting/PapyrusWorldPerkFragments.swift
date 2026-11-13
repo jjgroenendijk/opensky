@@ -49,12 +49,14 @@ extension PapyrusWorldRuntime {
 }
 
 @MainActor
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.StoryEvents {
     @discardableResult
     public func runPerkFragment(
         of perk: Perk, key: ReferenceKey, index: UInt16, activation: PerkFragmentActivation
     ) -> Bool {
-        guard let world, let formIDResolver else { return false }
+        guard
+            let world = bridge.world,
+            let formIDResolver = bridge.formIDResolver else { return false }
         return world.queuePerkFragment(
             of: perk, key: key, fragment: (index, activation),
             formIDResolver: formIDResolver

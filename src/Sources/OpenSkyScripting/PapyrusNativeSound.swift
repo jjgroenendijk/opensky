@@ -24,7 +24,7 @@ extension PapyrusNativeFunctions.SoundNatives {
                 let source = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)),
                 let play = bridge.gameNatives.playSound
             else { return failure(call, "PlayAndWait needs a source reference") }
-            let token = bridge.nextLatentWaitToken()
+            let token = bridge.sounds.nextLatentWaitToken()
             guard play(sound, source, token) != 0 else {
                 return .returned(.boolean(false))
             }
@@ -77,7 +77,7 @@ extension PapyrusNativeFunctions.SoundNatives {
                 muteMusic: boolean(call, at: 3, default: true),
                 letterbox: boolean(call, at: 4, default: true)
             )
-            let token = bridge.nextLatentWaitToken()
+            let token = bridge.sounds.nextLatentWaitToken()
             return play(request, token) ? .suspended(.external(token)) : .returned(.none)
         })
     }
@@ -96,7 +96,7 @@ extension PapyrusNativeFunctions.SoundNatives {
             else {
                 return .returned(.boolean(false))
             }
-            let token = bridge.nextLatentWaitToken()
+            let token = bridge.sounds.nextLatentWaitToken()
             guard path(actor, target, speed, token) else { return .returned(.boolean(false)) }
             return .suspended(.external(token))
         }
@@ -116,13 +116,13 @@ extension PapyrusNativeFunctions.SoundNatives {
     }
 }
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.Sounds {
     /// Above the actor graph's token range, so no two waits share a token. Sound and
     /// path waits share this range.
     static let firstLatentWaitToken: UInt64 = 1 << 60
 
     func nextLatentWaitToken() -> UInt64 {
-        defer { latentWaitToken += 1 }
-        return latentWaitToken
+        defer { bridge.runState.latentWaitToken += 1 }
+        return bridge.runState.latentWaitToken
     }
 }

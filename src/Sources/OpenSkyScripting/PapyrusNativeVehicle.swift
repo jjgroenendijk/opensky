@@ -35,7 +35,8 @@ extension PapyrusNativeFunctions.VehicleNatives {
                     let world = context.world as? PapyrusWorldStateBridge,
                     let receiver = call.receiver, let key = world.referenceKey(for: receiver)
                 else { return needsWorld(call) }
-                let loaded = key == .player || world.references?.referenceEntry(key: key) != nil
+                let loaded = key == .player || world.ports.references?
+                    .referenceEntry(key: key) != nil
                 return .returned(.boolean(loaded))
             })
         }
@@ -123,7 +124,7 @@ extension PapyrusNativeFunctions.VehicleNatives {
         registry.register(PapyrusNativeFunction(
             scriptName: "Game", functionName: "SetPlayerAIDriven"
         ) { call, context in
-            guard let ai = (context.world as? PapyrusWorldStateBridge)?.actorAI else {
+            guard let ai = (context.world as? PapyrusWorldStateBridge)?.ports.actorAI else {
                 return failure(call, "SetPlayerAIDriven needs the actor AI bridge")
             }
             ai.setPlayerAIDriven(boolean(call, at: 0, default: true))
@@ -142,7 +143,7 @@ extension PapyrusNativeFunctions.VehicleNatives {
             scriptName: script, functionName: name
         ) { call, context in
             guard
-                let world = context.world as? PapyrusWorldStateBridge, let ai = world.actorAI,
+                let world = context.world as? PapyrusWorldStateBridge, let ai = world.ports.actorAI,
                 let receiver = call.receiver, let key = world.referenceKey(for: receiver)
             else { return failure(call, "\(name) needs the actor AI bridge and a reference") }
             return body(call, world, ai, key)

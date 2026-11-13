@@ -16,7 +16,7 @@ struct PapyrusNativeTrapMotionTests {
     @Test func setMotionTypeMapsThePapyrusValues() throws {
         let fixture = try Fixture.make()
         let trapWorld = FakeTrapWorld()
-        fixture.session.bridge.trapWorld = trapWorld
+        fixture.session.bridge.ports.trapWorld = trapWorld
         #expect(fixture.call("SetMotionType", arguments: [.integer(4), .boolean(true)])
             == .returned(.none))
         #expect(trapWorld.motionTypes[fixture.key] == .keyframed)
@@ -31,7 +31,7 @@ struct PapyrusNativeTrapMotionTests {
     @Test func resetPassesTheTargetAndStaysAStubForAnActor() throws {
         let fixture = try Fixture.make()
         let trapWorld = FakeTrapWorld()
-        fixture.session.bridge.trapWorld = trapWorld
+        fixture.session.bridge.ports.trapWorld = trapWorld
         let door = fixture.handle(Fixture.doorID)
         #expect(fixture.call("Reset", arguments: [.none]) == .returned(.none))
         #expect(fixture.call("Reset", arguments: [.object(door)]) == .returned(.none))
@@ -52,7 +52,7 @@ struct PapyrusNativeTrapMotionTests {
             ))
         }
         #expect(fire() == .deviated(.none, .stubbed))
-        fixture.session.bridge.trapWorld = trapWorld
+        fixture.session.bridge.ports.trapWorld = trapWorld
         #expect(fire() == .returned(.none))
         #expect(trapWorld.shots.first?.weapon == Fixture.key(Fixture.keywordID))
         #expect(trapWorld.shots.first?.source == fixture.key)
@@ -62,7 +62,7 @@ struct PapyrusNativeTrapMotionTests {
     @Test func trapHitStaggersAndPushesTheActorHit() throws {
         let fixture = try Fixture.make()
         let trapWorld = FakeTrapWorld()
-        fixture.session.bridge.trapWorld = trapWorld
+        fixture.session.bridge.ports.trapWorld = trapWorld
         let hit = PapyrusWorldFixture.methodCall(
             "ObjectReference", "ProcessTrapHit", receiver: fixture.receiver,
             arguments: [.object(fixture.receiver), .float(10), .float(300)]

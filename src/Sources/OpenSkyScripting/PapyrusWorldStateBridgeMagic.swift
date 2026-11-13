@@ -5,22 +5,22 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
-public import OpenSkyGameData
-public import OpenSkyMagicInterface
+import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyMagicInterface
 import OpenSkyWorldState
 import simd
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.SpellEffects {
     // MARK: - Reading
 
     public func spellState(for key: ReferenceKey) -> PapyrusSpellState? {
         guard
-            let caster = magicNatives.casterRuntime?(),
-            let holder = actorHolder(for: key)
+            let caster = bridge.natives.magic.casterRuntime?(),
+            let holder = bridge.actorValues.actorHolder(for: key)
         else { return nil }
         let spellbook = caster.spellbookAccess.state(of: holder)
-        let effects = worldState.component(ActiveEffectState.self, for: key)
+        let effects = bridge.worldState.component(ActiveEffectState.self, for: key)
         let active = effects?.effects ?? []
         let potential = MagicEffectReach.potentialEffects(
             known: spellbook.known,
@@ -43,8 +43,8 @@ extension PapyrusWorldStateBridge {
     @discardableResult
     public func addSpell(_ spell: ReferenceKey, to actor: ReferenceKey) -> Bool {
         guard
-            let caster = magicNatives.casterRuntime?(),
-            let holder = actorHolder(for: actor)
+            let caster = bridge.natives.magic.casterRuntime?(),
+            let holder = bridge.actorValues.actorHolder(for: actor)
         else {
             return false
         }
@@ -54,8 +54,8 @@ extension PapyrusWorldStateBridge {
     @discardableResult
     public func removeSpell(_ spell: ReferenceKey, from actor: ReferenceKey) -> Bool {
         guard
-            let caster = magicNatives.casterRuntime?(),
-            let holder = actorHolder(for: actor)
+            let caster = bridge.natives.magic.casterRuntime?(),
+            let holder = bridge.actorValues.actorHolder(for: actor)
         else {
             return false
         }
@@ -69,8 +69,8 @@ extension PapyrusWorldStateBridge {
         _ spell: ReferenceKey, source: CastingSource, on actor: ReferenceKey
     ) -> Bool {
         guard
-            let caster = magicNatives.casterRuntime?(),
-            let holder = actorHolder(for: actor),
+            let caster = bridge.natives.magic.casterRuntime?(),
+            let holder = bridge.actorValues.actorHolder(for: actor),
             let hand = source.hand
         else { return false }
         // "If the calling actor does not have akSpell, it will be given to
@@ -85,8 +85,8 @@ extension PapyrusWorldStateBridge {
         _ spell: ReferenceKey, source: CastingSource, on actor: ReferenceKey
     ) -> Bool {
         guard
-            let caster = magicNatives.casterRuntime?(),
-            let holder = actorHolder(for: actor),
+            let caster = bridge.natives.magic.casterRuntime?(),
+            let holder = bridge.actorValues.actorHolder(for: actor),
             let hand = source.hand,
             caster.spellbookAccess.state(of: holder).spell(in: hand) == spell
         else { return false }
@@ -97,15 +97,15 @@ extension PapyrusWorldStateBridge {
 
     @discardableResult
     public func dispelSpell(_ spell: ReferenceKey, on actor: ReferenceKey) -> Int {
-        guard let holder = actorHolder(for: actor) else { return 0 }
-        return magicNatives.dispelEffects?(holder) { $0.source.record == spell } ?? 0
+        guard let holder = bridge.actorValues.actorHolder(for: actor) else { return 0 }
+        return bridge.natives.magic.dispelEffects?(holder) { $0.source.record == spell } ?? 0
     }
 
     @discardableResult
     public func dispelAllSpells(on actor: ReferenceKey) -> Int {
-        guard let holder = actorHolder(for: actor) else { return 0 }
-        let spells = magicNatives.casterRuntime?()?.spellbookAccess.spells
-        return magicNatives.dispelEffects?(holder) { effect in
+        guard let holder = bridge.actorValues.actorHolder(for: actor) else { return 0 }
+        let spells = bridge.natives.magic.casterRuntime?()?.spellbookAccess.spells
+        return bridge.natives.magic.dispelEffects?(holder) { effect in
             Self.isDispellable(effect, spells: spells)
         } ?? 0
     }
@@ -131,11 +131,11 @@ extension PapyrusWorldStateBridge {
         _ spell: ReferenceKey, from source: ReferenceKey, at target: ReferenceKey?,
         blame: ReferenceKey?
     ) -> Bool {
-        let blamed = blame.flatMap(actorHolder(for:))
+        let blamed = blame.flatMap(bridge.actorValues.actorHolder(for:))
         guard
-            let caster = magicNatives.casterRuntime?(),
+            let caster = bridge.natives.magic.casterRuntime?(),
             let record = caster.spellbookAccess.record(spell),
-            let holder = actorHolder(for: source) ?? blamed
+            let holder = bridge.actorValues.actorHolder(for: source) ?? blamed
         else { return false }
         guard
             let target,
@@ -157,7 +157,7 @@ extension PapyrusWorldStateBridge {
         caster holder: ActorValueHolder,
         target: ReferenceKey
     ) -> Bool {
-        guard let apply = magicNatives.applySpellHit else { return false }
+        guard let apply = bridge.natives.magic.applySpellHit else { return false }
         let payload = record.payload(caster: holder.key)
         _ = apply(SpellHit(
             payload: payload,
@@ -168,10 +168,12 @@ extension PapyrusWorldStateBridge {
 
     /// Every keyword the MGEFs behind `effects` carry, resolved once.
     private func effectKeywords(of effects: some Sequence<ReferenceKey>) -> Set<ReferenceKey> {
-        guard let store = magicEffectStore else { return [] }
+        guard let store = bridge.stores.magicEffectStore else { return [] }
         return Set(effects).reduce(into: []) { keywords, effect in
             guard let record = store.effect(key: effect) else { return }
             keywords.formUnion(store.keywordKeys(of: record))
         }
     }
 }
+
+extension PapyrusWorldStateBridge.SpellEffects: PapyrusWorldMagicBridge {}

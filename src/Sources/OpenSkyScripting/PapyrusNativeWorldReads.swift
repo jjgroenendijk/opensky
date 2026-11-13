@@ -15,8 +15,9 @@ extension PapyrusNativeFunctions.WorldReadsNatives {
     static func installWorldReads(into registry: inout PapyrusNativeRegistry) {
         scriptState("Cell", "IsInterior", into: &registry) { call, bridge, key in
             guard
-                let word = bridge.loadOrderWord(of: key),
-                let interior = bridge.sessionNatives.conditionData?().isInterior(cell: FormID(word))
+                let word = bridge.conditionTwins.loadOrderWord(of: key),
+                let interior = bridge.natives.session.conditionData?()
+                    .isInterior(cell: FormID(word))
             else { return failure(call, "IsInterior needs a loaded cell") }
             return .returned(.boolean(interior))
         }
@@ -24,7 +25,7 @@ extension PapyrusNativeFunctions.WorldReadsNatives {
         scriptState("Actor", "GetDialogueTarget", into: &registry) { call, bridge, key in
             guard
                 let world = bridge.world,
-                let evaluator = bridge.sessionNatives.conditionEvaluator?()
+                let evaluator = bridge.natives.session.conditionEvaluator?()
             else {
                 return needsWorld(call)
             }
@@ -37,8 +38,8 @@ extension PapyrusNativeFunctions.WorldReadsNatives {
         for (name, axis) in [("GetWidth", 0), ("GetLength", 1), ("GetHeight", 2)] {
             scriptState("ObjectReference", name, into: &registry) { call, bridge, key in
                 guard
-                    case let .plugin(plugin, objectID) = bridge.resolvedBase(of: key),
-                    let bounds = bridge.keywordStore?.bounds(
+                    case let .plugin(plugin, objectID) = bridge.formLists.resolvedBase(of: key),
+                    let bounds = bridge.stores.keywordStore?.bounds(
                         of: ResolvedFormID(plugin: plugin, objectID: objectID)
                     )
                 else { return failure(call, "\(name) needs a base form with bounds") }
@@ -49,13 +50,13 @@ extension PapyrusNativeFunctions.WorldReadsNatives {
         }
         // "The object has to be controlled by Havok ... or this function will always return 0."
         scriptState("ObjectReference", "GetMass", into: &registry) { call, bridge, key in
-            guard let mass = bridge.sessionNatives.havokMass else {
+            guard let mass = bridge.natives.session.havokMass else {
                 return failure(call, "GetMass needs the physics world")
             }
             return .returned(.float(mass(key) ?? 0))
         }
         scriptState("Actor", "GetBribeAmount", into: &registry) { call, bridge, key in
-            let context = bridge.sessionNatives.conditionEvaluator?().context
+            let context = bridge.natives.session.conditionEvaluator?().context
             guard
                 let context,
                 let amount = context[resolution: SpeechCheckResolution.self]

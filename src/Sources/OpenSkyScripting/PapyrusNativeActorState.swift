@@ -16,7 +16,7 @@ extension PapyrusNativeFunctions.ActorStateNatives {
         // `int GetCombatState()`: 0 not in combat, 1 in combat, 2 searching, which are
         // the raw values of `ActorCombatActivity`.
         scriptState("Actor", "GetCombatState", into: &registry) { call, bridge, key in
-            guard let activity = bridge.combatActivity(of: key) else {
+            guard let activity = bridge.combatEvents.combatActivity(of: key) else {
                 return failure(call, "GetCombatState needs a combat runtime")
             }
             return .returned(.integer(Int32(activity.rawValue)))
@@ -24,42 +24,43 @@ extension PapyrusNativeFunctions.ActorStateNatives {
         // OpenSky's combat loop fights the player alone, so a fighting actor targets
         // the player, and the player targets the actor the loop picked.
         scriptState("Actor", "GetCombatTarget", into: &registry) { call, bridge, key in
-            guard let activity = bridge.combatActivity(of: key) else {
+            guard let activity = bridge.combatEvents.combatActivity(of: key) else {
                 return failure(call, "GetCombatTarget needs a combat runtime")
             }
             guard
                 activity != .notFighting,
-                let target = bridge.actorNatives.combatRuntime?()?.combatTarget(of: key)
+                let target = bridge.natives.actor.combatRuntime?()?.combatTarget(of: key)
             else { return .returned(.none) }
             return .returned(handle(target, in: bridge))
         }
         // `StopCombatAlarm()` ends the actor's fight; OpenSky keeps no alarm apart from it.
         scriptState("Actor", "StopCombatAlarm", into: &registry) { _, bridge, key in
-            bridge.stopActorCombat(key)
+            bridge.actorValues.stopActorCombat(key)
             return .returned(.none)
         }
         // `EnableAI(bool abEnable = true)` and `bool IsAIEnabled()`.
         scriptState("Actor", "EnableAI", into: &registry) { call, bridge, key in
             let enabled = boolean(call, at: 0, default: true)
-            bridge.updateScriptedState(of: key) {
+            bridge.scriptState.updateScriptedState(of: key) {
                 $0.setFlag(aiDisabledName, enabled ? nil : true)
             }
             // An actor with no AI fights no more; the combat loop then leaves it out.
             if !enabled {
-                bridge.stopActorCombat(key)
+                bridge.actorValues.stopActorCombat(key)
             }
             return .returned(.none)
         }
         scriptState("Actor", "IsAIEnabled", into: &registry) { _, bridge, key in
-            .returned(.boolean(bridge.scriptedState(of: key).flag(aiDisabledName) != true))
+            .returned(.boolean(bridge.scriptState.scriptedState(of: key)
+                    .flag(aiDisabledName) != true))
         }
         scriptState("Actor", "IsBleedingOut", into: &registry) { _, bridge, key in
-            .returned(.boolean(bridge.scriptedState(of: key)
+            .returned(.boolean(bridge.scriptState.scriptedState(of: key)
                     .flag(ScriptedStateName.bleedingOut) == true))
         }
         // A summon or a raised corpse while its effect runs.
         scriptState("Actor", "IsCommandedActor", into: &registry) { _, bridge, key in
-            .returned(.boolean(bridge.magicNatives.isCommandedActor?(key) ?? false))
+            .returned(.boolean(bridge.natives.magic.isCommandedActor?(key) ?? false))
         }
         // `AddAchievement(int)`: OpenSky reports to no platform, so nothing happens.
         registry.register(PapyrusNativeFunction(
@@ -68,11 +69,11 @@ extension PapyrusNativeFunctions.ActorStateNatives {
     }
 }
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.CombatEvents {
     /// Nil without a combat runtime. A dead actor is not fighting.
     func combatActivity(of key: ReferenceKey) -> ActorCombatActivity? {
-        guard let combat = actorNatives.combatRuntime?() else { return nil }
-        guard worldState.component(ActorDeathState.self, for: key)?.isDead != true else {
+        guard let combat = bridge.natives.actor.combatRuntime?() else { return nil }
+        guard bridge.worldState.component(ActorDeathState.self, for: key)?.isDead != true else {
             return .notFighting
         }
         return combat.activity(of: key)

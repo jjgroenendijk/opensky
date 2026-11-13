@@ -97,7 +97,7 @@ extension PapyrusNativeFunctions.WorldPlaceNatives {
             guard
                 let target = worldTarget(call, context),
                 let bridge = context.world as? PapyrusWorldStateBridge,
-                let store = bridge.sessionNatives.conditionData?().locations
+                let store = bridge.natives.session.conditionData?().locations
             else { return failure(call, "IsChild needs location data and a location") }
             guard
                 let handle = objectArgument(call, at: 0),
@@ -118,7 +118,7 @@ extension PapyrusNativeFunctions.WorldPlaceNatives {
             guard
                 let target = worldTarget(call, context),
                 let bridge = context.world as? PapyrusWorldStateBridge,
-                let store = bridge.sessionNatives.conditionData?().locations,
+                let store = bridge.natives.session.conditionData?().locations,
                 case let .plugin(plugin, objectID) = target.key
             else { return failure(call, "HasCommonParent needs location data and a location") }
             guard
@@ -149,7 +149,7 @@ extension PapyrusNativeFunctions.WorldPlaceNatives {
         ) { call, context in
             guard
                 let bridge = context.world as? PapyrusWorldStateBridge,
-                let clock = bridge.sessionNatives.clockSource?()
+                let clock = bridge.natives.session.clockSource?()
             else { return failure(call, "GetCurrentGameTime needs a game clock") }
             return .returned(.float(clock.daysPassed))
         })
@@ -179,7 +179,7 @@ extension PapyrusNativeFunctions.WorldPlaceNatives {
     }
 
     static func position(of key: ReferenceKey, _ world: PapyrusWorldStateBridge) -> SIMD3<Float>? {
-        world.perceptionNatives.livePosition?(key) ?? world.referenceState(for: key)?.transform
+        world.natives.perception.livePosition?(key) ?? world.referenceState(for: key)?.transform
             .position
     }
 
@@ -188,7 +188,7 @@ extension PapyrusNativeFunctions.WorldPlaceNatives {
         _ first: ReferenceKey, _ second: ReferenceKey, _ world: PapyrusWorldStateBridge
     ) -> Bool {
         guard
-            let data = world.sessionNatives.conditionData?(),
+            let data = world.natives.session.conditionData?(),
             let left = data.cell(of: first),
             let right = data.cell(of: second)
         else { return true }
@@ -219,7 +219,7 @@ extension PapyrusNativeFunctions.WorldPlaceNatives {
         ) { call, context in
             guard
                 let bridge = context.world as? PapyrusWorldStateBridge,
-                let data = bridge.sessionNatives.conditionData?(),
+                let data = bridge.natives.session.conditionData?(),
                 let receiver = call.receiver,
                 let key = bridge.referenceKey(for: receiver)
             else { return failure(call, "\(name) needs place data and a reference") }

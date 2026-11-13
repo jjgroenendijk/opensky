@@ -46,13 +46,13 @@ extension ScriptWorldAdapter {
         let resolver = stage.data.scriptFormIDResolver
         streamer.onInteraction.register(.scripts) { [weak self] event in
             guard let self, let bridge = state.bridge else { return }
-            bridge.handleInteraction(event)
+            bridge.activations.handleInteraction(event)
             searchAshPileOwner(of: event, bridge: bridge)
         }
         // The streamer tests trigger volumes once per walk-mode frame; each edge
         // queues one event per script on the volume's reference.
         streamer.onTriggerTransition.register(.scripts) { [weak self] event in
-            self?.state.bridge?.handleTriggerTransition(event)
+            self?.state.bridge?.triggers.handleTriggerTransition(event)
         }
         streamer.onCellAttached.register(.scripts) { [weak self] attachment in
             guard let world = self?.state.bridge?.world, let location = attachment.scene.location

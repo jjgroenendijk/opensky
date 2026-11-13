@@ -65,11 +65,11 @@ struct PapyrusNativeTrapTests {
         let fixture = try Fixture.make()
         let count = { fixture.call("GetTriggerObjectCount", returnType: .integer) }
         #expect(count() == .returned(.integer(0)))
-        fixture.session.bridge.handleTriggerTransition(
+        fixture.session.bridge.triggers.handleTriggerTransition(
             TriggerTransitionEvent(reference: fixture.key, phase: .enter)
         )
         #expect(count() == .returned(.integer(1)))
-        fixture.session.bridge.handleTriggerTransition(
+        fixture.session.bridge.triggers.handleTriggerTransition(
             TriggerTransitionEvent(reference: fixture.key, phase: .leave)
         )
         #expect(count() == .returned(.integer(0)))
@@ -135,7 +135,7 @@ struct PapyrusNativeTrapTests {
     @Test func animationNativesDriveAnObjectGraph() throws {
         let fixture = try Fixture.make()
         let graphs = FakeObjectAnimation()
-        fixture.session.bridge.objectAnimation = graphs
+        fixture.session.bridge.ports.objectAnimation = graphs
         let play = fixture.call(
             "PlayAnimation", arguments: [.string("Trigger")], returnType: .boolean
         )
@@ -160,7 +160,7 @@ struct PapyrusNativeTrapTests {
         let fixture = try Fixture.make()
         let graphs = FakeObjectAnimation()
         graphs.variables = ["bOpen": .boolean(false), "iState": .integer(2)]
-        fixture.session.bridge.objectAnimation = graphs
+        fixture.session.bridge.ports.objectAnimation = graphs
         #expect(fixture.call(
             "SetAnimationVariableBool",
             arguments: [.string("bOpen"), .boolean(true)]
@@ -204,7 +204,7 @@ struct PapyrusNativeTrapTests {
         let headless = actorCall("PlaySubGraphAnimation", [.string("Start")])
         #expect(headless == .deviated(.none, .deferredAnimation))
         let graphs = FakeObjectAnimation()
-        fixture.session.bridge.objectAnimation = graphs
+        fixture.session.bridge.ports.objectAnimation = graphs
         #expect(actorCall("PlaySubGraphAnimation", [.string("Start")]) == .returned(.none))
         let set = actorCall("SetSubGraphFloatVariable", [.string("fBlendTime"), .float(1)])
         #expect(set == .returned(.none))
@@ -241,7 +241,7 @@ struct PapyrusNativeTrapTests {
             return
         }
         #expect(place(form) == .deviated(.none, .stubbed))
-        fixture.session.bridge.trapWorld = placement
+        fixture.session.bridge.ports.trapWorld = placement
         guard case let .returned(.object(placed)) = place(form) else {
             Issue.record("PlaceAtMe did not return a reference")
             return
@@ -256,7 +256,7 @@ struct PapyrusNativeTrapTests {
     @Test func applyHavokImpulseScalesTheUnitDirectionByTheMagnitude() throws {
         let fixture = try Fixture.make()
         let trapWorld = FakeTrapWorld()
-        fixture.session.bridge.trapWorld = trapWorld
+        fixture.session.bridge.ports.trapWorld = trapWorld
         let result = fixture.call(
             "ApplyHavokImpulse", arguments: [.float(0), .float(0), .float(-4), .float(50)]
         )
@@ -273,7 +273,7 @@ struct PapyrusNativeTrapTests {
     @Test func pushActorAwayKnocksDownFromTheReceiver() throws {
         let fixture = try Fixture.make()
         let trapWorld = FakeTrapWorld()
-        fixture.session.bridge.trapWorld = trapWorld
+        fixture.session.bridge.ports.trapWorld = trapWorld
         let result = fixture.call(
             "PushActorAway", arguments: [.object(fixture.receiver), .float(2)]
         )

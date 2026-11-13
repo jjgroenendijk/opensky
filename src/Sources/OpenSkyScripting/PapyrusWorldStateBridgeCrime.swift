@@ -4,22 +4,27 @@
 
 import Foundation
 import OpenSkyCrimeInterface
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.Crime {
+    func showBarterMenu(for actor: ReferenceKey) -> (opened: Bool, text: String)? {
+        guard let showBarterMenu = bridge.natives.crime.showBarterMenu else { return nil }
+        return showBarterMenu(actor)
+    }
+
     public func crimeGold(of faction: ReferenceKey) -> Int? {
-        guard let reporter = crimeNatives.crimeReporter?() else { return nil }
+        guard let reporter = bridge.natives.crime.crimeReporter?() else { return nil }
         return Int(reporter.crimeGold(of: faction))
     }
 
     public func crimeGold(of faction: ReferenceKey, violent: Bool) -> Int? {
-        guard let reporter = crimeNatives.crimeReporter?() else { return nil }
+        guard let reporter = bridge.natives.crime.crimeReporter?() else { return nil }
         return Int(reporter.crimeGold(of: faction, violent: violent))
     }
 
     @discardableResult
     public func modifyCrimeGold(of faction: ReferenceKey, by amount: Int, violent: Bool) -> Int? {
-        guard let reporter = crimeNatives.crimeReporter?() else { return nil }
+        guard let reporter = bridge.natives.crime.crimeReporter?() else { return nil }
         return Int(reporter.modifyCrimeGold(
             by: Int32(clamping: amount), violent: violent, of: faction
         ))
@@ -27,7 +32,7 @@ extension PapyrusWorldStateBridge {
 
     @discardableResult
     public func setCrimeGold(of faction: ReferenceKey, to gold: Int, violent: Bool) -> Int? {
-        guard let reporter = crimeNatives.crimeReporter?() else { return nil }
+        guard let reporter = bridge.natives.crime.crimeReporter?() else { return nil }
         return Int(reporter.setCrimeGold(
             Int32(clamping: gold), violent: violent, of: faction
         ))
@@ -48,15 +53,15 @@ extension PapyrusWorldStateBridge {
     /// - Returns: the bounty accrued, zero when nobody saw, or nil without a crime runtime.
     @discardableResult
     func sendWerewolfTransformation() -> Int? {
-        guard let reporter = crimeNatives.crimeReporter?() else { return nil }
-        return Int(reporter.reportWerewolfTransformation(by: playerKey)?.gold ?? 0)
+        guard let reporter = bridge.natives.crime.crimeReporter?() else { return nil }
+        return Int(reporter.reportWerewolfTransformation(by: bridge.playerKey)?.gold ?? 0)
     }
 
     /// The thief taking `reference` as a witnessed theft. Zero when the thief may take it.
     @discardableResult
     func sendStealAlarm(on reference: ReferenceKey, thief: ReferenceKey) -> Int? {
         guard
-            let reporter = crimeNatives.crimeReporter?(),
+            let reporter = bridge.natives.crime.crimeReporter?(),
             let world = reporter.world else { return nil }
         guard case let .forbidden(owner) = reporter.verdict(on: reference, by: thief) else {
             return 0
@@ -65,7 +70,7 @@ extension PapyrusWorldStateBridge {
         return Int(reporter.report(CrimeEvent(
             kind: .theft, perpetrator: thief, victim: owner.key,
             crimeFaction: world.crimeFaction(in: cell), cell: cell, witnessed: true,
-            stolenValue: baseObject(of: reference).map(world.crimeItemValue(of:)) ?? 0
+            stolenValue: bridge.baseObject(of: reference).map(world.crimeItemValue(of:)) ?? 0
         )).gold)
     }
 
@@ -78,7 +83,7 @@ extension PapyrusWorldStateBridge {
         criminal: ReferenceKey
     ) -> Int? {
         guard
-            let reporter = crimeNatives.crimeReporter?(),
+            let reporter = bridge.natives.crime.crimeReporter?(),
             let world = reporter.world else { return nil }
         let cell = world.crimeCell(of: witness)
         return Int(reporter.report(CrimeEvent(
@@ -91,3 +96,5 @@ extension PapyrusWorldStateBridge {
         )).gold)
     }
 }
+
+extension PapyrusWorldStateBridge.Crime: PapyrusWorldCrimeBridge {}

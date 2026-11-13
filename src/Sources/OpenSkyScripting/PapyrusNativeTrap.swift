@@ -55,7 +55,7 @@ extension PapyrusNativeFunctions.TrapNatives {
         ) { call, context in
             guard
                 let bridge = context.world as? PapyrusWorldStateBridge,
-                let seconds = bridge.sessionNatives.realTimeSource?()
+                let seconds = bridge.natives.session.realTimeSource?()
             else { return failure(call, "GetCurrentRealTime needs a real-time clock") }
             return .returned(.float(Float(seconds)))
         })
@@ -91,7 +91,11 @@ extension PapyrusNativeFunctions.TrapNatives {
             }
             guard damage > 0 else { return .returned(.none) }
             guard
-                target.world.damageActorValue(at: Int32(health), by: damage, on: target.key) != nil
+                target.world.actorBridge.damageActorValue(
+                    at: Int32(health),
+                    by: damage,
+                    on: target.key
+                ) != nil
             else {
                 return failure(call, "ProcessTrapHit needs an actor receiver")
             }

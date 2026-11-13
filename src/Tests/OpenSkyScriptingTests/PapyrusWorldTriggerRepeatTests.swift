@@ -24,34 +24,34 @@ struct PapyrusWorldTriggerRepeatTests {
     @Test func repeatsTwiceASecondWhileInsideAndStopsOnLeave() throws {
         let fixture = try Self.fixture()
         let bridge = fixture.session.bridge
-        bridge.handleTriggerTransition(TriggerTransitionEvent(
+        bridge.triggers.handleTriggerTransition(TriggerTransitionEvent(
             reference: fixture.key,
             phase: .enter
         ))
-        bridge.queueTriggerRepeats(after: 0.3)
+        bridge.triggers.queueTriggerRepeats(after: 0.3)
         #expect(Self.count(fixture) == 0)
-        bridge.queueTriggerRepeats(after: 0.3)
+        bridge.triggers.queueTriggerRepeats(after: 0.3)
         #expect(Self.count(fixture) == 1)
-        bridge.queueTriggerRepeats(after: 0.5)
+        bridge.triggers.queueTriggerRepeats(after: 0.5)
         #expect(Self.count(fixture) == 2)
 
-        bridge.handleTriggerTransition(TriggerTransitionEvent(
+        bridge.triggers.handleTriggerTransition(TriggerTransitionEvent(
             reference: fixture.key,
             phase: .leave
         ))
-        bridge.queueTriggerRepeats(after: 1)
+        bridge.triggers.queueTriggerRepeats(after: 1)
         #expect(Self.count(fixture) == 2)
     }
 
     @Test func anUnrunRepeatIsNotQueuedAgain() throws {
         let fixture = try Self.fixture()
         let bridge = fixture.session.bridge
-        bridge.handleTriggerTransition(TriggerTransitionEvent(
+        bridge.triggers.handleTriggerTransition(TriggerTransitionEvent(
             reference: fixture.key,
             phase: .enter
         ))
-        bridge.queueTriggerRepeats(after: 0.5)
-        bridge.queueTriggerRepeats(after: 0.5)
+        bridge.triggers.queueTriggerRepeats(after: 0.5)
+        bridge.triggers.queueTriggerRepeats(after: 0.5)
         #expect(fixture.session.world.eventQueue.filter { $0.functionName == "OnTrigger" }
             .count == 1)
     }

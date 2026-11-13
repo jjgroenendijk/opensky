@@ -72,7 +72,7 @@ struct PapyrusNativeDestructionTests {
         let fixture = try Fixture.make(events: [
             ("OnDestructionStageChanged", PapyrusWorldFixture.probeBody(note: "stage"))
         ])
-        fixture.session.bridge.keywordStore = try store()
+        fixture.session.bridge.stores.keywordStore = try store()
         return fixture
     }
 
@@ -96,14 +96,17 @@ struct PapyrusNativeDestructionTests {
         let hit = ScriptHitEvent(target: fixture.key, aggressor: .player)
         bridge.recordHit(hit, targetWasHostile: false)
         bridge.recordHit(hit, targetWasHostile: true)
-        #expect(bridge.scriptedState(of: fixture.key).value(ScriptedStateName.friendHits) == 1)
+        #expect(bridge.scriptedState(of: fixture.key)
+            .value(ScriptedStateName.friendHits) == 1)
         bridge.recordHit(
             ScriptHitEvent(target: .player, aggressor: fixture.key),
             targetWasHostile: true
         )
-        #expect(bridge.scriptedState(of: .player).form(ScriptedStateName.lastHostileActor)
+        #expect(bridge.scriptedState(of: .player)
+            .form(ScriptedStateName.lastHostileActor)
             == fixture.key)
         bridge.recordKill(victim: fixture.key, killer: .player)
-        #expect(bridge.scriptedState(of: fixture.key).form(ScriptedStateName.killer) == .player)
+        #expect(bridge.scriptedState(of: fixture.key)
+            .form(ScriptedStateName.killer) == .player)
     }
 }

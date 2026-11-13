@@ -11,19 +11,22 @@ nonisolated public struct DelayedActivation: Equatable, Sendable {
     public var remaining: Float
 }
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.ActivationDelays {
     /// Counts the delays down by `seconds` and activates each child whose delay ran out,
     /// with its parent as the activator. Returns the `OnActivate` events queued.
     @discardableResult
     public func advanceDelayedActivations(by seconds: Float) -> Int {
-        guard !delayedActivations.isEmpty, seconds.isFinite, seconds > 0 else { return 0 }
-        for index in delayedActivations.indices {
-            delayedActivations[index].remaining -= seconds
+        guard
+            !bridge.runState.delayedActivations.isEmpty, seconds.isFinite,
+            seconds > 0 else { return 0 }
+        for index in bridge.runState.delayedActivations.indices {
+            bridge.runState.delayedActivations[index].remaining -= seconds
         }
-        let due = delayedActivations.filter { $0.remaining <= 0 }
-        delayedActivations.removeAll { $0.remaining <= 0 }
+        let due = bridge.runState.delayedActivations.filter { $0.remaining <= 0 }
+        bridge.runState.delayedActivations.removeAll { $0.remaining <= 0 }
         return due.reduce(0) { queued, pending in
-            queued + activate(pending.child, by: pending.parent, togglesOpen: false).queuedEvents
+            queued + bridge.activate(pending.child, by: pending.parent, togglesOpen: false)
+                .queuedEvents
         }
     }
 }

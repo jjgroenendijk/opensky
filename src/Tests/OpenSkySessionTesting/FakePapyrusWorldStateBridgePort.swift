@@ -12,7 +12,9 @@ public import OpenSkySessionInterface
 public import OpenSkyWorldState
 
 /// Stores each property and records each call to `PapyrusWorldStateBridgePort`.
-public final class FakePapyrusWorldStateBridgePort: PapyrusWorldStateBridgePort {
+nonisolated public final class FakePapyrusWorldStateBridgePort: PapyrusWorldStateBridgePort {
+    public var dialogueFragmentsValue: any DialogueFragmentDispatching?
+    public var sceneFragmentsValue: any SceneFragmentDispatching?
     public var activateCalls: [ActivateCall] = []
     public var activateResult: PapyrusActivationOutcome?
     public var actorFlagsCalls: [(key: ReferenceKey, record: ActorBase.Flags?)] = []
@@ -92,10 +94,6 @@ public final class FakePapyrusWorldStateBridgePort: PapyrusWorldStateBridgePort 
     public var updateScriptedStateCalls: [ReferenceKey] = []
     public var writeCalls: [(component: WorldStateComponentValue, key: ReferenceKey)] = []
     public var writeResult = false
-    public var runTopicInfoFragmentsCalls: [RunTopicInfoFragmentsCall] = []
-    public var runTopicInfoFragmentsResult: [String] = []
-    public var runSceneFragmentCalls: [RunSceneFragmentCall] = []
-    public var runSceneFragmentResult = false
 
     public init() {}
 }
@@ -188,41 +186,31 @@ extension FakePapyrusWorldStateBridgePort {
             ].joined(separator: ", ")
         }
     }
-
-    nonisolated public struct RunTopicInfoFragmentsCall: CustomStringConvertible {
-        public let info: TopicInfo
-        public let key: ReferenceKey
-        public let phase: TopicInfoFragmentPhase
-        public let context: TopicInfoFragmentContext
-
-        public var description: String {
-            [
-                "info: " + String(describing: info),
-                "key: " + String(describing: key),
-                "phase: " + String(describing: phase),
-                "context: " + String(describing: context)
-            ].joined(separator: ", ")
-        }
-    }
-
-    nonisolated public struct RunSceneFragmentCall: CustomStringConvertible {
-        public let scene: Scene
-        public let key: ReferenceKey
-        public let scriptName: String
-        public let functionName: String
-
-        public var description: String {
-            [
-                "scene: " + String(describing: scene),
-                "key: " + String(describing: key),
-                "scriptName: " + String(describing: scriptName),
-                "functionName: " + String(describing: functionName)
-            ].joined(separator: ", ")
-        }
-    }
 }
 
-extension FakePapyrusWorldStateBridgePort {
+nonisolated extension FakePapyrusWorldStateBridgePort {
+    public var dialogueFragments: any DialogueFragmentDispatching {
+        get {
+            guard let dialogueFragmentsValue
+            else {
+                preconditionFailure("FakePapyrusWorldStateBridgePort.dialogueFragments is unset")
+            }
+            return dialogueFragmentsValue
+        }
+        set { dialogueFragmentsValue = newValue }
+    }
+
+    public var sceneFragments: any SceneFragmentDispatching {
+        get {
+            guard let sceneFragmentsValue
+            else {
+                preconditionFailure("FakePapyrusWorldStateBridgePort.sceneFragments is unset")
+            }
+            return sceneFragmentsValue
+        }
+        set { sceneFragmentsValue = newValue }
+    }
+
     @discardableResult
     public func activate(
         _ target: ReferenceKey,
@@ -517,37 +505,5 @@ extension FakePapyrusWorldStateBridgePort {
     {
         writeCalls.append((component: component, key: key))
         return writeResult
-    }
-
-    @discardableResult
-    public func runTopicInfoFragments(
-        of info: TopicInfo,
-        key: ReferenceKey,
-        phase: TopicInfoFragmentPhase,
-        context: TopicInfoFragmentContext
-    ) -> [String] {
-        runTopicInfoFragmentsCalls.append(RunTopicInfoFragmentsCall(
-            info: info,
-            key: key,
-            phase: phase,
-            context: context
-        ))
-        return runTopicInfoFragmentsResult
-    }
-
-    @discardableResult
-    public func runSceneFragment(
-        of scene: Scene,
-        key: ReferenceKey,
-        scriptName: String,
-        functionName: String
-    ) -> Bool {
-        runSceneFragmentCalls.append(RunSceneFragmentCall(
-            scene: scene,
-            key: key,
-            scriptName: scriptName,
-            functionName: functionName
-        ))
-        return runSceneFragmentResult
     }
 }

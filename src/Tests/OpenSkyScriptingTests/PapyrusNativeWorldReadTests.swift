@@ -26,14 +26,14 @@ struct PapyrusNativeWorldReadTests {
 
     @Test func editorLocationComesFromThePlaceSnapshot() throws {
         let fixture = try Fixture.make()
-        fixture.session.bridge.sessionNatives.conditionData = {
+        fixture.session.bridge.natives.session.conditionData = {
             ConditionDataResolution(editorLocations: [
                 fixture.key: ResolvedFormID(plugin: "Skyrim.esm", objectID: Self.townID)
             ])
         }
         #expect(fixture.call("GetEditorLocation", returnType: .object("Location"))
             == .returned(.object(fixture.handle(Self.townID))))
-        fixture.session.bridge.sessionNatives.conditionData = { .empty }
+        fixture.session.bridge.natives.session.conditionData = { .empty }
         #expect(fixture.call("GetEditorLocation", returnType: .object("Location"))
             == .returned(.none))
     }
@@ -51,7 +51,7 @@ struct PapyrusNativeWorldReadTests {
                 + LocationFixture.recordBytes(Self.caveID, "Cave")
         ))
         let store = LocationStore(plugins: [("Skyrim.esm", file)])
-        fixture.session.bridge.sessionNatives
+        fixture.session.bridge.natives.session
             .conditionData = { ConditionDataResolution(locations: store) }
         let keyword = PapyrusValue.object(fixture.handle(Self.holdKeywordID))
         let other = PapyrusValue.object(fixture.handle(Self.cellID))
@@ -69,14 +69,14 @@ struct PapyrusNativeWorldReadTests {
         let fixture = try Fixture.make()
         fixture.session.bridge.formIDResolver = PapyrusWorldFixture.resolver
         for worldspace in [nil, FormID(0x3C)] {
-            fixture.session.bridge.sessionNatives.conditionData = {
+            fixture.session.bridge.natives.session.conditionData = {
                 ConditionDataResolution(cells: [
                     fixture.key: ReferenceCell(cell: FormID(Self.cellID), worldspace: worldspace)
                 ])
             }
             #expect(isInterior(fixture) == .returned(.boolean(worldspace == nil)))
         }
-        fixture.session.bridge.sessionNatives.conditionData = { .empty }
+        fixture.session.bridge.natives.session.conditionData = { .empty }
         #expect(PapyrusWorldFixture.isInvalidArguments(isInterior(fixture)))
     }
 
@@ -85,7 +85,7 @@ struct PapyrusNativeWorldReadTests {
         var context = ConditionContext()
         context.dialogue = DialogueResolution(speakerInDialogue: fixture.key)
         let speaking = context
-        fixture.session.bridge.sessionNatives.conditionEvaluator = {
+        fixture.session.bridge.natives.session.conditionEvaluator = {
             ConditionEvaluator(context: speaking.using(ConditionFunctionRegistry()))
         }
         let player = fixture.session.world.objectHandle(for: .player)
@@ -105,7 +105,7 @@ struct PapyrusNativeWorldReadTests {
             bribeFactor: 0.5
         )
         let priced = context
-        fixture.session.bridge.sessionNatives.conditionEvaluator = {
+        fixture.session.bridge.natives.session.conditionEvaluator = {
             ConditionEvaluator(context: priced.using(ConditionFunctionRegistry()))
         }
         let price = SpeechCheckSettings.fallback.bribeAmount(SpeechCheckActors(
@@ -131,7 +131,7 @@ struct PapyrusNativeWorldReadTests {
                 data: ESMFixture.field("OBND", bounds)
             )
         ))
-        fixture.session.bridge.keywordStore = KeywordStore(index: RecordIndex(
+        fixture.session.bridge.stores.keywordStore = KeywordStore(index: RecordIndex(
             plugins: [("Skyrim.esm", file)], recordTypes: RecordIndex.referenceRecordTypes
         ))
         fixture.session.bridge.write(ReferenceTransformOverride(
@@ -143,7 +143,7 @@ struct PapyrusNativeWorldReadTests {
         )] {
             #expect(fixture.call(name, returnType: .float) == .returned(.float(size)))
         }
-        fixture.session.bridge.keywordStore = nil
+        fixture.session.bridge.stores.keywordStore = nil
         #expect(PapyrusWorldFixture.isInvalidArguments(fixture.call(
             "GetWidth",
             returnType: .float
