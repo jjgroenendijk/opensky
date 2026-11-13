@@ -1465,7 +1465,7 @@ targets += composition(
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsTesting", "OpenSkyGameData",
         "OpenSkyPhysics", "OpenSkyQuests", "OpenSkyQuestsInterface", "OpenSkyRendering",
         "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkySessionTesting",
-        "OpenSkyWorldInterface"
+        "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 

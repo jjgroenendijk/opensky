@@ -121,42 +121,6 @@ extension AIPackageActsAdapter {
         return .done
     }
 
-    /// One line of the topic, chosen as a scene chooses it, voiced and subtitled.
-    public func say(
-        _ topic: FormID?, speaker: ReferenceKey, to target: ReferenceKey?
-    ) -> PackageActionResult {
-        guard
-            let topic, let runtime = game.dialogue.runtime,
-            let offer = runtime.topics(linked: [topic], speaker: speaker).offers.first,
-            attempt({ try runtime.choose(offer.info, speaker: speaker) }) != nil,
-            let info = runtime.dialogue.info(offer.info)
-        else { return .failed }
-        let seconds = game.storyWorld.lineDuration(of: info, speaker: speaker)
-            ?? PackageActionResult.unvoicedLineSeconds
-        game.storyWorld.speak(
-            info: offer.info, speaker: speaker, lookAt: target, seconds: seconds
-        )
-        return .lasts(seconds: seconds)
-    }
-
-    /// The conversation opens with the actor's greeting. The package's own topic is not
-    /// forced: the greeting is picked as when the player talks to the actor. An actor waits
-    /// `fAIForceGreetingTimer` before it may force greet again.
-    public func greet(_ actor: ReferenceKey) -> PackageActionResult {
-        guard game.dialogue.claimForceGreet(speaker: actor, now: game.storyWorld.sceneSeconds)
-        else { return .failed }
-        game.dialogueMenu.begin(with: actor)
-        return game.dialogueMenu.isOpen ? .done : .failed
-    }
-
-    /// DialogueActivate: OpenSky has no conversations between two NPCs, so the actor
-    /// turns its head to the target.
-    public func look(at target: ReferenceKey, from actor: ReferenceKey) -> PackageActionResult {
-        let seconds = PackageActionResult.lookSeconds
-        game.headTracking.setLookTarget(target, for: actor, seconds: seconds)
-        return .lasts(seconds: seconds)
-    }
-
     /// The graph events that draw and sheathe the weapon.
     public static let drawWeaponEvent = "WeapEquip"
     public static let sheatheWeaponEvent = "Unequip"
@@ -177,18 +141,87 @@ extension AIPackageActsAdapter {
         return PackageSituationScan.situations(of: actors, observations: observations)
     }
 
+    public func say(
+        _ topic: FormID?, speaker: ReferenceKey, to target: ReferenceKey?
+    ) -> PackageActionResult {
+        speech.say(topic, speaker: speaker, to: target)
+    }
+
+    public func greet(_ actor: ReferenceKey) -> PackageActionResult {
+        speech.greet(actor)
+    }
+
+    public func look(at target: ReferenceKey, from actor: ReferenceKey) -> PackageActionResult {
+        speech.look(at: target, from: actor)
+    }
+
+    public func warn(_ intruder: ReferenceKey, from guardKey: ReferenceKey) -> PackageActionResult {
+        speech.warn(intruder, from: guardKey)
+    }
+
+    public func standDown(_ guardKey: ReferenceKey) -> PackageActionResult {
+        speech.standDown(guardKey)
+    }
+
+    var speech: Speech {
+        Speech(game: game)
+    }
+
+    /// The acts that speak, greet, look, or draw and sheathe for a guard.
+    struct Speech {
+        let game: any AIPackageActsHost
+    }
+}
+
+extension AIPackageActsAdapter.Speech {
+    /// One line of the topic, chosen as a scene chooses it, voiced and subtitled.
+    func say(
+        _ topic: FormID?, speaker: ReferenceKey, to target: ReferenceKey?
+    ) -> PackageActionResult {
+        guard
+            let topic, let runtime = game.dialogue.runtime,
+            let offer = runtime.topics(linked: [topic], speaker: speaker).offers.first,
+            attempt({ try runtime.choose(offer.info, speaker: speaker) }) != nil,
+            let info = runtime.dialogue.info(offer.info)
+        else { return .failed }
+        let seconds = game.storyWorld.lineDuration(of: info, speaker: speaker)
+            ?? PackageActionResult.unvoicedLineSeconds
+        game.storyWorld.speak(
+            info: offer.info, speaker: speaker, lookAt: target, seconds: seconds
+        )
+        return .lasts(seconds: seconds)
+    }
+
+    /// The conversation opens with the actor's greeting. The package's own topic is not
+    /// forced: the greeting is picked as when the player talks to the actor. An actor waits
+    /// `fAIForceGreetingTimer` before it may force greet again.
+    func greet(_ actor: ReferenceKey) -> PackageActionResult {
+        guard game.dialogue.claimForceGreet(speaker: actor, now: game.storyWorld.sceneSeconds)
+        else { return .failed }
+        game.dialogueMenu.begin(with: actor)
+        return game.dialogueMenu.isOpen ? .done : .failed
+    }
+
+    /// DialogueActivate: OpenSky has no conversations between two NPCs, so the actor
+    /// turns its head to the target.
+    func look(at target: ReferenceKey, from actor: ReferenceKey) -> PackageActionResult {
+        let seconds = PackageActionResult.lookSeconds
+        game.headTracking.setLookTarget(target, for: actor, seconds: seconds)
+        return .lasts(seconds: seconds)
+    }
+
     /// The guard draws its weapon and says a trespass line, when the load order has one
     /// it may say now. Without one the warning still counts.
-    public func warn(_ intruder: ReferenceKey, from guardKey: ReferenceKey) -> PackageActionResult {
-        _ = game.actorGraphWorld.graphs.raise(Self.drawWeaponEvent, on: guardKey)
+    func warn(_ intruder: ReferenceKey, from guardKey: ReferenceKey) -> PackageActionResult {
+        _ = game.actorGraphWorld.graphs.raise(AIPackageActsAdapter.drawWeaponEvent, on: guardKey)
         guard
             let seconds = game.storyWorld.sayTopic("TRES", speaker: guardKey, lookAt: intruder)
         else { return .done }
         return .lasts(seconds: seconds)
     }
 
-    public func standDown(_ guardKey: ReferenceKey) -> PackageActionResult {
-        _ = game.actorGraphWorld.graphs.raise(Self.sheatheWeaponEvent, on: guardKey)
+    func standDown(_ guardKey: ReferenceKey) -> PackageActionResult {
+        _ = game.actorGraphWorld.graphs.raise(AIPackageActsAdapter.sheatheWeaponEvent, on: guardKey)
         return .done
     }
 }
