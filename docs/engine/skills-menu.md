@@ -83,6 +83,10 @@ The `StatsMenu` class registers these `GameDelegate` callbacks in `InitExtension
 | `SetDirection` | ring angle: position times `SKILL_ANGLE` (20) |
 | `UpdateSkillList` | whether to capitalise names; reads `StatsMenu.SkillStatsA` |
 
+A perk with several ranks, of which the player owns some, shows the owned rank's description,
+then a line with `sStatsNextRank` ("Next Rank:") and the next rank's description. A perk with no
+rank owned, or every rank owned, shows one description.
+
 The engine fills two arrays on the class before it calls the movie:
 
 - `SkillStatsA`: five values per skill: level, name, meter (0 to 100), colour, legendary
