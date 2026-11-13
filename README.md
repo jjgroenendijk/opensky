@@ -30,22 +30,22 @@ each area counts.
 
 <!-- gaps:begin -->
 
-Measured on 2026-11-04 by `make rank-gaps`.
+Measured on 2026-11-13 by `make rank-gaps`.
 
 | Area | Done | Left | Total | Done % |
 | --- | --: | --: | --: | --: |
 | Papyrus natives | 508 | 0 | 508 | 100% |
 | Papyrus events | 68 | 0 | 68 | 100% |
-| Condition functions | 256 | 2 | 258 | 99% |
-| Record types | 119 | 1 | 120 | 99% |
-| Game settings | 1304 | 344 | 1648 | 79% |
+| Condition functions | 258 | 0 | 258 | 100% |
+| Record types | 120 | 0 | 120 | 100% |
+| Game settings | 1618 | 30 | 1648 | 98% |
 | Magic effect archetypes | 37 | 0 | 37 | 100% |
 | Perk entry points | 68 | 0 | 68 | 100% |
 | Perk entry-point functions | 9 | 0 | 9 | 100% |
 | AI package procedures | 30 | 0 | 30 | 100% |
 | AI packages that do not resolve | - | 0 | - | - |
 | Behavior node classes | 52 | 2 | 54 | 96% |
-| Behavior features ignored | - | 251 | - | - |
+| Behavior features ignored | - | 0 | - | - |
 | Havok classes | 100 | 0 | 100 | 100% |
 | Animation events | 145 | 0 | 145 | 100% |
 | Behavior graph variables | 696 | 0 | 696 | 100% |
@@ -58,7 +58,7 @@ Measured on 2026-11-04 by `make rank-gaps`.
 | Sound file variants | 3 | 0 | 3 | 100% |
 | Lip sync data | 1 | 0 | 1 | 100% |
 | Menus with no bridge | 23 | 0 | 23 | 100% |
-| AS2 runtime | - | 199 | - | - |
+| AS2 runtime | - | 1 | - | - |
 | SWF tags | 29 | 0 | 29 | 100% |
 
 <!-- gaps:end -->
