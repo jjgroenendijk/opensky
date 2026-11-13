@@ -97,6 +97,13 @@ struct SkillsMenuModelTests {
         #expect(model.page == .skills)
         _ = model.handle(.button(.yButton))
         _ = model.handle(.move(.up))
+        #expect(model.handle(.button(.accept)) == nil)
+        guard case let .legendaryAgain(again) = model.page else {
+            Issue.record("expected the second legendary question")
+            return
+        }
+        #expect(again.question == SkillsMenuText.legendarySecondConfirm.fallback)
+        _ = model.handle(.move(.up))
         #expect(model.handle(.button(.accept)) == .makeLegendary(21))
         _ = model.handle(.move(.right))
         _ = model.handle(.button(.yButton))

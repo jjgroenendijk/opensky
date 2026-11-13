@@ -28,8 +28,9 @@ The menu has three parts:
 | Perk question | Accept was pressed on a box the player can buy | `sStatsPerkConfirm`, a yes or no question; yes buys the rank |
 | Legendary | Jump was pressed on a skill at 100 | `sLegendaryResetConfirm` (set by `Update.esm`), a yes or no question; yes makes the skill legendary |
 
-`Update.esm` also sets `sLegendaryResetSecondConfirm`, "Are you sure you want to make this skill
-Legendary?". When the game asks it is not known, so OpenSky asks only the first question.
+A yes to the first question asks a second one, `sLegendaryResetSecondConfirm` (also set by
+`Update.esm`): "Are you sure you want to make this skill Legendary?". Only a yes to both makes
+the skill legendary; a no to either goes back to the skills.
 
 The ring follows the order of the Dragonborn altar's skill list in `DLC2MiraakAltarScript`:
 the six magic skills, then the six warrior skills, then the six thief skills. Vanilla draws

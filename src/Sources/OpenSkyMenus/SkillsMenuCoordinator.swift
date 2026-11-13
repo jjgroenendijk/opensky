@@ -210,7 +210,8 @@ public final class SkillsMenuCoordinator {
                 : "\(tree) perks"
             rows = model.perks.map(Self.perkRow)
             selected = model.perkPosition
-        case let .legendary(confirmation), let .perkConfirm(confirmation):
+        case let .legendary(confirmation), let .legendaryAgain(confirmation),
+             let .perkConfirm(confirmation):
             page = confirmation.question
             rows = confirmation.options
             selected = confirmation.selectedIndex
