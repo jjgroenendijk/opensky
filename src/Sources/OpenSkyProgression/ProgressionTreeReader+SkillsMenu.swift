@@ -26,12 +26,7 @@ extension ProgressionTreeReader {
                 node: node.index,
                 name: text(resolved.record.name, plugin: resolved.sourcePlugin, kind: .strings)
                     ?? resolved.displayName,
-                description: text(
-                    shown.record.description,
-                    plugin: shown.sourcePlugin,
-                    kind: .dlstrings
-                )
-                    ?? "",
+                description: cardText(chain: chain, owned: owned, shown: shown),
                 requirement: requirement(of: shown),
                 gridX: Float(node.position.column) + node.position.horizontal,
                 gridY: Float(node.position.row) + node.position.vertical,
@@ -41,6 +36,17 @@ extension ProgressionTreeReader {
                 refusal: refusalText(forChainFrom: key)
             )
         }
+    }
+
+    /// A perk with ranks left past an owned one shows both descriptions.
+    private func cardText(chain: [ResolvedPerk], owned: Int, shown: ResolvedPerk) -> String {
+        let next = text(shown.record.description, plugin: shown.sourcePlugin, kind: .dlstrings)
+        guard owned > 0, owned < chain.count else { return next ?? "" }
+        let current = chain[owned - 1]
+        return texts.perkCardText(
+            owned: text(current.record.description, plugin: current.sourcePlugin, kind: .dlstrings),
+            next: next
+        )
     }
 
     func skillDescription(_ index: Int32) -> String {
