@@ -104,6 +104,8 @@ nonisolated public struct CraftingStationInfo: Equatable, Sendable {
     public let brews: Bool
     /// An armor table, which improves armour; a grindstone improves weapons.
     public let improvesArmor: Bool
+    /// An arcane enchanter: it disenchants and enchants, with no recipe.
+    public var enchants = false
 
     public init(
         keywords: [ResolvedFormID], skill: Int32?, improves: Bool = false, brews: Bool = false,
@@ -167,7 +169,7 @@ nonisolated public struct CraftingCatalog: Sendable {
         let probe = CraftingCatalog(recipes: recipes, itemPlugin: itemPlugin, stations: [])
         let offering = Self.stations(in: loadOrder).filter {
             let station = probe.station(workbench: $0.workbench, keywords: $0.keywords)
-            return station.brews || !station.keywords.isEmpty
+            return station.brews || station.enchants || !station.keywords.isEmpty
         }
         self.init(
             recipes: recipes, itemPlugin: itemPlugin, stations: offering, formLists: formLists
@@ -177,7 +179,7 @@ nonisolated public struct CraftingCatalog: Sendable {
 
     /// The station query. A bench whose keywords name no recipe gets empty `keywords`.
     public func station(workbench: Workbench, keywords: [FormID]) -> CraftingStationInfo {
-        CraftingStationInfo(
+        var station = CraftingStationInfo(
             keywords: keywords.compactMap(itemPlugin.resolve).filter {
                 !recipes.recipes(workbenchKeyword: $0).isEmpty
             },
@@ -186,6 +188,8 @@ nonisolated public struct CraftingCatalog: Sendable {
             brews: [.alchemy, .alchemyExperiment].contains(workbench.benchType),
             improvesArmor: workbench.benchType == .smithingArmor
         )
+        station.enchants = [.enchanting, .enchantingExperiment].contains(workbench.benchType)
+        return station
     }
 
     private static func stations(in loadOrder: LoadOrderPlugins) -> [CraftingStationChoice] {

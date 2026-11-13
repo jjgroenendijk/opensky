@@ -13,6 +13,7 @@ nonisolated public final class FakeMagicPort: MagicPort {
     public typealias ShoutVoice = FakeMagicShoutVoicePort
     public typealias SoulTrapping = FakeMagicSoulTrappingPort
     public typealias MenuLines = FakeMagicMenuLinesPort
+    public typealias Enchanter = FakeMagicEnchanterPort
     public typealias MagicMenu = FakeMagicMenuListPort
     public typealias WorldArchetypeActions = FakeMagicWorldArchetypesPort
     public typealias ArchetypeActions = FakeMagicArchetypeActionsPort
@@ -25,6 +26,7 @@ nonisolated public final class FakeMagicPort: MagicPort {
     public var shoutVoice: ShoutVoice = FakeMagicShoutVoicePort()
     public var soulTrapping: SoulTrapping = FakeMagicSoulTrappingPort()
     public var menuLines: MenuLines = FakeMagicMenuLinesPort()
+    public var enchanter: Enchanter = FakeMagicEnchanterPort()
     public var magicMenu: MagicMenu = FakeMagicMenuListPort()
     public var worldArchetypeActions: WorldArchetypeActions = FakeMagicWorldArchetypesPort()
     public var archetypeActions: ArchetypeActions = FakeMagicArchetypeActionsPort()

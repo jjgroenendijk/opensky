@@ -18,6 +18,8 @@ public protocol MagicPort: AnyObject {
     var soulTrapping: SoulTrapping { get }
     associatedtype MenuLines: MagicMenuLinesPort
     var menuLines: MenuLines { get }
+    associatedtype Enchanter: MagicEnchanterPort
+    var enchanter: Enchanter { get }
     associatedtype MagicMenu: MagicMenuListPort
     var magicMenu: MagicMenu { get }
     associatedtype WorldArchetypeActions: MagicWorldArchetypesPort
@@ -113,6 +115,14 @@ public protocol MagicSoulTrappingPort {
         of victim: ReferenceKey,
         by caster: ReferenceKey
     ) -> SoulTrapOutcome
+}
+
+/// The arcane enchanter's menu.
+public protocol MagicEnchanterPort {
+    var enchanterChoices: EnchanterChoices { get }
+    func disenchant(_ item: FormID) -> EnchanterAnswer
+    func refusal(of selection: EnchanterSelection) -> String?
+    func enchant(_ selection: EnchanterSelection) -> EnchanterAnswer
 }
 
 /// The lines a menu shows for a read book or a readied spell.

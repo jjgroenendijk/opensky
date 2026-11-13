@@ -6,6 +6,7 @@
 import Foundation
 public import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
+public import OpenSkyGameData
 public import OpenSkyMenusInterface
 
 /// One recipe of the open station.
@@ -57,6 +58,17 @@ public protocol CraftingMenuWorld: MenuScreenWorld {
     func toggleIngredient(_ ingredient: FormID) -> String
     /// Brews the chosen ingredients; the outcome text.
     func brewChosenIngredients() -> String
+    /// What the open arcane enchanter offers, or nil when the station is no enchanter.
+    var enchanterChoices: EnchanterChoices? { get }
+    var enchantingTexts: GameSettingTexts<EnchantingMenuText> { get }
+    func disenchant(_ item: FormID) -> EnchanterAnswer
+    /// Why `selection` cannot be made, or nil when it can.
+    func enchantRefusal(_ selection: EnchanterSelection) -> String?
+    func enchant(_ selection: EnchanterSelection) -> EnchanterAnswer
+    /// Asks a yes or no question; `answer` gets true for yes.
+    func confirm(_ text: String, answer: @escaping (Bool) -> Void)
+    /// A message box with one OK button.
+    func inform(_ text: String)
 }
 
 public final class CraftingMenuCoordinator: ItemListMenuScreen {
@@ -65,6 +77,7 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
 
     private var recipes: [ResolvedFormID] = []
     private var ingredients: [FormID] = []
+    var enchanting = CraftingMenuEnchanting()
     private weak var world: (any CraftingMenuWorld)?
 
     public init(
@@ -101,6 +114,11 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
     }
 
     override func loadCategories() -> [ItemListCategory] {
+        if let choices = world?.enchanterChoices, let texts = world?.enchantingTexts {
+            recipes = []
+            ingredients = []
+            return enchanting.categories(choices, texts: texts)
+        }
         if let carried = world?.alchemyIngredients {
             return ingredientCategories(carried)
         }
@@ -142,6 +160,11 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
     }
 
     override func choose(_ row: ItemListRow, alternate: Bool) -> String {
+        if let world, world.enchanterChoices != nil {
+            return enchanting.choose(row, alternate: alternate, world: world) { [weak self] in
+                self?.reload()
+            }
+        }
         if !ingredients.isEmpty || world?.alchemyIngredients != nil {
             if alternate {
                 return world?.brewChosenIngredients() ?? "No game"
@@ -168,6 +191,7 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
     override func didClose() {
         recipes = []
         ingredients = []
+        enchanting = CraftingMenuEnchanting()
         world?.closeCraftingStation()
     }
 }

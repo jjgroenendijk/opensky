@@ -114,6 +114,28 @@ The equipped role goes to an item's best copy, and a made enchantment ranks abov
 the same temper. So an enchanted copy is the one an equip wears. The save keeps the component in
 the `ENCK` chunk ([save chunks](/formats/opensky-save-actor-chunks.md)).
 
+## Enchanting menu
+
+Using an arcane enchanter (a `FURN` whose `WBDT` bench type is enchanting) opens the
+[crafting menu](/engine/crafting.md#crafting-menu) with the header
+`<sEnchanting>: <sEnchantMenuDescription>`. It has four tabs in this order:
+
+| Tab | Setting | Rows |
+| --- | --- | --- |
+| Disenchant | `sDisenchant` | Carried enchanted items, known enchantments included; no staff |
+| Item | `sItem` | Carried plain weapons and apparel |
+| Enchantment | `sEnchantment` | The known base enchantments |
+| Soul Gem | `sSoulGem` | Carried filled soul gems, with the soul's size |
+
+The accept key on a Disenchant row asks `sConfirmDisenchant` with Yes and No. Yes destroys
+the item. A new enchantment shows `sEnchantmentsLearned` in a message box with one Ok button
+(`sOk`); `%s` is the enchantment's name. A known one shows `sEnchantmentKnown` on the HUD and
+keeps the item. On the other tabs the accept key chooses the row, or takes it out again. The
+second key makes the item. Without an item, an enchantment, and a gem it shows
+`sEnchantMustChooseItems`. A base that does not fit the item shows `sEnchantArmorIncompatible`,
+and an empty gem `sEnchantInsufficientCharge`. Otherwise it asks `sEnchantItem` and makes the
+item on Yes.
+
 ## Where OpenSky differs
 
 - A made enchantment combines bases of one plugin only, because one item profile reads all its
