@@ -38,6 +38,8 @@ nonisolated public struct HeadTrackingSettings: Equatable, Sendable {
     /// degrees, at which the speed is the slowest and the fastest.
     public var speedMinAngle: Float = 5
     public var speedMaxAngle: Float = 10
+    /// `fTrackSpeed`: the most the head turns, in radians per second.
+    public var trackSpeed: Float = 5
     /// `fTrackDeadZoneXY` and `fTrackDeadZoneZ`: degrees a goal may move before the head follows.
     public var deadZoneXY: Float = 8
     public var deadZoneZ: Float = 8
@@ -78,7 +80,8 @@ nonisolated public struct HeadTrackingSettings: Equatable, Sendable {
         let span = speedMaxAngle - speedMinAngle
         let blend = span > 0 ? min(max((degrees - speedMinAngle) / span, 0), 1)
             : degrees >= speedMaxAngle ? 1 : 0
-        return radians(speedMin + (speedMax - speedMin) * blend)
+        let speed = radians(speedMin + (speedMax - speedMin) * blend)
+        return trackSpeed > 0 ? min(speed, trackSpeed) : speed
     }
 
     /// True when `goal` is inside the dead zone around `look`.
@@ -97,6 +100,7 @@ nonisolated public struct HeadTrackingSettings: Equatable, Sendable {
         store.read("fHeadTrackSpeedMax", into: &settings, \.speedMax)
         store.read("fHeadTrackSpeedMinAngle", into: &settings, \.speedMinAngle)
         store.read("fHeadTrackSpeedMaxAngle", into: &settings, \.speedMaxAngle)
+        store.read("fTrackSpeed", into: &settings, \.trackSpeed)
         store.read("fTrackDeadZoneXY", into: &settings, \.deadZoneXY)
         store.read("fTrackDeadZoneZ", into: &settings, \.deadZoneZ)
         store.read("fTrackXY", into: &settings, \.trackXY)

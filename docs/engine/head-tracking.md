@@ -44,11 +44,14 @@ values come from the Creation Kit wiki page "Category:Settings"
 | Slowest turn, at or below the smaller angle still to go | `fHeadTrackSpeedMin`, `fHeadTrackSpeedMinAngle` | 60 degrees per second, 5 degrees |
 | Fastest turn, at or above the larger angle still to go | `fHeadTrackSpeedMax`, `fHeadTrackSpeedMaxAngle` | 200 degrees per second, 10 degrees |
 | Dead zone | `fTrackDeadZoneXY`, `fTrackDeadZoneZ` | 8 degrees on each axis |
+| Turn speed cap | `fTrackSpeed` | 5 radians per second |
 | Hold on the player | `fAIHoldDefaultHeadTrackTimer` | 5 seconds |
 | Target further round than | none | 108 degrees: behind, so the actor looks ahead |
 | Neck share of the turn | none | 40 percent; the head takes the rest |
 
-Between the two speed angles the speed is a straight blend. A head at rest does not move while
+Between the two speed angles the speed is a straight blend, capped at `fTrackSpeed`. The axis
+with more to turn moves at that speed, and the other by the same share of its own turn, so the
+head moves in a straight line and both angles arrive together. A head at rest does not move while
 its goal stays inside the dead zone. Once the goal leaves it, the head turns until it arrives.
 A head with no target always turns back to forward.
 
