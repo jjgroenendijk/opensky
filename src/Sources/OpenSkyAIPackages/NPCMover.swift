@@ -13,9 +13,6 @@ public struct NPCMover {
     nonisolated static let runDistance: Float = 512
     nonisolated static let stuckTimeout: Float = 2
     nonisolated static let progressTolerance: Float = 1
-    /// How fast an actor may turn, in radians per second. `nonisolated`, so the
-    /// in-place turn (`NPCFacingHold`) can use it without main-actor isolation.
-    nonisolated public static let maximumYawSpeed: Float = .pi * 2
 
     public let actor: ReferenceKey
     public let formID: FormID
@@ -28,6 +25,8 @@ public struct NPCMover {
     public var path: NavigationPath
     public var waypointIndex = 0
     public var yaw: Float
+    /// How fast the actor may turn, in radians per second: `fActorDefaultTurningSpeed`.
+    public var turnRate = MovementSpeedSettings.vanilla.defaultTurnRate
     public var gait: LocomotionGait = .walk
     public var state: NPCMovementState = .moving
     public var repathCount = 0

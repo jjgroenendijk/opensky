@@ -1,4 +1,5 @@
 public import OpenSkyConditions
+public import OpenSkyPlayer
 public import OpenSkyWorldInterface
 
 /// The load order's packages and the game settings the procedures read. The
@@ -11,6 +12,7 @@ public struct PackageSessionData {
     public var sandboxSettings = SandboxSettings.vanilla
     public var bumpSettings = BumpReactionSettings.vanilla
     public var followSettings = FollowSettings.vanilla
+    public var movementSpeeds = MovementSpeedSettings.vanilla
 
     public init(store: PackageStore, conditionFunctions: ConditionFunctionRegistry) {
         self.store = store

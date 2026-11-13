@@ -23,6 +23,8 @@ public final class SessionMotion {
     public var terrainSampler: WalkController.GroundSampler?
     /// The player's breath under water (docs/engine/walk-mode.md).
     public var breath = PlayerBreath()
+    /// The share of gait speed the player moves at this frame; nil moves at full speed.
+    public var playerSpeedScale: (@MainActor () -> Float)?
     /// The vehicle pose the player rides at, where the body's root goes; nil on foot.
     public var playerSeat: float4x4? {
         didSet {

@@ -257,7 +257,7 @@ struct DialogueCameraTests {
         let step: Float = 1 / 60
         let drive = hold.advance(by: step)
         #expect(drive.intent == .still)
-        #expect(abs(hold.yaw - NPCMover.maximumYawSpeed * step) < 0.001)
+        #expect(abs(hold.yaw - hold.turnRate * step) < 0.001)
         for _ in 0 ..< 120 where !hold.isSettled {
             _ = hold.advance(by: step)
         }

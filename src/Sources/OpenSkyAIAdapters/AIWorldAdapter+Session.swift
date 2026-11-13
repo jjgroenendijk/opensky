@@ -45,6 +45,10 @@ extension AIWorldAdapter {
         let gameSession = stage.gameSession
         let streamer = stage.streamer
         streamer.actors.npcMovementConfiguration = gameSession.locomotion.configuration.forActors
+        if let settings = game.aiRecords?.gameSettings {
+            streamer.actors.npcMovement.turnRate =
+                MovementSpeedSettings.resolve(store: settings).defaultTurnRate
+        }
         gameSession.motion.onPlayerWalkArrived = { [weak game] in
             game?.packages.movementSettled(actor: .player, reason: .arrival)
         }
@@ -87,6 +91,7 @@ struct AIRecordReads {
         data.sandboxSettings = SandboxSettings.resolve(store: settings)
         data.bumpSettings = BumpReactionSettings.resolve(store: settings)
         data.followSettings = FollowSettings.resolve(store: settings)
+        data.movementSpeeds = MovementSpeedSettings.resolve(store: settings)
         return data
     }
 

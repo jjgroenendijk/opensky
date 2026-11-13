@@ -7,15 +7,16 @@ import OpenSkyWorldInterface
 import simd
 
 nonisolated extension LocomotionBridge {
-    /// Speed of one gait, units per second.
+    /// Speed of one gait, units per second, after worn weight and `SpeedMult`.
     func speed(of gait: LocomotionGait) -> Float {
-        switch gait {
+        let base: Float = switch gait {
         case .walk: configuration.walkSpeed.value
         case .run: configuration.runSpeed.value
         case .sprint: configuration.sprintSpeed.value
         case .sneak: configuration.sneakSpeed.value
         case .swim: configuration.swimSpeed.value
         }
+        return base * speedScale
     }
 
     /// This frame's intent as a level world-space movement direction, unit

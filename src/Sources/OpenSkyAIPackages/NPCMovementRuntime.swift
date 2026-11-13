@@ -137,6 +137,9 @@ public struct NPCMovementRuntime {
     /// Standing actors a push slides. A walking actor takes the push on its own mover.
     private var slides: [ReferenceKey: NPCKnockbackSlide] = [:]
 
+    /// The turn rate each new mover and turn on the spot gets: `fActorDefaultTurningSpeed`.
+    public var turnRate = MovementSpeedSettings.vanilla.defaultTurnRate
+
     public init() {}
 
     var activeMoverCount: Int {
@@ -155,6 +158,7 @@ public struct NPCMovementRuntime {
     public mutating func start(_ start: NPCMoveStart) -> Bool {
         guard ridden[start.actor] == nil, hasRoom(for: start.actor) else { return false }
         var mover = NPCMover(start: start, drawnPlacement: drawnPlacement(of: start.actor))
+        mover.turnRate = turnRate
         if let slide = slides.removeValue(forKey: start.actor) {
             let push = slide.controller.knockback
             mover.controller.knock(SIMD3(push.x, push.y, 0))
@@ -183,12 +187,14 @@ public struct NPCMovementRuntime {
         let settled = parked[start.actor]?.readout ?? movers[start.actor]?.readout
         let drawn = drawnPlacement(of: start.actor)
         stop(start.actor)
-        facings[start.actor] = NPCFacingHold(
+        var hold = NPCFacingHold(
             start: start,
             feetPosition: settled?.feetPosition ?? start.placement.position,
             yaw: settled?.yaw ?? NPCYawMath.yaw(fromHeading: start.placement.rotation.z),
             drawnPlacement: drawn
         )
+        hold.turnRate = turnRate
+        facings[start.actor] = hold
     }
 
     /// Releases a hold, parking the actor on the bearing it reached.
