@@ -187,11 +187,17 @@ public struct InventorySessionBuilder {
             game.mapWorld.text(records?.menuTexts[name]) ?? fallback
         }
         let vanilla = AlchemyTexts.vanilla
-        return AlchemyTexts(
+        var texts = AlchemyTexts(
             potionPrefix: text("sCreatedPotionNamePrefix", vanilla.potionPrefix),
             poisonPrefix: text("sCreatedPoisonNamePrefix", vanilla.poisonPrefix),
             failed: text("sPotionCreationFailed", vanilla.failed)
         )
+        texts.created = text("sCreated", vanilla.created)
+        texts.discoveredEffects = text("sDiscoveredEffects", vanilla.discoveredEffects)
+        texts.discoveredByEating = text(
+            "sDiscoveredIngredientEffectEating", vanilla.discoveredByEating
+        )
+        return texts
     }
 
     /// Nil without a FACT and FLST index. The memberships are read at call time.

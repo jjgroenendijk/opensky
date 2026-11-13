@@ -161,10 +161,13 @@ extension InventoryCoordinator.AlchemyLab {
             return noteAlchemy(.brewFailed(reason: String(describing: error)))
         }
         runtime.store.set(state, for: .player)
+        let discovered = newEffectNames(brew.learned)
         learn(brew.learned)
         reportAlchemySkillUse(brew.skillUse)
         keepCarried(chosen)
-        return noteAlchemy(.brewed(count: count, item: potion.name, value: potion.value))
+        return noteAlchemy(.brewed(
+            count: count, item: potion.name, value: potion.value, discovered: discovered
+        ))
     }
 
     // MARK: - Learning
@@ -193,6 +196,31 @@ extension InventoryCoordinator.AlchemyLab {
         let names = indices.filter { !before.contains($0) }
             .map { effectName(ingredient.effects[$0].effect) }
         return noteAlchemy(.learned(ingredient: coordinator.name(of: item), effects: names))
+    }
+
+    /// The names of the effects in `learned` the player does not know yet.
+    private func newEffectNames(_ learned: [FormID: [Int]]) -> [String] {
+        let ingredients = coordinator.runtime?.inventory.baselines.items.ingredients
+        let names = learned.sorted { $0.key.rawValue < $1.key.rawValue }.flatMap { item, indices in
+            let known = Set(ingredientKnowledge.knownIndices(of: item))
+            let effects = ingredients?[item.rawValue]?.effects ?? []
+            return indices.filter { !known.contains($0) && effects.indices.contains($0) }
+                .map { effectName(effects[$0].effect) }
+        }
+        var seen: Set<String> = []
+        return names.filter { seen.insert($0).inserted }
+    }
+
+    /// The game's notice for `outcome`: the brew in `sCreated` words, or the readout line.
+    public func notice(of outcome: AlchemyActionOutcome) -> String {
+        guard case let .brewed(count, item, _, discovered) = outcome else { return outcome.text }
+        return coordinator.alchemyTexts.brewText(count: count, name: item, discovered: discovered)
+    }
+
+    /// The HUD notices of an eaten ingredient's new effects.
+    public func eatingNotices(of outcome: AlchemyActionOutcome) -> [String] {
+        guard case let .learned(ingredient, effects) = outcome else { return [] }
+        return coordinator.alchemyTexts.eatingNotices(ingredient: ingredient, effects: effects)
     }
 
     func learn(_ learned: [FormID: [Int]]) {

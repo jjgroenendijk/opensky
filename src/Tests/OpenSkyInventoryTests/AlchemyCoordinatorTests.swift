@@ -92,7 +92,13 @@ struct AlchemyCoordinatorTests {
         let picked = lab.alchemyLab.toggleAlchemyIngredient(Fixture.flower)
         #expect(picked.text.contains("Potion of Restore Health"))
         let outcome = lab.alchemyLab.brewChosenIngredients()
-        #expect(outcome == .brewed(count: 1, item: "Potion of Restore Health", value: 5))
+        guard case let .brewed(count, item, value, discovered) = outcome else {
+            Issue.record("no brew: \(outcome)")
+            return
+        }
+        #expect(count == 1 && item == "Potion of Restore Health" && value == 5)
+        #expect(discovered.count == 1)
+        #expect(lab.alchemyLab.notice(of: outcome).hasPrefix("Created Potion of Restore Health\n"))
         let potion = try #require(lab.alchemyLab.createdPotions.potions.first)
         #expect(harness.inventory.count(of: potion.id, in: .player) == 1)
         #expect(harness.inventory.count(of: Fixture.wheat, in: .player) == 1)

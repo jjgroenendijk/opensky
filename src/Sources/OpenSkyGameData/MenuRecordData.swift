@@ -60,7 +60,8 @@ nonisolated public struct MenuRecordData: Sendable {
 
     /// The alchemy lab's notices.
     public static let alchemyTexts: Set = [
-        "sCreatedPotionNamePrefix", "sCreatedPoisonNamePrefix", "sPotionCreationFailed"
+        "sCreatedPotionNamePrefix", "sCreatedPoisonNamePrefix", "sPotionCreationFailed",
+        "sCreated", "sDiscoveredEffects", "sDiscoveredIngredientEffectEating"
     ]
 
     public let player: ActorBase?

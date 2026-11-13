@@ -81,12 +81,17 @@ model in OpenSky, so dropping one leaves nothing visible.
 Mod Potions Created (entry point 89) sets how many items one brew makes, with the made item
 bound as the item.
 
+The brew's notice is `<sCreated> <name>`, or `<sCreated> (<count>) <name>` for more than one.
+When the brew taught effects, a line `<sDiscoveredEffects>:` and one line per new effect follow.
+
 ## Learning effects
 
 The player knows an effect of an ingredient once it is learnt. Brewing teaches every shared effect
 of every chosen ingredient. A failed brew shares no effect, so it teaches nothing. Eating an
 ingredient teaches its first effect. Mod Initial Ingredient Effects Learned (entry point 72, the
 Experimenter perk) sets how many first effects eating teaches. The knowledge is saved in `INGK`.
+Each effect eating teaches shows a HUD notice, `sDiscoveredIngredientEffectEating` with the
+effect's name and the ingredient's name in its two `%s`.
 
 The Papyrus natives `Ingredient.LearnEffect`, `LearnNextEffect`, `LearnAllEffects`, and
 `IsHostile`, and `Potion.IsHostile`, read and write the same knowledge. `IsHostile` on an

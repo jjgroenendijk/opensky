@@ -11,7 +11,8 @@ nonisolated public enum AlchemyActionOutcome: Equatable, Sendable {
     case dropped(String, preview: String)
     case cleared
     case needsTwo
-    case brewed(count: Int32, item: String, value: Int32)
+    /// `discovered` names the effects the brew taught.
+    case brewed(count: Int32, item: String, value: Int32, discovered: [String])
     case failed(String)
     case learned(ingredient: String, effects: [String])
     case poisoned(weapon: String, poison: String, doses: Int32)

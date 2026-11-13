@@ -19,6 +19,7 @@ extension InventoryCoordinator.ReadoutLines {
     }
 
     public func brewChosenIngredientsLine() -> String {
-        coordinator.alchemyLab.brewChosenIngredients().text
+        let lab = coordinator.alchemyLab
+        return lab.notice(of: lab.brewChosenIngredients())
     }
 }
