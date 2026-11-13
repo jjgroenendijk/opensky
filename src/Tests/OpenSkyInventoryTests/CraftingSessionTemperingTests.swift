@@ -38,8 +38,7 @@ extension CraftingSessionTests {
         #expect(harness.inventory.itemCopies(of: .player).levels(of: Items.sword, held: 2)
             == [1, 1])
         #expect(harness.skills.uses.count == 2)
-        let gain = Tempering.valueMultiplier(level: 1) - Tempering.valueMultiplier(level: 0)
-        let expected = CraftingSkillUseSettings.temperFactor * (25 * gain).squareRoot()
+        let expected = CraftingSkillUseSettings.vanilla.tempered(value: 25, levels: 1)
         #expect(abs((harness.skills.uses.first?.amount ?? 0) - expected) < 0.001)
     }
 

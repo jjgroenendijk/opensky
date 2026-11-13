@@ -134,6 +134,7 @@ the detail and the sources it did find.
 
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
+| Tempering skill use | Condition gain from `fHealthDataValue1`, one step per level | [crafting](/engine/crafting.md) |
 | Forge tab of each material keyword | Iron banded with iron, steel plate with steel, dragonplate, dragonscale, and dragonbone with dragon; scaled and other materials have no tab | [crafting](/engine/crafting.md#crafting-menu) |
 | Leveled lock step | One band per 10 player levels, up to Master | [locks](/engine/locks.md#leveled-locks) |
 | Lock with no `XLOC` | Level 1 when Papyrus locks it | [locks](/engine/locks.md) |
