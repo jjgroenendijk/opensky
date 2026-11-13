@@ -27,6 +27,7 @@ nonisolated extension CastingActionOutcome {
         case .noTome: "The player carries no spell tome."
         case let .unresolvedTome(book, plugin): "Could not resolve \(book) in \(plugin)."
         case let .readTome(reading, book): MagicCore.readingText(reading, book: book)
+        case let .spellAlreadyKnown(notice): notice
         case .noSpellsKnown: "The player knows no spells to select."
         case let .selected(spell): "Selected \(spell)."
         case .noSpellSelected: "No spell selected to ready."

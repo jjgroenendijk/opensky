@@ -20,6 +20,8 @@ nonisolated public enum CastingActionOutcome: Equatable, Sendable {
     case noTome
     case unresolvedTome(book: String, plugin: String)
     case readTome(SpellTomeReading, book: String)
+    /// The game's notice for a tome whose spell the reader knows already.
+    case spellAlreadyKnown(notice: String)
     case noSpellsKnown
     case selected(spell: String)
     case noSpellSelected

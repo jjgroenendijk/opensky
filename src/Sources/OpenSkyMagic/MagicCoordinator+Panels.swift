@@ -26,23 +26,26 @@ extension MagicCoordinator.ControlPanels {
         guard let caster = coordinator.caster
         else { return coordinator.recordCasting(.unavailable) }
         let spells = caster.spellbook.spells
-        let bookKey = spells.resolvedID(item, fromPlugin: coordinator.pluginName)
+        let plugin = coordinator.spellPluginName ?? coordinator.pluginName
+        let bookKey = spells.resolvedID(item, fromPlugin: plugin)
             .map(ReferenceKey.init(resolved:))
-        let spellKey = spells.resolvedID(spell, fromPlugin: coordinator.pluginName)
+        let spellKey = spells.resolvedID(spell, fromPlugin: plugin)
             .map(ReferenceKey.init(resolved:))
         guard let bookKey else {
             return coordinator.recordCasting(.unresolvedTome(
                 book: itemName(item),
-                plugin: coordinator.pluginName
+                plugin: plugin
             ))
         }
         let reading = caster.spellbook.read(book: bookKey, teaching: spellKey, on: .player)
-        if
-            reading.taught,
-            let learned = caster.spellbook.knownSpells(of: .player)
-                .first(where: { $0.key == spellKey })
-        {
-            coordinator.world.announceSpellLearned(learned.displayName)
+        let known = caster.spellbook.knownSpells(of: .player).first { $0.key == spellKey }
+        if let known, reading.taught {
+            coordinator.world.announceSpellLearned(known.displayName)
+        } else if let known {
+            let lead = coordinator.texts.magic.word("sAlreadyKnown", or: "You already know")
+            return coordinator.recordCasting(.spellAlreadyKnown(
+                notice: "\(lead) \(known.displayName)."
+            ))
         }
         return coordinator.recordCasting(.readTome(reading, book: itemName(item)))
     }
