@@ -23,10 +23,12 @@ extension MagicCoordinator.Enchanter {
             let entry = EnchanterItem(id: item, name: coordinator.world.itemName(item))
             if let profile = coordinator.weaponEnchantments.enchantmentProfile(of: item) {
                 if
-                    !profile.isStaff, records.rootBase(of: profile) != nil,
+                    !profile.isStaff, let base = records.rootBase(of: profile),
                     !coordinator.world.itemHasKeyword("MagicDisallowEnchanting", on: item)
                 {
-                    choices.disenchantable.append(entry)
+                    var row = entry
+                    row.isKnown = records.enchantingState.known.contains(base)
+                    choices.disenchantable.append(row)
                 }
             } else if
                 table.enchantableKind(of: item) != nil,
@@ -56,7 +58,10 @@ extension MagicCoordinator.Enchanter {
         let texts = coordinator.texts.enchanting
         switch coordinator.enchantingRecords.disenchant(item) {
         case let .learned(_, base):
-            return EnchanterAnswer(text: SettingTextFormat.fill(texts[.learned], [base]), done: true)
+            return EnchanterAnswer(
+                text: SettingTextFormat.fill(texts[.learned], [base]),
+                done: true
+            )
         case let .refused(refusal):
             return EnchanterAnswer(text: text(of: refusal), done: false)
         default:

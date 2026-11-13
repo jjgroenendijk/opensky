@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 @testable import OpenSkyMenus
 import OpenSkyMenusInterface
 import Testing
@@ -142,6 +143,8 @@ struct MenuScreenCoordinatorTests {
         #expect(menu.model.categories.map(\.label) == ["Can make", "All"])
         #expect(menu.model.rows.map(\.name) == ["Iron Dagger"])
         menu.route(.button(.accept))
+        #expect(world.questions.map(\.text) == [CraftingButtonText.confirmCreate.fallback])
+        world.questions[0].answer(true)
         #expect(world.actions == ["craft 2"])
         menu.route(.button(.cancel))
         #expect(world.actions.last == "close station")
@@ -180,5 +183,12 @@ struct MenuScreenCoordinatorTests {
         menu.route(.button(.accept))
         menu.route(.button(.xButton))
         #expect(world.actions == ["toggle 16", "brew"])
+        menu.route(.button(.yButton))
+        #expect(world.actions.last == "toggle 17")
+        menu.route(.button(.cancel))
+        #expect(world.questions.map(\.text) == [CraftingButtonText.quitAlchemy.fallback])
+        #expect(menu.isOpen)
+        world.questions[0].answer(true)
+        #expect(!menu.isOpen)
     }
 }

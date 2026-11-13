@@ -54,6 +54,7 @@ final class MenuScreens {
         gift = screens.gift
         crafting = screens.crafting
         textEntry = screens.textEntry
+        screens.crafting.nameEntry = screens.textEntry
         mapMovie = screens.mapMovie
         routes = [
             Self.route(screens.sleepWait), Self.route(screens.training), Self.route(screens.book),

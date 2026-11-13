@@ -177,8 +177,35 @@ The movie calls `CraftSelectedItem` or `CraftButtonPress` to make the selected r
 `CloseMenu` to leave, which closes the session. At an alchemy lab the movie lists the carried
 ingredients, with their known effects, on an Ingredients tab and a Chosen tab. Activate chooses or
 drops an ingredient, a chosen one shows as equipped, and R brews. The game shows the item in 3D
-(`ShowItem3D`), and lets the player rename an
-enchanted item and set its charge; OpenSky answers those calls and does nothing.
+(`ShowItem3D`) and lets the player set an enchantment's charge; OpenSky answers those calls
+and does nothing.
+
+## Buttons and questions
+
+The movie keeps its four bottom-bar labels in `/Menu.ButtonText`: select, exit, aux, and craft.
+Setting `bCanCraft` runs the movie's `UpdateButtonText`, which hides the craft label while
+`bCanCraft` is false. An empty label hides its button. Observed per station:
+
+| Station | Select | Aux | Craft shown |
+| --- | --- | --- | --- |
+| Forge | `sCreate` | none | never |
+| Grindstone, armor table | `sSelect` | none | while a row is highlighted |
+| Alchemy lab | `sRemove` on a chosen ingredient, else `sAdd` | `sClearSelections` once one is chosen | with two chosen ingredients |
+| Arcane enchanter | `sLearn` on a disenchant row, else `sSelect` | `sRenameItem` with a full choice, not on Disenchant | not on Disenchant |
+
+Exit is `sExit` everywhere. Each question box has `sYes` and `sNo`:
+
+- A forge recipe the player can make asks `sConstructibleMenuConfirm` first. A grindstone or
+  armor table asks `sSmithingConfirm`. A recipe the player cannot make shows its refusal (see
+  [Refused crafts](#refused-crafts)) as a HUD notice.
+- Leaving an alchemy lab always asks `sQuitAlchemy`. Leaving an arcane enchanter asks
+  `sQuitEnchanting` once an item, enchantment, or soul gem is chosen.
+- The aux key (Y) clears the chosen ingredients at a lab. At an enchanter it opens the
+  [text entry box](/engine/text-entry.md) under `sEnterItemName`; the name goes on the item
+  made.
+
+The lab's "two chosen ingredients" stands in for the game's "the chosen ingredients make a
+potion".
 
 ## Not modeled yet
 

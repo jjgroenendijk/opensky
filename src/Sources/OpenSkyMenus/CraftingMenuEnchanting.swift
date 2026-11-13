@@ -17,6 +17,7 @@ struct CraftingMenuEnchanting {
 
     private(set) var selection = EnchanterSelection()
     private var picks: [Pick] = []
+    private var known: Set<FormID> = []
 
     /// Disenchant, Item, Enchantment, and Soul Gem, in the game's order. A chosen row
     /// shows as equipped.
@@ -30,18 +31,28 @@ struct CraftingMenuEnchanting {
             selection.gem = nil
         }
         picks = []
-        func rows(_ entries: [(Pick, String, Bool)]) -> [ItemListRow] {
-            entries.map { pick, name, chosen in
-                picks.append(pick)
-                return ItemListRow(tag: UInt32(picks.count - 1), name: name, isEquipped: chosen)
+        func rows(_ entries: [(pick: Pick, row: ItemListRow)]) -> [ItemListRow] {
+            entries.map { entry in
+                picks.append(entry.pick)
+                var row = entry.row
+                row.tag = UInt32(picks.count - 1)
+                return row
             }
         }
-        let destroy = rows(choices.disenchantable.map { (.destroy($0.id), $0.name, false) })
-        let items = rows(choices.enchantable.map { (.item($0.id), $0.name, $0.id == selection.item) })
-        let bases = rows(choices.enchantments.map {
-            (.base($0.key), $0.name, selection.bases.contains($0.key))
+        func row(_ name: String, chosen: Bool) -> ItemListRow {
+            ItemListRow(tag: 0, name: name, isEquipped: chosen)
+        }
+        known = Set(choices.disenchantable.filter(\.isKnown).map(\.id))
+        let destroy = rows(choices.disenchantable.map {
+            (.destroy($0.id), row($0.name, chosen: false))
         })
-        let gems = rows(choices.gems.map { (.gem($0), $0.name, $0 == selection.gem) })
+        let items = rows(choices.enchantable.map {
+            (.item($0.id), row($0.name, chosen: $0.id == selection.item))
+        })
+        let bases = rows(choices.enchantments.map {
+            (.base($0.key), row($0.name, chosen: selection.bases.contains($0.key)))
+        })
+        let gems = rows(choices.gems.map { (.gem($0), row($0.name, chosen: $0 == selection.gem)) })
         return [
             ItemListCategory(label: texts[.disenchant], rows: destroy),
             ItemListCategory(label: texts[.item], rows: items),
@@ -62,6 +73,10 @@ struct CraftingMenuEnchanting {
         switch picks[Int(row.tag)] {
         case let .destroy(item):
             let texts = world.enchantingTexts
+            guard !known.contains(item) else {
+                world.showHUDNotification(texts[.alreadyKnown])
+                return texts[.alreadyKnown]
+            }
             world.confirm(texts[.confirmDisenchant]) { yes in
                 guard yes else { return }
                 let answer = world.disenchant(item)
@@ -87,12 +102,27 @@ struct CraftingMenuEnchanting {
         return "Chose \(row.name)"
     }
 
+    /// Something is chosen, so leaving asks first.
+    var hasChoice: Bool {
+        selection.item != nil || selection.gem != nil || !selection.bases.isEmpty
+    }
+
+    func isDestroyRow(_ row: ItemListRow) -> Bool {
+        guard picks.indices.contains(Int(row.tag)), case .destroy = picks[Int(row.tag)] else {
+            return false
+        }
+        return true
+    }
+
     /// Names the item to make; nil or empty keeps the made name.
     mutating func rename(_ name: String?) {
         selection.name = name.flatMap { $0.isEmpty ? nil : $0 }
     }
 
-    private mutating func make(world: any CraftingMenuWorld, changed: @escaping () -> Void) -> String {
+    private mutating func make(
+        world: any CraftingMenuWorld,
+        changed: @escaping () -> Void
+    ) -> String {
         if let refusal = world.enchantRefusal(selection) {
             world.showHUDNotification(refusal)
             return refusal

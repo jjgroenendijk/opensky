@@ -10,6 +10,8 @@ nonisolated public enum ItemListMovieEvent: Equatable, Sendable {
     /// Acts on the row the movie's item list has selected.
     case select
     case close
+    /// The movie's third bottom-bar button.
+    case aux
 }
 
 /// Where a list movie keeps its category list and its item list.

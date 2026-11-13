@@ -35,7 +35,6 @@ nonisolated let neverReadTextSettings = [
     "sEffectAlreadyAdded",
     "sEnableHelp",
     "sEnchantDeconstructMenuDescription",
-    "sEnterItemName",
     "sEnterName",
     "sExitGameAffirm",
     "sFor",
