@@ -127,6 +127,10 @@ public protocol MagicMenuLinesPort {
 public protocol MagicMenuListPort {
     var isPlayerTakingHealthDamage: Bool { get }
     var magicMenuSpells: [MagicMenuSpell] { get }
+    /// The tab titles in the menu's order.
+    var magicMenuCategoryOrder: [String] { get }
+    var magicMenuActiveEffects: [String] { get }
+    var magicMenuActiveEffectsTitle: String { get }
 }
 
 /// Effects that act on the world when a spell or a weapon lands.

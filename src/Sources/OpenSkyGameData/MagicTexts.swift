@@ -58,6 +58,29 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
         return word("sMagicSchool\(name)") ?? name
     }
 
+    /// The magic menu tab a known spell goes under: its school for a spell, the shouts
+    /// tab for a shout, the powers tab for a power or lesser power, else none.
+    public func menuCategory(of type: SpellType, magicSkill: Int32?) -> String? {
+        switch type {
+        case .spell:
+            guard
+                let skill = magicSkill,
+                let name = ActorValueIdentity.name(at: skill),
+                Self.schools.contains(name)
+            else { return nil }
+            return word("s\(name)", or: name.uppercased())
+        case .voice: return word("sShouts", or: "SHOUTS")
+        case .power, .lesserPower: return word("sPowers", or: "POWERS")
+        default: return nil
+        }
+    }
+
+    /// The magic menu's tab order: the five schools, then shouts and powers.
+    public var menuCategoryOrder: [String] {
+        Self.menuSchoolOrder.map { word("s\($0)", or: $0.uppercased()) }
+            + [word("sShouts", or: "SHOUTS"), word("sPowers", or: "POWERS")]
+    }
+
     /// Novice below 25, Apprentice below 50, Adept below 75, Expert below 100, then Master.
     func level(minimumSkill: UInt32) -> String {
         let index = min(Int(minimumSkill) / 25, Self.levels.count - 1)
@@ -71,6 +94,7 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
     ]
 
     static let schools = ["Alteration", "Conjuration", "Destruction", "Illusion", "Restoration"]
+    static let menuSchoolOrder = ["Alteration", "Illusion", "Destruction", "Conjuration", "Restoration"]
 
     /// The word a setting resolved to, else `fallback`.
     public func word(_ setting: String, or fallback: String) -> String {
@@ -103,6 +127,7 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
         + ["Sec", "Secs", "Min", "Mins", "Hour", "Hours"].map { "sEffectsListDisplay\($0)" }
         + levels.map { "s\($0.0)DisplayName" }
         + ["sSoulCaptured", "sSoulGemTooSmall"]
+        + schools.map { "s\($0)" } + ["sShouts", "sPowers", "sActiveEffects"]
 
     public static func resolve(
         store: GameSettingStore, text: GameTextResolver = { _ in nil }

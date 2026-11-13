@@ -7,6 +7,9 @@ public import OpenSkySessionInterface
 nonisolated public final class FakeMagicMenuListPort: MagicMenuListPort {
     public var isPlayerTakingHealthDamage = false
     public var magicMenuSpells: [MagicMenuSpell] = []
+    public var magicMenuCategoryOrder: [String] = []
+    public var magicMenuActiveEffects: [String] = []
+    public var magicMenuActiveEffectsTitle = ""
 
     public init() {}
 }

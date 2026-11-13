@@ -26,19 +26,27 @@ public struct MenuScreensGiftListsAdapter {
 
 extension MenuScreensGiftListsAdapter {
     /// "All" first, then one tab per spell kind in the order the kinds first appear.
+    /// All, then one tab per school, shouts, and powers in the menu's order, then the
+    /// effects on the player. A tab with no rows is left out.
     var magicMenuCategories: [ItemListCategory] {
-        let spells = game.magic.magicMenu.magicMenuSpells.enumerated().map { index, spell in
-            (kind: spell.typeName, row: ItemListRow(
+        let menu = game.magic.magicMenu
+        let spells = menu.magicMenuSpells.enumerated().map { index, spell in
+            (category: spell.category, row: ItemListRow(
                 tag: UInt32(index), name: spell.name, isEquipped: spell.isReadied
             ))
         }
-        var kinds: [String] = []
-        for spell in spells where !kinds.contains(spell.kind) {
-            kinds.append(spell.kind)
+        let order = menu.magicMenuCategoryOrder
+        let tabs = order.compactMap { title -> ItemListCategory? in
+            let rows = spells.filter { $0.category == title }.map(\.row)
+            return rows.isEmpty ? nil : ItemListCategory(label: title, rows: rows)
         }
-        return [ItemListCategory(label: "All", rows: spells.map(\.row))] + kinds.map { kind in
-            ItemListCategory(label: kind, rows: spells.filter { $0.kind == kind }.map(\.row))
+        let effects = menu.magicMenuActiveEffects.enumerated().map { index, name in
+            ItemListRow(tag: UInt32(spells.count + index), name: name)
         }
+        let effectsTab = effects.isEmpty
+            ? []
+            : [ItemListCategory(label: menu.magicMenuActiveEffectsTitle, rows: effects)]
+        return [ItemListCategory(label: "All", rows: spells.map(\.row))] + tabs + effectsTab
     }
 
     public func readySpell(at index: Int, leftHand: Bool) -> String {

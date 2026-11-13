@@ -10,13 +10,32 @@ extension MagicCoordinator.MagicMenu {
     public var magicMenuSpells: [MagicMenuSpell] {
         guard let caster = coordinator.caster else { return [] }
         let book = caster.spellbook.state(of: .player)
+        let texts = coordinator.texts.magic
         return coordinator.controlPanels.playerKnownSpells().map { spell in
             MagicMenuSpell(
                 name: spell.displayName,
-                typeName: coordinator.texts.magic.name(of: spell.spellType),
-                isReadied: !book.hands(of: spell.key).isEmpty
+                typeName: texts.name(of: spell.spellType),
+                isReadied: !book.hands(of: spell.key).isEmpty,
+                category: texts.menuCategory(of: spell.spellType, magicSkill: spell.magicSkill)
             )
         }
+    }
+
+    /// The names of the effects on the player, for the menu's last tab.
+    public var magicMenuActiveEffects: [String] {
+        guard let runtime = coordinator.effects else { return [] }
+        return runtime.active(on: .player).map { effect in
+            coordinator.effectsPanel.readout(of: effect, runtime: runtime).name
+        }
+    }
+
+    public var magicMenuCategoryOrder: [String] {
+        coordinator.texts.magic.menuCategoryOrder
+    }
+
+    /// The last tab's title.
+    public var magicMenuActiveEffectsTitle: String {
+        coordinator.texts.magic.word("sActiveEffects", or: "ACTIVE EFFECTS")
     }
 
     /// Selects the known spell at `index` and readies it in `hand`.
