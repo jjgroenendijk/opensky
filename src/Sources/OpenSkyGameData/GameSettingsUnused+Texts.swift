@@ -120,7 +120,6 @@ nonisolated let neverReadTextSettings = [
     "sPCControlsTriggerPrefix",
     "sPCRelationshipNegativeChangeText",
     "sPCRelationshipPositiveChangeText",
-    "sPoisonBowConfirmMessage",
     "sPrevious",
     "sPreviousSelection",
     "sQuantity",

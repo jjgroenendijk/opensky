@@ -2,7 +2,7 @@
 // `AlchemyTexts`, read from the load order's strings.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 public import OpenSkyInventoryInterface
 
 /// The game strings alchemy shows. The fallbacks are OpenSky's wording.
@@ -78,6 +78,18 @@ nonisolated extension AlchemyActionOutcome {
         case .cannotPoison: PoisonText.cannotPoison.fallback
         case let .notAPoison(name): "\(name) is no poison."
         case let .brewFailed(reason): "Brew failed: \(reason)"
+        }
+    }
+}
+
+nonisolated extension AlchemyActionOutcome {
+    /// The outcome's line, with a refusal in the load order's wording.
+    public func text(_ texts: GameSettingTexts<PoisonText>) -> String {
+        switch self {
+        case .noWeapon: texts[.noWeapon]
+        case .alreadyPoisoned: texts[.alreadyPoisoned]
+        case .cannotPoison: texts[.cannotPoison]
+        default: text
         }
     }
 }

@@ -8,6 +8,7 @@ import Foundation
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyInventory
@@ -32,6 +33,7 @@ protocol InventoryMenuHost: MenuInputConsumer, SendableMetatype {
     var inventory: any InventoryPort { get }
     var menuMode: any MenuModePort { get }
     var menuScreens: any MenuScreensPort { get }
+    var messages: any MessageCoordinatorPort { get }
     var renderer: (any RendererPort)? { get }
     var swfMovies: any SWFMovieSourcePort { get }
 }
@@ -223,7 +225,29 @@ final class InventoryMenuController {
             books.open(item: entry.item)
             return
         }
+        if let entry = model.selectedEntry, askBeforePoison(entry.item) {
+            return
+        }
         perform { itemActions.use($0.item) }
+    }
+
+    /// A poison the weapon can take asks first; Yes puts it on.
+    private func askBeforePoison(_ item: FormID) -> Bool {
+        let consumables = game.inventory.consumables
+        guard
+            consumables.use(of: item) == .applyPoison,
+            itemActions.refusal(.consume, of: item) == nil,
+            let question = consumables.poisonQuestion(item, texts: game.mapWorld.settingTexts())
+        else { return false }
+        let words = game.mapWorld.settingTexts(MessageBoxText.self)
+        game.messages.presentChoices(
+            title: nil, text: question, buttons: [words[.yes], words[.no]]
+        ) { [weak self] choice in
+            guard let self, choice == 0, isOpen, model.selectedEntry?.item == item else { return }
+            perform { itemActions.use($0.item) }
+        }
+        lastActionText = question
+        return true
     }
 
     func dropSelection(count: Int32 = 1) {

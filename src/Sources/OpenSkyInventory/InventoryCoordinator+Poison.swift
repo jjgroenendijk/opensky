@@ -5,7 +5,7 @@
 
 import OpenSkyConditions
 public import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 public import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
 import OpenSkyWorldState
@@ -32,6 +32,23 @@ extension InventoryCoordinator.Consumables {
         let weapons = equipment.equipped(on: runtime.player).filter { items.weapon($0) != nil }
         return weapons.first { equipment.occupancy(of: $0).hands.contains(.rightHand) }
             ?? weapons.first
+    }
+
+    /// The question before `poison` goes on the weapon, or nil when `applyPoison` would
+    /// refuse it, so the refusal shows at once.
+    public func poisonQuestion(_ poison: FormID, texts: GameSettingTexts<PoisonText>) -> String? {
+        guard
+            let runtime = coordinator.runtime, isPoison(poison),
+            let weapon = poisonableWeapon,
+            playerWeaponPoisons.poisons[weapon] == nil,
+            runtime.inventory.count(of: poison, in: runtime.player) > 0
+        else { return nil }
+        let type = runtime.inventory.baselines.items.weapon(weapon)?.animationType
+        guard type != .staff else { return nil }
+        return PoisonQuestion.text(
+            isRanged: type == .bow || type == .crossbow,
+            weapon: coordinator.name(of: weapon), poison: coordinator.name(of: poison), texts: texts
+        )
     }
 
     /// Uses one `poison` on the right-hand weapon. A staff, or a weapon that still carries a
