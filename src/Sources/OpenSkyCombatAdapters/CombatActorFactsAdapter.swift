@@ -147,6 +147,14 @@ extension CombatActorFactsAdapter {
         styleReader.combatStyle(of: key)
     }
 
+    public func actorName(of key: ReferenceKey) -> String? {
+        guard
+            let holder = game.actorWorld.actorValueHolder(for: key),
+            case let .actor(base) = holder.subject
+        else { return nil }
+        return game.actorWorld.displayName(of: key, base: base)
+    }
+
     public func health(of key: ReferenceKey) -> (current: Float, maximum: Float)? {
         guard
             let runtime = game.actorValues.runtime,

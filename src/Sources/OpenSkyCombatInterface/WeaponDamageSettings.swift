@@ -42,6 +42,8 @@ nonisolated public struct WeaponDamageSettings: Equatable, Sendable {
     /// `sSuccessfulSneakAttackMain` and `sSuccessfulSneakAttackEnd`, around the multiplier.
     public var sneakNoticeMain = "sSuccessfulSneakAttackMain"
     public var sneakNoticeEnd = "sSuccessfulSneakAttackEnd"
+    /// `sCriticalStrike`, before the struck actor's name.
+    public var criticalNotice = "Critical Strike on"
 
     /// UESP "Skyrim:Sneak": "Melee sneak attacks give 12x as much as ranged sneak
     /// attacks." No setting holds the ranged amount.
@@ -56,6 +58,11 @@ nonisolated public struct WeaponDamageSettings: Equatable, Sendable {
     /// The HUD notice, such as "Sneak attack for 3.0X damage!".
     public func sneakNotice(multiplier: Float) -> String {
         unsafe sneakNoticeMain + String(format: "%.1f", multiplier) + sneakNoticeEnd
+    }
+
+    /// "Critical Strike on Bandit".
+    public func criticalNotice(target name: String) -> String {
+        "\(criticalNotice) \(name)"
     }
 
     /// `text` resolves a string setting through the plugin's string table.
@@ -87,6 +94,9 @@ nonisolated public struct WeaponDamageSettings: Equatable, Sendable {
         }
         if let end = store.text("sSuccessfulSneakAttackEnd").flatMap({ text($0) }) {
             settings.sneakNoticeEnd = end
+        }
+        if let critical = store.text("sCriticalStrike").flatMap({ text($0) }) {
+            settings.criticalNotice = critical
         }
         return settings
     }
