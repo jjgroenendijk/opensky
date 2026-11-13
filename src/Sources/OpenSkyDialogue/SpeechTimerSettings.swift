@@ -27,6 +27,7 @@ nonisolated extension SpeechTimerSettings {
             ("fCommentOnPlayerKnockingThings", \.knockOverCommentSeconds),
             ("fBumpReactionSmallWaitTimer", \.bumpLineSeconds),
             ("fSpeechDelay", \.speechDelay),
+            ("fAIDefaultSpeechMult", \.speechMult),
             ("fDialogSpeechDelaySeconds", \.silentLineMinSeconds),
             ("fSubtitleSpeechDelay", \.silentLineMaxSeconds),
             ("fRandomSceneAgainMinTime", \.sceneRepeatMinSeconds),

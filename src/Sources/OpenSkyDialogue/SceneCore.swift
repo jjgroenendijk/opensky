@@ -5,9 +5,6 @@ public import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 
 public enum SceneCore {
-    /// Characters read per second, OpenSky's estimate for a response with no voice file.
-    static let charactersPerSecond: Float = 15
-
     /// Seconds the responses take, one text each; nil text counts as the default line.
     /// A text's reading time stays inside the silent line window of `speech`.
     public static func lineDuration(
@@ -16,7 +13,7 @@ public enum SceneCore {
         guard !texts.isEmpty else { return SceneRuntime.defaultLineDuration }
         return texts.reduce(0) { total, text in
             guard let text else { return total + SceneRuntime.defaultLineDuration }
-            let reading = Float(text.count) / charactersPerSecond
+            let reading = speech.readingSeconds(characters: text.count)
             return total + speech.silentLineSeconds(readingSeconds: reading)
         }
     }

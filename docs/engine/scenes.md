@@ -150,9 +150,9 @@ is the playing time in the xWMA packet table. The voice type is the speaker's `V
 file is read off the main actor, and the line's clock starts when the length is known. So the
 next line starts in the tick this one ends: no gap and no overlap.
 
-A response with no voice file lasts the time of its text: one second per 15 characters, kept
-between `fDialogSpeechDelaySeconds` (2 s) and `fSubtitleSpeechDelay` (8 s). The reading rate is
-OpenSky's estimate, and the window is OpenSky's reading of the two names
+A response with no voice file lasts the time of its text: `fAIDefaultSpeechMult` (0.15) seconds
+per character, kept between `fDialogSpeechDelaySeconds` (2 s) and `fSubtitleSpeechDelay` (8 s). For
+example, 30 characters last 4.5 seconds. The window is OpenSky's reading of the two names
 ([speech timers](/engine/dialogue.md#speech-timers)). A line with no text lasts 3 seconds. A save
 loaded while a line waits for its voice file ends that line at once.
 
