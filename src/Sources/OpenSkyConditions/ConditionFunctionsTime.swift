@@ -45,8 +45,6 @@ nonisolated extension ConditionFunctions {
         }
 
         /// The seven day names, in `dayOfWeek(of:)` order (UESP `Lore:Calendar`).
-        static let weekdayNames = [
-            "Sundas", "Morndas", "Tirdas", "Middas", "Turdas", "Fredas", "Loredas"
-        ]
+        static let weekdayNames = GameClock.weekdayNames
     }
 }

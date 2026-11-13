@@ -48,12 +48,14 @@ final class JournalMenuController {
     )
 
     unowned let game: any JournalMenuHost
+    let runtimeState: any RuntimeStatePort
     private(set) var model = JournalMenuModel.empty
     private(set) var isOpen = false
     let movie: MenuMovieSession
 
-    init(game: any JournalMenuHost) {
+    init(game: any JournalMenuHost, runtimeState: any RuntimeStatePort) {
         self.game = game
+        self.runtimeState = runtimeState
         movie = MenuMovieSession(
             movies: game.swfMovies, hud: game.hud, label: "journal movie", logger: Self.logger
         ) { [unowned game] in game.renderer }
@@ -112,7 +114,8 @@ final class JournalMenuController {
     }
 
     func aliasNaming(runtime: any QuestRuntimePort) -> QuestAliasNaming {
-        JournalAliasNamer(game: game).aliasNaming(runtime: runtime)
+        JournalAliasNamer(game: game, globals: runtimeState.globalResolution())
+            .aliasNaming(runtime: runtime)
     }
 
     // MARK: - Input
@@ -212,6 +215,7 @@ extension JournalMenuController: JournalWorld {
 /// Names a quest alias by its fill, for the journal page. It holds the host, not the menu.
 struct JournalAliasNamer {
     unowned let game: any JournalMenuHost
+    let globals: GlobalResolution
 
     func aliasNaming(runtime: any QuestRuntimePort) -> QuestAliasNaming {
         let aliases = runtime.aliasResolution()
@@ -251,6 +255,8 @@ struct JournalAliasNamer {
         let player = game.menuWorld.playerIdentity
         naming.player = AliasFill(name: playerName, isFemale: player?.isFemale)
         naming.pronouns = game.mapWorld.settingTexts(PronounText.self)
+        naming.replacementTexts = game.mapWorld.settingTexts(TextReplacementText.self)
+        naming.global = { [globals] in globals.floatValue(editorID: $0) }
         return naming
     }
 }

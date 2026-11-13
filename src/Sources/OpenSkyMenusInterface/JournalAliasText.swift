@@ -13,13 +13,23 @@ nonisolated public struct QuestAliasNaming: Sendable {
     public static let aliasKeyword = "alias"
 
     /// Naming that resolves nothing, so every tag survives as written.
-    public static let none = QuestAliasNaming { _, _ in nil }
+    public static let none: QuestAliasNaming = {
+        var naming = QuestAliasNaming { _, _ in nil }
+        naming.marksMissingTags = false
+        return naming
+    }()
 
     private let name: @Sendable (FormID, UInt32) -> String?
     package let isFemale: @Sendable (FormID, UInt32) -> Bool?
     /// `<Alias=Player>` works in a quest with no `Player` alias.
     public var player: AliasFill?
     public var pronouns = GameSettingTexts<PronounText>.vanilla
+    /// The current value of a global, by editor ID, for the `<Global=...>` tags.
+    public var global: @Sendable (String) -> Float? = { _ in nil }
+    public var replacementTexts = GameSettingTexts<TextReplacementText>.vanilla
+    /// A tag whose alias or global has no value shows `sInvalidTagString`. Off, it stays
+    /// as written, for a listing with no session behind it.
+    public var marksMissingTags = true
 
     public init(
         name: @escaping @Sendable (FormID, UInt32) -> String?,
