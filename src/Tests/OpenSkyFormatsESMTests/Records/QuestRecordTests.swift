@@ -199,6 +199,8 @@ struct QuestRecordTests {
         #expect(quest.objectives[0].targets[0].conditions.conditions.count == 1)
         #expect(quest.objectives[0].targets[1].conditions.isEmpty)
         #expect(quest.objectives[1].flags == [.oredWithPrevious])
+        #expect(quest.objectives[1].isOredWithPrevious)
+        #expect(!quest.objectives[0].isOredWithPrevious)
         #expect(quest.objectives[1].targets.map(\.aliasID) == [3])
         #expect(quest.skipped.isEmpty)
     }

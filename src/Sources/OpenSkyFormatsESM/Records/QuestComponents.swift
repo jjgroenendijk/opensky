@@ -73,6 +73,11 @@ nonisolated extension Quest {
         /// malformed data.
         public var displayText: LString?
         public var targets: [Target] = []
+
+        /// The objective is met by itself or by the one before it.
+        public var isOredWithPrevious: Bool {
+            flags.contains(.oredWithPrevious)
+        }
     }
 
     public struct ObjectiveFlags: OptionSet, Equatable, Sendable {

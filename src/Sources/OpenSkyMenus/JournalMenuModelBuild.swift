@@ -111,7 +111,7 @@ extension JournalMenuModel {
             isCompleted: state.isCompleted,
             stage: state.currentStage,
             objectives: objectives(
-                of: quest, state: state, strings: strings, substitute: substitute
+                of: quest, state: state, strings: strings, aliases: aliases
             ),
             logEntries: logEntries(
                 of: quest, state: state, strings: strings, substitute: substitute
@@ -150,8 +150,9 @@ extension JournalMenuModel {
         of quest: Quest,
         state: QuestRuntimeState,
         strings: LocalizedStrings?,
-        substitute: (String) -> String
+        aliases: QuestAliasNaming
     ) -> [JournalObjectiveEntry] {
+        let orWord = aliases.replacementTexts[.or]
         // An objective index may legally appear more than once in a QUST, so
         // the first record carrying display text wins rather than the last,
         // and each index contributes at most one row.
@@ -163,7 +164,8 @@ extension JournalMenuModel {
                 seen.insert(objective.index).inserted else { return nil }
             let text = JournalMenuModel
                 .text(objective.displayText, kind: .strings, strings: strings)
-                .flatMap { $0.isEmpty ? nil : substitute($0) }
+                .flatMap { $0.isEmpty ? nil : aliases.substituting($0, in: quest) }
+                .map { objective.isOredWithPrevious ? "\(orWord) \($0)" : $0 }
             return JournalObjectiveEntry(
                 index: objective.index,
                 text: text ?? "objective \(objective.index)",
