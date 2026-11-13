@@ -22,14 +22,17 @@ extension PackageCoordinator {
     /// Only actors with an override list are asked, because the answer changes nothing
     /// for the others.
     func applySituations(
-        to runtime: inout ActorPackageRuntime, clock: GameClock,
+        to runtime: inout ActorPackageRuntime, clock: GameClock, delta: Float,
         context: () -> ConditionContext
     ) {
         guard let world else { return }
         let listed = runtime.actorsWithOverrideLists(among: registeredActors.keys.sorted())
         guard !listed.isEmpty else { return }
+        let situations = spectators.remembering(
+            world.packageSituations(of: listed), actors: listed, delta: delta
+        )
         runtime.setSituations(
-            (listed, world.packageSituations(of: listed)), execution: { executions[$0] },
+            (listed, situations), execution: { executions[$0] },
             clock: clock, context: context
         )
     }

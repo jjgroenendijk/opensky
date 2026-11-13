@@ -40,6 +40,8 @@ nonisolated public struct SandboxMealWindow: Equatable, Sendable {
 nonisolated public struct SandboxSettings: Equatable, Sendable {
     /// `fSandboxDurationBase`, in game hours.
     public var durationBase: Float = 0.2
+    /// `fAISpectatorRememberThreatTimer`: seconds a spectator keeps watching after a fight.
+    public var spectatorRememberSeconds: Float = 5
     /// `fSandboxDurationRangeMult`: the duration varies this fraction either way.
     public var durationRange: Float = 0.25
     /// `fSandboxEnergyMult`: scales the procedure's Energy, 0 to 100.
@@ -112,6 +114,7 @@ nonisolated public struct SandboxSettings: Equatable, Sendable {
         store.read("fSandboxCylinderTop", into: &settings, \.cylinderTop)
         store.read("fSandBoxRadiusHysteresis", into: &settings, \.radiusHysteresis)
         store.read("fSandBoxInterMarkerMinDist", into: &settings, \.interMarkerMinDistance)
+        store.read("fAISpectatorRememberThreatTimer", into: &settings, \.spectatorRememberSeconds)
         return settings
     }
 }
