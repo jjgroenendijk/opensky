@@ -17,6 +17,7 @@ public protocol MenuScreensGiftListsHost: AnyObject, SendableMetatype {
     var magic: any MagicPort { get }
     var streamer: any CellStreamerPort { get }
     var menuRecords: (any MenuRecordsPort)? { get }
+    var mapWorld: any MapWorldPort { get }
 }
 
 /// Part of `MenuScreensWorldAdapter`, over its own narrow host.
@@ -91,6 +92,18 @@ extension MenuScreensGiftListsAdapter {
         return Set(([item] + keywords).compactMap {
             lists.resolvedID($0, fromPlugin: plugin).map(ReferenceKey.init(resolved:))
         })
+    }
+
+    /// A gift past the receiver's `CarryWeight`, as the game greys its row.
+    public func giftRefusal(_ item: FormID, actor: ReferenceKey, giving: Bool) -> String? {
+        guard
+            giving,
+            let other = game.streamer.residents.inventoryHolder(of: actor),
+            game.inventory.teammateTrades.teammateRefusal(
+                .store, item: item, count: 1, teammate: other
+            ) == .overencumbered
+        else { return nil }
+        return game.mapWorld.settingTexts(TeammateTradeText.self)[.itemTooHeavy]
     }
 
     public func give(_ item: FormID, actor: ReferenceKey, giving: Bool) -> String {

@@ -11,6 +11,8 @@ public protocol GiftMenuWorld: MenuScreenWorld {
     func giftCategories(actor: ReferenceKey, request: GiftMenuRequest) -> [ItemListCategory]
     /// Moves one of `item` from the giver to the receiver; the outcome text.
     func give(_ item: FormID, actor: ReferenceKey, giving: Bool) -> String
+    /// Why the receiver cannot take one of `item`, or nil when it can.
+    func giftRefusal(_ item: FormID, actor: ReferenceKey, giving: Bool) -> String?
     /// The actor the player stands closest to.
     var nearestActor: ReferenceKey? { get }
 }
@@ -64,8 +66,13 @@ public final class GiftMenuCoordinator: ItemListMenuScreen {
     }
 
     override func choose(_ row: ItemListRow, alternate _: Bool) -> String {
-        guard let actor else { return "No actor" }
-        return world?.give(FormID(row.tag), actor: actor, giving: request.giving) ?? "No game"
+        guard let actor, let world else { return "No actor" }
+        let item = FormID(row.tag)
+        if let refusal = world.giftRefusal(item, actor: actor, giving: request.giving) {
+            world.showHUDNotification(refusal)
+            return refusal
+        }
+        return world.give(item, actor: actor, giving: request.giving)
     }
 
     override func didClose() {
