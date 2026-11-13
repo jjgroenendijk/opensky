@@ -17,7 +17,7 @@ private struct BehaviorReferenceTable: BehaviorGraphInstance.ReferenceSource {
         skeleton _: BehaviorSkeleton,
         clips _: any BehaviorClipSource
     ) -> BehaviorGraphInstance? {
-        graphs[BehaviorGraphInstance.referenceKey(name)]
+        graphs[BehaviorGraphInstance.ChildGraphs.referenceKey(name)]
     }
 }
 

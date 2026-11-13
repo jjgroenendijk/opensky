@@ -163,7 +163,7 @@ extension RagdollRecoveryAdapter {
         let graph = key == .player
             ? game.gameSession?.locomotion.graph
             : game.actorGraphWorld.graphs.instance(of: key)
-        guard let duration = graph?.physicsRequests.getUp?.duration, duration > 0 else {
+        guard let duration = graph?.physics.physicsRequests.getUp?.duration, duration > 0 else {
             return nil
         }
         return duration

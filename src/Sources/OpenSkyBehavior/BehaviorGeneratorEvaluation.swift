@@ -30,27 +30,27 @@ nonisolated struct BehaviorVisit {
     let depth: Int
 }
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.Generators {
     /// The pose of the generator at `target`, or the reference pose when there
     /// is nothing there to evaluate.
-    public func evaluateGenerator(
+    func evaluateGenerator(
         at target: HKXPointerTarget?,
         depth: Int,
         deltaTime: Float
     ) -> BehaviorPose {
-        guard let target else { return skeleton.restPose }
-        guard depth < Self.maximumDepth else {
-            tally.note(.depthCapReached)
-            return skeleton.restPose
+        guard let target else { return graph.skeleton.restPose }
+        guard depth < BehaviorGraphInstance.maximumDepth else {
+            graph.tally.note(.depthCapReached)
+            return graph.skeleton.restPose
         }
-        guard let node = compiledNode(at: target) else { return skeleton.restPose }
-        markReached(target)
-        tally.noteGenerator()
-        if isDisabled(node) {
-            tally.note(.disabledNode)
-            return skeleton.restPose
+        guard let node = graph.compiledNode(at: target) else { return graph.skeleton.restPose }
+        graph.markReached(target)
+        graph.tally.noteGenerator()
+        if graph.isDisabled(node) {
+            graph.tally.note(.disabledNode)
+            return graph.skeleton.restPose
         }
-        let visit = BehaviorVisit(target: target, bound: boundValues(of: node), depth: depth)
+        let visit = BehaviorVisit(target: target, bound: graph.boundValues(of: node), depth: depth)
         return evaluate(node.object, visit, deltaTime: deltaTime)
     }
 
@@ -66,17 +66,22 @@ nonisolated extension BehaviorGraphInstance {
         let inner = BehaviorVisit(target: target, bound: bound, depth: next)
         switch object {
         case let clip as HKBClipGenerator:
-            return evaluateClip(clip, at: target, bound: bound, deltaTime: deltaTime)
+            return graph.clipPlayback.evaluateClip(
+                clip,
+                at: target,
+                bound: bound,
+                deltaTime: deltaTime
+            )
         case let blender as HKBBlenderGenerator:
             var bound = bound
-            if let parameter = blendParameterOverrides[target] {
+            if let parameter = graph.nodeMemory.blendParameterOverrides[target] {
                 bound["blendParameter"] = .real(parameter)
             }
-            return evaluateBlend(
+            return graph.blenders.evaluateBlend(
                 blender.blender, bound: bound, depth: next, deltaTime: deltaTime
             )
         case let matching as HKBPoseMatchingGenerator:
-            return evaluatePoseMatching(
+            return graph.blenders.evaluatePoseMatching(
                 matching, inner, deltaTime: deltaTime
             )
         case let selector as HKBManualSelectorGenerator:
@@ -84,12 +89,12 @@ nonisolated extension BehaviorGraphInstance {
                 selector, bound: bound, depth: next, deltaTime: deltaTime
             )
         case let wrapper as HKBModifierGenerator:
-            let pose = skeleton.absolute(evaluateGenerator(
+            let pose = graph.skeleton.absolute(evaluateGenerator(
                 at: wrapper.generator, depth: next, deltaTime: deltaTime
             ))
-            return applyModifier(at: wrapper.modifier, to: pose, deltaTime: deltaTime)
+            return graph.applyModifier(at: wrapper.modifier, to: pose, deltaTime: deltaTime)
         case let machine as HKBStateMachine:
-            return evaluateStateMachine(
+            return graph.stateMachines.evaluateStateMachine(
                 machine, inner, deltaTime: deltaTime
             )
         default:
@@ -109,7 +114,7 @@ nonisolated extension BehaviorGraphInstance {
         let (bound, depth) = (visit.bound, visit.depth)
         switch object {
         case let tagging as BSiStateTaggingGenerator:
-            noteStateTag(of: tagging, bound: bound)
+            graph.noteStateTag(of: tagging, bound: bound)
             return evaluateGenerator(
                 at: tagging.defaultGenerator, depth: depth, deltaTime: deltaTime
             )
@@ -124,89 +129,22 @@ nonisolated extension BehaviorGraphInstance {
                 offset, visit, deltaTime: deltaTime
             )
         case is HKBReferencePoseGenerator:
-            return skeleton.restPose
+            return graph.skeleton.restPose
         case let synced as BSSynchronizedClipGenerator:
-            return evaluateSynchronizedClip(
+            return graph.clipPlayback.evaluateSynchronizedClip(
                 synced, depth: depth, deltaTime: deltaTime
             )
         case let reference as HKBBehaviorReferenceGenerator:
-            return evaluateBehaviorReference(reference, deltaTime: deltaTime)
+            return graph.childGraphs.evaluateBehaviorReference(reference, deltaTime: deltaTime)
         case let sequence as BGSGamebryoSequenceGenerator:
             if let name = sequence.sequence, !name.isEmpty {
-                gamebryoSequencesThisUpdate.append(name)
+                graph.gamebryoSequencesThisUpdate.append(name)
             }
-            return skeleton.restPose
+            return graph.skeleton.restPose
         default:
-            tally.noteUnevaluatedGenerator(object.className)
-            return skeleton.restPose
+            graph.tally.noteUnevaluatedGenerator(object.className)
+            return graph.skeleton.restPose
         }
-    }
-
-    // MARK: - Blending
-
-    /// `hkbBlenderGenerator`: mixes child poses by `m_weight` and root travel by
-    /// `m_worldFromModelWeight`. A bone whose weights sum to at most
-    /// `m_referencePoseWeightThreshold` takes the reference pose for the rest.
-    func evaluateBlend(
-        _ blender: HKBBlenderFields,
-        bound: [String: BehaviorVariableValue],
-        depth: Int,
-        deltaTime: Float,
-        weights: [Float]? = nil
-    ) -> BehaviorPose {
-        let threshold = bound.float(
-            "m_referencePoseWeightThreshold",
-            or: blender
-                .referencePoseWeightThreshold
-        )
-        let children = blendChildren(
-            blender, bound: bound, depth: depth, deltaTime: deltaTime, weights: weights
-        )
-        let masked = children.map {
-            BehaviorPoseMath.MaskedChild(
-                pose: $0.pose, weight: $0.weight, boneWeights: $0.boneWeights
-            )
-        }
-        let full = masked.filter { !$0.pose.isAdditive }
-        var blended = full.isEmpty
-            ? BehaviorPoseMath.unchanged(boneCount: skeleton.referencePose.count)
-            : BehaviorPoseMath.blend(
-                masked: full, fallback: skeleton.restPose, referenceThreshold: threshold
-            )
-        // Each additive child adds on top at its own weight, after the normal children.
-        for layer in masked where layer.pose.isAdditive {
-            blended = BehaviorPoseMath.adding(
-                layer.pose,
-                to: blended,
-                weight: layer.weight(ofBone:)
-            )
-        }
-        blended.rootMotion = BehaviorPoseMath
-            .blend(
-                children: children.map { ($0.pose, $0.motionWeight) },
-                fallback: skeleton.restPose
-            )
-            .rootMotion
-        return blended
-    }
-
-    /// The decoded per-bone mask at `target`, honouring a binding on it, or nil
-    /// when the child carries none.
-    func boneWeights(at target: HKXPointerTarget?) -> [Float]? {
-        guard
-            let target,
-            let array = object(at: target, as: HKBBoneWeightArray.self),
-            !array.boneWeights.isEmpty
-        else { return nil }
-        markReached(target)
-        return array.boneWeights
-    }
-
-    // MARK: - Object access
-
-    /// The decoded object at `target` as `Value`, or nil.
-    public func object<Value: HKBClass>(at target: HKXPointerTarget, as _: Value.Type) -> Value? {
-        object(at: target) as? Value
     }
 
     // MARK: - Selection
@@ -227,7 +165,7 @@ nonisolated extension BehaviorGraphInstance {
                 .selectedGeneratorIndex
         )
         guard selector.generators.indices.contains(index) else {
-            return skeleton.restPose
+            return graph.skeleton.restPose
         }
         return evaluateGenerator(
             at: selector.generators[index], depth: depth, deltaTime: deltaTime

@@ -144,6 +144,7 @@ struct LocomotionBridgeFirstPersonTests {
         let locomotion = Set(LocomotionGraphNames.variables)
         #expect(locomotion.isDisjoint(with: bridge.status.missingVariables))
         #expect(locomotion.isSubset(of: bridge.status.firstPersonMissingVariables))
+        _ = bridge.ragdollGraphControls
     }
 
     // MARK: - Independence

@@ -6,10 +6,10 @@
 import Foundation
 import OpenSkyFormatsAnimation
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.Clips {
     /// The paired clips this graph played, as the track prefix, `|`, and the clip.
     public var pairedClipNames: [String] {
-        pairedClips.keys.sorted()
+        graph.nodeMemory.pairedClips.keys.sorted()
     }
 
     /// The playback phase of the first clip generator below `target` that has
@@ -18,7 +18,7 @@ nonisolated extension BehaviorGraphInstance {
     /// run over the same graph.
     func clipPhase(under target: HKXPointerTarget?) -> Float? {
         firstClip(under: target) { clipTarget, _ in
-            nodeStates[clipTarget].flatMap { $0.hasSeeded ? $0.phase : nil }
+            graph.nodeStates[clipTarget].flatMap { $0.hasSeeded ? $0.phase : nil }
         }
     }
 
@@ -27,7 +27,7 @@ nonisolated extension BehaviorGraphInstance {
     func clipCycleDuration(under target: HKXPointerTarget?) -> Float? {
         firstClip(under: target) { _, generator in
             guard
-                let clip = clip(
+                let clip = graph.clip(
                     named: generator.animationName, bindingIndex: generator.animationBindingIndex
                 ),
                 clip.duration > 0
@@ -50,8 +50,8 @@ nonisolated extension BehaviorGraphInstance {
         var stack: [(target: HKXPointerTarget, depth: Int)] = [(target, 0)]
         while let (current, depth) = stack.popLast() {
             guard
-                depth < Self.maximumDepth, visited.insert(current).inserted,
-                let node = compiledNode(at: current) else { continue }
+                depth < BehaviorGraphInstance.maximumDepth, visited.insert(current).inserted,
+                let node = graph.compiledNode(at: current) else { continue }
             if
                 let generator = node.object as? HKBClipGenerator,
                 let found = answer(current, generator)
@@ -73,14 +73,15 @@ nonisolated extension BehaviorGraphInstance {
         depth: Int,
         deltaTime: Float
     ) -> BehaviorPose {
-        synchronizedMarkThisUpdate = synchronizedMarkThisUpdate ?? BehaviorSynchronizedMark(
-            getToMarkTime: generator.getToMarkTime,
-            reorientsSupportCharacter: generator.reorientSupportChar
-        )
-        let outer = syncTrackPrefix
-        syncTrackPrefix = generator.syncAnimPrefix ?? ""
-        defer { syncTrackPrefix = outer }
-        return evaluateGenerator(
+        graph.synchronizedMarkThisUpdate = graph
+            .synchronizedMarkThisUpdate ?? BehaviorSynchronizedMark(
+                getToMarkTime: generator.getToMarkTime,
+                reorientsSupportCharacter: generator.reorientSupportChar
+            )
+        let outer = graph.nodeMemory.syncTrackPrefix
+        graph.nodeMemory.syncTrackPrefix = generator.syncAnimPrefix ?? ""
+        defer { graph.nodeMemory.syncTrackPrefix = outer }
+        return graph.evaluateGenerator(
             at: generator.clipGenerator, depth: depth, deltaTime: deltaTime
         )
     }
@@ -89,18 +90,18 @@ nonisolated extension BehaviorGraphInstance {
     /// found by bone name. A clip with no track names is used as it is.
     func pairedView(of clip: any BehaviorClip, named name: String?) -> any BehaviorClip {
         guard
-            let prefix = syncTrackPrefix,
-            !skeleton.boneNames.isEmpty,
+            let prefix = graph.nodeMemory.syncTrackPrefix,
+            !graph.skeleton.boneNames.isEmpty,
             clip.trackNames.contains(where: { $0 != nil })
         else { return clip }
         let key = prefix + "|" + (name ?? "")
-        if let cached = pairedClips[key] {
+        if let cached = graph.nodeMemory.pairedClips[key] {
             return cached
         }
         let paired = PairedBehaviorClip(clip, map: PairedTrackMap(
-            trackNames: clip.trackNames, prefix: prefix, boneNames: skeleton.boneNames
+            trackNames: clip.trackNames, prefix: prefix, boneNames: graph.skeleton.boneNames
         ))
-        pairedClips[key] = paired
+        graph.nodeMemory.pairedClips[key] = paired
         return paired
     }
 }

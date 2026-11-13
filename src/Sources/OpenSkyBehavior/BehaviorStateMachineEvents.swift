@@ -5,7 +5,7 @@
 import Foundation
 import OpenSkyFormatsAnimation
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.StateMachines {
     // MARK: - Notify events
 
     /// Raises a state's `m_enterNotifyEvents` or `m_exitNotifyEvents`, in
@@ -17,30 +17,24 @@ nonisolated extension BehaviorGraphInstance {
             : entry.info.exitNotifyEvents
         guard
             let target,
-            let array = object(at: target, as: HKBStateMachineEventPropertyArray.self)
+            let array = graph.object(at: target, as: HKBStateMachineEventPropertyArray.self)
         else {
             return
         }
         for event in array.events {
-            raise(event)
+            graph.raise(event)
         }
-    }
-
-    /// Raises one `hkbEventProperty`, payload included. An id of -1 is Havok's
-    /// "no event" and is dropped by the queue.
-    func raise(_ event: HKBEventProperty) {
-        events.raise(id: event.id, payload: payload(at: event.payload))
     }
 
     /// The deactivation half of a machine's lifecycle: the state it was in
     /// raises its exit events, and the machine forgets that it was entered
     /// while keeping `currentStateId` for `m_startStateMode` 2.
     func noteMachineDeactivation(of machine: HKBStateMachine, at target: HKXPointerTarget) {
-        guard var state = machineStates[target], state.isEntered else { return }
+        guard var state = graph.machineMemory.machineStates[target], state.isEntered else { return }
         raiseNotifyEvents(of: state.currentStateId, machine: machine, entering: false)
         state.isEntered = false
         state.transition = nil
-        machineStates[target] = state
+        graph.machineMemory.machineStates[target] = state
         publishMachineDeactivation(at: target)
     }
 
@@ -54,11 +48,11 @@ nonisolated extension BehaviorGraphInstance {
             info.flags & BehaviorTransitionFlag.disableCondition == 0,
             let target = info.condition else { return true }
         guard let expression = condition(at: target) else {
-            tally.note(.transitionConditionUnparsed, text: conditionSource(at: target))
+            graph.tally.note(.transitionConditionUnparsed, text: conditionSource(at: target))
             return false
         }
-        guard let result = expression.evaluate(in: variables) else {
-            tally.note(.transitionConditionUnresolved)
+        guard let result = expression.evaluate(in: graph.variables) else {
+            graph.tally.note(.transitionConditionUnresolved)
             return false
         }
         return result
@@ -67,19 +61,19 @@ nonisolated extension BehaviorGraphInstance {
     /// The parsed condition at `target`, cached. The optional is stored so a
     /// string that will not parse is parsed once and remembered as a failure.
     private func condition(at target: HKXPointerTarget) -> BehaviorConditionExpression? {
-        if let cached = conditionCache[target] {
+        if let cached = graph.machineMemory.conditionCache[target] {
             return cached
         }
         let parsed = conditionSource(at: target).flatMap(BehaviorConditionExpression.parse)
-        conditionCache[target] = parsed
+        graph.machineMemory.conditionCache[target] = parsed
         return parsed
     }
 
     private func conditionSource(at target: HKXPointerTarget) -> String? {
-        if let expression = object(at: target, as: HKBExpressionCondition.self) {
+        if let expression = graph.object(at: target, as: HKBExpressionCondition.self) {
             return expression.expression
         }
-        return object(at: target, as: HKBStringCondition.self)?.conditionString
+        return graph.object(at: target, as: HKBStringCondition.self)?.conditionString
     }
 
     // MARK: - Trigger and initiate intervals
@@ -101,13 +95,13 @@ nonisolated extension BehaviorGraphInstance {
 
     private func isOpen(_ interval: HKBStateMachineTimeInterval) -> Bool {
         if interval.enterTime != 0 || interval.exitTime != 0 {
-            tally.note(.transitionTimeIntervalIgnored)
+            graph.tally.note(.transitionTimeIntervalIgnored)
         }
         guard interval.enterEventId >= 0 else { return true }
-        guard let opened = eventLastSeen[interval.enterEventId] else { return false }
+        guard let opened = graph.eventLastSeen[interval.enterEventId] else { return false }
         guard
             interval.exitEventId >= 0,
-            let closed = eventLastSeen[interval.exitEventId]
+            let closed = graph.eventLastSeen[interval.exitEventId]
         else {
             return true
         }
@@ -139,18 +133,19 @@ nonisolated extension BehaviorGraphInstance {
         state: BehaviorMachineState
     ) -> Int? {
         if
-            events.isActive(id: machine.returnToPreviousStateEventId), state.previousStateId >= 0,
+            graph.events.isActive(id: machine.returnToPreviousStateEventId),
+            state.previousStateId >= 0,
             state.previousStateId != state.currentStateId
         {
             return state.previousStateId
         }
-        if events.isActive(id: machine.randomTransitionEventId) {
+        if graph.events.isActive(id: machine.randomTransitionEventId) {
             return randomTransitionStateId(machine, state: state)
         }
-        if events.isActive(id: machine.transitionToNextHigherStateEventId) {
+        if graph.events.isActive(id: machine.transitionToNextHigherStateEventId) {
             return neighbourStateId(machine, state: state, higher: true)
         }
-        if events.isActive(id: machine.transitionToNextLowerStateEventId) {
+        if graph.events.isActive(id: machine.transitionToNextLowerStateEventId) {
             return neighbourStateId(machine, state: state, higher: false)
         }
         return nil
@@ -166,12 +161,14 @@ nonisolated extension BehaviorGraphInstance {
         let targets = randomCandidates(machine: machine, state: state).compactMap { info in
             stateInfo(of: machine, id: info.toStateId)?.info
         }
-        return stateMachineRandom.pick(targets.map { ($0.stateId, $0.probability) })
+        return graph.machineMemory.stateMachineRandom
+            .pick(targets.map { ($0.stateId, $0.probability) })
     }
 
     /// A random start state among the enabled states, by `m_probability`.
     func randomStartStateId(_ machine: HKBStateMachine) -> Int? {
-        stateMachineRandom.pick(enabledStates(of: machine).map { ($0.stateId, $0.probability) })
+        graph.machineMemory.stateMachineRandom
+            .pick(enabledStates(of: machine).map { ($0.stateId, $0.probability) })
     }
 
     func firstEnabledStateId(_ machine: HKBStateMachine) -> Int? {
@@ -199,7 +196,7 @@ nonisolated extension BehaviorGraphInstance {
 
     private func enabledStates(of machine: HKBStateMachine) -> [HKBStateMachineStateInfo] {
         machine.states.compactMap(\.self)
-            .compactMap { object(at: $0, as: HKBStateMachineStateInfo.self) }
+            .compactMap { graph.object(at: $0, as: HKBStateMachineStateInfo.self) }
             .filter(\.enable)
     }
 
@@ -211,7 +208,7 @@ nonisolated extension BehaviorGraphInstance {
         let current = stateInfo(of: machine, id: state.currentStateId)?.info.name
         let outgoing = state.transition
             .flatMap { stateInfo(of: machine, id: $0.fromStateId)?.info.name }
-        activeStatesThisUpdate.append(
+        graph.activeStatesThisUpdate.append(
             BehaviorActiveState(
                 machineName: machine.node.name,
                 stateId: state.currentStateId,

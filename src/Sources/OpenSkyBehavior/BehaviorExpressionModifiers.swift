@@ -12,7 +12,7 @@ nonisolated enum BehaviorExpressionEventMode {
     static let sendOnEnterRange = 0
 }
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.VariableModifiers {
     /// Runs every statement of the modifier's expression array, in order, so a
     /// later statement sees what an earlier one assigned.
     func applyExpressions(
@@ -20,11 +20,11 @@ nonisolated extension BehaviorGraphInstance {
     ) {
         guard
             let arrayTarget = modifier.expressions,
-            let array = object(at: arrayTarget, as: HKBExpressionDataArray.self)
+            let array = graph.object(at: arrayTarget, as: HKBExpressionDataArray.self)
         else { return }
-        markReached(arrayTarget)
+        graph.markReached(arrayTarget)
         let statements = statements(of: array, at: arrayTarget)
-        var state = markReached(step.target)
+        var state = graph.markReached(step.target)
         let count = array.expressionsData.count
         if state.flags.count != count {
             state.flags = Array(repeating: false, count: count)
@@ -32,24 +32,24 @@ nonisolated extension BehaviorGraphInstance {
         }
         for (index, data) in array.expressionsData.enumerated() {
             guard let statement = statements[index] else {
-                tally.note(.expressionUnparsed)
+                graph.tally.note(.expressionUnparsed)
                 continue
             }
             run(statement, mode: data.eventMode, slot: index, state: &state)
         }
-        nodeStates[step.target] = state
+        graph.nodeStates[step.target] = state
     }
 
     private func statements(
         of array: HKBExpressionDataArray, at target: HKXPointerTarget
     ) -> [BehaviorExpressionStatement?] {
-        if let cached = statementCache[target] {
+        if let cached = graph.nodeMemory.statementCache[target] {
             return cached
         }
         let parsed = array.expressionsData.map { data in
             data.expression.flatMap(BehaviorExpressionStatement.parse)
         }
-        statementCache[target] = parsed
+        graph.nodeMemory.statementCache[target] = parsed
         return parsed
     }
 
@@ -59,14 +59,18 @@ nonisolated extension BehaviorGraphInstance {
         slot: Int,
         state: inout BehaviorNodeState
     ) {
-        let lookup: (String) -> Float? = { [variables] in variables.value(of: $0)?.realValue }
+        let lookup: (String) -> Float? = { [variables = graph.variables] in
+            variables.value(of: $0)?.realValue
+        }
         switch statement {
         // The game skips a statement that names an undeclared variable, and keeps
         // running the others (docs/engine/behavior-runtime.md).
         case let .assignment(name, expression):
-            guard let index = variables.index(of: name), let value = expression.evaluate(lookup)
+            guard
+                let index = graph.variables.index(of: name),
+                let value = expression.evaluate(lookup)
             else { return }
-            writeVariable(.real(value), at: index)
+            graph.writeVariable(.real(value), at: index)
         case let .event(name, condition):
             guard let value = condition.evaluate(lookup) else { return }
             let truth = value != 0
@@ -88,8 +92,8 @@ nonisolated extension BehaviorGraphInstance {
     /// Raises a graph event by name, or keeps it as unbound when the graph
     /// declares no such event, like a `SoundPlay.` request.
     func raiseOrReport(named name: String) {
-        if !events.raise(named: name) {
-            unboundEvents.append(name)
+        if !graph.events.raise(named: name) {
+            graph.unboundEvents.append(name)
         }
     }
 
@@ -101,10 +105,10 @@ nonisolated extension BehaviorGraphInstance {
     ) {
         guard
             let rangesTarget = modifier.eventRanges,
-            let ranges = object(at: rangesTarget, as: HKBEventRangeDataArray.self)
+            let ranges = graph.object(at: rangesTarget, as: HKBEventRangeDataArray.self)
         else { return }
-        markReached(rangesTarget)
-        var state = markReached(step.target)
+        graph.markReached(rangesTarget)
+        var state = graph.markReached(step.target)
         let input = step.bound.float("inputValue", or: modifier.inputValue)
         let lower = step.bound.float("lowerBound", or: modifier.lowerBound)
         let band = input >= lower
@@ -116,10 +120,10 @@ nonisolated extension BehaviorGraphInstance {
                 range.eventMode != BehaviorExpressionEventMode.sendOnEnterRange
                 || state.rangeIndex != band
             {
-                raise(range.event)
+                graph.raise(range.event)
             }
         }
         state.rangeIndex = band
-        nodeStates[step.target] = state
+        graph.nodeStates[step.target] = state
     }
 }

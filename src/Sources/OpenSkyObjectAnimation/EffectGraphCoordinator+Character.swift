@@ -8,7 +8,8 @@ extension EffectGraphCoordinator {
     func prepare(_ entry: Running, world: any EffectGraphWorld) {
         switch entry.attachment.anchor {
         case let .point(position):
-            entry.instance.characterContext = BehaviorCharacterContext(worldPosition: position)
+            entry.instance.physics
+                .characterContext = BehaviorCharacterContext(worldPosition: position)
         case let .actor(actor):
             guard let character = world.character(of: actor) else { return }
             entry.actorRig = character.rig

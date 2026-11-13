@@ -134,22 +134,22 @@ struct BehaviorClipFeatureTests {
     // MARK: - Offset animation and playback speed
 
     @Test func theOffsetFractionClampsAndAnEmptyRangeIsZero() {
-        #expect(BehaviorGraphInstance.offsetFraction(5, start: 0, end: 10) == 0.5)
-        #expect(BehaviorGraphInstance.offsetFraction(20, start: 0, end: 10) == 1)
-        #expect(BehaviorGraphInstance.offsetFraction(3, start: 2, end: 2) == 0)
+        #expect(BehaviorGraphInstance.Generators.offsetFraction(5, start: 0, end: 10) == 0.5)
+        #expect(BehaviorGraphInstance.Generators.offsetFraction(20, start: 0, end: 10) == 1)
+        #expect(BehaviorGraphInstance.Generators.offsetFraction(3, start: 2, end: 2) == 0)
     }
 
     /// Five frames: the phase runs from the second frame (0.25) to the end.
     @Test func theOffsetPhaseStartsOneFrameIn() {
-        #expect(BehaviorGraphInstance.offsetPhase(0, frameCount: 5) == 0.25)
-        #expect(BehaviorGraphInstance.offsetPhase(1, frameCount: 5) == 1)
-        #expect(BehaviorGraphInstance.offsetPhase(0.5, frameCount: 1) == 0.5)
+        #expect(BehaviorGraphInstance.Generators.offsetPhase(0, frameCount: 5) == 0.25)
+        #expect(BehaviorGraphInstance.Generators.offsetPhase(1, frameCount: 5) == 1)
+        #expect(BehaviorGraphInstance.Generators.offsetPhase(0.5, frameCount: 1) == 0.5)
     }
 
     @Test func aSpeedNearZeroRunsAtTheSmallestSpeed() {
-        #expect(BehaviorGraphInstance.playbackSpeed(0.0001) == 0.001)
-        #expect(BehaviorGraphInstance.playbackSpeed(0) == -0.001)
-        #expect(BehaviorGraphInstance.playbackSpeed(-0.0005) == -0.001)
-        #expect(BehaviorGraphInstance.playbackSpeed(2) == 2)
+        #expect(BehaviorGraphInstance.Clips.playbackSpeed(0.0001) == 0.001)
+        #expect(BehaviorGraphInstance.Clips.playbackSpeed(0) == -0.001)
+        #expect(BehaviorGraphInstance.Clips.playbackSpeed(-0.0005) == -0.001)
+        #expect(BehaviorGraphInstance.Clips.playbackSpeed(2) == 2)
     }
 }

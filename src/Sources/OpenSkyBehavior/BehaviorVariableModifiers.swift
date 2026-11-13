@@ -30,7 +30,7 @@ nonisolated extension [String: BehaviorVariableValue] {
     }
 }
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.VariableModifiers {
     func runVariableModifier(
         _ object: any HKBClass, _ step: BehaviorModifierStep, to pose: BehaviorPose
     ) -> BehaviorPose {
@@ -47,16 +47,16 @@ nonisolated extension BehaviorGraphInstance {
             applyDamping(modifier, step)
         case let modifier as BSSpeedSamplerModifier:
             let goal = step.bound.float("goalSpeed", or: modifier.goalSpeed)
-            let sampled = speedSamples?.blendSpeed(
+            let sampled = graph.speedSamples?.blendSpeed(
                 state: Int32(step.bound.float("state", or: Float(modifier.state))),
                 direction: step.bound.float("direction", or: modifier.direction),
                 goal: goal
             )
-            writeOutputs(["speedOut": .real(sampled ?? goal)], of: step.node)
+            graph.writeOutputs(["speedOut": .real(sampled ?? goal)], of: step.node)
         case let modifier as BSEventOnFalseToTrueModifier:
             applyFalseToTrue(modifier, step)
         case let modifier as BSTimerModifier:
-            applyTimer(
+            graph.applyTimer(
                 step,
                 alarm: step.bound.float("alarmTimeSeconds", or: modifier.alarmTimeSeconds),
                 event: modifier.alarmEvent,
@@ -76,7 +76,7 @@ nonisolated extension BehaviorGraphInstance {
         switch object {
         case let modifier as BSDecomposeVectorModifier:
             let vector = step.bound.quad("vector", or: modifier.vector)
-            writeOutputs(
+            graph.writeOutputs(
                 [
                     "x": .real(vector.x),
                     "y": .real(vector.y),
@@ -86,13 +86,13 @@ nonisolated extension BehaviorGraphInstance {
                 of: step.node
             )
         case is BSGetTimeStepModifier:
-            writeOutputs(["timeStep": .real(step.deltaTime)], of: step.node)
+            graph.writeOutputs(["timeStep": .real(step.deltaTime)], of: step.node)
         case let modifier as HKBTransformVectorModifier:
             applyTransformVector(modifier, step)
         case let modifier as BSIStateManagerModifier:
             applyIStateManager(modifier, step)
         default:
-            return runBoneModifier(object, step, to: pose)
+            return graph.boneModifiers.runBoneModifier(object, step, to: pose)
         }
         return pose
     }
@@ -102,10 +102,10 @@ nonisolated extension BehaviorGraphInstance {
     /// `BSIsActiveModifier`: while it runs, each `bIsActiveN` reads true, or false
     /// when `bInvertActiveN` is set. Deactivation writes the opposite.
     private func applyIsActive(_ modifier: BSIsActiveModifier, _ step: BehaviorModifierStep) {
-        var state = markReached(step.target)
+        var state = graph.markReached(step.target)
         state.isModifierRunning = true
-        nodeStates[step.target] = state
-        writeOutputs(isActiveOutputs(modifier, step.bound, running: true), of: step.node)
+        graph.nodeStates[step.target] = state
+        graph.writeOutputs(isActiveOutputs(modifier, step.bound, running: true), of: step.node)
     }
 
     private func isActiveOutputs(
@@ -126,21 +126,21 @@ nonisolated extension BehaviorGraphInstance {
         switch object {
         case let modifier as BSIsActiveModifier:
             guard
-                nodeStates[target]?.isModifierRunning == true,
-                let node = compiledNode(at: target)
+                graph.nodeStates[target]?.isModifierRunning == true,
+                let node = graph.compiledNode(at: target)
             else { return true }
-            let outputs = isActiveOutputs(modifier, boundValues(of: node), running: false)
+            let outputs = isActiveOutputs(modifier, graph.boundValues(of: node), running: false)
             // A node that just became active wrote these this update; it wins.
             let fresh = outputs.filter { path, _ in
-                outputIndexes(of: node, path: path).allSatisfy {
-                    !variablesWrittenThisUpdate.contains($0)
+                graph.outputIndexes(of: node, path: path).allSatisfy {
+                    !graph.variablesWrittenThisUpdate.contains($0)
                 }
             }
-            writeOutputs(fresh, of: node)
+            graph.writeOutputs(fresh, of: node)
             return true
         case let modifier as BSModifyOnceModifier:
             if let onDeactivate = modifier.onDeactivateModifier {
-                _ = applyModifier(at: onDeactivate, to: skeleton.restPose, deltaTime: 0)
+                _ = graph.applyModifier(at: onDeactivate, to: graph.skeleton.restPose, deltaTime: 0)
             }
             return true
         default:
@@ -152,11 +152,11 @@ nonisolated extension BehaviorGraphInstance {
     private func applyModifyOnce(
         _ modifier: BSModifyOnceModifier, _ step: BehaviorModifierStep, to pose: BehaviorPose
     ) -> BehaviorPose {
-        var state = markReached(step.target)
+        var state = graph.markReached(step.target)
         guard !state.hasSeeded else { return pose }
         state.hasSeeded = true
-        nodeStates[step.target] = state
-        return applyModifier(
+        graph.nodeStates[step.target] = state
+        return graph.applyModifier(
             at: modifier.onActivateModifier, to: pose, deltaTime: step.deltaTime,
             depth: step.depth + 1
         )
@@ -174,13 +174,13 @@ nonisolated extension BehaviorGraphInstance {
         let target = step.bound.float("target", or: modifier.target)
         let gain = step.bound.float("gain", or: modifier.gain)
         let amount = min(max(gain * step.deltaTime, 0), 1)
-        writeOutputs(["result": .real(source + (target - source) * amount)], of: step.node)
+        graph.writeOutputs(["result": .real(source + (target - source) * amount)], of: step.node)
     }
 
     /// `hkbDampingModifier`: a PID filter, applied once per update, that moves the
     /// damped value towards the raw one.
     private func applyDamping(_ modifier: HKBDampingModifier, _ step: BehaviorModifierStep) {
-        var state = markReached(step.target)
+        var state = graph.markReached(step.target)
         let bound = step.bound
         let gains = SIMD3(
             bound.float("kP", or: modifier.proportionalGain),
@@ -198,8 +198,8 @@ nonisolated extension BehaviorGraphInstance {
             let damped = bound.quad("dampedVector", or: modifier.dampedVector)
             outputs["dampedVector"] = .quad(damp(raw, damped, gains, &state))
         }
-        nodeStates[step.target] = state
-        writeOutputs(outputs, of: step.node)
+        graph.nodeStates[step.target] = state
+        graph.writeOutputs(outputs, of: step.node)
     }
 
     private func damp(
@@ -220,7 +220,7 @@ nonisolated extension BehaviorGraphInstance {
     private func applyFalseToTrue(
         _ modifier: BSEventOnFalseToTrueModifier, _ step: BehaviorModifierStep
     ) {
-        var state = markReached(step.target)
+        var state = graph.markReached(step.target)
         if !state.hasSeeded {
             state.hasSeeded = true
             state.flags = modifier.slots.map(\.variableToTest)
@@ -230,11 +230,11 @@ nonisolated extension BehaviorGraphInstance {
             let value = step.bound.bool("bVariableToTest\(label)", or: slot.variableToTest)
             let enabled = step.bound.bool("bEnableEvent\(label)", or: slot.enableEvent)
             if enabled, value, !state.flags[index] {
-                raise(slot.eventToSend)
+                graph.raise(slot.eventToSend)
             }
             state.flags[index] = value
         }
-        nodeStates[step.target] = state
+        graph.nodeStates[step.target] = state
     }
 
     // MARK: - Vectors and states
@@ -244,10 +244,10 @@ nonisolated extension BehaviorGraphInstance {
     private func applyTransformVector(
         _ modifier: HKBTransformVectorModifier, _ step: BehaviorModifierStep
     ) {
-        var state = markReached(step.target)
+        var state = graph.markReached(step.target)
         let first = !state.hasSeeded
         state.hasSeeded = true
-        nodeStates[step.target] = state
+        graph.nodeStates[step.target] = state
         let bound = step.bound
         guard
             bound.bool("computeOnModify", or: modifier.computeOnModify)
@@ -264,7 +264,7 @@ nonisolated extension BehaviorGraphInstance {
         let output = bound.bool("inverse", or: modifier.inverse)
             ? rotation.inverse.act(input - move)
             : rotation.act(input) + move
-        writeOutputs(["vectorOut": .quad(SIMD4(output, 0))], of: step.node)
+        graph.writeOutputs(["vectorOut": .quad(SIMD4(output, 0))], of: step.node)
     }
 
     /// `BSIStateManagerModifier`: publishes the iState of the first listed state
@@ -272,15 +272,15 @@ nonisolated extension BehaviorGraphInstance {
     private func applyIStateManager(
         _ modifier: BSIStateManagerModifier, _ step: BehaviorModifierStep
     ) {
-        markReached(step.target)
+        graph.markReached(step.target)
         for data in modifier.stateData {
             guard
                 let machine = data.stateMachine,
-                let state = machineStates[machine],
+                let state = graph.machineMemory.machineStates[machine],
                 state.isEntered,
                 state.currentStateId == data.stateID
             else { continue }
-            writeOutputs(
+            graph.writeOutputs(
                 ["iStateVar": .int(Int32(truncatingIfNeeded: data.stateToSetAs))],
                 of: step.node
             )

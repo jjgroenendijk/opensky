@@ -15,7 +15,7 @@ nonisolated struct BehaviorGlobalWildcardRoute: Sendable {
     let info: HKBStateMachineTransitionInfo
 }
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.StateMachines {
     /// Takes the first eligible global wildcard found below a state other than
     /// the current one. The current state's machines see their own wildcards.
     func selectGlobalWildcard(
@@ -41,14 +41,15 @@ nonisolated extension BehaviorGraphInstance {
         effect?.interrupted = state.transition.map { [$0] } ?? []
         effect?.trim(to: machine.maxSimultaneousTransitions)
         switchState(&state, to: best.stateId, machine: machine, transition: effect)
-        pendingNestedStateIds = best.nestedStateIds
+        graph.pendingNestedStateIds = best.nestedStateIds
         return true
     }
 
     private func isEligible(_ route: BehaviorGlobalWildcardRoute) -> Bool {
         let info = route.info
         guard
-            info.flags & BehaviorTransitionFlag.disabled == 0, events.isActive(id: info.eventId),
+            info.flags & BehaviorTransitionFlag.disabled == 0,
+            graph.events.isActive(id: info.eventId),
             stateInfo(
                 of: route.owner,
                 id: info.toStateId
@@ -64,15 +65,15 @@ nonisolated extension BehaviorGraphInstance {
         at target: HKXPointerTarget,
         depth: Int = 0
     ) -> [BehaviorGlobalWildcardRoute] {
-        if let cached = globalWildcardRouteCache[target] {
+        if let cached = graph.machineMemory.globalWildcardRouteCache[target] {
             return cached
         }
         // Cached empty first, so a machine nested inside itself ends the walk.
-        globalWildcardRouteCache[target] = []
-        guard depth < Self.maximumDepth else { return [] }
+        graph.machineMemory.globalWildcardRouteCache[target] = []
+        guard depth < BehaviorGraphInstance.maximumDepth else { return [] }
         var routes: [BehaviorGlobalWildcardRoute] = []
         for case let stateTarget? in machine.states {
-            guard let info = object(at: stateTarget, as: HKBStateMachineStateInfo.self) else {
+            guard let info = graph.object(at: stateTarget, as: HKBStateMachineStateInfo.self) else {
                 continue
             }
             for nested in machines(below: info.generator) {
@@ -91,7 +92,7 @@ nonisolated extension BehaviorGraphInstance {
                 }
             }
         }
-        globalWildcardRouteCache[target] = routes
+        graph.machineMemory.globalWildcardRouteCache[target] = routes
         return routes
     }
 
@@ -114,7 +115,7 @@ nonisolated extension BehaviorGraphInstance {
     {
         guard
             let target = machine.wildcardTransitions,
-            let array = object(at: target, as: HKBStateMachineTransitionInfoArray.self)
+            let array = graph.object(at: target, as: HKBStateMachineTransitionInfoArray.self)
         else {
             return []
         }
@@ -132,7 +133,7 @@ nonisolated extension BehaviorGraphInstance {
         var visited: Set<HKXPointerTarget> = []
         var stack = root.map { [$0] } ?? []
         while let target = stack.popLast() {
-            guard visited.insert(target).inserted, let node = compiledNode(at: target) else {
+            guard visited.insert(target).inserted, let node = graph.compiledNode(at: target) else {
                 continue
             }
             if let machine = node.object as? HKBStateMachine {

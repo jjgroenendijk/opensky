@@ -68,7 +68,7 @@ nonisolated public final class InstallBehaviorReferenceSource: BehaviorGraphInst
         skeleton: BehaviorSkeleton,
         clips: any BehaviorClipSource
     ) -> BehaviorGraphInstance? {
-        let key = BehaviorGraphInstance.referenceKey(name)
+        let key = BehaviorGraphInstance.ChildGraphs.referenceKey(name)
         guard
             let path = pathsByName[key] ?? pathsByName[key + ".hkx"],
             let file = decode(path)

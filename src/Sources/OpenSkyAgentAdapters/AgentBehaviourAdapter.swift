@@ -83,7 +83,7 @@ extension AgentBehaviourAdapter {
             : game.actorGraphs.instance(of: key)
         return [
             "ref": .string("\(key)"),
-            "clips": .array((graph?.pairedClipNames ?? []).map { .string($0) }),
+            "clips": .array((graph?.clipPlayback.pairedClipNames ?? []).map { .string($0) }),
             "getToMarkTime": graph?.synchronizedMark.map { .number(Double($0.getToMarkTime)) }
                 ?? .null
         ]

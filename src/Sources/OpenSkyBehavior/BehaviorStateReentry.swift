@@ -5,7 +5,7 @@
 import Foundation
 import OpenSkyFormatsAnimation
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.StateMachines {
     /// Deactivates the incoming state's nodes, except those the outgoing state shares.
     /// The swinging blade trap needs this: its script raises `Single` again in the
     /// update after `Reset`, while the finished swing is still blending out.
@@ -21,17 +21,17 @@ nonisolated extension BehaviorGraphInstance {
         if let generator = incoming.info.generator {
             collectSubtree(at: generator, depth: 0, into: &restarted)
         }
-        let stale = restarted.subtracting(kept).filter { nodeStates[$0] != nil }
+        let stale = restarted.subtracting(kept).filter { graph.nodeStates[$0] != nil }
         guard !stale.isEmpty else { return }
-        deactivateNodes(stale)
+        graph.deactivateNodes(stale)
     }
 
     private func collectSubtree(
         at target: HKXPointerTarget, depth: Int, into targets: inout Set<HKXPointerTarget>
     ) {
         guard
-            depth < Self.maximumDepth, targets.insert(target).inserted,
-            let node = compiledNode(at: target) else { return }
+            depth < BehaviorGraphInstance.maximumDepth, targets.insert(target).inserted,
+            let node = graph.compiledNode(at: target) else { return }
         for child in node.children {
             collectSubtree(at: child, depth: depth + 1, into: &targets)
         }
