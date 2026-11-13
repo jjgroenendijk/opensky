@@ -166,7 +166,10 @@ extension InventoryCoordinator.Pickpocketing {
         let value = runtime.inventory.baselines.items.gameValue(of: item)
         let isGold = item == runtime.inventory.goldFormID
         coordinator.skillUses?.reportSkillUse(SkillUseEvent(
-            actor: .player, action: .pickpocket, amount: Float(isGold ? count : value * count)
+            actor: .player, action: .pickpocket,
+            amount: coordinator.pickpocketSettings.skillUse(
+                stackValue: Float(isGold ? count : value * count)
+            )
         ))
         coordinator.storyEvents?.reportStoryEvent(.addItem(
             item, from: target.key, owner: target.key, how: .pickpocket

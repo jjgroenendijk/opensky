@@ -58,8 +58,9 @@ lands on the target as if it hit them, and the poison is used up.
 A roll from 0 to 100 below the chance succeeds:
 
 - The item moves to the player and is marked stolen.
-- Pickpocket gains skill use equal to the item's value times the count, or the coins taken
-  ([skill advancement](/engine/skill-advancement.md)).
+- Pickpocket gains skill use of `max(1, stack value) ^ fPickpocketSkillUsesCurve` (0.8). The
+  stack value is the item's value times the count, or the coins taken. For example, 100 gold
+  gives 39.8 ([skill advancement](/engine/skill-advancement.md)).
 - The story manager hears an add-item event with the pickpocket method.
 - The misc stat "Items Pickpocketed" goes up by one. "Pockets Picked" goes up by one at the first
   success after the pockets open. The wiki lists both stats without saying what they count, so this
