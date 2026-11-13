@@ -65,7 +65,9 @@ extension ProgressionTreeReader {
     }
 
     private func requirement(of perk: ResolvedPerk) -> String {
-        perk.requiredSkill.map { "Requires \(displaySkillName($0.skill)) \($0.level)" } ?? ""
+        perk.requiredSkill.map {
+            texts.requirementText(skill: displaySkillName($0.skill), level: $0.level)
+        } ?? ""
     }
 
     func displaySkillName(_ index: Int32) -> String {
