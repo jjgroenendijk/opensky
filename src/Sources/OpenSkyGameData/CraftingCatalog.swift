@@ -102,14 +102,18 @@ nonisolated public struct CraftingStationInfo: Equatable, Sendable {
     public let improves: Bool
     /// An alchemy lab: it brews from ingredients, with no recipe.
     public let brews: Bool
+    /// An armor table, which improves armour; a grindstone improves weapons.
+    public let improvesArmor: Bool
 
     public init(
-        keywords: [ResolvedFormID], skill: Int32?, improves: Bool = false, brews: Bool = false
+        keywords: [ResolvedFormID], skill: Int32?, improves: Bool = false, brews: Bool = false,
+        improvesArmor: Bool = false
     ) {
         self.keywords = keywords
         self.skill = skill
         self.improves = improves
         self.brews = brews
+        self.improvesArmor = improvesArmor
     }
 }
 
@@ -179,7 +183,8 @@ nonisolated public struct CraftingCatalog: Sendable {
             },
             skill: workbench.skillName.flatMap(ActorValueIdentity.index(named:)),
             improves: [.smithingWeapon, .smithingArmor].contains(workbench.benchType),
-            brews: [.alchemy, .alchemyExperiment].contains(workbench.benchType)
+            brews: [.alchemy, .alchemyExperiment].contains(workbench.benchType),
+            improvesArmor: workbench.benchType == .smithingArmor
         )
     }
 

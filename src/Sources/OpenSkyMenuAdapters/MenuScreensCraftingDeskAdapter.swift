@@ -59,8 +59,9 @@ extension MenuScreensCraftingDeskAdapter {
 }
 
 extension MenuScreensCraftingDeskAdapter {
+    /// The menu's title, which also says a station is open.
     var craftingStationName: String? {
-        game.inventory.craftingReadout.craftingSnapshot.stationName
+        game.inventory.craftingReadout.craftingSnapshot.header
     }
 
     var craftingRecipes: [CraftingMenuRecipe] {

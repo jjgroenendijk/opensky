@@ -64,6 +64,8 @@ nonisolated public struct InventoryTexts: Equatable, Sendable {
     public var soul = SoulTexts.vanilla
     /// The quality names of an improved item.
     public var tempering = TemperingTexts.vanilla
+    /// The crafting menu's header words.
+    public var crafting = GameSettingTexts<CraftingMenuText>.vanilla
 
     public init() {}
 }
