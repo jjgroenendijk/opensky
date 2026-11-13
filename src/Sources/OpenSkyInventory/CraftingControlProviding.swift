@@ -10,9 +10,15 @@ import OpenSkyWorldInterface
 extension InventoryCoordinator.CraftingReadout {
     public var craftingSnapshot: CraftingControlSnapshot {
         guard coordinator.runtime != nil else { return .unavailable }
+        let session = coordinator.crafting
         return CraftingControlSnapshot(
-            stationName: coordinator.crafting?.interaction.name,
-            recipes: coordinator.crafting?.statuses.map(recipeReadout) ?? []
+            stationName: session?.interaction.name,
+            header: session.map {
+                CraftingMenuText.header(
+                    station: $0.station, name: $0.interaction.name, texts: coordinator.texts.crafting
+                )
+            },
+            recipes: session?.statuses.map(recipeReadout) ?? []
         )
     }
 

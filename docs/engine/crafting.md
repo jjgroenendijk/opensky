@@ -142,8 +142,12 @@ Which condition the game checks first is OpenSky's reading.
 ## Crafting menu
 
 Using a station opens `Interface\craftingmenu.swf` over the session. The engine calls
-`/Menu.Initialize` and `SetPlatform`, writes the station name into
-`/Menu/MenuNameHolder/MenuName`, and sets `bCanCraft`. The lists are
+`/Menu.Initialize` and `SetPlatform`, writes the header into
+`/Menu/MenuNameHolder/MenuName`, and sets `bCanCraft`. The header is
+`<station name>: <sConstructibleMenuDescription>` at a forge,
+`<sWeaponSmithing>: <sSmithingMenuDescription>` at a grindstone,
+`<sArmorSmithing>: <sSmithingMenuDescription>` at an armor table, and
+`<sAlchemy>: <sAlchemyMenuDescription>` at an alchemy lab. The lists are
 `/Menu/InventoryLists/CategoriesListHolder/List_mc` and `.../ItemsListHolder/List_mc`, the
 same list class as the [inventory menu](/engine/inventory-menu.md#list-data). OpenSky shows
 the recipes the player can make now, all recipes, and then one tab per category that has a

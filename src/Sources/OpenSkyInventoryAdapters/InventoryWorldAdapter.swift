@@ -172,6 +172,7 @@ public struct InventorySessionBuilder {
         let text: GameTextResolver = { [game] in game.mapWorld.text($0) }
         var texts = InventoryTexts()
         texts.activation = game.mapWorld.settingTexts()
+        texts.crafting = game.mapWorld.settingTexts()
         texts.menu = InventoryMenuTexts.resolve(store: settings, text: text)
         texts.trade = TradeTexts.resolve(store: settings, text: text)
         texts.soul = SoulTexts.resolve(store: settings, text: text)
