@@ -18,7 +18,8 @@ extension InventoryCoordinator.CraftingBench {
         let context = ActivationPromptContext(
             isBook: coordinator.world.isBook(interaction.base),
             isTheft: coordinator.runtime?.isTheft(interaction) ?? false,
-            isPlayerSneaking: coordinator.world.isPlayerSneaking
+            isPlayerSneaking: coordinator.world.isPlayerSneaking,
+            isOpen: coordinator.runtime?.isOpen(interaction) ?? false
         )
         let verb = ActivationPrompt.labelled(
             interaction,

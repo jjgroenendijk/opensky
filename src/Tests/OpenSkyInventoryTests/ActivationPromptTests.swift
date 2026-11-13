@@ -1,5 +1,5 @@
-// The crosshair verb from the game's verb settings: theft, books, beds, seats, and a
-// sneaking player at an actor.
+// The crosshair verb from the game's verb settings: theft, books, beds, seats, open
+// doors, owned beds, and a sneaking player at an actor.
 
 @testable import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -42,7 +42,7 @@ struct ActivationPromptTests {
             FurnitureSeat(position: .zero, heading: 0, animationType: 1, keyword: nil)
         ]
         #expect(ActivationPrompt.text(for: chair, context: .init()) == .sit)
-        #expect(ActivationPrompt.text(for: interaction(.use), context: .init()) == .activate)
+        #expect(ActivationPrompt.text(for: interaction(.use), context: .init()) == .use)
         var authored = interaction(.activate)
         authored.hasLabelOverride = true
         #expect(ActivationPrompt.text(for: authored, context: .init()) == nil)
@@ -50,5 +50,18 @@ struct ActivationPromptTests {
             interaction(.take), context: .init(), texts: .vanilla
         )
         #expect(relabelled.actionLabel == "Take")
+    }
+
+    @Test func anOpenDoorClosesAndAnOwnedBedSaysSo() {
+        let open = ActivationPromptContext(isOpen: true)
+        #expect(ActivationPrompt.text(for: interaction(.open), context: open) == .close)
+        #expect(ActivationPrompt.text(for: interaction(.open), context: .init()) == .open)
+        var bed = interaction(.use)
+        bed.seats = [
+            FurnitureSeat(position: .zero, heading: 0, animationType: 2, keyword: nil)
+        ]
+        let owned = ActivationPrompt.labelled(bed, context: .init(isTheft: true), texts: .vanilla)
+        #expect(owned.actionLabel == "Sleep")
+        #expect(owned.name == "Thing (Owned)")
     }
 }

@@ -112,6 +112,14 @@ public final class WorldItemRuntime {
         return crime?.verdict(on: entry.key, item: interaction.base).isTheft ?? false
     }
 
+    /// Whether the door or other openable behind `interaction` stands open now.
+    public func isOpen(_ interaction: PlacedInteraction) -> Bool {
+        guard let entry = references?.referenceEntry(formID: interaction.reference) else {
+            return false
+        }
+        return store.component(ReferenceActivationState.self, for: entry.key)?.isOpen ?? false
+    }
+
     /// Moves the item behind `interaction` into the player's inventory and removes
     /// its reference from the world.
     /// - Throws: `WorldItemError.notTakeable`, `WorldItemError.unknownReference`, or
