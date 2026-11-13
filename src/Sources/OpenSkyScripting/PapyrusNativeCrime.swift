@@ -45,7 +45,11 @@ extension PapyrusNativeFunctions.CrimeNatives {
                 }
                 let violent = boolean(call, at: 1, default: false)
                 guard
-                    world.modifyCrimeGold(of: faction, by: Int(amount), violent: violent) != nil
+                    world.crimeBridge.modifyCrimeGold(
+                        of: faction,
+                        by: Int(amount),
+                        violent: violent
+                    ) != nil
                 else {
                     return failure(call, "ModCrimeGold needs a session with a crime runtime")
                 }
@@ -76,9 +80,9 @@ extension PapyrusNativeFunctions.CrimeNatives {
         ) { call, context in
             factionTarget(call, context) { world, faction in
                 let gold = if let violent {
-                    world.crimeGold(of: faction, violent: violent)
+                    world.crimeBridge.crimeGold(of: faction, violent: violent)
                 } else {
-                    world.crimeGold(of: faction)
+                    world.crimeBridge.crimeGold(of: faction)
                 }
                 guard let gold else {
                     return failure(call, "\(name) needs a session with a crime runtime")
@@ -102,7 +106,10 @@ extension PapyrusNativeFunctions.CrimeNatives {
                 guard let gold = integer(call, at: 0) else {
                     return failure(call, "\(name) needs an integer amount")
                 }
-                guard world.setCrimeGold(of: faction, to: Int(gold), violent: violent) != nil else {
+                guard
+                    world.crimeBridge
+                        .setCrimeGold(of: faction, to: Int(gold), violent: violent) != nil
+                else {
                     return failure(call, "\(name) needs a session with a crime runtime")
                 }
                 return .returned(.none)
@@ -122,7 +129,7 @@ extension PapyrusNativeFunctions.CrimeNatives {
         ) { call, context in
             guard let actor = actorTarget(call, context) else { return needsActor(call) }
             guard
-                actor.world.sendAssaultAlarm(
+                actor.world.crimeBridge.sendAssaultAlarm(
                     witness: actor.key, criminal: actor.world.playerKey
                 ) != nil
             else {
@@ -143,7 +150,7 @@ extension PapyrusNativeFunctions.CrimeNatives {
                 let item = call.receiver.flatMap(world.referenceKey(for:)),
                 let thief = objectArgument(call, at: 0).flatMap(world.referenceKey(for:))
             else { return failure(call, "SendStealAlarm needs an object and a thief") }
-            guard world.sendStealAlarm(on: item, thief: thief) != nil else {
+            guard world.crime.sendStealAlarm(on: item, thief: thief) != nil else {
                 return failure(call, "SendStealAlarm needs a session with a crime runtime")
             }
             return .returned(.none)
@@ -165,7 +172,8 @@ extension PapyrusNativeFunctions.CrimeNatives {
                 return failure(call, "SendTrespassAlarm needs a criminal actor argument")
             }
             guard
-                actor.world.sendTrespassAlarm(witness: actor.key, criminal: criminal) != nil
+                actor.world.crimeBridge
+                    .sendTrespassAlarm(witness: actor.key, criminal: criminal) != nil
             else {
                 return failure(call, "SendTrespassAlarm needs a session with a crime runtime")
             }
@@ -181,7 +189,7 @@ extension PapyrusNativeFunctions.CrimeNatives {
         ) { call, context in
             guard
                 let world = context.world as? PapyrusWorldStateBridge,
-                world.sendWerewolfTransformation() != nil
+                world.crime.sendWerewolfTransformation() != nil
             else {
                 return failure(call, "SendWereWolfTransformation needs a crime runtime")
             }

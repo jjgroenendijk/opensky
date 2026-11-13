@@ -19,7 +19,7 @@ extension PapyrusNativeFunctions.PresentationNatives {
     }
 
     private static func presenter(_ context: PapyrusNativeContext) -> (any PapyrusPresenting)? {
-        (context.world as? PapyrusWorldStateBridge)?.presenter
+        (context.world as? PapyrusWorldStateBridge)?.ports.presenter
     }
 
     private static func installMessageNatives(into registry: inout PapyrusNativeRegistry) {

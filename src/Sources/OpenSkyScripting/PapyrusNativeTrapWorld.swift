@@ -71,7 +71,7 @@ extension PapyrusNativeFunctions.TrapWorldNatives {
                 return failure(call, "PlaceActorAtMe needs an actor base")
             }
             guard
-                let placed = bridge.spawnReference(of: base, at: key),
+                let placed = bridge.referencePlacement.spawnReference(of: base, at: key),
                 let result = bridge.objectHandle(for: placed)
             else { return .returned(.none) }
             return .returned(.object(result))
@@ -84,7 +84,7 @@ extension PapyrusNativeFunctions.TrapWorldNatives {
     static func pushBack(
         _ call: PapyrusNativeCall, world: any PapyrusWorldBridge, actor: ReferenceKey
     ) {
-        guard let trapWorld = (world as? PapyrusWorldStateBridge)?.trapWorld else { return }
+        guard let trapWorld = (world as? PapyrusWorldStateBridge)?.ports.trapWorld else { return }
         if let stagger = float(call, at: 10), stagger.isFinite, stagger > 0 {
             _ = trapWorld.staggerActor(actor, magnitude: min(stagger, 1))
         }
@@ -124,7 +124,7 @@ extension PapyrusNativeFunctions.TrapWorldNatives {
                 let world = context.world as? PapyrusWorldStateBridge,
                 let receiver = call.receiver, let key = world.referenceKey(for: receiver)
             else { return needsWorld(call) }
-            guard let trapWorld = world.trapWorld else {
+            guard let trapWorld = world.ports.trapWorld else {
                 context.log.append("Stubbed \(call.qualifiedName)")
                 return .deviated(.none, .stubbed)
             }

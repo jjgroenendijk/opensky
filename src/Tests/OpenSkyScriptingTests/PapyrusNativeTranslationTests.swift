@@ -50,7 +50,7 @@ struct PapyrusNativeTranslationTests {
     }
 
     private func advance(_ seconds: Float) {
-        session.bridge.advanceTranslations(by: seconds)
+        session.bridge.scriptedMoves.advanceTranslations(by: seconds)
         PapyrusWorldFixture.drain(session.world)
     }
 
@@ -73,11 +73,11 @@ struct PapyrusNativeTranslationTests {
         #expect(isNear(number("GetPositionX"), 50))
         #expect(isNear(number("GetAngleZ"), 45))
         #expect(storedTransform == nil)
-        #expect(session.bridge.translationPoses[Self.moverKey]?.position.x == 50)
+        #expect(session.bridge.scriptedMoves.translationPoses[Self.moverKey]?.position.x == 50)
 
         advance(0.5)
         #expect(storedTransform?.position == SIMD3(100, 0, 0))
-        #expect(session.bridge.translations.isEmpty)
+        #expect(session.bridge.runState.translations.isEmpty)
         #expect(session.dispatch.notes == ["almost", "complete"])
     }
 
@@ -121,9 +121,9 @@ struct PapyrusNativeTranslationTests {
 
     @Test func aLoadedGameDropsRunningMoves() {
         var published: [[ReferenceKey: ReferenceTransformOverride]] = []
-        session.bridge.sessionNatives.publishTranslationPoses = { published.append($0) }
+        session.bridge.natives.session.publishTranslationPoses = { published.append($0) }
         _ = translate(toX: 100)
-        session.bridge.clearTranslations()
+        session.bridge.scriptedMoves.clearTranslations()
         #expect(published.map(\.count) == [1, 0])
     }
 }

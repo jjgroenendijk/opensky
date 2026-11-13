@@ -109,7 +109,7 @@ extension PapyrusNativeFunctions.ConditionTwinsNatives {
                     let parameter2 = twinWord(twin.parameter2, call, receiver: key, in: bridge)
                 else { return failure(call, "\(twin.native) names a form with no FormID") }
                 let subject = twin.subject == .player ? ReferenceKey.player : key
-                switch bridge.conditionValue(
+                switch bridge.conditionTwins.conditionValue(
                     twin.function, on: subject, parameter1: parameter1, parameter2: parameter2
                 ) {
                 case let .success(value):
@@ -141,13 +141,14 @@ extension PapyrusNativeFunctions.ConditionTwinsNatives {
         case .none:
             return 0
         case .receiver:
-            return bridge.loadOrderWord(of: receiver)
+            return bridge.conditionTwins.loadOrderWord(of: receiver)
         case let .object(index):
             guard let handle = objectArgument(call, at: index)
             else {
                 return 0
             }
-            return bridge.referenceKey(for: handle).flatMap(bridge.loadOrderWord(of:))
+            return bridge.referenceKey(for: handle)
+                .flatMap { bridge.conditionTwins.loadOrderWord(of: $0) }
         case let .integer(index):
             return integer(call, at: index)
                 .map { UInt32(bitPattern: $0) } ?? 0
@@ -155,19 +156,19 @@ extension PapyrusNativeFunctions.ConditionTwinsNatives {
     }
 }
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.ConditionTwins {
     /// The value condition function `index` answers about `subject`, or nil when no
     /// condition context is wired. Parameter words are load-order FormIDs.
     func conditionValue(
         _ index: UInt16, on subject: ReferenceKey, parameter1: UInt32, parameter2: UInt32
     ) -> Result<Float, ConditionFailure>? {
-        guard let evaluator = sessionNatives.conditionEvaluator?() else { return nil }
+        guard let evaluator = bridge.natives.session.conditionEvaluator?() else { return nil }
         guard let function = evaluator.context.functions[index] else {
             return .failure(.unknownFunction(index))
         }
         var context = evaluator.context
         context.subject = subject
-        if let formIDResolver {
+        if let formIDResolver = bridge.formIDResolver {
             context.formIDTranslation = FormIDTranslation(
                 source: formIDResolver, target: formIDResolver
             )
@@ -186,7 +187,7 @@ extension PapyrusWorldStateBridge {
     func loadOrderWord(of key: ReferenceKey) -> UInt32? {
         switch key == .player ? .playerReference : key {
         case let .plugin(plugin, objectID):
-            formIDResolver?.localFormID(
+            bridge.formIDResolver?.localFormID(
                 of: ResolvedFormID(plugin: plugin, objectID: objectID)
             )?.rawValue
         case let generated:

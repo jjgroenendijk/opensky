@@ -236,9 +236,9 @@ struct ScriptSightCheck {
     private func position(
         of key: ReferenceKey, bridge: PapyrusWorldStateBridge
     ) -> SIMD3<Float>? {
-        if let feet = bridge.perceptionNatives.livePosition?(key) {
+        if let feet = bridge.natives.perception.livePosition?(key) {
             return feet + SIMD3(0, 0, PlayerCapsule.standard.torsoHeight)
         }
-        return bridge.placement(of: key)?.state.transform.position
+        return bridge.referencePlacement.placement(of: key)?.state.transform.position
     }
 }

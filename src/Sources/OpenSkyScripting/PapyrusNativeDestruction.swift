@@ -16,39 +16,42 @@ extension PapyrusNativeFunctions.DestructionNatives {
             guard let amount = float(call, at: 0), amount.isFinite else {
                 return failure(call, "DamageObject needs a finite number")
             }
-            guard let data = bridge.destructibleData(of: key) else { return .returned(.none) }
-            var progress = bridge.destruction(of: key)
+            guard let data = bridge.referenceEvents.destructibleData(of: key)
+            else { return .returned(.none) }
+            var progress = bridge.referenceEvents.destruction(of: key)
             if progress.apply(damage: amount, to: data) {
                 bridge.write(ReferenceEnableState.disabled.erased, for: key)
             }
-            bridge.storeDestruction(progress, of: key)
+            bridge.referenceEvents.storeDestruction(progress, of: key)
             return .returned(.none)
         }
         // `SetDestroyed(bool abDestroyed = true)`.
         scriptState("ObjectReference", "SetDestroyed", into: &registry) { call, bridge, key in
             let progress = DestructionProgress.destroyed(
                 boolean(call, at: 0, default: true),
-                data: bridge.destructibleData(of: key)
+                data: bridge.referenceEvents.destructibleData(of: key)
             )
-            bridge.storeDestruction(progress, of: key)
+            bridge.referenceEvents.storeDestruction(progress, of: key)
             return .returned(.none)
         }
         scriptState("ObjectReference", "ClearDestruction", into: &registry) { _, bridge, key in
-            bridge.storeDestruction(DestructionProgress(), of: key)
+            bridge.referenceEvents.storeDestruction(DestructionProgress(), of: key)
             return .returned(.none)
         }
         scriptState(
             "ObjectReference", "GetCurrentDestructionStage", into: &registry
         ) { _, bridge, key in
-            .returned(.integer(Int32(bridge.destruction(of: key).stage)))
+            .returned(.integer(Int32(bridge.referenceEvents.destruction(of: key).stage)))
         }
     }
 }
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.ReferenceEvents {
     /// The `DEST` data of the reference's base, read in its plugin's space.
     func destructibleData(of key: ReferenceKey) -> Destructible? {
-        guard let keywordStore, let base = baseObject(of: key) else { return nil }
+        guard
+            let keywordStore = bridge.stores.keywordStore,
+            let base = bridge.baseObject(of: key) else { return nil }
         let space = if case let .plugin(plugin, _) = key {
             plugin
         } else {
@@ -59,7 +62,7 @@ extension PapyrusWorldStateBridge {
     }
 
     func destruction(of key: ReferenceKey) -> DestructionProgress {
-        let state = scriptedState(of: key)
+        let state = bridge.scriptState.scriptedState(of: key)
         return DestructionProgress(
             damage: state.value(ScriptedStateName.destructionDamage) ?? 0,
             stage: Int(state.value(ScriptedStateName.destructionStage) ?? 0),
@@ -71,7 +74,7 @@ extension PapyrusWorldStateBridge {
     /// aiCurrentStage)` when the stage moved. An intact object keeps no state.
     func storeDestruction(_ progress: DestructionProgress, of key: ReferenceKey) {
         let old = destruction(of: key).stage
-        updateScriptedState(of: key) { state in
+        bridge.scriptState.updateScriptedState(of: key) { state in
             state.setValue(
                 ScriptedStateName.destructionDamage,
                 progress.damage > 0
@@ -84,7 +87,7 @@ extension PapyrusWorldStateBridge {
             )
             state.setFlag(ScriptedStateName.destroyed, progress.isDestroyed ? true : nil)
         }
-        guard old != progress.stage, let world else { return }
+        guard old != progress.stage, let world = bridge.world else { return }
         _ = queueReferenceEvent(
             PapyrusEngineEvents.onDestructionStageChanged, on: key,
             [.integer(Int32(old)), .integer(Int32(progress.stage))], in: world

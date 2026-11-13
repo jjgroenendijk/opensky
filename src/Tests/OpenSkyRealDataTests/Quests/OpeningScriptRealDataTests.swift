@@ -102,14 +102,14 @@ struct OpeningScriptRealDataTests {
                 )
             ))
             bridge.world = world
-            bridge.actorAI = actorAI
+            bridge.ports.actorAI = actorAI
             bridge.questRuntime = QuestRuntime(
                 store: worldState, quests: quests,
                 locations: LocationStoreLoader.load(root: root, baseFile: file)
             )
             let loader = PexScriptLoader(fileSystem: VirtualFileSystem(root: root))
             world.scriptProvider = { try? loader.load($0) }
-            #expect(try bridge.startQuest(for: key))
+            #expect(try bridge.questScripts.startQuest(for: key))
             drain()
             faultsSeen = world.runtime.tally.faultTotal
         }

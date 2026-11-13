@@ -22,7 +22,7 @@ struct PapyrusNativePackageTests {
             Issue.record("GetTemplate answered without the package records")
             return
         }
-        fixture.session.bridge.sessionNatives
+        fixture.session.bridge.natives.session
             .packageTemplate = { $0 == FormID(0x100) ? FormID(doorID) : nil }
         #expect(template(0x100) == .returned(.object(fixture.handle(doorID))))
         #expect(template(doorID) == .returned(.none))

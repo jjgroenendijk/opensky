@@ -16,7 +16,7 @@ extension PapyrusNativeFunctions.TranslationNatives {
                     return failure(call, "\(name) needs finite numbers")
                 }
                 guard
-                    bridge.startTranslation(
+                    bridge.scriptedMoves.startTranslation(
                         of: key, to: request.target,
                         speed: request.speed, maxRotationSpeed: request.maxRotationSpeed
                     )
@@ -28,7 +28,7 @@ extension PapyrusNativeFunctions.TranslationNatives {
             }
         }
         scriptState("ObjectReference", "StopTranslation", into: &registry) { _, bridge, key in
-            bridge.stopTranslation(of: key)
+            bridge.scriptedMoves.stopTranslation(of: key)
             return .returned(.none)
         }
     }

@@ -108,7 +108,7 @@ struct PapyrusWorldDialogueTests {
         let session = try session()
         PapyrusWorldFixture.drain(session.world)
 
-        let names = try session.bridge.runTopicInfoFragments(
+        let names = try session.bridge.fragments.runTopicInfoFragments(
             of: info(), key: infoKey, phase: .end
         )
         #expect(names == ["Fragment_1"])
@@ -135,7 +135,7 @@ struct PapyrusWorldDialogueTests {
         )
         let context = TopicInfoFragmentContext(speaker: speaker, quest: quest)
 
-        try session.bridge.runTopicInfoFragments(
+        try session.bridge.fragments.runTopicInfoFragments(
             of: info(), key: infoKey, phase: .end, context: context
         )
         let event = try #require(session.world.eventQueue.last)
@@ -149,11 +149,11 @@ struct PapyrusWorldDialogueTests {
     @Test func asecondSayingReusesTheInstance() throws {
         let session = try session()
         let info = try info()
-        session.bridge.runTopicInfoFragments(of: info, key: infoKey, phase: .end)
+        session.bridge.fragments.runTopicInfoFragments(of: info, key: infoKey, phase: .end)
         PapyrusWorldFixture.drain(session.world)
         let created = session.world.instancesByKey.count
 
-        session.bridge.runTopicInfoFragments(of: info, key: infoKey, phase: .end)
+        session.bridge.fragments.runTopicInfoFragments(of: info, key: infoKey, phase: .end)
         PapyrusWorldFixture.drain(session.world)
         #expect(session.world.instancesByKey.count == created)
         #expect(session.dispatch.notes.filter { $0 == "info.end" }.count == 2)
@@ -164,7 +164,7 @@ struct PapyrusWorldDialogueTests {
     /// is counted, and is not a fault: the conversation goes on.
     @Test func amissingResultScriptIsCountedNotFaulted() throws {
         let session = try PapyrusQuestFixture.session(quest: PapyrusQuestFixture.quest())
-        let names = try session.bridge.runTopicInfoFragments(
+        let names = try session.bridge.fragments.runTopicInfoFragments(
             of: info(), key: infoKey, phase: .begin
         )
         #expect(names.isEmpty)
@@ -182,7 +182,7 @@ struct PapyrusWorldDialogueTests {
             store: session.worldState,
             dialogue: dialogueStore(),
             context: ConditionContext(functions: .standard),
-            fragments: session.bridge
+            fragments: session.bridge.fragments
         )
 
         let choice = try runtime.choose(

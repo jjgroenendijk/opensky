@@ -37,7 +37,7 @@ struct PapyrusNativeConditionTwinTests {
         fixture.session.bridge.formIDResolver = FormIDResolver(
             pluginName: PapyrusWorldFixture.pluginName, masters: []
         )
-        fixture.session.bridge.sessionNatives.conditionEvaluator = {
+        fixture.session.bridge.natives.session.conditionEvaluator = {
             ConditionEvaluator(context: ConditionContext().using(registry))
         }
         return fixture
@@ -81,7 +81,7 @@ struct PapyrusNativeConditionTwinTests {
             Issue.record("IsOnMount with no IsRidingMount function should fail: \(result)")
             return
         }
-        fixture.session.bridge.sessionNatives.conditionEvaluator = nil
+        fixture.session.bridge.natives.session.conditionEvaluator = nil
         guard case .failed = Self.call(fixture, "GetSitState", returnType: .integer) else {
             Issue.record("GetSitState with no condition context should fail")
             return

@@ -36,13 +36,13 @@ extension PapyrusNativeFunctions.EffectsNatives {
     private static func installImageSpaceModifiers(into registry: inout PapyrusNativeRegistry) {
         scriptState("ImageSpaceModifier", "Apply", into: &registry) { call, bridge, key in
             let strength = float(call, at: 0) ?? 1
-            bridge.effectPresenter?.applyImageSpaceModifier(
+            bridge.ports.effectPresenter?.applyImageSpaceModifier(
                 key, strength: strength, held: false, fadeSeconds: 0
             )
             return .returned(.none)
         }
         scriptState("ImageSpaceModifier", "Remove", into: &registry) { _, bridge, key in
-            bridge.effectPresenter?.removeImageSpaceModifier(key, fadeSeconds: 0)
+            bridge.ports.effectPresenter?.removeImageSpaceModifier(key, fadeSeconds: 0)
             return .returned(.none)
         }
         scriptState("ImageSpaceModifier", "PopTo", into: &registry) { call, bridge, key in
@@ -51,9 +51,9 @@ extension PapyrusNativeFunctions.EffectsNatives {
             else {
                 return failure(call, "PopTo needs an image space modifier")
             }
-            bridge.effectPresenter?.removeImageSpaceModifier(key, fadeSeconds: 0)
+            bridge.ports.effectPresenter?.removeImageSpaceModifier(key, fadeSeconds: 0)
             let strength = float(call, at: 1) ?? 1
-            bridge.effectPresenter?.applyImageSpaceModifier(
+            bridge.ports.effectPresenter?.applyImageSpaceModifier(
                 next, strength: strength, held: false, fadeSeconds: 0
             )
             return .returned(.none)
@@ -61,10 +61,12 @@ extension PapyrusNativeFunctions.EffectsNatives {
         scriptState("ImageSpaceModifier", "ApplyCrossFade", into: &registry) { call, bridge, key in
             let fade = fadeSeconds(call)
             removeCrossFade(bridge, fade: fade)
-            bridge.effectPresenter?.applyImageSpaceModifier(
+            bridge.ports.effectPresenter?.applyImageSpaceModifier(
                 key, strength: 1, held: true, fadeSeconds: fade
             )
-            bridge.updateScriptedState(of: .player) { $0.setForm(crossFadeModifierName, key) }
+            bridge.scriptState.updateScriptedState(of: .player) {
+                $0.setForm(crossFadeModifierName, key)
+            }
             return .returned(.none)
         }
         registry.register(PapyrusNativeFunction(
@@ -85,11 +87,13 @@ extension PapyrusNativeFunctions.EffectsNatives {
     }
 
     private static func removeCrossFade(_ bridge: PapyrusWorldStateBridge, fade: Float) {
-        guard let held = bridge.scriptedState(of: .player).form(crossFadeModifierName) else {
+        guard let held = bridge.scriptState.scriptedState(of: .player).form(crossFadeModifierName)
+        else {
             return
         }
-        bridge.effectPresenter?.removeImageSpaceModifier(held, fadeSeconds: fade)
-        bridge.updateScriptedState(of: .player) { $0.setForm(crossFadeModifierName, nil) }
+        bridge.ports.effectPresenter?.removeImageSpaceModifier(held, fadeSeconds: fade)
+        bridge.scriptState
+            .updateScriptedState(of: .player) { $0.setForm(crossFadeModifierName, nil) }
     }
 
     /// Registers a native whose receiver is the effect form, whose first argument is
@@ -110,7 +114,8 @@ extension PapyrusNativeFunctions.EffectsNatives {
             }
             let facing = objectArgument(call, at: 2).flatMap(bridge.referenceKey(for:))
             return body(
-                call, bridge.effectPresenter, effect, target.namingPlayer, facing?.namingPlayer
+                call, bridge.ports.effectPresenter, effect, target.namingPlayer,
+                facing?.namingPlayer
             )
         }
     }

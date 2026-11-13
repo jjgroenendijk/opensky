@@ -16,7 +16,7 @@ struct PapyrusNativeMassTests {
             return
         }
         var masses: [ReferenceKey: Float] = [:]
-        fixture.session.bridge.sessionNatives.havokMass = { masses[$0] }
+        fixture.session.bridge.natives.session.havokMass = { masses[$0] }
         #expect(fixture.call("GetMass", returnType: .float) == .returned(.float(0)))
         masses[fixture.key] = 12.5
         #expect(fixture.call("GetMass", returnType: .float) == .returned(.float(12.5)))

@@ -43,16 +43,16 @@ public protocol PapyrusWorldGuardBridge {
     func serveTime() -> Bool?
 }
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.Guards {
     public func crimeFaction(ofActor actor: ReferenceKey) -> ReferenceKey?? {
-        guard let profile = factionNatives.socialProfile(actor) else { return nil }
+        guard let profile = bridge.natives.faction.socialProfile(actor) else { return nil }
         return .some(profile.crimeFaction)
     }
 
     public func isGuard(_ actor: ReferenceKey) -> Bool? {
         guard
-            let profile = factionNatives.socialProfile(actor),
-            let runtime = factionNatives.runtime(actor)
+            let profile = bridge.natives.faction.socialProfile(actor),
+            let runtime = bridge.natives.faction.runtime(actor)
         else { return nil }
         return GuardRecognition.policedFaction(
             of: profile,
@@ -61,17 +61,19 @@ extension PapyrusWorldStateBridge {
     }
 
     public func canPayCrimeGold(to faction: ReferenceKey) -> Bool? {
-        crimeNatives.arrestSession?()?.canPayCrimeGold(to: faction)
+        bridge.natives.crime.arrestSession?()?.canPayCrimeGold(to: faction)
     }
 
     public func settleArrest(
         with faction: ReferenceKey,
         _ outcome: ArrestOutcome
     ) -> Result<ArrestSettlement, ArrestRefusal>? {
-        crimeNatives.arrestSession?()?.settleArrest(with: faction, outcome)
+        bridge.natives.crime.arrestSession?()?.settleArrest(with: faction, outcome)
     }
 
     public func serveTime() -> Bool? {
-        crimeNatives.arrestSession?()?.serveSentence()
+        bridge.natives.crime.arrestSession?()?.serveSentence()
     }
 }
+
+extension PapyrusWorldStateBridge.Guards: PapyrusWorldGuardBridge {}

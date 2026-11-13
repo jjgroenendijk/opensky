@@ -109,10 +109,10 @@ struct PapyrusWorldTriggerTests {
             scripts: [VMADFixture.Script(TriggerStreamFixture.scriptName, properties: [])],
             objects: [TriggerStreamFixture.triggerScript()]
         )
-        #expect(session.bridge.handleTriggerTransition(
+        #expect(session.bridge.triggers.handleTriggerTransition(
             TriggerTransitionEvent(reference: TriggerStreamFixture.volumeKey, phase: .enter)
         ) == 1)
-        #expect(session.bridge.handleTriggerTransition(
+        #expect(session.bridge.triggers.handleTriggerTransition(
             TriggerTransitionEvent(reference: TriggerStreamFixture.volumeKey, phase: .leave)
         ) == 1)
         PapyrusWorldFixture.drain(session.world)

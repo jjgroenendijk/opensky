@@ -55,14 +55,14 @@ extension PapyrusNativeFunctions.QuestNatives {
     /// (<https://ck.uesp.net/wiki/Start_-_Quest>). Only `Start` returns a value.
     private static func installQuestRunState(into registry: inout PapyrusNativeRegistry) {
         registerMutation(&registry, ["Start"]) { _, world, key in
-            try latent(.boolean(world.startQuest(for: key)), quest: key, world: world)
+            try latent(.boolean(world.questBridge.startQuest(for: key)), quest: key, world: world)
         }
         registerMutation(&registry, ["Stop"]) { _, world, key in
-            try world.stopQuest(for: key)
+            try world.questBridge.stopQuest(for: key)
             return .returned(.none)
         }
         registerMutation(&registry, ["CompleteQuest"]) { _, world, key in
-            try world.completeQuest(for: key)
+            try world.questBridge.completeQuest(for: key)
             return .returned(.none)
         }
     }
@@ -76,7 +76,7 @@ extension PapyrusNativeFunctions.QuestNatives {
                 return failure(call, "\(call.functionName) needs a stage index")
             }
             return try latent(
-                .boolean(world.setQuestStage(stage, for: key)),
+                .boolean(world.questBridge.setQuestStage(stage, for: key)),
                 quest: key,
                 world: world
             )
@@ -101,34 +101,34 @@ extension PapyrusNativeFunctions.QuestNatives {
             guard let objective = stageArgument(call, at: 0) else {
                 return failure(call, "\(call.functionName) needs an objective index")
             }
-            try world.setQuestObjectiveDisplayed(objective, flag(call, at: 1), for: key)
+            try world.questBridge.setQuestObjectiveDisplayed(objective, flag(call, at: 1), for: key)
             return .returned(.none)
         }
         registerMutation(&registry, ["SetObjectiveCompleted"]) { call, world, key in
             guard let objective = stageArgument(call, at: 0) else {
                 return failure(call, "\(call.functionName) needs an objective index")
             }
-            try world.setQuestObjectiveCompleted(objective, flag(call, at: 1), for: key)
+            try world.questBridge.setQuestObjectiveCompleted(objective, flag(call, at: 1), for: key)
             return .returned(.none)
         }
         registerMutation(&registry, ["SetObjectiveFailed"]) { call, world, key in
             guard let objective = stageArgument(call, at: 0) else {
                 return failure(call, "\(call.functionName) needs an objective index")
             }
-            try world.setQuestObjectiveFailed(objective, flag(call, at: 1), for: key)
+            try world.questBridge.setQuestObjectiveFailed(objective, flag(call, at: 1), for: key)
             return .returned(.none)
         }
         // Completes the objectives the quest has shown; one never shown has no journal row.
         registerMutation(&registry, ["CompleteAllObjectives"]) { _, world, key in
-            for objective in try world.questState(for: key).objectives.map(\.index) {
-                try world.setQuestObjectiveCompleted(objective, true, for: key)
+            for objective in try world.questBridge.questState(for: key).objectives.map(\.index) {
+                try world.questBridge.setQuestObjectiveCompleted(objective, true, for: key)
             }
             return .returned(.none)
         }
         // "Any objectives completed will be flagged as failed in the journal"
         // (<https://ck.uesp.net/wiki/FailAllObjectives_-_Quest>).
         registerMutation(&registry, ["FailAllObjectives"]) { _, world, key in
-            try world.failAllQuestObjectives(for: key)
+            try world.questBridge.failAllQuestObjectives(for: key)
             return .returned(.none)
         }
     }
@@ -161,7 +161,7 @@ extension PapyrusNativeFunctions.QuestNatives {
         ) -> PapyrusNativeResult
     ) {
         registerMutation(&registry, names) { call, world, key in
-            try body(call, world.questState(for: key))
+            try body(call, world.questBridge.questState(for: key))
         }
     }
 

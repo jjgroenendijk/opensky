@@ -42,7 +42,7 @@ struct QuestScriptRealDataTests {
         // Start, then advance to the lowest stage the fragment table covers:
         // the quest is not start-game-enabled, and only a running quest takes
         // an ordinary stage.
-        #expect(try bridge.startQuest(for: key))
+        #expect(try bridge.questScripts.startQuest(for: key))
         let firstFragmentStage = try #require(quest.fragments.map(\.stageIndex).min())
         #expect(try bridge.setQuestStage(firstFragmentStage, for: key))
         for _ in 0 ..< 32 where world.eventQueue.isEmpty == false {

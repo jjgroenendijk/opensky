@@ -78,14 +78,14 @@ struct ScriptedWorldChain {
         streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
         // The streamer answers every world lookup from here on, so cell
         // attribution is the engine's answer and not the fixture's.
-        session.bridge.references = streamer
+        session.bridge.ports.references = streamer
         let recorder = recorder
         session.dispatch.probeHandler = { call, _ in
             recorder.seen.append(contentsOf: call.arguments)
             return .returned(.none)
         }
         streamer.onInteraction.register(.scripts) { [weak bridge = session.bridge] event in
-            bridge?.handleInteraction(event)
+            bridge?.activations.handleInteraction(event)
         }
         Self.integrate(streamer: streamer, runner: runner, entries: [lever, door])
         // Attach queued OnInit/OnCellAttach/OnLoad; drain them so only the

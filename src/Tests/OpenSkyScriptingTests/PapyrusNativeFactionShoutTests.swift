@@ -27,7 +27,7 @@ struct PapyrusNativeFactionShoutTests {
     @Test func setEnemyAndSetAllyStoreBothDirections() throws {
         let fixture = try Fixture.make()
         var published: [FactionReactionOverride] = []
-        fixture.session.bridge.factionNatives.reactionsChanged = { published = $0 }
+        fixture.session.bridge.natives.faction.reactionsChanged = { published = $0 }
         let door = Fixture.key(Fixture.doorID)
         let other = fixture.handle(Fixture.doorID)
 
@@ -47,7 +47,7 @@ struct PapyrusNativeFactionShoutTests {
         let other = PapyrusValue.object(fixture.handle(Fixture.doorID))
         #expect(call(fixture, "Faction", "SetReaction", [other, .integer(3)])
             == .returned(.none))
-        #expect(fixture.session.bridge.scriptedFactionReactions().map {
+        #expect(fixture.session.bridge.scriptState.scriptedFactionReactions().map {
             "\($0.from)>\($0.toward)=\($0.reaction)"
         } == ["\(fixture.key)>\(door)=friend"])
         #expect(PapyrusWorldFixture.isInvalidArguments(
@@ -58,13 +58,13 @@ struct PapyrusNativeFactionShoutTests {
     @Test func setPlayerEnemyPairsWithThePlayerFaction() throws {
         let fixture = try Fixture.make()
         _ = call(fixture, "Faction", "SetPlayerEnemy")
-        let reactions = fixture.session.bridge.scriptedFactionReactions()
+        let reactions = fixture.session.bridge.scriptState.scriptedFactionReactions()
         #expect(reactions.contains {
             $0.from == PapyrusNativeFunctions.FactionRelationsNatives.playerFaction && $0
                 .reaction == .enemy
         })
         _ = call(fixture, "Faction", "SetPlayerEnemy", [.boolean(false)])
-        #expect(fixture.session.bridge.scriptedFactionReactions().allSatisfy {
+        #expect(fixture.session.bridge.scriptState.scriptedFactionReactions().allSatisfy {
             $0.reaction == .neutral
         })
     }

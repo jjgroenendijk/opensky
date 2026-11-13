@@ -8,21 +8,22 @@ public import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.ScriptState {
     public func scriptedState(of key: ReferenceKey) -> ScriptedReferenceState {
-        worldState.component(ScriptedReferenceState.self, for: key) ?? ScriptedReferenceState()
+        bridge.worldState
+            .component(ScriptedReferenceState.self, for: key) ?? ScriptedReferenceState()
     }
 
     /// Every form's script state, for the conditions. Rebuilt only after a state write.
     public func scriptedStateResolution() -> ScriptedStateConditionResolution {
-        let store = worldState
-        return store.derived(ScriptedStateConditionResolution.self, from: self) {
+        let store = bridge.worldState
+        return store.derived(ScriptedStateConditionResolution.self, from: bridge) {
             var states: [ReferenceKey: ScriptedReferenceState] = [:]
             for key in store.sortedDirtyKeys() {
                 states[key] = store.component(ScriptedReferenceState.self, for: key)
             }
             var equipped: [ReferenceKey: ReferenceKey] = [:]
-            for entry in references?.residentActorEntries() ?? [] {
+            for entry in bridge.ports.references?.residentActorEntries() ?? [] {
                 equipped[entry.key] = equippedShout(of: entry.key)
             }
             return ScriptedStateConditionResolution(states: states, equippedShouts: equipped)
@@ -44,13 +45,14 @@ extension PapyrusWorldStateBridge {
 
     /// Hands the stored reactions to `factionReactionsChanged`, also after a load.
     public func publishFactionReactions() {
-        factionNatives.reactionsChanged(scriptedFactionReactions())
+        bridge.natives.faction.reactionsChanged(scriptedFactionReactions())
     }
 
     public func scriptedFactionReactions() -> [FactionReactionOverride] {
         var reactions: [FactionReactionOverride] = []
-        for key in worldState.sortedDirtyKeys() {
-            guard let state = worldState.component(ScriptedReferenceState.self, for: key) else {
+        for key in bridge.worldState.sortedDirtyKeys() {
+            guard let state = bridge.worldState.component(ScriptedReferenceState.self, for: key)
+            else {
                 continue
             }
             for (name, other) in state.forms.sorted(by: { $0.key < $1.key })
@@ -79,16 +81,16 @@ extension PapyrusWorldStateBridge {
         var state = scriptedState(of: key)
         change(&state)
         if state.isEmpty {
-            worldState.reset(.scriptedState, for: key)
+            bridge.worldState.reset(.scriptedState, for: key)
         } else {
-            worldState.set(state, for: key, in: cellLocation(of: key))
+            bridge.worldState.set(state, for: key, in: bridge.cellLocation(of: key))
         }
     }
 
     /// The plugin entries of a form list, then the forms a script added with `AddForm`.
     public func formListEntries(of key: ReferenceKey) -> [ReferenceKey?]? {
         let added = scriptedState(of: key).addedForms.map { Optional($0) }
-        guard let entries = pluginFormListEntries(of: key) else {
+        guard let entries = bridge.formLists.pluginFormListEntries(of: key) else {
             return added.isEmpty ? nil : added
         }
         return entries + added

@@ -11,16 +11,17 @@ extension PapyrusNativeFunctions.ShoutsNatives {
     public static func installShouts(into registry: inout PapyrusNativeRegistry) {
         installWords(into: &registry)
         withForm("Actor", "AddShout", into: &registry) { _, bridge, actor, shout in
-            bridge
-                .updateScriptedState(of: actor) { $0.setFlag(ScriptedStateName.shout(shout), true) }
+            bridge.scriptState.updateScriptedState(of: actor) {
+                $0.setFlag(ScriptedStateName.shout(shout), true)
+            }
             return .returned(.none)
         }
         // `bool RemoveShout(Shout)`: true when the actor knew it, from a script or its
         // record. A record shout keeps false, so it stays gone. An equipped shout goes too.
         withForm("Actor", "RemoveShout", into: &registry) { _, bridge, actor, shout in
-            let fromRecord = bridge.recordShouts(of: actor).contains(shout)
-            let knew = bridge.knowsShout(shout, actor: actor, fromRecord: fromRecord)
-            bridge.updateScriptedState(of: actor) { state in
+            let fromRecord = bridge.scriptState.recordShouts(of: actor).contains(shout)
+            let knew = bridge.scriptState.knowsShout(shout, actor: actor, fromRecord: fromRecord)
+            bridge.scriptState.updateScriptedState(of: actor) { state in
                 state.setFlag(ScriptedStateName.shout(shout), fromRecord ? false : nil)
                 if state.form(equippedShoutName) == shout {
                     state.setForm(equippedShoutName, nil)
@@ -29,15 +30,15 @@ extension PapyrusNativeFunctions.ShoutsNatives {
             return .returned(.boolean(knew))
         }
         withForm("Actor", "EquipShout", into: &registry) { _, bridge, actor, shout in
-            bridge.updateScriptedState(of: actor) {
+            bridge.scriptState.updateScriptedState(of: actor) {
                 $0.setForm(equippedShoutName, shout)
                 $0.setFlag(ScriptedStateName.shoutUnequipped, nil)
             }
             return .returned(.none)
         }
         withForm("Actor", "UnequipShout", into: &registry) { _, bridge, actor, shout in
-            let equipped = bridge.equippedShout(of: actor)
-            bridge.updateScriptedState(of: actor) { state in
+            let equipped = bridge.scriptState.equippedShout(of: actor)
+            bridge.scriptState.updateScriptedState(of: actor) { state in
                 if state.form(equippedShoutName) == shout {
                     state.setForm(equippedShoutName, nil)
                 }
@@ -49,7 +50,7 @@ extension PapyrusNativeFunctions.ShoutsNatives {
             return .returned(.none)
         }
         scriptState("Actor", "GetEquippedShout", into: &registry) { _, bridge, actor in
-            let shout = bridge.equippedShout(of: actor)
+            let shout = bridge.scriptState.equippedShout(of: actor)
             return .returned(shout
                 .map { handle($0, in: bridge) } ?? .none)
         }
@@ -77,11 +78,11 @@ extension PapyrusNativeFunctions.ShoutsNatives {
     }
 }
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.ScriptState {
     /// The shouts the actor's base record gives.
     func recordShouts(of actor: ReferenceKey) -> [ReferenceKey] {
-        guard let base = baseObject(of: actor) else { return [] }
-        return menus?.recordShouts(ofBase: base) ?? []
+        guard let base = bridge.baseObject(of: actor) else { return [] }
+        return bridge.menus?.recordShouts(ofBase: base) ?? []
     }
 
     /// A script's `AddShout` or `RemoveShout` wins over the record's spell list.
@@ -113,21 +114,24 @@ extension PapyrusNativeFunctions.ShoutsNatives {
         ]
         for (name, flags) in names {
             withForm("Game", name, into: &registry) { _, bridge, player, word in
-                let known = bridge.scriptedState(of: player)
+                let known = bridge.scriptState.scriptedState(of: player)
                     .flag(ScriptedStateName.wordKnown(word)) == true
-                bridge.updateScriptedState(of: player) { state in
+                bridge.scriptState.updateScriptedState(of: player) { state in
                     for flag in flags {
                         state.setFlag(flag(word), true)
                     }
                 }
-                if name == "TeachWord", !known, let text = bridge.formName(of: word) {
-                    bridge.presenter?.postWorldNotice(.wordLearned(word: text))
+                if
+                    name == "TeachWord", !known,
+                    let text = bridge.itemNoticeLines.formName(of: word)
+                {
+                    bridge.ports.presenter?.postWorldNotice(.wordLearned(word: text))
                 }
                 return .returned(.none)
             }
         }
         withForm("Game", "IsWordUnlocked", into: &registry) { _, bridge, player, word in
-            let state = bridge.scriptedState(of: player)
+            let state = bridge.scriptState.scriptedState(of: player)
             return .returned(.boolean(state.flag(ScriptedStateName.wordUnlocked(word)) == true))
         }
     }

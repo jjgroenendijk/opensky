@@ -21,7 +21,7 @@ import OpenSkyWorldState
 
 extension GameSessionScope {
     var playerControlLocks: PlayerControlLocks {
-        var locks = scripts.bridge?.playerControlLocks ?? .none
+        var locks = scripts.bridge?.stateLinks.playerControlLocks ?? .none
         locks.isBeastForm = playerBeastForm.isBeast
         let death = ragdoll.playerDeath
         if death.isDead {

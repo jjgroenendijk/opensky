@@ -85,7 +85,7 @@ struct PapyrusNativePresentationTests {
     private static func fixture() throws -> (PapyrusNativeReferenceFixture, FakePresenter) {
         let fixture = try PapyrusNativeReferenceFixture.make()
         let presenter = FakePresenter()
-        fixture.session.bridge.presenter = presenter
+        fixture.session.bridge.ports.presenter = presenter
         return (fixture, presenter)
     }
 

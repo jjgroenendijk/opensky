@@ -21,7 +21,7 @@ struct PapyrusNativeFormListTests {
         let file = try KeywordFixture.plugin(formLists: [
             FormListFixture.recordBytes(formID: Self.listID, entries: [Fixture.leverID, 0])
         ])
-        fixture.session.bridge.formListStore = FormListStore(plugins: [("Skyrim.esm", file)])
+        fixture.session.bridge.stores.formListStore = FormListStore(plugins: [("Skyrim.esm", file)])
         let list = fixture.handle(Self.listID)
 
         #expect(call(fixture, "GetSize", on: list, returnType: .integer) == .returned(.integer(2)))
@@ -36,7 +36,7 @@ struct PapyrusNativeFormListTests {
         let file = try KeywordFixture.plugin(formLists: [
             FormListFixture.recordBytes(formID: Self.listID, entries: [0, Fixture.leverID])
         ])
-        fixture.session.bridge.formListStore = FormListStore(plugins: [("Skyrim.esm", file)])
+        fixture.session.bridge.stores.formListStore = FormListStore(plugins: [("Skyrim.esm", file)])
         let list = fixture.handle(Self.listID)
         let lever: [PapyrusValue] = [.object(fixture.receiver)]
         let door: [PapyrusValue] = [.object(fixture.handle(Fixture.doorID))]
@@ -71,7 +71,7 @@ struct PapyrusNativeFormListTests {
             + ESMFixture.topGroup("MISC", contents: ESMFixture.record(
                 "MISC", formID: Self.listID, data: misc
             )))
-        fixture.session.bridge.keywordStore = KeywordStore(index: RecordIndex(
+        fixture.session.bridge.stores.keywordStore = KeywordStore(index: RecordIndex(
             plugins: [("Skyrim.esm", file)], recordTypes: RecordIndex.referenceRecordTypes
         ))
         let form = fixture.handle(Self.listID)

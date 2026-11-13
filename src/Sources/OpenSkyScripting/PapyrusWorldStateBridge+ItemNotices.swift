@@ -5,15 +5,21 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyScriptingInterface
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.ItemNoticeLines {
     /// Posts nothing for an NPC, or for a form with no name to show.
     func postItemNotice(
         _ form: FormID, count: Int32 = 1, to holder: ReferenceKey,
         word: KeyPath<ItemNoticeTexts, String>
     ) {
-        guard holder == .player, let name = menus?.name(of: form), !name.isEmpty else { return }
-        _ = presenter?.postNotification(
-            ItemNoticeTexts.notice(name: name, count: count, word: itemNotices[keyPath: word])
+        guard
+            holder == .player, let name = bridge.menus?.name(of: form),
+            !name.isEmpty else { return }
+        _ = bridge.ports.presenter?.postNotification(
+            ItemNoticeTexts.notice(
+                name: name,
+                count: count,
+                word: bridge.stores.itemNotices[keyPath: word]
+            )
         )
     }
 
@@ -22,7 +28,7 @@ extension PapyrusWorldStateBridge {
     ) {
         guard
             case let .plugin(plugin, objectID) = form,
-            let local = formIDResolver?.localFormID(
+            let local = bridge.formIDResolver?.localFormID(
                 of: ResolvedFormID(plugin: plugin, objectID: objectID)
             )
         else { return }
@@ -33,10 +39,10 @@ extension PapyrusWorldStateBridge {
     func formName(of form: ReferenceKey) -> String? {
         guard
             case let .plugin(plugin, objectID) = form,
-            let local = formIDResolver?.localFormID(
+            let local = bridge.formIDResolver?.localFormID(
                 of: ResolvedFormID(plugin: plugin, objectID: objectID)
             ),
-            let name = menus?.name(of: local), !name.isEmpty
+            let name = bridge.menus?.name(of: local), !name.isEmpty
         else { return nil }
         return name
     }

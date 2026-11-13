@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 import simd
@@ -56,13 +56,13 @@ extension PapyrusNativeFunctions.ReferenceRulesNatives {
             ("GetStolenItemValueNoCrime", PapyrusWorldStateBridge.stolenValueNoCrimeName)
         ] {
             scriptState("Faction", name, into: &registry) { _, bridge, key in
-                let value = bridge.scriptedState(of: key).value(valueName) ?? 0
+                let value = bridge.scriptState.scriptedState(of: key).value(valueName) ?? 0
                 return .returned(.integer(Int32(clamping: Int64(value))))
             }
         }
         // OpenSky offers every topic whose conditions pass, so a known flag is all `Add` sets.
         scriptState("Topic", "Add", into: &registry) { _, bridge, key in
-            bridge.updateScriptedState(of: key) { $0.setFlag("topicAdded", true) }
+            bridge.scriptState.updateScriptedState(of: key) { $0.setFlag("topicAdded", true) }
             return .returned(.none)
         }
     }
@@ -90,13 +90,13 @@ extension PapyrusNativeFunctions.ReferenceRulesNatives {
             else { return failure(call, "MoveToNode needs a target and a node name") }
             let move = { [weak bridge] (node: simd_float4x4?) -> PapyrusValue in
                 if let node, let bridge {
-                    bridge.move(key, to: node)
+                    bridge.referenceRules.move(key, to: node)
                 }
                 return .none
             }
             switch lookup(target, name, move) {
             case let .found(node):
-                bridge.move(key, to: node)
+                bridge.referenceRules.move(key, to: node)
                 return .returned(.none)
             case .missing: return failure(
                     call,
@@ -108,26 +108,26 @@ extension PapyrusNativeFunctions.ReferenceRulesNatives {
     }
 }
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.ReferenceRules {
     /// The player stole `value` from `faction`, seen or unseen.
     public func noteStolenValue(_ value: Int64, from faction: ReferenceKey, witnessed: Bool) {
         let name = witnessed
             ? PapyrusWorldStateBridge.stolenValueCrimeName
             : PapyrusWorldStateBridge.stolenValueNoCrimeName
-        updateScriptedState(of: faction) { state in
+        bridge.scriptState.updateScriptedState(of: faction) { state in
             state.setValue(name, (state.value(name) ?? 0) + Float(value))
         }
     }
 
     /// Places `key` at a node's position and rotation, keeping its scale.
     func move(_ key: ReferenceKey, to node: simd_float4x4) {
-        guard let state = referenceState(for: key) else { return }
+        guard let state = bridge.referenceState(for: key) else { return }
         let basis = simd_float3x3(
             simd_normalize(SIMD3(node.columns.0.x, node.columns.0.y, node.columns.0.z)),
             simd_normalize(SIMD3(node.columns.1.x, node.columns.1.y, node.columns.1.z)),
             simd_normalize(SIMD3(node.columns.2.x, node.columns.2.y, node.columns.2.z))
         )
-        write(ReferenceTransformOverride(
+        bridge.write(ReferenceTransformOverride(
             position: SIMD3(node.columns.3.x, node.columns.3.y, node.columns.3.z),
             rotation: MatrixMath.eulerAngles(of: simd_quatf(basis)),
             scale: state.transform.scale
@@ -136,8 +136,8 @@ extension PapyrusWorldStateBridge {
 
     /// Places `key` at `point`, keeping its rotation and scale.
     func move(_ key: ReferenceKey, to point: SIMD3<Float>) {
-        guard let state = referenceState(for: key) else { return }
-        write(ReferenceTransformOverride(
+        guard let state = bridge.referenceState(for: key) else { return }
+        bridge.write(ReferenceTransformOverride(
             position: point, rotation: state.transform.rotation, scale: state.transform.scale
         ).erased, for: key)
     }

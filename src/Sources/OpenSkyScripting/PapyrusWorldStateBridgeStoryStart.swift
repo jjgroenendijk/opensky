@@ -3,20 +3,20 @@
 // "OnStoryKillActor - Quest"; docs/engine/story-manager.md maps the event data.
 
 import Foundation
-public import OpenSkyConditions
+import OpenSkyConditions
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.StoryEvents {
     /// Queues the event on the quest's scripts. An event with no Papyrus twin sends nothing.
     @discardableResult
     public func queueStoryStartEvent(quest id: FormID, event: StoryEventData) -> Int {
         guard
-            let world,
-            let key = questRuntime?.quests.key(for: id),
+            let world = bridge.world,
+            let key = bridge.questRuntime?.quests.key(for: id),
             let start = storyStartEvent(event)
         else { return 0 }
         return world.queueActorEvent(start.name, on: key, arguments: start.arguments)
@@ -71,7 +71,7 @@ extension PapyrusWorldStateBridge {
     }
 
     private func reference(_ key: ReferenceKey?) -> PapyrusValue {
-        key.flatMap(objectHandle(for:)).map { .object($0) } ?? .none
+        key.flatMap(bridge.objectHandle(for:)).map { .object($0) } ?? .none
     }
 
     private func location(_ id: ResolvedFormID?) -> PapyrusValue {
@@ -79,6 +79,6 @@ extension PapyrusWorldStateBridge {
     }
 
     private func form(_ id: FormID?) -> PapyrusValue {
-        reference(id.flatMap(referenceKey(forFormID:)))
+        reference(id.flatMap(bridge.referenceKey(forFormID:)))
     }
 }

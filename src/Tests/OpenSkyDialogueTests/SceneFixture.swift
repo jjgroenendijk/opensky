@@ -72,7 +72,8 @@ enum SceneFixture {
         questStopped: Bool = false,
         host: FakeSceneHost? = nil,
         pendingLines: ScenePendingLines = ScenePendingLines(),
-        others: [CatalogScene] = []
+        others: [CatalogScene] = [],
+        fragments: (any SceneFragmentDispatching)? = nil
     ) throws -> SceneRuntime {
         let quests = try DialogueRuntimeFixture.questStore()
         let questKey = try #require(quests.key(for: FormID(DialogueRuntimeFixture.runningQuest)))
@@ -97,7 +98,7 @@ enum SceneFixture {
         )
         return SceneRuntime(
             catalog: SceneCatalog(scenes: [scene] + others), dialogue: dialogue,
-            host: host, pendingLines: pendingLines, now: now
+            fragments: fragments, host: host, pendingLines: pendingLines, now: now
         )
     }
 }

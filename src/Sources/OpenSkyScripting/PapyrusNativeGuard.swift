@@ -29,10 +29,13 @@ extension PapyrusNativeFunctions.GuardNatives {
             guard let actor = actorTarget(call, context)
             else { return needsActor(call) }
             let bridge = actor.world as? PapyrusWorldStateBridge
-            if let scripted = bridge?.scriptedState(of: actor.key).form("crimeFaction") {
+            if
+                let scripted = bridge?.scriptState.scriptedState(of: actor.key)
+                    .form("crimeFaction")
+            {
                 return .returned(handle(scripted, in: actor.world))
             }
-            guard let faction = actor.world.crimeFaction(ofActor: actor.key) else {
+            guard let faction = actor.world.guardBridge.crimeFaction(ofActor: actor.key) else {
                 return failure(call, "GetCrimeFaction needs a session with faction data")
             }
             return .returned(faction.map { handle($0, in: actor.world) } ?? .none)
@@ -46,7 +49,7 @@ extension PapyrusNativeFunctions.GuardNatives {
         ) { call, context in
             guard let actor = actorTarget(call, context)
             else { return needsActor(call) }
-            guard let isGuard = actor.world.isGuard(actor.key) else {
+            guard let isGuard = actor.world.guardBridge.isGuard(actor.key) else {
                 return failure(call, "IsGuard needs a session with faction data")
             }
             return .returned(.boolean(isGuard))
@@ -63,7 +66,7 @@ extension PapyrusNativeFunctions.GuardNatives {
             functionName: "CanPayCrimeGold"
         ) { call, context in
             PapyrusNativeFunctions.CrimeNatives.factionTarget(call, context) { world, faction in
-                guard let canPay = world.canPayCrimeGold(to: faction) else {
+                guard let canPay = world.guardBridge.canPayCrimeGold(to: faction) else {
                     return failure(call, "CanPayCrimeGold needs a session with a crime runtime")
                 }
                 return .returned(.boolean(canPay))
@@ -106,7 +109,7 @@ extension PapyrusNativeFunctions.GuardNatives {
             scriptName: "Game",
             functionName: "ServeTime"
         ) { call, context in
-            guard let served = context.world?.serveTime() else {
+            guard let served = context.world?.guardBridge.serveTime() else {
                 return failure(call, "ServeTime needs a crime runtime")
             }
             guard served else { return failure(call, "ServeTime: the player is not in jail") }
@@ -122,7 +125,7 @@ extension PapyrusNativeFunctions.GuardNatives {
         _ faction: ReferenceKey,
         _ outcome: ArrestOutcome
     ) -> PapyrusNativeResult {
-        switch world.settleArrest(with: faction, outcome) {
+        switch world.guardBridge.settleArrest(with: faction, outcome) {
         case .none:
             failure(call, "\(call.functionName) needs a session with a crime runtime")
         case .success:

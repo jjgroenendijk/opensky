@@ -21,8 +21,8 @@ extension PapyrusNativeFunctions.ActiveMagicEffectNatives {
         }
         withEffectRun("Dispel", into: &registry) { call, bridge, run in
             guard
-                let holder = bridge.actorHolder(for: run.id.target),
-                let dispel = bridge.magicNatives.dispelEffects
+                let holder = bridge.actorValues.actorHolder(for: run.id.target),
+                let dispel = bridge.natives.magic.dispelEffects
             else { return failure(call, "Dispel needs an effect runtime and an actor target") }
             _ = dispel(holder) { $0.sequence == run.id.sequence }
             return .returned(.none)
@@ -34,7 +34,7 @@ extension PapyrusNativeFunctions.ActiveMagicEffectNatives {
                 let bridge = context.world as? PapyrusWorldStateBridge,
                 let receiver = call.receiver,
                 let key = bridge.referenceKey(for: receiver),
-                let data = bridge.magicEffectStore?.effect(key: key)?.effect.data
+                let data = bridge.stores.magicEffectStore?.effect(key: key)?.effect.data
             else { return failure(call, "GetAssociatedSkill needs a magic effect record") }
             let names = ActorValueIdentity.vanillaNames
             let index = Int(data.magicSkill)

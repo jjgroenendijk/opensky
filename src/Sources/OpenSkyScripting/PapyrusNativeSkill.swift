@@ -26,7 +26,8 @@ extension PapyrusNativeFunctions.SkillNatives {
                 else {
                     return failure(call, "AdvanceSkill needs a positive magnitude")
                 }
-                guard world.advancePlayerSkill(.advance, at: index, by: magnitude) else {
+                guard world.actorBridge.advancePlayerSkill(.advance, at: index, by: magnitude)
+                else {
                     return needsProgression(call)
                 }
                 return .returned(.none)
@@ -39,7 +40,7 @@ extension PapyrusNativeFunctions.SkillNatives {
             functionName: "IncrementSkill"
         ) { call, context in
             skillCall(call, context) { world, index in
-                guard world.advancePlayerSkill(.increment, at: index, by: 1) else {
+                guard world.actorBridge.advancePlayerSkill(.increment, at: index, by: 1) else {
                     return needsProgression(call)
                 }
                 return .returned(.none)
@@ -58,7 +59,7 @@ extension PapyrusNativeFunctions.SkillNatives {
                     return failure(call, "IncrementSkillBy needs a count of zero or more")
                 }
                 for _ in 0 ..< min(count, 100) {
-                    guard world.advancePlayerSkill(.increment, at: index, by: 1) else {
+                    guard world.actorBridge.advancePlayerSkill(.increment, at: index, by: 1) else {
                         return needsProgression(call)
                     }
                 }

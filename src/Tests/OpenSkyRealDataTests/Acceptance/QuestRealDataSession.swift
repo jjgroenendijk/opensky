@@ -70,7 +70,7 @@ final class QuestRealDataSession {
     /// The stages are set from outside because this quest advances through
     /// dialogue, which OpenSky does not have yet; see the suite's header.
     func walk(quest: Quest, key: ReferenceKey) throws {
-        guard try bridge.startQuest(for: key) else {
+        guard try bridge.questScripts.startQuest(for: key) else {
             throw QuestRealDataError.questWouldNotStart
         }
         drain()
@@ -83,10 +83,10 @@ final class QuestRealDataSession {
         }
         guard try state(of: quest.formID).isRunning else { return }
         for objective in quest.objectives.map(\.index) {
-            try bridge.setQuestObjectiveDisplayed(objective, true, for: key)
-            try bridge.setQuestObjectiveCompleted(objective, true, for: key)
+            try bridge.questScripts.setQuestObjectiveDisplayed(objective, true, for: key)
+            try bridge.questScripts.setQuestObjectiveCompleted(objective, true, for: key)
         }
-        try bridge.completeQuest(for: key)
+        try bridge.questScripts.completeQuest(for: key)
         drain()
     }
 
@@ -122,7 +122,7 @@ final class QuestRealDataSession {
     /// that stage's fragments have run before the caller looks at anything.
     /// The render half uses this to build two pages one stage apart.
     func start(quest: Quest, key: ReferenceKey, upTo stage: UInt16) throws {
-        guard try bridge.startQuest(for: key) else {
+        guard try bridge.questScripts.startQuest(for: key) else {
             throw QuestRealDataError.questWouldNotStart
         }
         drain()
@@ -133,7 +133,7 @@ final class QuestRealDataSession {
         // A stage fragment may stop the quest; a stopped quest takes no objective change.
         guard try state(of: quest.formID).isRunning else { return }
         for objective in quest.objectives.map(\.index) {
-            try bridge.setQuestObjectiveDisplayed(objective, true, for: key)
+            try bridge.questScripts.setQuestObjectiveDisplayed(objective, true, for: key)
         }
     }
 

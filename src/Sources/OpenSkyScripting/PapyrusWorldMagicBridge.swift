@@ -37,7 +37,7 @@ nonisolated public struct PapyrusSpellState: Equatable, Sendable {
 
 /// Magic state and mutations a Papyrus native may perform.
 @MainActor
-public protocol PapyrusWorldMagicBridge: AnyObject, Sendable {
+public protocol PapyrusWorldMagicBridge: Sendable {
     /// One observation of the magic acting on and known to `key`, or nil when
     /// this session runs no spellbook — a synthetic session with no SPEL index.
     func spellState(for key: ReferenceKey) -> PapyrusSpellState?

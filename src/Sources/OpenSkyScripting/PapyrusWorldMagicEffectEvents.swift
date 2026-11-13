@@ -9,17 +9,21 @@ import OpenSkyMagicInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.EffectEvents {
     /// Queues `OnMagicEffectApply` on the target's scripts, and starts and finishes the
     /// effects' own scripts, for the active-effect writes since the last call. The first
     /// call only sets the cursor. Returns how many effects started or ended.
     @discardableResult
     public func queueMagicEffectEvents() -> Int {
-        let next = worldState.nextJournalSequence
-        defer { effectJournalCursor = next }
-        guard let cursor = effectJournalCursor, cursor < next, let world else { return 0 }
+        let next = bridge.worldState.nextJournalSequence
+        defer { bridge.runState.effectJournalCursor = next }
+        guard
+            let cursor = bridge.runState.effectJournalCursor, cursor < next,
+            let world = bridge.world else { return 0 }
         var changed = 0
-        for entry in worldState.journalEntries(since: cursor) where entry.kind == .activeEffects {
+        for entry in bridge.worldState.journalEntries(since: cursor)
+            where entry.kind == .activeEffects
+        {
             let old = Self.effects(in: entry.oldValue)
             let new = Self.effects(in: entry.newValue)
             let oldSequences = Set(old.map(\.sequence))
@@ -42,10 +46,11 @@ extension PapyrusWorldStateBridge {
     /// The effects the save brought back get their script instances again, quietly, so
     /// their end still sends `OnEffectFinish`. Their script variables start fresh.
     public func skipMagicEffectJournal() {
-        effectJournalCursor = worldState.nextJournalSequence
-        guard let world else { return }
-        for key in worldState.sortedDirtyKeys() {
-            let effects = worldState.component(ActiveEffectState.self, for: key)?.effects ?? []
+        bridge.runState.effectJournalCursor = bridge.worldState.nextJournalSequence
+        guard let world = bridge.world else { return }
+        for key in bridge.worldState.sortedDirtyKeys() {
+            let effects = bridge.worldState.component(ActiveEffectState.self, for: key)?
+                .effects ?? []
             for effect in effects where world.effectScripts.runs[
                 PapyrusActiveEffectID(target: key, sequence: effect.sequence)
             ] == nil {
@@ -72,12 +77,12 @@ extension PapyrusWorldStateBridge {
         announces: Bool
     ) {
         guard
-            let store = magicEffectStore,
+            let store = bridge.stores.magicEffectStore,
             let record = store.effect(key: effect.effect),
             !record.effect.scriptData.scripts.isEmpty
         else { return }
         let resolver = store.sourceResolver(of: record)
-            ?? formIDResolver
+            ?? bridge.formIDResolver
             ?? FormIDResolver(pluginName: record.sourcePlugin, masters: [])
         world.startEffectScripts(
             PapyrusActiveEffectRun(

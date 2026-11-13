@@ -42,7 +42,7 @@ struct PapyrusNativeDebugTests {
             return
         }
         var toggles = 0
-        bridge.playerNatives.toggleMenus = { toggles += 1 }
+        bridge.natives.player.toggleMenus = { toggles += 1 }
         #expect(registry.invoke(Self.debug("ToggleMenus")) == .returned(.none))
         #expect(toggles == 1)
     }

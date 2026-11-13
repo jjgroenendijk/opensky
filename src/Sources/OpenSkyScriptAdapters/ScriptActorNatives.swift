@@ -29,36 +29,36 @@ import simd
 extension ScriptActorBindingsAdapter {
     /// Fills these natives as the bridge is built.
     public func fillActorNatives(bridge: PapyrusWorldStateBridge) {
-        bridge.actorNatives
+        bridge.natives.actor
             .actorValueRuntime = { [weak game = self.game] in game?.actorValues.runtime }
-        bridge.actorNatives.ragdollRuntime = { [weak game = self.game] in game?.ragdoll.runtime }
-        bridge.actorNatives.combatRuntime = { [weak game = self.game] in game?.combat.loop }
+        bridge.natives.actor.ragdollRuntime = { [weak game = self.game] in game?.ragdoll.runtime }
+        bridge.natives.actor.combatRuntime = { [weak game = self.game] in game?.combat.loop }
         // Only the player tracks a draw state, so `IsWeaponDrawn` fails with a
         // reason for everyone else instead of claiming sheathed.
-        bridge.actorNatives.weaponDrawState = { [weak game = self.game] key in
+        bridge.natives.actor.weaponDrawState = { [weak game = self.game] key in
             guard key == .player else { return nil }
             return game?.combat.melee?.state.drawState
         }
-        bridge.sessionNatives.conditionData = { [weak game = self.game] in
+        bridge.natives.session.conditionData = { [weak game = self.game] in
             game?.runtimeStateWorld.conditionData() ?? .empty
         }
-        bridge.perceptionNatives
+        bridge.natives.perception
             .detection = { [weak game = self.game] in game?.perception.perceptionResolution() }
-        bridge.sessionNatives.currentPackage = { [weak game = self.game] actor in
+        bridge.natives.session.currentPackage = { [weak game = self.game] actor in
             game?.packages.runtime?.currentPackage(for: actor)?.package.formID
         }
-        bridge.sessionNatives
+        bridge.natives.session
             .packageTemplate = { [weak game = self.game] package in
                 game?.packages.template(of: package)
             }
-        bridge.perceptionNatives.lightLevel = { [weak game = self.game] feet in
+        bridge.natives.perception.lightLevel = { [weak game = self.game] feet in
             let body = SIMD3<Float>(0, 0, PlayerCapsule.standard.torsoHeight)
             return game?.aiWorld.lightLevel(at: feet + body) ?? 1
         }
-        bridge.sessionNatives.cellFog = { [sky = self.skyBindings] cell, change in
+        bridge.natives.session.cellFog = { [sky = self.skyBindings] cell, change in
             sky.changeFog(change, in: cell)
         }
-        bridge.sessionNatives.havokMass = { [weak game = self.game] key in
+        bridge.natives.session.havokMass = { [weak game = self.game] key in
             if let body = game?.streamer.dynamicBodies.body(for: key) {
                 return body.definition.mass
             }
@@ -66,10 +66,10 @@ extension ScriptActorBindingsAdapter {
                 .instance.bodies.reduce(0) { $0 + $1.definition.mass }
         }
         let physics = physicsBindings
-        bridge.sessionNatives.publishTranslationPoses = { [weak bridge] poses in
-            physics.publishTranslations(poses, moves: bridge?.translations ?? [:])
+        bridge.natives.session.publishTranslationPoses = { [weak bridge] poses in
+            physics.publishTranslations(poses, moves: bridge?.runState.translations ?? [:])
         }
-        bridge.perceptionNatives.livePosition = { [weak game = self.game] key in
+        bridge.natives.perception.livePosition = { [weak game = self.game] key in
             guard let game else { return nil }
             guard key != .player else { return game.gameSession?.locomotion.status.feetPosition }
             return game.actorWorld.combatActor(key: key)?.feet

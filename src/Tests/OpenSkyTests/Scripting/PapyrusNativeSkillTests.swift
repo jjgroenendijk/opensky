@@ -54,7 +54,7 @@ struct PapyrusNativeSkillTests {
             ])
         ))
         if wired {
-            session.bridge.progressionNatives.advanceSkill = { advance, index, magnitude in
+            session.bridge.natives.progression.advanceSkill = { advance, index, magnitude in
                 let report = switch advance {
                 case .advance:
                     box.runtime.advance(

@@ -24,7 +24,7 @@ extension PapyrusNativeFunctions.ScriptStateLinksNatives {
             ] {
                 scriptState(script, setter, into: &registry) { call, bridge, key in
                     let owner = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
-                    bridge.updateScriptedState(of: key) { state in
+                    bridge.scriptState.updateScriptedState(of: key) { state in
                         state.setFlag(PapyrusWorldStateBridge.ownerSetName, true)
                         state.setForm("actorOwner", nil)
                         state.setForm("factionOwner", nil)
@@ -36,11 +36,11 @@ extension PapyrusNativeFunctions.ScriptStateLinksNatives {
             for (getter, wantsActor) in [("GetActorOwner", true), ("GetFactionOwner", false)] {
                 scriptState(script, getter, into: &registry) { _, bridge, key in
                     let owner: ReferenceOwner?
-                    if let scripted = bridge.scriptedOwner(of: key) {
+                    if let scripted = bridge.stateLinks.scriptedOwner(of: key) {
                         owner = scripted
                     } else if
                         script == "ObjectReference",
-                        let world = bridge.crimeNatives.crimeReporter?()?.world
+                        let world = bridge.natives.crime.crimeReporter?()?.world
                     {
                         owner = world.crimeOwner(of: key)
                     } else {
@@ -66,7 +66,7 @@ extension PapyrusNativeFunctions.ScriptStateLinksNatives {
             ("EnablePlayerControls", false)
         ] {
             scriptState("Game", native, into: &registry) { call, bridge, key in
-                bridge.updateScriptedState(of: key) { state in
+                bridge.scriptState.updateScriptedState(of: key) { state in
                     for (index, control) in playerControls.enumerated() {
                         let fallback = disables ? control.disabledByDefault : true
                         guard boolean(call, at: index, default: fallback)
@@ -83,14 +83,14 @@ extension PapyrusNativeFunctions.ScriptStateLinksNatives {
         for control in playerControls {
             let read = "Is\(control.name)ControlsEnabled"
             scriptState("Game", read, into: &registry) { _, bridge, key in
-                let state = bridge.scriptedState(of: key)
+                let state = bridge.scriptState.scriptedState(of: key)
                 return .returned(.boolean(state
                         .flag(PapyrusWorldStateBridge.controlDisabledName(control.name)) !=
                         true))
             }
         }
         scriptState("Game", "SetInChargen", into: &registry) { call, bridge, key in
-            bridge.updateScriptedState(of: key) { state in
+            bridge.scriptState.updateScriptedState(of: key) { state in
                 for (index, name) in PapyrusWorldStateBridge.chargenFlags.enumerated() {
                     state.setFlag(name, boolean(call, at: index, default: false) ? true : nil)
                 }
@@ -100,7 +100,9 @@ extension PapyrusNativeFunctions.ScriptStateLinksNatives {
         scriptState("Game", "SetBeastForm", into: &registry) { call, bridge, key in
             let flag: Bool? = PapyrusNativeFunctions
                 .boolean(call, at: 0, default: false) ? true : nil
-            bridge.updateScriptedState(of: key) { $0.setFlag(ScriptedStateName.beastForm, flag) }
+            bridge.scriptState.updateScriptedState(of: key) {
+                $0.setFlag(ScriptedStateName.beastForm, flag)
+            }
             return .returned(.none)
         }
     }
@@ -114,38 +116,50 @@ extension PapyrusNativeFunctions.ScriptStateLinksNatives {
                 guard
                     let form = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
                 else { return failure(call, "AddForm needs a form") }
-                bridge.updateScriptedState(of: key) { state in
+                bridge.scriptState.updateScriptedState(of: key) { state in
                     if !state.addedForms.contains(form) {
                         state.setAddedForms(state.addedForms + [form])
                     }
                     guard leveled else { return }
                     let level = integer(call, at: 1) ?? 1
                     let count = script == "LeveledItem" ? integer(call, at: 2) ?? 1 : 1
-                    state.setValue(PapyrusWorldStateBridge.addedLevelName(form), Float(level))
-                    state.setValue(PapyrusWorldStateBridge.addedCountName(form), Float(count))
+                    state.setValue(
+                        PapyrusWorldStateBridge.LeveledEdits.addedLevelName(form),
+                        Float(level)
+                    )
+                    state.setValue(
+                        PapyrusWorldStateBridge.LeveledEdits.addedCountName(form),
+                        Float(count)
+                    )
                 }
                 if leveled {
-                    bridge.publishLeveledEdits()
+                    bridge.leveledEdits.publishLeveledEdits()
                 }
                 return .returned(.none)
             }
             scriptState(script, "Revert", into: &registry) { _, bridge, key in
-                bridge.updateScriptedState(of: key) { state in
+                bridge.scriptState.updateScriptedState(of: key) { state in
                     for form in state.addedForms where leveled {
-                        state.setValue(PapyrusWorldStateBridge.addedLevelName(form), nil)
-                        state.setValue(PapyrusWorldStateBridge.addedCountName(form), nil)
+                        state.setValue(
+                            PapyrusWorldStateBridge.LeveledEdits.addedLevelName(form),
+                            nil
+                        )
+                        state.setValue(
+                            PapyrusWorldStateBridge.LeveledEdits.addedCountName(form),
+                            nil
+                        )
                     }
                     state.setAddedForms([])
                 }
                 if leveled {
-                    bridge.publishLeveledEdits()
+                    bridge.leveledEdits.publishLeveledEdits()
                 }
                 return .returned(.none)
             }
         }
         scriptState("FormList", "RemoveAddedForm", into: &registry) { call, bridge, key in
             let form = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
-            bridge.updateScriptedState(of: key) { state in
+            bridge.scriptState.updateScriptedState(of: key) { state in
                 state.setAddedForms(state.addedForms.filter { $0 != form })
             }
             return .returned(.none)
@@ -153,11 +167,11 @@ extension PapyrusNativeFunctions.ScriptStateLinksNatives {
     }
 }
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.StateLinks {
     /// The owner a script set on `key`: nil when no script set one, `.some(nil)` when a
     /// script cleared it.
     public func scriptedOwner(of key: ReferenceKey) -> ReferenceOwner?? {
-        let state = scriptedState(of: key)
+        let state = bridge.scriptState.scriptedState(of: key)
         guard state.flag(PapyrusWorldStateBridge.ownerSetName) == true else { return nil }
         if let actor = state.form("actorOwner") {
             return .some(.actor(actor))
@@ -168,11 +182,11 @@ extension PapyrusWorldStateBridge {
     }
 }
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.StateLinks {
     /// The control groups and `SetInChargen` switches scripts set on the player. The beast
     /// form is the shell's to add.
     public var playerControlLocks: PlayerControlLocks {
-        let state = scriptedState(of: playerKey)
+        let state = bridge.scriptState.scriptedState(of: bridge.playerKey)
         let flags = PapyrusWorldStateBridge.chargenFlags.map { state.flag($0) == true }
         return PlayerControlLocks(
             disabled: Set(PlayerControlGroup.allCases.filter {
@@ -185,6 +199,6 @@ extension PapyrusWorldStateBridge {
     /// False after `DisablePlayerControls` turned movement off; the HUD reads it.
     public var isPlayerMovementEnabled: Bool {
         let name = PapyrusWorldStateBridge.controlDisabledName("Movement")
-        return scriptedState(of: playerKey).flag(name) != true
+        return bridge.scriptState.scriptedState(of: bridge.playerKey).flag(name) != true
     }
 }

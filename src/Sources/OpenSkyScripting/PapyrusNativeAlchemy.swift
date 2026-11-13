@@ -45,7 +45,7 @@ extension PapyrusNativeFunctions.AlchemyNatives {
         ) { call, context in
             guard
                 let world = context.world as? PapyrusWorldStateBridge,
-                let bridge = world.alchemy,
+                let bridge = world.ports.alchemy,
                 case let .plugin(plugin, objectID)? = call.receiver
                     .flatMap(world.referenceKey(for:)),
                 let item = world.formIDResolver?.localFormID(

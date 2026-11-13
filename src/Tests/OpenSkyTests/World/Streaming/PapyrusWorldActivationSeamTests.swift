@@ -41,12 +41,12 @@ struct PapyrusWorldActivationSeamTests {
             objects: [PapyrusWorldActivationFixture.onActivateScript("DoorScript")],
             entries: [entry]
         )
-        session.bridge.references = streamer
+        session.bridge.ports.references = streamer
 
         // Registered scripts first: the audio step still runs before Papyrus.
         var audible: [InteractionEvent] = []
         streamer.onInteraction.register(.scripts) { [weak bridge = session.bridge] event in
-            bridge?.handleInteraction(event)
+            bridge?.activations.handleInteraction(event)
         }
         streamer.onInteraction.register(.audio) { audible.append($0) }
         #expect(streamer.onInteraction.registeredPhases == [.audio, .scripts])

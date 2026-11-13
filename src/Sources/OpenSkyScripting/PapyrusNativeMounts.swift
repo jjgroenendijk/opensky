@@ -9,14 +9,14 @@ import OpenSkyScriptingInterface
 extension PapyrusNativeFunctions.MountsNatives {
     static func installMounts(into registry: inout PapyrusNativeRegistry) {
         scriptState("Game", "GetPlayersLastRiddenHorse", into: &registry) { call, bridge, _ in
-            guard let lastMount = bridge.playerNatives.playersLastMount else {
+            guard let lastMount = bridge.natives.player.playersLastMount else {
                 return failure(call, "GetPlayersLastRiddenHorse needs the vehicle runtime")
             }
             let horse = lastMount().flatMap(bridge.objectHandle(for:))
             return .returned(horse.map { .object($0) } ?? .none)
         }
         scriptState("Actor", "Dismount", into: &registry) { call, bridge, actor in
-            guard let dismount = bridge.playerNatives.dismount else {
+            guard let dismount = bridge.natives.player.dismount else {
                 return failure(call, "Dismount needs the vehicle runtime")
             }
             return .returned(.boolean(dismount(actor)))

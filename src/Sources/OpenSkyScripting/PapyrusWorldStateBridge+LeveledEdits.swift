@@ -7,7 +7,7 @@ import OpenSkyGameData
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.LeveledEdits {
     static func addedLevelName(_ form: ReferenceKey) -> String {
         "addedLevel:\(form)"
     }
@@ -18,11 +18,13 @@ extension PapyrusWorldStateBridge {
 
     /// Run after an `AddForm`, a `Revert`, a global write, and a load.
     public func publishLeveledEdits() {
-        guard let edits = sessionNatives.leveledEdits?() else { return }
+        guard let edits = bridge.natives.session.leveledEdits?() else { return }
         edits.setAddedEntries(scriptAddedLeveledEntries())
         var globals: [FormID: Float] = [:]
-        for key in worldState.sortedOverriddenGlobalKeys() {
-            guard let id = localFormID(of: key), let value = worldState.globalValue(for: key)
+        for key in bridge.worldState.sortedOverriddenGlobalKeys() {
+            guard
+                let id = bridge.localFormID(of: key),
+                let value = bridge.worldState.globalValue(for: key)
             else { continue }
             globals[id] = value.value
         }
@@ -32,15 +34,15 @@ extension PapyrusWorldStateBridge {
     /// A leveled list's added forms carry a level; a form list's do not.
     func scriptAddedLeveledEntries() -> [FormID: [LeveledList.Entry]] {
         var added: [FormID: [LeveledList.Entry]] = [:]
-        for key in worldState.sortedDirtyKeys() {
+        for key in bridge.worldState.sortedDirtyKeys() {
             guard
-                let state = worldState.component(ScriptedReferenceState.self, for: key),
-                let list = localFormID(of: key)
+                let state = bridge.worldState.component(ScriptedReferenceState.self, for: key),
+                let list = bridge.localFormID(of: key)
             else { continue }
             let entries = state.addedForms.compactMap { form -> LeveledList.Entry? in
                 guard
                     let level = state.value(Self.addedLevelName(form)),
-                    let id = localFormID(of: form)
+                    let id = bridge.localFormID(of: form)
                 else { return nil }
                 let count = state.value(Self.addedCountName(form)) ?? 1
                 return LeveledList.Entry(

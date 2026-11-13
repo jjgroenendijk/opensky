@@ -71,7 +71,7 @@ struct TriggerVolumeWalkTests {
         )
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
-        session.bridge.references = streamer
+        session.bridge.ports.references = streamer
         let witness = DetachWitness()
         wire(streamer: streamer, session: session, witness: witness)
         integrate(streamer: streamer, runner: runner, entry: entry, volume: volume)
@@ -99,7 +99,7 @@ struct TriggerVolumeWalkTests {
             world.detach(cell: location)
         }
         streamer.onTriggerTransition.register(.scripts) { [weak bridge = session.bridge] event in
-            bridge?.handleTriggerTransition(event)
+            bridge?.triggers.handleTriggerTransition(event)
         }
     }
 

@@ -80,7 +80,7 @@ struct PapyrusNativeCrimeTests {
             world: world
         )
         if wireReporter {
-            session.bridge.crimeNatives.crimeReporter = { reporter }
+            session.bridge.natives.crime.crimeReporter = { reporter }
         }
         return try Fixture(
             session: session,
@@ -260,7 +260,7 @@ struct PapyrusNativeCrimeTests {
                 )
             )
         )
-        fixture.session.bridge.factionNatives.runtime = { _ in factions }
+        fixture.session.bridge.natives.faction.runtime = { _ in factions }
         let faction = try factionHandle(fixture)
 
         call("Faction", "SendAssaultAlarm", fixture, receiver: faction)

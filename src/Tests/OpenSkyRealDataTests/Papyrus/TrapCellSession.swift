@@ -62,7 +62,7 @@ final class TrapCellSession {
         let plugins = ActivePluginFiles.load(root: root, baseFile: install.file)
         hazards = HazardStore(plugins: plugins)
         spells = SpellStore(plugins: plugins)
-        bridge.formListStore = FormListStore(plugins: plugins)
+        bridge.stores.formListStore = FormListStore(plugins: plugins)
     }
 
     static func make() throws -> TrapCellSession {
@@ -103,12 +103,15 @@ final class TrapCellSession {
     func cross(_ entry: RuntimeReferenceEntry, script: String, label: String) -> Crossing {
         let journal = worldState.journalEntries.count
         let before = state(of: entry.key, script: script)
-        let queued = bridge.handleTriggerTransition(
+        let queued = bridge.triggers.handleTriggerTransition(
             TriggerTransitionEvent(reference: entry.key, phase: .enter)
         )
         drain()
         let inside = state(of: entry.key, script: script)
-        bridge.handleTriggerTransition(TriggerTransitionEvent(reference: entry.key, phase: .leave))
+        bridge.triggers.handleTriggerTransition(TriggerTransitionEvent(
+            reference: entry.key,
+            phase: .leave
+        ))
         drain()
         let after = state(of: entry.key, script: script)
         let deltas = worldState.journalEntries.count - journal

@@ -6,33 +6,33 @@
 import Foundation
 import OpenSkyConditions
 import OpenSkyFactionsInterface
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.Factions {
     @discardableResult
     public func addToFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
-        guard let runtime = factionNatives.runtime(actor) else { return nil }
+        guard let runtime = bridge.natives.faction.runtime(actor) else { return nil }
         // "If the Actor is already in the faction, this function does nothing."
         guard !runtime.isMember(actor, of: faction) else { return false }
-        return runtime.join(actor, to: faction, rank: 0, in: cellLocation(of: actor))
+        return runtime.join(actor, to: faction, rank: 0, in: bridge.cellLocation(of: actor))
     }
 
     @discardableResult
     public func removeFromFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
-        guard let runtime = factionNatives.runtime(actor) else { return nil }
-        return runtime.leave(actor, from: faction, in: cellLocation(of: actor))
+        guard let runtime = bridge.natives.faction.runtime(actor) else { return nil }
+        return runtime.leave(actor, from: faction, in: bridge.cellLocation(of: actor))
     }
 
     public func isInFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
-        guard let runtime = factionNatives.runtime(actor) else { return nil }
+        guard let runtime = bridge.natives.faction.runtime(actor) else { return nil }
         return (runtime.rank(of: actor, in: faction) ?? -1) >= 0
     }
 
     public func factionRank(of actor: ReferenceKey, in faction: ReferenceKey) -> Int8?? {
-        guard let runtime = factionNatives.runtime(actor) else { return nil }
+        guard let runtime = bridge.natives.faction.runtime(actor) else { return nil }
         return runtime.rank(of: actor, in: faction)
     }
 
@@ -42,8 +42,8 @@ extension PapyrusWorldStateBridge {
         of actor: ReferenceKey,
         in faction: ReferenceKey
     ) -> Bool? {
-        guard let runtime = factionNatives.runtime(actor) else { return nil }
-        return runtime.join(actor, to: faction, rank: rank, in: cellLocation(of: actor))
+        guard let runtime = bridge.natives.faction.runtime(actor) else { return nil }
+        return runtime.join(actor, to: faction, rank: rank, in: bridge.cellLocation(of: actor))
     }
 
     /// The rank stays inside the rank byte. "Will not remove an actor from a faction"
@@ -55,25 +55,30 @@ extension PapyrusWorldStateBridge {
         of actor: ReferenceKey,
         in faction: ReferenceKey
     ) -> Bool? {
-        guard let runtime = factionNatives.runtime(actor) else { return nil }
+        guard let runtime = bridge.natives.faction.runtime(actor) else { return nil }
         guard let rank = runtime.rank(of: actor, in: faction) else { return false }
         let moved = min(max(Int32(rank) + delta, Int32(Int8.min)), Int32(Int8.max))
-        return runtime.join(actor, to: faction, rank: Int8(moved), in: cellLocation(of: actor))
+        return runtime.join(
+            actor,
+            to: faction,
+            rank: Int8(moved),
+            in: bridge.cellLocation(of: actor)
+        )
     }
 
     /// Leaves every faction, including the authored ones the accessor seeds first.
     /// - Returns: how many memberships ended.
     @discardableResult
     func removeFromAllFactions(_ actor: ReferenceKey) -> Int? {
-        guard let runtime = factionNatives.runtime(actor) else { return nil }
-        let memberships = worldState.component(ActorFactionState.self, for: actor)?
+        guard let runtime = bridge.natives.faction.runtime(actor) else { return nil }
+        let memberships = bridge.worldState.component(ActorFactionState.self, for: actor)?
             .memberships ?? []
-        let cell = cellLocation(of: actor)
+        let cell = bridge.cellLocation(of: actor)
         return memberships.count { runtime.leave(actor, from: $0.faction, in: cell) }
     }
 
     public func relationshipRank(of actor: ReferenceKey, toward other: ReferenceKey) -> Int8?? {
-        guard let runtime = factionNatives.relationships() else { return nil }
+        guard let runtime = bridge.natives.faction.relationships() else { return nil }
         return runtime.rank(of: actor, toward: other, bases: actorBaseIdentity)
     }
 
@@ -83,35 +88,40 @@ extension PapyrusWorldStateBridge {
         of actor: ReferenceKey,
         toward other: ReferenceKey
     ) -> Bool? {
-        guard let runtime = factionNatives.relationships() else { return nil }
+        guard let runtime = bridge.natives.faction.relationships() else { return nil }
         let old = runtime.rank(of: actor, toward: other, bases: actorBaseIdentity)
         let changed = runtime.setRank(
             rank,
             of: actor,
             toward: other,
-            in: cellLocation(of: actor),
-            targetCell: cellLocation(of: other)
+            in: bridge.cellLocation(of: actor),
+            targetCell: bridge.cellLocation(of: other)
         )
         // A pair no layer named counts as acquaintances (rank 0).
         if changed, old != rank {
-            _ = story?.sendStoryEvent(.relationshipRank(actor, other, old: old ?? 0, new: rank))
+            _ = bridge.ports.story?.sendStoryEvent(.relationshipRank(
+                actor,
+                other,
+                old: old ?? 0,
+                new: rank
+            ))
         }
         return changed
     }
 
     public func factionReaction(of actor: ReferenceKey, toward other: ReferenceKey) -> Int? {
-        guard let reaction = factionNatives.socialDecision(actor, other)?.factionReaction
+        guard let reaction = bridge.natives.faction.socialDecision(actor, other)?.factionReaction
         else { return nil }
         return ConditionFunctionsFaction.factionRelationValue(of: reaction)
     }
 
     public func isHostile(_ actor: ReferenceKey, toward other: ReferenceKey) -> Bool? {
-        factionNatives.socialDecision(actor, other)?.isHostile
+        bridge.natives.faction.socialDecision(actor, other)?.isHostile
     }
 
     public func factionRelation(of faction: ReferenceKey, toward other: ReferenceKey) -> Int? {
         guard
-            let relations = factionNatives.relationIndex(),
+            let relations = bridge.natives.faction.relationIndex(),
             let reaction = relations.reaction(of: faction, toward: other)
         else { return nil }
         return ConditionFunctionsFaction.factionRelationValue(of: reaction)
@@ -121,6 +131,8 @@ extension PapyrusWorldStateBridge {
     /// what the record layer of a relationship lookup is keyed by. Nil for the
     /// player and for any actor no plugin describes.
     private var actorBaseIdentity: (ReferenceKey) -> ResolvedFormID? {
-        { [weak self] key in self?.factionNatives.socialBase(key) }
+        { [weak bridge = bridge] key in bridge?.natives.faction.socialBase(key) }
     }
 }
+
+extension PapyrusWorldStateBridge.Factions: PapyrusWorldFactionBridge {}

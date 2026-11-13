@@ -415,11 +415,11 @@ extension PapyrusNativeFactionTests {
         relationships: RelationshipRuntime,
         bases: [ReferenceKey: ResolvedFormID]
     ) {
-        session.bridge.factionNatives.runtime = { _ in factions }
-        session.bridge.factionNatives.relationships = { relationships }
-        session.bridge.factionNatives.socialBase = { bases[$0] }
-        session.bridge.factionNatives.relationIndex = { factions.derivation.relations }
-        session.bridge.factionNatives.socialDecision = { observer, target in
+        session.bridge.natives.faction.runtime = { _ in factions }
+        session.bridge.natives.faction.relationships = { relationships }
+        session.bridge.natives.faction.socialBase = { bases[$0] }
+        session.bridge.natives.faction.relationIndex = { factions.derivation.relations }
+        session.bridge.natives.faction.socialDecision = { observer, target in
             let profiles = [observer, target].map { key in
                 ActorSocialProfile(
                     key: key,

@@ -62,19 +62,19 @@ struct PapyrusNativeScriptStateTests {
         let fixture = try Fixture.make()
         let door = fixture.handle(Fixture.doorID)
         let doorKey = Fixture.key(Fixture.doorID)
-        #expect(fixture.session.bridge.scriptedOwner(of: fixture.key) == nil)
+        #expect(fixture.session.bridge.stateLinks.scriptedOwner(of: fixture.key) == nil)
 
         _ = call(fixture, "ObjectReference", "SetActorOwner", [.object(door)])
         #expect(call(fixture, "ObjectReference", "GetActorOwner", returnType: .object("ActorBase"))
             == .returned(.object(door)))
         _ = call(fixture, "ObjectReference", "SetFactionOwner", [.object(door)])
-        #expect(fixture.session.bridge.scriptedOwner(of: fixture.key)
+        #expect(fixture.session.bridge.stateLinks.scriptedOwner(of: fixture.key)
             == .some(.faction(doorKey, requiredRank: 0)))
         #expect(call(fixture, "ObjectReference", "GetActorOwner", returnType: .object("ActorBase"))
             == .returned(.none))
 
         _ = call(fixture, "ObjectReference", "SetActorOwner", [.none])
-        #expect(fixture.session.bridge.scriptedOwner(of: fixture.key) == .some(nil))
+        #expect(fixture.session.bridge.stateLinks.scriptedOwner(of: fixture.key) == .some(nil))
     }
 
     @Test func playerControlsUseEachNativesDefaults() throws {
@@ -84,11 +84,11 @@ struct PapyrusNativeScriptStateTests {
         }
         #expect(call(fixture, "Game", "DisablePlayerControls") == .returned(.none))
         #expect(isEnabled("Movement") == .returned(.boolean(false)))
-        #expect(!fixture.session.bridge.isPlayerMovementEnabled)
+        #expect(!fixture.session.bridge.stateLinks.isPlayerMovementEnabled)
         #expect(isEnabled("Looking") == .returned(.boolean(true)))
         #expect(call(fixture, "Game", "EnablePlayerControls") == .returned(.none))
         #expect(isEnabled("Movement") == .returned(.boolean(true)))
-        #expect(fixture.session.bridge.isPlayerMovementEnabled)
+        #expect(fixture.session.bridge.stateLinks.isPlayerMovementEnabled)
         #expect(fixture.session.worldState.component(ScriptedReferenceState.self, for: .player)
             == nil)
     }
@@ -144,7 +144,7 @@ struct PapyrusNativeScriptStateTests {
     @Test func getOpenStateReadsAMovingDoor() throws {
         let fixture = try Fixture.make()
         let doors = MovingDoors()
-        fixture.session.bridge.objectAnimation = doors
+        fixture.session.bridge.ports.objectAnimation = doors
         #expect(fixture.call("GetOpenState", returnType: .integer) == .returned(.integer(2)))
         doors.code = nil
         #expect(fixture.call("GetOpenState", returnType: .integer) == .returned(.integer(3)))

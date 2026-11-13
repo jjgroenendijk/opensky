@@ -13,27 +13,7 @@ extension PapyrusNativeFunctions.InventoryNatives {
     public static func installInventory(into registry: inout PapyrusNativeRegistry) {
         // A call on an `Actor` variable looks the native up under `Actor`.
         for script in ["ObjectReference", "Actor"] {
-            withItem(script, "AddItem", into: &registry) { call, world, bridge, holder, item in
-                let count = integer(call, at: 1) ?? 1
-                guard bridge.addItem(item, count: count, to: holder) else {
-                    return failure(call, "AddItem could not add the item")
-                }
-                if !boolean(call, at: 2, default: false) {
-                    world.postItemNotice(item, count: count, to: holder, word: \.added)
-                }
-                return .returned(.none)
-            }
-            withItem(script, "RemoveItem", into: &registry) { call, world, bridge, holder, item in
-                let count = integer(call, at: 1) ?? 1
-                let other = objectArgument(call, at: 3).flatMap { world.referenceKey(for: $0) }
-                guard bridge.removeItem(item, count: count, from: holder, to: other) else {
-                    return failure(call, "RemoveItem could not remove the item")
-                }
-                if !boolean(call, at: 2, default: false) {
-                    world.postItemNotice(item, count: count, to: holder, word: \.removed)
-                }
-                return .returned(.none)
-            }
+            installAddRemoveItem(on: script, into: &registry)
             withItem(script, "GetItemCount", into: &registry) { call, _, bridge, holder, item in
                 guard let count = bridge.itemCount(item, in: holder) else {
                     return failure(call, "GetItemCount needs an inventory")
@@ -58,7 +38,7 @@ extension PapyrusNativeFunctions.InventoryNatives {
         ) { call, context in
             guard
                 let world = context.world as? PapyrusWorldStateBridge,
-                let bridge = world.inventory,
+                let bridge = world.ports.inventory,
                 case let .plugin(plugin, objectID)? = call.receiver
                     .flatMap(world.referenceKey(for:)),
                 let item = world.formIDResolver?.localFormID(
@@ -77,15 +57,52 @@ extension PapyrusNativeFunctions.InventoryNatives {
         }
     }
 
+    /// `AddItem` and `RemoveItem`; `abSilent` (argument 2) hides the notice.
+    private static func installAddRemoveItem(
+        on script: String, into registry: inout PapyrusNativeRegistry
+    ) {
+        withItem(script, "AddItem", into: &registry) { call, world, bridge, holder, item in
+            let count = integer(call, at: 1) ?? 1
+            guard bridge.addItem(item, count: count, to: holder) else {
+                return failure(call, "AddItem could not add the item")
+            }
+            if !boolean(call, at: 2, default: false) {
+                world.itemNoticeLines.postItemNotice(
+                    item,
+                    count: count,
+                    to: holder,
+                    word: \.added
+                )
+            }
+            return .returned(.none)
+        }
+        withItem(script, "RemoveItem", into: &registry) { call, world, bridge, holder, item in
+            let count = integer(call, at: 1) ?? 1
+            let other = objectArgument(call, at: 3).flatMap { world.referenceKey(for: $0) }
+            guard bridge.removeItem(item, count: count, from: holder, to: other) else {
+                return failure(call, "RemoveItem could not remove the item")
+            }
+            if !boolean(call, at: 2, default: false) {
+                world.itemNoticeLines.postItemNotice(
+                    item,
+                    count: count,
+                    to: holder,
+                    word: \.removed
+                )
+            }
+            return .returned(.none)
+        }
+    }
+
     /// `EquipItem` and `UnequipItem`; `abSilent` is argument 2 of both.
     private static func installEquipNatives(into registry: inout PapyrusNativeRegistry) {
         withItem("Actor", "EquipItem", into: &registry) { call, world, bridge, actor, item in
             guard bridge.equipItem(item, on: actor) else {
                 return failure(call, "EquipItem could not equip the item")
             }
-            world.noteScriptedEquip(on: actor)
+            world.inventoryEvents.noteScriptedEquip(on: actor)
             if !boolean(call, at: 2, default: false) {
-                world.postItemNotice(item, to: actor, word: \.equipped)
+                world.itemNoticeLines.postItemNotice(item, to: actor, word: \.equipped)
             }
             return .returned(.none)
         }
@@ -93,9 +110,9 @@ extension PapyrusNativeFunctions.InventoryNatives {
             guard bridge.unequipItem(item, on: actor) else {
                 return failure(call, "UnequipItem needs an inventory")
             }
-            world.noteScriptedEquip(on: actor)
+            world.inventoryEvents.noteScriptedEquip(on: actor)
             if !boolean(call, at: 2, default: false) {
-                world.postItemNotice(item, to: actor, word: \.unequipped)
+                world.itemNoticeLines.postItemNotice(item, to: actor, word: \.unequipped)
             }
             return .returned(.none)
         }
@@ -126,7 +143,7 @@ extension PapyrusNativeFunctions.InventoryNatives {
             guard bridge.unequipAll(on: actor) else {
                 return failure(call, "UnequipAll needs an inventory")
             }
-            world.noteScriptedEquip(on: actor)
+            world.inventoryEvents.noteScriptedEquip(on: actor)
             return .returned(.none)
         }
         // `UnequipItemSlot(int aiSlot)`: a biped slot from 30 to 61.
@@ -134,7 +151,7 @@ extension PapyrusNativeFunctions.InventoryNatives {
             guard let slot = integer(call, at: 0), bridge.unequipSlot(slot, on: actor) else {
                 return failure(call, "UnequipItemSlot needs an actor and a slot from 30 to 61")
             }
-            world.noteScriptedEquip(on: actor)
+            world.inventoryEvents.noteScriptedEquip(on: actor)
             return .returned(.none)
         }
     }
@@ -161,7 +178,7 @@ extension PapyrusNativeFunctions.InventoryNatives {
         ) { call, context in
             guard
                 let world = context.world as? PapyrusWorldStateBridge,
-                let bridge = world.inventory,
+                let bridge = world.ports.inventory,
                 let receiver = call.receiver, let holder = world.referenceKey(for: receiver)
             else { return failure(call, "\(name) needs the inventory bridge and a reference") }
             return body(call, world, bridge, holder)
@@ -178,7 +195,7 @@ extension PapyrusNativeFunctions.InventoryNatives {
         ) { call, context in
             guard
                 let world = context.world as? PapyrusWorldStateBridge,
-                let bridge = world.inventory,
+                let bridge = world.ports.inventory,
                 let receiver = call.receiver, let holder = world.referenceKey(for: receiver)
             else { return failure(call, "RemoveAllItems needs the inventory bridge") }
             let other = objectArgument(call, at: 0)
@@ -216,7 +233,7 @@ extension PapyrusNativeFunctions.InventoryNatives {
         ) { call, context in
             guard
                 let world = context.world as? PapyrusWorldStateBridge,
-                let bridge = world.inventory,
+                let bridge = world.ports.inventory,
                 let receiver = call.receiver, let holder = world.referenceKey(for: receiver)
             else { return failure(call, "\(name) needs the inventory bridge and a reference") }
             guard

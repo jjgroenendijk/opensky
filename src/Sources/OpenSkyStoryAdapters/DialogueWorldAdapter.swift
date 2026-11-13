@@ -91,7 +91,7 @@ extension DialogueWorldAdapter: DialogueWorld {
     }
 
     public var fragments: (any DialogueFragmentDispatching)? {
-        game.scripts.bridge
+        game.scripts.bridge?.dialogueFragments
     }
 
     public func loadStrings() -> LocalizedStrings? {

@@ -9,9 +9,9 @@ public import OpenSkyScriptingInterface
 public import OpenSkyWorldState
 
 /// What the world adapters use of `PapyrusWorldStateBridge`.
-public protocol PapyrusWorldStateBridgePort: AnyObject, DialogueFragmentDispatching,
-    SceneFragmentDispatching
-{
+public protocol PapyrusWorldStateBridgePort: AnyObject {
+    var dialogueFragments: any DialogueFragmentDispatching { get }
+    var sceneFragments: any SceneFragmentDispatching { get }
     @discardableResult func activate(
         _ target: ReferenceKey,
         by activator: ReferenceKey,

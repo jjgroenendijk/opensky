@@ -41,7 +41,7 @@ public struct StorySceneCastAdapter {
 
 extension StorySceneCastAdapter {
     var sceneFragments: (any SceneFragmentDispatching)? {
-        game.scripts.bridge
+        game.scripts.bridge?.sceneFragments
     }
 
     public var sceneSeconds: Double {

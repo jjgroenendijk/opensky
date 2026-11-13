@@ -87,7 +87,7 @@ public final class ScriptCoordinator {
 
     /// Starts the scripts of the quests that already run. Session start calls it once.
     public func startQuestScripts() {
-        let started = bridge?.attachRunningQuestScripts() ?? 0
+        let started = bridge?.questScripts.attachRunningQuestScripts() ?? 0
         Self.logger.info("[INFO] quest scripts instantiated: \(started, privacy: .public)")
     }
 
@@ -120,16 +120,16 @@ public final class ScriptCoordinator {
     /// The renderer gates `delta`, so a menu-paused frame advances nothing.
     public func advance(delta: Float) {
         queueLocationChange()
-        bridge?.queueInventoryEvents()
-        bridge?.queueMagicEffectEvents()
-        bridge?.queueReferenceStateEvents()
-        bridge?.queueCombatStateEvents()
-        bridge?.queueTrackedStatEvents()
-        bridge?.queueLineOfSightEvents()
-        bridge?.advanceTranslations(by: delta)
-        bridge?.queueTriggerRepeats(after: delta)
-        bridge?.advanceDelayedActivations(by: delta)
-        bridge?.updateSunGaze()
+        bridge?.inventoryEvents.queueInventoryEvents()
+        bridge?.effectEvents.queueMagicEffectEvents()
+        bridge?.referenceEvents.queueReferenceStateEvents()
+        bridge?.combatEvents.queueCombatStateEvents()
+        bridge?.trackedStats.queueTrackedStatEvents()
+        bridge?.lineOfSight.queueLineOfSightEvents()
+        bridge?.scriptedMoves.advanceTranslations(by: delta)
+        bridge?.triggers.queueTriggerRepeats(after: delta)
+        bridge?.activationDelays.advanceDelayedActivations(by: delta)
+        bridge?.sunGaze.updateSunGaze()
         _ = runtime?.advance(delta: delta, gameClock: world?.gameClock)
     }
 
@@ -149,15 +149,15 @@ public final class ScriptCoordinator {
     /// last, because each one names an instance that must already exist. The
     /// player's scripts then hear `OnPlayerLoadGame`.
     public func restore(instances: [PapyrusInstanceState], timers: [PapyrusTimerState]) {
-        bridge?.attachRunningQuestScripts()
+        bridge?.questScripts.attachRunningQuestScripts()
         runtime?.restore(instanceStates: instances)
         runtime?.restore(timerStates: timers)
         runtime?.queuePlayerLoadGame()
-        bridge?.skipInventoryJournal()
-        bridge?.skipMagicEffectJournal()
-        bridge?.skipReferenceStateJournal()
-        bridge?.skipTrackedStatJournal()
-        bridge?.clearTranslations()
+        bridge?.inventoryEvents.skipInventoryJournal()
+        bridge?.effectEvents.skipMagicEffectJournal()
+        bridge?.referenceEvents.skipReferenceStateJournal()
+        bridge?.trackedStats.skipTrackedStatJournal()
+        bridge?.scriptedMoves.clearTranslations()
         lastPlayerLocation = nil
     }
 
@@ -239,14 +239,14 @@ extension ScriptCoordinator {
     /// readout never goes blank while the crosshair is on something.
     public var scriptsSnapshot: ScriptsSnapshot {
         var snapshot = targetedSnapshot
-        snapshot.scriptedMoveCount = bridge?.translations.count ?? 0
+        snapshot.scriptedMoveCount = bridge?.runState.translations.count ?? 0
         return snapshot
     }
 
     private var targetedSnapshot: ScriptsSnapshot {
         guard let runtime else { return .empty }
         let running = bridge?.questRuntime?.runningQuests().count ?? 0
-        let failures = bridge?.questAliasFillFailures ?? 0
+        let failures = bridge?.runState.questAliasFillFailures ?? 0
         guard let formID = world?.crosshairReference else {
             return runtime.scriptsSnapshot(
                 runningQuestCount: running, questAliasFillFailures: failures
@@ -259,7 +259,8 @@ extension ScriptCoordinator {
                 questAliasFillFailures: failures
             )
         }
-        let state = bridge.flatMap { ScriptsReadout.scriptStateText($0.scriptedState(of: key)) }
+        let state = bridge
+            .flatMap { ScriptsReadout.scriptStateText($0.scriptState.scriptedState(of: key)) }
         return runtime.scriptsSnapshot(
             target: key,
             targetDescription: [key.description, state].compactMap(\.self)

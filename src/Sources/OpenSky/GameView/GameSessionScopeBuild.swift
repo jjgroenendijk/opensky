@@ -266,7 +266,7 @@ struct GameSessionScopeBuild {
     /// The player states the HUD movie has a mode for.
     private func hudModeInputs(_ gameSession: GameSession) -> HUDModeInputs {
         HUDModeInputs(
-            movementDisabled: scope.scripts.bridge?.isPlayerMovementEnabled == false,
+            movementDisabled: scope.scripts.bridge?.stateLinks.isPlayerMovementEnabled == false,
             sneaking: scope.player.isSneaking,
             swimming: gameSession.walkController.isSwimming,
             ridingHorse: scope.mounts.drive?.kind == .horse,

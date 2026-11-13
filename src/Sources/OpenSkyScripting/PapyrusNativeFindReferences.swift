@@ -68,7 +68,7 @@ extension PapyrusNativeFunctions.FindReferencesNatives {
             return nil
         }
         guard filter == .baseFormList else { return [form] }
-        return bridge.pluginFormListEntries(of: form).map { Set($0.compactMap(\.self)) }
+        return bridge.formLists.pluginFormListEntries(of: form).map { Set($0.compactMap(\.self)) }
     }
 
     static func findCandidates(
@@ -76,13 +76,14 @@ extension PapyrusNativeFunctions.FindReferencesNatives {
         around sphere: (centre: SIMD3<Float>, radius: Float)
     ) -> [(key: ReferenceKey, distance: Float)] {
         let (centre, radius) = sphere
-        let entries = bridge.references?.residentEntries() ?? []
+        let entries = bridge.ports.references?.residentEntries() ?? []
         var keys = entries.compactMap { entry -> ReferenceKey? in
             switch filter {
             case .actors:
                 entry.placedActor == nil ? nil : entry.key
             case .baseForm, .baseFormList:
-                bridge.resolvedBase(of: entry.key).flatMap { bases.contains($0) ? entry.key : nil }
+                bridge.formLists.resolvedBase(of: entry.key)
+                    .flatMap { bases.contains($0) ? entry.key : nil }
             }
         }
         if filter == .actors {

@@ -116,7 +116,7 @@ struct PapyrusNativeMenusTests {
     @Test func gameNativesReachTheBridge() {
         let menus = FakeMenuBridge()
         let bridge = PapyrusWorldStateBridge(worldState: WorldStateStore())
-        bridge.menus = menus
+        bridge.ports.menus = menus
         var registry = PapyrusNativeRegistry(context: PapyrusNativeContext(world: bridge))
         PapyrusNativeFunctions.MenusNatives.installMenus(into: &registry)
         #expect(registry.invoke(Self.game("ShowRaceMenu")) == .returned(.none))
@@ -133,7 +133,7 @@ struct PapyrusNativeMenusTests {
     @Test func fastTravelReadsAnswerFromTheMenus() throws {
         let fixture = try PapyrusNativeReferenceFixture.make()
         let menus = FakeMenuBridge()
-        fixture.session.bridge.menus = menus
+        fixture.session.bridge.ports.menus = menus
         let read = Self.game("IsFastTravelControlsEnabled")
         #expect(fixture.registry.invoke(read) == .returned(.boolean(true)))
         menus.isFastTravelEnabled = false
@@ -149,7 +149,7 @@ struct PapyrusNativeMenusTests {
     @Test func openInventoryNeedsATeammateOrForce() throws {
         let fixture = try PapyrusNativeReferenceFixture.make()
         let menus = FakeMenuBridge()
-        fixture.session.bridge.menus = menus
+        fixture.session.bridge.ports.menus = menus
         let open = { (force: Bool) in
             fixture.registry.invoke(PapyrusWorldFixture.methodCall(
                 "Actor", "OpenInventory", receiver: fixture.receiver,
@@ -170,7 +170,7 @@ struct PapyrusNativeMenusTests {
     @Test func trainingAndGiftMenusOpenOnTheActor() throws {
         let fixture = try PapyrusNativeReferenceFixture.make()
         let menus = FakeMenuBridge()
-        fixture.session.bridge.menus = menus
+        fixture.session.bridge.ports.menus = menus
         let trainer = fixture.registry.invoke(Self.game(
             "ShowTrainingMenu",
             [.object(fixture.receiver)]
@@ -196,7 +196,7 @@ struct PapyrusNativeMenusTests {
         let fixture = try PapyrusNativeReferenceFixture.make()
         let menus = FakeMenuBridge()
         menus.races[fixture.key] = FormID(0x100)
-        fixture.session.bridge.menus = menus
+        fixture.session.bridge.ports.menus = menus
         let actor = { (name: String) in
             fixture.registry.invoke(PapyrusWorldFixture.methodCall(
                 "Actor", name, receiver: fixture.receiver, returnType: .object("Form")
@@ -214,7 +214,7 @@ struct PapyrusNativeMenusTests {
         let fixture = try PapyrusNativeReferenceFixture.make()
         let menus = FakeMenuBridge()
         menus.races[fixture.key] = FormID(0x100)
-        fixture.session.bridge.menus = menus
+        fixture.session.bridge.ports.menus = menus
         let result = fixture.registry.invoke(PapyrusWorldFixture.methodCall(
             "Actor", "SetRace", receiver: fixture.receiver, arguments: [.none]
         ))
@@ -228,7 +228,7 @@ struct PapyrusNativeMenusTests {
         let door = FormID(PapyrusNativeReferenceFixture.doorID)
         menus.voiceTypes[FormID(0x100)] = door
         menus.giftFilters[FormID(0x100)] = door
-        fixture.session.bridge.menus = menus
+        fixture.session.bridge.ports.menus = menus
         let doorHandle = PapyrusNativeResult.returned(
             .object(fixture.handle(PapyrusNativeReferenceFixture.doorID))
         )
@@ -250,7 +250,7 @@ struct PapyrusNativeMenusTests {
             objects: [PapyrusWorldFixture.eventScript("Horse", events: [])], entries: [entry]
         )
         let menus = FakeMenuBridge()
-        session.bridge.menus = menus
+        session.bridge.ports.menus = menus
         let registry = PapyrusWorldFixture.registry(for: session)
         let result = registry.invoke(PapyrusWorldFixture.methodCall(
             "Actor", "GetActorBase", receiver: session.world.objectHandle(for: entry.key),
@@ -263,7 +263,7 @@ struct PapyrusNativeMenusTests {
     @Test func moveToPlacesAResidentReferenceAtItsTarget() throws {
         let fixture = try PapyrusNativeReferenceFixture.make()
         let menus = FakeMenuBridge()
-        fixture.session.bridge.menus = menus
+        fixture.session.bridge.ports.menus = menus
         let move = { (target: PapyrusObjectHandle, offset: PapyrusValue) in
             fixture.registry.invoke(PapyrusWorldFixture.methodCall(
                 "ObjectReference", "MoveTo", receiver: fixture.receiver,
@@ -284,7 +284,7 @@ struct PapyrusNativeMenusTests {
     @Test func moveToSendsAnUnloadedReferenceIntoTheTargetCell() throws {
         let fixture = try PapyrusNativeReferenceFixture.make()
         let menus = FakeMenuBridge()
-        fixture.session.bridge.menus = menus
+        fixture.session.bridge.ports.menus = menus
         let prisoner = PapyrusNativeReferenceFixture.key(PapyrusNativeReferenceFixture.doorID)
         let record = try PapyrusWorldFixture.referenceEntry(
             objectID: PapyrusNativeReferenceFixture.doorID, scripts: [], placement: SIMD3(9, 9, 9)

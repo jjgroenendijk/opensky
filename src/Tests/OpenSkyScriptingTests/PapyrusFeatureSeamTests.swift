@@ -18,24 +18,25 @@ struct PapyrusFeatureSeamTests {
 
     @Test func factionNativesGoThroughTheFactionSeam() {
         let factions = FakeFactionAccess()
-        bridge.factionNatives = PapyrusFactionNatives(runtime: { _ in factions })
-        #expect(bridge.addToFaction(Self.actor, faction: Self.faction) == true)
+        bridge.natives.faction = PapyrusFactionNatives(runtime: { _ in factions })
+        #expect(bridge.factions.addToFaction(Self.actor, faction: Self.faction) == true)
         #expect(bridge.isInFaction(Self.actor, faction: Self.faction) == true)
-        #expect(bridge.addToFaction(Self.actor, faction: Self.faction) == false)
-        #expect(bridge.removeFromFaction(Self.actor, faction: Self.faction) == true)
+        #expect(bridge.factions.addToFaction(Self.actor, faction: Self.faction) == false)
+        #expect(bridge.factions.removeFromFaction(Self.actor, faction: Self.faction) == true)
         #expect(factions.left == [Self.faction])
     }
 
     @Test func relationshipNativesGoThroughTheRelationshipSeam() {
         let relationships = FakeRelationshipAccess()
-        bridge.factionNatives = PapyrusFactionNatives(relationships: { relationships })
-        #expect(bridge.setRelationshipRank(3, of: Self.actor, toward: Self.other) == true)
-        #expect(bridge.relationshipRank(of: Self.actor, toward: Self.other) == .some(.some(3)))
+        bridge.natives.faction = PapyrusFactionNatives(relationships: { relationships })
+        #expect(bridge.factions.setRelationshipRank(3, of: Self.actor, toward: Self.other) == true)
+        #expect(bridge.factions
+            .relationshipRank(of: Self.actor, toward: Self.other) == .some(.some(3)))
     }
 
     @Test func spellNativesGoThroughTheSpellbookSeam() {
         let caster = FakeSpellCaster()
-        bridge.magicNatives.casterRuntime = { caster }
+        bridge.natives.magic.casterRuntime = { caster }
         #expect(bridge.addSpell(Self.spell, to: bridge.playerKey))
         #expect(caster.spellbook.known[ActorValueHolder.player.key] == [Self.spell])
         #expect(bridge.removeSpell(Self.spell, from: bridge.playerKey))

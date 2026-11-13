@@ -22,7 +22,7 @@ extension PapyrusNativeFunctions.ActorAwarenessNatives {
             detection.pair(observer: other, target: actor).map { .boolean($0.isDetected) }
         }
         withActorBridge("GetCurrentPackage", into: &registry) { call, bridge, actor in
-            guard let lookup = bridge.sessionNatives.currentPackage else {
+            guard let lookup = bridge.natives.session.currentPackage else {
                 return failure(call, "GetCurrentPackage needs a package runtime")
             }
             let handle = lookup(actor)
@@ -33,7 +33,7 @@ extension PapyrusNativeFunctions.ActorAwarenessNatives {
         // Detection's light is this value over 100 (docs/engine/detection.md#light-level).
         withActorBridge("GetLightLevel", into: &registry) { call, bridge, actor in
             guard
-                let light = bridge.perceptionNatives.lightLevel,
+                let light = bridge.natives.perception.lightLevel,
                 let feet = PapyrusNativeFunctions.WorldPlaceNatives.position(of: actor, bridge)
             else {
                 return failure(call, "GetLightLevel needs the renderer and the actor's position")
@@ -47,7 +47,7 @@ extension PapyrusNativeFunctions.ActorAwarenessNatives {
                 let package = bridge.formIDResolver?.localFormID(
                     of: ResolvedFormID(plugin: plugin, objectID: objectID)
                 ),
-                let lookup = bridge.sessionNatives.packageTemplate
+                let lookup = bridge.natives.session.packageTemplate
             else { return failure(call, "GetTemplate needs the package records") }
             guard let template = lookup(package) else { return .returned(.none) }
             return .returned(PapyrusNativeFunctions.InventoryNatives.formHandle(
@@ -59,8 +59,8 @@ extension PapyrusNativeFunctions.ActorAwarenessNatives {
         // damage, so only health moves.
         withActorBridge("ResetHealthAndLimbs", into: &registry) { call, bridge, actor in
             guard
-                let values = bridge.actorNatives.actorValueRuntime?(),
-                let holder = bridge.actorHolder(for: actor)
+                let values = bridge.natives.actor.actorValueRuntime?(),
+                let holder = bridge.actorValues.actorHolder(for: actor)
             else { return failure(call, "ResetHealthAndLimbs needs actor values") }
             values.set(.health, to: values.maximums(of: holder)[.health], on: holder)
             return .returned(.none)
@@ -100,7 +100,7 @@ extension PapyrusNativeFunctions.ActorAwarenessNatives {
             else {
                 return failure(call, "\(name) needs a reference argument")
             }
-            guard let detection = bridge.perceptionNatives.detection?() else {
+            guard let detection = bridge.natives.perception.detection?() else {
                 return failure(call, "\(name) needs a perception pass")
             }
             guard let answer = read(actor, other, detection) else {

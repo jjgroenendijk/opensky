@@ -47,9 +47,21 @@ struct PapyrusNativeSessionRulesTests {
 
     @Test func stolenValuesSplitByWitness() throws {
         let fixture = try Fixture.make()
-        fixture.session.bridge.noteStolenValue(30, from: fixture.key, witnessed: true)
-        fixture.session.bridge.noteStolenValue(12, from: fixture.key, witnessed: false)
-        fixture.session.bridge.noteStolenValue(8, from: fixture.key, witnessed: false)
+        fixture.session.bridge.noteStolenValue(
+            30,
+            from: fixture.key,
+            witnessed: true
+        )
+        fixture.session.bridge.noteStolenValue(
+            12,
+            from: fixture.key,
+            witnessed: false
+        )
+        fixture.session.bridge.noteStolenValue(
+            8,
+            from: fixture.key,
+            witnessed: false
+        )
         #expect(call(fixture, "Faction", "GetStolenItemValueCrime", returnType: .integer) ==
             .returned(.integer(30)))
         #expect(call(fixture, "Faction", "GetStolenItemValueNoCrime", returnType: .integer) ==
@@ -152,8 +164,8 @@ struct PapyrusNativeSessionRulesTests {
         let fixture = try Fixture.make()
         #expect(call(fixture, "Game", "GetSunPositionZ", returnType: .float) ==
             .returned(.float(0)))
-        fixture.session.bridge.sessionNatives.towardSun = { [0, 0, 1] }
-        fixture.session.bridge.sessionNatives.playerView = {
+        fixture.session.bridge.natives.session.towardSun = { [0, 0, 1] }
+        fixture.session.bridge.natives.session.playerView = {
             PapyrusPlayerView(eye: [0, 0, 100], forward: [1, 0, 0])
         }
         #expect(call(fixture, "Game", "GetSunPositionZ", returnType: .float) ==
@@ -164,8 +176,8 @@ struct PapyrusNativeSessionRulesTests {
         let fixture = try Fixture.make()
         #expect(call(fixture, "Game", "IsPlayerSungazing", returnType: .boolean) ==
             .returned(.boolean(false)))
-        fixture.session.bridge.sessionNatives.towardSun = { [0, 0, 1] }
-        fixture.session.bridge.sessionNatives.playerView = {
+        fixture.session.bridge.natives.session.towardSun = { [0, 0, 1] }
+        fixture.session.bridge.natives.session.playerView = {
             PapyrusPlayerView(eye: .zero, forward: [0, 0.01, 1])
         }
         #expect(call(fixture, "Game", "IsPlayerSungazing", returnType: .boolean) ==

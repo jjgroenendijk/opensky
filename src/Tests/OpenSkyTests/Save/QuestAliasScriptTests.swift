@@ -127,7 +127,7 @@ struct QuestAliasScriptTests {
         #expect(session.world.aliasResolution.filledAliasCount == 0)
 
         // Starting again refills and re-instantiates.
-        #expect(try session.bridge.startQuest(for: PapyrusQuestFixture.questKey))
+        #expect(try session.bridge.questScripts.startQuest(for: PapyrusQuestFixture.questKey))
         #expect(session.world.instancesByKey[aliasKey] != nil)
     }
 
@@ -137,7 +137,7 @@ struct QuestAliasScriptTests {
         let session = try session()
         let snapshot = session.world.scriptsSnapshot(
             runningQuestCount: 1,
-            questAliasFillFailures: session.bridge.questAliasFillFailures
+            questAliasFillFailures: session.bridge.runState.questAliasFillFailures
         )
         #expect(snapshot.filledAliasCount == 1)
         #expect(snapshot.aliasQuestCount == 1)
@@ -158,7 +158,7 @@ struct QuestAliasScriptTests {
             aliases: PapyrusQuestFixture.forcedAlias(reference: 0)
         )
         let session = PapyrusQuestFixture.session(quest: quest)
-        #expect(session.bridge.questAliasFillFailures == 1)
+        #expect(session.bridge.runState.questAliasFillFailures == 1)
         #expect(try PapyrusQuestFixture.state(session).isRunning)
         #expect(session.world.aliasResolution.filledAliasCount == 0)
     }

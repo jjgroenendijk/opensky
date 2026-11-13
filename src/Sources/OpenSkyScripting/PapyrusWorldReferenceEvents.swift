@@ -9,15 +9,17 @@ import OpenSkyInventoryInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.ReferenceEvents {
     /// Queues the events for the activation, lock, and deletion writes since the last
     /// call. The first call only sets the cursor. Returns the count.
     @discardableResult
     public func queueReferenceStateEvents() -> Int {
-        let next = worldState.nextJournalSequence
-        defer { referenceJournalCursor = next }
-        guard let cursor = referenceJournalCursor, cursor < next, let world else { return 0 }
-        let entries = worldState.journalEntries(since: cursor)
+        let next = bridge.worldState.nextJournalSequence
+        defer { bridge.runState.referenceJournalCursor = next }
+        guard
+            let cursor = bridge.runState.referenceJournalCursor, cursor < next,
+            let world = bridge.world else { return 0 }
+        let entries = bridge.worldState.journalEntries(since: cursor)
             .filter { [.activation, .lock, .deletion, .inventory].contains($0.kind) }
         var queued = 0
         for (index, entry) in entries.enumerated()
@@ -39,7 +41,7 @@ extension PapyrusWorldStateBridge {
 
     /// Starts the next read at the journal's end, so a load is not read as changes.
     public func skipReferenceStateJournal() {
-        referenceJournalCursor = worldState.nextJournalSequence
+        bridge.runState.referenceJournalCursor = bridge.worldState.nextJournalSequence
     }
 
     private func queueOpenStateEvent(
@@ -56,7 +58,7 @@ extension PapyrusWorldStateBridge {
     private func queueLockStateEvent(
         _ entry: WorldStateJournalEntry, in world: PapyrusWorldRuntime
     ) -> Int {
-        let baseline = placedReference(for: entry.key)?.lock
+        let baseline = bridge.placedReference(for: entry.key)?.lock
         let isLocked = { (value: WorldStateComponentValue?) in
             ReferenceLockState.resolve(
                 baseline: baseline, delta: value?.value(as: ReferenceLockState.self)
@@ -80,7 +82,7 @@ extension PapyrusWorldStateBridge {
         guard
             entry.newValue?.value(as: ReferenceDeletionState.self)?.isDeleted == true,
             previous.kind == .inventory, previous.key != entry.key,
-            let base = baseObject(of: entry.key),
+            let base = bridge.baseObject(of: entry.key),
             itemCount(base, in: previous.newValue) > itemCount(base, in: previous.oldValue)
         else { return 0 }
         let taker = PapyrusValue.object(world.objectHandle(for: previous.key))

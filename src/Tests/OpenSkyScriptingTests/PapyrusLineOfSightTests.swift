@@ -78,15 +78,15 @@ struct PapyrusLineOfSightTests {
         }
         #expect(register("RegisterForSingleLOSGain") == .returned(.none))
         var sees = false
-        fixture.session.bridge.perceptionNatives.seesTarget = { _, _ in sees }
-        #expect(fixture.session.bridge.queueLineOfSightEvents() == 0)
+        fixture.session.bridge.natives.perception.seesTarget = { _, _ in sees }
+        #expect(fixture.session.bridge.lineOfSight.queueLineOfSightEvents() == 0)
         sees = true
-        #expect(fixture.session.bridge.queueLineOfSightEvents() == 1)
-        #expect(fixture.session.bridge.queueLineOfSightEvents() == 0)
+        #expect(fixture.session.bridge.lineOfSight.queueLineOfSightEvents() == 1)
+        #expect(fixture.session.bridge.lineOfSight.queueLineOfSightEvents() == 0)
         PapyrusWorldFixture.drain(world)
         #expect(fixture.session.dispatch.notes == ["gain"])
         #expect(register("RegisterForLOS") == .returned(.none))
         #expect(register("UnregisterForLOS") == .returned(.none))
-        #expect(fixture.session.bridge.queueLineOfSightEvents() == 0)
+        #expect(fixture.session.bridge.lineOfSight.queueLineOfSightEvents() == 0)
     }
 }

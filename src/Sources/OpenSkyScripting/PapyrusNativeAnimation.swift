@@ -45,7 +45,7 @@ extension PapyrusNativeFunctions.AnimationNatives {
         ) { call, context in
             if
                 let world = context.world as? PapyrusWorldStateBridge,
-                let bridge = world.objectAnimation,
+                let bridge = world.ports.objectAnimation,
                 let key = objectArgument(call, at: 0).flatMap(world.referenceKey(for:)),
                 let event = string(call, at: 1), bridge.playAnimation(event, on: key)
             {
@@ -80,7 +80,7 @@ extension PapyrusNativeFunctions.AnimationNatives {
         ) { call, context in
             if
                 let world = context.world as? PapyrusWorldStateBridge,
-                let bridge = world.objectAnimation,
+                let bridge = world.ports.objectAnimation,
                 let receiver = call.receiver, let key = world.referenceKey(for: receiver),
                 let result = body(call, bridge, key)
             {

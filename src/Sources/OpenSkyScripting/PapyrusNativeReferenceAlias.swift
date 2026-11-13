@@ -50,11 +50,11 @@ extension PapyrusNativeFunctions.ReferenceAliasNatives {
                 let handle = objectArgument(call, at: 0),
                 let reference = bridge.referenceKey(for: handle)
             else { return failure(call, "ForceRefTo needs a reference; Clear empties an alias") }
-            try bridge.forceAlias(slot, to: reference.namingPlayer)
+            try bridge.questScripts.forceAlias(slot, to: reference.namingPlayer)
             return .returned(.none)
         }
         withAliasSlot("ReferenceAlias", "Clear", into: &registry) { _, bridge, slot in
-            try bridge.forceAlias(slot, to: nil)
+            try bridge.questScripts.forceAlias(slot, to: nil)
             return .returned(.none)
         }
         withAliasSlot("LocationAlias", "GetLocation", into: &registry) { _, bridge, slot in
@@ -69,13 +69,13 @@ extension PapyrusNativeFunctions.ReferenceAliasNatives {
                 let handle = objectArgument(call, at: 0),
                 case let .plugin(plugin, objectID)? = bridge.referenceKey(for: handle)
             else { return failure(call, "ForceLocationTo needs a location") }
-            try bridge.forceLocationAlias(
+            try bridge.questScripts.forceLocationAlias(
                 slot, to: ResolvedFormID(plugin: plugin, objectID: objectID)
             )
             return .returned(.none)
         }
         withAliasSlot("LocationAlias", "Clear", into: &registry) { _, bridge, slot in
-            try bridge.forceLocationAlias(slot, to: nil)
+            try bridge.questScripts.forceLocationAlias(slot, to: nil)
             return .returned(.none)
         }
     }

@@ -39,7 +39,7 @@ struct PapyrusNativeFurnitureTests {
     @Test func inUseAsksTheBridgeWithTheMarkerAndTheReservationFlag() throws {
         let fixture = try Fixture.make()
         let furniture = FakeFurniture()
-        fixture.session.bridge.furniture = furniture
+        fixture.session.bridge.ports.furniture = furniture
         #expect(fixture.call("IsFurnitureInUse", returnType: .boolean) == .returned(.boolean(true)))
         #expect(fixture.call(
             "IsFurnitureMarkerInUse", arguments: [.integer(1), .boolean(true)], returnType: .boolean
@@ -60,7 +60,7 @@ struct PapyrusNativeFurnitureTests {
     @Test func sittingRotationReachesTheBridge() throws {
         let fixture = try Fixture.make()
         let furniture = FakeFurniture()
-        fixture.session.bridge.furniture = furniture
+        fixture.session.bridge.ports.furniture = furniture
         let result = fixture.registry.invoke(PapyrusNativeCall(
             kind: .staticFunction, scriptName: "Game", functionName: "SetSittingRotation",
             receiver: nil, arguments: [.float(-90)], returnType: .none

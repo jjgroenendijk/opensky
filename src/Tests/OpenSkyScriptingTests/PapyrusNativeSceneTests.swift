@@ -41,7 +41,7 @@ struct PapyrusNativeSceneTests {
         }
 
         let story = FakeStoryBridge()
-        fixture.session.bridge.story = story
+        fixture.session.bridge.ports.story = story
         #expect(read() == .returned(.none))
         story.scenes[fixture.key] = FormID(PapyrusNativeReferenceFixture.doorID)
         #expect(read() == .returned(.object(fixture.handle(PapyrusNativeReferenceFixture.doorID))))

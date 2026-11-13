@@ -1,12 +1,12 @@
 // Record-data reads for the form natives: form-list entries and `KWDA` keywords.
 
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.FormLists {
     func pluginFormListEntries(of key: ReferenceKey) -> [ReferenceKey?]? {
         guard
-            let formListStore,
+            let formListStore = bridge.stores.formListStore,
             case let .plugin(plugin, objectID) = key,
             let resolved = formListStore.formList(ResolvedFormID(
                 plugin: plugin,
@@ -22,7 +22,9 @@ extension PapyrusWorldStateBridge {
 
     /// The base form of a placed reference, read in its plugin's space.
     func resolvedBase(of reference: ReferenceKey) -> ReferenceKey? {
-        guard let keywordStore, let base = baseObject(of: reference) else { return nil }
+        guard
+            let keywordStore = bridge.stores.keywordStore,
+            let base = bridge.baseObject(of: reference) else { return nil }
         let space = if case let .plugin(plugin, _) = reference {
             plugin
         } else {
@@ -33,7 +35,7 @@ extension PapyrusWorldStateBridge {
 
     public func formHasKeyword(_ form: ReferenceKey, keyword: ReferenceKey) -> Bool? {
         guard
-            let keywordStore,
+            let keywordStore = bridge.stores.keywordStore,
             let base = keywordedForm(form, in: keywordStore),
             case let .plugin(keywordPlugin, keywordID) = keyword
         else { return nil }
@@ -45,7 +47,7 @@ extension PapyrusWorldStateBridge {
     /// A placed reference's base, read in its plugin's space as `HasKeyword`
     /// conditions read it; a generated one's base is in load-order space.
     private func keywordedForm(_ form: ReferenceKey, in store: KeywordStore) -> ResolvedFormID? {
-        guard let base = baseObject(of: form) else {
+        guard let base = bridge.baseObject(of: form) else {
             guard case let .plugin(plugin, objectID) = form else { return nil }
             return ResolvedFormID(plugin: plugin, objectID: objectID)
         }

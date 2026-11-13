@@ -74,7 +74,7 @@ extension PapyrusNativeFunctions.MenusNatives {
         // OpenSky returns at once with 0 favor points: the favor rule has no source yet.
         withReference("Actor", "ShowGiftMenu", into: &registry) { call, world, menus, key in
             let filter = objectArgument(call, at: 1).flatMap(world.referenceKey(for:))
-                .flatMap(world.formListEntries(of:))
+                .flatMap(world.scriptState.formListEntries(of:))
             menus.showGiftMenu(
                 actor: key, giving: boolean(call, at: 0, default: true),
                 filter: filter,
@@ -110,8 +110,8 @@ extension PapyrusNativeFunctions.MenusNatives {
         _ call: PapyrusNativeCall, _ world: PapyrusWorldStateBridge
     ) -> PapyrusNativeResult {
         guard
-            let movedPlacement = world.placement(of: key),
-            let targetPlacement = world.placement(of: target)
+            let movedPlacement = world.referencePlacement.placement(of: key),
+            let targetPlacement = world.referencePlacement.placement(of: target)
         else { return failure(call, "MoveTo needs references the plugins place") }
         let moved = movedPlacement.state.transform
         let place = targetPlacement.state.transform
@@ -130,7 +130,7 @@ extension PapyrusNativeFunctions.MenusNatives {
             for: key
         )
         if let destination = targetPlacement.location, destination != movedPlacement.location {
-            world.relocate(key, to: destination)
+            world.referencePlacement.relocate(key, to: destination)
         }
         return .returned(.none)
     }
@@ -138,7 +138,8 @@ extension PapyrusNativeFunctions.MenusNatives {
     /// Without `abForceOpen`, only a player teammate opens.
     private static func installOpenInventory(into registry: inout PapyrusNativeRegistry) {
         withReference("Actor", "OpenInventory", into: &registry) { call, world, menus, key in
-            let isTeammate = world.scriptedState(of: key).flag(ScriptedStateName.playerTeammate)
+            let isTeammate = world.scriptState.scriptedState(of: key)
+                .flag(ScriptedStateName.playerTeammate)
             if
                 key != .player,
                 boolean(call, at: 0, default: false) || isTeammate == true
@@ -154,7 +155,7 @@ extension PapyrusNativeFunctions.MenusNatives {
             let wasVisible = menus.isMapMarkerVisible(key)
             menus.addToMap(key, allowFastTravel: boolean(call, at: 0, default: false))
             if !wasVisible, menus.isMapMarkerVisible(key) {
-                bridge.presenter?.postWorldNotice(.mapMarkerAdded)
+                bridge.ports.presenter?.postWorldNotice(.mapMarkerAdded)
             }
             return .returned(.none)
         }
@@ -228,7 +229,7 @@ extension PapyrusNativeFunctions.MenusNatives {
         ]
         for (name, flag) in actorFlags {
             scriptState("Actor", name, into: &registry) { _, world, key in
-                .returned(.boolean(world.actorFlags(of: key)?.contains(flag) == true))
+                .returned(.boolean(world.actorValues.actorFlags(of: key)?.contains(flag) == true))
             }
         }
         withForm("ActorBase", "GetGiftFilter", into: &registry) { _, world, menus, form in

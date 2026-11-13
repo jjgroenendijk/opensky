@@ -9,13 +9,13 @@ public import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
-extension PapyrusWorldStateBridge {
+extension PapyrusWorldStateBridge.Placements {
     public func placement(of key: ReferenceKey) -> ReferencePlacement? {
-        if let state = referenceState(for: key) {
-            return ReferencePlacement(state: state, location: cellLocation(of: key))
+        if let state = bridge.referenceState(for: key) {
+            return ReferencePlacement(state: state, location: bridge.cellLocation(of: key))
         }
-        guard let plugin = references?.pluginPlacement(of: key) else { return nil }
-        let delta = worldState.delta(for: key)
+        guard let plugin = bridge.ports.references?.pluginPlacement(of: key) else { return nil }
+        let delta = bridge.worldState.delta(for: key)
         let state = ReferenceState(baseline: plugin.entry).applying(delta)
         let moved = delta?.component(ReferenceRelocation.self)?.location
         return ReferencePlacement(state: state, location: moved ?? plugin.home)
@@ -27,7 +27,7 @@ extension PapyrusWorldStateBridge {
     public func spawnReference(of base: ReferenceKey, at anchor: ReferenceKey) -> ReferenceKey? {
         guard
             case let .plugin(name, objectID) = base,
-            let formID = formIDResolver?.localFormID(
+            let formID = bridge.formIDResolver?.localFormID(
                 of: ResolvedFormID(plugin: name, objectID: objectID)
             ),
             let placement = placement(of: anchor),
@@ -36,19 +36,19 @@ extension PapyrusWorldStateBridge {
         let spawn = ReferenceSpawnState(
             base: formID, location: location, placement: placement.state.transform.placement
         )
-        let key = worldState.allocateGeneratedKey()
-        worldState.set(spawn, for: key, in: location)
+        let key = bridge.worldState.allocateGeneratedKey()
+        bridge.worldState.set(spawn, for: key, in: location)
         return key
     }
 
     /// Sends `key` to `location`. Moving it back to its plugin cell drops the move.
     public func relocate(_ key: ReferenceKey, to location: CellSceneLocation) {
         let origin = placement(of: key)?.location
-        let home = references?.pluginPlacement(of: key)?.home
+        let home = bridge.ports.references?.pluginPlacement(of: key)?.home
         if home == location {
-            worldState.reset(.relocation, for: key)
+            bridge.worldState.reset(.relocation, for: key)
         } else {
-            worldState.set(ReferenceRelocation(location: location), for: key, in: location)
+            bridge.worldState.set(ReferenceRelocation(location: location), for: key, in: location)
         }
         queueCellAttachmentChange(of: key, from: origin, to: location)
     }
@@ -58,7 +58,7 @@ extension PapyrusWorldStateBridge {
     private func queueCellAttachmentChange(
         of key: ReferenceKey, from origin: CellSceneLocation?, to destination: CellSceneLocation
     ) {
-        guard let world, key != playerKey else { return }
+        guard let world = bridge.world, key != bridge.playerKey else { return }
         let wasAttached = origin.map { world.attachedByCell[$0] != nil } ?? false
         let isAttached = world.attachedByCell[destination] != nil
         guard wasAttached != isAttached else { return }

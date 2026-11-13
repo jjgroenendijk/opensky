@@ -55,7 +55,7 @@ extension PapyrusNativeFunctions.AnimationVariablesNatives {
         ) { call, context in
             guard
                 let world = context.world as? PapyrusWorldStateBridge,
-                let bridge = world.objectAnimation,
+                let bridge = world.ports.objectAnimation,
                 let key = call.receiver.flatMap(world.referenceKey(for:))
             else { return failure(call, "\(functionName) needs an object with a graph") }
             return body(call, bridge, key)

@@ -32,15 +32,15 @@ struct PapyrusRegistrationEventTests {
             ("OnTrackedStatsEvent", PapyrusWorldFixture.probeBody(note: "stat"))
         ])
         let bridge = fixture.session.bridge
-        bridge.queueTrackedStatEvents()
+        bridge.trackedStats.queueTrackedStatEvents()
         let result = try fixture.registry.invoke(PapyrusWorldFixture.methodCall(
             "Form", "RegisterForTrackedStatsEvent", receiver: Self.instanceHandle(fixture)
         ))
         #expect(result == .returned(.none))
         Self.incrementStat(fixture, "Locks Picked")
         Self.incrementStat(fixture, "Bunnies Slaughtered", by: 2)
-        #expect(bridge.queueTrackedStatEvents() == 2)
-        #expect(bridge.queueTrackedStatEvents() == 0)
+        #expect(bridge.trackedStats.queueTrackedStatEvents() == 2)
+        #expect(bridge.trackedStats.queueTrackedStatEvents() == 0)
         PapyrusWorldFixture.drain(fixture.session.world)
         #expect(fixture.session.dispatch.notes == ["stat", "stat"])
     }
@@ -48,13 +48,13 @@ struct PapyrusRegistrationEventTests {
     @Test func aLoadIsNotReadAsStatChanges() throws {
         let fixture = try Fixture.make()
         let bridge = fixture.session.bridge
-        bridge.queueTrackedStatEvents()
+        bridge.trackedStats.queueTrackedStatEvents()
         fixture.session.world.trackedStatListeners.insert(
             PapyrusInstanceKey(reference: fixture.key, scriptName: "Lever")
         )
         Self.incrementStat(fixture, "Locks Picked")
-        bridge.skipTrackedStatJournal()
-        #expect(bridge.queueTrackedStatEvents() == 0)
+        bridge.trackedStats.skipTrackedStatJournal()
+        #expect(bridge.trackedStats.queueTrackedStatEvents() == 0)
     }
 
     @Test func theStateChangeNativesSendTheirEvent() throws {

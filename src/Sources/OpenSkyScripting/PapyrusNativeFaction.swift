@@ -26,7 +26,8 @@ extension PapyrusNativeFunctions.FactionNatives {
             functionName: "AddToFaction"
         ) { call, context in
             memberFactionTarget(call, context) { actor, faction in
-                guard actor.world.addToFaction(actor.key, faction: faction) != nil else {
+                guard actor.world.factionBridge.addToFaction(actor.key, faction: faction) != nil
+                else {
                     return needsFactionRuntime(call)
                 }
                 return .returned(.none)
@@ -41,7 +42,10 @@ extension PapyrusNativeFunctions.FactionNatives {
             functionName: "RemoveFromFaction"
         ) { call, context in
             memberFactionTarget(call, context) { actor, faction in
-                guard actor.world.removeFromFaction(actor.key, faction: faction) != nil else {
+                guard
+                    actor.world.factionBridge
+                        .removeFromFaction(actor.key, faction: faction) != nil
+                else {
                     return needsFactionRuntime(call)
                 }
                 return .returned(.none)
@@ -59,7 +63,10 @@ extension PapyrusNativeFunctions.FactionNatives {
             functionName: "IsInFaction"
         ) { call, context in
             memberFactionTarget(call, context) { actor, faction in
-                guard let member = actor.world.isInFaction(actor.key, faction: faction) else {
+                guard
+                    let member = actor.world.factionBridge
+                        .isInFaction(actor.key, faction: faction)
+                else {
                     return needsFactionRuntime(call)
                 }
                 return .returned(.boolean(member))
@@ -75,7 +82,8 @@ extension PapyrusNativeFunctions.FactionNatives {
             functionName: "GetFactionRank"
         ) { call, context in
             memberFactionTarget(call, context) { actor, faction in
-                guard let rank = actor.world.factionRank(of: actor.key, in: faction) else {
+                guard let rank = actor.world.factionBridge.factionRank(of: actor.key, in: faction)
+                else {
                     return needsFactionRuntime(call)
                 }
                 return .returned(.integer(rank.map(Int32.init) ?? -2))
@@ -100,7 +108,8 @@ extension PapyrusNativeFunctions.FactionNatives {
                     return failure(call, "SetFactionRank needs a rank in -128...127")
                 }
                 guard
-                    actor.world.setFactionRank(rank, of: actor.key, in: faction) != nil
+                    actor.world.factionBridge
+                        .setFactionRank(rank, of: actor.key, in: faction) != nil
                 else {
                     return needsFactionRuntime(call)
                 }
@@ -120,7 +129,10 @@ extension PapyrusNativeFunctions.FactionNatives {
                 guard let delta = integer(call, at: 1) else {
                     return failure(call, "ModFactionRank needs an integer change")
                 }
-                guard actor.world.modFactionRank(delta, of: actor.key, in: faction) != nil else {
+                guard
+                    actor.world.factionBridge
+                        .modFactionRank(delta, of: actor.key, in: faction) != nil
+                else {
                     return needsFactionRuntime(call)
                 }
                 return .returned(.none)
@@ -135,7 +147,7 @@ extension PapyrusNativeFunctions.FactionNatives {
                 let receiver = call.receiver,
                 let actor = bridge.referenceKey(for: receiver)
             else { return needsActor(call) }
-            guard bridge.removeFromAllFactions(actor) != nil else {
+            guard bridge.factions.removeFromAllFactions(actor) != nil else {
                 return needsFactionRuntime(call)
             }
             return .returned(.none)
@@ -153,7 +165,10 @@ extension PapyrusNativeFunctions.FactionNatives {
         ) { call, context in
             actorPair(call, context) { actor, other in
                 guard
-                    let stored = actor.world.relationshipRank(of: actor.key, toward: other),
+                    let stored = actor.world.factionBridge.relationshipRank(
+                        of: actor.key,
+                        toward: other
+                    ),
                     let rank = stored
                 else {
                     return failure(
@@ -183,7 +198,7 @@ extension PapyrusNativeFunctions.FactionNatives {
                     return failure(call, "SetRelationshipRank needs a rank in -4...4")
                 }
                 guard
-                    actor.world.setRelationshipRank(
+                    actor.world.factionBridge.setRelationshipRank(
                         Int8(clamping: raw), of: actor.key, toward: other
                     ) != nil
                 else {
@@ -210,7 +225,10 @@ extension PapyrusNativeFunctions.FactionNatives {
         ) { call, context in
             actorPair(call, context) { actor, other in
                 guard
-                    let reaction = actor.world.factionReaction(of: actor.key, toward: other)
+                    let reaction = actor.world.factionBridge.factionReaction(
+                        of: actor.key,
+                        toward: other
+                    )
                 else {
                     return needsFactionRuntime(call)
                 }
@@ -227,7 +245,8 @@ extension PapyrusNativeFunctions.FactionNatives {
             functionName: "IsHostileToActor"
         ) { call, context in
             actorPair(call, context) { actor, other in
-                guard let hostile = actor.world.isHostile(actor.key, toward: other) else {
+                guard let hostile = actor.world.factionBridge.isHostile(actor.key, toward: other)
+                else {
                     return needsFactionRuntime(call)
                 }
                 return .returned(.boolean(hostile))
@@ -251,7 +270,10 @@ extension PapyrusNativeFunctions.FactionNatives {
                 return failure(call, "GetReaction needs a faction argument")
             }
             guard
-                let reaction = target.world.factionRelation(of: target.key, toward: other)
+                let reaction = target.world.factionBridge.factionRelation(
+                    of: target.key,
+                    toward: other
+                )
             else {
                 return needsFactionRuntime(call)
             }
