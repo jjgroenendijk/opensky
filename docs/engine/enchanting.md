@@ -49,7 +49,7 @@ UESP gives, for apparel, "rounded down":
 ```text
 net magnitude = base magnitude * soul multiplier * skill multiplier * (1 + Enchanter perk)
                 * (1 + specific perk modifier)
-skill multiplier = 1 + (skill/100) * (skill/100 - 0.14) / 3.4
+skill multiplier = 1 + (fEnchantingSkillFactor - 1) * (skill/100) * max(0.01, (skill - 14) / 85)
 ```
 
 The soul multiplier is 1 for grand, 2/3 greater, 1/3 common, 1/6 lesser, and 1/12 petty. Every
@@ -96,7 +96,7 @@ scales:
 | --- | --- |
 | Enchant an item | 1 |
 | Disenchant | `fDisenchantSkillUse` (0.0025) per gold of enchantment value: 1 per 400 gold |
-| Recharge a weapon | 0.05 petty, 0.1 lesser, 0.2 common, 0.4 greater, 0.6 grand |
+| Recharge a weapon | The soul's charge times `fSkillUsageRechargeMult` (0.0002): 0.05 petty, 0.6 grand |
 
 The enchantment value is the item's game value minus its record value: what the
 [barter](/engine/barter.md) price adds for the enchantment.
