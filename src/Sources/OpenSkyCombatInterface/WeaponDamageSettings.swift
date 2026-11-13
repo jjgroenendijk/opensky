@@ -35,6 +35,8 @@ nonisolated public struct WeaponDamageSettings: Equatable, Sendable {
     public var maxArmorRating: Float = 80
     /// `fClothingArmorScale`: the factor on a clothing piece's rating.
     public var clothingArmorScale: Float = 1
+    /// `fCombatUnarmedCritDamageMult`: an unarmed critical adds this share of the base damage.
+    public var unarmedCriticalMult: Float = 1
     /// `fSneakAttackSkillUsageMelee`: Sneak experience per melee sneak attack.
     public var sneakSkillUseMelee: Float = 30
     /// `sSuccessfulSneakAttackMain` and `sSuccessfulSneakAttackEnd`, around the multiplier.
@@ -78,6 +80,7 @@ nonisolated public struct WeaponDamageSettings: Equatable, Sendable {
         store.read("fArmorRatingPCMax", into: &settings, \.armorRatingPlayerMax)
         store.read("fMaxArmorRating", into: &settings, \.maxArmorRating)
         store.read("fClothingArmorScale", into: &settings, \.clothingArmorScale)
+        store.read("fCombatUnarmedCritDamageMult", into: &settings, \.unarmedCriticalMult)
         store.read("fSneakAttackSkillUsageMelee", into: &settings, \.sneakSkillUseMelee)
         if let main = store.text("sSuccessfulSneakAttackMain").flatMap({ text($0) }) {
             settings.sneakNoticeMain = main

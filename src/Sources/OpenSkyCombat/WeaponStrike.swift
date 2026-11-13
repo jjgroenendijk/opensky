@@ -24,6 +24,8 @@ nonisolated public struct WeaponStrike: Equatable, Sendable {
     public var weaponDamageBonus: Float = 0
     /// The critical damage, added after every factor. Tempering does not raise it.
     public var criticalDamage: Float = 0
+    /// An unarmed critical adds the base damage times this share instead.
+    public var criticalBaseShare: Float = 0
     var isCritical = false
     /// `Mod Target Stagger` of the attacker times `Mod Incoming Stagger` of the target.
     var staggerMultiplier: Float = 1
@@ -59,7 +61,8 @@ nonisolated public struct WeaponStrike: Equatable, Sendable {
     public func damage(base: Float, attack: Float = 1) -> Float {
         let bonus = weaponDamageBonus.isFinite ? weaponDamageBonus : 0
         let critical = criticalDamage.isFinite ? max(0, criticalDamage) : 0
-        return max(0, base + bonus) * attack * factor + critical
+        let share = criticalBaseShare.isFinite ? max(0, criticalBaseShare) : 0
+        return max(0, base + bonus) * attack * factor + critical + max(0, base) * share
     }
 }
 

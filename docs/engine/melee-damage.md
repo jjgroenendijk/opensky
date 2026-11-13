@@ -84,6 +84,10 @@ applied = ((base + weaponBonus) * attackBonus * skill * sneak * (1 - armour) * p
            * attackDamageMult + critical) * (1 - blocked)
 ```
 
+A weapon's `critical` is its `CRDT` damage through the Calculate Critical Damage entry point. A
+fist has no `CRDT`, so an unarmed critical adds `base * fCombatUnarmedCritDamageMult` (1 in the
+install), as OpenSky observed the game do.
+
 `attackDamageMult` is the attacker's `AttackDamageMult` actor value (154). UESP "Skyrim Mod:Actor
 Value Indices" says it scales "all physical damage from weapons, fists, and bashing", with 1 as the
 default. It applies to the player and to NPCs.

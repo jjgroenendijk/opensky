@@ -18,6 +18,8 @@ final class CombatPerkTerms {
     let staggers: StaggerSettings
     /// The critical-hit, arrow-deflect, knock, and reflect rolls.
     var random = ConditionRandom()
+    /// `fCombatUnarmedCritDamageMult`: an unarmed critical's share of the base damage.
+    var unarmedCriticalMult: Float = 1
     /// The player's crouch last frame, so a sneak entry casts its perk spell once.
     var wasPlayerSneaking = false
     /// The graph flags the player's perks set true last frame.
@@ -91,7 +93,8 @@ final class CombatPerkTerms {
     }
 
     /// CK wiki "Perk Entry Point": the chance starts at 0 without perks, and `CRDT`
-    /// scales it. The critical damage starts at the weapon's `CRDT` damage.
+    /// scales it. The critical damage starts at the weapon's `CRDT` damage; a fist has
+    /// no `CRDT`, so its critical adds the base damage times `fCombatUnarmedCritDamageMult`.
     private func rollCritical(
         into strike: inout WeaponStrike, blow: CombatBlow, subjects: PerkEvaluationSubjects
     ) {
@@ -103,6 +106,10 @@ final class CombatPerkTerms {
         ) * (critical?.percentMultiplier ?? 1)
         guard chance > 0, Float(random.percent()) < chance else { return }
         strike.isCritical = true
+        if blow.handType == .handToHand {
+            strike.criticalBaseShare = unarmedCriticalMult
+            return
+        }
         strike.criticalDamage = perkValue(
             Float(critical?.damage ?? 0),
             at: .calculateCriticalDamage,

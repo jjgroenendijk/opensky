@@ -44,6 +44,7 @@ final class CombatShared {
         combatAI = data?.combatAI ?? .vanilla
         falls = data?.falls ?? .vanilla
         perks = CombatPerkTerms(world: world, items: data?.items, staggers: staggers)
+        perks.unarmedCriticalMult = weaponDamage.unarmedCriticalMult
     }
 
     var strikes: CombatShared.CombatStrikes {

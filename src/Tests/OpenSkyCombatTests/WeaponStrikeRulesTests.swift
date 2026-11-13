@@ -86,4 +86,12 @@ struct WeaponStrikeRulesTests {
         #expect(resolved.armorRatingPlayerMax == 2)
         #expect(resolved.sneakHand == 2)
     }
+
+    @Test func anUnarmedCriticalAddsItsShareOfTheBaseDamage() {
+        var strike = WeaponStrike.plain
+        strike.criticalBaseShare = 1
+        #expect(strike.damage(base: 10) == 20)
+        strike.criticalBaseShare = 0.5
+        #expect(strike.damage(base: 10, attack: 2) == 25)
+    }
 }
