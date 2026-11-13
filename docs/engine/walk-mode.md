@@ -158,15 +158,17 @@ Above water the breath is full again at once. The settings come from the CK wiki
 
 | Setting | Meaning | Value |
 | --- | --- | --- |
-| `fActorSwimBreathBase` | seconds of breath | 10, the wiki default; `Skyrim.esm` does not set it |
+| `fActorSwimBreathBase` | seconds of breath, before the next term | 10, the wiki default; `Skyrim.esm` does not set it |
+| `fActorSwimBreathMult` | adds 50 times its value in seconds | 0.2 in `Skyrim.esm`, so 10 more seconds |
 | `fActorSwimBreathDamage` | fraction of maximum health lost each second | 0.08 in `Skyrim.esm` |
 
-Example: with 100 health, a 16 second dive costs 6 seconds at 8 health a second, which is 48 health.
+The breath lasts 10 + 50 x 0.2 = 20 seconds. Example: with 100 health, a 26 second dive costs 6
+seconds at 8 health a second, which is 48 health.
 
 The `Water Breathing` actor value above 0 keeps the breath full. A water breathing effect, or the
-Argonian racial ability, raises it. `fActorSwimBreathMult` is in `Skyrim.esm` (0.2), but the wiki
-text for it ("number of minutes (additive)") does not say what it multiplies, so OpenSky does not
-use it. The breath refills at once, but the game may refill it over time; this is not measured.
+Argonian racial ability, raises it. The wiki text for `fActorSwimBreathMult` ("number of minutes
+(additive)") does not give its formula; the fixed factor 50 is OpenSky's reading. The breath
+refills at once, but the game may refill it over time; this is not measured.
 
 ## Ground material
 

@@ -1,4 +1,5 @@
-// The breath timer under water: ten seconds of breath, then health lost each second.
+// The breath timer under water: 10 + 50 x 0.2 = 20 seconds of breath, then health lost each
+// second.
 
 @testable import OpenSkyPlayer
 import Testing
@@ -7,7 +8,7 @@ struct PlayerBreathTests {
     @Test func aLongDiveCostsHealthAfterTheBreathRunsOut() {
         var breath = PlayerBreath()
         let first = breath.advance(
-            seconds: 6,
+            seconds: 16,
             submerged: true,
             waterBreathing: false,
             maximumHealth: 100
@@ -34,16 +35,23 @@ struct PlayerBreathTests {
             waterBreathing: true,
             maximumHealth: 100
         ) == 0)
-        #expect(breath.remainingSeconds == 10)
-        _ = breath.advance(seconds: 8, submerged: true, waterBreathing: false, maximumHealth: 100)
+        #expect(breath.remainingSeconds == 20)
+        _ = breath.advance(seconds: 18, submerged: true, waterBreathing: false, maximumHealth: 100)
         _ = breath.advance(
             seconds: 0.1,
             submerged: false,
             waterBreathing: false,
             maximumHealth: 100
         )
-        #expect(breath.remainingSeconds == 10)
+        #expect(breath.remainingSeconds == 20)
         #expect(PlayerLocomotionReadout.breathLine(breath).contains("above water"))
+    }
+
+    @Test func theMultiplierAddsFiftyTimesItsValue() {
+        var settings = BreathSettings()
+        settings.baseSeconds = 5
+        settings.multiplier = 1
+        #expect(settings.breathSeconds == 55)
     }
 
     @Test func theEyesDecideWhetherThePlayerIsUnderWater() {

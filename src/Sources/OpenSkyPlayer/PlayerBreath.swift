@@ -6,18 +6,26 @@ public import OpenSkyGameData
 /// The breath game settings. `Skyrim.esm` holds no `fActorSwimBreathBase`, so its CK
 /// wiki default applies.
 nonisolated public struct BreathSettings: Equatable, Sendable {
-    /// `fActorSwimBreathBase`: seconds under water before drowning starts.
-    public var breathSeconds: Float = 10
+    /// `fActorSwimBreathBase`: the base seconds under water before drowning starts.
+    public var baseSeconds: Float = 10
+    /// `fActorSwimBreathMult`: each point adds 50 seconds of breath.
+    public var multiplier: Float = 0.2
     /// `fActorSwimBreathDamage`: the fraction of the maximum health lost each second.
     public var damageFraction: Float = 0.08
 
     public static let vanilla = Self()
 
+    /// Seconds of breath before drowning starts: 10 + 50 x 0.2 = 20 with vanilla values.
+    public var breathSeconds: Float {
+        baseSeconds + 50 * multiplier
+    }
+
     public init() {}
 
     public static func resolve(store: GameSettingStore) -> Self {
         var settings = vanilla
-        store.read("fActorSwimBreathBase", into: &settings, \.breathSeconds)
+        store.read("fActorSwimBreathBase", into: &settings, \.baseSeconds)
+        store.read("fActorSwimBreathMult", into: &settings, \.multiplier)
         store.read("fActorSwimBreathDamage", into: &settings, \.damageFraction)
         return settings
     }

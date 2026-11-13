@@ -76,6 +76,7 @@ the detail and the sources it did find.
 
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
+| Breath time | `fActorSwimBreathBase` + 50 x `fActorSwimBreathMult` seconds | [walk mode](/engine/walk-mode.md#breath-and-drowning) |
 | Detection constants | Twelve values, such as a 90-degree half view cone | [detection constants](/engine/detection-constants.md#openskys-own-constants) |
 | Crouch visual factor and light level scale | 0.5; one luminance unit is level 100 | [detection](/engine/detection.md) |
 | `GetLightLevel` scale | Light level times 100 | [actor natives](/engine/papyrus-actor-natives.md) |
