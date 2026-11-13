@@ -60,26 +60,26 @@ extension MenuScreensCraftingDeskAdapter {
 
 extension MenuScreensCraftingDeskAdapter {
     var craftingStationName: String? {
-        game.inventory.craftingSnapshot.stationName
+        game.inventory.craftingReadout.craftingSnapshot.stationName
     }
 
     var craftingRecipes: [CraftingMenuRecipe] {
-        game.inventory.craftingSnapshot.recipes.filter(\.isOffered).map {
+        game.inventory.craftingReadout.craftingSnapshot.recipes.filter(\.isOffered).map {
             CraftingMenuRecipe(id: $0.id, name: $0.name, canMake: $0.isEligible)
         }
     }
 
     public func craft(_ recipe: ResolvedFormID) -> String {
-        game.inventory.craftLine(recipe, texts: game.mapWorld.settingTexts())
+        game.inventory.readoutLines.craftLine(recipe, texts: game.mapWorld.settingTexts())
     }
 
     public func closeCraftingStation() {
-        game.inventory.closeCraftingSession()
+        game.inventory.craftingBench.closeCraftingSession()
     }
 
     var alchemyIngredients: [CraftingMenuIngredient]? {
         guard game.inventory.alchemySelection != nil else { return nil }
-        return game.inventory.alchemyIngredients.map {
+        return game.inventory.alchemyLab.alchemyIngredients.map {
             CraftingMenuIngredient(
                 id: $0.id,
                 name: "\($0.name) (\($0.count)): \($0.effectsText)",
@@ -89,10 +89,10 @@ extension MenuScreensCraftingDeskAdapter {
     }
 
     public func toggleIngredient(_ ingredient: FormID) -> String {
-        game.inventory.toggleAlchemyIngredientLine(ingredient)
+        game.inventory.readoutLines.toggleAlchemyIngredientLine(ingredient)
     }
 
     public func brewChosenIngredients() -> String {
-        game.inventory.brewChosenIngredientsLine()
+        game.inventory.readoutLines.brewChosenIngredientsLine()
     }
 }

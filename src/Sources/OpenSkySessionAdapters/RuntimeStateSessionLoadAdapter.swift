@@ -77,7 +77,7 @@ extension RuntimeStateSessionLoadAdapter {
         }
         game.worldState.restore(from: file.snapshot)
         // No plugin holds a brewed potion, so the save's own list goes in the item index.
-        game.inventory.registerCreatedPotions()
+        game.inventory.alchemyLab.registerCreatedPotions()
         // A save without a CLOK chunk restores the vanilla-start clock.
         game.gameSession?.gameClock = file.clock ?? GameClock()
         game.gameSession?.clearScriptScreenEffects()

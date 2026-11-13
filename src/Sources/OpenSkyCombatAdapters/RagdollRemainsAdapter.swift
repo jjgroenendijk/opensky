@@ -62,7 +62,7 @@ extension RagdollRemainsAdapter {
             position = SIMD3(world.x, world.y, feet.z)
         }
         position.z += Self.droppedWeaponLift
-        return game.inventory.dropWeapon(
+        return game.inventory.itemActions.dropWeapon(
             of: holder,
             at: DropPlacement(location: cell, position: position, rotation: .zero)
         ) != nil

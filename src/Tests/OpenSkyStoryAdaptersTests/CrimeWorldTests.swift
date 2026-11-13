@@ -68,7 +68,7 @@ struct CrimeWorldTests {
         #expect(adapter.vendor(faction: Self.faction) == nil)
         #expect(adapter.vendor(of: Self.guardKey) == nil)
         #expect(adapter.targetOwnership() == nil)
-        #expect(host.fakeInventory.targetOwnershipCallCount == 1)
+        #expect(host.fakeInventory.itemPanels.targetOwnershipCallCount == 1)
     }
 
     @Test func witnessesNeedASession() {

@@ -81,9 +81,12 @@ extension FollowerCommandTasksAdapter {
         case .moveTo:
             return true
         case .pickUp:
-            return game.inventory.followerPickUp(key, by: follower)
+            return game.inventory.followerTakes.followerPickUp(key, by: follower)
         case .loot:
-            return game.inventoryWorld.run(game.inventory.followerTakeAll(from: key, by: follower))
+            return game.inventoryWorld.run(game.inventory.followerTakes.followerTakeAll(
+                from: key,
+                by: follower
+            ))
         case .attack:
             if task.crime == .violence {
                 game.crime.reportAssault(on: key, wasHostile: false)

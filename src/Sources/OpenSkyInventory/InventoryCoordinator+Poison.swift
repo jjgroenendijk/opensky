@@ -10,21 +10,24 @@ public import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
-extension InventoryCoordinator {
+extension InventoryCoordinator.Consumables {
     /// The poisons on the player's weapons.
     public var playerWeaponPoisons: WeaponPoisonState {
-        runtime?.store.component(WeaponPoisonState.self, for: .player) ?? WeaponPoisonState()
+        coordinator.runtime?.store
+            .component(WeaponPoisonState.self, for: .player) ?? WeaponPoisonState()
     }
 
     /// Whether `item` is an `ALCH` with the Poison flag, which a use puts on a weapon.
     public func isPoison(_ item: FormID) -> Bool {
-        runtime?.inventory.baselines.items.ingestibles[item.rawValue]?.flags
+        coordinator.runtime?.inventory.baselines.items.ingestibles[item.rawValue]?.flags
             .contains(.poison) == true
     }
 
     /// The weapon the player holds in the right hand, or nil with none drawn.
     public var poisonableWeapon: FormID? {
-        guard let runtime, let equipment else { return nil }
+        guard
+            let runtime = coordinator.runtime,
+            let equipment = coordinator.equipment else { return nil }
         let items = runtime.inventory.baselines.items
         let weapons = equipment.equipped(on: runtime.player).filter { items.weapon($0) != nil }
         return weapons.first { equipment.occupancy(of: $0).hands.contains(.rightHand) }
@@ -35,33 +38,40 @@ extension InventoryCoordinator {
     /// poison, refuses it, as `sPoisonUnableToPoison` and `sPoisonAlreadyPoisonedMessage` say.
     @discardableResult
     public func applyPoison(_ poison: FormID) -> AlchemyActionOutcome {
-        guard let runtime else { return noteAlchemy(.unavailable) }
-        let poisonName = name(of: poison)
-        guard isPoison(poison) else { return noteAlchemy(.notAPoison(poisonName)) }
-        guard let weapon = poisonableWeapon else { return noteAlchemy(.noWeapon) }
+        guard let runtime = coordinator.runtime
+        else { return coordinator.alchemyLab.noteAlchemy(.unavailable) }
+        let poisonName = coordinator.name(of: poison)
+        guard isPoison(poison)
+        else { return coordinator.alchemyLab.noteAlchemy(.notAPoison(poisonName)) }
+        guard let weapon = poisonableWeapon
+        else { return coordinator.alchemyLab.noteAlchemy(.noWeapon) }
         if runtime.inventory.baselines.items.weapon(weapon)?.animationType == .staff {
-            return noteAlchemy(.cannotPoison)
+            return coordinator.alchemyLab.noteAlchemy(.cannotPoison)
         }
         if playerWeaponPoisons.poisons[weapon] != nil {
-            return noteAlchemy(.alreadyPoisoned)
+            return coordinator.alchemyLab.noteAlchemy(.alreadyPoisoned)
         }
         do {
             try runtime.inventory.remove(poison, count: 1, from: runtime.player)
         } catch {
-            return noteAlchemy(.noneCarried(poisonName))
+            return coordinator.alchemyLab.noteAlchemy(.noneCarried(poisonName))
         }
         let doses = poisonDoses(of: poison)
         runtime.store.set(
             playerWeaponPoisons.applying(WeaponPoison(poison: poison, doses: doses), to: weapon),
             for: .player
         )
-        return noteAlchemy(.poisoned(weapon: name(of: weapon), poison: poisonName, doses: doses))
+        return coordinator.alchemyLab.noteAlchemy(.poisoned(
+            weapon: coordinator.name(of: weapon),
+            poison: poisonName,
+            doses: doses
+        ))
     }
 
     /// Mod Poison Dose Count, with the poison bound as the item.
     private func poisonDoses(of poison: FormID) -> Int32 {
-        let subject = runtime?.inventory.baselines.items.conditionSubject(of: poison)
-        let value = world.perkModified(
+        let subject = coordinator.runtime?.inventory.baselines.items.conditionSubject(of: poison)
+        let value = coordinator.world.perkModified(
             1,
             at: .modPoisonDoseCount,
             on: .player,

@@ -38,14 +38,17 @@ struct FavouritesTests {
                 inventory: items.runtime.inventory, references: items.references
             ))
         )
-        #expect(coordinator.hotkeyItem(1) == .failure(.emptySlot(1)))
-        #expect(coordinator.bindHotkey(1, to: Fixture.sword) == .bound("IronSword", slot: 1))
-        #expect(coordinator.hotkeyItem(1) == .failure(.notCarried("IronSword")))
+        #expect(coordinator.favouriteItems.hotkeyItem(1) == .failure(.emptySlot(1)))
+        #expect(coordinator.favouriteItems.bindHotkey(1, to: Fixture.sword) == .bound(
+            "IronSword",
+            slot: 1
+        ))
+        #expect(coordinator.favouriteItems.hotkeyItem(1) == .failure(.notCarried("IronSword")))
         try items.runtime.inventory.add(Fixture.sword, count: 1, to: .player)
-        #expect(coordinator.hotkeyItem(1) == .success(Fixture.sword))
-        #expect(coordinator.hotkeyItem(0) == .failure(.badSlot(0)))
-        #expect(coordinator.toggleFavourite(Fixture.sword) == .unmarked("IronSword"))
-        #expect(coordinator.hotkeyItem(1) == .failure(.emptySlot(1)))
+        #expect(coordinator.favouriteItems.hotkeyItem(1) == .success(Fixture.sword))
+        #expect(coordinator.favouriteItems.hotkeyItem(0) == .failure(.badSlot(0)))
+        #expect(coordinator.favouriteItems.toggleFavourite(Fixture.sword) == .unmarked("IronSword"))
+        #expect(coordinator.favouriteItems.hotkeyItem(1) == .failure(.emptySlot(1)))
     }
 
     @Test func theCardReadsDamageEffectsAndMarks() throws {
@@ -60,15 +63,15 @@ struct FavouritesTests {
         let coordinator = InventoryCoordinator(
             world: FakeAlchemyWorld(), lockWorld: FakeLockWorld(), data: data
         )
-        let sword = try #require(coordinator.itemCard(for: Fixture.sword))
+        let sword = try #require(coordinator.itemCards.itemCard(for: Fixture.sword))
         #expect(sword.kind == "Weapon")
         #expect(sword.damage == 7)
-        let poison = try #require(coordinator.itemCard(for: AlchemyFixture.poison))
+        let poison = try #require(coordinator.itemCards.itemCard(for: AlchemyFixture.poison))
         #expect(poison.kind == "Poison")
         #expect(poison.effects == ["Damage Health 10"])
-        coordinator.learnEatenIngredient(AlchemyFixture.wheat)
-        coordinator.bindHotkey(4, to: AlchemyFixture.wheat)
-        let wheat = try #require(coordinator.itemCard(for: AlchemyFixture.wheat))
+        coordinator.alchemyLab.learnEatenIngredient(AlchemyFixture.wheat)
+        coordinator.favouriteItems.bindHotkey(4, to: AlchemyFixture.wheat)
+        let wheat = try #require(coordinator.itemCards.itemCard(for: AlchemyFixture.wheat))
         #expect(wheat.effects == ["Restore Health", "?"])
         #expect(wheat.lines.last == "favourite, hotkey 4")
     }
@@ -83,8 +86,8 @@ struct FavouritesTests {
             lockWorld: FakeLockWorld(),
             data: InventorySessionData(items: WorldItemRuntime(inventory: inventory))
         )
-        #expect(coordinator.use(of: AlchemyFixture.poison) == .applyPoison)
-        #expect(coordinator.use(of: AlchemyFixture.wheat) == .consume)
-        #expect(coordinator.use(of: Fixture.sword) == .equip)
+        #expect(coordinator.consumables.use(of: AlchemyFixture.poison) == .applyPoison)
+        #expect(coordinator.consumables.use(of: AlchemyFixture.wheat) == .consume)
+        #expect(coordinator.consumables.use(of: Fixture.sword) == .equip)
     }
 }

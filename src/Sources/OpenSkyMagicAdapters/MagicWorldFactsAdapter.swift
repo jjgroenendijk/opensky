@@ -89,7 +89,7 @@ extension MagicWorldFactsAdapter {
     }
 
     public func playerAteIngredient(_ item: FormID) {
-        game.inventory.learnEatenIngredient(item)
+        game.inventory.alchemyLab.learnEatenIngredient(item)
     }
 
     public func postNotification(_ text: String) {

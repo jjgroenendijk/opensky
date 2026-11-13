@@ -34,6 +34,11 @@ public protocol RuntimeStateInventoryFactsHost: AnyObject, SendableMetatype {
 public struct RuntimeStateInventoryFactsAdapter {
     public let game: any RuntimeStateInventoryFactsHost
     public let state: RuntimeStatePartState
+
+    /// The player's traits a condition reads: sex, race, and gait.
+    public var playerTraits: PlayerTraits {
+        PlayerTraits(game: game)
+    }
 }
 
 extension RuntimeStateInventoryFactsAdapter {
@@ -63,7 +68,8 @@ extension RuntimeStateInventoryFactsAdapter {
         let equipped = game.inventory.equipment?.equipped(on: runtime.player) ?? []
         var equipment: [ReferenceKey: ActorEquipmentFacts] = [:]
         for key in [.player] + context.references.sortedActorEntries.map(\.key) {
-            guard var facts = game.inventory.conditionEquipment(of: key) else { continue }
+            guard var facts = game.inventory.itemConditions.conditionEquipment(of: key)
+            else { continue }
             let spells = context.magic.state(of: key)?.handSpells ?? [:]
             facts.rightHandType = Self.handType(facts.rightWeapon, spell: spells[.right] != nil)
             facts.leftHandType = facts.hasShield && facts.leftWeapon == nil
@@ -75,7 +81,8 @@ extension RuntimeStateInventoryFactsAdapter {
             counts: [.player: stacks.reduce(into: [:]) { $0[$1.item, default: 0] += $1.count }],
             equipped: [.player: Set(equipped)],
             equipment: equipment,
-            keywordCounts: [.player: game.inventory.conditionKeywordCounts(of: .player) ?? [:]],
+            keywordCounts: [.player: game.inventory.itemConditions
+                .conditionKeywordCounts(of: .player) ?? [:]],
             lookup: inventoryLookup()
         )
     }
@@ -85,13 +92,16 @@ extension RuntimeStateInventoryFactsAdapter {
         let inventory = game.inventory
         return InventoryConditionLookup(
             count: { [weak inventory] item, holder in
-                MainActor.assumeIsolated { inventory?.scriptItemCount(item, in: holder) }
+                MainActor
+                    .assumeIsolated { inventory?.scriptItems.scriptItemCount(item, in: holder) }
             },
             isEquipped: { [weak inventory] item, holder in
-                MainActor.assumeIsolated { inventory?.scriptIsEquipped(item, on: holder) }
+                MainActor
+                    .assumeIsolated { inventory?.scriptItems.scriptIsEquipped(item, on: holder) }
             },
             keywordCounts: { [weak inventory] holder in
-                MainActor.assumeIsolated { inventory?.conditionKeywordCounts(of: holder) }
+                MainActor
+                    .assumeIsolated { inventory?.itemConditions.conditionKeywordCounts(of: holder) }
             }
         )
     }
@@ -112,22 +122,29 @@ extension RuntimeStateInventoryFactsAdapter {
             )
         else { return nil }
         return FastTravelRule.isOverencumbered(
-            carried: game.inventory.playerCarriedWeight, capacity: capacity
+            carried: game.inventory.armourWeights.playerCarriedWeight, capacity: capacity
         )
     }
+}
 
-    /// The player's sex and race from the race menu, and the gait the walk uses.
-    public func playerConditionTraits(_ state: inout ActorConditionState) {
-        if let identity = game.menuWorld.playerIdentity {
-            state.isFemale = identity.isFemale
-            state.race = identity.race
-        }
-        let gait = game.gameSession?.locomotion.status.gait
-        state.isSneaking = gait.map { $0 == .sneak }
-        state.isSprinting = gait.map { $0 == .sprint }
-        state.isSwimming = gait.map { $0 == .swim }
-        state.isInDangerousWater = game.gameSession.map {
-            $0.locomotion.status.lastPlan.water?.isDangerous ?? false
+extension RuntimeStateInventoryFactsAdapter {
+    /// The player's traits a condition reads, apart from the item facts.
+    public struct PlayerTraits {
+        let game: any RuntimeStateInventoryFactsHost
+
+        /// The player's sex and race from the race menu, and the gait the walk uses.
+        public func fill(_ state: inout ActorConditionState) {
+            if let identity = game.menuWorld.playerIdentity {
+                state.isFemale = identity.isFemale
+                state.race = identity.race
+            }
+            let gait = game.gameSession?.locomotion.status.gait
+            state.isSneaking = gait.map { $0 == .sneak }
+            state.isSprinting = gait.map { $0 == .sprint }
+            state.isSwimming = gait.map { $0 == .swim }
+            state.isInDangerousWater = game.gameSession.map {
+                $0.locomotion.status.lastPlan.water?.isDangerous ?? false
+            }
         }
     }
 }

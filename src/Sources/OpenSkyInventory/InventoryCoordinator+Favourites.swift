@@ -5,35 +5,38 @@ public import OpenSkyFormatsESM
 public import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
-extension InventoryCoordinator {
+extension InventoryCoordinator.FavouriteItems {
     public var playerFavourites: FavouritesState {
-        runtime?.store.component(FavouritesState.self, for: .player) ?? FavouritesState()
+        coordinator.runtime?.store
+            .component(FavouritesState.self, for: .player) ?? FavouritesState()
     }
 
     @discardableResult
     public func toggleFavourite(_ item: FormID) -> FavouriteOutcome {
-        guard let runtime else { return .unavailable }
+        guard let runtime = coordinator.runtime else { return .unavailable }
         let favourites = playerFavourites
         runtime.store.set(favourites.toggling(item), for: .player)
-        return favourites.contains(item) ? .unmarked(name(of: item)) : .marked(name(of: item))
+        return favourites
+            .contains(item) ? .unmarked(coordinator.name(of: item)) :
+            .marked(coordinator.name(of: item))
     }
 
     /// Binds `slot` to `item`, which becomes a favourite if it was not one.
     @discardableResult
     func bindHotkey(_ slot: Int, to item: FormID) -> FavouriteOutcome {
-        guard let runtime else { return .unavailable }
+        guard let runtime = coordinator.runtime else { return .unavailable }
         guard let bound = playerFavourites.binding(item, to: slot) else { return .badSlot(slot) }
         runtime.store.set(bound, for: .player)
-        return .bound(name(of: item), slot: slot)
+        return .bound(coordinator.name(of: item), slot: slot)
     }
 
     /// The carried item `slot` names, or why there is none.
     public func hotkeyItem(_ slot: Int) -> Result<FormID, FavouriteOutcome> {
-        guard let runtime else { return .failure(.unavailable) }
+        guard let runtime = coordinator.runtime else { return .failure(.unavailable) }
         guard FavouritesState.hotkeySlots.contains(slot) else { return .failure(.badSlot(slot)) }
         guard let item = playerFavourites.hotkeys[slot] else { return .failure(.emptySlot(slot)) }
         guard runtime.inventory.count(of: item, in: runtime.player) > 0 else {
-            return .failure(.notCarried(name(of: item)))
+            return .failure(.notCarried(coordinator.name(of: item)))
         }
         return .success(item)
     }

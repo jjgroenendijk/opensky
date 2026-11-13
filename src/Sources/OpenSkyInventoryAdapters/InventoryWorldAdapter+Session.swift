@@ -78,7 +78,8 @@ final class InventoryInteractions {
             if useFurniture(event.target.interaction) {
                 return
             }
-            InventoryCommandRunner(game: hosts).run(game.inventory.handleInteraction(action))
+            InventoryCommandRunner(game: hosts)
+                .run(game.inventory.itemActions.handleInteraction(action))
             if action == .use, game.inventory.isCrafting {
                 game.menuScreens.crafting.open()
             }
@@ -119,7 +120,7 @@ final class InventoryInteractions {
         let offer = BookTakeOffer(
             isTheft: runtime.isTheft(interaction), reference: interaction.reference
         ) { [game] in
-            game.inventory.take(interaction)
+            game.inventory.itemActions.take(interaction)
         }
         return book.open(item: interaction.base, takeOffer: offer)
     }

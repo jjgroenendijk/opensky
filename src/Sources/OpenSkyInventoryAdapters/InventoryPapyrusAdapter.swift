@@ -27,13 +27,13 @@ public struct InventoryPapyrusAdapter {
 
 extension InventoryPapyrusAdapter {
     public func addItem(_ item: FormID, count: Int32, to holder: ReferenceKey) -> Bool {
-        game.inventory.scriptAddItem(item, count: count, to: holder)
+        game.inventory.scriptItems.scriptAddItem(item, count: count, to: holder)
     }
 
     public func removeItem(
         _ item: FormID, count: Int32, from holder: ReferenceKey, to other: ReferenceKey?
     ) -> Bool {
-        InventoryCommandRunner(game: game).run(game.inventory.scriptRemoveItem(
+        InventoryCommandRunner(game: game).run(game.inventory.scriptItems.scriptRemoveItem(
             item,
             count: count,
             from: holder,
@@ -42,11 +42,14 @@ extension InventoryPapyrusAdapter {
     }
 
     public func unequipSlot(_ slot: Int32, on actor: ReferenceKey) -> Bool {
-        InventoryCommandRunner(game: game).run(game.inventory.scriptUnequipSlot(slot, on: actor))
+        InventoryCommandRunner(game: game).run(game.inventory.scriptItems.scriptUnequipSlot(
+            slot,
+            on: actor
+        ))
     }
 
     public func dropItem(_ item: FormID, count: Int32, from holder: ReferenceKey) -> ReferenceKey? {
-        InventoryCommandRunner(game: game).run(game.inventory.scriptDropObject(
+        InventoryCommandRunner(game: game).run(game.inventory.scriptItems.scriptDropObject(
             item,
             count: count,
             from: holder
@@ -56,60 +59,70 @@ extension InventoryPapyrusAdapter {
     public func removeAllItems(
         from holder: ReferenceKey, to other: ReferenceKey?, removeQuestItems: Bool
     ) -> Bool {
-        InventoryCommandRunner(game: game).run(game.inventory.scriptRemoveAllItems(
+        InventoryCommandRunner(game: game).run(game.inventory.scriptItems.scriptRemoveAllItems(
             from: holder, to: other, removeQuestItems: removeQuestItems
         ))
     }
 
     public func baselineInventory(of holder: ReferenceKey) -> ReferenceInventoryState? {
-        game.inventory.scriptBaselineInventory(of: holder)
+        game.inventory.scriptItems.scriptBaselineInventory(of: holder)
     }
 
     public func itemCount(_ item: FormID, in holder: ReferenceKey) -> Int32? {
-        game.inventory.scriptItemCount(item, in: holder)
+        game.inventory.scriptItems.scriptItemCount(item, in: holder)
     }
 
     public func equipItem(_ item: FormID, on actor: ReferenceKey) -> Bool {
-        InventoryCommandRunner(game: game).run(game.inventory.scriptEquipItem(item, on: actor))
+        InventoryCommandRunner(game: game).run(game.inventory.scriptItems.scriptEquipItem(
+            item,
+            on: actor
+        ))
     }
 
     public func unequipItem(_ item: FormID, on actor: ReferenceKey) -> Bool {
-        InventoryCommandRunner(game: game).run(game.inventory.scriptUnequipItem(item, on: actor))
+        InventoryCommandRunner(game: game).run(game.inventory.scriptItems.scriptUnequipItem(
+            item,
+            on: actor
+        ))
     }
 
     public func setOutfit(_ outfit: FormID, on actor: ReferenceKey) -> Bool {
-        InventoryCommandRunner(game: game).run(game.inventory.scriptSetOutfit(outfit, on: actor))
+        InventoryCommandRunner(game: game).run(game.inventory.scriptItems.scriptSetOutfit(
+            outfit,
+            on: actor
+        ))
     }
 
     public func isEquipped(_ item: FormID, on actor: ReferenceKey) -> Bool? {
-        game.inventory.scriptIsEquipped(item, on: actor)
+        game.inventory.scriptItems.scriptIsEquipped(item, on: actor)
     }
 
     public func equippedWeapon(on actor: ReferenceKey, leftHand: Bool) -> FormID?? {
-        game.inventory.scriptEquippedWeapon(on: actor, leftHand: leftHand)
+        game.inventory.scriptItems.scriptEquippedWeapon(on: actor, leftHand: leftHand)
     }
 
     public func equippedShield(on actor: ReferenceKey) -> FormID?? {
-        game.inventory.scriptEquippedShield(on: actor)
+        game.inventory.scriptItems.scriptEquippedShield(on: actor)
     }
 
     public func unequipAll(on actor: ReferenceKey) -> Bool {
-        InventoryCommandRunner(game: game).run(game.inventory.scriptUnequipAll(on: actor))
+        InventoryCommandRunner(game: game)
+            .run(game.inventory.scriptItems.scriptUnequipAll(on: actor))
     }
 
     public func goldValue(of item: FormID) -> Int32? {
-        game.inventory.scriptGoldValue(of: item)
+        game.inventory.scriptItems.scriptGoldValue(of: item)
     }
 
     public func learnIngredientEffects(_ ingredient: FormID, indices: [Int]?) -> Bool {
-        game.inventory.learnIngredientEffects(ingredient, indices: indices)
+        game.inventory.alchemyLab.learnIngredientEffects(ingredient, indices: indices)
     }
 
     public func learnNextIngredientEffect(_ ingredient: FormID) -> Int? {
-        game.inventory.learnNextIngredientEffect(ingredient)
+        game.inventory.alchemyLab.learnNextIngredientEffect(ingredient)
     }
 
     public func isHostileItem(_ item: FormID) -> Bool? {
-        game.inventory.isHostileItem(item)
+        game.inventory.alchemyLab.isHostileItem(item)
     }
 }

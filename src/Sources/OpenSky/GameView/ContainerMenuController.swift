@@ -168,14 +168,14 @@ final class ContainerMenuController {
         var refreshed = ContainerMenuModel.build(
             container: (container, containerName ?? "Container"),
             mode: mode,
-            pricing: game.inventory.barterPricing(with: merchant),
+            pricing: game.inventory.containerTrade.barterPricing(with: merchant),
             runtime: inventory,
-            categories: InventoryMenuCategory.tabs(texts: game.inventory.menuTexts)
+            categories: InventoryMenuCategory.tabs(texts: game.inventory.itemCards.menuTexts)
         )
-        refreshed.player.carriedWeight = game.inventory.playerCarriedWeight
+        refreshed.player.carriedWeight = game.inventory.armourWeights.playerCarriedWeight
         if teammateTarget != nil {
             refreshed.container = refreshed.container
-                .hiding(game.inventory.teammateOutfit(of: container))
+                .hiding(game.inventory.teammateTrades.teammateOutfit(of: container))
         }
         refreshed.restore(from: model)
         model = refreshed

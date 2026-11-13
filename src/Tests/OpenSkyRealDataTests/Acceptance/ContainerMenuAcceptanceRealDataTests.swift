@@ -188,10 +188,20 @@ struct ContainerMenuAcceptanceRealDataTests {
         case (.barter, .player):
             outcome = try "sold \(entry.name) for \(shop.session.sell(entry.item).gold) gold"
         case (.container, .container):
-            try shop.inventory.transfer(entry.item, count: 1, from: shop.container, to: .player)
+            try shop.inventory.transfer(
+                entry.item,
+                count: 1,
+                from: shop.container,
+                to: .player
+            )
             outcome = "took \(entry.name)"
         case (.container, .player):
-            try shop.inventory.transfer(entry.item, count: 1, from: .player, to: shop.container)
+            try shop.inventory.transfer(
+                entry.item,
+                count: 1,
+                from: .player,
+                to: shop.container
+            )
             outcome = "stored \(entry.name)"
         }
         var rebuilt = shop.rebuild(mode: model.mode)

@@ -34,11 +34,12 @@ nonisolated public enum PickpocketCooldown {
     }
 }
 
-extension InventoryCoordinator {
+extension InventoryCoordinator.Pickpocketing {
     /// Whether `target` refuses a pickpocket now, because it caught the player lately.
     public func pickpocketRefused(by target: ReferenceKey) -> Bool {
         PickpocketCooldown.refuses(
-            caughtOn: world.pickpocketCaughtDay(of: target), today: world.gameDaysPassed
+            caughtOn: coordinator.world.pickpocketCaughtDay(of: target),
+            today: coordinator.world.gameDaysPassed
         )
     }
 
@@ -46,8 +47,8 @@ extension InventoryCoordinator {
         by target: InventoryHolder, item: String, chance: Float, runtime: WorldItemRuntime
     ) -> PickpocketOutcome {
         let crime = runtime.crime?.reportPickpocket(of: target.key, by: .player)
-        world.notePickpocketCatch(
-            on: world.gameDaysPassed, chargedTo: crime?.faction, by: target.key
+        coordinator.world.notePickpocketCatch(
+            on: coordinator.world.gameDaysPassed, chargedTo: crime?.faction, by: target.key
         )
         return .caught(item: item, chance: Int(chance), bounty: crime?.gold ?? 0)
     }
@@ -56,24 +57,26 @@ extension InventoryCoordinator {
     public func pickpocketChance(of item: FormID, count: Int32, from target: InventoryHolder)
         -> Float
     {
-        guard let runtime else { return 0 }
+        guard let runtime = coordinator.runtime else { return 0 }
         let definition = runtime.inventory.baselines.items.definition(item)
         let isGold = item == runtime.inventory.goldFormID
         let attempt = PickpocketAttempt(
-            thiefSkill: world.pickpocketSkill(of: .player) ?? ActorValueIdentity.skillFloor,
-            targetSkill: world.pickpocketSkill(of: target.key) ?? ActorValueIdentity.skillFloor,
+            thiefSkill: coordinator.world.pickpocketSkill(of: .player) ?? ActorValueIdentity
+                .skillFloor,
+            targetSkill: coordinator.world.pickpocketSkill(of: target.key) ?? ActorValueIdentity
+                .skillFloor,
             gold: isGold ? count : 0,
             weight: (definition?.weight ?? 0) * Float(count),
-            detected: world.detectsPlayer(target.key)
+            detected: coordinator.world.detectsPlayer(target.key)
         )
-        let chance = world.perkModified(
-            pickpocketSettings.baseChance(attempt),
+        let chance = coordinator.world.perkModified(
+            coordinator.pickpocketSettings.baseChance(attempt),
             at: .modPickpocketChance,
             on: .player,
             subjects: pickpocketSubjects(item, target: target),
             seams: ConditionContext()
         )
-        return pickpocketSettings.clamped(chance)
+        return coordinator.pickpocketSettings.clamped(chance)
     }
 
     /// The target, and the item for the perks' item tab, such as Cutpurse's gold test
@@ -82,14 +85,17 @@ extension InventoryCoordinator {
         -> PerkEvaluationSubjects
     {
         PerkEvaluationSubjects(owner: .player, target: target.key)
-            .binding(.item, to: runtime?.inventory.baselines.items.conditionSubject(of: item))
+            .binding(
+                .item,
+                to: coordinator.runtime?.inventory.baselines.items.conditionSubject(of: item)
+            )
     }
 
     /// Whether a perk entry point that answers yes or no says yes for `item`.
     private func pickpocketPerkAllows(
         _ entryPoint: PerkEntryPoint, item: FormID, target: InventoryHolder
     ) -> Bool {
-        world.perkModified(
+        coordinator.world.perkModified(
             0, at: entryPoint, on: .player,
             subjects: pickpocketSubjects(item, target: target), seams: ConditionContext()
         ) > 0
@@ -103,14 +109,14 @@ extension InventoryCoordinator {
         _ item: FormID, count: Int32 = 1, named name: String, into target: InventoryHolder,
         roll: Float
     ) -> PickpocketOutcome {
-        guard let runtime else { return .unavailable }
+        guard let runtime = coordinator.runtime else { return .unavailable }
         let chance = pickpocketChance(of: item, count: count, from: target)
         guard roll < chance else {
             return caught(by: target, item: name, chance: chance, runtime: runtime)
         }
         do {
             if
-                isPoison(item), pickpocketPerkAllows(
+                coordinator.consumables.isPoison(item), pickpocketPerkAllows(
                     .shouldApplyPlacedItem,
                     item: item,
                     target: target
@@ -119,7 +125,7 @@ extension InventoryCoordinator {
                 guard runtime.inventory.count(of: item, in: runtime.player) > 0 else {
                     return .failed("\(name) is not carried")
                 }
-                guard world.applyPlacedPoison(item, on: target.key) else {
+                guard coordinator.world.applyPlacedPoison(item, on: target.key) else {
                     return .failed("the poison did not land on \(target.key)")
                 }
                 try runtime.inventory.remove(item, count: 1, from: runtime.player)
@@ -139,7 +145,7 @@ extension InventoryCoordinator {
         _ item: FormID, count: Int32 = 1, named name: String, from target: InventoryHolder,
         roll: Float
     ) -> PickpocketOutcome {
-        guard let runtime else { return .unavailable }
+        guard let runtime = coordinator.runtime else { return .unavailable }
         if
             runtime.inventory.inventory(of: target).equipped.contains(item),
             !pickpocketPerkAllows(.canPickpocketEquippedItem, item: item, target: target)
@@ -159,10 +165,10 @@ extension InventoryCoordinator {
         }
         let value = runtime.inventory.baselines.items.gameValue(of: item)
         let isGold = item == runtime.inventory.goldFormID
-        skillUses?.reportSkillUse(SkillUseEvent(
+        coordinator.skillUses?.reportSkillUse(SkillUseEvent(
             actor: .player, action: .pickpocket, amount: Float(isGold ? count : value * count)
         ))
-        storyEvents?.reportStoryEvent(.addItem(
+        coordinator.storyEvents?.reportStoryEvent(.addItem(
             item, from: target.key, owner: target.key, how: .pickpocket
         ))
         return .took(item: name, chance: Int(chance))

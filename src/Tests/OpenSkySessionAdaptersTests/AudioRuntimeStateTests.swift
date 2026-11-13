@@ -102,7 +102,7 @@ struct AudioRuntimeStateTests {
         #expect(world.inventoryFacts.inventoryResolution(context: ConditionContext()) == nil)
         #expect(world.inventoryFacts.playerIsOverEncumbered() == nil)
         var state = ActorConditionState(current: .zero, maximums: .zero)
-        world.inventoryFacts.playerConditionTraits(&state)
+        world.inventoryFacts.playerTraits.fill(&state)
         #expect(state.isSneaking == nil)
         #expect(state.isInDangerousWater == nil)
     }

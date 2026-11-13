@@ -58,31 +58,33 @@ struct InventoryCoordinatorTests {
         harness.world.perkFactors[.modBuyPrices] = 0.8
         harness.world.perkFactors[.modSellPrices] = 1.25
 
-        let pricing = harness.coordinator.barterPricing(with: merchant)
+        let pricing = harness.coordinator.containerTrade.barterPricing(with: merchant)
 
         #expect(pricing.speechSkill == 100)
         #expect(pricing.buyModifier == Double(Float(0.8)))
         #expect(pricing.sellModifier == 1.25)
         #expect(harness.world.perkTargets[.modBuyPrices] == merchant)
-        #expect(harness.coordinator.barterPricing(with: nil).speechSkill == 100)
+        #expect(harness.coordinator.containerTrade.barterPricing(with: nil).speechSkill == 100)
     }
 
     @Test func withoutGameDataEveryActionSaysSo() {
         let coordinator = InventoryCoordinator(
             world: FakeWorld(), lockWorld: FakeLockWorld(), data: nil
         )
-        #expect(coordinator.takeInteractionTarget().text == InventoryCore.noRuntimeText)
-        #expect(coordinator.dropPlayerItem(nil, count: 1).text == InventoryCore.noRuntimeText)
-        #expect(coordinator.equipItem(nil, on: .player).value.text == InventoryCore.noEquipmentText)
-        #expect(coordinator.itemControlSnapshot == .unavailable)
-        #expect(coordinator.inventoryEquipmentSnapshot == .unavailable)
+        #expect(coordinator.itemActions.takeInteractionTarget().text == InventoryCore.noRuntimeText)
+        #expect(coordinator.itemActions.dropPlayerItem(nil, count: 1).text == InventoryCore
+            .noRuntimeText)
+        #expect(coordinator.equipmentChanges.equipItem(nil, on: .player).value.text == InventoryCore
+            .noEquipmentText)
+        #expect(coordinator.itemPanels.itemControlSnapshot == .unavailable)
+        #expect(coordinator.itemPanels.inventoryEquipmentSnapshot == .unavailable)
     }
 
     @Test func theUseKeyTakesTheCrosshairTarget() throws {
         let harness = try Self.harness()
         harness.world.crosshairInteraction = Self.looseItem
-        _ = harness.coordinator.handleInteraction(.take)
-        let snapshot = harness.coordinator.itemControlSnapshot
+        _ = harness.coordinator.itemActions.handleInteraction(.take)
+        let snapshot = harness.coordinator.itemPanels.itemControlSnapshot
         #expect(snapshot.lastActionText == "Took 3 × Fixture.")
         #expect(snapshot.playerStacks.map(\.item) == [Fixture.lockpick])
         // The readout names the item from its record, not by FormID.
@@ -91,26 +93,29 @@ struct InventoryCoordinatorTests {
 
     @Test func aSearchOpensOneSessionUntilItCloses() throws {
         let harness = try Self.harness()
-        _ = harness.coordinator.handleInteraction(.search)
+        _ = harness.coordinator.itemActions.handleInteraction(.search)
         #expect(harness.coordinator.lastAction.text == "Nothing under the crosshair to search.")
         harness.world.crosshairInteraction = Self.chest
-        _ = harness.coordinator.handleInteraction(.search)
-        #expect(harness.coordinator.itemControlSnapshot.containerName == "Fixture")
-        #expect(harness.coordinator.closeOpenContainer().text == "Closed the container.")
+        _ = harness.coordinator.itemActions.handleInteraction(.search)
+        #expect(harness.coordinator.itemPanels.itemControlSnapshot.containerName == "Fixture")
+        #expect(harness.coordinator.itemActions.closeOpenContainer()
+            .text == "Closed the container.")
         #expect(harness.coordinator.session == nil)
-        #expect(harness.coordinator.closeOpenContainer().text == InventoryCore.noContainerText)
+        #expect(harness.coordinator.itemActions.closeOpenContainer().text == InventoryCore
+            .noContainerText)
     }
 
     @Test func aDropNeedsAPlacementFromTheWorld() throws {
         let harness = try Self.harness()
         harness.world.crosshairInteraction = Self.looseItem
-        harness.coordinator.takeInteractionTarget()
-        #expect(harness.coordinator.dropPlayerItem(nil, count: 1).text
+        harness.coordinator.itemActions.takeInteractionTarget()
+        #expect(harness.coordinator.itemActions.dropPlayerItem(nil, count: 1).text
             == "Drop needs a resident cell; none is loaded.")
         harness.world.placement = DropPlacement(
             location: Items.cell, position: .zero, rotation: .zero
         )
-        #expect(harness.coordinator.dropPlayerItem(nil, count: 1).text.hasPrefix("Dropped 1 ×"))
+        #expect(harness.coordinator.itemActions.dropPlayerItem(nil, count: 1).text
+            .hasPrefix("Dropped 1 ×"))
         let inventory = try #require(harness.coordinator.runtime?.inventory)
         #expect(inventory.count(of: Fixture.lockpick, in: .player) == 2)
     }
@@ -119,11 +124,11 @@ struct InventoryCoordinatorTests {
         let harness = try Self.harness()
         let inventory = try #require(harness.coordinator.runtime?.inventory)
         try inventory.add(Fixture.cuirass, count: 1, to: .player)
-        let equipped = harness.coordinator.equipItem(nil, on: .player)
+        let equipped = harness.coordinator.equipmentChanges.equipItem(nil, on: .player)
         #expect(equipped.value.text.hasPrefix("Equipped "))
         #expect(equipped.commands == [.equipmentChanged(.player)])
-        #expect(harness.coordinator.equippedReadout(on: .player).count == 1)
-        let unequipped = harness.coordinator.unequipItem(nil, on: .player)
+        #expect(harness.coordinator.equipmentChanges.equippedReadout(on: .player).count == 1)
+        let unequipped = harness.coordinator.equipmentChanges.unequipItem(nil, on: .player)
         #expect(unequipped.value.text.hasPrefix("Unequipped "))
         #expect(unequipped.commands == [.equipmentChanged(.player)])
     }
@@ -131,36 +136,36 @@ struct InventoryCoordinatorTests {
     @Test func wornArmourWeighsWhatTheArmourWeightPerksSay() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator
-        #expect(coordinator.scriptEquipItem(Fixture.cuirass, on: .player).value)
+        #expect(coordinator.scriptItems.scriptEquipItem(Fixture.cuirass, on: .player).value)
         try #require(coordinator.runtime?.inventory).add(Fixture.helmet, count: 1, to: .player)
-        #expect(coordinator.playerCarriedWeight == 35)
+        #expect(coordinator.armourWeights.playerCarriedWeight == 35)
         harness.world.perkFactors[.modArmorWeight] = 0.5
-        #expect(coordinator.playerCarriedWeight == 20)
-        #expect(coordinator.playerWornArmourWeight == 15)
+        #expect(coordinator.armourWeights.playerCarriedWeight == 20)
+        #expect(coordinator.armourWeights.playerWornArmourWeight == 15)
     }
 
     @Test func theHarvestPerkSetsHowManyIngredientsAPlantGives() throws {
         let harness = try Self.harness()
         let plant = HarvestTests.flora(HarvestTests.plant, produce: Fixture.lockpick)
-        #expect(harness.coordinator.harvestCount(of: plant) == 1)
+        #expect(harness.coordinator.craftingBench.harvestCount(of: plant) == 1)
         harness.world.perkFactors[.modIngredientsHarvested] = 2
-        #expect(harness.coordinator.harvestCount(of: plant) == 2)
+        #expect(harness.coordinator.craftingBench.harvestCount(of: plant) == 2)
     }
 
     @Test func aPerkActivateLabelReplacesTheAuthoredOne() throws {
         let harness = try Self.harness()
         let plant = HarvestTests.flora(HarvestTests.plant, produce: Fixture.lockpick)
-        #expect(harness.coordinator.labelled(plant).actionLabel == "Harvest")
+        #expect(harness.coordinator.craftingBench.labelled(plant).actionLabel == "Harvest")
         harness.world.activateLabel = "Feed"
-        #expect(harness.coordinator.labelled(plant).actionLabel == "Feed")
+        #expect(harness.coordinator.craftingBench.labelled(plant).actionLabel == "Feed")
     }
 
     @Test func aGrantGoesToTheChosenHolderAndKeepsItsOwnLine() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator
-        #expect(coordinator.grantItem(Fixture.sword, count: 2, to: .openContainer).text
+        #expect(coordinator.itemPanels.grantItem(Fixture.sword, count: 2, to: .openContainer).text
             == "Grant refused: no container is open.")
-        #expect(coordinator.grantItem(Fixture.sword, count: 2, to: .player).text
+        #expect(coordinator.itemPanels.grantItem(Fixture.sword, count: 2, to: .player).text
             .hasPrefix("Granted 2 ×"))
         #expect(coordinator.runtime?.inventory.count(of: Fixture.sword, in: .player) == 2)
         #expect(coordinator.lastAction.text == "No item action yet.")
@@ -168,10 +173,10 @@ struct InventoryCoordinatorTests {
 
     @Test func ownershipReadsTheBountyFromTheWorld() throws {
         let harness = try Self.harness()
-        #expect(harness.coordinator.targetOwnership() == nil)
+        #expect(harness.coordinator.itemPanels.targetOwnership() == nil)
         harness.world.crosshairInteraction = Self.chest
         harness.world.bounty = 40
-        let ownership = try #require(harness.coordinator.targetOwnership())
+        let ownership = try #require(harness.coordinator.itemPanels.targetOwnership())
         #expect(ownership.reference == Items.chestReference)
         #expect(ownership.bounty == 40)
         #expect(!ownership.isTheft)
@@ -181,20 +186,20 @@ struct InventoryCoordinatorTests {
         let recorder = StoryEventRecorder()
         let harness = try Self.harness(seams: InventorySeams(storyEvents: recorder))
         let coordinator = harness.coordinator
-        let chest = try #require(coordinator.containerHolder(for: Self.chest))
+        let chest = try #require(coordinator.containerTrade.containerHolder(for: Self.chest))
         let inventory = try #require(coordinator.runtime?.inventory)
         try inventory.add(Fixture.sword, count: 1, to: .player)
-        let stored = try coordinator.transfer(ContainerTransferRequest(
+        let stored = try coordinator.containerTrade.transfer(ContainerTransferRequest(
             .store, item: Fixture.sword, name: "Sword", container: chest, vendor: nil
         ))
         #expect(stored.text(texts: .vanilla) == "Stored Sword.")
         #expect(inventory.count(of: Fixture.sword, in: chest) == 1)
-        let taken = try coordinator.transfer(ContainerTransferRequest(
+        let taken = try coordinator.containerTrade.transfer(ContainerTransferRequest(
             .take, item: Fixture.sword, name: "Sword", container: chest, vendor: nil
         ))
         #expect(taken.text(texts: .vanilla) == "Took Sword.")
         #expect(inventory.count(of: Fixture.sword, in: .player) == 1)
-        #expect(coordinator.takeAll(from: chest).text.hasPrefix("Took all:"))
+        #expect(coordinator.containerTrade.takeAll(from: chest).text.hasPrefix("Took all:"))
         let removed = try #require(recorder.events("REMP").first)
         #expect(removed.form == Fixture.sword && removed.actor1 == chest.key)
         #expect(removed.value1 == Float(StoryRemoveType.putInContainer.rawValue))
@@ -202,15 +207,17 @@ struct InventoryCoordinatorTests {
         #expect(added.first?.form == Fixture.sword)
         #expect(added.allSatisfy { $0.value1 == Float(StoryAcquireType.container.rawValue) })
     }
+}
 
-    // MARK: - Script natives
+// MARK: - Script natives
 
+extension InventoryCoordinatorTests {
     @Test func aScriptEquipGivesTheItemFirst() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator
-        #expect(coordinator.scriptEquipItem(Fixture.cuirass, on: .player)
+        #expect(coordinator.scriptItems.scriptEquipItem(Fixture.cuirass, on: .player)
             == InventoryResult(true, commands: [.equipmentChanged(.player)]))
-        #expect(coordinator.scriptItemCount(Fixture.cuirass, in: .player) == 1)
+        #expect(coordinator.scriptItems.scriptItemCount(Fixture.cuirass, in: .player) == 1)
         #expect(coordinator.equipment?.equipped(on: .player) == [Fixture.cuirass])
     }
 
@@ -218,69 +225,83 @@ struct InventoryCoordinatorTests {
         let harness = try Self.harness()
         let coordinator = harness.coordinator
         let chest = try #require(harness.references.referenceEntry(formID: Items.chestReference))
-        #expect(coordinator.scriptAddItem(Fixture.sword, count: 2, to: .player))
-        #expect(coordinator.scriptEquipItem(Fixture.cuirass, on: .player).value)
-        let before = coordinator.scriptItemCount(Fixture.sword, in: chest.key) ?? 0
-        #expect(coordinator.scriptRemoveAllItems(from: .player, to: chest.key).value)
+        #expect(coordinator.scriptItems.scriptAddItem(Fixture.sword, count: 2, to: .player))
+        #expect(coordinator.scriptItems.scriptEquipItem(Fixture.cuirass, on: .player).value)
+        let before = coordinator.scriptItems.scriptItemCount(Fixture.sword, in: chest.key) ?? 0
+        #expect(coordinator.scriptItems.scriptRemoveAllItems(from: .player, to: chest.key).value)
         #expect(coordinator.runtime?.inventory.inventory(of: .player).stacks.isEmpty == true)
         #expect(coordinator.equipment?.equipped(on: .player).isEmpty == true)
-        #expect(coordinator.scriptItemCount(Fixture.sword, in: chest.key) == before + 2)
+        #expect(coordinator.scriptItems.scriptItemCount(Fixture.sword, in: chest.key) == before + 2)
     }
 
     @Test func removeAllItemsKeepsQuestItemsUnlessAsked() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator
         harness.world.questItems = [Fixture.sword]
-        #expect(coordinator.scriptAddItem(Fixture.sword, count: 1, to: .player))
-        #expect(coordinator.scriptAddItem(Fixture.cuirass, count: 1, to: .player))
-        _ = coordinator.scriptRemoveAllItems(from: .player, to: nil)
-        #expect(coordinator.scriptItemCount(Fixture.sword, in: .player) == 1)
-        #expect(coordinator.scriptItemCount(Fixture.cuirass, in: .player) == 0)
-        _ = coordinator.scriptRemoveAllItems(from: .player, to: nil, removeQuestItems: true)
-        #expect(coordinator.scriptItemCount(Fixture.sword, in: .player) == 0)
+        #expect(coordinator.scriptItems.scriptAddItem(Fixture.sword, count: 1, to: .player))
+        #expect(coordinator.scriptItems.scriptAddItem(Fixture.cuirass, count: 1, to: .player))
+        _ = coordinator.scriptItems.scriptRemoveAllItems(from: .player, to: nil)
+        #expect(coordinator.scriptItems.scriptItemCount(Fixture.sword, in: .player) == 1)
+        #expect(coordinator.scriptItems.scriptItemCount(Fixture.cuirass, in: .player) == 0)
+        _ = coordinator.scriptItems.scriptRemoveAllItems(
+            from: .player,
+            to: nil,
+            removeQuestItems: true
+        )
+        #expect(coordinator.scriptItems.scriptItemCount(Fixture.sword, in: .player) == 0)
     }
 
     @Test func setOutfitGivesAndWearsTheOutfit() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator
-        #expect(coordinator.scriptSetOutfit(Fixture.guardOutfit, on: .player).value)
-        #expect(coordinator.scriptItemCount(Fixture.cuirass, in: .player) == 1)
+        #expect(coordinator.scriptItems.scriptSetOutfit(Fixture.guardOutfit, on: .player).value)
+        #expect(coordinator.scriptItems.scriptItemCount(Fixture.cuirass, in: .player) == 1)
         #expect(coordinator.equipment?.equipped(on: .player).contains(Fixture.cuirass) == true)
-        #expect(coordinator.scriptSetOutfit(Fixture.cuirass, on: .player).value == false)
+        #expect(coordinator.scriptItems.scriptSetOutfit(Fixture.cuirass, on: .player)
+            .value == false)
     }
 
     @Test func removeItemTakesNoMoreThanIsHeld() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator
-        #expect(coordinator.scriptAddItem(Fixture.sword, count: 1, to: .player))
-        #expect(coordinator.scriptRemoveItem(Fixture.sword, count: 5, from: .player, to: nil).value)
-        #expect(coordinator.scriptItemCount(Fixture.sword, in: .player) == 0)
+        #expect(coordinator.scriptItems.scriptAddItem(Fixture.sword, count: 1, to: .player))
+        #expect(coordinator.scriptItems.scriptRemoveItem(
+            Fixture.sword,
+            count: 5,
+            from: .player,
+            to: nil
+        ).value)
+        #expect(coordinator.scriptItems.scriptItemCount(Fixture.sword, in: .player) == 0)
     }
 
     @Test func dropObjectDropsOnlyWhatThePlayerCarries() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator
-        #expect(coordinator.scriptAddItem(Fixture.sword, count: 2, to: .player))
-        #expect(coordinator.scriptDropObject(Fixture.sword, count: 1, from: .player).value == nil)
+        #expect(coordinator.scriptItems.scriptAddItem(Fixture.sword, count: 2, to: .player))
+        #expect(coordinator.scriptItems.scriptDropObject(Fixture.sword, count: 1, from: .player)
+            .value == nil)
         harness.world.placement = DropPlacement(
             location: Items.cell, position: .zero, rotation: .zero
         )
-        #expect(coordinator.scriptDropObject(Fixture.sword, count: 5, from: .player).value != nil)
-        #expect(coordinator.scriptItemCount(Fixture.sword, in: .player) == 0)
-        #expect(coordinator.scriptDropObject(Fixture.sword, count: 1, from: .player).value == nil)
+        #expect(coordinator.scriptItems.scriptDropObject(Fixture.sword, count: 5, from: .player)
+            .value != nil)
+        #expect(coordinator.scriptItems.scriptItemCount(Fixture.sword, in: .player) == 0)
+        #expect(coordinator.scriptItems.scriptDropObject(Fixture.sword, count: 1, from: .player)
+            .value == nil)
         let chest = ReferenceKey.plugin(name: "test.esp", objectID: 0x99)
-        #expect(coordinator.scriptDropObject(Fixture.sword, count: 1, from: chest).value == nil)
+        #expect(coordinator.scriptItems.scriptDropObject(Fixture.sword, count: 1, from: chest)
+            .value == nil)
     }
 
     @Test func unequipSlotTakesOffWhatCoversTheSlot() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator
-        #expect(coordinator.scriptSetOutfit(Fixture.guardOutfit, on: .player).value)
+        #expect(coordinator.scriptItems.scriptSetOutfit(Fixture.guardOutfit, on: .player).value)
         #expect(coordinator.equipment?.equipped(on: .player).contains(Fixture.cuirass) == true)
-        #expect(coordinator.scriptUnequipSlot(29, on: .player).value == false)
-        #expect(coordinator.scriptUnequipSlot(32, on: .player).value)
+        #expect(coordinator.scriptItems.scriptUnequipSlot(29, on: .player).value == false)
+        #expect(coordinator.scriptItems.scriptUnequipSlot(32, on: .player).value)
         #expect(coordinator.equipment?.equipped(on: .player).contains(Fixture.cuirass) == false)
-        #expect(coordinator.scriptItemCount(Fixture.cuirass, in: .player) == 1)
+        #expect(coordinator.scriptItems.scriptItemCount(Fixture.cuirass, in: .player) == 1)
     }
 
     @Test func anUnresidentContainerHasNoHolder() throws {
@@ -290,7 +311,7 @@ struct InventoryCoordinatorTests {
             base: Fixture.chest,
             action: .search
         )
-        #expect(harness.coordinator.containerHolder(for: stray) == nil)
+        #expect(harness.coordinator.containerTrade.containerHolder(for: stray) == nil)
     }
 }
 
@@ -309,7 +330,8 @@ extension InventoryCoordinatorTests {
     /// Both skills, the weight, and being seen feed the chance (UESP "Skyrim:Pickpocket").
     @Test func thePickpocketChanceReadsBothSkillsAndDetection() throws {
         let harness = try Self.harness()
-        let chest = try #require(harness.coordinator.containerHolder(for: Self.chest))
+        let chest = try #require(harness.coordinator.containerTrade
+            .containerHolder(for: Self.chest))
         harness.world.pickpocketSkills = [.player: 50, chest.key: 30]
         let weight = harness.coordinator.runtime?.inventory.baselines.items
             .definition(Fixture.sword)?.weight ?? 0
@@ -317,10 +339,18 @@ extension InventoryCoordinatorTests {
         let unseen = settings.clamped(settings.baseChance(PickpocketAttempt(
             thiefSkill: 50, targetSkill: 30, weight: weight
         )))
-        #expect(harness.coordinator.pickpocketChance(of: Fixture.sword, count: 1, from: chest)
+        #expect(harness.coordinator.pickpocketing.pickpocketChance(
+            of: Fixture.sword,
+            count: 1,
+            from: chest
+        )
             == unseen)
         harness.world.detected = true
-        #expect(harness.coordinator.pickpocketChance(of: Fixture.sword, count: 1, from: chest)
+        #expect(harness.coordinator.pickpocketing.pickpocketChance(
+            of: Fixture.sword,
+            count: 1,
+            from: chest
+        )
             == settings.clamped(unseen - settings.detectedPenalty))
     }
 
@@ -330,16 +360,26 @@ extension InventoryCoordinatorTests {
         let recorder = SkillRecorder()
         let harness = try Self.harness(seams: InventorySeams(skillUses: recorder))
         let coordinator = harness.coordinator
-        let chest = try #require(coordinator.containerHolder(for: Self.chest))
+        let chest = try #require(coordinator.containerTrade.containerHolder(for: Self.chest))
         let inventory = try #require(coordinator.runtime?.inventory)
         try inventory.add(Fixture.sword, count: 1, to: chest)
         harness.world.pickpocketSkills = [.player: 100, chest.key: 15]
 
-        let caught = coordinator.pickpocket(Fixture.sword, named: "Sword", from: chest, roll: 99)
+        let caught = coordinator.pickpocketing.pickpocket(
+            Fixture.sword,
+            named: "Sword",
+            from: chest,
+            roll: 99
+        )
         #expect(caught.wasCaught)
         #expect(inventory.count(of: Fixture.sword, in: .player) == 0)
 
-        let took = coordinator.pickpocket(Fixture.sword, named: "Sword", from: chest, roll: 0)
+        let took = coordinator.pickpocketing.pickpocket(
+            Fixture.sword,
+            named: "Sword",
+            from: chest,
+            roll: 0
+        )
         guard case .took = took else {
             Issue.record("expected a take, got \(took)")
             return
@@ -354,25 +394,35 @@ extension InventoryCoordinatorTests {
     @Test func aCatchRefusesTheTargetForTwoDays() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator
-        let chest = try #require(coordinator.containerHolder(for: Self.chest))
+        let chest = try #require(coordinator.containerTrade.containerHolder(for: Self.chest))
         try #require(coordinator.runtime?.inventory).add(Fixture.sword, count: 1, to: chest)
         harness.world.gameDaysPassed = 10
-        #expect(!coordinator.pickpocketRefused(by: chest.key))
+        #expect(!coordinator.pickpocketing.pickpocketRefused(by: chest.key))
 
-        _ = coordinator.pickpocket(Fixture.sword, named: "Sword", from: chest, roll: 99)
+        _ = coordinator.pickpocketing.pickpocket(
+            Fixture.sword,
+            named: "Sword",
+            from: chest,
+            roll: 99
+        )
         harness.world.gameDaysPassed = 11.9
-        #expect(coordinator.pickpocketRefused(by: chest.key))
+        #expect(coordinator.pickpocketing.pickpocketRefused(by: chest.key))
         harness.world.gameDaysPassed = 12
-        #expect(!coordinator.pickpocketRefused(by: chest.key))
+        #expect(!coordinator.pickpocketing.pickpocketRefused(by: chest.key))
     }
 
     /// Worn items stay put without a Can Pickpocket Equipped Item perk.
     @Test func anEquippedItemNeedsThePerk() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator
-        #expect(coordinator.scriptEquipItem(Fixture.cuirass, on: .player).value)
+        #expect(coordinator.scriptItems.scriptEquipItem(Fixture.cuirass, on: .player).value)
         let pocket = try #require(coordinator.runtime?.player)
-        #expect(coordinator.pickpocket(Fixture.cuirass, named: "Cuirass", from: pocket, roll: 0)
+        #expect(coordinator.pickpocketing.pickpocket(
+            Fixture.cuirass,
+            named: "Cuirass",
+            from: pocket,
+            roll: 0
+        )
             == .equipped("Cuirass"))
     }
 }

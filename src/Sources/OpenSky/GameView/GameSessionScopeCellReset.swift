@@ -44,7 +44,7 @@ enum GameSessionScopeCellReset {
         }
         queries.holdsQuestItem = { [weak scope, weak store] key in
             guard
-                let items = scope?.inventory.questItems, !items.isEmpty,
+                let items = scope?.inventory.scriptItems.questItems, !items.isEmpty,
                 let inventory = store?.component(ReferenceInventoryState.self, for: key)
             else { return false }
             return items.contains { inventory.count(of: $0) > 0 }

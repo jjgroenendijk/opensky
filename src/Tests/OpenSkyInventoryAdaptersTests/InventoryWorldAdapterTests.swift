@@ -149,7 +149,7 @@ struct InventoryWorldAdapterTests {
 
     @Test func aTargetTakesTheRuntimeLabel() {
         let labelled = InventoryAdapterFixture.interaction(.harvest)
-        host.fakeInventory.labelledResult = labelled
+        host.fakeInventory.craftingBench.labelledResult = labelled
         #expect(adapter.perks.labelled(nil) == nil)
         let target = InventoryAdapterFixture.target(InventoryAdapterFixture.interaction(.take))
         #expect(adapter.perks.labelled(target)?.interaction == labelled)

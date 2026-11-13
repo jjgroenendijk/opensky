@@ -114,11 +114,14 @@ extension AgentItemsAdapter {
     }
 
     private func equipOnPlayer(_ item: FormID) throws(AgentFailure) {
-        let outcome = game.inventoryWorld.run(game.inventory.equipItem(item, on: .player))
+        let outcome = game.inventoryWorld.run(game.inventory.equipmentChanges.equipItem(
+            item,
+            on: .player
+        ))
         guard case .equipped = outcome else {
             throw AgentFailure(
                 .invalidArgument,
-                "equip refused: \(game.inventory.text(of: outcome))"
+                "equip refused: \(game.inventory.readoutLines.text(of: outcome))"
             )
         }
     }

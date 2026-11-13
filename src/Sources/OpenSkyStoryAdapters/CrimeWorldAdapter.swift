@@ -143,7 +143,7 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     }
 
     public func targetOwnership() -> ReferenceOwnershipReadout? {
-        game.inventory.targetOwnership()
+        game.inventory.itemPanels.targetOwnership()
     }
 
     public func stolenPlayerStacks() -> [ItemStackReadout] {

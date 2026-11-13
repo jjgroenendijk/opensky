@@ -6,16 +6,17 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyInventoryInterface
 
-extension InventoryCoordinator {
+extension InventoryCoordinator.Consumables {
     public func use(of item: FormID) -> ItemUse {
         if isPoison(item) {
             return .applyPoison
         }
-        let items = runtime?.inventory.baselines.items
+        let items = coordinator.runtime?.inventory.baselines.items
         if items?.ingestibles[item.rawValue] != nil || items?.ingredients[item.rawValue] != nil {
             return .consume
         }
-        let equipped = runtime.flatMap { equipment?.equipped(on: $0.player).contains(item) }
+        let equipped = coordinator.runtime
+            .flatMap { coordinator.equipment?.equipped(on: $0.player).contains(item) }
         return equipped == true ? .unequip : .equip
     }
 }

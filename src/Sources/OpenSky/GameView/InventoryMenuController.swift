@@ -96,12 +96,12 @@ final class InventoryMenuController {
         var refreshed = InventoryMenuModel.build(
             holder: .player, runtime: inventory,
             categories: InventoryMenuCategory.tabs(
-                texts: game.inventory.menuTexts, favourites: true
+                texts: game.inventory.itemCards.menuTexts, favourites: true
             ),
-            favourites: game.inventory.playerFavourites
+            favourites: game.inventory.favouriteItems.playerFavourites
         )
-        refreshed.carriedWeight = game.inventory.playerCarriedWeight
-        refreshed.markQuestItems(game.inventory.questItems)
+        refreshed.carriedWeight = game.inventory.armourWeights.playerCarriedWeight
+        refreshed.markQuestItems(game.inventory.scriptItems.questItems)
         if !model.categories.isEmpty {
             refreshed.selectCategory(model.selectedCategoryIndex)
             refreshed.select(model.selectedIndex)
@@ -113,7 +113,7 @@ final class InventoryMenuController {
 
     private func publishModel() {
         let model = model
-        let card = model.selectedEntry.flatMap { game.inventory.itemCard(for: $0.item) }
+        let card = model.selectedEntry.flatMap { game.inventory.itemCards.itemCard(for: $0.item) }
         movie.publish {
             InventoryMenuMovieBridge.publish(model, runtime: $0)
             InventoryMenuMovieBridge.publishItemCard(card, runtime: $0)
@@ -229,7 +229,7 @@ final class InventoryMenuController {
     func dropSelection(count: Int32 = 1) {
         perform { entry in
             itemActions.refusal(.drop, of: entry.item)
-                ?? game.inventory.dropPlayerItem(entry.item, count: count).text
+                ?? game.inventory.itemActions.dropPlayerItem(entry.item, count: count).text
         }
     }
 
