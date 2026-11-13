@@ -40,14 +40,16 @@ struct FavouritesTests {
         )
         #expect(coordinator.favouriteItems.hotkeyItem(1) == .failure(.emptySlot(1)))
         #expect(coordinator.favouriteItems.bindHotkey(1, to: Fixture.sword) == .bound(
-            "IronSword",
+            "<Missing Name>",
             slot: 1
         ))
-        #expect(coordinator.favouriteItems.hotkeyItem(1) == .failure(.notCarried("IronSword")))
+        #expect(coordinator.favouriteItems.hotkeyItem(1) == .failure(.notCarried("<Missing Name>")))
         try items.runtime.inventory.add(Fixture.sword, count: 1, to: .player)
         #expect(coordinator.favouriteItems.hotkeyItem(1) == .success(Fixture.sword))
         #expect(coordinator.favouriteItems.hotkeyItem(0) == .failure(.badSlot(0)))
-        #expect(coordinator.favouriteItems.toggleFavourite(Fixture.sword) == .unmarked("IronSword"))
+        #expect(
+            coordinator.favouriteItems.toggleFavourite(Fixture.sword) == .unmarked("<Missing Name>")
+        )
         #expect(coordinator.favouriteItems.hotkeyItem(1) == .failure(.emptySlot(1)))
     }
 

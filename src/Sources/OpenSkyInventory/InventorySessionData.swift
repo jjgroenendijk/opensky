@@ -66,8 +66,19 @@ nonisolated public struct InventoryTexts: Equatable, Sendable {
     public var tempering = TemperingTexts.vanilla
     /// The crafting menu's header words.
     public var crafting = GameSettingTexts<CraftingMenuText>.vanilla
+    /// `sMissingName`, an item's name when its record has none.
+    public var missingName = "<Missing Name>"
 
     public init() {}
+
+    /// `sMissingName` from the load order; the vanilla word when `text` gives nil.
+    public static func missingName(
+        store: GameSettingStore, text: GameTextResolver = { _ in nil }
+    ) -> String {
+        var texts = InventoryTexts()
+        store.read("sMissingName", into: &texts, \.missingName, text: text)
+        return texts.missingName
+    }
 }
 
 /// The load order's lockpicking rules and words.

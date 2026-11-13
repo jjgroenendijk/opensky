@@ -12,14 +12,20 @@ nonisolated public enum InventoryCore {
     static let noEquipmentText = "Equipment unavailable: no game data loaded."
     static let noContainerText = "No container open."
 
-    /// FULL name, else editor ID, else the FormID. Never empty, so a readout
-    /// line always names something.
-    public static func displayName(of item: FormID, definition: ItemDefinition?) -> String {
+    /// FULL name; `missing` (`sMissingName`) for a record with no or an empty FULL, as
+    /// the game names it; else editor ID, else the FormID. Never empty.
+    public static func displayName(
+        of item: FormID, definition: ItemDefinition?, missing: String? = nil
+    ) -> String {
         guard let definition else { return item.description }
-        if case let .inline(value) = definition.name, !value.isEmpty {
+        switch definition.name {
+        case let .inline(value) where !value.isEmpty:
             return value
+        case .none, .inline:
+            return missing ?? definition.editorID ?? item.description
+        default:
+            return definition.editorID ?? item.description
         }
-        return definition.editorID ?? item.description
     }
 
     /// The reference key plus the NPC_ base, which is what the record dump

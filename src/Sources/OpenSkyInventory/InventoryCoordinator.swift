@@ -101,7 +101,8 @@ public final class InventoryCoordinator {
 
     public func name(of item: FormID) -> String {
         InventoryCore.displayName(
-            of: item, definition: runtime?.inventory.baselines.items.definition(item)
+            of: item, definition: runtime?.inventory.baselines.items.definition(item),
+            missing: texts.missingName
         )
     }
 

@@ -14,6 +14,27 @@ struct InventoryCoreTests {
         #expect(InventoryCore.displayName(of: item, definition: nil) == item.description)
     }
 
+    @Test func aRecordWithoutANameShowsTheMissingNameText() {
+        let item = FormID(0x1234)
+        func definition(_ name: LString?) -> ItemDefinition {
+            ItemDefinition(
+                formID: item, family: .miscellaneous, editorID: "Thing", name: name, value: 0,
+                weight: 0,
+                keywords: [], enchantment: nil, modelPath: nil
+            )
+        }
+        let missing = "<Missing Name>"
+        #expect(InventoryCore.displayName(of: item, definition: definition(nil), missing: missing)
+            == missing)
+        #expect(InventoryCore.displayName(
+            of: item, definition: definition(.inline("")), missing: missing
+        ) == missing)
+        #expect(InventoryCore.displayName(
+            of: item, definition: definition(.inline("Gold")), missing: missing
+        ) == "Gold")
+        #expect(InventoryCore.displayName(of: item, definition: definition(nil)) == "Thing")
+    }
+
     @Test func anActorIsNamedByItsKeyAndBase() {
         let key = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x900)
         let actor = InventoryHolder(key: key, owner: .actor(base: FormID(0x50)), cell: nil)

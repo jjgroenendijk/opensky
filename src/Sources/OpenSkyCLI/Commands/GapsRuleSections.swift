@@ -188,6 +188,7 @@ extension GapsGatherer {
             _ = MagicTexts.resolve(store: store)
             _ = CrimeTexts.resolve(store: store)
             _ = InventoryMenuTexts.resolve(store: store)
+            _ = InventoryTexts.missingName(store: store)
             _ = ProgressionTexts.resolve(store: store)
             _ = ItemNoticeTexts.resolve(store: store)
             _ = SaveTexts.resolve(store: store)

@@ -177,6 +177,7 @@ public struct InventorySessionBuilder {
         texts.trade = TradeTexts.resolve(store: settings, text: text)
         texts.soul = SoulTexts.resolve(store: settings, text: text)
         texts.tempering = TemperingTexts.resolve(store: settings, text: text)
+        texts.missingName = InventoryTexts.missingName(store: settings, text: text)
         return texts
     }
 
