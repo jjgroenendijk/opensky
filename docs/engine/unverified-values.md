@@ -56,6 +56,7 @@ the detail and the sources it did find.
 
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
+| Magic menu tab order | Schools as Alteration, Illusion, Destruction, Conjuration, Restoration, then shouts, powers, active effects | [magic](/engine/magic.md#magic-menu) |
 | Cone spell world test | Looks 192 units ahead every 0.125 s and stops at the first surface seen | [spell delivery](/engine/spell-delivery.md) |
 | Ward power cap | `strongest ward x (base + mult x Restoration)`, so 1.3 x the stronger ward | [magic archetypes](/engine/magic-archetypes.md) |
 | Ward charge-up | A straight line over one second | [magic archetypes](/engine/magic-archetypes.md) |

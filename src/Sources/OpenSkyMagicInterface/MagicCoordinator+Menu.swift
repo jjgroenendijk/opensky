@@ -8,14 +8,18 @@ nonisolated public struct MagicMenuSpell: Equatable, Sendable {
     /// "spell", "power", or "ability", from the load order's texts.
     public let typeName: String
     public let isReadied: Bool
+    /// The tab's title: a school, "SHOUTS", or "POWERS", or nil for no tab of its own.
+    public let category: String?
 
     public init(
         name: String,
         typeName: String,
-        isReadied: Bool
+        isReadied: Bool,
+        category: String? = nil
     ) {
         self.name = name
         self.typeName = typeName
         self.isReadied = isReadied
+        self.category = category
     }
 }
