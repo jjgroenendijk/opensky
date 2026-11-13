@@ -190,6 +190,26 @@ final class FakeMagicWorld: MagicWorld {
     var canChangeRace = true
     var guide = MagicGuidePath.noMarker
     var aimRays: [ReferenceKey: MagicAimRay] = [:]
+    var looseBody: ReferenceKey?
+    var heldBodies: [ReferenceKey: MagicHeldBody] = [:]
+    var living: [ReferenceKey] = []
+    private(set) var pushes: [(body: ReferenceKey, impulse: SIMD3<Float>)] = []
+
+    func livingActors(near _: ReferenceKey, radius _: Float) -> [ReferenceKey] {
+        living
+    }
+
+    func telekinesisTarget(for _: ReferenceKey, within _: Float) -> ReferenceKey? {
+        looseBody
+    }
+
+    func heldBody(_ key: ReferenceKey) -> MagicHeldBody? {
+        heldBodies[key]
+    }
+
+    func pushBody(_ key: ReferenceKey, impulse: SIMD3<Float>) {
+        pushes.append((body: key, impulse: impulse))
+    }
 
     func commandActor(_ actor: ReferenceKey, for caster: ReferenceKey) {
         commandedBy.append((actor: actor, caster: caster))
