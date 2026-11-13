@@ -387,7 +387,8 @@ extension InventoryCoordinatorTests {
         #expect(inventory.stolenCount(of: Fixture.sword, in: .player) == 1)
         let value = inventory.baselines.items.definition(Fixture.sword)?.value ?? 0
         #expect(recorder.uses.map(\.action) == [.pickpocket])
-        #expect(recorder.uses.first?.amount == Float(value))
+        let expected = PickpocketSettings.vanilla.skillUse(stackValue: Float(value))
+        #expect(recorder.uses.first?.amount == expected)
     }
 
     /// A target that caught the player refuses for two game days (UESP "Skyrim:Pickpocket").

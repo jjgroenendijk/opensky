@@ -17,6 +17,8 @@ nonisolated public struct PickpocketSettings: Equatable, Sendable {
     public var detectedPenalty: Float = 25
     public var minimumChance: Float = 0
     public var maximumChance: Float = 90
+    /// `fPickpocketSkillUsesCurve`: a theft's skill use is its stack value to this power.
+    public var skillUsesCurve: Float = 0.8
 
     public static let vanilla = PickpocketSettings()
 
@@ -35,7 +37,13 @@ nonisolated public struct PickpocketSettings: Equatable, Sendable {
         store.read("fPickPocketDetected", into: &settings, \.detectedPenalty)
         store.read("fPickPocketMinChance", into: &settings, \.minimumChance)
         store.read("fPickPocketMaxChance", into: &settings, \.maximumChance)
+        store.read("fPickpocketSkillUsesCurve", into: &settings, \.skillUsesCurve)
         return settings
+    }
+
+    /// The skill use of a theft: max(1, stack value) ^ curve. 100 gold gives 100^0.8 = 39.8.
+    public func skillUse(stackValue: Float) -> Float {
+        pow(max(1, stackValue.isFinite ? stackValue : 1), skillUsesCurve)
     }
 
     /// The chance in percent before perks. `gold` is the coins taken, zero for an item.
