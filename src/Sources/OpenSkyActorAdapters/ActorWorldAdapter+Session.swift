@@ -48,21 +48,33 @@ extension ActorWorldAdapter {
             self?.hudMeters.publishHUDMeters(gameSession: gameSession)
         }
         gameSession.motion.breath = PlayerBreath(settings: BreathSettings.resolve(store: settings))
+        gameSession.motion.playerSpeedScale = PlayerSpeedScale.provider(
+            settings: settings, game: game
+        )
+        gameSession.worldTick.register(.breath) { [weak self, weak gameSession] delta in
+            guard let gameSession else { return }
+            self?.breathStep.advanceBreath(delta: delta, gameSession: gameSession)
+        }
+    }
+}
+
+/// The player's movement speed scale from `SpeedMult`, the worn armour weight, and a drawn
+/// weapon (docs/engine/walk-mode.md#speed).
+enum PlayerSpeedScale {
+    static func provider(
+        settings: GameSettingStore, game: any ActorWorldHost
+    ) -> @MainActor () -> Float {
         let speeds = MovementSpeedSettings.resolve(store: settings)
         let speedMult = ActorValueIdentity.index(named: "SpeedMult")
-        gameSession.motion.playerSpeedScale = { [weak game = self.game, weak gameSession] in
-            guard let game, let gameSession else { return 1 }
+        return { [weak game] in
+            guard let game else { return 1 }
             let mult = speedMult
                 .flatMap { game.actorValues.runtime?.value(at: $0, on: .player) } ?? 100
             return speeds.speedScale(
                 wornWeight: game.inventory.armourWeights.playerWornArmourWeight,
-                weaponDrawn: gameSession.locomotion.actorState.weaponDrawn,
+                weaponDrawn: game.combat.isWeaponDrawn,
                 speedMult: mult
             )
-        }
-        gameSession.worldTick.register(.breath) { [weak self, weak gameSession] delta in
-            guard let gameSession else { return }
-            self?.breathStep.advanceBreath(delta: delta, gameSession: gameSession)
         }
     }
 }

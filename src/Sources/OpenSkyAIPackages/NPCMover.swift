@@ -25,8 +25,9 @@ public struct NPCMover {
     public var path: NavigationPath
     public var waypointIndex = 0
     public var yaw: Float
-    /// How fast the actor may turn, in radians per second: `fActorDefaultTurningSpeed`.
-    public var turnRate = MovementSpeedSettings.vanilla.defaultTurnRate
+    /// How fast the actor may turn, in radians per second. The movement runtime sets it
+    /// from `fActorDefaultTurningSpeed`; this start value is that setting's vanilla value.
+    public var turnRate: Float = .pi * 2
     public var gait: LocomotionGait = .walk
     public var state: NPCMovementState = .moving
     public var repathCount = 0

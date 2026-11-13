@@ -8,7 +8,6 @@ import Foundation
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyInventory
@@ -44,7 +43,7 @@ final class InventoryMenuController {
     static let activationTicks = 20
 
     unowned let game: any InventoryMenuHost
-    let messages: any MessageCoordinatorPort
+    let itemDetails: InventoryMenuItemDetails
     private(set) var isOpen = false
     var model = InventoryMenuModel.empty
     /// On by default, so play mode draws the menu. The HUD is suspended while
@@ -58,9 +57,9 @@ final class InventoryMenuController {
     var previewSource: InventoryItemPreviewSource?
     var previewShown = false
 
-    init(game: any InventoryMenuHost, messages: any MessageCoordinatorPort) {
+    init(game: any InventoryMenuHost, itemDetails: InventoryMenuItemDetails) {
         self.game = game
-        self.messages = messages
+        self.itemDetails = itemDetails
         movie = MenuMovieSession(
             movies: game.swfMovies, hud: game.hud, label: "inventory menu movie",
             logger: Self.logger
@@ -99,7 +98,7 @@ final class InventoryMenuController {
         var refreshed = InventoryMenuModel.build(
             holder: .player, runtime: inventory,
             categories: InventoryMenuCategory.tabs(
-                texts: game.inventory.itemCards.menuTexts, favourites: true
+                texts: itemDetails.menuTexts, favourites: true
             ),
             favourites: game.inventory.favouriteItems.playerFavourites
         )
@@ -117,8 +116,8 @@ final class InventoryMenuController {
     private func publishModel() {
         let model = model
         let item = model.selectedEntry?.item
-        let card = item.flatMap { game.inventory.itemCards.itemCard(for: $0) }
-        let charge = item.flatMap { game.magic.weaponEnchantments.chargePercent(of: $0) }
+        let card = itemDetails.card(for: item)
+        let charge = itemDetails.chargePercent(of: item)
         movie.publish {
             InventoryMenuMovieBridge.publish(model, runtime: $0)
             InventoryMenuMovieBridge.publishItemCard(card, charge: charge, runtime: $0)
@@ -232,25 +231,22 @@ final class InventoryMenuController {
             books.open(item: entry.item)
             return
         }
-        if let entry = model.selectedEntry, askBeforePoison(entry.item) {
+        if let entry = model.selectedEntry, askBeforePoison(entry) {
             return
         }
         perform { itemActions.use($0.item) }
     }
 
     /// A poison the weapon can take asks first; Yes puts it on.
-    private func askBeforePoison(_ item: FormID) -> Bool {
-        let consumables = game.inventory.consumables
+    private func askBeforePoison(_ entry: InventoryMenuEntry) -> Bool {
+        let item = entry.item
         guard
-            consumables.use(of: item) == .applyPoison,
-            itemActions.refusal(.consume, of: item) == nil,
-            let question = consumables.poisonQuestion(item, texts: game.mapWorld.settingTexts())
+            let question = itemDetails.poisonQuestion(
+                item, refusal: itemActions.refusal(.consume, of: item)
+            )
         else { return false }
-        let words = game.mapWorld.settingTexts(MessageBoxText.self)
-        messages.presentChoices(
-            title: nil, text: question, buttons: [words[.yes], words[.no]]
-        ) { [weak self] choice in
-            guard let self, choice == 0, isOpen, model.selectedEntry?.item == item else { return }
+        itemDetails.ask(question) { [weak self] yes in
+            guard let self, yes, isOpen, model.selectedEntry?.item == item else { return }
             perform { itemActions.use($0.item) }
         }
         lastActionText = question

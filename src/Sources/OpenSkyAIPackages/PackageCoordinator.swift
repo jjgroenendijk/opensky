@@ -262,7 +262,7 @@ public final class PackageCoordinator {
             ActorPackageRuntime(store: $0.store, conditionFunctions: $0.conditionFunctions)
         }
         settings = PackageSettings(data)
-        spectators = SpectatorMemory(rememberSeconds: settings.sandbox.spectatorRememberSeconds)
+        spectators = SpectatorMemory(settings: settings)
         movement = PackageMovement(world: world)
         movement.settled = { [weak self] actor, reason in
             self?.movementSettled(actor: actor, reason: reason)

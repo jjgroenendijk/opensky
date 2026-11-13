@@ -62,6 +62,15 @@ public protocol CraftingMenuWorld: MenuScreenWorld {
     func toggleIngredient(_ ingredient: FormID) -> String
     /// Brews the chosen ingredients; the outcome text.
     func brewChosenIngredients() -> String
+    var enchanter: any CraftingMenuEnchanter { get }
+    /// Asks a yes or no question; `answer` gets true for yes.
+    func confirm(_ text: String, answer: @escaping (Bool) -> Void)
+    /// A message box with one OK button.
+    func inform(_ text: String)
+}
+
+/// What the crafting menu needs from the app at an arcane enchanter.
+public protocol CraftingMenuEnchanter {
     /// What the open arcane enchanter offers, or nil when the station is no enchanter.
     var enchanterChoices: EnchanterChoices? { get }
     var enchantingTexts: GameSettingTexts<EnchantingMenuText> { get }
@@ -69,10 +78,6 @@ public protocol CraftingMenuWorld: MenuScreenWorld {
     /// Why `selection` cannot be made, or nil when it can.
     func enchantRefusal(_ selection: EnchanterSelection) -> String?
     func enchant(_ selection: EnchanterSelection) -> EnchanterAnswer
-    /// Asks a yes or no question; `answer` gets true for yes.
-    func confirm(_ text: String, answer: @escaping (Bool) -> Void)
-    /// A message box with one OK button.
-    func inform(_ text: String)
 }
 
 public final class CraftingMenuCoordinator: ItemListMenuScreen {
@@ -120,10 +125,10 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
     }
 
     override func loadCategories() -> [ItemListCategory] {
-        if let choices = world?.enchanterChoices, let texts = world?.enchantingTexts {
+        if let enchanter = world?.enchanter, let choices = enchanter.enchanterChoices {
             recipes = []
             ingredients = []
-            return enchanting.categories(choices, texts: texts)
+            return enchanting.categories(choices, texts: enchanter.enchantingTexts)
         }
         if let carried = world?.alchemyIngredients {
             return ingredientCategories(carried)
@@ -177,7 +182,7 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
     }
 
     override func choose(_ row: ItemListRow, alternate: Bool) -> String {
-        if let world, world.enchanterChoices != nil {
+        if let world, world.enchanter.enchanterChoices != nil {
             return enchanting.choose(row, alternate: alternate, world: world) { [weak self] in
                 self?.reload()
             }
@@ -216,7 +221,7 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
     }
 
     var mode: CraftingMenuMode {
-        if world?.enchanterChoices != nil {
+        if world?.enchanter.enchanterChoices != nil {
             return .enchanting
         }
         if world?.alchemyIngredients != nil {

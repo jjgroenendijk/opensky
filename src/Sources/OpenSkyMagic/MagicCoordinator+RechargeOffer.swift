@@ -29,12 +29,30 @@ extension MagicCoordinator.WeaponRecharge {
 extension MagicCoordinator.WeaponEnchantments {
     /// What is left of `item`'s charge, in percent; nil for an item without a metered one.
     public func chargePercent(of item: FormID) -> Float? {
-        coordinator.weaponRecharge.weapon(item).map { Self.percent($0.charge.remaining, of: $0) }
+        coordinator.weaponRecharge.chargePercent(of: item)
     }
 
     /// The filled gems that could recharge `item`; nil when it holds no charge to fill.
     public func rechargeOffer(for item: FormID) -> RechargeOffer? {
-        let recharge = coordinator.weaponRecharge
+        coordinator.weaponRecharge.rechargeOffer(for: item)
+    }
+
+    /// Spends the offer's gem at `gemIndex` on `item`. False when nothing changed.
+    @discardableResult
+    public func recharge(_ item: FormID, gemIndex: Int) -> Bool {
+        coordinator.weaponRecharge.recharge(item, gemIndex: gemIndex)
+    }
+}
+
+extension MagicCoordinator.WeaponRecharge {
+    /// What is left of `item`'s charge, in percent; nil for an item without a metered one.
+    func chargePercent(of item: FormID) -> Float? {
+        weapon(item).map { Self.percent($0.charge.remaining, of: $0) }
+    }
+
+    /// The filled gems that could recharge `item`; nil when it holds no charge to fill.
+    func rechargeOffer(for item: FormID) -> RechargeOffer? {
+        let recharge = self
         guard
             let weapon = recharge.weapon(item),
             weapon.charge.remaining < weapon.charge.capacity
@@ -56,8 +74,8 @@ extension MagicCoordinator.WeaponEnchantments {
 
     /// Spends the offer's gem at `gemIndex` on `item`. False when nothing changed.
     @discardableResult
-    public func recharge(_ item: FormID, gemIndex: Int) -> Bool {
-        let recharge = coordinator.weaponRecharge
+    func recharge(_ item: FormID, gemIndex: Int) -> Bool {
+        let recharge = self
         let gems = recharge.filledGems()
         guard
             let runtime = coordinator.effects, let inventory = coordinator.world.inventory,

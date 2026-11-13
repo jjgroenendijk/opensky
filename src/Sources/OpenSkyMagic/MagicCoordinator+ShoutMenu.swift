@@ -28,7 +28,7 @@ extension MagicCoordinator.MagicMenu {
         let equipped = coordinator.world.shoutKnowledge.equipped
         return menuShouts.map {
             MagicMenuSpell(
-                name: $0.shout.displayName, typeName: texts.name(of: .voice),
+                name: $0.shout.displayName,
                 isReadied: $0.key == equipped, category: texts.menuCategory(
                     of: .voice,
                     magicSkill: nil

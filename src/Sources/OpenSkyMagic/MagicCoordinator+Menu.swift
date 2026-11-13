@@ -14,7 +14,6 @@ extension MagicCoordinator.MagicMenu {
         return coordinator.controlPanels.playerKnownSpells().map { spell in
             MagicMenuSpell(
                 name: spell.displayName,
-                typeName: texts.name(of: spell.spellType),
                 isReadied: !book.hands(of: spell.key).isEmpty,
                 category: texts.menuCategory(of: spell.spellType, magicSkill: spell.magicSkill)
             )
