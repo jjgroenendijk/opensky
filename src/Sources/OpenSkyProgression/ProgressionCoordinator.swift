@@ -83,7 +83,8 @@ public final class ProgressionCoordinator {
                 data.information.flatMap { information in
                     data.perkStore.map { (information, $0) }
                 }
-            }
+            },
+            texts: data?.texts ?? .vanilla
         )
         guard let data, let information = data.information else { return }
         var runtime = SkillAdvancementRuntime(data, information: information)

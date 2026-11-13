@@ -22,6 +22,7 @@ final class ProgressionTreeReader {
     /// every spend is then refused with `.notInPerkTree`.
     let trees: PerkTreeIndex
     private let world: any ProgressionWorld
+    let texts: ProgressionTexts
     /// The readout asks twice a second; walking eighteen trees each time is
     /// about nine hundred record lookups for numbers that rarely move.
     private var treeCounts = PerkTreeCountCache()
@@ -29,10 +30,12 @@ final class ProgressionTreeReader {
 
     init(
         perks: PerkCoordinator, world: any ProgressionWorld,
-        data: (information: ActorValueInformationStore, perks: PerkStore)?
+        data: (information: ActorValueInformationStore, perks: PerkStore)?,
+        texts: ProgressionTexts = .vanilla
     ) {
         self.perks = perks
         self.world = world
+        self.texts = texts
         information = data?.information
         trees = data.map { PerkTreeIndex(information: $0.information, perks: $0.perks) } ?? .empty
     }
