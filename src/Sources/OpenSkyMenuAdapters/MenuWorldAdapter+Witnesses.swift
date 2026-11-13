@@ -89,6 +89,10 @@ extension MenuWorldAdapter {
         skillsRace.gameFiles
     }
 
+    public var titleSettings: TitleMenuSettings {
+        skillsRace.titleSettings
+    }
+
     public var viewCamera: FreeFlyCamera? {
         skillsRace.viewCamera
     }

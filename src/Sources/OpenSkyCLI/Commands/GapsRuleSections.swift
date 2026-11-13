@@ -167,6 +167,7 @@ extension GapsGatherer {
             _ = StaminaSettings.resolve(store: store)
             _ = BreathSettings.resolve(store: store)
             _ = MovementSpeedSettings.resolve(store: store)
+            _ = TitleMenuSettings.resolve(store: store)
             _ = DragonFlightSettings.resolve(movementTypes: .empty, settings: store)
             _ = CellResetSettings.resolve(store: store)
             _ = CrimeSettings.resolve(store: store)

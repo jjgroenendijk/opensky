@@ -19,6 +19,8 @@ public protocol TitleMenuWorld: AnyObject {
     func quitApplication()
     /// The install's files, for the credits text; nil without game data.
     var gameFiles: (any GameFileSource)? { get }
+    /// The credits speed and the version number; vanilla without game data.
+    var titleSettings: TitleMenuSettings { get }
 }
 
 nonisolated public enum TitleMenuEntry: String, CaseIterable, Sendable {

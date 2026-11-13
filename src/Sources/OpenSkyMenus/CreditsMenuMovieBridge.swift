@@ -11,15 +11,12 @@ nonisolated enum CreditsMenuMovieBridge: Sendable {
     /// The credits text in the interface archive.
     static let creditsPath = "interface\\credits.txt"
     static let codeObjectName = "CodeObj"
-    /// Movie pixels the text moves up per frame. OpenSky's pace: the game reads
-    /// its own from code, which is not public.
-    static let scrollSpeed = 1.0
-
     /// Fills `CodeObj` and starts the scroll. `onClose` runs when the text has
     /// scrolled past or the player leaves.
     static func activate(
         runtime: SWFMovieRuntime,
         credits: String,
+        scrollSpeed: Double = Double(TitleMenuSettings.vanilla.creditsScrollSpeed),
         onClose: @escaping @MainActor @Sendable () -> Void
     ) {
         runtime.registerHostFunction("PlaySound") { _ in .undefined }

@@ -83,6 +83,10 @@ extension MenuWorldSkillsRaceAdapter {
         game.renderer
     }
 
+    var titleSettings: TitleMenuSettings {
+        game.menuRecords.map { TitleMenuSettings.resolve(store: $0.gameSettings) } ?? .vanilla
+    }
+
     var gameFiles: (any GameFileSource)? {
         game.swfMovies.fileSystem
     }

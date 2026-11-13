@@ -28,6 +28,8 @@ install with `openskycli swf movie-probe` and `swf action-list`:
   right edge of the 1280 x 720 stage.
 - The engine fills the rows by calling the `sendMenuProperties` callback with 14 values.
   Flag 0 shows Quit. Flag 1 shows Continue and enables Load. Value 2 is the version text.
+  OpenSky sends `OpenSky.<iUpdateESMVersion>`, `OpenSky.8` with the install, because the
+  game ends its own version with that setting.
   Flag 3 starts on the Press Start screen. Flag 9 skips the Bethesda.net login screen.
   The other flags show the DLC, Creations, Mods, Help, and console rows; OpenSky sends
   `false` for all of them.
@@ -176,7 +178,7 @@ movie makes `_root.CodeObj` itself and calls three functions on it, which the en
 | Function | What OpenSky does |
 | --- | --- |
 | `requestCredits(field)` | Writes the text of `Interface\credits.txt` into `field`, without HTML tags |
-| `getScrollSpeed()` | Returns 1 movie pixel per frame. The game's own speed is not in the data |
+| `getScrollSpeed()` | Returns `fCreditsScrollSpeed` (2 in the install) |
 | `closeMenu()` | Gives the layer back to the title movie |
 
 The engine then calls `onCodeObjectInit`, and the movie starts to scroll. Escape also ends
