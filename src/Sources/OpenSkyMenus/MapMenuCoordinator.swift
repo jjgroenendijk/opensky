@@ -51,6 +51,8 @@ public protocol MapMenuWorld: AnyObject {
     func ask(_ text: String, buttons: [String], answer: @escaping (Int) -> Void)
     /// Puts the custom marker on the HUD compass; nil takes it off.
     func showPlayerSetMarker(_ position: SIMD3<Float>?)
+    /// Puts the map markers near the player on the HUD compass.
+    func showCompassLocations(_ locations: [CompassLocation])
 }
 
 public final class MapMenuCoordinator {
@@ -119,6 +121,9 @@ public final class MapMenuCoordinator {
             world.incrementStat("Locations Discovered")
             discoveredCount += 1
         }
+        world.showCompassLocations(
+            MapMarkerRules.compassLocations(sites, player: player, settings: settings)
+        )
         exploreFog(at: player)
     }
 

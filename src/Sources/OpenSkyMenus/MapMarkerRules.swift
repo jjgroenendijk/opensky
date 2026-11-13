@@ -15,6 +15,35 @@ nonisolated public enum MapMarkerChange: Equatable, Sendable {
 }
 
 nonisolated public enum MapMarkerRules {
+    /// The opacity of a compass marker at or past the fade distance.
+    static let compassMinimumOpacity: Float = 50
+
+    /// The named markers the compass shows: a known one within `compassDistance`, and an
+    /// unknown one within `visibleDistance`. Each fades from 100 at the player to the
+    /// minimum at `fadeStartDistance`, by the squared distance.
+    public static func compassLocations(
+        _ sites: [MapMarkerSite], player: SIMD3<Float>, settings: MenuMapSettings
+    ) -> [CompassLocation] {
+        sites.compactMap { site in
+            guard !site.name.isEmpty else { return nil }
+            let known = site.state.isVisible || site.state.isDiscovered
+            let reach = known ? settings.compassDistance : settings.visibleDistance
+            let squared = simd_distance_squared(site.position, player)
+            guard squared <= reach * reach else { return nil }
+            return CompassLocation(
+                position: site.position,
+                isKnown: known,
+                opacityPercent: compassOpacity(squaredDistance: squared, settings: settings)
+            )
+        }
+    }
+
+    static func compassOpacity(squaredDistance: Float, settings: MenuMapSettings) -> Float {
+        let start = settings.fadeStartDistance * settings.fadeStartDistance
+        let share = start > 0 ? min(squaredDistance / start, 1) : 1
+        return compassMinimumOpacity + (100 - compassMinimumOpacity) * (1 - share)
+    }
+
     /// Discovers each marker within the reveal distance of `player`. A discovered
     /// marker is also visible and a travel target.
     public static func discover(

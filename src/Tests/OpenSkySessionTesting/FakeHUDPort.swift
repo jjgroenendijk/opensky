@@ -25,6 +25,7 @@ nonisolated public final class FakeHUDPort: HUDPort {
     public var showsResult = false
     public var updateCallCount = 0
     public var updatePlayerSetMarkerCalls: [SIMD3<Float>?] = []
+    public var updateCompassLocationsCalls: [[CompassLocation]] = []
     public var updateQuestTargetsCalls: [[SIMD3<Float>]] = []
     public var updateTargetCalls: [InteractionTarget?] = []
     public var suspendCallCount = 0
@@ -65,6 +66,10 @@ nonisolated extension FakeHUDPort {
 
     public func updatePlayerSetMarker(_ position: SIMD3<Float>?) {
         updatePlayerSetMarkerCalls.append(position)
+    }
+
+    public func updateCompassLocations(_ locations: [CompassLocation]) {
+        updateCompassLocationsCalls.append(locations)
     }
 
     public func updateQuestTargets(_ positions: [SIMD3<Float>]) {

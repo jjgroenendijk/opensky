@@ -18,13 +18,22 @@ and can travel to. Without a component the `FNAM` flags apply.
 | GMST | Value in Skyrim.esm | Use |
 | --- | --- | --- |
 | `iMapMarkerRevealDistance` | 1000 | Closer than this discovers a marker |
-| `iMapMarkerVisibleDistance` | 12500 | Closer than this shows it on the compass |
+| `iMapMarkerVisibleDistance` | 12500 | Closer than this shows an unknown marker on the compass |
+| `fHUDCompassLocationMaxDist` | 20000 | Closer than this shows a known marker on the compass |
+| `iMapMarkerFadeStartDistance` | 10000 | A compass marker fades out up to this distance |
 
 Discovery runs each time the player has moved 128 units. It gives no level experience:
 UESP "Skyrim:Leveling" (<https://en.uesp.net/wiki/Skyrim:Leveling>) gives level experience
 only for skill increases, so `iXPRewardDiscoverMapMarker` is a Fallout leftover. A discovered
 marker is visible and a travel target, and the HUD names it. `ObjectReference.AddToMap` shows a
 marker and makes it a travel target only when asked.
+
+## Compass
+
+Each discovery step also sends the named markers near the player to the HUD compass. A known
+marker (visible or discovered) shows as a location; an unknown one shows as undiscovered. The
+opacity is `50 + 50 * (1 - min(d^2 / fade^2, 1))`, with `d` the distance and `fade`
+`iMapMarkerFadeStartDistance`: 100 at the player and 50 at the fade distance and past it.
 
 ## World map
 
