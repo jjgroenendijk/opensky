@@ -1,6 +1,6 @@
 import Foundation
 public import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// One recipe row: what it makes and whether the player can make it now.
 nonisolated public struct CraftingRecipeReadout: Equatable, Sendable {
@@ -9,14 +9,18 @@ nonisolated public struct CraftingRecipeReadout: Equatable, Sendable {
     public let isEligible: Bool
     /// False when a condition fails, so the crafting menu leaves the recipe out.
     public let isOffered: Bool
+    /// The tab the created item goes under, or nil for none of its own.
+    public let category: CraftingCategoryText?
 
     public init(
-        id: ResolvedFormID, name: String, isEligible: Bool, isOffered: Bool = true
+        id: ResolvedFormID, name: String, isEligible: Bool, isOffered: Bool = true,
+        category: CraftingCategoryText? = nil
     ) {
         self.id = id
         self.name = name
         self.isEligible = isEligible
         self.isOffered = isOffered
+        self.category = category
     }
 }
 

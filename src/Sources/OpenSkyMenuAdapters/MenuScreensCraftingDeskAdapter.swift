@@ -64,8 +64,12 @@ extension MenuScreensCraftingDeskAdapter {
     }
 
     var craftingRecipes: [CraftingMenuRecipe] {
-        game.inventory.craftingReadout.craftingSnapshot.recipes.filter(\.isOffered).map {
-            CraftingMenuRecipe(id: $0.id, name: $0.name, canMake: $0.isEligible)
+        let titles: GameSettingTexts<CraftingCategoryText> = game.mapWorld.settingTexts()
+        return game.inventory.craftingReadout.craftingSnapshot.recipes.filter(\.isOffered).map {
+            CraftingMenuRecipe(
+                id: $0.id, name: $0.name, canMake: $0.isEligible,
+                category: $0.category.map { titles[$0] }
+            )
         }
     }
 

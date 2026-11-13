@@ -13,11 +13,14 @@ nonisolated public struct CraftingMenuRecipe: Equatable, Sendable {
     public let id: ResolvedFormID
     public let name: String
     public let canMake: Bool
+    /// The title of the tab the created item goes under, such as "IRON", or nil.
+    public let category: String?
 
-    public init(id: ResolvedFormID, name: String, canMake: Bool) {
+    public init(id: ResolvedFormID, name: String, canMake: Bool, category: String? = nil) {
         self.id = id
         self.name = name
         self.canMake = canMake
+        self.category = category
     }
 }
 
@@ -102,10 +105,20 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
         let rows = all.enumerated().map { index, recipe in
             ItemListRow(tag: UInt32(index), name: recipe.name, isEquipped: recipe.canMake)
         }
+        var titles: [String] = []
+        for title in all.compactMap(\.category) where !titles.contains(title) {
+            titles.append(title)
+        }
+        let tabs = titles.map { title in
+            ItemListCategory(
+                label: title,
+                rows: zip(all, rows).filter { $0.0.category == title }.map(\.1)
+            )
+        }
         return [
             ItemListCategory(label: "Can make", rows: rows.filter(\.isEquipped)),
             ItemListCategory(label: "All", rows: rows)
-        ]
+        ] + tabs
     }
 
     /// A chosen ingredient shows as equipped, as the vanilla lab marks it.
