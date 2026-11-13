@@ -40,6 +40,7 @@ final class FakeMenuScreenWorld: MenuScreenWorld, MenuInputConsumer {
     var giftRefusalText: String?
     var craftingStation: CraftingStationInfo?
     var craftingButtonTexts = GameSettingTexts<CraftingButtonText>.vanilla
+    var craftingTabTexts = GameSettingTexts<CraftingTabText>.vanilla
     var alchemyIngredients: [CraftingMenuIngredient]?
     var enchanterChoices: EnchanterChoices?
     var enchantingTexts = GameSettingTexts<EnchantingMenuText>.vanilla

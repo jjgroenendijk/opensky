@@ -20,7 +20,8 @@ nonisolated public struct CraftingMenuRecipe: Equatable, Sendable {
     public let categoryRank: Int
 
     public init(
-        id: ResolvedFormID, name: String, canMake: Bool, category: String? = nil, categoryRank: Int = 0
+        id: ResolvedFormID, name: String, canMake: Bool, category: String? = nil,
+        categoryRank: Int = 0
     ) {
         self.id = id
         self.name = name
@@ -50,6 +51,7 @@ public protocol CraftingMenuWorld: MenuScreenWorld {
     var craftingStationName: String? { get }
     var craftingStation: CraftingStationInfo? { get }
     var craftingButtonTexts: GameSettingTexts<CraftingButtonText> { get }
+    var craftingTabTexts: GameSettingTexts<CraftingTabText> { get }
     var craftingRecipes: [CraftingMenuRecipe] { get }
     /// Makes one of `recipe`; the outcome text.
     func craft(_ recipe: ResolvedFormID) -> String
@@ -132,6 +134,15 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
         let rows = all.enumerated().map { index, recipe in
             ItemListRow(tag: UInt32(index), name: recipe.name, isEquipped: recipe.canMake)
         }
+        if
+            let station = world?.craftingStation, station.improves,
+            let texts = world?.craftingTabTexts
+        {
+            return [ItemListCategory(
+                label: texts[station.improvesArmor ? .armor : .weapons],
+                rows: rows
+            )]
+        }
         var titles: [String] = []
         for recipe in all.sorted(by: { $0.categoryRank < $1.categoryRank }) {
             if let title = recipe.category, !titles.contains(title) {
@@ -158,7 +169,9 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
             ItemListRow(tag: UInt32(index), name: ingredient.name, isEquipped: ingredient.isChosen)
         }
         return [
-            ItemListCategory(label: "Ingredients", rows: rows),
+            ItemListCategory(
+                label: (world?.craftingTabTexts ?? .vanilla)[.ingredients], rows: rows
+            ),
             ItemListCategory(label: "Chosen", rows: rows.filter(\.isEquipped))
         ]
     }
@@ -177,7 +190,7 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
             return world?.toggleIngredient(ingredients[Int(row.tag)].id) ?? "No game"
         }
         guard let world, recipes.indices.contains(Int(row.tag)) else { return "No recipe" }
-        let mode = self.mode
+        let mode = mode
         if mode == .create, alternate {
             return "Nothing to craft"
         }
@@ -213,7 +226,7 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
     }
 
     var buttons: CraftingMenuButtons {
-        let mode = self.mode
+        let mode = mode
         var state = CraftingMenuButtons.State(mode: mode, hasRow: model.selected != nil)
         switch mode {
         case .alchemy:
