@@ -24,6 +24,8 @@ nonisolated public enum ActivationText: String, GameSettingTextKey {
     case steal = "sSteal"
     case stealFrom = "sStealFrom"
     case pickpocket = "sPickpocket"
+    /// An automatic load door, named from a distance.
+    case to = "sTo"
 
     public var fallback: String {
         switch self {
@@ -42,6 +44,7 @@ nonisolated public enum ActivationText: String, GameSettingTextKey {
         case .steal: "<font color='#FF0000'>Steal</font>"
         case .stealFrom: "<font color='#FF0000'>Steal from</font>"
         case .pickpocket: "<font color='#FF0000'>Pickpocket</font>"
+        case .to: "To"
         }
     }
 }
@@ -79,7 +82,11 @@ nonisolated public enum ActivationPrompt {
             }
             return context.isBook ? .read : .take
         case .search: return context.isTheft ? .stealFrom : .search
-        case .open: return context.isOpen ? .close : .open
+        case .open:
+            if interaction.automaticArea != nil {
+                return .to
+            }
+            return context.isOpen ? .close : .open
         case .harvest: return .harvest
         case .talk: return context.isPlayerSneaking ? .pickpocket : .talk
         case .use:
