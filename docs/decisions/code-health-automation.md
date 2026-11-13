@@ -58,6 +58,7 @@ CI job runs on each pull request.
 | Diff coverage ([Test order and coverage rules](/decisions/test-coverage-rules.md)) | `llvm-cov`, `make test COVERAGE=1` | After `make test`, CI on a pull request | Seconds |
 | Design metrics on the index store, as a report until each count is zero ([Design metrics](/decisions/design-metrics.md)) | libIndexStore, `make design-index-report` | By hand | The index build, then seconds |
 | Abstractness, instability, and distance per module ([Design metrics](/decisions/design-metrics.md), rule 6) | `make module-metrics` | Weekly workflow | Seconds |
+| Natural type groups against the modules ([Design metrics](/decisions/design-metrics.md), rule 7) | libIndexStore, `make design-groups` | Weekly workflow | The index build, then about 20 seconds |
 
 ## Duplicated code: jscpd
 

@@ -4,7 +4,7 @@ name: Weekly checks
 # instrumentation, too slow for every push, so they run on a macOS runner once a
 # week and on demand (docs/tools/ci.md). A failed run opens an issue, or comments
 # on the open one, and a green run closes it. The module metrics report of design
-# rule 6 runs here too, and fails nothing.
+# rule 6 and the design groups report of rule 7 run here too, and fail nothing.
 on:
   schedule:
     - cron: "17 3 * * 0"
@@ -83,6 +83,36 @@ jobs:
         with:
           name: module-metrics
           path: .logs/module-metrics/
+          include-hidden-files: true
+          retention-days: 90
+
+  design-groups:
+    name: Design groups
+    runs-on: xcode-27
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start Metal Toolchain download
+        run: tools/ci/metal-toolchain.sh start
+      - uses: actions/cache/restore@v6
+        with:
+          path: src/.vendor/ffmpeg
+          key: ffmpeg-${{ runner.arch }}-${{ hashFiles('tools/vendor-ffmpeg.sh') }}
+      - run: tools/vendor-ffmpeg.sh
+      - uses: actions/cache/restore@v6
+        with:
+          path: src/.vendor/astcenc
+          key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
+      - run: tools/vendor-astcenc.sh
+      - name: Wait for the Metal Toolchain
+        run: tools/ci/metal-toolchain.sh wait
+      - run: make design-groups
+      - name: Upload the report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: design-groups
+          path: .logs/design-groups/
           include-hidden-files: true
           retention-days: 90
 
