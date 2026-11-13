@@ -95,14 +95,14 @@ archives. Background priority made it worse: its throttled reads finished the ri
 
 ## Large references
 
-A large reference is a placed object whose base is at least 512 units in size, such as a
-mountain or a bridge. The `WRLD` `RNAM` field lists them by cell. Each plugin's copy of the
-`WRLD` lists only its own: on the install, `Skyrim.esm`'s `Tamriel` holds about 160,000 and
-the winning override 18. So OpenSky joins the lists of every plugin. In the game they keep their
-full model out to `uLargeRefLODGridSize` cells, 11 by default, instead of the 5 of `uGridsToLoad`
-(UESP "Skyrim Mod:Mod File Format/WRLD", `RNAM`). OpenSky reads the setting from the INI files
-and the Graphics page as "Large object grid", and turns the grid side into rings like
-`uGridsToLoad`: 11 gives 5. A value at or below the loaded grid turns the ring off.
+A large reference is a placed object that is big, such as a mountain or a bridge. The `WRLD` `RNAM`
+field lists them by cell. Each plugin's copy of the `WRLD` lists only its own: on the install,
+`Skyrim.esm`'s `Tamriel` holds about 160,000 and the winning override 18. So OpenSky joins the lists
+of every plugin. In the game they keep their full model out to `uLargeRefLODGridSize` cells, 11 by
+default, instead of the 5 of `uGridsToLoad` (UESP "Skyrim Mod:Mod File Format/WRLD", `RNAM`).
+OpenSky reads the setting from the INI files and the Graphics page as "Large object grid", and turns
+the grid side into rings like `uGridsToLoad`: 11 gives 5. A value at or below the loaded grid turns
+the ring off.
 
 Each ring build, on the build queue:
 
@@ -117,7 +117,11 @@ Each ring build, on the build queue:
    whole, and then every cell of its block joins the ring, so no large reference goes
    missing.
 3. In those cells, the references that `RNAM` lists are read from their cell and drawn with
-   their full model, as the cell build places them. Each takes the enable state its own cell
+   their full model, as the cell build places them. A listed static stays only while it is
+   still large: half the diagonal of its base's `OBND` bounds, times the reference's scale,
+   must be above `fLargeRefMinSize` (1,024 by default), as observed in the game. So a plugin
+   that raises the setting drops the smaller ones. A listed reference whose base is not a
+   static, or has no bounds, stays as `RNAM` lists it. Each takes the enable state its own cell
    would give it: the world state, then its enable parent.
 
 The quick first ring of a session keeps the `-LargeRef` shapes, because its builder cannot

@@ -95,6 +95,7 @@ extension GapsGatherer {
         RuleSettingReaders.read(store: store)
         SettingTextReaders.read(store: store)
         MenuTextReaders.read(store: store)
+        WorldSettingReaders.read(store: store)
         return log.editorIDs
     }
 }
@@ -238,6 +239,15 @@ extension GapsGatherer {
             _ = GameSettingTexts<ActivationChoiceText>.resolve(store: store)
             _ = GameSettingTexts<CraftingCategoryText>.resolve(store: store)
             _ = GameSettingTexts<CraftingMenuText>.resolve(store: store)
+        }
+    }
+}
+
+extension GapsGatherer {
+    /// The readers of settings for world streaming and the objects in it.
+    enum WorldSettingReaders {
+        static func read(store: GameSettingStore) {
+            _ = LargeReferenceSettings.resolve(store: store)
         }
     }
 }

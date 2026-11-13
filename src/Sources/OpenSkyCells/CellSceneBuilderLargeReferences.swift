@@ -32,9 +32,13 @@ nonisolated extension CellSceneBuilder.CellLargeReferenceBuilder {
         state: WorldStateSnapshot = .empty
     ) -> DistantReferences {
         let listed = largeReferences(worldspaceEditorID: worldspaceEditorID, cells: cells)
+        let filter = LargeReferenceFilter(
+            statics: owner.modelIndex.statIndexBuildingIfNeeded(), caches: owner.caches,
+            loadOrder: owner.recordIndex.loadOrderIndexBuildingIfNeeded().loadOrder
+        )
         return cellReferencePlacements(
             worldspaceEditorID: worldspaceEditorID, cells: Set(listed.keys), state: state
-        ) { cell, _ in listed[cell] ?? [] }
+        ) { cell, collected in filter.kept(listed[cell] ?? [], of: collected) }
     }
 
     /// The references `pick` names in each of `cells`, read from their cell and put in the

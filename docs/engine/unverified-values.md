@@ -35,6 +35,7 @@ the detail and the sources it did find.
 | `fTrackSpeed` unit | Radians per second, a cap on the head-tracking turn speed | [head tracking](/engine/head-tracking.md) |
 | Compass marker minimum opacity | 50 percent, at and past `iMapMarkerFadeStartDistance` | [world map](/engine/world-map.md) |
 | Music type without `PNAM` | Ranks as priority 100, the lowest | [music](/engine/music.md#scripted-music) |
+| `RNAM` reference whose base is not a static, or has no bounds | Stays a large reference without the size test | [distant LOD](/engine/distant-lod.md#large-references) |
 | Image space cross-fade curve | Linear rise and fall over the script's fade time | [image space](/rendering/image-space.md#where-opensky-differs) |
 | Terrain LOD cut skirt depth | 1000 units per level step: 1000 at level 4 up to 4000 at level 32 | [distant LOD](/engine/distant-lod.md#skirts) |
 | Melee hit volume | Half height 0.25 x capsule height, radius 0.75 x capsule radius | [melee combat](/engine/melee-combat.md) |

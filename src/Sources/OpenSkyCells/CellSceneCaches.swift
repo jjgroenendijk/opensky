@@ -34,6 +34,7 @@ nonisolated public final class CellSceneCaches {
     var exteriorPersistentPools: [UInt32: EnableParentPool] = [:]
     /// Each worldspace's `RNAM` references by cell, over every plugin.
     var largeReferenceIndex: [UInt32: [CellCoordinate: Set<UInt32>]] = [:]
+    var largeReferenceSettings: LargeReferenceSettings?
     /// The cells that hold a temporary Is Full LOD reference, by WRLD FormID.
     var temporaryFullLODCellIndex: [UInt32: Set<CellCoordinate>] = [:]
     /// Keyed by WRLD FormID, with the same ownership rule as the persistent refs.
