@@ -26,6 +26,8 @@ nonisolated struct EnchantingInput: Equatable, Sendable {
     var skill: Float
     var soul: SoulLevel
     var bases: [EnchantingBase]
+    /// `fEnchantingSkillFactor`: the power gain at skill 100 is about this minus 1.
+    var skillFactor: Float = EnchantingSettings.vanilla.skillFactor
 }
 
 /// How a new enchantment changes its base records.
@@ -53,10 +55,13 @@ nonisolated enum EnchantingRules {
     /// The skill term must stay below 200, where a use would cost nothing.
     static let skillCap = MadeEnchantment.skillCap
 
-    /// `1 + (skill/100) * (skill/100 - 0.14) / 3.4`: about 1.25 at skill 100.
-    static func skillMultiplier(_ skill: Float) -> Float {
-        let level = min(max(0, skill), skillCap) / 100
-        return 1 + level * (level - 0.14) / 3.4
+    /// `1 + (factor - 1) * (skill/100) * max(0.01, (skill - 14) / 85)`: 1.253 at skill 100
+    /// with the vanilla factor 1.25.
+    static func skillMultiplier(
+        _ skill: Float, factor: Float = EnchantingSettings.vanilla.skillFactor
+    ) -> Float {
+        let level = min(max(0, skill), skillCap)
+        return 1 + (factor - 1) * (level / 100) * max(0.01, (level - 14) / 85)
     }
 
     /// A grand soul gives the base magnitude; each smaller soul gives a fixed share.
@@ -75,7 +80,7 @@ nonisolated enum EnchantingRules {
     static func apparel(_ input: EnchantingInput) -> EnchantingScale {
         let soul = soulMultiplier(input.soul)
         return EnchantingScale(
-            powers: input.bases.map { soul * strength($0, skill: input.skill) },
+            powers: input.bases.map { soul * strength($0, input) },
             capacity: 0,
             costPerUse: 0
         )
@@ -87,7 +92,7 @@ nonisolated enum EnchantingRules {
         let capacity = SoulTrap.charge(of: input.soul)
         let skillFactor = MadeEnchantment.skillCostFactor(input.skill)
         let fullCost = input.bases.reduce(0) { $0 + useCost($1.cost, skillFactor: skillFactor) }
-        let powers = input.bases.map { strength($0, skill: input.skill) }
+        let powers = input.bases.map { strength($0, input) }
         guard fullCost > capacity, capacity > 0 else {
             return EnchantingScale(
                 powers: powers, capacity: capacity, costPerUse: fullCost,
@@ -107,22 +112,10 @@ nonisolated enum EnchantingRules {
         3 * pow(max(0, cost), 1.1) * skillFactor
     }
 
-    private static func strength(_ base: EnchantingBase, skill: Float) -> Float {
-        skillMultiplier(skill) * max(0, base.perkFactor)
+    private static func strength(_ base: EnchantingBase, _ input: EnchantingInput) -> Float {
+        skillMultiplier(input.skill, factor: input.skillFactor) * max(0, base.perkFactor)
     }
 
     /// UESP "Skyrim:Leveling": 1 per item enchanted.
     static let enchantExperience: Float = 1
-
-    /// UESP "Skyrim:Leveling": what recharging a weapon from a soul of this size gives.
-    static func rechargeExperience(_ soul: SoulLevel) -> Float {
-        switch soul {
-        case .petty: 0.05
-        case .lesser: 0.1
-        case .common: 0.2
-        case .greater: 0.4
-        case .grand: 0.6
-        case .empty, .unknown: 0
-        }
-    }
 }

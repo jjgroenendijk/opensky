@@ -72,7 +72,14 @@ struct EnchantingTests {
         #expect(abs(EnchantingRules.skillMultiplier(100) - 1.252_94) < 0.000_01)
         #expect(EnchantingRules.skillMultiplier(0) == 1)
         #expect(EnchantingRules.soulMultiplier(.common) == Float(1) / 3)
-        #expect(EnchantingRules.rechargeExperience(.grand) == 0.6)
+        #expect(abs(EnchantingSettings.vanilla.rechargeExperience(charge: 3000) - 0.6) < 0.000_01)
+    }
+
+    @Test func lowSkillStillRaisesThePowerALittle() {
+        // Below skill 14 the second term holds at 0.01: 1 + 0.25 x 0.1 x 0.01.
+        #expect(abs(EnchantingRules.skillMultiplier(10) - 1.000_25) < 0.000_001)
+        // A doubled factor doubles the gain: 1 + 0.5 x 86 / 85.
+        #expect(abs(EnchantingRules.skillMultiplier(100, factor: 1.5) - 1.505_88) < 0.000_01)
     }
 
     /// At skill 0 one use of a cost-100 base costs 3 * 100^1.1, about 475; a petty

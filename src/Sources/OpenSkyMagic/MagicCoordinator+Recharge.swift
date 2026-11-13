@@ -47,7 +47,9 @@ extension MagicCoordinator.WeaponRecharge {
         let amount = worth(gem)
         coordinator.enchantingTable.spendGem(gem, in: inventory)
         coordinator.enchantingRecords
-            .reportEnchantingUse(EnchantingRules.rechargeExperience(gem.soul))
+            .reportEnchantingUse(
+                coordinator.rules.enchanting.rechargeExperience(charge: SoulTrap.charge(of: gem.soul))
+            )
         let charge = EnchantmentLedger(store: runtime.store, inventory: inventory)
             .recharge(weapon.profile, by: amount, on: .player)
         return .recharged(item: weapon.profile.item, gem: gem.item, charge: charge)
