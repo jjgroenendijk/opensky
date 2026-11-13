@@ -15,6 +15,8 @@ nonisolated public struct BehaviorGapSweep {
 
     /// Node class -> objects of it in the swept graphs.
     private(set) var classCounts: [String: Int] = [:]
+    /// Node class -> the first graph file that holds it, so a row can say where to look.
+    private(set) var classFiles: [String: String] = [:]
     private(set) var reachedClasses: Set<String> = []
     public private(set) var tally = BehaviorTally(nameLimit: 4096)
     public private(set) var graphCount = 0
@@ -63,7 +65,7 @@ nonisolated public struct BehaviorGapSweep {
         let reasons = gapReasons
         return Self.ranked(classCounts.filter {
             !reachedClasses.contains($0.key) && reasons[$0.key] == nil
-        }.map { ($0.key, $0.value) })
+        }.map { ("\($0.key) (\(classFiles[$0.key] ?? "?"))", $0.value) })
     }
 
     private static func ranked(_ rows: [(String, Int)]) -> [(name: String, count: Int)] {
@@ -108,6 +110,9 @@ nonisolated public struct BehaviorGapSweep {
         graphCount += 1
         for name in objectGraph.objectRefs.compactMap(\.className) where Self.isNodeClass(name) {
             classCounts[name, default: 0] += 1
+            if classFiles[name] == nil {
+                classFiles[name] = path
+            }
         }
         let instance = BehaviorGraphInstance(
             graph: graph, in: objectGraph, skeleton: skeleton, clips: clips, tallyNameLimit: 4096
