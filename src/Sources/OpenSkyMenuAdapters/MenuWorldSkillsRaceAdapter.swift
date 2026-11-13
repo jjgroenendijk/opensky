@@ -84,7 +84,9 @@ extension MenuWorldSkillsRaceAdapter {
     }
 
     var titleSettings: TitleMenuSettings {
-        game.menuRecords.map { TitleMenuSettings.resolve(store: $0.gameSettings) } ?? .vanilla
+        game.menuRecords.map {
+            TitleMenuSettings.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
     }
 
     var gameFiles: (any GameFileSource)? {

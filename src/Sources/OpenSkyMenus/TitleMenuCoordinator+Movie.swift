@@ -78,11 +78,34 @@ extension TitleMenuCoordinator {
     /// The row the movie picked. Load runs in the movie (`answerLoadCalls`).
     func apply(_ request: TitleMenuMovieBridge.Request) {
         switch request {
-        case .resume: activate(.resume)
-        case .new: activate(.new)
+        case .resume, .continueLastSaved: activate(.resume)
+        case .new: askNewGame()
+        case .startNewGame: activate(.new)
         case .quit: activate(.quit)
         case .credits:
             showCredits()
+        }
+    }
+
+    /// The movie shows `sConfirmNew` and calls `StartNewGame` on yes. Without a movie
+    /// there is no question, and New starts at once.
+    private func askNewGame() {
+        guard movieLoaded, let renderer = world?.renderer else {
+            activate(.new)
+            return
+        }
+        let text = (world?.titleSettings ?? .vanilla).confirmNewText
+        do {
+            try renderer.updateSWFRuntime {
+                $0.callMovie(
+                    TitleMenuMovieBridge.confirmNewGameCallback,
+                    arguments: [.string(text)]
+                )
+            }
+            lastResult = "Asked: \(text)"
+        } catch {
+            movie.record(error)
+            activate(.new)
         }
     }
 }
