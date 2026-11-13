@@ -162,7 +162,8 @@ nonisolated public struct ActorValueResolver: Sendable {
     /// The full derived baseline for one NPC_.
     public func resolve(base: FormID) throws -> ResolvedActorValues {
         let resolved = try resolveStats(base: base)
-        let gathered = inputs(from: resolved)
+        var gathered = inputs(from: resolved)
+        gathered.isPlayer = base == MenuRecordData.playerBase
         let stats = resolved.stats.value
         // Read once: the three derivations below must agree about the level,
         // and a level-up landing between two of them would produce a baseline

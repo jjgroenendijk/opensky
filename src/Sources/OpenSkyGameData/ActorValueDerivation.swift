@@ -20,6 +20,8 @@ nonisolated public struct ActorValueLevelSettings: Equatable, Sendable {
     /// `fNPCHealthLevelBonus` — extra health per level above 1, outside the
     /// weighted spread.
     public var healthBonusPerLevel: Float
+    /// `fPCHealthLevelBonus`: the same bonus for the player, 0 in the install.
+    public var playerHealthBonusPerLevel: Float = 0
     /// `iAVDSkillsLevelUp`: skill points per level above 1, "the fixed 8"
     /// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLAS>).
     public var skillPointsPerLevel = 8
@@ -55,6 +57,7 @@ nonisolated public struct ActorValueLevelSettings: Equatable, Sendable {
         {
             settings.skillPointsPerLevel = max(0, Int(points))
         }
+        store.read("fPCHealthLevelBonus", into: &settings, \.playerHealthBonusPerLevel)
         store.read("fDefaultBowSpeedBonus", into: &settings, \.defaultBowSpeedBonus)
         store.read("iAVDSkillStart", into: &settings, \.skillStart)
         return settings
@@ -76,6 +79,8 @@ nonisolated public struct ActorValueInputs: Equatable, Sendable {
     public var attributeWeights: CharacterClass.AttributeWeights
     /// CLAS skill weights, empty when the actor names no class.
     public var skillWeights: CharacterClass.SkillWeights
+    /// True for the player's base, which takes `fPCHealthLevelBonus` per level.
+    public var isPlayer = false
 
     public init(
         race: Race.Stats = Race.Stats(),
@@ -140,7 +145,9 @@ nonisolated public enum ActorValueDerivation: Sendable {
             weights: inputs.attributeWeights
         )
         var perLevel = spread
-        perLevel.health += settings.healthBonusPerLevel * Float(levelsGained)
+        let healthBonus = inputs.isPlayer
+            ? settings.playerHealthBonusPerLevel : settings.healthBonusPerLevel
+        perLevel.health += healthBonus * Float(levelsGained)
         return sum(sum(racial, offsets), perLevel).clampedToNonNegative()
     }
 

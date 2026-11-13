@@ -98,6 +98,21 @@ struct ActorValueDerivationTests {
         #expect(values == ActorValues(health: 40, magicka: 20, stamina: 30))
     }
 
+    /// The player takes `fPCHealthLevelBonus` (0 in the install) in place of the NPC bonus.
+    @Test func thePlayerTakesItsOwnHealthBonus() {
+        var inputs = ActorValueInputs(
+            race: Race.Stats(),
+            stats: ActorBase.Stats(levelWord: 7),
+            autoCalculatesStats: true,
+            attributeWeights: weights(1, 2, 3)
+        )
+        inputs.isPlayer = true
+        var settings = ActorValueLevelSettings.documentedDefaults
+        #expect(ActorValueDerivation.baseValues(inputs: inputs, settings: settings).health == 10)
+        settings.playerHealthBonusPerLevel = 2
+        #expect(ActorValueDerivation.baseValues(inputs: inputs, settings: settings).health == 22)
+    }
+
     /// The rounding example from the same page: "if you have 50 HMS points to
     /// distribute, with 1/6 to Health and 4/6 to Magicka and 1/6 to Stamina,
     /// you would do Magicka first, which would receive 33 points ... Health,
