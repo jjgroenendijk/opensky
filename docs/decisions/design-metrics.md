@@ -152,3 +152,60 @@ This rule is a report, not a gate. An interface module here holds value types as
 protocols, so a large distance is a question for a review, not a failure. On 2026-11-10, 30 of
 84 modules have a distance of 0.7 or more. Most are the format and interface modules, which
 many modules use and which hold mostly value types.
+
+## Rule 7: one job per module
+
+The fan-out rule looks at one type at a time. It cannot see a module that holds several jobs,
+where each type is small but the module mixes unrelated work. Such a module rebuilds, and can
+break, for changes that have nothing to do with most of its types. `make design-groups` builds
+the index store and writes the report to `design-groups.txt` in its run directory
+(`tools/design/design-groups.py`). The weekly workflow runs it and keeps the file.
+
+- Each type is a node, and a link joins two types when code inside one names the other or one
+  of its members, as in rule 2.
+- The Louvain method (Blondel and others, 2008) finds groups of types with many links inside
+  and few between. The report runs it with a fixed seed, so two runs give the same groups.
+- Modularity (Newman) scores a grouping from 0 to about 1. The report prints it for the module
+  partition and for the Louvain groups.
+- For each module with 15 or more types, the report prints its number of natural groups and the
+  share of its types in the largest one. A low share means the module holds several jobs.
+- For each type over the rule 2 limit, it groups the members that call each other or that use
+  mostly the same outside types (Jaccard similarity of 0.3 or more). Each group is a candidate
+  for its own type.
+
+The Louvain method is written out in the script, about 60 lines, so the tooling needs no graph
+library. This rule is a report, not a gate: some modules span groups by design, and the table
+below gives the reason for each. For each module under 50 %, the report also lists its groups
+with a few type names, which shows the jobs the module mixes.
+
+The modularity of the module partition is 0.44 on 2026-11-13, after the fan-out splits of rule
+2 (`main` at the gate of rule 2). The Louvain groups reach 0.72. No module was split for this
+rule, so the first run and the last run are the same run. A group that serves one feature
+only is a candidate to move into that feature, tracked as open work.
+
+Each module below has less than half of its types in its largest group. The share is from the
+run on 2026-11-13.
+
+| Module | Share | Reason it spans groups |
+| --- | --- | --- |
+| `OpenSkyCLI` | 15 % | A driver: one group per command family, such as the SWF, audio, and animation commands. Each family follows the feature it drives |
+| `OpenSkyCLIArguments` | 28 % | The argument types of the same command families, for the same reason |
+| `OpenSky` | 41 % | The app: the launcher pages, the session scope, and one group per menu controller. It drives every feature |
+| `OpenSkyWorldInterface` | 16 % | An interface module: value types that many features share, one group per feature that reads them, such as dragon flight and the benchmark. The groups that serve one feature only are candidates to move |
+| `OpenSkySessionInterface` | 33 % | The ports of the session, one group per feature that uses them. A port belongs next to the other ports, so the adapters find them in one place |
+| `OpenSkyActorsInterface` | 37 % | Actor values, actor conditions, and combat state: three faces of one actor, read by different features |
+| `OpenSkyMenusInterface` | 42 % | The menu snapshots and input routing that each menu shares with the app |
+| `OpenSkyShaderTypes` | 22 % | Structs and indexes shared with the Metal shaders. Each shader family has its own group, and they share no code by design |
+| `OpenSkyRenderCore` | 22 % | The Metal-free render math, one group per pass: decals, sky, grass, particles, shadows. Passes share little by design |
+| `OpenSkyRendering` | 26 % | The renderer and its passes. The passes meet only in the frame encoder, which holds them together |
+| `OpenSkyFormatsCore` | 45 % | Shared readers and small value types, such as the binary reader, the logger, and the control map. Each format module uses a few of them |
+| `OpenSkyFormatsAudio` | 43 % | Two audio containers, FUZ and Bink, which share only the WAV output |
+| `OpenSkyGameData` | 44 % | The record stores, the load order, and the actor value data that every feature reads. The asset load queue is a candidate to move |
+| `OpenSkySessionAdapters` | 26 % | Adapters that answer ports from the session: runtime state, save export, and audio. Each group is one port family |
+| `OpenSkyMenuAdapters` | 40 % | One group per menu port: the map, the loading screen, and the menu screens |
+| `OpenSkyStoryAdapters` | 47 % | One group per story port: ambient talk, crime, and dialogue |
+| `OpenSkyActorAdapters` | 48 % | One group per actor port: animation events, actor values, mounts, and actor graphs |
+| `OpenSkyPlayer` | 37 % | The player's body: the state graph, interaction rays, mounts, and cameras. The mounts are a candidate to move |
+| `OpenSkyActorPresentation` | 40 % | Actor animation, assembly, dragon flight, lip sync, and vehicles. Dragon flight and vehicles are candidates to move |
+| `OpenSkyQuests` | 45 % | Quest aliases, the journal, and social events: the three parts of the quest runtime |
+| `OpenSkyObjectAnimation` | 48 % | Animated cell objects, effect graphs, and trap contacts: everything that moves without being an actor |

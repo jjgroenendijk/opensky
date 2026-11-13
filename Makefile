@@ -95,6 +95,9 @@ design-index-report: | $(VENDOR) ## Build the index, then report the design rule
 module-metrics: ## Report each module's abstractness, instability, and distance (design rule 6); fails nothing
 	@./tools/design/module-metrics.sh
 
+design-groups: | $(VENDOR) ## Build the index, then report the natural type groups against the modules; fails nothing
+	@./tools/design/design-groups.sh
+
 dump-comments: ## Print long comment blocks to rewrite in bulk [ARGS='-r src/Sources/X']
 	@./tools/comment-blocks.sh dump $(ARGS)
 

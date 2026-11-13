@@ -183,6 +183,10 @@ The `Module metrics` job runs `make module-metrics` and keeps `module-metrics.md
 artifact for 90 days. It is design rule 6 of [Design metrics](/decisions/design-metrics.md), a
 report that fails nothing.
 
+The `Design groups` job runs `make design-groups` and keeps `design-groups.txt` as a run
+artifact for 90 days. It is design rule 7 of [Design metrics](/decisions/design-metrics.md), a
+report that fails nothing. It builds the index store first, so it takes as long as a build.
+
 No pull request fails on a weekly finding, so the `Report` job keeps one issue,
 "Weekly checks fail on main", with the `bug` and `code-health` labels
 (`tools/ci/weekly-issue.sh`). A failed run opens it, or comments on it when it is open. A green
