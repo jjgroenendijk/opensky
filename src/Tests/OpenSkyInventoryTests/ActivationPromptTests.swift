@@ -5,6 +5,7 @@
 import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyWorldInterface
+import simd
 import Testing
 
 struct ActivationPromptTests {
@@ -20,6 +21,15 @@ struct ActivationPromptTests {
         #expect(ActivationPrompt.text(for: interaction(.take), context: theft) == .steal)
         #expect(ActivationPrompt.text(for: interaction(.search), context: theft) == .stealFrom)
         #expect(ActivationPrompt.text(for: interaction(.search), context: .init()) == .search)
+    }
+
+    @Test func anAutomaticDoorReadsTo() {
+        var door = interaction(.open)
+        #expect(ActivationPrompt.text(for: door, context: .init()) == .open)
+        door.automaticArea = AutomaticDoorArea(
+            worldToLocal: matrix_identity_float4x4, minimum: .zero, maximum: .one
+        )
+        #expect(ActivationPrompt.text(for: door, context: .init()) == .to)
     }
 
     @Test func aBookReadsAndASneakingPlayerPickpockets() {

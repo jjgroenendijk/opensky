@@ -59,7 +59,8 @@ nonisolated extension CellSceneBuilder.CellSceneInteractions {
                 reference: ref.formID,
                 base: ref.base,
                 position: ref.placement.position,
-                name: name ?? base.editorID ?? base.formID.description,
+                name: ref.teleportDestination.flatMap { destinationName(door: $0.door) }
+                    ?? name ?? base.editorID ?? base.formID.description,
                 action: action,
                 actionLabel: override ?? (isBed ? "Sleep" : action.defaultLabel),
                 sounds: base.sounds,
@@ -118,6 +119,25 @@ nonisolated extension CellSceneBuilder.CellSceneInteractions {
             worldToLocal: transform.inverse,
             minimum: SIMD3<Float>(bounds.minimum),
             maximum: SIMD3<Float>(bounds.maximum)
+        )
+    }
+
+    /// A load door shows where it leads: the interior cell's name, or else the name of
+    /// the worldspace that holds the far door.
+    nonisolated private func destinationName(door: FormID) -> String? {
+        let index = owner.recordIndex.loadOrderIndexBuildingIfNeeded()
+        let cell = index.cellFormID(containing: door)
+            .flatMap { index.record(withFormID: $0) }
+            .flatMap { found in
+                found.record.type == "CELL"
+                    ? attempt { try Cell(record: found.record, localized: found.localized) } : nil
+            }
+        let world = index.worldFormID(containing: door)
+            .flatMap { owner.waterBuilder.worldspaceIndexBuildingIfNeeded()[$0.rawValue] }
+        return LoadDoorName.resolve(
+            cellName: cell.flatMap { resolvedText($0.name) },
+            isInterior: cell?.isInterior == true,
+            worldspaceName: world.flatMap { resolvedText($0.name) }
         )
     }
 

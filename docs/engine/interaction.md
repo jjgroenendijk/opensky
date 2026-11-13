@@ -89,6 +89,13 @@ no open animation yet.
 A bed is a `FURN` whose model has a sleep marker (animation type 2). Its prompt reads "Sleep",
 and using it opens the [rest menu](/engine/sleep-wait.md).
 
+### Load doors
+
+A door with `XTEL` names where it leads instead of its own `FULL`, as observed in the game:
+the crosshair over Breezehome's front door reads "Open Breezehome". The name is the far
+door's interior cell `FULL`, or for an exterior the `FULL` of the worldspace that holds it,
+such as "Whiterun". A door whose destination has no name keeps its own name.
+
 ### Automatic doors
 
 A `DOOR` with `FNAM` bit 0x02 ("Automatic") opens when the player walks into it, not with the
@@ -104,7 +111,8 @@ each use is OpenSky's reading:
 - `fAutoDoorActivateDistance`: the door opens only while the feet are inside its box and within
   this distance of the door's reference.
 - `fAutoDoorDisplayDistance`: when the crosshair is on nothing else, the HUD names the nearest
-  automatic door within this distance. The crosshair never picks one directly.
+  automatic door within this distance, as `sTo` ("To") and the destination, such as
+  "To Skyrim". The crosshair never picks one directly.
 - `fTeleportDoorActivateDelayTimer` (0.6 s): after the player uses a load door, the finished
   destination is shown only once this time has passed. A rebuild of the same interior does not
   wait.

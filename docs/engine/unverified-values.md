@@ -288,3 +288,4 @@ the detail and the sources it did find.
 | Swim breadcrumb trail | A point every 128 units, the last 64 kept; joined within 1,024 units, serves targets within 512 of its end | [navigation](/engine/navigation.md#swimming-after-the-player) |
 | Already-known tome notice | `sAlreadyKnown`, a space, the spell name, and a full stop | [spellcasting](/engine/spellcasting.md#reading-a-tome) |
 | Alchemy craft button | Shown with two or more chosen ingredients, whether or not they share an effect | [crafting](/engine/crafting.md#buttons-and-questions) |
+| Load door name | Interior: the far cell's `FULL`; exterior: the worldspace's `FULL`, never the cell's | [interaction](/engine/interaction.md#load-doors) |
