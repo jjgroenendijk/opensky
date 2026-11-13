@@ -220,4 +220,35 @@ struct EnchantingTests {
         ))
         #expect(profile.entries.map(\.magnitude) == [37, 25])
     }
+
+    @Test func theEnchanterListsTheCarriedItemsAndDisenchantsInTheGamesWords() throws {
+        let trial = try session(carrying: [Records.fireSword, Records.ring, Gems.grandFilled])
+        let enchanter = trial.coordinator.enchanter
+        let choices = enchanter.enchanterChoices
+        #expect(choices.disenchantable.map(\.id) == [Records.fireSword])
+        #expect(choices.enchantable.map(\.id) == [Records.ring])
+        #expect(choices.gems.map(\.item) == [Gems.grandFilled])
+        #expect(enchanter.disenchant(Records.fireSword).done)
+        #expect(!enchanter.disenchant(Records.fireSword).done)
+    }
+
+    @Test func anIncompleteSelectionIsRefusedAndACompleteOneEnchants() throws {
+        let trial = try session(carrying: [Records.ring, Gems.grandFilled])
+        trial.knowing([Records.healthBase])
+        let enchanter = trial.coordinator.enchanter
+        var selection = EnchanterSelection()
+        #expect(enchanter.refusal(of: selection) != nil)
+        #expect(!enchanter.enchant(selection).done)
+        selection.item = Records.ring
+        selection.bases = [trial.key(Records.healthBase)]
+        selection.gem = enchanter.enchanterChoices.gems.first
+        #expect(enchanter.refusal(of: selection) == nil)
+        #expect(enchanter.enchant(selection).done)
+    }
+
+    @Test func withoutAGameTheEnchanterListsNothing() {
+        let enchanter = MagicCoordinator(world: FakeMagicWorld()).enchanter
+        #expect(enchanter.enchanterChoices == EnchanterChoices())
+        #expect(!enchanter.disenchant(Records.fireSword).done)
+    }
 }

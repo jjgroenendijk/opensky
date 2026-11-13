@@ -51,6 +51,7 @@ struct CombatWorldFactsTests {
         #expect(adapter.level(of: Self.foe) == nil)
         #expect(!adapter.ownsPerk(editorID: "Juggernaut", on: .player))
         #expect(adapter.combatStyle(of: Self.foe) == nil)
+        #expect(adapter.actorName(of: Self.foe) == nil)
         #expect(adapter.playerAttacker == nil)
         #expect(adapter.playerShooter == nil)
         #expect(!adapter.isInInterior)

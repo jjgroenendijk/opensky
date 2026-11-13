@@ -4,6 +4,7 @@ import OpenSkyAIAdapters
 import OpenSkyAIPackages
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import Testing
@@ -42,6 +43,16 @@ struct FollowerCommandWorldTests {
         host.fakeFollowerCommands.advanceUseKeyResult = .tap(Self.follower)
         adapter.advanceUseKey(by: 1, isDown: false)
         #expect(host.fakeStreamer.residents.activateCalls.isEmpty)
+    }
+
+    @Test func theCrosshairStaysNormalUntilCommandModeRuns() {
+        let texts = GameSettingTexts<FollowerCommandText>.vanilla
+        #expect(adapter.crosshair(for: nil, texts: texts) == nil)
+        host.fakeFollowerCommands.isChoosing = true
+        host.fakeFollowerCommands.phaseValue = .choosing(follower: Self.follower)
+        #expect(adapter.crosshair(for: nil, texts: texts) != nil)
+        host.fakeFollowerCommands.isChoosing = false
+        #expect(adapter.crosshair(for: nil, texts: texts)?.prompt == nil)
     }
 
     @Test func withoutATargetAPressIsNotTaken() {

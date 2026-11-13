@@ -5,6 +5,7 @@
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPlayer
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -75,6 +76,8 @@ struct ActorAdapterPartsTests {
         let player = PlayerWorldAdapter(game: host, stage: nil)
         #expect(player.playerAppearanceOverride == nil)
         #expect(player.playerBehaviorProject == nil)
+        host.fakeMapWorld.settingTextsResult = GameSettingTexts<ActorResourcePath>.vanilla
+        #expect(player.firstPersonSkeletonPath.lowercased().hasSuffix("skeleton.nif"))
     }
 
     @Test func withoutARendererOrRecordsNoIdlePlacesAreKnown() {
@@ -86,5 +89,16 @@ struct ActorAdapterPartsTests {
     @Test func withoutResidentActorsNoActorMakesASound() {
         let events = ActorGraphGraphEventsAdapter(game: host, state: ActorGraphPartState())
         #expect(events.actorSoundSources().isEmpty)
+    }
+
+    @Test func thePlayerSpeedScaleReadsWornWeightAndTheDrawnWeapon() {
+        let host = ActorHost()
+        let store = GameSettingStore(plugins: [])
+        let speeds = MovementSpeedSettings.resolve(store: store)
+        let scale = PlayerSpeedScale.provider(settings: store, game: host)
+        #expect(scale() == speeds.speedScale(wornWeight: 0, weaponDrawn: false, speedMult: 100))
+        host.fakeInventory.armourWeights.playerWornArmourWeight = 50
+        host.fakeCombat.isWeaponDrawn = true
+        #expect(scale() == speeds.speedScale(wornWeight: 50, weaponDrawn: true, speedMult: 100))
     }
 }

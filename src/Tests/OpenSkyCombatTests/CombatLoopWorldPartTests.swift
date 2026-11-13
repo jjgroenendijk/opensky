@@ -66,6 +66,7 @@ struct CombatLoopWorldPartTests {
         world.perkMultipliers[Self.foe] = 0.5
         let part = Self.coordinator(world).loopWorld
         #expect(part.combatBlock(of: Self.foe) == nil)
+        #expect(!part.combatWearsShield(Self.foe))
         #expect(part.combatBlockMultiplier(of: Self.foe) == 1)
         world.values[Self.foe] = [:]
         #expect(part.combatBlockMultiplier(of: Self.foe) == 0.5)

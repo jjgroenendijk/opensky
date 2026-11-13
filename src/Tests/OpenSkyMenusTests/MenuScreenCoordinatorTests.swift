@@ -139,6 +139,9 @@ struct MenuScreenCoordinatorTests {
         menu.route(.button(.accept))
         #expect(world.actions == ["give 77495 true"])
         #expect(world.hudLines == ["The item is too heavy to carry."])
+        #expect(menu.auxiliary() == nil)
+        menu.requestClose()
+        #expect(!menu.isOpen)
     }
 
     @Test func aGiftFilterKeepsMatchingHonestItems() {

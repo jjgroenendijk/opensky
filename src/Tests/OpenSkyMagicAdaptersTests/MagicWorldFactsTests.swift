@@ -47,6 +47,7 @@ struct MagicWorldFactsTests {
         #expect(adapter.nearestActorValueHolder() == Self.holder)
         #expect(adapter.residentActorKeys() == [Self.actor])
         #expect(world.actorValueHolderCalls == [Self.actor])
+        #expect(adapter.displayName(of: .player) == nil)
     }
 
     @Test func itemsAndNoticesReachTheirPorts() {

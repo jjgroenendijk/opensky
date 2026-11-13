@@ -1,6 +1,8 @@
 // The movement speed rules: worn weight slows the gaits, more with a weapon drawn, and
 // `SpeedMult` scales the rest.
 
+import OpenSkyEngineTesting
+import OpenSkyFormatsTesting
 import OpenSkyPlayer
 import Testing
 
@@ -31,5 +33,16 @@ struct MovementSpeedSettingsTests {
         var settings = MovementSpeedSettings.vanilla
         settings.weightMax = 0
         #expect(settings.encumbranceFactor(weight: 50, weaponDrawn: true) == 1)
+    }
+
+    @Test func theInstallSettingsReplaceTheDefaults() throws {
+        let store = try GameSettingFixture.store([
+            "fMoveEncumEffect": .float(0.5),
+            "fActorDefaultTurningSpeed": .float(3)
+        ])
+        let settings = MovementSpeedSettings.resolve(store: store)
+        #expect(settings.encumbranceEffect == 0.5)
+        #expect(settings.defaultTurnRate == 3)
+        #expect(settings.weightMax == MovementSpeedSettings.vanilla.weightMax)
     }
 }

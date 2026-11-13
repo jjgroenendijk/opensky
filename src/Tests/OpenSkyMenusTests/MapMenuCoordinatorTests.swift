@@ -153,6 +153,7 @@ struct MapMenuCoordinatorTests {
         #expect(world.sites[0].state.canTravelTo)
         #expect(!world.sites[1].state.isVisible)
         #expect(world.localMapFog.exploredCount(.exterior(CellCoordinate(x: 0, y: 0))) > 0)
+        #expect(!world.compassLocations.isEmpty)
         menu.tick()
         #expect(world.notices.count == 1, "no repeat before the player moves")
     }
