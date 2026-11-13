@@ -105,6 +105,12 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         /// Recursion stopped at the depth cap, which means the graph is deeper
         /// than the cap or contains a generator cycle.
         case depthCapReached
+
+        /// The game handles the data the same way, so the count shows odd data, not a
+        /// shortcut. See docs/engine/behavior-state-machines.md.
+        public var matchesGame: Bool {
+            self == .transitionConditionUnparsed || self == .transitionConditionUnresolved
+        }
     }
 
     // MARK: - Recording

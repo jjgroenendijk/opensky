@@ -336,10 +336,13 @@ extension GapsGatherer {
             let bindings = tally.rankedUnappliedBindings.map { entry in
                 (name: "binding not applied: \(entry.name)", count: entry.count)
             }
-            let clips = tally.rankedUnresolvedClips.map { entry in
-                (name: "clip not found: \(entry.name)", count: entry.count)
+            let (clips, absent) = splitClips(tally.rankedUnresolvedClips)
+            let matching = tally.rankedFeatureGaps.filter {
+                BehaviorTally.Gap(rawValue: $0.name)?.matchesGame == true
             }
-            let features = tally.rankedFeatureGaps + bindings + clips
+            let features = tally.rankedFeatureGaps.filter {
+                BehaviorTally.Gap(rawValue: $0.name)?.matchesGame != true
+            } + bindings + clips
             let unreached = sweep.unreachedClasses.map { entry in
                 (name: "not reached: \(entry.name)", count: entry.count)
             }
@@ -362,8 +365,27 @@ extension GapsGatherer {
                     left: GapsGatherer.ranked(features),
                     usesUnit: "hits",
                     notes: tally.rankedGapTexts.map { "\($0.count)x \($0.name)" }
+                        + absent + matching.map { "\($0.count)x \($0.name), as the game does" }
                 )
             ]
+        }
+
+        /// Clips some archive holds a file of that name for, as rows, apart from clips
+        /// no archive holds. The game cannot play those either, so they are a note,
+        /// not a gap. Loose files are not listed, so a mod's loose clip stays a row.
+        private func splitClips(
+            _ clips: [(name: String, count: Int)]
+        ) -> (rows: [(name: String, count: Int)], absent: [String]) {
+            let files = Set(gatherer.fileSystem.archiveEntries().map { Self.fileName($0.path) })
+            let found = clips.filter { files.contains(Self.fileName($0.name)) }
+            let absent = clips.count - found.count
+            let rows = found.map { (name: "clip not found: \($0.name)", count: $0.count) }
+            guard absent > 0 else { return (rows, []) }
+            return (rows, ["\(absent) clip names point at files no archive holds"])
+        }
+
+        private static func fileName(_ path: String) -> String {
+            String(path.lowercased().split(whereSeparator: { $0 == "\\" || $0 == "/" }).last ?? "")
         }
     }
 }
