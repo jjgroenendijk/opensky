@@ -223,6 +223,7 @@ extension GapsGatherer {
             _ = GameSettingTexts<MessageBoxText>.resolve(store: store)
             _ = GameSettingTexts<PlayerMarkerText>.resolve(store: store)
             _ = GameSettingTexts<HUDItemStatText>.resolve(store: store)
+            _ = GameSettingTexts<FollowerCommandText>.resolve(store: store)
             _ = GameSettingTexts<CraftingCategoryText>.resolve(store: store)
             _ = GameSettingTexts<CraftingMenuText>.resolve(store: store)
         }

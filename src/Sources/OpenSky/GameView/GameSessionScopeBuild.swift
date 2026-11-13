@@ -14,6 +14,7 @@ import OpenSkyCombatAdapters
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyInventoryAdapters
 import OpenSkyMagicAdapters
 import OpenSkyMenuAdapters
@@ -179,6 +180,15 @@ struct GameSessionScopeBuild {
             scope.updateQuestNotices()
             scope.hud.updatePlayerModes(hudModeInputs(gameSession))
             scope.hud.setActivateLocked(scope.playerControlLocks.disabled.contains(.activate))
+            if
+                let crosshair = scope.followerCommandWorld.crosshair(
+                    for: scope.inventoryWorld.perks.labelled(scope.streamer.interactionTarget),
+                    texts: scope.mapWorld.settingTexts()
+                )
+            {
+                scope.hud.updateTarget(crosshair.target)
+                scope.hud.setIdlePrompt(crosshair.prompt)
+            }
             scope.hud.updateFrame()
         }
     }
@@ -225,11 +235,8 @@ struct GameSessionScopeBuild {
         scope.streamer.events.onWorldspaceChanged
             .register(.weather) { [weak gameSession] editorID in
                 gameSession?.weather?.setWorldspace(editorID: editorID)
-                guard let gameSession, let store = gameSession.weather?.store else { return }
-                let outlines = store.worldspaceByEditorID[editorID]
-                    .map { store.borderOutlines(worldspace: $0) } ?? []
-                gameSession.motion.borderCheck = outlines.isEmpty ? nil : { from, to in
-                    BorderRegionRule.allows(from: from, to: to, outlines: outlines)
+                if let gameSession {
+                    Self.holdAtBorders(of: editorID, in: gameSession)
                 }
             }
         gameSession.motion.onBorderReached = { [weak scope] in
@@ -319,4 +326,20 @@ struct GameSessionScopeBuild {
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellStream"
     )
+}
+
+extension GameSessionScopeBuild {
+    /// The worldspace's border regions hold the player inside them.
+    private static func holdAtBorders(of editorID: String, in gameSession: GameSession) {
+        guard let store = gameSession.weather?.store else { return }
+        let outlines: [[SIMD2<Float>]] = store.worldspaceByEditorID[editorID]
+            .map { store.borderOutlines(worldspace: $0) } ?? []
+        guard !outlines.isEmpty else {
+            gameSession.motion.borderCheck = nil
+            return
+        }
+        gameSession.motion.borderCheck = { @Sendable from, to in
+            BorderRegionRule.allows(from: from, to: to, outlines: outlines)
+        }
+    }
 }
