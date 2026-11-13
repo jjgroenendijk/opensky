@@ -9,6 +9,7 @@
 import OpenSkyCombatFixtures
 @testable import OpenSkyCombatInterface
 @testable import OpenSkyFormatsESM
+import OpenSkyGameData
 import simd
 import Testing
 
@@ -36,6 +37,17 @@ struct CombatLoopRuntimeTests {
         #expect(runtime.state.isPlayerInCombat)
         #expect(runtime.state.target == Fixture.opponent)
         #expect(runtime.activity(of: Fixture.opponent) != .notFighting)
+    }
+
+    @Test func anAllyOutOfCombatTakesABlowWithoutFightingBack() {
+        let (runtime, world) = Fixture.session()
+        world.reactions[Fixture.opponent] = .ally
+        runtime.notePlayerHits([Fixture.opponent])
+        #expect(world.hostility[Fixture.opponent] != .hostile)
+        #expect(runtime.friendlyFire.count(on: Fixture.opponent) == 1)
+        world.reactions[Fixture.opponent] = .friend
+        runtime.notePlayerHits([Fixture.opponent])
+        #expect(world.hostility[Fixture.opponent] == .hostile)
     }
 
     /// The player has no machine, so it reads the fight its opponents are in.

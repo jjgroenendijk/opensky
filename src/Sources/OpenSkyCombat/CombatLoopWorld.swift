@@ -7,6 +7,7 @@ public import OpenSkyActorsInterface
 public import OpenSkyBehavior
 public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
+public import OpenSkyGameData
 public import OpenSkyMagicInterface
 import OpenSkyPerceptionInterface
 public import OpenSkyPhysics
@@ -213,6 +214,8 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// Starts a paired kill move by `actor` on `target` in place of its swing.
     func startCombatKillMove(by actor: ReferenceKey, on target: ReferenceKey, damage: Float)
         -> Bool
+    /// What `key` makes of the player through factions and relationships.
+    func combatReaction(toPlayerOf key: ReferenceKey) -> ActorReaction?
 }
 
 extension CombatLoopWorld {

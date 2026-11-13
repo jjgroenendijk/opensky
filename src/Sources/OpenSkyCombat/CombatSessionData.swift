@@ -19,6 +19,7 @@ public struct CombatSessionData {
     public var powerAttacks = PowerAttackSettings.vanilla
     public var skillUses = MeleeSkillUseSettings.vanilla
     public var staggers = StaggerSettings.vanilla
+    public var friendlyFire = FriendlyFireSettings.vanilla
     public var combatAI = CombatAISettings.vanilla
     public var arrows = ArrowSettings.vanilla
     /// The cone look ahead, read from the magic settings.

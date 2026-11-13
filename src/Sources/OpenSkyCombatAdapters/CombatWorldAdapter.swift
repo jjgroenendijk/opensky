@@ -123,6 +123,7 @@ public struct CombatSessionBuilder {
         data.powerAttacks = PowerAttackSettings.resolve(store: settings)
         data.skillUses = MeleeSkillUseSettings.resolve(store: settings)
         data.staggers = StaggerSettings.resolve(store: settings)
+        data.friendlyFire = FriendlyFireSettings.resolve(store: settings)
         data.combatAI = CombatAISettings.resolve(store: settings)
         data.arrows = ArrowSettings.resolve(store: settings, text: text)
         data.falls = FallDamageSettings.resolve(store: settings)

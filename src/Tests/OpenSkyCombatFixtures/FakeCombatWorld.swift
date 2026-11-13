@@ -7,6 +7,7 @@
 @testable public import OpenSkyCombat
 @testable public import OpenSkyCombatInterface
 @testable public import OpenSkyFormatsESM
+public import OpenSkyGameData
 @testable public import OpenSkyMagicInterface
 @testable public import OpenSkyProgressionInterface
 import simd
@@ -16,6 +17,7 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public var player = MeleeAttacker(key: .player, feet: SIMD3<Float>(), facing: 0)
     public var actors: [CombatActorObservation] = []
     public var hostility: [ReferenceKey: ActorHostility] = [:]
+    public var reactions: [ReferenceKey: ActorReaction] = [:]
     public var blocks: [ReferenceKey: MeleeBlockKind] = [:]
     /// Actors with no shield; every other actor wears one.
     public var shieldless: Set<ReferenceKey> = []
@@ -112,6 +114,10 @@ public final class FakeCombatWorld: CombatLoopWorld {
 
     public func combatActors() -> [CombatActorObservation] {
         actors
+    }
+
+    public func combatReaction(toPlayerOf key: ReferenceKey) -> ActorReaction? {
+        reactions[key]
     }
 
     public func combatHostility(of key: ReferenceKey) -> ActorHostility {
