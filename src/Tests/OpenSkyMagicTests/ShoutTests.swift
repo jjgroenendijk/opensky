@@ -161,4 +161,29 @@ struct ShoutTests {
         )))
         #expect(fresh.shoutReadout.unlockNextWord(of: trial.shout) == .refused(.noDragonSoul))
     }
+
+    @Test func theMagicMenuListsALearnedShoutAndReadiesIt() throws {
+        let trial = try session()
+        let menu = trial.coordinator.magicMenu
+        #expect(menu.magicMenuShouts.map(\.isReadied) == [true])
+        #expect(menu.readyShout(at: 0, texts: .vanilla).hasPrefix("Equipped"))
+        #expect(menu.readyShout(at: 9, texts: .vanilla) == "No shout selected.")
+        #expect(menu.shoutUnlockStep(at: 9, texts: .vanilla) == nil)
+        #expect(menu.unlockShout(at: 9) == "No shout selected.")
+    }
+
+    @Test func aKnownWordWithoutASoulIsRefusedInTheMenu() throws {
+        let file = try ShoutPluginFixture.plugin()
+        var data = MagicSessionData()
+        data.shouts = ShoutStore(plugins: [(Self.plugin, file)])
+        let world = FakeMagicWorld()
+        let coordinator = MagicCoordinator(world: world, data: data)
+        world.changeShoutKnowledge(.teachWord(.plugin(
+            name: Self.plugin.lowercased(), objectID: ShoutPluginFixture.Form.word1
+        )))
+        let menu = coordinator.magicMenu
+        let texts = GameSettingTexts<ShoutMenuText>.vanilla
+        #expect(menu.shoutUnlockStep(at: 0, texts: texts) == .refuse(texts[.failSpendSoul]))
+        #expect(menu.unlockShout(at: 0).contains("noDragonSoul"))
+    }
 }

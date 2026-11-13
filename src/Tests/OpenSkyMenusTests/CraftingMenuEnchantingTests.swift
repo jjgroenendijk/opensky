@@ -35,6 +35,12 @@ struct CraftingMenuEnchantingTests {
             #require(world.enchanterChoices),
             texts: world.enchantingTexts
         )
+        #expect(enchanting.isDestroyRow(tabs[0].rows[0]))
+        #expect(!enchanting.isDestroyRow(tabs[1].rows[0]))
+        enchanting.rename("Blade")
+        #expect(enchanting.selection.name == "Blade")
+        enchanting.rename("")
+        #expect(enchanting.selection.name == nil)
         _ = enchanting.choose(tabs[0].rows[0], alternate: false, world: world) {}
         #expect(world.questions.map(\.text) == [EnchantingMenuText.confirmDisenchant.fallback])
         world.questions[0].answer(true)
@@ -76,13 +82,15 @@ struct CraftingMenuEnchantingTests {
         #expect(world.hudLines == [EnchantingMenuText.alreadyKnown.fallback])
     }
 
-    @Test func leavingWithAChoiceAsksFirst() {
+    @Test func leavingWithAChoiceAsksFirst() throws {
         let world = world()
         let menu = CraftingMenuCoordinator(menuMode: MenuModeController(), world: world)
         menu.open()
+        #expect(menu.buttons.labels.count == 4)
         menu.route(.button(.cancel))
         #expect(!menu.isOpen)
         menu.open()
+        try menu.publishMovie(MenuMovieCallLog.emptyRuntime())
         menu.route(.move(.right))
         menu.route(.button(.accept))
         menu.route(.button(.cancel))

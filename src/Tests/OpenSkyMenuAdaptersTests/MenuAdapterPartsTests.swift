@@ -5,6 +5,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 @testable import OpenSkyMenuAdapters
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkySessionTesting
 import Testing
 
@@ -21,6 +22,17 @@ struct MenuAdapterPartsTests {
         #expect(races.racePresets(race: FormID(0x13746), isFemale: true).isEmpty)
         #expect(races.identityRecords == nil)
         #expect(races.recordIdentity == nil)
+        #expect(races.titleSettings == .vanilla)
+        #expect(MenuWorldAdapter(game: host, now: { Date() }).titleSettings == .vanilla)
+    }
+
+    @Test func theActivateChoiceQuestionAndTheCompassGoThroughTheirPorts() {
+        host.fakeMapWorld.settingTextsResult = GameSettingTexts<ActivationChoiceText>.vanilla
+        let perks = PerkActivationWorldAdapter(game: host, stage: nil)
+        #expect(perks.activationChoiceMessage == ActivationChoiceText.message.fallback)
+        let place = CompassLocation(position: .zero, isKnown: true, opacityPercent: 100)
+        MapWorldAdapter(game: host).showCompassLocations([place])
+        #expect(host.fakeHud.updateCompassLocationsCalls == [[place]])
     }
 
     @Test func aPluginTextWithoutStringsHasNoText() {

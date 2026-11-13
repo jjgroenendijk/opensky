@@ -16,4 +16,10 @@ struct MenuGapSweepTests {
             #expect(MenuGapSweep.isMenuMovie(path))
         }
     }
+
+    @Test func aNewSweepCountsNoUnsetReads() {
+        let sweep = MenuGapSweep()
+        #expect(sweep.unsetReads == 0)
+        #expect(sweep.unsetNameCount == 0)
+    }
 }

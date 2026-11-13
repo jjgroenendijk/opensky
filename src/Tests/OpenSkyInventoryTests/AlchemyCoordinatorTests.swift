@@ -67,6 +67,7 @@ struct AlchemyCoordinatorTests {
         #expect(!coordinator.isCrafting)
         coordinator.crafting = try CraftingSessionTests.harness().session
         #expect(coordinator.isCrafting)
+        #expect(!coordinator.craftingReadout.craftingSnapshot.recipes.isEmpty)
         coordinator.craftingBench.closeCraftingSession()
         #expect(!coordinator.isCrafting)
     }
@@ -175,6 +176,9 @@ struct AlchemyCoordinatorTests {
             ingredient: "Wheat", effects: ["Restore Health"]
         ))
         #expect(lab.alchemyLab.learnEatenIngredient(Fixture.wheat).text.contains("no new effect"))
+        let eaten = AlchemyActionOutcome.learned(ingredient: "Wheat", effects: ["Restore Health"])
+        #expect(lab.alchemyLab.eatingNotices(of: eaten).count == 1)
+        #expect(lab.alchemyLab.eatingNotices(of: .idle).isEmpty)
         harness.world.perkFactors[.modInitialIngredientEffectsLearned] = 2
         lab.alchemyLab.learnEatenIngredient(Fixture.cap)
         #expect(lab.alchemyLab.ingredientKnowledge.knownIndices(of: Fixture.cap) == [0, 1])
@@ -198,8 +202,11 @@ struct AlchemyCoordinatorTests {
         let lab = harness.coordinator
         try Self.carry([Fixture.poison], harness, count: 2)
         #expect(lab.consumables.applyPoison(Fixture.poison) == .noWeapon)
+        #expect(lab.consumables.poisonQuestion(Fixture.poison, texts: .vanilla) == nil)
         try Self.carry([InventoryBaselineFixture.sword], harness)
         _ = try lab.equipment?.equip(InventoryBaselineFixture.sword, on: .player)
+        let question = lab.consumables.poisonQuestion(Fixture.poison, texts: .vanilla)
+        #expect(question?.hasSuffix("?") == true)
         harness.world.perkFactors[.modPoisonDoseCount] = 2
         let applied = lab.consumables.applyPoison(Fixture.poison)
         #expect(applied.text.contains("Damage Health Poison"))

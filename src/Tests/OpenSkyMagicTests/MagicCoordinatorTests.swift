@@ -132,6 +132,15 @@ struct MagicCoordinatorTests {
         #expect(MagicCoordinator(world: FakeMagicWorld()).magicMenu.magicMenuSpells.isEmpty)
     }
 
+    @Test func theMagicMenuNamesItsTabsAndTheActiveEffects() throws {
+        let menu = try Self.effectsWired(FakeMagicWorld()).magicMenu
+        #expect(menu.magicMenuCategoryOrder.last == "POWERS")
+        #expect(menu.magicMenuActiveEffectsTitle == "ACTIVE EFFECTS")
+        #expect(menu.magicMenuActiveEffects.isEmpty)
+        #expect(MagicCoordinator(world: FakeMagicWorld()).magicMenu.magicMenuActiveEffects.isEmpty)
+        #expect(FakeMagicWorld().displayName(of: .player) == nil)
+    }
+
     @Test func selectionCyclesOverTheKnownSpells() throws {
         let coordinator = try Self.castingWired(FakeMagicWorld())
         #expect(coordinator.controlPanels.selectNextKnownSpell()
