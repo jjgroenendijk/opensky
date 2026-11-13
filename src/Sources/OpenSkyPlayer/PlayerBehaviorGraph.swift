@@ -34,9 +34,8 @@ nonisolated public struct PlayerBehaviorGraph {
     /// Its own character file: 37 properties, where the third-person one has 39.
     public static let firstPersonCharacterPath =
         "meshes\\actors\\character\\_1stperson\\characters\\firstperson.hkx"
-    /// The NIF rig the first-person arm meshes skin against. RACE names only
-    /// the third-person skeleton (ANAM), so this one is a constant here — the
-    /// install ships exactly one and no record points at it.
+    /// The NIF rig the first-person arm meshes skin against, when no
+    /// `sFirstPersonSkeleton` names one. RACE names only the third-person skeleton.
     public static let firstPersonRigPath = "meshes\\actors\\character\\_1stperson\\skeleton.nif"
 
     let instance: BehaviorGraphInstance

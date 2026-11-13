@@ -22,6 +22,7 @@ final class FakePlayerWorld: PlayerWorld {
     var areFirstPersonArmsVisible = false
     var firstPersonFOVYRadians: Float? = 1
     var firstPersonArmsEnabled: Bool? = true
+    var firstPersonSkeletonPath = PlayerBehaviorGraph.firstPersonRigPath
 
     func showPlayerBody(_ body: PlayerBody) throws {}
 
