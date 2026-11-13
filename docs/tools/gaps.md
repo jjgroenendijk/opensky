@@ -106,7 +106,11 @@ The node class section lists "not reached" classes as left, with a `not reached:
 they lower the share done. Raising events in a row does not reach every state, so "not
 reached" is not "broken". A
 folder with no skeleton is skipped and named in the notes. The "features ignored" section
-lists the `BehaviorTally` feature gaps, bindings not applied, and clips not found.
+lists the `BehaviorTally` feature gaps, bindings not applied, and clips not found. A clip
+whose file name no archive holds is a note, not a row: the game cannot play it either. Some
+vanilla kill moves and scene walks name such clips. A condition that does not parse, or names
+a variable the graph lacks, is a note too, because the game blocks the transition the same way
+([behaviour state machines](/engine/behavior-state-machines.md)).
 
 ### Menus and the AS2 runtime
 
