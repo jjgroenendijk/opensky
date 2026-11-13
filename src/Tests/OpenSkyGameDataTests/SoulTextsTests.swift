@@ -20,5 +20,6 @@ struct SoulTextsTests {
         #expect(texts.contents(.empty) == "Empty")
         #expect(texts.contents(nil) == "Empty")
         #expect(texts.name(of: .grand) == "Grand")
+        #expect(texts.name(of: .empty) == "None")
     }
 }

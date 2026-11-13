@@ -1,4 +1,4 @@
-// The soul sizes a soul gem names, from the `sSoulLevelName*` string settings, and
+// The soul sizes a soul gem names, from the `sSoulLevelName*` string settings and `sNone`, and
 // its "Filled with %s Soul" line from `sSoulLevel`. See docs/formats/item-records.md.
 
 public import OpenSkyFormatsESM
@@ -23,8 +23,9 @@ nonisolated public struct SoulTexts: Equatable, Sendable {
         return SettingTextFormat.fill(filled, [name(of: soul)])
     }
 
+    /// The no-soul size reads `sNone`.
     static let suffixes: [UInt8: String] = [
-        1: "Petty", 2: "Lesser", 3: "Common", 4: "Greater", 5: "Grand"
+        0: "None", 1: "Petty", 2: "Lesser", 3: "Common", 4: "Greater", 5: "Grand"
     ]
 
     public static func resolve(
@@ -32,7 +33,8 @@ nonisolated public struct SoulTexts: Equatable, Sendable {
     ) -> Self {
         var texts = vanilla
         for (level, suffix) in suffixes {
-            if let name = store.text("sSoulLevelName\(suffix)").flatMap({ text($0) }) {
+            let setting = level == 0 ? "sNone" : "sSoulLevelName\(suffix)"
+            if let name = store.text(setting).flatMap({ text($0) }) {
                 texts.names[level] = name
             }
         }
