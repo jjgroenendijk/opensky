@@ -51,12 +51,15 @@ nonisolated public enum GameSettingUnusedReason: String, CaseIterable, Sendable 
     /// The jump height while swimming. A swimmer cannot jump: the jump key raises it
     /// toward the surface instead.
     case swimJump
-    /// Ingredient use counts. The install adds `iIngredientAlchemyUses` (0) uses per brew, so
-    /// the count never reaches the threshold that teaches an effect, and its default skill
-    /// use is never given.
+    /// Ingredient use counts. The install adds `iIngredientAlchemyUses` (0) uses per brew and
+    /// `iIngredientWortcraftUses` (0) per bite, so the count never reaches the threshold that
+    /// teaches an effect, and its default skill use is never given.
     case ingredientUses
     /// Settings the game binary holds but no code path reads, as OpenSky observed.
     case neverRead
+    /// Impact particle models the game loads once at start and never places, as OpenSky
+    /// observed. Nothing on screen comes from them.
+    case preloadOnly
 }
 
 nonisolated public enum GameSettingsUnused: Sendable {
@@ -81,11 +84,12 @@ nonisolated public enum GameSettingsUnused: Sendable {
         .swimJump: ["fJumpSwimmingMult"],
         .ingredientUses: [
             "fDefaultIngredientSkillUseModifier", "iIngredientAlchemyUses",
-            "iIngredientUseEffectThreshold"
+            "iIngredientUseEffectThreshold", "iIngredientWortcraftUses"
         ],
         .neverRead: [
             "fCombatItemRestoreTimer", "fCombatThreatProximityExplosionAvoidTime",
-            "fConcussionTimer", "fGuardPackageAttackRadiusMult", "iMessIntactLimbDismemberChance",
+            "fConcussionTimer", "fGuardPackageAttackRadiusMult", "fImpactShaderMaxDistance",
+            "fInvisibilityMaxRefraction", "iMessIntactLimbDismemberChance",
             "sGenericCraftKeywordName09", "sGenericCraftKeywordName10"
         ] + neverReadTextSettings,
         .wikiUnused: wikiUnusedSettings,
@@ -109,7 +113,8 @@ nonisolated public enum GameSettingsUnused: Sendable {
             "sIgnoreText",
             "sRetryText"
         ],
-        .favourPoints: ["iFavorPointsRestore"]
+        .favourPoints: ["iFavorPointsRestore"],
+        .preloadOnly: ["sImpactParticleMetalDefault", "sImpactParticleWoodDefault"]
     ]
 }
 
