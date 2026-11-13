@@ -87,7 +87,7 @@ nonisolated public enum GameSettingsUnused: Sendable {
             "fCombatItemRestoreTimer", "fCombatThreatProximityExplosionAvoidTime",
             "fConcussionTimer", "fGuardPackageAttackRadiusMult", "iMessIntactLimbDismemberChance",
             "sGenericCraftKeywordName09", "sGenericCraftKeywordName10"
-        ],
+        ] + neverReadTextSettings,
         .wikiUnused: wikiUnusedSettings,
         .creations: creationsSettings,
         .consoles: consolesSettings,
