@@ -33,6 +33,13 @@ nonisolated public struct SaveTexts: Equatable, Sendable {
     public var overwriteQuestion = "Save over %s?"
     public var deleteQuestion = "Delete %s?"
     public var level = "Level"
+    /// The save description's words: `<sLevelAbbrev> <level>: <location>` and
+    /// `<sPlayTime>: <time>`.
+    public var levelAbbrev = "Level"
+    public var playTime = "Play Time"
+    public var defaultPlayerName = "Prisoner"
+    public var autosaveAbbrev = "Autosave"
+    public var quicksaveAbbrev = "Quicksave"
     public var unknownLocation = "Unknown"
     /// The name of an exterior cell without one of its own.
     public var wilderness = "Exterior"
@@ -77,6 +84,11 @@ nonisolated public struct SaveTexts: Equatable, Sendable {
         store.read("sMenuDisplayLevelString", into: &texts, \.level, text: text)
         store.read("sMenuDisplayUnknownLocationString", into: &texts, \.unknownLocation, text: text)
         store.read("sDefaultCellName", into: &texts, \.wilderness, text: text)
+        store.read("sLevelAbbrev", into: &texts, \.levelAbbrev, text: text)
+        store.read("sPlayTime", into: &texts, \.playTime, text: text)
+        store.read("sDefaultPlayerName", into: &texts, \.defaultPlayerName, text: text)
+        store.read("sAutosaveAbbrev", into: &texts, \.autosaveAbbrev, text: text)
+        store.read("sQuicksaveAbbrev", into: &texts, \.quicksaveAbbrev, text: text)
         let failures: [(String, WritableKeyPath<Self, String>)] = [
             ("sCantSaveNow", \.cannotSaveNow), ("sCantQuickSave", \.cannotQuickSave),
             ("sCantQuickLoad", \.cannotQuickLoad),
@@ -94,6 +106,28 @@ nonisolated public struct SaveTexts: Equatable, Sendable {
             store.read(editorID, into: &texts, keyPath, text: text)
         }
         return texts
+    }
+
+    /// A save row's title: the slot, with an autosave or quicksave slot in the game's
+    /// words, then the character, or `sDefaultPlayerName` when it has no name.
+    public func title(slot: String, characterName: String) -> String {
+        let name = characterName.isEmpty ? defaultPlayerName : characterName
+        return "\(slotLabel(slot)) - \(name)"
+    }
+
+    /// `Autosave2` reads as `<sAutosaveAbbrev> 2`, and `Quicksave` as `sQuicksaveAbbrev`.
+    public func slotLabel(_ slot: String) -> String {
+        if slot == "Quicksave" {
+            return quicksaveAbbrev
+        }
+        guard slot.hasPrefix("Autosave") else { return slot }
+        let number = slot.dropFirst("Autosave".count)
+        return number.isEmpty ? autosaveAbbrev : "\(autosaveAbbrev) \(number)"
+    }
+
+    /// The level, place, and play time, as the game's save description gives them.
+    public func detail(level: Int, location: String, playTime time: String) -> String {
+        "\(levelAbbrev) \(level): \(location), \(playTime): \(time)"
     }
 
     /// The message for `failure`. A corrupt save names where the player goes next: back to

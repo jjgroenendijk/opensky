@@ -332,10 +332,14 @@ struct SaveSnapshot {
         let savedAt = listing.summary.map {
             Date(timeIntervalSince1970: TimeInterval($0.metadata.creationTimestamp))
         } ?? listing.modified
-        let title = summary.map { "\(listing.slot) - \($0.characterName)" } ?? listing.slot
+        let title = summary.map {
+            texts.title(slot: listing.slot, characterName: $0.characterName)
+        } ?? listing.slot
         let detail = summary.map {
-            let playTime = SavePlayTime.text(seconds: $0.playSeconds)
-            return "\(texts.level) \($0.level), \($0.locationName), \(playTime)"
+            texts.detail(
+                level: Int($0.level), location: $0.locationName,
+                playTime: SavePlayTime.text(seconds: $0.playSeconds)
+            )
         } ?? listing.error ?? ""
         let thumbnail = listing.summary?.thumbnail
         return SaveSlotRow(
