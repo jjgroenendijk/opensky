@@ -28,6 +28,8 @@ Two record facts decide what shows:
 - An objective shows only while one of its three display flags is set. `SetObjectiveDisplayed`
   controls exactly that. If several flags are set, failed wins over completed, and completed
   wins over displayed.
+- An objective whose `FNAM` has the ORed-with-previous flag is an alternative to the one before
+  it. Its text starts with `sOr`, "OR", on the page and in the HUD notice.
 
 A quest can be on both lists. `CompleteQuest()` marks a quest complete but does not stop it. A
 quest a Fail Quest stage item failed leaves the active list and is listed with the completed ones,
