@@ -71,13 +71,11 @@ extension CraftingSession {
             inventory.store.set(improved, for: player.key, in: player.cell)
         }
         let value = Float(inventory.baselines.items.definition(target.item)?.value ?? 0)
-        let gain = Tempering.valueMultiplier(level: target.maximum)
-            - Tempering.valueMultiplier(level: from)
         return CraftOutcome(
             consumed: consumed,
             created: InventoryStack(item: target.item, count: 1),
             experience: reportSkillUse(amount: skillUse.tempered(
-                valueGain: value * gain, levels: Int(target.maximum - from)
+                value: value, levels: Int(target.maximum - from)
             )),
             improved: TemperStep(from: from, to: target.maximum)
         )

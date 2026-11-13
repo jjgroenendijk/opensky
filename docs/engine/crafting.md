@@ -115,12 +115,11 @@ plugin's.
 
 Differences from the game:
 
-- The skill use amount is `3.8 * sqrt(value gain) * sqrt(levels gained)`, times
-  `fTemperingSkillUseMult`. The value gain is the base value times the rise in the UESP
-  value multiplier (`1 + level / 6`). Players measured this formula (UESP "Skyrim
-  talk:Smithing"). It is uncertain: the settings `fTemperingSkillUseItemValConst`,
-  `...ItemValMult`, and `...ItemValExp` (25, 8, 0.6) do not fit it, and no source says how the
-  game uses them, so OpenSky does not read them.
+- The skill use amount is `condition gain x fTemperingSkillUseMult x (max(1, value) ^
+  fTemperingSkillUseItemValExp x fTemperingSkillUseItemValMult +
+  fTemperingSkillUseItemValConst)`. The condition gain is the levels gained times
+  `fHealthDataValue1 - 1`, the condition step of one quality level (0.1). For example, one
+  level on a sword of value 100 gives 0.1 x (100^0.6 x 8 + 25) = 15.2.
 - The matching material perk doubles the skill above the offset. It is read through the
   Mod Tempering Health entry point, as the effective skill row above shows.
 

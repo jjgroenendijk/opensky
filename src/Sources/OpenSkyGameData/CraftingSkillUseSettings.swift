@@ -11,10 +11,15 @@ nonisolated public struct CraftingSkillUseSettings: Equatable, Sendable {
     public var constructExponent: Float = 0.65
     /// `fTemperingSkillUseMult`: scales the improving formula.
     public var temperMult: Float = 1
+    /// `fTemperingSkillUseItemValConst`, `...Mult`, and `...Exp`: the item value term.
+    public var temperValueConst: Float = 25
+    public var temperValueMult: Float = 8
+    public var temperValueExponent: Float = 0.6
+    /// `fHealthDataValue1`: an item's condition at the first quality level. Each level
+    /// adds the same step over the plain condition 1.
+    public var firstLevelCondition: Float = 1.1
 
     public static let vanilla = Self()
-    /// The factor of the improving formula players measured (UESP "Skyrim talk:Smithing").
-    public static let temperFactor: Float = 3.8
 
     public init() {}
 
@@ -24,9 +29,12 @@ nonisolated public struct CraftingSkillUseSettings: Equatable, Sendable {
         return each * Float(max(0, count))
     }
 
-    /// Experience for raising an item's value by `valueGain` over `levels` quality levels.
-    public func tempered(valueGain: Float, levels: Int) -> Float {
-        temperMult * Self.temperFactor * sqrt(max(0, valueGain)) * sqrt(Float(max(0, levels)))
+    /// Experience for raising an item of base value `value` by `levels` quality levels:
+    /// condition gain x mult x (max(1, value)^exp x value mult + const).
+    public func tempered(value: Float, levels: Int) -> Float {
+        let conditionGain = Float(max(0, levels)) * (firstLevelCondition - 1)
+        let valueTerm = pow(max(1, value), temperValueExponent) * temperValueMult
+        return conditionGain * temperMult * (valueTerm + temperValueConst)
     }
 
     public static func resolve(store: GameSettingStore) -> Self {
@@ -35,6 +43,10 @@ nonisolated public struct CraftingSkillUseSettings: Equatable, Sendable {
         store.read("fConstructibleSkillUseMult", into: &settings, \.constructMult)
         store.read("fConstructibleSkilluseExp", into: &settings, \.constructExponent)
         store.read("fTemperingSkillUseMult", into: &settings, \.temperMult)
+        store.read("fTemperingSkillUseItemValConst", into: &settings, \.temperValueConst)
+        store.read("fTemperingSkillUseItemValMult", into: &settings, \.temperValueMult)
+        store.read("fTemperingSkillUseItemValExp", into: &settings, \.temperValueExponent)
+        store.read("fHealthDataValue1", into: &settings, \.firstLevelCondition)
         return settings
     }
 }
