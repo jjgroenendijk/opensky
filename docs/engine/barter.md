@@ -33,6 +33,9 @@ follower's own items:
 - A gift past its `CarryWeight` actor value shows its name and `sTeammateOverencumbered`
   ("can't carry any more.").
 
+The gift menu has the same weight limit, as observed in the game: a gift the receiver cannot
+carry shows `sItemTooHeavy` ("The item is too heavy to carry.") and stays with the player.
+
 The trade list hides the outfit's copies, as the game does; an extra copy shows.
 `sTeammateCantGiveOutfit` ("Your teammate already owns that armor.") is not used, because no
 source says when it shows.

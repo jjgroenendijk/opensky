@@ -155,4 +155,8 @@ extension MenuScreensWorldAdapter {
     public func give(_ item: FormID, actor: ReferenceKey, giving: Bool) -> String {
         giftLists.give(item, actor: actor, giving: giving)
     }
+
+    public func giftRefusal(_ item: FormID, actor: ReferenceKey, giving: Bool) -> String? {
+        giftLists.giftRefusal(item, actor: actor, giving: giving)
+    }
 }

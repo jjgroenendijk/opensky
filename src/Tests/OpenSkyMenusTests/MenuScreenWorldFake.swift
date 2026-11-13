@@ -36,6 +36,7 @@ final class FakeMenuScreenWorld: MenuScreenWorld, MenuInputConsumer {
 
     var craftingStationName: String?
     var craftingRecipes: [CraftingMenuRecipe] = []
+    var giftRefusalText: String?
     var craftingStation: CraftingStationInfo?
     var craftingButtonTexts = GameSettingTexts<CraftingButtonText>.vanilla
     var alchemyIngredients: [CraftingMenuIngredient]?
@@ -116,6 +117,10 @@ extension FakeMenuScreenWorld: MagicMenuWorld, GiftMenuWorld, CraftingMenuWorld 
     func give(_ item: FormID, actor: ReferenceKey, giving: Bool) -> String {
         actions.append("give \(item.rawValue) \(giving)")
         return "Gave"
+    }
+
+    func giftRefusal(_: FormID, actor _: ReferenceKey, giving _: Bool) -> String? {
+        giftRefusalText
     }
 
     var nearestActor: ReferenceKey? {

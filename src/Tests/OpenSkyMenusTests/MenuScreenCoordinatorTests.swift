@@ -112,6 +112,10 @@ struct MenuScreenCoordinatorTests {
         #expect(menu.openNearest())
         menu.route(.button(.accept))
         #expect(world.actions == ["give 77495 true"])
+        world.giftRefusalText = "The item is too heavy to carry."
+        menu.route(.button(.accept))
+        #expect(world.actions == ["give 77495 true"])
+        #expect(world.hudLines == ["The item is too heavy to carry."])
     }
 
     @Test func aGiftFilterKeepsMatchingHonestItems() {
