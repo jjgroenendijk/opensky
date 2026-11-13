@@ -1,30 +1,32 @@
-// The tab a crafting station lists a recipe under, from the created item's keywords: the
-// generic craftable keywords of the default objects (`GCK1` to `GCKX`), else the item's
-// material. Each tab's title is a string setting. See docs/engine/crafting.md#crafting-menu.
+// The tab a crafting station lists a recipe under: Food for food, else the first of the
+// created item's keywords that names a material or a generic craftable keyword (`GCK1` to
+// `GCK8`), else Misc. See docs/engine/crafting.md#crafting-menu.
 
 import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 
-/// A crafting tab's title. The raw value is the setting's editor ID.
+/// A crafting tab's title, in the order the forge lists its tabs. The raw value is the
+/// setting's editor ID; the Dragonborn tabs have no setting and use the movie's own key.
 nonisolated public enum CraftingCategoryText: String, GameSettingTextKey {
+    case wood = "sWood"
+    case hide = "sHide"
+    case draugr = "sDraugr"
     case iron = "sIron"
+    case studded = "sStudded"
+    case imperial = "sImperial"
     case steel = "sSteel"
+    case leather = "sLeather"
     case dwarven = "sDwarven"
     case elven = "sElven"
-    case orcish = "sOrcish"
-    case glass = "sGlass"
-    case ebony = "sEbony"
-    case daedric = "sDaedric"
-    case dragon = "sDragon"
-    case leather = "sLeather"
-    case hide = "sHide"
-    case studded = "sStudded"
-    case jewelry = "sJewelry"
-    case imperial = "sImperial"
-    case draugr = "sDraugr"
     case falmer = "sFalmer"
-    case wood = "sWood"
+    case orcish = "sOrcish"
+    case ebony = "sEbony"
+    case glass = "sGlass"
+    case dragon = "sDragon"
+    case daedric = "sDaedric"
+    case jewelry = "sJewelry"
+    case food = "sFood"
     case generic01 = "sGenericCraftKeywordName01"
     case generic02 = "sGenericCraftKeywordName02"
     case generic03 = "sGenericCraftKeywordName03"
@@ -33,8 +35,11 @@ nonisolated public enum CraftingCategoryText: String, GameSettingTextKey {
     case generic06 = "sGenericCraftKeywordName06"
     case generic07 = "sGenericCraftKeywordName07"
     case generic08 = "sGenericCraftKeywordName08"
-    case generic09 = "sGenericCraftKeywordName09"
-    case generic10 = "sGenericCraftKeywordName10"
+    case bonemold = "$Crafting_$DLC2ArmorBonemold"
+    case chitin = "$Crafting_$DLC2ArmorChitin"
+    case nordic = "$Crafting_$DLC2ArmorNordic"
+    case stalhrim = "$Crafting_$DLC2ArmorStalhrim"
+    case misc = "sMisc"
 
     public var fallback: String {
         switch self {
@@ -55,6 +60,7 @@ nonisolated public enum CraftingCategoryText: String, GameSettingTextKey {
         case .draugr: "DRAUGR"
         case .falmer: "FALMER"
         case .wood: "WOOD"
+        case .food: "FOOD"
         case .generic01: "HOUSE"
         case .generic02: "CONTAINERS"
         case .generic03: "FURNITURE"
@@ -63,19 +69,20 @@ nonisolated public enum CraftingCategoryText: String, GameSettingTextKey {
         case .generic06: "EXTERIOR"
         case .generic07: "BUILDING MATERIALS"
         case .generic08: "BITS"
-        case .generic09: "BOBS"
-        case .generic10: "AETHERIUM"
+        // The movie's translation table turns the key into the title.
+        case .bonemold, .chitin, .nordic, .stalhrim: rawValue
+        case .misc: "MISC"
         }
     }
 
-    /// A generic craftable keyword's tab, which wins over a material.
-    var isGeneric: Bool {
-        rawValue.hasPrefix("sGenericCraftKeywordName")
+    /// The tab's place in the forge's tab list.
+    public var rank: Int {
+        Self.allCases.firstIndex(of: self) ?? Self.allCases.count
     }
 
     static let generic: [Self] = [
-        .generic01, .generic02, .generic03, .generic04, .generic05,
-        .generic06, .generic07, .generic08, .generic09, .generic10
+        .generic01, .generic02, .generic03, .generic04,
+        .generic05, .generic06, .generic07, .generic08
     ]
 }
 
@@ -98,7 +105,10 @@ nonisolated public struct CraftingCategories: Equatable, Sendable {
         let defaults = DefaultObjectStore(index: index)
         var table: [FormID: CraftingCategoryText] = [:]
         for (editorID, tab) in Self.materials {
-            if let id = keywords.keyword(editorID: editorID)?.id, let local = itemPlugin.localFormID(of: id) {
+            if
+                let id = keywords.keyword(editorID: editorID)?.id,
+                let local = itemPlugin.localFormID(of: id)
+            {
                 table[local] = tab
             }
         }
@@ -110,33 +120,46 @@ nonisolated public struct CraftingCategories: Equatable, Sendable {
         self.init(tabByKeyword: table)
     }
 
-    /// The tab of an item with `keywords`. A generic craftable keyword wins over a
-    /// material, because a HearthFire part can carry both.
-    public func tab(forKeywords keywords: [FormID]) -> CraftingCategoryText? {
-        let tabs = keywords.compactMap { tabByKeyword[$0] }
-        return tabs.first(where: \.isGeneric) ?? tabs.first
+    /// The tab of an item with `keywords`: food first, then the first keyword in the
+    /// table, else Misc. An item with no keywords has no tab.
+    public func tab(forKeywords keywords: [FormID], isFood: Bool = false) -> CraftingCategoryText? {
+        if isFood {
+            return .food
+        }
+        guard !keywords.isEmpty else { return nil }
+        return keywords.lazy.compactMap { tabByKeyword[$0] }.first ?? .misc
     }
 
-    static let genericTags = ["GCK1", "GCK2", "GCK3", "GCK4", "GCK5", "GCK6", "GCK7", "GCK8", "GCK9", "GCKX"]
+    static let genericTags = ["GCK1", "GCK2", "GCK3", "GCK4", "GCK5", "GCK6", "GCK7", "GCK8"]
 
     /// Material keywords of the five masters and the forge tab each goes under.
     static let materials: [String: CraftingCategoryText] = [
         "WeapMaterialIron": .iron, "ArmorMaterialIron": .iron, "ArmorMaterialIronBanded": .iron,
-        "WeapMaterialSteel": .steel, "ArmorMaterialSteel": .steel, "ArmorMaterialSteelPlate": .steel,
+        "WeapMaterialSteel": .steel, "ArmorMaterialSteel": .steel,
+        "ArmorMaterialSteelPlate": .steel,
+        "ArmorMaterialScaled": .steel,
         "WeapMaterialDwarven": .dwarven, "ArmorMaterialDwarven": .dwarven,
-        "WeapMaterialElven": .elven, "ArmorMaterialElven": .elven, "ArmorMaterialElvenGilded": .elven,
+        "WeapMaterialElven": .elven, "ArmorMaterialElven": .elven,
+        "ArmorMaterialElvenGilded": .elven,
         "WeapMaterialOrcish": .orcish, "ArmorMaterialOrcish": .orcish,
         "WeapMaterialGlass": .glass, "ArmorMaterialGlass": .glass,
         "WeapMaterialEbony": .ebony, "ArmorMaterialEbony": .ebony,
         "WeapMaterialDaedric": .daedric, "ArmorMaterialDaedric": .daedric,
         "ArmorMaterialDragonplate": .dragon, "ArmorMaterialDragonscale": .dragon,
         "DLC1WeapMaterialDragonbone": .dragon,
-        "ArmorMaterialLeather": .leather, "ArmorMaterialHide": .hide,
+        "ArmorMaterialLeather": .leather, "ArmorMaterialStormcloak": .leather,
+        "ArmorMaterialHide": .hide,
         "ArmorMaterialStudded": .studded, "ArmorJewelry": .jewelry,
         "WeapMaterialImperial": .imperial, "ArmorMaterialImperialLight": .imperial,
         "ArmorMaterialImperialStudded": .imperial, "ArmorMaterialImperialHeavy": .imperial,
         "WeapMaterialDraugr": .draugr, "WeapMaterialDraugrHoned": .draugr,
         "WeapMaterialFalmer": .falmer, "WeapMaterialFalmerHoned": .falmer,
-        "ArmorMaterialFalmer": .falmer, "WeapMaterialWood": .wood
+        "ArmorMaterialFalmer": .falmer, "WeapMaterialWood": .wood,
+        "DLC2ArmorMaterialBonemoldLight": .bonemold, "DLC2ArmorMaterialBonemoldHeavy": .bonemold,
+        "DLC2ArmorMaterialChitinLight": .chitin, "DLC2ArmorMaterialChitinHeavy": .chitin,
+        "DLC2ArmorMaterialNordicLight": .nordic, "DLC2ArmorMaterialNordicHeavy": .nordic,
+        "DLC2WeaponMaterialNordic": .nordic,
+        "DLC2ArmorMaterialStalhrimLight": .stalhrim, "DLC2ArmorMaterialStalhrimHeavy": .stalhrim,
+        "DLC2WeaponMaterialStalhrim": .stalhrim
     ]
 }

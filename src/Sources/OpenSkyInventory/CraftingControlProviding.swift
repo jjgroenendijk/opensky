@@ -43,9 +43,11 @@ extension InventoryCoordinator.CraftingReadout {
         guard
             let created = recipe.created,
             let catalog = coordinator.craftingCatalog,
-            let keywords = coordinator.runtime?.inventory.baselines.items.definition(created)?.keywords
+            let items = coordinator.runtime?.inventory.baselines.items,
+            let keywords = items.definition(created)?.keywords
         else { return nil }
-        return catalog.categories.tab(forKeywords: keywords)
+        let isFood = items.ingestibles[created.rawValue]?.flags.contains(.food) == true
+        return catalog.categories.tab(forKeywords: keywords, isFood: isFood)
     }
 
     /// The quality name of `level`, from the weapon or the armour list.
