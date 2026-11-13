@@ -148,6 +148,7 @@ extension GapsGatherer {
             _ = TrainingSettings.resolve(store: store)
             _ = CraftingSkillUseSettings.resolve(store: store)
             _ = HeadTrackingSettings.resolve(store: store)
+            _ = IdleMarkerSettings.resolve(store: store)
             _ = FaceAnimationSettings.resolve(store: store)
             _ = FaceMorphCounts.resolve(store: store)
             _ = DifficultySettings.resolve(store: store)

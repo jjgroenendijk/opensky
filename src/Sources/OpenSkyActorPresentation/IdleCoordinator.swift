@@ -53,15 +53,19 @@ public struct IdleSessionData {
     public let conditionFunctions: ConditionFunctionRegistry
     /// Where plans load; nil runs them on the shared queue.
     public let planWorker: (any AssetLoadWorking<IdlePlanKey, IdlePlaybackPlan>)?
+    /// The arrival radius and the pause between idles.
+    public let markerSettings: IdleMarkerSettings
 
     public init(
         store: IdleStore,
         files: any GameFileSource,
         clips: ActorClipLoader,
         conditionFunctions: ConditionFunctionRegistry,
-        planWorker: (any AssetLoadWorking<IdlePlanKey, IdlePlaybackPlan>)? = nil
+        planWorker: (any AssetLoadWorking<IdlePlanKey, IdlePlaybackPlan>)? = nil,
+        markerSettings: IdleMarkerSettings = .vanilla
     ) {
         self.store = store
+        self.markerSettings = markerSettings
         self.conditionFunctions = conditionFunctions
         self.files = files
         self.clips = clips
@@ -172,6 +176,7 @@ public final class IdleCoordinator {
 
     weak let world: (any IdleWorld)?
     let conditionFunctions: ConditionFunctionRegistry
+    let markerSettings: IdleMarkerSettings
 
     public init(
         random: ((Int) -> Int)? = nil,
@@ -184,6 +189,8 @@ public final class IdleCoordinator {
         store = data?.store
         clips = data?.clips
         conditionFunctions = data?.conditionFunctions ?? ConditionFunctionRegistry()
+        markerSettings = data?.markerSettings ?? .vanilla
+        markerClaims.arrivalRadius = markerSettings.arrivalRadius
         plans = data?.planLoader()
     }
 
@@ -272,7 +279,7 @@ public final class IdleCoordinator {
         }
         if
             let marker = session.marker, !session.arrived,
-            simd_distance(actor.feet, marker.position) <= IdleCore.arrivalRadius
+            simd_distance(actor.feet, marker.position) <= markerSettings.arrivalRadius
         {
             session.arrived = true
             session.reselectAt = now
@@ -481,7 +488,7 @@ extension IdleCoordinator {
     private func finish(_ report: IdleReport, timer: Float?, now: Float) -> IdleReport {
         sessions[report.actor]?.reselectAt = IdleCore.nextSelection(
             after: now, playSeconds: report.seconds, timer: timer
-        )
+        ) + max(0, markerSettings.idleWait)
         return record(report)
     }
 }

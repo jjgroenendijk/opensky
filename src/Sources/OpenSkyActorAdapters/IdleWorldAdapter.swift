@@ -61,7 +61,9 @@ public final class IdleWorldAdapter {
             let clips = game.animationClips
         else { return nil }
         return IdleSessionData(
-            store: store, files: files, clips: clips, conditionFunctions: .standard
+            store: store, files: files, clips: clips, conditionFunctions: .standard,
+            markerSettings: (game.actorRecords?.gameSettings)
+                .map { IdleMarkerSettings.resolve(store: $0) } ?? .vanilla
         )
     }
 }

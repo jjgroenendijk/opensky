@@ -108,8 +108,6 @@ nonisolated public struct IdlePackageList: Equatable, Sendable {
 nonisolated public enum IdleCore {
     /// How far an actor looks for a free marker, in world units (about 15 m).
     static let claimRadius: Float = 1024
-    /// Close enough to the marker to start idling.
-    static let arrivalRadius: Float = 48
     /// How far from the marker's facing an actor may stand when its idle starts.
     static let facingTolerance: Float = .pi / 180
     /// The clip event that kills the actor playing it, as the executionee's chop clip

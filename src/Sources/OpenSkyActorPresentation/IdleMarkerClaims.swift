@@ -19,6 +19,8 @@ extension IdleCoordinator {
     /// memory; the sessions it fills stay with the coordinator.
     final class IdleMarkerClaims {
         private(set) var markers: [IdleMarkerPlacement] = []
+        /// `fAIMarkerDestinationRadius`: close enough to a marker to start idling.
+        var arrivalRadius = IdleMarkerSettings.vanilla.arrivalRadius
         private var refreshAt: Float = 0
         /// The marker each sandboxing actor last left, which it does not take again at once.
         var previous: [ReferenceKey: IdleMarkerPlacement] = [:]
@@ -64,7 +66,7 @@ extension IdleCoordinator {
                         area: area
                     )
                 else { continue }
-                let arrived = simd_distance(actor.feet, marker.position) <= IdleCore.arrivalRadius
+                let arrived = simd_distance(actor.feet, marker.position) <= arrivalRadius
                 if !arrived, world.moveActor(key, to: marker.position) != .started {
                     unreachable[key, default: []].insert(marker.reference)
                     continue
