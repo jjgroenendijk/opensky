@@ -54,7 +54,7 @@ struct StorySceneTalkTests {
     @Test func anAbsentSpeakerHasAnInstantLine() throws {
         let info = try DialogueFixture.info(Data())
         #expect(adapter.lineDuration(of: info, speaker: Self.speaker) == 0)
-        #expect(host.fakeStreamer.residentActorEntryCalls == [Self.speaker])
+        #expect(host.fakeStreamer.residents.residentActorEntryCalls == [Self.speaker])
         #expect(adapter.voicePaths(of: FormID(0x91), speaker: Self.speaker).isEmpty)
     }
 

@@ -5,59 +5,62 @@
 import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyWorldState
 import simd
 
-extension CellStreamer {
+extension CellStreamer.PhysicsSteps {
     /// One frame of dynamic simulation: reconcile residency, shove whatever the
     /// player walked into, step the solver, then hand any newly-settled resting
     /// transform to the world state.
     func advancePhysics(frameTime: Float, player: PlayerCapsuleState?) {
         reconcileDynamicBodies()
         pushDynamicBodies(player: player, frameTime: frameTime)
-        dynamicBodies.advance(
+        streamer.dynamicBodies.advance(
             by: frameTime,
             world: DynamicStepWorld(
-                staticCandidates: { [weak self] bounds in
-                    self?.staticCollisionCandidates(overlapping: bounds) ?? []
+                staticCandidates: { [weak streamer] bounds in
+                    streamer?.collision.staticCollisionCandidates(overlapping: bounds) ?? []
                 },
                 water: DynamicWaterWorld(
-                    sample: { [weak self] point in self?.water(at: point) },
+                    sample: { [weak streamer] point in streamer?.collision.water(at: point) },
                     player: player?.feetPosition
                 )
             )
         )
-        dynamicBodies.retainBodies(occupying: Set(residentDynamicBodyScenes().keys))
-        for settled in dynamicBodies.drainSettledTransforms() {
-            onBodySettled?(
+        streamer.dynamicBodies.retainBodies(occupying: Set(residentDynamicBodyScenes().keys))
+        for settled in streamer.dynamicBodies.drainSettledTransforms() {
+            streamer.events.onBodySettled?(
                 settled.key,
                 ReferenceTransformOverride(placement: settled.placement),
                 settled.placingCell
             )
         }
-        if composition.setDynamicDrawOwnership(dynamicBodies.exteriorDrawOwnership) {
+        if
+            streamer.composition
+                .setDynamicDrawOwnership(streamer.dynamicBodies.exteriorDrawOwnership)
+        {
             // Draw ownership changes only at a cell boundary. Recompose once
             // there so the occupied cell can outlive the placing cell without
             // rebuilding either cell's baked scene.
-            sink(viewScene(), nil)
+            streamer.sink(streamer.props.viewScene(), nil)
         }
         // Published every tick rather than only when something moved: a body
         // that has settled away from where its cell drew it keeps a delta until
         // the rebuild bakes it in, so "no movement this frame" is not "no
         // displacement to draw".
-        onDynamicPosesChanged?(dynamicBodies.instanceDeltas)
+        streamer.events.onDynamicPosesChanged?(streamer.dynamicBodies.instanceDeltas)
     }
 
     /// Adds the bodies of every newly resident or rebuilt cell and drops the
     /// bodies of every cell that left.
     func reconcileDynamicBodies() {
         let resident = residentDynamicBodyScenes()
-        dynamicBodies.retainBodies(occupying: Set(resident.keys))
-        for location in dynamicBodies.installedCells.keys where resident[location] == nil {
-            dynamicBodies.removeCell(location)
+        streamer.dynamicBodies.retainBodies(occupying: Set(resident.keys))
+        for location in streamer.dynamicBodies.installedCells.keys where resident[location] == nil {
+            streamer.dynamicBodies.removeCell(location)
         }
         // Cells are visited in a stable order so that two runs of the same
         // session install bodies in the same order, which the solver's
@@ -65,24 +68,25 @@ extension CellStreamer {
         for location in resident.keys.sorted(by: CellSceneLocation.isOrderedBefore) {
             guard
                 let scene = resident[location],
-                dynamicBodies.installedCells[location] != scene.stateSequence else { continue }
-            dynamicBodies.setCell(
+                streamer.dynamicBodies.installedCells[location] != scene.stateSequence
+            else { continue }
+            streamer.dynamicBodies.setCell(
                 location, placements: scene.dynamicBodies, sequence: scene.stateSequence
             )
         }
     }
 
     /// Every resident cell: the interior, or the loaded exterior cells.
-    public var residentCellLocations: Set<CellSceneLocation> {
+    var residentCellLocations: Set<CellSceneLocation> {
         Set(residentDynamicBodyScenes().keys)
     }
 
     private func residentDynamicBodyScenes() -> [CellSceneLocation: CellScene] {
         var resident: [CellSceneLocation: CellScene] = [:]
-        if let interiorScene, let location = interiorScene.location {
+        if let interiorScene = streamer.interiorScene, let location = interiorScene.location {
             resident[location] = interiorScene
         } else {
-            for scene in composition.cells.values {
+            for scene in streamer.composition.cells.values {
                 guard let location = scene.location else { continue }
                 resident[location] = scene
             }
@@ -96,14 +100,14 @@ extension CellStreamer {
     /// a reseed — is discarded rather than delivered as an enormous impulse.
     private func pushDynamicBodies(player: PlayerCapsuleState?, frameTime: Float) {
         guard let player, frameTime > 0 else {
-            dynamicBodies.lastPushFeetPosition = player?.feetPosition
+            streamer.dynamicBodies.lastPushFeetPosition = player?.feetPosition
             return
         }
-        defer { dynamicBodies.lastPushFeetPosition = player.feetPosition }
-        guard let previous = dynamicBodies.lastPushFeetPosition else { return }
+        defer { streamer.dynamicBodies.lastPushFeetPosition = player.feetPosition }
+        guard let previous = streamer.dynamicBodies.lastPushFeetPosition else { return }
         let velocity = (player.feetPosition - previous) / frameTime
         guard simd_length(velocity) <= Self.maximumPushSpeed else { return }
-        dynamicBodies.push(
+        streamer.dynamicBodies.push(
             capsule: player.capsule,
             feetPosition: player.feetPosition,
             velocity: velocity

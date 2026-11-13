@@ -69,7 +69,9 @@ extension ScriptReferenceBindingsAdapter {
         return ImpactPick.resolve(
             along: (origin, direction), length: pick.length, staticHit: solid
         ) { point in
-            streamer.sampleTerrain(at: point).map { (height: $0.height, material: $0.material) }
+            streamer.collision.sampleTerrain(at: point).map { sample in
+                (height: sample.height, material: sample.material)
+            }
         }
     }
 }

@@ -39,6 +39,6 @@ extension CellStreamer {
     public func registerCellAttached(
         _ phase: CellAttachStep, _ step: @escaping (CellAttachment) -> Void
     ) {
-        onCellAttached.register(phase, step)
+        events.onCellAttached.register(phase, step)
     }
 }

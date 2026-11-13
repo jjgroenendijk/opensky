@@ -112,7 +112,7 @@ public final class CellStreamingWalkDriver {
             return
         }
         let start = WalkPathRoute.exteriorWaypoints[0]
-        guard let ground = streamer.sampleTerrain(at: start) else {
+        guard let ground = streamer.collision.sampleTerrain(at: start) else {
             throw CellStreamingWalkBenchmarkError.noStartGround(start)
         }
         let feet = SIMD3(start.x, start.y, ground.height)

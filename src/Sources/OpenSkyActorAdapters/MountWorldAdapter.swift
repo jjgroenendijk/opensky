@@ -261,7 +261,7 @@ struct MountCandidateReads {
     func takeMount(_ key: ReferenceKey, kind: MountKind, saddleBone: String)
         -> PlayerMountDriveStart?
     {
-        guard let hold = game.streamer.takeRiddenActor(key) else { return nil }
+        guard let hold = game.streamer.actors.takeRiddenActor(key) else { return nil }
         let loan = game.actorGraphWorld.graphs.lend(key)
         return PlayerMountDriveStart(
             mount: key, kind: kind, saddleBone: saddleBone, feet: hold.feetPosition,

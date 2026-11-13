@@ -62,7 +62,7 @@ public final class HazardWorldAdapter {
         self.init(dependencies)
         guard let stage else { return }
         store = stage.data.rules.lockTrapData.hazards
-        stage.streamer.cellHazards.register(.hazards) { [weak self] event in
+        stage.streamer.events.cellHazards.register(.hazards) { [weak self] event in
             self?.load(event)
         }
         let gameSession = stage.gameSession

@@ -58,7 +58,7 @@ final class InventoryInteractions {
 
     func registerInventoryWorldItems(stage: SessionStage) {
         let streamer = stage.streamer
-        streamer.onInteraction.register(.worldItems) { [weak self] event in
+        streamer.events.onInteraction.register(.worldItems) { [weak self] event in
             guard let self else { return }
             let action = event.target.interaction.action
             if action == .take, openBook(event.target.interaction) {

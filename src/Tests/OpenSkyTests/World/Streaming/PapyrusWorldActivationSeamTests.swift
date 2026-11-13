@@ -45,11 +45,11 @@ struct PapyrusWorldActivationSeamTests {
 
         // Registered scripts first: the audio step still runs before Papyrus.
         var audible: [InteractionEvent] = []
-        streamer.onInteraction.register(.scripts) { [weak bridge = session.bridge] event in
+        streamer.events.onInteraction.register(.scripts) { [weak bridge = session.bridge] event in
             bridge?.handleInteraction(event)
         }
-        streamer.onInteraction.register(.audio) { audible.append($0) }
-        #expect(streamer.onInteraction.registeredPhases == [.audio, .scripts])
+        streamer.events.onInteraction.register(.audio) { audible.append($0) }
+        #expect(streamer.events.onInteraction.registeredPhases == [.audio, .scripts])
 
         let position = CellStreamerFixture.center + SIMD3<Float>(10, 0, 0)
         let placed = PapyrusWorldActivationFixture.interaction(

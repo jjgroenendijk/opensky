@@ -70,7 +70,7 @@ struct TriggerEventLogTests {
         let streamer = CellStreamerFixture.makeStreamer(
             runner: ManualCellBuildRunner(), radius: 0
         )
-        streamer.onTriggerTransition(TriggerTransitionEvent(reference: key, phase: .enter))
-        #expect(streamer.triggerLog.lines == ["enter skyrim.esm:ABCDEF unloaded"])
+        streamer.events.onTriggerTransition(TriggerTransitionEvent(reference: key, phase: .enter))
+        #expect(streamer.doorState.triggerLog.lines == ["enter skyrim.esm:ABCDEF unloaded"])
     }
 }

@@ -4,7 +4,7 @@ public import OpenSkySessionInterface
 public import OpenSkyWorld
 public import OpenSkyWorldInterface
 
-extension CellStreamer {
+extension CellStreamer.ActorSteps {
     @discardableResult
     public func moveActor(_ request: ActorMoveRequest) -> NPCMoveCommandResult {
         moveActor(

@@ -91,9 +91,9 @@ struct WorldAudioTransitionAcceptanceTests {
             music = musicDirector
             streamer = CellStreamerFixture.makeStreamer(runner: runner)
             // Exactly the three subscriptions the game controller makes.
-            streamer.onAmbienceContextChanged = { soundDirector.handleAmbienceContext($0) }
-            streamer.onMusicContextChanged = { musicDirector.handleMusicContext($0) }
-            streamer.onInteraction
+            streamer.events.onAmbienceContextChanged = { soundDirector.handleAmbienceContext($0) }
+            streamer.events.onMusicContextChanged = { musicDirector.handleMusicContext($0) }
+            streamer.events.onInteraction
                 .register(.audio) { soundDirector.handleInteraction($0) }
         }
 
@@ -120,8 +120,8 @@ struct WorldAudioTransitionAcceptanceTests {
                     activation: FormID(Self.doorActivation), close: nil, loop: nil
                 )
             )
-            #expect(streamer.onInteraction.registeredPhases == [.audio])
-            streamer.onInteraction(event)
+            #expect(streamer.events.onInteraction.registeredPhases == [.audio])
+            streamer.events.onInteraction(event)
 
             #expect(sound.lastSFXDescription == "sound\\fx\\dor\\doorwoodopen.xwm")
             #expect(sound.lastSFXError == nil)
@@ -139,7 +139,7 @@ struct WorldAudioTransitionAcceptanceTests {
         /// sound and the music state becomes interior.
         func enterTheInterior() throws {
             let exteriorTrack = music.currentTrackName
-            streamer.apply(transition: Self.transition(to: Self.interiorScene))
+            streamer.transitions.apply(transition: Self.transition(to: Self.interiorScene))
 
             #expect(ambienceNames == ["sound\\fx\\amb\\interior.xwm"])
             #expect(music.currentStateName == "interior")
@@ -150,7 +150,7 @@ struct WorldAudioTransitionAcceptanceTests {
         /// Step 4: the paired door leads back outside, and both the bed and the
         /// playlist return to what the exterior cell selects.
         func returnToTheExterior() throws {
-            streamer.apply(transition: Self.transition(to: Self.exteriorScene))
+            streamer.transitions.apply(transition: Self.transition(to: Self.exteriorScene))
 
             #expect(ambienceNames == ["sound\\fx\\amb\\exterior.xwm"])
             #expect(music.currentStateName == "exploration")

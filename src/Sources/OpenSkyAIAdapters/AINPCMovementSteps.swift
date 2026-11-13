@@ -15,19 +15,28 @@ import OpenSkyWorld
 import OpenSkyWorldInterface
 
 /// The cell streamer's NPC movement hooks, so a test can register them on a stand-in.
-protocol NPCMovementHooks: AnyObject {
-    var onNPCMovementPersist: ((NPCMovementPersistence) -> Void)? { get set }
-    var onNPCCellHandoff: ((NPCMovementPersistence) -> Void)? { get set }
-    var onNPCLocomotionDrive: ((NPCLocomotionDriveUpdate) -> Void)? { get set }
-    var onNPCLanding: ((ReferenceKey, WalkLanding) -> Void)? { get set }
-    var npcStandingActors: (() -> [NPCNeighbour])? { get set }
-    var npcMovementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)? { get set }
-    var npcBodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)? { get set }
+protocol NPCMovementHooks {
+    var onNPCMovementPersist: ((NPCMovementPersistence) -> Void)? { get nonmutating set }
+    var onNPCCellHandoff: ((NPCMovementPersistence) -> Void)? { get nonmutating set }
+    var onNPCLocomotionDrive: ((NPCLocomotionDriveUpdate) -> Void)? { get nonmutating set }
+    var onNPCLanding: ((ReferenceKey, WalkLanding) -> Void)? { get nonmutating set }
+    var npcStandingActors: (() -> [NPCNeighbour])? { get nonmutating set }
+    var npcMovementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)? { get nonmutating set }
+    var npcBodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)? { get nonmutating set }
+    associatedtype Rebuilds: NPCCellRebuilds
+    /// Held weakly by the cell handoff, so the hooks do not keep the streamer alive.
+    var cellStreamer: Rebuilds { get }
+}
+
+/// Where an actor is drawn, and the rebuild of a cell it left.
+protocol NPCCellRebuilds: AnyObject {
     func cellLocation(of key: ReferenceKey) -> CellSceneLocation?
     func requestRebuild(of location: CellSceneLocation)
 }
 
-extension CellStreamer: NPCMovementHooks {}
+extension CellStreamer.ActorSteps: NPCMovementHooks {}
+
+extension CellStreamer: NPCCellRebuilds {}
 
 /// Registers the NPC movement hooks of one session.
 struct AINPCMovementSteps {
@@ -65,12 +74,13 @@ struct AINPCMovementSteps {
         registerMovementTypes(on: streamer)
         // A walker drawn by the cell it left would vanish when that cell unloads, so
         // it moves into the cell it entered, and the cell it left drops it.
-        streamer.onNPCCellHandoff = { [weak hosts, weak streamer] persistence in
-            guard let cell = persistence.cell, let streamer else { return }
-            let drawing = streamer.cellLocation(of: persistence.actor)
+        let cells: any NPCCellRebuilds = streamer.cellStreamer
+        streamer.onNPCCellHandoff = { [weak hosts, weak cells] persistence in
+            guard let cell = persistence.cell, let cells else { return }
+            let drawing = cells.cellLocation(of: persistence.actor)
             hosts?.scripts.bridge?.relocate(persistence.actor, to: cell)
             if let drawing, drawing != cell {
-                streamer.requestRebuild(of: drawing)
+                cells.requestRebuild(of: drawing)
             }
         }
         streamer.onNPCLocomotionDrive = { [weak hosts] update in

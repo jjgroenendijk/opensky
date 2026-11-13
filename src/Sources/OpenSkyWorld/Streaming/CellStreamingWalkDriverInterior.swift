@@ -95,7 +95,7 @@ extension CellStreamingWalkDriver {
 
     public func requestExit() throws {
         let door = streamer.interiorScene.flatMap {
-            streamer.nearestDoor(in: $0, to: gameSession.freeFlyCamera.position)
+            streamer.transitions.nearestDoor(in: $0, to: gameSession.freeFlyCamera.position)
         }
         guard door?.reference == WalkPathRoute.interiorDoor else {
             throw CellStreamingWalkBenchmarkError.wrongDoor(
@@ -123,11 +123,11 @@ extension CellStreamingWalkDriver {
         updateController(moveForward: 0)
         updateStreamer()
         try validateController()
-        guard !streamer.isInterior else {
+        guard !streamer.coverage.isInterior else {
             try timeout(limit: WalkPathRoute.maximumTransitionFrames)
             return
         }
-        guard streamer.residentCoordinates.contains(WalkPathRoute.farmCell) else {
+        guard streamer.coverage.residentCoordinates.contains(WalkPathRoute.farmCell) else {
             throw CellStreamingWalkBenchmarkError.wrongDestination(
                 "return did not seed farm exterior cell"
             )

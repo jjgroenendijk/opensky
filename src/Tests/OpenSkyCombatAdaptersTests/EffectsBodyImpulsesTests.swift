@@ -51,7 +51,7 @@ struct EffectsBodyImpulsesTests {
     }
 
     @Test func waterReadsComeFromTheStreamer() {
-        host.fakeStreamer.sampleWaterHeightResult = 12
+        host.fakeStreamer.collision.sampleWaterHeightResult = 12
         #expect(adapter.waterHeight(at: SIMD2(1, 2)) == 12)
         #expect(adapter.waterCurrent(at: .zero) == nil)
         #expect(!adapter.isDangerousWater(at: .zero))
@@ -83,9 +83,9 @@ struct EffectsBodyImpulsesTests {
 
     @Test func aKnockMovesAnNPCThroughTheStreamer() {
         #expect(!adapter.knockActor(Self.actor, velocity: .zero, knockdown: false))
-        host.fakeStreamer.knockActorResult = true
+        host.fakeStreamer.actors.knockActorResult = true
         #expect(adapter.knockActor(Self.actor, velocity: SIMD3(1, 0, 0), knockdown: true))
         #expect(adapter.knockActor(.player, velocity: SIMD3(1, 0, 0), knockdown: false))
-        #expect(host.fakeStreamer.knockActorCalls.map(\.actor) == [Self.actor])
+        #expect(host.fakeStreamer.actors.knockActorCalls.map(\.actor) == [Self.actor])
     }
 }

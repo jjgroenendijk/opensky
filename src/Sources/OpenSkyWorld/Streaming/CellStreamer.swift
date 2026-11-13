@@ -4,7 +4,7 @@
 // (docs/engine/cell-streaming.md).
 
 import Foundation
-public import OpenSkyAudio
+import OpenSkyAudio
 public import OpenSkyCells
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
@@ -23,6 +23,8 @@ public typealias SettledBodyHandler = (
 ) -> Void
 
 public final class CellStreamer {
+    public let doorState = CellStreamerDoorState()
+    public let events = CellStreamerEvents()
     /// Receives the recomposed scene whenever it changes (integration or
     /// unload). `camera` is non-nil only on the first integrated cell -- the
     /// framing reseed that snaps the view onto the launch cell once it
@@ -36,8 +38,6 @@ public final class CellStreamer {
     public var grid: CellGridManager
     /// The worldspace the exterior cells come from. A door or a teleport changes it.
     public private(set) var worldspaceEditorID: String
-    /// Fires with the new worldspace after the exterior switched to it.
-    public let onWorldspaceChanged = FrameSchedule<WorldspaceChangeStep, String>()
     public var composition = CellSceneComposition() {
         didSet { actorPoseRevision &+= 1 }
     }
@@ -54,20 +54,6 @@ public final class CellStreamer {
     }
 
     public let sink: SceneSink
-    /// Fires with the center cell's REGN FormIDs when they change, for region weather.
-    /// The app wires it to `GameSession.weather.setRegions`.
-    public var onCenterRegionsChanged: (([FormID]) -> Void)?
-    /// Last region set pushed through `onCenterRegionsChanged`; nil = never
-    /// emitted. Guards against re-firing an unchanged set every frame.
-    private var lastEmittedRegions: [FormID]?
-    /// Fires with the current cell's ambience identity when it changes.
-    public var onAmbienceContextChanged: ((AmbienceContext) -> Void)?
-    /// Last ambience key pushed; nil = never emitted. Guards against re-firing.
-    /// Internal for the CellStreamerAmbience satellite to read/write.
-    public var lastEmittedAmbienceKey: AmbienceKey?
-    /// Fires with the current cell's music identity when it changes.
-    public var onMusicContextChanged: ((MusicContext) -> Void)?
-    public var musicFeed = MusicFeed()
     /// Retained for deterministic walk benchmarks that inspect nearby doors.
     /// Production use-key activation is view-ray based.
     public static let doorActivationRadius = InteractionRay.defaultMaximumDistance
@@ -82,7 +68,7 @@ public final class CellStreamer {
     /// at a time, so recentering can discard obsolete backlog before it does
     /// I/O and eviction always queues ahead of the next build. Readable (not
     /// writable) cross-file for the inspection satellite.
-    public private(set) var requests: [CellCoordinate] = []
+    public internal(set) var requests: [CellCoordinate] = []
     /// Resident cells awaiting a world-state rebuild, oldest request first.
     /// Kept apart from `requests` so first loads keep their center-out
     /// priority; rebuilds are dispatched only once the load queue is drained.
@@ -94,18 +80,15 @@ public final class CellStreamer {
     public var cellMutationSequence: [CellCoordinate: UInt64] = [:]
     /// Same, for the interior scene currently owning the view.
     public var interiorMutationSequence: UInt64 = 0
-    /// Source door of the transition that produced the current interior, so a
-    /// mutation inside it can be rebuilt through the door-transition path.
-    public var interiorSourceDoor: FormID?
     /// True while the in-flight door transition is an interior rebuild rather
     /// than a player-driven move, which suppresses the camera teleport.
     public var interiorRebuildInFlight = false
-    private var activeBuild: CellCoordinate?
+    var activeBuild: CellCoordinate?
 
     /// Finished builds drained from the runner, awaiting integration. Bounded
     /// by the grid size: at most one entry per in-flight cell. Readable (not
     /// writable) cross-file for the inspection satellite.
-    public private(set) var pending: [CellBuildResult] = []
+    public internal(set) var pending: [CellBuildResult] = []
     /// Set once the first drawable cell frames the camera, or a move places it;
     /// every later recompose passes a nil camera so the free-fly view is left alone.
     var hasSeededCamera = false
@@ -137,73 +120,18 @@ public final class CellStreamer {
     /// Nil outside an interior, where `composition` answers instead.
     private(set) var interiorActorPlacements: [ReferenceKey: ResidentActorPlacement]?
     public var transitionInFlight: FormID?
-    public private(set) var doorTransitionFailureCount = 0
     public var interactionTarget: InteractionTarget?
-    /// Fires when view-ray target identity, text, or hit details change.
-    public var onInteractionTargetChanged: ((InteractionTarget?) -> Void)?
-    /// Use-key event, delivered in `InteractionStep` order. No handler owns the
-    /// raycast or door behavior.
-    public let onInteraction = FrameSchedule<InteractionStep, InteractionEvent>()
     /// Everything Talk activation needs from the streamer.
     public var talk = TalkTargetingSeam()
     /// The lock check in front of every use-key activation.
     public var activationGate = ActivationGateSeam()
-    /// Player-driven door motion boundaries. World audio consumes these to
-    /// start the authored movement loop, retire it, and play the close sound.
-    public var onInteractionAnimation: ((InteractionAnimationEvent) -> Void)?
-    /// The player used a load door, which swings open while the transition holds.
-    public var onLoadDoorUsed: ((FormID) -> Void)?
-    /// Source placement retained across an asynchronous door build. Runtime
-    /// state rebuilds have no player interaction and leave this nil.
-    public var doorMotionInteraction: PlacedInteraction?
     /// Each sequence door's leaf moves from rest, by reference; its collision follows.
     public var sequenceDoorLeaves: [UInt32: [float4x4]] = [:]
-    /// A cell joined the live world. Emitted in CellStreamerPapyrus.
-    public let onCellAttached = FrameSchedule<CellAttachStep, CellAttachment>()
-    /// A cell left the live world: unloaded off the grid, dropped by a
-    /// coverage transition, or replaced by a door transition.
-    public let onCellDetached = FrameSchedule<CellDetachStep, CellSceneLocation>()
-    /// A door transition was queued. The loading screen covers the view from here.
-    public var onDoorTransitionStarted: (() -> Void)?
-    /// A door transition ended: the destination scene, or nil when it failed.
-    public var onDoorTransitionFinished: ((CellScene?) -> Void)?
-    /// A live cell's placed hazards changed: attached, rebuilt, or detached.
-    public let cellHazards = FrameSchedule<CellHazardStep, CellHazardEvent>()
-    /// The player entered or left a trigger volume. Emitted in CellStreamerTriggers.
-    public let onTriggerTransition = FrameSchedule<TriggerTransitionStep, TriggerTransitionEvent>()
-    /// Trigger volumes the player capsule was inside as of the last walk-mode
-    /// frame, keyed by the authoring REFR. The per-frame diff against this set
-    /// is what makes enter and leave edge events.
-    public var occupiedTriggers: Set<ReferenceKey> = []
-    /// Feet position of the previous walk-mode trigger test, so a frame that
-    /// moved further than a capsule radius can be swept rather than sampled
-    /// only at its destination. Nil outside walk mode.
-    var lastTriggerFeetPosition: SIMD3<Float>?
-    /// Automatic doors whose area held the player's feet last frame. Nil until the first
-    /// frame in a scene, so arriving inside a door's area does not send the player back.
-    public var automaticDoorOccupancy: Set<FormID>?
-    /// Automatic door distances and the teleport delay; the app sets the install's values.
-    public var doors = DoorSettings.vanilla
-    /// Seconds a used load door still waits before its finished build is shown.
-    var doorTransitionHold: Float = 0
-    /// Finished door builds held back by `doorTransitionHold`.
-    var heldDoorTransitions: [DoorTransitionBuildResult] = []
-    /// Recent trigger edges, filled by a subscriber
-    /// registered in `init`.
-    public let triggerLog = TriggerEventLog()
     /// Simulated rigid bodies, reconciled against residency each frame.
     public var dynamicBodies = DynamicBodyWorld()
-    /// Idle props by actor, drawn outside the cell scenes (CellStreamerActorProps).
-    public var actorProps: [FormID: ActorPropDraw] = [:]
-    /// A body came to rest and its transform should be persisted under the
-    /// reference's `.transform` component. `bind(to:)` wires it to the store.
-    public var onBodySettled: SettledBodyHandler?
     /// True while a settled body's transform is written. The body already draws
     /// at that pose, so the write rebuilds no cell; a later build bakes it in.
     public var isRecordingSettledBody = false
-    /// Where simulated bodies have moved, published each physics tick. The app wires it to
-    /// `GameSession.instancePoses.dynamicDeltas`.
-    public var onDynamicPosesChanged: (([UInt32: float4x4]) -> Void)?
     /// Resident graph, repath backlog and completion sink.
     public var navigationState = CellStreamerNavigationState()
     /// Active NPC capsules, their drive, and app callbacks.
@@ -231,7 +159,7 @@ public final class CellStreamer {
         )
         self.runner = runner
         self.sink = sink
-        registerTriggerLog()
+        triggers.registerTriggerLog()
     }
 
     /// One frame: collects finished builds, re-grids around the camera,
@@ -248,20 +176,19 @@ public final class CellStreamer {
         guard !isHeld else { return }
         let completed = runner.drainCompleted()
         if !completed.isEmpty {
-            pending.append(contentsOf: completed.filter(builtHere))
+            pending.append(contentsOf: completed.filter(builds.builtHere))
             activeBuild = nil
         }
-        let completedLOD = runner.drainCompletedDistantLOD().filter(builtHere)
-        if finishDoorTransition(drainDoorTransitions(frameTime: frameTime)) {
+        let completedLOD = runner.drainCompletedDistantLOD().filter(builds.builtHere)
+        let transition = transitions.drainDoorTransitions(frameTime: frameTime)
+        if transitions.finishDoorTransition(transition) {
             return
         }
-        let isInside = updateInteriorIfNeeded(
-            completedLOD: completedLOD
-        )
+        let isInside = transitions.updateInteriorIfNeeded(completedLOD: completedLOD)
         if isInside {
-            updateInteractionTarget(ray: interactionRay)
+            residents.updateInteractionTarget(ray: interactionRay)
             if activate {
-                activateInteractionTarget()
+                residents.activateInteractionTarget()
             }
             // Interiors carry most authored trigger volumes, so the test runs
             // on this path too rather than only on the exterior tail below.
@@ -269,7 +196,7 @@ public final class CellStreamer {
             return
         }
 
-        var sceneChanged = integrateActorProps()
+        var sceneChanged = props.integrateActorProps()
         // Renderer starts on its demo pose. Keep the configured launch grid
         // fixed until the first drawable cell supplies the framing camera.
         let effectivePosition = hasSeededCamera
@@ -282,186 +209,47 @@ public final class CellStreamer {
             }
             let actions = core.apply(diff: diff)
             requests.removeAll { !core.inFlight.contains($0) }
-            pruneRebuildState()
-            discardStagedCells(outside: grid.desiredCells)
+            runtimeStates.pruneRebuildState()
+            coverage.discardStagedCells(outside: grid.desiredCells)
             if !actions.removals.isEmpty, !coverageTransitionActive {
-                unload(actions.removals)
+                coverage.unload(actions.removals)
                 sceneChanged = true
             }
-            requests.append(contentsOf: requestsNearestFirst(actions.requests))
+            requests.append(contentsOf: coverage.requestsNearestFirst(actions.requests))
         }
 
-        if integrateOneBuild() {
+        if builds.integrateOneBuild() {
             sceneChanged = true
         }
-        if integrateDistantLOD(completedLOD) {
+        if coverage.integrateDistantLOD(completedLOD) {
             sceneChanged = true
         }
         if sceneChanged {
-            recomposeAndSink()
+            builds.recomposeAndSink()
         }
-        updateInteractionTarget(ray: interactionRay)
+        residents.updateInteractionTarget(ray: interactionRay)
         if activate {
-            activateInteractionTarget()
+            residents.activateInteractionTarget()
         }
-        dispatchNextBuild()
-        requestDistantLODIfNeeded()
-        emitCenterRegionsIfChanged()
-        emitAmbienceContextIfNeeded()
-        emitMusicContextIfNeeded()
+        builds.dispatchNextBuild()
+        coverage.requestDistantLODIfNeeded()
+        builds.emitCenterRegionsIfChanged()
+        ambience.emitAmbienceContextIfNeeded()
+        ambience.emitMusicContextIfNeeded()
         updatePlayerSpaces(playerCapsule, frameTime: frameTime)
     }
 
     /// Trigger volumes and automatic doors the player stands in, then the world systems.
     private func updatePlayerSpaces(_ capsule: PlayerCapsuleState?, frameTime: Float) {
-        updateTriggerOccupancy(capsule)
-        updateAutomaticDoors(feet: capsule?.feetPosition)
-        advanceWorldSystems(frameTime: frameTime, player: capsule)
-    }
-
-    /// Pushes the current exterior center cell's XCLR regions to the weather
-    /// feed when they change. Only fires for a resident exterior center: the
-    /// interior path returns before this (regions left unchanged — weather is
-    /// exterior-only, so entering a building keeps the exterior region so the
-    /// exit resumes seamlessly), and a center that has not streamed in yet is
-    /// skipped so a brief loading gap never drops region weighting.
-    private func emitCenterRegionsIfChanged() {
-        guard let scene = composition.cells[grid.center] else { return }
-        let regions = scene.regions
-        guard regions != lastEmittedRegions else { return }
-        lastEmittedRegions = regions
-        onCenterRegionsChanged?(regions)
-    }
-
-    /// At most one build per frame. First loads go before world-state
-    /// rebuilds, so a new cell still arrives center-out. The world-state
-    /// snapshot is taken here, the last main-thread moment before the build
-    /// leaves for the serial runner.
-    private func dispatchNextBuild() {
-        guard
-            transitionInFlight == nil,
-            interiorScene == nil,
-            activeBuild == nil,
-            pending.isEmpty
-        else { return }
-        if !requests.isEmpty {
-            let coordinate = requests.removeFirst()
-            activeBuild = coordinate
-            runner.enqueue(coordinate, state: stateSource())
-            return
-        }
-        dispatchNextRebuild()
-    }
-
-    /// Takes the first rebuild request the core still accepts. A request whose
-    /// cell stopped being resident (unloaded, or its first build has not
-    /// landed yet) is dropped here rather than dispatched; for the unloaded
-    /// case that is the cancellation, and for the not-yet-resident case the
-    /// integration of the first build re-queues it against the fresher state.
-    private func dispatchNextRebuild() {
-        while !rebuildRequests.isEmpty {
-            let coordinate = rebuildRequests.removeFirst()
-            guard core.beginRebuild(coordinate) else { continue }
-            activeBuild = coordinate
-            runner.enqueue(coordinate, state: stateSource())
-            return
-        }
+        triggers.updateTriggerOccupancy(capsule)
+        transitions.updateAutomaticDoors(feet: capsule?.feetPosition)
+        navigation.advanceWorldSystems(frameTime: frameTime, player: capsule)
     }
 
     // MARK: - Integration
-
-    /// Drains completed builds, folding each into the core. Void / failed /
-    /// stale outcomes are cheap (no recompose) and drained freely; the first
-    /// drawable success becomes resident and stops the drain -- that is the
-    /// per-frame budget of one recompose. Returns whether a cell was
-    /// integrated (composition changed). Remaining successes wait for the
-    /// next frame.
-    public func integrateOneBuild() -> Bool {
-        while !pending.isEmpty {
-            let entry = pending.removeFirst()
-            requests.removeAll { $0 == entry.coordinate }
-            switch entry.result {
-            case let .success(scene):
-                // A rebuild must not read as a fresh attach. `integrate` clears
-                // `rebuilding`, so read it first.
-                let isRebuild = core.rebuilding.contains(entry.coordinate)
-                let decision = core.integrate(coordinate: entry.coordinate, kind: .success)
-                if decision == .integrated {
-                    requeueRebuildIfStateMoved(entry.coordinate, scene: scene)
-                    if coverageTransitionActive {
-                        if let replaced = stagedCells.updateValue(scene, forKey: entry.coordinate) {
-                            evictUnused(replaced.assets)
-                        }
-                        // Staged offscreen: announced when the transition commits.
-                        return false
-                    }
-                    if let replaced = composition.setCell(scene, at: entry.coordinate) {
-                        evictUnused(replaced.assets)
-                    }
-                    emitCellAttached(scene, firstIntegration: !isRebuild)
-                    return true
-                }
-                if decision == .discardedStale {
-                    evictUnused(scene.assets)
-                }
-            // Stale success (unloaded mid-flight) -- drop, keep draining.
-            case let .failure(error):
-                let kind: CellStreamCore.BuildKind = Self.isVoid(error) ? .void : .failure
-                let decision = core.integrate(coordinate: entry.coordinate, kind: kind)
-                log(coordinate: entry.coordinate, decision: decision, error: error)
-            }
-        }
-        return false
-    }
-
-    /// A void slot (no CELL at the grid position) throws `cellNotFound`;
-    /// everything else is a genuine build failure.
-    private static func isVoid(_ error: any Error) -> Bool {
-        guard let cellError = error as? CellSceneError else { return false }
-        if case .cellNotFound = cellError {
-            return true
-        }
-        return false
-    }
 }
 
-extension CellStreamer {
-    private func log(
-        coordinate: CellCoordinate,
-        decision: CellStreamCore.IntegrationResult,
-        error: any Error
-    ) {
-        let position = "(\(coordinate.x),\(coordinate.y))"
-        switch decision {
-        case .recordedVoid:
-            Self.logger.debug("[INFO] cell \(position, privacy: .public) void, not retried")
-        case .recordedFailed:
-            let reason = String(describing: error)
-            Self.logger.warning(
-                """
-                [WARNING] cell \(position, privacy: .public) build failed, \
-                not retried: \(reason, privacy: .public)
-                """
-            )
-        case .discardedStale, .integrated:
-            break
-        }
-    }
-
-    /// Recomposes the resident cells and hands the scene to the sink. The
-    /// first recompose that has drawable bounds frames the camera; all later
-    /// ones pass nil.
-    private func recomposeAndSink() {
-        let scene = viewScene()
-        var camera: SceneCamera?
-        if !hasSeededCamera, let bounds = composition.composedBounds() {
-            camera = SceneCamera.framing(bounds: bounds)
-            hasSeededCamera = true
-        }
-        sink(scene, camera)
-        logFootprint()
-    }
-}
+extension CellStreamer {}
 
 // MARK: - Worldspace changes
 
@@ -471,97 +259,155 @@ extension CellStreamer {
     public func enterWorldspace(_ editorID: String, camera: SceneCamera) {
         if let previous = interiorScene {
             interiorScene = nil
-            interiorSourceDoor = nil
+            doorState.interiorSourceDoor = nil
             interiorMutationSequence = 0
-            emitCellDetached(previous)
-            evictUnused(previous.assets)
+            triggers.emitCellDetached(previous)
+            coverage.evictUnused(previous.assets)
         }
-        updateInteractionTarget(ray: nil)
+        residents.updateInteractionTarget(ray: nil)
         runner.enqueueWorldspaceChange(editorID)
         switchExterior(to: editorID, at: camera.walkFeetPosition ?? camera.eye)
         hasSeededCamera = true
-        sink(viewScene(), camera)
-        invalidateAmbienceContext()
-        invalidateMusicContext()
+        sink(props.viewScene(), camera)
+        ambience.invalidateAmbienceContext()
+        ambience.invalidateMusicContext()
     }
 
     /// Drops every exterior cell, staged cell, and the distant ring, then
     /// recenters the grid at `position` in `editorID`. The runner must already
     /// build in `editorID`, or have that change queued.
     func switchExterior(to editorID: String, at position: SIMD3<Float>) {
-        resetExterior(at: position)
+        builds.resetExterior(at: position)
         worldspaceEditorID = editorID
-        onWorldspaceChanged(editorID)
+        events.onWorldspaceChanged(editorID)
     }
 
     /// Starts the exterior at `position` while no cell has framed the view yet,
     /// so a start picked in the main menu loads there and not at the launch cell.
     public func moveStart(to position: SIMD3<Float>) {
         guard !hasSeededCamera, activeBuild == nil, requestedLODCenter == nil else { return }
-        resetExterior(at: position)
+        builds.resetExterior(at: position)
         hasSeededCamera = true
-    }
-
-    private func resetExterior(at position: SIMD3<Float>) {
-        var departed = CellAssets()
-        for coordinate in composition.coordinates {
-            guard let removed = composition.removeCell(at: coordinate) else { continue }
-            emitCellDetached(removed)
-            departed.meshKeys.formUnion(removed.assets.meshKeys)
-            departed.textureKeys.formUnion(removed.assets.textureKeys)
-        }
-        let staged = Array(stagedCells.values)
-        stagedCells.removeAll()
-        if let lod = composition.setDistantLOD(nil) {
-            departed.meshKeys.formUnion(lod.assets.meshKeys)
-            departed.textureKeys.formUnion(lod.assets.textureKeys)
-        }
-        for scene in pending
-            .compactMap({ element in attempt { try element.result.get() } }) + staged
-        {
-            departed.meshKeys.formUnion(scene.assets.meshKeys)
-            departed.textureKeys.formUnion(scene.assets.textureKeys)
-        }
-        pending.removeAll()
-        requests.removeAll()
-        rebuildRequests.removeAll()
-        cellMutationSequence.removeAll()
-        core = CellStreamCore()
-        requestedLODCenter = nil
-        settledLODCenter = nil
-        largeReferenceRequestCenter = nil
-        largeReferenceSettledCenter = nil
-        coverageTransitionActive = false
-        lastEmittedRegions = nil
-        grid = CellGridManager(initialPosition: position, radius: grid.radius)
-        evictUnused(departed)
-    }
-
-    /// False for a result built in a worldspace the exterior has left. Its
-    /// assets go back for eviction.
-    private func builtHere(_ entry: CellBuildResult) -> Bool {
-        guard let worldspace = entry.worldspaceEditorID, worldspace != worldspaceEditorID else {
-            return true
-        }
-        if case let .success(scene) = entry.result {
-            evictUnused(scene.assets)
-        }
-        return false
-    }
-
-    private func builtHere(_ entry: DistantLODBuildResult) -> Bool {
-        guard let worldspace = entry.worldspaceEditorID, worldspace != worldspaceEditorID else {
-            return true
-        }
-        if case let .success(scene?) = entry.result {
-            evictUnused(scene.assets)
-        }
-        return false
     }
 }
 
 extension CellStreamer {
     public func noteDoorTransitionFailure() {
-        doorTransitionFailureCount += 1
+        doorState.doorTransitionFailureCount += 1
     }
+}
+
+extension CellStreamer {
+    public var actors: ActorSteps {
+        ActorSteps(streamer: self)
+    }
+
+    public var residents: ResidentSteps {
+        ResidentSteps(streamer: self)
+    }
+
+    public var collision: CollisionSteps {
+        CollisionSteps(streamer: self)
+    }
+
+    public var physics: PhysicsSteps {
+        PhysicsSteps(streamer: self)
+    }
+
+    public var transitions: TransitionSteps {
+        TransitionSteps(streamer: self)
+    }
+
+    public var runtimeStates: RuntimeStateSteps {
+        RuntimeStateSteps(streamer: self)
+    }
+
+    public var props: PropSteps {
+        PropSteps(streamer: self)
+    }
+
+    public var coverage: CoverageSteps {
+        CoverageSteps(streamer: self)
+    }
+
+    public var triggers: TriggerSteps {
+        TriggerSteps(streamer: self)
+    }
+
+    public var navigation: NavigationSteps {
+        NavigationSteps(streamer: self)
+    }
+
+    public var builds: BuildSteps {
+        BuildSteps(streamer: self)
+    }
+
+    public var ambience: AmbienceSteps {
+        AmbienceSteps(streamer: self)
+    }
+
+    /// The NPC movers: walking, facing, resting, riding, and their saved state.
+    public struct ActorSteps {
+        let streamer: CellStreamer
+    }
+
+    /// The resident references, the interaction target, and activation.
+    public struct ResidentSteps {
+        let streamer: CellStreamer
+    }
+
+    /// Ground, water, and collision queries against the resident cells.
+    public struct CollisionSteps {
+        let streamer: CellStreamer
+    }
+
+    /// The dynamic bodies, water, and the moving collision of a frame.
+    public struct PhysicsSteps {
+        let streamer: CellStreamer
+    }
+
+    /// Door transitions, worldspace changes, and automatic doors.
+    public struct TransitionSteps {
+        let streamer: CellStreamer
+    }
+
+    /// The saved world state of resident references, enable parents, and hazards.
+    public struct RuntimeStateSteps {
+        let streamer: CellStreamer
+    }
+
+    /// Actor props and animated objects.
+    public struct PropSteps {
+        let streamer: CellStreamer
+    }
+
+    /// Which cells must load, in which order, and the counts that show it.
+    public struct CoverageSteps {
+        let streamer: CellStreamer
+    }
+
+    /// Trigger volumes and the Papyrus events of resident cells.
+    public struct TriggerSteps {
+        let streamer: CellStreamer
+    }
+
+    /// Path finding over the resident navigation meshes, and its overlay.
+    public struct NavigationSteps {
+        let streamer: CellStreamer
+    }
+
+    /// The music and ambient sound of the cells around the player.
+    /// The build pipeline: dispatch, integrate, and recompose the resident cells.
+    public struct BuildSteps {
+        let streamer: CellStreamer
+    }
+
+    public struct AmbienceSteps {
+        let streamer: CellStreamer
+    }
+}
+
+/// The NPC movement engine, a part of the actor part.
+struct CellNPCMovers {
+    let streamer: CellStreamer
 }

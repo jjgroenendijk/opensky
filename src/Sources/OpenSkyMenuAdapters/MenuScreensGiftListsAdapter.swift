@@ -57,7 +57,8 @@ extension MenuScreensGiftListsAdapter {
     ) -> [ItemListCategory] {
         guard
             let runtime = game.inventory.runtime?.inventory,
-            let giver = request.giving ? .player : game.streamer.inventoryHolder(of: actor)
+            let giver = request.giving ? .player : game.streamer.residents
+                .inventoryHolder(of: actor)
         else { return [] }
         let rows = runtime.inventory(of: giver).stacks
             .filter { $0.item != runtime.goldFormID }
@@ -87,7 +88,7 @@ extension MenuScreensGiftListsAdapter {
     public func give(_ item: FormID, actor: ReferenceKey, giving: Bool) -> String {
         guard
             let runtime = game.inventory.runtime?.inventory,
-            let other = game.streamer.inventoryHolder(of: actor)
+            let other = game.streamer.residents.inventoryHolder(of: actor)
         else { return "No inventory" }
         let name = game.inventory.name(of: item)
         do {

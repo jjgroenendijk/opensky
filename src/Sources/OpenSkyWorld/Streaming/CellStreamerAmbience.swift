@@ -21,26 +21,26 @@ nonisolated public struct AmbienceKey: Hashable, Sendable {
     let acousticSpace: UInt32?
 }
 
-extension CellStreamer {
+extension CellStreamer.AmbienceSteps {
     /// Resolves the streamer's current center cell into an ambience key, and
     /// emits a fresh `AmbienceContext` when it differs from the previous one.
     /// Called from update() and apply(transition:).
     public func emitAmbienceContextIfNeeded() {
         let key = currentAmbienceKey()
-        guard key != lastEmittedAmbienceKey else { return }
-        lastEmittedAmbienceKey = key
-        onAmbienceContextChanged?(currentAmbienceContext(key: key))
+        guard key != streamer.events.lastEmittedAmbienceKey else { return }
+        streamer.events.lastEmittedAmbienceKey = key
+        streamer.events.onAmbienceContextChanged?(currentAmbienceContext(key: key))
     }
 
     /// Forces a re-emit on the next call. Used after a transition that swaps
     /// scenes without changing the key (e.g. an interior re-entered with the
     /// same FormID and a fresh ASPC resolution).
     public func invalidateAmbienceContext() {
-        lastEmittedAmbienceKey = nil
+        streamer.events.lastEmittedAmbienceKey = nil
     }
 
     private func currentAmbienceKey() -> AmbienceKey {
-        if let interiorScene {
+        if let interiorScene = streamer.interiorScene {
             return AmbienceKey(
                 isInterior: true,
                 interiorFormID: interiorCellFormID(in: interiorScene),
@@ -49,8 +49,8 @@ extension CellStreamer {
                 acousticSpace: interiorScene.acousticSpace?.rawValue
             )
         }
-        let center = grid.center
-        let scene = composition.cells[center]
+        let center = streamer.grid.center
+        let scene = streamer.composition.cells[center]
         return AmbienceKey(
             isInterior: false,
             interiorFormID: nil,
@@ -68,7 +68,7 @@ extension CellStreamer {
                 isInterior: true
             )
         }
-        let regions = (composition.cells[grid.center]?.regions) ?? []
+        let regions = (streamer.composition.cells[streamer.grid.center]?.regions) ?? []
         return AmbienceContext(
             regions: regions,
             acousticSpace: nil,

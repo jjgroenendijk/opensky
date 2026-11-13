@@ -52,7 +52,7 @@ struct CrimeWorldTests {
         #expect(adapter.cellOwnership(at: Self.cell) == nil)
         #expect(adapter.cellTrespassFlags(at: Self.cell) == CellTrespassFlags())
         #expect(adapter.cellLocationLink(at: Self.cell) == nil)
-        #expect(host.fakeStreamer.residentSceneCalls == [Self.cell, Self.cell, Self.cell])
+        #expect(host.fakeStreamer.residents.residentSceneCalls == [Self.cell, Self.cell, Self.cell])
         #expect(adapter.references != nil)
     }
 

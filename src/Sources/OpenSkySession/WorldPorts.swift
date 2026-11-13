@@ -20,6 +20,10 @@ extension CameraInputState: CameraInputStatePort {}
 extension CellAttachment: CellAttachmentPort {}
 extension CellResetCoordinator: CellResetPort {}
 extension CellStreamer: @MainActor CellStreamerPort {}
+extension CellStreamer.ActorSteps: @MainActor CellStreamerActorsPort {}
+extension CellStreamer.CollisionSteps: @MainActor CellStreamerCollisionPort {}
+extension CellStreamer.ResidentSteps: @MainActor CellStreamerResidentsPort {}
+extension CellStreamerEvents: @MainActor CellStreamerEventsPort {}
 extension GameSession: GameSessionPort {}
 extension SessionAudio: SessionAudioPort {}
 extension SessionMotion: SessionMotionPort {}

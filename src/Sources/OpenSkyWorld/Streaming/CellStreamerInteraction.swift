@@ -3,163 +3,23 @@
 
 import OpenSkyActorPresentation
 public import OpenSkyCells
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyPhysics
+import OpenSkyPhysics
 import OpenSkyPlayer
-public import OpenSkyRenderCore
+import OpenSkyRenderCore
 public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 import simd
 
-extension CellStreamer {
-    public func sampleTerrain(at position: SIMD2<Float>) -> TerrainGroundSample? {
-        guard interiorScene == nil else { return nil }
-        return composition.sampleTerrain(at: position)
-    }
-
-    /// Water-surface height for the locomotion bridge's swim test.
-    public func sampleWaterHeight(at position: SIMD2<Float>) -> Float? {
-        if let interiorScene {
-            return [interiorScene.waterVolumes].water(at: SIMD3(
-                position,
-                CellSceneComposition.anyHeight
-            ))?.surface
-        }
-        return composition.sampleWaterHeight(at: position)
-    }
-
-    /// The water at a point: its surface, its current, and its type.
-    public func water(at point: SIMD3<Float>) -> WaterReading? {
-        if let interiorScene {
-            return [interiorScene.waterVolumes].water(at: point)
-        }
-        return composition.water(at: point)
-    }
-
-    /// Every collision candidate overlapping `bounds`: the per-cell static geometry
-    /// plus the simulated bodies at their current pose, as ordinary placed shapes.
-    /// Static shapes come first, for deterministic tie-breaks.
-    public func collisionCandidates(
-        overlapping bounds: ModelBounds
-    ) -> [StaticCollisionShape] {
-        staticCollisionCandidates(overlapping: bounds)
-            + dynamicBodies.placedShapes(overlapping: bounds)
-    }
-
-    /// What a character's capsule collides with: the same, without the light clutter
-    /// a character walks through.
-    public func characterCollisionCandidates(
-        overlapping bounds: ModelBounds
-    ) -> [StaticCollisionShape] {
-        staticCollisionCandidates(overlapping: bounds)
-            + dynamicBodies.characterShapes(overlapping: bounds)
-    }
-
-    /// The immutable half alone, which is what the dynamic solver collides its
-    /// bodies against — a body must not be handed itself as an obstacle.
-    public func staticCollisionCandidates(
-        overlapping bounds: ModelBounds
-    ) -> [StaticCollisionShape] {
-        fixedCollisionCandidates(overlapping: bounds)
-            + vehicleCollisionCandidates(overlapping: bounds)
-            + doorCollisionCandidates(overlapping: bounds)
-    }
-
-    /// A character's candidates but the vehicles' moving collision, for an actor that
-    /// rides or pulls a vehicle.
-    func collisionCandidatesIgnoringVehicles(
-        overlapping bounds: ModelBounds
-    ) -> [StaticCollisionShape] {
-        fixedCollisionCandidates(overlapping: bounds)
-            + doorCollisionCandidates(overlapping: bounds)
-            + dynamicBodies.characterShapes(overlapping: bounds)
-    }
-
-    /// The nearest hit over every collision candidate, the per-cell trees walked
-    /// along the ray. The same hit as `collisionCandidates(overlapping: ray.bounds)`.
-    public func nearestCollisionHit(ray: InteractionRay) -> InteractionRayHit? {
-        InteractionRaycaster.nearestHit(
-            ray: ray,
-            sets: fixedCollisionSets,
-            shapes: vehicleCollisionCandidates(overlapping: ray.bounds)
-                + doorCollisionCandidates(overlapping: ray.bounds)
-                + dynamicBodies.placedShapes(overlapping: ray.bounds)
-        )
-    }
-
-    /// Where a straight-down ray first meets fixed or door collision, for ground the
-    /// terrain does not cover, such as a city cell that hides its terrain quadrants.
-    public func topCollisionSurface(at position: SIMD2<Float>) -> SIMD3<Float>? {
-        let column = ModelBounds(
-            min: SIMD3(position - 0.01, -InteractionRaycaster.surfaceCeiling),
-            max: SIMD3(position + 0.01, InteractionRaycaster.surfaceCeiling)
-        )
-        return InteractionRaycaster.topSurface(
-            at: position,
-            sets: fixedCollisionSets,
-            shapes: doorCollisionCandidates(overlapping: column)
-        )
-    }
-
-    /// Whether the static half, as `staticCollisionCandidates` holds it, blocks the ray.
-    public func staticCollisionBlocks(ray: InteractionRay) -> Bool {
-        InteractionRaycaster.hasHit(
-            ray: ray,
-            sets: fixedCollisionSets,
-            shapes: vehicleCollisionCandidates(overlapping: ray.bounds)
-                + doorCollisionCandidates(overlapping: ray.bounds)
-        )
-    }
-
-    private var fixedCollisionSets: [StaticCollisionSet] {
-        interiorScene.map { [$0.staticCollision] } ?? composition.residentCollisionSets
-    }
-
-    private func fixedCollisionCandidates(
-        overlapping bounds: ModelBounds
-    ) -> [StaticCollisionShape] {
-        if let collision = interiorScene?.staticCollision {
-            return collision.candidates(overlapping: bounds)
-        }
-        return composition.collisionCandidates(overlapping: bounds)
-    }
-
-    /// Each vehicle follower's collision at its live pose; at the build's pose until
-    /// the vehicle pass first moves it.
-    public func vehicleCollisionCandidates(
-        overlapping bounds: ModelBounds
-    ) -> [StaticCollisionShape] {
-        let vehicles = interiorScene.map(\.vehicleCollision)
-            ?? composition.cells.values.flatMap(\.vehicleCollision)
-        return vehicles.flatMap { vehicle in
-            vehicle.shapes(
-                at: npcMovementState.vehiclePoses[vehicle.reference] ?? vehicle.placement,
-                overlapping: bounds
-            )
-        }
-    }
-
-    /// Each sequence door's collision with its leaves where the door coordinator put them.
-    public func doorCollisionCandidates(
-        overlapping bounds: ModelBounds
-    ) -> [StaticCollisionShape] {
-        let doors = interiorScene.map(\.doorCollision)
-            ?? composition.cells.values.flatMap(\.doorCollision)
-        return doors.flatMap { door in
-            door.shapes(
-                leafDeltas: sequenceDoorLeaves[door.reference.rawValue], overlapping: bounds
-            )
-        }
-    }
-
+extension CellStreamer.ResidentSteps {
     public func updateInteractionTarget(ray: InteractionRay?) {
         let pick = ray.map(pickInteraction(ray:)) ?? (target: nil, speaker: nil)
-        talk.speaker = pick.speaker
-        guard pick.target != interactionTarget else { return }
-        interactionTarget = pick.target
-        onInteractionTargetChanged?(pick.target)
+        streamer.talk.speaker = pick.speaker
+        guard pick.target != streamer.interactionTarget else { return }
+        streamer.interactionTarget = pick.target
+        streamer.events.onInteractionTargetChanged?(pick.target)
     }
 
     /// What one view ray points at: the nearest activatable object, or the nearest
@@ -168,7 +28,7 @@ extension CellStreamer {
     private func pickInteraction(
         ray: InteractionRay
     ) -> (target: InteractionTarget?, speaker: ReferenceKey?) {
-        let hit = nearestCollisionHit(ray: ray)
+        let hit = streamer.collision.nearestCollisionHit(ray: ray)
         let solid = hit.flatMap { hit in
             activeInteraction(reference: hit.reference).flatMap {
                 $0.automaticArea == nil ? $0 : nil
@@ -180,11 +40,11 @@ extension CellStreamer {
         }
         guard
             let actor = TalkTargetPicker.nearest(
-                ray: ray, candidates: talk.candidateSource?(ray) ?? []
+                ray: ray, candidates: streamer.talk.candidateSource?(ray) ?? []
             ),
             actor.distance < (hit?.distance ?? .greatestFiniteMagnitude)
         else {
-            return (solid ?? nearestAutomaticDoor(to: ray.origin), nil)
+            return (solid ?? streamer.transitions.nearestAutomaticDoor(to: ray.origin), nil)
         }
         return (Self.talkTarget(actor), actor.candidate.key)
     }
@@ -219,18 +79,18 @@ extension CellStreamer {
 
     /// Every activatable reference in the loaded cells. An interior replaces the exterior.
     public var residentInteractions: [PlacedInteraction] {
-        if let interiorScene {
+        if let interiorScene = streamer.interiorScene {
             return Array(interiorScene.interactions.values)
         }
-        return composition.cells.values.flatMap(\.interactions.values)
+        return streamer.composition.cells.values.flatMap(\.interactions.values)
     }
 
     /// Every runtime reference in the loaded cells, in no fixed order.
     public var residentReferences: [RuntimeReferenceEntry] {
-        if let interiorScene {
+        if let interiorScene = streamer.interiorScene {
             return interiorScene.references.sortedEntries()
         }
-        return composition.cells.values.flatMap { $0.references.sortedEntries() }
+        return streamer.composition.cells.values.flatMap { $0.references.sortedEntries() }
     }
 
     public func activateChildren(of key: ReferenceKey) -> [ActivateChild] {
@@ -243,36 +103,37 @@ extension CellStreamer {
     }
 
     private func activeInteraction(reference: FormID) -> PlacedInteraction? {
-        if let interiorScene {
+        if let interiorScene = streamer.interiorScene {
             return interiorScene.interactions[reference]
         }
-        return composition.interaction(reference: reference)
+        return streamer.composition.interaction(reference: reference)
     }
 
     /// Full decoded record behind a reference the player is looking at or
     /// otherwise addressing. An interior scene replaces the
     /// exterior composition entirely, so it answers alone when present.
     public func referenceEntry(formID: FormID) -> RuntimeReferenceEntry? {
-        if let interiorScene {
+        if let interiorScene = streamer.interiorScene {
             return interiorScene.references.entry(for: formID)
         }
-        return composition.referenceEntry(formID: formID)
+        return streamer.composition.referenceEntry(formID: formID)
     }
 
     public func referenceEntry(key: ReferenceKey) -> RuntimeReferenceEntry? {
-        if let interiorScene {
+        if let interiorScene = streamer.interiorScene {
             return interiorScene.references[key]
         }
-        return composition.referenceEntry(key: key)
+        return streamer.composition.referenceEntry(key: key)
     }
 
     public func residentEntries() -> [RuntimeReferenceEntry] {
-        interiorScene?.references.sortedEntries() ?? composition.referenceEntries()
+        streamer.interiorScene?.references.sortedEntries() ?? streamer.composition
+            .referenceEntries()
     }
 
     public func pluginPlacement(of key: ReferenceKey) -> PluginPlacement? {
         guard
-            let placedRecords, let entry = placedRecords.entry(for: key),
+            let placedRecords = streamer.placedRecords, let entry = placedRecords.entry(for: key),
             let home = placedRecords.home(of: entry)
         else { return nil }
         return PluginPlacement(entry: entry, home: home)
@@ -281,18 +142,19 @@ extension CellStreamer {
     /// One resident ACHR in constant time. An interior scene replaces the
     /// exterior composition.
     public func residentActorPlacement(key: ReferenceKey) -> ResidentActorPlacement? {
-        if let interiorActorPlacements {
+        if let interiorActorPlacements = streamer.interiorActorPlacements {
             return interiorActorPlacements[key]
         }
-        return composition.actorPlacements[key]
+        return streamer.composition.actorPlacements[key]
     }
 
     /// One entry of `residentActorEntries()` in constant time.
     public func residentActorEntry(key: ReferenceKey) -> RuntimeReferenceEntry? {
-        if let interiorScene {
-            return interiorActorPlacements?[key] == nil ? nil : interiorScene.references[key]
+        if let interiorScene = streamer.interiorScene {
+            return streamer.interiorActorPlacements?[key] == nil ? nil : interiorScene
+                .references[key]
         }
-        return composition.actorEntry(key: key)
+        return streamer.composition.actorEntry(key: key)
     }
 
     /// The resident ACHR closest to `position`, or nil when none is loaded. The
@@ -307,30 +169,30 @@ extension CellStreamer {
     /// Every resident ACHR, deterministically ordered: the set actor-value
     /// regeneration advances. An interior scene replaces the exterior composition.
     public func residentActorEntries() -> [RuntimeReferenceEntry] {
-        interiorScene?.references.sortedActorEntries ?? composition.actorEntries()
+        streamer.interiorScene?.references.sortedActorEntries ?? streamer.composition.actorEntries()
     }
 
     /// Every resident cell's built scene: the interior alone, or the loaded exterior cells.
     public var residentScenes: [CellScene] {
-        if let interiorScene {
+        if let interiorScene = streamer.interiorScene {
             return [interiorScene]
         }
-        return Array(composition.cells.values)
+        return Array(streamer.composition.cells.values)
     }
 
     /// The built scene for one resident cell, or nil. It gives a cell's `XOWN` owner
     /// and `XLCN` link. An interior scene replaces the exterior composition.
     public func residentScene(at location: CellSceneLocation) -> CellScene? {
-        if let interiorScene {
+        if let interiorScene = streamer.interiorScene {
             return interiorScene.location == location ? interiorScene : nil
         }
-        return composition.cells.values.first { $0.location == location }
+        return streamer.composition.cells.values.first { $0.location == location }
     }
 
     /// Snapshot index for live package-condition evaluation. Unlike the actor
     /// list, this includes disabled REFRs that an explicit run-on may name.
     public func residentReferenceIndex() -> RuntimeReferenceIndex {
-        interiorScene?.references ?? composition.mergedReferenceIndex()
+        streamer.interiorScene?.references ?? streamer.composition.mergedReferenceIndex()
     }
 
     private func distanceSquared(
@@ -346,7 +208,8 @@ extension CellStreamer {
     /// resident; the readout tells those apart.
     public func appearanceSkipReasons(forActor formID: FormID) -> [String] {
         let prefix = "ACHR \(formID): "
-        let summaries = interiorScene.map { [$0.summary] } ?? composition.actorSummaries()
+        let summaries = streamer.interiorScene.map { [$0.summary] } ?? streamer.composition
+            .actorSummaries()
         return summaries
             .flatMap(\.actorAppearanceSkipReasons)
             .filter { $0.hasPrefix(prefix) }
@@ -356,14 +219,14 @@ extension CellStreamer {
     /// Which resident cell holds a reference, so a Papyrus world write can be
     /// attributed to one cell instead of every resident one.
     public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
-        if let interiorScene {
+        if let interiorScene = streamer.interiorScene {
             return interiorScene.references[key] == nil ? nil : interiorScene.location
         }
-        return composition.cellLocation(of: key)
+        return streamer.composition.cellLocation(of: key)
     }
 
     public func activateInteractionTarget() {
-        guard let interactionTarget else { return }
+        guard let interactionTarget = streamer.interactionTarget else { return }
         activate(interactionTarget)
     }
 
@@ -371,44 +234,48 @@ extension CellStreamer {
     /// talk, and door. The lockpicking menu calls this again after a lock opens, and
     /// the perk choice menu with `offeringPerkChoices` false.
     public func activate(_ target: InteractionTarget, offeringPerkChoices: Bool = true) {
-        if let refusal = activationGate.refusal(for: target) {
-            activationGate.refusals(ActivationRefusalEvent(target: target, refusal: refusal))
+        if let refusal = streamer.activationGate.refusal(for: target) {
+            streamer.activationGate.refusals(ActivationRefusalEvent(
+                target: target,
+                refusal: refusal
+            ))
             return
         }
-        if offeringPerkChoices, activationGate.perkChoices?(target) == true {
+        if offeringPerkChoices, streamer.activationGate.perkChoices?(target) == true {
             return
         }
-        onInteraction(InteractionEvent(target: target))
+        streamer.events.onInteraction(InteractionEvent(target: target))
         // After the plain event, so an activated actor reaches the audio and
         // Papyrus subscribers in the same order an activated door does before
         // anything opens a menu on top of the world.
         if
             let event = TalkActivationEvent(
                 interaction: target.interaction,
-                pickedSpeaker: talk.speaker,
+                pickedSpeaker: streamer.talk.speaker,
                 placedKey: { referenceEntry(formID: target.interaction.reference)?.key }
             )
         {
-            talk.activations(event)
+            streamer.talk.activations(event)
         }
         guard
             target.interaction.action == .open,
-            requestDoorTransition(activeDoor(reference: target.interaction.reference))
+            streamer.transitions
+                .requestDoorTransition(activeDoor(reference: target.interaction.reference))
         else { return }
-        doorTransitionHold = max(0, doors.teleportDelay)
-        doorMotionInteraction = target.interaction
-        onLoadDoorUsed?(target.interaction.reference)
-        onInteractionAnimation?(InteractionAnimationEvent(
+        streamer.doorState.doorTransitionHold = max(0, streamer.doorState.doors.teleportDelay)
+        streamer.doorState.doorMotionInteraction = target.interaction
+        streamer.events.onLoadDoorUsed?(target.interaction.reference)
+        streamer.events.onInteractionAnimation?(InteractionAnimationEvent(
             interaction: target.interaction,
             phase: .motionStarted
         ))
     }
 
     private func activeDoor(reference: FormID) -> PlacedDoor? {
-        if let interiorScene {
+        if let interiorScene = streamer.interiorScene {
             return interiorScene.doors.first { $0.reference == reference }
         }
-        return composition.door(reference: reference)
+        return streamer.composition.door(reference: reference)
     }
 }
 

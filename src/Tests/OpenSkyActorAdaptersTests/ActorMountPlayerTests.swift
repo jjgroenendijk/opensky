@@ -23,7 +23,7 @@ struct ActorMountPlayerTests {
         actors.setRiddenHorseSprintAllowed(true)
         #expect(!actors.isRiddenHorseSprinting())
         #expect(actors.playerCarriedWeight() == nil)
-        #expect(host.fakeStreamer.residentActorEntryCalls == [Self.actor])
+        #expect(host.fakeStreamer.residents.residentActorEntryCalls == [Self.actor])
     }
 
     @Test func flightForwardsToStreamerGraphsAndPackages() {
@@ -32,7 +32,7 @@ struct ActorMountPlayerTests {
         flight.releaseFromFlight(Self.actor)
         flight.raiseFlightEvent("TakeOff", on: Self.actor)
         #expect(host.fakePackages.flightArrivedCalls == [Self.actor])
-        #expect(host.fakeStreamer.releaseRiddenActorCalls == [Self.actor])
+        #expect(host.fakeStreamer.actors.releaseRiddenActorCalls == [Self.actor])
         #expect(host.fakeActorGraphs.raiseCalls.map(\.event) == ["TakeOff"])
         #expect(flight.holdForFlight(Self.actor) == nil)
         #expect(flight.flightGroundHeight(at: .zero) == nil)
@@ -145,7 +145,7 @@ struct ActorMountPlayerTests {
         #expect(candidate?.saddleBone == nil)
         #expect(mounts.mountCandidate(.player) == nil)
         #expect(mounts.takeMount(Self.actor, kind: .horse, saddleBone: "SaddleBone") == nil)
-        #expect(host.fakeStreamer.takeRiddenActorCalls == [Self.actor])
+        #expect(host.fakeStreamer.actors.takeRiddenActorCalls == [Self.actor])
         #expect(mounts.dismountOffset(of: Self.actor) == SIMD3(-50, 0, 65))
     }
 

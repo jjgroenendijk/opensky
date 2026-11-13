@@ -18,7 +18,7 @@ public struct CellStreamerNavigationState {
     public var lastPath: NavigationPath?
 }
 
-extension CellStreamer {
+extension CellStreamer.NavigationSteps {
     /// Named frame budget: a crowd may invalidate together after an unload,
     /// but only this many queued paths can consume A* work in one frame.
     public static let maximumNavigationRepathsPerFrame = 2
@@ -27,7 +27,7 @@ extension CellStreamer {
     /// use the queued repath surface below so a crowd cannot spike one frame.
     public func findPath(_ query: NavigationPathQuery) -> NavigationPathResult {
         reconcileNavigation()
-        let result = navigationState.graph.findPath(query)
+        let result = streamer.navigationState.graph.findPath(query)
         rememberNavigationPath(from: result)
         return result
     }
@@ -38,19 +38,19 @@ extension CellStreamer {
         targetMoveTolerance: Float = NavigationPathQuery.defaultTargetMoveTolerance
     ) -> Bool {
         reconcileNavigation()
-        return navigationState.graph.pathIsCurrent(
+        return streamer.navigationState.graph.pathIsCurrent(
             path, target: target, targetMoveTolerance: targetMoveTolerance
         )
     }
 
     public func requestNavigationRepath(_ request: NavigationRepathRequest) {
-        navigationState.repathRequests.removeAll { $0.identifier == request.identifier }
-        navigationState.repathRequests.append(request)
+        streamer.navigationState.repathRequests.removeAll { $0.identifier == request.identifier }
+        streamer.navigationState.repathRequests.append(request)
     }
 
     func advanceWorldSystems(frameTime: Float, player: PlayerCapsuleState?) {
-        advancePhysics(frameTime: frameTime, player: player)
-        advanceNPCMovement(frameTime: frameTime)
+        streamer.physics.advancePhysics(frameTime: frameTime, player: player)
+        streamer.actors.advanceNPCMovement(frameTime: frameTime)
         advanceNavigation()
     }
 
@@ -58,15 +58,15 @@ extension CellStreamer {
         reconcileNavigation()
         let count = min(
             Self.maximumNavigationRepathsPerFrame,
-            navigationState.repathRequests.count
+            streamer.navigationState.repathRequests.count
         )
         guard count > 0 else { return }
-        let requests = Array(navigationState.repathRequests.prefix(count))
-        navigationState.repathRequests.removeFirst(count)
+        let requests = Array(streamer.navigationState.repathRequests.prefix(count))
+        streamer.navigationState.repathRequests.removeFirst(count)
         for request in requests {
-            let result = navigationState.graph.findPath(request.query)
+            let result = streamer.navigationState.graph.findPath(request.query)
             rememberNavigationPath(from: result)
-            navigationState.onRepath?(NavigationRepathResponse(
+            streamer.navigationState.onRepath?(NavigationRepathResponse(
                 identifier: request.identifier,
                 result: result
             ))
@@ -76,24 +76,24 @@ extension CellStreamer {
     /// Adds every newly resident/rebuilt cell and drops every departed one.
     public func reconcileNavigation() {
         let resident = residentNavigationScenes()
-        navigationState.graph.retainCells(Set(resident.keys))
+        streamer.navigationState.graph.retainCells(Set(resident.keys))
         for location in resident.keys.sorted(by: CellSceneLocation.isOrderedBefore) {
             guard
                 let scene = resident[location],
-                navigationState.graph.installedCells[location] != scene.stateSequence
+                streamer.navigationState.graph.installedCells[location] != scene.stateSequence
             else {
                 continue
             }
-            navigationState.graph.setCell(location, scene: scene)
+            streamer.navigationState.graph.setCell(location, scene: scene)
         }
     }
 
     private func residentNavigationScenes() -> [CellSceneLocation: CellScene] {
         var resident: [CellSceneLocation: CellScene] = [:]
-        if let interiorScene, let location = interiorScene.location {
+        if let interiorScene = streamer.interiorScene, let location = interiorScene.location {
             resident[location] = interiorScene
         } else {
-            for scene in composition.cells.values {
+            for scene in streamer.composition.cells.values {
                 guard let location = scene.location else { continue }
                 resident[location] = scene
             }
@@ -104,9 +104,9 @@ extension CellStreamer {
     private func rememberNavigationPath(from result: NavigationPathResult) {
         switch result {
         case let .path(path):
-            navigationState.lastPath = path
+            streamer.navigationState.lastPath = path
         case .miss:
-            navigationState.lastPath = nil
+            streamer.navigationState.lastPath = nil
         }
     }
 }

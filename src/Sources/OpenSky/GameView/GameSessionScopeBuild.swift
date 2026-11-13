@@ -69,12 +69,12 @@ struct GameSessionScopeBuild {
         let provider = stage.data
         scope.streamer.placedRecords = provider.placedRecords
         gameSession.loadedGridRadius = scope.streamer.grid.radius
-        scope.streamer.doors = DoorSettings.resolve(store: provider.gameSettings)
+        scope.streamer.doorState.doors = DoorSettings.resolve(store: provider.gameSettings)
         if let cellRunner = scope.cellRunner {
             gameSession.renderer.attachTextureStreaming(to: cellRunner)
         }
         scope.runtimeState.reloadGlobals()
-        scope.streamer.bind(to: scope.worldState)
+        scope.streamer.runtimeStates.bind(to: scope.worldState)
         registerAssetDrains(gameSession: gameSession)
         registerFrame(gameSession: gameSession)
         registerWorldQueries(gameSession: gameSession, streamer: streamer)
@@ -143,10 +143,10 @@ struct GameSessionScopeBuild {
     private func registerFrame(gameSession: GameSession) {
         // Published inside the frame's own update, so the poses the pass uploads
         // are the ones this frame simulated.
-        scope.streamer.onDynamicPosesChanged = { [weak gameSession] deltas in
+        scope.streamer.events.onDynamicPosesChanged = { [weak gameSession] deltas in
             gameSession?.instancePoses.dynamicDeltas = deltas
         }
-        scope.streamer.onLoadDoorUsed = { [weak scope] door in
+        scope.streamer.events.onLoadDoorUsed = { [weak scope] door in
             scope?.objectAnimationWorld.doors.swingOpen(door.rawValue)
         }
         let input = scope.cameraInput
@@ -156,10 +156,10 @@ struct GameSessionScopeBuild {
         }
         // The center cell's regions feed region-weighted weather selection, on
         // the draw loop's thread.
-        scope.streamer.onCenterRegionsChanged = { [weak gameSession] regions in
+        scope.streamer.events.onCenterRegionsChanged = { [weak gameSession] regions in
             gameSession?.weather?.setRegions(regions)
         }
-        scope.streamer.onInteractionTargetChanged = { [weak scope] target in
+        scope.streamer.events.onInteractionTargetChanged = { [weak scope] target in
             scope?.hud.updateTarget(scope?.inventoryWorld.perks.labelled(target))
         }
         gameSession.worldTick.register(.survivalMode) { [weak scope] _ in
@@ -199,26 +199,27 @@ struct GameSessionScopeBuild {
             frameTime: gameSession.lastCameraDelta
         )
         let walk = gameSession.walkController
-        scope.streamer.recordPlayerSwim(at: walk.feetPosition, isSwimming: walk.isSwimming)
+        scope.streamer.actors.recordPlayerSwim(at: walk.feetPosition, isSwimming: walk.isSwimming)
     }
 
     /// The ground, collision, water, and worldspace the session reads from the streamer.
     private func registerWorldQueries(gameSession: GameSession, streamer: CellStreamer) {
         gameSession.motion.terrainSampler = { [weak streamer] position in
-            streamer?.sampleTerrain(at: position)
+            streamer?.collision.sampleTerrain(at: position)
         }
         gameSession.motion.collisionQuery = { [weak streamer] bounds in
-            streamer?.characterCollisionCandidates(overlapping: bounds) ?? []
+            streamer?.collision.characterCollisionCandidates(overlapping: bounds) ?? []
         }
         gameSession.motion.characterCarry = { [weak streamer] capsule, feet in
             streamer?.dynamicBodies.characterCarry(capsule: capsule, feetPosition: feet) ?? .zero
         }
         gameSession.locomotion.sampleWater = { [weak streamer] position in
-            streamer?.water(at: position)
+            streamer?.collision.water(at: position)
         }
-        scope.streamer.onWorldspaceChanged.register(.weather) { [weak gameSession] editorID in
-            gameSession?.weather?.setWorldspace(editorID: editorID)
-        }
+        scope.streamer.events.onWorldspaceChanged
+            .register(.weather) { [weak gameSession] editorID in
+                gameSession?.weather?.setWorldspace(editorID: editorID)
+            }
     }
 
     /// Settings, key bindings, menu text, sounds, and the frame tick that every menu movie

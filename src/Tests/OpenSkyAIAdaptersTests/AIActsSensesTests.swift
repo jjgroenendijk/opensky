@@ -67,7 +67,7 @@ struct AIActsSensesTests {
             actor: Self.actor
         ) == .failed)
         adapter.worlds.stopPackageActor(Self.actor)
-        #expect(host.fakeStreamer.stopActorCalls == [Self.actor])
+        #expect(host.fakeStreamer.actors.stopActorCalls == [Self.actor])
     }
 
     @Test func candidatesCarryHostilityFlightAndPackages() {
@@ -90,9 +90,9 @@ struct AIActsSensesTests {
 
     @Test func sightIsBlockedOnlyByStaticCollision() {
         #expect(adapter.worlds.perceptionHasLineOfSight(from: .zero, to: .zero))
-        host.fakeStreamer.staticCollisionBlocksResult = true
+        host.fakeStreamer.collision.staticCollisionBlocksResult = true
         #expect(!adapter.worlds.perceptionHasLineOfSight(from: .zero, to: SIMD3(0, 100, 0)))
-        #expect(host.fakeStreamer.staticCollisionBlocksCalls.count == 1)
+        #expect(host.fakeStreamer.collision.staticCollisionBlocksCalls.count == 1)
     }
 
     @Test func sneakingAgainstObserversIsASkillUse() {

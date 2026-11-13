@@ -38,7 +38,7 @@ struct CellStreamerSpawnTests {
         let store = WorldStateStore()
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
-        streamer.bind(to: store)
+        streamer.runtimeStates.bind(to: store)
         let items = try WorldItemRuntime(
             inventory: InventoryRuntime(store: store, baselines: Fixture.resolver()),
             references: streamer
@@ -107,7 +107,7 @@ struct CellStreamerSpawnTests {
         let buildsBeforeDrop = harness.runner.enqueued.count
 
         try Self.drop(harness)
-        #expect(harness.streamer.queuedRebuildCount == 1)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 1)
 
         Self.settle(&harness, at: Self.home)
         #expect(harness.runner.enqueued.count > buildsBeforeDrop)
@@ -125,7 +125,7 @@ struct CellStreamerSpawnTests {
         Self.settle(&harness, at: Self.home)
 
         Self.settle(&harness, at: Self.faraway)
-        #expect(harness.streamer.residentCellCount >= 1)
+        #expect(harness.streamer.coverage.residentCellCount >= 1)
         // Nothing was written while the cell was away.
         #expect(harness.store.dirtyCount == 2)
 
@@ -153,7 +153,7 @@ struct CellStreamerSpawnTests {
         let states = harness.runner.enqueuedStates
         #expect(states.count >= 2)
         #expect(try Self.spawns(#require(states.last), in: Self.home).count == 1)
-        #expect(harness.streamer.queuedRebuildCount == 0)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 0)
     }
 
     // MARK: - Save round trip

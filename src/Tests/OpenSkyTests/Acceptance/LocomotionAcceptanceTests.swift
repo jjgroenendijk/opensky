@@ -204,7 +204,7 @@ struct LocomotionAcceptanceTests {
             at: Chain.interiorPosition,
             interior: true
         )
-        #expect(chain.streamer.isInterior)
+        #expect(chain.streamer.coverage.isInterior)
         #expect(chain.attachedLocations.locations.last == .interior(Chain.interiorCell))
         #expect(chain.feetPosition.isApproximately(Chain.interiorPosition))
 
@@ -222,7 +222,7 @@ struct LocomotionAcceptanceTests {
             at: exterior,
             interior: false
         )
-        #expect(!chain.streamer.isInterior)
+        #expect(!chain.streamer.coverage.isInterior)
         #expect(chain.feetPosition.isApproximately(exterior))
         // Sneak is a mode and deliberately survives a teleport, so the first
         // step back outside resolves the sneak gait again and the graph

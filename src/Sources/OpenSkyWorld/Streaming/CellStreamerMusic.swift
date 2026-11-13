@@ -40,36 +40,37 @@ public struct MusicFeed {
     public init() {}
 }
 
-extension CellStreamer {
+extension CellStreamer.AmbienceSteps {
     /// Resolves the streamer's current center cell into a music key, and emits
     /// a fresh `MusicContext` when it differs from the previous one. Called
     /// from update() and apply(transition:).
     public func emitMusicContextIfNeeded() {
         let key = currentMusicKey()
-        guard key != musicFeed.lastEmittedKey else { return }
-        musicFeed.lastEmittedKey = key
-        onMusicContextChanged?(Self.musicContext(key: key))
+        guard key != streamer.events.musicFeed.lastEmittedKey else { return }
+        streamer.events.musicFeed.lastEmittedKey = key
+        streamer.events.onMusicContextChanged?(Self.musicContext(key: key))
     }
 
     /// Forces a re-emit on the next call, for a scene swap that changes the
     /// music without changing the key (an interior re-entered with the same
     /// FormID after its playlist resolved differently).
     public func invalidateMusicContext() {
-        musicFeed.lastEmittedKey = nil
+        streamer.events.musicFeed.lastEmittedKey = nil
     }
 
     private func currentMusicKey() -> MusicKey {
         let (cellKey, scene) = cellMusicKey()
-        if let last = musicFeed.lastEmittedKey, last.withoutLocation == cellKey {
+        if let last = streamer.events.musicFeed.lastEmittedKey, last.withoutLocation == cellKey {
             return last
         }
         var key = cellKey
-        key.locationMusicType = scene.flatMap { musicFeed.locationMusicType?($0) }?.rawValue
+        key.locationMusicType = scene.flatMap { streamer.events.musicFeed.locationMusicType?($0) }?
+            .rawValue
         return key
     }
 
     private func cellMusicKey() -> (MusicKey, CellScene?) {
-        if let interiorScene {
+        if let interiorScene = streamer.interiorScene {
             let key = MusicKey(
                 isInterior: true,
                 interiorFormID: Self.interiorCellFormID(in: interiorScene),
@@ -81,8 +82,8 @@ extension CellStreamer {
             )
             return (key, interiorScene)
         }
-        let center = grid.center
-        let scene = composition.cells[center]
+        let center = streamer.grid.center
+        let scene = streamer.composition.cells[center]
         let key = MusicKey(
             isInterior: false,
             interiorFormID: nil,

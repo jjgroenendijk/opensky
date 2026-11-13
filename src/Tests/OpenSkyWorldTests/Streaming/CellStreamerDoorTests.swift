@@ -21,7 +21,7 @@ extension CellStreamerTests {
         let runner = ManualCellBuildRunner()
         let streamer = Fixture.makeStreamer(runner: runner, radius: 0)
         var phases: [InteractionAnimationPhase] = []
-        streamer.onInteractionAnimation = { phases.append($0.phase) }
+        streamer.events.onInteractionAnimation = { phases.append($0.phase) }
         streamer.update(cameraPosition: Fixture.center)
         let door = Fixture.door(reference: 0x10, destination: 0x20, position: Fixture.center)
         runner.complete(Fixture.coordinate(0, 0), with: .success(Self.interactiveScene(
@@ -61,9 +61,9 @@ extension CellStreamerTests {
 
         let runner = ManualCellBuildRunner()
         let streamer = Fixture.makeStreamer(runner: runner, radius: 0)
-        streamer.doors.teleportDelay = 0
+        streamer.doorState.doors.teleportDelay = 0
         var phases: [InteractionAnimationPhase] = []
-        streamer.onInteractionAnimation = { phases.append($0.phase) }
+        streamer.events.onInteractionAnimation = { phases.append($0.phase) }
         streamer.update(cameraPosition: Fixture.center)
         let door = Fixture.door(reference: 0x10, destination: 0x20, position: Fixture.center)
         runner.complete(Fixture.coordinate(0, 0), with: .success(Self.interactiveScene(
@@ -85,7 +85,7 @@ extension CellStreamerTests {
 
         let runner = ManualCellBuildRunner()
         let streamer = Fixture.makeStreamer(runner: runner, radius: 0)
-        streamer.doors.teleportDelay = 0
+        streamer.doorState.doors.teleportDelay = 0
         streamer.update(cameraPosition: Fixture.center)
         let outside = Fixture.door(reference: 0x10, destination: 0x20, position: Fixture.center)
         runner.complete(Fixture.coordinate(0, 0), with: .success(Self.interactiveScene(
@@ -97,8 +97,8 @@ extension CellStreamerTests {
         runner.completeDoorTransition(from: FormID(0x10), with: .failure(DoorFailure.broken))
         streamer.update(cameraPosition: Fixture.center)
 
-        #expect(streamer.doorTransitionFailureCount == 1)
-        #expect(!streamer.isInterior)
+        #expect(streamer.doorState.doorTransitionFailureCount == 1)
+        #expect(!streamer.coverage.isInterior)
     }
 
     @Test
@@ -108,7 +108,7 @@ extension CellStreamerTests {
         let streamer = Fixture.makeStreamer(runner: runner, radius: 0) { _, camera in
             cameras.append(camera)
         }
-        streamer.doors.teleportDelay = 0
+        streamer.doorState.doors.teleportDelay = 0
         streamer.update(cameraPosition: Fixture.center)
         let outside = Fixture.door(reference: 0x10, destination: 0x20, position: Fixture.center)
         runner.complete(Fixture.coordinate(0, 0), with: .success(Self.interactiveScene(
@@ -137,7 +137,7 @@ extension CellStreamerTests {
             scene: interior
         )))
         streamer.update(cameraPosition: Fixture.center)
-        #expect(streamer.isInterior)
+        #expect(streamer.coverage.isInterior)
         #expect(cameras.last.flatMap(\.self)?.eye == insidePosition)
 
         let exteriorBuildCount = runner.enqueued.count
@@ -159,7 +159,7 @@ extension CellStreamerTests {
             scene: outsideScene
         )))
         streamer.update(cameraPosition: insidePosition)
-        #expect(!streamer.isInterior)
+        #expect(!streamer.coverage.isInterior)
         #expect(cameras.last.flatMap(\.self)?.eye == Fixture.center)
     }
 

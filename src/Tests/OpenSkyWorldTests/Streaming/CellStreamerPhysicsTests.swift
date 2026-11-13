@@ -135,7 +135,7 @@ struct CellStreamerPhysicsTests {
         )
 
         let bounds = ModelBounds(min: SIMD3(-40, -40, 60), max: SIMD3(40, 40, 140))
-        #expect(streamer.collisionCandidates(overlapping: bounds).count == 1)
-        #expect(streamer.staticCollisionCandidates(overlapping: bounds).isEmpty)
+        #expect(streamer.collision.collisionCandidates(overlapping: bounds).count == 1)
+        #expect(streamer.collision.staticCollisionCandidates(overlapping: bounds).isEmpty)
     }
 }

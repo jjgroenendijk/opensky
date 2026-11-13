@@ -250,7 +250,7 @@ struct AgentPackageReadout {
     /// The movement type the actor's graph names, its speeds, and the shape it collides as.
     func movementReadout(_ key: ReferenceKey) -> AgentJSON {
         let name = game.actorGraphs.movementStateName(of: key)
-        let speeds = game.streamer.npcMovementSpeeds?(key)
+        let speeds = game.streamer.actors.npcMovementSpeeds?(key)
         let scale = game.streamer.npcTransform(for: key)?.scale ?? 1
         let bounds = game.streamer.npcBodyHalfExtents?(key)
         let capsule = bounds.flatMap { PlayerCapsule.upright(halfExtents: $0, scale: scale) }

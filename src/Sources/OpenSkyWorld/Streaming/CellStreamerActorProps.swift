@@ -29,46 +29,46 @@ nonisolated public struct ActorPropDraw {
     }
 }
 
-extension CellStreamer {
+extension CellStreamer.PropSteps {
     /// Shows `prop` on a resident actor, or removes the actor's prop with nil.
     public func setActorProp(_ prop: ActorPropAttachment?, on actor: FormID) {
-        guard actorProps[actor]?.prop != prop else { return }
-        let removed = actorProps.removeValue(forKey: actor)
+        guard streamer.doorState.actorProps[actor]?.prop != prop else { return }
+        let removed = streamer.doorState.actorProps.removeValue(forKey: actor)
         let wasDrawn = removed?.model != nil
         if let prop, let playback = residentActorPlayback(for: actor) {
-            actorProps[actor] = ActorPropDraw(prop: prop)
-            runner.enqueueActorProp(ActorPropRequest(
+            streamer.doorState.actorProps[actor] = ActorPropDraw(prop: prop)
+            streamer.runner.enqueueActorProp(ActorPropRequest(
                 actor: actor, prop: prop, skeletonPath: playback.clip.skeletonMeshPath
             ))
         }
         if let removed {
-            evictUnused(removed.assets)
+            streamer.coverage.evictUnused(removed.assets)
         }
         if wasDrawn {
-            sink(viewScene(), nil)
+            streamer.sink(viewScene(), nil)
         }
     }
 
     /// Takes loaded prop models. Returns true when one became drawable.
     public func integrateActorProps() -> Bool {
         var changed = false
-        for entry in runner.drainCompletedActorProps() {
+        for entry in streamer.runner.drainCompletedActorProps() {
             let actor = entry.request.actor
             // A prop replaced or removed while it loaded is dropped.
-            guard actorProps[actor]?.prop == entry.request.prop else {
-                evictUnused(entry.assets)
+            guard streamer.doorState.actorProps[actor]?.prop == entry.request.prop else {
+                streamer.coverage.evictUnused(entry.assets)
                 continue
             }
             switch entry.result {
             case let .success(model):
-                actorProps[actor]?.model = model
-                actorProps[actor]?.assets = entry.assets
+                streamer.doorState.actorProps[actor]?.model = model
+                streamer.doorState.actorProps[actor]?.assets = entry.assets
                 changed = true
             case let .failure(error):
-                actorProps.removeValue(forKey: actor)
-                evictUnused(entry.assets)
+                streamer.doorState.actorProps.removeValue(forKey: actor)
+                streamer.coverage.evictUnused(entry.assets)
                 let path = entry.request.prop.modelPath
-                Self.logger.warning(
+                CellStreamer.logger.warning(
                     """
                     [WARNING] idle prop \(path, privacy: .public) on \
                     \(actor.description, privacy: .public) did not load: \
@@ -83,8 +83,8 @@ extension CellStreamer {
     /// What the sink draws: the interior, or the resident exterior cells, plus
     /// every loaded prop whose actor is in it.
     public func viewScene() -> RenderScene {
-        let base = interiorScene?.renderScene ?? composition.composedScene()
-        let props = actorProps.sorted { $0.key.rawValue < $1.key.rawValue }
+        let base = streamer.interiorScene?.renderScene ?? streamer.composition.composedScene()
+        let props = streamer.doorState.actorProps.sorted { $0.key.rawValue < $1.key.rawValue }
             .compactMap { actor, draw -> RenderScene? in
                 guard let model = draw.model, let playback = base.actorPlayback(for: actor)
                 else { return nil }
@@ -94,21 +94,22 @@ extension CellStreamer {
     }
 
     private func residentActorPlayback(for actor: FormID) -> ActorAnimationPlayback? {
-        let scenes = interiorScene.map { [$0] } ?? Array(composition.cells.values)
+        let scenes = streamer.interiorScene.map { [$0] } ?? Array(streamer.composition.cells.values)
         return scenes.lazy.compactMap { $0.renderScene.actorPlayback(for: actor) }.first
     }
 }
 
-extension CellStreamer {
+extension CellStreamer.PropSteps {
     /// Drops the props of actors no loaded cell holds and returns their assets. The
     /// idle's own end cannot remove them, because it finds no reference by then.
     func takeDepartedActorProps() -> CellAssets {
-        let scenes = (interiorScene.map { [$0] } ?? []) + Array(composition.cells.values)
+        let scenes = (streamer.interiorScene.map { [$0] } ?? []) +
+            Array(streamer.composition.cells.values)
         var departed = CellAssets()
-        for (actor, draw) in actorProps
+        for (actor, draw) in streamer.doorState.actorProps
             where !scenes.contains(where: { $0.renderScene.actorPlayback(for: actor) != nil })
         {
-            actorProps.removeValue(forKey: actor)
+            streamer.doorState.actorProps.removeValue(forKey: actor)
             departed.meshKeys.formUnion(draw.assets.meshKeys)
             departed.textureKeys.formUnion(draw.assets.textureKeys)
         }
@@ -117,7 +118,7 @@ extension CellStreamer {
 
     /// The keys of every prop that stays, so eviction keeps them.
     var actorPropAssets: CellAssets {
-        actorProps.values.reduce(into: CellAssets()) { assets, draw in
+        streamer.doorState.actorProps.values.reduce(into: CellAssets()) { assets, draw in
             assets.meshKeys.formUnion(draw.assets.meshKeys)
             assets.textureKeys.formUnion(draw.assets.textureKeys)
         }

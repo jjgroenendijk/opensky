@@ -57,7 +57,7 @@ struct InventoryVendorAdapterTests {
     @Test func aMovedMerchantStandsWhereItMoved() throws {
         let moved = ReferenceTransformOverride(position: SIMD3(5, 6, 7), rotation: .zero)
         host.fakeStreamer.referenceEntryKeyResult = try InventoryAdapterFixture.actorEntry()
-        host.fakeStreamer.npcTransformResult = moved
+        host.fakeStreamer.actors.npcTransformResult = moved
         let facts = adapter.vendorPlaceFacts(of: Self.key, for: .nearSelf)
         #expect(facts?.position == SIMD3(5, 6, 7))
     }

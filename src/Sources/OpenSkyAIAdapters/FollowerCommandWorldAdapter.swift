@@ -112,7 +112,7 @@ public final class FollowerCommandWorldAdapter {
         switch game.followerCommands.advanceUseKey(by: delta, isDown: isDown) {
         case .tap:
             if let pressedTarget {
-                game.streamer.activate(pressedTarget)
+                game.streamer.residents.activate(pressedTarget)
             }
             pressedTarget = nil
         case let .hold(follower):

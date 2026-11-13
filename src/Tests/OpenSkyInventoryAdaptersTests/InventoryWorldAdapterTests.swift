@@ -43,7 +43,7 @@ struct InventoryWorldAdapterTests {
 
     @Test func readoutsForwardToTheirPorts() {
         host.fakePlayer.isSneaking = true
-        host.fakeStreamer.appearanceSkipReasonsResult = ["no skeleton"]
+        host.fakeStreamer.residents.appearanceSkipReasonsResult = ["no skeleton"]
         host.fakeCrime.theftBountyResult = 40
         host.fakeMagic.weaponEnchantments.enchantmentLineResult = "Fire Damage"
         #expect(adapter.isPlayerSneaking)

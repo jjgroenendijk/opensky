@@ -198,7 +198,7 @@ final class CombatAcceptanceChain {
         // A body that comes to rest writes its resting pose into the world
         // state, which is what makes settled clutter survive a save. Wired the
         // way `CellStreamer.bind(to:)` wires it.
-        streamer.onBodySettled = { [store] key, transform, placingCell in
+        streamer.events.onBodySettled = { [store] key, transform, placingCell in
             store.set(transform, for: key, in: placingCell)
         }
         try inventory.add(Self.arrowItem, count: 10, to: .player)

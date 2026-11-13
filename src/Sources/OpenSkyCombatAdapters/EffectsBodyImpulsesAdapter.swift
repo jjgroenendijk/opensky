@@ -86,15 +86,15 @@ extension EffectsBodyImpulsesAdapter {
     }
 
     public func waterHeight(at position: SIMD2<Float>) -> Float? {
-        game.streamer.sampleWaterHeight(at: position)
+        game.streamer.collision.sampleWaterHeight(at: position)
     }
 
     public func waterCurrent(at point: SIMD3<Float>) -> SIMD3<Float>? {
-        game.streamer.water(at: point)?.current
+        game.streamer.collision.water(at: point)?.current
     }
 
     public func isDangerousWater(at point: SIMD3<Float>) -> Bool {
-        game.streamer.water(at: point)?.isDangerous ?? false
+        game.streamer.collision.water(at: point)?.isDangerous ?? false
     }
 
     public func raceSize(of actor: ReferenceKey) -> Int {
@@ -150,7 +150,7 @@ extension EffectsBodyImpulsesAdapter {
             return false
         }
         guard actor == .player else {
-            return game.streamer.knockActor(actor, velocity: velocity)
+            return game.streamer.actors.knockActor(actor, velocity: velocity)
         }
         game.gameSession?.knockPlayer(velocity)
         return true
@@ -227,7 +227,8 @@ struct EffectsBodyContacts {
         if let material = touch.material {
             return material
         }
-        return game.streamer.sampleTerrain(at: SIMD2(touch.point.x, touch.point.y))?.material
+        return game.streamer.collision.sampleTerrain(at: SIMD2(touch.point.x, touch.point.y))?
+            .material
     }
 
     /// The body's material names the impact data set; the surface it hit picks the entry,
@@ -276,7 +277,8 @@ struct EffectsRaceReads {
 
     func race(of actor: ReferenceKey) -> Race? {
         guard
-            let base = actor == .player ? nil : game.streamer.residentActorEntry(key: actor)?
+            let base = actor == .player ? nil : game.streamer.residents
+                .residentActorEntry(key: actor)?
                 .placedActor?.base,
             let resolver = game.combatRecords?.actorValueBaselines?.resolver
         else { return nil }

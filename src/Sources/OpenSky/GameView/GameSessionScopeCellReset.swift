@@ -55,17 +55,18 @@ enum GameSessionScopeCellReset {
         gameSession.cellReset = reset
         // The prepare step hands its keys to the enqueue step of the same attach.
         var resetKeys: [ReferenceKey] = []
-        streamer.onCellAttached.register(.resetPrepare) { [weak scope, weak reset] attachment in
+        let events = streamer.events
+        events.onCellAttached.register(.resetPrepare) { [weak scope, weak reset] attachment in
             resetKeys = attachment.isFirstIntegration
                 ? reset?.cellAttached(attachment.scene) ?? [] : []
             scope?.scripts.runtime?.lifecycle.prepareReset(of: resetKeys)
         }
         registerLeveledRolls(store: store, provider: provider, streamer: streamer) { resetKeys }
-        streamer.onCellAttached.register(.resetEnqueue) { [weak scope] _ in
+        streamer.events.onCellAttached.register(.resetEnqueue) { [weak scope] _ in
             scope?.scripts.runtime?.lifecycle.enqueueReset(of: resetKeys)
             resetKeys = []
         }
-        streamer.onCellDetached.register(.reset) { [weak reset, weak store] location in
+        streamer.events.onCellDetached.register(.reset) { [weak reset, weak store] location in
             reset?.cellDetached(location)
             store?.dropEyeTextures(in: location)
         }
@@ -78,13 +79,14 @@ enum GameSessionScopeCellReset {
         resetKeys: @escaping () -> [ReferenceKey]
     ) {
         guard let baselines = provider.inventoryBaselines else { return }
-        streamer.onCellAttached.register(.leveledRolls) { [weak store, weak streamer] attachment in
+        let events = streamer.events
+        events.onCellAttached.register(.leveledRolls) { [weak store, weak streamer] attachment in
             guard attachment.isFirstIntegration, let store else { return }
             let frozen = LeveledRollFreeze.freeze(
                 attachment.scene, level: baselines.leveling.playerLevel.level, in: store
             ) { baselines.rollsLeveledLists(Self.inventoryOwner(of: $0, baselines: baselines)) }
             guard !Set(frozen).isDisjoint(with: resetKeys()) else { return }
-            streamer?.noteStateMutation(
+            streamer?.runtimeStates.noteStateMutation(
                 in: attachment.scene.location, sequence: store.nextJournalSequence
             )
         }

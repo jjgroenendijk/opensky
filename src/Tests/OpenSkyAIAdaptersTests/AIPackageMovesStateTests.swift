@@ -22,8 +22,8 @@ struct AIPackageMovesStateTests {
     }
 
     @Test func navigationForwardsMovesAndHostility() {
-        host.fakeStreamer.moveActorResult = .started
-        host.fakeStreamer.stopActorResult = true
+        host.fakeStreamer.actors.moveActorResult = .started
+        host.fakeStreamer.actors.stopActorResult = true
         host.fakeFactions.hostilityResult = .hostile
         #expect(adapter.worlds.moveActor(Self.actor, to: .zero) == .started)
         #expect(adapter.worlds.stopActor(Self.actor))
@@ -48,11 +48,11 @@ struct AIPackageMovesStateTests {
         adapter.worlds.dismountPackageActor(Self.actor)
         #expect(host.fakeVehicleWorld.detachCalls == [Self.actor])
         #expect(host.fakeNpcAnimation.dismountCalls == [Self.actor])
-        #expect(host.fakeStreamer.stopActorCalls.isEmpty)
+        #expect(host.fakeStreamer.actors.stopActorCalls.isEmpty)
     }
 
     @Test func aLiveTransformPlacesTheActor() {
-        host.fakeStreamer.npcTransformResult = ReferenceTransformOverride(position: .one)
+        host.fakeStreamer.actors.npcTransformResult = ReferenceTransformOverride(position: .one)
         #expect(adapter.worlds.packageActorPosition(Self.actor) == .one)
         #expect(adapter.worlds.packageActorPosition(.player) == nil)
         #expect(adapter.worlds.furnitureActorPosition(Self.actor) == .one)
@@ -77,10 +77,10 @@ struct AIPackageMovesStateTests {
     }
 
     @Test func aMoveIsRecordedAndMapped() {
-        host.fakeStreamer.moveActorResult = .started
+        host.fakeStreamer.actors.moveActorResult = .started
         #expect(adapter
             .worlds.movePackageActor(PackageMove(Self.actor, to: .one, direct: false)) == .started)
-        host.fakeStreamer.moveActorResult = .moverCapReached
+        host.fakeStreamer.actors.moveActorResult = .moverCapReached
         #expect(adapter.worlds
             .movePackageActor(PackageMove(Self.actor, to: .one, direct: true)) == .busy)
         #expect(host.fakePackages.recordMoveCalls.map(\.actor) == [Self.actor, Self.actor])
@@ -108,7 +108,7 @@ struct AIPackageMovesStateTests {
     }
 
     @Test func theMoverAlwaysHasRoomForThePlayer() {
-        let movement = host.fakeStreamer.npcMovement
+        let movement = host.fakeStreamer.actors.npcMovement
         movement.hasRoomResult = false
         #expect(adapter.worlds.packageMoverHasRoom(for: .player))
         #expect(!adapter.worlds.packageMoverHasRoom(for: Self.actor))

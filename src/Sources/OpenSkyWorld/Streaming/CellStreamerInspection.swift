@@ -7,78 +7,78 @@ import OpenSkyCells
 public import OpenSkyFormatsCore
 import OpenSkyTerrain
 
-extension CellStreamer {
+extension CellStreamer.CoverageSteps {
     /// Grid slots that reached a terminal state: resident + void + failed.
     public var resolvedCellCount: Int {
-        core.resident.count + core.void.count + core.failed.count
+        streamer.core.resident.count + streamer.core.void.count + streamer.core.failed.count
     }
 
     public var residentCellCount: Int {
-        core.resident.count
+        streamer.core.resident.count
     }
 
     public var residentCoordinates: Set<CellCoordinate> {
-        core.resident
+        streamer.core.resident
     }
 
     public var voidCellCount: Int {
-        core.void.count
+        streamer.core.void.count
     }
 
     public var failedCellCount: Int {
-        core.failed.count
+        streamer.core.failed.count
     }
 
     public var inFlightCellCount: Int {
-        core.inFlight.count
+        streamer.core.inFlight.count
     }
 
     public var pendingCompletionCount: Int {
-        pending.count
+        streamer.pending.count
     }
 
     public var queuedRequestCount: Int {
-        requests.count
+        streamer.requests.count
     }
 
     /// The full grid the manager currently wants around its center.
     public var desiredCellCount: Int {
-        grid.desiredCells.count
+        streamer.grid.desiredCells.count
     }
 
     var distantLODBlockCount: Int {
-        composition.distantLOD?.blockCount ?? 0
+        streamer.composition.distantLOD?.blockCount ?? 0
     }
 
     /// Large references past the loaded grid drawn with their full model.
-    public var largeReferenceCount: Int {
-        composition.distantLOD?.largeReferenceCount ?? 0
+    var largeReferenceCount: Int {
+        streamer.composition.distantLOD?.largeReferenceCount ?? 0
     }
 
     /// Is Full LOD references the distant ring draws with their full model.
-    public var fullLODReferenceCount: Int {
-        composition.distantLOD?.fullLODReferenceCount ?? 0
+    var fullLODReferenceCount: Int {
+        streamer.composition.distantLOD?.fullLODReferenceCount ?? 0
     }
 
     /// Terrain blocks the ring draws from the generated LOD.
-    public var generatedTerrainBlockCount: Int {
-        composition.distantLOD?.generatedTerrainBlockCount ?? 0
+    var generatedTerrainBlockCount: Int {
+        streamer.composition.distantLOD?.generatedTerrainBlockCount ?? 0
     }
 
     /// Cell segments of object LOD large-reference shapes hidden for the ring.
-    public var hiddenLargeReferenceSegments: Int {
-        composition.distantLOD?.hiddenLargeReferenceSegments ?? 0
+    var hiddenLargeReferenceSegments: Int {
+        streamer.composition.distantLOD?.hiddenLargeReferenceSegments ?? 0
     }
 
     public var composedCellCount: Int {
-        composition.cellCount
+        streamer.composition.cellCount
     }
 
     var isCoverageTransitionActive: Bool {
-        coverageTransitionActive
+        streamer.coverageTransitionActive
     }
 
     public var isInterior: Bool {
-        interiorScene != nil
+        streamer.interiorScene != nil
     }
 }

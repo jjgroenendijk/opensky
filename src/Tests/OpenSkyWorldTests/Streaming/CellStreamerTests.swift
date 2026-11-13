@@ -29,8 +29,8 @@ struct CellStreamerTests {
         let streamer = Fixture.makeStreamer(runner: runner)
         streamer.update(cameraPosition: Fixture.center)
         #expect(runner.enqueued == [Fixture.coordinate(0, 0)])
-        #expect(streamer.queuedRequestCount == 8)
-        #expect(streamer.inFlightCellCount == 9)
+        #expect(streamer.coverage.queuedRequestCount == 8)
+        #expect(streamer.coverage.inFlightCellCount == 9)
 
         // Nothing completed -> no second build reaches the runner.
         streamer.update(cameraPosition: Fixture.center)
@@ -57,14 +57,14 @@ struct CellStreamerTests {
             worldspaceEditorID: "Tamriel", gridX: 0, gridY: 0
         )))
         streamer.update(cameraPosition: Fixture.center)
-        #expect(streamer.voidCellCount == 1)
+        #expect(streamer.coverage.voidCellCount == 1)
 
         // Many frames later: the void slot stays accounted, no retry storm.
         for _ in 0 ..< 10 {
             streamer.update(cameraPosition: Fixture.center)
         }
         #expect(runner.enqueued.filter { $0 == Fixture.coordinate(0, 0) }.count == 1)
-        #expect(streamer.voidCellCount == 1)
+        #expect(streamer.coverage.voidCellCount == 1)
     }
 
     @Test
@@ -77,7 +77,7 @@ struct CellStreamerTests {
         for _ in 0 ..< 10 {
             streamer.update(cameraPosition: Fixture.center)
         }
-        #expect(streamer.failedCellCount == 1)
+        #expect(streamer.coverage.failedCellCount == 1)
         #expect(runner.enqueued.filter { $0 == Fixture.coordinate(0, 0) }.count == 1)
     }
 
@@ -97,12 +97,12 @@ struct CellStreamerTests {
             runner.complete(cell, with: .success(Fixture.cellScene()))
         }
         streamer.update(cameraPosition: Fixture.center)
-        #expect(streamer.residentCellCount == 1)
+        #expect(streamer.coverage.residentCellCount == 1)
         streamer.update(cameraPosition: Fixture.center)
-        #expect(streamer.residentCellCount == 2)
+        #expect(streamer.coverage.residentCellCount == 2)
         streamer.update(cameraPosition: Fixture.center)
-        #expect(streamer.residentCellCount == 3)
-        #expect(streamer.pendingCompletionCount == 0)
+        #expect(streamer.coverage.residentCellCount == 3)
+        #expect(streamer.coverage.pendingCompletionCount == 0)
     }
 
     @Test
@@ -119,9 +119,9 @@ struct CellStreamerTests {
         runner.complete(Fixture.coordinate(-1, -1), with: .failure(FakeBuildError.broken))
         runner.complete(Fixture.coordinate(0, 0), with: .success(Fixture.cellScene()))
         streamer.update(cameraPosition: Fixture.center)
-        #expect(streamer.residentCellCount == 1)
-        #expect(streamer.voidCellCount == 1)
-        #expect(streamer.failedCellCount == 1)
+        #expect(streamer.coverage.residentCellCount == 1)
+        #expect(streamer.coverage.voidCellCount == 1)
+        #expect(streamer.coverage.failedCellCount == 1)
     }
 
     // MARK: - Out-of-order completions
@@ -141,7 +141,7 @@ struct CellStreamerTests {
         for _ in cells {
             streamer.update(cameraPosition: Fixture.center)
         }
-        #expect(streamer.residentCellCount == 3)
+        #expect(streamer.coverage.residentCellCount == 3)
     }
 
     // MARK: - Unload on recenter
@@ -161,12 +161,12 @@ struct CellStreamerTests {
         for _ in grid {
             streamer.update(cameraPosition: Fixture.center)
         }
-        #expect(streamer.residentCellCount == 9)
+        #expect(streamer.coverage.residentCellCount == 9)
 
         // Jump far away: every old cell leaves the grid -> all dropped.
         let far = CellGridManager.cellCenter(of: Fixture.coordinate(5, 0))
         streamer.update(cameraPosition: far)
-        #expect(streamer.residentCellCount == 0)
+        #expect(streamer.coverage.residentCellCount == 0)
         // And a fresh 3x3 gets requested around the new center.
         #expect(runner.enqueued.filter { $0 == Fixture.coordinate(5, 0) }.count == 1)
     }
@@ -188,7 +188,7 @@ struct CellStreamerTests {
         // A build from the old grid lands late -> discarded, not resident.
         runner.complete(Fixture.coordinate(-1, 0), with: .success(Fixture.cellScene()))
         streamer.update(cameraPosition: far)
-        #expect(streamer.residentCellCount == 0)
+        #expect(streamer.coverage.residentCellCount == 0)
     }
 
     // MARK: - Eviction on unload
@@ -212,7 +212,7 @@ struct CellStreamerTests {
         for _ in grid {
             streamer.update(cameraPosition: Fixture.center)
         }
-        #expect(streamer.residentCellCount == 9)
+        #expect(streamer.coverage.residentCellCount == 9)
 
         // Far jump: disjoint new grid, so the whole old grid is dropped.
         streamer.update(cameraPosition: CellGridManager.cellCenter(of: Fixture.coordinate(9, 0)))
@@ -267,7 +267,7 @@ struct CellStreamerTests {
         for _ in 0 ..< 12 {
             streamer.update(cameraPosition: Fixture.center)
         }
-        #expect(streamer.residentCellCount == 9)
+        #expect(streamer.coverage.residentCellCount == 9)
         #expect(runner.evictedMeshKeys.isEmpty)
     }
 }
