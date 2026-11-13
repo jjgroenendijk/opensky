@@ -35,7 +35,10 @@ extension GameSessionScopeFactories {
             provider: stage.data, gameSession: stage.gameSession, streamer: stage.streamer,
             worldState: scope.worldState
         )
-        scope.storyWorld.fillStoryNatives(&bridge.natives.story, &bridge.natives.session)
+        // Two inout accesses to one stored property of a class conflict at run time.
+        var natives = bridge.natives
+        scope.storyWorld.fillStoryNatives(&natives.story, &natives.session)
+        bridge.natives = natives
         return ScriptCoordinator(world: world, bridge: bridge, fileSystem: fileSystem)
     }
 
