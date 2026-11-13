@@ -28,6 +28,7 @@ the detail and the sources it did find.
 
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
+| Trainer tier thresholds | Journeyman from a maximum of 50, Expert at 75, Master above 75 | [training](/engine/training.md#training-menu) |
 | Music type without `PNAM` | Ranks as priority 100, the lowest | [music](/engine/music.md#scripted-music) |
 | Image space cross-fade curve | Linear rise and fall over the script's fade time | [image space](/rendering/image-space.md#where-opensky-differs) |
 | Terrain LOD cut skirt depth | 1000 units per level step: 1000 at level 4 up to 4000 at level 32 | [distant LOD](/engine/distant-lod.md#skirts) |

@@ -69,10 +69,13 @@ engine calls `InitExtensions(0, false)` and fills `/TrainingMenuObj`:
 | Field | Text |
 | --- | --- |
 | `SkillName` | the skill and its level |
-| `TrainerSkill` | the trainer's name and maximum level |
+| `TrainerSkill` | the trainer's tier, name, and maximum level |
 | `TimesTrained` | the sessions done and the sessions per level |
 | `TrainCost` | the price |
 | `CurrentGold` | the player's gold |
+
+The tier is `sJourneyman` for a trainer whose maximum is at least 50, `sExpert` at 75, and
+`sMaster` above 75. The vanilla trainers teach up to 50, 75, or 90.
 
 `SkillMeter.SetPercent` shows the progress to the next skill level. The movie's train button
 calls `Train`, and its exit button calls `Exit`. A refusal stays on the HUD as in the

@@ -50,4 +50,12 @@ struct TrainingSettingsTests {
         #expect(settings.text(for: .trainerLimit) == "No higher")
         #expect(settings.text(for: .levelUpFirst) == "sCanNotTrainAnymore")
     }
+
+    @Test func aTrainerTierFollowsItsMaximum() {
+        let settings = TrainingSettings.vanilla
+        #expect(settings.tier(trainerMaximum: 40) == nil)
+        #expect(settings.tier(trainerMaximum: 50) == "Journeyman")
+        #expect(settings.tier(trainerMaximum: 75) == "Expert")
+        #expect(settings.tier(trainerMaximum: 90) == "Master")
+    }
 }
