@@ -95,7 +95,7 @@ extension PapyrusNativeFunctions.ScriptStateNatives {
             into: &registry
         ) { call, bridge, key in
             let allows = boolean(call, at: 0, default: true)
-            bridge.scriptState.updateScriptedState(of: key) {
+            bridge.updateScriptedState(of: key) {
                 $0.setFlag(ScriptedStateName.flyingMountLandingRefused, allows ? nil : true)
             }
             return .returned(.none)
@@ -103,10 +103,10 @@ extension PapyrusNativeFunctions.ScriptStateNatives {
         for flag in scriptedFlags {
             scriptState(flag.script, flag.setter, into: &registry) { call, bridge, key in
                 let isSet = boolean(call, at: 0, default: true)
-                let wasSet = bridge.scriptState.scriptedState(of: key).flag(flag.name) == true
+                let wasSet = bridge.scriptedState(of: key).flag(flag.name) == true
                 // A flag the record also holds keeps false, so it hides the record's flag.
                 let cleared: Bool? = recordFlagNames.contains(flag.name) ? false : nil
-                bridge.scriptState.updateScriptedState(of: key) {
+                bridge.updateScriptedState(of: key) {
                     $0.setFlag(flag.name, isSet ? true : cleared)
                 }
                 if
@@ -122,7 +122,7 @@ extension PapyrusNativeFunctions.ScriptStateNatives {
             }
             guard let getter = flag.getter else { continue }
             scriptState(flag.script, getter, into: &registry) { _, bridge, key in
-                .returned(.boolean(bridge.scriptState.scriptedState(of: key)
+                .returned(.boolean(bridge.scriptedState(of: key)
                         .flag(flag.name) ?? false))
             }
         }
@@ -137,7 +137,7 @@ extension PapyrusNativeFunctions.ScriptStateNatives {
             }
             guard let getter = value.getter else { continue }
             scriptState("Actor", getter, into: &registry) { _, bridge, key in
-                .returned(.float(bridge.scriptState.scriptedState(of: key)
+                .returned(.float(bridge.scriptedState(of: key)
                         .value(value.setter) ?? 0))
             }
         }
@@ -152,12 +152,12 @@ extension PapyrusNativeFunctions.ScriptStateNatives {
         for form in scriptedForms {
             scriptState("Actor", form.setter, into: &registry) { call, bridge, key in
                 let link = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
-                bridge.scriptState.updateScriptedState(of: key) { $0.setForm(form.name, link) }
+                bridge.updateScriptedState(of: key) { $0.setForm(form.name, link) }
                 return .returned(.none)
             }
         }
         scriptState("Actor", "ClearLookAt", into: &registry) { _, bridge, key in
-            bridge.scriptState.updateScriptedState(of: key) { $0.setForm("lookAt", nil) }
+            bridge.updateScriptedState(of: key) { $0.setForm("lookAt", nil) }
             return .returned(.none)
         }
     }
@@ -168,15 +168,15 @@ extension PapyrusNativeFunctions.ScriptStateNatives {
         let name = ScriptedStateName.doingFavor
         scriptState("Actor", "SetDoingFavor", into: &registry) { call, bridge, key in
             let isSet = boolean(call, at: 0, default: true)
-            let was = bridge.scriptState.scriptedState(of: key).flag(name) ?? false
-            bridge.scriptState.updateScriptedState(of: key) { $0.setFlag(name, isSet ? true : nil) }
+            let was = bridge.scriptedState(of: key).flag(name) ?? false
+            bridge.updateScriptedState(of: key) { $0.setFlag(name, isSet ? true : nil) }
             if was != isSet {
                 bridge.natives.story.favorStateChanged?(key, isSet)
             }
             return .returned(.none)
         }
         scriptState("Actor", "IsDoingFavor", into: &registry) { _, bridge, key in
-            .returned(.boolean(bridge.scriptState.scriptedState(of: key).flag(name) ?? false))
+            .returned(.boolean(bridge.scriptedState(of: key).flag(name) ?? false))
         }
     }
 
@@ -188,14 +188,14 @@ extension PapyrusNativeFunctions.ScriptStateNatives {
                 let number = float(call, at: 1), number.isFinite
             else { return failure(call, "SetKeywordData needs a keyword and a number") }
             let name = ScriptedStateName.keywordData(keyword)
-            bridge.scriptState.updateScriptedState(of: key) { $0.setValue(name, number) }
+            bridge.updateScriptedState(of: key) { $0.setValue(name, number) }
             return .returned(.none)
         }
         scriptState("Location", "GetKeywordData", into: &registry) { call, bridge, key in
             guard
                 let keyword = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
             else { return failure(call, "GetKeywordData needs a keyword") }
-            let state = bridge.scriptState.scriptedState(of: key)
+            let state = bridge.scriptedState(of: key)
             return .returned(.float(state.value(ScriptedStateName.keywordData(keyword)) ?? 0))
         }
     }

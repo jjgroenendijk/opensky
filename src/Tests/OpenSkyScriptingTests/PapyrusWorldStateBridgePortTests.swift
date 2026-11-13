@@ -19,10 +19,10 @@ struct PapyrusWorldStateBridgePortTests {
         let fixture = try PapyrusNativeReferenceFixture.make()
         let bridge = fixture.session.bridge
         let key = fixture.key
-        #expect(bridge.magicBridge.spellState(for: key) == nil)
-        #expect(bridge.crimeBridge.crimeGold(of: key) == nil)
-        #expect(bridge.factionBridge.isInFaction(key, faction: key) == nil)
-        #expect(bridge.guardBridge.isGuard(key) == nil)
+        #expect(bridge.roles.magic.spellState(for: key) == nil)
+        #expect(bridge.roles.crime.crimeGold(of: key) == nil)
+        #expect(bridge.roles.factions.isInFaction(key, faction: key) == nil)
+        #expect(bridge.roles.guards.isGuard(key) == nil)
         #expect(bridge.isInFaction(key, faction: key) == nil)
         #expect(bridge.isHostile(key, toward: .player) == nil)
         _ = bridge.relationshipRank(of: key, toward: .player)
@@ -92,5 +92,22 @@ extension Result {
             return true
         }
         return false
+    }
+}
+
+extension PapyrusWorldStateBridgePortTests {
+    /// The queued events count their listeners, and a frame step and a journal skip
+    /// over a quiet world change nothing a script can see.
+    @Test func eventsCountTheirListeners() throws {
+        let fixture = try PapyrusNativeReferenceFixture.make()
+        let world = fixture.session.world
+        #expect(world.queueRaceSwitchComplete(actor: fixture.key) >= 0)
+        #expect(world.queuePlayerBowShot(
+            weapon: nil, ammunition: nil, power: 1, sunGazing: false
+        ) >= 0)
+        let bridge = fixture.session.bridge
+        bridge.advanceFrame(by: 0.1)
+        bridge.skipJournals()
+        #expect(bridge.silentDeath == nil)
     }
 }

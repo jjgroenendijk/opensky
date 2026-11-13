@@ -65,11 +65,11 @@ struct PapyrusNativeTrapTests {
         let fixture = try Fixture.make()
         let count = { fixture.call("GetTriggerObjectCount", returnType: .integer) }
         #expect(count() == .returned(.integer(0)))
-        fixture.session.bridge.triggers.handleTriggerTransition(
+        fixture.session.bridge.handleTriggerTransition(
             TriggerTransitionEvent(reference: fixture.key, phase: .enter)
         )
         #expect(count() == .returned(.integer(1)))
-        fixture.session.bridge.triggers.handleTriggerTransition(
+        fixture.session.bridge.handleTriggerTransition(
             TriggerTransitionEvent(reference: fixture.key, phase: .leave)
         )
         #expect(count() == .returned(.integer(0)))

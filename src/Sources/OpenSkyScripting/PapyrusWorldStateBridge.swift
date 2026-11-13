@@ -124,6 +124,32 @@ extension PapyrusWorldStateBridge {
 }
 
 extension PapyrusWorldStateBridge {
+    /// One frame of world changes turned into script events, in a fixed order: the
+    /// journals first, then the timed moves, trigger repeats, and delayed activations.
+    public func advanceFrame(by delta: Float) {
+        inventoryEvents.queueInventoryEvents()
+        effectEvents.queueMagicEffectEvents()
+        referenceEvents.queueReferenceStateEvents()
+        combatEvents.queueCombatStateEvents()
+        trackedStats.queueTrackedStatEvents()
+        lineOfSight.queueLineOfSightEvents()
+        scriptedMoves.advanceTranslations(by: delta)
+        triggers.queueTriggerRepeats(after: delta)
+        activationDelays.advanceDelayedActivations(by: delta)
+        sunGaze.updateSunGaze()
+    }
+
+    /// After a load, the journals start from now, so loaded changes raise no events.
+    public func skipJournals() {
+        inventoryEvents.skipInventoryJournal()
+        effectEvents.skipMagicEffectJournal()
+        referenceEvents.skipReferenceStateJournal()
+        trackedStats.skipTrackedStatJournal()
+        scriptedMoves.clearTranslations()
+    }
+}
+
+extension PapyrusWorldStateBridge {
     public var activations: Activations {
         Activations(bridge: self)
     }

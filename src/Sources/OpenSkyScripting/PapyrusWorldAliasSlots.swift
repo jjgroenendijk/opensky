@@ -15,38 +15,39 @@ nonisolated public struct PapyrusAliasSlot: Hashable, Sendable {
     let aliasID: UInt32
 }
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.QuestScriptRuns {
     /// The session-stable handle naming `slot`.
     func aliasSlotHandle(_ slot: PapyrusAliasSlot) -> PapyrusObjectHandle {
-        if let existing = aliasSlotHandles[slot] {
+        if let existing = world.aliasSlotHandles[slot] {
             return existing
         }
-        let handle = allocateOpaqueHandle()
-        aliasSlotHandles[slot] = handle
-        aliasSlotsByHandle[handle] = slot
+        let handle = world.activationRuns.allocateOpaqueHandle()
+        world.aliasSlotHandles[slot] = handle
+        world.aliasSlotsByHandle[handle] = slot
         return handle
     }
 
     /// The slot behind a slot handle, or behind the handle of an alias script, which is
     /// `Self` inside that script.
     func aliasSlot(for handle: PapyrusObjectHandle) -> PapyrusAliasSlot? {
-        aliasSlotsByHandle[handle] ?? keysByHandle[handle].flatMap { aliasSlotsByInstance[$0] }
+        world.aliasSlotsByHandle[handle] ?? world.keysByHandle[handle]
+            .flatMap { world.aliasSlotsByInstance[$0] }
     }
 
     func aliasReference(in slot: PapyrusAliasSlot) -> ReferenceKey? {
-        aliasResolution.table(forKey: slot.quest).reference(forAlias: slot.aliasID)
+        world.aliasResolution.table(forKey: slot.quest).reference(forAlias: slot.aliasID)
     }
 
     func aliasLocation(in slot: PapyrusAliasSlot) -> ResolvedFormID? {
-        aliasResolution.table(forKey: slot.quest).location(forAlias: slot.aliasID)
+        world.aliasResolution.table(forKey: slot.quest).location(forAlias: slot.aliasID)
     }
 
     /// The lowest-script-name alias script serving `slot` whose script is `typeName` or
     /// extends it. Nil while the alias is empty.
     func aliasInstance(of slot: PapyrusAliasSlot, as typeName: String) -> PapyrusObjectHandle? {
-        aliasSlotsByInstance.filter { $0.value == slot }.keys.sorted().lazy
-            .compactMap { self.instancesByKey[$0] }
-            .first { self.runtime.resolvesObject($0, as: typeName) }
+        world.aliasSlotsByInstance.filter { $0.value == slot }.keys.sorted().lazy
+            .compactMap { world.instancesByKey[$0] }
+            .first { world.runtime.resolvesObject($0, as: typeName) }
     }
 
     /// Retires the alias scripts of `slot` that no longer sit on its filled reference,
@@ -54,15 +55,15 @@ extension PapyrusWorldRuntime {
     @discardableResult
     func retireAliasScripts(of slot: PapyrusAliasSlot) -> Int {
         let current = aliasReference(in: slot)
-        let stale = aliasSlotsByInstance
+        let stale = world.aliasSlotsByInstance
             .filter { $0.value == slot && $0.key.reference != current }
             .keys.sorted()
         for key in stale {
-            retire(key)
-            aliasSlotsByInstance.removeValue(forKey: key)
-            questAliasInstanceKeys[slot.quest]?.remove(key)
-            persistentKeys.remove(key)
-            firedOnInit.remove(key)
+            world.lifecycle.retire(key)
+            world.aliasSlotsByInstance.removeValue(forKey: key)
+            world.questAliasInstanceKeys[slot.quest]?.remove(key)
+            world.persistentKeys.remove(key)
+            world.firedOnInit.remove(key)
         }
         return stale.count
     }

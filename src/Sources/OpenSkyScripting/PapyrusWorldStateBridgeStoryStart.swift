@@ -19,7 +19,7 @@ extension PapyrusWorldStateBridge.StoryEvents {
             let key = bridge.questRuntime?.quests.key(for: id),
             let start = storyStartEvent(event)
         else { return 0 }
-        return world.queueActorEvent(start.name, on: key, arguments: start.arguments)
+        return world.scriptEvents.queueActorEvent(start.name, on: key, arguments: start.arguments)
     }
 
     private func storyStartEvent(

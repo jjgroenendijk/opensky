@@ -21,13 +21,13 @@ extension PapyrusNativeFunctions.ReferenceStateNatives {
         // activation no longer opens or closes the reference.
         scriptState("ObjectReference", "BlockActivation", into: &registry) { call, bridge, key in
             let blocked = boolean(call, at: 0, default: true)
-            bridge.scriptState.updateScriptedState(of: key) {
+            bridge.updateScriptedState(of: key) {
                 $0.setFlag(PapyrusWorldStateBridge.activationBlockedName, blocked ? true : nil)
             }
             return .returned(.none)
         }
         scriptState("ObjectReference", "IsActivationBlocked", into: &registry) { _, bridge, key in
-            .returned(.boolean(bridge.scriptState.scriptedState(of: key)
+            .returned(.boolean(bridge.scriptedState(of: key)
                     .flag(PapyrusWorldStateBridge.activationBlockedName) == true))
         }
         // `MoveToMyEditorLocation()`: drops the script's moves, so the plugin placement shows.

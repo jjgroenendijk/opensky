@@ -30,7 +30,7 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
     private static func installDeferredKill(into registry: inout PapyrusNativeRegistry) {
         for (name, deferred) in [("StartDeferredKill", true), ("EndDeferredKill", false)] {
             scriptState("Actor", name, into: &registry) { _, bridge, key in
-                bridge.scriptState.updateScriptedState(of: key) {
+                bridge.updateScriptedState(of: key) {
                     $0.setFlag(ScriptedStateName.deferredKill, deferred ? true : nil)
                 }
                 return .returned(.none)
@@ -52,7 +52,7 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
             guard
                 let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
             else { return failure(call, "StartVampireFeed needs a target") }
-            bridge.world?.queueVampireFeed(feeder: key, target: target)
+            bridge.world?.scriptEvents.queueVampireFeed(feeder: key, target: target)
             _ = bridge.ports.actorAI?.playIdle(editorID: vampireFeedIdle, on: key, with: target)
             return .returned(.none)
         }
@@ -60,7 +60,7 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
             guard
                 let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
             else { return failure(call, "StartCannibal needs a target") }
-            bridge.scriptState.updateScriptedState(of: target) {
+            bridge.updateScriptedState(of: target) {
                 $0.setFlag(ScriptedStateName.eaten, true)
             }
             _ = bridge.ports.actorAI?.playIdle(editorID: cannibalFeedIdle, on: key, with: target)
@@ -76,7 +76,7 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
                 let spell = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)),
                 let target = objectArgument(call, at: 1).flatMap(bridge.referenceKey(for:))
             else { return failure(call, "DoCombatSpellApply needs a spell and a target") }
-            guard bridge.magicBridge.castSpell(spell, from: key, at: target) else {
+            guard bridge.roles.magic.castSpell(spell, from: key, at: target) else {
                 return failure(call, "DoCombatSpellApply has no caster runtime or no such spell")
             }
             return .returned(.none)
@@ -97,7 +97,7 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
             return .returned(.boolean(ai.playIdle(idle, on: key, with: target)))
         }
         scriptState("Actor", "ClearArrested", into: &registry) { _, bridge, key in
-            bridge.scriptState.updateScriptedState(of: key) {
+            bridge.updateScriptedState(of: key) {
                 $0.setFlag("resistingArrest", nil)
                 $0.setFlag("arrested", nil)
             }
@@ -141,8 +141,8 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
             guard let pile = bridge.ports.trapWorld?.placeAtMe(base, at: key, count: 1) else {
                 return failure(call, "AttachAshPile could not place the pile")
             }
-            bridge.scriptState.updateScriptedState(of: key) { $0.setForm(ashPileName, pile) }
-            bridge.scriptState.updateScriptedState(of: pile) {
+            bridge.updateScriptedState(of: key) { $0.setForm(ashPileName, pile) }
+            bridge.updateScriptedState(of: pile) {
                 $0.setForm(PapyrusWorldStateBridge.ashPileOwnerName, key)
             }
             return .returned(.none)

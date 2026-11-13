@@ -19,7 +19,7 @@ struct PapyrusWorldPauseTests {
         world.isPaused = true
 
         for _ in 0 ..< 5 {
-            #expect(world.advance(delta: 1.0) == .zero)
+            #expect(world.scriptEvents.advance(delta: 1.0) == .zero)
         }
         #expect(world.scheduler.tickCount == 0)
         #expect(probe.notes.isEmpty)
@@ -29,7 +29,7 @@ struct PapyrusWorldPauseTests {
         // first frame after it may run at most the one step its own delta
         // pays for.
         world.isPaused = false
-        #expect(world.advance(delta: 1.0 / 30.0).steps == 1)
+        #expect(world.scriptEvents.advance(delta: 1.0 / 30.0).steps == 1)
         #expect(probe.notes == ["a.onload"])
     }
 
@@ -40,7 +40,7 @@ struct PapyrusWorldPauseTests {
         world.isPaused = true
         world.enqueue(onLoad())
 
-        let report = world.stepFixed()
+        let report = world.scriptEvents.stepFixed()
         #expect(report.steps == 1)
         #expect(report.dispatched == 1)
         #expect(probe.notes == ["a.onload"])
@@ -51,12 +51,12 @@ struct PapyrusWorldPauseTests {
     func burstStepsAreBounded() throws {
         let world = try PapyrusWorldFixture.twoInstanceWorld(probe: PapyrusWorldProbeDispatch())
         world.isPaused = true
-        world.burst(ticks: 3)
+        world.readouts.burst(ticks: 3)
         #expect(world.scheduler.tickCount == 3)
-        world.burst(ticks: -1)
+        world.readouts.burst(ticks: -1)
         #expect(world.scheduler.tickCount == 3)
-        world.burst(ticks: 10000)
-        #expect(world.scheduler.tickCount == 3 + PapyrusWorldRuntime.maximumBurstTicks)
+        world.readouts.burst(ticks: 10000)
+        #expect(world.scheduler.tickCount == 3 + PapyrusWorldRuntime.Readouts.maximumBurstTicks)
     }
 
     @Test("the recent-event ring keeps the newest eight and counts the rest")
@@ -91,16 +91,16 @@ struct PapyrusWorldPauseTests {
         #expect(world.lastTickReport == .zero)
         world.enqueue(onLoad())
 
-        #expect(world.advance(delta: 1.0 / 30.0).steps == 1)
+        #expect(world.scriptEvents.advance(delta: 1.0 / 30.0).steps == 1)
         #expect(world.lastTickReport.steps == 1)
         #expect(world.lastTickReport.dispatched == 1)
 
         // A sub-step frame, a zero delta, and a paused frame each advance
         // nothing, so none of them may wipe the sample above.
-        _ = world.advance(delta: 1.0 / 120.0)
-        _ = world.advance(delta: 0)
+        _ = world.scriptEvents.advance(delta: 1.0 / 120.0)
+        _ = world.scriptEvents.advance(delta: 0)
         world.isPaused = true
-        _ = world.advance(delta: 1.0)
+        _ = world.scriptEvents.advance(delta: 1.0)
         #expect(world.lastTickReport.dispatched == 1)
     }
 
@@ -109,9 +109,9 @@ struct PapyrusWorldPauseTests {
         let world = try PapyrusWorldFixture.twoInstanceWorld(probe: PapyrusWorldProbeDispatch())
         world.isPaused = true
         world.enqueue(onLoad())
-        world.stepFixed()
+        world.scriptEvents.stepFixed()
 
-        let snapshot = world.scriptsSnapshot(target: aKey.reference)
+        let snapshot = world.readouts.scriptsSnapshot(target: aKey.reference)
         #expect(snapshot.instanceCount == 2)
         #expect(snapshot.targetDescription == aKey.reference.description)
         #expect(snapshot.targetScripts == ["ascript"])
@@ -133,7 +133,7 @@ struct PapyrusWorldPauseTests {
     @Test("an untargeted snapshot names no reference and no scripts")
     func scriptsSnapshotWithoutTarget() throws {
         let world = try PapyrusWorldFixture.twoInstanceWorld(probe: PapyrusWorldProbeDispatch())
-        let snapshot = world.scriptsSnapshot()
+        let snapshot = world.readouts.scriptsSnapshot()
         #expect(snapshot.targetDescription == nil)
         #expect(snapshot.targetScripts.isEmpty)
         #expect(snapshot.pendingWaitCount == 0)

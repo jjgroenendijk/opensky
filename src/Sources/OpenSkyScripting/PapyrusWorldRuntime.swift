@@ -246,9 +246,10 @@ public final class PapyrusWorldRuntime {
         scheduler.onResume = { call, outcome in
             tracker.noteResume(of: call, outcome: outcome)
         }
-        runtime.siblingInstance = { [weak self] in self?.sibling(of: $0, as: $1) }
+        runtime.siblingInstance = { [weak self] in self?.activationRuns.sibling(of: $0, as: $1) }
         runtime.aliasSlotInstance = { [weak self] handle, typeName in
-            self?.aliasSlotsByHandle[handle].flatMap { self?.aliasInstance(of: $0, as: typeName) }
+            guard let self, let slot = aliasSlotsByHandle[handle] else { return nil }
+            return questRuns.aliasInstance(of: slot, as: typeName)
         }
         runtime.describeHandle = { [weak self] in self?.referenceKey(for: $0)?.description }
         runtime.loadScript = { [weak self] in self?.resolveScript(named: $0) ?? false }
@@ -364,7 +365,7 @@ public final class PapyrusWorldRuntime {
     /// lowest script name, chosen deterministically. Alias and effect scripts are left out.
     public func referenceHandleMap() -> [ReferenceKey: PapyrusObjectHandle] {
         var map: [ReferenceKey: PapyrusObjectHandle] = [:]
-        let otherKeys = aliasInstanceKeys.union(effectScripts.instanceKeys)
+        let otherKeys = activationRuns.aliasInstanceKeys.union(effectScripts.instanceKeys)
         for key in instancesByKey.keys.sorted()
             where map[key.reference] == nil && !otherKeys.contains(key)
         {
@@ -467,5 +468,79 @@ nonisolated public final class PapyrusWorldSuspensionTracker {
             faulted = 0
         }
         return StepSummary(resumed: resumed, faulted: faulted)
+    }
+}
+
+extension PapyrusWorldRuntime {
+    public var lifecycle: Lifecycle {
+        Lifecycle(world: self)
+    }
+
+    var scriptEvents: ScriptEvents {
+        ScriptEvents(world: self)
+    }
+
+    var questRuns: QuestScriptRuns {
+        QuestScriptRuns(world: self)
+    }
+
+    var fragmentRuns: FragmentRuns {
+        FragmentRuns(world: self)
+    }
+
+    var activeEffects: ActiveEffects {
+        ActiveEffects(world: self)
+    }
+
+    var timers: Timers {
+        Timers(world: self)
+    }
+
+    var activationRuns: ActivationRuns {
+        ActivationRuns(world: self)
+    }
+
+    var readouts: Readouts {
+        Readouts(world: self)
+    }
+
+    /// Attaching scripts to references as cells load, retiring them, and reset.
+    public struct Lifecycle {
+        let world: PapyrusWorldRuntime
+    }
+
+    /// The engine events scripts listen for, queued and drained.
+    struct ScriptEvents {
+        let world: PapyrusWorldRuntime
+    }
+
+    /// Quest and alias scripts, and latent quest calls.
+    struct QuestScriptRuns {
+        let world: PapyrusWorldRuntime
+    }
+
+    /// Topic, scene, package, and perk fragments.
+    struct FragmentRuns {
+        let world: PapyrusWorldRuntime
+    }
+
+    /// Magic effect scripts on actors.
+    struct ActiveEffects {
+        let world: PapyrusWorldRuntime
+    }
+
+    /// Update timers, menu time, and the calls that wait.
+    struct Timers {
+        let world: PapyrusWorldRuntime
+    }
+
+    /// OnActivate events and the activation depth.
+    struct ActivationRuns {
+        let world: PapyrusWorldRuntime
+    }
+
+    /// What the runtime reports about its scripts.
+    struct Readouts {
+        let world: PapyrusWorldRuntime
     }
 }

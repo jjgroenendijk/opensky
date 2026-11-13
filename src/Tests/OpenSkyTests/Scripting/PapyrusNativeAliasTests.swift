@@ -37,7 +37,7 @@ struct PapyrusNativeAliasTests {
     }
 
     private func slotHandle(_ session: PapyrusWorldFixture.Session) -> PapyrusObjectHandle {
-        session.world.aliasSlotHandle(PapyrusAliasSlot(
+        session.world.questRuns.aliasSlotHandle(PapyrusAliasSlot(
             quest: PapyrusQuestFixture.questKey, aliasID: PapyrusQuestFixture.aliasID
         ))
     }
@@ -88,7 +88,7 @@ struct PapyrusNativeAliasTests {
 
         #expect(call(session, "ReferenceAlias", "Clear", on: slot) == .returned(.none))
         #expect(try fill(session) == nil)
-        #expect(session.world.questAliasInstanceCount == 0)
+        #expect(session.world.questRuns.questAliasInstanceCount == 0)
         #expect(call(session, "ReferenceAlias", "GetReference", on: slot, returnType: .object(
             "ObjectReference"
         )) == .returned(.none))
@@ -124,7 +124,7 @@ struct PapyrusNativeAliasTests {
 
     @Test func anUnknownAliasIsRefused() throws {
         let session = try session()
-        let missing = session.world.aliasSlotHandle(
+        let missing = session.world.questRuns.aliasSlotHandle(
             PapyrusAliasSlot(quest: PapyrusQuestFixture.questKey, aliasID: 42)
         )
         #expect(PapyrusWorldFixture.isInvalidArguments(

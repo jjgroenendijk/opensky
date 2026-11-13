@@ -46,7 +46,7 @@ struct PapyrusWorldActivationSeamTests {
         // Registered scripts first: the audio step still runs before Papyrus.
         var audible: [InteractionEvent] = []
         streamer.onInteraction.register(.scripts) { [weak bridge = session.bridge] event in
-            bridge?.activations.handleInteraction(event)
+            bridge?.handleInteraction(event)
         }
         streamer.onInteraction.register(.audio) { audible.append($0) }
         #expect(streamer.onInteraction.registeredPhases == [.audio, .scripts])

@@ -46,13 +46,13 @@ struct QuestScriptRealDataTests {
         let firstFragmentStage = try #require(quest.fragments.map(\.stageIndex).min())
         #expect(try bridge.setQuestStage(firstFragmentStage, for: key))
         for _ in 0 ..< 32 where world.eventQueue.isEmpty == false {
-            world.stepFixed()
+            world.scriptEvents.stepFixed()
         }
 
         let state = try #require(bridge.questRuntime).state(of: quest.formID)
         #expect(state.isRunning)
         #expect(state.isStageDone(firstFragmentStage))
-        #expect(world.questCount == 1)
+        #expect(world.questRuns.questCount == 1)
         // One script: this quest's whole VMAD is the generated fragment
         // script, which the fragment tail names as well, and the two spellings
         // collapse onto one instance.

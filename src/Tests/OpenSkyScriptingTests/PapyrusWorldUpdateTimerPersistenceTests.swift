@@ -53,7 +53,7 @@ struct PapyrusWorldUpdateTimerPersistenceTests {
         clock: GameClock
     ) throws -> [PapyrusTimerState] {
         let source = try twoReferenceSession()
-        _ = source.world.stepFixed(gameClock: clock)
+        _ = source.world.scriptEvents.stepFixed(gameClock: clock)
         guard
             let persistentHandle = source.world
                 .instancesByKey[PapyrusUpdateTimerFixture.instanceKey],
@@ -72,7 +72,7 @@ struct PapyrusWorldUpdateTimerPersistenceTests {
             handle: transientHandle, slot: .realSingleShot, interval: 1
         )
         for _ in 0 ..< 10 {
-            _ = source.world.stepFixed(gameClock: clock)
+            _ = source.world.scriptEvents.stepFixed(gameClock: clock)
         }
         return source.world.timerStates()
     }
@@ -98,14 +98,14 @@ struct PapyrusWorldUpdateTimerPersistenceTests {
             interval: 1,
             remaining: 0
         )
-        target.world.restore(timerStates: states + [unknown])
+        target.world.lifecycle.restore(timerStates: states + [unknown])
         #expect(target.world.skips.counts[.unknownSaveTimerTarget] == 1)
         #expect(target.world.updateTimers.pendingCount == 2)
 
         // The game time that passed between save and load must not count:
         // the first sample of a far-future clock only anchors.
         let loadClock = PapyrusUpdateTimerFixture.advanced(clock, hours: 100)
-        _ = target.world.stepFixed(gameClock: loadClock)
+        _ = target.world.scriptEvents.stepFixed(gameClock: loadClock)
         #expect(PapyrusUpdateTimerFixture.gameTimeNotes(target).isEmpty)
 
         // The real slot fires after exactly its remaining delay, counted
@@ -116,7 +116,7 @@ struct PapyrusWorldUpdateTimerPersistenceTests {
             stepsSinceRestore < 64
         {
             stepsSinceRestore += 1
-            _ = target.world.stepFixed(gameClock: loadClock)
+            _ = target.world.scriptEvents.stepFixed(gameClock: loadClock)
         }
         #expect(stepsSinceRestore == PapyrusUpdateTimerFixture.dueStep(
             interval: expectedRemaining, stepSeconds: 1.0 / 30.0
@@ -125,7 +125,7 @@ struct PapyrusWorldUpdateTimerPersistenceTests {
 
         // Three game hours past the load anchor fires the restored
         // game-time slot.
-        _ = target.world.stepFixed(
+        _ = target.world.scriptEvents.stepFixed(
             gameClock: PapyrusUpdateTimerFixture.advanced(loadClock, hours: 3)
         )
         #expect(PapyrusUpdateTimerFixture.gameTimeNotes(target).count == 1)
@@ -143,7 +143,7 @@ struct PapyrusWorldUpdateTimerPersistenceTests {
         session.world.detach(cell: PapyrusWorldFixture.cell)
         #expect(session.world.updateTimers.pendingCount == 0)
         #expect(session.world.timerStates().isEmpty)
-        _ = session.world.stepFixed()
+        _ = session.world.scriptEvents.stepFixed()
         #expect(PapyrusUpdateTimerFixture.updateNotes(session).isEmpty)
         #expect(PapyrusUpdateTimerFixture.gameTimeNotes(session).isEmpty)
     }

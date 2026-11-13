@@ -19,7 +19,8 @@ struct PapyrusWorldSiblingTests {
         let fragment = try #require(world.instancesByKey[
             PapyrusQuestFixture.instanceKey(PapyrusQuestFixture.fragmentScript)
         ])
-        #expect(world.sibling(of: fragment, as: PapyrusQuestFixture.questScript) == quest)
-        #expect(world.sibling(of: fragment, as: "NoSuchScript") == nil)
+        #expect(world.activationRuns
+            .sibling(of: fragment, as: PapyrusQuestFixture.questScript) == quest)
+        #expect(world.activationRuns.sibling(of: fragment, as: "NoSuchScript") == nil)
     }
 }

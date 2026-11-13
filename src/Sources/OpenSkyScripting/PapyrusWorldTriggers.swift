@@ -3,11 +3,11 @@
 // not script code, so events queue at depth 0. Handlers a script lacks are counted no-ops.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 public import OpenSkyPhysics
 import OpenSkyScriptingInterface
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.ScriptEvents {
     /// Queues `OnTriggerEnter(akActionRef)` on every script instance attached
     /// to `volume`. Returns how many events were queued.
     @discardableResult
@@ -30,10 +30,10 @@ extension PapyrusWorldRuntime {
         volume: ReferenceKey,
         actor: ReferenceKey
     ) -> Int {
-        let handle = objectHandle(for: actor)
+        let handle = world.objectHandle(for: actor)
         var queued = 0
-        for key in instanceKeys(on: volume) {
-            enqueue(PapyrusScriptEvent(
+        for key in world.instanceKeys(on: volume) {
+            world.enqueue(PapyrusScriptEvent(
                 target: key,
                 functionName: functionName,
                 arguments: [.object(handle)],
@@ -54,13 +54,19 @@ extension PapyrusWorldStateBridge.Triggers {
         switch event.phase {
         case .enter:
             bridge.runState.triggerOccupants[event.reference, default: []].insert(actor)
-            return bridge.world?.queueOnTriggerEnter(volume: event.reference, actor: actor) ?? 0
+            return bridge.world?.scriptEvents.queueOnTriggerEnter(
+                volume: event.reference,
+                actor: actor
+            ) ?? 0
         case .leave:
             bridge.runState.triggerOccupants[event.reference]?.remove(actor)
             if bridge.runState.triggerOccupants[event.reference]?.isEmpty == true {
                 bridge.runState.triggerOccupants[event.reference] = nil
             }
-            return bridge.world?.queueOnTriggerLeave(volume: event.reference, actor: actor) ?? 0
+            return bridge.world?.scriptEvents.queueOnTriggerLeave(
+                volume: event.reference,
+                actor: actor
+            ) ?? 0
         }
     }
 }
@@ -87,7 +93,7 @@ extension PapyrusWorldStateBridge.Triggers {
         for volume in bridge.runState.triggerOccupants.keys.sorted() {
             let actors = (bridge.runState.triggerOccupants[volume] ?? []).sorted()
             for key in world.instanceKeys(on: volume)
-                where !waiting.contains(key) && world.handlesEvent(name, key: key)
+                where !waiting.contains(key) && world.scriptEvents.handlesEvent(name, key: key)
             {
                 for actor in actors {
                     world.enqueue(PapyrusScriptEvent(

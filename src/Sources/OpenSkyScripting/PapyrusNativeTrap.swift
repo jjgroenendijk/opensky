@@ -91,7 +91,7 @@ extension PapyrusNativeFunctions.TrapNatives {
             }
             guard damage > 0 else { return .returned(.none) }
             guard
-                target.world.actorBridge.damageActorValue(
+                target.world.roles.actors.damageActorValue(
                     at: Int32(health),
                     by: damage,
                     on: target.key

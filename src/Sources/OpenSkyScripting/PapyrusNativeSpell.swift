@@ -43,7 +43,7 @@ extension PapyrusNativeFunctions.SpellNatives {
             functionName: "AddSpell"
         ) { call, context in
             spellTarget(call, context) { actor, spell in
-                let added = actor.world.magicBridge.addSpell(spell, to: actor.key)
+                let added = actor.world.roles.magic.addSpell(spell, to: actor.key)
                 if added, boolean(call, at: 1, default: true) {
                     (actor.world as? PapyrusWorldStateBridge)?
                         .itemNoticeLines.postItemNotice(spell, to: actor.key, word: \.spellAdded)
@@ -56,7 +56,7 @@ extension PapyrusNativeFunctions.SpellNatives {
             functionName: "RemoveSpell"
         ) { call, context in
             spellTarget(call, context) { actor, spell in
-                .returned(.boolean(actor.world.magicBridge.removeSpell(spell, from: actor.key)))
+                .returned(.boolean(actor.world.roles.magic.removeSpell(spell, from: actor.key)))
             }
         })
         registry.register(PapyrusNativeFunction(
@@ -80,7 +80,7 @@ extension PapyrusNativeFunctions.SpellNatives {
             functionName: "EquipSpell"
         ) { call, context in
             spellSource(call, context) { actor, spell, source in
-                guard actor.world.magicBridge.equipSpell(spell, source: source, on: actor.key)
+                guard actor.world.roles.magic.equipSpell(spell, source: source, on: actor.key)
                 else {
                     return failure(call, "EquipSpell could not ready that spell")
                 }
@@ -92,7 +92,7 @@ extension PapyrusNativeFunctions.SpellNatives {
             functionName: "UnequipSpell"
         ) { call, context in
             spellSource(call, context) { actor, spell, source in
-                actor.world.magicBridge.unequipSpell(spell, source: source, on: actor.key)
+                actor.world.roles.magic.unequipSpell(spell, source: source, on: actor.key)
                 return .returned(.none)
             }
         })
@@ -109,7 +109,7 @@ extension PapyrusNativeFunctions.SpellNatives {
             else {
                 return failure(call, "GetEquippedSpell reads the two hands alone")
             }
-            guard let state = actor.world.magicBridge.spellState(for: actor.key) else {
+            guard let state = actor.world.roles.magic.spellState(for: actor.key) else {
                 return needsSpellbook(call)
             }
             guard let spell = state.handSpells[hand] else {
@@ -145,7 +145,7 @@ extension PapyrusNativeFunctions.SpellNatives {
             functionName: "DispelSpell"
         ) { call, context in
             spellTarget(call, context) { actor, spell in
-                .returned(.boolean(actor.world.magicBridge.dispelSpell(spell, on: actor.key) > 0))
+                .returned(.boolean(actor.world.roles.magic.dispelSpell(spell, on: actor.key) > 0))
             }
         })
         registry.register(PapyrusNativeFunction(
@@ -155,7 +155,7 @@ extension PapyrusNativeFunctions.SpellNatives {
             guard let actor = actorTarget(call, context) else {
                 return needsActor(call)
             }
-            actor.world.magicBridge.dispelAllSpells(on: actor.key)
+            actor.world.roles.magic.dispelAllSpells(on: actor.key)
             return .returned(.none)
         })
     }
@@ -189,7 +189,7 @@ extension PapyrusNativeFunctions.SpellNatives {
                 let blame = name == "RemoteCast"
                     ? objectArgument(call, at: 1)
                     .flatMap { world.referenceKey(for: $0) } : nil
-                guard world.magicBridge.castSpell(spell, from: caster, at: target, blame: blame)
+                guard world.roles.magic.castSpell(spell, from: caster, at: target, blame: blame)
                 else {
                     return failure(call, "\(name) has no caster runtime or no such spell")
                 }
@@ -228,7 +228,7 @@ extension PapyrusNativeFunctions.SpellNatives {
         body: (PapyrusSpellState, ReferenceKey) -> PapyrusNativeResult
     ) -> PapyrusNativeResult {
         spellTarget(call, context) { actor, form in
-            guard let state = actor.world.magicBridge.spellState(for: actor.key) else {
+            guard let state = actor.world.roles.magic.spellState(for: actor.key) else {
                 return needsSpellbook(call)
             }
             return body(state, form)

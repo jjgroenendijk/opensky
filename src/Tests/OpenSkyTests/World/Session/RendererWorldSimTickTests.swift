@@ -80,7 +80,7 @@ struct RendererWorldSimTickTests {
         let world = Self.waitingWorld(probe)
         try Self.seedInstance(world)
         gameSession.worldTick.register(.scripts) { delta in
-            _ = world.advance(delta: delta, gameClock: gameSession.gameClock)
+            _ = world.scriptEvents.advance(delta: delta, gameClock: gameSession.gameClock)
         }
 
         // One step delivers OnLoad, which suspends; 30 more steps of 1/30 s
@@ -112,7 +112,7 @@ struct RendererWorldSimTickTests {
             functionName: "OnLoad",
             arguments: []
         ))
-        gameSession.worldTick.register(.scripts) { _ = world.advance(delta: $0) }
+        gameSession.worldTick.register(.scripts) { _ = world.scriptEvents.advance(delta: $0) }
         let hook = gameSession.worldTick
 
         hook(Float(Self.step) / 2)
@@ -147,7 +147,7 @@ struct RendererWorldSimTickTests {
         let probe = PapyrusWorldProbeDispatch()
         let world = Self.waitingWorld(probe)
         try Self.seedInstance(world)
-        gameSession.worldTick.register(.scripts) { _ = world.advance(delta: $0) }
+        gameSession.worldTick.register(.scripts) { _ = world.scriptEvents.advance(delta: $0) }
         gameSession.worldSimPaused = true
 
         for _ in 0 ..< 60 {

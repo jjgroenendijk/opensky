@@ -48,7 +48,7 @@ extension PapyrusWorldStateBridge.QuestScripts {
     public func stopQuest(for key: ReferenceKey) throws {
         let resolved = try resolveQuest(key)
         try resolved.runtime.stopQuest(resolved.quest.formID)
-        bridge.world?.detachQuest(key: key)
+        bridge.world?.questRuns.detachQuest(key: key)
         // The table went with the stop, so the binding seam must not keep
         // handing the old fills to the next attach.
         bridge.world?.aliasResolution = resolved.runtime.aliasResolution()
@@ -86,13 +86,13 @@ extension PapyrusWorldStateBridge.QuestScripts {
         if !before.isStageDone(stage) || resolved.quest.allowsRepeatedStages {
             let chosen = items ?? resolved.quest.stages.first { $0.index == stage }?
                 .defaultItems ?? []
-            bridge.world?.queueQuestFragments(
+            bridge.world?.questRuns.queueQuestFragments(
                 of: resolved.quest, stage: stage, key: key,
                 logEntries: Set(chosen.map(Int32.init))
             )
         }
         if !state.isRunning {
-            bridge.world?.retireAfterShutDown(key)
+            bridge.world?.questRuns.retireAfterShutDown(key)
         }
         if state.isFailed, !before.isFailed {
             bridge.natives.story.questFailed?(id)
@@ -194,7 +194,7 @@ extension PapyrusWorldStateBridge.QuestScripts {
 
     private func syncAliasScripts(of slot: PapyrusAliasSlot, _ resolved: ResolvedQuestBridge) {
         bridge.world?.aliasResolution = resolved.runtime.aliasResolution()
-        bridge.world?.retireAliasScripts(of: slot)
+        bridge.world?.questRuns.retireAliasScripts(of: slot)
         if attempt({ try resolved.runtime.state(of: resolved.quest.formID).isRunning }) == true {
             attachQuestScripts(resolved.quest, key: slot.quest)
         }
@@ -245,13 +245,13 @@ extension PapyrusWorldStateBridge.QuestScripts {
             let placement = bridge.ports.references?.pluginPlacement(of: key)
         else { return false }
         let resolver = bridge.formIDResolver ?? FormIDResolver(pluginName: "", masters: [])
-        return world.attachUnloaded(placement.entry, formIDResolver: resolver) > 0
+        return world.lifecycle.attachUnloaded(placement.entry, formIDResolver: resolver) > 0
     }
 
     /// The scripts `attachOnUse` would attach for `key`, so an attach can load them first.
     func scriptsOfTarget(_ key: ReferenceKey) -> [String] {
         if let quest = bridge.questRuntime?.quests.quest(key: key) {
-            return bridge.world?.attachedScripts(of: quest).map(\.name) ?? []
+            return bridge.world?.questRuns.attachedScripts(of: quest).map(\.name) ?? []
         }
         guard
             bridge.cellLocation(of: key) == nil,
@@ -264,7 +264,7 @@ extension PapyrusWorldStateBridge.QuestScripts {
 
     private func attachIdleQuest(_ key: ReferenceKey) -> Bool {
         guard
-            bridge.world?.hasDeferredWork(forQuest: key) == false,
+            bridge.world?.lifecycle.hasDeferredWork(forQuest: key) == false,
             let quest = bridge.questRuntime?.quests.quest(key: key), !quest.script.scripts.isEmpty
         else {
             return false
@@ -298,7 +298,7 @@ extension PapyrusWorldStateBridge.QuestScripts {
         let resolver = bridge.questRuntime?.quests.sourceResolver(of: quest.formID)
             ?? bridge.formIDResolver
             ?? FormIDResolver(pluginName: "", masters: [])
-        return world.attachQuest(
+        return world.questRuns.attachQuest(
             quest, key: key, formIDResolver: resolver, aliases: aliases,
             waitsForTargets: waitsForTargets
         )

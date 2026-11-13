@@ -5,16 +5,16 @@
 public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.Lifecycle {
     /// Before the cell's attach: drops the live instances on `references`, so the
     /// attach makes new ones, and lets each run `OnInit` again.
     public func prepareReset(of references: [ReferenceKey]) {
         for reference in references {
-            for key in instanceKeys(on: reference) {
+            for key in world.instanceKeys(on: reference) {
                 retire(key)
-                persistentKeys.remove(key)
+                world.persistentKeys.remove(key)
             }
-            firedOnInit = firedOnInit.filter { $0.reference != reference }
+            world.firedOnInit = world.firedOnInit.filter { $0.reference != reference }
         }
     }
 
@@ -23,10 +23,10 @@ extension PapyrusWorldRuntime {
     public func enqueueReset(of references: [ReferenceKey]) -> Int {
         var queued = 0
         for reference in references {
-            for key in instanceKeys(on: reference)
-                where handlesEvent(PapyrusEngineEvents.onReset, key: key)
+            for key in world.instanceKeys(on: reference)
+                where world.scriptEvents.handlesEvent(PapyrusEngineEvents.onReset, key: key)
             {
-                enqueue(PapyrusScriptEvent(
+                world.enqueue(PapyrusScriptEvent(
                     target: key, functionName: PapyrusEngineEvents.onReset, arguments: []
                 ))
                 queued += 1

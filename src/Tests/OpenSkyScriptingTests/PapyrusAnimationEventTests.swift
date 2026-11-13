@@ -48,12 +48,13 @@ struct PapyrusAnimationEventTests {
     @Test func aRegisteredListenerHearsTheEvent() throws {
         let listening = try listeningWorld()
         let world = listening.world, handle = listening.handle
-        #expect(world.registerAnimationEvent(
+        #expect(world.scriptEvents.registerAnimationEvent(
             handle: handle,
             sender: Self.sender,
             name: "ExitCartEnd"
         ))
-        #expect(world.queueAnimationEvent(sender: Self.sender, name: "exitcartend") == 1)
+        #expect(world.scriptEvents
+            .queueAnimationEvent(sender: Self.sender, name: "exitcartend") == 1)
         #expect(world.queueAnimationEvent(sender: .player, name: "ExitCartEnd") == 0)
         PapyrusWorldFixture.drain(world)
         #expect(listening.probe.notes == ["rider.onanimationevent"])
@@ -62,8 +63,17 @@ struct PapyrusAnimationEventTests {
     @Test func anUnregisteredListenerHearsNothing() throws {
         let listening = try listeningWorld()
         let world = listening.world, handle = listening.handle
-        world.registerAnimationEvent(handle: handle, sender: Self.sender, name: "ExitCartEnd")
-        world.unregisterAnimationEvent(handle: handle, sender: Self.sender, name: "ExitCartEnd")
-        #expect(world.queueAnimationEvent(sender: Self.sender, name: "ExitCartEnd") == 0)
+        world.scriptEvents.registerAnimationEvent(
+            handle: handle,
+            sender: Self.sender,
+            name: "ExitCartEnd"
+        )
+        world.scriptEvents.unregisterAnimationEvent(
+            handle: handle,
+            sender: Self.sender,
+            name: "ExitCartEnd"
+        )
+        #expect(world.scriptEvents
+            .queueAnimationEvent(sender: Self.sender, name: "ExitCartEnd") == 0)
     }
 }

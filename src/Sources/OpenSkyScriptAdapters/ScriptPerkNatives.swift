@@ -68,6 +68,6 @@ extension ScriptPerkBindingsAdapter {
             return (game.containerMenu.isOpen && game.containerMenu.vendor != nil, text)
         }
         bridge.natives.faction = game.factionWorld.papyrusNatives()
-        bridge.scriptState.publishFactionReactions()
+        bridge.publishFactionReactions()
     }
 }

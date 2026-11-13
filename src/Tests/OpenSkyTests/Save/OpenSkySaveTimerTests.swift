@@ -190,7 +190,7 @@ struct OpenSkySaveTimerTests {
             handle: handle, slot: .realSingleShot, interval: 1
         )
         for _ in 0 ..< 10 {
-            _ = source.world.stepFixed()
+            _ = source.world.scriptEvents.stepFixed()
         }
         let states = source.world.timerStates()
         let expectedRemaining = max(0, 1.0 - 10.0 * step)
@@ -204,8 +204,8 @@ struct OpenSkySaveTimerTests {
         // Instances first, then timers: a saved timer names the instance it
         // belongs to, and a restore that cannot find it counts a skip.
         let target = try PapyrusUpdateTimerFixture.session(isPersistent: true)
-        target.world.restore(instanceStates: decoded.scripts)
-        target.world.restore(timerStates: decoded.timers)
+        target.world.lifecycle.restore(instanceStates: decoded.scripts)
+        target.world.lifecycle.restore(timerStates: decoded.timers)
         #expect(target.world.updateTimers.pendingCount == 1)
         #expect(target.world.skips.counts[.unknownSaveTimerTarget] == nil)
 
@@ -215,7 +215,7 @@ struct OpenSkySaveTimerTests {
             stepsSinceRestore < 64
         {
             stepsSinceRestore += 1
-            _ = target.world.stepFixed()
+            _ = target.world.scriptEvents.stepFixed()
         }
         #expect(stepsSinceRestore == PapyrusUpdateTimerFixture.dueStep(
             interval: expectedRemaining, stepSeconds: step

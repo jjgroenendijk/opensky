@@ -43,7 +43,7 @@ struct QuestAcceptanceBudgetTests {
         )
         #expect(session.world.eventQueue.count == Self.fragmentCount)
 
-        let first = session.world.stepFixed()
+        let first = session.world.scriptEvents.stepFixed()
         #expect(first.dispatched == PapyrusTickBudget.standard.events)
         #expect(first.queued == Self.fragmentCount - PapyrusTickBudget.standard.events)
         #expect(first.faulted == 0)
@@ -71,7 +71,7 @@ struct QuestAcceptanceBudgetTests {
         try session.bridge.setQuestStage(
             PapyrusQuestFixture.fragmentStage, for: PapyrusQuestFixture.questKey
         )
-        session.world.stepFixed()
+        session.world.scriptEvents.stepFixed()
         let spent = session.world.runtime.tally.instructionsExecuted - floor
         #expect(spent > 0, "the tick dispatched fragments but executed nothing")
         #expect(spent < PapyrusTickBudget.standard.instructions)

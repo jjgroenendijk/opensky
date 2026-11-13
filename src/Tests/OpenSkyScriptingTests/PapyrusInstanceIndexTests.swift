@@ -43,9 +43,9 @@ struct PapyrusInstanceIndexTests {
         }
         #expect(world.instanceKeys(on: first.key).map(\.scriptName) == ["ascript", "cscript"])
 
-        world.retire(PapyrusWorldFixture.key(objectID: 1, script: "AScript"))
+        world.lifecycle.retire(PapyrusWorldFixture.key(objectID: 1, script: "AScript"))
         #expect(world.instanceKeys(on: first.key).map(\.scriptName) == ["cscript"])
-        world.retire(PapyrusWorldFixture.key(objectID: 2, script: "BScript"))
+        world.lifecycle.retire(PapyrusWorldFixture.key(objectID: 2, script: "BScript"))
         #expect(world.instanceKeys(on: second.key).isEmpty)
         #expect(world.instanceKeys(on: first.key) == Self.filtered(world, first.key))
     }

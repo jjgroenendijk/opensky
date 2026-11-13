@@ -5,11 +5,11 @@
 // them fail. Handlers a script lacks are counted no-ops.
 
 import Foundation
-public import OpenSkyCombatInterface
-public import OpenSkyFormatsESM
+import OpenSkyCombatInterface
+import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.ScriptEvents {
     /// Queues `OnHit` with the Creation Kit's seven parameters
     /// (<https://www.creationkit.com/index.php?title=OnHit_-_ObjectReference>) on each
     /// script of `hit.target`. Declared on `ObjectReference`, so crates get it too.
@@ -20,7 +20,7 @@ extension PapyrusWorldRuntime {
             PapyrusEngineEvents.onHit,
             on: hit.target,
             arguments: [
-                .object(objectHandle(for: hit.aggressor)),
+                .object(world.objectHandle(for: hit.aggressor)),
                 formValue(hit.source),
                 formValue(hit.projectile),
                 .boolean(hit.isPowerAttack),
@@ -37,7 +37,7 @@ extension PapyrusWorldRuntime {
     @discardableResult
     public func queueActorDeath(actor: ReferenceKey, killer: ReferenceKey?) -> Int {
         let arguments: [PapyrusValue] = [
-            killer.map { .object(objectHandle(for: $0)) } ?? .none
+            killer.map { .object(world.objectHandle(for: $0)) } ?? .none
         ]
         return queueActorEvent(PapyrusEngineEvents.onDying, on: actor, arguments: arguments)
             + queueActorEvent(PapyrusEngineEvents.onDeath, on: actor, arguments: arguments)
@@ -58,7 +58,7 @@ extension PapyrusWorldRuntime {
         queueActorEvent(
             PapyrusEngineEvents.onWardHit, on: holder,
             arguments: [
-                .object(objectHandle(for: caster)), .object(objectHandle(for: spell)),
+                .object(world.objectHandle(for: caster)), .object(world.objectHandle(for: spell)),
                 .integer(status)
             ]
         )
@@ -104,8 +104,8 @@ extension PapyrusWorldRuntime {
         arguments: [PapyrusValue]
     ) -> Int {
         var queued = 0
-        for key in instanceKeys(on: reference) {
-            enqueue(PapyrusScriptEvent(
+        for key in world.instanceKeys(on: reference) {
+            world.enqueue(PapyrusScriptEvent(
                 target: key,
                 functionName: functionName,
                 arguments: arguments,
@@ -122,10 +122,10 @@ extension PapyrusWorldRuntime {
     func formValue(_ formID: FormID?) -> PapyrusValue {
         guard
             let formID,
-            let key = formIDResolver.flatMap({ ReferenceKey.resolve(formID, using: $0) })
+            let key = world.formIDResolver.flatMap({ ReferenceKey.resolve(formID, using: $0) })
         else {
             return .none
         }
-        return .object(objectHandle(for: key))
+        return .object(world.objectHandle(for: key))
     }
 }

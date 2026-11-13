@@ -20,7 +20,7 @@ public struct PapyrusDeferredScriptWork {
     let run: () -> Void
 }
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.Lifecycle {
     /// Types whose property handlers a script runs on a form without a script instance,
     /// such as `ObjectReference.Motion_Keyframed`. Nothing else may load them.
     static let referenceTypeScripts = ["ObjectReference", "Actor", "GlobalVariable"]
@@ -28,7 +28,7 @@ extension PapyrusWorldRuntime {
     /// The scripts of the quests and references that `scripts`' object properties name.
     /// An attach waits for them too, so a first use can attach them at once (`attachOnUse`).
     func targetScripts(of scripts: [AttachedScript], resolver: FormIDResolver) -> [String] {
-        guard let scriptsOfTarget else { return [] }
+        guard let scriptsOfTarget = world.scriptsOfTarget else { return [] }
         let objects = scripts.flatMap(\.properties).flatMap { property -> [ScriptObjectReference] in
             switch property.value {
             case let .object(object): [object]
@@ -48,7 +48,7 @@ extension PapyrusWorldRuntime {
         var seen: Set<String> = []
         while let name = pending.popLast() {
             guard seen.insert(PapyrusRuntime.key(name)).inserted else { continue }
-            switch scriptAvailability(named: name) {
+            switch world.scriptAvailability(named: name) {
             case .loading: loading = true
             case .ready: pending += staticCallScripts(ofChain: name)
             case .missing: break
@@ -64,12 +64,12 @@ extension PapyrusWorldRuntime {
         var visited: Set<String> = []
         while !current.isEmpty, visited.insert(PapyrusRuntime.key(current)).inserted {
             let key = PapyrusRuntime.key(current)
-            guard let object = runtime.script(named: current) else { break }
-            if let known = staticCallScriptsByKey[key] {
+            guard let object = world.runtime.script(named: current) else { break }
+            if let known = world.staticCallScriptsByKey[key] {
                 targets += known
             } else {
                 let found = object.staticCallScripts
-                staticCallScriptsByKey[key] = found
+                world.staticCallScriptsByKey[key] = found
                 targets += found
             }
             current = object.parentClassName
@@ -82,18 +82,22 @@ extension PapyrusWorldRuntime {
         quest: ReferenceKey? = nil,
         _ run: @escaping () -> Void
     ) {
-        deferredScriptWork.append(PapyrusDeferredScriptWork(cell: cell, quest: quest, run: run))
+        world.deferredScriptWork.append(PapyrusDeferredScriptWork(
+            cell: cell,
+            quest: quest,
+            run: run
+        ))
     }
 
     func hasDeferredWork(forQuest key: ReferenceKey) -> Bool {
-        deferredScriptWork.contains { $0.quest == key }
+        world.deferredScriptWork.contains { $0.quest == key }
     }
 
     /// Runs the waiting work again, oldest first. Work that still waits queues again.
     public func retryDeferredScriptWork() {
-        guard !deferredScriptWork.isEmpty else { return }
-        let waiting = deferredScriptWork
-        deferredScriptWork = []
+        guard !world.deferredScriptWork.isEmpty else { return }
+        let waiting = world.deferredScriptWork
+        world.deferredScriptWork = []
         for work in waiting {
             work.run()
         }

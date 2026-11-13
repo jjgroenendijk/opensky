@@ -58,8 +58,8 @@ struct ScriptingAcceptanceEngineTests {
 
         let fresh = try ScriptedWorldChain(activate: false)
         fresh.session.worldState.restore(from: file.snapshot)
-        fresh.session.world.restore(instanceStates: file.scripts)
-        fresh.session.world.restore(timerStates: file.timers)
+        fresh.session.world.lifecycle.restore(instanceStates: file.scripts)
+        fresh.session.world.lifecycle.restore(timerStates: file.timers)
 
         #expect(fresh.session.worldState.snapshot() == source.session.worldState.snapshot())
         #expect(fresh.session.worldState.journalEntries.isEmpty)
@@ -80,8 +80,10 @@ struct ScriptingAcceptanceEngineTests {
         )
         #expect(freshInstance.value(named: "activationMarker", declaredBy: "LeverScript")
             == .integer(1))
-        #expect(fresh.session.world.instanceStates() == source.session.world.instanceStates())
-        #expect(fresh.session.world.timerStates() == source.session.world.timerStates())
+        #expect(fresh.session.world.instanceStates() == source.session.world.lifecycle
+            .instanceStates())
+        #expect(fresh.session.world.timerStates() == source.session.world.lifecycle
+            .timerStates())
         #expect(fresh.session.world.updateTimers.pendingCount == 1)
     }
 }

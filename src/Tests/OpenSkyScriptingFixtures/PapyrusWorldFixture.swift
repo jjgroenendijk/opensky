@@ -316,7 +316,7 @@ public enum PapyrusWorldFixture {
     @MainActor
     public static func drain(_ world: PapyrusWorldRuntime, maxSteps: Int = 64) {
         for _ in 0 ..< maxSteps {
-            let report = world.stepFixed()
+            let report = world.scriptEvents.stepFixed()
             if report.dispatched == 0, report.resumed == 0, report.queued == 0 {
                 return
             }

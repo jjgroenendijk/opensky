@@ -49,7 +49,7 @@ extension PapyrusWorldStateBridge.InventoryEvents {
             let world = bridge.world, let formIDResolver = bridge.formIDResolver,
             let scripts = bridge.natives.session.itemScripts?(base), !scripts.isEmpty
         else { return 0 }
-        return world.queueItemEvent(
+        return world.scriptEvents.queueItemEvent(
             (name, arguments), base: base, scripts: scripts,
             formIDResolver: formIDResolver
         )
@@ -151,7 +151,10 @@ extension PapyrusWorldStateBridge.InventoryEvents {
         let (holder, item) = target
         let itemKey = item.flatMap(itemKey)
         var queued = 0
-        for key in world.instanceKeys(on: holder) where world.definesFunction(name, key: key) {
+        for key in world.instanceKeys(on: holder) where world.scriptEvents.definesFunction(
+            name,
+            key: key
+        ) {
             if item != nil, !passesInventoryFilters(itemKey, instance: key) {
                 continue
             }

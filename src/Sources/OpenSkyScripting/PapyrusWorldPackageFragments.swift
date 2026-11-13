@@ -4,10 +4,10 @@
 // (<https://ck.uesp.net/wiki/Package_Fragments>). Layout: docs/formats/vmad.md.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.FragmentRuns {
     /// Instantiates the package's fragment script if needed and enqueues the fragment
     /// with flag `slot`. Keyed by the PACK's `ReferenceKey` plus the script name.
     @discardableResult
@@ -24,9 +24,12 @@ extension PapyrusWorldRuntime {
             let key = ReferenceKey.resolve(package.formID, using: formIDResolver)
         else { return false }
         let target = PapyrusInstanceKey(reference: key, scriptName: fragment.scriptName)
-        if instancesByKey[target] == nil, scriptsLoading([fragment.scriptName]) {
-            deferUntilScriptsLoad { [weak self] in
-                self?.queuePackageFragment(
+        if
+            world.instancesByKey[target] == nil,
+            world.lifecycle.scriptsLoading([fragment.scriptName])
+        {
+            world.lifecycle.deferUntilScriptsLoad { [weak world] in
+                world?.fragmentRuns.queuePackageFragment(
                     of: package, slot: slot, actor: actor, formIDResolver: formIDResolver
                 )
             }
@@ -41,12 +44,12 @@ extension PapyrusWorldRuntime {
             let quest = package.details.ownerQuest
                 .flatMap({ ReferenceKey.resolve($0, using: formIDResolver) })
         {
-            fragmentQuests[key] = quest
+            world.fragmentQuests[key] = quest
         }
-        enqueue(PapyrusScriptEvent(
+        world.enqueue(PapyrusScriptEvent(
             target: target,
             functionName: fragment.functionName,
-            arguments: [.object(objectHandle(for: actor))]
+            arguments: [.object(world.objectHandle(for: actor))]
         ))
         return true
     }
@@ -61,7 +64,7 @@ extension PapyrusWorldStateBridge.StoryEvents {
         guard
             let world = bridge.world,
             let formIDResolver = bridge.formIDResolver else { return false }
-        return world.queuePackageFragment(
+        return world.fragmentRuns.queuePackageFragment(
             of: package, slot: slot, actor: actor, formIDResolver: formIDResolver
         )
     }
@@ -76,6 +79,7 @@ extension PapyrusWorldStateBridge.StoryEvents {
         case 0x04: name = PapyrusEngineEvents.onPackageChange
         default: return 0
         }
-        return bridge.world?.queuePackageEvent(name, package: package, actor: actor) ?? 0
+        return bridge.world?.scriptEvents
+            .queuePackageEvent(name, package: package, actor: actor) ?? 0
     }
 }

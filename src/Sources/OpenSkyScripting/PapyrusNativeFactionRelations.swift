@@ -77,7 +77,7 @@ extension PapyrusNativeFunctions.FactionRelationsNatives {
         }
         var members: [ReferenceKey] = []
         for actor in actors {
-            guard let isMember = bridge.factions.isInFaction(actor, faction: faction)
+            guard let isMember = bridge.isInFaction(actor, faction: faction)
             else { return nil }
             if isMember {
                 members.append(actor)

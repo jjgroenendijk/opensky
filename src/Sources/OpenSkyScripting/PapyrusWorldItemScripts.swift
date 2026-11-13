@@ -4,10 +4,10 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
-public import OpenSkyScriptingInterface
+import OpenSkyFormatsESM
+import OpenSkyScriptingInterface
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.ScriptEvents {
     /// Queues `name` on each script of the item `base`, creating the instances on first
     /// use. A script still loading queues the event once it loads. Returns the count queued now.
     @discardableResult
@@ -20,9 +20,9 @@ extension PapyrusWorldRuntime {
         let (name, arguments) = event
         let live = scripts.filter { !$0.isRemoved }
         guard !live.isEmpty else { return 0 }
-        if scriptsLoading(live.map(\.name)) {
-            deferUntilScriptsLoad { [weak self] in
-                self?.queueItemEvent(
+        if world.lifecycle.scriptsLoading(live.map(\.name)) {
+            world.lifecycle.deferUntilScriptsLoad { [weak world] in
+                world?.scriptEvents.queueItemEvent(
                     event, base: base, scripts: live,
                     formIDResolver: formIDResolver
                 )
@@ -33,12 +33,12 @@ extension PapyrusWorldRuntime {
         for script in live {
             let key = PapyrusInstanceKey(reference: base, scriptName: script.name)
             guard
-                instancesByKey[key] != nil || makeItemInstance(key, script, formIDResolver),
+                world.instancesByKey[key] != nil || makeItemInstance(key, script, formIDResolver),
                 handlesEvent(
                     name,
                     key: key
                 ) else { continue }
-            enqueue(PapyrusScriptEvent(target: key, functionName: name, arguments: arguments))
+            world.enqueue(PapyrusScriptEvent(target: key, functionName: name, arguments: arguments))
             queued += 1
         }
         return queued
@@ -48,15 +48,15 @@ extension PapyrusWorldRuntime {
     private func makeItemInstance(
         _ key: PapyrusInstanceKey, _ script: AttachedScript, _ resolver: FormIDResolver
     ) -> Bool {
-        guard resolveScript(named: script.name) else {
-            skips.note(.missingScript)
+        guard world.resolveScript(named: script.name) else {
+            world.skips.note(.missingScript)
             return false
         }
         let item = PapyrusAttachItem(key: key, script: script, isPersistent: true)
-        guard instantiate(item) else { return false }
-        persistentKeys.insert(key)
-        bind(plan: [item], created: [key], formIDResolver: resolver)
-        enqueueOnInitIfNeeded(key)
+        guard world.lifecycle.instantiate(item) else { return false }
+        world.persistentKeys.insert(key)
+        world.lifecycle.bind(plan: [item], created: [key], formIDResolver: resolver)
+        world.enqueueOnInitIfNeeded(key)
         return true
     }
 }

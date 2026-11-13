@@ -35,27 +35,27 @@ extension PapyrusNativeFunctions.ActorStateNatives {
         }
         // `StopCombatAlarm()` ends the actor's fight; OpenSky keeps no alarm apart from it.
         scriptState("Actor", "StopCombatAlarm", into: &registry) { _, bridge, key in
-            bridge.actorValues.stopActorCombat(key)
+            bridge.stopActorCombat(key)
             return .returned(.none)
         }
         // `EnableAI(bool abEnable = true)` and `bool IsAIEnabled()`.
         scriptState("Actor", "EnableAI", into: &registry) { call, bridge, key in
             let enabled = boolean(call, at: 0, default: true)
-            bridge.scriptState.updateScriptedState(of: key) {
+            bridge.updateScriptedState(of: key) {
                 $0.setFlag(aiDisabledName, enabled ? nil : true)
             }
             // An actor with no AI fights no more; the combat loop then leaves it out.
             if !enabled {
-                bridge.actorValues.stopActorCombat(key)
+                bridge.stopActorCombat(key)
             }
             return .returned(.none)
         }
         scriptState("Actor", "IsAIEnabled", into: &registry) { _, bridge, key in
-            .returned(.boolean(bridge.scriptState.scriptedState(of: key)
+            .returned(.boolean(bridge.scriptedState(of: key)
                     .flag(aiDisabledName) != true))
         }
         scriptState("Actor", "IsBleedingOut", into: &registry) { _, bridge, key in
-            .returned(.boolean(bridge.scriptState.scriptedState(of: key)
+            .returned(.boolean(bridge.scriptedState(of: key)
                     .flag(ScriptedStateName.bleedingOut) == true))
         }
         // A summon or a raised corpse while its effect runs.

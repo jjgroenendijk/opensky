@@ -71,7 +71,7 @@ extension PapyrusNativeFunctions.TrapWorldNatives {
                 return failure(call, "PlaceActorAtMe needs an actor base")
             }
             guard
-                let placed = bridge.referencePlacement.spawnReference(of: base, at: key),
+                let placed = bridge.spawnReference(of: base, at: key),
                 let result = bridge.objectHandle(for: placed)
             else { return .returned(.none) }
             return .returned(.object(result))

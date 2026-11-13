@@ -5,12 +5,12 @@
 // See docs/engine/dialogue.md and docs/engine/papyrus-quests.md.
 
 import Foundation
-public import OpenSkyDialogueInterface
+import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.FragmentRuns {
     /// Instantiates the response's result script if needed and enqueues the fragment
     /// for `phase`. A missing script counts as `missingScript`; an undefined function
     /// counts as `undefinedEventFunction`. Neither stops the conversation.
@@ -30,9 +30,12 @@ extension PapyrusWorldRuntime {
             return []
         }
         let target = PapyrusInstanceKey(reference: key, scriptName: fragment.scriptName)
-        if instancesByKey[target] == nil, scriptsLoading([fragment.scriptName]) {
-            deferUntilScriptsLoad { [weak self] in
-                self?.queueTopicInfoFragment(
+        if
+            world.instancesByKey[target] == nil,
+            world.lifecycle.scriptsLoading([fragment.scriptName])
+        {
+            world.lifecycle.deferUntilScriptsLoad { [weak world] in
+                world?.fragmentRuns.queueTopicInfoFragment(
                     of: info, key: key, phase: phase, context: context,
                     formIDResolver: formIDResolver
                 )
@@ -46,16 +49,17 @@ extension PapyrusWorldRuntime {
         else {
             return []
         }
-        dialogueInstanceKeys.insert(target)
+        world.dialogueInstanceKeys.insert(target)
         if let quest = context.quest {
-            fragmentQuests[key] = quest
+            world.fragmentQuests[key] = quest
         }
-        enqueue(PapyrusScriptEvent(
+        world.enqueue(PapyrusScriptEvent(
             target: target,
             functionName: fragment.functionName,
-            arguments: context.speaker.map { [PapyrusValue.object(objectHandle(for: $0))] } ?? []
+            arguments: context.speaker
+                .map { [PapyrusValue.object(world.objectHandle(for: $0))] } ?? []
         ))
-        dialogueFragmentsQueued += 1
+        world.dialogueFragmentsQueued += 1
         return [fragment.functionName]
     }
 
@@ -71,9 +75,9 @@ extension PapyrusWorldRuntime {
         let (scriptName, functionName) = fragment
         guard !scriptName.isEmpty else { return false }
         let target = PapyrusInstanceKey(reference: key, scriptName: scriptName)
-        if instancesByKey[target] == nil, scriptsLoading([scriptName]) {
-            deferUntilScriptsLoad { [weak self] in
-                self?.queueSceneFragment(
+        if world.instancesByKey[target] == nil, world.lifecycle.scriptsLoading([scriptName]) {
+            world.lifecycle.deferUntilScriptsLoad { [weak world] in
+                world?.fragmentRuns.queueSceneFragment(
                     of: scene, key: key, fragment: fragment,
                     formIDResolver: formIDResolver
                 )
@@ -88,16 +92,16 @@ extension PapyrusWorldRuntime {
             return false
         }
         if let quest = scene.quest.flatMap({ ReferenceKey.resolve($0, using: formIDResolver) }) {
-            fragmentQuests[key] = quest
+            world.fragmentQuests[key] = quest
         }
-        enqueue(PapyrusScriptEvent(target: target, functionName: functionName, arguments: []))
-        sceneFragmentsQueued += 1
+        world.enqueue(PapyrusScriptEvent(target: target, functionName: functionName, arguments: []))
+        world.sceneFragmentsQueued += 1
         return true
     }
 
     /// Response result scripts holding a live instance.
     var dialogueInfoCount: Int {
-        Set(dialogueInstanceKeys.map(\.reference)).count
+        Set(world.dialogueInstanceKeys.map(\.reference)).count
     }
 
     // MARK: - Private
@@ -111,18 +115,18 @@ extension PapyrusWorldRuntime {
         declared scripts: [AttachedScript],
         formIDResolver: FormIDResolver
     ) -> Bool {
-        if instancesByKey[target] != nil {
+        if world.instancesByKey[target] != nil {
             return true
         }
         let declared = scripts.first {
             $0.name.lowercased() == target.scriptName.lowercased()
         }
         if let declared, declared.isRemoved {
-            skips.note(.removedScript)
+            world.skips.note(.removedScript)
             return false
         }
-        guard resolveScript(named: target.scriptName) else {
-            skips.note(.missingScript)
+        guard world.resolveScript(named: target.scriptName) else {
+            world.skips.note(.missingScript)
             return false
         }
         let item = PapyrusAttachItem(
@@ -131,12 +135,12 @@ extension PapyrusWorldRuntime {
                 ?? AttachedScript(name: target.scriptName, flags: [], properties: []),
             isPersistent: true
         )
-        guard instantiate(item) else {
+        guard world.lifecycle.instantiate(item) else {
             return false
         }
-        persistentKeys.insert(target)
-        bind(plan: [item], created: [target], formIDResolver: formIDResolver)
-        enqueueOnInitIfNeeded(target)
+        world.persistentKeys.insert(target)
+        world.lifecycle.bind(plan: [item], created: [target], formIDResolver: formIDResolver)
+        world.enqueueOnInitIfNeeded(target)
         return true
     }
 }

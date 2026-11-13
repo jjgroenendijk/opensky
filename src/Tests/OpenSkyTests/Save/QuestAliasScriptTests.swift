@@ -47,7 +47,7 @@ struct QuestAliasScriptTests {
         #expect(session.world.instancesByKey[aliasKey] != nil)
         #expect(session.world.questAliasInstanceKeys[PapyrusQuestFixture.questKey]
             == [aliasKey])
-        #expect(session.world.questAliasInstanceCount == 1)
+        #expect(session.world.questRuns.questAliasInstanceCount == 1)
         // It is persistent and in no cell's attached set, so no detach reaches
         // it — the same rule the quest's own instances follow.
         #expect(session.world.persistentKeys.contains(aliasKey))
@@ -63,7 +63,7 @@ struct QuestAliasScriptTests {
         let session = try session()
         let aliasKey = PapyrusQuestFixture.aliasInstanceKey(PapyrusQuestFixture.aliasScript)
         let handle = try #require(session.world.instancesByKey[aliasKey])
-        #expect(session.world.owningQuest(of: handle) == PapyrusQuestFixture.questKey)
+        #expect(session.world.questRuns.owningQuest(of: handle) == PapyrusQuestFixture.questKey)
     }
 
     /// The alias script attaches after its cell loaded, so it gets the
@@ -104,7 +104,7 @@ struct QuestAliasScriptTests {
             quest: quest,
             objects: PapyrusQuestFixture.objects([PapyrusQuestFixture.aliasScriptObject()])
         )
-        #expect(session.world.questAliasInstanceCount == 0)
+        #expect(session.world.questRuns.questAliasInstanceCount == 0)
         #expect(session.world.instancesByKey[
             PapyrusQuestFixture.aliasInstanceKey(PapyrusQuestFixture.aliasScript)
         ] == nil)
@@ -135,7 +135,7 @@ struct QuestAliasScriptTests {
     /// something to show before anything calls `Start`.
     @Test func wireUpFillsAliasesAndReportsThem() throws {
         let session = try session()
-        let snapshot = session.world.scriptsSnapshot(
+        let snapshot = session.world.readouts.scriptsSnapshot(
             runningQuestCount: 1,
             questAliasFillFailures: session.bridge.runState.questAliasFillFailures
         )

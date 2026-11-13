@@ -21,7 +21,8 @@ extension PapyrusWorldStateBridge.CombatEvents {
         if let cached = bridge.runState.combatEventKeys, cached.revision == world.instanceRevision {
             keys = cached.keys
         } else {
-            keys = world.instancesByKey.keys.filter { world.handlesEvent(name, key: $0) }.sorted()
+            keys = world.instancesByKey.keys
+                .filter { world.scriptEvents.handlesEvent(name, key: $0) }.sorted()
             bridge.runState.combatEventKeys = (world.instanceRevision, keys)
         }
         var activities: [ReferenceKey: ActorCombatActivity] = [:]
@@ -45,15 +46,15 @@ extension PapyrusWorldStateBridge.CombatEvents {
     }
 }
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.ScriptEvents {
     /// `definesFunction`, remembered per instance: a script chain does not change while
     /// the instance lives, and a per-frame scan asks the same question every frame.
     func handlesEvent(_ name: String, key: PapyrusInstanceKey) -> Bool {
-        if let known = handledEvents[key]?[name] {
+        if let known = world.handledEvents[key]?[name] {
             return known
         }
         let answer = definesFunction(name, key: key)
-        handledEvents[key, default: [:]][name] = answer
+        world.handledEvents[key, default: [:]][name] = answer
         return answer
     }
 }

@@ -62,7 +62,7 @@ extension PapyrusWorldStateBridge.ReferenceEvents {
     }
 
     func destruction(of key: ReferenceKey) -> DestructionProgress {
-        let state = bridge.scriptState.scriptedState(of: key)
+        let state = bridge.scriptedState(of: key)
         return DestructionProgress(
             damage: state.value(ScriptedStateName.destructionDamage) ?? 0,
             stage: Int(state.value(ScriptedStateName.destructionStage) ?? 0),
@@ -74,7 +74,7 @@ extension PapyrusWorldStateBridge.ReferenceEvents {
     /// aiCurrentStage)` when the stage moved. An intact object keeps no state.
     func storeDestruction(_ progress: DestructionProgress, of key: ReferenceKey) {
         let old = destruction(of: key).stage
-        bridge.scriptState.updateScriptedState(of: key) { state in
+        bridge.updateScriptedState(of: key) { state in
             state.setValue(
                 ScriptedStateName.destructionDamage,
                 progress.damage > 0

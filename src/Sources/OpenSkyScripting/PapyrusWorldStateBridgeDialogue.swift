@@ -25,7 +25,7 @@ extension PapyrusWorldStateBridge {
             context: TopicInfoFragmentContext
         ) -> [String] {
             guard let bridge, let world = bridge.world else { return [] }
-            return world.queueTopicInfoFragment(
+            return world.fragmentRuns.queueTopicInfoFragment(
                 of: info,
                 key: key,
                 phase: phase,
@@ -42,7 +42,7 @@ extension PapyrusWorldStateBridge {
             functionName: String
         ) -> Bool {
             guard let bridge, let world = bridge.world else { return false }
-            return world.queueSceneFragment(
+            return world.fragmentRuns.queueSceneFragment(
                 of: scene,
                 key: key,
                 fragment: (scriptName, functionName),

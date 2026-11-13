@@ -17,7 +17,7 @@ extension PapyrusNativeFunctions.PerkNatives {
             functionName: "AddPerk"
         ) { call, context in
             perkTarget(call, context) { actor, perk in
-                .returned(.boolean(actor.world.actorBridge.addPerk(perk, to: actor.key)))
+                .returned(.boolean(actor.world.roles.actors.addPerk(perk, to: actor.key)))
             }
         })
 
@@ -28,7 +28,7 @@ extension PapyrusNativeFunctions.PerkNatives {
             functionName: "RemovePerk"
         ) { call, context in
             perkTarget(call, context) { actor, perk in
-                .returned(.boolean(actor.world.actorBridge.removePerk(perk, from: actor.key)))
+                .returned(.boolean(actor.world.roles.actors.removePerk(perk, from: actor.key)))
             }
         })
 
@@ -39,7 +39,7 @@ extension PapyrusNativeFunctions.PerkNatives {
             functionName: "HasPerk"
         ) { call, context in
             perkTarget(call, context) { actor, perk in
-                guard let owns = actor.world.actorBridge.hasPerk(perk, on: actor.key) else {
+                guard let owns = actor.world.roles.actors.hasPerk(perk, on: actor.key) else {
                     return failure(call, "HasPerk needs a session with a perk runtime")
                 }
                 return .returned(.boolean(owns))

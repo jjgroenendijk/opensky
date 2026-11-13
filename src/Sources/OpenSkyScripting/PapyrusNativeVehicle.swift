@@ -67,10 +67,14 @@ extension PapyrusNativeFunctions.VehicleNatives {
                 let event = string(call, at: 1)
             else { return failure(call, "\(name) needs a sender and an event name") }
             guard name == "RegisterForAnimationEvent" else {
-                runtime.unregisterAnimationEvent(handle: receiver, sender: sender, name: event)
+                runtime.scriptEvents.unregisterAnimationEvent(
+                    handle: receiver,
+                    sender: sender,
+                    name: event
+                )
                 return .returned(.none)
             }
-            let registered = runtime.registerAnimationEvent(
+            let registered = runtime.scriptEvents.registerAnimationEvent(
                 handle: receiver, sender: sender, name: event
             )
             return .returned(.boolean(registered))

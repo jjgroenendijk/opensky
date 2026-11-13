@@ -24,7 +24,7 @@ struct PapyrusWorldTriggerRepeatTests {
     @Test func repeatsTwiceASecondWhileInsideAndStopsOnLeave() throws {
         let fixture = try Self.fixture()
         let bridge = fixture.session.bridge
-        bridge.triggers.handleTriggerTransition(TriggerTransitionEvent(
+        bridge.handleTriggerTransition(TriggerTransitionEvent(
             reference: fixture.key,
             phase: .enter
         ))
@@ -35,7 +35,7 @@ struct PapyrusWorldTriggerRepeatTests {
         bridge.triggers.queueTriggerRepeats(after: 0.5)
         #expect(Self.count(fixture) == 2)
 
-        bridge.triggers.handleTriggerTransition(TriggerTransitionEvent(
+        bridge.handleTriggerTransition(TriggerTransitionEvent(
             reference: fixture.key,
             phase: .leave
         ))
@@ -46,7 +46,7 @@ struct PapyrusWorldTriggerRepeatTests {
     @Test func anUnrunRepeatIsNotQueuedAgain() throws {
         let fixture = try Self.fixture()
         let bridge = fixture.session.bridge
-        bridge.triggers.handleTriggerTransition(TriggerTransitionEvent(
+        bridge.handleTriggerTransition(TriggerTransitionEvent(
             reference: fixture.key,
             phase: .enter
         ))

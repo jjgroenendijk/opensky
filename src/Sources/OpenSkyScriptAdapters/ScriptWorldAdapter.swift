@@ -126,22 +126,14 @@ public final class ScriptWorldAdapter {
             worldState: worldState, references: streamer,
             seams: featureBindings.seams(provider: provider, worldState: worldState)
         )
-        bridge.stores.globals = game.runtimeState.globalStore
         state.bridge = bridge
-        bridge.natives.session.clockSource = { [weak gameSession] in gameSession?.gameClock }
-        // The game counts real time from its launch, without frozen time (CK wiki
-        // "GetCurrentRealTime - Utility"): the time before this session, then its frames.
-        let beforeSession = BenchmarkAppStart.processStart().map { -$0.timeIntervalSinceNow } ?? 0
-        bridge.natives.session.realTimeSource = { [weak gameSession] in
-            beforeSession + (gameSession?.gameTime.realSecondsRun ?? 0)
-        }
+        playerNatives.fillSessionNatives(bridge: bridge, placedRecords: provider.placedRecords)
         actorBindings.fillActorNatives(bridge: bridge)
-        nodeBindings.fillLineOfSight(bridge: bridge)
+        ScriptLineOfSightNatives(nodes: nodeBindings).fill(bridge: bridge)
         perkBindings.fillSpellNatives(bridge: bridge, provider: provider)
         skyBindings.fillSky(bridge: bridge)
         nodeBindings.fillModelNodes(provider: provider, gameSession: gameSession)
         sessionBindings.fillGameNatives(bridge: bridge)
-        bridge.natives.session.itemScripts = Self.itemScripts(provider.placedRecords)
         bridge.formIDResolver = provider.scriptFormIDResolver
         fillPlayerNatives(bridge: bridge)
         return bridge
@@ -155,21 +147,6 @@ public final class ScriptWorldAdapter {
     /// An `AttachAshPile` pile opens its actor's inventory, as activating the body would.
     func searchAshPileOwner(of event: InteractionEvent, bridge: PapyrusWorldStateBridge) {
         playerNatives.searchAshPileOwner(of: event, bridge: bridge)
-    }
-
-    /// Decoded once per base form, because each equip asks again.
-    private static func itemScripts(
-        _ lookup: PlacedRecordLookup?
-    ) -> (ReferenceKey) -> [AttachedScript] {
-        var cache: [ReferenceKey: [AttachedScript]] = [:]
-        return { base in
-            if let known = cache[base] {
-                return known
-            }
-            let scripts = lookup?.scripts(ofBase: base) ?? []
-            cache[base] = scripts
-            return scripts
-        }
     }
 }
 
@@ -195,6 +172,19 @@ extension ScriptWorldAdapter: ScriptWorld {
 struct ScriptPlayerNatives {
     let game: any ScriptWorldHost
 
+    /// The globals, clocks, and item scripts of the session natives.
+    func fillSessionNatives(bridge: PapyrusWorldStateBridge, placedRecords: PlacedRecordLookup?) {
+        bridge.stores.globals = game.runtimeState.globalStore
+        bridge.natives.session.clockSource = { [weak game] in game?.gameSession?.gameClock }
+        // The game counts real time from its launch, without frozen time (CK wiki
+        // "GetCurrentRealTime - Utility"): the time before this session, then its frames.
+        let beforeSession = BenchmarkAppStart.processStart().map { -$0.timeIntervalSinceNow } ?? 0
+        bridge.natives.session.realTimeSource = { [weak game] in
+            beforeSession + (game?.gameSession?.gameTime.realSecondsRun ?? 0)
+        }
+        bridge.natives.session.itemScripts = Self.itemScripts(placedRecords)
+    }
+
     func fillPlayerNatives(bridge: PapyrusWorldStateBridge) {
         bridge.natives.session.leveledEdits = { [weak game] in
             game?.worldRecords?.leveledScriptEdits
@@ -217,6 +207,21 @@ struct ScriptPlayerNatives {
             game.ragdoll.searchCorpse(actor)
         else { return }
         game.containerMenu.open()
+    }
+
+    /// Decoded once per base form, because each equip asks again.
+    static func itemScripts(
+        _ lookup: PlacedRecordLookup?
+    ) -> (ReferenceKey) -> [AttachedScript] {
+        var cache: [ReferenceKey: [AttachedScript]] = [:]
+        return { base in
+            if let known = cache[base] {
+                return known
+            }
+            let scripts = lookup?.scripts(ofBase: base) ?? []
+            cache[base] = scripts
+            return scripts
+        }
     }
 
     var crosshairReference: FormID? {

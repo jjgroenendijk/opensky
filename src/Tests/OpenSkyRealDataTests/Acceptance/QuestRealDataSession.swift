@@ -148,7 +148,7 @@ final class QuestRealDataSession {
     /// bounded so a broken queue fails the test rather than hanging.
     func drain(maxSteps: Int = 64) {
         for _ in 0 ..< maxSteps {
-            let report = world.stepFixed()
+            let report = world.scriptEvents.stepFixed()
             if report.dispatched == 0, report.resumed == 0, report.queued == 0 {
                 return
             }
@@ -209,7 +209,7 @@ enum QuestRealDataReport {
             "objectives displayed: \(state.objectives.count { $0.isDisplayed }) "
                 + "completed \(state.objectives.count { $0.isCompleted })",
             "quest script instances: \(world.questInstanceKeys.count) "
-                + "alias instances: \(world.questAliasInstanceCount)",
+                + "alias instances: \(world.questRuns.questAliasInstanceCount)",
             "fragments queued: \(world.questFragmentsQueued) "
                 + "last: \(world.lastQuestFragment ?? "none")",
             "aliases filled: \(world.aliasResolution.filledAliasCount)",

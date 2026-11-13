@@ -37,8 +37,11 @@ struct PapyrusEngineEventSenderTests {
     @Test func readingGrabbingAndReleasingQueueTheirEvents() throws {
         let fixture = try Self.fixture(["OnRead", "OnGrab", "OnRelease"])
         #expect(Self.run(fixture) { $0.queueRead(on: fixture.key) } == ["onread"])
-        #expect(Self.run(fixture) { $0.queueGrab(of: fixture.key, held: true) } == ["ongrab"])
-        #expect(Self.run(fixture) { $0.queueGrab(of: fixture.key, held: false) } == ["onrelease"])
+        #expect(Self
+            .run(fixture) { $0.queueGrab(of: fixture.key, held: true) } == ["ongrab"])
+        #expect(Self
+            .run(fixture) { $0.queueGrab(of: fixture.key, held: false) } ==
+            ["onrelease"])
     }
 
     @Test func theFirstTrapHitAlsoStartsContact() throws {
@@ -59,8 +62,10 @@ struct PapyrusEngineEventSenderTests {
             position: .zero,
             initial: false
         )
-        #expect(Self.run(fixture) { $0.queueTrapHit(next, on: fixture.key) } == ["ontraphit"])
-        #expect(Self.run(fixture) { $0.queueTrapHitStop(target: door, on: fixture.key) }
+        #expect(Self
+            .run(fixture) { $0.queueTrapHit(next, on: fixture.key) } == ["ontraphit"])
+        #expect(Self
+            .run(fixture) { $0.queueTrapHitStop(target: door, on: fixture.key) }
             == ["ontraphitstop"])
     }
 
@@ -72,7 +77,8 @@ struct PapyrusEngineEventSenderTests {
     @Test func bleedingOutReachesTheActor() throws {
         let fixture = try Self.fixture(["OnEnterBleedout"])
         #expect(Self
-            .run(fixture) { $0.queueEnterBleedout(actor: fixture.key) } == ["onenterbleedout"])
+            .run(fixture) { $0.queueEnterBleedout(actor: fixture.key) } ==
+            ["onenterbleedout"])
     }
 
     @Test func theNewSendersAreInTheCensus() {

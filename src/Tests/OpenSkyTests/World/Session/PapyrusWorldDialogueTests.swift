@@ -112,7 +112,7 @@ struct PapyrusWorldDialogueTests {
             of: info(), key: infoKey, phase: .end
         )
         #expect(names == ["Fragment_1"])
-        #expect(session.world.dialogueInfoCount == 1)
+        #expect(session.world.fragmentRuns.dialogueInfoCount == 1)
         #expect(session.world.dialogueFragmentsQueued == 1)
 
         PapyrusWorldFixture.drain(session.world)
@@ -141,7 +141,7 @@ struct PapyrusWorldDialogueTests {
         let event = try #require(session.world.eventQueue.last)
         #expect(event.arguments == [.object(session.world.objectHandle(for: speaker))])
         let handle = session.world.objectHandle(for: infoKey)
-        #expect(session.world.owningQuest(of: handle) == quest)
+        #expect(session.world.questRuns.owningQuest(of: handle) == quest)
     }
 
     /// Saying the same line twice runs on the instance the first saying
@@ -168,7 +168,7 @@ struct PapyrusWorldDialogueTests {
             of: info(), key: infoKey, phase: .begin
         )
         #expect(names.isEmpty)
-        #expect(session.world.dialogueInfoCount == 0)
+        #expect(session.world.fragmentRuns.dialogueInfoCount == 0)
         #expect(session.world.runtime.tally.faultTotal == 0)
     }
 

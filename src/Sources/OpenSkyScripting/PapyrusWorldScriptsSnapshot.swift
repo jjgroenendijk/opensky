@@ -9,7 +9,7 @@ import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 @MainActor
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.Readouts {
     /// One VM sample for the Scripts readout. `target` is the interacted reference, or
     /// nil. `runningQuestCount` comes from `QuestRuntime`, because quest state is the
     /// store's. `questAliasFillFailures` comes from the bridge.
@@ -19,43 +19,43 @@ extension PapyrusWorldRuntime {
         runningQuestCount: Int = 0,
         questAliasFillFailures: Int = 0
     ) -> ScriptsSnapshot {
-        let tally = runtime.tally
+        let tally = world.runtime.tally
         return ScriptsSnapshot(
-            instanceCount: instancesByKey.count,
+            instanceCount: world.instancesByKey.count,
             targetDescription: targetDescription ?? target?.description,
             targetScripts: scriptNames(attachedTo: target),
-            questInstanceCount: questInstanceKeys.count,
-            questCount: questCount,
+            questInstanceCount: world.questInstanceKeys.count,
+            questCount: world.questRuns.questCount,
             runningQuestCount: runningQuestCount,
-            questFragmentsQueued: questFragmentsQueued,
-            lastQuestFragment: lastQuestFragment,
-            questAliasInstanceCount: questAliasInstanceCount,
-            filledAliasCount: aliasResolution.filledAliasCount,
-            aliasQuestCount: aliasResolution.filledQuestCount,
+            questFragmentsQueued: world.questFragmentsQueued,
+            lastQuestFragment: world.lastQuestFragment,
+            questAliasInstanceCount: world.questRuns.questAliasInstanceCount,
+            filledAliasCount: world.aliasResolution.filledAliasCount,
+            aliasQuestCount: world.aliasResolution.filledQuestCount,
             questAliasFillFailures: questAliasFillFailures,
-            lastQuestAliasFill: lastQuestAliasFill,
-            recentEvents: recentEvents,
-            droppedRecentEventCount: droppedRecentEventCount,
-            pendingEventCount: eventQueue.count,
-            isPaused: isPaused,
-            pendingWaitCount: scheduler.pendingCount,
-            pendingTimerCount: updateTimers.pendingCount,
-            tickCount: scheduler.tickCount,
-            budgetEvents: budget.events,
-            budgetInstructions: budget.instructions,
-            lastTickSteps: lastTickReport.steps,
-            lastTickDispatched: lastTickReport.dispatched,
-            lastTickQueued: lastTickReport.queued,
-            lastTickResumed: lastTickReport.resumed,
-            lastTickFaulted: lastTickReport.faulted,
+            lastQuestAliasFill: world.lastQuestAliasFill,
+            recentEvents: world.recentEvents,
+            droppedRecentEventCount: world.droppedRecentEventCount,
+            pendingEventCount: world.eventQueue.count,
+            isPaused: world.isPaused,
+            pendingWaitCount: world.scheduler.pendingCount,
+            pendingTimerCount: world.updateTimers.pendingCount,
+            tickCount: world.scheduler.tickCount,
+            budgetEvents: world.budget.events,
+            budgetInstructions: world.budget.instructions,
+            lastTickSteps: world.lastTickReport.steps,
+            lastTickDispatched: world.lastTickReport.dispatched,
+            lastTickQueued: world.lastTickReport.queued,
+            lastTickResumed: world.lastTickReport.resumed,
+            lastTickFaulted: world.lastTickReport.faulted,
             nativeCallTotal: tally.nativeCallTotal,
             implementedNativeNameCount: Self.implementedNativeNameCount(tally),
             unimplementedNativeTotal: tally.unimplementedNativeTotal,
             topUnimplementedNatives: Self.topUnimplementedNatives(tally),
             lastFault: tally.lastFault,
-            lastStepInstructions: lastStepInstructions,
-            usesGameTiming: runtime.nativeTiming == .game,
-            lastStepDelayedCalls: lastStepDelayedCalls
+            lastStepInstructions: world.lastStepInstructions,
+            usesGameTiming: world.runtime.nativeTiming == .game,
+            lastStepDelayedCalls: world.lastStepDelayedCalls
         )
     }
 
@@ -64,7 +64,7 @@ extension PapyrusWorldRuntime {
     /// a control cannot stall the frame.
     func burst(ticks: Int, gameClock: GameClock? = nil) {
         for _ in 0 ..< min(max(0, ticks), Self.maximumBurstTicks) {
-            stepFixed(gameClock: gameClock)
+            world.scriptEvents.stepFixed(gameClock: gameClock)
         }
     }
 
@@ -77,7 +77,7 @@ extension PapyrusWorldRuntime {
     /// no instances.
     private func scriptNames(attachedTo key: ReferenceKey?) -> [String] {
         guard let key else { return [] }
-        return instanceKeys(on: key).map(\.scriptName)
+        return world.instanceKeys(on: key).map(\.scriptName)
     }
 
     /// Distinct native names the session called that never reported

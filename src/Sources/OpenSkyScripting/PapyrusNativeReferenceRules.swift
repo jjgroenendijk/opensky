@@ -56,13 +56,13 @@ extension PapyrusNativeFunctions.ReferenceRulesNatives {
             ("GetStolenItemValueNoCrime", PapyrusWorldStateBridge.stolenValueNoCrimeName)
         ] {
             scriptState("Faction", name, into: &registry) { _, bridge, key in
-                let value = bridge.scriptState.scriptedState(of: key).value(valueName) ?? 0
+                let value = bridge.scriptedState(of: key).value(valueName) ?? 0
                 return .returned(.integer(Int32(clamping: Int64(value))))
             }
         }
         // OpenSky offers every topic whose conditions pass, so a known flag is all `Add` sets.
         scriptState("Topic", "Add", into: &registry) { _, bridge, key in
-            bridge.scriptState.updateScriptedState(of: key) { $0.setFlag("topicAdded", true) }
+            bridge.updateScriptedState(of: key) { $0.setFlag("topicAdded", true) }
             return .returned(.none)
         }
     }
@@ -114,7 +114,7 @@ extension PapyrusWorldStateBridge.ReferenceRules {
         let name = witnessed
             ? PapyrusWorldStateBridge.stolenValueCrimeName
             : PapyrusWorldStateBridge.stolenValueNoCrimeName
-        bridge.scriptState.updateScriptedState(of: faction) { state in
+        bridge.updateScriptedState(of: faction) { state in
             state.setValue(name, (state.value(name) ?? 0) + Float(value))
         }
     }

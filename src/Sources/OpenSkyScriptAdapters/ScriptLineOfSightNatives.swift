@@ -1,4 +1,4 @@
-// The Papyrus natives `ScriptNodeBindingsAdapter` fills as the bridge is built.
+// The line-of-sight natives, filled as the bridge is built.
 
 import Foundation
 import OpenSkyActorPresentation
@@ -14,7 +14,7 @@ import OpenSkyObjectAnimation
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyRendering
-public import OpenSkyScripting
+import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkyWorld
@@ -22,11 +22,13 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
-extension ScriptNodeBindingsAdapter {
-    /// Fills these natives as the bridge is built.
-    public func fillLineOfSight(bridge: PapyrusWorldStateBridge) {
+/// Fills the line-of-sight natives from the node reads of `ScriptNodeBindingsAdapter`.
+struct ScriptLineOfSightNatives {
+    let nodes: ScriptNodeBindingsAdapter
+
+    func fill(bridge: PapyrusWorldStateBridge) {
         bridge.natives.perception.seesTarget = { viewer, target in
-            self.sees(viewer: viewer, target: target, bridge: bridge)
+            nodes.sees(viewer: viewer, target: target, bridge: bridge)
         }
     }
 }

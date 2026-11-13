@@ -101,7 +101,10 @@ extension PapyrusWorldStateBridge.ReferenceEvents {
         in world: PapyrusWorldRuntime
     ) -> Int {
         var queued = 0
-        for instance in world.instanceKeys(on: key) where world.handlesEvent(name, key: instance) {
+        for instance in world.instanceKeys(on: key) where world.scriptEvents.handlesEvent(
+            name,
+            key: instance
+        ) {
             world.enqueue(PapyrusScriptEvent(
                 target: instance,
                 functionName: name,

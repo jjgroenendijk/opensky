@@ -103,12 +103,12 @@ final class TrapCellSession {
     func cross(_ entry: RuntimeReferenceEntry, script: String, label: String) -> Crossing {
         let journal = worldState.journalEntries.count
         let before = state(of: entry.key, script: script)
-        let queued = bridge.triggers.handleTriggerTransition(
+        let queued = bridge.handleTriggerTransition(
             TriggerTransitionEvent(reference: entry.key, phase: .enter)
         )
         drain()
         let inside = state(of: entry.key, script: script)
-        bridge.triggers.handleTriggerTransition(TriggerTransitionEvent(
+        bridge.handleTriggerTransition(TriggerTransitionEvent(
             reference: entry.key,
             phase: .leave
         ))
@@ -181,7 +181,7 @@ final class TrapCellSession {
     /// that waits forever fails the test instead of hanging it.
     private func drain() {
         for _ in 0 ..< 10000 where !world.eventQueue.isEmpty || world.scheduler.pendingCount > 0 {
-            _ = world.stepFixed()
+            _ = world.scriptEvents.stepFixed()
         }
     }
 }

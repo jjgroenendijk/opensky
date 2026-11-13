@@ -30,13 +30,13 @@ struct PapyrusWorldRetireTests {
             functionName: "OnLoad",
             arguments: []
         )]
-        #expect(world.stepFixed().dispatched == 1)
+        #expect(world.scriptEvents.stepFixed().dispatched == 1)
         #expect(world.scheduler.pendingCount == 1)
 
         world.detach(cell: PapyrusWorldFixture.cell)
         #expect(world.scheduler.pendingCount == 0)
         for _ in 0 ..< 10 {
-            #expect(world.stepFixed().resumed == 0)
+            #expect(world.scriptEvents.stepFixed().resumed == 0)
         }
         #expect(probe.notes.isEmpty)
     }

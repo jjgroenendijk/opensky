@@ -1,13 +1,13 @@
 // The calls a reference's scripts wait in, so a stalled script shows where it stopped.
 
-public import OpenSkyFormatsESM
-public import OpenSkyScriptingInterface
+import OpenSkyFormatsESM
+import OpenSkyScriptingInterface
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.Timers {
     public func waits(on key: ReferenceKey) -> [PapyrusWaitReadout] {
-        scheduler.pendingCalls.compactMap { call in
+        world.scheduler.pendingCalls.compactMap { call in
             guard
-                let instance = suspensionTracker.instance(waiting: call.id),
+                let instance = world.suspensionTracker.instance(waiting: call.id),
                 instance.reference == key
             else { return nil }
             return PapyrusWaitReadout(
@@ -19,14 +19,14 @@ extension PapyrusWorldRuntime {
     }
 }
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.Timers {
     /// Live variables, so an object shows the reference it holds; a save keeps none.
     public func instances(on key: ReferenceKey) -> [PapyrusInstanceReadout] {
-        let keys = instancesByKey.keys.filter { $0.reference == key }.sorted()
+        let keys = world.instancesByKey.keys.filter { $0.reference == key }.sorted()
         return keys.compactMap { instanceKey in
             guard
-                let handle = instancesByKey[instanceKey],
-                let instance = runtime.instance(for: handle)
+                let handle = world.instancesByKey[instanceKey],
+                let instance = world.runtime.instance(for: handle)
             else { return nil }
             return PapyrusInstanceReadout(
                 script: instanceKey.scriptName,
@@ -40,6 +40,6 @@ extension PapyrusWorldRuntime {
 
     private func variableText(_ value: PapyrusValue) -> String {
         guard case let .object(handle) = value else { return "\(value)" }
-        return referenceKey(for: handle).map { "object(\($0))" } ?? "\(value)"
+        return world.referenceKey(for: handle).map { "object(\($0))" } ?? "\(value)"
     }
 }

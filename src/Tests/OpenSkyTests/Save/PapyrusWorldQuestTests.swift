@@ -25,7 +25,7 @@ struct PapyrusWorldQuestTests {
         let session = try PapyrusQuestFixture.session(quest: PapyrusQuestFixture.quest())
         let world = session.world
 
-        #expect(world.questCount == 1)
+        #expect(world.questRuns.questCount == 1)
         #expect(world.questInstanceKeys.count == 2)
         #expect(world.instancesByKey[
             PapyrusQuestFixture.instanceKey(PapyrusQuestFixture.questScript)
@@ -316,7 +316,7 @@ struct PapyrusWorldQuestTests {
         // Same order the app's load path uses: quest instances first, so the
         // restored variables have somewhere to land.
         fresh.bridge.attachRunningQuestScripts()
-        fresh.world.restore(instanceStates: file.scripts)
+        fresh.world.lifecycle.restore(instanceStates: file.scripts)
 
         #expect(fresh.world.instanceStates() == source.world.instanceStates())
         #expect(try PapyrusQuestFixture.state(fresh) == PapyrusQuestFixture.state(source))
