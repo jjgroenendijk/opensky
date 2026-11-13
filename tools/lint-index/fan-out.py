@@ -5,8 +5,8 @@ real symbols, not text. A type uses another when code inside it names that type 
 its members. Only types this repository declares under src/Sources count: the standard
 library and Apple's frameworks do not. A type's own nested types, and the type it is
 nested in, do not count either. The composition root and the session scope build the object
-graph, so they are left out by name. Fails nothing.
-Usage: fan-out.py <DataStore> <repo>. See docs/decisions/design-metrics.md.
+graph, so they are left out by name. With --gate it fails on any type over the limit.
+Usage: fan-out.py <DataStore> <repo> [--gate]. See docs/decisions/design-metrics.md.
 """
 
 import collections
@@ -81,9 +81,10 @@ def self_check():
     return [row[0] for row in findings(definitions, used, 2)] == [3]
 
 
-def report(definitions, used):
+def report(definitions, used, gate):
     rows = findings(definitions, used, LIMIT)
-    print(f"[INFO] design rule 2, fan-out per type: {len(rows)} types use more than "
+    tag = ("[FAIL]" if rows else "[ OK ]") if gate else "[INFO]"
+    print(f"{tag} design rule 2, fan-out per type: {len(rows)} types use more than "
           f"{LIMIT} others ({len(used)} types counted)")
     for count, name, path in rows:
         print(f"  {path}: {name} uses {count} types")
@@ -92,6 +93,7 @@ def report(definitions, used):
         print(f"    {module}: {count}")
     for limit in SHOWN_LIMITS:
         print(f"[INFO] over {limit}: {len(findings(definitions, used, limit))}")
+    return rows
 
 
 def main():
@@ -115,8 +117,9 @@ def main():
                 containers = [other for rel_roles, _, other in relations
                               if rel_roles & REL_CONTAINED_BY]
                 references.append((containers, usr))
-    report(definitions, fan_out(definitions, references))
-    return 0
+    gate = "--gate" in sys.argv[3:]
+    rows = report(definitions, fan_out(definitions, references), gate)
+    return 1 if gate and rows else 0
 
 
 if __name__ == "__main__":
