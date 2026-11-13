@@ -60,7 +60,7 @@ nonisolated public struct MenuRecordData: Sendable {
     public static func isMenuText(_ editorID: String) -> Bool {
         editorID.hasPrefix("sNoFastTravel") || editorID.hasPrefix("sRSM")
             || editorID == "sFastTravelConfirm" || editorID == "sFastTravelNoTravelHealthDamage"
-            || editorID == "sOverEncumbered"
+            || editorID == "sOverEncumbered" || editorID == "sTESVDLC2DragonUnableToFlyMessage"
             || alchemyTexts.contains(editorID)
     }
 

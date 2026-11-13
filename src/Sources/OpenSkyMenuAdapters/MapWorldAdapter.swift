@@ -38,6 +38,7 @@ public protocol MapWorldHost: MenuInputConsumer, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var streamer: any CellStreamerPort { get }
     var menuRecords: (any MenuRecordsPort)? { get }
+    var mountWorld: any MountWorldPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 

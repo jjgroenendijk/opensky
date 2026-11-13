@@ -39,6 +39,7 @@ final class MenuHost: LoadingScreenPresentationHost, LoadingScreenWorldHost, Map
     let fakeLoadingWorld = FakeLoadingScreenWorldPort()
     let fakeMagic = FakeMagicPort()
     let fakeMagicWorld = FakeMagicWorldPort()
+    let fakeMountWorld = FakeMountWorldPort()
     let fakeMapMenu = FakeMapMenuPort()
     let fakeMapWorld = FakeMapWorldPort()
     let fakeMenuMode = FakeMenuModePort()
@@ -144,6 +145,10 @@ final class MenuHost: LoadingScreenPresentationHost, LoadingScreenWorldHost, Map
 
     var magic: any MagicPort {
         fakeMagic
+    }
+
+    var mountWorld: any MountWorldPort {
+        fakeMountWorld
     }
 
     var magicWorld: any MagicWorldPort {
