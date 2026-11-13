@@ -91,7 +91,10 @@ extension PapyrusWorldStateBridge.ScriptedMoves {
 
     private func queueTranslationEvent(_ name: String, on key: ReferenceKey) {
         guard let world = bridge.world else { return }
-        for instance in world.instanceKeys(on: key) where world.handlesEvent(name, key: instance) {
+        for instance in world.instanceKeys(on: key) where world.scriptEvents.handlesEvent(
+            name,
+            key: instance
+        ) {
             world.enqueue(PapyrusScriptEvent(target: instance, functionName: name, arguments: []))
         }
     }

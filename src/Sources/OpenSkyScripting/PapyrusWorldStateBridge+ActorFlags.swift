@@ -23,13 +23,13 @@ extension PapyrusWorldStateBridge.ActorValueCalls {
 
     public func actorFlagOverrides(of key: ReferenceKey, base: FormID) -> ActorFlagOverrides {
         var overrides = ActorFlagOverrides()
-        let own = bridge.scriptState.scriptedState(of: key)
+        let own = bridge.scriptedState(of: key)
         overrides.script(.ghost, own.flag(ScriptedStateName.ghost))
         overrides.script(
             .notShowOnStealthMeter, own.flag(ScriptedStateName.notShowOnStealthMeter)
         )
         if let baseKey = bridge.referenceKey(forFormID: base) {
-            let state = bridge.scriptState.scriptedState(of: baseKey)
+            let state = bridge.scriptedState(of: baseKey)
             overrides.script(.essential, state.flag(ScriptedStateName.essential))
             overrides.script(.protected, state.flag(ScriptedStateName.protected))
             overrides.script(.invulnerable, state.flag(ScriptedStateName.invulnerable))

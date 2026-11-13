@@ -20,7 +20,7 @@ extension PapyrusNativeFunctions.LevelNatives {
         ) { call, context in
             guard
                 let actor = actorTarget(call, context),
-                let state = actor.world.actorBridge.actorState(for: actor.key)
+                let state = actor.world.roles.actors.actorState(for: actor.key)
             else {
                 return needsActor(call)
             }
@@ -36,7 +36,7 @@ extension PapyrusNativeFunctions.LevelNatives {
         ) { call, context in
             guard
                 let world = context.world,
-                let points = world.actorBridge.playerPerkPoints()
+                let points = world.roles.actors.playerPerkPoints()
             else {
                 return needsProgress(call)
             }
@@ -57,7 +57,7 @@ extension PapyrusNativeFunctions.LevelNatives {
             }
             guard
                 let world = context.world,
-                world.actorBridge.modifyPlayerPerkPoints(by: Int(delta)) != nil
+                world.roles.actors.modifyPlayerPerkPoints(by: Int(delta)) != nil
             else {
                 return needsProgress(call)
             }
@@ -80,7 +80,7 @@ extension PapyrusNativeFunctions.LevelNatives {
             }
             guard
                 let world = context.world,
-                world.actorBridge.modifyPlayerPerkPoints(by: Int(max(0, delta))) != nil
+                world.roles.actors.modifyPlayerPerkPoints(by: Int(max(0, delta))) != nil
             else {
                 return needsProgress(call)
             }
@@ -101,8 +101,8 @@ extension PapyrusNativeFunctions.LevelNatives {
             let target = wanted < 0 ? Self.perkPointCap : Int(wanted)
             guard
                 let world = context.world,
-                let current = world.actorBridge.playerPerkPoints(),
-                world.actorBridge.modifyPlayerPerkPoints(by: target - current) != nil
+                let current = world.roles.actors.playerPerkPoints(),
+                world.roles.actors.modifyPlayerPerkPoints(by: target - current) != nil
             else {
                 return needsProgress(call)
             }

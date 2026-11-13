@@ -239,6 +239,6 @@ struct ScriptSightCheck {
         if let feet = bridge.natives.perception.livePosition?(key) {
             return feet + SIMD3(0, 0, PlayerCapsule.standard.torsoHeight)
         }
-        return bridge.referencePlacement.placement(of: key)?.state.transform.position
+        return bridge.placement(of: key)?.state.transform.position
     }
 }

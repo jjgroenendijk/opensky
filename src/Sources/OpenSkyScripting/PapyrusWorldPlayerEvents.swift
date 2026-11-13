@@ -4,10 +4,10 @@
 // player's key, so they get them too.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.ScriptEvents {
     /// Queues `OnPlayerLoadGame()` on each script of the player. Returns the count.
     @discardableResult
     public func queuePlayerLoadGame() -> Int {
@@ -44,7 +44,7 @@ extension PapyrusWorldRuntime {
         queueActorEvent(
             sitting ? PapyrusEngineEvents.onSit : PapyrusEngineEvents.onGetUp,
             on: actor,
-            arguments: [.object(objectHandle(for: furniture))]
+            arguments: [.object(world.objectHandle(for: furniture))]
         )
     }
 
@@ -53,7 +53,7 @@ extension PapyrusWorldRuntime {
     public func queueSpellCast(_ spell: ReferenceKey, by caster: ReferenceKey) -> Int {
         queueActorEvent(
             PapyrusEngineEvents.onSpellCast, on: caster,
-            arguments: [.object(objectHandle(for: spell))]
+            arguments: [.object(world.objectHandle(for: spell))]
         )
     }
 
@@ -76,11 +76,11 @@ extension PapyrusWorldRuntime {
     func queueVampireFeed(feeder: ReferenceKey, target: ReferenceKey) -> Int {
         queueActorEvent(
             PapyrusEngineEvents.onVampireFeed, on: feeder,
-            arguments: [.object(objectHandle(for: target))]
+            arguments: [.object(world.objectHandle(for: target))]
         )
     }
 
     private func locationValue(_ location: ResolvedFormID?) -> PapyrusValue {
-        location.map { .object(objectHandle(for: ReferenceKey(resolved: $0))) } ?? .none
+        location.map { .object(world.objectHandle(for: ReferenceKey(resolved: $0))) } ?? .none
     }
 }

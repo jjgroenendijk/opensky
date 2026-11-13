@@ -88,9 +88,18 @@ struct ScriptNativesTests {
         #expect(bridge.natives.session.skyMode?() == ScriptSkyBindingsAdapter.SkyMode.interior)
     }
 
+    /// Without a session the clocks give nothing, and real time counts only the launch.
+    @Test func sessionNativesReadTheHostsSession() {
+        adapter.playerNatives.fillSessionNatives(bridge: bridge, placedRecords: nil)
+        #expect(bridge.natives.session.clockSource?() == nil)
+        #expect((bridge.natives.session.realTimeSource?() ?? -1) >= 0)
+        #expect(bridge.natives.session.itemScripts?(Self.actor).isEmpty == true)
+        #expect(bridge.natives.session.itemScripts?(Self.actor).isEmpty == true)
+    }
+
     @Test func anActorSeesThroughPerception() {
         host.fakePerception.perceptionResolutionResult = .empty
-        adapter.nodeBindings.fillLineOfSight(bridge: bridge)
+        ScriptLineOfSightNatives(nodes: adapter.nodeBindings).fill(bridge: bridge)
         #expect(bridge.natives.perception.seesTarget?(Self.actor, .player) == nil)
         #expect(bridge.natives.perception.seesTarget?(.player, Self.actor) == nil)
     }

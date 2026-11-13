@@ -33,7 +33,7 @@ extension PapyrusNativeFunctions.ReferenceAliasNatives {
                 guard
                     let receiver = call.receiver,
                     let bridge = context.world as? PapyrusWorldStateBridge,
-                    let quest = bridge.world?.owningQuest(of: receiver),
+                    let quest = bridge.world?.questRuns.owningQuest(of: receiver),
                     let handle = bridge.objectHandle(for: quest)
                 else { return failure(call, "GetOwningQuest needs a quest that owns the caller") }
                 return .returned(.object(handle))
@@ -58,7 +58,7 @@ extension PapyrusNativeFunctions.ReferenceAliasNatives {
             return .returned(.none)
         }
         withAliasSlot("LocationAlias", "GetLocation", into: &registry) { _, bridge, slot in
-            guard let location = bridge.world?.aliasLocation(in: slot) else {
+            guard let location = bridge.world?.questRuns.aliasLocation(in: slot) else {
                 return .returned(.none)
             }
             let handle = bridge.objectHandle(for: ReferenceKey(resolved: location))
@@ -93,7 +93,7 @@ extension PapyrusNativeFunctions.ReferenceAliasNatives {
             guard
                 let bridge = context.world as? PapyrusWorldStateBridge,
                 let receiver = call.receiver,
-                let slot = bridge.world?.aliasSlot(for: receiver)
+                let slot = bridge.world?.questRuns.aliasSlot(for: receiver)
             else { return failure(call, "\(name) needs an alias of a quest")
             }
             do {
@@ -110,7 +110,7 @@ extension PapyrusNativeFunctions.ReferenceAliasNatives {
     }
 }
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.QuestScriptRuns {
     /// The quest that owns the scene, topic, or package (`PACK` `QNAM`), or whose alias
     /// holds the script, behind `handle`.
     /// A handle of a filled reference names the first quest, by key, that holds it.
@@ -118,18 +118,21 @@ extension PapyrusWorldRuntime {
         if let slot = aliasSlot(for: handle) {
             return slot.quest
         }
-        guard let reference = referenceKey(for: handle) else { return nil }
-        if let quest = fragmentQuests[reference] {
+        guard let reference = world.referenceKey(for: handle) else { return nil }
+        if let quest = world.fragmentQuests[reference] {
             return quest
         }
-        let owners = questAliasInstanceKeys.keys.sorted()
+        let owners = world.questAliasInstanceKeys.keys.sorted()
         if
-            let key = keysByHandle[handle],
-            let quest = owners.first(where: { questAliasInstanceKeys[$0]?.contains(key) == true })
+            let key = world.keysByHandle[handle],
+            let quest = owners
+                .first(where: { world.questAliasInstanceKeys[$0]?.contains(key) == true })
         {
             return quest
         }
         return owners
-            .first { questAliasInstanceKeys[$0]?.contains { $0.reference == reference } == true }
+            .first {
+                world.questAliasInstanceKeys[$0]?.contains { $0.reference == reference } == true
+            }
     }
 }

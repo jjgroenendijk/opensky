@@ -14,23 +14,8 @@ public import OpenSkyWorldState
 /// natives reach everything through `context.world`.
 @MainActor
 public protocol PapyrusWorldBridge: PapyrusWorldBarterBridge, Sendable {
-    /// Quest stages, objectives, and the tracked stats.
-    var questBridge: any PapyrusWorldQuestBridge { get }
-
-    /// Actor values, combat, perks, skills, and death.
-    var actorBridge: any PapyrusWorldActorBridge { get }
-
-    /// Spells: the spellbook, equipped spells, dispels, and casts.
-    var magicBridge: any PapyrusWorldMagicBridge { get }
-
-    /// Crime gold and the alarms witnesses raise.
-    var crimeBridge: any PapyrusWorldCrimeBridge { get }
-
-    /// Faction membership, ranks, relationships, and reactions.
-    var factionBridge: any PapyrusWorldFactionBridge { get }
-
-    /// Guards, arrests, and jail time.
-    var guardBridge: any PapyrusWorldGuardBridge { get }
+    /// The world by area: quests, actors, magic, crime, factions, and guards.
+    var roles: PapyrusWorldRoles { get }
 
     /// Session-stable identity of the player; see `ReferenceKey.player`.
     var playerKey: ReferenceKey { get }
@@ -123,4 +108,36 @@ public protocol PapyrusWorldBridge: PapyrusWorldBarterBridge, Sendable {
 
     /// The base form of a placed reference or a placed actor.
     func baseObject(of key: ReferenceKey) -> FormID?
+}
+
+/// The parts of the world a native reaches, one protocol per area.
+public struct PapyrusWorldRoles: Sendable {
+    /// Quest stages, objectives, and the tracked stats.
+    public let quests: any PapyrusWorldQuestBridge
+    /// Actor values, combat, perks, skills, and death.
+    public let actors: any PapyrusWorldActorBridge
+    /// Spells: the spellbook, equipped spells, dispels, and casts.
+    public let magic: any PapyrusWorldMagicBridge
+    /// Crime gold and the alarms witnesses raise.
+    public let crime: any PapyrusWorldCrimeBridge
+    /// Faction membership, ranks, relationships, and reactions.
+    public let factions: any PapyrusWorldFactionBridge
+    /// Guards, arrests, and jail time.
+    public let guards: any PapyrusWorldGuardBridge
+
+    public init(
+        quests: any PapyrusWorldQuestBridge,
+        actors: any PapyrusWorldActorBridge,
+        magic: any PapyrusWorldMagicBridge,
+        crime: any PapyrusWorldCrimeBridge,
+        factions: any PapyrusWorldFactionBridge,
+        guards: any PapyrusWorldGuardBridge
+    ) {
+        self.quests = quests
+        self.actors = actors
+        self.magic = magic
+        self.crime = crime
+        self.factions = factions
+        self.guards = guards
+    }
 }

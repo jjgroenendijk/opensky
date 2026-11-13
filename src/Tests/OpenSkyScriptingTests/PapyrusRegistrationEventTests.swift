@@ -78,21 +78,21 @@ struct PapyrusRegistrationEventTests {
             ("OnSleepStop", PapyrusWorldFixture.probeBody(note: "stop"))
         ])
         let world = fixture.session.world
-        #expect(world.queueSleepEvents(start: 1, end: 1.25) == 0)
+        #expect(world.scriptEvents.queueSleepEvents(start: 1, end: 1.25) == 0)
         let register = { (name: String) in
             try fixture.registry.invoke(PapyrusWorldFixture.methodCall(
                 "Form", name, receiver: Self.instanceHandle(fixture)
             ))
         }
         #expect(try register("RegisterForSleep") == .returned(.none))
-        #expect(world.queueSleepEvents(start: 1, end: 1.25) == 2)
+        #expect(world.scriptEvents.queueSleepEvents(start: 1, end: 1.25) == 2)
         PapyrusWorldFixture.drain(world)
         #expect(fixture.session.dispatch.notes == ["start", "stop"])
         #expect(try register("UnregisterForSleep") == .returned(.none))
-        #expect(world.queueSleepEvents(start: 2, end: 2.25) == 0)
+        #expect(world.scriptEvents.queueSleepEvents(start: 2, end: 2.25) == 0)
         // Retiring the instance, as a stopped quest does, drops the registration.
         #expect(try register("RegisterForSleep") == .returned(.none))
-        world.retire(PapyrusInstanceKey(reference: fixture.key, scriptName: "Lever"))
+        world.lifecycle.retire(PapyrusInstanceKey(reference: fixture.key, scriptName: "Lever"))
         #expect(world.sleepListeners.isEmpty)
     }
 }

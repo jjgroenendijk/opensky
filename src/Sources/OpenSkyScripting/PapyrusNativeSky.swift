@@ -28,7 +28,7 @@ extension PapyrusNativeFunctions.SkyNatives {
         })
         // "Checks to the see if the player is looking directly at the sun."
         scriptState("Game", "IsPlayerSungazing", into: &registry) { _, bridge, _ in
-            .returned(.boolean(bridge.sunGaze.isPlayerSunGazing))
+            .returned(.boolean(bridge.isPlayerSunGazing))
         }
         scriptState("Game", "SetSunGazeImageSpaceModifier", into: &registry) { call, bridge, _ in
             bridge.runState.sunGazeModifier = objectArgument(call, at: 0)

@@ -3,10 +3,10 @@
 // (<https://ck.uesp.net/wiki/Perk_Fragments>). Layout: docs/formats/vmad.md.
 
 import Foundation
-public import OpenSkyFormatsESM
-public import OpenSkyScriptingInterface
+import OpenSkyFormatsESM
+import OpenSkyScriptingInterface
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.FragmentRuns {
     /// Instantiates the perk's fragment script if needed and enqueues fragment `index`.
     /// Keyed by the PERK's `ReferenceKey` plus the script name.
     @discardableResult
@@ -22,9 +22,12 @@ extension PapyrusWorldRuntime {
             !fragment.scriptName.isEmpty
         else { return false }
         let target = PapyrusInstanceKey(reference: key, scriptName: fragment.scriptName)
-        if instancesByKey[target] == nil, scriptsLoading([fragment.scriptName]) {
-            deferUntilScriptsLoad { [weak self] in
-                self?.queuePerkFragment(
+        if
+            world.instancesByKey[target] == nil,
+            world.lifecycle.scriptsLoading([fragment.scriptName])
+        {
+            world.lifecycle.deferUntilScriptsLoad { [weak world] in
+                world?.fragmentRuns.queuePerkFragment(
                     of: perk, key: key, fragment: (index, activation),
                     formIDResolver: formIDResolver
                 )
@@ -36,12 +39,12 @@ extension PapyrusWorldRuntime {
                 target, declared: perk.script.scripts, formIDResolver: formIDResolver
             )
         else { return false }
-        enqueue(PapyrusScriptEvent(
+        world.enqueue(PapyrusScriptEvent(
             target: target,
             functionName: fragment.functionName,
             arguments: [
-                .object(objectHandle(for: activation.target)),
-                .object(objectHandle(for: activation.actor))
+                .object(world.objectHandle(for: activation.target)),
+                .object(world.objectHandle(for: activation.actor))
             ]
         ))
         return true
@@ -57,7 +60,7 @@ extension PapyrusWorldStateBridge.StoryEvents {
         guard
             let world = bridge.world,
             let formIDResolver = bridge.formIDResolver else { return false }
-        return world.queuePerkFragment(
+        return world.fragmentRuns.queuePerkFragment(
             of: perk, key: key, fragment: (index, activation),
             formIDResolver: formIDResolver
         )

@@ -24,14 +24,14 @@ struct PapyrusWorldUpdateTimerTests {
             interval: Double(Float(0.1)), stepSeconds: step
         )
         for stepIndex in 1 ... due {
-            _ = session.world.stepFixed()
+            _ = session.world.scriptEvents.stepFixed()
             let expected = stepIndex == due ? 1 : 0
             #expect(
                 PapyrusUpdateTimerFixture.updateNotes(session).count == expected
             )
         }
         for _ in 0 ..< 30 {
-            _ = session.world.stepFixed()
+            _ = session.world.scriptEvents.stepFixed()
         }
         #expect(PapyrusUpdateTimerFixture.updateNotes(session).count == 1)
         #expect(session.world.updateTimers.pendingCount == 0)
@@ -45,7 +45,7 @@ struct PapyrusWorldUpdateTimerTests {
             session, "RegisterForUpdate", interval: 0.05
         )
         for stepIndex in 1 ... 10 {
-            _ = session.world.stepFixed()
+            _ = session.world.scriptEvents.stepFixed()
             #expect(
                 PapyrusUpdateTimerFixture.updateNotes(session).count
                     == stepIndex / 2
@@ -74,7 +74,7 @@ struct PapyrusWorldUpdateTimerTests {
         )
         var expected = 0
         for stepIndex in 1 ... 3 * repeatingDue {
-            _ = session.world.stepFixed()
+            _ = session.world.scriptEvents.stepFixed()
             if stepIndex == 2 {
                 expected += 1 // the replaced single-shot, at 0.05 s not 100 s
             }
@@ -95,11 +95,11 @@ struct PapyrusWorldUpdateTimerTests {
         PapyrusUpdateTimerFixture.invoke(
             session, "RegisterForUpdate", interval: 0
         )
-        _ = session.world.stepFixed()
+        _ = session.world.scriptEvents.stepFixed()
         // Both clamp to zero and fire on the very next step.
         #expect(PapyrusUpdateTimerFixture.updateNotes(session).count == 2)
         for stepIndex in 1 ... 3 {
-            _ = session.world.stepFixed()
+            _ = session.world.scriptEvents.stepFixed()
             // The zero-interval repeating timer fires once per step, never
             // more — no infinite loop inside one step.
             #expect(
@@ -111,9 +111,9 @@ struct PapyrusWorldUpdateTimerTests {
         PapyrusUpdateTimerFixture.invoke(
             session, "RegisterForSingleUpdate", interval: Float.nan
         )
-        _ = session.world.stepFixed()
+        _ = session.world.scriptEvents.stepFixed()
         #expect(PapyrusUpdateTimerFixture.updateNotes(session).count == 6)
-        _ = session.world.stepFixed()
+        _ = session.world.scriptEvents.stepFixed()
         #expect(PapyrusUpdateTimerFixture.updateNotes(session).count == 6)
     }
 
@@ -154,7 +154,7 @@ struct PapyrusWorldUpdateTimerTests {
         session.world.registerUpdateTimer(
             handle: aHandle, slot: .realSingleShot, interval: 0
         )
-        _ = session.world.stepFixed()
+        _ = session.world.scriptEvents.stepFixed()
         #expect(PapyrusUpdateTimerFixture.updateNotes(session) == [
             "bscript.onupdate", "ascript.onupdate", "ascript.onupdate", "bscript.onupdate"
         ])
@@ -222,7 +222,7 @@ struct PapyrusWorldUpdateTimerTests {
 
         PapyrusUpdateTimerFixture.invoke(session, "RegisterForSingleUpdate", interval: 0.05)
         for _ in 0 ..< 3 {
-            _ = session.world.stepFixed()
+            _ = session.world.scriptEvents.stepFixed()
         }
 
         let notes = PapyrusUpdateTimerFixture.updateNotes(session)

@@ -17,7 +17,7 @@ extension PapyrusNativeFunctions.StatsNatives {
                 return failure(call, "IncrementStat needs a world runtime and a stat name")
             }
             let amount = integer(call, at: 1) ?? 1
-            guard world.questBridge.incrementStat(name, by: amount) else {
+            guard world.roles.quests.incrementStat(name, by: amount) else {
                 return failure(call, "IncrementStat: no misc stat named \(name)")
             }
             return .returned(.none)
@@ -32,7 +32,7 @@ extension PapyrusNativeFunctions.StatsNatives {
             else {
                 return failure(call, "QueryStat needs a world runtime and a stat name")
             }
-            return .returned(.integer(world.questBridge.queryStat(name)))
+            return .returned(.integer(world.roles.quests.queryStat(name)))
         })
     }
 }

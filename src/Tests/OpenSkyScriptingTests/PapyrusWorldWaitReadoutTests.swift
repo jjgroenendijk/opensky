@@ -40,7 +40,7 @@ struct PapyrusWorldWaitReadoutTests {
             functionName: "OnLoad",
             arguments: []
         )]
-        #expect(world.stepFixed().dispatched == 1)
+        #expect(world.scriptEvents.stepFixed().dispatched == 1)
 
         let waits = world.waits(on: target.reference)
         #expect(waits.map(\.script) == [target.scriptName])

@@ -9,7 +9,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.ActiveEffects {
     /// Starts the scripts of one effect run on its target and queues `OnEffectStart`.
     /// A script still loading attaches once it loads, unless the run ended first.
     /// `announces` false attaches an effect a save brought back, with no `OnInit` or start.
@@ -21,7 +21,7 @@ extension PapyrusWorldRuntime {
     ) {
         let live = scripts.filter { !$0.isRemoved }
         guard !live.isEmpty else { return }
-        effectScripts.begin(run)
+        world.effectScripts.begin(run)
         attachEffectScripts(
             run,
             scripts: live,
@@ -33,16 +33,16 @@ extension PapyrusWorldRuntime {
     /// Ends one effect run: queues `OnEffectFinish` on each instance that served it,
     /// and retires an instance that now serves no run once its events have run.
     public func finishEffectScripts(_ id: PapyrusActiveEffectID) {
-        guard let run = effectScripts.runs[id] else { return }
-        let (served, idle) = effectScripts.end(id)
-        for key in served where instancesByKey[key] != nil {
-            enqueue(PapyrusScriptEvent(
+        guard let run = world.effectScripts.runs[id] else { return }
+        let (served, idle) = world.effectScripts.end(id)
+        for key in served where world.instancesByKey[key] != nil {
+            world.enqueue(PapyrusScriptEvent(
                 target: key,
                 functionName: PapyrusEngineEvents.onEffectFinish,
                 arguments: effectArguments(run)
             ))
         }
-        retiringKeys.formUnion(idle.filter { instancesByKey[$0] != nil })
+        world.retiringKeys.formUnion(idle.filter { world.instancesByKey[$0] != nil })
     }
 
     private func attachEffectScripts(
@@ -51,29 +51,33 @@ extension PapyrusWorldRuntime {
         formIDResolver: FormIDResolver,
         announces: Bool
     ) {
-        if scriptsLoading(scripts.map(\.name)) {
-            deferUntilScriptsLoad { [weak self] in
-                guard let self, effectScripts.runs[run.id] != nil else { return }
-                attachEffectScripts(
+        if world.lifecycle.scriptsLoading(scripts.map(\.name)) {
+            world.lifecycle.deferUntilScriptsLoad { [weak world] in
+                guard let world, world.effectScripts.runs[run.id] != nil else { return }
+                world.activeEffects.attachEffectScripts(
                     run, scripts: scripts, formIDResolver: formIDResolver, announces: announces
                 )
             }
             return
         }
-        guard let serial = effectScripts.serials[run.id] else { return }
+        guard let serial = world.effectScripts.serials[run.id] else { return }
         for script in scripts {
             let key = PapyrusInstanceKey(
                 reference: run.id.target, scriptName: script.name, effectRun: serial
             )
             if !announces {
-                firedOnInit.insert(key)
+                world.firedOnInit.insert(key)
             }
-            guard instancesByKey[key] != nil || makeEffectInstance(key, script, formIDResolver)
+            guard world.instancesByKey[key] != nil || makeEffectInstance(
+                key,
+                script,
+                formIDResolver
+            )
             else { continue }
-            effectScripts.attach(key, to: run.id)
-            retiringKeys.remove(key)
+            world.effectScripts.attach(key, to: run.id)
+            world.retiringKeys.remove(key)
             guard announces else { continue }
-            enqueue(PapyrusScriptEvent(
+            world.enqueue(PapyrusScriptEvent(
                 target: key,
                 functionName: PapyrusEngineEvents.onEffectStart,
                 arguments: effectArguments(run)
@@ -84,22 +88,22 @@ extension PapyrusWorldRuntime {
     private func makeEffectInstance(
         _ key: PapyrusInstanceKey, _ script: AttachedScript, _ resolver: FormIDResolver
     ) -> Bool {
-        guard resolveScript(named: script.name) else {
-            skips.note(.missingScript)
+        guard world.resolveScript(named: script.name) else {
+            world.skips.note(.missingScript)
             return false
         }
         let item = PapyrusAttachItem(key: key, script: script, isPersistent: false)
-        guard instantiate(item) else { return false }
-        bind(plan: [item], created: [key], formIDResolver: resolver)
-        enqueueOnInitIfNeeded(key)
+        guard world.lifecycle.instantiate(item) else { return false }
+        world.lifecycle.bind(plan: [item], created: [key], formIDResolver: resolver)
+        world.enqueueOnInitIfNeeded(key)
         return true
     }
 
     /// `(Actor akTarget, Actor akCaster)`. A potion nobody cast has no caster.
     private func effectArguments(_ run: PapyrusActiveEffectRun) -> [PapyrusValue] {
         [
-            .object(objectHandle(for: run.id.target)),
-            run.caster.map { .object(objectHandle(for: $0)) } ?? .none
+            .object(world.objectHandle(for: run.id.target)),
+            run.caster.map { .object(world.objectHandle(for: $0)) } ?? .none
         ]
     }
 }

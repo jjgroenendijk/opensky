@@ -208,12 +208,13 @@ struct OpenSkySavePapyrusTests {
         #expect(instance.setValue(.string("armed"), named: "label", declaredBy: "Alarm"))
         instance.activeState = "Triggered"
 
-        let decoded = try OpenSkySaveDecoder.decode(encode(scripts: world.instanceStates()))
+        let decoded = try OpenSkySaveDecoder
+            .decode(encode(scripts: world.instanceStates()))
 
         let fresh = PapyrusWorldFixture.worldRuntime(
             objects: [object], nativeDispatch: PapyrusWorldProbeDispatch()
         )
-        fresh.restore(instanceStates: decoded.scripts)
+        fresh.lifecycle.restore(instanceStates: decoded.scripts)
         let restoredHandle = try #require(fresh.instancesByKey[key])
         let restored = try #require(fresh.runtime.instance(for: restoredHandle))
         #expect(restored.activeState == "Triggered")

@@ -19,7 +19,7 @@ extension PapyrusNativeFunctions.StateChangesNatives {
                     return failure(call, "\(native) needs the new state")
                 }
                 let state = boolean(call, at: 0, default: false)
-                _ = world.queueActorEvent(event, on: key, arguments: [.boolean(state)])
+                _ = world.scriptEvents.queueActorEvent(event, on: key, arguments: [.boolean(state)])
                 return .returned(.none)
             }
         }

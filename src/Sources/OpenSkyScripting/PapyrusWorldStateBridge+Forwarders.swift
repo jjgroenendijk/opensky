@@ -9,34 +9,18 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
+public import OpenSkyPhysics
 import OpenSkyQuestsInterface
 public import OpenSkyScriptingInterface
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 
 extension PapyrusWorldStateBridge {
-    public var questBridge: any PapyrusWorldQuestBridge {
-        questScripts
-    }
-
-    public var actorBridge: any PapyrusWorldActorBridge {
-        actorValues
-    }
-
-    public var magicBridge: any PapyrusWorldMagicBridge {
-        spellEffects
-    }
-
-    public var crimeBridge: any PapyrusWorldCrimeBridge {
-        crime
-    }
-
-    public var factionBridge: any PapyrusWorldFactionBridge {
-        factions
-    }
-
-    public var guardBridge: any PapyrusWorldGuardBridge {
-        guards
+    public var roles: PapyrusWorldRoles {
+        PapyrusWorldRoles(
+            quests: questScripts, actors: actorValues, magic: spellEffects,
+            crime: crime, factions: factions, guards: guards
+        )
     }
 
     public func stopQuest(for key: ReferenceKey) throws {
@@ -281,5 +265,17 @@ extension PapyrusWorldStateBridge {
 
     public var sceneFragments: any SceneFragmentDispatching {
         fragments
+    }
+
+    /// `CellStreamer.onInteraction` subscriber: records one activation.
+    @discardableResult
+    public func handleInteraction(_ event: InteractionEvent) -> PapyrusActivationOutcome {
+        activations.handleInteraction(event)
+    }
+
+    /// A trigger volume's enter or leave event.
+    @discardableResult
+    public func handleTriggerTransition(_ event: TriggerTransitionEvent) -> Int {
+        triggers.handleTriggerTransition(event)
     }
 }

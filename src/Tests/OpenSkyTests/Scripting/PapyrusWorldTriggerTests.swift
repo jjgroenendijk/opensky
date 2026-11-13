@@ -42,7 +42,7 @@ struct PapyrusWorldTriggerTests {
                 TriggerStreamFixture.triggerScript("OtherTrigger")
             ]
         )
-        let queued = session.world.queueOnTriggerEnter(
+        let queued = session.world.scriptEvents.queueOnTriggerEnter(
             volume: TriggerStreamFixture.volumeKey, actor: .player
         )
         #expect(queued == 2)
@@ -65,7 +65,7 @@ struct PapyrusWorldTriggerTests {
             scripts: [VMADFixture.Script(TriggerStreamFixture.scriptName, properties: [])],
             objects: [TriggerStreamFixture.triggerScript()]
         )
-        #expect(session.world.queueOnTriggerLeave(
+        #expect(session.world.scriptEvents.queueOnTriggerLeave(
             volume: TriggerStreamFixture.volumeKey, actor: .player
         ) == 1)
         #expect(session.world.eventQueue.first?.functionName == "OnTriggerLeave")
@@ -79,7 +79,7 @@ struct PapyrusWorldTriggerTests {
             scripts: [VMADFixture.Script(TriggerStreamFixture.scriptName, properties: [])],
             objects: [TriggerStreamFixture.triggerScript()]
         )
-        let queued = session.world.queueOnTriggerEnter(
+        let queued = session.world.scriptEvents.queueOnTriggerEnter(
             volume: TriggerStreamFixture.key(0x999), actor: .player
         )
         #expect(queued == 0)
@@ -92,8 +92,14 @@ struct PapyrusWorldTriggerTests {
             scripts: [VMADFixture.Script("SilentScript", properties: [])],
             objects: [TriggerStreamFixture.silentScript("SilentScript")]
         )
-        session.world.queueOnTriggerEnter(volume: TriggerStreamFixture.volumeKey, actor: .player)
-        session.world.queueOnTriggerLeave(volume: TriggerStreamFixture.volumeKey, actor: .player)
+        session.world.scriptEvents.queueOnTriggerEnter(
+            volume: TriggerStreamFixture.volumeKey,
+            actor: .player
+        )
+        session.world.scriptEvents.queueOnTriggerLeave(
+            volume: TriggerStreamFixture.volumeKey,
+            actor: .player
+        )
         let before = session.world.skips.counts[.undefinedEventFunction] ?? 0
         PapyrusWorldFixture.drain(session.world)
         let after = session.world.skips.counts[.undefinedEventFunction] ?? 0
@@ -109,10 +115,10 @@ struct PapyrusWorldTriggerTests {
             scripts: [VMADFixture.Script(TriggerStreamFixture.scriptName, properties: [])],
             objects: [TriggerStreamFixture.triggerScript()]
         )
-        #expect(session.bridge.triggers.handleTriggerTransition(
+        #expect(session.bridge.handleTriggerTransition(
             TriggerTransitionEvent(reference: TriggerStreamFixture.volumeKey, phase: .enter)
         ) == 1)
-        #expect(session.bridge.triggers.handleTriggerTransition(
+        #expect(session.bridge.handleTriggerTransition(
             TriggerTransitionEvent(reference: TriggerStreamFixture.volumeKey, phase: .leave)
         ) == 1)
         PapyrusWorldFixture.drain(session.world)

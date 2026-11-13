@@ -17,7 +17,7 @@ nonisolated public struct PapyrusAttachItem: Sendable {
     public let isPersistent: Bool
 }
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.Lifecycle {
     /// Creates instances for every reference with VMAD script data and enqueues
     /// `OnInit` (if never fired), `OnCellAttach`, `OnLoad`, then `OnCellLoad`. On a rebuild
     /// (`firstIntegration == false`) only new references get `OnInit`.
@@ -30,37 +30,37 @@ extension PapyrusWorldRuntime {
         let scripts = references.sortedEntries().flatMap(attachedScripts(of:))
             .filter { !$0.isRemoved }
         let names = scripts.map(\.name) + targetScripts(of: scripts, resolver: formIDResolver)
-        if deferredScriptWork.contains(where: { $0.cell == cell }) || scriptsLoading(names) {
-            deferUntilScriptsLoad(cell: cell) { [weak self] in
-                self?.attach(
+        if world.deferredScriptWork.contains(where: { $0.cell == cell }) || scriptsLoading(names) {
+            deferUntilScriptsLoad(cell: cell) { [weak world] in
+                world?.attach(
                     cell: cell, references: references, formIDResolver: formIDResolver,
                     firstIntegration: firstIntegration
                 )
             }
             return
         }
-        retainFormIDResolver(formIDResolver)
+        world.retainFormIDResolver(formIDResolver)
         let plan = collectAttachPlan(references: references)
-        var attached = attachedByCell[cell] ?? []
+        var attached = world.attachedByCell[cell] ?? []
         var created: Set<PapyrusInstanceKey> = []
         for item in plan {
             attached.insert(item.key)
-            retiringKeys.remove(item.key)
+            world.retiringKeys.remove(item.key)
             if item.isPersistent {
-                persistentKeys.insert(item.key)
+                world.persistentKeys.insert(item.key)
             }
-            if instancesByKey[item.key] == nil, instantiate(item) {
+            if world.instancesByKey[item.key] == nil, instantiate(item) {
                 created.insert(item.key)
             }
         }
-        attachedByCell[cell] = attached
+        world.attachedByCell[cell] = attached
         bind(plan: plan, created: created, formIDResolver: formIDResolver)
         enqueueAttachEvents(
             plan: plan, created: created, firstIntegration: firstIntegration
         )
         if firstIntegration {
             enqueueCellLoad(references: references)
-            cellLoadedReferences[cell] = Set(references.sortedEntries().map(\.key))
+            world.cellLoadedReferences[cell] = Set(references.sortedEntries().map(\.key))
         }
     }
 
@@ -68,8 +68,8 @@ extension PapyrusWorldRuntime {
     /// included, once the cell is in the scene (<https://ck.uesp.net/wiki/OnCellLoad>).
     private func enqueueCellLoad(references: RuntimeReferenceIndex) {
         for entry in references.sortedEntries() {
-            for key in instanceKeys(on: entry.key) {
-                enqueue(PapyrusScriptEvent(
+            for key in world.instanceKeys(on: entry.key) {
+                world.enqueue(PapyrusScriptEvent(
                     target: key, functionName: PapyrusEngineEvents.onCellLoad, arguments: []
                 ))
             }
@@ -80,18 +80,18 @@ extension PapyrusWorldRuntime {
     /// the cell's instances. A persistent instance survives with its variables. Any other
     /// instance that handles one of the two events retires once they have run.
     public func detach(cell: CellSceneLocation) {
-        deferredScriptWork.removeAll { $0.cell == cell }
-        if let unloaded = cellLoadedReferences.removeValue(forKey: cell) {
-            dropAnimationEvents(of: unloaded)
+        world.deferredScriptWork.removeAll { $0.cell == cell }
+        if let unloaded = world.cellLoadedReferences.removeValue(forKey: cell) {
+            world.scriptEvents.dropAnimationEvents(of: unloaded)
         }
-        guard let keys = attachedByCell.removeValue(forKey: cell) else {
+        guard let keys = world.attachedByCell.removeValue(forKey: cell) else {
             return
         }
         for key in keys.sorted() {
             let handles = enqueueDetachEvents(key)
-            guard !persistentKeys.contains(key) else { continue }
+            guard !world.persistentKeys.contains(key) else { continue }
             if handles {
-                retiringKeys.insert(key)
+                world.retiringKeys.insert(key)
             } else {
                 retire(key)
             }
@@ -102,9 +102,9 @@ extension PapyrusWorldRuntime {
     private func enqueueDetachEvents(_ key: PapyrusInstanceKey) -> Bool {
         var handles = false
         for name in [PapyrusEngineEvents.onUnload, PapyrusEngineEvents.onCellDetach]
-            where definesFunction(name, key: key)
+            where world.scriptEvents.definesFunction(name, key: key)
         {
-            enqueue(PapyrusScriptEvent(target: key, functionName: name, arguments: []))
+            world.enqueue(PapyrusScriptEvent(target: key, functionName: name, arguments: []))
             handles = true
         }
         return handles
@@ -112,10 +112,10 @@ extension PapyrusWorldRuntime {
 
     /// Retires each detached instance whose queued events have all run.
     func retireDrainedInstances() {
-        guard !retiringKeys.isEmpty else { return }
-        let waiting = Set(eventQueue.map(\.target)).union(busyInstances)
-        for key in retiringKeys.sorted() where !waiting.contains(key) {
-            retiringKeys.remove(key)
+        guard !world.retiringKeys.isEmpty else { return }
+        let waiting = Set(world.eventQueue.map(\.target)).union(world.busyInstances)
+        for key in world.retiringKeys.sorted() where !waiting.contains(key) {
+            world.retiringKeys.remove(key)
             retire(key)
         }
     }
@@ -128,11 +128,11 @@ extension PapyrusWorldRuntime {
         for entry in references.sortedEntries() {
             for script in attachedScripts(of: entry) {
                 guard !script.isRemoved else {
-                    skips.note(.removedScript)
+                    world.skips.note(.removedScript)
                     continue
                 }
-                guard resolveScript(named: script.name) else {
-                    skips.note(.missingScript)
+                guard world.resolveScript(named: script.name) else {
+                    world.skips.note(.missingScript)
                     continue
                 }
                 let key = PapyrusInstanceKey(
@@ -168,25 +168,25 @@ extension PapyrusWorldRuntime {
         let plan = collectAttachPlan(references: RuntimeReferenceIndex(entries: [entry]))
         var created: Set<PapyrusInstanceKey> = []
         for item in plan {
-            persistentKeys.insert(item.key)
-            if instancesByKey[item.key] == nil, instantiate(item) {
+            world.persistentKeys.insert(item.key)
+            if world.instancesByKey[item.key] == nil, instantiate(item) {
                 created.insert(item.key)
             }
         }
         bind(plan: plan, created: created, formIDResolver: formIDResolver)
         for item in plan where created.contains(item.key) {
-            enqueueOnInitIfNeeded(item.key)
+            world.enqueueOnInitIfNeeded(item.key)
         }
         return created.count
     }
 
     public func instantiate(_ item: PapyrusAttachItem) -> Bool {
         do {
-            let handle = try runtime.makeInstance(scriptName: item.script.name)
-            storeInstance(handle, for: item.key)
+            let handle = try world.runtime.makeInstance(scriptName: item.script.name)
+            world.storeInstance(handle, for: item.key)
             return true
         } catch {
-            skips.note(.instanceCreationFailed)
+            world.skips.note(.instanceCreationFailed)
             return false
         }
     }
@@ -201,7 +201,7 @@ extension PapyrusWorldRuntime {
         guard !created.isEmpty else {
             return
         }
-        let handles = referenceHandleMap()
+        let handles = world.referenceHandleMap()
         for item in plan where created.contains(item.key) {
             bind(item, handles: handles, formIDResolver: formIDResolver)
         }
@@ -213,40 +213,45 @@ extension PapyrusWorldRuntime {
         formIDResolver: FormIDResolver
     ) {
         guard
-            let handle = instancesByKey[item.key],
-            let instance = runtime.instance(for: handle),
-            let chain = attempt({ try runtime.scriptChain(from: item.script.name) })
+            let handle = world.instancesByKey[item.key],
+            let instance = world.runtime.instance(for: handle),
+            let chain = attempt({ try world.runtime.scriptChain(from: item.script.name) })
         else {
-            skips.note(.bindingFailed)
+            world.skips.note(.bindingFailed)
             return
         }
         do {
             let binding = try item.script.binding(
-                in: runtime,
+                in: world.runtime,
                 formIDResolver: formIDResolver,
-                aliases: aliasResolution,
-                aliasHandle: { self.aliasInstanceHandle(for: $0) ?? self.objectHandle(for: $0) },
-                aliasSlot: { self.aliasSlotHandle(PapyrusAliasSlot(quest: $0, aliasID: $1)) },
-                objectHandle: { handles[$0] ?? self.objectHandle(for: $0) }
+                aliases: world.aliasResolution,
+                aliasHandle: {
+                    world.activationRuns.aliasInstanceHandle(for: $0) ?? world.objectHandle(for: $0)
+                },
+                aliasSlot: { quest, aliasID in
+                    let slot = PapyrusAliasSlot(quest: quest, aliasID: aliasID)
+                    return world.questRuns.aliasSlotHandle(slot)
+                },
+                objectHandle: { handles[$0] ?? world.objectHandle(for: $0) }
             )
-            bindingSkips.merge(binding.skipped)
+            world.bindingSkips.merge(binding.skipped)
             for (name, value) in binding.initialValues.sorted(by: { $0.key < $1.key })
                 where !instance.applyInitialValue(
                     value, named: name, scriptChain: chain
                 )
             {
-                skips.note(.bindingFailed)
+                world.skips.note(.bindingFailed)
             }
             for setting in binding.propertySettings {
-                let outcome = runtime.setProperty(
+                let outcome = world.runtime.setProperty(
                     setting.propertyName, on: handle, to: setting.value
                 )
-                if settle(outcome, target: item.key) {
-                    skips.note(.bindingFailed)
+                if world.scriptEvents.settle(outcome, target: item.key) {
+                    world.skips.note(.bindingFailed)
                 }
             }
         } catch {
-            skips.note(.bindingFailed)
+            world.skips.note(.bindingFailed)
         }
     }
 
@@ -257,13 +262,13 @@ extension PapyrusWorldRuntime {
     ) {
         if firstIntegration {
             for item in plan {
-                enqueueOnInitIfNeeded(item.key)
-                enqueue(PapyrusScriptEvent(
+                world.enqueueOnInitIfNeeded(item.key)
+                world.enqueue(PapyrusScriptEvent(
                     target: item.key,
                     functionName: PapyrusEngineEvents.onCellAttach,
                     arguments: []
                 ))
-                enqueue(PapyrusScriptEvent(
+                world.enqueue(PapyrusScriptEvent(
                     target: item.key,
                     functionName: PapyrusEngineEvents.onLoad,
                     arguments: []
@@ -271,7 +276,7 @@ extension PapyrusWorldRuntime {
             }
         } else {
             for item in plan where created.contains(item.key) {
-                enqueueOnInitIfNeeded(item.key)
+                world.enqueueOnInitIfNeeded(item.key)
             }
         }
     }
@@ -279,26 +284,26 @@ extension PapyrusWorldRuntime {
     /// Another script may still hold the handle, for example a property naming a quest
     /// that stopped, so the handle stays a name for its reference.
     public func retire(_ key: PapyrusInstanceKey) {
-        guard let handle = removeInstance(for: key) else {
+        guard let handle = world.removeInstance(for: key) else {
             return
         }
-        opaqueKeysByHandle[handle] = key.reference
-        runtime.instances.removeValue(forKey: handle)
-        if let cursor = drainCursor {
-            drainCursor = cursor - eventQueue.prefix(cursor).count { $0.target == key }
+        world.opaqueKeysByHandle[handle] = key.reference
+        world.runtime.instances.removeValue(forKey: handle)
+        if let cursor = world.drainCursor {
+            world.drainCursor = cursor - world.eventQueue.prefix(cursor).count { $0.target == key }
         }
-        eventQueue.removeAll { $0.target == key }
-        updateTimers.removeAll(for: key)
+        world.eventQueue.removeAll { $0.target == key }
+        world.updateTimers.removeAll(for: key)
         // A stopped quest drops its registrations (CK wiki "RegisterForSleep - Form").
-        sleepListeners.remove(key)
-        trackedStatListeners.remove(key)
-        pendingOnInit.remove(key)
-        retiringKeys.remove(key)
-        handledEvents[key] = nil
+        world.sleepListeners.remove(key)
+        world.trackedStatListeners.remove(key)
+        world.pendingOnInit.remove(key)
+        world.retiringKeys.remove(key)
+        world.handledEvents[key] = nil
         // A later run of the effect makes a new instance, which gets its own `OnInit`.
-        if effectScripts.forget(instance: key) {
-            firedOnInit.remove(key)
+        if world.effectScripts.forget(instance: key) {
+            world.firedOnInit.remove(key)
         }
-        scheduler.cancel(suspensionTracker.forget(instance: key))
+        world.scheduler.cancel(world.suspensionTracker.forget(instance: key))
     }
 }

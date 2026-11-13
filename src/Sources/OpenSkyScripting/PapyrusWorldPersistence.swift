@@ -4,7 +4,7 @@ import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyScriptingInterface
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.Lifecycle {
     /// Every live instance's persisted state, sorted by `PapyrusInstanceKey`
     /// so the output is byte-deterministic input for a save encoder.
     ///
@@ -12,11 +12,11 @@ extension PapyrusWorldRuntime {
     /// is runtime-allocated with no world meaning) and snapshot as `.none`.
     /// Effect instances are left out: a load attaches them again from the active effects.
     public func instanceStates() -> [PapyrusInstanceState] {
-        instancesByKey.keys.sorted().compactMap { key in
+        world.instancesByKey.keys.sorted().compactMap { key in
             guard
                 key.effectRun == nil,
-                let handle = instancesByKey[key],
-                let instance = runtime.instance(for: handle)
+                let handle = world.instancesByKey[key],
+                let instance = world.runtime.instance(for: handle)
             else {
                 return nil
             }
@@ -24,7 +24,7 @@ extension PapyrusWorldRuntime {
                 key: key,
                 activeState: instance.activeState,
                 variables: instance.sortedVariableStates().map(Self.persistable),
-                hasFiredOnInit: firedOnInit.contains(key)
+                hasFiredOnInit: world.firedOnInit.contains(key)
             )
         }
     }
@@ -45,7 +45,7 @@ extension PapyrusWorldRuntime {
     /// for stage B's `PTMR` save chunk. Non-persistent instances lose their
     /// timers on cell unload, so a save never carries them.
     public func timerStates() -> [PapyrusTimerState] {
-        updateTimers.states(for: persistentKeys, stepSeconds: fixedStepSeconds)
+        world.updateTimers.states(for: world.persistentKeys, stepSeconds: world.fixedStepSeconds)
     }
 
     /// Re-arms saved timer slots against the current clock. Tolerant by
@@ -55,11 +55,11 @@ extension PapyrusWorldRuntime {
     /// difference between save and load never counts toward a timer.
     public func restore(timerStates: [PapyrusTimerState]) {
         for state in timerStates {
-            guard instancesByKey[state.key] != nil else {
-                skips.note(.unknownSaveTimerTarget)
+            guard world.instancesByKey[state.key] != nil else {
+                world.skips.note(.unknownSaveTimerTarget)
                 continue
             }
-            updateTimers.restore(
+            world.updateTimers.restore(
                 key: state.key,
                 slot: state.slot,
                 interval: state.interval,
@@ -71,34 +71,34 @@ extension PapyrusWorldRuntime {
     private func restoreInstance(_ state: PapyrusInstanceState) {
         guard
             let handle = existingOrCreatedHandle(for: state.key),
-            let instance = runtime.instance(for: handle)
+            let instance = world.runtime.instance(for: handle)
         else {
-            skips.note(.unknownSaveScript)
+            world.skips.note(.unknownSaveScript)
             return
         }
         instance.activeState = state.activeState
         for variable in state.variables where !instance.restore(variable) {
-            skips.note(.unknownSaveVariable)
+            world.skips.note(.unknownSaveVariable)
         }
         if state.hasFiredOnInit {
-            firedOnInit.insert(state.key)
+            world.firedOnInit.insert(state.key)
         } else {
-            firedOnInit.remove(state.key)
+            world.firedOnInit.remove(state.key)
         }
     }
 
     private func existingOrCreatedHandle(
         for key: PapyrusInstanceKey
     ) -> PapyrusObjectHandle? {
-        if let handle = instancesByKey[key] {
+        if let handle = world.instancesByKey[key] {
             return handle
         }
         guard
-            let handle = attempt({ try runtime.makeInstance(scriptName: key.scriptName) })
+            let handle = attempt({ try world.runtime.makeInstance(scriptName: key.scriptName) })
         else {
             return nil
         }
-        storeInstance(handle, for: key)
+        world.storeInstance(handle, for: key)
         return handle
     }
 

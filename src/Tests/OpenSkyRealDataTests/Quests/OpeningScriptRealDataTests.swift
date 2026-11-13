@@ -126,7 +126,7 @@ struct OpeningScriptRealDataTests {
         /// Runs queued events and fragments, and notes each fault they raise.
         func drain() {
             for _ in 0 ..< 64 where !world.eventQueue.isEmpty {
-                world.stepFixed()
+                world.scriptEvents.stepFixed()
             }
             let tally = world.runtime.tally
             if tally.faultTotal > faultsSeen {

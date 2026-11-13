@@ -99,7 +99,7 @@ struct TriggerVolumeWalkTests {
             world.detach(cell: location)
         }
         streamer.onTriggerTransition.register(.scripts) { [weak bridge = session.bridge] event in
-            bridge?.triggers.handleTriggerTransition(event)
+            bridge?.handleTriggerTransition(event)
         }
     }
 
@@ -150,7 +150,7 @@ struct TriggerVolumeWalkTests {
                     feetPosition: controller.feetPosition
                 )
             )
-            _ = harness.session.world.advance(delta: 1.0 / 30.0)
+            _ = harness.session.world.scriptEvents.advance(delta: 1.0 / 30.0)
             let notes = harness.session.dispatch.notes
             while seen < notes.count {
                 timeline.append((frame, notes[seen]))

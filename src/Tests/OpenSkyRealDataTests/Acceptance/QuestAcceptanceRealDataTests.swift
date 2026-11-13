@@ -64,7 +64,7 @@ struct QuestAcceptanceRealDataTests {
         let world = session.world
         let next = try #require(session.quests.quest(editorID: "MGRArniel02"))
         #expect(try session.state(of: next.formID).isRunning)
-        #expect(world.questCount == 1)
+        #expect(world.questRuns.questCount == 1)
         #expect(world.runtime.tally.faultTotal == 0)
         #expect(world.bindingSkips.counts[.unresolvedReference] == nil)
         #expect(world.bindingSkips.counts[.aliasObject] == 6)
@@ -160,7 +160,7 @@ struct QuestAcceptanceRealDataTests {
         let restored = try QuestRealDataSession(root: session.root, pluginName: pluginName)
         restored.worldState.restore(from: file.snapshot)
         restored.bridge.attachRunningQuestScripts()
-        restored.world.restore(instanceStates: file.scripts)
+        restored.world.lifecycle.restore(instanceStates: file.scripts)
 
         let key = try #require(session.quests.key(editorID: targetEditorID))
         #expect(

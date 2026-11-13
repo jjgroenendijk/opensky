@@ -33,7 +33,7 @@ extension PapyrusWorldStateBridge.EffectEvents {
                 changed += 1
             }
             for effect in old where !newSequences.contains(effect.sequence) {
-                world.finishEffectScripts(PapyrusActiveEffectID(
+                world.activeEffects.finishEffectScripts(PapyrusActiveEffectID(
                     target: entry.key, sequence: effect.sequence
                 ))
                 changed += 1
@@ -84,7 +84,7 @@ extension PapyrusWorldStateBridge.EffectEvents {
         let resolver = store.sourceResolver(of: record)
             ?? bridge.formIDResolver
             ?? FormIDResolver(pluginName: record.sourcePlugin, masters: [])
-        world.startEffectScripts(
+        world.activeEffects.startEffectScripts(
             PapyrusActiveEffectRun(
                 id: PapyrusActiveEffectID(target: target, sequence: effect.sequence),
                 effect: effect.effect,
@@ -106,7 +106,10 @@ extension PapyrusWorldStateBridge.EffectEvents {
             effect.caster.map { .object(world.objectHandle(for: $0)) } ?? .none,
             .object(world.objectHandle(for: effect.effect))
         ]
-        for key in world.instanceKeys(on: target) where world.handlesEvent(name, key: key) {
+        for key in world.instanceKeys(on: target) where world.scriptEvents.handlesEvent(
+            name,
+            key: key
+        ) {
             world.enqueue(PapyrusScriptEvent(target: key, functionName: name, arguments: arguments))
         }
     }

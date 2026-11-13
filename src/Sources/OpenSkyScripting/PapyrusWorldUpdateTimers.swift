@@ -235,7 +235,7 @@ nonisolated public struct PapyrusUpdateTimerRegistry: Sendable {
     }
 }
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.Timers {
     /// Arms one timer slot on the exact script instance behind `handle`.
     /// An opaque (non-scripted) handle has no instance to deliver `OnUpdate`
     /// to, so the call is a no-op; the native still returns None either way,
@@ -246,8 +246,8 @@ extension PapyrusWorldRuntime {
         slot: PapyrusUpdateTimerSlot,
         interval: Double
     ) -> Bool {
-        guard let key = keysByHandle[handle] else { return false }
-        updateTimers.register(key: key, slot: slot, interval: interval)
+        guard let key = world.keysByHandle[handle] else { return false }
+        world.updateTimers.register(key: key, slot: slot, interval: interval)
         return true
     }
 
@@ -257,8 +257,8 @@ extension PapyrusWorldRuntime {
         handle: PapyrusObjectHandle,
         family: PapyrusUpdateTimerFamily
     ) -> Bool {
-        guard let key = keysByHandle[handle] else { return false }
-        updateTimers.unregister(key: key, family: family)
+        guard let key = world.keysByHandle[handle] else { return false }
+        world.updateTimers.unregister(key: key, family: family)
         return true
     }
 
@@ -267,15 +267,15 @@ extension PapyrusWorldRuntime {
     /// re-enter dispatch. Runs between the scheduler tick and the queue drain,
     /// so a timer becoming due on step N dispatches on step N.
     public func advanceUpdateTimers(gameClock: GameClock?) {
-        let firings = updateTimers.advanceStep(
-            stepSeconds: fixedStepSeconds, gameClock: gameClock
+        let firings = world.updateTimers.advanceStep(
+            stepSeconds: world.fixedStepSeconds, gameClock: gameClock
         )
         for firing in firings {
             let name = firing.slot.family == .real
                 ? PapyrusEngineEvents.onUpdate
                 : PapyrusEngineEvents.onUpdateGameTime
             for target in updateTargets(of: firing.key, event: name) {
-                enqueue(PapyrusScriptEvent(
+                world.enqueue(PapyrusScriptEvent(
                     target: target, functionName: name, arguments: [], activationDepth: 0
                 ))
             }
@@ -287,10 +287,14 @@ extension PapyrusWorldRuntime {
     /// (<https://ck.uesp.net/wiki/OnUpdate_-_Form>). Alias and effect scripts are
     /// objects of their own, so they neither relay nor hear another's update.
     private func updateTargets(of key: PapyrusInstanceKey, event: String) -> [PapyrusInstanceKey] {
-        let separate = aliasInstanceKeys.union(effectScripts.instanceKeys)
+        let separate = world.activationRuns.aliasInstanceKeys
+            .union(world.effectScripts.instanceKeys)
         guard !separate.contains(key) else { return [key] }
-        let siblings = instanceKeys(on: key.reference).filter { sibling in
-            sibling != key && !separate.contains(sibling) && definesFunction(event, key: sibling)
+        let siblings = world.instanceKeys(on: key.reference).filter { sibling in
+            sibling != key && !separate.contains(sibling) && world.scriptEvents.definesFunction(
+                event,
+                key: sibling
+            )
         }
         return [key] + siblings
     }

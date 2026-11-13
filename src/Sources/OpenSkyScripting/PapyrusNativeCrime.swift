@@ -45,7 +45,7 @@ extension PapyrusNativeFunctions.CrimeNatives {
                 }
                 let violent = boolean(call, at: 1, default: false)
                 guard
-                    world.crimeBridge.modifyCrimeGold(
+                    world.roles.crime.modifyCrimeGold(
                         of: faction,
                         by: Int(amount),
                         violent: violent
@@ -80,9 +80,9 @@ extension PapyrusNativeFunctions.CrimeNatives {
         ) { call, context in
             factionTarget(call, context) { world, faction in
                 let gold = if let violent {
-                    world.crimeBridge.crimeGold(of: faction, violent: violent)
+                    world.roles.crime.crimeGold(of: faction, violent: violent)
                 } else {
-                    world.crimeBridge.crimeGold(of: faction)
+                    world.roles.crime.crimeGold(of: faction)
                 }
                 guard let gold else {
                     return failure(call, "\(name) needs a session with a crime runtime")
@@ -107,7 +107,7 @@ extension PapyrusNativeFunctions.CrimeNatives {
                     return failure(call, "\(name) needs an integer amount")
                 }
                 guard
-                    world.crimeBridge
+                    world.roles.crime
                         .setCrimeGold(of: faction, to: Int(gold), violent: violent) != nil
                 else {
                     return failure(call, "\(name) needs a session with a crime runtime")
@@ -129,7 +129,7 @@ extension PapyrusNativeFunctions.CrimeNatives {
         ) { call, context in
             guard let actor = actorTarget(call, context) else { return needsActor(call) }
             guard
-                actor.world.crimeBridge.sendAssaultAlarm(
+                actor.world.roles.crime.sendAssaultAlarm(
                     witness: actor.key, criminal: actor.world.playerKey
                 ) != nil
             else {
@@ -172,7 +172,7 @@ extension PapyrusNativeFunctions.CrimeNatives {
                 return failure(call, "SendTrespassAlarm needs a criminal actor argument")
             }
             guard
-                actor.world.crimeBridge
+                actor.world.roles.crime
                     .sendTrespassAlarm(witness: actor.key, criminal: criminal) != nil
             else {
                 return failure(call, "SendTrespassAlarm needs a session with a crime runtime")

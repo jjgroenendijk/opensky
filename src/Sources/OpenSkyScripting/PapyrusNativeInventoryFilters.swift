@@ -20,7 +20,7 @@ extension PapyrusNativeFunctions.InventoryFiltersNatives {
                 guard
                     let filter = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
                 else { return false }
-                bridge.scriptState.updateScriptedState(of: key.reference) {
+                bridge.updateScriptedState(of: key.reference) {
                     $0.setForm(
                         PapyrusWorldStateBridge.InventoryEvents.inventoryFilterName(key, filter),
                         filter
@@ -36,7 +36,7 @@ extension PapyrusNativeFunctions.InventoryFiltersNatives {
                 guard
                     let filter = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
                 else { return false }
-                bridge.scriptState.updateScriptedState(of: key.reference) {
+                bridge.updateScriptedState(of: key.reference) {
                     $0.setForm(
                         PapyrusWorldStateBridge.InventoryEvents.inventoryFilterName(key, filter),
                         nil
@@ -50,7 +50,7 @@ extension PapyrusNativeFunctions.InventoryFiltersNatives {
                 into: &registry
             ) { _, bridge, key in
                 let prefix = PapyrusWorldStateBridge.InventoryEvents.inventoryFilterPrefix(key)
-                bridge.scriptState.updateScriptedState(of: key.reference) { state in
+                bridge.updateScriptedState(of: key.reference) { state in
                     for name in state.forms.keys where name.hasPrefix(prefix) {
                         state.setForm(name, nil)
                     }
@@ -93,7 +93,7 @@ extension PapyrusNativeFunctions.InventoryFiltersNatives {
         if let key = world.keysByHandle[handle] {
             return [key]
         }
-        if let slot = world.aliasSlot(for: handle) {
+        if let slot = world.questRuns.aliasSlot(for: handle) {
             return world.aliasSlotsByInstance.filter { $0.value == slot }.keys.sorted()
         }
         return bridge.referenceKey(for: handle).map(world.instanceKeys(on:)) ?? []
@@ -112,12 +112,12 @@ extension PapyrusWorldStateBridge.InventoryEvents {
     /// True when the instance has no filter, or a filter names `item` or holds it in a list.
     func passesInventoryFilters(_ item: ReferenceKey?, instance key: PapyrusInstanceKey) -> Bool {
         let prefix = Self.inventoryFilterPrefix(key)
-        let filters = bridge.scriptState.scriptedState(of: key.reference).forms
+        let filters = bridge.scriptedState(of: key.reference).forms
             .filter { $0.key.hasPrefix(prefix) }.values
         guard !filters.isEmpty else { return true }
         guard let item else { return false }
         return filters.contains { filter in
-            filter == item || bridge.scriptState.formListEntries(of: filter)?.contains(item) == true
+            filter == item || bridge.formListEntries(of: filter)?.contains(item) == true
         }
     }
 }

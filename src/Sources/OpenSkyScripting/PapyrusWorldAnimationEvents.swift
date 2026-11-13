@@ -3,20 +3,20 @@
 // (<https://ck.uesp.net/wiki/RegisterForAnimationEvent_-_Form>).
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.ScriptEvents {
     /// False when `handle` names no script instance.
     @discardableResult
     func registerAnimationEvent(
         handle: PapyrusObjectHandle, sender: ReferenceKey, name: String
     ) -> Bool {
-        guard let key = keysByHandle[handle] else { return false }
+        guard let key = world.keysByHandle[handle] else { return false }
         let folded = name.lowercased()
-        animationEventListeners[sender, default: [:]][folded, default: []].insert(key)
-        if animationEventSpellings[folded] == nil {
-            animationEventSpellings[folded] = name
+        world.animationEventListeners[sender, default: [:]][folded, default: []].insert(key)
+        if world.animationEventSpellings[folded] == nil {
+            world.animationEventSpellings[folded] = name
         }
         return true
     }
@@ -24,21 +24,21 @@ extension PapyrusWorldRuntime {
     func unregisterAnimationEvent(
         handle: PapyrusObjectHandle, sender: ReferenceKey, name: String
     ) {
-        guard let key = keysByHandle[handle] else { return }
-        animationEventListeners[sender]?[name.lowercased()]?.remove(key)
+        guard let key = world.keysByHandle[handle] else { return }
+        world.animationEventListeners[sender]?[name.lowercased()]?.remove(key)
     }
 
     /// Queues `OnAnimationEvent(akSource, asEventName)` on every live listener, in key
     /// order. Returns how many events were queued.
     @discardableResult
     public func queueAnimationEvent(sender: ReferenceKey, name: String) -> Int {
-        let listeners = animationEventListeners[sender]?[name.lowercased()] ?? []
-        let live = listeners.filter { instancesByKey[$0] != nil }.sorted()
+        let listeners = world.animationEventListeners[sender]?[name.lowercased()] ?? []
+        let live = listeners.filter { world.instancesByKey[$0] != nil }.sorted()
         for key in live {
-            enqueue(PapyrusScriptEvent(
+            world.enqueue(PapyrusScriptEvent(
                 target: key,
                 functionName: PapyrusEngineEvents.onAnimationEvent,
-                arguments: [.object(objectHandle(for: sender)), .string(name)],
+                arguments: [.object(world.objectHandle(for: sender)), .string(name)],
                 activationDepth: 0
             ))
         }
@@ -52,16 +52,16 @@ extension PapyrusWorldRuntime {
     func dropAnimationEvents(of senders: some Sequence<ReferenceKey>) -> Int {
         var queued = 0
         for sender in senders.sorted() {
-            guard let byName = animationEventListeners.removeValue(forKey: sender) else {
+            guard let byName = world.animationEventListeners.removeValue(forKey: sender) else {
                 continue
             }
             for (folded, listeners) in byName.sorted(by: { $0.key < $1.key }) {
-                let name = animationEventSpellings[folded] ?? folded
-                for key in listeners.sorted() where instancesByKey[key] != nil {
-                    enqueue(PapyrusScriptEvent(
+                let name = world.animationEventSpellings[folded] ?? folded
+                for key in listeners.sorted() where world.instancesByKey[key] != nil {
+                    world.enqueue(PapyrusScriptEvent(
                         target: key,
                         functionName: PapyrusEngineEvents.onAnimationEventUnregistered,
-                        arguments: [.object(objectHandle(for: sender)), .string(name)],
+                        arguments: [.object(world.objectHandle(for: sender)), .string(name)],
                         activationDepth: 0
                     ))
                     queued += 1

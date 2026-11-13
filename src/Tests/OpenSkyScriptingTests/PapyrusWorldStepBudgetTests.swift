@@ -21,7 +21,7 @@ struct PapyrusWorldStepBudgetTests {
         world.budget = PapyrusTickBudget(events: 32, instructions: 50)
 
         for _ in 0 ..< 12 {
-            world.stepFixed()
+            world.scriptEvents.stepFixed()
             #expect(world.lastStepInstructions <= 50)
         }
         #expect(world.runtime.tally.instructionsExecuted <= 12 * 50)
@@ -37,7 +37,7 @@ struct PapyrusWorldStepBudgetTests {
             scripts: [("Waiter", Self.waitingLoop(note: "waiter"))], probe: probe
         )
         for _ in 0 ..< 60 {
-            alone.stepFixed()
+            alone.scriptEvents.stepFixed()
         }
         // One wake in 60 steps of 1/30 s, at step 31, with a few instructions.
         #expect(alone.runtime.tally.instructionsExecuted < 20)
@@ -54,7 +54,7 @@ struct PapyrusWorldStepBudgetTests {
         )
         crowd.budget = PapyrusTickBudget(events: 32, instructions: 50)
         for _ in 0 ..< 60 {
-            crowd.stepFixed()
+            crowd.scriptEvents.stepFixed()
         }
         #expect(crowdProbe.notes.filter { $0 == "waiter" }.count >= 1)
     }
@@ -66,7 +66,7 @@ struct PapyrusWorldStepBudgetTests {
             probe: PapyrusWorldProbeDispatch()
         )
         world.budget = PapyrusTickBudget(events: 32, instructions: 1)
-        world.stepFixed()
+        world.scriptEvents.stepFixed()
         #expect(world.runtime.stepInstructionsLeft == .max)
     }
 

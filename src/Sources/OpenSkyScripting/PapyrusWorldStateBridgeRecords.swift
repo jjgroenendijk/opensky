@@ -10,7 +10,7 @@ import OpenSkyScriptingInterface
 extension PapyrusWorldStateBridge.RecordReads {
     /// `IsKiller` reads the link on the victim. A death with no known killer clears it.
     public func recordKill(victim: ReferenceKey, killer: ReferenceKey?) {
-        bridge.scriptState.updateScriptedState(of: victim) {
+        bridge.updateScriptedState(of: victim) {
             $0.setForm(ScriptedStateName.killer, killer)
         }
     }
@@ -19,9 +19,9 @@ extension PapyrusWorldStateBridge.RecordReads {
     /// `IsCleared` reads, the HUD notice, and the music when `playsMusic`.
     public func markLocationCleared(_ location: ReferenceKey, playsMusic: Bool) {
         guard
-            bridge.scriptState.scriptedState(of: location)
+            bridge.scriptedState(of: location)
                 .flag(ScriptedStateName.cleared) != true else { return }
-        bridge.scriptState.updateScriptedState(of: location) {
+        bridge.updateScriptedState(of: location) {
             $0.setFlag(ScriptedStateName.cleared, true)
         }
         if let name = bridge.itemNoticeLines.formName(of: location) {
@@ -36,13 +36,13 @@ extension PapyrusWorldStateBridge.RecordReads {
     /// A blow on the player names its aggressor for `IsLastHostileActor`.
     public func recordHit(_ hit: ScriptHitEvent, targetWasHostile: Bool) {
         if hit.aggressor == .player, hit.target != .player, !targetWasHostile {
-            bridge.scriptState.updateScriptedState(of: hit.target) { state in
+            bridge.updateScriptedState(of: hit.target) { state in
                 let hits = state.value(ScriptedStateName.friendHits) ?? 0
                 state.setValue(ScriptedStateName.friendHits, hits + 1)
             }
         }
         if hit.target == .player, hit.aggressor != .player {
-            bridge.scriptState.updateScriptedState(of: .player) {
+            bridge.updateScriptedState(of: .player) {
                 $0.setForm(ScriptedStateName.lastHostileActor, hit.aggressor)
             }
         }

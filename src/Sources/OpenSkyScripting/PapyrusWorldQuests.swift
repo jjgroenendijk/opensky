@@ -7,12 +7,12 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.QuestScriptRuns {
     /// Instantiates every script `quest` carries and enqueues `OnInit` for those
     /// that never fired it. Idempotent, so a restarted quest keeps its variables.
     /// - Parameter key: the QUST's session-stable identity.
@@ -27,13 +27,16 @@ extension PapyrusWorldRuntime {
         waitsForTargets: Bool = true
     ) -> Int {
         let loadedAtStart = cellsLoadedAtStart
-            ?? (quest.flags.contains(.startGameEnabled) ? [] : Set(cellLoadedReferences.keys))
+            ?? (quest.flags.contains(.startGameEnabled) ? [] : Set(world.cellLoadedReferences.keys))
         let attached = attachedScripts(of: quest)
-        let targets = waitsForTargets ? targetScripts(of: attached, resolver: formIDResolver) : []
+        let targets = waitsForTargets ? world.lifecycle.targetScripts(
+            of: attached,
+            resolver: formIDResolver
+        ) : []
         let names = attached.map(\.name) + targets
-        if hasDeferredWork(forQuest: key) || scriptsLoading(names) {
-            deferUntilScriptsLoad(quest: key) { [weak self] in
-                self?.attachQuest(
+        if world.lifecycle.hasDeferredWork(forQuest: key) || world.lifecycle.scriptsLoading(names) {
+            world.lifecycle.deferUntilScriptsLoad(quest: key) { [weak world] in
+                world?.questRuns.attachQuest(
                     quest, key: key, formIDResolver: formIDResolver, aliases: aliases,
                     cellsLoadedAtStart: loadedAtStart, waitsForTargets: waitsForTargets
                 )
@@ -43,23 +46,27 @@ extension PapyrusWorldRuntime {
         let plan = questAttachPlan(quest, key: key)
         var created: Set<PapyrusInstanceKey> = []
         for item in plan {
-            persistentKeys.insert(item.key)
-            questInstanceKeys.insert(item.key)
-            if instancesByKey[item.key] == nil, instantiate(item) {
+            world.persistentKeys.insert(item.key)
+            world.questInstanceKeys.insert(item.key)
+            if world.instancesByKey[item.key] == nil, world.lifecycle.instantiate(item) {
                 created.insert(item.key)
             }
         }
         let aliasPlan = questAliasAttachPlan(quest, key: key, aliases: aliases)
         for item in aliasPlan {
-            persistentKeys.insert(item.key)
-            questAliasInstanceKeys[key, default: []].insert(item.key)
-            if instancesByKey[item.key] == nil, instantiate(item) {
+            world.persistentKeys.insert(item.key)
+            world.questAliasInstanceKeys[key, default: []].insert(item.key)
+            if world.instancesByKey[item.key] == nil, world.lifecycle.instantiate(item) {
                 created.insert(item.key)
             }
         }
-        bind(plan: plan + aliasPlan, created: created, formIDResolver: formIDResolver)
+        world.lifecycle.bind(
+            plan: plan + aliasPlan,
+            created: created,
+            formIDResolver: formIDResolver
+        )
         for item in plan + aliasPlan where created.contains(item.key) {
-            enqueueOnInitIfNeeded(item.key)
+            world.enqueueOnInitIfNeeded(item.key)
         }
         enqueueLateCellLoad(
             aliasPlan.map(\.key).filter(created.contains), skipping: loadedAtStart
@@ -73,10 +80,10 @@ extension PapyrusWorldRuntime {
     private func enqueueLateCellLoad(
         _ keys: [PapyrusInstanceKey], skipping loadedAtStart: Set<CellSceneLocation>
     ) {
-        let loaded = cellLoadedReferences.filter { !loadedAtStart.contains($0.key) }
+        let loaded = world.cellLoadedReferences.filter { !loadedAtStart.contains($0.key) }
             .values.reduce(into: Set<ReferenceKey>()) { $0.formUnion($1) }
         for key in keys where loaded.contains(key.reference) {
-            enqueue(PapyrusScriptEvent(
+            world.enqueue(PapyrusScriptEvent(
                 target: key, functionName: PapyrusEngineEvents.onCellLoad, arguments: []
             ))
         }
@@ -88,16 +95,16 @@ extension PapyrusWorldRuntime {
     /// - Returns: instances retired.
     @discardableResult
     public func detachQuest(key: ReferenceKey) -> Int {
-        deferredScriptWork.removeAll { $0.quest == key }
-        var keys = questInstanceKeys.filter { $0.reference == key }
-        let aliasKeys = questAliasInstanceKeys.removeValue(forKey: key) ?? []
+        world.deferredScriptWork.removeAll { $0.quest == key }
+        var keys = world.questInstanceKeys.filter { $0.reference == key }
+        let aliasKeys = world.questAliasInstanceKeys.removeValue(forKey: key) ?? []
         keys.formUnion(aliasKeys)
         for instanceKey in keys.sorted() {
-            retire(instanceKey)
-            aliasSlotsByInstance.removeValue(forKey: instanceKey)
-            persistentKeys.remove(instanceKey)
-            questInstanceKeys.remove(instanceKey)
-            firedOnInit.remove(instanceKey)
+            world.lifecycle.retire(instanceKey)
+            world.aliasSlotsByInstance.removeValue(forKey: instanceKey)
+            world.persistentKeys.remove(instanceKey)
+            world.questInstanceKeys.remove(instanceKey)
+            world.firedOnInit.remove(instanceKey)
         }
         return keys.count
     }
@@ -113,9 +120,9 @@ extension PapyrusWorldRuntime {
         key: ReferenceKey,
         logEntries: Set<Int32>? = nil
     ) -> Int {
-        if hasDeferredWork(forQuest: key) {
-            deferUntilScriptsLoad(quest: key) { [weak self] in
-                self?.queueQuestFragments(
+        if world.lifecycle.hasDeferredWork(forQuest: key) {
+            world.lifecycle.deferUntilScriptsLoad(quest: key) { [weak world] in
+                world?.questRuns.queueQuestFragments(
                     of: quest, stage: stage, key: key, logEntries: logEntries
                 )
             }
@@ -128,30 +135,30 @@ extension PapyrusWorldRuntime {
             let target = PapyrusInstanceKey(
                 reference: key, scriptName: fragment.scriptName
             )
-            guard instancesByKey[target] != nil else {
-                skips.note(.missingQuestFragmentInstance)
+            guard world.instancesByKey[target] != nil else {
+                world.skips.note(.missingQuestFragmentInstance)
                 continue
             }
-            enqueue(PapyrusScriptEvent(
+            world.enqueue(PapyrusScriptEvent(
                 target: target,
                 functionName: fragment.functionName,
                 arguments: []
             ))
             queued += 1
-            questFragmentsQueued += 1
-            lastQuestFragment = "\(fragment.functionName) -> \(target.scriptName)"
+            world.questFragmentsQueued += 1
+            world.lastQuestFragment = "\(fragment.functionName) -> \(target.scriptName)"
         }
         return queued
     }
 
     /// Quests holding at least one live script instance.
     var questCount: Int {
-        Set(questInstanceKeys.map(\.reference)).count
+        Set(world.questInstanceKeys.map(\.reference)).count
     }
 
     /// Alias script instances live across every running quest.
     var questAliasInstanceCount: Int {
-        questAliasInstanceKeys.values.reduce(0) { $0 + $1.count }
+        world.questAliasInstanceKeys.values.reduce(0) { $0 + $1.count }
     }
 
     /// Scripts the quest's filled aliases carry, each instantiated on the reference
@@ -176,18 +183,18 @@ extension PapyrusWorldRuntime {
             }
             for script in section.scripts {
                 guard !script.isRemoved else {
-                    skips.note(.removedScript)
+                    world.skips.note(.removedScript)
                     continue
                 }
-                guard resolveScript(named: script.name) else {
-                    skips.note(.missingScript)
+                guard world.resolveScript(named: script.name) else {
+                    world.skips.note(.missingScript)
                     continue
                 }
                 let instanceKey = PapyrusInstanceKey(
                     reference: reference, scriptName: script.name
                 )
                 guard seen.insert(instanceKey).inserted else { continue }
-                aliasSlotsByInstance[instanceKey] = PapyrusAliasSlot(
+                world.aliasSlotsByInstance[instanceKey] = PapyrusAliasSlot(
                     quest: questKey, aliasID: UInt32(aliasID)
                 )
                 plan.append(PapyrusAttachItem(
@@ -208,11 +215,11 @@ extension PapyrusWorldRuntime {
         var seen: Set<PapyrusInstanceKey> = []
         for script in quest.script.scripts + fragmentScripts(of: quest) {
             guard !script.isRemoved else {
-                skips.note(.removedScript)
+                world.skips.note(.removedScript)
                 continue
             }
-            guard resolveScript(named: script.name) else {
-                skips.note(.missingScript)
+            guard world.resolveScript(named: script.name) else {
+                world.skips.note(.missingScript)
                 continue
             }
             let instanceKey = PapyrusInstanceKey(

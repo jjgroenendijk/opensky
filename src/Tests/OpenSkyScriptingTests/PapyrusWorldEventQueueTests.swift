@@ -25,13 +25,13 @@ struct PapyrusWorldEventQueueTests {
             ))
         }
 
-        let first = world.stepFixed()
+        let first = world.scriptEvents.stepFixed()
         #expect(first.dispatched == 2)
         #expect(first.queued == 3)
-        let second = world.stepFixed()
+        let second = world.scriptEvents.stepFixed()
         #expect(second.dispatched == 2)
         #expect(second.queued == 1)
-        let third = world.stepFixed()
+        let third = world.scriptEvents.stepFixed()
         #expect(third.dispatched == 1)
         #expect(third.queued == 0)
         #expect(probe.notes == [
@@ -81,15 +81,15 @@ struct PapyrusWorldEventQueueTests {
 
         // Step 1: the waiter's OnLoad suspends in Utility.Wait(2), which releases
         // the instance, so its OnCellAttach runs in the same step.
-        let first = world.stepFixed()
+        let first = world.scriptEvents.stepFixed()
         #expect(first.dispatched == 3)
         #expect(first.queued == 0)
         #expect(probe.notes == ["waiter.attach", "bystander.onload"])
 
-        let second = world.stepFixed()
+        let second = world.scriptEvents.stepFixed()
         #expect(second.resumed == 0)
         // Step 3: two 1 s steps have elapsed, so the wait resumes and finishes.
-        let third = world.stepFixed()
+        let third = world.scriptEvents.stepFixed()
         #expect(third.resumed == 1)
         #expect(probe.notes == ["waiter.attach", "bystander.onload", "waiter.done"])
     }
@@ -125,7 +125,7 @@ struct PapyrusWorldEventQueueTests {
             PapyrusScriptEvent(target: key, functionName: "OnCellAttach", arguments: [])
         ]
         for _ in 0 ..< 3 {
-            world.stepFixed()
+            world.scriptEvents.stepFixed()
         }
         #expect(world.busyInstances == [key])
         #expect(world.eventQueue.map(\.functionName) == ["OnCellAttach"])
@@ -157,14 +157,14 @@ struct PapyrusWorldEventQueueTests {
             functionName: "OnLoad",
             arguments: []
         )]
-        #expect(world.stepFixed().dispatched == 1) // suspends in the wait
+        #expect(world.scriptEvents.stepFixed().dispatched == 1) // suspends in the wait
 
         for step in 1 ... 29 {
-            let report = world.stepFixed()
+            let report = world.scriptEvents.stepFixed()
             #expect(report.resumed == 0, "resumed early at step \(step)")
         }
         #expect(probe.notes.isEmpty)
-        let thirtieth = world.stepFixed()
+        let thirtieth = world.scriptEvents.stepFixed()
         #expect(thirtieth.resumed == 1)
         #expect(probe.notes == ["waiter.done"])
     }
@@ -177,7 +177,7 @@ struct PapyrusWorldEventQueueTests {
             target: aKey, functionName: "OnLoad", arguments: []
         ))
         for _ in 0 ..< 3 {
-            let report = world.advance(delta: 0)
+            let report = world.scriptEvents.advance(delta: 0)
             #expect(report.steps == 0)
             #expect(report.dispatched == 0)
             #expect(report.resumed == 0)
@@ -190,9 +190,9 @@ struct PapyrusWorldEventQueueTests {
     @Test("advance accumulates partial deltas and caps a hitch at four steps")
     func advanceAccumulatesAndCaps() throws {
         let world = try PapyrusWorldFixture.twoInstanceWorld(probe: PapyrusWorldProbeDispatch())
-        #expect(world.advance(delta: 1.0 / 60.0).steps == 0)
-        #expect(world.advance(delta: 1.0 / 60.0).steps == 1)
-        #expect(world.advance(delta: 10).steps == 4)
+        #expect(world.scriptEvents.advance(delta: 1.0 / 60.0).steps == 0)
+        #expect(world.scriptEvents.advance(delta: 1.0 / 60.0).steps == 1)
+        #expect(world.scriptEvents.advance(delta: 10).steps == 4)
     }
 
     @Test("an event function the script does not define is a counted no-op")
@@ -201,7 +201,7 @@ struct PapyrusWorldEventQueueTests {
         world.enqueue(PapyrusScriptEvent(
             target: aKey, functionName: "OnNothingDefined", arguments: []
         ))
-        let report = world.stepFixed()
+        let report = world.scriptEvents.stepFixed()
         #expect(report.dispatched == 1)
         #expect(report.faulted == 0)
         #expect(world.skips.counts[.undefinedEventFunction] == 1)

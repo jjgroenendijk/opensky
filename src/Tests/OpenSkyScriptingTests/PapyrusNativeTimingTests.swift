@@ -36,13 +36,13 @@ struct PapyrusNativeTimingTests {
         let body = Self.repeated(Self.randomInt, then: "done")
         let world = try Self.world(onLoad: body, probe: probe, timing: .game)
 
-        world.stepFixed()
+        world.scriptEvents.stepFixed()
         for _ in 1 ..< Self.callCount {
             #expect(probe.notes.isEmpty)
-            world.stepFixed()
+            world.scriptEvents.stepFixed()
         }
         #expect(probe.notes.isEmpty)
-        world.stepFixed()
+        world.scriptEvents.stepFixed()
         #expect(probe.notes == ["done"])
         #expect(world.lastStepDelayedCalls == 1)
     }
@@ -53,7 +53,7 @@ struct PapyrusNativeTimingTests {
         let body = Self.repeated(Self.mathAbs, then: "done")
         let world = try Self.world(onLoad: body, probe: probe, timing: .game)
 
-        world.stepFixed()
+        world.scriptEvents.stepFixed()
         #expect(probe.notes == ["done"])
     }
 
@@ -63,7 +63,7 @@ struct PapyrusNativeTimingTests {
         let body = Self.repeated(Self.randomInt, then: "done")
         let world = try Self.world(onLoad: body, probe: probe, timing: .runToEnd)
 
-        world.stepFixed()
+        world.scriptEvents.stepFixed()
         #expect(probe.notes == ["done"])
         #expect(world.lastStepDelayedCalls == 0)
     }
@@ -99,9 +99,9 @@ struct PapyrusNativeTimingTests {
             )
             let body = PexFixture.runtimeFunction(instructions: [call, Self.note("done")])
             let world = try Self.world(onLoad: body, probe: probe, timing: .runToEnd)
-            world.stepFixed()
+            world.scriptEvents.stepFixed()
             for _ in 0 ..< 10 {
-                world.stepMenuTime()
+                world.timers.stepMenuTime()
             }
             notes[wait] = probe.notes
         }

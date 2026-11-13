@@ -85,7 +85,7 @@ struct ScriptedWorldChain {
             return .returned(.none)
         }
         streamer.onInteraction.register(.scripts) { [weak bridge = session.bridge] event in
-            bridge?.activations.handleInteraction(event)
+            bridge?.handleInteraction(event)
         }
         Self.integrate(streamer: streamer, runner: runner, entries: [lever, door])
         // Attach queued OnInit/OnCellAttach/OnLoad; drain them so only the

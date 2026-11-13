@@ -103,9 +103,9 @@ struct PapyrusScriptLookupTests {
             }
             return helperLoaded ? .ready([PexFixture.runtimeFile(objects: [helper])]) : .loading
         }
-        #expect(world.scriptsLoading(["Caller"]))
+        #expect(world.lifecycle.scriptsLoading(["Caller"]))
         helperLoaded = true
-        #expect(!world.scriptsLoading(["Caller"]))
+        #expect(!world.lifecycle.scriptsLoading(["Caller"]))
     }
 
     /// `PlayerSleepQuestScript` calls `IsInInterior`, which `ObjectReference.psc` writes

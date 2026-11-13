@@ -58,7 +58,7 @@ struct QuestAcceptanceTests {
         // keyed by the reference the alias holds, not by the quest.
         #expect(chain.notes.filter { $0 == "alias.oninit" }.count == 1)
         #expect(chain.session.world.questInstanceKeys.count == 2)
-        #expect(chain.session.world.questAliasInstanceCount == 1)
+        #expect(chain.session.world.questRuns.questAliasInstanceCount == 1)
 
         let aliases = try chain.runtime.aliasState(of: Chain.questFormID)
         #expect(
@@ -189,7 +189,7 @@ struct QuestAcceptanceTests {
         // Same order the app's load path uses: quest instances first, so the
         // restored script variables have somewhere to land.
         fresh.session.bridge.attachRunningQuestScripts()
-        fresh.session.world.restore(instanceStates: file.scripts)
+        fresh.session.world.lifecycle.restore(instanceStates: file.scripts)
 
         #expect(fresh.session.worldState.snapshot() == chain.session.worldState.snapshot())
         #expect(try fresh.state == chain.state)
@@ -246,7 +246,7 @@ struct QuestAcceptanceTests {
         #expect(state.stagesReached == [Chain.leverStage])
         #expect(try chain.runtime.aliasState(of: Chain.questFormID).isEmpty)
         #expect(chain.session.world.questInstanceKeys.isEmpty)
-        #expect(chain.session.world.questAliasInstanceCount == 0)
+        #expect(chain.session.world.questRuns.questAliasInstanceCount == 0)
         #expect(try JournalMenuModel.build(runtime: chain.runtime, strings: nil).isEmpty)
     }
 

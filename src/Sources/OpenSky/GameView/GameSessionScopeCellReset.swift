@@ -58,11 +58,11 @@ enum GameSessionScopeCellReset {
         streamer.onCellAttached.register(.resetPrepare) { [weak scope, weak reset] attachment in
             resetKeys = attachment.isFirstIntegration
                 ? reset?.cellAttached(attachment.scene) ?? [] : []
-            scope?.scripts.runtime?.prepareReset(of: resetKeys)
+            scope?.scripts.runtime?.lifecycle.prepareReset(of: resetKeys)
         }
         registerLeveledRolls(store: store, provider: provider, streamer: streamer) { resetKeys }
         streamer.onCellAttached.register(.resetEnqueue) { [weak scope] _ in
-            scope?.scripts.runtime?.enqueueReset(of: resetKeys)
+            scope?.scripts.runtime?.lifecycle.enqueueReset(of: resetKeys)
             resetKeys = []
         }
         streamer.onCellDetached.register(.reset) { [weak reset, weak store] location in

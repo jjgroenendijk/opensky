@@ -61,7 +61,8 @@ struct PapyrusWorldLifecycleTests {
         let entry = try PapyrusWorldFixture.referenceEntry(
             objectID: 1, scripts: [.init("AScript", properties: [])], isPersistent: true
         )
-        #expect(world.attachUnloaded(entry, formIDResolver: PapyrusWorldFixture.resolver) == 1)
+        #expect(world.lifecycle
+            .attachUnloaded(entry, formIDResolver: PapyrusWorldFixture.resolver) == 1)
         PapyrusWorldFixture.drain(world)
         #expect(probe.notes == ["ascript.oninit"])
 

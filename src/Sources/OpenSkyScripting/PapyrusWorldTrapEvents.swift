@@ -2,10 +2,10 @@
 // own scripts (<https://ck.uesp.net/wiki/OnTrapHitStart_-_ObjectReference>).
 
 import Foundation
-public import OpenSkyFormatsESM
-public import OpenSkyScriptingInterface
+import OpenSkyFormatsESM
+import OpenSkyScriptingInterface
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.ScriptEvents {
     /// `Motion_Keyframed`: a trap's graph moves it, not Havok.
     static let keyframedMotionType: Int32 = 4
 
@@ -15,7 +15,7 @@ extension PapyrusWorldRuntime {
             PapyrusEngineEvents.onTrapHitStart, PapyrusEngineEvents.onTrapHit,
             PapyrusEngineEvents.onTrapHitStop
         ]
-        return instanceKeys(on: trap).contains { key in
+        return world.instanceKeys(on: trap).contains { key in
             names.contains { handlesEvent($0, key: key) }
         }
     }
@@ -24,7 +24,7 @@ extension PapyrusWorldRuntime {
     @discardableResult
     public func queueTrapHit(_ hit: PapyrusTrapHit, on trap: ReferenceKey) -> Int {
         let arguments: [PapyrusValue] = [
-            .object(objectHandle(for: hit.target)),
+            .object(world.objectHandle(for: hit.target)),
             .float(hit.velocity.x), .float(hit.velocity.y), .float(hit.velocity.z),
             .float(hit.position.x), .float(hit.position.y), .float(hit.position.z),
             .integer(0), .boolean(hit.initial), .integer(Self.keyframedMotionType)
@@ -47,7 +47,7 @@ extension PapyrusWorldRuntime {
     public func queueTrapHitStop(target: ReferenceKey, on trap: ReferenceKey) -> Int {
         queueActorEvent(
             PapyrusEngineEvents.onTrapHitStop, on: trap,
-            arguments: [.object(objectHandle(for: target))]
+            arguments: [.object(world.objectHandle(for: target))]
         )
     }
 }

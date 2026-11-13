@@ -64,7 +64,7 @@ extension PapyrusNativeFunctions.EffectsNatives {
             bridge.ports.effectPresenter?.applyImageSpaceModifier(
                 key, strength: 1, held: true, fadeSeconds: fade
             )
-            bridge.scriptState.updateScriptedState(of: .player) {
+            bridge.updateScriptedState(of: .player) {
                 $0.setForm(crossFadeModifierName, key)
             }
             return .returned(.none)
@@ -87,7 +87,7 @@ extension PapyrusNativeFunctions.EffectsNatives {
     }
 
     private static func removeCrossFade(_ bridge: PapyrusWorldStateBridge, fade: Float) {
-        guard let held = bridge.scriptState.scriptedState(of: .player).form(crossFadeModifierName)
+        guard let held = bridge.scriptedState(of: .player).form(crossFadeModifierName)
         else {
             return
         }

@@ -178,7 +178,7 @@ extension ScriptingAcceptanceRealDataTests {
     private func drainEvents(_ world: PapyrusWorldRuntime) throws {
         let isHeld = { (event: PapyrusScriptEvent) in world.busyInstances.contains(event.target) }
         for _ in 0 ..< 10000 where !world.eventQueue.allSatisfy(isHeld) {
-            _ = world.stepFixed()
+            _ = world.scriptEvents.stepFixed()
         }
         #expect(world.eventQueue.allSatisfy(isHeld), "attached-script event queue did not drain")
     }

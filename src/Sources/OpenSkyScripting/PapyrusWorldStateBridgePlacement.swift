@@ -64,6 +64,6 @@ extension PapyrusWorldStateBridge.Placements {
         guard wasAttached != isAttached else { return }
         let name = isAttached
             ? PapyrusEngineEvents.onAttachedToCell : PapyrusEngineEvents.onDetachedFromCell
-        _ = world.queueActorEvent(name, on: key, arguments: [])
+        _ = world.scriptEvents.queueActorEvent(name, on: key, arguments: [])
     }
 }

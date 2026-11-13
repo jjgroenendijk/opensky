@@ -52,7 +52,7 @@ struct PapyrusWorldRuntimeTests {
         // instance is created from the script library on demand.
         let restoredProbe = PapyrusWorldProbeDispatch()
         let restored = try makeWorld(probe: restoredProbe, attach: false)
-        restored.restore(instanceStates: states)
+        restored.lifecycle.restore(instanceStates: states)
         #expect(restored.instanceStates() == states)
 
         // The fired set survives: attaching the same reference later must
@@ -75,7 +75,8 @@ struct PapyrusWorldRuntimeTests {
         let handle = try #require(world.instancesByKey[key])
         let instance = try #require(world.runtime.instance(for: handle))
         #expect(instance.setValue(.integer(4), named: "count", declaredBy: "StatefulScript"))
-        #expect(world.scriptVariableResolution().value(named: "Count", on: key.reference) == 4)
+        #expect(world.scriptVariableResolution()
+            .value(named: "Count", on: key.reference) == 4)
 
         let generation = world.runtime.variableGeneration.value
         _ = world.scriptVariableResolution()
@@ -84,7 +85,8 @@ struct PapyrusWorldRuntimeTests {
 
         #expect(instance.setValue(.integer(9), named: "count", declaredBy: "StatefulScript"))
         #expect(world.runtime.variableGeneration.value != generation)
-        #expect(world.scriptVariableResolution().value(named: "count", on: key.reference) == 9)
+        #expect(world.scriptVariableResolution()
+            .value(named: "count", on: key.reference) == 9)
     }
 
     @Test("object and array values persist as .none")
@@ -130,7 +132,7 @@ struct PapyrusWorldRuntimeTests {
             )],
             hasFiredOnInit: true
         )
-        world.restore(instanceStates: [unknownScript, unknownVariable])
+        world.lifecycle.restore(instanceStates: [unknownScript, unknownVariable])
         #expect(world.skips.counts[.unknownSaveScript] == 1)
         #expect(world.skips.counts[.unknownSaveVariable] == 1)
         #expect(world.instancesByKey.count == 1)

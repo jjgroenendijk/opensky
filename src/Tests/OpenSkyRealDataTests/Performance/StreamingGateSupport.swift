@@ -9,7 +9,7 @@ import OpenSkyCells
 import OpenSkyGameData
 import OpenSkyPlayer
 import OpenSkyRendering
-import OpenSkyScripting
+@testable import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
 import Testing
@@ -71,7 +71,7 @@ enum StreamingGateSupport {
             files: [], nativeDispatch: PapyrusNativeFunctions.standardRegistry
         ))
         session.worldTick.register(.scripts) { [runtime, weak session] delta in
-            _ = runtime.advance(delta: delta, gameClock: session?.gameClock)
+            _ = runtime.scriptEvents.advance(delta: delta, gameClock: session?.gameClock)
         }
     }
 }

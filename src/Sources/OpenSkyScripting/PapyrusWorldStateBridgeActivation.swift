@@ -40,7 +40,7 @@ extension PapyrusWorldStateBridge.Activations {
 
     /// The actor an `AttachAshPile` pile stands for; nil for anything else.
     public func ashPileOwner(of key: ReferenceKey) -> ReferenceKey? {
-        bridge.scriptState.scriptedState(of: key).form(PapyrusWorldStateBridge.ashPileOwnerName)
+        bridge.scriptedState(of: key).form(PapyrusWorldStateBridge.ashPileOwnerName)
     }
 
     /// Records one activation, queues `OnActivate` on the target's scripts, and
@@ -89,7 +89,10 @@ extension PapyrusWorldStateBridge.Activations {
         by activator: ReferenceKey,
         togglesOpen: Bool
     ) -> PapyrusActivationOutcome {
-        let queued = bridge.world?.queueOnActivate(target: target, activator: activator)
+        let queued = bridge.world?.activationRuns.queueOnActivate(
+            target: target,
+            activator: activator
+        )
             ?? .none
         guard !queued.cappedByRecursion else { return queued }
         let current = bridge.worldState.component(ReferenceActivationState.self, for: target)

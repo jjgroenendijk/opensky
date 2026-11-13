@@ -8,15 +8,15 @@ import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.ScriptEvents {
     /// False when `handle` names no script instance.
     @discardableResult
     func registerTrackedStats(handle: PapyrusObjectHandle, _ isRegistered: Bool) -> Bool {
-        guard let key = keysByHandle[handle] else { return false }
+        guard let key = world.keysByHandle[handle] else { return false }
         if isRegistered {
-            trackedStatListeners.insert(key)
+            world.trackedStatListeners.insert(key)
         } else {
-            trackedStatListeners.remove(key)
+            world.trackedStatListeners.remove(key)
         }
         return true
     }
@@ -79,7 +79,7 @@ extension PapyrusNativeFunctions.TrackedStatsNatives {
                         let bridge = context.world as? PapyrusWorldStateBridge,
                         let world = bridge.world, let receiver = call.receiver
                     else { return needsWorld(call) }
-                    world.registerTrackedStats(handle: receiver, isRegistered)
+                    world.scriptEvents.registerTrackedStats(handle: receiver, isRegistered)
                     return .returned(.none)
                 })
             }

@@ -5,15 +5,15 @@
 import Foundation
 import OpenSkyScriptingInterface
 
-extension PapyrusWorldRuntime {
+extension PapyrusWorldRuntime.ScriptEvents {
     /// False when `handle` names no script instance.
     @discardableResult
     func registerSleep(handle: PapyrusObjectHandle, _ isRegistered: Bool) -> Bool {
-        guard let key = keysByHandle[handle] else { return false }
+        guard let key = world.keysByHandle[handle] else { return false }
         if isRegistered {
-            sleepListeners.insert(key)
+            world.sleepListeners.insert(key)
         } else {
-            sleepListeners.remove(key)
+            world.sleepListeners.remove(key)
         }
         return true
     }
@@ -22,14 +22,14 @@ extension PapyrusWorldRuntime {
     /// together. Returns how many events were queued.
     @discardableResult
     public func queueSleepEvents(start: Double, end: Double) -> Int {
-        sleepListeners = sleepListeners.filter { instancesByKey[$0] != nil }
-        let listeners = sleepListeners.sorted()
+        world.sleepListeners = world.sleepListeners.filter { world.instancesByKey[$0] != nil }
+        let listeners = world.sleepListeners.sorted()
         for listener in listeners {
-            enqueue(PapyrusScriptEvent(
+            world.enqueue(PapyrusScriptEvent(
                 target: listener, functionName: PapyrusEngineEvents.onSleepStart,
                 arguments: [.float(Float(start)), .float(Float(end))], activationDepth: 0
             ))
-            enqueue(PapyrusScriptEvent(
+            world.enqueue(PapyrusScriptEvent(
                 target: listener, functionName: PapyrusEngineEvents.onSleepStop,
                 arguments: [.boolean(false)], activationDepth: 0
             ))
@@ -52,7 +52,7 @@ extension PapyrusNativeFunctions.SleepNatives {
                         let bridge = context.world as? PapyrusWorldStateBridge,
                         let world = bridge.world, let receiver = call.receiver
                     else { return needsWorld(call) }
-                    world.registerSleep(handle: receiver, isRegistered)
+                    world.scriptEvents.registerSleep(handle: receiver, isRegistered)
                     return .returned(.none)
                 })
             }

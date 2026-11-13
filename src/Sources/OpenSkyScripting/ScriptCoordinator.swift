@@ -87,7 +87,7 @@ public final class ScriptCoordinator {
 
     /// Starts the scripts of the quests that already run. Session start calls it once.
     public func startQuestScripts() {
-        let started = bridge?.questScripts.attachRunningQuestScripts() ?? 0
+        let started = bridge?.attachRunningQuestScripts() ?? 0
         Self.logger.info("[INFO] quest scripts instantiated: \(started, privacy: .public)")
     }
 
@@ -109,55 +109,42 @@ public final class ScriptCoordinator {
                 return state
             }
         }
-        runtime.retryDeferredScriptWork()
+        runtime.lifecycle.retryDeferredScriptWork()
     }
 
     /// The player slept from `start` to `end`, in game days passed; time has already passed.
     public func reportSleep(start: Double, end: Double) {
-        bridge?.world?.queueSleepEvents(start: start, end: end)
+        bridge?.world?.scriptEvents.queueSleepEvents(start: start, end: end)
     }
 
     /// The renderer gates `delta`, so a menu-paused frame advances nothing.
     public func advance(delta: Float) {
         queueLocationChange()
-        bridge?.inventoryEvents.queueInventoryEvents()
-        bridge?.effectEvents.queueMagicEffectEvents()
-        bridge?.referenceEvents.queueReferenceStateEvents()
-        bridge?.combatEvents.queueCombatStateEvents()
-        bridge?.trackedStats.queueTrackedStatEvents()
-        bridge?.lineOfSight.queueLineOfSightEvents()
-        bridge?.scriptedMoves.advanceTranslations(by: delta)
-        bridge?.triggers.queueTriggerRepeats(after: delta)
-        bridge?.activationDelays.advanceDelayedActivations(by: delta)
-        bridge?.sunGaze.updateSunGaze()
-        _ = runtime?.advance(delta: delta, gameClock: world?.gameClock)
+        bridge?.advanceFrame(by: delta)
+        _ = runtime?.scriptEvents.advance(delta: delta, gameClock: world?.gameClock)
     }
 
     /// One script step after a rest moved the clock, so game-time timers and
     /// `WaitGameTime` see the new hour. A zero delta alone runs no step.
     public func advanceRestStep() {
         advance(delta: 0)
-        _ = runtime?.stepFixed(gameClock: world?.gameClock)
+        _ = runtime?.scriptEvents.stepFixed(gameClock: world?.gameClock)
     }
 
     /// Time a menu pauses the world for. Only `WaitMenuMode` counts it.
     public func advanceMenuTime(delta: Float) {
-        runtime?.advanceMenuTime(delta: delta)
+        runtime?.timers.advanceMenuTime(delta: delta)
     }
 
     /// Quest instances first, so saved variables have somewhere to go. Timers
     /// last, because each one names an instance that must already exist. The
     /// player's scripts then hear `OnPlayerLoadGame`.
     public func restore(instances: [PapyrusInstanceState], timers: [PapyrusTimerState]) {
-        bridge?.questScripts.attachRunningQuestScripts()
-        runtime?.restore(instanceStates: instances)
-        runtime?.restore(timerStates: timers)
-        runtime?.queuePlayerLoadGame()
-        bridge?.inventoryEvents.skipInventoryJournal()
-        bridge?.effectEvents.skipMagicEffectJournal()
-        bridge?.referenceEvents.skipReferenceStateJournal()
-        bridge?.trackedStats.skipTrackedStatJournal()
-        bridge?.scriptedMoves.clearTranslations()
+        bridge?.attachRunningQuestScripts()
+        runtime?.lifecycle.restore(instanceStates: instances)
+        runtime?.lifecycle.restore(timerStates: timers)
+        runtime?.scriptEvents.queuePlayerLoadGame()
+        bridge?.skipJournals()
         lastPlayerLocation = nil
     }
 
@@ -166,7 +153,7 @@ public final class ScriptCoordinator {
         guard let runtime, case let .some(location) = world?.playerLocation else { return }
         defer { lastPlayerLocation = .some(location) }
         guard case let .some(previous) = lastPlayerLocation, previous != location else { return }
-        runtime.queueLocationChange(actor: .player, from: previous, to: location)
+        runtime.scriptEvents.queueLocationChange(actor: .player, from: previous, to: location)
     }
 
     /// A script that fails to load is logged once, because `PapyrusWorldRuntime`
@@ -248,20 +235,20 @@ extension ScriptCoordinator {
         let running = bridge?.questRuntime?.runningQuests().count ?? 0
         let failures = bridge?.runState.questAliasFillFailures ?? 0
         guard let formID = world?.crosshairReference else {
-            return runtime.scriptsSnapshot(
+            return runtime.readouts.scriptsSnapshot(
                 runningQuestCount: running, questAliasFillFailures: failures
             )
         }
         guard let key = world?.referenceKey(formID: formID) else {
-            return runtime.scriptsSnapshot(
+            return runtime.readouts.scriptsSnapshot(
                 targetDescription: formID.description,
                 runningQuestCount: running,
                 questAliasFillFailures: failures
             )
         }
         let state = bridge
-            .flatMap { ScriptsReadout.scriptStateText($0.scriptState.scriptedState(of: key)) }
-        return runtime.scriptsSnapshot(
+            .flatMap { ScriptsReadout.scriptStateText($0.scriptedState(of: key)) }
+        return runtime.readouts.scriptsSnapshot(
             target: key,
             targetDescription: [key.description, state].compactMap(\.self)
                 .joined(separator: "  "),
@@ -277,7 +264,7 @@ extension ScriptCoordinator {
 
     /// The runtime clamps `ticks`, so a stray value cannot stall the frame.
     func stepScripts(ticks: Int) {
-        runtime?.burst(ticks: ticks, gameClock: world?.gameClock)
+        runtime?.readouts.burst(ticks: ticks, gameClock: world?.gameClock)
     }
 }
 
