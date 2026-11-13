@@ -81,7 +81,7 @@ them, for example `sVDSGManual`: "Unused UI string from Fallout 3's loading scre
 | Action points | `fActionPointsReload` | Only V.A.T.S. spends them |
 | Firearms | `fGunSpreadArmBase`, `fWeaponConditionJam1` | Guns, grenades, and item condition are Fallout systems |
 | Fallout systems | `fKarmaModStealing`, `sRepairCost`, `sFullHealth` | Karma, chems, repair, the Pip-Boy and its notes, radio, hacking, traits. A lock needs no perk: UESP [Skyrim:Lockpicking](https://en.uesp.net/wiki/Skyrim:Lockpicking) says "It is possible to open any lock--even Master--at any skill level", so `sLockpickInsufficientPerks` never shows |
-| Oblivion | `fMoveEncumEffect`, `sHolidayNewLifeFestival` | The wiki marks them "Unused". UESP "Skyrim:Calendar": "no holidays were specifically given" |
+| Oblivion | `fWortFailSkillUseMagnitude`, `sHolidayNewLifeFestival` | The wiki marks them "Unused". UESP "Skyrim:Calendar": "no holidays were specifically given" |
 | Marked unused | `sHeavyArmorSink` | The wiki says "Unused"; `sHairColor0` to `15` hold their own names |
 | Creations | `sReportModConfirm` | The Bethesda.net Creations manager. OpenSky does not connect to it |
 | Consoles | `sKinectCantInit`, `sNoDeviceSelected` | Xbox, Kinect, and console storage texts |
@@ -91,6 +91,10 @@ them, for example `sVDSGManual`: "Unused UI string from Fallout 3's loading scre
 | Replaced notices | `sQuestAddedText`, `sDungeonCleared`, `sSneakAttack` | The HUD shows these notices with `sHUDStarted`, `sHUDCompleted`, `sCleared`, and `sSuccessfulSneakAttackMain`. See [journal](/engine/journal.md) and [melee damage](/engine/melee-damage.md) |
 | Debug dialog | `sContinueText`, `sAbortText` | The developer assert box ("Continue Running Executable?", Abort, Retry, Ignore). A release build never opens it |
 | Favour points | `iFavorPointsRestore` | The wiki gives it no description, and its vanilla value is 0. UESP [Skyrim:Disposition](https://en.uesp.net/wiki/Skyrim:Disposition) says disposition "is no longer visible" and changes by relationship rank, -4 to 4, which quests set. No points exist to restore |
+| Ground flight | `fMoveFlyRunMult` | A flier's speed as a multiple of its ground gaits. Every vanilla flier has its own flying movement type, such as `Dragon_Flying_MT` |
+| Swim jump | `fJumpSwimmingMult` | A swimmer cannot jump. The jump key raises it toward the surface |
+| Ingredient uses | `iIngredientAlchemyUses` | The install adds 0 uses per brew, so the count never teaches an effect |
+| Never read | `fConcussionTimer` | The game holds them, but no code path reads them, as OpenSky observed |
 
 A setting on this list counts as done in the [gap report](/tools/gaps.md). A setting the wiki
 does not mark, and whose system Skyrim has, stays off the list even if OpenSky lacks the system.
