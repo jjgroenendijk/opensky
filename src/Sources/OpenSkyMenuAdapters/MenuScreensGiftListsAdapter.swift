@@ -3,7 +3,7 @@ import OpenSkyCells
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
 public import OpenSkySessionInterface
@@ -36,9 +36,15 @@ extension MenuScreensGiftListsAdapter {
                 tag: UInt32(index), name: spell.name, isEquipped: spell.isReadied
             ))
         }
+        let shouts = menu.magicMenuShouts.enumerated().map { index, shout in
+            (category: shout.category, row: ItemListRow(
+                tag: UInt32(Self.shoutTagBase + index), name: shout.name,
+                isEquipped: shout.isReadied
+            ))
+        }
         let order = menu.magicMenuCategoryOrder
         let tabs = order.compactMap { title -> ItemListCategory? in
-            let rows = spells.filter { $0.category == title }.map(\.row)
+            let rows = (spells + shouts).filter { $0.category == title }.map(\.row)
             return rows.isEmpty ? nil : ItemListCategory(label: title, rows: rows)
         }
         let effects = menu.magicMenuActiveEffects.enumerated().map { index, name in
@@ -47,11 +53,31 @@ extension MenuScreensGiftListsAdapter {
         let effectsTab = effects.isEmpty
             ? []
             : [ItemListCategory(label: menu.magicMenuActiveEffectsTitle, rows: effects)]
-        return [ItemListCategory(label: "All", rows: spells.map(\.row))] + tabs + effectsTab
+        let all = ItemListCategory(label: "All", rows: (spells + shouts).map(\.row))
+        return [all] + tabs + effectsTab
     }
 
+    /// Shout rows carry tags from here on, past any spell or effect row.
+    static let shoutTagBase = 1 << 20
+
     public func readySpell(at index: Int, leftHand: Bool) -> String {
-        game.magic.menuLines.readyKnownSpellLine(at: index, in: leftHand ? .left : .right)
+        if index >= Self.shoutTagBase {
+            return game.magic.magicMenu.readyShout(
+                at: index - Self.shoutTagBase, texts: game.mapWorld.settingTexts()
+            )
+        }
+        return game.magic.menuLines.readyKnownSpellLine(at: index, in: leftHand ? .left : .right)
+    }
+
+    public func shoutUnlockStep(at index: Int) -> ShoutUnlockStep? {
+        guard index >= Self.shoutTagBase else { return nil }
+        return game.magic.magicMenu.shoutUnlockStep(
+            at: index - Self.shoutTagBase, texts: game.mapWorld.settingTexts()
+        )
+    }
+
+    public func unlockShout(at index: Int) -> String {
+        game.magic.magicMenu.unlockShout(at: index - Self.shoutTagBase)
     }
 }
 

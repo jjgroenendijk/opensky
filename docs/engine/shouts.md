@@ -40,6 +40,18 @@ state](/engine/papyrus-script-state.md#words-and-shouts)).
 The Shouts section also shows how fast the world and the player run while a Slow Time effect is
 on the player ([Slow Time](/engine/magic-archetypes.md#world)).
 
+## Magic menu
+
+The magic menu lists each known shout under `sShouts`, and in the first tab, by name. The
+equipped shout is marked. Accept equips the selected shout. While a shout is under way the
+equip is refused with `sFailShouting` ("You cannot change shouts while shouting.").
+
+The left-hand key unlocks the next learned word of the selected shout. With a dragon soul it
+asks `sConfirmSpendSoul` ("Spend Soul?") with Yes and No, and Yes spends one. With none, the HUD
+shows `sFailSpendSoul` ("Dragon Souls are required to unlock shouts."). A shout with no learned
+word left to unlock takes the key as an equip. The game binds unlocking to its own key; which
+key is not confirmed.
+
 ## One shout, step by step
 
 1. The key goes down. The shout is refused when Mod Shout OK (entry point 82) is not above 0, when

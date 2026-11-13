@@ -5,7 +5,7 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
 import OpenSkyProgressionInterface
@@ -139,6 +139,14 @@ extension MenuScreensWorldAdapter {
 
     public func readySpell(at index: Int, leftHand: Bool) -> String {
         giftLists.readySpell(at: index, leftHand: leftHand)
+    }
+
+    public func shoutUnlockStep(at index: Int) -> ShoutUnlockStep? {
+        giftLists.shoutUnlockStep(at: index)
+    }
+
+    public func unlockShout(at index: Int) -> String {
+        giftLists.unlockShout(at: index)
     }
 
     public var nearestActor: ReferenceKey? {

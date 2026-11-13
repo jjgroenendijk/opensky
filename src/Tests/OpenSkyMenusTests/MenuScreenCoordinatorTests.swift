@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagicInterface
 @testable import OpenSkyMenus
 import OpenSkyMenusInterface
 import Testing
@@ -100,6 +101,25 @@ struct MenuScreenCoordinatorTests {
         menu.route(.button(.xButton))
         #expect(world.actions == ["ready 1 right", "ready 1 left"])
         #expect(menu.lastResult == "Readied")
+    }
+
+    @Test func theUnlockKeyOnAShoutAsksBeforeASoulIsSpent() {
+        let world = FakeMenuScreenWorld()
+        world.categories = [ItemListCategory(label: "All", rows: [
+            ItemListRow(tag: 7, name: "Unrelenting Force"), ItemListRow(tag: 8, name: "Whirlwind Sprint")
+        ])]
+        world.shoutSteps = [7: .ask("Spend Soul?"), 8: .refuse("Dragon Souls are required.")]
+        let menu = MagicMenuCoordinator(menuMode: MenuModeController(), world: world)
+        #expect(menu.open())
+        menu.route(.button(.xButton))
+        #expect(world.questions.map(\.text) == ["Spend Soul?"])
+        world.questions.first?.answer(true)
+        #expect(world.actions == ["unlock 7"])
+        menu.route(.move(.down))
+        menu.route(.button(.xButton))
+        #expect(world.hudLines == ["Dragon Souls are required."])
+        menu.route(.button(.accept))
+        #expect(world.actions == ["unlock 7", "ready 8 right"])
     }
 
     @Test func giftGivesTheSelectedItem() {

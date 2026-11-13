@@ -2,6 +2,7 @@
 // selected spell in the right hand, R in the left. See docs/engine/magic.md#magic-menu.
 
 import Foundation
+public import OpenSkyMagicInterface
 public import OpenSkyMenusInterface
 
 /// What the magic menu needs from the app.
@@ -10,6 +11,10 @@ public protocol MagicMenuWorld: MenuScreenWorld {
     var magicMenuCategories: [ItemListCategory] { get }
     /// Readies the known spell at `index`; the outcome text.
     func readySpell(at index: Int, leftHand: Bool) -> String
+    /// What the unlock key does on the row at `index`; nil for a row that is no shout.
+    func shoutUnlockStep(at index: Int) -> ShoutUnlockStep?
+    func unlockShout(at index: Int) -> String
+    func confirm(_ text: String, answer: @escaping (Bool) -> Void)
 }
 
 public final class MagicMenuCoordinator: ItemListMenuScreen {
@@ -45,7 +50,24 @@ public final class MagicMenuCoordinator: ItemListMenuScreen {
         world?.magicMenuCategories ?? []
     }
 
+    /// The left-hand key on a shout unlocks its next word instead.
     override func choose(_ row: ItemListRow, alternate: Bool) -> String {
-        world?.readySpell(at: Int(row.tag), leftHand: alternate) ?? "No game"
+        guard let world else { return "No game" }
+        let index = Int(row.tag)
+        guard alternate, let step = world.shoutUnlockStep(at: index) else {
+            return world.readySpell(at: index, leftHand: alternate)
+        }
+        switch step {
+        case let .refuse(text):
+            world.showHUDNotification(text)
+            return text
+        case let .ask(text):
+            world.confirm(text) { [weak self] yes in
+                guard yes, let self, let world = self.world else { return }
+                lastResult = world.unlockShout(at: index)
+                reload()
+            }
+            return text
+        }
     }
 }
