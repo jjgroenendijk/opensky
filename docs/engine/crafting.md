@@ -147,13 +147,27 @@ Using a station opens `Interface\craftingmenu.swf` over the session. The engine 
 `/Menu/MenuNameHolder/MenuName`, and sets `bCanCraft`. The lists are
 `/Menu/InventoryLists/CategoriesListHolder/List_mc` and `.../ItemsListHolder/List_mc`, the
 same list class as the [inventory menu](/engine/inventory-menu.md#list-data). OpenSky shows
-two tabs: the recipes the player can make now, and all recipes.
+the recipes the player can make now, all recipes, and then one tab per category, in the order
+the recipes first name them.
+
+A recipe's category comes from the keywords of the item it makes:
+
+- A generic craftable keyword, the default objects `GCK1` to `GCKX`. `HearthFires.esm` points
+  these at its `BYOHHouseCraftingCategory*` keywords. The tab titles are
+  `sGenericCraftKeywordName01` to `10`, such as "HOUSE" and "WEAPON RACKS". This one wins when an
+  item also has a material.
+- A material keyword, such as `WeapMaterialIron` or `ArmorMaterialIronBanded`. The titles are
+  `sIron`, `sSteel`, `sDwarven`, `sElven`, `sOrcish`, `sGlass`, `sEbony`, `sDaedric`, `sDragon`,
+  `sLeather`, `sHide`, `sStudded`, `sJewelry`, `sImperial`, `sDraugr`, `sFalmer`, and `sWood`.
+- Anything else is only on the first two tabs.
+
+`interface\translate_english.txt` has no `$` key for these titles, so the engine supplies them.
 
 The movie calls `CraftSelectedItem` or `CraftButtonPress` to make the selected recipe, and
 `CloseMenu` to leave, which closes the session. At an alchemy lab the movie lists the carried
 ingredients, with their known effects, on an Ingredients tab and a Chosen tab. Activate chooses or
-drops an ingredient, a chosen one shows as equipped, and R brews. The game splits a forge's recipes
-into tabs by material keyword, shows the item in 3D (`ShowItem3D`), and lets the player rename an
+drops an ingredient, a chosen one shows as equipped, and R brews. The game shows the item in 3D
+(`ShowItem3D`), and lets the player rename an
 enchanted item and set its charge; OpenSky answers those calls and does nothing.
 
 ## Not modeled yet

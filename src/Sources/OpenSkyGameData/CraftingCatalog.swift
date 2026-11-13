@@ -129,6 +129,8 @@ nonisolated public struct CraftingCatalog: Sendable {
     public let stations: [CraftingStationChoice]
     /// The form lists a component may name. Nil treats every component as one item.
     public let formLists: FormListStore?
+    /// The tab each created item goes under.
+    public var categories: CraftingCategories = .empty
 
     public init(
         recipes: RecipeStore,
@@ -166,6 +168,7 @@ nonisolated public struct CraftingCatalog: Sendable {
         self.init(
             recipes: recipes, itemPlugin: itemPlugin, stations: offering, formLists: formLists
         )
+        categories = CraftingCategories(loadOrder: loadOrder, itemPlugin: itemPlugin)
     }
 
     /// The station query. A bench whose keywords name no recipe gets empty `keywords`.
@@ -221,9 +224,11 @@ nonisolated public struct CraftingCatalog: Sendable {
 
     /// This catalog, reading form-list components through `formLists`.
     public func with(formLists: FormListStore) -> CraftingCatalog {
-        CraftingCatalog(
+        var catalog = CraftingCatalog(
             recipes: recipes, itemPlugin: itemPlugin, stations: stations, formLists: formLists
         )
+        catalog.categories = categories
+        return catalog
     }
 
     /// The leaf items of `id` when it is a form list, in list order.

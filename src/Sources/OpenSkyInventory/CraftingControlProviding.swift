@@ -25,7 +25,8 @@ extension InventoryCoordinator.CraftingReadout {
                 id: recipe.id,
                 name: itemName,
                 isEligible: status.isReady,
-                isOffered: status.eligibility.isOffered
+                isOffered: status.eligibility.isOffered,
+                category: category(of: recipe)
             )
         }
         let copies = temper.copies.map { qualityName($0, of: temper.item) }
@@ -36,6 +37,15 @@ extension InventoryCoordinator.CraftingReadout {
             isEligible: status.isReady,
             isOffered: true
         )
+    }
+
+    private func category(of recipe: CraftingRecipe) -> CraftingCategoryText? {
+        guard
+            let created = recipe.created,
+            let catalog = coordinator.craftingCatalog,
+            let keywords = coordinator.runtime?.inventory.baselines.items.definition(created)?.keywords
+        else { return nil }
+        return catalog.categories.tab(forKeywords: keywords)
     }
 
     /// The quality name of `level`, from the weapon or the armour list.
