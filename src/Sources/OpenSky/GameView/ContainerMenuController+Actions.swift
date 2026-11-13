@@ -108,11 +108,11 @@ extension ContainerMenuController {
         if pickpocketTarget != nil, mode == .container {
             let outcome = deals.pickpocket(entry, count: count, side: model.side, target: container)
             note(outcome.text)
-            if outcome.took, !pickedOpenPockets {
+            if outcome.result.took, !pickedOpenPockets {
                 pickedOpenPockets = true
                 deals.notePocketsPicked()
             }
-            if outcome.caught {
+            if outcome.result.caught {
                 close()
             }
             refreshModel()
@@ -135,20 +135,16 @@ extension ContainerMenuController {
             return
         }
         do {
-            var request = ContainerTransferRequest(
-                transfer, item: entry.item, name: entry.name, container: container,
-                vendor: vendor
+            let deal = ContainerDeal(
+                transfer: transfer, move: (entry, count), container: container,
+                vendor: vendor, merchant: merchant
             )
-            request.count = count
-            request.merchant = merchant
-            request.acceptingLess = acceptingLess
-            let outcome = try game.inventory.containerTrade.transfer(request)
-            if case .merchantShort = outcome {
+            let reply = try deals.transfer(deal, acceptingLess: acceptingLess)
+            if reply.merchantShort {
                 pendingSale = (entry, count)
-                note(outcome.text(texts: game.inventory.containerTrade.tradeTexts)
-                    + " Accept sells for the merchant's gold; cancel keeps the item.")
+                note(reply.text + " Accept sells for the merchant's gold; cancel keeps the item.")
             } else {
-                note(outcome.text(texts: game.inventory.containerTrade.tradeTexts))
+                note(reply.text)
             }
         } catch {
             note("\(model.transferLabel) refused: \(String(describing: error))")
@@ -245,7 +241,7 @@ struct ContainerMenuDeals {
     func pickpocket(
         _ entry: InventoryMenuEntry, count: Int32, side: ContainerMenuModel.Side,
         target: InventoryHolder
-    ) -> PickpocketReply {
+    ) -> (text: String, result: (took: Bool, caught: Bool)) {
         let roll = Float.random(in: 0 ..< 100)
         let outcome = side == .container
             ? game.inventory.pickpocketing.pickpocket(
@@ -262,7 +258,7 @@ struct ContainerMenuDeals {
         if outcome.wasCaught {
             game.hud.showNotification(game.mapWorld.settingTexts(PickpocketText.self)[.caught])
         }
-        return PickpocketReply(text: outcome.text, took: took, caught: outcome.wasCaught)
+        return (outcome.text, (took, outcome.wasCaught))
     }
 
     /// Counts the first successful take from one open set of pockets.
@@ -299,6 +295,27 @@ struct ContainerMenuDeals {
             )).text
     }
 
+    /// Runs one take, store, buy, or sell. A short merchant says so, so the menu can
+    /// wait for a confirm.
+    func transfer(
+        _ deal: ContainerDeal, acceptingLess: Bool
+    ) throws -> (text: String, merchantShort: Bool) {
+        var request = ContainerTransferRequest(
+            deal.transfer, item: deal.move.entry.item, name: deal.move.entry.name,
+            container: deal.container, vendor: deal.vendor
+        )
+        request.count = deal.move.count
+        request.merchant = deal.merchant
+        request.acceptingLess = acceptingLess
+        let trade = game.inventory.containerTrade
+        let outcome = try trade.transfer(request)
+        let text = outcome.text(texts: trade.tradeTexts)
+        if case .merchantShort = outcome {
+            return (text, true)
+        }
+        return (text, false)
+    }
+
     func takeAll(from container: InventoryHolder, teammate: Bool) -> String {
         let outcome = teammate
             ? game.inventory.teammateTrades.takeAllFromTeammate(container) : game.inventory
@@ -315,9 +332,12 @@ struct ContainerDealPartner {
     var vendor: Vendor?
 }
 
-/// What one pickpocket try showed, and whether it took the item or was caught.
-struct PickpocketReply {
-    let text: String
-    let took: Bool
-    let caught: Bool
+/// One move the container menu asks for: what, how many, with whom, and for barter the
+/// vendor and the merchant.
+struct ContainerDeal {
+    let transfer: ContainerTransfer
+    let move: (entry: InventoryMenuEntry, count: Int32)
+    let container: InventoryHolder
+    let vendor: Vendor?
+    let merchant: ReferenceKey?
 }

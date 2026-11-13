@@ -10,6 +10,7 @@ import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 import OpenSkySessionTesting
 @testable import OpenSkyStoryAdapters
+import OpenSkyWorldState
 import Testing
 
 @MainActor
@@ -126,6 +127,16 @@ struct StoryWorldTests {
         #expect(frame.actors.map(\.isDead) == [false, true])
         #expect(!frame.isInterior)
         #expect(!frame.playerInConversation)
+    }
+
+    /// With no session the search has no origin, and an empty cell gives no candidates.
+    @Test func theQuestReferenceSearchReadsTheLoadedCell() throws {
+        host.fakeStreamer.residentReferenceIndexResult = .empty
+        host.fakeDialogueWorld.conditionContextResult = ConditionContext()
+        let search = try #require(adapter.questReferenceSearch())
+        #expect(search.origin == nil)
+        #expect(search.dead.isEmpty)
+        #expect(search.disabled.isEmpty)
     }
 
     @Test func aQuestReferenceNeedsAPlacedAnchor() {

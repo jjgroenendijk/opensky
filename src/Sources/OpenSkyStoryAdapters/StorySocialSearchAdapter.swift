@@ -41,8 +41,27 @@ public struct StorySocialSearchAdapter {
 }
 
 extension StorySocialSearchAdapter {
+    var questReferences: QuestReferences {
+        QuestReferences(game: game)
+    }
+
     /// Nil while no cell is loaded.
     public func questReferenceSearch() -> QuestReferenceSearch? {
+        questReferences.questReferenceSearch()
+    }
+
+    public func createQuestReference(_ base: FormID, at anchor: ReferenceKey) -> ReferenceKey? {
+        questReferences.createQuestReference(base, at: anchor)
+    }
+
+    /// The quest reference search and spawn, which read the streamer and the world state.
+    struct QuestReferences {
+        let game: any StorySocialSearchHost
+    }
+}
+
+extension StorySocialSearchAdapter.QuestReferences {
+    func questReferenceSearch() -> QuestReferenceSearch? {
         let streamer = game.streamer
         let references = streamer.residentReferenceIndex()
         let store = game.worldState
@@ -68,7 +87,7 @@ extension StorySocialSearchAdapter {
 
     /// A new reference of `base` where `anchor` stands, loaded or not. It is a spawn, so
     /// the save keeps it and a cell build places it like a dropped item or an actor.
-    public func createQuestReference(_ base: FormID, at anchor: ReferenceKey) -> ReferenceKey? {
+    func createQuestReference(_ base: FormID, at anchor: ReferenceKey) -> ReferenceKey? {
         guard
             let placement = game.scripts.bridge?.placement(of: anchor),
             let location = placement.location
