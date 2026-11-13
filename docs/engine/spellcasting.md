@@ -175,11 +175,16 @@ Nothing fails silently.
 | `deliveryUnsupported` | A delivery OpenSky does not carry out ([spell delivery](/engine/spell-delivery.md)) |
 | `abilityNotCastable` | An ability is carried, not cast |
 | `powerAlreadyUsedToday` | The once-per-day rule |
+| `castingAnother` | A self Invisibility spell while the other hand casts |
 
 A player refusal also shows a HUD notice from a string setting: `sMagicCastInsufficientMagicka`
 or `sMagicCastPowerUsed`. While a shout runs, a new press of a hand with a readied spell is
 refused with `sMagicCastCastWhileShouting`. A shout begun during a cast shows
-`sMagicCastShoutWhileCasting`. The notice shows once per press, not each frame of a held cast.
+`sMagicCastShoutWhileCasting`. A self Invisibility spell begun while the other hand casts is
+refused with `sMagicCastMultiCast`, as observed in the game. A refusal without a notice shows
+`sMagicCastOKText`, which is empty in the install, so nothing appears. The notice shows once per
+press, not each frame of a held cast. `sMagicCastRangedUnderwater` is never shown: no refusal
+of a ranged cast under water was observed.
 
 UESP: "Magicka will not regenerate while you are casting a spell." So a casting player stops only
 magicka; health and stamina keep going. An NPC follows `bRegenNPCMagickaDuringCast`, which is false

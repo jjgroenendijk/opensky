@@ -32,6 +32,8 @@ public protocol MagicWorld: AnyObject, SkillUseReporting, MagicArchetypeWorld {
     /// Every resident actor other than the player, in a stable order.
     func residentActorKeys() -> [ReferenceKey]
     func actorName(_ holder: ActorValueHolder) -> String
+    /// The name the game shows for `holder`, or nil for an actor without one.
+    func displayName(of holder: ActorValueHolder) -> String?
     func itemName(_ item: FormID) -> String
 
     /// Launches a spell projectile. False when the session cannot fly one.
@@ -157,6 +159,11 @@ extension MagicWorld {
     public func noteSpellCast(_: ReferenceKey, by _: ReferenceKey) {}
 
     public func postNotification(_: String) {}
+
+    /// A session with no actor records names nobody.
+    public func displayName(of _: ActorValueHolder) -> String? {
+        nil
+    }
 
     public func announceSpellLearned(_: String) {}
 

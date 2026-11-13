@@ -72,6 +72,13 @@ public enum SpellHitApplication {
                 entries: scaled.entries.count,
                 stored: stored.count
             )
+            let tally = runtime.lastApplication
+            if tally.refused > 0 {
+                report.noteRefusal(SpellTargetRefusal(
+                    target: target.key, aboveLevelCap: tally.aboveLevelCap,
+                    nothingLanded: tally.landed == 0
+                ))
+            }
         }
         return report
     }

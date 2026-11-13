@@ -184,6 +184,23 @@ can settle which one is right.
 Tapering is not applied. The Creation Kit documents it, but no vanilla potion or ingredient effect
 uses it, so it would be untested.
 
+## Hit notices
+
+When the player's spell lands on a named actor, observed in the game:
+
+- A level-capped effect (Calm, Fear, Frenzy, Rally, Banish, Command Summoned, Disarm,
+  Reanimate) that meets a target above its level shows `sMagicEffectResisted`, filled with the
+  target and the spell: "Bandit is too powerful for Calm.".
+- Otherwise, when the target refused every entry it got, the HUD shows
+  `sMagicEffectNotApplied`: "Bandit resisted Calm.". A touch spell never shows this line.
+
+The two settings' names read swapped against their texts. OpenSky counts an entry as refused
+when a target check stops it, such as the level cap or Turn Undead on the living. An entry
+OpenSky does not carry out yet is not counted.
+
+A poison dose that lands an effect on the player shows `sPoisoned` ("You have been poisoned.")
+once per dose, whoever applied it.
+
 ## Potions and ingredients
 
 Consuming removes one unit through the inventory and applies what the item does. The unit is only

@@ -230,6 +230,10 @@ extension MagicWorldAdapter {
         worldFacts.actorName(holder)
     }
 
+    public func displayName(of holder: ActorValueHolder) -> String? {
+        worldFacts.displayName(of: holder)
+    }
+
     public func itemName(_ item: FormID) -> String {
         worldFacts.itemName(item)
     }

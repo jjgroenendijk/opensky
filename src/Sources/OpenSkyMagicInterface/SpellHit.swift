@@ -152,6 +152,8 @@ nonisolated public struct SpellHitReport: Equatable, Sendable {
     public private(set) var brokenWards: [ReferenceKey] = []
     /// Every target with a ward up, and what the spell did to the ward, in target order.
     public private(set) var wardHits: [SpellWardHit] = []
+    /// Targets that refused an entry, in target order.
+    public private(set) var refusals: [SpellTargetRefusal] = []
 
     public static let none = SpellHitReport()
 
@@ -169,6 +171,10 @@ nonisolated public struct SpellHitReport: Equatable, Sendable {
             brokenWards.append(holder)
         }
         wardHits.append(SpellWardHit(holder: holder, status: broken ? .broken : .absorbed))
+    }
+
+    public mutating func noteRefusal(_ refusal: SpellTargetRefusal) {
+        refusals.append(refusal)
     }
 
     /// A spell that is not hostile passed through `holder`'s ward.
@@ -316,5 +322,20 @@ nonisolated public struct SpellWardHit: Equatable, Sendable {
     public init(holder: ReferenceKey, status: Status) {
         self.holder = holder
         self.status = status
+    }
+}
+
+/// A target that refused some of a spell's entries.
+nonisolated public struct SpellTargetRefusal: Equatable, Sendable {
+    public let target: ReferenceKey
+    /// A level-capped entry, such as Calm, met a target above its level.
+    public let aboveLevelCap: Bool
+    /// No entry acted on the target.
+    public let nothingLanded: Bool
+
+    public init(target: ReferenceKey, aboveLevelCap: Bool, nothingLanded: Bool) {
+        self.target = target
+        self.aboveLevelCap = aboveLevelCap
+        self.nothingLanded = nothingLanded
     }
 }

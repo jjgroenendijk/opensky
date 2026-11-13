@@ -106,8 +106,9 @@ extension MagicCoordinator.FrameStep {
             .still
         caster.acceptFrame(playerIntent, on: .player)
         for failure in caster.takePlayerFailures() {
-            if let text = CastNoticeText.notice(for: failure) {
-                coordinator.pendingCommands.append(.notice(coordinator.texts.castNotices[text]))
+            let text = coordinator.texts.castNotices[CastNoticeText.notice(for: failure) ?? .ok]
+            if !text.isEmpty {
+                coordinator.pendingCommands.append(.notice(text))
             }
         }
         advanceActorCasts(delta: intent.deltaTime)

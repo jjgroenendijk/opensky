@@ -19,6 +19,9 @@ nonisolated public enum CastNoticeText: String, GameSettingTextKey {
     case telekinesisNoRecast = "sMagicTelekinesisNoRecast"
     /// A player's hit with an enchanted weapon that has no charge left.
     case itemOutOfCharge = "sMagicCastInsufficientItemCharge"
+    case castingAnother = "sMagicCastMultiCast"
+    /// The game's text for a cast with no notice; empty in the install.
+    case ok = "sMagicCastOKText"
 
     public var fallback: String {
         switch self {
@@ -34,6 +37,8 @@ nonisolated public enum CastNoticeText: String, GameSettingTextKey {
         case .flyingMountNoCast: "You cannot cast that type of spell while riding a dragon."
         case .telekinesisNoRecast: "You're already holding something."
         case .itemOutOfCharge: "Your item has insufficient charge"
+        case .castingAnother: "You cannot cast this spell while casting another"
+        case .ok: ""
         }
     }
 
@@ -52,6 +57,7 @@ nonisolated public enum CastNoticeText: String, GameSettingTextKey {
         case .staffOutOfCharge: .itemOutOfCharge
         case .powerAlreadyUsedToday: .powerUsed
         case .notFromFlyingMount: .flyingMountNoCast
+        case .castingAnother: .castingAnother
         case .noSpellReadied, .unknownSpell, .notCharged, .deliveryUnsupported,
              .abilityNotCastable, .notDualCastable: nil
         }

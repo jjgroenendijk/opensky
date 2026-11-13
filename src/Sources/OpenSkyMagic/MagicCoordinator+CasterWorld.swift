@@ -100,6 +100,9 @@ extension MagicCoordinator.CasterBridge {
             })
         else { return .none }
         coordinator.wardShields.breakWards(report.brokenWards)
+        if hit.payload.caster == .player {
+            noteRefusals(report.refusals, of: hit.payload, holders: holders)
+        }
         for wardHit in report.wardHits {
             coordinator.pendingCommands.append(
                 .wardHit(wardHit, caster: hit.payload.caster, spell: hit.payload.spell)
@@ -111,6 +114,26 @@ extension MagicCoordinator.CasterBridge {
             )
         }
         return report
+    }
+
+    /// The player's spell refused by a named target: the game's notice for each.
+    private func noteRefusals(
+        _ refusals: [SpellTargetRefusal], of payload: SpellPayload,
+        holders: [ReferenceKey: ActorValueHolder]
+    ) {
+        let delivery = coordinator.caster?.spellbook.spells.spell(key: payload.spell)?.data?
+            .delivery
+        for refusal in refusals where refusal.target != .player {
+            guard
+                let holder = holders[refusal.target],
+                let name = coordinator.world.displayName(of: holder),
+                let text = MagicHitNoticeText.notice(
+                    for: refusal, names: (name, payload.name),
+                    isTouch: delivery == .touch, texts: coordinator.texts.hitNotices
+                )
+            else { continue }
+            coordinator.pendingCommands.append(.notice(text))
+        }
     }
 
     /// The holder of each target still resident. A target that left is absent.
