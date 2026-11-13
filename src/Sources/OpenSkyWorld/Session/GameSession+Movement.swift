@@ -238,6 +238,7 @@ extension GameSession.MovementSteps {
             pitch: session.freeFlyCamera.pitch
         )
         session.locomotion.acceptFrame(frameInput)
+        session.locomotion.speedScale = session.motion.playerSpeedScale?() ?? 1
         session.walkController.carryVelocity = session.motion.characterCarry?(
             session.walkController.capsule, session.walkController.feetPosition
         ) ?? .zero

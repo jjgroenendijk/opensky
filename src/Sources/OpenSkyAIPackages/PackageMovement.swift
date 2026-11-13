@@ -126,11 +126,14 @@ struct PackageSettings {
     let bump: BumpReactionSettings
     /// Follower spacing and slowdown.
     let follow: FollowSettings
+    /// The fast walk and jog speeds between walk and run.
+    let speeds: MovementSpeedSettings
 
     init(_ data: PackageSessionData?) {
         guardWarnings = data?.guardWarnings ?? .vanilla
         sandbox = data?.sandboxSettings ?? .vanilla
         bump = data?.bumpSettings ?? .vanilla
         follow = data?.followSettings ?? .vanilla
+        speeds = data?.movementSpeeds ?? .vanilla
     }
 }

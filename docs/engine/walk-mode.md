@@ -149,6 +149,19 @@ toward the depth that puts its eye at the surface, or up (jump) and down (sneak)
 to 200 units per second. A swimmer resting on a shallow bottom counts as grounded, so it can walk
 out.
 
+## Speed
+
+Worn armour weight slows every gait of the player. The weight is the armour weight after perks.
+The factor is `1 - effect x (min(weight, fMoveWeightMax) + fMoveWeightMin) / (fMoveWeightMax -
+fMoveWeightMin)`. The effect is `fMoveEncumEffect` (0.3) with a weapon drawn, and
+`fMoveEncumEffectNoWeapon` (0.15) without one. No plugin sets `fMoveWeightMin`, so it is 0. For
+example, 115 weight with a sword drawn leaves 70% of the speed. The `SpeedMult` actor value then
+scales the result: 120 moves at 1.2 times.
+
+An NPC turns at `fActorDefaultTurningSpeed` radians a second. A package with a preferred fast
+walk or jog moves at walk + (run - walk) x `fFastWalkInterpolationBetweenWalkAndRun` (0.15) or
+`fJogInterpolationBetweenWalkAndRun` (0.65).
+
 ## Breath and drowning
 
 The player is under water while the eye is below the water surface. Under water the breath

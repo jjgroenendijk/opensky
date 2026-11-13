@@ -75,12 +75,17 @@ nonisolated public struct DragonFlightSettings: Equatable, Sendable {
         if let degrees = store.number("fCombatPerchMaxTargetAngle") {
             settings.perchMaxTargetAngle = degrees * .pi / 180
         }
+        // A movement type without a turn rate turns at `fFlyingActorDefaultTurningSpeed`.
+        let defaultTurn = store.number("fFlyingActorDefaultTurningSpeed") ?? settings.turnRate
+        settings.turnRate = defaultTurn
         if let flying = movementTypes.type(editorID: flyingType)?.speeds {
             settings.cruiseSpeed = flying.forwardWalk
-            settings.turnRate = flying.rotateInPlaceWalk
+            settings.turnRate = flying.rotateInPlaceWalk > 0 ? flying
+                .rotateInPlaceWalk : defaultTurn
         }
         if let hovering = movementTypes.type(editorID: hoveringType)?.speeds {
-            settings.hoverTurnRate = hovering.rotateInPlaceWalk
+            settings.hoverTurnRate =
+                hovering.rotateInPlaceWalk > 0 ? hovering.rotateInPlaceWalk : defaultTurn
         }
         return settings
     }

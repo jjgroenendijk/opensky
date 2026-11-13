@@ -48,6 +48,18 @@ extension ActorWorldAdapter {
             self?.hudMeters.publishHUDMeters(gameSession: gameSession)
         }
         gameSession.motion.breath = PlayerBreath(settings: BreathSettings.resolve(store: settings))
+        let speeds = MovementSpeedSettings.resolve(store: settings)
+        let speedMult = ActorValueIdentity.index(named: "SpeedMult")
+        gameSession.motion.playerSpeedScale = { [weak game = self.game, weak gameSession] in
+            guard let game, let gameSession else { return 1 }
+            let mult = speedMult
+                .flatMap { game.actorValues.runtime?.value(at: $0, on: .player) } ?? 100
+            return speeds.speedScale(
+                wornWeight: game.inventory.armourWeights.playerWornArmourWeight,
+                weaponDrawn: gameSession.locomotion.actorState.weaponDrawn,
+                speedMult: mult
+            )
+        }
         gameSession.worldTick.register(.breath) { [weak self, weak gameSession] delta in
             guard let gameSession else { return }
             self?.breathStep.advanceBreath(delta: delta, gameSession: gameSession)

@@ -93,7 +93,7 @@ extension NPCMover {
         let turnedYaw = NPCYawMath.turn(
             from: yaw,
             to: targetYaw,
-            maximum: NPCMover.maximumYawSpeed * max(frameTime, 0)
+            maximum: turnRate * max(frameTime, 0)
         )
         return NPCMoverStepPlan(
             speed: speed,

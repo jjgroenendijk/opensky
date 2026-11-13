@@ -123,8 +123,8 @@ struct PackageAliasStackTests {
         #expect(PackageOverrideExecution.gait(of: general(.walk)) == .walk)
         #expect(PackageOverrideExecution.gait(of: general(.fastWalk)) == .walk)
         #expect(PackageOverrideExecution.gait(of: general(.run, flags: [])) == nil)
-        #expect(PackageOverrideExecution.walkRunBlend(of: general(.fastWalk)) == 0.25)
-        #expect(PackageOverrideExecution.walkRunBlend(of: general(.jog)) == 0.5)
+        #expect(PackageOverrideExecution.walkRunBlend(of: general(.fastWalk)) == 0.15)
+        #expect(PackageOverrideExecution.walkRunBlend(of: general(.jog)) == 0.65)
         #expect(PackageOverrideExecution.walkRunBlend(of: general(.run)) == nil)
         #expect(PackageOverrideExecution.walkRunBlend(of: general(.jog, flags: [])) == nil)
     }

@@ -4,6 +4,7 @@
 
 public import OpenSkyFormatsESM
 public import OpenSkyPhysics
+public import OpenSkyPlayer
 public import OpenSkyWorldInterface
 
 /// The procedure tree of one actor's current package.
@@ -23,12 +24,15 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     /// The procedure inputs by `PKC2` index, read once because every tick asks for them.
     public let values: [Int8: Package.DataValue]
 
-    public init(package: ResolvedPackage, fromSchedule: Bool = false) {
+    public init(
+        package: ResolvedPackage, fromSchedule: Bool = false,
+        speeds: MovementSpeedSettings = .vanilla
+    ) {
         self.package = package.package.formID
         self.fromSchedule = fromSchedule
         ridesHorse = package.ridesHorse
         gait = Self.gait(of: package.package.general)
-        walkRunBlend = Self.walkRunBlend(of: package.package.general)
+        walkRunBlend = Self.walkRunBlend(of: package.package.general, speeds: speeds)
         values = Self.values(of: package)
         runner = PackageTreeRunner(
             tree: package.tree, seed: UInt64(package.package.formID.rawValue)
@@ -63,13 +67,15 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
         )
     }
 
-    /// The game's speed scale is 1.25 for fast walk and 1.5 for jog, where 1 walks and 2
-    /// runs (clean-room read of `SkyrimSE.exe`, 2026-11-07).
-    static func walkRunBlend(of general: Package.GeneralData) -> Float? {
+    /// Fast walk and jog sit between walk and run by `fFastWalkInterpolationBetweenWalkAndRun`
+    /// and `fJogInterpolationBetweenWalkAndRun`.
+    static func walkRunBlend(
+        of general: Package.GeneralData, speeds: MovementSpeedSettings = .vanilla
+    ) -> Float? {
         guard general.flags.contains(.usesPreferredSpeed) else { return nil }
         return switch general.preferredSpeed {
-        case .fastWalk: 0.25
-        case .jog: 0.5
+        case .fastWalk: speeds.fastWalkBlend
+        case .jog: speeds.jogBlend
         case .walk, .run, .unknown: nil
         }
     }

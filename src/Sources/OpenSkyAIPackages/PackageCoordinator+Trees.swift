@@ -52,7 +52,9 @@ extension PackageCoordinator {
         }
         leaveExecution(of: actor)
         let fromSchedule = runtime.hold(for: actor) == nil
-        var execution = PackageOverrideExecution(package: current, fromSchedule: fromSchedule)
+        var execution = PackageOverrideExecution(
+            package: current, fromSchedule: fromSchedule, speeds: settings.speeds
+        )
         updateMount(actor, rides: execution.ridesHorse)
         let commands = execution.runner.start(host: &session)
         executions[actor] = execution

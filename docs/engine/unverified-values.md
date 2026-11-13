@@ -76,6 +76,8 @@ the detail and the sources it did find.
 
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
+| Encumbrance slowdown | Worn armour weight after perks, `fMoveWeightMin` 0, `SpeedMult` / 100 after it | [walk mode](/engine/walk-mode.md#speed) |
+| Fast walk and jog speed | The two interpolation settings, not a fixed 0.25 and 0.5 | [walk mode](/engine/walk-mode.md#speed) |
 | Breath time | `fActorSwimBreathBase` + 50 x `fActorSwimBreathMult` seconds | [walk mode](/engine/walk-mode.md#breath-and-drowning) |
 | Detection constants | Twelve values, such as a 90-degree half view cone | [detection constants](/engine/detection-constants.md#openskys-own-constants) |
 | Crouch visual factor and light level scale | 0.5; one luminance unit is level 100 | [detection](/engine/detection.md) |
