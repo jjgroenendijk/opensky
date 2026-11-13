@@ -75,7 +75,8 @@ extension CombatShared {
         func drainBowZoomStamina(bow: FormID?, delta: Float) {
             guard shared.archery?.zoom.isZoomed == true, delta > 0 else { return }
             shared.world.pauseBowZoomStamina()
-            let perSecond = shared.perks.powerAttackStamina(0, weapon: bow)
+            let base = shared.archery?.settings.bowZoomStaminaDrain ?? 0
+            let perSecond = shared.perks.powerAttackStamina(base, weapon: bow)
             guard perSecond > 0, perSecond.isFinite else { return }
             shared.world.damageStamina(by: perSecond * delta, of: .player)
         }

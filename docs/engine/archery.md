@@ -170,7 +170,7 @@ records give the numbers:
 | Effect in the `PERK` | Entry point | Value | What OpenSky does |
 | --- | --- | --- | --- |
 | Eagle Eye | `Mod Bow Zoom` (20) | set 0.6 | The view's half-angle tangent is this share of normal |
-| Eagle Eye | `Mod Power Attack Stamina` (27), bow only | set 10 | Stamina drained per second while zoomed |
+| Eagle Eye | `Mod Power Attack Stamina` (27), bow only | set 10 | Stamina drained per second while zoomed. The entry point starts from `fBowZoomStaminaDrainMult`, 0 in the install |
 | Steady Hand | `Bow Speed Bonus` actor value (78) | -0.5, then -0.25 more | The world and the player run at this speed while zoomed: 0.5 at rank 1, 0.25 at rank 2 |
 
 `Bow Speed Bonus` starts at `fDefaultBowSpeedBonus`, 1. The perk text says time slows by 25% and
