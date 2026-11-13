@@ -21,6 +21,11 @@ public final class SessionMotion {
     /// Current resident terrain lookup, wired by GameViewController. nil in
     /// renderer-only tests/offscreen paths -> walk mode has no ground.
     public var terrainSampler: WalkController.GroundSampler?
+    /// Whether the player may walk from one point to the next: the border regions.
+    public var borderCheck: (@Sendable (SIMD2<Float>, SIMD2<Float>) -> Bool)?
+    /// Runs once each time a border region first holds the player back.
+    public var onBorderReached: (@MainActor () -> Void)?
+    var wasAtBorder = false
     /// The player's breath under water (docs/engine/walk-mode.md).
     public var breath = PlayerBreath()
     /// The share of gait speed the player moves at this frame; nil moves at full speed.

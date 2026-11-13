@@ -37,6 +37,10 @@ nonisolated public struct WalkController: Sendable {
     public let capsule: PlayerCapsule
     public let configuration: PlayerMovementConfiguration
     public private(set) var feetPosition: SIMD3<Float>
+    /// Whether a step may go from the first point to the second; nil moves freely.
+    public var mayMove: (@Sendable (SIMD2<Float>, SIMD2<Float>) -> Bool)?
+    /// The last update held the player back at a `mayMove` edge.
+    public private(set) var isHeldAtEdge = false
     public internal(set) var verticalVelocity: Float = 0
     /// Horizontal speed from a trap or a push, units per second. It fades on the ground.
     public internal(set) var knockback = SIMD2<Float>()
@@ -106,6 +110,7 @@ nonisolated public struct WalkController: Sendable {
         camera.applyLook(lookRight: input.lookRight, lookUp: input.lookUp)
         let clampedTime = min(max(input.dt, 0), Self.maximumFrameTime)
         accumulatedTime += clampedTime
+        isHeldAtEdge = false
         // `StepWorld` stores the two queries, which needs them escaping; the
         // callers' closures are not, and none of them outlives this call, so
         // they are lent rather than promoted.
@@ -146,6 +151,7 @@ nonisolated public struct WalkController: Sendable {
             ? simd_normalize(plan.horizontalDisplacement)
             : SIMD2<Float>()
         var candidateXY = currentXY + plan.horizontalDisplacement + pushStep(dt: dt)
+        holdAtEdge(&candidateXY, from: currentXY)
         if
             !plan.isSwimming,
             isBlockedSlope(at: candidateXY, direction: direction, sampleGround: sampleGround)
@@ -191,28 +197,6 @@ nonisolated public struct WalkController: Sendable {
             sampleGround: sampleGround,
             collisionQuery: collisionQuery
         )
-    }
-
-    /// Walk mode's own displacement with no planner: level input at walk or run speed.
-    /// Only one of this and the bridge runs, so movement cannot double.
-    private static func plan(
-        input: CameraInput,
-        yaw: Float,
-        dt: Float,
-        configuration: PlayerMovementConfiguration
-    ) -> LocomotionStepPlan {
-        let forward = SIMD2<Float>(cosf(yaw), sinf(yaw))
-        let right = SIMD2<Float>(sinf(yaw), -cosf(yaw))
-        var direction = forward * input.moveForward + right * input.moveRight
-        let magnitude = simd_length(direction)
-        if magnitude > 1 {
-            direction /= magnitude
-        }
-        let speed = input.boost ? configuration.runSpeed.value : configuration.walkSpeed.value
-        var plan = LocomotionStepPlan()
-        plan.horizontalDisplacement = direction * speed * dt
-        plan.motionSource = direction == SIMD2<Float>() ? .idle : .configuredSpeed
-        return plan
     }
 
     /// Vertical handling while swimming: no gravity, no ground snap, and no
@@ -311,6 +295,35 @@ nonisolated public struct WalkController: Sendable {
 }
 
 nonisolated extension WalkController {
+    /// Walk mode's own displacement with no planner: level input at walk or run speed.
+    /// Only one of this and the bridge runs, so movement cannot double.
+    private static func plan(
+        input: CameraInput,
+        yaw: Float,
+        dt: Float,
+        configuration: PlayerMovementConfiguration
+    ) -> LocomotionStepPlan {
+        let forward = SIMD2<Float>(cosf(yaw), sinf(yaw))
+        let right = SIMD2<Float>(sinf(yaw), -cosf(yaw))
+        var direction = forward * input.moveForward + right * input.moveRight
+        let magnitude = simd_length(direction)
+        if magnitude > 1 {
+            direction /= magnitude
+        }
+        let speed = input.boost ? configuration.runSpeed.value : configuration.walkSpeed.value
+        var plan = LocomotionStepPlan()
+        plan.horizontalDisplacement = direction * speed * dt
+        plan.motionSource = direction == SIMD2<Float>() ? .idle : .configuredSpeed
+        return plan
+    }
+
+    /// A step `mayMove` refuses keeps the feet where they are.
+    private mutating func holdAtEdge(_ candidate: inout SIMD2<Float>, from current: SIMD2<Float>) {
+        guard let mayMove, candidate != current, !mayMove(current, candidate) else { return }
+        candidate = current
+        isHeldAtEdge = true
+    }
+
     /// Where to draw the feet: between the last two steps, by the time left
     /// over. A display frame rarely holds a whole number of steps, so drawing
     /// the last step alone makes the view jump by a step now and then.

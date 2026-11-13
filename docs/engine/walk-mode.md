@@ -220,6 +220,16 @@ response wins. The same probe crosses from terrain to a mesh stair.
 A door or the first scene placement resets the whole controller state before the next step. Moving
 bodies collide through the same query ([dynamic bodies](/engine/dynamic-bodies.md)).
 
+## Border regions
+
+A border region is a `REGN` with record flag `0x40` (xEdit "Border Region") in the current
+worldspace. Its `RPLD` outline is the edge of the playable world: `BorderRegionSkyrim` rings
+Tamriel with 173 points. A walk step that would take the player from inside an outline to
+outside every outline does not move sideways, and the HUD shows
+`sPlayerLeavingBorderRegion` ("You cannot go that way.") once each time the edge first holds
+the player. A worldspace without border regions, and a player who is already outside, move
+freely. A mount is not held yet.
+
 ## The walk route gate
 
 `WalkPathGateRealDataTests` (`make test PLAN=Perf`) runs a fixed route. Fixed 1/30 s input frames
