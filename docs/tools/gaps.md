@@ -93,7 +93,8 @@ adds its entry point there and to `engineRead`.
 
 The sweep steps every graph in a `behaviors...` folder under `meshes\actors\`. Each graph
 uses the skeleton in the `character assets...` folder beside its `behaviors...` folder, matched
-by suffix: `canine\behaviors wolf` uses `canine\character assets wolf\skeleton.hkx`. It
+by suffix: `canine\behaviors wolf` uses `canine\character assets wolf\skeleton.hkx`. A
+behaviour reference loads its file from the install, as in the game. The sweep
 runs 30 idle updates, then raises each event the graph declares and runs 3 more updates per
 event. A class is in one of three groups:
 
