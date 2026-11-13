@@ -31,7 +31,8 @@ whose procedure name contains `IdleMarker`. A dead actor does not look.
   `fSandboxCylinderTop` ([sandbox](/engine/sandbox.md)).
 - The actor walks to the marker through the normal move command. A marker it cannot reach
   is skipped for that actor, so it does not retry every frame.
-- The actor has arrived when it stands within 48 units of the marker.
+- The actor has arrived when it stands within `fAIMarkerDestinationRadius` (50 units) of the
+  marker.
 - Once it stops walking, the actor turns on the spot to the marker's facing, the Z rotation of
   the marker reference. Its first idle there starts when it faces within 1 degree. The game uses
   the same rule; furniture uses 10 degrees and a heading marker 5 (clean-room read of
@@ -57,7 +58,7 @@ Every candidate gets a verdict in the trace: chosen, passed, failed (with the na
 failing condition function), not reached, already played, or no animation.
 
 The next pick happens after the longer of the clip time and the marker timer (`IDLT`),
-and at least one second later.
+and at least one second later, plus `fAIIdleWaitTime` (0.1 seconds).
 
 ## Package idles
 
