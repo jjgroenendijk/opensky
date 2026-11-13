@@ -27,3 +27,17 @@ nonisolated public struct MapMarkerSite: Equatable, Sendable {
         self.iconType = iconType
     }
 }
+
+/// A map marker on the HUD compass: a known one shows as a location, an unknown one as
+/// undiscovered.
+nonisolated public struct CompassLocation: Equatable, Sendable {
+    public let position: SIMD3<Float>
+    public let isKnown: Bool
+    public let opacityPercent: Float
+
+    public init(position: SIMD3<Float>, isKnown: Bool, opacityPercent: Float) {
+        self.position = position
+        self.isKnown = isKnown
+        self.opacityPercent = opacityPercent
+    }
+}

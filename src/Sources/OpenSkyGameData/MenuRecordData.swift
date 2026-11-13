@@ -11,8 +11,12 @@ nonisolated public struct MenuMapSettings: Equatable, Sendable {
     /// `fFastTravelSpeedMult`. Skyrim.esm has no record of it, so the engine
     /// default of 1 applies unless a plugin adds one.
     public var fastTravelSpeedMultiplier: Float
+    /// `fHUDCompassLocationMaxDist`: a known marker closer than this is on the compass.
+    public var compassDistance: Float = 20000
+    /// `iMapMarkerFadeStartDistance`: a compass marker fades out up to this distance.
+    public var fadeStartDistance: Float = 10000
 
-    /// Measured in the install: 1000 and 12500.
+    /// Measured in the install: 1000 and 12500; the compass distances 20000 and 10000.
     public static let vanilla = Self(revealDistance: 1000, visibleDistance: 12500)
 
     public init(
@@ -39,6 +43,8 @@ nonisolated public struct MenuMapSettings: Equatable, Sendable {
                 "fFastTravelSpeedMult", vanilla.fastTravelSpeedMultiplier
             )
         )
+        compassDistance = number("fHUDCompassLocationMaxDist", vanilla.compassDistance)
+        fadeStartDistance = number("iMapMarkerFadeStartDistance", vanilla.fadeStartDistance)
     }
 }
 

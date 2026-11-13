@@ -190,6 +190,10 @@ extension MapWorldAdapter: MapMenuWorld {
         game.hud.updatePlayerSetMarker(position)
     }
 
+    public func showCompassLocations(_ locations: [CompassLocation]) {
+        game.hud.updateCompassLocations(locations)
+    }
+
     public func refusalText(_ refusal: FastTravelRefusal) -> String {
         text(records?.menuTexts[refusal.rawValue]) ?? refusal.rawValue
     }

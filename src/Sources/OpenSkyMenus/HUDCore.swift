@@ -41,12 +41,13 @@ nonisolated public enum HUDCore {
         HUDMovieBridge.normalizedDegrees(90 - yawRadians * 180 / .pi)
     }
 
-    /// The interaction target as a location marker, each quest target, then the
-    /// player's own map marker.
+    /// The interaction target as a location marker, each quest target, the player's
+    /// own map marker, then the map markers near the player.
     public static func markers(
         for target: InteractionTarget?,
         questTargets: [SIMD3<Float>] = [],
         playerSet: SIMD3<Float>? = nil,
+        locations: [CompassLocation] = [],
         cameraPosition: SIMD3<Float>
     ) -> [HUDCompassMarker] {
         let location = target.flatMap { target in
@@ -61,7 +62,15 @@ nonisolated public enum HUDCore {
             heading(to: position, from: cameraPosition)
                 .map { HUDCompassMarker(headingDegrees: $0, kind: .playerSet) }
         }
-        return (location.map { [$0] } ?? []) + quests + (custom.map { [$0] } ?? [])
+        let places = locations.compactMap { place in
+            heading(to: place.position, from: cameraPosition).map {
+                HUDCompassMarker(
+                    headingDegrees: $0, opacityPercent: place.opacityPercent,
+                    kind: place.isKnown ? .location : .undiscovered
+                )
+            }
+        }
+        return (location.map { [$0] } ?? []) + quests + (custom.map { [$0] } ?? []) + places
     }
 
     /// Nil when the point is straight above or below.
@@ -85,12 +94,13 @@ nonisolated public enum HUDCore {
         target: InteractionTarget?,
         questTargets: [SIMD3<Float>] = [],
         playerSet: SIMD3<Float>? = nil,
+        locations: [CompassLocation] = [],
         cameraPosition: SIMD3<Float>
     ) -> [HUDCompassMarker] {
         guard settings.markersEnabled else { return [] }
         return markers(
             for: target, questTargets: questTargets, playerSet: playerSet,
-            cameraPosition: cameraPosition
+            locations: locations, cameraPosition: cameraPosition
         )
     }
 

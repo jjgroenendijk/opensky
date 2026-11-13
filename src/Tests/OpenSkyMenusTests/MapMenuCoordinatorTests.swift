@@ -112,6 +112,11 @@ final class FakeMapWorld: MapMenuWorld, MenuInputConsumer {
     func showPlayerSetMarker(_ position: SIMD3<Float>?) {
         compassPlayerMarker = position
     }
+
+    var compassLocations: [CompassLocation] = []
+    func showCompassLocations(_ locations: [CompassLocation]) {
+        compassLocations = locations
+    }
 }
 
 struct AskedQuestion {
