@@ -58,6 +58,10 @@ from teaching again. The tome stays in the inventory: neither source says it lea
 reader, because that is the only reading that works when an NPC picks up the book. The spell comes
 from `BOOK` `DATA`'s "teaches" field, read when flag `0x04` is set.
 
+A tome whose spell the reader knows already teaches nothing. The HUD shows `sAlreadyKnown`
+("You already know") followed by the spell name and a full stop, for example "You already know
+Healing.". The space and the full stop are OpenSky's.
+
 ## Readying a spell to a hand
 
 Spells have their own equip path. The item path refuses anything the owner does not hold, because

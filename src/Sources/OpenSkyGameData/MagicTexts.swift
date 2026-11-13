@@ -94,7 +94,13 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
     ]
 
     static let schools = ["Alteration", "Conjuration", "Destruction", "Illusion", "Restoration"]
-    static let menuSchoolOrder = ["Alteration", "Illusion", "Destruction", "Conjuration", "Restoration"]
+    static let menuSchoolOrder = [
+        "Alteration",
+        "Illusion",
+        "Destruction",
+        "Conjuration",
+        "Restoration"
+    ]
 
     /// The word a setting resolved to, else `fallback`.
     public func word(_ setting: String, or fallback: String) -> String {
@@ -126,7 +132,7 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
         + ["Potion", "Enchantment"].map { "sMagicType\($0)" } + ["sIngredient"]
         + ["Sec", "Secs", "Min", "Mins", "Hour", "Hours"].map { "sEffectsListDisplay\($0)" }
         + levels.map { "s\($0.0)DisplayName" }
-        + ["sSoulCaptured", "sSoulGemTooSmall"]
+        + ["sSoulCaptured", "sSoulGemTooSmall", "sAlreadyKnown"]
         + schools.map { "s\($0)" } + ["sShouts", "sPowers", "sActiveEffects"]
 
     public static func resolve(

@@ -139,6 +139,26 @@ struct MagicCastingPartTests {
         #expect(missing.text != taught.text)
     }
 
+    /// A second read of a tome whose spell is known shows the game's notice.
+    @Test func aKnownSpellsTomeSaysSo() throws {
+        let coordinator = try MagicCoordinatorTests.castingWired(FakeMagicWorld())
+        let panels = coordinator.controlPanels
+        let read = {
+            panels.readSpellTome(
+                FormID(SpellbookFixture.Book.healingTome),
+                spell: FormID(SpellbookFixture.Spell.healing)
+            )
+        }
+        let first = read()
+        let second = read()
+        guard case let .spellAlreadyKnown(notice) = second else {
+            Issue.record("expected the already-known notice: \(first) then \(second)")
+            return
+        }
+        #expect(notice.hasPrefix("You already know "))
+        #expect(notice.hasSuffix("."))
+    }
+
     /// Select, ready, and cast a known spell, then hold the hand over real frames
     /// with the weapons drawn and sheathed. The readout counts the cues.
     @Test func aCastRunsThroughTheParts() throws {
