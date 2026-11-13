@@ -193,8 +193,9 @@ One press works like this:
 2. No other choice: the target's own action runs, unless a choice replaced it.
 3. One other choice, and a choice replaced the action: that choice runs with no menu. The
    prompt shows its label instead of the target's verb.
-4. Otherwise a message box lists the choices by their `EPF2` label, then the target's verb,
-   unless a choice replaced it.
+4. Otherwise a message box asks `sActivationChoiceMessage` ("What would you like to do?") and
+   lists the choices by their `EPF2` label, then the target's verb, unless a choice replaced
+   it.
 
 On the local install, `VampireFeed` has two choices with no flags, so a sleeping target gets a
 menu with "Feed" and the normal action. `PlayerWerewolfFeed` has both flags set and names a

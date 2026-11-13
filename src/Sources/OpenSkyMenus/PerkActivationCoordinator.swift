@@ -25,6 +25,16 @@ public protocol PerkActivationWorld: AnyObject {
     /// The target's own action, without asking the perks again.
     func performDefaultActivation(_ target: InteractionTarget)
     var crosshairTarget: InteractionTarget? { get }
+    /// `sActivationChoiceMessage`, the question over the choices.
+    var activationChoiceMessage: String { get }
+}
+
+nonisolated public enum ActivationChoiceText: String, GameSettingTextKey {
+    case message = "sActivationChoiceMessage"
+
+    public var fallback: String {
+        "What would you like to do?"
+    }
 }
 
 /// What running one choice did.
@@ -120,7 +130,9 @@ public final class PerkActivationCoordinator {
             buttons.append(verb.isEmpty ? target.interaction.action.defaultLabel : verb)
         }
         messages.presentChoices(
-            title: nil, text: target.interaction.name, buttons: buttons
+            title: nil,
+            text: world?.activationChoiceMessage ?? ActivationChoiceText.message.fallback,
+            buttons: buttons
         ) { [weak self] index in
             guard let self else { return }
             if offered.indices.contains(index) {

@@ -51,6 +51,10 @@ extension PerkActivationWorldAdapter: PerkActivationWorld {
         game.mapWorld.text(value)
     }
 
+    public var activationChoiceMessage: String {
+        game.mapWorld.settingTexts(ActivationChoiceText.self)[.message]
+    }
+
     public func runPerkFragment(
         _ choice: PerkActivateChoice, actor: ReferenceKey, target: ReferenceKey
     ) -> Bool {

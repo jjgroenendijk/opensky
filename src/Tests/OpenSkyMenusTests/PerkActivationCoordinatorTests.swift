@@ -31,6 +31,10 @@ final class FakePerkActivationWorld: PerkActivationWorld {
         return text
     }
 
+    var activationChoiceMessage: String {
+        ActivationChoiceText.message.fallback
+    }
+
     func runPerkFragment(
         _ choice: PerkActivateChoice, actor: ReferenceKey, target: ReferenceKey
     ) -> Bool {
@@ -119,6 +123,7 @@ struct PerkActivationCoordinatorTests {
         #expect(coordinator.activate(target))
         #expect(menuMode.topMenu == MessageCoordinator.identifier)
         #expect(messages.boxes.current?.buttons.map(\.text) == ["Feed", "Feed in bed", "Open"])
+        #expect(messages.boxes.current?.text == "What would you like to do?")
         #expect(coordinator.promptLabel(on: targetKey) == nil)
 
         messages.route(.button(.accept))
