@@ -68,7 +68,9 @@ struct FakeWriter {
         /// The file comment and the imports that `body` uses, so a split file imports only
         /// what it names: an unused public import is an error.
         func header(for body: [String]) -> [String] {
+            // An associated type's name can match a type in another module; it is no import.
             let words = Set(body.joined(separator: "\n").matches(of: #/\w+/#).map { String($0.0) })
+                .subtracting(context.associated.keys)
             let used = modules.filter { module in
                 words.contains { word in
                     appleModule(word) == module
