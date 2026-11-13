@@ -122,9 +122,12 @@ key handler.
 The save and load pages, their questions, and the progress line read string settings:
 `sMenuDisplayNewSave` names the new-save row, `sSaveOverSaveGame` and `sDeleteSaveGame` ask before
 overwriting or deleting, and `sQuickSaving`, `sSaveSuccessful`, `sLoading`, `sDeleteSuccessful`, and
-`sSaveFailed` fill the progress line. A save's detail line uses `sMenuDisplayLevelString`, and its
-location uses `sDefaultCellName` for an exterior cell and `sMenuDisplayUnknownLocationString` when
-there is no cell. Without game data, the pages keep OpenSky's English words.
+`sSaveFailed` fill the progress line. A save's title is its slot and the character's name, or
+`sDefaultPlayerName` when it has none. An autosave slot reads `sAutosaveAbbrev` and its number, and
+the quicksave slot `sQuicksaveAbbrev`. The detail line follows the game's save description:
+`<sLevelAbbrev> <level>: <location>, <sPlayTime>: <time>`. The location uses `sDefaultCellName`
+for an exterior cell and `sMenuDisplayUnknownLocationString` when there is no cell. Without game
+data, the pages keep OpenSky's English words.
 
 The Settings page stays the engine's, because its values are the
 [player settings](/engine/settings.md).
