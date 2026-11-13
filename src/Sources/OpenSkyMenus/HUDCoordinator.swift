@@ -225,60 +225,11 @@ public final class HUDCoordinator {
     /// The crosshair item's damage or armour rating, shown under the prompt.
     public private(set) var targetStat: HUDItemStat?
 
-    public func updateTargetStat(_ stat: HUDItemStat?) {
-        guard stat != targetStat else { return }
-        targetStat = stat
-        sync.promptNeedsUpdate = true
-    }
-
-    public func updateTarget(_ target: InteractionTarget?) {
-        let oldPrompt = effectivePrompt
-        let oldReference = interactionTarget?.interaction.reference
-        interactionTarget = target
-        sync.promptNeedsUpdate = oldPrompt != effectivePrompt
-        sync.markersNeedUpdate = questTargetsChanged
-            || oldReference != target?.interaction.reference
-    }
-
-    public func updateQuestTargets(_ positions: [SIMD3<Float>]) {
-        guard positions != questTargets else { return }
-        questTargets = positions
-        questTargetsChanged = true
-        sync.markersNeedUpdate = true
-    }
-
-    public func updateCompassLocations(_ locations: [CompassLocation]) {
-        guard locations != compassLocations else { return }
-        compassLocations = locations
-        sync.markersNeedUpdate = true
-    }
-
-    public func updatePlayerSetMarker(_ position: SIMD3<Float>?) {
-        guard position != playerSetMarker else { return }
-        playerSetMarker = position
-        questTargetsChanged = true
-        sync.markersNeedUpdate = true
-    }
+    /// Text the crosshair shows with no target, such as command mode's Wait There.
+    public private(set) var idlePrompt: String?
 
     /// The game shows no prompt while a script locks the activate control.
     public private(set) var isActivateLocked = false
-
-    /// No stat shows without a prompt.
-    var shownStat: HUDItemStat? {
-        effectivePrompt == nil ? nil : targetStat
-    }
-
-    public var effectivePrompt: String? {
-        isActivateLocked ? nil : HUDCore.effectivePrompt(settings, target: interactionTarget)
-    }
-
-    public func effectiveMarkers(cameraPosition: SIMD3<Float>) -> [HUDCompassMarker] {
-        HUDCore.effectiveMarkers(
-            settings, target: interactionTarget, questTargets: questTargets,
-            playerSet: playerSetMarker, locations: compassLocations,
-            cameraPosition: cameraPosition
-        )
-    }
 
     /// Applies one readout change. The layer toggle and the scale reach the
     /// renderer only; every other change republishes the movie state.
@@ -316,8 +267,8 @@ public final class HUDCoordinator {
             } else {
                 HUDMovieBridge.setCompassMarkers(markers, runtime: runtime)
                 HUDMovieBridge.setActivationPrompt(
-                        effectivePrompt, stat: shownStat, runtime: runtime
-                    )
+                    effectivePrompt, stat: shownStat, runtime: runtime
+                )
             }
             HUDMovieBridge.setCrosshairEnabled(settings.crosshairEnabled, runtime: runtime)
             if initialize {
@@ -372,5 +323,69 @@ extension HUDCoordinator {
         let oldPrompt = effectivePrompt
         isActivateLocked = locked
         sync.promptNeedsUpdate = sync.promptNeedsUpdate || oldPrompt != effectivePrompt
+    }
+}
+
+// MARK: - Target and compass
+
+extension HUDCoordinator {
+    public func setIdlePrompt(_ text: String?) {
+        guard text != idlePrompt else { return }
+        let oldPrompt = effectivePrompt
+        idlePrompt = text
+        sync.promptNeedsUpdate = sync.promptNeedsUpdate || oldPrompt != effectivePrompt
+    }
+
+    public func updateTargetStat(_ stat: HUDItemStat?) {
+        guard stat != targetStat else { return }
+        targetStat = stat
+        sync.promptNeedsUpdate = true
+    }
+
+    public func updateTarget(_ target: InteractionTarget?) {
+        let oldPrompt = effectivePrompt
+        let oldReference = interactionTarget?.interaction.reference
+        interactionTarget = target
+        sync.promptNeedsUpdate = oldPrompt != effectivePrompt
+        sync.markersNeedUpdate = questTargetsChanged
+            || oldReference != target?.interaction.reference
+    }
+
+    public func updateQuestTargets(_ positions: [SIMD3<Float>]) {
+        guard positions != questTargets else { return }
+        questTargets = positions
+        questTargetsChanged = true
+        sync.markersNeedUpdate = true
+    }
+
+    public func updateCompassLocations(_ locations: [CompassLocation]) {
+        guard locations != compassLocations else { return }
+        compassLocations = locations
+        sync.markersNeedUpdate = true
+    }
+
+    public func updatePlayerSetMarker(_ position: SIMD3<Float>?) {
+        guard position != playerSetMarker else { return }
+        playerSetMarker = position
+        questTargetsChanged = true
+        sync.markersNeedUpdate = true
+    }
+
+    /// No stat shows without a prompt.
+    var shownStat: HUDItemStat? {
+        effectivePrompt == nil ? nil : targetStat
+    }
+
+    public var effectivePrompt: String? {
+        isActivateLocked ? nil : HUDCore.effectivePrompt(settings, target: interactionTarget)
+            ?? (interactionTarget == nil && settings.promptEnabled ? idlePrompt : nil)
+    }
+
+    public func effectiveMarkers(cameraPosition: SIMD3<Float>) -> [HUDCompassMarker] {
+        HUDCore.effectiveMarkers(
+            settings, target: interactionTarget, questTargets: questTargets,
+            playerSet: playerSetMarker, locations: compassLocations,
+            cameraPosition: cameraPosition
+        )
     }
 }

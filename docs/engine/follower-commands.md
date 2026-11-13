@@ -79,6 +79,19 @@ the press reaches as far as any use-key press. A press on any other target acts 
 | Living actor | Starts combat with it, from where it stands. |
 | Ground | Walks to the spot and waits there, then follows again. |
 
+## Crosshair
+
+While command mode runs, the crosshair names the order instead of the normal use verb:
+
+| Target | Prompt |
+| --- | --- |
+| Living actor other than the follower | `sAttack` ("Attack") |
+| Container with no lock and no owner | `sTakeAll` ("Take All") |
+| Nothing, with ground the follower can reach | `sWaitHere` ("Wait There") |
+
+Other targets keep their normal verb, so a locked chest still reads Unlock. The normal words
+come back when command mode ends.
+
 A seated follower stays seated only while its own packages let it. Its follow package may get
 it up again when the player walks away.
 

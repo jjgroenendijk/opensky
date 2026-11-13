@@ -9,7 +9,7 @@ import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyPlayer
 import OpenSkyRenderCore
@@ -41,6 +41,7 @@ public protocol FollowerCommandWorldHost: AnyObject, SendableMetatype {
 public final class FollowerCommandWorldAdapter {
     public let game: any FollowerCommandWorldHost
     private var pressedTarget: InteractionTarget?
+    private var wasChoosing = false
 
     public let tasksHost: any FollowerCommandTasksHost
 
@@ -121,6 +122,33 @@ public final class FollowerCommandWorldAdapter {
         case nil:
             break
         }
+    }
+
+    /// The crosshair while command mode runs, and once more as it ends to put the normal
+    /// words back. Nil while command mode stays off.
+    public func crosshair(
+        for target: InteractionTarget?, texts: GameSettingTexts<FollowerCommandText>
+    ) -> (target: InteractionTarget?, prompt: String?)? {
+        let commands = game.followerCommands
+        let choosing = commands.isChoosing
+        defer { wasChoosing = choosing }
+        guard choosing || wasChoosing else { return nil }
+        guard choosing, let follower = commands.phase.follower else { return (target, nil) }
+        guard let target else {
+            return (nil, checks.groundTarget() == nil ? nil : texts[.waitHere])
+        }
+        let key = game.streamer.referenceEntry(formID: target.interaction.reference)?.key
+        guard
+            let picked = key.flatMap(commandTarget),
+            let verb = FollowerCommandPrompt.verb(for: picked, follower: follower)
+        else { return (target, nil) }
+        return (
+            InteractionTarget(
+                interaction: target.interaction.relabelled(texts[verb]),
+                hitPosition: target.hitPosition, distance: target.distance
+            ),
+            nil
+        )
     }
 
     /// The terrain test's step along the view ray, in units.
