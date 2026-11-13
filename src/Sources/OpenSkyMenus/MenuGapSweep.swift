@@ -1,7 +1,8 @@
 // Starts every interface movie with no bridge installed and ticks it, then counts what
 // the AS2 runtime lacked and which menus talk to the engine with no bridge here.
 // A bridge answers GameDelegate calls, so those are counted per movie, not as
-// runtime gaps. `openskycli gaps` prints it. Names and counts only.
+// runtime gaps. Reads of names a movie never set are counted apart, because Flash
+// answers them with `undefined` too. `openskycli gaps` prints it. Names and counts only.
 
 import Foundation
 import OpenSkyFormatsSWF
@@ -18,6 +19,13 @@ nonisolated public struct MenuGapSweep {
     private(set) var missingNames: [String: Int] = [:]
     private(set) var unimplementedOpcodes: [String: Int] = [:]
     private(set) var faultKinds: [String: Int] = [:]
+    /// Reads of names Flash does not define and no movie set, with their distinct names.
+    public private(set) var unsetReads = 0
+    private(set) var unsetNames: Set<String> = []
+
+    public var unsetNameCount: Int {
+        unsetNames.count
+    }
 
     public init() {}
 
@@ -71,19 +79,21 @@ nonisolated public struct MenuGapSweep {
 
     private mutating func record(_ runtime: SWFMovieRuntime, path: String) {
         let tally = runtime.tally
-        for (name, count) in tally.missingNames {
+        let calls = runtime.invokeLog.entries.filter { $0.direction == .movieToEngine }.map(\.name)
+        let engineNames = Set(runtime.movieCallbackNames + calls)
+        for (name, count) in tally.missingNames where !engineNames.contains(name) {
             missingNames[name, default: 0] += count
         }
+        unsetReads += tally.unsetTotal
+        unsetNames.formUnion(tally.unsetNames.keys)
         for entry in tally.rankedUnimplemented {
             unimplementedOpcodes[entry.name, default: 0] += entry.count
         }
         for fault in tally.faults {
             faultKinds[fault.kind, default: 0] += 1
         }
-        let calls = runtime.invokeLog.entries.filter { $0.direction == .movieToEngine }.map(\.name)
-        let names = Set(runtime.movieCallbackNames + calls)
-        if !names.isEmpty, Self.isMenuMovie(path) {
-            engineMovies[path.lowercased()] = names
+        if !engineNames.isEmpty, Self.isMenuMovie(path) {
+            engineMovies[path.lowercased()] = engineNames
         }
     }
 }

@@ -20,6 +20,10 @@ nonisolated public struct AS2Tally: Equatable, Sendable {
     public private(set) var missingTotal = 0
     /// Missing-API hits that arrived after `missingNames` was full.
     public private(set) var unnamedMissing = 0
+    /// Reads of names Flash does not define and the movie never set. Flash answers them
+    /// with `undefined` too, so they are kept apart from `missingNames`.
+    public private(set) var unsetNames: [String: Int] = [:]
+    public private(set) var unsetTotal = 0
     public private(set) var faults: [AS2Fault] = []
     /// Every fault raised, including ones past `faultLimit`.
     public private(set) var faultTotal = 0
@@ -54,6 +58,13 @@ nonisolated public struct AS2Tally: Equatable, Sendable {
             missingNames[name, default: 0] += 1
         } else {
             unnamedMissing += 1
+        }
+    }
+
+    mutating func noteUnset(_ name: String) {
+        unsetTotal += 1
+        if unsetNames[name] != nil || unsetNames.count < nameLimit {
+            unsetNames[name, default: 0] += 1
         }
     }
 

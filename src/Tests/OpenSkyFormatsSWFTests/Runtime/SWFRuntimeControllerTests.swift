@@ -69,7 +69,7 @@ struct SWFRuntimeControllerTests {
         for name in names {
             #expect(runtime.tally.missingNames[name] == nil, "\(name)")
         }
-        #expect(runtime.tally.missingNames["unknownChild"] == 1)
+        #expect(runtime.tally.unsetNames["unknownChild"] == 1)
     }
 
     /// Read both as a bare variable and as a `_global` member, as the class preambles do.
@@ -89,7 +89,7 @@ struct SWFRuntimeControllerTests {
         for name in SWFMovieRuntime.unsetGlobals {
             #expect(runtime.tally.missingNames[name] == nil, "\(name)")
         }
-        #expect(runtime.tally.missingNames["UnknownPackage"] == 2)
+        #expect(runtime.tally.unsetNames["UnknownPackage"] == 2)
     }
 
     @Test func currentFrameLabelIsTheLastLabelAtOrBeforeThePlayhead() throws {

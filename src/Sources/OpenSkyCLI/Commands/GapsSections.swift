@@ -160,7 +160,9 @@ extension GapsGatherer {
                 usesUnit: "hits",
                 notes: [
                     note,
-                    "a name a movie reads before it sets it also counts, so not every row is a gap"
+                    "\(sweep.unsetReads) reads of \(sweep.unsetNameCount) names Flash does not "
+                        + "define and the movie never set are not listed: Flash answers them "
+                        + "with undefined too"
                 ]
             ),
             assets.swfTags()

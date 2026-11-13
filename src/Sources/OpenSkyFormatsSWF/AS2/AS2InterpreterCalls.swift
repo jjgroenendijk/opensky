@@ -32,7 +32,7 @@ nonisolated extension AS2Interpreter {
         let arguments = try popArguments(frame)
         let callee = try getVariable(name, frame: frame, offset: offset)
         guard let function = callee.functionValue else {
-            runtime.noteMissing(name)
+            runtime.noteUnanswered(name)
             try frame.push(.undefined)
             return .next
         }
@@ -65,7 +65,13 @@ nonisolated extension AS2Interpreter {
         }
         let thisValue = receiver.objectValue?.superThis ?? defaultThis
         guard let function = callee.functionValue else {
-            runtime.noteMissing(name.isEmpty ? "[[call]]" : name)
+            // A method on `undefined` is a miss of the receiver, which its own read
+            // already counted; Flash calls nothing either.
+            if receiver == .undefined || receiver == .null {
+                runtime.noteUnset(name.isEmpty ? "[[call]]" : name)
+            } else {
+                runtime.noteUnanswered(name.isEmpty ? "[[call]]" : name)
+            }
             try frame.push(.undefined)
             return .next
         }
@@ -101,7 +107,7 @@ nonisolated extension AS2Interpreter {
 
     /// `new` on a name that is not a function: Flash pushes `undefined` and goes on.
     private func missingConstructor(_ name: String, frame: AS2Frame) throws(AS2Fault) -> AS2Flow {
-        runtime.noteMissing(name)
+        runtime.noteUnanswered(name)
         try frame.push(.undefined)
         return .next
     }

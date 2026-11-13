@@ -72,7 +72,7 @@ nonisolated extension AS2Interpreter {
             return value
         }
         if !runtime.unsetGlobals.contains(name) {
-            runtime.noteMissing(name)
+            runtime.noteUnanswered(name)
         }
         return .undefined
     }

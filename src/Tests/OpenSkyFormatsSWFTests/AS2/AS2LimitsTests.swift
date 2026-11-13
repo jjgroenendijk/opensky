@@ -78,6 +78,20 @@ struct AS2LimitsTests {
         #expect(runtime.tally.isClean == false)
     }
 
+    /// A class prologue reads `_global.Name` before it defines it. Flash answers
+    /// `undefined` too, so the read is kept apart from the runtime's gaps.
+    @Test func aNameFlashDoesNotDefineIsTalliedAsUnset() {
+        let runtime = AS2Runtime()
+        let value = AS2Fixture.evaluate(
+            AS2Fixture.getVariable("InventoryDefines"),
+            runtime: runtime
+        )
+        #expect(value == .undefined)
+        #expect(runtime.tally.missingNames.isEmpty)
+        #expect(runtime.tally.unsetNames["InventoryDefines"] == 1)
+        #expect(runtime.tally.unsetTotal == 1)
+    }
+
     @Test func tallyNamesAreCappedButTotalsKeepCounting() {
         var limits = AS2Limits.standard
         limits.tallyNames = 2

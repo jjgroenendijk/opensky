@@ -185,7 +185,25 @@ stack. That happens in 666 of the 1,180 vanilla action blocks. It is counted ins
 ## The tally
 
 An unimplemented opcode or an unknown API is a logged no-op plus a tally entry, never an error. The
-tally counts unimplemented opcodes (ranked, with Adobe names), missing names (ranked), faults, empty
-stack reads (normal, so they do not make a run unclean), and actions, blocks, and calls run. Name
-tables keep at most 256 names, and totals keep counting past that. `ActionTrace` output goes to a
-bounded trace log, never to `print`.
+tally counts unimplemented opcodes (ranked, with Adobe names), missing names (ranked), unset names,
+faults, empty stack reads (normal, so they do not make a run unclean), and actions, blocks, and
+calls run. Name tables keep at most 256 names, and totals keep counting past that. `ActionTrace`
+output goes to a bounded trace log, never to `print`.
+
+A read that nothing answers goes to one of two tables:
+
+- Missing names: Flash or Scaleform GFx defines the name, such as `getBounds`, `Rectangle`, or a
+  text field's `numLines`. The runtime lacks it, so this is a runtime gap.
+- Unset names: any other name. The movie never set it at the time of the read, and Flash answers
+  `undefined` too. Examples: an AS2 class prologue reads `_global.InventoryDefines` before it
+  defines it, CLIK reads `_parent.onButtonLoad` before it calls it, and a list reads its
+  `scrollbar` field before a caller sets it. A `gotoAndStop` to a label the clip lacks is unset
+  too, because Flash also leaves the playhead where it is. So is an `attachMovie` of a linkage name
+  the movie does not export, which Flash answers with `undefined`, and a method called on
+  `undefined`, such as `list.pop().toString()` on an empty list: the read that gave `undefined`
+  already counted.
+
+`AS2FlashNames` lists the names Flash defines: the global classes and functions, the members of
+movie clips, text fields, and buttons, and the methods of the native classes. The lists come
+from the Adobe "ActionScript 2.0 Language Reference" and the Scaleform "GFx AS2 Extensions
+Reference".

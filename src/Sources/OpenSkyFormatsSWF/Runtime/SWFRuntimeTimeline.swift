@@ -48,10 +48,10 @@ nonisolated extension SWFMovieRuntime {
     }
 
     /// `gotoAndStop("label")` / `ActionGoToLabel`. An unknown label leaves the
-    /// playhead alone and lands in the tally, never throws.
+    /// playhead alone, as in Flash, and lands in the tally's unset names.
     public func gotoLabel(_ label: String, of node: SWFDisplayObject, play: Bool) {
         guard let index = node.timeline?.frameIndex(forLabel: label) else {
-            runtime.noteMissing("gotoAndStop(\(label))")
+            runtime.noteUnset("gotoAndStop(\(label))")
             node.isPlaying = play
             return
         }
