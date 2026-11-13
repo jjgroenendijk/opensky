@@ -322,6 +322,17 @@ struct MapMenuCoordinatorTests {
     }
 
     @Test
+    func aDragonFliesOnlyWithinItsWorldspace() {
+        var context = FastTravelContext()
+        context.ridingDragon = true
+        #expect(FastTravelRule.refusal(context) == nil)
+        context.destinationInOtherWorldspace = true
+        #expect(FastTravelRule.refusal(context) == .dragonCannotFly)
+        context.ridingDragon = false
+        #expect(FastTravelRule.refusal(context) == nil)
+    }
+
+    @Test
     func fastTravelTimeGrowsWithDistance() {
         let near = FastTravelRule.gameSeconds(
             distance: 1000,

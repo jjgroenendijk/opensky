@@ -28,7 +28,9 @@ import simd
 /// Witnesses that forward to the narrow parts of `MapWorldAdapter`.
 extension MapWorldAdapter {
     public var fastTravelContext: FastTravelContext {
-        travel.fastTravelContext
+        var context = travel.fastTravelContext
+        context.ridingDragon = !game.mountWorld.flyingMounts.isEmpty
+        return context
     }
 
     public func travel(to marker: MapMarkerSite) -> Bool {

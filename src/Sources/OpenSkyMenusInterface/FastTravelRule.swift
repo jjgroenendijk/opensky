@@ -15,6 +15,8 @@ nonisolated public enum FastTravelRefusal: String, Equatable, Sendable, CaseIter
     case scriptBlock = "sNoFastTravelScriptBlock"
     case undiscovered = "sNoFastTravelUndiscovered"
     case takingHealthDamage = "sFastTravelNoTravelHealthDamage"
+    /// A ridden dragon flies only within its worldspace (UESP "Skyrim:Dragon Riding").
+    case dragonCannotFly = "sTESVDLC2DragonUnableToFlyMessage"
 }
 
 nonisolated public struct FastTravelContext: Equatable, Sendable {
@@ -27,6 +29,9 @@ nonisolated public struct FastTravelContext: Equatable, Sendable {
     public var locationForbidsFastTravel = false
     public var enabledByScripts = true
     public var destinationCanTravelTo = true
+    public var ridingDragon = false
+    /// The map's markers lie in another worldspace than the player, such as a walled city.
+    public var destinationInOtherWorldspace = false
 
     public init() {}
 }
@@ -61,6 +66,9 @@ nonisolated public enum FastTravelRule {
         }
         if context.overencumbered {
             return .overencumbered
+        }
+        if context.ridingDragon, context.destinationInOtherWorldspace {
+            return .dragonCannotFly
         }
         return nil
     }

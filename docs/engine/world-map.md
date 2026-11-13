@@ -115,6 +115,12 @@ lowers health each second, such as poison or fire. The message is the matching
 `sNoFastTravel*` GMST string. The health damage refusal has a name outside that pattern:
 `sFastTravelNoTravelHealthDamage`, "You can't fast travel while taking health damage."
 
+A player riding a dragon is refused last when the map's markers lie in another worldspace,
+such as the Tamriel map seen from inside a walled city: `sTESVDLC2DragonUnableToFlyMessage`,
+"Your dragon cannot fast travel right now." UESP "Skyrim:Dragon Riding"
+(<https://en.uesp.net/wiki/Skyrim:Dragon_Riding>) says a dragon cannot fast travel to a
+different worldspace.
+
 Two natives read this state. `Game.IsFastTravelControlsEnabled()` is false while a script
 block from `EnableFastTravel(false)` holds. `ObjectReference.CanFastTravelToMarker()` is true
 for a marker that the map shows and that allows fast travel. It does not check combat or

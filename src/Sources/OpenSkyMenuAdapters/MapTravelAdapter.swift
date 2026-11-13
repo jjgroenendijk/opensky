@@ -58,6 +58,9 @@ extension MapTravelAdapter {
         context.inAir = !(game.gameSession?.walkController.isGrounded ?? true)
         context.alarmed = game.crime.isPlayerPursued
         context.takingHealthDamage = game.magic.magicMenu.isPlayerTakingHealthDamage
+        let streamer = game.streamer
+        context.destinationInOtherWorldspace = streamer.interiorScene != nil
+            || mapRecords.mapWorldspace.map { $0.editorID != streamer.worldspaceEditorID } == true
         if game.inventory.runtime != nil {
             context.overencumbered = FastTravelRule.isOverencumbered(
                 carried: game.inventory.armourWeights.playerCarriedWeight,
