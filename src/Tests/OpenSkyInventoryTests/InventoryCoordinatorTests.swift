@@ -18,18 +18,18 @@ import Testing
 
 @MainActor
 struct InventoryCoordinatorTests {
-    private typealias Fixture = InventoryBaselineFixture
-    private typealias Items = WorldItemRuntimeTests
+    typealias Fixture = InventoryBaselineFixture
+    typealias Items = WorldItemRuntimeTests
 
     /// The coordinator, its world and the reference index, all retained,
     /// because the item runtime holds the reference index weakly.
-    private struct Harness {
+    struct Harness {
         let coordinator: InventoryCoordinator
         let world: FakeWorld
         let references: FakeWorldReferences
     }
 
-    private static func harness(seams: InventorySeams = InventorySeams()) throws -> Harness {
+    static func harness(seams: InventorySeams = InventorySeams()) throws -> Harness {
         let items = try Items.standardHarness()
         let world = FakeWorld()
         var data = InventorySessionData(items: WorldItemRuntime(
@@ -42,11 +42,11 @@ struct InventoryCoordinatorTests {
         return Harness(coordinator: coordinator, world: world, references: items.references)
     }
 
-    private static var looseItem: PlacedInteraction {
+    static var looseItem: PlacedInteraction {
         Items.interaction(reference: Items.looseItem, base: Fixture.lockpick, action: .take)
     }
 
-    private static var chest: PlacedInteraction {
+    static var chest: PlacedInteraction {
         Items.interaction(reference: Items.chestReference, base: Fixture.chest, action: .search)
     }
 
@@ -428,7 +428,7 @@ extension InventoryCoordinatorTests {
 }
 
 extension InventoryCoordinatorTests {
-    private final class FakeWorld: InventoryWorld {
+    final class FakeWorld: InventoryWorld {
         var activateLabel: String?
         var crosshairInteraction: PlacedInteraction?
         var placement: DropPlacement?
