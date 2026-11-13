@@ -331,7 +331,7 @@ struct ActorBreathStep {
         let waterBreathing = ActorValueIdentity.index(named: "Water Breathing")
             .flatMap { runtime?.value(at: $0, on: .player) }
             .map { $0 > 0 } ?? false
-        let damage = gameSession.breath.advance(
+        let damage = gameSession.motion.breath.advance(
             seconds: delta, submerged: submerged, waterBreathing: waterBreathing,
             maximumHealth: runtime?.maximums(of: .player).health ?? 0
         )

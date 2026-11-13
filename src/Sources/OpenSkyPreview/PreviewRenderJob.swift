@@ -127,7 +127,10 @@ public enum PreviewRenderJob {
             weather.forceWeather(found.formID, transition: .instant)
         }
         if let fileSystem = sources.fileSystem {
-            try gameSession.attachOffscreenSky(loadOrder: sources.loadOrder, fileSystem: fileSystem)
+            try gameSession.weatherSteps.attachOffscreenSky(
+                loadOrder: sources.loadOrder,
+                fileSystem: fileSystem
+            )
         }
     }
 

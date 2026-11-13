@@ -84,15 +84,15 @@ struct WorldTimeAcceptanceWeatherTests {
         let device = try #require(ShadowSceneFixture.device)
         let gameSession = try ShadowSceneFixture.makeSession(device: device)
         let defaults = try Self.weatherTimeGlobals()
-        gameSession.gameClock = GameClock(hour: WorldTimeAcceptanceClock.startHour)
+        gameSession.clockSteps.gameClock = GameClock(hour: WorldTimeAcceptanceClock.startHour)
         gameSession.gameTime.globalResolution = GlobalResolution(
-            defaults: defaults, clock: gameSession.gameClock
+            defaults: defaults, clock: gameSession.clockSteps.gameClock
         )
-        #expect(gameSession.currentTimescale == WorldTimeAcceptanceClock.fastTimescale)
+        #expect(gameSession.clockSteps.currentTimescale == WorldTimeAcceptanceClock.fastTimescale)
 
         // Setting the clock wholesale clears the elapsed-hours mark, so the
         // first read is zero: a restored save must not age months of weather.
-        #expect(gameSession.consumeElapsedGameHours() == 0)
+        #expect(gameSession.clockSteps.consumeElapsedGameHours() == 0)
 
         let system = try WeatherSystem(store: Self.weatherStore(), worldspaceFormID: 0x500)
         system.update(hour: gameSession.timeOfDay)
@@ -102,9 +102,9 @@ struct WorldTimeAcceptanceWeatherTests {
         for _ in 0 ..< WorldTimeAcceptanceClock.steps {
             gameSession.gameTime.clock.advance(
                 wallDelta: WorldTimeAcceptanceClock.wallStep,
-                timescale: gameSession.currentTimescale
+                timescale: gameSession.clockSteps.currentTimescale
             )
-            let elapsed = gameSession.consumeElapsedGameHours()
+            let elapsed = gameSession.clockSteps.consumeElapsedGameHours()
             #expect(elapsed == WorldTimeAcceptanceClock.gameHoursPerStep)
             elapsedTotal += elapsed
             system.update(
@@ -124,9 +124,10 @@ struct WorldTimeAcceptanceWeatherTests {
         }
         // `timeOfDay` is the projection the sky shader and the weather blend
         // both read, so this is the sky hour agreeing with the clock.
-        #expect(gameSession.timeOfDay == gameSession.gameClock.hourOfDay)
+        #expect(gameSession.timeOfDay == gameSession.clockSteps.gameClock.hourOfDay)
         try Self.expectClockAgreement(
-            gameSession.gameClock, defaults: defaults, resolvedHour: gameSession.timeOfDay
+            gameSession.clockSteps.gameClock, defaults: defaults,
+            resolvedHour: gameSession.timeOfDay
         )
     }
 

@@ -12,20 +12,26 @@ import OpenSkyWorldState
 
 /// Where the session finds effect records (`IMGS`, `SPGD`), and the cell link an
 /// interior names.
-extension GameSession {
+extension GameSession.WeatherSteps {
     /// The session's weather and its cloud layers. Without weather data the renderer
     /// keeps its procedural sky.
     public func attachWeather(from provider: WorldDataStores?) throws {
-        weather = provider?.weatherSystem
+        session.weather = provider?.weatherSystem
         if let provider {
-            skySettings = SkySettings.resolve(store: provider.gameSettings)
+            session.sky.skySettings = SkySettings.resolve(store: provider.gameSettings)
         }
-        weather?.transitionAcceleration = skySettings.weatherTransAccel
+        session.weather?.transitionAcceleration = session.sky.skySettings.weatherTransAccel
         if let files = provider?.scriptFileSystem {
-            renderer.skyClouds = try SkyClouds(fileSystem: files, device: renderer.device)
-            renderer.skyCelestial = try SkyCelestial(fileSystem: files, device: renderer.device)
-            renderer.recordTextures = try RecordTextures(
-                fileSystem: files, device: renderer.device
+            session.renderer.skyClouds = try SkyClouds(
+                fileSystem: files,
+                device: session.renderer.device
+            )
+            session.renderer.skyCelestial = try SkyCelestial(
+                fileSystem: files,
+                device: session.renderer.device
+            )
+            session.renderer.recordTextures = try RecordTextures(
+                fileSystem: files, device: session.renderer.device
             )
         }
     }
@@ -35,102 +41,122 @@ extension GameSession {
     public func attachOffscreenSky(
         loadOrder: LoadOrderPlugins, fileSystem: any GameFileSource
     ) throws {
-        skySettings = SkySettings.resolve(store: GameSettingStore(
+        session.sky.skySettings = SkySettings.resolve(store: GameSettingStore(
             plugins: loadOrder.plugins.map { ($0.name, $0.file) }
         ))
-        let device = renderer.device
-        renderer.skyClouds = try SkyClouds(fileSystem: fileSystem, device: device, immediate: true)
-        renderer.skyCelestial = try SkyCelestial(
+        let device = session.renderer.device
+        session.renderer.skyClouds = try SkyClouds(
+            fileSystem: fileSystem,
+            device: device,
+            immediate: true
+        )
+        session.renderer.skyCelestial = try SkyCelestial(
             fileSystem: fileSystem, device: device, immediate: true
         )
-        renderer.recordTextures = try RecordTextures(
+        session.renderer.recordTextures = try RecordTextures(
             fileSystem: fileSystem, device: device, immediate: true
         )
     }
 }
 
-extension GameSession {
+extension GameSession.WeatherSteps {
     /// Advances weather and caches this frame's resolve; nil without a weather system.
     /// Fades and rerolls count game hours, so a fixed clock (offscreen, CLI) holds both.
     public func updateWeather(deltaTime: Float) {
         defer { updateImageSpace(deltaTime: deltaTime) }
-        guard weatherEnabled, let weather else {
-            currentResolvedWeather = nil
-            celestialSky = nil
-            renderer.regionEmittance = [:]
+        guard session.sky.weatherEnabled, let weather = session.weather else {
+            session.sky.currentResolvedWeather = nil
+            session.sky.celestialSky = nil
+            session.renderer.regionEmittance = [:]
             return
         }
-        weather.cloudSpeedMax = skySettings.weatherCloudSpeedMax
-        weather.update(hour: timeOfDay, elapsedGameHours: consumeElapsedGameHours())
-        renderer.regionEmittance = weather.regionEmittance(
-            for: renderer.emittanceRegions, hour: timeOfDay
+        weather.cloudSpeedMax = session.sky.skySettings.weatherCloudSpeedMax
+        weather.update(
+            hour: session.timeOfDay,
+            elapsedGameHours: session.clockSteps.consumeElapsedGameHours()
         )
-        currentResolvedWeather = weather.resolvedWeather?.applyingStormSkyDarkening()
-        celestialSky = currentResolvedWeather == nil ? nil : weather.celestialSky(
-            hour: timeOfDay, daysPassed: gameTime.clock.daysPassed, settings: skySettings
+        session.renderer.regionEmittance = weather.regionEmittance(
+            for: session.renderer.emittanceRegions, hour: session.timeOfDay
         )
-        if let links = imageSpaceLinks {
-            precipitationTuning = PrecipitationTuning(record: weather.precipitationParticles(
-                in: links.records, plugin: links.weatherPlugin
-            ))
+        session.sky.currentResolvedWeather = weather.resolvedWeather?
+            .applyingStormSkyDarkening()
+        session.sky.celestialSky = session.sky.currentResolvedWeather == nil ? nil : weather
+            .celestialSky(
+                hour: session.timeOfDay,
+                daysPassed: session.gameTime.clock.daysPassed,
+                settings: session.sky.skySettings
+            )
+        if let links = session.sky.imageSpaceLinks {
+            session.sky
+                .precipitationTuning = PrecipitationTuning(record: weather
+                    .precipitationParticles(
+                        in: links.records,
+                        plugin: links.weatherPlugin
+                    ))
         }
         applyScriptParticles(deltaTime: deltaTime)
     }
 
     public func updateWeatherFromWallClock() {
-        let delta = weatherClock.advance(to: renderer.wallClock.now, paused: worldSimPaused)
+        let delta = session.sky.weatherClock.advance(
+            to: session.renderer.wallClock.now,
+            paused: session.worldSimPaused
+        )
         updateWeather(deltaTime: delta)
     }
 
     /// A script's `SPGD` replaces the weather's particle look while it shows, and adds
     /// its rain or snow to the weather's.
     private func applyScriptParticles(deltaTime: Float) {
-        scriptParticles.advance(deltaTime)
-        guard let record = scriptParticles.record else { return }
-        precipitationTuning = PrecipitationTuning(record: record)
-        if var resolved = currentResolvedWeather {
-            resolved.precipitation = scriptParticles.adding(to: resolved.precipitation)
-            currentResolvedWeather = resolved
+        session.sky.scriptParticles.advance(deltaTime)
+        guard let record = session.sky.scriptParticles.record else { return }
+        session.sky.precipitationTuning = PrecipitationTuning(record: record)
+        if var resolved = session.sky.currentResolvedWeather {
+            resolved.precipitation = session.sky.scriptParticles.adding(to: resolved.precipitation)
+            session.sky.currentResolvedWeather = resolved
         }
     }
 
     /// A load or a new game drops the fade and the particles a script left running.
     public func clearScriptScreenEffects() {
-        imageSpace.screenFade = ScreenFade()
-        scriptParticles = ScriptParticleGeometry()
+        session.imageSpace.screenFade = ScreenFade()
+        session.sky.scriptParticles = ScriptParticleGeometry()
     }
 
     /// Ages the running modifiers and resolves the baseline from the interior cell or
     /// the weather blend (docs/rendering/image-space.md).
     public func updateImageSpace(deltaTime: Float) {
-        imageSpace.modifiers.advance(deltaTime)
-        imageSpace.screenFade.advance(deltaTime)
-        guard let links = imageSpaceLinks else {
-            imageSpace.baseline = .none
-            renderer.volumetricLight = .fallback
+        session.imageSpace.modifiers.advance(deltaTime)
+        session.imageSpace.screenFade.advance(deltaTime)
+        guard let links = session.sky.imageSpaceLinks else {
+            session.imageSpace.baseline = .none
+            session.renderer.volumetricLight = .fallback
             return
         }
-        renderer.volumetricLight = if links.interior == nil, weatherEnabled, let weather {
+        session.renderer.volumetricLight = if
+            links.interior == nil, session.sky.weatherEnabled,
+            let weather = session.weather
+        {
             weather.volumetricLight(
-                hour: timeOfDay, records: links.records, plugin: links.weatherPlugin
+                hour: session.timeOfDay, records: links.records, plugin: links.weatherPlugin
             )
         } else {
             .fallback
         }
-        let underwater = renderer.cameraWaterImageSpace
+        let underwater = session.renderer.cameraWaterImageSpace
         let context: ImageSpaceContext = if let underwater {
             .underwater(imageSpace: underwater)
         } else if let interior = links.interior {
             .interior(cellImageSpace: interior.imageSpace)
-        } else if weatherEnabled, let weather {
-            weather.imageSpaceContext(hour: timeOfDay)
+        } else if session.sky.weatherEnabled, let weather = session.weather {
+            weather.imageSpaceContext(hour: session.timeOfDay)
         } else {
             .none
         }
         let plugin = underwater == nil
             ? links.interior?.plugin ?? links.weatherPlugin
             : links.weatherPlugin
-        imageSpace.baseline = BaselineImageSpaceResolver.resolve(context) {
+        session.imageSpace.baseline = BaselineImageSpaceResolver.resolve(context) {
             links.resolve($0, plugin: plugin)
         }
     }

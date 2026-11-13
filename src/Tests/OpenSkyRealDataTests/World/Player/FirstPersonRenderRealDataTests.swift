@@ -54,8 +54,8 @@ struct FirstPersonRenderRealDataTests {
         Self.frameFirstPerson(gameSession, feet: feet)
         let empty = try Self.frame(renderer)
 
-        try gameSession.setPlayerBody(assembled.body)
-        try gameSession.setPlayerFirstPersonRig(assembled.arms)
+        try gameSession.rigSteps.setPlayerBody(assembled.body)
+        try gameSession.rigSteps.setPlayerFirstPersonRig(assembled.arms)
         Self.drive(assembled, feet: feet, input: CameraInput(dt: 1.0 / 120))
         Self.place(assembled, gameSession: gameSession, feet: feet)
         // Sheathed, the first-person idle keeps the hands below the view, as in the game.
@@ -165,7 +165,7 @@ struct FirstPersonRenderRealDataTests {
         #expect(renderer.areFirstPersonArmsVisible)
         #expect(!renderer.isPlayerBodyVisible)
 
-        gameSession.setMovementMode(.thirdPerson)
+        gameSession.movementSteps.setMovementMode(.thirdPerson)
         let thirdPerson = try frame(renderer)
         #expect(!renderer.areFirstPersonArmsVisible)
         #expect(renderer.isPlayerBodyVisible)
@@ -175,7 +175,7 @@ struct FirstPersonRenderRealDataTests {
         )
         #expect(thirdPerson != firstPerson, "the camera mode changed nothing")
 
-        gameSession.setMovementMode(.walk)
+        gameSession.movementSteps.setMovementMode(.walk)
         let returned = try frame(renderer)
         #expect(renderer.areFirstPersonArmsVisible)
         #expect(!renderer.isPlayerBodyVisible)
@@ -184,11 +184,11 @@ struct FirstPersonRenderRealDataTests {
 
         // Fly shows the body too, so a developer can look at the character; it
         // never shows the arms.
-        gameSession.setMovementMode(.fly)
+        gameSession.movementSteps.setMovementMode(.fly)
         _ = try frame(renderer)
         #expect(!renderer.areFirstPersonArmsVisible)
         #expect(renderer.isPlayerBodyVisible)
-        gameSession.setMovementMode(.walk)
+        gameSession.movementSteps.setMovementMode(.walk)
     }
 
     /// Equipping reaches both rigs: two rigs assembled from the same install, one
@@ -214,8 +214,8 @@ struct FirstPersonRenderRealDataTests {
                 device: device, root: root, equipped: equipped
             )
             drawWeapon(fresh, feet: feet, handType: handType)
-            try gameSession.setPlayerBody(fresh.body)
-            try gameSession.setPlayerFirstPersonRig(fresh.arms)
+            try gameSession.rigSteps.setPlayerBody(fresh.body)
+            try gameSession.rigSteps.setPlayerFirstPersonRig(fresh.arms)
             place(fresh, gameSession: gameSession, feet: feet)
             try frames.append(frame(renderer))
             report.append(

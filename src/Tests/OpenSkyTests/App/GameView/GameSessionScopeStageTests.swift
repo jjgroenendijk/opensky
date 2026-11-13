@@ -33,7 +33,7 @@ struct GameSessionScopeStageTests {
         )
         #expect(scope.stage != nil)
         scope.start()
-        #expect(gameSession.animationEvents != nil)
+        #expect(gameSession.audio.animationEvents != nil)
         _ = scope.scripts
         _ = scope.inventory
         _ = scope.magic

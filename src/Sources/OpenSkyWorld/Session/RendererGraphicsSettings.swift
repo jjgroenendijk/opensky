@@ -36,8 +36,16 @@ extension PostEffectSettings {
 extension GameSession {
     /// The renderer's GPU features, and the tone mapping the frame input carries.
     public func applyGraphicsSettings(_ store: PlayerSettingsStore) {
-        renderer.applyGraphicsSettings(store)
-        imageSpace.toneMapping.enabled = store.bool(.toneMapping)
+        GraphicsSteps(session: self).apply(store)
+    }
+
+    struct GraphicsSteps {
+        let session: GameSession
+
+        func apply(_ store: PlayerSettingsStore) {
+            session.renderer.applyGraphicsSettings(store)
+            session.imageSpace.toneMapping.enabled = store.bool(.toneMapping)
+        }
     }
 }
 

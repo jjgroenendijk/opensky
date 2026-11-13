@@ -77,6 +77,12 @@ either. The check compares it with the lines its hunk removes, with those keywor
 A smaller public surface adds no code to test. Example: `public func absorb()` becoming
 `func absorb()` counts nothing; `public let cap = 1` becoming `let cap = 2` counts.
 
+A hunk that only puts part names into member paths is not new either. When a large type is
+split into parts, its callers reach the same members through a part, and the check compares the
+words of the hunk with those of the lines it removes. The words may wrap onto other lines.
+Example: `session.breath.advance()` becoming `session.motion.breath.advance()` counts nothing;
+`session.breath = 1` becoming `session.motion.breath = 2` counts.
+
 The app and the CLI targets are outside both rules: they are not package modules, and the UI
 tests cover them. The modules declared with `composition()` and their interfaces, such as
 `OpenSkyMagicAdapters` and `OpenSkySessionInterface`, are outside too, for the reason the
@@ -88,6 +94,11 @@ A file that imports a Metal framework (`Metal`, `MetalKit`, `MetalFX`, or
 it, and the CI runner has no Metal 4, so its lines never run there. Metal-free render code,
 such as all of `OpenSkyRenderCore`, stays inside. Example: a change to a render pass that
 encodes draw calls counts nothing; a change to the culling math it calls counts as usual.
+
+A file that only extends types declared in such a file of the same module is outside too.
+Example: `GameSession+Movement.swift` holds no type of its own and extends `GameSession`, which
+needs a renderer. A file that also declares a type of its own, such as `SessionMotion`, stays
+inside.
 
 An adapter module with a test target, such as `OpenSkyProgressionAdapters` and its
 `OpenSkyProgressionAdaptersTests`, is inside both rules. Its tests build the adapter over the

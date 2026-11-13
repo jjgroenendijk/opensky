@@ -8,10 +8,12 @@
 #      and an accessor the compiler adds for a property wrapper is skipped.
 #
 # A file that imports a Metal framework is left out: only the GPU tests reach it, and
-# the CI runner has no Metal 4.
+# the CI runner has no Metal 4. So is a file that only extends types declared in such a
+# file of its module, such as a part of the game session, which needs a renderer.
 #
 # A block git sees as moved unchanged is not new: rename detection for lines. A line
-# that only gains or loses an access keyword, such as `public`, is not new either.
+# that only gains or loses an access keyword, such as `public`, is not new either, and
+# nor is a hunk that only reaches the same members through a part (`s.v` to `s.part.v`).
 #
 # Usage: tools/coverage/changed-lines.sh BASE DERIVED_DATA
 #        tools/coverage/changed-lines.sh --self-check
@@ -20,6 +22,8 @@ set -eu
 cd "$(git rev-parse --show-toplevel)"
 
 python3 - "$@" <<'PY'
+import difflib
+import glob
 import re
 import subprocess
 import sys
@@ -31,6 +35,9 @@ from swift_source import XCODE_ONLY, tested_wiring_modules, wiring_modules
 METAL_IMPORT = re.compile(r"^(?:@\w+\s+)*(?:(?:public|package|internal)\s+)?import\s+"
                           r"(?:Metal|MetalKit|MetalFX|MetalPerformanceShaders)\b", re.MULTILINE)
 ACCESS = re.compile(r"\b(?:public|open|package|internal|fileprivate|private)(?:\(set\))?\s+")
+TOKEN = re.compile(r"\w+|\S")
+# Part names put into a member path: `motion .` or `. motion`, with optional chaining.
+PATH_SEGMENT = re.compile(r"(?:\w+ (?:\? )?\. ?)+|(?: ?(?:\? )?\. \w+)+")
 HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 # The colours `git diff --color-moved` gets, so a moved added line is told apart.
@@ -39,43 +46,113 @@ COLOURS = ["-c", "color.diff.new=green", "-c", "color.diff.newMoved=blue",
            "-c", "color.diff.newMovedAlternative=blue"]
 
 
-def needs_metal(path):
+TOP_LEVEL = re.compile(r"^(?:@\w+(?:\([^)]*\))?\s+)*(?:(?:public|package|internal|fileprivate|private|"
+                       r"nonisolated|final|open|indirect)\s+)*(extension|class|struct|enum|actor|"
+                       r"protocol|typealias|func|var|let)\s+(\w+)", re.MULTILINE)
+METAL_TYPES = {}
+
+
+def read(path):
     try:
         with open(path, encoding="utf-8", errors="ignore") as source:
-            return bool(METAL_IMPORT.search(source.read()))
+            return source.read()
     except OSError:
-        return False
+        return ""
+
+
+def metal_types(module):
+    """The types declared in the files of `module` that import a Metal framework."""
+    if module not in METAL_TYPES:
+        names = set()
+        for path in sorted(glob.glob(f"src/Sources/{module}/**/*.swift", recursive=True)):
+            text = read(path)
+            if METAL_IMPORT.search(text):
+                names |= {name for kind, name in TOP_LEVEL.findall(text) if kind != "extension"}
+        METAL_TYPES[module] = names
+    return METAL_TYPES[module]
+
+
+def extends_only(text, types):
+    """True when every top-level declaration in `text` extends one of `types`."""
+    declarations = TOP_LEVEL.findall(text)
+    return bool(declarations) and all(kind == "extension" and name in types
+                                      for kind, name in declarations)
+
+
+def needs_metal(path):
+    text = read(path)
+    if METAL_IMPORT.search(text):
+        return True
+    parts = path.split("/")
+    return len(parts) > 3 and extends_only(text, metal_types(parts[2]))
 
 
 def without_access(text):
     return " ".join(ACCESS.sub("", text).split())
 
 
+def tokens(lines):
+    return [token for line in lines for token in TOKEN.findall(line)]
+
+
+def only_longer_paths(added, removed):
+    """True when the added lines read the removed ones with part names put into member paths,
+    such as `session.breath` becoming `session.motion.breath`, wrapped onto any lines."""
+    matcher = difflib.SequenceMatcher(a=tokens(removed), b=tokens(added), autojunk=False)
+    inserted = [" ".join(matcher.b[j1:j2]) for op, _, _, j1, j2 in matcher.get_opcodes()
+                if op != "equal"]
+    if any(op not in ("equal", "insert") for op, *_ in matcher.get_opcodes()):
+        return False
+    return bool(inserted) and all(PATH_SEGMENT.fullmatch(chunk) for chunk in inserted)
+
+
+def hunk_lines(hunk, removed):
+    """The numbers of the added lines in one hunk that are new code."""
+    if removed and only_longer_paths([text for _, text, _ in hunk], removed):
+        return set()
+    bare_removed = [without_access(text) for text in removed]
+    found = set()
+    for number, text, moved in hunk:
+        bare = without_access(text)
+        if bare in bare_removed:
+            bare_removed.remove(bare)
+        elif not moved:
+            found.add(number)
+    return found
+
+
 def changed_lines(diff, metal=needs_metal):
     """{path: {line}} for the lines a coloured `git diff -U0` adds, without moved ones, lines
-    whose only change in their hunk is an access keyword, and files that import Metal."""
-    changed, lines, number, removed = {}, None, 0, None
+    whose only change in their hunk is an access keyword or a longer member path, and files
+    that import Metal."""
+    changed, lines, number, removed, hunk = {}, None, 0, [], []
     skipped = XCODE_ONLY | (wiring_modules() - tested_wiring_modules())
+
+    def close_hunk():
+        if lines is not None:
+            lines.update(hunk_lines(hunk, removed))
+        hunk.clear()
+        removed.clear()
+
     for raw in diff.splitlines():
         text = ANSI.sub("", raw)
         if text.startswith("diff "):
-            removed = None
+            close_hunk()
+            lines = None
         elif text.startswith("+++ "):
             path = text[6:] if text.startswith("+++ b/") else ""
             usable = (path.startswith("src/Sources/") and path.endswith(".swift")
                       and path.split("/")[2] not in skipped and not metal(path))
             lines = changed.setdefault(path, set()) if usable else None
-        elif (hunk := HUNK.match(text)):
-            number, removed = int(hunk.group(1)), []
-        elif text.startswith("-") and removed is not None:
-            removed.append(without_access(text[1:]))
-        elif text.startswith("+") and lines is not None:
-            bare = without_access(text[1:])
-            if bare in removed:
-                removed.remove(bare)
-            elif not raw.startswith(MOVED):
-                lines.add(number)
+        elif (match := HUNK.match(text)):
+            close_hunk()
+            number = int(match.group(1))
+        elif text.startswith("-") and not text.startswith("--- "):
+            removed.append(text[1:])
+        elif text.startswith("+"):
+            hunk.append((number, text[1:], raw.startswith(MOVED)))
             number += 1
+    close_hunk()
     return changed
 
 
@@ -118,6 +195,8 @@ def self_check():
         f"{NEW}+a\n{NEW}+b\n{NEW}+c\n{MOVED}+moved\n"
         "@@ -8,3 +8,3 @@\n-public func h() {\n-public private(set) var v = 1\n-public let w = 1\n"
         f"{NEW}+func h() {{\n{NEW}+var v = 1\n{NEW}+let w = 2\n"
+        f"@@ -20,1 +20,2 @@\n-s?.f(a: a)\n{NEW}+s?.part.f(\n{NEW}+    a: a)\n"
+        f"@@ -30,1 +30,1 @@\n-s.v = 1\n{NEW}+s.part.v = 2\n"
         "diff --git a/src/Sources/OpenSky/B.swift b/src/Sources/OpenSky/B.swift\n"
         "+++ b/src/Sources/OpenSky/B.swift\n@@ -0,0 +1,1 @@\n+b\n"
         f"diff --git a/src/Sources/{untested}/C.swift b/src/Sources/{untested}/C.swift\n"
@@ -126,7 +205,7 @@ def self_check():
         "+++ b/src/Sources/OpenSkyRendering/Pass.swift\n@@ -0,0 +1,1 @@\n+d\n"
     )
     changed = changed_lines(diff, metal=lambda path: path.endswith("Pass.swift"))
-    if changed != {"src/Sources/OpenSkyMagic/A.swift": {1, 2, 3, 10}}:
+    if changed != {"src/Sources/OpenSkyMagic/A.swift": {1, 2, 3, 10, 30}}:
         sys.exit(f"[ERROR] diff-coverage self-check: changed lines {changed}")
     files = {
         "src/Sources/OpenSkyMagic/A.swift": {
@@ -140,6 +219,12 @@ def self_check():
     imports = ["import Metal\n", "public import MetalKit\n", "@preconcurrency import Metal\n"]
     others = ["import MetalTypes\n", "// import Metal\n", "import simd\n"]
     found = [bool(METAL_IMPORT.search(text)) for text in imports + others]
+    session = {"Session"}
+    parts = [extends_only("extension Session.Part {\n}\n", session),
+             extends_only("public extension Session {\n}\nextension Other {\n}\n", session),
+             extends_only("extension Session {\n}\nstruct Helper {\n}\n", session)]
+    if parts != [True, False, False]:
+        sys.exit(f"[ERROR] diff-coverage self-check: extension-only files {parts}")
     if result != expected or ranges([3, 4, 5, 9]) != "3-5, 9" or found != [True] * 3 + [False] * 3:
         sys.exit(f"[ERROR] diff-coverage self-check: {result}")
     # A Quick run kept after the last source change merges in; an older GPU run does not.

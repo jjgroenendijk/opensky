@@ -50,12 +50,12 @@ struct GameSessionFrameInputTests {
         _ = try renderer.renderOffscreen(width: Self.width, height: Self.height)
         let before = renderer.projectionMatrix
 
-        gameSession.setMovementMode(.walk)
-        gameSession.setFirstPersonFOVY(radians: 1.2)
+        gameSession.movementSteps.setMovementMode(.walk)
+        gameSession.rigSteps.setFirstPersonFOVY(radians: 1.2)
         #expect(renderer.projectionMatrix == before)
         _ = try renderer.renderOffscreen(width: Self.width, height: Self.height)
 
-        #expect(renderer.frameInput.fovYRadians == gameSession.firstPersonCamera.fovYRadians)
+        #expect(renderer.frameInput.fovYRadians == gameSession.rigs.firstPersonCamera.fovYRadians)
         #expect(renderer.frameInput.fovYRadians != FirstPersonCamera.defaultFOVYRadians)
         #expect(renderer.projectionMatrix != before)
     }
@@ -65,13 +65,13 @@ struct GameSessionFrameInputTests {
     @MainActor
     func aFlyTeleportThenWalkStandsOnTheSpot() throws {
         let gameSession = try Self.makeSession()
-        gameSession.setMovementMode(.fly)
+        gameSession.movementSteps.setMovementMode(.fly)
         let spot = SIMD3<Float>(100, -50, 68)
-        gameSession.reseedMovement(camera: .teleport(placement: .init(
+        gameSession.movementSteps.reseedMovement(camera: .teleport(placement: .init(
             position: spot,
             rotation: .zero
         )))
-        gameSession.setMovementMode(.walk)
+        gameSession.movementSteps.setMovementMode(.walk)
         #expect(simd_distance(gameSession.walkController.feetPosition, spot) < 0.01)
     }
 

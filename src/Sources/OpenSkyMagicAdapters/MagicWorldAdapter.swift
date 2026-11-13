@@ -217,7 +217,8 @@ final class MagicFrameSteps {
             self?.archetypeEffects.run(coordinator?.frameStep.advanceEffects(delta: delta) ?? [])
             self?.heldMagic.publishMagicLights()
             self?.heldMagic.publishSummonFades()
-            gameSession?.isPlayerParalysed = coordinator?.archetypeActions.influence(of: .player)
+            gameSession?.motion.isPlayerParalysed = coordinator?.archetypeActions
+                .influence(of: .player)
                 .isParalysed ?? false
             let scales = coordinator?.timeScales ?? .normal
             gameSession?.magicTimeScale = scales.world

@@ -61,7 +61,7 @@ enum StreamingGateSupport {
         let session = try GameSession(
             view: makeView(), scene: RenderScene(instances: []), movementConfiguration: .synthetic
         )
-        session.worldAudio = WorldAudioEngine()
+        session.audio.worldAudio = WorldAudioEngine()
         return session
     }
 

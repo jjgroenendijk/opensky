@@ -9,15 +9,15 @@ import OpenSkyRendering
 import OpenSkyWorldInterface
 public import OpenSkyWorldState
 
-extension GameSession {
+extension GameSession.ClockSteps {
     /// Authoritative game clock. Setting it wholesale (save load, tests)
     /// resets the weather's elapsed-hours mark so a restored date does not
     /// register as months of weather time.
     public var gameClock: GameClock {
-        get { gameTime.clock }
-        set {
-            gameTime.clock = newValue
-            gameTime.weatherGameSecondsMark = nil
+        get { session.gameTime.clock }
+        nonmutating set {
+            session.gameTime.clock = newValue
+            session.gameTime.weatherGameSecondsMark = nil
         }
     }
 
@@ -25,7 +25,7 @@ extension GameSession {
     /// vanilla default 20 when nothing resolves it. Clamping happens in
     /// `GameClock.advance`.
     public var currentTimescale: Float {
-        gameTime.globalResolution?.floatValue(editorID: GameClock.timescaleEditorID)
+        session.gameTime.globalResolution?.floatValue(editorID: GameClock.timescaleEditorID)
             ?? GameClock.defaultTimescale
     }
 
@@ -34,39 +34,42 @@ extension GameSession {
     /// carries no jump on resume. The offscreen path deliberately never calls
     /// this, so a fixed clock renders deterministically.
     public func advanceGameClockFromWallClock() {
-        gameTime.advanceRealTime(to: renderer.wallClock.now)
-        let delta = gameTime.frameClock.advance(
-            to: renderer.wallClock.now, paused: worldSimPaused
+        session.gameTime.advanceRealTime(to: session.renderer.wallClock.now)
+        let delta = session.gameTime.frameClock.advance(
+            to: session.renderer.wallClock.now, paused: session.worldSimPaused
         )
-        gameTime.clock.advance(wallDelta: delta, timescale: currentTimescale)
+        session.gameTime.clock.advance(wallDelta: delta, timescale: currentTimescale)
     }
 
     /// Per-frame world simulation tick, after the clock advances, so a script sees this
     /// frame's time. While paused `worldSimClock` returns zero, which is no advance.
     public func updateWorldSimFromWallClock() {
-        let delta = worldSimClock.advance(
-            to: renderer.wallClock.now, paused: worldSimPaused
+        let delta = session.worldSimClock.advance(
+            to: session.renderer.wallClock.now, paused: session.worldSimPaused
         )
-        updateWorldSim(deltaTime: delta * effectiveWorldTimeScale)
+        updateWorldSim(deltaTime: delta * session.effectiveWorldTimeScale)
     }
 
     /// Seconds of menu pause since the last call; zero while the world runs.
     public func consumeMenuTime() -> Float {
-        menuTimeClock.advance(to: renderer.wallClock.now, paused: !worldSimPaused)
+        session.menuTimeClock.advance(
+            to: session.renderer.wallClock.now,
+            paused: !session.worldSimPaused
+        )
     }
 
     /// Times only the world callback, excluding the renderer clock advance.
     /// Both the live and offscreen loops use this seam so the fly benchmark
     /// measures the same Papyrus VM work the shipping frame loop performs.
     public func updateWorldSim(deltaTime: Float) {
-        assetDrains(())
-        guard !worldTick.isEmpty else {
-            lastScriptUpdateMS = 0
+        session.assetDrains(())
+        guard !session.worldTick.isEmpty else {
+            session.lastScriptUpdateMS = 0
             return
         }
         let started = Stopwatch()
-        worldTick(deltaTime)
-        lastScriptUpdateMS =
+        session.worldTick(deltaTime)
+        session.lastScriptUpdateMS =
             started.milliseconds
     }
 
@@ -75,9 +78,9 @@ extension GameSession {
     /// zero and a single step is capped at one day, preserving the bounds the
     /// old wrap heuristic enforced.
     public func consumeElapsedGameHours() -> Float {
-        defer { gameTime.weatherGameSecondsMark = gameTime.clock.totalGameSeconds }
-        guard let mark = gameTime.weatherGameSecondsMark else { return 0 }
-        let hours = (gameTime.clock.totalGameSeconds - mark) / GameClock.secondsPerHour
+        defer { session.gameTime.weatherGameSecondsMark = session.gameTime.clock.totalGameSeconds }
+        guard let mark = session.gameTime.weatherGameSecondsMark else { return 0 }
+        let hours = (session.gameTime.clock.totalGameSeconds - mark) / GameClock.secondsPerHour
         return Float(min(max(0, hours), 24))
     }
 }

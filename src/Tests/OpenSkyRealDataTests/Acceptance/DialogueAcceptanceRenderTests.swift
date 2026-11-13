@@ -145,11 +145,12 @@ struct DialogueAcceptanceRenderTests {
     @MainActor
     private static func engageTheDialogueCamera(_ gameSession: GameSession) throws -> [UInt8] {
         let renderer = gameSession.renderer
-        let head = gameSession.playerEyePosition + gameSession.freeFlyCamera.forward * 140
-        gameSession.setDialogueCameraFocus(DialogueCameraFocus(
+        let head = gameSession.dialogueCameraSteps.playerEyePosition + gameSession.freeFlyCamera
+            .forward * 140
+        gameSession.dialogueCameraSteps.setDialogueCameraFocus(DialogueCameraFocus(
             headPosition: head
         ))
-        #expect(gameSession.isDialogueCameraEngaged)
+        #expect(gameSession.dialogueCameraSteps.isDialogueCameraEngaged)
         return try FirstPersonRenderRealDataTests.frame(renderer)
     }
 

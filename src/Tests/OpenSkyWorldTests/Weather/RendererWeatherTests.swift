@@ -91,12 +91,12 @@ struct RendererWeatherTests {
         let active = try ShadowSceneFixture.readPixels(
             texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
         )
-        gameSession.weatherEnabled = false
+        gameSession.sky.weatherEnabled = false
         let disabled = try ShadowSceneFixture.readPixels(
             texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
         )
         #expect(active != disabled)
-        #expect(gameSession.currentResolvedWeather == nil)
+        #expect(gameSession.sky.currentResolvedWeather == nil)
         #expect(gameSession.wind == .calm)
     }
 

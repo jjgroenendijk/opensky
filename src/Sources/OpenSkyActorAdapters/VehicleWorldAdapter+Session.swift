@@ -50,7 +50,7 @@ extension VehicleWorldAdapter {
             // Only the end of a ride frees the seat; a chair holds the player too.
             let rides = vehicles.lastPoses[.player] != nil
             if ridesPlayer, !rides {
-                gameSession?.playerSeat = nil
+                gameSession?.motion.playerSeat = nil
             }
             ridesPlayer = rides
         }

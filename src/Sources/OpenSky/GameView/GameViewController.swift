@@ -155,7 +155,7 @@ final class GameViewController: NSViewController, GameWindowContent {
             let newRenderer = newGameSession.renderer
             newGameSession.applyGraphicsSettings(playerSettingsStore)
             newGameSession.timeOfDay = TimeOfDaySettings.load()
-            try newGameSession.attachWeather(from: provider)
+            try newGameSession.weatherSteps.attachWeather(from: provider)
             newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
             mtkView.delegate = newRenderer
             gameSession = newGameSession

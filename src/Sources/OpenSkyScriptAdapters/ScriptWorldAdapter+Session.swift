@@ -71,7 +71,7 @@ extension ScriptWorldAdapter {
             self?.soundBindings.answerSoundWaits()
             self?.nodeBindings.answerPathWaits()
             self?.game.scripts.advance(delta: delta)
-            let menuTime = gameSession?.consumeMenuTime() ?? 0
+            let menuTime = gameSession?.clockSteps.consumeMenuTime() ?? 0
             if menuTime > 0 {
                 self?.game.scripts.advanceMenuTime(delta: menuTime)
             }
