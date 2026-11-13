@@ -45,6 +45,18 @@ nonisolated public enum GameSettingUnusedReason: String, CaseIterable, Sendable 
     /// Favour points. Skyrim keeps favour as a relationship rank from -4 to 4 that quests
     /// and scripts set, so there are no points to restore.
     case favourPoints
+    /// A flier's speed as a multiple of its ground gaits. Every flier in the vanilla data
+    /// has its own flying movement type with its own speeds, so no speed is derived.
+    case groundFlight
+    /// The jump height while swimming. A swimmer cannot jump: the jump key raises it
+    /// toward the surface instead.
+    case swimJump
+    /// Ingredient use counts. The install adds `iIngredientAlchemyUses` (0) uses per brew, so
+    /// the count never reaches the threshold that teaches an effect, and its default skill
+    /// use is never given.
+    case ingredientUses
+    /// Settings the game binary holds but no code path reads, as OpenSky observed.
+    case neverRead
 }
 
 nonisolated public enum GameSettingsUnused: Sendable {
@@ -65,6 +77,16 @@ nonisolated public enum GameSettingsUnused: Sendable {
         .firearms: firearmsSettings,
         .falloutSystems: falloutSystemsSettings,
         .oblivion: oblivionSettings,
+        .groundFlight: ["fMoveFlyRunMult", "fMoveFlyWalkMult"],
+        .swimJump: ["fJumpSwimmingMult"],
+        .ingredientUses: [
+            "fDefaultIngredientSkillUseModifier", "iIngredientAlchemyUses",
+            "iIngredientUseEffectThreshold"
+        ],
+        .neverRead: [
+            "fCombatItemRestoreTimer", "fCombatThreatProximityExplosionAvoidTime",
+            "fConcussionTimer", "fGuardPackageAttackRadiusMult", "iMessIntactLimbDismemberChance"
+        ],
         .wikiUnused: wikiUnusedSettings,
         .creations: creationsSettings,
         .consoles: consolesSettings,
@@ -294,10 +316,7 @@ nonisolated private let falloutSystemsSettings = [
 ]
 
 nonisolated private let oblivionSettings = [
-    "fMoveEncumEffect",
-    "fMoveEncumEffectNoWeapon",
     "fWortFailSkillUseMagnitude",
-    "iIngredientWortcraftUses",
     "sHolidayEmperorsBirthday",
     "sHolidayFirstPlanting",
     "sHolidayHarvestsEnd",
