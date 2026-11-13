@@ -129,6 +129,7 @@ With `L` the Lockpicking skill, clamped to 0 to 100:
 | Quantity | Formula | Source |
 | --- | --- | --- |
 | Sweet-spot width | `fSweetSpot<band> * (0.82 + fLockpickSkillSweetSpotMult * L) * perk` | UESP; 0.82 has no GMST |
+| Sweet-spot widening | `fLockpickBrokenPicksMult` degrees for each pick this lock broke; 0 in the install | OpenSky's reading |
 | Partial-zone width | `fPartialPick<band> * (fLockpickSkillPartialPickBase + fLockpickSkillPartialPickMult * L)` | UESP and GMSTs |
 | Pick life while straining | 2, 1, 0.75, 0.5, 0.25 seconds, times `1 + 0.5 * L / 100` | UESP; no GMST |
 

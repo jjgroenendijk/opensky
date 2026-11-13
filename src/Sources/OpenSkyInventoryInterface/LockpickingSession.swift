@@ -70,7 +70,8 @@ nonisolated public struct LockpickingSession: Equatable, Sendable {
     /// falling to 0 across a partial zone, 0 beyond it.
     func allowedRotation(at angle: Float) -> Float {
         let distance = abs(angle - sweetSpotCenter)
-        let halfSweet = parameters.sweetSpotWidth / 2
+        let widening = Float(picksBroken) * parameters.widthPerBrokenPick
+        let halfSweet = max(0, parameters.sweetSpotWidth + widening) / 2
         if distance <= halfSweet {
             return 1
         }
@@ -143,6 +144,8 @@ nonisolated public struct LockpickingParameters: Equatable, Sendable {
     /// sweet spot. Zero starts it upright.
     public let startingArc: Float
     public let halfArc: Float
+    /// `fLockpickBrokenPicksMult`: degrees the sweet spot widens for each pick this lock broke.
+    public let widthPerBrokenPick: Float
 
     public init(
         difficulty: LockDifficulty,
@@ -151,7 +154,8 @@ nonisolated public struct LockpickingParameters: Equatable, Sendable {
         breakSeconds: Float,
         unbreakable: Bool = false,
         startingArc: Float = 0,
-        halfArc: Float = LockpickingSettings.documentedDefaults.halfArc
+        halfArc: Float = LockpickingSettings.documentedDefaults.halfArc,
+        widthPerBrokenPick: Float = 0
     ) {
         self.difficulty = difficulty
         self.sweetSpotWidth = sweetSpotWidth
@@ -160,6 +164,7 @@ nonisolated public struct LockpickingParameters: Equatable, Sendable {
         self.unbreakable = unbreakable
         self.startingArc = startingArc
         self.halfArc = halfArc
+        self.widthPerBrokenPick = widthPerBrokenPick
     }
 }
 

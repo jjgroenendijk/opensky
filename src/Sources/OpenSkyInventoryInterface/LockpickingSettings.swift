@@ -29,6 +29,8 @@ nonisolated public struct LockpickingSettings: Equatable, Sendable {
     public var breakSkillMult: Float
     /// The pick's travel, in degrees either side of upright. UESP: "a 180 degree arc".
     public var halfArc: Float
+    /// `fLockpickBrokenPicksMult`: sweet-spot degrees added per pick broken on the lock.
+    public var brokenPicksMult: Float = 0
     /// `iLockLevelMaxVeryEasy`: the highest lock level that is still Novice.
     public var noviceMaximum: UInt8 = 1
 
@@ -91,6 +93,7 @@ nonisolated public struct LockpickingSettings: Equatable, Sendable {
                 ?? settings.successUses[band]
         }
         settings.brokenUses = float("fSkillUsageLockPickBroken") ?? settings.brokenUses
+        settings.brokenPicksMult = float("fLockpickBrokenPicksMult") ?? settings.brokenPicksMult
         settings.sweetSpotSkillMult = float("fLockpickSkillSweetSpotMult")
             ?? settings.sweetSpotSkillMult
         settings.partialSkillBase = float("fLockpickSkillPartialPickBase")
