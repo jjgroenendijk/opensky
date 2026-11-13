@@ -4,6 +4,7 @@
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 import simd
@@ -264,10 +265,15 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
 }
 
 extension CombatLoopWorldPart {
+    func combatReaction(toPlayerOf key: ReferenceKey) -> ActorReaction? {
+        shared.world.reaction(of: key, toward: .player)
+    }
+
     func makeRuntime(_ data: CombatSessionData) -> CombatLoopRuntime {
         let runtime = CombatLoopRuntime(settings: data.combat, world: self)
         runtime.skillUses = data.skillUses
         runtime.staggers = data.staggers
+        runtime.friendlyFire = CombatLoopRuntime.FriendlyFire(settings: data.friendlyFire)
         runtime.combatAI = data.combatAI
         runtime.applyingGameSettings = shared.appliesCombatGameSettings
         return runtime

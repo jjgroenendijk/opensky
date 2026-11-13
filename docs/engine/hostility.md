@@ -100,3 +100,26 @@ nothing until something asks.
 Seeding walks the actor's template chain once per actor per session. The derivation itself is not
 cached. It is two component reads, a pair lookup, and a walk of two short lists. A cache would have
 to be cleared on every world state write, and actor values are written sixty times a second.
+
+## Friendly fire
+
+A blow from the player on a friend or an ally does not always make it hostile. The actor counts
+the player's blows and attacks only when the count passes what it allows
+([Friendly Fire](https://ck.uesp.net/wiki/Friendly_Fire)):
+
+| Reaction to the player | In combat | Out of combat |
+| --- | --- | --- |
+| Friend | `iFriendHitCombatAllowed`, 3 | `iFriendHitNonCombatAllowed`, 0 |
+| Ally | `iAllyHitCombatAllowed`, 1000 | `iAllyHitNonCombatAllowed`, 3 |
+| Neutral or enemy | attacks at once | attacks at once |
+
+- A count of 1000 or more has no limit. The ally's count then stays at 1.
+- A blow less than `fFriendMinimumLastHitTime` (0.5 seconds) after the last one does not count.
+- A count is forgotten `fFriendHitTimer` (10 seconds) after its last blow.
+- "In combat" means the struck actor is fighting at that moment.
+
+For example, the player's arrow hits a friendly guard who fights a dragon. The guard counts one
+blow and keeps fighting the dragon. The fourth blow, each more than half a second apart and within
+10 seconds, turns the guard on the player.
+
+The player's followers are left out: a blow on an actor the player commands never provokes it.

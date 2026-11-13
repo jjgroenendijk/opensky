@@ -2,13 +2,19 @@
 
 @testable public import OpenSkyCombat
 @testable public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// A `CombatLoopWorld` whose actors have nothing to cast, so every fight is a
-/// melee fight. A conformer gets the four casting members from here.
+/// melee fight. A conformer gets the four casting members from here, and no actor
+/// reacts to the player, so no hit counts as friendly fire.
 @MainActor
 public protocol NoCasterCombatWorld: CombatLoopWorld {}
 
 extension NoCasterCombatWorld {
+    public func combatReaction(toPlayerOf _: ReferenceKey) -> ActorReaction? {
+        nil
+    }
+
     public func combatCasting(of _: ReferenceKey) -> CombatCastingProfile {
         .none
     }

@@ -135,6 +135,10 @@ extension CombatCastingChain: CombatLoopWorld {
         MeleeAttacker(key: .player, feet: playerFeet, facing: 0)
     }
 
+    public func combatReaction(toPlayerOf _: ReferenceKey) -> ActorReaction? {
+        nil
+    }
+
     public func combatActors() -> [CombatActorObservation] {
         [CombatActorObservation(
             key: Self.caster, feet: casterFeet, isDead: casterIsDead, name: "Caster"

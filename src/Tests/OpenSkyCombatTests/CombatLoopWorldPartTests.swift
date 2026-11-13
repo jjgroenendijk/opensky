@@ -61,6 +61,11 @@ struct CombatLoopWorldPartTests {
         #expect(!Self.coordinator(world).loopWorld.combatAssists(Self.ally, ally: Self.foe))
     }
 
+    @Test func anActorWithoutAReactionCountsAsNoFriendOfThePlayer() {
+        let part = Self.coordinator(FakeCoordinatorWorld()).loopWorld
+        #expect(part.combatReaction(toPlayerOf: Self.ally) == nil)
+    }
+
     @Test func theBlockAndItsTermsComeFromTheSharedParts() {
         let world = FakeCoordinatorWorld()
         world.perkMultipliers[Self.foe] = 0.5

@@ -45,6 +45,10 @@ public final class CombatLoopRuntime: CombatControlling {
     var skillUses = MeleeSkillUseSettings.vanilla
     /// Stagger strength and chance of an NPC blow.
     public var staggers = StaggerSettings.vanilla
+    /// The player's blows on friends and allies, which turn hostile only past a count.
+    var friendlyFire = FriendlyFire()
+    /// Seconds of fixed steps run, the friendly fire clock.
+    private(set) var stepSeconds: Double = 0
     /// Flee distances and the ally follow radius.
     public var combatAI = CombatAISettings.vanilla
     /// Whether the advance, range, healing, shout, and flight settings reach the machines.
@@ -347,6 +351,7 @@ public final class CombatLoopRuntime: CombatControlling {
     /// follows the edge, the flash decays, and the caps are enforced.
     private func step() {
         guard let world else { return }
+        stepSeconds += Double(Self.fixedStepSeconds)
         let hostility = driveBehaviors(world: world)
         state = CombatLoopState.derive(
             actors: world.combatActors(),
@@ -417,12 +422,24 @@ extension CombatLoopRuntime {
     /// puts it in the fight. A hit that staggered also interrupts what it was doing.
     public func notePlayerHits(_ targets: [ReferenceKey], staggered: Set<ReferenceKey> = []) {
         for target in targets where target != .player && commanders[target] != .player {
+            guard turnsOnPlayer(target) else { continue }
             provoke(target)
             provoked.insert(target)
             if staggered.contains(target) {
                 noteStagger(of: target)
             }
         }
+    }
+
+    /// False while a friend or an ally takes the blow without fighting back.
+    private func turnsOnPlayer(_ target: ReferenceKey) -> Bool {
+        guard hostility(of: target) != .hostile else { return true }
+        return friendlyFire.noteHit(
+            on: target,
+            reaction: world?.combatReaction(toPlayerOf: target),
+            inCombat: behaviors[target]?.phase.isEngaged == true,
+            now: stepSeconds
+        )
     }
 
     /// The `iStaggerAttackChance` roll for a hit with no magnitude of its own, an arrow.
