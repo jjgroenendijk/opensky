@@ -53,6 +53,10 @@ extension MenuScreensWorldAdapter {
         craftingDesk.craftingButtonTexts
     }
 
+    public var craftingTabTexts: GameSettingTexts<CraftingTabText> {
+        craftingDesk.craftingTabTexts
+    }
+
     public var craftingRecipes: [CraftingMenuRecipe] {
         craftingDesk.craftingRecipes
     }

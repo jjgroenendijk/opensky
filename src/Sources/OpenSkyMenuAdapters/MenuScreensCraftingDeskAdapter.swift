@@ -4,8 +4,8 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
-import OpenSkyMenusInterface
 public import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 
@@ -71,6 +71,10 @@ extension MenuScreensCraftingDeskAdapter {
     }
 
     var craftingButtonTexts: GameSettingTexts<CraftingButtonText> {
+        game.mapWorld.settingTexts()
+    }
+
+    var craftingTabTexts: GameSettingTexts<CraftingTabText> {
         game.mapWorld.settingTexts()
     }
 

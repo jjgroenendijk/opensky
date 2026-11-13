@@ -149,9 +149,10 @@ Using a station opens `Interface\craftingmenu.swf` over the session. The engine 
 `<sArmorSmithing>: <sSmithingMenuDescription>` at an armor table, and
 `<sAlchemy>: <sAlchemyMenuDescription>` at an alchemy lab. The lists are
 `/Menu/InventoryLists/CategoriesListHolder/List_mc` and `.../ItemsListHolder/List_mc`, the
-same list class as the [inventory menu](/engine/inventory-menu.md#list-data). OpenSky shows
-the recipes the player can make now, all recipes, and then one tab per category that has a
-recipe.
+same list class as the [inventory menu](/engine/inventory-menu.md#list-data). At a forge OpenSky
+shows the recipes the player can make now, all recipes, and then one tab per category that has
+a recipe. An improve bench has one tab: `sArmor` ("ARMOR") at an armour table and `sWeapons`
+("WEAPONS") at a grindstone. The alchemy lab's ingredient tab is `sIngredients` ("INGREDIENTS").
 
 A recipe's category comes from the item it makes:
 
@@ -175,7 +176,7 @@ settings `sGenericCraftKeywordName09` and `10` make no tab.
 
 The movie calls `CraftSelectedItem` or `CraftButtonPress` to make the selected recipe, and
 `CloseMenu` to leave, which closes the session. At an alchemy lab the movie lists the carried
-ingredients, with their known effects, on an Ingredients tab and a Chosen tab. Activate chooses or
+ingredients, with their known effects, on the ingredient tab and a Chosen tab. Activate chooses or
 drops an ingredient, a chosen one shows as equipped, and R brews. The game shows the item in 3D
 (`ShowItem3D`) and lets the player set an enchantment's charge; OpenSky answers those calls
 and does nothing.

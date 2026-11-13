@@ -106,7 +106,10 @@ struct MenuScreenCoordinatorTests {
     @Test func theUnlockKeyOnAShoutAsksBeforeASoulIsSpent() {
         let world = FakeMenuScreenWorld()
         world.categories = [ItemListCategory(label: "All", rows: [
-            ItemListRow(tag: 7, name: "Unrelenting Force"), ItemListRow(tag: 8, name: "Whirlwind Sprint")
+            ItemListRow(tag: 7, name: "Unrelenting Force"), ItemListRow(
+                tag: 8,
+                name: "Whirlwind Sprint"
+            )
         ])]
         world.shoutSteps = [7: .ask("Spend Soul?"), 8: .refuse("Dragon Souls are required.")]
         let menu = MagicMenuCoordinator(menuMode: MenuModeController(), world: world)
@@ -192,6 +195,21 @@ struct MenuScreenCoordinatorTests {
         #expect(menu.model.categories.map(\.label) == ["Can make", "All", "IRON", "STEEL"])
     }
 
+    @Test func anImproveBenchHasOneTabNamedForWhatItImproves() {
+        let world = FakeMenuScreenWorld()
+        let menu = CraftingMenuCoordinator(menuMode: MenuModeController(), world: world)
+        world.craftingStationName = "Armor Smithing: Improve"
+        world.craftingStation = CraftingStationInfo(
+            keywords: [], skill: nil, improves: true, improvesArmor: true
+        )
+        world.craftingRecipes = [CraftingMenuRecipe(
+            id: ResolvedFormID(plugin: "Skyrim.esm", objectID: 1), name: "Iron Helmet",
+            canMake: true
+        )]
+        #expect(menu.open())
+        #expect(menu.model.categories.map(\.label) == ["ARMOR"])
+    }
+
     /// At a lab the rows are the carried ingredients: E chooses one, R brews.
     @Test func anAlchemyLabListsIngredientsToChooseAndBrew() {
         let world = FakeMenuScreenWorld()
@@ -202,7 +220,7 @@ struct MenuScreenCoordinatorTests {
             CraftingMenuIngredient(id: FormID(0x11), name: "Blue Mountain Flower", isChosen: true)
         ]
         #expect(menu.open())
-        #expect(menu.model.categories.map(\.label) == ["Ingredients", "Chosen"])
+        #expect(menu.model.categories.map(\.label) == ["INGREDIENTS", "Chosen"])
         #expect(menu.model.rows.map(\.name) == ["Wheat", "Blue Mountain Flower"])
         menu.route(.button(.accept))
         menu.route(.button(.xButton))
