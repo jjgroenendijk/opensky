@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagicInterface
 @testable import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyRenderCore
@@ -44,6 +45,7 @@ final class FakeMenuScreenWorld: MenuScreenWorld, MenuInputConsumer {
     var enchantingTexts = GameSettingTexts<EnchantingMenuText>.vanilla
     var enchantRefusalText: String?
     var questions: [(text: String, answer: (Bool) -> Void)] = []
+    var shoutSteps: [Int: ShoutUnlockStep] = [:]
     var boxes: [String] = []
 
     func showHUDNotification(_ text: String) {
@@ -108,6 +110,15 @@ extension FakeMenuScreenWorld: MagicMenuWorld, GiftMenuWorld, CraftingMenuWorld 
     func readySpell(at index: Int, leftHand: Bool) -> String {
         actions.append("ready \(index) \(leftHand ? "left" : "right")")
         return "Readied"
+    }
+
+    func shoutUnlockStep(at index: Int) -> ShoutUnlockStep? {
+        shoutSteps[index]
+    }
+
+    func unlockShout(at index: Int) -> String {
+        actions.append("unlock \(index)")
+        return "Unlocked"
     }
 
     func giftCategories(actor: ReferenceKey, request: GiftMenuRequest) -> [ItemListCategory] {

@@ -144,6 +144,10 @@ public protocol MagicMenuListPort {
     var magicMenuCategoryOrder: [String] { get }
     var magicMenuActiveEffects: [String] { get }
     var magicMenuActiveEffectsTitle: String { get }
+    var magicMenuShouts: [MagicMenuSpell] { get }
+    func readyShout(at index: Int, texts: GameSettingTexts<ShoutMenuText>) -> String
+    func shoutUnlockStep(at index: Int, texts: GameSettingTexts<ShoutMenuText>) -> ShoutUnlockStep?
+    func unlockShout(at index: Int) -> String
 }
 
 /// Effects that act on the world when a spell or a weapon lands.
