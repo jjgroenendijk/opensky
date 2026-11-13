@@ -49,7 +49,7 @@ struct CellStreamerStartTests {
 
         runner.complete(Fixture.coordinate(5, 5), with: .success(Fixture.cellScene()))
         streamer.update(cameraPosition: start)
-        #expect(streamer.composedCellCount == 1)
+        #expect(streamer.coverage.composedCellCount == 1)
         #expect(framed.isEmpty)
     }
 
@@ -61,7 +61,7 @@ struct CellStreamerStartTests {
         runner.complete(Fixture.coordinate(0, 0), with: .success(Fixture.cellScene()))
         streamer.update(cameraPosition: Fixture.center)
         streamer.moveStart(to: CellGridManager.cellCenter(of: Fixture.coordinate(5, 5)))
-        #expect(streamer.composedCellCount == 1)
+        #expect(streamer.coverage.composedCellCount == 1)
         #expect(streamer.grid.center == Fixture.coordinate(0, 0))
     }
 }

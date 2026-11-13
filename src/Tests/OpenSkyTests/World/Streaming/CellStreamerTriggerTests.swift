@@ -50,7 +50,7 @@ struct CellStreamerTriggerTests {
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
         let recorder = TriggerRecorder()
-        streamer.onTriggerTransition.register(.scripts) { recorder.note($0) }
+        streamer.events.onTriggerTransition.register(.scripts) { recorder.note($0) }
         let scene = CellStreamerFixture.cellScene(
             location: .exterior(CellStreamerFixture.coordinate(0, 0)),
             triggerVolumes: TriggerStreamFixture.volumeSet([volume])
@@ -91,7 +91,8 @@ struct CellStreamerTriggerTests {
 
         Self.step(harness, feetAt: Self.inside)
         #expect(harness.recorder.log == ["enter"])
-        #expect(harness.streamer.occupiedTriggers == [TriggerStreamFixture.key(Self.volumeID)])
+        #expect(harness.streamer.doorState
+            .occupiedTriggers == [TriggerStreamFixture.key(Self.volumeID)])
 
         // Dwelling: several frames inside, including a small move that stays
         // inside, must not re-fire.
@@ -107,7 +108,7 @@ struct CellStreamerTriggerTests {
         Self.step(harness, feetAt: Self.inside)
         Self.step(harness, feetAt: Self.outside)
         #expect(harness.recorder.log == ["enter", "leave"])
-        #expect(harness.streamer.occupiedTriggers.isEmpty)
+        #expect(harness.streamer.doorState.occupiedTriggers.isEmpty)
 
         Self.step(harness, feetAt: Self.outside)
         Self.step(harness, feetAt: Self.outside + SIMD3<Float>(64, 0, 0))
@@ -124,7 +125,7 @@ struct CellStreamerTriggerTests {
         // so only the swept samples can see the visit.
         Self.step(harness, feetAt: Self.farSide)
         #expect(harness.recorder.log == ["enter", "leave"])
-        #expect(harness.streamer.occupiedTriggers.isEmpty)
+        #expect(harness.streamer.doorState.occupiedTriggers.isEmpty)
     }
 
     @Test
@@ -140,7 +141,7 @@ struct CellStreamerTriggerTests {
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 1)
         var log: [TriggerTransitionEvent] = []
-        streamer.onTriggerTransition.register(.scripts) { log.append($0) }
+        streamer.events.onTriggerTransition.register(.scripts) { log.append($0) }
         TriggerStreamFixture.settle(
             streamer: streamer, runner: runner, eye: Self.center
         ) { coordinate in
@@ -178,14 +179,14 @@ struct CellStreamerTriggerTests {
         harness.streamer.update(cameraPosition: TriggerStreamFixture.eye(feetAt: Self.inside))
         harness.streamer.update(cameraPosition: TriggerStreamFixture.eye(feetAt: Self.outside))
         #expect(harness.recorder.log.isEmpty)
-        #expect(harness.streamer.occupiedTriggers.isEmpty)
+        #expect(harness.streamer.doorState.occupiedTriggers.isEmpty)
 
         // Walking into the volume, then switching to fly, keeps containment:
         // the player never left, so no leave is fabricated.
         Self.step(harness, feetAt: Self.inside)
         harness.streamer.update(cameraPosition: TriggerStreamFixture.eye(feetAt: Self.inside))
         #expect(harness.recorder.log == ["enter"])
-        #expect(harness.streamer.occupiedTriggers.count == 1)
+        #expect(harness.streamer.doorState.occupiedTriggers.count == 1)
     }
 
     // MARK: - Streaming boundary
@@ -203,7 +204,7 @@ struct CellStreamerTriggerTests {
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 1)
         var log: [TriggerTransitionEvent] = []
-        streamer.onTriggerTransition.register(.scripts) { log.append($0) }
+        streamer.events.onTriggerTransition.register(.scripts) { log.append($0) }
         let away = SIMD3<Float>(boundaryX - 600, Self.center.y, 0)
         TriggerStreamFixture.settle(
             streamer: streamer, runner: runner, eye: TriggerStreamFixture.eye(feetAt: away)
@@ -238,7 +239,8 @@ struct CellStreamerTriggerTests {
     func unloadingTheCellFiresLeaveBeforeTheDetach() throws {
         let harness = try Self.makeHarness()
         let recorder = harness.recorder
-        harness.streamer.onCellDetached.register(.scripts) { _ in recorder.log.append("detach") }
+        harness.streamer.events.onCellDetached
+            .register(.scripts) { _ in recorder.log.append("detach") }
         Self.step(harness, feetAt: Self.inside)
         #expect(recorder.log == ["enter"])
 
@@ -246,7 +248,7 @@ struct CellStreamerTriggerTests {
         let departed = CellGridManager.cellCenter(of: CellStreamerFixture.coordinate(8, 0))
         Self.step(harness, feetAt: departed)
         #expect(recorder.log == ["enter", "leave", "detach"])
-        #expect(harness.streamer.occupiedTriggers.isEmpty)
+        #expect(harness.streamer.doorState.occupiedTriggers.isEmpty)
 
         // Containment was released once, not once per later frame.
         Self.step(harness, feetAt: departed)
@@ -257,7 +259,7 @@ struct CellStreamerTriggerTests {
 
     @Test
     func aNormalWalkingFrameNeedsNoSweepSamples() {
-        let samples = CellStreamer.sweepSamples(
+        let samples = CellStreamer.TriggerSteps.sweepSamples(
             from: .zero, to: SIMD3<Float>(12, 0, 0), radius: PlayerCapsule.standard.radius
         )
         #expect(samples.isEmpty)
@@ -265,12 +267,12 @@ struct CellStreamerTriggerTests {
 
     @Test
     func aLongTeleportSamplesAtMostTheCappedNumberOfPoses() throws {
-        let samples = CellStreamer.sweepSamples(
+        let samples = CellStreamer.TriggerSteps.sweepSamples(
             from: .zero,
             to: SIMD3<Float>(1_000_000, 0, 0),
             radius: PlayerCapsule.standard.radius
         )
-        #expect(samples.count == CellStreamer.maximumTriggerSweepSamples)
+        #expect(samples.count == CellStreamer.TriggerSteps.maximumTriggerSweepSamples)
         // Evenly spaced, endpoints excluded, ascending along the path.
         let first = try #require(samples.first)
         let last = try #require(samples.last)

@@ -92,11 +92,11 @@ extension FactionWorldAdapter: FactionWorld {
     }
 
     public func placedActorBase(of key: ReferenceKey) -> FormID? {
-        dependencies.streamer()?.residentActorPlacement(key: key)?.base
+        dependencies.streamer()?.residents.residentActorPlacement(key: key)?.base
     }
 
     public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
-        dependencies.streamer()?.cellLocation(of: key)
+        dependencies.streamer()?.residents.cellLocation(of: key)
     }
 }
 

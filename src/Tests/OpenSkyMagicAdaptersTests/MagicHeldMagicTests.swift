@@ -29,7 +29,7 @@ struct MagicHeldMagicTests {
     }
 
     @Test func livingActorsAreFoundAroundAMovedNPC() {
-        host.fakeStreamer.npcTransformResult = Self.moved
+        host.fakeStreamer.actors.npcTransformResult = Self.moved
         #expect(adapter.livingActors(near: Self.actor, radius: 150) == [.player])
         #expect(adapter.livingActors(near: Self.actor, radius: 50).isEmpty)
         #expect(adapter.livingActors(near: .player, radius: 150).isEmpty)
@@ -43,24 +43,24 @@ struct MagicHeldMagicTests {
     }
 
     @Test func aLetGoActorIsSetDownAndReleased() {
-        host.fakeStreamer.npcTransformResult = Self.moved
+        host.fakeStreamer.actors.npcTransformResult = Self.moved
         let adapter = adapter
         adapter.state.grabbedActors = [Self.actor]
         adapter.holdActor(Self.actor, at: nil)
-        #expect(host.fakeStreamer.steerRiddenActorCalls.count == 1)
-        #expect(host.fakeStreamer.releaseRiddenActorCalls == [Self.actor])
+        #expect(host.fakeStreamer.actors.steerRiddenActorCalls.count == 1)
+        #expect(host.fakeStreamer.actors.releaseRiddenActorCalls == [Self.actor])
         #expect(adapter.state.grabbedActors.isEmpty)
     }
 
     @Test func anActorTheStreamerCannotHoldStaysFree() {
         adapter.holdActor(Self.actor, at: SIMD3(1, 2, 3))
         adapter.holdActor(.player, at: SIMD3(1, 2, 3))
-        #expect(host.fakeStreamer.takeRiddenActorCalls == [Self.actor])
-        #expect(host.fakeStreamer.steerRiddenActorCalls.isEmpty)
+        #expect(host.fakeStreamer.actors.takeRiddenActorCalls == [Self.actor])
+        #expect(host.fakeStreamer.actors.steerRiddenActorCalls.isEmpty)
     }
 
     @Test func aThrownNPCIsKnockedDownAlongTheThrow() {
-        host.fakeStreamer.npcTransformResult = Self.moved
+        host.fakeStreamer.actors.npcTransformResult = Self.moved
         adapter.throwActor(Self.actor, along: SIMD3(1, 0, 0), force: 5)
         adapter.throwActor(Self.actor, along: SIMD3(0, 0, 1), force: 5)
         adapter.throwActor(.player, along: SIMD3(1, 0, 0), force: 5)

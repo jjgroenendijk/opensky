@@ -44,9 +44,9 @@ struct CellStreamerPapyrusTests {
         let store = WorldStateStore()
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: radius)
-        streamer.bind(to: store)
+        streamer.runtimeStates.bind(to: store)
         let resolver = PapyrusWorldFixture.resolver
-        streamer.onCellAttached.register(.scripts) { attachment in
+        streamer.events.onCellAttached.register(.scripts) { attachment in
             guard let location = attachment.scene.location else { return }
             world.attach(
                 cell: location,
@@ -55,7 +55,7 @@ struct CellStreamerPapyrusTests {
                 firstIntegration: attachment.isFirstIntegration
             )
         }
-        streamer.onCellDetached.register(.scripts) { world.detach(cell: $0) }
+        streamer.events.onCellDetached.register(.scripts) { world.detach(cell: $0) }
         return Harness(
             store: store, runner: runner, streamer: streamer, world: world, probe: probe
         )
@@ -166,7 +166,7 @@ struct CellStreamerPapyrusTests {
         // Recentering with settled coverage stages the new cell offscreen.
         let moved = CellCoordinate(x: 4, y: 0)
         harness.streamer.update(cameraPosition: Self.position(of: moved))
-        #expect(harness.streamer.isCoverageTransitionActive)
+        #expect(harness.streamer.coverage.isCoverageTransitionActive)
         try harness.runner.complete(moved, with: .success(Self.scriptedScene(at: moved)))
         harness.streamer.update(cameraPosition: Self.position(of: moved))
         PapyrusWorldFixture.drain(harness.world)
@@ -177,7 +177,7 @@ struct CellStreamerPapyrusTests {
 
         harness.runner.completeDistantLOD(moved, with: Self.lodScene())
         harness.streamer.update(cameraPosition: Self.position(of: moved))
-        #expect(!harness.streamer.isCoverageTransitionActive)
+        #expect(!harness.streamer.coverage.isCoverageTransitionActive)
         PapyrusWorldFixture.drain(harness.world)
         #expect(harness.world.attachedByCell[.exterior(moved)]?.count == 1)
         #expect(harness.probe.notes == Self.loadNotes + Self.loadNotes.dropFirst())
@@ -205,14 +205,17 @@ struct CellStreamerPapyrusTests {
             location: .interior(FormID(0x2000)),
             references: PapyrusWorldFixture.index([entry])
         )
-        harness.streamer.apply(transition: Self.transition(to: interior))
+        harness.streamer.transitions.apply(transition: Self.transition(to: interior))
         PapyrusWorldFixture.drain(harness.world)
         #expect(harness.probe.notes == Self.loadNotes)
         let handle = try #require(harness.world.instancesByKey.values.first)
 
         // Re-running the same transition as a rebuild swaps the scene under a
         // stationary player: same instance, no second OnLoad.
-        harness.streamer.apply(transition: Self.transition(to: interior), isRebuild: true)
+        harness.streamer.transitions.apply(
+            transition: Self.transition(to: interior),
+            isRebuild: true
+        )
         PapyrusWorldFixture.drain(harness.world)
         #expect(harness.world.instancesByKey.count == 1)
         #expect(harness.world.instancesByKey.values.first == handle)

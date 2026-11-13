@@ -47,7 +47,7 @@ struct SaveSessionFlowTests {
 
     @Test func conditionDataAndSaveContentsReadThePorts() {
         let world = RuntimeStateWorldAdapter(game: host, now: { Self.start })
-        host.fakeStreamer.residentReferencePlacesResult = ReferencePlaces()
+        host.fakeStreamer.residents.residentReferencePlacesResult = ReferencePlaces()
         let data = world.core.conditionData()
         #expect(data.formLists == nil)
         host.fakeWorldState.snapshotResult = .empty

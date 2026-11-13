@@ -43,7 +43,7 @@ struct CellStreamerRuntimeStateTests {
         let store = WorldStateStore()
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: radius)
-        streamer.bind(to: store)
+        streamer.runtimeStates.bind(to: store)
         return Harness(store: store, runner: runner, streamer: streamer)
     }
 
@@ -116,7 +116,7 @@ struct CellStreamerRuntimeStateTests {
         Self.settle(&harness, at: Self.position(of: cell))
         Self.disable(0x20, in: harness, at: cell)
 
-        harness.streamer.requestDoorTransition(
+        harness.streamer.transitions.requestDoorTransition(
             CellStreamerFixture.door(reference: 0x900, destination: 0x901, position: .zero)
         )
 
@@ -137,10 +137,10 @@ struct CellStreamerRuntimeStateTests {
         ))
         harness.completedCount = 1
         harness.streamer.update(cameraPosition: camera)
-        #expect(harness.streamer.residentCellCount == 1)
+        #expect(harness.streamer.coverage.residentCellCount == 1)
 
         Self.disable(0x30, in: harness, at: cell)
-        #expect(harness.streamer.queuedRebuildCount == 1)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 1)
 
         // The rebuild reaches the runner with the delta, and the cell keeps
         // rendering its old scene while that build is in flight.
@@ -148,9 +148,9 @@ struct CellStreamerRuntimeStateTests {
         #expect(harness.runner.enqueued == [cell, cell])
         let state = try #require(harness.runner.enqueuedStates.last)
         #expect(state[Self.key(0x30)]?.component(ReferenceEnableState.self) == .disabled)
-        #expect(harness.streamer.rebuildingCellCount == 1)
-        #expect(harness.streamer.residentCellCount == 1)
-        #expect(harness.streamer.composedCellCount == 1)
+        #expect(harness.streamer.runtimeStates.rebuildingCellCount == 1)
+        #expect(harness.streamer.coverage.residentCellCount == 1)
+        #expect(harness.streamer.coverage.composedCellCount == 1)
 
         // The replacement displaces the old scene on the next integration.
         harness.runner.complete(cell, with: .success(
@@ -158,9 +158,9 @@ struct CellStreamerRuntimeStateTests {
         ))
         harness.completedCount = 2
         harness.streamer.update(cameraPosition: camera)
-        #expect(harness.streamer.residentCellCount == 1)
-        #expect(harness.streamer.rebuildingCellCount == 0)
-        #expect(harness.streamer.queuedRebuildCount == 0)
+        #expect(harness.streamer.coverage.residentCellCount == 1)
+        #expect(harness.streamer.runtimeStates.rebuildingCellCount == 0)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 0)
 
         // And nothing further is dispatched once the state is caught up.
         harness.streamer.update(cameraPosition: camera)
@@ -184,10 +184,10 @@ struct CellStreamerRuntimeStateTests {
 
         // The next dispatch is a first load, not the rebuild.
         #expect(harness.runner.enqueued.last != Self.coordinate(0, 0))
-        #expect(harness.streamer.queuedRebuildCount == 1)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 1)
 
         Self.settle(&harness, at: camera)
-        #expect(harness.streamer.queuedRebuildCount == 0)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 0)
         #expect(harness.runner.enqueued.filter { $0 == Self.coordinate(0, 0) }.count == 2)
     }
 
@@ -216,8 +216,8 @@ struct CellStreamerRuntimeStateTests {
         // The stale scene is integrated rather than dropped, so the cell is
         // drawable immediately, and the rebuild goes out in the same frame's
         // dispatch slot now that the runner's dedupe entry has cleared.
-        #expect(harness.streamer.residentCellCount == 1)
-        #expect(harness.streamer.rebuildingCellCount == 1)
+        #expect(harness.streamer.coverage.residentCellCount == 1)
+        #expect(harness.streamer.runtimeStates.rebuildingCellCount == 1)
         #expect(harness.runner.enqueued.count == 2)
 
         Self.settle(&harness, at: camera)
@@ -227,8 +227,8 @@ struct CellStreamerRuntimeStateTests {
         let rebuildState = try #require(harness.runner.enqueuedStates.last)
         #expect(rebuildState.sequence >= 2)
         #expect(rebuildState[Self.key(0x50)]?.component(ReferenceEnableState.self) == .disabled)
-        #expect(harness.streamer.queuedRebuildCount == 0)
-        #expect(harness.streamer.rebuildingCellCount == 0)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 0)
+        #expect(harness.streamer.runtimeStates.rebuildingCellCount == 0)
     }
 
     @Test
@@ -241,7 +241,7 @@ struct CellStreamerRuntimeStateTests {
 
         Self.disable(0x60, in: harness, at: cell)
         harness.streamer.update(cameraPosition: camera)
-        #expect(harness.streamer.rebuildingCellCount == 1)
+        #expect(harness.streamer.runtimeStates.rebuildingCellCount == 1)
 
         // Second mutation while the first rebuild is in flight.
         Self.disable(0x61, in: harness, at: cell)
@@ -250,7 +250,7 @@ struct CellStreamerRuntimeStateTests {
         // Two rebuilds total -- one per mutation -- and the final resident
         // scene was built from state that includes both.
         #expect(harness.runner.enqueued.count == loadCount + 2)
-        #expect(harness.streamer.queuedRebuildCount == 0)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 0)
         let finalState = harness.runner.enqueuedStates[harness.runner.enqueued.count - 1]
         #expect(finalState.sequence == harness.store.nextJournalSequence)
         #expect(finalState.dirtyCount == 2)
@@ -271,7 +271,7 @@ struct CellStreamerRuntimeStateTests {
         // Leave, so the cell is unloaded and its scene dropped entirely.
         let far = Self.position(of: Self.coordinate(9, 0))
         Self.settle(&harness, at: far)
-        #expect(!harness.streamer.residentCoordinates.contains(cell))
+        #expect(!harness.streamer.coverage.residentCoordinates.contains(cell))
 
         // Come back: the reload carries the delta, because it comes from the
         // store rather than from anything the unloaded scene held.
@@ -283,7 +283,7 @@ struct CellStreamerRuntimeStateTests {
         )
         let state = harness.runner.enqueuedStates[reloadIndex]
         #expect(state[Self.key(0x70)]?.component(ReferenceEnableState.self) == .disabled)
-        #expect(harness.streamer.residentCoordinates.contains(cell))
+        #expect(harness.streamer.coverage.residentCoordinates.contains(cell))
     }
 
     @Test
@@ -294,18 +294,18 @@ struct CellStreamerRuntimeStateTests {
         Self.settle(&harness, at: home)
 
         Self.disable(0x80, in: harness, at: cell)
-        #expect(harness.streamer.queuedRebuildCount == 1)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 1)
 
         // Leave before the rebuild is dispatched.
         let far = Self.position(of: Self.coordinate(9, 0))
         harness.streamer.update(cameraPosition: far)
-        #expect(harness.streamer.queuedRebuildCount == 0)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 0)
 
         let afterLeaving = harness.runner.enqueued.count
         Self.settle(&harness, at: far)
         // No ghost rebuild for the removed cell.
         #expect(!harness.runner.enqueued[afterLeaving...].contains(cell))
-        #expect(harness.streamer.rebuildingCellCount == 0)
+        #expect(harness.streamer.runtimeStates.rebuildingCellCount == 0)
     }
 
     // MARK: - Unattributed mutations
@@ -315,16 +315,16 @@ struct CellStreamerRuntimeStateTests {
         var harness = Self.makeHarness(radius: 1)
         let camera = Self.position(of: Self.coordinate(0, 0))
         Self.settle(&harness, at: camera)
-        #expect(harness.streamer.residentCellCount == 9)
+        #expect(harness.streamer.coverage.residentCellCount == 9)
         let loadCount = harness.runner.enqueued.count
 
         harness.store.set(ReferenceEnableState.disabled, for: Self.key(0x90))
-        #expect(harness.streamer.queuedRebuildCount == 9)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 9)
 
         Self.settle(&harness, at: camera)
         #expect(harness.runner.enqueued.count == loadCount + 9)
-        #expect(harness.streamer.residentCellCount == 9)
-        #expect(harness.streamer.queuedRebuildCount == 0)
+        #expect(harness.streamer.coverage.residentCellCount == 9)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 0)
     }
 
     @Test
@@ -336,7 +336,7 @@ struct CellStreamerRuntimeStateTests {
 
         Self.disable(0xA0, in: harness, at: Self.coordinate(40, 40))
 
-        #expect(harness.streamer.queuedRebuildCount == 0)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 0)
         Self.settle(&harness, at: camera)
         #expect(harness.runner.enqueued.count == loadCount)
     }
@@ -357,7 +357,7 @@ extension CellStreamerRuntimeStateTests {
         #expect(harness.store.component(OffScreenState.self, for: Self.key(0x91))?.phase == 2)
         harness.store.reset(OffScreenState.componentKind, for: Self.key(0x91))
 
-        #expect(harness.streamer.queuedRebuildCount == 0)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 0)
         Self.settle(&harness, at: camera)
         #expect(harness.runner.enqueued.count == loadCount)
     }
@@ -371,13 +371,13 @@ extension CellStreamerRuntimeStateTests {
         Self.settle(&harness, at: Self.position(of: cell))
         let resting = ReferenceTransformOverride(position: SIMD3(1, 2, 3))
 
-        harness.streamer.onBodySettled?(Self.key(0x92), resting, .exterior(cell))
+        harness.streamer.events.onBodySettled?(Self.key(0x92), resting, .exterior(cell))
 
         #expect(harness.store.component(ReferenceTransformOverride.self, for: Self.key(0x92))
             != nil)
-        #expect(harness.streamer.queuedRebuildCount == 0)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 0)
         harness.store.set(ReferenceEnableState.disabled, for: Self.key(0x93), in: .exterior(cell))
-        #expect(harness.streamer.queuedRebuildCount == 1)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 1)
     }
 }
 
@@ -408,10 +408,10 @@ extension CellStreamerRuntimeStateTests {
             }
             harness.completedCount = harness.runner.enqueued.count
         }
-        #expect(harness.streamer.residentCellCount == 9)
+        #expect(harness.streamer.coverage.residentCellCount == 9)
 
         harness.store.set(ReferenceEnableState.disabled, for: entry.key)
-        #expect(harness.streamer.queuedRebuildCount == 1)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 1)
         let before = harness.runner.enqueued.count
         harness.streamer.update(cameraPosition: camera)
         #expect(Array(harness.runner.enqueued.dropFirst(before)) == [holder])

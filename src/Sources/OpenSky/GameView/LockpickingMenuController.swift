@@ -135,7 +135,7 @@ final class LockpickingMenuController {
         game.menuMode.dismiss(Self.identifier)
         // The press that met the lock goes through now that it is open.
         if opened, let target {
-            game.streamer.activate(target)
+            game.streamer.residents.activate(target)
         }
     }
 

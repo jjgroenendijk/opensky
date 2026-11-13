@@ -6,7 +6,7 @@ import OpenSkyDiagnostics
 import OpenSkyFormatsCore
 import OpenSkyTerrain
 
-extension CellStreamer {
+extension CellStreamer.CoverageSteps {
     /// One-line memory report per recompose -- the streaming footprint budget
     /// is measured, not guessed (docs/engine/cell-streaming.md memory budget).
     func logFootprint() {
@@ -14,7 +14,7 @@ extension CellStreamer {
         let residentCount = residentCellCount
         let voidCount = voidCellCount
         let inFlightCount = inFlightCellCount
-        Self.logger.info(
+        CellStreamer.logger.info(
             """
             [INFO] stream: \(residentCount, privacy: .public) resident, \
             \(voidCount, privacy: .public) void, \
@@ -28,7 +28,7 @@ extension CellStreamer {
     /// first -- the first integrated cell is the one that frames the camera.
     /// Deterministic tie-break by coordinate keeps dispatch order stable.
     func requestsNearestFirst(_ requests: [CellCoordinate]) -> [CellCoordinate] {
-        let center = grid.center
+        let center = streamer.grid.center
         return requests.sorted { lhs, rhs in
             let lhsDistance = Self.squaredDistance(lhs, center)
             let rhsDistance = Self.squaredDistance(rhs, center)

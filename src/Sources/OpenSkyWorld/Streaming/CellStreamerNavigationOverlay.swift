@@ -4,16 +4,16 @@
 import OpenSkyNavigation
 public import OpenSkyRenderCore
 
-extension CellStreamer {
+extension CellStreamer.NavigationSteps {
     public func appendNavigationWorldOverlay(
         context: WorldOverlayFrameContext,
         to list: inout WorldOverlayDrawList
     ) {
         guard context.navmeshOverlayEnabled || context.pathOverlayEnabled else { return }
         reconcileNavigation()
-        navigationState.graph.appendWorldOverlay(
+        streamer.navigationState.graph.appendWorldOverlay(
             context: context,
-            path: navigationState.lastPath,
+            path: streamer.navigationState.lastPath,
             to: &list
         )
     }

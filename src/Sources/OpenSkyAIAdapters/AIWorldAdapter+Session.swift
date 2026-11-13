@@ -44,17 +44,17 @@ extension AIWorldAdapter {
         guard let stage else { return }
         let gameSession = stage.gameSession
         let streamer = stage.streamer
-        streamer.npcMovementConfiguration = gameSession.locomotion.configuration.forActors
+        streamer.actors.npcMovementConfiguration = gameSession.locomotion.configuration.forActors
         gameSession.motion.onPlayerWalkArrived = { [weak game] in
             game?.packages.movementSettled(actor: .player, reason: .arrival)
         }
-        streamer.onNPCPosesChanged = { [weak gameSession] deltas in
+        streamer.actors.onNPCPosesChanged = { [weak gameSession] deltas in
             gameSession?.instancePoses.npcDeltas = deltas
         }
-        streamer.npcWaterPushRace = { [weak game] actor in
+        streamer.actors.npcWaterPushRace = { [weak game] actor in
             game?.effectsWorld.waterPushRace(of: actor) ?? .normal
         }
-        AINPCMovementSteps(hosts: game).register(on: streamer)
+        AINPCMovementSteps(hosts: game).register(on: streamer.actors)
         gameSession.motion.playerFurniture = worlds
         frames.registerAIPackages(stage: stage)
         frames.registerAIPerception(stage: stage)
@@ -158,7 +158,7 @@ extension AIFrameSteps {
         let streamer = stage.streamer
         stage.gameSession.renderer.worldOverlaySources
             .register(identifier: "navigation") { [weak streamer] context, list in
-                streamer?.appendNavigationWorldOverlay(context: context, to: &list)
+                streamer?.navigation.appendNavigationWorldOverlay(context: context, to: &list)
             }
     }
 }

@@ -19,8 +19,8 @@ extension CellStreamerTests {
         let streamer = Fixture.makeStreamer(runner: runner, radius: 0)
         var targets: [InteractionTarget?] = []
         var events: [InteractionEvent] = []
-        streamer.onInteractionTargetChanged = { targets.append($0) }
-        streamer.onInteraction.register(.scripts) { events.append($0) }
+        streamer.events.onInteractionTargetChanged = { targets.append($0) }
+        streamer.events.onInteraction.register(.scripts) { events.append($0) }
 
         streamer.update(cameraPosition: Fixture.center)
         let position = Fixture.center + SIMD3<Float>(10, 0, 0)

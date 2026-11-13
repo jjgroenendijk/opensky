@@ -84,7 +84,7 @@ struct ScriptGameNativesTests {
             letterbox: true
         )
         #expect(natives.playBink?(movie, 4) == true)
-        #expect(host.fakeStreamer.moveActorCalls.isEmpty)
+        #expect(host.fakeStreamer.actors.moveActorCalls.isEmpty)
     }
 
     @Test func constraintsGoThroughThePhysicsBindings() {

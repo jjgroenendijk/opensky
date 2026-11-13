@@ -16,7 +16,7 @@ extension CellStreamerTests {
         let runner = ManualCellBuildRunner()
         var emitted: [[FormID]] = []
         let streamer = Fixture.makeStreamer(runner: runner)
-        streamer.onCenterRegionsChanged = { emitted.append($0) }
+        streamer.events.onCenterRegionsChanged = { emitted.append($0) }
         streamer.update(cameraPosition: Fixture.center)
 
         // Before the center cell is resident, nothing is pushed (a loading gap
@@ -42,7 +42,7 @@ extension CellStreamerTests {
         let runner = ManualCellBuildRunner()
         var emitted: [[FormID]] = []
         let streamer = Fixture.makeStreamer(runner: runner)
-        streamer.onCenterRegionsChanged = { emitted.append($0) }
+        streamer.events.onCenterRegionsChanged = { emitted.append($0) }
         streamer.update(cameraPosition: Fixture.center)
 
         runner.complete(Fixture.coordinate(0, 0), with: .success(Fixture.cellScene()))

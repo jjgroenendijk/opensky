@@ -26,7 +26,7 @@ struct LockAndRefusalAdapterTests {
         host.fakeProgression.reportSkillUseResult = 5
         host.fakeCrime.reportLockpickingResult = 10
         host.fakeInventory.nameResult = "Lockpick"
-        host.fakeStreamer.residentInteractions = [
+        host.fakeStreamer.residents.residentInteractions = [
             locked,
             InventoryAdapterFixture.interaction(.take)
         ]

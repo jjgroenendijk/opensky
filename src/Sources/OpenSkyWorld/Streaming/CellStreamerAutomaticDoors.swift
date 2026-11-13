@@ -7,35 +7,40 @@ import OpenSkyFormatsESM
 import OpenSkyWorldInterface
 import simd
 
-extension CellStreamer {
+extension CellStreamer.TransitionSteps {
     /// Activates each automatic door whose area the feet entered this frame. A door
     /// fires once per entry and again only after the player leaves its area.
     func updateAutomaticDoors(feet: SIMD3<Float>?) {
-        guard let feet, transitionInFlight == nil else {
-            automaticDoorOccupancy = nil
+        guard let feet, streamer.transitionInFlight == nil else {
+            streamer.doorState.automaticDoorOccupancy = nil
             return
         }
-        let inside = residentScenes.flatMap { scene in
+        let inside = streamer.residents.residentScenes.flatMap { scene in
             scene.interactions.values.filter {
                 $0.automaticArea?.contains(feet) == true
-                    && simd_distance($0.position, feet) <= doors.autoActivateDistance
+                    && simd_distance($0.position, feet) <= streamer.doorState.doors
+                    .autoActivateDistance
             }
         }
-        let previous = automaticDoorOccupancy
-        automaticDoorOccupancy = Set(inside.map(\.reference))
+        let previous = streamer.doorState.automaticDoorOccupancy
+        streamer.doorState.automaticDoorOccupancy = Set(inside.map(\.reference))
         guard
             let previous,
             let entered = inside.sorted(by: { $0.reference.rawValue < $1.reference.rawValue })
                 .first(where: { !previous.contains($0.reference) })
         else { return }
-        activate(InteractionTarget(interaction: entered, hitPosition: feet, distance: 0))
+        streamer.residents.activate(InteractionTarget(
+            interaction: entered,
+            hitPosition: feet,
+            distance: 0
+        ))
     }
 
     /// The nearest automatic door within `fAutoDoorDisplayDistance`, which the HUD names
     /// when the crosshair is on nothing else.
     func nearestAutomaticDoor(to origin: SIMD3<Float>) -> InteractionTarget? {
-        let range = doors.autoDisplayDistance
-        let near = residentScenes.flatMap { scene in
+        let range = streamer.doorState.doors.autoDisplayDistance
+        let near = streamer.residents.residentScenes.flatMap { scene in
             scene.interactions.values.filter {
                 $0.automaticArea != nil && simd_distance($0.position, origin) <= range
             }

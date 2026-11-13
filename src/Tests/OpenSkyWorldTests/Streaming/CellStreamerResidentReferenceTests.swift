@@ -23,22 +23,22 @@ struct CellStreamerResidentReferenceTests {
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
         let cell = CellStreamerFixture.coordinate(0, 0)
         let camera = CellGridManager.cellCenter(of: cell)
-        #expect(streamer.residentReferenceCount == 0)
+        #expect(streamer.runtimeStates.residentReferenceCount == 0)
 
         streamer.update(cameraPosition: camera)
         let scene = try Self.scene(references: Self.referenceIndex(count: 3))
         runner.complete(cell, with: .success(scene))
         streamer.update(cameraPosition: camera)
-        #expect(streamer.residentCellCount == 1)
-        #expect(streamer.residentReferenceCount == 3)
+        #expect(streamer.coverage.residentCellCount == 1)
+        #expect(streamer.runtimeStates.residentReferenceCount == 3)
 
         // Walking far enough away unloads the cell, and the count follows
         // residency rather than history.
         streamer.update(cameraPosition: CellGridManager.cellCenter(
             of: CellStreamerFixture.coordinate(40, 40)
         ))
-        #expect(streamer.residentCellCount == 0)
-        #expect(streamer.residentReferenceCount == 0)
+        #expect(streamer.coverage.residentCellCount == 0)
+        #expect(streamer.runtimeStates.residentReferenceCount == 0)
     }
 
     @Test
@@ -52,8 +52,8 @@ struct CellStreamerResidentReferenceTests {
         runner.complete(cell, with: .success(Self.scene(references: .empty)))
         streamer.update(cameraPosition: camera)
 
-        #expect(streamer.residentCellCount == 1)
-        #expect(streamer.residentReferenceCount == 0)
+        #expect(streamer.coverage.residentCellCount == 1)
+        #expect(streamer.runtimeStates.residentReferenceCount == 0)
     }
 
     // MARK: - Fixtures

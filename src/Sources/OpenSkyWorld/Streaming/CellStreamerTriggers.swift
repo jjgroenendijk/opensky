@@ -9,7 +9,7 @@ public import OpenSkyPlayer
 import OpenSkyWorldState
 import simd
 
-extension CellStreamer {
+extension CellStreamer.TriggerSteps {
     /// Longest teleport, in capsule radii, that is still sampled for volumes
     /// crossed on the way. Past this the sweep samples evenly at coarser
     /// spacing, so a very long jump stays O(1) rather than O(distance).
@@ -22,9 +22,12 @@ extension CellStreamer {
     /// Weak, because the schedule this streamer owns would otherwise retain it
     /// back.
     func registerTriggerLog() {
-        onTriggerTransition.register(.readout) { [weak self] event in
-            guard let self else { return }
-            triggerLog.record(event, formID: referenceEntry(key: event.reference)?.formID)
+        streamer.events.onTriggerTransition.register(.readout) { [weak streamer] event in
+            guard let streamer else { return }
+            streamer.doorState.triggerLog.record(
+                event,
+                formID: streamer.residents.referenceEntry(key: event.reference)?.formID
+            )
         }
     }
 
@@ -39,23 +42,23 @@ extension CellStreamer {
         intersecting capsule: PlayerCapsule,
         at feetPosition: SIMD3<Float>
     ) -> [TriggerVolume] {
-        if let interiorScene {
+        if let interiorScene = streamer.interiorScene {
             return interiorScene.triggerVolumes.volumes(
                 intersecting: capsule, at: feetPosition
             )
         }
-        return composition.triggerVolumes(intersecting: capsule, at: feetPosition)
+        return streamer.composition.triggerVolumes(intersecting: capsule, at: feetPosition)
     }
 
     /// One frame's occupancy test and diff. A nil state (fly mode) freezes occupancy, so
     /// switching modes inside a volume fakes no leave.
     func updateTriggerOccupancy(_ state: PlayerCapsuleState?) {
         guard let state else {
-            lastTriggerFeetPosition = nil
+            streamer.doorState.lastTriggerFeetPosition = nil
             return
         }
-        let previous = lastTriggerFeetPosition ?? state.feetPosition
-        lastTriggerFeetPosition = state.feetPosition
+        let previous = streamer.doorState.lastTriggerFeetPosition ?? state.feetPosition
+        streamer.doorState.lastTriggerFeetPosition = state.feetPosition
         let occupied = references(of: triggerVolumes(intersecting: state))
         var touched = occupied
         for sample in Self.sweepSamples(
@@ -75,13 +78,16 @@ extension CellStreamer {
     /// unload path goes through — grid eviction, a coverage-transition drop,
     /// and a door transition replacing the previous scene.
     public func releaseTriggers(in scene: CellScene) {
-        guard !occupiedTriggers.isEmpty else { return }
+        guard !streamer.doorState.occupiedTriggers.isEmpty else { return }
         let owned = Set(scene.triggerVolumes.volumes.map(\.reference))
-        let released = occupiedTriggers.intersection(owned)
+        let released = streamer.doorState.occupiedTriggers.intersection(owned)
         guard !released.isEmpty else { return }
-        occupiedTriggers.subtract(released)
+        streamer.doorState.occupiedTriggers.subtract(released)
         for key in released.sorted() {
-            onTriggerTransition(TriggerTransitionEvent(reference: key, phase: .leave))
+            streamer.events.onTriggerTransition(TriggerTransitionEvent(
+                reference: key,
+                phase: .leave
+            ))
         }
     }
 
@@ -92,14 +98,20 @@ extension CellStreamer {
         occupied: Set<ReferenceKey>,
         touched: Set<ReferenceKey>
     ) {
-        let entered = touched.subtracting(occupiedTriggers)
-        let left = occupiedTriggers.union(touched).subtracting(occupied)
-        occupiedTriggers = occupied
+        let entered = touched.subtracting(streamer.doorState.occupiedTriggers)
+        let left = streamer.doorState.occupiedTriggers.union(touched).subtracting(occupied)
+        streamer.doorState.occupiedTriggers = occupied
         for key in entered.sorted() {
-            onTriggerTransition(TriggerTransitionEvent(reference: key, phase: .enter))
+            streamer.events.onTriggerTransition(TriggerTransitionEvent(
+                reference: key,
+                phase: .enter
+            ))
         }
         for key in left.sorted() {
-            onTriggerTransition(TriggerTransitionEvent(reference: key, phase: .leave))
+            streamer.events.onTriggerTransition(TriggerTransitionEvent(
+                reference: key,
+                phase: .leave
+            ))
         }
     }
 

@@ -110,7 +110,7 @@ extension DragonFlightWorldAdapter: DragonFlightWorld {
     }
 
     public func holdForFlight(_ actor: ReferenceKey) -> (feet: SIMD3<Float>, yaw: Float)? {
-        game.streamer.takeRiddenActor(actor).map { ($0.feetPosition, $0.yaw) }
+        game.streamer.actors.takeRiddenActor(actor).map { ($0.feetPosition, $0.yaw) }
     }
 
     public func moveFlying(

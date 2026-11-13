@@ -12,47 +12,51 @@ import OpenSkyTerrain
 public import OpenSkyWorldInterface
 import simd
 
-extension CellStreamer {
+extension CellStreamer.TransitionSteps {
     /// Returns true only when a successful transition replaced current view.
     /// The finished door builds, held until `fTeleportDoorActivateDelayTimer` has passed
     /// since the player used the door. A rebuild does not wait.
     func drainDoorTransitions(frameTime: Float) -> [DoorTransitionBuildResult] {
-        heldDoorTransitions += runner.drainCompletedDoorTransitions()
+        streamer.doorState.heldDoorTransitions += streamer.runner.drainCompletedDoorTransitions()
         if frameTime.isFinite, frameTime > 0 {
-            doorTransitionHold = max(0, doorTransitionHold - frameTime)
+            streamer.doorState.doorTransitionHold = max(
+                0,
+                streamer.doorState.doorTransitionHold - frameTime
+            )
         }
-        guard doorTransitionHold <= 0 || interiorRebuildInFlight else { return [] }
-        defer { heldDoorTransitions = [] }
-        return heldDoorTransitions
+        guard streamer.doorState.doorTransitionHold <= 0 || streamer.interiorRebuildInFlight
+        else { return [] }
+        defer { streamer.doorState.heldDoorTransitions = [] }
+        return streamer.doorState.heldDoorTransitions
     }
 
     public func finishDoorTransition(_ entries: [DoorTransitionBuildResult]) -> Bool {
         guard let entry = entries.last else { return false }
-        transitionInFlight = nil
-        automaticDoorOccupancy = nil
-        let motionInteraction = doorMotionInteraction
-        doorMotionInteraction = nil
-        let isRebuild = interiorRebuildInFlight
-        interiorRebuildInFlight = false
+        streamer.transitionInFlight = nil
+        streamer.doorState.automaticDoorOccupancy = nil
+        let motionInteraction = streamer.doorState.doorMotionInteraction
+        streamer.doorState.doorMotionInteraction = nil
+        let isRebuild = streamer.interiorRebuildInFlight
+        streamer.interiorRebuildInFlight = false
         // A cell build ahead of transition on serial queue may complete in
         // same poll. Fold it into suspended exterior state first.
-        _ = integrateOneBuild()
+        _ = streamer.builds.integrateOneBuild()
         switch entry.result {
         case let .success(transition):
             emitDoorMotion(.closed, interaction: motionInteraction)
             apply(transition: transition, sourceDoor: entry.sourceDoor, isRebuild: isRebuild)
             if !isRebuild {
-                onDoorTransitionFinished?(transition.scene)
+                streamer.events.onDoorTransitionFinished?(transition.scene)
             }
             return true
         case let .failure(error):
             emitDoorMotion(.cancelled, interaction: motionInteraction)
-            noteDoorTransitionFailure()
+            streamer.noteDoorTransitionFailure()
             if !isRebuild {
-                onDoorTransitionFinished?(nil)
+                streamer.events.onDoorTransitionFinished?(nil)
             }
             let reason = String(describing: error)
-            Self.logger.warning(
+            CellStreamer.logger.warning(
                 "[WARNING] door transition failed: \(reason, privacy: .public)"
             )
             return false
@@ -64,22 +68,22 @@ extension CellStreamer {
     public func updateInteriorIfNeeded(
         completedLOD: [DistantLODBuildResult]
     ) -> Bool {
-        guard interiorScene != nil else { return false }
-        if integrateActorProps() {
-            sink(viewScene(), nil)
+        guard streamer.interiorScene != nil else { return false }
+        if streamer.props.integrateActorProps() {
+            streamer.sink(streamer.props.viewScene(), nil)
         }
         for entry in completedLOD {
             if case let .success(scene) = entry.result, let scene {
-                evictUnused(scene.assets)
+                streamer.coverage.evictUnused(scene.assets)
             }
         }
-        dispatchInteriorRebuildIfNeeded()
+        streamer.runtimeStates.dispatchInteriorRebuildIfNeeded()
         return true
     }
 
     public func nearestDoor(in scene: CellScene, to position: SIMD3<Float>) -> PlacedDoor? {
         scene.doors
-            .filter { simd_distance($0.position, position) <= Self.doorActivationRadius }
+            .filter { simd_distance($0.position, position) <= CellStreamer.doorActivationRadius }
             .min { lhs, rhs in
                 simd_distance_squared(lhs.position, position)
                     < simd_distance_squared(rhs.position, position)
@@ -96,30 +100,30 @@ extension CellStreamer {
     /// console-style teleport into an interior enters through its door.
     @discardableResult
     public func requestDoorTransition(from sourceDoor: FormID) -> Bool {
-        guard transitionInFlight == nil else { return false }
-        transitionInFlight = sourceDoor
-        doorTransitionHold = 0
-        interiorRebuildInFlight = false
+        guard streamer.transitionInFlight == nil else { return false }
+        streamer.transitionInFlight = sourceDoor
+        streamer.doorState.doorTransitionHold = 0
+        streamer.interiorRebuildInFlight = false
         // Built against the live store, so a changed interior comes back changed.
-        runner.enqueueDoorTransition(from: sourceDoor, state: stateSource())
-        onDoorTransitionStarted?()
+        streamer.runner.enqueueDoorTransition(from: sourceDoor, state: streamer.stateSource())
+        streamer.events.onDoorTransitionStarted?()
         return true
     }
 
     /// Drops the interior and shows the resident exterior again at `camera`,
     /// for a teleport out that uses no door. The grid then follows the camera.
     public func leaveInterior(camera: SceneCamera) {
-        guard let previous = interiorScene else { return }
-        hasSeededCamera = true
-        interiorScene = nil
-        interiorSourceDoor = nil
-        interiorMutationSequence = 0
-        updateInteractionTarget(ray: nil)
-        emitCellDetached(previous)
-        evictUnused(previous.assets)
-        sink(viewScene(), camera)
-        invalidateAmbienceContext()
-        invalidateMusicContext()
+        guard let previous = streamer.interiorScene else { return }
+        streamer.hasSeededCamera = true
+        streamer.interiorScene = nil
+        streamer.doorState.interiorSourceDoor = nil
+        streamer.interiorMutationSequence = 0
+        streamer.residents.updateInteractionTarget(ray: nil)
+        streamer.triggers.emitCellDetached(previous)
+        streamer.coverage.evictUnused(previous.assets)
+        streamer.sink(streamer.props.viewScene(), camera)
+        streamer.ambience.invalidateAmbienceContext()
+        streamer.ambience.invalidateMusicContext()
     }
 
     private func emitDoorMotion(
@@ -127,7 +131,7 @@ extension CellStreamer {
         interaction: PlacedInteraction?
     ) {
         guard let interaction else { return }
-        onInteractionAnimation?(InteractionAnimationEvent(
+        streamer.events.onInteractionAnimation?(InteractionAnimationEvent(
             interaction: interaction,
             phase: phase
         ))
@@ -142,59 +146,63 @@ extension CellStreamer {
         sourceDoor: FormID? = nil,
         isRebuild: Bool = false
     ) {
-        updateInteractionTarget(ray: nil)
+        streamer.residents.updateInteractionTarget(ray: nil)
         let camera = isRebuild
             ? nil
             : SceneCamera.teleport(placement: transition.destinationPlacement)
-        hasSeededCamera = hasSeededCamera || camera != nil
+        streamer.hasSeededCamera = streamer.hasSeededCamera || camera != nil
         switch transition.scene.location {
         case .interior:
-            let previous = interiorScene
-            interiorScene = transition.scene
-            interiorSourceDoor = sourceDoor ?? interiorSourceDoor
+            let previous = streamer.interiorScene
+            streamer.interiorScene = transition.scene
+            streamer.doorState.interiorSourceDoor = sourceDoor ?? streamer.doorState
+                .interiorSourceDoor
             // A rebuild re-enters the same interior, so its scripts stay
             // attached; only a player-driven move retires the old cell.
             if let previous {
                 if !isRebuild {
-                    emitCellDetached(previous)
+                    streamer.triggers.emitCellDetached(previous)
                 }
-                evictUnused(previous.assets)
+                streamer.coverage.evictUnused(previous.assets)
             }
-            emitCellAttached(transition.scene, firstIntegration: !isRebuild)
-            sink(viewScene(), camera)
+            streamer.triggers.emitCellAttached(transition.scene, firstIntegration: !isRebuild)
+            streamer.sink(streamer.props.viewScene(), camera)
         case let .exterior(coordinate):
-            let previousInterior = interiorScene
-            interiorScene = nil
-            interiorSourceDoor = nil
-            interiorMutationSequence = 0
+            let previousInterior = streamer.interiorScene
+            streamer.interiorScene = nil
+            streamer.doorState.interiorSourceDoor = nil
+            streamer.interiorMutationSequence = 0
             // The runner already builds in the destination worldspace.
-            if let worldspace = transition.worldspaceEditorID, worldspace != worldspaceEditorID {
-                switchExterior(
+            if
+                let worldspace = transition.worldspaceEditorID,
+                worldspace != streamer.worldspaceEditorID
+            {
+                streamer.switchExterior(
                     to: worldspace, at: transition.destinationPlacement.position
                 )
             }
-            let replaced = composition.setCell(transition.scene, at: coordinate)
-            core.seedResident(coordinate)
+            let replaced = streamer.composition.setCell(transition.scene, at: coordinate)
+            streamer.core.seedResident(coordinate)
             if let previousInterior {
-                emitCellDetached(previousInterior)
-                evictUnused(previousInterior.assets)
+                streamer.triggers.emitCellDetached(previousInterior)
+                streamer.coverage.evictUnused(previousInterior.assets)
             }
             // `replaced` is the same cell rebuilt at the same coordinate, so
             // the attach below reconciles it; detaching first would retire
             // instances the attach immediately recreates.
             if let replaced {
-                evictUnused(replaced.assets)
+                streamer.coverage.evictUnused(replaced.assets)
             }
-            emitCellAttached(transition.scene, firstIntegration: !isRebuild)
-            sink(viewScene(), camera)
+            streamer.triggers.emitCellAttached(transition.scene, firstIntegration: !isRebuild)
+            streamer.sink(streamer.props.viewScene(), camera)
         case nil:
-            Self.logger.warning("[WARNING] door destination scene has no CELL identity")
+            CellStreamer.logger.warning("[WARNING] door destination scene has no CELL identity")
         }
         // A scene swap changes the ambience context even when the key matches
         // (e.g. re-entering the same interior); force a re-emit next tick.
-        invalidateAmbienceContext()
-        emitAmbienceContextIfNeeded()
-        invalidateMusicContext()
-        emitMusicContextIfNeeded()
+        streamer.ambience.invalidateAmbienceContext()
+        streamer.ambience.emitAmbienceContextIfNeeded()
+        streamer.ambience.invalidateMusicContext()
+        streamer.ambience.emitMusicContextIfNeeded()
     }
 }

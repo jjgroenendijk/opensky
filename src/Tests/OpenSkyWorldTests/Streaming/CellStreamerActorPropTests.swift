@@ -17,7 +17,7 @@ struct CellStreamerActorPropTests {
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
         let actor = FormID(0x0001_2345)
-        streamer.actorProps[actor] = ActorPropDraw(
+        streamer.doorState.actorProps[actor] = ActorPropDraw(
             prop: ActorPropAttachment(modelPath: "clutter\\mug.nif", bone: "WEAPON"),
             assets: CellAssets(
                 meshKeys: ["meshes\\clutter\\mug.nif"],
@@ -25,9 +25,9 @@ struct CellStreamerActorPropTests {
             )
         )
 
-        streamer.evictUnused(CellAssets())
+        streamer.coverage.evictUnused(CellAssets())
 
-        #expect(streamer.actorProps.isEmpty)
+        #expect(streamer.doorState.actorProps.isEmpty)
         #expect(runner.evictedMeshKeys.last == ["meshes\\clutter\\mug.nif"])
         #expect(runner.evictedTextureKeys.last == ["color|mug.dds"])
     }

@@ -13,13 +13,15 @@ import OpenSkyTerrain
 public import OpenSkyWorldState
 import simd
 
-extension CellStreamer {
+extension CellStreamer.RuntimeStateSteps {
     /// Records a world-state mutation and schedules the rebuilds that make it
     /// visible. Call it on the main thread right after the store journals it.
     /// A nil `location` rebuilds every resident cell, because the streamer cannot
     /// tell which one holds the reference.
     public func noteStateMutation(in location: CellSceneLocation?, sequence: UInt64) {
-        guard !isRecordingSettledBody, !noteNPCRestMutation(sequence: sequence) else { return }
+        guard
+            !streamer.isRecordingSettledBody,
+            !streamer.actors.noteNPCRestMutation(sequence: sequence) else { return }
         switch location {
         case let .exterior(coordinate):
             noteExteriorMutation(coordinate, sequence: sequence)
@@ -34,10 +36,12 @@ extension CellStreamer {
     /// persistent reference can sit in more than one. When none holds it, such as a
     /// spawned reference, every resident cell rebuilds, as for an unattributed write.
     public func noteStateMutation(of key: ReferenceKey, sequence: UInt64) {
-        guard !isRecordingSettledBody, !noteNPCRestMutation(sequence: sequence) else { return }
+        guard
+            !streamer.isRecordingSettledBody,
+            !streamer.actors.noteNPCRestMutation(sequence: sequence) else { return }
         noteDistantLODMutation(of: key)
-        let holders = composition.cellCoordinates(holding: key)
-        let interiorHolds = interiorScene?.references[key] != nil
+        let holders = streamer.composition.cellCoordinates(holding: key)
+        let interiorHolds = streamer.interiorScene?.references[key] != nil
         guard !holders.isEmpty || interiorHolds else {
             noteUnattributedMutation(sequence: sequence)
             return
@@ -46,7 +50,7 @@ extension CellStreamer {
             noteExteriorMutation(coordinate, sequence: sequence)
         }
         if interiorHolds {
-            interiorMutationSequence = max(interiorMutationSequence, sequence)
+            streamer.interiorMutationSequence = max(streamer.interiorMutationSequence, sequence)
         }
     }
 
@@ -56,10 +60,13 @@ extension CellStreamer {
     }
 
     private func noteInteriorMutation(_ formID: FormID, sequence: UInt64) {
-        guard case let .interior(current)? = interiorScene?.location, current == formID else {
+        guard
+            case let .interior(current)? = streamer.interiorScene?.location,
+            current == formID
+        else {
             return
         }
-        interiorMutationSequence = max(interiorMutationSequence, sequence)
+        streamer.interiorMutationSequence = max(streamer.interiorMutationSequence, sequence)
     }
 
     /// An unattributed mutation could touch any loaded reference, so every
@@ -67,12 +74,12 @@ extension CellStreamer {
     /// This is the correctness-first choice; a narrower answer needs the store
     /// to attribute its writes, not a cleverer guess here.
     private func noteUnattributedMutation(sequence: UInt64) {
-        for coordinate in core.resident.sorted(by: Self.isOrderedBefore) {
+        for coordinate in streamer.core.resident.sorted(by: Self.isOrderedBefore) {
             recordMutationSequence(coordinate, sequence: sequence)
             requestRebuild(coordinate)
         }
-        if interiorScene != nil {
-            interiorMutationSequence = max(interiorMutationSequence, sequence)
+        if streamer.interiorScene != nil {
+            streamer.interiorMutationSequence = max(streamer.interiorMutationSequence, sequence)
         }
     }
 
@@ -87,12 +94,12 @@ extension CellStreamer {
                 .contains { $0.enableParent?.parent.objectID == objectID }
                 || scene.hazards.contains { $0.enableParent?.parent.objectID == objectID }
         }
-        for (coordinate, scene) in composition.cells where dependsOnKey(scene) {
+        for (coordinate, scene) in streamer.composition.cells where dependsOnKey(scene) {
             recordMutationSequence(coordinate, sequence: sequence)
             requestRebuild(coordinate)
         }
-        if let interiorScene, dependsOnKey(interiorScene) {
-            interiorMutationSequence = max(interiorMutationSequence, sequence)
+        if let interiorScene = streamer.interiorScene, dependsOnKey(interiorScene) {
+            streamer.interiorMutationSequence = max(streamer.interiorMutationSequence, sequence)
         }
     }
 
@@ -100,15 +107,15 @@ extension CellStreamer {
     private func noteDistantLODMutation(of key: ReferenceKey) {
         guard
             case let .plugin(_, objectID) = key,
-            composition.distantLOD?.watchedObjectIDs.contains(objectID) == true,
-            requestedLODCenter == grid.center
+            streamer.composition.distantLOD?.watchedObjectIDs.contains(objectID) == true,
+            streamer.requestedLODCenter == streamer.grid.center
         else { return }
-        requestedLODCenter = nil
+        streamer.requestedLODCenter = nil
     }
 
     private func recordMutationSequence(_ coordinate: CellCoordinate, sequence: UInt64) {
-        cellMutationSequence[coordinate] = max(
-            cellMutationSequence[coordinate] ?? 0,
+        streamer.cellMutationSequence[coordinate] = max(
+            streamer.cellMutationSequence[coordinate] ?? 0,
             sequence
         )
     }
@@ -124,9 +131,9 @@ extension CellStreamer {
     /// nor being built, so a return visit rebuilds it from the store anyway.
     private func requestRebuild(_ coordinate: CellCoordinate) {
         guard
-            core.accountedCells.contains(coordinate),
-            !rebuildRequests.contains(coordinate) else { return }
-        rebuildRequests.append(coordinate)
+            streamer.core.accountedCells.contains(coordinate),
+            !streamer.rebuildRequests.contains(coordinate) else { return }
+        streamer.rebuildRequests.append(coordinate)
     }
 
     /// Deterministic order for the unattributed fan-out, so a test and a
@@ -144,9 +151,9 @@ extension CellStreamer {
     /// that arrived while an earlier rebuild ran.
     public func requeueRebuildIfStateMoved(_ coordinate: CellCoordinate, scene: CellScene) {
         guard
-            let wanted = cellMutationSequence[coordinate], scene.stateSequence < wanted,
-            !rebuildRequests.contains(coordinate) else { return }
-        rebuildRequests.append(coordinate)
+            let wanted = streamer.cellMutationSequence[coordinate], scene.stateSequence < wanted,
+            !streamer.rebuildRequests.contains(coordinate) else { return }
+        streamer.rebuildRequests.append(coordinate)
     }
 
     /// Drops rebuild bookkeeping for cells the grid no longer accounts for.
@@ -155,9 +162,10 @@ extension CellStreamer {
     /// plugin bytes plus the current snapshot, which reapplies the delta on
     /// its own. Dropping the pending rebuild leaves no ghost dispatch.
     public func pruneRebuildState() {
-        let accounted = core.accountedCells
-        rebuildRequests.removeAll { !accounted.contains($0) }
-        cellMutationSequence = cellMutationSequence.filter { accounted.contains($0.key) }
+        let accounted = streamer.core.accountedCells
+        streamer.rebuildRequests.removeAll { !accounted.contains($0) }
+        streamer.cellMutationSequence = streamer.cellMutationSequence
+            .filter { accounted.contains($0.key) }
     }
 
     // MARK: - Interior rebuilds
@@ -168,23 +176,25 @@ extension CellStreamer {
     /// where they stand.
     public func dispatchInteriorRebuildIfNeeded() {
         guard
-            transitionInFlight == nil, let scene = interiorScene, let door = interiorSourceDoor,
-            scene.stateSequence < interiorMutationSequence else { return }
-        transitionInFlight = door
-        interiorRebuildInFlight = true
-        runner.enqueueDoorTransition(from: door, state: stateSource())
+            streamer.transitionInFlight == nil, let scene = streamer.interiorScene,
+            let door = streamer.doorState
+                .interiorSourceDoor,
+            scene.stateSequence < streamer.interiorMutationSequence else { return }
+        streamer.transitionInFlight = door
+        streamer.interiorRebuildInFlight = true
+        streamer.runner.enqueueDoorTransition(from: door, state: streamer.stateSource())
     }
 
     // MARK: - Inspection (tests + streaming verification)
 
     /// Rebuild requests queued but not yet dispatched.
     var queuedRebuildCount: Int {
-        rebuildRequests.count
+        streamer.rebuildRequests.count
     }
 
     /// Resident cells with a rebuild currently in flight.
     var rebuildingCellCount: Int {
-        core.rebuilding.count
+        streamer.core.rebuilding.count
     }
 
     /// Runtime references retained by the scenes currently owning the view.
@@ -192,10 +202,10 @@ extension CellStreamer {
     /// is the same precedence `referenceEntry(key:)` uses, so a lookup that
     /// succeeds is always counted here.
     public var residentReferenceCount: Int {
-        if let interiorScene {
+        if let interiorScene = streamer.interiorScene {
             return interiorScene.references.count
         }
-        return composition.cells.values.reduce(0) { $0 + $1.references.count }
+        return streamer.composition.cells.values.reduce(0) { $0 + $1.references.count }
     }
 
     /// The cell the player is currently in, which is where anything they spawn
@@ -203,34 +213,35 @@ extension CellStreamer {
     /// loaded, matching the precedence every other lookup here uses;
     /// otherwise it is the exterior grid center. Nil only before the first
     /// cell has streamed in, when there is nowhere to put anything.
-    public var currentCellLocation: CellSceneLocation? {
-        if let interiorScene {
+    var currentCellLocation: CellSceneLocation? {
+        if let interiorScene = streamer.interiorScene {
             return interiorScene.location
         }
-        return composition.cells[grid.center] == nil ? nil : .exterior(grid.center)
+        return streamer.composition
+            .cells[streamer.grid.center] == nil ? nil : .exterior(streamer.grid.center)
     }
 }
 
-extension CellStreamer {
+extension CellStreamer.RuntimeStateSteps {
     /// Builds read the store's snapshot, a mutation rebuilds its cell, and a
     /// settled body persists as a transform override. The store outlives the
     /// streamer, so only the streamer is held weakly.
     public func bind(to store: WorldStateStore) {
-        stateSource = { store.snapshot() }
-        store.onMutation = { [weak self] location, sequence in
-            self?.noteStateMutation(in: location, sequence: sequence)
+        streamer.stateSource = { store.snapshot() }
+        store.onMutation = { [weak streamer] location, sequence in
+            streamer?.runtimeStates.noteStateMutation(in: location, sequence: sequence)
         }
-        store.onUnplacedMutation = { [weak self] key, sequence in
-            self?.noteStateMutation(of: key, sequence: sequence)
+        store.onUnplacedMutation = { [weak streamer] key, sequence in
+            streamer?.runtimeStates.noteStateMutation(of: key, sequence: sequence)
         }
-        store.onReferenceMutation = { [weak self] key, kind, sequence in
+        store.onReferenceMutation = { [weak streamer] key, kind, sequence in
             guard kind == .enableState else { return }
-            self?.noteEnableParentMutation(key, sequence: sequence)
+            streamer?.runtimeStates.noteEnableParentMutation(key, sequence: sequence)
         }
-        onBodySettled = { [weak self] key, transform, placingCell in
-            self?.isRecordingSettledBody = true
+        streamer.events.onBodySettled = { [weak streamer] key, transform, placingCell in
+            streamer?.isRecordingSettledBody = true
             store.set(transform, for: key, in: placingCell)
-            self?.isRecordingSettledBody = false
+            streamer?.isRecordingSettledBody = false
         }
     }
 }

@@ -85,7 +85,7 @@ struct TriggerVolumeWalkTests {
         witness: DetachWitness
     ) {
         let world = session.world
-        streamer.onCellAttached.register(.scripts) { attachment in
+        streamer.events.onCellAttached.register(.scripts) { attachment in
             guard let location = attachment.scene.location else { return }
             world.attach(
                 cell: location,
@@ -94,13 +94,14 @@ struct TriggerVolumeWalkTests {
                 firstIntegration: attachment.isFirstIntegration
             )
         }
-        streamer.onCellDetached.register(.scripts) { location in
+        streamer.events.onCellDetached.register(.scripts) { location in
             witness.queuedAtDetach = world.eventQueue.map(\.functionName)
             world.detach(cell: location)
         }
-        streamer.onTriggerTransition.register(.scripts) { [weak bridge = session.bridge] event in
-            bridge?.handleTriggerTransition(event)
-        }
+        streamer.events.onTriggerTransition
+            .register(.scripts) { [weak bridge = session.bridge] event in
+                bridge?.handleTriggerTransition(event)
+            }
     }
 
     private static func integrate(
@@ -174,7 +175,7 @@ struct TriggerVolumeWalkTests {
         let enterFrame = try #require(timeline.first?.0)
         let leaveFrame = try #require(timeline.last?.0)
         #expect(leaveFrame > enterFrame)
-        #expect(harness.streamer.occupiedTriggers.isEmpty)
+        #expect(harness.streamer.doorState.occupiedTriggers.isEmpty)
     }
 
     @Test
@@ -210,7 +211,7 @@ struct TriggerVolumeWalkTests {
         // The witness ran inside `detach`'s call site, before retirement, and
         // already saw the leave queued.
         #expect(harness.detachWitness.queuedAtDetach == ["OnTriggerLeave"])
-        #expect(harness.streamer.occupiedTriggers.isEmpty)
+        #expect(harness.streamer.doorState.occupiedTriggers.isEmpty)
     }
 
     @Test

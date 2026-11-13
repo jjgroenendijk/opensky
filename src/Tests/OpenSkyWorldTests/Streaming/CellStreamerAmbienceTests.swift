@@ -17,7 +17,7 @@ extension CellStreamerTests {
         let runner = ManualCellBuildRunner()
         var emitted: [AmbienceContext] = []
         let streamer = Fixture.makeStreamer(runner: runner)
-        streamer.onAmbienceContextChanged = { emitted.append($0) }
+        streamer.events.onAmbienceContextChanged = { emitted.append($0) }
         streamer.update(cameraPosition: Fixture.center)
 
         // First update emits an empty context (the director needs to know
@@ -46,7 +46,7 @@ extension CellStreamerTests {
         let runner = ManualCellBuildRunner()
         var emitted: [AmbienceContext] = []
         let streamer = Fixture.makeStreamer(runner: runner)
-        streamer.onAmbienceContextChanged = { emitted.append($0) }
+        streamer.events.onAmbienceContextChanged = { emitted.append($0) }
 
         // The initial empty context fires on the first update, then a second
         // matching one for the regionless center cell does not (key unchanged).
@@ -62,7 +62,7 @@ extension CellStreamerTests {
         let runner = ManualCellBuildRunner()
         var emitted: [AmbienceContext] = []
         let streamer = Fixture.makeStreamer(runner: runner)
-        streamer.onAmbienceContextChanged = { emitted.append($0) }
+        streamer.events.onAmbienceContextChanged = { emitted.append($0) }
         streamer.update(cameraPosition: Fixture.center)
         let initialEmitted = emitted.count
 

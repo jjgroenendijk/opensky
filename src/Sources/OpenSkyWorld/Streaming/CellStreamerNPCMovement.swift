@@ -53,66 +53,66 @@ struct NPCUnbakedRest {
     let drawingCell: CellSceneLocation
 }
 
-extension CellStreamer {
+extension CellStreamer.ActorSteps {
     public var npcMovement: NPCMovementRuntime {
-        get { npcMovementState.runtime }
-        set { npcMovementState.runtime = newValue }
+        get { streamer.npcMovementState.runtime }
+        nonmutating set { streamer.npcMovementState.runtime = newValue }
     }
 
     public var npcMovementConfiguration: PlayerMovementConfiguration {
-        get { npcMovementState.configuration }
-        set { npcMovementState.configuration = newValue }
+        get { streamer.npcMovementState.configuration }
+        nonmutating set { streamer.npcMovementState.configuration = newValue }
     }
 
     public var onNPCMovementPersist: ((NPCMovementPersistence) -> Void)? {
-        get { npcMovementState.onPersist }
-        set { npcMovementState.onPersist = newValue }
+        get { streamer.npcMovementState.onPersist }
+        nonmutating set { streamer.npcMovementState.onPersist = newValue }
     }
 
     public var onNPCLocomotionDrive: ((NPCLocomotionDriveUpdate) -> Void)? {
-        get { npcMovementState.onDrive }
-        set { npcMovementState.onDrive = newValue }
+        get { streamer.npcMovementState.onDrive }
+        nonmutating set { streamer.npcMovementState.onDrive = newValue }
     }
 
     public var onNPCPosesChanged: (([UInt32: float4x4]) -> Void)? {
-        get { npcMovementState.onPosesChanged }
-        set { npcMovementState.onPosesChanged = newValue }
+        get { streamer.npcMovementState.onPosesChanged }
+        nonmutating set { streamer.npcMovementState.onPosesChanged = newValue }
     }
 
     public var onNPCDoorCrossing: ((ReferenceKey, FormID) -> Void)? {
-        get { npcMovementState.onDoorCrossing }
-        set { npcMovementState.onDoorCrossing = newValue }
+        get { streamer.npcMovementState.onDoorCrossing }
+        nonmutating set { streamer.npcMovementState.onDoorCrossing = newValue }
     }
 
     public var onNPCLanding: ((ReferenceKey, WalkLanding) -> Void)? {
-        get { npcMovementState.onLanding }
-        set { npcMovementState.onLanding = newValue }
+        get { streamer.npcMovementState.onLanding }
+        nonmutating set { streamer.npcMovementState.onLanding = newValue }
     }
 
     public var onNPCCellHandoff: ((NPCMovementPersistence) -> Void)? {
-        get { npcMovementState.onCellHandoff }
-        set { npcMovementState.onCellHandoff = newValue }
+        get { streamer.npcMovementState.onCellHandoff }
+        nonmutating set { streamer.npcMovementState.onCellHandoff = newValue }
     }
 
     public var npcStandingActors: (() -> [NPCNeighbour])? {
-        get { npcMovementState.standingActors }
-        set { npcMovementState.standingActors = newValue }
+        get { streamer.npcMovementState.standingActors }
+        nonmutating set { streamer.npcMovementState.standingActors = newValue }
     }
 
     public var npcMovementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)? {
-        get { npcMovementState.movementSpeeds }
-        set { npcMovementState.movementSpeeds = newValue }
+        get { streamer.npcMovementState.movementSpeeds }
+        nonmutating set { streamer.npcMovementState.movementSpeeds = newValue }
     }
 
     public var npcBodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)? {
-        get { npcMovementState.bodyHalfExtents }
-        set { npcMovementState.bodyHalfExtents = newValue }
+        get { streamer.npcMovementState.bodyHalfExtents }
+        nonmutating set { streamer.npcMovementState.bodyHalfExtents = newValue }
     }
 
     /// The race facts that decide how a current pushes a walking NPC.
     public var npcWaterPushRace: ((ReferenceKey) -> WaterPushRace)? {
-        get { npcMovementState.waterPushRace }
-        set { npcMovementState.waterPushRace = newValue }
+        get { streamer.npcMovementState.waterPushRace }
+        nonmutating set { streamer.npcMovementState.waterPushRace = newValue }
     }
 
     /// A `direct` move walks the straight line to `point` on the terrain, without a
@@ -123,43 +123,10 @@ extension CellStreamer {
         gait: LocomotionGait? = nil, runSlowdown: FollowSettings? = nil,
         walkRunBlend: Float? = nil
     ) -> NPCMoveCommandResult {
-        guard let entry = referenceEntry(key: actor), entry.placedActor != nil else {
-            return .actorNotResident
-        }
-        let standing = npcMovement.standingTransform(of: entry, in: stateSource())
-        let result = direct ? .path(.straight(to: point)) : findPath(NavigationPathQuery(
-            start: standing.position,
-            target: point,
-            capsuleRadius: PlayerCapsule.standard.radius
-        ))
-        let swim = npcMovementState.swimBreadcrumbs.trail(from: standing.position, to: point)
-        let found: NavigationPath? = if case let .path(path) = result {
-            path
-        } else {
-            swim.map(NavigationPath.through)
-        }
-        guard let path = found else {
-            guard case let .miss(reason) = result else { return .noPath(.disconnected) }
-            return .noPath(reason)
-        }
-        let bounds = npcMovementState.bodyHalfExtents?(actor)
-        var start = NPCMoveStart(
-            actor: actor,
-            formID: entry.formID,
-            placement: standing.placement,
-            scale: standing.scale,
-            capsule: bounds.flatMap { .upright(halfExtents: $0, scale: standing.scale) }
-                ?? .standard,
-            configuration: npcMovementConfiguration,
-            path: path,
-            ignoresStatics: direct,
-            gait: gait
+        movers.moveActor(
+            actor, to: point, direct: direct, gait: gait, runSlowdown: runSlowdown,
+            walkRunBlend: walkRunBlend
         )
-        start.runSlowdown = runSlowdown
-        start.walkRunBlend = walkRunBlend
-        start.longBody = bounds.flatMap { LongBodyShape(halfExtents: $0, scale: standing.scale) }
-        let started = npcMovement.start(start)
-        return started ? .started : .moverCapReached
     }
 
     /// Stops one actor where it stands, through the movement authority.
@@ -167,7 +134,7 @@ extension CellStreamer {
     @discardableResult
     public func stopActor(_ actor: ReferenceKey) -> Bool {
         bindNPCMovementCallbacks()
-        return holdingRests { npcMovement.stop(actor) }
+        return movers.holdingRests { npcMovement.stop(actor) }
     }
 
     /// Moves a still actor's rest to where a vehicle let it off.
@@ -185,13 +152,13 @@ extension CellStreamer {
     public func faceActor(_ actor: ReferenceKey, towards point: SIMD3<Float>) -> Bool {
         // A vehicle owns a rider's pose; the rider's seat idle sets where it looks.
         guard
-            npcMovementState.carried[actor] == nil,
-            let entry = referenceEntry(key: actor), entry.placedActor != nil
+            streamer.npcMovementState.carried[actor] == nil,
+            let entry = streamer.residents.referenceEntry(key: actor), entry.placedActor != nil
         else {
             return false
         }
         bindNPCMovementCallbacks()
-        let standing = npcMovement.standingTransform(of: entry, in: stateSource())
+        let standing = npcMovement.standingTransform(of: entry, in: streamer.stateSource())
         npcMovement.face(NPCFaceStart(
             actor: actor,
             formID: entry.formID,
@@ -235,12 +202,12 @@ extension CellStreamer {
         moved: (ReferenceTransformOverride) -> ReferenceTransformOverride
     ) {
         guard
-            npcMovementState.carried[actor] == nil, !npcMovement.isWalking(actor),
+            streamer.npcMovementState.carried[actor] == nil, !npcMovement.isWalking(actor),
             !npcMovement.isSliding(actor),
-            let entry = referenceEntry(key: actor), entry.placedActor != nil
+            let entry = streamer.residents.referenceEntry(key: actor), entry.placedActor != nil
         else { return }
         bindNPCMovementCallbacks()
-        let standing = npcMovement.standingTransform(of: entry, in: stateSource())
+        let standing = npcMovement.standingTransform(of: entry, in: streamer.stateSource())
         let target = moved(standing)
         npcMovement.place(
             NPCFaceStart(
@@ -254,7 +221,7 @@ extension CellStreamer {
 
     /// Where the player swims, so a follower can swim after it off the navmesh.
     public func recordPlayerSwim(at feet: SIMD3<Float>, isSwimming: Bool) {
-        npcMovementState.swimBreadcrumbs.record(feet, isSwimming: isSwimming)
+        streamer.npcMovementState.swimBreadcrumbs.record(feet, isSwimming: isSwimming)
     }
 
     public func isActorWalking(_ actor: ReferenceKey) -> Bool {
@@ -267,11 +234,11 @@ extension CellStreamer {
         _ actor: ReferenceKey, toHeading heading: Float, within tolerance: Float
     ) -> Float? {
         guard
-            npcMovementState.carried[actor] == nil,
-            let entry = referenceEntry(key: actor), entry.placedActor != nil
+            streamer.npcMovementState.carried[actor] == nil,
+            let entry = streamer.residents.referenceEntry(key: actor), entry.placedActor != nil
         else { return nil }
         guard !npcMovement.isWalking(actor) else { return .pi }
-        let standing = npcMovement.standingTransform(of: entry, in: stateSource())
+        let standing = npcMovement.standingTransform(of: entry, in: streamer.stateSource())
         let remaining = NPCYawMath.shortestTurn(from: standing.rotation.z, to: heading)
         guard abs(remaining) > tolerance else {
             releaseActorFacing(actor)
@@ -299,11 +266,11 @@ extension CellStreamer {
     @discardableResult
     public func knockActor(_ actor: ReferenceKey, velocity: SIMD3<Float>) -> Bool {
         guard
-            npcMovementState.carried[actor] == nil,
-            let entry = referenceEntry(key: actor), entry.placedActor != nil
+            streamer.npcMovementState.carried[actor] == nil,
+            let entry = streamer.residents.referenceEntry(key: actor), entry.placedActor != nil
         else { return false }
         bindNPCMovementCallbacks()
-        let standing = npcMovement.standingTransform(of: entry, in: stateSource())
+        let standing = npcMovement.standingTransform(of: entry, in: streamer.stateSource())
         let knocked = npcMovement.knock(
             NPCFaceStart(
                 actor: actor, formID: entry.formID, placement: standing.placement,
@@ -320,12 +287,12 @@ extension CellStreamer {
     /// vehicle carries it.
     public func takeRiddenActor(_ actor: ReferenceKey) -> NPCRiddenHold? {
         guard
-            npcMovementState.carried[actor] == nil,
-            let entry = referenceEntry(key: actor), entry.placedActor != nil
+            streamer.npcMovementState.carried[actor] == nil,
+            let entry = streamer.residents.referenceEntry(key: actor), entry.placedActor != nil
         else { return nil }
         bindNPCMovementCallbacks()
-        let standing = npcMovement.standingTransform(of: entry, in: stateSource())
-        let hold = holdingRests {
+        let standing = npcMovement.standingTransform(of: entry, in: streamer.stateSource())
+        let hold = movers.holdingRests {
             npcMovement.takeRidden(NPCFaceStart(
                 actor: actor, formID: entry.formID, placement: standing.placement,
                 scale: standing.scale, target: standing.position
@@ -337,11 +304,13 @@ extension CellStreamer {
 
     public func steerRiddenActor(_ actor: ReferenceKey, to feet: SIMD3<Float>, yaw: Float) {
         bindNPCMovementCallbacks()
-        let cell = navigationCell(at: feet)
-        holdingRests {
-            npcMovement.steerRidden(actor, to: feet, yaw: yaw, cell: cell) { [weak self] state in
-                Set(self?.triggerVolumes(intersecting: state).map(\.reference) ?? [])
-            }
+        let cell = movers.navigationCell(at: feet)
+        movers.holdingRests {
+            npcMovement
+                .steerRidden(actor, to: feet, yaw: yaw, cell: cell) { [weak streamer] state in
+                    Set(streamer?.triggers.triggerVolumes(intersecting: state)
+                        .map(\.reference) ?? [])
+                }
         }
         onNPCPosesChanged?(npcMovement.instanceDeltas())
     }
@@ -353,7 +322,7 @@ extension CellStreamer {
     @discardableResult
     public func releaseRiddenActor(_ actor: ReferenceKey) -> Bool {
         bindNPCMovementCallbacks()
-        let released = holdingRests { npcMovement.releaseRidden(actor) }
+        let released = movers.holdingRests { npcMovement.releaseRidden(actor) }
         onNPCPosesChanged?(npcMovement.instanceDeltas())
         return released
     }
@@ -364,135 +333,27 @@ extension CellStreamer {
 
     /// The actor's live pose: where its vehicle carries it, else where it walks.
     public func npcTransform(for actor: ReferenceKey) -> ReferenceTransformOverride? {
-        npcMovementState.carried[actor] ?? npcMovement.transform(for: actor)
+        streamer.npcMovementState.carried[actor] ?? npcMovement.transform(for: actor)
     }
 
     /// Writes all active actors once immediately before a save snapshot.
     public func persistNPCMovementForSave() {
-        holdingRests { npcMovement.persistForSave() }
+        movers.holdingRests { npcMovement.persistForSave() }
     }
 
     func advanceNPCMovement(frameTime: Float) {
-        bindNPCMovementCallbacks()
-        holdingRests { advanceMovers(frameTime: frameTime) }
-        bakeBuiltRests()
-        onNPCPosesChanged?(npcMovement.instanceDeltas())
+        movers.advanceNPCMovement(frameTime: frameTime)
     }
 
-    /// Runs `body`, then delivers the rest writes it emitted, once the runtime holds
-    /// its result.
-    private func holdingRests<T>(_ body: () -> T) -> T {
-        npcMovementState.heldRests = []
-        let result = body()
-        let rests = npcMovementState.heldRests ?? []
-        npcMovementState.heldRests = nil
-        rests.forEach(deliverRest)
-        return result
-    }
-
-    private func advanceMovers(frameTime: Float) {
-        npcMovement.advance(by: frameTime, world: NPCMovementWorld(
-            sampleGround: { [weak self] position in self?.sampleTerrain(at: position) },
-            collisionQuery: { [weak self] bounds in
-                self?.characterCollisionCandidates(overlapping: bounds) ?? []
-            },
-            repath: { [weak self] query in
-                self?.findPath(query) ?? .miss(.disconnected)
-            },
-            cellAt: { [weak self] position in
-                self?.navigationCell(at: position)
-            },
-            triggersAt: { [weak self] state in
-                Set(self?.triggerVolumes(intersecting: state).map(\.reference) ?? [])
-            },
-            hasGround: { [weak self] position in
-                self?.interiorScene != nil || self?.sampleTerrain(at: position) != nil
-            },
-            standingActors: { [weak self] in self?.npcStandingActors?() ?? [] },
-            sampleWater: { [weak self] position in self?.water(at: position) },
-            waterPushRace: { [weak self] actor in self?.npcWaterPushRace?(actor) ?? .normal },
-            vehicleActors: npcMovementState.vehicleLinkedActors,
-            collisionQueryIgnoringVehicles: { [weak self] bounds in
-                self?.collisionCandidatesIgnoringVehicles(overlapping: bounds) ?? []
-            },
-            movementSpeeds: { [weak self] actor in
-                self?.npcMovementState.movementSpeeds?(actor)
-            }
-        ))
-    }
-
-    /// Called from `noteStateMutation` while a rest write is in progress. The actor
-    /// already draws at that pose, so the write rebuilds nothing; a later build of
-    /// its cell bakes it in. Returns false when no rest write is in progress.
     func noteNPCRestMutation(sequence: UInt64) -> Bool {
-        guard let rest = npcMovementState.recordingRest else { return false }
-        if let cell = cellLocation(of: rest.actor) {
-            npcMovementState.unbakedRests[rest.actor, default: []].append(NPCUnbakedRest(
-                sequence: sequence, placement: rest.transform.placement, drawingCell: cell
-            ))
-        }
-        return true
-    }
-
-    /// Moves each actor's draw base to the newest rest its cell's resident build holds.
-    private func bakeBuiltRests() {
-        for actor in npcMovementState.unbakedRests.keys.sorted() {
-            guard
-                var rests = npcMovementState.unbakedRests[actor],
-                let cell = rests.last?.drawingCell,
-                let built = residentStateSequence(at: cell),
-                let baked = rests.lastIndex(where: { $0.sequence <= built })
-            else { continue }
-            npcMovement.bake(actor, at: rests[baked].placement)
-            rests.removeSubrange(...baked)
-            npcMovementState.unbakedRests[actor] = rests.isEmpty ? nil : rests
-        }
-    }
-
-    private func residentStateSequence(at location: CellSceneLocation) -> UInt64? {
-        switch location {
-        case let .exterior(coordinate):
-            return composition.cells[coordinate]?.stateSequence
-        case .interior:
-            guard let interiorScene, interiorScene.location == location else { return nil }
-            return interiorScene.stateSequence
-        }
-    }
-
-    private func navigationCell(at position: SIMD3<Float>) -> CellSceneLocation? {
-        reconcileNavigation()
-        return navigationState.graph.cell(at: position)
-    }
-
-    private func deliverRest(_ persistence: NPCMovementPersistence) {
-        npcMovementState.recordingRest = persistence
-        onNPCMovementPersist?(persistence)
-        npcMovementState.recordingRest = nil
-        if persistence.reason == .cellHandoff {
-            onNPCCellHandoff?(persistence)
-        }
+        movers.noteNPCRestMutation(sequence: sequence)
     }
 
     public func bindNPCMovementCallbacks() {
-        npcMovement.onDrive = { [weak self] update in
-            self?.onNPCLocomotionDrive?(update)
-        }
-        npcMovement.onPersist = { [weak self] persistence in
-            guard let self else { return }
-            if npcMovementState.heldRests != nil {
-                npcMovementState.heldRests?.append(persistence)
-            } else {
-                deliverRest(persistence)
-            }
-        }
-        npcMovement.onTriggerTransition = { [weak self] event in
-            self?.onTriggerTransition(event)
-        }
-        npcMovement.onDoorCrossing = { [weak self] actor, door in
-            self?.onNPCDoorCrossing?(actor, door)
-        }
-        npcMovement.onLanding = { [weak self] actor, landing in
-            self?.onNPCLanding?(actor, landing)
-        }
+        movers.bindNPCMovementCallbacks()
+    }
+
+    var movers: CellNPCMovers {
+        CellNPCMovers(streamer: streamer)
     }
 }

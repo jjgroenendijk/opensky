@@ -168,18 +168,21 @@ struct NavigationRuntimeTests {
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 1)
         streamer.composition.setCell(fixture.firstScene, at: CellCoordinate(x: 0, y: 0))
         streamer.composition.setCell(fixture.secondScene, at: CellCoordinate(x: 1, y: 0))
-        let path = try #require(streamer.findPath(Self.crossCellQuery).path)
+        let path = try #require(streamer.navigation.findPath(Self.crossCellQuery).path)
         streamer.composition.removeCell(at: CellCoordinate(x: 1, y: 0))
-        #expect(!streamer.navigationPathIsCurrent(path, target: Self.crossCellQuery.target))
+        #expect(!streamer.navigation.navigationPathIsCurrent(
+            path,
+            target: Self.crossCellQuery.target
+        ))
 
         var responses: [NavigationRepathResponse] = []
         streamer.navigationState.onRepath = { responses.append($0) }
         for identifier in 1 ... 3 {
-            streamer.requestNavigationRepath(NavigationRepathRequest(
+            streamer.navigation.requestNavigationRepath(NavigationRepathRequest(
                 identifier: UInt64(identifier), query: Self.crossCellQuery
             ))
         }
-        streamer.advanceNavigation()
+        streamer.navigation.advanceNavigation()
 
         #expect(responses.map(\.identifier) == [1, 2])
         // The target cell is gone, so no repath can reach it.

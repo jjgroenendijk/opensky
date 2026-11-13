@@ -173,7 +173,9 @@ extension ObjectAnimationWorldAdapter: PapyrusObjectAnimationBridge {
         if let code = doors.openStateCode(of: reference) {
             return code
         }
-        guard let interaction = game.streamer.residentInteraction(reference: FormID(reference))
+        guard
+            let interaction = game.streamer.residents
+                .residentInteraction(reference: FormID(reference))
         else { return 0 }
         return [.open, .search].contains(interaction.action) ? nil : 0
     }

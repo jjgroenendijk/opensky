@@ -171,8 +171,8 @@ extension CellStreamingWalkDriver {
                 boost: moveForward != 0,
                 dt: Self.inputTimeStep
             ),
-            sampleGround: streamer.sampleTerrain,
-            collisionQuery: streamer.characterCollisionCandidates
+            sampleGround: streamer.collision.sampleTerrain,
+            collisionQuery: streamer.collision.characterCollisionCandidates
         )
     }
 
@@ -193,12 +193,12 @@ extension CellStreamingWalkDriver {
         if let error = swapError.error {
             throw CellStreamingWalkBenchmarkError.sceneSwapFailed(error)
         }
-        if streamer.failedCellCount > 0 {
-            throw CellStreamingWalkBenchmarkError.cellBuildFailed(streamer.failedCellCount)
+        if streamer.coverage.failedCellCount > 0 {
+            throw CellStreamingWalkBenchmarkError.cellBuildFailed(streamer.coverage.failedCellCount)
         }
-        if streamer.doorTransitionFailureCount > 0 {
+        if streamer.doorState.doorTransitionFailureCount > 0 {
             throw CellStreamingWalkBenchmarkError.doorBuildFailed(
-                streamer.doorTransitionFailureCount
+                streamer.doorState.doorTransitionFailureCount
             )
         }
     }
@@ -228,9 +228,9 @@ extension CellStreamingWalkDriver {
     }
 
     public static func isSettled(_ streamer: CellStreamer) -> Bool {
-        streamer.resolvedCellCount == streamer.desiredCellCount
-            && streamer.inFlightCellCount == 0
-            && streamer.pendingCompletionCount == 0
-            && streamer.queuedRequestCount == 0
+        streamer.coverage.resolvedCellCount == streamer.coverage.desiredCellCount
+            && streamer.coverage.inFlightCellCount == 0
+            && streamer.coverage.pendingCompletionCount == 0
+            && streamer.coverage.queuedRequestCount == 0
     }
 }

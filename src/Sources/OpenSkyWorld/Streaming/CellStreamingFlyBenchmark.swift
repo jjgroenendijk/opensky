@@ -216,7 +216,7 @@ public enum CellStreamingFlyBenchmark {
             guard isSettled(streamer) else { return false }
             settledFootprints.append(footprint)
             if legIndex == -1 {
-                initialResidents = streamer.residentCoordinates
+                initialResidents = streamer.coverage.residentCoordinates
             }
             legIndex += 1
             guard legIndex < segments.count else { return true }
@@ -226,7 +226,8 @@ public enum CellStreamingFlyBenchmark {
         }
 
         private func validateUnloads() throws {
-            guard !initialResidents.subtracting(streamer.residentCoordinates).isEmpty else {
+            guard !initialResidents.subtracting(streamer.coverage.residentCoordinates).isEmpty
+            else {
                 throw CellStreamingFlyBenchmarkError.noCellsUnloaded
             }
         }
@@ -295,9 +296,9 @@ public enum CellStreamingFlyBenchmark {
             if let error = swapError.error {
                 throw CellStreamingFlyBenchmarkError.sceneSwapFailed(error)
             }
-            guard streamer.failedCellCount == 0 else {
+            guard streamer.coverage.failedCellCount == 0 else {
                 throw CellStreamingFlyBenchmarkError.cellBuildFailed(
-                    count: streamer.failedCellCount
+                    count: streamer.coverage.failedCellCount
                 )
             }
         }
@@ -339,11 +340,11 @@ public enum CellStreamingFlyBenchmark {
 /// the same scene swaps however fast its cells build.
 @MainActor
 private func isSettled(_ streamer: CellStreamer) -> Bool {
-    streamer.startAreaReady
-        && streamer.resolvedCellCount == streamer.desiredCellCount
-        && streamer.inFlightCellCount == 0
-        && streamer.pendingCompletionCount == 0
-        && streamer.queuedRequestCount == 0
+    streamer.coverage.startAreaReady
+        && streamer.coverage.resolvedCellCount == streamer.coverage.desiredCellCount
+        && streamer.coverage.inFlightCellCount == 0
+        && streamer.coverage.pendingCompletionCount == 0
+        && streamer.coverage.queuedRequestCount == 0
 }
 
 private func checkedFootprint(capMB: Double) throws -> Double {

@@ -39,7 +39,7 @@ struct AgentSweepTests {
         host.fakeIdleWorld.idles = idles
         host.fakeRenderControls.frameStatsSnapshot = .empty
         host.fakeWorldState.snapshotResult = .empty
-        host.fakeStreamer.residentReferenceIndexResult = .empty
+        host.fakeStreamer.residents.residentReferenceIndexResult = .empty
         world = AgentWorldAdapter(game: host, now: { Date(timeIntervalSinceReferenceDate: 0) })
     }
 
@@ -119,8 +119,8 @@ struct AgentEventTapTests {
         let seam = FakeActivationGateSeamPort()
         seam.refusals = FrameSchedule()
         host.fakeStreamer.activationGate = seam
-        host.fakeStreamer.onCellDetached = FrameSchedule()
-        host.fakeStreamer.onInteraction = FrameSchedule()
+        host.fakeStreamer.events.onCellDetached = FrameSchedule()
+        host.fakeStreamer.events.onInteraction = FrameSchedule()
         host.fakeScripts.scriptsSnapshot = .empty
         host.fakeCombat.meleeCombatSnapshot = .unavailable
         let world = AgentWorldAdapter(game: host, now: { Date(timeIntervalSinceReferenceDate: 0) })

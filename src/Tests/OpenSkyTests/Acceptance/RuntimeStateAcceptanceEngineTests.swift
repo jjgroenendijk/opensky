@@ -31,7 +31,7 @@ private struct WorldTimeEngineHarness {
 
     init(radius: Int32 = 0) {
         streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: radius)
-        streamer.bind(to: store)
+        streamer.runtimeStates.bind(to: store)
     }
 
     /// Runs frames until no new build is dispatched, completing each dispatched
@@ -79,7 +79,7 @@ struct RuntimeStateAcceptanceTests {
         let cell = CellCoordinate(x: 0, y: 0)
         let home = CellGridManager.cellCenter(of: cell)
         WorldTimeEngineHarness.settle(&harness, at: home)
-        #expect(harness.streamer.residentCoordinates.contains(cell))
+        #expect(harness.streamer.coverage.residentCoordinates.contains(cell))
 
         Self.mutate(harness.store, in: .exterior(cell))
         #expect(harness.store.dirtyCount == 2)
@@ -87,7 +87,7 @@ struct RuntimeStateAcceptanceTests {
 
         // The streamer noticed, and the rebuild it dispatches runs against
         // state that contains both deltas.
-        #expect(harness.streamer.queuedRebuildCount == 1)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 1)
         WorldTimeEngineHarness.settle(&harness, at: home)
         try Self.expectBothDeltas(in: #require(harness.runner.enqueuedStates.last))
 
@@ -96,7 +96,7 @@ struct RuntimeStateAcceptanceTests {
         // store.
         let far = CellGridManager.cellCenter(of: CellCoordinate(x: 9, y: 0))
         WorldTimeEngineHarness.settle(&harness, at: far)
-        #expect(!harness.streamer.residentCoordinates.contains(cell))
+        #expect(!harness.streamer.coverage.residentCoordinates.contains(cell))
 
         let beforeReturn = harness.runner.enqueued.count
         WorldTimeEngineHarness.settle(&harness, at: home)
@@ -106,7 +106,7 @@ struct RuntimeStateAcceptanceTests {
             "the cell never reloaded"
         )
         try Self.expectBothDeltas(in: harness.runner.enqueuedStates[reloadIndex])
-        #expect(harness.streamer.residentCoordinates.contains(cell))
+        #expect(harness.streamer.coverage.residentCoordinates.contains(cell))
 
         // Two generated keys are minted so the allocator has a position worth
         // resuming rather than its initial one.
@@ -167,7 +167,7 @@ struct RuntimeStateAcceptanceTests {
         var harness = WorldTimeEngineHarness(radius: 1)
         let home = CellGridManager.cellCenter(of: cell)
         WorldTimeEngineHarness.settle(&harness, at: home)
-        #expect(harness.streamer.residentCellCount == 9)
+        #expect(harness.streamer.coverage.residentCellCount == 9)
         #expect(harness.store.dirtyCount == 0)
         let beforeLoad = harness.runner.enqueued.count
 
@@ -176,11 +176,11 @@ struct RuntimeStateAcceptanceTests {
         #expect(harness.store.dirtyCount == 2)
         // The restore is announced as one unattributed mutation, so every
         // resident cell is queued for a rebuild.
-        #expect(harness.streamer.queuedRebuildCount == 9)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 9)
 
         WorldTimeEngineHarness.settle(&harness, at: home)
         #expect(harness.runner.enqueued.count == beforeLoad + 9)
-        #expect(harness.streamer.queuedRebuildCount == 0)
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 0)
         try Self.expectBothDeltas(in: #require(harness.runner.enqueuedStates.last))
     }
 

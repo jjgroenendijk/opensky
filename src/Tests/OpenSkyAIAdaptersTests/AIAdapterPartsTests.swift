@@ -26,7 +26,7 @@ struct AIAdapterPartsTests {
     )
 
     init() {
-        host.fakeStreamer.residentReferenceIndexResult = .empty
+        host.fakeStreamer.residents.residentReferenceIndexResult = .empty
         adapter = AIWorldAdapter(game: host, stage: nil)
     }
 
@@ -65,7 +65,7 @@ struct AIAdapterPartsTests {
         adapter.worlds.placeStanding(Self.actor, from: occupancy)
         adapter.worlds.moveFurnitureActor(Self.actor, to: pose)
         adapter.worlds.finishStanding(Self.actor, at: pose)
-        #expect(host.fakeStreamer.restActorCalls.map(\.actor) == [
+        #expect(host.fakeStreamer.actors.restActorCalls.map(\.actor) == [
             Self.actor,
             Self.actor,
             Self.actor
@@ -95,14 +95,14 @@ struct AIAdapterPartsTests {
     }
 
     @Test func aPackageNearTheActorUsesItsLivePosition() {
-        host.fakeStreamer.npcTransformResult = ReferenceTransformOverride(position: .one)
+        host.fakeStreamer.actors.npcTransformResult = ReferenceTransformOverride(position: .one)
         let places = adapter.packageMoves.places
         let nearSelf = Package.Location(rawKind: 12, value: 0, radius: 5)
         #expect(places.packagePlace(of: nearSelf, actor: Self.actor, aliasQuest: nil)?
             .point == .one)
         let editor = Package.Location(rawKind: 3, value: 0, radius: 5)
         #expect(places.packagePlace(of: editor, actor: Self.actor, aliasQuest: nil) == nil)
-        host.fakeStreamer.npcTransformResult = nil
+        host.fakeStreamer.actors.npcTransformResult = nil
         #expect(adapter.packageMoves.packageActorPosition(Self.actor) == nil)
     }
 

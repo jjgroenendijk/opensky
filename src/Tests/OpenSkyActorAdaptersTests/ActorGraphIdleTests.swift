@@ -50,9 +50,9 @@ struct ActorGraphIdleTests {
 
     @Test func aTurnGoesThroughTheStreamer() {
         let idles = IdleWorldAdapter(game: host, stage: nil)
-        host.fakeStreamer.turnActorResult = 0.5
+        host.fakeStreamer.actors.turnActorResult = 0.5
         #expect(idles.turnActor(Self.actor, toHeading: 1, within: 0.1) == 0.5)
-        #expect(host.fakeStreamer.turnActorCalls.map(\.actor) == [Self.actor])
+        #expect(host.fakeStreamer.actors.turnActorCalls.map(\.actor) == [Self.actor])
         #expect(idles.synchronizedMark(of: .player) == nil)
         #expect(idles.synchronizedMark(of: Self.actor) == nil)
     }

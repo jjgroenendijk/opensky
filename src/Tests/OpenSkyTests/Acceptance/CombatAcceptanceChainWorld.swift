@@ -111,7 +111,7 @@ extension CombatAcceptanceChain: ProjectileWorld {
     func sweepProjectile(_ query: ShapeSweepQuery) -> ShapeSweepHit? {
         ShapeSweeper.firstHit(
             query: query,
-            shapes: streamer.staticCollisionCandidates(overlapping: query.bounds)
+            shapes: streamer.collision.staticCollisionCandidates(overlapping: query.bounds)
         )
     }
 

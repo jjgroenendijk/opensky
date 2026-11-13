@@ -99,15 +99,15 @@ struct DistantLODStreamerTests {
             missingBlockCount: 0
         ))
         streamer.update(cameraPosition: position)
-        #expect(!streamer.startAreaReady)
+        #expect(!streamer.coverage.startAreaReady)
         for cell in cells {
             runner.complete(cell, scene: cellScene())
         }
         for _ in cells {
             streamer.update(cameraPosition: position)
         }
-        #expect(streamer.startAreaReady)
-        #expect(streamer.distantLODBlockCount == 5)
+        #expect(streamer.coverage.startAreaReady)
+        #expect(streamer.coverage.distantLODBlockCount == 5)
         #expect(runner.lodRequests.isEmpty)
         #expect(runner.prebuildRequests.count == 1)
     }
@@ -138,14 +138,14 @@ struct DistantLODStreamerTests {
             missingBlockCount: 0
         ))
         streamer.update(cameraPosition: position)
-        #expect(streamer.distantLODBlockCount == 7)
+        #expect(streamer.coverage.distantLODBlockCount == 7)
 
         let moved = CellGridManager.cellCenter(of: CellCoordinate(x: 3, y: 0))
         streamer.update(cameraPosition: moved)
-        #expect(streamer.isCoverageTransitionActive)
-        #expect(streamer.composedCellCount == 9)
-        #expect(streamer.residentCellCount == 0)
-        #expect(streamer.distantLODBlockCount == 7)
+        #expect(streamer.coverage.isCoverageTransitionActive)
+        #expect(streamer.coverage.composedCellCount == 9)
+        #expect(streamer.coverage.residentCellCount == 0)
+        #expect(streamer.coverage.distantLODBlockCount == 7)
 
         let movedCells = (2 ... 4).flatMap { x in
             (-1 ... 1).map { CellCoordinate(x: Int32(x), y: Int32($0)) }
@@ -158,9 +158,9 @@ struct DistantLODStreamerTests {
         }
         #expect(runner.lodRequests == [Self.center, CellCoordinate(x: 3, y: 0)])
         #expect(runner.lodHiddenCells.last == Set(movedCells))
-        #expect(streamer.isCoverageTransitionActive)
-        #expect(streamer.composedCellCount == 9)
-        #expect(streamer.distantLODBlockCount == 7)
+        #expect(streamer.coverage.isCoverageTransitionActive)
+        #expect(streamer.coverage.composedCellCount == 9)
+        #expect(streamer.coverage.distantLODBlockCount == 7)
 
         runner.completeLOD(CellCoordinate(x: 3, y: 0), scene: DistantLODScene(
             renderScene: RenderScene(instances: []),
@@ -169,9 +169,9 @@ struct DistantLODStreamerTests {
             missingBlockCount: 0
         ))
         streamer.update(cameraPosition: moved)
-        #expect(!streamer.isCoverageTransitionActive)
-        #expect(streamer.composedCellCount == 9)
-        #expect(streamer.distantLODBlockCount == 8)
+        #expect(!streamer.coverage.isCoverageTransitionActive)
+        #expect(streamer.coverage.composedCellCount == 9)
+        #expect(streamer.coverage.distantLODBlockCount == 8)
     }
 
     private func loadNearGrid(
@@ -193,11 +193,11 @@ struct DistantLODStreamerTests {
         let streamer = CellStreamer(center: Self.center, radius: 1, runner: runner) { _, _ in }
         let position = CellGridManager.cellCenter(of: Self.center)
         streamer.update(cameraPosition: position)
-        #expect(!streamer.startAreaReady)
+        #expect(!streamer.coverage.startAreaReady)
 
         loadNearGrid(streamer, runner: runner, position: position)
-        #expect(streamer.nearGridResolved)
-        #expect(!streamer.startAreaReady, "the near grid alone leaves bare sky beyond it")
+        #expect(streamer.coverage.nearGridResolved)
+        #expect(!streamer.coverage.startAreaReady, "the near grid alone leaves bare sky beyond it")
 
         runner.completeLOD(Self.center, scene: DistantLODScene(
             renderScene: RenderScene(instances: []),
@@ -206,7 +206,7 @@ struct DistantLODStreamerTests {
             missingBlockCount: 0
         ))
         streamer.update(cameraPosition: position)
-        #expect(streamer.startAreaReady)
+        #expect(streamer.coverage.startAreaReady)
     }
 
     @Test func aQuickFirstRingWaitsForItsLargeReferences() {
@@ -225,7 +225,10 @@ struct DistantLODStreamerTests {
         loadNearGrid(streamer, runner: runner, position: position)
         streamer.update(cameraPosition: position)
         #expect(runner.lodRequests == [Self.center])
-        #expect(!streamer.startAreaReady, "the LOD of the large references would swap in view")
+        #expect(
+            !streamer.coverage.startAreaReady,
+            "the LOD of the large references would swap in view"
+        )
 
         runner.completeLOD(Self.center, scene: DistantLODScene(
             renderScene: RenderScene(instances: []),
@@ -234,7 +237,7 @@ struct DistantLODStreamerTests {
             missingBlockCount: 0
         ))
         streamer.update(cameraPosition: position)
-        #expect(streamer.startAreaReady)
+        #expect(streamer.coverage.startAreaReady)
     }
 
     @Test func anEnableChangeOfARingReferenceBuildsTheRingAgain() {
@@ -252,11 +255,14 @@ struct DistantLODStreamerTests {
         streamer.update(cameraPosition: position)
         #expect(runner.lodRequests == [Self.center])
 
-        streamer.noteEnableParentMutation(.plugin(name: "Other.esp", objectID: 0x99), sequence: 1)
+        streamer.runtimeStates.noteEnableParentMutation(
+            .plugin(name: "Other.esp", objectID: 0x99),
+            sequence: 1
+        )
         streamer.update(cameraPosition: position)
         #expect(runner.lodRequests == [Self.center])
 
-        streamer.noteEnableParentMutation(
+        streamer.runtimeStates.noteEnableParentMutation(
             .plugin(name: "Skyrim.esm", objectID: 0x0012_3456), sequence: 2
         )
         streamer.update(cameraPosition: position)
@@ -272,6 +278,6 @@ struct DistantLODStreamerTests {
 
         runner.failLOD(Self.center)
         streamer.update(cameraPosition: position)
-        #expect(streamer.startAreaReady)
+        #expect(streamer.coverage.startAreaReady)
     }
 }

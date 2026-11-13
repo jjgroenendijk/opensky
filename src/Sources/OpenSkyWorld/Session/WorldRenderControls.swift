@@ -104,7 +104,7 @@ extension WorldRenderControls {
             drawCalls: draw.drawCalls,
             drawnInstances: draw.drawnInstances,
             culledInstances: draw.culledInstances,
-            residentCellCount: streamer?.residentCellCount ?? 0,
+            residentCellCount: streamer?.coverage.residentCellCount ?? 0,
             // Process-wide, so it stays meaningful with no renderer.
             memoryFootprintMB: MemoryFootprint.physFootprintMB()
         )

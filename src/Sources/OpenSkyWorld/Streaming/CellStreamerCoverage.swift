@@ -8,15 +8,15 @@ public import OpenSkyCells
 public import OpenSkyFormatsCore
 public import OpenSkyTerrain
 
-extension CellStreamer {
+extension CellStreamer.CoverageSteps {
     /// Drops unloaded cells and schedules eviction of assets no resident cell needs. Only
     /// the departed keys minus the resident union go, so in-flight builds keep theirs.
     /// Eviction runs on the build queue (docs/engine/cell-streaming.md).
     public func unload(_ coordinates: [CellCoordinate]) {
         var departed = CellAssets()
         for coordinate in coordinates {
-            guard let removed = composition.removeCell(at: coordinate) else { continue }
-            emitCellDetached(removed)
+            guard let removed = streamer.composition.removeCell(at: coordinate) else { continue }
+            streamer.triggers.emitCellDetached(removed)
             departed.meshKeys.formUnion(removed.assets.meshKeys)
             departed.textureKeys.formUnion(removed.assets.textureKeys)
         }
@@ -25,20 +25,23 @@ extension CellStreamer {
 
     /// Every desired near cell is loaded, empty, or failed.
     public var nearGridResolved: Bool {
-        core.resident.union(core.void).union(core.failed).isSuperset(of: grid.desiredCells)
+        streamer.core.resident.union(streamer.core.void).union(streamer.core.failed)
+            .isSuperset(of: streamer.grid.desiredCells)
     }
 
     /// The start area can show without holes: an interior is in, or the near grid
     /// resolved and the distant ring of its center was integrated or failed. A quick
     /// first ring also waits for its large references, so they never swap in view.
     public var startAreaReady: Bool {
-        interiorScene != nil
-            || (nearGridResolved && settledLODCenter == grid.center && !awaitsLargeReferences)
+        streamer.interiorScene != nil
+            ||
+            (nearGridResolved && streamer.settledLODCenter == streamer.grid
+                .center && !awaitsLargeReferences)
     }
 
     private var awaitsLargeReferences: Bool {
-        composition.distantLOD?.largeReferencesPending == true
-            && largeReferenceSettledCenter != grid.center
+        streamer.composition.distantLOD?.largeReferencesPending == true
+            && streamer.largeReferenceSettledCenter != streamer.grid.center
     }
 
     /// Requests the distant ring for the current center once the near grid has
@@ -47,43 +50,49 @@ extension CellStreamer {
         // The first ring may start beside the near grid, so the start area does
         // not wait for both builds in a row. It hides the whole desired grid.
         if
-            requestedLODCenter == nil, settledLODCenter == nil,
-            runner.startDistantLODPrebuild(center: grid.center, hiddenCells: grid.desiredCells)
+            streamer.requestedLODCenter == nil, streamer.settledLODCenter == nil,
+            streamer.runner.startDistantLODPrebuild(
+                center: streamer.grid.center,
+                hiddenCells: streamer.grid.desiredCells
+            )
         {
-            requestedLODCenter = grid.center
+            streamer.requestedLODCenter = streamer.grid.center
             return
         }
         // Cell + LOD work share one serial cache-confined queue. Let every
         // desired full cell reach resident/void/failed first so first-time
         // loading 100+ distant assets cannot starve the near grid.
         // The quick first ring has no large references, so it is built once more.
-        let addsLargeReferences = composition.distantLOD?.largeReferencesPending == true
-            && largeReferenceRequestCenter != grid.center
-        guard nearGridResolved, requestedLODCenter != grid.center || addsLargeReferences
+        let addsLargeReferences = streamer.composition.distantLOD?.largeReferencesPending == true
+            && streamer.largeReferenceRequestCenter != streamer.grid.center
+        guard
+            nearGridResolved,
+            streamer.requestedLODCenter != streamer.grid.center || addsLargeReferences
         else { return }
-        if runner.enqueueDistantLOD(
-            center: grid.center, hiddenCells: core.resident, state: stateSource()
+        if streamer.runner.enqueueDistantLOD(
+            center: streamer.grid.center, hiddenCells: streamer.core.resident,
+            state: streamer.stateSource()
         ) {
-            requestedLODCenter = grid.center
-            largeReferenceRequestCenter = addsLargeReferences ? grid.center : nil
+            streamer.requestedLODCenter = streamer.grid.center
+            streamer.largeReferenceRequestCenter = addsLargeReferences ? streamer.grid.center : nil
         }
     }
 
     public func integrateDistantLOD(_ entries: [DistantLODBuildResult]) -> Bool {
         var changed = false
         for entry in entries {
-            if entry.center == grid.center {
-                settledLODCenter = entry.center
+            if entry.center == streamer.grid.center {
+                streamer.settledLODCenter = entry.center
             }
-            if entry.center == largeReferenceRequestCenter {
-                largeReferenceSettledCenter = entry.center
+            if entry.center == streamer.largeReferenceRequestCenter {
+                streamer.largeReferenceSettledCenter = entry.center
             }
             switch entry.result {
-            case let .success(scene) where entry.center == grid.center:
-                if coverageTransitionActive {
+            case let .success(scene) where entry.center == streamer.grid.center:
+                if streamer.coverageTransitionActive {
                     commitCoverageTransition(distantLOD: scene)
                 } else {
-                    let old = composition.setDistantLOD(scene)
+                    let old = streamer.composition.setDistantLOD(scene)
                     if let old {
                         evictUnused(old.assets)
                     }
@@ -95,7 +104,7 @@ extension CellStreamer {
                 }
             case let .failure(error):
                 let reason = String(describing: error)
-                Self.logger.warning(
+                CellStreamer.logger.warning(
                     "[WARNING] distant LOD build failed: \(reason, privacy: .public)"
                 )
             }
@@ -104,65 +113,67 @@ extension CellStreamer {
     }
 
     public func discardStagedCells(outside desiredCells: Set<CellCoordinate>) {
-        let stale = stagedCells.keys.filter { !desiredCells.contains($0) }
+        let stale = streamer.stagedCells.keys.filter { !desiredCells.contains($0) }
         for coordinate in stale {
-            guard let scene = stagedCells.removeValue(forKey: coordinate) else { continue }
+            guard let scene = streamer.stagedCells.removeValue(forKey: coordinate) else { continue }
             evictUnused(scene.assets)
         }
     }
 
     public func commitCoverageTransition(distantLOD: DistantLODScene?) {
         var departed = CellAssets()
-        for coordinate in composition.coordinates where !core.resident.contains(coordinate) {
-            guard let scene = composition.removeCell(at: coordinate) else { continue }
-            emitCellDetached(scene)
+        for coordinate in streamer.composition.coordinates
+            where !streamer.core.resident.contains(coordinate)
+        {
+            guard let scene = streamer.composition.removeCell(at: coordinate) else { continue }
+            streamer.triggers.emitCellDetached(scene)
             departed.meshKeys.formUnion(scene.assets.meshKeys)
             departed.textureKeys.formUnion(scene.assets.textureKeys)
         }
         // Deterministic promotion order so script instantiation is reproducible.
-        let promoted = stagedCells.keys.sorted { ($0.x, $0.y) < ($1.x, $1.y) }
-        for coordinate in promoted where core.resident.contains(coordinate) {
-            guard let scene = stagedCells[coordinate] else { continue }
-            let replaced = composition.setCell(scene, at: coordinate)
+        let promoted = streamer.stagedCells.keys.sorted { ($0.x, $0.y) < ($1.x, $1.y) }
+        for coordinate in promoted where streamer.core.resident.contains(coordinate) {
+            guard let scene = streamer.stagedCells[coordinate] else { continue }
+            let replaced = streamer.composition.setCell(scene, at: coordinate)
             // A staged cell that replaced a composed scene at the same
             // coordinate never left the world, so it is not a first attach.
-            emitCellAttached(scene, firstIntegration: replaced == nil)
+            streamer.triggers.emitCellAttached(scene, firstIntegration: replaced == nil)
             if let replaced {
                 departed.meshKeys.formUnion(replaced.assets.meshKeys)
                 departed.textureKeys.formUnion(replaced.assets.textureKeys)
             }
         }
-        stagedCells.removeAll(keepingCapacity: true)
-        if let oldLOD = composition.setDistantLOD(distantLOD) {
+        streamer.stagedCells.removeAll(keepingCapacity: true)
+        if let oldLOD = streamer.composition.setDistantLOD(distantLOD) {
             departed.meshKeys.formUnion(oldLOD.assets.meshKeys)
             departed.textureKeys.formUnion(oldLOD.assets.textureKeys)
         }
-        coverageTransitionActive = false
+        streamer.coverageTransitionActive = false
         evictUnused(departed)
     }
 }
 
-extension CellStreamer {
+extension CellStreamer.CoverageSteps {
     /// Drops `candidates` keys nothing resident needs. An interior scene and staged cells
     /// count as resident, because they are drawing outside the composition.
     public func evictUnused(_ candidates: CellAssets) {
         var candidates = candidates
-        let departedProps = takeDepartedActorProps()
+        let departedProps = streamer.props.takeDepartedActorProps()
         candidates.meshKeys.formUnion(departedProps.meshKeys)
         candidates.textureKeys.formUnion(departedProps.textureKeys)
-        var resident = composition.residentAssets()
-        let props = actorPropAssets
+        var resident = streamer.composition.residentAssets()
+        let props = streamer.props.actorPropAssets
         resident.meshKeys.formUnion(props.meshKeys)
         resident.textureKeys.formUnion(props.textureKeys)
-        if let interiorScene {
+        if let interiorScene = streamer.interiorScene {
             resident.meshKeys.formUnion(interiorScene.assets.meshKeys)
             resident.textureKeys.formUnion(interiorScene.assets.textureKeys)
         }
-        for scene in stagedCells.values {
+        for scene in streamer.stagedCells.values {
             resident.meshKeys.formUnion(scene.assets.meshKeys)
             resident.textureKeys.formUnion(scene.assets.textureKeys)
         }
-        runner.enqueueEviction(
+        streamer.runner.enqueueEviction(
             droppingMeshKeys: candidates.meshKeys.subtracting(resident.meshKeys),
             droppingTextureKeys: candidates.textureKeys.subtracting(resident.textureKeys)
         )

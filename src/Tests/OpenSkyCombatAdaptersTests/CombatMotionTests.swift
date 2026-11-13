@@ -27,15 +27,15 @@ struct CombatMotionTests {
     }
 
     @Test func movesGoThroughTheStreamer() {
-        host.fakeStreamer.moveActorResult = .started
+        host.fakeStreamer.actors.moveActorResult = .started
         #expect(adapter.moveActor(Self.foe, to: SIMD3(1, 2, 3)))
         #expect(adapter.moveActor(Self.foe, to: SIMD3(1, 2, 3), gait: nil))
-        #expect(host.fakeStreamer.moveActorCalls.count == 2)
+        #expect(host.fakeStreamer.actors.moveActorCalls.count == 2)
         adapter.faceActor(Self.foe, toward: .zero)
         adapter.stopActor(Self.foe)
         adapter.resumePackage(for: Self.foe)
-        #expect(host.fakeStreamer.faceActorCalls.map(\.actor) == [Self.foe])
-        #expect(host.fakeStreamer.stopActorCalls == [Self.foe])
+        #expect(host.fakeStreamer.actors.faceActorCalls.map(\.actor) == [Self.foe])
+        #expect(host.fakeStreamer.actors.stopActorCalls == [Self.foe])
         #expect(host.fakePackages.resumeCalls == [Self.foe])
     }
 

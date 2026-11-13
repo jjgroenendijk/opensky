@@ -35,19 +35,19 @@ extension AudioWorldAdapter {
 
     private func registerAudioCallbacks(stage: SessionStage) {
         let streamer = stage.streamer
-        streamer.onInteraction.register(.audio) { [weak game = self.game] event in
+        streamer.events.onInteraction.register(.audio) { [weak game = self.game] event in
             game?.audio.soundDirector?.handleInteraction(event)
         }
-        streamer.onInteractionAnimation = { [weak game = self.game] event in
+        streamer.events.onInteractionAnimation = { [weak game = self.game] event in
             game?.audio.soundDirector?.handleInteractionAnimation(event)
         }
-        streamer.onAmbienceContextChanged = { [weak game = self.game] context in
+        streamer.events.onAmbienceContextChanged = { [weak game = self.game] context in
             game?.audio.soundDirector?.handleAmbienceContext(context)
         }
-        streamer.onMusicContextChanged = { [weak game = self.game] context in
+        streamer.events.onMusicContextChanged = { [weak game = self.game] context in
             game?.audio.musicDirector?.handleMusicContext(context)
         }
-        streamer.musicFeed.locationMusicType = { [weak game = self.game] scene in
+        streamer.events.musicFeed.locationMusicType = { [weak game = self.game] scene in
             game?.runtimeStateWorld.locationMusicType(of: scene.locationKey)
         }
     }

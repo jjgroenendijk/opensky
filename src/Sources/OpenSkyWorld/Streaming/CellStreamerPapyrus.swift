@@ -6,7 +6,7 @@ import Foundation
 public import OpenSkyCells
 public import OpenSkyGameData
 
-extension CellStreamer {
+extension CellStreamer.TriggerSteps {
     /// Announces a cell that is now part of the live world.
     ///
     /// - Parameter firstIntegration: false when the cell never left and its
@@ -14,8 +14,11 @@ extension CellStreamer {
     ///   events.
     public func emitCellAttached(_ scene: CellScene, firstIntegration: Bool) {
         guard let location = scene.location else { return }
-        onCellAttached(CellAttachment(scene: scene, isFirstIntegration: firstIntegration))
-        cellHazards(CellHazardEvent(location: location, hazards: scene.hazards))
+        streamer.events.onCellAttached(CellAttachment(
+            scene: scene,
+            isFirstIntegration: firstIntegration
+        ))
+        streamer.events.cellHazards(CellHazardEvent(location: location, hazards: scene.hazards))
     }
 
     /// Announces a cell that left the world; a nil or unlocated scene is a no-op. Occupied
@@ -25,8 +28,8 @@ extension CellStreamer {
         guard let scene else { return }
         releaseTriggers(in: scene)
         guard let location = scene.location else { return }
-        onCellDetached(location)
-        cellHazards(CellHazardEvent(location: location, hazards: []))
+        streamer.events.onCellDetached(location)
+        streamer.events.cellHazards(CellHazardEvent(location: location, hazards: []))
     }
 }
 

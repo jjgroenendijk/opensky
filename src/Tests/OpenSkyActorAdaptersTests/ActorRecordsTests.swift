@@ -19,7 +19,7 @@ struct ActorRecordsTests {
     init() throws {
         host.actorRecords = FakeActorRecords()
         let entry = try PackageRuntimeFixture.residentActor(0x20, base: 0x30)
-        host.fakeStreamer.residentActorEntryResult = entry
+        host.fakeStreamer.residents.residentActorEntryResult = entry
         host.fakeActorWorld.combatActorsResult = [CombatActorObservation(
             key: entry.key,
             feet: .one
@@ -53,7 +53,7 @@ struct ActorRecordsTests {
     @Test func aTakenMountDrivesWithTheRecordsConfiguration() {
         let mounts = MountWorldAdapter(game: host, stage: nil)
         let key = PackageRuntimeFixture.key(0x20)
-        host.fakeStreamer.takeRiddenActorResult = NPCRiddenHold(
+        host.fakeStreamer.actors.takeRiddenActorResult = NPCRiddenHold(
             actor: key, formID: FormID(0x20),
             placement: PlacedReference.Placement(position: .zero, rotation: .zero),
             scale: 1, feetPosition: .one, yaw: 0.5

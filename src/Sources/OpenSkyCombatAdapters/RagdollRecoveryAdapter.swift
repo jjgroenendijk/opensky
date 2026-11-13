@@ -135,7 +135,7 @@ extension RagdollRecoveryAdapter {
             game.gameSession?.locomotion.raise(RagdollGraphNames.ragdollInstant)
             return
         }
-        _ = game.streamer.takeRiddenActor(key)
+        _ = game.streamer.actors.takeRiddenActor(key)
         _ = game.actorGraphWorld.graphs.raise(RagdollGraphNames.ragdollInstant, on: key)
     }
 
@@ -148,7 +148,7 @@ extension RagdollRecoveryAdapter {
         }
         do {
             let streamer = game.streamer
-            let facing = yaw ?? streamer.riddenHold(of: key)?.yaw ?? 0
+            let facing = yaw ?? streamer.actors.riddenHold(of: key)?.yaw ?? 0
             streamer.steerRiddenActor(key, to: feet, yaw: facing)
         }
         _ = game.actorGraphWorld.graphs.raise(RagdollGraphNames.getUpStart, on: key)

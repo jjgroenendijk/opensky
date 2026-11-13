@@ -106,7 +106,7 @@ final class LocomotionAcceptanceChain {
         ) { _, _ in }
         view.input = input
         let log = attachedLocations
-        streamer.onCellAttached.register(.agentEvents) { log.note($0.scene.location) }
+        streamer.events.onCellAttached.register(.agentEvents) { log.note($0.scene.location) }
         // The start cell, brought up the way every later one is.
         streamer.update(cameraPosition: controller.cameraPosition)
         completePendingBuilds()
@@ -219,7 +219,7 @@ final class LocomotionAcceptanceChain {
         )
         frames += 1
         recordStates()
-        guard !streamer.isInterior else { return }
+        guard !streamer.coverage.isInterior else { return }
         streamer.update(cameraPosition: controller.cameraPosition)
         completePendingBuilds()
     }
@@ -306,7 +306,8 @@ final class LocomotionAcceptanceChain {
         )))
         // One frame as long as `fTeleportDoorActivateDelayTimer`, which the door waits out.
         streamer.update(
-            cameraPosition: controller.cameraPosition, frameTime: streamer.doors.teleportDelay
+            cameraPosition: controller.cameraPosition,
+            frameTime: streamer.doorState.doors.teleportDelay
         )
         reseat(at: placement)
     }

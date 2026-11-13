@@ -106,17 +106,17 @@ struct CellRenderRealDataTests {
         try pumpStreaming(
             harness, at: (center, "fill"), series: &series,
             settled: {
-                if streamer.residentCellCount == 1, singleDrawCount == 0 {
+                if streamer.coverage.residentCellCount == 1, singleDrawCount == 0 {
                     singleDrawCount = renderer.scene.drawCount
                 }
-                return streamer.resolvedCellCount == 25
-                    && streamer.pendingCompletionCount == 0
+                return streamer.coverage.resolvedCellCount == 25
+                    && streamer.coverage.pendingCompletionCount == 0
             }
         )
 
-        #expect(streamer.resolvedCellCount == 25, "5x5 did not fully resolve")
-        #expect(streamer.failedCellCount == 0, "cells failed to build: streaming bug")
-        #expect(streamer.residentCellCount + streamer.voidCellCount == 25)
+        #expect(streamer.coverage.resolvedCellCount == 25, "5x5 did not fully resolve")
+        #expect(streamer.coverage.failedCellCount == 0, "cells failed to build: streaming bug")
+        #expect(streamer.coverage.residentCellCount + streamer.coverage.voidCellCount == 25)
 
         let filledFootprint = try #require(MemoryFootprint.physFootprintMB())
         let composedDrawCount = renderer.scene.drawCount
@@ -138,7 +138,8 @@ struct CellRenderRealDataTests {
         try pumpStreaming(
             harness, at: (far, "recenter"), series: &series,
             settled: {
-                streamer.resolvedCellCount == 25 && streamer.pendingCompletionCount == 0
+                streamer.coverage.resolvedCellCount == 25 && streamer.coverage
+                    .pendingCompletionCount == 0
             }
         )
         // A few more frames so the renderer's retire list fully drains the old
@@ -219,9 +220,9 @@ extension CellRenderRealDataTests {
                 throw error
             }
             if let megabytes = MemoryFootprint.physFootprintMB() {
-                if streamer.residentCellCount != lastResident {
-                    lastResident = streamer.residentCellCount
-                    let line = "[INFO] \(label): \(streamer.residentCellCount) resident, "
+                if streamer.coverage.residentCellCount != lastResident {
+                    lastResident = streamer.coverage.residentCellCount
+                    let line = "[INFO] \(label): \(streamer.coverage.residentCellCount) resident, "
                         + "\(Int(megabytes)) MB"
                     series.append(line)
                     // Persist the curve as it grows so a footprint-cap abort
@@ -249,9 +250,10 @@ extension CellRenderRealDataTests {
     ) throws {
         let streamer = harness.streamer
         let percentShown = unsafe "\(String(format: "%.1f", stats.fraction * 100))%"
+        let coverage = streamer.coverage
         let output = ([
             "[INFO] streamed 5x5 around (\(FirstRenderCell.gridX),\(FirstRenderCell.gridY)): "
-                + "\(streamer.residentCellCount) loaded, \(streamer.voidCellCount) void",
+                + "\(coverage.residentCellCount) loaded, \(coverage.voidCellCount) void",
             "[INFO] composed draw count: \(stats.composedDrawCount) "
                 + "(single cell: \(stats.singleDrawCount))",
             "[INFO] streamed non-background pixels: "

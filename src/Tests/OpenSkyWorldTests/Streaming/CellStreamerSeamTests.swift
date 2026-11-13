@@ -15,13 +15,14 @@ struct CellStreamerSeamTests {
 
     @Test func onlyThePlayerAndResidentActorsHaveAnInventoryHolder() throws {
         let streamer = try CellStreamerNPCMovementTests.streamerWithWalker()
-        #expect(streamer.inventoryHolder(of: .player) == .player)
-        let holder = try #require(streamer.inventoryHolder(of: Self.actor))
+        #expect(streamer.residents.inventoryHolder(of: .player) == .player)
+        let holder = try #require(streamer.residents.inventoryHolder(of: Self.actor))
         #expect(holder.key == Self.actor)
-        let base = try #require(streamer.referenceEntry(key: Self.actor)?.placedActor?.base)
+        let base = try #require(streamer.residents.referenceEntry(key: Self.actor)?.placedActor?
+            .base)
         #expect(holder.owner == .actor(base: base))
         let stranger = ReferenceKey.plugin(name: "test.esm", objectID: 0x9999)
-        #expect(streamer.inventoryHolder(of: stranger) == nil)
+        #expect(streamer.residents.inventoryHolder(of: stranger) == nil)
     }
 
     @Test func theVehicleRulesPublishIntoTheMovementState() throws {
@@ -29,9 +30,9 @@ struct CellStreamerSeamTests {
         let pose = ReferenceTransformOverride(
             position: SIMD3(300, 50, 0), rotation: SIMD3(0, 0, 1), scale: 1
         )
-        streamer.publishCarriedPoses([Self.actor: pose])
-        streamer.publishVehicleLinks([Self.actor])
-        streamer.setVehiclePose(matrix_identity_float4x4, for: FormID(0x9100))
+        streamer.actors.publishCarriedPoses([Self.actor: pose])
+        streamer.actors.publishVehicleLinks([Self.actor])
+        streamer.actors.setVehiclePose(matrix_identity_float4x4, for: FormID(0x9100))
         #expect(streamer.npcMovementState.carried[Self.actor]?.position == pose.position)
         #expect(streamer.npcMovementState.vehicleLinkedActors == [Self.actor])
         #expect(streamer.npcMovementState.vehiclePoses[FormID(0x9100)] == matrix_identity_float4x4)

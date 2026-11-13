@@ -41,7 +41,7 @@ struct FollowerCommandWorldTests {
         #expect(host.fakeFollowerCommands.favorStartedCalls == [Self.follower])
         host.fakeFollowerCommands.advanceUseKeyResult = .tap(Self.follower)
         adapter.advanceUseKey(by: 1, isDown: false)
-        #expect(host.fakeStreamer.activateCalls.isEmpty)
+        #expect(host.fakeStreamer.residents.activateCalls.isEmpty)
     }
 
     @Test func withoutATargetAPressIsNotTaken() {

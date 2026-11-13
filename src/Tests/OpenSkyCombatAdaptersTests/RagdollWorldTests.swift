@@ -48,9 +48,9 @@ struct RagdollWorldTests {
             RagdollGraphNames.bleedOutStart, RagdollGraphNames.bleedOutStop,
             RagdollGraphNames.ragdollInstant, RagdollGraphNames.getUpStart
         ])
-        #expect(host.fakeStreamer.takeRiddenActorCalls == [Self.actor])
-        #expect(host.fakeStreamer.steerRiddenActorCalls.count == 1)
-        #expect(host.fakeStreamer.releaseRiddenActorCalls == [Self.actor])
+        #expect(host.fakeStreamer.actors.takeRiddenActorCalls == [Self.actor])
+        #expect(host.fakeStreamer.actors.steerRiddenActorCalls.count == 1)
+        #expect(host.fakeStreamer.actors.releaseRiddenActorCalls == [Self.actor])
     }
 
     @Test func thePlayerKnockdownNeedsASession() {
@@ -58,7 +58,7 @@ struct RagdollWorldTests {
             .enterKnockdown(.player), .getUp(.player, feet: .zero, yaw: nil), .endKnockdown(.player)
         ])
         #expect(graphs.raiseCalls.isEmpty)
-        #expect(host.fakeStreamer.releaseRiddenActorCalls.isEmpty)
+        #expect(host.fakeStreamer.actors.releaseRiddenActorCalls.isEmpty)
     }
 
     @Test func withoutABridgeAZeroHealthActorDies() {

@@ -7,7 +7,7 @@ public import OpenSkyGameData
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 
-extension CellStreamer {
+extension CellStreamer.ResidentSteps {
     /// `location` names a cell's location; nil leaves the cell's references out.
     public func residentReferencePlaces(
         location: (CellLocationKey) -> ResolvedFormID?

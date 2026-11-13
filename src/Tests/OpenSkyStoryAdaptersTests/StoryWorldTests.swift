@@ -131,7 +131,7 @@ struct StoryWorldTests {
 
     /// With no session the search has no origin, and an empty cell gives no candidates.
     @Test func theQuestReferenceSearchReadsTheLoadedCell() throws {
-        host.fakeStreamer.residentReferenceIndexResult = .empty
+        host.fakeStreamer.residents.residentReferenceIndexResult = .empty
         host.fakeDialogueWorld.conditionContextResult = ConditionContext()
         let search = try #require(adapter.questReferenceSearch())
         #expect(search.origin == nil)

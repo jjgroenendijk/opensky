@@ -37,12 +37,12 @@ struct CrimeActorsJailTests {
     }
 
     @Test func movesStopsAndPackagesReachTheirPorts() {
-        host.fakeStreamer.moveActorResult = .started
+        host.fakeStreamer.actors.moveActorResult = .started
         #expect(adapter.moveActor(Self.alive, to: .zero) == "started")
         adapter.stopActor(Self.alive)
         adapter.suspendPackage(for: Self.alive)
         adapter.resumePackage(for: Self.alive)
-        #expect(host.fakeStreamer.stopActorCalls == [Self.alive])
+        #expect(host.fakeStreamer.actors.stopActorCalls == [Self.alive])
         #expect(host.fakePackages.suspendCalls == [Self.alive])
         #expect(host.fakePackages.resumeCalls == [Self.alive])
     }

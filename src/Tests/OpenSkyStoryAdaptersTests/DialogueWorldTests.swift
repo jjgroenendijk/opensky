@@ -84,9 +84,9 @@ struct DialogueWorldTests {
         ])
         #expect(host.fakePackages.suspendCalls == [Self.speaker])
         #expect(host.fakePackages.resumeCalls == [Self.speaker])
-        #expect(host.fakeStreamer.stopActorCalls == [Self.speaker])
-        #expect(host.fakeStreamer.faceActorCalls.map(\.actor) == [Self.speaker])
-        #expect(host.fakeStreamer.releaseActorFacingCalls == [Self.speaker])
+        #expect(host.fakeStreamer.actors.stopActorCalls == [Self.speaker])
+        #expect(host.fakeStreamer.actors.faceActorCalls.map(\.actor) == [Self.speaker])
+        #expect(host.fakeStreamer.actors.releaseActorFacingCalls == [Self.speaker])
     }
 
     @Test func aWonBribeReportsTheEventStatAndSkill() {

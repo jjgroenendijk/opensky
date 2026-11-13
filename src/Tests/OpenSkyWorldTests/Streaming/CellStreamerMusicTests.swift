@@ -18,7 +18,7 @@ extension CellStreamerTests {
         let runner = ManualCellBuildRunner()
         var emitted: [MusicContext] = []
         let streamer = Fixture.makeStreamer(runner: runner)
-        streamer.onMusicContextChanged = { emitted.append($0) }
+        streamer.events.onMusicContextChanged = { emitted.append($0) }
         streamer.update(cameraPosition: Fixture.center)
 
         // First update emits the empty context: the director needs to know
@@ -50,8 +50,8 @@ extension CellStreamerTests {
         var emitted: [MusicContext] = []
         var lookups = 0
         let streamer = Fixture.makeStreamer(runner: runner)
-        streamer.onMusicContextChanged = { emitted.append($0) }
-        streamer.musicFeed.locationMusicType = { _ in
+        streamer.events.onMusicContextChanged = { emitted.append($0) }
+        streamer.events.musicFeed.locationMusicType = { _ in
             lookups += 1
             return FormID(0x50)
         }
@@ -74,7 +74,7 @@ extension CellStreamerTests {
         let runner = ManualCellBuildRunner()
         var emitted: [MusicContext] = []
         let streamer = Fixture.makeStreamer(runner: runner)
-        streamer.onMusicContextChanged = { emitted.append($0) }
+        streamer.events.onMusicContextChanged = { emitted.append($0) }
         streamer.update(cameraPosition: Fixture.center)
         runner.complete(Fixture.coordinate(0, 0), with: .success(Fixture.cellScene()))
         streamer.update(cameraPosition: Fixture.center)
@@ -88,11 +88,11 @@ extension CellStreamerTests {
         let runner = ManualCellBuildRunner()
         var emitted: [MusicContext] = []
         let streamer = Fixture.makeStreamer(runner: runner)
-        streamer.onMusicContextChanged = { emitted.append($0) }
+        streamer.events.onMusicContextChanged = { emitted.append($0) }
         streamer.update(cameraPosition: Fixture.center)
         #expect(emitted.count == 1)
 
-        streamer.invalidateMusicContext()
+        streamer.ambience.invalidateMusicContext()
         streamer.update(cameraPosition: Fixture.center)
         #expect(emitted.count == 2)
         #expect(emitted.last == emitted.first)
@@ -103,14 +103,14 @@ extension CellStreamerTests {
         let runner = ManualCellBuildRunner()
         var emitted: [MusicContext] = []
         let streamer = Fixture.makeStreamer(runner: runner)
-        streamer.onMusicContextChanged = { emitted.append($0) }
+        streamer.events.onMusicContextChanged = { emitted.append($0) }
         streamer.update(cameraPosition: Fixture.center)
         let beforeEntering = emitted.count
 
         let interior = Fixture.cellScene(
             location: .interior(FormID(0x138CA)), musicType: FormID(0x40)
         )
-        streamer.apply(transition: DoorTransition(
+        streamer.transitions.apply(transition: DoorTransition(
             sourceDoor: FormID(0x10),
             destinationDoor: FormID(0x20),
             destinationPlacement: PlacedReference.Placement(

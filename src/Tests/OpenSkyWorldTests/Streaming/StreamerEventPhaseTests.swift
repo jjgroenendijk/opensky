@@ -55,12 +55,12 @@ struct StreamerEventPhaseTests {
     @Test func aCellAttachCarriesTheIntegrationFlagToEveryStep() {
         let streamer = CellStreamerFixture.makeStreamer(runner: ManualCellBuildRunner())
         var seen: [CellAttachStep] = []
-        streamer.onCellAttached.register(.agentEvents) { _ in seen.append(.agentEvents) }
-        streamer.onCellAttached.register(.scripts) { attachment in
+        streamer.events.onCellAttached.register(.agentEvents) { _ in seen.append(.agentEvents) }
+        streamer.events.onCellAttached.register(.scripts) { attachment in
             #expect(!attachment.isFirstIntegration)
             seen.append(.scripts)
         }
-        streamer.onCellAttached(CellAttachment(
+        streamer.events.onCellAttached(CellAttachment(
             scene: CellStreamerFixture.cellScene(),
             isFirstIntegration: false
         ))
