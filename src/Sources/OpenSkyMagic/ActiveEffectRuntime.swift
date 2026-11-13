@@ -226,7 +226,7 @@ public struct ActiveEffectRuntime {
         context.subject = target.key
         context.target = target.key
         context[resolution: MagicApplicationContext.self] = application
-        let holds = ConditionEvaluator.holds(list, in: &context)
+        let holds = EntryConditions.holds(list, in: &context)
         conditions.random = context.random
         return holds
     }
@@ -396,12 +396,15 @@ nonisolated extension ResolvedMagicEffect {
     }
 }
 
-nonisolated extension ConditionEvaluator {
-    /// Evaluates `list` in `context`, keeping the random draws it made.
-    static func holds(_ list: ConditionList, in context: inout ConditionContext) -> Bool {
-        var evaluator = ConditionEvaluator(context: context)
-        let outcome = evaluator.evaluate(list)
-        context.random = evaluator.context.random
-        return outcome.isTrue
+nonisolated extension ActiveEffectRuntime {
+    /// The condition evaluator step of `allows`.
+    enum EntryConditions {
+        /// Evaluates `list` in `context`, keeping the random draws it made.
+        static func holds(_ list: ConditionList, in context: inout ConditionContext) -> Bool {
+            var evaluator = ConditionEvaluator(context: context)
+            let outcome = evaluator.evaluate(list)
+            context.random = evaluator.context.random
+            return outcome.isTrue
+        }
     }
 }
