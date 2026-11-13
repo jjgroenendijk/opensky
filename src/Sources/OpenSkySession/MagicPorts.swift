@@ -11,6 +11,7 @@ extension MagicCoordinator.FrameStep: MagicFrameStepPort {}
 extension MagicCoordinator.ItemUse: MagicItemUsePort {}
 extension MagicCoordinator.MagicMenu: MagicMenuListPort {}
 extension MagicCoordinator.MenuLines: MagicMenuLinesPort {}
+extension MagicCoordinator.Enchanter: MagicEnchanterPort {}
 extension MagicCoordinator.ShoutVoice: MagicShoutVoicePort {}
 extension MagicCoordinator.SoulTrapping: MagicSoulTrappingPort {}
 extension MagicCoordinator.WeaponEnchantments: MagicWeaponEnchantmentsPort {}

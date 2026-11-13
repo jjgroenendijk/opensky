@@ -89,6 +89,7 @@ nonisolated public struct MagicSessionTexts: Equatable, Sendable {
     /// The spell words the spellcasting readout shows.
     public var magic = MagicTexts.vanilla
     public var castNotices = GameSettingTexts<CastNoticeText>.vanilla
+    public var enchanting = GameSettingTexts<EnchantingMenuText>.vanilla
     public var souls = SoulTexts.vanilla
 
     public init() {}

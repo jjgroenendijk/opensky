@@ -28,6 +28,8 @@ nonisolated public struct CraftingControlSnapshot: Equatable, Sendable {
     public let stationName: String?
     /// The menu's title, such as "Forge: Create".
     public let header: String?
+    /// What the open station does; nil with none open.
+    public var station: CraftingStationInfo?
     public let recipes: [CraftingRecipeReadout]
 
     public static let unavailable = CraftingControlSnapshot(

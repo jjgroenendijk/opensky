@@ -1,9 +1,10 @@
 import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
+import OpenSkyMenusInterface
 public import OpenSkyMenus
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
@@ -14,6 +15,7 @@ public protocol MenuScreensCraftingDeskHost: AnyObject, SendableMetatype {
     var inventory: any InventoryPort { get }
     var magic: any MagicPort { get }
     var mapWorld: any MapWorldPort { get }
+    var messages: any MessageCoordinatorPort { get }
     var scripts: any ScriptPort { get }
 }
 
@@ -99,5 +101,42 @@ extension MenuScreensCraftingDeskAdapter {
 
     public func brewChosenIngredients() -> String {
         game.inventory.readoutLines.brewChosenIngredientsLine()
+    }
+}
+
+extension MenuScreensCraftingDeskAdapter {
+    var enchanterChoices: EnchanterChoices? {
+        guard game.inventory.craftingReadout.craftingSnapshot.station?.enchants == true else {
+            return nil
+        }
+        return game.magic.enchanter.enchanterChoices
+    }
+
+    var enchantingTexts: GameSettingTexts<EnchantingMenuText> {
+        game.mapWorld.settingTexts()
+    }
+
+    public func disenchant(_ item: FormID) -> EnchanterAnswer {
+        game.magic.enchanter.disenchant(item)
+    }
+
+    public func enchantRefusal(_ selection: EnchanterSelection) -> String? {
+        game.magic.enchanter.refusal(of: selection)
+    }
+
+    public func enchant(_ selection: EnchanterSelection) -> EnchanterAnswer {
+        game.magic.enchanter.enchant(selection)
+    }
+
+    public func confirm(_ text: String, answer: @escaping (Bool) -> Void) {
+        let words = game.mapWorld.settingTexts(MessageBoxText.self)
+        game.messages.presentChoices(
+            title: nil, text: text, buttons: [words[.yes], words[.no]]
+        ) { answer($0 == 0) }
+    }
+
+    public func inform(_ text: String) {
+        let words = game.mapWorld.settingTexts(MessageBoxText.self)
+        game.messages.presentChoices(title: nil, text: text, buttons: [words[.ok]]) { _ in }
     }
 }

@@ -130,7 +130,7 @@ extension MagicCoordinator.EnchantingTable {
     }
 
     /// True for a weapon, false for apparel, nil for anything an enchanter refuses.
-    private func enchantableKind(of item: FormID) -> Bool? {
+    func enchantableKind(of item: FormID) -> Bool? {
         guard
             let items = coordinator.world.inventory?.baselines.items,
             let definition = items.definition(item),

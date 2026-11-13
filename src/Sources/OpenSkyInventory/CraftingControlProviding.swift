@@ -11,15 +11,18 @@ extension InventoryCoordinator.CraftingReadout {
     public var craftingSnapshot: CraftingControlSnapshot {
         guard coordinator.runtime != nil else { return .unavailable }
         let session = coordinator.crafting
-        return CraftingControlSnapshot(
+        var snapshot = CraftingControlSnapshot(
             stationName: session?.interaction.name,
             header: session.map {
                 CraftingMenuText.header(
-                    station: $0.station, name: $0.interaction.name, texts: coordinator.texts.crafting
+                    station: $0.station, name: $0.interaction.name,
+                    texts: coordinator.texts.crafting
                 )
             },
             recipes: session?.statuses.map(recipeReadout) ?? []
         )
+        snapshot.station = session?.station
+        return snapshot
     }
 
     private func recipeReadout(_ status: CraftingRecipeStatus) -> CraftingRecipeReadout {

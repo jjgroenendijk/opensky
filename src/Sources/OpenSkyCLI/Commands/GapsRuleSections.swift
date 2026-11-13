@@ -200,6 +200,7 @@ extension GapsGatherer {
             _ = GameSettingTexts<ActivationText>.resolve(store: store)
             _ = GameSettingTexts<SaveNoticeText>.resolve(store: store)
             _ = GameSettingTexts<CastNoticeText>.resolve(store: store)
+            _ = GameSettingTexts<EnchantingMenuText>.resolve(store: store)
             _ = GameSettingTexts<ControlRefusalText>.resolve(store: store)
             _ = GameSettingTexts<QuestNoticeText>.resolve(store: store)
             _ = GameSettingTexts<PronounText>.resolve(store: store)

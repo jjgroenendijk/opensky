@@ -3,7 +3,7 @@ import OpenSkyCamera
 import OpenSkyCells
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 public import OpenSkyMenus
@@ -67,6 +67,34 @@ extension MenuScreensWorldAdapter {
 
     public func brewChosenIngredients() -> String {
         craftingDesk.brewChosenIngredients()
+    }
+
+    public var enchanterChoices: EnchanterChoices? {
+        craftingDesk.enchanterChoices
+    }
+
+    public var enchantingTexts: GameSettingTexts<EnchantingMenuText> {
+        craftingDesk.enchantingTexts
+    }
+
+    public func disenchant(_ item: FormID) -> EnchanterAnswer {
+        craftingDesk.disenchant(item)
+    }
+
+    public func enchantRefusal(_ selection: EnchanterSelection) -> String? {
+        craftingDesk.enchantRefusal(selection)
+    }
+
+    public func enchant(_ selection: EnchanterSelection) -> EnchanterAnswer {
+        craftingDesk.enchant(selection)
+    }
+
+    public func confirm(_ text: String, answer: @escaping (Bool) -> Void) {
+        craftingDesk.confirm(text, answer: answer)
+    }
+
+    public func inform(_ text: String) {
+        craftingDesk.inform(text)
     }
 
     public func helpTopic(_ editorID: String) -> HelpTopic? {

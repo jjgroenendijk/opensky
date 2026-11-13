@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 @testable import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyRenderCore
@@ -36,6 +37,11 @@ final class FakeMenuScreenWorld: MenuScreenWorld, MenuInputConsumer {
     var craftingStationName: String?
     var craftingRecipes: [CraftingMenuRecipe] = []
     var alchemyIngredients: [CraftingMenuIngredient]?
+    var enchanterChoices: EnchanterChoices?
+    var enchantingTexts = GameSettingTexts<EnchantingMenuText>.vanilla
+    var enchantRefusalText: String?
+    var questions: [(text: String, answer: (Bool) -> Void)] = []
+    var boxes: [String] = []
 
     func showHUDNotification(_ text: String) {
         hudLines.append(text)
@@ -131,5 +137,27 @@ extension FakeMenuScreenWorld: MagicMenuWorld, GiftMenuWorld, CraftingMenuWorld 
     func brewChosenIngredients() -> String {
         actions.append("brew")
         return "Brewed"
+    }
+
+    func disenchant(_ item: FormID) -> EnchanterAnswer {
+        actions.append("disenchant \(item.rawValue)")
+        return EnchanterAnswer(text: "Learned", done: true)
+    }
+
+    func enchantRefusal(_: EnchanterSelection) -> String? {
+        enchantRefusalText
+    }
+
+    func enchant(_ selection: EnchanterSelection) -> EnchanterAnswer {
+        actions.append("enchant \(selection.item?.rawValue ?? 0) \(selection.bases.count)")
+        return EnchanterAnswer(text: "Enchanted", done: true)
+    }
+
+    func confirm(_ text: String, answer: @escaping (Bool) -> Void) {
+        questions.append((text, answer))
+    }
+
+    func inform(_ text: String) {
+        boxes.append(text)
     }
 }

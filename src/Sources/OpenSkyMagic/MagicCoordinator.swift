@@ -188,6 +188,10 @@ extension MagicCoordinator {
         MenuLines(coordinator: self)
     }
 
+    public var enchanter: Enchanter {
+        Enchanter(coordinator: self)
+    }
+
     public var magicMenu: MagicMenu {
         MagicMenu(coordinator: self)
     }
@@ -303,6 +307,11 @@ extension MagicCoordinator {
 
     /// The one-line outcomes the menus show.
     public struct MenuLines {
+        let coordinator: MagicCoordinator
+    }
+
+    /// The arcane enchanter's menu: what it offers and its two actions.
+    public struct Enchanter {
         let coordinator: MagicCoordinator
     }
 
