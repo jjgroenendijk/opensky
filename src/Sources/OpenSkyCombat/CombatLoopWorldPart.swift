@@ -115,6 +115,10 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
         shared.strikes.meleeBlock(of: key)
     }
 
+    func combatWearsShield(_ key: ReferenceKey) -> Bool {
+        shared.strikes.shieldRating(of: key) != nil
+    }
+
     /// The same blocker's term the player's swing resolves, so both directions
     /// reduce a blow through one implementation.
     func combatBlockMultiplier(of key: ReferenceKey) -> Float {

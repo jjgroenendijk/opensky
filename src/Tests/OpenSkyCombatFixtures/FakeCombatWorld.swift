@@ -17,6 +17,8 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public var actors: [CombatActorObservation] = []
     public var hostility: [ReferenceKey: ActorHostility] = [:]
     public var blocks: [ReferenceKey: MeleeBlockKind] = [:]
+    /// Actors with no shield; every other actor wears one.
+    public var shieldless: Set<ReferenceKey> = []
     public var awareness: [ReferenceKey: CombatAwareness] = [:]
     public var healthFractions: [ReferenceKey: Float] = [:]
     public var influences: [ReferenceKey: ActorMagicInfluence] = [:]
@@ -130,6 +132,10 @@ public final class FakeCombatWorld: CombatLoopWorld {
         guard amount > 0 else { return false }
         damage[key, default: 0] += amount
         return true
+    }
+
+    public func combatWearsShield(_ key: ReferenceKey) -> Bool {
+        !shieldless.contains(key)
     }
 
     public func combatBlock(of key: ReferenceKey) -> MeleeBlockKind? {

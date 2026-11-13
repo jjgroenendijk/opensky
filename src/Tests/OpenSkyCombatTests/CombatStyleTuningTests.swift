@@ -91,6 +91,14 @@ struct CombatStyleTuningTests {
             .attackIntervalSeconds * 0.5)
     }
 
+    @Test func anActorWithoutAShieldBlocksLessOften() {
+        let (runtime, world) = CombatLoopFixture.session()
+        let shielded = runtime.makeMachine(for: CombatLoopFixture.opponent).settings.blockChance
+        world.shieldless = [CombatLoopFixture.opponent]
+        let unshielded = runtime.makeMachine(for: CombatLoopFixture.opponent).settings.blockChance
+        #expect(abs(unshielded - shielded * runtime.combatAI.blockChanceWeaponMult) < 0.0001)
+    }
+
     @Test func aggressiveStyleLandsMoreBlowsInTheSameFight() {
         func damageTaken(_ style: CombatStyleTuning?) -> Float {
             let (runtime, world) = CombatLoopFixture.session()

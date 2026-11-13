@@ -265,7 +265,10 @@ public final class CombatLoopRuntime: CombatControlling {
     /// A new machine for `key`, with its combat style folded into the settings.
     public func makeMachine(for key: ReferenceKey) -> CombatBehaviorMachine {
         let tuning = styleTuning(of: key)
-        let tuned = behaviorSettings.tuned(by: tuning)
+        var tuned = behaviorSettings.tuned(by: tuning)
+        if world?.combatWearsShield(key) == false {
+            tuned.blockChance *= max(0, combatAI.blockChanceWeaponMult)
+        }
         return CombatBehaviorMachine(
             settings: combatAI.applyingFlee(
                 to: applyingGameSettings ? combatAI

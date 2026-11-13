@@ -114,6 +114,9 @@ So they are chosen in the open, with a reason each. An actor's
 | Combo chance | 0.3 | A chain about one swing in three: often enough to see, rare enough that a block still answers most swings |
 | Most swings in a combo | 3 | The vanilla one-handed attack chain has three swings |
 
+An actor without a shield blocks at the chance times `fCombatBlockChanceWeaponMult` (0.25 in the
+install). The shield is checked when the actor's machine is made.
+
 ## Combat style
 
 An actor's `CSTY` [combat style](/formats/combat-style.md) scales the settings above for that

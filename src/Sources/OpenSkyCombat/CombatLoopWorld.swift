@@ -81,6 +81,8 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     func combatBlockMultiplier(of key: ReferenceKey) -> Float
     /// The Block skill of `key`, which a blocked swing's recoil reads.
     func combatBlockSkill(of key: ReferenceKey) -> Float
+    /// Whether `key` wears a shield; without one it blocks less often.
+    func combatWearsShield(_ key: ReferenceKey) -> Bool
 
     /// The skill, sneak-attack, armour, and perk terms of `blow` on `target`.
     func combatStrike(_ blow: CombatBlow, on target: ReferenceKey) -> WeaponStrike
@@ -225,6 +227,11 @@ extension CombatLoopWorld {
 
     public func combatFlies(_: ReferenceKey) -> Bool {
         false
+    }
+
+    /// A world that knows no gear blocks at the full chance.
+    public func combatWearsShield(_: ReferenceKey) -> Bool {
+        true
     }
 
     @discardableResult
