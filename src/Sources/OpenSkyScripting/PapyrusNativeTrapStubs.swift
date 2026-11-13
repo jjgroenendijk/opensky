@@ -5,7 +5,7 @@
 import Foundation
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.TrapStubsNatives {
     /// One stubbed native and the value it answers.
     private struct TrapStub {
         let scriptName: String

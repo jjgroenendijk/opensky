@@ -9,7 +9,7 @@ import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ActorStateNatives {
     static let aiDisabledName = ScriptedStateName.aiDisabled
 
     public static func installActorState(into registry: inout PapyrusNativeRegistry) {
@@ -41,7 +41,9 @@ extension PapyrusNativeFunctions {
         // `EnableAI(bool abEnable = true)` and `bool IsAIEnabled()`.
         scriptState("Actor", "EnableAI", into: &registry) { call, bridge, key in
             let enabled = boolean(call, at: 0, default: true)
-            bridge.updateScriptedState(of: key) { $0.setFlag(aiDisabledName, enabled ? nil : true) }
+            bridge.updateScriptedState(of: key) {
+                $0.setFlag(aiDisabledName, enabled ? nil : true)
+            }
             // An actor with no AI fights no more; the combat loop then leaves it out.
             if !enabled {
                 bridge.stopActorCombat(key)

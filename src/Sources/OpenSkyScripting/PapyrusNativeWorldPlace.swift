@@ -13,7 +13,7 @@ import OpenSkyScriptingInterface
 import OpenSkyWorldState
 import simd
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.WorldPlaceNatives {
     /// The distance between references that do not share a worldspace or interior.
     /// The game's own value there is not documented; any range check fails on it.
     static let separateSpaceDistance = Float.greatestFiniteMagnitude
@@ -70,7 +70,9 @@ extension PapyrusNativeFunctions {
                 let state = world.referenceState(for: key),
                 let start = position(of: key, world),
                 let end = position(of: other, world)
-            else { return needsResidentReference(call) }
+            else {
+                return needsResidentReference(call)
+            }
             let bearing = atan2(end.x - start.x, end.y - start.y)
             return .returned(.float(degreesFromMinus180(bearing - state.transform.rotation.z)))
         }
@@ -158,7 +160,10 @@ extension PapyrusNativeFunctions {
                 let bridge = context.world as? PapyrusWorldStateBridge,
                 let loadOrder = bridge.formIDResolver
             else { return failure(call, "GetFormFromFile needs the load order") }
-            guard let raw = integer(call, at: 0), let file = string(call, at: 1) else {
+            guard
+                let raw = integer(call, at: 0),
+                let file = string(call, at: 1)
+            else {
                 return failure(call, "GetFormFromFile needs a FormID and a file name")
             }
             let isLight = loadOrder.lightPlugins.contains {
@@ -173,9 +178,7 @@ extension PapyrusNativeFunctions {
         })
     }
 
-    static func position(
-        of key: ReferenceKey, _ world: PapyrusWorldStateBridge
-    ) -> SIMD3<Float>? {
+    static func position(of key: ReferenceKey, _ world: PapyrusWorldStateBridge) -> SIMD3<Float>? {
         world.perceptionNatives.livePosition?(key) ?? world.referenceState(for: key)?.transform
             .position
     }

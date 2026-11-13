@@ -9,7 +9,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.SkillNatives {
     public static func installSkill(into registry: inout PapyrusNativeRegistry) {
         // "Function AdvanceSkill(string asSkillName, float afMagnitude) native
         // global". The page requires a positive magnitude; a zero or negative
@@ -20,7 +20,10 @@ extension PapyrusNativeFunctions {
             functionName: "AdvanceSkill"
         ) { call, context in
             skillCall(call, context) { world, index in
-                guard let magnitude = float(call, at: 1), magnitude > 0 else {
+                guard
+                    let magnitude = float(call, at: 1),
+                    magnitude > 0
+                else {
                     return failure(call, "AdvanceSkill needs a positive magnitude")
                 }
                 guard world.advancePlayerSkill(.advance, at: index, by: magnitude) else {
@@ -67,9 +70,7 @@ extension PapyrusNativeFunctions {
     /// The one failure both natives return when the session runs no
     /// progression: nothing advanced, and saying so is better than a script
     /// that believes it taught the player something.
-    private static func needsProgression(
-        _ call: PapyrusNativeCall
-    ) -> PapyrusNativeResult {
+    private static func needsProgression(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
         failure(call, "\(call.functionName) needs a session with skill advancement")
     }
 

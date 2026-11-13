@@ -5,12 +5,12 @@
 // Documented in docs/engine/papyrus-spell-natives.md, with the natives left out on purpose.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface
-public import OpenSkyScriptingInterface
+import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.SpellNatives {
     public static func installSpell(into registry: inout PapyrusNativeRegistry) {
         installSpellKnowledge(into: &registry)
         installSpellEquip(into: &registry)
@@ -37,9 +37,7 @@ extension PapyrusNativeFunctions {
     /// `bool RemoveSpell(Spell akSpell)` and `bool HasSpell(Form akForm)`.
     /// `abVerbose` shows the spell-added notice for the player. A shout is never in
     /// the spellbook, so `HasSpell` answers false for one.
-    private static func installSpellKnowledge(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installSpellKnowledge(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Actor",
             functionName: "AddSpell"
@@ -188,7 +186,8 @@ extension PapyrusNativeFunctions {
                 let target = objectArgument(call, at: targetIndex)
                     .flatMap { world.referenceKey(for: $0) }
                 let blame = name == "RemoteCast"
-                    ? objectArgument(call, at: 1).flatMap { world.referenceKey(for: $0) } : nil
+                    ? objectArgument(call, at: 1)
+                    .flatMap { world.referenceKey(for: $0) } : nil
                 guard world.castSpell(spell, from: caster, at: target, blame: blame) else {
                     return failure(call, "\(name) has no caster runtime or no such spell")
                 }
@@ -251,29 +250,14 @@ extension PapyrusNativeFunctions {
 
     /// Argument `index` as a casting source, or nil when it is missing or names
     /// no documented source.
-    static func castingSource(
-        _ call: PapyrusNativeCall,
-        at index: Int
-    ) -> CastingSource? {
+    static func castingSource(_ call: PapyrusNativeCall, at index: Int) -> CastingSource? {
         integer(call, at: index).flatMap(CastingSource.init(rawValue:))
-    }
-
-    /// One record identity as the object value a script compares against, or
-    /// Papyrus `None` when no handle can be minted for it.
-    public static func handle(
-        _ key: ReferenceKey,
-        in world: any PapyrusWorldBridge
-    ) -> PapyrusValue {
-        world.objectHandle(for: key).map(PapyrusValue.object) ?? .none
     }
 
     /// The single failure a spell native returns when the session runs no
     /// spellbook — a synthetic scene with no SPEL index, where inventing an
     /// empty spellbook would read as an actor who has learned nothing.
     static func needsSpellbook(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
-        failure(
-            call,
-            "\(call.functionName) needs a session with a spellbook runtime"
-        )
+        failure(call, "\(call.functionName) needs a session with a spellbook runtime")
     }
 }

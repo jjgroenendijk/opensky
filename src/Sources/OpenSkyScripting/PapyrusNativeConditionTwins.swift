@@ -8,7 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ConditionTwinsNatives {
     /// Where a condition parameter comes from.
     enum TwinParameter {
         case none
@@ -46,9 +46,7 @@ extension PapyrusNativeFunctions {
             script: "Actor", native: "IsBeingRidden", function: 714, returnType: .boolean
         ),
         ConditionTwin(script: "Actor", native: "GetSitState", function: 159, returnType: .integer),
-        ConditionTwin(
-            script: "Actor", native: "GetSleepState", function: 49, returnType: .integer
-        ),
+        ConditionTwin(script: "Actor", native: "GetSleepState", function: 49, returnType: .integer),
         ConditionTwin(script: "Actor", native: "GetGoldAmount", function: 48, returnType: .integer),
         ConditionTwin(script: "Actor", native: "IsSneaking", function: 286, returnType: .boolean),
         ConditionTwin(
@@ -145,7 +143,8 @@ extension PapyrusNativeFunctions {
         case .receiver:
             return bridge.loadOrderWord(of: receiver)
         case let .object(index):
-            guard let handle = objectArgument(call, at: index) else {
+            guard let handle = objectArgument(call, at: index)
+            else {
                 return 0
             }
             return bridge.referenceKey(for: handle).flatMap(bridge.loadOrderWord(of:))

@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.FactionNatives {
     public static func installFaction(into registry: inout PapyrusNativeRegistry) {
         installFactionMemberships(into: &registry)
         installFactionRanks(into: &registry)
@@ -17,9 +17,7 @@ extension PapyrusNativeFunctions {
     }
 
     /// Joining and leaving.
-    private static func installFactionMemberships(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installFactionMemberships(into registry: inout PapyrusNativeRegistry) {
         // "Adds the Actor to a specified faction at rank 0." —
         // `Function AddToFaction(Faction akFaction)`
         // (<https://ck.uesp.net/wiki/AddToFaction_-_Actor>)
@@ -52,9 +50,7 @@ extension PapyrusNativeFunctions {
     }
 
     /// Reading and writing a rank.
-    private static func installFactionRanks(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installFactionRanks(into registry: inout PapyrusNativeRegistry) {
         // "Returns whether this actor is a member of the specified faction or
         // not." — `bool Function IsInFaction(Faction akFaction) native`
         // (<https://ck.uesp.net/wiki/IsInFaction_-_Actor>)
@@ -115,9 +111,7 @@ extension PapyrusNativeFunctions {
 
     /// `ModFactionRank(Faction akFaction, int aiMod)` and `RemoveFromAllFactions()`
     /// (<https://ck.uesp.net/wiki/RemoveFromAllFactions_-_Actor>).
-    private static func installFactionBulkChanges(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installFactionBulkChanges(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Actor",
             functionName: "ModFactionRank"
@@ -149,9 +143,7 @@ extension PapyrusNativeFunctions {
     }
 
     /// The two `Actor` relationship accessors.
-    private static func installRelationshipRanks(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installRelationshipRanks(into registry: inout PapyrusNativeRegistry) {
         // "Gets the relationship rank between this actor and another ... 4: Lover
         // ... -4: Archnemesis" (<https://ck.uesp.net/wiki/GetRelationshipRank_-_Actor>)
         // An unknown pair is a refusal, not 0: 0 is Acquaintance, a real rank.
@@ -250,10 +242,7 @@ extension PapyrusNativeFunctions {
             functionName: "GetReaction"
         ) { call, context in
             guard let target = worldTarget(call, context) else {
-                return failure(
-                    call,
-                    "GetReaction needs a world runtime and a faction receiver"
-                )
+                return failure(call, "GetReaction needs a world runtime and a faction receiver")
             }
             guard
                 let handle = objectArgument(call, at: 0),
@@ -314,9 +303,7 @@ extension PapyrusNativeFunctions {
 
     /// The single failure every faction native returns for a session that runs
     /// no faction runtime.
-    private static func needsFactionRuntime(
-        _ call: PapyrusNativeCall
-    ) -> PapyrusNativeResult {
+    private static func needsFactionRuntime(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
         failure(call, "\(call.functionName) needs a session with a faction runtime")
     }
 }

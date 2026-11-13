@@ -6,14 +6,14 @@
 
 import Foundation
 import OpenSkyActorsInterface
-public import OpenSkyFormatsESM
-public import OpenSkyScriptingInterface
+import OpenSkyFormatsESM
+import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ActorNatives {
     public static func installActor(into registry: inout PapyrusNativeRegistry) {
         installActorValueReads(into: &registry)
         installActorValueWrites(into: &registry)
-        installActorValueWriteNatives(into: &registry)
+        PapyrusNativeFunctions.ActorValuesNatives.installActorValueWriteNatives(into: &registry)
         installActorStatus(into: &registry)
         installActorCombat(into: &registry)
     }
@@ -61,9 +61,7 @@ extension PapyrusNativeFunctions {
     /// `float GetActorValuePercentage(string)`, and `float GetActorValueMax(string)`
     /// (<https://www.creationkit.com/index.php?title=GetActorValue_-_Actor>). The
     /// base is the re-derived maximum; the percentage divides by the maximum.
-    private static func installActorValueReads(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installActorValueReads(into registry: inout PapyrusNativeRegistry) {
         let reads: [(String, @Sendable (PapyrusActorState, Int32) -> Float?)] = [
             ("GetActorValue", { state, index in state.value(at: index) }),
             ("GetBaseActorValue", { state, index in state.baseValue(at: index) }),
@@ -97,9 +95,7 @@ extension PapyrusNativeFunctions {
     /// Negative amounts act as positive, as the wiki says
     /// (<https://www.creationkit.com/index.php?title=DamageActorValue_-_Actor>). Damage
     /// to zero health becomes a death in the same call.
-    private static func installActorValueWrites(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installActorValueWrites(into registry: inout PapyrusNativeRegistry) {
         let writes: [(
             String,
             @MainActor @Sendable (any PapyrusWorldBridge, Int32, Float, ReferenceKey) -> Void
@@ -136,9 +132,7 @@ extension PapyrusNativeFunctions {
     /// `IsInCombat` reads the behavior phase, so searching counts.
     /// `IsWeaponDrawn` answers only for the player; others fail with a reason. The
     /// killer may be `None` (<https://www.creationkit.com/index.php?title=Kill_-_Actor>).
-    private static func installActorStatus(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installActorStatus(into registry: inout PapyrusNativeRegistry) {
         let flags: [(String, @Sendable (PapyrusActorState) -> Bool?)] = [
             ("IsDead", { $0.isDead }),
             ("IsInCombat", { $0.isInCombat }),
@@ -211,32 +205,10 @@ extension PapyrusNativeFunctions {
         })
     }
 
-    /// The world façade plus the world identity of `self`, for an `Actor`
-    /// method. Identical in shape to `worldTarget(_:_:)`; named separately so
-    /// the failure it produces can say "actor" rather than "reference".
-    public static func actorTarget(
-        _ call: PapyrusNativeCall,
-        _ context: PapyrusNativeContext
-    ) -> (world: any PapyrusWorldBridge, key: ReferenceKey)? {
-        worldTarget(call, context)
-    }
-
-    /// The single failure an `Actor` native returns when it has no world, no
-    /// world identity for its receiver, or no actor behind that identity.
-    public static func needsActor(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
-        failure(
-            call,
-            "\(call.functionName) needs a world runtime and an actor receiver"
-        )
-    }
-
     /// The vanilla actor-value index the string argument at `index` names, or nil
     /// when it is missing, not a string, or no vanilla name. Papyrus synonyms such
     /// as `Marksman` are not aliased.
-    public static func actorValueIndex(
-        _ call: PapyrusNativeCall,
-        at index: Int
-    ) -> Int32? {
+    public static func actorValueIndex(_ call: PapyrusNativeCall, at index: Int) -> Int32? {
         guard let name = string(call, at: index) else { return nil }
         return ActorValueIdentity.index(named: name)
     }
@@ -252,21 +224,6 @@ extension PapyrusNativeFunctions {
         at index: Int
     ) -> PapyrusNativeResult {
         let name = string(call, at: index) ?? "<missing>"
-        return failure(
-            call,
-            "\(call.functionName) knows no actor value named \"\(name)\""
-        )
-    }
-
-    /// Argument `index` as an object handle, or nil for a missing argument and
-    /// for Papyrus `None` alike — which `Kill(akKiller = None)` relies on.
-    public static func objectArgument(
-        _ call: PapyrusNativeCall,
-        at index: Int
-    ) -> PapyrusObjectHandle? {
-        guard
-            call.arguments.indices.contains(index),
-            case let .object(handle) = call.arguments[index] else { return nil }
-        return handle
+        return failure(call, "\(call.functionName) knows no actor value named \"\(name)\"")
     }
 }

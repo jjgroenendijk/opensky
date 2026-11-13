@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.HavokConstraintsNatives {
     static func installHavokConstraints(into registry: inout PapyrusNativeRegistry) {
         constraintHook("AddHavokBallAndSocketConstraint", into: &registry) { call, ends, hooks in
             let offsets = (4 ..< 10).map { float(call, at: $0) ?? 0 }

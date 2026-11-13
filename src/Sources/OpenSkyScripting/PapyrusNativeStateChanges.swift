@@ -5,7 +5,7 @@
 import Foundation
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.StateChangesNatives {
     static func installStateChanges(into registry: inout PapyrusNativeRegistry) {
         let natives = [
             ("SendLycanthropyStateChanged", PapyrusEngineEvents.onLycanthropyStateChanged),
@@ -13,7 +13,8 @@ extension PapyrusNativeFunctions {
         ]
         for (native, event) in natives {
             scriptState("Actor", native, into: &registry) { call, bridge, key in
-                guard let world = bridge.world else { return needsWorld(call) }
+                guard let world = bridge.world
+                else { return needsWorld(call) }
                 guard !call.arguments.isEmpty else {
                     return failure(call, "\(native) needs the new state")
                 }

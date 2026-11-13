@@ -4,7 +4,7 @@ import Foundation
 import OpenSkyConditions
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.UtilityNatives {
     public static func installUtility(into registry: inout PapyrusNativeRegistry) {
         installWaits(into: &registry)
         installRandom(into: &registry)
@@ -18,7 +18,10 @@ extension PapyrusNativeFunctions {
                 scriptName: "Utility",
                 functionName: name
             ) { call, _ in
-                guard let seconds = float(call, at: 0), seconds.isFinite else {
+                guard
+                    let seconds = float(call, at: 0),
+                    seconds.isFinite
+                else {
                     return failure(call, "\(name) needs a finite duration")
                 }
                 let duration = Double(max(0, seconds))

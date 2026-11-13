@@ -7,7 +7,7 @@
 import Foundation
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ActorValuesNatives {
     /// `SetActorValue`, `ModActorValue` and `ForceActorValue`, each `(string, float)`.
     /// `SetAV`, `ModAV` and `ForceAV` are Papyrus wrappers, so they need no entry.
     /// A negative amount passes through, unlike `DamageActorValue`: the wiki's
@@ -19,11 +19,13 @@ extension PapyrusNativeFunctions {
                 scriptName: "Actor",
                 functionName: write.rawValue
             ) { call, context in
-                guard let actor = actorTarget(call, context) else {
+                guard let actor = actorTarget(call, context)
+                else {
                     return needsActor(call)
                 }
-                guard let index = actorValueIndex(call, at: 0) else {
-                    return unknownActorValue(call, at: 0)
+                guard let index = PapyrusNativeFunctions.ActorNatives.actorValueIndex(call, at: 0)
+                else {
+                    return PapyrusNativeFunctions.ActorNatives.unknownActorValue(call, at: 0)
                 }
                 guard let value = float(call, at: 1), value.isFinite else {
                     return failure(call, "\(write.rawValue) needs a finite value")

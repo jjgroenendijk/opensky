@@ -17,7 +17,7 @@ extension PapyrusMenuBridge {
     }
 }
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.MenusNatives {
     public static func installMenus(into registry: inout PapyrusNativeRegistry) {
         game("ShowRaceMenu", into: &registry) { _, menus in
             menus.showRaceMenu(limited: false)
@@ -73,11 +73,11 @@ extension PapyrusNativeFunctions {
         })
         // OpenSky returns at once with 0 favor points: the favor rule has no source yet.
         withReference("Actor", "ShowGiftMenu", into: &registry) { call, world, menus, key in
-            let filter = objectArgument(call, at: 1)
-                .flatMap(world.referenceKey(for:))
+            let filter = objectArgument(call, at: 1).flatMap(world.referenceKey(for:))
                 .flatMap(world.formListEntries(of:))
             menus.showGiftMenu(
-                actor: key, giving: boolean(call, at: 0, default: true), filter: filter,
+                actor: key, giving: boolean(call, at: 0, default: true),
+                filter: filter,
                 showsStolenItems: boolean(call, at: 2, default: false)
             )
             return .returned(.integer(0))
@@ -93,7 +93,9 @@ extension PapyrusNativeFunctions {
                 guard
                     let handle = objectArgument(call, at: 0),
                     let target = world.referenceKey(for: handle)
-                else { return failure(call, "MoveTo needs a target reference") }
+                else {
+                    return failure(call, "MoveTo needs a target reference")
+                }
                 guard key != .player else {
                     menus.movePlayer(to: target)
                     return .returned(.none)
@@ -137,7 +139,10 @@ extension PapyrusNativeFunctions {
     private static func installOpenInventory(into registry: inout PapyrusNativeRegistry) {
         withReference("Actor", "OpenInventory", into: &registry) { call, world, menus, key in
             let isTeammate = world.scriptedState(of: key).flag(ScriptedStateName.playerTeammate)
-            if key != .player, boolean(call, at: 0, default: false) || isTeammate == true {
+            if
+                key != .player,
+                boolean(call, at: 0, default: false) || isTeammate == true
+            {
                 menus.openInventory(of: key)
             }
             return .returned(.none)
@@ -211,7 +216,8 @@ extension PapyrusNativeFunctions {
             .returned(.integer(Int32(menus.sex(ofBase: form) ?? -1)))
         }
         withForm("ActorBase", "GetRace", into: &registry) { _, world, menus, form in
-            .returned(menus.race(ofBase: form).map { formHandle($0, in: world) } ?? .none)
+            .returned(menus.race(ofBase: form)
+                .map { PapyrusNativeFunctions.InventoryNatives.formHandle($0, in: world) } ?? .none)
         }
         withForm("ActorBase", "IsUnique", into: &registry) { _, _, menus, form in
             .returned(.boolean(menus.recordFlags(ofBase: form)?.contains(.unique) == true))
@@ -226,13 +232,14 @@ extension PapyrusNativeFunctions {
             }
         }
         withForm("ActorBase", "GetGiftFilter", into: &registry) { _, world, menus, form in
-            .returned(menus.giftFilter(ofBase: form).map { formHandle($0, in: world) } ?? .none)
+            .returned(menus.giftFilter(ofBase: form)
+                .map { PapyrusNativeFunctions.InventoryNatives.formHandle($0, in: world) } ?? .none)
         }
         // A talking activator's voice is not read, so it answers None.
         withReference("ObjectReference", "GetVoiceType", into: &registry) { _, world, menus, key in
             let base = key == .player ? FormID(0x7) : world.baseObject(of: key)
             return .returned(base.flatMap(menus.voiceType(ofBase:)).map {
-                formHandle($0, in: world)
+                PapyrusNativeFunctions.InventoryNatives.formHandle($0, in: world)
             } ?? .none)
         }
         withForm("Form", "GetName", into: &registry) { _, _, menus, form in

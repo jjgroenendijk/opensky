@@ -5,7 +5,7 @@ import Foundation
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ObjectReferenceMotionNatives {
     /// `float GetPositionX()`, `GetPositionY()`, `GetPositionZ()`.
     ///
     /// Read from the resolved `ReferenceState`, so a script that moved the
@@ -21,7 +21,8 @@ extension PapyrusNativeFunctions {
                     return needsWorld(call)
                 }
                 guard let state = target.world.referenceState(for: target.key) else {
-                    return needsResidentReference(call)
+                    return PapyrusNativeFunctions.ObjectReferenceNatives
+                        .needsResidentReference(call)
                 }
                 return .returned(.float(state.transform.position[axis]))
             })
@@ -46,7 +47,10 @@ extension PapyrusNativeFunctions {
             var position = state.transform.position
             var supplied = false
             for axis in 0 ..< 3 where call.arguments.indices.contains(axis) {
-                guard let value = float(call, at: axis), value.isFinite else {
+                guard
+                    let value = float(call, at: axis),
+                    value.isFinite
+                else {
                     return failure(call, "SetPosition needs finite coordinates")
                 }
                 position[axis] = value

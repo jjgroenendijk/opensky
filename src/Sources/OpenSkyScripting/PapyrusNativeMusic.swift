@@ -4,7 +4,7 @@
 import Foundation
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.MusicNatives {
     static func installMusic(into registry: inout PapyrusNativeRegistry) {
         scriptState("MusicType", "Add", into: &registry) { call, bridge, key in
             guard let music = bridge.music else {

@@ -9,7 +9,7 @@ import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.GuardNatives {
     public static func installGuard(into registry: inout PapyrusNativeRegistry) {
         installGuardQueries(into: &registry)
         installArrestOutcomes(into: &registry)
@@ -26,7 +26,8 @@ extension PapyrusNativeFunctions {
             scriptName: "Actor",
             functionName: "GetCrimeFaction"
         ) { call, context in
-            guard let actor = actorTarget(call, context) else { return needsActor(call) }
+            guard let actor = actorTarget(call, context)
+            else { return needsActor(call) }
             let bridge = actor.world as? PapyrusWorldStateBridge
             if let scripted = bridge?.scriptedState(of: actor.key).form("crimeFaction") {
                 return .returned(handle(scripted, in: actor.world))
@@ -43,7 +44,8 @@ extension PapyrusNativeFunctions {
             scriptName: "Actor",
             functionName: "IsGuard"
         ) { call, context in
-            guard let actor = actorTarget(call, context) else { return needsActor(call) }
+            guard let actor = actorTarget(call, context)
+            else { return needsActor(call) }
             guard let isGuard = actor.world.isGuard(actor.key) else {
                 return failure(call, "IsGuard needs a session with faction data")
             }
@@ -60,7 +62,7 @@ extension PapyrusNativeFunctions {
             scriptName: "Faction",
             functionName: "CanPayCrimeGold"
         ) { call, context in
-            factionTarget(call, context) { world, faction in
+            PapyrusNativeFunctions.CrimeNatives.factionTarget(call, context) { world, faction in
                 guard let canPay = world.canPayCrimeGold(to: faction) else {
                     return failure(call, "CanPayCrimeGold needs a session with a crime runtime")
                 }
@@ -77,7 +79,7 @@ extension PapyrusNativeFunctions {
             scriptName: "Faction",
             functionName: "PlayerPayCrimeGold"
         ) { call, context in
-            factionTarget(call, context) { world, faction in
+            PapyrusNativeFunctions.CrimeNatives.factionTarget(call, context) { world, faction in
                 settle(call, world, faction, .pay(
                     removeStolen: boolean(call, at: 0, default: true),
                     goToJail: boolean(call, at: 1, default: true)
@@ -93,7 +95,7 @@ extension PapyrusNativeFunctions {
             scriptName: "Faction",
             functionName: "SendPlayerToJail"
         ) { call, context in
-            factionTarget(call, context) { world, faction in
+            PapyrusNativeFunctions.CrimeNatives.factionTarget(call, context) { world, faction in
                 settle(call, world, faction, .jail)
             }
         })

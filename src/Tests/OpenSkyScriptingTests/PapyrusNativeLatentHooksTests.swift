@@ -118,7 +118,8 @@ struct PapyrusNativeLatentHooksTests {
         let trapWorld = FakeTrapWorld()
         fixture.session.bridge.trapWorld = trapWorld
         #expect(call(fixture, "Actor", "AttachAshPile", [.none]) == .returned(.none))
-        #expect(trapWorld.placed.first?.base == PapyrusNativeFunctions.defaultAshPile)
+        #expect(trapWorld.placed.first?.base == PapyrusNativeFunctions.ActorRulesNatives
+            .defaultAshPile)
         let pile = ReferenceKey.generated(42)
         #expect(fixture.session.bridge.ashPileOwner(of: pile) == fixture.key)
         fixture.session.bridge.activate(pile, by: .player, togglesOpen: false)

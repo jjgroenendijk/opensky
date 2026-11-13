@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.FurnitureNatives {
     static func installFurniture(into registry: inout PapyrusNativeRegistry) {
         // A call on an `Actor` variable looks the native up under `Actor`.
         for script in ["ObjectReference", "Actor"] {

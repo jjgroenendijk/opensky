@@ -7,7 +7,7 @@ import OpenSkyInventoryInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.LockNatives {
     /// The level a `Lock()` gives a reference that has no XLOC. OpenSky's choice:
     /// no source says what the game uses, so the easiest band.
     static let defaultLockLevel: UInt8 = 1

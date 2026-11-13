@@ -9,7 +9,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.CrimeNatives {
     public static func installCrime(into registry: inout PapyrusNativeRegistry) {
         installFactionCrimeGold(into: &registry)
         installCrimeAlarms(into: &registry)
@@ -197,7 +197,8 @@ extension PapyrusNativeFunctions {
         _ context: PapyrusNativeContext,
         body: (any PapyrusWorldBridge, ReferenceKey) -> PapyrusNativeResult
     ) -> PapyrusNativeResult {
-        guard let target = worldTarget(call, context) else {
+        guard let target = worldTarget(call, context)
+        else {
             return failure(
                 call,
                 "\(call.functionName) needs a world runtime and a faction receiver"

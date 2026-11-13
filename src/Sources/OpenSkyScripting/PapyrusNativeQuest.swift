@@ -10,7 +10,7 @@ import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.QuestNatives {
     public static func installQuest(into registry: inout PapyrusNativeRegistry) {
         installQuestReads(into: &registry)
         installQuestRunState(into: &registry)
@@ -29,9 +29,7 @@ extension PapyrusNativeFunctions {
     /// `bool IsStageDone(int aiStage)`, with their wrapper spellings. Each is
     /// answered by `QuestRuntimeState`
     /// (<https://ck.uesp.net/wiki/GetCurrentStageID_-_Quest>).
-    private static func installQuestReads(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installQuestReads(into registry: inout PapyrusNativeRegistry) {
         register(&registry, ["IsRunning"]) { _, state in
             .returned(.boolean(state.isRunning))
         }
@@ -55,9 +53,7 @@ extension PapyrusNativeFunctions {
 
     /// `bool Start()`, `Stop()` and `CompleteQuest()`
     /// (<https://ck.uesp.net/wiki/Start_-_Quest>). Only `Start` returns a value.
-    private static func installQuestRunState(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installQuestRunState(into registry: inout PapyrusNativeRegistry) {
         registerMutation(&registry, ["Start"]) { _, world, key in
             try latent(.boolean(world.startQuest(for: key)), quest: key, world: world)
         }
@@ -74,9 +70,7 @@ extension PapyrusNativeFunctions {
     /// `bool SetCurrentStageID(int aiStage)` and its `SetStage` wrapper
     /// (<https://ck.uesp.net/wiki/SetStage_-_Quest>). An unknown stage is a native
     /// failure, so the script gets the documented false and the tally records it.
-    private static func installQuestStages(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installQuestStages(into registry: inout PapyrusNativeRegistry) {
         registerMutation(&registry, ["SetCurrentStageID", "SetStage"]) { call, world, key in
             guard let stage = stageArgument(call, at: 0) else {
                 return failure(call, "\(call.functionName) needs a stage index")
@@ -102,34 +96,26 @@ extension PapyrusNativeFunctions {
     /// `SetObjectiveDisplayed(int aiObjective, bool abDisplayed = true, bool
     /// abForce = false)` and the completed and failed setters, each changing only
     /// its own flag. `abForce` only re-announces in the journal UI, so it is ignored.
-    private static func installQuestObjectives(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installQuestObjectives(into registry: inout PapyrusNativeRegistry) {
         registerMutation(&registry, ["SetObjectiveDisplayed"]) { call, world, key in
             guard let objective = stageArgument(call, at: 0) else {
                 return failure(call, "\(call.functionName) needs an objective index")
             }
-            try world.setQuestObjectiveDisplayed(
-                objective, flag(call, at: 1), for: key
-            )
+            try world.setQuestObjectiveDisplayed(objective, flag(call, at: 1), for: key)
             return .returned(.none)
         }
         registerMutation(&registry, ["SetObjectiveCompleted"]) { call, world, key in
             guard let objective = stageArgument(call, at: 0) else {
                 return failure(call, "\(call.functionName) needs an objective index")
             }
-            try world.setQuestObjectiveCompleted(
-                objective, flag(call, at: 1), for: key
-            )
+            try world.setQuestObjectiveCompleted(objective, flag(call, at: 1), for: key)
             return .returned(.none)
         }
         registerMutation(&registry, ["SetObjectiveFailed"]) { call, world, key in
             guard let objective = stageArgument(call, at: 0) else {
                 return failure(call, "\(call.functionName) needs an objective index")
             }
-            try world.setQuestObjectiveFailed(
-                objective, flag(call, at: 1), for: key
-            )
+            try world.setQuestObjectiveFailed(objective, flag(call, at: 1), for: key)
             return .returned(.none)
         }
         // Completes the objectives the quest has shown; one never shown has no journal row.
@@ -149,9 +135,7 @@ extension PapyrusNativeFunctions {
 
     /// `bool IsObjectiveDisplayed(int)`, `IsObjectiveCompleted(int)`, and
     /// `IsObjectiveFailed(int)`. An objective nothing touched reads all false.
-    private static func installQuestObjectiveReads(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installQuestObjectiveReads(into registry: inout PapyrusNativeRegistry) {
         let reads: [(String, @Sendable (QuestObjectiveState) -> Bool)] = [
             ("IsObjectiveDisplayed", \.isDisplayed),
             ("IsObjectiveCompleted", \.isCompleted),
@@ -214,10 +198,7 @@ extension PapyrusNativeFunctions {
     /// A stage or objective index argument. Both are `int` in Papyrus and
     /// `UInt16` on disk, so a negative or out-of-range number names no stage
     /// the record can declare and is refused rather than wrapped.
-    private static func stageArgument(
-        _ call: PapyrusNativeCall,
-        at index: Int
-    ) -> UInt16? {
+    private static func stageArgument(_ call: PapyrusNativeCall, at index: Int) -> UInt16? {
         guard let raw = integer(call, at: index) else { return nil }
         return UInt16(exactly: raw)
     }

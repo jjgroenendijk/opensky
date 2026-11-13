@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ReferenceAliasNatives {
     static let referenceAliasReads = ["GetRef", "GetReference", "GetActorRef", "GetActorReference"]
 
     public static func installReferenceAlias(into registry: inout PapyrusNativeRegistry) {
@@ -94,7 +94,8 @@ extension PapyrusNativeFunctions {
                 let bridge = context.world as? PapyrusWorldStateBridge,
                 let receiver = call.receiver,
                 let slot = bridge.world?.aliasSlot(for: receiver)
-            else { return failure(call, "\(name) needs an alias of a quest") }
+            else { return failure(call, "\(name) needs an alias of a quest")
+            }
             do {
                 return try body(call, bridge, slot)
             } catch {

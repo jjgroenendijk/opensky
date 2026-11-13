@@ -24,13 +24,14 @@ extension PapyrusWorldStateBridge {
     }
 }
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.BarterNatives {
     public static func installBarter(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Actor",
             functionName: "ShowBarterMenu"
         ) { call, context in
-            guard let actor = actorTarget(call, context) else { return needsActor(call) }
+            guard let actor = actorTarget(call, context)
+            else { return needsActor(call) }
             guard let result = actor.world.showBarterMenu(for: actor.key) else {
                 return failure(call, "ShowBarterMenu needs a session with vendor data")
             }

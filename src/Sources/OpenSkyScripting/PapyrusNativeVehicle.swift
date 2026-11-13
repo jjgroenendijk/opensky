@@ -24,7 +24,7 @@ extension PapyrusActorAIBridge {
     }
 }
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.VehicleNatives {
     public static func installVehicle(into registry: inout PapyrusNativeRegistry) {
         // A call on an `Actor` variable looks the native up under `Actor`.
         for script in ["ObjectReference", "Actor"] {
@@ -82,7 +82,8 @@ extension PapyrusNativeFunctions {
             return .returned(.none)
         }
         withActorAI("Actor", "SetVehicle", into: &registry) { call, world, ai, rider in
-            let vehicle = objectArgument(call, at: 0).flatMap { world.referenceKey(for: $0) }
+            let vehicle = objectArgument(call, at: 0)
+                .flatMap { world.referenceKey(for: $0) }
             ai.setVehicle(rider, vehicle: vehicle)
             return .returned(.none)
         }

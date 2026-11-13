@@ -11,7 +11,7 @@ import OpenSkyGameData
 import OpenSkyPerceptionInterface
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ActorAwarenessNatives {
     public static func installActorAwareness(into registry: inout PapyrusNativeRegistry) {
         // "Checks to see if this actor has line-of-sight to the target object."
         withDetectionPair("HasLOS", into: &registry) { actor, other, detection in
@@ -33,10 +33,8 @@ extension PapyrusNativeFunctions {
         // Detection's light is this value over 100 (docs/engine/detection.md#light-level).
         withActorBridge("GetLightLevel", into: &registry) { call, bridge, actor in
             guard
-                let light = bridge.perceptionNatives.lightLevel, let feet = position(
-                    of: actor,
-                    bridge
-                )
+                let light = bridge.perceptionNatives.lightLevel,
+                let feet = PapyrusNativeFunctions.WorldPlaceNatives.position(of: actor, bridge)
             else {
                 return failure(call, "GetLightLevel needs the renderer and the actor's position")
             }
@@ -51,7 +49,11 @@ extension PapyrusNativeFunctions {
                 ),
                 let lookup = bridge.sessionNatives.packageTemplate
             else { return failure(call, "GetTemplate needs the package records") }
-            return .returned(lookup(package).map { formHandle($0, in: bridge) } ?? .none)
+            guard let template = lookup(package) else { return .returned(.none) }
+            return .returned(PapyrusNativeFunctions.InventoryNatives.formHandle(
+                template,
+                in: bridge
+            ))
         }
         // "Resets this actor's health and restores all his limbs." OpenSky has no limb
         // damage, so only health moves.
@@ -95,7 +97,9 @@ extension PapyrusNativeFunctions {
             guard
                 let handle = objectArgument(call, at: 0),
                 let other = bridge.referenceKey(for: handle)
-            else { return failure(call, "\(name) needs a reference argument") }
+            else {
+                return failure(call, "\(name) needs a reference argument")
+            }
             guard let detection = bridge.perceptionNatives.detection?() else {
                 return failure(call, "\(name) needs a perception pass")
             }

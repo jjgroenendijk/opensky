@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.SneakNatives {
     static func installSneak(into registry: inout PapyrusNativeRegistry) {
         scriptState("Actor", "StartSneaking", into: &registry) { call, bridge, key in
             guard key == .player else { return .returned(.none) }

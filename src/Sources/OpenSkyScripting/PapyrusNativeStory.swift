@@ -9,7 +9,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.StoryNatives {
     public static func installStory(into registry: inout PapyrusNativeRegistry) {
         // `SendStoryEvent(Location akLoc = None, ObjectReference akRef1 = None,
         // ObjectReference akRef2 = None, int aiValue1 = 0, int aiValue2 = 0)`
@@ -44,7 +44,8 @@ extension PapyrusNativeFunctions {
                 let world = context.world as? PapyrusWorldStateBridge, let story = world.story,
                 let key = call.receiver.flatMap(world.referenceKey(for:))
             else { return failure(call, "GetCurrentScene needs a reference and the scene runtime") }
-            return .returned(story.currentScene(of: key).map { formHandle($0, in: world) } ?? .none)
+            return .returned(story.currentScene(of: key)
+                .map { PapyrusNativeFunctions.InventoryNatives.formHandle($0, in: world) } ?? .none)
         })
     }
 
@@ -56,13 +57,16 @@ extension PapyrusNativeFunctions {
         var event = StoryEventData(event: "SCPT")
         event.keyword = keyword
         if
-            let handle = objectArgument(call, at: 0), case let .plugin(name, objectID)? =
+            let handle = objectArgument(call, at: 0),
+            case let .plugin(name, objectID)? =
             world.referenceKey(for: handle)
         {
             event.location1 = ResolvedFormID(plugin: name, objectID: objectID)
         }
-        event.actor1 = objectArgument(call, at: 1).flatMap { world.referenceKey(for: $0) }
-        event.actor2 = objectArgument(call, at: 2).flatMap { world.referenceKey(for: $0) }
+        event.actor1 = objectArgument(call, at: 1)
+            .flatMap { world.referenceKey(for: $0) }
+        event.actor2 = objectArgument(call, at: 2)
+            .flatMap { world.referenceKey(for: $0) }
         event.value1 = integer(call, at: 3).map(Float.init) ?? 0
         event.value2 = integer(call, at: 4).map(Float.init) ?? 0
         return event

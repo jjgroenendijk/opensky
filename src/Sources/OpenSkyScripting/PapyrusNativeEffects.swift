@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.EffectsNatives {
     /// The `.player` script-state link that names the modifier `ApplyCrossFade` holds.
     static let crossFadeModifierName = "crossFadeModifier"
 
@@ -46,7 +46,9 @@ extension PapyrusNativeFunctions {
             return .returned(.none)
         }
         scriptState("ImageSpaceModifier", "PopTo", into: &registry) { call, bridge, key in
-            guard let next = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)) else {
+            guard
+                let next = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
+            else {
                 return failure(call, "PopTo needs an image space modifier")
             }
             bridge.effectPresenter?.removeImageSpaceModifier(key, fadeSeconds: 0)
@@ -101,7 +103,9 @@ extension PapyrusNativeFunctions {
         ) -> PapyrusNativeResult
     ) {
         scriptState(script, name, into: &registry) { call, bridge, effect in
-            guard let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)) else {
+            guard
+                let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
+            else {
                 return failure(call, "\(name) needs a reference to play on")
             }
             let facing = objectArgument(call, at: 2).flatMap(bridge.referenceKey(for:))

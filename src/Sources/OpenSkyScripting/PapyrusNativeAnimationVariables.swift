@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.AnimationVariablesNatives {
     static func installAnimationVariables(into registry: inout PapyrusNativeRegistry) {
         for type in ["Bool", "Int", "Float"] {
             animationVariable("GetAnimationVariable\(type)", into: &registry) { call, bridge, key in

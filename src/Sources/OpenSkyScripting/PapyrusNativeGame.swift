@@ -5,7 +5,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.GameNatives {
     /// `Actor GetPlayer()`, a global function with no receiver. It returns the
     /// session-stable opaque handle for `ReferenceKey.player`, so `akActionRef ==
     /// Game.GetPlayer()` works. The handle has no `Actor` script, so an `Actor`
@@ -27,7 +27,10 @@ extension PapyrusNativeFunctions {
             scriptName: "Game",
             functionName: "GetForm"
         ) { call, context in
-            guard let world = context.world, let formID = integer(call, at: 0) else {
+            guard
+                let world = context.world,
+                let formID = integer(call, at: 0)
+            else {
                 return failure(call, "GetForm needs a world runtime and an int FormID")
             }
             guard

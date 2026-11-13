@@ -8,7 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.SpellRecordsNatives {
     static func installSpellRecords(into registry: inout PapyrusNativeRegistry) {
         scriptState("Spell", "IsHostile", into: &registry) { call, bridge, spell in
             guard let record = bridge.magicNatives.casterRuntime?()?.spellbookAccess.record(spell)

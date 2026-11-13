@@ -68,7 +68,11 @@ struct PapyrusNativeTrapMotionTests {
             arguments: [.object(fixture.receiver), .float(10), .float(300)]
                 + [PapyrusValue](repeating: .float(0), count: 6) + [.integer(0), .float(2)]
         )
-        PapyrusNativeFunctions.pushBack(hit, world: fixture.session.bridge, actor: .player)
+        PapyrusNativeFunctions.TrapWorldNatives.pushBack(
+            hit,
+            world: fixture.session.bridge,
+            actor: .player
+        )
         #expect(trapWorld.staggers.first?.actor == .player)
         #expect(trapWorld.staggers.first?.magnitude == 1)
         #expect(trapWorld.pushes.first?.source == fixture.key)

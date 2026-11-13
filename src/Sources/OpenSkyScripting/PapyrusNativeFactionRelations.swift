@@ -10,7 +10,7 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.FactionRelationsNatives {
     /// `PlayerFaction`, Skyrim.esm `000DB1`, which `SetPlayerEnemy` pairs with.
     static let playerFaction = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x000DB1)
 
@@ -24,10 +24,13 @@ extension PapyrusNativeFunctions {
         ]
         for (name, pair) in pairs.sorted(by: { $0.key < $1.key }) {
             scriptState("Faction", name, into: &registry) { call, bridge, faction in
-                guard let other = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
+                guard
+                    let other = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
                 else { return failure(call, "\(name) needs a faction") }
-                let mine = boolean(call, at: 1, default: false) ? pair.softened : pair.base
-                let theirs = boolean(call, at: 2, default: false) ? pair.softened : pair.base
+                let mine = boolean(call, at: 1, default: false) ? pair
+                    .softened : pair.base
+                let theirs = boolean(call, at: 2, default: false) ? pair
+                    .softened : pair.base
                 bridge.setFactionReaction(mine, of: faction, toward: other)
                 bridge.setFactionReaction(theirs, of: other, toward: faction)
                 return .returned(.none)
@@ -79,9 +82,12 @@ extension PapyrusNativeFunctions {
                 members.append(actor)
             }
         }
-        let centre = position(of: bridge.playerKey, bridge)
+        let centre = PapyrusNativeFunctions.WorldPlaceNatives.position(of: bridge.playerKey, bridge)
         let distance = { (key: ReferenceKey) -> Float in
-            guard let centre, let here = position(of: key, bridge) else { return .infinity }
+            guard let centre, let here = PapyrusNativeFunctions.WorldPlaceNatives.position(
+                of: key,
+                bridge
+            ) else { return .infinity }
             return simd_distance(centre, here)
         }
         return members.sorted { (distance($0), $0) < (distance($1), $1) }

@@ -9,7 +9,7 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.InventoryNatives {
     public static func installInventory(into registry: inout PapyrusNativeRegistry) {
         // A call on an `Actor` variable looks the native up under `Actor`.
         for script in ["ObjectReference", "Actor"] {
@@ -181,11 +181,10 @@ extension PapyrusNativeFunctions {
                 let bridge = world.inventory,
                 let receiver = call.receiver, let holder = world.referenceKey(for: receiver)
             else { return failure(call, "RemoveAllItems needs the inventory bridge") }
-            let other = objectArgument(call, at: 0).flatMap { world.referenceKey(for: $0) }
+            let other = objectArgument(call, at: 0)
+                .flatMap { world.referenceKey(for: $0) }
             let removeQuestItems = boolean(call, at: 2, default: false)
-            _ = bridge.removeAllItems(
-                from: holder, to: other, removeQuestItems: removeQuestItems
-            )
+            _ = bridge.removeAllItems(from: holder, to: other, removeQuestItems: removeQuestItems)
             return .returned(.none)
         })
     }

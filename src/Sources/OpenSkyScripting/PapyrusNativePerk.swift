@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.PerkNatives {
     public static func installPerk(into registry: inout PapyrusNativeRegistry) {
         // "Adds the specified perk to this actor."
         // (<https://ck.uesp.net/wiki/AddPerk_-_Actor>) It spends no perk point, so it
@@ -40,10 +40,7 @@ extension PapyrusNativeFunctions {
         ) { call, context in
             perkTarget(call, context) { actor, perk in
                 guard let owns = actor.world.hasPerk(perk, on: actor.key) else {
-                    return failure(
-                        call,
-                        "HasPerk needs a session with a perk runtime"
-                    )
+                    return failure(call, "HasPerk needs a session with a perk runtime")
                 }
                 return .returned(.boolean(owns))
             }

@@ -7,7 +7,7 @@ import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 import simd
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.SkyNatives {
     static func installSky(into registry: inout PapyrusNativeRegistry) {
         for (axis, name) in ["GetSunPositionX", "GetSunPositionY", "GetSunPositionZ"].enumerated() {
             scriptState("Game", name, into: &registry) { _, bridge, _ in
@@ -30,7 +30,8 @@ extension PapyrusNativeFunctions {
             .returned(.boolean(bridge.isPlayerSunGazing))
         }
         scriptState("Game", "SetSunGazeImageSpaceModifier", into: &registry) { call, bridge, _ in
-            bridge.sunGazeModifier = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
+            bridge.sunGazeModifier = objectArgument(call, at: 0)
+                .flatMap(bridge.referenceKey(for:))
             return .returned(.none)
         }
     }
