@@ -146,21 +146,28 @@ Using a station opens `Interface\craftingmenu.swf` over the session. The engine 
 `/Menu/MenuNameHolder/MenuName`, and sets `bCanCraft`. The lists are
 `/Menu/InventoryLists/CategoriesListHolder/List_mc` and `.../ItemsListHolder/List_mc`, the
 same list class as the [inventory menu](/engine/inventory-menu.md#list-data). OpenSky shows
-the recipes the player can make now, all recipes, and then one tab per category, in the order
-the recipes first name them.
+the recipes the player can make now, all recipes, and then one tab per category that has a
+recipe.
 
-A recipe's category comes from the keywords of the item it makes:
+A recipe's category comes from the item it makes:
 
-- A generic craftable keyword, the default objects `GCK1` to `GCKX`. `HearthFires.esm` points
-  these at its `BYOHHouseCraftingCategory*` keywords. The tab titles are
-  `sGenericCraftKeywordName01` to `10`, such as "HOUSE" and "WEAPON RACKS". This one wins when an
-  item also has a material.
-- A material keyword, such as `WeapMaterialIron` or `ArmorMaterialIronBanded`. The titles are
-  `sIron`, `sSteel`, `sDwarven`, `sElven`, `sOrcish`, `sGlass`, `sEbony`, `sDaedric`, `sDragon`,
-  `sLeather`, `sHide`, `sStudded`, `sJewelry`, `sImperial`, `sDraugr`, `sFalmer`, and `sWood`.
-- Anything else is only on the first two tabs.
+- Food goes under `sFood`.
+- Otherwise the first of the item's keywords, in record order, that is in the table below
+  names the tab.
+- An item with keywords but no match goes under `sMisc`. An item with no keywords gets no tab.
 
-`interface\translate_english.txt` has no `$` key for these titles, so the engine supplies them.
+The table holds material keywords, such as `WeapMaterialIron` or `ArmorMaterialIronBanded`, and
+the generic craftable keywords, the default objects `GCK1` to `GCK8`. `HearthFires.esm` points
+these at its `BYOHHouseCraftingCategory*` keywords. `ArmorMaterialScaled` goes under Steel and
+`ArmorMaterialStormcloak` under Leather.
+
+The tabs come in this fixed order: `sWood`, `sHide`, `sDraugr`, `sIron`, `sStudded`,
+`sImperial`, `sSteel`, `sLeather`, `sDwarven`, `sElven`, `sFalmer`, `sOrcish`, `sEbony`,
+`sGlass`, `sDragon`, `sDaedric`, `sJewelry`, `sFood`, `sGenericCraftKeywordName01` to `08`
+(such as "HOUSE" and "WEAPON RACKS"), the four Dragonborn tabs, then `sMisc`. The Dragonborn
+tabs, Bonemold, Chitin, Nordic, and Stalhrim, have no setting. Their titles are the
+`$Crafting_$DLC2Armor*` keys of `interface\translate_english.txt`. `GCK9`, `GCKX`, and their
+settings `sGenericCraftKeywordName09` and `10` make no tab.
 
 The movie calls `CraftSelectedItem` or `CraftButtonPress` to make the selected recipe, and
 `CloseMenu` to leave, which closes the session. At an alchemy lab the movie lists the carried

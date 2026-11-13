@@ -147,6 +147,24 @@ struct MenuScreenCoordinatorTests {
         #expect(world.actions.last == "close station")
     }
 
+    @Test func craftingTabsFollowTheForgeOrderNotTheRecipeOrder() {
+        let world = FakeMenuScreenWorld()
+        let menu = CraftingMenuCoordinator(menuMode: MenuModeController(), world: world)
+        world.craftingStationName = "Forge"
+        world.craftingRecipes = [
+            CraftingMenuRecipe(
+                id: ResolvedFormID(plugin: "Skyrim.esm", objectID: 1), name: "Steel Sword",
+                canMake: true, category: "STEEL", categoryRank: 6
+            ),
+            CraftingMenuRecipe(
+                id: ResolvedFormID(plugin: "Skyrim.esm", objectID: 2), name: "Iron Dagger",
+                canMake: true, category: "IRON", categoryRank: 3
+            )
+        ]
+        #expect(menu.open())
+        #expect(menu.model.categories.map(\.label) == ["Can make", "All", "IRON", "STEEL"])
+    }
+
     /// At a lab the rows are the carried ingredients: E chooses one, R brews.
     @Test func anAlchemyLabListsIngredientsToChooseAndBrew() {
         let world = FakeMenuScreenWorld()

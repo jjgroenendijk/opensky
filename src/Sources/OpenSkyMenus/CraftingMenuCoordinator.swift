@@ -15,12 +15,17 @@ nonisolated public struct CraftingMenuRecipe: Equatable, Sendable {
     public let canMake: Bool
     /// The title of the tab the created item goes under, such as "IRON", or nil.
     public let category: String?
+    /// The tab's place in the forge's fixed tab order.
+    public let categoryRank: Int
 
-    public init(id: ResolvedFormID, name: String, canMake: Bool, category: String? = nil) {
+    public init(
+        id: ResolvedFormID, name: String, canMake: Bool, category: String? = nil, categoryRank: Int = 0
+    ) {
         self.id = id
         self.name = name
         self.canMake = canMake
         self.category = category
+        self.categoryRank = categoryRank
     }
 }
 
@@ -106,8 +111,10 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
             ItemListRow(tag: UInt32(index), name: recipe.name, isEquipped: recipe.canMake)
         }
         var titles: [String] = []
-        for title in all.compactMap(\.category) where !titles.contains(title) {
-            titles.append(title)
+        for recipe in all.sorted(by: { $0.categoryRank < $1.categoryRank }) {
+            if let title = recipe.category, !titles.contains(title) {
+                titles.append(title)
+            }
         }
         let tabs = titles.map { title in
             ItemListCategory(
