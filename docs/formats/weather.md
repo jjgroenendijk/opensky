@@ -83,6 +83,10 @@ Four `DALC` fields, in the order sunrise, day, sunset, night. Each is 32 bytes (
 float32 scale. Some community notes call the scale a Fresnel or specular power. With fewer
 than four full `DALC` fields, OpenSky has no time-of-day mapping and ignores them all.
 
+A `DALC` of 24 bytes is the older layout: the six colours only, with no specular and no
+scale. xEdit reads a struct with missing trailing members the same way. `Skyrim.esm` has
+one weather in this layout, the test weather `TESTCloudyRain`.
+
 ### Clouds, sounds, and links
 
 Source: xEdit `dev-4.1.6` (commit `9fb0168`) `wbRecord(WTHR, ...)` and the `wbWeather*` helpers. A
