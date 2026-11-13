@@ -13,8 +13,6 @@ extension TitleMenuCoordinator {
         subsystem: "nl.jjgroenendijk.opensky",
         category: "Menus"
     )
-    static let version = "OpenSky"
-
     func startMovie() {
         let hasSaves = entries.contains(.resume)
         movie.start(MenuMovie(
@@ -35,9 +33,12 @@ extension TitleMenuCoordinator {
                     self?.pendingLoadCalls.append(call)
                 }
             },
-            activate: { runtime in
+            activate: { [weak self] runtime in
+                let version = (self?.world?.titleSettings ?? .vanilla).versionText
                 TitleMenuMovieBridge.activate(
-                    runtime: runtime, hasSaves: hasSaves, version: Self.version
+                    runtime: runtime,
+                    hasSaves: hasSaves,
+                    version: version
                 )
             },
             didLoad: { [weak self] in self?.world?.showTitleBackdrop(true) }

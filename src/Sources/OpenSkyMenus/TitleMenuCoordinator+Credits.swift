@@ -39,7 +39,10 @@ extension TitleMenuCoordinator {
         movie.start(MenuMovie(
             path: CreditsMenuMovieBridge.moviePath,
             activate: { [weak self] runtime in
-                CreditsMenuMovieBridge.activate(runtime: runtime, credits: credits) {
+                let speed = (self?.world?.titleSettings ?? .vanilla).creditsScrollSpeed
+                CreditsMenuMovieBridge.activate(
+                    runtime: runtime, credits: credits, scrollSpeed: Double(speed)
+                ) {
                     self?.creditsClosing = true
                 }
             }

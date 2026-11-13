@@ -31,6 +31,10 @@ private final class FakeTitleWorld: TitleMenuWorld, MenuInputConsumer, SaveGameS
         nil
     }
 
+    var titleSettings: TitleMenuSettings {
+        .vanilla
+    }
+
     func showTitleBackdrop(_: Bool) {}
 
     func holdWorldLoading() {
