@@ -71,6 +71,9 @@ The fields that change on every run of one build are dropped before the compare,
 `skippedFrames`, `timeline`, `wallClock`, and `timestamp`. Animation clips load off the main
 thread, so `clipsLoaded`, the graph `steps` and `recentEvents`, and the player's `lastFall` go
 too (`tools/tour/volatile.txt`). Numbers match within 0.01, because float maths moves a value in
-its last digits. A `position`, `distance`, or `feet` matches within 2 units: the app runs a
-frame or two between `worldReady` and the tour's pause, and a walking actor moves about 1.2
-units a frame. Measured 2026-11-09: three runs of one build differed only there.
+its last digits. A `position`, `distance`, or `feet` matches within 3 units: the app runs a
+frame or two between `worldReady` and the tour's pause, and a walking actor moves about 1.3
+units a frame, so two frames move it up to about 2.7 units. Measured 2026-11-09: three runs of
+one build differed only there. Measured 2026-11-13: two builds put Saadia 1.3 and 2.6 units
+further from the player than the reference, one and two frames of walking, with every other
+read the same.
