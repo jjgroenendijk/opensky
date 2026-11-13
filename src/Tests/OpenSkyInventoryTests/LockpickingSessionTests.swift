@@ -55,6 +55,23 @@ struct LockpickingSessionTests {
         #expect(session.allowedRotation(at: -40) == 0)
     }
 
+    @Test func eachBrokenPickWidensTheSweetSpot() {
+        var session = LockpickingSession(
+            parameters: LockpickingParameters(
+                difficulty: .adept, sweetSpotWidth: 10, partialWidth: 0, breakSeconds: 0.5,
+                widthPerBrokenPick: 20
+            ),
+            sweetSpotCenter: 60,
+            picks: 3
+        )
+        #expect(session.allowedRotation(at: 48) == 0)
+        // The upright pick is far from the sweet spot, so turning strains it until it breaks.
+        #expect(session
+            .step(1, input: LockpickingInput(pickDelta: 0, turning: true)) == [.pickBroke])
+        // One broken pick: 10 + 20 degrees wide, so 12 degrees off centre is inside.
+        #expect(session.allowedRotation(at: 48) == 1)
+    }
+
     @Test func turningInTheSweetSpotOpens() {
         var session = LockpickingSession(
             parameters: Self.parameters(.novice),

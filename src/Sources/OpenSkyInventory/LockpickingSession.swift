@@ -26,7 +26,8 @@ nonisolated extension LockpickingParameters {
             breakSeconds: breakTime,
             unbreakable: perks.unbreakable,
             startingArc: perks.startingArc,
-            halfArc: settings.halfArc
+            halfArc: settings.halfArc,
+            widthPerBrokenPick: settings.brokenPicksMult
         )
     }
 }
