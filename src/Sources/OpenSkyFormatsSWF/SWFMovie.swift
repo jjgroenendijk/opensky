@@ -237,6 +237,9 @@ nonisolated public struct SWFMovie: Sendable {
     public var importDiagnostics = SWFImportMergeDiagnostics()
     /// Engine pictures by `img://` name (`SWFImageSlot`). Empty for a decoded movie.
     public var imageSlots: [String: SWFImageSlot] = [:]
+    /// Movies `MovieClipLoader.loadClip` can put in a clip, by the lowercased name the
+    /// actions use (`SWFMovieImportMerger.mergeLoadables`).
+    public var loadableMovies: [String: SWFLoadableMovie] = [:]
     /// FileAttributes (69); nil when the movie has none.
     public let fileAttributes: SWFFileAttributes?
     /// Metadata (77): the authoring tool's XML description.

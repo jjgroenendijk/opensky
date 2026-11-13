@@ -58,7 +58,7 @@ Measured on 2026-11-13 by `make rank-gaps`.
 | Sound file variants | 3 | 0 | 3 | 100% |
 | Lip sync data | 1 | 0 | 1 | 100% |
 | Menus with no bridge | 23 | 0 | 23 | 100% |
-| AS2 runtime | - | 1 | - | - |
+| AS2 runtime | - | 0 | - | - |
 | SWF tags | 29 | 0 | 29 | 100% |
 
 <!-- gaps:end -->

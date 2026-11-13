@@ -2,7 +2,7 @@
 type: File Format
 title: SWF display list
 description: PlaceObject 1-3, RemoveObject, MATRIX and CXFORM, clip layers, DefineSprite,
-  FrameLabel, ExportAssets, ImportAssets, and how imported sprites merge.
+  FrameLabel, ExportAssets, ImportAssets, and how imported and loaded movies merge.
 tags: [format, swf, ui, scaleform]
 ---
 
@@ -151,6 +151,30 @@ never placed or exported again is skipped without reading the source. This keeps
 On `inventorymenu.swf`: 3 movies, 675 characters, 3 placeholders bound, 0 unresolved, 8
 imports skipped. The 11 display nodes become 373. See
 [inventory menu](/engine/inventory-menu.md).
+
+## Loaded movies
+
+A movie can also load another movie at run time with `MovieClipLoader.loadClip(url,
+target)`. In the vanilla interface, only `startmenu.swf` does this. It loads
+`BethesdaNetLogin.swf` into `_LoginHolder_mc`, and then uses
+`_LoginHolder_mc.LoginMenu_mc` and the class `BethesdaNetLogin`.
+
+The URL is a string in the actions, so OpenSky finds it before the movie runs. Every
+pushed string or constant-pool string that ends in `.swf` is a candidate. OpenSky
+resolves each one like an import URL and merges the source the same way, at an offset.
+The merge also reserves one more ID. The source's root timeline becomes a sprite with
+that ID.
+
+When `loadClip` runs:
+
+1. The target clip is replaced by a new clip of the loaded sprite. The new clip keeps
+   the depth, name, matrix, colour transform, and visibility of the old one.
+2. The source's DoInitAction blocks run once, the first time that movie loads.
+3. The new clip starts. On the next tick the listener gets `onLoadStart`,
+   `onLoadComplete`, and `onLoadInit`, as for an engine image.
+
+A URL whose movie is not in the install is not merged. Its `loadClip` call still
+fails, and the runtime reports the name as missing.
 
 ## Vanilla display lists
 

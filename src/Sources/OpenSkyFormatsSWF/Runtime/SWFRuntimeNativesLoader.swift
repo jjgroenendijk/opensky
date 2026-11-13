@@ -1,6 +1,7 @@
 // The `MovieClip` geometry methods and `MovieClipLoader`. The loader shows an
-// engine picture for an `img://` URL with an image slot. Anything else reports
-// `onLoadError` on the next tick, so CLIK's icon loader gives up cleanly.
+// engine picture for an `img://` URL with an image slot, and puts a merged movie in
+// a clip for a `.swf` name. Anything else reports `onLoadError` on the next tick, so
+// CLIK's icon loader gives up cleanly.
 
 import Foundation
 import simd
@@ -100,7 +101,8 @@ nonisolated extension SWFMovieRuntime {
 
     // MARK: - MovieClipLoader
 
-    /// `new MovieClipLoader()`: a broadcaster whose `loadClip` shows image slots only.
+    /// `new MovieClipLoader()`: a broadcaster whose `loadClip` shows image slots and
+    /// merged movies.
     public static func installMovieClipLoader(_ runtime: AS2Runtime) {
         let prototype = AS2Object(prototype: runtime.objectPrototype)
         AS2Runtime.constructor(runtime, name: "MovieClipLoader", prototype: prototype) { context in
@@ -111,7 +113,7 @@ nonisolated extension SWFMovieRuntime {
             return .undefined
         }
         AS2Runtime.method(runtime, on: prototype, name: "loadClip") { context in
-            loadImage(context) ?? failLoad(context)
+            loadImage(context) ?? loadMovie(context) ?? failLoad(context)
         }
         AS2Runtime.method(runtime, on: prototype, name: "onDeferredLoadInit") { context in
             guard let owner = movieRuntime(context), let loader = context.thisObject else {
@@ -158,6 +160,36 @@ nonisolated extension SWFMovieRuntime {
         target.addChild(picture, atDepth: 0)
         owner.markDirty()
         owner.timers.addOnce("onDeferredLoadInit", on: loader, arguments: [context.argument(1)])
+        return .boolean(true)
+    }
+
+    /// Turns the target clip into the loaded movie's root, as Flash does: a new clip
+    /// of the movie's root timeline takes the target's place, name, and transform.
+    /// Its DoInitAction blocks run once, before its first frame. Nil when the name
+    /// is no merged movie.
+    private static func loadMovie(_ context: AS2CallContext) -> AS2Value? {
+        guard
+            let owner = movieRuntime(context), let loader = context.thisObject,
+            case let .string(url) = context.argument(0),
+            let loadable = owner.movie.loadedSprite(named: url),
+            let target = SWFDisplayObject.resolve(context.argument(1).objectValue),
+            let parent = target.parent,
+            let node = owner.makeDisplayObject(characterId: loadable.spriteId)
+        else { return nil }
+        node.name = target.name
+        node.matrix = target.matrix
+        node.colorTransform = target.colorTransform
+        node.isVisible = target.isVisible
+        _ = parent.removeChild(atDepth: target.depth)
+        parent.addChild(node, atDepth: target.depth)
+        if owner.startedLoadables.insert(loadable.spriteId).inserted {
+            for initAction in loadable.initActions {
+                AS2Interpreter.execute(in: owner.runtime, initAction, target: node.object)
+            }
+        }
+        owner.bringUp(node)
+        owner.markDirty()
+        owner.timers.addOnce("onDeferredLoadInit", on: loader, arguments: [.object(node.object)])
         return .boolean(true)
     }
 

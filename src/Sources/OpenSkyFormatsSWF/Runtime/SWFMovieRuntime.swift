@@ -42,6 +42,8 @@ nonisolated public final class SWFMovieRuntime {
     var platformCall: SWFPlatformCall?
     /// Text fields `createTextField` made, by their runtime character id.
     var scriptEditTexts: [UInt16: SWFEditText] = [:]
+    /// Loaded movies whose DoInitAction blocks already ran, by sprite id.
+    var startedLoadables: Set<UInt16> = []
     /// Nesting guard for a frame action that jumps the same clip again.
     var gotoDepth = 0
     /// Instances placed in the current batch, waiting for their constructors.
