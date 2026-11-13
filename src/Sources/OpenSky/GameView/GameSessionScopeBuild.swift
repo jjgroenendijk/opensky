@@ -82,7 +82,7 @@ struct GameSessionScopeBuild {
         GameSessionScopeCellReset.build(
             scope: scope, provider: provider, gameSession: gameSession, streamer: streamer
         )
-        gameSession.animationEvents = AnimationEventCoordinator(world: scope.animationEvents)
+        gameSession.audio.animationEvents = AnimationEventCoordinator(world: scope.animationEvents)
         buildAdapters()
     }
 
@@ -204,13 +204,13 @@ struct GameSessionScopeBuild {
 
     /// The ground, collision, water, and worldspace the session reads from the streamer.
     private func registerWorldQueries(gameSession: GameSession, streamer: CellStreamer) {
-        gameSession.terrainSampler = { [weak streamer] position in
+        gameSession.motion.terrainSampler = { [weak streamer] position in
             streamer?.sampleTerrain(at: position)
         }
-        gameSession.collisionQuery = { [weak streamer] bounds in
+        gameSession.motion.collisionQuery = { [weak streamer] bounds in
             streamer?.characterCollisionCandidates(overlapping: bounds) ?? []
         }
-        gameSession.characterCarry = { [weak streamer] capsule, feet in
+        gameSession.motion.characterCarry = { [weak streamer] capsule, feet in
             streamer?.dynamicBodies.characterCarry(capsule: capsule, feetPosition: feet) ?? .zero
         }
         gameSession.locomotion.sampleWater = { [weak streamer] position in

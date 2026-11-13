@@ -207,11 +207,11 @@ extension SessionPorts {
     }
 
     func setPlayerBody(_ body: PlayerBody) throws {
-        try scope.gameSession?.setPlayerBody(body)
+        try scope.gameSession?.rigSteps.setPlayerBody(body)
     }
 
     func setPlayerFirstPersonRig(_ rig: PlayerFirstPersonRig) throws {
-        try scope.gameSession?.setPlayerFirstPersonRig(rig)
+        try scope.gameSession?.rigSteps.setPlayerFirstPersonRig(rig)
     }
 
     var hazardWorld: any HazardWorldPort {
@@ -547,10 +547,10 @@ extension SessionPorts {
 extension SessionPorts {
     func takeStartedAudio(_ audio: StartedAudio) {
         guard let session = scope.gameSession else { return }
-        session.worldAudio = audio.engine
-        session.soundDirector = audio.sounds
-        session.musicDirector = audio.music
-        session.footstepDirector = audio.footsteps
+        session.audio.worldAudio = audio.engine
+        session.audio.soundDirector = audio.sounds
+        session.audio.musicDirector = audio.music
+        session.audio.footstepDirector = audio.footsteps
     }
 }
 

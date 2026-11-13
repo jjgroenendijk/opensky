@@ -72,7 +72,10 @@ extension DialogueWorldAdapter {
         }
         gameSession.renderer.worldOverlaySources
             .register(identifier: "dialogue-camera") { [weak gameSession] context, list in
-                gameSession?.appendDialogueCameraOverlay(context: context, to: &list)
+                gameSession?.dialogueCameraSteps.appendDialogueCameraOverlay(
+                    context: context,
+                    to: &list
+                )
             }
     }
 }

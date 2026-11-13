@@ -45,7 +45,7 @@ extension AIWorldAdapter {
         let gameSession = stage.gameSession
         let streamer = stage.streamer
         streamer.npcMovementConfiguration = gameSession.locomotion.configuration.forActors
-        gameSession.onPlayerWalkArrived = { [weak game] in
+        gameSession.motion.onPlayerWalkArrived = { [weak game] in
             game?.packages.movementSettled(actor: .player, reason: .arrival)
         }
         streamer.onNPCPosesChanged = { [weak gameSession] deltas in
@@ -55,7 +55,7 @@ extension AIWorldAdapter {
             game?.effectsWorld.waterPushRace(of: actor) ?? .normal
         }
         AINPCMovementSteps(hosts: game).register(on: streamer)
-        gameSession.playerFurniture = worlds
+        gameSession.motion.playerFurniture = worlds
         frames.registerAIPackages(stage: stage)
         frames.registerAIPerception(stage: stage)
         frames.registerAIFurniture(stage: stage)

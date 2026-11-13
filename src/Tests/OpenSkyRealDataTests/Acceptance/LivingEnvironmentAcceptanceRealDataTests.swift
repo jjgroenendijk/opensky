@@ -77,7 +77,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         let renderer = gameSession.renderer
         gameSession.weather = weather
         gameSession.timeOfDay = 13
-        gameSession.updateWeather(deltaTime: 0)
+        gameSession.weatherSteps.updateWeather(deltaTime: 0)
         renderer.adoptFrameInput(gameSession.frameInput)
         renderer.seekParticles(to: 1.25)
         for _ in 0 ..< 45 {
@@ -125,8 +125,8 @@ struct LivingEnvironmentAcceptanceRealDataTests {
             renderer.shadowQuality = .off
         } restore: { renderer.shadowQuality = .high }
         let weather = try toggledDelta(renderer, against: (baseline, 1.25)) {
-            gameSession.weatherEnabled = false
-        } restore: { gameSession.weatherEnabled = true }
+            gameSession.sky.weatherEnabled = false
+        } restore: { gameSession.sky.weatherEnabled = true }
         let particles = try toggledDelta(renderer, against: (baseline, 1.25)) {
             renderer.particlesEnabled = false
         } restore: { renderer.particlesEnabled = true }
@@ -138,7 +138,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         } restore: { renderer.grassEnabled = true }
         renderer.actorAnimationsEnabled = false
         renderer.shadowQuality = .off
-        gameSession.weatherEnabled = false
+        gameSession.sky.weatherEnabled = false
         renderer.particlesEnabled = false
         renderer.precipitationEnabled = false
         renderer.grassEnabled = false

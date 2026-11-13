@@ -7,7 +7,7 @@ public import OpenSkyWorld
 
 extension GameSession {
     public var dialogueRestorePose: FreeFlyCamera? {
-        dialogueCameraState.restorePose
+        dialogueCameraSteps.restorePose
     }
 
     public func knockPlayer(_ velocity: SIMD3<Float>) {

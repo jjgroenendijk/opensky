@@ -107,7 +107,7 @@ enum RenderEffects {
     /// Turns `camera` toward the sun the weather placed, with the sun off the centre so
     /// the flare ghosts spread along the screen.
     static func faceSun(_ gameSession: GameSession, from camera: SceneCamera) {
-        guard let sky = gameSession.celestialSky, sky.sunAlpha > 0 else {
+        guard let sky = gameSession.sky.celestialSky, sky.sunAlpha > 0 else {
             print("[WARNING] face sun: no sun above the horizon; pass --weather and a day hour")
             return
         }
@@ -144,7 +144,7 @@ enum RenderEffects {
         let records = EffectRecordStore(
             plugins: ActivePluginFiles.load(root: scene.context.root, baseFile: file)
         )
-        gameSession.imageSpaceLinks = ImageSpaceLinks(
+        gameSession.sky.imageSpaceLinks = ImageSpaceLinks(
             records: records,
             weatherPlugin: "skyrim.esm"
         )
@@ -153,7 +153,7 @@ enum RenderEffects {
             loadOrder: scene.builder.previewPlaces.pluginLoadOrder,
             worldspace: scene.worldspace
         )
-        try gameSession.attachOffscreenSky(
+        try gameSession.weatherSteps.attachOffscreenSky(
             loadOrder: scene.builder.previewPlaces.pluginLoadOrder,
             fileSystem: scene.context.makeFileSystem()
         )
@@ -239,7 +239,7 @@ enum RenderEffectsReadout {
                 + "snow live \(precipitation.snowLiveCount), "
                 + "spgd \(renderer.precipitation.tuning.source ?? "fallback")"
         )
-        if let sky = gameSession.celestialSky {
+        if let sky = gameSession.sky.celestialSky {
             let moons = sky.moons
                 .map { "\($0.moon.rawValue) \($0.phase.textureSuffix) \($0.alpha)" }
             let auroras = sky.auroras.map { "\($0.model) \($0.alpha)" }

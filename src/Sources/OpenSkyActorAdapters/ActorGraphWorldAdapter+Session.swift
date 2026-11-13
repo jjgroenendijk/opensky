@@ -35,7 +35,7 @@ extension ActorGraphWorldAdapter {
         let gameSession = stage.gameSession
         guard game.audioFileSystem != nil else { return }
         gameSession
-            .actorSoundSources = { [weak self] in
+            .audio.actorSoundSources = { [weak self] in
                 self?.graphEvents.actorSoundSources() ?? []
             }
         gameSession.worldTick.register(.actorGraphs) { [weak self] delta in

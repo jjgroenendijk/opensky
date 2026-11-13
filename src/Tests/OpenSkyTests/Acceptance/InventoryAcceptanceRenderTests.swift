@@ -161,7 +161,7 @@ struct InventoryAcceptanceRenderTests {
         // Everything that would move between two frames is off, so a pixel that
         // differs differs because the world state did.
         renderer.actorAnimationsEnabled = false
-        gameSession.weatherEnabled = false
+        gameSession.sky.weatherEnabled = false
         renderer.particlesEnabled = false
         renderer.precipitationEnabled = false
         renderer.grassEnabled = false

@@ -6,25 +6,26 @@ public import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
 
-extension GameSession {
+extension GameSession.RigSteps {
     /// Attaches the assembled arms, sizing the draw rings for their groups and
     /// making their buffers resident, exactly as `setPlayerBody` does.
     public func setPlayerFirstPersonRig(_ rig: PlayerFirstPersonRig?) throws {
-        let retiring = playerFirstPersonRig?.residencyAllocations ?? []
-        playerFirstPersonRig = rig
+        let retiring = session.rigs.playerFirstPersonRig?.residencyAllocations ?? []
+        session.rigs.playerFirstPersonRig = rig
         updatePlayerFirstPersonPose()
         if let rig {
-            try renderer.growRings(
-                drawCount: renderer.scene.drawCount + (playerBody?.render.drawCount ?? 0)
+            try session.renderer.growRings(
+                drawCount: session.renderer.scene
+                    .drawCount + (session.rigs.playerBody?.render.drawCount ?? 0)
                     + rig.render.drawCount,
-                instanceCount: renderer.scene
-                    .instanceCount + (playerBody?.render.instanceCount ?? 0)
+                instanceCount: session.renderer.scene
+                    .instanceCount + (session.rigs.playerBody?.render.instanceCount ?? 0)
                     + rig.render.instanceCount
             )
-            renderer.residencySet.addAllocations(rig.residencyAllocations)
-            renderer.residencySet.commit()
+            session.renderer.residencySet.addAllocations(rig.residencyAllocations)
+            session.renderer.residencySet.commit()
         }
-        renderer.retireAllocations(retiring)
+        session.renderer.retireAllocations(retiring)
     }
 
     /// Hangs the arms off this frame's eye.
@@ -34,11 +35,13 @@ extension GameSession {
     /// dragged out to the orbit camera: they are not drawn there, and moving
     /// them would rebuild their draw groups every frame for nothing.
     public func updatePlayerFirstPersonPose() {
-        guard let playerFirstPersonRig, movementMode == .walk else { return }
+        guard
+            let playerFirstPersonRig = session.rigs.playerFirstPersonRig,
+            session.movementMode == .walk else { return }
         playerFirstPersonRig.place(
-            eyePosition: freeFlyCamera.position,
-            yaw: freeFlyCamera.yaw,
-            pitch: freeFlyCamera.pitch
+            eyePosition: session.freeFlyCamera.position,
+            yaw: session.freeFlyCamera.yaw,
+            pitch: session.freeFlyCamera.pitch
         )
     }
 
@@ -46,13 +49,13 @@ extension GameSession {
     /// value. Vanilla applies it to the whole world, so it is one angle. A conversation
     /// always uses the world angle, because the dialogue camera is outside the head.
     public var sessionFOVYRadians: Float {
-        isDialogueCameraEngaged
+        session.dialogueCameraSteps.isDialogueCameraEngaged
             ? DialogueCamera.fovYRadians
-            : dialogueCameraRestoreFOVYRadians
+            : session.dialogueCameraSteps.dialogueCameraRestoreFOVYRadians
     }
 
     /// Sets the first-person field of view and re-projects.
     public func setFirstPersonFOVY(radians: Float) {
-        firstPersonCamera.setFOVY(radians: radians)
+        session.rigs.firstPersonCamera.setFOVY(radians: radians)
     }
 }

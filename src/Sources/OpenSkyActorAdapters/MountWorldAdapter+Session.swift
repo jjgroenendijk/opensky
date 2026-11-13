@@ -35,7 +35,7 @@ extension MountWorldAdapter {
 
     private func registerMounts(stage: SessionStage) {
         let gameSession = stage.gameSession
-        gameSession.playerMount = self
+        gameSession.motion.playerMount = self
         doorGate.registerDoorGate()
     }
 }

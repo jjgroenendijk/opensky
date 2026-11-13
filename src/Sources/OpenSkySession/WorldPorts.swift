@@ -21,6 +21,10 @@ extension CellAttachment: CellAttachmentPort {}
 extension CellResetCoordinator: CellResetPort {}
 extension CellStreamer: @MainActor CellStreamerPort {}
 extension GameSession: GameSessionPort {}
+extension SessionAudio: SessionAudioPort {}
+extension SessionMotion: SessionMotionPort {}
+extension SessionRigs: SessionRigsPort {}
+extension SessionSky: SessionSkyPort {}
 extension LoadPhaseRecorder: LoadPhaseRecorderPort {}
 extension SteppedWallClock: SteppedWallClockPort {}
 extension WorldAudioFootstepDirector: WorldAudioFootstepDirectorPort {

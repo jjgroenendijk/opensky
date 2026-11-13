@@ -71,7 +71,7 @@ private final class RealKillCamWorld: CinematicCameraWorld {
         lowestTimeScale = min(lowestTimeScale, frame.timeScale)
         posedFrames += frame.pose == nil ? 0 : 1
         gameSession.worldTimeScale = frame.timeScale
-        gameSession.setCinematicCamera(frame.pose, shakeOffset: frame.shake)
+        gameSession.cinematicSteps.setCinematicCamera(frame.pose, shakeOffset: frame.shake)
     }
 
     func startImageSpaceModifier(_ key: ReferenceKey) -> Bool {

@@ -45,21 +45,22 @@ struct DialogueCameraRenderRealDataTests {
             cell.bounds.min.z
         )
         FirstPersonRenderRealDataTests.frameFirstPerson(gameSession, feet: feet)
-        gameSession.setFirstPersonFOVY(
+        gameSession.rigSteps.setFirstPersonFOVY(
             radians: MatrixMath.radians(fromDegrees: Self.probeFOVYDegrees)
         )
         let playerPose = gameSession.freeFlyCamera
         let playerFOV = gameSession.frameInput.fovYRadians
         let released = try Self.frame(renderer)
-        #expect(!gameSession.isDialogueCameraEngaged)
+        #expect(!gameSession.dialogueCameraSteps.isDialogueCameraEngaged)
 
         // Somebody standing a conversation's distance ahead of the player.
-        let speaker = gameSession.playerEyePosition + gameSession.freeFlyCamera.forward * 140
-        gameSession.setDialogueCameraFocus(DialogueCameraFocus(
+        let speaker = gameSession.dialogueCameraSteps.playerEyePosition + gameSession.freeFlyCamera
+            .forward * 140
+        gameSession.dialogueCameraSteps.setDialogueCameraFocus(DialogueCameraFocus(
             headPosition: speaker
         ))
-        #expect(gameSession.isDialogueCameraEngaged)
-        let pose = try #require(gameSession.dialogueCameraPose)
+        #expect(gameSession.dialogueCameraSteps.isDialogueCameraEngaged)
+        let pose = try #require(gameSession.dialogueCameraSteps.dialogueCameraPose)
         #expect(pose.target == speaker)
         // The eye left the player's head and is looking back at the speaker.
         #expect(simd_distance(pose.eye, playerPose.position) > 1)
@@ -76,9 +77,9 @@ struct DialogueCameraRenderRealDataTests {
             "the dialogue camera moved \(delta) pixels"
         )
 
-        gameSession.setDialogueCameraFocus(nil)
-        #expect(!gameSession.isDialogueCameraEngaged)
-        #expect(gameSession.dialogueCameraPose == nil)
+        gameSession.dialogueCameraSteps.setDialogueCameraFocus(nil)
+        #expect(!gameSession.dialogueCameraSteps.isDialogueCameraEngaged)
+        #expect(gameSession.dialogueCameraSteps.dialogueCameraPose == nil)
         #expect(gameSession.freeFlyCamera.position == playerPose.position)
         #expect(gameSession.freeFlyCamera.yaw == playerPose.yaw)
         #expect(gameSession.freeFlyCamera.pitch == playerPose.pitch)

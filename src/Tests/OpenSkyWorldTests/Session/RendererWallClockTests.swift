@@ -31,14 +31,14 @@ struct RendererWallClockTests {
     func gameClockAdvancesByTheManualStepTimesTimescale() throws {
         let clock = ManualWallClock(now: 100)
         let gameSession = try makeSession(clock: clock)
-        gameSession.gameClock = GameClock(totalGameSeconds: 0)
+        gameSession.clockSteps.gameClock = GameClock(totalGameSeconds: 0)
 
-        gameSession.advanceGameClockFromWallClock()
+        gameSession.clockSteps.advanceGameClockFromWallClock()
         clock.advance(by: 0.05)
-        gameSession.advanceGameClockFromWallClock()
+        gameSession.clockSteps.advanceGameClockFromWallClock()
 
         let expected = 0.05 * Double(GameClock.defaultTimescale)
-        #expect(abs(gameSession.gameClock.totalGameSeconds - expected) < 1e-6)
+        #expect(abs(gameSession.clockSteps.gameClock.totalGameSeconds - expected) < 1e-6)
     }
 
     @Test(.enabled(if: ShadowSceneFixture.hasMetal4Device))

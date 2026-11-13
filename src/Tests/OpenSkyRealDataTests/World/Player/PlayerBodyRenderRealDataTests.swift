@@ -71,7 +71,7 @@ struct PlayerBodyRenderRealDataTests {
         }
         assembled.body.place(feetPosition: feet, yaw: gameSession.freeFlyCamera.yaw)
         assembled.body.animation.update(at: 0)
-        try gameSession.setPlayerBody(assembled.body)
+        try gameSession.rigSteps.setPlayerBody(assembled.body)
 
         let thirdPerson = try Self.frame(renderer)
         let bodyPixels = Self.changedPixels(empty, thirdPerson)
@@ -188,7 +188,7 @@ struct PlayerBodyRenderRealDataTests {
             feetPosition: stage.feet, yaw: stage.gameSession.freeFlyCamera.yaw
         )
         rebuilt.body.animation.update(at: 0)
-        try stage.gameSession.setPlayerBody(rebuilt.body)
+        try stage.gameSession.rigSteps.setPlayerBody(rebuilt.body)
         let rebuiltFrame = try frame(stage.gameSession.renderer)
         report.append(
             "reassembled vs original: "
@@ -231,8 +231,8 @@ struct PlayerBodyRenderRealDataTests {
             yaw: 0,
             pitch: MatrixMath.radians(fromDegrees: -10)
         )
-        gameSession.setMovementMode(.thirdPerson)
-        gameSession.freeFlyCamera.position = gameSession.thirdPersonCamera.resolve(
+        gameSession.movementSteps.setMovementMode(.thirdPerson)
+        gameSession.freeFlyCamera.position = gameSession.rigs.thirdPersonCamera.resolve(
             feetPosition: feet,
             yaw: gameSession.freeFlyCamera.yaw,
             pitch: gameSession.freeFlyCamera.pitch,

@@ -30,7 +30,7 @@ nonisolated struct LivingEnvironmentFlyEvidence: Sendable {
             particles.reduce(0) { $0 + $1.liveCount }
         )
         rainLiveCount = max(rainLiveCount, renderer.precipitation.snapshot.rainLiveCount)
-        if gameSession.currentResolvedWeather != nil {
+        if gameSession.sky.currentResolvedWeather != nil {
             weatherName = gameSession.weather?.currentWeatherEditorID ?? "selected rain"
         }
         windSpeed = max(windSpeed, gameSession.wind.speed)

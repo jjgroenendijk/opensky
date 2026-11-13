@@ -55,8 +55,8 @@ struct CombatAcceptanceRenderTests {
         let assembled = cell.assembled
         let feet = try cell.terrainStart()
         let gameSession = try cell.makeSession()
-        try gameSession.setPlayerBody(assembled.body)
-        try gameSession.setPlayerFirstPersonRig(assembled.arms)
+        try gameSession.rigSteps.setPlayerBody(assembled.body)
+        try gameSession.rigSteps.setPlayerFirstPersonRig(assembled.arms)
         var report: [String] = []
 
         let settings = CombatSettings.resolve(store: GameSettingLoader.load(root: cell.root))
@@ -84,8 +84,8 @@ struct CombatAcceptanceRenderTests {
         // available — it says the difference above is the combat state rather
         // than the republish, and that the state is reached deterministically.
         let second = try PlayerBodyFixture.assemble(device: cell.device, root: cell.root)
-        try gameSession.setPlayerBody(second.body)
-        try gameSession.setPlayerFirstPersonRig(second.arms)
+        try gameSession.rigSteps.setPlayerBody(second.body)
+        try gameSession.rigSteps.setPlayerFirstPersonRig(second.arms)
         let again = try Self.poses(second, stage: stage)
         let residual = FirstPersonRenderRealDataTests.changedPixels(
             frames.swinging, again.swinging
@@ -188,8 +188,8 @@ struct CombatAcceptanceRenderTests {
             yaw: 0,
             pitch: 0
         )
-        gameSession.setMovementMode(.thirdPerson)
-        gameSession.freeFlyCamera.position = gameSession.thirdPersonCamera.resolve(
+        gameSession.movementSteps.setMovementMode(.thirdPerson)
+        gameSession.freeFlyCamera.position = gameSession.rigs.thirdPersonCamera.resolve(
             feetPosition: feet,
             yaw: gameSession.freeFlyCamera.yaw,
             pitch: gameSession.freeFlyCamera.pitch,

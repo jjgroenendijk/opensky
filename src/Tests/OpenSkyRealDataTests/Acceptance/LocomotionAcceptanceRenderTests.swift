@@ -50,8 +50,8 @@ struct LocomotionAcceptanceRenderTests {
         var report: [String] = []
 
         let empty = try Self.thirdPersonFrame(gameSession, feet: feet)
-        try gameSession.setPlayerBody(assembled.body)
-        try gameSession.setPlayerFirstPersonRig(assembled.arms)
+        try gameSession.rigSteps.setPlayerBody(assembled.body)
+        try gameSession.rigSteps.setPlayerFirstPersonRig(assembled.arms)
 
         let idle = try Self.settle(assembled, gameSession: gameSession, feet: feet)
         let bodyPixels = FirstPersonRenderRealDataTests.changedPixels(empty, idle)
@@ -109,8 +109,8 @@ struct LocomotionAcceptanceRenderTests {
         let second = try PlayerBodyFixture.assemble(
             device: install.device, root: install.root
         )
-        try gameSession.setPlayerBody(second.body)
-        try gameSession.setPlayerFirstPersonRig(second.arms)
+        try gameSession.rigSteps.setPlayerBody(second.body)
+        try gameSession.rigSteps.setPlayerFirstPersonRig(second.arms)
         _ = try Self.settle(second, gameSession: gameSession, feet: feet)
         let again = try Self.drive(
             second,
@@ -124,8 +124,8 @@ struct LocomotionAcceptanceRenderTests {
             residual == 0,
             "the same input from a fresh graph drew a different frame (\(residual) pixels)"
         )
-        try gameSession.setPlayerBody(assembled.body)
-        try gameSession.setPlayerFirstPersonRig(assembled.arms)
+        try gameSession.rigSteps.setPlayerBody(assembled.body)
+        try gameSession.rigSteps.setPlayerFirstPersonRig(assembled.arms)
     }
 
     /// The camera-mode axis: third person draws the body, first person draws
@@ -172,12 +172,12 @@ struct LocomotionAcceptanceRenderTests {
             yaw: 0,
             pitch: 0
         )
-        gameSession.setMovementMode(.thirdPerson)
+        gameSession.movementSteps.setMovementMode(.thirdPerson)
         // `setMovementMode` seats the capsule under the eye; the orbit pull-back
         // happens in `advancePlayer`, which only a live frame loop runs. Doing
         // it here is what puts the camera behind the player rather than inside
         // them.
-        gameSession.freeFlyCamera.position = gameSession.thirdPersonCamera.resolve(
+        gameSession.freeFlyCamera.position = gameSession.rigs.thirdPersonCamera.resolve(
             feetPosition: feet,
             yaw: gameSession.freeFlyCamera.yaw,
             pitch: gameSession.freeFlyCamera.pitch,

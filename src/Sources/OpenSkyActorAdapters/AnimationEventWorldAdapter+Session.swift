@@ -29,7 +29,7 @@ extension AnimationEventWorldAdapter {
         gameSession.frameSteps.register(.animationEvents) { [weak gameSession, weak game] _ in
             guard let gameSession else { return }
             let idles = game?.idleWorld.idles
-            let events = gameSession.animationEvents
+            let events = gameSession.audio.animationEvents
             let locomotion = gameSession.locomotion
             let names = locomotion.graphEvents.drain(locomotion.animationEventConsumer)
                 .map { idles?.ownGraphEvent($0, from: .player) ?? $0 }

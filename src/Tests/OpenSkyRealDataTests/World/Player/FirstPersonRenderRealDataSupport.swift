@@ -96,7 +96,7 @@ extension FirstPersonRenderRealDataTests {
             yaw: 0,
             pitch: 0
         )
-        gameSession.setMovementMode(.walk)
+        gameSession.movementSteps.setMovementMode(.walk)
     }
 
     static func droppedPieces(_ rig: PlayerFirstPersonRig) -> Int {

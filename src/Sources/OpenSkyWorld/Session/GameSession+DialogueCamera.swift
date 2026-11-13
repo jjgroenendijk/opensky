@@ -6,34 +6,38 @@
 // `movementMode` never changes.
 
 import OpenSkyPhysics
-public import OpenSkyPlayer
+import OpenSkyPlayer
 public import OpenSkyRenderCore
 import OpenSkyRendering
 public import OpenSkyWorldInterface
 import simd
 
-extension GameSession {
+extension GameSession.DialogueCameraSteps {
+    public var restorePose: FreeFlyCamera? {
+        session.rigs.dialogueCameraState.restorePose
+    }
+
     /// True while a conversation owns the view.
     public var isDialogueCameraEngaged: Bool {
-        dialogueCameraState.focus != nil
+        session.rigs.dialogueCameraState.focus != nil
     }
 
     /// True while the override frames the player's own head.
     var isDialogueCameraFramingPlayer: Bool {
-        dialogueCameraState.focus?.framesPlayer ?? false
+        session.rigs.dialogueCameraState.focus?.framesPlayer ?? false
     }
 
     /// The pose the last resolve settled on, or nil when none has run.
     public var dialogueCameraPose: DialogueCameraPose? {
-        dialogueCameraState.camera.pose
+        session.rigs.dialogueCameraState.camera.pose
     }
 
     /// The field of view that mode projects with, which is what releasing the
     /// override re-projects to. The one statement of the per-mode rule;
     /// `activeFOVYRadians` reads it rather than repeating it.
     var dialogueCameraRestoreFOVYRadians: Float {
-        movementMode == .walk
-            ? firstPersonCamera.fovYRadians
+        session.movementMode == .walk
+            ? session.rigs.firstPersonCamera.fovYRadians
             : FirstPersonCamera.defaultFOVYRadians
     }
 
@@ -43,9 +47,9 @@ extension GameSession {
     public func setDialogueCameraFocus(_ focus: DialogueCameraFocus?) {
         let wasEngaged = isDialogueCameraEngaged
         restorePlayerCameraPose()
-        dialogueCameraState.focus = focus
+        session.rigs.dialogueCameraState.focus = focus
         if focus == nil {
-            dialogueCameraState.camera.reset()
+            session.rigs.dialogueCameraState.camera.reset()
         }
         applyDialogueCamera()
         guard wasEngaged != isDialogueCameraEngaged else { return }
@@ -54,9 +58,9 @@ extension GameSession {
     /// Puts the player's own pose back. Safe to call when nothing is applied,
     /// which is what lets the input frame start with it unconditionally.
     public func restorePlayerCameraPose() {
-        guard let restorePose = dialogueCameraState.restorePose else { return }
-        freeFlyCamera = restorePose
-        dialogueCameraState.restorePose = nil
+        guard let restorePose = session.rigs.dialogueCameraState.restorePose else { return }
+        session.freeFlyCamera = restorePose
+        session.rigs.dialogueCameraState.restorePose = nil
     }
 
     /// Resolves this frame's framing and writes it into the view pose.
@@ -67,41 +71,42 @@ extension GameSession {
     /// live one is.
     public func applyDialogueCamera() {
         restorePlayerCameraPose()
-        let playerPose = freeFlyCamera
-        let shake = cinematicCameraState.shakeOffset
+        let playerPose = session.freeFlyCamera
+        let shake = session.rigs.cinematicCameraState.shakeOffset
         defer {
-            if dialogueCameraState.restorePose != nil || shake != .zero {
-                freeFlyCamera.position += shake
-                dialogueCameraState.restorePose = playerPose
+            if session.rigs.dialogueCameraState.restorePose != nil || shake != .zero {
+                session.freeFlyCamera.position += shake
+                session.rigs.dialogueCameraState.restorePose = playerPose
             }
         }
-        if applyCinematicPose() {
-            dialogueCameraState.restorePose = playerPose
+        if session.cinematicSteps.applyCinematicPose() {
+            session.rigs.dialogueCameraState.restorePose = playerPose
             return
         }
-        guard let focus = dialogueCameraState.focus else { return }
-        dialogueCameraState.restorePose = playerPose
-        let pose = dialogueCameraState.camera.resolve(
+        guard let focus = session.rigs.dialogueCameraState.focus else { return }
+        session.rigs.dialogueCameraState.restorePose = playerPose
+        let pose = session.rigs.dialogueCameraState.camera.resolve(
             subject: DialogueCameraSubject(
                 headPosition: focus.headPosition,
                 playerEyePosition: focus.viewpoint ?? playerEyePosition,
-                capsule: walkController.capsule
+                capsule: session.walkController.capsule
             ),
-            collisionQuery: collisionQuery ?? { _ in [] }
+            collisionQuery: session.motion.collisionQuery ?? { _ in [] }
         )
-        freeFlyCamera.position = pose.eye
-        freeFlyCamera.yaw = pose.yaw
-        freeFlyCamera.pitch = pose.pitch
+        session.freeFlyCamera.position = pose.eye
+        session.freeFlyCamera.yaw = pose.yaw
+        session.freeFlyCamera.pitch = pose.pitch
     }
 
     /// Where the player's own eye is. In third person the camera is the orbit eye,
     /// so the capsule eye is used; in fly mode the view itself is the best answer.
     public var playerEyePosition: SIMD3<Float> {
-        guard movementMode.isPlayerControlled else {
-            return dialogueCameraState.restorePose?.position ?? freeFlyCamera.position
+        guard session.movementMode.isPlayerControlled else {
+            return session.rigs.dialogueCameraState.restorePose?.position ?? session.freeFlyCamera
+                .position
         }
-        return walkController.feetPosition
-            + SIMD3<Float>(0, 0, walkController.capsule.eyeHeight)
+        return session.walkController.feetPosition
+            + SIMD3<Float>(0, 0, session.walkController.capsule.eyeHeight)
     }
 
     /// The pivot cross, the sightline, and the speaker's facing, for the world
@@ -134,16 +139,4 @@ extension GameSession {
     private static let dialogueCameraPivotColor = SIMD4<Float>(1, 0.85, 0.2, 1)
     private static let dialogueCameraSightlineColor = SIMD4<Float>(0.2, 0.9, 1, 1)
     private static let dialogueCameraEyeColor = SIMD4<Float>(1, 0.3, 0.9, 1)
-}
-
-/// Everything the override owns, in one value: extensions cannot add stored
-/// properties, and these three are one thing.
-public struct RendererDialogueCameraState {
-    /// The live focus, or nil when no conversation is framing anybody.
-    public var focus: DialogueCameraFocus?
-    /// The framing math and its collision readout.
-    public var camera = DialogueCamera()
-    /// The player's own view pose, held while the override stands in for it.
-    /// Non-nil exactly while the swap is applied.
-    public var restorePose: FreeFlyCamera?
 }
