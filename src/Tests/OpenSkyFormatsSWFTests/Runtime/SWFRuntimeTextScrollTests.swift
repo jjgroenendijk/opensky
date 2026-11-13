@@ -63,6 +63,12 @@ struct SWFRuntimeTextScrollTests {
         #expect(firstLine(runtime) == 0)
     }
 
+    /// GFx `numLines` counts every laid-out line, shown or not.
+    @Test func numLinesCountsEveryLine() throws {
+        let (runtime, field) = try Self.started()
+        #expect(runtime.member("numLines", of: field) == .number(4))
+    }
+
     @Test func scrollMovesTheDrawnWindowAndClamps() throws {
         let (runtime, field) = try Self.started()
         #expect(runtime.setMember("scroll", of: field, to: .number(2)))

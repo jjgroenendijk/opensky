@@ -133,8 +133,9 @@ bound variable back, so a movie that reads `_root.someVar` later sees the same s
 reaches the renderer as an override on the scene item, and the layout code lays out that run again
 ([SWF render layer](/rendering/swf-layer.md)).
 
-A multiline field that wraps shows only the lines that fit its bounds, from `scroll` on. `maxscroll`
-and `bottomScroll` come from the same layout, so CLIK's `TextArea` and `ScrollBar` scroll it. A field
+A multiline field that wraps shows only the lines that fit its bounds, from `scroll` on. `maxscroll`,
+`bottomScroll`, and the GFx `numLines` come from the same layout, so CLIK's `TextArea` and `ScrollBar`
+scroll it. A field
 with the `AutoSize` flag, or with GFx `textAutoSize` set by script, sizes its text to fit instead, so
 it draws every line. Flash clips a line that the bottom edge cuts; OpenSky leaves that line out.
 
