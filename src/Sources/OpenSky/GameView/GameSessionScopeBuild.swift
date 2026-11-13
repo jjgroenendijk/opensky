@@ -160,7 +160,13 @@ struct GameSessionScopeBuild {
             gameSession?.weather?.setRegions(regions)
         }
         scope.streamer.events.onInteractionTargetChanged = { [weak scope] target in
-            scope?.hud.updateTarget(scope?.inventoryWorld.perks.labelled(target))
+            guard let scope else { return }
+            scope.hud.updateTarget(scope.inventoryWorld.perks.labelled(target))
+            let item = target.flatMap { $0.interaction.action == .take ? $0.interaction.base : nil }
+            scope.hud.updateTargetStat(HUDItemStat.of(
+                item.flatMap { scope.inventory.itemCards.itemCard(for: $0) },
+                texts: scope.mapWorld.settingTexts()
+            ))
         }
         gameSession.worldTick.register(.survivalMode) { [weak scope] _ in
             scope?.survivalMode.tick()
