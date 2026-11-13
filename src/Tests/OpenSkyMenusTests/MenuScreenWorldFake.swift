@@ -103,7 +103,13 @@ extension FakeMenuScreenWorld: TutorialMenuWorld {
     }
 }
 
-extension FakeMenuScreenWorld: MagicMenuWorld, GiftMenuWorld, CraftingMenuWorld {
+extension FakeMenuScreenWorld: MagicMenuWorld, GiftMenuWorld, CraftingMenuWorld,
+    CraftingMenuEnchanter
+{
+    var enchanter: any CraftingMenuEnchanter {
+        self
+    }
+
     var magicMenuCategories: [ItemListCategory] {
         categories
     }

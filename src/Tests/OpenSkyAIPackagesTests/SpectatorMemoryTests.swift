@@ -9,7 +9,7 @@ struct SpectatorMemoryTests {
     private let actor = ReferenceKey.plugin(name: "base.esm", objectID: 0x10)
 
     @Test func aSpectatorKeepsWatchingUntilTheTimerRunsOut() {
-        var memory = SpectatorMemory(rememberSeconds: 5)
+        var memory = PackageCoordinator.SpectatorMemory(rememberSeconds: 5)
         let watching = memory.remembering([actor: .spectator], actors: [actor], delta: 1)
         #expect(watching[actor] == .spectator)
         #expect(memory.remembering([:], actors: [actor], delta: 4)[actor] == .spectator)
@@ -17,7 +17,7 @@ struct SpectatorMemoryTests {
     }
 
     @Test func anotherSituationEndsTheMemory() {
-        var memory = SpectatorMemory(rememberSeconds: 5)
+        var memory = PackageCoordinator.SpectatorMemory(rememberSeconds: 5)
         _ = memory.remembering([actor: .spectator], actors: [actor], delta: 1)
         #expect(memory.remembering([actor: .combat], actors: [actor], delta: 1)[actor] == .combat)
         #expect(memory.remembering([:], actors: [actor], delta: 1)[actor] == nil)

@@ -36,41 +36,6 @@ nonisolated public struct PackageSituationObservation: Equatable, Sendable {
     }
 }
 
-/// A spectator keeps watching for `fAISpectatorRememberThreatTimer` seconds after the
-/// fight near it ends.
-nonisolated public struct SpectatorMemory: Equatable, Sendable {
-    /// `fAISpectatorRememberThreatTimer`.
-    public var rememberSeconds: Float = 5
-    /// Seconds each recent spectator has gone without a fight near it.
-    public private(set) var quietSeconds: [ReferenceKey: Float] = [:]
-
-    public init(rememberSeconds: Float = 5) {
-        self.rememberSeconds = rememberSeconds
-    }
-
-    /// `situations` with each remembered spectator kept a spectator, after `delta` seconds.
-    public mutating func remembering(
-        _ situations: [ReferenceKey: PackageSituation], actors: [ReferenceKey], delta: Float
-    ) -> [ReferenceKey: PackageSituation] {
-        var result = situations
-        for actor in actors {
-            if situations[actor] == .spectator {
-                quietSeconds[actor] = 0
-                continue
-            }
-            guard let quiet = quietSeconds[actor] else { continue }
-            let now = quiet + max(0, delta)
-            if situations[actor] == nil, now < rememberSeconds {
-                quietSeconds[actor] = now
-                result[actor] = .spectator
-            } else {
-                quietSeconds[actor] = nil
-            }
-        }
-        return result
-    }
-}
-
 /// Which situation each actor is in, from where the others stand. The radii are
 /// OpenSky's: the wiki names the behaviours but not their ranges.
 nonisolated public enum PackageSituationScan {

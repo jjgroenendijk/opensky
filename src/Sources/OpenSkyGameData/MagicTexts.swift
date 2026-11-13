@@ -13,20 +13,6 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
 
     public init() {}
 
-    public func name(of type: SpellType) -> String {
-        let setting: String? = switch type {
-        case .spell: "sMagicTypeSpell"
-        case .disease: "sMagicTypeDisease"
-        case .power: "sMagicTypePower"
-        case .lesserPower: "sMagicTypeLesserPower"
-        case .ability: "sMagicTypeAbility"
-        case .poison: "sMagicTypePoison"
-        case .voice: "sMagicTypeVoicePower"
-        case .addiction, .unknown: nil
-        }
-        return word(setting) ?? type.description
-    }
-
     func name(of casting: MagicEffectCastingType) -> String {
         let setting: String? = switch casting {
         case .constantEffect: "sMagicConstantEffect"

@@ -25,7 +25,6 @@ nonisolated public struct CraftingRecipeReadout: Equatable, Sendable {
 }
 
 nonisolated public struct CraftingControlSnapshot: Equatable, Sendable {
-    public let stationName: String?
     /// The menu's title, such as "Forge: Create".
     public let header: String?
     /// What the open station does; nil with none open.
@@ -42,7 +41,6 @@ nonisolated public struct CraftingControlSnapshot: Equatable, Sendable {
         header: String? = nil,
         recipes: [CraftingRecipeReadout]
     ) {
-        self.stationName = stationName
         self.header = header ?? stationName
         self.recipes = recipes
     }

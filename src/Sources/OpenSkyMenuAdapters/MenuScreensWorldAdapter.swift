@@ -52,6 +52,14 @@ public final class MenuScreensWorldAdapter {
         )
     }
 
+    var enchanterDesk: MenuScreensEnchanterAdapter {
+        MenuScreensEnchanterAdapter(game: hosts)
+    }
+
+    public var enchanter: any CraftingMenuEnchanter {
+        enchanterDesk
+    }
+
     public var guides: MenuScreensGuidesAdapter {
         MenuScreensGuidesAdapter(game: hosts)
     }

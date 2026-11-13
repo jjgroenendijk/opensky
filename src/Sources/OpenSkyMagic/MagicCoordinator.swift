@@ -192,6 +192,11 @@ extension MagicCoordinator {
         Enchanter(coordinator: self)
     }
 
+    /// How much the Enchanting skill adds to a made enchantment, from its setting.
+    var enchantingSkillFactor: Float {
+        rules.enchanting.skillFactor
+    }
+
     public var magicMenu: MagicMenu {
         MagicMenu(coordinator: self)
     }

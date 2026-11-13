@@ -36,7 +36,7 @@ public struct ActiveEffectRuntime {
     /// would put it out of reach there.
     public var tally = ActiveEffectTally()
     /// What the last `apply` did with its entries, for the caster's notices.
-    public private(set) var lastApplication = EffectApplicationTally()
+    public private(set) var lastApplication = ApplicationTally()
     /// The tick walks holders in key order; this keeps that order between frames.
     /// Internal, because the tick half reads it from another file.
     var holderOrder = ReferenceKeyOrder()
@@ -118,7 +118,7 @@ public struct ActiveEffectRuntime {
         on target: ActorValueHolder
     ) -> [ActiveEffect] {
         var stored: [ActiveEffect] = []
-        lastApplication = EffectApplicationTally()
+        lastApplication = ApplicationTally()
         for entry in entries {
             guard let resolved = effects.resolve(entry, fromPlugin: pluginName) else {
                 tally.noteUnresolvedEffect()

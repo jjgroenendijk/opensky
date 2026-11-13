@@ -18,7 +18,6 @@ struct MagicTextsTests {
             guard case let .inline(value) = text.text else { return nil }
             return value
         }
-        #expect(texts.name(of: SpellType.voice) == "Shout")
         #expect(texts.name(of: MagicEffectCastingType.concentration) == "Held")
         #expect(texts.name(of: MagicEffectDelivery.touch) == "Contact")
         #expect(texts.name(of: MagicEffectDelivery.aimed) == MagicEffectDelivery.aimed.description)

@@ -1,7 +1,7 @@
 import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 public import OpenSkyMenus
@@ -117,29 +117,6 @@ extension MenuScreensCraftingDeskAdapter {
 }
 
 extension MenuScreensCraftingDeskAdapter {
-    var enchanterChoices: EnchanterChoices? {
-        guard game.inventory.craftingReadout.craftingSnapshot.station?.enchants == true else {
-            return nil
-        }
-        return game.magic.enchanter.enchanterChoices
-    }
-
-    var enchantingTexts: GameSettingTexts<EnchantingMenuText> {
-        game.mapWorld.settingTexts()
-    }
-
-    public func disenchant(_ item: FormID) -> EnchanterAnswer {
-        game.magic.enchanter.disenchant(item)
-    }
-
-    public func enchantRefusal(_ selection: EnchanterSelection) -> String? {
-        game.magic.enchanter.refusal(of: selection)
-    }
-
-    public func enchant(_ selection: EnchanterSelection) -> EnchanterAnswer {
-        game.magic.enchanter.enchant(selection)
-    }
-
     public func confirm(_ text: String, answer: @escaping (Bool) -> Void) {
         let words = game.mapWorld.settingTexts(MessageBoxText.self)
         game.messages.presentChoices(

@@ -72,14 +72,14 @@ struct CraftingMenuEnchanting {
         guard picks.indices.contains(Int(row.tag)) else { return "No row" }
         switch picks[Int(row.tag)] {
         case let .destroy(item):
-            let texts = world.enchantingTexts
+            let texts = world.enchanter.enchantingTexts
             guard !known.contains(item) else {
                 world.showHUDNotification(texts[.alreadyKnown])
                 return texts[.alreadyKnown]
             }
             world.confirm(texts[.confirmDisenchant]) { yes in
                 guard yes else { return }
-                let answer = world.disenchant(item)
+                let answer = world.enchanter.disenchant(item)
                 if answer.done {
                     world.inform(answer.text)
                 } else {
@@ -123,15 +123,15 @@ struct CraftingMenuEnchanting {
         world: any CraftingMenuWorld,
         changed: @escaping () -> Void
     ) -> String {
-        if let refusal = world.enchantRefusal(selection) {
+        if let refusal = world.enchanter.enchantRefusal(selection) {
             world.showHUDNotification(refusal)
             return refusal
         }
         let chosen = selection
         selection = EnchanterSelection()
-        world.confirm(world.enchantingTexts[.confirmEnchant]) { yes in
+        world.confirm(world.enchanter.enchantingTexts[.confirmEnchant]) { yes in
             guard yes else { return }
-            let answer = world.enchant(chosen)
+            let answer = world.enchanter.enchant(chosen)
             if !answer.done {
                 world.showHUDNotification(answer.text)
             }

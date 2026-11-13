@@ -2,13 +2,15 @@
 // methods of the Adobe "ActionScript 2.0 Language Reference". Vanilla lists build one
 // for a clip's `scale9Grid`.
 
-nonisolated private struct Box: Equatable {
-    var x: Double
-    var y: Double
-    var width: Double
-    var height: Double
+nonisolated extension SWFMovieRuntime {
+    fileprivate struct Box: Equatable {
+        var x: Double
+        var y: Double
+        var width: Double
+        var height: Double
 
-    static let empty = Box(x: 0, y: 0, width: 0, height: 0)
+        static let empty = Box(x: 0, y: 0, width: 0, height: 0)
+    }
 }
 
 nonisolated extension SWFMovieRuntime {

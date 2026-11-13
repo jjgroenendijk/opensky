@@ -119,7 +119,7 @@ extension MagicCoordinator.EnchantingTable {
                     perkFactor: enchantmentPower(of: record, on: item, using: store)
                 )
             },
-            skillFactor: coordinator.rules.enchanting.skillFactor
+            skillFactor: coordinator.enchantingSkillFactor
         )
         let scale = isWeapon ? EnchantingRules.weapon(input) : EnchantingRules.apparel(input)
         return .success(MadeEnchantment(

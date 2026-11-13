@@ -94,6 +94,7 @@ extension GapsGatherer {
         MagicSettingReaders.read(store: store)
         RuleSettingReaders.read(store: store)
         SettingTextReaders.read(store: store)
+        MenuTextReaders.read(store: store)
         return log.editorIDs
     }
 }
@@ -217,6 +218,12 @@ extension GapsGatherer {
             _ = GameSettingTexts<PoisonText>.resolve(store: store)
             _ = GameSettingTexts<PickpocketText>.resolve(store: store)
             _ = GameSettingTexts<TeammateTradeText>.resolve(store: store)
+        }
+    }
+
+    /// The menus' own texts, each from a `GameSettingTexts` key enum.
+    enum MenuTextReaders {
+        static func read(store: GameSettingStore) {
             _ = GameSettingTexts<CraftingRefusalText>.resolve(store: store)
             _ = GameSettingTexts<CraftingButtonText>.resolve(store: store)
             _ = GameSettingTexts<SkillsMenuText>.resolve(store: store)
