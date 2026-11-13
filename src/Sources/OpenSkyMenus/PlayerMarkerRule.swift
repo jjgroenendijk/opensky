@@ -16,12 +16,15 @@ nonisolated public enum PlayerMarkerText: String, GameSettingTextKey {
     case remove = "sRemoveMarker"
     case leave = "sLeaveMarker"
     case name = "sPlayerSetMarkerName"
+    /// The label of the player's own position marker.
+    case currentLocation = "sCurrentLocation"
     case yes = "sYesText"
     case no = "sNoText"
 
     public var fallback: String {
         switch self {
         case .placeMarker: "Place Marker"
+        case .currentLocation: "Current Location"
         case .placeUndiscovered: "You have not discovered this location yet.\nPlace marker?"
         case .moveQuestion: "Do you want to move your marker or remove it?"
         case .move: "Move It"

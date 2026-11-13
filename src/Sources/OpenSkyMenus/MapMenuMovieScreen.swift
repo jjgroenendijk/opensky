@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsSWF
+import OpenSkyGameData
 public import OpenSkyMenusInterface
 import OpenSkyWorldInterface
 
@@ -90,15 +91,23 @@ public final class MapMenuMovieScreen {
         movie.stop()
     }
 
+    /// The sites, then the custom marker when one is placed, then the player's position.
     private func movieMarkers() -> [MapMovieMarker] {
-        let markers = sites.map {
+        var markers = sites.map {
             MapMovieMarker(
                 name: $0.name, iconType: Int($0.iconType), isUndiscovered: !$0.state.isDiscovered
             )
         }
-        guard shownPlayerMarker != nil else { return markers }
+        if shownPlayerMarker != nil {
+            markers.append(MapMovieMarker(
+                name: map.playerMarkerName, iconType: MapMenuMovieBridge.playerSetIconType,
+                isUndiscovered: false
+            ))
+        }
+        let label = map.world?.playerMarkerTexts[.currentLocation]
+            ?? PlayerMarkerText.currentLocation.fallback
         return markers + [MapMovieMarker(
-            name: map.playerMarkerName, iconType: MapMenuMovieBridge.playerSetIconType,
+            name: label, iconType: MapMenuMovieBridge.currentLocationIconType,
             isUndiscovered: false
         )]
     }
@@ -109,8 +118,9 @@ public final class MapMenuMovieScreen {
             shownPlayerMarker = placed
             MapMenuMovieBridge.create(movieMarkers(), runtime: runtime)
         }
+        let here = map.world?.playerPosition
         let points = (sites.map(\.position) + (placed.map { [$0] } ?? []))
-            .map { world?.mapScreenPoint($0) }
+            .map { world?.mapScreenPoint($0) } + [here.flatMap { world?.mapScreenPoint($0) }]
         let selected = sites.firstIndex { $0.key == map.selected?.key }
         MapMenuMovieBridge.refresh(points, selected: selected, runtime: runtime)
     }
@@ -122,6 +132,7 @@ public final class MapMenuMovieScreen {
                 map.placePlayerMarker()
                 return
             }
+            // The player's own marker is the last one and does nothing when clicked.
             guard sites.indices.contains(index), map.select(key: sites[index].key) else { return }
             map.travelToSelected()
         case .toggleLocalMap:
