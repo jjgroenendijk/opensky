@@ -163,11 +163,37 @@ A dotted qualifier, like `<Alias.ShortName=...>`, picks which name of the object
 has one name per reference, so the qualifier is only parsed, so that such a tag is still found.
 
 The text is scanned, not matched with a regular expression, so an unclosed `<` costs nothing. A
-tag that cannot be resolved stays exactly as written. A visible `<Alias=Prisoner>` says "this
-fill is missing". Deleting it would leave a sentence with a hole and nothing to point at.
+tag whose alias has no fill shows `sInvalidTagString`, "[...]" in the vanilla text, as the wiki
+says for an unfilled alias. A tag of a family OpenSky does not read stays exactly as written.
 
 The app names an alias through the loaded cells: the alias's reference, then that reference's
-name. So a fill outside the loaded area keeps its tag.
+name. So a fill outside the loaded area shows the invalid-tag text.
+
+## Text replacement
+
+`<Global=Name>` shows the current value of the global `Name`. A whole value prints as an
+integer, and a fraction to two places, as the wiki gives for a float global. A missing global
+shows `sInvalidTagString`. The game keeps the value from when the quest started, unless a script
+calls `UpdateCurrentInstanceGlobal`; OpenSky shows the current value.
+
+`<Global.Time=Name>` reads the value as hours. One hour or more prints with one decimal and
+`sTimeHours`, such as "1.5 Hours". Less prints the minutes and `sTimeMinutes`, and a value of 0
+or less prints "0 Minutes".
+
+The other subtags read the value as `GameDaysPassed`, a day count from the vanilla start date:
+
+| Subtag | Text |
+| --- | --- |
+| `Hour12` | the hour on a 12-hour clock |
+| `Minutes` | the minutes past the hour |
+| `Month`, `MonthWord` | the month's number or name |
+| `Day`, `WeekDay`, `Year` | the day of the month, the weekday name, the year |
+| `TimeSpan` | the span of the day the hour falls in |
+| `Meridiem` | "AM" or "PM" |
+
+The spans are `sTimeSpanMidnight` (23 to 1), `sTimeSpanNight` (1 to 5), `sTimeSpanSunrise` (5 to
+8), `sTimeSpanMorning` (8 to 12), `sTimeSpanAfternoon` (12 to 17), `sTimeSpanSunset` (17 to 19),
+and `sTimeSpanEvening` (19 to 23). A "Cap" suffix on any subtag capitalises the text.
 
 ## Opening the journal
 

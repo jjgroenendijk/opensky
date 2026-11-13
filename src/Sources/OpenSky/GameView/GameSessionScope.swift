@@ -170,7 +170,7 @@ final class GameSessionScope {
     /// The quest the journal readout names and the quest changes it runs.
     lazy var journal = JournalCoordinator(world: journalMenu)
 
-    lazy var journalMenu = JournalMenuController(game: ports)
+    lazy var journalMenu = JournalMenuController(game: ports, runtimeState: ports.runtimeState)
     /// The dialogue index, the open conversation, and the speaker focus.
     lazy var dialogue = DialogueCoordinator(
         store: worldState,

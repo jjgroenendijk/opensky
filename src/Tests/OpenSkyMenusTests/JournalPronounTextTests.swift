@@ -46,9 +46,8 @@ struct JournalPronounTextTests {
     }
 
     @Test
-    func aPronounOfAnUnknownSexStaysAsWritten() throws {
+    func aPronounOfAnUnknownSexShowsTheInvalidTagText() throws {
         let naming = QuestAliasNaming { _, _ in "Bob" }
-        #expect(try naming
-            .substituting("<Alias.Pronoun=Bob>", in: quest()) == "<Alias.Pronoun=Bob>")
+        #expect(try naming.substituting("<Alias.Pronoun=Bob>", in: quest()) == "[...]")
     }
 }
