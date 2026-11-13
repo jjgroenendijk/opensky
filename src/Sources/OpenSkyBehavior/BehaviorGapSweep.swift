@@ -114,6 +114,7 @@ nonisolated public struct BehaviorGapSweep {
         )
         let source = HKXBehaviorObjectSource(graph: objectGraph)
         instance.characterProperties = properties
+        instance.references = InstallBehaviorReferenceSource(fileSystem: fileSystem, rootPath: path)
         instance.activate()
         update(instance, times: Self.idleUpdates, source: source)
         for name in instance.events.names.compactMap(\.self)
