@@ -44,19 +44,28 @@ extension MagicCoordinator.WeaponRecharge {
             let gem = fitting.min(by: { worth($0) < worth($1) })
             ?? filled.max(by: { worth($0) < worth($1) })
         else { return .noFilledGem }
-        let amount = worth(gem)
-        coordinator.enchantingTable.spendGem(gem, in: inventory)
-        coordinator.enchantingRecords
-            .reportEnchantingUse(
-                coordinator.rules.enchanting.rechargeExperience(charge: SoulTrap.charge(of: gem.soul))
-            )
-        let charge = EnchantmentLedger(store: runtime.store, inventory: inventory)
-            .recharge(weapon.profile, by: amount, on: .player)
+        let charge = recharge(weapon, with: gem, runtime: runtime, inventory: inventory)
         return .recharged(item: weapon.profile.item, gem: gem.item, charge: charge)
     }
 
+    /// Spends `gem` on `weapon`, with the Enchanting experience a recharge gives.
+    func recharge(
+        _ weapon: RechargeableWeapon, with gem: SoulGemCandidate,
+        runtime: ActiveEffectRuntime, inventory: any InventoryAccess
+    ) -> EnchantmentCharge {
+        let amount = gemRechargeAmount(gem.soul, for: weapon.profile.item)
+        coordinator.enchantingTable.spendGem(gem, in: inventory)
+        coordinator.enchantingRecords
+            .reportEnchantingUse(
+                coordinator.rules.enchanting
+                    .rechargeExperience(charge: SoulTrap.charge(of: gem.soul))
+            )
+        return EnchantmentLedger(store: runtime.store, inventory: inventory)
+            .recharge(weapon.profile, by: amount, on: .player)
+    }
+
     /// Soul Squeezer adds to every soul through entry point 49.
-    private func gemRechargeAmount(_ soul: SoulLevel, for item: FormID) -> Float {
+    func gemRechargeAmount(_ soul: SoulLevel, for item: FormID) -> Float {
         let subject = coordinator.world.inventory?.baselines.items.conditionSubject(of: item)
         return coordinator.world.perkModified(
             SoulTrap.charge(of: soul), at: .modSoulGemRecharge, on: .player,

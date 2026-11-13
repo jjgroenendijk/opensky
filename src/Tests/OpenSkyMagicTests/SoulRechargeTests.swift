@@ -113,6 +113,18 @@ struct SoulRechargeTests {
         #expect(trial.coordinator.weaponRecharge.rechargeEquippedWeapon() == .nothingToRecharge)
     }
 
+    @Test func theChargeButtonOffersEachFilledGem() throws {
+        let trial = try session(hits: 2, gems: [Gems.petty], souls: [Gems.petty: 1])
+        let blade = trial.coordinator.weaponEnchantments
+        let offer = try #require(blade.rechargeOffer(for: Gems.enchantedBlade))
+        #expect(offer.gems.count == 1)
+        #expect(offer.currentPercent < 100)
+        #expect(blade.recharge(Gems.enchantedBlade, gemIndex: 0))
+        #expect(blade.chargePercent(of: Gems.enchantedBlade) == 100)
+        #expect(blade.rechargeOffer(for: Gems.enchantedBlade) == nil)
+        #expect(!blade.recharge(Gems.enchantedBlade, gemIndex: 0))
+    }
+
     @Test func noFilledGemRechargesNothing() throws {
         let trial = try session(hits: 2, gems: [Gems.petty])
         #expect(trial.coordinator.weaponRecharge.rechargeEquippedWeapon() == .noFilledGem)

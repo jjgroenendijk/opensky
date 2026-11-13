@@ -100,6 +100,8 @@ nonisolated extension InventoryMenuMovieBridge {
         switch name {
         case "ItemSelect": return .equip(index: index)
         case "DropItem": return .drop(index: index)
+        case "ShowSoulGemList": return .showSoulGems
+        case "ItemCardListCallback": return .chooseCardListEntry(index: index)
         default: return .close
         }
     }

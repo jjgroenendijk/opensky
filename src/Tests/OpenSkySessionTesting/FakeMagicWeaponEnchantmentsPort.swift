@@ -20,6 +20,12 @@ nonisolated public final class FakeMagicWeaponEnchantmentsPort: MagicWeaponEncha
     public var enchantmentProfileResult: ItemEnchantmentProfile?
     public var equipmentChangedCalls: [InventoryHolder] = []
     public var equipmentChangedResult: WornEnchantmentReport?
+    public var chargePercentCalls: [FormID] = []
+    public var chargePercentResult: Float?
+    public var rechargeOfferCalls: [FormID] = []
+    public var rechargeOfferResult: RechargeOffer?
+    public var rechargeCalls: [(item: FormID, gemIndex: Int)] = []
+    public var rechargeResult = false
 
     public init() {}
 }
@@ -100,5 +106,21 @@ nonisolated extension FakeMagicWeaponEnchantmentsPort {
             preconditionFailure("FakeMagicWeaponEnchantmentsPort.equipmentChanged has no result")
         }
         return equipmentChangedResult
+    }
+
+    public func chargePercent(of item: FormID) -> Float? {
+        chargePercentCalls.append(item)
+        return chargePercentResult
+    }
+
+    public func rechargeOffer(for item: FormID) -> RechargeOffer? {
+        rechargeOfferCalls.append(item)
+        return rechargeOfferResult
+    }
+
+    @discardableResult
+    public func recharge(_ item: FormID, gemIndex: Int) -> Bool {
+        rechargeCalls.append((item: item, gemIndex: gemIndex))
+        return rechargeResult
     }
 }

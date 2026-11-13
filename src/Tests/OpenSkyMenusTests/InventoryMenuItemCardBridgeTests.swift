@@ -56,4 +56,13 @@ struct InventoryMenuItemCardBridgeTests {
         #expect(info["armor"] == .integer(13))
         #expect(info["effects"] == .string("Fortify Archery 10"))
     }
+
+    @Test func theChargeButtonAndTheGemListReachTheEngine() {
+        #expect(InventoryMenuMovieBridge
+            .action(named: "ShowSoulGemList", arguments: []) == .showSoulGems)
+        #expect(
+            InventoryMenuMovieBridge.action(named: "ItemCardListCallback", arguments: [.number(2)])
+                == .chooseCardListEntry(index: 2)
+        )
+    }
 }

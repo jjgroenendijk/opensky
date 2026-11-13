@@ -166,7 +166,7 @@ final class GameSessionScope {
     }
 
     /// Inventory menu row list + presentation state.
-    lazy var inventoryMenu = InventoryMenuController(game: ports)
+    lazy var inventoryMenu = InventoryMenuController(game: ports, messages: ports.messages)
     /// The quest the journal readout names and the quest changes it runs.
     lazy var journal = JournalCoordinator(world: journalMenu)
 
