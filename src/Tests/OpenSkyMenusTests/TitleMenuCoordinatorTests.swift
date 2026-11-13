@@ -222,6 +222,15 @@ struct TitleMenuCoordinatorTests {
         #expect(!menu.isOpen)
     }
 
+    @Test @MainActor
+    func theMoviesYesToTheNewQuestionStartsTheGame() {
+        let (menu, world) = Self.make()
+        menu.open()
+        menu.apply(.startNewGame)
+        #expect(world.newGames == 1)
+        #expect(!menu.isOpen)
+    }
+
     @Test func thePropertiesShowQuitAndContinueAndSkipTheLogin() {
         let flags = TitleMenuMovieBridge.menuProperties(hasSaves: true, version: "OpenSky")
         #expect(flags.count == 14)

@@ -24,13 +24,19 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
     ]
     static let globalSinkFunctions = ["gfxProcessSound"]
 
-    /// The movie's calls when the player picks a main row.
+    /// The movie's calls when the player picks a main row. New asks the engine for its
+    /// question; the movie calls `StartNewGame` after a yes and its fade.
     enum Request: String, CaseIterable, Sendable {
         case resume = "CONTINUE"
         case new = "NEW"
+        case startNewGame = "StartNewGame"
+        case continueLastSaved = "ContinueLastSavedGame"
         case credits = "OpenCreditsMenu"
         case quit = "QuitToDesktop"
     }
+
+    /// The movie's `GameDelegate` callback that shows a yes-or-no question before New.
+    static let confirmNewGameCallback = "ConfirmNewGame"
 
     /// The 14 flags of `sendMenuProperties`. Flag 9 set skips the login screen.
     static func menuProperties(hasSaves: Bool, version: String) -> [AS2Value] {

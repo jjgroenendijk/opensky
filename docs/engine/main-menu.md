@@ -62,7 +62,11 @@ Differences from the game:
 - Credits returns the movie to its main rows. OpenSky has no credits roll.
 - Delete in the Load list does nothing. Saves are deleted in the System menu.
 - The movie has `ConfirmNewGame` and `ConfirmContinue` callbacks, so the game can ask a
-  question before New and Continue. OpenSky does not call them and starts at once.
+  question before New and Continue. On `NEW`, OpenSky calls `ConfirmNewGame` with
+  `sConfirmNew`, and starts the game when the movie calls `StartNewGame` after a yes. The
+  game uses `sConfirmNewMods` when Creations are loaded; OpenSky has no Creations manager.
+  The game asks before Continue only while a game is in progress. OpenSky does not ask, and
+  treats `ContinueLastSavedGame` as Continue.
 
 ## The held world
 
