@@ -60,7 +60,7 @@ extension MapTravelAdapter {
         context.takingHealthDamage = game.magic.magicMenu.isPlayerTakingHealthDamage
         if game.inventory.runtime != nil {
             context.overencumbered = FastTravelRule.isOverencumbered(
-                carried: game.inventory.playerCarriedWeight,
+                carried: game.inventory.armourWeights.playerCarriedWeight,
                 capacity: game.actorValues.runtime?.value(
                     at: ActorValueIdentity.carryWeightIndex, on: .player
                 )

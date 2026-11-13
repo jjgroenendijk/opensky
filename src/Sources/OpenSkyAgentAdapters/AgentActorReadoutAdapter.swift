@@ -75,7 +75,7 @@ extension AgentActorReadoutAdapter {
             "action": .string(interaction.actionLabel),
             "distance": .init(target.distance),
             "position": .init(interaction.position),
-            "theft": .bool(game.inventory.targetOwnership()?.isTheft == true)
+            "theft": .bool(game.inventory.itemPanels.targetOwnership()?.isTheft == true)
         ]
     }
 

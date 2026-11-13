@@ -6,14 +6,15 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyInventoryInterface
 
-extension InventoryCoordinator {
+extension InventoryCoordinator.DeathItems {
     /// Gives the actor at `key` its death item. The roll is seeded by the reference,
     /// so two corpses of one base can differ.
     /// - Returns: the stacks added; empty when there was nothing to add.
     @discardableResult
     public func grantDeathItem(to key: ReferenceKey, actorLevel: Int) -> [InventoryStack] {
         guard
-            let runtime, let holder = scriptHolder(key),
+            let runtime = coordinator.runtime,
+            let holder = coordinator.scriptItems.scriptHolder(key),
             case let .actor(base) = holder.owner
         else { return [] }
         let stacks = runtime.inventory.baselines.deathItemStacks(

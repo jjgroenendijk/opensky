@@ -7,18 +7,19 @@ import OpenSkyGameData
 public import OpenSkyInventoryInterface
 import OpenSkyWorldInterface
 
-extension InventoryCoordinator {
+extension InventoryCoordinator.CraftingReadout {
     public var craftingSnapshot: CraftingControlSnapshot {
-        guard runtime != nil else { return .unavailable }
+        guard coordinator.runtime != nil else { return .unavailable }
         return CraftingControlSnapshot(
-            stationName: crafting?.interaction.name,
-            recipes: crafting?.statuses.map(recipeReadout) ?? []
+            stationName: coordinator.crafting?.interaction.name,
+            recipes: coordinator.crafting?.statuses.map(recipeReadout) ?? []
         )
     }
 
     private func recipeReadout(_ status: CraftingRecipeStatus) -> CraftingRecipeReadout {
         let recipe = status.recipe
-        let itemName = recipe.created.map(name(of:)) ?? recipe.editorID ?? recipe.id.description
+        let itemName = recipe.created.map(coordinator.name(of:)) ?? recipe.editorID ?? recipe.id
+            .description
         guard let temper = status.temper else {
             return CraftingRecipeReadout(
                 id: recipe.id,
@@ -39,7 +40,7 @@ extension InventoryCoordinator {
 
     /// The quality name of `level`, from the weapon or the armour list.
     func qualityName(_ level: Int32, of item: FormID) -> String {
-        let isWeapon = runtime?.inventory.baselines.items.weapon(item) != nil
-        return temperingTexts.name(level: level, isWeapon: isWeapon)
+        let isWeapon = coordinator.runtime?.inventory.baselines.items.weapon(item) != nil
+        return coordinator.texts.tempering.name(level: level, isWeapon: isWeapon)
     }
 }

@@ -21,7 +21,8 @@ extension ContainerMenuController {
     /// matches the one a crosshair search opens.
     @discardableResult
     func nominate(_ interaction: PlacedInteraction) -> Bool {
-        guard let holder = game.inventory.containerHolder(for: interaction) else { return false }
+        guard let holder = game.inventory.containerTrade.containerHolder(for: interaction)
+        else { return false }
         target(holder, name: interaction.name)
         return true
     }
@@ -141,13 +142,13 @@ extension ContainerMenuController {
             request.count = count
             request.merchant = merchant
             request.acceptingLess = acceptingLess
-            let outcome = try game.inventory.transfer(request)
+            let outcome = try game.inventory.containerTrade.transfer(request)
             if case .merchantShort = outcome {
                 pendingSale = (entry, count)
-                note(outcome.text(texts: game.inventory.tradeTexts)
+                note(outcome.text(texts: game.inventory.containerTrade.tradeTexts)
                     + " Accept sells for the merchant's gold; cancel keeps the item.")
             } else {
-                note(outcome.text(texts: game.inventory.tradeTexts))
+                note(outcome.text(texts: game.inventory.containerTrade.tradeTexts))
             }
         } catch {
             note("\(model.transferLabel) refused: \(String(describing: error))")
@@ -233,7 +234,7 @@ struct ContainerMenuDeals {
 
     /// Shows the notice of a target that caught the player lately. True when it refuses.
     func showsPocketRefusal(by actor: ReferenceKey) -> Bool {
-        guard game.inventory.pickpocketRefused(by: actor) else { return false }
+        guard game.inventory.pickpocketing.pickpocketRefused(by: actor) else { return false }
         let text = game.mapWorld.settingTexts(PickpocketText.self)[.caughtBefore]
         game.hud.showNotification(game.dialogueWorld.speakerLabel(for: actor) + text)
         return true
@@ -247,10 +248,10 @@ struct ContainerMenuDeals {
     ) -> PickpocketReply {
         let roll = Float.random(in: 0 ..< 100)
         let outcome = side == .container
-            ? game.inventory.pickpocket(
+            ? game.inventory.pickpocketing.pickpocket(
                 entry.item, count: count, named: entry.name, from: target, roll: roll
             )
-            : game.inventory.plant(
+            : game.inventory.pickpocketing.plant(
                 entry.item, count: count, named: entry.name, into: target, roll: roll
             )
         var took = false
@@ -275,7 +276,7 @@ struct ContainerMenuDeals {
         of teammate: InventoryHolder, name: String?
     ) -> String? {
         guard
-            let refusal = game.inventory.teammateRefusal(
+            let refusal = game.inventory.teammateTrades.teammateRefusal(
                 transfer, item: move.entry.item, count: move.count, teammate: teammate
             )
         else { return nil }
@@ -288,14 +289,20 @@ struct ContainerMenuDeals {
     /// Equips or unequips the row's item on the player, and returns the outcome line.
     func toggleEquip(_ entry: InventoryMenuEntry) -> String {
         entry.isEquipped
-            ? game.inventoryWorld.run(game.inventory.unequipItem(entry.item, on: .player)).text
-            : game.inventoryWorld.run(game.inventory.equipItem(entry.item, on: .player)).text
+            ? game.inventoryWorld.run(game.inventory.equipmentChanges.unequipItem(
+                entry.item,
+                on: .player
+            )).text
+            : game.inventoryWorld.run(game.inventory.equipmentChanges.equipItem(
+                entry.item,
+                on: .player
+            )).text
     }
 
     func takeAll(from container: InventoryHolder, teammate: Bool) -> String {
         let outcome = teammate
-            ? game.inventory.takeAllFromTeammate(container) : game.inventory
-            .takeAll(from: container)
+            ? game.inventory.teammateTrades.takeAllFromTeammate(container) : game.inventory
+            .containerTrade.takeAll(from: container)
         return outcome.text
     }
 }

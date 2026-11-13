@@ -113,7 +113,7 @@ extension AIPackageActsAdapter {
             let bridge = game.scripts.bridge,
             let entry = game.streamer.referenceEntry(key: item),
             let reference = entry.placedReference,
-            game.inventory.scriptAddItem(
+            game.inventory.scriptItems.scriptAddItem(
                 reference.base, count: max(1, reference.itemCount ?? 1), to: actor
             )
         else { return .failed }

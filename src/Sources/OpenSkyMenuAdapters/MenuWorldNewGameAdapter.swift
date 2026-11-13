@@ -52,7 +52,7 @@ extension MenuWorldNewGameAdapter {
     /// A chosen cell is a test start, so the race menu opens there at once.
     public func startNewGame(at start: NewGameStart) {
         game.worldState.restore(from: .empty)
-        game.inventory.registerCreatedPotions()
+        game.inventory.alchemyLab.registerCreatedPotions()
         game.gameSession?.gameClock = GameClock()
         game.gameSession?.clearScriptScreenEffects()
         game.effectsWorld.fadeOutHealthCues()

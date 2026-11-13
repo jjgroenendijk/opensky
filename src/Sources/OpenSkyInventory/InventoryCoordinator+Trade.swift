@@ -10,14 +10,14 @@ import OpenSkyProgressionInterface
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 
-extension InventoryCoordinator {
+extension InventoryCoordinator.ContainerTrade {
     /// The holder a container interaction stands for, resolved the way
     /// `WorldItemRuntime.openContainer` resolves it. Nil when nothing resident
     /// holds the reference, because a made-up key would match nothing else.
     public func containerHolder(for interaction: PlacedInteraction) -> InventoryHolder? {
         guard
-            runtime != nil,
-            let references = runtime?.references,
+            coordinator.runtime != nil,
+            let references = coordinator.runtime?.references,
             let entry = references.referenceEntry(formID: interaction.reference)
         else { return nil }
         return InventoryHolder(
@@ -39,8 +39,8 @@ extension InventoryCoordinator {
         )
         let (container, vendor) = (request.container, request.vendor)
         let (merchant, acceptingLess) = (request.merchant, request.acceptingLess)
-        guard let runtime else { return .unavailable }
-        if transfer == .store || transfer == .sell, isQuestItem(item) {
+        guard let runtime = coordinator.runtime else { return .unavailable }
+        if transfer == .store || transfer == .sell, coordinator.scriptItems.isQuestItem(item) {
             return .questItem
         }
         switch transfer {
@@ -53,7 +53,7 @@ extension InventoryCoordinator {
             return .took(item: name, bounty: bounty)
         case .store:
             try runtime.inventory.transfer(item, count: count, from: .player, to: container)
-            storyEvents?.reportStoryEvent(.removeItem(
+            coordinator.storyEvents?.reportStoryEvent(.removeItem(
                 item, reference: container.key,
                 owner: ContainerSession(runtime: runtime, container: container).actorOwner,
                 how: .putInContainer
@@ -67,7 +67,7 @@ extension InventoryCoordinator {
             } catch BarterError.playerCannotAfford {
                 return .tooExpensive
             }
-            storyEvents?.reportStoryEvent(.addItem(
+            coordinator.storyEvents?.reportStoryEvent(.addItem(
                 item, from: container.key, owner: merchant, how: .buy
             ))
             reportTrade(bought)
@@ -80,7 +80,7 @@ extension InventoryCoordinator {
             } catch let BarterError.merchantCannotAfford(price, gold) {
                 return .merchantShort(price: price, gold: gold)
             }
-            storyEvents?.reportStoryEvent(.removeItem(
+            coordinator.storyEvents?.reportStoryEvent(.removeItem(
                 item, reference: container.key, owner: merchant, how: .given
             ))
             reportTrade(sold)
@@ -89,7 +89,7 @@ extension InventoryCoordinator {
     }
 
     public func takeAll(from container: InventoryHolder) -> ItemActionOutcome {
-        guard let runtime else { return .unavailable }
+        guard let runtime = coordinator.runtime else { return .unavailable }
         do {
             let session = ContainerSession(runtime: runtime, container: container)
             let moved = try session.takeAll()
@@ -110,34 +110,34 @@ extension InventoryCoordinator {
             runtime: runtime,
             merchant: container,
             pricing: barterPricing(with: merchant),
-            rules: vendors?.rules(for: vendor) ?? .unrestricted
+            rules: coordinator.vendors?.rules(for: vendor) ?? .unrestricted
         )
     }
 
     /// The prices the player trades at with `merchant`: the player's live Speech skill,
     /// then the player's `Mod Buy Prices` and `Mod Sell Prices` with the merchant bound.
     public func barterPricing(with merchant: ReferenceKey?) -> BarterPricing {
-        let world = world
+        let world = coordinator.world
         let subjects = PerkEvaluationSubjects(owner: .player, target: merchant)
         let modifier = { (entryPoint: PerkEntryPoint) in
             Double(world.perkModified(
                 1, at: entryPoint, on: .player, subjects: subjects, seams: ConditionContext()
             ))
         }
-        return barterPricing.trading(
+        return coordinator.barterPricing.trading(
             speechSkill: world.playerSpeechSkill().map(Double.init)
-                ?? barterPricing.speechSkill,
+                ?? coordinator.barterPricing.speechSkill,
             buyModifier: modifier(.modBuyPrices),
             sellModifier: modifier(.modSellPrices)
         )
     }
 }
 
-extension InventoryCoordinator {
+extension InventoryCoordinator.ContainerTrade {
     /// "1 base XP per gold used in transactions", at the item's own value
     /// (UESP "Skyrim:Leveling", "Skyrim:Speech").
     func reportTrade(_ trade: BarterTransaction) {
-        skillUses?.reportSkillUse(SkillUseEvent(
+        coordinator.skillUses?.reportSkillUse(SkillUseEvent(
             actor: .player, action: .barter, amount: Float(trade.unitValue)
         ))
     }
@@ -153,7 +153,7 @@ extension InventoryCoordinator {
             case (false, .actor): .deadBody
             default: .container
             }
-            storyEvents?.reportStoryEvent(.addItem(
+            coordinator.storyEvents?.reportStoryEvent(.addItem(
                 stack.item, from: session.container.key, owner: session.actorOwner, how: how
             ))
         }

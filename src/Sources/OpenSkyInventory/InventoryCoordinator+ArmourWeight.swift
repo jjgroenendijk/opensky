@@ -14,10 +14,10 @@ nonisolated struct WornArmourWeight: Equatable, Sendable {
     let worn: Float
 }
 
-extension InventoryCoordinator {
+extension InventoryCoordinator.ArmourWeights {
     /// What the player carries, with worn armour at its perk weight.
     public var playerCarriedWeight: Float {
-        guard let runtime else { return 0 }
+        guard let runtime = coordinator.runtime else { return 0 }
         let saved = wornArmourWeights().reduce(0) { $0 + $1.authored - $1.worn }
         return max(0, runtime.inventory.carriedWeight(of: runtime.player) - saved)
     }
@@ -29,14 +29,14 @@ extension InventoryCoordinator {
     }
 
     func wornArmourWeights() -> [WornArmourWeight] {
-        guard let runtime else { return [] }
+        guard let runtime = coordinator.runtime else { return [] }
         let items = runtime.inventory.baselines.items
         return runtime.inventory.inventory(of: runtime.player).equipped.compactMap { item in
             guard let definition = items.definition(item), definition.family == .armor else {
                 return nil
             }
             let authored = max(0, definition.weight)
-            let worn = world.perkModified(
+            let worn = coordinator.world.perkModified(
                 authored,
                 at: .modArmorWeight,
                 on: .player,

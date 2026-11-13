@@ -58,7 +58,7 @@ extension AIDetectionSenseAdapter {
         eyeHeight: Float
     ) -> DetectionTargetTraits {
         DetectionTargetTraits(
-            equippedWeight: game.inventory.playerWornArmourWeight,
+            equippedWeight: game.inventory.armourWeights.playerWornArmourWeight,
             lightLevel: playerPerk(
                 lightLevel(at: feet + SIMD3(0, 0, PlayerCapsule.torsoHeight(eyeHeight: eyeHeight))),
                 at: .modDetectionLight

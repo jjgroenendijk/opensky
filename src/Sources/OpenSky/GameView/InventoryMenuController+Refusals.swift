@@ -44,9 +44,9 @@ struct InventoryItemActions {
         var facts = ItemRequestFacts()
         let family = definition(of: item)?.family
         facts.isKey = family == .key
-        facts.isQuestItem = game.inventory.isQuestItem(item)
+        facts.isQuestItem = game.inventory.scriptItems.isQuestItem(item)
         facts.canBeFavourite = family.map(Self.favouriteFamilies.contains) ?? true
-        facts.isEquipped = game.inventory.use(of: item) == .unequip
+        facts.isEquipped = game.inventory.consumables.use(of: item) == .unequip
         facts.playerIsAttacking = game.combat.playerActionFacts?.attackState.isAttacking == true
         let status = game.gameSession?.locomotion.status
         facts.playerIsAirborne = status.map { !$0.isGrounded } ?? false
@@ -65,15 +65,23 @@ struct InventoryItemActions {
 
     func use(_ item: FormID) -> String {
         let inventory = game.inventory
-        let use = inventory.use(of: item)
+        let use = inventory.consumables.use(of: item)
         if let refused = refusal(request(for: use, item: item), of: item) {
             return refused
         }
         switch use {
-        case .applyPoison: return inventory.applyPoison(item).text(game.mapWorld.settingTexts())
+        case .applyPoison: return inventory.consumables.applyPoison(item)
+            .text(game.mapWorld.settingTexts())
         case .consume: return game.magic.itemUse.consumeMagicItem(item).text
-        case .unequip: return game.inventoryWorld.run(inventory.unequipItem(item, on: .player)).text
-        case .equip: return game.inventoryWorld.run(inventory.equipItem(item, on: .player)).text
+        case .unequip:
+            return game.inventoryWorld.run(inventory.equipmentChanges.unequipItem(
+                item,
+                on: .player
+            ))
+            .text
+        case .equip:
+            return game.inventoryWorld.run(inventory.equipmentChanges.equipItem(item, on: .player))
+                .text
         }
     }
 }

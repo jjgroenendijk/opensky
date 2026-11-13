@@ -24,24 +24,25 @@ nonisolated struct AlchemyPreview: Equatable, Sendable {
     }
 }
 
-extension InventoryCoordinator {
+extension InventoryCoordinator.AlchemyLab {
     /// The Alchemy skill's actor-value index.
     static let alchemySkill: Int32 = 16
     public static let alchemyIngredientLimit = 3
 
     public var createdPotions: CreatedPotionState {
-        runtime?.store.component(CreatedPotionState.self, for: .player) ?? CreatedPotionState()
+        coordinator.runtime?.store
+            .component(CreatedPotionState.self, for: .player) ?? CreatedPotionState()
     }
 
     public var ingredientKnowledge: IngredientKnowledgeState {
-        runtime?.store.component(IngredientKnowledgeState.self, for: .player)
+        coordinator.runtime?.store.component(IngredientKnowledgeState.self, for: .player)
             ?? IngredientKnowledgeState()
     }
 
     /// Puts the brewed potions of the running game in the item index. Call it after a
     /// save is loaded, because no plugin holds them.
     public func registerCreatedPotions() {
-        guard let items = runtime?.inventory.baselines.items else { return }
+        guard let items = coordinator.runtime?.inventory.baselines.items else { return }
         items.removeCreatedPotions()
         for potion in createdPotions.potions {
             items.registerCreated(potion.ingestible)
@@ -52,17 +53,17 @@ extension InventoryCoordinator {
 
     /// Every carried ingredient, by name.
     public var alchemyIngredients: [AlchemyIngredientReadout] {
-        guard let runtime else { return [] }
+        guard let runtime = coordinator.runtime else { return [] }
         let items = runtime.inventory.baselines.items
         let knowledge = ingredientKnowledge
-        let chosen = alchemySelection ?? []
+        let chosen = coordinator.alchemySelection ?? []
         return runtime.inventory.inventory(of: runtime.player).stacks
             .reduce(into: [FormID: Int32]()) { $0[$1.item, default: 0] += $1.count }
             .compactMap { item, count -> AlchemyIngredientReadout? in
                 guard let ingredient = items.ingredients[item.rawValue] else { return nil }
                 return AlchemyIngredientReadout(
                     id: item,
-                    name: name(of: item),
+                    name: coordinator.name(of: item),
                     count: count,
                     effects: ingredient.effects.indices.map { index in
                         knowledge.knows(index, of: item)
@@ -77,12 +78,12 @@ extension InventoryCoordinator {
     /// Adds `item` to the chosen ingredients, or takes it out when already chosen.
     @discardableResult
     public func toggleAlchemyIngredient(_ item: FormID) -> AlchemyActionOutcome {
-        guard let runtime else { return noteAlchemy(.unavailable) }
-        guard var chosen = alchemySelection else { return noteAlchemy(.noLab) }
-        let itemName = name(of: item)
+        guard let runtime = coordinator.runtime else { return noteAlchemy(.unavailable) }
+        guard var chosen = coordinator.alchemySelection else { return noteAlchemy(.noLab) }
+        let itemName = coordinator.name(of: item)
         if let index = chosen.firstIndex(of: item) {
             chosen.remove(at: index)
-            alchemySelection = chosen
+            coordinator.alchemySelection = chosen
             return noteAlchemy(.dropped(itemName, preview: previewText))
         }
         guard runtime.inventory.baselines.items.ingredients[item.rawValue] != nil else {
@@ -95,13 +96,13 @@ extension InventoryCoordinator {
             return noteAlchemy(.tooMany(limit: Self.alchemyIngredientLimit))
         }
         chosen.append(item)
-        alchemySelection = chosen
+        coordinator.alchemySelection = chosen
         return noteAlchemy(.picked(itemName, preview: previewText))
     }
 
     /// What the chosen ingredients make now. Nil with fewer than two chosen.
     var alchemyPreview: AlchemyPreview? {
-        guard let chosen = alchemySelection, chosen.count >= 2 else { return nil }
+        guard let chosen = coordinator.alchemySelection, chosen.count >= 2 else { return nil }
         guard let brew = brew(chosen) else {
             return AlchemyPreview(name: nil, value: 0, effects: [])
         }
@@ -123,8 +124,8 @@ extension InventoryCoordinator {
     /// them up and gives the failed skill use.
     @discardableResult
     public func brewChosenIngredients() -> AlchemyActionOutcome {
-        guard let runtime else { return noteAlchemy(.unavailable) }
-        guard let chosen = alchemySelection else { return noteAlchemy(.noLab) }
+        guard let runtime = coordinator.runtime else { return noteAlchemy(.unavailable) }
+        guard let chosen = coordinator.alchemySelection else { return noteAlchemy(.noLab) }
         guard chosen.count >= 2 else { return noteAlchemy(.needsTwo) }
         let consumed = chosen.map { InventoryStack(item: $0, count: 1) }
         guard let brew = brew(chosen), let strongest = brew.primary else {
@@ -136,11 +137,11 @@ extension InventoryCoordinator {
                 return noteAlchemy(.brewFailed(reason: String(describing: error)))
             }
             keepCarried(chosen)
-            reportAlchemySkillUse(alchemySettings.failedSkillUse)
-            return noteAlchemy(.failed(alchemyTexts.failed))
+            reportAlchemySkillUse(coordinator.alchemySettings.failedSkillUse)
+            return noteAlchemy(.failed(coordinator.alchemyTexts.failed))
         }
         let (state, potion) = createdPotions.adding(
-            name: alchemyTexts.name(
+            name: coordinator.alchemyTexts.name(
                 isPoison: brew.isPoison, effect: effectName(strongest.result.effect)
             ),
             isPoison: brew.isPoison,
@@ -172,10 +173,13 @@ extension InventoryCoordinator {
     /// Ingredient Effects Learned).
     @discardableResult
     public func learnEatenIngredient(_ item: FormID) -> AlchemyActionOutcome {
-        guard let ingredient = runtime?.inventory.baselines.items.ingredients[item.rawValue] else {
-            return noteAlchemy(.notAnIngredient(name(of: item)))
+        guard
+            let ingredient = coordinator.runtime?.inventory.baselines.items
+                .ingredients[item.rawValue]
+        else {
+            return noteAlchemy(.notAnIngredient(coordinator.name(of: item)))
         }
-        let count = world.perkModified(
+        let count = coordinator.world.perkModified(
             1,
             at: .modInitialIngredientEffectsLearned,
             on: .player,
@@ -188,11 +192,11 @@ extension InventoryCoordinator {
         learn([item: indices])
         let names = indices.filter { !before.contains($0) }
             .map { effectName(ingredient.effects[$0].effect) }
-        return noteAlchemy(.learned(ingredient: name(of: item), effects: names))
+        return noteAlchemy(.learned(ingredient: coordinator.name(of: item), effects: names))
     }
 
     func learn(_ learned: [FormID: [Int]]) {
-        guard let runtime, !learned.isEmpty else { return }
+        guard let runtime = coordinator.runtime, !learned.isEmpty else { return }
         var knowledge = ingredientKnowledge
         for (ingredient, indices) in learned {
             knowledge = knowledge.learning(indices, of: ingredient)
@@ -203,26 +207,29 @@ extension InventoryCoordinator {
     // MARK: - Rules glue
 
     func brew(_ chosen: [FormID]) -> AlchemyBrew? {
-        guard let items = runtime?.inventory.baselines.items, let store = magicEffects else {
+        guard
+            let items = coordinator.runtime?.inventory.baselines.items,
+            let store = coordinator.magicEffects
+        else {
             return nil
         }
-        let plugin = magicItemPlugin
+        let plugin = coordinator.magicItemPlugin
         let ingredients = chosen.compactMap { item in
             items.ingredients[item.rawValue].map {
                 AlchemyIngredient(id: item, effects: $0.effects)
             }
         }
-        let skill = recipeConditions?.skillLevel(at: Self.alchemySkill) ?? 0
+        let skill = coordinator.recipeConditions?.skillLevel(at: Self.alchemySkill) ?? 0
         return AlchemyRules.brew(
             ingredients,
             resolve: { store.resolve($0, fromPlugin: plugin) },
-            power: AlchemyRules.powerFactor(skill: skill, settings: alchemySettings),
+            power: AlchemyRules.powerFactor(skill: skill, settings: coordinator.alchemySettings),
             perks: alchemyPerks
         )
     }
 
     private var alchemyPerks: AlchemyPerks {
-        let world = world
+        let world = coordinator.world
         return AlchemyPerks(
             effectiveness: { effect, isPoison in
                 var seams = ConditionContext()
@@ -248,14 +255,17 @@ extension InventoryCoordinator {
 
     private func brewName(_ brew: AlchemyBrew) -> String? {
         brew.primary.map {
-            alchemyTexts.name(isPoison: brew.isPoison, effect: effectName($0.result.effect))
+            coordinator.alchemyTexts.name(
+                isPoison: brew.isPoison,
+                effect: effectName($0.result.effect)
+            )
         }
     }
 
     /// Mod Potions Created, with the made potion bound as the item.
     private func potionsCreated(of potion: CreatedPotion) -> Int32 {
-        let subject = runtime?.inventory.baselines.items.conditionSubject(of: potion.id)
-        let value = world.perkModified(
+        let subject = coordinator.runtime?.inventory.baselines.items.conditionSubject(of: potion.id)
+        let value = coordinator.world.perkModified(
             1,
             at: .modPotionsCreated,
             on: .player,
@@ -267,20 +277,25 @@ extension InventoryCoordinator {
 
     /// The MGEF's display name in the load order's language.
     func effectName(_ effect: FormID) -> String {
-        guard let resolved = magicEffects?.resolve(effect, fromPlugin: magicItemPlugin) else {
+        guard let resolved = coordinator.magicEffects?.resolve(
+            effect,
+            fromPlugin: coordinator.magicItemPlugin
+        ) else {
             return effect.description
         }
-        return world.magicEffectName(resolved)
+        return coordinator.world.magicEffectName(resolved)
     }
 
     /// Keeps chosen only the ingredients the player still carries.
     private func keepCarried(_ chosen: [FormID]) {
-        guard let runtime else { return }
-        alchemySelection = chosen.filter { runtime.inventory.count(of: $0, in: runtime.player) > 0 }
+        guard let runtime = coordinator.runtime else { return }
+        coordinator.alchemySelection = chosen.filter {
+            runtime.inventory.count(of: $0, in: runtime.player) > 0
+        }
     }
 
     private func reportAlchemySkillUse(_ amount: Float) {
-        guard amount > 0, let skillUses else { return }
+        guard amount > 0, let skillUses = coordinator.skillUses else { return }
         _ = skillUses.reportSkillUse(SkillUseEvent(
             actor: .player, action: .craft(skill: Self.alchemySkill), amount: amount
         ))
@@ -288,19 +303,22 @@ extension InventoryCoordinator {
 
     @discardableResult
     func noteAlchemy(_ outcome: AlchemyActionOutcome) -> AlchemyActionOutcome {
-        lastAlchemy = outcome
+        coordinator.lastAlchemy = outcome
         return outcome
     }
 }
 
 // MARK: - Scripts
 
-extension InventoryCoordinator {
+extension InventoryCoordinator.AlchemyLab {
     /// `Ingredient.LearnEffect` and `LearnAllEffects`: nil `indices` teaches every effect.
     /// False when `item` is no ingredient.
     @discardableResult
     public func learnIngredientEffects(_ item: FormID, indices: [Int]?) -> Bool {
-        guard let ingredient = runtime?.inventory.baselines.items.ingredients[item.rawValue] else {
+        guard
+            let ingredient = coordinator.runtime?.inventory.baselines.items
+                .ingredients[item.rawValue]
+        else {
             return false
         }
         let all = Array(ingredient.effects.indices)
@@ -311,7 +329,10 @@ extension InventoryCoordinator {
     /// `Ingredient.LearnNextEffect`: the index learnt, -1 when every effect is known,
     /// nil when `item` is no ingredient.
     public func learnNextIngredientEffect(_ item: FormID) -> Int? {
-        guard let ingredient = runtime?.inventory.baselines.items.ingredients[item.rawValue] else {
+        guard
+            let ingredient = coordinator.runtime?.inventory.baselines.items
+                .ingredients[item.rawValue]
+        else {
             return nil
         }
         let knowledge = ingredientKnowledge
@@ -326,14 +347,17 @@ extension InventoryCoordinator {
     /// `IsHostile` on a potion or an ingredient: a potion by its Poison flag, an
     /// ingredient by its costliest effect, as a brew decides. Nil for anything else.
     public func isHostileItem(_ item: FormID) -> Bool? {
-        guard let items = runtime?.inventory.baselines.items else { return nil }
+        guard let items = coordinator.runtime?.inventory.baselines.items else { return nil }
         if let potion = items.ingestibles[item.rawValue] {
             return potion.flags.contains(.poison)
         }
-        guard let ingredient = items.ingredients[item.rawValue], let store = magicEffects else {
+        guard
+            let ingredient = items.ingredients[item.rawValue],
+            let store = coordinator.magicEffects
+        else {
             return nil
         }
-        let plugin = magicItemPlugin
+        let plugin = coordinator.magicItemPlugin
         let costliest = ingredient.effects.compactMap { entry -> (Float, Bool)? in
             store.resolve(entry.effect, fromPlugin: plugin).map { effect in
                 let result = AlchemyRules.scaled(entry, effect, power: 1)

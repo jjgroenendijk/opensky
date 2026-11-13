@@ -67,38 +67,40 @@ struct AlchemyCoordinatorTests {
         #expect(!coordinator.isCrafting)
         coordinator.crafting = try CraftingSessionTests.harness().session
         #expect(coordinator.isCrafting)
-        coordinator.closeCraftingSession()
+        coordinator.craftingBench.closeCraftingSession()
         #expect(!coordinator.isCrafting)
     }
 
     @Test func craftingWithNoOpenStationSaysSo() throws {
         let coordinator = try Self.harness().coordinator
         let recipe = ResolvedFormID(plugin: "Base.esm", objectID: 0x10)
-        #expect(coordinator.craftLine(recipe, texts: .vanilla) == "No crafting station is open.")
+        #expect(coordinator.readoutLines
+            .craftLine(recipe, texts: .vanilla) == "No crafting station is open.")
     }
 
     @Test func anOutcomeReadsAsTheLineItShows() throws {
         let coordinator = try Self.harness().coordinator
-        #expect(coordinator.text(of: .nothingToDrop) == ItemActionOutcome.nothingToDrop.text)
+        #expect(coordinator.readoutLines.text(of: .nothingToDrop) == ItemActionOutcome.nothingToDrop
+            .text)
     }
 
     @Test func aBrewUsesOneOfEachAndRegistersThePotion() throws {
         let harness = try Self.harness()
         try Self.carry([Fixture.wheat, Fixture.flower], harness, count: 2)
         let lab = harness.coordinator
-        lab.toggleAlchemyIngredient(Fixture.wheat)
-        let picked = lab.toggleAlchemyIngredient(Fixture.flower)
+        lab.alchemyLab.toggleAlchemyIngredient(Fixture.wheat)
+        let picked = lab.alchemyLab.toggleAlchemyIngredient(Fixture.flower)
         #expect(picked.text.contains("Potion of Restore Health"))
-        let outcome = lab.brewChosenIngredients()
+        let outcome = lab.alchemyLab.brewChosenIngredients()
         #expect(outcome == .brewed(count: 1, item: "Potion of Restore Health", value: 5))
-        let potion = try #require(lab.createdPotions.potions.first)
+        let potion = try #require(lab.alchemyLab.createdPotions.potions.first)
         #expect(harness.inventory.count(of: potion.id, in: .player) == 1)
         #expect(harness.inventory.count(of: Fixture.wheat, in: .player) == 1)
         #expect(harness.inventory.baselines.items.ingestibles[potion.id.rawValue] != nil)
-        #expect(lab.ingredientKnowledge.knows(0, of: Fixture.flower))
+        #expect(lab.alchemyLab.ingredientKnowledge.knows(0, of: Fixture.flower))
         // Value 5 plus 1 for the created potion (UESP "Skyrim:Leveling").
         #expect(harness.skills.uses.map(\.amount) == [6])
-        let alchemy = InventoryCoordinator.alchemySkill
+        let alchemy = InventoryCoordinator.AlchemyLab.alchemySkill
         #expect(harness.skills.uses.first?.action == .craft(skill: alchemy))
         // Both are still carried, so they stay chosen for the next brew.
         #expect(lab.alchemySelection == [Fixture.wheat, Fixture.flower])
@@ -108,39 +110,41 @@ struct AlchemyCoordinatorTests {
         let harness = try Self.harness()
         try Self.carry([Fixture.wheat, Fixture.salt], harness)
         let lab = harness.coordinator
-        lab.toggleAlchemyIngredient(Fixture.wheat)
-        #expect(lab.toggleAlchemyIngredientLine(Fixture.salt).contains("No shared effect"))
-        #expect(lab.brewChosenIngredients() == .failed("You failed to create a potion."))
+        lab.alchemyLab.toggleAlchemyIngredient(Fixture.wheat)
+        #expect(lab.readoutLines.toggleAlchemyIngredientLine(Fixture.salt)
+            .contains("No shared effect"))
+        #expect(lab.alchemyLab.brewChosenIngredients() == .failed("You failed to create a potion."))
         #expect(harness.inventory.count(of: Fixture.wheat, in: .player) == 0)
         #expect(harness.inventory.count(of: Fixture.salt, in: .player) == 0)
         #expect(harness.skills.uses.map(\.amount) == [5])
-        #expect(lab.createdPotions.potions.isEmpty)
+        #expect(lab.alchemyLab.createdPotions.potions.isEmpty)
     }
 
     @Test func aLabAllowsThreeIngredientsAndOnlyCarriedOnes() throws {
         let harness = try Self.harness()
         let lab = harness.coordinator
-        #expect(lab.toggleAlchemyIngredient(Fixture.wheat) == .noneCarried("Wheat"))
+        #expect(lab.alchemyLab.toggleAlchemyIngredient(Fixture.wheat) == .noneCarried("Wheat"))
         try Self.carry([Fixture.wheat, Fixture.flower, Fixture.cap, Fixture.poison], harness)
         #expect(
-            lab.toggleAlchemyIngredient(Fixture.poison) == .notAnIngredient("Damage Health Poison")
+            lab.alchemyLab
+                .toggleAlchemyIngredient(Fixture.poison) == .notAnIngredient("Damage Health Poison")
         )
         for item in [Fixture.wheat, Fixture.flower, Fixture.cap] {
-            lab.toggleAlchemyIngredient(item)
+            lab.alchemyLab.toggleAlchemyIngredient(item)
         }
         #expect(lab.alchemySelection?.count == 3)
-        lab.toggleAlchemyIngredient(Fixture.flower)
+        lab.alchemyLab.toggleAlchemyIngredient(Fixture.flower)
         #expect(lab.alchemySelection == [Fixture.wheat, Fixture.cap])
-        #expect(lab.brewChosenIngredientsLine().contains("Poison of Damage Health"))
+        #expect(lab.readoutLines.brewChosenIngredientsLine().contains("Poison of Damage Health"))
     }
 
     @Test func modPotionsCreatedMakesMore() throws {
         let harness = try Self.harness()
         try Self.carry([Fixture.wheat, Fixture.flower], harness)
         harness.world.perkFactors[.modPotionsCreated] = 2
-        harness.coordinator.toggleAlchemyIngredient(Fixture.wheat)
-        harness.coordinator.toggleAlchemyIngredient(Fixture.flower)
-        #expect(harness.coordinator.brewChosenIngredients().text.hasPrefix("Made 2"))
+        harness.coordinator.alchemyLab.toggleAlchemyIngredient(Fixture.wheat)
+        harness.coordinator.alchemyLab.toggleAlchemyIngredient(Fixture.flower)
+        #expect(harness.coordinator.alchemyLab.brewChosenIngredients().text.hasPrefix("Made 2"))
         // Nothing is left, so nothing stays chosen.
         #expect(harness.coordinator.alchemySelection?.isEmpty == true)
     }
@@ -150,9 +154,10 @@ struct AlchemyCoordinatorTests {
         try Self.carry([Fixture.wheat, Fixture.flower], harness)
         harness.world.perkFactors[.modAlchemyEffectiveness] = 2
         harness.world.purifies = true
-        harness.coordinator.toggleAlchemyIngredient(Fixture.wheat)
-        harness.coordinator.toggleAlchemyIngredient(Fixture.flower)
-        #expect(harness.coordinator.alchemyPreview?.effects == ["Restore Health 17 for 0 s"])
+        harness.coordinator.alchemyLab.toggleAlchemyIngredient(Fixture.wheat)
+        harness.coordinator.alchemyLab.toggleAlchemyIngredient(Fixture.flower)
+        #expect(harness.coordinator.alchemyLab.alchemyPreview?
+            .effects == ["Restore Health 17 for 0 s"])
         #expect(harness.world.alchemySeams.last?.isPoison == false)
         #expect(harness.world.alchemySeams.last?.effect?.effect.editorID == "AlchRestoreHealth")
     }
@@ -160,48 +165,49 @@ struct AlchemyCoordinatorTests {
     @Test func eatingTeachesTheFirstEffectOrMoreWithExperimenter() throws {
         let harness = try Self.harness()
         let lab = harness.coordinator
-        #expect(lab.learnEatenIngredient(Fixture.wheat) == .learned(
+        #expect(lab.alchemyLab.learnEatenIngredient(Fixture.wheat) == .learned(
             ingredient: "Wheat", effects: ["Restore Health"]
         ))
-        #expect(lab.learnEatenIngredient(Fixture.wheat).text.contains("no new effect"))
+        #expect(lab.alchemyLab.learnEatenIngredient(Fixture.wheat).text.contains("no new effect"))
         harness.world.perkFactors[.modInitialIngredientEffectsLearned] = 2
-        lab.learnEatenIngredient(Fixture.cap)
-        #expect(lab.ingredientKnowledge.knownIndices(of: Fixture.cap) == [0, 1])
+        lab.alchemyLab.learnEatenIngredient(Fixture.cap)
+        #expect(lab.alchemyLab.ingredientKnowledge.knownIndices(of: Fixture.cap) == [0, 1])
     }
 
     @Test func scriptsLearnEffectsOneByOneOrAll() throws {
         let lab = try Self.harness().coordinator
-        #expect(lab.learnNextIngredientEffect(Fixture.wheat) == 0)
-        #expect(lab.learnNextIngredientEffect(Fixture.wheat) == 1)
-        #expect(lab.learnNextIngredientEffect(Fixture.wheat) == -1)
-        #expect(lab.learnIngredientEffects(Fixture.flower, indices: nil))
-        #expect(lab.ingredientKnowledge.knownIndices(of: Fixture.flower) == [0, 1])
-        #expect(!lab.learnIngredientEffects(Fixture.poison, indices: [0]))
-        #expect(lab.isHostileItem(Fixture.poison) == true)
-        #expect(lab.isHostileItem(Fixture.wheat) == true)
-        #expect(lab.isHostileItem(Fixture.flower) == false)
+        #expect(lab.alchemyLab.learnNextIngredientEffect(Fixture.wheat) == 0)
+        #expect(lab.alchemyLab.learnNextIngredientEffect(Fixture.wheat) == 1)
+        #expect(lab.alchemyLab.learnNextIngredientEffect(Fixture.wheat) == -1)
+        #expect(lab.alchemyLab.learnIngredientEffects(Fixture.flower, indices: nil))
+        #expect(lab.alchemyLab.ingredientKnowledge.knownIndices(of: Fixture.flower) == [0, 1])
+        #expect(!lab.alchemyLab.learnIngredientEffects(Fixture.poison, indices: [0]))
+        #expect(lab.alchemyLab.isHostileItem(Fixture.poison) == true)
+        #expect(lab.alchemyLab.isHostileItem(Fixture.wheat) == true)
+        #expect(lab.alchemyLab.isHostileItem(Fixture.flower) == false)
     }
 
     @Test func aPoisonGoesOnTheDrawnWeaponForTheDoseCount() throws {
         let harness = try Self.harness()
         let lab = harness.coordinator
         try Self.carry([Fixture.poison], harness, count: 2)
-        #expect(lab.applyPoison(Fixture.poison) == .noWeapon)
+        #expect(lab.consumables.applyPoison(Fixture.poison) == .noWeapon)
         try Self.carry([InventoryBaselineFixture.sword], harness)
         _ = try lab.equipment?.equip(InventoryBaselineFixture.sword, on: .player)
         harness.world.perkFactors[.modPoisonDoseCount] = 2
-        let applied = lab.applyPoison(Fixture.poison)
+        let applied = lab.consumables.applyPoison(Fixture.poison)
         #expect(applied.text.contains("Damage Health Poison"))
         guard case let .poisoned(_, _, doses) = applied else {
             Issue.record("expected a poisoned weapon, got \(applied)")
             return
         }
         #expect(doses == 2)
-        #expect(lab.playerWeaponPoisons.poisons[InventoryBaselineFixture.sword]?.doses == 2)
+        #expect(lab.consumables.playerWeaponPoisons.poisons[InventoryBaselineFixture.sword]?
+            .doses == 2)
         #expect(harness.inventory.count(of: Fixture.poison, in: .player) == 1)
-        #expect(lab.applyPoison(Fixture.poison) == .alreadyPoisoned)
+        #expect(lab.consumables.applyPoison(Fixture.poison) == .alreadyPoisoned)
         #expect(harness.inventory.count(of: Fixture.poison, in: .player) == 1)
-        #expect(lab.applyPoison(Fixture.wheat) == .notAPoison("Wheat"))
+        #expect(lab.consumables.applyPoison(Fixture.wheat) == .notAPoison("Wheat"))
         #expect(AlchemyActionOutcome.noWeapon.text(.vanilla) == PoisonText.noWeapon.fallback)
     }
 
@@ -220,10 +226,10 @@ struct AlchemyCoordinatorTests {
             ]
         )
         harness.store.set(state, for: .player)
-        harness.coordinator.registerCreatedPotions()
+        harness.coordinator.alchemyLab.registerCreatedPotions()
         #expect(items.definition(potion.id)?.family == .ingestible)
         harness.store.reset(CreatedPotionState.componentKind, for: .player)
-        harness.coordinator.registerCreatedPotions()
+        harness.coordinator.alchemyLab.registerCreatedPotions()
         #expect(items.definition(potion.id) == nil)
     }
 }

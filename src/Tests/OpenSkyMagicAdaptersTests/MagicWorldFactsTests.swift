@@ -51,12 +51,12 @@ struct MagicWorldFactsTests {
 
     @Test func itemsAndNoticesReachTheirPorts() {
         host.fakeInventory.nameResult = "Wheat"
-        host.fakeInventory.learnEatenIngredientResult = AlchemyActionOutcome.idle
+        host.fakeInventory.alchemyLab.learnEatenIngredientResult = AlchemyActionOutcome.idle
         #expect(adapter.itemName(FormID(0x40)) == "Wheat")
         adapter.playerAteIngredient(FormID(0x40))
         adapter.postNotification("Hello")
         adapter.announceSpellLearned("Flames")
-        #expect(host.fakeInventory.learnEatenIngredientCalls == [FormID(0x40)])
+        #expect(host.fakeInventory.alchemyLab.learnEatenIngredientCalls == [FormID(0x40)])
         #expect(host.fakeMessages.postNotificationCalls == ["Hello"])
         #expect(host.fakeMessages.postWorldNoticeCalls.count == 1)
     }

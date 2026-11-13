@@ -9,21 +9,25 @@ import OpenSkyProgressionInterface
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 
-extension InventoryCoordinator {
+extension InventoryCoordinator.CraftingBench {
     // MARK: - Harvest
 
     /// `interaction` with its runtime label: the game's verb, then a harvested plant, a
     /// locked target, or a perk's activate label, which wins.
     public func labelled(_ interaction: PlacedInteraction) -> PlacedInteraction {
         let context = ActivationPromptContext(
-            isBook: world.isBook(interaction.base),
-            isTheft: runtime?.isTheft(interaction) ?? false,
-            isPlayerSneaking: world.isPlayerSneaking
+            isBook: coordinator.world.isBook(interaction.base),
+            isTheft: coordinator.runtime?.isTheft(interaction) ?? false,
+            isPlayerSneaking: coordinator.world.isPlayerSneaking
         )
-        let verb = ActivationPrompt.labelled(interaction, context: context, texts: activationTexts)
-        let labelled = locks
-            .labelled(runtime?.labelled(verb) ?? verb)
-        guard let label = world.perkActivateLabel(for: interaction.reference) else {
+        let verb = ActivationPrompt.labelled(
+            interaction,
+            context: context,
+            texts: coordinator.texts.activation
+        )
+        let labelled = coordinator.locks
+            .labelled(coordinator.runtime?.labelled(verb) ?? verb)
+        guard let label = coordinator.world.perkActivateLabel(for: interaction.reference) else {
             return labelled
         }
         return labelled.relabelled(label)
@@ -31,18 +35,18 @@ extension InventoryCoordinator {
 
     /// Refreshes the prompt, which now reads as harvested.
     public func harvest(_ interaction: PlacedInteraction) -> InventoryResult<ItemActionOutcome> {
-        guard let runtime else { return InventoryResult(.unavailable) }
+        guard let runtime = coordinator.runtime else { return InventoryResult(.unavailable) }
         do {
             let outcome = try runtime.harvest(
                 interaction, at: harvestMoment, count: harvestCount(of: interaction)
             )
-            let items = outcome.granted.map { "\($0.count) × \(name(of: $0.item))" }
+            let items = outcome.granted.map { "\($0.count) × \(coordinator.name(of: $0.item))" }
             return InventoryResult(
-                note(.harvested(plant: interaction.name, items: items)),
+                coordinator.note(.harvested(plant: interaction.name, items: items)),
                 commands: [.refreshInteractionTarget]
             )
         } catch {
-            return InventoryResult(note(.failed(
+            return InventoryResult(coordinator.note(.failed(
                 action: "Harvest",
                 reason: String(describing: error)
             )))
@@ -52,15 +56,16 @@ extension InventoryCoordinator {
     /// The day and the season of a harvest now.
     var harvestMoment: HarvestMoment {
         HarvestMoment(
-            day: world.gameDaysPassed, season: world.gameMonth.flatMap(HarvestSeason.init(month:))
+            day: coordinator.world.gameDaysPassed,
+            season: coordinator.world.gameMonth.flatMap(HarvestSeason.init(month:))
         )
     }
 
     /// Green Thumb sets Mod Ingredients Harvested to 2, with the produce bound as the item.
     func harvestCount(of interaction: PlacedInteraction) -> Int32 {
         let produce = interaction.produce?.ingredient
-        let subject = runtime?.inventory.baselines.items.conditionSubject(of: produce)
-        let value = world.perkModified(
+        let subject = coordinator.runtime?.inventory.baselines.items.conditionSubject(of: produce)
+        let value = coordinator.world.perkModified(
             1,
             at: .modIngredientsHarvested,
             on: .player,
@@ -71,8 +76,8 @@ extension InventoryCoordinator {
     }
 
     public func harvestInteractionTarget() -> InventoryResult<ItemActionOutcome> {
-        guard let interaction = world.crosshairInteraction else {
-            return InventoryResult(note(.nothingUnderCrosshair(verb: "harvest")))
+        guard let interaction = coordinator.world.crosshairInteraction else {
+            return InventoryResult(coordinator.note(.nothingUnderCrosshair(verb: "harvest")))
         }
         return harvest(interaction)
     }
@@ -82,46 +87,50 @@ extension InventoryCoordinator {
     /// Opens a session for a station activation, replacing any open one.
     @discardableResult
     public func openCraftingSession(_ event: CraftingActivationEvent) -> CraftingActionOutcome {
-        guard let runtime else { return noteCraft(.unavailable) }
-        guard let craftingCatalog else { return noteCraft(.noRecipeData) }
-        crafting = CraftingSession(
+        guard let runtime = coordinator.runtime else { return noteCraft(.unavailable) }
+        guard let craftingCatalog = coordinator.craftingCatalog
+        else { return noteCraft(.noRecipeData) }
+        coordinator.crafting = CraftingSession(
             event: event,
             catalog: craftingCatalog,
             inventory: runtime.inventory,
             player: runtime.player,
-            conditions: recipeConditions,
-            skills: skillUses,
-            skillUse: craftingSkillUse
+            conditions: coordinator.recipeConditions,
+            skills: coordinator.skillUses,
+            skillUse: coordinator.craftingSkillUse
         )
-        alchemySelection = crafting?.station.brews == true ? [] : nil
-        if alchemySelection != nil {
-            let carried = alchemyIngredients.count
+        coordinator.alchemySelection = coordinator.crafting?.station.brews == true ? [] : nil
+        if coordinator.alchemySelection != nil {
+            let carried = coordinator.alchemyLab.alchemyIngredients.count
             return noteCraft(.openedLab(event.interaction.name, ingredients: carried))
         }
-        let count = crafting?.recipes.count ?? 0
+        let count = coordinator.crafting?.recipes.count ?? 0
         return noteCraft(.opened(station: event.interaction.name, recipes: count))
     }
 
     @discardableResult
     public func craft(_ recipe: ResolvedFormID) -> CraftingActionOutcome {
-        guard let crafting else { return noteCraft(.notOpen) }
+        guard let crafting = coordinator.crafting else { return noteCraft(.notOpen) }
         do {
             let outcome = try crafting.craft(recipe)
             if let step = outcome.improved {
-                let from = qualityName(step.from, of: outcome.created.item)
-                let to = qualityName(step.to, of: outcome.created.item)
-                let item = name(of: outcome.created.item)
+                let from = coordinator.craftingReadout.qualityName(
+                    step.from,
+                    of: outcome.created.item
+                )
+                let to = coordinator.craftingReadout.qualityName(step.to, of: outcome.created.item)
+                let item = coordinator.name(of: outcome.created.item)
                 return noteCraft(.improved(item: item, from: from, to: to))
             }
-            storyEvents?.reportStoryEvent(.craft(
+            coordinator.storyEvents?.reportStoryEvent(.craft(
                 actor: .player,
-                workbench: runtime?.references?
+                workbench: coordinator.runtime?.references?
                     .referenceEntry(formID: crafting.interaction.reference)?.key,
                 location: nil,
                 created: outcome.created.item
             ))
             return noteCraft(.crafted(
-                count: outcome.created.count, item: name(of: outcome.created.item)
+                count: outcome.created.count, item: coordinator.name(of: outcome.created.item)
             ))
         } catch {
             if
@@ -136,15 +145,15 @@ extension InventoryCoordinator {
 
     @discardableResult
     public func closeCraftingSession() -> CraftingActionOutcome {
-        guard crafting != nil else { return noteCraft(.notOpen) }
-        crafting = nil
-        alchemySelection = nil
+        guard coordinator.crafting != nil else { return noteCraft(.notOpen) }
+        coordinator.crafting = nil
+        coordinator.alchemySelection = nil
         return noteCraft(.closed)
     }
 
     @discardableResult
     private func noteCraft(_ outcome: CraftingActionOutcome) -> CraftingActionOutcome {
-        lastCraft = outcome
+        coordinator.lastCraft = outcome
         return outcome
     }
 }

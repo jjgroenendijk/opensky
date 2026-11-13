@@ -82,9 +82,10 @@ struct ActorConditionReads {
         // OpenSky weighs only the player's load; an NPC carries any weight.
         state.isOverEncumbered = holder.key == .player ? inventoryFacts
             .playerIsOverEncumbered() : false
-        state.holdsWeapon = game.inventory.conditionEquipment(of: holder.key).map { facts in
-            facts.rightWeapon != nil || facts.leftWeapon != nil
-        }
+        state.holdsWeapon = game.inventory.itemConditions.conditionEquipment(of: holder.key)
+            .map { facts in
+                facts.rightWeapon != nil || facts.leftWeapon != nil
+            }
         return state
     }
 
@@ -107,7 +108,7 @@ extension RuntimeStateCoreAdapter {
         guard let values = game.actorValues.runtime else { return .empty }
         var player = ActorConditionReads(game: game, inventoryFacts: inventoryFacts)
             .actorConditionState(holder: .player, values: values)
-        inventoryFacts.playerConditionTraits(&player)
+        inventoryFacts.playerTraits.fill(&player)
         var states = residentActorStates(values: values)
         states[.player] = player
         return ActorStateResolution.fight(

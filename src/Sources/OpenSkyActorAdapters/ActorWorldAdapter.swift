@@ -186,7 +186,7 @@ extension ActorWorldAdapter: ActorValueWorld {
     }
 
     public func playerCarriedWeight() -> Float? {
-        game.inventory.runtime == nil ? nil : game.inventory.playerCarriedWeight
+        game.inventory.runtime == nil ? nil : game.inventory.armourWeights.playerCarriedWeight
     }
 
     public func setPlayerOverencumbered(_ overencumbered: Bool) {

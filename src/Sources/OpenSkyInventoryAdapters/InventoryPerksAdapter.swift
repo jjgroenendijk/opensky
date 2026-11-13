@@ -76,7 +76,7 @@ extension InventoryPerksAdapter {
     public func labelled(_ target: InteractionTarget?) -> InteractionTarget? {
         target.map {
             InteractionTarget(
-                interaction: game.inventory.labelled($0.interaction),
+                interaction: game.inventory.craftingBench.labelled($0.interaction),
                 hitPosition: $0.hitPosition,
                 distance: $0.distance
             )

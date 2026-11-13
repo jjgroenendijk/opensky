@@ -9,14 +9,16 @@ public import OpenSkyInventoryInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
-extension InventoryCoordinator {
+extension InventoryCoordinator.FollowerTakes {
     /// Moves every stack `key` holds to `follower`, marked stolen when the take is theft.
     /// True when anything moved.
     public func followerTakeAll(
         from key: ReferenceKey, by follower: ReferenceKey
     ) -> InventoryResult<Bool> {
         guard
-            let runtime, let source = scriptHolder(key), let destination = scriptHolder(follower)
+            let runtime = coordinator.runtime,
+            let source = coordinator.scriptItems.scriptHolder(key),
+            let destination = coordinator.scriptItems.scriptHolder(follower)
         else { return InventoryResult(false) }
         // Looting a body is no theft.
         let isBody = if case .actor = source.owner {
@@ -48,7 +50,8 @@ extension InventoryCoordinator {
     /// Moves a loose item into `follower`'s inventory and out of the world.
     public func followerPickUp(_ item: ReferenceKey, by follower: ReferenceKey) -> Bool {
         guard
-            let runtime, let destination = scriptHolder(follower),
+            let runtime = coordinator.runtime,
+            let destination = coordinator.scriptItems.scriptHolder(follower),
             let entry = runtime.references?.referenceEntry(key: item),
             let reference = entry.placedReference
         else { return false }

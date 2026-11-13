@@ -4,20 +4,20 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyInventoryInterface
 
-extension InventoryCoordinator {
+extension InventoryCoordinator.ItemCards {
     /// Nil without game data or for an item no plugin describes.
     public func itemCard(for item: FormID) -> InventoryItemCard? {
         guard
-            let runtime,
+            let runtime = coordinator.runtime,
             let definition = runtime.inventory.baselines.items.definition(item)
         else {
             return nil
         }
         let items = runtime.inventory.baselines.items
-        let favourites = playerFavourites
+        let favourites = coordinator.favouriteItems.playerFavourites
         var card = InventoryItemCard(
             layout: Self.layout(of: definition, items: items),
-            name: name(of: item),
+            name: coordinator.name(of: item),
             kind: Self.kind(of: definition, items: items),
             value: items.gameValue(of: item),
             weight: definition.weight,
@@ -25,28 +25,29 @@ extension InventoryCoordinator {
             // DNAM holds the rating times 100.
             armourRating: items.armor[item.rawValue].map { Float($0.armorRating & 0xFFFF) / 100 },
             effects: effectLines(of: item, items: items),
-            enchantment: world.enchantmentLine(of: item, on: runtime.player.key),
+            enchantment: coordinator.world.enchantmentLine(of: item, on: runtime.player.key),
             isStolen: runtime.inventory.inventory(of: runtime.player).stolenCount(of: item) > 0,
             hotkey: favourites.hotkey(of: item),
             isFavourite: favourites.contains(item)
         )
-        card.isQuestItem = isQuestItem(item)
+        card.isQuestItem = coordinator.scriptItems.isQuestItem(item)
         return card
     }
 
     private func effectLines(of item: FormID, items: ItemDefinitionStore) -> [String] {
         if let ingredient = items.ingredients[item.rawValue] {
-            let knowledge = ingredientKnowledge
+            let knowledge = coordinator.alchemyLab.ingredientKnowledge
             return ingredient.effects.indices.map { index in
-                knowledge.knows(index, of: item) ? effectName(ingredient.effects[
-                    index
-                ].effect) : "?"
+                knowledge.knows(index, of: item) ? coordinator.alchemyLab
+                    .effectName(ingredient.effects[
+                        index
+                    ].effect) : "?"
             }
         }
         let effects = items.ingestibles[item.rawValue]?.effects
             ?? items.scrolls[item.rawValue]?.effects ?? []
         return effects.map { entry in
-            var line = effectName(entry.effect)
+            var line = coordinator.alchemyLab.effectName(entry.effect)
             if entry.magnitude > 0 {
                 line += " \(Int(entry.magnitude.rounded()))"
             }

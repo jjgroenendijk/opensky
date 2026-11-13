@@ -20,19 +20,22 @@ extension InventoryMenuController {
     func toggleFavouriteSelection() {
         perform {
             itemActions.refusal(.favourite, of: $0.item)
-                ?? game.inventory.toggleFavourite($0.item).text
+                ?? game.inventory.favouriteItems.toggleFavourite($0.item).text
         }
     }
 
     /// A number key in play: equips or unequips the bound item, or uses a potion,
     /// food, ingredient, or poison, as activating its row would.
     func useHotkey(_ slot: Int) {
-        switch game.inventory.hotkeyItem(slot) {
+        switch game.inventory.favouriteItems.hotkeyItem(slot) {
         case let .failure(outcome):
             lastActionText = outcome.text
         case let .success(item):
             // A refusal shows its own notice.
-            let request = itemActions.request(for: game.inventory.use(of: item), item: item)
+            let request = itemActions.request(
+                for: game.inventory.consumables.use(of: item),
+                item: item
+            )
             if let refused = itemActions.refusal(request, of: item) {
                 lastActionText = refused
                 return

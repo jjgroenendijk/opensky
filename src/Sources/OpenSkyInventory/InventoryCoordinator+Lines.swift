@@ -2,16 +2,16 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
 
-extension InventoryCoordinator {
+extension InventoryCoordinator.ReadoutLines {
     public func craftLine(
         _ recipe: ResolvedFormID,
         texts: GameSettingTexts<CraftingRefusalText>
     ) -> String {
-        craft(recipe).text(texts)
+        coordinator.craftingBench.craft(recipe).text(texts)
     }
 
     public func toggleAlchemyIngredientLine(_ item: FormID) -> String {
-        toggleAlchemyIngredient(item).text
+        coordinator.alchemyLab.toggleAlchemyIngredient(item).text
     }
 
     public func text(of outcome: ItemActionOutcome) -> String {
@@ -19,6 +19,6 @@ extension InventoryCoordinator {
     }
 
     public func brewChosenIngredientsLine() -> String {
-        brewChosenIngredients().text
+        coordinator.alchemyLab.brewChosenIngredients().text
     }
 }

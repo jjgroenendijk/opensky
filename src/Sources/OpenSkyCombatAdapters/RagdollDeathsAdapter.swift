@@ -87,7 +87,10 @@ extension RagdollDeathsAdapter {
             let values = game.actorValues.runtime,
             let holder = poseReads.holder(of: key)
         else { return }
-        game.inventory.grantDeathItem(to: key, actorLevel: values.baseline(of: holder).level)
+        game.inventory.deathItems.grantDeathItem(
+            to: key,
+            actorLevel: values.baseline(of: holder).level
+        )
     }
 
     var selectedRagdollActor: ReferenceKey? {
