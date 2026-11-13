@@ -80,6 +80,7 @@ public protocol InventoryArmourWeightsPort {
 public protocol InventoryConsumablesPort {
     @discardableResult func applyPoison(_ poison: FormID) -> AlchemyActionOutcome
     func use(of item: FormID) -> ItemUse
+    func poisonQuestion(_ poison: FormID, texts: GameSettingTexts<PoisonText>) -> String?
 }
 
 /// Moving items between holders: take all, transfer, and the holder of a container.
