@@ -5,15 +5,15 @@
 import Foundation
 import OpenSkyFormatsAnimation
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.ChildGraphs {
     /// Asks the clip source to prefetch every clip the start states reach.
-    public func prefetchReachableClips() {
+    func prefetchReachableClips() {
         var names: [String] = []
         var visited: Set<HKXPointerTarget> = []
-        collectClipNames(at: root, depth: 0, visited: &visited, into: &names)
+        collectClipNames(at: graph.root, depth: 0, visited: &visited, into: &names)
         var seen: Set<String> = []
         for name in names where seen.insert(name.lowercased()).inserted {
-            clipSource.prefetch(named: name)
+            graph.clipSource.prefetch(named: name)
         }
     }
 
@@ -24,8 +24,8 @@ nonisolated extension BehaviorGraphInstance {
         into names: inout [String]
     ) {
         guard
-            let target, depth < Self.maximumDepth, visited.insert(target).inserted,
-            let node = compiledNode(at: target)
+            let target, depth < BehaviorGraphInstance.maximumDepth, visited.insert(target).inserted,
+            let node = graph.compiledNode(at: target)
         else { return }
         switch node.object {
         case let clip as HKBClipGenerator:
@@ -33,14 +33,17 @@ nonisolated extension BehaviorGraphInstance {
                 names.append(name)
             }
         case let machine as HKBStateMachine:
-            let start = stateInfo(of: machine, id: machine.startStateId)?.info.generator
+            let start = graph.stateMachines.stateInfo(of: machine, id: machine.startStateId)?.info
+                .generator
             collectClipNames(at: start, depth: depth + 1, visited: &visited, into: &names)
         case let reference as HKBBehaviorReferenceGenerator:
-            guard let name = reference.behaviorName, let child = referencedGraph(named: name)
+            guard
+                let name = reference.behaviorName,
+                let child = graph.childGraphs.referencedGraph(named: name)
             else { return }
             // Pointer targets are per file, so the child starts its own visited set.
             var childVisited: Set<HKXPointerTarget> = []
-            child.collectClipNames(
+            child.childGraphs.collectClipNames(
                 at: child.root, depth: depth + 1, visited: &childVisited, into: &names
             )
         default:

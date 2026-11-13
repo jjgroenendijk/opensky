@@ -62,14 +62,14 @@ nonisolated enum BehaviorPoseMatchRules {
     }
 }
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.Blenders {
     func evaluatePoseMatching(
         _ matching: HKBPoseMatchingGenerator,
         _ visit: BehaviorVisit,
         deltaTime: Float
     ) -> BehaviorPose {
         let (target, bound, depth) = (visit.target, visit.bound, visit.depth)
-        var node = markReached(target)
+        var node = graph.markReached(target)
         var state = node.poseMatch ?? startPoseMatch(matching)
         applyPoseMatchEvents(matching, &state)
         if state.isMatching {
@@ -81,7 +81,7 @@ nonisolated extension BehaviorGraphInstance {
             )
         }
         node.poseMatch = state
-        nodeStates[target] = node
+        graph.nodeStates[target] = node
         return evaluateBlend(
             matching.blender, bound: bound, depth: depth,
             deltaTime: state.isMatching ? 0 : deltaTime, weights: state.weights
@@ -102,7 +102,7 @@ nonisolated extension BehaviorGraphInstance {
     private func applyPoseMatchEvents(
         _ matching: HKBPoseMatchingGenerator, _ state: inout BehaviorPoseMatchState
     ) {
-        for event in events.active {
+        for event in graph.events.active {
             if event.id == matching.startPlayingEventId {
                 state.isMatching = false
             } else if event.id == matching.startMatchingEventId {
@@ -118,9 +118,9 @@ nonisolated extension BehaviorGraphInstance {
         deltaTime: Float
     ) {
         let live = BehaviorModelPose(
-            BehaviorPose(bones: characterContext.livePose ?? lastCompleteBones
-                ?? skeleton.referencePose),
-            skeleton: skeleton
+            BehaviorPose(bones: graph.physics.characterContext.livePose ?? graph.lastCompleteBones
+                ?? graph.skeleton.referencePose),
+            skeleton: graph.skeleton
         )
         guard let orientation = frame(of: live, matching) else { return }
         let errors = BehaviorPoseMatchRules.errors(
@@ -172,7 +172,7 @@ nonisolated extension BehaviorGraphInstance {
     private func position(
         ofRagdollBone index: Int, in pose: BehaviorModelPose
     ) -> SIMD3<Float>? {
-        let bone = skeleton.bone(forRagdollBone: index)
+        let bone = graph.skeleton.bone(forRagdollBone: index)
         return pose.contains(bone) ? pose.translations[bone] : nil
     }
 
@@ -182,28 +182,28 @@ nonisolated extension BehaviorGraphInstance {
     ) -> simd_quatf? {
         guard
             let generator = clipGenerator(underChild: target),
-            let clip = clip(
+            let clip = graph.clip(
                 named: generator.animationName, bindingIndex: generator.animationBindingIndex
             ),
             clip.duration > 0
         else { return nil }
         let start = generator.cropStartAmountLocalTime + generator.startTime
         let samples = clip.samples(at: min(max(start, 0), clip.duration))
-        let mirrored = generator.flags & 0x4 != 0 ? mirror : nil
+        let mirrored = generator.flags & 0x4 != 0 ? graph.mirror : nil
         let bones = BehaviorPoseMath.applying(
             mirrored?.mirroring(samples, isAdditive: false) ?? samples,
-            to: skeleton.referencePose
+            to: graph.skeleton.referencePose
         )
-        let pose = BehaviorModelPose(BehaviorPose(bones: bones), skeleton: skeleton)
+        let pose = BehaviorModelPose(BehaviorPose(bones: bones), skeleton: graph.skeleton)
         return frame(of: pose, matching)
     }
 
     private func clipGenerator(underChild target: HKXPointerTarget) -> HKBClipGenerator? {
         guard
-            let child = object(at: target, as: HKBBlenderGeneratorChild.self),
+            let child = graph.object(at: target, as: HKBBlenderGeneratorChild.self),
             let generator = child.generator
         else { return nil }
-        return object(at: generator, as: HKBClipGenerator.self)
+        return graph.object(at: generator, as: HKBClipGenerator.self)
     }
 
     /// Starting to match again plays the current child from its start.
@@ -211,8 +211,8 @@ nonisolated extension BehaviorGraphInstance {
         guard
             let index, matching.blender.children.indices.contains(index),
             let child = matching.blender.children[index],
-            let generator = object(at: child, as: HKBBlenderGeneratorChild.self)?.generator
+            let generator = graph.object(at: child, as: HKBBlenderGeneratorChild.self)?.generator
         else { return }
-        nodeStates[generator] = nil
+        graph.nodeStates[generator] = nil
     }
 }

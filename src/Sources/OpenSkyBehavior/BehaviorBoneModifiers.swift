@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsAnimation
 import simd
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.BoneModifiers {
     private static let modelUp = SIMD3<Float>(0, 0, 1)
     private static let modelForward = SIMD3<Float>(0, 1, 0)
 
@@ -39,7 +39,7 @@ nonisolated extension BehaviorGraphInstance {
             return pose
         case let modifier as HKBGetUpModifier:
             let bound = step.bound
-            physicsRequests.getUp = BehaviorGetUpRequest(
+            graph.physics.physicsRequests.getUp = BehaviorGetUpRequest(
                 groundNormal: BehaviorModelPose.vector3(
                     bound.quad("groundNormal", or: modifier.groundNormal)
                 ),
@@ -77,7 +77,7 @@ nonisolated extension BehaviorGraphInstance {
         let axis = simd_normalize(rawAxis)
         let angle = bound.float("twistAngle", or: modifier.twistAngle)
         var result = pose
-        var model = BehaviorModelPose(pose, skeleton: skeleton)
+        var model = BehaviorModelPose(pose, skeleton: graph.skeleton)
         let chain = model.chain(
             from: bound.int("startBoneIndex", or: modifier.startBoneIndex),
             to: bound.int("endBoneIndex", or: modifier.endBoneIndex)
@@ -87,7 +87,7 @@ nonisolated extension BehaviorGraphInstance {
         let local = bound.int("rotationAxisCoordinates", or: modifier.rotationAxisCoordinates) == 1
         let additive = bound.bool("isAdditive", or: modifier.isAdditive)
         if !additive, !local {
-            tally.note(.twistModelAxisAsAdditive)
+            graph.tally.note(.twistModelAxisAsAdditive)
         }
         for (position, bone) in chain.enumerated() {
             let share = (ramped ? Float(position + 1) : 1) / max(total, 1)
@@ -155,15 +155,15 @@ nonisolated extension BehaviorGraphInstance {
         _ modifier: BSTweenerModifier, _ step: BehaviorModifierStep, to pose: BehaviorPose
     ) -> BehaviorPose {
         let bound = step.bound
-        var state = markReached(step.target)
+        var state = graph.markReached(step.target)
         let duration = bound.bool("useTweenDuration", or: modifier.useTweenDuration)
             ? bound.float("tweenDuration", or: modifier.tweenDuration) : 0
         let remaining = max(duration - state.elapsed, 0)
         let fraction = remaining <= step.deltaTime ? 1 : step.deltaTime / remaining
         state.elapsed += step.deltaTime
-        nodeStates[step.target] = state
+        graph.nodeStates[step.target] = state
         var result = pose
-        let context = characterContext
+        let context = graph.physics.characterContext
         if bound.bool("tweenPosition", or: modifier.tweenPosition) {
             let target = BehaviorModelPose.vector3(bound.quad(
                 "targetPosition",
@@ -188,7 +188,7 @@ nonisolated extension BehaviorGraphInstance {
     private func applyPassByTarget(
         _ modifier: BSPassByTargetTriggerModifier, _ step: BehaviorModifierStep
     ) {
-        var state = markReached(step.target)
+        var state = graph.markReached(step.target)
         guard !state.hasFiredAlarm else { return }
         let bound = step.bound
         let target = BehaviorModelPose.vector3(bound.quad(
@@ -198,7 +198,7 @@ nonisolated extension BehaviorGraphInstance {
         let rawDirection = BehaviorModelPose.vector3(
             bound.quad("movementDirection", or: modifier.movementDirection)
         )
-        let context = characterContext
+        let context = graph.physics.characterContext
         let direction = simd_length(rawDirection) > 0
             ? simd_normalize(rawDirection) : context.worldRotation.act(Self.modelForward)
         let offset = context.worldPosition - target
@@ -206,9 +206,9 @@ nonisolated extension BehaviorGraphInstance {
         let lateral = simd_length(offset - direction * along)
         if along >= 0, lateral <= bound.float("radius", or: modifier.radius) {
             state.hasFiredAlarm = true
-            raise(modifier.triggerEvent)
+            graph.raise(modifier.triggerEvent)
         }
-        nodeStates[step.target] = state
+        graph.nodeStates[step.target] = state
     }
 
     /// `BSLimbIKModifier`: when the ground probe finds geometry along the limb,
@@ -218,14 +218,14 @@ nonisolated extension BehaviorGraphInstance {
         _ modifier: BSLimbIKModifier, _ step: BehaviorModifierStep, to pose: BehaviorPose
     ) -> BehaviorPose {
         let bound = step.bound
-        var model = BehaviorModelPose(pose, skeleton: skeleton)
+        var model = BehaviorModelPose(pose, skeleton: graph.skeleton)
         let chain = model.chain(
             from: bound.int("startBoneIndex", or: modifier.startBoneIndex),
             to: bound.int("endBoneIndex", or: modifier.endBoneIndex)
         )
         guard let start = chain.first, let end = chain.last, start != end else { return pose }
-        var state = markReached(step.target)
-        let context = characterContext
+        var state = graph.markReached(step.target)
+        let context = graph.physics.characterContext
         let from = model.translations[start]
         let limb = model.translations[end] - from
         let hit = context.ground?.firstHit(
@@ -239,7 +239,7 @@ nonisolated extension BehaviorGraphInstance {
         let gain = min(max(bound.float("gain", or: modifier.gain), 0), 1)
         let angle = current + (goal - current) * gain
         state.weights = [angle]
-        nodeStates[step.target] = state
+        graph.nodeStates[step.target] = state
         let side = simd_cross(limb, Self.modelUp)
         guard abs(angle) > 0, simd_length(side) > 0 else { return pose }
         var result = pose
@@ -255,12 +255,12 @@ nonisolated extension BehaviorGraphInstance {
         var bones = Set(modifier.keyframeInfo.filter(\.isValid).map(\.boneIndex))
         if
             let list = modifier.keyframedBonesList,
-            let array = object(at: list, as: HKBBoneIndexArray.self)
+            let array = graph.object(at: list, as: HKBBoneIndexArray.self)
         {
-            markReached(list)
+            graph.markReached(list)
             bones.formUnion(array.boneIndices)
         }
-        physicsRequests.keyframedBones = bones.filter { $0 >= 0 }.sorted()
+        graph.physics.physicsRequests.keyframedBones = bones.filter { $0 >= 0 }.sorted()
     }
 
     private func applyFootIkControls(
@@ -272,7 +272,10 @@ nonisolated extension BehaviorGraphInstance {
                 "controlData/gains/\(name)", or: modifier.gains.value(name)
             )
         }
-        physicsRequests.footIkGains = gains
-        writeOutputs(["errorOutTranslation": .quad(SIMD4(footIkError, 0))], of: step.node)
+        graph.physics.physicsRequests.footIkGains = gains
+        graph.writeOutputs(
+            ["errorOutTranslation": .quad(SIMD4(graph.nodeMemory.footIkError, 0))],
+            of: step.node
+        )
     }
 }

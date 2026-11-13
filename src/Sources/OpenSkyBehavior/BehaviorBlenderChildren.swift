@@ -13,7 +13,53 @@ nonisolated struct BehaviorBlenderEntry {
     var characterWeights: [Float]?
 }
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.Blenders {
+    /// `hkbBlenderGenerator`: mixes child poses by `m_weight` and root travel by
+    /// `m_worldFromModelWeight`. A bone whose weights sum to at most
+    /// `m_referencePoseWeightThreshold` takes the reference pose for the rest.
+    func evaluateBlend(
+        _ blender: HKBBlenderFields,
+        bound: [String: BehaviorVariableValue],
+        depth: Int,
+        deltaTime: Float,
+        weights: [Float]? = nil
+    ) -> BehaviorPose {
+        let threshold = bound.float(
+            "m_referencePoseWeightThreshold",
+            or: blender
+                .referencePoseWeightThreshold
+        )
+        let children = blendChildren(
+            blender, bound: bound, depth: depth, deltaTime: deltaTime, weights: weights
+        )
+        let masked = children.map {
+            BehaviorPoseMath.MaskedChild(
+                pose: $0.pose, weight: $0.weight, boneWeights: $0.boneWeights
+            )
+        }
+        let full = masked.filter { !$0.pose.isAdditive }
+        var blended = full.isEmpty
+            ? BehaviorPoseMath.unchanged(boneCount: graph.skeleton.referencePose.count)
+            : BehaviorPoseMath.blend(
+                masked: full, fallback: graph.skeleton.restPose, referenceThreshold: threshold
+            )
+        // Each additive child adds on top at its own weight, after the normal children.
+        for layer in masked where layer.pose.isAdditive {
+            blended = BehaviorPoseMath.adding(
+                layer.pose,
+                to: blended,
+                weight: layer.weight(ofBone:)
+            )
+        }
+        blended.rootMotion = BehaviorPoseMath
+            .blend(
+                children: children.map { ($0.pose, $0.motionWeight) },
+                fallback: graph.skeleton.restPose
+            )
+            .rootMotion
+        return blended
+    }
+
     /// Evaluates every contributing child. A synced blender runs its leader first, so the
     /// others can follow its phase; each result returns to its own index, keeping blend order.
     func blendChildren(
@@ -40,16 +86,17 @@ nonisolated extension BehaviorGraphInstance {
         if synced, active.count > 1 {
             cycle = sharedCycle(blender, entries: entries, weights: weights, active: active)
         }
-        let outer = pendingClipPhase
-        let outerMute = mutesClipAnnotations
+        let outer = graph.pendingClipPhase
+        let outerMute = graph.nodeMemory.mutesClipAnnotations
         defer {
-            pendingClipPhase = outer
-            mutesClipAnnotations = outerMute
+            graph.pendingClipPhase = outer
+            graph.nodeMemory.mutesClipAnnotations = outerMute
         }
         var results = [BehaviorBlendChild?](repeating: nil, count: entries.count)
         for index in cycle.order(active) {
             guard let entry = entries[index] else { continue }
-            mutesClipAnnotations = outerMute || (cycle.leader != nil && index != cycle.leader)
+            graph.nodeMemory
+                .mutesClipAnnotations = outerMute || (cycle.leader != nil && index != cycle.leader)
             results[index] = blendChild(
                 entry,
                 weights: (pose: weights[index], motion: parametric ? weights[index] : 1),
@@ -57,8 +104,8 @@ nonisolated extension BehaviorGraphInstance {
                 deltaTime: deltaTime * cycle.rate(of: index)
             )
             if index == cycle.leader {
-                pendingClipPhase = clipPhase(under: entry.child.generator).map { ($0, false) }
-                    ?? outer
+                let phase = graph.clipPlayback.clipPhase(under: entry.child.generator)
+                graph.pendingClipPhase = phase.map { ($0, false) } ?? outer
             }
         }
         return results.compactMap(\.self)
@@ -66,12 +113,12 @@ nonisolated extension BehaviorGraphInstance {
 
     private func blenderEntry(at target: HKXPointerTarget) -> BehaviorBlenderEntry? {
         guard
-            let node = compiledNode(at: target),
+            let node = graph.compiledNode(at: target),
             let child = node.object as? HKBBlenderGeneratorChild
         else { return nil }
-        markReached(target)
-        var entry = BehaviorBlenderEntry(child: child, bound: boundValues(of: node))
-        entry.characterWeights = characterBoneWeights(of: node, path: "boneWeights")
+        graph.markReached(target)
+        var entry = BehaviorBlenderEntry(child: child, bound: graph.boundValues(of: node))
+        entry.characterWeights = graph.characterBoneWeights(of: node, path: "boneWeights")
         return entry
     }
 
@@ -113,7 +160,8 @@ nonisolated extension BehaviorGraphInstance {
     ) -> BehaviorSharedCycle {
         var durations: [Int: Float] = [:]
         for index in active {
-            durations[index] = clipCycleDuration(under: entries[index]?.child.generator)
+            durations[index] = graph.clipPlayback
+                .clipCycleDuration(under: entries[index]?.child.generator)
         }
         let master = blender.indexOfSyncMasterChild
         let heaviest = active.max { (weights[$0], -$0) < (weights[$1], -$1) }
@@ -141,18 +189,18 @@ nonisolated extension BehaviorGraphInstance {
         let (weight, motionScale) = (weights.pose, weights.motion)
         let child = entry.child
         return BehaviorBlendChild(
-            pose: evaluateGenerator(at: child.generator, depth: depth, deltaTime: deltaTime),
+            pose: graph.evaluateGenerator(at: child.generator, depth: depth, deltaTime: deltaTime),
             weight: weight,
             motionWeight: motionScale * entry.bound.float(
                 "m_worldFromModelWeight", or: child.worldFromModelWeight
             ),
-            boneWeights: entry.characterWeights ?? boneWeights(at: child.boneWeights)
+            boneWeights: entry.characterWeights ?? graph.blenders.boneWeights(at: child.boneWeights)
         )
     }
 
     private func noteBlendGaps(_ blender: HKBBlenderFields) {
         if blender.subtractLastChild {
-            tally.note(.blenderSubtractLastChild)
+            graph.tally.note(.blenderSubtractLastChild)
         }
     }
 }
@@ -173,5 +221,31 @@ nonisolated struct BehaviorSharedCycle {
     func order(_ active: [Int]) -> [Int] {
         guard let leader else { return active }
         return [leader] + active.filter { $0 != leader }
+    }
+}
+
+nonisolated extension BehaviorGraphInstance.Blenders {
+    /// The decoded per-bone mask at `target`, honouring a binding on it, or nil
+    /// when the child carries none.
+    func boneWeights(at target: HKXPointerTarget?) -> [Float]? {
+        guard
+            let target,
+            let array = graph.object(at: target, as: HKBBoneWeightArray.self),
+            !array.boneWeights.isEmpty
+        else { return nil }
+        graph.markReached(target)
+        return array.boneWeights
+    }
+
+    /// Blends two poses. When only one is additive, both become full poses first.
+    func blendFull(_ lhs: BehaviorPose, _ rhs: BehaviorPose, weight: Float) -> BehaviorPose {
+        guard lhs.isAdditive != rhs.isAdditive else {
+            return BehaviorPoseMath.blend(lhs, rhs, weight: weight)
+        }
+        return BehaviorPoseMath.blend(
+            graph.skeleton.absolute(lhs),
+            graph.skeleton.absolute(rhs),
+            weight: weight
+        )
     }
 }

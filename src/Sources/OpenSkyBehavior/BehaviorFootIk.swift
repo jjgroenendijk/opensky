@@ -7,16 +7,16 @@ import Foundation
 import OpenSkyFormatsAnimation
 import simd
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.BoneModifiers {
     func applyFootIk(
         _ modifier: HKBFootIkModifier, _ step: BehaviorModifierStep, to pose: BehaviorPose
     ) -> BehaviorPose {
-        guard characterContext.footIk else {
-            footIkError = SIMD3()
+        guard graph.physics.characterContext.footIk else {
+            graph.nodeMemory.footIkError = SIMD3()
             return pose
         }
         let bound = step.bound
-        var state = markReached(step.target)
+        var state = graph.markReached(step.target)
         if state.weights.count != modifier.legs.count {
             state.weights = Array(repeating: 0, count: modifier.legs.count)
             state.flags = Array(repeating: false, count: modifier.legs.count)
@@ -27,7 +27,7 @@ nonisolated extension BehaviorGraphInstance {
         )
         let offset = bound.float("verticalOffset", or: modifier.verticalOffset)
         let onOffGain = Self.timed(gain("onOffGain", modifier), step.deltaTime)
-        var model = BehaviorModelPose(pose, skeleton: skeleton)
+        var model = BehaviorModelPose(pose, skeleton: graph.skeleton)
         var result = pose
         var errors: [Float] = []
         for (slot, leg) in modifier.legs.enumerated() {
@@ -38,7 +38,7 @@ nonisolated extension BehaviorGraphInstance {
             let ground = groundHeight(under: ankle, modifier, bound, flat: animatedGround)
             guard let ground else {
                 if !state.flags[slot] {
-                    raise(leg.ungroundedEvent)
+                    graph.raise(leg.ungroundedEvent)
                 }
                 state.flags[slot] = true
                 state.weights[slot] *= 1 - onOffGain
@@ -60,9 +60,9 @@ nonisolated extension BehaviorGraphInstance {
                 pose: &result
             )
         }
-        nodeStates[step.target] = state
+        graph.nodeStates[step.target] = state
         let feedback = gain("worldFromModelFeedbackGain", modifier)
-        footIkError = feedback > 0 ? SIMD3(0, 0, Self.combinedError(
+        graph.nodeMemory.footIkError = feedback > 0 ? SIMD3(0, 0, Self.combinedError(
             errors, bias: gain("errorUpDownBias", modifier)
         ) * Self.timed(feedback, step.deltaTime)) : SIMD3()
         return result
@@ -70,7 +70,7 @@ nonisolated extension BehaviorGraphInstance {
 
     /// The controls modifier's gain when one runs, else the foot IK modifier's own.
     private func gain(_ name: String, _ modifier: HKBFootIkModifier) -> Float {
-        physicsRequests.footIkGains?[name] ?? modifier.gains.value(name)
+        graph.physics.physicsRequests.footIkGains?[name] ?? modifier.gains.value(name)
     }
 
     /// A gain is a rate at 30 updates a second, so a step of `deltaTime` applies this much.
@@ -91,7 +91,7 @@ nonisolated extension BehaviorGraphInstance {
         _ bound: [String: BehaviorVariableValue],
         flat: Float
     ) -> Float? {
-        guard let probe = characterContext.ground else { return flat }
+        guard let probe = graph.physics.characterContext.ground else { return flat }
         return probe.groundHeight(
             at: ankle,
             up: bound.float("raycastDistanceUp", or: modifier.raycastDistanceUp),

@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsAnimation
 import simd
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.BoneModifiers {
     func runAimModifier(
         _ object: any HKBClass, _ step: BehaviorModifierStep, to pose: BehaviorPose
     ) -> BehaviorPose {
@@ -16,7 +16,7 @@ nonisolated extension BehaviorGraphInstance {
         case let modifier as BSDirectAtModifier:
             return applyDirectAt(modifier, step, to: pose)
         default:
-            tally.notePassthroughModifier(object.className)
+            graph.tally.notePassthroughModifier(object.className)
             return pose
         }
     }
@@ -37,7 +37,7 @@ nonisolated extension BehaviorGraphInstance {
                 bound.float("\(prefix)Z", or: camera.z)
             )
             : BehaviorModelPose.vector3(bound.quad("targetLocation", or: location))
-        return characterContext.modelPoint(fromWorld: world)
+        return graph.physics.characterContext.modelPoint(fromWorld: world)
     }
 
     /// Eases `current` towards `goal`, by `onGain` when rising and `offGain` when falling.
@@ -67,7 +67,7 @@ nonisolated extension BehaviorGraphInstance {
         let target = aimTarget(bound, prefix: "lookAtCamera", authored: (
             modifier.lookAtCamera, camera
         ), location: modifier.targetLocation)
-        var model = BehaviorModelPose(pose, skeleton: skeleton)
+        var model = BehaviorModelPose(pose, skeleton: graph.skeleton)
         let lookFrom = modifier.bones.last.map(\.index).flatMap { model.contains($0) ? $0 : nil }
         let toTarget = target - (lookFrom.map { model.translations[$0] } ?? SIMD3())
         let facing = BehaviorModelPose.rotation(from: SIMD3(0, 1, 0), to: toTarget).angle
@@ -77,7 +77,7 @@ nonisolated extension BehaviorGraphInstance {
             && (!outside || bound.bool(
                 "continueLookOutsideOfLimit", or: modifier.continueLookOutsideOfLimit
             ))
-        var state = markReached(step.target)
+        var state = graph.markReached(step.target)
         let joints = lookAtJoints(modifier, bound)
         if state.weights.count != joints.count {
             state.weights = Array(repeating: 0, count: joints.count)
@@ -99,11 +99,11 @@ nonisolated extension BehaviorGraphInstance {
             )
         }
         if outside, state.flags.first != true {
-            raise(modifier.targetOutOfLimitEvent)
+            graph.raise(modifier.targetOutOfLimitEvent)
         }
         state.flags = [outside]
-        nodeStates[step.target] = state
-        writeOutputs(["targetOutsideLimits": .bool(outside)], of: step.node)
+        graph.nodeStates[step.target] = state
+        graph.writeOutputs(["targetOutsideLimits": .bool(outside)], of: step.node)
         return result
     }
 
@@ -162,7 +162,7 @@ nonisolated extension BehaviorGraphInstance {
         let target = aimTarget(bound, prefix: "directAtCamera", authored: (
             modifier.directAtCamera, camera
         ), location: modifier.targetLocation)
-        var model = BehaviorModelPose(pose, skeleton: skeleton)
+        var model = BehaviorModelPose(pose, skeleton: graph.skeleton)
         let chain = model.chain(
             from: bound.int("startBoneIndex", or: modifier.startBoneIndex),
             to: bound.int("endBoneIndex", or: modifier.endBoneIndex)
@@ -171,7 +171,7 @@ nonisolated extension BehaviorGraphInstance {
         let origin = model.contains(source)
             ? model.translations[source] : chain.first.map { model.translations[$0] } ?? SIMD3()
         let goal = directAtGoal(modifier, bound, toTarget: target - origin)
-        var state = markReached(step.target)
+        var state = graph.markReached(step.target)
         let current = state.weights.count == 2 ? SIMD2(state.weights[0], state.weights[1]) : SIMD2()
         let onGain = bound.float("onGain", or: modifier.onGain)
         let offGain = bound.float("offGain", or: modifier.offGain)
@@ -180,7 +180,7 @@ nonisolated extension BehaviorGraphInstance {
             Self.ease(current.y, to: goal.y, on: onGain, off: offGain)
         )
         state.weights = [eased.x, eased.y]
-        nodeStates[step.target] = state
+        graph.nodeStates[step.target] = state
         var result = pose
         let share = 1 / Float(max(chain.count, 1)) * .pi / 180
         for bone in chain {
@@ -188,7 +188,7 @@ nonisolated extension BehaviorGraphInstance {
             let pitch = simd_quatf(angle: eased.y * share, axis: SIMD3(1, 0, 0))
             model.rotate(bone, by: heading * pitch, in: &result)
         }
-        writeOutputs(
+        graph.writeOutputs(
             [
                 "active": .bool(goal != SIMD2() || simd_length(eased) > 0.01),
                 "currentHeadingOffset": .real(eased.x),

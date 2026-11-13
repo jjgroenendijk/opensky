@@ -6,7 +6,7 @@
 import Foundation
 import OpenSkyFormatsAnimation
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.Modifiers {
     /// Runs the modifier at `target` over `pose`. Modifiers that only touch
     /// variables and events return the pose unchanged, which is not a
     /// pass-through and is not tallied as one.
@@ -16,17 +16,17 @@ nonisolated extension BehaviorGraphInstance {
         deltaTime: Float,
         depth: Int = 0
     ) -> BehaviorPose {
-        guard let target, depth < Self.maximumDepth else {
+        guard let target, depth < BehaviorGraphInstance.maximumDepth else {
             if target != nil {
-                tally.note(.depthCapReached)
+                graph.tally.note(.depthCapReached)
             }
             return pose
         }
-        guard let node = compiledNode(at: target) else { return pose }
-        markReached(target)
-        tally.noteModifier()
-        let bound = boundValues(of: node)
-        guard bound.bool("enable", or: isEnabled(node.object)), !isDisabled(node) else {
+        guard let node = graph.compiledNode(at: target) else { return pose }
+        graph.markReached(target)
+        graph.tally.noteModifier()
+        let bound = graph.boundValues(of: node)
+        guard bound.bool("enable", or: isEnabled(node.object)), !graph.isDisabled(node) else {
             return pose
         }
         let step = BehaviorModifierStep(
@@ -58,7 +58,7 @@ nonisolated extension BehaviorGraphInstance {
         case let driven as HKBEventDrivenModifier:
             return applyEventDriven(driven, step, to: pose)
         case let timer as HKBTimerModifier:
-            applyTimer(
+            graph.applyTimer(
                 step, alarm: step.bound.float("alarmTimeSeconds", or: timer.alarmTimeSeconds),
                 event: timer.alarmEvent, repeating: false
             )
@@ -74,14 +74,16 @@ nonisolated extension BehaviorGraphInstance {
             applyRagdollControls(controls)
             return pose
         case let powered as HKBPoweredRagdollControlsModifier:
-            poweredRagdollControls = powered
+            graph.physics.poweredRagdollControls = powered
             return pose
         case let listener as BSRagdollContactListenerModifier:
             let id = listener.contactEvent.id
-            ragdollContactEvent = events.names.indices.contains(id) ? events.names[id] : nil
+            graph.physics.ragdollContactEvent = graph.events.names.indices.contains(id) ? graph
+                .events
+                .names[id] : nil
             return pose
         default:
-            return runVariableModifier(object, step, to: pose)
+            return graph.variableModifiers.runVariableModifier(object, step, to: pose)
         }
     }
 
@@ -96,42 +98,22 @@ nonisolated extension BehaviorGraphInstance {
         to pose: BehaviorPose
     ) -> BehaviorPose {
         let (target, deltaTime, depth) = (step.target, step.deltaTime, step.depth)
-        var state = markReached(target)
+        var state = graph.markReached(target)
         if !state.hasSeeded {
             state.hasSeeded = true
             state.isModifierRunning = driven.activeByDefault
         }
-        if events.isActive(id: driven.activateEventId) {
+        if graph.events.isActive(id: driven.activateEventId) {
             state.isModifierRunning = true
         }
-        if events.isActive(id: driven.deactivateEventId) {
+        if graph.events.isActive(id: driven.deactivateEventId) {
             state.isModifierRunning = false
         }
-        nodeStates[target] = state
+        graph.nodeStates[target] = state
         guard state.isModifierRunning else { return pose }
         return applyModifier(
             at: driven.wrapped, to: pose, deltaTime: deltaTime, depth: depth + 1
         )
-    }
-
-    /// `hkbTimerModifier` and `BSTimerModifier`: raises `event` once `alarm`
-    /// seconds have passed since activation. A repeating timer starts again each
-    /// time it fires; the other stays quiet until it is reactivated.
-    func applyTimer(
-        _ step: BehaviorModifierStep,
-        alarm: Float,
-        event: HKBEventProperty,
-        repeating: Bool
-    ) {
-        let target = step.target
-        var state = markReached(target)
-        state.elapsed += step.deltaTime
-        if !state.hasFiredAlarm, state.elapsed >= alarm {
-            state.hasFiredAlarm = !repeating
-            state.elapsed = repeating && alarm > 0 ? state.elapsed - alarm : state.elapsed
-            raise(event)
-        }
-        nodeStates[target] = state
     }
 
     /// `BSEventEveryNEventsModifier`: counts occurrences of `m_eventToCheckFor`
@@ -141,10 +123,10 @@ nonisolated extension BehaviorGraphInstance {
         _ counter: BSEventEveryNEventsModifier,
         at target: HKXPointerTarget
     ) {
-        var state = markReached(target)
-        let occurrences = events.active.count { $0.id == counter.eventToCheckFor.id }
+        var state = graph.markReached(target)
+        let occurrences = graph.events.active.count { $0.id == counter.eventToCheckFor.id }
         guard occurrences > 0 else {
-            nodeStates[target] = state
+            graph.nodeStates[target] = state
             return
         }
         if state.eventThreshold == 0 {
@@ -154,50 +136,52 @@ nonisolated extension BehaviorGraphInstance {
         while state.eventCount >= state.eventThreshold {
             state.eventCount -= state.eventThreshold
             state.eventThreshold = nextThreshold(of: counter)
-            raise(counter.eventToSend)
+            graph.raise(counter.eventToSend)
         }
-        nodeStates[target] = state
+        graph.nodeStates[target] = state
     }
 
     private func nextThreshold(of counter: BSEventEveryNEventsModifier) -> Int {
         let maximum = max(counter.numberOfEventsBeforeSend, 1)
         guard counter.randomizeNumberOfEvents else { return maximum }
         let minimum = min(max(counter.minimumNumberOfEventsBeforeSend, 1), maximum)
-        return random.next(in: minimum ... maximum)
+        return graph.nodeMemory.random.next(in: minimum ... maximum)
     }
 
     /// `hkbRigidBodyRagdollControlsModifier`: publishes the authored blend duration so
     /// `RagdollRuntime` uses it. `m_bones` is not read; the ragdoll uses every body in
     /// the skeleton NIF.
     private func applyRagdollControls(_ controls: HKBRigidBodyRagdollControlsModifier) {
-        ragdollBlendDuration = controls.durationToBlend
+        graph.physics.ragdollBlendDuration = controls.durationToBlend
     }
 
     // MARK: - Deactivation
+}
 
+nonisolated extension BehaviorGraphInstance.Modifiers {
     /// Runs the deactivation hooks of `targets` and forgets their state.
     func deactivateNodes(_ targets: Set<HKXPointerTarget>) {
-        for target in targets.sorted(by: Self.isOrderedBefore) {
-            if let object = object(at: target) {
+        for target in targets.sorted(by: BehaviorGraphInstance.isOrderedBefore) {
+            if let object = graph.object(at: target) {
                 noteDeactivation(of: object, at: target)
             }
-            nodeStates[target] = nil
+            graph.nodeStates[target] = nil
         }
-        reachedThisUpdate.subtract(targets)
+        graph.reachedThisUpdate.subtract(targets)
     }
 
     /// Runs a node's deactivation: `BSEventOnDeactivateModifier` raises its event, and
     /// `hkbStateMachine` leaves its state, and a behavior reference stops its graph.
     func noteDeactivation(of object: any HKBClass, at target: HKXPointerTarget) {
         if let machine = object as? HKBStateMachine {
-            noteMachineDeactivation(of: machine, at: target)
+            graph.stateMachines.noteMachineDeactivation(of: machine, at: target)
             return
         }
         if let reference = object as? HKBBehaviorReferenceGenerator {
-            noteReferenceDeactivation(reference)
+            graph.childGraphs.noteReferenceDeactivation(reference)
             return
         }
-        if noteModifierDeactivation(of: object, at: target) {
+        if graph.variableModifiers.noteModifierDeactivation(of: object, at: target) {
             return
         }
         guard
@@ -206,6 +190,9 @@ nonisolated extension BehaviorGraphInstance {
         else {
             return
         }
-        events.raise(id: modifier.event.id, payload: payload(at: modifier.event.payload))
+        graph.events.raise(
+            id: modifier.event.id,
+            payload: graph.payload(at: modifier.event.payload)
+        )
     }
 }

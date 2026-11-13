@@ -5,7 +5,7 @@
 import Foundation
 import OpenSkyFormatsAnimation
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.StateMachines {
     /// Steps the transition chain. A delayed transition changes state when it ends.
     func advanceTransition(
         _ state: inout BehaviorMachineState, machine: HKBStateMachine, deltaTime: Float
@@ -42,7 +42,7 @@ nonisolated extension BehaviorGraphInstance {
             inner.delayedStateId ?? transition.fromStateId,
             in: walk, poses: &poses
         )
-        return blendFull(outgoing, incoming, weight: inner.weight)
+        return graph.blenders.blendFull(outgoing, incoming, weight: inner.weight)
     }
 
     func sharedStatePose(
@@ -70,8 +70,8 @@ nonisolated extension BehaviorGraphInstance {
         guard info.flags & BehaviorTransitionFlag.fromNestedStateIsValid != 0 else { return true }
         guard
             let generator = stateInfo(of: machine, id: state.currentStateId)?.info.generator,
-            object(at: generator, as: HKBStateMachine.self) != nil,
-            let nested = machineStates[generator], nested.isEntered
+            graph.object(at: generator, as: HKBStateMachine.self) != nil,
+            let nested = graph.machineMemory.machineStates[generator], nested.isEntered
         else { return false }
         return nested.currentStateId == info.fromNestedStateId
     }

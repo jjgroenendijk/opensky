@@ -6,32 +6,33 @@ import Foundation
 public import OpenSkyFormatsAnimation
 import simd
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.Generators {
     /// `BSBoneSwitchGenerator`: the default generator, with each child's pose
     /// replacing it on the bones that child's bone weights cover.
     func evaluateBoneSwitch(
         _ switcher: BSBoneSwitchGenerator, depth: Int, deltaTime: Float
     ) -> BehaviorPose {
-        var pose = skeleton.absolute(evaluateGenerator(
+        var pose = graph.skeleton.absolute(evaluateGenerator(
             at: switcher.defaultGenerator,
             depth: depth,
             deltaTime: deltaTime
         ))
         for target in switcher.children.compactMap(\.self) {
             guard
-                let node = compiledNode(at: target),
+                let node = graph.compiledNode(at: target),
                 let data = node.object as? BSBoneSwitchGeneratorBoneData
             else { continue }
-            markReached(target)
+            graph.markReached(target)
             let authored = data.boneWeight.flatMap { target in
-                markReached(target)
-                return object(at: target, as: HKBBoneWeightArray.self)?.boneWeights
+                graph.markReached(target)
+                return graph.object(at: target, as: HKBBoneWeightArray.self)?.boneWeights
             }
             guard
-                let weights = characterBoneWeights(of: node, path: "spBoneWeight") ?? authored,
+                let weights = graph
+                    .characterBoneWeights(of: node, path: "spBoneWeight") ?? authored,
                 !weights.isEmpty
             else { continue }
-            let child = skeleton.absolute(
+            let child = graph.skeleton.absolute(
                 evaluateGenerator(at: data.generator, depth: depth, deltaTime: deltaTime)
             )
             for bone in pose.bones.indices
@@ -56,22 +57,24 @@ nonisolated extension BehaviorGraphInstance {
         deltaTime: Float
     ) -> BehaviorPose {
         let (target, bound, depth) = (visit.target, visit.bound, visit.depth)
-        var state = nodeStates[target] ?? markReached(target)
+        var state = graph.nodeStates[target] ?? graph.markReached(target)
         let isHolding = state.frozenBlendParameter != nil || state.crossBlendSource != nil
-        let crossBlends = isHolding && events.isActive(id: cyclic.eventToCrossBlend.id)
+        let crossBlends = isHolding && graph.events.isActive(id: cyclic.eventToCrossBlend.id)
         // The copy starts from the blender as it stood before this update.
         let copy = crossBlends && state.crossBlendSource == nil
             ? state.frozenBlendParameter
-            .map { BehaviorCyclicCopy(states: nodeStates, parameter: $0) }
+            .map { BehaviorCyclicCopy(states: graph.nodeStates, parameter: $0) }
             : nil
         if let blender = cyclic.blenderGenerator {
             let parameter = bound.float("fBlendParameter", or: cyclic.blendParameter)
             if crossBlends {
                 state.frozenBlendParameter = nil
-            } else if !isHolding, events.isActive(id: cyclic.eventToFreezeBlendValue.id) {
-                state.frozenBlendParameter = blendParameterOverrides[blender] ?? parameter
+            } else if !isHolding, graph.events.isActive(id: cyclic.eventToFreezeBlendValue.id) {
+                state.frozenBlendParameter = graph.nodeMemory
+                    .blendParameterOverrides[blender] ?? parameter
             }
-            blendParameterOverrides[blender] = state.frozenBlendParameter ?? parameter
+            graph.nodeMemory.blendParameterOverrides[blender] = state
+                .frozenBlendParameter ?? parameter
         }
         let live = evaluateGenerator(
             at: cyclic.blenderGenerator,
@@ -84,9 +87,9 @@ nonisolated extension BehaviorGraphInstance {
             if state.crossBlendSource != nil {
                 state.elapsed = max(duration - state.elapsed, 0)
             } else {
-                state.crossBlendSource = cyclicLastPoses[target] ?? live
+                state.crossBlendSource = graph.nodeMemory.cyclicLastPoses[target] ?? live
                 state.elapsed = 0
-                cyclicCopies[target] = copy
+                graph.nodeMemory.cyclicCopies[target] = copy
             }
         }
         var result = live
@@ -98,14 +101,14 @@ nonisolated extension BehaviorGraphInstance {
             let duration = bound.float("fTransitionDuration", or: cyclic.transitionDuration)
             if state.elapsed >= duration {
                 state.crossBlendSource = nil
-                cyclicCopies[target] = nil
+                graph.nodeMemory.cyclicCopies[target] = nil
             }
         }
         if !BehaviorBlendCurve.isKnown(cyclic.blendCurve) {
-            tally.note(.transitionBlendCurveApproximated)
+            graph.tally.note(.transitionBlendCurveApproximated)
         }
-        nodeStates[target] = state
-        cyclicLastPoses[target] = result
+        graph.nodeStates[target] = state
+        graph.nodeMemory.cyclicLastPoses[target] = result
         return result
     }
 
@@ -117,23 +120,26 @@ nonisolated extension BehaviorGraphInstance {
         depth: Int,
         deltaTime: Float
     ) -> BehaviorPose? {
-        guard let blender = cyclic.blenderGenerator, var copy = cyclicCopies[target] else {
+        guard
+            let blender = cyclic.blenderGenerator,
+            var copy = graph.nodeMemory.cyclicCopies[target]
+        else {
             return nil
         }
-        cyclicCopies[target] = nil
-        let live = nodeStates
-        let liveParameter = blendParameterOverrides[blender]
-        let wasMuted = mutesClipAnnotations
-        nodeStates = copy.states
+        graph.nodeMemory.cyclicCopies[target] = nil
+        let live = graph.nodeStates
+        let liveParameter = graph.nodeMemory.blendParameterOverrides[blender]
+        let wasMuted = graph.nodeMemory.mutesClipAnnotations
+        graph.nodeStates = copy.states
         copy.states = [:]
-        blendParameterOverrides[blender] = copy.parameter
-        mutesClipAnnotations = true
+        graph.nodeMemory.blendParameterOverrides[blender] = copy.parameter
+        graph.nodeMemory.mutesClipAnnotations = true
         let pose = evaluateGenerator(at: blender, depth: depth, deltaTime: deltaTime)
-        copy.states = nodeStates
-        nodeStates = live
-        blendParameterOverrides[blender] = liveParameter
-        mutesClipAnnotations = wasMuted
-        cyclicCopies[target] = copy
+        copy.states = graph.nodeStates
+        graph.nodeStates = live
+        graph.nodeMemory.blendParameterOverrides[blender] = liveParameter
+        graph.nodeMemory.mutesClipAnnotations = wasMuted
+        graph.nodeMemory.cyclicCopies[target] = copy
         return pose
     }
 
@@ -152,7 +158,7 @@ nonisolated extension BehaviorGraphInstance {
         _ live: BehaviorPose,
         weight: Float
     ) -> BehaviorPose {
-        var pose = blendFull(source, live, weight: weight)
+        var pose = graph.blenders.blendFull(source, live, weight: weight)
         pose.rootMotion = live.rootMotion
         return pose
     }
@@ -165,7 +171,7 @@ nonisolated extension BehaviorGraphInstance {
         deltaTime: Float
     ) -> BehaviorPose {
         let (target, bound, depth) = (visit.target, visit.bound, visit.depth)
-        let pose = skeleton.absolute(evaluateGenerator(
+        let pose = graph.skeleton.absolute(evaluateGenerator(
             at: offset.defaultGenerator, depth: depth, deltaTime: deltaTime
         ))
         let start = bound.float("fOffsetRangeStart", or: offset.offsetRangeStart)
@@ -175,20 +181,20 @@ nonisolated extension BehaviorGraphInstance {
         let frames = offsetFrameCount(offset)
         let phase = Self.offsetPhase(fraction, frameCount: frames)
         let frame = min(Int(phase * Float(max(frames - 1, 0))), max(frames - 2, 0))
-        var state = markReached(target)
-        let outer = pendingClipPhase
-        pendingClipPhase = (phase, false)
+        var state = graph.markReached(target)
+        let outer = graph.pendingClipPhase
+        graph.pendingClipPhase = (phase, false)
         let sampled = evaluateGenerator(
             at: offset.offsetClipGenerator, depth: depth, deltaTime: 0
         )
-        pendingClipPhase = outer
+        graph.pendingClipPhase = outer
         let moved = abs(fraction - state.offsetFraction) > Self.offsetEpsilon
         if state.offsetLayer == nil || (frame != state.offsetFrame && moved) {
             state.offsetLayer = sampled
             state.offsetFrame = frame
             state.offsetFraction = fraction
         }
-        nodeStates[target] = state
+        graph.nodeStates[target] = state
         guard let layer = state.offsetLayer, layer.isAdditive else { return pose }
         return BehaviorPoseMath.adding(layer, to: pose) { _ in 1 }
     }
@@ -212,23 +218,11 @@ nonisolated extension BehaviorGraphInstance {
     private func offsetFrameCount(_ offset: BSOffsetAnimationGenerator) -> Int {
         guard
             let target = offset.offsetClipGenerator,
-            let generator = object(at: target, as: HKBClipGenerator.self)
+            let generator = graph.object(at: target, as: HKBClipGenerator.self)
         else { return 0 }
-        return clipSource.clip(
+        return graph.clipSource.clip(
             named: generator.animationName, bindingIndex: generator.animationBindingIndex
         )?.frameCount ?? 0
-    }
-
-    /// Blends two poses. When only one is additive, both become full poses first.
-    func blendFull(_ lhs: BehaviorPose, _ rhs: BehaviorPose, weight: Float) -> BehaviorPose {
-        guard lhs.isAdditive != rhs.isAdditive else {
-            return BehaviorPoseMath.blend(lhs, rhs, weight: weight)
-        }
-        return BehaviorPoseMath.blend(
-            skeleton.absolute(lhs),
-            skeleton.absolute(rhs),
-            weight: weight
-        )
     }
 }
 

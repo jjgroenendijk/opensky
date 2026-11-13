@@ -21,7 +21,7 @@ nonisolated extension BehaviorGraphInstance {
     }
 }
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.ChildGraphs {
     /// Evaluates one behavior reference, or the reference pose with a tally
     /// entry when the name cannot be resolved.
     func evaluateBehaviorReference(
@@ -32,10 +32,10 @@ nonisolated extension BehaviorGraphInstance {
             let name = generator.behaviorName,
             let child = referencedGraph(named: name)
         else {
-            tally.note(.unresolvedBehaviorReference)
-            return skeleton.restPose
+            graph.tally.note(.unresolvedBehaviorReference)
+            return graph.skeleton.restPose
         }
-        if let memo = referencedResults[name] {
+        if let memo = graph.referencedResults[name] {
             return BehaviorPose(bones: memo.bones, rootMotion: memo.rootMotion)
         }
         let key = Self.referenceKey(name)
@@ -43,14 +43,14 @@ nonisolated extension BehaviorGraphInstance {
         pushEvents(into: child, key: key)
         let result = child.update(deltaTime: deltaTime)
         if child.isWaitingForClip {
-            isWaitingForClip = true
+            graph.isWaitingForClip = true
         }
-        referencedResults[name] = result
-        unboundEvents += result.unboundEvents
+        graph.referencedResults[name] = result
+        graph.unboundEvents += result.unboundEvents
         pullEvents(from: child, key: key)
-        activeStatesThisUpdate += child.activeStates
+        graph.activeStatesThisUpdate += child.activeStates
         if let tag = child.stateTag {
-            noteStateTag(tag)
+            graph.noteStateTag(tag)
         }
         return BehaviorPose(bones: result.bones, rootMotion: result.rootMotion)
     }
@@ -59,10 +59,12 @@ nonisolated extension BehaviorGraphInstance {
     /// activation enters every machine at its start state again. Skipped while
     /// another reference to the same file ran this update.
     func noteReferenceDeactivation(_ generator: HKBBehaviorReferenceGenerator) {
-        guard let name = generator.behaviorName, referencedResults[name] == nil else { return }
+        guard
+            let name = generator.behaviorName,
+            graph.referencedResults[name] == nil else { return }
         let key = Self.referenceKey(name)
-        pulledEventNames[key] = nil
-        referencedGraphs[key]??.deactivate()
+        graph.pulledEventNames[key] = nil
+        graph.referencedGraphs[key]??.deactivate()
     }
 
     /// The child instance for `name`, loaded once. A miss is remembered as a
@@ -70,21 +72,25 @@ nonisolated extension BehaviorGraphInstance {
     /// frame.
     func referencedGraph(named name: String) -> BehaviorGraphInstance? {
         let key = Self.referenceKey(name)
-        if let cached = referencedGraphs[key] {
+        if let cached = graph.referencedGraphs[key] {
             return cached
         }
-        guard let references, !referenceAncestry.contains(key) else {
-            referencedGraphs[key] = BehaviorGraphInstance?.none
+        guard let references = graph.references, !graph.referenceAncestry.contains(key) else {
+            graph.referencedGraphs[key] = BehaviorGraphInstance?.none
             return nil
         }
-        let child = references.behavior(named: name, skeleton: skeleton, clips: clipSource)
+        let child = references.behavior(
+            named: name,
+            skeleton: graph.skeleton,
+            clips: graph.clipSource
+        )
         child?.references = references
-        child?.characterProperties = characterProperties
-        child?.speedSamples = speedSamples
-        child?.referenceAncestry = referenceAncestry.union([key])
-        referencedGraphs[key] = child
+        child?.characterProperties = graph.characterProperties
+        child?.speedSamples = graph.speedSamples
+        child?.referenceAncestry = graph.referenceAncestry.union([key])
+        graph.referencedGraphs[key] = child
         if child == nil {
-            tally.note(.unresolvedBehaviorReference)
+            graph.tally.note(.unresolvedBehaviorReference)
         }
         return child
     }
@@ -94,7 +100,7 @@ nonisolated extension BehaviorGraphInstance {
     /// them to, which is what a sub-behavior's private state is.
     private func pushVariables(into child: BehaviorGraphInstance) {
         for name in child.variables.names {
-            guard let name, let value = variables.value(of: name) else { continue }
+            guard let name, let value = graph.variables.value(of: name) else { continue }
             child.setVariable(value, named: name)
         }
     }
@@ -104,8 +110,8 @@ nonisolated extension BehaviorGraphInstance {
     /// already queued on the child by its own raise, so pushing them back would
     /// deliver one event to the child twice.
     private func pushEvents(into child: BehaviorGraphInstance, key: String) {
-        let echoed = pulledEventNames[key] ?? []
-        for event in events.active {
+        let echoed = graph.pulledEventNames[key] ?? []
+        for event in graph.events.active {
             guard let name = event.name, !echoed.contains(name) else { continue }
             child.raiseEvent(named: name, payload: event.payload)
         }
@@ -120,13 +126,13 @@ nonisolated extension BehaviorGraphInstance {
         var raised: Set<String> = []
         for event in child.events.pending {
             guard let name = event.name else { continue }
-            if events.raise(named: name, payload: event.payload) {
+            if graph.events.raise(named: name, payload: event.payload) {
                 raised.insert(name)
             } else {
-                unboundEvents.append(name)
+                graph.unboundEvents.append(name)
             }
         }
-        pulledEventNames[key] = raised
+        graph.pulledEventNames[key] = raised
     }
 
     /// Behavior names are compared case-insensitively on the file name alone,

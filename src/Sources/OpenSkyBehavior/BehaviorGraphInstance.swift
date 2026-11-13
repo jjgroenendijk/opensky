@@ -147,6 +147,18 @@ nonisolated public final class BehaviorGraphInstance {
     /// extension in another file cannot reach a private setter.
     public var events: BehaviorEventQueue
     public var tally: BehaviorTally
+    /// What the state machines remember between updates.
+    var machineMemory = MachineMemory()
+    /// The ragdoll and character hand-offs between the graph and physics.
+    public var physics = PhysicsOutputs()
+    /// The actor's placement and foot IK switch, which the bone modifiers read.
+    public var characterContext: BehaviorCharacterContext {
+        get { physics.characterContext }
+        set { physics.characterContext = newValue }
+    }
+
+    /// What the other node families remember between updates.
+    var nodeMemory = NodeMemory()
     public private(set) var isActive = false
     public private(set) var time: Float = 0
 
@@ -154,15 +166,9 @@ nonisolated public final class BehaviorGraphInstance {
     public var nodeStates: [HKXPointerTarget: BehaviorNodeState] = [:]
     public var reachedThisUpdate: Set<HKXPointerTarget> = []
 
-    /// Per-state-machine runtime state. Not cleared by `deactivate()`:
-    /// `m_startStateMode` 2 re-enters the state that was current when it stopped.
-    var machineStates: [HKXPointerTarget: BehaviorMachineState] = [:]
     /// Update index at which each event id was last active, so a transition's
     /// trigger and initiate intervals can be read as event windows.
     public var eventLastSeen: [Int: Int] = [:]
-    /// Parsed transition conditions, keyed by the condition object. The
-    /// optional is stored so a string that will not parse is parsed once.
-    var conditionCache: [HKXPointerTarget: BehaviorConditionExpression?] = [:]
     /// The playback phase a sync master or a synchronizing transition is
     /// imposing on the clips below the node being evaluated. `seedOnly` marks
     /// a transition's one-shot alignment apart from a blender's continuous one.
@@ -170,41 +176,10 @@ nonisolated public final class BehaviorGraphInstance {
     /// The start states a transition hands to the machines below it, outermost
     /// first. Each machine that enters below it takes the first one.
     public var pendingNestedStateIds: [Int] = []
-    /// Global wildcard routes per machine, built on first reach.
-    var globalWildcardRouteCache: [HKXPointerTarget: [BehaviorGlobalWildcardRoute]] = [:]
 
-    /// Seconds the animated-to-simulated blend takes, from the last evaluated
-    /// `hkbRigidBodyRagdollControlsModifier`. Nil until one has run. Internal, because
-    /// the modifier that writes it is an extension in another file.
-    public var ragdollBlendDuration: Float?
-    /// The `hkbPoweredRagdollControlsModifier` the last update ran, or nil.
-    public var poweredRagdollControls: HKBPoweredRagdollControlsModifier?
-    /// The event the last update's `BSRagdollContactListenerModifier` raises on contact.
-    public var ragdollContactEvent: String?
-    /// Where the character stands and what ground it stands on.
-    public var characterContext = BehaviorCharacterContext()
-    /// The physics hand-offs the last update's modifiers asked for.
-    public var physicsRequests = BehaviorPhysicsRequests()
     /// Variable indexes a node wrote back this update, so a deactivating node
     /// does not overwrite what a newly active one just wrote.
     public var variablesWrittenThisUpdate: Set<Int> = []
-    /// Parsed `hkbEvaluateExpressionModifier` statements per expression array.
-    var statementCache: [HKXPointerTarget: [BehaviorExpressionStatement?]] = [:]
-    /// Mean ankle correction of the last foot IK solve, model space.
-    var footIkError = SIMD3<Float>()
-    /// The pose each cyclic blend generator produced last, so a crossfade can start from it.
-    var cyclicLastPoses: [HKXPointerTarget: BehaviorPose] = [:]
-    /// The held blender each cyclic blend fades away from, which keeps running.
-    var cyclicCopies: [HKXPointerTarget: BehaviorCyclicCopy] = [:]
-    /// True while a synced blender runs a follower, whose annotations repeat the leader's.
-    var mutesClipAnnotations = false
-    /// The blend parameter a cyclic blend generator hands its blender, by blender.
-    var blendParameterOverrides: [HKXPointerTarget: Float] = [:]
-    /// The source of every random choice the graph makes. Seeded the same for
-    /// every instance, so two runs with the same input stay identical.
-    var random = BehaviorRandom()
-    /// The state machines' own random source, for random start states and transitions.
-    var stateMachineRandom = BehaviorStateMachineRandom()
 
     /// What every state machine the last update reached is doing, in walk
     /// order. This is the state path items 14.5 and 14.6 read, and what the
@@ -228,10 +203,6 @@ nonisolated public final class BehaviorGraphInstance {
     public var unboundEvents: [String] = []
     /// True when the update in progress reached a clip that is still loading.
     public var isWaitingForClip = false
-    /// The sync prefix of the synchronized clip being evaluated, nil outside one.
-    var syncTrackPrefix: String?
-    /// This actor's views of the paired clips it played, by prefix and clip name.
-    var pairedClips: [String: PairedBehaviorClip] = [:]
     /// The bones of the last update that had every clip it reached, held while
     /// a clip loads so the character keeps its pose instead of snapping to rest.
     private(set) var lastCompleteBones: [HKABonePose]?
@@ -343,9 +314,9 @@ nonisolated public final class BehaviorGraphInstance {
         unboundEvents = []
         pendingNestedStateIds = []
         isWaitingForClip = false
-        poweredRagdollControls = nil
-        ragdollContactEvent = nil
-        physicsRequests = BehaviorPhysicsRequests()
+        physics.poweredRagdollControls = nil
+        physics.ragdollContactEvent = nil
+        physics.physicsRequests = BehaviorPhysicsRequests()
         variablesWrittenThisUpdate = []
         let pose = skeleton.absolute(evaluateGenerator(at: root, depth: 0, deltaTime: step))
         activeStates = activeStatesThisUpdate
@@ -420,7 +391,7 @@ nonisolated public final class BehaviorGraphInstance {
             }
             return nil
         }
-        return pairedView(of: found, named: name)
+        return clipPlayback.pairedView(of: found, named: name)
     }
 
     /// Marks `target` as reached this update, activating it on the first reach.

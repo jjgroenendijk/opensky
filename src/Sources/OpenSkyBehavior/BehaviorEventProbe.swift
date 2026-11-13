@@ -90,7 +90,7 @@ nonisolated public enum BehaviorEventProbe {
     ) -> Step {
         let (event, accepted) = raised
         var fired: [String] = []
-        let pairedBefore = Set(instance.pairedClipNames)
+        let pairedBefore = Set(instance.clipPlayback.pairedClipNames)
         for _ in 0 ..< updates {
             for (name, value) in variables.sorted(by: { $0.key < $1.key }) {
                 instance.setVariable(.real(value), named: name)
@@ -109,7 +109,8 @@ nonisolated public enum BehaviorEventProbe {
             event: event, accepted: accepted, states: states, fired: fired,
             stateTag: tag, stateTagNames: names.sorted()
         )
-        step.synchronizedClips = instance.pairedClipNames.filter { !pairedBefore.contains($0) }
+        step.synchronizedClips = instance.clipPlayback.pairedClipNames
+            .filter { !pairedBefore.contains($0) }
         return step
     }
 }

@@ -6,15 +6,15 @@
 import Foundation
 import OpenSkyFormatsAnimation
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.StateMachines {
     /// Publishes a running machine's outputs and its sync variable.
     func publishMachineOutputs(
         _ machine: HKBStateMachine,
         at target: HKXPointerTarget,
         currentStateId: Int
     ) {
-        if let node = compiledNode(at: target) {
-            writeOutputs(
+        if let node = graph.compiledNode(at: target) {
+            graph.writeOutputs(
                 [
                     "isActive": .bool(true),
                     "currentStateId": .int(Int32(truncatingIfNeeded: currentStateId))
@@ -23,7 +23,7 @@ nonisolated extension BehaviorGraphInstance {
             )
         }
         if machine.syncVariableIndex >= 0 {
-            writeVariable(
+            graph.writeVariable(
                 .int(Int32(truncatingIfNeeded: currentStateId)), at: machine.syncVariableIndex
             )
         }
@@ -32,11 +32,11 @@ nonisolated extension BehaviorGraphInstance {
     /// A machine that stopped running reads inactive, unless a node that just became
     /// active wrote the same variable this update.
     func publishMachineDeactivation(at target: HKXPointerTarget) {
-        guard let node = compiledNode(at: target) else { return }
-        let fresh = outputIndexes(of: node, path: "isActive").allSatisfy {
-            !variablesWrittenThisUpdate.contains($0)
+        guard let node = graph.compiledNode(at: target) else { return }
+        let fresh = graph.outputIndexes(of: node, path: "isActive").allSatisfy {
+            !graph.variablesWrittenThisUpdate.contains($0)
         }
         guard fresh else { return }
-        writeOutputs(["isActive": .bool(false)], of: node)
+        graph.writeOutputs(["isActive": .bool(false)], of: node)
     }
 }

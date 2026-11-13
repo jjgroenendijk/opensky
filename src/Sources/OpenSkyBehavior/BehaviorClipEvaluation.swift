@@ -22,7 +22,7 @@ nonisolated struct BehaviorClipWindow {
     }
 }
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.Clips {
     /// The phase gap, as a fraction of the clip, below which a synced clip keeps its time.
     static let syncPhaseTolerance: Float = 0.002
 
@@ -34,18 +34,18 @@ nonisolated extension BehaviorGraphInstance {
         deltaTime: Float
     ) -> BehaviorPose {
         guard
-            let clip = clip(
+            let clip = graph.clip(
                 named: generator.animationName,
                 bindingIndex: generator.animationBindingIndex
             ),
             clip.duration > 0
         else {
-            return skeleton.restPose
+            return graph.skeleton.restPose
         }
         let window = BehaviorClipWindow(clip, generator: generator)
-        guard window.length > 0 else { return skeleton.restPose }
+        guard window.length > 0 else { return graph.skeleton.restPose }
 
-        var state = markReached(target)
+        var state = graph.markReached(target)
         let wasSeeded = state.hasSeeded
         let play = BehaviorClipPlay(generator: generator, clip: clip, window: window)
         seedIfNeeded(&state, play: play, bound: bound)
@@ -64,8 +64,8 @@ nonisolated extension BehaviorGraphInstance {
         let samples = clip.samples(at: window.start + state.localTime)
         let mirror = clipMirror(for: generator)
         let base = clip.isAdditive
-            ? BehaviorPoseMath.unchanged(boneCount: skeleton.referencePose.count).bones
-            : skeleton.referencePose
+            ? BehaviorPoseMath.unchanged(boneCount: graph.skeleton.referencePose.count).bones
+            : graph.skeleton.referencePose
         var pose = BehaviorPose(
             bones: BehaviorPoseMath.applying(
                 mirror?.mirroring(samples, isAdditive: clip.isAdditive) ?? samples, to: base
@@ -83,7 +83,7 @@ nonisolated extension BehaviorGraphInstance {
         pose.rootMotion = mirror?.mirroring(motion) ?? motion
         fireTriggers(generator, state: state, window: window, wrapped: wrapped)
         fireAnnotations(clip, state: state, window: window, crossing: crossing)
-        nodeStates[target] = state
+        graph.nodeStates[target] = state
         return pose
     }
 
@@ -112,10 +112,10 @@ nonisolated extension BehaviorGraphInstance {
     /// The character's mirror when `generator` plays mirrored, tallied when there is none.
     private func clipMirror(for generator: HKBClipGenerator) -> BehaviorMirror? {
         guard generator.flags & 0x4 != 0 else { return nil }
-        if mirror == nil {
-            tally.note(.clipMirrored)
+        if graph.mirror == nil {
+            graph.tally.note(.clipMirrored)
         }
-        return mirror
+        return graph.mirror
     }
 
     /// Places a freshly activated clip at `m_startTime` and records the root
@@ -159,7 +159,7 @@ nonisolated extension BehaviorGraphInstance {
             // 3 is ping pong, which reverses at each edge. It runs as a loop and is
             // tallied.
             if generator.mode == 3 {
-                tally.note(.clipPingPongAsLoop)
+                graph.tally.note(.clipPingPongAsLoop)
             }
             let raw = state.localTime + advance
             state.localTime = raw.truncatingRemainder(dividingBy: window.length)
@@ -194,7 +194,7 @@ nonisolated extension BehaviorGraphInstance {
         justSeeded: Bool
     ) -> Bool {
         guard
-            let pending = pendingClipPhase, pending.value.isFinite,
+            let pending = graph.pendingClipPhase, pending.value.isFinite,
             !pending.seedOnly || justSeeded else { return false }
         let target = min(max(pending.value, 0), 1) * window.length
         // A synced clip that plays at the shared rate is already in step; a jump of
@@ -230,7 +230,7 @@ nonisolated extension BehaviorGraphInstance {
         guard clip.carriesExtractedMotion else { return .identity }
         // A reference frame that is not the even-sampled kind is approximated
         // from the root bone, and tallied.
-        tally.note(.clipExtractedMotionApproximated)
+        graph.tally.note(.clipExtractedMotionApproximated)
         guard !jumped else { return .identity }
         guard
             wrapped,
@@ -248,7 +248,7 @@ nonisolated extension BehaviorGraphInstance {
     }
 
     private func rootPose(of samples: [HKABoneTransformSample]) -> HKABonePose? {
-        samples.first { $0.boneIndex == skeleton.rootBoneIndex }?.pose
+        samples.first { $0.boneIndex == graph.skeleton.rootBoneIndex }?.pose
     }
 
     // MARK: - Triggers
@@ -264,11 +264,11 @@ nonisolated extension BehaviorGraphInstance {
     ) {
         guard
             let arrayTarget = generator.triggers,
-            let array = object(at: arrayTarget, as: HKBClipTriggerArray.self)
+            let array = graph.object(at: arrayTarget, as: HKBClipTriggerArray.self)
         else {
             return
         }
-        markReached(arrayTarget)
+        graph.markReached(arrayTarget)
         for trigger in array.triggers {
             guard !trigger.acyclic || state.cycleCount == 0 else { continue }
             // `m_relativeToEndOfClip` offsets are negative (`MT_JumpLand`'s
@@ -280,9 +280,9 @@ nonisolated extension BehaviorGraphInstance {
             guard crossed(at, state: state, window: window, wrapped: wrapped) else {
                 continue
             }
-            events.raise(
+            graph.events.raise(
                 id: trigger.event.id,
-                payload: payload(at: trigger.event.payload)
+                payload: graph.payload(at: trigger.event.payload)
             )
         }
     }
@@ -297,7 +297,7 @@ nonisolated extension BehaviorGraphInstance {
         crossing: BehaviorClipCrossing
     ) {
         let (wrapped, justSeeded) = (crossing.wrapped, crossing.justSeeded)
-        guard !mutesClipAnnotations else { return }
+        guard !graph.nodeMemory.mutesClipAnnotations else { return }
         for annotation in clip.annotations {
             let at = annotation.time - window.start
             guard
@@ -308,8 +308,8 @@ nonisolated extension BehaviorGraphInstance {
             else {
                 continue
             }
-            if !events.raise(named: annotation.text) {
-                unboundEvents.append(annotation.text)
+            if !graph.events.raise(named: annotation.text) {
+                graph.unboundEvents.append(annotation.text)
             }
         }
     }
@@ -333,12 +333,6 @@ nonisolated extension BehaviorGraphInstance {
             return afterStart && point <= state.localTime
         }
         return afterStart || point <= state.localTime
-    }
-
-    /// The string an event payload carries, if it carries one.
-    func payload(at target: HKXPointerTarget?) -> String? {
-        guard let target else { return nil }
-        return object(at: target, as: HKBStringEventPayload.self)?.data
     }
 }
 

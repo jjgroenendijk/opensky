@@ -85,7 +85,7 @@ struct BehaviorBoneModifierTests {
         graph.characterContext.footIk = false
         let bones = graph.update(deltaTime: 1 / 30).bones
         #expect(simd_distance(ankle(bones), SIMD3(0, 0, 5)) < 1e-3)
-        #expect(graph.footIkError == SIMD3())
+        #expect(graph.nodeMemory.footIkError == SIMD3())
     }
 
     private func physicsRequests(after modifier: any HKBClass) -> BehaviorPhysicsRequests {
@@ -96,7 +96,7 @@ struct BehaviorBoneModifierTests {
         )
         let graph = BehaviorFixture.instance(root: root, table: table)
         _ = graph.update(deltaTime: 1 / 30)
-        return graph.physicsRequests
+        return graph.physics.physicsRequests
     }
 
     @Test func keyframeBonesRequestsOnlyValidBones() {

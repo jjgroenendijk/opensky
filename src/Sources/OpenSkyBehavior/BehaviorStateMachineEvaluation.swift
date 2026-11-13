@@ -20,7 +20,7 @@ nonisolated struct BehaviorTransitionCandidate: Sendable {
     }
 }
 
-nonisolated extension BehaviorGraphInstance {
+nonisolated extension BehaviorGraphInstance.StateMachines {
     /// Runs one state machine: enter, step the crossfade, pick a transition,
     /// then pose the current state and whatever is still blending out.
     func evaluateStateMachine(
@@ -29,7 +29,7 @@ nonisolated extension BehaviorGraphInstance {
         deltaTime: Float
     ) -> BehaviorPose {
         let (target, bound, depth) = (visit.target, visit.bound, visit.depth)
-        var state = machineStates[target] ?? BehaviorMachineState()
+        var state = graph.machineMemory.machineStates[target] ?? BehaviorMachineState()
         if !state.isEntered {
             enterStartState(&state, machine: machine, bound: bound)
         }
@@ -39,7 +39,7 @@ nonisolated extension BehaviorGraphInstance {
         // the pose it is leaving, and one that reaches its duration is dropped
         // here rather than posed at a weight of exactly 1.
         advanceTransition(&state, machine: machine, deltaTime: deltaTime)
-        machineStates[target] = state
+        graph.machineMemory.machineStates[target] = state
         publishMachineOutputs(machine, at: target, currentStateId: state.currentStateId)
         // Reported before the pose walk rather than after it, so a machine
         // appears ahead of the machines nested below it.
@@ -47,7 +47,7 @@ nonisolated extension BehaviorGraphInstance {
         let pose = machinePose(
             state, machine: machine, depth: depth, deltaTime: deltaTime
         )
-        pendingNestedStateIds = []
+        graph.pendingNestedStateIds = []
         return pose
     }
 
@@ -64,7 +64,7 @@ nonisolated extension BehaviorGraphInstance {
         var stateId = bound.int("startStateId", or: machine.startStateId)
         if
             machine.startStateMode == BehaviorStartStateMode.sync,
-            let synced = variables.value(at: machine.syncVariableIndex)
+            let synced = graph.variables.value(at: machine.syncVariableIndex)
         {
             stateId = synced.intValue
         }
@@ -74,9 +74,9 @@ nonisolated extension BehaviorGraphInstance {
         {
             stateId = picked
         }
-        if let nested = pendingNestedStateIds.first {
+        if let nested = graph.pendingNestedStateIds.first {
             stateId = nested
-            pendingNestedStateIds.removeFirst()
+            graph.pendingNestedStateIds.removeFirst()
         }
         // A missing or disabled start state falls back to the first enabled state.
         if stateInfo(of: machine, id: stateId) == nil, let first = firstEnabledStateId(machine) {
@@ -87,10 +87,10 @@ nonisolated extension BehaviorGraphInstance {
         state.currentStateId = stateId
         state.transition = nil
         guard stateInfo(of: machine, id: stateId) != nil else {
-            tally.note(.stateMachineNoStartState)
+            graph.tally.note(.stateMachineNoStartState)
             return
         }
-        raise(machine.eventToSendWhenStateOrTransitionChanges)
+        graph.raise(machine.eventToSendWhenStateOrTransitionChanges)
         raiseNotifyEvents(of: stateId, machine: machine, entering: true)
     }
 
@@ -101,7 +101,7 @@ nonisolated extension BehaviorGraphInstance {
     ) -> (target: HKXPointerTarget, info: HKBStateMachineStateInfo)? {
         for case let stateTarget? in machine.states {
             guard
-                let info = object(at: stateTarget, as: HKBStateMachineStateInfo.self),
+                let info = graph.object(at: stateTarget, as: HKBStateMachineStateInfo.self),
                 info.stateId == id, info.enable
             else {
                 continue
@@ -128,7 +128,7 @@ nonisolated extension BehaviorGraphInstance {
         }
         // The outgoing walk must not use up or clear the start states the
         // transition handed to the incoming state's machines.
-        let pending = pendingNestedStateIds
+        let pending = graph.pendingNestedStateIds
         var poses: [Int: BehaviorPose] = [:]
         let outgoing = sourcePose(
             of: transition, in: BehaviorMachineWalk(
@@ -137,18 +137,18 @@ nonisolated extension BehaviorGraphInstance {
                 deltaTime: deltaTime
             ), poses: &poses
         )
-        pendingNestedStateIds = pending
+        graph.pendingNestedStateIds = pending
         if transition.synchronizes {
             let source = stateInfo(of: machine, id: transition.fromStateId)?.info.generator
-            pendingClipPhase = clipPhase(under: source).map { ($0, true) }
+            graph.pendingClipPhase = graph.clipPlayback.clipPhase(under: source).map { ($0, true) }
         }
         let incoming = sharedStatePose(
             transition.delayedStateId ?? state.currentStateId,
             in: BehaviorMachineWalk(machine: machine, depth: depth, deltaTime: deltaTime),
             poses: &poses
         )
-        pendingClipPhase = nil
-        return blendFull(outgoing, incoming, weight: transition.weight)
+        graph.pendingClipPhase = nil
+        return graph.blenders.blendFull(outgoing, incoming, weight: transition.weight)
     }
 
     func statePose(
@@ -158,10 +158,10 @@ nonisolated extension BehaviorGraphInstance {
         deltaTime: Float
     ) -> BehaviorPose {
         guard let entry = stateInfo(of: machine, id: stateId) else {
-            return skeleton.restPose
+            return graph.skeleton.restPose
         }
-        markReached(entry.target)
-        return evaluateGenerator(
+        graph.markReached(entry.target)
+        return graph.evaluateGenerator(
             at: entry.info.generator, depth: depth, deltaTime: deltaTime
         )
     }
@@ -223,11 +223,11 @@ nonisolated extension BehaviorGraphInstance {
     private func transitions(at target: HKXPointerTarget?) -> [HKBStateMachineTransitionInfo] {
         guard
             let target,
-            let array = object(at: target, as: HKBStateMachineTransitionInfoArray.self)
+            let array = graph.object(at: target, as: HKBStateMachineTransitionInfoArray.self)
         else {
             return []
         }
-        markReached(target)
+        graph.markReached(target)
         return array.transitions
     }
 
@@ -239,7 +239,7 @@ nonisolated extension BehaviorGraphInstance {
         let info = candidate.info
         guard
             info.flags & BehaviorTransitionFlag.disabled == 0,
-            events.isActive(id: info.eventId) else { return false }
+            graph.events.isActive(id: info.eventId) else { return false }
         let isSelf = info.toStateId == state.currentStateId
         let allowsSelf = info.flags & BehaviorTransitionFlag.allowSelfTransition != 0
         guard
@@ -279,7 +279,7 @@ nonisolated extension BehaviorGraphInstance {
 
     private func notePendingNested(_ info: HKBStateMachineTransitionInfo) {
         if info.flags & BehaviorTransitionFlag.toNestedStateIsValid != 0 {
-            pendingNestedStateIds = [info.toNestedStateId]
+            graph.pendingNestedStateIds = [info.toNestedStateId]
         }
     }
 
@@ -298,7 +298,7 @@ nonisolated extension BehaviorGraphInstance {
         state.previousStateId = state.currentStateId
         state.currentStateId = stateId
         state.transition = effect
-        raise(machine.eventToSendWhenStateOrTransitionChanges)
+        graph.raise(machine.eventToSendWhenStateOrTransitionChanges)
         raiseNotifyEvents(of: stateId, machine: machine, entering: true)
     }
 
@@ -307,17 +307,17 @@ nonisolated extension BehaviorGraphInstance {
     /// what 198 of the 397 blending effects in the vanilla player graph carry.
     func effect(for info: HKBStateMachineTransitionInfo) -> BehaviorTransition? {
         guard let target = info.transition else { return nil }
-        guard let blending = object(at: target, as: HKBBlendingTransitionEffect.self) else {
-            tally.note(.transitionEffectUnevaluated)
+        guard let blending = graph.object(at: target, as: HKBBlendingTransitionEffect.self) else {
+            graph.tally.note(.transitionEffectUnevaluated)
             return nil
         }
-        markReached(target)
+        graph.markReached(target)
         guard blending.duration > 0 else { return nil }
         if !BehaviorBlendCurve.isKnown(blending.blendCurve) {
-            tally.note(.transitionBlendCurveApproximated)
+            graph.tally.note(.transitionBlendCurveApproximated)
         }
         if blending.toGeneratorStartTimeFraction != 0 {
-            tally.note(.transitionStartFractionIgnored)
+            graph.tally.note(.transitionStartFractionIgnored)
         }
         return BehaviorTransition(
             fromStateId: -1,
