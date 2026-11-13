@@ -21,7 +21,7 @@ struct PapyrusNativeDebugTests {
     @Test func traceUserWritesOnlyToAnOpenLog() {
         let context = PapyrusNativeContext()
         var registry = PapyrusNativeRegistry(context: context)
-        PapyrusNativeFunctions.installDebug(into: &registry)
+        PapyrusNativeFunctions.DebugNatives.installDebug(into: &registry)
         let trace = Self.debug("TraceUser", [.string("quests"), .string("stage 10")])
         #expect(registry.invoke(trace) == .returned(.boolean(false)))
         let open = Self.debug("OpenUserLog", [.string("quests")])
@@ -36,7 +36,7 @@ struct PapyrusNativeDebugTests {
     @Test func toggleMenusNeedsTheHUD() {
         let bridge = PapyrusWorldStateBridge(worldState: WorldStateStore())
         var registry = PapyrusNativeRegistry(context: PapyrusNativeContext(world: bridge))
-        PapyrusNativeFunctions.installDebug(into: &registry)
+        PapyrusNativeFunctions.DebugNatives.installDebug(into: &registry)
         guard case .failed = registry.invoke(Self.debug("ToggleMenus")) else {
             Issue.record("ToggleMenus answered without the HUD")
             return

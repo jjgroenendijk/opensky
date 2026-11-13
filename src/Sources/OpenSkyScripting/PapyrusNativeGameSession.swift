@@ -6,13 +6,13 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.GameSessionNatives {
     static func installGameSession(into registry: inout PapyrusNativeRegistry) {
         installSaveAndQuit(into: &registry)
         installScreen(into: &registry)
         installDebugSession(into: &registry)
         installPlayerSession(into: &registry)
-        installSound(into: &registry)
+        PapyrusNativeFunctions.SoundNatives.installSound(into: &registry)
     }
 
     private static func installSaveAndQuit(into registry: inout PapyrusNativeRegistry) {

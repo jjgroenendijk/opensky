@@ -6,7 +6,7 @@ public import OpenSkyCrimeInterface
 public import OpenSkyFormatsESM
 public import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ScriptStateLinksNatives {
     /// The eight control groups of `DisablePlayerControls`, in argument order, with the
     /// default each argument has there. `EnablePlayerControls` defaults every one to true.
     static let playerControls: [(name: String, disabledByDefault: Bool)] =
@@ -69,7 +69,8 @@ extension PapyrusNativeFunctions {
                 bridge.updateScriptedState(of: key) { state in
                     for (index, control) in playerControls.enumerated() {
                         let fallback = disables ? control.disabledByDefault : true
-                        guard boolean(call, at: index, default: fallback) else { continue }
+                        guard boolean(call, at: index, default: fallback)
+                        else { continue }
                         state.setFlag(
                             PapyrusWorldStateBridge.controlDisabledName(control.name),
                             disables ? true : nil
@@ -84,7 +85,8 @@ extension PapyrusNativeFunctions {
             scriptState("Game", read, into: &registry) { _, bridge, key in
                 let state = bridge.scriptedState(of: key)
                 return .returned(.boolean(state
-                        .flag(PapyrusWorldStateBridge.controlDisabledName(control.name)) != true))
+                        .flag(PapyrusWorldStateBridge.controlDisabledName(control.name)) !=
+                        true))
             }
         }
         scriptState("Game", "SetInChargen", into: &registry) { call, bridge, key in
@@ -96,7 +98,8 @@ extension PapyrusNativeFunctions {
             return .returned(.none)
         }
         scriptState("Game", "SetBeastForm", into: &registry) { call, bridge, key in
-            let flag: Bool? = boolean(call, at: 0, default: false) ? true : nil
+            let flag: Bool? = PapyrusNativeFunctions
+                .boolean(call, at: 0, default: false) ? true : nil
             bridge.updateScriptedState(of: key) { $0.setFlag(ScriptedStateName.beastForm, flag) }
             return .returned(.none)
         }
@@ -108,7 +111,8 @@ extension PapyrusNativeFunctions {
         for script in ["FormList", "LeveledItem", "LeveledActor", "LeveledSpell"] {
             let leveled = script != "FormList"
             scriptState(script, "AddForm", into: &registry) { call, bridge, key in
-                guard let form = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
+                guard
+                    let form = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
                 else { return failure(call, "AddForm needs a form") }
                 bridge.updateScriptedState(of: key) { state in
                     if !state.addedForms.contains(form) {

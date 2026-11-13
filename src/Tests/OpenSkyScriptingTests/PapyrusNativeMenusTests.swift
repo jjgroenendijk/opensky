@@ -118,7 +118,7 @@ struct PapyrusNativeMenusTests {
         let bridge = PapyrusWorldStateBridge(worldState: WorldStateStore())
         bridge.menus = menus
         var registry = PapyrusNativeRegistry(context: PapyrusNativeContext(world: bridge))
-        PapyrusNativeFunctions.installMenus(into: &registry)
+        PapyrusNativeFunctions.MenusNatives.installMenus(into: &registry)
         #expect(registry.invoke(Self.game("ShowRaceMenu")) == .returned(.none))
         #expect(registry.invoke(Self.game("ShowLimitedRaceMenu")) == .returned(.none))
         let enable = Self.game("EnableFastTravel", [.boolean(false)])
@@ -188,7 +188,7 @@ struct PapyrusNativeMenusTests {
 
     @Test func withoutTheBridgeANativeDoesNothing() {
         var registry = PapyrusNativeRegistry(context: PapyrusNativeContext())
-        PapyrusNativeFunctions.installMenus(into: &registry)
+        PapyrusNativeFunctions.MenusNatives.installMenus(into: &registry)
         #expect(registry.invoke(Self.game("ShowRaceMenu")) != .returned(.none))
     }
 

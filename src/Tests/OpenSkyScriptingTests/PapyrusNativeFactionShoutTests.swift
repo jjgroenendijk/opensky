@@ -60,7 +60,8 @@ struct PapyrusNativeFactionShoutTests {
         _ = call(fixture, "Faction", "SetPlayerEnemy")
         let reactions = fixture.session.bridge.scriptedFactionReactions()
         #expect(reactions.contains {
-            $0.from == PapyrusNativeFunctions.playerFaction && $0.reaction == .enemy
+            $0.from == PapyrusNativeFunctions.FactionRelationsNatives.playerFaction && $0
+                .reaction == .enemy
         })
         _ = call(fixture, "Faction", "SetPlayerEnemy", [.boolean(false)])
         #expect(fixture.session.bridge.scriptedFactionReactions().allSatisfy {

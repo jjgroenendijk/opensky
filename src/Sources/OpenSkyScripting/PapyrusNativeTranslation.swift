@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyScriptingInterface
 public import OpenSkyWorldState
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.TranslationNatives {
     public static func installTranslation(into registry: inout PapyrusNativeRegistry) {
         // `SplineTranslateTo` puts a tangent magnitude before the speed. OpenSky moves in a
         // straight line, so the tangent is read past and not used.
@@ -20,7 +20,10 @@ extension PapyrusNativeFunctions {
                         of: key, to: request.target,
                         speed: request.speed, maxRotationSpeed: request.maxRotationSpeed
                     )
-                else { return needsResidentReference(call) }
+                else {
+                    return PapyrusNativeFunctions.ObjectReferenceNatives
+                        .needsResidentReference(call)
+                }
                 return .returned(.none)
             }
         }
@@ -35,7 +38,9 @@ extension PapyrusNativeFunctions {
     ) -> TranslationRequest? {
         var values: [Float] = []
         for index in 0 ... speedIndex {
-            guard let value = float(call, at: index), value.isFinite else { return nil }
+            guard
+                let value = float(call, at: index),
+                value.isFinite else { return nil }
             values.append(value)
         }
         let capIndex = speedIndex + 1

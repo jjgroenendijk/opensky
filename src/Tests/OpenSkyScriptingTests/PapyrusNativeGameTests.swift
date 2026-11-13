@@ -71,7 +71,7 @@ struct PapyrusNativeGameTests {
 
     @Test func usingGamepadAnswersFalse() {
         var registry = PapyrusNativeRegistry()
-        PapyrusNativeFunctions.installGame(into: &registry)
+        PapyrusNativeFunctions.GameNatives.installGame(into: &registry)
         #expect(registry.invoke(PapyrusNativeCall(
             kind: .staticFunction, scriptName: "Game", functionName: "UsingGamepad",
             receiver: nil, arguments: [], returnType: .boolean

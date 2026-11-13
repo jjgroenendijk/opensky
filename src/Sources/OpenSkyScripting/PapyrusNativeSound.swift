@@ -7,14 +7,15 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.SoundNatives {
     static func installSound(into registry: inout PapyrusNativeRegistry) {
         // `int Play(ObjectReference akSource)`: 0 when the sound failed to play.
         scriptState("Sound", "Play", into: &registry) { call, bridge, sound in
             guard
                 let source = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)),
                 let play = bridge.gameNatives.playSound
-            else { return failure(call, "Play needs a source reference") }
+            else { return failure(call, "Play needs a source reference")
+            }
             return .returned(.integer(play(sound, source, nil)))
         }
         // `bool PlayAndWait(ObjectReference akSource)`: latent until the sound ends.
@@ -29,12 +30,22 @@ extension PapyrusNativeFunctions {
             }
             return .suspended(.external(token))
         }
-        gameHook("Sound", "StopInstance", into: &registry) { call, hooks in
-            guard let stop = hooks.stopSound, let id = integer(call, at: 0) else { return nil }
+        PapyrusNativeFunctions.GameSessionNatives.gameHook(
+            "Sound",
+            "StopInstance",
+            into: &registry
+        ) { call, hooks in
+            guard
+                let stop = hooks.stopSound,
+                let id = integer(call, at: 0) else { return nil }
             stop(id)
             return .returned(.none)
         }
-        gameHook("Sound", "SetInstanceVolume", into: &registry) { call, hooks in
+        PapyrusNativeFunctions.GameSessionNatives.gameHook(
+            "Sound",
+            "SetInstanceVolume",
+            into: &registry
+        ) { call, hooks in
             guard
                 let set = hooks.setSoundVolume, let id = integer(call, at: 0),
                 let volume = float(call, at: 1)
@@ -79,7 +90,10 @@ extension PapyrusNativeFunctions {
                 let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)),
                 let path = bridge.gameNatives.pathToReference
             else { return failure(call, "PathToReference needs a target reference") }
-            guard let speed = float(call, at: 1), (0 ... 1).contains(speed) else {
+            guard
+                let speed = float(call, at: 1),
+                (0 ... 1).contains(speed)
+            else {
                 return .returned(.boolean(false))
             }
             let token = bridge.nextLatentWaitToken()

@@ -8,7 +8,7 @@ import OpenSkyInventoryInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ReferenceStateNatives {
     /// `GetOpenState` codes: 1 open, 3 closed. A sequence door also answers 2 opening
     /// and 4 closing.
     static let openStateOpen: Int32 = 1
@@ -69,7 +69,9 @@ extension PapyrusNativeFunctions {
     /// with angles in degrees as `GetAngleX` reads them.
     private static func installTransformWrites(into registry: inout PapyrusNativeRegistry) {
         transformWrite("SetScale", into: &registry) { call, transform in
-            guard let scale = float(call, at: 0), scale.isFinite, scale > 0 else { return nil }
+            guard
+                let scale = float(call, at: 0), scale.isFinite,
+                scale > 0 else { return nil }
             var scaled = transform
             scaled.scale = scale
             return scaled
@@ -77,7 +79,9 @@ extension PapyrusNativeFunctions {
         transformWrite("SetAngle", into: &registry) { call, transform in
             var rotation = transform.rotation
             for axis in 0 ..< 3 {
-                guard let degrees = float(call, at: axis), degrees.isFinite else { return nil }
+                guard
+                    let degrees = float(call, at: axis),
+                    degrees.isFinite else { return nil }
                 rotation[axis] = degrees * .pi / 180
             }
             return ReferenceTransformOverride(

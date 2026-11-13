@@ -11,7 +11,7 @@ import OpenSkyGameData
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.WorldReadsNatives {
     static func installWorldReads(into registry: inout PapyrusNativeRegistry) {
         scriptState("Cell", "IsInterior", into: &registry) { call, bridge, key in
             guard

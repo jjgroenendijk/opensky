@@ -7,14 +7,14 @@ import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.TrapNatives {
     public static func installTrap(into registry: inout PapyrusNativeRegistry) {
         installTrapReads(into: &registry)
         installTrapHit(into: &registry)
-        installTrapWorld(into: &registry)
-        installTrapMotion(into: &registry)
-        installTrapStubs(into: &registry)
-        installDestruction(into: &registry)
+        PapyrusNativeFunctions.TrapWorldNatives.installTrapWorld(into: &registry)
+        PapyrusNativeFunctions.TrapMotionNatives.installTrapMotion(into: &registry)
+        PapyrusNativeFunctions.TrapStubsNatives.installTrapStubs(into: &registry)
+        PapyrusNativeFunctions.DestructionNatives.installDestruction(into: &registry)
     }
 
     /// `int GetTriggerObjectCount()`, `Form GetBaseObject()`, `float GetAngleX()`,
@@ -35,7 +35,8 @@ extension PapyrusNativeFunctions {
         for (functionName, axis) in [("GetAngleX", 0), ("GetAngleY", 1), ("GetAngleZ", 2)] {
             reference(functionName, into: &registry) { call, target in
                 guard let state = target.world.referenceState(for: target.key) else {
-                    return needsResidentReference(call)
+                    return PapyrusNativeFunctions.ObjectReferenceNatives
+                        .needsResidentReference(call)
                 }
                 return .returned(.float(state.transform.rotation[axis] * 180 / .pi))
             }
@@ -90,13 +91,15 @@ extension PapyrusNativeFunctions {
             }
             guard damage > 0 else { return .returned(.none) }
             guard
-                target.world.damageActorValue(
-                    at: Int32(health), by: damage, on: target.key
-                ) != nil
+                target.world.damageActorValue(at: Int32(health), by: damage, on: target.key) != nil
             else {
                 return failure(call, "ProcessTrapHit needs an actor receiver")
             }
-            pushBack(call, world: target.world, actor: target.key)
+            PapyrusNativeFunctions.TrapWorldNatives.pushBack(
+                call,
+                world: target.world,
+                actor: target.key
+            )
             return .returned(.none)
         }
     }

@@ -52,7 +52,7 @@ extension PapyrusWorldStateBridge {
     }
 }
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.LineOfSightNatives {
     /// The same four natives on `Form`, `Alias`, and `ActiveMagicEffect`.
     static func installLineOfSight(into registry: inout PapyrusNativeRegistry) {
         let natives: [(String, LineOfSightWatch.Mode?)] = [
@@ -61,7 +61,7 @@ extension PapyrusNativeFunctions {
             ("RegisterForSingleLOSLost", .singleLost),
             ("UnregisterForLOS", nil)
         ]
-        for script in updateTimerScripts {
+        for script in PapyrusNativeFunctions.UpdateTimersNatives.updateTimerScripts {
             for (name, mode) in natives {
                 registry.register(PapyrusNativeFunction(
                     scriptName: script, functionName: name

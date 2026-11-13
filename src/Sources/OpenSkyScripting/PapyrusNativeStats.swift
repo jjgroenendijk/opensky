@@ -4,13 +4,16 @@
 import Foundation
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.StatsNatives {
     public static func installStats(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Game",
             functionName: "IncrementStat"
         ) { call, context in
-            guard let world = context.world, let name = string(call, at: 0) else {
+            guard
+                let world = context.world,
+                let name = string(call, at: 0)
+            else {
                 return failure(call, "IncrementStat needs a world runtime and a stat name")
             }
             let amount = integer(call, at: 1) ?? 1
@@ -23,7 +26,10 @@ extension PapyrusNativeFunctions {
             scriptName: "Game",
             functionName: "QueryStat"
         ) { call, context in
-            guard let world = context.world, let name = string(call, at: 0) else {
+            guard
+                let world = context.world,
+                let name = string(call, at: 0)
+            else {
                 return failure(call, "QueryStat needs a world runtime and a stat name")
             }
             return .returned(.integer(world.queryStat(name)))

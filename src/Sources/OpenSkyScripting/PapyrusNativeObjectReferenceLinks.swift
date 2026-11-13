@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ObjectReferenceLinksNatives {
     /// `bool Activate(ObjectReference akActivator, bool abDefaultProcessingOnly = false)`.
     /// Its whole effect is `PapyrusWorldBridge.activate(_:by:togglesOpen:)`, with
     /// `togglesOpen` false: a script activation is not an open action. The
@@ -31,9 +31,7 @@ extension PapyrusNativeFunctions {
                     return failure(call, "Activate needs an ObjectReference activator")
                 }
             }
-            let outcome = target.world.activate(
-                target.key, by: activator, togglesOpen: false
-            )
+            let outcome = target.world.activate(target.key, by: activator, togglesOpen: false)
             return .returned(.boolean(!outcome.cappedByRecursion))
         })
     }

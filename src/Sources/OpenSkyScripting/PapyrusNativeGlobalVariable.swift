@@ -8,7 +8,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.GlobalVariableNatives {
     public static func installGlobalVariable(into registry: inout PapyrusNativeRegistry) {
         installGlobalReads(into: &registry)
         installGlobalWrites(into: &registry)
@@ -17,9 +17,7 @@ extension PapyrusNativeFunctions {
     /// `float GetValue()` and `int GetValueInt()`. An undefined global fails
     /// rather than reading 0, because a script would act on the 0.
     /// `GetValueInt` truncates toward zero and saturates at the `Int32` bounds.
-    private static func installGlobalReads(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installGlobalReads(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "GlobalVariable",
             functionName: "GetValue"
@@ -44,9 +42,7 @@ extension PapyrusNativeFunctions {
     /// A write needs no existing definition, so a session with no `GlobalStore`
     /// can still store one. A non-finite value is refused, because coercion
     /// would turn it into 0 and hide the script's bug.
-    private static func installGlobalWrites(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installGlobalWrites(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "GlobalVariable",
             functionName: "SetValue"
@@ -79,13 +75,12 @@ extension PapyrusNativeFunctions {
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext
     ) -> GlobalValue? {
-        guard let target = worldTarget(call, context) else { return nil }
+        guard let target = worldTarget(call, context)
+        else { return nil }
         return target.world.globalValue(for: target.key)
     }
 
-    private static func needsGlobal(
-        _ call: PapyrusNativeCall
-    ) -> PapyrusNativeResult {
+    private static func needsGlobal(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
         failure(call, "\(call.functionName) needs a global this session defines")
     }
 

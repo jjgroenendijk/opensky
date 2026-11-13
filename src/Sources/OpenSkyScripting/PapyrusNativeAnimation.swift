@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.AnimationNatives {
     /// The wait without a graph: a trap loops on it while its cell is loaded, and an
     /// instant answer would spin that loop.
     static let animationEventWaitSeconds = 1.0
@@ -23,7 +23,8 @@ extension PapyrusNativeFunctions {
         // `bool Function PlayAnimationAndWait(string asAnimation, string asEventName) native`
         animationNative("PlayAnimationAndWait", into: &registry) { call, bridge, key in
             guard
-                let event = string(call, at: 0), let awaited = string(call, at: 1),
+                let event = string(call, at: 0),
+                let awaited = string(call, at: 1),
                 bridge.playAnimation(event, on: key),
                 let token = bridge.awaitAnimationEvent(awaited, on: key)
             else { return nil }
@@ -53,8 +54,8 @@ extension PapyrusNativeFunctions {
             context.log.append("Deferred animation \(call.qualifiedName)")
             return .deviated(.none, .deferredAnimation)
         })
-        installAnimationVariables(into: &registry)
-        installSubGraphNatives(into: &registry)
+        PapyrusNativeFunctions.AnimationVariablesNatives.installAnimationVariables(into: &registry)
+        PapyrusNativeFunctions.SubGraphsNatives.installSubGraphNatives(into: &registry)
         registry.register(PapyrusNativeFunction(
             scriptName: "ObjectReference",
             functionName: "PlayGamebryoAnimation"

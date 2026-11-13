@@ -11,7 +11,7 @@ import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ActorRulesNatives {
     /// `KnockAreaEffect` magnitude 1 as a knockdown, in Havok metres a second.
     /// [WARNING] OpenSky's reading: no open source gives the game's scale.
     static let knockAreaMagnitude: Float = 14
@@ -49,14 +49,16 @@ extension PapyrusNativeFunctions {
     private static func installFeeding(into registry: inout PapyrusNativeRegistry) {
         // The event fires whether or not the animation plays (CK wiki, StartVampireFeed).
         scriptState("Actor", "StartVampireFeed", into: &registry) { call, bridge, key in
-            guard let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
+            guard
+                let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
             else { return failure(call, "StartVampireFeed needs a target") }
             bridge.world?.queueVampireFeed(feeder: key, target: target)
             _ = bridge.actorAI?.playIdle(editorID: vampireFeedIdle, on: key, with: target)
             return .returned(.none)
         }
         scriptState("Actor", "StartCannibal", into: &registry) { call, bridge, key in
-            guard let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
+            guard
+                let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
             else { return failure(call, "StartCannibal needs a target") }
             bridge.updateScriptedState(of: target) { $0.setFlag(ScriptedStateName.eaten, true) }
             _ = bridge.actorAI?.playIdle(editorID: cannibalFeedIdle, on: key, with: target)
@@ -114,7 +116,9 @@ extension PapyrusNativeFunctions {
             return .returned(.none)
         }
         scriptState("Actor", "SetEyeTexture", into: &registry) { call, bridge, key in
-            guard let set = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)) else {
+            guard
+                let set = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
+            else {
                 return .returned(.none)
             }
             guard let retexture = bridge.gameNatives.setEyeTexture else {
@@ -183,11 +187,11 @@ extension PapyrusNativeFunctions {
             guard
                 let magnitude = float(call, at: 0), magnitude.isFinite,
                 let radius = float(call, at: 1), radius.isFinite,
-                let centre = position(of: key, bridge)
+                let centre = PapyrusNativeFunctions.WorldPlaceNatives.position(of: key, bridge)
             else { return failure(call, "KnockAreaEffect needs a magnitude and a radius") }
             guard let trapWorld = bridge.trapWorld else { return .deviated(.none, .stubbed) }
             let knock = min(max(magnitude, 0), 1) * knockAreaMagnitude
-            let actors = findCandidates(
+            let actors = PapyrusNativeFunctions.FindReferencesNatives.findCandidates(
                 bridge, filter: .actors, bases: [], around: (centre, radius)
             )
             for actor in actors.map(\.key).sorted() where actor != key {

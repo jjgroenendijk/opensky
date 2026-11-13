@@ -6,60 +6,24 @@
 // Documented in docs/engine/papyrus-activation.md, with the gaps against the game.
 
 import Foundation
-public import OpenSkyFormatsESM
-public import OpenSkyScriptingInterface
+import OpenSkyFormatsESM
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ObjectReferenceNatives {
     public static func installObjectReference(into registry: inout PapyrusNativeRegistry) {
         installEnableState(into: &registry)
         installDeletion(into: &registry)
-        installPositionReads(into: &registry)
-        installSetPosition(into: &registry)
-        installActivate(into: &registry)
-        installLinkedReference(into: &registry)
-    }
-
-    /// The world façade plus the world identity of `self`, or nil when either
-    /// is missing. Every world-touching native starts with this.
-    public static func worldTarget(
-        _ call: PapyrusNativeCall,
-        _ context: PapyrusNativeContext
-    ) -> (world: any PapyrusWorldBridge, key: ReferenceKey)? {
-        guard
-            let world = context.world,
-            let receiver = call.receiver,
-            let key = world.referenceKey(for: receiver)
-        else { return nil }
-        return (world, key)
-    }
-
-    /// The single failure a world native returns when it has no world to talk
-    /// to, or no world identity for its receiver.
-    public static func needsWorld(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
-        failure(
-            call,
-            "\(call.functionName) needs a world runtime and a reference receiver"
-        )
-    }
-
-    /// The failure for a reference whose plugin baseline no resident cell can
-    /// supply, which is what stops a read from inventing a position.
-    public static func needsResidentReference(
-        _ call: PapyrusNativeCall
-    ) -> PapyrusNativeResult {
-        failure(
-            call,
-            "\(call.functionName) needs a reference a resident cell knows"
-        )
+        PapyrusNativeFunctions.ObjectReferenceMotionNatives.installPositionReads(into: &registry)
+        PapyrusNativeFunctions.ObjectReferenceMotionNatives.installSetPosition(into: &registry)
+        PapyrusNativeFunctions.ObjectReferenceLinksNatives.installActivate(into: &registry)
+        PapyrusNativeFunctions.ObjectReferenceLinksNatives.installLinkedReference(into: &registry)
     }
 
     /// `Enable(bool abFadeIn = false)`, `Disable(bool abFadeOut = false)`, their
     /// `NoWait` forms, and `bool IsEnabled()`. There is no fade, so the fade argument
     /// is ignored and a call never waits; the stored state is the same either way.
-    private static func installEnableState(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installEnableState(into registry: inout PapyrusNativeRegistry) {
         let writes = [
             ("Enable", true), ("EnableNoWait", true), ("Disable", false), ("DisableNoWait", false)
         ]
@@ -97,9 +61,7 @@ extension PapyrusNativeFunctions {
     /// `Delete()` and `bool IsDeleted()`. Writes a `ReferenceDeletionState` delta at
     /// once, which the save keeps. It differs from the record header's deleted flag.
     /// OpenSky has no reference counting, so it does not wait until nothing holds it.
-    private static func installDeletion(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installDeletion(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "ObjectReference",
             functionName: "Delete"

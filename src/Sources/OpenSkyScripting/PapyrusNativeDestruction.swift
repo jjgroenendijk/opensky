@@ -9,7 +9,7 @@ import OpenSkyGameData
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.DestructionNatives {
     static func installDestruction(into registry: inout PapyrusNativeRegistry) {
         // `DamageObject(float afDamage)`. An object with no `DEST` data takes no damage.
         scriptState("ObjectReference", "DamageObject", into: &registry) { call, bridge, key in
@@ -27,7 +27,8 @@ extension PapyrusNativeFunctions {
         // `SetDestroyed(bool abDestroyed = true)`.
         scriptState("ObjectReference", "SetDestroyed", into: &registry) { call, bridge, key in
             let progress = DestructionProgress.destroyed(
-                boolean(call, at: 0, default: true), data: bridge.destructibleData(of: key)
+                boolean(call, at: 0, default: true),
+                data: bridge.destructibleData(of: key)
             )
             bridge.storeDestruction(progress, of: key)
             return .returned(.none)

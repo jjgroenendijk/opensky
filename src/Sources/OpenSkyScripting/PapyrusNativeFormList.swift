@@ -5,7 +5,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.FormListNatives {
     /// `int GetSize()`, `Form GetAt(int)`, `int Find(Form)`, `bool HasForm(Form)`, and
     /// `bool Form.HasKeyword(Keyword)`. A nested list counts as one entry, as the list
     /// stores it, so `Find` does not look inside it.

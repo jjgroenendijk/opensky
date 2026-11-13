@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ScriptStateNatives {
     /// One Bool a setter stores and an optional getter reads. The setter's first
     /// argument defaults to true, as most of them declare.
     private struct ScriptedFlag {
@@ -50,9 +50,7 @@ extension PapyrusNativeFunctions {
             "Actor", "SetNoBleedoutRecovery", "GetNoBleedoutRecovery",
             ScriptedStateName.noBleedoutRecovery
         ),
-        ScriptedFlag(
-            "Actor", "SetNotShowOnStealthMeter", ScriptedStateName.notShowOnStealthMeter
-        ),
+        ScriptedFlag("Actor", "SetNotShowOnStealthMeter", ScriptedStateName.notShowOnStealthMeter),
         ScriptedFlag("Actor", "SetDontMove", "dontMove"),
         ScriptedFlag("Actor", "SetAttackActorOnSight", "attackActorOnSight"),
         ScriptedFlag("Actor", "SetHeadTracking", "headTracking"),
@@ -142,9 +140,9 @@ extension PapyrusNativeFunctions {
         }
         installScriptedForms(into: &registry)
         installKeywordData(into: &registry)
-        installOwnership(into: &registry)
-        installPlayerControls(into: &registry)
-        installAddedForms(into: &registry)
+        PapyrusNativeFunctions.ScriptStateLinksNatives.installOwnership(into: &registry)
+        PapyrusNativeFunctions.ScriptStateLinksNatives.installPlayerControls(into: &registry)
+        PapyrusNativeFunctions.ScriptStateLinksNatives.installAddedForms(into: &registry)
     }
 
     private static func installScriptedForms(into registry: inout PapyrusNativeRegistry) {
@@ -191,38 +189,11 @@ extension PapyrusNativeFunctions {
             return .returned(.none)
         }
         scriptState("Location", "GetKeywordData", into: &registry) { call, bridge, key in
-            guard let keyword = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
+            guard
+                let keyword = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
             else { return failure(call, "GetKeywordData needs a keyword") }
             let state = bridge.scriptedState(of: key)
             return .returned(.float(state.value(ScriptedStateName.keywordData(keyword)) ?? 0))
         }
-    }
-
-    /// Registers a native that reads or writes the script state of its receiver's form,
-    /// or of the player for a global `Game` function.
-    static func scriptState(
-        _ script: String, _ name: String,
-        into registry: inout PapyrusNativeRegistry,
-        body: @escaping @MainActor (
-            PapyrusNativeCall, PapyrusWorldStateBridge, ReferenceKey
-        ) -> PapyrusNativeResult
-    ) {
-        let native: PapyrusNativeFunction.Body = { call, context in
-            guard let bridge = context.world as? PapyrusWorldStateBridge else {
-                return needsWorld(call)
-            }
-            if script == "Game" {
-                return body(call, bridge, .player)
-            }
-            guard let key = call.receiver.flatMap(bridge.referenceKey(for:)) else {
-                return needsWorld(call)
-            }
-            return body(call, bridge, key)
-        }
-        registry.register(PapyrusNativeFunction(
-            scriptName: script,
-            functionName: name,
-            body: native
-        ))
     }
 }

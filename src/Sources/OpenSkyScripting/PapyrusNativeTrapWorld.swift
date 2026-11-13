@@ -16,7 +16,7 @@ struct TrapWorldTarget {
     let key: ReferenceKey
 }
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.TrapWorldNatives {
     static func installTrapWorld(into registry: inout PapyrusNativeRegistry) {
         installPlaceAtMe(into: &registry)
         installPlaceActorAtMe(into: &registry)
@@ -28,9 +28,7 @@ extension PapyrusNativeFunctions {
             else {
                 return failure(call, "ApplyHavokImpulse needs a direction and a magnitude")
             }
-            _ = target.trapWorld.applyImpulse(
-                simd_normalize(direction) * magnitude, to: target.key
-            )
+            _ = target.trapWorld.applyImpulse(simd_normalize(direction) * magnitude, to: target.key)
             return .returned(.none)
         }
         trapWorldReference("PushActorAway", into: &registry) { call, target in
@@ -69,7 +67,9 @@ extension PapyrusNativeFunctions {
             guard
                 let handle = objectArgument(call, at: 0),
                 let base = bridge.referenceKey(for: handle)
-            else { return failure(call, "PlaceActorAtMe needs an actor base") }
+            else {
+                return failure(call, "PlaceActorAtMe needs an actor base")
+            }
             guard
                 let placed = bridge.spawnReference(of: base, at: key),
                 let result = bridge.objectHandle(for: placed)
@@ -89,7 +89,8 @@ extension PapyrusNativeFunctions {
             _ = trapWorld.staggerActor(actor, magnitude: min(stagger, 1))
         }
         guard
-            let pushback = float(call, at: 2), pushback.isFinite, pushback > 0,
+            let pushback = float(call, at: 2), pushback.isFinite,
+            pushback > 0,
             let handle = objectArgument(call, at: 0),
             let trap = world.referenceKey(for: handle)
         else { return }
@@ -100,7 +101,8 @@ extension PapyrusNativeFunctions {
 
     static func vector(_ call: PapyrusNativeCall, from index: Int) -> SIMD3<Float>? {
         guard
-            let x = float(call, at: index), let y = float(call, at: index + 1),
+            let x = float(call, at: index),
+            let y = float(call, at: index + 1),
             let z = float(call, at: index + 2)
         else { return nil }
         let value = SIMD3(x, y, z)

@@ -6,11 +6,14 @@ import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.TrapMotionNatives {
     static func installTrapMotion(into registry: inout PapyrusNativeRegistry) {
         // `SetMotionType(int aiMotionType, bool abAllowActivate = true)`. The second
         // argument is not read: a body made dynamic starts to fall at once.
-        trapWorldReference("SetMotionType", into: &registry) { call, target in
+        PapyrusNativeFunctions.TrapWorldNatives.trapWorldReference(
+            "SetMotionType",
+            into: &registry
+        ) { call, target in
             guard
                 let value = integer(call, at: 0),
                 let motionType = ReferenceMotionType(papyrusValue: value)
@@ -19,14 +22,15 @@ extension PapyrusNativeFunctions {
             return .returned(.none)
         }
         // `Reset(ObjectReference akTarget = None)`. An actor is not reset yet.
-        trapWorldReference("Reset", into: &registry) { call, target in
-            let destination = objectArgument(call, at: 0)
-                .flatMap { target.world.referenceKey(for: $0) }
-            guard target.trapWorld.resetReference(target.key, to: destination) else {
-                return .deviated(.none, .stubbed)
+        PapyrusNativeFunctions.TrapWorldNatives
+            .trapWorldReference("Reset", into: &registry) { call, target in
+                let destination = objectArgument(call, at: 0)
+                    .flatMap { target.world.referenceKey(for: $0) }
+                guard target.trapWorld.resetReference(target.key, to: destination) else {
+                    return .deviated(.none, .stubbed)
+                }
+                return .returned(.none)
             }
-            return .returned(.none)
-        }
         installWeaponFire(into: &registry)
     }
 
@@ -49,7 +53,8 @@ extension PapyrusNativeFunctions {
                 context.log.append("Stubbed \(call.qualifiedName)")
                 return .deviated(.none, .stubbed)
             }
-            let ammunition = objectArgument(call, at: 1).flatMap { world.referenceKey(for: $0) }
+            let ammunition = objectArgument(call, at: 1)
+                .flatMap { world.referenceKey(for: $0) }
             _ = trapWorld.fireWeapon(weapon, from: source, ammunition: ammunition)
             return .returned(.none)
         })

@@ -62,9 +62,9 @@ extension PapyrusWorldStateBridge {
     }
 }
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.TrackedStatsNatives {
     static func installTrackedStats(into registry: inout PapyrusNativeRegistry) {
-        for script in updateTimerScripts {
+        for script in PapyrusNativeFunctions.UpdateTimersNatives.updateTimerScripts {
             for (name, isRegistered) in [
                 ("RegisterForTrackedStatsEvent", true), ("UnregisterForTrackedStatsEvent", false)
             ] {

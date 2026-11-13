@@ -10,7 +10,7 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.FindReferencesNatives {
     enum FindFilter {
         case actors, baseForm, baseFormList
     }
@@ -32,8 +32,10 @@ extension PapyrusNativeFunctions {
                     }
                     let first = filter == .actors ? 0 : 1
                     guard
-                        let x = float(call, at: first), let y = float(call, at: first + 1),
-                        let z = float(call, at: first + 2), let radius = float(call, at: first + 3)
+                        let x = float(call, at: first),
+                        let y = float(call, at: first + 1),
+                        let z = float(call, at: first + 2),
+                        let radius = float(call, at: first + 3)
                     else { return failure(call, "\(name) needs a point and a radius") }
                     guard let bases = findBases(call, filter, bridge) else {
                         return failure(call, "\(name) needs a base form")
@@ -60,7 +62,9 @@ extension PapyrusNativeFunctions {
         if filter == .actors {
             return []
         }
-        guard let form = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)) else {
+        guard
+            let form = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
+        else {
             return nil
         }
         guard filter == .baseFormList else { return [form] }
@@ -91,7 +95,8 @@ extension PapyrusNativeFunctions {
             {
                 return nil
             }
-            guard let position = position(of: key, bridge) else { return nil }
+            guard let position = PapyrusNativeFunctions.WorldPlaceNatives.position(of: key, bridge)
+            else { return nil }
             let distance = simd_distance(position, centre)
             return distance <= radius ? (key, distance) : nil
         }

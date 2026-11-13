@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ShoutsNatives {
     public static func installShouts(into registry: inout PapyrusNativeRegistry) {
         installWords(into: &registry)
         withForm("Actor", "AddShout", into: &registry) { _, bridge, actor, shout in
@@ -50,7 +50,8 @@ extension PapyrusNativeFunctions {
         }
         scriptState("Actor", "GetEquippedShout", into: &registry) { _, bridge, actor in
             let shout = bridge.equippedShout(of: actor)
-            return .returned(shout.map { handle($0, in: bridge) } ?? .none)
+            return .returned(shout
+                .map { handle($0, in: bridge) } ?? .none)
         }
     }
 
@@ -66,7 +67,9 @@ extension PapyrusNativeFunctions {
         ) -> PapyrusNativeResult
     ) {
         scriptState(script, name, into: &registry) { call, bridge, key in
-            guard let form = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)) else {
+            guard
+                let form = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
+            else {
                 return failure(call, "\(name) needs a form")
             }
             return body(call, bridge, key, form)
@@ -100,7 +103,7 @@ extension PapyrusWorldStateBridge {
     }
 }
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ShoutsNatives {
     private static func installWords(into registry: inout PapyrusNativeRegistry) {
         // `TeachWord(WordOfPower)` and `UnlockWord(WordOfPower)` act on the player. The CK
         // wiki's UnlockWord page: it also marks the word known, with no notice.

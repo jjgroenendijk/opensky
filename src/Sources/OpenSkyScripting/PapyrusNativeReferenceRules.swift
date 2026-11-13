@@ -9,7 +9,7 @@ import OpenSkyScriptingInterface
 import OpenSkyWorldState
 import simd
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ReferenceRulesNatives {
     static func installReferenceRules(into registry: inout PapyrusNativeRegistry) {
         installNodes(into: &registry)
         // "Flags this cell for reset on next load", even in a no-reset zone.
@@ -72,7 +72,9 @@ extension PapyrusNativeFunctions {
     /// answers once it has loaded.
     private static func installNodes(into registry: inout PapyrusNativeRegistry) {
         scriptState("ObjectReference", "HasNode", into: &registry) { call, bridge, key in
-            guard let name = string(call, at: 0), let lookup = bridge.gameNatives.nodeTransform
+            guard
+                let name = string(call, at: 0),
+                let lookup = bridge.gameNatives.nodeTransform
             else { return failure(call, "HasNode needs a node name") }
             switch lookup(key, name, { .boolean($0 != nil) }) {
             case .found: return .returned(.boolean(true))
@@ -83,7 +85,8 @@ extension PapyrusNativeFunctions {
         scriptState("ObjectReference", "MoveToNode", into: &registry) { call, bridge, key in
             guard
                 let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)),
-                let name = string(call, at: 1), let lookup = bridge.gameNatives.nodeTransform
+                let name = string(call, at: 1),
+                let lookup = bridge.gameNatives.nodeTransform
             else { return failure(call, "MoveToNode needs a target and a node name") }
             let move = { [weak bridge] (node: simd_float4x4?) -> PapyrusValue in
                 if let node, let bridge {
@@ -95,7 +98,10 @@ extension PapyrusNativeFunctions {
             case let .found(node):
                 bridge.move(key, to: node)
                 return .returned(.none)
-            case .missing: return failure(call, "MoveToNode found no node \(name)")
+            case .missing: return failure(
+                    call,
+                    "MoveToNode found no node \(name)"
+                )
             case let .loading(token): return .suspended(.external(token))
             }
         }

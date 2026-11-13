@@ -6,7 +6,7 @@
 import Foundation
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.MountsNatives {
     static func installMounts(into registry: inout PapyrusNativeRegistry) {
         scriptState("Game", "GetPlayersLastRiddenHorse", into: &registry) { call, bridge, _ in
             guard let lastMount = bridge.playerNatives.playersLastMount else {

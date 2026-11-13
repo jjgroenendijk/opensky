@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.AlchemyNatives {
     static func installAlchemy(into registry: inout PapyrusNativeRegistry) {
         for script in ["Ingredient", "Potion"] {
             onItemForm(script, "IsHostile", into: &registry) { call, bridge, item in

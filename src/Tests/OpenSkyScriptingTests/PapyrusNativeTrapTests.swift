@@ -128,7 +128,7 @@ struct PapyrusNativeTrapTests {
             "WaitForAnimationEvent", arguments: [.string("EndLoop")], returnType: .boolean
         )
         #expect(result == .suspended(.realSecondsAnswering(
-            PapyrusNativeFunctions.animationEventWaitSeconds, .boolean(true)
+            PapyrusNativeFunctions.AnimationNatives.animationEventWaitSeconds, .boolean(true)
         )))
     }
 
@@ -152,7 +152,7 @@ struct PapyrusNativeTrapTests {
             "WaitForAnimationEvent", arguments: [.string("Done")], returnType: .boolean
         )
         #expect(paced == .suspended(.realSecondsAnswering(
-            PapyrusNativeFunctions.animationEventWaitSeconds, .boolean(true)
+            PapyrusNativeFunctions.AnimationNatives.animationEventWaitSeconds, .boolean(true)
         )))
     }
 

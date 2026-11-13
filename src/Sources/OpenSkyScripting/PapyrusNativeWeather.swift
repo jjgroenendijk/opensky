@@ -5,7 +5,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.WeatherNatives {
     public static func installWeather(into registry: inout PapyrusNativeRegistry) {
         // `SetActive(bool abOverride = false, bool abAccelerate = false)` blends, and
         // `ForceActive(bool abOverride = false)` snaps. An override holds the weather.
@@ -41,7 +41,8 @@ extension PapyrusNativeFunctions {
                 return failure(call, "FindWeather needs an int")
             }
             let match = sky.candidateWeathers().first { sky.classification(of: $0) == type }
-            return .returned(match.map { handle($0, in: bridge) } ?? .none)
+            return .returned(match
+                .map { handle($0, in: bridge) } ?? .none)
         }
         weather("GetClassification", into: &registry) { call, sky, key, _ in
             guard let key, let code = sky.classification(of: key) else {

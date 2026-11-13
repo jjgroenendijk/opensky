@@ -4,7 +4,7 @@ import Darwin
 import Foundation
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.MathNatives {
     public static func installMath(into registry: inout PapyrusNativeRegistry) {
         installMathRounding(into: &registry)
         installMathArithmetic(into: &registry)
@@ -40,9 +40,7 @@ extension PapyrusNativeFunctions {
         }
     }
 
-    private static func installMathTrigonometry(
-        into registry: inout PapyrusNativeRegistry
-    ) {
+    private static func installMathTrigonometry(into registry: inout PapyrusNativeRegistry) {
         registerUnaryFloat("Sin", into: &registry) { Darwin.sin($0) }
         registerUnaryFloat("Cos", into: &registry) { Darwin.cos($0) }
         registerUnaryFloat("Tan", into: &registry) { Darwin.tan($0) }

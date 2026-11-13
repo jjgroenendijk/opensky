@@ -6,12 +6,9 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.DebugNatives {
     private static var debugLogger: EngineLogger {
-        EngineLogger(
-            subsystem: Bundle.main.bundleIdentifier ?? "OpenSky",
-            category: "PapyrusDebug"
-        )
+        EngineLogger(subsystem: Bundle.main.bundleIdentifier ?? "OpenSky", category: "PapyrusDebug")
     }
 
     public static func installDebug(into registry: inout PapyrusNativeRegistry) {
@@ -81,7 +78,8 @@ extension PapyrusNativeFunctions {
             functionName: "TraceUser"
         ) { call, context in
             guard
-                let name = string(call, at: 0), context.openUserLogs.contains(name),
+                let name = string(call, at: 0),
+                context.openUserLogs.contains(name),
                 let message = string(call, at: 1)
             else { return .returned(.boolean(false)) }
             context.log.append("\(name): \(message)")

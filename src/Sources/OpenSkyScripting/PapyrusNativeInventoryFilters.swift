@@ -9,7 +9,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.InventoryFiltersNatives {
     public static func installInventoryFilters(into registry: inout PapyrusNativeRegistry) {
         for script in ["ObjectReference", "Actor", "ReferenceAlias"] {
             withFilteredInstances(
@@ -17,7 +17,8 @@ extension PapyrusNativeFunctions {
                 "AddInventoryEventFilter",
                 into: &registry
             ) { call, bridge, key in
-                guard let filter = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
+                guard
+                    let filter = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
                 else { return false }
                 bridge.updateScriptedState(of: key.reference) {
                     $0.setForm(PapyrusWorldStateBridge.inventoryFilterName(key, filter), filter)
@@ -29,7 +30,8 @@ extension PapyrusNativeFunctions {
                 "RemoveInventoryEventFilter",
                 into: &registry
             ) { call, bridge, key in
-                guard let filter = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
+                guard
+                    let filter = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
                 else { return false }
                 bridge.updateScriptedState(of: key.reference) {
                     $0.setForm(PapyrusWorldStateBridge.inventoryFilterName(key, filter), nil)

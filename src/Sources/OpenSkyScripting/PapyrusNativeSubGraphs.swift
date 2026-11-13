@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.SubGraphsNatives {
     static func installSubGraphNatives(into registry: inout PapyrusNativeRegistry) {
         // `Function PlaySubGraphAnimation(string asEventName) native`
         subGraphNative("PlaySubGraphAnimation", into: &registry) { call, bridge, actor in
@@ -16,7 +16,9 @@ extension PapyrusNativeFunctions {
         }
         // `Function SetSubGraphFloatVariable(string asVariableName, float afValue) native`
         subGraphNative("SetSubGraphFloatVariable", into: &registry) { call, bridge, actor in
-            guard let name = string(call, at: 0), call.arguments.count > 1 else { return }
+            guard
+                let name = string(call, at: 0),
+                call.arguments.count > 1 else { return }
             let value: Float = switch call.arguments[1] {
             case let .float(real): real
             case let .integer(integer): Float(integer)

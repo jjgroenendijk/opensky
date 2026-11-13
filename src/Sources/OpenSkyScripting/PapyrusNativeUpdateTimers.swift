@@ -7,7 +7,7 @@
 import Foundation
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.UpdateTimersNatives {
     static let updateTimerScripts = ["Form", "Alias", "ActiveMagicEffect"]
 
     public static func installUpdateTimers(into registry: inout PapyrusNativeRegistry) {
@@ -64,9 +64,7 @@ extension PapyrusNativeFunctions {
         guard let interval = float(call, at: 0) else {
             return failure(call, "\(call.functionName) needs a float interval")
         }
-        world.registerUpdateTimer(
-            handle: receiver, slot: slot, interval: Double(interval)
-        )
+        world.registerUpdateTimer(handle: receiver, slot: slot, interval: Double(interval))
         return .returned(.none)
     }
 }

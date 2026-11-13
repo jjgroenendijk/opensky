@@ -8,7 +8,7 @@ import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.ActiveMagicEffectNatives {
     public static func installActiveMagicEffect(into registry: inout PapyrusNativeRegistry) {
         withEffectRun("GetTargetActor", into: &registry) { _, bridge, run in
             .returned(bridge.objectHandle(for: run.id.target).map { .object($0) } ?? .none)

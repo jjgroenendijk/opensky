@@ -10,9 +10,9 @@ import Testing
 struct PapyrusNativeReferenceAliasTests {
     @Test func aliasReadsReturnTheBoundReference() {
         var registry = PapyrusNativeRegistry()
-        PapyrusNativeFunctions.installReferenceAlias(into: &registry)
+        PapyrusNativeFunctions.ReferenceAliasNatives.installReferenceAlias(into: &registry)
         let marker = PapyrusObjectHandle(42)
-        for name in PapyrusNativeFunctions.referenceAliasReads {
+        for name in PapyrusNativeFunctions.ReferenceAliasNatives.referenceAliasReads {
             let call = PapyrusWorldFixture.methodCall(
                 "ReferenceAlias", name, receiver: marker, returnType: .object("ObjectReference")
             )

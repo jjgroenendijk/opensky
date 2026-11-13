@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.CellFogNatives {
     static func installCellFog(into registry: inout PapyrusNativeRegistry) {
         cellFog("SetFogColor", into: &registry) { call in
             let channels = (0 ..< 6).compactMap { integer(call, at: $0) }
@@ -19,13 +19,16 @@ extension PapyrusNativeFunctions {
         }
         cellFog("SetFogPlanes", into: &registry) { call in
             guard
-                let near = float(call, at: 0), let far = float(call, at: 1),
+                let near = float(call, at: 0),
+                let far = float(call, at: 1),
                 near.isFinite, far.isFinite
             else { return nil }
             return .planes(near: near, far: far)
         }
         cellFog("SetFogPower", into: &registry) { call in
-            guard let power = float(call, at: 0), power.isFinite else { return nil }
+            guard
+                let power = float(call, at: 0),
+                power.isFinite else { return nil }
             return .power(power)
         }
     }

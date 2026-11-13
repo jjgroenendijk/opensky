@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.PresentationNatives {
     /// `Game.ShakeCamera` defaults: "afStrength = 0.5", and "afDuration = 0.0",
     /// which means "use the game setting".
     static let defaultShakeStrength: Float = 0.5
@@ -58,7 +58,8 @@ extension PapyrusNativeFunctions {
                 functionName: "Show"
             ) { call, context in
                 messageTarget(call, context) { presenter, message in
-                    let arguments = (0 ..< 9).map { float(call, at: $0) ?? 0 }
+                    let arguments = (0 ..< 9)
+                        .map { float(call, at: $0) ?? 0 }
                     switch presenter.showMessage(message, arguments: arguments) {
                     case .notFound:
                         return failure(call, "Show needs a MESG record")
@@ -148,7 +149,8 @@ extension PapyrusNativeFunctions {
         body: (any PapyrusPresenting, ReferenceKey) -> PapyrusNativeResult
     ) -> PapyrusNativeResult {
         guard let presenter = presenter(context) else { return needsPresenter(call) }
-        guard let target = worldTarget(call, context) else {
+        guard let target = worldTarget(call, context)
+        else {
             return failure(call, "\(call.functionName) needs a Message receiver")
         }
         return body(presenter, target.key)

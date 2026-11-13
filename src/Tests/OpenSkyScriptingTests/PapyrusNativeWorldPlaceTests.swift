@@ -81,7 +81,8 @@ struct PapyrusNativeWorldPlaceTests {
             "GetDistance", arguments: [.object(fixture.handle(Fixture.doorID))],
             returnType: .float
         )
-        #expect(result == .returned(.float(PapyrusNativeFunctions.separateSpaceDistance)))
+        #expect(result ==
+            .returned(.float(PapyrusNativeFunctions.WorldPlaceNatives.separateSpaceDistance)))
     }
 
     @Test func locationCellAndWorldspaceComeFromThePlaceSnapshot() throws {

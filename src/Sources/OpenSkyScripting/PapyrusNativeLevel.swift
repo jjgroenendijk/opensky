@@ -7,7 +7,7 @@
 import Foundation
 import OpenSkyScriptingInterface
 
-extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions.LevelNatives {
     public static func installLevel(into registry: inout PapyrusNativeRegistry) {
         // "Gets the actor's current level." — "int Function GetLevel() native"
         // (<https://www.creationkit.com/index.php?title=GetLevel_-_Actor>)
@@ -95,7 +95,7 @@ extension PapyrusNativeFunctions {
             guard let wanted = integer(call, at: 0) else {
                 return failure(call, "SetPerkPoints needs a perk-point count")
             }
-            let target = wanted < 0 ? PapyrusNativeFunctions.perkPointCap : Int(wanted)
+            let target = wanted < 0 ? Self.perkPointCap : Int(wanted)
             guard
                 let world = context.world,
                 let current = world.playerPerkPoints(),
