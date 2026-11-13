@@ -122,14 +122,6 @@ public final class PlayerCoordinator {
         }
     }
 
-    /// Clips read on the shared play-time queue; a state whose clip is still
-    /// loading keeps the current pose (docs/decisions/concurrency.md).
-    private static func clipWorker(
-        _ fileSystem: any GameFileSource
-    ) -> SerialAssetLoadWorker<String, SplineBehaviorClip> {
-        SerialAssetLoadWorker(load: InstallBehaviorClipSource.load(fileSystem: fileSystem))
-    }
-
     /// Moves finished clip loads and rigs in. Runs at the frame's drain point.
     public func drainClipLoads() {
         drainGraphs()
@@ -246,10 +238,14 @@ public final class PlayerCoordinator {
         builtEyeTextureSet = eyeTextureSet
         generation += 1
         for firstPerson in firstPersonGraph == nil ? [false] : [false, true] {
-            source.requestPlayerRig(PlayerRigRequest(
+            var request = PlayerRigRequest(
                 generation: generation, firstPerson: firstPerson,
                 equipped: equipped, appearance: appearance, eyeTextureSet: eyeTextureSet
-            ))
+            )
+            if firstPerson {
+                request.firstPersonSkeletonPath = world.firstPersonSkeletonPath
+            }
+            source.requestPlayerRig(request)
         }
     }
 
@@ -308,6 +304,16 @@ public final class PlayerCoordinator {
             firstPersonFailureReason = error.localizedDescription
             Self.logger.warning("first-person arms: \(String(describing: error), privacy: .public)")
         }
+    }
+}
+
+extension PlayerCoordinator {
+    /// Clips read on the shared play-time queue; a state whose clip is still
+    /// loading keeps the current pose (docs/decisions/concurrency.md).
+    private static func clipWorker(
+        _ fileSystem: any GameFileSource
+    ) -> SerialAssetLoadWorker<String, SplineBehaviorClip> {
+        SerialAssetLoadWorker(load: InstallBehaviorClipSource.load(fileSystem: fileSystem))
     }
 }
 

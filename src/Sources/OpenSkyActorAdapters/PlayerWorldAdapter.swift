@@ -30,6 +30,7 @@ public protocol PlayerWorldHost: AnyObject, SendableMetatype {
     var inventory: any InventoryPort { get }
     var magicWorld: any MagicWorldPort { get }
     var magic: any MagicPort { get }
+    var mapWorld: any MapWorldPort { get }
     var player: any PlayerPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var worldState: any WorldStateStorePort { get }

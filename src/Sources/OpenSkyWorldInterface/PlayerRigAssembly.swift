@@ -10,6 +10,8 @@ nonisolated public struct PlayerRigRequest: Equatable, Sendable {
     public let appearance: PlayerAppearanceOverride?
     /// The texture set `Actor.SetEyeTexture` gave the player's eyes.
     public let eyeTextureSet: FormID?
+    /// The first-person NIF rig from `sFirstPersonSkeleton`; nil keeps the vanilla path.
+    public var firstPersonSkeletonPath: String?
 
     public init(
         generation: Int, firstPerson: Bool, equipped: [FormID]?,

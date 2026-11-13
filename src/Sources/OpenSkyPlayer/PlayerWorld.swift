@@ -28,5 +28,7 @@ public protocol PlayerWorld: AnyObject {
     func setFirstPersonFOVY(radians: Float)
     /// Nil without a renderer.
     var firstPersonArmsEnabled: Bool? { get }
+    /// The first-person NIF rig, from `sFirstPersonSkeleton`.
+    var firstPersonSkeletonPath: String { get }
     func setFirstPersonArmsEnabled(_ enabled: Bool)
 }

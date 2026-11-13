@@ -43,6 +43,11 @@ extension PlayerWorldAdapter {
         firstPerson.setFirstPersonFOVY(radians: radians)
     }
 
+    public var firstPersonSkeletonPath: String {
+        let texts = game.mapWorld.settingTexts(ActorResourcePath.self)
+        return ActorResourcePath.meshPath(texts[.firstPersonSkeleton])
+    }
+
     public var firstPersonArmsEnabled: Bool? {
         firstPerson.firstPersonArmsEnabled
     }

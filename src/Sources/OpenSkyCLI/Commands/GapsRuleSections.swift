@@ -196,6 +196,7 @@ extension GapsGatherer {
             _ = LockTexts.resolve(store: store)
             _ = TemperingTexts.resolve(store: store)
             _ = GameSettingTexts<RestText>.resolve(store: store)
+            _ = GameSettingTexts<ActorResourcePath>.resolve(store: store)
             _ = GameSettingTexts<ActivationText>.resolve(store: store)
             _ = GameSettingTexts<SaveNoticeText>.resolve(store: store)
             _ = GameSettingTexts<CastNoticeText>.resolve(store: store)

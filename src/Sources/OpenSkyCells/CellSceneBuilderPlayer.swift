@@ -89,7 +89,8 @@ nonisolated extension CellSceneBuilder.CellPlayerRigBuilder {
             }
             if firstPerson {
                 visual = visual.firstPersonProjection(
-                    skeletonPath: PlayerBehaviorGraph.firstPersonRigPath
+                    skeletonPath: request.firstPersonSkeletonPath
+                        ?? PlayerBehaviorGraph.firstPersonRigPath
                 )
             }
             assembly = ActorAssembler(provider: owner.meshes).assemble(
