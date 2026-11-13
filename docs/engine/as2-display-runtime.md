@@ -172,8 +172,10 @@ These are Flash and Scaleform GFx built-ins with no spec behind them, rebuilt fr
   files hold no safe-zone key, so 15 is the game's built-in default.
 - `Selection`: `setFocus` and `getFocus` round-trip a focus target. Range queries answer -1.
 - `Object`, `Function` (`call`, `apply`), `Array`, `String`, `Number`, `Boolean`, `Math`,
-  `ASSetPropFlags`, `isNaN`, `parseInt`, `parseFloat`, `NaN`, `Infinity`, the global `random(n)`, and
-  `flash.geom.Point`. These follow ECMA-262 3rd edition section 15, as ActionScript does.
+  `ASSetPropFlags`, `isNaN`, `parseInt`, `parseFloat`, `NaN`, `Infinity`, the global `random(n)`,
+  `flash.geom.Point`, and `flash.geom.Rectangle`. These follow ECMA-262 3rd edition section 15, as
+  ActionScript does. `Point` and `Rectangle` print their numbers as AS2 does, such as
+  `(x=1, y=2.5)`.
 - `Key`, `Mouse`, and the timer functions ([AS2 input](/engine/as2-input.md)), and `ExternalInterface`
   and `fscommand` ([GameDelegate bridge](/engine/as2-game-delegate.md)).
 
