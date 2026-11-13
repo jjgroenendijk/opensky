@@ -11,6 +11,8 @@ nonisolated public final class FakeInventoryAlchemyLabPort: InventoryAlchemyLabP
     public var isHostileItemResult: Bool?
     public var learnEatenIngredientCalls: [FormID] = []
     public var learnEatenIngredientResult: AlchemyActionOutcome?
+    public var eatingNoticesCalls: [AlchemyActionOutcome] = []
+    public var eatingNoticesResult: [String] = []
     public var learnIngredientEffectsCalls: [(item: FormID, indices: [Int]?)] = []
     public var learnIngredientEffectsResult = false
     public var learnNextIngredientEffectCalls: [FormID] = []
@@ -33,6 +35,11 @@ nonisolated extension FakeInventoryAlchemyLabPort {
             preconditionFailure("FakeInventoryAlchemyLabPort.learnEatenIngredient has no result")
         }
         return learnEatenIngredientResult
+    }
+
+    public func eatingNotices(of outcome: AlchemyActionOutcome) -> [String] {
+        eatingNoticesCalls.append(outcome)
+        return eatingNoticesResult
     }
 
     @discardableResult

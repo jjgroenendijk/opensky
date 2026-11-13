@@ -63,6 +63,8 @@ public protocol InventoryAlchemyLabPort {
     var alchemyIngredients: [AlchemyIngredientReadout] { get }
     func isHostileItem(_ item: FormID) -> Bool?
     @discardableResult func learnEatenIngredient(_ item: FormID) -> AlchemyActionOutcome
+    /// The HUD notices of the effects an eaten ingredient taught.
+    func eatingNotices(of outcome: AlchemyActionOutcome) -> [String]
     @discardableResult func learnIngredientEffects(_ item: FormID, indices: [Int]?) -> Bool
     func learnNextIngredientEffect(_ item: FormID) -> Int?
     func registerCreatedPotions()
