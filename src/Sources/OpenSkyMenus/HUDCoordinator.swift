@@ -174,7 +174,9 @@ public final class HUDCoordinator {
         do {
             try renderer.updateSWFRuntime { runtime in
                 if update.prompt {
-                    HUDMovieBridge.setActivationPrompt(effectivePrompt, runtime: runtime)
+                    HUDMovieBridge.setActivationPrompt(
+                        effectivePrompt, stat: shownStat, runtime: runtime
+                    )
                 }
                 if update.markers {
                     HUDMovieBridge.setCompassMarkers(
@@ -220,6 +222,15 @@ public final class HUDCoordinator {
         }
     }
 
+    /// The crosshair item's damage or armour rating, shown under the prompt.
+    public private(set) var targetStat: HUDItemStat?
+
+    public func updateTargetStat(_ stat: HUDItemStat?) {
+        guard stat != targetStat else { return }
+        targetStat = stat
+        sync.promptNeedsUpdate = true
+    }
+
     public func updateTarget(_ target: InteractionTarget?) {
         let oldPrompt = effectivePrompt
         let oldReference = interactionTarget?.interaction.reference
@@ -251,6 +262,11 @@ public final class HUDCoordinator {
 
     /// The game shows no prompt while a script locks the activate control.
     public private(set) var isActivateLocked = false
+
+    /// No stat shows without a prompt.
+    var shownStat: HUDItemStat? {
+        effectivePrompt == nil ? nil : targetStat
+    }
 
     public var effectivePrompt: String? {
         isActivateLocked ? nil : HUDCore.effectivePrompt(settings, target: interactionTarget)
@@ -299,7 +315,9 @@ public final class HUDCoordinator {
                 )
             } else {
                 HUDMovieBridge.setCompassMarkers(markers, runtime: runtime)
-                HUDMovieBridge.setActivationPrompt(effectivePrompt, runtime: runtime)
+                HUDMovieBridge.setActivationPrompt(
+                        effectivePrompt, stat: shownStat, runtime: runtime
+                    )
             }
             HUDMovieBridge.setCrosshairEnabled(settings.crosshairEnabled, runtime: runtime)
             if initialize {

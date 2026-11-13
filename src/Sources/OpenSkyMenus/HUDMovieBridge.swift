@@ -181,7 +181,11 @@ nonisolated public enum HUDMovieBridge: Sendable {
         call("ShowElements", [.string(mode.rawValue), .boolean(show)], runtime: runtime)
     }
 
-    public static func setActivationPrompt(_ prompt: String?, runtime: SWFMovieRuntime) {
+    /// `stat` fills the movie's field line; without one the field stays undefined, so
+    /// the movie leaves it out.
+    public static func setActivationPrompt(
+        _ prompt: String?, stat: HUDItemStat? = nil, runtime: SWFMovieRuntime
+    ) {
         let visible = prompt?.isEmpty == false
         call(
             "SetCrosshairTarget",
@@ -194,8 +198,8 @@ nonisolated public enum HUDMovieBridge: Sendable {
                 .boolean(true),
                 .number(0),
                 .number(0),
-                .number(0),
-                .string("")
+                stat.map { .number($0.value) } ?? .undefined,
+                stat.map { .string($0.label) } ?? .undefined
             ],
             runtime: runtime
         )

@@ -38,6 +38,19 @@ Heading zero is north (world +Y), and east (+X) is 90. OpenSky keeps headings in
 player and compass angles get the same camera yaw. A local visual check confirmed that heading zero
 centers the movie's north marker, and that publishing a prompt does not move the compass.
 
+## Crosshair item stat
+
+`SetCrosshairTarget` takes ten arguments: `abActivate, aName, abShowButton, abTextOnly,
+abFavorMode, abShowCrosshair, aWeight, aCost, aFieldValue, aFieldText`. The movie adds a field
+line only when `aFieldValue` is not `undefined`, and formats it as the rounded number and the
+label. As observed in the game, the crosshair on a loose weapon sends its damage and
+`sHUDDamage` ("DAMAGE"), and on loose armour its rating and `sHUDArmorRating`
+("ARMOR RATING"). Every other target leaves the field `undefined`.
+
+OpenSky sends the numbers the inventory item card shows. The game sends the damage and rating
+the player would get with their skill and perks, and a damage for ammunition; OpenSky does not
+yet.
+
 ## Authored placeholder clips
 
 The installed movie starts with authoring samples visible under
