@@ -196,6 +196,9 @@ nonisolated extension SWFMovieRuntime {
         installPointMethods(runtime, prototype: prototype)
         let geometry = runtime.makeObject()
         geometry.define(.object(constructor), for: "Point", flags: .dontEnumerate)
+        geometry.define(
+            .object(installRectangle(runtime)), for: "Rectangle", flags: .dontEnumerate
+        )
         let flash = runtime.globalObject.lookup("flash")?.property.value.objectValue
             ?? runtime.makeObject()
         flash.define(.object(geometry), for: "geom", flags: .dontEnumerate)
@@ -221,7 +224,8 @@ nonisolated extension SWFMovieRuntime {
         }
         AS2Runtime.method(runtime, on: prototype, name: "toString") { context in
             let point = try coordinates(context.thisObject, context)
-            return .string("(x=\(point.0), y=\(point.1))")
+            let text = { context.runtime.coercion.toString(.number($0)) }
+            return .string("(x=\(text(point.0)), y=\(text(point.1)))")
         }
         AS2Runtime.method(runtime, on: prototype, name: "equals") { context in
             let lhs = try coordinates(context.thisObject, context)
