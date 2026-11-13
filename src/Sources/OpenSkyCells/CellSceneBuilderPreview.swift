@@ -34,7 +34,7 @@ nonisolated public struct PreviewSubject {
     }
 }
 
-nonisolated extension CellPreviewBuilder {
+nonisolated extension CellSceneBuilder.CellPreviewBuilder {
     /// The FormID the preview gives its one placed copy; outside every plugin's range.
     public static let previewReference = FormID(0xFF0F_FFF0)
 
@@ -152,11 +152,11 @@ nonisolated extension CellPreviewBuilder {
 }
 
 nonisolated extension CellSceneBuilder {
-    public var previewBuilder: CellPreviewBuilder {
-        CellPreviewBuilder(owner: self)
+    public var previewBuilder: CellSceneBuilder.CellPreviewBuilder {
+        CellSceneBuilder.CellPreviewBuilder(owner: self)
     }
 
-    public var previewPlaces: CellPreviewPlaces {
-        CellPreviewPlaces(owner: self)
+    public var previewPlaces: CellSceneBuilder.CellPreviewPlaces {
+        CellSceneBuilder.CellPreviewPlaces(owner: self)
     }
 }

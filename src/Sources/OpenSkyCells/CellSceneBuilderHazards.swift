@@ -16,7 +16,7 @@ nonisolated public struct CellHazard: Equatable, Sendable {
     public let enableParent: EnableParent?
 }
 
-nonisolated extension CellObjectBuilder {
+nonisolated extension CellSceneBuilder.CellHazardBuilder {
     /// The enabled `PHZD` records every plugin stores under `cell`.
     nonisolated public func collectHazards(
         in cell: FoundCell,
@@ -32,7 +32,7 @@ nonisolated extension CellObjectBuilder {
         ) {
             try $0.record.decode(PlacedProjectile.init(record:))
         } failed: { _ in }
-        let byFormID = owner.referenceBuilder.entriesByFormID(resolved.entries)
+        let byFormID = owner.referenceBuilder.states.entriesByFormID(resolved.entries)
         let enable = owner.enableResolver(
             entries: byFormID,
             pool: parentPool,
@@ -58,10 +58,12 @@ nonisolated extension CellObjectBuilder {
 
     /// The first plugin's live `PHZD` records; one that does not decode is skipped.
     nonisolated private func baseHazards(in cellChildren: ESMGroup?) -> [PlacedProjectile] {
-        guard let cellChildren, let children = owner.childrenOrSkip(cellChildren) else { return [] }
+        guard
+            let cellChildren,
+            let children = owner.records.childrenOrSkip(cellChildren) else { return [] }
         var hazards: [PlacedProjectile] = []
         for case let .group(group) in children {
-            guard let records = owner.childrenOrSkip(group) else { continue }
+            guard let records = owner.records.childrenOrSkip(group) else { continue }
             for case let .record(record) in records
                 where record.type == "PHZD" && !record.isDeleted
             {

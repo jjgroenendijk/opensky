@@ -46,7 +46,7 @@ nonisolated enum WaterMeshBuilder: Sendable {
     }
 }
 
-nonisolated extension CellWaterBuilder {
+nonisolated extension CellSceneBuilder.CellWaterBuilder {
     /// Builds at most one water plane. CELL DATA has-water gates the feature;
     /// an explicit XCLW sentinel wins over every WRLD default.
     nonisolated func buildWater(found: FoundCell, worldspace: Worldspace?) -> WaterBuild? {
@@ -182,12 +182,12 @@ nonisolated extension CellWaterBuilder {
 
     /// The cached 4096 x 4096 quad every water plane scales and moves.
     nonisolated func sharedWaterPlane() -> RenderMesh? {
-        if let waterPlaneMesh = owner.waterPlaneMesh {
+        if let waterPlaneMesh = owner.caches.waterPlaneMesh {
             return waterPlaneMesh
         }
         do {
             let uploaded = try owner.meshes.renderMesh(WaterMeshBuilder.cellPlane())
-            owner.waterPlaneMesh = uploaded
+            owner.caches.waterPlaneMesh = uploaded
             return uploaded
         } catch {
             CellSceneBuilder.logger.warning("water plane upload failed, skipped")
@@ -207,23 +207,23 @@ nonisolated extension CellWaterBuilder {
     }
 
     nonisolated func worldspaceIndexBuildingIfNeeded() -> [UInt32: Worldspace] {
-        if let worldspaceIndex = owner.worldspaceIndex {
+        if let worldspaceIndex = owner.caches.worldspaceIndex {
             return worldspaceIndex
         }
         let index = owner.recordIndex.loadOrderRecords(of: "WRLD") {
             try Worldspace(record: $0, localized: $1)
         }
-        owner.worldspaceIndex = index
+        owner.caches.worldspaceIndex = index
         return index
     }
 
     nonisolated func waterTypeIndexBuildingIfNeeded() -> [UInt32: WaterType] {
-        if let waterTypeIndex = owner.waterTypeIndex {
+        if let waterTypeIndex = owner.caches.waterTypeIndex {
             return waterTypeIndex
         }
         let index = owner.recordIndex
             .loadOrderRecords(of: "WATR") { record, _ in try WaterType(record: record) }
-        owner.waterTypeIndex = index
+        owner.caches.waterTypeIndex = index
         return index
     }
 
@@ -289,11 +289,11 @@ nonisolated extension CellWaterBuilder {
 }
 
 nonisolated extension CellSceneBuilder {
-    var waterBuilder: CellWaterBuilder {
-        CellWaterBuilder(owner: self)
+    var waterBuilder: CellSceneBuilder.CellWaterBuilder {
+        CellSceneBuilder.CellWaterBuilder(owner: self)
     }
 
-    var waterVolumeBuilder: CellWaterVolumeBuilder {
-        CellWaterVolumeBuilder(owner: self)
+    var waterVolumeBuilder: CellSceneBuilder.CellWaterVolumeBuilder {
+        CellSceneBuilder.CellWaterVolumeBuilder(owner: self)
     }
 }

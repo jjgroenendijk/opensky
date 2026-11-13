@@ -17,7 +17,7 @@ nonisolated public struct DoorTransition: Sendable {
     public var worldspaceEditorID: String?
 }
 
-nonisolated extension CellDoorTransitionBuilder {
+nonisolated extension CellSceneBuilder.CellDoorTransitionBuilder {
     nonisolated private static func placedReference(
         _ found: LoadOrderRecord
     ) throws -> PlacedReference {
@@ -38,13 +38,13 @@ nonisolated extension CellDoorTransitionBuilder {
         worldspaceEditorID: String
     ) throws -> [(coordinate: CellCoordinate, door: PlacedDoor)] {
         let localized = owner.file.isLocalized
-        let world = try owner.worldChildrenGroup(
+        let world = try owner.records.worldChildrenGroup(
             editorID: worldspaceEditorID, localized: localized
         )
         return persistentReferences(in: world, localized: localized)
             .filter { $0.teleportDestination != nil }
             .flatMap { ref -> [(coordinate: CellCoordinate, door: PlacedDoor)] in
-                let doors = owner.assembler.resolveDoors(refs: [ref])
+                let doors = owner.assembler.interactions.resolveDoors(refs: [ref])
                 let coordinate = CellGridManager.cellCoordinate(for: ref.placement.position)
                 return doors.map { (coordinate, $0) }
             }
@@ -85,7 +85,7 @@ nonisolated extension CellDoorTransitionBuilder {
         localized: Bool
     ) -> EnableParentPool {
         let key = world.formID.rawValue
-        if let cached = owner.exteriorPersistentPools[key] {
+        if let cached = owner.caches.exteriorPersistentPools[key] {
             return cached
         }
         let pool = owner.loadPhases.measure(.cellLookup) {
@@ -98,7 +98,7 @@ nonisolated extension CellDoorTransitionBuilder {
             }
             return pool
         }
-        owner.exteriorPersistentPools[key] = pool
+        owner.caches.exteriorPersistentPools[key] = pool
         return pool
     }
 
@@ -107,14 +107,14 @@ nonisolated extension CellDoorTransitionBuilder {
         localized: Bool
     ) -> [PlacedReference] {
         let key = world.formID.rawValue
-        if let cached = owner.exteriorPersistentRefs[key] {
+        if let cached = owner.caches.exteriorPersistentRefs[key] {
             return cached
         }
         var counts = BuildCounts()
         let refs = owner.recordIndex.persistentCell(in: world, localized: localized).map {
             owner.referenceBuilder.collectReferences(in: $0, counts: &counts)
         } ?? []
-        owner.exteriorPersistentRefs[key] = refs
+        owner.caches.exteriorPersistentRefs[key] = refs
         return refs
     }
 
@@ -127,7 +127,7 @@ nonisolated extension CellDoorTransitionBuilder {
         worldspaceEditorID: String,
         state: WorldStateSnapshot = .empty
     ) throws -> DoorTransition {
-        let index = owner.interiorBuilder.loadOrderIndexBuildingIfNeeded()
+        let index = owner.recordIndex.loadOrderIndexBuildingIfNeeded()
         guard
             let sourceRecord = index.record(withFormID: sourceDoor),
             sourceRecord.record.type == "REFR", !sourceRecord.record.isDeleted
@@ -153,7 +153,7 @@ nonisolated extension CellDoorTransitionBuilder {
         let scene: CellScene
         var worldspace: String?
         if
-            let interior = owner.referenceBuilder.placedRecords
+            let interior = owner.referenceBuilder.states.placedRecords
                 .interiorCell(holding: destinationID)
         {
             scene = try owner.interiorBuilder.buildInteriorScene(cellFormID: interior, state: state)

@@ -19,7 +19,7 @@ struct CellSceneBuilderPlayerRigTests {
         let device = try #require(CellSceneBuilderTests.device)
         let builder = try fixtures.makeBuilder(pluginData: fixtures.plugin(), device: device)
         #expect(throws: PlayerBodyError.self) {
-            try builder.actorBuilder.assemblePlayerRig(Self.request).get()
+            try builder.actorBuilder.playerRig.assemblePlayerRig(Self.request).get()
         }
         let provider = BuilderCellSceneProvider(builder: builder, worldspaceEditorID: "Tamriel")
         #expect(throws: PlayerBodyError.self) { try provider.assemblePlayerRig(Self.request).get() }

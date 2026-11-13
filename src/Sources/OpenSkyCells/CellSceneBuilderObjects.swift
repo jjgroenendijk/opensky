@@ -14,7 +14,7 @@ import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyWorldInterface
 
-nonisolated extension CellObjectBuilder {
+nonisolated extension CellSceneBuilder.CellAnimatedObjectBuilder {
     /// Base types whose meshes vanilla animates with a behaviour graph.
     static let animatedObjectTypes: Set<FourCC> = ["ACTI", "DOOR", "FURN", "CONT", "MSTT"]
 
@@ -25,7 +25,7 @@ nonisolated extension CellObjectBuilder {
             let fileSystem = owner.fileSystem,
             let project = owner.meshes.extraData.behaviorProjectPath(forPath: modelPath)
         else { return nil }
-        if let known = owner.objectBehaviorAssets[project] {
+        if let known = owner.caches.objectBehaviorAssets[project] {
             return known
         }
         var asset: BehaviorProjectAsset?
@@ -40,7 +40,7 @@ nonisolated extension CellObjectBuilder {
                 """
             )
         }
-        owner.objectBehaviorAssets[project] = .some(asset)
+        owner.caches.objectBehaviorAssets[project] = .some(asset)
         return asset
     }
 
@@ -85,7 +85,7 @@ nonisolated extension CellObjectBuilder {
 }
 
 nonisolated extension CellSceneBuilder {
-    var objectBuilder: CellObjectBuilder {
-        CellObjectBuilder(owner: self)
+    var objectBuilder: CellSceneBuilder.CellObjectBuilder {
+        CellSceneBuilder.CellObjectBuilder(owner: self)
     }
 }

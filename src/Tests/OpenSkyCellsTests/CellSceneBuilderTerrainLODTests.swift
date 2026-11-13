@@ -34,25 +34,26 @@ struct CellSceneBuilderTerrainLODTests: CellSceneBuilderFixture {
 
     @Test(.enabled(if: Self.hasDevice)) func aWorldWithoutLODFilesKeepsTheVanillaCurve() throws {
         let terrain = try makeBuilder().terrainBuilder
-        #expect(terrain.terrainLODBrightness(lodWorldspace: "Tamriel") == .vanilla)
-        #expect(terrain.terrainLODBrightness(lodWorldspace: "tamriel") == .vanilla)
+        #expect(terrain.terrainLOD.terrainLODBrightness(lodWorldspace: "Tamriel") == .vanilla)
+        #expect(terrain.terrainLOD.terrainLODBrightness(lodWorldspace: "tamriel") == .vanilla)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func aWorldIsItsOwnLODWorld() throws {
         let terrain = try makeBuilder().terrainBuilder
-        #expect(terrain.lodWorldspace(of: "Tamriel") == "Tamriel")
+        #expect(terrain.distantLOD.lodWorldspace(of: "Tamriel") == "Tamriel")
     }
 
     @Test(.enabled(if: Self.hasDevice)) func aBlockWithoutLandGeneratesNoTerrain() throws {
         let terrain = try makeBuilder().terrainBuilder
-        let generator = try #require(terrain.loadOrderTerrainLOD(lodWorldspace: "Tamriel"))
+        let generator = try #require(terrain.terrainLOD
+            .loadOrderTerrainLOD(lodWorldspace: "Tamriel"))
         let block = DistantLODBlock(
             kind: .terrain, level: 4, origin: CellCoordinate(x: 4, y: -4),
             path: "meshes\\terrain\\tamriel\\tamriel.4.4.-4.btr", clipMask: nil
         )
         #expect(generator.source(for: block) == nil)
         #expect(generator.terrainBlock(block) == nil)
-        #expect(terrain.loadOrderTerrainLOD(lodWorldspace: "Nowhere") == nil)
+        #expect(terrain.terrainLOD.loadOrderTerrainLOD(lodWorldspace: "Nowhere") == nil)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func aFlowMapIsFoundUnderItsPluginFolder() throws {

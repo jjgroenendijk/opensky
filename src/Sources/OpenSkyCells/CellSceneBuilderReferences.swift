@@ -22,7 +22,7 @@ nonisolated public struct CollectedActor: Sendable {
     var spawnKey: ReferenceKey?
 }
 
-nonisolated extension CellReferenceBuilder {
+nonisolated extension CellSceneBuilder.CellReferenceBuilder {
     /// Live REFRs of every plugin from the persistent and temporary children
     /// groups, tagged with their group. Other record types are not static
     /// placements and are not counted (docs/engine/cell-scene.md). A REFR that
@@ -44,12 +44,14 @@ nonisolated extension CellReferenceBuilder {
         in cellChildren: ESMGroup?,
         counts: inout BuildCounts
     ) -> [CollectedReference] {
-        guard let cellChildren, let children = owner.childrenOrSkip(cellChildren) else { return [] }
+        guard
+            let cellChildren,
+            let children = owner.records.childrenOrSkip(cellChildren) else { return [] }
         var refs: [CollectedReference] = []
         for case let .group(group) in children {
             guard
                 group.kind == .cellPersistentChildren || group.kind == .cellTemporaryChildren,
-                let records = owner.childrenOrSkip(group)
+                let records = owner.records.childrenOrSkip(group)
             else { continue }
             let isPersistent = group.kind == .cellPersistentChildren
             for case let .record(record) in records where record.type == "REFR" {
@@ -156,7 +158,7 @@ nonisolated extension CellReferenceBuilder {
                 .scriptData
                 .scripts ?? []
         case let .actor(actor):
-            let templates = owner.actorBuilder.actorResolversBuildingIfNeeded().template
+            let templates = owner.actorBuilder.resolver.actorResolversBuildingIfNeeded().template
                 .rolling(leveledRoll(of: key, base: actor.base, deltas: deltas))
             return attempt { try templates.resolveScripts(base: actor.base).value } ?? []
         }
@@ -164,7 +166,7 @@ nonisolated extension CellReferenceBuilder {
 }
 
 nonisolated extension CellSceneBuilder {
-    var referenceBuilder: CellReferenceBuilder {
-        CellReferenceBuilder(owner: self)
+    var referenceBuilder: CellSceneBuilder.CellReferenceBuilder {
+        CellSceneBuilder.CellReferenceBuilder(owner: self)
     }
 }

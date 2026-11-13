@@ -12,13 +12,13 @@ public import OpenSkyRenderResources
 import OpenSkyRuntimeState
 public import OpenSkyWorldInterface
 
-nonisolated private struct FaceMorphAssociationState {
+nonisolated struct FaceMorphAssociationState {
     var bindings: [ObjectIdentifier: FaceMorphBuffer] = [:]
     var pairedPaths: [String] = []
     var misses: [FaceMorphAssociationMiss] = []
 }
 
-nonisolated extension CellActorBuilder {
+nonisolated extension CellSceneBuilder.CellMorphBuilder {
     public func makeFaceMorphPlayback(
         assembly: ActorAssembly<ActorRenderAsset>
     ) -> FaceMorphPlayback? {
@@ -54,7 +54,7 @@ nonisolated extension CellActorBuilder {
     }
 
     /// A head built from parts carries its morphs in its own head part meshes.
-    private func assembledFacePlayback(
+    func assembledFacePlayback(
         assembly: ActorAssembly<ActorRenderAsset>
     ) -> FaceMorphPlayback? {
         guard let face = PlayerAppearanceOverride(face: assembly.visual.appearance) else {
@@ -68,7 +68,7 @@ nonisolated extension CellActorBuilder {
         )
     }
 
-    private func associate(
+    func associate(
         _ part: HeadPart,
         faceModels: [AssembledActorModel<ActorRenderAsset>],
         fileSystem: any GameFileSource,
@@ -132,12 +132,12 @@ nonisolated extension CellActorBuilder {
     func faceMorphFile(
         _ path: String, fileSystem: any GameFileSource
     ) -> Result<TRIFile, AssetLoadFailure> {
-        if let known = owner.faceMorphFiles[path] {
+        if let known = owner.caches.faceMorphFiles[path] {
             return known
         }
         let loaded = Result { try TRIFile(data: fileSystem.contents(forPath: path)) }
             .mapError(AssetLoadFailure.init)
-        owner.faceMorphFiles[path] = loaded
+        owner.caches.faceMorphFiles[path] = loaded
         return loaded
     }
 }

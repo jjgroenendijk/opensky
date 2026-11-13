@@ -8,15 +8,15 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-nonisolated extension CellRecordIndex {
+nonisolated extension CellSceneBuilder.CellRecordIndex {
     /// The cell as the load order has it: the winning CELL values, and the first
     /// plugin's children group when that plugin has the cell.
     nonisolated func loadOrderCell(formID: FormID, base: FoundCell?) -> FoundCell? {
         guard
-            let winner = owner.interiorBuilder.loadOrderIndexBuildingIfNeeded()
+            let winner = owner.recordIndex.loadOrderIndexBuildingIfNeeded()
                 .record(withFormID: formID),
             winner.record.type == "CELL", winner.position > 0, !winner.record.isDeleted,
-            let cell = owner.decodeOrSkip(winner.record, using: { _ in
+            let cell = owner.records.decodeOrSkip(winner.record, using: { _ in
                 try winner.decode { try Cell(record: $0, localized: winner.localized) }
             })
         else { return base }
@@ -103,7 +103,7 @@ nonisolated extension CellRecordIndex {
     }
 
     nonisolated func laterChildren(of cell: FormID, type: FourCC) -> [CellChildRecord] {
-        owner.interiorBuilder.loadOrderIndexBuildingIfNeeded().laterChildren(ofCell: cell)
+        owner.recordIndex.loadOrderIndexBuildingIfNeeded().laterChildren(ofCell: cell)
             .filter { $0.record.record.type == type }
     }
 
@@ -114,22 +114,40 @@ nonisolated extension CellRecordIndex {
         of type: FourCC,
         decode: @Sendable (ESMRecord, Bool) throws -> Value
     ) -> [UInt32: Value] {
-        let loadOrder = owner.interiorBuilder.loadOrderIndexBuildingIfNeeded().loadOrder
+        let loadOrder = owner.recordIndex.loadOrderIndexBuildingIfNeeded().loadOrder
         return owner.loadPhases.measure(.recordIndex) {
             var skipped = SkippedRecords()
             let index = loadOrder.indexRecordsInParallel(of: type, skipped: &skipped, using: decode)
-            owner.noteSkipped(skipped)
+            owner.records.noteSkipped(skipped)
             return index
         }
     }
 }
 
 nonisolated extension CellSceneBuilder {
-    var recordIndex: CellRecordIndex {
-        CellRecordIndex(owner: self)
+    var recordIndex: CellSceneBuilder.CellRecordIndex {
+        CellSceneBuilder.CellRecordIndex(owner: self)
     }
 
-    var modelIndex: CellModelIndex {
-        CellModelIndex(owner: self)
+    var modelIndex: CellSceneBuilder.CellModelIndex {
+        CellSceneBuilder.CellModelIndex(owner: self)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellRecordIndex {
+    nonisolated func loadOrderIndexBuildingIfNeeded() -> LoadOrderRecordIndex {
+        if let loadOrderIndex = owner.caches.loadOrderIndex {
+            return loadOrderIndex
+        }
+        let store = LoadOptimisations.isOn(.recordIndexCache) ? owner.formIDIndexStore : nil
+        let index = owner.loadPhases.measure(.recordIndex) {
+            LoadOrderRecordIndex(
+                plugins: owner.loadOrderPlugins,
+                space: owner.formIDResolver,
+                store: store
+            )
+        }
+        owner.caches.loadOrderIndex = index
+        return index
     }
 }

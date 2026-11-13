@@ -12,7 +12,7 @@ import OpenSkyObjectAnimation
 import OpenSkyRenderCore
 import OpenSkyRendering
 
-nonisolated extension CellObjectBuilder {
+nonisolated extension CellSceneBuilder.CellAnimatedObjectBuilder {
     struct SequenceDoorBase {
         let ref: PlacedReference
         let modelPath: String
@@ -47,12 +47,12 @@ nonisolated extension CellObjectBuilder {
         guard
             let fileSystem = owner.fileSystem,
             let key = attempt({ try owner.meshes.meshKey(for: modelPath) }) else { return nil }
-        if let known = owner.sequenceDoorRigs[key] {
+        if let known = owner.caches.sequenceDoorRigs[key] {
             return known
         }
         let rig = attempt { try NIFFile(data: fileSystem.contents(forPath: key)) }
             .flatMap { element in attempt { try SequenceDoorRig(file: element) } }
-        owner.sequenceDoorRigs[key] = .some(rig)
+        owner.caches.sequenceDoorRigs[key] = .some(rig)
         return rig
     }
 
@@ -67,7 +67,10 @@ nonisolated extension CellObjectBuilder {
                 .flatMap { NodeControllerRig(animation: $0.animation, lagOnly: true) }
                 .flatMap { EffectPoseRig(nodes: $0, graph: rig.skeleton) }
                 .flatMap { $0.addsNodes ? $0 : nil }
-            guard let copy = posedCopy(of: instance, skeleton: nodes?.skeleton ?? rig.skeleton)
+            guard let copy = owner.objectBuilder.hazards.posedCopy(
+                of: instance,
+                skeleton: nodes?.skeleton ?? rig.skeleton
+            )
             else { continue }
             instances[index] = copy.instance
             let door = CellSequenceDoor(

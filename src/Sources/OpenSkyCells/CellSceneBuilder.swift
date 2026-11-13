@@ -24,6 +24,7 @@ import simd
 /// A class because the record indexes are cached across builds.
 /// Single-threaded, like the libraries it drives.
 nonisolated public final class CellSceneBuilder {
+    public let caches = CellSceneCaches()
     public static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellScene"
@@ -47,49 +48,14 @@ nonisolated public final class CellSceneBuilder {
     }
 
     public let distantLODBuilder: DistantLODBuilder?
-    /// Built on first use, like every index below.
-    public var statIndex: [UInt32: StaticObject]?
-    public var textureSetIndex: [UInt32: TextureSet]?
-    var directionalMaterials = DirectionalMaterialCache()
     /// Every active plugin, lowest priority first; `file` alone when none are given.
     public let loadOrderPlugins: [(name: String, file: ESMFile)]
-    /// Door transitions, base objects, and cells read the load order through it.
-    var loadOrderIndex: LoadOrderRecordIndex?
     /// Keeps each plugin's FormID index between sessions; nil walks every plugin.
     public var formIDIndexStore: (any FormIDIndexStore)?
-    /// MSTT/TREE/FURN/ACTI/CONT/DOOR; checked when a base is not a STAT.
-    public var modelBaseIndex: [UInt32: ModelBase]?
-    /// Keyed by WRLD FormID. Placement decides which exterior scene owns each ref.
-    var exteriorPersistentRefs: [UInt32: [PlacedReference]] = [:]
-    var exteriorPersistentPools: [UInt32: EnableParentPool] = [:]
-    /// Each worldspace's `RNAM` references by cell, over every plugin.
-    var largeReferenceIndex: [UInt32: [CellCoordinate: Set<UInt32>]] = [:]
-    /// The cells that hold a temporary Is Full LOD reference, by WRLD FormID.
-    var temporaryFullLODCellIndex: [UInt32: Set<CellCoordinate>] = [:]
-    /// Keyed by WRLD FormID, with the same ownership rule as the persistent refs.
-    var exteriorPersistentActors: [UInt32: [PlacedActor]] = [:]
     public var actorTemplateResolver: ActorTemplateResolver?
     public var actorVisualResolver: ActorVisualResolver?
     /// The session's roller; a cell build records its leveled placements here.
     public var leveling = LeveledListRoller()
-    var encounterZones: EncounterZoneStore?
-    /// Immutable decoded rig/idle assets; playback objects remain cell-owned.
-    var actorAnimationClips: [ActorAnimationCacheKey: ActorAnimationClip] = [:]
-    /// Lag bones by skeleton mesh path; nil inside records a skeleton without one.
-    var actorLagBoneRigs: [String: ActorLagBoneRig?] = [:]
-    /// Decoded expression TRI files by resource path. A file does not change while the
-    /// game runs, so a rebuild reuses it; a failure is kept too.
-    var faceMorphFiles: [String: Result<TRIFile, AssetLoadFailure>] = [:]
-    /// Painted chargen face color maps as DDS bytes, by their synthetic texture key.
-    var faceTintTextures: [String: Data] = [:]
-    /// Object behaviour sets by project path; nil inside records a failed load.
-    var objectBehaviorAssets: [String: BehaviorProjectAsset?] = [:]
-    /// Sequence door rigs by mesh key; nil inside records a mesh without one.
-    var sequenceDoorRigs: [String: SequenceDoorRig?] = [:]
-    /// Graph object meshes' moving nodes by mesh key; nil inside records none.
-    var movingPartRigs: [String: MovingPartRig?] = [:]
-    /// Node controller rigs by mesh key; nil inside records a mesh without one.
-    var nodeControllerRigs: [String: NodeControllerRig?] = [:]
     public let pluginName: String
     /// Built once, because `ESMFile.pluginHeader()` re-decodes on every call.
     public let formIDResolver: FormIDResolver
@@ -97,32 +63,11 @@ nonisolated public final class CellSceneBuilder {
     public let pluginLocalized: Bool
     /// Resolves FULL/RNAM interaction text when the builder has a VFS.
     public let localizedStrings: LocalizedStrings?
-    var worldspaceIndex: [UInt32: Worldspace]?
-    /// Keyed by WRLD editor ID; holds only lookups made with `pluginLocalized`.
-    var worldChildrenGroups: [String: FoundWorld] = [:]
-    /// Keyed by WRLD load-order FormID, then by XCLC grid, over every plugin.
-    var loadOrderExteriorCells: [UInt32: [SIMD2<Int32>: FoundCell]] = [:]
-    /// LTEX FormID to its TXST texture keys; nil marks a broken chain.
-    var terrainTextureKeyCache: [UInt32: TerrainTextureKeys?] = [:]
-    /// Diffuse path to its mean gamma colour; nil marks a texture the CPU cannot decode.
-    var terrainTextureMeans: [String: SIMD3<Float>?] = [:]
-    /// Diffuse path and mip edge to the land texture the terrain LOD bake samples.
-    var terrainLODTextures: [String: TerrainLODTexture?] = [:]
-    /// LOD worldspace editor ID, lowercased, to its fitted terrain LOD curve.
-    var terrainLODBrightnessByWorld: [String: TerrainLODBrightness] = [:]
-    var waterTypeIndex: [UInt32: WaterType]?
-    var waterPlaneMesh: RenderMesh?
-    var landTextureIndex: [UInt32: LandTexture]?
-    var grassIndex: [UInt32: Grass]?
-    public var lightingTemplateIndex: [UInt32: LightingTemplate]?
-    public var lightIndex: [UInt32: LightRecord]?
-    /// `ADDN` `DATA` index to the add-on's model path, over the load order.
-    var addOnModelIndex: [UInt32: String]?
     public var materialTypeIndex: MaterialTypeIndex?
     /// Records this builder could not decode, each FormID counted once.
-    public private(set) var skippedRecords = SkippedRecords()
-    private var skippedFormIDs: Set<UInt32> = []
-    private var skippedGroupOffsets: Set<Int> = []
+    public internal(set) var skippedRecords = SkippedRecords()
+    var skippedFormIDs: Set<UInt32> = []
+    var skippedGroupOffsets: Set<Int> = []
 
     public init(
         file: ESMFile,
@@ -186,17 +131,18 @@ nonisolated public final class CellSceneBuilder {
         counts.totalRefs = refs.count + counts.malformedRefs
         let location = CellSceneLocation.exterior(coordinate)
         let parents = doorTransitions.persistentParentPool(in: world, localized: pluginLocalized)
-        let resolved = referenceBuilder.effectiveReferences(
+        let resolved = referenceBuilder.states.effectiveReferences(
             (refs, collected), state: state, location: location,
             parentPool: parents, counts: &counts
         )
         let effective = resolved.references
-        let collision = buildCollision(resolved: resolved, location: location)
-        let instances = resolveInstances(refs: effective, counts: &counts)
+        let collision = collisionBuilder.triggers
+            .buildCollision(resolved: resolved, location: location)
+        let instances = records.instances.resolveInstances(refs: effective, counts: &counts)
         let actors = actorBuilder.buildExteriorActors(
             cell: found, world: world, coordinate: coordinate, localized: pluginLocalized,
             deltas: resolved.deltas, collision: collision.staticCollision,
-            parents: enableParents(resolved, pool: parents)
+            parents: records.instances.enableParents(resolved, pool: parents)
         )
         let environment = assembler.buildEnvironment(found: found, worldspace: world.worldspace)
         let volumes = waterVolumeBuilder.waterVolumes(effective, found: found, in: environment)
@@ -205,8 +151,8 @@ nonisolated public final class CellSceneBuilder {
             instances: instances,
             geometry: CellGeometryBuild(
                 location: location,
-                doors: assembler.resolveDoors(refs: effective),
-                interactions: assembler.resolveInteractions(refs: effective),
+                doors: assembler.interactions.resolveDoors(refs: effective),
+                interactions: assembler.interactions.resolveInteractions(refs: effective),
                 terrain: environment.terrain,
                 grass: environment.grass,
                 water: environment.water,
@@ -227,361 +173,338 @@ nonisolated public final class CellSceneBuilder {
             counts: counts
         )
         let hazards = objectBuilder
-            .collectHazards(in: found, resolved: resolved, parentPool: parents)
-        return objectBuilder.finished(scene, hazards: hazards, collision: collision)
+            .hazards.collectHazards(in: found, resolved: resolved, parentPool: parents)
+        return objectBuilder.hazards.finished(scene, hazards: hazards, collision: collision)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellActorBuilder {
+    var chargen: CellSceneBuilder.CellChargenBuilder {
+        CellSceneBuilder.CellChargenBuilder(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellActorBuilder {
+    var morphs: CellSceneBuilder.CellMorphBuilder {
+        CellSceneBuilder.CellMorphBuilder(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellActorBuilder {
+    var playerRig: CellSceneBuilder.CellPlayerRigBuilder {
+        CellSceneBuilder.CellPlayerRigBuilder(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellActorBuilder {
+    var animation: CellSceneBuilder.CellActorAnimationBuilder {
+        CellSceneBuilder.CellActorAnimationBuilder(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellActorBuilder {
+    var spawns: CellSceneBuilder.CellActorSpawnBuilder {
+        CellSceneBuilder.CellActorSpawnBuilder(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellActorBuilder {
+    var resolver: CellSceneBuilder.CellActorResolver {
+        CellSceneBuilder.CellActorResolver(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellActorBuilder {
+    var recorder: CellSceneBuilder.CellActorRecorder {
+        CellSceneBuilder.CellActorRecorder(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellSceneAssembler {
+    var interactions: CellSceneBuilder.CellSceneInteractions {
+        CellSceneBuilder.CellSceneInteractions(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellSceneAssembler {
+    var renderParts: CellSceneBuilder.CellSceneRenderParts {
+        CellSceneBuilder.CellSceneRenderParts(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellTerrainBuilder {
+    public var grass: CellSceneBuilder.CellGrassBuilder {
+        CellSceneBuilder.CellGrassBuilder(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellTerrainBuilder {
+    public var distantLOD: CellSceneBuilder.CellDistantLODBuilder {
+        CellSceneBuilder.CellDistantLODBuilder(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellTerrainBuilder {
+    public var terrainLOD: CellSceneBuilder.CellTerrainLODBuilder {
+        CellSceneBuilder.CellTerrainLODBuilder(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellTerrainBuilder {
+    public var textures: CellSceneBuilder.CellTerrainTextures {
+        CellSceneBuilder.CellTerrainTextures(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellObjectBuilder {
+    var hazards: CellSceneBuilder.CellHazardBuilder {
+        CellSceneBuilder.CellHazardBuilder(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellObjectBuilder {
+    var animated: CellSceneBuilder.CellAnimatedObjectBuilder {
+        CellSceneBuilder.CellAnimatedObjectBuilder(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellReferenceBuilder {
+    var largeReferences: CellSceneBuilder.CellLargeReferenceBuilder {
+        CellSceneBuilder.CellLargeReferenceBuilder(owner: owner)
+    }
+}
+
+nonisolated extension CellSceneBuilder.CellReferenceBuilder {
+    var states: CellSceneBuilder.CellReferenceStateBuilder {
+        CellSceneBuilder.CellReferenceStateBuilder(owner: owner)
+    }
+
+    var placedRecords: PlacedRecordLookup {
+        states.placedRecords
     }
 }
 
 nonisolated extension CellSceneBuilder {
-    private func enableParents(
-        _ resolved: EffectiveReferences,
-        pool: EnableParentPool
-    ) -> ActorEnableParents {
-        ActorEnableParents(
-            references: referenceBuilder.entriesByFormID(resolved.entries),
-            pool: pool
-        )
-    }
-
-    /// Adds the skips of a load-order decode, which counts them itself.
-    func noteSkipped(_ skipped: SkippedRecords) {
-        guard !skipped.isEmpty else { return }
-        skippedRecords.merge(skipped)
-        for line in skipped.lines {
-            Self.logger.warning("malformed records skipped: \(line, privacy: .public)")
-        }
-    }
-
-    /// Decodes `record`, or counts it in `skippedRecords` and returns nil.
-    /// Cell searches re-read records on every build, so a FormID counts once.
-    nonisolated public func decodeOrSkip<Value>(
-        _ record: ESMRecord,
-        using decode: (ESMRecord) throws -> Value
-    ) -> Value? {
-        do {
-            return try decode(record)
-        } catch {
-            guard skippedFormIDs.insert(record.formID).inserted else { return nil }
-            skippedRecords.note(record.type, error: error)
-            let id = FormID(record.formID).description
-            let type = record.type.description
-            let reason = String(describing: error)
-            Self.logger.warning(
-                """
-                malformed \(type, privacy: .public) \(id, privacy: .public) skipped: \
-                \(reason, privacy: .public)
-                """
-            )
-            return nil
-        }
-    }
-
-    /// The group's children, or nil with the error counted once under its record type.
-    nonisolated public func childrenOrSkip(_ group: ESMGroup) -> [ESMGroup.Child]? {
-        do {
-            return try group.children()
-        } catch {
-            guard skippedGroupOffsets.insert(group.contentRange.lowerBound).inserted else {
-                return nil
-            }
-            skippedRecords.note(group.recordType ?? "GRUP", error: error)
-            Self.logMalformedGroup(error)
-            return nil
-        }
-    }
-
-    /// For static walks, which hold no builder to count the skip in.
-    nonisolated public static func loggedChildren(_ group: ESMGroup) -> [ESMGroup.Child]? {
-        do {
-            return try group.children()
-        } catch {
-            logMalformedGroup(error)
-            return nil
-        }
-    }
-
-    private static func logMalformedGroup(_ error: any Error) {
-        let reason = String(describing: error)
-        logger.warning("malformed group skipped: \(reason, privacy: .public)")
-    }
-
-    /// Returns the first WRLD group whose EDID matches exactly. A malformed WRLD
-    /// is skipped, because another one may still match.
-    nonisolated public func worldChildrenGroup(
-        editorID: String,
-        localized: Bool
-    ) throws -> FoundWorld {
-        guard localized == pluginLocalized else {
-            return try uncachedWorldChildrenGroup(editorID: editorID, localized: localized)
-        }
-        if let cached = worldChildrenGroups[editorID] {
-            return cached
-        }
-        let found = try uncachedWorldChildrenGroup(editorID: editorID, localized: localized)
-        worldChildrenGroups[editorID] = found
-        return found
-    }
-
-    /// Every exterior CELL under `group` by grid. One full walk costs about as much
-    /// as a few single-cell searches, and each later build then skips the walk.
-    nonisolated func exteriorCellIndex(
-        of group: ESMGroup,
-        localized: Bool
-    ) -> [SIMD2<Int32>: FoundCell] {
-        var index: [SIMD2<Int32>: FoundCell] = [:]
-        indexExteriorCells(in: group, localized: localized, into: &index)
-        return index
-    }
-
-    nonisolated private func indexExteriorCells(
-        in group: ESMGroup,
-        localized: Bool,
-        into index: inout [SIMD2<Int32>: FoundCell]
-    ) {
-        // Prune a malformed subtree: other cells may live in a sibling block.
-        guard let children = childrenOrSkip(group) else { return }
-        for (position, child) in children.enumerated() {
-            switch child {
-            case let .record(record) where record.type == "CELL" && group.kind != .worldChildren:
-                guard
-                    let cell = decodeOrSkip(record, using: {
-                        try Cell(record: $0, localized: localized)
-                    }),
-                    let grid = cell.grid, index[SIMD2(grid.x, grid.y)] == nil
-                else { continue }
-                index[SIMD2(grid.x, grid.y)] = FoundCell(
-                    cell: cell,
-                    formID: record.formID,
-                    children: cellChildrenGroup(
-                        following: position, in: children, cellFormID: record.formID
-                    )
-                )
-            case let .group(sub)
-                where sub.kind == .exteriorCellBlock || sub.kind == .exteriorCellSubBlock:
-                indexExteriorCells(in: sub, localized: localized, into: &index)
-            default:
-                break
-            }
-        }
-    }
-
-    /// The worldspace persistent CELL: the one CELL stored directly in the world
-    /// children group, not in a block (xEdit names it "<Persistent Worldspace Cell>").
-    nonisolated func persistentCell(
-        in worldChildren: ESMGroup,
-        localized: Bool
-    ) -> FoundCell? {
-        guard let children = childrenOrSkip(worldChildren) else { return nil }
-        for (index, child) in children.enumerated() {
-            guard
-                case let .record(record) = child, record.type == "CELL",
-                let cell = decodeOrSkip(record, using: {
-                    try Cell(record: $0, localized: localized)
-                })
-            else { continue }
-            return FoundCell(
-                cell: cell,
-                formID: record.formID,
-                children: cellChildrenGroup(
-                    following: index, in: children, cellFormID: record.formID
-                )
-            )
-        }
-        return nil
-    }
-
-    /// The group follows its CELL among the same siblings, labeled with its FormID.
-    nonisolated func cellChildrenGroup(
-        following index: Int,
-        in children: [ESMGroup.Child],
-        cellFormID: UInt32
-    ) -> ESMGroup? {
-        let rest = children[(index + 1)...]
-        for case let .group(group) in rest where group.kind == .cellChildren {
-            if group.parentFormID == cellFormID {
-                return group
-            }
-        }
-        return nil
-    }
-
-    /// Skips unknown bases, markers, and failed meshes. Sorted by
-    /// (mesh path, FormID) so shared models sit together for instancing.
-    nonisolated public func resolveInstances(
-        refs: [PlacedReference],
-        counts: inout BuildCounts
-    ) -> [ResolvedInstance] {
-        guard !refs.isEmpty else { return [] }
-        let statIndex = modelIndex.statIndexBuildingIfNeeded()
-        let modelBaseIndex = modelIndex.modelBaseIndexBuildingIfNeeded()
-        let lightIndex = interiorLighting.lightIndexBuildingIfNeeded()
-        meshes.predecode(paths: refs.lazy.compactMap { ref -> String? in
-            guard lightIndex[ref.base.rawValue] == nil else { return nil }
-            let resolved = self.modelIndex.resolveBase(
-                formID: ref.base.rawValue, statIndex: statIndex, modelBaseIndex: modelBaseIndex
-            )
-            return resolved?.isEditorMarker == false ? resolved?.modelPath : nil
-        })
-        defer { meshes.dropPredecoded() }
-        let doors = objectBuilder.sequenceDoors(in: refs)
-        var instances: [ResolvedInstance] = []
-        for ref in refs where lightIndex[ref.base.rawValue] == nil {
-            let id = ref.formID.description
-            guard
-                let resolved = modelIndex.resolveBase(
-                    formID: ref.base.rawValue, statIndex: statIndex, modelBaseIndex: modelBaseIndex
-                )
-            else {
-                counts.unsupportedBases += 1
-                let base = ref.base.description
-                Self.logger.info(
-                    """
-                    REFR \(id, privacy: .public): base \(base, privacy: .public) \
-                    type not supported, skipped
-                    """
-                )
-                continue
-            }
-            guard let modelPath = resolved.modelPath, !resolved.isEditorMarker else {
-                counts.markers += 1
-                let base = resolved.formID.description
-                let type = resolved.recordType.description
-                Self.logger.info(
-                    """
-                    REFR \(id, privacy: .public): marker \(type, privacy: .public) \
-                    \(base, privacy: .public), skipped
-                    """
-                )
-                continue
-            }
-            let surface = objectBuilder.surface(for: resolved)
-            if
-                var instance = loadInstance(
-                    ref: ref, model: (modelPath, surface),
-                    behavior: objectBuilder
-                        .objectBehavior(recordType: resolved.recordType, modelPath: modelPath),
-                    counts: &counts
-                )
-            {
-                instance.isSequenceDoor = doors[ref.formID] != nil
-                instance.sequenceDoorKind = doors[ref.formID]?.kind ?? .door
-                instance.treeMotion = resolved.treeData.map(TreeMotion.init)
-                instances.append(instance)
-            }
-        }
-        return instances.sorted { ($0.sortKey, $0.formID) < ($1.sortKey, $1.formID) }
-    }
-
-    /// Nil when the mesh fails to load or holds only editor-marker geometry.
-    nonisolated private func loadInstance(
-        ref: PlacedReference,
-        model: (path: String, surface: ModelSurfaceOverride),
-        behavior: BehaviorProjectAsset?,
-        counts: inout BuildCounts
-    ) -> ResolvedInstance? {
-        let (modelPath, surface) = model
-        do {
-            let animated = behavior.flatMap { asset in
-                attempt {
-                    try meshes.animatedObjectModel(
-                        path: modelPath,
-                        bones: Set(objectBuilder.objectPoseRig(modelPath: modelPath, asset: asset)?
-                            .skeleton
-                            .boneNames ?? asset.skeleton.boneNames),
-                        reference: ref.formID.rawValue,
-                        surface: surface
-                    )
-                }
-            }
-            return try ResolvedInstance(
-                sortKey: attempt { try VirtualFileSystem.normalize(modelPath) } ?? modelPath,
-                formID: ref.formID.rawValue,
-                modelPath: modelPath,
-                model: animated ?? meshes.model(path: modelPath, surface: surface),
-                surface: surface,
-                transform: MatrixMath.placement(
-                    position: ref.placement.position,
-                    rotation: ref.placement.rotation,
-                    scale: ref.scale
-                ),
-                animated: animated == nil ? nil : behavior,
-                emittance: interiorLighting.emittanceSource(of: ref)
-            )
-        } catch MeshLibraryError.editorMarkerOnly {
-            counts.markers += 1
-        } catch {
-            counts.modelFailures += 1
-            let id = ref.formID.description
-            let reason = String(describing: error)
-            Self.logger.warning(
-                """
-                REFR \(id, privacy: .public): model \(modelPath, privacy: .public) \
-                failed (\(reason, privacy: .public)), skipped
-                """
-            )
-        }
-        return nil
+    public var collisionBuilder: CellSceneBuilder.CellCollisionBuilder {
+        CellSceneBuilder.CellCollisionBuilder(owner: self)
     }
 }
 
-/// The parts are declared next to their owner, so the cycle between them stays in one file.
-nonisolated struct CellActorBuilder {
-    let owner: CellSceneBuilder
+nonisolated extension CellSceneBuilder.CellCollisionBuilder {
+    public var triggers: CellSceneBuilder.CellTriggerBuilder {
+        CellSceneBuilder.CellTriggerBuilder(owner: owner)
+    }
 }
 
-nonisolated struct CellRecordIndex {
-    let owner: CellSceneBuilder
+nonisolated extension CellSceneBuilder.CellCollisionBuilder {
+    public var doorCollision: CellSceneBuilder.CellDoorCollisionBuilder {
+        CellSceneBuilder.CellDoorCollisionBuilder(owner: owner)
+    }
 }
 
-/// The model, texture-set, and material indexes and the exterior build source.
-nonisolated struct CellModelIndex {
-    let owner: CellSceneBuilder
+nonisolated extension CellSceneBuilder.CellCollisionBuilder {
+    public var router: CellSceneBuilder.CellCollisionRouter {
+        CellSceneBuilder.CellCollisionRouter(owner: owner)
+    }
 }
 
-nonisolated struct CellReferenceBuilder {
-    let owner: CellSceneBuilder
+nonisolated extension CellSceneBuilder {
+    var records: CellSceneBuilder.CellRecordWalker {
+        CellSceneBuilder.CellRecordWalker(owner: self)
+    }
+
+    var preparation: CellSceneBuilder.CellIndexPreparation {
+        CellSceneBuilder.CellIndexPreparation(owner: self)
+    }
+
+    public func prepareIndexes(worldspace: String?) {
+        preparation.prepareIndexes(worldspace: worldspace)
+    }
+
+    /// The walk from the plugin's groups to a cell and its placed references.
+    nonisolated struct CellRecordWalker {
+        let owner: CellSceneBuilder
+    }
+
+    /// The indexes a build reads, made once before the first cell.
+    nonisolated struct CellIndexPreparation {
+        let owner: CellSceneBuilder
+    }
+
+    nonisolated struct CellActorBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// The static and dynamic collision, trigger volumes, and door collision of a cell.
+    nonisolated public struct CellCollisionBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// Routes each collision shape into its partition or dynamic body.
+    nonisolated public struct CellCollisionRouter {
+        let owner: CellSceneBuilder
+    }
+
+    /// The door collision and moving collision sources of a cell.
+    nonisolated public struct CellDoorCollisionBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// The trigger volumes of a cell.
+    nonisolated public struct CellTriggerBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// Records each assembled actor into the cell build.
+    nonisolated struct CellActorRecorder {
+        let owner: CellSceneBuilder
+    }
+
+    /// Resolves each placed actor to its visual, state, and equipment.
+    nonisolated struct CellActorResolver {
+        let owner: CellSceneBuilder
+    }
+
+    /// Spawned and levelled actors, and the floors they stand on.
+    nonisolated struct CellActorSpawnBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// The animation clips and lag-bone rigs of actors.
+    nonisolated struct CellActorAnimationBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// The player's body and first-person rig.
+    nonisolated struct CellPlayerRigBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// The head and face morphs of an actor.
+    nonisolated struct CellMorphBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// The character generation tints of an actor's face.
+    nonisolated struct CellChargenBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    nonisolated struct CellRecordIndex {
+        let owner: CellSceneBuilder
+    }
+
+    /// The model, texture-set, and material indexes and the exterior build source.
+    nonisolated struct CellModelIndex {
+        let owner: CellSceneBuilder
+    }
+
+    nonisolated struct CellReferenceBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// The runtime state and relocation of placed references.
+    nonisolated struct CellReferenceStateBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// The large references and full LOD placements of a worldspace.
+    nonisolated struct CellLargeReferenceBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    nonisolated public struct CellInteriorBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// The lighting of an interior cell: its template, fog, and lights.
+    nonisolated public struct CellInteriorLighting {
+        let owner: CellSceneBuilder
+    }
+
+    /// The door transitions and a worldspace's exterior doors and persistent references.
+    nonisolated public struct CellDoorTransitionBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    nonisolated public struct CellPreviewBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// Where a preview stands, and the cell that holds a previewed reference.
+    nonisolated public struct CellPreviewPlaces {
+        let owner: CellSceneBuilder
+    }
+
+    nonisolated struct CellObjectBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// Animated objects, sequence doors, and node controllers.
+    nonisolated struct CellAnimatedObjectBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// The hazards and vehicles of a cell.
+    nonisolated struct CellHazardBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    nonisolated public struct CellTerrainBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// The texture layers and render items of a terrain cell.
+    nonisolated public struct CellTerrainTextures {
+        let owner: CellSceneBuilder
+    }
+
+    /// The generated terrain LOD textures and their brightness.
+    nonisolated public struct CellTerrainLODBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// The distant LOD scene and its water.
+    nonisolated public struct CellDistantLODBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// The grass of a terrain cell.
+    nonisolated public struct CellGrassBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    nonisolated struct CellSceneAssembler {
+        let owner: CellSceneBuilder
+    }
+
+    /// The render placements, particles, bounds, and summary of a scene.
+    nonisolated struct CellSceneRenderParts {
+        let owner: CellSceneBuilder
+    }
+
+    /// The doors and interactions a scene offers the player.
+    nonisolated struct CellSceneInteractions {
+        let owner: CellSceneBuilder
+    }
+
+    nonisolated struct CellWaterBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// The water volumes of a cell: their collision planes and currents.
+    nonisolated struct CellWaterVolumeBuilder {
+        let owner: CellSceneBuilder
+    }
+
+    /// The model and behaviour each placed reference draws with, sorted for instancing.
+    nonisolated struct CellInstanceResolver {
+        let owner: CellSceneBuilder
+    }
 }
 
-nonisolated public struct CellInteriorBuilder {
-    let owner: CellSceneBuilder
-}
-
-/// The lighting of an interior cell: its template, fog, and lights.
-nonisolated public struct CellInteriorLighting {
-    let owner: CellSceneBuilder
-}
-
-/// The door transitions and a worldspace's exterior doors and persistent references.
-nonisolated public struct CellDoorTransitionBuilder {
-    let owner: CellSceneBuilder
-}
-
-nonisolated public struct CellPreviewBuilder {
-    let owner: CellSceneBuilder
-}
-
-/// Where a preview stands, and the cell that holds a previewed reference.
-nonisolated public struct CellPreviewPlaces {
-    let owner: CellSceneBuilder
-}
-
-nonisolated struct CellObjectBuilder {
-    let owner: CellSceneBuilder
-}
-
-nonisolated public struct CellTerrainBuilder {
-    let owner: CellSceneBuilder
-}
-
-nonisolated struct CellSceneAssembler {
-    let owner: CellSceneBuilder
-}
-
-nonisolated struct CellWaterBuilder {
-    let owner: CellSceneBuilder
-}
-
-/// The water volumes of a cell: their collision planes and currents.
-nonisolated struct CellWaterVolumeBuilder {
-    let owner: CellSceneBuilder
+nonisolated extension CellSceneBuilder.CellRecordWalker {
+    var instances: CellSceneBuilder.CellInstanceResolver {
+        CellSceneBuilder.CellInstanceResolver(owner: owner)
+    }
 }

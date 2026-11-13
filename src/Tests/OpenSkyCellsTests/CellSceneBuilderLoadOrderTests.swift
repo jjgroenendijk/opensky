@@ -122,7 +122,7 @@ struct CellSceneBuilderLoadOrderTests {
                 ("World.esp", world)
             ]
         )
-        let found = try builder.worldChildrenGroup(editorID: "ModWorld", localized: false)
+        let found = try builder.records.worldChildrenGroup(editorID: "ModWorld", localized: false)
         #expect(found.formID == FormID(0x0300_001A))
         #expect(found.children == nil)
         let scene = try builder.buildScene(worldspaceEditorID: "ModWorld", gridX: 3, gridY: 4)

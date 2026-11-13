@@ -75,11 +75,11 @@ struct CellSceneBuilderPreviewPlacesTests: CellSceneBuilderFixture {
 
     @Test func anActorIsFramedAsAStandingBox() {
         let tall = ModelBounds(min: SIMD3(-10, -10, 0), max: SIMD3(10, 10, 500))
-        let box = CellPreviewBuilder.standingBox(tall, feet: .zero)
+        let box = CellSceneBuilder.CellPreviewBuilder.standingBox(tall, feet: .zero)
         #expect(box.min == SIMD3(-45, -45, 0))
         #expect(box.max == SIMD3(45, 45, 160))
         let short = ModelBounds(min: .zero, max: SIMD3(1, 1, 20))
-        #expect(CellPreviewBuilder.standingBox(short, feet: .zero).max.z == 64)
+        #expect(CellSceneBuilder.CellPreviewBuilder.standingBox(short, feet: .zero).max.z == 64)
     }
 
     @Test func aFramingBoxReplacesThePlacementsBounds() {

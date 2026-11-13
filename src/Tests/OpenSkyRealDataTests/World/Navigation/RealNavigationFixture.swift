@@ -163,7 +163,7 @@ enum RealNavigationFixture {
         return CellStreamerFixture.cellScene(
             location: location,
             doors: placed.map { [$0] } ?? [],
-            navmeshes: CellReferenceBuilder.collectNavmeshes(in: cell.children)
+            navmeshes: CellSceneBuilder.CellReferenceBuilder.collectNavmeshes(in: cell.children)
         )
     }
 }

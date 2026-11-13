@@ -46,7 +46,7 @@ struct CellSceneBuilderDistantLODTests: CellSceneBuilderFixture {
     @Test(.enabled(if: Self.hasDevice)) func aWorldWithoutASettingsFileHasNoRing() throws {
         let terrain = try makeBuilder(plugin()).terrainBuilder
         #expect(throws: (any Error).self) {
-            try terrain.buildDistantLOD(
+            try terrain.distantLOD.buildDistantLOD(
                 worldspaceEditorID: "Tamriel",
                 center: center,
                 hiddenCells: []
@@ -57,7 +57,7 @@ struct CellSceneBuilderDistantLODTests: CellSceneBuilderFixture {
     @Test(.enabled(if: Self.hasDevice)) func theRingDrawsWaterOverTheWholeArea() throws {
         try writeSettings(worldspace: "tamriel")
         let terrain = try makeBuilder(plugin(worldDefaultWaterHeight: -500)).terrainBuilder
-        let ring = try #require(try terrain.buildDistantLOD(
+        let ring = try #require(try terrain.distantLOD.buildDistantLOD(
             worldspaceEditorID: "Tamriel", center: center, hiddenCells: []
         ))
         #expect(ring.blockCount == 0)
@@ -73,7 +73,7 @@ struct CellSceneBuilderDistantLODTests: CellSceneBuilderFixture {
     @Test(.enabled(if: Self.hasDevice)) func aLoadedCellLeavesAGapInTheWater() throws {
         try writeSettings(worldspace: "tamriel")
         let terrain = try makeBuilder(plugin(worldDefaultWaterHeight: -500)).terrainBuilder
-        let ring = try #require(try terrain.buildDistantLOD(
+        let ring = try #require(try terrain.distantLOD.buildDistantLOD(
             worldspaceEditorID: "Tamriel", center: center, hiddenCells: [center]
         ))
         #expect(cellArea(ring.renderScene.water) == 256 * 256 - 1)
@@ -84,7 +84,7 @@ struct CellSceneBuilderDistantLODTests: CellSceneBuilderFixture {
         let flagged = try makeBuilder(plugin(worldDefaultWaterHeight: -500, worldFlags: 0x08))
         let dry = try makeBuilder(plugin())
         for builder in [flagged, dry] {
-            let ring = try #require(try builder.terrainBuilder.buildDistantLOD(
+            let ring = try #require(try builder.terrainBuilder.distantLOD.buildDistantLOD(
                 worldspaceEditorID: "Tamriel", center: center, hiddenCells: []
             ))
             #expect(ring.renderScene.water.isEmpty)
@@ -101,9 +101,9 @@ struct CellSceneBuilderDistantLODTests: CellSceneBuilderFixture {
             parentFlags: 0x0002,
             extraWorldRecords: parent
         )).terrainBuilder
-        #expect(terrain.lodWorldspace(of: "WhiterunWorld") == "Tamriel")
-        #expect(terrain.lodWorldspace(of: "Nowhere") == "Nowhere")
-        let ring = try #require(try terrain.buildDistantLOD(
+        #expect(terrain.distantLOD.lodWorldspace(of: "WhiterunWorld") == "Tamriel")
+        #expect(terrain.distantLOD.lodWorldspace(of: "Nowhere") == "Nowhere")
+        let ring = try #require(try terrain.distantLOD.buildDistantLOD(
             worldspaceEditorID: "WhiterunWorld", center: center, hiddenCells: []
         ))
         #expect(ring.missingBlockCount > 0)

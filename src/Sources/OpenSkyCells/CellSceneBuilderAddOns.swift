@@ -9,7 +9,7 @@ import OpenSkyGameData
 import OpenSkyRendering
 import simd
 
-nonisolated extension CellObjectBuilder {
+nonisolated extension CellSceneBuilder.CellObjectBuilder {
     /// The add-on models of `instances`, each placed at its node.
     func addOnInstances(for instances: [ResolvedInstance]) -> [ResolvedInstance] {
         let plain = ModelSurfaceOverride(diffuseTexture: nil, normalTexture: nil, tint: nil)
@@ -37,7 +37,7 @@ nonisolated extension CellObjectBuilder {
     }
 
     func addOnModelIndexBuildingIfNeeded() -> [UInt32: String] {
-        if let addOnModelIndex = owner.addOnModelIndex {
+        if let addOnModelIndex = owner.caches.addOnModelIndex {
             return addOnModelIndex
         }
         let records = owner.recordIndex
@@ -47,7 +47,7 @@ nonisolated extension CellObjectBuilder {
             guard let nodeIndex = record.nodeIndex, let path = record.model?.path else { continue }
             index[nodeIndex] = index[nodeIndex] ?? path
         }
-        owner.addOnModelIndex = index
+        owner.caches.addOnModelIndex = index
         return index
     }
 }

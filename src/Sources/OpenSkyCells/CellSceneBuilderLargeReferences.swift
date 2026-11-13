@@ -23,7 +23,7 @@ nonisolated public struct DistantReferences: Sendable {
     }
 }
 
-nonisolated extension CellReferenceBuilder {
+nonisolated extension CellSceneBuilder.CellLargeReferenceBuilder {
     /// The ring's large references, placed as their cells place them, in the enable state
     /// `state` and their enable parents give, as in their own cells.
     nonisolated func largeReferencePlacements(
@@ -57,7 +57,10 @@ nonisolated extension CellReferenceBuilder {
                     )
                 })
             else { continue }
-            let collected = collectTaggedReferences(in: source.cell, counts: &counts)
+            let collected = owner.referenceBuilder.collectTaggedReferences(
+                in: source.cell,
+                counts: &counts
+            )
             let wanted = pick(cell, collected)
             guard !wanted.isEmpty else { continue }
             let placed = owner.doorTransitions.exteriorReferences(
@@ -65,9 +68,12 @@ nonisolated extension CellReferenceBuilder {
                 coordinate: cell, localized: owner.pluginLocalized
             ).filter { wanted.contains($0.formID.rawValue) }
             result.watch(placed)
-            references += applyRuntimeState(
+            references += owner.referenceBuilder.states.applyRuntimeState(
                 refs: placed,
-                entries: referenceEntries(refs: placed, collected: collected),
+                entries: owner.referenceBuilder.referenceEntries(
+                    refs: placed,
+                    collected: collected
+                ),
                 deltas: deltas,
                 parentPool: owner.doorTransitions.persistentParentPool(
                     in: source.world,
@@ -89,7 +95,7 @@ nonisolated extension CellReferenceBuilder {
     ) -> DistantReferences {
         guard
             let world = attempt({
-                try owner.worldChildrenGroup(
+                try owner.records.worldChildrenGroup(
                     editorID: worldspaceEditorID, localized: owner.pluginLocalized
                 )
             })
@@ -107,7 +113,7 @@ nonisolated extension CellReferenceBuilder {
     /// the record header is read, so the walk decodes no reference.
     nonisolated func temporaryFullLODCells(in world: FoundWorld) -> Set<CellCoordinate> {
         let key = world.formID.rawValue
-        if let cached = owner.temporaryFullLODCellIndex[key] {
+        if let cached = owner.caches.temporaryFullLODCellIndex[key] {
             return cached
         }
         var found: Set<CellCoordinate> = []
@@ -115,10 +121,12 @@ nonisolated extension CellReferenceBuilder {
             in: world,
             localized: owner.pluginLocalized
         ) {
-            guard let cellChildren = cell.children, let groups = owner.childrenOrSkip(cellChildren)
+            guard
+                let cellChildren = cell.children,
+                let groups = owner.records.childrenOrSkip(cellChildren)
             else { continue }
             for case let .group(group) in groups where group.kind == .cellTemporaryChildren {
-                let records = owner.childrenOrSkip(group) ?? []
+                let records = owner.records.childrenOrSkip(group) ?? []
                 let holds = records.contains { child in
                     guard case let .record(record) = child else { return false }
                     return record.type == "REFR" && !record.isDeleted
@@ -129,7 +137,7 @@ nonisolated extension CellReferenceBuilder {
                 }
             }
         }
-        owner.temporaryFullLODCellIndex[key] = found
+        owner.caches.temporaryFullLODCellIndex[key] = found
         return found
     }
 
@@ -143,7 +151,7 @@ nonisolated extension CellReferenceBuilder {
         var result = DistantReferences()
         guard
             let world = attempt({
-                try owner.worldChildrenGroup(
+                try owner.records.worldChildrenGroup(
                     editorID: worldspaceEditorID, localized: owner.pluginLocalized
                 )
             })
@@ -159,9 +167,13 @@ nonisolated extension CellReferenceBuilder {
         result.watch(wanted)
         var counts = BuildCounts()
         let entries = wanted.compactMap {
-            runtimeEntry(formID: $0.formID, isPersistent: true, record: .reference($0))
+            owner.referenceBuilder.runtimeEntry(
+                formID: $0.formID,
+                isPersistent: true,
+                record: .reference($0)
+            )
         }
-        let enabled = applyRuntimeState(
+        let enabled = owner.referenceBuilder.states.applyRuntimeState(
             refs: wanted, entries: entries, deltas: state.deltasByKey(),
             parentPool: owner.doorTransitions.persistentParentPool(
                 in: world,
@@ -176,7 +188,7 @@ nonisolated extension CellReferenceBuilder {
     nonisolated private func placements(
         of references: [PlacedReference], counts: inout BuildCounts
     ) -> [RenderPlacement] {
-        owner.resolveInstances(refs: references, counts: &counts)
+        owner.records.instances.resolveInstances(refs: references, counts: &counts)
             .filter { !$0.model.meshes.isEmpty }
             .map { instance in
                 RenderPlacement(
@@ -207,11 +219,11 @@ nonisolated extension CellReferenceBuilder {
     /// Each plugin's `WRLD` lists only the large references it adds, so the lists of
     /// every plugin are joined, as `RNAM` counts on the install show.
     nonisolated private func largeReferenceIndex(world: UInt32) -> [CellCoordinate: Set<UInt32>] {
-        if let cached = owner.largeReferenceIndex[world] {
+        if let cached = owner.caches.largeReferenceIndex[world] {
             return cached
         }
         var skipped = SkippedRecords()
-        let versions = owner.interiorBuilder.loadOrderIndexBuildingIfNeeded().loadOrder
+        let versions = owner.recordIndex.loadOrderIndexBuildingIfNeeded().loadOrder
             .decodeEveryVersion(
                 of: "WRLD",
                 skipped: &skipped,
@@ -224,7 +236,7 @@ nonisolated extension CellReferenceBuilder {
                 index[cell, default: []].insert(reference.reference.rawValue)
             }
         }
-        owner.largeReferenceIndex[world] = index
+        owner.caches.largeReferenceIndex[world] = index
         return index
     }
 }

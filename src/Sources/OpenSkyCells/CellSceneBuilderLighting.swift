@@ -11,7 +11,7 @@ nonisolated public struct InteriorLightingBuild: Sendable {
     public let pointLights: [RenderPointLight]
 }
 
-nonisolated extension CellInteriorLighting {
+nonisolated extension CellSceneBuilder.CellInteriorLighting {
     nonisolated public func buildInteriorLighting(
         cell: Cell,
         references: [PlacedReference]
@@ -146,13 +146,13 @@ nonisolated extension CellInteriorLighting {
     }
 
     nonisolated public func lightingTemplateIndexBuildingIfNeeded() -> [UInt32: LightingTemplate] {
-        if let lightingTemplateIndex = owner.lightingTemplateIndex {
+        if let lightingTemplateIndex = owner.caches.lightingTemplateIndex {
             return lightingTemplateIndex
         }
         let index = owner.recordIndex.loadOrderRecords(of: "LGTM") { record, _ in
             try LightingTemplate(record: record)
         }
-        owner.lightingTemplateIndex = index
+        owner.caches.lightingTemplateIndex = index
         return index
     }
 
@@ -167,12 +167,12 @@ nonisolated extension CellInteriorLighting {
     }
 
     nonisolated public func lightIndexBuildingIfNeeded() -> [UInt32: LightRecord] {
-        if let lightIndex = owner.lightIndex {
+        if let lightIndex = owner.caches.lightIndex {
             return lightIndex
         }
         let index = owner.recordIndex
             .loadOrderRecords(of: "LIGH") { record, _ in try LightRecord(record: record) }
-        owner.lightIndex = index
+        owner.caches.lightIndex = index
         return index
     }
 }

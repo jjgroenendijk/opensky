@@ -4,36 +4,42 @@
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder.CellIndexPreparation {
     /// Every load-order index a cell build reads. With `worldspace`, also that
     /// worldspace's cell lookups and its terrain LOD brightness.
-    public func prepareIndexes(worldspace: String?) {
-        _ = interiorBuilder.loadOrderIndexBuildingIfNeeded()
-        _ = modelIndex.statIndexBuildingIfNeeded()
-        _ = modelIndex.textureSetIndexBuildingIfNeeded()
-        _ = modelIndex.modelBaseIndexBuildingIfNeeded()
-        _ = modelIndex.materialTypeIndexBuildingIfNeeded()
-        _ = interiorLighting.lightingTemplateIndexBuildingIfNeeded()
-        _ = interiorLighting.lightIndexBuildingIfNeeded()
-        _ = terrainBuilder.landTextureIndexBuildingIfNeeded()
-        _ = terrainBuilder.grassIndexBuildingIfNeeded()
-        _ = objectBuilder.addOnModelIndexBuildingIfNeeded()
-        _ = waterBuilder.worldspaceIndexBuildingIfNeeded()
-        _ = waterBuilder.waterTypeIndexBuildingIfNeeded()
-        _ = actorBuilder.actorResolversBuildingIfNeeded()
+    func prepareIndexes(worldspace: String?) {
+        _ = owner.recordIndex.loadOrderIndexBuildingIfNeeded()
+        _ = owner.modelIndex.statIndexBuildingIfNeeded()
+        _ = owner.modelIndex.textureSetIndexBuildingIfNeeded()
+        _ = owner.modelIndex.modelBaseIndexBuildingIfNeeded()
+        _ = owner.modelIndex.materialTypeIndexBuildingIfNeeded()
+        _ = owner.interiorLighting.lightingTemplateIndexBuildingIfNeeded()
+        _ = owner.interiorLighting.lightIndexBuildingIfNeeded()
+        _ = owner.terrainBuilder.grass.landTextureIndexBuildingIfNeeded()
+        _ = owner.terrainBuilder.grass.grassIndexBuildingIfNeeded()
+        _ = owner.objectBuilder.addOnModelIndexBuildingIfNeeded()
+        _ = owner.waterBuilder.worldspaceIndexBuildingIfNeeded()
+        _ = owner.waterBuilder.waterTypeIndexBuildingIfNeeded()
+        _ = owner.actorBuilder.resolver.actorResolversBuildingIfNeeded()
         guard
             let worldspace,
             let world = attempt({
-                try worldChildrenGroup(
+                try owner.records.worldChildrenGroup(
                     editorID: worldspace,
-                    localized: pluginLocalized
+                    localized: owner.pluginLocalized
                 )
             })
         else { return }
-        _ = recordIndex.findCell(in: world, gridX: 0, gridY: 0, localized: pluginLocalized)
-        _ = doorTransitions.persistentParentPool(in: world, localized: pluginLocalized)
-        _ = terrainBuilder
-            .terrainLODBrightness(lodWorldspace: terrainBuilder.lodWorldspace(of: worldspace))
+        _ = owner.recordIndex.findCell(
+            in: world,
+            gridX: 0,
+            gridY: 0,
+            localized: owner.pluginLocalized
+        )
+        _ = owner.doorTransitions.persistentParentPool(in: world, localized: owner.pluginLocalized)
+        _ = owner.terrainBuilder
+            .terrainLOD.terrainLODBrightness(lodWorldspace: owner.terrainBuilder.distantLOD
+                .lodWorldspace(of: worldspace))
     }
 
     /// The winning WRLD with that editor ID in the whole load order, and the
@@ -43,13 +49,13 @@ nonisolated extension CellSceneBuilder {
         localized _: Bool
     ) throws -> FoundWorld {
         guard
-            let match = waterBuilder.worldspaceIndexBuildingIfNeeded()
+            let match = owner.waterBuilder.worldspaceIndexBuildingIfNeeded()
                 .filter({ $0.value.editorID == editorID })
                 .min(by: { $0.key < $1.key })
         else { throw CellSceneError.worldspaceNotFound(editorID: editorID) }
         let formID = FormID(stored: match.key)
         return FoundWorld(
-            children: recordIndex.baseWorldChildren(of: formID), worldspace: match.value,
+            children: owner.recordIndex.baseWorldChildren(of: formID), worldspace: match.value,
             formID: formID
         )
     }

@@ -10,7 +10,7 @@ import OpenSkyRendering
 import OpenSkyWorldInterface
 import simd
 
-nonisolated extension CellObjectBuilder {
+nonisolated extension CellSceneBuilder.CellObjectBuilder {
     /// The seats of one furniture reference, in marker order.
     func seats(of base: ModelBase, at ref: PlacedReference) -> [FurnitureSeat] {
         guard let modelPath = base.modelPath else { return [] }

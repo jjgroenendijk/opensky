@@ -14,7 +14,7 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
-nonisolated extension CellPreviewPlaces {
+nonisolated extension CellSceneBuilder.CellPreviewPlaces {
     /// Where a built cell places a reference; nil when it does not place it.
     public func previewPlacement(
         of reference: FormID, in scene: CellScene
@@ -69,13 +69,13 @@ nonisolated extension CellPreviewPlaces {
 
     /// The plugins this builder reads, for record lookups by name.
     public var pluginLoadOrder: LoadOrderPlugins {
-        owner.interiorBuilder.loadOrderIndexBuildingIfNeeded().loadOrder
+        owner.recordIndex.loadOrderIndexBuildingIfNeeded().loadOrder
     }
 
     /// The cell that holds a placed reference. An exterior reference gives the grid its
     /// position falls in, because a persistent one is stored in no grid cell.
     public func previewCell(holding reference: FormID) -> CellDirectoryEntry? {
-        let index = owner.interiorBuilder.loadOrderIndexBuildingIfNeeded()
+        let index = owner.recordIndex.loadOrderIndexBuildingIfNeeded()
         guard let cell = index.cellFormID(containing: reference) else { return nil }
         guard index.worldFormID(containing: reference) != nil else {
             return .interior(cell: cell, entryDoor: nil)

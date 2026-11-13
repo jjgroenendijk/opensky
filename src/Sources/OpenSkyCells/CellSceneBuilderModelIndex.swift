@@ -11,13 +11,13 @@ nonisolated public struct ExteriorBuildSource: Sendable {
     public let cell: FoundCell
 }
 
-nonisolated extension CellModelIndex {
+nonisolated extension CellSceneBuilder.CellModelIndex {
     nonisolated public func exteriorBuildSource(
         worldspaceEditorID: String,
         gridX: Int32,
         gridY: Int32
     ) throws -> ExteriorBuildSource {
-        let world = try owner.worldChildrenGroup(
+        let world = try owner.records.worldChildrenGroup(
             editorID: worldspaceEditorID,
             localized: owner.pluginLocalized
         )
@@ -41,23 +41,23 @@ nonisolated extension CellModelIndex {
 
     /// Keyed in the load-order space, like the references that place them.
     nonisolated public func statIndexBuildingIfNeeded() -> [UInt32: StaticObject] {
-        if let statIndex = owner.statIndex {
+        if let statIndex = owner.caches.statIndex {
             return statIndex
         }
         let index = owner.recordIndex
             .loadOrderRecords(of: "STAT") { record, _ in try StaticObject(record: record) }
-        owner.statIndex = index
+        owner.caches.statIndex = index
         return index
     }
 
     /// TXST by FormID, for the MODS texture sets of placed models.
     nonisolated public func textureSetIndexBuildingIfNeeded() -> [UInt32: TextureSet] {
-        if let textureSetIndex = owner.textureSetIndex {
+        if let textureSetIndex = owner.caches.textureSetIndex {
             return textureSetIndex
         }
         let index = owner.recordIndex
             .loadOrderRecords(of: "TXST") { record, _ in try TextureSet(record: record) }
-        owner.textureSetIndex = index
+        owner.caches.textureSetIndex = index
         return index
     }
 
@@ -86,7 +86,7 @@ nonisolated extension CellModelIndex {
 
     /// One cached index spans the six model-base top groups.
     nonisolated public func modelBaseIndexBuildingIfNeeded() -> [UInt32: ModelBase] {
-        if let modelBaseIndex = owner.modelBaseIndex {
+        if let modelBaseIndex = owner.caches.modelBaseIndex {
             return modelBaseIndex
         }
         var index: [UInt32: ModelBase] = [:]
@@ -95,7 +95,7 @@ nonisolated extension CellModelIndex {
                 try ModelBase(record: record, localized: localized)
             }) { _, later in later }
         }
-        owner.modelBaseIndex = index
+        owner.caches.modelBaseIndex = index
         return index
     }
 
@@ -104,7 +104,7 @@ nonisolated extension CellModelIndex {
         if let materialTypeIndex = owner.materialTypeIndex {
             return materialTypeIndex
         }
-        let loadOrder = owner.interiorBuilder.loadOrderIndexBuildingIfNeeded().loadOrder
+        let loadOrder = owner.recordIndex.loadOrderIndexBuildingIfNeeded().loadOrder
         let index = owner.loadPhases
             .measure(.recordIndex) { MaterialTypeIndex(loadOrder: loadOrder) }
         owner.materialTypeIndex = index

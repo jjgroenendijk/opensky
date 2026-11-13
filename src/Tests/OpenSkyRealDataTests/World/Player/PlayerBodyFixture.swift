@@ -61,13 +61,13 @@ enum PlayerBodyFixture {
         )
         bridge.attachFirstPerson(graph: firstPersonGraph.instance)
         let body = try unwrap(
-            builder.actorBuilder.makePlayerBody(
+            builder.actorBuilder.playerRig.makePlayerBody(
                 skeleton: graph.skeleton, pose: bridge.pose, equipped: equipped, appearance: nil
             ),
             what: "player body"
         )
         let arms = try unwrap(
-            builder.actorBuilder.makePlayerFirstPersonRig(
+            builder.actorBuilder.playerRig.makePlayerFirstPersonRig(
                 skeleton: firstPersonGraph.skeleton,
                 pose: bridge.firstPersonPose,
                 equipped: equipped,

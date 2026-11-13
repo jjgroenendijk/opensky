@@ -103,7 +103,10 @@ struct NavmeshRealDataTests {
         // The production walk logs and skips a failure rather than reporting
         // it, so the probe decodes the records itself for the error text. What
         // the walk owes is agreement: the same records, minus the failures.
-        if CellReferenceBuilder.collectNavmeshes(in: cell.children).count != navmeshes.count {
+        if
+            CellSceneBuilder.CellReferenceBuilder.collectNavmeshes(in: cell.children)
+                .count != navmeshes.count
+        {
             census.failures.append("\(place): collectNavmeshes disagrees with a direct decode")
         }
     }

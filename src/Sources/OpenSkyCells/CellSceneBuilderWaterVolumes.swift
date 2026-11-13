@@ -9,7 +9,7 @@ import OpenSkyPhysics
 import OpenSkyRenderCore
 import simd
 
-nonisolated extension CellWaterVolumeBuilder {
+nonisolated extension CellSceneBuilder.CellWaterVolumeBuilder {
     /// How deep a cell's water box reaches when the cell has no land to measure.
     static let cellWaterFallbackDepth: Float = 4096
 
@@ -80,7 +80,7 @@ nonisolated extension CellWaterVolumeBuilder {
             uniquingKeysWith: { first, _ in first }
         )
         var volumes: [WaterVolume] = []
-        for placement in owner.resolveCollisionPlacements(refs: refs) {
+        for placement in owner.collisionBuilder.resolveCollisionPlacements(refs: refs) {
             guard
                 let ref = byFormID[placement.reference],
                 let model = attempt({ try collisionModels.model(path: placement.modelPath) })

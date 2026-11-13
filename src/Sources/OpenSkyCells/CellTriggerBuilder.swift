@@ -28,15 +28,15 @@ nonisolated public struct CellCollisionBuild: Sendable {
     public var doors: [CellDoorCollision] = []
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder.CellTriggerBuilder {
     /// The solid set and the trigger set for one cell, from the references a
     /// build settled on after runtime state was applied.
     nonisolated public func buildCollision(
         resolved: EffectiveReferences,
         location: CellSceneLocation
     ) -> CellCollisionBuild {
-        loadPhases.measure(.collision) {
-            let products = buildCollisionProducts(
+        owner.loadPhases.measure(.collision) {
+            let products = owner.collisionBuilder.buildCollisionProducts(
                 refs: resolved.references,
                 location: location,
                 keys: resolved.entries.reduce(into: [:]) { keys, entry in
@@ -55,7 +55,10 @@ nonisolated extension CellSceneBuilder {
                     )
                 }
             )
-            let doors = splitDoorCollision(split.fixed, refs: resolved.references)
+            let doors = owner.collisionBuilder.doorCollision.splitDoorCollision(
+                split.fixed,
+                refs: resolved.references
+            )
             return CellCollisionBuild(
                 staticCollision: doors.fixed,
                 triggerVolumes: buildTriggerVolumes(
@@ -160,9 +163,9 @@ nonisolated extension CellSceneBuilder {
         keys: [FormID: ReferenceKey],
         stats: inout TriggerVolumeStats
     ) -> [TriggerVolume] {
-        guard let collisionModels else { return [] }
+        guard let collisionModels = owner.collisionModels else { return [] }
         var volumes: [TriggerVolume] = []
-        for placement in resolveCollisionPlacements(refs: refs) {
+        for placement in owner.collisionBuilder.resolveCollisionPlacements(refs: refs) {
             // The static pass already counted this model's load failure.
             guard
                 let model = attempt({ try collisionModels.model(path: placement.modelPath) }),

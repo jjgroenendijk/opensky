@@ -76,7 +76,7 @@ nonisolated public struct ActorEnableParents {
     }
 }
 
-nonisolated extension CellActorBuilder {
+nonisolated extension CellSceneBuilder.CellActorBuilder {
     /// Actors for one exterior cell: local ACHRs plus worldspace-persistent
     /// ACHRs whose physical position lies in this cell, resolved + assembled.
     nonisolated func buildExteriorActors(
@@ -101,12 +101,15 @@ nonisolated extension CellActorBuilder {
             guard actorCell == coordinate else { continue }
             byID[actor.formID.rawValue] = CollectedActor(actor: actor, isPersistent: true)
         }
-        let collected = Self.standingOnFloors(owner.referenceBuilder.relocating(
-            byID.values.sorted { $0.actor.formID.rawValue < $1.actor.formID.rawValue },
-            into: .exterior(coordinate),
-            deltas: deltas
-        ) + spawnedActors(in: .exterior(coordinate), deltas: deltas), collision: collision)
-        recordLeveledPlacements(
+        let collected = CellSceneBuilder.CellActorSpawnBuilder.standingOnFloors(
+            owner.referenceBuilder.states.relocating(
+                byID.values.sorted { $0.actor.formID.rawValue < $1.actor.formID.rawValue },
+                into: .exterior(coordinate),
+                deltas: deltas
+            ) + spawns.spawnedActors(in: .exterior(coordinate), deltas: deltas),
+            collision: collision
+        )
+        spawns.recordLeveledPlacements(
             collected, location: .exterior(coordinate),
             zone: cell?.cell.encounterZone ?? world.worldspace?.encounterZone
         )
@@ -127,41 +130,20 @@ nonisolated extension CellActorBuilder {
     ) -> CellActorBuild {
         let started = Stopwatch()
         var malformed: [String] = []
-        let collected = Self.standingOnFloors(owner.referenceBuilder.relocating(
-            decodeActors(in: cell, malformed: &malformed), into: location, deltas: deltas
-        ) + spawnedActors(in: location, deltas: deltas), collision: collision)
-        recordLeveledPlacements(collected, location: location, zone: cell?.cell.encounterZone)
+        let collected = CellSceneBuilder.CellActorSpawnBuilder.standingOnFloors(
+            owner.referenceBuilder.states.relocating(
+                decodeActors(in: cell, malformed: &malformed), into: location, deltas: deltas
+            ) + spawns.spawnedActors(in: location, deltas: deltas),
+            collision: collision
+        )
+        spawns.recordLeveledPlacements(
+            collected,
+            location: location,
+            zone: cell?.cell.encounterZone
+        )
         return resolvedBuild(
             (collected, malformed), parents: parents, deltas: deltas, started: started
         )
-    }
-
-    /// Records the cell's zone for its containers, and each actor's zone (its own
-    /// `XEZN`, else the cell's) and `XLCM` by reference and by base, before its
-    /// template chain rolls.
-    nonisolated func recordLeveledPlacements(
-        _ collected: [CollectedActor], location: CellSceneLocation, zone: FormID?
-    ) {
-        let zones = owner.encounterZones ?? EncounterZoneStore(plugins: owner.loadOrderPlugins)
-        owner.encounterZones = zones
-        let cellZone = zone.flatMap { zones.resolve($0, fromPlugin: owner.pluginName)?.zone }
-        owner.leveling.placements.record(cell: location, zone: cellZone)
-        for collectedActor in collected {
-            let actor = collectedActor.actor
-            let own = actor.details.links["XEZN"].flatMap {
-                zones.resolve($0, fromPlugin: FormIDResolver.loadOrderSpaceName)?.zone
-            }
-            let placement = LeveledActorPlacement(
-                zone: own ?? cellZone,
-                difficulty: LeveledActorDifficulty(levelModifier: actor.details.levelModifier)
-            )
-            owner.leveling.placements.record(actor: actor.base, placement)
-            let key = collectedActor.spawnKey
-                ?? ReferenceKey.resolve(actor.formID, using: owner.formIDResolver)
-            if let key {
-                owner.leveling.placements.record(reference: key, placement)
-            }
-        }
     }
 
     /// Counts, indexes, and resolves the collected actors of one cell build.
@@ -180,10 +162,10 @@ nonisolated extension CellActorBuilder {
         build.counts.failureReasons = malformed
         let enable = owner.enableResolver(
             entries: parents.references
-                .merging(owner.referenceBuilder.entriesByFormID(build.entries)) { $1 },
+                .merging(owner.referenceBuilder.states.entriesByFormID(build.entries)) { $1 },
             pool: parents.pool, deltas: deltas
         )
-        resolveActors(actors, into: &build, deltas: deltas, enable: enable)
+        resolver.resolveActors(actors, into: &build, deltas: deltas, enable: enable)
         build.durationMS =
             started.milliseconds
         return build
@@ -209,14 +191,14 @@ nonisolated extension CellActorBuilder {
         in cellChildren: ESMGroup?,
         malformed: inout [String]
     ) -> [CollectedActor] {
-        guard let cellChildren, let children = owner.childrenOrSkip(cellChildren) else {
+        guard let cellChildren, let children = owner.records.childrenOrSkip(cellChildren) else {
             return []
         }
         var actors: [CollectedActor] = []
         for case let .group(group) in children {
             guard
                 group.kind == .cellPersistentChildren || group.kind == .cellTemporaryChildren,
-                let records = owner.childrenOrSkip(group)
+                let records = owner.records.childrenOrSkip(group)
             else { continue }
             let isPersistent = group.kind == .cellPersistentChildren
             for case let .record(record) in records where record.type == "ACHR" {
@@ -244,7 +226,7 @@ nonisolated extension CellActorBuilder {
         localized: Bool
     ) -> [PlacedActor] {
         let key = world.formID.rawValue
-        if let cached = owner.exteriorPersistentActors[key] {
+        if let cached = owner.caches.exteriorPersistentActors[key] {
             return cached
         }
         var actors: [PlacedActor] = []
@@ -253,265 +235,13 @@ nonisolated extension CellActorBuilder {
             actors = decodeActors(in: persistent, malformed: &malformed)
                 .map(\.actor)
         }
-        owner.exteriorPersistentActors[key] = actors
+        owner.caches.exteriorPersistentActors[key] = actors
         return actors
-    }
-
-    /// Resolves each ACHR through the template + visual chains, assembles GPU
-    /// assets via MeshLibrary, and buckets every actor exactly once. Per-actor
-    /// failures log + count and never abort the build (mod-quirk rule).
-    nonisolated private func resolveActors(
-        _ actors: [PlacedActor],
-        into build: inout CellActorBuild,
-        deltas: [ReferenceKey: ReferenceStateDelta],
-        enable: EnableParentResolver
-    ) {
-        guard !actors.isEmpty else { return }
-        let indexed = owner.referenceBuilder.entriesByFormID(build.entries)
-        let steps = actors.map { actor in
-            resolveStep(actor, entry: indexed[actor.formID], deltas: deltas, enable: enable)
-        }
-        // Every look is known before the first assembly, so the part files load on every core.
-        owner.meshes.preparse(paths: steps.flatMap(\.modelPaths))
-        defer { owner.meshes.dropPreparsed() }
-        let assembler = ActorAssembler(provider: owner.meshes)
-        for (actor, step) in zip(actors, steps) {
-            let id = actor.formID.description
-            switch step {
-            case let .skipped(skip, key):
-                build.counts.disabledSkips += 1
-                if let key {
-                    build.disabledKeys.insert(key)
-                }
-                CellSceneBuilder.logger
-                    .info("ACHR \(id, privacy: .public): \(skip, privacy: .public), skipped")
-            case let .resolved(placed, visual, head):
-                record(assembler.assemble(placed: placed, visual: visual), id: id, into: &build)
-                if let head {
-                    recordSeveredHead(
-                        assembler.assemble(placed: placed, visual: head), into: &build
-                    )
-                }
-            case let .failed(reason):
-                build.counts.failures += 1
-                build.counts.failureReasons.append("ACHR \(id): unresolved (\(reason))")
-                CellSceneBuilder.logger.warning(
-                    """
-                    ACHR \(id, privacy: .public): unresolved \
-                    (\(reason, privacy: .public)), failed
-                    """
-                )
-            }
-        }
-    }
-
-    /// The runtime skip, or the resolved look, of one actor. Reads records only.
-    nonisolated private func resolveStep(
-        _ actor: PlacedActor,
-        entry: RuntimeReferenceEntry?,
-        deltas: [ReferenceKey: ReferenceStateDelta],
-        enable: EnableParentResolver
-    ) -> ActorBuildStep {
-        if let skip = actorRuntimeSkip(actor: actor, entry: entry, deltas: deltas, enable: enable) {
-            return .skipped(skip, entry?.key)
-        }
-        let resolvers = actorResolversBuildingIfNeeded()
-        do {
-            let roll = entry.map {
-                owner.referenceBuilder.leveledRoll(of: $0.key, base: actor.base, deltas: deltas)
-            }
-            let templates = resolvers.template.rolling(roll)
-            let appearance = try templates.resolve(base: actor.base)
-            var visual = try resolvers.visual.resolve(
-                appearance: appearance,
-                equipped: runtimeEquipment(entry: entry, deltas: deltas),
-                roll: roll,
-                carried: templates.carriedItems(base: actor.base)
-            ).presenting(
-                entry.flatMap { deltas[$0.key]?.component(ActorPresentationState.self) },
-                textureSets: resolvers.visual.textureSets
-            )
-            if
-                visual.headSource == .assembled,
-                let face = PlayerAppearanceOverride(face: appearance)
-            {
-                visual = chargenVisual(visual, appearance: face)
-            }
-            let placed = actorApplyingRuntimeTransform(actor, entry: entry, deltas: deltas)
-            let death = entry.flatMap { deltas[$0.key]?.component(ActorDeathState.self) }
-            guard death?.severedNode != nil else { return .resolved(placed, visual, head: nil) }
-            let cut = visual.decapitated(gore: resolvers.visual.decapitationGore(for: visual))
-            return .resolved(placed, cut.body, head: cut.head)
-        } catch {
-            return .failed(String(describing: error))
-        }
-    }
-
-    nonisolated private func actorApplyingRuntimeTransform(
-        _ actor: PlacedActor,
-        entry: RuntimeReferenceEntry?,
-        deltas: [ReferenceKey: ReferenceStateDelta]
-    ) -> PlacedActor {
-        guard
-            let entry,
-            let transform = deltas[entry.key]?.component(ReferenceTransformOverride.self)
-        else { return actor }
-        return PlacedActor(
-            copying: actor,
-            placement: transform.placement,
-            scale: transform.scale
-        )
-    }
-
-    /// Buckets one assembled actor: drawn plus its animation outcome, or a
-    /// counted failure with its reason. Split out of `resolveActors` so both
-    /// stay inside the strict-lint function-body cap.
-    nonisolated private func record(
-        _ assembly: ActorAssembly<ActorRenderAsset>,
-        id: String,
-        into build: inout CellActorBuild
-    ) {
-        build.counts.appearanceSkipReasons += Self.appearanceSkipLines(assembly, id: id)
-        guard assembly.isRenderable else {
-            build.counts.failures += 1
-            let reasons = assembly.skips.map { String(describing: $0.reason) }
-                .joined(separator: ", ")
-            build.counts.failureReasons.append(
-                "ACHR \(id): no renderable geometry (\(reasons))"
-            )
-            CellSceneBuilder.logger.warning(
-                """
-                ACHR \(id, privacy: .public): no renderable geometry \
-                (\(reasons, privacy: .public)), failed
-                """
-            )
-            return
-        }
-        build.counts.rendered += 1
-        let faceMorph = makeFaceMorphPlayback(assembly: assembly)
-        build.placements.append(contentsOf: assembly.renderPlacements(
-            at: assembly.transform,
-            faceMorphs: faceMorph?.renderBuffers ?? [:],
-            owner: assembly.actor.rawValue,
-            reference: assembly.actor.rawValue
-        ))
-        var skeleton: ActorAnimationPlayback?
-        switch makeAnimationPlayback(assembly: assembly) {
-        case let .success(playback):
-            build.counts.animated += 1
-            skeleton = playback
-        case let .failure(error):
-            build.counts.animationFailures += 1
-            build.counts.animationFailureReasons.append(
-                "ACHR \(id): \(error.localizedDescription)"
-            )
-        }
-        if let faceMorph {
-            build.animations.append(faceMorph)
-            build.animations.append(LipSyncPlayback(faceMorph: faceMorph, head: skeleton))
-        }
-        if let skeleton {
-            build.animations.append(skeleton)
-        }
-    }
-
-    /// A cut head: drawn at its actor, posed by its own playback so it can fall apart from
-    /// the body. Its outcome is not counted, because the actor is already counted.
-    nonisolated private func recordSeveredHead(
-        _ assembly: ActorAssembly<ActorRenderAsset>,
-        into build: inout CellActorBuild
-    ) {
-        guard
-            assembly.isRenderable,
-            case let .success(playback) = makeAnimationPlayback(
-                assembly: assembly, severedHead: true
-            )
-        else { return }
-        build.placements.append(contentsOf: assembly.renderPlacements(
-            at: assembly.transform,
-            owner: assembly.actor.rawValue,
-            reference: assembly.actor.rawValue,
-            isCulled: false
-        ))
-        build.animations.append(playback)
-    }
-
-    /// The assembly's `AppearanceSkip` entries as readable lines, one per skip.
-    ///
-    /// Only the `.appearance` subject is taken: the other `ActorAssemblySkip`
-    /// subjects are asset-loading outcomes, which the failure buckets above
-    /// already own, and mixing the two would make a missing NIF read as a
-    /// resolution decision.
-    nonisolated private static func appearanceSkipLines(
-        _ assembly: ActorAssembly<ActorRenderAsset>,
-        id: String
-    ) -> [String] {
-        assembly.skips.compactMap { skip in
-            guard case let .appearance(appearance) = skip.subject else { return nil }
-            return "ACHR \(id): \(appearance.reason) (\(appearance.subject))"
-        }
-    }
-
-    /// The equipped set a changed actor renders from, or nil while its default
-    /// outfit still applies. The baseline is the outfit, so the first equip
-    /// keeps the outfit and adds the new piece.
-    nonisolated private func runtimeEquipment(
-        entry: RuntimeReferenceEntry?,
-        deltas: [ReferenceKey: ReferenceStateDelta]
-    ) -> [FormID]? {
-        guard let entry, let delta = deltas[entry.key] else { return nil }
-        return delta.component(ReferenceInventoryState.self)?.equipped
-    }
-
-    /// Why this actor is not drawn, or nil when it should be. An `XESP` parent
-    /// decides alone, as for references; an actor with no index entry only has
-    /// its record flag.
-    nonisolated private func actorRuntimeSkip(
-        actor: PlacedActor,
-        entry: RuntimeReferenceEntry?,
-        deltas: [ReferenceKey: ReferenceStateDelta],
-        enable: EnableParentResolver
-    ) -> String? {
-        guard let entry else {
-            return actor.isInitiallyDisabled ? "initially disabled" : nil
-        }
-        let resolved = owner.referenceBuilder.resolvedRuntimeState(for: entry, deltas: deltas)
-        if resolved.deletion.isDeleted {
-            return "deleted at runtime"
-        }
-        guard !enable.isEnabled(entry) else { return nil }
-        return resolved.overriddenKinds.contains(.enableState)
-            ? "disabled at runtime"
-            : "initially disabled"
-    }
-
-    /// Template + visual resolver pair over the plugin's NPC_/LVLN and
-    /// RACE/ARMO/ARMA/OTFT/LVLI top groups, built once and reused across
-    /// every cell build (shared like statIndex). Internal rather than private
-    /// because the player body resolves through the same pair
-    /// (CellSceneBuilderPlayer.swift) and must not force a second copy of two
-    /// plugin-wide indexes into memory.
-    nonisolated func actorResolversBuildingIfNeeded()
-        -> (template: ActorTemplateResolver, visual: ActorVisualResolver)
-    {
-        if let template = owner.actorTemplateResolver, let visual = owner.actorVisualResolver {
-            return (template, visual)
-        }
-        let loadOrder = owner.interiorBuilder.loadOrderIndexBuildingIfNeeded().loadOrder
-        let (template, visual) = owner.loadPhases.measure(.actorIndex) {
-            (
-                ActorTemplateResolver.build(from: loadOrder, leveling: owner.leveling),
-                ActorVisualResolver.build(from: loadOrder, leveling: owner.leveling)
-            )
-        }
-        owner.actorTemplateResolver = template
-        owner.actorVisualResolver = visual
-        return (template, visual)
     }
 }
 
 /// One actor of a cell build, between its look resolution and its assembly.
-nonisolated private enum ActorBuildStep {
+nonisolated enum ActorBuildStep {
     case skipped(String, ReferenceKey?)
     /// `head` is the cut head of a decapitated actor, drawn as its own piece.
     case resolved(PlacedActor, ResolvedActorVisual, head: ResolvedActorVisual?)
@@ -531,7 +261,7 @@ nonisolated private enum ActorBuildStep {
 }
 
 nonisolated extension CellSceneBuilder {
-    var actorBuilder: CellActorBuilder {
-        CellActorBuilder(owner: self)
+    var actorBuilder: CellSceneBuilder.CellActorBuilder {
+        CellSceneBuilder.CellActorBuilder(owner: self)
     }
 }

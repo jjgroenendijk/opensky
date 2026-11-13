@@ -68,7 +68,7 @@ nonisolated extension StaticCollisionShape {
     }
 }
 
-nonisolated extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder.CellDoorCollisionBuilder {
     /// A reference whose collision moves: its mesh, its part count, and each block's part.
     struct MovingCollisionSource {
         let ref: PlacedReference
@@ -84,8 +84,8 @@ nonisolated extension CellSceneBuilder {
         _ set: StaticCollisionSet, refs: [PlacedReference]
     ) -> (fixed: StaticCollisionSet, doors: [CellDoorCollision]) {
         let sources = movingCollisionSources(in: refs)
-        guard !sources.isEmpty, let library = collisionModels else { return (set, []) }
-        let materials = modelIndex.materialTypeIndexBuildingIfNeeded()
+        guard !sources.isEmpty, let library = owner.collisionModels else { return (set, []) }
+        let materials = owner.modelIndex.materialTypeIndexBuildingIfNeeded()
         let fixed = StaticCollisionSet(
             location: set.location,
             shapes: set.shapes.filter { sources[$0.reference] == nil },
@@ -125,21 +125,21 @@ nonisolated extension CellSceneBuilder {
         return (fixed, collisions)
     }
 
-    private func movingCollisionSources(
+    func movingCollisionSources(
         in refs: [PlacedReference]
     ) -> [FormID: MovingCollisionSource] {
-        var sources = objectBuilder.sequenceDoors(in: refs).mapValues { door in
+        var sources = owner.objectBuilder.animated.sequenceDoors(in: refs).mapValues { door in
             MovingCollisionSource(
                 ref: door.ref, modelPath: door.modelPath,
                 partCount: door.rig.skeleton.bones.count,
                 part: { door.rig.leaf(ofBlock: $0) }, movingParts: nil
             )
         }
-        let bases = modelIndex.modelBaseIndexBuildingIfNeeded()
+        let bases = owner.modelIndex.modelBaseIndexBuildingIfNeeded()
         for ref in refs where sources[ref.formID] == nil {
             guard
                 let base = bases[ref.base.rawValue], let path = base.modelPath,
-                let asset = objectBuilder.objectBehavior(
+                let asset = owner.objectBuilder.animated.objectBehavior(
                     recordType: base.recordType,
                     modelPath: path
                 ),
@@ -156,16 +156,16 @@ nonisolated extension CellSceneBuilder {
     /// The moving nodes of a graph object mesh, read once per mesh.
     func movingPartRig(modelPath: String, boneNames: [String]) -> MovingPartRig? {
         guard
-            let fileSystem,
-            let key = attempt({ try meshes.meshKey(for: modelPath) }) else { return nil }
-        if let known = movingPartRigs[key] {
+            let fileSystem = owner.fileSystem,
+            let key = attempt({ try owner.meshes.meshKey(for: modelPath) }) else { return nil }
+        if let known = owner.caches.movingPartRigs[key] {
             return known
         }
         let rig = attempt { try NIFFile(data: fileSystem.contents(forPath: key)) }
             .flatMap { element in
                 attempt { try MovingPartRig(file: element, boneNames: boneNames) }
             }
-        movingPartRigs[key] = .some(rig)
+        owner.caches.movingPartRigs[key] = .some(rig)
         return rig
     }
 }

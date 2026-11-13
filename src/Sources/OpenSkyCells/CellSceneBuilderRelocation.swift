@@ -8,12 +8,12 @@ import OpenSkyGameData
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
-nonisolated extension CellReferenceBuilder {
+nonisolated extension CellSceneBuilder.CellReferenceStateBuilder {
     /// Built from the load-order index the door transitions use.
     nonisolated public var placedRecords: PlacedRecordLookup {
         PlacedRecordLookup(
-            index: owner.interiorBuilder.loadOrderIndexBuildingIfNeeded(),
-            templates: owner.actorBuilder.actorResolversBuildingIfNeeded().template
+            index: owner.recordIndex.loadOrderIndexBuildingIfNeeded(),
+            templates: owner.actorBuilder.resolver.actorResolversBuildingIfNeeded().template
         )
     }
 

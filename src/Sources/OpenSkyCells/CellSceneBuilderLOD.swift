@@ -8,7 +8,7 @@ public import OpenSkyTerrain
 public import OpenSkyWorldState
 import simd
 
-nonisolated extension CellTerrainBuilder {
+nonisolated extension CellSceneBuilder.CellDistantLODBuilder {
     nonisolated public func buildDistantLOD(
         worldspaceEditorID: String,
         center: CellCoordinate,
@@ -19,28 +19,29 @@ nonisolated extension CellTerrainBuilder {
         guard let builder = owner.distantLODBuilder else { return nil }
         let built = try builder.build(
             worldspace: lodWorld, center: center, hiddenCells: hiddenCells,
-            terrain: loadOrderTerrainLOD(lodWorldspace: lodWorld)
+            terrain: owner.terrainBuilder.terrainLOD.loadOrderTerrainLOD(lodWorldspace: lodWorld)
         )
         // Generated blocks keep the land textures' own brightness, so they need no curve.
         let lod = built.with(terrainLODBrightness: built.generatedTerrainBlockCount > 0
-            ? .identity : terrainLODBrightness(lodWorldspace: lodWorld))
+            ? .identity : owner.terrainBuilder.terrainLOD
+            .terrainLODBrightness(lodWorldspace: lodWorld))
         let water = builder.area(worldspace: lodWorld).map {
             distantWater(worldspace: worldspaceEditorID, area: $0, hiddenCells: hiddenCells)
         } ?? []
         let withWater = water.isEmpty ? lod : lod.adding(water: water)
-        let largeReferences = owner.referenceBuilder.largeReferencePlacements(
+        let largeReferences = owner.referenceBuilder.largeReferences.largeReferencePlacements(
             worldspaceEditorID: worldspaceEditorID, cells: lod.largeReferenceCells, state: state
         )
-        let fullLOD = owner.referenceBuilder.fullLODPlacements(
+        let fullLOD = owner.referenceBuilder.largeReferences.fullLODPlacements(
             worldspaceEditorID: worldspaceEditorID, loadedCells: hiddenCells, state: state
         )
-        let temporaryFullLOD = owner.referenceBuilder.temporaryFullLODPlacements(
+        let temporaryFullLOD = owner.referenceBuilder.largeReferences.temporaryFullLODPlacements(
             worldspaceEditorID: worldspaceEditorID, loadedCells: hiddenCells, state: state
         )
         return withWater.adding(largeReferences: largeReferences.placements, assets: CellAssets())
             .adding(
                 fullLODReferences: fullLOD.placements + temporaryFullLOD.placements,
-                assets: owner.assembler.drainTouchedAssets()
+                assets: owner.assembler.renderParts.drainTouchedAssets()
             )
             .watching(largeReferences.watchedObjectIDs
                 .union(fullLOD.watchedObjectIDs)

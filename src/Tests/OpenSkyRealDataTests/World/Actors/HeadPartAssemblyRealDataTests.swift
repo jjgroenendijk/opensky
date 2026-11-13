@@ -18,7 +18,8 @@ struct HeadPartAssemblyRealDataTests {
     @MainActor
     func everyNPCResolvesItsHeadParts() throws {
         let install = try RealDataInstall.load()
-        let resolvers = install.sceneBuilder().actorBuilder.actorResolversBuildingIfNeeded()
+        let resolvers = install.sceneBuilder().actorBuilder.resolver
+            .actorResolversBuildingIfNeeded()
         var npcs: [FormID] = []
         ESMWalk.forEachRecord(in: install.file) { record in
             if record.type == "NPC_" {

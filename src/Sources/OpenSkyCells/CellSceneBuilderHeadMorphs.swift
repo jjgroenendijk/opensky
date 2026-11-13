@@ -18,7 +18,7 @@ nonisolated struct AssembledHeadMorphs {
     var misses: [FaceMorphAssociationMiss] = []
 }
 
-nonisolated extension CellActorBuilder {
+nonisolated extension CellSceneBuilder.CellMorphBuilder {
     /// Every head part mesh with a TRI of its own vertex count gets one buffer.
     func assembledHeadMorphs(
         assembly: ActorAssembly<ActorRenderAsset>, face: PlayerAppearanceOverride
@@ -64,7 +64,7 @@ nonisolated extension CellActorBuilder {
     }
 
     /// The race TRI target: the race's morph race (`NAM8`) by editor ID, else its own.
-    private func raceMorphTarget(_ race: FormID) -> String? {
+    func raceMorphTarget(_ race: FormID) -> String? {
         guard let races = owner.actorVisualResolver?.races, let record = races[race.rawValue] else {
             return nil
         }
