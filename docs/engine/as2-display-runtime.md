@@ -183,14 +183,15 @@ These are Flash and Scaleform GFx built-ins with no spec behind them, rebuilt fr
 `Math.random` draws from a seeded xorshift64\* generator owned by the runtime, so a menu that animates
 on random values still draws the same frame twice.
 
-`MovieClipLoader` loads only engine images. An image slot is a named blank bitmap that the engine
-adds to the movie before it starts, with a rectangle shape filled by it. `loadClip("img://name",
-target)` places that shape in the target at depth 0, then sends `onLoadStart`, `onLoadComplete`, and
-`onLoadInit` on the next tick. The engine paints the slot's texture later, so the picture can change
-without a reload. Any other URL, or a slot that does not exist, reports `onLoadError` on the next
-tick. Flash reports later too, and a component that calls `loadClip` from its constructor must not
-be re-entered. CLIK's icon loader then gives up cleanly. Loading another SWF into a clip is not
-built: the start menu loads `BethesdaNetLogin.swf` this way, and it stays a missing name.
+`MovieClipLoader` loads engine images and the interface movies the loading movie names ([loaded
+movies](/formats/swf-display-list.md#loaded-movies)). An image slot is a named blank bitmap that the
+engine adds to the movie before it starts, with a rectangle shape filled by it.
+`loadClip("img://name", target)` places that shape in the target at depth 0, then sends
+`onLoadStart`, `onLoadComplete`, and `onLoadInit` on the next tick. The engine paints the slot's
+texture later, so the picture can change without a reload. A movie URL replaces the target with the
+loaded movie's root and reports the same events. Any other URL, or a slot that does not exist,
+reports `onLoadError` on the next tick. Flash reports later too, and a component that calls
+`loadClip` from its constructor must not be re-entered. CLIK's icon loader then gives up cleanly.
 
 ## Left out on purpose
 

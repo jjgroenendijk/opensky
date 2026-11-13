@@ -51,8 +51,12 @@ nonisolated public final class SWFMovieLoader {
     /// texts get fonts too.
     public func load(path: String) throws -> SWFMovieScene {
         let file = try SWFFile(data: fileSystem.contents(forPath: path))
-        let merged = try SWFMovieImportMerger.merge(
-            SWFMovie(file: file),
+        let merged = try SWFMovieImportMerger.mergeLoadables(
+            SWFMovieImportMerger.merge(
+                SWFMovie(file: file),
+                path: path,
+                resolve: { [self] source in sourceMovie(at: source) }
+            ),
             path: path,
             resolve: { [self] source in sourceMovie(at: source) }
         )

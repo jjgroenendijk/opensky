@@ -64,18 +64,18 @@ nonisolated public struct SWFMovieImportMerger {
     /// the bound only exists so a malformed chain terminates.
     static let maximumDepth = 4
 
-    private let resolve: Resolver
-    private var movie: SWFMovie
+    let resolve: Resolver
+    var movie: SWFMovie
     /// Lowest id no merged movie has claimed yet.
-    private var nextOffset: Int
+    var nextOffset: Int
     /// Resolved path -> that source's export table in merged ids. Doubles as
     /// the dedupe memo, so a diamond import merges once.
     private var exportsByPath: [String: [String: UInt16]] = [:]
     /// Paths on the current merge stack, so a cycle terminates.
-    private var visiting: Set<String> = []
+    var visiting: Set<String> = []
     /// Merged init actions in run order, deepest import first.
-    private var importedInitActions: [SWFDoInitAction] = []
-    private var diagnostics = SWFImportMergeDiagnostics()
+    var importedInitActions: [SWFDoInitAction] = []
+    var diagnostics = SWFImportMergeDiagnostics()
 
     /// Merges every non-font import `movie` names, recursively.
     /// - Parameters:
@@ -94,7 +94,7 @@ nonisolated public struct SWFMovieImportMerger {
         return merger.run(path: path)
     }
 
-    private init(movie: SWFMovie, resolve: @escaping Resolver) {
+    init(movie: SWFMovie, resolve: @escaping Resolver) {
         self.movie = movie
         self.resolve = resolve
         nextOffset = Int(Self.highestId(of: movie)) + 1
@@ -115,7 +115,7 @@ nonisolated public struct SWFMovieImportMerger {
     /// that movie's own ids, which is what turns its placeholder id into the
     /// merged dictionary key that has to be bound; `depth` is how many import
     /// hops that movie itself sits below the root.
-    private mutating func mergeImports(
+    mutating func mergeImports(
         of importer: SWFMovie,
         path: String,
         offset: Int,
@@ -173,7 +173,7 @@ nonisolated public struct SWFMovieImportMerger {
 
     /// Merges one source movie's characters and name tables at `offset` and
     /// returns its export table in merged ids.
-    private mutating func absorb(
+    mutating func absorb(
         _ source: SWFMovie,
         path: String,
         offset: Int
@@ -203,7 +203,7 @@ nonisolated public struct SWFMovieImportMerger {
         return exports
     }
 
-    private mutating func initActions(of source: SWFMovie, offset: Int) -> [SWFDoInitAction] {
+    mutating func initActions(of source: SWFMovie, offset: Int) -> [SWFDoInitAction] {
         var remap = SWFCharacterRemap(offset: offset)
         let actions = remap.initActions(source.initActions)
         diagnostics.saturatedReferences += remap.saturatedReferences
@@ -331,7 +331,7 @@ nonisolated public struct SWFMovieImportMerger {
         return byId
     }
 
-    private static func split(_ path: String) -> [String] {
+    static func split(_ path: String) -> [String] {
         path.lowercased()
             .replacingOccurrences(of: "/", with: "\\")
             .split(separator: "\\")
