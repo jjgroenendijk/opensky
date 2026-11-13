@@ -87,7 +87,8 @@ extension MenuScreensGuidesAdapter {
             skill: (name, level), progress: skill?.progress ?? 0,
             trainer: (offer.name, offer.maximumLevel),
             sessions: (Int(sessions), TrainingSettings.sessionsPerLevel),
-            price: price
+            price: price,
+            tier: progression.training.tier(trainerMaximum: offer.maximumLevel)
         )
     }
 

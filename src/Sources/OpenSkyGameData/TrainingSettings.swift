@@ -13,6 +13,13 @@ nonisolated public struct TrainingSettings: Equatable, Sendable {
     public var cannotTrainAnymoreText = "sCanNotTrainAnymore"
     public var cannotTrainHigherText = "sCanNotTrainHigher"
     public var insufficientGoldText = "sInsufficientGoldToTrain"
+    public var journeymanText = "Journeyman"
+    public var expertText = "Expert"
+    public var masterText = "Master"
+    /// The lowest trainer maximums of the Journeyman and Expert tiers. A higher
+    /// maximum than the Expert one is a Master.
+    public static let journeymanSkill = 50
+    public static let expertSkill = 75
 
     public static let vanilla = Self()
     /// UESP: "You may train up to five times per level." No setting holds it.
@@ -47,6 +54,17 @@ nonisolated public struct TrainingSettings: Equatable, Sendable {
         return nil
     }
 
+    /// The trainer's tier word for its highest skill level, or nil below Journeyman.
+    public func tier(trainerMaximum: Int) -> String? {
+        if trainerMaximum > Self.expertSkill {
+            return masterText
+        }
+        if trainerMaximum >= Self.expertSkill {
+            return expertText
+        }
+        return trainerMaximum >= Self.journeymanSkill ? journeymanText : nil
+    }
+
     /// The notice the game shows for `refusal`.
     public func text(for refusal: TrainingRefusal) -> String {
         switch refusal {
@@ -67,7 +85,9 @@ nonisolated public struct TrainingSettings: Equatable, Sendable {
         let texts: [(String, WritableKeyPath<Self, String>)] = [
             ("sCanNotTrainAnymore", \.cannotTrainAnymoreText),
             ("sCanNotTrainHigher", \.cannotTrainHigherText),
-            ("sInsufficientGoldToTrain", \.insufficientGoldText)
+            ("sInsufficientGoldToTrain", \.insufficientGoldText),
+            ("sJourneyman", \.journeymanText), ("sExpert", \.expertText),
+            ("sMaster", \.masterText)
         ]
         for (editorID, keyPath) in texts {
             if let value = store.text(editorID).flatMap({ text($0) }) {

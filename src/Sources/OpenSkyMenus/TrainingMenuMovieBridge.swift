@@ -13,6 +13,8 @@ nonisolated public struct TrainingCard: Equatable, Sendable {
     public var skillProgress: Float
     public var trainerName: String
     public var trainerMaximum: Int
+    /// "Journeyman", "Expert", or "Master", from the trainer's maximum.
+    public var trainerTier: String?
     public var sessions: Int
     public var sessionsPerLevel: Int
     public var cost: Int
@@ -23,13 +25,15 @@ nonisolated public struct TrainingCard: Equatable, Sendable {
         progress: Float,
         trainer: (name: String, maximum: Int),
         sessions: (done: Int, perLevel: Int),
-        price: (cost: Int, gold: Int)
+        price: (cost: Int, gold: Int),
+        tier: String? = nil
     ) {
         skillName = skill.name
         skillLevel = skill.level
         skillProgress = progress
         trainerName = trainer.name
         trainerMaximum = trainer.maximum
+        trainerTier = tier
         self.sessions = sessions.done
         sessionsPerLevel = sessions.perLevel
         cost = price.cost
@@ -40,7 +44,8 @@ nonisolated public struct TrainingCard: Equatable, Sendable {
     var lines: [String] {
         [
             "\(skillName) \(skillLevel)",
-            "\(trainerName) trains up to \(trainerMaximum)",
+            [trainerTier, "\(trainerName) trains up to \(trainerMaximum)"]
+                .compactMap(\.self).joined(separator: ": "),
             "Trained \(sessions) of \(sessionsPerLevel) times this level",
             "Cost: \(cost)",
             "Gold: \(gold)"
