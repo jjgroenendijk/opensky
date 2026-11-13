@@ -19,6 +19,9 @@ nonisolated public struct ArcherySettings: Equatable, Sendable {
     /// Unofficial Patch triples it, which is exactly the kind of load-order
     /// difference a resolved-with-source setting exists to make visible.
     public let visibleMoveDistance: MovementSetting
+    /// `fBowZoomStaminaDrainMult`: stamina a second while zoomed with a bow, before perks.
+    /// The install sets 0.
+    public var bowZoomStaminaDrain: Float = 0
 
     /// Values for synthetic scenes and tests: the documented defaults, stated
     /// explicitly so a test never depends on an install being present.
@@ -36,11 +39,13 @@ nonisolated public struct ArcherySettings: Equatable, Sendable {
     /// Reads every setting out of `store`, falling back to the UESP-documented
     /// default and saying so when the load order carries none.
     public static func resolve(store: GameSettingStore) -> ArcherySettings {
-        ArcherySettings(
+        var settings = ArcherySettings(
             firstPersonTiltUpAngle: float("f1PArrowTiltUpAngle", store: store, fallback: 2),
             thirdPersonTiltUpAngle: float("f3PArrowTiltUpAngle", store: store, fallback: 2.5),
             visibleMoveDistance: float("fVisibleNavmeshMoveDist", store: store, fallback: 4096)
         )
+        store.read("fBowZoomStaminaDrainMult", into: &settings, \.bowZoomStaminaDrain)
+        return settings
     }
 
     /// Every setting paired with its editor ID, for the CLI report and the
