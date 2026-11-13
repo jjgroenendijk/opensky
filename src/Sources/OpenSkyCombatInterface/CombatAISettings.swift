@@ -54,6 +54,9 @@ nonisolated public struct CombatAISettings: Equatable, Sendable {
     public var perchAttackTimeMin: Float = 4
     public var groundAttackTimeMin: Float = 8
     public var groundAttackTimeMax: Float = 17
+    /// `fCombatBlockChanceWeaponMult`: the block chance of an actor with no shield, as a
+    /// share of the chance with one.
+    public var blockChanceWeaponMult: Float = 0.25
 
     public static let vanilla = Self()
 
@@ -69,6 +72,7 @@ nonisolated public struct CombatAISettings: Equatable, Sendable {
         store.read("fFleeDistanceInterior", into: &settings, \.fleeDistanceInterior)
         store.read("fFleeDistanceExterior", into: &settings, \.fleeDistanceExterior)
         store.read("fCombatDistance", into: &settings, \.combatDistance)
+        store.read("fCombatBlockChanceWeaponMult", into: &settings, \.blockChanceWeaponMult)
         store.read("fCombatFollowRadiusMult", into: &settings, \.followRadiusMult)
         store.read("fCombatTeammateFollowRadiusMult", into: &settings, \.teammateFollowRadiusMult)
         store.read("fSummonedCreatureMinFollowDist", into: &settings, \.summonFollowNear)
