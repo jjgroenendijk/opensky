@@ -143,6 +143,10 @@ extension CombatWorldAdapter {
         actorFacts.health(of: key)
     }
 
+    public func actorName(of key: ReferenceKey) -> String? {
+        actorFacts.actorName(of: key)
+    }
+
     @discardableResult
     public func damageHealth(by amount: Float, of key: ReferenceKey) -> Bool {
         actorFacts.damageHealth(by: amount, of: key)

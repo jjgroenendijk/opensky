@@ -128,6 +128,10 @@ final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
         healths[key]
     }
 
+    func actorName(of key: ReferenceKey) -> String? {
+        key == .player ? nil : "Bandit"
+    }
+
     func canBeKilled(_ target: ReferenceKey, by _: ReferenceKey) -> Bool {
         !unkillable.contains(target)
     }

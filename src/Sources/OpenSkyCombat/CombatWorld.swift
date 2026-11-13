@@ -111,6 +111,8 @@ public protocol CombatWorld: AnyObject {
     func actorValues(of key: ReferenceKey) -> ((Int32) -> Float?)?
     /// Current and maximum health. Nil when `key` has no actor values.
     func health(of key: ReferenceKey) -> (current: Float, maximum: Float)?
+    /// The name the game shows for `key`, or nil for an actor without one.
+    func actorName(of key: ReferenceKey) -> String?
     @discardableResult
     func damageHealth(by amount: Float, of key: ReferenceKey) -> Bool
     func damageStamina(by amount: Float, of key: ReferenceKey)

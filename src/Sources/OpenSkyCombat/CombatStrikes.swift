@@ -62,6 +62,22 @@ extension CombatShared {
             )
         }
 
+        /// The player's critical hit on a living actor: "<sCriticalStrike> <name>".
+        func reportCriticalStrike(
+            _ strike: WeaponStrike,
+            blow: CombatBlow,
+            on target: ReferenceKey
+        ) {
+            guard
+                strike.isCritical, blow.attacker == .player, target != .player,
+                (shared.world.health(of: target)?.current ?? 0) > 0,
+                let name = shared.world.actorName(of: target)
+            else { return }
+            shared.pendingCommands.append(
+                .showNotification(shared.weaponDamage.criticalNotice(target: name))
+            )
+        }
+
         /// The blow before the block, so a stronger hit costs more to stop.
         func applyBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey) {
             let incoming = damage.strike.damage(base: damage.base, attack: damage.attackMultiplier)

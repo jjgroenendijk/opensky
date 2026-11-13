@@ -80,6 +80,7 @@ struct WeaponStrikeRulesTests {
             "fArmorRatingPCMax": .float(2)
         ])
         let resolved = WeaponDamageSettings.resolve(store: store)
+        #expect(resolved.criticalNotice(target: "Bandit") == "Critical Strike on Bandit")
         #expect(resolved.playerSkillMax == 2)
         #expect(resolved.sneakDagger == 5)
         #expect(resolved.maxArmorRating == 90)
