@@ -99,13 +99,12 @@ nonisolated public struct Weather: Sendable {
     }
 
     /// One DALC keyframe: the six-axis directional ambient plus the ambient
-    /// specular color and the trailing float. xEdit labels the float "Scale";
-    /// some community docs call it a fresnel/specular power. Colors are 0-1
-    /// (RGBX bytes, pad dropped, like the NAM0 layers).
+    /// specular color and the trailing float xEdit labels "Scale". Colors are 0-1.
+    /// The 24-byte layout has no specular and no scale, so both are nil.
     public struct DirectionalAmbient: Equatable, Sendable {
         public let colors: DirectionalAmbientColors
-        let specular: SIMD3<Float>
-        let scale: Float
+        let specular: SIMD3<Float>?
+        let scale: Float?
     }
 
     /// The four DALC keyframes a WTHR carries, one per time of day. Record
@@ -127,7 +126,7 @@ nonisolated public struct Weather: Sendable {
     /// DATA block. nil when absent or not the known 19-byte SSE size.
     public let data: WeatherData?
     /// DALC directional ambient keyframes. nil when the record carries fewer
-    /// than four 32-byte DALC subrecords (skipped rather than guessed).
+    /// than four DALC subrecords of 24 or 32 bytes (skipped rather than guessed).
     public let directionalAmbient: DirectionalAmbientKeyframes?
 
     /// Clouds, sounds, sky statics and the linked forms.
@@ -144,7 +143,7 @@ nonisolated public struct Weather: Sendable {
         // DALC fields stream in Sunrise/Day/Sunset/Night order.
         let frames = fields.readAll("DALC") { try Self.readDirectionalAmbient(&$0) }
         if frames.contains(where: { $0 == nil }) {
-            fields.note(.mismatch("WTHR DALC shorter than 32 bytes"))
+            fields.note(.mismatch("WTHR DALC shorter than 24 bytes"))
         }
         directionalAmbient = Self.keyframes(from: frames.compactMap(\.self))
         sky = WeatherSky(&fields)
@@ -241,13 +240,12 @@ nonisolated public struct Weather: Sendable {
         )
     }
 
-    // DALC: 32-byte wbAmbientColors. Six directional RGBX colors (X+/X-/Y+/Y-/
-    // Z+/Z-), one Specular RGBX, one float Scale. Undersized/unknown DALC ->
-    // nil (skip rather than guess), matching the record's decode policy.
+    // DALC: wbAmbientColors, six RGBX colors (X+/X-/Y+/Y-/Z+/Z-), then a specular
+    // RGBX and a float Scale in the 32-byte layout. Below 24 bytes -> nil.
     private static func readDirectionalAmbient(
         _ reader: inout BinaryReader
     ) throws -> DirectionalAmbient? {
-        guard reader.data.count >= 32 else { return nil }
+        guard reader.data.count >= 24 else { return nil }
         let colors = try DirectionalAmbientColors(
             positiveX: readColor(&reader),
             negativeX: readColor(&reader),
@@ -256,6 +254,9 @@ nonisolated public struct Weather: Sendable {
             positiveZ: readColor(&reader),
             negativeZ: readColor(&reader)
         )
+        guard reader.data.count >= 32 else {
+            return DirectionalAmbient(colors: colors, specular: nil, scale: nil)
+        }
         let specular = try readColor(&reader)
         let scale = try reader.readFloat32()
         return DirectionalAmbient(colors: colors, specular: specular, scale: scale)

@@ -91,11 +91,11 @@ struct WeatherRealDataTests {
             }
             if let ambient = weather.directionalAmbient {
                 stats.dalcPresent += 1
-                // Every DALC channel is a 0-1 RGBX byte color; the Scale float
-                // must at least be finite.
+                // Every DALC channel is a 0-1 RGBX byte color; the Scale float,
+                // absent from the 24-byte layout, must at least be finite.
                 for keyframe in [ambient.sunrise, ambient.day, ambient.sunset, ambient.night] {
                     #expect((0 ... 1).contains(keyframe.colors.positiveZ.z))
-                    #expect(keyframe.scale.isFinite)
+                    #expect(keyframe.scale?.isFinite ?? true)
                 }
             }
         }

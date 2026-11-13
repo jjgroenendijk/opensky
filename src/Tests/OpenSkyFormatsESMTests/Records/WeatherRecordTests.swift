@@ -3,6 +3,7 @@
 // dev-4.1.5 wbDefinitionsTES5.pas; see docs/formats/records.md.
 
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 import OpenSkyTagsTesting
@@ -108,8 +109,21 @@ struct WeatherRecordTests {
         #expect(weather.directionalAmbient == nil)
     }
 
+    @Test func decodesShortDirectionalAmbientWithoutSpecular() throws {
+        let short = { (base: UInt8) in
+            ESMFixture.field("DALC", Self.dalc(base: base, scale: 1).prefix(24))
+        }
+        let weather = try Self.decode("WTHR", fields: short(10) + short(20) + short(30) + short(40))
+        let ambient = try #require(weather.directionalAmbient)
+        #expect(ambient.sunrise.colors.negativeZ == SIMD3<Float>(25, 26, 27) / 255)
+        #expect(ambient.night.colors.positiveX == SIMD3<Float>(40, 41, 42) / 255)
+        #expect(ambient.day.specular == nil)
+        #expect(ambient.day.scale == nil)
+        #expect(weather.skipped.isEmpty)
+    }
+
     @Test func skipsUndersizedDirectionalAmbient() throws {
-        // A 16-byte DALC is not the 32-byte layout -> skipped, not guessed.
+        // A 16-byte DALC is below the 24-byte layout -> skipped, not guessed.
         let fields = ESMFixture.field("DALC", Data(count: 16))
             + ESMFixture.field("DALC", Self.dalc(base: 10, scale: 1))
             + ESMFixture.field("DALC", Self.dalc(base: 20, scale: 1))
