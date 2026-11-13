@@ -146,6 +146,21 @@ nonisolated public final class AS2Runtime {
         tally.noteMissing(name)
     }
 
+    /// A name the movie read and nothing answered: a runtime gap when Flash defines the
+    /// name, else a value the movie never set.
+    public func noteUnanswered(_ name: String) {
+        if AS2FlashNames.isDefined(name) {
+            tally.noteMissing(name)
+        } else {
+            tally.noteUnset(name)
+        }
+    }
+
+    /// A read Flash also leaves unanswered, such as a frame label the clip lacks.
+    public func noteUnset(_ name: String) {
+        tally.noteUnset(name)
+    }
+
     func noteStackUnderflow() {
         tally.noteStackUnderflow()
     }

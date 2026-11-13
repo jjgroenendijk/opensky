@@ -73,6 +73,7 @@ struct SWFRuntimeNativesTests {
         #expect(node.object.lookup("built")?.property.value == .number(1))
     }
 
+    /// Flash also answers `undefined`, so the miss is an unset name.
     @Test func attachingAnUnknownLinkageNameIsTalliedNotFatal() throws {
         let runtime = try started()
         let result = try call(
@@ -80,7 +81,8 @@ struct SWFRuntimeNativesTests {
             [.string("NoSuchThing"), .string("x"), .number(5)]
         )
         #expect(result == .undefined)
-        #expect(runtime.tally.missingNames["NoSuchThing"] == 1)
+        #expect(runtime.tally.unsetNames["attachMovie(NoSuchThing)"] == 1)
+        #expect(runtime.tally.missingNames.isEmpty)
     }
 
     @Test func createEmptyMovieClipAndRemoveMovieClipRoundTrip() throws {

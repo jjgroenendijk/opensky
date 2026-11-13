@@ -148,6 +148,6 @@ nonisolated extension AS2Interpreter {
         guard demanded else {
             return
         }
-        runtime.noteMissing(name)
+        runtime.noteUnanswered(name)
     }
 }

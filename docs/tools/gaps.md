@@ -114,11 +114,12 @@ Every interface movie starts with no bridge and runs 10 ticks. A movie directly 
 A movie in a subfolder, such as `inventory components\`, is a part another menu loads. A menu
 counts as done when `MenuMovieBridges.moviePaths` lists it. A new bridge adds its movie there.
 
-The AS2 section lists the names the runtime did not provide, the opcodes it did not run, and
-its faults, over all movies. GameDelegate calls are not in it, because a bridge answers them.
-A movie that needs its bridge before it does anything shows few gaps here. A name a movie reads
-before it sets it, such as a CLIK button's `textField`, counts too, so the top rows need a
-check before they become an issue.
+The AS2 section lists the Flash names the runtime did not provide, the opcodes it did not run,
+and its faults, over all movies. A movie's own GameDelegate names are not in it, because a
+bridge answers them. A movie that needs its bridge before it does anything shows few gaps here.
+A name Flash does not define and the movie never set, such as a class name its prologue reads
+first, is not a row: Flash answers it with `undefined` too. A note counts these reads
+([AS2 runtime](/engine/as2-runtime.md#the-tally)).
 
 The SWF tag section counts every tag in every movie, nested sprites included. GFx extension
 tags (codes 1000 to 1009) take their names from JPEXS Free Flash Decompiler's GFx tag classes.

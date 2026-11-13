@@ -147,6 +147,10 @@ extension SWFActionRunCommand {
         for entry in ranked {
             print("[INFO]   \(entry.name) \(entry.count)")
         }
+        print(
+            "[INFO] swf action-run unset: \(tally.unsetTotal) reads of "
+                + "\(tally.unsetNames.count) names the movie never set"
+        )
     }
 
     private static func printClasses(_ runtime: SWFMovieRuntime) {

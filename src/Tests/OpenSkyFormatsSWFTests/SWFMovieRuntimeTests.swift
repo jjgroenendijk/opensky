@@ -121,11 +121,13 @@ struct SWFMovieRuntimeTests {
         #expect(runtime.root.child(named: "third") != nil)
     }
 
+    /// Flash also leaves the playhead alone, so the label is an unset name, not a gap.
     @Test func anUnknownLabelIsTalliedAndLeavesThePlayheadAlone() throws {
         let runtime = try SWFRuntimeFixture.started(tags: Self.threeFrameMovie())
         runtime.gotoLabel("nowhere", of: runtime.root, play: false)
         #expect(runtime.root.currentFrame == 0)
-        #expect(runtime.tally.missingNames["gotoAndStop(nowhere)"] == 1)
+        #expect(runtime.tally.unsetNames["gotoAndStop(nowhere)"] == 1)
+        #expect(runtime.tally.missingNames["gotoAndStop(nowhere)"] == nil)
     }
 
     /// `ActionGoToLabel` (0x8C) through the host, rather than the Swift API.

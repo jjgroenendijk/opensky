@@ -253,7 +253,7 @@ nonisolated public final class SWFMovieRuntime {
             let characterId = movie.exportedNames[linkage],
             let node = makeDisplayObject(characterId: characterId)
         else {
-            runtime.noteMissing(linkage)
+            runtime.noteUnset("attachMovie(\(linkage))")
             return nil
         }
         node.name = name

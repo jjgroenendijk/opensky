@@ -60,9 +60,10 @@ registered class's constructor and prototype, and `--dump-proto` walks a node's 
 ([CLI](/tools/cli.md)). All 53 vanilla movies bring up and tick with no fault and no unimplemented
 opcode, and register 305 classes.
 
-The names still missing are mostly CLIK component state, such as `myLog` and `onButtonLoad`. CLIK
-fields and globals a movie reads before it sets them are not counted
-([AS2 input](/engine/as2-input.md)). Menu data is published only where a feature needs it.
+An unregistered GameDelegate name, such as `myLog`, is a tally entry and an unhandled invoke
+log row. CLIK fields and globals a movie reads before it sets them, such as `onButtonLoad`, are
+unset names, not missing ones ([AS2 runtime](/engine/as2-runtime.md#the-tally)). Menu data is
+published only where a feature needs it.
 
 ### tweenmenu.swf
 
