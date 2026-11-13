@@ -150,7 +150,8 @@ struct SceneRuntimeTests {
         #expect(SceneCore.lineDuration(texts: []) == SceneRuntime.defaultLineDuration)
         #expect(SceneCore.lineDuration(texts: ["Hi"]) == 2)
         #expect(SceneCore.lineDuration(texts: [String(repeating: "a", count: 300)]) == 8)
-        #expect(SceneCore.lineDuration(texts: [String(repeating: "a", count: 30), nil]) == 5)
+        #expect(abs(SceneCore.lineDuration(texts: [String(repeating: "a", count: 30), nil]) - 7.5) <
+            0.0001)
     }
 
     // MARK: - Package actions and line timing

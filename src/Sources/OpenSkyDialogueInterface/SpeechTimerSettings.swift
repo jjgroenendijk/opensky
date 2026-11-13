@@ -75,6 +75,8 @@ nonisolated public struct SpeechTimerSettings: Equatable, Sendable {
     /// time a line with no voice file stays up.
     public var silentLineMinSeconds: Float = 2
     public var silentLineMaxSeconds: Float = 8
+    /// `fAIDefaultSpeechMult`: seconds per character of a line with no voice file.
+    public var speechMult: Float = 0.15
     /// `fRandomSceneAgainMinTime` and `...MaxTime`: the wait before a scene flagged
     /// "Repeat while true" plays again.
     public var sceneRepeatMinSeconds: Float = 10
@@ -102,6 +104,12 @@ nonisolated public struct SpeechTimerSettings: Equatable, Sendable {
     /// A voiced line's seconds with the gap the next line waits for.
     public func padded(_ seconds: Float) -> Float {
         seconds + finite(voiceFilePadding)
+    }
+
+    /// The reading time of a line with no voice file: characters x `fAIDefaultSpeechMult`.
+    /// A 40-character line reads for 6 seconds.
+    public func readingSeconds(characters: Int) -> Float {
+        Float(max(0, characters)) * finite(speechMult)
     }
 
     /// How long a line with no voice file stays up: its reading time, kept inside the
