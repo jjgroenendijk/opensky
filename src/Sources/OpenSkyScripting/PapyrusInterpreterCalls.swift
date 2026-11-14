@@ -28,7 +28,6 @@ extension PapyrusRuntime.Interpreter {
     ) throws(PapyrusFault) -> PapyrusFlow {
         let operands = try requireOperands(4, instruction: instruction)
         let function = try callName(operands[0], frame: frame)
-        let functionName = function.spelling
         let receiverValue = try read(operands[1], frame: frame)
         if receiverValue == .none {
             // The game logs "Cannot call ... on a None object" and the script goes on.
@@ -50,8 +49,9 @@ extension PapyrusRuntime.Interpreter {
         let handle = declaredReceiver(value, operand: operands[1], frame: frame)
         let arguments = try callArguments(operands, countIndex: 3, frame: frame)
         if
+            function.mayBeStateCall,
             let intrinsic = try intrinsic(
-                functionName,
+                function.spelling,
                 call: (handle, arguments),
                 destination: operands[2],
                 frame: frame
@@ -59,27 +59,26 @@ extension PapyrusRuntime.Interpreter {
         {
             return intrinsic
         }
-        guard let instance = runtime.instance(for: handle) else {
-            return try externalMethodFlow(
-                function,
-                operands: operands,
-                call: (handle, arguments),
-                frame: frame
-            )
+        let instance = runtime.instance(for: handle)
+        let target = try cachedTarget(
+            frame: frame, script: instance?.rootScriptName ?? "", state: instance?.activeState ?? ""
+        ) { () throws(PapyrusFault) -> PapyrusCallTarget in
+            guard let instance else {
+                return try externalTarget(function, receiverOperand: operands[1], frame: frame)
+            }
+            if let resolved = try resolveMethod(function.spelling, instance: instance) {
+                return Self.target(of: resolved)
+            }
+            let root = instance.rootScriptName
+            return .native(script: root, key: runtime.index(named: root)?.key)
         }
-        if let resolved = try resolveMethod(functionName, instance: instance) {
-            return try resolvedMethodFlow(
-                resolved,
+        return try flow(
+            target,
+            call: PendingCall(
+                kind: .method,
                 function: function,
-                call: (handle, arguments),
-                destination: operands[2]
-            )
-        }
-        let root = instance.rootScriptName
-        return try natives.nativeFlow(
-            nativeCall(
-                kind: .method, script: (root, runtime.index(named: root)?.key), function: function,
-                call: (handle, arguments)
+                receiver: handle,
+                arguments: arguments
             ),
             destination: operands[2]
         )
@@ -91,7 +90,6 @@ extension PapyrusRuntime.Interpreter {
     ) throws(PapyrusFault) -> PapyrusFlow {
         let operands = try requireOperands(3, instruction: instruction)
         let function = try callName(operands[0], frame: frame)
-        let functionName = function.spelling
         guard let handle = frame.instanceHandle, let instance = runtime.instance(for: handle) else {
             throw .invalidOperand(
                 instruction: instructionIndex,
@@ -100,38 +98,25 @@ extension PapyrusRuntime.Interpreter {
         }
         let arguments = try callArguments(operands, countIndex: 2, frame: frame)
         let parentName = frame.ownerScript.parentClassName
-        if
-            let resolved = try resolveMethod(
-                functionName,
-                instance: instance,
-                startingAt: parentName
-            )
-        {
-            if !resolved.function.flags.contains(.native) {
-                try pushFrame(
-                    resolved,
-                    instanceHandle: handle,
-                    arguments: arguments,
-                    completion: .assign(operands[1])
+        let target = try cachedTarget(
+            frame: frame, script: parentName, state: instance.activeState
+        ) { () throws(PapyrusFault) -> PapyrusCallTarget in
+            if
+                let resolved = try resolveMethod(
+                    function.spelling, instance: instance, startingAt: parentName
                 )
-                return .next
+            {
+                return Self.target(of: resolved)
             }
-            return try natives.nativeFlow(
-                nativeCall(
-                    kind: .parent,
-                    script: (resolved.script.name, resolved.owner.key),
-                    function: function,
-                    call: (handle, arguments)
-                ),
-                destination: operands[1]
-            )
+            return .native(script: parentName, key: runtime.index(named: parentName)?.key)
         }
-        return try natives.nativeFlow(
-            nativeCall(
+        return try flow(
+            target,
+            call: PendingCall(
                 kind: .parent,
-                script: (parentName, runtime.index(named: parentName)?.key),
                 function: function,
-                call: (handle, arguments)
+                receiver: handle,
+                arguments: arguments
             ),
             destination: operands[1]
         )
@@ -144,32 +129,83 @@ extension PapyrusRuntime.Interpreter {
         let operands = try requireOperands(4, instruction: instruction)
         let scriptName = try name(from: operands[0])
         let function = try callName(operands[1], frame: frame)
-        let functionName = function.spelling
         let arguments = try callArguments(operands, countIndex: 3, frame: frame)
-        if runtime.index(named: scriptName) == nil {
-            _ = runtime.loadScript?(scriptName)
+        let target = try cachedTarget(
+            frame: frame, script: "", state: ""
+        ) { () throws(PapyrusFault) -> PapyrusCallTarget in
+            if runtime.index(named: scriptName) == nil {
+                _ = runtime.loadScript?(scriptName)
+            }
+            if
+                let resolved = staticFunction(function.spelling, script: scriptName),
+                !resolved.function.flags.contains(.native)
+            {
+                return .function(resolved)
+            }
+            return .native(script: scriptName, key: function.scriptKey)
         }
-        if
-            let resolved = staticFunction(functionName, script: scriptName),
-            !resolved.function.flags.contains(.native)
-        {
-            try pushFrame(
-                resolved,
-                instanceHandle: nil,
-                arguments: arguments,
-                completion: .assign(operands[2])
-            )
-            return .next
-        }
-        return try natives.nativeFlow(
-            nativeCall(
-                kind: .staticFunction,
-                script: (scriptName, function.scriptKey),
-                function: function,
-                call: (nil, arguments)
+        return try flow(
+            target,
+            call: PendingCall(
+                kind: .staticFunction, function: function, receiver: nil, arguments: arguments
             ),
             destination: operands[2]
         )
+    }
+
+    /// The call site's kept target while the library, the receiver's script, and its
+    /// state are the ones it was found for; otherwise `resolve` finds it and it is kept.
+    private func cachedTarget(
+        frame: PapyrusFrame,
+        script: String,
+        state: String,
+        resolve: () throws(PapyrusFault) -> PapyrusCallTarget
+    ) throws(PapyrusFault) -> PapyrusCallTarget {
+        let site = frame.instructionIndex - 1
+        if
+            let kept = frame.owner.callSites.site(of: frame.compiled, at: site),
+            kept.holds(generation: runtime.scriptsGeneration, script: script, state: state)
+        {
+            return kept.target
+        }
+        let target = try resolve()
+        // Read after `resolve`, which may load a script and so change the library.
+        let found = PapyrusCallSite(
+            generation: runtime.scriptsGeneration, script: script, state: state, target: target
+        )
+        frame.owner.callSites.keep(found, of: frame.compiled, at: site)
+        return target
+    }
+
+    private static func target(of resolved: PapyrusResolvedFunction) -> PapyrusCallTarget {
+        resolved.function.flags.contains(.native)
+            ? .native(script: resolved.script.name, key: resolved.owner.key)
+            : .function(resolved)
+    }
+
+    private func flow(
+        _ target: PapyrusCallTarget,
+        call: PendingCall,
+        destination: PexValue
+    ) throws(PapyrusFault) -> PapyrusFlow {
+        switch target {
+        case let .function(resolved):
+            try pushFrame(
+                resolved,
+                instanceHandle: call.receiver,
+                arguments: call.arguments,
+                completion: .assign(destination)
+            )
+            return .next
+        case let .native(script, key):
+            return try natives.nativeFlow(
+                nativeCall(
+                    kind: call.kind, script: (script, key), function: call.function,
+                    call: (call.receiver, call.arguments)
+                ),
+                destination: destination
+            )
+        }
     }
 
     private func callArguments(
@@ -299,56 +335,34 @@ extension PapyrusRuntime.Interpreter {
     ) throws(PapyrusFault) -> CallName {
         let spelling = try name(from: operand)
         let keys = frame.compiled.callNameKeys(at: frame.instructionIndex - 1, spelling: spelling)
-        return CallName(spelling: spelling, key: keys?.function, scriptKey: keys?.script)
-    }
-
-    private func externalMethodCall(
-        _ function: CallName,
-        receiverOperand: PexValue,
-        call: (receiver: PapyrusObjectHandle, arguments: [PapyrusValue]),
-        frame: PapyrusFrame
-    ) -> PapyrusNativeCall {
-        let (receiver, arguments) = call
-        let declared = receiverScriptName(receiverOperand, frame: frame)
-        let owner = nativeOwner(of: function.spelling, from: declared)
-        return nativeCall(
-            kind: .method,
-            script: (
-                owner?.script.name ?? declared,
-                owner?.key ?? runtime.index(named: declared)?.key
-            ),
-            function: function,
-            call: (receiver, arguments)
+        return CallName(
+            spelling: spelling, key: keys?.function, scriptKey: keys?.script,
+            mayBeStateCall: keys?.isStateCall ?? true
         )
     }
 
     /// A call on a receiver with no script instance: a Papyrus wrapper of its declared
     /// type runs, anything else goes to native dispatch.
-    private func externalMethodFlow(
+    private func externalTarget(
         _ function: CallName,
-        operands: [PexValue],
-        call: (receiver: PapyrusObjectHandle, arguments: [PapyrusValue]),
+        receiverOperand: PexValue,
         frame: PapyrusFrame
-    ) throws(PapyrusFault) -> PapyrusFlow {
-        let (receiver, arguments) = call
+    ) throws(PapyrusFault) -> PapyrusCallTarget {
         if
             let wrapper = try externalWrapper(
                 function.spelling,
-                receiverOperand: operands[1],
+                receiverOperand: receiverOperand,
                 frame: frame
             )
         {
-            return try resolvedMethodFlow(
-                wrapper, function: function, call: (receiver, arguments), destination: operands[2]
-            )
+            return .function(wrapper)
         }
-        let call = externalMethodCall(
-            function,
-            receiverOperand: operands[1],
-            call: (receiver, arguments),
-            frame: frame
+        let declared = receiverScriptName(receiverOperand, frame: frame)
+        let owner = nativeOwner(of: function.spelling, from: declared)
+        return .native(
+            script: owner?.script.name ?? declared,
+            key: owner?.key ?? runtime.index(named: declared)?.key
         )
-        return try natives.nativeFlow(call, destination: operands[2])
     }
 
     /// A function written in Papyrus on the receiver's declared type, such as
@@ -381,31 +395,6 @@ extension PapyrusRuntime.Interpreter {
         return chain.first { $0.declaresNative(functionName) }
     }
 
-    private func resolvedMethodFlow(
-        _ resolved: PapyrusResolvedFunction,
-        function: CallName,
-        call: (receiver: PapyrusObjectHandle, arguments: [PapyrusValue]),
-        destination: PexValue
-    ) throws(PapyrusFault) -> PapyrusFlow {
-        let (receiver, arguments) = call
-        if !resolved.function.flags.contains(.native) {
-            try pushFrame(
-                resolved,
-                instanceHandle: receiver,
-                arguments: arguments,
-                completion: .assign(destination)
-            )
-            return .next
-        }
-        let call = nativeCall(
-            kind: .method,
-            script: (resolved.script.name, resolved.owner.key),
-            function: function,
-            call: (receiver, arguments)
-        )
-        return try natives.nativeFlow(call, destination: destination)
-    }
-
     private func receiverScriptName(
         _ operand: PexValue,
         frame: PapyrusFrame
@@ -422,4 +411,14 @@ private struct CallName {
     let spelling: String
     let key: String?
     let scriptKey: String?
+    /// False when the folded name shows the call is not `GotoState` or `GetState`.
+    let mayBeStateCall: Bool
+}
+
+/// One call on its way to a target: what kind it is, its name, and its inputs.
+private struct PendingCall {
+    let kind: PapyrusNativeCallKind
+    let function: CallName
+    let receiver: PapyrusObjectHandle?
+    let arguments: [PapyrusValue]
 }
