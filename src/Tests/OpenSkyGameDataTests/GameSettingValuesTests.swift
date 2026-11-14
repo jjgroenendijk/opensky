@@ -66,6 +66,8 @@ struct GameSettingValuesTests {
         #expect(GameSettingsUnused.reason(for: "iXPRewardPickLock") == .rewardXP)
         #expect(GameSettingsUnused.reason(for: "iSpeechChallengeDifficultyHard") == .speechGlobals)
         #expect(GameSettingsUnused.reason(for: "sActorFade") == .movieLabel)
+        #expect(GameSettingsUnused.reason(for: "fSneakAmbushTargetMod") == .ambushPackage)
+        #expect(GameSettingsUnused.reason(for: "fSneakAmbushNonTargetMod") == .ambushPackage)
     }
 
     @Test func regenerationSettingsComeFromTheLoadOrder() throws {

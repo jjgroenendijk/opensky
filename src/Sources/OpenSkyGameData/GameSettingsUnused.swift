@@ -60,6 +60,9 @@ nonisolated public enum GameSettingUnusedReason: String, CaseIterable, Sendable 
     /// Impact particle models the game loads once at start and never places, as OpenSky
     /// observed. Nothing on screen comes from them.
     case preloadOnly
+    /// Detection modifiers of an NPC that runs an ambush package (`PKDT` type 9). Every
+    /// vanilla package is type 18 or 19, and the Creation Kit makes only these.
+    case ambushPackage
 }
 
 nonisolated public enum GameSettingsUnused: Sendable {
@@ -114,7 +117,8 @@ nonisolated public enum GameSettingsUnused: Sendable {
             "sRetryText"
         ],
         .favourPoints: ["iFavorPointsRestore"],
-        .preloadOnly: ["sImpactParticleMetalDefault", "sImpactParticleWoodDefault"]
+        .preloadOnly: ["sImpactParticleMetalDefault", "sImpactParticleWoodDefault"],
+        .ambushPackage: ["fSneakAmbushNonTargetMod", "fSneakAmbushTargetMod"]
     ]
 }
 
