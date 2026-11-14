@@ -34,14 +34,19 @@ nonisolated public enum TerrainLODGenerator {
 
         /// The cell under a block-local point, and the point in that cell's quads.
         func locate(_ point: SIMD2<Float>) -> (land: TerrainLODLand?, quads: SIMD2<Float>) {
+            let found = locateCell(point)
+            return (found.index < cells.count ? cells[found.index] : nil, found.quads)
+        }
+
+        /// The index in `cells` under a block-local point, and the point in its quads.
+        func locateCell(_ point: SIMD2<Float>) -> (index: Int, quads: SIMD2<Float>) {
             let cellSize = TerrainMeshBuilder.cellSize
             let last = Int(level) - 1
             let column = min(max(Int(point.x / cellSize), 0), last)
             let row = min(max(Int(point.y / cellSize), 0), last)
             let local = (point - SIMD2(Float(column), Float(row)) * cellSize)
                 / TerrainMeshBuilder.quadSize
-            let index = row * Int(level) + column
-            return (index < cells.count ? cells[index] : nil, local)
+            return (row * Int(level) + column, local)
         }
 
         func height(at point: SIMD2<Float>) -> Float {
