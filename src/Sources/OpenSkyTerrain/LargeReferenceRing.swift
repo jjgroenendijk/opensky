@@ -55,8 +55,9 @@ nonisolated public enum LargeReferenceRing {
     }
 
     /// The ring's cells, plus every cell of each block in `blocks` whose large-reference
-    /// shape hides whole, so no large reference of it goes missing. The loaded grid draws
-    /// its own.
+    /// shape hides whole, so no large reference of it goes missing. The full cells in
+    /// `hiddenCells` draw their own. A near cell that is not one yet, such as a cell still
+    /// building, keeps the ring's, because its segment is gone from the object LOD.
     public static func cells(
         center: CellCoordinate,
         radii: (radius: Int32, loadedRadius: Int32),
@@ -68,8 +69,7 @@ nonisolated public enum LargeReferenceRing {
         guard radius > loadedRadius else { return cells }
         func add(x: Int32, y: Int32) {
             let cell = CellCoordinate(x: x, y: y)
-            let rings = max(abs(Int64(x) - Int64(center.x)), abs(Int64(y) - Int64(center.y)))
-            if rings > Int64(loadedRadius), !hiddenCells.contains(cell) {
+            if !hiddenCells.contains(cell) {
                 cells.insert(cell)
             }
         }

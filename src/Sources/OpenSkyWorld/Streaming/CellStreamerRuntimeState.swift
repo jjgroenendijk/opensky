@@ -107,10 +107,9 @@ extension CellStreamer.RuntimeStateSteps {
     private func noteDistantLODMutation(of key: ReferenceKey) {
         guard
             case let .plugin(_, objectID) = key,
-            streamer.composition.distantLOD?.watchedObjectIDs.contains(objectID) == true,
-            streamer.requestedLODCenter == streamer.grid.center
+            streamer.composition.distantLOD?.watchedObjectIDs.contains(objectID) == true
         else { return }
-        streamer.requestedLODCenter = nil
+        streamer.lodRebuildWanted = true
     }
 
     private func recordMutationSequence(_ coordinate: CellCoordinate, sequence: UInt64) {

@@ -57,9 +57,10 @@ struct LargeReferenceRingTests {
 
     @Test func cellsCoverTheRingAndHiddenBlocksButNotTheLoadedGrid() {
         let center = CellCoordinate(x: 0, y: 0)
+        let loaded = (-2 ... 2).flatMap { x in (-2 ... 2).map { CellCoordinate(x: x, y: $0) } }
         let cells = LargeReferenceRing.cells(
             center: center, radii: (5, 2),
-            hiddenCells: [CellCoordinate(x: 3, y: 0)],
+            hiddenCells: Set(loaded + [CellCoordinate(x: 3, y: 0)]),
             blocks: [objects(at: .init(x: 4, y: 0)), objects(at: .init(x: 12, y: 0))]
         )
         #expect(cells.contains(CellCoordinate(x: 5, y: 5)))
@@ -68,6 +69,17 @@ struct LargeReferenceRingTests {
         #expect(!cells.contains(CellCoordinate(x: 3, y: 0)))
         #expect(!cells.contains(CellCoordinate(x: 12, y: 0)))
         #expect(cells.count == 11 * 11 - 5 * 5 - 1 + 4 * 4 - 2 * 4)
+    }
+
+    @Test func aNearCellThatIsNotLoadedKeepsTheRingsLargeReferences() {
+        let building = CellCoordinate(x: 2, y: 0)
+        let loaded = (-2 ... 2).flatMap { x in (-2 ... 2).map { CellCoordinate(x: x, y: $0) } }
+        let cells = LargeReferenceRing.cells(
+            center: .init(x: 0, y: 0), radii: (5, 2),
+            hiddenCells: Set(loaded).subtracting([building]), blocks: []
+        )
+        #expect(cells.contains(building))
+        #expect(!cells.contains(CellCoordinate(x: 1, y: 0)))
     }
 
     @Test func aRingNoWiderThanTheLoadedGridHasNoCells() {

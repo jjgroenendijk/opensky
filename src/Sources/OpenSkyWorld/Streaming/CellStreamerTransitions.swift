@@ -72,11 +72,7 @@ extension CellStreamer.TransitionSteps {
         if streamer.props.integrateActorProps() {
             streamer.sink(streamer.props.viewScene(), nil)
         }
-        for entry in completedLOD {
-            if case let .success(scene) = entry.result, let scene {
-                streamer.coverage.evictUnused(scene.assets)
-            }
-        }
+        streamer.coverage.discardDistantLOD(completedLOD)
         streamer.runtimeStates.dispatchInteriorRebuildIfNeeded()
         return true
     }

@@ -26,6 +26,8 @@ public final class MenuPartState {
     /// The opening quest's player `MoveTo` loads a far cell, so it gets a loading screen.
     public var coverNextTeleport = false
     public var teleportCovered = false
+    /// When a covered move finished; the cover then waits for the area around it.
+    public var arrivalSince: Double?
     /// From New until the opening quest moves the player. A dark cover, not the
     /// loading menu, because that menu pauses the scripts that make the move. On the
     /// simulation clock, so a game paused by agent control does not run out the limit.

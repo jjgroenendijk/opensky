@@ -65,12 +65,11 @@ extension CellStreamer.BuildSteps {
         }
     }
 
-    /// Drains completed builds, folding each into the core. Void / failed /
-    /// stale outcomes are cheap (no recompose) and drained freely; the first
-    /// drawable success becomes resident and stops the drain -- that is the
-    /// per-frame budget of one recompose. Returns whether a cell was
-    /// integrated (composition changed). Remaining successes wait for the
-    /// next frame.
+    /// Drains completed builds, folding each into the core. Void, failed, stale,
+    /// and waiting outcomes are cheap (no recompose) and drained freely; the first
+    /// success that draws at once stops the drain -- that is the per-frame budget of
+    /// one recompose. Returns whether a cell was integrated (composition changed).
+    /// Remaining successes wait for the next frame.
     func integrateOneBuild() -> Bool {
         while !streamer.pending.isEmpty {
             let entry = streamer.pending.removeFirst()
@@ -86,15 +85,16 @@ extension CellStreamer.BuildSteps {
                         entry.coordinate,
                         scene: scene
                     )
-                    if streamer.coverageTransitionActive {
+                    let waiting = streamer.stagedCells[entry.coordinate] != nil
+                    if waiting || !streamer.coverage.goesLiveAtOnce(entry.coordinate) {
                         if let replaced = streamer.stagedCells.updateValue(
                             scene,
                             forKey: entry.coordinate
                         ) {
                             streamer.coverage.evictUnused(replaced.assets)
                         }
-                        // Staged offscreen: announced when the transition commits.
-                        return false
+                        // Waits off screen: announced when its ring swaps in.
+                        continue
                     }
                     if let replaced = streamer.composition.setCell(scene, at: entry.coordinate) {
                         streamer.coverage.evictUnused(replaced.assets)
@@ -187,10 +187,13 @@ extension CellStreamer.BuildSteps {
         streamer.cellMutationSequence.removeAll()
         streamer.core = CellStreamCore()
         streamer.requestedLODCenter = nil
+        streamer.lodRequestHiddenCells = nil
+        streamer.liveLODHiddenCells = nil
+        streamer.liveLODCenter = nil
+        streamer.lodRebuildWanted = false
         streamer.settledLODCenter = nil
         streamer.largeReferenceRequestCenter = nil
         streamer.largeReferenceSettledCenter = nil
-        streamer.coverageTransitionActive = false
         streamer.events.lastEmittedRegions = nil
         streamer.grid = CellGridManager(initialPosition: position, radius: streamer.grid.radius)
         streamer.coverage.evictUnused(departed)

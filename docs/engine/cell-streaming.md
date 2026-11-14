@@ -185,10 +185,28 @@ known `CELL` identity is never announced, because subscribers file script instan
 Once the whole near grid is settled, the same queue builds one [distant LOD](/engine/distant-lod.md)
 scene. It comes last, so its many first-load assets cannot delay near cells.
 
-After that, moving the center starts a coverage change. The old scene stays on screen. New cells
-build and wait off screen. Void and failed slots stay covered by LOD. When the matching LOD
-arrives, the waiting cells and the new LOD ring go live in one swap. Another move drops waiting
-cells outside the newest grid. Waiting cells keep their assets from eviction until the swap.
+Each ring is built to leave out a set of cells, its hidden cells, because full cells draw there.
+Every cell is drawn either as a full cell or by the ring, never both and never neither:
+
+- A finished cell goes live at once when the ring on screen and the ring being built both leave
+  it out. A rebuild of a drawn cell is one example.
+- Any other finished cell waits off screen. Its ring hides it, and both swap in together.
+- A drawn cell the grid no longer wants stays on screen while a ring leaves it out. It goes when a
+  ring that covers it swaps in.
+- A cell not built yet, and a void or failed slot, keeps its LOD.
+
+One ring builds at a time. The next one leaves out every drawn or waiting cell the grid wants. It is
+requested when no cell build is queued, or at once when a waiting cell is next to the player's cell,
+so that cell does not wait for the rest of the grid. A finished ring swaps in even when the player
+has moved on since it was requested, because it still covers exactly the cells it leaves out.
+Otherwise a player that keeps moving faster than one batch would get no new cell. Waiting cells the
+ring being built leaves out are kept, even when the grid no longer wants them. Waiting cells keep
+their assets from eviction until the swap.
+
+A ring that fails or has no LOD swaps in as no ring: every waiting cell shows, and no LOD draws.
+
+The build queue runs at the `userInitiated` priority. At `utility`, a busy machine gave the
+builds so little time that the player passed the cells the builds were for.
 
 ## Changing worldspace
 
