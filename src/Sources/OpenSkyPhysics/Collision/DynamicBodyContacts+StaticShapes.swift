@@ -15,32 +15,59 @@ nonisolated struct DynamicSampleAnswer {
     var outsideDistance: Float = .greatestFiniteMagnitude
 }
 
-nonisolated extension DynamicBodyContacts {
-    /// Contacts between `body` and the placed static shapes `shapes`.
+/// Buffers the static contact pass reuses across bodies, substeps, and steps.
+/// The answers of one body are read only inside its own pass, so nothing
+/// outlives the next call. Keeping the capacity removes one heap allocation
+/// per shape per body per step.
+nonisolated public struct DynamicContactScratch: Sendable {
+    /// The static shapes near each body, kept for one step.
+    var staticShapes = DynamicStaticShapes(bodyCount: 0)
+    /// Shape-major: the answers of shape `s` start at `s * sampleCount`.
+    fileprivate var answers: [DynamicSampleAnswer] = []
+    fileprivate var outside: [Float] = []
+    fileprivate var nearest: [(distance: Float, penetration: DynamicPenetration?)?] = []
+
+    public init() {}
+}
+
+nonisolated extension DynamicContactScratch {
+    /// Contacts between `body` and the placed static shapes `shapes`, appended
+    /// to `contacts`.
     ///
     /// Shapes are visited in the order the broadphase returned them, which is
     /// source-shape order and therefore stable, so the contact list is
     /// deterministic for a given pose.
-    static func staticContacts(
-        body: DynamicBody,
-        index: Int,
+    mutating func appendStaticContacts(
+        of pair: DynamicPairBody,
         samples: [(point: SIMD3<Float>, radius: Float)],
-        shapes: [StaticCollisionShape]
-    ) -> [DynamicContact] {
-        let recovery = recoveryDepth(of: body)
+        shapes: [StaticCollisionShape],
+        into contacts: inout [DynamicContact]
+    ) {
+        let (body, index) = (pair.body, pair.index)
+        let count = samples.count
+        guard count > 0, !shapes.isEmpty else { return }
+        let recovery = DynamicBodyContacts.recoveryDepth(of: body)
+        answers.removeAll(keepingCapacity: true)
+        answers.append(
+            contentsOf: repeatElement(DynamicSampleAnswer(), count: shapes.count * count)
+        )
         // A body's samples are its hull corners, so the same shape is asked
         // about eight times over. Testing them together builds each placed
         // triangle once per shape rather than once per sample.
-        let answers = shapes.map { answers(of: samples, shape: $0, recovery: recovery) }
-        var outside = [Float](repeating: .greatestFiniteMagnitude, count: samples.count)
-        for shapeAnswers in answers {
-            for sample in samples.indices {
-                outside[sample] = min(outside[sample], shapeAnswers[sample].outsideDistance)
-            }
+        for (shapeIndex, shape) in shapes.enumerated() {
+            fillAnswers(of: samples, shape: shape, recovery: recovery, from: shapeIndex * count)
         }
-        var result: [DynamicContact] = []
-        for (shape, shapeAnswers) in zip(shapes, answers) {
-            for (sampleIndex, answer) in shapeAnswers.enumerated() {
+        outside.removeAll(keepingCapacity: true)
+        outside.append(contentsOf: repeatElement(.greatestFiniteMagnitude, count: count))
+        for offset in answers.indices {
+            let sample = offset % count
+            outside[sample] = min(
+                outside[sample], answers[offset].outsideDistance
+            )
+        }
+        for (shapeIndex, shape) in shapes.enumerated() {
+            for sampleIndex in 0 ..< count {
+                let answer = answers[shapeIndex * count + sampleIndex]
                 guard let hit = answer.hit else { continue }
                 let sample = samples[sampleIndex]
                 let radius = sample.radius + DynamicBody.contactMargin
@@ -50,7 +77,7 @@ nonisolated extension DynamicBodyContacts {
                 if hit.depth > radius, answer.hitDistance > outside[sampleIndex] {
                     continue
                 }
-                result.append(DynamicContact(
+                contacts.append(DynamicContact(
                     body: index,
                     other: nil,
                     point: sample.point - hit.normal * (radius - hit.depth),
@@ -62,20 +89,19 @@ nonisolated extension DynamicBodyContacts {
                 ))
             }
         }
-        return result
     }
 
     /// Each sample's deepest penetration into one placed shape and its nearest
-    /// outside face, in sample order. The work runs in the shape's local space:
-    /// moving a few samples through one inverse matrix is cheaper than moving
-    /// every triangle. The placement is rigid times uniform scale, so lengths
-    /// convert back exactly.
-    private static func answers(
+    /// outside face, written to the answers from `base` on, in sample order.
+    /// The work runs in the shape's local space: moving a few samples through
+    /// one inverse matrix is cheaper than moving every triangle. The placement
+    /// is rigid times uniform scale, so lengths convert back exactly.
+    private mutating func fillAnswers(
         of samples: [(point: SIMD3<Float>, radius: Float)],
         shape: StaticCollisionShape,
-        recovery: Float
-    ) -> [DynamicSampleAnswer] {
-        var answers = [DynamicSampleAnswer](repeating: DynamicSampleAnswer(), count: samples.count)
+        recovery: Float,
+        from base: Int
+    ) {
         let soup: (vertices: [SIMD3<Float>], indices: [UInt32])
         switch shape.geometry {
         case let .triangleSoup(vertices, indices),
@@ -85,35 +111,33 @@ nonisolated extension DynamicBodyContacts {
             soup = (CollisionBox.vertices(halfExtents), CollisionBox.indices)
         case .sphere, .capsule:
             for (index, sample) in samples.enumerated() {
-                answers[index].hit = penetration(
+                answers[base + index].hit = DynamicBodyContacts.penetration(
                     of: sample.point, radius: sample.radius + DynamicBody.contactMargin,
                     shape: shape
                 )
             }
-            return answers
+            return
         }
         guard
             let local = DynamicLocalSamples(samples: samples, shape: shape, recovery: recovery)
-        else { return answers }
-        accumulate(soup: soup, against: local, shape: shape, into: &answers)
-        return answers
+        else { return }
+        accumulate(soup: soup, against: local, shape: shape, from: base)
     }
 
     /// One pass over a shape's own triangles, keeping every sample's nearest
     /// surface. The samples arrive already in the shape's space; the answers are
     /// moved back to the world before they are returned.
-    private static func accumulate(
+    private mutating func accumulate(
         soup: (vertices: [SIMD3<Float>], indices: [UInt32]),
         against local: DynamicLocalSamples,
         shape: StaticCollisionShape,
-        into answers: inout [DynamicSampleAnswer]
+        from base: Int
     ) {
         let vertices = soup.vertices
         let indices = soup.indices
         let end = indices.count - indices.count % 3
-        var localNearest = [(distance: Float, penetration: DynamicPenetration?)?](
-            repeating: nil, count: local.points.count
-        )
+        nearest.removeAll(keepingCapacity: true)
+        nearest.append(contentsOf: repeatElement(nil, count: local.points.count))
         for offset in stride(from: 0, to: end, by: 3) {
             let first = Int(indices[offset])
             let second = Int(indices[offset + 1])
@@ -134,22 +158,22 @@ nonisolated extension DynamicBodyContacts {
                     orientation: local.orientation
                 )
             else { continue }
-            accumulate(surface: surface, local: local, into: &localNearest)
+            Self.accumulate(surface: surface, local: local, into: &nearest)
         }
         let scale = DynamicCollisionMath.maximumScale(of: shape.transform)
-        for index in localNearest.indices {
-            guard let nearest = localNearest[index] else { continue }
-            guard let hit = nearest.penetration else {
-                answers[index].outsideDistance = nearest.distance * scale
+        for index in nearest.indices {
+            guard let best = nearest[index] else { continue }
+            guard let hit = best.penetration else {
+                answers[base + index].outsideDistance = best.distance * scale
                 continue
             }
             let direction = shape.transform * SIMD4<Float>(hit.normal, 0)
             let world = SIMD3(direction.x, direction.y, direction.z)
             guard simd_length_squared(world) > Float.ulpOfOne else { continue }
-            answers[index].hit = DynamicPenetration(
+            answers[base + index].hit = DynamicPenetration(
                 normal: simd_normalize(world), depth: hit.depth * scale
             )
-            answers[index].hitDistance = nearest.distance * scale
+            answers[base + index].hitDistance = best.distance * scale
         }
     }
 
