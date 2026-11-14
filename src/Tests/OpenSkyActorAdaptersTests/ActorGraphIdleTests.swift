@@ -57,6 +57,13 @@ struct ActorGraphIdleTests {
         #expect(idles.synchronizedMark(of: Self.actor) == nil)
     }
 
+    @Test func anActorWithoutARunningGraphRunsNoGraphOfItsOwn() throws {
+        let idles = IdleWorldAdapter(game: host, stage: nil)
+        let graphs = try #require(host.fakeActorGraphWorld.graphs as? FakeActorGraphPort)
+        #expect(!idles.runsOwnGraph(Self.actor))
+        #expect(graphs.instanceCalls == [Self.actor])
+    }
+
     @Test func anObjectEventFallsBackToTheActorGraph() throws {
         let objects = ObjectAnimationWorldAdapter(game: host, stage: nil)
         let graphs = try #require(host.fakeActorGraphWorld.graphs as? FakeActorGraphPort)

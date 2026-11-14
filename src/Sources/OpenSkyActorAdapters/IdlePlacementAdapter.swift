@@ -125,6 +125,10 @@ extension IdlePlacementAdapter {
         return game.actorGraphWorld.graphInstance(of: actor)?.synchronizedMark
     }
 
+    public func runsOwnGraph(_ actor: ReferenceKey) -> Bool {
+        game.actorGraphWorld.graphs.instance(of: actor) != nil
+    }
+
     public func raiseIdleEvent(_ name: String, state: String?, on actor: ReferenceKey) -> Bool {
         guard actor == .player else {
             return game.actorGraphWorld.graphs.raise(name, on: actor)

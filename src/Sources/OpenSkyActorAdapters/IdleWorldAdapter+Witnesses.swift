@@ -53,6 +53,10 @@ extension IdleWorldAdapter {
         placement.synchronizedMark(of: actor)
     }
 
+    public func runsOwnGraph(_ actor: ReferenceKey) -> Bool {
+        placement.runsOwnGraph(actor)
+    }
+
     public func raiseIdleEvent(_ name: String, state: String?, on actor: ReferenceKey) -> Bool {
         placement.raiseIdleEvent(name, state: state, on: actor)
     }

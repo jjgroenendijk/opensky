@@ -36,6 +36,7 @@ nonisolated public struct InventoryConditionResolution: Sendable {
     /// Items per KWDA keyword, summed over each holder's stacks.
     private let keywordCounts: [ReferenceKey: [FormID: Int32]]
     private let lookup: InventoryConditionLookup?
+    private var equipmentLookup: (@MainActor @Sendable (ReferenceKey) -> ActorEquipmentFacts?)?
     public let isAvailable: Bool
 
     public init(
@@ -62,9 +63,23 @@ nonisolated public struct InventoryConditionResolution: Sendable {
         isAvailable = false
     }
 
+    /// A copy that reads an actor's equipment when a condition asks, so a context build
+    /// walks no actors. Conditions run on the main actor, as the whole simulation does.
+    public func readingEquipment(
+        _ lookup: @escaping @MainActor @Sendable (ReferenceKey) -> ActorEquipmentFacts?
+    ) -> Self {
+        var copy = self
+        copy.equipmentLookup = lookup
+        return copy
+    }
+
     /// Nil without equipment data for `actor`.
     func equipment(of actor: ReferenceKey) -> ActorEquipmentFacts? {
-        equipment[actor]
+        if let known = equipment[actor] {
+            return known
+        }
+        guard let equipmentLookup else { return nil }
+        return MainActor.assumeIsolated { equipmentLookup(actor) }
     }
 
     /// Nil without inventory data for `holder`.

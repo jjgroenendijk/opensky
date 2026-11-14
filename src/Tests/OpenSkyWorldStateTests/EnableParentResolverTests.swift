@@ -62,6 +62,18 @@ struct EnableParentResolverTests {
         #expect(RuntimeReferenceIndex.empty.enableParentObjectIDs.isEmpty)
     }
 
+    @Test func theIndexKeepsItsKeysInOrderAndListsNoMarkerItLacks() throws {
+        let index = try RuntimeReferenceIndex(entries: [
+            Self.entry(0x903), Self.entry(0x900), Self.entry(0x902), Self.entry(0x901)
+        ])
+        let keys = [0x900, 0x901, 0x902, 0x903].map {
+            ReferenceKey.plugin(name: "skyrim.esm", objectID: UInt32($0))
+        }
+        #expect(index.sortedKeys() == keys)
+        #expect(index.sortedEntries().map(\.key) == keys)
+        #expect(index.mapMarkerKeys.isEmpty)
+    }
+
     @Test func aChildFollowsItsParent() throws {
         let parent = try Self.entry(0x900)
         let child = try Self.entry(0x901, parent: 0x900)

@@ -35,6 +35,10 @@ final class PairedIdleWorld: IdleWorld {
         0
     }
 
+    func runsOwnGraph(_: ReferenceKey) -> Bool {
+        false
+    }
+
     var idleAnimationTime: Float? {
         0
     }
