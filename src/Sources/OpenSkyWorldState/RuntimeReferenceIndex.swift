@@ -69,6 +69,9 @@ nonisolated public struct RuntimeReferenceIndex: Sendable {
     /// systems read this list, and the index never changes after a build. A
     /// disabled actor stays findable by key but is not in this list.
     public let sortedActorEntries: [RuntimeReferenceEntry]
+    /// The object IDs some entry names as its `XESP` enable parent, built once so a
+    /// script's enable or disable checks a cell without reading every record.
+    public let enableParentObjectIDs: Set<UInt32>
 
     /// Cells built without reference retention (synthetic render tests) use
     /// this rather than an optional field.
@@ -88,6 +91,7 @@ nonisolated public struct RuntimeReferenceIndex: Sendable {
         sortedActorEntries = byKey.values
             .filter { $0.placedActor != nil && !absentActors.contains($0.key) }
             .sorted { $0.key < $1.key }
+        enableParentObjectIDs = Set(byKey.values.compactMap { $0.enableParent?.parent.objectID })
     }
 
     public var count: Int {
