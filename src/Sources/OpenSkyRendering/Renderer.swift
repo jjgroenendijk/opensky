@@ -129,6 +129,8 @@ public final class Renderer: NSObject {
     /// This frame's cascades, produced by encodeShadowPass, consumed by
     /// updateFrameUniforms. Empty when shadows are off/idle this frame.
     public var shadowCascades: [ShadowCascade] = []
+    /// The far cascade maps kept from earlier frames.
+    var shadowCascadeReuse = ShadowCascadeReuse()
     /// Whether encodeShadowPass rendered cascades this frame (drives the
     /// shader's shadowsEnabled flag). Reset every frame.
     public var shadowsActiveThisFrame = false

@@ -95,6 +95,8 @@ struct RendererGPUCullingTests {
         #expect(cpu.culledInstances > 1)
         #expect(cpuShadow.drawnInstances > 0)
 
+        // Both frames draw every cascade, so their shadow counts compare.
+        renderer.shadowCascadeReuse.reset()
         renderer.gpuCullingEnabled = true
         let gpuPixels = try OffscreenRendererFixture.pixels(
             of: renderer.renderOffscreen(width: Self.width, height: Self.height)

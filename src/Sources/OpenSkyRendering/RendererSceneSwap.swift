@@ -27,6 +27,8 @@ extension Renderer {
         // shares is filtered out at purge time (live-set check), not here.
         var retiring = sceneAllocations
         scene = newScene
+        // A kept far shadow map still shows the old scene's casters.
+        shadowCascadeReuse.reset()
         if let newCamera {
             camera = newCamera
             if let frameDriver {

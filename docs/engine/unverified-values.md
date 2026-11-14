@@ -195,6 +195,7 @@ the detail and the sources it did find.
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
 | Actor camera fade shapes | Each drawn shape's world box grown by the probe radius; half its diagonal as the radius; the player's capsule radius 24 at the centre of its drawn shapes; the pivot 112 over the feet in place of the `Cam3` node height | [graphics options](/engine/graphics-options.md#actor-fade-near-the-camera) |
+| Far shadow cascade reuse | A far cascade map kept while it covers its slice, at most 2 or 4 frames, 0.25 degrees of sun turn, 10% wider fit | [shadows](/rendering/shadows.md#far-cascade-reuse) |
 | Particle lifetime and limits | OpenSky's policies | [particles](/rendering/particles.md) |
 | Lightning bolt growth | Midpoint bends halving each level, branches 0.3 to 0.5 long, a new bolt every 0.1 s blended from the last | [particles](/rendering/particles.md#ribbons) |
 | Ribbon texture direction | U along the band for strips and bolts | [particles](/rendering/particles.md#ribbons) |

@@ -178,7 +178,8 @@ extension Renderer {
         shadowsActiveThisFrame = false
         lastShadowDrawStats = ShadowDrawStats()
 
-        let cascades = frameCascades(projection: projection)
+        let plan = frameCascades(projection: projection)
+        let cascades = plan.cascades
         updateRoomVisibility(viewProjection: projection * frameInput.view.viewMatrix())
         // The cull runs here, before any pass draws, for the camera and each cascade.
         encodeGPUCulling(
@@ -191,7 +192,7 @@ extension Renderer {
         guard !cascades.isEmpty else { return true }
 
         var state = ShadowPassState(slot: slot, base: slot * shadowInstanceSlotCapacity)
-        guard encodeCascades(cascades, state: &state) else { return false }
+        guard encodeCascades(plan, state: &state) else { return false }
         lastShadowDrawStats = state.stats
         shadowCascades = cascades
         shadowsActiveThisFrame = true
@@ -199,14 +200,21 @@ extension Renderer {
     }
 
     /// This frame's cascades; empty when shadows are off or nothing casts.
-    private func frameCascades(projection: float4x4) -> [ShadowCascade] {
-        guard shadowRenders else { return [] }
+    private func frameCascades(projection: float4x4) -> ShadowCascadePlan {
+        let none = ShadowCascadePlan(cascades: [], redraws: [])
+        guard shadowRenders else {
+            shadowCascadeReuse.reset()
+            return none
+        }
         let hasCasters = !frameDrawGroups.shadowOpaqueCasters.casters.isEmpty
             || !frameDrawGroups.shadowAlphaTestedCasters.casters.isEmpty
             || !scene.terrain.isEmpty
-        guard hasCasters else { return [] }
+        guard hasCasters else {
+            shadowCascadeReuse.reset()
+            return none
+        }
         let (fovY, aspect) = Self.fovAspect(from: projection)
-        return ShadowCascadeMath.makeCascades(ShadowCascadeRequest(
+        var request = ShadowCascadeRequest(
             cameraToWorld: frameInput.view.viewMatrix().inverse,
             fovYRadians: fovY,
             aspectRatio: aspect,
@@ -218,16 +226,21 @@ extension Renderer {
             shadowMapResolution: shadow.map.width,
             casterBackup: Self.shadowCasterBackup,
             residentBounds: residentCasterBounds()
-        ))
+        )
+        request.farCascadeMargin = ShadowCascadeReuse.margin
+        let fresh = ShadowCascadeMath.makeCascades(request)
+        return shadowCascadeReuse.plan(request, fresh: fresh)
     }
 
-    /// One depth encoder per cascade; each renders the frustum-surviving
-    /// casters into its array slice. Returns false if an encoder is unavailable.
+    /// One depth encoder per drawn cascade; each renders the frustum-surviving
+    /// casters into its array slice. A reused cascade keeps its slice as the
+    /// last draw left it. Returns false if an encoder is unavailable.
     private func encodeCascades(
-        _ cascades: [ShadowCascade],
+        _ plan: ShadowCascadePlan,
         state: inout ShadowPassState
     ) -> Bool {
-        for (index, cascade) in cascades.enumerated() {
+        let lastDrawn = plan.redraws.lastIndex(of: true)
+        for (index, cascade) in plan.cascades.enumerated() where plan.redraws[index] {
             guard let encoder = makeShadowEncoder(cascade: index) else { return false }
             encoder.label = "Shadow Cascade \(index)"
             configureShadowEncoder(encoder)
@@ -250,10 +263,10 @@ extension Renderer {
             // MTL4 does not auto-track cross-encoder hazards: without a barrier
             // the scene pass may sample the shadow map before these depth
             // writes land (intermittent whole-frame shadow corruption). One
-            // producer barrier on the last cascade covers every prior cascade
+            // producer barrier on the last drawn cascade covers every prior cascade
             // encoder ("current and prior encoders"), so the scene pass's
             // fragment sampling waits for all shadow depth writes.
-            if index == cascades.count - 1 {
+            if index == lastDrawn {
                 encoder.barrier(
                     afterStages: .fragment,
                     beforeQueueStages: .fragment,

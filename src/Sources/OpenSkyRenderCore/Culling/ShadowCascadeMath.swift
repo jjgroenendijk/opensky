@@ -35,6 +35,9 @@ nonisolated public struct ShadowCascadeRequest: Sendable {
     public var shadowMapResolution: Int
     public var casterBackup: Float
     public var residentBounds: ModelBounds?
+    /// Every cascade after the first grows by this share of its radius on each
+    /// side, so its map still covers the view after the camera moves a little.
+    public var farCascadeMargin: Float = 0
 
     public init(
         cameraToWorld: simd_float4x4,
@@ -122,7 +125,8 @@ nonisolated public enum ShadowCascadeMath: Sendable {
                 light: (sun, up),
                 resolution: resolution,
                 casterBackup: request.casterBackup,
-                residentBounds: request.residentBounds
+                residentBounds: request.residentBounds,
+                margin: index == 0 ? 0 : request.farCascadeMargin
             )
             cascades.append(ShadowCascade(
                 viewProjection: viewProjection,
@@ -215,7 +219,8 @@ nonisolated public enum ShadowCascadeMath: Sendable {
         light: (sun: SIMD3<Float>, up: SIMD3<Float>),
         resolution: Int,
         casterBackup: Float,
-        residentBounds: ModelBounds? = nil
+        residentBounds: ModelBounds? = nil,
+        margin: Float = 0
     ) -> simd_float4x4 {
         let (sun, up) = light
         let sphere = boundingSphere(corners)
@@ -234,15 +239,16 @@ nonisolated public enum ShadowCascadeMath: Sendable {
         // Fixed square extent (sphere diameter) keeps the texel size stable as
         // the camera rotates; +2 texels of border guarantees the corners stay
         // inside after the origin snaps down to the grid.
-        let diameter = 2 * sphere.radius
+        let pad = sphere.radius * max(margin, 0)
+        let diameter = 2 * (sphere.radius + pad)
         let texelSize = diameter / Float(resolution)
         let extent = diameter + 2 * texelSize
-        let originX = (minBound.x / texelSize).rounded(.down) * texelSize
-        let originY = (minBound.y / texelSize).rounded(.down) * texelSize
+        let originX = ((minBound.x - pad) / texelSize).rounded(.down) * texelSize
+        let originY = ((minBound.y - pad) / texelSize).rounded(.down) * texelSize
         // Eye space looks down -z: nearest corner has the largest (least
         // negative) z, so slice near = -maxZ. The casterBackup extension is
         // clamped to resident geometry so it never reaches past what exists.
-        let sliceNearZ = -maxBound.z
+        let sliceNearZ = -maxBound.z - pad
         let residentNearZ = residentBounds.map {
             residentNearLightZ($0, lightView: lightView)
         }
@@ -251,7 +257,7 @@ nonisolated public enum ShadowCascadeMath: Sendable {
             fullBackupNearZ: sliceNearZ - casterBackup,
             residentNearZ: residentNearZ
         )
-        let farZ = max(-minBound.z, nearZ + 1e-4)
+        let farZ = max(-minBound.z + pad, nearZ + 1e-4)
         let ortho = MatrixMath.orthographic(OrthographicBounds(
             left: originX,
             right: originX + extent,
