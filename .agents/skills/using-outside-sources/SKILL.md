@@ -77,12 +77,8 @@ with the main session's worktree.
 3. Check the reply against the same list. A reply that breaks it is thrown away. Do not
    carry any part of it into the repo, and start a new sub-agent with a stricter prompt.
 4. Write the description into the matching `docs/` page, citing the file and commit as
-   "behaviour described from". Add a Mermaid diagram of the behaviour in the same page,
-   because a diagram shows a missing state or branch that prose hides. Pick it by the shape:
-   `stateDiagram-v2` for one thing that reacts to events (an actor, a menu, a quest stage),
-   `sequenceDiagram` for parts that send messages in order, `flowchart` for a procedure
-   with branches. Rules with no time order stay a table. The diagram holds only what the
-   description holds, in OpenSky's own names.
+   "behaviour described from", with the Mermaid diagram the `writing-wiki-docs` skill asks
+   for ("Game behaviour gets a diagram").
 5. Implement from the description, in OpenSky's own names and structure.
 6. Confirm the behaviour in the reference game, driven through `openskycli reference`
    (`driving-the-running-game`), or record in the page that it is unconfirmed.
