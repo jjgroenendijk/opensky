@@ -41,15 +41,21 @@ and a worked example.
 
 A Mermaid diagram beside the prose is preferred, not required. A diagram shows a missing
 state or branch that prose hides, GitHub renders it, and a diff shows each change. Leave it
-out when it adds nothing, such as for a single formula. When you draw one, pick it by the
-shape of the behaviour:
+out when it adds nothing, such as for a single formula. When you draw one, pick it by what the
+information is about:
 
-| The behaviour | Diagram |
+| The information | Diagram |
 | --- | --- |
-| One thing that reacts to events over time: an actor, a menu, a quest stage | `stateDiagram-v2` |
-| Parts that send messages to each other in order | `sequenceDiagram` |
-| A procedure or formula with branches | `flowchart` |
-| Rules from a mix of inputs with no time order | A table, not a diagram |
+| One thing in one state at a time, moved by events: an actor, a menu, a quest stage | `stateDiagram-v2` |
+| Several parts that pass messages or events in a fixed order | `sequenceDiagram` |
+| A procedure, a check list, or a formula with branches | `flowchart TD` |
+| Records and the links between them | `erDiagram` |
+| How a value changes with one input: a falloff, a cap, a ramp | `xychart-beta` |
+| Timers and waits that overlap in time | `gantt` |
+| Rules from a mix of inputs, with no order and no flow | A table, not a diagram |
+
+[mermaid-diagrams.md](mermaid-diagrams.md) has an example of each type, the mistakes to avoid
+when choosing, the syntax traps, and how to check that a diagram renders.
 
 A diagram holds only what the prose holds, in OpenSky's own names.
 
