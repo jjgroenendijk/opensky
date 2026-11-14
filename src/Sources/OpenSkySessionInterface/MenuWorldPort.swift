@@ -14,4 +14,8 @@ public protocol MenuWorldPort: AnyObject, PapyrusMenuBridge {
     func restorePlayerPlace(_ place: SavePlayerPlace)
     @discardableResult func setRace(of actor: ReferenceKey, to race: FormID?) -> Bool
     func teleportPlayer(_ target: AgentTeleportTarget, openingRaceMenu: Bool)
+    /// Starts a new game at a chosen place, as the launcher's Play does.
+    func startNewGame(_ request: AgentNewGameRequest) throws(AgentFailure)
+    /// The last new game started at a chosen place; nil before the first.
+    var lastNewGame: AgentNewGameRequest? { get }
 }

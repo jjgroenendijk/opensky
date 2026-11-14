@@ -19,6 +19,9 @@ nonisolated public final class FakeAgentWorldPort: AgentWorldPort {
     public var teleportJobToSavePlayerPlaceCalls: [SavePlayerPlace] = []
     public var teleportJobToSavePlayerPlaceError: AgentFailure?
     public var teleportJobToSavePlayerPlaceResult: AgentTeleportJob = FakeAgentTeleportJobPort()
+    public var performCalls: [AgentDebugCommand] = []
+    public var performError: AgentFailure?
+    public var performResult: AgentHandling?
 
     public init() {}
 }
@@ -48,5 +51,16 @@ nonisolated extension FakeAgentWorldPort {
             throw teleportJobToSavePlayerPlaceError
         }
         return teleportJobToSavePlayerPlaceResult
+    }
+
+    public func perform(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentHandling {
+        performCalls.append(command)
+        if let performError {
+            throw performError
+        }
+        guard let performResult else {
+            preconditionFailure("FakeAgentWorldPort.perform has no result")
+        }
+        return performResult
     }
 }

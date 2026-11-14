@@ -5,6 +5,7 @@ public import OpenSkySessionInterface
 
 /// Stores each property and records each call to `TitleMenuPort`.
 nonisolated public final class FakeTitleMenuPort: TitleMenuPort {
+    public var closeCallCount = 0
     public var creditsShown = false
     public var isOpen = false
     public var loadCalls: [(slot: String, acceptingChangedContent: Bool)] = []
@@ -17,6 +18,10 @@ nonisolated public final class FakeTitleMenuPort: TitleMenuPort {
 }
 
 nonisolated extension FakeTitleMenuPort {
+    public func close() {
+        closeCallCount += 1
+    }
+
     public func load(_ slot: String, acceptingChangedContent: Bool) {
         loadCalls.append((slot: slot, acceptingChangedContent: acceptingChangedContent))
     }

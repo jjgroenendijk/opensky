@@ -5,6 +5,7 @@ import AppKit
 import MetalKit
 import OpenSkyActorPresentation
 import OpenSkyAgentAdapters
+import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyCombat
@@ -58,11 +59,21 @@ extension GameSessionScope {
         if let continueSlot = launch.continueSlot {
             loadingWorld.coverSessionStart()
             titleMenu.load(continueSlot)
-        } else if launch.launchStart != .normal {
-            menuWorld.teleports.startPlayer(at: launch.launchStart)
+        } else if let newGame = launch.newGame {
+            startNewGame(newGame)
         } else if launch.startsAtTitleScreen || playerSettings.store.bool(.startAtTitleScreen) {
             openTitleScreen()
         } else {
+            loadingWorld.coverSessionStart()
+        }
+    }
+
+    /// A start the load order lacks leaves the player in the world, with the reason shown.
+    private func startNewGame(_ newGame: LaunchNewGame) {
+        do {
+            try menuWorld.newGame.startNewGame(newGame)
+        } catch {
+            hud.showNotification("New game: \(error.message)")
             loadingWorld.coverSessionStart()
         }
     }

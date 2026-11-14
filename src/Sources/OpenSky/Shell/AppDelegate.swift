@@ -102,7 +102,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func makeGameWindow(atTitleScreen: Bool) -> NSWindow {
         let game = makeGame()
         game.startsAtTitleScreen = atTitleScreen
-        game.launchStart = pendingStart
+        game.newGame = pendingStart == .normal
+            ? nil : LaunchPreferences.savedNewGame(at: pendingStart)
         game.continueSlot = pendingContinueSlot
         pendingStart = .normal
         pendingContinueSlot = nil

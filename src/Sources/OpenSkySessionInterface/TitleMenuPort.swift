@@ -2,6 +2,7 @@ public import OpenSkyMenusInterface
 
 /// What the world adapters use of `TitleMenuCoordinator`.
 public protocol TitleMenuPort: AnyObject {
+    func close()
     var creditsShown: Bool { get }
     var isOpen: Bool { get }
     func load(_ slot: String, acceptingChangedContent: Bool)

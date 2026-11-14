@@ -41,6 +41,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case frame
     /// The view in the values the reference game's console takes.
     case view
+    /// The last new game started at a chosen place.
+    case newGame
 
     public static let defaultActorRadius: Float = 4096
 
@@ -90,6 +92,7 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "paired": .paired
         case "favor": .favor
         case "impulses": .impulses
+        case "newgame": .newGame
         default: nil
         }
     }
@@ -141,6 +144,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case view(AgentViewTarget)
     case setTime(hour: Float)
     case weather(String?)
+    /// Starts a new game at a chosen place, as the launcher's Play does.
+    case newGame(AgentNewGameRequest)
     case setActorValue(reference: String, name: String, value: Float)
     case modActorValue(reference: String, name: String, delta: Float)
     /// `equip` then equips the item on the player, as `EquipItem` does.
@@ -228,6 +233,7 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "view": try .view(AgentViewTarget.parse(args))
         case "time": try .setTime(hour: parseHour(args))
         case "weather": try .weather(args.optionalString("id"))
+        case "newgame": try .newGame(.parse(args))
         case "av": try parseActorValue(args)
         case "item": try parseItem(args)
         case "quest":

@@ -28,7 +28,12 @@ The app opens on the launcher. The launcher holds:
   the Cmd+, window too.
   - Launch puts Play first, with one line that says what Play will do. Launch options hold
     "Resume latest save", "Skip main menu", and "Full screen"; New game holds where a new
-    game starts and the Survival Mode choice. Game files shows the game folder and only the
+    game starts and the Survival Mode choice. A start is the main menu, a place from a
+    searchable list of the install's named interiors and map markers, a cell editor ID,
+    or a grid cell. A place start also sets the hour, the weather, the story state, the
+    starting items, and whether the race menu opens
+    ([new game at a chosen place](/engine/main-menu.md#new-game-at-a-chosen-place)).
+    Game files shows the game folder and only the
     asset optimisation state; each row opens Settings or the Asset Optimisation page.
   - Settings holds the game folder, the install check, plugins.txt, the string-table
     language, the Skyrim saves folder, and, under "Show details", the

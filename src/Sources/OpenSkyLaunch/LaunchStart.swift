@@ -1,5 +1,5 @@
-// Where a Play session starts: the normal start, a cell by name, or a grid cell
-// in a worldspace. The launcher validates the choice and remembers it.
+// Where a Play session starts: the normal start, a cell by name, a grid cell
+// in a worldspace, or a map marker. The launcher validates the choice and remembers it.
 
 public import Foundation
 public import OpenSkyGameData
@@ -11,14 +11,24 @@ nonisolated public enum LaunchStart: Equatable, Sendable {
     case cell(String)
     /// An exterior cell by its grid coordinates.
     case exterior(worldspace: String, x: Int32, y: Int32)
+    /// A map marker: its worldspace, and its reference as a plugin name and an object ID.
+    case marker(worldspace: String, plugin: String, objectID: UInt32)
 
-    /// `normal`, `cell:WhiterunBanneredMare`, or `exterior:Tamriel:6:-2`.
+    /// `normal`, `cell:WhiterunBanneredMare`, `exterior:Tamriel:6:-2`, or
+    /// `marker:Tamriel:Skyrim.esm:01A2B3`.
     public var storedValue: String {
         switch self {
         case .normal: "normal"
         case let .cell(editorID): "cell:\(editorID)"
         case let .exterior(worldspace, x, y): "exterior:\(worldspace):\(x):\(y)"
+        case let .marker(worldspace, plugin, objectID):
+            "marker:\(worldspace):\(plugin):" + Self.hex(objectID)
         }
+    }
+
+    static func hex(_ objectID: UInt32) -> String {
+        let digits = String(objectID, radix: 16, uppercase: true)
+        return String(repeating: "0", count: max(0, 6 - digits.count)) + digits
     }
 
     /// Nil for text this version cannot read, so a bad saved value starts normally.
@@ -41,6 +51,12 @@ nonisolated public enum LaunchStart: Equatable, Sendable {
             )
             guard case let .success(start) = form.validate() else { return nil }
             self = start
+        case ("marker", 4):
+            guard
+                LaunchStartForm.isEditorID(parts[1]), !parts[2].isEmpty,
+                let objectID = UInt32(parts[3], radix: 16), objectID <= 0xFFFFFF
+            else { return nil }
+            self = .marker(worldspace: parts[1], plugin: parts[2], objectID: objectID)
         default:
             return nil
         }
@@ -51,6 +67,8 @@ nonisolated public enum LaunchStart: Equatable, Sendable {
 nonisolated public struct LaunchStartForm: Equatable, Sendable {
     public enum Kind: Int, CaseIterable, Sendable {
         case normal
+        /// A place picked from the list the install gives.
+        case place
         case cell
         case exterior
     }
@@ -63,19 +81,28 @@ nonisolated public struct LaunchStartForm: Equatable, Sendable {
     public var worldspace: String
     public var x: String
     public var y: String
+    /// The place picked from the list; nil until one is picked.
+    public var place: LaunchStart?
 
     public init(
         kind: Kind = .normal, cell: String = "", worldspace: String = "Tamriel",
-        x: String = "", y: String = ""
+        x: String = "", y: String = "", place: LaunchStart? = nil
     ) {
         self.kind = kind
         self.cell = cell
         self.worldspace = worldspace
         self.x = x
         self.y = y
+        self.place = place
     }
 
-    public init(_ start: LaunchStart) {
+    /// - Parameter fromList: the start was picked from the place list, so the form
+    ///   shows the list and not the typed fields.
+    public init(_ start: LaunchStart, fromList: Bool = false) {
+        if fromList, start != .normal {
+            self.init(kind: .place, place: start)
+            return
+        }
         switch start {
         case .normal:
             self.init()
@@ -83,6 +110,8 @@ nonisolated public struct LaunchStartForm: Equatable, Sendable {
             self.init(kind: .cell, cell: editorID)
         case let .exterior(worldspace, x, y):
             self.init(kind: .exterior, worldspace: worldspace, x: String(x), y: String(y))
+        case .marker:
+            self.init(kind: .place, place: start)
         }
     }
 
@@ -107,7 +136,14 @@ nonisolated public struct LaunchStartForm: Equatable, Sendable {
             guard let gridX = coordinate(x) else { return .failure(.badCoordinate("X")) }
             guard let gridY = coordinate(y) else { return .failure(.badCoordinate("Y")) }
             return .success(.exterior(worldspace: name, x: gridX, y: gridY))
+        case .place:
+            guard let place else { return .failure(.noPlace) }
+            return .success(place)
         }
+    }
+
+    static func isEditorID(_ text: String) -> Bool {
+        !text.isEmpty && text.unicodeScalars.allSatisfy(isEditorIDScalar)
     }
 
     private func coordinate(_ text: String) -> Int32? {
@@ -128,6 +164,9 @@ nonisolated public enum LaunchStartProblem: Error, Equatable, Sendable {
     case emptyWorldspace
     case badWorldspaceName
     case badCoordinate(String)
+    case noPlace
+    /// The saved place is not in the load order any more.
+    case placeMissing(String)
 
     public var reason: String {
         switch self {
@@ -142,6 +181,10 @@ nonisolated public enum LaunchStartProblem: Error, Equatable, Sendable {
         case let .badCoordinate(axis):
             "\(axis) must be a whole number from \(LaunchStartForm.gridRange.lowerBound) "
                 + "to \(LaunchStartForm.gridRange.upperBound)"
+        case .noPlace:
+            "Choose a place from the list"
+        case let .placeMissing(name):
+            "\(name) is not in the load order any more; choose another place"
         }
     }
 }

@@ -64,7 +64,7 @@ extension LaunchPageViewController {
             resumesLatestSave: resumeControl.state == .on,
             skipsMainMenu: skipMainMenuControl.state == .on,
             newestSlot: continueOffer.isEnabled ? continueOffer.slot : nil,
-            start: (try? startForm.validate().get()) ?? .normal
+            start: validStart ?? .normal
         )
     }
 
@@ -80,12 +80,8 @@ extension LaunchPageViewController {
         case .mainMenu:
             return resumes ? "No save to resume: opens the main menu" : "Opens the main menu"
         case let .newGame(start):
-            let place = switch start {
-            case let .cell(editorID): editorID
-            case let .exterior(worldspace, x, y): "\(worldspace) \(x), \(y)"
-            case .normal: "the main menu"
-            }
-            return (resumes ? "No save to resume: " : "") + "Starts a new game in \(place)"
+            return (resumes ? "No save to resume: " : "")
+                + "Starts a new game in \(placeName(of: start))"
         }
     }
 

@@ -1,6 +1,7 @@
 public import Foundation
 public import OpenSkyAgentControl
 public import OpenSkyFormatsESM
+public import OpenSkyLaunch
 public import OpenSkyMenus
 
 /// What the parts of `MenuWorldAdapter` share between frames.
@@ -15,6 +16,10 @@ public final class MenuPartState {
     public var newGameTeleport: AgentWait?
     /// A chosen test cell opens the race menu when the move ends; a quest's move does not.
     public var raceMenuAfterTeleport = false
+    /// What a new game at a chosen place still changes when the move ends.
+    public var arrivalSteps: [AgentDebugCommand] = []
+    /// The last new game started at a chosen place.
+    public var lastNewGame: LaunchNewGame?
     /// The player's race before a script or a magic effect changed it. Not saved.
     public var originalPlayerRace: FormID?
     var startTickerInstalled = false

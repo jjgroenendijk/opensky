@@ -345,7 +345,7 @@ targets += foundation(
 targets += foundation(
     "OpenSkyLaunch",
     dependencies: ["OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData"],
-    tests: ["OpenSkyFormatsCore", "OpenSkyGameData", "OpenSkyFormatsTesting"]
+    tests: ["OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyFormatsTesting"]
 )
 // The Windows reference game: its prefix, launch, batch file, and version check
 // (docs/tools/reference-game.md). Developer tooling; the app shows it only once set up.
@@ -1466,6 +1466,7 @@ targets += composition(
         "OpenSkyActorsInterface", "OpenSkyCombatInterface", "OpenSkyConditions", "OpenSkyCrime",
         "OpenSkyCrimeInterface", "OpenSkyDialogue", "OpenSkyDialogueInterface",
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsTesting", "OpenSkyGameData",
+        "OpenSkyMenusInterface",
         "OpenSkyPhysics", "OpenSkyQuests", "OpenSkyQuestsInterface", "OpenSkyRendering",
         "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkySessionTesting",
         "OpenSkyWorldInterface", "OpenSkyWorldState"

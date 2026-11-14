@@ -29,7 +29,7 @@ final class GameViewController: NSViewController, GameWindowContent {
     /// Set by the launch mode; the player setting can also ask for it.
     var startsAtTitleScreen = false
     /// Where Play starts, from the launcher. Ignored when `continueSlot` is set.
-    var launchStart = LaunchStart.normal
+    var newGame: LaunchNewGame?
     /// The save the launcher's Continue loads.
     var continueSlot: String?
 
@@ -212,7 +212,7 @@ final class GameViewController: NSViewController, GameWindowContent {
             soundMixTimings: soundMixTimings,
             launch: GameLaunchChoice(
                 startsAtTitleScreen: startsAtTitleScreen,
-                launchStart: launchStart,
+                newGame: newGame,
                 continueSlot: continueSlot
             ),
             dataRoot: dataRoot

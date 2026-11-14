@@ -535,4 +535,7 @@ awk '/^--- pex MQ101QuestScript/{f=1;next} /^--- /{f=0} f' "$log" | grep -q 'Sta
 run "load-pass whiterun" load-pass --scene whiterun
 grep -Eq '^1[[:space:]]cold[[:space:]]' "$log" || fail "load-pass printed no cold pass"
 
+run "places (search finds a map marker)" places --search riverwood --limit 5
+grep -Eq '^marker:[A-Za-z0-9_]+:' "$log" || fail "places printed no map marker"
+
 echo "[INFO] probe passed — full output in $log"

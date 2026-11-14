@@ -11,7 +11,8 @@ nonisolated public struct MapMarkerEntry: Equatable, Sendable {
     public let marker: MapMarker
     public let name: LString?
     public let position: SIMD3<Float>
-    let sourcePlugin: String
+    /// The plugin whose string tables hold `name`.
+    public let sourcePlugin: String
 }
 
 nonisolated public struct MapMarkerIndex: Sendable {
@@ -41,6 +42,15 @@ nonisolated public struct MapMarkerIndex: Sendable {
 
     var count: Int {
         entries.count
+    }
+
+    /// Every marker, ordered by reference identity.
+    public var all: [MapMarkerEntry] {
+        entries.values.sorted(by: Self.precedes)
+    }
+
+    public func marker(_ reference: ResolvedFormID) -> MapMarkerEntry? {
+        entries[reference]
     }
 
     /// Markers of one worldspace, ordered by reference identity.

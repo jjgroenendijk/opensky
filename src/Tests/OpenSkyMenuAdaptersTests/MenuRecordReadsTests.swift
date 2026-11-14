@@ -44,11 +44,13 @@ struct MenuRecordReadsTests {
         #expect(menus().scriptMenus.leveledBase(of: Self.actor, base: FormID(0x40)) == FormID(0x40))
     }
 
-    @Test func aFailedMoveLiftsItsCoverOnTheClock() {
+    @Test func aFailedMoveLiftsItsCoverOnTheClock() throws {
         host.fakeAgentWorld.teleportJobToAgentTeleportTargetError = AgentFailure(
             .invalidArgument, "no cell"
         )
-        menus(at: 7).teleports.startPlayer(at: .cell("NoSuchCell"))
+        try menus(at: 7).newGame.startNewGame(
+            LaunchNewGame(start: .cell("NoSuchCell"), opensRaceMenu: false)
+        )
         #expect(host.fakeLoadingScreens.beginLoadCalls == [7])
         #expect(host.fakeLoadingScreens.loadFinishedCalls == [7])
         #expect(host.fakeHud.showNotificationCalls == ["Move: no cell"])

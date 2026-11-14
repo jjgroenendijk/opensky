@@ -5,6 +5,7 @@ public import OpenSkyDialogueInterface
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 public import OpenSkyQuestsInterface
 public import OpenSkySessionInterface
 public import OpenSkyWorldState
@@ -28,6 +29,8 @@ nonisolated public final class FakeStoryWorldPort: StoryWorldPort {
     public var speakCalls: [SpeakCall] = []
     public var startOpeningQuestCallCount = 0
     public var startOpeningQuestResult = false
+    public var skipOpeningQuestCalls: [OpeningSkip.Side] = []
+    public var skipOpeningQuestResult = false
     public var voicePathsCalls: [(info: FormID, speaker: ReferenceKey)] = []
     public var voicePathsResult: [String] = []
     public var sendStoryEventCalls: [StoryEventData] = []
@@ -152,6 +155,12 @@ nonisolated extension FakeStoryWorldPort {
     public func startOpeningQuest() -> Bool {
         startOpeningQuestCallCount += 1
         return startOpeningQuestResult
+    }
+
+    @discardableResult
+    public func skipOpeningQuest(side: OpeningSkip.Side) -> Bool {
+        skipOpeningQuestCalls.append(side)
+        return skipOpeningQuestResult
     }
 
     public func voicePaths(of info: FormID, speaker: ReferenceKey) -> [String] {

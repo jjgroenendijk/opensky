@@ -3,6 +3,7 @@ public import OpenSkyDialogueInterface
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 public import OpenSkyQuestsInterface
 public import OpenSkyScriptingInterface
 public import OpenSkyWorldState
@@ -29,5 +30,8 @@ public protocol StoryWorldPort: AnyObject, PapyrusStoryBridge {
     var scenes: any ScenePort { get }
     func speak(info id: FormID, speaker: ReferenceKey, lookAt: ReferenceKey?, seconds: Float)
     @discardableResult func startOpeningQuest() -> Bool
+    /// Leaves the world as it is after the opening, without playing it. False when
+    /// a quest is missing or a stage did not run.
+    @discardableResult func skipOpeningQuest(side: OpeningSkip.Side) -> Bool
     func voicePaths(of info: FormID, speaker: ReferenceKey) -> [String]
 }

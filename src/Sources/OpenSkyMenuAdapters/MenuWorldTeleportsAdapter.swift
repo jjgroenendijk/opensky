@@ -8,7 +8,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
-public import OpenSkyLaunch
+import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkyMagicInterface
 import OpenSkyMenus
@@ -51,19 +51,6 @@ extension MenuWorldTeleportsAdapter {
         }
     }
 
-    /// A launcher start option: the player moves there behind the loading screen,
-    /// with no new game and no race menu.
-    public func startPlayer(at start: LaunchStart) {
-        let target: AgentTeleportTarget
-        switch start {
-        case .normal: return
-        case let .cell(editorID): target = .cell(editorID)
-        case let .exterior(worldspace, x, y): target = .grid(x: x, y: y, worldspace: worldspace)
-        }
-        state.coverNextTeleport = true
-        teleportPlayer(target, openingRaceMenu: false)
-    }
-
     /// A load puts the player back where the save was made, behind the loading screen.
     public func restorePlayerPlace(_ place: SavePlayerPlace) {
         state.coverNextTeleport = true
@@ -97,10 +84,27 @@ extension MenuWorldTeleportsAdapter {
         } catch {
             game.hud.showNotification("Move: \(error.message)")
             liftTeleportCover(at: state.now().timeIntervalSinceReferenceDate)
-            openRaceMenuIfAsked()
+            finishArrival()
             return
         }
         installStartTicker()
+    }
+
+    /// One console-style change of a new game; a refusal shows as a notification.
+    func run(_ command: AgentDebugCommand) {
+        do {
+            _ = try game.agentWorld.perform(command)
+        } catch {
+            game.hud.showNotification("New game: \(error.message)")
+        }
+    }
+
+    /// What a new game asked for on arrival, then the race menu.
+    private func finishArrival() {
+        let steps = state.arrivalSteps
+        state.arrivalSteps = []
+        steps.forEach(run)
+        openRaceMenuIfAsked()
     }
 
     private func installStartTicker() {
@@ -147,7 +151,7 @@ extension MenuWorldTeleportsAdapter {
             game.hud.showNotification("Move: \(error.message)")
         }
         liftTeleportCover(at: now)
-        openRaceMenuIfAsked()
+        finishArrival()
     }
 
     /// A new or loaded game is played, so the player walks rather than flies.

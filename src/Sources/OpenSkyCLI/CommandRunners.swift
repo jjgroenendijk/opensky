@@ -367,3 +367,9 @@ extension LoadPassArguments: CLIRunnable {
         try await LoadPassCommand.run(context: context(), arguments: self)
     }
 }
+
+extension PlacesArguments: CLIRunnable {
+    func execute() throws {
+        try PlacesCommand.run(context: context(), arguments: self)
+    }
+}

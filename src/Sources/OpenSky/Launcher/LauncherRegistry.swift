@@ -2,6 +2,7 @@
 // `LauncherRegistry`.
 
 import AppKit
+import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyLoading
@@ -58,8 +59,53 @@ final class LauncherContext {
         store: AssetOptimisationPageViewController.savedSettings(), environment: .live
     )
 
+    /// The places of the install; nil until a load has ended well.
+    var startPlaces: StartPlaceList?
+    var onStartPlacesChange: () -> Void = {}
+    private var placesLoad: Task<Void, Never>?
+    private var placesFolder: String?
+    nonisolated private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky", category: "Launcher"
+    )
+
+    var isLoadingStartPlaces: Bool {
+        placesLoad != nil
+    }
+
     init(actions: (any LauncherActions)?) {
         self.actions = actions
+    }
+
+    /// Reads the places once per game folder, off the main actor. A test host has
+    /// no install, so a test sets `startPlaces` itself.
+    func loadStartPlaces() {
+        guard
+            !GameDataLocator.isRunningInTestHost, let root = try? GameDataLocator.locate()
+        else { return }
+        let folder = root.installURL.path(percentEncoded: false)
+        guard folder != placesFolder else { return }
+        placesFolder = folder
+        placesLoad?.cancel()
+        startPlaces = nil
+        placesLoad = Task { [weak self] in
+            let list = await Self.readStartPlaces(root: root)
+            guard !Task.isCancelled, let self else { return }
+            startPlaces = list
+            placesLoad = nil
+            onStartPlacesChange()
+        }
+        onStartPlacesChange()
+    }
+
+    @concurrent
+    nonisolated private static func readStartPlaces(root: GameDataRoot) async -> StartPlaceList? {
+        do {
+            return try StartPlaceList.load(root: root)
+        } catch {
+            let reason = String(describing: error)
+            logger.error("[ERROR] the place list did not load: \(reason, privacy: .public)")
+            return nil
+        }
     }
 }
 

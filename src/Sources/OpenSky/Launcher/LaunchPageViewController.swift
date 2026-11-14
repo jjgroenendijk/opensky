@@ -38,7 +38,10 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     lazy var startReasonLabel = layout.line("LaunchStartReasonStatsLabel")
     lazy var startCellRow = layout.row("Cell", startCellField)
     lazy var startGridRow = layout.row("Worldspace and grid cell", makeGridFields())
-    var startForm = LaunchStartForm(LaunchPreferences.savedStart())
+    var startForm = LaunchPageViewController.savedStartForm()
+    let placeButton = LaunchLinkButton()
+    lazy var startPlaceRow = layout.row("Place", placeButton)
+    lazy var startOptions = LaunchStartOptionsPanel(layout: layout)
     let survivalModeControl = NSButton(
         checkboxWithTitle: "Survival Mode", target: nil, action: nil
     )
@@ -83,6 +86,9 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         loadPanel.isHidden = true
         loadPanel.onCancel = { [weak self] in self?.context.actions?.cancelLoad() }
         configureStartControls()
+        configurePlaceControls()
+        startOptions.onChange = { [weak self] in self?.refreshStart() }
+        startOptions.refreshWeathers(from: context.startPlaces)
         view = layout.makeView(title: "OpenSky", groups: [
             playRow,
             loadPanel,
@@ -133,13 +139,14 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
             colour: status.isFound ? LauncherStyle.textDim : LauncherStyle.warning
         )
         folderButton.toolTip = status.isFound ? status.path : status.note
+        context.loadStartPlaces()
         refreshPlay()
     }
 
     /// Play needs the game folder and, for a new game, a valid start.
     func refreshPlay() {
         let isFound = GameFolderStatus().isFound
-        let startIsValid = (try? startForm.validate().get()) != nil
+        let startIsValid = validStart != nil && startOptions.problem == nil
         let resumes = if case .resume = launchPlan {
             true
         } else {
@@ -209,6 +216,13 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
 
     @objc private func play() {
         context.actions?.start(launchPlan)
+    }
+
+    /// A saved start that is one of the places used last was picked from the list.
+    static func savedStartForm() -> LaunchStartForm {
+        let start = LaunchPreferences.savedStart()
+        let recent = LaunchPreferences.savedRecentPlaces().contains { $0.start == start }
+        return LaunchStartForm(start, fromList: recent)
     }
 
     @objc private func openAssetOptimisation() {

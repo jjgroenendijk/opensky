@@ -15,7 +15,7 @@ import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyMenusInterface
+public import OpenSkyMenusInterface
 public import OpenSkyQuests
 public import OpenSkyQuestsInterface
 import OpenSkyRendering
@@ -95,6 +95,10 @@ public final class StoryWorldAdapter {
     @discardableResult
     public func startOpeningQuest() -> Bool {
         quests.startOpeningQuest()
+    }
+
+    public func skipOpeningQuest(side: OpeningSkip.Side) -> Bool {
+        quests.skipOpeningQuest(side: side)
     }
 
     /// Starts every listed quest, then attaches scripts once and runs the start-up stages.
@@ -207,6 +211,35 @@ final class StoryQuestStarts {
             return true
         } catch {
             game.hud.showNotification("New game: \(NewGameStart.openingQuest) did not start")
+            return false
+        }
+    }
+
+    /// Starts the opening quest without its start-up stage, which would move the
+    /// player, then sets the stages its quick start entry sets.
+    @discardableResult
+    func skipOpeningQuest(side: OpeningSkip.Side) -> Bool {
+        guard
+            let runtime = questRuntime, let bridge = game.scripts.bridge,
+            let opening = runtime.quests.formID(editorID: NewGameStart.openingQuest),
+            let openingKey = runtime.quests.key(for: opening),
+            let companion = runtime.quests.formID(editorID: side.quest),
+            let companionKey = runtime.quests.key(for: companion)
+        else {
+            game.hud.showNotification("New game: the opening quests are missing")
+            return false
+        }
+        do {
+            try runtime.startQuest(opening, event: nil)
+            bridge.attachScripts(ofQuest: opening)
+            _ = try bridge.setQuestStage(OpeningSkip.companionStage, for: companionKey)
+            for stage in OpeningSkip.openingStages {
+                _ = try bridge.setQuestStage(stage, for: openingKey)
+            }
+            try bridge.stopQuest(for: openingKey)
+            return true
+        } catch {
+            game.hud.showNotification("New game: the opening could not be skipped")
             return false
         }
     }

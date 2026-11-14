@@ -16,7 +16,7 @@ import Testing
 
 @MainActor
 struct LauncherTests {
-    private final class RecordingActions: LauncherActions {
+    final class RecordingActions: LauncherActions {
         var plays: [LaunchStart] = []
         var continued: [String] = []
         var folderChanges = 0

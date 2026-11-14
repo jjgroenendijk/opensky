@@ -5,6 +5,7 @@ import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyMenusInterface
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
@@ -36,6 +37,13 @@ struct StoryWorldTests {
         #expect(throws: (any Error).self) { try adapter.startQuest(FormID(0x90), event: nil) }
         adapter.questFailed(FormID(0x90))
         #expect(host.fakeHud.showNotificationCalls.count == 1)
+    }
+
+    @Test func withoutQuestsTheOpeningCannotBeSkipped() {
+        #expect(!adapter.skipOpeningQuest(side: .hadvar))
+        #expect(host.fakeHud.showNotificationCalls == ["New game: the opening quests are missing"])
+        #expect(OpeningSkip.Side.hadvar.quest != OpeningSkip.Side.ralof.quest)
+        #expect(OpeningSkip.openingStages.last == 1000)
     }
 
     @Test func theSocialTickRunsOncePerFrame() {

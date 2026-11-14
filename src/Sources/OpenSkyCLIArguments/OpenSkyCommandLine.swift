@@ -34,6 +34,7 @@ public struct OpenSkyCommandLine: ParsableCommand {
             + "cell, Tamriel (6,-2), unless --worldspace, --x, and --y say otherwise.",
         groupedSubcommands: [
             CommandGroup(name: "Game data", subcommands: [
+                PlacesArguments.self,
                 InstallArguments.self, PluginsArguments.self, RecordArguments.self,
                 GMSTArguments.self, ESSArguments.self, GapsArguments.self
             ]),

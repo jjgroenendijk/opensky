@@ -19,6 +19,9 @@ nonisolated public final class FakeMenuWorldPort: MenuWorldPort {
     public var setRaceCalls: [(actor: ReferenceKey, race: FormID?)] = []
     public var setRaceResult = false
     public var teleportPlayerCalls: [(target: AgentTeleportTarget, openingRaceMenu: Bool)] = []
+    public var startNewGameCalls: [AgentNewGameRequest] = []
+    public var startNewGameError: AgentFailure?
+    public var lastNewGame: AgentNewGameRequest?
     public var showRaceMenuCalls: [Bool] = []
     public var fastTravelCalls: [ReferenceKey] = []
     public var fastTravelResult = false
@@ -106,6 +109,13 @@ nonisolated extension FakeMenuWorldPort {
 
     public func teleportPlayer(_ target: AgentTeleportTarget, openingRaceMenu: Bool) {
         teleportPlayerCalls.append((target: target, openingRaceMenu: openingRaceMenu))
+    }
+
+    public func startNewGame(_ request: AgentNewGameRequest) throws(AgentFailure) {
+        startNewGameCalls.append(request)
+        if let startNewGameError {
+            throw startNewGameError
+        }
     }
 
     public func showRaceMenu(limited: Bool) {

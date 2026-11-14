@@ -172,6 +172,10 @@ extension AgentHost {
         fakeMenuScreensWorld
     }
 
+    var menuWorld: any MenuWorldPort {
+        fakeMenuWorld
+    }
+
     var messages: any MessageCoordinatorPort {
         fakeMessages
     }

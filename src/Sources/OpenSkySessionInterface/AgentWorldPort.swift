@@ -10,4 +10,6 @@ public protocol AgentWorldPort: AnyObject {
     func viewJob(_ target: AgentViewTarget) throws(AgentFailure) -> AgentTeleportJob
     func teleportJob(to target: AgentTeleportTarget) throws(AgentFailure) -> AgentTeleportJob
     func teleportJob(to place: SavePlayerPlace) throws(AgentFailure) -> AgentTeleportJob
+    /// One console-style change, as `openskycli game debug` makes it.
+    func perform(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentHandling
 }
