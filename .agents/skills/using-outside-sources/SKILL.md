@@ -77,8 +77,8 @@ with the main session's worktree.
 3. Check the reply against the same list. A reply that breaks it is thrown away. Do not
    carry any part of it into the repo, and start a new sub-agent with a stricter prompt.
 4. Write the description into the matching `docs/` page, citing the file and commit as
-   "behaviour described from", with the Mermaid diagram the `writing-wiki-docs` skill asks
-   for ("Game behaviour gets a diagram").
+   "behaviour described from". Document every behaviour the read returns, preferably with a
+   diagram (`writing-wiki-docs`, "Game behaviour read from the game").
 5. Implement from the description, in OpenSky's own names and structure.
 6. Confirm the behaviour in the reference game, driven through `openskycli reference`
    (`driving-the-running-game`), or record in the page that it is unconfirmed.
