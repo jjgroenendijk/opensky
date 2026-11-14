@@ -24,7 +24,8 @@ resets when the time away is at least:
 | The cell's location is cleared | `iHoursToRespawnCellCleared` | 720 (30 days) |
 
 A location is cleared when a script called `SetCleared` on it (the `cleared` flag of
-[script state](/engine/papyrus-script-state.md)). The location is the cell's `XLCN`.
+[script state](/engine/papyrus-script-state.md)). The location is the cell's `XLCN`. The game
+also clears a location when its bosses die ([cleared locations](/engine/cleared-locations.md)).
 
 A cell does not reset when its encounter zone (`CELL XEZN`) has the ECZN "Never Resets" flag
 (`DATA` flags bit 0x01). An exterior cell with no zone of its own uses the worldspace's

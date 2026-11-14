@@ -52,6 +52,41 @@ The keyword rule is OpenSky's reading of the record.
 A package reserves its seat when its procedure starts, before the actor walks there. Leaving
 the package frees the seat, even when the actor never sat down.
 
+## Arriving at the seat
+
+In the game, a walk counts as arrived by the kind of goal it walks to. OpenSky does not build
+this yet. It uses one fixed arrival distance for every walk, and snaps the actor to the marker's
+heading.
+
+- A furniture reference: the arrival radius is the larger of the game's furniture radius (25
+  units by default) and the radius the walk asks for.
+- An X marker or a heading marker: its own radius and angle settings.
+- Any other reference: the default radius and angle.
+- Arrival also needs the height difference to be within a separate limit.
+- A walk to a furniture entry marker asks to end facing the marker's heading. The allowed
+  difference is the game's furniture angle, 1 degree by default. The entry clip starts after
+  that.
+
+```mermaid
+flowchart TD
+    W[Walk toward the goal] --> K{Goal kind}
+    K -- furniture --> F[radius = max of furniture radius and asked radius]
+    K -- X marker or heading marker --> M[marker radius and angle]
+    K -- other --> D[default radius and angle]
+    F --> R{Within radius<br/>and height limit?}
+    M --> R
+    D --> R
+    R -- no --> W
+    R -- yes --> E{Entry marker goal?}
+    E -- no --> Done[Arrived]
+    E -- yes --> T{Heading within<br/>the furniture angle?}
+    T -- no --> Turn[Turn toward the marker heading] --> T
+    T -- yes --> Clip[Play the entry clip]
+```
+
+Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. It is not yet confirmed
+in the reference game.
+
 ## Sitting down and standing up
 
 On arrival the actor's root is set below the seat's point, at the furniture's own height,

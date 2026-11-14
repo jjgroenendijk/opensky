@@ -104,6 +104,47 @@ one step snaps to the goal.
 Source: a clean-room read of `SkyrimSE.exe` on 2026-11-07. These rules never set
 `CombatShout`, so OpenSky does not either.
 
+### Emotion while speaking
+
+In the game, a speaker's emotion value moves at random around the line's value while it talks.
+OpenSky does not build this yet. It holds one value for the whole line.
+
+- Each actor keeps a current emotion value (0 to 100), a base value, and a change timer.
+- When a line starts, the actor's emotion type and value come from the response's `TRDT` emotion
+  type and value. That value is also the base value. Combat lines do the same. Starting dialogue
+  also resets the timer.
+- When the current value is at the neutral listening value (50 by default) and the timer has run
+  out, a new value is rolled:
+  - low = base − base × the minimum change percent / 100, and high = base + base × the maximum
+    change percent / 100. Both percents are 30 by default. Each part is rounded down to a whole
+    number.
+  - If low is below 0, low becomes 0 and high is not clamped. Otherwise high is clamped to 100.
+  - The new value = low + a random whole number from 0 up to, but not including, high − low.
+  - The timer is set to a random time between the game's minimum and maximum, 0 and 1.5 seconds
+    by default.
+- While the actor does not speak, a value above the neutral value falls toward it by a fixed step
+  each update, 10 by default.
+- The face shows the expression of the emotion type (types 1 to 7) at strength = value / 100. A
+  neutral line takes its strength from the game's mood face value and the `Mood` actor value.
+- The Papyrus functions `GetEmotion` and `GetEmotionValue` return the current type and value.
+
+Example: a line with emotion value 60 gives low = 60 − 18 = 42 and high = 60 + 18 = 78. Each roll
+picks a value from 42 to 77.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Quiet
+    Quiet --> Speaking: line starts / type and value from TRDT, base = value, reset timer
+    Speaking --> Speaking: value at neutral and timer done / roll value in [low, high), roll timer
+    Speaking --> Speaking: update / timer -= frame time
+    Speaking --> Settling: line ends
+    Settling --> Settling: value above neutral / value -= step
+    Settling --> Quiet: value at or below neutral
+```
+
+Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. It is not yet confirmed
+in the reference game.
+
 ### Blinks
 
 A blink closes `BlinkLeft` and `BlinkRight` together over `fBlinkDownTime` (0.04 seconds) and
