@@ -136,7 +136,7 @@ static inline float3
 postOccludeUnderFog(float3 color, float occlusion, float3 world, constant FrameUniforms &frame)
 {
     float2 fog = fogAt(world, frame);
-    float3 fogPart = mix(frame.fogNearColor, frame.fogFarColor, fog.x) * fog.y;
+    float3 fogPart = mix(frame.fogNearColor, frame.fogFarColor, fog.y) * fog.y;
     return toLinear(fogPart + max(toGamma(color) - fogPart, 0.0) * occlusion);
 }
 
@@ -177,21 +177,27 @@ static inline float postValueNoise(float3 position)
     return mix(bottom, top, t.z);
 }
 
-// VOLI density: drifting noise thins the air by up to the density share.
-static inline float postAirDensity(float3 world, float time, constant PostEffectUniforms &post)
+// VOLI density: 1 where the noise is full, thinner by up to the density share elsewhere.
+// The noise fades to a quarter over 150 units above the camera.
+static inline float
+postAirDensity(float3 world, float3 camera, float time, constant PostEffectUniforms &post)
 {
     float4 density = post.volumetricDensity;
     if (density.x <= 0.0) {
         return 1.0;
     }
     float3 moved = world - float3(density.z, 0.0, -density.w) * time;
-    return 1.0 - density.x * postValueNoise(moved / max(density.y, 1.0));
+    float noise = postValueNoise(moved / max(density.y, 1.0));
+    float fall = 1.0 - 0.75 * smoothstep(0.0, 1.0, saturate((world.z - camera.z) / 150.0));
+    return 1.0 + density.x * (noise * fall - 1.0);
 }
 
-// Volumetric light: the ray from the camera to the pixel steps through the sun cascades.
-// The share of lit steps, a forward-scattering phase, and the ray length set how much
-// sun light the air adds.
+// Volumetric light, as the game adds it (docs/rendering/post-effects.md#volumetric-light):
+// the air in front of the pixel is cut into slices that are even in `depth ^ range`. Each
+// slice adds its sun-lit share times its density and the phase. The sum times the intensity
+// is added to the game's colour values, which the scene pass clamped to 1.
 static inline float3 postVolumetricLight(
+    float3 color,
     PostPixel pixel,
     bool sky,
     constant FrameUniforms &frame,
@@ -199,36 +205,33 @@ static inline float3 postVolumetricLight(
     depth2d_array<float> shadowMap,
     sampler compare)
 {
-    if (frame.shadowsEnabled == 0) {
-        return 0.0;
-    }
     float3 toPixel =
         (sky ? postWorldPosition(pixel.uv, 0.5, post) : pixel.world) - frame.cameraPosition;
-    float maximum = post.volumetricLight.z;
-    float reach = sky ? maximum : min(length(toPixel), maximum);
-    float3 direction = normalize(toPixel);
-    // A sky ray leaves the cascades at their edges, which cut hard bands into the sky.
-    float lit = 1.0;
-    if (!sky) {
-        int steps = max(int(post.volumetricLight.y), 1);
-        float offset = postNoise(pixel.pixel);
-        float sum = 0.0;
-        for (int step = 0; step < steps; ++step) {
-            float along = (float(step) + offset) / float(steps) * reach;
-            float3 point = frame.cameraPosition + direction * along;
-            sum += postSunLit(point, frame, shadowMap, compare) *
-                   postAirDensity(point, frame.animationTime, post);
-        }
-        lit = sum / float(steps);
+    float range = length(toPixel);
+    float3 direction = toPixel / max(range, 1.0e-4);
+    float near = post.volumetricPhase.y;
+    float exponent = max(post.volumetricLight.z, 1.0);
+    // The share of all slices that lie in front of the pixel.
+    float front = sky ? 1.0 : pow(saturate(1.0 - near / max(range, near)), exponent);
+    int steps = max(int(post.volumetricLight.y), 1);
+    float offset = postNoise(pixel.pixel);
+    float sum = 0.0;
+    for (int step = 0; step < steps; ++step) {
+        float slice = (float(step) + offset) / float(steps) * front;
+        // The distance of a slice; past the sun cascades the air counts as lit.
+        float along = near / max(1.0 - pow(slice, 1.0 / exponent), 1.0e-5);
+        float3 point = frame.cameraPosition + direction * min(along, 60000.0);
+        float lit = frame.shadowsEnabled == 0 ? 1.0 : postSunLit(point, frame, shadowMap, compare);
+        sum += lit * postAirDensity(point, frame.cameraPosition, frame.animationTime, post);
     }
     float asymmetry = post.volumetricLight.w;
     float cosine = dot(direction, -frame.sunDirection);
-    float forward = (1.0 - asymmetry * asymmetry) /
-                    pow(1.0 + asymmetry * asymmetry - 2.0 * asymmetry * cosine, 1.5);
-    float phase = mix(1.0, forward, post.volumetricPhase.x);
-    float scatter = 1.0 - exp(-reach / maximum);
-    float3 light = toLinear(frame.sunColor * post.volumetricColour.w + post.volumetricColour.rgb);
-    return light * (lit * phase * scatter * post.volumetricLight.x);
+    float forward =
+        (1.0 - asymmetry * asymmetry) / (12.566371 * max(1.0 - asymmetry * cosine, 1.0e-3));
+    float phase = 1.0 + post.volumetricPhase.x * (forward - 1.0);
+    float amount = post.volumetricLight.x * front * phase * sum / float(steps);
+    float3 light = frame.sunColor * post.volumetricColour.w + post.volumetricColour.rgb;
+    return toLinear(min(toGamma(color), 1.0) + light * max(amount, 0.0));
 }
 
 // Where the depth of field is sharp, how far past it the blur grows, and how strong it is.
@@ -418,7 +421,7 @@ static inline float3 postApply(
         color = postOccludeUnderFog(color, occlusion, pixel.world, frame);
     }
     if ((post.effects & PostEffectFlagVolumetricLight) != 0) {
-        color += postVolumetricLight(pixel, sky, frame, post, shadowMap, compare);
+        color = postVolumetricLight(color, pixel, sky, frame, post, shadowMap, compare);
     }
     if ((post.effects & PostEffectFlagLensFlare) != 0) {
         color += postLensFlare(pixel, frame, post, depth);

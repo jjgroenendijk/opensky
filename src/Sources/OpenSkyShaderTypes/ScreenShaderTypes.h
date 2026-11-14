@@ -113,8 +113,13 @@ typedef struct
     vector_float4 grading;
     /// x double-vision strength, y motion blur 0 to 1, zw radial blur centre in UV.
     vector_float4 extra;
-    /// x exposure, y white point (0 is none), z 1 to measure luminance, w unused.
+    /// x unused, y white point (0 is none), z 1 to measure luminance and 2 to tone map too.
     vector_float4 toneMapping;
+    /// The adapted luminance X of each screen quarter: top left, top right, bottom left,
+    /// bottom right. The contrast pivots around it.
+    vector_float4 quarterPivot;
+    /// The exposure Y / X of each screen quarter, in the same order.
+    vector_float4 quarterExposure;
     /// Radial blur: strength, ramp up, start, ramp down.
     vector_float4 radialBlur;
     /// x radial blur down start; yzw unused.
@@ -155,14 +160,15 @@ typedef struct
     vector_float4 projection;
     /// x radius in world units, y unused, z bias, w fade distance.
     vector_float4 ambientOcclusion;
-    /// x strength, y march steps, z reach in world units, w phase asymmetry.
+    /// x VOLI intensity, y march steps, z VOLI sampling range factor, w phase asymmetry.
     vector_float4 volumetricLight;
     /// VOLI: rgb the record colour times its share, w the share of the sun colour.
     vector_float4 volumetricColour;
     /// VOLI density noise: x share, y cell size in world units, z drift and w fall in
     /// world units per second.
     vector_float4 volumetricDensity;
-    /// VOLI: x the share of the forward phase against an even one; yzw unused.
+    /// VOLI: x the share of the forward phase against an even one, y the game's near
+    /// plane in world units; zw unused.
     vector_float4 volumetricPhase;
     /// x strength, y clear distance, z distance where the blur is full, w full blur
     /// radius in pixels.

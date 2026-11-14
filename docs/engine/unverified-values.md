@@ -233,8 +233,9 @@ the detail and the sources it did find.
 | Large reference LOD hidden per block | The game's per-cell rule is not known | [distant LOD](/engine/distant-lod.md#large-references) |
 | Ambient occlusion fade | Fades out between 2,048 and 4,096 units from the camera | [post effects](/rendering/post-effects.md#ambient-occlusion) |
 | Ambient occlusion blur edge | A tap 5 percent nearer or farther than the pixel counts for nothing | [post effects](/rendering/post-effects.md#ambient-occlusion) |
+| Eye adaptation quarters | the four quarter values blend linearly between the quarter centres; checked with capture pairs only | [image space](/rendering/image-space.md#hdr-tone-mapping) |
 | Volumetric light steps | 8, 16, 32 steps by quality | [post effects](/rendering/post-effects.md#volumetric-light) |
-| `VOLI` field scales | strength 0.025 × intensity; reach 102.4 × range; cell 64 × size; drift 4 × wind along X; fall 64 × falling; fallback values for interiors | [post effects](/rendering/post-effects.md#volumetric-light) |
+| `VOLI` field scales | cell 64 × size; drift 4 × wind along X; fall 64 × falling; noise fade over 150 units above the camera; near plane 15; fallback values for interiors | [post effects](/rendering/post-effects.md#volumetric-light) |
 | Depth of field blur | Clear at distance, full at range; `2 + 2 × radius` pixels at 1080 lines, radius 3 without a code; modifier moves toward its value | [post effects](/rendering/post-effects.md#depth-of-field) |
 | `IMGS` `DNAM` blur code | High half of float `2 + 4n`; radius `n / 2`, odd `n` is No Sky | [image spaces](/formats/image-spaces.md#depth-of-field) |
 | Lens flare pattern | 5 ghosts, strength 0.6 times sun alpha and weather Sun Glare, 9 visibility taps | [post effects](/rendering/post-effects.md#lens-flare) |

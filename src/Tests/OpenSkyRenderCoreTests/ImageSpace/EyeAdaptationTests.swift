@@ -48,4 +48,18 @@ struct EyeAdaptationTests {
         #expect(abs(mean - 0.25) < 1e-5)
         #expect(ToneMappingState.meanLuminance(sum: 0, count: 0) == nil)
     }
+
+    @Test func eachScreenQuarterAdaptsOnItsOwn() {
+        var eyes = EyeAdaptationQuarters()
+        #expect(eyes.pivots(fallback: 0.5) == SIMD4(repeating: 0.5))
+        eyes.advance(measured: [0.8, 0.6, 0.1, nil], speed: 3, strength: 3, deltaTime: 0)
+        // A quarter with no sample keeps the fallback; the others take their own mean.
+        #expect(eyes.pivots(fallback: 0.5) == SIMD4(0.8, 0.6, 0.1, 0.5))
+        #expect(eyes.exposures == SIMD4(repeating: 1))
+        eyes.advance(measured: [0.8, 0.6, 0.9, nil], speed: 3, strength: 3, deltaTime: 1 / 30)
+        // Only the quarter whose light changed leaves exposure 1.
+        #expect(eyes.exposures.x == 1 && eyes.exposures.y == 1 && eyes.exposures.z > 1)
+        eyes.reset()
+        #expect(eyes.pivots(fallback: 0.2) == SIMD4(repeating: 0.2))
+    }
 }

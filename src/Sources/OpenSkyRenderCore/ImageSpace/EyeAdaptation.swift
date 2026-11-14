@@ -68,6 +68,42 @@ nonisolated public struct EyeAdaptation: Equatable, Sendable {
     }
 }
 
+/// One eye per screen quarter, as the game adapts: top left, top right, bottom left,
+/// bottom right. The shader blends the four across the screen
+/// (docs/rendering/image-space.md#hdr-tone-mapping).
+nonisolated public struct EyeAdaptationQuarters: Equatable, Sendable {
+    public static let count = 4
+
+    public private(set) var quarters = [EyeAdaptation](repeating: EyeAdaptation(), count: count)
+
+    public init() {}
+
+    /// A quarter with no sample keeps its channels.
+    public mutating func advance(
+        measured: [Float?], speed: Float, strength: Float, deltaTime: Float
+    ) {
+        for (index, value) in measured.prefix(Self.count).enumerated() {
+            guard let value else { continue }
+            quarters[index].advance(
+                measured: value, speed: speed, strength: strength, deltaTime: deltaTime
+            )
+        }
+    }
+
+    public mutating func reset() {
+        quarters = [EyeAdaptation](repeating: EyeAdaptation(), count: Self.count)
+    }
+
+    /// The slow channel X of each quarter; `fallback` where nothing was measured yet.
+    public func pivots(fallback: Float) -> SIMD4<Float> {
+        SIMD4(quarters.map { $0.adaptedLuminance ?? fallback })
+    }
+
+    public var exposures: SIMD4<Float> {
+        SIMD4(quarters.map(\.exposure))
+    }
+}
+
 /// The tone-mapping stage's switch. The eye it adapts lives in the renderer.
 nonisolated public struct ToneMappingState: Equatable, Sendable {
     public var enabled = true

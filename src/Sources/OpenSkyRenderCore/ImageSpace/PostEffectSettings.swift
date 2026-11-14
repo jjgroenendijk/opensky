@@ -60,10 +60,9 @@ nonisolated public struct PostEffectSettings: Equatable, Sendable {
 
     /// How bright the flare ghosts get; unverified.
     public static let lensFlareStrength: Float = 0.6
-    /// How bright the lit air gets for each unit of `VOLI` intensity; unverified.
-    public static let volumetricStrengthPerIntensity: Float = 0.025
-    /// World units the ray reaches for each unit of `VOLI` sampling range; unverified.
-    public static let volumetricReachPerSamplingRange: Float = 102.4
+    /// The near plane of the game's depth buffer, `fNearDistance`, in world units. The
+    /// volumetric slices are even in that buffer's depth raised to the sampling range.
+    public static let volumetricNearPlane: Float = 15
     /// World units of one density noise cell for each unit of `VOLI` density size;
     /// unverified.
     public static let volumetricCellPerDensitySize: Float = 64

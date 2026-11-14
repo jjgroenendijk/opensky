@@ -192,6 +192,8 @@ public final class Renderer: NSObject {
     public var skyCelestial: SkyCelestial?
     /// The exposure the eye has adapted to, fed back from the GPU each frame.
     public var eyeAdaptation = EyeAdaptation()
+    /// The same eye per screen quarter; the grade reads these.
+    public var eyeQuarters = EyeAdaptationQuarters()
     public let precipitation: PrecipitationVolume
     var precipitationEnabled = true
     public var particlesEnabled = true

@@ -65,7 +65,7 @@ nonisolated public enum SurfaceShadingSetting: String, CaseIterable, Sendable {
         case .reflections: "Reflections of the surroundings on metal, glass, and eyes"
         case .parallax: "Height-mapped surfaces and the layer under ice and glass"
         case .vertexColorGamma: "Treat baked vertex colours as gamma values, as the game does"
-        case .baseAmbient: "Add the single ambient colour on top of the six-axis ambient"
+        case .baseAmbient: "Indoors, add the single ambient colour to the six-axis ambient"
         case .hairLighting: "Soft, capped light on hair and highlights along its strands"
         case .sparkle: "Small glints on snow and ice surfaces"
         case .landscapeNoise: "A noise texture that breaks up the colour of distant land"
