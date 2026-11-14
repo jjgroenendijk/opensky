@@ -55,6 +55,7 @@ struct RendererTextureStreamingTests {
     @MainActor
     private static func render(
         texture: any MTLTexture, transform: float4x4 = matrix_identity_float4x4,
+        others: [float4x4] = [],
         prepare: (Renderer) -> Void
     ) throws -> [UInt8] {
         let device = try #require(Self.device)
@@ -71,7 +72,13 @@ struct RendererTextureStreamingTests {
                     model: render, transform: transform,
                     bounds: bounds.transformed(by: transform), referenceFormID: Self.reference
                 )
-            ]),
+            ] + others.map { other in
+                RenderPlacement(
+                    model: render,
+                    transform: other,
+                    bounds: bounds.transformed(by: other)
+                )
+            }),
             camera: camera, shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
         prepare(renderer)
@@ -127,5 +134,20 @@ struct RendererTextureStreamingTests {
         }
         let use = try #require(moved?.nearestUses()[ObjectIdentifier(texture)])
         #expect(use.distance < 1000, "measured at \(use.distance), the baked bounds")
+    }
+
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
+    func theNearestOfSeveralInstancesSetsTheUse() throws {
+        let device = try #require(Self.device)
+        let texture = try TextureLoader(device: device)
+            .texture(ready: Self.ready(), usage: .color, label: "shared")
+        let far = MatrixMath.translation(SIMD3(50000, 0, 0))
+        var shared: Renderer?
+        _ = try Self.render(texture: texture, transform: far, others: [matrix_identity_float4x4]) {
+            shared = $0
+        }
+        let use = try #require(shared?.nearestUses()[ObjectIdentifier(texture)])
+        #expect(use.distance < 1000, "measured at \(use.distance), the far instance")
     }
 }
