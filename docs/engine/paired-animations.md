@@ -88,6 +88,38 @@ An NPC plays kill moves on other NPCs through the same steps. While either actor
 move, it leaves the fight, and any other hit on it deals ten times its damage. A player kill
 move always shows the [kill cam](/engine/kill-cam.md).
 
+### The player as the victim
+
+A clean-room read of `SkyrimSE.exe` 1.7.104.0 found these rules. It is not yet confirmed in the
+reference game.
+
+- A kill move starts when a paired idle whose animation event begins with `pa_Kill` starts. Both
+  actors enter a kill move state, and the victim records the attacker as its partner. A failsafe
+  timer of 10 seconds starts.
+- While the victim is in that state, every hit on it deals ten times its damage. So the player
+  dies from the clip's own hit, not when the clip starts.
+- The kill move end event clears the state and ends the pair.
+- When the player is the victim and the camera is in first person, the game switches to the
+  third-person camera.
+
+```mermaid
+sequenceDiagram
+    participant N as NPC attacker
+    participant P as Player victim
+    participant C as Camera
+    N->>P: paired idle starts (event pa_Kill...)
+    Note over N,P: both in kill move state, 10 s failsafe
+    P->>C: first person? switch to third person
+    N->>P: the clip's hit, damage × 10
+    Note over P: player dies
+    N->>P: kill move end event
+    Note over N,P: state cleared, pair ends
+```
+
+The read did not find whether the program itself lets an NPC pick the player as victim, or a gate
+on the player's health, essential state, difficulty, or a chance. These are most likely conditions
+in the idle data. The read did not find whether the controls lock either.
+
 ## Reaching the mark
 
 Every track is relative to `PairedRoot`, so two actors on the same root line up. The mark is the

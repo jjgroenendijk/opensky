@@ -114,7 +114,7 @@ A clean-room read of `SkyrimSE.exe` 1.7.104.0 (2026-11-06, behaviour only) gave 
   scripts, through `MusicType.Add()`, which OpenSky already runs.
 - `DCMS` plays when a location turns cleared and has the `LocTypeClearable` keyword
   (`DOBJ` `KWDO`). A location is cleared when it has at least one boss reference (`LRTB`)
-  and every boss reference is done.
+  and every boss reference is done ([cleared locations](/engine/cleared-locations.md)).
 - `DTMS` plays only if its `MUSC` has the "Plays One Selection" flag.
 
 ### Discovery music
