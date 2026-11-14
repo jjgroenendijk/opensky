@@ -45,6 +45,9 @@ public final class BenchmarkTourCoordinator {
     private var current: BenchmarkSceneResult?
     private var recorder = BenchmarkSceneRecorder()
     private var clearance = BenchmarkTerrainClearance()
+    /// The measured shot's camera pose per step, lifted once before the first
+    /// measured frame, so the clearance queries cost no measured time.
+    private var measuredPath: [BenchmarkCameraPose] = []
     private var allFrameMS: [Double] = []
     private var allGPUMS: [Double] = []
     private var memory = GPUMemoryTracker()
@@ -265,6 +268,7 @@ extension BenchmarkTourCoordinator {
             requestCapture(scene: scene, world: world)
         }
         sampleMemory(world: world)
+        measuredPath = path(of: scene, origin: settling.origin, world: world)
         signposts.mark("measure")
         phase = .measuring(origin: settling.origin, step: 0)
     }
@@ -286,7 +290,11 @@ extension BenchmarkTourCoordinator {
             finishScene()
             return
         }
-        world.setCamera(pose(of: scene, at: elapsed, origin: origin, world: world))
+        world.setCamera(
+            step < measuredPath.count
+                ? measuredPath[step]
+                : pose(of: scene, at: elapsed, origin: origin, world: world)
+        )
         phase = .measuring(origin: origin, step: step + 1)
     }
 
@@ -296,6 +304,21 @@ extension BenchmarkTourCoordinator {
         let usage = world.gpuMemory()
         recorder.add(memory: usage)
         memory.add(usage)
+    }
+
+    /// Every pose `measure` sets, in step order, from the clearance state the
+    /// warm-up left. The same calls in the same order give the same path.
+    private func path(
+        of scene: BenchmarkScene, origin: SIMD3<Float>, world: any BenchmarkTourWorld
+    ) -> [BenchmarkCameraPose] {
+        var poses: [BenchmarkCameraPose] = []
+        var step = 0
+        while Double(step) * Self.stepSeconds <= scene.shot.seconds {
+            let elapsed = Double(step) * Self.stepSeconds
+            poses.append(pose(of: scene, at: elapsed, origin: origin, world: world))
+            step += 1
+        }
+        return poses
     }
 
     private func pose(

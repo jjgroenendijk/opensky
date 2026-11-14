@@ -29,6 +29,7 @@ private final class FakeTourWorld: BenchmarkTourWorld {
     var screenshots: [URL] = []
     var finished: BenchmarkTourResult?
     var memoryReads = 0
+    var groundQueries = 0
 
     func beginTour(overrides: [PlayerSettingID: Double], passTiming _: Bool) {
         began = overrides
@@ -51,7 +52,8 @@ private final class FakeTourWorld: BenchmarkTourWorld {
     }
 
     func groundHeight(x _: Float, y _: Float) -> Float? {
-        100
+        groundQueries += 1
+        return 100
     }
 
     func isBlocked(_: SIMD3<Float>, radius _: Float) -> Bool {
@@ -172,6 +174,26 @@ struct BenchmarkTourCoordinatorTests {
         let origin = SIMD3<Float>(19855, -7422, 100)
         #expect(world.cameras.contains(shot.pose(at: 0, origin: origin)))
         #expect(world.arrivals.count == 1)
+    }
+
+    @Test func theMeasuredFramesAskNoClearanceQuery() throws {
+        let world = FakeTourWorld()
+        let tour = BenchmarkTourCoordinator(world: world)
+        let request = BenchmarkRequest(sceneIDs: ["whiterun"], loadPasses: false)
+        try tour.start(request, machine: Self.machine)
+        var queriesWhileMeasuring: Set<Int> = []
+        var measuredCameras = 0
+        while tour.isRunning {
+            let cameras = world.cameras.count
+            tour.tick()
+            if case .measuring = tour.phase, world.cameras.count > cameras {
+                queriesWhileMeasuring.insert(world.groundQueries)
+                measuredCameras += 1
+            }
+        }
+        let shot = try #require(BenchmarkTour.scene(id: "whiterun")).shot
+        #expect(abs(measuredCameras - Int(shot.seconds * 60)) <= 2)
+        #expect(queriesWhileMeasuring.count == 1)
     }
 
     @Test func aSceneThatNeverArrivesFails() throws {
