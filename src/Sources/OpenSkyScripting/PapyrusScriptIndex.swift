@@ -24,6 +24,7 @@ final class PapyrusScriptIndex {
     private var nativeBySpelling: [String: Bool] = [:]
     private var variablesBySpelling: [String: DeclaredVariable?] = [:]
     private var variablesGeneration: Int?
+    var callSites = PapyrusCallSites()
 
     init(_ script: PexObject) {
         self.script = script
@@ -33,10 +34,14 @@ final class PapyrusScriptIndex {
                 .map { PapyrusName.key($0.name) }
         })
         var states: [String: [String: PapyrusCompiledFunction]] = [:]
+        var ordinal = 0
         for state in script.states where states[PapyrusName.key(state.name)] == nil {
             var functions: [String: PapyrusCompiledFunction] = [:]
             for named in state.functions where functions[PapyrusName.key(named.name)] == nil {
-                functions[PapyrusName.key(named.name)] = PapyrusCompiledFunction(named.function)
+                functions[PapyrusName.key(named.name)] = PapyrusCompiledFunction(
+                    named.function, ordinal: ordinal
+                )
+                ordinal += 1
             }
             states[PapyrusName.key(state.name)] = functions
         }
@@ -47,8 +52,14 @@ final class PapyrusScriptIndex {
         for property in script.properties {
             let key = PapyrusName.key(property.name)
             guard seen.insert(key).inserted else { continue }
-            reads[key] = property.readHandler.map(PapyrusCompiledFunction.init)
-            writes[key] = property.writeHandler.map(PapyrusCompiledFunction.init)
+            if let handler = property.readHandler {
+                reads[key] = PapyrusCompiledFunction(handler, ordinal: ordinal)
+                ordinal += 1
+            }
+            if let handler = property.writeHandler {
+                writes[key] = PapyrusCompiledFunction(handler, ordinal: ordinal)
+                ordinal += 1
+            }
         }
         readHandlers = reads
         writeHandlers = writes

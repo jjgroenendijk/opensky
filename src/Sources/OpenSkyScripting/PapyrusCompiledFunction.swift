@@ -21,10 +21,17 @@ nonisolated struct PapyrusCallNameKeys: Equatable, Sendable {
     let function: String
     /// The script a static call names; nil for a method or parent call.
     let script: String?
+
+    /// `GotoState` and `GetState`, which the interpreter runs itself.
+    var isStateCall: Bool {
+        script == nil && (function == "gotostate" || function == "getstate")
+    }
 }
 
 nonisolated final class PapyrusCompiledFunction: Sendable {
     let function: PexFunction
+    /// This function's place among its script's functions, for `PapyrusCallSites`.
+    let ordinal: Int
     let slotTypes: [PapyrusType]
     /// Each slot's starting value, the default of its type.
     let slotDefaults: [PapyrusValue]
@@ -39,8 +46,9 @@ nonisolated final class PapyrusCompiledFunction: Sendable {
     /// Every identifier spelling the instructions use, so the run loop never folds one.
     private let bindingsBySpelling: [String: PapyrusNameBinding]
 
-    init(_ function: PexFunction) {
+    init(_ function: PexFunction, ordinal: Int = -1) {
         self.function = function
+        self.ordinal = ordinal
         let declarations = function.parameters + function.localVariables
         var slotsByKey: [String: Int] = [:]
         var types: [PapyrusType] = []
