@@ -5,6 +5,8 @@ import Foundation
 
 import OpenSkyAgentAdapters
 import OpenSkyAgentControl
+import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkySessionTesting
 import Testing
 
@@ -56,5 +58,24 @@ struct AgentDebugTests {
 
     @Test func anUnknownInputIsRefused() {
         #expect(throws: AgentFailure.self) { try world.applyInput("no such input", phase: .press) }
+    }
+
+    private func view(weather: UInt32?) -> AgentDebugCommand {
+        .view(AgentViewTarget(
+            feet: [0, 0, 0], yawDegrees: 0, pitchDegrees: 0, worldspace: nil,
+            interiorCell: nil, hour: nil, weather: weather
+        ))
+    }
+
+    @Test func aViewWithAWeatherNoPluginHasIsRefused() {
+        let session = FakeGameSessionPort()
+        let weather = FakeWeatherSystemPort()
+        weather.store = WeatherStore(loadOrder: LoadOrderPlugins([]))
+        session.weather = weather
+        host.gameSession = session
+        #expect(failure(of: view(weather: 0x999)) == .invalidArgument)
+        #expect(weather.forceWeatherCalls.isEmpty)
+        // Without a weather the command goes on to the teleport, which needs a loaded world.
+        #expect(failure(of: view(weather: nil)) != .invalidArgument)
     }
 }
