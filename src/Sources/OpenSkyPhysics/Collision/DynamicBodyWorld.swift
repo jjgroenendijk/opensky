@@ -87,6 +87,7 @@ nonisolated public struct DynamicBodyWorld: Sendable {
     /// falls asleep rather than on every step it stays asleep.
     private var wasSleeping: Set<ReferenceKey> = []
     private var accumulatedTime: Float = 0
+    private var contactScratch = DynamicContactScratch()
     /// `CellScene.stateSequence` of the scene whose placements are installed,
     /// per cell. A rebuilt cell arrives with a fresh sequence and so hands its
     /// placements over again; an unchanged one is skipped. Kept here rather than
@@ -246,7 +247,8 @@ nonisolated public struct DynamicBodyWorld: Sendable {
         var stats = DynamicStepStats()
         while accumulatedTime + Float.ulpOfOne >= PhysicsStep.fixedTimeStep {
             stats = DynamicBodySolver.step(
-                bodies: &bodies, world: world, dt: PhysicsStep.fixedTimeStep
+                bodies: &bodies, world: world, dt: PhysicsStep.fixedTimeStep,
+                scratch: &contactScratch
             )
             holdPins(dt: PhysicsStep.fixedTimeStep)
             rebinExteriorBodies()

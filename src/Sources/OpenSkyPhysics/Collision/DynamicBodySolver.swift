@@ -95,6 +95,24 @@ nonisolated public enum DynamicBodySolver: Sendable {
         joints: [RagdollJointDefinition] = [],
         selfCollision: RagdollSelfCollision = .disabled
     ) -> DynamicStepStats {
+        var scratch = DynamicContactScratch()
+        return step(
+            bodies: &bodies, world: world, dt: dt, joints: joints,
+            selfCollision: selfCollision, scratch: &scratch
+        )
+    }
+
+    /// `step` with contact buffers the caller keeps, so a world stepped every
+    /// frame allocates them once.
+    @discardableResult
+    public static func step(
+        bodies: inout [DynamicBody],
+        world: DynamicStepWorld,
+        dt: Float,
+        joints: [RagdollJointDefinition] = [],
+        selfCollision: RagdollSelfCollision = .disabled,
+        scratch: inout DynamicContactScratch
+    ) -> DynamicStepStats {
         var stats = DynamicStepStats()
         guard dt > 0, dt.isFinite, !bodies.isEmpty else {
             stats.sleepingBodyCount = bodies.count(where: \.isSleeping)
@@ -107,7 +125,7 @@ nonisolated public enum DynamicBodySolver: Sendable {
         stats.substepCount = substeps
         let substepTime = dt / Float(substeps)
         let isRagdoll = !joints.isEmpty
-        var staticShapes = DynamicStaticShapes(bodyCount: bodies.count)
+        scratch.staticShapes = DynamicStaticShapes(bodyCount: bodies.count)
         for _ in 0 ..< substeps {
             for index in bodies.indices where !bodies[index].isSleeping {
                 integratePose(&bodies[index], dt: substepTime, stats: &stats)
@@ -115,7 +133,7 @@ nonisolated public enum DynamicBodySolver: Sendable {
             let contacts = gatherContacts(
                 bodies: bodies,
                 world: world,
-                staticShapes: &staticShapes,
+                scratch: &scratch,
                 dt: dt,
                 selfCollision: isRagdoll ? selfCollision : nil
             )
@@ -214,7 +232,7 @@ nonisolated public enum DynamicBodySolver: Sendable {
     private static func gatherContacts(
         bodies: [DynamicBody],
         world: DynamicStepWorld,
-        staticShapes: inout DynamicStaticShapes,
+        scratch: inout DynamicContactScratch,
         dt: Float,
         selfCollision: RagdollSelfCollision? = nil
     ) -> [DynamicContact] {
@@ -224,11 +242,14 @@ nonisolated public enum DynamicBodySolver: Sendable {
         var contacts: [DynamicContact] = []
         for index in bodies.indices where !bodies[index].isSleeping {
             let body = bodies[index]
-            contacts += DynamicBodyContacts.staticContacts(
-                body: body,
-                index: index,
+            let shapes = scratch.staticShapes.candidates(
+                for: body, index: index, world: world, dt: dt
+            )
+            scratch.appendStaticContacts(
+                of: DynamicPairBody(body: body, index: index),
                 samples: body.contactSamples(),
-                shapes: staticShapes.candidates(for: body, index: index, world: world, dt: dt)
+                shapes: shapes,
+                into: &contacts
             )
         }
         for (first, second) in pairs {

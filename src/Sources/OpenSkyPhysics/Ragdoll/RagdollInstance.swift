@@ -46,6 +46,7 @@ nonisolated public struct RagdollInstance: Sendable {
     /// Where the root bone was when the current settle window opened, and how
     /// long that window has been running.
     private var settleReference: SIMD3<Float>?
+    private var contactScratch = DynamicContactScratch()
     private var settleElapsed: Float = 0
     /// Whether the one final joint projection has already been made for this
     /// spell of rest. Cleared by `wake()`, so a corpse that is hit and comes to
@@ -149,7 +150,8 @@ nonisolated public struct RagdollInstance: Sendable {
             world: world,
             dt: dt,
             joints: definition.joints,
-            selfCollision: isSelfCollisionEnabled ? definition.selfCollision : .disabled
+            selfCollision: isSelfCollisionEnabled ? definition.selfCollision : .disabled,
+            scratch: &contactScratch
         )
         updateSettling(dt: dt)
         return lastStats
