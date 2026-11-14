@@ -16,10 +16,13 @@ extension Renderer {
     /// Indices into the alpha-tested list of the refraction groups this frame draws.
     private func refractionGroupIndices() -> [Int] {
         let layers = effectiveRenderLayers
-        return frameDrawGroups.alphaTested.indices.filter {
-            let group = frameDrawGroups.alphaTested[$0]
-            return group.drawsRefraction && layers.contains(group.layer)
+        var indices: [Int] = []
+        for (index, group) in frameDrawGroups.alphaTested.enumerated()
+            where group.drawsRefraction && layers.contains(group.layer)
+        {
+            indices.append(index)
         }
+        return indices
     }
 
     /// True when a refraction shape is in view, so the pass must store its depth.

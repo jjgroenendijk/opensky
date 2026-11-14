@@ -62,15 +62,17 @@ public struct QuestRuntime: QuestAccess {
     /// Every quest with runtime state, in `ReferenceKey` order, with its record.
     public func runtimeQuests() -> [(quest: Quest, state: QuestRuntimeState)] {
         store.derived([(quest: Quest, state: QuestRuntimeState)].self, from: quests) {
-            quests.sortedQuests().compactMap { quest in
-                guard
+            // A plain loop: a closure in main-actor code pays an executor check per call.
+            var found: [(quest: Quest, state: QuestRuntimeState)] = []
+            for quest in quests.sortedQuests() {
+                if
                     let key = quests.key(for: quest.formID),
                     let state = store.component(QuestRuntimeState.self, for: key)
-                else {
-                    return nil
+                {
+                    found.append((quest: quest, state: state))
                 }
-                return (quest: quest, state: state)
             }
+            return found
         }
     }
 
@@ -78,12 +80,16 @@ public struct QuestRuntime: QuestAccess {
     /// order. These are the quests the Papyrus side builds scripts for.
     public func runningQuests() -> [(quest: Quest, key: ReferenceKey)] {
         store.derived([(quest: Quest, key: ReferenceKey)].self, from: quests) {
-            quests.sortedQuests().compactMap { quest in
-                guard let key = quests.key(for: quest.formID) else { return nil }
+            var running: [(quest: Quest, key: ReferenceKey)] = []
+            for quest in quests.sortedQuests() {
+                guard let key = quests.key(for: quest.formID) else { continue }
                 let state = store.component(QuestRuntimeState.self, for: key)
                     ?? QuestRuntimeState.baseline(for: quest)
-                return state.isRunning ? (quest: quest, key: key) : nil
+                if state.isRunning {
+                    running.append((quest: quest, key: key))
+                }
             }
+            return running
         }
     }
 

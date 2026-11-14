@@ -235,6 +235,12 @@ stream. Cancel cancels the task. A stage that already runs finishes, and no new 
 - Data that crosses threads is a `nonisolated` `Sendable` value type.
 - Work that fans out inside one build goes through `ParallelDecode.map`. A worker writes no
   cache and times no load phase.
+- In a per-frame loop on the main actor, walk a list with a `for` loop, not with `map`,
+  `filter`, `allSatisfy`, or `Optional.map`. The standard library is built in the Swift 5
+  language mode, so Swift 6 adds a run-time executor check (`swift_task_isCurrentExecutor`) at the
+  start of each main-actor closure passed to it. The check runs once per element: 2.7% of the
+  main thread in `.logs/profile/20261114T174723Z`. A closure passed to a function of an OpenSky
+  module gets no check, and neither does a `@Sendable` closure.
 
 The structural rules (`tools/lint/syntax-rules.sh`) `unchecked_sendable`, `detached_task`, and
 `main_queue_or_semaphore` fail the first three in `src/Sources/`. The rule

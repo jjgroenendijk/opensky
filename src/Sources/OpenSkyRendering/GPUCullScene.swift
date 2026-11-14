@@ -329,15 +329,24 @@ private struct GPUCullSceneBuilder {
         guard
             !group.instances.isEmpty,
             // A LOD mesh picks its detail level per instance on the CPU.
-            group.mesh.lodIndexCounts.isEmpty,
-            // A region's emittance changes with the hour, so it is written every frame.
-            group.instances.allSatisfy({ $0.referenceFormID == 0 && $0.emittance?.region == nil })
+            group.mesh.lodIndexCounts.isEmpty
         else { return nil }
+        // A region's emittance changes with the hour, so it is written every frame.
+        // Plain loops here: a closure in main-actor code pays an executor check per call.
+        for instance in group.instances
+            where instance.referenceFormID != 0 || instance.emittance?.region != nil
+        {
+            return nil
+        }
         let index = groups.count
         let first = instances.count
         var bounds = group.instances.first?.bounds
         for instance in group.instances {
-            bounds = instance.bounds.flatMap { own in bounds.map { $0.union(own) } }
+            if let own = instance.bounds, let current = bounds {
+                bounds = current.union(own)
+            } else {
+                bounds = nil
+            }
             instances.append(Self.cullInstance(instance, group: index, outputBase: first))
         }
         groups.append(GPUCullGroup(

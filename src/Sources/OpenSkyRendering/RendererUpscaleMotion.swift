@@ -60,18 +60,29 @@ extension Renderer {
         state: ScenePassState,
         uniforms: UInt64
     ) -> Bool {
-        let groups = upscale.objectMotionEnabled
-            ?
-            (frameDrawGroups.opaque.filter(\.isMoving) + frameDrawGroups.alphaTested
-                .filter(\.isMoving))
-            : []
-        var models: [MotionKey: float4x4] = [:]
-        defer { upscale.previousModels = models }
+        var groups: [DrawGroup] = []
         // A fading reference drops pixels in the scene pass; motion drawn over them would
         // move the ground behind it, so it keeps the camera motion instead.
-        let shown = groups
-            .map { group in group.instances.enumerated().filter { fadeOut(of: $0.element) == 0 } }
-        let count = shown.reduce(0) { $0 + $1.count }
+        var shown: [[(offset: Int, element: DrawInstance)]] = []
+        var count = 0
+        // Plain loops: a closure in main-actor code pays an executor check per call.
+        if upscale.objectMotionEnabled {
+            for list in [frameDrawGroups.opaque, frameDrawGroups.alphaTested] {
+                for group in list where group.isMoving {
+                    var placed: [(offset: Int, element: DrawInstance)] = []
+                    for (offset, instance) in group.instances.enumerated()
+                        where fadeOut(of: instance) == 0
+                    {
+                        placed.append((offset, instance))
+                    }
+                    groups.append(group)
+                    shown.append(placed)
+                    count += placed.count
+                }
+            }
+        }
+        var models: [MotionKey: float4x4] = [:]
+        defer { upscale.previousModels = models }
         guard count > 0, let instances = motionInstanceRing(count: count, slot: state.slot)
         else { return true }
         guard
