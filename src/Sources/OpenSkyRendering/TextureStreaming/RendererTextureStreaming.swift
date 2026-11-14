@@ -179,27 +179,33 @@ extension Renderer {
     }
 
     /// Maps tiles for `levels`; the tail counts as one level. False when the pool is out
-    /// of memory, with nothing mapped.
+    /// of memory, with nothing mapped. Levels the texture can drop take movable tiles; the
+    /// floor levels and the tail take pinned ones.
     private func mapLevels(
         _ levels: Range<Int>, of entry: StreamedTextureEntry, texture: any MTLTexture
     ) -> Bool {
         let layout = entry.layout
-        let tiled = levels.filter { $0 < layout.firstLevelInTail && entry.tiles[$0] == nil }
+        var tiled: [Int] = []
+        for level in levels where level < layout.firstLevelInTail && entry.tiles[level] == nil {
+            tiled.append(level)
+        }
         let needsTail = levels.upperBound > layout.firstLevelInTail
             && entry.tiles[layout.firstLevelInTail] == nil && layout.tailTiles > 0
-        let count = tiled.reduce(needsTail ? layout.tailTiles : 0) { $0 + layout.tiles(level: $1) }
-        guard count > 0 else { return true }
-        guard
-            let tiles = textureStreaming.pool.allocate(count, added: { heap in
-                residencySet.addAllocation(heap)
-                residencySet.commit()
-            }) else { return false }
-        var remaining = tiles[...]
+        guard let (pinned, movable) = allocateTiles(for: tiled, tail: needsTail, of: layout)
+        else { return false }
+        var remaining = (pinned: pinned[...], movable: movable[...])
         var operations: [(heap: Int, operation: MTL4UpdateSparseTextureMappingOperation)] = []
         for level in tiled {
             let grid = layout.tileGrid(level: level)
-            let levelTiles = Array(remaining.prefix(grid.x * grid.y))
-            remaining = remaining.dropFirst(levelTiles.count)
+            let count = grid.x * grid.y
+            let levelTiles: [SparseTile]
+            if level < layout.floorLevel {
+                levelTiles = Array(remaining.movable.prefix(count))
+                remaining.movable = remaining.movable.dropFirst(count)
+            } else {
+                levelTiles = Array(remaining.pinned.prefix(count))
+                remaining.pinned = remaining.pinned.dropFirst(count)
+            }
             entry.tiles[level] = levelTiles
             for (offset, tile) in levelTiles.enumerated() {
                 let region = MTLRegionMake2D(offset % grid.x, offset / grid.x, 1, 1)
@@ -210,7 +216,7 @@ extension Renderer {
             }
         }
         if needsTail {
-            let tailTiles = Array(remaining.prefix(layout.tailTiles))
+            let tailTiles = Array(remaining.pinned.prefix(layout.tailTiles))
             entry.tiles[layout.firstLevelInTail] = tailTiles
             for (offset, tile) in tailTiles.enumerated() {
                 operations.append((tile.heap, .init(
@@ -227,6 +233,34 @@ extension Renderer {
             )
         }
         return true
+    }
+
+    /// The tiles for `tiled` and the tail: movable for the levels the texture can drop,
+    /// pinned for the floor levels and the tail. Nil when the pool is out of memory.
+    private func allocateTiles(
+        for tiled: [Int], tail: Bool, of layout: SparseTextureLayout
+    ) -> (pinned: [SparseTile], movable: [SparseTile])? {
+        var counts = (pinned: tail ? layout.tailTiles : 0, movable: 0)
+        for level in tiled {
+            if level < layout.floorLevel {
+                counts.movable += layout.tiles(level: level)
+            } else {
+                counts.pinned += layout.tiles(level: level)
+            }
+        }
+        let pool = textureStreaming.pool
+        let addHeap: (any MTLHeap) -> Void = { heap in
+            self.residencySet.addAllocation(heap)
+            self.residencySet.commit()
+        }
+        guard let pinned = pool.allocate(counts.pinned, kind: .pinned, added: addHeap) else {
+            return nil
+        }
+        guard let movable = pool.allocate(counts.movable, kind: .movable, added: addHeap) else {
+            retireAllocations(pool.free(pinned))
+            return nil
+        }
+        return (pinned, movable)
     }
 
     private func unmapLoweredLevels() {
