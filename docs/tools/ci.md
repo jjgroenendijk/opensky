@@ -92,6 +92,10 @@ so it can name the self-hosted labels itself. The `Runner` job cannot stop that.
 setting "Approval for running fork pull request workflows" must therefore be "Require approval for
 all external contributors". Approve a fork run only after you read its workflow changes.
 
+Anyone with write access can push a branch with a new workflow that names the self-hosted labels.
+So the owner stays the only collaborator with write access. GitHub runner groups, which limit a
+runner to chosen workflows, exist only for organizations, not for a personal account.
+
 ## The same gate as make check
 
 Format and Static checks run `make format-check` and `make lint`, the two halves of `make check`, so
