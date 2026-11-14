@@ -90,15 +90,7 @@ nonisolated extension TerrainLODGenerator {
         _ source: Source,
         texture: (FormID) -> TerrainLODTexture?
     ) -> [UInt8] {
-        var cache: [FormID: TerrainLODTexture?] = [:]
-        func lookup(_ form: FormID) -> TerrainLODTexture? {
-            if let hit = cache[form] {
-                return hit
-            }
-            let made = texture(form)
-            cache[form] = made
-            return made
-        }
+        let lands = BakeLand.resolve(source.cells, texture: texture)
         var pixels = [UInt8](repeating: 255, count: textureSize * textureSize * 4)
         let offsets: [SIMD2<Float>] = [
             SIMD2(-0.25, -0.25),
@@ -112,7 +104,7 @@ nonisolated extension TerrainLODGenerator {
                 let centre = texelPoint(column: column, row: row, source: source)
                 var sum = SIMD3<Float>(repeating: 0)
                 for offset in offsets {
-                    sum += colour(at: centre + offset * texel, source: source, texture: lookup)
+                    sum += colour(at: centre + offset * texel, source: source, lands: lands)
                 }
                 let base = (row * textureSize + column) * 4
                 let mean = sum / Float(offsets.count)
@@ -128,10 +120,12 @@ nonisolated extension TerrainLODGenerator {
     static func colour(
         at point: SIMD2<Float>,
         source: Source,
-        texture: (FormID) -> TerrainLODTexture?
+        lands: [BakeLand?]
     ) -> SIMD3<Float> {
-        let found = source.locate(point)
-        guard let land = found.land else { return missingColour }
+        let found = source.locateCell(point)
+        guard found.index < lands.count, let land = lands[found.index] else {
+            return missingColour
+        }
         let quads = found.quads
         let east = quads.x >= 16 ? 1 : 0
         let north = quads.y >= 16 ? 1 : 0
@@ -139,15 +133,14 @@ nonisolated extension TerrainLODGenerator {
         let local = quads - SIMD2(Float(east), Float(north)) * 16
         let u = quads.x / quadsPerRepeat
         let v = quads.y / quadsPerRepeat
-        var albedo = texture(quadrant.base)?.sample(u: u, v: v) ?? missingColour
+        var albedo = quadrant.base?.sample(u: u, v: v) ?? missingColour
         for layer in quadrant.layers {
-            guard let map = texture(layer.texture) else { continue }
             let weight = quadrantOpacity(layer.opacities, at: local)
             if weight > 0 {
-                albedo = simd_mix(albedo, map.sample(u: u, v: v), SIMD3(repeating: weight))
+                albedo = simd_mix(albedo, layer.map.sample(u: u, v: v), SIMD3(repeating: weight))
             }
         }
-        let vertexColour = land.colour(x: quads.x, y: quads.y)
+        let vertexColour = TerrainLODLand.bilinear(x: quads.x, y: quads.y) { land.colours[$0] }
         return albedo * SIMD3(
             pow(vertexColour.x, 2.2), pow(vertexColour.y, 2.2), pow(vertexColour.z, 2.2)
         )
@@ -168,5 +161,45 @@ nonisolated extension TerrainLODGenerator {
         let north = opacities[index + side] +
             (opacities[index + side + 1] - opacities[index + side]) * fx
         return min(max(south + (north - south) * fy, 0), 1)
+    }
+}
+
+/// One cell's land with its textures looked up once per block, so a sample reads no
+/// dictionary and calls no closure.
+nonisolated struct BakeLand {
+    struct Quadrant {
+        let base: TerrainLODTexture?
+        /// Only the layers whose texture exists, in blend order.
+        let layers: [(map: TerrainLODTexture, opacities: [Float])]
+    }
+
+    let colours: [SIMD3<Float>]
+    let quadrants: [Quadrant]
+
+    static func resolve(
+        _ cells: [TerrainLODLand?],
+        texture: (FormID) -> TerrainLODTexture?
+    ) -> [Self?] {
+        var cache: [FormID: TerrainLODTexture?] = [:]
+        func lookup(_ form: FormID) -> TerrainLODTexture? {
+            if let hit = cache[form] {
+                return hit
+            }
+            let made = texture(form)
+            cache[form] = made
+            return made
+        }
+        return cells.map { cell in
+            cell.map { land in
+                Self(colours: land.colours, quadrants: land.quadrants.map { quadrant in
+                    Quadrant(
+                        base: lookup(quadrant.base),
+                        layers: quadrant.layers.compactMap { layer in
+                            lookup(layer.texture).map { ($0, layer.opacities) }
+                        }
+                    )
+                })
+            }
+        }
     }
 }
