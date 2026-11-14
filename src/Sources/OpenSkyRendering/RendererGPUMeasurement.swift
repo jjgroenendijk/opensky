@@ -2,8 +2,32 @@
 // same commit feedback `FrameStats` reads; memory comes from the device and the
 // renderer's residency set.
 
+import Foundation
 import Metal
+import OpenSkyFormatsCore
 import Synchronization
+
+/// Logs the error of a failed command buffer, so a GPU fault shows its cause in the
+/// system log. Only the first few, because a fault often repeats each frame.
+nonisolated final class GPUCommitFailureLog: Sendable {
+    static let limit = 8
+    private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky", category: "Rendering"
+    )
+    private let logged = Mutex(0)
+
+    func record(_ error: any Error, part: String) {
+        let count = logged.withLock { value in
+            value += 1
+            return value
+        }
+        guard count <= Self.limit else { return }
+        let nsError = error as NSError
+        let text = "GPU command buffer failed (\(part)): \(nsError.domain) \(nsError.code), "
+            + "\(nsError.localizedDescription), \(nsError.userInfo)"
+        Self.logger.error("[ERROR] \(text)")
+    }
+}
 
 /// What the GPU reported since the last take: the busy time of each finished frame,
 /// and the frames that left no time.
