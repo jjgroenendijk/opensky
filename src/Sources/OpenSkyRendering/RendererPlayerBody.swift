@@ -8,59 +8,48 @@ import OpenSkyRenderCore
 import simd
 
 extension Renderer {
-    /// Scene opaque groups plus the player's, so the scene pass cannot forget the body.
-    /// Order is for stable grouping only; depth decides visibility. The first-person arms
-    /// are drawn separately (`RendererFirstPersonArms.swift`).
-    var opaqueDrawGroups: [DrawGroup] {
+    /// The lists the opaque groups join: the scene, the player's body, the effect
+    /// models, and the loading cover. Order is for stable grouping only; depth decides
+    /// visibility. The first-person arms are drawn separately
+    /// (`RendererFirstPersonArms.swift`).
+    private var opaqueSources: [[DrawGroup]] {
         let body = isPlayerBodyVisible ? frameInput.rigs.body?.render.opaque : nil
-        return Self.joined(
-            scene.opaque, body ?? [], effects.scene.opaque, effects.loadingCover?.opaque ?? []
-        )
+        return [scene.opaque, body ?? [], effects.scene.opaque, effects.loadingCover?.opaque ?? []]
     }
 
-    var alphaTestedDrawGroups: [DrawGroup] {
+    private var alphaTestedSources: [[DrawGroup]] {
         let body = isPlayerBodyVisible ? frameInput.rigs.body?.render.alphaTested : nil
-        return Self.joined(
+        return [
             scene.alphaTested, body ?? [], effects.scene.alphaTested,
             effects.loadingCover?.alphaTested ?? []
-        )
+        ]
     }
 
     /// What the shadow pass rasterizes: the scene plus the player's body in
     /// every mode a player exists in, whether or not the eye can see it. The
     /// reasoning is on `PlayerRigVisibility`.
-    var shadowOpaqueDrawGroups: [DrawGroup] {
+    private var shadowOpaqueSources: [[DrawGroup]] {
         let body = frameInput.rigs.visibility.castsBodyShadow ? frameInput.rigs.body?.render
             .opaque : nil
-        return Self.joined(scene.opaque, body ?? [])
+        return [scene.opaque, body ?? []]
     }
 
-    var shadowAlphaTestedDrawGroups: [DrawGroup] {
+    private var shadowAlphaTestedSources: [[DrawGroup]] {
         let body = frameInput.rigs.visibility.castsBodyShadow
             ? frameInput.rigs.body?.render.alphaTested : nil
-        return Self.joined(scene.alphaTested, body ?? [])
+        return [scene.alphaTested, body ?? []]
     }
 
     /// Joins the lists once per frame, before the first pass reads them. The shadow
     /// pass reads them once per cascade, so joining on each read copied the scene lists.
+    /// A list whose sources are the same as last frame keeps its joined copy.
     func refreshFrameDrawGroups() {
-        frameDrawGroups = FrameDrawGroups(
-            opaque: opaqueDrawGroups,
-            alphaTested: alphaTestedDrawGroups,
-            shadowOpaque: shadowOpaqueDrawGroups,
-            shadowAlphaTested: shadowAlphaTestedDrawGroups
+        frameDrawGroups.refresh(
+            opaque: opaqueSources,
+            alphaTested: alphaTestedSources,
+            shadowOpaque: shadowOpaqueSources,
+            shadowAlphaTested: shadowAlphaTestedSources
         )
-    }
-
-    /// The scene list shares its storage when nothing joins it.
-    private static func joined(_ base: [DrawGroup], _ extras: [DrawGroup]...) -> [DrawGroup] {
-        guard extras.contains(where: { !$0.isEmpty }) else { return base }
-        var result = base
-        result.reserveCapacity(base.count + extras.reduce(0) { $0 + $1.count })
-        for extra in extras {
-            result += extra
-        }
-        return result
     }
 
     /// Whether the third-person body is drawn to the camera this frame.
@@ -82,8 +71,84 @@ extension Renderer {
 
 /// The draw-group lists of one frame, as `refreshFrameDrawGroups()` joined them.
 struct FrameDrawGroups {
-    var opaque: [DrawGroup] = []
-    var alphaTested: [DrawGroup] = []
-    var shadowOpaque: [DrawGroup] = []
-    var shadowAlphaTested: [DrawGroup] = []
+    private var joinedOpaque = JoinedDrawGroups()
+    private var joinedAlphaTested = JoinedDrawGroups()
+    private var joinedShadowOpaque = JoinedDrawGroups()
+    private var joinedShadowAlphaTested = JoinedDrawGroups()
+
+    var opaque: [DrawGroup] {
+        joinedOpaque.groups
+    }
+
+    var alphaTested: [DrawGroup] {
+        joinedAlphaTested.groups
+    }
+
+    var shadowOpaque: [DrawGroup] {
+        joinedShadowOpaque.groups
+    }
+
+    var shadowAlphaTested: [DrawGroup] {
+        joinedShadowAlphaTested.groups
+    }
+
+    mutating func refresh(
+        opaque: [[DrawGroup]],
+        alphaTested: [[DrawGroup]],
+        shadowOpaque: [[DrawGroup]],
+        shadowAlphaTested: [[DrawGroup]]
+    ) {
+        joinedOpaque.refresh(opaque)
+        joinedAlphaTested.refresh(alphaTested)
+        joinedShadowOpaque.refresh(shadowOpaque)
+        joinedShadowAlphaTested.refresh(shadowAlphaTested)
+    }
+}
+
+/// One joined list and the lists it was joined from. Each source is a `let` list
+/// of a render scene, which cannot change in place, and this copy keeps its
+/// storage alive. So equal storage means equal contents, and a frame whose
+/// sources did not change keeps the joined list without copying any group.
+nonisolated struct JoinedDrawGroups {
+    private(set) var groups: [DrawGroup] = []
+    private var sources: [[DrawGroup]] = []
+
+    mutating func refresh(_ next: [[DrawGroup]]) {
+        guard !Self.sameStorage(sources, next) else { return }
+        sources = next
+        groups = Self.joined(next)
+    }
+
+    /// The first source shares its storage when nothing joins it.
+    private static func joined(_ lists: [[DrawGroup]]) -> [DrawGroup] {
+        var count = 0
+        var nonEmpty = 0
+        for list in lists where !list.isEmpty {
+            count += list.count
+            nonEmpty += 1
+        }
+        if nonEmpty == 0 {
+            return []
+        }
+        if nonEmpty == 1, let only = lists.first(where: { !$0.isEmpty }) {
+            return only
+        }
+        var result: [DrawGroup] = []
+        result.reserveCapacity(count)
+        for list in lists {
+            result += list
+        }
+        return result
+    }
+
+    private static func sameStorage(_ first: [[DrawGroup]], _ second: [[DrawGroup]]) -> Bool {
+        guard first.count == second.count else { return false }
+        for (left, right) in zip(first, second) {
+            guard left.count == right.count else { return false }
+            let leftBase = left.withUnsafeBufferPointer { $0.baseAddress }
+            let rightBase = right.withUnsafeBufferPointer { $0.baseAddress }
+            guard unsafe leftBase == rightBase else { return false }
+        }
+        return true
+    }
 }

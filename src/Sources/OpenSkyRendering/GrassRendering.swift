@@ -119,9 +119,18 @@ nonisolated public struct GrassGroupAccumulator {
         }
     }
 
+    /// Merges a whole group with one key lookup and one append, in the order the
+    /// instances had, so the result equals adding them one at a time.
     public mutating func add(_ group: GrassDrawGroup) {
-        for instance in group.instances {
-            add(mesh: group.mesh, material: group.material, instance: instance)
+        guard !group.instances.isEmpty else { return }
+        let key = Key(
+            mesh: ObjectIdentifier(group.mesh), diffuse: ObjectIdentifier(group.material.diffuse)
+        )
+        if let index = indexByKey[key] {
+            groups[index].instances.append(contentsOf: group.instances)
+        } else {
+            indexByKey[key] = groups.count
+            groups.append(group)
         }
     }
 

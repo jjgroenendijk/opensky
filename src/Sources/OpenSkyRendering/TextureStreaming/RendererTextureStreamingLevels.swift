@@ -100,14 +100,15 @@ extension Renderer {
             }
         }
         func note(_ material: RenderMaterial, bounds: ModelBounds, uvPerUnit: Float) {
-            for map in material.streamedMaps(uvPerUnit: uvPerUnit) {
-                note(map.texture, bounds: bounds, uvPerUnit: map.uvPerUnit)
+            material.forEachStreamedMap(uvPerUnit: uvPerUnit) { texture, perUnit in
+                note(texture, bounds: bounds, uvPerUnit: perUnit)
             }
         }
         for group in [frameDrawGroups.opaque, frameDrawGroups.alphaTested].joined() {
             let uvScale = max(group.material.uvScale.x, group.material.uvScale.y)
             // A rider or a walker is far from its baked bounds; measure where it draws.
-            for instance in group.instances.lazy.map(drawn) {
+            for placed in group.instances {
+                let instance = drawn(placed)
                 guard let bounds = instance.bounds else { continue }
                 let axis = instance.modelMatrix.columns.0
                 let scale = max(simd_length(SIMD3(axis.x, axis.y, axis.z)), 0.01)

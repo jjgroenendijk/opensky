@@ -4,9 +4,21 @@ import OpenSkyRenderCore
 
 nonisolated extension RenderScene {
     public var emittanceRegions: Set<UInt32> {
-        let instances = (opaque + alphaTested).flatMap(\.instances)
-        var regions = Set(instances.compactMap(\.emittance?.region))
-        regions.formUnion(particles.compactMap(\.emittance?.region))
+        var regions = Set<UInt32>()
+        for list in [opaque, alphaTested] {
+            for group in list {
+                for instance in group.instances {
+                    if let region = instance.emittance?.region {
+                        regions.insert(region)
+                    }
+                }
+            }
+        }
+        for particle in particles {
+            if let region = particle.emittance?.region {
+                regions.insert(region)
+            }
+        }
         return regions
     }
 }
