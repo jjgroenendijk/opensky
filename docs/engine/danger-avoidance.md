@@ -87,8 +87,3 @@ radius set by the source's weapon. A higher level replaces a lower one, never th
 | None | unchanged | unchanged |
 
 What the onlooker then does, such as fleeing or a comment, was not found.
-
-## Source
-
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. It is not yet confirmed
-in the reference game.

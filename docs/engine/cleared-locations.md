@@ -91,8 +91,3 @@ the cleared flag. A script clear plays no music, sends no event, and does not ch
 - OpenSky counts a boss as done only when it dies. The game leaves a disabled boss out of the
   count.
 - A location cleared by a script plays the cleared music in OpenSky. In the game it does not.
-
-## Source
-
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. It is not yet confirmed
-in the reference game.

@@ -83,9 +83,3 @@ stateDiagram-v2
 Releasing the Activate key that started the grab keeps the object held. On letting go, the spring
 is removed and the object keeps its speed. Grab has no throw. It was not found whether opening a
 menu lets go.
-
-## Source
-
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. It is not yet confirmed
-in the reference game. UESP "Skyrim:Controls" (<https://en.uesp.net/wiki/Skyrim:Controls>)
-describes the grab key.

@@ -101,8 +101,3 @@ While locked, each frame the game steers the mount:
 
 The steering stops while the target is gone or dead, all inputs are zero, the target is the
 player's own mount, or the weapon is sheathed and the target is an actor.
-
-## Source
-
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. It is not yet confirmed
-in the reference game.

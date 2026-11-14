@@ -83,8 +83,3 @@ sends the Left, Right, or Dual Power Attack for the hand it was armed for. Relea
 
 No kill move rule depends on the hand. The kill moves for each hand are idle data in
 `Skyrim.esm`, such as the `KillMoveDualWieldA` idle ([paired animations](/engine/paired-animations.md#kill-moves)).
-
-## Source
-
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. It is not yet confirmed
-in the reference game.

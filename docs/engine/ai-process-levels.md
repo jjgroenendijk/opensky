@@ -90,8 +90,3 @@ sequenceDiagram
 The time is checked after every 10 actors. Over budget, the pass stops, and the next frame goes on
 from the same place. Each level uses the same actor update. What a lower level skips inside it was
 not found.
-
-## Source
-
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. It is not yet confirmed
-in the reference game.

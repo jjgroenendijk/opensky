@@ -76,8 +76,3 @@ Example: an attacker with 40 `Block` bashes with a shield (W = 1, S = 1) at a ru
    target's heading to the attacker, as a part of a full turn (0 to 1). With no attacker it is 0.
 5. The target performs Stagger Start (`AAS1`). On success it is marked staggered, for at most 3
    seconds.
-
-## Source
-
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. It is not yet confirmed
-in the reference game. The action codes are `DOBJ` default objects.

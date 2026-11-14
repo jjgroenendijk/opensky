@@ -86,10 +86,6 @@ flowchart TD
     T -- yes --> Clip[Play the entry clip]
 ```
 
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. The values were checked against
-`Skyrim.esm`, which overrides several of the program's own defaults. The rules are not yet
-confirmed by a second read or in the reference game.
-
 ## Sitting down and standing up
 
 On arrival the actor's root is set below the seat's point, at the furniture's own height,
