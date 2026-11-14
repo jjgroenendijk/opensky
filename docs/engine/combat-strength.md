@@ -33,7 +33,7 @@ Offense is the damage per second of the actor's attacks:
 
 - The sum of a damage figure for each attack item equipped:
   - a weapon: its full damage, with the game's weapon damage and skill scaling, × its speed × a
-    speed multiplier, which is lower for bows and crossbows;
+    speed multiplier: 1 for a melee weapon, 0.2 for a bow or a crossbow;
   - a spell: the sum of its effect magnitudes, divided by (cast time + 1) for one casting type;
   - a staff: its enchantment's effects.
 - If the sum is 0, the actor's unarmed damage is used.

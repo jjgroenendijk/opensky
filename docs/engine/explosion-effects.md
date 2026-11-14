@@ -27,12 +27,12 @@ block it.
 
 1. Power = 1 − (d / R)² when d ≤ R, else 0. d is the distance from the camera, or from the player
    when there is no camera position. R is the `EXPL` `DATA` radius times the explosion's scale.
-2. When the power is above the game's threshold, 0.6 by default, a fixed image space modifier
+2. When the power is above the game's threshold, 0.75, a fixed image space modifier
    from the master file applies at strength 1.
 3. An explosion whose `DATA` flags have bit `0x40` (Ignore Image Space Swap) skips step 2.
 
-Example: an explosion with radius 200 at 100 units gives power 1 − 0.25 = 0.75. That is above 0.6,
-so the swap applies. At 150 units the power is 0.44, so it does not.
+Example: an explosion with radius 200 at 80 units gives power 1 − 0.16 = 0.84. That is above 0.75,
+so the swap applies. At 100 units the power is exactly 0.75, which is not above it, so it does not.
 
 ```mermaid
 flowchart TD
@@ -54,9 +54,9 @@ to 99.
 
 - If the part's chance is marked absolute, the part explodes when r is below its explode chance.
   A chance of 100 or more always explodes.
-- Otherwise, it explodes when r is below the game's explode percentage (5 by default) × the part's
+- Otherwise, it explodes when r is below the game's explode percentage (75) × the part's
   chance / 100.
-- A part that does not explode is cut off when r is below the game's dismember chance
+- A part that does not explode is cut off when r is below the game's dismember chance (50)
   ([decapitation](/engine/ragdoll.md#decapitation)).
 
 Vanilla data has no explodable part, so a test needs a synthetic record.
@@ -79,7 +79,8 @@ flowchart TD
 
 ## Source
 
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. It is not yet confirmed
-in the reference game. The Creation Kit wiki pages "Explosion"
+Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. The values were checked against
+`Skyrim.esm`, which overrides several of the program's own defaults. The rules are not yet
+confirmed by a second read or in the reference game. The Creation Kit wiki pages "Explosion"
 (<https://ck.uesp.net/wiki/Explosion>) and "BodyPartData" (<https://ck.uesp.net/wiki/BodyPartData>)
 name the record fields.

@@ -58,13 +58,15 @@ In the game, a walk counts as arrived by the kind of goal it walks to. OpenSky d
 this yet. It uses one fixed arrival distance for every walk, and snaps the actor to the marker's
 heading.
 
-- A furniture reference: the arrival radius is the larger of the game's furniture radius (25
-  units by default) and the radius the walk asks for.
-- An X marker or a heading marker: its own radius and angle settings.
-- Any other reference: the default radius and angle.
+- A furniture reference: the arrival radius is the larger of the game's furniture radius (150
+  units) and the radius the walk asks for.
+- An X marker or a heading marker: the marker radius, 50 units. A heading marker allows 5
+  degrees of facing, and an idle marker 1 degree.
+- Any other reference: the default radius, and a facing of 5 degrees. In combat the facing is 1
+  degree.
 - Arrival also needs the height difference to be within a separate limit.
 - A walk to a furniture entry marker asks to end facing the marker's heading. The allowed
-  difference is the game's furniture angle, 1 degree by default. The entry clip starts after
+  difference is the game's furniture angle, 10 degrees. The entry clip starts after
   that.
 
 ```mermaid
@@ -84,8 +86,9 @@ flowchart TD
     T -- yes --> Clip[Play the entry clip]
 ```
 
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. It is not yet confirmed
-in the reference game.
+Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. The values were checked against
+`Skyrim.esm`, which overrides several of the program's own defaults. The rules are not yet
+confirmed by a second read or in the reference game.
 
 ## Sitting down and standing up
 
