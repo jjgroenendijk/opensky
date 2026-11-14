@@ -78,7 +78,17 @@ extension CellStreamer.PhysicsSteps {
 
     /// Every resident cell: the interior, or the loaded exterior cells.
     var residentCellLocations: Set<CellSceneLocation> {
-        Set(residentDynamicBodyScenes().keys)
+        // Read in place: the scenes are large, and a condition build reads this each time.
+        if let interiorScene = streamer.interiorScene, let location = interiorScene.location {
+            return [location]
+        }
+        var locations = Set<CellSceneLocation>()
+        for scene in streamer.composition.cells.values {
+            if let location = scene.location {
+                locations.insert(location)
+            }
+        }
+        return locations
     }
 
     private func residentDynamicBodyScenes() -> [CellSceneLocation: CellScene] {

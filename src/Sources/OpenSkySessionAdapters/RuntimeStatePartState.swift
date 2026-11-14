@@ -20,9 +20,11 @@ public final class RuntimeStatePartState {
     init() {}
 }
 
-/// Where resident references are, for one set of resident cells and reference count.
+/// Where resident references are, for one set of resident cells, reference count, and
+/// player cell.
 struct ResidentReferencePlaces {
     let cells: Set<CellSceneLocation>
     let count: Int
+    let current: CellSceneLocation?
     let places: ReferencePlaces
 }
