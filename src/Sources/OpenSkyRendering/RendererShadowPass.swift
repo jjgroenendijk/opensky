@@ -66,6 +66,16 @@ extension Renderer {
         let cullView: Int
     }
 
+    /// The list and view one `encodeCasterGroups` call draws.
+    struct CasterPass {
+        let list: GPUCullList
+        let context: ShadowCascadeContext
+
+        var alphaTested: Bool {
+            list == .alphaTested
+        }
+    }
+
     /// Running cursors + stats threaded through one frame's cascade encodes.
     /// `base` is this frame slot's shadow instance-ring origin; `instanceCursor`
     /// advances as each cascade appends its surviving-caster run.
@@ -191,8 +201,8 @@ extension Renderer {
     /// This frame's cascades; empty when shadows are off or nothing casts.
     private func frameCascades(projection: float4x4) -> [ShadowCascade] {
         guard shadowRenders else { return [] }
-        let hasCasters = frameDrawGroups.shadowOpaque.contains(where: \.castsShadows)
-            || frameDrawGroups.shadowAlphaTested.contains(where: \.castsShadows)
+        let hasCasters = !frameDrawGroups.shadowOpaqueCasters.casters.isEmpty
+            || !frameDrawGroups.shadowAlphaTestedCasters.casters.isEmpty
             || !scene.terrain.isEmpty
         guard hasCasters else { return [] }
         let (fovY, aspect) = Self.fovAspect(from: projection)
@@ -230,10 +240,11 @@ extension Renderer {
             // The shadow lists, not the camera lists: a first-person player
             // is hidden from the eye and still casts (RendererPlayerBody).
             encodeCasterGroups(
-                frameDrawGroups.shadowOpaque, list: .opaque, in: context, state: &state
+                frameDrawGroups.shadowOpaqueCasters, list: .opaque, in: context, state: &state
             )
             encodeCasterGroups(
-                frameDrawGroups.shadowAlphaTested, list: .alphaTested, in: context, state: &state
+                frameDrawGroups.shadowAlphaTestedCasters, list: .alphaTested, in: context,
+                state: &state
             )
             encodeShadowTerrain(in: context, state: &state)
             // MTL4 does not auto-track cross-encoder hazards: without a barrier
@@ -286,51 +297,49 @@ extension Renderer {
     /// Per group: cull per instance against this cascade's frustum, append the
     /// survivors' transforms into the shadow instance ring, draw once with the
     /// surviving instanceCount. Pipeline switches lazily on caster kind.
+    ///
+    /// Only the caster indices are walked, and each group is read in place, so a
+    /// view copies no group and looks at no group that casts no shadow.
     func encodeCasterGroups(
-        _ groups: [DrawGroup],
+        _ casters: ShadowCasterList,
         list: GPUCullList,
         in context: ShadowCascadeContext,
         excluding: RenderLayer = [],
         state: inout ShadowPassState
     ) {
-        let alphaTested = list == .alphaTested
+        let pass = CasterPass(list: list, context: context)
         var boundPipeline: ObjectIdentifier?
         // The same mask the scene pass uses. Hiding the statics while their
         // shadows still fell on the terrain would make the tool actively
         // misleading — the frame would show a shadow with no caster.
         let layers = effectiveRenderLayers.subtracting(excluding)
-        for (index, group) in groups.enumerated()
-            where group.castsShadows && layers.contains(group.layer)
-        {
+        for index in casters.casters where layers.contains(casters.groups[index].layer) {
             guard
                 let visible = visibleCasters(
-                    of: (group, index), list: list, in: context, state: &state
+                    of: casters.groups[index], at: index, in: pass, state: &state
                 )
             else { continue }
-            let pipeline = shadowPipeline(group: group, alphaTested: alphaTested)
+            let pipeline = shadowPipeline(
+                group: casters.groups[index], alphaTested: pass.alphaTested
+            )
             if boundPipeline != ObjectIdentifier(pipeline) {
                 context.encoder.setRenderPipelineState(pipeline)
                 boundPipeline = ObjectIdentifier(pipeline)
             }
-            drawCasterGroup(
-                (group, visible),
-                alphaTested: alphaTested,
-                in: context,
-                state: &state
-            )
+            drawCasterGroup(casters.groups[index], visible, in: pass, state: &state)
         }
     }
 
     /// The group's surviving casters for this cascade, or nil when none survive.
     private func visibleCasters(
-        of entry: (group: DrawGroup, index: Int),
-        list: GPUCullList,
-        in context: ShadowCascadeContext,
+        of group: DrawGroup,
+        at index: Int,
+        in pass: CasterPass,
         state: inout ShadowPassState
     ) -> VisibleInstances? {
-        let (group, index) = entry
+        let context = pass.context
         let visibility = context.cullView < 0 ? .cpu : gpuVisibility(
-            of: index, in: list, view: (context.cullView, context.frustum), slot: state.slot
+            of: index, in: pass.list, view: (context.cullView, context.frustum), slot: state.slot
         )
         switch visibility {
         case .skipped:
@@ -398,12 +407,12 @@ extension Renderer {
     /// Binds the group's buffers/textures and emits one instanced draw for the
     /// surviving casters of this cascade.
     private func drawCasterGroup(
-        _ caster: (group: DrawGroup, visible: VisibleInstances),
-        alphaTested: Bool,
-        in context: ShadowCascadeContext,
+        _ group: DrawGroup,
+        _ visible: VisibleInstances,
+        in pass: CasterPass,
         state: inout ShadowPassState
     ) {
-        let (group, visible) = caster
+        let context = pass.context
         guard
             let uniformOffset = writeShadowDrawUniforms(
                 state: state,
@@ -430,7 +439,7 @@ extension Renderer {
             bindShadowSkinning(for: group.mesh, slot: state.slot)
         }
         bindShadowMorph(group.faceMorph, slot: state.slot)
-        if alphaTested {
+        if pass.alphaTested {
             argumentTable.setTexture(
                 streamedBinding(group.material.diffuse),
                 index: TextureIndex.diffuse.rawValue

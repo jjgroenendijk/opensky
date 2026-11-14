@@ -84,12 +84,12 @@ struct FrameDrawGroups {
         joinedAlphaTested.groups
     }
 
-    var shadowOpaque: [DrawGroup] {
-        joinedShadowOpaque.groups
+    var shadowOpaqueCasters: ShadowCasterList {
+        joinedShadowOpaque.casterList
     }
 
-    var shadowAlphaTested: [DrawGroup] {
-        joinedShadowAlphaTested.groups
+    var shadowAlphaTestedCasters: ShadowCasterList {
+        joinedShadowAlphaTested.casterList
     }
 
     mutating func refresh(
@@ -111,12 +111,18 @@ struct FrameDrawGroups {
 /// sources did not change keeps the joined list without copying any group.
 nonisolated struct JoinedDrawGroups {
     private(set) var groups: [DrawGroup] = []
+    private(set) var casters: [Int] = []
     private var sources: [[DrawGroup]] = []
+
+    var casterList: ShadowCasterList {
+        ShadowCasterList(groups: groups, casters: casters)
+    }
 
     mutating func refresh(_ next: [[DrawGroup]]) {
         guard !Self.sameStorage(sources, next) else { return }
         sources = next
         groups = Self.joined(next)
+        casters = ShadowCasterList.casterIndices(of: groups)
     }
 
     /// The first source shares its storage when nothing joins it.
@@ -150,5 +156,20 @@ nonisolated struct JoinedDrawGroups {
             guard unsafe leftBase == rightBase else { return false }
         }
         return true
+    }
+}
+
+/// A draw-group list and the indices of its groups that cast shadows. The indices
+/// point into `groups`, because the GPU cull numbers the groups of the same list.
+nonisolated struct ShadowCasterList {
+    var groups: [DrawGroup] = []
+    var casters: [Int] = []
+
+    static func casterIndices(of groups: [DrawGroup]) -> [Int] {
+        var result: [Int] = []
+        for index in groups.indices where groups[index].castsShadows {
+            result.append(index)
+        }
+        return result
     }
 }

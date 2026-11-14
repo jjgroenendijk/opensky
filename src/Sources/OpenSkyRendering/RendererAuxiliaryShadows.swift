@@ -92,8 +92,8 @@ nonisolated struct ShadowReach: Equatable {
 
 /// The shadow groups an auxiliary view draws from.
 struct AuxiliaryCasters {
-    var opaque: [DrawGroup]
-    var alphaTested: [DrawGroup]
+    var opaque: ShadowCasterList
+    var alphaTested: ShadowCasterList
 }
 
 extension Renderer {
@@ -108,9 +108,7 @@ extension Renderer {
             slot: slot, base: slot * AuxiliaryShadowResources.instanceLimit,
             rings: resources.rings
         )
-        var casters = AuxiliaryCasters(
-            opaque: frameDrawGroups.shadowOpaque, alphaTested: frameDrawGroups.shadowAlphaTested
-        )
+        var casters = auxiliaryCasters(reaching: nil)
         var castersReach: ShadowReach?
         for (number, view) in views.enumerated() {
             if view.reach != castersReach {
@@ -164,7 +162,8 @@ extension Renderer {
     /// The shadow groups cut down to the instances inside `reach`; all of them without one.
     private func auxiliaryCasters(reaching reach: ShadowReach?) -> AuxiliaryCasters {
         let groups = AuxiliaryCasters(
-            opaque: frameDrawGroups.shadowOpaque, alphaTested: frameDrawGroups.shadowAlphaTested
+            opaque: frameDrawGroups.shadowOpaqueCasters,
+            alphaTested: frameDrawGroups.shadowAlphaTestedCasters
         )
         guard let reach else { return groups }
         return AuxiliaryCasters(
@@ -173,19 +172,28 @@ extension Renderer {
         )
     }
 
-    private func casters(of groups: [DrawGroup], reaching reach: ShadowReach) -> [DrawGroup] {
-        groups.indices.compactMap { index -> DrawGroup? in
-            guard groups[index].castsShadows else { return nil }
-            let inside = groups[index].instances.filter { placed in
-                drawn(placed).bounds.map { reach.touches($0) } ?? true
+    /// Every kept group casts, so each index is a caster.
+    private func casters(
+        of list: ShadowCasterList, reaching reach: ShadowReach
+    ) -> ShadowCasterList {
+        var kept = ShadowCasterList()
+        for index in list.casters {
+            var inside: [DrawInstance] = []
+            for placed in list.groups[index].instances {
+                if let bounds = drawn(placed).bounds, !reach.touches(bounds) {
+                    continue
+                }
+                inside.append(placed)
             }
-            guard !inside.isEmpty else { return nil }
-            let group = groups[index]
-            return DrawGroup(
+            guard !inside.isEmpty else { continue }
+            let group = list.groups[index]
+            kept.casters.append(kept.groups.count)
+            kept.groups.append(DrawGroup(
                 mesh: group.mesh, material: group.material, faceMorph: group.faceMorph,
                 instances: inside
-            )
+            ))
         }
+        return kept
     }
 
     /// The views the options ask for this frame; records each one for the scene pass.
