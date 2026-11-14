@@ -119,20 +119,23 @@ extension PackageCoordinator {
 
     /// The session side of the actor's current package.
     func session(for actor: ReferenceKey) -> PackageTreeSession? {
+        // Reads through `self.runtime` in place: a `let` copy of the runtime retains
+        // every table it holds.
         guard
-            let runtime, let world, let clock = world.packageClock,
-            let current = runtime.currentPackage(for: actor)
+            let world, let clock = world.packageClock,
+            let current = runtime?.currentPackage(for: actor),
+            let conditionFunctions = runtime?.conditionFunctions
         else { return nil }
         let execution = executions[actor].flatMap {
             $0.package == current.package.formID ? $0 : nil
         }
         var session = PackageTreeSession(
-            world: world, actor: actor, aliasQuest: runtime.holdingQuest(for: actor),
+            world: world, actor: actor, aliasQuest: runtime?.holdingQuest(for: actor),
             package: current,
             values: execution?.values ?? PackageOverrideExecution.values(of: current),
             clock: clock,
             translation: store?.translation(of: current.definition.formID),
-            conditionFunctions: runtime.conditionFunctions,
+            conditionFunctions: conditionFunctions,
             makeContext: { [weak self] in
                 self?.conditionContext(clock: clock) ?? world.packageConditionContext(clock: clock)
             }

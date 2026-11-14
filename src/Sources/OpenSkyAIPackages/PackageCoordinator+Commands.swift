@@ -8,12 +8,11 @@ import OpenSkyWorldState
 extension PackageCoordinator {
     /// Feeds one event to one running procedure. A procedure that ends moves the tree on.
     func step(_ actor: ReferenceKey, with event: PackageProcedureEvent, leaf: Int) {
-        guard var execution = executions[actor], var session = session(for: actor) else {
+        guard let before = executions[actor]?.ends, var session = session(for: actor) else {
             return
         }
-        let before = execution.ends
-        let commands = execution.runner.handle(event, leaf: leaf, host: &session)
-        executions[actor] = execution
+        // In place: a copy taken out and written back copies the whole tree state.
+        let commands = executions[actor]?.runner.handle(event, leaf: leaf, host: &session) ?? []
         apply(commands, actor: actor, endsBefore: before)
     }
 

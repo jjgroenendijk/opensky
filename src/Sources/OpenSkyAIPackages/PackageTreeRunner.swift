@@ -94,9 +94,7 @@ nonisolated public struct PackageTreeRunner: Equatable, Sendable {
     mutating func handle(
         _ event: PackageProcedureEvent, leaf node: Int, host: inout some PackageTreeHost
     ) -> [PackageTreeCommand] {
-        guard var leaf = running[node] else { return [] }
-        let produced = leaf.machine.handle(event)
-        running[node] = leaf
+        guard let produced = running[node]?.machine.handle(event) else { return [] }
         collect(produced, from: node)
         settle(node, host: &host)
         return drain()

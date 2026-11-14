@@ -74,8 +74,7 @@ extension AIPackageMovesAdapter {
         public func packageAliasStacks() -> [ReferenceKey: PackageAliasStack] {
             guard let quests = game.scripts.bridge?.questRuntime else { return [:] }
             var stacks: [ReferenceKey: PackageAliasStack] = [:]
-            let running = quests.runningQuests().map(\.quest).sorted { $0.priority > $1.priority }
-            for quest in running where quest.aliases.contains(where: { !$0.packages.isEmpty }) {
+            for quest in Self.aliasPackageQuests(quests.runningQuests()) {
                 guard let table = attempt({ try quests.aliasState(of: quest.formID) })
                 else { continue }
                 for alias in quest.aliases where !alias.packages.isEmpty {
@@ -89,6 +88,21 @@ extension AIPackageMovesAdapter {
                 }
             }
             return stacks
+        }
+
+        /// The running quests with alias packages, highest priority first. Only these
+        /// are sorted; they are few.
+        static func aliasPackageQuests(
+            _ running: [(quest: Quest, key: ReferenceKey)]
+        ) -> [Quest] {
+            var result: [Quest] = []
+            for entry in running
+                where entry.quest.aliases.contains(where: { !$0.packages.isEmpty })
+            {
+                result.append(entry.quest)
+            }
+            result.sort { $0.priority > $1.priority }
+            return result
         }
 
         public func packagePatrolPath(
