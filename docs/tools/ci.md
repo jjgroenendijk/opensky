@@ -85,6 +85,13 @@ in the `RUNNER_STATUS_TOKEN` repository secret. Give it access to this repositor
   run then follow each other. A second runner instance on the same Mac, in its own folder, runs
   them side by side, and each instance keeps its own build tree.
 
+### Privacy
+
+Job logs and uploaded artifacts of a public repository are public. They show the runner's folder,
+and Xcode's build logs show the `HOME` and `USER` of the account that runs it. The setup job also
+logs the runner name and the Mac's host name. A runner account and host name must therefore be
+fine to publish. A separate macOS account, for example `ci`, keeps a private account name out.
+
 ### Security
 
 The repository is public. A pull request from a fork runs the workflow file of that pull request,
