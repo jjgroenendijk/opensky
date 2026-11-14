@@ -52,16 +52,10 @@ extension RuntimeStateReferenceMotionAdapter {
         ReferenceConditionReads(game: game).referenceFacts(of: references)
     }
 
+    /// Moving actors and the player up front; any other reference only when a condition
+    /// reads it, so a context build walks no references.
     public func motionResolution(references: RuntimeReferenceIndex) -> MotionConditionResolution {
         var facts = game.streamer.npcMovement.motionFacts()
-        for entry in references.sortedEntries() where facts[entry.key] == nil {
-            let state = game.worldState.resolvedState(for: entry)
-            let moved = game.streamer.npcTransform(for: entry.key)
-            facts[entry.key] = ReferenceMotionFacts(
-                position: moved?.position ?? state.transform.position,
-                rotation: moved?.rotation ?? state.transform.rotation
-            )
-        }
         if let gameSession = game.gameSession {
             let status = gameSession.locomotion.status
             facts[.player] = ReferenceMotionFacts(
@@ -73,7 +67,17 @@ extension RuntimeStateReferenceMotionAdapter {
                 )
             )
         }
-        return MotionConditionResolution(facts: facts)
+        let streamer = game.streamer
+        let worldState = game.worldState
+        return MotionConditionResolution(facts: facts) { [weak streamer, weak worldState] key in
+            guard let streamer, let worldState, let entry = references[key] else { return nil }
+            let state = worldState.resolvedState(for: entry)
+            let moved = streamer.npcTransform(for: key)
+            return ReferenceMotionFacts(
+                position: moved?.position ?? state.transform.position,
+                rotation: moved?.rotation ?? state.transform.rotation
+            )
+        }
     }
 
     public func placeResolution(references: RuntimeReferenceIndex) -> PlaceConditionResolution {
@@ -116,12 +120,13 @@ extension RuntimeStateReferenceMotionAdapter {
         let key = MarkerViewKey(
             store: ObjectIdentifier(worldState),
             markers: worldState.revision(of: [.mapMarker]),
-            references: references.sortedKeys()
+            references: references.mapMarkerKeys
         )
         return state.conditionCaches.markers.value(for: key) {
             var markers: Set<ReferenceKey> = []
-            for entry in references.sortedEntries() {
-                guard let record = entry.placedReference?.mapMarker else { continue }
+            for key in references.mapMarkerKeys {
+                guard let entry = references[key], let record = entry.placedReference?.mapMarker
+                else { continue }
                 let state = worldState.component(MapMarkerState.self, for: entry.key)
                     ?? MapMarkerState(record: record)
                 if state.isVisible {
@@ -150,18 +155,21 @@ struct ReferenceConditionReads {
         context.mounts.hastyLandRequests = Set(requests.filter { $0.value == .hasty }.keys)
     }
 
-    /// Lock, open, and deletion state of every reference a run-on can name.
+    /// Lock, open, and deletion state of any reference a run-on can name, read when a
+    /// condition asks for it.
     func referenceFacts(of references: RuntimeReferenceIndex)
         -> ReferenceConditionResolution
     {
-        var facts: [ReferenceKey: ReferenceConditionFacts] = [:]
-        for entry in references.sortedEntries() {
-            let state = game.worldState.resolvedState(for: entry)
-            let action = game.streamer.residentInteraction(reference: entry.formID)?.action
-            facts[entry.key] = ReferenceConditionFacts(
+        let streamer = game.streamer
+        let worldState = game.worldState
+        return ReferenceConditionResolution { [weak streamer, weak worldState] key in
+            guard let streamer, let worldState, let entry = references[key] else { return nil }
+            let state = worldState.resolvedState(for: entry)
+            let action = streamer.residentInteraction(reference: entry.formID)?.action
+            return ReferenceConditionFacts(
                 lock: ReferenceLockState.resolve(
                     baseline: entry.placedReference?.lock,
-                    delta: game.worldState.component(ReferenceLockState.self, for: entry.key)
+                    delta: worldState.component(ReferenceLockState.self, for: key)
                 ),
                 isOpen: state.activation.isOpen,
                 isDoor: action == .open,
@@ -169,6 +177,5 @@ struct ReferenceConditionReads {
                 canOpen: action == .open || action == .search
             )
         }
-        return ReferenceConditionResolution(facts: facts)
     }
 }

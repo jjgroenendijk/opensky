@@ -124,14 +124,21 @@ way:
 | View | Store kinds | Other inputs in the key |
 | --- | --- | --- |
 | Places, deaths | `death` | the streamer, the resident cells |
-| Places, map markers | `mapMarker` | the run-on reference keys |
-| Inventory | `inventory` | the actors, which hands hold a spell, equipment present |
+| Places, map markers | `mapMarker` | the map markers among the run-on references |
+| Inventory, the player's items | `inventory` | equipment present |
 | Actor state, NPCs | `actorValues`, `inventory` | the actors and death, player level, each combat phase |
 | Scenes | `scene` | the scene catalog; aliases resolve on every read |
 | Crime | `crimeLedger`, `inventory`, `scriptedState`, `factions` | the crime coordinator's state, the player's cell, the run-ons |
 
 The player's actor state also reads its gait, melee graph, and race menu, so it is built every
-frame. The crime coordinator keeps its own counter, raised by every change of the fields the crime
+frame.
+
+Other views are not built with the context at all. A reference's lock, open, and deletion state,
+its position and rotation, and an actor's equipment are read when a condition asks for that
+reference. A context is built many times per frame, and a condition list reads only a few
+references, so a view of every loaded reference would cost more than all the reads. Moving actors
+and the player are the exception: their motion comes from the movement step, which already holds
+it. The crime coordinator keeps its own counter, raised by every change of the fields the crime
 seam reads, such as pursuits, assaults, and trespass. A script changes state through the same
 writes, so its changes move the same revisions.
 

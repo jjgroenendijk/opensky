@@ -86,6 +86,19 @@ struct ConditionEquipmentFunctionTests {
         ) == .true)
     }
 
+    /// Equipment the table lacks is read when the condition asks for the actor.
+    @MainActor
+    @Test func equipmentIsReadOnDemand() throws {
+        var context = try ConditionEvaluatorFixture.populatedContext()
+        let armed = Self.armed
+        context.inventory = InventoryConditionResolution(counts: [Self.subject: [:]])
+            .readingEquipment { $0 == Self.subject ? armed : nil }
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
+        #expect(try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
+            functionIndex: 597, 0, 1, parameter1: 1
+        )) == .true)
+    }
+
     @Test func noEquipmentFailsWithAReason() throws {
         #expect(try Self.outcome(597, equals: 0, facts: nil)
             .failures == [.unavailableData(.inventory)])

@@ -42,45 +42,41 @@ public struct RuntimeStateInventoryFactsAdapter {
 }
 
 extension RuntimeStateInventoryFactsAdapter {
-    /// The player's item counts, and the equipment of the player and every actor a
-    /// run-on can name. Any other holder is read on demand through the lookup.
+    /// The player's item counts; any other holder, and every actor's equipment, is read
+    /// on demand when a condition asks.
     public func inventoryResolution(context: ConditionContext) -> InventoryConditionResolution? {
         guard let runtime = game.inventory.runtime else { return nil }
-        let actors = [.player] + context.references.sortedActorEntries.map(\.key)
         let key = InventoryViewKey(
             runtime: ObjectIdentifier(runtime),
             writes: runtime.inventory.store.revision(of: [.inventory]),
-            actors: actors,
-            spellHands: actors.map { actor in
-                context.magic.state(of: actor).map { Set($0.handSpells.keys) } ?? []
-            },
             hasEquipment: game.inventory.equipment != nil
         )
-        return state.conditionCaches.inventory.value(for: key) {
-            freshInventoryResolution(context: context, runtime: runtime)
+        let items = state.conditionCaches.inventory.value(for: key) {
+            freshInventoryResolution(runtime: runtime)
         }
-    }
-
-    private func freshInventoryResolution(
-        context: ConditionContext, runtime: any WorldItemRuntimePort
-    ) -> InventoryConditionResolution {
-        let stacks = runtime.inventory.inventory(of: runtime.player).stacks
-        let equipped = game.inventory.equipment?.equipped(on: runtime.player) ?? []
-        var equipment: [ReferenceKey: ActorEquipmentFacts] = [:]
-        for key in [.player] + context.references.sortedActorEntries.map(\.key) {
-            guard var facts = game.inventory.itemConditions.conditionEquipment(of: key)
-            else { continue }
-            let spells = context.magic.state(of: key)?.handSpells ?? [:]
+        let inventory = game.inventory
+        let magic = context.magic
+        return items.readingEquipment { [weak inventory] actor in
+            guard var facts = inventory?.itemConditions.conditionEquipment(of: actor) else {
+                return nil
+            }
+            let spells = magic.state(of: actor)?.handSpells ?? [:]
             facts.rightHandType = Self.handType(facts.rightWeapon, spell: spells[.right] != nil)
             facts.leftHandType = facts.hasShield && facts.leftWeapon == nil
                 ? CombatHandType.shield.rawValue
                 : Self.handType(facts.leftWeapon, spell: spells[.left] != nil)
-            equipment[key] = facts
+            return facts
         }
+    }
+
+    private func freshInventoryResolution(
+        runtime: any WorldItemRuntimePort
+    ) -> InventoryConditionResolution {
+        let stacks = runtime.inventory.inventory(of: runtime.player).stacks
+        let equipped = game.inventory.equipment?.equipped(on: runtime.player) ?? []
         return InventoryConditionResolution(
             counts: [.player: stacks.reduce(into: [:]) { $0[$1.item, default: 0] += $1.count }],
             equipped: [.player: Set(equipped)],
-            equipment: equipment,
             keywordCounts: [.player: game.inventory.itemConditions
                 .conditionKeywordCounts(of: .player) ?? [:]],
             lookup: inventoryLookup()

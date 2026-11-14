@@ -83,6 +83,21 @@ struct ConditionMotionFunctionTests {
         #expect(try Self.outcome(639, equals: 0, parameter1: target, parameter2: far) == .true)
     }
 
+    /// A reference the table lacks is read through the lookup when a condition asks.
+    @MainActor
+    @Test func theLookupAnswersForAReferenceTheTableLacks() throws {
+        var context = try ConditionEvaluatorFixture.populatedContext()
+        let walker = Self.walker
+        context.motion = MotionConditionResolution(facts: [:]) { key in
+            key == Self.subject ? walker : nil
+        }
+        var evaluator = ConditionEvaluator(context: context.using(Self.registry))
+        let position = try ConditionEvaluatorFixture.condition(
+            comparisonValue: Float(10).bitPattern, functionIndex: 6, parameter1: Self.axisZ
+        )
+        #expect(evaluator.evaluate(position) == .true)
+    }
+
     @Test func noMotionFailsWithAReason() throws {
         #expect(try Self.outcome(25, equals: 0, subject: nil)
             .failures == [.unavailableData(.motion)])

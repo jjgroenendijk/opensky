@@ -23,6 +23,8 @@ public protocol IdleWorld: AnyObject {
     func idleConditionContext() -> ConditionContext
     /// Advances on every state write, so a shared context is rebuilt after one.
     var idleStateSequence: UInt64 { get }
+    /// Whether the actor runs its own behavior graph, without building a condition context.
+    func runsOwnGraph(_ actor: ReferenceKey) -> Bool
     /// The clock actor clips play on; nil without a renderer.
     var idleAnimationTime: Float? { get }
     func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult
@@ -408,8 +410,7 @@ extension IdleCoordinator {
 
     /// An actor that runs its own graph rolls there; one without plays a rolled variant.
     private func planVariant(for actor: ReferenceKey) -> Int {
-        let runsGraph = worldConditionContext()[resolution: GraphVariableResolution.self]
-            .graphs[actor] != nil
+        let runsGraph = world?.runsOwnGraph(actor) == true
         return runsGraph || actor == .player ? 0 : random(IdlePlanKey.variants)
     }
 

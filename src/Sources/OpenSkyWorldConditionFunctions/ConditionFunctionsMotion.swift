@@ -14,13 +14,29 @@ nonisolated public struct MotionConditionResolution: ConditionResolution, Sendab
     public static let empty = MotionConditionResolution(facts: nil)
 
     private let facts: [ReferenceKey: ReferenceMotionFacts]?
+    private let lookup: (@MainActor @Sendable (ReferenceKey) -> ReferenceMotionFacts?)?
 
     public init(facts: [ReferenceKey: ReferenceMotionFacts]?) {
         self.facts = facts
+        lookup = nil
+    }
+
+    /// `facts` first, then `lookup` for any other reference, read when a condition asks.
+    /// Conditions run on the main actor, as the whole simulation does.
+    public init(
+        facts: [ReferenceKey: ReferenceMotionFacts],
+        lookup: @escaping @MainActor @Sendable (ReferenceKey) -> ReferenceMotionFacts?
+    ) {
+        self.facts = facts
+        self.lookup = lookup
     }
 
     func facts(of key: ReferenceKey) -> ReferenceMotionFacts? {
-        facts?[key]
+        if let known = facts?[key] {
+            return known
+        }
+        guard let lookup else { return nil }
+        return MainActor.assumeIsolated { lookup(key) }
     }
 }
 

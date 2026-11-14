@@ -44,13 +44,26 @@ nonisolated public struct ReferenceConditionResolution: ConditionResolution, Sen
     public static let empty = ReferenceConditionResolution(facts: nil)
 
     private let facts: [ReferenceKey: ReferenceConditionFacts]?
+    private let lookup: (@MainActor @Sendable (ReferenceKey) -> ReferenceConditionFacts?)?
 
     public init(facts: [ReferenceKey: ReferenceConditionFacts]?) {
         self.facts = facts
+        lookup = nil
+    }
+
+    /// Reads one reference when a condition asks, so a context build walks no references.
+    /// Conditions run on the main actor, as the whole simulation does.
+    public init(lookup: @escaping @MainActor @Sendable (ReferenceKey) -> ReferenceConditionFacts?) {
+        facts = nil
+        self.lookup = lookup
     }
 
     func facts(of key: ReferenceKey) -> ReferenceConditionFacts? {
-        facts?[key]
+        if let facts {
+            return facts[key]
+        }
+        guard let lookup else { return nil }
+        return MainActor.assumeIsolated { lookup(key) }
     }
 }
 
