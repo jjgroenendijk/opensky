@@ -57,9 +57,24 @@ grow. Skinned casters use the same bone palette slot as the scene pass, computed
 
 Metal 4 does not track hazards between encoders. Without a barrier, the scene pass sometimes sampled
 the shadow array before the depth writes landed: about half of all pixels changed between identical
-frames, in about half of the runs. A determinism test found it. The last cascade encoder now issues
+frames, in about half of the runs. A determinism test found it. The last drawn cascade encoder issues
 `barrier(afterStages: .fragment, beforeQueueStages: .fragment, visibilityOptions: .device)`, which
 covers every cascade encoder before it.
+
+## Far cascade reuse
+
+The first cascade is drawn every frame. A far cascade keeps the map it drew last while
+all of these hold:
+
+- every corner of its new slice of the view projects inside the old map, depth included;
+- the sun has turned less than 0.25 degrees since the map was drawn;
+- the map is younger than its age limit: 2 frames for the second cascade, 4 for the third.
+
+A kept map keeps its old light transform too, so the scene samples it where it was drawn.
+To keep the map useful while the camera moves, each far cascade fits a square 10% wider
+on each side than its slice needs, which makes its texels 10% larger. A moving actor's far
+shadow lags by up to 3 frames. A new scene, shadows turned off, a new map size, or a new
+cascade count draws every cascade again.
 
 Acne control is a raster depth bias of 2 with slope scale 3, back-face culling, and a receiver-side
 bias of 0.0015 in normalized device coordinates.
