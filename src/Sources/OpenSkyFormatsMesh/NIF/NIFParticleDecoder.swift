@@ -70,7 +70,7 @@ nonisolated extension NIFFile {
         var found: [FoundSystem] = []
         /// The parent transform of every block the walk reached.
         var parents: [Int: float4x4] = [:]
-        lazy var visibility = ParticleVisibilityFilter(file: file)
+        lazy var visibility = NIFParticleVisibilityFilter(file: file)
 
         mutating func walk(from root: Int32) throws {
             var stack = NIFGraphStack(

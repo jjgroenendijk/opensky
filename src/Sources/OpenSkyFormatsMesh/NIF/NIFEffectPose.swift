@@ -44,8 +44,6 @@ nonisolated public struct NIFEffectPose: Sendable {
     private var colors: [Int: [UInt32: SIMD3<Float>]] = [:]
     /// Alpha test thresholds by node, 0 to 1.
     private var alphaTests: [Int: Float] = [:]
-    /// A `NiFloatExtraData` named with this prefix shows or hides the node it names.
-    static let visibilityExtraDataPrefix = "hkVis:"
 
     /// Later sequences in `playing` win where two animate the same value.
     public init(scene: NIFEffectScene, playing: [Playing]) {
@@ -112,9 +110,10 @@ nonisolated public struct NIFEffectPose: Sendable {
             alphaTests[index] = simd_clamp(value / 255, 0, 1)
         case let (_, .extraDataFloat(name, keys)):
             guard
-                name.hasPrefix(Self.visibilityExtraDataPrefix),
+                name.hasPrefix(NIFParticleVisibilityFilter.extraDataPrefix),
                 let index = scene
-                    .node(named: String(name.dropFirst(Self.visibilityExtraDataPrefix.count))),
+                    .node(named: String(name
+                            .dropFirst(NIFParticleVisibilityFilter.extraDataPrefix.count))),
                 let value = NIFKeySampler.float(keys, at: time)
             else { return }
             hidden[index] = value < 0.5

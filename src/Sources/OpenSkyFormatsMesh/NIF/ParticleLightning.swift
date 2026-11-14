@@ -42,7 +42,7 @@ nonisolated extension NIFFile {
     /// that shape's place in the model. Its effect shader is the controller's own.
     public func lightningSystems() -> [ParticleSystemDefinition] {
         let parents = nodeParents()
-        var visibility = ParticleVisibilityFilter(file: self)
+        var visibility = NIFParticleVisibilityFilter(file: self)
         return blocks.compactMap { block in
             guard
                 let controller = Self.lightningController(block),
@@ -78,7 +78,7 @@ nonisolated extension NIFFile {
     /// The block's transform in the model, composed up its parents. Nil for a block no
     /// root reaches or a hidden subtree holds. The step limit stops a cyclic file.
     private func modelTransform(
-        of block: Int, parents: [Int: Int], visibility: inout ParticleVisibilityFilter
+        of block: Int, parents: [Int: Int], visibility: inout NIFParticleVisibilityFilter
     ) -> float4x4? {
         var transform = matrix_identity_float4x4
         var current: Int? = block

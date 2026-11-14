@@ -42,6 +42,14 @@ nonisolated public struct NIFObjectNET: Sendable {
 }
 
 nonisolated public struct NIFObjectPrefix: Sendable {
+    /// The name of editor-only geometry, such as the box of a lean marker.
+    /// Vanilla marker meshes use it; docs/formats/nif.md.
+    static let editorMarkerName = "EditorMarker"
+
+    var isEditorMarker: Bool {
+        name?.caseInsensitiveCompare(Self.editorMarkerName) == .orderedSame
+    }
+
     /// See NIFObjectNET.name.
     public let name: String?
     /// See NIFObjectNET.controllerRef.
