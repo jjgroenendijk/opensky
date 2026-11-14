@@ -26,6 +26,7 @@ extension Renderer {
         state.materialDepth = .readOnly
         state.encoder.setDepthStencilState(waterDepthState)
         var boundPipeline: ObjectIdentifier?
+        state.boundTextures = BoundTextures()
         for index in order where layers.contains(groups[index].layer) {
             let group = groups[index]
             encode(

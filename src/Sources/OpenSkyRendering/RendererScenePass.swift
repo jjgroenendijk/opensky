@@ -31,6 +31,8 @@ extension Renderer {
         var materialDepth: MaterialDepthMode?
         /// Set while the blood of one weapon draws; weapon-blood groups draw only then.
         var weaponBloodAlpha: Float?
+        /// The material textures the argument table holds during one run of group draws.
+        var boundTextures = BoundTextures()
     }
 
     /// Writes this frame's uniforms into its 256-byte-aligned slot and
@@ -234,6 +236,7 @@ extension Renderer {
     ) {
         let pipelines = shipping.resolved(debug: isRenderDebugActive ? debugPipelines : nil)
         let layers = effectiveRenderLayers
+        state.boundTextures = BoundTextures()
         // Pipeline bound lazily: an all-culled list encodes nothing. Model
         // ordering is retained, so switch only when rigid/skinned kind does.
         var boundPipeline: ObjectIdentifier?
@@ -295,7 +298,7 @@ extension Renderer {
             pointLightBuffer.gpuAddress + UInt64(lightOffset.byteOffset),
             index: BufferIndex.pointLights.rawValue
         )
-        bindMaterialTextures(group.material)
+        bindMaterialTextures(group.material, bound: &state.boundTextures)
         if let mode = state.materialDepth {
             applyDrawState(
                 of: group.material, mode: mode, skinned: group.mesh.isSkinned, state: state
@@ -303,48 +306,6 @@ extension Renderer {
         }
         state.encoder.setCullMode(group.material.doubleSided ? .none : .back)
         drawVisible(group.mesh, visible, state: state)
-    }
-
-    /// The fragment declares every surface slot, so the diffuse fills a 2D slot and
-    /// the black cube the environment slot when a material lacks the texture.
-    private func bindMaterialTextures(_ material: RenderMaterial) {
-        let diffuse = streamedBinding(material.diffuse)
-        argumentTable.setTexture(diffuse, index: TextureIndex.diffuse.rawValue)
-        argumentTable.setTexture(
-            material.effect?.palette?.gpuResourceID ?? diffuse,
-            index: TextureIndex.effectPalette.rawValue
-        )
-        let surface = material.surface
-        let slots: [(any MTLTexture?, TextureIndex)] = [
-            (material.normal, .surfaceNormal),
-            (surface.glow, .surfaceGlow),
-            (surface.detail, .surfaceDetail),
-            (surface.environmentMask, .surfaceEnvironmentMask),
-            (material.faceTint ?? surface.innerLayer, .surfaceLayer),
-            (surface.backLight, .surfaceBackLight),
-            (surface.projected?.diffuse, .projectedDiffuse),
-            (surface.projected?.noise, .projectedNoise)
-        ]
-        for (texture, index) in slots {
-            let binding = if let texture {
-                streamedBinding(texture)
-            } else {
-                diffuse
-            }
-            argumentTable.setTexture(binding, index: index.rawValue)
-        }
-        argumentTable.setTexture(
-            (surface.environment ?? blackCube).gpuResourceID,
-            index: TextureIndex.surfaceEnvironment.rawValue
-        )
-        argumentTable.setTexture(
-            (material.effect?.sourceVolume ?? greyVolume).gpuResourceID,
-            index: TextureIndex.effectSourceVolume.rawValue
-        )
-        argumentTable.setTexture(
-            refraction.copy?.gpuResourceID ?? diffuse,
-            index: TextureIndex.sceneColor.rawValue
-        )
     }
 
     /// The group's surviving instances for the camera, or nil when none survive.
