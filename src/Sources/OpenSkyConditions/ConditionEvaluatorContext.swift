@@ -114,7 +114,7 @@ nonisolated public struct ConditionContext: Sendable {
 /// runs against. Passed `inout` so a function that consumes randomness advances
 /// the caller's stream.
 nonisolated public struct ConditionCall: Sendable {
-    public let condition: Condition
+    public internal(set) var condition: Condition
     public var context: ConditionContext
 
     /// Parameter #1, with CIS1 first when present. A CIS1 name resolves to the alias
