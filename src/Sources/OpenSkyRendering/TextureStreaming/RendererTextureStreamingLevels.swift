@@ -104,18 +104,15 @@ extension Renderer {
                 note(texture, bounds: bounds, uvPerUnit: perUnit)
             }
         }
-        for group in [frameDrawGroups.opaque, frameDrawGroups.alphaTested].joined() {
-            let uvScale = max(group.material.uvScale.x, group.material.uvScale.y)
-            // A rider or a walker is far from its baked bounds; measure where it draws.
-            for placed in group.instances {
-                let instance = drawn(placed)
-                guard let bounds = instance.bounds else { continue }
-                let axis = instance.modelMatrix.columns.0
-                let scale = max(simd_length(SIMD3(axis.x, axis.y, axis.z)), 0.01)
-                note(
-                    group.material, bounds: bounds,
-                    uvPerUnit: group.mesh.uvPerUnit * uvScale / scale
-                )
+        for list in [frameDrawGroups.opaque, frameDrawGroups.alphaTested] {
+            for index in list.indices {
+                // Every map of the material scales its density with the instance, but a
+                // landscape noise map, whose density is fixed. So the finest instance and
+                // the nearest one are the only two that can need the most of any map.
+                let pair = finestUses(of: list[index], camera: camera)
+                guard let finest = pair.finest, let nearest = pair.nearest else { continue }
+                note(list[index].material, bounds: finest.bounds, uvPerUnit: finest.uvPerUnit)
+                note(list[index].material, bounds: nearest.bounds, uvPerUnit: nearest.uvPerUnit)
             }
         }
         for item in scene.terrain {
@@ -136,6 +133,41 @@ extension Renderer {
 }
 
 extension Renderer {
+    /// One instance's surface: its bounds where it draws and its UV density.
+    struct InstanceSurface {
+        let bounds: ModelBounds
+        let uvPerUnit: Float
+    }
+
+    /// The group's instance with the most texels per pixel, and its nearest instance,
+    /// each the first of its kind in the group's order.
+    func finestUses(
+        of group: DrawGroup, camera: SIMD3<Float>
+    ) -> (finest: InstanceSurface?, nearest: InstanceSurface?) {
+        let uvScale = max(group.material.uvScale.x, group.material.uvScale.y)
+        var finest: (use: TextureUse, surface: InstanceSurface)?
+        var nearest: (use: TextureUse, surface: InstanceSurface)?
+        // A rider or a walker is far from its baked bounds; measure where it draws.
+        for placed in group.instances {
+            let instance = drawn(placed)
+            guard let bounds = instance.bounds else { continue }
+            let axis = instance.modelMatrix.columns.0
+            let scale = max(simd_length(SIMD3(axis.x, axis.y, axis.z)), 0.01)
+            let surface = InstanceSurface(
+                bounds: bounds, uvPerUnit: group.mesh.uvPerUnit * uvScale / scale
+            )
+            let use = TextureUse(bounds: bounds, camera: camera, uvPerUnit: surface.uvPerUnit)
+            if use.isFiner(than: finest?.use) {
+                finest = (use, surface)
+            }
+            let near = TextureUse(bounds: bounds, camera: camera, uvPerUnit: 1)
+            if near.isFiner(than: nearest?.use) {
+                nearest = (near, surface)
+            }
+        }
+        return (finest?.surface, nearest?.surface)
+    }
+
     /// The arm groups drawn this frame, which are not in `frameDrawGroups`.
     var firstPersonArmGroups: [DrawGroup] {
         guard areFirstPersonArmsVisible, let rig = frameInput.rigs.arms else { return [] }
