@@ -346,7 +346,7 @@ jobs:
       # deletes its older caches, because nothing can restore them any more.
       - name: Check the pull request is still open
         id: pr
-        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        if: ${{ !cancelled() && github.event_name == 'pull_request' && steps.cas.outcome == 'success' }}
         env:
           PR: ${{ github.event.pull_request.number }}
         run: |
