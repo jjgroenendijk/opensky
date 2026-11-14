@@ -57,10 +57,14 @@ nonisolated public struct RenderMaterial: Sendable {
         animatedSource = material.animation == nil ? nil : material
     }
 
-    /// Every texture a draw of this material binds, for the residency set.
-    public var textures: [any MTLTexture] {
-        [diffuse] + [normal, faceTint, effect?.palette, effect?.sourceVolume].compactMap(\.self)
-            + surface.textures
+    /// Calls `body` with every texture a draw of this material binds, for the
+    /// residency set, without building a list.
+    public func forEachTexture(_ body: (any MTLTexture) -> Void) {
+        body(diffuse)
+        for case let texture? in [normal, faceTint, effect?.palette, effect?.sourceVolume] {
+            body(texture)
+        }
+        surface.forEachTexture(body)
     }
 }
 

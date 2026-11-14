@@ -11,21 +11,32 @@ nonisolated extension RenderMaterial {
     /// Every map a lit draw samples across the surface, paired with its UV per world unit.
     /// A cube map and an effect palette are not sampled by UV, so they are left out.
     public func streamedMaps(uvPerUnit: Float) -> [(texture: any MTLTexture, uvPerUnit: Float)] {
+        var maps: [(texture: any MTLTexture, uvPerUnit: Float)] = []
+        forEachStreamedMap(uvPerUnit: uvPerUnit) { maps.append(($0, $1)) }
+        return maps
+    }
+
+    /// Calls `body` with each map of `streamedMaps`, in the same order, without
+    /// building the list. The streaming pass asks once per drawn instance.
+    public func forEachStreamedMap(
+        uvPerUnit: Float, _ body: (any MTLTexture, Float) -> Void
+    ) {
         let shared = [
             diffuse, normal, faceTint, surface.glow, surface.environmentMask, surface.backLight
         ]
-        var maps = shared.compactMap { $0.map { (texture: $0, uvPerUnit: uvPerUnit) } }
+        for case let texture? in shared {
+            body(texture, uvPerUnit)
+        }
         if let detail = surface.detail {
             let noise = hasTerm(.landscapeNoise)
-            maps.append((detail, noise ? Self.landscapeNoiseUVPerUnit : uvPerUnit))
+            body(detail, noise ? Self.landscapeNoiseUVPerUnit : uvPerUnit)
         }
         if let inner = surface.innerLayer {
             // The shader reads the inner layer's alpha at the base UV and its colour scaled.
             let layer = surface.multiLayer
             let scale = hasTerm(.multiLayer) ? max(1, layer.z, layer.w) : 1
-            maps.append((inner, uvPerUnit * scale))
+            body(inner, uvPerUnit * scale)
         }
-        return maps
     }
 
     private func hasTerm(_ term: ShadingTerm) -> Bool {

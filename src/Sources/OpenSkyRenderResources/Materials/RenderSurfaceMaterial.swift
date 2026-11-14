@@ -61,11 +61,14 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
         }
     }
 
-    var textures: [any MTLTexture] {
-        [
+    func forEachTexture(_ body: (any MTLTexture) -> Void) {
+        let all = [
             glow, detail, environment, environmentMask, innerLayer, backLight,
             projected?.diffuse, projected?.noise
-        ].compactMap(\.self)
+        ]
+        for case let texture? in all {
+            body(texture)
+        }
     }
 
     private static let termBits: [(SurfaceShading.Terms, ShadingTerm)] = [

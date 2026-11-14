@@ -515,24 +515,33 @@ nonisolated public struct RenderScene: Sendable {
     public var residencyAllocations: [any MTLAllocation] {
         var seen = Set<ObjectIdentifier>()
         var allocations: [any MTLAllocation] = []
-        func add(_ resources: [any MTLAllocation]) {
-            allocations.append(contentsOf: resources.filter {
-                seen.insert(ObjectIdentifier($0)).inserted
-            })
+        // One allocation at a time: a temporary list per group was built and freed
+        // for every group of the scene.
+        func add(_ resource: any MTLAllocation) {
+            if seen.insert(ObjectIdentifier(resource)).inserted {
+                allocations.append(resource)
+            }
         }
-        for group in opaque + alphaTested {
-            var resources: [any MTLAllocation] = [group.mesh.vertexBuffer, group.mesh.indexBuffer]
-                + group.material.textures
-            if let skinning = group.mesh.skinningBuffer {
-                resources.append(skinning)
+        func add(_ resources: [any MTLAllocation]) {
+            for resource in resources {
+                add(resource)
             }
-            if let matrices = group.mesh.boneMatrixBuffer {
-                resources.append(matrices)
+        }
+        for list in [opaque, alphaTested] {
+            for group in list {
+                add(group.mesh.vertexBuffer)
+                add(group.mesh.indexBuffer)
+                group.material.forEachTexture { add($0) }
+                if let skinning = group.mesh.skinningBuffer {
+                    add(skinning)
+                }
+                if let matrices = group.mesh.boneMatrixBuffer {
+                    add(matrices)
+                }
+                if let morph = group.faceMorph {
+                    add(morph.buffer)
+                }
             }
-            if let morph = group.faceMorph {
-                resources.append(morph.buffer)
-            }
-            add(resources)
         }
         for item in terrain {
             add([
