@@ -63,13 +63,12 @@ extension PapyrusWorldRuntime.ActivationRuns {
             ?? world.aliasSlotsByHandle[handle].flatMap(world.questRuns.aliasReference(in:))
     }
 
-    /// Lowest-script-name instance handle for a reference, matching
-    /// `referenceHandleMap()`'s deterministic choice without building the
-    /// whole map. Alias and effect scripts are not `ObjectReference` scripts, so they never answer.
+    /// The lowest-script-name instance handle on a reference. Alias and effect scripts are
+    /// not `ObjectReference` scripts, so they never answer.
     private func instanceHandle(for key: ReferenceKey) -> PapyrusObjectHandle? {
-        let otherKeys = aliasInstanceKeys.union(world.effectScripts.instanceKeys)
+        let aliasKeys = aliasInstanceKeys
         return world.instanceKeys(on: key)
-            .first { !otherKeys.contains($0) }
+            .first { !aliasKeys.contains($0) && !world.effectScripts.contains(instance: $0) }
             .flatMap { world.instancesByKey[$0] }
     }
 

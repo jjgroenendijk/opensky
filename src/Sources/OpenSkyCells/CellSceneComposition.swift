@@ -27,20 +27,14 @@ nonisolated public struct CellSceneComposition {
 
     public private(set) var cells: [CellCoordinate: CellScene] = [:] {
         didSet {
-            residentCollision = cells.values.map(\.staticCollision)
-            residentWater = cells.values.map(\.waterVolumes).filter { !$0.volumes.isEmpty }
-            residentActors = Self.mergedActorEntries(cells)
-            residentActorsByKey = Dictionary(residentActors.map { ($0.key, $0) }) { first, _ in
-                first
+            if batchDepth == 0 {
+                reindexResidents()
             }
-            let sorted = cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
-            residentCoordinates = sorted.map(\.key)
-            residentReferences = sorted
-                .map { (location: $0.value.location, references: $0.value.references) }
-            actorPlacements = ResidentActorPlacement.index(residentReferences)
-            mergedReferences = nil
         }
     }
+
+    /// Above zero inside `batch`, which rebuilds the resident indexes once at its end.
+    private var batchDepth = 0
 
     /// Every resident ACHR by key, so a per-actor read is one dictionary hit.
     public private(set) var actorPlacements: [ReferenceKey: ResidentActorPlacement] = [:]
@@ -396,5 +390,33 @@ nonisolated extension CellSceneComposition {
     /// Each resident cell's static collision, in the order `collisionCandidates` reads them.
     public var residentCollisionSets: [StaticCollisionSet] {
         residentCollision
+    }
+}
+
+nonisolated extension CellSceneComposition {
+    /// Runs several cell changes and rebuilds the resident indexes once, not once per
+    /// change. A ring swap changes many cells in one frame.
+    public mutating func batch(_ body: (inout Self) -> Void) {
+        batchDepth += 1
+        body(&self)
+        batchDepth -= 1
+        if batchDepth == 0 {
+            reindexResidents()
+        }
+    }
+
+    private mutating func reindexResidents() {
+        residentCollision = cells.values.map(\.staticCollision)
+        residentWater = cells.values.map(\.waterVolumes).filter { !$0.volumes.isEmpty }
+        residentActors = Self.mergedActorEntries(cells)
+        residentActorsByKey = Dictionary(residentActors.map { ($0.key, $0) }) { first, _ in
+            first
+        }
+        let sorted = cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
+        residentCoordinates = sorted.map(\.key)
+        residentReferences = sorted
+            .map { (location: $0.value.location, references: $0.value.references) }
+        actorPlacements = ResidentActorPlacement.index(residentReferences)
+        mergedReferences = nil
     }
 }
