@@ -49,4 +49,11 @@ extension CommandLineTests {
         #expect(try command(["places", "--weathers"], as: PlacesArguments.self).weathers)
         #expect(exitCode(["places", "--limit", "0"]) == OpenSkyCommandLine.usageExitCode)
     }
+
+    @Test func pexCallsTakesOneFunctionName() throws {
+        let calls = try command(["pex-calls", "SendPlayerToJail"], as: PexCallsArguments.self)
+        #expect(calls.function == "SendPlayerToJail")
+        #expect(exitCode(["pex-calls", ""]) == OpenSkyCommandLine.usageExitCode)
+        #expect(exitCode(["pex-calls"]) == OpenSkyCommandLine.usageExitCode)
+    }
 }

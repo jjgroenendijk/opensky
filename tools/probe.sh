@@ -538,4 +538,7 @@ grep -Eq '^1[[:space:]]cold[[:space:]]' "$log" || fail "load-pass printed no col
 run "places (search finds a map marker)" places --search riverwood --limit 5
 grep -Eq '^marker:[A-Za-z0-9_]+:' "$log" || fail "places printed no map marker"
 
+run "pex-calls SendPlayerToJail" pex-calls SendPlayerToJail
+grep -q ' callmethod SendPlayerToJail, ' "$log" || fail "pex-calls found no SendPlayerToJail call"
+
 echo "[INFO] probe passed — full output in $log"
