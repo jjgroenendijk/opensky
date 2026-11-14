@@ -207,29 +207,28 @@ extension RuntimeStateCoreAdapter {
     }
 
     /// Where the player and each resident reference are now.
+    /// Kept while the resident cells, their reference count, and the player's cell stay
+    /// the same, with the player's place in it, so a build copies none of the maps.
     private func currentReferencePlaces() -> ReferencePlaces {
         let streamer = game.streamer
         let cells = streamer.residentCellLocations
         let count = streamer.residentReferenceCount
-        var places: ReferencePlaces
-        if let cached = state.referencePlaces, cached.cells == cells, cached.count == count {
-            places = cached.places
-        } else {
-            places = streamer.residentReferencePlaces { [self] in location(of: $0) }
-            state.referencePlaces = ResidentReferencePlaces(
-                cells: cells,
-                count: count,
-                places: places
-            )
-        }
+        let current = streamer.currentCellLocation
         if
-            let current = streamer.currentCellLocation,
-            let scene = streamer.residentScene(at: current)
+            let cached = state.referencePlaces, cached.cells == cells, cached.count == count,
+            cached.current == current
         {
+            return cached.places
+        }
+        var places = streamer.residentReferencePlaces { [self] in location(of: $0) }
+        if let current, let scene = streamer.residentScene(at: current) {
             places.locations[.player] = location(of: scene)
             places.interiors[.player] = scene.isInterior
             places.cells[.player] = scene.referenceCell
         }
+        state.referencePlaces = ResidentReferencePlaces(
+            cells: cells, count: count, current: current, places: places
+        )
         return places
     }
 }

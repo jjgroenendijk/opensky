@@ -203,7 +203,11 @@ extension CellStreamer.RuntimeStateSteps {
         if let interiorScene = streamer.interiorScene {
             return interiorScene.references.count
         }
-        return streamer.composition.cells.values.reduce(0) { $0 + $1.references.count }
+        var count = 0
+        for scene in streamer.composition.cells.values {
+            count += scene.references.count
+        }
+        return count
     }
 
     /// The cell the player is currently in, which is where anything they spawn
