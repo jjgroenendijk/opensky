@@ -66,9 +66,13 @@ OpenSky reads x as cells per 1/64 of the texture, y as the glint power, and z as
 strength, and does not use w. This is an OpenSky model, not the game's formula. The game's
 `[Display] bToggleSparkles` turns the term off, as does the "Snow and ice sparkle" switch.
 
-Ambient is the six-axis directional ambient (`DALC`), plus the single ambient colour while
-"Base ambient light" is on. The emissive colour times its multiple adds to the light, scaled
-by the slot 2 glow map on a glow shape. An external-emittance shape uses the colour of its
+Ambient is the six-axis directional ambient (`DALC`). Under a weather it is used alone. In an
+interior the single ambient colour is added while "Base ambient light" is on. Capture pairs
+against the reference game give this split: outdoors the ground is about 1.5 times too bright
+with the single colour, and an inn is far too dark without it.
+
+The emissive colour times its multiple adds to the light, scaled by the slot 2 glow map on a
+glow shape. An external-emittance shape uses the colour of its
 reference's `XEMI` light, or its `XEMI` region's weather colour at this hour
 ([effect shapes](/formats/nif-materials.md#effect-shapes)), instead. A reference without one
 keeps the NIF colour. The sun terms

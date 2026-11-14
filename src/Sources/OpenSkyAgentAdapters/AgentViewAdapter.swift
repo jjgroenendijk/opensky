@@ -39,6 +39,15 @@ extension AgentViewAdapter {
             cell: cell, feet: target.feet, yaw: MatrixMath.radians(fromDegrees: target.yawDegrees),
             worldspace: target.interiorCell == nil ? target.worldspace : nil
         )
+        let weather = target.weather.map { FormID(stored: $0) }
+        if
+            let weather, let system = game.gameSession?.weather,
+            system.store.weather(weather) == nil
+        {
+            throw AgentFailure(
+                .invalidArgument, "no weather has the FormID \(weather)"
+            )
+        }
         let job = try AgentTeleportJob(
             hub: hub, place: place,
             pitch: MatrixMath.radians(fromDegrees: target.pitchDegrees)
@@ -46,8 +55,8 @@ extension AgentViewAdapter {
         if let hour = target.hour {
             game.runtimeState.setGameClockHour(hour)
         }
-        if let weather = target.weather {
-            game.gameSession?.weather?.forceWeather(FormID(stored: weather), transition: .instant)
+        if let weather {
+            game.gameSession?.weather?.forceWeather(weather, transition: .instant)
         }
         return job
     }

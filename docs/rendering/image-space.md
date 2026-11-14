@@ -40,7 +40,12 @@ checked with capture pairs against the reference game.
 
 - **Measure.** Every 16th pixel in each direction adds its luminance, with the weights
   (0.2125, 0.7154, 0.0721), to two GPU counters per frame slot. The mean is a plain mean, not
-  a log mean.
+  a log mean. The measured colour already holds the fog and the
+  [volumetric light](/rendering/post-effects.md#volumetric-light), as in the game.
+- **Quarters.** The game measures the scene down to a 2 x 2 grid, so each screen quarter has
+  its own mean, X, and Y. A pixel reads them blended, as a linear sampler reads a 2 x 2
+  texture: one quarter's values up to its centre, then a mix towards the next quarter. So a
+  bright sky does not darken the ground below it through the contrast pivot.
 - **Adapt.** Two values, X and Y, follow the mean M. Each frame each moves by `(M - old) *
   rate`, at least 1/256 and never past M. With `S = speed * 2`, `K = strength * 0.4`, and
   `n = 30 * seconds`, X uses the rate `1 - (1 - 0.01 S / K)^n` and Y `1 - (1 - 0.01 S)^n`.
@@ -142,8 +147,6 @@ The launcher's "Low-health pulse" switch stands for the game's `bLowHealthIModEn
   the game's `bUse64bitsHDRRenderTarget` on, the target is half-float in linear sRGB instead,
   and colour above 1 reaches the tone mapping. Only then does bloom draw. The game always
   renders to a float target.
-- The game measures the scene down to a 2 x 2 grid by default, so each screen quarter adapts
-  on its own. OpenSky measures one mean for the whole frame.
 - The bloom tap pattern, the radius step, and the receive-bloom threshold are not documented.
   OpenSky reads the receive threshold but does not use it.
 - The radial blur reach, its radius unit, and the centre's screen space are OpenSky's reading

@@ -145,9 +145,7 @@ extension Renderer {
     private func setVolumetricLight(_ uniforms: inout PostEffectUniforms) {
         let look = volumetricLight.clamped
         uniforms.volumetricLight = SIMD4(
-            PostEffectSettings.volumetricStrengthPerIntensity * look.intensity,
-            Float(postEffects.volumetricSteps),
-            PostEffectSettings.volumetricReachPerSamplingRange * look.samplingRangeFactor,
+            look.intensity, Float(postEffects.volumetricSteps), look.samplingRangeFactor,
             look.phaseFunctionScattering
         )
         // The frame's sun colour carries the image space sunlight scale, which only the
@@ -163,7 +161,9 @@ extension Renderer {
             PostEffectSettings.volumetricDriftPerWindSpeed * look.densityWindSpeed,
             PostEffectSettings.volumetricFallPerFallingSpeed * look.densityFallingSpeed
         )
-        uniforms.volumetricPhase = SIMD4(look.phaseFunctionContribution, 0, 0, 0)
+        uniforms.volumetricPhase = SIMD4(
+            look.phaseFunctionContribution, PostEffectSettings.volumetricNearPlane, 0, 0
+        )
     }
 
     /// Outdoors under a sky only; nil when the sun is behind the camera or set.

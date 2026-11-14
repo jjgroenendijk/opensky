@@ -146,7 +146,7 @@ enum RenderEffects {
         )
         gameSession.sky.imageSpaceLinks = ImageSpaceLinks(
             records: records,
-            weatherPlugin: "skyrim.esm"
+            weatherPlugin: FormIDResolver.loadOrderSpaceName
         )
         try applyWeather(
             options.weather, to: gameSession,

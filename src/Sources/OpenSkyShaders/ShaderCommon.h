@@ -297,7 +297,8 @@ static inline float2 fogAt(float3 worldPosition, constant FrameUniforms &frame)
 static inline float3 applyFog(float3 color, float3 worldPosition, constant FrameUniforms &frame)
 {
     float2 fog = fogAt(worldPosition, frame);
-    float3 fogColor = mix(frame.fogNearColor, frame.fogFarColor, fog.x);
+    // The fog amount also picks the colour between near and far, as in the game.
+    float3 fogColor = mix(frame.fogNearColor, frame.fogFarColor, fog.y);
     // The game mixes in gamma space; the fog colour is a gamma value.
     return toLinear(mix(toGamma(color), fogColor, fog.y));
 }

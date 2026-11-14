@@ -45,7 +45,7 @@ extension EffectsFrameStep {
         let gameSession = stage.gameSession
         guard let records = provider.effectRecords else { return }
         gameSession.sky.imageSpaceLinks = ImageSpaceLinks(
-            records: records, weatherPlugin: EffectsBasePlugin.name
+            records: records, weatherPlugin: FormIDResolver.loadOrderSpaceName
         )
         let frameSteps = gameSession.frameSteps
         frameSteps.register(.effects) { [weak self, weak gameSession, weak streamer] position in
@@ -54,7 +54,9 @@ extension EffectsFrameStep {
             let now = now()
             let renderer = gameSession.renderer
             gameSession.sky.imageSpaceLinks?.interior = streamer?.interiorScene.map {
-                InteriorImageSpace(imageSpace: $0.imageSpace, plugin: EffectsBasePlugin.name)
+                InteriorImageSpace(
+                    imageSpace: $0.imageSpace, plugin: FormIDResolver.loadOrderSpaceName
+                )
             }
             let paused = gameSession.worldSimPaused
             let elapsed = lastFrame.map { Float(now.timeIntervalSince($0)) } ?? 0

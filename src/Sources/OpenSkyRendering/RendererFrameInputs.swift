@@ -1,6 +1,7 @@
 import Metal
 import OpenSkyFormatsESM
 import OpenSkyRenderCore
+import OpenSkyRenderResources
 import simd
 
 /// The sun, ambient light, sky, and fog one frame's uniforms take.
@@ -11,9 +12,15 @@ struct FrameLight {
     let grassSunColor: SIMD3<Float>
     let ambientColor: SIMD3<Float>
     let ambient: DirectionalAmbientColors
+    /// False under a weather: its lit surfaces take the six-axis ambient alone.
+    let addsBaseAmbient: Bool
     /// The weather's sky palette; nil when the scene draws no sky.
     let weatherSky: ResolvedWeather?
     let fog: Renderer.FrameFog
+
+    func terms(_ terms: SurfaceShadingTerm) -> SurfaceShadingTerm {
+        addsBaseAmbient ? terms : terms.subtracting(.baseAmbient)
+    }
 }
 
 extension Renderer {
@@ -33,6 +40,7 @@ extension Renderer {
             ambientColor: weather?.ambientColor ?? interior?.ambientColor
                 ?? camera.ambientColor,
             ambient: weather?.directionalAmbient ?? interior?.directionalAmbient ?? .black,
+            addsBaseAmbient: weather == nil,
             weatherSky: scene.sky != nil && !covered
                 ? weather?.liftingSky(scale: EyeAdaptation.sceneScale, lift: scales.skyLift) : nil,
             fog: waterAboveCamera.map(underwaterFog) ?? aboveWater

@@ -83,17 +83,19 @@ public final class ImageSpacePassResources {
         luminanceBuffer = luminance
     }
 
-    static let luminanceStride = 2 * MemoryLayout<UInt32>.stride
+    /// A sum and a sample count per screen quarter.
+    static let luminanceStride = 2 * EyeAdaptationQuarters.count * MemoryLayout<UInt32>.stride
 
-    /// The slot's luminance from the frame that last used it, cleared for this frame.
-    func takeMeanLuminance(slot: Int) -> Float? {
+    /// The slot's luminance sums from the frame that last used it, cleared for this frame.
+    func takeLuminance(slot: Int) -> MeasuredLuminance {
+        let count = 2 * EyeAdaptationQuarters.count
         let values = unsafe luminanceBuffer.contents().advanced(by: Self.luminanceStride * slot)
-            .bindMemory(to: UInt32.self, capacity: 2)
-        defer {
-            unsafe values[0] = 0
-            unsafe values[1] = 0
+            .bindMemory(to: UInt32.self, capacity: count)
+        let taken = (0 ..< count).map { unsafe values[$0] }
+        for index in 0 ..< count {
+            unsafe values[index] = 0
         }
-        return unsafe ToneMappingState.meanLuminance(sum: values[0], count: values[1])
+        return MeasuredLuminance(counters: taken)
     }
 
     private static func makePipeline(
@@ -217,15 +219,20 @@ extension Renderer {
         let toneMaps = frameInput.imageSpace.passEnabled && frameInput.imageSpace.toneMapping
             .enabled
             && ToneMappingState.isActive(parameters.hdr)
-        let measured = imageSpacePass.takeMeanLuminance(slot: slot)
+        let measured = imageSpacePass.takeLuminance(slot: slot)
         let deltaTime = eyeAdaptationClock.advance(to: CACurrentMediaTime(), paused: false)
-        if frameInput.imageSpace.passEnabled, let measured {
+        if frameInput.imageSpace.passEnabled, let whole = measured.whole {
             eyeAdaptation.advance(
-                measured: measured, speed: parameters.hdr.eyeAdaptSpeed,
+                measured: whole, speed: parameters.hdr.eyeAdaptSpeed,
+                strength: parameters.hdr.eyeAdaptStrength, deltaTime: deltaTime
+            )
+            eyeQuarters.advance(
+                measured: measured.quarters, speed: parameters.hdr.eyeAdaptSpeed,
                 strength: parameters.hdr.eyeAdaptStrength, deltaTime: deltaTime
             )
         } else if !frameInput.imageSpace.passEnabled {
             eyeAdaptation.reset()
+            eyeQuarters.reset()
         }
         guard let target = descriptor.colorAttachments[0].texture else { return nil }
         let post = postEffectUniforms(parameters, targetHeight: target.height)
@@ -237,11 +244,10 @@ extension Renderer {
         let grades = frameInput.imageSpace.passEnabled
             && (toneMaps || blooms || !parameters.isNeutral)
         guard grades || post != nil else { return nil }
-        // x exposure, y white, z 1 measures and 2 also tone maps, w the adapted X the
-        // contrast pivots around.
-        let toneMapping = SIMD4<Float>(
-            eyeAdaptation.exposure, parameters.hdr.white, toneMaps ? 2 : 1,
-            eyeAdaptation.adaptedLuminance ?? 0.5
+        let toneMapping = ImageSpaceToneMapping(
+            white: parameters.hdr.white, mode: toneMaps ? 2 : 1,
+            pivots: eyeQuarters.pivots(fallback: eyeAdaptation.adaptedLuminance ?? 0.5),
+            exposures: eyeQuarters.exposures
         )
         return ImageSpaceGrade(
             uniforms: Self.uniforms(
@@ -433,7 +439,7 @@ extension Renderer {
     static func uniforms(
         _ parameters: ImageSpaceParameters,
         targetHeight: Int,
-        toneMapping: SIMD4<Float> = SIMD4(1, 0, 0, 0),
+        toneMapping: ImageSpaceToneMapping = ImageSpaceToneMapping(),
         motion: ImageSpaceMotion = ImageSpaceMotion()
     ) -> ImageSpaceUniforms {
         let pixels = Float(targetHeight) / 1080
@@ -452,7 +458,9 @@ extension Renderer {
                 lowHalf: SIMD2(parameters.doubleVision, parameters.motionBlur),
                 highHalf: radial.center
             ),
-            toneMapping: toneMapping,
+            toneMapping: SIMD4(0, toneMapping.white, toneMapping.mode, 0),
+            quarterPivot: toneMapping.pivots,
+            quarterExposure: toneMapping.exposures,
             radialBlur: SIMD4(radial.strength, radial.rampUp, radial.start, radial.rampDown),
             radialBlurEnd: SIMD4(radial.downStart, 0, 0, 0),
             bloom: motion.blooms
@@ -463,6 +471,38 @@ extension Renderer {
                 : .zero,
             reprojection: motion.reprojection
         )
+    }
+}
+
+/// The tone-mapping inputs of one frame. `mode` 0 is off, 1 measures, and 2 also tone maps.
+struct ImageSpaceToneMapping {
+    var white: Float = 0
+    var mode: Float = 0
+    /// The adapted luminance X and the exposure of each screen quarter.
+    var pivots = SIMD4<Float>(repeating: 0)
+    var exposures = SIMD4<Float>(repeating: 1)
+}
+
+/// The luminance counters one frame wrote: a fixed-point sum and a sample count per quarter.
+struct MeasuredLuminance {
+    let counters: [UInt32]
+
+    var quarters: [Float?] {
+        (0 ..< EyeAdaptationQuarters.count).map {
+            ToneMappingState.meanLuminance(sum: counters[$0 * 2], count: counters[$0 * 2 + 1])
+        }
+    }
+
+    /// The mean over the whole frame. The sum is 64-bit: four quarters can pass 32 bits.
+    var whole: Float? {
+        var sum: UInt64 = 0
+        var count: UInt64 = 0
+        for quarter in 0 ..< EyeAdaptationQuarters.count {
+            sum += UInt64(counters[quarter * 2])
+            count += UInt64(counters[quarter * 2 + 1])
+        }
+        guard count > 0 else { return nil }
+        return Float(sum) / Float(count) / ToneMappingState.fixedPointScale
     }
 }
 

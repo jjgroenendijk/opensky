@@ -120,10 +120,11 @@ static float3 imageSpaceBloom(
 }
 
 // Eye adaptation input: every 16th pixel each way adds its fixed-point luminance, in the
-// game's colour values, to the slot's counters (EyeAdaptation.swift). A plain mean, as the
-// game's down-sample chain gives.
+// game's colour values, to the counters of its screen quarter (EyeAdaptation.swift). A plain
+// mean per quarter, as the game's down-sample chain to 2 x 2 gives.
 static void imageSpaceMeasure(
     float2 position,
+    float2 uv,
     float3 color,
     constant ImageSpaceUniforms &uniforms,
     device atomic_uint *luminance)
@@ -132,19 +133,27 @@ static void imageSpaceMeasure(
     if (uniforms.toneMapping.z < 0.5 || any((pixel & 15u) != 0u)) {
         return;
     }
+    uint quarter = (uv.y >= 0.5 ? 2u : 0u) + (uv.x >= 0.5 ? 1u : 0u);
     float value = clamp(dot(toGamma(color), imageSpaceLuminance), 0.0, 64.0);
-    atomic_fetch_add_explicit(&luminance[0], uint(value * 1024.0), memory_order_relaxed);
-    atomic_fetch_add_explicit(&luminance[1], 1u, memory_order_relaxed);
+    atomic_fetch_add_explicit(&luminance[quarter * 2u], uint(value * 1024.0), memory_order_relaxed);
+    atomic_fetch_add_explicit(&luminance[quarter * 2u + 1u], 1u, memory_order_relaxed);
+}
+
+// One value per screen quarter, blended as a linear sampler reads a 2 x 2 texture.
+static float imageSpaceQuarterValue(float4 quarters, float2 uv)
+{
+    float2 blend = saturate(uv * 2.0 - 0.5);
+    return mix(mix(quarters.x, quarters.y, blend.x), mix(quarters.z, quarters.w, blend.x), blend.y);
 }
 
 // The game tone maps and grades its stored colour values, which are gamma values here, so
 // the pass works on toGamma of the scene and returns it linear (docs/rendering/image-space.md).
-static float4 imageSpaceGrade(float3 color, constant ImageSpaceUniforms &uniforms)
+static float4 imageSpaceGrade(float3 color, float2 uv, constant ImageSpaceUniforms &uniforms)
 {
     float3 scene = toGamma(color);
     if (uniforms.toneMapping.z > 1.5 && uniforms.toneMapping.y > 0.0) {
         float lum = max(dot(scene, imageSpaceLuminance), 1.0e-5);
-        float x = lum * uniforms.toneMapping.x;
+        float x = lum * imageSpaceQuarterValue(uniforms.quarterExposure, uv);
         float white = uniforms.toneMapping.y * 1.1;
         float mapped = x * (1.0 + x / (white * white)) / (1.0 + x);
         scene *= mapped / lum;
@@ -152,7 +161,7 @@ static float4 imageSpaceGrade(float3 color, constant ImageSpaceUniforms &uniform
     float grey = dot(scene, imageSpaceLuminance);
     scene = mix(float3(grey), scene, uniforms.grading.x);
     scene = mix(scene, grey * uniforms.tint.rgb, uniforms.tint.a);
-    float pivot = uniforms.toneMapping.w;
+    float pivot = imageSpaceQuarterValue(uniforms.quarterPivot, uv);
     scene = uniforms.grading.z * (uniforms.grading.y * scene - pivot) + pivot;
     scene = mix(saturate(scene), uniforms.fade.rgb, uniforms.fade.a);
     return float4(toLinear(scene), 1.0);
@@ -178,7 +187,6 @@ fragment float4 imageSpaceFragment(
     float3 color = (post.effects & PostEffectFlagAntiAliasing) != 0
                        ? postFXAA(scene, uv, texel)
                        : scene.sample(linearClamp, uv).rgb;
-    imageSpaceMeasure(in.position.xy, color, uniforms, luminance);
     if (uniforms.grading.w > 0.5) {
         color = imageSpaceBlur(scene, linearClamp, uv, texel, uniforms.grading.w, color);
     }
@@ -196,8 +204,11 @@ fragment float4 imageSpaceFragment(
             color, pixel, frame, post, scene, sceneDepth, {occlusionMap, indirectMap}, shadowMap,
             shadowCompare);
     }
+    // The game measures the frame after the volumetric light, so the adapted luminance,
+    // which is also the contrast pivot, includes it.
+    imageSpaceMeasure(in.position.xy, uv, color, uniforms, luminance);
     color = imageSpaceBloom(scene, linearClamp, uv, texel, color, uniforms);
-    return imageSpaceGrade(color, uniforms);
+    return imageSpaceGrade(color, uv, uniforms);
 }
 
 /// The same grade without the copy: it reads the pixel from tile memory, so it serves
@@ -208,8 +219,10 @@ fragment float4 imageSpaceTileFragment(
     device atomic_uint *luminance [[buffer(BufferIndexImageSpaceLuminance)]],
     float4 scene [[color(0)]])
 {
-    imageSpaceMeasure(in.position.xy, scene.rgb, uniforms, luminance);
-    return imageSpaceGrade(scene.rgb, uniforms);
+    // The triangle's uv has y up; the quarters count from the top of the screen.
+    float2 uv = float2(in.uv.x, 1.0 - in.uv.y);
+    imageSpaceMeasure(in.position.xy, uv, scene.rgb, uniforms, luminance);
+    return imageSpaceGrade(scene.rgb, uv, uniforms);
 }
 
 // Asset format comparison: decodes any sampled texture (BC, ASTC, RGBA8) to

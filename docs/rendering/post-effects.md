@@ -114,33 +114,37 @@ shader like this:
 
 | `VOLI` field | Use | Fallback |
 | --- | --- | --- |
-| `CNAM` intensity | strength = 0.025 × intensity | 2 |
+| `CNAM` intensity | scales the summed light | 2 |
 | `DNAM` custom colour contribution `c` | light = sun colour × (1 - c) + colour × c | 0 |
 | `ENAM` to `GNAM` colour | as above | 1, 1, 1 |
-| `HNAM` density contribution | how much the density noise thins the air | 0 |
+| `HNAM` density contribution `d` | density = 1 + d × (noise - 1) | 0 |
 | `INAM` density size | one noise cell is 64 × size units | 10 |
 | `JNAM` wind speed | the noise drifts 4 × speed units per second along X | 0 |
 | `KNAM` falling speed | the noise falls 64 × speed units per second | 0 |
-| `LNAM` phase contribution `p` | phase = mix(1, Henyey-Greenstein, p) | 1 |
+| `LNAM` phase contribution `p` | phase = 1 + p × (Henyey-Greenstein - 1) | 1 |
 | `MNAM` phase scattering `g` | the Henyey-Greenstein asymmetry | 0.6 |
-| `NNAM` sampling range factor | the ray reach = 102.4 × factor units | 40 |
+| `NNAM` sampling range factor `r` | the slices are even in `depth ^ r` | 40 |
 
 The vanilla records all use colour 1, 1, 1, custom colour 0, density 0.3, size 10, wind 15,
 falling 0.3, and range 40. Intensity runs 1 to 4, and `p` and `g` run 0.7 to 0.85.
 
-- The ray from the camera to the pixel, at most the reach long, takes a fixed number of
-  steps: 8, 16, or 32 for quality 0, 1, or 2. A per-pixel noise offset turns the step bands
-  into grain.
-- Each step takes one tap of the [sun cascades](/rendering/shadows.md), times the air density
-  there: `1 - density × noise`, where the noise is smooth value noise from 0 to 1. The mean
-  over the steps is the light along the ray.
-- The Henyey-Greenstein phase makes the air brightest toward the sun:
-  `(1 - g²) / (1 + g² - 2g cos θ)^1.5`, where θ is the angle between the ray and the sun.
-- The added colour is the light times the lit share, the phase, `1 - exp(-length / reach)`,
-  and the strength. The sky pixels take the full length.
+The sum follows the Windows game, observed in the reference game:
+
+- The air between the near plane and the far plane is cut into slices. The slices are even
+  in `depth ^ r`, where depth is the 0 to 1 depth buffer value. With `r` = 40 almost all
+  slices lie far away, so the light shows as bright haze on distant land and on the sky.
+- Each slice adds `lit × density × phase`. `lit` is one tap of the
+  [sun cascades](/rendering/shadows.md), and 1 past the last cascade. The phase is
+  `(1 - g²) / (4π (1 - g cos))` with the angle between the view ray and the sun.
+- A pixel takes the slices in front of it; the sky takes them all. The result is
+  `intensity × sum / slice count`, times the light colour. It is added to the scene colour
+  after the fog and before the luminance measure, the bloom, and the tone curve, so the
+  eye adaptation sees it.
+- OpenSky marches 8, 16, or 32 steps for quality 0, 1, or 2 over the pixel's share of the
+  slices, which gives the same mean. A per-pixel noise offset turns the step bands into grain.
 - A sky pixel does not march: its lit share is 1. A sky ray leaves the cascades at their
   edges, and those edges would cut a hard disc and bands into the sky.
-- With shadows off, nothing is added.
+- With shadows off, every slice counts as lit.
 
 ## Depth of field
 
@@ -236,7 +240,7 @@ still not known.
   game's linear depth.
 - Screen-space reflections: OpenSky reflects on water only. The game also reflects on other
   surfaces; see [the game's reflections](#the-games-reflections).
-- The volumetric light's scales from `VOLI` fields to world units and strength are OpenSky's
+- The volumetric light's noise scales from `VOLI` fields to world units are OpenSky's
   reading of the field names. The noise drifts along X, because no wind direction is known.
 - The lens flare is OpenSky's own pattern. The game names a `LENS` lens flare record, but the
   vanilla install has none (Skyrim.esm, Update.esm, and the three DLC files have no `LENS`

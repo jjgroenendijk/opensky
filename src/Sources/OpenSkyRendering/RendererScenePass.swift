@@ -78,7 +78,7 @@ extension Renderer {
             grassFadeDistances: frameGrassFadeDistances,
             treeWind: frameTreeWind,
             debugMode: renderDebug.mode.rawValue,
-            shadingTerms: shadingTerms.rawValue,
+            shadingTerms: light.terms(shadingTerms).rawValue,
             sceneDepthUnproject: sceneDepthUnproject,
             terrainLODBrightening: terrainLODBrightness.uniform,
             precipitationOcclusion: precipitationOcclusionView ?? matrix_identity_float4x4,
