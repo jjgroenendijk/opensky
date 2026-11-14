@@ -90,8 +90,7 @@ extension CellStreamer.RuntimeStateSteps {
         guard case let .plugin(_, objectID) = key else { return }
         noteDistantLODMutation(of: key)
         func dependsOnKey(_ scene: CellScene) -> Bool {
-            scene.references.sortedEntries()
-                .contains { $0.enableParent?.parent.objectID == objectID }
+            scene.references.enableParentObjectIDs.contains(objectID)
                 || scene.hazards.contains { $0.enableParent?.parent.objectID == objectID }
         }
         for (coordinate, scene) in streamer.composition.cells where dependsOnKey(scene) {
