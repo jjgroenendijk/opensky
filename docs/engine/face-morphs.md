@@ -113,23 +113,24 @@ OpenSky does not build this yet. It holds one value for the whole line.
 - When a line starts, the actor's emotion type and value come from the response's `TRDT` emotion
   type and value. That value is also the base value. Combat lines do the same. Starting dialogue
   also resets the timer.
-- When the current value is at the neutral listening value (50 by default) and the timer has run
+- When the current value is at the neutral listening value (50) and the timer has run
   out, a new value is rolled:
   - low = base − base × the minimum change percent / 100, and high = base + base × the maximum
-    change percent / 100. Both percents are 30 by default. Each part is rounded down to a whole
+    change percent / 100. Both percents are 100. Each part is rounded down to a whole
     number.
   - If low is below 0, low becomes 0 and high is not clamped. Otherwise high is clamped to 100.
   - The new value = low + a random whole number from 0 up to, but not including, high − low.
-  - The timer is set to a random time between the game's minimum and maximum, 0 and 1.5 seconds
-    by default.
+  - The timer is set to a random time between the game's minimum and maximum. Both are 1.5
+    seconds, so the timer is a fixed 1.5 seconds.
 - While the actor does not speak, a value above the neutral value falls toward it by a fixed step
-  each update, 10 by default.
+  each update, 10.
 - The face shows the expression of the emotion type (types 1 to 7) at strength = value / 100. A
-  neutral line takes its strength from the game's mood face value and the `Mood` actor value.
+  neutral line takes its strength from the game's mood face value (50) and the `Mood` actor value.
 - The Papyrus functions `GetEmotion` and `GetEmotionValue` return the current type and value.
 
-Example: a line with emotion value 60 gives low = 60 − 18 = 42 and high = 60 + 18 = 78. Each roll
-picks a value from 42 to 77.
+Example: a line with emotion value 60 gives low = 60 − 60 = 0 and high = 60 + 60 = 120. Low is
+not below 0, so high is clamped to 100. Each roll picks a value from 0 to 99, so a speaking face
+moves a lot.
 
 ```mermaid
 stateDiagram-v2
@@ -142,8 +143,9 @@ stateDiagram-v2
     Settling --> Quiet: value at or below neutral
 ```
 
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. It is not yet confirmed
-in the reference game.
+Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. The values were checked against
+`Skyrim.esm`, which overrides several of the program's own defaults. The rules are not yet
+confirmed by a second read or in the reference game.
 
 ### Blinks
 
