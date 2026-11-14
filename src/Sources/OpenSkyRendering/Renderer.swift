@@ -337,6 +337,7 @@ public final class Renderer: NSObject {
     public let greyVolume: any MTLTexture
     /// Set by a benchmark to get each frame's GPU time; nil in normal play.
     public var gpuFrameLog: GPUFrameLog?
+    let commitFailures = GPUCommitFailureLog()
     /// Set by a benchmark to time each render pass on the GPU; nil in normal play.
     public var passTimer: GPUPassTimer?
     /// Set by a benchmark: a frame waits for its slot instead of being skipped, because

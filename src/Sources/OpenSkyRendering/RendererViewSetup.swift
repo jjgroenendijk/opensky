@@ -38,7 +38,7 @@ extension Renderer {
     func commitFrame() {
         let parts = earlyFrameParts ?? GPUFrameParts(count: 1)
         earlyFrameParts = nil
-        commandQueue.commit([commandBuffer], options: commitOptions(adding: parts))
+        commandQueue.commit([commandBuffer], options: commitOptions(adding: parts, part: "frame"))
     }
 
     /// Commits the culling and shadow work, so the GPU runs it while the CPU encodes
@@ -47,7 +47,7 @@ extension Renderer {
         let parts = GPUFrameParts(count: 2)
         earlyFrameParts = parts
         commandBuffer.endCommandBuffer()
-        commandQueue.commit([commandBuffer], options: commitOptions(adding: parts))
+        commandQueue.commit([commandBuffer], options: commitOptions(adding: parts, part: "early"))
         commandBuffer.beginCommandBuffer(allocator: allocator)
     }
 
@@ -60,12 +60,14 @@ extension Renderer {
         frameIndex += 1
     }
 
-    private func commitOptions(adding parts: GPUFrameParts) -> MTL4CommitOptions {
+    private func commitOptions(adding parts: GPUFrameParts, part: String) -> MTL4CommitOptions {
         let options = MTL4CommitOptions()
         let spans = frameStats.gpuSpans
         let log = gpuFrameLog
+        let failures = commitFailures
         options.addFeedbackHandler { feedback in
             if let error = feedback.error {
+                failures.record(error, part: part)
                 log?.recordFailure(error)
             }
             guard let busy = parts.add(start: feedback.gpuStartTime, end: feedback.gpuEndTime)
