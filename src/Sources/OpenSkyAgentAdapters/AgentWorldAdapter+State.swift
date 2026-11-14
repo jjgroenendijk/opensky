@@ -56,8 +56,15 @@ extension AgentWorldAdapter {
         case let .global(editorID): try frameReadout.globalState(editorID)
         case .time: frameReadout.timeState()
         case .frame: frameReadout.frameState()
-        case .view: try view.viewState()
+        case .view, .newGame: try sessionState(query)
         }
+    }
+
+    private func sessionState(_ query: AgentStateQuery) throws(AgentFailure) -> AgentJSON {
+        if case .newGame = query {
+            return game.menuWorld.lastNewGame?.json ?? ["start": .null]
+        }
+        return try view.viewState()
     }
 
     /// The reads that look inside the scripts, the packages, and the seats.

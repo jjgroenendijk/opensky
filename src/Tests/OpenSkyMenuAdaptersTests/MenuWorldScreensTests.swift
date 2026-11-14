@@ -2,6 +2,7 @@ import Foundation
 
 // The menu world applies settings and script menu calls; the screens and loading parts read state.
 
+import OpenSkyAgentControl
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -124,7 +125,9 @@ struct MenuWorldScreensTests {
 
     @Test func teleportsCoverAndReportFailures() {
         let menus = MenuWorldAdapter(game: host, now: { Date(timeIntervalSinceReferenceDate: 0) })
-        menus.teleports.startPlayer(at: .normal)
+        #expect(throws: AgentFailure.self) {
+            try menus.newGame.startNewGame(LaunchNewGame(start: .normal))
+        }
         #expect(host.fakeLoadingScreens.beginLoadCalls.isEmpty)
         menus.teleports.abandonNewGameCover()
         #expect(!host.fakeStreamer.isHeld)

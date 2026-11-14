@@ -134,6 +134,49 @@ its record, so it draws at the new place only while that cell is loaded.
 The `MQ101` fragment calls were read with the PEX disassembler into
 `.logs/probe-mq101/functions.txt`.
 
+## New game at a chosen place
+
+The launcher's Play, and `debug newgame` in the [agent control](/tools/agent-control.md), start
+a new game at a place instead of the opening. The place is a named interior, a map marker, a
+cell by editor ID, or a grid cell. `openskycli places` lists the first two kinds from the active
+plugins. Steps 1 to 3 of a new game run, and `MQ101` does not start. The player then moves to
+the place behind the loading screen:
+
+- An interior is entered as the console's `coc` enters it.
+- A map marker puts the player at the marker's position, as a fast travel does.
+
+On arrival the chosen weather is forced, the chosen item preset is added and worn, and the race
+menu opens unless it was turned off. The chosen hour is set before the move. A start that names
+a map marker the load order lacks is refused before anything changes.
+
+The item presets are OpenSky's own choice of `Skyrim.esm` items, not a rule of the game. Each
+editor ID was checked with `openskycli record show`.
+
+### The opening, done
+
+The story choice "Helgen done" leaves the world as it is after the opening, without playing
+it. It follows the game's own data. The start-up stage of `MQ101`, stage 0, has five log
+entries. Each has one condition on the global `MQQuickstart`: the entry for value 0 is the
+normal opening, and the entry for value 3 skips to the end of Helgen. That entry's fragment:
+
+1. Moves the player to `HelgenEndMarker` and opens the race menu.
+2. Shows a message box that asks who the player left with. The first button sets stage 1 of
+   `MQ102A`, Hadvar's quest; the other sets stage 1 of `MQ102B`, Ralof's quest.
+3. Sets stages 25, 26, and 1000 of `MQ101`, then stops the quest.
+
+OpenSky starts `MQ101` without its start-up stage, so the player is not moved, and then sets
+the same stages and stops it: stage 1 of `MQ102A` or `MQ102B`, then 25, 26, and 1000 of
+`MQ101`, then the stop. The launcher's story choice gives the answer of the message box.
+Three steps of the entry are not run: `AddRaceSpells` after the race menu, the removal of the
+two opening music tracks, and the disable of the Helgen attack reference.
+
+The player record itself holds a test kit, such as an iron sword, iron armour, torches, and
+gold. Only the normal opening removes it, so a place start keeps it, and a starting items set
+is added on top of it.
+
+The entries and the fragment were read with `openskycli record show MQ101` and
+`openskycli pex QF_MQ101_0003372B --function Fragment_27`.
+
 ## Load list
 
 Load opens two lists in the movie: the characters, then the saves of one character. The

@@ -38,4 +38,15 @@ extension CommandLineTests {
         #expect(exitCode(["record", "show", "0x3C", "--out", "a.txt", "--print"])
             == OpenSkyCommandLine.usageExitCode)
     }
+
+    @Test func placesTakesASearchTextAndARowLimit() throws {
+        let places = try command(
+            ["places", "--search", "bannered mare", "--limit", "5"], as: PlacesArguments.self
+        )
+        #expect(places.search == "bannered mare")
+        #expect(places.limit == 5)
+        #expect(!places.weathers)
+        #expect(try command(["places", "--weathers"], as: PlacesArguments.self).weathers)
+        #expect(exitCode(["places", "--limit", "0"]) == OpenSkyCommandLine.usageExitCode)
+    }
 }

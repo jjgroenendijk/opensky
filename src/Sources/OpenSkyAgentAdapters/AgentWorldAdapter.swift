@@ -44,6 +44,7 @@ public protocol AgentWorldHost: AnyObject, SendableMetatype {
     var simulationClock: any SteppedWallClockPort { get }
     var streamer: any CellStreamerPort { get }
     var titleMenu: any TitleMenuPort { get }
+    var menuWorld: any MenuWorldPort { get }
     var dataRoot: GameDataRoot? { get }
 }
 

@@ -45,6 +45,19 @@ struct AgentQueryTests {
         #expect(throws: AgentFailure.self) { try world.hub.actorValueIndex("NoSuchValue") }
     }
 
+    @Test func aNewGameClosesTheTitleMenuAndReadsBackItsRequest() throws {
+        #expect(try world.query(.newGame) == ["start": .null])
+        let request = AgentNewGameRequest(start: "cell:WhiterunInn", hour: 9)
+        host.fakeTitleMenu.isOpen = true
+        _ = try world.perform(.newGame(request))
+        #expect(host.fakeTitleMenu.closeCallCount == 1)
+        #expect(host.fakeMenuWorld.startNewGameCalls == [request])
+        host.fakeMenuWorld.lastNewGame = request
+        #expect(try world.query(.newGame) == request.json)
+        host.fakeMenuWorld.startNewGameError = AgentFailure(.notFound, "no such place")
+        #expect(throws: AgentFailure.self) { try world.perform(.newGame(request)) }
+    }
+
     @Test func statusAndClockReachTheirPorts() throws {
         host.fakeTitleMenu.isOpen = true
         let status = world.agentStatus

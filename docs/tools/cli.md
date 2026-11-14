@@ -106,6 +106,7 @@ the number. A summary line goes to stderr.
 | --- | --- |
 | `install` | The game folder check the launcher shows: game version, official DLC, Creation Club plugin count, archive, plugin, and record counts, and each install problem with its fix. Exits 1 on a problem |
 | `plugins` | The resolved load order, where each plugin came from, and plugins listed active that `Data/` lacks |
+| `places [--search <text>] [--limit n] [--weathers]` | The places a new game can start at, as the launcher's place picker lists them: every named interior and every map marker in the load order. A row is the start value, the name, and where the place is; `game debug newgame --at` takes the start value. `--search` keeps the places that hold every word; `--weathers` prints the weather editor IDs instead |
 | `record show <id> [--out <file> \| --print]` | One record by FormID or editor ID: header, decoded view, and fields, complete and never cut short. It writes `.logs/record-show/<UTC time>/<id>.txt` and prints the header line and the path; `--out` names the file, and `--print` writes to standard output. Reference rows include rotation and the `XTEL` destination. An editor ID lookup scans every record |
 | `record find --type <TYPE> [--where <filter>]... [--fields a,b] [--limit n] [--count] [--json]` | Every winning record of one type that matches the filters ([searching records](#searching-records)) |
 | `gmst combat`, `gmst archery`, `gmst detection`, `gmst movement` | The settings one subsystem uses, each with the winning plugin or the documented fallback |

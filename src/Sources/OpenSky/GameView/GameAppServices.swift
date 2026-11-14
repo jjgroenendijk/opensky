@@ -18,8 +18,9 @@ import simd
 /// Where Play starts, as the launcher chose it.
 struct GameLaunchChoice {
     var startsAtTitleScreen = false
-    var launchStart = LaunchStart.normal
-    /// The save the launcher's Continue loads. It wins over `launchStart`.
+    /// The new game Play starts at a chosen place; nil for the normal start.
+    var newGame: LaunchNewGame?
+    /// The save the launcher's Continue loads. It wins over `newGame`.
     var continueSlot: String?
 }
 

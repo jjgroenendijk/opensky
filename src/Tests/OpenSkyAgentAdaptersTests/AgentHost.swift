@@ -69,6 +69,7 @@ final class AgentHost: RendererSlotHost, AgentActorReadoutHost, AgentActorsHost,
 
     let fakeMenuRouter = FakeMenuRouterPort()
     let fakeMenuScreensWorld = FakeMenuScreensWorldPort()
+    let fakeMenuWorld = FakeMenuWorldPort()
     let fakeMessages = FakeMessageCoordinatorPort()
     let fakeMountWorld = FakeMountWorldPort()
     let fakeMounts = FakeMountPort()

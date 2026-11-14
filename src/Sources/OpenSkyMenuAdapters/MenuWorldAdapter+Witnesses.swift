@@ -134,6 +134,14 @@ extension MenuWorldAdapter {
         newGame.startNewGame(at: start)
     }
 
+    public func startNewGame(_ request: AgentNewGameRequest) throws(AgentFailure) {
+        try newGame.startNewGame(request)
+    }
+
+    public var lastNewGame: AgentNewGameRequest? {
+        newGame.lastNewGame
+    }
+
     public func holdWorldLoading() {
         newGame.holdWorldLoading()
     }

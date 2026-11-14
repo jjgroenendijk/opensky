@@ -7,7 +7,10 @@ import OpenSkyGameData
 import OpenSkyLaunch
 
 extension LaunchPageViewController: NSTextFieldDelegate {
-    static let startKindTitles = ["Main menu", "A cell by name", "A worldspace and grid cell"]
+    /// In the order of `LaunchStartForm.Kind`.
+    static let startKindTitles = [
+        "Main menu", "A place from the list", "A cell by name", "A worldspace and grid cell"
+    ]
 
     func makeNewGameGroup() -> NSView {
         PanelComponents.configureCheckbox(
@@ -28,7 +31,8 @@ extension LaunchPageViewController: NSTextFieldDelegate {
         startupLogoControl.toolTip = "The logo movie before the main menu; a key skips it"
         refreshNewGame()
         return layout.group("New game", [
-            layout.row("Starts at", startKindPopUp), startCellRow, startGridRow,
+            layout.row("Starts at", startKindPopUp), startPlaceRow, startCellRow, startGridRow
+        ] + startOptions.rows + [
             startReasonLabel, layout.toggle(startupLogoControl), layout.toggle(survivalModeControl),
             layout.toggle(survivalModeAskControl)
         ])
@@ -60,7 +64,7 @@ extension LaunchPageViewController: NSTextFieldDelegate {
             startKindPopUp, target: self, action: #selector(startKindChanged),
             identifier: "LaunchStartKindControl"
         )
-        startKindPopUp.toolTip = "Where a new game starts: the main menu, a cell, or a grid cell"
+        startKindPopUp.toolTip = "Where a new game starts: the main menu, or a place"
         let fields = [
             (startCellField, "LaunchStartCellControl", 240.0, "WhiterunBanneredMare"),
             (startWorldspaceField, "LaunchStartWorldspaceControl", 140, "Tamriel"),
@@ -96,27 +100,36 @@ extension LaunchPageViewController: NSTextFieldDelegate {
         startWorldspaceField.stringValue = startForm.worldspace
         startXField.stringValue = startForm.x
         startYField.stringValue = startForm.y
+        showPlace()
         refreshStart()
     }
 
     /// Shows the reason of an invalid start, and remembers a valid one.
-    private func refreshStart() {
+    func refreshStart() {
         startCellField.isHidden = startForm.kind != .cell
         startCellRow.isHidden = startCellField.isHidden
+        startPlaceRow.isHidden = startForm.kind != .place
+        for row in startOptions.rows {
+            row.isHidden = startForm.kind == .normal
+        }
         for field in [startWorldspaceField, startXField, startYField] {
             field.isHidden = startForm.kind != .exterior
         }
         startGridRow.isHidden = startForm.kind != .exterior
+        var reason: String?
         switch startForm.validate() {
         case let .success(start):
             LaunchPreferences.remember(start)
-            startReasonLabel.stringValue = ""
-            startReasonLabel.isHidden = true
+            reason = missingPlace?.reason
         case let .failure(problem):
-            startReasonLabel.stringValue = "Play is off: \(problem.reason)"
-            startReasonLabel.toolTip = startReasonLabel.stringValue
-            startReasonLabel.isHidden = false
+            reason = problem.reason
         }
+        if startForm.kind != .normal {
+            reason = reason ?? startOptions.problem?.reason
+        }
+        startReasonLabel.stringValue = reason.map { "Play is off: \($0)" } ?? ""
+        startReasonLabel.toolTip = startReasonLabel.stringValue
+        startReasonLabel.isHidden = reason == nil
         refreshPlay()
     }
 

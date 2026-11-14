@@ -83,7 +83,8 @@ nonisolated extension AgentCommandCatalog {
         command(
             "state.view",
             "The view for the reference game: feet, angles, place, hour, and weather."
-        )
+        ),
+        command("state.newgame", "The last new game started at a chosen place.")
     ]
 
     static let debug: [AgentCommandSpec] = teleportAndTime + actorChanges + menusAndRender
@@ -119,6 +120,21 @@ nonisolated extension AgentCommandCatalog {
         command(
             "debug.weather", "Force a weather; no ID clears it.",
             positionals: [optional("id", "The weather editor ID.")]
+        ),
+        command(
+            "debug.newgame", "Start a new game at a place, as the launcher's Play does.",
+            options: [
+                value(
+                    "at",
+                    "start",
+                    "A start: cell:EditorID, exterior:World:X:Y, or marker:World:Plugin:ID."
+                ),
+                value("hour", "h", "The hour of the day, 0 to 24. Default: the new game hour."),
+                value("weather", "editorID", "Force this weather on arrival."),
+                value("story", "state", "One of not-started, helgen-hadvar, helgen-ralof."),
+                value("items", "preset", "One of none, warrior, archer, mage, thief."),
+                negatedFlag("racemenu", "Do not open the race menu on arrival.")
+            ]
         ),
         command(
             "debug.rest", "Pass hours as the wait menu does, without the refusals.",

@@ -43,7 +43,7 @@ extension AgentWorldAdapter {
         case .overlay, .channel, .shadows, .fade, .cartMode, .playBink, .skipBink, .titles,
              .loadScreen, .sound, .settings:
             return try done(render.renderDebug(command))
-        case .raceMenu, .skillsMenu, .gamepad, .fastTravel:
+        case .raceMenu, .skillsMenu, .gamepad, .fastTravel, .newGame:
             return try done(menuDebug(command))
         case let .benchmark(request):
             return try view.benchmark(request)
@@ -70,8 +70,17 @@ extension AgentWorldAdapter {
         case let .skillsMenu(sky, levels): try menuReadout.openSkillsMenu(sky: sky, levels: levels)
         case let .gamepad(count, press): try screens.driveGamepad(count: count, press: press)
         case let .fastTravel(marker): try screens.fastTravel(to: marker)
+        case let .newGame(request): try startNewGame(request)
         default: throw AgentFailure(.invalidArgument, "not a menu debug command")
         }
+    }
+
+    private func startNewGame(_ request: AgentNewGameRequest) throws(AgentFailure) -> AgentJSON {
+        if game.titleMenu.isOpen {
+            game.titleMenu.close()
+        }
+        try game.menuWorld.startNewGame(request)
+        return request.json
     }
 
     private func actorDebug(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
