@@ -249,6 +249,9 @@ disagree about what is a first strike.
 
 ## Not done yet
 
+The game's own rules for alarms, witnesses, guards, and statistics are in
+[crime reports](/engine/crime-reports.md).
+
 - A witness does not walk to a guard. It reports only when a guard is near it already. Crimes by
   followers, animal witnesses, and children telling adults are not modelled.
 - "Horses Stolen" and the per-hold bounty stats are not counted. Riding a horse the player
