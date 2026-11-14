@@ -122,9 +122,3 @@ flowchart TD
     C -- yes --> D[Start combat with the killer,<br/>search near the killer]
     D --> E[Say DetectFriendDie about the victim]
 ```
-
-## Source
-
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. It is not yet confirmed
-in the reference game. The Creation Kit wiki "Detection Tab"
-(<https://ck.uesp.net/wiki/Detection_Tab>) names the subtypes.

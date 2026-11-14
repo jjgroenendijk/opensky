@@ -39,6 +39,10 @@ clean-room read, or a probe of the install. It cost real work to find, and an is
 a chat reply is lost once the work moves on. Write it as prose with its formulas, constants,
 and a worked example.
 
+Behaviour from a clean-room read of the game program gets no source paragraph: the page does not
+name the read, its version, or that the rule is still unconfirmed. The behaviour stands on its
+own, and an observation in the reference game is cited once there is one.
+
 A Mermaid diagram beside the prose is preferred, not required. A diagram shows a missing
 state or branch that prose hides, GitHub renders it, and a diff shows each change. Leave it
 out when it adds nothing, such as for a single formula. When you draw one, pick it by what the

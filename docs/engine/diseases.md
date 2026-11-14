@@ -64,9 +64,3 @@ flowchart TD
 ```
 
 Whether a blocked hit still rolls was not found.
-
-## Source
-
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. It is not yet confirmed
-in the reference game. UESP "Skyrim:Diseases" (<https://en.uesp.net/wiki/Skyrim:Diseases>) lists
-the diseases and their carriers.

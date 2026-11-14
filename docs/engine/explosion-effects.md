@@ -76,11 +76,3 @@ flowchart TD
     C -- yes --> Cut[Part is cut off]
     C -- no --> Keep[Body stays whole]
 ```
-
-## Source
-
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. The values were checked against
-`Skyrim.esm`, which overrides several of the program's own defaults. The rules are not yet
-confirmed by a second read or in the reference game. The Creation Kit wiki pages "Explosion"
-(<https://ck.uesp.net/wiki/Explosion>) and "BodyPartData" (<https://ck.uesp.net/wiki/BodyPartData>)
-name the record fields.

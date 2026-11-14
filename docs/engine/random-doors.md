@@ -55,10 +55,3 @@ flowchart TD
 The player lands at the target door's random teleport marker (`XRTM`) when it has one. Otherwise
 the player lands a fixed distance in front of the door, 150 units by default and more for an
 automatic door, and faces away from it.
-
-## Source
-
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. The values were checked against
-`Skyrim.esm`, which overrides several of the program's own defaults. The rules are not yet
-confirmed by a second read or in the reference game. The Creation Kit wiki page "Door"
-(<https://ck.uesp.net/wiki/Door>) describes the destination list.

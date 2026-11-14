@@ -154,9 +154,3 @@ old timer keeps running, and a later loss can stop the music almost at once.
 
 The game also has a cap on the player's combat strength, 35000 by default. No rule was found that
 reads it.
-
-## Source
-
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0. It is not yet confirmed
-in the reference game. UESP "Skyrim:Music" (<https://en.uesp.net/wiki/Skyrim:Music>) describes the
-music types.

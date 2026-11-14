@@ -90,9 +90,6 @@ move always shows the [kill cam](/engine/kill-cam.md).
 
 ### The player as the victim
 
-A clean-room read of `SkyrimSE.exe` 1.7.104.0 found these rules. It is not yet confirmed in the
-reference game.
-
 - A kill move starts when a paired idle whose animation event begins with `pa_Kill` starts. Both
   actors enter a kill move state, and the victim records the attacker as its partner. A failsafe
   timer of 10 seconds starts.
