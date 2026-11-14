@@ -126,6 +126,13 @@ struct ParticleNodeAndRibbonTests {
         // 16 long by 4 wide is the 8 by 8 square's area.
     }
 
+    @Test func aSpinAngleWrapsAsInTheGame() {
+        #expect(abs(ParticleSpin.advanced(1, by: 0.5) - 1.5) < 1e-6)
+        #expect(abs(ParticleSpin.advanced(2 * .pi, by: 0.5) - 0.5) < 1e-5)
+        #expect(ParticleSpin.advanced(9 * .pi, by: 2 * .pi) == 0)
+        #expect(ParticleSpin.advanced(-1, by: -9) == -10, "a negative angle does not wrap")
+    }
+
     @Test func aLightningBoltReachesItsLengthAndCrawlsOverTime() throws {
         let file = try NIFFile(data: NIFFixture.file(
             blocks: [

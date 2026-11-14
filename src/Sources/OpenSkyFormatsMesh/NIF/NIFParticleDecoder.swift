@@ -70,6 +70,7 @@ nonisolated extension NIFFile {
         var found: [FoundSystem] = []
         /// The parent transform of every block the walk reached.
         var parents: [Int: float4x4] = [:]
+        lazy var visibility = ParticleVisibilityFilter(file: file)
 
         mutating func walk(from root: Int32) throws {
             var stack = NIFGraphStack(
@@ -102,6 +103,7 @@ nonisolated extension NIFFile {
                     let node = block.typeName == NIFSwitchNode.typeName
                         ? try NIFSwitchNode(data: block.data, header: file.header).activeNode
                         : try NIFNode(data: block.data, header: file.header)
+                    guard !visibility.drops(node.object) else { continue }
                     let world = visit.parent * node.object.localTransform
                     stack.push(
                         children: node.children,
@@ -109,6 +111,9 @@ nonisolated extension NIFFile {
                         depth: visit.depth + 1
                     )
                 } else if NIFFile.particleSystemTypes.contains(block.typeName) {
+                    var reader = BinaryReader(block.data)
+                    let object = try NIFObjectPrefix(reader: &reader, header: file.header)
+                    guard !visibility.drops(object) else { continue }
                     found.append(FoundSystem(index: index, block: block, parent: visit.parent))
                 }
                 // Any other type is a leaf we do not collect (geometry, shader
