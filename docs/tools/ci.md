@@ -20,6 +20,7 @@ developer machine. `Changes` and `Lint` only read results, so they run on Linux.
 | Format | `format-check`: every `tools/format/` script with `--check` |
 | Static checks | `lint`: every `tools/lint/` script and its self-check |
 | Changes | None. It decides whether Build & test runs |
+| Runner | None. It picks a hosted or the self-hosted runner for the two jobs below |
 | Index checks | `lint-index` |
 | Build & test | `test PLAN=UnitTests COVERAGE=1`: the whole unit plan, the coverage floors, and the changed lines (diffed against the base on a pull request) |
 | Lint | None. It passes only when the jobs above pass |
@@ -38,6 +39,58 @@ A pull request that changes only Markdown, `docs/`, `.agents/`, `.claude/`, the 
 Build & test, because nothing in it is compiled. Static checks still lint and test those files. `Lint`
 accepts that skip only when `Changes` asked for it. A push to `main` always builds, so the
 compilation cache stays current.
+
+## Self-hosted runner
+
+The owner has a faster Mac registered as a self-hosted runner, with the default labels
+`self-hosted`, `macOS`, and `ARM64`. It is not always online. The `Runner` job decides where Build
+& test and Index checks run. Format and Static checks always stay on hosted runners, so the two
+heavy jobs do not wait behind them on one machine.
+
+The two jobs go to the self-hosted Mac only when all of these are true:
+
+- The event is a pull request, opened by the repository owner.
+- The pull request comes from a branch of this repository, not from a fork.
+- The `RUNNER_STATUS_TOKEN` secret is set, and the runner list shows at least one online runner
+  with all three labels.
+
+Otherwise they take the `xcode-27` hosted runner, as before. A push to `main` always uses hosted
+runners, because only those runs save the caches that every hosted run restores.
+
+GitHub cannot move a queued job to another runner. A job sent to the self-hosted Mac waits there
+when the Mac goes offline after the `Runner` job checked it. Cancel that run and push again, or
+rerun it once the Mac is back.
+
+### The token
+
+`GITHUB_TOKEN` cannot read the runner list, because that needs the repository permission
+"Administration: read". So the `Runner` job reads it with a fine-grained personal access token
+in the `RUNNER_STATUS_TOKEN` repository secret. Give it access to this repository only, with
+"Administration: read-only" and nothing else. Without the secret, every run uses hosted runners.
+
+### Differences on the self-hosted Mac
+
+- **Kept build tree.** The checkout does not clean, and a later step runs
+  `git clean -ffdx -e .cache/ -e src/.vendor/`. That removes stray files from earlier pull
+  requests and keeps the build tree, the compilation cache, the index tree, and the vendored
+  libraries. A checkout rewrites only the files that changed, so the next build is incremental
+  without the `source-times.sh` step.
+- **No GitHub cache.** The jobs restore and save no cache there. Its own tree is newer, and a
+  transfer from GitHub's cache would be slower. The compilation cache is never saved, so it is
+  checked against `CAS_MAX_MB` on every run there.
+- **Xcode.** `DEVELOPER_DIR` is `/Applications/Xcode.app/Contents/Developer`, the default
+  install path. The Mac needs the same Xcode version as the hosted job, the Metal Toolchain,
+  and Homebrew on the runner service's `PATH` for `brew install periphery`.
+- **One job at a time.** One runner instance runs one job. Build & test and Index checks of one
+  run then follow each other. A second runner instance on the same Mac, in its own folder, runs
+  them side by side, and each instance keeps its own build tree.
+
+### Security
+
+The repository is public. A pull request from a fork runs the workflow file of that pull request,
+so it can name the self-hosted labels itself. The `Runner` job cannot stop that. The repository
+setting "Approval for running fork pull request workflows" must therefore be "Require approval for
+all external contributors". Approve a fork run only after you read its workflow changes.
 
 ## The same gate as make check
 

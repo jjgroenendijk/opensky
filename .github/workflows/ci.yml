@@ -169,19 +169,68 @@ jobs:
           fi
           echo "build=$build" | tee -a "$GITHUB_OUTPUT"
 
+  # Picks the runner of Build & test and Index checks (docs/tools/ci.md#self-hosted-runner).
+  # Only a pull request that the owner opened from a branch of this repository may use
+  # the self-hosted Mac, and only while it is online. Every other run, and every run
+  # without the RUNNER_STATUS_TOKEN secret, takes a hosted runner.
+  runner:
+    name: Runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      labels: ${{ steps.pick.outputs.labels }}
+      hosted: ${{ steps.pick.outputs.hosted }}
+      developer-dir: ${{ steps.pick.outputs.developer-dir }}
+    steps:
+      - id: pick
+        env:
+          GH_TOKEN: ${{ secrets.RUNNER_STATUS_TOKEN }}
+          OWNER_PR: >-
+            ${{ github.event_name == 'pull_request'
+            && github.event.pull_request.user.login == github.repository_owner
+            && github.event.pull_request.head.repo.full_name == github.repository }}
+          SELF_HOSTED_LABELS: '["self-hosted","macOS","ARM64"]'
+        run: |
+          online=0
+          if [ "$OWNER_PR" != true ]; then
+            echo "[INFO] not a pull request by the owner from this repository"
+          elif [ -z "$GH_TOKEN" ]; then
+            echo "[WARNING] the RUNNER_STATUS_TOKEN secret is not set"
+          elif runners="$(gh api "repos/$GITHUB_REPOSITORY/actions/runners")"; then
+            online="$(echo "$runners" | jq --argjson want "$SELF_HOSTED_LABELS" \
+              '[.runners[] | select(.status == "online" and ([.labels[].name] | contains($want)))] | length')"
+          else
+            echo "[WARNING] cannot read the runner list"
+          fi
+          if [ "$online" -gt 0 ]; then
+            echo "[INFO] $online self-hosted runner(s) online"
+            {
+              echo "labels=$SELF_HOSTED_LABELS"
+              echo "hosted=false"
+              echo "developer-dir=/Applications/Xcode.app/Contents/Developer"
+            } | tee -a "$GITHUB_OUTPUT"
+          else
+            {
+              echo 'labels=["xcode-27"]'
+              echo "hosted=true"
+              echo "developer-dir=$DEVELOPER_DIR"
+            } | tee -a "$GITHUB_OUTPUT"
+          fi
+
   # Only tests that need no game data: a runner has no install, and the job sets no
   # OPENSKY_DATA_ROOT, so a gated test skips. Index checks compiles the real-data suites.
   build-test:
     name: Build & test
-    needs: changes
+    needs: [changes, runner]
     if: needs.changes.outputs.build == 'true'
-    runs-on: xcode-27
+    runs-on: ${{ fromJSON(needs.runner.outputs.labels) }}
     timeout-minutes: 60
     permissions:
       contents: read
       actions: write
       pull-requests: read
     env:
+      DEVELOPER_DIR: ${{ needs.runner.outputs.developer-dir }}
       # Signing, then CI-only speed settings: no index data, which nothing in CI reads,
       # and no plugin or macro trust prompt.
       BUILD_FLAGS: >-
@@ -194,9 +243,14 @@ jobs:
       GH_REPO: ${{ github.repository }}
     steps:
       # Depth 2 keeps the merge commit's base, which the changed-lines check diffs against.
+      # The self-hosted Mac keeps its build tree and vendored libraries between runs.
       - uses: actions/checkout@v7
         with:
           fetch-depth: 2
+          clean: ${{ needs.runner.outputs.hosted == 'true' }}
+      - name: Clean all but the build tree
+        if: needs.runner.outputs.hosted != 'true'
+        run: git clean -ffdx -e .cache/ -e src/.vendor/
       # The download overlaps the steps up to "Wait for the Metal Toolchain".
       - name: Start Metal Toolchain download
         run: tools/ci/metal-toolchain.sh start
@@ -210,26 +264,29 @@ jobs:
       - name: Keep building after errors
         run: defaults write com.apple.dt.Xcode IDEBuildingContinueBuildingAfterErrors -bool YES
       # Restore and save apart, so a failing test does not throw away the build.
+      # The self-hosted Mac uses no GitHub cache: its own tree is newer and local.
       - uses: actions/cache/restore@v6
         id: ffmpeg
+        if: needs.runner.outputs.hosted == 'true'
         with:
           path: src/.vendor/ffmpeg
           key: ffmpeg-${{ runner.arch }}-${{ hashFiles('tools/vendor-ffmpeg.sh') }}
       # The app and CLI link the vendored ffmpeg, and a fresh checkout has none.
       - run: tools/vendor-ffmpeg.sh
-      - if: steps.ffmpeg.outputs.cache-hit != 'true'
+      - if: steps.ffmpeg.outcome == 'success' && steps.ffmpeg.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
           path: src/.vendor/ffmpeg
           key: ${{ steps.ffmpeg.outputs.cache-primary-key }}
       - uses: actions/cache/restore@v6
         id: astcenc
+        if: needs.runner.outputs.hosted == 'true'
         with:
           path: src/.vendor/astcenc
           key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
       # The ASTC texture encoder links the vendored astcenc static library.
       - run: tools/vendor-astcenc.sh
-      - if: steps.astcenc.outputs.cache-hit != 'true'
+      - if: steps.astcenc.outcome == 'success' && steps.astcenc.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
           path: src/.vendor/astcenc
@@ -246,6 +303,7 @@ jobs:
       # The SDK's precompiled modules and stat cache change only with Xcode.
       - uses: actions/cache/restore@v6
         id: sdk
+        if: needs.runner.outputs.hosted == 'true'
         with:
           path: |
             .cache/DerivedData/ModuleCache.noindex
@@ -253,15 +311,17 @@ jobs:
           key: sdk2-${{ runner.arch }}-${{ steps.keys.outputs.xcode }}
       - uses: actions/cache/restore@v6
         id: cas
+        if: needs.runner.outputs.hosted == 'true'
         with:
           path: .cache/CompilationCache.noindex
           key: ${{ steps.keys.outputs.cas }}${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             ${{ steps.keys.outputs.cas }}
             cas2-${{ runner.arch }}-main-
-      # COMPILATION_CACHE_LIMIT_SIZE does not shrink the store, so main drops it when too big.
+      # COMPILATION_CACHE_LIMIT_SIZE does not shrink the store, so main drops it when too
+      # big. The self-hosted store is never saved, so it is checked on every run.
       - name: Start the compilation cache over when too big
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || needs.runner.outputs.hosted != 'true'
         run: |
           store=.cache/CompilationCache.noindex
           size="$(du -sm "$store" 2>/dev/null | cut -f1)"
@@ -275,7 +335,7 @@ jobs:
       - run: make test PLAN=UnitTests COVERAGE=1 DIFF_BASE="$DIFF_BASE" XCODEBUILD_FLAGS="$BUILD_FLAGS"
         env:
           DIFF_BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || 'HEAD' }}
-      - if: steps.sdk.outputs.cache-hit != 'true' && github.event_name == 'push'
+      - if: steps.sdk.outcome == 'success' && steps.sdk.outputs.cache-hit != 'true' && github.event_name == 'push'
         uses: actions/cache/save@v6
         with:
           path: |
@@ -323,19 +383,27 @@ jobs:
   # the last push to main, so it compiles only what changed (docs/tools/ci.md#index-checks).
   index-checks:
     name: Index checks
-    needs: changes
+    needs: [changes, runner]
     if: needs.changes.outputs.build == 'true'
-    runs-on: xcode-27
+    runs-on: ${{ fromJSON(needs.runner.outputs.labels) }}
     timeout-minutes: 60
     permissions:
       contents: read
       actions: write
     env:
+      DEVELOPER_DIR: ${{ needs.runner.outputs.developer-dir }}
       BUILD_FLAGS: CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= -skipPackagePluginValidation -skipMacroValidation
       GH_TOKEN: ${{ github.token }}
       INDEX_TREE: .cache/DerivedData-index
     steps:
+      # The self-hosted Mac keeps its index tree, whose file times stay right, because
+      # a checkout there rewrites only the files that changed.
       - uses: actions/checkout@v7
+        with:
+          clean: ${{ needs.runner.outputs.hosted == 'true' }}
+      - name: Clean all but the build tree
+        if: needs.runner.outputs.hosted != 'true'
+        run: git clean -ffdx -e .cache/ -e src/.vendor/
       - name: Cache keys
         id: keys
         run: |
@@ -344,6 +412,7 @@ jobs:
       # Only a push to main saves the tree, because it is about 1.1 GB.
       - uses: actions/cache/restore@v6
         id: index
+        if: needs.runner.outputs.hosted == 'true'
         with:
           path: |
             .cache/DerivedData-index
@@ -352,15 +421,18 @@ jobs:
           restore-keys: ${{ steps.keys.outputs.index }}
       # A checkout writes every file now, which would make the build compile all of it.
       - name: Give the sources the times the restored tree expects
+        if: needs.runner.outputs.hosted == 'true'
         run: tools/ci/source-times.sh "$(cat "$INDEX_TREE/source-commit" 2>/dev/null || true)"
       - name: Start Metal Toolchain download
         run: tools/ci/metal-toolchain.sh start
       - uses: actions/cache/restore@v6
+        if: needs.runner.outputs.hosted == 'true'
         with:
           path: src/.vendor/ffmpeg
           key: ffmpeg-${{ runner.arch }}-${{ hashFiles('tools/vendor-ffmpeg.sh') }}
       - run: tools/vendor-ffmpeg.sh
       - uses: actions/cache/restore@v6
+        if: needs.runner.outputs.hosted == 'true'
         with:
           path: src/.vendor/astcenc
           key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
@@ -402,7 +474,7 @@ jobs:
   lint:
     name: Lint
     if: ${{ always() }}
-    needs: [changes, format, static-checks, build-test, index-checks]
+    needs: [changes, runner, format, static-checks, build-test, index-checks]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
