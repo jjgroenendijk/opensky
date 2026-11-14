@@ -58,10 +58,12 @@ extension Renderer {
     /// Each drawn actor's world bounds, merged over its meshes.
     private func focusShadowTargets() -> [FocusShadowTarget] {
         var bounds: [UInt32: ModelBounds] = [:]
-        // Walks both lists in place: joining them copied every draw group each frame.
-        for list in [frameDrawGroups.shadowOpaque, frameDrawGroups.shadowAlphaTested] {
-            for group in list where group.layer.contains(.actors) && group.castsShadows {
-                for placed in group.instances where placed.owner != 0 {
+        for list in [
+            frameDrawGroups.shadowOpaqueCasters,
+            frameDrawGroups.shadowAlphaTestedCasters
+        ] {
+            for index in list.casters where list.groups[index].layer.contains(.actors) {
+                for placed in list.groups[index].instances where placed.owner != 0 {
                     guard let own = drawn(placed).bounds else { continue }
                     if let merged = bounds[placed.owner] {
                         bounds[placed.owner] = merged.union(own)

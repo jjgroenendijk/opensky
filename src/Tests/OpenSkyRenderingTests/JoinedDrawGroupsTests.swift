@@ -1,5 +1,6 @@
 // The joined draw-group list of a frame: kept while its sources stay the same,
 // joined again when one changes, and shared when only one source has groups.
+// Its caster indices name the groups that cast shadows, in the joined order.
 
 import Metal
 @testable import OpenSkyFormatsCore
@@ -17,7 +18,9 @@ struct JoinedDrawGroupsTests {
         device != nil
     }
 
-    private static func scene(boxes: Int, device: any MTLDevice) throws -> RenderScene {
+    private static func scene(
+        boxes: Int, device: any MTLDevice, casting: (Int) -> Bool = { _ in true }
+    ) throws -> RenderScene {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: .rgba8Unorm, width: 1, height: 1, mipmapped: false
         )
@@ -36,7 +39,8 @@ struct JoinedDrawGroupsTests {
             )
             return try RenderPlacement(
                 model: RenderModel(device: device, model: model) { _, _ in texture },
-                transform: MatrixMath.translation(SIMD3(Float(index) * 40, 0, 0))
+                transform: MatrixMath.translation(SIMD3(Float(index) * 40, 0, 0)),
+                castsShadows: casting(index)
             )
         }
         return RenderScene(instances: placements)
@@ -79,5 +83,20 @@ struct JoinedDrawGroupsTests {
         #expect(Self.base(joined.groups) == Self.base(world.opaque))
         joined.refresh([[], []])
         #expect(joined.groups.isEmpty)
+    }
+
+    @Test(.enabled(if: Self.hasDevice))
+    func casterIndicesNameOnlyTheGroupsThatCastShadows() throws {
+        let device = try #require(Self.device)
+        let world = try Self.scene(boxes: 3, device: device) { $0 != 1 }
+        let effects = try Self.scene(boxes: 2, device: device) { $0 == 1 }
+        var joined = JoinedDrawGroups()
+
+        joined.refresh([world.opaque, effects.opaque])
+
+        let expected = joined.groups.indices.filter { joined.groups[$0].castsShadows }
+        #expect(joined.casters == expected)
+        #expect(joined.casters.count == 3)
+        #expect(joined.casterList.groups.count == 5)
     }
 }
