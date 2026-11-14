@@ -32,12 +32,17 @@ A docs page holds what the code cannot show. Everything else lives somewhere bet
 Keep every reverse-engineered fact and every spec citation. They are expensive to find
 again. If a fact is only about one parser or type, put it in a doc comment there instead.
 
-## Game behaviour gets a diagram
+## Game behaviour read from the game
 
-A page that describes how the game behaves also draws it as a Mermaid diagram, whatever the
-source: a wiki, the reference game, or a clean-room read. A diagram shows a missing state or
-branch that prose hides. GitHub renders Mermaid, and a diff shows each change. Pick the
-diagram by the shape of the behaviour:
+Every behaviour learned from the game goes into a `docs/` page: from the reference game, a
+clean-room read, or a probe of the install. It cost real work to find, and an issue body or
+a chat reply is lost once the work moves on. Write it as prose with its formulas, constants,
+and a worked example.
+
+A Mermaid diagram beside the prose is preferred, not required. A diagram shows a missing
+state or branch that prose hides, GitHub renders it, and a diff shows each change. Leave it
+out when it adds nothing, such as for a single formula. When you draw one, pick it by the
+shape of the behaviour:
 
 | The behaviour | Diagram |
 | --- | --- |
@@ -46,9 +51,7 @@ diagram by the shape of the behaviour:
 | A procedure or formula with branches | `flowchart` |
 | Rules from a mix of inputs with no time order | A table, not a diagram |
 
-The diagram holds only what the prose holds, in OpenSky's own names. Keep the prose and
-the formulas beside it, with a worked example; the diagram does not replace them. A page
-you change that describes behaviour but has no diagram gets one in the same change.
+A diagram holds only what the prose holds, in OpenSky's own names.
 
 ## Writing style
 
