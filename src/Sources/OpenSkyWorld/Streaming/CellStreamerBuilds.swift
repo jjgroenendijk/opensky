@@ -194,7 +194,6 @@ extension CellStreamer.BuildSteps {
         streamer.lodRebuildWanted = false
         streamer.settledLODCenter = nil
         streamer.largeReferenceRequestCenter = nil
-        streamer.largeReferenceSettledCenter = nil
         streamer.events.lastEmittedRegions = nil
         streamer.grid = CellGridManager(initialPosition: position, radius: streamer.grid.radius)
         streamer.coverage.evictUnused(departed)

@@ -113,8 +113,6 @@ public final class CellStreamer {
     public internal(set) var settledLODCenter: CellCoordinate?
     /// The center whose quick first ring was rebuilt once to add its large references.
     var largeReferenceRequestCenter: CellCoordinate?
-    /// The center whose large-reference rebuild was integrated or failed.
-    var largeReferenceSettledCenter: CellCoordinate?
     /// Built cells the ring on screen still draws LOD over. Each waits off screen
     /// for a ring that leaves its place out, then both swap in together.
     public var stagedCells: [CellCoordinate: CellScene] = [:]

@@ -129,8 +129,9 @@ Each ring build, on the build queue:
 
 The quick first ring of a session keeps the `-LargeRef` shapes, because its builder cannot
 read the plugins. Once the near grid is in, the same center is built once more with the large
-references. The start area stays behind the loading screen until that second build is in or
-has failed, so the first view already shows the full models and no swap is seen.
+references. The loading screen lifts once the quick ring is in; the second build then swaps
+in like any later ring. The near cells stay drawn through the swap, so only distant shapes
+change.
 `openskycli game state frame` reports `largeReferences` and `hiddenLargeReferenceLOD`, the
 count of cell segments the ring hid. `openskycli render` prints the large-reference count with
 the LOD line.
@@ -188,7 +189,7 @@ them like a file's model. The build thread reads the land and the land textures;
 maps, and their DDS bytes are then made on every core, a few dozen blocks at a time
 ([concurrency](/decisions/concurrency.md)). The quick first ring of a session still draws the
 vanilla files, because its builder cannot read the plugins; the second build of the same center
-swaps the generated blocks in behind the loading screen. `openskycli game state frame` reports
+swaps the generated blocks in after the loading screen lifts. `openskycli game state frame` reports
 `generatedTerrainBlocks`, and `openskycli render` prints the count with the LOD line.
 
 Objects and trees still come from the vanilla files. The game draws its own LOD files only;
