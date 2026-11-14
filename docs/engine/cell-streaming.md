@@ -180,6 +180,11 @@ about it. The join event has a flag that is true only when the cell really joine
 cell that never left was only rebuilt. So a rebuild does not fire load events again. A scene with no
 known `CELL` identity is never announced, because subscribers file script instances by it.
 
+A ring swap can put many cells on screen in one frame. Their joins are queued, and one goes out
+per frame, so no single frame pays for the scripts of every cell. The picture does not wait for
+them. A cell that leaves before its join went out is never announced at all. A rebuild of a cell
+whose join is still queued goes out at once, as a first join.
+
 ## Distant LOD and coverage
 
 Once the whole near grid is settled, the same queue builds one [distant LOD](/engine/distant-lod.md)

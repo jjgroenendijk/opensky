@@ -13,7 +13,9 @@ extension CellStreamer.CoverageSteps {
     public func unload(_ coordinates: [CellCoordinate]) {
         var departed = CellAssets()
         var removedScenes: [CellScene] = []
-        removedScenes = coordinates.compactMap { streamer.composition.removeCell(at: $0) }
+        streamer.composition.batch { composition in
+            removedScenes = coordinates.compactMap { composition.removeCell(at: $0) }
+        }
         for removed in removedScenes {
             streamer.triggers.emitCellDetached(removed)
             departed.meshKeys.formUnion(removed.assets.meshKeys)
@@ -214,18 +216,20 @@ extension CellStreamer.CoverageSteps {
         var detached: [(coordinate: CellCoordinate, scene: CellScene)] = []
         var attached: [(scene: CellScene, first: Bool)] = []
         var departed = CellAssets()
-        for coordinate in leaving {
-            guard let scene = streamer.composition.removeCell(at: coordinate) else { continue }
-            detached.append((coordinate, scene))
-        }
-        for (coordinate, scene) in arriving {
-            let replaced = streamer.composition.setCell(scene, at: coordinate)
-            // A waiting cell that replaced a drawn scene at the same coordinate
-            // never left the world, so it is not a first attach.
-            attached.append((scene, replaced == nil))
-            if let replaced {
-                departed.meshKeys.formUnion(replaced.assets.meshKeys)
-                departed.textureKeys.formUnion(replaced.assets.textureKeys)
+        streamer.composition.batch { composition in
+            for coordinate in leaving {
+                guard let scene = composition.removeCell(at: coordinate) else { continue }
+                detached.append((coordinate, scene))
+            }
+            for (coordinate, scene) in arriving {
+                let replaced = composition.setCell(scene, at: coordinate)
+                // A waiting cell that replaced a drawn scene at the same coordinate
+                // never left the world, so it is not a first attach.
+                attached.append((scene, replaced == nil))
+                if let replaced {
+                    departed.meshKeys.formUnion(replaced.assets.meshKeys)
+                    departed.textureKeys.formUnion(replaced.assets.textureKeys)
+                }
             }
         }
         for (coordinate, scene) in detached {
@@ -241,7 +245,7 @@ extension CellStreamer.CoverageSteps {
             streamer.triggers.emitCellDetached(scene)
         }
         for (scene, first) in attached {
-            streamer.triggers.emitCellAttached(scene, firstIntegration: first)
+            streamer.triggers.queueCellAttached(scene, firstIntegration: first)
         }
         if let oldLOD = streamer.composition.setDistantLOD(distantLOD) {
             departed.meshKeys.formUnion(oldLOD.assets.meshKeys)

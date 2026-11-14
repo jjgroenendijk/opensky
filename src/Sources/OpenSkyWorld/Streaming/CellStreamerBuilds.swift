@@ -182,6 +182,7 @@ extension CellStreamer.BuildSteps {
             departed.textureKeys.formUnion(scene.assets.textureKeys)
         }
         streamer.pending.removeAll()
+        streamer.queuedAttachments.removeAll()
         streamer.requests.removeAll()
         streamer.rebuildRequests.removeAll()
         streamer.cellMutationSequence.removeAll()

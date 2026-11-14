@@ -107,6 +107,8 @@ public final class CellStreamer {
     var lodRebuildWanted = false
     /// Rings swapped in since the session started, for `state frame`.
     var ringSwapCount = 0
+    /// Cells a ring swap put on screen whose scripts have not attached yet.
+    var queuedAttachments: [CellAttachment] = []
     /// The center whose distant ring was last integrated or failed.
     public internal(set) var settledLODCenter: CellCoordinate?
     /// The center whose quick first ring was rebuilt once to add its large references.
@@ -231,6 +233,7 @@ public final class CellStreamer {
         if coverage.integrateDistantLOD(completedLOD) {
             sceneChanged = true
         }
+        triggers.emitNextQueuedAttachment()
         if sceneChanged {
             builds.recomposeAndSink()
         }
