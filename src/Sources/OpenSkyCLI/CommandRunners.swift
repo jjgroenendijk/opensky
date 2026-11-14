@@ -373,3 +373,9 @@ extension PlacesArguments: CLIRunnable {
         try PlacesCommand.run(context: context(), arguments: self)
     }
 }
+
+extension PexCallsArguments: CLIRunnable {
+    func execute() throws {
+        try PexCallsCommand.run(context: context(), arguments: self)
+    }
+}
