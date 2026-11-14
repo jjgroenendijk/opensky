@@ -108,7 +108,7 @@ that appears in front of it between two looks. The settings' names give the look
 uses the result is OpenSky's reading. An actor in the way is still hit first.
 
 There is no aim assist. Vanilla nudges a cast toward a target, and OpenSky aims exactly where the
-camera points, as it does for arrows.
+camera points, as it does for arrows. The game's rule is in [combat assist](/engine/combat-assist.md).
 
 ## What a projectile shows
 
