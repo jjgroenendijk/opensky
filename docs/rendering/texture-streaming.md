@@ -32,6 +32,16 @@ with sparse tier 2, so a missing tile draws black and never faults.
   ASTC formats made placement-sparse textures on the M1 (2026-10-09).
 - The tiles come from a pool of 16 MB placement heaps. The pool adds a heap when it runs
   out and drops a heap when all its tiles are free, so its size follows what is mapped.
+- A heap holds one of two kinds of tiles. Movable tiles hold the levels a texture can drop.
+  Pinned tiles hold the floor level and the tail, which stay mapped while the texture lives.
+- New tiles come from the fullest heap of their kind first, so the emptiest heaps lose
+  tiles over time.
+- The pool drains a movable heap that holds at most a quarter of its tiles in use, when the
+  movable tiles in use fit in one heap fewer. Each texture with tiles there drops the
+  levels that use them, as a lowered texture does. The next level update reads them again
+  into fuller heaps, and the empty heap is freed. Until then the texture draws a coarser
+  level, never a missing one. Example: three heaps with 900, 950, and 40 of 1,024 tiles in
+  use drain the third heap, and the pool keeps two.
 - The draw binds a texture view whose base level is the first resident level, so the
   sampler never picks an unmapped level.
 

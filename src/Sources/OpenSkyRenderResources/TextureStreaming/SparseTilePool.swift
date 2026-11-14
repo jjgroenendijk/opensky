@@ -4,12 +4,6 @@
 
 public import Metal
 
-/// One tile in one heap of the pool.
-public struct SparseTile: Hashable {
-    public let heap: Int
-    public let index: Int
-}
-
 public final class SparseTilePool {
     static let heapBytes = 16 << 20
 
@@ -17,17 +11,14 @@ public final class SparseTilePool {
     public let pageSize: MTLSparsePageSize
     public let tileBytes: Int
     private var heaps: [Int: any MTLHeap] = [:]
-    private var freeTiles: [Int: [Int]] = [:]
+    private var ledger: SparseTileLedger
     private var nextHeapID = 0
 
     public init(device: any MTLDevice, pageSize: MTLSparsePageSize) {
         self.device = device
         self.pageSize = pageSize
         tileBytes = device.sparseTileSizeInBytes(sparsePageSize: pageSize)
-    }
-
-    public var tilesPerHeap: Int {
-        Self.heapBytes / tileBytes
+        ledger = SparseTileLedger(tilesPerHeap: Self.heapBytes / tileBytes)
     }
 
     public var reservedBytes: Int {
@@ -35,27 +26,29 @@ public final class SparseTilePool {
     }
 
     public var usedTiles: Int {
-        heaps.keys.reduce(0) { $0 + tilesPerHeap - (freeTiles[$1]?.count ?? 0) }
+        ledger.usedTiles
     }
 
     public func heap(_ id: Int) -> any MTLHeap? {
         heaps[id]
     }
 
-    /// `count` tiles, new heaps included; nil when a heap cannot be made. `added` gets
-    /// each new heap, so the caller can make it resident.
-    public func allocate(_ count: Int, added: (any MTLHeap) -> Void) -> [SparseTile]? {
+    /// `count` tiles of `kind`, new heaps included; nil when a heap cannot be made. `added`
+    /// gets each new heap, so the caller can make it resident.
+    public func allocate(
+        _ count: Int, kind: SparseTileKind, added: (any MTLHeap) -> Void
+    ) -> [SparseTile]? {
         var tiles: [SparseTile] = []
         tiles.reserveCapacity(count)
-        for id in heaps.keys.sorted() where tiles.count < count {
-            take(from: id, count: count - tiles.count, into: &tiles)
+        for id in ledger.takeOrder(for: kind) where tiles.count < count {
+            ledger.take(from: id, count: count - tiles.count, into: &tiles)
         }
         while tiles.count < count {
-            guard let id = addHeap(added: added) else {
+            guard let id = addHeap(kind: kind, added: added) else {
                 free(tiles)
                 return nil
             }
-            take(from: id, count: count - tiles.count, into: &tiles)
+            ledger.take(from: id, count: count - tiles.count, into: &tiles)
         }
         return tiles
     }
@@ -64,30 +57,21 @@ public final class SparseTilePool {
     /// them once no frame in flight can use them.
     @discardableResult
     public func free(_ tiles: [SparseTile]) -> [any MTLHeap] {
-        for tile in tiles {
-            freeTiles[tile.heap, default: []].append(tile.index)
-        }
         var emptied: [any MTLHeap] = []
-        for id in Set(tiles.map(\.heap)) where freeTiles[id]?.count == tilesPerHeap {
+        for id in ledger.free(tiles) {
             if let heap = heaps.removeValue(forKey: id) {
                 emptied.append(heap)
             }
-            freeTiles[id] = nil
         }
         return emptied
     }
 
-    private func take(from id: Int, count: Int, into tiles: inout [SparseTile]) {
-        guard var free = freeTiles[id], !free.isEmpty else { return }
-        let taken = min(count, free.count)
-        for index in free.suffix(taken) {
-            tiles.append(SparseTile(heap: id, index: index))
-        }
-        free.removeLast(taken)
-        freeTiles[id] = free
+    /// The nearly empty heap whose movable tiles the caller should move, or nil.
+    public func heapToDrain() -> Int? {
+        ledger.heapToDrain()
     }
 
-    private func addHeap(added: (any MTLHeap) -> Void) -> Int? {
+    private func addHeap(kind: SparseTileKind, added: (any MTLHeap) -> Void) -> Int? {
         let descriptor = MTLHeapDescriptor()
         descriptor.type = .placement
         descriptor.storageMode = .private
@@ -98,8 +82,7 @@ public final class SparseTilePool {
         let id = nextHeapID
         nextHeapID += 1
         heaps[id] = heap
-        // Reversed, so `take` hands out low indexes first.
-        freeTiles[id] = Array((0 ..< tilesPerHeap).reversed())
+        ledger.addHeap(id, kind: kind)
         added(heap)
         return id
     }

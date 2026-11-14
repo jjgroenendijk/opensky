@@ -45,6 +45,31 @@ extension Renderer {
         for (entry, level) in zip(entries, levels) {
             apply(level, to: entry, overBudget: overBudget)
         }
+        if textureStreaming.enabled {
+            drainNearlyEmptyHeap()
+        }
+    }
+
+    /// Moves the tiles out of a nearly empty heap, so the heap can be freed. Each texture
+    /// with tiles there drops the levels that use them. The next update reads those levels
+    /// again, and their new tiles come from fuller heaps.
+    private func drainNearlyEmptyHeap() {
+        guard let heap = textureStreaming.pool.heapToDrain() else { return }
+        for entry in textureStreaming.entries.values
+            where entry.texture != nil && entry.unmapAfterFrame == nil
+        {
+            var coarsest = -1
+            for (level, tiles) in entry.tiles where level < entry.layout.floorLevel {
+                guard level > coarsest else { continue }
+                for tile in tiles where tile.heap == heap {
+                    coarsest = level
+                    break
+                }
+            }
+            if coarsest >= 0 {
+                lower(entry, to: coarsest + 1)
+            }
+        }
     }
 
     private func demand(
