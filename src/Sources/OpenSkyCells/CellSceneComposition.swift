@@ -53,6 +53,9 @@ nonisolated public struct CellSceneComposition {
     )] = []
     /// The grid coordinate of each entry in `residentReferences`.
     private var residentCoordinates: [CellCoordinate] = []
+    /// The first entry of `residentReferences` in grid order that holds each key, so a
+    /// lookup reads one index rather than asking every cell in turn.
+    private var residentCellOfKey: [ReferenceKey: Int] = [:]
     /// `referenceEntries()` as one index, built on the first read after residency changes.
     private var mergedReferences: RuntimeReferenceIndex?
     public private(set) var distantLOD: DistantLODScene?
@@ -200,12 +203,8 @@ nonisolated public struct CellSceneComposition {
     /// Runtime reference lookup across resident cells. Linear over a few cells, with a
     /// dictionary hit per cell.
     public func referenceEntry(key: ReferenceKey) -> RuntimeReferenceEntry? {
-        for resident in residentReferences {
-            if let entry = resident.references[key] {
-                return entry
-            }
-        }
-        return nil
+        guard let cell = residentCellOfKey[key] else { return nil }
+        return residentReferences[cell].references[key]
     }
 
     public func referenceEntry(formID: FormID) -> RuntimeReferenceEntry? {
@@ -365,7 +364,8 @@ nonisolated extension CellSceneComposition {
     /// Which resident cell holds `key`, so a write rebuilds one cell, not all. Nil when no
     /// resident cell knows it.
     public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
-        residentReferences.first { $0.references[key] != nil }.flatMap(\.location)
+        guard let cell = residentCellOfKey[key] else { return nil }
+        return residentReferences[cell].location
     }
 
     /// Every resident ACHR, by `ReferenceKey` in a cell and by grid across cells, so
@@ -405,6 +405,18 @@ nonisolated extension CellSceneComposition {
         }
     }
 
+    /// The first index in `indexes` holding each key.
+    private static func firstCells(of indexes: [RuntimeReferenceIndex]) -> [ReferenceKey: Int] {
+        var result: [ReferenceKey: Int] = [:]
+        result.reserveCapacity(indexes.reduce(0) { $0 + $1.count })
+        for (cell, index) in indexes.enumerated() {
+            for key in index.sortedKeys() where result[key] == nil {
+                result[key] = cell
+            }
+        }
+        return result
+    }
+
     private mutating func reindexResidents() {
         residentCollision = cells.values.map(\.staticCollision)
         residentWater = cells.values.map(\.waterVolumes).filter { !$0.volumes.isEmpty }
@@ -417,6 +429,7 @@ nonisolated extension CellSceneComposition {
         residentReferences = sorted
             .map { (location: $0.value.location, references: $0.value.references) }
         actorPlacements = ResidentActorPlacement.index(residentReferences)
+        residentCellOfKey = Self.firstCells(of: residentReferences.map(\.references))
         mergedReferences = nil
     }
 }
