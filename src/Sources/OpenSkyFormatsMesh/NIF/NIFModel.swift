@@ -47,14 +47,6 @@ nonisolated extension NIFFile {
             NIFLegacyTriShape.typeName, NIFLegacyTriShape.lodTypeName
         ]
 
-        /// The name of editor-only geometry, such as the box of a lean marker.
-        /// Vanilla marker meshes use it; docs/formats/nif.md.
-        public static let editorMarkerName = "EditorMarker"
-
-        public static func isEditorMarker(_ name: String?) -> Bool {
-            name?.caseInsensitiveCompare(editorMarkerName) == .orderedSame
-        }
-
         public init(file: NIFFile, skeleton: NIFSkeleton?, keepingRoot: Bool = false) throws {
             self.file = file
             hierarchy = try file.nodeHierarchy(keepingRoot: keepingRoot)
@@ -91,7 +83,7 @@ nonisolated extension NIFFile {
                     guard
                         let node = try drawableNode(block), !node.object.isHidden,
                         !NIFCurrentPlane.isCurrentPlane(node.object.name) else { continue }
-                    guard !Self.isEditorMarker(node.object.name) else {
+                    guard !node.object.isEditorMarker else {
                         editorMarkerShapeCount += 1
                         continue
                     }
@@ -131,7 +123,7 @@ nonisolated extension NIFFile {
             parent: float4x4
         ) throws {
             guard let shape = try file.triShape(of: block) else { return }
-            guard !Self.isEditorMarker(shape.object.name) else {
+            guard !shape.object.isEditorMarker else {
                 editorMarkerShapeCount += 1
                 return
             }
