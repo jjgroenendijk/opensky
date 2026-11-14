@@ -193,6 +193,7 @@ public final class GameSession: RenderFrameDriver {
     public var frameInput: RenderFrameInput {
         var input = RenderFrameInput(view: freeFlyCamera)
         input.movementMode = movementMode
+        input.cameraPivot = dialogueCameraSteps.cameraPivot
         input.fovYRadians = viewFOVYRadians
         input.horizontalFOVRadians = rigs.cinematicCameraState.pose?.horizontalFieldOfView
         input.timeOfDay = timeOfDay

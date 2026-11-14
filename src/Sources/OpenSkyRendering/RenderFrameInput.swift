@@ -9,6 +9,9 @@ public struct RenderFrameInput {
     /// The pose every pass draws from: the player's view, or an override standing in for it.
     public var view: FreeFlyCamera
     public var movementMode = CameraMovementMode.fly
+    /// The point the camera looks from, such as the third-person orbit point. Nil in
+    /// first person and the free camera. The actor camera fade sweeps from here to the eye.
+    public var cameraPivot: SIMD3<Float>?
     public var fovYRadians = FirstPersonCamera.defaultFOVYRadians
     /// A camera mesh's horizontal view; the renderer turns it into `fovYRadians`
     /// for the drawable's aspect. Nil keeps `fovYRadians`.

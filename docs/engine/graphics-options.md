@@ -97,17 +97,38 @@ Where OpenSky differs:
 ## Actor fade near the camera
 
 An actor fades out while the camera is inside it, so the view never shows the inside of a
-body. Each frame the actor nearest the camera is picked when the camera is closer than
-`30 + r` units to the actor's upright axis, between its feet and its head, where `r` is its
-radius. That actor fades out over 0.5 seconds, the player at once. Every other faded actor
-fades back in at the same speed. The fade draws with the game's 4 x 4 screen-door pattern: a
-pixel with threshold `t` from the pattern hides while the fade's visible share is below `t`.
+body. The fade draws with the game's 4 x 4 screen-door pattern: a pixel with threshold `t` from
+the pattern hides while the fade's visible share is below `t`. The visible share changes in a
+straight line: other actors over `fActorTeleportFadeSeconds` (0.5 s) each way, the player over
+`fPlayerTeleportFadeSeconds` (0.001 s), so at once.
 
-The pick distance, the speeds, and the pattern come from a clean-room read of `SkyrimSE.exe`
-1.7.104.0 and the game's shaders (2026-11-06, behaviour only). The game finds the actor with
-its camera collision probe along the camera line, and takes the radius from the actor's
-collision shape. OpenSky takes the nearest drawn actor, with its axis and radius from the
-bounds of its shapes. `state frame` lists the faded actors under `actorCameraFade`.
+The game picks the actor with its camera probe:
+
+- A sphere of radius `fCameraCasterSize:Camera` (15) sweeps from the camera's pivot to the eye.
+  For the player, the pivot is its reference position plus the height of the `Camera3rd [Cam3]`
+  node in its skeleton. The probe passes through living actors and skips the player. It stops
+  at the first object that blocks the camera, a dead body included.
+- The last living actor the sphere hits is the candidate. It fades when the hit point is nearer
+  to the eye than `fActorFadeOutLimit:Camera` (30) plus the bounding radius of the shape it hit.
+- The player fades in a separate test: a sphere of `fCameraCasterTargetSize:Camera` (20) at the
+  eye touches the player's character capsule. When the eye is above the player's feet, it is
+  first lowered by the player's height minus `fCharControllerCheckHeightOffset:Camera` (124). A
+  seated player instead fades when the eye is within `fCameraCasterFadeSittingRadius:HAVOK` (45)
+  of its head.
+- Only the third-person, horse, furniture, and similar orbit cameras start a fade. First person
+  and the free camera start none, so riders beside the player on the opening cart stay solid,
+  and a faded actor fades back in. The player's horse never fades.
+
+OpenSky follows this rule with what the renderer has. The probe tests each drawn shape of an
+actor: its world box, grown by the probe radius, and the radius is half the box's diagonal. The
+shapes are drawn where their pose puts them, so riders who share one root on a cart stay apart.
+The pivot is the player's feet plus its eye height, 112, in place of the `Cam3` node height.
+The player's capsule stands at the centre of its drawn shapes, with radius 24. OpenSky does not
+yet use the seated test, the dead bodies that block the game's probe, or the mount rule.
+
+The rule comes from clean-room reads of `SkyrimSE.exe` 1.7.104.0 and the game's shaders
+(2026-11-06 and 2026-11-14, behaviour only). `state frame` lists the faded actors under
+`actorCameraFade`.
 
 ## Picture features OpenSky leaves out
 

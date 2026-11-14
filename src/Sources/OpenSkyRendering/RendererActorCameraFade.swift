@@ -24,7 +24,8 @@ extension Renderer {
     func advanceViewTimers(seconds: Float) {
         let view = frameInput.view
         fadeTimers.actorCamera.advance(
-            eye: view.position, candidates: actorCameraCandidates(), seconds: seconds
+            eye: view.position, pivot: frameInput.cameraPivot,
+            candidates: actorCameraCandidates(), seconds: seconds
         )
         fadeTimers.depthOfFieldFocus.advance(
             angles: SIMD3(view.pitch, 0, view.yaw), position: view.position,
@@ -32,30 +33,40 @@ extension Renderer {
         )
     }
 
-    /// One candidate per drawn actor: its axis and radius from the bounds of its shapes.
+    /// One candidate per drawn actor, with the world box of each of its shapes as drawn
+    /// this frame. A seated rider's shapes sit where its seat idle puts them, so riders
+    /// that share one root on a cart stay apart.
     private func actorCameraCandidates() -> [ActorCameraFade.Candidate] {
-        var bounds: [UInt32: (min: SIMD3<Float>, max: SIMD3<Float>)] = [:]
+        var shapes: [UInt32: [ModelBounds]] = [:]
         for groups in actorGroupsByOwner.values {
             for group in groups {
                 for placed in group.instances {
                     let instance = drawn(placed)
                     guard instance.referenceFormID != 0, let box = instance.bounds else { continue }
-                    let known = bounds[instance.referenceFormID] ?? (box.min, box.max)
-                    bounds[instance.referenceFormID] = (
-                        simd_min(known.min, box.min), simd_max(known.max, box.max)
-                    )
+                    shapes[instance.referenceFormID, default: []].append(box)
                 }
             }
         }
-        return bounds.map { formID, box in
-            let size = box.max - box.min
-            return ActorCameraFade.Candidate(
-                formID: formID,
-                feet: SIMD3((box.min.x + box.max.x) / 2, (box.min.y + box.max.y) / 2, box.min.z),
-                height: size.z,
-                radius: min(size.x, size.y) / 2,
-                isPlayer: formID == Self.playerFormID
-            )
+        if isPlayerBodyVisible, let body = frameInput.rigs.body?.render {
+            for list in [body.opaque, body.alphaTested] {
+                for group in list {
+                    for instance in group.instances {
+                        if let box = instance.bounds {
+                            shapes[Self.playerFormID, default: []].append(box)
+                        }
+                    }
+                }
+            }
         }
+        var candidates: [ActorCameraFade.Candidate] = []
+        candidates.reserveCapacity(shapes.count)
+        for (formID, boxes) in shapes {
+            candidates.append(ActorCameraFade.Candidate(
+                formID: formID, shapes: boxes, isPlayer: formID == Self.playerFormID
+            ))
+        }
+        // Fixed order, so a tie between two hits picks the same actor every run.
+        candidates.sort { $0.formID < $1.formID }
+        return candidates
     }
 }
