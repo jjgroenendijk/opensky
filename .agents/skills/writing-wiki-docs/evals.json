@@ -34,5 +34,17 @@
       "Does not create the changelog page",
       "Offers gh pr list --milestone as the way to see what a milestone added"
     ]
+  },
+  {
+    "skills": [
+      "writing-wiki-docs"
+    ],
+    "query": "Document how the game decides when a guard arrests the player, from the UESP crime page.",
+    "files": [],
+    "expected_behavior": [
+      "Writes the rule in prose with its source and a worked example",
+      "Adds a Mermaid stateDiagram-v2 of the arrest states and the events between them",
+      "Uses OpenSky's own names in the diagram"
+    ]
   }
 ]

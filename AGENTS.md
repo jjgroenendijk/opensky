@@ -91,7 +91,8 @@ and math routine with synthetic fixtures built in code.
 ## Open work, docs, and checking a behaviour
 
 - Open work lives in GitHub issues and milestones (`starting-roadmap-work` skill).
-- `docs/` holds only what the code cannot show (`writing-wiki-docs` skill).
+- `docs/` holds only what the code cannot show, and draws game behaviour as a Mermaid diagram
+  (`writing-wiki-docs` skill).
 - A new subsystem or visible behaviour gets an `openskycli game` command that sets it and a
   `state` read that shows it, in the same milestone (`driving-the-running-game` skill).
 

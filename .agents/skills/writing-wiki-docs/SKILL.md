@@ -32,6 +32,24 @@ A docs page holds what the code cannot show. Everything else lives somewhere bet
 Keep every reverse-engineered fact and every spec citation. They are expensive to find
 again. If a fact is only about one parser or type, put it in a doc comment there instead.
 
+## Game behaviour gets a diagram
+
+A page that describes how the game behaves also draws it as a Mermaid diagram, whatever the
+source: a wiki, the reference game, or a clean-room read. A diagram shows a missing state or
+branch that prose hides. GitHub renders Mermaid, and a diff shows each change. Pick the
+diagram by the shape of the behaviour:
+
+| The behaviour | Diagram |
+| --- | --- |
+| One thing that reacts to events over time: an actor, a menu, a quest stage | `stateDiagram-v2` |
+| Parts that send messages to each other in order | `sequenceDiagram` |
+| A procedure or formula with branches | `flowchart` |
+| Rules from a mix of inputs with no time order | A table, not a diagram |
+
+The diagram holds only what the prose holds, in OpenSky's own names. Keep the prose and
+the formulas beside it, with a worked example; the diagram does not replace them. A page
+you change that describes behaviour but has no diagram gets one in the same change.
+
 ## Writing style
 
 Use the writing style in the root `AGENTS.md`. A docs page adds one rule: no
