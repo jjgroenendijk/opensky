@@ -46,5 +46,17 @@
       "Prefers a Mermaid stateDiagram-v2 of the arrest states and the events between them, but does not treat it as required",
       "Uses OpenSky's own names in the diagram"
     ]
+  },
+  {
+    "skills": [
+      "writing-wiki-docs"
+    ],
+    "query": "Write up the random door lookup from the clean-room read: shuffle the destinations, collect matching doors in each, pick one, link both. Add a diagram.",
+    "files": [],
+    "expected_behavior": [
+      "Draws a flowchart TD, not a state diagram, because the lookup runs to the end without waiting for an event",
+      "Labels each branch of a question diamond",
+      "Renders the block with mmdc before committing, as mermaid-diagrams.md describes"
+    ]
   }
 ]
