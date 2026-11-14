@@ -40,8 +40,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var pendingContentRect: CGRect?
     /// Keeps App Nap from slowing the frame loop of a hidden agent run.
     private var hiddenRunActivity: (any NSObjectProtocol)?
+    /// When `main` started, for the benchmark's app start phases.
+    var mainEntered: Date?
 
     func applicationDidFinishLaunching(_: Notification) {
+        gameContext.startMarks = AppStartMarks(mainEntered: mainEntered, launchFinished: Date())
         // The shell is a committed dark design (Theme.swift): forcing dark
         // appearance keeps every system control on the charcoal palette.
         NSApplication.shared.appearance = NSAppearance(named: .darkAqua)

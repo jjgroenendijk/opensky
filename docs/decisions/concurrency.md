@@ -173,6 +173,9 @@ as in the serial decode, whatever run finished first. The FormID index sorts its
 FormID and then by file offset, so the first record of a FormID wins, as in the serial walk.
 `ParallelDecode` lives in `OpenSkyFormatsCore`, so the plugin readers can use it.
 
+A generated terrain LOD block reads its land and land textures on the build thread, then
+bakes its mesh and maps on a worker, because the bake is a pure function of those values.
+
 An actor part decodes against the actor's skeleton, so only the file read and parse run
 ahead. The build first resolves the look of every actor in the cell, then reads all their
 part files at once, then assembles the actors in their old order.

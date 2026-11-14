@@ -3,7 +3,10 @@
 
 public import Foundation
 public import OpenSkyFormatsCore
-import OpenSkyRenderCore
+public import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
+import OpenSkyImageKernels
+public import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 import simd
@@ -25,6 +28,28 @@ nonisolated public struct GeneratedTerrainBlock: Sendable {
 nonisolated public protocol TerrainLODGenerating: AnyObject {
     /// Nil when the worldspace has no land in the block.
     func terrainBlock(_ block: DistantLODBlock) -> GeneratedTerrainBlock?
+    /// Builds `blocks` ahead, on every core, for the `terrainBlock` calls that follow.
+    func prepareTerrainBlocks(_ blocks: [DistantLODBlock])
+}
+
+nonisolated extension GeneratedTerrainBlock {
+    /// Bakes `block` from its land; `texture` gives each land texture at the block's mip.
+    public init(
+        _ block: DistantLODBlock,
+        from source: TerrainLODGenerator.Source,
+        texture: @escaping (FormID) -> TerrainLODTexture?
+    ) {
+        let side = TerrainLODGenerator.textureSize
+        let diffuse = TerrainLODGenerator.diffuse(source, texture: texture)
+        let normal = TerrainLODGenerator.normalMap(source)
+        self.init(
+            model: TerrainLODGenerator.model(
+                source, diffuseKey: block.generatedDiffuseKey, normalKey: block.generatedNormalKey
+            ),
+            diffuse: DDSEncoder.rgba8888(DecodedImage(width: side, height: side, rgba: diffuse)),
+            normal: DDSEncoder.rgba8888(DecodedImage(width: side, height: side, rgba: normal))
+        )
+    }
 }
 
 nonisolated extension DistantLODBlock {
@@ -50,6 +75,25 @@ nonisolated extension DistantLODBlock {
 
 nonisolated extension DistantLODBuilder {
     /// Nil when the generator has no land for the block; the vanilla file then draws.
+    /// Blocks generated per fan-out: enough to fill the cores, few enough that the
+    /// finished maps waiting for the serial loop stay a few megabytes.
+    static let generatedTerrainChunk = 24
+
+    /// Lets `terrain` build the terrain blocks of `blocks` that the mesh cache lacks.
+    func prepareGeneratedTerrain(
+        _ blocks: ArraySlice<DistantLODBlock>, terrain: any TerrainLODGenerating
+    ) {
+        guard meshes.decodesInParallel else { return }
+        let missing = blocks.filter {
+            $0.kind == .terrain
+                && meshes.bounds(forPath: $0.generatedMeshKey, terrainLODClipMask: $0.clipMask)
+                == nil
+        }
+        if !missing.isEmpty {
+            terrain.prepareTerrainBlocks(missing)
+        }
+    }
+
     func generatedPlacement(
         for block: DistantLODBlock,
         terrain: any TerrainLODGenerating

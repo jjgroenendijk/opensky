@@ -183,10 +183,12 @@ the switch is off.
 - The generated block keeps the land textures' own brightness, so a ring with generated
   blocks draws with no [brightness curve](/rendering/surface-shading.md).
 
-The blocks are built on the cell build queue when a ring first needs them, and the mesh cache
-keeps them like a file's model. The quick first ring of a session still draws the vanilla files,
-because its builder cannot read the plugins; the second build of the same center swaps the
-generated blocks in behind the loading screen. `openskycli game state frame` reports
+The blocks are built on the cell build queue when a ring first needs them, and the mesh cache keeps
+them like a file's model. The build thread reads the land and the land textures; the mesh, the two
+maps, and their DDS bytes are then made on every core, a few dozen blocks at a time
+([concurrency](/decisions/concurrency.md)). The quick first ring of a session still draws the
+vanilla files, because its builder cannot read the plugins; the second build of the same center
+swaps the generated blocks in behind the loading screen. `openskycli game state frame` reports
 `generatedTerrainBlocks`, and `openskycli render` prints the count with the LOD line.
 
 Objects and trees still come from the vanilla files. The game draws its own LOD files only;

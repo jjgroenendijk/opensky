@@ -95,6 +95,18 @@ struct TerrainLODGeneratorTests {
         #expect((120 ... 135).contains(blended[2]))
     }
 
+    @Test func textureFormsListEveryBaseAndLayerOnce() {
+        var cells = [TerrainLODLand?](repeating: Self.land(height: 0), count: 16)
+        cells[3] = Self.land(height: 0, layerOpacity: 0.5)
+        cells[5] = nil
+        let source = TerrainLODGenerator.Source(level: 4, cells: cells, defaultHeight: 0)
+        #expect(TerrainLODGenerator.textureForms(of: source) == [Self.red, Self.blue])
+        let bare = TerrainLODGenerator.Source(
+            level: 4, cells: Array(repeating: nil, count: 16), defaultHeight: 0
+        )
+        #expect(TerrainLODGenerator.textureForms(of: bare).isEmpty)
+    }
+
     @Test func normalMapStoresXZYInRedGreenBlue() {
         let source = TerrainLODGenerator.Source(
             level: 4,

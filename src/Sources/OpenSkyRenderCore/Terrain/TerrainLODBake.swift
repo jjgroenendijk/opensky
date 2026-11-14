@@ -70,6 +70,20 @@ nonisolated extension TerrainLODGenerator {
         max(32 / Int(max(level, 1)), 1)
     }
 
+    /// Every land texture the diffuse bake of `source` can ask for.
+    public static func textureForms(of source: Source) -> Set<FormID> {
+        var forms: Set<FormID> = []
+        for land in source.cells.compactMap(\.self) {
+            for quadrant in land.quadrants {
+                forms.insert(quadrant.base)
+                for layer in quadrant.layers {
+                    forms.insert(layer.texture)
+                }
+            }
+        }
+        return forms
+    }
+
     /// RGBA8 in sRGB, row 0 at the north edge, alpha 255. `texture` gives a land texture
     /// at `textureEdge(level:)`; nil leaves that layer out.
     public static func diffuse(
