@@ -219,6 +219,22 @@ start until the world is ready (`processToWorldReadyMS`), each world load stage,
 session start phases. A launcher run starts in a process that is already running, so it has
 no app start.
 
+`phases` cuts `processToWorldReadyMS` at each start step. The phases follow each other, so they
+add up to the whole time, and the summary prints them on its `App start phases` line:
+
+| Phase | From | Until |
+| --- | --- | --- |
+| `beforeMain` | The kernel's process start | The app's `main` starts: loading the executable and its libraries |
+| `appLaunch` | `main` | AppKit has finished its launch |
+| `beforeWorldLoad` | The launch | The world data load starts |
+| `worldLoad` | The load start | The load end |
+| `beforeSession` | The load end | The session start, such as making the game window |
+| `session` | The session start | The first frame is drawn |
+| `startArea` | The first frame | The world is ready: the start area streamed in behind the loading screen |
+
+A phase whose end mark is missing is left out, and the next phase starts where the one before
+it ended.
+
 Before the first scene, unless `--no-load-passes` is given, a new cell builder with empty
 caches builds the first scene's cells twice off screen: once cold, then again warm with its
 caches full. An exterior builds the 3 by 3 block around its origin and its distant LOD. The

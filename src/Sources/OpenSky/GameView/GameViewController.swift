@@ -39,7 +39,7 @@ final class GameViewController: NSViewController, GameWindowContent {
     /// The stage times of the load that built `cellSession`.
     var worldLoadReport: WorldLoadReport?
     /// Times the work between the load and the first frame.
-    let sessionStart = SessionStartRecorder()
+    let sessionStart = SessionStartRecorder(wallClock: Date.init)
     /// Times the streamer's builds by asset phase; set only when a benchmark tour will run.
     var benchmarkLoadPhases: LoadPhaseRecorder?
 

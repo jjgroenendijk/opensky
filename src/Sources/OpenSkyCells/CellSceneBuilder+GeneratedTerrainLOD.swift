@@ -17,6 +17,8 @@ nonisolated extension CellSceneBuilder.CellTerrainLODBuilder {
         private unowned let builder: CellSceneBuilder
         private let world: FoundWorld
         private let defaultHeight: Float
+        /// Blocks `prepareTerrainBlocks` built ahead; a nil value is a block without land.
+        private var prepared: [DistantLODBlock: GeneratedTerrainBlock?] = [:]
 
         init(builder: CellSceneBuilder, world: FoundWorld, defaultHeight: Float) {
             self.builder = builder
@@ -25,25 +27,42 @@ nonisolated extension CellSceneBuilder.CellTerrainLODBuilder {
         }
 
         func terrainBlock(_ block: DistantLODBlock) -> GeneratedTerrainBlock? {
+            if let made = prepared.removeValue(forKey: block) {
+                return made
+            }
             guard let source = source(for: block) else { return nil }
             let edge = TerrainLODGenerator.textureEdge(level: block.level)
-            let diffuse = TerrainLODGenerator.diffuse(source) {
+            return GeneratedTerrainBlock(block, from: source) {
                 self.builder.terrainBuilder.terrainLOD.terrainLODTexture($0, edge: edge)
             }
-            let normal = TerrainLODGenerator.normalMap(source)
-            let side = TerrainLODGenerator.textureSize
-            return GeneratedTerrainBlock(
-                model: TerrainLODGenerator.model(
-                    source, diffuseKey: block.generatedDiffuseKey,
-                    normalKey: block.generatedNormalKey
-                ),
-                diffuse: DDSEncoder.rgba8888(DecodedImage(
-                    width: side,
-                    height: side,
-                    rgba: diffuse
-                )),
-                normal: DDSEncoder.rgba8888(DecodedImage(width: side, height: side, rgba: normal))
-            )
+        }
+
+        /// Reads the land and the land textures here, where the builder's caches live, then
+        /// bakes the blocks on every core: the bake only turns values into values.
+        func prepareTerrainBlocks(_ blocks: [DistantLODBlock]) {
+            var jobs: [DistantLODBlock: PreparedTerrainSource] = [:]
+            for block in blocks where prepared[block] == nil {
+                guard let source = source(for: block) else {
+                    prepared[block] = .some(nil)
+                    continue
+                }
+                let edge = TerrainLODGenerator.textureEdge(level: block.level)
+                var textures: [FormID: TerrainLODTexture] = [:]
+                for form in TerrainLODGenerator.textureForms(of: source) {
+                    textures[form] = builder.terrainBuilder.terrainLOD
+                        .terrainLODTexture(form, edge: edge)
+                }
+                jobs[block] = PreparedTerrainSource(source: source, textures: textures)
+            }
+            let ready = jobs
+            let made = ParallelDecode.map(ready.keys) { block in
+                ready[block].map { job in
+                    GeneratedTerrainBlock(block, from: job.source) { job.textures[$0] }
+                }
+            }
+            for (block, generated) in made {
+                prepared[block] = .some(generated)
+            }
         }
 
         /// Nil when no cell of the block has land.
@@ -104,4 +123,10 @@ nonisolated extension CellSceneBuilder.CellTerrainLODBuilder {
         owner.caches.terrainLODTextures[key] = .some(texture)
         return texture
     }
+}
+
+/// One block's land and land textures, read on the build thread for a worker to bake.
+private struct PreparedTerrainSource: Sendable {
+    let source: TerrainLODGenerator.Source
+    let textures: [FormID: TerrainLODTexture]
 }

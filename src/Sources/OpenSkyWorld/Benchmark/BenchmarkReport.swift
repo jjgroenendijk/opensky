@@ -27,6 +27,12 @@ nonisolated public enum BenchmarkReport {
             let process = start.processToWorldReadyMS
                 .map { ", process start to world ready \(format($0)) ms" } ?? ""
             lines.append("App start: world load \(format(start.worldLoadMS)) ms\(process)")
+            let phases = AppStartPhase.allCases.compactMap { phase in
+                start.phases[phase.rawValue].map { "\(phase.rawValue) \(format($0))" }
+            }
+            if !phases.isEmpty {
+                lines.append("App start phases (ms): " + phases.joined(separator: ", "))
+            }
         }
         for (name, pass) in [("Cold load", result.coldLoad), ("Warm load", result.warmLoad)] {
             guard let pass else { continue }

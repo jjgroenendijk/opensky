@@ -783,7 +783,8 @@ targets += domain(
 targets += domain(
     "OpenSkyTerrain",
     dependencies: [
-        "OpenSkyFormatsCore", "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyRendering",
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
+        "OpenSkyRendering",
         "OpenSkyAssetCache", "OpenSkyImageKernels", "OpenSkyRenderCore", "OpenSkyRenderResources"
     ],
     tests: [

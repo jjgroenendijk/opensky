@@ -475,7 +475,11 @@ nonisolated public final class DistantLODBuilder {
         var missing = 0
         var generated = 0
         var ring = start
-        for block in selected {
+        for (index, block) in selected.enumerated() {
+            if let terrain, index.isMultiple(of: Self.generatedTerrainChunk) {
+                let end = min(index + Self.generatedTerrainChunk, selected.count)
+                prepareGeneratedTerrain(selected[index ..< end], terrain: terrain)
+            }
             let hides = ring.map {
                 LargeReferenceRing.hidesLargeReferences(
                     of: block, center: $0.center, radius: $0.radius

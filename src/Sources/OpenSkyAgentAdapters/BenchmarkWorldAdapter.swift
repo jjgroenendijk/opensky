@@ -550,7 +550,6 @@ final class BenchmarkScreenshots {
 
 /// The machine, plugins, and app start a tour reports, for `BenchmarkWorldAdapter`.
 struct BenchmarkRunInputs {
-    private static let millisecondsPerSecond = 1000.0
     let game: any BenchmarkWorldHost
     let wallClock: () -> Date
 
@@ -566,10 +565,9 @@ struct BenchmarkRunInputs {
 
     func appStart() -> BenchmarkAppStart? {
         guard let report = game.worldLoadReport else { return nil }
-        let sinceStart = BenchmarkAppStart.processStart()
-            .map { wallClock().timeIntervalSince($0) * Self.millisecondsPerSecond }
         return BenchmarkAppStart(
-            report: report, session: game.sessionStartTiming, processToWorldReadyMS: sinceStart
+            report: report, session: game.sessionStartTiming,
+            processStart: BenchmarkAppStart.processStart(), worldReady: wallClock()
         )
     }
 }

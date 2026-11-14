@@ -31,6 +31,8 @@ final class GameLaunchContext {
     /// Built by `load`, handed to the next game view, which owns it from then on.
     private var cellSession: CellSession?
     private var worldLoadReport: WorldLoadReport?
+    /// The app start so far; `load` adds the world load to it.
+    var startMarks = AppStartMarks()
     private(set) var gameDataErrorMessage: String?
     /// Set before `load` when a benchmark tour will run, so its arrivals report asset phases.
     var benchmarkLoadPhases: LoadPhaseRecorder?
@@ -93,14 +95,17 @@ final class GameLaunchContext {
             decodesInParallel: settings.bool(.parallelDecode),
             loadPhases: benchmarkLoadPhases
         )
+        var marks = startMarks
+        marks.worldLoadStarted = Date()
         loader.start(
             work: { progress in try await Self.loadWorld(request, progress: progress) },
             onUpdate: onUpdate,
             completion: { [weak self, weak loader] world in
                 self?.virtualFileSystem = world.fileSystem
                 self?.cellSession = world.session
+                marks.worldLoadFinished = Date()
                 self?.worldLoadReport = loader.map {
-                    WorldLoadReport(timeline: $0.timeline, total: $0.elapsed)
+                    WorldLoadReport(timeline: $0.timeline, total: $0.elapsed, marks: marks)
                 }
                 completion()
             }

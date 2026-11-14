@@ -134,13 +134,26 @@ extension Duration {
 }
 
 extension BenchmarkAppStart {
+    /// `processStart` is nil when the kernel did not say; the phases are then left out.
     public init(
         report: WorldLoadReport,
         session: SessionStartTiming,
-        processToWorldReadyMS: Double?
+        processStart: Date?,
+        worldReady: Date
     ) {
+        let marks = report.marks
+        let ends: [AppStartPhase: Date] = [
+            .beforeMain: marks.mainEntered, .appLaunch: marks.launchFinished,
+            .beforeWorldLoad: marks.worldLoadStarted, .worldLoad: marks.worldLoadFinished,
+            .beforeSession: session.startedAt, .session: session.firstFrameAt
+        ].compactMapValues(\.self)
+        let phases = processStart.map {
+            AppStartPhase.split(from: $0, to: worldReady, ends: ends)
+        } ?? [:]
         self.init(
-            processToWorldReadyMS: processToWorldReadyMS,
+            processToWorldReadyMS: processStart.map {
+                worldReady.timeIntervalSince($0) * Self.millisecondsPerSecond
+            },
             worldLoadMS: report.total.milliseconds,
             stages: Dictionary(
                 report.timeline.slowestFirst.map { ($0.stage.rawValue, $0.duration.milliseconds) },
@@ -149,7 +162,10 @@ extension BenchmarkAppStart {
             sessionStart: Dictionary(
                 session.measured.map { ($0.phase.rawValue, $0.duration.milliseconds) },
                 uniquingKeysWith: +
-            )
+            ),
+            phases: Dictionary(uniqueKeysWithValues: phases.map { ($0.key.rawValue, $0.value) })
         )
     }
+
+    private static let millisecondsPerSecond = 1000.0
 }

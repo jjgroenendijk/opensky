@@ -6,6 +6,7 @@ import AppKit
 @main
 enum OpenSkyApp {
     static func main() {
+        let entered = Date()
         let app = NSApplication.shared
 
         // Unit tests inject into this process (TEST_HOST) and only need it
@@ -19,6 +20,7 @@ enum OpenSkyApp {
         }
 
         let delegate = AppDelegate()
+        delegate.mainEntered = entered
         app.delegate = delegate
         app.mainMenu = MainMenu.make(target: delegate)
         app.setActivationPolicy(.regular)
