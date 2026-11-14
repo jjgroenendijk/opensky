@@ -173,6 +173,9 @@ as in the serial decode, whatever run finished first. The FormID index sorts its
 FormID and then by file offset, so the first record of a FormID wins, as in the serial walk.
 `ParallelDecode` lives in `OpenSkyFormatsCore`, so the plugin readers can use it.
 
+A generated terrain LOD block reads its land and land textures on the build thread, then
+bakes its mesh and maps on a worker, because the bake is a pure function of those values.
+
 An actor part decodes against the actor's skeleton, so only the file read and parse run
 ahead. The build first resolves the look of every actor in the cell, then reads all their
 part files at once, then assembles the actors in their old order.
@@ -193,15 +196,16 @@ thread:
 Archive reads are safe on several threads: the file system keeps its archive list in a
 `Mutex`, and an archive is a `Sendable` value over mapped memory.
 
-`concurrentPerform` returns only when every item is done, so no work outlives the build that
-started it. It is a fork and join, not a pipeline: the build thread waits at each join. A
-`TaskGroup` would need `await` inside the build, and the build is synchronous. The workers
-inherit the `.utility` priority of the build queue, so the main thread wins a core when both
-want one. Priority alone did not keep the frames smooth: with a worker on every core, the
-95th percentile frame time of the benchmark tour rose by about 1 ms in two on/off pairs on
-an M1. So the fan-out runs on two threads fewer than the machine has cores, and each worker
-takes the next item until none is left. Fewer than four items run serially, because the
-fan-out then costs more than it saves.
+`concurrentPerform` returns only when every item is done, so no work outlives the build that started
+it. It is a fork and join, not a pipeline: the build thread waits at each join. A `TaskGroup` would
+need `await` inside the build, and the build is synchronous. The workers inherit the
+`.userInitiated` priority of the build queue, so the main thread, at the higher `.userInteractive`
+priority, wins a core when both want one. The build queue is not lower than that: at `.utility`,
+other processes on a busy machine took the cores, and the player moved past the cells it waited for.
+Priority alone did not keep the frames smooth: with a worker on every core, the 95th percentile
+frame time of the benchmark tour rose by about 1 ms in two on/off pairs on an M1. So the fan-out
+runs on two threads fewer than the machine has cores, and each worker takes the next item until none
+is left. Fewer than four items run serially, because the fan-out then costs more than it saves.
 
 The result does not depend on the fan-out: the serial loads make the same decisions in the
 same order, and only the values they read come from a worker. The setting

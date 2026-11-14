@@ -68,14 +68,15 @@ LOD scenes are built on the same serial queue as cells, except the first ring:
    function with its own mesh and texture libraries, so it never touches the build queue's
    caches. It hides the whole desired near grid. The loading screen stays up until the near
    grid has finished and this ring is in ([loading screens](/engine/loading-screens.md)).
-2. Every later ring waits for the near grid to finish (every cell loaded, empty, or failed),
+2. The second ring waits for the near grid to finish (every cell loaded, empty, or failed),
    so a LOD build cannot hold up near cells.
-3. After the first ring, a move keeps the old grid and old LOD visible.
-4. New full cells are collected off-screen.
-5. When the matching new LOD is ready, the new cells and new LOD swap in together. There is no
-   moment with a hole, and no moment with old LOD over new cells.
-6. A LOD build that is out of date when it finishes is dropped, and its assets are freed.
-7. Old LOD assets stay loaded while cells or the new LOD still use them.
+3. Each ring leaves out exactly the full cells that draw with it. A new cell that the ring on
+   screen covers waits off screen.
+4. When the next ring is ready, it swaps in with the cells it leaves out. There is no moment
+   with a hole, and no moment with old LOD over new cells. The rules for when a ring is
+   requested are on the [cell streaming](/engine/cell-streaming.md#distant-lod-and-coverage)
+   page.
+5. Old LOD assets stay loaded while cells or the new LOD still use them.
 
 Camera framing uses only full cell bounds. Otherwise distant LOD would pull the start camera out
 to see the whole world.
@@ -112,7 +113,9 @@ Each ring build, on the build queue:
    holds one segment per cell ([LOD format](/formats/lod.md#large-references)). A block that
    reaches into the ring drops the segments of the cells inside the large radius, and keeps
    the rest.
-2. The ring's cells are every cell inside the large radius, minus the loaded grid. A
+2. The ring's cells are every cell inside the large radius, minus the cells the ring leaves
+   out. A near cell that is still building keeps the ring's large references, because its
+   object LOD segment is gone. A
    `-LargeRef` shape without segments, as a tool other than the game's might write, drops
    whole, and then every cell of its block joins the ring, so no large reference goes
    missing.
@@ -126,8 +129,9 @@ Each ring build, on the build queue:
 
 The quick first ring of a session keeps the `-LargeRef` shapes, because its builder cannot
 read the plugins. Once the near grid is in, the same center is built once more with the large
-references. The start area stays behind the loading screen until that second build is in or
-has failed, so the first view already shows the full models and no swap is seen.
+references. The loading screen lifts once the quick ring is in; the second build then swaps
+in like any later ring. The near cells stay drawn through the swap, so only distant shapes
+change.
 `openskycli game state frame` reports `largeReferences` and `hiddenLargeReferenceLOD`, the
 count of cell segments the ring hid. `openskycli render` prints the large-reference count with
 the LOD line.
@@ -180,10 +184,12 @@ the switch is off.
 - The generated block keeps the land textures' own brightness, so a ring with generated
   blocks draws with no [brightness curve](/rendering/surface-shading.md).
 
-The blocks are built on the cell build queue when a ring first needs them, and the mesh cache
-keeps them like a file's model. The quick first ring of a session still draws the vanilla files,
-because its builder cannot read the plugins; the second build of the same center swaps the
-generated blocks in behind the loading screen. `openskycli game state frame` reports
+The blocks are built on the cell build queue when a ring first needs them, and the mesh cache keeps
+them like a file's model. The build thread reads the land and the land textures; the mesh, the two
+maps, and their DDS bytes are then made on every core, a few dozen blocks at a time
+([concurrency](/decisions/concurrency.md)). The quick first ring of a session still draws the
+vanilla files, because its builder cannot read the plugins; the second build of the same center
+swaps the generated blocks in after the loading screen lifts. `openskycli game state frame` reports
 `generatedTerrainBlocks`, and `openskycli render` prints the count with the LOD line.
 
 Objects and trees still come from the vanilla files. The game draws its own LOD files only;

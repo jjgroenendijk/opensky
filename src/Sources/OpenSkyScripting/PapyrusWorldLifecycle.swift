@@ -201,15 +201,13 @@ extension PapyrusWorldRuntime.Lifecycle {
         guard !created.isEmpty else {
             return
         }
-        let handles = world.referenceHandleMap()
         for item in plan where created.contains(item.key) {
-            bind(item, handles: handles, formIDResolver: formIDResolver)
+            bind(item, formIDResolver: formIDResolver)
         }
     }
 
     private func bind(
         _ item: PapyrusAttachItem,
-        handles: [ReferenceKey: PapyrusObjectHandle],
         formIDResolver: FormIDResolver
     ) {
         guard
@@ -232,7 +230,7 @@ extension PapyrusWorldRuntime.Lifecycle {
                     let slot = PapyrusAliasSlot(quest: quest, aliasID: aliasID)
                     return world.questRuns.aliasSlotHandle(slot)
                 },
-                objectHandle: { handles[$0] ?? world.objectHandle(for: $0) }
+                objectHandle: { world.objectHandle(for: $0) }
             )
             world.bindingSkips.merge(binding.skipped)
             for (name, value) in binding.initialValues.sorted(by: { $0.key < $1.key })

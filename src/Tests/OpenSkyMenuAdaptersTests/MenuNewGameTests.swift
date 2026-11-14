@@ -3,10 +3,12 @@
 
 import Foundation
 import OpenSkyAgentControl
+import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyMenuAdapters
 import OpenSkyMenusInterface
 import OpenSkySessionTesting
+import OpenSkyWorldInterface
 import Testing
 
 @MainActor
@@ -90,5 +92,26 @@ struct MenuNewGameTests {
         #expect(steps.first == .weather("SkyrimClear"))
         #expect(steps.count == 1 + LaunchItemPreset.mage.items.count)
         #expect(MenuWorldNewGameAdapter.arrivalSteps(of: LaunchNewGame(start: .cell("X"))).isEmpty)
+    }
+
+    @Test func aCoveredMoveKeepsItsCoverUntilTheAreaAroundTheArrivalIsIn() {
+        let session = FakeGameSessionPort()
+        let schedule = FrameSchedule<FrameStep, SIMD3<Float>>()
+        session.frameStepsValue = schedule
+        host.gameSession = session
+        let job = FakeAgentTeleportJobPort()
+        job.waitValue = AgentWait { _ in .done(.success(.null)) }
+        host.fakeAgentWorld.viewJobResult = job
+        menus.teleports.followView(AgentViewTarget(
+            feet: .zero, yawDegrees: 0, pitchDegrees: 0, worldspace: "Tamriel",
+            interiorCell: nil, hour: nil, weather: nil
+        ))
+        schedule(.zero)
+        schedule(.zero)
+        #expect(host.fakeLoadingScreens.loadFinishedCalls.isEmpty)
+        host.fakeStreamer.startAreaReady = true
+        schedule(.zero)
+        #expect(host.fakeLoadingScreens.loadFinishedCalls == [0])
+        #expect(session.setMovementModeCalls.count == 1)
     }
 }

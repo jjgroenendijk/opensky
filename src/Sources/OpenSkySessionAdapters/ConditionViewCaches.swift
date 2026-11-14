@@ -6,7 +6,6 @@ public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
-public import OpenSkyMagicInterface
 public import OpenSkyWorldState
 
 @MainActor
@@ -37,13 +36,11 @@ struct MarkerViewKey: Hashable {
     let references: [ReferenceKey]
 }
 
-/// Item stacks and equip flags are inventory writes; an actor's baseline equipment is
-/// fixed by its record. The hand type also reads which hands hold a spell.
+/// The player's item stacks and equip flags are inventory writes. Equipment is read live,
+/// so it needs no key.
 public struct InventoryViewKey: Hashable {
     public let runtime: ObjectIdentifier
     public let writes: UInt64
-    public let actors: [ReferenceKey]
-    public let spellHands: [Set<SpellHand>]
     public let hasEquipment: Bool
 }
 

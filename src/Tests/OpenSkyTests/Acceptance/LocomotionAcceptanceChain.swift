@@ -257,7 +257,8 @@ final class LocomotionAcceptanceChain {
 
     /// Completes every cell build the streamer asked for. The cell east of the
     /// start carries the door, which is what makes the route cross a streaming
-    /// boundary before it reaches one.
+    /// boundary before it reaches one. This world has no distant LOD, so each
+    /// ring fails, which shows the cells that waited for it.
     private func completePendingBuilds() {
         let pending = runner.enqueued.suffix(from: min(completedBuilds, runner.enqueued.count))
         for coordinate in pending {
@@ -267,11 +268,18 @@ final class LocomotionAcceptanceChain {
                 door: coordinate.x == 1 ? Self.door() : nil
             )))
         }
-        guard !pending.isEmpty else { return }
+        let rings = runner.enqueuedLODCenters
+            .suffix(from: min(failedRings, runner.enqueuedLODCenters.count))
+        for center in rings {
+            failedRings += 1
+            runner.failDistantLOD(center)
+        }
+        guard !pending.isEmpty || !rings.isEmpty else { return }
         streamer.update(cameraPosition: controller.cameraPosition)
     }
 
     private var completedBuilds = 0
+    private var failedRings = 0
 
     // MARK: - The door
 
@@ -321,21 +329,35 @@ final class LocomotionAcceptanceChain {
         controller.reset(cameraPosition: camera.position)
         bridge.reset()
     }
+}
 
-    // MARK: - Scenes
+extension LocomotionAcceptanceChain {
+    /// US ANSI virtual key codes, the same physical layout `GameMetalView`
+    /// maps. Spelled here rather than imported because the view keeps them
+    /// private, which is right: they are its own input contract.
+    enum Key: UInt16 {
+        case keyW = 13
+        case keyC = 8
+        case space = 49
+        case keyE = 14
+        case leftShift = 56
+        case leftOption = 58
+    }
+}
 
-    private static func exteriorScene(
+extension LocomotionAcceptanceChain {
+    fileprivate static func exteriorScene(
         _ coordinate: CellCoordinate,
         door: PlacedDoor?
     ) -> CellScene {
         scene(location: .exterior(coordinate), door: door)
     }
 
-    private static func interiorScene(door: PlacedDoor) -> CellScene {
+    fileprivate static func interiorScene(door: PlacedDoor) -> CellScene {
         scene(location: .interior(interiorCell), door: door)
     }
 
-    private static func scene(location: CellSceneLocation, door: PlacedDoor?) -> CellScene {
+    fileprivate static func scene(location: CellSceneLocation, door: PlacedDoor?) -> CellScene {
         guard let door else {
             return CellStreamerFixture.cellScene(location: location)
         }
@@ -355,7 +377,7 @@ final class LocomotionAcceptanceChain {
         )
     }
 
-    private static func door() -> PlacedDoor {
+    fileprivate static func door() -> PlacedDoor {
         CellStreamerFixture.door(
             reference: doorReference,
             destination: interiorDoorReference,
@@ -363,25 +385,11 @@ final class LocomotionAcceptanceChain {
         )
     }
 
-    private static func interiorDoor() -> PlacedDoor {
+    fileprivate static func interiorDoor() -> PlacedDoor {
         CellStreamerFixture.door(
             reference: interiorDoorReference,
             destination: doorReference,
             position: interiorPosition
         )
-    }
-}
-
-extension LocomotionAcceptanceChain {
-    /// US ANSI virtual key codes, the same physical layout `GameMetalView`
-    /// maps. Spelled here rather than imported because the view keeps them
-    /// private, which is right: they are its own input contract.
-    enum Key: UInt16 {
-        case keyW = 13
-        case keyC = 8
-        case space = 49
-        case keyE = 14
-        case leftShift = 56
-        case leftOption = 58
     }
 }

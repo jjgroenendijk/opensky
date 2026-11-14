@@ -37,7 +37,7 @@ struct GameAppServices {
     var audioFileSystem: (any GameFileSource)?
     var menuTextLoader: (() -> LocalizedLabels)?
     var controlMapLoader: (() throws -> ControlMapFile)?
-    var sessionStart = SessionStartRecorder()
+    var sessionStart = SessionStartRecorder(wallClock: Date.init)
     var worldLoadReport: WorldLoadReport?
     var benchmarkLoadPhases: LoadPhaseRecorder?
     var terrainLODConfigurationStore = TerrainLODConfigurationStore(

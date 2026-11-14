@@ -360,20 +360,6 @@ public final class PapyrusWorldRuntime {
         return .ready
     }
 
-    /// One handle per world reference for VMAD object-property binding. A
-    /// reference carrying several scripts resolves to the instance with the
-    /// lowest script name, chosen deterministically. Alias and effect scripts are left out.
-    public func referenceHandleMap() -> [ReferenceKey: PapyrusObjectHandle] {
-        var map: [ReferenceKey: PapyrusObjectHandle] = [:]
-        let otherKeys = activationRuns.aliasInstanceKeys.union(effectScripts.instanceKeys)
-        for key in instancesByKey.keys.sorted()
-            where map[key.reference] == nil && !otherKeys.contains(key)
-        {
-            map[key.reference] = instancesByKey[key]
-        }
-        return map
-    }
-
     /// One reference's instances in key order.
     func instanceKeys(on reference: ReferenceKey) -> [PapyrusInstanceKey] {
         instanceKeysByReference[reference] ?? []

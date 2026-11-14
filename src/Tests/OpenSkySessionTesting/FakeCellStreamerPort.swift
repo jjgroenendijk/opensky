@@ -36,6 +36,7 @@ nonisolated public final class FakeCellStreamerPort: CellStreamerPort {
     public var generatedTerrainBlockCount = 0
     public var grid: CellGridManager = FakeCellGridManagerPort()
     public var hiddenLargeReferenceSegments = 0
+    public var coverageReadoutValue: CellCoverageReadout?
     public var inFlightCellCount = 0
     public var interactionTarget: InteractionTarget?
     public var interiorMutationSequence: UInt64 = 0
@@ -92,6 +93,15 @@ nonisolated extension FakeCellStreamerPort {
 
     public func enterWorldspace(_ editorID: String, camera: SceneCamera) {
         enterWorldspaceCalls.append((editorID: editorID, camera: camera))
+    }
+
+    public var coverageReadout: CellCoverageReadout {
+        get {
+            guard let coverageReadoutValue
+            else { preconditionFailure("FakeCellStreamerPort.coverageReadout is unset") }
+            return coverageReadoutValue
+        }
+        set { coverageReadoutValue = newValue }
     }
 
     public func leaveInterior(camera: SceneCamera) {

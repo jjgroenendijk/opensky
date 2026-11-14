@@ -29,6 +29,9 @@ nonisolated public struct LocationStore: Sendable {
     let bossLocations: [ReferenceKey: [ResolvedFormID]]
     /// `DOBJ` `KWDO`: a location with this keyword plays the cleared music.
     public let clearableKeyword: ResolvedFormID?
+    /// Each location's descendants through `PNAM`, itself included, nearest generation
+    /// first and FormID order within one, built once at load.
+    let descendants: [LocationIdentity: [ResolvedFormID]]
 
     public var locations: [ResolvedFormID: ResolvedLocation] {
         table.values
@@ -58,6 +61,7 @@ nonisolated public struct LocationStore: Sendable {
         bossLocations = Self.locations(
             listing: bossType, in: table.values.values, index: index
         )
+        descendants = Self.descendants(in: table, index: index)
     }
 
     /// The ref types `reference` is listed under in any location's `LCSR` or `ACSR`.

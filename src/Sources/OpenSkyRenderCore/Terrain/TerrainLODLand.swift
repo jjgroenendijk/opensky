@@ -76,10 +76,6 @@ nonisolated public struct TerrainLODLand: Sendable {
         simd_normalize(Self.bilinear(x: x, y: y) { normals[$0] })
     }
 
-    func colour(x: Float, y: Float) -> SIMD3<Float> {
-        Self.bilinear(x: x, y: y) { colours[$0] }
-    }
-
     static func bilinear<Value: SIMDOrFloat>(
         x: Float,
         y: Float,

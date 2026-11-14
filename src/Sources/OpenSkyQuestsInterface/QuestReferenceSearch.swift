@@ -14,20 +14,26 @@ nonisolated public struct QuestReferenceSearch: Sendable {
     /// The context the match conditions read; the filler sets subject and quest.
     public var context: ConditionContext
     public var dead: Set<ReferenceKey>
-    public var disabled: Set<ReferenceKey>
+    /// Read only for the candidates a match tests, so a search walks no references.
+    /// Conditions and searches run on the main actor, as the whole simulation does.
+    public var isDisabled: @MainActor @Sendable (ReferenceKey) -> Bool
 
     public init(
         references: RuntimeReferenceIndex,
         origin: SIMD3<Float>?,
         context: ConditionContext,
         dead: Set<ReferenceKey> = [],
-        disabled: Set<ReferenceKey> = []
+        isDisabled: @escaping @MainActor @Sendable (ReferenceKey) -> Bool = { _ in false }
     ) {
         self.references = references
         self.origin = origin
         self.context = context
         self.dead = dead
-        self.disabled = disabled
+        self.isDisabled = isDisabled
+    }
+
+    public func disables(_ key: ReferenceKey) -> Bool {
+        MainActor.assumeIsolated { isDisabled(key) }
     }
 
     /// The loaded references whose untagged linked ref (`XLKR`) is `parent`, as the

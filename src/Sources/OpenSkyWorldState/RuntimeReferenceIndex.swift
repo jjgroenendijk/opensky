@@ -69,6 +69,13 @@ nonisolated public struct RuntimeReferenceIndex: Sendable {
     /// systems read this list, and the index never changes after a build. A
     /// disabled actor stays findable by key but is not in this list.
     public let sortedActorEntries: [RuntimeReferenceEntry]
+    /// The object IDs some entry names as its `XESP` enable parent, built once so a
+    /// script's enable or disable checks a cell without reading every record.
+    public let enableParentObjectIDs: Set<UInt32>
+    /// The entries placed as map markers, in `sortedKeys()` order.
+    public let mapMarkerKeys: [ReferenceKey]
+    /// Sorted once: the index never changes, and many readers walk it in order.
+    private let orderedKeys: [ReferenceKey]
 
     /// Cells built without reference retention (synthetic render tests) use
     /// this rather than an optional field.
@@ -88,6 +95,9 @@ nonisolated public struct RuntimeReferenceIndex: Sendable {
         sortedActorEntries = byKey.values
             .filter { $0.placedActor != nil && !absentActors.contains($0.key) }
             .sorted { $0.key < $1.key }
+        enableParentObjectIDs = Set(byKey.values.compactMap { $0.enableParent?.parent.objectID })
+        orderedKeys = byKey.keys.sorted()
+        mapMarkerKeys = orderedKeys.filter { byKey[$0]?.placedReference?.mapMarker != nil }
     }
 
     public var count: Int {
@@ -111,11 +121,11 @@ nonisolated public struct RuntimeReferenceIndex: Sendable {
     /// nondeterministic, so every caller that walks the whole index — save
     /// serialization and inspection UI among them — walks it through here.
     public func sortedKeys() -> [ReferenceKey] {
-        entriesByKey.keys.sorted()
+        orderedKeys
     }
 
     /// Entries in `sortedKeys()` order.
     public func sortedEntries() -> [RuntimeReferenceEntry] {
-        sortedKeys().compactMap { entriesByKey[$0] }
+        orderedKeys.compactMap { entriesByKey[$0] }
     }
 }

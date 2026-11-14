@@ -90,8 +90,7 @@ extension CellStreamer.RuntimeStateSteps {
         guard case let .plugin(_, objectID) = key else { return }
         noteDistantLODMutation(of: key)
         func dependsOnKey(_ scene: CellScene) -> Bool {
-            scene.references.sortedEntries()
-                .contains { $0.enableParent?.parent.objectID == objectID }
+            scene.references.enableParentObjectIDs.contains(objectID)
                 || scene.hazards.contains { $0.enableParent?.parent.objectID == objectID }
         }
         for (coordinate, scene) in streamer.composition.cells where dependsOnKey(scene) {
@@ -107,10 +106,9 @@ extension CellStreamer.RuntimeStateSteps {
     private func noteDistantLODMutation(of key: ReferenceKey) {
         guard
             case let .plugin(_, objectID) = key,
-            streamer.composition.distantLOD?.watchedObjectIDs.contains(objectID) == true,
-            streamer.requestedLODCenter == streamer.grid.center
+            streamer.composition.distantLOD?.watchedObjectIDs.contains(objectID) == true
         else { return }
-        streamer.requestedLODCenter = nil
+        streamer.lodRebuildWanted = true
     }
 
     private func recordMutationSequence(_ coordinate: CellCoordinate, sequence: UInt64) {

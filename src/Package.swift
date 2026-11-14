@@ -783,7 +783,8 @@ targets += domain(
 targets += domain(
     "OpenSkyTerrain",
     dependencies: [
-        "OpenSkyFormatsCore", "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyRendering",
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
+        "OpenSkyRendering",
         "OpenSkyAssetCache", "OpenSkyImageKernels", "OpenSkyRenderCore", "OpenSkyRenderResources"
     ],
     tests: [
@@ -1266,7 +1267,7 @@ targets += composition(
     tests: [
         "OpenSkyActorsInterface", "OpenSkyAgentControl", "OpenSkyAudio", "OpenSkyCombatInterface",
         "OpenSkyDialogueInterface", "OpenSkyEngineTesting",
-        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyMagicInterface",
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyMagicInterface",
         "OpenSkyMenusInterface", "OpenSkyPhysics", "OpenSkyRenderCore",
         "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkySessionTesting",
         "OpenSkyWorldInterface", "OpenSkyWorldState"

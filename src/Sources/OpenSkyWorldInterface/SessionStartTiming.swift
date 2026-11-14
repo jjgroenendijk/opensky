@@ -1,9 +1,13 @@
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 /// How long each measured phase took.
 nonisolated public struct SessionStartTiming: Equatable, Sendable {
     public private(set) var durations: [SessionStartPhase: Duration] = [:]
+    /// The wall clock when the first phase started.
+    public var startedAt: Date?
+    /// The wall clock when the first frame was drawn.
+    public var firstFrameAt: Date?
 
     public init() {}
 

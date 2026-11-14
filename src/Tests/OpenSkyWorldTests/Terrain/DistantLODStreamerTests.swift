@@ -45,12 +45,27 @@ nonisolated private final class LODManualRunner: CellBuildRunning {
         return true
     }
 
+    /// Finishes the newest ring requested for `center`, a prebuild included.
     func completeLOD(_ center: CellCoordinate, scene: DistantLODScene) {
-        readyLOD.append(DistantLODBuildResult(center: center, result: .success(scene)))
+        readyLOD.append(DistantLODBuildResult(
+            center: center, result: .success(scene), hiddenCells: hiddenCells(of: center)
+        ))
     }
 
     func failLOD(_ center: CellCoordinate) {
-        readyLOD.append(DistantLODBuildResult(center: center, result: .failure(LODTestError())))
+        readyLOD.append(DistantLODBuildResult(
+            center: center, result: .failure(LODTestError()), hiddenCells: hiddenCells(of: center)
+        ))
+    }
+
+    private func hiddenCells(of center: CellCoordinate) -> Set<CellCoordinate> {
+        if let index = lodRequests.lastIndex(of: center) {
+            return lodHiddenCells[index]
+        }
+        for (requested, hidden) in prebuildRequests.reversed() where requested == center {
+            return hidden
+        }
+        return []
     }
 
     func drainCompletedDistantLOD() -> [DistantLODBuildResult] {
@@ -209,7 +224,7 @@ struct DistantLODStreamerTests {
         #expect(streamer.coverage.startAreaReady)
     }
 
-    @Test func aQuickFirstRingWaitsForItsLargeReferences() {
+    @Test func aQuickFirstRingReadiesTheStartAreaAndIsBuiltAgain() {
         let runner = LODManualRunner()
         runner.prebuilds = true
         let streamer = CellStreamer(center: Self.center, radius: 1, runner: runner) { _, _ in }
@@ -224,10 +239,10 @@ struct DistantLODStreamerTests {
         ))
         loadNearGrid(streamer, runner: runner, position: position)
         streamer.update(cameraPosition: position)
-        #expect(runner.lodRequests == [Self.center])
+        #expect(runner.lodRequests == [Self.center], "the full ring is still built")
         #expect(
-            !streamer.coverage.startAreaReady,
-            "the LOD of the large references would swap in view"
+            streamer.coverage.startAreaReady,
+            "the cover must not wait for the generated terrain and the large references"
         )
 
         runner.completeLOD(Self.center, scene: DistantLODScene(
@@ -238,6 +253,8 @@ struct DistantLODStreamerTests {
         ))
         streamer.update(cameraPosition: position)
         #expect(streamer.coverage.startAreaReady)
+        #expect(streamer.composition.distantLOD?.largeReferencesPending == false)
+        #expect(streamer.coverage.nearGridResolved, "the swap keeps the near grid drawn")
     }
 
     @Test func anEnableChangeOfARingReferenceBuildsTheRingAgain() {

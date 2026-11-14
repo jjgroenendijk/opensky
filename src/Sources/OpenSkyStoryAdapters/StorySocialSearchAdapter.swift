@@ -71,7 +71,6 @@ extension StorySocialSearchAdapter.QuestReferences {
         )
         var context = game.dialogueWorld.conditionContext()
         context.references = references
-        let entries = references.sortedEntries()
         let feet = game.gameSession.map { gameSession in
             gameSession.movementMode.isPlayerControlled
                 ? gameSession.walkController.feetPosition : gameSession.freeFlyCamera.position
@@ -80,9 +79,10 @@ extension StorySocialSearchAdapter.QuestReferences {
             references: references,
             origin: feet,
             context: context.using(ConditionFunctionRegistry.standard),
-            dead: Set(game.actorWorld.combatActors().filter(\.isDead).map(\.key)),
-            disabled: Set(entries.filter { !enable.isEnabled($0) }.map(\.key))
-        )
+            dead: Set(game.actorWorld.combatActors().filter(\.isDead).map(\.key))
+        ) { key in
+            references[key].map { !enable.isEnabled($0) } ?? false
+        }
     }
 
     /// A new reference of `base` where `anchor` stands, loaded or not. It is a spawn, so
