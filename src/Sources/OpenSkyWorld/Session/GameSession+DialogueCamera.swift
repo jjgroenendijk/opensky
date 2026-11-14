@@ -13,6 +13,16 @@ public import OpenSkyWorldInterface
 import simd
 
 extension GameSession.DialogueCameraSteps {
+    /// Where the camera looks from: the player's eye height over its feet, the orbit point
+    /// of the third-person and dialogue cameras. Nil in first person and the free camera.
+    var cameraPivot: SIMD3<Float>? {
+        guard
+            session.movementMode == .thirdPerson || isDialogueCameraEngaged,
+            session.movementMode.isPlayerControlled
+        else { return nil }
+        return ThirdPersonCamera.pivot(feetPosition: session.walkController.feetPosition)
+    }
+
     public var restorePose: FreeFlyCamera? {
         session.rigs.dialogueCameraState.restorePose
     }
