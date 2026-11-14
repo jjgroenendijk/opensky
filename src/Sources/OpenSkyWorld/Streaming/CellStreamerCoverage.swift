@@ -32,14 +32,13 @@ extension CellStreamer.CoverageSteps {
 
     /// The start area can show without holes: an interior is in, or the near grid
     /// resolved and is drawn, and the distant ring of its center was integrated or
-    /// failed. A quick first ring also waits for its large references, so they never
-    /// swap in view.
+    /// failed. A quick first ring is enough: its rebuild with the generated terrain and
+    /// the large references swaps in later like any ring, with the near grid still drawn.
     public var startAreaReady: Bool {
         streamer.interiorScene != nil
             || (
                 nearGridResolved && streamer.stagedCells.isEmpty
                     && streamer.settledLODCenter == streamer.grid.center
-                    && !awaitsLargeReferences
             )
     }
 
@@ -65,11 +64,6 @@ extension CellStreamer.CoverageSteps {
         let live = streamer.liveLODHiddenCells?.contains(coordinate) ?? true
         let next = streamer.lodRequestHiddenCells?.contains(coordinate) ?? true
         return live && next
-    }
-
-    private var awaitsLargeReferences: Bool {
-        streamer.composition.distantLOD?.largeReferencesPending == true
-            && streamer.largeReferenceSettledCenter != streamer.grid.center
     }
 
     /// The cells the next ring leaves out: every drawn or waiting cell the grid wants.
@@ -150,9 +144,6 @@ extension CellStreamer.CoverageSteps {
             streamer.lodRequestHiddenCells = nil
             if entry.center == streamer.grid.center {
                 streamer.settledLODCenter = entry.center
-            }
-            if entry.center == streamer.largeReferenceRequestCenter {
-                streamer.largeReferenceSettledCenter = entry.center
             }
             switch entry.result {
             case let .success(scene?):
