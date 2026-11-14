@@ -48,7 +48,10 @@ struct QuestMatchingAliasTests {
         )
     }
 
-    private func search(_ entries: [RuntimeReferenceEntry]) -> QuestReferenceSearch {
+    private func search(
+        _ entries: [RuntimeReferenceEntry],
+        disabled: Set<ReferenceKey> = []
+    ) -> QuestReferenceSearch {
         var registry = ConditionFunctionRegistry()
         ConditionFunctions.installCore(into: &registry)
         let references = RuntimeReferenceIndex(entries: entries)
@@ -58,7 +61,7 @@ struct QuestMatchingAliasTests {
             references: references,
             origin: SIMD3(0, 0, 0),
             context: context.using(registry)
-        )
+        ) { disabled.contains($0) }
     }
 
     private func isID(_ base: UInt32) -> Data {
@@ -90,6 +93,27 @@ struct QuestMatchingAliasTests {
         let quests = try runtime(aliases: alias, search: world)
         try quests.startQuest(quest)
         #expect(try quests.aliasState(of: quest).reference(forAlias: 0) == key(0x1001))
+    }
+
+    /// A disabled reference is left out unless the alias allows disabled ones (bit 7).
+    @Test func aDisabledReferenceMatchesOnlyWhenTheAliasAllowsIt() throws {
+        let world = try search([
+            reference(0x1000, base: chairBase, x: 500),
+            reference(0x1001, base: chairBase, x: 100)
+        ], disabled: [key(0x1001)])
+        let closest = QuestFixture.alias(
+            id: 0, name: "Chair", flags: 0x2020, extras: isID(chairBase)
+        )
+        let quests = try runtime(aliases: closest, search: world)
+        try quests.startQuest(quest)
+        #expect(try quests.aliasState(of: quest).reference(forAlias: 0) == key(0x1000))
+
+        let allowing = QuestFixture.alias(
+            id: 0, name: "Chair", flags: 0x20A0, extras: isID(chairBase)
+        )
+        let allowed = try runtime(aliases: allowing, search: world)
+        try allowed.startQuest(quest)
+        #expect(try allowed.aliasState(of: quest).reference(forAlias: 0) == key(0x1001))
     }
 
     /// In the loaded area, no match is a real miss, and a required alias refuses the start.

@@ -257,9 +257,7 @@ nonisolated public enum QuestAliasFiller: Sendable {
             }
             let match = scope.match(alias, quest: quest, filled: state)
             let held = state
-            let found = match.choose(from: candidates.filter { candidate in
-                match.passes(candidate) { held.holds($0) }
-            })
+            let found = match.choose(from: match.matches(candidates) { held.holds($0) })
             guard let found else {
                 skipped.note(.noMatch)
                 if alias.flags.contains(.matchInLoadedArea) {

@@ -144,7 +144,7 @@ struct StoryWorldTests {
         let search = try #require(adapter.questReferenceSearch())
         #expect(search.origin == nil)
         #expect(search.dead.isEmpty)
-        #expect(search.disabled.isEmpty)
+        #expect(!search.disables(Self.actor), "a reference outside the cell is not disabled")
     }
 
     @Test func aQuestReferenceNeedsAPlacedAnchor() {

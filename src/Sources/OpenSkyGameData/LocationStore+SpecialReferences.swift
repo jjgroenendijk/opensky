@@ -27,15 +27,57 @@ nonisolated extension LocationStore {
     public func specialReferencesWithChildren(
         ofType type: ReferenceKey, in locationID: ResolvedFormID
     ) -> [ReferenceKey] {
-        let children = locations.keys
-            .filter { $0 != locationID && isWithin($0, ancestor: locationID) }
-            .map { (id: $0, depth: parentChain(of: $0).count) }
-            .sorted { lhs, rhs in
+        let children = (descendants[LocationIdentity(locationID)] ?? []).filter { $0 != locationID }
+        return ([locationID] + children).flatMap {
+            specialReferences(ofType: type, in: $0)
+        }
+    }
+}
+
+/// A location's FormID with the plugin name compared without case, as `PNAM` chains are.
+nonisolated struct LocationIdentity: Hashable, Sendable {
+    let plugin: String
+    let objectID: UInt32
+
+    init(_ id: ResolvedFormID) {
+        plugin = id.plugin.lowercased()
+        objectID = id.objectID
+    }
+}
+
+nonisolated extension LocationStore {
+    /// Every location under each of its `PNAM` ancestors and under itself, sorted by
+    /// generation depth, then plugin and object ID. A cycle is walked once.
+    static func descendants(
+        in table: ResolvedRecordTable<ResolvedLocation>,
+        index: RecordIndex
+    ) -> [LocationIdentity: [ResolvedFormID]] {
+        let parent = { (id: ResolvedFormID) -> ResolvedFormID? in
+            guard let resolved = table.value(id), let raw = resolved.location.parent else {
+                return nil
+            }
+            return index.resolvedID(raw, fromPlugin: resolved.sourcePlugin)
+        }
+        var found: [LocationIdentity: [(id: ResolvedFormID, depth: Int)]] = [:]
+        for id in table.values.keys {
+            var chain: [ResolvedFormID] = []
+            var current: ResolvedFormID? = id
+            var visited: Set<ResolvedFormID> = []
+            while let step = current, visited.insert(step).inserted {
+                chain.append(step)
+                current = parent(step)
+            }
+            // The depth counts the chain's resolved locations, as `parentChain` does.
+            let depth = chain.count(where: { table.value($0) != nil })
+            for ancestor in chain {
+                found[LocationIdentity(ancestor), default: []].append((id, depth))
+            }
+        }
+        return found.mapValues { members in
+            members.sorted { lhs, rhs in
                 (lhs.depth, lhs.id.plugin, lhs.id.objectID)
                     < (rhs.depth, rhs.id.plugin, rhs.id.objectID)
-            }
-        return ([locationID] + children.map(\.id)).flatMap {
-            specialReferences(ofType: type, in: $0)
+            }.map(\.id)
         }
     }
 }
