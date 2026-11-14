@@ -265,7 +265,9 @@ nonisolated public struct ParticleSimulator: Sendable {
                 dead.insert(index, within: live)
                 continue
             }
-            live[index].rotation += live[index].rotationSpeed * deltaTime
+            live[index].rotation = ParticleSpin.advanced(
+                live[index].rotation, by: live[index].rotationSpeed * deltaTime
+            )
             for modifier in activeModifiers {
                 apply(modifier, to: &live[index], wind: windVector * deltaTime)
             }

@@ -235,7 +235,10 @@ items marked "inferred" are OpenSky's reading, not confirmed against the game:
   `percentage` of its speed each 1/30 second (inferred). Past the range the drag fades to
   none over `rangeFalloff`. Vanilla ranges are `FLT_MAX`, so the drag applies everywhere.
 - Rotation. Each particle starts at the angle plus or minus its variation, and spins at the
-  speed plus or minus its variation. With random speed sign, half spin the other way. A
+  speed plus or minus its variation. With random speed sign, half spin the other way. Each
+  update adds the time step times the speed to the angle. An angle above 10 pi starts again
+  at 0; otherwise one whole turn comes off an angle above 2 pi. A negative angle is not
+  wrapped (behaviour observed in the game). A
   billboard turns in the screen plane, because it has one free turn. A mesh particle spins
   about the axis, or about its own random axis when random axis is set.
 - Sub-texture. A particle picks its start frame, loop start frame, and frame count, each
@@ -343,9 +346,12 @@ billboards.
 ## From scene graph to particle system
 
 OpenSky walks the scene graph from the footer roots. It adds up the `NiNode` transforms, stops
-at depth 64, and stops on loops. The walk differs from the mesh walk (see
-[NIF](/formats/nif.md)): it does not drop hidden or `EditorMarker` subtrees. Like the mesh
-walk, it enters only the active child of a `NiSwitchNode`. Each `NiParticleSystem`,
+at depth 64, and stops on loops. Like the mesh walk (see
+[NIF](/formats/nif.md)), it drops an `EditorMarker` subtree and a hidden subtree, and it
+enters only the active child of a `NiSwitchNode`. A hidden object keeps its systems when
+something can show it later: a `NiVisController` on it, a sequence with a visibility track
+for its name, or an `hkVis:` extra data value for its name. A lightning bolt follows the same
+rule. Each `NiParticleSystem`,
 `BSStripParticleSystem`, or `NiMeshParticleSystem` becomes one particle system with its world
 transform, capacity, emitters, modifiers, effect shader, and alpha property, and the names
 of the nodes above it.
