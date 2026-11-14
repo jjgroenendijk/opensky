@@ -118,10 +118,22 @@ Example: the player's Whiterun bounty goes from 40 to 1040 for a murder. Whiteru
 1040, Largest Bounty becomes at least 1040, and Total Lifetime Bounty goes up by 1000. Paying the
 fine sets Whiterun Bounty to 0 and leaves the other two.
 
-The game never changes "Horses Stolen", "Assaults", "Murders", "Times Jailed", "Jail Escapes", or
-"Locks Picked" itself. Only a script can, through Papyrus `Game.IncrementStat`, most likely from
-the vanilla scripts. "Trespasses", "Items Stolen", "Items Pickpocketed", "Pockets Picked", "Days
-Jailed", and "Fines Paid" each change on their own game event, which was not read.
+"Horses Stolen", "Assaults", "Murders", "Times Jailed", "Jail Escapes", and "Locks Picked" count
+up in play, but no vanilla script calls `Game.IncrementStat` for them
+(`openskycli pex-calls IncrementStat`). So the game counts them itself, by a path that was not
+found. "Trespasses", "Items Stolen", "Items Pickpocketed", "Pockets Picked", "Days Jailed", and
+"Fines Paid" each change on their own game event, which was not read.
+
+The vanilla scripts count only these statistics:
+
+| Statistic | Counted by |
+| --- | --- |
+| Persuasions, Bribes, Intimidations | The favour dialogue script |
+| Horses Owned, Houses Owned, Stores Invested In | Stable dialogue, house, and Investor perk scripts |
+| Side Quests Completed, Questlines Completed | The achievements script and the last quest of each questline |
+| NumVampirePerks, NumWerewolfPerks, Necks Bitten, Werewolf Transformations, Vampirism Cures | Vampire and werewolf scripts |
+| Diseases Contracted | Only the Survival Mode disease script |
+| Standing Stones Found, Nirnroots Found, Wings Plucked, Brawls Won | Object and quest scripts |
 
 ## Where OpenSky differs
 
@@ -132,4 +144,4 @@ Jailed", and "Fines Paid" each change on their own game event, which was not rea
 - OpenSky does not move the crime gold to the faction of the guard that answers.
 - OpenSky's guards do not fight NPC criminals.
 - OpenSky does not keep the ten hold bounty statistics. It counts "Assaults", "Murders", and
-  "Locks Picked" itself, which the game leaves to scripts.
+  "Locks Picked" itself, as the game does.
