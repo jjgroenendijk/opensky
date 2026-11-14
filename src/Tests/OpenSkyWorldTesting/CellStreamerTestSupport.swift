@@ -22,6 +22,8 @@ nonisolated public final class ManualCellBuildRunner: CellBuildRunning {
     public private(set) var enqueuedDoorTransitionStates: [WorldStateSnapshot] = []
     /// Distant-LOD centers the streamer asked for, in request order.
     public private(set) var enqueuedLODCenters: [CellCoordinate] = []
+    /// The cells each LOD request leaves out, newest per center.
+    public private(set) var requestedLODHiddenCells: [CellCoordinate: Set<CellCoordinate>] = [:]
     public private(set) var enqueuedWorldspaces: [String] = []
     private var ready: [CellBuildResult] = []
     private var readyDoorTransitions: [DoorTransitionBuildResult] = []
@@ -94,15 +96,27 @@ nonisolated public final class ManualCellBuildRunner: CellBuildRunning {
     @discardableResult
     public func enqueueDistantLOD(
         center: CellCoordinate,
-        hiddenCells _: Set<CellCoordinate>,
+        hiddenCells: Set<CellCoordinate>,
         state _: WorldStateSnapshot
     ) -> Bool {
         enqueuedLODCenters.append(center)
+        requestedLODHiddenCells[center] = hiddenCells
         return true
     }
 
+    /// Finishes the ring of `center` as it was requested.
     public func completeDistantLOD(_ center: CellCoordinate, with scene: DistantLODScene) {
-        readyLOD.append(DistantLODBuildResult(center: center, result: .success(scene)))
+        readyLOD.append(DistantLODBuildResult(
+            center: center, result: .success(scene),
+            hiddenCells: requestedLODHiddenCells[center] ?? []
+        ))
+    }
+
+    public func failDistantLOD(_ center: CellCoordinate) {
+        readyLOD.append(DistantLODBuildResult(
+            center: center, result: .failure(LODBuildFailure()),
+            hiddenCells: requestedLODHiddenCells[center] ?? []
+        ))
     }
 
     public func drainCompletedDistantLOD() -> [DistantLODBuildResult] {
@@ -111,3 +125,6 @@ nonisolated public final class ManualCellBuildRunner: CellBuildRunning {
         return out
     }
 }
+
+/// A ring build that threw.
+nonisolated struct LODBuildFailure: Error {}

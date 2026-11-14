@@ -45,12 +45,27 @@ nonisolated private final class LODManualRunner: CellBuildRunning {
         return true
     }
 
+    /// Finishes the newest ring requested for `center`, a prebuild included.
     func completeLOD(_ center: CellCoordinate, scene: DistantLODScene) {
-        readyLOD.append(DistantLODBuildResult(center: center, result: .success(scene)))
+        readyLOD.append(DistantLODBuildResult(
+            center: center, result: .success(scene), hiddenCells: hiddenCells(of: center)
+        ))
     }
 
     func failLOD(_ center: CellCoordinate) {
-        readyLOD.append(DistantLODBuildResult(center: center, result: .failure(LODTestError())))
+        readyLOD.append(DistantLODBuildResult(
+            center: center, result: .failure(LODTestError()), hiddenCells: hiddenCells(of: center)
+        ))
+    }
+
+    private func hiddenCells(of center: CellCoordinate) -> Set<CellCoordinate> {
+        if let index = lodRequests.lastIndex(of: center) {
+            return lodHiddenCells[index]
+        }
+        for (requested, hidden) in prebuildRequests.reversed() where requested == center {
+            return hidden
+        }
+        return []
     }
 
     func drainCompletedDistantLOD() -> [DistantLODBuildResult] {

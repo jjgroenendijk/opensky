@@ -3,6 +3,7 @@
 import CoreGraphics
 import OpenSkyAgentAdapters
 import OpenSkyEngineTesting
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenusInterface
@@ -95,7 +96,15 @@ final class AgentHost: RendererSlotHost, AgentActorReadoutHost, AgentActorsHost,
     let fakeScripts = FakeScriptPort()
     let fakeSimulationClock = FakeSteppedWallClockPort()
     let fakeSkillsMenu = FakeSkillsMenuPort()
-    let fakeStreamer = FakeCellStreamerPort()
+    let fakeStreamer = {
+        let fake = FakeCellStreamerPort()
+        fake.coverageReadoutValue = CellCoverageReadout(
+            center: CellCoordinate(x: 0, y: 0), wantedCells: [], drawnCells: [],
+            waitingCells: [], ringCenter: nil, ringBuilding: false, ringSwaps: 0
+        )
+        return fake
+    }()
+
     let fakeSystemMenu = FakeSystemMenuPort()
     let fakeTitleMenu = FakeTitleMenuPort()
     let fakeTitleSequence = FakeTitleSequencePort()

@@ -36,6 +36,7 @@ public protocol CellStreamerPort: AnyObject, PapyrusWorldReferenceSource {
     var generatedTerrainBlockCount: Int { get }
     var grid: CellGridManager { get }
     var hiddenLargeReferenceSegments: Int { get }
+    var coverageReadout: CellCoverageReadout { get }
     var inFlightCellCount: Int { get }
     var interactionTarget: InteractionTarget? { get }
     var interiorMutationSequence: UInt64 { get }

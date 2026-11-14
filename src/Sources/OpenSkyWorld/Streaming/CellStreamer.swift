@@ -94,19 +94,27 @@ public final class CellStreamer {
     var hasSeededCamera = false
     /// While held, nothing loads: the main menu shows before the player picks a start.
     public var isHeld = false
-    /// Internal (not private) so the CellStreamerCoverage satellite can read
-    /// and write it; the coverage state below is shared for the same reason.
+    /// The center of the newest distant ring request. The coverage satellite
+    /// shares this state, so it is not private.
     public var requestedLODCenter: CellCoordinate?
+    /// The cells the ring being built leaves out. One ring builds at a time.
+    var lodRequestHiddenCells: Set<CellCoordinate>?
+    /// The cells the ring on screen leaves out; nil while no ring is on screen.
+    public internal(set) var liveLODHiddenCells: Set<CellCoordinate>?
+    /// The center of the ring on screen.
+    var liveLODCenter: CellCoordinate?
+    /// A reference the ring draws changed, so the ring is built again.
+    var lodRebuildWanted = false
+    /// Rings swapped in since the session started, for `state frame`.
+    var ringSwapCount = 0
     /// The center whose distant ring was last integrated or failed.
     public internal(set) var settledLODCenter: CellCoordinate?
     /// The center whose quick first ring was rebuilt once to add its large references.
     var largeReferenceRequestCenter: CellCoordinate?
     /// The center whose large-reference rebuild was integrated or failed.
     var largeReferenceSettledCenter: CellCoordinate?
-    /// Once settled coverage exists, recenter builds stay offscreen here.
-    /// Old full cells + LOD remain composed until replacement LOD arrives,
-    /// then full grid + ring swap in one recompose.
-    public var coverageTransitionActive = false
+    /// Built cells the ring on screen still draws LOD over. Each waits off screen
+    /// for a ring that leaves its place out, then both swap in together.
     public var stagedCells: [CellCoordinate: CellScene] = [:]
     public var interiorScene: CellScene? {
         didSet {
@@ -182,6 +190,7 @@ public final class CellStreamer {
         let completedLOD = runner.drainCompletedDistantLOD().filter(builds.builtHere)
         let transition = transitions.drainDoorTransitions(frameTime: frameTime)
         if transitions.finishDoorTransition(transition) {
+            coverage.discardDistantLOD(completedLOD)
             return
         }
         let isInside = transitions.updateInteriorIfNeeded(completedLOD: completedLOD)
@@ -202,17 +211,15 @@ public final class CellStreamer {
         let effectivePosition = hasSeededCamera
             ? cameraPosition
             : CellGridManager.cellCenter(of: grid.center)
-        let previousCenter = grid.center
         if let diff = grid.update(cameraPosition: effectivePosition, loaded: core.accountedCells) {
-            if grid.center != previousCenter, composition.distantLOD != nil {
-                coverageTransitionActive = true
-            }
             let actions = core.apply(diff: diff)
             requests.removeAll { !core.inFlight.contains($0) }
             runtimeStates.pruneRebuildState()
             coverage.discardStagedCells(outside: grid.desiredCells)
-            if !actions.removals.isEmpty, !coverageTransitionActive {
-                coverage.unload(actions.removals)
+            // A cell a ring leaves out stays until a ring covers its place.
+            let removals = actions.removals.filter { !coverage.isHiddenByAnyRing($0) }
+            if !removals.isEmpty {
+                coverage.unload(removals)
                 sceneChanged = true
             }
             requests.append(contentsOf: coverage.requestsNearestFirst(actions.requests))

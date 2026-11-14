@@ -28,9 +28,12 @@ location is known only when its cell is built. Then the screen is picked for tha
 and it holds until the near grid around the marker and its first distant ring are in, or
 for at most 60 seconds.
 
-Loading a save, Continue, a launcher start, and a script's `MoveTo` of the player to a
-reference outside the loaded cells also show a screen. It is picked at once,
-because the save's place is not read yet, and it holds until the player stands there.
+Loading a save, Continue, a launcher start, and a script's `MoveTo` of the player to a reference
+outside the loaded cells also show a screen. It is picked at once, because the save's place is not
+read yet. It holds until the player stands there, and then until the near grid around the player
+and its distant ring are in, as at a session start, or for at most 90 seconds, a limit OpenSky
+chose. A new game's first move works the same way, so the cart ride never starts with only the
+player's own cell in full detail.
 
 A session that starts in the world, not at the title screen, also starts behind a loading
 screen. It is picked at once and holds until the near grid and the first ring of

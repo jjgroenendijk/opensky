@@ -115,6 +115,15 @@ extension CellStreamer {
         coverage.hiddenLargeReferenceSegments
     }
 
+    public var coverageReadout: CellCoverageReadout {
+        CellCoverageReadout(
+            center: grid.center, wantedCells: grid.desiredCells,
+            drawnCells: composition.coordinates, waitingCells: Set(stagedCells.keys),
+            ringCenter: liveLODCenter, ringBuilding: lodRequestHiddenCells != nil,
+            ringSwaps: ringSwapCount
+        )
+    }
+
     public var isInterior: Bool {
         coverage.isInterior
     }

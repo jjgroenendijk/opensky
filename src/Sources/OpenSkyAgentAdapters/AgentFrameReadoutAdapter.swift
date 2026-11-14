@@ -131,6 +131,7 @@ extension AgentFrameReadoutAdapter {
             "fullLODReferences": .init(game.streamer.fullLODReferenceCount),
             "generatedTerrainBlocks": .init(game.streamer.generatedTerrainBlockCount),
             "hiddenLargeReferenceLOD": .init(game.streamer.hiddenLargeReferenceSegments),
+            "coverage": coverageState(),
             "screenFade": render.screenFadeState(),
             "postEffects": render.postEffectState(),
             "lighting": render.lightingState(),
@@ -140,6 +141,30 @@ extension AgentFrameReadoutAdapter {
             "waterFlow": render.waterFlowState(),
             "precipitation": render.precipitationState(),
             "gpuMemory": gpuMemoryState()
+        ]
+    }
+
+    /// The full cells, the waiting cells, and the ring, with how near to the player a
+    /// wanted cell still shows LOD.
+    private func coverageState() -> AgentJSON {
+        let coverage = game.streamer.coverageReadout
+        func cell(_ cell: CellCoordinate) -> AgentJSON {
+            [.init(Int(cell.x)), .init(Int(cell.y))]
+        }
+        func cells(_ set: Set<CellCoordinate>) -> AgentJSON {
+            .array(set.sorted { ($0.x, $0.y) < ($1.x, $1.y) }.map(cell))
+        }
+        let camera = game.gameSession?.renderer.camera
+        let playerCell = camera.map { CellCoordinate(containing: $0.walkFeetPosition ?? $0.eye) }
+        let nearest = playerCell.flatMap(coverage.nearestMissing(from:))
+        return [
+            "center": cell(coverage.center),
+            "drawn": cells(coverage.drawnCells),
+            "waiting": cells(coverage.waitingCells),
+            "ringCenter": coverage.ringCenter.map(cell) ?? .null,
+            "ringBuilding": .bool(coverage.ringBuilding),
+            "ringSwaps": .init(coverage.ringSwaps),
+            "nearestLODRing": nearest.map { AgentJSON($0) } ?? .null
         ]
     }
 

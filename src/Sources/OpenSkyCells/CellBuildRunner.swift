@@ -219,72 +219,6 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
     }
 }
 
-/// One finished build handed back to the main-thread streamer.
-nonisolated public struct CellBuildResult: Sendable {
-    public let coordinate: CellCoordinate
-    public let result: Result<CellScene, any Error>
-    /// The worldspace the build read; nil when the provider has none.
-    public let worldspaceEditorID: String?
-
-    public init(
-        coordinate: CellCoordinate,
-        result: Result<CellScene, any Error>,
-        worldspaceEditorID: String? = nil
-    ) {
-        self.coordinate = coordinate
-        self.result = result
-        self.worldspaceEditorID = worldspaceEditorID
-    }
-}
-
-nonisolated public struct CellBuildMetric: Equatable, Sendable {
-    public let collisionDurationMS: Double
-    let collisionShapeCount: Int
-    let collisionTriangleCount: Int
-    /// Actor phase accounting mirrored off CellLoadSummary so the fly bench
-    /// can gate latency + exact accounting per cell (5.5).
-    public var actorDurationMS = 0.0
-    public var actorDiscoveredCount = 0
-    public var actorRenderedCount = 0
-    public var actorDisabledSkipCount = 0
-    public var actorFailureCount = 0
-    /// One reason per counted failure, mirrored off CellLoadSummary so the
-    /// fly bench can prove every failure explained (5.6 acceptance).
-    public var actorFailureReasons: [String] = []
-    public var actorAnimatedCount = 0
-    public var actorAnimationFailureCount = 0
-    public var actorAnimationFailureReasons: [String] = []
-
-    public var actorAccountingIsExact: Bool {
-        actorDiscoveredCount
-            == actorRenderedCount + actorDisabledSkipCount + actorFailureCount
-    }
-
-    public var actorFailuresAreExplained: Bool {
-        actorFailureCount == actorFailureReasons.count
-    }
-
-    public var actorAnimationAccountingIsExact: Bool {
-        actorRenderedCount == actorAnimatedCount + actorAnimationFailureCount
-    }
-
-    public var actorAnimationFailuresAreExplained: Bool {
-        actorAnimationFailureCount == actorAnimationFailureReasons.count
-    }
-}
-
-nonisolated public struct DistantLODBuildResult: Sendable {
-    public let center: CellCoordinate
-    public let result: Result<DistantLODScene?, any Error>
-    /// The worldspace the ring was built for; nil when the provider has none.
-    public var worldspaceEditorID: String?
-}
-
-nonisolated public struct DoorTransitionBuildResult: Sendable {
-    public let sourceDoor: FormID
-    public let result: Result<DoorTransition, any Error>
-}
-
 /// Runs cell builds off the main thread and buffers the results for a
 /// main-thread poll. The streamer enqueues coordinates and drains completions
 /// once per frame; ordering of completions is the executor's business.
@@ -388,7 +322,9 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
     ) {
         self.lodPrebuild = lodPrebuild
         self.provider = Mutex(provider)
-        queue = DispatchQueue(label: label, qos: .utility)
+        // The player waits for these cells. At utility priority a busy machine starved
+        // them while the frames kept drawing, so the player outran the near grid.
+        queue = DispatchQueue(label: label, qos: .userInitiated)
     }
 
     public func enqueue(_ coordinate: CellCoordinate, state: WorldStateSnapshot) {
@@ -473,7 +409,8 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
                 )
             }
             let entry = DistantLODBuildResult(
-                center: center, result: result, worldspaceEditorID: worldspace
+                center: center, result: result, hiddenCells: hiddenCells,
+                worldspaceEditorID: worldspace
             )
             results.withLock { $0.distantLOD.append(entry) }
         }
@@ -494,7 +431,9 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         // Not background priority: its throttled reads made the ring arrive last.
         Task { [self] in
             let result = await lodPrebuild.build(center: center, hiddenCells: hiddenCells)
-            let entry = DistantLODBuildResult(center: center, result: result)
+            let entry = DistantLODBuildResult(
+                center: center, result: result, hiddenCells: hiddenCells
+            )
             results.withLock { $0.distantLOD.append(entry) }
         }
         return true

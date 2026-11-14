@@ -74,10 +74,6 @@ extension CellStreamer.CoverageSteps {
         streamer.composition.cellCount
     }
 
-    var isCoverageTransitionActive: Bool {
-        streamer.coverageTransitionActive
-    }
-
     public var isInterior: Bool {
         streamer.interiorScene != nil
     }

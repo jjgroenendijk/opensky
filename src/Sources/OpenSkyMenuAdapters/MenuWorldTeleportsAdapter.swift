@@ -145,11 +145,32 @@ extension MenuWorldTeleportsAdapter {
             MenusLog.logger.warning("[WARNING] the opening quest did not move the player")
             abandonNewGameCover()
         }
+        if let since = state.arrivalSince {
+            liftCoverOnceTheAreaIsIn(since: since, now: now)
+            return
+        }
         guard let wait = state.newGameTeleport, let result = wait.poll(now).finish else { return }
         state.newGameTeleport = nil
         if case let .failure(error) = result {
             game.hud.showNotification("Move: \(error.message)")
+        } else if state.teleportCovered {
+            // The move ends once the player's own cell is in. The cover stays until the
+            // near grid and its distant ring are in too, as at a session start.
+            state.arrivalSince = now
+            return
         }
+        liftTeleportCover(at: now)
+        finishArrival()
+    }
+
+    /// The cover waits for the near grid and its ring around the arrival, or a time limit.
+    private func liftCoverOnceTheAreaIsIn(since: Double, now: Double) {
+        let timedOut = now - since > Self.arrivalCoverLimitSeconds
+        guard game.streamer.startAreaReady || timedOut else { return }
+        if timedOut {
+            MenusLog.logger.warning("[WARNING] the area around the arrival was not ready")
+        }
+        state.arrivalSince = nil
         liftTeleportCover(at: now)
         finishArrival()
     }
@@ -171,4 +192,6 @@ extension MenuWorldTeleportsAdapter {
 
 extension MenuWorldTeleportsAdapter {
     static let newGameCoverLimitSeconds = 30.0
+    /// A stuck build must not trap the player behind the cover.
+    static let arrivalCoverLimitSeconds = 90.0
 }
