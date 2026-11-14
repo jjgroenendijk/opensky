@@ -164,8 +164,8 @@ Writing first means the stagger reads this hit's magnitude, not the last one's.
 
 UESP "Skyrim:Combat#Staggering" (<https://en.uesp.net/wiki/Skyrim:Combat#Staggering>) says a hit
 has "a chance" to stagger and that a stagger interrupts what the target was doing. The install's
-`fStagger*` settings give the numbers. How they combine is OpenSky's reading, because no source
-states it:
+`fStagger*` settings give the numbers. How they combine is OpenSky's reading, made before a source
+stated it. The game's own rule is in [hit reactions](/engine/hit-reactions.md):
 
 ```text
 magnitude = source * perk multiplier * block factor * mass factor
@@ -221,6 +221,9 @@ and leaves its decal ([impacts and decals](/rendering/decals.md)).
 
 These take the same input path as sneak, sprint, and jump. The fixed movement step never reads
 them: attacking does not move the capsule. The graph does that, if its attack clips carry movement.
+
+The game's two-button rules, with left, dual, and power attacks, are in
+[attack input](/engine/attack-input.md).
 
 Losing cursor capture drops the guard, because a block held through a lost mouse-up would stay up
 forever. The drawn state stays, like sneak, because the player set it on purpose.
