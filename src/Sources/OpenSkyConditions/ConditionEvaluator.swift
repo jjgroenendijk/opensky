@@ -156,7 +156,9 @@ nonisolated public struct ConditionRandom: Equatable, Sendable {
 /// tally and the random stream advance. It never short-circuits, so the tally covers
 /// the whole list.
 nonisolated public struct ConditionEvaluator: Sendable {
-    public var context: ConditionContext
+    /// One call for the evaluator's whole life: each condition swaps in its own record,
+    /// so the large context is never copied per condition.
+    private var call: ConditionCall
     public private(set) var tally: ConditionTally
     /// When true, a function the registry lacks holds instead of failing. The failure is
     /// still tallied, so a census sees it. A perk spend uses this (docs/engine/perks.md).
@@ -166,8 +168,13 @@ nonisolated public struct ConditionEvaluator: Sendable {
         context: ConditionContext,
         tally: ConditionTally = ConditionTally()
     ) {
-        self.context = context
+        call = ConditionCall(condition: Condition(probingFunction: 0), context: context)
         self.tally = tally
+    }
+
+    public var context: ConditionContext {
+        _read { yield call.context }
+        _modify { yield &call.context }
     }
 
     // MARK: - Evaluation
@@ -225,9 +232,8 @@ nonisolated public struct ConditionEvaluator: Sendable {
             return .failure(.unknownFunction(condition.functionIndex))
         }
         let condition = translated(condition, for: function)
-        var call = ConditionCall(condition: condition, context: context)
+        call.condition = condition
         let value = function.body(&call)
-        context = call.context
         switch value {
         case let .failure(failure):
             return .failure(failure)
