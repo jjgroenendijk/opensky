@@ -44,6 +44,26 @@ one is "where the player ends up after paying the fine or being released from ja
 A faction with no `JAIL` door, or a door that cannot be entered, falls back to serving the
 sentence at once: the clock moves forward and the player stands on the marker if it is loaded.
 
+### The two parameters in the game
+
+`Faction.SendPlayerToJail(bool abRemoveInventory = True, bool abRealJail = True)` takes two
+switches. The Creation Kit wiki (<https://ck.uesp.net/wiki/SendPlayerToJail_-_Faction>) says:
+
+- `abRemoveInventory`: whether everything is taken from the player.
+- `abRealJail`: whether the player goes to "real" jail.
+- Quest items are only hidden when the player goes to real jail.
+
+| `abRemoveInventory` | `abRealJail` | Inventory | Quest items |
+| --- | --- | --- | --- |
+| true | true | Taken | Hidden |
+| true | false | Taken | Not hidden |
+| false | true | Kept | Hidden |
+| false | false | Kept | Not hidden |
+
+The vanilla scripts call it 8 times (`openskycli pex-calls SendPlayerToJail`). Seven pass both
+`true`. One dialogue fragment, `TIF__00020F99`, passes `false, true`, so it jails the player
+without taking their things.
+
 The stay begins in the first cell the player stands in after the arrest. That is the jail cell.
 
 ## Serving the sentence

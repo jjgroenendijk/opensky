@@ -113,9 +113,36 @@ sequenceDiagram
     Note over N,P: state cleared, pair ends
 ```
 
-The read did not find whether the program itself lets an NPC pick the player as victim, or a gate
-on the player's health, essential state, difficulty, or a chance. These are most likely conditions
-in the idle data. The read did not find whether the controls lock either.
+Whether an NPC may pick the player is decided by the idle data in `Skyrim.esm`. The kill-move
+roots `KillMoveFrontSideRoot` (under the power-attack root) and `KillMoveFrontSideRoot00` (under
+`NonMountedCombatRight`) hold these conditions. All are joined by AND, except one pair joined by
+OR.
+
+| Run on | Condition | Meaning |
+| --- | --- | --- |
+| Attacker | `GetTargetHeight` from −35 to 35 | The target stands at about the same height |
+| Attacker | `GetGraphVariableInt IsEquipping` ≠ 1 | Not drawing a weapon |
+| Attacker | `IsWeaponMagicOut` = 1 | The weapon is out |
+| Attacker | `GetGlobalValue KillMove` = 1 | Kill moves are on |
+| Attacker | `GetEquippedItemType` (right hand) ≠ 12 | Not a crossbow |
+| Attacker | `GetAttackState` ≠ 6 | Not in that attack state |
+| Attacker | `IsStaggered` ≠ 1 | Not staggered |
+| Attacker | `ShouldAttackKill` = 1 | This swing kills |
+| Attacker | `GetRelativeAngle` from 90 to 270 | The angle to the target |
+| Target | `GetPairedAnimation` = 0, and ≠ 1 | Not in a paired idle already |
+| Target | `IsFurnitureAnimType` ≠ 1, 2, and 4 | Not sitting, sleeping, or leaning |
+| Target | `GetIsID AstridEnd` = 0 | Not Astrid at the end of her quest |
+| Attacker OR target | `GetIsID Player` = 0, OR `IsLastHostileActor` = 1 | The attacker is not the player, or the target is the last enemy |
+| Target | `GetActorValue Paralysis` = 0 | Not paralysed |
+
+So the last-enemy rule binds only the player as attacker. No condition stops an NPC from choosing
+the player as victim. The race and weapon idles below these roots test the target's race and
+keywords, `IsEssential`, and `GetRandomPercent`.
+
+Example: a bandit with a sword swings at the player, on level ground. The swing would kill. If the
+`KillMove` global is 1, every row passes, and the idle tree may pick a kill move.
+
+The data does not show whether the controls lock during the kill move.
 
 ## Reaching the mark
 
