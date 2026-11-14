@@ -326,7 +326,12 @@ extension Renderer {
             (surface.projected?.noise, .projectedNoise)
         ]
         for (texture, index) in slots {
-            argumentTable.setTexture(texture.map(streamedBinding) ?? diffuse, index: index.rawValue)
+            let binding = if let texture {
+                streamedBinding(texture)
+            } else {
+                diffuse
+            }
+            argumentTable.setTexture(binding, index: index.rawValue)
         }
         argumentTable.setTexture(
             (surface.environment ?? blackCube).gpuResourceID,

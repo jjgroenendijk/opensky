@@ -265,9 +265,12 @@ extension Renderer {
 
     /// A texture nobody holds can no longer be sampled, so its tiles return to the pool.
     private func dropDeadEntries() {
-        let dead = textureStreaming.entries.filter { $0.value.texture == nil }
-        for (key, entry) in dead {
-            textureStreaming.entries[key] = nil
+        var dead: [ObjectIdentifier] = []
+        for (key, entry) in textureStreaming.entries where entry.texture == nil {
+            dead.append(key)
+        }
+        for key in dead {
+            guard let entry = textureStreaming.entries.removeValue(forKey: key) else { continue }
             freeTiles(entry.tiles.values.flatMap(\.self))
         }
     }
@@ -393,7 +396,11 @@ extension Renderer {
         stats.reservedBytes = textureStreaming.pool.reservedBytes
         stats.usedBytes = textureStreaming.pool.usedTiles * textureStreaming.pool.tileBytes
         stats.budgetBytes = textureStreaming.budgetBytes
-        stats.pendingReads = textureStreaming.entries.values.count { $0.requestedLevel != nil }
+        var pending = 0
+        for entry in textureStreaming.entries.values where entry.requestedLevel != nil {
+            pending += 1
+        }
+        stats.pendingReads = pending
         textureStreaming.stats = stats
     }
 }

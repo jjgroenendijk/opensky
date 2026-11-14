@@ -171,20 +171,23 @@ extension Renderer {
         guard !retired.isEmpty else { return }
         let drained = endFrameEvent.signaledValue
         var ready: [any MTLAllocation] = []
-        retired.removeAll { entry in
-            guard entry.lastFrameIndex <= drained else { return false }
-            ready.append(contentsOf: entry.allocations)
-            return true
+        var kept: [RetiredAllocations] = []
+        // Plain loops: a closure in main-actor code pays an executor check per call.
+        for entry in retired {
+            if entry.lastFrameIndex <= drained {
+                ready.append(contentsOf: entry.allocations)
+            } else {
+                kept.append(entry)
+            }
         }
+        retired = kept
         guard !ready.isEmpty else { return }
-        var live = Set(sceneAllocations.map(ObjectIdentifier.init))
-        live.formUnion(effects.scene.residencyAllocations.map(ObjectIdentifier.init))
-        live.formUnion(
-            (effects.decalAllocations + effects.particleAllocations).map(ObjectIdentifier.init)
-        )
-        live
-            .formUnion((effects.loadingCover?.residencyAllocations ?? [])
-                .map(ObjectIdentifier.init))
+        var live = Set<ObjectIdentifier>()
+        live.insertIdentifiers(of: sceneAllocations)
+        live.insertIdentifiers(of: effects.scene.residencyAllocations)
+        live.insertIdentifiers(of: effects.decalAllocations)
+        live.insertIdentifiers(of: effects.particleAllocations)
+        live.insertIdentifiers(of: effects.loadingCover?.residencyAllocations ?? [])
         live.formUnion(effects.menuScene.resident.keys)
         live.insert(ObjectIdentifier(frameUniformBuffer))
         live.insert(ObjectIdentifier(drawUniformBuffer))
@@ -193,30 +196,41 @@ extension Renderer {
         live.insert(ObjectIdentifier(shadowDrawUniformBuffer))
         live.insert(ObjectIdentifier(shadowInstanceBuffer))
         live.insert(ObjectIdentifier(shadow.map))
-        for movie in [swf.movie, swf.overlay?.movie].compactMap(\.self) {
-            live.formUnion(movie.residencyAllocations.map(ObjectIdentifier.init))
+        for case let movie? in [swf.movie, swf.overlay?.movie] {
+            live.insertIdentifiers(of: movie.residencyAllocations)
         }
-        live.formUnion((gpuCull.scene?.allocations ?? []).map(ObjectIdentifier.init))
-        live.formUnion((upscale.targets?.allocations ?? []).map(ObjectIdentifier.init))
+        live.insertIdentifiers(of: gpuCull.scene?.allocations ?? [])
+        live.insertIdentifiers(of: upscale.targets?.allocations ?? [])
         if let motion = upscale.motionInstances {
             live.insert(ObjectIdentifier(motion))
         }
         // The player's rigs share meshes and textures with the cell's actors.
         for rig in frameInput.rigs.all {
-            live.formUnion(rig.render.residencyAllocations.map(ObjectIdentifier.init))
+            live.insertIdentifiers(of: rig.render.residencyAllocations)
         }
         // A drained A entry may share an allocation with undrained B. Keep that
         // allocation resident until every retired frame using it drains.
         for entry in retired {
-            live.formUnion(entry.allocations.map(ObjectIdentifier.init))
+            live.insertIdentifiers(of: entry.allocations)
         }
         var seen = Set<ObjectIdentifier>()
-        let removable = ready.filter { allocation in
+        var removable: [any MTLAllocation] = []
+        for allocation in ready {
             let id = ObjectIdentifier(allocation)
-            return !live.contains(id) && seen.insert(id).inserted
+            if !live.contains(id), seen.insert(id).inserted {
+                removable.append(allocation)
+            }
         }
         guard !removable.isEmpty else { return }
         residencySet.removeAllocations(removable)
         residencySet.commit()
+    }
+}
+
+extension Set<ObjectIdentifier> {
+    fileprivate mutating func insertIdentifiers(of allocations: [any MTLAllocation]) {
+        for allocation in allocations {
+            insert(ObjectIdentifier(allocation))
+        }
     }
 }

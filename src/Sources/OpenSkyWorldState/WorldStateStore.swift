@@ -338,7 +338,7 @@ public final class WorldStateStore {
     /// everything below it. Entries already dropped are simply absent, which
     /// `droppedJournalEntryCount` lets the caller detect.
     public func journalEntries(since sequence: UInt64) -> [WorldStateJournalEntry] {
-        changeJournal.entries.filter { $0.sequence >= sequence }
+        changeJournal.entries(since: sequence)
     }
 
     /// Empties the retained window without touching state or sequence numbers.
@@ -365,16 +365,23 @@ public final class WorldStateStore {
     /// Deterministic view of the current state, in `ReferenceKey` order. The only
     /// part that crosses threads; its `sequence` lets a built cell be checked later.
     public func snapshot() -> WorldStateSnapshot {
-        WorldStateSnapshot(
-            entries: sortedDirtyKeys().compactMap { key in
-                guard let delta = deltas[key] else { return nil }
-                return WorldStateSnapshotEntry(key: key, delta: delta)
-            },
+        // Plain loops: a closure in main-actor code pays an executor check per call.
+        var entries: [WorldStateSnapshotEntry] = []
+        for key in sortedDirtyKeys() {
+            if let delta = deltas[key] {
+                entries.append(WorldStateSnapshotEntry(key: key, delta: delta))
+            }
+        }
+        var globals: [WorldStateGlobalSnapshotEntry] = []
+        for key in sortedOverriddenGlobalKeys() {
+            if let value = globalValues[key] {
+                globals.append(WorldStateGlobalSnapshotEntry(key: key, value: value))
+            }
+        }
+        return WorldStateSnapshot(
+            entries: entries,
             nextGeneratedSequence: allocator.nextSequence,
-            globals: sortedOverriddenGlobalKeys().compactMap { key in
-                guard let value = globalValues[key] else { return nil }
-                return WorldStateGlobalSnapshotEntry(key: key, value: value)
-            },
+            globals: globals,
             sequence: changeJournal.nextSequence
         )
     }

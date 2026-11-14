@@ -89,8 +89,15 @@ nonisolated public struct WorldStateJournal: Sendable {
     // MARK: - Component entries
 
     /// Retained component entries, oldest first.
-    public var entries: [WorldStateJournalEntry] {
+    var entries: [WorldStateJournalEntry] {
         components.entries
+    }
+
+    /// Retained component entries at or after `sequence`, oldest first. Walks
+    /// back from the newest entry, so a consumer that keeps up reads a few
+    /// entries instead of the whole window.
+    public func entries(since sequence: UInt64) -> [WorldStateJournalEntry] {
+        components.newest { $0.sequence >= sequence }
     }
 
     /// Component entries dropped because the window was full.
@@ -178,6 +185,18 @@ nonisolated private struct JournalRing<Entry: Sendable>: Sendable {
 
     var entries: [Entry] {
         (0 ..< retained).compactMap { storage[(start + $0) % capacity] }
+    }
+
+    /// The newest run of entries that all pass `keep`, oldest first.
+    func newest(while keep: (Entry) -> Bool) -> [Entry] {
+        var run: [Entry] = []
+        var offset = retained
+        while offset > 0, let entry = storage[(start + offset - 1) % capacity], keep(entry) {
+            run.append(entry)
+            offset -= 1
+        }
+        run.reverse()
+        return run
     }
 
     mutating func append(_ entry: Entry) {

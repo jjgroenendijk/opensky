@@ -360,16 +360,22 @@ extension Renderer {
         let stride = MemoryLayout<InstanceTransform>.stride
         let base = state.base + state.instanceCursor
         let buffer = state.rings?.instances ?? shadowInstanceBuffer
-        let room = state.rings.map { $0.instanceLimit - state.instanceCursor } ?? .max
+        let room = if let rings = state.rings {
+            rings.instanceLimit - state.instanceCursor
+        } else {
+            Int.max
+        }
         var written = 0
         for placed in group.instances where written < room {
             // Same substitution the scene pass makes, so a moving body's shadow
             // travels with it (RendererDynamicPose.swift).
             let instance = drawn(placed)
-            if
-                instance.bounds.map(context.frustum.intersects) == false
-                || distanceFade(of: instance) == nil
-            {
+            let outside = if let bounds = instance.bounds {
+                !context.frustum.intersects(bounds)
+            } else {
+                false
+            }
+            if outside || distanceFade(of: instance) == nil {
                 state.stats.culledInstances += 1
                 continue
             }

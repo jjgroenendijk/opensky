@@ -158,8 +158,10 @@ extension PapyrusRuntime.Interpreter {
         if let slot = binding.slot {
             return frame.compiled.slotTypes[slot]
         }
-        let declared = attempt { try declaredVariable(name, frame: frame) }
-        return declared.map { PapyrusType(name: $0.variable.typeName) }
+        guard let declared = attempt({ try declaredVariable(name, frame: frame) }) else {
+            return nil
+        }
+        return PapyrusType(name: declared.variable.typeName)
     }
 
     func resolveMethod(
@@ -223,12 +225,13 @@ extension PapyrusRuntime.Interpreter {
             return .none
         }
         if binding.isSelf {
-            return frame.instanceHandle.map(PapyrusValue.object) ?? .none
+            guard let handle = frame.instanceHandle else { return .none }
+            return .object(handle)
         }
         if let slot = binding.slot {
             return frame.slots[slot]
         }
-        if let instance = frame.instanceHandle.flatMap(runtime.instance(for:)) {
+        if let handle = frame.instanceHandle, let instance = runtime.instance(for: handle) {
             let owner = try declaredVariable(name, frame: frame)?.owner.name ?? frame.ownerScript
                 .name
             if let value = instance.value(named: name, declaredBy: owner) {
