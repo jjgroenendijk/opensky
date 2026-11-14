@@ -9,7 +9,7 @@
       "Looks for a Tier 1 source first: the SKSE .psc files and the CK wiki page",
       "Does not open the SKSE C++ source in the main session",
       "If Tier 1 is not enough, starts a read-only Explore sub-agent whose prompt forbids code, offsets, and names from the source",
-      "Writes the behaviour description into docs/ with the file and commit cited before implementing"
+      "Writes the behaviour description into docs/ with the file and commit cited before implementing, with a Mermaid diagram that fits the behaviour's shape"
     ]
   },
   {
