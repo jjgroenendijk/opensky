@@ -116,6 +116,32 @@ struct LocationStoreTests {
         #expect(map.location(worldspace: id("Base.esm", 0x99), x: 4, y: -20) == nil)
     }
 
+    /// The town's own references first, then each generation below it, FormID order
+    /// within one, so a child's children come after every child.
+    @Test
+    func specialReferencesWithChildrenWalkEachGenerationInOrder() throws {
+        let place = { (formID: UInt32, parent: UInt32?, reference: UInt32) in
+            var data = ESMFixture.field("EDID", ESMFixture.zstring("Place\(formID)"))
+            if let parent {
+                data += ESMFixture.field("PNAM", ESMFixture.words([parent]))
+            }
+            data += ESMFixture.field("LCSR", ESMFixture.words([0x600, reference, 0x3C, 0]))
+            return ESMFixture.record("LCTN", formID: formID, data: data)
+        }
+        let store = try LocationStore(plugins: [("Test.esm", plugin(locations: [
+            place(0x503, 0x501, 0x703),
+            place(0x502, 0x500, 0x702),
+            place(0x501, 0x500, 0x701),
+            place(0x500, nil, 0x700),
+            place(0x504, nil, 0x704)
+        ]))])
+        let found = store.specialReferencesWithChildren(
+            ofType: ReferenceKey(resolved: id("Test.esm", 0x600)), in: id("Test.esm", 0x500)
+        )
+        let expected: [UInt32] = [0x700, 0x701, 0x702, 0x703]
+        #expect(found == expected.map { ReferenceKey(resolved: id("Test.esm", $0)) })
+    }
+
     private func plugin(
         masters: [String] = [],
         locations: [Data],

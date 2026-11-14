@@ -50,32 +50,47 @@ nonisolated struct QuestAliasMatch {
     let aliases: QuestAliasResolution
     let translation: FormIDTranslation?
 
-    /// Whether `candidate` passes the alias flags and its match conditions.
-    func passes(_ candidate: ReferenceKey, held: (ReferenceKey) -> Bool) -> Bool {
+    /// The candidates that pass the alias flags and its match conditions, in order. One
+    /// evaluator serves the whole list: only the subject changes, so the context is not
+    /// copied per candidate.
+    func matches(_ candidates: [ReferenceKey], held: (ReferenceKey) -> Bool) -> [ReferenceKey] {
+        var evaluator = evaluator()
         let flags = alias.flags
-        if search.dead.contains(candidate), !flags.contains(.allowDead) {
-            return false
+        return candidates.filter { candidate in
+            if search.dead.contains(candidate), !flags.contains(.allowDead) {
+                return false
+            }
+            if !flags.contains(.allowDisabled), search.disables(candidate) {
+                return false
+            }
+            if held(candidate), !flags.contains(.allowReuseInQuest) {
+                return false
+            }
+            return conditionsPass(on: candidate, with: &evaluator)
         }
-        if search.disabled.contains(candidate), !flags.contains(.allowDisabled) {
-            return false
-        }
-        if held(candidate), !flags.contains(.allowReuseInQuest) {
-            return false
-        }
-        return conditionsPass(on: candidate)
     }
 
     func conditionsPass(on candidate: ReferenceKey) -> Bool {
+        var evaluator = evaluator()
+        return conditionsPass(on: candidate, with: &evaluator)
+    }
+
+    private func conditionsPass(
+        on candidate: ReferenceKey, with evaluator: inout ConditionEvaluator
+    ) -> Bool {
         let conditions = alias.matchConditions.conditions
         guard !conditions.isEmpty else { return true }
+        evaluator.context.subject = candidate
+        return evaluator.evaluate(conditions).isTrue
+    }
+
+    private func evaluator() -> ConditionEvaluator {
         var context = search.context
-        context.subject = candidate
         context.target = nil
         context.aliasQuest = quest
         context.aliases = aliases
         context.formIDTranslation = translation
-        var evaluator = ConditionEvaluator(context: context)
-        return evaluator.evaluate(conditions).isTrue
+        return ConditionEvaluator(context: context)
     }
 
     /// "Closest" takes the nearest to the player; otherwise a random match.
