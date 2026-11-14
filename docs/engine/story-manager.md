@@ -125,6 +125,46 @@ These have vanilla nodes, but OpenSky has no system that does what they describe
 them, so firing them would start nothing. `STIJ` (served time) has no vanilla node either, but it
 fires when a sentence is served, for mods ([jail](/engine/jail.md)).
 
+### Which events the game sends
+
+The game itself sends these events, each from the system named:
+
+| Code | Sent from |
+| --- | --- |
+| `KILL` | An actor's death. A murder crime is made in the same step |
+| `ASSU` | An assault |
+| `CLOC` | An actor's location change |
+| `SCPT` | `SendStoryEvent` and `SendStoryEventAndWait`, which fail with an error before the start-up quests are set up |
+| `ADIA` | Dialogue, including a conversation one NPC starts with another |
+| `AHEL` | A greeting in passing |
+| `AIPL`, `REMP` | An item added to or removed from the player |
+| `CRFT` | Alchemy, enchanting, and smithing, both making and improving |
+| `INFC`, `CURE` | Catching and curing a disease ([diseases](/engine/diseases.md)) |
+| `NVPE` | Learning a new shout or word |
+| `DEAD` | The timed check for dead bodies |
+| `SKIL`, `LEVL` | A skill level, and a player level |
+| `CHRR` | A relationship rank change, by a script or by the game |
+| `PFIN`, `JAIL`, `STIJ`, `ESJA` | Paying a fine, going to jail, serving time, and escaping |
+| `TRES` | Trespass |
+| `ADCR` | A crime when it becomes final ([crime reports](/engine/crime-reports.md)) |
+| `ARRT` | An arrest |
+| `CAST` | A spell cast |
+| `QSTR` | A quest start |
+
+The game never sends `AFAV`, `LOCK`, `INTM`, `BRIB`, `FLAT`, or `PRFV`. These reach a quest only
+through `SendStoryEvent` from a script.
+
+```mermaid
+flowchart LR
+    G[Game systems] -->|KILL, CRFT, ADCR, ...| S[Story manager walk]
+    P[Papyrus SendStoryEvent] -->|any event, also LOCK, BRIB, INTM, FLAT, AFAV, PRFV| S
+    S --> Q[Start the quest of the first node that passes]
+```
+
+So OpenSky differs in two ways. It sends `LOCK`, `BRIB`, `INTM`, and `FLAT` from play, which the
+game does not. It does not send `NVPE`, `PFIN`, `INFC`, `CURE`, `QSTR`, or `TRES`, which the game
+does.
+
 ## Papyrus events for a started quest
 
 When an event node starts a quest, the quest's scripts attach first. Then each script hears
