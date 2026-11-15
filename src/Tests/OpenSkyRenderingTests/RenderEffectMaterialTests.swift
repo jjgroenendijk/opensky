@@ -39,12 +39,21 @@ struct RenderEffectMaterialTests {
         #expect(flags & (Self.bit(.soft) | Self.bit(.lit) | Self.bit(.externalEmittance)) == 0)
     }
 
-    @Test func particlesAlwaysTakeTheirColourAndAlpha() {
+    @Test func onlyAStripSystemAlwaysTakesItsParticleColourAndAlpha() {
         let plain = RenderEffectMaterial(shading: Self.shading(), palette: nil)
-        let particles = RenderEffectMaterial.forParticles(plain)
         let colour = Self.bit(.vertexColors) | Self.bit(.vertexAlpha)
-        #expect(plain.flags & colour == 0)
-        #expect(particles.flags & colour == colour)
+        #expect(RenderEffectMaterial.forParticles(plain, isStrip: false).flags & colour == 0)
+        #expect(RenderEffectMaterial.forParticles(plain, isStrip: true).flags & colour == colour)
+    }
+
+    @Test func aParticleSystemWithVertexColoursKeepsThem() {
+        var shading = Self.shading()
+        shading.vertexColors = true
+        shading.vertexAlpha = true
+        let material = RenderEffectMaterial(shading: shading, palette: nil)
+        let colour = Self.bit(.vertexColors) | Self.bit(.vertexAlpha)
+        #expect(RenderEffectMaterial.forParticles(material, isStrip: false)
+            .flags & colour == colour)
     }
 
     @Test func onlyAdditiveParticleBlendsAddLight() {

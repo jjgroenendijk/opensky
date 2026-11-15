@@ -175,7 +175,8 @@ nonisolated extension NIFEffectShaderProperty {
                 falloffStartAngle, falloffStopAngle, falloffStartOpacity, falloffStopOpacity
             ) : nil,
             vertexColors: hasVertexColors,
-            vertexAlpha: hasVertexAlpha,
+            // The game takes colour and alpha together; see docs/rendering/particles.md.
+            vertexAlpha: hasVertexColors,
             softFalloffDepth: isSoftEffect ? softFalloffDepth : nil,
             lightingInfluence: isEffectLit ? Float(lightingInfluence) / 255 : nil,
             externalEmittance: has(.externalEmittance),

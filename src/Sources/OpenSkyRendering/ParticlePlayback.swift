@@ -446,7 +446,7 @@ nonisolated public final class ParticlePlayback: Sendable {
         self.sourcePath = sourcePath
         self.meshModel = meshModel
         self.texture = texture
-        self.effect = RenderEffectMaterial.forParticles(effect)
+        self.effect = RenderEffectMaterial.forParticles(effect, isStrip: definition.isStrip)
         self.emittance = emittance
         blendMode = ParticleBlendMode(alpha: definition.alphaProperty)
         self.seed = seed
