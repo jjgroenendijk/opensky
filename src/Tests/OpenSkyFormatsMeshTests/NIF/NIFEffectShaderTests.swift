@@ -294,3 +294,21 @@ final class NIFEffectShaderTests: XCTestCase {
         try check(NIFEffectShaderProperty(data: fixture.data(), header: header))
     }
 }
+
+extension NIFEffectShaderTests {
+    /// Vertex_Colors alone gives the shading both colour and alpha; Vertex_Alpha alone neither.
+    func testShadingTakesVertexAlphaFromVertexColours() throws {
+        var fixture = EffectFixture()
+        fixture.shaderFlags1 = 0
+        fixture.shaderFlags2 = 0x20 // Vertex_Colors
+        let colours = try NIFEffectShaderProperty(data: fixture.data(), header: header()).shading
+        XCTAssertTrue(colours.vertexColors)
+        XCTAssertTrue(colours.vertexAlpha)
+
+        fixture.shaderFlags1 = 0x08 // Vertex_Alpha
+        fixture.shaderFlags2 = 0
+        let alpha = try NIFEffectShaderProperty(data: fixture.data(), header: header()).shading
+        XCTAssertFalse(alpha.vertexColors)
+        XCTAssertFalse(alpha.vertexAlpha)
+    }
+}

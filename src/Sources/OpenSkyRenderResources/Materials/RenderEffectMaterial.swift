@@ -72,8 +72,13 @@ nonisolated public struct RenderEffectMaterial: Sendable {
         return copy
     }()
 
-    /// `material` with the vertex colour and alpha flags on, for particle colours.
-    public static func forParticles(_ material: RenderEffectMaterial) -> RenderEffectMaterial {
+    /// `material` as a particle system draws it: a strip system always takes its particle
+    /// colour and alpha, any other system only when the shader asks for vertex colours.
+    public static func forParticles(
+        _ material: RenderEffectMaterial,
+        isStrip: Bool
+    ) -> RenderEffectMaterial {
+        guard isStrip else { return material }
         var copy = material
         copy.flags |= UInt32(EffectFlag.vertexColors.rawValue | EffectFlag.vertexAlpha.rawValue)
         return copy
