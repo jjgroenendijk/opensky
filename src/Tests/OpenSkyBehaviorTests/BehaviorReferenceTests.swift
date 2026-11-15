@@ -9,7 +9,7 @@ import OpenSkyEngineTesting
 import Testing
 
 /// A `BehaviorGraphInstance.ReferenceSource` backed by instances the test already built.
-private struct BehaviorReferenceTable: BehaviorGraphInstance.ReferenceSource {
+struct BehaviorReferenceTable: BehaviorGraphInstance.ReferenceSource {
     let graphs: [String: BehaviorGraphInstance]
 
     func behavior(

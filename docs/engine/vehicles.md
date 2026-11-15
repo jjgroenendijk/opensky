@@ -265,3 +265,6 @@ before it got on no longer counts as where it is.
 ## Where OpenSky differs
 
 - The cart is not a physics body: it follows the horse by the trailer rule above.
+- A rider with a live graph leaves `Cart_State` at the clip's trigger, as in the game. A rider
+  whose exit idle plays without a graph gets its `ExitCartEnd` when the clip ends. For seat B
+  that is 2 seconds later than in the game.

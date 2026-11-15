@@ -86,6 +86,15 @@ start in the states on the path, and the last one starts in the wildcard's `m_to
 machine checks this only when none of its own transitions fire. A wildcard with only
 `FLAG_IS_LOCAL_WILDCARD` (`0x800`) fires only while its machine is active.
 
+The rule crosses a behaviour reference. A global wildcard of a machine in a referenced file also
+moves the machines of the file that refers to it: such a machine moves into the state that holds
+the reference. The referenced file then starts, sees the same event, and takes the wildcard
+itself. The two files number their events on their own, so the event is matched by name. For
+example, the arm machines in `mt_behavior.hkx` have global wildcards on
+`OffsetBoundStandingCartStart`. A prisoner's cart exit clip sends that event near its end, and
+the top machine of `0_master.hkx` then leaves `Cart_State` for the state that holds the
+locomotion file ([how an exit state ends](/engine/vehicles.md#how-an-exit-state-ends)).
+
 Evidence from the install: in `0_master.hkx`, no `Master_Behavior` transition targets
 `Cart_State`. The `Cart` machine inside it has seven wildcards with flags `0xd00`, among them
 `IdleCartPrisonerCIdle`, `IdleCartDriverIdleStill`, and the five sway events. The other cart
