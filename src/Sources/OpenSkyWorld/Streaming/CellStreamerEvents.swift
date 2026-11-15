@@ -47,8 +47,8 @@ public final class CellStreamerEvents {
     /// A cell left the live world: unloaded off the grid, dropped by a
     /// coverage transition, or replaced by a door transition.
     public let onCellDetached = FrameSchedule<CellDetachStep, CellSceneLocation>()
-    /// A door transition was queued. The loading screen covers the view from here.
-    public var onDoorTransitionStarted: (() -> Void)?
+    /// A door transition was queued. The loading screen fades the view out from here.
+    public var onDoorTransitionStarted: ((DoorFade) -> Void)?
     /// A door transition ended: the destination scene, or nil when it failed.
     public var onDoorTransitionFinished: ((CellScene?) -> Void)?
     /// A live cell's placed hazards changed: attached, rebuilt, or detached.

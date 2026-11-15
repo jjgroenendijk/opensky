@@ -87,22 +87,22 @@ extension CellStreamer.TransitionSteps {
     }
 
     @discardableResult
-    public func requestDoorTransition(_ door: PlacedDoor?) -> Bool {
+    public func requestDoorTransition(_ door: PlacedDoor?, fade: DoorFade = .none) -> Bool {
         guard let door else { return false }
-        return requestDoorTransition(from: door.reference)
+        return requestDoorTransition(from: door.reference, fade: fade)
     }
 
     /// Goes through any door REFR in the load order, resident or not. A
     /// console-style teleport into an interior enters through its door.
     @discardableResult
-    public func requestDoorTransition(from sourceDoor: FormID) -> Bool {
+    public func requestDoorTransition(from sourceDoor: FormID, fade: DoorFade = .none) -> Bool {
         guard streamer.transitionInFlight == nil else { return false }
         streamer.transitionInFlight = sourceDoor
         streamer.doorState.doorTransitionHold = 0
         streamer.interiorRebuildInFlight = false
         // Built against the live store, so a changed interior comes back changed.
         streamer.runner.enqueueDoorTransition(from: sourceDoor, state: streamer.stateSource())
-        streamer.events.onDoorTransitionStarted?()
+        streamer.events.onDoorTransitionStarted?(fade)
         return true
     }
 

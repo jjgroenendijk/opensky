@@ -72,6 +72,7 @@ public final class LoadingScreenCoordinator {
     private var text: String?
     /// The screens a later tip is drawn from.
     private var tipScreens: [ResolvedRecord<LoadScreen>] = []
+    private var fadeOut: FadeOut?
     private var loadInFlight = false
     /// Pointer motion while the button is held, applied at the next tick.
     private var pendingDrag = SIMD2<Float>.zero
@@ -88,12 +89,14 @@ public final class LoadingScreenCoordinator {
         waitingSince != nil || session != nil || forced != nil
     }
 
-    /// A transition started. The view goes dark until `destinationReady`.
-    public func begin(at time: Double) {
+    /// A transition started. After `fadeWait` seconds the view turns black over
+    /// `fadeSeconds`, and stays dark until `destinationReady`.
+    public func begin(at time: Double, fadeSeconds: Double = 0, fadeWait: Double = 0) {
         guard isEnabled, forced == nil, session == nil, waitingSince == nil else { return }
         waitingSince = time
+        fadeOut = FadeOut(start: time + max(0, fadeWait), seconds: fadeSeconds)
         world?.setLoadingPaused(true)
-        world?.presentLoadingCover(Self.darkFrame)
+        presentFadeOut(at: time)
     }
 
     /// The destination is built. Picks a screen for `location` and starts the
@@ -192,7 +195,12 @@ public final class LoadingScreenCoordinator {
     // MARK: - Frames
 
     public func tick(time: Double) {
-        guard session != nil else { return }
+        guard session != nil else {
+            if waitingSince != nil {
+                presentFadeOut(at: time)
+            }
+            return
+        }
         let seconds = lastTick.map { Float(min(max(time - $0, 0), Self.longestFrame)) } ?? 0
         lastTick = time
         steer(seconds: seconds)
@@ -245,7 +253,21 @@ public final class LoadingScreenCoordinator {
     /// A stall longer than this counts as this long, so the object does not jump.
     static let longestFrame = 0.1
 
+    private func presentFadeOut(at time: Double) {
+        let opacity = fadeOut?.opacity(at: time) ?? 1
+        guard opacity < 1 else {
+            fadeOut = nil
+            world?.presentLoadingCover(Self.darkFrame)
+            return
+        }
+        world?.presentLoadingCover(LoadingCoverFrame(
+            model: nil, scale: 1, rotationDegrees: .zero, translation: .zero,
+            text: nil, opacity: opacity, drawsObject: false
+        ))
+    }
+
     private func start(_ next: LoadingScreenSession) {
+        fadeOut = nil
         session = next
         lastTick = nil
         pendingDrag = .zero
@@ -256,6 +278,7 @@ public final class LoadingScreenCoordinator {
     }
 
     private func finish() {
+        fadeOut = nil
         session = nil
         text = nil
         tipScreens = []
@@ -286,4 +309,15 @@ public final class LoadingScreenCoordinator {
         model: nil, scale: 1, rotationDegrees: .zero, translation: .zero,
         text: nil, opacity: 1, drawsObject: true
     )
+}
+
+/// The view turning black before a door's load: linear from clear to black.
+nonisolated struct FadeOut: Equatable, Sendable {
+    let start: Double
+    let seconds: Double
+
+    func opacity(at time: Double) -> Float {
+        guard seconds > 0 else { return 1 }
+        return Float(min(1, max(0, (time - start) / seconds)))
+    }
 }

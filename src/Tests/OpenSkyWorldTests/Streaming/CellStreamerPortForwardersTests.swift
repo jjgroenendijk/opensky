@@ -54,7 +54,7 @@ struct CellStreamerPortForwardersTests {
     }
 
     @Test func doorTransitionHooksAreStored() {
-        streamer.onDoorTransitionStarted = {}
+        streamer.onDoorTransitionStarted = { _ in }
         streamer.onDoorTransitionFinished = { _ in }
         #expect(streamer.onDoorTransitionStarted != nil)
         #expect(streamer.onDoorTransitionFinished != nil)

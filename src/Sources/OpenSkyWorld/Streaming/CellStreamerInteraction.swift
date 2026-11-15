@@ -257,12 +257,18 @@ extension CellStreamer.ResidentSteps {
         {
             streamer.talk.activations(event)
         }
+        let doors = streamer.doorState.doors
+        let fade = target.interaction.automaticArea == nil ? doors.normalFade : doors.automaticFade
         guard
             target.interaction.action == .open,
-            streamer.transitions
-                .requestDoorTransition(activeDoor(reference: target.interaction.reference))
+            streamer.transitions.requestDoorTransition(
+                activeDoor(reference: target.interaction.reference), fade: fade
+            )
         else { return }
-        streamer.doorState.doorTransitionHold = max(0, streamer.doorState.doors.teleportDelay)
+        // The scene swaps only once the view is black.
+        streamer.doorState.doorTransitionHold = max(
+            0, streamer.doorState.doors.teleportDelay, Float(fade.total)
+        )
         streamer.doorState.doorMotionInteraction = target.interaction
         streamer.events.onLoadDoorUsed?(target.interaction.reference)
         streamer.events.onInteractionAnimation?(InteractionAnimationEvent(

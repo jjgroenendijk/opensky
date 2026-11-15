@@ -132,7 +132,7 @@ extension CellStreamer {
         navigation.findPath(query)
     }
 
-    public var onDoorTransitionStarted: (() -> Void)? {
+    public var onDoorTransitionStarted: ((DoorFade) -> Void)? {
         get { events.onDoorTransitionStarted }
         set { events.onDoorTransitionStarted = newValue }
     }
