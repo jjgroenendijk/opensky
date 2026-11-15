@@ -54,7 +54,7 @@
     "files": [],
     "expected_behavior": [
       "Runs gh pr ready, then reads the last push's CI run instead of waiting for a new one",
-      "Waits for the Lint check with gh pr checks --watch before merging",
+      "Waits for CI with make ci-wait in a background shell before merging, not a hand-written loop",
       "Merges with gh pr merge --rebase, never --merge or --squash"
     ]
   },

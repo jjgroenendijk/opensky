@@ -11,7 +11,8 @@ case " $command " in
     *" sleep "* | *"(sleep "*)
         cat >&2 <<'MSG'
 [BLOCKED] Do not poll with sleep. Start the long command with run_in_background
-and wait for its completion notification; `gh pr checks <n> --watch` waits for CI.
+and wait for its completion notification; do not read its output file before that.
+`make ci-wait ARGS=<pr>` in the background waits for CI.
 MSG
         exit 2
         ;;

@@ -61,12 +61,16 @@ or `Model:`. Allowed trailers:
 4. Open the PR as a draft after the first push: `gh pr create --draft`. Describe what and
    why, and cite the format specs used. Push each later atomic commit to it. CI runs the
    whole unit plan on every push, draft included, so push early and keep working while
-   the runner tests; a newer push cancels the older run.
+   the runner tests; a newer push cancels the older run. Before the push that should
+   merge, check the changed lines locally (`testing-and-verifying` skill): a run that
+   fails there costs a second run.
 5. Closing a milestone acceptance issue -> the PR body carries the acceptance record, in
    the format defined by `docs/tools/acceptance-record.md`. Nothing enforces this, so it
    is checked here.
 6. When the work is done and verified, `gh pr ready <pr>`, and read the last CI run with
-   `gh pr checks <pr> --watch`. Marking ready starts no new run; the last push's run counts.
+   `make ci-wait ARGS=<pr>` in a background shell. It waits for the run of the last push
+   and prints each failed job with its `[FAIL]` and error lines. Marking ready starts no
+   new run; the last push's run counts.
 7. Merge after review with `gh pr merge <pr> --rebase`. A rebase merge puts every atomic
    commit on `main` with no merge commit; the repo disables merge commits and squash
    merging. When the branch no longer rebases cleanly, run `git rebase origin/main`, then
@@ -90,5 +94,6 @@ then the gate (`starting-roadmap-work`). Never one PR that turns on the gate and
   itself still succeeds — verify with `gh pr view <n> --json mergedAt`; a failed local
   branch-delete is cosmetic. To sync main safely, prefer
   `git fetch && git switch --detach origin/main` over assuming `git checkout main`.
-- Waiting on CI or PR checks: `sleep N && gh pr checks` is hard-blocked by the harness. Use
-  `gh pr checks <n> --watch` (blocking) or a `run_in_background` poll, not chained sleeps.
+- Waiting on CI: a hook blocks `sleep N && gh pr checks`, and `gh pr checks --watch` ends
+  at once when the run has not started yet. Use `make ci-wait ARGS=<pr>` in a background
+  shell instead of a wait loop of your own.

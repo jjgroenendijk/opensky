@@ -23,7 +23,7 @@ UV_RUN         := UV_LINK_MODE=copy uv run --locked --quiet --project tools/wiki
 
 .DEFAULT_GOAL := help
 .PHONY: help bootstrap build-app build-cli build-tests compile install test test-rerun \
-	test-package check-perms check fix format format-check lint lint-index dump-comments \
+	test-package check-perms check fix format format-check lint lint-index ci-wait dump-comments \
 	apply-comments run-cli benchmark tour-record tour-check profile sample-launch probe rank-gaps sync-wiki \
 	add-cli-command package-dmg render-icon prune clean setup-reference build-bridge
 
@@ -88,6 +88,9 @@ fakes: ## Regenerate the port fakes in OpenSkySessionTesting from OpenSkySession
 
 lint-index: | $(VENDOR) ## Build the index, then fail on unused code or an adapter that uses another
 	@./tools/lint-index.sh
+
+ci-wait: ## Wait for a pull request's CI run, then print what failed [ARGS=pr]
+	@./tools/ci/wait.sh $(ARGS)
 
 design-index-report: | $(VENDOR) ## Build the index, then report the design rules that read it; fails nothing
 	@./tools/design/index-report.sh

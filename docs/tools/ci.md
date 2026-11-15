@@ -33,6 +33,11 @@ request one commit at a time, and the runner tests each commit while the session
 next one, so the session never runs the whole unit plan locally. A newer push cancels the run of
 the older one, so unfinished work costs at most one run per push.
 
+`make ci-wait [ARGS=<pr>]` waits for the run of a pull request's last push, the current branch's
+pull request by default. It prints each job's result and, after a failure, the `[FAIL]`,
+`[ERROR]`, and compiler error lines of the failed jobs. `gh pr checks --watch` alone ends at once
+when the run has not started yet, so a wait right after a push needs this target.
+
 A pull request that changes only Markdown, `docs/`, `.agents/`, `.claude/`, the Python tools in
 `tools/wiki-mirror/`, the markdownlint config in `tools/markdown/`, or the Renovate config skips
 Build & test, because nothing in it is compiled. Static checks still lint and test those files. `Lint`
