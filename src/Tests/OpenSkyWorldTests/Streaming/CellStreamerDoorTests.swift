@@ -62,6 +62,7 @@ extension CellStreamerTests {
         let runner = ManualCellBuildRunner()
         let streamer = Fixture.makeStreamer(runner: runner, radius: 0)
         streamer.doorState.doors.teleportDelay = 0
+        streamer.doorState.doors.normalFade = .none
         var phases: [InteractionAnimationPhase] = []
         streamer.events.onInteractionAnimation = { phases.append($0.phase) }
         streamer.update(cameraPosition: Fixture.center)
@@ -86,6 +87,7 @@ extension CellStreamerTests {
         let runner = ManualCellBuildRunner()
         let streamer = Fixture.makeStreamer(runner: runner, radius: 0)
         streamer.doorState.doors.teleportDelay = 0
+        streamer.doorState.doors.normalFade = .none
         streamer.update(cameraPosition: Fixture.center)
         let outside = Fixture.door(reference: 0x10, destination: 0x20, position: Fixture.center)
         runner.complete(Fixture.coordinate(0, 0), with: .success(Self.interactiveScene(
@@ -109,6 +111,7 @@ extension CellStreamerTests {
             cameras.append(camera)
         }
         streamer.doorState.doors.teleportDelay = 0
+        streamer.doorState.doors.normalFade = .none
         streamer.update(cameraPosition: Fixture.center)
         let outside = Fixture.door(reference: 0x10, destination: 0x20, position: Fixture.center)
         runner.complete(Fixture.coordinate(0, 0), with: .success(Self.interactiveScene(

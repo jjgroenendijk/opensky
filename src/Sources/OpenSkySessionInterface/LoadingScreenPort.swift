@@ -3,7 +3,7 @@ public import OpenSkyFormatsESM
 /// What the world adapters use of `LoadingScreenCoordinator`.
 public protocol LoadingScreenPort: AnyObject {
     associatedtype LoadingScreenSession: LoadingScreenSessionPort
-    func begin(at time: Double)
+    func begin(at time: Double, fadeSeconds: Double, fadeWait: Double)
     func beginLoad(at time: Double)
     func beginFirstLoad(at time: Double)
     func cancel()
@@ -20,4 +20,11 @@ public protocol LoadingScreenPort: AnyObject {
     func setStick(_ value: SIMD2<Float>)
     func nextTip() -> String?
     func destinationReady(location: ResolvedFormID?, at time: Double)
+}
+
+extension LoadingScreenPort {
+    /// Covers the view at once, with no fade.
+    public func begin(at time: Double) {
+        begin(at: time, fadeSeconds: 0, fadeWait: 0)
+    }
 }

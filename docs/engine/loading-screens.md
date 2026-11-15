@@ -15,8 +15,12 @@ page.
 
 ## Timeline
 
-1. A door transition starts. The view goes dark at once, and the world pauses. No screen is
-   picked yet, because the destination's location is not known until its cell record is read.
+1. A door transition starts, and the world pauses. When the player uses a door, the view first
+   fades to black: a normal door waits 0.01 seconds, then fades over 0.4 seconds; an automatic
+   door fades over 0.5 seconds with no wait. The fade is linear. The new scene replaces the old
+   one only once the view is black. A teleport that is not the player using a door goes dark at
+   once. No screen is picked yet, because the destination's location is not known until its
+   cell record is read.
 2. The destination scene is ready. OpenSky picks a screen for the destination's `XLCN`
    location and shows it.
 3. The screen holds for at least 1.5 seconds from that point. Then it fades out over 1
@@ -46,6 +50,12 @@ so without a minimum the screen would flash for one frame and the tip could not 
 
 A session start picks only from the screens marked for the main menu, because no game is
 loaded yet. Every other cover picks from the screens whose conditions pass.
+
+A clean-room read of `SkyrimSE.exe`, 2026-11-15, found the door fade: the game fades to opaque
+black before the teleport, and moves the player only once the fade is done. The fader is a
+full-screen rectangle whose opacity changes linearly. A fade that starts while another is part
+way continues from the current opacity. It did not confirm whether a door inside the same cell
+shows a loading screen.
 
 ## Drawing
 

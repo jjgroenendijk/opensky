@@ -52,6 +52,24 @@ struct LoadingScreenCoordinatorTests {
         return world
     }
 
+    @Test func aDoorFadesToBlackAfterItsWait() throws {
+        let world = try Self.world()
+        let loading = LoadingScreenCoordinator(world: world)
+
+        loading.begin(at: 10, fadeSeconds: 0.4, fadeWait: 0.01)
+        #expect(world.frames.last??.opacity == 0)
+        #expect(world.frames.last??.drawsObject == false)
+        loading.tick(time: 10.21)
+        #expect(abs((world.frames.last??.opacity ?? 0) - 0.5) < 0.001)
+        loading.tick(time: 10.41)
+        #expect(world.frames.last == .some(LoadingScreenCoordinator.darkFrame))
+        loading.tick(time: 10.5)
+        #expect(world.frames.last == .some(LoadingScreenCoordinator.darkFrame))
+
+        loading.destinationReady(location: nil, at: 10.6)
+        #expect(world.frames.last??.drawsObject == true)
+    }
+
     @Test func coversAtOnceAndHoldsTheMinimumAfterTheBuild() throws {
         let world = try Self.world()
         let loading = LoadingScreenCoordinator(world: world)

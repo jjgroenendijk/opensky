@@ -52,9 +52,9 @@ extension LoadingScreenWorldAdapter {
     private func registerLoadingScreen(stage: SessionStage) {
         let streamer = stage.streamer
         let gameSession = stage.gameSession
-        streamer.onDoorTransitionStarted = { [weak self] in
+        streamer.onDoorTransitionStarted = { [weak self] fade in
             guard let self else { return }
-            game.loadingScreens.begin(at: now)
+            game.loadingScreens.begin(at: now, fadeSeconds: fade.seconds, fadeWait: fade.wait)
         }
         streamer.onDoorTransitionFinished = { [weak self] scene in
             guard let self else { return }

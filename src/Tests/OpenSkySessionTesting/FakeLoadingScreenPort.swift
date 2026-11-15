@@ -6,7 +6,7 @@ public import OpenSkySessionInterface
 /// Stores each property and records each call to `LoadingScreenPort`.
 nonisolated public final class FakeLoadingScreenPort: LoadingScreenPort {
     public typealias LoadingScreenSession = FakeLoadingScreenSessionPort
-    public var beginCalls: [Double] = []
+    public var beginCalls: [BeginCall] = []
     public var beginLoadCalls: [Double] = []
     public var beginFirstLoadCalls: [Double] = []
     public var cancelCallCount = 0
@@ -29,9 +29,25 @@ nonisolated public final class FakeLoadingScreenPort: LoadingScreenPort {
     public init() {}
 }
 
+extension FakeLoadingScreenPort {
+    nonisolated public struct BeginCall: CustomStringConvertible {
+        public let time: Double
+        public let fadeSeconds: Double
+        public let fadeWait: Double
+
+        public var description: String {
+            [
+                "time: " + String(describing: time),
+                "fadeSeconds: " + String(describing: fadeSeconds),
+                "fadeWait: " + String(describing: fadeWait)
+            ].joined(separator: ", ")
+        }
+    }
+}
+
 nonisolated extension FakeLoadingScreenPort {
-    public func begin(at time: Double) {
-        beginCalls.append(time)
+    public func begin(at time: Double, fadeSeconds: Double, fadeWait: Double) {
+        beginCalls.append(BeginCall(time: time, fadeSeconds: fadeSeconds, fadeWait: fadeWait))
     }
 
     public func beginLoad(at time: Double) {
