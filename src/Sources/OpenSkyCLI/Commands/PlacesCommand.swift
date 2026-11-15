@@ -1,5 +1,6 @@
-// `places`: reads the active plugins as the launcher's place picker does, and prints
-// the list. A row's first column is a start value `game debug newgame --at` takes.
+// `places`: reads the active plugins as the launcher's start menu does, and prints its
+// settlements, or every place with `--all`. A row's first column is a start value that
+// `game debug newgame --at` takes.
 
 import OpenSkyCLIArguments
 import OpenSkyLaunch
@@ -17,10 +18,11 @@ enum PlacesCommand {
             print("[INFO] \(list.weathers.count) weathers")
             return
         }
-        let found = list.search(arguments.search ?? "")
+        let shown = arguments.all ? list : list.settlements
+        let found = shown.search(arguments.search ?? "")
         for place in found.prefix(arguments.limit ?? .max) {
             print("\(place.start.storedValue)\t\(place.name)\t\(place.detail)")
         }
-        print("[INFO] \(found.count) of \(list.places.count) places")
+        print("[INFO] \(found.count) of \(shown.places.count) places")
     }
 }

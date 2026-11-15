@@ -1,6 +1,6 @@
 // The places a new game can start at, read from the active plugins: every named
-// interior cell and every map marker. The launcher and `openskycli places` show the
-// list; nothing from it is stored outside the user's settings.
+// interior cell and every map marker. The launcher offers only the settlements;
+// `openskycli places --all` shows the whole list.
 
 public import Foundation
 import OpenSkyFormatsCore
@@ -14,15 +14,44 @@ nonisolated public struct StartPlace: Equatable, Sendable {
     public let detail: String
     /// The cell's editor ID; a map marker has none.
     public let editorID: String?
+    /// The name of a marker's top worldspace, such as "Skyrim" for a marker in Whiterun;
+    /// an interior has none.
+    public let worldspace: String?
+    public let markerType: MapMarkerType?
     let searchKey: String
 
-    public init(start: LaunchStart, name: String, detail: String, editorID: String? = nil) {
+    public init(
+        start: LaunchStart, name: String, detail: String, editorID: String? = nil,
+        worldspace: String? = nil, markerType: MapMarkerType? = nil
+    ) {
         self.start = start
         self.name = name
         self.detail = detail
         self.editorID = editorID
+        self.worldspace = worldspace
+        self.markerType = markerType
         searchKey = [name, editorID ?? "", detail].joined(separator: " ").lowercased()
     }
+
+    /// The marker types of a place people live in. The names are xEdit's; the choice
+    /// is OpenSky's (docs/engine/unverified-values.md).
+    static let settlementTypes: Set = [
+        "City", "Town", "Settlement", "Orc Stronghold", "Raven Rock", "Tel Mithryn",
+        "Riften Capitol", "Windhelm Capitol", "Whiterun Capitol", "Solitude Capitol",
+        "Markarth Capitol", "Winterhold Capitol", "Morthal Capitol", "Falkreath Capitol",
+        "Dawnstar Capitol"
+    ]
+
+    public var isSettlement: Bool {
+        markerType?.name.map(Self.settlementTypes.contains) ?? false
+    }
+}
+
+/// The places of one worldspace, as the launcher's start menu shows them.
+nonisolated public struct StartPlaceGroup: Equatable, Sendable {
+    /// The worldspace name, or "Interior" for the interiors.
+    public let title: String
+    public let places: [StartPlace]
 }
 
 nonisolated public struct StartPlaceList: Sendable {
@@ -67,6 +96,18 @@ nonisolated public struct StartPlaceList: Sendable {
         return StartPlaceList(loadOrder: loadOrder.plugins) { text, plugin in
             (plugin.map { strings.scoped(to: $0) } ?? strings).resolve(text)
         }
+    }
+
+    /// The map markers of hold capitals, towns, villages, and orc strongholds.
+    public var settlements: StartPlaceList {
+        StartPlaceList(places: places.filter(\.isSettlement), weathers: weathers)
+    }
+
+    /// The places by worldspace; the worldspaces and the places in each are ordered by name.
+    public var groups: [StartPlaceGroup] {
+        Dictionary(grouping: places) { $0.worldspace ?? $0.detail }
+            .map { StartPlaceGroup(title: $0.key, places: $0.value) }
+            .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
     }
 
     public func contains(_ start: LaunchStart) -> Bool {
@@ -141,7 +182,7 @@ nonisolated extension StartPlaceList {
 
     private static func markers(in loadOrder: LoadOrderPlugins, text: Text) -> [StartPlace] {
         var skipped = SkippedRecords()
-        var worlds: [ResolvedFormID: (editorID: String, name: String)] = [:]
+        var worlds: [ResolvedFormID: World] = [:]
         let records = loadOrder.decodeRecords(of: "WRLD", skipped: &skipped) {
             try Worldspace(record: $0, localized: $1)
         }
@@ -150,7 +191,10 @@ nonisolated extension StartPlaceList {
                 let editorID = world.editorID, LaunchStartForm.isEditorID(editorID),
                 let id = loadOrder.space.resolve(world.formID)
             else { continue }
-            worlds[id] = (editorID, text(world.name, nil) ?? editorID)
+            worlds[id] = World(
+                editorID: editorID, name: text(world.name, nil) ?? editorID,
+                parent: world.parent.flatMap(loadOrder.space.resolve)
+            )
         }
         return MapMarkerIndex(plugins: loadOrder.files).all.compactMap { entry in
             guard
@@ -163,9 +207,30 @@ nonisolated extension StartPlaceList {
                     worldspace: world.editorID, plugin: entry.reference.plugin,
                     objectID: entry.reference.objectID
                 ),
-                name: name, detail: world.name + type
+                name: name, detail: world.name + type,
+                worldspace: topName(of: entry.worldspace, in: worlds),
+                markerType: entry.marker.type
             )
         }
+    }
+
+    private struct World {
+        let editorID: String
+        let name: String
+        let parent: ResolvedFormID?
+    }
+
+    /// A city worldspace, such as Whiterun's, groups under its parent, such as Skyrim.
+    private static func topName(
+        of id: ResolvedFormID, in worlds: [ResolvedFormID: World]
+    ) -> String? {
+        var current = worlds[id]
+        var steps = 0
+        while let parent = current?.parent, let next = worlds[parent], steps < 8 {
+            current = next
+            steps += 1
+        }
+        return current?.name
     }
 
     private static func weatherNames(in loadOrder: LoadOrderPlugins) -> [String] {

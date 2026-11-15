@@ -138,9 +138,15 @@ The `MQ101` fragment calls were read with the PEX disassembler into
 
 The launcher's Play, and `debug newgame` in the [agent control](/tools/agent-control.md), start
 a new game at a place instead of the opening. The place is a named interior, a map marker, a
-cell by editor ID, or a grid cell. `openskycli places` lists the first two kinds from the active
-plugins. Steps 1 to 3 of a new game run, and `MQ101` does not start. The player then moves to
-the place behind the loading screen:
+cell by editor ID, or a grid cell. The launcher offers only the settlements: the map markers
+whose type is City, Town, Settlement, Orc Stronghold, a hold capital (such as Whiterun
+Capitol), Raven Rock, or Tel Mithryn. A hold capital's marker sits in its city worldspace, so
+the menu groups each place under the top parent (`WNAM`) of its worldspace, such as Skyrim.
+The marker type names are xEdit's. `openskycli places` lists the same settlements,
+and `--all` lists every named interior and map marker of the active plugins.
+
+Steps 1 to 3 of a new game run, and `MQ101` does not start. The player then moves to the place
+behind the loading screen:
 
 - An interior is entered as the console's `coc` enters it.
 - A map marker puts the player at the marker's position, as a fast travel does.

@@ -110,6 +110,10 @@ nonisolated public struct MapMarkerType: Equatable, Hashable, Sendable {
 
     public let rawValue: UInt8
 
+    public init(rawValue: UInt8) {
+        self.rawValue = rawValue
+    }
+
     /// Nil for a value the xEdit table does not name.
     public var name: String? {
         Int(rawValue) < Self.names.count ? Self.names[Int(rawValue)] : nil
