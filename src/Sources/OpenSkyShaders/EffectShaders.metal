@@ -39,7 +39,10 @@ vertex ParticleVertexOut particleVertex(
 
 // A ribbon band (docs/rendering/particles.md#ribbons): the instance holds the start point
 // and width in positionSize, the end point and width in rotation, and the texture coordinate
-// along the band in uvRect.xy; uvRect.z set runs it along the texture's V.
+// along the band in uvRect.xy. uvRect.z picks the kind: 0 faces the eye with the texture's U
+// along the band, 1 faces the eye with V along it, and 2 is a lightning piece, which keeps
+// the side direction in color.xyz, with the start alpha in color.w and the end alpha in
+// uvRect.w.
 vertex ParticleVertexOut ribbonVertex(
     uint vertexID [[vertex_id]],
     uint instanceID [[instance_id]],
@@ -54,11 +57,17 @@ vertex ParticleVertexOut ribbonVertex(
     float3 end = band.rotation.xyz;
     float3 point = mix(start, end, corner.y);
     float width = mix(band.positionSize.w, band.rotation.w, corner.y);
-    float3 along = end - start;
-    float3 toEye = frame.cameraPosition - point;
-    float3 side = cross(along, toEye);
-    float sideLength = length(side);
-    side = sideLength > 1e-5 ? side / sideLength : frame.cameraRight;
+    bool fixedSide = band.uvRect.z > 1.5;
+    float3 side;
+    if (fixedSide) {
+        side = band.color.xyz;
+    } else {
+        float3 along = end - start;
+        float3 toEye = frame.cameraPosition - point;
+        side = cross(along, toEye);
+        float sideLength = length(side);
+        side = sideLength > 1e-5 ? side / sideLength : frame.cameraRight;
+    }
     float3 world = point + side * (corner.x * width * 0.5);
     ParticleVertexOut out;
     out.position = frame.viewProjectionMatrix * float4(world, 1.0);
@@ -66,7 +75,8 @@ vertex ParticleVertexOut ribbonVertex(
     float alongUV = mix(band.uvRect.x, band.uvRect.y, corner.y);
     float acrossUV = corner.x * 0.5 + 0.5;
     out.texcoord = band.uvRect.z > 0.5 ? float2(acrossUV, alongUV) : float2(alongUV, acrossUV);
-    out.color = band.color;
+    out.color =
+        fixedSide ? float4(1.0, 1.0, 1.0, mix(band.color.w, band.uvRect.w, corner.y)) : band.color;
     return out;
 }
 

@@ -207,8 +207,8 @@ the detail and the sources it did find.
 | Actor camera fade shapes | Each drawn shape's world box grown by the probe radius; half its diagonal as the radius; the player's capsule radius 24 at the centre of its drawn shapes; the pivot 112 over the feet in place of the `Cam3` node height | [graphics options](/engine/graphics-options.md#actor-fade-near-the-camera) |
 | Far shadow cascade reuse | A far cascade map kept while it covers its slice, at most 2 or 4 frames, 0.25 degrees of sun turn, 10% wider fit | [shadows](/rendering/shadows.md#far-cascade-reuse) |
 | Particle lifetime and limits | OpenSky's policies | [particles](/rendering/particles.md) |
-| Lightning bolt growth | Midpoint bends halving each level, branches 0.3 to 0.5 long, a new bolt every 0.1 s blended from the last | [particles](/rendering/particles.md#ribbons) |
-| Ribbon texture direction | U along the band for strips and bolts | [particles](/rendering/particles.md#ribbons) |
+| Lightning bolt between sequences | A sequence that leaves the generation unset keeps the bolt, its tree, and its track values; at most 2,048 quads per bolt tree | [particles](/rendering/particles.md#lightning) |
+| Ribbon texture direction | U along the band for strips | [particles](/rendering/particles.md#ribbons) |
 | Particle sequence switch | A played sequence restarts the controllers it feeds from 0; others keep the default sequence's keys | [particles](/rendering/particles.md#sequences) |
 | Rain streak shape | Length over width from the `SPGD` size Y over X, 1 to 16, with the square's area | [precipitation](/rendering/precipitation.md#streaks) |
 | Strip particle order | One band through the particles in birth order | [particles](/rendering/particles.md#ribbons) |

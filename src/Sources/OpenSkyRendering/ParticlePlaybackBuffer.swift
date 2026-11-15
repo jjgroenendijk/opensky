@@ -7,6 +7,15 @@ import OpenSkyFormatsMesh
 import OpenSkyRenderCore
 import simd
 
+/// Layout mirrored by ParticleInstance in ShaderTypes.h.
+nonisolated public struct ParticleGPUInstance: Sendable {
+    let positionSize: SIMD4<Float>
+    let color: SIMD4<Float>
+    let uvRect: SIMD4<Float>
+    /// The cosine and sine of the billboard turn in x and y; a ribbon's end point and width.
+    let rotation: SIMD4<Float>
+}
+
 nonisolated extension ParticlePlayback {
     /// Writes the live particles into the slot's range. With a `viewer`, a blend that
     /// depends on order gets its particles far to near.
@@ -29,14 +38,9 @@ nonisolated extension ParticlePlayback {
     private func instances(
         _ simulator: ParticleSimulator, viewer: SIMD3<Float>?
     ) -> [ParticleGPUInstance] {
-        if let lightning {
+        if lightning != nil {
             let model = simulator.placementTransform * simulator.definition.worldTransform
-            return lightning.segments(at: playbackTime, color: SIMD4(repeating: 1)).map {
-                var segment = $0
-                segment.start = Self.point(model, segment.start)
-                segment.end = Self.point(model, segment.end)
-                return segment.instance(alongTextureV: false)
-            }
+            return lightningQuads.map { $0.instance(model: model) }
         }
         var particles = simulator.particles.map(Self.faded)
         guard !particles.isEmpty else { return [] }

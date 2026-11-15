@@ -118,7 +118,8 @@ the camera and draw last.
 ## Ribbons
 
 Some systems draw bands instead of squares. A band joins two points. Its width is set at each
-end, and it turns about its own length to face the eye. The bands use the same effect shading,
+end, and it turns about its own length to face the eye. A [lightning](#lightning) bolt uses the
+same bands with a fixed side direction. The bands use the same effect shading,
 blend pipelines, and depth rules as the squares, and the same instance layout: the start point
 and width, the end point and width, the colour, and the texture coordinate along the band.
 
@@ -126,31 +127,86 @@ and width, the end point and width, the colour, and the texture coordinate along
 | --- | --- |
 | `BSStripParticleSystem` | One band through its particles in birth order, oldest first |
 | Rain | Each drop stretched along its velocity ([precipitation](/rendering/precipitation.md#streaks)) |
-| Lightning controller | A grown bolt; see below |
-
-A `BSProceduralLightningController` sits on an empty shape. nif.xml names its fields but not
-how the bolt is built, so this is OpenSky's reading:
-
-- The main bolt runs from the shape's origin along its +Y for the length, plus or minus the
-  length variation. The vanilla `lightningbolt01.nif` has its `BeamEnd` node 512 units
-  along +Y, the same as its length field.
-- The bolt is halved `subdivisions` times (at most 8). Each new middle point moves sideways,
-  in the shape's XZ plane, by up to the arc offset, and by half as much at each next level.
-- `branches` plus or minus `branch variation` child bolts start at a random point on the
-  main bolt, lean up to about 30 degrees away from it, and are 0.3 to 0.5 of its length.
-  They are halved two times fewer, bend half as far, and are `child width multiplier` times
-  as wide.
-- With "fade main bolt" or "fade child bolts" set, a bolt narrows and fades to nothing at
-  its far end.
-- Every 0.1 s a new bolt grows from a new seed, and the drawn bolt blends from one to the
-  next, so it crawls instead of jumping.
 
 A strip's texture runs from its oldest end, U 0, to its newest, U 1. A rain streak's
 texture runs along the band in V, because the generated streak mask is tall. A strip
 system's particles are not sorted, because the band joins them in birth order.
 
-The bolt's texture runs along the band in U. The interpolators of the vanilla bolts are blend
-interpolators that no sequence keys, so the fields are used as stored.
+## Lightning
+
+A `BSProceduralLightningController` grows a lightning bolt. Its target is a node. The first
+shape below that node is empty and hidden in the file: the controller fills it and shows it.
+The bolt sits at that shape and takes its effect shader and alpha property. nif.xml names the
+controller's fields; the rules below say how the game builds the bolt from them.
+
+### The tree
+
+A bolt is a tree. The main bolt has depth 0. Each child is one step deeper than its parent.
+
+| Value at depth d | Rule |
+| --- | --- |
+| Segments | 2 to the power of the subdivisions; a child has one subdivision less |
+| Length | `0.5^d x length + 0.25^d x r x length variation`, with r random in -1 to 1 |
+| Width | `child width multiplier^d x width`, the same along the whole bolt |
+| Arc size | `0.5^d x arc offset` |
+| Branch count and variation | Halved at each depth, rounded down |
+
+A bolt gets its branch count of children, plus or minus a random part of the branch
+variation. A bolt with a branch count of 0, or with no subdivisions left, gets none, so the
+tree ends there.
+
+Every bolt runs along the shape's +Y. A child runs parallel to its parent. It starts at the
+middle of a random segment in the first half of the parent.
+
+The points of a bolt move sideways only, in the shape's XZ plane, by midpoint displacement:
+the middle point moves by the arc size in a random direction, then each half does the same
+with half the size. Both ends stay in place.
+
+For example, a main bolt with 3 subdivisions, length 512, width 16, 2 branches, and a child
+width multiplier of 0.5 has 8 segments. Each of its 2 children has 4 segments, is 256 long
+and 8 wide, and has 1 child of its own with 2 segments, 128 long and 4 wide.
+
+### The mesh
+
+Each bolt is two flat ribbons that cross along the bolt, one wide in the shape's X and one
+wide in its Z. They do not turn to the eye. The texture's V runs from 0 at the start of the
+bolt to 1 at its end.
+
+The vertex alpha is 0 at the far end of every bolt and at the start of the main bolt. With
+"fade main bolt" or "fade child bolts" set, the alpha of a point i of n segments is
+`1 - i^2 / n^2`. Without the flag it is 1 between the ends.
+
+### Time
+
+Tracks decide when the bolt changes. They come from the controller sequence in play, by
+interpolator ID, or from the controller's own interpolators when no sequence feeds it.
+
+| Track | Effect |
+| --- | --- |
+| `Generation` (bool) | The bolt shows only while it is on. Each change to on grows a new random tree |
+| `Mutation` (bool) | Each change gives the same tree new lengths and bends |
+| `ArcOffset` (float) | With the "animate arc offset" flag, the arc size follows it; without the flag nothing moves between mutations |
+| `Length`, `Width` (float) | Replace the stored field |
+
+A controller that no generation track feeds builds nothing.
+
+The 12 vanilla meshes with a lightning controller, such as `meshes\magic\lightningbolt01.nif`,
+feed only these five IDs (`openskycli nif <path> --controllers` lists them). Their `mIdle`
+sequence holds the generation on with one key and flips the mutation several times a second.
+The meshes with `mBegin`, `mLoop`, and `mEnd` key the generation only in `mBegin`; the other two
+leave every track unset.
+
+OpenSky's own choices here:
+
+- A sequence that leaves the generation unset keeps the bolt as the sequence before left it:
+  shown or hidden, with the same tree and the same track values.
+- Before an effect graph plays a sequence, the bolt follows the default sequence, picked among
+  the sequences that key the generation ([sequences](#sequences)).
+- The other four values (subdivisions, branches, branch variation, length variation) have no
+  interpolator ID in the vanilla files, so only the controller's own interpolators can key
+  them.
+- One bolt tree draws at most 2,048 quads. A bolt with more segments than fit is drawn with
+  fewer segments.
 
 ## Mesh particles
 
