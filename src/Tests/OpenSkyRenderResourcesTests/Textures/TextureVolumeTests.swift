@@ -124,13 +124,13 @@ struct TextureVolumeTests {
             shading: shading, source: "textures\\effects\\noise.dds",
             textureProvider: library.provider
         )
-        #expect(volume.sourceVolume?.textureType == .type3D)
+        #expect(volume.sourceIsVolume)
         #expect(volume.flags & flag != 0)
         let flat = RenderEffectMaterial(
             shading: shading, source: "textures\\effects\\flat.dds",
             textureProvider: library.provider
         )
-        #expect(flat.sourceVolume == nil)
+        #expect(!flat.sourceIsVolume)
         #expect(flat.flags & flag == 0)
     }
 }

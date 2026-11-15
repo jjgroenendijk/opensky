@@ -61,7 +61,7 @@ nonisolated public struct RenderMaterial: Sendable {
     /// residency set, without building a list.
     public func forEachTexture(_ body: (any MTLTexture) -> Void) {
         body(diffuse)
-        for case let texture? in [normal, faceTint, effect?.palette, effect?.sourceVolume] {
+        for case let texture? in [normal, faceTint, effect?.palette] {
             body(texture)
         }
         surface.forEachTexture(body)

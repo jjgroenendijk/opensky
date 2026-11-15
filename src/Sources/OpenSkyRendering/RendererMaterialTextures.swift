@@ -51,7 +51,6 @@ extension Renderer {
         bindSurface(surface.projected?.diffuse, .projectedDiffuse)
         bindSurface(surface.projected?.noise, .projectedNoise)
         bind((surface.environment ?? blackCube).gpuResourceID, .surfaceEnvironment)
-        bind((material.effect?.sourceVolume ?? greyVolume).gpuResourceID, .effectSourceVolume)
         bind(refraction.copy?.gpuResourceID ?? diffuse, .sceneColor)
     }
 }

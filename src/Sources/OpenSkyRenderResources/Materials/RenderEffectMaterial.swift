@@ -9,8 +9,8 @@ import simd
 nonisolated public struct RenderEffectMaterial: Sendable {
     /// Nil when the shape names no palette; the diffuse is bound in its place.
     public let palette: any MTLTexture?
-    /// The source texture when its file is a volume; the diffuse then holds a placeholder.
-    public let sourceVolume: any MTLTexture?
+    /// The source file is a volume, which the game samples as transparent black.
+    public let sourceIsVolume: Bool
     /// `EffectFlag` bits.
     public private(set) var flags: UInt32
     public let baseColor: SIMD4<Float>
@@ -31,7 +31,7 @@ nonisolated public struct RenderEffectMaterial: Sendable {
             shading: shading,
             palette: hasPalette && (shading.paletteColor || shading.paletteAlpha)
                 ? textureProvider(shading.paletteTexture, .color) : nil,
-            sourceVolume: resolved?.textureType == .type3D ? resolved : nil
+            sourceIsVolume: resolved?.textureType == .type3D
         )
     }
 
@@ -39,12 +39,12 @@ nonisolated public struct RenderEffectMaterial: Sendable {
     public init(
         shading: EffectShading,
         palette: any MTLTexture?,
-        sourceVolume: any MTLTexture? = nil
+        sourceIsVolume: Bool = false
     ) {
         self.palette = palette
-        self.sourceVolume = sourceVolume
+        self.sourceIsVolume = sourceIsVolume
         flags = Self.flags(shading, hasPalette: palette != nil)
-        if sourceVolume != nil {
+        if sourceIsVolume {
             flags |= UInt32(EffectFlag.sourceVolume.rawValue)
         }
         baseColor = shading.baseColor
