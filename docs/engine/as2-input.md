@@ -172,6 +172,51 @@ and `PLATFORM_PC_GAMEPAD` to 1. While a gamepad is connected, the runtime sends 
 `SetPlatform` call, and it sends the movie's last call again when a gamepad connects or leaves. The
 game may instead follow the last device used; that is not confirmed.
 
+### Gamepads in the world
+
+Outside a menu a gamepad plays the game. The control map's gamepad column binds each
+`Main Gameplay` row, as the keyboard column does: A activates, B opens the Tween menu, X readies
+the weapon, Y jumps, the left bumper sprints, the right bumper shouts, the right trigger attacks,
+the left trigger blocks, the left stick button sneaks, the right stick button switches the view,
+Back waits, Start opens the journal, D-pad up and down open the favourites, and D-pad left and
+right use favourites 1 and 2. A button press is the same action a key press is, through the same
+locks. A trigger counts as pressed above 5 % of its travel.
+
+Each stick has a radial dead zone: below 25 % of the travel it reads 0, and from 97 % it reads 1,
+with a straight line between. A radial dead zone keeps a diagonal's direction.
+
+The left stick moves, added to the move keys, and ends Auto-Move. The direction is free, and the
+speed is a share of run speed that follows this curve, a straight line between the points:
+
+| Push | 0 | 0.2 | 0.7 | 0.9 | 1 |
+| --- | --- | --- | --- | --- | --- |
+| Share of run speed | 0 | 0.1 | 0.5 | 0.9 | 1 |
+
+So a small push walks, and there is no separate walk or run step.
+
+The right stick turns the view. Each frame:
+
+1. A small push on the other axis is taken away: each axis loses up to 0.15 of the other
+   axis's push, and the rest is scaled back to 0 to 1.
+2. The push length m becomes 0.115141 m - 0.382666 m² + 2.02865 m³ - 0.754499 m⁴. This is
+   close to a cube: half a push turns at about a sixth of full speed.
+3. While the stick is pushed all the way, the speed grows in a straight line to 2.5 times over
+   0.92 s, at the default sensitivity.
+4. The result is multiplied by the sensitivity, 0.66672 by default and 0.4445 to 1.5556 in all.
+5. A full yaw turns π radians a second times that; a full pitch turns 0.5625 × 3 radians a
+   second times that.
+
+At the default sensitivity a full push turns about 121 degrees a second at first, and about 302
+after the ramp. Invert Y flips the pitch.
+
+The Gameplay row `$360 Controller` turns gamepad reading on or off; off, the game reads no gamepad,
+not even in a menu. `$Vibration` turns the rumble on or off. Both take their defaults from the
+install's `SkyrimPrefs.ini`, `bGamepadEnable` and `bGamePadRumble`.
+
+With a gamepad connected, the Controls list shows the rows the file lets a gamepad remap, with
+their `360_` button art, and the next gamepad button binds the chosen row. A button another row
+holds swaps to that row. A remap is stored as `Gamepad|<context>|<event>`.
+
 `openskycli game debug gamepad --count 1` reports a gamepad without one connected, and
 `--press down,a` presses buttons. `state menu` shows the movie's focused clip, its frame label, the
 controller count, and the platform.

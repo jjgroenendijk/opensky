@@ -40,7 +40,9 @@ extension GameSessionScope {
         effects.applyGraphicsSettings(playerSettings.store)
         hud.start()
         controllerRumble.settings = ShoutRumbleSettings.resolve(store: stage.data.gameSettings)
-        controllerRumble.isEnabled = { [store = playerSettings.store] in store.bool(.vibration) }
+        controllerRumble.isEnabled = { [store = playerSettings.store] in
+            store.bool(.vibration) && store.bool(.gamepadEnabled)
+        }
         stage.gameSession.locomotion.waterPushRace = effectsWorld.waterPushRace(of: .player)
         messages.reloadHelpRecords()
         player.requestBody()

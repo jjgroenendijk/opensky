@@ -132,6 +132,11 @@ nonisolated public struct InputBindings: Equatable, Sendable {
     /// Slots the file lets the player bind to a mouse button. Vanilla allows every
     /// gameplay row with a keyboard key but the hotkeys and the saves.
     public private(set) var mouseKeys: Set<String> = Self.vanillaMouseKeys
+    /// Gamepad buttons by slot, from the file's gamepad column; a slot can have two.
+    public private(set) var gamepadDefaults: [String: [UInt32]] = Self.vanillaGamepad
+    var gamepadOverrides: [String: UInt32] = [:]
+    /// Slots the file lets the player bind to a gamepad button.
+    public private(set) var gamepadKeys: Set<String> = Set(Self.vanillaGamepad.keys)
     /// Keys only the map reads, by scan code, from the file's `Map Menu` context.
     public private(set) var mapMenuKeys: [UInt32: GameInputAction] = Self.vanillaMapMenuKeys
 
@@ -152,6 +157,8 @@ nonisolated public struct InputBindings: Equatable, Sendable {
             fixedKeys = Set(events.filter { !$0.remappableKeyboard }
                 .map { "\(context)|\($0.name)" })
             mouseKeys = Set(events.filter(\.remappableMouse).map { "\(context)|\($0.name)" })
+            gamepadKeys = Set(events.filter(\.remappableGamepad).map { "\(context)|\($0.name)" })
+            gamepadDefaults = [:]
             for slot in Self.slots where slot.context == .gameplay {
                 let keyboard = controlMap.codes(of: slot.event, in: gameplay, device: .keyboard)
                 let mouse = controlMap.codes(of: slot.event, in: gameplay, device: .mouse)
@@ -160,6 +167,11 @@ nonisolated public struct InputBindings: Equatable, Sendable {
                     defaults[slot.key] = code
                 } else if let button = mouse.first {
                     defaults[slot.key] = InputCode.mouseBase + button
+                }
+                let pad = controlMap.codes(of: slot.event, in: gameplay, device: .gamepad)
+                    .filter { GamepadButton(controlMapCode: $0) != nil }
+                if !pad.isEmpty {
+                    gamepadDefaults[slot.key] = pad
                 }
             }
             references = Self.menuReferences(in: controlMap) ?? references
@@ -246,11 +258,13 @@ nonisolated public struct InputBindings: Equatable, Sendable {
 
     mutating func reset() {
         overrides = [:]
+        gamepadOverrides = [:]
     }
 
     /// Restores remaps saved by key, dropping any for an unknown event.
     public mutating func restore(_ saved: [String: Int]) {
         let known = Set(Self.slots.map(\.key))
+        gamepadOverrides = Self.gamepadEntries(saved, known: known)
         overrides = saved.reduce(into: [:]) { result, pair in
             guard known.contains(pair.key), pair.value >= 0, Self.isKnown(UInt32(pair.value)) else {
                 return

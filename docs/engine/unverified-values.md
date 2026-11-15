@@ -276,6 +276,7 @@ the detail and the sources it did find.
 | Save lock flag bit 0x01 | Meaning not confirmed | [locks](/engine/locks.md) |
 | `.seq` FormID reading | Through the master list first | [SEQ](/formats/seq.md) |
 | Input device for prompts | Not confirmed | [AS2 input](/engine/as2-input.md) |
+| Gamepad look sensitivity | The default sensitivity at the middle of OpenSky's Look Sensitivity slider, scaled with it, kept inside the game's range | [AS2 input](/engine/as2-input.md#gamepads-in-the-world) |
 | Auto-Move end | Pressing Auto-Move again, Forward, or Back ends it | [control map](/formats/controlmap.md#the-controls-list) |
 | Mouse button art | Mouse button `n` (0 the left) shows `Mouse<n+1>` | [control map](/formats/controlmap.md#the-controls-list) |
 | Inventory menu callbacks | Two not confirmed | [inventory menu](/engine/inventory-menu.md) |

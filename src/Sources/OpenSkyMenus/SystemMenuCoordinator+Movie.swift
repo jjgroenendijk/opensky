@@ -119,7 +119,10 @@ extension SystemMenuCoordinator {
     /// The movie sorts and redraws the list itself after a remap; after a plain
     /// request it has already drawn the empty list, so it is redrawn here.
     func refreshMovieMappings(_ request: SystemMenuMovieBridge.Request) {
-        let rows = SystemMenuMovieBridge.mappingRows(settings.bindings, keyName: settings.keyName)
+        let rows = SystemMenuMovieBridge.mappingRows(
+            settings.bindings, keyName: settings.keyName,
+            gamepad: (renderer?.swfGamepadCount ?? 0) > 0
+        )
         updateMovie { runtime in
             SystemMenuMovieBridge.fillMappings(rows, request: request, runtime: runtime)
             if request != .startRemap {

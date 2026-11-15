@@ -372,3 +372,18 @@ struct SystemMenuCoordinatorTests {
         #expect(harness.menu.masterVolume == 0.5)
     }
 }
+
+@MainActor
+extension SystemMenuCoordinatorTests {
+    @Test
+    func controlsPageTakesAGamepadButton() {
+        let harness = Harness()
+        harness.open(.controls)
+        #expect(!harness.menu.captureGamepad(code: 0x1000), "not waiting yet")
+        harness.menu.route(.button(.accept))
+        #expect(harness.menu.captureGamepad(code: 0x1000))
+        #expect(!harness.menu.isWaitingForKey)
+        #expect(harness.settings.buttonName(forUserEvent: "Zoom In", gamepad: true) == nil)
+        #expect(harness.settings.buttonName(forUserEvent: "Activate", gamepad: false) != nil)
+    }
+}

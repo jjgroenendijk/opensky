@@ -55,7 +55,15 @@ public final class PlayerSettingsCoordinator {
     func rebind(_ action: GameInputAction, to scanCode: UInt32) -> InputRebindResult {
         var next = bindings
         let result = next.rebind(action, to: scanCode)
-        store.replaceKeyBindings(next.overrides.mapValues(Int.init))
+        store.replaceKeyBindings(next.savedBindings)
+        return result
+    }
+
+    @discardableResult
+    func rebindGamepad(_ action: GameInputAction, to code: UInt32) -> InputRebindResult {
+        var next = bindings
+        let result = next.rebindGamepad(action, to: code)
+        store.replaceKeyBindings(next.savedBindings)
         return result
     }
 

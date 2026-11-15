@@ -147,4 +147,18 @@ struct CameraInputStateTests {
         #expect(stepped.lookRight == 4)
         #expect(stepped.moveForward == 1)
     }
+
+    @Test
+    func theStickAddsToTheKeysAndForwardEndsAutoMove() {
+        let state = CameraInputState()
+        state.press(.right)
+        state.setAnalogMove(SIMD2(0.5, 0))
+        #expect(state.makeInput(dt: 1).moveRight == 1, "keys and stick together stay within 1")
+        state.toggleAutoMove()
+        state.setAnalogMove(SIMD2(-0.25, 0))
+        #expect(state.makeInput(dt: 1).moveForward == 1, "a sideways push keeps Auto-Move")
+        #expect(state.makeInput(dt: 1).moveRight == 0.75)
+        state.setAnalogMove(SIMD2(0, 0.5))
+        #expect(state.makeInput(dt: 1).moveForward == 0.5, "a forward push ends Auto-Move")
+    }
 }

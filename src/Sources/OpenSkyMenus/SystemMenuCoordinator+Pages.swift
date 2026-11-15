@@ -100,6 +100,19 @@ extension SystemMenuCoordinator {
         return true
     }
 
+    /// A gamepad button pressed while the Controls page waits. True when taken.
+    public func captureGamepad(code: UInt32) -> Bool {
+        guard
+            model.isOpen, model.page == .controls, controlsPage.waitingForKey,
+            let slot = controlsPage.selectedSlot
+        else { return false }
+        _ = controlsPage.capture(scanCode: code)
+        let result = settings.rebindGamepad(slot.action, to: code)
+        lastMessage = result == .notRemappable ? "\(slot.action.rawValue) cannot be remapped" : nil
+        finishMovieRemap(succeeded: result != .notRemappable && result != .unknownKey)
+        return true
+    }
+
     var isWaitingForKey: Bool {
         model.isOpen && model.page == .controls && controlsPage.waitingForKey
     }

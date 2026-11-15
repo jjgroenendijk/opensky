@@ -64,8 +64,8 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
     private static let gameplay: [PlayerSettingDefinition] = [
         row(("gameplay.invertY", .gameplay), .toggle, "$Invert Y", 0, applied: true),
         row(("gameplay.lookSensitivity", .gameplay), unit, "$Look Sensitivity", 0.5, applied: true),
-        row(("gameplay.vibration", .gameplay), .toggle, "$Vibration", 1),
-        row(("gameplay.controller", .gameplay), .toggle, "$360 Controller", 0),
+        row(("gameplay.vibration", .gameplay), .toggle, "$Vibration", 1, applied: true),
+        row(("gameplay.controller", .gameplay), .toggle, "$360 Controller", 1, applied: true),
         row(
             ("gameplay.missingCreationsCheck", .gameplay),
             .toggle,

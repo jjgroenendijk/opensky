@@ -111,6 +111,8 @@ nonisolated extension PlayerSettingID {
     public static let invertLook = Self("gameplay.invertY")
     public static let lookSensitivity = Self("gameplay.lookSensitivity")
     public static let vibration = Self("gameplay.vibration")
+    /// The 360 Controller row: whether the game reads a gamepad.
+    public static let gamepadEnabled = Self("gameplay.controller")
     public static let difficulty = Self("gameplay.difficulty")
     /// The answer to the Survival Mode prompt, and the in-game toggle.
     public static let survivalMode = Self("gameplay.survivalMode")

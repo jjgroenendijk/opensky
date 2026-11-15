@@ -6,6 +6,7 @@ public import OpenSkySessionInterface
 /// Stores each property and records each call to `CameraInputStatePort`.
 nonisolated public final class FakeCameraInputStatePort: CameraInputStatePort {
     public var addLookCalls: [(right: Float, up: Float)] = []
+    public var setAnalogMoveCalls: [SIMD2<Float>] = []
     public var invertLook = false
     public var lookScale: Float = 0
     public var pressCalls: [CameraInputState.MoveKey] = []
@@ -13,6 +14,8 @@ nonisolated public final class FakeCameraInputStatePort: CameraInputStatePort {
     public var setBoostCalls: [Bool] = []
     public var setSprintCalls: [Bool] = []
     public var toggleSneakCallCount = 0
+    public var toggleAutoMoveCallCount = 0
+    public var toggleAlwaysRunCallCount = 0
     public var requestJumpCallCount = 0
     public var requestAttackCallCount = 0
     public var setAttackHeldCalls: [Bool] = []
@@ -29,6 +32,10 @@ nonisolated public final class FakeCameraInputStatePort: CameraInputStatePort {
 nonisolated extension FakeCameraInputStatePort {
     public func addLook(right: Float, up: Float) {
         addLookCalls.append((right: right, up: up))
+    }
+
+    public func setAnalogMove(_ move: SIMD2<Float>) {
+        setAnalogMoveCalls.append(move)
     }
 
     public func press(_ key: CameraInputState.MoveKey) {
@@ -49,6 +56,14 @@ nonisolated extension FakeCameraInputStatePort {
 
     public func toggleSneak() {
         toggleSneakCallCount += 1
+    }
+
+    public func toggleAutoMove() {
+        toggleAutoMoveCallCount += 1
+    }
+
+    public func toggleAlwaysRun() {
+        toggleAlwaysRunCallCount += 1
     }
 
     public func requestJump() {
