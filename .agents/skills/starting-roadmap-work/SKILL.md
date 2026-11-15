@@ -82,7 +82,9 @@ so these checks run together in one batch, not one per issue.
    such issue; `gh issue list --label verification-needed` finds the one.
 3. When the planned work is done, run every check on the list in one batch, such as one
    base and one branch benchmark for all performance issues. Tick each item that passes.
-   A check that fails reopens its issue with the result.
+   A check that fails opens a new issue with the result and a link to the closed one.
+   The closed issue stays closed, so its history shows what was built and the new issue
+   shows what is still wrong.
 
 - One branch and one PR per issue.
 - A new check that fails across the tree lands in slices, each its own PR: first the check as
