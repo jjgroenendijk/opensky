@@ -54,6 +54,7 @@ nonisolated public final class FakeGameSessionPort: GameSessionPort {
     public var settlePlayerOnGroundResult = false
     public var timeOfDay: Float = 0
     public var uiSceneValue: UIScene?
+    public var menuViewOffsetValue: MenuViewOffset?
     public var updateWeatherCalls: [Float] = []
     public var viewFOVYRadians: Float = 0
     public var walkController: WalkController = FakeWalkPort()
@@ -192,6 +193,15 @@ nonisolated extension FakeGameSessionPort {
             return uiSceneValue
         }
         set { uiSceneValue = newValue }
+    }
+
+    public var menuViewOffset: MenuViewOffset {
+        get {
+            guard let menuViewOffsetValue
+            else { preconditionFailure("FakeGameSessionPort.menuViewOffset is unset") }
+            return menuViewOffsetValue
+        }
+        set { menuViewOffsetValue = newValue }
     }
 
     public func updateWeather(deltaTime: Float) {

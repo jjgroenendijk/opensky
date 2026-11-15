@@ -105,6 +105,10 @@ extension MenuScreensWorldAdapter: TweenMenuWorld {
             levelUpReady: (progression.leveling?.levelsReady ?? 0) > 0
         )
     }
+
+    public func setMenuViewOffset(_ offset: MenuViewOffset) {
+        game.gameSession?.menuViewOffset = offset
+    }
 }
 
 extension MenuScreensWorldAdapter: SleepWaitWorld {

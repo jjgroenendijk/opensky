@@ -42,6 +42,10 @@ extension Renderer {
         if let horizontal = input.horizontalFOVRadians, horizontal > 0, drawableAspectRatio > 0 {
             input.fovYRadians = 2 * atan(tan(horizontal / 2) / drawableAspectRatio)
         }
+        input.fovYRadians = RenderFrameInput.widened(
+            fovY: input.fovYRadians, byHorizontal: input.extraHorizontalFOVRadians,
+            aspect: drawableAspectRatio
+        )
         frameInput = input
         if input.fovYRadians != adoptedFOVYRadians {
             adoptedFOVYRadians = input.fovYRadians

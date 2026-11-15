@@ -40,6 +40,7 @@ public final class GameSession: RenderFrameDriver {
     public var imageSpace = ImageSpaceState()
     /// The HUD, menus, and dev overlays the UI pass draws. Default empty -> zero draws.
     public var uiScene = UIScene.empty
+    public var menuViewOffset = MenuViewOffset.none
     /// Menu-mode pause gate. True freezes the per-frame time advance while the frame and
     /// UI still draw. Clocks keep their marks fresh while paused, so resume has no jump.
     public var worldSimPaused = false
@@ -191,7 +192,13 @@ public final class GameSession: RenderFrameDriver {
 
     /// Everything the renderer draws this frame, read after every system has run.
     public var frameInput: RenderFrameInput {
-        var input = RenderFrameInput(view: freeFlyCamera)
+        var view = freeFlyCamera
+        view.yaw += menuViewOffset.yaw
+        view.pitch = FreeFlyCamera.clampPitch(view.pitch + menuViewOffset.pitch)
+        var input = RenderFrameInput(view: view)
+        input.extraHorizontalFOVRadians = MatrixMath.radians(
+            fromDegrees: menuViewOffset.horizontalFOVDegrees
+        )
         input.movementMode = movementMode
         input.cameraPivot = dialogueCameraSteps.cameraPivot
         input.fovYRadians = viewFOVYRadians
