@@ -17,24 +17,15 @@ import Testing
 struct SceneActorTests {
     private let speaker = DialogueRuntimeFixture.speakerKey
 
-    /// One phase with a 4 second timer, and the speaker's alias as its one actor.
     private func timerScene(
         _ id: UInt32, sceneFlags: UInt32 = 0, actorFlags: UInt32 = 0, behavior: UInt32 = 0
     ) throws -> CatalogScene {
-        let fields: [(String, Data)] = [
-            ("EDID", ESMFixture.zstring("Timer\(id)")), ("FNAM", ESMFixture.u32(sceneFlags)),
-            ("HNAM", Data()), ("NEXT", Data()), ("NEXT", Data()), ("HNAM", Data()),
-            ("ALID", ESMFixture.i32(0)), ("LNAM", ESMFixture.u32(actorFlags)),
-            ("DNAM", ESMFixture.u32(behavior)),
-            ("ANAM", ESMFixture.u16(2)), ("ALID", ESMFixture.i32(0)), ("INAM", ESMFixture.u32(1)),
-            ("SNAM", ESMFixture.u32(0)), ("ENAM", ESMFixture.u32(0)),
-            ("SNAM", ESMFixture.f32(4)), ("ANAM", Data()),
-            ("PNAM", ESMFixture.u32(DialogueRuntimeFixture.runningQuest))
-        ]
-        let record = try Scene(record: ESMFixture.record("SCEN", formID: id, fields: fields))
-        return CatalogScene(
-            formID: FormID(id), key: .plugin(name: DialogueFixture.pluginName, objectID: id),
-            scene: record
+        try SceneFixture.timerScene(
+            id, sceneFlags: sceneFlags, actors: [TimerSceneActor(
+                alias: 0,
+                flags: actorFlags,
+                behavior: behavior
+            )]
         )
     }
 

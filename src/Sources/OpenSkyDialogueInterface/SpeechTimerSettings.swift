@@ -77,10 +77,9 @@ nonisolated public struct SpeechTimerSettings: Equatable, Sendable {
     public var silentLineMaxSeconds: Float = 8
     /// `fAIDefaultSpeechMult`: seconds per character of a line with no voice file.
     public var speechMult: Float = 0.15
-    /// `fRandomSceneAgainMinTime` and `...MaxTime`: the wait before a scene flagged
-    /// "Repeat while true" plays again.
-    public var sceneRepeatMinSeconds: Float = 10
-    public var sceneRepeatMaxSeconds: Float = 30
+    /// `fRandomSceneAgainMinTime` and `...MaxTime`: the gap between two conversation scenes.
+    public var conversationGapMinSeconds: Float = 10
+    public var conversationGapMaxSeconds: Float = 30
 
     public static let vanilla = Self()
 
@@ -120,10 +119,10 @@ nonisolated public struct SpeechTimerSettings: Equatable, Sendable {
         return min(max(finite(readingSeconds), low), high)
     }
 
-    /// The scene repeat window, ordered and never negative.
-    public var sceneRepeatPause: ClosedRange<Float> {
-        let low = finite(min(sceneRepeatMinSeconds, sceneRepeatMaxSeconds))
-        return low ... max(low, finite(max(sceneRepeatMinSeconds, sceneRepeatMaxSeconds)))
+    /// The gap between two conversation scenes, ordered and never negative.
+    public var conversationGap: ClosedRange<Float> {
+        let low = finite(min(conversationGapMinSeconds, conversationGapMaxSeconds))
+        return low ... max(low, finite(max(conversationGapMinSeconds, conversationGapMaxSeconds)))
     }
 
     /// Seconds before `line` may come again. `unit` in 0...1 picks a point in a window.

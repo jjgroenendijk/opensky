@@ -126,9 +126,9 @@ struct SpeechTimerTests {
 
     @Test func theSceneRepeatWindowIsOrdered() {
         var settings = SpeechTimerSettings.vanilla
-        #expect(settings.sceneRepeatPause == 10 ... 30)
-        settings.sceneRepeatMinSeconds = 40
-        #expect(settings.sceneRepeatPause == 30 ... 40)
+        #expect(settings.conversationGap == 10 ... 30)
+        settings.conversationGapMinSeconds = 40
+        #expect(settings.conversationGap == 30 ... 40)
     }
 
     @Test func eachLineNamesItsTopicSubtype() {

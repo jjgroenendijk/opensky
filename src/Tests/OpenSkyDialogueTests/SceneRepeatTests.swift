@@ -1,5 +1,5 @@
-// A scene flagged "Repeat while true" waits `fRandomSceneAgainMinTime` to `...MaxTime`
-// before it plays again (docs/engine/scenes.md).
+// A scene flagged "Repeat while true" plays again at once, one run per tick
+// (docs/engine/scenes.md).
 
 import Foundation
 @testable import OpenSkyDialogue
@@ -32,24 +32,16 @@ struct SceneRepeatTests {
         )
     }
 
-    @Test func aRepeatingSceneWaitsBeforeItPlaysAgain() throws {
+    @Test func aRepeatingScenePlaysAgainOnTheNextTick() throws {
         let store = WorldStateStore()
-        let pending = ScenePendingLines()
         let scene = try Self.repeatScene()
-        func tick(_ now: Double) throws -> [SceneStep] {
-            var runtime = try SceneFixture.runtime(
-                store: store, scene: scene, now: now, pendingLines: pending
-            )
-            runtime.loopPause = { $0.lowerBound }
-            runtime.repeatPause = 12 ... 20
-            return try (now == 0 ? runtime.start(scene.formID) : runtime.tick()).map(\.step)
-        }
-        let started = try tick(0)
+        let started = try SceneFixture.runtime(store: store, scene: scene)
+            .start(scene.formID).map(\.step)
+        #expect(started.count { $0 == .phaseStarted(0) } == 1)
         #expect(started.last == .repeated)
-        #expect(try tick(11).isEmpty)
-        let again = try tick(12)
-        #expect(again.contains(.phaseStarted(0)))
+        let again = try SceneFixture.runtime(store: store, scene: scene, now: 0.1)
+            .tick().map(\.step)
+        #expect(again.count { $0 == .phaseStarted(0) } == 1)
         #expect(again.last == .repeated)
-        #expect(try tick(23).isEmpty)
     }
 }

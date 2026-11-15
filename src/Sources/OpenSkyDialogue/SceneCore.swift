@@ -68,6 +68,7 @@ public enum SceneCore {
         case let .emptyAlias(action): "action \(action): actor alias empty"
         case let .actorUnavailable(action): "action \(action): actor dead or busy"
         case let .unsupportedAction(action, type): "action \(action): type \(type) not run"
+        case .waitingForConversation: "waiting for its conversation partners or its turn"
         default: ""
         }
     }

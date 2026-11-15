@@ -32,7 +32,10 @@ nonisolated public struct SceneCatalog: Sendable {
 
     /// The scenes of `store` that `resolver`'s plugin can name, keyed through it.
     /// Pass the quest store's resolver, so a scene's quest is a quest-store FormID.
-    public init(store: SceneStore, resolver: FormIDResolver) {
+    /// `conversationQuests` holds the quests that start from the actor dialogue event.
+    public init(
+        store: SceneStore, resolver: FormIDResolver, conversationQuests: Set<FormID> = []
+    ) {
         self.init(scenes: store.scenes.records.compactMap { record in
             guard
                 let formID = resolver.localFormID(of: record.id),
@@ -47,7 +50,8 @@ nonisolated public struct SceneCatalog: Sendable {
                 .map { FormIDTranslation(source: $0, target: resolver) }
             return CatalogScene(
                 formID: formID, key: key, scene: record.record, quest: quest,
-                translation: translation
+                translation: translation,
+                isConversation: quest.map(conversationQuests.contains) ?? false
             )
         })
     }
@@ -62,6 +66,9 @@ nonisolated public struct CatalogScene: Equatable, Sendable {
     public let quest: FormID?
     /// From the scene's own plugin to the catalog's space. Nil when they are the same.
     public let translation: FormIDTranslation?
+    /// The scene's quest starts from the actor dialogue event (`QUST ENAM` "ADIA"): two
+    /// actors that meet and talk. See docs/engine/scenes.md#conversation-scenes.
+    public let isConversation: Bool
 
     /// A scene from a plugin whose FormIDs are the catalog's own.
     public init(formID: FormID, key: ReferenceKey, scene: Scene) {
@@ -73,13 +80,15 @@ nonisolated public struct CatalogScene: Equatable, Sendable {
         key: ReferenceKey,
         scene: Scene,
         quest: FormID?,
-        translation: FormIDTranslation? = nil
+        translation: FormIDTranslation? = nil,
+        isConversation: Bool = false
     ) {
         self.formID = formID
         self.key = key
         self.scene = scene
         self.quest = quest
         self.translation = translation
+        self.isConversation = isConversation
     }
 
     public var editorID: String {

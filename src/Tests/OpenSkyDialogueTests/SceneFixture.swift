@@ -69,6 +69,7 @@ enum SceneFixture {
         gate value: Float = 0,
         now: Double = 0,
         filled: Bool = true,
+        partner: ReferenceKey? = nil,
         questStopped: Bool = false,
         host: FakeSceneHost? = nil,
         pendingLines: ScenePendingLines = ScenePendingLines(),
@@ -79,7 +80,8 @@ enum SceneFixture {
         let questKey = try #require(quests.key(for: FormID(DialogueRuntimeFixture.runningQuest)))
         var context = try DialogueRuntimeFixture.context()
         let fills = filled
-            ? [QuestAliasFill(aliasID: 0, reference: DialogueRuntimeFixture.speakerKey)] : []
+            ? [QuestAliasFill(aliasID: 0, reference: DialogueRuntimeFixture.speakerKey)]
+            + (partner.map { [QuestAliasFill(aliasID: 1, reference: $0)] } ?? []) : []
         context.aliases = QuestAliasResolution(
             defaults: quests, tables: [questKey: QuestAliasState(fills: fills)]
         )
@@ -99,6 +101,45 @@ enum SceneFixture {
         return SceneRuntime(
             catalog: SceneCatalog(scenes: [scene] + others), dialogue: dialogue,
             fragments: fragments, host: host, pendingLines: pendingLines, now: now
+        )
+    }
+}
+
+/// A scene actor of `SceneFixture.timerScene`: its alias, `LNAM` flags, and behaviour `DNAM`.
+struct TimerSceneActor {
+    var alias: Int32
+    var flags: UInt32 = 0
+    var behavior: UInt32 = 0
+}
+
+extension SceneFixture {
+    /// One phase with a 4 second timer on alias 0. Each actor is an alias with its
+    /// `LNAM` flags and its behaviour `DNAM`.
+    static func timerScene(
+        _ id: UInt32, sceneFlags: UInt32 = 0,
+        actors: [TimerSceneActor],
+        isConversation: Bool = false
+    ) throws -> CatalogScene {
+        var fields: [(String, Data)] = [
+            ("EDID", ESMFixture.zstring("Timer\(id)")), ("FNAM", ESMFixture.u32(sceneFlags)),
+            ("HNAM", Data()), ("NEXT", Data()), ("NEXT", Data()), ("HNAM", Data())
+        ]
+        for actor in actors {
+            fields += [
+                ("ALID", ESMFixture.i32(actor.alias)), ("LNAM", ESMFixture.u32(actor.flags)),
+                ("DNAM", ESMFixture.u32(actor.behavior))
+            ]
+        }
+        fields += [
+            ("ANAM", ESMFixture.u16(2)), ("ALID", ESMFixture.i32(0)), ("INAM", ESMFixture.u32(1)),
+            ("SNAM", ESMFixture.u32(0)), ("ENAM", ESMFixture.u32(0)),
+            ("SNAM", ESMFixture.f32(4)), ("ANAM", Data()),
+            ("PNAM", ESMFixture.u32(DialogueRuntimeFixture.runningQuest))
+        ]
+        let record = try Scene(record: ESMFixture.record("SCEN", formID: id, fields: fields))
+        return CatalogScene(
+            formID: FormID(id), key: .plugin(name: DialogueFixture.pluginName, objectID: id),
+            scene: record, quest: record.quest, isConversation: isConversation
         )
     }
 }
@@ -216,6 +257,12 @@ final class FakeSceneHost: SceneWorld {
 
     func sceneActorStatus(_ actor: ReferenceKey) -> SceneActorStatus {
         statuses[actor] ?? []
+    }
+
+    var unloaded: Set<ReferenceKey> = []
+
+    func hasLoadedBody(_ actor: ReferenceKey) -> Bool {
+        !unloaded.contains(actor)
     }
 }
 

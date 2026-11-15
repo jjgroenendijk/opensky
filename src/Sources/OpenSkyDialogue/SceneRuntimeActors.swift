@@ -87,7 +87,7 @@ extension SceneRuntime.Playback {
         var waits = false
         for (actor, reference) in runtime.filledActors(of: entry) where !actor.isOptional {
             guard let other = runtime.holder(of: reference, except: entry.formID) else { continue }
-            if other.scene.flags.contains(.interruptible) {
+            if other.scene.flags.contains(.interruptible) || other.isConversation {
                 events += runtime.stop(other.formID, reason: .interrupted)
             } else {
                 waits = true
