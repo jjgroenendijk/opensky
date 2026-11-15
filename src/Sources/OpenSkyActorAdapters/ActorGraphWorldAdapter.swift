@@ -68,11 +68,6 @@ public final class ActorGraphWorldAdapter {
         let moving = update.intent != .still
         state.gaits[update.actor] = update.gait
         state.groundMaterials[update.actor] = update.groundMaterial
-        if moving {
-            state.movers.insert(update.actor)
-        } else {
-            state.movers.remove(update.actor)
-        }
         graphs.setMotion(
             ActorGraphMotion(
                 isMoving: moving,

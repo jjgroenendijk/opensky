@@ -9,8 +9,6 @@ public final class ActorGraphPartState {
     public var gaits: [ReferenceKey: LocomotionGait] = [:]
     /// Each mover's ground material, which picks its footstep sound.
     public var groundMaterials: [ReferenceKey: FormID] = [:]
-    /// The movers whose last drive moved them, for their movement loops.
-    public var movers: Set<ReferenceKey> = []
     /// Each rolled actor base's sound types, after its audio template.
     var actorSounds: [LeveledActorRollKey: ActorSounds] = [:]
     /// Each rolled actor base's race graph project and weight.

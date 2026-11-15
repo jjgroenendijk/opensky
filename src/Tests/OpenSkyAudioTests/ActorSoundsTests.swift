@@ -1,5 +1,5 @@
-// An actor's sound types through its audio template, and which loops play near the
-// listener. See docs/engine/actor-sounds.md.
+// An actor's sound types through its audio template, the chance pick, and which loops
+// play near the listener. See docs/engine/actor-sounds.md.
 
 import OpenSkyAudio
 import OpenSkyFormatsESM
@@ -22,7 +22,8 @@ struct ActorSoundsTests {
             )
         ]),
         FormID(0x30): ActorSoundRecord(inheritsFrom: FormID(0x31), types: []),
-        FormID(0x31): ActorSoundRecord(inheritsFrom: FormID(0x30), types: [])
+        FormID(0x31): ActorSoundRecord(inheritsFrom: FormID(0x30), types: []),
+        FormID(0x40): ActorSoundRecord(inheritsFrom: FormID(0x10), types: [])
     ]
 
     private static func sounds(_ id: UInt32) -> ActorSounds {
@@ -39,15 +40,36 @@ struct ActorSoundsTests {
         #expect(Self.sounds(0x20).sounds(.movementLoop) == [Self.gears])
     }
 
-    @Test func aTemplateLoopEndsWithNoSounds() {
+    @Test func onlyOneStepOfInheritanceCounts() {
         #expect(Self.sounds(0x30) == .none)
+        #expect(Self.sounds(0x40) == .none)
     }
 
-    @Test func loopsFollowConsciousnessAndMovement() {
+    @Test func onlyTheConsciousLoopPlaysOnItsOwn() {
         let sounds = Self.sounds(0x10)
-        #expect(sounds.loops(isConscious: true, isMoving: false) == [Self.breath])
-        #expect(sounds.loops(isConscious: true, isMoving: true) == [Self.breath, Self.gears])
-        #expect(sounds.loops(isConscious: false, isMoving: true).isEmpty)
+        #expect(sounds.loops(isConscious: true) == [Self.breath])
+        #expect(sounds.loops(isConscious: false).isEmpty)
+    }
+
+    @Test func thePickTriesTheLowestChanceFirst() {
+        let sounds = ActorSounds(types: [
+            ActorSoundType(type: 0, entries: [
+                .init(sound: FormID(0xB), chance: 100), .init(sound: FormID(0xA), chance: 30)
+            ])
+        ])
+        var rolls = [12]
+        #expect(sounds.pick(.idle) { rolls.removeFirst() } == FormID(0xA))
+        rolls = [64, 99]
+        #expect(sounds.pick(.idle) { rolls.removeFirst() } == FormID(0xB))
+        #expect(rolls.isEmpty)
+    }
+
+    @Test func thePickPlaysNothingWhenNoRollPasses() {
+        let sounds = ActorSounds(types: [
+            ActorSoundType(type: 3, entries: [.init(sound: FormID(0xA), chance: 50)])
+        ])
+        #expect(sounds.pick(.hit) { 50 } == nil)
+        #expect(sounds.pick(.idle) { 0 } == nil)
     }
 
     @Test func thePlanKeepsTheNearestActorsInReach() {
@@ -56,12 +78,12 @@ struct ActorSoundsTests {
             ActorSoundSource(
                 key: .generated(UInt64(index + 1)),
                 position: SIMD3(Float(index) * 100, 0, 0),
-                sounds: sounds, isConscious: true, isMoving: false
+                sounds: sounds, isConscious: true
             )
         }
         let far = ActorSoundSource(
             key: .generated(99), position: SIMD3(ActorLoopPlan.reach + 1, 0, 0),
-            sounds: sounds, isConscious: true, isMoving: false
+            sounds: sounds, isConscious: true
         )
         let wanted = ActorLoopPlan.wanted(sources + [far], listener: .zero)
         #expect(wanted.count == ActorLoopPlan.actorLimit)

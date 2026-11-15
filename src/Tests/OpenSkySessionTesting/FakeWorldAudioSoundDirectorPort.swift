@@ -22,6 +22,9 @@ nonisolated public final class FakeWorldAudioSoundDirectorPort: WorldAudioSoundD
     public var playScriptSoundResult: Int32 = 0
     public var playSoundCalls: [PlaySoundCall] = []
     public var playSoundResult = false
+    public var playSoundTypeCalls: [PlaySoundTypeCall] = []
+    public var playSoundTypeResult = false
+    public var endAnimationSoundsCalls: [ReferenceKey] = []
     public var releaseAnimationSoundCalls: [(editorID: String, source: ReferenceKey)] = []
     public var retireScriptSoundsCallCount = 0
     public var retireScriptSoundsResult: [UInt64: Bool] = [:]
@@ -71,6 +74,20 @@ extension FakeWorldAudioSoundDirectorPort {
             [
                 "formID: " + String(describing: formID),
                 "source: " + String(describing: source),
+                "position: " + String(describing: position)
+            ].joined(separator: ", ")
+        }
+    }
+
+    nonisolated public struct PlaySoundTypeCall: CustomStringConvertible {
+        public let type: UInt32
+        public let actor: ReferenceKey
+        public let position: SIMD3<Float>
+
+        public var description: String {
+            [
+                "type: " + String(describing: type),
+                "actor: " + String(describing: actor),
                 "position: " + String(describing: position)
             ].joined(separator: ", ")
         }
@@ -143,6 +160,19 @@ nonisolated extension FakeWorldAudioSoundDirectorPort {
     ) -> Bool {
         playSoundCalls.append(PlaySoundCall(formID: formID, source: source, position: position))
         return playSoundResult
+    }
+
+    public func playSoundType(
+        _ type: UInt32,
+        actor: ReferenceKey,
+        at position: SIMD3<Float>
+    ) -> Bool {
+        playSoundTypeCalls.append(PlaySoundTypeCall(type: type, actor: actor, position: position))
+        return playSoundTypeResult
+    }
+
+    public func endAnimationSounds(source: ReferenceKey) {
+        endAnimationSoundsCalls.append(source)
     }
 
     public func releaseAnimationSound(editorID: String, source: ReferenceKey) {

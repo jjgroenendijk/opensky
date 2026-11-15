@@ -1,6 +1,5 @@
-// An actor's sound types (NPC_ CSDT) and the loops a living creature keeps playing:
-// breath and hum (conscious loop) and the moving parts of a machine (movement loop).
-// See docs/engine/actor-sounds.md.
+// An actor's sound types (NPC_ CSDT): the one its graph's `enum_` event asks for, and the
+// conscious loop a living creature keeps playing. See docs/engine/actor-sounds.md.
 
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
@@ -30,18 +29,15 @@ nonisolated public struct ActorSounds: Equatable, Sendable {
         self.types = types
     }
 
-    /// The sounds of `npc`. An audio template replaces the actor's own list, as the
-    /// Creation Kit locks that list; a template can name another in turn.
+    /// The sounds of `npc`: its own list, or the list of its audio template, which the
+    /// Creation Kit locks the own list to. A template that inherits in turn gives none.
     public static func of(_ npc: FormID, records: (FormID) -> ActorSoundRecord?) -> ActorSounds {
-        var current = npc
-        var visited: Set<FormID> = []
-        while visited.insert(current).inserted, let record = records(current) {
-            guard let template = record.inheritsFrom else {
-                return ActorSounds(types: record.types)
-            }
-            current = template
+        guard let record = records(npc) else { return .none }
+        guard let template = record.inheritsFrom else { return ActorSounds(types: record.types) }
+        guard let inherited = records(template), inherited.inheritsFrom == nil else {
+            return .none
         }
-        return .none
+        return ActorSounds(types: inherited.types)
     }
 
     /// Every sound of one type. An entry with a chance of 0 never plays.
@@ -52,11 +48,27 @@ nonisolated public struct ActorSounds: Equatable, Sendable {
             .compactMap(\.sound)
     }
 
-    /// The loops that play now: the conscious loop while awake, the movement loop on top
-    /// while the actor moves.
-    public func loops(isConscious: Bool, isMoving: Bool) -> [FormID] {
-        guard isConscious else { return [] }
-        return sounds(.consciousLoop) + (isMoving ? sounds(.movementLoop) : [])
+    /// The sound one event of `kind` plays: the entries in order of chance, lowest
+    /// first, each with its own roll in 0...99, and the first roll below its chance wins.
+    /// Nil when no roll passes.
+    public func pick(_ kind: ActorSoundKind, roll: () -> Int) -> FormID? {
+        let entries = types.filter { $0.type == kind.rawValue }.flatMap(\.entries)
+        let byChance = entries.indices.sorted { left, right in
+            let chances = (entries[left].chance ?? 100, entries[right].chance ?? 100)
+            return chances.0 == chances.1 ? left < right : chances.0 < chances.1
+        }
+        for index in byChance {
+            let entry = entries[index]
+            if roll() < Int(entry.chance ?? 100) {
+                return entry.sound
+            }
+        }
+        return nil
+    }
+
+    /// The loops that play now: the conscious loop while the actor is awake.
+    public func loops(isConscious: Bool) -> [FormID] {
+        isConscious ? sounds(.consciousLoop) : []
     }
 }
 
@@ -66,17 +78,14 @@ nonisolated public struct ActorSoundSource: Equatable, Sendable {
     public var position: SIMD3<Float>
     public var sounds: ActorSounds
     public var isConscious: Bool
-    public var isMoving: Bool
 
     public init(
-        key: ReferenceKey, position: SIMD3<Float>, sounds: ActorSounds,
-        isConscious: Bool, isMoving: Bool
+        key: ReferenceKey, position: SIMD3<Float>, sounds: ActorSounds, isConscious: Bool
     ) {
         self.key = key
         self.position = position
         self.sounds = sounds
         self.isConscious = isConscious
-        self.isMoving = isMoving
     }
 }
 
@@ -108,10 +117,7 @@ nonisolated public enum ActorLoopPlan {
             .prefix(actorLimit)
         var wanted: [ActorLoop: SIMD3<Float>] = [:]
         for (source, _) in near {
-            let loops = source.sounds.loops(
-                isConscious: source.isConscious, isMoving: source.isMoving
-            )
-            for sound in loops {
+            for sound in source.sounds.loops(isConscious: source.isConscious) {
                 wanted[ActorLoop(actor: source.key, sound: sound)] = source.position
             }
         }

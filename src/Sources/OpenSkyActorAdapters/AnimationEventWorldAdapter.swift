@@ -66,6 +66,16 @@ extension AnimationEventWorldAdapter: AnimationEventWorld {
         game.gameSession?.soundDirector?.releaseAnimationSound(editorID: editorID, source: source)
     }
 
+    public func playSoundType(
+        _ type: UInt32, source: ReferenceKey, at position: SIMD3<Float>
+    ) -> Bool {
+        game.gameSession?.soundDirector?.playSoundType(type, actor: source, at: position) ?? false
+    }
+
+    public func endAnimationSounds(source: ReferenceKey) {
+        game.gameSession?.soundDirector?.endAnimationSounds(source: source)
+    }
+
     public func shakeCamera(from position: SIMD3<Float>, strength: Float) {
         game.cinematicCamera.startShake(
             source: position, strength: strength, duration: Float(CameraShake.defaultDuration)

@@ -1,7 +1,6 @@
 // Clip annotations that ask the engine, not the graph, to act: sounds, camera shake,
-// head tracking, and script events. The player graph, the NPC idles, and the object graphs all send
-// their
-// fired names here. See docs/engine/animation-events.md.
+// head tracking, and script events. The player graph, the NPC idles, and the object graphs
+// all send their fired names here. See docs/engine/animation-events.md.
 
 import Foundation
 public import OpenSkyBehavior
@@ -27,6 +26,11 @@ public protocol AnimationEventWorld: AnyObject {
     func sendScriptAnimationEvent(_ name: String, from source: ReferenceKey)
     /// Sends `name` to the behaviour graphs of the effects on `source`.
     func sendEffectGraphEvent(_ name: String, from source: ReferenceKey)
+    /// Plays one sound of the `CSDT` sound type `type` of the actor `source`. False when
+    /// the actor has no sound of that type or no roll passed.
+    func playSoundType(_ type: UInt32, source: ReferenceKey, at position: SIMD3<Float>) -> Bool
+    /// Ends every loop `source` started through its animation sound events.
+    func endAnimationSounds(source: ReferenceKey)
 }
 
 extension AnimationEventWorld {
@@ -67,18 +71,8 @@ public final class AnimationEventCoordinator {
             return nil
         }
         switch action {
-        case let .playSound(editorID, node):
-            // `SoundPlayAt` names a bone; a source without it plays at its feet.
-            let atNode = node.flatMap { world.animationEventPosition(of: source, node: $0) }
-            guard let position = atNode ?? world.animationEventPosition(of: source)
-            else { return nil }
-            if !world.playAnimationSound(editorID: editorID, source: source, at: position) {
-                missingSounds.insert(editorID)
-            }
-        case let .stopSound(editorID):
-            world.stopAnimationSound(editorID: editorID, source: source)
-        case let .releaseSound(editorID):
-            world.releaseAnimationSound(editorID: editorID, source: source)
+        case .playSound, .stopSound, .releaseSound, .playSoundType, .endSounds:
+            guard runSound(action, from: source) else { return nil }
         case let .cameraShake(strength):
             guard let position = world.animationEventPosition(of: source) else { return nil }
             world.shakeCamera(from: position, strength: strength)
@@ -90,6 +84,32 @@ public final class AnimationEventCoordinator {
         counts[Self.kind(action), default: 0] += 1
         lastEvent = "\(name) from \(source)"
         return action
+    }
+
+    /// False when the sound has no place to play, so the event is not counted.
+    private func runSound(_ action: AnimationEventAction, from source: ReferenceKey) -> Bool {
+        switch action {
+        case let .playSound(editorID, node):
+            // `SoundPlayAt` names a bone; a source without it plays at its feet.
+            let atNode = node.flatMap { world.animationEventPosition(of: source, node: $0) }
+            guard let position = atNode ?? world.animationEventPosition(of: source)
+            else { return false }
+            if !world.playAnimationSound(editorID: editorID, source: source, at: position) {
+                missingSounds.insert(editorID)
+            }
+        case let .stopSound(editorID):
+            world.stopAnimationSound(editorID: editorID, source: source)
+        case let .releaseSound(editorID):
+            world.releaseAnimationSound(editorID: editorID, source: source)
+        case let .playSoundType(type):
+            guard let position = world.animationEventPosition(of: source) else { return false }
+            return world.playSoundType(type, source: source, at: position)
+        case .endSounds:
+            world.endAnimationSounds(source: source)
+        default:
+            break
+        }
+        return true
     }
 
     /// One readout line per action kind, in name order.
@@ -105,6 +125,8 @@ public final class AnimationEventCoordinator {
         case .cameraShake: "camera shake"
         case .headTracking: "head tracking"
         case .raiseEvent: "script event"
+        case .playSoundType: "sound type"
+        case .endSounds: "sound end"
         }
     }
 }

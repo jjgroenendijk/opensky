@@ -19,14 +19,19 @@ nonisolated public enum AnimationEventAction: Equatable, Sendable {
     /// Sends the payload of `Func.<name>` as its own event to the source's scripts. The
     /// graphs declare the bare name, and `dragonactorscript` registers for it.
     case raiseEvent(name: String)
+    /// Plays one sound of the actor's `CSDT` sound type with this number, 0...7.
+    case playSoundType(UInt32)
+    /// Ends every loop the source started through these sound events.
+    case endSounds
 
     /// The annotation names this parser reads, with the payload folded to `.*`, the way
     /// `HKXGapCensus` folds them. Compared without case.
     public static let handledEvents = [
         soundPlay + ".*", soundPlayAt + ".*",
         soundStop + ".*", soundRelease + ".*",
-        cameraShake + ".*", headTrackingOn, headTrackingOff, function + ".*"
-    ]
+        cameraShake + ".*", headTrackingOn, headTrackingOff, function + ".*",
+        soundAnimationEnd, soundAnimationEnd + ".*"
+    ] + soundTypeEvents
 
     static let soundPlay = "SoundPlay"
     static let soundPlayAt = "SoundPlayAt"
@@ -39,14 +44,17 @@ nonisolated public enum AnimationEventAction: Equatable, Sendable {
     static let headTrackingOff = "HeadTrackingOff"
     /// A NIF sequence text key, such as `Sound: DRSWoodGateHelgenOpen` on a door.
     static let textKeySound = "sound:"
+    static let soundAnimationEnd = "SoundAnimationEnd"
+    /// The events of the `CSDT` sound types, in type order.
+    static let soundTypeEvents = [
+        "enum_idle", "enum_aware", "enum_attack", "enum_hit",
+        "enum_death", "enum_weapon", "enum_movement", "enum_awake"
+    ]
 
     /// Nil for an annotation the graph or another runtime handles, or an empty payload.
     public static func parse(_ text: String) -> AnimationEventAction? {
-        if text.caseInsensitiveCompare(headTrackingOn) == .orderedSame {
-            return .headTracking(enabled: true)
-        }
-        if text.caseInsensitiveCompare(headTrackingOff) == .orderedSame {
-            return .headTracking(enabled: false)
+        if let action = bare(text) {
+            return action
         }
         if text.lowercased().hasPrefix(textKeySound) {
             let editorID = text.dropFirst(textKeySound.count).trimmingCharacters(in: .whitespaces)
@@ -73,6 +81,26 @@ nonisolated public enum AnimationEventAction: Equatable, Sendable {
         default:
             return nil
         }
+    }
+
+    /// The annotations with no payload: head tracking, the sound-type events, and
+    /// `SoundAnimationEnd`, which may also carry one.
+    private static func bare(_ text: String) -> AnimationEventAction? {
+        if text.caseInsensitiveCompare(headTrackingOn) == .orderedSame {
+            return .headTracking(enabled: true)
+        }
+        if text.caseInsensitiveCompare(headTrackingOff) == .orderedSame {
+            return .headTracking(enabled: false)
+        }
+        if
+            text.caseInsensitiveCompare(soundAnimationEnd) == .orderedSame
+            || text.lowercased().hasPrefix(soundAnimationEnd.lowercased() + ".")
+        {
+            return .endSounds
+        }
+        return soundTypeEvents.firstIndex {
+            $0.caseInsensitiveCompare(text) == .orderedSame
+        }.map { .playSoundType(UInt32($0)) }
     }
 
     private static func shake(_ payload: Substring) -> AnimationEventAction? {
