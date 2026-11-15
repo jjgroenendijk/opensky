@@ -4,12 +4,15 @@
 import Foundation
 import OpenSkyFormatsSWF
 public import OpenSkyMenusInterface
+public import OpenSkyRenderCore
 
 /// What the Tween menu needs from the app.
 public protocol TweenMenuWorld: MenuScreenWorld {
     /// The date line, such as "Sundas, 1:00 PM, 17th of Last Seed, 4E 201"; nil without a game.
     var gameDateText: String? { get }
     var tweenLevel: TweenMenuLevel { get }
+    /// The Tween camera's turn and wider view, set each frame while it moves.
+    func setMenuViewOffset(_ offset: MenuViewOffset)
 }
 
 /// The player's level as the bottom bar shows it.
@@ -36,7 +39,9 @@ public final class TweenMenuCoordinator: MenuScreen<TweenMovieEvent> {
     public private(set) var showsLevelUp = false
     /// The close animation runs; the menu shuts when it ends.
     public private(set) var isClosing = false
+    public private(set) var camera = TweenCamera()
     private var onChoose: ((TweenMenuChoice) -> Void)?
+    private var lastTick: Double?
     private weak var world: (any TweenMenuWorld)?
 
     public init(
@@ -69,6 +74,7 @@ public final class TweenMenuCoordinator: MenuScreen<TweenMovieEvent> {
         highlighted = nil
         isClosing = false
         self.onChoose = onChoose
+        camera.open()
         lastResult = "Tween menu open"
         present(
             path: TweenMenuMovieBridge.moviePath,
@@ -94,7 +100,7 @@ public final class TweenMenuCoordinator: MenuScreen<TweenMovieEvent> {
     override func handleKey(_ event: MenuInputEvent) {
         switch event {
         case .button(.cancel): startClosing()
-        case let .move(direction): highlighted = Self.choice(toward: direction)
+        case let .move(direction): highlight(Self.choice(toward: direction))
         case .button(.accept): highlighted.map(choose)
         default: return
         }
@@ -102,9 +108,11 @@ public final class TweenMenuCoordinator: MenuScreen<TweenMovieEvent> {
 
     override func handle(_ event: TweenMovieEvent) {
         switch event {
-        case let .highlight(choice): highlighted = choice
+        case let .highlight(choice): highlight(choice)
         case let .open(choice): choose(choice)
-        case .closing: isClosing = true
+        case .closing:
+            isClosing = true
+            camera.close()
         case .closed:
             close()
             lastResult = "Closed"
@@ -113,6 +121,22 @@ public final class TweenMenuCoordinator: MenuScreen<TweenMovieEvent> {
 
     override func didClose() {
         isClosing = false
+        camera.close()
+    }
+
+    /// The camera keeps easing back after the menu has shut.
+    override public func tick(now: Double) {
+        super.tick(now: now)
+        let dt = lastTick.map { Float(now - $0) } ?? 0
+        lastTick = now
+        guard camera.isActive else { return }
+        camera.step(dt: dt)
+        world?.setMenuViewOffset(camera.offset)
+    }
+
+    private func highlight(_ choice: TweenMenuChoice) {
+        highlighted = choice
+        camera.highlight(choice)
     }
 
     override var panel: MenuTextPanel {
@@ -135,6 +159,7 @@ public final class TweenMenuCoordinator: MenuScreen<TweenMovieEvent> {
             return
         }
         isClosing = true
+        camera.close()
         movie.publish { TweenMenuMovieBridge.startClose(runtime: $0) }
     }
 

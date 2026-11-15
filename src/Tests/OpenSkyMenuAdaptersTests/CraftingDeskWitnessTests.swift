@@ -8,12 +8,25 @@ import OpenSkyMagicInterface
 @testable import OpenSkyMenuAdapters
 import OpenSkyMenus
 import OpenSkyMenusInterface
+import OpenSkyProgressionInterface
+import OpenSkyRenderCore
 import OpenSkySessionTesting
 import Testing
 
 @MainActor
 struct CraftingDeskWitnessTests {
     private let host = MenuHost()
+
+    @Test func theTweenMenuReadsTheLevelAndSendsTheCameraOffset() {
+        host.fakeProgression.skillsMenuPlayer = .empty
+        let session = FakeGameSessionPort()
+        host.gameSession = session
+        let screens = MenuScreensWorldAdapter(game: host)
+        #expect(screens.tweenLevel.level == 1)
+        #expect(!screens.tweenLevel.levelUpReady, "no level waits without leveling")
+        screens.setMenuViewOffset(MenuViewOffset(horizontalFOVDegrees: 10))
+        #expect(session.menuViewOffsetValue?.horizontalFOVDegrees == 10)
+    }
 
     @Test func theCraftingDeskReadsTheOpenStationAndItsTexts() {
         let screens = MenuScreensWorldAdapter(game: host)

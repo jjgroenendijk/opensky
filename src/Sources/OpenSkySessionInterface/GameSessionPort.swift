@@ -53,6 +53,8 @@ public protocol GameSessionPort: AnyObject {
     @discardableResult func settlePlayerOnGround() -> Bool
     var timeOfDay: Float { get set }
     var uiScene: UIScene { get set }
+    /// A menu's turn and wider view over the player's camera, such as the Tween menu's.
+    var menuViewOffset: MenuViewOffset { get set }
     func updateWeather(deltaTime: Float)
     var viewFOVYRadians: Float { get }
     var walkController: WalkController { get }

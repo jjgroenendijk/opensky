@@ -2,6 +2,7 @@
 // simulation fills it once per frame, after every system has run, and the renderer
 // reads only it, so no game value can change half way through an encode.
 
+import Foundation
 public import OpenSkyRenderCore
 public import simd
 
@@ -16,6 +17,9 @@ public struct RenderFrameInput {
     /// A camera mesh's horizontal view; the renderer turns it into `fovYRadians`
     /// for the drawable's aspect. Nil keeps `fovYRadians`.
     public var horizontalFOVRadians: Float?
+    /// Widens the horizontal view by this much at the drawable's aspect, as a menu's
+    /// camera does.
+    public var extraHorizontalFOVRadians: Float = 0
     /// Fractional hour of day in [0, 24).
     public var timeOfDay = RenderFrameInput.defaultTimeOfDay
     /// Wind for precipitation, grass and particles. Calm when no weather is active.
@@ -121,5 +125,18 @@ private final class PoseRevisionSource {
     func next() -> PoseRevision {
         last += 1
         return PoseRevision(source: self, count: last)
+    }
+}
+
+extension RenderFrameInput {
+    /// The vertical view after the horizontal view at `aspect` widens by `extra`.
+    nonisolated static func widened(
+        fovY: Float,
+        byHorizontal extra: Float,
+        aspect: Float
+    ) -> Float {
+        guard extra != 0, aspect > 0 else { return fovY }
+        let horizontal = 2 * atan(tan(fovY / 2) * aspect) + extra
+        return 2 * atan(tan(horizontal / 2) / aspect)
     }
 }

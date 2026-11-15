@@ -40,4 +40,13 @@ struct RenderFrameInputTests {
         second.dynamicDeltas[1] = matrix_identity_float4x4
         #expect(first.revision != second.revision)
     }
+
+    @Test
+    func aWiderHorizontalViewWidensTheVerticalOneAtTheAspect() {
+        let square = RenderFrameInput.widened(fovY: .pi / 2, byHorizontal: .pi / 18, aspect: 1)
+        #expect(abs(square - (.pi / 2 + .pi / 18)) < 0.0001, "at aspect 1 both grow alike")
+        let wide = RenderFrameInput.widened(fovY: 1, byHorizontal: 0.2, aspect: 16 / 9)
+        #expect(wide > 1 && wide < 1.2, "a wide drawable gains less vertical view")
+        #expect(RenderFrameInput.widened(fovY: 1, byHorizontal: 0, aspect: 2) == 1)
+    }
 }

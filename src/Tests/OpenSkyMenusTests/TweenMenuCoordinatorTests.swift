@@ -23,7 +23,13 @@ final class FakeTweenWorld: TweenMenuWorld, MenuInputConsumer {
     var gameDateText: String? = "Sundas, 1:00 PM, 17th of Last Seed, 4E 201"
     var tweenLevel = TweenMenuLevel(level: 3, progress: 0.25, levelUpReady: false)
 
+    var viewOffsets: [MenuViewOffset] = []
+
     func showHUDNotification(_: String) {}
+
+    func setMenuViewOffset(_ offset: MenuViewOffset) {
+        viewOffsets.append(offset)
+    }
 
     var menuInputConsumer: (any MenuInputConsumer)? {
         self
