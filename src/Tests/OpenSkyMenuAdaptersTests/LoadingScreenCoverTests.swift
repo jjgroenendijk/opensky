@@ -79,8 +79,8 @@ struct LoadingScreenCoverTests {
         )])
         host.menuRecords = records
         let loading = LoadingScreenWorldAdapter(game: host, stage: nil, clock: { Date() })
-        #expect(loading.modelMarkerLoader() != nil)
+        #expect(loading.assetLoaders.modelMarkerLoader() != nil)
         host.menuRecords = nil
-        #expect(loading.modelMarkerLoader() == nil)
+        #expect(loading.assetLoaders.modelMarkerLoader() == nil)
     }
 }

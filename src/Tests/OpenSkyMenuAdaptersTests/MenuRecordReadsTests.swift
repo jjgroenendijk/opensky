@@ -33,14 +33,14 @@ struct MenuRecordReadsTests {
         #expect(menus().titleLighting == nil)
         #expect(menus().skillsRace.perkSkySource == nil)
         let loading = LoadingScreenWorldAdapter(game: host, stage: nil, clock: { Date() })
-        #expect(loading.cameraPathLoader() == nil)
+        #expect(loading.assetLoaders.cameraPathLoader() == nil)
     }
 
     @Test func recordsGiveTheFileReads() {
         host.menuRecords = records
         #expect(menus().skillsRace.perkSkySource != nil)
         let loading = LoadingScreenWorldAdapter(game: host, stage: nil, clock: { Date() })
-        #expect(loading.cameraPathLoader() != nil)
+        #expect(loading.assetLoaders.cameraPathLoader() != nil)
         #expect(menus().scriptMenus.leveledBase(of: Self.actor, base: FormID(0x40)) == FormID(0x40))
     }
 

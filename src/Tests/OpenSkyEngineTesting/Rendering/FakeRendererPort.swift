@@ -18,7 +18,6 @@ public final class FakeRendererPort: RendererPort {
         public let particleCount: Int
         public let hasLighting: Bool
         public var pointLightCount = 0
-        public var camera: LoadingCoverCamera?
     }
 
     public enum FakeError: Error {
@@ -134,8 +133,7 @@ public final class FakeRendererPort: RendererPort {
     public func setLoadingScene(_ cover: LoadingCoverScene?) throws {
         loadingCovers.append(LoadingCover(
             placements: cover?.placements, particleCount: cover?.particles.count ?? 0,
-            hasLighting: cover?.lighting != nil, pointLightCount: cover?.pointLights.count ?? 0,
-            camera: cover?.camera
+            hasLighting: cover?.lighting != nil, pointLightCount: cover?.pointLights.count ?? 0
         ))
     }
 
