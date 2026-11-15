@@ -1,5 +1,5 @@
 // The System page's Help and Installed Content topics, read from the load order.
-// The help topics are the messages of the DOBJ `HMPC` form list.
+// Each is a list of messages: the DOBJ `HMPC` form list for Help, `HMCC` for Installed Content.
 
 import OpenSkyCells
 import OpenSkyFormatsESM
@@ -16,16 +16,18 @@ extension MessageWorldAdapter: SystemMenuTopicSource {
 extension MessageRecordReads {
     func systemMenuTopics(_ page: SystemMenuPage) -> [SystemMenuTopic] {
         guard let data = game.menuRecords, let menus = data.menuRecords else { return [] }
-        switch page {
-        case .help:
-            let list = menus.helpManual.flatMap { data.formListStore?.flattened($0) }
-            let text = MessageWorldAdapter.Text(game: game)
-            let messages = (list?.entries ?? []).compactMap { entry in
+        let text = MessageWorldAdapter.Text(game: game)
+        func messages(_ list: ResolvedFormID?) -> [BuiltMessage] {
+            let entries = list.flatMap { data.formListStore?.flattened($0) }?.entries ?? []
+            return entries.compactMap { entry in
                 entry.flatMap { text.buildMessage(ReferenceKey(resolved: $0), arguments: []) }
             }
-            return SystemMenuTopic.help(messages)
+        }
+        switch page {
+        case .help:
+            return SystemMenuTopic.help(messages(menus.helpManual))
         case .installedContent:
-            return SystemMenuTopic.installedContent(menus.installedPlugins)
+            return SystemMenuTopic.installedContent(messages(menus.installedContent))
         default:
             return []
         }

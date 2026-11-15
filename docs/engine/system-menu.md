@@ -174,9 +174,21 @@ Help lists the `HelpManualPC` form list, which the `HMPC` default object names
 ([UESP DOBJ](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DOBJ)). Each entry is a
 `MESG`: its `FULL` is the title and its `DESC` the text.
 
-Installed Content lists the active plugins with their author, description, and masters from
-the `TES4` header. The game shows the names of Creations here instead. A Creation plugin has
-no such name in its header, so the game takes it from data outside the plugin files.
+Installed Content works the same way with the `HelpManualInstalledContent` form list in
+`Update.esm`, which the `HMCC` default object names. It holds seven messages, such as
+`Help_ccBGSSSE001` ("Fishing") and `Help_ccQDRSSE001` ("Survival Mode"). The game shows every
+entry, whether or not its plugin is installed, and a plugin with no entry does not appear. In
+the text, each carriage return shows as a space. A mod changes the list only by overriding the
+form list or its messages.
+
+A second list, `HelpManualInstalledContentAE` (77 messages, `HMAE`), is used when a check in
+the game passes, likely that the player owns the Anniversary Edition upgrade. OpenSky always uses
+the shorter list ([unverified values](/engine/unverified-values.md)).
+
+A clean-room read of `SkyrimSE.exe`, 2026-11-15, found that the engine fills the list from one
+of these two default objects, and that it reads no other file for it. The Creations download
+menu keeps a separate `ContentCatalog.txt`, which this list does not use. The default object
+tags were read from `Update.esm` on the install.
 
 ## Not done yet
 

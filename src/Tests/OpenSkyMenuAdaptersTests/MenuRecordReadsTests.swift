@@ -63,6 +63,30 @@ struct MenuRecordReadsTests {
         #expect(host.fakeSubtitles.advanceCalls == [5])
     }
 
+    @Test func installedContentListsTheMessagesOfTheCreationList() throws {
+        let file = try Fixture.plugin(records: [
+            Fixture.recordBytes("DOBJ", formID: 0x31, fields: [
+                ("DNAM", Data("HMCC".utf8) + Fixture.u32(0x60))
+            ]),
+            Fixture.recordBytes("FLST", formID: 0x60, fields: [("LNAM", Fixture.u32(0x50))]),
+            Fixture.recordBytes("MESG", formID: 0x50, fields: [
+                ("FULL", Fixture.zstring("Fishing")), ("DESC", Fixture.zstring("Cast.\rReel."))
+            ])
+        ])
+        let plugins = [("base.esm", file)]
+        records.menuRecords = MenuRecordData(
+            loadOrder: LoadOrderPlugins(plugins), settings: GameSettingStore(plugins: [])
+        )
+        records.formListStore = FormListStore(plugins: plugins)
+        records.presentationRecords = PresentationRecordStore(plugins: plugins)
+        host.menuRecords = records
+        host.fakeRuntimeState.conditionContextResult = ConditionContext()
+        let messages = MessageWorldAdapter(game: host, now: { Date() })
+        #expect(messages.systemMenuTopics(.installedContent) == [
+            SystemMenuTopic(title: "Fishing", text: "Cast. Reel.")
+        ])
+    }
+
     @Test func aMessageOwnedByAQuestBuildsWithoutQuests() throws {
         let owner = Fixture.recordBytes("MESG", formID: 0x51, fields: [
             ("DESC", Fixture.zstring("Owner"))

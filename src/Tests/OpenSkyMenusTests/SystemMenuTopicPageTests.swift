@@ -65,18 +65,16 @@ struct SystemMenuTopicPageTests {
         ])
     }
 
-    @Test func installedContentListsEachPluginWithItsHeader() {
-        let plugins = [
-            InstalledPlugin(name: "Skyrim.esm"),
-            InstalledPlugin(
-                name: "Example.esl", author: "Someone", summary: "Adds a thing.",
-                masters: ["Skyrim.esm", "Update.esm"]
+    @Test func installedContentShowsACarriageReturnAsASpace() {
+        let messages = [
+            BuiltMessage(
+                title: "Fishing", text: "Cast a line.\rReel it in.",
+                buttons: [], isMessageBox: false
             )
         ]
-        let topics = SystemMenuTopic.installedContent(plugins)
-        #expect(topics.map(\.title) == ["Skyrim.esm", "Example.esl"])
-        #expect(topics[0].text.isEmpty)
-        #expect(topics[1].text == "Author: Someone\nAdds a thing.\nMasters: Skyrim.esm, Update.esm")
+        #expect(SystemMenuTopic.installedContent(messages) == [
+            SystemMenuTopic(title: "Fishing", text: "Cast a line. Reel it in.")
+        ])
     }
 
     @Test func movieRowsCarryTheIndexTheMovieHandsBack() {
