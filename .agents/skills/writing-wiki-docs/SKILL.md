@@ -36,8 +36,8 @@ again. If a fact is only about one parser or type, put it in a doc comment there
 
 Every behaviour learned from the game goes into a `docs/` page: from the reference game, a
 clean-room read, or a probe of the install. It cost real work to find, and an issue body or
-a chat reply is lost once the work moves on. Write it as prose with its formulas, constants,
-and a worked example.
+a chat reply is lost once the work moves on. Write down its formulas, constants, and a
+worked example.
 
 Behaviour from a clean-room read of the game program gets no source paragraph: the page does not
 name the read, its version, or that the rule is still unconfirmed. The behaviour stands on its
@@ -61,7 +61,12 @@ information is about:
 [mermaid-diagrams.md](mermaid-diagrams.md) has an example of each type, the mistakes to avoid
 when choosing, the syntax traps, and how to check that a diagram renders.
 
-A diagram holds only what the prose holds, in OpenSky's own names.
+A diagram and the prose share the work; they do not repeat each other. When a diagram shows
+the states, events, steps, or branches, the prose does not walk through them again. The prose
+keeps what a diagram cannot show well: the formulas, the constants, the worked example, and
+why a rule exists. For example, an arrest page draws the states and the events between them,
+and its prose gives only the bounty values and one worked arrest. Use OpenSky's own names in
+the diagram.
 
 ## Writing style
 
