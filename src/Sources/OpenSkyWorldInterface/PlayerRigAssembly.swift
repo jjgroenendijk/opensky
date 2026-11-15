@@ -44,12 +44,16 @@ nonisolated public struct PlayerRigAssembly<Asset: Sendable, FaceMorph: Sendable
     /// Race, chargen, and expression morphs on the head parts; empty for the arms and a
     /// baked head.
     public let faceMorphs: [ObjectIdentifier: FaceMorph]
+    /// The armour whose worn model hangs cloth on the body; nil for none.
+    public let capeArmor: FormID?
 
     public init(
         assembly: ActorAssembly<Asset>,
-        faceMorphs: [ObjectIdentifier: FaceMorph] = [:]
+        faceMorphs: [ObjectIdentifier: FaceMorph] = [:],
+        capeArmor: FormID? = nil
     ) {
         self.assembly = assembly
         self.faceMorphs = faceMorphs
+        self.capeArmor = capeArmor
     }
 }

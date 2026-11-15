@@ -22,18 +22,14 @@ nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
         isCulled: Bool = true
     ) -> [RenderPlacement] {
         let posed = isCulled ? poseBounds?.transformed(by: transform) : nil
+        // Keyed by mesh, so a head's morphs and a cape's cloth reach only their own mesh.
         return models.map {
-            let morphs: [ObjectIdentifier: FaceMorphBuffer] =
-                switch $0.role {
-                case .faceGenHead, .headPart: faceMorphs
-                default: [:]
-                }
-            return RenderPlacement(
+            RenderPlacement(
                 model: $0.asset.model,
                 transform: transform,
                 bounds: Self.isAttachment($0.role) ? nil : posed,
                 referenceFormID: reference,
-                faceMorphs: morphs,
+                faceMorphs: faceMorphs,
                 layer: .actors,
                 owner: owner
             )

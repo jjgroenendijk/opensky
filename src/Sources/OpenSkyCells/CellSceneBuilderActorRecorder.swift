@@ -44,9 +44,15 @@ nonisolated extension CellSceneBuilder.CellActorRecorder {
         }
         build.counts.rendered += 1
         let faceMorph = owner.actorBuilder.morphs.makeFaceMorphPlayback(assembly: assembly)
+        let cloth = ClothPlayback.make(
+            actor: assembly.actor, assembly: assembly,
+            capeArmor: owner.actorVisualResolver?.verletCapeArmor
+        )
+        let morphs = (faceMorph?.renderBuffers ?? [:])
+            .merging(cloth?.renderBinding ?? [:]) { face, _ in face }
         build.placements.append(contentsOf: assembly.renderPlacements(
             at: assembly.transform,
-            faceMorphs: faceMorph?.renderBuffers ?? [:],
+            faceMorphs: morphs,
             owner: assembly.actor.rawValue,
             reference: assembly.actor.rawValue
         ))
@@ -67,6 +73,9 @@ nonisolated extension CellSceneBuilder.CellActorRecorder {
         }
         if let skeleton {
             build.animations.append(skeleton)
+        }
+        if let cloth {
+            build.animations.append(cloth)
         }
     }
 

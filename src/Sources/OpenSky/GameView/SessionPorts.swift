@@ -3,6 +3,7 @@
 
 import AppKit
 import MetalKit
+import OpenSkyActorAdapters
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIAdapters
@@ -332,6 +333,10 @@ extension SessionPorts {
 
     var mounts: any MountPort {
         scope.mounts
+    }
+
+    var clothReadout: ClothReadout {
+        scope.clothWorld.coordinator.readout
     }
 
     var movieWorld: any MovieWorldPort {

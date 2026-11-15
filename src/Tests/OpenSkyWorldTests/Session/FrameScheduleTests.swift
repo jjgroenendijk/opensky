@@ -53,7 +53,7 @@ struct FrameScheduleTests {
             .combatLoop,
             .packages, .followerCommands, .perception, .idles, .dragonFlight, .actorGraphs,
             .vehicles, .furniture,
-            .objectAnimation, .effectGraphs,
+            .objectAnimation, .effectGraphs, .cloth,
             .dialogueCamera, .story
         ])
     }

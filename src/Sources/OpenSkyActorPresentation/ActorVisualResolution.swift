@@ -89,6 +89,9 @@ nonisolated public struct ActorVisualResolver: Sendable {
     public var leveling = LeveledListRoller()
     /// CSTY records, whose Equipment Score Mults pick a carried weapon.
     public var combatStyles: [UInt32: CombatStyle] = [:]
+    /// The armour whose worn model hangs cloth on the actor: the default object "Verlet
+    /// Cape" (`DOBJ` `AIVC`), nil without Dawnguard (docs/engine/cape-cloth.md).
+    public var verletCapeArmor: FormID?
 
     var outfitter: ActorOutfitResolver {
         ActorOutfitResolver(
@@ -177,6 +180,8 @@ nonisolated public struct ActorVisualResolver: Sendable {
         }
         resolver.skippedRecords = skipped
         resolver.leveling = leveling
+        resolver.verletCapeArmor = DefaultObjectStore(plugins: loadOrder.files)
+            .object(tag: "AIVC").flatMap { loadOrder.space.localFormID(of: $0) }
         return resolver
     }
 

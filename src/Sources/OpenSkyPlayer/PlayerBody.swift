@@ -32,6 +32,8 @@ nonisolated public final class PlayerBody {
     public let faceMorphs: [ObjectIdentifier: FaceMorphBuffer]
     /// The face's blinks and expressions, driven like an NPC's.
     public let face: FaceMorphPlayback?
+    /// The cape's cloth, when the body wears the cape armour.
+    public let cloth: ClothPlayback?
 
     /// Where the body stands, rebuilt from the capsule every frame.
     public private(set) var transform = matrix_identity_float4x4
@@ -41,16 +43,19 @@ nonisolated public final class PlayerBody {
     public init(
         assembly: ActorAssembly<ActorRenderAsset>,
         animation: SkinnedPosePlayback,
-        faceMorphs: [ObjectIdentifier: FaceMorphBuffer] = [:]
+        faceMorphs: [ObjectIdentifier: FaceMorphBuffer] = [:],
+        cloth: ClothPlayback? = nil
     ) {
         self.assembly = assembly
         self.animation = animation
         self.faceMorphs = faceMorphs
+        self.cloth = cloth
         face = faceMorphs.isEmpty ? nil : FaceMorphPlayback(
             actor: Self.actorFormID, bindings: faceMorphs, pairedPaths: [], misses: []
         )
         render = RenderScene(instances: assembly.renderPlacements(
-            at: matrix_identity_float4x4, faceMorphs: faceMorphs
+            at: matrix_identity_float4x4,
+            faceMorphs: faceMorphs.merging(cloth?.renderBinding ?? [:]) { face, _ in face }
         ))
     }
 
@@ -72,7 +77,7 @@ nonisolated public final class PlayerBody {
         transform = wanted
         render = RenderScene(instances: assembly.renderPlacements(
             at: wanted,
-            faceMorphs: faceMorphs
+            faceMorphs: faceMorphs.merging(cloth?.renderBinding ?? [:]) { face, _ in face }
         ))
     }
 

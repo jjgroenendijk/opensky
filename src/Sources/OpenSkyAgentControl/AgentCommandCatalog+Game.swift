@@ -39,6 +39,7 @@ nonisolated extension AgentCommandCatalog {
         command(
             "state.mount", "The player's mount: kind, phase, motion, and a dragon's orders."
         ),
+        command("state.cloth", "The cape cloth switch and the capes stepped last frame."),
         command(
             "state.paired",
             "Each paired animation playing: its idle, and each actor's role and paired clips."

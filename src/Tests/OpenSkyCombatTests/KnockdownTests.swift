@@ -91,6 +91,19 @@ struct KnockdownTests {
         #expect(coordinator.deathState(of: Self.actor) == nil)
     }
 
+    @Test func aLoadedActorHandsOutItsRagdoll() {
+        let world = FakeRagdollSessionWorld()
+        world.ragdollResidents = [RagdollResident(key: Self.actor, position: .zero)]
+        let coordinator = RagdollCoordinator(
+            store: WorldStateStore(), world: world,
+            data: RagdollSessionData(loadDefinition: { _, _, _ in
+                RagdollFixture.limb().definition
+            })
+        )
+        #expect(coordinator.ragdollDefinition(of: Self.actor)?.bones.count == 3)
+        #expect(coordinator.ragdollDefinition(of: .generated(99)) == nil)
+    }
+
     @Test func aDeadActorIsNotKnockedDown() {
         let world = FakeRagdollSessionWorld()
         world.ragdollResidents = [RagdollResident(key: Self.actor, position: .zero)]

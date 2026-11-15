@@ -15,6 +15,8 @@ nonisolated public final class FakeRagdollPort: RagdollPort {
     public var advanceCalls: [AdvanceCall] = []
     public var advanceResult: [RagdollCommand] = []
     public var deathSettingsValue: DeathSettings?
+    public var ragdollDefinitionCalls: [ReferenceKey] = []
+    public var ragdollDefinitionResult: RagdollDefinition?
     public var dismemberCalls: [ReferenceKey] = []
     public var dismemberResult = false
     public var dropPlayerBodyCallCount = 0
@@ -93,6 +95,11 @@ nonisolated extension FakeRagdollPort {
             return deathSettingsValue
         }
         set { deathSettingsValue = newValue }
+    }
+
+    public func ragdollDefinition(of key: ReferenceKey) -> RagdollDefinition? {
+        ragdollDefinitionCalls.append(key)
+        return ragdollDefinitionResult
     }
 
     @discardableResult

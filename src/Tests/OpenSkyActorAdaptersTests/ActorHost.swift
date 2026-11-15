@@ -13,12 +13,14 @@ import simd
 
 @MainActor
 final class ActorHost: ActorGraphGraphEventsHost, ActorGraphWorldHost, ActorWorldHost,
-    AnimationEventWorldHost, BeastFormWorldHost, DragonFlightCandidatesHost, DragonFlightWorldHost,
+    AnimationEventWorldHost, ClothWorldHost, BeastFormWorldHost, DragonFlightCandidatesHost,
+    DragonFlightWorldHost,
     EffectGraphWorldHost, IdlePlacementHost, IdleWorldHost, MountDragonRidingHost, MountWorldHost,
     ObjectAnimationWorldHost, PlayerFaceHost, PlayerFirstPersonHost, PlayerWorldHost,
     VehicleWorldHost
 {
     let fakeActorGraphWorld = FakeActorGraphWorldPort()
+    let fakeRagdoll = FakeRagdollPort()
     let fakeActorGraphs = FakeActorGraphPort()
     let fakeActorValues = FakeActorValuePort()
     let fakeActorWorld = FakeActorWorldPort()
@@ -216,6 +218,10 @@ final class ActorHost: ActorGraphGraphEventsHost, ActorGraphWorldHost, ActorWorl
 
     var sequenceDoors: any SequenceDoorPort {
         fakeSequenceDoors
+    }
+
+    var ragdoll: any RagdollPort {
+        fakeRagdoll
     }
 
     var streamer: any CellStreamerPort {

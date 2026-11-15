@@ -27,6 +27,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case flight(reference: String?)
     /// The player's mount: its kind, phase, motion, and a dragon's flight and orders.
     case mount
+    /// The cape cloth switch and how many capes stepped in the last frame.
+    case cloth
     /// Each paired animation playing, with both actors' graph roles and paired clips.
     case paired
     /// Follower command mode: its phase, the follower, and the last decision and outcome.
@@ -89,6 +91,7 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     private static func session(_ name: String) -> Self? {
         switch name {
         case "mount": .mount
+        case "cloth": .cloth
         case "paired": .paired
         case "favor": .favor
         case "impulses": .impulses

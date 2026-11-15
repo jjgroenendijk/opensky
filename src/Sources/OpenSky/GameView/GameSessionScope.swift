@@ -364,6 +364,11 @@ final class GameSessionScope {
     lazy var sequenceDoors = factories.makeSequenceDoors()
     lazy var nodeControllers = factories.makeNodeControllers()
 
+    /// The capes that move as cloth on the loaded actors.
+    lazy var clothWorld = ClothWorldAdapter(
+        game: ports, stage: stage,
+        isEnabled: playerSettings.store.bool(.characterCapeCloth)
+    )
     /// The behaviour graphs of the effects on actors, which hear the actors' events.
     lazy var effectGraphWorld = EffectGraphWorldAdapter(game: ports, stage: stage)
     lazy var effectGraphs = EffectGraphCoordinator(

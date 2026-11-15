@@ -112,6 +112,33 @@ nonisolated public final class FaceMorphBuffer: Sendable {
         }
     }
 
+    /// A stream with no TRI targets, whose position deltas a simulation writes, such as
+    /// the cape cloth (docs/engine/cape-cloth.md).
+    public init(device: any MTLDevice, simulating mesh: RenderMesh) throws {
+        vertexCount = mesh.vertexCount
+        targets = []
+        fixedWeights = [:]
+        deltas = Mutex(Array(
+            repeating: MorphVertexDelta(position: .zero, normal: .zero), count: mesh.vertexCount
+        ))
+        let length = vertexCount * MorphVertexLayout.stride * GPUFactory.maxFramesInFlight
+        guard let buffer = device.makeBuffer(length: length, options: .storageModeShared) else {
+            throw FaceMorphError.bufferAllocationFailed
+        }
+        self.buffer = buffer
+        buffer.label = "\(mesh.name ?? "cloth").cloth-deltas"
+        for slot in 0 ..< GPUFactory.maxFramesInFlight {
+            prepare(slot: slot)
+        }
+    }
+
+    /// Sets each vertex's position delta; the normals stay. A wrong count is ignored.
+    public func setPositionDeltas(_ positions: [SIMD3<Float>]) {
+        guard positions.count == vertexCount else { return }
+        let next = positions.map { MorphVertexDelta(position: $0, normal: .zero) }
+        deltas.withLock { $0 = next }
+    }
+
     public func update(weights: [String: Float]) {
         let composed = FaceMorphComposer.compose(
             targets: targets, weights: weights.merging(fixedWeights) { $1 },

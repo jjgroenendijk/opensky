@@ -12,6 +12,7 @@ import OpenSkyInventoryInterface
 import OpenSkyLoading
 import OpenSkyMenusInterface
 import OpenSkyObjectAnimation
+public import OpenSkyPlayer
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRendering
@@ -28,6 +29,7 @@ import simd
 /// What `AgentObjectsAdapter` reads from the session.
 @MainActor
 public protocol AgentObjectsHost: AnyObject, SendableMetatype {
+    var clothReadout: ClothReadout { get }
     var effectGraphs: any EffectGraphPort { get }
     var effectModelPoser: any EffectModelPoserPort { get }
     var factions: any FactionPort { get }
@@ -46,6 +48,17 @@ public struct AgentObjectsAdapter {
 }
 
 extension AgentObjectsAdapter {
+    func clothState() -> AgentJSON {
+        let readout = game.clothReadout
+        return [
+            "enabled": .bool(readout.isEnabled),
+            "stepped": .init(readout.steppedCount),
+            "capes": .array(readout.capes.map { cape in
+                ["actor": .formID(cape.actor.rawValue), "bone": .string(cape.bone)]
+            })
+        ]
+    }
+
     func favorState() -> AgentJSON {
         followers.favorState()
     }
