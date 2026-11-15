@@ -65,8 +65,13 @@ Differences from the game:
   question before New and Continue. On `NEW`, OpenSky calls `ConfirmNewGame` with
   `sConfirmNew`, and starts the game when the movie calls `StartNewGame` after a yes. The
   game uses `sConfirmNewMods` when Creations are loaded; OpenSky has no Creations manager.
-  The game asks before Continue only while a game is in progress. OpenSky does not ask, and
-  treats `ContinueLastSavedGame` as Continue.
+  The game asks before Continue only while a game is in progress: after a new game or a load
+  in this run, the player quit to the main menu. Then OpenSky calls `ConfirmContinue` with
+  `sConfirmContinue`, and loads the newest save when the movie calls `ContinueLastSavedGame`
+  after a yes. Otherwise Continue loads at once.
+- When the player's settings file cannot be read, an OK box over the main menu says so, once,
+  with `sCantLoadSettings`. When only its controls cannot be read, it says `sCantLoadControls`.
+  The defaults are used in both cases.
 
 ## The held world
 

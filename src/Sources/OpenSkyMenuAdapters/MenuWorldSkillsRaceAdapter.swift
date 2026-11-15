@@ -144,6 +144,10 @@ extension MenuWorldSkillsRaceAdapter {
     var recordIdentity: PlayerIdentityState? {
         races.recordIdentity
     }
+
+    var prisonerName: String {
+        races.prisonerName
+    }
 }
 
 /// The playable races, their head options, and the identities the race menu starts from.
@@ -212,7 +216,13 @@ struct RaceMenuReads {
         guard let player = game.mapWorld.records?.player else { return nil }
         return PlayerIdentityState(
             record: player, details: player.details,
-            name: game.mapWorld.text(player.name) ?? "Prisoner"
+            name: game.mapWorld.text(player.name) ?? prisonerName
         )
+    }
+
+    /// `sPrisoner`: the player's name until the race menu names them.
+    var prisonerName: String {
+        game.menuRecords?.gameSettings.text("sPrisoner").flatMap { game.mapWorld.text($0) }
+            ?? "Prisoner"
     }
 }

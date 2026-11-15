@@ -78,7 +78,8 @@ extension TitleMenuCoordinator {
     /// The row the movie picked. Load runs in the movie (`answerLoadCalls`).
     func apply(_ request: TitleMenuMovieBridge.Request) {
         switch request {
-        case .resume, .continueLastSaved: activate(.resume)
+        case .resume: askContinue()
+        case .continueLastSaved: activate(.resume)
         case .new: askNewGame()
         case .startNewGame: activate(.new)
         case .quit: activate(.quit)
@@ -90,22 +91,34 @@ extension TitleMenuCoordinator {
     /// The movie shows `sConfirmNew` and calls `StartNewGame` on yes. Without a movie
     /// there is no question, and New starts at once.
     private func askNewGame() {
-        guard movieLoaded, let renderer = world?.renderer else {
-            activate(.new)
+        let text = (world?.titleSettings ?? .vanilla).confirmNewText
+        ask(text, callback: TitleMenuMovieBridge.confirmNewGameCallback, otherwise: .new)
+    }
+
+    /// The game asks `sConfirmContinue` only while a game is in progress, because only
+    /// then can progress be lost. The movie calls `ContinueLastSavedGame` on yes.
+    private func askContinue() {
+        guard gameStarted else {
+            activate(.resume)
             return
         }
-        let text = (world?.titleSettings ?? .vanilla).confirmNewText
+        let text = (world?.titleSettings ?? .vanilla).confirmContinueText
+        ask(text, callback: TitleMenuMovieBridge.confirmContinueCallback, otherwise: .resume)
+    }
+
+    private func ask(_ text: String, callback: String, otherwise entry: TitleMenuEntry) {
+        guard movieLoaded, let renderer = world?.renderer else {
+            activate(entry)
+            return
+        }
         do {
             try renderer.updateSWFRuntime {
-                $0.callMovie(
-                    TitleMenuMovieBridge.confirmNewGameCallback,
-                    arguments: [.string(text)]
-                )
+                $0.callMovie(callback, arguments: [.string(text)])
             }
             lastResult = "Asked: \(text)"
         } catch {
             movie.record(error)
-            activate(.new)
+            activate(entry)
         }
     }
 }

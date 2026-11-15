@@ -8,6 +8,9 @@ nonisolated public enum SkillsMenuText: String, GameSettingTextKey {
     case legendaryConfirm = "sLegendaryResetConfirm"
     /// Asked after a Yes to the first question.
     case legendarySecondConfirm = "sLegendaryResetSecondConfirm"
+    /// The buttons of the three questions: yes, and cancel in place of no.
+    case yes = "sYesText"
+    case cancel = "sCancel"
 
     public var fallback: String {
         switch self {
@@ -15,6 +18,8 @@ nonisolated public enum SkillsMenuText: String, GameSettingTextKey {
         case .legendaryConfirm:
             "Making a skill Legendary will set it to 15 and return its perks. Are you sure?"
         case .legendarySecondConfirm: "Are you sure you want to make this skill Legendary?"
+        case .yes: "Yes"
+        case .cancel: "Cancel"
         }
     }
 }

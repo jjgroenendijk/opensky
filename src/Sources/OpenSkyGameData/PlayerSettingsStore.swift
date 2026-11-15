@@ -55,6 +55,8 @@ public final class PlayerSettingsStore {
     public let catalog: PlayerSettingsCatalog
     public private(set) var model = PlayerSettingsModel()
     private let persistence: (any PlayerSettingsPersistence)?
+    /// What could not be read from the file at start, until the player was told.
+    private var loadFailure: PlayerSettingsLoadFailure?
     private var observers: [(token: UUID, observer: Observer)] = []
 
     /// A file that cannot be read or decoded starts from defaults and is reported.
@@ -67,14 +69,22 @@ public final class PlayerSettingsStore {
         do {
             if let data = try persistence?.loadSettings() {
                 model = try PlayerSettingsModel(decoding: data, catalog: catalog)
+                loadFailure = model.bindingsDamaged ? .controls : nil
             }
         } catch {
+            loadFailure = .settings
             Self.logger
                 .error("[ERROR] settings load: \(String(describing: error), privacy: .public)")
         }
         for (id, value) in PlayerSettingsOverrides.current {
             _ = model.set(id, to: value, in: catalog)
         }
+    }
+
+    /// What could not be read at start, once: the game tells the player a single time.
+    public func takeLoadFailure() -> PlayerSettingsLoadFailure? {
+        defer { loadFailure = nil }
+        return loadFailure
     }
 
     /// An unsaved copy of `other` with `overrides` on top, for one benchmark run.
@@ -157,4 +167,10 @@ public final class PlayerSettingsStore {
 nonisolated extension PlayerSettingID {
     /// Not a stored setting: the notification sent when a key binding changes.
     public static let keyBindingsChanged = Self("controls.keyBindings")
+}
+
+/// The part of the settings file that could not be read; its defaults are used instead.
+nonisolated public enum PlayerSettingsLoadFailure: Sendable {
+    case settings
+    case controls
 }

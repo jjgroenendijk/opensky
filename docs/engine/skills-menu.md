@@ -30,7 +30,8 @@ The menu has three parts:
 
 A yes to the first question asks a second one, `sLegendaryResetSecondConfirm` (also set by
 `Update.esm`): "Are you sure you want to make this skill Legendary?". Only a yes to both makes
-the skill legendary; a no to either goes back to the skills.
+the skill legendary; a no to either goes back to the skills. The buttons of all three questions
+are `sYesText` and `sCancel`, so the no button reads "Cancel".
 
 The ring follows the order of the Dragonborn altar's skill list in `DLC2MiraakAltarScript`:
 the six magic skills, then the six warrior skills, then the six thief skills. Vanilla draws

@@ -29,6 +29,7 @@ struct TitleMenuSettingsTests {
             return value
         }
         #expect(settings.confirmNewText == "Begin anew?")
+        #expect(settings.cantLoadControlsText == "Unable to load controls. Defaults will be used.")
         #expect(TitleMenuSettings.vanilla.confirmNewText == "Start a new game?")
     }
 }

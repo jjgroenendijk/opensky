@@ -14,6 +14,8 @@ nonisolated public struct PlayerSettingsModel: Equatable, Sendable {
     public private(set) var keyBindings: [String: Int] = [:]
     /// Text values, such as a folder path. Empty text means the default.
     public private(set) var texts: [PlayerSettingID: String] = [:]
+    /// The file's key bindings could not all be read, so the defaults stand in for them.
+    public private(set) var bindingsDamaged = false
 
     public init() {}
 
@@ -101,8 +103,13 @@ nonisolated extension PlayerSettingsModel {
             guard let number = (raw as? NSNumber)?.doubleValue else { continue }
             set(PlayerSettingID(key), to: number, in: catalog)
         }
-        for (key, raw) in migrated["keyBindings"] as? [String: Any] ?? [:] {
-            guard let code = raw as? Int, (0 ... 0xFFFF).contains(code) else { continue }
+        let bindings = migrated["keyBindings"]
+        bindingsDamaged = bindings != nil && !(bindings is [String: Any])
+        for (key, raw) in bindings as? [String: Any] ?? [:] {
+            guard let code = raw as? Int, (0 ... 0xFFFF).contains(code) else {
+                bindingsDamaged = true
+                continue
+            }
             keyBindings[key] = code
         }
         for (key, raw) in migrated["texts"] as? [String: Any] ?? [:] {

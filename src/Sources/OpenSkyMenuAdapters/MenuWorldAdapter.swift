@@ -101,7 +101,7 @@ public final class MenuWorldAdapter {
         let identity = playerIdentity
         let race = records?.playableRaces.first { $0.formID == identity?.race }
         return (
-            identity?.name ?? "Prisoner",
+            identity?.name ?? skillsRace.prisonerName,
             game.mapWorld.text(race?.name) ?? race?.editorID ?? ""
         )
     }

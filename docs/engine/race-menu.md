@@ -184,7 +184,7 @@ Its calls were measured with `openskycli swf movie-probe`.
 | `SetCategoriesList` | The seven categories, each a name and its flag |
 | `SetRaceList` | Per race: name, `RACE` `DESC`, and 1 for the current race |
 | `SetOptionSliders` | Per slider: 8 values, the name, page flag, callback, minimum, maximum, value, step, and id |
-| `SetNameText` | The character's name |
+| `SetNameText` | The character's name; `sPrisoner` until the player names them |
 
 | Movie calls | Effect |
 | --- | --- |

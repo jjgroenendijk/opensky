@@ -38,6 +38,19 @@ struct PlayerSettingsStoreTests {
         #expect(second.model.keyBindings == bindings)
     }
 
+    /// The player is told once: the whole file, or only its controls.
+    @Test func aFileThatCannotBeReadIsReportedOnce() {
+        let disk = MemoryPersistence()
+        disk.data = Data("not json".utf8)
+        let broken = PlayerSettingsStore(persistence: disk)
+        #expect(broken.takeLoadFailure() == .settings)
+        #expect(broken.takeLoadFailure() == nil)
+        disk.data = Data(#"{"schema": 3, "keyBindings": {"Main Gameplay|Jump": "space"}}"#.utf8)
+        #expect(PlayerSettingsStore(persistence: disk).takeLoadFailure() == .controls)
+        disk.data = Data(#"{"schema": 3, "keyBindings": {"Main Gameplay|Jump": 57}}"#.utf8)
+        #expect(PlayerSettingsStore(persistence: disk).takeLoadFailure() == nil)
+    }
+
     @Test func aBenchmarkCopyTakesOverridesAndNeverSaves() {
         let disk = MemoryPersistence()
         let saved = PlayerSettingsStore(persistence: disk)

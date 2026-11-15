@@ -10,6 +10,14 @@ nonisolated public struct TitleMenuSettings: Equatable, Sendable {
     public var updateESMVersion = 8
     /// `sConfirmNew`: the question before New starts a game.
     public var confirmNewText = "Start a new game?"
+    /// `sConfirmContinue`: the question before Continue loads the last save while a game
+    /// is in progress.
+    public var confirmContinueText = "Continue from your last saved game?"
+
+    /// `sCantLoadSettings` and `sCantLoadControls`: the OK box when the player's settings
+    /// file, or its controls, could not be read.
+    public var cantLoadSettingsText = "Unable to load settings. Defaults will be used."
+    public var cantLoadControlsText = "Unable to load controls. Defaults will be used."
 
     public static let vanilla = Self()
 
@@ -22,6 +30,9 @@ nonisolated public struct TitleMenuSettings: Equatable, Sendable {
         store.read("fCreditsScrollSpeed", into: &settings, \.creditsScrollSpeed)
         store.read("iUpdateESMVersion", into: &settings, \.updateESMVersion)
         store.read("sConfirmNew", into: &settings, \.confirmNewText, text: text)
+        store.read("sConfirmContinue", into: &settings, \.confirmContinueText, text: text)
+        store.read("sCantLoadSettings", into: &settings, \.cantLoadSettingsText, text: text)
+        store.read("sCantLoadControls", into: &settings, \.cantLoadControlsText, text: text)
         return settings
     }
 
