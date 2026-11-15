@@ -11,6 +11,7 @@ public protocol SystemMenuPort: AnyObject {
     func open()
     func quicksave()
     func route(_ event: MenuInputEvent)
+    func route(_ event: MenuPointerEvent)
     var snapshot: SystemMenuControlSnapshot { get }
     var topicPage: SystemMenuTopicPageModel? { get }
 }

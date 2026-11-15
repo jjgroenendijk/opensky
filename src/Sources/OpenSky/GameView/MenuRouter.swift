@@ -43,7 +43,7 @@ final class MenuRouter {
     /// The menus whose movie hit tests the cursor, so it must be visible.
     static let cursorMenus: [MenuIdentifier] = [
         TitleMenuCoordinator.identifier, RaceMenuCoordinator.identifier,
-        MessageCoordinator.identifier
+        MessageCoordinator.identifier, SystemMenuCoordinator.identifier
     ] + MenuScreens.cursorMenus
 
     /// A script opens the race menu during play, while look holds the cursor.

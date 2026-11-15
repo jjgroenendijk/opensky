@@ -77,6 +77,14 @@ extension SystemMenuCoordinator {
         publishSettingsRows()
     }
 
+    /// The movie changed a row itself, after a click or its Defaults button. The
+    /// movie already shows the value, so the rows are not published again.
+    func changeSetting(row: Int, to value: Double) {
+        guard model.page == .settings, settingsPage.rows.indices.contains(row) else { return }
+        settingsPage.select(row: row)
+        settings.store.set(settingsPage.rows[row], to: value)
+    }
+
     /// A key pressed while the Controls page waits for one. True when taken.
     public func captureKey(scanCode: UInt32) -> Bool {
         guard model.isOpen, model.page == .controls, controlsPage.waitingForKey else {
