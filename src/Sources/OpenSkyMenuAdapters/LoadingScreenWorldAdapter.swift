@@ -45,9 +45,7 @@ public final class LoadingScreenWorldAdapter {
     private var startCoverSince: Double?
     /// Where a fast travel lands; the cover waits until the grid is centered there.
     private var moveTarget: SIMD3<Float>?
-    /// Whether the pointer button is down, so pointer motion drags the object.
-    private var dragHeld = false
-    private var heldDirections: Set<MenuInputEvent.Direction> = []
+    let input: LoadingScreenInputRouter
     lazy var movie = MenuMovieOverlay(movies: game.swfMovies) { [weak self] in
         self?.game.renderer
     }
@@ -70,6 +68,7 @@ public final class LoadingScreenWorldAdapter {
         self.clock = clock
         presentationHost = game
         self.game = game
+        input = LoadingScreenInputRouter(game: game)
         state.nextTip = { [weak game] in game?.loadingScreens.nextTip() }
     }
 
@@ -130,9 +129,29 @@ public final class LoadingScreenWorldAdapter {
 
     // MARK: - The loading movie
 
+    public func route(_ event: MenuInputEvent) {
+        input.route(event)
+    }
+
+    public func route(_ event: MenuPointerEvent) {
+        input.route(event)
+    }
+}
+
+/// Turns the loading menu's input into drag and stick steps.
+final class LoadingScreenInputRouter {
+    let game: any LoadingScreenWorldHost
+    /// Whether the pointer button is down, so pointer motion drags the object.
+    private var dragHeld = false
+    private var heldDirections: Set<MenuInputEvent.Direction> = []
+
+    init(game: any LoadingScreenWorldHost) {
+        self.game = game
+    }
+
     /// A drag with the button held turns the object and changes the field of view,
     /// as the game's mouse does. The arrow keys stand in for the game's stick.
-    public func route(_ event: MenuInputEvent) {
+    func route(_ event: MenuInputEvent) {
         switch event {
         case .button(.accept):
             dragHeld = true
@@ -151,7 +170,7 @@ public final class LoadingScreenWorldAdapter {
 
     /// The button's press and release, from the cursor; a captured cursor's press
     /// arrives as the accept button.
-    public func route(_ event: MenuPointerEvent) {
+    func route(_ event: MenuPointerEvent) {
         switch event.phase {
         case .pressed: dragHeld = true
         case .released: dragHeld = false
