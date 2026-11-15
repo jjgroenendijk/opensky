@@ -1,6 +1,7 @@
 // The load-order records behind cameras, combat styles, messages, and body parts:
 // CAMS and CPTH, CSTY, MESG, LSCR with the STAT models loading screens show, and
-// BPTD. Built once off one `RecordIndex`. See docs/formats/camera-records.md,
+// BPTD. Built once off one `RecordIndex`; a STAT decodes only when a loading screen
+// shows it. See docs/formats/camera-records.md,
 // combat-style.md, messages.md, and body-parts.md.
 
 import Foundation
@@ -15,8 +16,10 @@ nonisolated public struct PresentationRecordStore: Sendable {
     public let combatStyles: TypedRecordStore<CombatStyle>
     public let messages: TypedRecordStore<GameMessage>
     public let loadScreens: TypedRecordStore<LoadScreen>
-    /// The `MODL` path of each STAT, for a loading screen's `NNAM` object.
-    public let staticModels: TypedRecordStore<String>
+    /// The index the STAT records are read from, one at a time, for a loading screen's
+    /// `NNAM` object. Skyrim.esm holds tens of thousands of STATs and loading screens
+    /// name a few hundred.
+    private let index: RecordIndex
     /// The hit, sever, and explode parts a race's `GNAM` names.
     public let bodyParts: TypedRecordStore<BodyPartData>
 
@@ -36,10 +39,7 @@ nonisolated public struct PresentationRecordStore: Sendable {
             decode: { try LoadScreen(record: $0.record, localized: $0.localized) },
             editorID: \.editorID
         )
-        staticModels = TypedRecordStore(
-            index: index, types: ["STAT"],
-            decode: { try Self.modelPath(of: $0.record) }, editorID: { _ in nil }
-        )
+        self.index = index
         bodyParts = TypedRecordStore(
             index: index, types: ["BPTD"],
             decode: { try BodyPartData(record: $0.record, localized: $0.localized) },
@@ -53,7 +53,13 @@ nonisolated public struct PresentationRecordStore: Sendable {
 
     /// The model path a loading screen shows, or nil when its STAT is missing.
     public func model(of screen: ResolvedRecord<LoadScreen>) -> String? {
-        staticModels.resolve(screen.record.model, fromPlugin: screen.sourcePlugin)?.record
+        guard
+            let id = index.resolvedID(screen.record.model, fromPlugin: screen.sourcePlugin),
+            case let .decoded(path, _) = index.decodeIndexed(id, using: {
+                try Self.modelPath(of: $0.record)
+            })
+        else { return nil }
+        return path
     }
 
     private static func modelPath(of record: ESMRecord) throws -> String {
