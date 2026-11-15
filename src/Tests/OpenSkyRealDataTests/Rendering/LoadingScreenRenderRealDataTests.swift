@@ -99,6 +99,7 @@ struct LoadingScreenRenderRealDataTests {
     }
 
     /// The game's scene for `frame`, at the default field of view and no camera path.
+    @MainActor
     private static func coverScene(
         _ frame: LoadingCoverFrame, model: RenderModel
     ) -> LoadingCoverScene {

@@ -1377,8 +1377,9 @@ targets += composition(
         "OpenSkyAgentControl", "OpenSkyCombatInterface", "OpenSkyConditions",
         "OpenSkyEngineTesting", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsTesting",
         "OpenSkyGameData",
-        "OpenSkyInventoryInterface", "OpenSkyLaunch", "OpenSkyMagicInterface", "OpenSkyMenus",
-        "OpenSkyMenusInterface", "OpenSkyPlayer",
+        "OpenSkyInventoryInterface", "OpenSkyLaunch", "OpenSkyLoading", "OpenSkyMagicInterface",
+        "OpenSkyMenus",
+        "OpenSkyMenusInterface", "OpenSkyPlayer", "OpenSkyRenderCore",
         "OpenSkyRendering", "OpenSkySessionInterface", "OpenSkySessionTesting",
         "OpenSkyWorldInterface"
     ]

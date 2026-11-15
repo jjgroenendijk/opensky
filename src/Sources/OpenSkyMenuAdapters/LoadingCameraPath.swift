@@ -2,6 +2,7 @@
 // `CameraPath` sequence moves the `CameraPathNode`, and the node's place sets the
 // scene camera (docs/engine/loading-screens.md#camera).
 
+import OpenSkyFormatsCore
 public import OpenSkyFormatsMesh
 import simd
 
@@ -28,7 +29,7 @@ nonisolated public struct LoadingCameraPath: Sendable {
                 case let .transform(channel) = track.channel else { return nil }
             return channel
         }.first
-        let rest = (try? NIFCameraTrack(file: file))?.translation(at: 0) ?? .zero
+        let rest = attempt { try NIFCameraTrack(file: file) }?.translation(at: 0) ?? .zero
         self.init(sequence: sequence, channel: channel, rest: rest)
     }
 
