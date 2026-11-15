@@ -1,5 +1,5 @@
 // Where a Play session starts: the normal start, a cell by name, a grid cell
-// in a worldspace, or a map marker. The launcher validates the choice and remembers it.
+// in a worldspace, or a map marker. The launcher remembers the last choice.
 
 public import Foundation
 public import OpenSkyGameData
@@ -39,21 +39,17 @@ nonisolated public enum LaunchStart: Equatable, Sendable {
         case ("normal", 1):
             self = .normal
         case ("cell", 2):
-            guard case let .success(start) = LaunchStartForm(kind: .cell, cell: parts[1]).validate()
-            else { return nil }
-            self = start
+            guard Self.isEditorID(parts[1]) else { return nil }
+            self = .cell(parts[1])
         case ("exterior", 4):
-            let form = LaunchStartForm(
-                kind: .exterior,
-                worldspace: parts[1],
-                x: parts[2],
-                y: parts[3]
-            )
-            guard case let .success(start) = form.validate() else { return nil }
-            self = start
+            guard
+                Self.isEditorID(parts[1]), let x = Self.coordinate(parts[2]),
+                let y = Self.coordinate(parts[3])
+            else { return nil }
+            self = .exterior(worldspace: parts[1], x: x, y: y)
         case ("marker", 4):
             guard
-                LaunchStartForm.isEditorID(parts[1]), !parts[2].isEmpty,
+                Self.isEditorID(parts[1]), !parts[2].isEmpty,
                 let objectID = UInt32(parts[3], radix: 16), objectID <= 0xFFFFFF
             else { return nil }
             self = .marker(worldspace: parts[1], plugin: parts[2], objectID: objectID)
@@ -61,131 +57,19 @@ nonisolated public enum LaunchStart: Equatable, Sendable {
             return nil
         }
     }
-}
-
-/// What the launcher's start fields hold, before validation.
-nonisolated public struct LaunchStartForm: Equatable, Sendable {
-    public enum Kind: Int, CaseIterable, Sendable {
-        case normal
-        /// A place picked from the list the install gives.
-        case place
-        case cell
-        case exterior
-    }
 
     /// A grid bound wide enough for Tamriel, with room to spare.
     static let gridRange: ClosedRange<Int32> = -64 ... 64
 
-    public var kind: Kind
-    public var cell: String
-    public var worldspace: String
-    public var x: String
-    public var y: String
-    /// The place picked from the list; nil until one is picked.
-    public var place: LaunchStart?
-
-    public init(
-        kind: Kind = .normal, cell: String = "", worldspace: String = "Tamriel",
-        x: String = "", y: String = "", place: LaunchStart? = nil
-    ) {
-        self.kind = kind
-        self.cell = cell
-        self.worldspace = worldspace
-        self.x = x
-        self.y = y
-        self.place = place
-    }
-
-    /// - Parameter fromList: the start was picked from the place list, so the form
-    ///   shows the list and not the typed fields.
-    public init(_ start: LaunchStart, fromList: Bool = false) {
-        if fromList, start != .normal {
-            self.init(kind: .place, place: start)
-            return
-        }
-        switch start {
-        case .normal:
-            self.init()
-        case let .cell(editorID):
-            self.init(kind: .cell, cell: editorID)
-        case let .exterior(worldspace, x, y):
-            self.init(kind: .exterior, worldspace: worldspace, x: String(x), y: String(y))
-        case .marker:
-            self.init(kind: .place, place: start)
-        }
-    }
-
-    /// The start, or the one-line reason it cannot be used.
-    public func validate() -> Result<LaunchStart, LaunchStartProblem> {
-        switch kind {
-        case .normal:
-            return .success(.normal)
-        case .cell:
-            let name = cell.trimmingCharacters(in: .whitespaces)
-            guard !name.isEmpty else { return .failure(.emptyCell) }
-            guard name.unicodeScalars.allSatisfy(Self.isEditorIDScalar) else {
-                return .failure(.badCellName)
-            }
-            return .success(.cell(name))
-        case .exterior:
-            let name = worldspace.trimmingCharacters(in: .whitespaces)
-            guard !name.isEmpty else { return .failure(.emptyWorldspace) }
-            guard name.unicodeScalars.allSatisfy(Self.isEditorIDScalar) else {
-                return .failure(.badWorldspaceName)
-            }
-            guard let gridX = coordinate(x) else { return .failure(.badCoordinate("X")) }
-            guard let gridY = coordinate(y) else { return .failure(.badCoordinate("Y")) }
-            return .success(.exterior(worldspace: name, x: gridX, y: gridY))
-        case .place:
-            guard let place else { return .failure(.noPlace) }
-            return .success(place)
-        }
-    }
-
-    static func isEditorID(_ text: String) -> Bool {
-        !text.isEmpty && text.unicodeScalars.allSatisfy(isEditorIDScalar)
-    }
-
-    private func coordinate(_ text: String) -> Int32? {
-        Int32(text.trimmingCharacters(in: .whitespaces)).flatMap {
-            Self.gridRange.contains($0) ? $0 : nil
-        }
-    }
-
     /// Editor IDs are letters, digits, and underscores.
-    private static func isEditorIDScalar(_ scalar: Unicode.Scalar) -> Bool {
-        scalar.isASCII && (CharacterSet.alphanumerics.contains(scalar) || scalar == "_")
-    }
-}
-
-nonisolated public enum LaunchStartProblem: Error, Equatable, Sendable {
-    case emptyCell
-    case badCellName
-    case emptyWorldspace
-    case badWorldspaceName
-    case badCoordinate(String)
-    case noPlace
-    /// The saved place is not in the load order any more.
-    case placeMissing(String)
-
-    public var reason: String {
-        switch self {
-        case .emptyCell:
-            "Enter the editor ID of a cell, such as WhiterunBanneredMare"
-        case .badCellName:
-            "A cell editor ID has only letters, digits, and underscores"
-        case .emptyWorldspace:
-            "Enter the editor ID of a worldspace, such as DLC2SolstheimWorld"
-        case .badWorldspaceName:
-            "A worldspace editor ID has only letters, digits, and underscores"
-        case let .badCoordinate(axis):
-            "\(axis) must be a whole number from \(LaunchStartForm.gridRange.lowerBound) "
-                + "to \(LaunchStartForm.gridRange.upperBound)"
-        case .noPlace:
-            "Choose a place from the list"
-        case let .placeMissing(name):
-            "\(name) is not in the load order any more; choose another place"
+    static func isEditorID(_ text: String) -> Bool {
+        !text.isEmpty && text.unicodeScalars.allSatisfy { scalar in
+            scalar.isASCII && (CharacterSet.alphanumerics.contains(scalar) || scalar == "_")
         }
+    }
+
+    private static func coordinate(_ text: String) -> Int32? {
+        Int32(text).flatMap { gridRange.contains($0) ? $0 : nil }
     }
 }
 

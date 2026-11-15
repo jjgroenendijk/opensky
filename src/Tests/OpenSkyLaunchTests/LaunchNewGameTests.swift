@@ -29,20 +29,6 @@ struct LaunchNewGameTests {
         }
     }
 
-    @Test func aPlaceFromTheListNeedsAPlace() {
-        #expect(LaunchStartForm(kind: .place).validate() == .failure(.noPlace))
-        let marker = LaunchStart.marker(worldspace: "Tamriel", plugin: "Skyrim.esm", objectID: 9)
-        #expect(LaunchStartForm(marker).kind == .place)
-        #expect(LaunchStartForm(marker).validate() == .success(marker))
-        let cell = LaunchStart.cell("WhiterunBanneredMare")
-        #expect(LaunchStartForm(cell).kind == .cell)
-        #expect(LaunchStartForm(cell, fromList: true).kind == .place)
-        #expect(LaunchStartForm(cell, fromList: true).validate() == .success(cell))
-        #expect(LaunchStartForm(.normal, fromList: true).kind == .normal)
-        #expect(!LaunchStartProblem.noPlace.reason.isEmpty)
-        #expect(LaunchStartProblem.placeMissing("Riverwood").reason.contains("Riverwood"))
-    }
-
     @Test func textValidatesIntoANewGame() {
         let text = LaunchNewGameText(
             start: "cell:WhiterunBanneredMare", hour: " 13.5 ", weather: " SkyrimClear ",

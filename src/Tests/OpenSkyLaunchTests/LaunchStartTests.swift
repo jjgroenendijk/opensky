@@ -1,5 +1,4 @@
-// Start options: parsing the saved value, validating the launcher's fields,
-// and remembering the last choice.
+// Start options: parsing the saved value and remembering the last choice.
 
 import Foundation
 import OpenSkyLaunch
@@ -32,6 +31,8 @@ struct LaunchStartTests {
             "exterior:Tamriel:6",
             "exterior:Bad World:1:1",
             "exterior:Tamriel:x:1",
+            "exterior:Tamriel:6:500",
+            "cell: QASmoke",
             "teleport:somewhere"
         ] {
             #expect(LaunchStart(storedValue: text) == nil, "\(text)")
@@ -41,52 +42,6 @@ struct LaunchStartTests {
     @Test func anyWorldspaceIsAStoredStart() {
         #expect(LaunchStart(storedValue: "exterior:DLC2SolstheimWorld:7:8")
             == .exterior(worldspace: "DLC2SolstheimWorld", x: 7, y: 8))
-    }
-
-    @Test func aCellNeedsAnEditorID() {
-        #expect(LaunchStartForm(kind: .cell, cell: "  ").validate() == .failure(.emptyCell))
-        #expect(LaunchStartForm(kind: .cell, cell: "Whiterun Inn").validate()
-            == .failure(.badCellName))
-        #expect(LaunchStartForm(kind: .cell, cell: " QASmoke ").validate()
-            == .success(.cell("QASmoke")))
-    }
-
-    @Test func anExteriorNeedsAWorldspaceNameAndWholeCoordinates() {
-        let form = LaunchStartForm(kind: .exterior, worldspace: " Tamriel ", x: "6", y: "-2")
-        #expect(form.validate() == .success(.exterior(worldspace: "Tamriel", x: 6, y: -2)))
-        var other = form
-        other.worldspace = "DLC2SolstheimWorld"
-        #expect(other.validate()
-            == .success(.exterior(worldspace: "DLC2SolstheimWorld", x: 6, y: -2)))
-        var empty = form
-        empty.worldspace = " "
-        #expect(empty.validate() == .failure(.emptyWorldspace))
-        var spaced = form
-        spaced.worldspace = "Solstheim World"
-        #expect(spaced.validate() == .failure(.badWorldspaceName))
-        var badX = form
-        badX.x = "6.5"
-        #expect(badX.validate() == .failure(.badCoordinate("X")))
-        var farY = form
-        farY.y = "500"
-        #expect(farY.validate() == .failure(.badCoordinate("Y")))
-    }
-
-    @Test func everyProblemHasAReason() {
-        let problems: [LaunchStartProblem] = [
-            .emptyCell, .badCellName, .emptyWorldspace, .badWorldspaceName, .badCoordinate("X")
-        ]
-        for problem in problems {
-            #expect(!problem.reason.isEmpty)
-        }
-        #expect(LaunchStartProblem.badCoordinate("X").reason
-            == "X must be a whole number from -64 to 64")
-    }
-
-    @Test func theFormRebuildsFromAStart() {
-        let start = LaunchStart.exterior(worldspace: "Tamriel", x: -3, y: 9)
-        #expect(LaunchStartForm(start).validate() == .success(start))
-        #expect(LaunchStartForm(.cell("A")).kind == .cell)
     }
 
     @Test func theLastChoiceIsRemembered() throws {

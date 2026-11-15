@@ -30,17 +30,9 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     )
     let fullScreenControl = NSButton(checkboxWithTitle: "Full screen", target: nil, action: nil)
     lazy var skipMainMenuRow = layout.toggle(skipMainMenuControl, indent: 20)
-    let startKindPopUp = NSPopUpButton()
-    let startCellField = NSTextField()
-    let startWorldspaceField = NSTextField()
-    let startXField = NSTextField()
-    let startYField = NSTextField()
+    let startPopUp = NSPopUpButton()
     lazy var startReasonLabel = layout.line("LaunchStartReasonStatsLabel")
-    lazy var startCellRow = layout.row("Cell", startCellField)
-    lazy var startGridRow = layout.row("Worldspace and grid cell", makeGridFields())
-    var startForm = LaunchPageViewController.savedStartForm()
-    let placeButton = LaunchLinkButton()
-    lazy var startPlaceRow = layout.row("Place", placeButton)
+    var start = LaunchPreferences.savedStart()
     lazy var startOptions = LaunchStartOptionsPanel(layout: layout)
     let survivalModeControl = NSButton(
         checkboxWithTitle: "Survival Mode", target: nil, action: nil
@@ -85,8 +77,7 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         playRow = makePlayRow()
         loadPanel.isHidden = true
         loadPanel.onCancel = { [weak self] in self?.context.actions?.cancelLoad() }
-        configureStartControls()
-        configurePlaceControls()
+        configureStartMenu()
         startOptions.onChange = { [weak self] in self?.refreshStart() }
         startOptions.refreshWeathers(from: context.startPlaces)
         view = layout.makeView(title: "OpenSky", groups: [
@@ -216,13 +207,6 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
 
     @objc private func play() {
         context.actions?.start(launchPlan)
-    }
-
-    /// A saved start that is one of the places used last was picked from the list.
-    static func savedStartForm() -> LaunchStartForm {
-        let start = LaunchPreferences.savedStart()
-        let recent = LaunchPreferences.savedRecentPlaces().contains { $0.start == start }
-        return LaunchStartForm(start, fromList: recent)
     }
 
     @objc private func openAssetOptimisation() {

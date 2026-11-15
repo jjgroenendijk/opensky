@@ -2,7 +2,7 @@
 // interior cell and every map marker. The launcher offers only the settlements;
 // `openskycli places --all` shows the whole list.
 
-public import Foundation
+import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
@@ -171,7 +171,7 @@ nonisolated extension StartPlaceList {
                 guard
                     record.type == "CELL", !record.isDeleted,
                     let cell = attempt({ try Cell(record: record, localized: plugin.localized) }),
-                    let editorID = cell.editorID, LaunchStartForm.isEditorID(editorID)
+                    let editorID = cell.editorID, LaunchStart.isEditorID(editorID)
                 else { continue }
                 cells[plugin.formID(of: record).rawValue] = Interior(
                     editorID: editorID, name: cell.name
@@ -188,7 +188,7 @@ nonisolated extension StartPlaceList {
         }
         for world in records {
             guard
-                let editorID = world.editorID, LaunchStartForm.isEditorID(editorID),
+                let editorID = world.editorID, LaunchStart.isEditorID(editorID),
                 let id = loadOrder.space.resolve(world.formID)
             else { continue }
             worlds[id] = World(
@@ -238,55 +238,6 @@ nonisolated extension StartPlaceList {
         let names: [String] = loadOrder.decodeRecords(of: "WTHR", skipped: &skipped) { record in
             ESMWalk.editorID(of: record)
         }
-        return names.filter(LaunchStartForm.isEditorID)
-    }
-}
-
-// MARK: - The places used last
-
-nonisolated public struct LaunchRecentPlace: Equatable, Sendable {
-    public let start: LaunchStart
-    public let name: String
-
-    public init(start: LaunchStart, name: String) {
-        self.start = start
-        self.name = name
-    }
-}
-
-nonisolated extension LaunchPreferences {
-    public static let recentPlacesSetting = SettingKey("OpenSkyLaunchRecentPlaces", default: "")
-    public static let recentPlaceLimit = 8
-
-    /// Newest first. One place per line: the stored start, a tab, and the name.
-    public static func savedRecentPlaces(
-        userDefaults: UserDefaults = GameDataLocator.settingsDefaults
-    ) -> [LaunchRecentPlace] {
-        SettingsStore(defaults: userDefaults).value(recentPlacesSetting)
-            .split(separator: "\n")
-            .compactMap { line in
-                let parts = line.split(separator: "\t", maxSplits: 1).map(String.init)
-                guard parts.count == 2, let start = LaunchStart(storedValue: parts[0]) else {
-                    return nil
-                }
-                return LaunchRecentPlace(start: start, name: parts[1])
-            }
-    }
-
-    /// Puts `place` first and drops the oldest past the limit.
-    public static func rememberRecent(
-        _ place: LaunchRecentPlace,
-        userDefaults: UserDefaults = GameDataLocator.settingsDefaults
-    ) {
-        let others = savedRecentPlaces(userDefaults: userDefaults).filter {
-            $0.start != place.start
-        }
-        let lines = ([place] + others).prefix(recentPlaceLimit).map { recent in
-            let name = recent.name.replacingOccurrences(of: "\n", with: " ")
-                .replacingOccurrences(of: "\t", with: " ")
-            return "\(recent.start.storedValue)\t\(name)"
-        }
-        SettingsStore(defaults: userDefaults)
-            .set(lines.joined(separator: "\n"), for: recentPlacesSetting)
+        return names.filter(LaunchStart.isEditorID)
     }
 }

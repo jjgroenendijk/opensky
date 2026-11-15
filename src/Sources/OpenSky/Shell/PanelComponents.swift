@@ -16,8 +16,6 @@ enum PanelMetrics {
     static let rowSpacing: CGFloat = 6
     /// Between control groups within a section.
     static let groupSpacing: CGFloat = 12
-    /// Horizontal spacing inside a control row.
-    static let rowGap: CGFloat = 8
 
     static let captionFont = NSFont.systemFont(ofSize: 12)
     static let monoFont = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)

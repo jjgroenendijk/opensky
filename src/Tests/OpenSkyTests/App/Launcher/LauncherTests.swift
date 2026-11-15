@@ -204,23 +204,6 @@ struct LauncherTests {
         #expect(!note.isHidden)
     }
 
-    @Test func anInvalidStartTurnsPlayOffAndSaysWhy() throws {
-        let saved = LaunchPreferences.savedStart()
-        defer { LaunchPreferences.remember(saved) }
-        let page = LaunchPageViewController(context: LauncherContext(actions: RecordingActions()))
-        page.loadViewIfNeeded()
-        page.startKindPopUp.selectItem(at: LaunchStartForm.Kind.cell.rawValue)
-        page.startKindPopUp.sendAction(page.startKindPopUp.action, to: page.startKindPopUp.target)
-        let play = try #require(button("LaunchPlayControl", in: page.view))
-        #expect(!play.isEnabled)
-        #expect(page.startReasonLabel.stringValue.hasPrefix("Play is off: "))
-        #expect(!page.startCellField.isHidden)
-        #expect(page.startXField.isHidden)
-        page.startKindPopUp.selectItem(at: LaunchStartForm.Kind.normal.rawValue)
-        page.startKindPopUp.sendAction(page.startKindPopUp.action, to: page.startKindPopUp.target)
-        #expect(page.startReasonLabel.isHidden)
-    }
-
     @Test func playResumesTheNewestSaveOnlyWhenAsked() {
         let settings = SettingsStore.shared
         let resumes = settings.value(LaunchPreferences.resumesLatestSaveSetting)

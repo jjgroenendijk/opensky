@@ -172,7 +172,7 @@ nonisolated public struct LaunchNewGameText: Equatable, Sendable {
             return .failure(problem)
         case let .success(hour):
             let weather = weather.trimmingCharacters(in: .whitespaces)
-            guard weather.isEmpty || LaunchStartForm.isEditorID(weather) else {
+            guard weather.isEmpty || LaunchStart.isEditorID(weather) else {
                 return .failure(.badWeather)
             }
             return .success(LaunchNewGame(
@@ -259,7 +259,7 @@ nonisolated extension LaunchPreferences {
         return LaunchNewGame(
             start: start,
             hour: hour,
-            weather: LaunchStartForm.isEditorID(text.weather) ? text.weather : nil,
+            weather: LaunchStart.isEditorID(text.weather) ? text.weather : nil,
             story: LaunchStory(rawValue: text.story) ?? .notStarted,
             opensRaceMenu: text.opensRaceMenu,
             items: LaunchItemPreset(rawValue: text.items) ?? .none

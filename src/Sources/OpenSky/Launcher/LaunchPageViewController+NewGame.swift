@@ -1,17 +1,12 @@
 // The Launch page's New game group: where a new game starts, the startup logo, and
 // the Survival Mode answer, so the plugin's prompt does not stop a new game unless the
-// player asks for it. The start rules live in `LaunchStartForm`; this file only shows them.
+// player asks for it.
 
 import AppKit
 import OpenSkyGameData
 import OpenSkyLaunch
 
-extension LaunchPageViewController: NSTextFieldDelegate {
-    /// In the order of `LaunchStartForm.Kind`.
-    static let startKindTitles = [
-        "Main menu", "A place from the list", "A cell by name", "A worldspace and grid cell"
-    ]
-
+extension LaunchPageViewController {
     func makeNewGameGroup() -> NSView {
         PanelComponents.configureCheckbox(
             survivalModeControl, target: self, action: #selector(survivalModeChanged),
@@ -31,7 +26,7 @@ extension LaunchPageViewController: NSTextFieldDelegate {
         startupLogoControl.toolTip = "The logo movie before the main menu; a key skips it"
         refreshNewGame()
         return layout.group("New game", [
-            layout.row("Starts at", startKindPopUp), startPlaceRow, startCellRow, startGridRow
+            layout.row("Starts at", startPopUp)
         ] + startOptions.rows + [
             startReasonLabel, layout.toggle(startupLogoControl), layout.toggle(survivalModeControl),
             layout.toggle(survivalModeAskControl)
@@ -58,92 +53,20 @@ extension LaunchPageViewController: NSTextFieldDelegate {
         refreshNewGame()
     }
 
-    func configureStartControls() {
-        startKindPopUp.addItems(withTitles: Self.startKindTitles)
-        PanelComponents.configurePopUp(
-            startKindPopUp, target: self, action: #selector(startKindChanged),
-            identifier: "LaunchStartKindControl"
-        )
-        startKindPopUp.toolTip = "Where a new game starts: the main menu, or a place"
-        let fields = [
-            (startCellField, "LaunchStartCellControl", 240.0, "WhiterunBanneredMare"),
-            (startWorldspaceField, "LaunchStartWorldspaceControl", 140, "Tamriel"),
-            (startXField, "LaunchStartXControl", 60, "X"),
-            (startYField, "LaunchStartYControl", 60, "Y")
-        ]
-        for (field, identifier, width, placeholder) in fields {
-            PanelComponents.configureTextField(
-                field, identifier: identifier, width: width, placeholder: placeholder
-            )
-            field.delegate = self
-        }
-        startCellField.toolTip = "The editor ID of a cell, as the console's coc takes it"
-        startWorldspaceField.toolTip = "The editor ID of the worldspace, such as DLC2SolstheimWorld"
-        startXField.toolTip = "The grid X of the exterior cell"
-        startYField.toolTip = "The grid Y of the exterior cell"
-        startReasonLabel.textColor = LauncherStyle.warning
-        showStartForm()
-    }
-
-    func makeGridFields() -> NSStackView {
-        for field in [startWorldspaceField, startXField, startYField] {
-            LauncherStyle.style(field)
-        }
-        let fields = NSStackView(views: [startWorldspaceField, startXField, startYField])
-        fields.spacing = PanelMetrics.rowGap
-        return fields
-    }
-
-    private func showStartForm() {
-        startKindPopUp.selectItem(at: startForm.kind.rawValue)
-        startCellField.stringValue = startForm.cell
-        startWorldspaceField.stringValue = startForm.worldspace
-        startXField.stringValue = startForm.x
-        startYField.stringValue = startForm.y
-        showPlace()
-        refreshStart()
-    }
-
-    /// Shows the reason of an invalid start, and remembers a valid one.
+    /// Shows why Play is off for a new game, if it is.
     func refreshStart() {
-        startCellField.isHidden = startForm.kind != .cell
-        startCellRow.isHidden = startCellField.isHidden
-        startPlaceRow.isHidden = startForm.kind != .place
         for row in startOptions.rows {
-            row.isHidden = startForm.kind == .normal
+            row.isHidden = start == .normal
         }
-        for field in [startWorldspaceField, startXField, startYField] {
-            field.isHidden = startForm.kind != .exterior
-        }
-        startGridRow.isHidden = startForm.kind != .exterior
         var reason: String?
-        switch startForm.validate() {
-        case let .success(start):
-            LaunchPreferences.remember(start)
-            reason = missingPlace?.reason
-        case let .failure(problem):
-            reason = problem.reason
-        }
-        if startForm.kind != .normal {
-            reason = reason ?? startOptions.problem?.reason
+        if validStart == nil {
+            reason = context.isLoadingStartPlaces ? Self.readingTitle : nil
+        } else if start != .normal {
+            reason = startOptions.problem?.reason
         }
         startReasonLabel.stringValue = reason.map { "Play is off: \($0)" } ?? ""
         startReasonLabel.toolTip = startReasonLabel.stringValue
         startReasonLabel.isHidden = reason == nil
         refreshPlay()
-    }
-
-    func controlTextDidChange(_: Notification) {
-        startForm.cell = startCellField.stringValue
-        startForm.worldspace = startWorldspaceField.stringValue
-        startForm.x = startXField.stringValue
-        startForm.y = startYField.stringValue
-        refreshStart()
-    }
-
-    @objc private func startKindChanged() {
-        startForm.kind = LaunchStartForm
-            .Kind(rawValue: startKindPopUp.indexOfSelectedItem) ?? .normal
-        refreshStart()
     }
 }
