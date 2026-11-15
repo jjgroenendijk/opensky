@@ -71,11 +71,7 @@ extension Renderer {
         descriptor.storageMode = .private
         guard let texture = device.makeTexture(descriptor: descriptor) else { return nil }
         texture.label = "\(label)Copy"
-        if let old = self[keyPath: path] {
-            residencySet.removeAllocation(old)
-        }
-        residencySet.addAllocation(texture)
-        residencySet.commit()
+        targetResidency.replace(self[keyPath: path].map { [$0] } ?? [], with: [texture])
         self[keyPath: path] = texture
         return texture
     }

@@ -120,6 +120,15 @@ binding model. The samplers are trilinear with 8x anisotropy and repeat, a shado
 Residency is one app-owned `MTLResidencySet` holding the rings and every scene allocation, attached
 to the queue. Offscreen targets are added and removed around each offscreen render.
 
+A Metal 4 command buffer keeps no resource alive. Up to 3 frames can still be on the GPU when the
+CPU replaces a resource, such as a render target after a resize. Freeing the old resource, or
+removing it from the residency set, at that moment can fault the GPU: the frame reads memory that
+is gone. After such a page fault the driver ignores every later submission, so no frame is drawn
+again. So a replaced resource goes on the retire list with the index of the newest committed
+frame. It leaves the residency set and is released only once the shared event has passed that
+index. Only a resource whose last frame has already finished, such as an offscreen target or a
+drained staging buffer, is removed at once.
+
 ## Bind-pose skinning
 
 A skinned mesh selects the skinned pipeline. Buffer 6 holds normalized float4 weights and ushort4

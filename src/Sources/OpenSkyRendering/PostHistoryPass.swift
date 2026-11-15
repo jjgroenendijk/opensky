@@ -77,7 +77,7 @@ final class PostHistoryPass {
     }
 
     /// Makes the targets match `target`. False when a texture cannot be made.
-    func prepare(matching target: any MTLTexture, residency: any MTLResidencySet) -> Bool {
+    func prepare(matching target: any MTLTexture, residency: TargetResidency) -> Bool {
         if
             let first = history.first, first.width == target.width,
             first.height == target.height, history.count == 2
@@ -101,10 +101,8 @@ final class PostHistoryPass {
         } else {
             (scratch, blurred) = (nil, nil)
         }
-        old.forEach { residency.removeAllocation($0) }
         history = [first, second]
-        made.forEach { residency.addAllocation($0) }
-        residency.commit()
+        residency.replace(old, with: made)
         lastTracedFrame = nil
         return true
     }

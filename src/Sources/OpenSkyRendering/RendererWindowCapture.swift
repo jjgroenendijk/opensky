@@ -12,11 +12,10 @@ enum WindowCaptureState {
 
 extension Renderer {
     /// Asks the next live frame to copy what it presents. An untaken older copy
-    /// is dropped.
+    /// is dropped once its frame has finished.
     public func requestWindowCapture() {
         if case let .copied(texture, _) = windowCapture {
-            residencySet.removeAllocation(texture)
-            residencySet.commit()
+            retireAllocations([texture])
         }
         windowCapture = .requested
     }
