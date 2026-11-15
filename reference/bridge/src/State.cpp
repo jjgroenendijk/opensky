@@ -1,5 +1,6 @@
 #include "State.h"
 
+#include "Menus.h"
 #include "Places.h"
 #include "Settings.h"
 #include "Sky.h"
@@ -274,6 +275,7 @@ std::string Snapshot(const std::string &lastBatch)
         "{{\"version\":1,\"batch\":{},\"mainMenu\":{},\"loading\":{}", Quoted(lastBatch), mainMenu,
         loading);
     json += Dialog();
+    json += MenuState();
     auto *player = RE::PlayerCharacter::GetSingleton();
     if (player && !mainMenu && !loading) {
         json += Place(player);
@@ -301,6 +303,24 @@ void RunLine(const std::string &line)
     constexpr auto markerVerb = "marker "sv;
     constexpr auto settingVerb = "ini "sv;
     constexpr auto cameraVerb = "camera "sv;
+    constexpr auto menuVariableVerb = "menuvar "sv;
+    constexpr auto binkVerb = "playbink "sv;
+    // `menuclick`, `menumove`, `menudown`, `menuup`, and `menuhit` act on a menu's movie.
+    for (const auto action : {"click"sv, "move"sv, "down"sv, "up"sv, "hit"sv}) {
+        const auto verb = std::format("menu{} ", action);
+        if (line.starts_with(verb)) {
+            ClickMenu(std::string_view(line).substr(verb.size()), action);
+            return;
+        }
+    }
+    if (line.starts_with(menuVariableVerb)) {
+        ReadMenuVariable(std::string_view(line).substr(menuVariableVerb.size()));
+        return;
+    }
+    if (line.starts_with(binkVerb)) {
+        PlayBink(std::string_view(line).substr(binkVerb.size()));
+        return;
+    }
     if (line.starts_with(cameraVerb)) {
         SetCamera(std::string_view(line).substr(cameraVerb.size()));
         return;

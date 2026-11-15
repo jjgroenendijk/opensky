@@ -61,7 +61,7 @@ distance of `TargetLocation` is OpenSky's own.
 
 The game gives the player's graphs three fixed values. They do not change with the attack or
 with how long the attack key is held. Read from the reference game through the bridge
-([reference game](/tools/reference-game.md#recording-graph-variables)), observed 2026-11-04:
+([reference game](/tools/reference-bridge-probes.md#recording-graph-variables)), observed 2026-11-04:
 
 | Variable | The player | A bandit NPC |
 | --- | --- | --- |

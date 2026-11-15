@@ -320,6 +320,12 @@ extension ReferenceArguments.Shot: CLIRunnable {
     }
 }
 
+extension ReferenceArguments.Listen: CLIRunnable {
+    func execute() async throws {
+        try await ReferenceCapture.listen(arguments: self)
+    }
+}
+
 extension ReferenceArguments.State: CLIRunnable {
     func execute() throws {
         try ReferenceBridgeCommand.state(arguments: self)

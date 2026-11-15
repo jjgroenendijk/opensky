@@ -1,4 +1,5 @@
-// `reference state|send|sync|follow|load|answer`: the Windows game through the OpenSkyBridge
+// `reference state|send|sync|follow|load|answer|shot|listen`: the Windows game through the
+// OpenSkyBridge
 // plugin, with no typed console keys (docs/tools/reference-game.md#the-bridge-plugin).
 
 public import ArgumentParser
@@ -85,6 +86,32 @@ extension ReferenceArguments {
         public var out: String?
 
         public init() {}
+    }
+
+    public struct Listen: CLICommandArguments {
+        public static let configuration = CommandConfiguration(
+            commandName: "listen",
+            abstract: "Record the Windows game's sound, without OpenSky, as a WAV file.",
+            discussion: """
+            Writes .logs/reference-listen/<UTC time>/reference.wav unless --out names a file.
+            """
+        )
+        @OptionGroup public var global: GlobalOptions
+        @Option(parsing: .unconditional, help: "How long to record, in seconds. Default: 10.")
+        public var seconds = 10.0
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp("The WAV file to write.", valueName: "file")
+        )
+        public var out: String?
+
+        public init() {}
+
+        public func validate() throws {
+            guard (0.5 ... 600).contains(seconds) else {
+                throw ValidationError("--seconds must be 0.5 to 600")
+            }
+        }
     }
 
     public struct Answer: CLICommandArguments {
