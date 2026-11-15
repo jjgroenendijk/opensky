@@ -52,6 +52,16 @@ struct DialogueWorldTests {
         #expect(host.fakePerks.multiplierCalls.map(\.target) == [Self.speaker, Self.speaker])
     }
 
+    @Test func theConditionContextKeepsTheSpeakerAndAddsVoiceTypes() {
+        var base = ConditionContext()
+        base[resolution: DialogueResolution.self] = DialogueResolution(
+            speakerInDialogue: Self.speaker, line: nil
+        )
+        host.fakeRuntimeState.conditionContextResult = base
+        let dialogue = adapter.conditionContext()[resolution: DialogueResolution.self]
+        #expect(dialogue.speakerInDialogue == Self.speaker)
+    }
+
     @Test func withoutScriptsOrStringsTheReadsAreEmpty() {
         #expect(adapter.questStates() == nil)
         _ = adapter.questAliases()
