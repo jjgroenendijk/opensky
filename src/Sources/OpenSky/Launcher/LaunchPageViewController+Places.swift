@@ -1,29 +1,28 @@
-// The Launch page's place row: the place a new game starts at, picked from the list
-// the install gives. The list loads off the main actor; until it has loaded, the row
-// shows the saved place and Play stays as it was.
+// The Launch page's start menu: the main menu, or a settlement of the install, under a
+// heading for its worldspace. The list loads off the main actor; until it has loaded, a
+// saved place start shows "Reading the places" and Play waits.
 
 import AppKit
-import OpenSkyGameData
 import OpenSkyLaunch
 
 extension LaunchPageViewController {
-    func configurePlaceControls() {
-        PanelComponents.configureButton(
-            placeButton, target: self, action: #selector(choosePlace),
-            identifier: "LaunchStartPlaceControl"
+    static let mainMenuTitle = "Main menu"
+    static let readingTitle = "Reading the places"
+
+    func configureStartMenu() {
+        PanelComponents.configurePopUp(
+            startPopUp, target: self, action: #selector(startChanged),
+            identifier: "LaunchStartControl"
         )
-        placeButton.toolTip = "Choose a named interior or a map marker of the install"
+        startPopUp.toolTip = "Where a new game starts: the main menu, or a town of the install"
         context.onStartPlacesChange = { [weak self] in self?.refreshPlaces() }
-        showPlace()
+        showStartMenu()
     }
 
-    /// The name of a start, as the list or the places used last give it.
+    /// The name of a start, as the list gives it.
     func placeName(of start: LaunchStart) -> String {
         if let place = context.startPlaces?.place(for: start) {
             return place.name
-        }
-        if let recent = LaunchPreferences.savedRecentPlaces().first(where: { $0.start == start }) {
-            return recent.name
         }
         switch start {
         case .normal: return "the main menu"
@@ -33,60 +32,59 @@ extension LaunchPageViewController {
         }
     }
 
-    /// A picked place that the loaded list lacks cannot start a game.
-    var missingPlace: LaunchStartProblem? {
-        guard
-            startForm.kind == .place, let place = startForm.place,
-            let list = context.startPlaces, !list.contains(place)
-        else { return nil }
-        return .placeMissing(placeName(of: place))
-    }
-
-    /// The start Play uses, or nil while the fields do not give one.
+    /// The start Play uses, or nil while the list it names has not loaded.
     var validStart: LaunchStart? {
-        guard missingPlace == nil else { return nil }
-        return try? startForm.validate().get()
+        start == .normal || context.startPlaces != nil ? start : nil
     }
 
     func refreshPlaces() {
         startOptions.refreshWeathers(from: context.startPlaces)
-        showPlace()
+        showStartMenu()
         refreshStart()
     }
 
-    func showPlace() {
-        let title: String = if let place = startForm.place {
-            placeName(of: place)
-        } else if context.startPlaces == nil, context.isLoadingStartPlaces {
-            "Reading the places"
-        } else {
-            "Choose a place"
+    /// A saved start the loaded settlements lack falls back to the main menu.
+    func showStartMenu() {
+        let settlements = context.startPlaces?.settlements
+        if let settlements, !settlements.contains(start) {
+            start = .normal
+            LaunchPreferences.remember(start)
         }
-        placeButton.show(
-            symbol: "mappin.and.ellipse", title: title,
-            colour: missingPlace == nil ? LauncherStyle.text : LauncherStyle.warning
-        )
-        placeButton.isEnabled = context.startPlaces != nil
+        let menu = NSMenu()
+        menu.autoenablesItems = false
+        menu.addItem(item(Self.mainMenuTitle, for: .normal))
+        if let settlements {
+            for group in settlements.groups {
+                menu.addItem(.separator())
+                menu.addItem(.sectionHeader(title: group.title))
+                for place in group.places {
+                    let entry = item(place.name, for: place.start)
+                    entry.indentationLevel = 1
+                    menu.addItem(entry)
+                }
+            }
+        } else if start != .normal {
+            let reading = item(Self.readingTitle, for: start)
+            reading.isEnabled = false
+            menu.addItem(reading)
+        }
+        startPopUp.menu = menu
+        startPopUp.select(menu.items.first { $0.representedObject as? String == start.storedValue })
     }
 
-    @objc private func choosePlace() {
-        guard let list = context.startPlaces else { return }
-        let popover = NSPopover()
-        popover.behavior = .transient
-        popover.contentViewController = StartPlacePickerViewController(
-            list: list, recent: LaunchPreferences.savedRecentPlaces()
-        ) { [weak self, weak popover] place in
-            popover?.close()
-            self?.pick(place)
-        }
-        popover.show(relativeTo: placeButton.bounds, of: placeButton, preferredEdge: .maxY)
+    private func item(_ title: String, for start: LaunchStart) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.representedObject = start.storedValue
+        return item
     }
 
-    func pick(_ place: StartPlace) {
-        startForm.kind = .place
-        startForm.place = place.start
-        LaunchPreferences.rememberRecent(LaunchRecentPlace(start: place.start, name: place.name))
-        showPlace()
+    @objc private func startChanged() {
+        guard
+            let value = startPopUp.selectedItem?.representedObject as? String,
+            let picked = LaunchStart(storedValue: value)
+        else { return }
+        start = picked
+        LaunchPreferences.remember(start)
         refreshStart()
     }
 }

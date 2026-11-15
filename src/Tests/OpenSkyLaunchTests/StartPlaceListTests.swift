@@ -222,25 +222,4 @@ struct StartPlaceListTests {
         #expect(try list().weathers == ["SkyrimClear", "SkyrimStormRain"])
         #expect(StartPlaceList.empty.places.isEmpty)
     }
-
-    @Test func recentPlacesKeepTheNewestFirstUpToTheLimit() throws {
-        let suite = "StartPlaceListTests-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
-        #expect(LaunchPreferences.savedRecentPlaces(userDefaults: defaults).isEmpty)
-        for index in 0 ..< LaunchPreferences.recentPlaceLimit + 2 {
-            LaunchPreferences.rememberRecent(
-                LaunchRecentPlace(start: .cell("Cell\(index)"), name: "Place\t\(index)"),
-                userDefaults: defaults
-            )
-        }
-        LaunchPreferences.rememberRecent(
-            LaunchRecentPlace(start: .cell("Cell5"), name: "Again"), userDefaults: defaults
-        )
-        let recent = LaunchPreferences.savedRecentPlaces(userDefaults: defaults)
-        #expect(recent.count == LaunchPreferences.recentPlaceLimit)
-        #expect(recent.first == LaunchRecentPlace(start: .cell("Cell5"), name: "Again"))
-        #expect(recent[1] == LaunchRecentPlace(start: .cell("Cell9"), name: "Place 9"))
-        #expect(recent.filter { $0.start == .cell("Cell5") }.count == 1)
-    }
 }

@@ -24,7 +24,7 @@ final class LauncherUITests: OpenSkyUITestCase {
         let app = try launchApp(skipsLauncher: false)
         XCTAssertTrue(app.checkBoxes["LaunchResumeControl"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.checkBoxes["LaunchFullScreenControl"].exists)
-        XCTAssertTrue(app.popUpButtons["LaunchStartKindControl"].exists)
+        XCTAssertTrue(app.popUpButtons["LaunchStartControl"].exists)
         XCTAssertTrue(app.staticTexts["LaunchPlaySummaryStatsLabel"].exists)
 
         app.buttons["LauncherAssetOptimisationLinkControl"].click()
