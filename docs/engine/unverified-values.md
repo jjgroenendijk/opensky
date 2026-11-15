@@ -305,3 +305,4 @@ the detail and the sources it did find.
 | Already-known tome notice | `sAlreadyKnown`, a space, the spell name, and a full stop | [spellcasting](/engine/spellcasting.md#reading-a-tome) |
 | Alchemy craft button | Shown with two or more chosen ingredients, whether or not they share an effect | [crafting](/engine/crafting.md#buttons-and-questions) |
 | Load door name | Interior: the far cell's `FULL`; exterior: the worldspace's `FULL`, never the cell's | [interaction](/engine/interaction.md#load-doors) |
+| Inline picture height | The bottom of an `<img>` picture sits on the baseline; a negative `vspace` moves it down | [AS2 display runtime](/engine/as2-display-runtime.md#text) |

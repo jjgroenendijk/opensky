@@ -31,6 +31,8 @@ nonisolated public struct SWFSceneItem: Equatable, Sendable {
     /// An `editText` item's box when a script resized the field; nil keeps the
     /// character's bounds.
     public var textBounds: SWFRect?
+    /// The inline `<img>` pictures of an `editText` item's `textOverride`.
+    public var textImages: [SWFInlineImage] = []
 }
 
 /// Ordered render commands for one frame. Masks carry the geometry items the

@@ -163,6 +163,13 @@ its `textField`. The movie then turns each `[Event]` tag into key art: its `Crea
 `GetButtonFromUserEvent` with the controlmap user event, and the engine answers with the bound
 key's name. Without that answer the movie faults before it shows the text.
 
+The movie then calls `flash.display.BitmapData.loadBitmap` with that name and `.png`, such as
+`E.png`. The movie exports one bitmap per key under that name. When the bitmap has a size, the
+movie writes `<img src='E.png' height='h' width='w'>` into the `htmlText`, and the field draws
+the picture in the line of text. With a gamepad connected, the answer is the gamepad art name,
+such as `360_A`. An event the player cannot remap, such as a camera event, answers with its
+first input in `controlmap.txt`.
+
 Help lists the `HelpManualPC` form list, which the `HMPC` default object names
 ([UESP DOBJ](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DOBJ)). Each entry is a
 `MESG`: its `FULL` is the title and its `DESC` the text.

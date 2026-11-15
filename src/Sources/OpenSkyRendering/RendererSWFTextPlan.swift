@@ -39,7 +39,8 @@ nonisolated extension SWFMovieResources {
                     guard let field = scene.movie.editText(id) else { continue }
                     let text = item.textBounds.map(field.withBounds) ?? field
                     plans[index] = planEditText(
-                        text, content: item.textOverride, firstLine: item.textFirstLine
+                        text, content: item.textOverride, firstLine: item.textFirstLine,
+                        images: item.textImages
                     )
                 }
             }
@@ -71,9 +72,9 @@ nonisolated extension SWFMovieResources {
 
         /// `content` is the runtime string an `SWFSceneItem` carried; nil keeps the
         /// character's authored `InitialText`.
-        private func planEditText(_ text: SWFEditText, content: String?, firstLine: Int?)
-            -> [SWFMovieResources.PlannedTextRun]
-        {
+        private func planEditText(
+            _ text: SWFEditText, content: String?, firstLine: Int?, images: [SWFInlineImage]
+        ) -> [SWFMovieResources.PlannedTextRun] {
             let resolved = content ?? text.plainText
             guard resolved?.isEmpty == false else { return [] }
             guard let font = scene.resolvedFont(for: text) else {
@@ -81,9 +82,9 @@ nonisolated extension SWFMovieResources {
                 return []
             }
             let layout = SWFTextLayout.editText(
-                text, font: font, content: content, firstLine: firstLine
+                text, font: font, content: content, firstLine: firstLine, images: images
             )
-            return layout.runs.map { run in
+            var planned = layout.runs.map { run in
                 SWFMovieResources.PlannedTextRun(
                     font: font,
                     fontKey: fontKey(for: font, editText: text),
@@ -93,6 +94,17 @@ nonisolated extension SWFMovieResources {
                     clipBottom: layout.clipBottom
                 )
             }
+            if !layout.images.isEmpty {
+                if planned.isEmpty {
+                    planned.append(SWFMovieResources.PlannedTextRun(
+                        font: font, fontKey: fontKey(for: font, editText: text),
+                        emTwips: 0, color: SIMD4(repeating: 1), glyphs: [],
+                        clipBottom: layout.clipBottom
+                    ))
+                }
+                planned[0].inlineImages = layout.images
+            }
+            return planned
         }
 
         /// Bit position of the movie generation inside an atlas font key.

@@ -140,6 +140,11 @@ with the `AutoSize` flag, or with GFx `textAutoSize` set by script, sizes its te
 it draws every line. When the bottom edge cuts the next line, that line is drawn too, clipped at
 the edge. It does not count for `bottomScroll` or `maxscroll`.
 
+`htmlText` drops its tags, except `<img src='name' width='w' height='h' vspace='v'>`. That tag
+draws the bitmap the movie exports under `name` in the line, `w` by `h` pixels. A size the tag
+leaves out comes from the bitmap. The picture takes its width in the line. Reading `htmlText`
+back gives the tags again, so a script that assigns it again keeps its pictures.
+
 ## Scene generation
 
 The runtime produces the same scene command stream as the static scene builder, with the same clip

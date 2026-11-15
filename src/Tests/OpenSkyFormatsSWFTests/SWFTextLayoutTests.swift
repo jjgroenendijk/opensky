@@ -153,6 +153,23 @@ struct SWFTextLayoutTests {
         #expect(SWFTextLayout.editText(exact, font: font, firstLine: 0).clipBottom == nil)
     }
 
+    /// The picture takes its width in the line, and its bottom sits on the baseline.
+    @Test func anImageTakesItsWidthInTheLine() throws {
+        let font = try Self.makeFont()
+        let text = try Self.makeEditText(text: "")
+        let image = SWFInlineImage(source: "E.png", width: 10, height: 20)
+        let layout = SWFTextLayout.editText(
+            text, font: font, content: "A\u{FFFC}B", images: [image]
+        )
+        let glyphs = try #require(layout.runs.first).glyphs
+        #expect(glyphs.count == 2)
+        let placed = try #require(layout.images.first)
+        #expect(placed.image == image)
+        #expect(placed.x == glyphs[0].x + 600)
+        #expect(glyphs[1].x == placed.x + 200)
+        #expect(placed.y == glyphs[0].y - 400)
+    }
+
     @Test func wordWrapBreaksAtSpaces() throws {
         let font = try Self.makeFont()
         // "AB AB AB": word width 1100 (600 - 100 kern + 500? no kern across

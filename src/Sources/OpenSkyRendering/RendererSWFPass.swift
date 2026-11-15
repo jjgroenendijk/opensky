@@ -393,21 +393,118 @@ nonisolated struct SWFFrameBuilder {
             let emPixels = max(1, min(256, Int((run.emTwips * pixelsPerTwip).rounded())))
             appendGlyphQuads(run: run, emPixels: emPixels, textToPixels: textToPixels)
             let quadCount = glyphQuadCount - quadStart
-            guard quadCount > 0 else { continue }
+            if quadCount > 0 {
+                uniforms.append(makeUniforms(
+                    transform: pixelsToClip,
+                    fill: .solid(run.color),
+                    colorTransform: item.colorTransform,
+                    fillMode: .glyph
+                ))
+                ops.append(SWFDrawOp(
+                    kind: .content(clipCount: clipCount),
+                    usesGlyphBuffer: true,
+                    vertexStart: quadStart * 6,
+                    vertexCount: quadCount * 6,
+                    uniformIndex: uniforms.count - 1,
+                    bitmapId: nil,
+                    glyphCount: quadCount
+                ))
+            }
+            appendInlineImages(run, item: item, clipCount: clipCount, textToPixels: textToPixels)
+        }
+    }
+
+    /// Character-local twips -> NDC for one item.
+    private func clipTransform(for item: SWFSceneItem) -> SWFTransform {
+        pixelsToClip.concatenating(stageToPixels).concatenating(item.transform)
+    }
+
+    private func makeUniforms(
+        transform: SWFTransform,
+        fill: SWFMovieResources.ResolvedFill,
+        colorTransform: SWFColorTransform,
+        fillMode: SWFFillMode? = nil
+    ) -> SWFDrawUniforms {
+        var uniforms = SWFDrawUniforms()
+        uniforms.transformRotation = transform.packedLinear
+        uniforms.transformTranslation = transform.packedTranslation
+        uniforms.colorMultiply = colorTransform.multiply * SIMD4(1, 1, 1, opacity)
+        uniforms.colorAdd = colorTransform.add * SIMD4(1, 1, 1, opacity)
+        switch fill {
+        case let .solid(color):
+            uniforms.baseColor = color
+            uniforms.fillMode = UInt32((fillMode ?? .solid).rawValue)
+        case let .bitmap(id, toUV, tiled):
+            uniforms.fillMode = UInt32(SWFFillMode.bitmap.rawValue)
+            uniforms.fillRotation = toUV.packedLinear
+            uniforms.fillTranslation = toUV.packedTranslation
+            uniforms.bitmapTiled = tiled ? 1 : 0
+            uniforms.sourcePremultiplied = movie.bitmaps[id]?.premultiplied == true ? 1 : 0
+        case let .gradient(row, toSquare, radial, spread):
+            uniforms.fillMode = UInt32(
+                (radial ? SWFFillMode.radialGradient : SWFFillMode.linearGradient).rawValue
+            )
+            uniforms.fillRotation = toSquare.packedLinear
+            uniforms.fillTranslation = toSquare.packedTranslation
+            uniforms.gradientSpread = UInt32(spread.rawValue)
+            uniforms.gradientV = (Float(row) + 0.5) / Float(max(1, movie.gradientRowCount))
+        }
+        return uniforms
+    }
+}
+
+nonisolated extension SWFFrameBuilder {
+    /// An HTML field's `<img>` pictures: one bitmap quad each in the glyph ring, cut at the
+    /// field's bottom edge like the glyphs.
+    private mutating func appendInlineImages(
+        _ run: SWFMovieResources.PlannedTextRun,
+        item: SWFSceneItem,
+        clipCount: Int,
+        textToPixels: SWFTransform
+    ) {
+        let twipsPerPixel: Float = 20
+        let bottom = run.clipBottom.map { textToPixels.apply(SIMD2(0, $0)).y }
+        for placement in run.inlineImages {
+            guard
+                let id = movie.scene.movie.exportedNames[placement.image.source],
+                movie.bitmaps[id] != nil,
+                uniforms.count < movie.drawCapacity,
+                glyphQuadCount < movie.glyphQuadCapacity
+            else {
+                skipped += 1
+                continue
+            }
+            let origin = SIMD2(placement.x, placement.y)
+            let extent = SIMD2(placement.image.width, placement.image.height) * twipsPerPixel
+            let minCorner = textToPixels.apply(origin)
+            var maxCorner = textToPixels.apply(origin + extent)
+            let size = maxCorner - minCorner
+            guard size.x > 0, size.y > 0 else { continue }
+            if let bottom, maxCorner.y > bottom {
+                guard bottom > minCorner.y else { continue }
+                maxCorner.y = bottom
+            }
+            let quadStart = glyphQuadCount
+            appendQuad(minCorner: minCorner, maxCorner: maxCorner, uvMin: .zero, uvMax: .one)
+            glyphQuadCount += 1
+            // The shader reads the bitmap at the pixel position mapped to 0...1 of the picture.
+            let toUV = SWFTransform(
+                scaleX: 1 / size.x, scaleY: 1 / size.y,
+                translateX: -minCorner.x / size.x, translateY: -minCorner.y / size.y
+            )
             uniforms.append(makeUniforms(
                 transform: pixelsToClip,
-                fill: .solid(run.color),
-                colorTransform: item.colorTransform,
-                fillMode: .glyph
+                fill: .bitmap(characterId: id, toUV: toUV, tiled: false),
+                colorTransform: item.colorTransform
             ))
             ops.append(SWFDrawOp(
                 kind: .content(clipCount: clipCount),
                 usesGlyphBuffer: true,
                 vertexStart: quadStart * 6,
-                vertexCount: quadCount * 6,
+                vertexCount: 6,
                 uniformIndex: uniforms.count - 1,
-                bitmapId: nil,
-                glyphCount: quadCount
+                bitmapId: id,
+                glyphCount: 0
             ))
         }
     }
@@ -479,43 +576,5 @@ nonisolated struct SWFFrameBuilder {
         glyphVertices.append(contentsOf: [
             topLeft, topRight, bottomLeft, topRight, bottomRight, bottomLeft
         ])
-    }
-
-    /// Character-local twips -> NDC for one item.
-    private func clipTransform(for item: SWFSceneItem) -> SWFTransform {
-        pixelsToClip.concatenating(stageToPixels).concatenating(item.transform)
-    }
-
-    private func makeUniforms(
-        transform: SWFTransform,
-        fill: SWFMovieResources.ResolvedFill,
-        colorTransform: SWFColorTransform,
-        fillMode: SWFFillMode? = nil
-    ) -> SWFDrawUniforms {
-        var uniforms = SWFDrawUniforms()
-        uniforms.transformRotation = transform.packedLinear
-        uniforms.transformTranslation = transform.packedTranslation
-        uniforms.colorMultiply = colorTransform.multiply * SIMD4(1, 1, 1, opacity)
-        uniforms.colorAdd = colorTransform.add * SIMD4(1, 1, 1, opacity)
-        switch fill {
-        case let .solid(color):
-            uniforms.baseColor = color
-            uniforms.fillMode = UInt32((fillMode ?? .solid).rawValue)
-        case let .bitmap(id, toUV, tiled):
-            uniforms.fillMode = UInt32(SWFFillMode.bitmap.rawValue)
-            uniforms.fillRotation = toUV.packedLinear
-            uniforms.fillTranslation = toUV.packedTranslation
-            uniforms.bitmapTiled = tiled ? 1 : 0
-            uniforms.sourcePremultiplied = movie.bitmaps[id]?.premultiplied == true ? 1 : 0
-        case let .gradient(row, toSquare, radial, spread):
-            uniforms.fillMode = UInt32(
-                (radial ? SWFFillMode.radialGradient : SWFFillMode.linearGradient).rawValue
-            )
-            uniforms.fillRotation = toSquare.packedLinear
-            uniforms.fillTranslation = toSquare.packedTranslation
-            uniforms.gradientSpread = UInt32(spread.rawValue)
-            uniforms.gradientV = (Float(row) + 0.5) / Float(max(1, movie.gradientRowCount))
-        }
-        return uniforms
     }
 }

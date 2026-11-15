@@ -35,9 +35,13 @@ nonisolated public struct SWFTextLayoutResult: Equatable, Sendable {
     /// Set when a line shows only in part: the field's bottom edge, in text-local twips,
     /// where the renderer cuts the glyphs.
     public var clipBottom: Float?
+    /// The `<img>` pictures of an HTML field, placed in their lines.
+    public var images: [SWFInlineImagePlacement] = []
 }
 
 nonisolated public enum SWFTextLayout: Sendable {
+    static let twipsPerPixel: Float = 20
+
     /// Lays out a DefineText/DefineText2 block. Record state (font, height,
     /// color, pen offsets) inherits from earlier records; glyph advances move
     /// the pen. Positions are in the text tag's local space (its MATRIX is
@@ -88,7 +92,8 @@ nonisolated public enum SWFTextLayout: Sendable {
         _ text: SWFEditText,
         font: SWFFontDefinition,
         content override: String? = nil,
-        firstLine: Int? = nil
+        firstLine: Int? = nil,
+        images: [SWFInlineImage] = []
     ) -> SWFTextLayoutResult {
         let content = override ?? text.plainText
         guard let content, !content.isEmpty, !font.glyphs.isEmpty else {
@@ -98,7 +103,7 @@ nonisolated public enum SWFTextLayout: Sendable {
             font: font, emTwips: Float(text.fontHeight ?? 240)
         )
         let availableWidth = text.availableWidth
-        var shaper = LineShaper(metrics: metrics)
+        var shaper = LineShaper(metrics: metrics, images: images)
         let paragraphs = content
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
@@ -128,15 +133,16 @@ nonisolated public enum SWFTextLayout: Sendable {
                 clipBottom = Float(text.bounds.yMax)
             }
         }
-        let placed = place(lines: Array(drawn), text: text, metrics: metrics)
+        let placed = place(lines: Array(drawn), text: text, metrics: metrics, images: images)
         let color = text.color ?? SWFColor(red: 0, green: 0, blue: 0, alpha: 255)
-        let runs = placed.isEmpty ? [] : [SWFTextRun(
-            fontID: nil, emTwips: metrics.emTwips, color: color, glyphs: placed
+        let runs = placed.glyphs.isEmpty ? [] : [SWFTextRun(
+            fontID: nil, emTwips: metrics.emTwips, color: color, glyphs: placed.glyphs
         )]
         var result = SWFTextLayoutResult(runs: runs, missingGlyphs: shaper.missingGlyphs)
         result.lineCount = lines.count
         result.visibleLineCount = shown.count
         result.clipBottom = clipBottom
+        result.images = placed.images
         return result
     }
 
@@ -159,13 +165,15 @@ nonisolated public enum SWFTextLayout: Sendable {
     private static func place(
         lines: [ShapedLine],
         text: SWFEditText,
-        metrics: FontScaledMetrics
-    ) -> [SWFGlyphPlacement] {
+        metrics: FontScaledMetrics,
+        images: [SWFInlineImage]
+    ) -> (glyphs: [SWFGlyphPlacement], images: [SWFInlineImagePlacement]) {
         let availableWidth = text.availableWidth
         let align = text.layout?.align ?? 0
         let extraLeading = Float(text.layout?.leading ?? 0)
         let lineAdvance = metrics.ascent + metrics.descent + metrics.leading + extraLeading
         var placed: [SWFGlyphPlacement] = []
+        var placedImages: [SWFInlineImagePlacement] = []
         var baseline = Float(text.bounds.yMin) + metrics.ascent
         for line in lines {
             var startX = Float(text.bounds.xMin) + text.leftInset
@@ -177,13 +185,22 @@ nonisolated public enum SWFTextLayout: Sendable {
                 }
             }
             for glyph in line.glyphs {
+                if let index = glyph.imageIndex {
+                    // The picture's bottom sits on the baseline; a negative vspace moves it down.
+                    let image = images[index]
+                    let top = baseline - (image.height + image.verticalSpace) * twipsPerPixel
+                    placedImages.append(SWFInlineImagePlacement(
+                        image: image, x: startX + glyph.x, y: top
+                    ))
+                    continue
+                }
                 placed.append(SWFGlyphPlacement(
                     glyphIndex: glyph.glyphIndex, x: startX + glyph.x, y: baseline
                 ))
             }
             baseline += lineAdvance
         }
-        return placed
+        return (placed, placedImages)
     }
 }
 
@@ -239,6 +256,11 @@ nonisolated private struct ShapedGlyph {
     let advance: Float
     /// Character is breakable whitespace (wrap point).
     let isSpace: Bool
+
+    /// An inline image stands in the line as a glyph with a negative index.
+    var imageIndex: Int? {
+        glyphIndex < 0 ? -1 - glyphIndex : nil
+    }
 }
 
 nonisolated private struct ShapedLine {
@@ -252,13 +274,27 @@ nonisolated private struct ShapedLine {
 /// Maps characters to glyph indices and accumulates pen advances + kerning.
 nonisolated private struct LineShaper {
     let metrics: FontScaledMetrics
+    let images: [SWFInlineImage]
     private(set) var missingGlyphs = 0
+    private(set) var nextImage = 0
+
+    static let imageScalar = SWFHTMLText.imageMarker.unicodeScalars.first
 
     mutating func shape(_ text: String) -> ShapedLine {
         var line = ShapedLine()
         var penX: Float = 0
         var previousCode: UInt16?
         for scalar in text.unicodeScalars {
+            if scalar == Self.imageScalar, nextImage < images.count {
+                let advance = images[nextImage].width * SWFTextLayout.twipsPerPixel
+                line.glyphs.append(ShapedGlyph(
+                    glyphIndex: -1 - nextImage, x: penX, advance: advance, isSpace: false
+                ))
+                nextImage += 1
+                penX += advance
+                previousCode = nil
+                continue
+            }
             guard scalar.value <= UInt16.max else {
                 missingGlyphs += 1
                 continue
