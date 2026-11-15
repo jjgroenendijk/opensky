@@ -81,6 +81,24 @@ struct SoundCategoryMixTests {
         #expect(mix.musicLevel < 1)
     }
 
+    @Test func aMovieHoldsTheMasterCategoryFortyDecibelsDown() {
+        var mix = Self.mix()
+        let movie = SoundMixInputs(movieMute: true)
+        mix.advance(movie, seconds: 0.05)
+        #expect(!mix.level(of: Self.music).paused)
+        mix.advance(movie, seconds: 0.05)
+        let held = mix.level(of: Self.music)
+        #expect(held.paused)
+        #expect(abs(held.gain - 0.63 * SoundCategoryMix.movieMuteLevel) < 0.0001)
+        #expect(!mix.level(of: nil).paused, "a sound with no category plays on")
+        mix.advance(SoundMixInputs(), seconds: 0)
+        let back = mix.level(of: Self.music)
+        #expect(!back.paused)
+        #expect(abs(back.gain - 0.63 * SoundCategoryMix.movieMuteLevel) < 0.0001)
+        mix.advance(SoundMixInputs(), seconds: 0.1)
+        #expect(abs(mix.level(of: Self.music).gain - 0.63) < 0.0001)
+    }
+
     @Test func underWaterMutesTheFlaggedCategory() {
         var mix = Self.mix()
         mix.advance(SoundMixInputs(submerged: true), seconds: 0)

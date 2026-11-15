@@ -104,7 +104,7 @@ struct MoviePlayerCoordinatorTests {
 
     @Test func onlyAnInterruptibleMovieSkipsOnActivate() {
         let fixed = player()
-        fixed.route(.button(.accept))
+        fixed.route(.activate)
         #expect(fixed.isPlaying)
         #expect(fixed.skip(force: true))
         #expect(!fixed.isPlaying)
@@ -114,6 +114,8 @@ struct MoviePlayerCoordinatorTests {
         skippable.route(.button(.cancel))
         #expect(skippable.isPlaying, "Cancel does not skip a movie in the game")
         skippable.route(.button(.accept))
+        #expect(skippable.isPlaying, "Return sends Accept alone, which does not skip")
+        skippable.route(.activate)
         #expect(outcome == .skipped)
     }
 

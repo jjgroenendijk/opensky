@@ -14,7 +14,9 @@ nonisolated public final class FakeWorldMusicDirectorPort: WorldMusicDirectorPor
     public var playDiscoveryMusicResult: MusicRefusal?
     public var playSpecialMusicCalls: [SpecialMusic] = []
     public var playSpecialMusicResult: MusicRefusal?
+    public var pauseMusicCallCount = 0
     public var removeScriptedMusicCalls: [FormID] = []
+    public var resumeMusicCallCount = 0
     public var setCombatActiveCalls: [Bool] = []
     public var setCombatActiveResult: MusicRefusal?
 
@@ -44,8 +46,16 @@ nonisolated extension FakeWorldMusicDirectorPort {
         return playSpecialMusicResult
     }
 
+    public func pauseMusic() {
+        pauseMusicCallCount += 1
+    }
+
     public func removeScriptedMusic(_ id: FormID) {
         removeScriptedMusicCalls.append(id)
+    }
+
+    public func resumeMusic() {
+        resumeMusicCallCount += 1
     }
 
     @discardableResult

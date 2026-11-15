@@ -25,6 +25,9 @@ public final class WorldMusicDirector {
     private let trackSource: TrackSource
     /// The playlist entry whose file is still loading; `tick` starts it once loaded.
     private var waitingTrackIndex: Int?
+    /// Pauses nest: the music comes back when the last one ends.
+    private var pauses = 0
+    static let pauseFadeSeconds: Float = 0.5
 
     /// Music playback. Toggling takes effect immediately: off fades the current
     /// track out, on restarts the selection the last context resolved.
@@ -291,6 +294,10 @@ public final class WorldMusicDirector {
 
     private func applyMusicState(at index: Int) {
         waitingTrackIndex = nil
+        guard pauses == 0 else {
+            retireMusicSources(overSeconds: Self.pauseFadeSeconds)
+            return
+        }
         guard musicEnabled, engine.isRunning else {
             // Switching music off (or losing the engine) stops now rather than
             // fading: the user asked for silence, not for a slow one.
@@ -351,6 +358,23 @@ public final class WorldMusicDirector {
 
 /// Starting, crossfading, and retiring the music sources.
 extension WorldMusicDirector {
+    /// Fades the track out and holds the music until every pause has ended; the type
+    /// then plays its tracks again. A movie that mutes music pauses it.
+    public func pauseMusic() {
+        pauses += 1
+        if pauses == 1 {
+            applyMusicState()
+        }
+    }
+
+    public func resumeMusic() {
+        guard pauses > 0 else { return }
+        pauses -= 1
+        if pauses == 0 {
+            applyMusicState()
+        }
+    }
+
     /// Plays the default objects' music for `kind` once, then returns to the music it
     /// interrupted. During combat the fight's music stays.
     @discardableResult

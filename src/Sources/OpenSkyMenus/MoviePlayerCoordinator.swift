@@ -120,8 +120,8 @@ public final class MoviePlayerCoordinator {
     }
 
     public func route(_ event: MenuInputEvent) {
-        // The game skips on the Activate key only, which the menu's Accept follows.
-        if event == .button(.accept) {
+        // Only Activate skips: not Return, Escape, or a mouse button bound to nothing.
+        if event == .activate {
             skip()
         }
     }

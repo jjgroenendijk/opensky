@@ -33,8 +33,9 @@ public final class MovieWorldAdapter: MoviePlayerWorld {
 
     public let game: any MovieWorldHost
     private var soundID: Int?
-    /// The categories this movie muted, unmuted again when it ends.
-    private var mutedCategories: [AudioCategory] = []
+    /// What the playing movie holds: the master category, the music, or both.
+    private var mutesAudio = false
+    private var mutesMusic = false
 
     public init(game: any MovieWorldHost) {
         self.game = game
@@ -50,13 +51,14 @@ public final class MovieWorldAdapter: MoviePlayerWorld {
 
     public func startMovieSound(_ sound: DecodedAudio?, request: MovieRequest) {
         guard let engine = game.audio.engine, engine.isRunning else { return }
-        // The game mutes its master category, so every game sound; the movie's own
-        // sound skips the categories.
-        let muting = request.muteAudio
-            ? AudioCategory.allCases : request.muteMusic ? [.music] : []
-        mutedCategories = muting.filter { !engine.isMuted($0) }
-        for category in mutedCategories {
-            engine.setMuted(true, for: category)
+        // The movie's own sound skips the categories and the master volume.
+        mutesAudio = request.muteAudio
+        mutesMusic = request.muteMusic
+        if mutesAudio {
+            engine.movieMutesAudio = true
+        }
+        if mutesMusic {
+            game.audio.musicDirector?.pauseMusic()
         }
         guard let sound, sound.frameCount > 0 else { return }
         do {
@@ -76,10 +78,15 @@ public final class MovieWorldAdapter: MoviePlayerWorld {
             engine.stopSource(id: soundID)
         }
         soundID = nil
-        for category in mutedCategories {
-            engine.setMuted(false, for: category)
+        // Audio comes back first, then music.
+        if mutesAudio {
+            engine.movieMutesAudio = false
         }
-        mutedCategories = []
+        if mutesMusic {
+            game.audio.musicDirector?.resumeMusic()
+        }
+        mutesAudio = false
+        mutesMusic = false
     }
 
     /// Plays the startup logo, then runs `then`. Runs `then` at once when the logo

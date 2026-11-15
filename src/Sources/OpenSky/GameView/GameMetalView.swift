@@ -132,6 +132,9 @@ final class GameMetalView: MTKView {
             onInputEvent?(name)
         }
         dispatcher.apply(action, .press)
+        if inMenu, bindings.action(forMacKey: event.keyCode, inMenu: false) == .activate {
+            dispatcher.apply(.activate, .press)
+        }
     }
 
     /// Key capture for the Controls page, then typed text for a name field.
@@ -192,6 +195,9 @@ final class GameMetalView: MTKView {
             }
             if captured {
                 menuMode?.routeMenuInput(.button(.accept))
+                if bindings.action(forMouseButton: 0) == .activate {
+                    menuMode?.routeMenuInput(.activate)
+                }
             } else {
                 menuMode?.routeMenuPointer(menuPointer(.pressed, event))
             }

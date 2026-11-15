@@ -55,7 +55,7 @@ extension ContainerMenuController {
             if let text = quantity?.text {
                 noteAction(text)
             }
-        case .button(.yButton), .pointer, .release:
+        case .button(.yButton), .pointer, .release, .activate:
             return
         }
     }

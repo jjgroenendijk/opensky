@@ -74,7 +74,7 @@ public final class SleepWaitMenuCoordinator: MenuScreen<SleepWaitMovieEvent> {
         case .move(.right), .move(.up): chosenHours = min(Self.hours.upperBound, chosenHours + 1)
         case .button(.accept): handle(.wait(hours: chosenHours))
         case .button(.cancel): handle(.cancel)
-        case .button(.xButton), .button(.yButton), .pointer, .release: return
+        case .button(.xButton), .button(.yButton), .pointer, .release, .activate: return
         }
     }
 

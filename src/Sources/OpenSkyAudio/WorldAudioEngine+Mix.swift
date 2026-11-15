@@ -16,6 +16,8 @@ extension WorldAudioEngine {
     /// Steps the mix and brings every source to its new level, pausing or resuming it.
     public func advanceSoundMix(_ inputs: SoundMixInputs, seconds: Float) {
         guard soundMix != nil else { return }
+        var inputs = inputs
+        inputs.movieMute = movieMutesAudio
         soundMix?.advance(inputs, seconds: seconds)
         for source in sources {
             let level = mixLevel(of: source)
