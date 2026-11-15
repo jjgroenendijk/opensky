@@ -11,7 +11,6 @@ import OpenSkyWorld
 /// The file reads the loading screens start with the session: camera paths and model markers.
 public struct LoadingScreenAssetLoaders {
     let game: any LoadingScreenWorldHost
-    let state: LoadingScreenPartState
     let presentationRecords: PresentationRecordStore?
 
     /// Loads the camera paths the loading screens name, all of them started at once.
@@ -41,15 +40,5 @@ public struct LoadingScreenAssetLoaders {
             markers.prefetch(path)
         }
         return markers
-    }
-
-    func registerLoadingScreenCameraPaths(stage: SessionStage) {
-        let gameSession = stage.gameSession
-        guard let paths = cameraPathLoader() else { return }
-        state.cameraPaths = paths
-        gameSession.assetDrains.register(.loadingCameraPaths) { _ in paths.drain() }
-        guard let markers = modelMarkerLoader() else { return }
-        state.modelMarkers = markers
-        gameSession.assetDrains.register(.loadingModelMarkers) { _ in markers.drain() }
     }
 }
