@@ -237,7 +237,7 @@ struct QuestRecordTests {
 
     /// A four-character code as the little-endian word ENAM stores.
     private func fourCC(_ value: String) -> UInt32 {
-        FourCC(stringLiteral: value).rawValue
+        FourCC(code: value).rawValue
     }
 
     @Test(arguments: [

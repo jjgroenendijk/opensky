@@ -12,14 +12,14 @@ nonisolated extension ConditionFunctions.ConditionFunctionsData {
     nonisolated enum ConditionFunctionsObjectType {
         /// `wbFormTypeEnum` values for the base types a placed reference can have.
         static let objectTypes: [Int32: FourCC] = {
-            let names: [Int32: String] = [
+            let names: [Int32: FourCC] = [
                 0: "ACTI", 1: "ARMO", 2: "BOOK", 3: "CONT", 4: "DOOR", 5: "INGR", 6: "LIGH",
                 7: "MISC", 8: "STAT", 9: "GRAS", 10: "TREE", 12: "WEAP", 13: "NPC_", 14: "LVLN",
                 17: "ALCH", 18: "LVLI", 19: "KEYM", 20: "AMMO", 21: "FLOR", 22: "FURN",
                 23: "SOUN", 30: "IDLM", 33: "TACT", 42: "MSTT", 90: "APPA", 97: "SLGM",
                 100: "SCRL"
             ]
-            return names.mapValues { FourCC(stringLiteral: $0) }
+            return names
         }()
 
         /// Base types that go into an inventory when taken. A light is carried only with
