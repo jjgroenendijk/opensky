@@ -15,6 +15,18 @@
     "skills": [
       "testing-and-verifying"
     ],
+    "query": "My change to MagicCoordinator is done and tested. Push it so the PR can merge.",
+    "files": [],
+    "expected_behavior": [
+      "Runs make test with T naming the test targets that cover the change and COVERAGE=1 before the push, and adds tests for the changed lines it lists",
+      "Does not run the whole unit plan or make lint-index locally",
+      "After the push, waits with make ci-wait in a background shell"
+    ]
+  },
+  {
+    "skills": [
+      "testing-and-verifying"
+    ],
     "query": "Run the full real-data suite.",
     "files": [],
     "expected_behavior": [

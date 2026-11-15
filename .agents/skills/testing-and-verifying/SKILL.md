@@ -43,7 +43,16 @@ not touch but that calls into it. Reasonable defaults, not rules:
 
 The whole unit plan (`make test PLAN=UnitTests`) and the sanitizers run in CI: the
 unit plan on every push, the sanitizers and `make lint-index` weekly. Do not run the unit plan
-or the sanitizers locally before a push; push and read `gh pr checks <n> --watch`.
+or the sanitizers locally before a push; push and run `make ci-wait`, which waits for the
+run and prints what failed.
+
+CI also checks that 80% of the branch's changed lines ran in a test. This check fails more
+pull request runs than failing tests do, and each failure costs a 15-minute run plus a
+second one after the fix. So before the push that should merge a change under
+`src/Sources/`, run the test targets that cover the change with `COVERAGE=1`, for example
+`make test T='OpenSkyMagicTests,OpenSkyMagicAdaptersTests' COVERAGE=1`, and add tests for
+the lines it lists. A line that only a target outside `T` runs is listed too, so name
+every target that covers the change.
 
 Find the suites for a file with `grep -rl 'TypeName' Tests`. Suite names follow the type
 under test (`BSAArchive` is covered by `BSAArchiveTests`). The plans and what each one builds
@@ -77,9 +86,9 @@ Rules that hold across all four:
   `make build-app`, `make build-cli`, and `make build-tests` (every bundle of a plan,
   `PLAN=UnitTests` by default, without running a test).
 - `COVERAGE=1` checks that the branch's changed lines ran in a test, and with
-  `PLAN=UnitTests` also the coverage floors, as CI does. Run `make test PLAN=UnitTests
-  COVERAGE=1` locally when a change deletes tests or adds code no test reaches. Under the
-  floor, the check lists the changed lines no test ran.
+  `PLAN=UnitTests` also the coverage floors, as CI does. Under the floor, the check
+  lists the changed lines no test ran. Run `make test PLAN=UnitTests COVERAGE=1` locally
+  only when a change deletes tests, because only the whole plan checks the floors.
 - A failed run prints each failing test and its message from the result bundle.
   `python3 tools/xcresult_summary.py <bundle>` prints it again. Do not hand-parse
   `.xcresult` JSON.
@@ -99,7 +108,7 @@ builds nothing: the only git hook is `pre-commit`.
 - Start the command itself in the background, not with `> file` redirection, and wait for
   the completion notification. Do not `cat` the task output, `sleep`, or loop on a log
   before it arrives; a hook blocks `sleep`. Each check is one more turn, and each turn
-  re-reads the whole context.
+  re-reads the whole context. Wait for CI the same way, with `make ci-wait`.
 - The output already lists each error once, with repository paths. Read it from the
   notification. Open the transcript only when the output says errors were not shown.
 - After a failed compile the build drops the driver records of the failed targets itself
