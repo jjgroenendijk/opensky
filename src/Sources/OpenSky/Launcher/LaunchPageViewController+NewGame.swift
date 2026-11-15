@@ -58,12 +58,7 @@ extension LaunchPageViewController {
         for row in startOptions.rows {
             row.isHidden = start == .normal
         }
-        var reason: String?
-        if validStart == nil {
-            reason = context.isLoadingStartPlaces ? Self.readingTitle : nil
-        } else if start != .normal {
-            reason = startOptions.problem?.reason
-        }
+        let reason = validStart == nil && context.isLoadingStartPlaces ? Self.readingTitle : nil
         startReasonLabel.stringValue = reason.map { "Play is off: \($0)" } ?? ""
         startReasonLabel.toolTip = startReasonLabel.stringValue
         startReasonLabel.isHidden = reason == nil

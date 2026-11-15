@@ -152,7 +152,9 @@ behind the loading screen:
 - A map marker puts the player at the marker's position, as a fast travel does.
 
 On arrival the chosen weather is forced, the chosen item preset is added and worn, and the race
-menu opens unless it was turned off. The chosen hour is set before the move. A start that names
+menu opens unless it was turned off. The chosen hour is set before the move. The launcher sets
+only the story and the item preset, so the game keeps its own hour and weather and the race
+menu always opens; the other options are for `debug newgame`. A start that names
 a map marker the load order lacks is refused before anything changes.
 
 The item presets are OpenSky's own choice of `Skyrim.esm` items, not a rule of the game. Each

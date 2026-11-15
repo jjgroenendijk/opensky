@@ -38,7 +38,6 @@ extension LaunchPageViewController {
     }
 
     func refreshPlaces() {
-        startOptions.refreshWeathers(from: context.startPlaces)
         showStartMenu()
         refreshStart()
     }
