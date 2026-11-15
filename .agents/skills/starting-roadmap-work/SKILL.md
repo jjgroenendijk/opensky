@@ -2,9 +2,9 @@
 name: starting-roadmap-work
 description: Picks up and finishes OpenSky roadmap work on GitHub - how milestones map to
   Mn, choosing the next issue, writing an issue body, one branch and one PR per issue,
-  labels, assigning an issue, the draft PR flow, and closing a milestone. Use when
-  choosing what to work on, filing or editing an issue, starting an issue, or finishing a
-  milestone.
+  labels, assigning an issue, the draft PR flow, the single verification-needed issue for
+  checks that wait, and closing a milestone. Use when choosing what to work on, filing or
+  editing an issue, starting or closing an issue, or finishing a milestone.
 ---
 
 # Starting roadmap work
@@ -68,6 +68,21 @@ code itself.
 3. Push each further atomic commit to the draft PR as it is done.
 4. When the acceptance gate is met and verified, mark the PR ready:
    `gh pr ready <pr>`.
+
+## Verification that waits
+
+Some gates need a slow check after the code is done: a benchmark before and after, a live
+game run, or a reference-game comparison. Each such run costs minutes and slows the machine,
+so these checks run together in one batch, not one per issue.
+
+1. When the implementation is done but its check is not, close the issue anyway: the PR
+   body says `Closes #NNN`, or `gh issue close NNN` names the commit.
+2. Add the check to the one open issue with the `verification-needed` label, as a task
+   list item: the issue number, what to run, and what result passes. Never open a second
+   such issue; `gh issue list --label verification-needed` finds the one.
+3. When the planned work is done, run every check on the list in one batch, such as one
+   base and one branch benchmark for all performance issues. Tick each item that passes.
+   A check that fails reopens its issue with the result.
 
 - One branch and one PR per issue.
 - A new check that fails across the tree lands in slices, each its own PR: first the check as
