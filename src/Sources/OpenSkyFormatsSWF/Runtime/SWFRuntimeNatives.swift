@@ -27,6 +27,7 @@ nonisolated extension SWFMovieRuntime {
         installTimers(runtime)
         installMovieClipLoader(runtime)
         installGeometry(runtime)
+        installBitmapData(runtime, movie: movie)
         return Installed(
             movieClipPrototype: movieClipPrototype,
             textFieldPrototype: textFieldPrototype

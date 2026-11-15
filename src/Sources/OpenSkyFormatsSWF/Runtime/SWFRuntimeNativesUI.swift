@@ -56,7 +56,11 @@ nonisolated extension SWFMovieRuntime {
             return .undefined
         }
         let text = try context.string(0)
-        owner.setText(html ? SWFEditText.stripHTML(text) : text, of: node)
+        if html {
+            owner.setHTMLText(text, of: node)
+        } else {
+            owner.setText(text, of: node)
+        }
         return .undefined
     }
 

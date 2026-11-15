@@ -56,6 +56,8 @@ nonisolated public final class SWFDisplayObject {
     /// Runtime text for an edit-text node, overriding the character's
     /// `InitialText`.
     public var textOverride: String?
+    /// The `<img>` pictures of the last `htmlText`, one per image marker in the text.
+    public var textImages: [SWFInlineImage] = []
     /// A text field's own box after a script set `_width` or `_height`; nil keeps the
     /// character's bounds.
     public var textBounds: SWFRect?

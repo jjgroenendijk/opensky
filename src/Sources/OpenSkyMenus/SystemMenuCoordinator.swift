@@ -187,7 +187,9 @@ public final class SystemMenuCoordinator {
             prepare: SystemMenuMovieBridge.prepare(runtime:)
         ) { [weak self] runtime in
             SystemMenuMovieBridge.activate(runtime: runtime, buttonName: { [weak self] event in
-                self?.settings.buttonName(forUserEvent: event)
+                self?.settings.buttonName(
+                    forUserEvent: event, gamepad: (self?.renderer?.swfGamepadCount ?? 0) > 0
+                )
             }, onClose: { [weak self] in
                 self?.close()
             })

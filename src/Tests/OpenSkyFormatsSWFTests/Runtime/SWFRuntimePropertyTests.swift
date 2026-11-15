@@ -158,12 +158,24 @@ struct SWFRuntimePropertyTests {
         #expect(item.textOverride == "CD")
     }
 
-    /// The layout draws one plain run, so markup such as key art must not show as text.
+    /// Markup does not show as text; an `<img>` keeps its place as one image marker.
     @Test func assignedHTMLTextDrawsWithoutItsTags() throws {
         let runtime = try SWFRuntimeFixture.started(tags: Self.textMovie())
         let field = try #require(runtime.root.child(named: "field"))
-        #expect(runtime.setMember("htmlText", of: field, to: .string("Press <img src='E.png'>E")))
-        #expect(runtime.text(of: field) == "Press E")
+        #expect(runtime.setMember(
+            "htmlText", of: field, to: .string("<b>Press</b> <img src='E.png' width='9'>E")
+        ))
+        #expect(runtime.text(of: field) == "Press \u{FFFC}E")
+        #expect(field.textImages.map(\.source) == ["E.png"])
+        let item = try #require(SWFRuntimeFixture.drawItems(runtime.makeScene()).first)
+        #expect(item.textImages.first?.width == 9)
+        guard case let .string(html)? = runtime.member("htmlText", of: field) else {
+            Issue.record("htmlText is not a string")
+            return
+        }
+        #expect(html.contains("<img src='E.png'"))
+        runtime.setText("plain", of: field)
+        #expect(field.textImages.isEmpty)
     }
 
     @Test func aVariableBoundFieldReadsAndWritesThatVariable() throws {

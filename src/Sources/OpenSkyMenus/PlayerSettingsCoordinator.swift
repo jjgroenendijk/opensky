@@ -74,13 +74,38 @@ public final class PlayerSettingsCoordinator {
             ?? DirectInputKeyCodes.fallbackName(scanCode)
     }
 
-    /// The key bound to a controlmap user event, such as "E" for "Activate".
+    /// The art name of the input bound to a controlmap user event, such as "E" for
+    /// "Activate", or "360_A" with a gamepad. An event the player cannot remap, such as
+    /// "Zoom In", answers with its first input in the control map.
+    public func buttonName(forUserEvent event: String, gamepad: Bool) -> String? {
+        let slot = InputBindings.slots.first { $0.event == event }
+        if gamepad {
+            let code = slot.flatMap { bindings.gamepadCodes(for: $0.action).first }
+                ?? controlMapCode(of: event, device: .gamepad)
+            return code.flatMap { GamepadButton(controlMapCode: $0)?.artName }
+        }
+        if let slot, let scanCode = bindings.scanCode(for: slot.action) {
+            return keyName(scanCode)
+        }
+        if let code = controlMapCode(of: event, device: .keyboard) {
+            return keyName(code)
+        }
+        return controlMapCode(of: event, device: .mouse).map { keyName(InputCode.mouse(Int($0))) }
+    }
+
+    /// The keyboard and mouse art name, for callers that never show gamepad art.
     public func buttonName(forUserEvent event: String) -> String? {
-        guard
-            let slot = InputBindings.slots.first(where: { $0.event == event }),
-            let scanCode = bindings.scanCode(for: slot.action)
-        else { return nil }
-        return keyName(scanCode)
+        buttonName(forUserEvent: event, gamepad: false)
+    }
+
+    private func controlMapCode(of event: String, device: ControlDevice) -> UInt32? {
+        guard let controlMap else { return nil }
+        for context in controlMap.contexts.indices {
+            if let code = controlMap.codes(of: event, in: context, device: device).first {
+                return code
+            }
+        }
+        return nil
     }
 
     func resetBindings() {

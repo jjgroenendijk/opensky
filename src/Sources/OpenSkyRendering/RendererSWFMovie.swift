@@ -48,6 +48,8 @@ nonisolated public final class SWFMovieResources {
         public let glyphs: [SWFGlyphPlacement]
         /// The text-local y, in twips, where the field's bottom edge cuts the glyphs.
         var clipBottom: Float?
+        /// Exported bitmaps an HTML field draws in its lines, such as key art.
+        var inlineImages: [SWFInlineImagePlacement] = []
     }
 
     public let scene: SWFMovieScene
@@ -177,7 +179,8 @@ nonisolated public final class SWFMovieResources {
                 case .staticText, .editText:
                     let runs = plans[index] ?? []
                     draws += runs.count
-                    glyphs += runs.reduce(0) { $0 + $1.glyphs.count }
+                    glyphs += runs.reduce(0) { $0 + $1.glyphs.count + $1.inlineImages.count }
+                    draws += runs.reduce(0) { $0 + $1.inlineImages.count }
                 }
             }
         }

@@ -66,7 +66,7 @@ nonisolated extension SWFMovieRuntime {
         case "_parent":
             return node.parent.map { .object($0.object) }
         case "text", "htmlText":
-            return textMember(of: node)
+            return textMember(of: node, html: name == "htmlText")
         case "scroll", "maxscroll", "bottomScroll", "numLines":
             return scrollMember(name, of: node)
         case "selectable":
@@ -121,7 +121,11 @@ nonisolated extension SWFMovieRuntime {
                 return false
             }
             let text = runtime.coercion.toString(value)
-            setText(name == "htmlText" ? SWFEditText.stripHTML(text) : text, of: node)
+            if name == "htmlText" {
+                setHTMLText(text, of: node)
+            } else {
+                setText(text, of: node)
+            }
             return true
         case "scroll":
             return setTextScroll(value, of: node)
@@ -132,11 +136,13 @@ nonisolated extension SWFMovieRuntime {
 
     // MARK: - Text
 
-    private func textMember(of node: SWFDisplayObject) -> AS2Value? {
+    private func textMember(of node: SWFDisplayObject, html: Bool) -> AS2Value? {
         guard case .editText = node.content else {
             return nil
         }
-        return .string(text(of: node) ?? "")
+        let plain = text(of: node) ?? ""
+        guard html, !node.textImages.isEmpty else { return .string(plain) }
+        return .string(SWFHTMLText.restoringImages(in: plain, images: node.textImages))
     }
 
     /// Assigns a field's runtime content and writes the bound variable back, so
@@ -144,6 +150,7 @@ nonisolated extension SWFMovieRuntime {
     /// same string.
     public func setText(_ value: String, of node: SWFDisplayObject) {
         node.textOverride = value
+        node.textImages = []
         if
             let characterId = node.characterId,
             let field = editText(characterId), !field.variableName.isEmpty
@@ -151,6 +158,21 @@ nonisolated extension SWFMovieRuntime {
             writeVariable(field.variableName, from: node, to: .string(value))
         }
         markDirty()
+    }
+
+    /// Assigns `htmlText`: the tags drop out, and each `<img>` keeps its place in the line.
+    /// A size the tag leaves out comes from the bitmap the movie exports under that name.
+    public func setHTMLText(_ html: String, of node: SWFDisplayObject) {
+        let parsed = SWFHTMLText.parse(html)
+        setText(parsed.text, of: node)
+        node.textImages = parsed.images.map { image in
+            var sized = image
+            if let id = movie.exportedNames[image.source], let bitmap = movie.bitmap(id) {
+                sized.width = sized.width > 0 ? sized.width : Float(bitmap.width)
+                sized.height = sized.height > 0 ? sized.height : Float(bitmap.height)
+            }
+            return sized
+        }
     }
 
     /// The string a field currently draws: an explicit assignment first, then
