@@ -62,7 +62,7 @@ struct MenuRecordDataFirstUseTests {
         #expect(!records.isDecoded(.chargen))
         #expect(records.chargen.headParts.isEmpty)
         #expect(records.isDecoded(.chargen))
-        #expect(records.installedPlugins.map(\.name) == ["Base.esm"])
+        #expect(records.installedContent == nil)
         #expect(records.helpManual == nil)
         #expect(records.mainMenuLighting == nil)
         #expect(records.isDecoded(.content))

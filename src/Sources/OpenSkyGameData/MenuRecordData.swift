@@ -56,6 +56,8 @@ nonisolated public struct MenuRecordData: Sendable {
     public static let statsPrefix = "fStats"
     /// The default object naming the PC help topic list.
     public static let helpManualTag = "HMPC"
+    /// The Creations list without the Anniversary Edition upgrade; `HMAE` names the longer one.
+    public static let installedContentTag = "HMCC"
 
     /// A string setting the fast-travel, race, or alchemy menus or the HUD show.
     public static func isMenuText(_ editorID: String) -> Bool {
@@ -87,7 +89,7 @@ nonisolated public struct MenuRecordData: Sendable {
 
     /// The System page's lists and the title light, decoded on first use.
     private struct Content: Sendable {
-        let installedPlugins: [InstalledPlugin]
+        let installedContent: ResolvedFormID?
         let helpManual: ResolvedFormID?
         let mainMenuLighting: MainMenuCellLighting?
     }
@@ -132,9 +134,9 @@ nonisolated public struct MenuRecordData: Sendable {
         chargenRecords.value
     }
 
-    /// The active plugins in load order, for the System page's Installed Content.
-    public var installedPlugins: [InstalledPlugin] {
-        content.value.installedPlugins
+    /// The FLST of Creation messages the System page's Installed Content lists.
+    public var installedContent: ResolvedFormID? {
+        content.value.installedContent
     }
 
     /// The FLST of help topics the System page's Help lists: the DOBJ `HMPC` default object.
@@ -179,9 +181,7 @@ nonisolated public struct MenuRecordData: Sendable {
         content = FirstUseValue {
             let defaultObjects = DefaultObjectStore(plugins: loadOrder.files)
             return Content(
-                installedPlugins: loadOrder.plugins.map {
-                    InstalledPlugin(name: $0.name, file: $0.file)
-                },
+                installedContent: defaultObjects.object(tag: Self.installedContentTag),
                 helpManual: defaultObjects.object(tag: Self.helpManualTag),
                 mainMenuLighting: MainMenuCellLighting(
                     loadOrder: loadOrder, defaultObjects: defaultObjects

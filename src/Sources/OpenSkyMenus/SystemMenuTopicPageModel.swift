@@ -2,7 +2,7 @@
 // the text of the one the player opened. See docs/engine/system-menu.md#help-and-installed-content.
 
 import Foundation
-public import OpenSkyGameData
+import OpenSkyGameData
 public import OpenSkyMenusInterface
 
 /// Where the Help and Installed Content pages read their topics. The app answers
@@ -21,17 +21,12 @@ nonisolated extension SystemMenuTopic {
         }
     }
 
-    /// One topic per active plugin, titled by its file name. The game names a Creation
-    /// from data outside the install, so OpenSky shows what the plugin header holds.
-    public static func installedContent(_ plugins: [InstalledPlugin]) -> [SystemMenuTopic] {
-        plugins.map { plugin in
-            let lines = [
-                plugin.author.map { "Author: \($0)" },
-                plugin.summary,
-                plugin.masters.isEmpty ? nil : "Masters: " + plugin.masters.joined(separator: ", ")
-            ]
-            return SystemMenuTopic(
-                title: plugin.name, text: lines.compactMap(\.self).joined(separator: "\n")
+    /// One topic per Creation message. The game shows each carriage return in the
+    /// text as a space.
+    public static func installedContent(_ messages: [BuiltMessage]) -> [SystemMenuTopic] {
+        help(messages).map { topic in
+            SystemMenuTopic(
+                title: topic.title, text: topic.text.replacingOccurrences(of: "\r", with: " ")
             )
         }
     }

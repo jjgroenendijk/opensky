@@ -308,3 +308,4 @@ the detail and the sources it did find.
 | Inline picture height | The bottom of an `<img>` picture sits on the baseline; a negative `vspace` moves it down | [AS2 display runtime](/engine/as2-display-runtime.md#text) |
 | Menu controller count | One controller, GFx's default, whatever is connected | [AS2 input](/engine/as2-input.md#who-sets-the-focus) |
 | Tween camera turn direction | Skills turns the view up, Magic left, Items right, and Map down, as the entries sit | [Tween menu](/engine/tween-menu.md#camera) |
+| Installed Content list | Always the seven-entry `HMCC` list, never the Anniversary Edition `HMAE` one | [system menu](/engine/system-menu.md#help-and-installed-content) |
