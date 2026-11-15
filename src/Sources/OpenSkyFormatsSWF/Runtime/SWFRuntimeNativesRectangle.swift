@@ -3,13 +3,13 @@
 // for a clip's `scale9Grid`.
 
 nonisolated extension SWFMovieRuntime {
-    fileprivate struct Box: Equatable {
+    struct RectangleBox: Equatable {
         var x: Double
         var y: Double
         var width: Double
         var height: Double
 
-        static let empty = Box(x: 0, y: 0, width: 0, height: 0)
+        static let empty = RectangleBox(x: 0, y: 0, width: 0, height: 0)
     }
 }
 
@@ -21,7 +21,7 @@ nonisolated extension SWFMovieRuntime {
         ) { context in
             guard let instance = context.thisObject else { return .undefined }
             try write(
-                Box(
+                RectangleBox(
                     x: context.number(0), y: context.number(1),
                     width: context.number(2), height: context.number(3)
                 ),
@@ -31,7 +31,33 @@ nonisolated extension SWFMovieRuntime {
         }
         installRectangleQueries(runtime, prototype: prototype)
         installRectangleChanges(runtime, prototype: prototype)
+        installRectangleEdges(runtime, prototype: prototype)
         return constructor
+    }
+
+    /// A new `flash.geom.Rectangle`, for a native that answers with one.
+    static func makeRectangle(_ runtime: AS2Runtime, _ frame: RectangleBox) -> AS2Value {
+        let geometry = runtime.globalObject.lookup("flash")?.property.value.objectValue?
+            .lookup("geom")?.property.value.objectValue
+        let constructor = geometry?.lookup("Rectangle")?.property.value.objectValue
+        let prototype = constructor?.lookup("prototype")?.property.value.objectValue
+        let instance = AS2Object(prototype: prototype ?? runtime.objectPrototype)
+        write(frame, to: instance)
+        return .object(instance)
+    }
+
+    /// `left`, `top`, `right`, and `bottom` read the four numbers.
+    private static func installRectangleEdges(_ runtime: AS2Runtime, prototype: AS2Object) {
+        let edges: [(String, (RectangleBox) -> Double)] = [
+            ("left", { $0.x }), ("top", { $0.y }),
+            ("right", { $0.x + $0.width }), ("bottom", { $0.y + $0.height })
+        ]
+        for (name, edge) in edges {
+            let getter = runtime.makeNative { context in
+                try .number(edge(rectangle(context.thisObject, context)))
+            }
+            prototype.addAccessor(name: name, getter: getter, setter: nil)
+        }
     }
 
     private static func installRectangleQueries(_ runtime: AS2Runtime, prototype: AS2Object) {
@@ -106,17 +132,17 @@ nonisolated extension SWFMovieRuntime {
     }
 
     /// The shared area, or nil when the two only touch or miss.
-    private static func overlap(_ lhs: Box, _ rhs: Box) -> Box? {
+    private static func overlap(_ lhs: RectangleBox, _ rhs: RectangleBox) -> RectangleBox? {
         let left = max(lhs.x, rhs.x)
         let top = max(lhs.y, rhs.y)
         let right = min(lhs.x + lhs.width, rhs.x + rhs.width)
         let bottom = min(lhs.y + lhs.height, rhs.y + rhs.height)
         guard right > left, bottom > top else { return nil }
-        return Box(x: left, y: top, width: right - left, height: bottom - top)
+        return RectangleBox(x: left, y: top, width: right - left, height: bottom - top)
     }
 
     /// An empty rectangle adds nothing, so the union is the other one.
-    private static func union(_ lhs: Box, _ rhs: Box) -> Box {
+    private static func union(_ lhs: RectangleBox, _ rhs: RectangleBox) -> RectangleBox {
         if lhs.width <= 0 || lhs.height <= 0 {
             return rhs
         }
@@ -127,28 +153,33 @@ nonisolated extension SWFMovieRuntime {
         let top = min(lhs.y, rhs.y)
         let right = max(lhs.x + lhs.width, rhs.x + rhs.width)
         let bottom = max(lhs.y + lhs.height, rhs.y + rhs.height)
-        return Box(x: left, y: top, width: right - left, height: bottom - top)
+        return RectangleBox(x: left, y: top, width: right - left, height: bottom - top)
     }
 
-    private static func make(_ box: Box, like context: AS2CallContext) -> AS2Value {
+    private static func make(_ box: RectangleBox, like context: AS2CallContext) -> AS2Value {
         let result = context.runtime.makeObject()
         result.prototype = context.thisObject?.prototype ?? context.runtime.objectPrototype
         write(box, to: result)
         return .object(result)
     }
 
-    private static func write(_ box: Box, to object: AS2Object) {
+    private static func write(_ box: RectangleBox, to object: AS2Object) {
         object.assign(.number(box.x), for: "x")
         object.assign(.number(box.y), for: "y")
         object.assign(.number(box.width), for: "width")
         object.assign(.number(box.height), for: "height")
     }
 
-    private static func rectangle(_ object: AS2Object?, _ context: AS2CallContext) throws -> Box {
+    private static func rectangle(
+        _ object: AS2Object?,
+        _ context: AS2CallContext
+    ) throws -> RectangleBox {
         guard let object else { return .empty }
         let read = { (name: String) throws -> Double in
             try context.interpreter.toNumber(object.lookup(name)?.property.value ?? .undefined)
         }
-        return try Box(x: read("x"), y: read("y"), width: read("width"), height: read("height"))
+        return try RectangleBox(
+            x: read("x"), y: read("y"), width: read("width"), height: read("height")
+        )
     }
 }

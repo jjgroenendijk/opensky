@@ -18,6 +18,7 @@ nonisolated extension SWFMovieRuntime {
         AS2Runtime.method(runtime, on: prototype, name: "toString") { context in
             .string(node(context)?.targetPath ?? "[object TextField]")
         }
+        installTextFieldLines(runtime, prototype: prototype)
         // Formatting is accepted and ignored: the text layout path renders one
         // font and color per field, so a format object has nothing to change.
         for name in ["setTextFormat", "setNewTextFormat"] {

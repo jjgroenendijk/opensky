@@ -145,6 +145,17 @@ draws the bitmap the movie exports under `name` in the line, `w` by `h` pixels. 
 leaves out comes from the bitmap. The picture takes its width in the line. Reading `htmlText`
 back gives the tags again, so a script that assigns it again keeps its pictures.
 
+Three GFx text methods read the field's layout, in pixels from the field's top-left corner:
+
+- `getLineOffset(line)` gives the index of the line's first character, or -1 past the last line.
+- `getCharBoundaries(index)` gives a `flash.geom.Rectangle` around the character: its line's top,
+  the line height, its left edge, and its advance. Lines above `scroll` do not count.
+- `getLineMetrics(line)` gives `x`, `width`, `height`, `ascent`, `descent`, and `leading`.
+
+The journal uses the first two to start its objective list below the last line of a quest
+description, and the third to place each bottom bar button after its label. `numLines` counts
+every laid-out line of any field. A `Rectangle` reads `left`, `top`, `right`, and `bottom`.
+
 ## Scene generation
 
 The runtime produces the same scene command stream as the static scene builder, with the same clip
