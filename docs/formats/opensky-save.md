@@ -251,7 +251,15 @@ A save is written in three steps:
    system, and `/tmp` may be on another.
 2. Flush the file to disk before closing it. Without this, after a power loss the rename can
    land before the data, and the file is full of zeros.
-3. Rename it over the old save. A crash or a full disk leaves the old save whole.
+3. Move older copies one step back, then rename the new file over the old save. A crash or a
+   full disk leaves the old save whole.
+
+Like the game, OpenSky keeps one backup of a save it overwrites. The old `quick.osav` becomes
+`quick.osav.bak`, and an older `.bak` is dropped. With more backups, the next ones are
+`.osav.bak.bak` and so on, the newest with the fewest suffixes. A new slot makes no backup.
+The save list shows only `.osav` files. A clean-room read of `SkyrimSE.exe`, 2026-11-15, found
+that the game writes `<name>.ess.tmp`, then renames each `<name>.ess` copy one `.bak` older, and
+then renames the new file into place. Its default count is 1.
 
 On any failure the temporary file is removed. There is no compression: saves hold changes,
 not whole worlds, so they are small and easy to read in a hex editor.

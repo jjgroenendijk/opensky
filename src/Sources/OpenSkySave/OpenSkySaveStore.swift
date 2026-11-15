@@ -35,6 +35,9 @@ nonisolated public struct OpenSkySaveStore: Sendable {
     /// `defaultStore(fileManager:)` creates it.
     public let directory: URL
 
+    /// Older copies kept when a save overwrites a slot, as the game keeps one by default.
+    public var backupCount = 1
+
     /// `FileManager` is not `Sendable`, so the store reads `.default` at each call.
     private var fileManager: FileManager {
         .default
@@ -131,7 +134,7 @@ nonisolated public struct OpenSkySaveStore: Sendable {
             thumbnail: thumbnail,
             playerPlace: playerPlace
         )
-        try OpenSkySaveIO.writeAtomically(data, to: destination)
+        try OpenSkySaveIO.writeAtomically(data, to: destination, backups: backupCount)
         return destination
     }
 
