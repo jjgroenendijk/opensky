@@ -27,8 +27,8 @@ The app opens on the launcher. The launcher holds:
   shows or hides the technical notes and developer settings on every page at once, and in
   the Cmd+, window too.
   - Launch puts Play first, with one line that says what Play will do. Launch options hold
-    "Resume latest save", "Skip main menu", and "Full screen"; New game holds where a new
-    game starts and the Survival Mode choice. A start is the main menu or one of the
+    "Resume latest save", "Skip main menu", "Full screen", and "Play the startup logo";
+    New game holds where a new game starts. A start is the main menu or one of the
     install's settlements, picked in one menu with a heading for each worldspace. A saved
     start the menu lacks falls back to the main menu. A place start also sets the story
     state and the starting items, and the race menu opens
@@ -36,7 +36,8 @@ The app opens on the launcher. The launcher holds:
     Game files shows the game folder and only the
     asset optimisation state; each row opens Settings or the Asset Optimisation page.
   - Settings holds the game folder, the install check, plugins.txt, the string-table
-    language, the Skyrim saves folder, and, under "Show details", the
+    language, the Skyrim saves folder, the Survival Mode choice (off, on, or ask in a new
+    game), and, under "Show details", the
     [agent control](/tools/agent-control.md) switch and the reference game prefix. The
     game folder is a load setting, so it sits with the others and not on the page a
     player starts from.

@@ -1,5 +1,5 @@
 // The Launch page's launch options: resume the newest save, skip the main menu,
-// and full screen. `LaunchPlan` holds the rule; this file only shows it.
+// full screen, and the startup logo. `LaunchPlan` holds the rule; this file only shows it.
 
 import AppKit
 import OpenSkyGameData
@@ -15,7 +15,12 @@ extension LaunchPageViewController {
                 "LaunchSkipMainMenuControl",
                 "Load the save without the main menu"
             ),
-            (fullScreenControl, "LaunchFullScreenControl", "Play opens full screen")
+            (fullScreenControl, "LaunchFullScreenControl", "Play opens full screen"),
+            (
+                startupLogoControl,
+                "LaunchStartupLogoControl",
+                "The logo movie before the main menu; a key skips it"
+            )
         ]
         for (box, identifier, toolTip) in boxes {
             PanelComponents.configureCheckbox(
@@ -25,7 +30,8 @@ extension LaunchPageViewController {
         }
         refreshLaunchOptions()
         return layout.group("Launch options", [
-            layout.toggle(resumeControl), skipMainMenuRow, layout.toggle(fullScreenControl)
+            layout.toggle(resumeControl), skipMainMenuRow, layout.toggle(fullScreenControl),
+            layout.toggle(startupLogoControl)
         ])
     }
 
@@ -35,7 +41,9 @@ extension LaunchPageViewController {
             .value(LaunchPreferences.resumesLatestSaveSetting) ? .on : .off
         skipMainMenuControl.state = settings.value(LaunchPreferences.skipsMainMenuSetting)
             ? .on : .off
-        fullScreenControl.state = context.playerSettings().bool(.fullScreen) ? .on : .off
+        let store = context.playerSettings()
+        fullScreenControl.state = store.bool(.fullScreen) ? .on : .off
+        startupLogoControl.state = store.bool(.startupLogo) ? .on : .off
         skipMainMenuRow.isHidden = resumeControl.state == .off
         refreshPlay()
     }
@@ -89,7 +97,9 @@ extension LaunchPageViewController {
         let settings = SettingsStore.shared
         settings.set(resumeControl.state == .on, for: LaunchPreferences.resumesLatestSaveSetting)
         settings.set(skipMainMenuControl.state == .on, for: LaunchPreferences.skipsMainMenuSetting)
-        context.playerSettings().set(.fullScreen, to: fullScreenControl.state == .on ? 1 : 0)
+        let store = context.playerSettings()
+        store.set(.fullScreen, to: fullScreenControl.state == .on ? 1 : 0)
+        store.set(.startupLogo, to: startupLogoControl.state == .on ? 1 : 0)
         refreshLaunchOptions()
     }
 }

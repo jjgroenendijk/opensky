@@ -34,14 +34,8 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     lazy var startReasonLabel = layout.line("LaunchStartReasonStatsLabel")
     var start = LaunchPreferences.savedStart()
     lazy var startOptions = LaunchStartOptionsPanel(layout: layout)
-    let survivalModeControl = NSButton(
-        checkboxWithTitle: "Survival Mode", target: nil, action: nil
-    )
     let startupLogoControl = NSButton(
         checkboxWithTitle: "Play the startup logo", target: nil, action: nil
-    )
-    let survivalModeAskControl = NSButton(
-        checkboxWithTitle: "Let the game ask about Survival Mode", target: nil, action: nil
     )
     private(set) lazy var playButton: LauncherButton = {
         let button = LauncherButton(
@@ -95,7 +89,6 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         refreshGameFolder()
         refreshContinue()
         refreshLaunchOptions()
-        refreshNewGame()
         let assets = context.assetOptimisation
         if assets.check == nil, assets.activity == .idle {
             assets.startCheck()
