@@ -46,10 +46,12 @@ if [ -n "$compiles" ]; then
     # A build keeps going after an error: one that stops at the first error cancels the
     # Products copy of a module whose emit finished, and every module above then fails.
     # Debug compiles with coverage like a test build, so the two share intermediates.
-    # Release is arm64 only: Float16 does not exist on x86_64.
+    # Release is arm64 only: Float16 does not exist on x86_64. Without the explicit
+    # no, a Release build takes coverage from the scheme's test plan and counts every
+    # branch it runs, which slows the measured app.
     case "$config" in
         Debug) set -- "$@" CLANG_COVERAGE_MAPPING=YES ;;
-        Release) set -- "$@" ARCHS=arm64 ;;
+        Release) set -- "$@" ARCHS=arm64 CLANG_COVERAGE_MAPPING=NO ;;
     esac
     set -- -workspace "$root/src/OpenSky.xcworkspace" "$@" \
         COMPILATION_CACHE_CAS_PATH="$OPENSKY_COMPILATION_CACHE" \
