@@ -220,62 +220,33 @@ nonisolated public enum LaunchNewGameProblem: Error, Equatable, Sendable {
 }
 
 nonisolated extension LaunchPreferences {
-    public static let hourSetting = SettingKey("OpenSkyLaunchNewGameHour", default: "")
-    public static let weatherSetting = SettingKey("OpenSkyLaunchNewGameWeather", default: "")
     public static let storySetting = SettingKey(
         "OpenSkyLaunchNewGameStory", default: LaunchStory.notStarted.rawValue
     )
     public static let itemsSetting = SettingKey(
         "OpenSkyLaunchNewGameItems", default: LaunchItemPreset.none.rawValue
     )
-    public static let raceMenuSetting = SettingKey("OpenSkyLaunchNewGameRaceMenu", default: true)
 
-    /// The saved options as text. The start is the saved start.
-    public static func savedNewGameText(
-        userDefaults: UserDefaults = GameDataLocator.settingsDefaults
-    ) -> LaunchNewGameText {
-        let store = SettingsStore(defaults: userDefaults)
-        return LaunchNewGameText(
-            start: savedStart(userDefaults: userDefaults).storedValue,
-            hour: store.value(hourSetting),
-            weather: store.value(weatherSetting),
-            story: store.value(storySetting),
-            items: store.value(itemsSetting),
-            opensRaceMenu: store.value(raceMenuSetting)
-        )
-    }
-
-    /// The new game Play starts at `start`; a saved option that no longer reads
-    /// falls back to its default.
+    /// The new game Play starts at `start`. The launcher sets only the story and the
+    /// items, so the game keeps its own hour and weather and the race menu opens. A saved
+    /// option that no longer reads falls back to its default.
     public static func savedNewGame(
         at start: LaunchStart, userDefaults: UserDefaults = GameDataLocator.settingsDefaults
     ) -> LaunchNewGame {
-        let text = savedNewGameText(userDefaults: userDefaults)
-        // A saved hour that no longer parses keeps the hour of the game.
-        let hour: Float? = switch LaunchNewGameText.hour(from: text.hour) {
-        case let .success(value): value
-        case .failure: nil
-        }
+        let store = SettingsStore(defaults: userDefaults)
         return LaunchNewGame(
             start: start,
-            hour: hour,
-            weather: LaunchStart.isEditorID(text.weather) ? text.weather : nil,
-            story: LaunchStory(rawValue: text.story) ?? .notStarted,
-            opensRaceMenu: text.opensRaceMenu,
-            items: LaunchItemPreset(rawValue: text.items) ?? .none
+            story: LaunchStory(rawValue: store.value(storySetting)) ?? .notStarted,
+            items: LaunchItemPreset(rawValue: store.value(itemsSetting)) ?? .none
         )
     }
 
-    /// Saves every option but the start, which `remember(_:)` saves.
     public static func remember(
-        options text: LaunchNewGameText,
+        story: LaunchStory, items: LaunchItemPreset,
         userDefaults: UserDefaults = GameDataLocator.settingsDefaults
     ) {
         let store = SettingsStore(defaults: userDefaults)
-        store.set(text.hour, for: hourSetting)
-        store.set(text.weather, for: weatherSetting)
-        store.set(text.story, for: storySetting)
-        store.set(text.items, for: itemsSetting)
-        store.set(text.opensRaceMenu, for: raceMenuSetting)
+        store.set(story.rawValue, for: storySetting)
+        store.set(items.rawValue, for: itemsSetting)
     }
 }

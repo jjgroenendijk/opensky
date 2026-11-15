@@ -2,6 +2,7 @@
 // refused, and what the settings remember.
 
 import Foundation
+import OpenSkyGameData
 import OpenSkyLaunch
 import Testing
 
@@ -85,28 +86,15 @@ struct LaunchNewGameTests {
         let start = LaunchStart.cell("QASmoke")
         #expect(LaunchPreferences.savedNewGame(at: start, userDefaults: defaults)
             == LaunchNewGame(start: start))
-        LaunchPreferences.remember(
-            options: LaunchNewGameText(
-                start: "", hour: "9", weather: "SkyrimClear", story: "helgen-hadvar",
-                items: "thief", opensRaceMenu: false
-            ),
-            userDefaults: defaults
-        )
-        #expect(LaunchPreferences.savedNewGame(at: start, userDefaults: defaults) == LaunchNewGame(
-            start: start, hour: 9, weather: "SkyrimClear", story: .helgenHadvar,
-            opensRaceMenu: false, items: .thief
-        ))
-        #expect(LaunchPreferences.savedNewGameText(userDefaults: defaults).items == "thief")
+        LaunchPreferences.remember(story: .helgenHadvar, items: .thief, userDefaults: defaults)
+        #expect(LaunchPreferences.savedNewGame(at: start, userDefaults: defaults)
+            == LaunchNewGame(start: start, story: .helgenHadvar, items: .thief))
     }
 
     @Test func aSavedOptionThatNoLongerReadsFallsBack() throws {
         let defaults = try isolatedDefaults()
-        LaunchPreferences.remember(
-            options: LaunchNewGameText(
-                start: "", hour: "late", weather: "Bad Weather", story: "x", items: "y"
-            ),
-            userDefaults: defaults
-        )
+        defaults.set("x", forKey: LaunchPreferences.storySetting.name)
+        defaults.set("y", forKey: LaunchPreferences.itemsSetting.name)
         let start = LaunchStart.exterior(worldspace: "Tamriel", x: 1, y: 2)
         #expect(LaunchPreferences.savedNewGame(at: start, userDefaults: defaults)
             == LaunchNewGame(start: start))

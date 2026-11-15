@@ -78,8 +78,6 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         loadPanel.isHidden = true
         loadPanel.onCancel = { [weak self] in self?.context.actions?.cancelLoad() }
         configureStartMenu()
-        startOptions.onChange = { [weak self] in self?.refreshStart() }
-        startOptions.refreshWeathers(from: context.startPlaces)
         view = layout.makeView(title: "OpenSky", groups: [
             playRow,
             loadPanel,
@@ -137,7 +135,7 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     /// Play needs the game folder and, for a new game, a valid start.
     func refreshPlay() {
         let isFound = GameFolderStatus().isFound
-        let startIsValid = validStart != nil && startOptions.problem == nil
+        let startIsValid = validStart != nil
         let resumes = if case .resume = launchPlan {
             true
         } else {
