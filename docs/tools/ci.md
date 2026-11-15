@@ -213,7 +213,13 @@ A repository keeps 10 GB of caches. When it is full, GitHub drops the least rece
 | Vendored ffmpeg | hash of `tools/vendor-ffmpeg.sh` | any run that missed it |
 | SDK modules (`ModuleCache.noindex`, `SDKStatCaches.noindex`) | Xcode build version | a push to `main` that missed it |
 | Compilation cache (`CompilationCache.noindex`) | `cas2-<arch>-<scope>-<run>`, where scope is `main` or `pr-<number>` | every run that was not cancelled |
-| Index tree (`DerivedData-index`, SDK modules) | `index1-<arch>-<Xcode build>-<commit>` | every push to `main` |
+| Index tree (`DerivedData-index`, SDK modules) | `index2-<arch>-<Xcode build>-<commit>` | every push to `main` |
+
+The index tree builds incrementally on the restored tree. When a change to a public
+declaration leaves old object files in other modules, such as an initialiser that became
+inlined, the link fails with `Undefined symbol` for that declaration. Raise the number in the
+index key in `ci.yml` in that pull request: the run then builds the tree from nothing, and the
+next push to `main` saves the new tree.
 
 The compilation cache roughly halves the build:
 
