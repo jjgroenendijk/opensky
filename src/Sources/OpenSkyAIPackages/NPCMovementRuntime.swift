@@ -21,6 +21,9 @@ public struct NPCMovementWorld {
     /// Actors that are not walking, such as the player and standing NPCs, that a mover
     /// steers around. Walking actors come from the runtime itself.
     public var standingActors: () -> [NPCNeighbour] = { [] }
+    /// Where the camera is. A mover far from it steps less often; nil steps every mover
+    /// every frame.
+    public var viewer: SIMD3<Float>?
     /// The water at a point, or nil where there is none.
     public var sampleWater: (SIMD3<Float>) -> WaterReading? = { _ in nil }
     /// The size and movement facts of an actor's race that decide a current's push.
@@ -127,6 +130,8 @@ public struct NPCMovementRuntime {
     public var onLanding: ((ReferenceKey, WalkLanding) -> Void)?
 
     private var movers: [ReferenceKey: NPCMover] = [:]
+    /// When each mover's banded step is due (`NPCMovementRuntime+Bands.swift`).
+    var moverClocks = NPCMoverClocks()
     var parked: [ReferenceKey: NPCParkedMovement] = [:]
     /// Actors turning on the spot. Not counted against the mover
     /// cap: a turn runs no path, no collision sweep and no repath, so the CPU
@@ -216,6 +221,7 @@ public struct NPCMovementRuntime {
     /// - Returns: true when there was a live mover to stop.
     @discardableResult
     public mutating func stop(_ actor: ReferenceKey) -> Bool {
+        moverClocks.remove(actor)
         guard let mover = movers.removeValue(forKey: actor) else { return false }
         parked[actor] = NPCParkedMovement(mover, readout: mover.readout(as: .halted))
         onPersist?(mover.persistence(reason: .halt))
@@ -238,12 +244,21 @@ public struct NPCMovementRuntime {
         let crowd = neighbourSnapshot(world: world)
         for key in movers.keys.sorted() {
             guard var mover = movers[key] else { continue }
+            guard
+                let step = moverClocks.step(
+                    of: key, mover: &mover, frameTime: frameTime, viewer: world.viewer
+                )
+            else {
+                movers[key] = mover
+                continue
+            }
             let near = crowd.filter { $0.key != key }
-            let outcome = mover.advance(by: frameTime, world: world, neighbours: near)
+            let outcome = mover.advance(by: step, world: world, neighbours: near)
             publish(outcome.emissions, actor: key)
             if outcome.isFinished {
                 parked[key] = NPCParkedMovement(mover, readout: mover.readout)
                 movers.removeValue(forKey: key)
+                moverClocks.remove(key)
             } else {
                 movers[key] = mover
             }
@@ -288,6 +303,7 @@ public struct NPCMovementRuntime {
     public mutating func rest(_ actor: ReferenceKey, at transform: ReferenceTransformOverride) {
         guard ridden[actor] == nil else { return }
         movers[actor] = nil
+        moverClocks.remove(actor)
         facings[actor] = nil
         slides[actor] = nil
         guard let old = parked[actor] else { return }
@@ -378,25 +394,6 @@ public struct NPCMovementRuntime {
         movers.mapValues(\.motionFacts)
     }
 
-    public func readouts() -> [NPCMovementReadout] {
-        let live = movers.values.map(\.readout) + facings.values.map(\.readout)
-            + ridden.values.map(\.readout) + slides.values.map(\.readout)
-        let held = parked.filter { facings[$0.key] == nil && slides[$0.key] == nil }
-            .values.map(\.readout)
-        return (live + held).sorted { $0.actor < $1.actor }
-    }
-
-    /// A parked actor keeps its delta until a cell build bakes its pose in (`bake`), so
-    /// it stays drawn where it stopped and its arrival rebuilds nothing.
-    public func instanceDeltas() -> [UInt32: float4x4] {
-        let resting = parked.values.map { ($0.formID.rawValue, $0.instanceDelta) }
-        let moving = movers.values.map { ($0.formID.rawValue, $0.instanceDelta) }
-        let turning = facings.values.map { ($0.formID.rawValue, $0.instanceDelta) }
-        let riding = ridden.values.map { ($0.formID.rawValue, $0.instanceDelta) }
-        let sliding = slides.values.map { ($0.formID.rawValue, $0.instanceDelta) }
-        return Dictionary(resting + moving + turning + riding + sliding) { _, later in later }
-    }
-
     /// Records that `actor`'s cell is now built with it at `placement`, so its draw
     /// delta starts there, whether it is parked, walking or turning.
     public mutating func bake(_ actor: ReferenceKey, at placement: PlacedReference.Placement) {
@@ -434,6 +431,25 @@ public struct NPCMovementRuntime {
 }
 
 extension NPCMovementRuntime {
+    public func readouts() -> [NPCMovementReadout] {
+        let live = movers.values.map(\.readout) + facings.values.map(\.readout)
+            + ridden.values.map(\.readout) + slides.values.map(\.readout)
+        let held = parked.filter { facings[$0.key] == nil && slides[$0.key] == nil }
+            .values.map(\.readout)
+        return (live + held).sorted { $0.actor < $1.actor }
+    }
+
+    /// A parked actor keeps its delta until a cell build bakes its pose in (`bake`), so
+    /// it stays drawn where it stopped and its arrival rebuilds nothing.
+    public func instanceDeltas() -> [UInt32: float4x4] {
+        let resting = parked.values.map { ($0.formID.rawValue, $0.instanceDelta) }
+        let moving = movers.values.map { ($0.formID.rawValue, $0.instanceDelta) }
+        let turning = facings.values.map { ($0.formID.rawValue, $0.instanceDelta) }
+        let riding = ridden.values.map { ($0.formID.rawValue, $0.instanceDelta) }
+        let sliding = slides.values.map { ($0.formID.rawValue, $0.instanceDelta) }
+        return Dictionary(resting + moving + turning + riding + sliding) { _, later in later }
+    }
+
     /// Pushes `actor` at `velocity`, units per second. A walking actor takes it on its
     /// mover; a standing one slides. False for a ridden actor.
     @discardableResult

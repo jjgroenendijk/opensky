@@ -617,10 +617,11 @@ targets += feature(
 )
 targets += feature(
     "OpenSkyPerception",
-    dependencies: ["OpenSkyFormatsESM", "OpenSkyPhysics", "OpenSkyRenderCore"],
+    dependencies: ["OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyPhysics", "OpenSkyRenderCore"],
     tests: [
-        "OpenSkyFeaturesTesting", "OpenSkyFormatsESM", "OpenSkyPerceptionInterface",
-        "OpenSkyPhysics", "OpenSkyShaderTypes", "OpenSkyRenderCore"
+        "OpenSkyFeaturesTesting", "OpenSkyFormatsESM", "OpenSkyGameData",
+        "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyShaderTypes",
+        "OpenSkyRenderCore"
     ]
 )
 targets += feature(

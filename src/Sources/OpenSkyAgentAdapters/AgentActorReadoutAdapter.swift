@@ -121,7 +121,8 @@ extension AgentActorReadoutAdapter {
                 (game.actorPlayback(for: actor.key)?.lagBoneOffsets ?? [:])
                     .mapValues(AgentJSON.init)
             ),
-            "graph": graph
+            "graph": graph,
+            "bands": details.bands(of: actor.key, distance: distance)
         ])
     }
 
@@ -160,6 +161,18 @@ extension AgentActorReadoutAdapter {
 /// An actor's behaviour graph and leveled roll, for `AgentActorReadoutAdapter`.
 struct AgentActorDetails {
     let game: any AgentActorReadoutHost
+
+    /// The update band at the camera distance, and the band movement and perception use
+    /// (docs/engine/update-bands.md).
+    func bands(of key: ReferenceKey, distance: Float) -> AgentJSON {
+        [
+            "distance": .string(UpdateBands.standard.band(atDistance: distance).name),
+            "movement": game.streamer.npcMovement.movementBand(of: key)
+                .map { .string($0.name) } ?? .null,
+            "perception": game.perception.perceptionBand(of: key)
+                .map { .string($0.name) } ?? .null
+        ]
+    }
 
     func graphState(_ graph: ActorGraphReadout) -> AgentJSON {
         [

@@ -151,6 +151,12 @@ extension AIWorldAdapter {
             perceptionSense.perceptionCandidates()
         }
 
+        public func perceptionCandidates(
+            isDue: (ReferenceKey, SIMD3<Float>) -> Bool
+        ) -> (present: [ReferenceKey], fresh: [PerceptionCandidate]) {
+            perceptionSense.perceptionCandidates(isDue: isDue)
+        }
+
         public func perceptionTargets() -> [PerceptionTarget] {
             perceptionSense.perceptionTargets()
         }

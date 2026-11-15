@@ -40,7 +40,8 @@ reaches the graph in the same frame.
 | Further | Not at all; the actor keeps its last pose |
 
 Both distances are settings, so a crowded scene can trade distance for frame time. The values
-are OpenSky's; the game does not state its own.
+are OpenSky's; the game does not state its own. Movement, perception, and particles use the
+same distances ([update bands](/engine/update-bands.md)).
 
 Each step sets the locomotion variables from the actor's movement: `Speed`, `Direction`,
 `TurnDelta`, `IsSprinting`, `IsSneaking`, `IsNPC`, and the player flags set to false. It also

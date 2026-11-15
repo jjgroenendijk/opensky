@@ -83,6 +83,9 @@ the detail and the sources it did find.
 
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
+| Update bands | Every frame to 1,024 units, 30 a second to 2,048, 15 a second to 6,144, 5 a second further | [update bands](/engine/update-bands.md#the-bands) |
+| Far NPC movement | Waits at most 1/15 s; walk steps of 1/60 s in the `near` band and 1/30 s further out | [update bands](/engine/update-bands.md#systems-that-use-the-bands) |
+| Far perception observers | Built again in the update bands, measured from the player | [update bands](/engine/update-bands.md#systems-that-use-the-bands) |
 | Encumbrance slowdown | Worn armour weight after perks, `fMoveWeightMin` 0, `SpeedMult` / 100 after it | [walk mode](/engine/walk-mode.md#speed) |
 | Fast walk and jog speed | The two interpolation settings, not a fixed 0.25 and 0.5 | [walk mode](/engine/walk-mode.md#speed) |
 | Breath time | `fActorSwimBreathBase` + 50 x `fActorSwimBreathMult` seconds | [walk mode](/engine/walk-mode.md#breath-and-drowning) |
@@ -195,6 +198,8 @@ the detail and the sources it did find.
 
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
+| Far particle systems | Stepped in the update bands, waiting at most 1/15 s | [update bands](/engine/update-bands.md#systems-that-use-the-bands) |
+| Grass near lists | The draw distance plus 1,024 units, built again after the camera moves 512 to 1,024 units | [update bands](/engine/update-bands.md#grass) |
 | Actor camera fade shapes | Each drawn shape's world box grown by the probe radius; half its diagonal as the radius; the player's capsule radius 24 at the centre of its drawn shapes; the pivot 112 over the feet in place of the `Cam3` node height | [graphics options](/engine/graphics-options.md#actor-fade-near-the-camera) |
 | Far shadow cascade reuse | A far cascade map kept while it covers its slice, at most 2 or 4 frames, 0.25 degrees of sun turn, 10% wider fit | [shadows](/rendering/shadows.md#far-cascade-reuse) |
 | Particle lifetime and limits | OpenSky's policies | [particles](/rendering/particles.md) |

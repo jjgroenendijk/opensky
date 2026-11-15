@@ -89,7 +89,7 @@ extension CellNPCMovers {
     }
 
     private func advanceMovers(frameTime: Float) {
-        streamer.actors.npcMovement.advance(by: frameTime, world: NPCMovementWorld(
+        var world = NPCMovementWorld(
             sampleGround: { [weak streamer] position in
                 streamer?.collision.sampleTerrain(at: position)
             },
@@ -121,7 +121,9 @@ extension CellNPCMovers {
             movementSpeeds: { [weak streamer] actor in
                 streamer?.npcMovementState.movementSpeeds?(actor)
             }
-        ))
+        )
+        world.viewer = streamer.viewerPosition
+        streamer.actors.npcMovement.advance(by: frameTime, world: world)
     }
 
     /// Called from `noteStateMutation` while a rest write is in progress. The actor
