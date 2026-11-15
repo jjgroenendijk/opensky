@@ -12,12 +12,12 @@ if [ "${1:-}" = --self-check ]; then
 fi
 cd "$(git rev-parse --show-toplevel)"
 targets="$(sed -n 's/^\([a-z][a-z0-9-]*\):.*/\1/p' Makefile | sort -u)"
+# One awk pass: a shell loop here started a grep for each of several thousand hits.
 report="$(git ls-files -z -- ':!Makefile' ':!tools/lint/make-targets.sh' | xargs -0 grep -HnoE '`make [a-z][a-z0-9-]*' 2>/dev/null \
-    | sed 's/:`make /: make /' | while IFS= read -r hit; do
-        name="${hit##*make }"
-        [ "${name%-}" = "$name" ] || continue
-        printf "%s\n" "$targets" | grep -qx "$name" || printf "%s\n" "$hit"
-    done)"
+    | sed 's/:`make /: make /' | TARGETS="$targets" awk '
+        BEGIN { count = split(ENVIRON["TARGETS"], names, "\n"); for (i = 1; i <= count; i++) known[names[i]] = 1 }
+        { name = $0; sub(/.*make /, "", name) }
+        name !~ /-$/ && !(name in known)')"
 if [ -n "$report" ]; then
     printf '[FAIL] these name a make target the Makefile does not have:\n%s\n' "$report" >&2
     echo 'Fix: name a target from make help.' >&2
