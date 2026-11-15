@@ -149,8 +149,8 @@ one core busy the whole time.
   their cell. `--x --y` and `--cell` change cells. `--worldspace <editorID>` with `--x --y` or
   `--pos` goes to that worldspace first, such as `--worldspace DLC2SolstheimWorld --x 7 --y 8`.
 - `debug teleport --x --y` and `--cell` stand the player where the game's `coc` does: on the
-  cell's `COCMarkerHeading`, else on its most recently placed `XMarkerHeading` or `XMarker`
-  ([CenterOnCell](https://ck.uesp.net/wiki/CenterOnCell)). An exterior cell without one
+  cell's `COCMarkerHeading`, else on an `XMarkerHeading`, else on an `XMarker`
+  ([centre on cell](/engine/center-on-cell.md)). An exterior cell without one
   puts the player at the cell centre, on the terrain. Where the cell hides its terrain, as
   city worlds such as `WindhelmWorld` do, the player stands on the top collision surface
   there, which can be a roof.

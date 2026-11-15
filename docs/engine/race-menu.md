@@ -226,6 +226,26 @@ movie's key handler moves between categories only on a gamepad, with the trigger
 `W`, and `S` move inside the open list, and `Tab` moves focus to the second list. While the race
 menu or the title menu is open, the engine frees the mouse cursor so a click reaches the movie.
 
+### Where a click lands
+
+The drawn arrows are not the click areas. Each side of the category bar has an invisible click
+area, and the movie changes the category on a click inside it. Observed in the reference game on
+2026-11-15, at 1280 x 720 with the Body category open, clicking along the bar at y = 38 through
+the bridge ([reference game](/tools/reference-bridge-probes.md#clicking-a-menu-and-playing-a-movie)):
+
+| Stage x | What a click does |
+| --- | --- |
+| up to 544 | Moves one category to the left |
+| 545 to 652, with the drawn left arrow at about 587 | Nothing |
+| from 653, with the drawn right arrow at about 700 | Moves one category to the right |
+
+So a click on the drawn left arrow does nothing, and a click on the drawn right arrow works.
+
+The small arrows at both ends of a slider do nothing on a click either. A click on the slider's
+track moves the thumb one step towards the click. For example, with the Dirt slider's thumb at
+x = 235, a click on its right end arrow at x = 398 left it there, and a click on the track at
+x = 300 moved it to x = 335.
+
 Before it sends the lists, the engine checks that the movie built its category list. When it did
 not, the movie closes and the engine rows stay in charge.
 

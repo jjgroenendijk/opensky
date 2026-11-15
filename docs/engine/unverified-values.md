@@ -130,7 +130,6 @@ the detail and the sources it did find.
 | Drunk state in a save | Not confirmed | [actor state graph](/engine/actor-state-graph.md) |
 | Player attack timing during an attack | The values read at rest, every step | [actor state graph](/engine/actor-state-graph.md#attack-timing) |
 | `IsInCastState` on the player | 1 while either hand casts | [actor state graph](/engine/actor-state-graph.md#variables-left-unwritten) |
-| Creature sound cues with no `SoundPlay` prefix | Play nothing | [animation events](/engine/animation-events.md#events-the-game-ignores) |
 | Additive clip order | OpenSky's order | [behaviour runtime](/engine/behavior-runtime.md) |
 | Two clip rules | Not confirmed | [behaviour clips](/engine/behavior-clips.md) |
 | Animation and skeleton split | A guess from the objects | [HKX behaviour](/formats/hkx-behavior.md) |
@@ -192,7 +191,7 @@ the detail and the sources it did find.
 | Longest frame a loading screen turn counts | 0.1 s | [loading screens](/engine/loading-screens.md) |
 | Longest wait for the start area under a load or new-game cover | 90 s | [loading screens](/engine/loading-screens.md) |
 | Notification timing | Limit of 3 at once | [messages](/engine/messages.md) |
-| Movie track and colour matrix | The track with ID 0; BT.601 | [movies](/engine/movies.md) |
+| Movie colour matrix | BT.601; the only vanilla movie is grey, so it cannot tell BT.601 from BT.709 | [movies](/engine/movies.md#drawing) |
 | Custom marker aim and questions | 5% of the map camera height; the question order | [world map](/engine/world-map.md#custom-marker) |
 | Speaker matrix on two speakers | Centre and surrounds add at -3 dB, LFE dropped, the mono row only | [sound output](/formats/sound-output-reverb.md#output-model-mapping) |
 | Special music triggers | Level up with the notice, cleared with the notice, death when the player dies | [music](/engine/music.md#special-music) |
@@ -260,7 +259,6 @@ the detail and the sources it did find.
 | Path bank sign and bend measure | Rolls with the turn's sign; bend is heading change per unit length | [NIF controllers](/formats/nif-controllers.md#node-controller-rules) |
 | Particle modifier readings | Items marked "inferred" | [NIF particles](/formats/nif-particles.md) |
 | Rotation extra data | Read as thousandths of a radian | [NIF extra data](/formats/nif-extra-data.md) |
-| Volume texture depth | 0.5 | [DDS](/formats/dds.md) |
 | Distant LOD level limit | `2 x level1`, capped | [distant LOD](/engine/distant-lod.md) |
 | First-person shadow rule | OpenSky's rule | [first person](/engine/first-person.md) |
 | Main menu smoke and start | Placement checked by eye | [main menu](/engine/main-menu.md) |
@@ -288,8 +286,8 @@ the detail and the sources it did find.
 | Explosion light and impact | `EXPL` light for 2 s, fading linearly; impact data set played on no material | [explosions](/formats/explosions.md#runtime) |
 | Casting light position | In front of the caster's eye, where a held Light spell floats | [spellcasting](/engine/spellcasting.md) |
 | Face-target aim point | The facing object's origin, an actor's feet | [visual effects](/rendering/visual-effects.md#where-effects-come-from) |
-| Creature loop reach and count | Loops play for the nearest 8 actors within 3000 units | [creature sounds](/engine/actor-sounds.md#loops-come-from-the-sound-types) |
-| Creature loop states | Conscious loop while alive and not unconscious; movement loop while the mover moves; a `CSDC` chance of 0 never plays | [creature sounds](/engine/actor-sounds.md#loops-come-from-the-sound-types) |
+| Creature loop reach and count | Loops play for the nearest 8 actors within 3000 units | [creature sounds](/engine/actor-sounds.md#loops) |
+| Creature conscious loop state | Stops while the actor is unconscious | [creature sounds](/engine/actor-sounds.md#loops) |
 | Music and dialogue duck levels | Music falls to 0.4 and `SFDC`/`NDSC` sounds to 0.5 in a conversation; `SFDC`/`NDSC` fade over the music seconds | [sound mix](/engine/sound-mix.md#what-a-category-does) |
 | Sound rumble bus level | The sum of each sound's `LNAM` send times its heard level, master volume included | [sound mix](/engine/sound-mix.md#rumble) |
 | Weapon rumble timing | Every blow the player's weapon lands | [sound mix](/engine/sound-mix.md#rumble) |
