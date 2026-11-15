@@ -35,40 +35,53 @@ everything. The three planes upload as 8-bit textures, one set per frame in flig
 never changes a texture the GPU still reads. The shader turns YCbCr into RGB with the BT.601
 matrix and turns the result into linear colour for the sRGB target.
 
-[WARNING] No source says which matrix Bink uses. BT.601 matches libavcodec's default for this
-decoder. A clean-room read of `SkyrimSE.exe`, 2026-11-15, found that the game asks the Bink
-library for 32-bit RGB pictures and passes no matrix or range, so the choice is inside that
-library, which the read did not cover.
+The game asks the Bink library for RGB pictures and passes no matrix or range. In the reference
+game on 2026-11-15, a script-played `BGS_Logo.bik` was captured and compared with libavcodec
+decodes of the same moment (`.logs/bink-check/`, local only). Studio levels widened to full range
+matched with a mean squared error of 4.9 per channel; full levels gave 246. The logo is grey, so
+BT.601 and BT.709 differ by less than 0.1 there, and no vanilla movie tells the two apart. OpenSky
+keeps BT.601, libavcodec's default for this decoder.
 
 A letterboxed movie keeps its aspect ratio and draws black bars. With `abLetterbox` false the
 picture stretches over the whole frame.
 
 ## Sound
 
-The sound plays as a non-positional source that skips every category submix, so no category
-slider or mute changes it. `abMuteAudio` mutes every game category while the movie plays, and
-`abMuteMusic` mutes music. Each category comes back when the movie ends, unless it was muted
-before. The startup logo mutes both.
+The movie's sound plays at the file's own level. No volume slider, category, or mute changes it,
+the master volume included. In the reference game the logo's sound matched the file's samples
+with a gain of 1.00.
 
-The game plays the movie's sound on an output of its own, at the file's level. It mutes its
-master sound category for `abMuteAudio` and pauses the music for `abMuteMusic`. Both default to
-true ([PlayBink - Game](https://ck.uesp.net/wiki/PlayBink_-_Game)).
+`abMuteAudio` pauses the master sound category while the movie plays. Each sound that plays in
+that category, or in a category below it, fades to 40 dB quieter over 100 ms and then pauses, if
+it can pause. A sound that cannot pause keeps playing 40 dB quieter. A sound with no category
+plays on. A sound that starts during the movie starts 40 dB quieter. When the movie ends, each
+sound resumes at 40 dB quieter and fades back to its level over 100 ms.
+
+`abMuteMusic` pauses the music: the playing track fades out over 500 ms and ends, and the music
+type stays the current one. When the movie ends, the type plays its tracks again. Pauses nest, so
+the music returns only when every pause has ended. Audio comes back first, then music. Both flags
+default to true ([PlayBink - Game](https://ck.uesp.net/wiki/PlayBink_-_Game)), and the startup
+movies use both.
+
+With both flags false, a movie changes no other sound. Nothing lowers the other sound by a fixed
+amount while a movie plays.
+
+[WARNING] The reference game did not show the muting when the bridge called `Game.PlayBink`: the
+tavern's sound under the logo stayed about 2 dB below its level before, with the default flags
+and with every flag false, and the music system reported the same track playing. The bridge
+calls the function from outside a running script, which may take another path.
 
 ## Skipping
 
-An interruptible movie ends on the first press of Activate: E on the keyboard and A on a
-gamepad, or the key the player bound to it. In menus, OpenSky's Accept follows Activate, so
-Return also skips. Cancel does not. The startup logo is interruptible, and a skip ends it.
-A movie that is not interruptible plays to its last frame. `openskycli game debug skipbink`
-ends any movie.
+An interruptible movie ends on a new press of Activate: E on the keyboard and A on a gamepad, or
+the key the player bound to it. A press that started before the movie does not count. Escape,
+other keys, and mouse buttons do not skip, unless the player bound them to Activate. Closing
+the window ends any movie.
 
-A clean-room read of `SkyrimSE.exe`, 2026-11-15, found the skip key, the muting, and that the
-movie sound does not follow any volume slider. It also found that the startup logo setting is a
-comma-separated list of movies, and that a skip ends the rest of the list.
+The startup movies are a comma-separated list. Each one is interruptible, and a skip while the
+game still loads in the background ends the rest of the list. A movie that is not interruptible
+plays to its last frame. `openskycli game debug skipbink` ends any movie.
 
 ## Where OpenSky differs
 
-- The movie sound follows the master volume, because it plays through OpenSky's own mixer. In
-  the game it does not.
-- Return skips a movie, because OpenSky adds it to the menu's Accept.
 - A slow decode drops pictures but keeps the sound on time. The game's player is not documented.

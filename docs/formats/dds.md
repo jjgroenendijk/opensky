@@ -196,9 +196,22 @@ volume in a 2D effect slot looks. Direct3D 11 does not define the result of samp
 resource through a 2D shader slot.
 
 The game's effect shaders declare every texture slot, the source slot included, as a 2D
-texture, in all of their variants. No effect shader reads a 3D texture, so there is no third
-coordinate: what the game shows for a volume source depends on the graphics driver
-(clean-room read of the game's shaders, 2026-11-06).
+texture, in all of their variants. No effect shader reads a 3D texture, so the result of a
+volume in that slot depends on the graphics layer.
+
+### What the reference game shows
+
+On 2026-11-15 the reference game (Direct3D 11 through DXVK) drew a test copy of the barrier mesh
+in the prefix, never in the repo (`.logs/volume-check/`, local only). The copy turned off the
+volume shape's vertex colours, vertex alpha, and falloff, gave it a white opaque effect colour,
+and made every other layer transparent. A spawned `MQ03SkaalVillageBarrier01` used it.
+
+- With `NoiseVolume.dds` as the source, the shape drew nothing: the sky above the player kept
+  its clouds, with a mean grey level of 143.
+- With a 2D texture of the same name length (`fxfog01tile.dds`) in its place, the same view
+  darkened to a grey level of 57.
+
+So a volume in an effect source slot samples as transparent black, and the shape is invisible.
 
 ### How OpenSky draws it
 
@@ -207,20 +220,13 @@ coordinate: what the game shows for a volume source depends on the graphics driv
   the frame goes on.
 - A colour load of a volume file gets the 2D colour placeholder, because a 2D slot cannot
   sample it. The texture library remembers that the file is a volume.
-- An effect shape on a static mesh asks for its source as an effect source. For a volume
-  file it gets the 3D texture, which binds to its own shader slot, and the shader samples it
-  at the shape's UV and depth 0.5, the middle slice.
-  [UNCONFIRMED] The depth 0.5 is OpenSky's choice. The game reads the slot as 2D, so the
-  driver decides what it returns. Particles and every other 2D consumer keep the
+- An effect shape whose source file is a volume samples transparent black, as the reference
+  game does, so the shape draws nothing. Particles and every other 2D consumer keep the
   placeholder.
 
-The noise does not change OpenSky's frame of the barrier mesh. The shape's flags turn on
-vertex colours and vertex alpha. Its vertex colours are black over almost all of the shape,
-and its base colour is (0.196, 0.196, 0.216), so its effect colour is near zero whatever
-the source holds. An L8 texel has alpha 1, the same as the placeholder. So the shape is a
-dark, semi-transparent layer, and a capture with the volume matches one with the placeholder
-byte for byte. A temporary shader edit that coloured the volume-path pixels confirmed that
-every pixel of the shape samples the volume, and that the sample varies across it.
+The vanilla barrier shape looks the same either way. Its vertex colours are black over almost
+all of the shape, and its base colour is (0.196, 0.196, 0.216), so its effect colour is near
+zero whatever the source holds.
 
 `openskycli dds <path> --out <folder>` uploads a texture the way an effect shape does,
 prints the uploaded type, size, and levels, and writes each slice of `--level` as a PNG.

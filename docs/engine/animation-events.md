@@ -58,9 +58,18 @@ or an object's placed position. A source that is not loaded does nothing.
 | `SoundPlayAt` | `SNDR` editor ID, then a node name | Plays the sound at that bone of the source: an actor's skeleton bone, or a bone of an object graph, such as a trap's blade |
 | `SoundStop` | `SNDR` editor ID, maybe a node name | Ends that source's loop of the sound |
 | `SoundRelease` | `SNDR` editor ID, maybe a node name | Lets that loop finish its current pass, then end |
+| `SoundAnimationEnd` | any | Ends every loop the source started through these events |
+| `enum_idle`, `enum_aware`, `enum_attack`, `enum_hit`, `enum_death`, `enum_weapon`, `enum_movement`, `enum_awake` | none | Plays the actor's sound type of that name ([creature sounds](/engine/actor-sounds.md#sound-types)) |
 | `CameraShake` | Strength, such as `0.3` | Shakes the camera; a far source shakes it less |
 | `HeadTrackingOn`, `HeadTrackingOff` | none | Lets the head turn, or holds it forward |
 | `FlightLandingEffect`, `FlightForcefulLandStart`, `FlightCrashLand*` | none | Dust and touchdown of a landing dragon ([dragon flight](/engine/dragon-flight.md#clip-events)) |
+
+The editor ID of a `SoundPlay` event may also name a `SOUN` sound marker, which plays its
+descriptor. An actor's sound plays only when the actor is within the sound's audible distance
+of the listener on each axis.
+
+The game tries each event in a fixed order and stops at the first that takes it: the sound
+events above, then a footstep tag, then the sound type events.
 
 A `SoundPlay` key means the same in a NIF text key ([NIF sequences](/formats/nif-sequences.md)).
 A door mesh's sequences write a sound as `Sound: <editor ID>` instead, which plays the same way
