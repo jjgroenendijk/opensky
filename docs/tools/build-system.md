@@ -24,6 +24,9 @@ per target.
 - `-IDEBuildingContinueBuildingAfterErrors=YES` ([below](#stale-module-copies));
 - `CLANG_COVERAGE_MAPPING=YES` for Debug ([test runs](/tools/test-runs.md#code-coverage)) and
   `ARCHS=arm64` for Release, because `Float16` does not exist on x86_64;
+- `CLANG_COVERAGE_MAPPING=NO` for Release. Without it a plain build takes coverage from the
+  scheme's test plan, and the app adds to a counter at every branch, which slows each
+  benchmark and profile;
 - `XCODEBUILD_FLAGS`, and a result bundle in the run directory.
 
 `tools/build-env.sh` names the paths, for the scripts and for `make`: `OPENSKY_DERIVED_DATA`,
