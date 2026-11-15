@@ -70,6 +70,43 @@ struct OpenSkySaveStoreTests {
     }
 
     @Test
+    func overwritingASlotKeepsTheOldSaveAsABackup() throws {
+        try withTemporaryStore { store in
+            let first = try save(store, slot: "quicksave", snapshot: .empty)
+            #expect(!FileManager.default.fileExists(atPath: first.path() + ".bak"))
+            try save(store, slot: "quicksave")
+
+            let backup = OpenSkySaveIO.backup(of: first, generation: 1)
+            #expect(backup.lastPathComponent == "quicksave.osav.bak")
+            let old = try OpenSkySaveDecoder.decode(Data(contentsOf: backup))
+            #expect(old.snapshot == .empty)
+            #expect(try store.listSlots() == ["quicksave"])
+        }
+    }
+
+    @Test
+    func backupsRotateAndTheOldestIsDropped() throws {
+        try withTemporaryStore { base in
+            var store = base
+            store.backupCount = 2
+            var file = URL(filePath: "/")
+            for sequence in 1 ... 4 {
+                let snapshot = OpenSkySaveFixture.richSnapshot(
+                    nextGeneratedSequence: UInt64(sequence)
+                )
+                file = try save(store, slot: "auto", snapshot: snapshot)
+            }
+            let sequences = try (1 ... 2).map { generation in
+                let url = OpenSkySaveIO.backup(of: file, generation: generation)
+                return try OpenSkySaveDecoder.decode(Data(contentsOf: url)).allocator.nextSequence
+            }
+            #expect(sequences == [3, 2])
+            let third = OpenSkySaveIO.backup(of: file, generation: 3)
+            #expect(!FileManager.default.fileExists(atPath: third.path(percentEncoded: false)))
+        }
+    }
+
+    @Test
     func listSlotsReportsSavedSlotsSortedAndWithoutTheExtension() throws {
         try withTemporaryStore { store in
             #expect(try store.listSlots().isEmpty)

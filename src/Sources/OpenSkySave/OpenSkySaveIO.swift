@@ -20,13 +20,13 @@ nonisolated public enum OpenSkySaveIO: Sendable {
         return directory
     }
 
-    /// Writes `data` to `destination` so that the destination is either its
-    /// old contents or the complete new ones, never a mixture.
-    ///
-    /// The temp file goes in a fresh replacement folder on the destination's volume,
-    /// because a rename only replaces atomically within one filesystem. The folder is
-    /// removed afterwards, so a failed save leaves neither a damaged destination nor litter.
-    public static func writeAtomically(_ data: Data, to destination: URL) throws {
+    /// Writes `data` so `destination` holds its old contents or the new ones, never a mix.
+    /// The temp file sits in a replacement folder on the same volume, because a rename is
+    /// atomic only within one filesystem. `backups` older copies (`.bak`, `.bak.bak`, ...)
+    /// rotate only after the new file is on disk.
+    public static func writeAtomically(
+        _ data: Data, to destination: URL, backups: Int = 0
+    ) throws {
         let fileManager = FileManager.default
         let folder = try fileManager.url(
             for: .itemReplacementDirectory, in: .userDomainMask,
@@ -37,7 +37,31 @@ nonisolated public enum OpenSkySaveIO: Sendable {
             path: destination.lastPathComponent, directoryHint: .notDirectory
         )
         try write(data, to: temporary, fileManager: fileManager)
+        try rotateBackups(of: destination, count: backups, fileManager: fileManager)
         try replace(destination, with: temporary)
+    }
+
+    /// The URL of the `generation`th backup of `file`: 0 is the file itself.
+    public static func backup(of file: URL, generation: Int) -> URL {
+        let name = file.lastPathComponent + String(repeating: ".bak", count: max(0, generation))
+        return file.deletingLastPathComponent().appending(path: name, directoryHint: .notDirectory)
+    }
+
+    /// Moves each existing copy one generation older, dropping the oldest.
+    private static func rotateBackups(
+        of file: URL, count: Int, fileManager: FileManager
+    ) throws {
+        for generation in stride(from: count - 1, through: 0, by: -1) {
+            let newer = backup(of: file, generation: generation)
+            guard fileManager.fileExists(atPath: newer.path(percentEncoded: false)) else {
+                continue
+            }
+            let older = backup(of: file, generation: generation + 1)
+            if fileManager.fileExists(atPath: older.path(percentEncoded: false)) {
+                try fileManager.removeItem(at: older)
+            }
+            try fileManager.moveItem(at: newer, to: older)
+        }
     }
 
     private static func write(_ data: Data, to url: URL, fileManager: FileManager) throws {
