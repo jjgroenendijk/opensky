@@ -40,6 +40,23 @@ extension SystemMenuCoordinator {
         }
     }
 
+    /// The cursor goes to the movie, as in the game: its rows, sliders, steppers, and
+    /// check boxes take clicks and drags. Without the movie a click is accept.
+    public func route(_ event: MenuPointerEvent) {
+        guard model.isOpen else { return }
+        guard movieLoaded, let renderer else {
+            if event.phase == .pressed {
+                route(.button(.accept))
+            }
+            return
+        }
+        attempt {
+            try renderer.updateSWFRuntime { _ = TitleMenuMovieBridge.handle(event, runtime: $0) }
+        }
+        answerMovieCalls()
+        followMovieState()
+    }
+
     func sendToMovie(_ event: MenuInputEvent) {
         guard let renderer else { return }
         do {

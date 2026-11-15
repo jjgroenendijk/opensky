@@ -13,7 +13,8 @@ nonisolated public final class FakeSystemMenuPort: SystemMenuPort {
     public var movieMainPage: SystemMenuPageSnapshot?
     public var openCallCount = 0
     public var quicksaveCallCount = 0
-    public var routeCalls: [MenuInputEvent] = []
+    public var routeEventMenuInputEventCalls: [MenuInputEvent] = []
+    public var routeEventMenuPointerEventCalls: [MenuPointerEvent] = []
     public var snapshotValue: SystemMenuControlSnapshot?
     public var topicPage: SystemMenuTopicPageModel?
 
@@ -34,7 +35,11 @@ nonisolated extension FakeSystemMenuPort {
     }
 
     public func route(_ event: MenuInputEvent) {
-        routeCalls.append(event)
+        routeEventMenuInputEventCalls.append(event)
+    }
+
+    public func route(_ event: MenuPointerEvent) {
+        routeEventMenuPointerEventCalls.append(event)
     }
 
     public var snapshot: SystemMenuControlSnapshot {

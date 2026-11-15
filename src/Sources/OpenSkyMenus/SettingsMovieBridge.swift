@@ -22,11 +22,16 @@ nonisolated enum SettingsMovieBridge: Sendable {
     static let optionsState = "OPTIONS_LISTS_STATE"
     static let mainState = "MAIN_STATE"
 
-    /// The movie's requests are answered by the engine's own publish, because the
-    /// options list takes no key input in this runtime. The handler only reports.
+    /// `OptionChange([ID, value])`: a row's own stepper, slider, or check box changed,
+    /// as a click or the Defaults button does.
+    static let optionChangeName = "OptionChange"
+
+    /// The movie's requests are answered by the engine's own publish. A change the
+    /// movie made itself, with the cursor, reports the row and its new value.
     static func register(
         runtime: SWFMovieRuntime,
-        onRequest: @escaping @MainActor @Sendable (PlayerSettingGroup) -> Void
+        onRequest: @escaping @MainActor @Sendable (PlayerSettingGroup) -> Void,
+        onChange: @escaping @MainActor @Sendable (Int, Double) -> Void
     ) {
         for (name, group) in requestNames {
             runtime.registerHostFunction(name) { _ in
@@ -34,6 +39,29 @@ nonisolated enum SettingsMovieBridge: Sendable {
                 return .undefined
             }
         }
+        runtime.registerHostFunction(optionChangeName) { call in
+            guard let change = optionChange(call.arguments) else {
+                return .undefined
+            }
+            MainActor.assumeIsolated { onChange(change.row, change.value) }
+            return .undefined
+        }
+    }
+
+    /// The row and value of an `OptionChange` call, which passes them as two numbers.
+    static func optionChange(_ arguments: [AS2Value]) -> (row: Int, value: Double)? {
+        let numbers = arguments.map(number)
+        guard numbers.count >= 2, numbers[1].isFinite else { return nil }
+        let id = numbers[0]
+        guard id.isFinite, id >= 0, id == id.rounded() else { return nil }
+        return (Int(id), numbers[1])
+    }
+
+    private static func number(_ value: AS2Value) -> Double {
+        if case let .number(number) = value {
+            return number
+        }
+        return .nan
     }
 
     // MARK: - Values
@@ -55,11 +83,15 @@ nonisolated enum SettingsMovieBridge: Sendable {
         selected: Int,
         runtime: SWFMovieRuntime
     ) {
-        let fields: [[String: AS2Value]] = rows.map { row in
+        let fields: [[String: AS2Value]] = rows.enumerated().map { index, row in
             var fields: [String: AS2Value] = [
                 "text": .string(row.definition.title),
                 "movieType": .integer(row.definition.kind.movieType),
-                "value": .number(movieValue(row.value, for: row.definition))
+                "value": .number(movieValue(row.value, for: row.definition)),
+                // The row's `ID` comes back in `OptionChange`; `defaultVal` is what
+                // the movie's Defaults button sets.
+                "ID": .integer(index),
+                "defaultVal": .number(row.definition.defaultValue)
             ]
             if case let .choice(options) = row.definition.kind {
                 fields["options"] = .object(runtime.runtime.makeArray(options.map(AS2Value.string)))

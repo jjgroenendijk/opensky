@@ -129,8 +129,18 @@ the quicksave slot `sQuicksaveAbbrev`. The detail line follows the game's save d
 for an exterior cell and `sMenuDisplayUnknownLocationString` when there is no cell. Without game
 data, the pages keep OpenSky's English words.
 
-The Settings page stays the engine's, because its values are the
-[player settings](/engine/settings.md).
+The Settings page keeps its values in the [player settings](/engine/settings.md). The engine
+fills each category's rows when the movie asks for them. Each row carries `text`, `movieType`,
+`value`, `ID` (its index in the category), and `defaultVal`. A row that the movie changes itself
+calls `OptionChange([ID, value])`, and the engine writes that value to the store. A click on a
+stepper arrow, a slider, or a check box does this. So does the movie's `$Defaults` button, which
+sets each row to its `defaultVal`.
+
+## The cursor
+
+The pause menu shows the cursor, as in the game. Each click and each move goes to the movie, so
+the rows, the sliders, the steppers, the check boxes, and the Controls list take clicks and drags.
+Without the movie, a click is the accept button.
 
 ## Help and Installed Content
 
