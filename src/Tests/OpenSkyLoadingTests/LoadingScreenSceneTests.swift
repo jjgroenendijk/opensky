@@ -86,4 +86,16 @@ struct LoadingScreenSceneTests {
         #expect(lighting.directionalAmbient.positiveZ == .zero)
         #expect(lighting.fog == nil)
     }
+
+    @Test func aFrameGivesItsPoseWithTheMarker() {
+        let frame = LoadingCoverFrame(
+            model: "a.nif", scale: 2, rotationDegrees: [0, 0, 90], translation: [1, 0, 0],
+            turnRadians: 0.5, text: nil, opacity: 1, drawsObject: true
+        )
+        let pose = frame.modelPose(markerRotation: [0.1, 0, 0])
+        #expect(pose == LoadingScreenScene.ModelPose(
+            rotationDegrees: [0, 0, 90], scale: 2, translation: [1, 0, 0], turnRadians: 0.5,
+            markerRotation: [0.1, 0, 0]
+        ))
+    }
 }

@@ -3,6 +3,7 @@
 
 import Foundation
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
 @testable import OpenSkyMenuAdapters
 import simd
 import Testing
@@ -63,5 +64,12 @@ struct LoadingCameraPathTests {
     @Test func aPathWithoutTheSequenceStaysAtRest() {
         let path = LoadingCameraPath(sequence: nil, channel: nil, rest: [1, 2, 3])
         #expect(path.nodePosition(after: 10) == [1, 2, 3])
+    }
+
+    @Test func aFileWithoutTheSequenceRestsWhereItsCameraStands() throws {
+        let file = try NIFFile(data: NIFFixture.cameraFile(translations: [(0, [4, 5, 6])]))
+        let path = try LoadingCameraPath(file: file)
+        #expect(path.sequence == nil)
+        #expect(path.nodePosition(after: 3) == path.rest)
     }
 }

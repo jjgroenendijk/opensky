@@ -112,7 +112,7 @@ extension LoadingScreenPresentationAdapter {
         guard let renderer = game.renderer, let gameSession = game.gameSession else { return }
         do {
             if let frame, frame.drawsObject, frame.model != nil {
-                try renderer.setLoadingScene(coverScene(frame, gameSession: gameSession))
+                try renderer.setLoadingScene(coverScene(frame, renderer: renderer))
             } else {
                 state.mist = nil
                 try renderer.setLoadingCover(frame?.drawsObject == true ? [] : nil)
@@ -142,9 +142,8 @@ extension LoadingScreenPresentationAdapter {
     /// The game's scene for `frame`: its camera, its lights, the mist, and the model.
     public func coverScene(
         _ frame: LoadingCoverFrame,
-        gameSession: any GameSessionPort
+        renderer: any RendererPort
     ) -> LoadingCoverScene {
-        let renderer = gameSession.renderer
         var scene = LoadingCoverScene(
             placements: [], pointLights: LoadingScreenScene.lights,
             lighting: LoadingScreenScene.lighting,
