@@ -51,6 +51,11 @@ struct StorySceneTalkTests {
         adapter.stopQuest(FormID(0x90))
     }
 
+    @Test func onlyThePlayerAndAResidentActorHaveALoadedBody() {
+        #expect(adapter.hasLoadedBody(.player))
+        #expect(!adapter.hasLoadedBody(Self.speaker))
+    }
+
     @Test func anAbsentSpeakerHasAnInstantLine() throws {
         let info = try DialogueFixture.info(Data())
         #expect(adapter.lineDuration(of: info, speaker: Self.speaker) == 0)

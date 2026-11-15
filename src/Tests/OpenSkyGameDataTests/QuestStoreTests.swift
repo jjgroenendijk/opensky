@@ -79,6 +79,23 @@ struct QuestStoreTests {
         #expect(store.formID(for: GlobalFixture.key(0x9999)) == nil)
     }
 
+    @Test("a quest started by the actor dialogue event is a conversation quest")
+    func listsConversationQuests() throws {
+        let quest = { (formID: UInt32, editorID: String, event: UInt32?) in
+            QuestFixture.record(
+                formID: formID,
+                fields: QuestFixture.editorID(editorID) + QuestFixture.general()
+                    + (event.map { QuestFixture.word("ENAM", $0) } ?? Data())
+            )
+        }
+        // "ADIA" and "CHRR" as little-endian words.
+        let store = try QuestFixture.store(
+            quest(0x0100, "Chat", 0x4149_4441) + quest(0x0101, "Plain", nil)
+                + quest(0x0102, "Other", 0x5252_4843)
+        )
+        #expect(store.conversationQuests == [FormID(0x0100)])
+    }
+
     @Test("an empty plugin yields an empty store")
     func handlesEmptyPlugin() throws {
         let store = try QuestFixture.store(Data())
