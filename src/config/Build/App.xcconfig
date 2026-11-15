@@ -11,8 +11,11 @@ SUPPORTED_PLATFORMS = macosx
 // SWIFT_INCLUDE_PATHS; there is deliberately no bridging header.
 SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor
 
-// Generated Info.plist keys.
+// Generated Info.plist keys. App-Info.plist adds the allocator setting, which has no
+// build setting; macOS applies it only when `open` or Finder starts the app
+// (docs/engine/cell-streaming.md#memory).
 GENERATE_INFOPLIST_FILE = YES
+INFOPLIST_FILE = config/Build/App-Info.plist
 INFOPLIST_KEY_NSPrincipalClass = NSApplication
 INFOPLIST_KEY_LSApplicationCategoryType = public.app-category.role-playing-games
 INFOPLIST_KEY_NSHumanReadableCopyright =
