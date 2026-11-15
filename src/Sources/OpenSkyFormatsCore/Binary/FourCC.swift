@@ -14,20 +14,22 @@ nonisolated public struct FourCC: Hashable, Sendable {
 }
 
 nonisolated extension FourCC: ExpressibleByStringLiteral {
+    public typealias StringLiteralType = StaticString
+
     /// Programmer-supplied literals only (`"WRLD"`). A literal of the wrong length gives
-    /// `invalidLiteral`, which no file holds. Each `case "WRLD":` of a field switch runs
-    /// this, so it must not allocate.
-    @inlinable
-    public init(stringLiteral value: StringLiteralType) {
-        var packed: UInt32 = 0
-        var count = 0
-        for byte in value.utf8 {
-            if count < 4 {
-                packed |= UInt32(byte) << (8 * count)
-            }
-            count += 1
+    /// `invalidLiteral`, which no file holds. Inlined so each `case "WRLD":` of a field
+    /// switch reads four constant bytes, which the optimiser folds into one integer.
+    @inlinable @inline(__always)
+    public init(stringLiteral value: StaticString) {
+        guard value.hasPointerRepresentation, value.utf8CodeUnitCount == 4 else {
+            self.init(rawValue: 0)
+            return
         }
-        self.init(rawValue: count == 4 ? packed : 0)
+        let bytes = unsafe value.utf8Start
+        self.init(
+            rawValue: unsafe UInt32(bytes[0]) | UInt32(bytes[1]) << 8
+                | UInt32(bytes[2]) << 16 | UInt32(bytes[3]) << 24
+        )
     }
 
     fileprivate static func packed(_ bytes: [UInt8]) -> UInt32 {
@@ -39,6 +41,13 @@ nonisolated extension FourCC {
     /// Four zero bytes: a code literal of the wrong length. A record or field signature
     /// is printable ASCII, so this never matches one.
     static let invalidLiteral = FourCC(rawValue: 0)
+
+    /// Code text known only at run time, such as a code a record or table holds. Text
+    /// that is not four bytes gives `invalidLiteral`, as a wrong literal does.
+    public init(code: String) {
+        let bytes = Array(code.utf8)
+        self.init(rawValue: bytes.count == 4 ? Self.packed(bytes) : Self.invalidLiteral.rawValue)
+    }
 
     /// Text from a user, such as a command-line option: four ASCII characters, or nil.
     public init?(text: String) {

@@ -74,7 +74,7 @@ struct MinorItemRealDataTests {
     private static func sweep(file: ESMFile, localized: Bool, into sweep: inout Sweep) {
         var skipped = SkippedRecords()
         for type in expectedTotals.keys.sorted() {
-            for record in file.liveRecords(of: FourCC(stringLiteral: type), skipped: &skipped) {
+            for record in file.liveRecords(of: FourCC(code: type), skipped: &skipped) {
                 sweep.records[type, default: 0] += 1
                 do {
                     let decoded = try decode(record, localized: localized)

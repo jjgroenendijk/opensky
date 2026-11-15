@@ -16,7 +16,7 @@ extension RecordDecoderTests {
                 record: record(ESMFixture.record(type, formID: 0x77, data: fields))
             )
             #expect(base.formID == FormID(0x77))
-            #expect(base.recordType == FourCC(stringLiteral: type))
+            #expect(base.recordType == FourCC(code: type))
             #expect(base.editorID == "Some\(type)")
             #expect(base.name == .inline("\(type) Name"))
             #expect(base.modelPath == "Meshes\\\(type)\\thing.nif")
