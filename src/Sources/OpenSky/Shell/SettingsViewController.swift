@@ -1,5 +1,6 @@
 // Settings: the game folder and its install check, plugins.txt, the string-table
-// language, the Skyrim saves folder, agent control, and the reference game prefix.
+// language, the Skyrim saves folder, Survival Mode, agent control, and the reference
+// game prefix.
 // The Cmd+, window and the launcher's Settings page both host it, in the launcher's look.
 // Choices go to the shared defaults domain so the CLI sees them too.
 
@@ -23,6 +24,7 @@ final class SettingsViewController: NSViewController, LauncherPageRefreshing {
     lazy var languageNoteLabel = layout.line("SettingsLanguageStatsLabel")
     lazy var savesNoteLabel = layout.line("SettingsSkyrimSavesStatsLabel")
     lazy var referenceNoteLabel = layout.line("SettingsReferenceStatsLabel")
+    let survivalModePopUp = NSPopUpButton()
     let agentControlCheckbox = NSButton(
         checkboxWithTitle: "Agent control", target: nil, action: nil
     )
@@ -36,7 +38,8 @@ final class SettingsViewController: NSViewController, LauncherPageRefreshing {
     override func loadView() {
         view = layout.makeView(title: "Settings", groups: [
             makeGameFolderGroup(), makePluginsTextGroup(), makeLanguageGroup(),
-            makeSavesFolderGroup(), makeAgentControlGroup(), makeReferenceGroup()
+            makeSavesFolderGroup(), makeGameplayGroup(), makeAgentControlGroup(),
+            makeReferenceGroup()
         ])
         view.frame = NSRect(x: 0, y: 0, width: LauncherPageLayout.minimumPageWidth, height: 560)
         refresh()
@@ -101,6 +104,7 @@ final class SettingsViewController: NSViewController, LauncherPageRefreshing {
         refreshLanguage(root: root)
         refreshSavesFolder()
         refreshReferencePrefix()
+        refreshGameplay()
         refreshAgentControl()
     }
 

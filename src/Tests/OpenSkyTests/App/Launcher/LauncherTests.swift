@@ -244,21 +244,36 @@ struct LauncherTests {
         #expect(shown == ["assetOptimisation"])
     }
 
-    @Test func survivalModeIsOffAndUnaskedByDefaultAndTheBoxesWriteTheSettings() throws {
+    @Test func survivalModeIsOffByDefaultAndTheMenuWritesBothSettings() throws {
+        let store = PlayerSettingsStore(persistence: nil)
+        let page = SettingsViewController()
+        page.playerSettings = { store }
+        page.loadViewIfNeeded()
+        let menu = try #require(
+            find("SettingsSurvivalModeControl", in: page.view) as? NSPopUpButton
+        )
+        #expect(menu.titleOfSelectedItem == "Off")
+        menu.selectItem(withTitle: "On")
+        menu.sendAction(menu.action, to: menu.target)
+        #expect(store.bool(.survivalMode))
+        #expect(!store.bool(.survivalModeAsk))
+        menu.selectItem(withTitle: "Ask in a new game")
+        menu.sendAction(menu.action, to: menu.target)
+        #expect(!store.bool(.survivalMode))
+        #expect(store.bool(.survivalModeAsk))
+    }
+
+    @Test func theStartupLogoIsALaunchOption() throws {
         let store = PlayerSettingsStore(persistence: nil)
         let context = LauncherContext(actions: RecordingActions())
         context.playerSettings = { store }
         let page = LaunchPageViewController(context: context)
         page.loadViewIfNeeded()
-        let survival = try #require(button("LaunchSurvivalModeControl", in: page.view))
-        let ask = try #require(button("LaunchSurvivalModeAskControl", in: page.view))
-        #expect(survival.state == .off)
-        #expect(ask.state == .off)
-        survival.performClick(nil)
-        #expect(store.bool(.survivalMode))
-        ask.performClick(nil)
-        #expect(store.bool(.survivalModeAsk))
-        #expect(!survival.isEnabled)
+        let logo = try #require(button("LaunchStartupLogoControl", in: page.view))
+        let before = store.bool(.startupLogo)
+        logo.performClick(nil)
+        #expect(store.bool(.startupLogo) == !before)
+        #expect(button("LaunchSurvivalModeControl", in: page.view) == nil)
     }
 
     private func button(_ identifier: String, in view: NSView) -> NSButton? {
