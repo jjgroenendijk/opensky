@@ -46,6 +46,8 @@ extension CommandLineTests {
         #expect(places.search == "bannered mare")
         #expect(places.limit == 5)
         #expect(!places.weathers)
+        #expect(!places.all)
+        #expect(try command(["places", "--all"], as: PlacesArguments.self).all)
         #expect(try command(["places", "--weathers"], as: PlacesArguments.self).weathers)
         #expect(exitCode(["places", "--limit", "0"]) == OpenSkyCommandLine.usageExitCode)
     }

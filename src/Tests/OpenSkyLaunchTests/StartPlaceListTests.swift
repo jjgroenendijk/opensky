@@ -1,5 +1,5 @@
 // The place list over synthetic plugins: named interiors, map markers, a later
-// plugin's copy of a cell, and the search.
+// plugin's copy of a cell, a city worldspace under its parent, and the search.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -42,12 +42,15 @@ struct StartPlaceListTests {
 
     /// A worldspace whose persistent cell holds `markers`.
     private static func world(
-        _ formID: UInt32, named: (editorID: String, name: String), cell: UInt32, markers: Data
+        _ formID: UInt32, named: (editorID: String, name: String), cell: UInt32, markers: Data,
+        parent: UInt32? = nil
     ) -> Data {
         let (editorID, name) = named
-        let record = Fixture.recordBytes("WRLD", formID: formID, fields: [
-            ("EDID", Fixture.zstring(editorID)), ("FULL", Fixture.zstring(name))
-        ])
+        var fields = [("EDID", Fixture.zstring(editorID)), ("FULL", Fixture.zstring(name))]
+        if let parent {
+            fields.append(("WNAM", Fixture.u32(parent)))
+        }
+        let record = Fixture.recordBytes("WRLD", formID: formID, fields: fields)
         let persistentCell = Fixture.recordBytes("CELL", formID: cell, fields: [
             ("DATA", Fixture.u16(0))
         ])
@@ -96,6 +99,11 @@ struct StartPlaceListTests {
                     0x0100_0800, named: ("ModIsland", "The Island"), cell: 0x0100_0801,
                     markers: Self.marker(0x0100_0802, name: "Raven Dock", type: 33)
                 )
+                    + Self.world(
+                        0x0100_0810, named: ("WhiterunWorld", "Whiterun"), cell: 0x0100_0811,
+                        markers: Self.marker(0x0100_0812, name: "Whiterun Gate", type: 40),
+                        parent: 0x3C
+                    )
             ))
         return LoadOrderPlugins([("Skyrim.esm", base), ("Mod.esp", mod)])
     }
@@ -112,7 +120,7 @@ struct StartPlaceListTests {
     @Test func namedInteriorsAndMarkersAreListedByName() throws {
         let list = try list()
         #expect(list.places.map(\.name) == [
-            "Raven Dock", "Riverwood", "The Drunken Mare", "Whiterun"
+            "Raven Dock", "Riverwood", "The Drunken Mare", "Whiterun", "Whiterun Gate"
         ])
         let inn = try #require(list.place(for: .cell("WhiterunInn")))
         #expect(inn.detail == "Interior")
@@ -166,12 +174,48 @@ struct StartPlaceListTests {
 
     @Test func searchMatchesEveryWordInNameEditorIDAndDetail() throws {
         let list = try list()
-        #expect(list.search("").count == 4)
-        #expect(list.search("whiterun").map(\.name) == ["Whiterun", "The Drunken Mare"])
+        #expect(list.search("").count == 5)
+        #expect(list.search("whiterun").map(\.name)
+            == ["Whiterun", "Whiterun Gate", "The Drunken Mare"])
         #expect(list.search("mare interior").map(\.name) == ["The Drunken Mare"])
         #expect(list.search("ISLAND dock").map(\.name) == ["Raven Dock"])
         #expect(list.search("town").map(\.name) == ["Riverwood"])
         #expect(list.search("nowhere").isEmpty)
+    }
+
+    @Test func settlementsKeepTownsAndCitiesGroupedByWorldspace() throws {
+        let list = try list()
+        let settlements = list.settlements
+        #expect(settlements.places.map(\.name) == ["Riverwood", "Whiterun", "Whiterun Gate"])
+        #expect(settlements.weathers == list.weathers)
+        let riverwood = try #require(settlements.places.first)
+        #expect(riverwood.worldspace == "Skyrim")
+        #expect(riverwood.isSettlement)
+        #expect(settlements.groups.map(\.title) == ["Skyrim"])
+        #expect(list.groups.map(\.title) == ["Interior", "Skyrim", "The Island"])
+        #expect(list.groups[1].places.map(\.name) == ["Riverwood", "Whiterun", "Whiterun Gate"])
+        let gate = try #require(settlements.places.last)
+        #expect(gate.detail == "Whiterun, Whiterun Capitol")
+        #expect(gate.worldspace == "Skyrim")
+    }
+
+    @Test func aMarkerTypeIsASettlementOnlyWhenPeopleLiveThere() {
+        func place(type: UInt8) -> StartPlace {
+            StartPlace(
+                start: .normal, name: "A", detail: "", worldspace: "Skyrim",
+                markerType: MapMarkerType(rawValue: type)
+            )
+        }
+        // City, Town, Settlement, Orc Stronghold, Riften and Whiterun Capitol, Raven Rock,
+        // Tel Mithryn.
+        for type: UInt8 in [1, 2, 3, 28, 36, 40, 54, 56] {
+            #expect(place(type: type).isSettlement, "\(type)")
+        }
+        // None, Cave, Fort, Docks, Whiterun Castle.
+        for type: UInt8 in [0, 4, 6, 33, 39] {
+            #expect(!place(type: type).isSettlement, "\(type)")
+        }
+        #expect(!StartPlace(start: .normal, name: "A", detail: "Interior").isSettlement)
     }
 
     @Test func weathersAreListedByName() throws {
