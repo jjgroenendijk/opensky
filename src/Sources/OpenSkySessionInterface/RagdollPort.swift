@@ -10,6 +10,8 @@ public protocol RagdollPort: AnyObject {
     associatedtype RagdollRuntime: RagdollRuntimePort
     func advance(events: [String], controls: RagdollGraphControls, delta: Float) -> [RagdollCommand]
     var deathSettings: DeathSettings { get }
+    /// The ragdoll the actor's skeleton carries, while the actor is loaded.
+    func ragdollDefinition(of key: ReferenceKey) -> RagdollDefinition?
     @discardableResult func dismember(_ key: ReferenceKey) -> Bool
     func dropPlayerBody()
     @discardableResult func knockDown(

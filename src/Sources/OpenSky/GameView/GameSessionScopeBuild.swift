@@ -114,6 +114,7 @@ struct GameSessionScopeBuild {
         _ = scope.dragonFlightWorld
         _ = scope.objectAnimationWorld
         _ = scope.effectGraphWorld
+        _ = scope.clothWorld
         _ = scope.animationEvents
         _ = scope.dialogueWorld
         _ = scope.storyWorld

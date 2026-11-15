@@ -251,6 +251,10 @@ public final class RagdollCoordinator {
 }
 
 extension RagdollCoordinator: RagdollWorldSeam {
+    public func ragdollDefinition(of key: ReferenceKey) -> RagdollDefinition? {
+        world.ragdollPose(of: key).flatMap(definition(for:))
+    }
+
     public func ragdollActor(for key: ReferenceKey) -> RagdollActor? {
         guard
             let pose = world.ragdollPose(of: key),

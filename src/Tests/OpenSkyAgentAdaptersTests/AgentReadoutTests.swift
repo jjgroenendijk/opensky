@@ -13,6 +13,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenusInterface
 import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
@@ -112,6 +113,20 @@ struct AgentReadoutTests {
             return
         }
         #expect(flying.count == 1)
+    }
+
+    @Test func theClothStateListsEachCape() throws {
+        host.clothReadout = ClothReadout(
+            isEnabled: true, steppedCount: 1, capes: [(FormID(0x14), "NPC Spine2 [Spn2]")]
+        )
+        let state = try object(world.query(.cloth))
+        #expect(state["enabled"] == .bool(true))
+        #expect(state["stepped"] == AgentJSON(1))
+        guard case let .array(capes)? = state["capes"] else {
+            Issue.record("no cape list")
+            return
+        }
+        #expect(capes.count == 1)
     }
 
     @Test func thePlayerStateReadsItsSiblingParts() throws {

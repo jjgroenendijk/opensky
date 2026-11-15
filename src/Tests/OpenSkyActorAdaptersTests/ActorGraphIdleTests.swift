@@ -3,6 +3,7 @@
 import OpenSkyActorAdapters
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyPlayer
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import Testing
@@ -34,6 +35,16 @@ struct ActorGraphIdleTests {
         #expect(events.playAnimationSound(editorID: "NPCFoot", source: Self.actor, at: .zero))
         events.stopAnimationSound(editorID: "NPCFoot", source: Self.actor)
         events.releaseAnimationSound(editorID: "NPCFoot", source: Self.actor)
+        #expect(!events.playSoundType(2, source: Self.actor, at: .zero), "no sound director")
+        events.endAnimationSounds(source: Self.actor)
+    }
+
+    @Test func theClothWorldFindsNoCapeWithoutAScene() {
+        let cloth = ClothWorldAdapter(game: host, stage: nil, isEnabled: false)
+        #expect(cloth.clothPlaybacks.isEmpty)
+        cloth.coordinator.tick(deltaTime: 0.016)
+        #expect(!cloth.coordinator.readout.isEnabled)
+        #expect(cloth.coordinator.readout.capes.isEmpty)
     }
 
     @Test func idleCallsReachVehiclesAndTheAIWorld() {

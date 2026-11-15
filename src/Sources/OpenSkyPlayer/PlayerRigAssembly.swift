@@ -32,7 +32,10 @@ nonisolated extension PlayerBody {
                 skeleton: skeleton, pose: pose, models: rig.assembly.models.map(\.asset.model),
                 sheathNodes: rig.assembly.visual.sheathNodes
             ),
-            faceMorphs: rig.faceMorphs
+            faceMorphs: rig.faceMorphs,
+            cloth: ClothPlayback.make(
+                actor: PlayerBody.actorFormID, assembly: rig.assembly, capeArmor: rig.capeArmor
+            )
         )
     }
 }

@@ -272,6 +272,8 @@ nonisolated extension PlayerSettingID {
     public static let characterDialogueExpressions = Self("characters.dialogueExpressions")
     /// Actors turn their heads toward what they look at.
     public static let characterHeadTracking = Self("characters.headTracking")
+    /// The Vampire Lord's cape moves as cloth (docs/engine/cape-cloth.md).
+    public static let characterCapeCloth = Self("characters.capeCloth")
     /// Traps, doors, and levers play their behaviour graph animations.
     public static let objectAnimation = Self("world.objectAnimation")
     /// The player and package actors sit in chairs and lie in beds.
@@ -312,6 +314,7 @@ nonisolated extension PlayerSettingsCatalog {
             applied: true
         ),
         row(("characters.headTracking", .opensky), .toggle, "Head tracking", 1, applied: true),
+        row(("characters.capeCloth", .opensky), .toggle, "Cape cloth", 1, applied: true),
         row(("world.objectAnimation", .opensky), .toggle, "Animated objects", 1, applied: true),
         row(("world.furniture", .opensky), .toggle, "Sit in furniture", 1, applied: true),
         row(

@@ -47,7 +47,7 @@ extension AgentWorldAdapter {
         case let .quest(editorID): try menuReadout.questState(editorID)
         case .scenes: objects.scenesState()
         case .scripts, .packages, .furniture, .objects, .effects, .nodes, .changes, .flight,
-             .mount, .paired, .favor, .impulses:
+             .mount, .paired, .favor, .impulses, .cloth:
             try inspection(query)
         case let .actorValue(reference, name): try actorReadout.actorValueState(
                 reference,
@@ -89,6 +89,7 @@ extension AgentWorldAdapter {
         case .paired: behaviour.pairedState()
         case .favor: objects.favorState()
         case .impulses: motion.impulsesState()
+        case .cloth: objects.clothState()
         default: throw AgentFailure(.invalidArgument, "not an inspection query")
         }
     }

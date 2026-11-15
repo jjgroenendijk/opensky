@@ -7,6 +7,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenusInterface
+import OpenSkyPlayer
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkySessionTesting
@@ -20,6 +21,7 @@ final class AgentHost: RendererSlotHost, AgentActorReadoutHost, AgentActorsHost,
     AgentRenderHost, AgentScreensHost, AgentViewHost, AgentWorldHost, BenchmarkTourSettingsHost,
     BenchmarkWorldHost
 {
+    var clothReadout = ClothReadout(isEnabled: true, steppedCount: 0, capes: [])
     let fakeActorGraphs = FakeActorGraphPort()
     let fakeActorValues = FakeActorValuePort()
     let fakeActorWorld = FakeActorWorldPort()

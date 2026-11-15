@@ -50,6 +50,8 @@ public enum WorldTickStep: Int, FramePhase {
     case objectAnimation
     /// After the actor and object graphs, so their events reach effect graphs in the same frame.
     case effectGraphs
+    /// After the actor graphs, so a cape's pins follow this frame's pose.
+    case cloth
     /// Samples the speaker's head bone in the same tick.
     case dialogueCamera
     /// Scenes speak through the dialogue index.

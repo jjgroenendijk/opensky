@@ -56,7 +56,7 @@ protocol SessionPortSet:
     AnimationEventWorldHost, AudioWorldHost, BeastFormWorldHost, BenchmarkWorldHost,
     CinematicCameraWorldHost, CombatWorldHost, ContainerMenuHost, CrimeWorldHost,
     DialogueCameraHost, DialogueMenuHost, DialogueWorldHost, DragonFlightWorldHost,
-    EffectGraphWorldHost, EffectsWorldHost, FollowerCommandWorldHost, IdleWorldHost,
+    ClothWorldHost, EffectGraphWorldHost, EffectsWorldHost, FollowerCommandWorldHost, IdleWorldHost,
     InventoryMenuHost, InventoryWorldHost, JournalMenuHost, LoadingScreenWorldHost, LockWorldHost,
     LockpickingMenuHost, MagicWorldHost, MapWorldHost, MenuHotkeyHost,
     MenuTickHost, MenuPlayRoutesHost, MenuFrontRoutesHost, MenuScreensHost, MenuScreensWorldHost,

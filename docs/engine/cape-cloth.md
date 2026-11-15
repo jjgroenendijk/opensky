@@ -107,3 +107,12 @@ The cloth is never reset while it lives: not on load, on a teleport, or after a 
 Every cloth steps every frame, with no distance or visibility check. It is removed when the
 actor's 3D is unloaded, and a new one starts from the rest pose the next time the armour is
 attached.
+
+## In OpenSky
+
+The setting "Cape cloth" turns the cloth on or off; off holds the cape at its rest pose.
+`openskycli game state cloth` lists the loaded capes and how many moved in the last frame.
+The solved positions reach the GPU as per-vertex offsets that are added before skinning,
+the same buffer face morphs use. The body capsule takes the radius of OpenSky's character
+controller, 24 units, which every actor shares. The bounds fallback would take the Vampire
+Lord's wings and push the cape far out from the back.

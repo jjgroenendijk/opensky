@@ -28,7 +28,9 @@ nonisolated extension CellSceneBuilder.CellPlayerRigBuilder {
                     faceMorphs: morphs.map {
                         owner.actorBuilder.morphs.assembledHeadMorphs(assembly: assembly, face: $0)
                             .bindings
-                    } ?? [:]
+                    } ?? [:],
+                    capeArmor: request.firstPerson
+                        ? nil : owner.actorVisualResolver?.verletCapeArmor
                 )
             }
     }
