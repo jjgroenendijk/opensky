@@ -80,6 +80,9 @@ extension AgentMenuReadoutAdapter {
                 ]
             }
         }
+        if game.menuMode.topMenu?.name == "TweenMenu" {
+            result["tween"] = screens.tweenState
+        }
         if game.titleMenu.isOpen {
             result["credits"] = .bool(game.titleMenu.creditsShown)
         }

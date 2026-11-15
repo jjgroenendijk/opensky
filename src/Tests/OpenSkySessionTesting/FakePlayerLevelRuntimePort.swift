@@ -7,6 +7,7 @@ public import OpenSkySessionInterface
 nonisolated public final class FakePlayerLevelRuntimePort: PlayerLevelRuntimePort {
     public var experienceForNextLevel: Float = 0
     public var level = 0
+    public var levelsReady = 0
     public var stateValue: PlayerProgressState?
 
     public init() {}

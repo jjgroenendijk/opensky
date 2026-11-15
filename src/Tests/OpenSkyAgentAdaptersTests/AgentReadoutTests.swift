@@ -62,6 +62,19 @@ struct AgentReadoutTests {
         }
     }
 
+    @Test func anOpenTweenMenuShowsItsHighlight() throws {
+        let tween = FakeTweenMenuPort()
+        tween.isOpen = true
+        tween.highlighted = .magic
+        tween.showsLevelUp = true
+        host.fakeMenuScreens.tween = tween
+        host.fakeMenuMode.topMenu = MenuIdentifier("TweenMenu")
+        let state = try object(world.query(.menu))
+        let readout = object(state["tween"] ?? .null)
+        #expect(readout["highlighted"] == .string("magic"))
+        #expect(readout["levelUp"] == .bool(true))
+    }
+
     @Test func aStartedMovieAndAForcedScreenAnswerTheirState() throws {
         host.fakeMovies.playResult = true
         host.fakeLoadingScreens.forceResult = true

@@ -96,6 +96,17 @@ public final class MenuScreensWorldAdapter {
     }
 }
 
+extension MenuScreensWorldAdapter: TweenMenuWorld {
+    public var tweenLevel: TweenMenuLevel {
+        let progression = hosts.progression
+        let player = progression.skillsMenuPlayer
+        return TweenMenuLevel(
+            level: player.level, progress: player.levelProgress,
+            levelUpReady: (progression.leveling?.levelsReady ?? 0) > 0
+        )
+    }
+}
+
 extension MenuScreensWorldAdapter: SleepWaitWorld {
     public var gameDateText: String? {
         game.gameSession.map { game.runtimeState.dateLine(of: $0.gameClock) }
