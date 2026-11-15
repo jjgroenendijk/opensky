@@ -37,14 +37,15 @@ struct SWFRuntimeControllerTests {
         #expect(runtime.inputPlatform == SWFMovieRuntime.keyboardPlatform)
     }
 
-    @Test func aGamepadAddsAControllerToFocusGroupZero() throws {
+    /// A gamepad changes the platform, never the count a menu reads.
+    @Test func aGamepadChangesOnlyThePlatform() throws {
         let runtime = try started()
         runtime.setGamepadCount(1)
-        #expect(try numControllers(runtime) == .integer(2))
-        #expect(runtime.focusGroupControllerMask == 0b11)
+        #expect(try numControllers(runtime) == .integer(1))
+        #expect(runtime.focusGroupControllerMask == 1)
         #expect(runtime.inputPlatform == SWFMovieRuntime.gamepadPlatform)
         runtime.setGamepadCount(9)
-        #expect(runtime.controllerCount == 1 + SWFMovieRuntime.maximumGamepads)
+        #expect(runtime.controllerCount == 1)
     }
 
     @Test func setPlatformCarriesTheRuntimePlatformAndIsSentAgain() throws {
@@ -56,7 +57,7 @@ struct SWFRuntimeControllerTests {
         }
         runtime.callMovie("SetPlatform", arguments: [.number(0), .boolean(false)])
         runtime.setGamepadCount(1)
-        runtime.setGamepadCount(1)
+        runtime.setGamepadCount(2)
         runtime.setGamepadCount(0)
         #expect(log.calls.map(\.first) == [.number(0), .number(1), .number(0)])
         #expect(log.calls.allSatisfy { $0.last == .boolean(false) })
