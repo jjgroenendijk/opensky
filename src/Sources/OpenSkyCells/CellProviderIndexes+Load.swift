@@ -248,7 +248,8 @@ nonisolated extension CellProviderIndexes.RecordStores {
             var menuData = MenuRecordData(
                 loadOrder: context.loadOrder, settings: context.tuning.store
             )
-            menuData.chargenTypes = menuData.readChargenTypes(fileSystem: context.fileSystem)
+            let fileSystem = context.fileSystem
+            menuData.readChargenTypes { $0.readChargenTypes(fileSystem: fileSystem) }
             return (PresentationRecordStore(plugins: context.plugins), menuData)
         }
         let (idleStore, effects) = try await idles

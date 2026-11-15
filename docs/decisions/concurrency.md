@@ -223,6 +223,18 @@ function returns it as a `sending` value: no other code holds it. Each stage rep
 and end through a `@Sendable` closure into an `AsyncStream`, and a main-actor task reads that
 stream. Cancel cancels the task. A stage that already runs finishes, and no new stage starts.
 
+### Records decoded on first use
+
+Some record data is read by few sessions, or only when a menu opens, such as the playable
+races, the race menu's head parts, the map markers, and the System page's lists. Such data is
+not decoded during the load. A `FirstUseValue` holds how to decode it, and the first read
+decodes it on the reading thread and keeps it. Its value sits in a `Mutex`, so two first reads
+at the same time decode it once. Example: the menu stage reads only the settings; the races
+are decoded when the save list or the race menu first asks for a race.
+
+Data that the first frame or a first message box needs stays in the load, because a decode on
+the main actor at that moment shows as a stall.
+
 ## Rules for new code
 
 - Do not read or decode a file on the main actor after the first frame. A load that must stay

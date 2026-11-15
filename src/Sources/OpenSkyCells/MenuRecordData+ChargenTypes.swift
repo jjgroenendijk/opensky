@@ -1,5 +1,5 @@
 // The race menu's type ranges come from the chargen TRI of each race and sex, read
-// once while the world loads. See docs/engine/race-menu.md.
+// the first time the race menu asks for them. See docs/engine/race-menu.md.
 
 import Foundation
 import OpenSkyFormatsCore
