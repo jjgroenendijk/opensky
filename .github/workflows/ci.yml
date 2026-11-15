@@ -408,7 +408,7 @@ jobs:
         id: keys
         run: |
           xcode="$(xcodebuild -version | awk '/Build version/ { print $3 }')"
-          echo "index=index1-$RUNNER_ARCH-$xcode-" >>"$GITHUB_OUTPUT"
+          echo "index=index2-$RUNNER_ARCH-$xcode-" >>"$GITHUB_OUTPUT"
       # Only a push to main saves the tree, because it is about 1.1 GB.
       - uses: actions/cache/restore@v6
         id: index
