@@ -1,7 +1,7 @@
 // Scaleform's multi-controller focus API. CLIK's `UIComponent.focused` setter loops over
 // `Selection.numFocusGroups` and `System.capabilities.numControllers` before it calls
-// `Selection.setFocus`, so without them no CLIK control ever takes focus. Keyboard and
-// mouse are controller 0, each gamepad adds one, and all share focus group 0.
+// `Selection.setFocus`, so without them no CLIK control ever takes focus. Menus see one
+// controller, whatever is connected, and it is in focus group 0.
 // See docs/engine/as2-input.md.
 
 import Foundation
@@ -22,9 +22,10 @@ nonisolated extension SWFMovieRuntime {
     static let gamepadPlatform = 1.0
     static let setPlatformName = "SetPlatform"
 
-    /// Keyboard and mouse plus each connected gamepad.
+    /// The game never sets the count, so a menu sees GFx's default of one controller, with
+    /// or without a gamepad. The gamepad shows only in the platform.
     public var controllerCount: Int {
-        1 + gamepadCount
+        1
     }
 
     /// The platform the movie draws its button art for.
@@ -37,16 +38,14 @@ nonisolated extension SWFMovieRuntime {
         (1 << controllerCount) - 1
     }
 
-    /// Updates `System.capabilities.numControllers` and sends the movie's last
-    /// `SetPlatform` call again with the new platform, so its button art follows.
+    /// Sends the movie's last `SetPlatform` call again when a gamepad connects or the last
+    /// one goes, so its button art follows.
     public func setGamepadCount(_ count: Int) {
         let clamped = min(max(count, 0), Self.maximumGamepads)
         guard clamped != gamepadCount else { return }
+        let platformChanged = (clamped > 0) != (gamepadCount > 0)
         gamepadCount = clamped
-        runtime.globalObject.lookup("System")?.property.value.objectValue?
-            .lookup("capabilities")?.property.value.objectValue?
-            .define(.integer(controllerCount), for: "numControllers", flags: .dontEnumerate)
-        if let call = platformCall {
+        if platformChanged, let call = platformCall {
             sendPlatform(call)
         }
     }

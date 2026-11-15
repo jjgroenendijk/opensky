@@ -130,11 +130,16 @@ no `handleInput`, so an unfiltered path dropped every key.
 
 CLIK's `UIComponent.focused` setter reads `Selection.numFocusGroups` and
 `System.capabilities.numControllers`, then calls `Selection.setFocus` once per controller. GFx adds
-these fields; Flash has none of them. Without them, no CLIK control takes focus. OpenSky answers
-keyboard and mouse as controller 0 and each connected gamepad as one more controller, all in focus
-group 0. Every controller shares one focus, and each focus change calls the `Selection` listeners'
-`onSetFocus(old, new, 0)`. Whether Skyrim counts a gamepad as a second GFx controller is not
-confirmed; a menu sees the same focus either way.
+these fields; Flash has none of them. Without them, no CLIK control takes focus. The game does
+not set the controller count, so a menu reads GFx's default of one controller, with or without a
+gamepad. That controller is in focus group 0, and each focus change calls the `Selection`
+listeners' `onSetFocus(old, new, 0)`.
+
+A gamepad shows only in the platform. `SetPlatform` gets 1, PC with a gamepad, while a gamepad is
+connected and the `$360 Controller` row is on, and 0 otherwise. Its second argument is always
+false. The last input does not matter: a key press with a gamepad connected keeps the gamepad
+art. The movie gets `SetPlatform` when it starts, and again when the first gamepad connects or
+the last one goes.
 
 CLIK's `Button` reads its `focusIndicator` member and tests it with `== null`. When it is null, the
 button shows focus with its own `over` state; when it is a child clip, the child plays `show` and
