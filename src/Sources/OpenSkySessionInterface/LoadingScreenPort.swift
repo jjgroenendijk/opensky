@@ -5,6 +5,7 @@ public protocol LoadingScreenPort: AnyObject {
     associatedtype LoadingScreenSession: LoadingScreenSessionPort
     func begin(at time: Double)
     func beginLoad(at time: Double)
+    func beginFirstLoad(at time: Double)
     func cancel()
     func destinationKnown(location: ResolvedFormID?, at time: Double)
     @discardableResult func force(editorID: String, at time: Double) -> Bool
@@ -15,6 +16,8 @@ public protocol LoadingScreenPort: AnyObject {
     var session: LoadingScreenSession? { get }
     var shownCount: Int { get }
     func tick(time: Double)
-    func turn(byDegrees degrees: Float, at time: Double)
+    func drag(by pixels: SIMD2<Float>)
+    func setStick(_ value: SIMD2<Float>)
+    func nextTip() -> String?
     func destinationReady(location: ResolvedFormID?, at time: Double)
 }

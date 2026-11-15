@@ -45,7 +45,8 @@ The game picks a screen when the loading menu opens:
    another random screen's tip. An option, off by default, uses up every specific screen
    before one repeats.
 
-OpenSky picks at random among all screens whose conditions pass, with these choices:
+OpenSky follows these rules. A session start counts as "before a game is loaded". The later
+tips come from the same candidates as the screen. OpenSky adds these choices:
 
 - The conditions run on the player.
 - While the screen is chosen, the player's current location is the destination's `XLCN`

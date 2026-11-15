@@ -14,20 +14,25 @@ nonisolated struct PointLightRange: Equatable, Sendable {
 }
 
 extension Renderer {
-    /// Selects and writes the nearest supported point lights for one draw.
+    /// Selects and writes the nearest supported point lights for one draw. A cover is
+    /// lit by its own lights only.
     func writePointLights(
         near position: SIMD3<Float>,
         slot: Int,
         draw: Int
     ) -> PointLightRange {
         let limit = LightingConstant.maxPointLights.rawValue
-        let pick = pointLightPick(near: position, limit: limit)
+        let cover = effects.loadingCover
+        let pick = cover?.nearestPointLightPick(to: position, limit: limit)
+            ?? pointLightPick(near: position, limit: limit)
+        let lights = activePointLights
         let stride = MemoryLayout<PointLightUniform>.stride
         let first = (slot * drawUniformSlotCapacity + draw) * limit
-        let transient = transientPointLights.prefix(limit).map { (light: $0, index: Int?.none) }
+        let transient = cover == nil
+            ? transientPointLights.prefix(limit).map { (light: $0, index: Int?.none) } : []
         let scenePicks = (0 ..< min(pick.count, limit - transient.count)).map {
             let index = Int(pick.indices[$0])
-            return (light: scene.pointLights[index], index: Int?.some(index))
+            return (light: lights[index], index: Int?.some(index))
         }
         let picked = transient + scenePicks
         let ordered = picked.filter { !$0.light.castsShadows }

@@ -27,14 +27,20 @@ extension Renderer {
 
     /// What the shadow pass rasterizes: the scene plus the player's body in
     /// every mode a player exists in, whether or not the eye can see it. The
-    /// reasoning is on `PlayerRigVisibility`.
+    /// reasoning is on `PlayerRigVisibility`. A cover casts alone.
     private var shadowOpaqueSources: [[DrawGroup]] {
+        if let cover = effects.loadingCover {
+            return [cover.opaque]
+        }
         let body = frameInput.rigs.visibility.castsBodyShadow ? frameInput.rigs.body?.render
             .opaque : nil
         return [scene.opaque, body ?? []]
     }
 
     private var shadowAlphaTestedSources: [[DrawGroup]] {
+        if let cover = effects.loadingCover {
+            return [cover.alphaTested]
+        }
         let body = frameInput.rigs.visibility.castsBodyShadow
             ? frameInput.rigs.body?.render.alphaTested : nil
         return [scene.alphaTested, body ?? []]

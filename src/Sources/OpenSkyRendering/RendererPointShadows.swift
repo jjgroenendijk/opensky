@@ -51,8 +51,9 @@ extension Renderer {
     /// Six views for each picked shadow light; records the picks for the light uniforms.
     func pointShadowViews() -> [AuxiliaryShadowView] {
         guard pointLightShadowsEnabled, shadowRenders else { return [] }
-        let candidates = scene.pointLights.indices.compactMap { index in
-            let light = scene.pointLights[index]
+        let lights = activePointLights
+        let candidates = lights.indices.compactMap { index in
+            let light = lights[index]
             return light.castsShadows
                 ? PointShadowCandidate(index: index, position: light.position, radius: light.radius)
                 : nil
@@ -64,7 +65,7 @@ extension Renderer {
         guard !picked.isEmpty, pointShadowResources() != nil else { return [] }
         var views: [AuxiliaryShadowView] = []
         for (number, index) in picked.enumerated() {
-            let light = scene.pointLights[index]
+            let light = lights[index]
             let position = light.animated(at: animationTime, enabled: lightAnimationEnabled)
                 .position
             let first = number * ShadowConstant.pointFaceCount.rawValue
@@ -75,7 +76,7 @@ extension Renderer {
                     viewProjection: PointShadowMath.viewProjection(
                         light: position, face: face, radius: light.radius
                     ),
-                    excluding: [], drawsTerrain: true, target: .pointLights,
+                    excluding: [], drawsTerrain: effects.loadingCover == nil, target: .pointLights,
                     reach: ShadowReach(centre: position, radius: light.radius)
                 ))
             }

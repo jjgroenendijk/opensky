@@ -206,7 +206,9 @@ final class GameMetalView: MTKView {
         // that went down inside the view and came up outside it must not leave
         // a bow drawn forever.
         input?.setAttackHeld(false)
-        if inMenu, !captured {
+        // A captured cursor's press arrives as accept, but a menu that drags, such as
+        // the loading screen, still needs to see the button come up.
+        if inMenu {
             menuMode?.routeMenuPointer(menuPointer(.released, event))
         }
     }

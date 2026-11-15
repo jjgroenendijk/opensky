@@ -19,8 +19,8 @@ page.
    picked yet, because the destination's location is not known until its cell record is read.
 2. The destination scene is ready. OpenSky picks a screen for the destination's `XLCN`
    location and shows it.
-3. The screen holds for at least 1.5 seconds from that point. Then it fades out over 0.4
-   seconds, and the world runs again.
+3. The screen holds for at least 1.5 seconds from that point. Then it fades out over 1
+   second, and the world runs again.
 4. A transition that fails keeps the old scene, so the cover lifts at once.
 
 A fast travel works like a door. The view goes dark at once, because the destination's
@@ -42,28 +42,27 @@ with bare sky past the grid edge. Then the same minimum and fade apply.
 
 In the game, the screen holds as long as the load takes. OpenSky builds a cell much faster,
 so without a minimum the screen would flash for one frame and the tip could not be read. The
-1.5 seconds and the 0.4-second fade are OpenSky's choice.
+1.5-second minimum and the 1-second fade are the game's values (see [timing](#timing)).
+
+A session start picks only from the screens marked for the main menu, because no game is
+loaded yet. Every other cover picks from the screens whose conditions pass.
 
 ## Drawing
 
-- The cover is its own render layer. While it shows, the renderer draws only the cover: the
-  screen's `STAT` model, placed in front of the camera. The world, the player body, and the
-  first-person arms are not drawn.
-- The object starts at the `RNAM` rotation, `SNAM` scale, and `XNAM` offset. The player turns
-  it with the mouse or the left and right keys, inside the `ONAM` range. A screen with no range
-  does not turn. Source: CK wiki [LoadScreen](https://ck.uesp.net/wiki/LoadScreen), "Rotation
-  Offset Constraints: how far the user can rotate the model".
-- OpenSky places the camera at 2.5 times the model's radius times its scale, and at least 48
-  units, so the whole object fits on screen. It moves the eye sideways and up by the `MOD2`
-  path keys, and back by a key's distance only where it is farther than the fit distance. The
-  game's own placement is in [the game's scene](#the-games-scene) below.
-- The cover has its own light: a white light from above, behind the eye, and to the left,
-  over a grey ambient, with no fog, so the loaded world's light, such as a dark blue night,
-  does not tint it. The main menu logo brings its own light ([title menu](/engine/main-menu.md)).
+OpenSky draws the game's scene, described in [the game's scene](#the-games-scene) below.
+
+- The cover is its own render layer with its own camera. While it shows, the renderer draws
+  only the cover: the screen's `STAT` model and the mist, seen from the scene's camera with the
+  scene's field of view. The world, the player body, and the first-person arms are not drawn.
+- The cover is lit only by the scene's three lights, and only its own models cast shadows. The
+  world's lights, fog, and terrain do not reach it.
+- The mist's particles are built once when the screen shows, so they keep running while the
+  screen holds.
 - The HUD is hidden while the cover shows, and returns when the cover is gone.
 - During the fade, the world draws again under a black panel whose opacity falls to zero.
-- A screen with no model shows the tip on black.
-- The cover stands on black and takes no weather fog, also when no cell is loaded behind it.
+- A screen with no model, and the dark frame before a screen is picked, show black with no mist.
+- The arrow keys stand in for the game's stick while they are held: left and right turn the
+  model, and up and down change the field of view. A click and drag works as the game's mouse.
 
 ## The game's scene
 
@@ -211,17 +210,14 @@ system font.
 `openskycli game debug loadscreen <editor ID>` holds one screen, and
 `debug loadscreen` with no ID releases it.
 `openskycli game debug fasttravel <marker name>` travels as the map does. `state menu` shows
-`loading`: whether the cover is up, the screen, its camera path, the player's turn, and
-whether the loading movie is up.
+`loading`: whether the cover is up, the screen, its camera path, the player's turn in degrees,
+the field of view, and whether the loading movie is up.
 
 ## Differences from the game
 
-- [WARNING] OpenSky fits the camera to the model's radius with a normal field of view. The game
-  uses a fixed camera at 600 units with a narrow view, and replaces the camera position with the
-  `MOD2` path.
-- [WARNING] OpenSky lights the model with one white light over a grey ambient. The game uses
-  three fixed point lights over a black ambient, and light 1 casts a shadow.
-- [WARNING] OpenSky draws plain black behind the model. The game draws the mist particles.
-- [WARNING] OpenSky ignores the inventory marker rotation, the wide-screen scale, and the field
-  of view input.
-- [INFO] The game does not play the `UILoadscreenMist` sound, and neither does OpenSky.
+- [WARNING] OpenSky keeps its own near and far planes for the scene camera, not 15 and 20480.
+- [WARNING] OpenSky ignores rotation keys in a `MOD2` path; the camera keeps the base look
+  direction. No vanilla path has rotation keys.
+- [WARNING] OpenSky's point shadows use its own bias, not 30.64.
+- [WARNING] The mist file's sequences are not picked by name; its particles and controllers
+  run as the mesh loads them.

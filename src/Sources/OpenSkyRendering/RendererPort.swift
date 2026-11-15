@@ -53,6 +53,7 @@ public protocol RendererPort: AnyObject {
         particles: [ParticlePlayback],
         lighting: RenderLighting?
     ) throws
+    func setLoadingScene(_ cover: LoadingCoverScene?) throws
     func setMenuScene(_ scene: MenuScene?)
     func setMoviePicture(_ picture: MoviePicture?, letterbox: Bool)
     var shadowQuality: ShadowQuality { get set }

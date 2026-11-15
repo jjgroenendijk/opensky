@@ -45,6 +45,9 @@ public final class LoadingScreenWorldAdapter {
     private var startCoverSince: Double?
     /// Where a fast travel lands; the cover waits until the grid is centered there.
     private var moveTarget: SIMD3<Float>?
+    /// Whether the pointer button is down, so pointer motion drags the object.
+    private var dragHeld = false
+    private var heldDirections: Set<MenuInputEvent.Direction> = []
     lazy var movie = MenuMovieOverlay(movies: game.swfMovies) { [weak self] in
         self?.game.renderer
     }
@@ -67,6 +70,7 @@ public final class LoadingScreenWorldAdapter {
         self.clock = clock
         presentationHost = game
         self.game = game
+        state.nextTip = { [weak game] in game?.loadingScreens.nextTip() }
     }
 
     public var now: Double {
@@ -78,7 +82,7 @@ public final class LoadingScreenWorldAdapter {
     public func coverSessionStart() {
         startCoverSince = now
         moveTarget = nil
-        game.loadingScreens.beginLoad(at: now)
+        game.loadingScreens.beginFirstLoad(at: now)
     }
 
     /// Fast travel: the view goes dark at once, the screen is picked once the cell
@@ -126,20 +130,45 @@ public final class LoadingScreenWorldAdapter {
 
     // MARK: - The loading movie
 
-    /// Look and the arrow keys turn the object, as the game lets the player do.
+    /// A drag with the button held turns the object and changes the field of view,
+    /// as the game's mouse does. The arrow keys stand in for the game's stick.
     public func route(_ event: MenuInputEvent) {
-        let degrees: Float = switch event {
-        case let .pointer(deltaX, _): deltaX * Self.turnDegreesPerPoint
-        case .move(.left): -Self.turnDegreesPerKey
-        case .move(.right): Self.turnDegreesPerKey
-        default: 0
+        switch event {
+        case .button(.accept):
+            dragHeld = true
+        case let .pointer(deltaX, deltaY) where dragHeld:
+            game.loadingScreens.drag(by: SIMD2(deltaX, deltaY))
+        case let .move(direction):
+            heldDirections.insert(direction)
+            game.loadingScreens.setStick(stick)
+        case let .release(direction):
+            heldDirections.remove(direction)
+            game.loadingScreens.setStick(stick)
+        default:
+            break
         }
-        guard degrees != 0 else { return }
-        game.loadingScreens.turn(byDegrees: degrees, at: now)
     }
 
-    public static let turnDegreesPerPoint: Float = 0.5
-    public static let turnDegreesPerKey: Float = 10
+    /// The button's press and release, from the cursor; a captured cursor's press
+    /// arrives as the accept button.
+    public func route(_ event: MenuPointerEvent) {
+        switch event.phase {
+        case .pressed: dragHeld = true
+        case .released: dragHeld = false
+        case .moved: break
+        }
+    }
+
+    /// Up is positive, as on a stick.
+    private var stick: SIMD2<Float> {
+        func axis(_ positive: MenuInputEvent.Direction, _ negative: MenuInputEvent.Direction)
+            -> Float
+        {
+            (heldDirections.contains(positive) ? 1 : 0) -
+                (heldDirections.contains(negative) ? 1 : 0)
+        }
+        return SIMD2(axis(.right, .left), axis(.up, .down))
+    }
 }
 
 extension LoadingScreenWorldAdapter: LoadingScreenWorld {}

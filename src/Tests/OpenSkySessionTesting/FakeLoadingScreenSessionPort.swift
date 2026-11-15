@@ -8,6 +8,7 @@ public import OpenSkySessionInterface
 nonisolated public final class FakeLoadingScreenSessionPort: LoadingScreenSessionPort {
     public var screen: ResolvedRecord<LoadScreen>?
     public var turnDegrees: Float = 0
+    public var fieldOfView: Float = 0
 
     public init() {}
 }
