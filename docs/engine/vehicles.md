@@ -187,27 +187,63 @@ call `SetVehicle` (read with `openskycli pex`):
 So the game ends a link on its own when the exit state ends, and `ExitCartEnd` is the event that
 marks that moment. OpenSky takes any actor off its vehicle on that event.
 
-How the exit state ends (clean-room read of `SkyrimSE.exe` and the graphs, 2026-11-07):
+### How an exit state ends
 
-- Each exit state plays its clip once and then holds the last frame. It does not leave on its own.
-  It sends `ExitCartEnd` only when it is left.
-- The graph leaves `Cart_State` for `Root` on the event `CartExit`. Neither the engine nor a script
-  sends it. Only the driver's exit clip does, as a trigger 0.2 s before its end. So for the driver,
-  `CartExit` comes first and `ExitCartEnd` follows in the same graph update.
-- A prisoner's exit clip has no `CartExit` trigger. Its one trigger, `OffsetBoundStandingCartStart`
-  (`OffsetBoundStandingStart` for seat A), switches the arms to the bound standing pose. What
-  makes a prisoner's exit state send `ExitCartEnd` was not found.
-- On `ExitCartBegin` the engine stops pinning the rider to the cart, so the clip's root motion
-  carries it off. On `ExitCartEnd` the engine ends the link itself, as `SetVehicle(None)` does.
-- The clips end far from the seat. `CartPrisonerCExit` ends about 330 units behind the seat's root,
-  turned about 167 degrees. `CartDriverExit` ends about 106 units to the side, turned about 99
-  degrees.
-- Seating the player with `IdleCartPrisonerCIdle` puts the player's camera in a cart view mode,
-  and `IdleCartPrisonerCExit` ends it.
+An exit state plays its clip once and then holds the last frame. It sends `ExitCartEnd` only
+when the graph leaves it. Each exit clip carries one trigger near its end that makes the graph
+leave:
 
-[WARNING] OpenSky sends a prisoner's `ExitCartEnd` when the idle's clip time ends. The game's
-trigger for it is unknown. The player's graph then stays in the exit state, holding the bound
-standing arms, until another idle leaves it.
+| Seat | Clip length | Trigger | At | Root motion over the clip | Turn |
+| --- | --- | --- | --- | --- | --- |
+| A | 8.5 s | `OffsetBoundStandingStart` | 8.3 s | (-16, -380, -2) | about 170 degrees |
+| B | 11.0 s | `OffsetBoundStandingCartStart` | 9.0 s | (21, -375, -2) | about -170 degrees |
+| C | 15.67 s | `OffsetBoundStandingCartStart` | 15.47 s | (-8, -330, -2) | about 180 degrees |
+| D | 18.0 s | `OffsetBoundStandingCartStart` | 17.8 s | (11, -288, 0) | about 180 degrees |
+| Driver | 5.67 s | `CartExit` | 5.47 s | (106, 6, 6) | about 100 degrees |
+
+The root motion is in the actor's own space: -Y is backwards. The times and the motion are in
+the clips and in `meshes\animationdatasinglefile.txt`.
+
+For the driver, `CartExit` is a plain transition from `Cart_State` to `Root`. For a prisoner,
+the trigger is an event of the arm layers in `mt_behavior.hkx`: the machines
+`CarryLeftArmBehavior` and `CarryRightArmBehavior` have wildcard transitions on it to their
+bound standing states. These transitions are global wildcards (transition flags 0xd00). A
+global wildcard also acts on every state machine above it: the top machine leaves the state it
+is in, here `Cart_State`, for the state that holds the target. So the same event that binds the
+arms takes the prisoner out of the cart state.
+
+The same rule is the only way into `Cart_State`: the top machine has no transition to it. The
+`Cart` machine's wildcards on `IdleCartPrisonerCIdle`, the four `IdleCartPrisoner?Sway` events,
+`IdleCartDriverIdleStill`, and `IdleCartDriverSway` are global. Those on the A, B, D, and driver
+idle events are local (flags 0x900), so a script must send a sway or the C idle first.
+
+```mermaid
+sequenceDiagram
+    participant Q as Script
+    participant G as Graph
+    participant E as Engine
+    Q->>G: exit idle, such as IdleCartPrisonerCExit
+    Note over G: exit state starts, 0.5 s blend
+    G->>E: ExitCartBegin, HeadTrackingOff
+    Note over E: stops pinning the rider to the seat
+    Note over G: the clip's root motion carries the rider off
+    Note over G: the clip's trigger fires near its end
+    Note over G: leaves Cart_State for Root, arms go to the bound pose
+    G->>E: ExitCartEnd, then HeadTrackingOn
+    Note over E: ends the vehicle link, the rider no longer sits
+    E->>Q: ExitCartEnd
+    Note over Q: counts the rider, gives it its next package
+```
+
+While the `Cart` machine is active, the graph variable `bAnimationDriven` is true, so the clip
+moves the actor. When the machine is left, the variable is false again, and normal movement and
+collision start from where the root motion left the actor. The game does not move the actor to
+a marker.
+
+The first-person graph has only seat C: its idle, sway, and exit states, and the same arm
+wildcards. So the player always rides in seat C. `IdleCartPrisonerCIdle` puts the player's
+camera in a cart view mode that drops the cart's roll, and `IdleCartPrisonerCExit` ends it. The
+C exit state also sends `ZeroOutCameraPitch`, which levels the camera.
 
 The rider's root is still on the cart's root at that moment, but the exit clip has carried the
 body off the cart. So the rider stands where the clip left its `NPC COM [COM ]` bone, read on the

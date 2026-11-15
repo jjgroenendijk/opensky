@@ -98,5 +98,8 @@ them, for example `sVDSGManual`: "Unused UI string from Fallout 3's loading scre
 | Never read | `fConcussionTimer`, `sSeasonWinter`, `sArmorWeightHeavy` | The game holds them, but no code path reads them, as OpenSky observed. Some sit in name tables (armour weights, seasons, spell and projectile types) that nothing reads |
 | Preload only | `sImpactParticleWoodDefault` | The game loads the model once at start and never places it, as OpenSky observed |
 
+The rules of single settings that have no page of their own are on the
+[game setting rules](/engine/game-setting-rules.md) page.
+
 A setting on this list counts as done in the [gap report](/tools/gaps.md). A setting the wiki
 does not mark, and whose system Skyrim has, stays off the list even if OpenSky lacks the system.

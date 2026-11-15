@@ -28,7 +28,8 @@ An actor plays in one scene at a time. A scene holds its actors from the moment 
 phase until it ends. A second scene that needs a held actor waits before its first phase:
 
 - If the scene that holds the actor has flag 0x10 (interruptible), it is stopped, and the new
-  scene takes the actor.
+  scene takes the actor. A [conversation scene](#conversation-scenes) always counts as
+  interruptible.
 - Otherwise the new scene waits. It tries again on every tick.
 - An optional actor (actor `LNAM` flag 0x02) never makes a scene wait. Its actions are done at
   once while another scene holds it, like an empty alias.
@@ -83,9 +84,7 @@ completed actions:
 4. Finishing completes the actions that should end by now, runs the phase's end fragments, and
    moves to the next phase.
 5. After the last phase, a scene with flag 0x08 (repeat while true) starts again from phase 1
-   when its scene conditions pass. It first waits a random time between
-   `fRandomSceneAgainMinTime` and `fRandomSceneAgainMaxTime` (10 to 30 s in `Skyrim.esm`); the
-   wait is OpenSky's reading of the names. Otherwise it ends.
+   when its scene conditions pass, with no wait. Otherwise it ends.
 
 The Creation Kit's [Scenes Tab](https://ck.uesp.net/wiki/Scenes_Tab) page gives the phase end as
 a choice: "End when all actions are complete" (the default) or "End on conditions". The
@@ -103,6 +102,25 @@ Conditions are checked with the player as subject, no target, and the scene's qu
 alias quest. Several phases can pass in one tick. A tick takes at most twice as many steps as
 the scene has phases, plus four, and repeats a scene at most once, so it cannot loop forever.
 
+The game itself takes several frames for one phase, because each step waits for the one
+before it. A fragment adds the time the script needs to return.
+
+```mermaid
+sequenceDiagram
+    participant S as Scene
+    participant P as Script
+    S->>P: phase begins
+    P-->>S: fragment returned
+    Note over S: next frame: actions start
+    Note over S: a later frame: all actions done
+    S->>P: phase ends
+    P-->>S: fragment returned
+    Note over S: next frame: next phase
+```
+
+One phase with one line of no length takes about 5 to 7 frames this way. A phase whose start
+conditions fail is skipped, one phase per frame. OpenSky runs these steps in one tick.
+
 ## Actions
 
 | Type | What OpenSky does |
@@ -114,6 +132,23 @@ the scene has phases, plus four, and repeats a scene at most once, so it cannot 
 An action whose alias is empty is done at once. The Creation Kit says a scene goes on when an
 actor is dead or disabled, and an empty alias is the same case for OpenSky. A dialogue action
 whose topic has no passing response for the speaker is also done at once.
+
+The game ends an action at its start in these cases:
+
+| Action | Done at its start when |
+| --- | --- |
+| Dialogue | The alias is empty, or the speaker is dead, disabled, or deleted |
+| Dialogue | The topic is missing, or no response passes for the speaker |
+| Package | The alias is empty or not an actor, or the actor is dead, disabled, or deleted |
+| Package | None of the action's packages can run for the actor |
+| Any | Another scene holds the actor |
+
+Whether the actor is loaded is not part of these tests. An action whose actor the player talks
+to in the dialogue menu is skipped for that frame and does not hold its phase.
+
+Before a speaker with a loaded body says its line, it must face the actor it looks at: within
+20 degrees, or within 80 degrees while it moves. The line also waits while the speaker still
+says something else, or while its body loads.
 
 A dialogue action with flag 0x10000 loops. The Creation Kit says "the actor will loop the dialogue in
 this action (within a random time between the specified Min and Max seconds)"
@@ -198,8 +233,8 @@ loaded cells.
 A save stores the playing scenes in the `SCNS` chunk, and the pause time of each paused scene
 in the `SCNP` chunk ([world chunks](/formats/opensky-save-world-chunks.md)). After a load, a
 scene goes on from the same phase with the same running actions, still paused if it was.
-The wait before a repeat is not saved: a save made during it plays the scene again at once after
-the load.
+The gap after a conversation scene is not saved: after a load, the next conversation scene may
+begin at once.
 
 ## Scenes far from the player
 
@@ -222,14 +257,47 @@ the bridge's `processLevel` readout: from Riverwood, `WindhelmIntroScene` ran it
 then all five lines in about 0.5 s, twice. Both speakers were at process level 3, the lowest.
 OpenSky gives such a line no length, so it ends on the next tick.
 
-Some far-away scenes wait in their first phase, and the rule is not known yet.
-`WindhelmOengulHermirScene3`, `RiftenGrandPlazaScene30`, and `RiftenBeggarSnilfScene` stayed in
-phase 0 for 45 s with enabled actors at process level 3, the same level as the Windhelm
-speakers, and no actor of theirs played in another scene. Their first lines have no condition
-that fails. Each of the waiting scenes has the flag "Begin on Quest Start"; `WindhelmIntroScene`
-does not. Their quests could not be started again from the console after a stop, so a scene
-started with `StartScene` could not be compared with the same scene started by its quest.
-OpenSky plays these scenes on; the wait is tracked in a `gap` issue.
+A far-away [conversation scene](#conversation-scenes) does not play. It waits before its first
+phase until both partners have a loaded body. `WindhelmOengulHermirScene3`,
+`RiftenGrandPlazaScene30`, `RiftenBeggarSnilfScene`, and `CWDialogueSoldiers02Scene` stayed in
+phase 0 for 45 s in the reference game, with enabled actors at process level 3 and no actor in
+another scene. Each of their quests has the event `ADIA`. The quests of `WindhelmIntroScene`,
+`IvarsteadSSScene`, and `MorthalInitialScene`, which did play, have no event.
+
+## Conversation scenes
+
+A conversation scene is a scene whose quest starts from the actor dialogue event: the `QUST
+ENAM` is `ADIA`. `Skyrim.esm` and the DLC have 900 such quests. They hold the short talks
+between two townspeople. These scenes follow extra rules:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Waiting: scene starts
+    Waiting --> Waiting: a partner is in a scene,\nor has no loaded body,\nor another conversation plays,\nor the gap has not passed
+    Waiting --> [*]: a partner is dead
+    Waiting --> Meeting: both partners free
+    Meeting --> Playing: the partners are near\nand face each other
+    Playing --> [*]: scene ends, gap starts
+```
+
+- The partners are the first two actor aliases of the scene that hold an actor.
+- One conversation scene plays at a time in the whole game. When one begins, the game draws a
+  gap between `fRandomSceneAgainMinTime` and `fRandomSceneAgainMaxTime` (10 to 30 s in
+  `Skyrim.esm`). The gap counts down only while no conversation scene plays, and the next one
+  waits until it is over.
+- In the game, one partner walks to the other before the first phase, and the scene stays
+  paused until they are near and face each other. Partners with no loaded body never meet, so
+  the scene waits for as long as they are far away.
+- The scene counts as interruptible, with or without flag 0x10.
+
+OpenSky differs in two points. It does not make a partner walk: the scene begins as soon as
+both partners have a loaded body and are free. And it starts the gap when the conversation
+ends ([unverified values](/engine/unverified-values.md)).
+
+For example, `RiftenGrandPlazaScene30` starts with its quest at the start of the game. From
+Riverwood both speakers are unloaded, so it waits. When the player walks into the Riften
+market and both speakers load, the scene begins, if no other conversation plays and the gap
+after the last one is over.
 
 ## Observed on the install
 
@@ -241,3 +309,5 @@ its two speakers and ends.
 ## Not done yet
 
 - Observing combat is not known, so the observe-combat behaviour flags never act.
+- A conversation partner does not walk to the other partner before the scene begins.
+- A speaker does not wait to face its look target before its line.
