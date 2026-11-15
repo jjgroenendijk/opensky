@@ -36,11 +36,17 @@ extension LoadingScreenWorldAdapter {
     }
 
     public var assetLoaders: LoadingScreenAssetLoaders {
-        LoadingScreenAssetLoaders(
-            game: game,
-            state: state,
-            presentationRecords: presentationRecords
-        )
+        LoadingScreenAssetLoaders(game: game, presentationRecords: presentationRecords)
+    }
+
+    private func registerLoadingScreenCameraPaths(stage: SessionStage) {
+        let gameSession = stage.gameSession
+        guard let paths = assetLoaders.cameraPathLoader() else { return }
+        state.cameraPaths = paths
+        gameSession.assetDrains.register(.loadingCameraPaths) { _ in paths.drain() }
+        guard let markers = assetLoaders.modelMarkerLoader() else { return }
+        state.modelMarkers = markers
+        gameSession.assetDrains.register(.loadingModelMarkers) { _ in markers.drain() }
     }
 
     private func registerLoadingScreen(stage: SessionStage) {
@@ -68,6 +74,6 @@ extension LoadingScreenWorldAdapter {
             game.loadingScreens.tick(time: now)
             movie.tick()
         }
-        assetLoaders.registerLoadingScreenCameraPaths(stage: stage)
+        registerLoadingScreenCameraPaths(stage: stage)
     }
 }
