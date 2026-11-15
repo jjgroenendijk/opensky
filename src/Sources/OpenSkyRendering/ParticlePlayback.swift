@@ -393,21 +393,13 @@ nonisolated extension ParticleSimulator {
     }
 }
 
-/// Layout mirrored by ParticleInstance in ShaderTypes.h.
-nonisolated public struct ParticleGPUInstance: Sendable {
-    let positionSize: SIMD4<Float>
-    let color: SIMD4<Float>
-    let uvRect: SIMD4<Float>
-    /// The cosine and sine of the billboard turn in x and y.
-    let rotation: SIMD4<Float>
-}
-
 nonisolated public final class ParticlePlayback: Sendable {
     nonisolated private struct State {
         var simulator: ParticleSimulator
         var simulationTime: Float = 0
         /// Length over width of a rain streak; 0 draws square billboards.
         var streakAspect: Float = 0
+        var lightningPlay = LightningBolt.Play()
     }
 
     public let name: String
@@ -463,8 +455,8 @@ nonisolated public final class ParticlePlayback: Sendable {
             placementTransform: placementTransform,
             seed: seed
         )
-        capacity = definition.lightning == nil ? simulator.capacity : LightningBolt.segmentCapacity
         lightning = definition.lightning.map { LightningBolt(parameters: $0, seed: seed) }
+        capacity = lightning?.maxQuads ?? simulator.capacity
         state = Mutex(State(simulator: simulator))
         let count = max(capacity, 1) * GPUFactory.maxFramesInFlight
         guard
@@ -532,7 +524,14 @@ nonisolated public final class ParticlePlayback: Sendable {
 
     /// Plays the named NIF sequence's controller keys, as an effect graph asks.
     public func play(sequence name: String) {
-        state.withLock { $0.simulator.play(sequence: name) }
+        state.withLock {
+            $0.simulator.play(sequence: name)
+            if let lightning {
+                $0.lightningPlay = lightning.play(
+                    $0.lightningPlay, switchedTo: name, at: $0.simulationTime
+                )
+            }
+        }
     }
 
     func setSpawnScale(_ scale: PrecipitationScale) {
@@ -545,9 +544,11 @@ nonisolated public final class ParticlePlayback: Sendable {
         state.withLock { $0.streakAspect = aspect.isFinite ? max(aspect, 0) : 0 }
     }
 
-    /// Seconds played since the last reset; a lightning bolt grows on this clock.
-    var playbackTime: Float {
-        state.withLock { $0.simulationTime }
+    /// The bolt's quads now, in the shape's own space; empty for a particle system.
+    var lightningQuads: [LightningQuad] {
+        guard let lightning else { return [] }
+        let (time, play) = state.withLock { ($0.simulationTime, $0.lightningPlay) }
+        return lightning.quads(at: time, play: play)
     }
 
     /// True when this system draws ribbon bands instead of square billboards.
@@ -564,6 +565,7 @@ nonisolated public final class ParticlePlayback: Sendable {
         state.withLock {
             $0.simulator.reset(seed: seed)
             $0.simulationTime = 0
+            $0.lightningPlay = LightningBolt.Play()
         }
     }
 

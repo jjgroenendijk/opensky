@@ -105,8 +105,9 @@ roll, and scale. A target Ptr of -1 is resolved by the look-at name.
 
 - Shader property controllers that play on their own clock. See the next section.
 
-- Lightning bolts. Each `BSProceduralLightningController` becomes a bolt at its target
-  shape, drawn as ribbon bands ([particles](/rendering/particles.md#ribbons)).
+- Lightning bolts. Each `BSProceduralLightningController` becomes a bolt at the first shape
+  below its target node ([particles](/rendering/particles.md#lightning)). A sequence feeds it
+  by the interpolator IDs `Generation`, `Mutation`, `ArcOffset`, `Length`, and `Width`.
 
 ### Shader property controllers
 

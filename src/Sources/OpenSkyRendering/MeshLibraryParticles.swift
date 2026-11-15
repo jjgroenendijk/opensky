@@ -22,7 +22,9 @@ nonisolated extension MeshLibrary {
         var playbacks: [ParticlePlayback] = []
         for (index, definition) in definitions.enumerated() {
             let emits = definition.maxParticles > 0 && definition.emitters.contains(where: \.active)
-            guard emits || definition.lightning != nil, let shader = definition.effectShader
+            guard
+                emits || definition.lightning?.isKeyed == true,
+                let shader = definition.effectShader
             else { continue }
             let texture = textures.texture(key: shader.sourceTexturePath, usage: .color)
             let seed = (UInt64(formID) << 32) ^ UInt64(index + 1)

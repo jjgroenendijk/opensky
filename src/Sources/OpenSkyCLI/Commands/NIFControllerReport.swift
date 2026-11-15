@@ -7,6 +7,7 @@ import OpenSkyFormatsMesh
 enum NIFControllerReport {
     static func print(file: NIFFile) {
         printShaderControllers(file: file)
+        printLightningControllers(file: file)
         let animation: NIFNodeAnimation
         do {
             animation = try NIFNodeAnimationDecoder.animation(of: file)
@@ -56,6 +57,23 @@ enum NIFControllerReport {
                     + " x\(format(timing.frequency)): \(variable)"
                     + ", \(entry.keyCount) keys" + (entry.target == nil ? ", not drawn" : "")
             )
+        }
+    }
+
+    private static func printLightningControllers(file: NIFFile) {
+        guard let reports = try? file.lightningReports(), !reports.isEmpty else { return }
+        Swift.print("lightning controllers: \(reports.count)")
+        for report in reports {
+            Swift.print(
+                "lightning controller block \(report.controller) on block \(report.target) "
+                    + report.targetType
+            )
+            for feed in report.feeds {
+                Swift.print(
+                    "  sequence \(feed.sequence): \(feed.id.isEmpty ? "(no ID)" : feed.id) "
+                        + "\(feed.type), \(feed.keys) keys"
+                )
+            }
         }
     }
 

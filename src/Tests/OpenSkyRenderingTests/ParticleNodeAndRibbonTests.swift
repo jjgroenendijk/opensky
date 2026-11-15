@@ -1,5 +1,5 @@
 // Emitters that ride moved nodes, the inherit object's velocity, the spin axis of mesh
-// particles, sequence switches, and the ribbon shapes: strips, rain streaks, and lightning bolts.
+// particles, sequence switches, and the ribbon shapes: strips and rain streaks.
 
 @testable import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
@@ -131,59 +131,6 @@ struct ParticleNodeAndRibbonTests {
         #expect(abs(ParticleSpin.advanced(2 * .pi, by: 0.5) - 0.5) < 1e-5)
         #expect(ParticleSpin.advanced(9 * .pi, by: 2 * .pi) == 0)
         #expect(ParticleSpin.advanced(-1, by: -9) == -10, "a negative angle does not wrap")
-    }
-
-    @Test func aLightningBoltReachesItsLengthAndCrawlsOverTime() throws {
-        let file = try NIFFile(data: NIFFixture.file(
-            blocks: [
-                NIFFixture.Block("NiNode", NIFFixture.niNode(
-                    prefix: NIFFixture.avObjectPrefix(controllerRef: 1)
-                )),
-                NIFFixture.Block(
-                    "BSProceduralLightningController",
-                    NIFParticleParameterFixture.lightningController(
-                        targetRef: 0, subdivisions: 4, branches: 0, length: 512, width: 16
-                    )
-                )
-            ],
-            roots: [0]
-        ))
-        let bolt = try #require(try file.particleSystems().first?.lightning)
-        let generator = LightningBolt(parameters: bolt, seed: 1)
-        let now = generator.segments(at: 0, color: SIMD4(repeating: 1))
-        // Four halvings make 16 bands on the main bolt; no branches were asked for.
-        #expect(now.count == 16)
-        #expect(simd_length(now[0].start) < 1e-4)
-        #expect(abs((now.last?.end.y ?? 0) - 512) < 1e-3)
-        #expect(now.last?.endWidth == 0, "the main bolt fades to a point")
-        let later = generator.segments(at: 0.05, color: SIMD4(repeating: 1))
-        #expect(later.count == now.count)
-        #expect(zip(now, later).contains { simd_distance($0.end, $1.end) > 1e-3 })
-        #expect(generator.segments(at: 0, color: SIMD4(repeating: 1)) == now)
-    }
-
-    @Test func aLightningBoltGrowsTheBranchesItAsksFor() throws {
-        let file = try NIFFile(data: NIFFixture.file(
-            blocks: [
-                NIFFixture.Block("NiNode", NIFFixture.niNode(
-                    prefix: NIFFixture.avObjectPrefix(controllerRef: 1)
-                )),
-                NIFFixture.Block(
-                    "BSProceduralLightningController",
-                    NIFParticleParameterFixture.lightningController(
-                        targetRef: 0, subdivisions: 4, branches: 2, length: 512, width: 16
-                    )
-                )
-            ],
-            roots: [0]
-        ))
-        let bolt = try #require(try file.particleSystems().first?.lightning)
-        let generator = LightningBolt(parameters: bolt, seed: 1)
-        let branches = generator.branches(generation: 0)
-        // The main bolt comes first; each branch leaves it with two fewer halvings.
-        #expect(branches.count > 1)
-        #expect(branches.dropFirst().allSatisfy { $0.points.count < branches[0].points.count })
-        #expect(generator.segments(at: 0, color: SIMD4(repeating: 1)).count > 16)
     }
 
     @Test func aPlayedSequenceSwitchesTheBirthRateAndRestartsItsClock() {

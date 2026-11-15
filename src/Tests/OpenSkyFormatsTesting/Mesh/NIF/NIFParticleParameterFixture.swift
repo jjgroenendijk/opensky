@@ -85,20 +85,24 @@ public enum NIFParticleParameterFixture: Sendable {
         return out
     }
 
-    /// nif.xml `BSProceduralLightningController` aimed at the block at `targetRef`, with no
-    /// interpolators and the given bolt fields.
+    /// nif.xml `BSProceduralLightningController` aimed at the block at `targetRef`, with
+    /// the given bolt fields. `interpolators` fills the nine interpolator refs from the
+    /// first (generation) on; the rest stay empty.
     public static func lightningController(
-        targetRef: Int32, subdivisions: UInt16, branches: UInt16, length: Float, width: Float = 16
+        targetRef: Int32, subdivisions: UInt16, branches: UInt16, length: Float, width: Float = 16,
+        interpolators: [Int32] = [], flags: UInt16 = 0x8
     ) -> Data {
         var out = Data()
         out.appendUInt32(0xFFFF_FFFF) // Next Controller
-        out.appendUInt16(0x8) // Flags: active
+        out.appendUInt16(flags)
         for value: Float in [1, 0, 0, 1] { // Frequency, phase, start, stop
             out.appendFloat32(value)
         }
         out.appendUInt32(UInt32(bitPattern: targetRef))
-        for _ in 0 ..< 9 {
-            out.appendUInt32(0xFFFF_FFFF)
+        for slot in 0 ..< 9 {
+            out
+                .appendUInt32(UInt32(bitPattern: slot < interpolators
+                        .count ? interpolators[slot] : -1))
         }
         out.appendUInt16(subdivisions)
         out.appendUInt16(branches)
@@ -108,6 +112,81 @@ public enum NIFParticleParameterFixture: Sendable {
         }
         out.append(contentsOf: [1, 1, 1]) // Fade main, fade children, animate arc
         out.appendUInt32(0xFFFF_FFFF) // Shader property
+        return out
+    }
+
+    /// A lightning node with its hidden shape, as the vanilla bolts have it: block 1 is
+    /// the node the controller (block 3) targets, block 2 the shape, block 4 its effect
+    /// shader. `extraBlocks` start at block 5.
+    public static func lightningFile(
+        controller: Data, extraBlocks: [NIFFixture.Block] = [], strings: [String] = []
+    ) -> Data {
+        NIFFixture.file(
+            blocks: [
+                NIFFixture.Block("NiNode", NIFFixture.niNode(children: [1])),
+                NIFFixture.Block("NiNode", NIFFixture.niNode(
+                    prefix: NIFFixture.avObjectPrefix(controllerRef: 3), children: [2]
+                )),
+                NIFFixture.Block("BSTriShape", NIFFixture.bsTriShape(
+                    prefix: NIFFixture.avObjectPrefix(flags: 0xF, translation: [0, 0, 10]),
+                    shaderPropertyRef: 4, attributes: 0, strideDwords: 0
+                )),
+                NIFFixture.Block("BSProceduralLightningController", controller),
+                NIFFixture.Block(
+                    "BSEffectShaderProperty", NIFParticleFixture.effectShaderProperty()
+                )
+            ] + extraBlocks,
+            strings: strings,
+            roots: [0]
+        )
+    }
+
+    /// `NiBoolInterpolator` holding one value and no key data.
+    public static func boolInterpolator(_ value: Bool) -> Data {
+        Data([value ? 1 : 0, 0xFF, 0xFF, 0xFF, 0xFF])
+    }
+
+    /// `NiFloatInterpolator` holding one value and no key data.
+    public static func floatInterpolator(_ value: Float) -> Data {
+        var out = Data()
+        out.appendFloat32(value)
+        out.appendUInt32(0xFFFF_FFFF)
+        return out
+    }
+
+    /// nif.xml `NiControllerSequence` whose links all feed `controller`; each link names
+    /// its interpolator block and the string index of its interpolator ID.
+    public static func sequence(
+        name: UInt32, timing: (cycle: UInt32, stop: Float), controller: UInt32,
+        links: [(interpolator: UInt32, id: UInt32)]
+    ) -> Data {
+        var out = Data()
+        out.appendUInt32(name)
+        out.appendUInt32(UInt32(links.count))
+        out.appendUInt32(1)
+        for link in links {
+            out.appendUInt32(link.interpolator)
+            out.appendUInt32(controller)
+            out.append(0)
+            for string in [
+                0xFFFF_FFFF,
+                0xFFFF_FFFF,
+                0xFFFF_FFFF,
+                0xFFFF_FFFF,
+                link.id
+            ] as [UInt32] {
+                out.appendUInt32(string)
+            }
+        }
+        out.appendFloat32(1)
+        out.appendUInt32(0xFFFF_FFFF)
+        out.appendUInt32(timing.cycle)
+        out.appendFloat32(1)
+        out.appendFloat32(0)
+        out.appendFloat32(timing.stop)
+        out.appendUInt32(0xFFFF_FFFF)
+        out.appendUInt32(0xFFFF_FFFF)
+        out.appendUInt16(0)
         return out
     }
 
