@@ -337,8 +337,6 @@ public final class Renderer: NSObject {
     public var shadingTerms = SurfaceShadingTerm.all
     /// Bound in the environment slot of a material without a cube map.
     public let blackCube: any MTLTexture
-    /// Bound in the effect volume slot of a material whose source is not a volume.
-    public let greyVolume: any MTLTexture
     /// Set by a benchmark to get each frame's GPU time; nil in normal play.
     public var gpuFrameLog: GPUFrameLog?
     let commitFailures = GPUCommitFailureLog()
@@ -413,7 +411,6 @@ public final class Renderer: NSObject {
         let framing = camera ?? .demo
         (self.camera, frameInput) = (framing, RenderFrameInput(view: .init(framing: framing)))
         (frameUniformBuffer, blackCube) = try Self.makeFrameResources(device: device)
-        greyVolume = try TextureLoader.makePlaceholder(device: device, usage: .volume)
         let rings = try Self.makeSceneRings(device: device, scene: self.scene)
         (drawUniformBuffer, pointLightBuffer) = (rings.drawBuffer, rings.pointLightBuffer)
         drawUniformSlotCapacity = rings.drawCapacity
@@ -427,7 +424,7 @@ public final class Renderer: NSObject {
             allocations: [
                 frameUniformBuffer, shadow.map, worldOverlayResources.vertexBuffer,
                 swf.whiteTexture, swf.fallbackRamp, imageSpacePass.uniformBuffer,
-                imageSpacePass.luminanceBuffer, blackCube, greyVolume
+                imageSpacePass.luminanceBuffer, blackCube
             ] + rings.residencyAllocations + uiResources.residencyAllocations
                 + effects.residentBuffers + self.scene.residencyAllocations
                 + precipitation.residencyAllocations

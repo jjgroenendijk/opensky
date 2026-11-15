@@ -116,8 +116,6 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// Terrain normal maps (LTEX TXST TX01): the base, then one slot per layer slot.
     TextureIndexTerrainBaseNormal = 16,
     TextureIndexTerrainLayerNormal0 = 17,
-    /// An effect shape's source when the file is a volume, after the terrain normal slots.
-    TextureIndexEffectSourceVolume = 25,
     /// Focus shadows and the precipitation occlusion map (depth2d_array). The cascade
     /// array stands in until an option builds it.
     TextureIndexAuxiliaryShadowMap = 26,
@@ -231,7 +229,7 @@ typedef NS_ENUM(EnumBackingType, EffectFlag)
     EffectFlagLit = 1 << 7,
     /// The reference's emittance tints the colour: SLSF1 External_Emittance.
     EffectFlagExternalEmittance = 1 << 8,
-    /// The source is a volume, bound at TextureIndexEffectSourceVolume.
+    /// The source file is a volume, which samples as transparent black.
     EffectFlagSourceVolume = 1 << 9,
     /// Rain or snow: hidden where the precipitation occlusion map has a roof above it.
     EffectFlagPrecipitation = 1 << 10,
