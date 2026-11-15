@@ -189,6 +189,7 @@ Retires when the installed Xcode ships that fix: delete the override, and a clea
 | A real-data test uses tens of GB and locks the machine | Wrap heavy real-data runs in `tools/memguard.sh` ([testing](/testing.md#memory-watchdog)) | The tests carry their own bounds (checked 2026-07-20) |
 | `xccov` reports no package file, only `OpenSky.app` with 0 files | Package modules build into frameworks the result bundle does not list as coverage products. `tools/coverage/` reads the profile with `llvm-cov` instead ([test runs](/tools/test-runs.md#code-coverage)) | `xccov view --report` lists the package frameworks (checked 2026-11-09, Xcode 27.2) |
 | `xcrun xctrace record --launch -- openskycli ...` never starts the process | Start the process first and attach with `--attach <pid>`. `tools/profile.sh` does this ([profiling](/testing.md#profiling)) | A `--launch` recording of the CLI completes (checked 2026-10-01, xctrace 27.0) |
+| A launch trace of a built `OpenSky.app` shows the old code | `xctrace record --launch` of the app's executable runs the copy LaunchServices knows, `/Applications/OpenSky.app`, not the given path. Check the `OpenSky` binary path in the exported samples. Start the app with `open -n <app>` and attach, as `tools/profile.sh` does; an attach misses the first seconds of the start | A `--launch` trace runs the given path (checked 2026-11-15, xctrace 27.2) |
 
 ### Test plans and Swift Testing
 
