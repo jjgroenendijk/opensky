@@ -152,13 +152,12 @@ temporary ones are added the same way.
 
 The 71 temporary Is Full LOD references are found by one walk of the worldspace's exterior
 cells, the first time a ring is built. The walk reads only the record headers of each cell's
-temporary children, and keeps the cells that hold a live `REFR` with the flag. Each ring build
-then reads those cells, except the loaded ones, and draws their flagged temporary references in
-their enable state.
+temporary children, in every plugin, and keeps the cells that hold a live `REFR` with the flag.
+Each ring build then reads those cells, except the loaded ones, with every plugin's changes
+laid over them, and draws their flagged temporary references in their enable state. So a
+reference that a mod adds or flags is drawn, and one that a mod deletes or unflags is not.
 
-[WARNING] The walk reads the temporary children of the first plugin that has each cell. A
-temporary Is Full LOD reference that only a later plugin adds is drawn only when its cell is
-loaded. The objects merged into the object LOD blocks do not follow enable changes: the
+[WARNING] The objects merged into the object LOD blocks do not follow enable changes: the
 vanilla blocks were built with them, and only generated LOD could leave them out.
 
 ## Generated terrain

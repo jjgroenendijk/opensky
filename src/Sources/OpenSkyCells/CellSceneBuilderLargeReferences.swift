@@ -113,8 +113,9 @@ nonisolated extension CellSceneBuilder.CellLargeReferenceBuilder {
         }
     }
 
-    /// The cells whose temporary children hold a live REFR with the Is Full LOD flag. Only
-    /// the record header is read, so the walk decodes no reference.
+    /// The cells where any plugin stores a live temporary REFR with the Is Full LOD flag.
+    /// Only the record header is read, so the walk decodes no reference. A cell kept here
+    /// whose flag a later plugin clears draws nothing: the placements read the merged cell.
     nonisolated func temporaryFullLODCells(in world: FoundWorld) -> Set<CellCoordinate> {
         let key = world.formID.rawValue
         if let cached = owner.caches.temporaryFullLODCellIndex[key] {
@@ -124,25 +125,40 @@ nonisolated extension CellSceneBuilder.CellLargeReferenceBuilder {
         for (grid, cell) in owner.recordIndex.exteriorCells(
             in: world,
             localized: owner.pluginLocalized
-        ) {
-            guard
-                let cellChildren = cell.children,
-                let groups = owner.records.childrenOrSkip(cellChildren)
-            else { continue }
-            for case let .group(group) in groups where group.kind == .cellTemporaryChildren {
-                let records = owner.records.childrenOrSkip(group) ?? []
-                let holds = records.contains { child in
-                    guard case let .record(record) = child else { return false }
-                    return record.type == "REFR" && !record.isDeleted
-                        && record.flags.rawValue & PlacedReference.fullLODFlag != 0
-                }
-                if holds {
-                    found.insert(CellCoordinate(x: grid.x, y: grid.y))
-                }
-            }
+        ) where baseHoldsTemporaryFullLOD(cell) || laterHoldsTemporaryFullLOD(cell) {
+            found.insert(CellCoordinate(x: grid.x, y: grid.y))
         }
         owner.caches.temporaryFullLODCellIndex[key] = found
         return found
+    }
+
+    nonisolated private func baseHoldsTemporaryFullLOD(_ cell: FoundCell) -> Bool {
+        guard
+            let cellChildren = cell.children,
+            let groups = owner.records.childrenOrSkip(cellChildren)
+        else { return false }
+        for case let .group(group) in groups where group.kind == .cellTemporaryChildren {
+            let records = owner.records.childrenOrSkip(group) ?? []
+            let holds = records.contains { child in
+                guard case let .record(record) = child else { return false }
+                return Self.isLiveFullLODReference(record)
+            }
+            if holds {
+                return true
+            }
+        }
+        return false
+    }
+
+    nonisolated private func laterHoldsTemporaryFullLOD(_ cell: FoundCell) -> Bool {
+        owner.recordIndex.loadOrderIndexBuildingIfNeeded()
+            .laterChildren(ofCell: FormID(cell.formID))
+            .contains { !$0.isPersistent && Self.isLiveFullLODReference($0.record.record) }
+    }
+
+    nonisolated private static func isLiveFullLODReference(_ record: ESMRecord) -> Bool {
+        record.type == "REFR" && !record.isDeleted
+            && record.flags.rawValue & PlacedReference.fullLODFlag != 0
     }
 
     /// The worldspace's persistent Is Full LOD references outside `loadedCells`, in their
