@@ -34,8 +34,18 @@ Header flag 0x400 shows the screen in the main menu.
 
 ## Selection
 
-The game picks a random screen among those whose conditions pass. OpenSky does the same, with
-these choices:
+The game picks a screen when the loading menu opens:
+
+1. The candidates are the screens whose conditions pass on the player and that have a model.
+   Before a game is loaded, the candidates are the screens with header flag 0x400 instead.
+2. A screen with conditions counts as a specific screen. If any specific screen is a
+   candidate, the game picks at random among the specific ones only. Otherwise it picks at
+   random among all candidates.
+3. The chosen screen's tip shows first. Each later tip request from the loading movie picks
+   another random screen's tip. An option, off by default, uses up every specific screen
+   before one repeats.
+
+OpenSky picks at random among all screens whose conditions pass, with these choices:
 
 - The conditions run on the player.
 - While the screen is chosen, the player's current location is the destination's `XLCN`
