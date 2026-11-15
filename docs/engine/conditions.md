@@ -80,6 +80,18 @@ aliases, actor state, enable state, the clock, the runtime reference index, subj
 target, a random source, and the snapshots for data, magic, factions, crime, perks,
 detection, and dialogue. A caller off the main actor builds its own context from a snapshot.
 
+A live context holds more than twenty such snapshots, and one condition list reads few of
+them. A scene phase that tests a quest stage needs no actor state, inventory, or package state.
+So the live context stores most snapshots as deferred: a snapshot is built when a condition
+first reads it, and then kept. Copies of the context share the built snapshot. The globals,
+the quests and aliases, detection, the clock, and the reference index are still built with the
+context, because a run-on or almost every list needs them.
+
+A deferred snapshot is read at its first use, not when the context was made. So a condition
+sees a value that changed earlier in the same frame. The build runs on the main actor: only
+main-actor code may read a live context. A context built from plain values, as a test or a
+caller off the main actor builds it, holds no deferred snapshot.
+
 During play, the data snapshot carries the keyword, form list, and location stores, and
 each resident reference's current location: the location of the cell that holds it
 ([cell link](/formats/locations.md#cell-link)). The stores are read in the load-order

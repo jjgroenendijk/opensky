@@ -81,12 +81,14 @@ extension DialogueWorldAdapter: DialogueWorld {
 
     public func conditionContext() -> ConditionContext {
         var context = game.runtimeState.conditionContext()
-        context.dialogue = DialogueResolution(
-            voiceTypes: residentVoiceTypes(),
-            speakerInDialogue: context.dialogue.speakerInDialogue,
-            line: context.dialogue.line
-        )
-        context[resolution: SpeechCheckResolution.self] = outcomes.speechCheckResolution()
+        context.transform(DialogueResolution.self) { base in
+            DialogueResolution(
+                voiceTypes: self.residentVoiceTypes(),
+                speakerInDialogue: base.speakerInDialogue,
+                line: base.line
+            )
+        }
+        context.setDeferred { [outcomes] in outcomes.speechCheckResolution() }
         return context
     }
 

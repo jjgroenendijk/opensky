@@ -208,4 +208,20 @@ nonisolated extension ConditionContext {
             combatTargetResolver = newValue
         }
     }
+
+    /// Sets the actor seam to build on its first read, as `setDeferred` does.
+    public mutating func setDeferredActors(_ build: @escaping @MainActor ()
+        -> ActorStateResolution)
+    {
+        combatTargetResolver = DeferredCombatTargets(source: setDeferred(build))
+    }
+}
+
+/// The combat-target seam over an actor resolution that is still to build.
+nonisolated private struct DeferredCombatTargets: ConditionCombatTargetResolving {
+    let source: DeferredConditionResolution
+
+    func combatTarget(of key: ReferenceKey) -> ReferenceKey? {
+        (source.value as? ActorStateResolution)?.combatTarget(of: key)
+    }
 }
