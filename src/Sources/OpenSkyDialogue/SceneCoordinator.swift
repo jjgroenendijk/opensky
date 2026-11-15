@@ -29,8 +29,8 @@ public final class SceneCoordinator {
 
     private(set) var trace: [SceneEvent] = []
     private(set) var lines: [SceneLine] = []
-    /// The wait before a repeating scene plays again.
-    public let repeatPause: ClosedRange<Float>
+    /// The gap between two conversation scenes.
+    public let conversationGap: ClosedRange<Float>
     /// Scenes known to be playing, so a frame with none builds no runtime.
     public private(set) var playing: Set<FormID> = []
     private var ticksSinceScan = 0
@@ -44,12 +44,12 @@ public final class SceneCoordinator {
         dialogue: DialogueCoordinator,
         world: any SceneWorld,
         catalog: SceneCatalog = .empty,
-        repeatPause: ClosedRange<Float> = 10 ... 30
+        conversationGap: ClosedRange<Float> = 10 ... 30
     ) {
         self.dialogue = dialogue
         self.world = world
         self.catalog = catalog
-        self.repeatPause = repeatPause
+        self.conversationGap = conversationGap
         rescan()
     }
 
@@ -71,7 +71,7 @@ public final class SceneCoordinator {
             playingCache: playingCache,
             now: world.sceneSeconds
         )
-        runtime.repeatPause = repeatPause
+        runtime.conversationGap = conversationGap
         return runtime
     }
 

@@ -80,6 +80,10 @@ extension StoryWorldAdapter {
         sceneLines.lineDuration(of: info, speaker: speaker)
     }
 
+    public func hasLoadedBody(_ actor: ReferenceKey) -> Bool {
+        sceneLines.hasLoadedBody(actor)
+    }
+
     public func voicePaths(of info: FormID, speaker: ReferenceKey) -> [String] {
         sceneLines.voicePaths(of: info, speaker: speaker)
     }

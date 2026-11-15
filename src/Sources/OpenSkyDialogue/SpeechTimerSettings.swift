@@ -30,8 +30,8 @@ nonisolated extension SpeechTimerSettings {
             ("fAIDefaultSpeechMult", \.speechMult),
             ("fDialogSpeechDelaySeconds", \.silentLineMinSeconds),
             ("fSubtitleSpeechDelay", \.silentLineMaxSeconds),
-            ("fRandomSceneAgainMinTime", \.sceneRepeatMinSeconds),
-            ("fRandomSceneAgainMaxTime", \.sceneRepeatMaxSeconds)
+            ("fRandomSceneAgainMinTime", \.conversationGapMinSeconds),
+            ("fRandomSceneAgainMaxTime", \.conversationGapMaxSeconds)
         ]
         for (editorID, keyPath) in fields {
             store.read(editorID, into: &settings, keyPath)

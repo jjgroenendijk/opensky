@@ -235,10 +235,15 @@ extension GameSessionScopeFactories {
             world: scope.storyWorld,
             catalog: scope.worldData.flatMap { data in
                 data.storyData.scenes.flatMap { store in
-                    data.questStore.map { SceneCatalog(store: store, resolver: $0.resolver) }
+                    data.questStore.map { quests in
+                        SceneCatalog(
+                            store: store, resolver: quests.resolver,
+                            conversationQuests: quests.conversationQuests
+                        )
+                    }
                 }
             } ?? .empty,
-            repeatPause: scope.dialogue.speechTimers.sceneRepeatPause
+            conversationGap: scope.dialogue.speechTimers.conversationGap
         )
     }
 

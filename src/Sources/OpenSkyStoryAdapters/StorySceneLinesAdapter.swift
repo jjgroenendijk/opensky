@@ -47,14 +47,12 @@ public struct StorySceneLinesAdapter {
 extension StorySceneLinesAdapter {
     /// The line's seconds plus `fGameplayVoiceFilePadding`, the gap before the next line.
     /// A speaker with no loaded body ends the line at once, as the reference game does.
+    public func hasLoadedBody(_ actor: ReferenceKey) -> Bool {
+        actor == .player || game.streamer.residentActorEntry(key: actor) != nil
+    }
+
     public func lineDuration(of info: TopicInfo, speaker: ReferenceKey) -> Float? {
-        let streamer = game.streamer
-        if
-            speaker != .player,
-            streamer.residentActorEntry(key: speaker) == nil
-        {
-            return 0
-        }
+        guard hasLoadedBody(speaker) else { return 0 }
         let texts = responseTexts(of: info)
         let speech = game.dialogue.speechTimers
         let seconds = state.voiceTimer.map {

@@ -20,6 +20,7 @@ struct SceneCoreTests {
         (.fragmentUnrun("End"), "fragment End not run"),
         (.repeated, "repeated"),
         (.waitingForActors, "waiting for actors in another scene"),
+        (.waitingForConversation, "waiting for its conversation partners or its turn"),
         (.paused, "paused by an actor"),
         (.resumed, "resumed"),
         (.ended(.finished), "ended (finished)"),

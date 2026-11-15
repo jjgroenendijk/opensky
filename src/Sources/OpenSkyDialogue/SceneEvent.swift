@@ -37,6 +37,9 @@ nonisolated public enum SceneStep: Equatable, Sendable {
     case actorUnavailable(UInt32)
     /// An actor this scene needs is in another scene, so the next phase waits.
     case waitingForActors
+    /// A conversation scene waits: for its two partners to be loaded and free, or for
+    /// the conversation that plays now and the gap after it.
+    case waitingForConversation
     /// An actor's behaviour flags paused the scene, for example in combat.
     case paused
     case resumed

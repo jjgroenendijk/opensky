@@ -202,6 +202,12 @@ nonisolated public final class QuestStore: Sendable {
         return keysByFormID[raw]
     }
 
+    /// Quests that start from the actor dialogue event (`ENAM` "ADIA"). Their scenes are
+    /// conversation scenes: docs/engine/scenes.md#conversation-scenes.
+    public var conversationQuests: Set<FormID> {
+        Set(questsByFormID.lazy.filter { $0.value.event == "ADIA" }.map { FormID($0.key) })
+    }
+
     /// Records in editor-ID order, for inspection surfaces. Records without an
     /// editor ID sort by FormID under their hex spelling.
     public func sortedQuests() -> [Quest] {

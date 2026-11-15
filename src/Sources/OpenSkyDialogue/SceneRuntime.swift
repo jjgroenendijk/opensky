@@ -25,6 +25,8 @@ public protocol SceneHost: AnyObject {
     func releaseScenePackages(actor: ReferenceKey, owner: ScenePackageOwner)
     /// What the actor does now, for the scene actor behaviour flags.
     func sceneActorStatus(_ actor: ReferenceKey) -> SceneActorStatus
+    /// The actor has a loaded body, so it can walk to a partner and face it.
+    func hasLoadedBody(_ actor: ReferenceKey) -> Bool
 }
 
 /// The scene action that holds an actor's packages.
@@ -49,8 +51,8 @@ nonisolated public enum ScenePackageState: Equatable, Sendable {
 @MainActor
 final class ScenePendingLines {
     var lines: [ScenePackageOwner: SceneLine] = [:]
-    /// When each repeating scene may play again, in scene seconds.
-    var repeatsAt: [FormID: Double] = [:]
+    /// Scene seconds from which the next conversation scene may begin. Not saved.
+    var conversationFreeAt: Double = 0
 
     init() {}
 
@@ -78,9 +80,9 @@ public struct SceneRuntime {
         return { stream.float(in: $0) }
     }()
 
-    /// `fRandomSceneAgainMinTime` to `...MaxTime`: the wait before a scene flagged
-    /// "Repeat while true" plays again. Drawn through `loopPause`.
-    var repeatPause: ClosedRange<Float> = 10 ... 30
+    /// `fRandomSceneAgainMinTime` to `...MaxTime`: the gap after a conversation scene before
+    /// the next one may begin. Drawn through `loopPause`.
+    var conversationGap: ClosedRange<Float> = 10 ... 30
 
     init(
         catalog: SceneCatalog,
