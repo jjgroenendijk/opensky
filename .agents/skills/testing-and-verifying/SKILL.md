@@ -42,8 +42,8 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | Milestone acceptance | `make test PLAN=RealDataAll`, `make test PLAN=UITests`, and the acceptance record (format in `docs/tools/acceptance-record.md`) in the closing PR. A milestone about load or frame time adds `make sample-launch` on the installed Release app |
 
 The whole unit plan (`make test PLAN=UnitTests`) and the sanitizers run in CI: the
-unit plan and `make lint-index` on every push, the sanitizers weekly. Do not run them locally
-before a push; push and read `gh pr checks <n> --watch`.
+unit plan on every push, the sanitizers and `make lint-index` weekly. Do not run the unit plan
+or the sanitizers locally before a push; push and read `gh pr checks <n> --watch`.
 
 Find the suites for a file with `grep -rl 'TypeName' Tests`. Suite names follow the type
 under test (`BSAArchive` is covered by `BSAArchiveTests`). The plans and what each one builds

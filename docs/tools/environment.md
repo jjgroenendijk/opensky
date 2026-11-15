@@ -97,9 +97,9 @@ library build.
 
 ### Periphery
 
-Checked 2026-10-08. The cask in the `peripheryapp/periphery` tap does not install. The
-`Index checks` CI job installs the core formula (`brew install periphery`). Homebrew marks that formula
-deprecated, because the upstream repository is archived, and plans to disable it on
+Checked 2026-10-08. The cask in the `peripheryapp/periphery` tap does not install. The weekly
+`Index checks` CI job installs the core formula (`brew install periphery`). Homebrew marks that
+formula deprecated, because the upstream repository is archived, and plans to disable it on
 2027-08-12.
 
 Retires when Periphery has a maintained install path again, or `make lint-index` moves to another

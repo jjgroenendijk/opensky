@@ -20,8 +20,7 @@ developer machine. `Changes` and `Lint` only read results, so they run on Linux.
 | Format | `format-check`: every `tools/format/` script with `--check` |
 | Static checks | `lint`: every `tools/lint/` script and its self-check |
 | Changes | None. It decides whether Build & test runs |
-| Runner | None. It picks a hosted or the self-hosted runner for the two jobs below |
-| Index checks | `lint-index` |
+| Runner | None. It picks a hosted or the self-hosted runner for Build & test |
 | Build & test | `test PLAN=UnitTests COVERAGE=1`: the whole unit plan, the coverage floors, and the changed lines (diffed against the base on a pull request) |
 | Lint | None. It passes only when the jobs above pass |
 
@@ -44,10 +43,10 @@ compilation cache stays current.
 
 The owner has a faster Mac registered as a self-hosted runner, with the default labels
 `self-hosted`, `macOS`, and `ARM64`. It is not always online. The `Runner` job decides where Build
-& test and Index checks run. Format and Static checks always stay on hosted runners, so the two
-heavy jobs do not wait behind them on one machine.
+& test runs. Format and Static checks always stay on hosted runners, so the heavy job does not
+wait behind them on one machine.
 
-The two jobs go to the self-hosted Mac only when all of these are true:
+Build & test goes to the self-hosted Mac only when all of these are true:
 
 - The event is a pull request, opened by the repository owner.
 - The pull request comes from a branch of this repository, not from a fork.
@@ -72,18 +71,16 @@ in the `RUNNER_STATUS_TOKEN` repository secret. Give it access to this repositor
 
 - **Kept build tree.** The checkout does not clean, and a later step runs
   `git clean -ffdx -e .cache/ -e src/.vendor/`. That removes stray files from earlier pull
-  requests and keeps the build tree, the compilation cache, the index tree, and the vendored
-  libraries. A checkout rewrites only the files that changed, so the next build is incremental
-  without the `source-times.sh` step.
-- **No GitHub cache.** The jobs restore and save no cache there. Its own tree is newer, and a
+  requests and keeps the build tree, the compilation cache, and the vendored
+  libraries. A checkout rewrites only the files that changed, so the next build is incremental.
+- **No GitHub cache.** The job restores and saves no cache there. Its own tree is newer, and a
   transfer from GitHub's cache would be slower. The compilation cache is never saved, so it is
   checked against `CAS_MAX_MB` on every run there.
 - **Xcode.** `DEVELOPER_DIR` is `/Applications/Xcode.app/Contents/Developer`, the default
-  install path. The Mac needs the same Xcode version as the hosted job, the Metal Toolchain,
-  and Homebrew on the runner service's `PATH` for `brew install periphery`.
-- **One job at a time.** One runner instance runs one job. Build & test and Index checks of one
-  run then follow each other. A second runner instance on the same Mac, in its own folder, runs
-  them side by side, and each instance keeps its own build tree.
+  install path. The Mac needs the same Xcode version as the hosted job and the Metal Toolchain.
+- **One job at a time.** One runner instance runs one job, so two pull requests build one after
+  the other. A second runner instance on the same Mac, in its own folder, runs them side by
+  side, and each instance keeps its own build tree.
 
 ### Privacy
 
@@ -153,7 +150,7 @@ The job builds the app, the CLI, and every test bundle, and runs the `UnitTests`
 ad hoc signing (`CODE_SIGN_IDENTITY=-`), because a runner has no signing identity.
 
 - **No game data.** A runner has no Skyrim install. The job sets no `OPENSKY_DATA_ROOT`, so a
-  test gated on the install skips. The real-data suites only compile, in the `Index checks` job:
+  test gated on the install skips. The real-data suites only compile, in the weekly `Index checks` job:
   a build of the unit plan does not compile `OpenSkyRealDataTests`. `tools/lint/realdata-plan.sh` checks
   that every such suite lives in `OpenSkyRealDataTests`, which the unit plan does not include.
 - **Metal 4.** A test that needs a Metal 4 GPU gates on `device.supportsFamily(.metal4)` and
@@ -179,31 +176,6 @@ ad hoc signing (`CODE_SIGN_IDENTITY=-`), because a runner has no signing identit
   failure, so `gh run download <run> -n build-test-logs` gets the start time and duration of every
   build task.
 
-## Index checks
-
-`make lint-index` runs every check that reads the index store: Periphery's unused-code scan and the
-adapter rule (`tools/lint-index/adapter-references.py`). A task replayed from the compilation cache
-writes almost no index data. Measured 2026-11-08: a Debug build of the CLI into an empty tree,
-served from a warm cache, wrote 276 index units for about 5,000 Swift files. So the index build
-cannot reuse the cached build of Build & test. It builds uncached on its own runner, at the same
-time as Build & test. It also builds `OpenSkyRealDataTests`, which no other job compiles.
-
-Measured 2026-11-08 on #1885: the job takes 17 to 19 minutes, of which `make lint-index` is about 16.
-Build & test takes 22 minutes with a cold compilation cache and 10.5 with a warm one. On the
-development Mac the same uncached build takes about 9 minutes.
-
-So the job builds incrementally. A push to `main` saves its whole index tree, and every run
-restores the newest one before it builds:
-
-1. The restored tree holds `source-commit`, the commit it was built from.
-2. A checkout gives every file the current time, so the build would compile all of it.
-   `tools/ci/source-times.sh` therefore sets every tracked file to one fixed old time, then gives
-   the current time only to the files that differ from `source-commit`.
-3. The build then compiles the changed files and the files that depend on them.
-
-The tree is 4.4 GB on disk and about 1.1 GB compressed (measured 2026-11-09), so only a push to
-`main` saves it, and `tools/ci/cache-prune.sh` deletes the older trees after each save.
-
 ## Caches
 
 A repository keeps 10 GB of caches. When it is full, GitHub drops the least recently used entry.
@@ -213,13 +185,6 @@ A repository keeps 10 GB of caches. When it is full, GitHub drops the least rece
 | Vendored ffmpeg | hash of `tools/vendor-ffmpeg.sh` | any run that missed it |
 | SDK modules (`ModuleCache.noindex`, `SDKStatCaches.noindex`) | Xcode build version | a push to `main` that missed it |
 | Compilation cache (`CompilationCache.noindex`) | `cas2-<arch>-<scope>-<run>`, where scope is `main` or `pr-<number>` | every run that was not cancelled |
-| Index tree (`DerivedData-index`, SDK modules) | `index2-<arch>-<Xcode build>-<commit>` | every push to `main` |
-
-The index tree builds incrementally on the restored tree. When a change to a public
-declaration leaves old object files in other modules, such as an initialiser that became
-inlined, the link fails with `Undefined symbol` for that declaration. Raise the number in the
-index key in `ci.yml` in that pull request: the run then builds the tree from nothing, and the
-next push to `main` saves the new tree.
 
 The compilation cache roughly halves the build:
 
@@ -245,9 +210,20 @@ The compilation cache roughly halves the build:
 
 ## Weekly
 
-`weekly.yml` runs on Sunday night and on demand (`gh workflow run weekly.yml`). It holds only
-`make test PLAN=Sanitizers SAN=thread` and `SAN=address`. Each rebuilds everything with instrumentation,
-which costs too much on every pull request.
+`weekly.yml` runs on Sunday night and on demand (`gh workflow run weekly.yml`). Its checks are
+`make test PLAN=Sanitizers SAN=thread`, `SAN=address`, and `make lint-index`. Each rebuilds
+everything, which costs too much on every pull request.
+
+`make lint-index` runs every check that reads the index store: Periphery's unused-code scan, the
+adapter rule, and the design rules with a gate ([code health](/decisions/code-health-automation.md)).
+A task replayed from the compilation cache writes almost no index data. Measured 2026-11-08: a
+Debug build of the CLI into an empty tree, served from a warm cache, wrote 276 index units for
+about 5,000 Swift files. So the index build is uncached. It also builds `OpenSkyRealDataTests`,
+which no other job compiles.
+
+On each pull request the job took 9 to 14 minutes on its own runner, and 30 with no restored
+index tree (measured 2026-11-15). So a finding now waits for the weekly run: run
+`make lint-index` locally before a push that adds or removes declarations.
 
 The `Module metrics` job runs `make module-metrics` and keeps `module-metrics.md` as a run
 artifact for 90 days. It is design rule 6 of [Design metrics](/decisions/design-metrics.md), a
