@@ -113,6 +113,7 @@ extension AgentScreensAdapter {
             "screen": .init(session?.screen?.record.editorID),
             "cameraPath": .init(session?.screen?.record.cameraPath),
             "turn": .number(Double(session?.turnDegrees ?? 0)),
+            "fieldOfView": .number(Double(session?.fieldOfView ?? 0)),
             "movieLoaded": .bool(game.loadingWorld.isMovieLoaded),
             "shown": .init(loading.shownCount)
         ]

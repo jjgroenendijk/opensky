@@ -10,7 +10,7 @@ public import OpenSkyMenus
 public import OpenSkyMenusInterface
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
-public import OpenSkyRenderCore
+import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
@@ -62,12 +62,14 @@ extension LoadingScreenPresentationAdapter {
 
     func startMovie(text: String) {
         state.movieText = text
+        state.shownTip = text
+        state.tipRequests = 0
         state.movieFadedOut = false
         let content = movieContent(text: text)
         movie.start(
             path: LoadingMenuMovieBridge.moviePath,
             prepare: { [weak state] runtime in
-                LoadingMenuMovieBridge.prepare(runtime: runtime) { state?.movieText ?? "" }
+                LoadingMenuMovieBridge.prepare(runtime: runtime) { state?.requestTip() ?? "" }
             },
             activate: { LoadingMenuMovieBridge.activate(runtime: $0, content: content) }
         )
@@ -109,14 +111,11 @@ extension LoadingScreenPresentationAdapter {
     public func presentLoadingCover(_ frame: LoadingCoverFrame?) {
         guard let renderer = game.renderer, let gameSession = game.gameSession else { return }
         do {
-            if let frame, frame.drawsObject {
-                let view = coverView(gameSession)
-                try renderer.setLoadingCover(
-                    placement(frame, gameSession: gameSession),
-                    lighting: LoadingCoverFrame.lighting(yaw: view.yaw, pitch: view.pitch)
-                )
+            if let frame, frame.drawsObject, frame.model != nil {
+                try renderer.setLoadingScene(coverScene(frame, gameSession: gameSession))
             } else {
-                try renderer.setLoadingCover(nil)
+                state.mist = nil
+                try renderer.setLoadingCover(frame?.drawsObject == true ? [] : nil)
             }
         } catch {
             LoadingScreenLog.logger
@@ -140,19 +139,33 @@ extension LoadingScreenPresentationAdapter {
 }
 
 extension LoadingScreenPresentationAdapter {
-    /// A model's radius is half its bound's diagonal.
-    private static let halfDiagonal: Float = 0.5
-    /// The radius of a cover model whose bound is unknown, in units.
-    private static let fallbackCoverRadius: Float = 64
-
-    public func placement(
+    /// The game's scene for `frame`: its camera, its lights, the mist, and the model.
+    public func coverScene(
         _ frame: LoadingCoverFrame,
         gameSession: any GameSessionPort
-    ) -> [RenderPlacement] {
+    ) -> LoadingCoverScene {
         let renderer = gameSession.renderer
-        guard
-            frame.drawsObject, let path = frame.model,
-            !state.failedModels.contains(path) else { return [] }
+        var scene = LoadingCoverScene(
+            placements: [], pointLights: LoadingScreenScene.lights,
+            lighting: LoadingScreenScene.lighting,
+            camera: LoadingCoverCamera(
+                view: LoadingScreenScene.camera(pathNode: cameraPathNode(frame)),
+                horizontalFieldOfView: LoadingScreenScene.horizontalFieldOfView(frame.fieldOfView)
+            )
+        )
+        guard let meshes = meshLibrary(renderer: renderer) else { return scene }
+        let mist = mist(meshes: meshes)
+        scene.placements = mist?.placements ?? []
+        scene.particles = mist?.particles ?? []
+        scene.placements += placement(
+            frame,
+            meshes: meshes,
+            aspectRatio: renderer.drawableAspectRatio
+        )
+        return scene
+    }
+
+    private func meshLibrary(renderer: any RendererPort) -> MeshLibrary? {
         if
             state.meshes == nil,
             let fileSystem = game.menuRecords?.scriptFileSystem
@@ -164,19 +177,22 @@ extension LoadingScreenPresentationAdapter {
                 MeshLibrary(fileSystem: fileSystem, device: renderer.device, textures: $0)
             }
         }
+        return state.meshes
+    }
+
+    private func placement(
+        _ frame: LoadingCoverFrame, meshes: MeshLibrary, aspectRatio: Float
+    ) -> [RenderPlacement] {
+        guard let path = frame.model, !state.failedModels.contains(path) else { return [] }
         do {
-            guard let model = try state.meshes?.model(path: path) else { return [] }
-            let view = coverView(gameSession)
-            let radius = state.meshes?.bounds(forPath: path)
-                .map { simd_distance($0.max, $0.min) * Self.halfDiagonal } ?? Self
-                .fallbackCoverRadius
+            let model = try meshes.model(path: path)
+            let marker = InventoryItemPreview.meshPath(path)
+                .flatMap { state.modelMarkers?.value(for: $0) }
+            let pose = frame.modelPose(markerRotation: marker?.rotation)
             return [RenderPlacement(
                 model: model,
-                transform: frame.objectTransform(
-                    eye: view.position, yaw: view.yaw, pitch: view.pitch, radius: radius,
-                    cameraOffset: cameraOffset(frame)
-                ),
-                castsShadows: false,
+                transform: LoadingScreenScene.modelTransform(pose, aspectRatio: aspectRatio),
+                castsShadows: true,
                 layer: .loadingCover
             )]
         } catch {
@@ -187,17 +203,51 @@ extension LoadingScreenPresentationAdapter {
         }
     }
 
-    public func coverView(_ gameSession: any GameSessionPort) -> FreeFlyCamera {
-        gameSession.dialogueRestorePose ?? gameSession.freeFlyCamera
+    /// The mist, built once per cover so its particles run on. The model still
+    /// shows when the mist fails to load.
+    private func mist(meshes: MeshLibrary) -> LoadingMist? {
+        if let mist = state.mist {
+            return mist
+        }
+        let path = LoadingScreenScene.mistPath
+        guard !state.failedModels.contains(path) else { return nil }
+        do {
+            let transform = LoadingScreenScene.mistTransform
+            let mist = try LoadingMist(
+                placements: [RenderPlacement(
+                    model: meshes.model(path: path), transform: transform,
+                    castsShadows: false, layer: .loadingCover
+                )],
+                particles: meshes.particlePlaybacks(
+                    path: path, placementTransform: transform, formID: 0
+                )
+            )
+            state.mist = mist
+            return mist
+        } catch {
+            state.failedModels.insert(path)
+            LoadingScreenLog.logger
+                .warning("[WARNING] loading screen mist failed: \(path, privacy: .public)")
+            return nil
+        }
     }
 
-    /// The path's camera position at `seconds`, looping over the controller's window.
-    private func cameraOffset(_ frame: LoadingCoverFrame) -> SIMD3<Float> {
+    private func cameraPathNode(_ frame: LoadingCoverFrame) -> SIMD3<Float> {
         guard let path = frame.cameraPath, let track = state.cameraPaths?.value(for: path) else {
             return .zero
         }
-        let length = Double(track.stopTime - track.startTime)
-        let local = length > 0 ? frame.elapsedSeconds.truncatingRemainder(dividingBy: length) : 0
-        return track.translation(at: track.startTime + Float(local))
+        return track.nodePosition(after: frame.elapsedSeconds)
+    }
+}
+
+extension LoadingScreenPartState {
+    /// The game shows the chosen screen's tip first; each later request from the
+    /// movie draws another random screen's tip.
+    func requestTip() -> String {
+        tipRequests += 1
+        if tipRequests > 1, let next = nextTip?() {
+            shownTip = next
+        }
+        return shownTip ?? movieText ?? ""
     }
 }

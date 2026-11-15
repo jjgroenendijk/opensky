@@ -7,7 +7,8 @@ public import OpenSkySessionInterface
 nonisolated public final class FakeLoadingScreenWorldPort: LoadingScreenWorldPort {
     public var coverMoveCalls: [SIMD3<Float>] = []
     public var isMovieLoaded = false
-    public var routeCalls: [MenuInputEvent] = []
+    public var routeEventMenuInputEventCalls: [MenuInputEvent] = []
+    public var routeEventMenuPointerEventCalls: [MenuPointerEvent] = []
 
     public init() {}
 }
@@ -18,6 +19,10 @@ nonisolated extension FakeLoadingScreenWorldPort {
     }
 
     public func route(_ event: MenuInputEvent) {
-        routeCalls.append(event)
+        routeEventMenuInputEventCalls.append(event)
+    }
+
+    public func route(_ event: MenuPointerEvent) {
+        routeEventMenuPointerEventCalls.append(event)
     }
 }

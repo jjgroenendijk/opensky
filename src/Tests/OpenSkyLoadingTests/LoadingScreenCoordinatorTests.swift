@@ -1,7 +1,8 @@
 // A door transition covers the view at once, shows the picked screen for the
 // minimum time after the destination is ready, then fades and resumes the
 // world. A fast travel picks once the destination is known and holds until the
-// area is in. A forced screen holds until released.
+// area is in. A forced screen holds until released. A drag and the stick turn
+// and zoom the object by frame time.
 
 import Foundation
 import OpenSkyConditions
@@ -39,13 +40,14 @@ final class FakeLoadingWorld: LoadingScreenWorld {
 struct LoadingScreenCoordinatorTests {
     private typealias Fixture = ESMFixture
 
-    private static func world() throws -> FakeLoadingWorld {
+    private static func world(extra: [Data] = []) throws -> FakeLoadingWorld {
         let screen = Fixture.recordBytes("LSCR", formID: 0x50, fields: [
-            ("EDID", Fixture.zstring("LoadScreenDragon")), ("SNAM", Fixture.f32(2))
+            ("EDID", Fixture.zstring("LoadScreenDragon")), ("SNAM", Fixture.f32(2)),
+            ("NNAM", Fixture.u32(0x60))
         ])
         let world = FakeLoadingWorld()
         world.presentationRecords = try PresentationRecordStore(
-            plugins: [("Base.esm", Fixture.plugin(records: [screen]))]
+            plugins: [("Base.esm", Fixture.plugin(records: [screen] + extra))]
         )
         return world
     }
@@ -136,56 +138,46 @@ struct LoadingScreenCoordinatorTests {
         #expect(!loading.isCovering)
     }
 
-    @Test func objectStandsInFrontOfTheEye() {
-        let frame = LoadingCoverFrame(
-            model: "a.nif", scale: 1, rotationDegrees: .zero, translation: .zero,
-            text: nil, opacity: 1, drawsObject: true
-        )
-        let transform = frame.objectTransform(eye: .zero, yaw: 0, pitch: 0, radius: 40)
-        #expect(transform.columns.3.x == 100)
-        #expect(transform.columns.3.y == 0)
+    @Test func aDragAndTheStickTurnAndZoomByFrameTime() throws {
+        let world = try Self.world()
+        let loading = LoadingScreenCoordinator(world: world)
+        loading.beginLoad(at: 0)
+        loading.drag(by: [100, 50])
+        loading.tick(time: 0.05)
+        // 100 px x 0.05 s x 0.02 rad, and 50 px x 0.05 s x 0.6.
+        #expect(abs((loading.session?.turnRadians ?? 0) - 0.1) < 1e-5)
+        #expect(abs((loading.session?.fieldOfView ?? 0) - 76.5) < 1e-4)
+        loading.setStick([1, 1])
+        loading.tick(time: 0.15)
+        // The stick turns by -0.45 rad and zooms by -5 per second.
+        #expect(abs((loading.session?.turnRadians ?? 0) - 0.055) < 1e-5)
+        #expect(abs((loading.session?.fieldOfView ?? 0) - 76) < 1e-4)
+        #expect(abs((world.frames.last??.fieldOfView ?? 0) - 76) < 1e-4)
+        loading.setStick(.zero)
+        loading.drag(by: [100, 0])
+        loading.tick(time: 10)
+        #expect(abs((loading.session?.turnRadians ?? 0) - 0.255) < 1e-5, "a stall counts 0.1 s")
     }
 
-    @Test func cameraPathSetsTheDistanceWhenFartherThanTheFit() {
-        let frame = LoadingCoverFrame(
-            model: "a.nif", scale: 1, rotationDegrees: .zero, translation: [5, 0, -40],
-            text: nil, opacity: 1, drawsObject: true
-        )
-        let transform = frame.objectTransform(
-            eye: .zero, yaw: 0, pitch: 0, radius: 40, cameraOffset: [0, -300, 16]
-        )
-        // Yaw 0 looks down +X, so right is -Y and up is +Z.
-        #expect(transform.columns.3.x == 300)
-        #expect(transform.columns.3.y == -5)
-        #expect(transform.columns.3.z == -56)
-        let near = frame.objectTransform(
-            eye: .zero, yaw: 0, pitch: 0, radius: 40, cameraOffset: [0, -25, 35]
-        )
-        #expect(near.columns.3.x == 100, "the fit wins over a near path")
+    @Test func aFirstLoadShowsOnlyMainMenuScreens() throws {
+        let world = try Self.world(extra: [Fixture.recordBytes(
+            "LSCR",
+            formID: 0x51,
+            flags: 0x400,
+            fields: [
+                ("EDID", Fixture.zstring("LoadScreenMenu")), ("NNAM", Fixture.u32(0x60))
+            ]
+        )])
+        let loading = LoadingScreenCoordinator(world: world)
+        loading.beginFirstLoad(at: 0)
+        #expect(loading.session?.screen?.record.editorID == "LoadScreenMenu")
     }
 
-    @Test func coverLightComesFromAboveAndBehindTheEye() {
-        let lighting = LoadingCoverFrame.lighting(yaw: 0, pitch: 0)
-        #expect(lighting.directionalDirection.x > 0, "travels away from the eye")
-        #expect(lighting.directionalDirection.z < 0, "travels down")
-        #expect(lighting.fog == nil)
-        #expect(lighting.ambientColor.x == lighting.ambientColor.z, "grey, not tinted")
-    }
-
-    @Test func objectStaysOnTheViewAxisWhenLookingDown() {
-        let frame = LoadingCoverFrame(
-            model: "a.nif", scale: 1, rotationDegrees: .zero, translation: .zero,
-            text: nil, opacity: 1, drawsObject: true
-        )
-        let pitch: Float = -0.6
-        let transform = frame.objectTransform(eye: .zero, yaw: 0.3, pitch: pitch, radius: 40)
-        let center = SIMD3<Float>(
-            transform.columns.3.x,
-            transform.columns.3.y,
-            transform.columns.3.z
-        )
-        let forward = SIMD3<Float>(cosf(pitch) * cosf(0.3), cosf(pitch) * sinf(0.3), sinf(pitch))
-        #expect(simd_length(simd_cross(simd_normalize(center), forward)) < 1e-4)
-        #expect(simd_dot(center, forward) > 0)
+    @Test func aLaterTipComesFromAScreenThatMayShow() throws {
+        let world = try Self.world()
+        let loading = LoadingScreenCoordinator(world: world)
+        #expect(loading.nextTip() == nil)
+        loading.beginLoad(at: 0)
+        #expect(loading.nextTip() == "LoadScreenDragon")
     }
 }

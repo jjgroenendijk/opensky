@@ -11,7 +11,8 @@ nonisolated public struct LoadingScreenSession: Equatable, Sendable {
     /// Long enough that a fast cell build shows a readable screen, not a
     /// one-frame flash.
     static let minimumSeconds = 1.5
-    public static let fadeSeconds = 0.4
+    /// The game fades the world in from black over one second.
+    public static let fadeSeconds = 1.0
 
     nonisolated public enum Phase: Equatable, Sendable {
         case showing
@@ -23,7 +24,9 @@ nonisolated public struct LoadingScreenSession: Equatable, Sendable {
     public let startedAt: Double
     public private(set) var readyAt: Double?
     /// The player's turn so far, inside the ONAM range.
-    public private(set) var turnDegrees: Float = 0
+    public private(set) var turnRadians: Float = 0
+    /// The scene camera's field of view, in the game's own unit.
+    public private(set) var fieldOfView = LoadingScreenScene.defaultFieldOfView
 
     public init(screen: ResolvedRecord<LoadScreen>?, startedAt: Double) {
         self.screen = screen
@@ -32,7 +35,8 @@ nonisolated public struct LoadingScreenSession: Equatable, Sendable {
 
     public static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.screen?.id == rhs.screen?.id && lhs.startedAt == rhs.startedAt
-            && lhs.readyAt == rhs.readyAt && lhs.turnDegrees == rhs.turnDegrees
+            && lhs.readyAt == rhs.readyAt && lhs.turnRadians == rhs.turnRadians
+            && lhs.fieldOfView == rhs.fieldOfView
     }
 
     /// The destination finished building. Only the first call counts.
@@ -57,10 +61,14 @@ nonisolated public struct LoadingScreenSession: Equatable, Sendable {
         return Float(max(0, 1 - (time - fadeStart) / Self.fadeSeconds))
     }
 
-    /// The object's rotation in degrees: RNAM plus the player's turn about Z.
-    var objectRotationDegrees: SIMD3<Float> {
-        let initial = SIMD3<Float>(screen?.record.initialRotation.map(SIMD3<Float>.init) ?? .zero)
-        return initial + SIMD3(0, 0, turnDegrees)
+    /// The player's turn, in degrees, for the state readout.
+    public var turnDegrees: Float {
+        turnRadians * 180 / .pi
+    }
+
+    /// RNAM, in degrees.
+    var initialRotationDegrees: SIMD3<Float> {
+        SIMD3<Float>(screen?.record.initialRotation.map(SIMD3<Float>.init) ?? .zero)
     }
 
     /// Seconds the screen has shown, for the camera path.
@@ -68,11 +76,26 @@ nonisolated public struct LoadingScreenSession: Equatable, Sendable {
         max(0, time - startedAt)
     }
 
-    /// The player turns the object; ONAM limits how far. No range means no turn.
-    public mutating func turn(byDegrees degrees: Float) {
-        guard degrees.isFinite, let range = screen?.record.rotationOffsetRange else { return }
-        let low = Float(min(range.x, range.y))
-        let high = Float(max(range.x, range.y))
-        turnDegrees = min(max(turnDegrees + degrees, low), high)
+    /// The player turns the object about the scene's vertical axis. ONAM limits the
+    /// turn only when it is narrower than a full turn each way; -180 and 180 are the
+    /// defaults with no ONAM.
+    public mutating func turn(byRadians radians: Float) {
+        guard radians.isFinite else { return }
+        var next = turnRadians + radians
+        let range = screen?.record.rotationOffsetRange.map {
+            SIMD2<Float>(Float(min($0.x, $0.y)), Float(max($0.x, $0.y)))
+        } ?? SIMD2(-180, 180)
+        if range.x > -180 || range.y < 180 {
+            next = min(max(next, range.x * .pi / 180), range.y * .pi / 180)
+        }
+        turnRadians = next
+    }
+
+    /// A change that would leave the open limits is ignored.
+    public mutating func changeFieldOfView(by amount: Float) {
+        let next = fieldOfView + amount
+        let limits = LoadingScreenScene.fieldOfViewLimits
+        guard next > limits.low, next < limits.high else { return }
+        fieldOfView = next
     }
 }

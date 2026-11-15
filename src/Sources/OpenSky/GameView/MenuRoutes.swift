@@ -148,7 +148,8 @@ struct MenuRoutes {
         [
             TitleMenuCoordinator.identifier: { [unowned front] in front.titleMenu.route($0) },
             RaceMenuCoordinator.identifier: { [unowned front] in front.raceMenu.route($0) },
-            MessageCoordinator.identifier: { [unowned front] in front.messages.route($0) }
+            MessageCoordinator.identifier: { [unowned front] in front.messages.route($0) },
+            LoadingScreenWorldAdapter.identifier: { [unowned play] in play.loadingWorld.route($0) }
         ].merging(front.menuScreens.pointerRoutes) { first, _ in first }
     }
 

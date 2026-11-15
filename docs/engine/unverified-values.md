@@ -185,7 +185,9 @@ the detail and the sources it did find.
 | Shaped current positions | Read as Havok units | [water physics](/engine/water-physics.md#current-lists) |
 | World sound roll interval | OpenSky's interval | [world sounds](/engine/world-sfx.md) |
 | Music above a region | Not confirmed | [music](/engine/music.md) |
-| Loading screen timing | 1.5 s; 0.4 s fade | [loading screens](/engine/loading-screens.md) |
+| Loading screen light falloff | 1, as a `LIGH` record with none | [loading screens](/engine/loading-screens.md) |
+| Loading screen arrow keys | The stick at full tilt while held | [loading screens](/engine/loading-screens.md) |
+| Longest frame a loading screen turn counts | 0.1 s | [loading screens](/engine/loading-screens.md) |
 | Longest wait for the start area under a load or new-game cover | 90 s | [loading screens](/engine/loading-screens.md) |
 | Notification timing | Limit of 3 at once | [messages](/engine/messages.md) |
 | Movie track, colour matrix, skip keys | First track; BT.601; not confirmed | [movies](/engine/movies.md) |

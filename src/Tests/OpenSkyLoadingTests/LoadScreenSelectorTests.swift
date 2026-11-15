@@ -14,13 +14,20 @@ struct LoadScreenSelectorTests {
 
     private static func screen(
         _ objectID: UInt32,
-        _ tip: String
+        _ tip: String,
+        model: Bool = true,
+        conditioned: Bool = false,
+        mainMenu: Bool = false
     ) throws -> ResolvedRecord<LoadScreen> {
+        var fields = [("EDID", Fixture.zstring(tip)), ("DESC", Fixture.zstring(tip))]
+        if model {
+            fields.append(("NNAM", Fixture.u32(0x60)))
+        }
+        if conditioned {
+            fields.append(("CTDA", Data(QuestFixture.condition(functionIndex: 0).dropFirst(6))))
+        }
         let record = try LoadScreen(
-            record: Fixture.record(
-                "LSCR",
-                fields: [("EDID", Fixture.zstring(tip)), ("DESC", Fixture.zstring(tip))]
-            ),
+            record: Fixture.record("LSCR", flags: mainMenu ? 0x400 : 0, fields: fields),
             localized: false
         )
         return ResolvedRecord(
@@ -53,6 +60,28 @@ struct LoadScreenSelectorTests {
         let selector = try LoadScreenSelector(screens: Self.screens()) { _ in "GetIsID" }
         var random = ConditionRandom(seed: 1)
         #expect(selector.pick(random: &random) == nil)
+    }
+
+    @Test func onlyScreensWithAModelCountAndSpecificOnesWin() throws {
+        let screens = try [
+            Self.screen(0x10, "General"), Self.screen(
+                0x11,
+                "Bare",
+                model: false,
+                conditioned: true
+            ),
+            Self.screen(0x12, "Whiterun", conditioned: true)
+        ]
+        let selector = LoadScreenSelector(screens: screens) { _ in nil }
+        #expect(selector.candidates(.gameLoaded).map(\.record.editorID) == ["Whiterun"])
+        let general = LoadScreenSelector(screens: Array(screens.prefix(2))) { _ in nil }
+        #expect(general.candidates(.gameLoaded).map(\.record.editorID) == ["General"])
+    }
+
+    @Test func beforeAGameOnlyMainMenuScreensCount() throws {
+        let screens = try [Self.screen(0x10, "General"), Self.screen(0x11, "Menu", mainMenu: true)]
+        let selector = LoadScreenSelector(screens: screens) { _ in "GetIsID" }
+        #expect(selector.candidates(.noGame).map(\.record.editorID) == ["Menu"])
     }
 
     @Test func standardCheckPutsThePlayerInTheDestination() throws {

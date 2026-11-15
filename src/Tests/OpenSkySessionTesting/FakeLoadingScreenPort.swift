@@ -8,6 +8,7 @@ nonisolated public final class FakeLoadingScreenPort: LoadingScreenPort {
     public typealias LoadingScreenSession = FakeLoadingScreenSessionPort
     public var beginCalls: [Double] = []
     public var beginLoadCalls: [Double] = []
+    public var beginFirstLoadCalls: [Double] = []
     public var cancelCallCount = 0
     public var destinationKnownCalls: [(location: ResolvedFormID?, time: Double)] = []
     public var forceCalls: [(editorID: String, time: Double)] = []
@@ -19,7 +20,10 @@ nonisolated public final class FakeLoadingScreenPort: LoadingScreenPort {
     public var session: LoadingScreenSession?
     public var shownCount = 0
     public var tickCalls: [Double] = []
-    public var turnCalls: [(degrees: Float, time: Double)] = []
+    public var dragCalls: [SIMD2<Float>] = []
+    public var setStickCalls: [SIMD2<Float>] = []
+    public var nextTipCallCount = 0
+    public var nextTipResult: String?
     public var destinationReadyCalls: [(location: ResolvedFormID?, time: Double)] = []
 
     public init() {}
@@ -32,6 +36,10 @@ nonisolated extension FakeLoadingScreenPort {
 
     public func beginLoad(at time: Double) {
         beginLoadCalls.append(time)
+    }
+
+    public func beginFirstLoad(at time: Double) {
+        beginFirstLoadCalls.append(time)
     }
 
     public func cancel() {
@@ -60,8 +68,17 @@ nonisolated extension FakeLoadingScreenPort {
         tickCalls.append(time)
     }
 
-    public func turn(byDegrees degrees: Float, at time: Double) {
-        turnCalls.append((degrees: degrees, time: time))
+    public func drag(by pixels: SIMD2<Float>) {
+        dragCalls.append(pixels)
+    }
+
+    public func setStick(_ value: SIMD2<Float>) {
+        setStickCalls.append(value)
+    }
+
+    public func nextTip() -> String? {
+        nextTipCallCount += 1
+        return nextTipResult
     }
 
     public func destinationReady(location: ResolvedFormID?, at time: Double) {

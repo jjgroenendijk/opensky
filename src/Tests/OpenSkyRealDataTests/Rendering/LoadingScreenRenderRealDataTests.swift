@@ -54,17 +54,7 @@ struct LoadingScreenRenderRealDataTests {
         let renderer = gameSession.renderer
         let dark = try RenderedPixels.renderFrame(renderer, width: Self.width, height: Self.height)
         let renderModel = try install.meshes.model(path: model)
-        let radius = install.meshes.bounds(forPath: model)
-            .map { simd_length($0.max - $0.min) / 2 } ?? 64
-        let view = gameSession.freeFlyCamera
-        try renderer.setLoadingCover([RenderPlacement(
-            model: renderModel,
-            transform: frame.objectTransform(
-                eye: view.position, yaw: view.yaw, pitch: view.pitch, radius: radius
-            ),
-            castsShadows: false,
-            layer: .loadingCover
-        )])
+        try renderer.setLoadingScene(Self.coverScene(frame, model: renderModel))
         gameSession.uiScene = frame.overlay
         let shown = try RenderedPixels.renderFrame(renderer, width: Self.width, height: Self.height)
         let changed = RenderedPixels.changedCount(dark.pixels, shown.pixels, tolerance: 8)
@@ -78,7 +68,7 @@ struct LoadingScreenRenderRealDataTests {
         let lines = [
             "[INFO] \(Self.destination): \(selector.passing().count) "
                 + "of \(store.loadScreens.records.count) screens pass",
-            "[INFO] picked \(screen.record.editorID ?? "?") model \(model) radius \(radius)",
+            "[INFO] picked \(screen.record.editorID ?? "?") model \(model)",
             "[INFO] text: \(text ?? "none")",
             "[INFO] changed pixels: \(changed)"
         ]
@@ -106,5 +96,28 @@ struct LoadingScreenRenderRealDataTests {
         context.data = ConditionDataResolution(locations: locations)
         let check = LoadScreenSelector.conditionCheck(context: context, destination: location.id)
         return (store, LoadScreenSelector(store: store, check: check))
+    }
+
+    /// The game's scene for `frame`, at the default field of view and no camera path.
+    private static func coverScene(
+        _ frame: LoadingCoverFrame, model: RenderModel
+    ) -> LoadingCoverScene {
+        let transform = LoadingScreenScene.modelTransform(
+            frame.modelPose(markerRotation: nil),
+            aspectRatio: Float(Self.width) / Float(Self.height)
+        )
+        return LoadingCoverScene(
+            placements: [RenderPlacement(
+                model: model, transform: transform, castsShadows: true, layer: .loadingCover
+            )],
+            pointLights: LoadingScreenScene.lights,
+            lighting: LoadingScreenScene.lighting,
+            camera: LoadingCoverCamera(
+                view: LoadingScreenScene.camera(),
+                horizontalFieldOfView: LoadingScreenScene.horizontalFieldOfView(
+                    LoadingScreenScene.defaultFieldOfView
+                )
+            )
+        )
     }
 }

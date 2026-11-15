@@ -95,18 +95,26 @@ struct MenuWorldScreensTests {
         #expect(host.fakeHud.showNotificationCalls == ["Rested"])
     }
 
-    @Test func theLoadingCoverStartsAndTurns() {
+    @Test func theLoadingCoverStartsAndTakesADragAndTheStick() {
         let loading = LoadingScreenWorldAdapter(
             game: host,
             clock: { Date(timeIntervalSinceReferenceDate: 0) }
         )
         loading.coverSessionStart()
-        #expect(host.fakeLoadingScreens.beginLoadCalls.count == 1)
+        #expect(host.fakeLoadingScreens.beginFirstLoadCalls.count == 1)
         loading.coverMove(to: .zero)
         #expect(host.fakeLoadingScreens.beginCalls.count == 1)
         loading.route(.move(.left))
-        #expect(host.fakeLoadingScreens.turnCalls
-            .map(\.degrees) == [-LoadingScreenWorldAdapter.turnDegreesPerKey])
+        loading.route(.move(.up))
+        loading.route(.release(.left))
+        #expect(host.fakeLoadingScreens.setStickCalls == [[-1, 0], [-1, 1], [0, 1]])
+        loading.route(.pointer(deltaX: 4, deltaY: 2))
+        #expect(host.fakeLoadingScreens.dragCalls.isEmpty, "no drag without the button")
+        loading.route(.button(.accept))
+        loading.route(.pointer(deltaX: 4, deltaY: 2))
+        loading.route(MenuPointerEvent(.released, location: .zero, viewSize: .zero))
+        loading.route(.pointer(deltaX: 4, deltaY: 2))
+        #expect(host.fakeLoadingScreens.dragCalls == [[4, 2]])
     }
 
     @Test func pausingTheLoadingCoverPresentsItsMenu() {

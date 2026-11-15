@@ -1,5 +1,5 @@
-// Picks the loading screen for a destination: every LSCR whose conditions pass
-// for the player standing in the destination, then one at random. The run-on
+// Picks the loading screen for a destination: the LSCRs whose conditions pass for
+// the player standing in the destination, specific ones first, then one at random. The run-on
 // rule and the census behind it: docs/formats/loading-screens.md#selection.
 
 import Foundation
@@ -25,9 +25,33 @@ nonisolated struct LoadScreenSelector: Sendable {
         screens.filter { check($0) == nil }
     }
 
-    /// One passing screen, picked with the seeded generator.
+    /// Whether a game is loaded when the screen is chosen.
+    nonisolated enum GameState: Sendable {
+        case noGame
+        case gameLoaded
+    }
+
+    /// The screens the game picks from. Only a screen with a model counts. Before a
+    /// game is loaded, the main menu screens count instead of the passing ones. A
+    /// screen with conditions is specific: when one counts, only specific screens do.
+    func candidates(_ state: GameState) -> [ResolvedRecord<LoadScreen>] {
+        let shown = switch state {
+        case .noGame: screens.filter(\.record.displaysInMainMenu)
+        case .gameLoaded: passing()
+        }
+        let modelled = shown.filter { $0.record.model != nil }
+        let specific = modelled.filter { !$0.record.conditions.isEmpty }
+        return specific.isEmpty ? modelled : specific
+    }
+
+    /// One candidate, picked with the seeded generator.
     func pick(random: inout ConditionRandom) -> ResolvedRecord<LoadScreen>? {
-        let candidates = passing()
+        Self.pick(from: candidates(.gameLoaded), random: &random)
+    }
+
+    static func pick(
+        from candidates: [ResolvedRecord<LoadScreen>], random: inout ConditionRandom
+    ) -> ResolvedRecord<LoadScreen>? {
         guard !candidates.isEmpty else { return nil }
         return candidates[Int(random.next() % UInt64(candidates.count))]
     }

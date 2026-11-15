@@ -69,6 +69,8 @@ public final class EffectLayer {
     public internal(set) var bloodyWeapons: [MembraneTarget: Float] = [:]
     /// The loading screen's object. While set, the world does not draw.
     public internal(set) var loadingCover: RenderScene?
+    /// The cover's own camera, when it is a scene apart from the world.
+    public internal(set) var loadingCoverCamera: LoadingCoverCamera?
     /// Wall time for the cover's particle systems, which run while a menu pauses the world.
     var loadingCoverClock = FrameSimClock()
     /// Membranes the last frame drew, for the readout.

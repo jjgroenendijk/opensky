@@ -5,4 +5,5 @@ public import OpenSkyGameData
 public protocol LoadingScreenSessionPort {
     var screen: ResolvedRecord<LoadScreen>? { get }
     var turnDegrees: Float { get }
+    var fieldOfView: Float { get }
 }

@@ -15,8 +15,12 @@ nonisolated public struct LoadingCoverFrame: Equatable, Sendable {
     /// The STAT model the screen turns, or nil for a dark screen.
     public let model: String?
     public let scale: Float
+    /// RNAM, whole degrees per axis.
     public let rotationDegrees: SIMD3<Float>
     public let translation: SIMD3<Float>
+    public let turnRadians: Float
+    /// The scene camera's field of view, in the game's own unit.
+    public let fieldOfView: Float
     /// The MOD2 camera path mesh, played from `elapsedSeconds`.
     public let cameraPath: String?
     public let elapsedSeconds: Double
@@ -28,6 +32,7 @@ nonisolated public struct LoadingCoverFrame: Equatable, Sendable {
 
     init(
         model: String?, scale: Float, rotationDegrees: SIMD3<Float>, translation: SIMD3<Float>,
+        turnRadians: Float = 0, fieldOfView: Float = LoadingScreenScene.defaultFieldOfView,
         cameraPath: String? = nil, elapsedSeconds: Double = 0,
         text: String?, opacity: Float, drawsObject: Bool
     ) {
@@ -35,6 +40,8 @@ nonisolated public struct LoadingCoverFrame: Equatable, Sendable {
         self.scale = scale
         self.rotationDegrees = rotationDegrees
         self.translation = translation
+        self.turnRadians = turnRadians
+        self.fieldOfView = fieldOfView
         self.cameraPath = cameraPath
         self.elapsedSeconds = elapsedSeconds
         self.text = text
@@ -63,7 +70,13 @@ public final class LoadingScreenCoordinator {
     private(set) var lastPassingCount = 0
     public private(set) var shownCount = 0
     private var text: String?
+    /// The screens a later tip is drawn from.
+    private var tipScreens: [ResolvedRecord<LoadScreen>] = []
     private var loadInFlight = false
+    /// Pointer motion while the button is held, applied at the next tick.
+    private var pendingDrag = SIMD2<Float>.zero
+    private var stick = SIMD2<Float>.zero
+    private var lastTick: Double?
     private var random = ConditionRandom()
     weak let world: (any LoadingScreenWorld)?
 
@@ -107,12 +120,22 @@ public final class LoadingScreenCoordinator {
         waitingSince != nil
     }
 
-    /// A load that can show its screen at once, such as the session start. The
+    /// A load that can show its screen at once, such as a new game's first move. The
     /// screen stays until `loadFinished(at:)`.
     public func beginLoad(at time: Double) {
+        beginLoad(at: time, state: .gameLoaded)
+    }
+
+    /// A load before any game is loaded, such as the session start. Only screens
+    /// marked for the main menu can show.
+    public func beginFirstLoad(at time: Double) {
+        beginLoad(at: time, state: .noGame)
+    }
+
+    private func beginLoad(at time: Double, state: LoadScreenSelector.GameState) {
         guard isEnabled, forced == nil, session == nil, waitingSince == nil else { return }
         loadInFlight = true
-        start(LoadingScreenSession(screen: pick(location: nil), startedAt: time))
+        start(LoadingScreenSession(screen: pick(location: nil, state: state), startedAt: time))
     }
 
     public func loadFinished(at time: Double) {
@@ -128,11 +151,23 @@ public final class LoadingScreenCoordinator {
         finish()
     }
 
-    /// The player turns the object, as the game allows inside the ONAM range.
-    public func turn(byDegrees degrees: Float, at time: Double) {
-        guard session != nil else { return }
-        session?.turn(byDegrees: degrees)
-        tick(time: time)
+    /// Pointer motion in pixels while the button is held; X turns the object and Y
+    /// changes the field of view at the next frame.
+    public func drag(by pixels: SIMD2<Float>) {
+        guard session != nil, pixels.x.isFinite, pixels.y.isFinite else { return }
+        pendingDrag += pixels
+    }
+
+    /// The stick, each axis from -1 to 1, held until changed. Up is positive Y.
+    public func setStick(_ value: SIMD2<Float>) {
+        stick = simd_clamp(value, SIMD2(repeating: -1), SIMD2(repeating: 1))
+    }
+
+    /// A later tip, from another random screen that may show. Nil without one.
+    public func nextTip() -> String? {
+        guard !tipScreens.isEmpty else { return text }
+        let screen = tipScreens[Int(random.next() % UInt64(tipScreens.count))]
+        return world?.loadingText(of: screen) ?? text
     }
 
     // MARK: - Debug
@@ -157,6 +192,10 @@ public final class LoadingScreenCoordinator {
     // MARK: - Frames
 
     public func tick(time: Double) {
+        guard session != nil else { return }
+        let seconds = lastTick.map { Float(min(max(time - $0, 0), Self.longestFrame)) } ?? 0
+        lastTick = time
+        steer(seconds: seconds)
         guard let session else { return }
         let phase = session.phase(at: time)
         guard phase != .finished else {
@@ -175,8 +214,10 @@ public final class LoadingScreenCoordinator {
         return LoadingCoverFrame(
             model: session.screen.flatMap { world?.presentationRecords?.model(of: $0) },
             scale: record?.initialScale ?? 1,
-            rotationDegrees: session.objectRotationDegrees,
+            rotationDegrees: session.initialRotationDegrees,
             translation: record?.initialTranslation ?? .zero,
+            turnRadians: session.turnRadians,
+            fieldOfView: session.fieldOfView,
             cameraPath: record?.cameraPath,
             elapsedSeconds: session.elapsedSeconds(at: time),
             text: text,
@@ -185,8 +226,29 @@ public final class LoadingScreenCoordinator {
         )
     }
 
+    /// The game's rates: a drag turns by pixels times frame seconds times 0.02
+    /// radians and zooms by pixels times frame seconds times 0.6; the stick turns
+    /// by 0.45 radians and zooms by 5 per second.
+    private func steer(seconds: Float) {
+        let drag = pendingDrag
+        pendingDrag = .zero
+        let turn = drag.x * seconds * 0.02 - stick.x * 0.45 * seconds
+        let zoom = drag.y * seconds * 0.6 - stick.y * 5 * seconds
+        if turn != 0 {
+            session?.turn(byRadians: turn)
+        }
+        if zoom != 0 {
+            session?.changeFieldOfView(by: zoom)
+        }
+    }
+
+    /// A stall longer than this counts as this long, so the object does not jump.
+    static let longestFrame = 0.1
+
     private func start(_ next: LoadingScreenSession) {
         session = next
+        lastTick = nil
+        pendingDrag = .zero
         shownCount += 1
         text = next.screen.flatMap { world?.loadingText(of: $0) }
         world?.setLoadingPaused(true)
@@ -196,14 +258,20 @@ public final class LoadingScreenCoordinator {
     private func finish() {
         session = nil
         text = nil
+        tipScreens = []
+        stick = .zero
         world?.presentLoadingCover(nil)
         world?.setLoadingPaused(false)
     }
 
-    private func pick(location: ResolvedFormID?) -> ResolvedRecord<LoadScreen>? {
+    private func pick(
+        location: ResolvedFormID?, state: LoadScreenSelector.GameState = .gameLoaded
+    ) -> ResolvedRecord<LoadScreen>? {
         guard let selector = selector(location: location) else { return nil }
-        lastPassingCount = selector.passing().count
-        return selector.pick(random: &random)
+        let candidates = selector.candidates(state)
+        lastPassingCount = candidates.count
+        tipScreens = candidates
+        return LoadScreenSelector.pick(from: candidates, random: &random)
     }
 
     private func selector(location: ResolvedFormID?) -> LoadScreenSelector? {
