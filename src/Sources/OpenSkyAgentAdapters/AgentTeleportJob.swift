@@ -266,18 +266,6 @@ public final class AgentTeleportJob {
         place(at: feet, gameSession: gameSession, streamer: streamer)
     }
 
-    /// Stands the player where `coc` would, unless the request named an exact spot.
-    /// An exterior cell's index also holds persistent references from other cells.
-    private func useCOCMarker(in references: RuntimeReferenceIndex?, grid: CellCoordinate?) {
-        guard exactFeet == nil, let references else { return }
-        let placed = references.sortedEntries().compactMap(\.placedReference).filter { ref in
-            grid.map { CellCoordinate(containing: ref.placement.position) == $0 } ?? true
-        }
-        guard let marker = CenterOnCellMarker.placement(in: placed) else { return }
-        exactFeet = marker.position
-        exactYaw = marker.rotation.z
-    }
-
     /// A position or a reference stays in the current cell, because interior
     /// coordinates are local to their cell. A grid teleport leaves the interior.
     private func place(
@@ -304,6 +292,26 @@ public final class AgentTeleportJob {
 }
 
 extension AgentTeleportJob {
+    /// Stands the player where `coc` would, unless the request named an exact spot.
+    /// An exterior cell's index also holds persistent references from other cells.
+    private func useCOCMarker(in references: RuntimeReferenceIndex?, grid: CellCoordinate?) {
+        guard exactFeet == nil, let references else { return }
+        let placed = references.sortedEntries().compactMap(\.placedReference).filter { ref in
+            grid.map { CellCoordinate(containing: ref.placement.position) == $0 } ?? true
+        }
+        let records = game.streamer.placedRecords.map { lookup in
+            CenterOnCellMarker.Records(
+                isStatic: { lookup.recordType(ofBase: $0) == "STAT" },
+                arrival: { lookup.arrival(through: $0) }
+            )
+        }
+        guard
+            let marker = CenterOnCellMarker.placement(in: placed, records: records ?? .markersOnly)
+        else { return }
+        exactFeet = marker.position
+        exactYaw = marker.rotation.z
+    }
+
     /// In front of a looked-up actor once its cell has loaded, not inside it.
     private func useLoadedReference() {
         guard let text = lookedUpReference else { return }

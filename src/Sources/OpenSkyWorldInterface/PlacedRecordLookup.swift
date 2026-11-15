@@ -1,5 +1,5 @@
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyWorldState
@@ -124,6 +124,22 @@ nonisolated public struct PlacedRecordLookup: Sendable {
             next = link.flatMap { ReferenceKey.resolve($0.ref, using: resolver) }
         }
         return points
+    }
+
+    /// The record type of the base object `base`, such as `STAT` or `DOOR`.
+    public func recordType(ofBase base: FormID) -> FourCC? {
+        index.record(withFormID: base)?.record.type
+    }
+
+    /// Where a player arriving through the load door `door` stands: the arrival that the
+    /// door's partner stores, since each side of a load door holds the other side's arrival.
+    public func arrival(through door: PlacedReference) -> PlacedReference.Placement? {
+        guard
+            let partner = door.teleportDestination?.door,
+            let found = index.record(withFormID: partner), !found.record.isDeleted,
+            let placed = attempt({ try found.decode(PlacedReference.init(record:)) })
+        else { return nil }
+        return placed.teleportDestination?.placement
     }
 
     /// Where the CELL `formID` sits, loaded or not: its grid square or its interior.
