@@ -1,6 +1,6 @@
 // `reference capture`: one run folder under `.logs/reference/` with both captures, their
 // difference, the batch file of the view, and a report (`ReferenceComparisonCapture`).
-// `reference shot`: the Windows game window alone.
+// `reference shot`: the Windows game window alone. `reference listen`: its sound alone.
 
 import Foundation
 import OpenSkyAgentControl
@@ -43,6 +43,18 @@ enum ReferenceCapture {
         do {
             try ReferenceWindowCapture.capture(to: url, expected: frame)
         } catch let error as ReferenceCaptureError {
+            throw CLIError.failure(error.localizedDescription)
+        }
+        print("[INFO] Wrote \(url.path(percentEncoded: false))")
+    }
+
+    /// `reference listen`: the Windows game's sound alone, to time when it plays a sound.
+    static func listen(arguments: ReferenceArguments.Listen) async throws {
+        let url = try arguments.out.map { URL(filePath: $0) }
+            ?? RunDirectory.create("reference-listen").appending(path: "reference.wav")
+        do {
+            try await ReferenceAudioCapture.record(seconds: arguments.seconds, to: url)
+        } catch let error as ReferenceAudioCaptureError {
             throw CLIError.failure(error.localizedDescription)
         }
         print("[INFO] Wrote \(url.path(percentEncoded: false))")

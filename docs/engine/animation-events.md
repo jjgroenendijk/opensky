@@ -173,7 +173,7 @@ events" ([gap report](/tools/gaps.md)).
 Some events reach no graph listener and no engine system. The game takes no action on them,
 so OpenSky does not either, and `make rank-gaps` counts them as done. A wolf fighting a bandit in the
 reference game was recorded through the bridge, observed 2026-11-04
-([reference game](/tools/reference-game.md#recording-graph-variables)):
+([reference game](/tools/reference-bridge-probes.md#recording-graph-variables)):
 
 - `StartAnimationDriven`, sent by about 29 creature attack clips. The wolf sent it at the hit
   frame of each power attack, and its `bAnimationDriven` stayed 0 before and after. The graph

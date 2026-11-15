@@ -36,6 +36,7 @@ FetchContent_Populate(directxtk)
 
 add_library(OpenSkyBridge SHARED
     src/Channel.cpp
+    src/Menus.cpp
     src/Places.cpp
     src/Plugin.cpp
     src/Settings.cpp

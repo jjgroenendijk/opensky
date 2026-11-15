@@ -194,6 +194,7 @@ the number. A summary line goes to stderr.
 | `reference sync [--no-hide-menus] [--freeze]` | Puts the Windows game at the running OpenSky's view through the bridge plugin |
 | `reference follow` | Puts the running OpenSky at the Windows game's view, through `debug.view` |
 | `reference shot [--width <px>] [--height <px>] [--out <file>]` | Captures only the Windows game window as a PNG, without OpenSky; by default to `.logs/reference-shot/<UTC time>/reference.png` |
+| `reference listen [--seconds <n>] [--out <file>]` | Records only the Windows game's sound for `--seconds` (default 10) as a 48 kHz stereo WAV; by default to `.logs/reference-listen/<UTC time>/reference.wav` |
 | `reference answer <button>` | Presses a button of the message box open in the Windows game, by index or text |
 | `reference load [<save>]` | Waits for the Windows game's main menu, then loads the save, by default the newest |
 

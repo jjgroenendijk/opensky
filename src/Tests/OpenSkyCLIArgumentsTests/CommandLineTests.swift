@@ -254,6 +254,12 @@ struct CommandLineTests {
         _ = try command(["reference", "status"], as: ReferenceArguments.Status.self)
         #expect(exitCode(["reference", "launch", "--width", "10"])
             == OpenSkyCommandLine.usageExitCode)
+        let listen = try command(
+            ["reference", "listen", "--seconds", "3"], as: ReferenceArguments.Listen.self
+        )
+        #expect(listen.seconds == 3)
+        #expect(exitCode(["reference", "listen", "--seconds", "0.1"])
+            == OpenSkyCommandLine.usageExitCode)
     }
 
     @Test func aUsageErrorExitsWithTwoAndHelpWithZero() {
