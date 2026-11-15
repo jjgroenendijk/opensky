@@ -89,10 +89,17 @@ looks the same when it comes back into view.
 The fragment shader shades a particle like an effect shape that faces the eye
 ([effect shapes](/formats/nif-materials.md#effect-shapes)): the system's base color, palette,
 falloff, soft effect, effect lighting, and point lights. The particle color is the vertex color
-and alpha. OpenSky always applies it, also when the shader's vertex flags are off, because the
-color modifier and the birth and death fade live there. In the vanilla files with particle
-systems, 1292 soft effect shaders set vertex colors without vertex alpha. It is not known
-whether the game then drops the particle alpha. A playback takes its reference's `XEMI`
+and alpha. An effect shader takes it only when its `Vertex_Colors` flag (SLSF2 bit 5) is on:
+
+| `Vertex_Colors` | `Vertex_Alpha` | A particle's own color and alpha |
+| --- | --- | --- |
+| on | on or off | Both apply, so the particle fades at birth and death |
+| off | on or off | Both are dropped: the particle keeps the shader's color at full alpha |
+
+The `Vertex_Alpha` flag (SLSF1 bit 3) changes nothing for an effect shader, on a particle
+system or on a plain shape. A strip particle system always takes its color and alpha. So the
+1292 vanilla soft effect shaders on particle systems that set vertex colors without vertex
+alpha still fade. A playback takes its reference's `XEMI`
 emittance for external emittance. Fog takes the light away from an additive system instead of mixing
 in the fog color, because the sum already shows the fogged scene behind it.
 
