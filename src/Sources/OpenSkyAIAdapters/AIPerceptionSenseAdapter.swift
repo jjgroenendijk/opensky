@@ -53,11 +53,23 @@ public struct AIPerceptionSenseAdapter {
 
 extension AIPerceptionSenseAdapter {
     public func perceptionCandidates() -> [PerceptionCandidate] {
+        perceptionCandidates { _, _ in true }.fresh
+    }
+
+    /// Builds a candidate only for an actor `isDue` asks for; the rest are listed by key.
+    func perceptionCandidates(
+        isDue: (ReferenceKey, SIMD3<Float>) -> Bool
+    ) -> (present: [ReferenceKey], fresh: [PerceptionCandidate]) {
+        let actors = game.actorWorld.combatActors()
+        let due = actors.filter { isDue($0.key, $0.feet) }
+        guard !due.isEmpty else {
+            return (present: actors.map(\.key), fresh: [])
+        }
         let readouts = game.packages.readouts().filter { $0.currentPackage != nil }
         let packaged = Set(readouts.map(\.actor))
         let sleepers = Set(readouts.filter { $0.procedure == .sleep }.map(\.actor))
         let isExterior = game.streamer.interiorScene == nil
-        return game.actorWorld.combatActors().map { actor in
+        let fresh = due.map { actor in
             var observer = PerceptionObserver(
                 key: actor.key,
                 feet: actor.feet,
@@ -79,6 +91,7 @@ extension AIPerceptionSenseAdapter {
                 hasPackage: packaged.contains(actor.key)
             )
         }
+        return (present: actors.map(\.key), fresh: fresh)
     }
 
     public func perceptionTargets() -> [PerceptionTarget] {

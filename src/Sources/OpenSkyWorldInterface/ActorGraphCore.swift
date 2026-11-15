@@ -4,15 +4,18 @@
 
 import Foundation
 public import OpenSkyBehavior
+import OpenSkyGameData
 public import simd
 
 /// How far from the camera an actor's graph steps every frame, at a reduced rate, or
-/// not at all. A graph that does not step keeps its last pose.
+/// not at all. A graph that does not step keeps its last pose. The rates are the shared
+/// update bands; past `maximumDistance` a graph stops, where other work keeps its
+/// distant band.
 nonisolated public struct ActorGraphCutoff: Equatable, Sendable {
     /// Seconds between steps past `fullRateDistance`: 15 steps per second.
-    public static let reducedStepInterval: Float = 1.0 / 15
+    public static let reducedStepInterval = UpdateBand.reduced.interval
     /// Seconds between steps in the outer half of `fullRateDistance`: 30 steps per second.
-    public static let nearStepInterval: Float = 1.0 / 30
+    public static let nearStepInterval = UpdateBand.near.interval
     public static let standard = ActorGraphCutoff(fullRateDistance: 2048, maximumDistance: 6144)
 
     public var fullRateDistance: Float
@@ -25,13 +28,17 @@ nonisolated public struct ActorGraphCutoff: Equatable, Sendable {
 
     /// Zero steps every frame. Nil does not step.
     public func stepInterval(atDistance distance: Float) -> Float? {
-        if distance <= fullRateDistance * 0.5 {
-            return 0
-        }
-        if distance <= fullRateDistance {
-            return Self.nearStepInterval
-        }
-        return distance <= maximumDistance ? Self.reducedStepInterval : nil
+        guard distance <= maximumDistance else { return nil }
+        return bands.band(atDistance: distance).interval
+    }
+
+    /// The bands up to `maximumDistance`, where a graph stops.
+    var bands: UpdateBands {
+        UpdateBands(
+            nearDistance: fullRateDistance * 0.5,
+            reducedDistance: fullRateDistance,
+            distantDistance: maximumDistance
+        )
     }
 }
 

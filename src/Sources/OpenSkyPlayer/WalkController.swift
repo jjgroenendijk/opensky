@@ -26,7 +26,7 @@ nonisolated public struct WalkController: Sendable {
 
     static let gravity = PhysicsStep.gravity
     static let maximumSlopeDegrees = PhysicsStep.maximumSlopeDegrees
-    public static let fixedTimeStep = PhysicsStep.fixedTimeStep
+    static let fixedTimeStep = PhysicsStep.fixedTimeStep
     public static let maximumFrameTime = PhysicsStep.maximumFrameTime
     static let groundSnapDistance: Float = 24
     /// How fast a swimmer may rise or sink, units per second. The capsule is
@@ -58,6 +58,9 @@ nonisolated public struct WalkController: Sendable {
     /// was missing — the impact table is keyed by it.
     public private(set) var groundMaterial: FormID?
     private var accumulatedTime: Float = 0
+    /// Seconds of one fixed step. A far NPC takes longer steps, so a walk that steps
+    /// less often also runs fewer steps.
+    public var stepTime = PhysicsStep.fixedTimeStep
     /// The feet one fixed step before `feetPosition`; drawing blends from here.
     private var previousFeetPosition: SIMD3<Float>
     public var activeStepSupport: CapsuleStepSupport?
@@ -119,10 +122,10 @@ nonisolated public struct WalkController: Sendable {
                 let world = StepWorld(
                     sampleGround: ground, collisionQuery: query, plan: plan
                 )
-                while accumulatedTime + Float.ulpOfOne >= Self.fixedTimeStep {
+                while accumulatedTime + Float.ulpOfOne >= stepTime {
                     previousFeetPosition = feetPosition
                     stepTrackingFall(yaw: camera.yaw, input: input, world: world)
-                    accumulatedTime -= Self.fixedTimeStep
+                    accumulatedTime -= stepTime
                 }
             }
         }
@@ -328,7 +331,7 @@ nonisolated extension WalkController {
     /// over. A display frame rarely holds a whole number of steps, so drawing
     /// the last step alone makes the view jump by a step now and then.
     public var drawnFeetPosition: SIMD3<Float> {
-        let blend = min(max(accumulatedTime / Self.fixedTimeStep, 0), 1)
+        let blend = min(max(accumulatedTime / stepTime, 0), 1)
         return simd_mix(previousFeetPosition, feetPosition, SIMD3(repeating: blend))
     }
 

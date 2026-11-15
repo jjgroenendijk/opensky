@@ -9,7 +9,7 @@ nonisolated extension WalkController {
     mutating func stepTrackingFall(yaw: Float, input: CameraInput, world: StepWorld) {
         let wasGrounded = isGrounded
         let fallSpeed = -verticalVelocity
-        step(yaw: yaw, input: input, dt: Self.fixedTimeStep, world: world)
+        step(yaw: yaw, input: input, dt: stepTime, world: world)
         trackFall(wasGrounded: wasGrounded, speed: fallSpeed)
     }
 

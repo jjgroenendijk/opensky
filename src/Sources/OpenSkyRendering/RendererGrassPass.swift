@@ -13,8 +13,12 @@ extension Renderer {
     /// The frame's density and distance limits, and the instances the budget has left.
     private struct GrassInstanceFilter {
         let density: Float
-        let maximumDistanceSquared: Float
+        let drawDistance: Float
         var remaining: Int
+
+        var maximumDistanceSquared: Float {
+            drawDistance * drawDistance
+        }
     }
 
     func encodeGrass(groups: [GrassDrawGroup], state: inout ScenePassState) {
@@ -38,10 +42,11 @@ extension Renderer {
 
         var filter = GrassInstanceFilter(
             density: density,
-            maximumDistanceSquared: distance * distance,
+            drawDistance: distance,
             remaining: min(max(grassInstanceBudget, 0), GrassRenderPolicy.maximumInstancesPerFrame)
         )
         beginMeshGrassFrame(slot: state.slot, groupCount: groups.count)
+        grassNearLists.beginFrame(groupCount: groups.count)
         for (index, group) in groups.enumerated() {
             encodeGrassGroup(
                 (group, index),
@@ -54,7 +59,7 @@ extension Renderer {
     }
 
     private func writeGrassInstances(
-        _ group: GrassDrawGroup,
+        _ entry: (group: GrassDrawGroup, index: Int),
         filter: inout GrassInstanceFilter,
         state: inout ScenePassState,
         stats: inout GrassDrawStats
@@ -62,11 +67,18 @@ extension Renderer {
         let base = state.slot * instanceSlotCapacity + state.instanceCursor
         let stride = MemoryLayout<InstanceTransform>.stride
         var written = 0
-        for instance in group.instances {
-            guard instance.densityKey < filter.density else {
-                stats.densityCulledInstances += 1
-                continue
-            }
+        let near = grassNearLists.list(
+            of: entry.group.instances, mesh: ObjectIdentifier(entry.group.mesh),
+            index: entry.index,
+            reach: GrassNearLists.Reach(
+                viewer: frameInput.view.position, density: filter.density,
+                drawDistance: filter.drawDistance
+            )
+        )
+        stats.densityCulledInstances += near.densityCulled
+        stats.distanceCulledInstances += near.outside
+        for index in near.indices {
+            let instance = entry.group.instances[Int(index)]
             let delta = instance.position - frameInput.view.position
             guard simd_length_squared(delta) <= filter.maximumDistanceSquared else {
                 stats.distanceCulledInstances += 1
@@ -96,7 +108,7 @@ extension Renderer {
     ) {
         let (group, index) = entry
         let upload = writeGrassInstances(
-            group, filter: &filter, state: &state, stats: &stats
+            entry, filter: &filter, state: &state, stats: &stats
         )
         guard upload.written > 0 else { return }
         state.instanceCursor += upload.written
@@ -183,5 +195,12 @@ extension Renderer {
         unsafe drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<GrassDrawUniforms>.size)
         return offset
+    }
+}
+
+extension Renderer {
+    /// Grass near lists built in the last frame.
+    public var grassNearListRebuilds: Int {
+        grassNearLists.rebuiltLastFrame
     }
 }

@@ -87,6 +87,8 @@ struct PerceptionCoordinatorTests {
         let runtime = try #require(coordinator.runtime)
         #expect(runtime.observers.map(\.key) == [PerceptionFixture.guardKey])
         #expect(!coordinator.perceptionLines(for: PerceptionFixture.guardKey).isEmpty)
+        #expect(coordinator.perceptionBand(of: PerceptionFixture.guardKey) != nil)
+        #expect(coordinator.perceptionBand(of: .player) == nil)
     }
 
     /// One second crouched behind a near guard: `fSkillUsageSneakPerSecond` uses.

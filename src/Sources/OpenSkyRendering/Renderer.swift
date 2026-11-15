@@ -200,6 +200,10 @@ public final class Renderer: NSObject {
     var precipitationEnabled = true
     public var particlesEnabled = true
     var particlesFrozen = false
+    /// When each particle system's banded step is due (`ParticleBandClocks.swift`).
+    var particleBands = ParticleBandClocks()
+    /// Each grass group's instances near the camera (`GrassNearLists.swift`).
+    var grassNearLists = GrassNearLists()
     /// Blended particles and their systems draw far to near.
     public var particleSortingEnabled = true
     public var particleEmissionScale: Float = 1

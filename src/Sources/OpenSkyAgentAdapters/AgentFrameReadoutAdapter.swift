@@ -140,7 +140,17 @@ extension AgentFrameReadoutAdapter {
             "treeWind": render.treeWindState(),
             "waterFlow": render.waterFlowState(),
             "precipitation": render.precipitationState(),
-            "gpuMemory": gpuMemoryState()
+            "gpuMemory": gpuMemoryState(),
+            "updateBands": updateBandState()
+        ]
+    }
+
+    /// Particle systems per update band, and the grass near lists built last frame.
+    private func updateBandState() -> AgentJSON {
+        guard let renderer = game.gameSession?.renderer else { return .null }
+        return [
+            "particles": .object(renderer.particleBandCounts.mapValues { AgentJSON($0) }),
+            "grassListsRebuilt": .init(renderer.grassNearListRebuilds)
         ]
     }
 

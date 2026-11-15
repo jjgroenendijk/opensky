@@ -88,6 +88,22 @@ struct AIActsSensesTests {
         #expect(adapter.worlds.lightLevel(at: .zero) == 1)
     }
 
+    /// Only the actors `isDue` asks for are built; the rest are listed by key.
+    @Test func aRefreshBuildsOnlyTheDueActors() {
+        host.fakeActorWorld.combatActorsResult = [
+            CombatActorObservation(key: Self.actor, feet: .zero),
+            CombatActorObservation(key: Self.other, feet: SIMD3(9000, 0, 0))
+        ]
+        host.fakeFactions.hostilityResult = .hostile
+        host.fakeDragonFlightWorld.isFlyingResult = false
+        let refresh = adapter.worlds.perceptionCandidates { key, _ in key == Self.actor }
+        #expect(refresh.present == [Self.actor, Self.other])
+        #expect(refresh.fresh.map(\.observer.key) == [Self.actor])
+        let none = adapter.worlds.perceptionCandidates { _, _ in false }
+        #expect(none.present == [Self.actor, Self.other])
+        #expect(none.fresh.isEmpty)
+    }
+
     @Test func sightIsBlockedOnlyByStaticCollision() {
         #expect(adapter.worlds.perceptionHasLineOfSight(from: .zero, to: .zero))
         host.fakeStreamer.collision.staticCollisionBlocksResult = true

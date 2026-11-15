@@ -1,7 +1,9 @@
 // Per-frame actor animation clock + measured palette refresh.
 
 import Foundation
+import OpenSkyGameData
 import OpenSkyRenderCore
+import simd
 
 extension Renderer {
     public func updateAnimations(deltaTime: Float) {
@@ -37,9 +39,19 @@ extension Renderer {
 
     func updateParticles(deltaTime: Float) {
         guard particlesEnabled, !particlesFrozen else { return }
-        for playback in scene.particles + effects.particles {
+        let playbacks = scene.particles + effects.particles
+        particleBands.keep(playbacks)
+        let viewer = frameInput.view.position
+        for playback in playbacks {
+            let placement = playback.simulator.placementTransform.columns.3
+            guard
+                let step = particleBands.step(
+                    of: playback, at: SIMD3(placement.x, placement.y, placement.z),
+                    viewer: viewer, deltaTime: deltaTime
+                )
+            else { continue }
             playback.advance(
-                deltaTime: deltaTime,
+                deltaTime: step,
                 wind: frameInput.wind,
                 emissionScale: particleEmissionScale
             )
@@ -55,5 +67,12 @@ extension Renderer {
                 emissionScale: particleEmissionScale
             )
         }
+    }
+}
+
+extension Renderer {
+    /// How many particle systems stepped in each band, by band name.
+    public var particleBandCounts: [String: Int] {
+        particleBands.bandCounts.reduce(into: [:]) { $0[$1.key.name] = $1.value }
     }
 }

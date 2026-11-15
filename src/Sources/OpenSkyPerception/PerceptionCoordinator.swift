@@ -2,7 +2,8 @@
 // resident actors observe, and answers the AI & Navigation detection section.
 // The pass itself is `PerceptionRuntime`. See docs/engine/coordinators.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
+import OpenSkyGameData
 public import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 public import OpenSkyRenderCore
@@ -37,9 +38,28 @@ nonisolated public struct PerceptionCandidate: Equatable, Sendable {
 @MainActor
 public protocol PerceptionSessionWorld: AnyObject {
     func perceptionCandidates() -> [PerceptionCandidate]
+    /// Builds only the candidates `isDue` asks for, given each actor's key and feet. The
+    /// result lists every resident key, and the candidates built again this time; a key
+    /// without a fresh candidate keeps its last one.
+    func perceptionCandidates(
+        isDue: (ReferenceKey, SIMD3<Float>) -> Bool
+    ) -> (present: [ReferenceKey], fresh: [PerceptionCandidate])
     /// The player, and nothing else: NPC-versus-NPC perception is out of scope.
     func perceptionTargets() -> [PerceptionTarget]
     func perceptionHasLineOfSight(from origin: SIMD3<Float>, to destination: SIMD3<Float>) -> Bool
+}
+
+extension PerceptionSessionWorld {
+    /// Builds every candidate and keeps the due ones, for a world where one is cheap.
+    public func perceptionCandidates(
+        isDue: (ReferenceKey, SIMD3<Float>) -> Bool
+    ) -> (present: [ReferenceKey], fresh: [PerceptionCandidate]) {
+        let all = perceptionCandidates()
+        return (
+            present: all.map(\.observer.key),
+            fresh: all.filter { isDue($0.observer.key, $0.observer.feet) }
+        )
+    }
 }
 
 nonisolated public enum PerceptionCore {
@@ -62,6 +82,8 @@ nonisolated public enum PerceptionCore {
 public final class PerceptionCoordinator {
     public private(set) var runtime: PerceptionRuntime?
     let world: any PerceptionSessionWorld
+    /// Each observer's banded refresh (`PerceptionCoordinator+Bands.swift`).
+    var bandedRoster = PerceptionBandedRoster()
 
     public init(
         world: any PerceptionSessionWorld,
@@ -77,6 +99,7 @@ public final class PerceptionCoordinator {
     /// - Returns: the Sneak skill uses earned by hiding during the steps run.
     public func advance(by delta: Float) -> [PerceptionCommand] {
         guard let runtime else { return [] }
+        bandedRoster.waited += delta.isFinite ? max(delta, 0) : 0
         let steps = runtime.advance(by: delta)
         guard steps > 0 else { return [] }
         let seconds = Float(steps) * PerceptionRuntime.fixedStepSeconds
@@ -101,11 +124,12 @@ public final class PerceptionCoordinator {
 
 extension PerceptionCoordinator: PerceptionWorld {
     public func perceptionObservers() -> [PerceptionObserver] {
-        PerceptionCore.observers(from: world.perceptionCandidates())
+        PerceptionCore.observers(from: bandedCandidates())
     }
 
+    /// The targets the observers were measured from, read once per roster refresh.
     public func perceptionTargets() -> [PerceptionTarget] {
-        world.perceptionTargets()
+        bandedRoster.takeTargets() ?? world.perceptionTargets()
     }
 
     public func perceptionHasLineOfSight(

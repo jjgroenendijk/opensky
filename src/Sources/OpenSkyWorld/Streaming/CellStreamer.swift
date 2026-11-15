@@ -92,6 +92,8 @@ public final class CellStreamer {
     /// Set once the first drawable cell frames the camera, or a move places it;
     /// every later recompose passes a nil camera so the free-fly view is left alone.
     var hasSeededCamera = false
+    /// The camera position of the last update; far NPC work runs less often.
+    private(set) var viewerPosition: SIMD3<Float>?
     /// While held, nothing loads: the main menu shows before the player picks a start.
     public var isHeld = false
     /// The center of the newest distant ring request. The coverage satellite
@@ -182,6 +184,7 @@ public final class CellStreamer {
         frameTime: Float = 0
     ) {
         guard !isHeld else { return }
+        viewerPosition = cameraPosition
         let completed = runner.drainCompleted()
         if !completed.isEmpty {
             pending.append(contentsOf: completed.filter(builds.builtHere))
