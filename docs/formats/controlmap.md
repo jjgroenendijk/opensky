@@ -55,6 +55,19 @@ The name is also the symbol of the key's button art in the menu movies. The Cont
 of `quest_journal.swf` attaches a clip named `L-Ctrl` or `Slash`, and falls back to
 `UnknownKey` with the hex code as its text.
 
+## The Controls list
+
+The pause menu's Controls list shows each `Main Gameplay` row whose keyboard flag is 1, in the
+file's order. A row can take a key, and a mouse button where its mouse flag is 1. So the attack
+rows are listed too: Right Attack/Block, the left mouse button by default, attacks, and Left
+Attack/Block, the right button, blocks. A mouse button is stored as 256 plus its number, as
+SKSE's `Input.psc` numbers it, and its button art is `Mouse1` for the left button up to
+`Mouse8`. The key name table has no mouse rows.
+
+Auto-Move walks forward until it is pressed again or Forward or Back is pressed. Toggle Always
+Run flips whether the player runs; Run, held, gives the other speed. The install's
+`SkyrimPrefs.ini` turns always run on (`bAlwaysRunByDefault=1`).
+
 ## Where OpenSky differs
 
 - macOS sends Control-click as a right click, so Sneak moves from Left Control to C.

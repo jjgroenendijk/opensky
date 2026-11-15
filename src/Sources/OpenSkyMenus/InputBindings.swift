@@ -14,6 +14,28 @@ nonisolated public enum InputContext: String, CaseIterable, Sendable {
     case opensky = "OpenSky"
 }
 
+/// An input code: a DirectInput scan code below 256, and a mouse button above it. Mouse
+/// button `n` is `256 + n`, as SKSE's `Input.psc` numbers them; 0 is the left button.
+nonisolated public enum InputCode {
+    public static let mouseBase: UInt32 = 256
+    /// The mouse buttons the control map's mouse column can name for a button.
+    static let mouseButtons: ClosedRange<UInt32> = 0 ... 7
+
+    public static func mouse(_ button: Int) -> UInt32 {
+        mouseBase + UInt32(button)
+    }
+
+    /// The mouse button of a code, or nil for a keyboard key.
+    public static func mouseButton(_ code: UInt32) -> Int? {
+        code >= mouseBase ? Int(code - mouseBase) : nil
+    }
+
+    /// The button art symbol for a mouse code: `Mouse1` is the left button.
+    static func mouseName(_ code: UInt32) -> String? {
+        mouseButton(code).map { "Mouse\($0 + 1)" }
+    }
+}
+
 /// One remappable row: the action, its controlmap event, and its default key.
 nonisolated public struct InputBindingSlot: Equatable, Sendable {
     public let action: GameInputAction
@@ -35,14 +57,20 @@ nonisolated enum InputRebindResult: Equatable, Sendable {
 }
 
 nonisolated public struct InputBindings: Equatable, Sendable {
-    /// Keyboard actions in the Controls page order. Attack and block stay on the mouse.
+    /// Actions in the control map's order, which the Controls page sorts by. Right
+    /// Attack/Block is the weapon hand's attack, Left Attack/Block the off hand's block.
     public static let slots: [InputBindingSlot] = [
         slot(.forward, .gameplay, "Forward"), slot(.back, .gameplay, "Back"),
         slot(.left, .gameplay, "Strafe Left"), slot(.right, .gameplay, "Strafe Right"),
+        slot(.block, .gameplay, "Left Attack/Block"),
+        slot(.attack, .gameplay, "Right Attack/Block"),
         slot(.activate, .gameplay, "Activate"), slot(.readyWeapon, .gameplay, "Ready Weapon"),
+        slot(.tweenMenu, .gameplay, "Tween Menu"),
         slot(.cameraMode, .gameplay, "Toggle POV"), slot(.jump, .gameplay, "Jump"),
-        slot(.sprint, .gameplay, "Sprint"), slot(.sneak, .gameplay, "Sneak"),
-        slot(.run, .gameplay, "Run"), slot(.shout, .gameplay, "Shout"),
+        slot(.sprint, .gameplay, "Sprint"), slot(.shout, .gameplay, "Shout"),
+        slot(.sneak, .gameplay, "Sneak"), slot(.run, .gameplay, "Run"),
+        slot(.toggleAlwaysRun, .gameplay, "Toggle Always Run"),
+        slot(.autoMove, .gameplay, "Auto-Move"), slot(.favorites, .gameplay, "Favorites"),
         slot(.journal, .gameplay, "Journal"),
         slot(.inventory, .gameplay, "Quick Inventory"), slot(.map, .gameplay, "Quick Map"),
         slot(.skills, .gameplay, "Quick Stats"), slot(.magic, .gameplay, "Quick Magic"),
@@ -63,6 +91,7 @@ nonisolated public struct InputBindings: Equatable, Sendable {
         "OpenSky|Fly Up": 0x2D,
         "OpenSky|Fly Down": 0x2F
     ]
+    static let macUnbound: Set = ["Main Gameplay|Auto-Move"]
 
     /// Vanilla keys, used when the install's controlmap.txt cannot be read.
     public static let builtInDefaults: [String: UInt32] = [
@@ -72,6 +101,10 @@ nonisolated public struct InputBindings: Equatable, Sendable {
         "Main Gameplay|Toggle POV": 0x21, "Main Gameplay|Jump": 0x39,
         "Main Gameplay|Sprint": 0x38, "Main Gameplay|Sneak": 0x1D, "Main Gameplay|Run": 0x2A,
         "Main Gameplay|Shout": 0x2C,
+        "Main Gameplay|Left Attack/Block": InputCode.mouseBase + 1,
+        "Main Gameplay|Right Attack/Block": InputCode.mouseBase,
+        "Main Gameplay|Tween Menu": 0x0F, "Main Gameplay|Toggle Always Run": 0x3A,
+        "Main Gameplay|Auto-Move": 0x2E, "Main Gameplay|Favorites": 0x10,
         "Main Gameplay|Journal": 0x24, "Main Gameplay|Quick Inventory": 0x17,
         "Main Gameplay|Quick Map": 0x32, "Main Gameplay|Quick Stats": 0x35,
         "Main Gameplay|Quick Magic": 0x19, "Main Gameplay|Wait": 0x14,
@@ -96,6 +129,9 @@ nonisolated public struct InputBindings: Equatable, Sendable {
     public private(set) var menuReferences: [GameInputAction: [String]]
     /// Slots the file marks as not remappable on the keyboard.
     public private(set) var fixedKeys: Set<String> = []
+    /// Slots the file lets the player bind to a mouse button. Vanilla allows every
+    /// gameplay row with a keyboard key but the hotkeys and the saves.
+    public private(set) var mouseKeys: Set<String> = Self.vanillaMouseKeys
     /// Keys only the map reads, by scan code, from the file's `Map Menu` context.
     public private(set) var mapMenuKeys: [UInt32: GameInputAction] = Self.vanillaMapMenuKeys
 
@@ -111,20 +147,28 @@ nonisolated public struct InputBindings: Equatable, Sendable {
                 $0.name == InputContext.gameplay.rawValue
             })
         {
-            fixedKeys = Set(controlMap.contexts[gameplay].events.filter { !$0.remappableKeyboard }
-                .map { "\(InputContext.gameplay.rawValue)|\($0.name)" })
+            let events = controlMap.contexts[gameplay].events
+            let context = InputContext.gameplay.rawValue
+            fixedKeys = Set(events.filter { !$0.remappableKeyboard }
+                .map { "\(context)|\($0.name)" })
+            mouseKeys = Set(events.filter(\.remappableMouse).map { "\(context)|\($0.name)" })
             for slot in Self.slots where slot.context == .gameplay {
-                if
-                    let code = controlMap.codes(of: slot.event, in: gameplay, device: .keyboard)
-                        .first
-                {
+                let keyboard = controlMap.codes(of: slot.event, in: gameplay, device: .keyboard)
+                let mouse = controlMap.codes(of: slot.event, in: gameplay, device: .mouse)
+                    .filter { InputCode.mouseButtons.contains($0) }
+                if let code = keyboard.first {
                     defaults[slot.key] = code
+                } else if let button = mouse.first {
+                    defaults[slot.key] = InputCode.mouseBase + button
                 }
             }
             references = Self.menuReferences(in: controlMap) ?? references
             mapMenuKeys = Self.mapMenuKeys(in: controlMap) ?? mapMenuKeys
         }
         defaults.merge(Self.macOverrides) { _, mac in mac }
+        for key in Self.macUnbound {
+            defaults[key] = nil
+        }
         self.defaults = defaults
         menuReferences = references
     }
@@ -136,6 +180,13 @@ nonisolated public struct InputBindings: Equatable, Sendable {
     public func scanCode(for action: GameInputAction) -> UInt32? {
         guard let slot = Self.slot(for: action) else { return nil }
         return overrides[slot.key] ?? defaults[slot.key]
+    }
+
+    /// The action a mouse button fires outside menus, such as attack for the left one.
+    public func action(forMouseButton button: Int) -> GameInputAction? {
+        let code = InputCode.mouse(button)
+        return Self.slots.first { $0.context == .gameplay && scanCode(for: $0.action) == code }?
+            .action
     }
 
     func isRemapped(_ action: GameInputAction) -> Bool {
@@ -174,7 +225,12 @@ nonisolated public struct InputBindings: Equatable, Sendable {
         guard
             let slot = Self.slot(for: action), slot.remappable,
             !fixedKeys.contains(slot.key) else { return .notRemappable }
-        guard DirectInputKeyCodes.macKeyCode(scanCode) != nil else { return .unknownKey }
+        if let button = InputCode.mouseButton(scanCode) {
+            guard mouseKeys.contains(slot.key) else { return .notRemappable }
+            guard InputCode.mouseButtons.contains(UInt32(button)) else { return .unknownKey }
+        } else if DirectInputKeyCodes.macKeyCode(scanCode) == nil {
+            return .unknownKey
+        }
         let old = self.scanCode(for: action)
         let holder = Self.slots.first {
             $0.action != action && $0.context == slot.context && self
@@ -196,13 +252,27 @@ nonisolated public struct InputBindings: Equatable, Sendable {
     public mutating func restore(_ saved: [String: Int]) {
         let known = Set(Self.slots.map(\.key))
         overrides = saved.reduce(into: [:]) { result, pair in
-            guard
-                known.contains(pair.key), pair.value >= 0,
-                DirectInputKeyCodes.macKeyCode(UInt32(pair.value)) != nil
-            else { return }
+            guard known.contains(pair.key), pair.value >= 0, Self.isKnown(UInt32(pair.value)) else {
+                return
+            }
             result[pair.key] = UInt32(pair.value)
         }
     }
+
+    private static func isKnown(_ code: UInt32) -> Bool {
+        if let button = InputCode.mouseButton(code) {
+            return InputCode.mouseButtons.contains(UInt32(button))
+        }
+        return DirectInputKeyCodes.macKeyCode(code) != nil
+    }
+
+    /// From the vanilla file's mouse column, for when it cannot be read.
+    static let vanillaMouseKeys: Set<String> = Set([
+        "Forward", "Back", "Strafe Left", "Strafe Right", "Left Attack/Block",
+        "Right Attack/Block", "Activate", "Ready Weapon", "Tween Menu", "Toggle POV", "Jump",
+        "Sprint", "Shout", "Sneak", "Run", "Toggle Always Run", "Auto-Move", "Favorites",
+        "Wait", "Journal", "Pause", "Quick Inventory", "Quick Magic", "Quick Stats", "Quick Map"
+    ].map { "\(InputContext.gameplay.rawValue)|\($0)" })
 
     private mutating func set(_ slot: InputBindingSlot, to scanCode: UInt32) {
         overrides[slot.key] = defaults[slot.key] == scanCode ? nil : scanCode

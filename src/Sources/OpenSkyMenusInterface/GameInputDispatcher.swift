@@ -15,6 +15,10 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
     case placeMarker
     case menuUp, menuDown, menuLeft, menuRight, menuAccept, menuCancel
     case hotkey1, hotkey2, hotkey3, hotkey4, hotkey5, hotkey6, hotkey7, hotkey8
+    /// The Tween menu key (Tab) and the favourites key (Q).
+    case tweenMenu, favorites
+    /// Auto-Move and Toggle Always Run flip a state, as Sneak does.
+    case autoMove, toggleAlwaysRun
 
     /// A held action stays down until released; the rest fire once on press.
     public var isHeld: Bool {
@@ -35,7 +39,7 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
     /// stays: it opens the form's perk tree.
     var isBlockedInBeastForm: Bool {
         switch self {
-        case .inventory, .magic, .map, .cameraMode: true
+        case .inventory, .magic, .map, .cameraMode, .favorites: true
         default: hotkeySlot != nil
         }
     }
@@ -44,20 +48,22 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
     /// The wait key and the favourites open menus, so the menu group locks them.
     var controlGroup: PlayerControlGroup? {
         switch self {
-        case .forward, .back, .left, .right, .up, .down, .run, .sprint, .jump: .movement
+        case .forward, .back, .left, .right, .up, .down, .run, .sprint, .jump, .autoMove,
+             .toggleAlwaysRun: .movement
         case .attack, .block, .shout, .readyWeapon: .fighting
         case .cameraMode: .camSwitch
         case .sneak: .sneaking
         case .activate: .activate
         case .journal: .journal
-        case .inventory, .magic, .map, .skills, .wait: .menu
+        case .inventory, .magic, .map, .skills, .wait, .tweenMenu, .favorites: .menu
         default: hotkeySlot != nil ? .menu : nil
         }
     }
 
     /// Map, magic, wait, saves, pause, skills, and the hotkeys: the app carries these out.
     var isAppCommand: Bool {
-        [.map, .magic, .wait, .quicksave, .quickload, .pause, .skills].contains(self)
+        [.map, .magic, .wait, .quicksave, .quickload, .pause, .skills, .tweenMenu, .favorites]
+            .contains(self)
             || hotkeySlot != nil
     }
 
@@ -193,12 +199,18 @@ public struct GameInputDispatcher {
             applyRelease(action)
             return
         }
+        applyPress(action)
+    }
+
+    private func applyPress(_ action: GameInputAction) {
         switch action {
         case .sneak: input?.toggleSneak()
         case .jump: input?.requestJump()
         case .activate: input?.requestActivation()
         case .readyWeapon: input?.requestWeaponToggle()
         case .cameraMode: input?.requestCameraModeCycle()
+        case .autoMove: input?.toggleAutoMove()
+        case .toggleAlwaysRun: input?.toggleAlwaysRun()
         case .journal: openJournal?()
         case .inventory: openInventory?()
         default:

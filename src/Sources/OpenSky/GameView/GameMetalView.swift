@@ -169,7 +169,9 @@ final class GameMetalView: MTKView {
             let action = bindings.action(forMacKey: event.keyCode, inMenu: false),
             let flag = Self.modifierFlags[event.keyCode]
         {
-            dispatcher.apply(action, event.modifierFlags.contains(flag) ? .press : .release)
+            // Caps Lock reports its lock state, not the key: each change is one press.
+            let pressed = flag == .capsLock || event.modifierFlags.contains(flag)
+            dispatcher.apply(action, pressed ? .press : .release)
         }
         super.flagsChanged(with: event)
     }
@@ -185,6 +187,9 @@ final class GameMetalView: MTKView {
         // A captured cursor is hidden and has no place on screen, so a click
         // there is the accept button.
         if inMenu {
+            if captureMouse(0) {
+                return
+            }
             if captured {
                 menuMode?.routeMenuInput(.button(.accept))
             } else {
@@ -192,10 +197,10 @@ final class GameMetalView: MTKView {
             }
             return
         }
-        // The first click captures the cursor; every later click attacks, as
-        // in vanilla. Look follows pointer motion, so the button is free.
+        // The first click captures the cursor; every later click fires its bound
+        // action, attack by default. Look follows pointer motion, so the button is free.
         if captured {
-            dispatcher.apply(.attack, .press)
+            pressMouse(0)
         } else {
             captureCursor()
         }
@@ -206,6 +211,7 @@ final class GameMetalView: MTKView {
         // that went down inside the view and came up outside it must not leave
         // a bow drawn forever.
         input?.setAttackHeld(false)
+        releaseMouse(0)
         // A captured cursor's press arrives as accept, but a menu that drags, such as
         // the loading screen, still needs to see the button come up.
         if inMenu {
@@ -214,17 +220,52 @@ final class GameMetalView: MTKView {
     }
 
     override func rightMouseDown(with event: NSEvent) {
-        // Block is held, so it is a button-down/up pair rather than a latch.
-        // Menu mode swallows it; a menu has no guard to raise.
+        // A held action, block by default, is a button-down/up pair. Menu mode
+        // swallows it, except as the key the Controls page waits for.
         guard menuMode?.isMenuMode != true, captured else {
-            super.rightMouseDown(with: event)
+            if !(inMenu && captureMouse(1)) {
+                super.rightMouseDown(with: event)
+            }
             return
         }
-        dispatcher.apply(.block, .press)
+        pressMouse(1)
     }
 
     override func rightMouseUp(with event: NSEvent) {
-        dispatcher.apply(.block, .release)
+        releaseMouse(1)
+    }
+
+    override func otherMouseDown(with event: NSEvent) {
+        let button = event.buttonNumber
+        if inMenu {
+            _ = captureMouse(button)
+        } else if captured {
+            pressMouse(button)
+        }
+    }
+
+    override func otherMouseUp(with event: NSEvent) {
+        releaseMouse(event.buttonNumber)
+    }
+
+    /// The Controls page waiting for a key takes a mouse button too.
+    private func captureMouse(_ button: Int) -> Bool {
+        onCapturedKey?(InputCode.mouse(button)) == true
+    }
+
+    private func pressMouse(_ button: Int) {
+        guard let action = bindings.action(forMouseButton: button) else { return }
+        if let name = action.helpEvent {
+            onInputEvent?(name)
+        }
+        dispatcher.apply(action, .press)
+    }
+
+    private func releaseMouse(_ button: Int) {
+        guard
+            !inMenu, let action = bindings.action(forMouseButton: button), action.sendsRelease
+        else { return }
+        dispatcher.apply(action, .release)
     }
 
     override func mouseMoved(with event: NSEvent) {
