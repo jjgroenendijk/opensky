@@ -281,3 +281,22 @@ The GPU features and the record coverage added after that raised it again. A Deb
 memory (`.logs/fly-footprint/20261013T124032Z` and `20261013T124232Z`). The heap stayed near the
 older runs, so the growth is GPU memory.
 The 1.6 times plateau check still fails a footprint that keeps growing.
+
+### Freed memory the allocator keeps
+
+Each cell build allocates and frees a lot of small memory. The live data stays the same over a
+session, but the default macOS allocator keeps freed pages. The footprint counts them, so it grew
+with each visit to the same places.
+
+A Release tour on 2026-11-15 visited Whiterun, the plains, and Dragonsreach twice in one session.
+The malloc heap held 1022 MB of live data after one visit and 1024 MB after two. But the regions
+`vmmap` lists as "Malloc Small (empty)" and "Malloc Large (empty)" grew from 13 MB to 629 MB, and
+the footprint at the last scene grew from 3311 MB to 3825 MB
+(`.logs/memory-growth/20261115T091203Z` and `20261115T101831Z`).
+
+The app starts with `MallocSpaceEfficient=1` (`LSEnvironment` in the app's Info.plist). The
+allocator then returns freed pages sooner. The same tour then ended at 2099 MB instead of
+3447 MB, the scenes measured 2189 to 2487 MB instead of 2847 to 3825 MB, and the frame times did
+not get worse (`.logs/memory-growth/20261115T103015Z-space-efficient`). macOS applies the setting
+only when `open` or Finder starts the app. `openskycli game launch` and the benchmark use `open`.
+An app started from Xcode runs without it.
