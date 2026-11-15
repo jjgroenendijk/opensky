@@ -1,5 +1,6 @@
 // The records the title, race, and map menus read: the `Player` NPC_, the
 // playable races, the map markers, the Tamriel map bounds, and the map GMSTs.
+// The records are decoded the first time a menu reads them.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -70,63 +71,123 @@ nonisolated public struct MenuRecordData: Sendable {
         "sCreated", "sDiscoveredEffects", "sDiscoveredIngredientEffectEating"
     ]
 
-    public let player: ActorBase?
-    /// RACE records with the playable flag, sorted by editor ID.
-    public let playableRaces: [Race]
-    public let markers: MapMarkerIndex
-    /// Every WRLD record by editor ID.
-    public let worldspaces: [String: Worldspace]
-    /// Each WRLD's plugin-relative identity, the key map markers are grouped by.
-    public let worldspaceIDs: [String: ResolvedFormID]
+    /// The `Player` NPC_ and the playable races, decoded on first use.
+    private struct Races: Sendable {
+        let player: ActorBase?
+        /// RACE records with the playable flag, sorted by editor ID.
+        let playable: [Race]
+    }
+
+    /// The map markers and the WRLD records, decoded on first use.
+    private struct Map: Sendable {
+        let markers: MapMarkerIndex
+        let worldspaces: [String: Worldspace]
+        let worldspaceIDs: [String: ResolvedFormID]
+    }
+
+    /// The System page's lists and the title light, decoded on first use.
+    private struct Content: Sendable {
+        let installedPlugins: [InstalledPlugin]
+        let helpManual: ResolvedFormID?
+        let mainMenuLighting: MainMenuCellLighting?
+    }
+
+    private let races: FirstUseValue<Races>
+    private let map: FirstUseValue<Map>
+    private let chargenRecords: FirstUseValue<ChargenRecords>
+    private let content: FirstUseValue<Content>
+    private var chargenTypeTable: FirstUseValue<[ChargenTypeKey: [Int: Int]]>?
+
     public let mapSettings: MenuMapSettings
     /// String GMSTs the menus show, such as `sNoFastTravelCombat` and `sRSMBody`, by editor ID.
     public let menuTexts: [String: LString]
-    /// Head parts and colours for the race menu.
-    public let chargen: ChargenRecords
     /// The `fStats` float GMSTs that shape the skills menu's perk sky.
     public let statsSettings: [String: Float]
-    /// The active plugins in load order, for the System page's Installed Content.
-    public let installedPlugins: [InstalledPlugin]
-    /// The FLST of help topics the System page's Help lists: the DOBJ `HMPC` default object.
-    public let helpManual: ResolvedFormID?
-    /// The light the main menu's logo and smoke are drawn under.
-    public let mainMenuLighting: MainMenuCellLighting?
-    /// The highest type each race and sex's chargen TRI holds, by `NAMA` index. Filled
-    /// from the install after the records load.
-    public var chargenTypes: [ChargenTypeKey: [Int: Int]] = [:]
 
-    /// Every plugin's records; a later plugin's override wins.
+    public var player: ActorBase? {
+        races.value.player
+    }
+
+    /// RACE records with the playable flag, sorted by editor ID.
+    public var playableRaces: [Race] {
+        races.value.playable
+    }
+
+    public var markers: MapMarkerIndex {
+        map.value.markers
+    }
+
+    /// Every WRLD record by editor ID.
+    public var worldspaces: [String: Worldspace] {
+        map.value.worldspaces
+    }
+
+    /// Each WRLD's plugin-relative identity, the key map markers are grouped by.
+    public var worldspaceIDs: [String: ResolvedFormID] {
+        map.value.worldspaceIDs
+    }
+
+    /// Head parts and colours for the race menu.
+    public var chargen: ChargenRecords {
+        chargenRecords.value
+    }
+
+    /// The active plugins in load order, for the System page's Installed Content.
+    public var installedPlugins: [InstalledPlugin] {
+        content.value.installedPlugins
+    }
+
+    /// The FLST of help topics the System page's Help lists: the DOBJ `HMPC` default object.
+    public var helpManual: ResolvedFormID? {
+        content.value.helpManual
+    }
+
+    /// The light the main menu's logo and smoke are drawn under.
+    public var mainMenuLighting: MainMenuCellLighting? {
+        content.value.mainMenuLighting
+    }
+
+    /// The highest type each race and sex's chargen TRI holds, by `NAMA` index. Empty
+    /// until `readChargenTypes(with:)` names how to read them.
+    public var chargenTypes: [ChargenTypeKey: [Int: Int]] {
+        chargenTypeTable?.value ?? [:]
+    }
+
+    /// True once a menu read the records of `part`, for tests of the first-use decode.
+    func isDecoded(_ part: DecodedPart) -> Bool {
+        switch part {
+        case .races: races.isBuilt
+        case .map: map.isBuilt
+        case .chargen: chargenRecords.isBuilt
+        case .content: content.isBuilt
+        }
+    }
+
+    enum DecodedPart: Sendable {
+        case races, map, chargen, content
+    }
+
+    /// Every plugin's records; a later plugin's override wins. Only the settings are read
+    /// here; each part of the records is decoded the first time a menu reads it.
     public init(loadOrder: LoadOrderPlugins, settings: GameSettingStore) {
-        var skipped = SkippedRecords()
-        let player = loadOrder.indexRecords(of: "NPC_", skipped: &skipped) { record, localized in
-            FormID(record.formID) == Self.playerBase
-                ? try ActorBase(record: record, localized: localized) : nil
-        }[Self.playerBase.rawValue]
-        let races = loadOrder.decodeRecords(of: "RACE", skipped: &skipped) {
-            try Race(record: $0, localized: $1)
-        }.filter { $0.flags.contains(.playable) }
-        let worldspaces = loadOrder.decodeRecords(of: "WRLD", skipped: &skipped) {
-            try Worldspace(record: $0, localized: $1)
+        races = FirstUseValue { Self.races(loadOrder) }
+        map = FirstUseValue { Self.map(loadOrder) }
+        chargenRecords = FirstUseValue {
+            var skipped = SkippedRecords()
+            return ChargenRecords(loadOrder: loadOrder, skipped: &skipped)
         }
-        var byName: [String: Worldspace] = [:]
-        var ids: [String: ResolvedFormID] = [:]
-        for world in worldspaces {
-            guard let name = world.editorID else { continue }
-            byName[name] = world
-            ids[name] = loadOrder.space.resolve(world.formID)
+        content = FirstUseValue {
+            let defaultObjects = DefaultObjectStore(plugins: loadOrder.files)
+            return Content(
+                installedPlugins: loadOrder.plugins.map {
+                    InstalledPlugin(name: $0.name, file: $0.file)
+                },
+                helpManual: defaultObjects.object(tag: Self.helpManualTag),
+                mainMenuLighting: MainMenuCellLighting(
+                    loadOrder: loadOrder, defaultObjects: defaultObjects
+                )
+            )
         }
-        self.worldspaces = byName
-        worldspaceIDs = ids
-        chargen = ChargenRecords(loadOrder: loadOrder, skipped: &skipped)
-        self.player = player
-        playableRaces = races.sorted { ($0.editorID ?? "") < ($1.editorID ?? "") }
-        markers = MapMarkerIndex(plugins: loadOrder.files)
-        installedPlugins = loadOrder.plugins.map { InstalledPlugin(name: $0.name, file: $0.file) }
-        let defaultObjects = DefaultObjectStore(plugins: loadOrder.files)
-        helpManual = defaultObjects.object(tag: Self.helpManualTag)
-        mainMenuLighting = MainMenuCellLighting(
-            loadOrder: loadOrder, defaultObjects: defaultObjects
-        )
         mapSettings = MenuMapSettings(store: settings)
         menuTexts = settings.values.values.reduce(into: [:]) { texts, resolved in
             let name = resolved.setting.editorID
@@ -143,6 +204,48 @@ nonisolated public struct MenuRecordData: Sendable {
             else { return }
             values[resolved.setting.editorID] = value
         }
+    }
+
+    /// Reads the chargen types with `read` the first time the race menu asks for them.
+    public mutating func readChargenTypes(
+        with read: @escaping @Sendable (MenuRecordData) -> [ChargenTypeKey: [Int: Int]]
+    ) {
+        let records = self
+        chargenTypeTable = FirstUseValue { read(records) }
+    }
+
+    private static func races(_ loadOrder: LoadOrderPlugins) -> Races {
+        var skipped = SkippedRecords()
+        let player = loadOrder.indexRecords(of: "NPC_", skipped: &skipped) { record, localized in
+            FormID(record.formID) == Self.playerBase
+                ? try ActorBase(record: record, localized: localized) : nil
+        }[Self.playerBase.rawValue]
+        let races = loadOrder.decodeRecords(of: "RACE", skipped: &skipped) {
+            try Race(record: $0, localized: $1)
+        }.filter { $0.flags.contains(.playable) }
+        return Races(
+            player: player,
+            playable: races.sorted { ($0.editorID ?? "") < ($1.editorID ?? "") }
+        )
+    }
+
+    private static func map(_ loadOrder: LoadOrderPlugins) -> Map {
+        var skipped = SkippedRecords()
+        let worldspaces = loadOrder.decodeRecords(of: "WRLD", skipped: &skipped) {
+            try Worldspace(record: $0, localized: $1)
+        }
+        var byName: [String: Worldspace] = [:]
+        var ids: [String: ResolvedFormID] = [:]
+        for world in worldspaces {
+            guard let name = world.editorID else { continue }
+            byName[name] = world
+            ids[name] = loadOrder.space.resolve(world.formID)
+        }
+        return Map(
+            markers: MapMarkerIndex(plugins: loadOrder.files),
+            worldspaces: byName,
+            worldspaceIDs: ids
+        )
     }
 }
 
