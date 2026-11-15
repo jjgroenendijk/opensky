@@ -102,9 +102,9 @@ struct MoviePlayerCoordinatorTests {
         #expect(player.readout.lastOutcome == .finished)
     }
 
-    @Test func onlyAnInterruptibleMovieSkipsOnAKey() {
+    @Test func onlyAnInterruptibleMovieSkipsOnActivate() {
         let fixed = player()
-        fixed.route(.button(.cancel))
+        fixed.route(.button(.accept))
         #expect(fixed.isPlaying)
         #expect(fixed.skip(force: true))
         #expect(!fixed.isPlaying)
@@ -112,6 +112,8 @@ struct MoviePlayerCoordinatorTests {
         var outcome: MovieOutcome?
         let skippable = player(interruptible: true, onEnd: { outcome = $0 })
         skippable.route(.button(.cancel))
+        #expect(skippable.isPlaying, "Cancel does not skip a movie in the game")
+        skippable.route(.button(.accept))
         #expect(outcome == .skipped)
     }
 

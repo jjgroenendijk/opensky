@@ -120,8 +120,8 @@ public final class MoviePlayerCoordinator {
     }
 
     public func route(_ event: MenuInputEvent) {
-        // [WARNING] Not confirmed which keys skip a movie; cancel and accept both do here.
-        if event == .button(.cancel) || event == .button(.accept) {
+        // The game skips on the Activate key only, which the menu's Accept follows.
+        if event == .button(.accept) {
             skip()
         }
     }

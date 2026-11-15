@@ -50,10 +50,10 @@ public final class MovieWorldAdapter: MoviePlayerWorld {
 
     public func startMovieSound(_ sound: DecodedAudio?, request: MovieRequest) {
         guard let engine = game.audio.engine, engine.isRunning else { return }
-        // [WARNING] Not confirmed which categories "game audio" covers; the movie plays
-        // as an effect, so the effects category stays on.
-        let muting = (request.muteAudio ? [AudioCategory.voice, .footsteps] : [])
-            + (request.muteMusic ? [AudioCategory.music] : [])
+        // The game mutes its master category, so every game sound; the movie's own
+        // sound skips the categories.
+        let muting = request.muteAudio
+            ? AudioCategory.allCases : request.muteMusic ? [.music] : []
         mutedCategories = muting.filter { !engine.isMuted($0) }
         for category in mutedCategories {
             engine.setMuted(true, for: category)
@@ -61,10 +61,9 @@ public final class MovieWorldAdapter: MoviePlayerWorld {
         guard let sound, sound.frameCount > 0 else { return }
         do {
             let buffer = try WorldAudioEngine.makeBuffer(decoded: sound, downmixToMono: false)
-            soundID = try engine.playNonPositional(
-                buffer: buffer,
-                request: .nonPositional(name: request.fileName, category: .effects)
-            )
+            var play = AudioPlayRequest.nonPositional(name: request.fileName, category: .effects)
+            play.bypassesCategory = true
+            soundID = try engine.playNonPositional(buffer: buffer, request: play)
         } catch {
             let reason = String(describing: error)
             Self.logger.warning("[WARNING] movie sound did not start: \(reason, privacy: .public)")
