@@ -1,9 +1,10 @@
 name: Weekly checks
 
-# The unit tests under each sanitizer. Each one rebuilds everything with
-# instrumentation, too slow for every push, so they run on a macOS runner once a
-# week and on demand (docs/tools/ci.md). A failed run opens an issue, or comments
-# on the open one, and a green run closes it. The module metrics report of design
+# The unit tests under each sanitizer, and the checks that read the index store.
+# Each one rebuilds everything, with instrumentation or without the compilation
+# cache, too slow for every push, so they run on a macOS runner once a week and
+# on demand (docs/tools/ci.md). A failed run opens an issue, or comments on the
+# open one, and a green run closes it. The module metrics report of design
 # rule 6 and the design groups report of rule 7 run here too, and fail nothing.
 on:
   schedule:
@@ -39,6 +40,9 @@ jobs:
             command: make test PLAN=Sanitizers SAN=thread XCODEBUILD_FLAGS="$BUILD_FLAGS"
           - name: Address sanitizer
             command: make test PLAN=Sanitizers SAN=address XCODEBUILD_FLAGS="$BUILD_FLAGS"
+          # The checks read the index store, so this job keeps it on.
+          - name: Index checks
+            command: make lint-index XCODEBUILD_FLAGS="${BUILD_FLAGS/COMPILER_INDEX_STORE_ENABLE=NO /}"
     steps:
       - if: inputs.force_failure
         run: exit 1
@@ -58,6 +62,10 @@ jobs:
           key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
       # The ASTC texture encoder links the vendored astcenc static library.
       - run: tools/vendor-astcenc.sh
+      # Periphery is the one tool the CI image does not ship. The cask in the
+      # periphery tap no longer installs, so take the Homebrew core formula.
+      - if: matrix.name == 'Index checks'
+        run: brew install periphery
       - name: Wait for the Metal Toolchain
         run: tools/ci/metal-toolchain.sh wait
       - run: ${{ matrix.command }}

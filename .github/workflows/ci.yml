@@ -3,7 +3,7 @@ name: CI
 # The checks run on macOS, like a developer machine (docs/tools/ci.md). Format and
 # Static checks run the two halves of `make check`, so the gates are the same by
 # construction, and Build & test runs `make test`. The checks share two jobs, so one
-# run uses at most 4 macOS runners at a time; the Free plan allows 5 per account.
+# run uses at most 3 macOS runners at a time; the Free plan allows 5 per account.
 # The Changes and Lint jobs only read results, so they run on Linux.
 # A draft pull request runs too, so the full unit plan runs on a runner while the
 # author keeps working; a newer push cancels the older run. Marking a draft ready
@@ -169,7 +169,7 @@ jobs:
           fi
           echo "build=$build" | tee -a "$GITHUB_OUTPUT"
 
-  # Picks the runner of Build & test and Index checks (docs/tools/ci.md#self-hosted-runner).
+  # Picks the runner of Build & test (docs/tools/ci.md#self-hosted-runner).
   # Only a pull request that the owner opened from a branch of this repository may use
   # the self-hosted Mac, and only while it is online. Every other run, and every run
   # without the RUNNER_STATUS_TOKEN secret, takes a hosted runner.
@@ -218,7 +218,7 @@ jobs:
           fi
 
   # Only tests that need no game data: a runner has no install, and the job sets no
-  # OPENSKY_DATA_ROOT, so a gated test skips. Index checks compiles the real-data suites.
+  # OPENSKY_DATA_ROOT, so a gated test skips. The weekly Index checks job compiles the real-data suites.
   build-test:
     name: Build & test
     needs: [changes, runner]
@@ -377,104 +377,12 @@ jobs:
           include-hidden-files: true
           retention-days: 7
 
-  # The checks that read the index store: unused code and the adapter rule. A build
-  # replayed from the compilation cache writes almost no index data, so this job builds
-  # uncached on its own runner, beside Build & test. It starts from the index tree of
-  # the last push to main, so it compiles only what changed (docs/tools/ci.md#index-checks).
-  index-checks:
-    name: Index checks
-    needs: [changes, runner]
-    if: needs.changes.outputs.build == 'true'
-    runs-on: ${{ fromJSON(needs.runner.outputs.labels) }}
-    timeout-minutes: 60
-    permissions:
-      contents: read
-      actions: write
-    env:
-      DEVELOPER_DIR: ${{ needs.runner.outputs.developer-dir }}
-      BUILD_FLAGS: CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= -skipPackagePluginValidation -skipMacroValidation
-      GH_TOKEN: ${{ github.token }}
-      INDEX_TREE: .cache/DerivedData-index
-    steps:
-      # The self-hosted Mac keeps its index tree, whose file times stay right, because
-      # a checkout there rewrites only the files that changed.
-      - uses: actions/checkout@v7
-        with:
-          clean: ${{ needs.runner.outputs.hosted == 'true' }}
-      - name: Clean all but the build tree
-        if: needs.runner.outputs.hosted != 'true'
-        run: git clean -ffdx -e .cache/ -e src/.vendor/
-      - name: Cache keys
-        id: keys
-        run: |
-          xcode="$(xcodebuild -version | awk '/Build version/ { print $3 }')"
-          echo "index=index2-$RUNNER_ARCH-$xcode-" >>"$GITHUB_OUTPUT"
-      # Only a push to main saves the tree, because it is about 1.1 GB.
-      - uses: actions/cache/restore@v6
-        id: index
-        if: needs.runner.outputs.hosted == 'true'
-        with:
-          path: |
-            .cache/DerivedData-index
-            .cache/DerivedData/SDKExplicitPrecompiledModules
-          key: ${{ steps.keys.outputs.index }}${{ github.sha }}
-          restore-keys: ${{ steps.keys.outputs.index }}
-      # A checkout writes every file now, which would make the build compile all of it.
-      - name: Give the sources the times the restored tree expects
-        if: needs.runner.outputs.hosted == 'true'
-        run: tools/ci/source-times.sh "$(cat "$INDEX_TREE/source-commit" 2>/dev/null || true)"
-      - name: Start Metal Toolchain download
-        run: tools/ci/metal-toolchain.sh start
-      - uses: actions/cache/restore@v6
-        if: needs.runner.outputs.hosted == 'true'
-        with:
-          path: src/.vendor/ffmpeg
-          key: ffmpeg-${{ runner.arch }}-${{ hashFiles('tools/vendor-ffmpeg.sh') }}
-      - run: tools/vendor-ffmpeg.sh
-      - uses: actions/cache/restore@v6
-        if: needs.runner.outputs.hosted == 'true'
-        with:
-          path: src/.vendor/astcenc
-          key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
-      - run: tools/vendor-astcenc.sh
-      # Periphery is the one tool the CI image does not ship. The cask in the
-      # periphery tap no longer installs, so take the Homebrew core formula.
-      - run: brew install periphery
-      - name: Wait for the Metal Toolchain
-        run: tools/ci/metal-toolchain.sh wait
-      - run: make lint-index XCODEBUILD_FLAGS="$BUILD_FLAGS"
-      # Saved after failed checks too, because the build itself is still valid.
-      - name: Record the commit the tree was built from
-        if: ${{ !cancelled() && github.event_name == 'push' && steps.index.outputs.cache-hit != 'true' }}
-        run: git rev-parse HEAD >"$INDEX_TREE/source-commit"
-      - if: ${{ !cancelled() && github.event_name == 'push' && steps.index.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v6
-        with:
-          path: |
-            .cache/DerivedData-index
-            .cache/DerivedData/SDKExplicitPrecompiledModules
-          key: ${{ steps.index.outputs.cache-primary-key }}
-      - name: Delete superseded index trees
-        if: ${{ !cancelled() && github.event_name == 'push' && steps.index.outputs.cache-hit != 'true' }}
-        env:
-          PREFIX: ${{ steps.keys.outputs.index }}
-          KEEP: ${{ steps.index.outputs.cache-primary-key }}
-        run: tools/ci/cache-prune.sh "$GITHUB_REF" "$PREFIX" "$KEEP"
-      - name: Upload logs
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: index-checks-logs
-          path: .logs/
-          include-hidden-files: true
-          retention-days: 7
-
   # The one required status check on main. A new job goes into `needs`, and branch
   # protection needs no change. Build & test may skip only when Changes said so.
   lint:
     name: Lint
     if: ${{ always() }}
-    needs: [changes, runner, format, static-checks, build-test, index-checks]
+    needs: [changes, runner, format, static-checks, build-test]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -483,10 +391,9 @@ jobs:
           RESULTS: ${{ join(needs.*.result, ' ') }}
           BUILD_NEEDED: ${{ needs.changes.outputs.build }}
           BUILD_RESULT: ${{ needs.build-test.result }}
-          INDEX_RESULT: ${{ needs.index-checks.result }}
         run: |
           echo "$RESULTS"
           for result in $RESULTS; do
             [ "$result" = success ] || [ "$result" = skipped ] || exit 1
           done
-          [ "$BUILD_NEEDED" = false ] || { [ "$BUILD_RESULT" = success ] && [ "$INDEX_RESULT" = success ]; }
+          [ "$BUILD_NEEDED" = false ] || [ "$BUILD_RESULT" = success ]

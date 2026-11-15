@@ -153,7 +153,7 @@ declared order.
 
 Every rule on this page and in [Coordinators](/engine/coordinators.md) has a check in
 `make check` and CI. The adapter rule needs the index store a build writes, so it runs in
-`make lint-index` and the `Index checks` CI job on each pull request. The structural rules are in `tools/syntax-lint/`.
+`make lint-index` and the weekly `Index checks` CI job. The structural rules are in `tools/syntax-lint/`.
 
 | Rule | Check |
 | --- | --- |

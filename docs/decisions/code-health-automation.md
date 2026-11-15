@@ -29,7 +29,7 @@ baseline files, and updating the baselines after each refactor cost too much.
 ## The checks
 
 "Lint" means `make lint` and a CI job. "Health" means `make lint-index`, which the `Index checks`
-CI job runs on each pull request.
+CI job runs weekly.
 
 | Check | Tool | Where | Cost |
 | --- | --- | --- | --- |

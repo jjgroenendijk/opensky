@@ -16,7 +16,7 @@ so this skill is how the rest is done right.
 2. `make check` green, and the change verified as the `testing-and-verifying` skill
    describes. `make check` lints the Swift files the branch changed and includes the
    duplicate, comment-length, and suppression gates. The whole unit plan runs in CI on
-   every push, and so does `make lint-index`; the sanitizers run in the weekly CI workflow.
+   every push; the sanitizers and `make lint-index` run in the weekly CI workflow.
 3. Staged files legal: nothing extracted from the game install. New binary blob -> stop, ask.
 
 ## Message format

@@ -44,7 +44,7 @@ the call read as one idea and gives the next field a home.
 A type that uses many other types does many jobs, and a change in any of them can break it.
 This is coupling between objects, after Chidamber and Kemerer. `make lint-index` counts for
 each type the other types it uses, and fails on each type over the limit
-(`tools/lint-index/fan-out.py --gate`). The `Index checks` CI job runs it.
+(`tools/lint-index/fan-out.py --gate`). The weekly `Index checks` CI job runs it.
 
 - A type uses another when code inside it names that type or one of its members.
 - Only types declared under `src/Sources/` count. The standard library and Apple's
