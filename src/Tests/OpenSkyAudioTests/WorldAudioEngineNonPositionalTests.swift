@@ -84,6 +84,24 @@ struct WorldAudioEngineNonPositionalTests {
         #expect(!names.contains("effect-0"), "the oldest positional source must be evicted")
     }
 
+    /// A movie's sound skips the category submixes, so muting every category leaves it on.
+    @Test
+    func aSourceThatBypassesItsCategoryPlaysWithEveryCategoryMuted() throws {
+        let engine = try MusicAudioFixture.makeRunningEngine()
+        for category in AudioCategory.allCases {
+            engine.setMuted(true, for: category)
+        }
+        var request = AudioPlayRequest.nonPositional(name: "movie", category: .effects)
+        request.bypassesCategory = true
+        let id = try engine.playNonPositional(
+            buffer: MusicAudioFixture.makeStereoBuffer(), request: request
+        )
+        let source = try #require(engine.sources.first { $0.id == id })
+        let destinations = engine.engine.outputConnectionPoints(for: source.node, outputBus: 0)
+        #expect(destinations.contains { $0.node === engine.engine.mainMixerNode })
+        #expect(try MusicAudioFixture.renderRMS(engine) > 1e-2)
+    }
+
     @Test
     func disabledEngineRefusesNonPositionalPlayback() throws {
         let format = try #require(

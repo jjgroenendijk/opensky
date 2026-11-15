@@ -116,6 +116,9 @@ nonisolated public struct AudioPlayRequest: Sendable {
     public var outputModel: OutputModelProfile?
     /// The SNDR's `SNCT`; nil takes the category `category` maps to.
     public var soundCategory: FormID?
+    /// A non-positional source that skips its category submix, so muting or turning
+    /// down a category leaves it alone. A movie's sound plays like this.
+    public var bypassesCategory = false
 
     /// Request for a source with no world position — music, ambience and other
     /// 2D material routed straight into a category submix.
@@ -466,7 +469,9 @@ extension WorldAudioEngine {
         request: AudioPlayRequest,
         format: AVAudioFormat
     ) throws -> AVAudioPlayerNode {
-        guard let mixer = categoryMixers[request.category] else {
+        let target = request.bypassesCategory
+            ? engine.mainMixerNode : categoryMixers[request.category]
+        guard let mixer = target else {
             throw AudioEngineError.submixUnavailable
         }
         let node = AVAudioPlayerNode()

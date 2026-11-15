@@ -89,5 +89,8 @@ libavcodec needs the container fields as codec parameters:
 video flags 0. It has two audio tracks, both 48 kHz stereo DCT (flags `0x7000`), with IDs 1 and
 0 in that order. Every frame frames cleanly and decodes in libavcodec.
 
-[WARNING] No source says which track the game plays when a movie has two. OpenSky plays the
-track with ID 0.
+OpenSky plays the track with ID 0. A clean-room read of `SkyrimSE.exe`, 2026-11-15, found that
+the game never picks a track or mixes two, so the Bink library's default plays.
+
+[WARNING] Not confirmed that the library's default is the track with ID 0 rather than the
+first track in the file, which has ID 1 here.
