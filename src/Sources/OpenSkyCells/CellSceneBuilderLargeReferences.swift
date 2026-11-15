@@ -121,44 +121,19 @@ nonisolated extension CellSceneBuilder.CellLargeReferenceBuilder {
         if let cached = owner.caches.temporaryFullLODCellIndex[key] {
             return cached
         }
+        let scan = CellSceneBuilder.TemporaryFullLODScan(
+            records: owner.records,
+            loadOrder: owner.recordIndex.loadOrderIndexBuildingIfNeeded()
+        )
         var found: Set<CellCoordinate> = []
         for (grid, cell) in owner.recordIndex.exteriorCells(
             in: world,
             localized: owner.pluginLocalized
-        ) where baseHoldsTemporaryFullLOD(cell) || laterHoldsTemporaryFullLOD(cell) {
+        ) where scan.holdsTemporaryFullLOD(cell) {
             found.insert(CellCoordinate(x: grid.x, y: grid.y))
         }
         owner.caches.temporaryFullLODCellIndex[key] = found
         return found
-    }
-
-    nonisolated private func baseHoldsTemporaryFullLOD(_ cell: FoundCell) -> Bool {
-        guard
-            let cellChildren = cell.children,
-            let groups = owner.records.childrenOrSkip(cellChildren)
-        else { return false }
-        for case let .group(group) in groups where group.kind == .cellTemporaryChildren {
-            let records = owner.records.childrenOrSkip(group) ?? []
-            let holds = records.contains { child in
-                guard case let .record(record) = child else { return false }
-                return Self.isLiveFullLODReference(record)
-            }
-            if holds {
-                return true
-            }
-        }
-        return false
-    }
-
-    nonisolated private func laterHoldsTemporaryFullLOD(_ cell: FoundCell) -> Bool {
-        owner.recordIndex.loadOrderIndexBuildingIfNeeded()
-            .laterChildren(ofCell: FormID(cell.formID))
-            .contains { !$0.isPersistent && Self.isLiveFullLODReference($0.record.record) }
-    }
-
-    nonisolated private static func isLiveFullLODReference(_ record: ESMRecord) -> Bool {
-        record.type == "REFR" && !record.isDeleted
-            && record.flags.rawValue & PlacedReference.fullLODFlag != 0
     }
 
     /// The worldspace's persistent Is Full LOD references outside `loadedCells`, in their

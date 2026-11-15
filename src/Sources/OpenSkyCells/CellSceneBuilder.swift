@@ -413,6 +413,12 @@ nonisolated extension CellSceneBuilder {
         let owner: CellSceneBuilder
     }
 
+    /// Finds the cells that hold a temporary Is Full LOD reference from record headers.
+    nonisolated struct TemporaryFullLODScan {
+        let records: CellSceneBuilder.CellRecordWalker
+        let loadOrder: LoadOrderRecordIndex
+    }
+
     nonisolated public struct CellInteriorBuilder {
         let owner: CellSceneBuilder
     }
