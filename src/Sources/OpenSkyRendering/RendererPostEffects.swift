@@ -113,7 +113,7 @@ extension Renderer {
         ]
         let ready = passes.filter { entry in
             guard uniforms.effects & UInt32(entry.flag.rawValue) != 0 else { return false }
-            guard entry.pass.prepare(matching: inputs.scene, residency: residencySet) else {
+            guard entry.pass.prepare(matching: inputs.scene, residency: targetResidency) else {
                 uniforms.effects &= ~UInt32(entry.flag.rawValue)
                 return false
             }

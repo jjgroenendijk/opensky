@@ -121,7 +121,7 @@ public final class ImageSpacePassResources {
     /// A copy target matching `target`, made resident in `residency` when it is new.
     func copyTarget(
         matching target: any MTLTexture,
-        residency: any MTLResidencySet
+        residency: TargetResidency
     ) -> any MTLTexture? {
         if let sceneCopy, Self.matches(sceneCopy, target, format: target.pixelFormat) {
             return sceneCopy
@@ -137,7 +137,7 @@ public final class ImageSpacePassResources {
     /// A stored depth-stencil target the size of `target`, made resident when it is new.
     func depthTarget(
         matching target: any MTLTexture,
-        residency: any MTLResidencySet
+        residency: TargetResidency
     ) -> any MTLTexture? {
         let format = MTLPixelFormat.depth32Float_stencil8
         if let storedDepth, Self.matches(storedDepth, target, format: format) {
@@ -181,14 +181,10 @@ public final class ImageSpacePassResources {
     private static func replace(
         _ old: any MTLTexture?,
         with new: any MTLTexture?,
-        residency: any MTLResidencySet
+        residency: TargetResidency
     ) -> any MTLTexture? {
         guard let new else { return old }
-        if let old {
-            residency.removeAllocation(old)
-        }
-        residency.addAllocation(new)
-        residency.commit()
+        residency.replace(old.map { [$0] } ?? [], with: [new])
         return new
     }
 }
@@ -284,7 +280,7 @@ extension Renderer {
         guard splits else { return descriptor }
         guard
             let target = descriptor.colorAttachments[0].texture,
-            let depth = imageSpacePass.depthTarget(matching: target, residency: residencySet)
+            let depth = imageSpacePass.depthTarget(matching: target, residency: targetResidency)
         else { return nil }
         let split = MTL4RenderPassDescriptor()
         split.colorAttachments[0].texture = target
@@ -347,7 +343,7 @@ extension Renderer {
         markScenePassSegment(next: .imageSpace)
         guard
             let target = descriptor.colorAttachments[0].texture,
-            let copy = imageSpacePass.copyTarget(matching: target, residency: residencySet),
+            let copy = imageSpacePass.copyTarget(matching: target, residency: targetResidency),
             let depthCopy = postEffectDepthCopy(grade, descriptor: descriptor),
             let blit = commandBuffer.makeComputeCommandEncoder()
         else { return nil }

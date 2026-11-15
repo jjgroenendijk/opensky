@@ -44,9 +44,9 @@ extension Renderer {
         guard let swap = attempt({ try precipitation.setSnowLook(wanted, texture: texture) })
         else { return }
         // The textures stay: the generated flake and the record textures are kept.
-        residencySet.removeAllocations(swap.retired.filter { !($0 is (any MTLTexture)) })
-        residencySet.addAllocations(swap.added)
-        residencySet.commit()
+        targetResidency.replace(
+            swap.retired.filter { !($0 is (any MTLTexture)) }, with: swap.added
+        )
     }
 
     /// The game hides rain per drop with its occlusion map; this whole-volume check under
