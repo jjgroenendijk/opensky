@@ -29,4 +29,9 @@ struct WorldNoticeTextTests {
             == .big(HUDBigNotice(kind: .shout, title: "Fus", status: "Word of Power Learned")))
         #expect(WorldNoticeShape(.mapMarkerAdded, texts: texts) == .line("Map updated."))
     }
+
+    @Test func aDiseaseShowsTheSettingTheNameAndAFullStop() {
+        #expect(WorldNoticeShape(.diseaseContracted(name: "Rockjoint"), texts: texts)
+            == .line("You have contracted Rockjoint."))
+    }
 }

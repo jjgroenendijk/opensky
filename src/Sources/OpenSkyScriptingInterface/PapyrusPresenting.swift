@@ -51,6 +51,8 @@ nonisolated public enum WorldNotice: Equatable, Sendable {
     /// `souls` is the player's count after the absorb.
     case dragonSoulAbsorbed(souls: Int)
     case mapMarkerAdded
+    /// The player gained the disease spell with this name.
+    case diseaseContracted(name: String)
 }
 
 @MainActor
