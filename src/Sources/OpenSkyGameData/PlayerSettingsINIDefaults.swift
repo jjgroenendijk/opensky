@@ -76,7 +76,9 @@ nonisolated extension PlayerSettingsCatalog {
         INIKey(id: .generalSubtitles, section: "Interface", key: "bGeneralSubtitles"),
         INIKey(id: .compass, section: "Interface", key: "bShowCompass"),
         INIKey(id: .floatingMarkers, section: "GamePlay", key: "bShowFloatingQuestMarkers"),
-        INIKey(id: .invertLook, section: "Controls", key: "bInvertYValues")
+        INIKey(id: .invertLook, section: "Controls", key: "bInvertYValues"),
+        INIKey(id: .gamepadEnabled, section: "MAIN", key: "bGamepadEnable"),
+        INIKey(id: .vibration, section: "Controls", key: "bGamePadRumble")
     ]
 
     /// The stepper option nearest a minute count: 5, 10, 15, 30, 45, or 60.

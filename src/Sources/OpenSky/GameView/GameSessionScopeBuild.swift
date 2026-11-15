@@ -19,6 +19,7 @@ import OpenSkyInventoryAdapters
 import OpenSkyMagicAdapters
 import OpenSkyMenuAdapters
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyProgression
@@ -266,6 +267,7 @@ struct GameSessionScopeBuild {
                 title: texts[.title], text: texts[.message], buttons: [texts[.confirm]]
             ) { _ in }
         }
+        wireGamepad(router.monitor)
         let sounds = MenuSoundPlayer(MenuSoundDependencies(game: scope.ports))
         renderer.swfSoundPlayer = { sounds.play(editorID: $0 ?? MenuSoundPlayer.okSound) }
         let ticks = router.ticks
@@ -326,6 +328,27 @@ struct GameSessionScopeBuild {
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellStream"
     )
+}
+
+extension GameSessionScopeBuild {
+    /// The gamepad plays through the same dispatcher and bindings as the keys, and the
+    /// Controls page can wait for one of its buttons.
+    private func wireGamepad(_ monitor: GamepadMonitor) {
+        let store = scope.playerSettings.store
+        monitor.isEnabled = { store.bool(.gamepadEnabled) }
+        monitor.cameraInput = scope.cameraInput
+        monitor.bindings = { [weak scope] in scope?.playerSettings.bindings ?? InputBindings() }
+        monitor.applyEdge = { [weak scope] edge in
+            guard let view = scope?.hostView as? GameMetalView else { return }
+            if edge.phase == .press, let name = edge.action.helpEvent {
+                view.onInputEvent?(name)
+            }
+            view.dispatcher.apply(edge.action, edge.phase)
+        }
+        monitor.onCapturedButton = { [weak scope] code in
+            scope?.systemMenu.captureGamepad(code: code) ?? false
+        }
+    }
 }
 
 extension GameSessionScopeBuild {

@@ -60,7 +60,8 @@ extension AgentMenuReadoutAdapter {
             "movie": screens.movieFocusState,
             "bink": screens.binkState,
             "titles": screens.titlesState,
-            "map": screens.mapState
+            "map": screens.mapState,
+            "gamepad": screens.gamepadState
         ]
         if let rows = menuRows() {
             result["rows"] = .array(rows.rows.map { .string($0) })

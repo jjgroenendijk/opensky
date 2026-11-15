@@ -30,6 +30,8 @@ public final class CameraInputState {
     public private(set) var isActivationHeld = false
     private var cameraModeCycleRequested = false
     private var autoMove = false
+    /// A gamepad's left stick, x right and y forward, added to the move keys.
+    private var analogMove: SIMD2<Float> = .zero
     /// The install's `SkyrimPrefs.ini` sets always run on by default.
     public private(set) var alwaysRun = true
 
@@ -46,8 +48,12 @@ public final class CameraInputState {
         autoMove.toggle()
     }
 
-    public var isAutoMoving: Bool {
-        autoMove
+    /// The left stick this frame. A stick pushed forward or back ends Auto-Move too.
+    public func setAnalogMove(_ move: SIMD2<Float>) {
+        analogMove = move
+        if move.y != 0 {
+            autoMove = false
+        }
     }
 
     /// Caps Lock flips whether the body runs without the Run key held.
@@ -161,6 +167,7 @@ public final class CameraInputState {
     public func releaseAll() {
         pressed.removeAll()
         autoMove = false
+        analogMove = .zero
         boost = false
         sprinting = false
         jumpRequested = false
@@ -194,8 +201,8 @@ public final class CameraInputState {
             return input
         }
         var input = CameraInput(
-            moveForward: autoMove ? 1 : axis(.forward, .back),
-            moveRight: axis(.right, .left),
+            moveForward: autoMove ? 1 : Self.clamped(axis(.forward, .back) + analogMove.y),
+            moveRight: Self.clamped(axis(.right, .left) + analogMove.x),
             moveUp: axis(.up, .down),
             lookRight: pendingLookRight,
             lookUp: pendingLookUp,
@@ -219,6 +226,10 @@ public final class CameraInputState {
         attackRequested = false
         weaponToggleRequested = false
         return input
+    }
+
+    private static func clamped(_ value: Float) -> Float {
+        min(1, max(-1, value))
     }
 
     private func axis(_ positive: MoveKey, _ negative: MoveKey) -> Float {

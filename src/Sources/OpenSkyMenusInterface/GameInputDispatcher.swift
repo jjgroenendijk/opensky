@@ -100,7 +100,7 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
     }
 }
 
-public enum GameInputPhase: Sendable {
+nonisolated public enum GameInputPhase: Sendable {
     case press
     case release
 }

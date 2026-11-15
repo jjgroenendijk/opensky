@@ -98,11 +98,15 @@ nonisolated extension SystemMenuMovieBridge {
     }
 
     /// One row per remappable gameplay action. `buttonName` is the symbol of the
-    /// key's button art, and `buttonID` its hex fallback.
+    /// key's button art, and `buttonID` its hex fallback. With a gamepad the rows are
+    /// the ones the file lets a gamepad remap, with their `360_` art.
     static func mappingRows(
-        _ bindings: InputBindings, keyName: (UInt32) -> String
+        _ bindings: InputBindings, keyName: (UInt32) -> String, gamepad: Bool = false
     ) -> [[String: AS2Value]] {
-        InputBindings.slots.enumerated().compactMap { index, slot in
+        if gamepad {
+            return gamepadMappingRows(bindings)
+        }
+        return InputBindings.slots.enumerated().compactMap { index, slot in
             guard
                 slot.context == .gameplay, slot.remappable,
                 !bindings.fixedKeys.contains(slot.key)
@@ -111,6 +115,21 @@ nonisolated extension SystemMenuMovieBridge {
             return [
                 "text": .string(slot.event), "sortIndex": .integer(index),
                 "buttonName": .string(code.map(keyName) ?? ""),
+                "buttonID": code.map { .integer(Int($0)) } ?? .undefined
+            ]
+        }
+    }
+
+    private static func gamepadMappingRows(_ bindings: InputBindings) -> [[String: AS2Value]] {
+        InputBindings.slots.enumerated().compactMap { index, slot in
+            guard slot.context == .gameplay, bindings.gamepadKeys.contains(slot.key) else {
+                return nil
+            }
+            let code = bindings.gamepadCodes(for: slot.action).first
+            let art = code.flatMap { GamepadButton(controlMapCode: $0)?.artName }
+            return [
+                "text": .string(slot.event), "sortIndex": .integer(index),
+                "buttonName": .string(art ?? ""),
                 "buttonID": code.map { .integer(Int($0)) } ?? .undefined
             ]
         }

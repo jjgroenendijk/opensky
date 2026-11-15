@@ -81,6 +81,12 @@ extension AgentScreensAdapter {
         ]
     }
 
+    /// The gamepads the movies see, and the last gameplay event one pressed.
+    var gamepadState: AgentJSON {
+        let gamepads = game.menuRouter.gamepads
+        return ["count": .init(gamepads.count), "lastUserEvent": .init(gamepads.lastUserEvent)]
+    }
+
     /// `debug gamepad`: the reported gamepads change at once; presses arrive next frame.
     func driveGamepad(count: Int?, press: [String]) throws(AgentFailure) -> AgentJSON {
         let gamepads = game.menuRouter.gamepads
@@ -100,7 +106,9 @@ extension AgentScreensAdapter {
 
     private static let gamepadButtons: [String: GamepadButton] = [
         "a": .a, "b": .b, "x": .x, "y": .y,
-        "up": .dpadUp, "down": .dpadDown, "left": .dpadLeft, "right": .dpadRight
+        "up": .dpadUp, "down": .dpadDown, "left": .dpadLeft, "right": .dpadRight,
+        "lb": .leftShoulder, "rb": .rightShoulder, "lt": .leftTrigger, "rt": .rightTrigger,
+        "l3": .leftThumb, "r3": .rightThumb, "start": .start, "back": .back
     ]
 
     /// The loading screen: whether it covers, which screen, and its movie.

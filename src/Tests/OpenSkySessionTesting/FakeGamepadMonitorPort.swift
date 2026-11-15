@@ -7,6 +7,8 @@ public import OpenSkySessionInterface
 nonisolated public final class FakeGamepadMonitorPort: GamepadMonitorPort {
     public var simulatedCount = 0
     public var simulatedPress: Set<GamepadButton> = []
+    public var count = 0
+    public var lastUserEvent: String?
 
     public init() {}
 }

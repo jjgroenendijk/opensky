@@ -187,7 +187,7 @@ Every teleport ends with the player standing on the ground below the placed spot
 | `debug playbink <file> [--interruptible]` | Plays a Bink movie from `Data\Video`, such as `BGS_Logo.bik`, as `Game.PlayBink` does. `--interruptible` lets a key skip it |
 | `debug skipbink` | Ends the playing movie, even one a key cannot skip |
 | `debug titles <step>` | `show` or `hide` the opening titles of `interface\titles.swf`, or plays one clip such as `Sequence1`, through the `MQ101` script hooks |
-| `debug gamepad [--count n] [--press down,a]` | Reports `n` gamepads (0 to 3) to the menu movies when fewer are connected, and presses gamepad buttons (`a`, `b`, `x`, `y`, `up`, `down`, `left`, `right`) on the next frame |
+| `debug gamepad [--count n] [--press down,a]` | Reports `n` gamepads (0 to 3) to the menu movies when fewer are connected, and presses gamepad buttons (`a`, `b`, `x`, `y`, `up`, `down`, `left`, `right`, `lb`, `rb`, `lt`, `rt`, `l3`, `r3`, `start`, `back`) on the next frame. Outside a menu the press plays the game, as the control map's gamepad column says |
 
 ### Rendering
 
@@ -212,7 +212,7 @@ Every teleport ends with the player standing on the ground below the placed spot
 | `debug loadscreen` | `state menu` `loading` |
 | `debug playbink` | `state menu` `bink.frame` and `bink.lastOutcome` |
 | `debug titles` | `state menu` `titles` |
-| `debug gamepad` | `state menu` `movie.focus`, `movie.focusLabel`, `movie.controllers`, and `movie.platform` |
+| `debug gamepad` | `state menu` `movie.focus`, `movie.focusLabel`, `movie.controllers`, and `movie.platform`; `gamepad.count` and `gamepad.lastUserEvent`, the last gameplay event a gamepad pressed, such as `Jump` |
 
 ## Benchmark
 

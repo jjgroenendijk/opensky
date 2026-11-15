@@ -10,17 +10,30 @@ nonisolated public struct GamepadSnapshot: Equatable, Sendable {
     public var pressed: Set<GamepadButton>
     /// The left stick, -1 to 1; positive y is up.
     public var leftStick: SIMD2<Float>
+    /// The right stick, -1 to 1; positive y is up.
+    public var rightStick: SIMD2<Float>
 
-    public init(pressed: Set<GamepadButton> = [], leftStick: SIMD2<Float> = .zero) {
+    public init(
+        pressed: Set<GamepadButton> = [],
+        leftStick: SIMD2<Float> = .zero,
+        rightStick: SIMD2<Float> = .zero
+    ) {
         self.pressed = pressed
         self.leftStick = leftStick
+        self.rightStick = rightStick
     }
 
-    /// Two gamepads at once: every pressed button, and the stick pushed furthest.
+    /// Two gamepads at once: every pressed button, and each stick pushed furthest.
     public func merged(with other: Self) -> Self {
-        let stick = simd_length(other.leftStick) > simd_length(leftStick)
-            ? other.leftStick : leftStick
-        return Self(pressed: pressed.union(other.pressed), leftStick: stick)
+        Self(
+            pressed: pressed.union(other.pressed),
+            leftStick: Self.further(leftStick, other.leftStick),
+            rightStick: Self.further(rightStick, other.rightStick)
+        )
+    }
+
+    private static func further(_ first: SIMD2<Float>, _ second: SIMD2<Float>) -> SIMD2<Float> {
+        simd_length(second) > simd_length(first) ? second : first
     }
 }
 
@@ -72,7 +85,7 @@ nonisolated public struct GamepadMenuInput: Sendable {
         case .b: .cancel
         case .x: .xButton
         case .y: .yButton
-        case .dpadUp, .dpadDown, .dpadLeft, .dpadRight: nil
+        default: nil
         }
     }
 
