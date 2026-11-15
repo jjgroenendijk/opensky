@@ -52,6 +52,29 @@ struct WorldAudioSoundDirectorAnimationTests {
         #expect(engine.sources.isEmpty)
     }
 
+    @Test func aSoundTypeEventPlaysTheActorsSoundOfThatType() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = director(engine: engine, loops: false)
+        #expect(!director.playSoundType(2, actor: source, at: .zero), "no sounds known yet")
+        let attack = ActorSoundType(type: 2, entries: [.init(sound: FormID(0xBBB), chance: 100)])
+        director.actorSoundTypes[source] = ActorSounds(types: [attack])
+        #expect(director.playSoundType(2, actor: source, at: .zero))
+        #expect(engine.sources.count == 1)
+        #expect(!director.playSoundType(3, actor: source, at: .zero), "no hit sound")
+        #expect(!director.playSoundType(99, actor: source, at: .zero), "not a sound type")
+    }
+
+    @Test func soundAnimationEndStopsTheSourcesAnimationLoops() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = director(engine: engine, loops: true)
+        director.playAnimationSound(editorID: "TestClap", source: source, at: .zero)
+        #expect(director.animationLoopCount == 1)
+        director.endAnimationSounds(source: ReferenceKey.plugin(name: "test.esp", objectID: 0x11))
+        #expect(director.animationLoopCount == 1, "another source's end leaves it")
+        director.endAnimationSounds(source: source)
+        #expect(director.animationLoopCount == 0)
+    }
+
     @Test func anUnknownEditorIDPlaysNothing() throws {
         let engine = try Fixture.makeRunningEngine()
         let director = director(engine: engine, loops: false)

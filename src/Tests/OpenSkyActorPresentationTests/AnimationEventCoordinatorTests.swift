@@ -24,6 +24,8 @@ private final class FakeAnimationEventWorld: AnimationEventWorld {
     var headTracking: [(Bool, ReferenceKey)] = []
     var scriptEvents: [(String, ReferenceKey)] = []
     var effectGraphEvents: [(String, ReferenceKey)] = []
+    var soundTypes: [(UInt32, ReferenceKey)] = []
+    var endedSources: [ReferenceKey] = []
 
     func animationEventPosition(of source: ReferenceKey) -> SIMD3<Float>? {
         positions[source]
@@ -62,6 +64,15 @@ private final class FakeAnimationEventWorld: AnimationEventWorld {
 
     func sendEffectGraphEvent(_ name: String, from source: ReferenceKey) {
         effectGraphEvents.append((name, source))
+    }
+
+    func playSoundType(_ type: UInt32, source: ReferenceKey, at _: SIMD3<Float>) -> Bool {
+        soundTypes.append((type, source))
+        return true
+    }
+
+    func endAnimationSounds(source: ReferenceKey) {
+        endedSources.append(source)
     }
 }
 
@@ -159,5 +170,19 @@ struct AnimationEventCoordinatorTests {
         #expect(tracking.heldForward == [actor])
         tracking.setHeadTracking(true, for: actor)
         #expect(tracking.heldForward.isEmpty)
+    }
+
+    @Test func aSoundTypeEventPlaysTheActorsSoundType() {
+        let (coordinator, world) = make()
+        coordinator.handle("enum_Awake", from: actor)
+        coordinator.handle("enum_idle", from: actor)
+        #expect(world.soundTypes.map(\.0) == [7, 0])
+        #expect(coordinator.readout == ["sound type: 2"])
+    }
+
+    @Test func soundAnimationEndEndsTheSourcesLoops() {
+        let (coordinator, world) = make()
+        coordinator.handle("SoundAnimationEnd", from: actor)
+        #expect(world.endedSources == [actor])
     }
 }

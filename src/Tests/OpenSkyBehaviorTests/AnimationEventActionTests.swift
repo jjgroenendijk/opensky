@@ -33,6 +33,15 @@ struct AnimationEventActionTests {
             == .releaseSound(editorID: "TestBark"))
     }
 
+    @Test func soundTypeEventsNameTheirTypeInOrder() {
+        #expect(AnimationEventAction.parse("enum_idle") == .playSoundType(0))
+        #expect(AnimationEventAction.parse("Enum_Movement") == .playSoundType(6))
+        #expect(AnimationEventAction.parse("enum_awake") == .playSoundType(7))
+        #expect(AnimationEventAction.parse("enum_sleep") == nil)
+        #expect(AnimationEventAction.parse("SoundAnimationEnd") == .endSounds)
+        #expect(AnimationEventAction.parse("SoundAnimationEnd.Any") == .endSounds)
+    }
+
     @Test func cameraShakeReadsItsStrength() {
         #expect(AnimationEventAction.parse("CameraShake.0.3") == .cameraShake(strength: 0.3))
         #expect(AnimationEventAction.parse("CameraShake.2") == .cameraShake(strength: 1))

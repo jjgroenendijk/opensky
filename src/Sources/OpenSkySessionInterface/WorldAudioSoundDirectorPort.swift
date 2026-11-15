@@ -22,6 +22,8 @@ public protocol WorldAudioSoundDirectorPort: AnyObject {
         source: ReferenceKey,
         at position: SIMD3<Float>
     ) -> Bool
+    func playSoundType(_ type: UInt32, actor: ReferenceKey, at position: SIMD3<Float>) -> Bool
+    func endAnimationSounds(source: ReferenceKey)
     func releaseAnimationSound(editorID: String, source: ReferenceKey)
     func retireScriptSounds() -> [UInt64: Bool]
     func setScriptSoundVolume(_ id: Int32, _ volume: Float)

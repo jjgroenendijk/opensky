@@ -104,8 +104,7 @@ struct ActorGraphSoundReads {
                 .flag(ScriptedStateName.unconscious) == true
             return ActorSoundSource(
                 key: actor.key, position: actor.feet, sounds: sounds,
-                isConscious: !actor.isDead && !unconscious,
-                isMoving: state.movers.contains(actor.key)
+                isConscious: !actor.isDead && !unconscious
             )
         }
     }
