@@ -152,5 +152,16 @@
       "Adds the benchmark as an item to the single open verification-needed issue, and does not open a new one",
       "Leaves the benchmark for the batch run once the planned work is done"
     ]
+  },
+  {
+    "skills": [
+      "starting-roadmap-work"
+    ],
+    "query": "In the verification batch, the benchmark for a closed performance issue shows no gain. What now?",
+    "files": [],
+    "expected_behavior": [
+      "Opens a new issue with the result and a link to the closed issue",
+      "Leaves the closed issue closed instead of reopening it"
+    ]
   }
 ]
