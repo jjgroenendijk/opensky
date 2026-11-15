@@ -26,6 +26,8 @@ nonisolated public struct ControlMapEvent: Equatable, Sendable {
     let mouse: [ControlInput]
     let gamepad: [ControlInput]
     public let remappableKeyboard: Bool
+    public var remappableMouse = false
+    public var remappableGamepad = false
 }
 
 nonisolated public struct ControlMapContext: Equatable, Sendable {
@@ -115,18 +117,20 @@ nonisolated public struct ControlMapFile: Equatable, Sendable {
             default: throw .malformedLine(line: number, reason: "remap flag \(fields[index])")
             }
         }
-        // The mouse and gamepad flags and the optional group flags are checked, not kept.
-        _ = try (flag(5), flag(6))
+        // The optional group flags are checked, not kept.
         if fields.count > 7, hex(fields[7]) == nil {
             throw .malformedLine(line: number, reason: "group flags \(fields[7])")
         }
-        return try ControlMapEvent(
+        var event = try ControlMapEvent(
             name: fields[0],
             keyboard: inputs(fields[1], line: number),
             mouse: inputs(fields[2], line: number),
             gamepad: inputs(fields[3], line: number),
             remappableKeyboard: flag(4)
         )
+        event.remappableMouse = try flag(5)
+        event.remappableGamepad = try flag(6)
+        return event
     }
 
     /// `0xff`, `0x11`, `0x02,0x4f`, `0x1d+0xb7`, or `!0,Activate,!0,Pause`.

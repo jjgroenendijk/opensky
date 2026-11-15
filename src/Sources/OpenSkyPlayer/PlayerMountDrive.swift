@@ -109,6 +109,7 @@ public final class PlayerMountDrive {
         var mountInput = CameraInput(dt: input.dt)
         mountInput.moveForward = steer.throttle
         mountInput.boost = input.boost
+        mountInput.alwaysRun = input.alwaysRun
         mountInput.sprint = steerable && input.sprint
         if steerable, input.jump {
             let moving = steer.throttle > 0

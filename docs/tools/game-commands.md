@@ -85,6 +85,8 @@ To look at one record, reference, mesh, or cell without the game window, use
 | `up`, `down` | Held. The camera's up and down move keys |
 | `run`, `sprint` | Held. Movement speed |
 | `sneak`, `jump` | Fires once on press |
+| `autoMove`, `toggleAlwaysRun` | Flips Auto-Move or always run, as C and Caps Lock do |
+| `tweenMenu`, `favorites` | Opens the Tween menu or the favourites menu |
 | `activate` | Uses the reference under the crosshair |
 | `attack`, `block`, `shout` | Held. Combat |
 | `readyWeapon` | Draws or sheathes the weapon |

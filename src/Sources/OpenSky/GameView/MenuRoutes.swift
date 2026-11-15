@@ -92,6 +92,9 @@ struct MenuHotkeys {
             guard !game.followerCommands.cancel() else { return }
             game.saveGames.autosave(.pause)
             game.systemMenu.open()
+        case .tweenMenu:
+            // In command mode Tab only leaves it.
+            _ = game.followerCommands.cancel()
         default:
             useHotkey(action)
         }

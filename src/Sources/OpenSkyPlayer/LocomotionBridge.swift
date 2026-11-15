@@ -393,7 +393,7 @@ nonisolated extension LocomotionBridge {
         intent = LocomotionIntent(
             moveForward: input.moveForward,
             moveRight: input.moveRight,
-            run: input.boost,
+            run: input.isRunning,
             sprint: input.sprint,
             sneak: input.sneak,
             jump: input.jump

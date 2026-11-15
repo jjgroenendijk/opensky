@@ -34,6 +34,8 @@ public protocol CameraInputReceiving: AnyObject {
     func setBoost(_ enabled: Bool)
     func setSprint(_ enabled: Bool)
     func toggleSneak()
+    func toggleAutoMove()
+    func toggleAlwaysRun()
     func requestJump()
     func requestAttack()
     func setAttackHeld(_ enabled: Bool)

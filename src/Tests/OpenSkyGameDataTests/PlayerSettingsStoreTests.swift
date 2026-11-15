@@ -25,12 +25,17 @@ struct PlayerSettingsStoreTests {
         var changed: [PlayerSettingID] = []
         first.observe { changed.append($0) }
         first.set(.masterVolume, to: 0.25)
-        first.replaceKeyBindings(["Main Gameplay|Forward": 0x48])
+        // A mouse button is 256 and up, a gamepad button up to 0x8000.
+        let bindings = [
+            "Main Gameplay|Forward": 0x48, "Main Gameplay|Left Attack/Block": 0x101,
+            "Gamepad|Main Gameplay|Jump": 0x8000
+        ]
+        first.replaceKeyBindings(bindings)
         #expect(changed == [.masterVolume, .keyBindingsChanged])
 
         let second = PlayerSettingsStore(persistence: disk)
         #expect(second.value(.masterVolume) == 0.25)
-        #expect(second.model.keyBindings == ["Main Gameplay|Forward": 0x48])
+        #expect(second.model.keyBindings == bindings)
     }
 
     @Test func aBenchmarkCopyTakesOverridesAndNeverSaves() {

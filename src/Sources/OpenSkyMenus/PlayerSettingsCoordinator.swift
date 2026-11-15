@@ -59,9 +59,11 @@ public final class PlayerSettingsCoordinator {
         return result
     }
 
-    /// The install's name for a key, such as `L-Ctrl`, or a built-in one.
+    /// The install's name for a key, such as `L-Ctrl`, or a built-in one. A mouse
+    /// button is `Mouse1` to `Mouse8`, the symbols of the movies' mouse art.
     public func keyName(_ scanCode: UInt32) -> String {
-        keyNames?.name(scanCode) ?? DirectInputKeyCodes.fallbackName(scanCode)
+        InputCode.mouseName(scanCode) ?? keyNames?.name(scanCode)
+            ?? DirectInputKeyCodes.fallbackName(scanCode)
     }
 
     /// The key bound to a controlmap user event, such as "E" for "Activate".

@@ -20,8 +20,10 @@ nonisolated public struct CameraInput: Sendable {
     public var lookRight: Float = 0
     /// Pointer delta, points, +y = pointer moved up (view looks up).
     public var lookUp: Float = 0
-    /// Shift held -> speed boost. In walk mode this is run rather than walk.
+    /// Shift held -> speed boost. In walk mode the Run key, which flips `alwaysRun`.
     public var boost = false
+    /// The Toggle Always Run state. Walk mode only: the fly camera reads `boost`.
+    public var alwaysRun = false
     /// Sprint key held. Walk mode only; fly mode ignores it.
     public var sprint = false
     /// Sneak mode, a toggle rather than a held key, so the value is the state
@@ -81,6 +83,11 @@ nonisolated public struct CameraInput: Sendable {
         self.toggleWeaponDrawn = toggleWeaponDrawn
         self.shout = shout
         self.dt = dt
+    }
+
+    /// Whether the body runs: the Run key flips the Toggle Always Run state.
+    public var isRunning: Bool {
+        boost != alwaysRun
     }
 
     /// This input with every move and action dropped. The view still turns and the

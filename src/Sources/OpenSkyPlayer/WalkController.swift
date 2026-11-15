@@ -313,7 +313,7 @@ nonisolated extension WalkController {
         if magnitude > 1 {
             direction /= magnitude
         }
-        let speed = input.boost ? configuration.runSpeed.value : configuration.walkSpeed.value
+        let speed = input.isRunning ? configuration.runSpeed.value : configuration.walkSpeed.value
         var plan = LocomotionStepPlan()
         plan.horizontalDisplacement = direction * speed * dt
         plan.motionSource = direction == SIMD2<Float>() ? .idle : .configuredSpeed

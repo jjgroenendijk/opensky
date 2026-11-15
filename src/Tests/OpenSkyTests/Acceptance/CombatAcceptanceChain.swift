@@ -170,6 +170,8 @@ final class CombatAcceptanceChain {
         // so the gate cannot freeze the machine's own cursor.
         view.pointerCapture = .none
         try wire()
+        // The route drives W as a walk and Shift as a run, so always run starts off.
+        input.toggleAlwaysRun()
     }
 
     /// Activates the graphs, seeds the two inventories, and brings the start

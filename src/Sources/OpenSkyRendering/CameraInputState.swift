@@ -29,9 +29,30 @@ public final class CameraInputState {
     private var activationRequested = false
     public private(set) var isActivationHeld = false
     private var cameraModeCycleRequested = false
+    private var autoMove = false
+    /// The install's `SkyrimPrefs.ini` sets always run on by default.
+    public private(set) var alwaysRun = true
 
+    /// Forward or back ends Auto-Move.
     public func press(_ key: MoveKey) {
         pressed.insert(key)
+        if key == .forward || key == .back {
+            autoMove = false
+        }
+    }
+
+    /// Auto-Move walks forward until it is pressed again or a forward or back key is.
+    public func toggleAutoMove() {
+        autoMove.toggle()
+    }
+
+    public var isAutoMoving: Bool {
+        autoMove
+    }
+
+    /// Caps Lock flips whether the body runs without the Run key held.
+    public func toggleAlwaysRun() {
+        alwaysRun.toggle()
     }
 
     public func release(_ key: MoveKey) {
@@ -139,6 +160,7 @@ public final class CameraInputState {
     /// block guard drops.
     public func releaseAll() {
         pressed.removeAll()
+        autoMove = false
         boost = false
         sprinting = false
         jumpRequested = false
@@ -159,7 +181,7 @@ public final class CameraInputState {
     /// or between stepped frames) drains nothing, so a press waits for a step.
     public func makeInput(dt: Float) -> CameraInput {
         guard dt > 0 else {
-            return CameraInput(
+            var input = CameraInput(
                 boost: boost,
                 sprint: sprinting,
                 sneak: sneaking,
@@ -168,9 +190,11 @@ public final class CameraInputState {
                 shout: shouting,
                 dt: dt
             )
+            input.alwaysRun = alwaysRun
+            return input
         }
-        let input = CameraInput(
-            moveForward: axis(.forward, .back),
+        var input = CameraInput(
+            moveForward: autoMove ? 1 : axis(.forward, .back),
             moveRight: axis(.right, .left),
             moveUp: axis(.up, .down),
             lookRight: pendingLookRight,
@@ -187,6 +211,7 @@ public final class CameraInputState {
             shout: shouting,
             dt: dt
         )
+        input.alwaysRun = alwaysRun
         pendingLookRight = 0
         pendingLookUp = 0
         jumpRequested = false

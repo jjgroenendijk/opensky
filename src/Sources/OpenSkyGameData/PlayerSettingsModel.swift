@@ -102,7 +102,7 @@ nonisolated extension PlayerSettingsModel {
             set(PlayerSettingID(key), to: number, in: catalog)
         }
         for (key, raw) in migrated["keyBindings"] as? [String: Any] ?? [:] {
-            guard let code = raw as? Int, (0 ... 0xFF).contains(code) else { continue }
+            guard let code = raw as? Int, (0 ... 0xFFFF).contains(code) else { continue }
             keyBindings[key] = code
         }
         for (key, raw) in migrated["texts"] as? [String: Any] ?? [:] {

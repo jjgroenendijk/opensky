@@ -111,6 +111,8 @@ final class LocomotionAcceptanceChain {
         streamer.update(cameraPosition: controller.cameraPosition)
         completePendingBuilds()
         settleAndAttachGraphs()
+        // The route drives W as a walk and Shift as a run, so always run starts off.
+        input.toggleAlwaysRun()
     }
 
     /// Attaches both graphs, in the order the app does it: the bridge is built
