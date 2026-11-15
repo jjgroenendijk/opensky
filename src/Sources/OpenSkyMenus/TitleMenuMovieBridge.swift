@@ -37,6 +37,8 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
 
     /// The movie's `GameDelegate` callback that shows a yes-or-no question before New.
     static let confirmNewGameCallback = "ConfirmNewGame"
+    /// The same before Continue; the movie calls `ContinueLastSavedGame` after a yes.
+    static let confirmContinueCallback = "ConfirmContinue"
 
     /// The 14 flags of `sendMenuProperties`. Flag 9 set skips the login screen.
     static func menuProperties(hasSaves: Bool, version: String) -> [AS2Value] {

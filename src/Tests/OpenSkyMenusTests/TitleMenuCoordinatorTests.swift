@@ -231,6 +231,27 @@ struct TitleMenuCoordinatorTests {
         #expect(!menu.isOpen)
     }
 
+    /// Without a game in progress Continue asks nothing; a new game makes one in progress.
+    @Test @MainActor
+    func continueAsksOnlyWhileAGameIsInProgress() async {
+        let (menu, world) = Self.make()
+        world.saveRows = [SaveSlotRow(
+            slot: "Save1", title: "Save 1", detail: "", savedAt: Date(timeIntervalSince1970: 1)
+        )]
+        menu.open()
+        #expect(!menu.gameStarted)
+        menu.apply(.new)
+        #expect(menu.gameStarted)
+        menu.open()
+        menu.apply(.resume)
+        await menu.loadWork?.value
+        #expect(world.loaded == ["Save1"], "without the movie the question is skipped")
+        menu.open()
+        menu.apply(.continueLastSaved)
+        await menu.loadWork?.value
+        #expect(world.loaded == ["Save1", "Save1"])
+    }
+
     @Test func thePropertiesShowQuitAndContinueAndSkipTheLogin() {
         let flags = TitleMenuMovieBridge.menuProperties(hasSaves: true, version: "OpenSky")
         #expect(flags.count == 14)

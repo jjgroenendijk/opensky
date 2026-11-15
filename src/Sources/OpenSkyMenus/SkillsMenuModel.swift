@@ -174,7 +174,10 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
                 message = refusal
                 return nil
             }
-            page = .perkConfirm(ConfirmationModel(question: texts[.perkConfirm]))
+            page = .perkConfirm(ConfirmationModel(
+                question: texts[.perkConfirm],
+                options: [texts[.yes], texts[.cancel]]
+            ))
         case .button(.cancel):
             guard !isBeastTree else { return .close }
             page = .skills
@@ -196,7 +199,10 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
             page = isSecond ? .legendaryAgain(confirmation) : .legendary(confirmation)
             return nil
         case .chose(0) where !isSecond:
-            page = .legendaryAgain(ConfirmationModel(question: texts[.legendarySecondConfirm]))
+            page = .legendaryAgain(ConfirmationModel(
+                question: texts[.legendarySecondConfirm],
+                options: [texts[.yes], texts[.cancel]]
+            ))
             return nil
         case .chose(0):
             page = .skills
@@ -233,7 +239,10 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
             message = "\(skill.name) must reach 100 to become legendary."
             return
         }
-        page = .legendary(ConfirmationModel(question: texts[.legendaryConfirm]))
+        page = .legendary(ConfirmationModel(
+            question: texts[.legendaryConfirm],
+            options: [texts[.yes], texts[.cancel]]
+        ))
     }
 
     /// The closest box that way, with sideways distance counted twice, so up follows a

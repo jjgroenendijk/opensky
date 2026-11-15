@@ -83,10 +83,20 @@ extension GameSessionScope {
     /// The game plays its logo movie before the title menu.
     private func openTitleScreen() {
         guard playerSettings.store.bool(.startupLogo) else {
-            titleMenu.open()
+            openTitleMenu()
             return
         }
-        movieWorld.playStartupLogo { [weak self] in self?.titleMenu.open() }
+        movieWorld.playStartupLogo { [weak self] in self?.openTitleMenu() }
+    }
+
+    /// A settings file that could not be read is reported once, over the title menu.
+    private func openTitleMenu() {
+        titleMenu.open()
+        guard let failure = playerSettings.store.takeLoadFailure() else { return }
+        let texts = menuWorld.titleSettings
+        _ = messages.showMessageBox(
+            failure == .controls ? texts.cantLoadControlsText : texts.cantLoadSettingsText
+        )
     }
 
     /// The playback drawing one resident actor, matched by its ACHR.

@@ -34,6 +34,8 @@ public final class TitleMenuCoordinator {
     public static let identifier = MenuIdentifier.titleMenu
 
     public private(set) var isOpen = false
+    /// A game was started or loaded in this run, so one is in progress behind the menu.
+    public internal(set) var gameStarted = false
     public private(set) var selectedIndex = 0
     public private(set) var loadPage: SaveLoadPageModel?
     public internal(set) var lastResult: String?
@@ -173,6 +175,7 @@ public final class TitleMenuCoordinator {
 
     func newGame(at start: NewGameStart) {
         close()
+        gameStarted = true
         world?.startNewGame(at: start)
         switch start {
         case .vanilla: lastResult = "New game"
@@ -201,6 +204,7 @@ public final class TitleMenuCoordinator {
                     slot: slot, acceptingChangedContent: acceptingChangedContent
                 )
                 self.close()
+                self.gameStarted = true
                 self.lastResult = "Loaded \(slot)"
             } catch let failure as SaveFailure {
                 self.notify(self.saveTexts.text(for: failure, fromMainMenu: true))

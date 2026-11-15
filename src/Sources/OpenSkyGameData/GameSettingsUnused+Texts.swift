@@ -114,6 +114,7 @@ nonisolated let neverReadTextSettings = [
     "sOff",
     "sOKText",
     "sOn",
+    "sOptional",
     "sPauseText",
     "sPCControlsTextNone",
     "sPCControlsTextPrefix",

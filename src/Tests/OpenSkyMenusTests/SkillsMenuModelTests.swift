@@ -65,7 +65,10 @@ struct SkillsMenuModelTests {
         _ = model.handle(.move(.right))
         #expect(model.selectedPerk?.node == 3)
         #expect(model.handle(.button(.accept)) == nil)
-        #expect(model.page == .perkConfirm(ConfirmationModel(question: model.texts[.perkConfirm])))
+        let confirm = ConfirmationModel(
+            question: model.texts[.perkConfirm], options: [model.texts[.yes], model.texts[.cancel]]
+        )
+        #expect(model.page == .perkConfirm(confirm))
         #expect(model.isInTree)
         _ = model.handle(.move(.up))
         #expect(model.handle(.button(.accept)) == .buyPerk(node: 3, skill: 21))
