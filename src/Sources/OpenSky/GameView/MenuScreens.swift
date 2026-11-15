@@ -24,6 +24,7 @@ struct MenuScreenRoute {
 /// The screens' coordinators, built by the session scope.
 struct MenuScreenCoordinators {
     let sleepWait: SleepWaitMenuCoordinator
+    let tween: TweenMenuCoordinator
     let training: TrainingMenuCoordinator
     let book: BookMenuCoordinator
     let tutorial: TutorialMenuCoordinator
@@ -37,6 +38,7 @@ struct MenuScreenCoordinators {
 
 final class MenuScreens {
     let sleepWait: any SleepWaitMenuPort
+    let tween: any TweenMenuPort
     let training: any TrainingMenuPort
     let book: any BookMenuPort
     let magic: any MagicMenuPort
@@ -48,6 +50,7 @@ final class MenuScreens {
 
     init(game: any MenuScreensHost, screens: MenuScreenCoordinators) {
         sleepWait = screens.sleepWait
+        tween = screens.tween
         training = screens.training
         book = screens.book
         magic = screens.magic
@@ -60,7 +63,7 @@ final class MenuScreens {
             Self.route(screens.sleepWait), Self.route(screens.training), Self.route(screens.book),
             Self.route(screens.tutorial), Self.route(screens.magic), Self.route(screens.gift),
             Self.route(screens.crafting), Self.route(screens.textEntry),
-            Self.route(screens.creationClub)
+            Self.route(screens.creationClub), Self.route(screens.tween)
         ]
         mapMovie.onJournal = { [unowned game] in game.journalMenu.open() }
     }
@@ -96,6 +99,6 @@ final class MenuScreens {
         BookMenuCoordinator.identifier, TutorialMenuCoordinator.identifier,
         MagicMenuCoordinator.identifier, GiftMenuCoordinator.identifier,
         CraftingMenuCoordinator.identifier, TextEntryMenuCoordinator.identifier,
-        CreationClubMenuCoordinator.identifier
+        CreationClubMenuCoordinator.identifier, TweenMenuCoordinator.identifier
     ]
 }

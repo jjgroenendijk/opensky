@@ -168,6 +168,10 @@ extension AgentHost {
         fakeMenuRouter
     }
 
+    var menuScreens: any MenuScreensPort {
+        fakeMenuScreens
+    }
+
     var menuScreensWorld: any MenuScreensWorldPort {
         fakeMenuScreensWorld
     }

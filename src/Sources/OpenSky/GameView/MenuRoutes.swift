@@ -93,10 +93,28 @@ struct MenuHotkeys {
             game.saveGames.autosave(.pause)
             game.systemMenu.open()
         case .tweenMenu:
-            // In command mode Tab only leaves it.
-            _ = game.followerCommands.cancel()
+            openTweenMenu()
         default:
             useHotkey(action)
+        }
+    }
+
+    /// In command mode Tab only leaves it.
+    private func openTweenMenu() {
+        guard !game.followerCommands.cancel() else { return }
+        game.menuScreens.tween.open { [weak game] choice in
+            guard let game else { return }
+            MenuHotkeys(game: game).open(choice)
+        }
+    }
+
+    /// The menu a Tween menu entry opens, as its own key opens it.
+    func open(_ choice: TweenMenuChoice) {
+        switch choice {
+        case .skills: game.skillsMenu.open()
+        case .magic: game.menuScreens.magic.open()
+        case .items: game.inventoryMenu.open()
+        case .map: game.mapMenu.open()
         }
     }
 

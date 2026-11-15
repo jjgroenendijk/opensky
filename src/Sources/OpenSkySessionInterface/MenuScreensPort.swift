@@ -9,6 +9,7 @@ public protocol MenuScreensPort: AnyObject {
     var pointerRoutes: [MenuIdentifier: (MenuPointerEvent) -> Void] { get }
     var sleepWait: any SleepWaitMenuPort { get }
     var training: any TrainingMenuPort { get }
+    var tween: any TweenMenuPort { get }
     var crafting: any CraftingMenuPort { get }
     var keyRoutes: [MenuIdentifier: (MenuInputEvent) -> Void] { get }
 }

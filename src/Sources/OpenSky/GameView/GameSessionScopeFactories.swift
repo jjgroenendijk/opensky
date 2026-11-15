@@ -88,6 +88,7 @@ extension GameSessionScopeFactories {
                 hud: hud,
                 world: world
             ),
+            tween: TweenMenuCoordinator(menuMode: mode, movies: movies, hud: hud, world: world),
             training: TrainingMenuCoordinator(
                 menuMode: mode,
                 movies: movies,

@@ -19,6 +19,7 @@ extension SWFMovieSource: SWFMovieSourcePort {}
 extension SkillsMenuCoordinator: SkillsMenuPort {}
 extension SkillsMenuModel: SkillsMenuModelPort {}
 extension SleepWaitMenuCoordinator: SleepWaitMenuPort {}
+extension TweenMenuCoordinator: TweenMenuPort {}
 extension SubtitleCoordinator: SubtitlePort {}
 extension SystemMenuCoordinator: SystemMenuPort {}
 extension SystemMenuModel: SystemMenuModelPort {}

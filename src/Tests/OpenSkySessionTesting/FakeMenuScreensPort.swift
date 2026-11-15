@@ -12,6 +12,7 @@ nonisolated public final class FakeMenuScreensPort: MenuScreensPort {
     public var pointerRoutes: [MenuIdentifier: (MenuPointerEvent) -> Void] = [:]
     public var sleepWait: any SleepWaitMenuPort = FakeSleepWaitMenuPort()
     public var training: any TrainingMenuPort = FakeTrainingMenuPort()
+    public var tween: any TweenMenuPort = FakeTweenMenuPort()
     public var crafting: any CraftingMenuPort = FakeCraftingMenuPort()
     public var keyRoutes: [MenuIdentifier: (MenuInputEvent) -> Void] = [:]
 

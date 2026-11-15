@@ -30,6 +30,7 @@ public protocol AgentScreensHost: AnyObject, SendableMetatype {
     var mapMenu: any MapMenuPort { get }
     var mapWorld: any MapWorldPort { get }
     var menuRouter: any MenuRouterPort { get }
+    var menuScreens: any MenuScreensPort { get }
     var movies: any MoviePlayerPort { get }
     var renderer: (any RendererPort)? { get }
     var titleSequence: any TitleSequencePort { get }
@@ -42,6 +43,17 @@ public struct AgentScreensAdapter {
 }
 
 extension AgentScreensAdapter {
+    /// The Tween menu: the highlighted entry, whether Skills reads "LEVEL UP", and
+    /// whether its close animation runs.
+    var tweenState: AgentJSON {
+        let tween = game.menuScreens.tween
+        return [
+            "open": .bool(tween.isOpen), "highlighted": .init(tween.highlighted.map { "\($0)" }),
+            "levelUp": .bool(tween.showsLevelUp), "closing": .bool(tween.isClosing),
+            "result": .string(tween.lastResult)
+        ]
+    }
+
     /// The opening titles: shown, loaded, and the clip asked for last.
     var titlesState: AgentJSON {
         let titles = game.titleSequence
