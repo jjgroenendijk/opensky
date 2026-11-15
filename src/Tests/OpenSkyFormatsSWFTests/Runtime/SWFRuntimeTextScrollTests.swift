@@ -69,6 +69,33 @@ struct SWFRuntimeTextScrollTests {
         #expect(runtime.member("numLines", of: field) == .number(4))
     }
 
+    private static func call(
+        _ name: String, _ argument: Double, on field: SWFDisplayObject, _ runtime: SWFMovieRuntime
+    ) -> AS2Value {
+        AS2Interpreter.invoke(
+            in: runtime.runtime, field.object.lookup(name)?.property.value ?? .undefined,
+            thisValue: .object(field.object), arguments: [.number(argument)]
+        ).value
+    }
+
+    /// The journal puts its objectives under `getCharBoundaries(getLineOffset(last)).bottom`.
+    @Test func theLastLinesBottomIsReadable() throws {
+        let (runtime, field) = try Self.started()
+        #expect(Self.call("getLineOffset", 3, on: field, runtime) == .integer(6))
+        #expect(Self.call("getLineOffset", 9, on: field, runtime) == .integer(-1))
+        let box = try #require(Self.call("getCharBoundaries", 6, on: field, runtime).objectValue)
+        #expect(box.lookup("y")?.property.value == .number(150))
+        #expect(box.lookup("width")?.property.value == .number(25))
+        let getter = try #require(box.lookup("bottom")?.property.getter)
+        let bottom = AS2Interpreter.invoke(
+            in: runtime.runtime, .object(getter), thisValue: .object(box), arguments: []
+        ).value
+        #expect(bottom == .number(200))
+        let metrics = try #require(Self.call("getLineMetrics", 0, on: field, runtime).objectValue)
+        #expect(metrics.lookup("width")?.property.value == .number(30))
+        #expect(metrics.lookup("ascent")?.property.value == .number(40))
+    }
+
     @Test func scrollMovesTheDrawnWindowAndClamps() throws {
         let (runtime, field) = try Self.started()
         #expect(runtime.setMember("scroll", of: field, to: .number(2)))

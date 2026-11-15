@@ -35,7 +35,7 @@ nonisolated extension SWFMovieRuntime {
         case "maxscroll":
             return .integer(maxScroll(of: node))
         case "numLines":
-            return .integer(textLines(of: node)?.count ?? 1)
+            return .integer(max(1, measuredLayout(of: node, characters: false)?.lineCount ?? 1))
         default:
             let lines = textLines(of: node)
             let visible = lines.map { min($0.visible, $0.count - scroll + 1) } ?? 1
