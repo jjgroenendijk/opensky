@@ -136,7 +136,7 @@ restating of names. A format fact gets one line and a link to its `docs/formats/
 
 | Skill | Load it when |
 | --- | --- |
-| `starting-roadmap-work` | Choosing the next item, starting an issue, or closing a milestone |
+| `starting-roadmap-work` | Choosing the next item, starting or closing an issue, or closing a milestone |
 | `committing-and-landing-work` | Committing, pushing, or opening and merging a pull request |
 | `implementing-format-parsers` | Adding or changing any file format parser |
 | `writing-wiki-docs` | Adding or materially changing anything under `docs/` |

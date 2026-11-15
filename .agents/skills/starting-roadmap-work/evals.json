@@ -140,5 +140,17 @@
       "Does not turn the gate on in the same PR that fixes the whole tree",
       "Turns the gate on only when the count on main is zero"
     ]
+  },
+  {
+    "skills": [
+      "starting-roadmap-work"
+    ],
+    "query": "The code for the performance issue is merged, but its benchmark before and after is not run yet. Can the issue close?",
+    "files": [],
+    "expected_behavior": [
+      "Closes the issue now instead of keeping it open for the measurement",
+      "Adds the benchmark as an item to the single open verification-needed issue, and does not open a new one",
+      "Leaves the benchmark for the batch run once the planned work is done"
+    ]
   }
 ]
