@@ -6,6 +6,9 @@ import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
+import OpenSkyGameData
+import OpenSkyRendering
+import OpenSkyRenderResources
 import OpenSkyTagsTesting
 import OpenSkyWorldTesting
 import simd
@@ -20,14 +23,17 @@ struct CellSceneBuilderFullLODTests: CellSceneBuilderFixture {
     }
 
     /// The record header's flags sit after the type and the size.
-    private func fullLOD(_ record: Data) -> Data {
+    private func withFlags(_ record: Data, _ flags: UInt32) -> Data {
         var bytes = record
         let start = bytes.startIndex + 8
-        let flags = PlacedReference.fullLODFlag
         for byte in 0 ..< 4 {
             bytes[start + byte] |= UInt8(truncatingIfNeeded: flags >> (8 * UInt32(byte)))
         }
         return bytes
+    }
+
+    private func fullLOD(_ record: Data) -> Data {
+        withFlags(record, PlacedReference.fullLODFlag)
     }
 
     private func makeBuilder(temporaryRefs: Data) throws -> CellSceneBuilder {
@@ -132,5 +138,73 @@ struct CellSceneBuilderFullLODTests: CellSceneBuilderFixture {
             worldspaceEditorID: "Nowhere", loadedCells: []
         )
         #expect(unknown.placements.isEmpty)
+    }
+
+    /// A reference whose enable parent starts disabled is not drawn, and the parent is
+    /// watched, so enabling it builds the ring again.
+    @Test(.enabled(if: Self.hasDevice)) func aRingReferenceFollowsItsEnableParent() throws {
+        try writeLooseFile("meshes/arch/wall.nif", unitNIF())
+        let disabledParent = withFlags(refrRecord(formID: 0x400, base: 0x100), 0x800)
+        let builder = try makeBuilder(
+            pluginData: plugin(
+                temporaryRefs: fullLOD(refrRecord(formID: 0x200, base: 0x100, enableParent: 0x400)),
+                statRecords: statRecord(formID: 0x100, modelPath: "arch\\wall.nif"),
+                extraWorldChildren: persistentCell(holding: disabledParent
+                    + fullLOD(refrRecord(formID: 0x300, base: 0x100, enableParent: 0x400)))
+            ),
+            device: #require(Self.device)
+        )
+        let temporary = builder.referenceBuilder.largeReferences.temporaryFullLODPlacements(
+            worldspaceEditorID: "Tamriel", loadedCells: []
+        )
+        #expect(temporary.placements.isEmpty)
+        #expect(temporary.watchedObjectIDs == [0x200, 0x400])
+        let persistent = builder.referenceBuilder.largeReferences.fullLODPlacements(
+            worldspaceEditorID: "Tamriel", loadedCells: []
+        )
+        #expect(persistent.placements.isEmpty)
+        #expect(persistent.watchedObjectIDs == [0x300, 0x400])
+    }
+
+    /// `Mod.esp` stores a flagged temporary reference in the base plugin's cell (6,-2).
+    @Test(.enabled(if: Self.hasDevice)) func findsAFlaggedReferenceALaterPluginAdds() throws {
+        try writeLooseFile("meshes/arch/wall.nif", unitNIF())
+        let base = try ESMFile(data: plugin(
+            temporaryRefs: refrRecord(formID: 0x201, base: 0x100),
+            statRecords: statRecord(formID: 0x100, modelPath: "arch\\wall.nif")
+        ))
+        let cell = ESMFixture.record("CELL", formID: 0x2B, data: cellFields(
+            editorID: "TestCell06", grid: (6, -2), flags: 0
+        )) + ESMFixture.childGroup(
+            parent: 0x2B, groupType: 6, contents: ESMFixture.childGroup(
+                parent: 0x2B, groupType: 9,
+                contents: fullLOD(refrRecord(formID: 0x0100_0800, base: 0x100))
+            )
+        )
+        let block = ESMFixture.exteriorBlock(
+            x: 0, y: -1, groupType: 4,
+            contents: ESMFixture.exteriorBlock(x: 0, y: -1, groupType: 5, contents: cell)
+        )
+        let mod = try ESMFile(data: ESMFixture.tes4(masters: ["Skyrim.esm"])
+            + ESMFixture.topGroup(
+                "WRLD",
+                contents: worldRecord(formID: 0x1A, editorID: "Tamriel")
+                    + ESMFixture.childGroup(parent: 0x1A, groupType: 1, contents: block)
+            ))
+        let device = try #require(Self.device)
+        let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [])
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
+        let builder = CellSceneBuilder(
+            file: base,
+            meshes: MeshLibrary(fileSystem: vfs, device: device, textures: textures),
+            textures: textures,
+            fileSystem: vfs,
+            plugins: [("Skyrim.esm", base), ("Mod.esp", mod)]
+        )
+        let distant = builder.referenceBuilder.largeReferences.temporaryFullLODPlacements(
+            worldspaceEditorID: "Tamriel", loadedCells: []
+        )
+        #expect(distant.placements.count == 1)
+        #expect(distant.watchedObjectIDs == [0x800])
     }
 }
