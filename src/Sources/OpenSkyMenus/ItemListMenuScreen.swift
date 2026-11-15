@@ -58,7 +58,7 @@ public class ItemListMenuScreen: MenuScreen<ItemListMovieEvent> {
         case .button(.xButton): chooseSelected(alternate: true)
         case .button(.cancel): requestClose()
         case .button(.yButton): runAuxiliary()
-        case .pointer, .release: return
+        case .pointer, .release, .activate: return
         }
     }
 

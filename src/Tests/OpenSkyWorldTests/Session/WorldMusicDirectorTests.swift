@@ -43,6 +43,25 @@ struct WorldMusicDirectorTests {
         #expect(MusicDirectorFixture.musicSourceIDs(engine) == first)
     }
 
+    @Test func pausesNestAndTheTypePlaysAgainAfterTheLast() throws {
+        let engine = try MusicDirectorFixture.makeRunningEngine()
+        let director = MusicDirectorFixture.makeDirector(engine: engine)
+        director.handleMusicContext(MusicFixture.context(cellMusicType: 0x20))
+        let playing = try #require(MusicDirectorFixture.musicSourceIDs(engine).first)
+        engine.advanceFades(deltaTime: 3)
+        director.pauseMusic()
+        director.pauseMusic()
+        engine.advanceFades(deltaTime: 0.25)
+        #expect(engine.fadeGain(of: playing) == 0.5)
+        engine.advanceFades(deltaTime: 0.25)
+        #expect(MusicDirectorFixture.musicSourceIDs(engine).isEmpty)
+        #expect(director.currentStateName == "exploration")
+        director.resumeMusic()
+        #expect(MusicDirectorFixture.musicSourceIDs(engine).isEmpty)
+        director.resumeMusic()
+        #expect(MusicDirectorFixture.musicSourceIDs(engine).count == 1)
+    }
+
     // MARK: - Crossfade
 
     @Test func selectionChangeCrossfadesOutgoingOutAndIncomingIn() throws {

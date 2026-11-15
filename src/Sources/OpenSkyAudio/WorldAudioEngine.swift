@@ -62,6 +62,11 @@ public final class WorldAudioEngine {
     let engine = AVAudioEngine()
     public let environment = AVAudioEnvironmentNode()
     private(set) var categoryMixers: [AudioCategory: AVAudioMixerNode] = [:]
+    /// The master volume stage: every game sound passes it, and a sound that bypasses the
+    /// categories, such as a movie's, goes past it to the speakers.
+    let masterMixer = AVAudioMixerNode()
+    /// A movie that mutes audio holds the master sound category (docs/engine/movies.md).
+    public var movieMutesAudio = false
     /// Serial owner of every WMADecoder and all streaming state.
     public let decodeQueue = DispatchQueue(
         label: "nl.jjgroenendijk.opensky.audio-decode",
@@ -127,7 +132,8 @@ public final class WorldAudioEngine {
     }
 
     private func applyOutputVolume() {
-        engine.mainMixerNode.outputVolume = isOutputMuted ? 0 : masterVolume
+        engine.mainMixerNode.outputVolume = isOutputMuted ? 0 : 1
+        masterMixer.outputVolume = isOutputMuted ? 0 : masterVolume
     }
 
     private var categoryVolumes: [AudioCategory: Float] =
@@ -259,6 +265,7 @@ public final class WorldAudioEngine {
             ProvisionalAttenuation.maximumDistanceMeters
         environment.distanceAttenuationParameters.rolloffFactor =
             ProvisionalAttenuation.rolloffFactor
+        engine.attach(masterMixer)
         for category in AudioCategory.allCases {
             let mixer = AVAudioMixerNode()
             engine.attach(mixer)
@@ -276,9 +283,10 @@ public final class WorldAudioEngine {
             standardFormatWithSampleRate: engine.outputNode.outputFormat(forBus: 0).sampleRate,
             channels: 2
         )
-        engine.connect(environment, to: engine.mainMixerNode, format: mixFormat)
+        engine.connect(masterMixer, to: engine.mainMixerNode, format: mixFormat)
+        engine.connect(environment, to: masterMixer, format: mixFormat)
         for mixer in categoryMixers.values {
-            engine.connect(mixer, to: engine.mainMixerNode, format: mixFormat)
+            engine.connect(mixer, to: masterMixer, format: mixFormat)
         }
         for (category, mixer) in categoryMixers {
             mixer.outputVolume = audibleVolume(for: category)

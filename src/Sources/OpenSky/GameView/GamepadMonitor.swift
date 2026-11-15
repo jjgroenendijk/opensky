@@ -76,6 +76,10 @@ final class GamepadMonitor {
         }
         for event in input.events(for: snapshot, now: now) {
             _ = menuMode.routeMenuInput(event)
+            // The gamepad's A is Activate as well as Accept.
+            if event == .button(.accept) {
+                _ = menuMode.routeMenuInput(.activate)
+            }
         }
     }
 

@@ -121,9 +121,11 @@ struct GameInputDispatcherTests {
         #expect(dispatcher.apply(.menuCancel, .press) == .menu(.button(.cancel)))
         #expect(dispatcher.apply(.readyWeapon, .press) == .menu(.button(.xButton)))
         #expect(dispatcher.apply(.jump, .press) == .menu(.button(.yButton)))
+        #expect(dispatcher.apply(.activate, .press) == .menu(.activate))
         #expect(dispatcher.apply(.sneak, .press) == .swallowed)
         #expect(consumer.events == [
-            .move(.up), .release(.down), .button(.cancel), .button(.xButton), .button(.yButton)
+            .move(.up), .release(.down), .button(.cancel), .button(.xButton), .button(.yButton),
+            .activate
         ])
         #expect(input.makeInput(dt: 0.1).moveForward == 0)
     }

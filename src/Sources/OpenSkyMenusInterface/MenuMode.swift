@@ -14,6 +14,9 @@ nonisolated public enum MenuInputEvent: Equatable, Sendable {
     /// A direction key came up. Only a menu that reads held keys, such as
     /// lockpicking, acts on it.
     case release(Direction)
+    /// A key or button bound to Activate went down. It comes after the Accept that the
+    /// same press sends; only a movie, which skips on Activate alone, reads it.
+    case activate
 }
 
 /// Where the visible cursor is, for a menu that picks rows by hit testing.

@@ -176,6 +176,7 @@ public struct GameInputDispatcher {
         let event: MenuInputEvent? = switch (action, phase) {
         case (.menuAccept, .press): .button(.accept)
         case (.menuCancel, .press): .button(.cancel)
+        case (.activate, .press): .activate
         case (.readyWeapon, .press): .button(.xButton)
         case (.jump, .press): .button(.yButton)
         case (_, .press): action.menuDirection.map { .move($0) }

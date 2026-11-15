@@ -65,16 +65,19 @@ nonisolated public struct SoundMixInputs: Equatable, Sendable {
     public var dialogue = false
     public var submerged = false
     public var statsMenu = false
+    /// A movie that mutes audio plays.
+    public var movieMute = false
 
     public init(
         menuMode: Bool = false, loading: Bool = false, dialogue: Bool = false,
-        submerged: Bool = false, statsMenu: Bool = false
+        submerged: Bool = false, statsMenu: Bool = false, movieMute: Bool = false
     ) {
         self.menuMode = menuMode
         self.loading = loading
         self.dialogue = dialogue
         self.submerged = submerged
         self.statsMenu = statsMenu
+        self.movieMute = movieMute
     }
 }
 
@@ -89,6 +92,10 @@ nonisolated public struct SoundCategoryMix: Sendable {
     public static let musicDuckLevel: Float = 0.4
     /// The level of the dialogue-fade sounds and of other voices under dialogue; OpenSky's.
     public static let dialogueDuckLevel: Float = 0.5
+    /// A movie that mutes audio holds the master category 40 dB down, reached and left
+    /// over 100 ms (docs/engine/movies.md).
+    public static let movieMuteLevel: Float = 0.01
+    public static let movieMuteSeconds: Float = 0.1
 
     public let categories: [UInt32: SoundCategory]
     public let roles: [SoundCategoryRole: FormID]
@@ -98,6 +105,7 @@ nonisolated public struct SoundCategoryMix: Sendable {
     public private(set) var menuLevel: Float = 1
     public private(set) var dialogueLevel: Float = 1
     public private(set) var musicLevel: Float = 1
+    public private(set) var movieLevel: Float = 1
 
     public init(
         categories: [UInt32: SoundCategory], roles: [SoundCategoryRole: FormID],
@@ -123,6 +131,10 @@ nonisolated public struct SoundCategoryMix: Sendable {
             musicLevel, to: inputs.dialogue ? Self.musicDuckLevel : 1, seconds: step,
             spans: (down: timings.musicDuckSeconds, up: timings.musicUnduckSeconds)
         )
+        movieLevel = Self.ramp(
+            movieLevel, to: inputs.movieMute ? Self.movieMuteLevel : 1, seconds: step,
+            spans: (down: Self.movieMuteSeconds, up: Self.movieMuteSeconds)
+        )
     }
 
     /// The category with `editorID`, for a sound that names none.
@@ -144,6 +156,10 @@ nonisolated public struct SoundCategoryMix: Sendable {
             }
             for role in roles.filter({ $0.value == id }).map(\.key) {
                 apply(role, gain: &gain, paused: &paused)
+            }
+            if node.parent == nil {
+                gain *= movieLevel
+                paused = paused || (inputs.movieMute && movieLevel <= Self.movieMuteLevel)
             }
             current = node.parent
         }

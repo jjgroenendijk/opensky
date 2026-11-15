@@ -8,6 +8,9 @@ public protocol WorldMusicDirectorPort: AnyObject {
     func handleMusicContext(_ context: MusicContext)
     @discardableResult func playDiscoveryMusic(markerType: UInt8) -> MusicRefusal?
     @discardableResult func playSpecialMusic(_ kind: SpecialMusic) -> MusicRefusal?
+    /// Pauses nest; the music plays again once every pause has ended.
+    func pauseMusic()
     func removeScriptedMusic(_ id: FormID)
+    func resumeMusic()
     @discardableResult func setCombatActive(_ active: Bool) -> MusicRefusal?
 }
