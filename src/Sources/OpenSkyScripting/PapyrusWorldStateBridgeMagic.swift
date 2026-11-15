@@ -8,6 +8,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 import simd
 
@@ -48,7 +49,20 @@ extension PapyrusWorldStateBridge.SpellEffects {
         else {
             return false
         }
-        return caster.spellbookAccess.learn(spell, on: holder)
+        let learned = caster.spellbookAccess.learn(spell, on: holder)
+        if learned, actor == bridge.playerKey, let notice = Self.diseaseNotice(
+            for: caster.spellbookAccess.spells.spell(key: spell)
+        ) {
+            bridge.ports.presenter?.postWorldNotice(notice)
+        }
+        return learned
+    }
+
+    /// The HUD line for a disease the player just gained; nil for any other spell.
+    /// See docs/engine/diseases.md.
+    static func diseaseNotice(for spell: ResolvedSpell?) -> WorldNotice? {
+        guard let spell, spell.spellType == .disease else { return nil }
+        return .diseaseContracted(name: spell.displayName)
     }
 
     @discardableResult

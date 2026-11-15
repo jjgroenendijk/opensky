@@ -11,7 +11,8 @@ tags: [engine, magic, combat, actor-values]
 Some creatures carry a disease. Their hits can give it to the target. The player then sees a
 notice with the disease's name.
 
-OpenSky does not build this yet. A hit never gives a disease.
+OpenSky does not build the infection yet: a hit never gives a disease. It shows the notice when
+a script gives the player a disease spell.
 
 ## Which creatures carry one
 
