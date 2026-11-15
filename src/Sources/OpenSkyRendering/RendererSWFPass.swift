@@ -418,6 +418,7 @@ nonisolated struct SWFFrameBuilder {
         textToPixels: SWFTransform
     ) {
         let font = run.font
+        let bottom = run.clipBottom.map { textToPixels.apply(SIMD2(0, $0)).y }
         for glyph in run.glyphs {
             guard
                 glyphQuadCount < movie.glyphQuadCapacity,
@@ -447,12 +448,16 @@ nonisolated struct SWFFrameBuilder {
             }
             let pen = textToPixels.apply(SIMD2(glyph.x, glyph.y))
             let minCorner = SIMD2(pen.x + entry.bearing.x, pen.y - entry.bearing.y)
-            appendQuad(
-                minCorner: minCorner,
-                maxCorner: minCorner + entry.size,
-                uvMin: entry.uvMin,
-                uvMax: entry.uvMax
-            )
+            var maxCorner = minCorner + entry.size
+            var uvMax = entry.uvMax
+            if let bottom, maxCorner.y > bottom {
+                // A line the field's bottom edge cuts shows only its top part, as in Flash.
+                guard bottom > minCorner.y else { continue }
+                let kept = (bottom - minCorner.y) / (maxCorner.y - minCorner.y)
+                uvMax.y = entry.uvMin.y + (uvMax.y - entry.uvMin.y) * kept
+                maxCorner.y = bottom
+            }
+            appendQuad(minCorner: minCorner, maxCorner: maxCorner, uvMin: entry.uvMin, uvMax: uvMax)
             glyphQuadCount += 1
         }
     }

@@ -137,6 +137,22 @@ struct SWFTextLayoutTests {
         #expect(run.glyphs[0].y == 800)
     }
 
+    /// Bounds 2500 twips high fit two whole lines; the third line's top is inside the field,
+    /// so it is drawn and cut at the bottom edge, but scrolling still counts two lines.
+    @Test func aLineTheBottomEdgeCutsIsDrawnClipped() throws {
+        let font = try Self.makeFont()
+        let text = try Self.makeEditText(
+            text: "A\nB\nA\nB", bounds: SWFRect(xMin: 0, xMax: 4000, yMin: 0, yMax: 2500)
+        )
+        let window = SWFTextLayout.editText(text, font: font, firstLine: 0)
+        #expect(window.visibleLineCount == 2)
+        #expect(window.clipBottom == 2500)
+        let run = try #require(window.runs.first)
+        #expect(run.glyphs.map(\.glyphIndex) == [0, 1, 0])
+        let exact = try Self.makeEditText(text: "A\nB\nA\nB")
+        #expect(SWFTextLayout.editText(exact, font: font, firstLine: 0).clipBottom == nil)
+    }
+
     @Test func wordWrapBreaksAtSpaces() throws {
         let font = try Self.makeFont()
         // "AB AB AB": word width 1100 (600 - 100 kern + 500? no kern across

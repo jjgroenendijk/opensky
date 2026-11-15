@@ -89,7 +89,8 @@ nonisolated extension SWFMovieResources {
                     fontKey: fontKey(for: font, editText: text),
                     emTwips: run.emTwips,
                     color: Self.straightColor(run.color),
-                    glyphs: run.glyphs
+                    glyphs: run.glyphs,
+                    clipBottom: layout.clipBottom
                 )
             }
         }
