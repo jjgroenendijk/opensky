@@ -32,6 +32,9 @@ nonisolated public struct SWFTextLayoutResult: Equatable, Sendable {
     /// Lines after wrapping, and how many of them fit the field from the first shown one.
     public var lineCount = 0
     public var visibleLineCount = 0
+    /// Set when a line shows only in part: the field's bottom edge, in text-local twips,
+    /// where the renderer cuts the glyphs.
+    public var clipBottom: Float?
 }
 
 nonisolated public enum SWFTextLayout: Sendable {
@@ -110,12 +113,22 @@ nonisolated public enum SWFTextLayout: Sendable {
             }
         }
         var shown = lines[...]
+        var drawn = lines[...]
+        var clipBottom: Float?
         if let firstLine {
             let fitting = fittingLineCount(text: text, metrics: metrics)
             let start = min(max(0, firstLine), max(0, lines.count - 1))
             shown = lines[start ..< min(lines.count, start + fitting)]
+            drawn = shown
+            // Flash draws the next line too when its top is inside the field, cut by
+            // the bottom edge. It does not count as a shown line for scrolling.
+            let top = Float(text.bounds.yMin) + Float(fitting) * lineAdvance(text, metrics)
+            if shown.endIndex < lines.count, top < Float(text.bounds.yMax) {
+                drawn = lines[start ..< shown.endIndex + 1]
+                clipBottom = Float(text.bounds.yMax)
+            }
         }
-        let placed = place(lines: Array(shown), text: text, metrics: metrics)
+        let placed = place(lines: Array(drawn), text: text, metrics: metrics)
         let color = text.color ?? SWFColor(red: 0, green: 0, blue: 0, alpha: 255)
         let runs = placed.isEmpty ? [] : [SWFTextRun(
             fontID: nil, emTwips: metrics.emTwips, color: color, glyphs: placed
@@ -123,17 +136,21 @@ nonisolated public enum SWFTextLayout: Sendable {
         var result = SWFTextLayoutResult(runs: runs, missingGlyphs: shaper.missingGlyphs)
         result.lineCount = lines.count
         result.visibleLineCount = shown.count
+        result.clipBottom = clipBottom
         return result
     }
 
-    /// Whole lines whose descent stays inside the bounds, at least one. A line cut by the
-    /// bottom edge is left out rather than clipped.
+    private static func lineAdvance(_ text: SWFEditText, _ metrics: FontScaledMetrics) -> Float {
+        metrics.ascent + metrics.descent + metrics.leading + Float(text.layout?.leading ?? 0)
+    }
+
+    /// Whole lines whose descent stays inside the bounds, at least one. The scroll
+    /// properties count these; a line the bottom edge cuts is drawn but not counted.
     private static func fittingLineCount(text: SWFEditText, metrics: FontScaledMetrics) -> Int {
-        let extraLeading = Float(text.layout?.leading ?? 0)
-        let lineAdvance = metrics.ascent + metrics.descent + metrics.leading + extraLeading
+        let advance = lineAdvance(text, metrics)
         let room = Float(text.bounds.yMax - text.bounds.yMin) - metrics.ascent - metrics.descent
-        guard lineAdvance > 0, room > 0 else { return 1 }
-        return Int(room / lineAdvance) + 1
+        guard advance > 0, room > 0 else { return 1 }
+        return Int(room / advance) + 1
     }
 
     /// Positions shaped lines inside the field bounds: first baseline sits one

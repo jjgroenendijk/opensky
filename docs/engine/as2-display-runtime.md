@@ -137,7 +137,8 @@ A multiline field that wraps shows only the lines that fit its bounds, from `scr
 `bottomScroll`, and the GFx `numLines` come from the same layout, so CLIK's `TextArea` and `ScrollBar`
 scroll it. A field
 with the `AutoSize` flag, or with GFx `textAutoSize` set by script, sizes its text to fit instead, so
-it draws every line. Flash clips a line that the bottom edge cuts; OpenSky leaves that line out.
+it draws every line. When the bottom edge cuts the next line, that line is drawn too, clipped at
+the edge. It does not count for `bottomScroll` or `maxscroll`.
 
 ## Scene generation
 

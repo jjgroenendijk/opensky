@@ -46,6 +46,8 @@ nonisolated public final class SWFMovieResources {
         let emTwips: Float
         let color: SIMD4<Float>
         public let glyphs: [SWFGlyphPlacement]
+        /// The text-local y, in twips, where the field's bottom edge cuts the glyphs.
+        var clipBottom: Float?
     }
 
     public let scene: SWFMovieScene
