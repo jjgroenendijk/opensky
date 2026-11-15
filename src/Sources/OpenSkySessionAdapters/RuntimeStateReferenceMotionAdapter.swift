@@ -143,16 +143,19 @@ struct ReferenceConditionReads {
     let game: any RuntimeStateReferenceMotionHost
 
     func addMountSeams(to context: inout ConditionContext) {
-        let vehicles = game.vehicleWorld.vehicles
-        context.mounts = MountConditionResolution(
-            mounts: vehicles.core.mounts, playersLastMount: vehicles.playersLastMount,
-            flyingMounts: game.mountWorld.flyingMounts
-        )
-        context.mounts.flyingStates = game.dragonFlightWorld.flyingStates
-        context.mounts.canFlyHere = game.streamer.interiorScene == nil
-        let requests = game.dragonFlight.landingRequests
-        context.mounts.crashLandRequests = Set(requests.filter { $0.value == .crash }.keys)
-        context.mounts.hastyLandRequests = Set(requests.filter { $0.value == .hasty }.keys)
+        context.setDeferred { [game] in
+            let vehicles = game.vehicleWorld.vehicles
+            var mounts = MountConditionResolution(
+                mounts: vehicles.core.mounts, playersLastMount: vehicles.playersLastMount,
+                flyingMounts: game.mountWorld.flyingMounts
+            )
+            mounts.flyingStates = game.dragonFlightWorld.flyingStates
+            mounts.canFlyHere = game.streamer.interiorScene == nil
+            let requests = game.dragonFlight.landingRequests
+            mounts.crashLandRequests = Set(requests.filter { $0.value == .crash }.keys)
+            mounts.hastyLandRequests = Set(requests.filter { $0.value == .hasty }.keys)
+            return mounts
+        }
     }
 
     /// Lock, open, and deletion state of any reference a run-on can name, read when a

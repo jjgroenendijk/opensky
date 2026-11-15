@@ -79,12 +79,12 @@ extension AIPackageStateAdapter {
             globals: game.runtimeState.globalResolution(),
             quests: game.scripts.bridge?.questRuntime?.resolution() ?? .empty,
             aliases: game.scripts.bridge?.questRuntime?.aliasResolution() ?? .empty,
-            actors: game.runtimeStateWorld.actorResolution(),
             detection: game.perception.perceptionResolution(),
             referenceEnable: referenceEnableResolution(),
             clock: clock,
             references: game.streamer.residentReferenceIndex()
         )
+        context.setDeferredActors { [game] in game.runtimeStateWorld.actorResolution() }
         game.runtimeStateWorld.addLiveSeams(to: &context)
         return context
     }

@@ -80,7 +80,7 @@ public final class DialogueCoordinator {
             fragments: world.fragments
         ) { [world] in
             var context = world.conditionContext()
-            context.dialogue = context.dialogue.talking(to: speaker).saying(line)
+            context.transform(DialogueResolution.self) { $0.talking(to: speaker).saying(line) }
             return context
         }
     }

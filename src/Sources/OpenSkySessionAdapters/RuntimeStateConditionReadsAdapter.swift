@@ -63,17 +63,20 @@ extension RuntimeStateConditionReadsAdapter {
             globals: globals,
             quests: quests?.resolution() ?? .empty,
             aliases: quests?.aliasResolution() ?? .empty,
-            actors: core.actorResolution(),
             detection: game.perception.perceptionResolution(),
-            magic: game.magic.magicConditionResolution(),
-            crime: game.crime.conditionResolution(owning: references.sortedKeys()),
-            factions: game.factions.conditionResolution(),
             clock: game.gameSession?.gameClock,
             references: references,
             subject: crosshair?.key,
             target: crosshair?.key
         )
-        context.data = core.conditionData()
+        // One condition list reads few of these views, so each is built on its first read.
+        context.setDeferredActors { [core] in core.actorResolution() }
+        context.setDeferred { [game] in game.magic.magicConditionResolution() }
+        context.setDeferred { [game] in
+            game.crime.conditionResolution(owning: references.sortedKeys())
+        }
+        context.setDeferred { [game] in game.factions.conditionResolution() }
+        context.setDeferred { [core] in core.conditionData() }
         liveSeams.addLiveSeams(to: &context)
         return context
     }

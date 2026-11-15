@@ -77,7 +77,7 @@ extension IdleWorldAdapter: IdleWorld {
         guard let clock = game.gameSession?.gameClock else { return ConditionContext() }
         var context = game.aiWorld.packageConditionContext(clock: clock)
         // Idle trees test keywords, such as the chopping block's `isExecutioner`.
-        context.data = game.runtimeStateWorld.conditionData()
+        context.setDeferred { [game] in game.runtimeStateWorld.conditionData() }
         return context
     }
 

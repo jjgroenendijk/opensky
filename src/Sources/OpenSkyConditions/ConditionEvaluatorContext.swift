@@ -6,6 +6,7 @@
 import Foundation
 public import OpenSkyFormatsESM
 public import OpenSkyWorldState
+import Synchronization
 
 /// A feature's condition seam: the state its condition functions read,
 /// resolved for one evaluation. A context holds at most one value per type,
@@ -39,11 +40,6 @@ nonisolated public struct ConditionContext: Sendable {
     public var functions: ConditionFunctionRegistry = .empty
     /// The one seam global values come through (`GlobalResolution`).
     public var globals: GlobalResolution = .empty
-    /// Load-order keyword, form-list and location stores plus the current and
-    /// editor location facts for references. Empty when no data snapshot is
-    /// available, so the record-data functions report an honest unavailable
-    /// result rather than a convincing zero.
-    public var data: ConditionDataResolution = .empty
     /// Runtime enable overrides for `GetDisabled`. When absent for a key, the
     /// function falls back to the placement record's initial flag.
     public var referenceEnable: ReferenceEnableResolution = .empty
@@ -73,7 +69,7 @@ nonisolated public struct ConditionContext: Sendable {
     /// The story-manager event being walked. The Event Data run-on reads it.
     public var event: StoryEventData?
 
-    private var resolutions: [ObjectIdentifier: any ConditionResolution] = [:]
+    private var resolutions: [ObjectIdentifier: ConditionResolutionSlot] = [:]
 
     public init() {}
 
@@ -88,12 +84,13 @@ nonisolated public struct ConditionContext: Sendable {
         return context
     }
 
-    /// The resolution of `type` this context carries, or `type.empty`.
+    /// The resolution of `type` this context carries, or `type.empty`. A deferred one
+    /// is built on this first read.
     public subscript<Resolution: ConditionResolution>(
         resolution type: Resolution.Type
     ) -> Resolution {
-        get { resolutions[ObjectIdentifier(type)] as? Resolution ?? .empty }
-        set { resolutions[ObjectIdentifier(type)] = newValue }
+        get { resolutions[ObjectIdentifier(type)]?.value as? Resolution ?? .empty }
+        set { resolutions[ObjectIdentifier(type)] = .value(newValue) }
     }
 
     /// Drops the resolution of `type`, so `overlaid(by:)` no longer carries it.
@@ -107,6 +104,79 @@ nonisolated public struct ConditionContext: Sendable {
         var merged = self
         merged.resolutions.merge(other.resolutions) { _, new in new }
         return merged
+    }
+
+    /// Sets a resolution that `build` makes when a condition first reads it. A live
+    /// context holds many views, and one condition list reads few of them.
+    @discardableResult
+    public mutating func setDeferred<Resolution: ConditionResolution>(
+        _ build: @escaping @MainActor () -> Resolution
+    ) -> DeferredConditionResolution {
+        let source = DeferredConditionResolution { build() }
+        resolutions[ObjectIdentifier(Resolution.self)] = .deferred(source)
+        return source
+    }
+
+    /// Replaces the resolution of `type` by `change` of it, worked out on the first read.
+    public mutating func transform<Resolution: ConditionResolution>(
+        _ type: Resolution.Type, _ change: @escaping @MainActor (Resolution) -> Resolution
+    ) {
+        let base = resolutions[ObjectIdentifier(type)]
+        setDeferred { change(base?.value as? Resolution ?? .empty) }
+    }
+}
+
+nonisolated extension ConditionDataResolution: ConditionResolution {}
+
+nonisolated extension ConditionContext {
+    /// Load-order keyword, form-list and location stores plus the current and
+    /// editor location facts for references. Empty when no data snapshot is
+    /// available, so the record-data functions report an honest unavailable
+    /// result rather than a convincing zero.
+    public var data: ConditionDataResolution {
+        get { self[resolution: ConditionDataResolution.self] }
+        set { self[resolution: ConditionDataResolution.self] = newValue }
+    }
+}
+
+/// One stored resolution: a value, or one still to build.
+nonisolated enum ConditionResolutionSlot: Sendable {
+    case value(any ConditionResolution)
+    case deferred(DeferredConditionResolution)
+
+    var value: any ConditionResolution {
+        switch self {
+        case let .value(value): value
+        case let .deferred(source): source.value
+        }
+    }
+}
+
+/// A resolution built on its first read and kept after it. Copies of a context share
+/// it, so the live state is read once. The build runs on the main actor, so only
+/// main-actor code may read a context that holds one.
+nonisolated public final class DeferredConditionResolution: Sendable {
+    private enum State: Sendable {
+        case pending(@MainActor () -> any ConditionResolution)
+        case built(any ConditionResolution)
+    }
+
+    private let state: Mutex<State>
+
+    init(_ build: @escaping @MainActor () -> any ConditionResolution) {
+        state = Mutex(.pending(build))
+    }
+
+    public var value: any ConditionResolution {
+        let build: @MainActor () -> any ConditionResolution
+        switch state.withLock({ $0 }) {
+        case let .built(value): return value
+        case let .pending(pending): build = pending
+        }
+        // Built outside the lock, because a build may read another deferred resolution.
+        let built = MainActor.assumeIsolated { build() }
+        state.withLock { $0 = .built(built) }
+        return built
     }
 }
 
