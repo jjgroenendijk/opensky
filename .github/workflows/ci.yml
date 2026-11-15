@@ -368,8 +368,9 @@ jobs:
       - name: Build timing summary
         if: ${{ !cancelled() }}
         run: tools/ci/build-timing.sh | tee -a "$GITHUB_STEP_SUMMARY"
+      # Only a failed run: the upload is about 40,000 files and takes close to a minute.
       - name: Upload build and test logs
-        if: ${{ !cancelled() }}
+        if: ${{ failure() }}
         uses: actions/upload-artifact@v7
         with:
           name: build-test-logs
