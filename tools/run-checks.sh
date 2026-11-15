@@ -31,7 +31,8 @@ while read -r script flag; do
     part="$(basename "$script" .sh)${flag:+ $flag}"
     log="$run_dir/$(printf '%s' "$part" | tr ' ' '_').log"
     # set -e would end the subshell on a failing part before it writes its status.
-    { code=0; sh "$script" ${flag:+"$flag"} >"$log" 2>&1 || code=$?; echo "$code $part" >"$log.status"; } &
+    { code=0; start="$(date +%s)"; sh "$script" ${flag:+"$flag"} >"$log" 2>&1 || code=$?
+      echo "$code $(($(date +%s) - start)) $part" >"$log.status"; } &
 done <"$list"
 wait
 
@@ -43,13 +44,13 @@ if [ "$written" -ne "$expected" ]; then
     echo "[ERROR] $failed parts wrote no status; read their logs in $run_dir"
 fi
 for status in "$run_dir"/*.status; do
-    read -r code part <"$status"
+    read -r code seconds part <"$status"
     log="${status%.status}"
     if [ "$code" -eq 0 ]; then
-        echo "[ OK ] $part"
+        echo "[ OK ] $part (${seconds} s)"
     else
         failed=$((failed + 1))
-        echo "[ERROR] $part failed (log: $log)"
+        echo "[ERROR] $part failed after ${seconds} s (log: $log)"
         tail -n 30 "$log" | sed 's/^/  /'
     fi
 done
