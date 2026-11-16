@@ -1,4 +1,3 @@
-import AVFAudio
 import Foundation
 
 // The readouts that read a sibling part answer from the fakes: the menu state with its
@@ -149,21 +148,9 @@ struct AgentReadoutTests {
     }
 
     @Test func theSoundsReadListsPlayingAndStartedSounds() throws {
-        let session = FakeGameSessionPort()
-        let format = try #require(AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1))
-        let engine = WorldAudioEngine(manualRenderingFormat: format)
-        engine.isEnabled = true
-        let tone = try #require(AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 441))
-        tone.frameLength = 441
-        let id = try engine.playPositional(
-            buffer: tone,
-            request: AudioPlayRequest(
-                name: "loop.wav", category: .effects, worldPosition: [64, 0, 0], loops: true
-            )
-        )
-        engine.releaseSource(id: id)
-        session.worldAudio = engine
-        host.gameSession = session
+        let loop = try PlayingLoopSession()
+        loop.engine.releaseSource(id: loop.id)
+        host.gameSession = loop.session
         let state = try object(world.query(.sounds))
         guard
             case let .array(playing)? = state["playing"],

@@ -35,6 +35,8 @@ nonisolated public enum AgentWorldChange: Equatable, Sendable {
     case delete(reference: String)
     /// Locks or unlocks a reference, as `ObjectReference.Lock` does.
     case lock(reference: String, locked: Bool)
+    /// Lets a looping sound finish its pass and end, as a `SoundRelease` event does.
+    case release(sound: Int)
     /// Activates a reference, as `ObjectReference.Activate` does.
     case activate(reference: String, activator: String)
     /// Places a blood hit decal on an actor, `height` units above its feet.
@@ -60,6 +62,7 @@ nonisolated public enum AgentWorldChange: Equatable, Sendable {
         case "delete": try .delete(reference: args.string("ref"))
         case "lock":
             try .lock(reference: args.string("ref"), locked: args.bool("on", default: true))
+        case "release": try .release(sound: args.int("id"))
         case "activate":
             try .activate(
                 reference: args.string("ref"), activator: args.optionalString("by") ?? "player"

@@ -35,6 +35,7 @@ struct AgentWorldChangeCommandTests {
             enabled: false
         )))
         #expect(try parse(["enable", "1A2B"]) == .world(.enable(reference: "1A2B", enabled: true)))
+        #expect(try parse(["release", "7"]) == .world(.release(sound: 7)))
         #expect(try parse(["delete", "1A2B"]) == .world(.delete(reference: "1A2B")))
         #expect(try parse(["lock", "1A2B"]) == .world(.lock(reference: "1A2B", locked: true)))
         #expect(try parse(["lock", "1A2B", "off"])

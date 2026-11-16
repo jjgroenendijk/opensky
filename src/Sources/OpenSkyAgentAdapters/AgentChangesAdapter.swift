@@ -44,6 +44,7 @@ extension AgentChangesAdapter {
         case let .delete(reference): try delete(reference)
         case let .lock(reference, locked): try setLocked(reference, locked: locked)
         case let .activate(reference, activator): try activate(reference, by: activator)
+        case let .release(sound): try releaseSound(sound)
         case let .decal(reference, height): try placeDecal(on: reference, height: height)
         case let .spawn(base, anchor): try spawn(base, at: anchor)
         }
@@ -181,6 +182,14 @@ extension AgentChangesAdapter {
         return try [
             "ref": formJSON(key), "locked": .bool(locked), "level": .init(Int(lock.level))
         ]
+    }
+
+    private func releaseSound(_ id: Int) throws(AgentFailure) -> AgentJSON {
+        guard let audio = game.gameSession?.worldAudio else { throw hub.notReady() }
+        guard audio.releaseSource(id: id) else {
+            throw AgentFailure(.notFound, "no playing sound \(id)")
+        }
+        return ["id": .init(id), "released": .bool(true)]
     }
 
     /// The level `ObjectReference.Lock` gives a reference that has no XLOC.

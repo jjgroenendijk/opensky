@@ -10,6 +10,7 @@ import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 import OpenSkyRenderCore
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -82,6 +83,14 @@ struct AgentChangesTests {
         #expect(throws: AgentFailure.self) {
             try world.perform(.world(.delete(reference: "player")))
         }
+    }
+
+    @Test func aReleaseNeedsAPlayingSound() throws {
+        let loop = try PlayingLoopSession()
+        let id = loop.id
+        host.gameSession = loop.session
+        #expect(try result(.release(sound: id))["released"] == .bool(true))
+        #expect(throws: AgentFailure.self) { try world.perform(.world(.release(sound: id + 1))) }
     }
 
     @Test func anActivationReachesTheBridgeAsAScriptWould() throws {
