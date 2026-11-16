@@ -102,10 +102,13 @@ public final class ClothCoordinator {
         self.world = world
     }
 
+    /// A paused frame (no time) keeps the last step's record, so a paused readout
+    /// still shows which capes move.
     public func tick(deltaTime: Float) {
+        guard deltaTime > 0 else { return }
         lastSteppedCount = 0
         lastStepped = []
-        guard isEnabled, deltaTime > 0, let world else { return }
+        guard isEnabled, let world else { return }
         for cloth in world.clothPlaybacks {
             guard let frame = world.clothFrame(for: cloth) else { continue }
             let body = cloth.bodyCapsule(actorToWorld: frame.actorToWorld, scale: frame.scale)
