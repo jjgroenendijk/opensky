@@ -194,6 +194,7 @@ both games. A reference may also be one outside the loaded cells.
 | `debug spell <spell> [on\|off] [--ref <ref>]` | Gives an actor (default `player`) a spell, as `Actor.AddSpell` does, or takes it with `off`. A disease shows the HUD notice |
 | `debug enable <ref>`, `debug disable <ref>` | Enables or disables a reference, as `ObjectReference.Enable` and `Disable` do. Answers `enabled` |
 | `debug activate <ref> [--by <ref>]` | Activates a reference, as `ObjectReference.Activate` does, with the player or `--by` as the activator. No aim is needed. Answers `queuedEvents`, the `OnActivate` events queued |
+| `debug release <id>` | Lets a looping sound, by its `id` from `state sounds`, finish its pass and end, as a `SoundRelease` animation event does. Vanilla animations release no looping sound, so this is the way to see it |
 | `debug delete <ref>` | Deletes a reference, as `ObjectReference.Delete` does. Answers `deleted` |
 | `debug lock <ref> [on\|off]` | Locks or unlocks a reference, as `ObjectReference.Lock` does. A reference with no lock gets level 1. Answers `locked` and `level` |
 | `debug decal <ref> [--height <units>]` | Strikes a loaded actor as a one-handed blade does: the blade's impact for the actor's race material plays on its side facing the player, 100 units above the feet by default, and leaves its decal on the body. Answers `placed` and `skinDecals`, the bone each decal rides |

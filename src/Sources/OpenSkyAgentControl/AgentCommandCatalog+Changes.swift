@@ -53,6 +53,10 @@ nonisolated extension AgentCommandCatalog {
             ]
         ),
         command(
+            "debug.release", "Let a looping sound finish its pass, as a SoundRelease event does.",
+            positionals: [required("id", "The sound's id from state sounds.")]
+        ),
+        command(
             "debug.activate", "Activate a reference, as ObjectReference.Activate does.",
             positionals: [required("ref", anyRefHelp)],
             options: [value("by", "ref", "The activator. Default: player.")]
