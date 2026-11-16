@@ -344,7 +344,8 @@ one run folder, `.logs/reference/<UTC time>/`:
 | `report.json` | The view, the size, the RGB PSNR, and the largest channel error |
 
 The reference window is the normal window of the size the game was started with, whose
-owner name holds "wine" or "skyrim"; without such a window it is the biggest one. The
+owner name holds "wine" or "skyrim", on any Space; without such a window it is the biggest
+one on screen, then the biggest on another Space. The
 capture needs the Screen Recording permission for the terminal, or for OpenSky when the
 Game menu or the Reference Game page captures; OpenSky asks for it on the first capture.
 Those write the same files to

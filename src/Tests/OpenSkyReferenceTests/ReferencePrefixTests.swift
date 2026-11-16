@@ -174,6 +174,21 @@ struct ReferenceWindowTests {
         #expect(ReferenceWindow.pick(windows, expected: small)?.id == 1)
     }
 
+    @Test func aWindowOnAnotherSpaceIsFound() {
+        let hidden = ReferenceWindowInfo(
+            id: 1, ownerName: "wine", layer: 0, width: 2560, height: 1440, isOnScreen: false
+        )
+        let game = ReferenceWindowInfo(
+            id: 2, ownerName: "SkyrimSE.exe", layer: 0, width: 1280, height: 720, isOnScreen: false
+        )
+        let frame = ReferenceWindowFrame(x: 0, y: 0, width: 1280, height: 720)
+        #expect(ReferenceWindow.pick([hidden, game], expected: frame)?.id == 2)
+        #expect(ReferenceWindow.pick([game])?.id == 2)
+        var front = game
+        front.isOnScreen = true
+        #expect(ReferenceWindow.pick([hidden, front])?.id == 2)
+    }
+
     @Test func aWindowIsPlacedOnlyAtItsFramesCornerAndSize() {
         let frame = ReferenceWindowFrame(x: 720, y: 62, width: 720, height: 405)
         let window = ReferenceWindowInfo(
