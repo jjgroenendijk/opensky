@@ -58,7 +58,8 @@ extension LocomotionBridgeTests {
             root: root,
             table: table,
             data: BehaviorFixture.graphData(
-                variables: variables, events: LocomotionGraphNames.events
+                variables: variables,
+                events: LocomotionGraphNames.events + [LocomotionGraphNames.jumpLandEnd]
             )
         )
     }

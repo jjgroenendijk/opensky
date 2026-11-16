@@ -138,6 +138,30 @@ vertical velocity, clears grounded and step support, and raises `JumpUp`. `JumpF
 the capsule leaves the ground without jumping, and `JumpLand` when the controller reports ground
 again.
 
+After a landing the character graph stands, even with `Speed` held at 200. It drops a `moveStart`
+that comes before its landing clip ends. So on the step after the graph fires `JumpLandEnd`, the
+bridge raises `moveStart` again while the player moves, and `sprintStart` while the player sprints.
+Without this, a player who ran off a ledge glides on in the standing pose.
+
+```mermaid
+stateDiagram-v2
+    Moving: MT_LocomotionType_State
+    Falling: JumpFallState
+    Landing: JumpLandState
+    Standing: MT_Standing_State
+    Moving --> Falling: JumpFall or JumpUp
+    Falling --> Landing: JumpLand
+    Landing --> Standing: JumpLandEnd, the graph's own event
+    Standing --> Moving: moveStart, raised on the next step while moving
+    note right of Landing: a moveStart here is dropped
+```
+
+In the game a character runs on after a landing. How it gets there is only partly known
+([locomotion graph](/engine/locomotion-graph.md#how-the-game-drives-the-graph)): the landing itself
+sends only the land action, and the move-start action comes when the game's own movement state
+changes to moving. What changes that state after a landing was not found, so the re-raise after
+`JumpLandEnd` is OpenSky's way to match the result.
+
 Water height is `CELL` `XCLW` over the worldspace default ([sky and water](/engine/sky-water.md)).
 Interiors report none: a vanilla interior places its water as geometry, not as a plane.
 

@@ -70,6 +70,8 @@ nonisolated public enum LocomotionGraphNames: Sendable {
     static let jumpUp = "JumpUp"
     static let jumpFall = "JumpFall"
     static let jumpLand = "JumpLand"
+    /// The graph's own event when the landing clip ends and it stands again.
+    static let jumpLandEnd = "JumpLandEnd"
     static let swimStart = "SwimStart"
     static let swimStop = "SwimStop"
 
