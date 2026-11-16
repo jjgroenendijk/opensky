@@ -103,6 +103,34 @@ struct NIFBillboardTests {
         #expect(try file.model().meshes.count == 1)
     }
 
+    /// A billboard at x 10 under a root turned 90 degrees about Z; one shape below it at
+    /// x 4 in the billboard's frame, and one beside it.
+    @Test func aRigidShapeBelowABillboardCarriesTheNodeInItsOwnFrame() throws {
+        var billboard = NIFFixture.niNode(
+            prefix: NIFFixture.avObjectPrefix(translation: [10, 0, 0]), children: [2]
+        )
+        billboard.appendUInt16(9)
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("BSFadeNode", NIFFixture.niNode(
+                prefix: NIFFixture.avObjectPrefix(rotationRows: [0, -1, 0, 1, 0, 0, 0, 0, 1]),
+                children: [1, 3]
+            )),
+            .init("NiBillboardNode", billboard),
+            .init("BSTriShape", NIFFixture.staticTriangleShape(
+                prefix: NIFFixture.avObjectPrefix(translation: [4, 0, 0]), shaderPropertyRef: 4
+            )),
+            .init("BSTriShape", NIFFixture.staticTriangleShape(shaderPropertyRef: 4)),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
+        ]))
+        let meshes = try file.model().meshes
+        try #require(meshes.count == 2)
+        let below = try #require(meshes[0].billboard)
+        Self.expectClose(below.pivot, [-4, 0, 0])
+        Self.expectClose(below.rotation.act([1, 0, 0]), [1, 0, 0])
+        #expect(below.mode == 9)
+        #expect(meshes[1].billboard == nil)
+    }
+
     /// A root turned 90 degrees about Z, a billboard at x 10 under it, and a child below.
     private static func animator(mode: UInt16) throws -> NIFNodeAnimator {
         var billboard = NIFFixture.niNode(

@@ -95,6 +95,39 @@ struct NodeControllerCoordinatorTests {
         #expect(nodes.nodes(of: 0x10)?.first?.controllers == ["NiBillboardNode mode 4"])
     }
 
+    /// A root with billboard "Glow"; `nested` puts billboard "Inner" below it.
+    static func billboardFile(nested: Bool) throws -> NIFFile {
+        var glow = NIFFixture.niNode(
+            prefix: NIFFixture.avObjectPrefix(nameIndex: 1), children: nested ? [2] : []
+        )
+        glow.appendUInt16(4)
+        var inner = NIFFixture.niNode(prefix: NIFFixture.avObjectPrefix(nameIndex: 2))
+        inner.appendUInt16(4)
+        var blocks: [NIFFixture.Block] = [
+            .init("NiNode", NIFFixture.niNode(
+                prefix: NIFFixture.avObjectPrefix(nameIndex: 0), children: [1]
+            )),
+            .init("NiBillboardNode", glow)
+        ]
+        if nested {
+            blocks.append(.init("NiBillboardNode", inner))
+        }
+        return try NIFFile(data: NIFFixture.file(
+            blocks: blocks, strings: ["Root", "Glow", "Inner"]
+        ))
+    }
+
+    @Test func aRigOfOnlyBillboardsLeavesTheTurnToTheVertexShader() throws {
+        let rig = try #require(try NodeControllerRig(file: Self.billboardFile(nested: false)))
+        #expect(rig.movesOnlyShaderBillboards(particleAncestors: [["root"]]))
+        // A particle system below the billboard must move with it, so the CPU turns it.
+        #expect(!rig.movesOnlyShaderBillboards(particleAncestors: [["glow", "root"]]))
+        let nested = try #require(try NodeControllerRig(file: Self.billboardFile(nested: true)))
+        #expect(!nested.movesOnlyShaderBillboards(particleAncestors: []))
+        let wheel = try #require(try NodeControllerRig(file: Self.file(flags: 0xC)))
+        #expect(!wheel.movesOnlyShaderBillboards(particleAncestors: []))
+    }
+
     @Test func aMeshWithOnlyInactiveControllersGetsNoRig() throws {
         #expect(try NodeControllerRig(file: Self.file(flags: 0x4)) == nil)
     }

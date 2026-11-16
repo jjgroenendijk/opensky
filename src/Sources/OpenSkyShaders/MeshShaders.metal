@@ -4,6 +4,8 @@
 #include "ProjectedMaterial.h"
 #include "SnowShading.h"
 #include "MeshRefraction.h"
+#include "BillboardTurn.h"
+#include "TreeWind.h"
 
 // Static-mesh path: diffuse * (directional sun + ambient),
 // vertex color as tint (Skyrim bakes AO there). Alpha-test pipeline variant
@@ -23,40 +25,6 @@ static inline float3 undoTerrainLODBrightening(float3 albedo, float2 curve)
 {
     return toLinear(pow(toGamma(albedo) / curve.x, 1.0 / curve.y));
 }
-// Tree sway grows with height like a tilt; leaves flutter by their wind weight and fade
-// with distance. The scales are OpenSky's (docs/rendering/trees.md).
-constant float treeSwayTilt = 0.1;
-constant float leafSideShare = 0.5;
-
-static inline float3 treeWindOffset(
-    float3 world,
-    float weight,
-    float3 origin,
-    constant DrawUniforms &draw,
-    constant FrameUniforms &frame)
-{
-    float4 motion = draw.windMotion;
-    float speed = frame.treeWind.z;
-    if (speed <= 0.0 || (motion.x <= 0.0 && motion.w <= 0.0)) {
-        return 0.0;
-    }
-    float2 direction = frame.treeWind.xy;
-    float phase = dot(origin.xy, float2(0.0013, 0.0021));
-    float height = max(world.z - origin.z, 0.0);
-    float time = frame.animationTime;
-    float swing = 0.75 + 0.25 * sin(6.28318530718 * motion.y * time + phase);
-    float3 offset = float3(direction * (motion.x * speed * treeSwayTilt * height * swing), 0.0);
-    if (motion.w > 0.0) {
-        float fade =
-            saturate(1.0 - distance(origin, frame.cameraPosition) / max(frame.treeWind.w, 1.0));
-        float wave =
-            sin(6.28318530718 * motion.w * time + phase * 7.0 + (world.x + world.y) * 0.05);
-        float flutter = motion.z * weight * speed * fade * wave;
-        offset += float3(direction * flutter * leafSideShare, flutter);
-    }
-    return offset;
-}
-
 // Instanced: matrices come from the per-instance transform
 // array, bound at the draw group's base offset — instance_id starts at 0
 // per draw call, so it indexes straight into the group's visible instances.
@@ -72,15 +40,17 @@ vertex StaticVertexOut staticMeshVertex(
     StaticVertexOut out;
     const device InstanceTransform &instance = instances[instanceID];
     float4 world = instance.modelMatrix * float4(in.position, 1.0);
+    BillboardTurn turn = billboardTurn(draw, instance.modelMatrix, frame);
+    world.xyz = turn.pivot + turn.rotation * (world.xyz - turn.pivot);
     world.xyz += treeWindOffset(world.xyz, in.color.a, instance.modelMatrix[3].xyz, draw, frame);
     out.position = frame.viewProjectionMatrix * world;
-    out.normal = (instance.normalMatrix * float4(in.normal, 0.0)).xyz;
+    out.normal = turn.rotation * (instance.normalMatrix * float4(in.normal, 0.0)).xyz;
     out.worldPosition = world.xyz;
     out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
     out.color = float4(in.color.rgb, draw.windMotion.w > 0.0 ? 1.0 : in.color.a);
     out.instanceColor = instance.instanceColor;
     out.fadeOut = instance.grassParameters.w;
-    setBasis(out, upper3x3(instance.normalMatrix));
+    setBasis(out, turn.rotation * upper3x3(instance.normalMatrix));
     return out;
 }
 

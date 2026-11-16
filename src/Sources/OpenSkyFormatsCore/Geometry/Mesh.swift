@@ -32,6 +32,8 @@ nonisolated public struct Mesh: Sendable {
     /// The segment of an object LOD large-reference shape this piece came from; segment
     /// `k` holds the large references of one cell (docs/formats/lod.md).
     public let objectLODSegment: Int?
+    /// Nil unless the shape is rigid and hangs below an `NiBillboardNode`.
+    public let billboard: MeshBillboard?
 
     public init(
         name: String?,
@@ -46,7 +48,8 @@ nonisolated public struct Mesh: Sendable {
         materialSlot: Int,
         skinning: MeshSkinning? = nil,
         lodIndexCounts: [Int] = [],
-        objectLODSegment: Int? = nil
+        objectLODSegment: Int? = nil,
+        billboard: MeshBillboard? = nil
     ) {
         self.name = name
         self.transform = transform
@@ -61,6 +64,42 @@ nonisolated public struct Mesh: Sendable {
         self.skinning = skinning
         self.lodIndexCounts = lodIndexCounts
         self.objectLODSegment = objectLODSegment
+        self.billboard = billboard
+    }
+}
+
+/// The nearest `NiBillboardNode` above a rigid shape, in the shape's own frame. The vertex
+/// shader turns the shape about the node so the node faces the camera by its mode
+/// (docs/formats/nif-sequences.md#billboard-nodes).
+nonisolated public struct MeshBillboard: Equatable, Sendable {
+    public let pivot: SIMD3<Float>
+    /// The node's rest rotation.
+    public let rotation: simd_quatf
+    /// nif.xml `BillboardMode`.
+    public let mode: UInt16
+
+    public init(pivot: SIMD3<Float>, rotation: simd_quatf, mode: UInt16) {
+        self.pivot = pivot
+        self.rotation = rotation
+        self.mode = mode
+    }
+
+    /// The node at `node` in the frame `shape` maps to the same space. Nil when the
+    /// shape's transform cannot be inverted.
+    public init?(node: float4x4, shape: float4x4, mode: UInt16) {
+        guard abs(shape.determinant) > 1e-12 else { return nil }
+        let local = shape.inverse * node
+        let axes = [local.columns.0, local.columns.1, local.columns.2].map {
+            simd_normalize(SIMD3($0.x, $0.y, $0.z))
+        }
+        guard axes.allSatisfy({ $0.x.isFinite && $0.y.isFinite && $0.z.isFinite }) else {
+            return nil
+        }
+        self.init(
+            pivot: SIMD3(local.columns.3.x, local.columns.3.y, local.columns.3.z),
+            rotation: simd_quatf(simd_float3x3(axes[0], axes[1], axes[2])).normalized,
+            mode: mode
+        )
     }
 }
 

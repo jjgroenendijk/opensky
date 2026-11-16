@@ -66,6 +66,32 @@ nonisolated public struct NodeControllerRig: Sendable {
         )
     }
 
+    /// True when the rig moves only billboards that the static vertex shader can turn
+    /// instead, so the mesh needs no posed copy: no controller or sequence plays, no
+    /// billboard sits below another, and no particle system, given by the names of its
+    /// ancestor nodes, sits below one.
+    public func movesOnlyShaderBillboards(particleAncestors: [[String]]) -> Bool {
+        let billboards = Set(animation.billboardNodes)
+        guard
+            animation.playingControllers.isEmpty, sequences.isEmpty,
+            boneNodes.allSatisfy(billboards.contains)
+        else { return false }
+        let nested = billboards.contains { node in
+            var parent = animation.nodes[node].parent
+            var steps = 0
+            while let current = parent, steps < 64 {
+                if billboards.contains(current) {
+                    return true
+                }
+                parent = animation.nodes[current].parent
+                steps += 1
+            }
+            return false
+        }
+        let names = Set(billboards.compactMap { animation.nodes[$0].name?.lowercased() })
+        return !nested && particleAncestors.allSatisfy { names.isDisjoint(with: $0) }
+    }
+
     func sequence(named name: String) -> NIFSequence? {
         sequences.first { $0.name.caseInsensitiveCompare(name) == .orderedSame }
     }

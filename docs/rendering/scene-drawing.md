@@ -101,6 +101,21 @@ Culling works per instance. Each frame writes only visible instances, packed, an
 with that count. A fully culled group is skipped and uses no uniform slot. Terrain is not instanced.
 Grass uses the instance ring with its own pipeline ([grass](/engine/grass.md)).
 
+## Billboard shapes
+
+A rigid shape below an `NiBillboardNode` keeps the node's position, rest rotation, and mode in
+its own frame. The flatten takes the nearest billboard above the shape. The static vertex shader
+turns the shape about that node to the frame's camera, by the rules on the
+[sequence page](/formats/nif-sequences.md#billboard-nodes). It works in world space from the
+instance's model matrix, so each placement turns about its own pivot in the same instanced draw.
+The turn also rotates the normal and the tangent frame. The draw ring stores the node's position
+with the mode plus 1, so a zeroed slot draws the shape at rest.
+
+A skinned shape is not turned here: its pose already holds the turn
+([node controllers](/engine/object-animation.md#node-controllers)). A billboard shape casts no
+sun shadow, because the shadow and ray-traced passes draw it unturned. Its motion for temporal
+upscaling is the camera's motion only.
+
 ## Swapping scenes
 
 A new scene replaces the old one between frames, which is what [cell streaming](/engine/cell-streaming.md)

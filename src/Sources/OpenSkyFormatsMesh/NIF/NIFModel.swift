@@ -91,10 +91,16 @@ nonisolated extension NIFFile {
                     stack.push(
                         children: node.children,
                         parent: world,
-                        depth: visit.depth + 1
+                        depth: visit.depth + 1,
+                        billboard: NIFBillboard.mode(of: block).map {
+                            NIFGraphStack.Billboard(transform: world, mode: $0)
+                        } ?? visit.billboard
                     )
                 } else if Self.shapeTypes.contains(block.typeName) {
-                    try appendShape(block: block, index: index, parent: visit.parent)
+                    try appendShape(
+                        block: block, index: index, parent: visit.parent,
+                        billboard: visit.billboard
+                    )
                 }
                 // Any other type is a leaf we do not draw (collision, shader
                 // properties, controllers…): subtree ends.
@@ -120,7 +126,8 @@ nonisolated extension NIFFile {
         private mutating func appendShape(
             block: NIFBlock,
             index: Int,
-            parent: float4x4
+            parent: float4x4,
+            billboard: NIFGraphStack.Billboard? = nil
         ) throws {
             guard let shape = try file.triShape(of: block) else { return }
             guard !shape.object.isEditorMarker else {
@@ -156,9 +163,10 @@ nonisolated extension NIFFile {
                 slotIndex = materials.count - 1
                 slotIndexes[key] = slotIndex
             }
+            let transform = parent * shape.object.localTransform
             let mesh = try Mesh(
                 name: shape.object.name,
-                transform: parent * shape.object.localTransform,
+                transform: transform,
                 positions: geometry.positions,
                 normals: geometry.normals,
                 tangents: geometry.tangents,
@@ -170,7 +178,10 @@ nonisolated extension NIFFile {
                 skinning: geometry.skinning,
                 lodIndexCounts: MeshLODLevels.indexCounts(
                     triangleCounts: shape.lodTriangleCounts, indexCount: geometry.indices.count
-                )
+                ),
+                billboard: geometry.skinning == nil ? billboard.flatMap {
+                    MeshBillboard(node: $0.transform, shape: transform, mode: $0.mode)
+                } : nil
             )
             let pieces = try mesh.splitByObjectLODSegment(file.largeReferenceSegments(
                 of: block,

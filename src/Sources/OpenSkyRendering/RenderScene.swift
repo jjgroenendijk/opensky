@@ -343,7 +343,8 @@ nonisolated public struct RenderScene: Sendable {
     /// The distant LOD's fitted curve; nil draws with the vanilla one.
     public var terrainLODBrightness: TerrainLODBrightness?
 
-    /// One mesh of a placement as a draw. A see-through surface casts no sun shadow.
+    /// One mesh of a placement as a draw. A see-through surface casts no sun shadow, and
+    /// nor does a billboard, which only the scene pass turns to the camera.
     private static func instance(
         of placement: RenderPlacement, mesh: RenderMesh, state: MaterialDrawState, seeThrough: Bool
     ) -> DrawInstance {
@@ -352,7 +353,8 @@ nonisolated public struct RenderScene: Sendable {
             modelMatrix: modelMatrix,
             normalMatrix: MatrixMath.normalMatrix(modelMatrix),
             bounds: placement.bounds,
-            castsShadows: placement.castsShadows && !seeThrough && state.castsShadows,
+            castsShadows: placement.castsShadows && !seeThrough && state.castsShadows
+                && mesh.billboard == nil,
             receivesPointLights: placement.receivesPointLights && !state.distantLOD,
             receivesShadows: placement.receivesShadows && state.receivesShadows,
             referenceFormID: placement.referenceFormID,

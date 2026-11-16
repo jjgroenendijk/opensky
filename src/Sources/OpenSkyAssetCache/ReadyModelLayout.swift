@@ -19,6 +19,8 @@ nonisolated public struct ReadyMeshLayout: Equatable, Sendable {
     public let lodIndexCounts: [Int]
     /// See `Mesh.objectLODSegment`.
     public let objectLODSegment: Int?
+    /// See `Mesh.billboard`.
+    public let billboard: MeshBillboard?
     /// False for a skinned mesh, an empty one, or one whose indices pass its vertices.
     /// Such a model loads through the whole decode, which reports the problem.
     public let isReady: Bool
@@ -106,6 +108,7 @@ nonisolated extension ModelCacheCodec {
             out.int(mesh.indices.count)
             out.array(mesh.lodIndexCounts.map(UInt32.init))
             out.int(mesh.objectLODSegment ?? -1)
+            ModelCacheCodec.encode(mesh.billboard, into: &out)
             out.array(bounds.map { [$0.min, $0.max] } ?? [])
             out.value(MeshUVDensity.uvPerUnit(
                 positions: mesh.positions, uvs: mesh.uvs, indices: mesh.indices
@@ -127,6 +130,7 @@ nonisolated extension ModelCacheCodec {
             let indexCount = try input.int()
             let levels = try input.array(UInt32.self).map(Int.init)
             let segment = try input.int()
+            let billboard = try ModelCacheCodec.billboard(&input)
             let corners = try input.array(SIMD3<Float>.self)
             let uvPerUnit = try input.value(Float.self)
             let ready = try input.bool()
@@ -146,7 +150,8 @@ nonisolated extension ModelCacheCodec {
                 indexCount: indexCount,
                 bounds: corners.count == 2 ? ModelBounds(min: corners[0], max: corners[1]) : nil,
                 uvPerUnit: uvPerUnit, lodIndexCounts: levels,
-                objectLODSegment: segment >= 0 ? segment : nil, isReady: ready,
+                objectLODSegment: segment >= 0 ? segment : nil, billboard: billboard,
+                isReady: ready,
                 vertexRange: vertices, indexRange: indices
             )
         }

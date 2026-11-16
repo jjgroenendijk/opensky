@@ -25,7 +25,8 @@ enum RenderReporting {
         print(
             "[INFO] draw calls: \(render.stats.drawCalls) "
                 + "(\(scene.drawCount) draw items, \(scene.instanceCount) instances, "
-                + "\(render.stats.culledInstances) culled)"
+                + "\(render.stats.culledInstances) culled, "
+                + "\(render.stats.billboardDrawCalls) billboard draws)"
         )
         let pixels = readPixels(texture: render.texture)
         let percent = unsafe String(format: "%.1f", nonBackgroundFraction(pixels: pixels) * 100)
