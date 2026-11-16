@@ -61,15 +61,12 @@ public final class ClothWorldAdapter: ClothWorld {
             let pose = game.animatedPose(for: entry.key),
             let bone = pose[cloth.bone]
         else { return nil }
-        let moved = streamer.npcTransform(for: entry.key)
-        let placement = moved?.placement ?? actor.placement
-        let scale = moved?.scale ?? actor.scale
-        let actorToWorld = MatrixMath.placement(
-            position: placement.position, rotation: placement.rotation, scale: scale
+        let frame = streamer.drawnFrame(
+            of: entry.key, placed: actor.placement, scale: actor.scale
         )
         return ClothActorFrame(
-            actorToWorld: actorToWorld, scale: scale, boneToActor: bone,
-            calves: calves(of: entry.key, pose: pose, actorToWorld: actorToWorld)
+            actorToWorld: frame.actorToWorld, scale: frame.scale, boneToActor: bone,
+            calves: calves(of: entry.key, pose: pose, actorToWorld: frame.actorToWorld)
         )
     }
 
