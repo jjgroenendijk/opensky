@@ -1,3 +1,4 @@
+import AVFAudio
 import Foundation
 
 // The readouts that read a sibling part answer from the fakes: the menu state with its
@@ -15,6 +16,7 @@ import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
+import OpenSkySessionInterface
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -144,6 +146,34 @@ struct AgentReadoutTests {
         let state = try object(world.query(.player))
         #expect(state["cell"] != nil)
         #expect(state["healthCues"] != nil)
+    }
+
+    @Test func theSoundsReadListsPlayingAndStartedSounds() throws {
+        let session = FakeGameSessionPort()
+        let format = try #require(AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1))
+        let engine = WorldAudioEngine(manualRenderingFormat: format)
+        engine.isEnabled = true
+        let tone = try #require(AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 441))
+        tone.frameLength = 441
+        let id = try engine.playPositional(
+            buffer: tone,
+            request: AudioPlayRequest(
+                name: "loop.wav", category: .effects, worldPosition: [64, 0, 0], loops: true
+            )
+        )
+        engine.releaseSource(id: id)
+        session.worldAudio = engine
+        host.gameSession = session
+        let state = try object(world.query(.sounds))
+        guard
+            case let .array(playing)? = state["playing"],
+            case let .array(started)? = state["started"]
+        else {
+            Issue.record("no sound lists")
+            return
+        }
+        #expect(object(playing[0])["released"] == .bool(true))
+        #expect(object(started[0])["file"] == .string("loop.wav"))
     }
 
     @Test func anActorInRangeIsListed() throws {

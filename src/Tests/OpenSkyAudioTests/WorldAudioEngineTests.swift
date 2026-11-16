@@ -195,3 +195,29 @@ struct WorldAudioEngineTests {
         }
     }
 }
+
+@MainActor
+struct WorldAudioEngineStartLogTests {
+    @Test
+    func aReleasedLoopIsMarkedAndTheStartLogKeepsTheNewest() throws {
+        let engine = try OfflineAudioFixture.makeRunningEngine()
+        let tone = try OfflineAudioFixture.makeToneBuffer(seconds: 0.02)
+        var ids: [Int] = []
+        for index in 0 ... WorldAudioEngine.recentStartLimit {
+            try ids.append(engine.playPositional(
+                buffer: tone,
+                request: AudioPlayRequest(
+                    name: "tone\(index)", category: .effects, worldPosition: [Float(index), 0, 0],
+                    loops: true
+                )
+            ))
+        }
+        let last = try #require(ids.last)
+        #expect(engine.releaseSource(id: last))
+        #expect(engine.sources.first { $0.id == last }?.released == true)
+        #expect(engine.recentStarts.count == WorldAudioEngine.recentStartLimit)
+        #expect(engine.recentStarts.first?.name == "tone1")
+        let newest = engine.recentStarts.last?.worldPosition?.x
+        #expect(newest == Float(WorldAudioEngine.recentStartLimit))
+    }
+}

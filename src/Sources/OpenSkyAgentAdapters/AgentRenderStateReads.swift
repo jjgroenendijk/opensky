@@ -155,6 +155,38 @@ struct AgentRenderStateReads {
         ]
     }
 
+    func soundsState() -> AgentJSON {
+        guard let audio = game.gameSession?.worldAudio else { return .null }
+        func place(_ position: SIMD3<Float>?) -> AgentJSON {
+            position.map(AgentJSON.init) ?? .null
+        }
+        let now = audio.playbackClockSeconds
+        return [
+            "running": .bool(audio.isRunning),
+            "playing": .array(audio.sources.map { source in
+                [
+                    "id": .init(source.id),
+                    "file": .string(source.name),
+                    "category": .string(source.category.rawValue),
+                    "position": place(source.placedPosition),
+                    "loops": .bool(source.loops),
+                    "released": .bool(source.released),
+                    "seconds": .init(Float(max(now - source.startClockSeconds, 0)))
+                ]
+            }),
+            "started": .array(audio.recentStarts.reversed().map { start in
+                [
+                    "id": .init(start.id),
+                    "file": .string(start.name),
+                    "category": .string(start.category.rawValue),
+                    "position": place(start.worldPosition),
+                    "loops": .bool(start.loops),
+                    "secondsAgo": .init(Float(max(now - start.clockSeconds, 0)))
+                ]
+            })
+        ]
+    }
+
     /// The bone each skin decal on `actor` rides, or `feet` for one without a bone.
     func skinDecalBones(of actor: ReferenceKey) -> [String] {
         let skin = game.effects.skinDecals

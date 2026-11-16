@@ -54,6 +54,7 @@ nonisolated extension AgentCommandCatalog {
     ]
 
     static let musicRead: [AgentCommandSpec] = [
-        command("state.music", "The playing music type and track, and what interrupts it.")
+        command("state.music", "The playing music type and track, and what interrupts it."),
+        command("state.sounds", "The playing sounds, where they play, and the newest ones started.")
     ]
 }
