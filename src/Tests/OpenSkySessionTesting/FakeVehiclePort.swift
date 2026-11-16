@@ -15,7 +15,7 @@ nonisolated public final class FakeVehiclePort: VehiclePort {
     public var playersLastMount: ReferenceKey?
     public var seatCalls: [SeatCall] = []
     public var seatResult = false
-    public var advanceCallCount = 0
+    public var advanceCalls: [Float] = []
     public var advanceResult: [VehicleCommand] = []
     public var animationEventCalls: [(name: String, actor: ReferenceKey)] = []
     public var animationEventResult: [VehicleCommand] = []
@@ -60,8 +60,8 @@ nonisolated extension FakeVehiclePort {
         return seatResult
     }
 
-    public func advance() -> [VehicleCommand] {
-        advanceCallCount += 1
+    public func advance(dt: Float) -> [VehicleCommand] {
+        advanceCalls.append(dt)
         return advanceResult
     }
 

@@ -144,12 +144,13 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
     public mutating func advance(
         base: (ReferenceKey) -> ReferenceTransformOverride?,
         bone: (ReferenceKey, String) -> SIMD3<Float>? = { _, _ in nil },
-        ground: (SIMD3<Float>) -> Float? = { _ in nil }
+        ground: (SIMD3<Float>) -> Float? = { _ in nil },
+        dt: Float = 0
     ) -> [ReferenceKey: ReferenceTransformOverride] {
         withoutActuallyEscaping(base) { base in
             withoutActuallyEscaping(bone) { bone in
                 withoutActuallyEscaping(ground) { ground in
-                    var frame = Frame(base: base, bone: bone, ground: ground)
+                    var frame = Frame(base: base, bone: bone, ground: ground, dt: dt)
                     for follower in links.keys.sorted() {
                         _ = pose(of: follower, frame: &frame, depth: 0)
                     }
@@ -163,6 +164,8 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
         let base: (ReferenceKey) -> ReferenceTransformOverride?
         let bone: (ReferenceKey, String) -> SIMD3<Float>?
         let ground: (SIMD3<Float>) -> Float?
+        /// Zero places a towed follower at its link's distance, with no dynamics.
+        let dt: Float
         var solved: [ReferenceKey: float4x4] = [:]
     }
 
@@ -189,26 +192,25 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
             let bone = frame.bone(link.carrier, name) ?? .zero
             result = carrier * MatrixMath.translation(bone)
         case var .towed(tow):
-            result = Self.pull(&tow, hitch: carrier.columns.3, ground: frame.ground)
+            result = Self.pull(&tow, hitch: carrier.columns.3, ground: frame.ground, dt: frame.dt)
             links[key]?.seat = .towed(tow)
         }
         frame.solved[key] = result
         return result
     }
 
-    /// Moves a towed follower to `length` behind the hitch, along the line from where
-    /// it was, so it trails the carrier's path. It rests on the ground under its wheels,
-    /// or, before they are known, on the ground under its origin and the hitch.
+    /// Moves a towed follower along the line from where it was toward the hitch, so it
+    /// trails the carrier's path: to `length` behind it, or with `dt`, to where the tow
+    /// line's spring takes it. It rests on the ground under its wheels, or, before they
+    /// are known, on the ground under its origin and the hitch.
     static func pull(
-        _ tow: inout VehicleTow, hitch: SIMD4<Float>, ground: (SIMD3<Float>) -> Float?
+        _ tow: inout VehicleTow, hitch: SIMD4<Float>, ground: (SIMD3<Float>) -> Float?,
+        dt: Float = 0
     ) -> float4x4 {
-        let flat = SIMD2(hitch.x - tow.position.x, hitch.y - tow.position.y)
         let previousHeading = tow.heading
-        if simd_length(flat) > 0.001 {
-            tow.heading = atan2(flat.x, flat.y)
-        }
+        let distance = towDistance(&tow, hitch: hitch, ground: ground, dt: dt)
         let direction = SIMD2(sin(tow.heading), cos(tow.heading))
-        let spot = SIMD2(hitch.x, hitch.y) - direction * tow.length
+        let spot = SIMD2(hitch.x, hitch.y) - direction * distance
         tow.rolled += simd_dot(spot - SIMD2(tow.position.x, tow.position.y), direction)
         trail(&tow, front: spot, previousHeading: previousHeading)
         let top = max(tow.position.z, hitch.z) + groundSearchHeight
@@ -242,7 +244,7 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
         return MatrixMath.translation(tow.position) * tilted * rotation
     }
 
-    private static func slope(from low: Float?, to high: Float?, _ length: Float) -> Float {
+    static func slope(from low: Float?, to high: Float?, _ length: Float) -> Float {
         guard let low, let high, length > 0 else { return 0 }
         return atan2(high - low, length)
     }

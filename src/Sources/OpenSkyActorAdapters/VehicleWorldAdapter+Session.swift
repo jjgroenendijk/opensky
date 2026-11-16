@@ -44,9 +44,9 @@ extension VehicleWorldAdapter {
     private func registerVehicles(stage: SessionStage) {
         let gameSession = stage.gameSession
         registerVehicleWheels(stage: stage)
-        gameSession.worldTick.register(.vehicles) { [weak self, weak gameSession] _ in
+        gameSession.worldTick.register(.vehicles) { [weak self, weak gameSession] delta in
             guard let self else { return }
-            run(vehicles.advance())
+            run(vehicles.advance(dt: delta))
             // Only the end of a ride frees the seat; a chair holds the player too.
             let rides = vehicles.lastPoses[.player] != nil
             if ridesPlayer, !rides {

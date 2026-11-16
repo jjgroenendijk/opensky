@@ -76,6 +76,7 @@ units below `HorseSpine2`. This also changes only the picture.
 
 ## What OpenSky follows
 
-OpenSky does not build these bodies and joints. It moves the cart as a trailer instead
-([vehicles](/engine/vehicles.md#towing)). From this rig it takes the horse's placement at the start
-of the tether and the front axle's 40 degree limit.
+OpenSky does not build these bodies and joints. It moves the cart as a trailer on a tow line with
+mass, play, and drag instead ([vehicles](/engine/vehicles.md#towing)). From this rig it takes the
+horse's placement at the start of the tether, the front axle's 40 degree limit, and the result of
+the hitch: the cart lags, rolls on after a stop, and sways, but the shaft tip stays near the horse.

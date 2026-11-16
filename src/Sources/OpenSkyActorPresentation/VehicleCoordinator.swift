@@ -113,7 +113,8 @@ public final class VehicleCoordinator {
         Set(core.links.flatMap { [$0.key, $0.value.carrier] })
     }
 
-    public func advance() -> [VehicleCommand] {
+    /// `dt` moves a towed cart on its tow line; zero places it at the link's distance.
+    public func advance(dt: Float = 0) -> [VehicleCommand] {
         guard let world else { return [] }
         guard !core.links.isEmpty else {
             guard hasDeltas else { return [] }
@@ -126,7 +127,8 @@ public final class VehicleCoordinator {
         lastPoses = core.advance(
             base: { world.vehiclePose(of: $0) },
             bone: { world.vehicleBone(of: $0, named: $1) },
-            ground: { world.vehicleGround(at: $0, excluding: linked) }
+            ground: { world.vehicleGround(at: $0, excluding: linked) },
+            dt: dt
         )
         var commands: [VehicleCommand] = []
         var placements: [UInt32: float4x4] = [:]
