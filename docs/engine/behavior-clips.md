@@ -263,11 +263,33 @@ The two instances are joined only by names:
   the reference.
 - A reference reached twice in one parent update runs once. Otherwise its clock would advance twice
   and run fast.
+- The same holds for any node inside one graph. `mt_behavior.hkx` uses one locomotion machine in
+  three places: the body and the two carry-arm layers. Each update runs that machine once, and the
+  other parents reuse its pose. Run once per parent, the walk played three times too fast and fired
+  each `FootLeft` and `FootRight` three times as often. A held cyclic-blend copy is the exception:
+  it runs the live blender's nodes again on its own states.
 - A reference that is no longer reached deactivates its child, as any Havok node does. The next
   reach enters every machine of the child at its start state. `1hm_behavior.hkx` needs this: its
   readied machine picks the bow or the sword stance from `iLeftHandType` only as it enters.
 - A child that references one of its own parents is refused by name. Mod data can contain cycles.
   Refusing by name, not by depth, keeps a legal deep nesting working.
+
+The game builds one list of active nodes per frame. A shared node is in it once. One pass gives
+each node one time step, copied from one parent, never added up over parents. A child of a synced
+blend gets the step rescaled to the shared cycle, and a node that does not advance gets 0. Then each
+node updates once, and every parent reads the same result. So a shared clip plays at 1x and fires
+its marks once (clean-room read of `SkyrimSE.exe` 1.7.104.0, 2026-11-16, behaviour only).
+
+```mermaid
+flowchart TD
+    Body[Body layer] --> M[Locomotion machine<br/>shared node]
+    Left[CarryLeftArmBehavior] --> M
+    Right[CarryRightArmBehavior] --> M
+    M --> W[MT_ForwardBlend: walk clips]
+    W -. "one time step per frame" .-> U[Update once]
+    U -. "FootLeft, FootRight once" .-> E[Events]
+    U --> R[Pose read by all three parents]
+```
 
 The event rule matters. The active set already holds everything the parent pushed in on the previous
 update. Raising it back made every crossing event bounce between the graphs forever. The vanilla

@@ -46,3 +46,42 @@ sound right.
 
 A routed step also shows the `IPCT` impact model at the feet, such as dust
 ([impacts and decals](/rendering/decals.md)).
+
+## What the game does
+
+Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0, 2026-11-16, which
+returned behaviour only. Not yet confirmed in the reference game.
+
+```mermaid
+flowchart TD
+    A[Graph event from an actor] --> B{"Taken by an animation-event handler?"}
+    B -- yes --> Z[No footstep]
+    B -- no --> C{"Name is a footstep tag of an FSTP record?"}
+    C -- no --> Z
+    C -- yes --> D{"Feet under water?"}
+    D -- yes --> E[Water's material, or the default water material]
+    D -- no --> F{"Ground material recorded?"}
+    F -- yes --> G[Last ground material of the character controller]
+    F -- "no, outdoors" --> H[Landscape texture under the actor]
+    F -- "no, indoors" --> Z
+    E --> I[Distinct footstep sets of every worn piece<br/>none: the DFTS default object]
+    G --> I
+    H --> I
+    I --> J{"Gait list"}
+    J --> K["swim, sneak, sprint flags first<br/>then run at speed ratio 0.5 or more<br/>else walk"]
+    K --> L[Each set: footstep for the tag and gait<br/>its IPCT for the material plays]
+```
+
+- The tag list comes from the `FSTP` records in the data, such as `FootLeft`, `FootRight`,
+  `FootSprintLeft`, `FootScuffLeft`, `FootBack`, `JumpUp`, and `JumpDown`. The player and NPCs
+  follow the same rules; only the sound's placement differs a little for the player.
+- There is no ground check. A foot tag sent in the air plays, on the last ground material. There is
+  no rate limit, no minimum time between steps, and no merging of one tag sent twice in a frame.
+  So the step rate is the rate of the foot marks in the clips that play, and a clip that runs too
+  fast is heard at once ([shared nodes](/engine/behavior-clips.md#behavior-references)).
+- Two different worn sets play two sounds per step.
+- A hard landing of the player, with fall damage above 0, plays a heavy landing sound above a
+  fall-damage threshold and a light one below it. The threshold starts at 500.
+
+OpenSky differs in three ways: it reads only the set in the feet slot, it takes the gait from its
+own gait state, and it plays no hard-landing sound.

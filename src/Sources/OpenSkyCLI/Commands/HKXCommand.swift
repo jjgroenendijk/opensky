@@ -82,7 +82,11 @@ enum HKXCommand {
             for clip in step.synchronizedClips {
                 print("  paired clip \(clip)")
             }
-            let fired = Array(Set(step.fired)).sorted()
+            let counts = Dictionary(step.fired.map { ($0, 1) }, uniquingKeysWith: +)
+            let fired = counts.keys.sorted().map { name in
+                let count = counts[name, default: 1]
+                return count > 1 ? "\(name) x\(count)" : name
+            }
             print("  fired: \(fired.isEmpty ? "none" : fired.joined(separator: ", "))")
         }
     }
