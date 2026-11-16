@@ -37,10 +37,9 @@ nonisolated public struct ThirdPersonCamera: Equatable, Sendable {
         (PlayerCapsule.standard.height / 2 / framingFillFraction)
             / tanf(fovYRadians / 2)
 
-    /// How far right of the spine axis the eye sits. One capsule radius: the
-    /// camera rides the shoulder line of the measured capsule rather than its
-    /// centre, so the body sits left of frame and the crosshair looks past it.
-    public static let shoulderOffset = PlayerCapsule.standard.radius
+    /// How far right of the spine axis the eye sits, about the shoulder line, so the
+    /// body sits left of frame and the crosshair looks past it.
+    public static let shoulderOffset: Float = 24
 
     /// The radius the zoom sweep collides with: the distance from the eye to a
     /// corner of the near plane at 16:9, so no wall the probe clears can cut the view.

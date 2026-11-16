@@ -14,7 +14,9 @@ nonisolated public struct PlayerCapsule: Equatable, Sendable {
         self.eyeHeight = eyeHeight
     }
 
-    public static let standard = PlayerCapsule(radius: 24, height: 128, eyeHeight: 112)
+    /// The human skeleton's bound, half size (22, 14, 64), gives radius (22 + 14) / 2.
+    /// See docs/engine/character-shapes.md.
+    public static let standard = PlayerCapsule(radius: 18, height: 128, eyeHeight: 112)
 
     /// Halfway up the capsule.
     public var centreHeight: Float {

@@ -149,10 +149,11 @@ public struct NPCMover {
         let query: WalkController.CollisionQuery = ignoresStatics
             ? { _ in [] } : world.collisionQuery(for: actor)
         let (longBody, yaw) = (longBody, yaw)
+        let groundSampler = ignoresStatics ? staticFloorSampler(world: world) : world.sampleGround
         controller.update(
             frameTime: frameTime,
             yaw: yaw,
-            sampleGround: ignoresStatics ? staticFloorSampler(world: world) : world.sampleGround,
+            sampleGround: groundSampler,
             collisionQuery: query
         ) { state in
             var plan = LocomotionStepPlan()
@@ -172,7 +173,7 @@ public struct NPCMover {
             if let longBody {
                 plan.horizontalDisplacement += longBody.correction(
                     pose: (state.feetPosition, yaw), displacement: plan.horizontalDisplacement,
-                    lift: configuration.stepHeight.value, query: query
+                    ground: { groundSampler($0)?.height }, query: query
                 )
             }
             plan.swimSurfaceHeight = water.swimSurface

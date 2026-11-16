@@ -88,11 +88,11 @@ struct ClothPlaybackTests {
     }
 
     @Test func theBodyCapsuleTakesTheControllerRadiusAndTheBoundsHeight() {
-        #expect(ClothPlayback.bodyCapsule(bounds: nil) == (24, 128))
+        #expect(ClothPlayback.bodyCapsule(bounds: nil) == (18, 128))
         let wings = ClothPlayback.bodyCapsule(bounds: ModelBounds(
             min: SIMD3(-120, -10, 0), max: SIMD3(120, 10, 200)
         ))
-        #expect(wings == (24, 200), "wide wings do not widen the body")
+        #expect(wings == (18, 200), "wide wings do not widen the body")
     }
 
     @Test(.enabled(if: Self.hasDevice))

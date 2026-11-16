@@ -33,7 +33,7 @@ struct WalkControllerConfigurationTests {
         drive(controller: &low, camera: &lowCamera, query: query)
         drive(controller: &high, camera: &highCamera, query: query)
 
-        #expect(low.feetPosition.x < 17)
+        #expect(low.feetPosition.x < 23)
         #expect(high.feetPosition.x > 80)
         #expect(abs(high.feetPosition.z - 20) < 0.1)
     }

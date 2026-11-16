@@ -24,6 +24,14 @@ nonisolated public struct LongBodyShape: Equatable, Sendable {
     /// From the centre to each end sphere's centre, along the long axis.
     public let endOffset: Float
     public let endRadius: Float
+    /// The body capsule along the long axis: its radius, the height of its axis above the
+    /// feet, and the half length of its segment.
+    public let bodyRadius: Float
+    public let bodyHeight: Float
+    public let bodyHalfLength: Float
+
+    /// The half size the game uses for a skeleton without a `BBX` bound.
+    public static let missingBoundHalfExtents = SIMD3<Float>(repeating: 25)
 
     /// Ends sit this far inside the long capsule's segment ends.
     public static let endInset: Float = 8
@@ -40,12 +48,19 @@ nonisolated public struct LongBodyShape: Equatable, Sendable {
         isForwardLong = size.y >= size.x
         endRadius = thickest - radius
         endOffset = max(long - radius - Self.endInset, 0)
+        bodyRadius = radius
+        bodyHeight = thickest - radius + thickest
+        bodyHalfLength = max(long - radius, 0)
+    }
+
+    private func axis(yaw: Float) -> SIMD2<Float> {
+        let forward = SIMD2<Float>(cosf(yaw), sinf(yaw))
+        return isForwardLong ? forward : SIMD2(forward.y, -forward.x)
     }
 
     /// The feet of each end sphere's short capsule. `yaw` is counter-clockwise from +X.
     public func endFeet(at feet: SIMD3<Float>, yaw: Float, lift: Float) -> [SIMD3<Float>] {
-        let forward = SIMD2<Float>(cosf(yaw), sinf(yaw))
-        let axis = isForwardLong ? forward : SIMD2(forward.y, -forward.x)
+        let axis = axis(yaw: yaw)
         return [1, -1].map { (side: Float) in
             let point = SIMD2(feet.x, feet.y) + axis * endOffset * side
             return SIMD3(point.x, point.y, feet.z + lift)
@@ -53,27 +68,65 @@ nonisolated public struct LongBodyShape: Equatable, Sendable {
     }
 
     public var endCapsule: PlayerCapsule {
-        PlayerCapsule(radius: endRadius, height: endRadius * 2, eyeHeight: endRadius)
+        .ball(radius: endRadius)
     }
 
-    /// The horizontal change to `displacement` that keeps both ends out of `query`'s shapes.
-    /// The ends ride `lift` above the feet, so the ground under them is the capsule's job.
+    /// The body capsule as a row of balls along its segment, no more than one radius apart,
+    /// so a beam that passes between two of them still meets one.
+    public func bodyBallFeet(at feet: SIMD3<Float>, yaw: Float) -> [SIMD3<Float>] {
+        let axis = axis(yaw: yaw)
+        let gaps = max(1, Int(ceilf(2 * bodyHalfLength / max(bodyRadius, 1))))
+        return (0 ... gaps).map { index in
+            let along = -bodyHalfLength + 2 * bodyHalfLength * Float(index) / Float(gaps)
+            let point = SIMD2(feet.x, feet.y) + axis * along
+            return SIMD3(point.x, point.y, feet.z + bodyHeight - bodyRadius)
+        }
+    }
+
+    /// The horizontal change to `displacement` that keeps the ends and the body out of
+    /// `query`'s shapes. Each end stands on the ground under it, from `ground`, and follows
+    /// that ground. Only the push a move adds over standing still counts, so the slope an
+    /// end stands on does not push the body back.
     public func correction(
-        pose: (feet: SIMD3<Float>, yaw: Float), displacement: SIMD2<Float>, lift: Float,
-        query: CapsuleWorldCollider.CandidateQuery
+        pose: (feet: SIMD3<Float>, yaw: Float), displacement: SIMD2<Float>,
+        ground: (SIMD2<Float>) -> Float?, query: CapsuleWorldCollider.CandidateQuery
     ) -> SIMD2<Float> {
         let (feet, yaw) = pose
-        let collider = CapsuleWorldCollider(capsule: endCapsule)
-        let move = SIMD3(displacement.x, displacement.y, 0)
         var correction = SIMD2<Float>.zero
-        for start in endFeet(at: feet, yaw: yaw, lift: lift) {
-            let moved = collider.move(from: start, displacement: move, query: query)
-            let push = SIMD2(moved.position.x, moved.position.y)
-                - SIMD2(start.x + move.x, start.y + move.y)
+        func keepLarger(_ push: SIMD2<Float>) {
             if simd_length_squared(push) > simd_length_squared(correction) {
                 correction = push
             }
         }
+        let ends = CapsuleWorldCollider(capsule: endCapsule)
+        for start in endFeet(at: feet, yaw: yaw, lift: 0) {
+            let here = SIMD2(start.x, start.y)
+            let there = here + displacement
+            let standing = SIMD3(here.x, here.y, ground(here) ?? start.z)
+            let rise = (ground(there) ?? standing.z) - standing.z
+            keepLarger(Self.addedPush(
+                ends, from: standing, move: SIMD3(displacement.x, displacement.y, rise),
+                query: query
+            ))
+        }
+        let body = CapsuleWorldCollider(capsule: .ball(radius: bodyRadius))
+        for start in bodyBallFeet(at: feet, yaw: yaw) {
+            keepLarger(Self.addedPush(
+                body, from: start, move: SIMD3(displacement.x, displacement.y, 0), query: query
+            ))
+        }
         return correction
+    }
+
+    /// The horizontal push a move meets, less the push the same shape meets standing still.
+    private static func addedPush(
+        _ collider: CapsuleWorldCollider, from start: SIMD3<Float>, move: SIMD3<Float>,
+        query: CapsuleWorldCollider.CandidateQuery
+    ) -> SIMD2<Float> {
+        let resting = collider.move(from: start, displacement: .zero, query: query).position
+        let moved = collider.move(from: start, displacement: move, query: query).position
+        let restPush = SIMD2(resting.x - start.x, resting.y - start.y)
+        let movePush = SIMD2(moved.x - start.x - move.x, moved.y - start.y - move.y)
+        return movePush - restPush
     }
 }

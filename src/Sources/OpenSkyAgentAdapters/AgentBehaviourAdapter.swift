@@ -251,7 +251,8 @@ struct AgentPackageReadout {
     func movementReadout(_ key: ReferenceKey) -> AgentJSON {
         let name = game.actorGraphs.movementStateName(of: key)
         let speeds = game.streamer.actors.npcMovementSpeeds?(key)
-        let scale = game.streamer.npcTransform(for: key)?.scale ?? 1
+        let scale = (game.streamer.npcTransform(for: key)?.scale ?? 1)
+            * (game.streamer.npcHeightScale?(key) ?? 1)
         let bounds = game.streamer.npcBodyHalfExtents?(key)
         let capsule = bounds.flatMap { PlayerCapsule.upright(halfExtents: $0, scale: scale) }
         let long = bounds.flatMap { LongBodyShape(halfExtents: $0, scale: scale) }
@@ -262,7 +263,10 @@ struct AgentPackageReadout {
             "capsuleRadius": capsule.map { .init($0.radius) } ?? .null,
             "capsuleHeight": capsule.map { .init($0.height) } ?? .null,
             "endRadius": long.map { .init($0.endRadius) } ?? .null,
-            "endOffset": long.map { .init($0.endOffset) } ?? .null
+            "endOffset": long.map { .init($0.endOffset) } ?? .null,
+            "bodyRadius": long.map { .init($0.bodyRadius) } ?? .null,
+            "bodyHeight": long.map { .init($0.bodyHeight) } ?? .null,
+            "bodyHalfLength": long.map { .init($0.bodyHalfLength) } ?? .null
         ]
     }
 

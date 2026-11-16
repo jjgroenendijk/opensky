@@ -148,7 +148,7 @@ struct CapsuleCollisionTests {
             frames: 60,
             query: DynamicBodyScene.candidateQuery([floor, highStep])
         )
-        #expect(high.feetPosition.x < 17)
+        #expect(high.feetPosition.x < 23)
         #expect(abs(high.feetPosition.z) < 0.1)
         #expect(!high.hasUnresolvedPenetration)
     }
@@ -160,7 +160,7 @@ struct CapsuleCollisionTests {
             DynamicBodyScene.floor(extent: 200),
             DynamicBodyScene.box(center: SIMD3(70, 0, 8), half: SIMD3(30, 100, 8))
         ])
-        let start = SIMD3<Float>(17.37147, 0, 0.002)
+        let start = SIMD3<Float>(22.0, 0, 0.002)
         let support = collider.stepSupport(
             at: SIMD2(start.x + PlayerCapsule.standard.radius + 1.5, start.y),
             minimumHeight: start.z,

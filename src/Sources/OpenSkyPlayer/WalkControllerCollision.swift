@@ -81,6 +81,18 @@ nonisolated extension WalkController {
         if let centerSupport {
             return centerSupport
         }
+        // Just after a step up the centre is not over the tread yet; the tread ahead holds it.
+        if
+            let ahead = stepProbePoint(from: start, displacement: displacement),
+            let held = collider.stepSupport(
+                at: ahead,
+                minimumHeight: activeStepSupport.height - 0.1,
+                maximumHeight: activeStepSupport.height + 0.1,
+                query: collisionQuery
+            )
+        {
+            return held
+        }
         return stepSupport(
             from: start,
             displacement: displacement,
@@ -95,17 +107,23 @@ nonisolated extension WalkController {
         collider: CapsuleWorldCollider,
         collisionQuery: CollisionQuery
     ) -> CapsuleStepSupport? {
-        let horizontal = SIMD2<Float>(displacement.x, displacement.y)
-        let length = simd_length(horizontal)
-        guard length > Float.ulpOfOne else { return nil }
-        let direction = horizontal / length
-        let point = SIMD2<Float>(start.x, start.y) + direction * (capsule.radius + length)
+        guard let point = stepProbePoint(from: start, displacement: displacement) else {
+            return nil
+        }
         return collider.stepSupport(
             at: point,
             minimumHeight: start.z + 0.05,
             maximumHeight: start.z + configuration.stepHeight.value,
             query: collisionQuery
         )
+    }
+
+    /// Just past the capsule's front edge after this move.
+    func stepProbePoint(from start: SIMD3<Float>, displacement: SIMD3<Float>) -> SIMD2<Float>? {
+        let horizontal = SIMD2<Float>(displacement.x, displacement.y)
+        let length = simd_length(horizontal)
+        guard length > Float.ulpOfOne else { return nil }
+        return SIMD2(start.x, start.y) + horizontal / length * (capsule.radius + length)
     }
 
     func isHorizontallyBlocked(

@@ -43,7 +43,7 @@ makes that choice only once.
 | Target | The speaker's `NPC Head [Head]` bone | The posed skeleton each frame. The capsule's eye height if the actor has no skeleton |
 | Framed height | 96 units | The head in the middle, down to the capsule's middle, and the same distance above the head |
 | Framing distance | about 126 units | `(span / 2 / fill) / tan(fov / 2)` at a 65 degree vertical field of view |
-| Shoulder offset | 24 units | One capsule radius, on the same side as third person |
+| Shoulder offset | 24 units | The third-person shoulder offset, on the same side |
 | Space behind the player | 24 units | The third-person minimum distance, so the lens clears the player's body |
 | Field of view | 65 degrees | The shared world angle, whatever mode the conversation interrupted |
 
