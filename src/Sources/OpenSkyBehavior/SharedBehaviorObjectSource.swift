@@ -9,6 +9,7 @@ nonisolated public final class SharedBehaviorObjectSource: BehaviorObjectSource 
     private let graph: HKXObjectGraph
     /// The optional is stored so an object with no decoder is tried once.
     private var decoded: [HKXPointerTarget: (any HKBClass)?] = [:]
+    public let fileCaches: BehaviorFileCaches? = BehaviorFileCaches()
 
     public init(graph: HKXObjectGraph) {
         self.graph = graph

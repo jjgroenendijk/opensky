@@ -41,11 +41,31 @@ struct BehaviorReferenceWildcardTests {
         #expect(parent.activeStates.map(\.stateName) == ["Seat"])
     }
 
+    @Test func graphsOverOneFileShareTheirWildcardRoutes() {
+        let caches = BehaviorFileCaches()
+        let first = Self.parent(child: Self.child(wildcardFlags: Self.global), caches: caches)
+        let second = Self.parent(child: Self.child(wildcardFlags: Self.global), caches: caches)
+        for graph in [first, second] {
+            graph.update(deltaTime: Self.step)
+            graph.raiseEvent(named: "bind")
+            for _ in 0 ..< 3 {
+                graph.update(deltaTime: Self.step)
+            }
+            #expect(graph.activeStates.map(\.stateName) == ["Walk", "Bound"])
+        }
+        #expect(caches.globalWildcardTables.count == 1)
+        let routes = caches.globalWildcardTables.values.first?.routes ?? []
+        #expect(routes.map(\.holderPath) == [["child.hkx"]])
+    }
+
     // MARK: - Graphs
 
     /// A top machine that starts in `Seat` and holds the reference in `Walk`. It has
     /// no transition of its own, so only the child's wildcard can move it.
-    private static func parent(child: BehaviorGraphInstance) -> BehaviorGraphInstance {
+    private static func parent(
+        child: BehaviorGraphInstance,
+        caches: BehaviorFileCaches? = nil
+    ) -> BehaviorGraphInstance {
         var table = BehaviorObjectTable()
         let reference = table.add(
             HKBBehaviorReferenceGenerator(
@@ -71,8 +91,12 @@ struct BehaviorReferenceWildcardTests {
         let root = table.add(
             BehaviorStateMachineFixture.machine("top", states: [seat, walk]), at: 0x140
         )
-        let graph = BehaviorFixture.instance(
-            root: root, table: table, data: BehaviorFixture.graphData(events: ["bind", "left"])
+        let graph = BehaviorGraphInstance(
+            root: root,
+            data: BehaviorFixture.graphData(events: ["bind", "left"]),
+            source: CachedTable(table: table, fileCaches: caches),
+            skeleton: BehaviorFixture.skeleton(),
+            clips: EmptyBehaviorClipSource()
         )
         graph.references = BehaviorReferenceTable(graphs: ["child.hkx": child])
         return graph
@@ -105,5 +129,19 @@ struct BehaviorReferenceWildcardTests {
         return BehaviorFixture.instance(
             root: root, table: table, data: BehaviorFixture.graphData(events: ["other", "bind"])
         )
+    }
+}
+
+/// A fixture table that shares `fileCaches` the way one decoded file does.
+private struct CachedTable: BehaviorObjectSource {
+    let table: BehaviorObjectTable
+    let fileCaches: BehaviorFileCaches?
+
+    func object(at target: HKXPointerTarget) -> (any HKBClass)? {
+        table.object(at: target)
+    }
+
+    func className(at target: HKXPointerTarget) -> String? {
+        table.className(at: target)
     }
 }

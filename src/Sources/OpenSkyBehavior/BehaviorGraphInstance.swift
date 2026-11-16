@@ -13,6 +13,23 @@ import simd
 nonisolated public protocol BehaviorObjectSource {
     func object(at target: HKXPointerTarget) -> (any HKBClass)?
     func className(at target: HKXPointerTarget) -> String?
+    /// Caches every graph over the same file may share; nil when graphs share nothing.
+    var fileCaches: BehaviorFileCaches? { get }
+}
+
+nonisolated extension BehaviorObjectSource {
+    public var fileCaches: BehaviorFileCaches? {
+        nil
+    }
+}
+
+/// What graphs over one behavior file can build once for all of them. Not `Sendable`:
+/// its owner keeps it on one actor, as `SharedBehaviorObjectSource` does.
+nonisolated public final class BehaviorFileCaches {
+    /// Global wildcard routes per machine, built by the first graph that needs them.
+    var globalWildcardTables: [BehaviorGlobalWildcardTableKey: BehaviorGlobalWildcardTable] = [:]
+
+    public init() {}
 }
 
 /// The packfile-backed source: decode on demand through the class registry.
@@ -114,6 +131,11 @@ nonisolated public final class BehaviorGraphInstance {
     public let skeleton: BehaviorSkeleton
 
     private let source: any BehaviorObjectSource
+    /// Caches every actor over the same file can use.
+    var fileCaches: BehaviorFileCaches? {
+        source.fileCaches
+    }
+
     private let clips: any BehaviorClipSource
     public let root: HKXPointerTarget?
 
