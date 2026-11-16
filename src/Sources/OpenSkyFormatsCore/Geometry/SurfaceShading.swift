@@ -41,7 +41,7 @@ nonisolated public struct SurfaceShading: Hashable, Sendable {
         public static let environmentLightFade = Terms(rawValue: 1 << 15)
         /// The placed reference's emittance colour replaces `emissiveColor`.
         public static let externalEmittance = Terms(rawValue: 1 << 16)
-        /// Glints on snow and ice, from `sparkle`.
+        /// Glints from `sparkle`, on a shape with projected UVs and the multi-index snow flag.
         public static let sparkle = Terms(rawValue: 1 << 17)
         /// `detailTexture` is the terrain noise that breaks up distant land.
         public static let landscapeNoise = Terms(rawValue: 1 << 18)
@@ -49,6 +49,10 @@ nonisolated public struct SurfaceShading: Hashable, Sendable {
         public static let refraction = Terms(rawValue: 1 << 19)
         /// The refraction normal map scrolls, as heat over a fire.
         public static let fireRefraction = Terms(rawValue: 1 << 20)
+        /// Under improved snow: the rim sheen and sparkles, masked by the diffuse alpha.
+        public static let snow = Terms(rawValue: 1 << 21)
+        /// Snow under a directional material too: the mask adds the diffuse alpha to the layer.
+        public static let snowBase = Terms(rawValue: 1 << 22)
     }
 
     public var terms: Terms = []
@@ -62,7 +66,7 @@ nonisolated public struct SurfaceShading: Hashable, Sendable {
     public var tintColor: SIMD3<Float>?
     public var environmentScale: Float = 1
     public var multiLayer = MultiLayer()
-    /// Shader type 14 parameters: docs/rendering/surface-shading.md.
+    /// Shader type 10 and 14 parameters: docs/rendering/surface-shading.md.
     public var sparkle = SIMD4<Float>.zero
     public var refractionStrength: Float = 0
     /// Slot 2: glow map, or the soft and rim light mask.

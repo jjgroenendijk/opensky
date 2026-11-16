@@ -53,18 +53,39 @@ Each light, the sun and the eight nearest point lights, adds:
 | Rim light | `colour * pow(1 - N.V, LE2) * smoothstep(-0.2, 1, -L.V)` | Albedo times the slot 2 light mask |
 | Soft light | `colour * wrap * smoothstep(1, 0, N.L) * sqrt(LE1)` with `wrap = max((N.L + LE1) / (1 + LE1), 0)` | Albedo times the slot 2 light mask |
 | Hair specular | `colour * pow(sqrt(1 - (T.H)^2), glossiness)` replaces the specular row | As specular |
-| Sparkle (sun only) | `colour * pow(N'.H, y) * z`, with N' the normal tilted at random per texture cell | Added to the specular |
+| Sparkle | `colour * step(0.5, sum * z * pow(R.L', w)) * saturate(N.H')`, below | Added to the specular, times the normal alpha |
 
 LE1 and LE2 are the two lighting effect floats of the shader property. T is the strand
 direction of an anisotropic hair shape, along +v of the texture (Kajiya-Kay model). A hair
 soft-lighting shape caps the summed direct diffuse light at 1, because `nif.xml` says the
 flag keeps hair "from going too bright under lights".
 
-The sparkle parameters of shader type 14 have no public description. Their vanilla values
-are, for example, (7.2, 150, 1.2, 1.1) on the ice icicles and (3, 100, 5, 100) in Windhelm.
-OpenSky reads x as cells per 1/64 of the texture, y as the glint power, and z as its
-strength, and does not use w. This is an OpenSky model, not the game's formula. The game's
+Shader types 10 and 14 store four sparkle values, such as (7.2, 150, 1.2, 1.1) on the ice
+icicles. The game uses them only on a shape with both SLSF1 bit 23 `Projected_UV` and SLSF2
+bit 9 `Multi_Index_Snow`, and no vanilla shape has both. The icicles are snow through SLSF2
+bit 28 instead ([snow meshes](#snow-meshes)). On such a shape, with `(x, y, z, w)` the four
+values:
+
+1. The blue channel of the game's `textures\effects\projectednoise.dds` is read at the mesh
+   UV times `|x|^1.3`, `|x|^1.6`, and `|x|^1.9`. Each read, at most 1, is raised to `y`, and the
+   three are summed.
+2. The sum times `z`, times `saturate(R . -L)^w`, is 1 at 0.5 or more and 0 below. `R` is the
+   fixed view direction (0.577, 0.577, 0.577) reflected about the normal, and `L` the direction
+   to the light.
+3. That is times `saturate(N . H')`, with `H'` halfway between `L` and the fixed view, times the
+   light colour. The sun and each point light add, and the sum is times the normal-map alpha.
+
+A snow pixel has no such sparkle; it has the snow sparkles instead. The game's
 `[Display] bToggleSparkles` turns the term off, as does the "Snow and ice sparkle" switch.
+
+### Snow meshes
+
+With improved snow on, a lit shape is snow when it sets SLSF2 bit 28 without bit 29 (tree
+animation), or SLSF1 bit 30. A shape with an LOD flag (SLSF2 bit 1, 2, 14, or 31) is never
+snow. Snow shading is the rim sheen and the sparkles of
+[snow ground](/engine/terrain.md#snow-ground), and the occlusion and specular rules below.
+The snow mask is the raw diffuse alpha, not times the vertex or material alpha. The shader
+type plays no part: 19 cave icicles of type 14 and 9 shapes of type 0 set bit 28.
 
 Ambient is the six-axis directional ambient (`DALC`). Under a weather it is used alone. In an
 interior the single ambient colour is added while "Base ambient light" is on. Capture pairs
@@ -124,8 +145,14 @@ The game draws two kinds (clean-room read of the game's shaders and of `SkyrimSE
   position turned 90 degrees, `(y, -x)`. The noise repeats every noise-UV-scale units and the
   diffuse map every two of them.
 - **Overlay** (flag clear, such as dirt, moss, and ice). The game draws the `MATO` model's
-  texture as a second pass along the projection vector, repeating every material-UV-scale
-  units, with a hard cut at the edge. OpenSky draws it inside the shape, with the same cut.
+  texture as a second pass. Faces take it when they point against the projection vector:
+  the vanilla vectors point down, such as (0, 0, -1), so the overlay lies on top. The texture
+  repeats every material-UV-scale units, with a hard cut at the edge. A `MATO` whose model has
+  no texture, such as the missing `ShaderTests\ShaderBox.nif`, draws no overlay. The
+  texture coordinate is the world position in a frame across that direction, so a slanted
+  vector, such as the moss of `TundraMossMaterialObject`, does not stretch the texture on
+  steep faces. For a vector straight down it is the world `(y, -x)`, as for a single-pass
+  layer. OpenSky draws the overlay inside the shape, with the same cut.
 
 The edge, with `c = cos(DNAM max angle)` and `n` the noise texture's red channel:
 
@@ -139,18 +166,30 @@ So a face takes the layer where `N . direction > c + (1 - c) * (bias + scale * n
   the diffuse map times the single-pass colour, by `smoothstep(-0.1, 0.1, edge)`.
 - With it off, the face takes the single-pass colour, or white when the record has none, with a
   hard edge at 0.
-- The game's normal maps of the layer change only the normal it keeps for reflections and
-  ambient occlusion, not the lighting normal, so OpenSky does not use them.
+- The game's normal maps of a single-pass layer change only the normal it keeps for
+  reflections and ambient occlusion, not the lighting normal, so OpenSky does not use them.
+- An overlay is lit with the base shape's normal map, at the mesh UV. Its x and y are times
+  the `MATO` normal dampener, then the normal is normalized again: 0 makes it flat, 1 keeps
+  it. The cut uses the full normal. OpenSky lights the overlay pixels with the dampened
+  normal, but with the shape's other terms. The game lights them with only the sun, the point
+  lights, and the ambient light, times the overlay texture.
 
 A material whose last `DATA` field is set also gives the shapes the snow shading: the rim
-sheen and the sparkles of [snow ground](/engine/terrain.md#snow-ground). The snow mask is the
-layer's blend for a single-pass material and the shape's own diffuse alpha under an overlay.
-In the install the field is set on 34 of 42 winning records, dirt, moss, and ice included, and
-the game applies it to all of them.
+sheen and the sparkles of [snow ground](/engine/terrain.md#snow-ground). In the install the
+field is set on 34 of 42 winning records, dirt, moss, and ice included, and the game applies
+it to all of them. The snow mask is:
+
+| Case | Mask |
+| --- | --- |
+| Single-pass layer | The layer's blend |
+| Single-pass layer on a shape with SLSF1 bit 30 | `min(1, diffuse alpha + blend)` |
+| Overlay pixel, snow material | 1 |
+| Overlay pixel, other material | 0 |
+| No layer on the pixel, [snow mesh](#snow-meshes) | The diffuse alpha |
+
 The game drops the shape's own specular there and adds the point lights' specular to the rim.
 OpenSky does the same, by the snow mask: the sun's specular goes, and the point lights'
-specular stays, without the shape's specular colour and mask. The normal dampener of an
-overlay scales its normal map, which OpenSky does not draw.
+specular stays, without the shape's specular colour and mask.
 
 ## Albedo
 

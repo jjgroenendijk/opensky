@@ -145,22 +145,36 @@ static float2 innerLayerCoordinate(
     return (uv + texel * depth * transmitted.xy) * draw.multiLayer.zw;
 }
 
-// Sparkle snow (shader type 14): each small texture cell tilts its normal at random,
-// and a cell that mirrors the sun into the eye flashes. OpenSky reads parameter x as
-// cells per 1/64 of the texture, y as the glint power, z as its strength; w is unused.
-static float sparkle(float2 uv, LightGeometry geometry, float3 toSun, float4 params)
+// The sparkles of a shape with projected UVs and the multi-index snow flag. The noise
+// map's blue channel, at three scales of the mesh UV, raised to y, summed, times z, and
+// times a fixed-view highlight to the power w, flashes fully at 0.5 or more.
+struct SparkleInput
 {
-    float2 cell = floor(uv * 64.0 * max(params.x, 0.01));
-    float3 jitter = fract(
-                        sin(float3(
-                            dot(cell, float2(12.9898, 78.233)), dot(cell, float2(39.346, 11.135)),
-                            dot(cell, float2(73.156, 52.235)))) *
-                        43758.5453) -
-                    0.5;
-    float3 tilted = normalize(geometry.normal + jitter * 0.6);
-    float3 halfway = normalize(toSun + geometry.toEye);
-    float facing = step(0.0, dot(geometry.normal, toSun));
-    return pow(saturate(dot(tilted, halfway)), max(params.y, 1.0)) * params.z * facing;
+    float2 uv;
+    float3 normal;
+    float4 params;
+    float mask;
+};
+
+static float3 sparkleLight(
+    SparkleInput input,
+    float3 lightColour,
+    float3 toLight,
+    texture2d<float> noise,
+    sampler trilinear)
+{
+    constexpr float3 view = float3(0.57735027);
+    float size = abs(input.params.x);
+    float sum = 0.0;
+    constexpr float powers[3] = {1.3, 1.6, 1.9};
+    for (uint scale = 0; scale < 3; ++scale) {
+        float value = min(noise.sample(trilinear, input.uv * pow(size, powers[scale])).b, 1.0);
+        sum += pow(value, input.params.y);
+    }
+    float highlight = saturate(dot(reflect(view, input.normal), -toLight));
+    float glint = sum * input.params.z * pow(highlight, input.params.w) >= 0.5 ? 1.0 : 0.0;
+    float facing = saturate(dot(input.normal, normalize(toLight + view)));
+    return lightColour * glint * facing * input.mask;
 }
 
 // The game's character light, white and fixed to the camera: a rim on faces that turn

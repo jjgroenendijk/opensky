@@ -37,7 +37,7 @@ nonisolated public struct NIFShaderFlag: Hashable, Sendable {
         "Vertex_Lighting", "Uniform_Scale", "Fit_Slope", "Billboard", "No_LOD_Land_Blend",
         "EnvMap_Light_Fade", "Wireframe", "Weapon_Blood", "Hide_On_Local_Map", "Premult_Alpha",
         "Cloud_LOD", "Anisotropic_Lighting", "No_Transparency_Multisampling", "Unused01",
-        "Multi_Layer_Parallax", "Soft_Lighting", "Rim_Lighting", "Back_Lighting", "Unused02",
+        "Multi_Layer_Parallax", "Soft_Lighting", "Rim_Lighting", "Back_Lighting", "Snow",
         "Tree_Anim", "Effect_Lighting", "HD_LOD_Objects"
     ]
 }
@@ -62,11 +62,14 @@ nonisolated extension NIFShaderFlag {
     static let screendoorAlphaFade = NIFShaderFlag(word: 1, bit: 19)
     static let faceGenRGBTint = NIFShaderFlag(word: 1, bit: 21)
     static let ownEmit = NIFShaderFlag(word: 1, bit: 22)
+    static let projectedUV = NIFShaderFlag(word: 1, bit: 23)
     static let remappableTextures = NIFShaderFlag(word: 1, bit: 25)
     static let decal = NIFShaderFlag(word: 1, bit: 26)
     static let dynamicDecal = NIFShaderFlag(word: 1, bit: 27)
     static let externalEmittance = NIFShaderFlag(word: 1, bit: 29)
     static let softEffect = NIFShaderFlag(word: 1, bit: 30)
+    /// The same bit on a lighting shader: the shape is snow under its directional material too.
+    static let snowBase = NIFShaderFlag(word: 1, bit: 30)
     static let zBufferTest = NIFShaderFlag(word: 1, bit: 31)
     static let zBufferWrite = NIFShaderFlag(word: 2, bit: 0)
     static let lodLandscape = NIFShaderFlag(word: 2, bit: 1)
@@ -76,6 +79,8 @@ nonisolated extension NIFShaderFlag {
     static let vertexColors = NIFShaderFlag(word: 2, bit: 5)
     static let glowMap = NIFShaderFlag(word: 2, bit: 6)
     static let assumeShadowmask = NIFShaderFlag(word: 2, bit: 7)
+    static let multiIndexSnow = NIFShaderFlag(word: 2, bit: 9)
+    static let noLODLandBlend = NIFShaderFlag(word: 2, bit: 14)
     static let envMapLightFade = NIFShaderFlag(word: 2, bit: 15)
     static let weaponBlood = NIFShaderFlag(word: 2, bit: 17)
     static let anisotropicLighting = NIFShaderFlag(word: 2, bit: 21)
@@ -83,7 +88,8 @@ nonisolated extension NIFShaderFlag {
     static let softLighting = NIFShaderFlag(word: 2, bit: 25)
     static let rimLighting = NIFShaderFlag(word: 2, bit: 26)
     static let backLighting = NIFShaderFlag(word: 2, bit: 27)
-    static let unused02 = NIFShaderFlag(word: 2, bit: 28)
+    /// With improved snow on, the shape takes the snow shading; its diffuse alpha is the mask.
+    static let snow = NIFShaderFlag(word: 2, bit: 28)
     static let treeAnim = NIFShaderFlag(word: 2, bit: 29)
     static let effectLighting = NIFShaderFlag(word: 2, bit: 30)
     static let hdLODObjects = NIFShaderFlag(word: 2, bit: 31)
@@ -96,12 +102,12 @@ nonisolated extension NIFShaderFlag {
         decal, dynamicDecal, externalEmittance, zBufferTest, zBufferWrite, lodLandscape,
         lodObjects, doubleSided, vertexColors, glowMap, assumeShadowmask, envMapLightFade,
         anisotropicLighting, multiLayerParallax, softLighting, rimLighting, backLighting,
-        treeAnim, hdLODObjects
+        treeAnim, hdLODObjects, snow, snowBase, projectedUV, multiIndexSnow, noLODLandBlend
     ]
 
     /// Bits whose behaviour OpenSky has without a read: docs/formats/nif-materials.md.
     public static let lightingMatchedByDefault: Set<NIFShaderFlag> = [
-        skinned, remappableTextures, noFade, unused02
+        skinned, remappableTextures, noFade
     ]
 
     /// `BSEffectShaderProperty` bits `EffectShading` or the draw state depends on.
@@ -123,6 +129,7 @@ nonisolated public enum NIFLightingShaderType: Sendable {
     static let faceGen: UInt32 = 4
     static let skinTint: UInt32 = 5
     static let hairTint: UInt32 = 6
+    static let snow: UInt32 = 10
     static let multiLayer: UInt32 = 11
     static let sparkleSnow: UInt32 = 14
     static let eye: UInt32 = 16
@@ -130,7 +137,7 @@ nonisolated public enum NIFLightingShaderType: Sendable {
 
     /// Type 0 is the plain default, which needs no rule of its own.
     public static let engineRead: Set<UInt32> = [
-        0, environmentMap, glow, parallax, faceGen, skinTint, hairTint, multiLayer,
+        0, environmentMap, glow, parallax, faceGen, skinTint, hairTint, snow, multiLayer,
         sparkleSnow, eye, lodLandscapeNoise
     ]
 

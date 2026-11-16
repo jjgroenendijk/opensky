@@ -113,12 +113,40 @@ struct NIFSurfaceShadingTests {
         #expect(window.terms.isSuperset(of: [.externalEmittance, .glowMap]))
     }
 
-    @Test func sparkleSnowKeepsItsFourParameters() throws {
+    /// The flags of a vanilla cave icicle: sparkle snow type, SLSF2 bit 28, no projected UVs.
+    @Test func anIcicleIsSnowWithoutItsOwnSparkles() throws {
         let ice = try shading(type: 14, flags1: 0x8240_0301, flags2: 0x1000_0001, slots: [
             0: "ice.dds"
         ], tail: [0.3, 2, 7.2, 150, 1.2, 1.1])
-        #expect(ice.terms.contains(.sparkle))
+        #expect(ice.terms.contains(.snow))
+        #expect(!ice.terms.contains(.snowBase))
+        #expect(!ice.terms.contains(.sparkle))
         #expect(ice.sparkle == SIMD4(7.2, 150, 1.2, 1.1))
+    }
+
+    @Test func projectedUVAndMultiIndexSnowTurnTheSparklesOn() throws {
+        let ice = try shading(type: 10, flags1: 0x80C0_0301, flags2: 0x0000_0201, slots: [
+            0: "ice.dds"
+        ], tail: [0.3, 2, 7.2, 150, 1.2, 1.1])
+        #expect(ice.terms.contains(.sparkle))
+        #expect(!ice.terms.contains(.snow))
+        #expect(ice.sparkle == SIMD4(7.2, 150, 1.2, 1.1))
+        #expect(ice.detailTexture == "textures/effects/projectednoise.dds")
+    }
+
+    @Test func distantAndTreeShapesAreNeverSnow() throws {
+        let lod = try shading(type: 0, flags1: 0x8000_0000, flags2: 0x1000_0005, slots: [
+            0: "rock.dds"
+        ])
+        #expect(!lod.terms.contains(.snow))
+        let tree = try shading(type: 0, flags1: 0x8000_0000, flags2: 0x3000_0001, slots: [
+            0: "pine.dds"
+        ])
+        #expect(!tree.terms.contains(.snow))
+        let base = try shading(type: 0, flags1: 0xC000_0000, flags2: 0x0000_0001, slots: [
+            0: "rock.dds"
+        ])
+        #expect(base.terms.isSuperset(of: [.snow, .snowBase]))
     }
 
     @Test func distantLandUsesTheTerrainNoise() throws {

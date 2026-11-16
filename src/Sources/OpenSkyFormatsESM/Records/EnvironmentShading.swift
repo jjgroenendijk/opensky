@@ -109,7 +109,8 @@ nonisolated public struct MaterialObject: Equatable, Sendable {
         public let noiseUVScale: Float
         public let materialUVScale: Float
         public let projectionVector: SIMD3<Float>
-        let normalDampener: Float?
+        /// Flattens the base normal map under an overlay: 1 keeps it, 0 makes it flat.
+        public let normalDampener: Float?
         public let singlePassColor: SIMD3<Float>?
         public let isSinglePass: Bool?
         public let isSnow: Bool?

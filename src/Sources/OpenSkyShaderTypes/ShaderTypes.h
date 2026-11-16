@@ -453,14 +453,15 @@ typedef struct
     /// rgb skin or hair tint colour.
     vector_float4 tintColor;
     /// x inner thickness, y refraction scale, zw inner texture scale. A sparkle
-    /// shape stores its four sparkle parameters here instead.
+    /// shape stores its four sparkle parameters here instead: size, power, density,
+    /// and highlight power.
     vector_float4 multiLayer;
     /// Directional material: xyz the world direction, w the cosine of its max angle.
     vector_float4 projectedDirection;
-    /// x falloff scale, y falloff bias, z texture tile in units, w 0 none, 1 colour,
-    /// 2 single-pass texture, 3 overlay texture, plus 4 for snow.
+    /// x falloff scale, y falloff bias, z texture tile in units, w the mode bits of
+    /// RenderProjectedMaterial.mode: the kind in bits 0-1, then the snow bits 4, 8, 16.
     vector_float4 projectedParameters;
-    /// rgb single-pass colour, a noise tile in units.
+    /// rgb single-pass colour, or x the overlay's normal dampener; a noise tile in units.
     vector_float4 projectedColor;
     /// Tree wind: x sway, y sway frequency, z leaf amplitude, w leaf frequency. A w above
     /// 0 marks the vertex alpha as the leaf's wind weight (docs/rendering/trees.md).

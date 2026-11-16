@@ -5,11 +5,13 @@ import OpenSkyRenderResources
 import simd
 
 extension Renderer {
-    /// `DrawUniforms.projectedParameters`; `w` 0 when the material has none.
-    func projectedParameters(_ projected: RenderProjectedMaterial?) -> SIMD4<Float> {
-        guard let projected else { return .zero }
-        var parameters = projected.parameters
-        parameters.w = projected.mode(
+    /// `DrawUniforms.projectedParameters`; `w` 0 when the shape has no directional
+    /// material and is not snow.
+    func projectedParameters(_ surface: RenderSurfaceMaterial) -> SIMD4<Float> {
+        var parameters = surface.projected?.parameters ?? .zero
+        parameters.w = RenderProjectedMaterial.mode(
+            surface.projected,
+            mesh: (surface.isSnow, surface.isSnowBase),
             texturesEnabled: surfaceFeatures.projectedTextures,
             improvedSnow: surfaceFeatures.improvedSnow
         )

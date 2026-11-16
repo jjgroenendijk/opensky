@@ -43,25 +43,38 @@ nonisolated extension CellSceneBuilder.CellObjectBuilder {
         owner.caches.directionalMaterials.index = index
         var projected: ProjectedMaterial?
         if let object = index[id.rawValue], let properties = object.properties {
-            let singlePass = properties.isSinglePass ?? false
-            projected = ProjectedMaterial(
-                diffuseTexture: singlePass
-                    ? Self.projectedDiffusePath
-                    : modelTextures(path: object.model?.path)?.diffuseTexture,
-                noiseTexture: Self.projectedNoisePath,
-                direction: singlePass ? SIMD3(0, 0, 1) : properties.projectionVector,
-                maxAngle: directional.maxAngle,
-                falloffScale: properties.falloffScale,
-                falloffBias: properties.falloffBias,
-                noiseUVScale: properties.noiseUVScale,
-                materialUVScale: properties.materialUVScale,
-                singlePassColor: properties.singlePassColor ?? SIMD3(1, 1, 1),
-                singlePass: singlePass,
-                isSnow: properties.isSnow ?? false
+            let overlayTexture = properties.isSinglePass == true
+                ? nil : modelTextures(path: object.model?.path)?.diffuseTexture
+            projected = Self.projectedMaterial(
+                properties, maxAngle: directional.maxAngle, overlayTexture: overlayTexture
             )
         }
         owner.caches.directionalMaterials.resolved[key] = .some(projected)
         return projected
+    }
+
+    /// A single-pass material lies on faces that point up; an overlay on faces that point
+    /// against its projection vector, with its model's texture.
+    nonisolated static func projectedMaterial(
+        _ properties: MaterialObject.Properties,
+        maxAngle: Float,
+        overlayTexture: String?
+    ) -> ProjectedMaterial {
+        let singlePass = properties.isSinglePass ?? false
+        return ProjectedMaterial(
+            diffuseTexture: singlePass ? projectedDiffusePath : overlayTexture,
+            noiseTexture: projectedNoisePath,
+            direction: singlePass ? SIMD3(0, 0, 1) : -properties.projectionVector,
+            maxAngle: maxAngle,
+            falloffScale: properties.falloffScale,
+            falloffBias: properties.falloffBias,
+            noiseUVScale: properties.noiseUVScale,
+            materialUVScale: properties.materialUVScale,
+            singlePassColor: properties.singlePassColor ?? SIMD3(1, 1, 1),
+            singlePass: singlePass,
+            isSnow: properties.isSnow ?? false,
+            normalDampener: properties.normalDampener ?? 1
+        )
     }
 
     /// A single-pass material draws these shared maps, projected straight down; its

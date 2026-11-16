@@ -140,7 +140,7 @@ extension Renderer {
             tintColor: material.surface.tintColor,
             multiLayer: material.surface.multiLayer,
             projectedDirection: material.surface.projected?.direction ?? .zero,
-            projectedParameters: projectedParameters(material.surface.projected),
+            projectedParameters: projectedParameters(material.surface),
             projectedColor: material.surface.projected?.color ?? .zero,
             windMotion: TreeMotion.uniform(
                 group.instances.first?.treeMotion, windWeighted: material.drawState.windWeighted

@@ -156,4 +156,19 @@ struct ModelSurfaceOverrideTests {
         let human = ModelSurfaceOverride.skinned(nil, skinTone: .one)
         #expect(surface?.cacheKey != human?.cacheKey, "the skin tone must not hide the set")
     }
+
+    @Test func theNormalDampenerIsPartOfTheCacheKey() {
+        func surface(dampener: Float) -> ModelSurfaceOverride {
+            ModelSurfaceOverride(
+                diffuseTexture: nil, normalTexture: nil, tint: nil, shapes: [],
+                projected: ProjectedMaterial(
+                    diffuseTexture: "moss.dds", noiseTexture: nil, direction: SIMD3(0, 0, 1),
+                    maxAngle: 60, falloffScale: 0.35, falloffBias: 0.4, noiseUVScale: 48,
+                    materialUVScale: 256, singlePassColor: SIMD3(1, 1, 1), singlePass: false,
+                    normalDampener: dampener
+                )
+            )
+        }
+        #expect(surface(dampener: 0.75).cacheKey != surface(dampener: 1).cacheKey)
+    }
 }
