@@ -107,7 +107,9 @@ legendary step. `openskycli game state` reads the open page as "... beast tree (
 ## Checking it in the game
 
 `openskycli game debug form werewolf`, `vampirelord`, or `none` sets the race and the
-`SetBeastForm` flag without the change scripts. `state player` shows `form` and the
+`SetBeastForm` flag without the change scripts. Like the scripts, it first takes off everything
+the player wears, because worn clothes cover the beast skin and have no model for a beast race.
+It does not put on the form's own clothes. `state player` shows `form` and the
 `behaviorProject` the body runs.
 
 ## Where OpenSky differs

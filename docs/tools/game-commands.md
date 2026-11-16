@@ -157,7 +157,7 @@ Every teleport ends with the player standing on the ground below the placed spot
 | `debug av <name> --value <v>` or `--mod <d>` `[--ref <ref>]` | Sets the base value, as `SetActorValue` does, or adds to the current value, of an actor (default `player`), such as `debug av Health --value 50`. A primary's current value moves with its maximum. Replies `before`, `value`, and `base` |
 | `debug item <editorID> [--count <n>] [--ref <ref>] [--equip]` | Adds an item to a container (default `player`), 1 by default. A negative count removes it. `--equip` then equips it on the player |
 | `debug perk <editorID> [on\|off]` | Gives the player the perk, or takes it with `off`, as `Actor.AddPerk` does, abilities included. Answers `changed` and `owned` |
-| `debug form werewolf\|vampirelord\|none` | Puts the player in a beast form with its race and `SetBeastForm`, without the change scripts, or ends it. Answers `form` |
+| `debug form werewolf\|vampirelord\|none` | Puts the player in a beast form: takes off all worn items, then sets its race and `SetBeastForm`, without the rest of the change scripts. `none` ends it. Answers `form` |
 | `debug kill <ref>`, `debug resurrect <ref>` | Kills or brings back an actor, not the player |
 | `debug decapitate <ref>` | Cuts a dead actor's head off, as a severing killing blow does: the body rebuilds with the neck stump and the head falls. Answers `severed` |
 | `debug subgraph <ref> --event <name>` or `--var <name> --value <v>` | Sends an event or sets a variable, as `PlaySubGraphAnimation` or `SetSubGraphFloatVariable` does. Answers `taken` and the actor's sub-graphs |

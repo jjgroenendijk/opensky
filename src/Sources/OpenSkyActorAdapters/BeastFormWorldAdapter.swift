@@ -18,6 +18,7 @@ import OpenSkyWorldState
 @MainActor
 public protocol BeastFormWorldHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
+    var inventory: any InventoryPort { get }
     var menuWorld: any MenuWorldPort { get }
     var scripts: any ScriptPort { get }
     var actorRecords: (any ActorRecordsPort)? { get }
@@ -37,8 +38,9 @@ public final class BeastFormWorldAdapter {
         return PlayerBeastForm.resolve(beastFormFlag: flag, raceEditorID: playerRace?.editorID)
     }
 
-    /// The debug switch: the form's race and `SetBeastForm`, without the change scripts.
-    /// `.none` restores the race the player had before. False when the race is not loaded.
+    /// The debug switch: `UnequipAll`, the form's race, and `SetBeastForm`, without the rest
+    /// of the change scripts. Worn clothes would hide the beast skin, and they have no model
+    /// for a beast race. `.none` restores the race. False when the race is not loaded.
     public func force(_ wanted: PlayerBeastForm) -> Bool {
         let race: FormID?
         switch wanted {
@@ -48,6 +50,9 @@ public final class BeastFormWorldAdapter {
         case .otherBeast: return false
         }
         guard wanted == .none || race != nil else { return false }
+        if wanted.isBeast {
+            _ = game.inventory.scriptItems.scriptUnequipAll(on: .player)
+        }
         game.scripts.bridge?.updateScriptedState(of: .player) {
             $0.setFlag(ScriptedStateName.beastForm, wanted.isBeast ? true : nil)
         }
