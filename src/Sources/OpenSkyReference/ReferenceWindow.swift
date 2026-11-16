@@ -1,6 +1,6 @@
-// Which on-screen window is the reference game. Wine names its processes after itself
+// Which window is the reference game, on any Space. Wine names its processes after itself
 // or after the Windows program, so both count. A window of the size the game was given
-// wins; otherwise the biggest such window wins over Steam's.
+// wins; otherwise the biggest such window on screen, then the biggest on another Space.
 
 public import Foundation
 
@@ -15,10 +15,12 @@ nonisolated public struct ReferenceWindowInfo: Equatable, Sendable {
     public var y: Double
     /// The process that owns the window, whose windows the launcher moves.
     public var ownerPID: Int32
+    /// False for a window on a Space that is not in front, or a hidden one.
+    public var isOnScreen: Bool
 
     public init(
         id: UInt32, ownerName: String, layer: Int, width: Double, height: Double,
-        x: Double = 0, y: Double = 0, ownerPID: Int32 = 0
+        x: Double = 0, y: Double = 0, ownerPID: Int32 = 0, isOnScreen: Bool = true
     ) {
         self.id = id
         self.ownerName = ownerName
@@ -28,6 +30,7 @@ nonisolated public struct ReferenceWindowInfo: Equatable, Sendable {
         self.x = x
         self.y = y
         self.ownerPID = ownerPID
+        self.isOnScreen = isOnScreen
     }
 
     public func isPlaced(at frame: ReferenceWindowFrame) -> Bool {
@@ -54,7 +57,10 @@ nonisolated public enum ReferenceWindow {
         {
             return match
         }
-        return candidates.max { $0.width * $0.height < $1.width * $1.height }
+        let biggest = { (windows: [ReferenceWindowInfo]) in
+            windows.max { $0.width * $0.height < $1.width * $1.height }
+        }
+        return biggest(candidates.filter(\.isOnScreen)) ?? biggest(candidates)
     }
 
     /// `appmanifest_489830.acf` two folders above a Steam game folder.

@@ -1,6 +1,6 @@
 // Captures the reference game's window with `screencapture -l`, which takes one window
-// without its shadow, even when another window covers it. It needs the Screen Recording
-// permission for the app or terminal that asks.
+// without its shadow, even when another window covers it or it is on another Space. It
+// needs the Screen Recording permission for the app or terminal that asks.
 
 import CoreGraphics
 public import Foundation
@@ -13,7 +13,7 @@ nonisolated public enum ReferenceCaptureError: Error, Equatable, Sendable, Local
 
     public var errorDescription: String? {
         switch self {
-        case .noWindow: "No reference game window is on screen. Start the reference game first."
+        case .noWindow: "No reference game window is open. Start the reference game first."
         case let .captureFailed(id):
             "screencapture could not capture window \(id). Check the Screen Recording permission."
         case let .encodeFailed(name): "Cannot encode \(name)."
@@ -23,9 +23,10 @@ nonisolated public enum ReferenceCaptureError: Error, Equatable, Sendable, Local
 }
 
 nonisolated public enum ReferenceWindowCapture {
-    /// The reference windows on screen now, from the window server.
-    public static func onScreenWindows() -> [ReferenceWindowInfo] {
-        let info = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], 0)
+    /// Every window the window server knows, on any Space, because the game window is often
+    /// on a Space other than the one in front.
+    public static func allWindows() -> [ReferenceWindowInfo] {
+        let info = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], 0)
             as? [[String: Any]] ?? []
         return info.compactMap { entry -> ReferenceWindowInfo? in
             guard
@@ -38,14 +39,15 @@ nonisolated public enum ReferenceWindowCapture {
                 id: id, ownerName: owner, layer: layer,
                 width: bounds["Width"] ?? 0, height: bounds["Height"] ?? 0,
                 x: bounds["X"] ?? 0, y: bounds["Y"] ?? 0,
-                ownerPID: entry[kCGWindowOwnerPID as String] as? Int32 ?? 0
+                ownerPID: entry[kCGWindowOwnerPID as String] as? Int32 ?? 0,
+                isOnScreen: entry[kCGWindowIsOnscreen as String] as? Bool ?? false
             )
         }
     }
 
     /// The reference game's window now; `expected` prefers the window of that size.
     public static func window(expected: ReferenceWindowFrame?) -> ReferenceWindowInfo? {
-        ReferenceWindow.pick(onScreenWindows(), expected: expected)
+        ReferenceWindow.pick(allWindows(), expected: expected)
     }
 
     /// Writes the reference window as a PNG; `expected` prefers the window of that size.
