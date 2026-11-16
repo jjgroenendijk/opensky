@@ -34,6 +34,15 @@ nonisolated public enum ChargenMorphs {
         SliderPair(negative: "EyesBack", positive: "EyesForward")
     ]
     public static let vampireTarget = "VampireMorph"
+    /// The expression TRI target that thins a face built from parts.
+    public static let skinnyTarget = "SkinnyMorph"
+
+    /// The `SkinnyMorph` weight of a body weight from 0 to 100: weight 0 is fully thin.
+    public static func skinnyWeight(bodyWeight: Float) -> Float {
+        guard bodyWeight.isFinite else { return 0.5 }
+        return 1 - min(max(bodyWeight, 0), 100) * 0.01
+    }
+
     /// NAMA groups that pick a numbered target; index 1 is unused.
     public static let partPrefixes: [Int: String] = [0: "NoseType", 2: "EyesType", 3: "LipType"]
 

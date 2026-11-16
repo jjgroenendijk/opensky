@@ -84,4 +84,11 @@ struct ChargenMorphsTests {
             0
         ])
     }
+
+    @Test func bodyWeightThinsTheFace() {
+        #expect(ChargenMorphs.skinnyWeight(bodyWeight: 0) == 1)
+        #expect(ChargenMorphs.skinnyWeight(bodyWeight: 100) == 0)
+        #expect(abs(ChargenMorphs.skinnyWeight(bodyWeight: 25) - 0.75) < 1e-6)
+        #expect(ChargenMorphs.skinnyWeight(bodyWeight: 150) == 0)
+    }
 }

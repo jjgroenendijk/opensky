@@ -21,6 +21,14 @@ duplicate FormIDs, and pairs each head part that has an expression TRI with its 
 
 Face morphs and skeletal animation are separate. Neither owns or resets the other.
 
+## Body weight on the face
+
+The expression TRI holds a `SkinnyMorph` target. A head built from its parts gets it once, when
+the head is built, at weight 1 − body weight × 0.01. The body weight is `NPC_` `NAM7`, from 0 to
+100, of the NPC that gives the face. Example: weight 0 gives 1, the thinnest face; weight 100
+gives 0. A head loaded from a FaceGen file gets no `SkinnyMorph`: its file already holds the
+weight. The player's head is built from parts, so it gets the morph too.
+
 ## Joining targets on the CPU
 
 When the actor is built, each target is prepared once:
@@ -197,8 +205,3 @@ persisted player setting, so a choice survives a restart.
 
 A TRI parse or pairing failure affects only that actor. The actor and its baked head still draw.
 Any pair that worked still morphs.
-
-## Not done yet
-
-- The expression TRI's `SkinnyMorph` target. The game likely drives it by body weight, by an
-  unknown formula.
