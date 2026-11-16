@@ -84,6 +84,18 @@ struct BehaviorClipTests {
         #expect(graph.update(deltaTime: 0.1).firedEvents.isEmpty)
     }
 
+    /// The retractable bridge plays its first sound from a trigger at 0.0 of its lower clip.
+    @Test func aTriggerAtTheClipStartFiresOnTheFirstUpdate() throws {
+        let (graph, _) = try splineGraph(
+            mode: 0,
+            triggers: [BehaviorTriggerSpec(localTime: 0, eventId: 0)],
+            events: ["sound"]
+        )
+        graph.update(deltaTime: 0.1)
+        #expect(graph.update(deltaTime: 0.1).firedEvents.map(\.name) == ["sound"])
+        #expect(graph.update(deltaTime: 0.1).firedEvents.isEmpty)
+    }
+
     /// `m_relativeToEndOfClip` is an offset from the end, and vanilla writes it
     /// negative: `MT_JumpLand` has `JumpLandEnd` at -0.8. So the time is the
     /// window length plus the offset; minus would place it past the end.

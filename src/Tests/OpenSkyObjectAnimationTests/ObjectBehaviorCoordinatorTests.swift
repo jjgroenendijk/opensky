@@ -1,6 +1,8 @@
-// The object behaviour coordinator without a graph, and the project path rules.
+// The object behaviour coordinator without a graph and across a cell rebuild, and the
+// project path rules.
 
 import OpenSkyBehavior
+import OpenSkyEngineTesting
 @testable import OpenSkyObjectAnimation
 import OpenSkyWorldInterface
 import Testing
@@ -15,8 +17,50 @@ private final class EmptyObjectWorld: ObjectBehaviorWorld {
     func animationWaitFinished(token _: UInt64, fired _: Bool) {}
 }
 
+private final class RebuiltObjectWorld: ObjectBehaviorWorld {
+    var objects: [CellAnimatedObject] = []
+    var finished: [(token: UInt64, fired: Bool)] = []
+
+    func residentAnimatedObjects() -> [CellAnimatedObject] {
+        objects
+    }
+
+    func objectGraphFired(_: String, from _: UInt32) {}
+
+    func animationWaitFinished(token: UInt64, fired: Bool) {
+        finished.append((token, fired))
+    }
+}
+
 @MainActor
 struct ObjectBehaviorCoordinatorTests {
+    /// A rebuilt cell brings a new pose buffer. The graph keeps running, so a script that
+    /// waits for its end event is not dropped, as the Ratway bridge's wait was.
+    @Test func aRebuiltCellKeepsTheGraphAndItsWaits() throws {
+        let world = RebuiltObjectWorld()
+        let asset = try BehaviorProjectFixture.asset()
+        world.objects = [CellAnimatedObject(
+            reference: 0x10,
+            asset: asset,
+            pose: SkinnedPoseBuffer()
+        )]
+        let objects = ObjectBehaviorCoordinator(world: world, files: { nil })
+        objects.sync()
+        let first = try #require(objects.running[0x10])
+        let token = try #require(objects.awaitEvent("Trans02", on: 0x10))
+        let rebuilt = SkinnedPoseBuffer()
+        world.objects = [CellAnimatedObject(reference: 0x10, asset: asset, pose: rebuilt)]
+        objects.sync()
+        let kept = try #require(objects.running[0x10])
+        #expect(kept === first)
+        #expect(kept.object.pose === rebuilt)
+        #expect(world.finished.isEmpty)
+        world.objects = []
+        objects.sync()
+        #expect(world.finished.map(\.token) == [token])
+        #expect(world.finished.map(\.fired) == [false])
+    }
+
     @Test func anObjectWithoutAGraphTakesNoEventAndNoWait() {
         let world = EmptyObjectWorld()
         let objects = ObjectBehaviorCoordinator(world: world, files: { nil })

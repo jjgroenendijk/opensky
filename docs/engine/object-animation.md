@@ -52,7 +52,13 @@ starts a graph for each new object, drops the graphs of departed cells, steps ea
 publishes its bones. Clips load off the main actor and arrive at the next step.
 
 An object never walks, so no bone is a root whose travel is taken out of the pose. A rebuilt
-cell brings a new pose buffer, and its object starts again at its first state.
+cell brings a new pose buffer. The object keeps its graph, its state, and the waits on it, and
+poses the new buffer, so a lever pulled just before a rebuild still ends its pull.
+
+A clip trigger at time 0 fires on the update that starts the clip, as an annotation at 0 does.
+The Nordic retractable bridge so plays `DRSRetractableBridgeWoodDownA` as it starts to lower,
+`DRSRetractableBridgeWoodDownB` at `SoundNode01` 1.667 seconds in, and fires `Trans02` at the
+end of its 3-second clip.
 
 ## Papyrus
 
@@ -122,10 +128,6 @@ Activators, doors, furniture, containers, and moving statics are checked for a g
 - `BGSGamebryoSequenceGenerator` plays its sequence whole. Its blend mode and percent are read
   but not used.
 - A node that only a mesh sequence moves draws in motion, but its collision stays at rest.
-- The text events in an object graph's clips do not reach the object's scripts or sounds. In
-  the Riften Ratway the bridge lever and the retractable bridge move to their end pose, but
-  their scripts keep waiting for `FullPushedUp` and `trans02`, and the bridge plays no
-  `SoundPlayAt` sound at `SoundNode01`.
 
 ## Sequence doors
 
