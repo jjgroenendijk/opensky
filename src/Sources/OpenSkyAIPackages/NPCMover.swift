@@ -5,6 +5,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyPhysics
 public import OpenSkyPlayer
+import OpenSkyRenderCore
 public import OpenSkyWorldInterface
 import simd
 
@@ -43,8 +44,8 @@ public struct NPCMover {
     let walkRunBlend: Float?
     let longBody: LongBodyShape?
     let heightScale: Float
-    /// This step's movement type speeds, from the actor's graph state.
-    var movementSpeeds: MovementType.Speeds?
+    /// This step's movement type speeds and their adjustments.
+    var movementSpeeds = ActorMovementSpeeds()
     /// The other actors near this one for the step in progress.
     private(set) var neighbours: [NPCNeighbour] = []
     /// The jump across a ledge link in progress.

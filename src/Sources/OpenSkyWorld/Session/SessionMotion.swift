@@ -2,6 +2,7 @@
 
 import OpenSkyActorPresentation
 import OpenSkyAudio
+public import OpenSkyGameData
 public import OpenSkyPhysics
 public import OpenSkyPlayer
 import OpenSkyRenderCore
@@ -28,8 +29,8 @@ public final class SessionMotion {
     var wasAtBorder = false
     /// The player's breath under water (docs/engine/walk-mode.md).
     public var breath = PlayerBreath()
-    /// The share of gait speed the player moves at this frame; nil moves at full speed.
-    public var playerSpeedScale: (@MainActor () -> Float)?
+    /// The player's speed adjustments this frame; nil moves at full speed.
+    public var playerMovement: (@MainActor () -> ActorMovementSpeeds)?
     /// The vehicle pose the player rides at, where the body's root goes; nil on foot.
     public var playerSeat: float4x4? {
         didSet {

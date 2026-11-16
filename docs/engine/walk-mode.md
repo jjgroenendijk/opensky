@@ -151,12 +151,14 @@ out.
 
 ## Speed
 
-Worn armour weight slows every gait of the player. The weight is the armour weight after perks.
+Worn armour weight slows the player's run and sprint, but never below the walk; the walk keeps
+its speed. The weight is the armour weight after perks.
 The factor is `1 - effect x (min(weight, fMoveWeightMax) + fMoveWeightMin) / (fMoveWeightMax -
 fMoveWeightMin)`. The effect is `fMoveEncumEffect` (0.3) with a weapon drawn, and
 `fMoveEncumEffectNoWeapon` (0.15) without one. No plugin sets `fMoveWeightMin`, so it is 0. For
-example, 115 weight with a sword drawn leaves 70% of the speed. The `SpeedMult` actor value then
-scales the result: 120 moves at 1.2 times.
+example, 115 weight with a sword drawn leaves 70% of the run speed. The `SpeedMult` actor value
+scales every gait first: 120 moves at 1.2 times, and 0 counts as 100. NPCs follow the same rules
+([navigation](/engine/navigation.md#npc-path-following)).
 
 An NPC turns at `fActorDefaultTurningSpeed` radians a second. A package with a preferred fast
 walk or jog moves at walk + (run - walk) x `fFastWalkInterpolationBetweenWalkAndRun` (0.15) or

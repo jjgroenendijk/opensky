@@ -73,6 +73,10 @@ struct RecordDetailTests {
         #expect(details.bodyParts.male[1].model?.path == "lower.nif")
         #expect(details.bipedObjectNames == ["Head"])
         #expect(details.movementTypes.first?.overrides.count == 11)
+        #expect(details.movementOverride(forType: FormID(0x60))?.values.count == 11)
+        #expect(details.movementOverride(forType: FormID(0x61)) == nil)
+        #expect(details.baseMovementType("WKMV") == FormID(0x62))
+        #expect(details.baseMovementType("RNMV") == nil)
         #expect(details.headData.female.headParts.map(\.part) == [FormID(0x70)])
         #expect(details.headData.female.tintMasks.first?.presets.first?.defaultValue == 0.5)
         #expect(details.headData.male.presets == [FormID(0x71)])
@@ -185,6 +189,7 @@ struct RecordDetailTests {
             ("MNAM", Data()), ("ANAM", Fixture.zstring("male.nif")),
             ("FNAM", Data()), ("ANAM", Fixture.zstring("female.nif")), ("MODT", Data(count: 12)),
             ("NAM2", Data()),
+            ("WKMV", Fixture.u32(0x62)),
             ("ATKD", Data(count: 44)), ("ATKE", Fixture.zstring("attackStart")),
             ("ATKE", Fixture.zstring("bashStart")),
             ("NAM1", Data()), ("MNAM", Data()),

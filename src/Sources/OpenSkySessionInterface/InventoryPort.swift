@@ -74,6 +74,7 @@ public protocol InventoryAlchemyLabPort {
 public protocol InventoryArmourWeightsPort {
     var playerCarriedWeight: Float { get }
     var playerWornArmourWeight: Float { get }
+    func wornArmourWeight(of holder: InventoryHolder) -> Float
 }
 
 /// Using an item: eating, drinking, and applying a poison.

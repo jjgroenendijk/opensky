@@ -4,6 +4,7 @@
 // uses gait speed; the branch keys on `BehaviorRootMotion.isExtracted`, not a speed
 // threshold. See docs/engine/walk-mode.md.
 
+public import OpenSkyGameData
 public import OpenSkyBehavior
 public import OpenSkyCombatInterface
 public import OpenSkyPhysics
@@ -42,8 +43,8 @@ nonisolated public final class LocomotionBridge {
     /// This frame's intent. The renderer writes it once per frame; every fixed
     /// step in that frame reads the same value.
     public var intent: LocomotionIntent = .still
-    /// The share of each gait's speed the player moves at: worn weight and `SpeedMult`.
-    public var speedScale: Float = 1
+    /// The player's speed adjustments: `SpeedMult` and worn weight.
+    public var movement = ActorMovementSpeeds()
 
     /// This frame's melee intent, kept out of `intent` because the fixed step never reads
     /// it; the melee runtime does at frame rate. One input path still feeds both.

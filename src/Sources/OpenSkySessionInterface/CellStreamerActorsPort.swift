@@ -2,7 +2,7 @@
 
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
 public import OpenSkyPhysics
 import OpenSkyRenderCore
@@ -27,7 +27,7 @@ public protocol CellStreamerActorsPort {
     var npcHeightScale: ((ReferenceKey) -> Float)? { get }
     var npcMovement: NPCMovementRuntime { get }
     func npcMovementReadouts() -> [NPCMovementReadout]
-    var npcMovementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)? { get }
+    var npcMovementSpeeds: ((ReferenceKey) -> ActorMovementSpeeds)? { get }
     func publishCarriedPoses(_ poses: [ReferenceKey: ReferenceTransformOverride])
     func publishVehicleLinks(_ linked: Set<ReferenceKey>)
     func setVehiclePose(_ pose: float4x4, for formID: FormID)

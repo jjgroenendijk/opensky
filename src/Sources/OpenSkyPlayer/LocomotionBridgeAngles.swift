@@ -2,13 +2,16 @@
 // arguments. The one place OpenSky's yaw (counterclockwise from +X) becomes Havok's
 // `Direction` (radians from facing, positive left).
 
+import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyWorldInterface
 import simd
 
 nonisolated extension LocomotionBridge {
-    /// Speed of one gait, units per second, after worn weight and `SpeedMult`.
+    /// Speed of one gait, units per second, after `SpeedMult`; worn weight slows a run, but
+    /// never below the walk.
     func speed(of gait: LocomotionGait) -> Float {
+        let walk = configuration.walkSpeed.value * movement.multiplier
         let base: Float = switch gait {
         case .walk: configuration.walkSpeed.value
         case .run: configuration.runSpeed.value
@@ -16,7 +19,8 @@ nonisolated extension LocomotionBridge {
         case .sneak: configuration.sneakSpeed.value
         case .swim: configuration.swimSpeed.value
         }
-        return base * speedScale
+        let scaled = base * movement.multiplier
+        return gait == .run || gait == .sprint ? movement.run(scaled, walk: walk) : scaled
     }
 
     /// This frame's intent as a level world-space movement direction, unit

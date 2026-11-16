@@ -89,9 +89,20 @@ long frame is clamped to 100 ms, so it cannot jump.
 - [WARNING] The 512-unit rule is OpenSky's choice; the game's default speed rule is not documented.
 - A gait's speed is the forward walk or run of the movement type (`MOVT` `SPED`) that the actor's
   graph state names: `iState` 60 is `iState_HorseDefault`, so a horse uses the `MOVT` named
-  `HorseDefault`, walk 125.11 and run 450. Without a running graph, the default `NPC_Default_MT`
-  gives walk 80.1 and run 370. Either is multiplied by the actor's scale ([actor state
-  graph](/engine/actor-state-graph.md#how-the-game-picks-istate)). The game blends the speed s
+  `HorseDefault`, walk 125.11 and run 450. Without a graph state, the race's own walk type
+  (`RACE` `WKMV`) is used, then the default `NPC_Default_MT`, walk 80.1 and run 370 ([actor state
+  graph](/engine/actor-state-graph.md#how-the-game-picks-istate)).
+- A race can replace a type's speeds: an `MTYP` with a `SPED` after it in the `RACE` record gives
+  that race its own speeds for that type. Example: `ChickenRace` walks `Chicken_Default_MT` at
+  34.71 and runs at 251.94.
+- The speeds are multiplied in this order:
+  1. the actor's scale times its [height](/engine/actor-resolution.md#height);
+  2. the size of `SpeedMult` over 100, where 0 counts as 100;
+  3. on a run only, the worn weight share of [walk mode](/engine/walk-mode.md#speed). The run
+     never drops below the walk. Example: a run of 450 and a walk of 125 at share 0.7 give 315.
+  An actor that cannot run walks instead. The player cannot run over its carry weight. An NPC
+  has no carry weight check.
+- An NPC's weapon counts as drawn while it fights. The game blends the speed s
   between gaits, with W the walk and R the run: s up to 1 gives s × W, s from 1 to 2 gives (2 − s) ×
   W + (s − 1) × R. Fast walk is 1.25 and jog is 1.5 (clean-room read of `SkyrimSE.exe`, 2026-11-07).
 - The game changes an actor's speed toward its goal at a bounded rate: each frame by at most dt

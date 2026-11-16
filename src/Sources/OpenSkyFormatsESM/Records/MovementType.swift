@@ -77,7 +77,7 @@ nonisolated public struct MovementType: Equatable, Sendable {
         }
     }
 
-    let formID: FormID
+    public let formID: FormID
     let editorID: String?
     /// MNAM — the name the behavior graph and the Creation Kit show. Distinct
     /// from EDID in vanilla (`NPC_Sneaking_MT` is named `NPCSneaking`).
@@ -127,6 +127,7 @@ nonisolated public struct MovementTypeStore: Equatable, Sendable {
     public private(set) var types: [String: MovementType] = [:]
     /// By `MNAM` in lower case, the name a graph's `iState_*` constant carries.
     public private(set) var typesByName: [String: MovementType] = [:]
+    private var typesByFormID: [FormID: MovementType] = [:]
     private(set) var skippedRecords = SkippedRecords()
 
     public static let empty = MovementTypeStore(types: [:])
@@ -148,6 +149,11 @@ nonisolated public struct MovementTypeStore: Equatable, Sendable {
     /// The type a graph state names, such as `HorseDefault` for `iState_HorseDefault`.
     public func type(named name: String) -> MovementType? {
         typesByName[name.lowercased()]
+    }
+
+    /// The type a race's movement slot or override names.
+    public func type(formID: FormID) -> MovementType? {
+        typesByFormID[formID]
     }
 
     /// The forward speeds of one movement type, or nil when the record or its
@@ -176,6 +182,7 @@ nonisolated public struct MovementTypeStore: Equatable, Sendable {
             if let name = type.name {
                 typesByName[name.lowercased()] = type
             }
+            typesByFormID[type.formID] = type
         }
     }
 }

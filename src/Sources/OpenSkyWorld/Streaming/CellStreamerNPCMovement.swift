@@ -30,7 +30,7 @@ public struct CellStreamerNPCMovementState {
     public var bodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)?
     /// The actor's height times its race's height; nil counts as 1.
     public var heightScale: ((ReferenceKey) -> Float)?
-    var movementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)?
+    var movementSpeeds: ((ReferenceKey) -> ActorMovementSpeeds)?
     /// Rest writes no resident build has drawn yet, oldest first, per actor.
     var unbakedRests: [ReferenceKey: [NPCUnbakedRest]] = [:]
     /// The rest write in progress, so its store mutation rebuilds no cell.
@@ -101,7 +101,7 @@ extension CellStreamer.ActorSteps {
         nonmutating set { streamer.npcMovementState.standingActors = newValue }
     }
 
-    public var npcMovementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)? {
+    public var npcMovementSpeeds: ((ReferenceKey) -> ActorMovementSpeeds)? {
         get { streamer.npcMovementState.movementSpeeds }
         nonmutating set { streamer.npcMovementState.movementSpeeds = newValue }
     }

@@ -34,7 +34,9 @@ public struct NPCMovementWorld {
     public var collisionQueryIgnoringVehicles: WalkController.CollisionQuery?
     /// The speeds of the movement type an actor's graph state names; nil keeps the
     /// default type's (docs/engine/navigation.md#npc-path-following).
-    public var movementSpeeds: (ReferenceKey) -> MovementType.Speeds? = { _ in nil }
+    public var movementSpeeds: (ReferenceKey) -> ActorMovementSpeeds = { _ in
+        ActorMovementSpeeds()
+    }
 
     public init(
         sampleGround: @escaping WalkController.GroundSampler,
@@ -48,7 +50,9 @@ public struct NPCMovementWorld {
         waterPushRace: @escaping (ReferenceKey) -> WaterPushRace = { _ in .normal },
         vehicleActors: Set<ReferenceKey> = [],
         collisionQueryIgnoringVehicles: WalkController.CollisionQuery? = nil,
-        movementSpeeds: @escaping (ReferenceKey) -> MovementType.Speeds? = { _ in nil }
+        movementSpeeds: @escaping (ReferenceKey) -> ActorMovementSpeeds = { _ in
+            ActorMovementSpeeds()
+        }
     ) {
         self.sampleGround = sampleGround
         self.collisionQuery = collisionQuery

@@ -83,6 +83,9 @@ struct MovementTypeRecordTests {
         #expect(store.type(editorID: "npc_default_mt")?.name == "NPCDefault")
         #expect(store.forwardSpeeds(editorID: "NPC_Default_MT")?.run == 400)
         #expect(store.forwardSpeeds(editorID: "missing") == nil)
+        let byFormID = try #require(store.type(formID: FormID(0x0100)))
+        #expect(byFormID.speeds?.forwardRun == 400)
+        #expect(ActorMovementSpeeds.speeds(of: byFormID, race: nil) == byFormID.speeds)
     }
 
     @Test

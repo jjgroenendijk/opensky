@@ -3,6 +3,7 @@
 
 import OpenSkyEngineTesting
 import OpenSkyFormatsTesting
+import OpenSkyGameData
 import OpenSkyPlayer
 import Testing
 
@@ -22,11 +23,19 @@ struct MovementSpeedSettingsTests {
         #expect(settings.encumbranceFactor(weight: 0, weaponDrawn: true) == 1)
     }
 
-    @Test func speedMultScalesAfterTheWeight() {
+    @Test func speedMultScalesEveryGaitAndTheWeightOnlyTheRun() {
         let settings = MovementSpeedSettings.vanilla
-        // Half the maximum weight, sheathed: 1 - 0.15 x 0.5 = 0.925, then 120 / 100.
-        let scale = settings.speedScale(wornWeight: 57.5, weaponDrawn: false, speedMult: 120)
-        #expect(abs(scale - 0.925 * 1.2) < 0.0001)
+        // Half the maximum weight, sheathed: 1 - 0.15 x 0.5 = 0.925 of the run.
+        let movement = settings.movement(wornWeight: 57.5, weaponDrawn: false, speedMult: 120)
+        #expect(movement.multiplier == 1.2)
+        #expect(abs(movement.runShare - 0.925) < 0.0001)
+        #expect(abs(movement.run(400, walk: 100) - 370) < 0.001)
+        // A heavy load never slows a run below the walk.
+        #expect(ActorMovementSpeeds(runShare: 0.1).run(400, walk: 100) == 100)
+        #expect(ActorMovementSpeeds(canRun: false).run(400, walk: 100) == 100)
+        // A SpeedMult of 0 counts as 100, and a negative one counts as its size.
+        #expect(ActorMovementSpeeds.multiplier(speedMult: 0) == 1)
+        #expect(ActorMovementSpeeds.multiplier(speedMult: -50) == 0.5)
     }
 
     @Test func anEmptyWeightRangeDoesNotSlow() {

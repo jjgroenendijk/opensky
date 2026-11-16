@@ -122,7 +122,7 @@ extension CellNPCMovers {
                 streamer?.collision.collisionCandidatesIgnoringVehicles(overlapping: bounds) ?? []
             },
             movementSpeeds: { [weak streamer] actor in
-                streamer?.npcMovementState.movementSpeeds?(actor)
+                streamer?.npcMovementState.movementSpeeds?(actor) ?? ActorMovementSpeeds()
             }
         )
         world.viewer = streamer.viewerPosition

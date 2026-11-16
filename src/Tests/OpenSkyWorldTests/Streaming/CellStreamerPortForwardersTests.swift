@@ -69,14 +69,16 @@ struct CellStreamerPortForwardersTests {
         actors.onNPCLanding = { _, _ in }
         actors.onNPCCellHandoff = { _ in }
         actors.npcStandingActors = { [] }
-        actors.npcMovementSpeeds = { _ in nil }
+        actors.npcMovementSpeeds = { _ in ActorMovementSpeeds() }
         actors.npcBodyHalfExtents = { _ in SIMD3(1, 1, 1) }
+        actors.npcHeightScale = { _ in 1.1 }
         actors.npcWaterPushRace = { _ in .normal }
         #expect(actors.onNPCDoorCrossing != nil)
         #expect(actors.onNPCLanding != nil)
         #expect(actors.onNPCCellHandoff != nil)
-        #expect(actors.npcMovementSpeeds?(Self.actor) == nil)
+        #expect(actors.npcMovementSpeeds?(Self.actor) == ActorMovementSpeeds())
         #expect(actors.npcBodyHalfExtents?(Self.actor) == SIMD3(1, 1, 1))
+        #expect(actors.npcHeightScale?(Self.actor) == 1.1)
         #expect(actors.npcWaterPushRace?(Self.actor) == .normal)
         #expect(actors.cellStreamer === streamer)
     }
