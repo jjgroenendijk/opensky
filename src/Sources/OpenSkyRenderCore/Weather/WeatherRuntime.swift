@@ -30,17 +30,21 @@ nonisolated public struct TimeOfDayWeights: Equatable, Sendable {
         self.night = night
     }
 
-    /// Piecewise blend across control points: night before sunrise, a smooth
-    /// ramp peaking the sunrise keyframe at the sunrise midpoint, full day
-    /// between the windows, a ramp peaking sunset at the sunset midpoint, and
-    /// night after. Only ever two adjacent keyframes are non-zero.
+    /// The game starts the sunrise blend this many hours before the climate's sunrise and
+    /// ends the sunset blend this many hours after its sunset.
+    static let twilightExtension: Float = 0.5
+
+    /// Piecewise linear blend: night until the widened sunrise begins, a tent peaking the
+    /// sunrise keyframe at the window's middle, full day between the windows, a tent
+    /// peaking sunset, and night after the widened sunset ends. Only ever two adjacent
+    /// keyframes are non-zero.
     public init(hour: Float, timing: Climate.Timing?) {
         let hour = TimeOfDayWeights.wrap(hour)
         let windows = TimeOfDayWeights.windows(timing: timing)
-        let sunriseBegin = windows.sunriseBegin
+        let sunriseBegin = max(windows.sunriseBegin - TimeOfDayWeights.twilightExtension, 0)
         let sunriseEnd = windows.sunriseEnd
         let sunsetBegin = windows.sunsetBegin
-        let sunsetEnd = windows.sunsetEnd
+        let sunsetEnd = min(windows.sunsetEnd + TimeOfDayWeights.twilightExtension, 23.99)
         let sunriseMid = (sunriseBegin + sunriseEnd) / 2
         let sunsetMid = (sunsetBegin + sunsetEnd) / 2
 
@@ -124,11 +128,10 @@ nonisolated public struct TimeOfDayWeights: Equatable, Sendable {
         )
     }
 
-    /// Smoothstep across [lower, upper]; degenerate window -> 1 (fully arrived).
+    /// Linear across [lower, upper]; degenerate window -> 1 (fully arrived).
     private static func ramp(_ value: Float, _ lower: Float, _ upper: Float) -> Float {
         guard upper > lower else { return 1 }
-        let time = simd_clamp((value - lower) / (upper - lower), 0, 1)
-        return time * time * (3 - 2 * time)
+        return simd_clamp((value - lower) / (upper - lower), 0, 1)
     }
 
     private static func wrap(_ hour: Float) -> Float {

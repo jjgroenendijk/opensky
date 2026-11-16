@@ -370,18 +370,28 @@ at the window pixels (`.logs/issue-1501/run8/`):
 
 The active weathers' own night `Effect Lighting` colours are blue, for example
 `SkyrimClear` (0.08, 0.37, 0.58), so the glow does not take the active weather. The changes
-fall at the `SkyrimClimate` sunrise (05:30 to 10:00) and sunset (16:00 to 20:30) times.
-Brightness is not settled: the red the glow adds halves from 19:00 to 21:00, although both
-keys have red 0.95, so a later step scales it.
+fall at the `SkyrimClimate` sunrise (05:30 to 10:00) and sunset (16:00 to 20:30) times,
+each widened by half an hour ([time-of-day blend](/engine/weather.md#time-of-day-blend)).
 
-A clean-room read of the game's lighting shader (2026-11-06) narrows that step down:
+The emittance colour times its multiplier joins the light sum, with the sun, point, and
+ambient light, before the sum multiplies the diffuse texture. So the glow is
+`albedo * emittance * multiplier`, then times the vertex colour. Fog then blends the whole lit
+colour, emittance included, toward the fog colour. Storm fog reaches full strength much nearer
+than clear fog, so it likely explains the glow lost under `SkyrimStormRain`. OpenSky does the
+same. The lighting has no hour or weather factor of its own, and the sunlight scale of the
+image space multiplies only the sun, not the emittance.
 
-- The emittance colour times its multiplier joins the light sum, with the sun, point, and
-  ambient light, before the sum multiplies the diffuse texture. So the glow is
-  `albedo * emittance * multiplier`, then times the vertex colour. OpenSky does the same.
-- Fog then blends the whole lit colour, emittance included, toward the fog colour. Storm fog
-  reaches full strength much nearer than clear fog, so it likely explains the glow lost under
-  `SkyrimStormRain`. OpenSky fogs the glow the same way.
-- The lighting shader has no hour or weather factor of its own, and no eye adaptation or tone
-  mapping. So the drop from 19:00 to 21:00 must come from a frame-wide step after it, most
-  likely eye adaptation in the image space. That step is not decoded yet.
+The drop in brightness from 19:00 to 21:00 comes from the weather's image space, which blends
+by the same hour weights. At 19:00 the weights are sunset 0.8 and night 0.2, and at 21:00 night
+is 1. The two `SkyrimClear` image spaces grade the glow very differently:
+
+| `IMGS` | Saturation | Brightness | Contrast | Tint amount | Tint colour |
+| --- | --- | --- | --- | --- | --- |
+| `ISSkyrimClearDUSK` | 1.5 | 1.2 | 1.5 | 0.45 | (0.89, 0.52, 0.43) |
+| `ISSkyrimClearNIGHT` | 1.4 | 1.25 | 1.5 | 0.8 | (0.51, 0.53, 0.52) |
+
+The night tint moves 80% of each colour toward its luminance times a grey, so a warm glow
+loses most of its red. The dusk tint is orange and weaker, so the orange stays. Run through
+the [image space grade](/rendering/image-space.md#hdr-tone-mapping) over a dark base, a glow
+of `0.25 * key` adds about (98, 41, 15) of 255 at dusk and (59, 52, 35) at night: the red
+falls by about 40%, and the colour turns from orange to yellow, as the game shows.

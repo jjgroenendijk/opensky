@@ -20,8 +20,22 @@ struct WeatherRuntimeTests {
         // Default windows: sunrise 05-07 (mid 06), sunset 17-19 (mid 18).
         #expect(TimeOfDayWeights(hour: 0, timing: nil).night == 1)
         #expect(TimeOfDayWeights(hour: 12, timing: nil).day == 1)
-        #expect(TimeOfDayWeights(hour: 6, timing: nil).sunrise == 1)
-        #expect(TimeOfDayWeights(hour: 18, timing: nil).sunset == 1)
+        // The default windows widen to 04:30-07:00 and 17:00-19:30, so the peaks move.
+        #expect(TimeOfDayWeights(hour: 5.75, timing: nil).sunrise == 1)
+        #expect(TimeOfDayWeights(hour: 18.25, timing: nil).sunset == 1)
+        #expect(TimeOfDayWeights(hour: 4.5, timing: nil).night == 1)
+        #expect(TimeOfDayWeights(hour: 19.5, timing: nil).night == 1)
+    }
+
+    @Test func timeOfDayWeightsRampLinearly() {
+        // Halfway from the sunset peak (18:15) to the widened end (19:30).
+        let weights = TimeOfDayWeights(hour: 18.875, timing: nil)
+        #expect(abs(weights.sunset - 0.5) < 1e-4)
+        #expect(abs(weights.night - 0.5) < 1e-4)
+        // A quarter of the way from the widened sunrise start (04:30) to its peak (05:45).
+        let dawn = TimeOfDayWeights(hour: 4.8125, timing: nil)
+        #expect(abs(dawn.sunrise - 0.25) < 1e-4)
+        #expect(abs(dawn.night - 0.75) < 1e-4)
     }
 
     @Test func timeOfDayWeightsSumToOneAndWrap() {
