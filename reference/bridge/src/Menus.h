@@ -19,6 +19,21 @@ void ReadMenuVariable(std::string_view arguments);
 /// function `Game.PlayBink`; each flag is 0 or 1 and defaults as the script does.
 void PlayBink(std::string_view arguments);
 
-/// The `menuValues` member of the state: each value a `menuvar` line read, and the last click.
+/// `menuopen <menu>` and `menuclose <menu>` show or hide a menu through the interface's message
+/// queue, as the game's own key for that menu does.
+void OpenMenu(std::string_view menu, bool open);
+
+/// `menucall <menu>|<path>|<argument>...`: calls an ActionScript function of the movie. A
+/// number, `true`, or `false` passes as that type, anything else as text.
+void CallMenu(std::string_view arguments);
+
+/// `automove on|off` holds or ends Auto-Move, so the player walks with no key pressed.
+void SetAutoMove(bool on);
+
+/// Runs a `menuopen`, `menuclose`, `menucall`, or `automove` line; false for any other line.
+bool RunMenuLine(std::string_view line);
+
+/// The `menuValues` member of the state: each value a `menuvar` line read, the last click and
+/// call, the open menus, and Auto-Move.
 std::string MenuState();
 } // namespace bridge

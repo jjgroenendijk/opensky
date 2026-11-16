@@ -25,12 +25,17 @@ interface from inside instead. A field list is split by `|`, because menu names 
 | `menuhit <menu>\|<x>\|<y>` | Only tests the point: is a shape under it, and is a mouse target under it |
 | `menuvar <menu>\|<path>` | Reads one ActionScript value of the menu's movie, such as `_x` of a clip |
 | `playbink <file>[\|<flags>]` | Calls the script function `Game.PlayBink`; four optional `0` or `1` fields set its flags |
+| `menuopen <menu>`, `menuclose <menu>` | Shows or hides a menu, such as `TweenMenu` or `Journal Menu`, as the game's own key for it does |
+| `menucall <menu>\|<path>\|<argument>...` | Calls one ActionScript function of the menu's movie. A number, `true`, or `false` passes as that type, anything else as text |
+| `automove on`, `automove off` | Holds or ends Auto-Move, so the player walks forward with no key pressed |
 
 The movie finds the target under the cursor once per frame. So a click is three batches, one
 line each: move, then down, then up. Sent in one batch, the press reaches nothing. The click
 goes through the movie's own hit test, as a real click does. `state.json` lists each value a
-`menuvar` line read under `menuValues`, keyed by `<menu>|<path>`, and the last mouse line under
-`menuClick`, with its window point and the two hit tests. A stage point is in the movie's own
+`menuvar` line read under `menuValues`, keyed by `<menu>|<path>`, the last mouse line under
+`menuClick`, with its window point and the two hit tests, and the last `menucall` under
+`menuCall`, with its `result`. `openMenus` names every open menu, and `autoMove` says whether
+Auto-Move is held. A stage point is in the movie's own
 pixels; at the default 1280 x 720 window it is the same as the window point. For example, to
 click the race menu's right category arrow:
 
