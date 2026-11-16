@@ -120,8 +120,23 @@ confirmed against the game; the wiki gives the unit, not the range.
 ## Time-of-day blend
 
 The hour and the climate's `TNAM` sunrise and sunset windows give four weights: sunrise, day,
-sunset, night. They always add up to 1. At most two neighbors are above 0 at once, with smoothstep
-ramps at the window middles.
+sunset, night. They always add up to 1. At most two neighbors are above 0 at once.
+
+The game widens both windows by half an hour before it blends: the sunrise starts 0.5 hours
+earlier (not before 00:00), and the sunset ends 0.5 hours later (not after hour 23.99). Each
+window is then a straight-line tent:
+
+| Hour | Weights |
+| --- | --- |
+| Before the widened sunrise start, or after the widened sunset end | night 1 |
+| From the sunrise start to the window's middle | night falls to 0, sunrise rises to 1 |
+| From the middle to the sunrise end | sunrise falls to 0, day rises to 1 |
+| From the sunrise end to the sunset start | day 1 |
+| From the sunset start to the window's middle | day falls to 0, sunset rises to 1 |
+| From the middle to the widened sunset end | sunset falls to 0, night rises to 1 |
+
+For example, `SkyrimClimate` has a sunset from 16:00 to 20:30. Widened, it ends at 21:00, and
+its middle is 18:30. At 19:00 the weights are sunset 0.8 and night 0.2; from 21:00 on, night is 1.
 
 The same four weights blend every field with four keyframes: sky colors, directional ambient, and
 wind. So they all change together. Without `TNAM` the windows are 05:00 to 07:00 and 17:00 to
