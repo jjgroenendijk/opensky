@@ -42,8 +42,14 @@ matched with a mean squared error of 4.9 per channel; full levels gave 246. The 
 BT.601 and BT.709 differ by less than 0.1 there, and no vanilla movie tells the two apart. OpenSky
 keeps BT.601, libavcodec's default for this decoder.
 
-A letterboxed movie keeps its aspect ratio and draws black bars. With `abLetterbox` false the
-picture stretches over the whole frame.
+The game draws the decoded RGB picture as it is. The frame goes into 256 by 256 tiles of plain
+8-bit textures, not sRGB textures, and a pass-through shader draws them straight to the screen
+after a clear. No gamma step, brightness, contrast, tint, image space, or HDR tone mapping
+touches it. So a frame on screen has the colours of the decoded file: in the reference game the
+logo's mean colour was 149, 154, 157 against 150, 154, 159 in a standard decode.
+
+With `abLetterbox` true the movie fits the screen width and is centred from top to bottom. With
+it false the movie fits the screen height and is centred from side to side.
 
 ## Sound
 
@@ -51,11 +57,13 @@ The movie's sound plays at the file's own level. No volume slider, category, or 
 the master volume included. In the reference game the logo's sound matched the file's samples
 with a gain of 1.00.
 
-`abMuteAudio` pauses the master sound category while the movie plays. Each sound that plays in
-that category, or in a category below it, fades to 40 dB quieter over 100 ms and then pauses, if
-it can pause. A sound that cannot pause keeps playing 40 dB quieter. A sound with no category
-plays on. A sound that starts during the movie starts 40 dB quieter. When the movie ends, each
-sound resumes at 40 dB quieter and fades back to its level over 100 ms.
+`abMuteAudio` pauses the master sound category while the movie plays, the same pause a menu
+uses, with a fade time of 0. Each sound in that category, or in a category below it, pauses at
+once, if it can pause. A sound that cannot pause keeps playing 40 dB quieter. A sound with no
+category plays on. A sound that starts during the movie starts 40 dB quieter. When the movie
+ends, the category is un-paused, again with a fade time of 0, so the sounds come back at once.
+
+The game runs the movie in its own loop, so the world does not update until it ends.
 
 `abMuteMusic` pauses the music: the playing track fades out over 500 ms and ends, and the music
 type stays the current one. When the movie ends, the type plays its tracks again. Pauses nest, so
@@ -85,3 +93,8 @@ plays to its last frame. `openskycli game debug skipbink` ends any movie.
 ## Where OpenSky differs
 
 - A slow decode drops pictures but keeps the sound on time. The game's player is not documented.
+- OpenSky turns the picture into linear colour for its sRGB target. Beside the game, its logo
+  frame was about 40 % darker (mean 91, 92, 101), as if a gamma step were applied twice.
+- With `abLetterbox` false OpenSky stretches the picture over the whole frame.
+- During a movie OpenSky lowers the other sound categories to about 1 % but does not pause them,
+  and it fades them over 100 ms.

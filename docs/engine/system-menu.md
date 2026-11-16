@@ -136,6 +136,55 @@ calls `OptionChange([ID, value])`, and the engine writes that value to the store
 stepper arrow, a slider, or a check box does this. So does the movie's `$Defaults` button, which
 sets each row to its `defaultVal`.
 
+### Settings rows and saving
+
+The movie fixes each page's rows and their kind: 0 is a slider, 1 a stepper, and 2 a check
+box. The Gameplay page, for example, has a Save on Pause stepper (Disabled to 5 Mins), a
+Difficulty stepper (Legendary down to Very Easy), and a Look Sensitivity slider. Under the
+cursor the row finds the part on top:
+
+- Slider: the thumb, the two arrows, and the track react to press and release.
+- Stepper: the two arrows react to press and release. A click on the value acts as the next
+  arrow.
+- Check box: toggles on release.
+
+Each change calls `OptionChange(ID, value)` and plays `UIMenuPrevNext`. A slider's value is its
+scroll position divided by 20, so 0 to 1. A stepper's value is the chosen index, and a check
+box's is 0 or 1. When the player leaves a changed page, the movie shows `$Saving...` and,
+1000 ms later, calls `SaveSettings`, or `SaveControls` for the Controls page.
+
+### Controls rows and remapping
+
+The movie asks for the rows with `RequestInputMappings` and the chosen category, then sorts them
+by each row's sort index. Only the Switch titles are fixed in the movie. A remap works in four
+steps:
+
+1. A pressed row shows `$Press a button to map to this action.` and turns off list selection.
+2. After 200 ms the movie calls `StartRemapMode` with the row's text.
+3. The engine answers with success or failure. A failure shows `$That button is reserved.` for
+   1000 ms.
+4. A success sorts the list again and marks the page as changed.
+
+The game keeps changed bindings in a custom control map file beside the default
+`Interface/Controls/PC/ControlMap.txt`, so they last after a restart.
+
+### Quit
+
+On a computer the Quit page lists `$Main Menu` (0) and `$Desktop` (1), and the selection starts
+on `$Main Menu`. A row asks first, inside the movie: `$Quit to main menu?  Any unsaved progress
+will be lost.` or `$Quit to desktop?  Any unsaved progress will be lost.` On a console the main
+menu question shows at once.
+
+### Where OpenSky differs
+
+Seen beside the game:
+
+- [WARNING] A mouse click on a check box, a stepper arrow, or a slider changes nothing. The
+  Settings page also draws over its category list, and after Esc the old list stays on screen
+  while the selection is stuck.
+- [WARNING] The Controls page draws no rows, though the engine sends them.
+- [WARNING] The Quit list stays on Cancel and cannot be moved.
+
 ## The cursor
 
 The pause menu shows the cursor, as in the game. Each click and each move goes to the movie, so

@@ -48,6 +48,11 @@ The CK names these game settings. `Skyrim.esm` overrides most of the wiki's valu
 
 OpenSky reads the plugin value and falls back to the wiki value.
 
+The game also has values that are not in `Skyrim.esm`. The pair must be within 3000 units of
+the player, and the event reaches at most 500 units. An actor waits 120 s before it talks to
+the same partner again and 60 s before it talks to another one. An actor waits up to 20 s for
+its event, and walks away after 2 s.
+
 ## The rules
 
 The pass runs every 30 frames on the loaded actors. No `ADIA` or `AHEL` fires while the player

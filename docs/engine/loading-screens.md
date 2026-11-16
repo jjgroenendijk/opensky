@@ -57,6 +57,17 @@ full-screen rectangle whose opacity changes linearly. A fade that starts while a
 way continues from the current opacity. It did not confirm whether a door inside the same cell
 shows a loading screen.
 
+After the teleport, the game keeps the world updating for about 500 ms before the fade back
+in. The fade in lasts 1.0 s, and it does not start before 1.5 s have passed. Control most
+likely returns when the fade in ends.
+
+`Skyrim.esm` has 298 `LSCR` records. 221 have no conditions. The others use
+`GetInCurrentLoc` for a screen tied to a place, `GetRandomPercent` below 3, 5, 8, 15, 20, or 50
+for a rare screen, and `GetStage`, `GetStageDone`, `GetQuestCompleted`, or
+`GetVMQuestVariable` for a screen tied to a quest. The game picks at random among the screens
+whose conditions pass. Whether a door checks them at the source or at the destination was not
+found, and neither was whether a door inside the same cell skips the fade.
+
 ## Drawing
 
 OpenSky draws the game's scene, described in [the game's scene](#the-games-scene) below.
@@ -229,5 +240,8 @@ the field of view, and whether the loading movie is up.
 - [WARNING] OpenSky ignores rotation keys in a `MOD2` path; the camera keeps the base look
   direction. No vanilla path has rotation keys.
 - [WARNING] OpenSky's point shadows use its own bias, not 30.64.
+- [WARNING] Through the Bee and Barb door to Riften, OpenSky faded to black, but the
+  transition never ended: no screen was picked, the view stayed black, and later teleports
+  were refused.
 - [WARNING] The mist file's sequences are not picked by name; its particles and controllers
   run as the mesh loads them.

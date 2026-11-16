@@ -71,6 +71,21 @@ Observed in the install's movie:
 The engine model owns the keyboard selection. It moves the movie's focus to the matching
 button, and a click on a button makes the same pick as the accept key.
 
+### The two questions
+
+Both questions are the engine's own message boxes over the menu, not part of the movie.
+
+| Choice | Question | Buttons |
+| --- | --- | --- |
+| A perk | `sStatsPerkConfirm`: "Are you sure you want this perk?" | `sOk` "Ok", `sCancel` "Cancel" |
+| A level-up attribute | `sConfirmAttribute`: "Increase %s?", with Health, Magicka, or Stamina | `sOk`, `sCancel` |
+
+For an attribute the movie sends the pick at once with `UIMenuOK`, and the engine then asks.
+While a question is open, more presses are ignored.
+
+[WARNING] OpenSky has the perk question in its menu state but does not draw it, and it applies
+an attribute pick with no question.
+
 ### statsmenu.swf
 
 The `StatsMenu` class registers these `GameDelegate` callbacks in `InitExtensions`:

@@ -40,8 +40,9 @@ spell with no target.
    nothing happens, and no notice shows.
 5. The spell is cast on the target. This works on any actor, not only the player. A target that
    already has the spell is skipped, and the cast fails.
-6. If the cast worked and the target is the player, the notice shows: the game's contracted
-   disease text, a space, the disease's name, and a full stop. The "Diseases Contracted"
+6. If the cast worked and the target is the player, the notice shows as a HUD notification:
+   the game setting `sContractedDisease` ("You have contracted"), a space, the spell's `FULL`
+   name, and a full stop. For example: "You have contracted Ataxia." The "Diseases Contracted"
    statistic goes up by one.
 
 So `DiseaseResist` 100 or more never contracts, and a negative value always does.
@@ -65,3 +66,23 @@ flowchart TD
 ```
 
 Whether a blocked hit still rolls was not found.
+
+## Which sources show the notice
+
+| Source | Roll | Notice |
+| --- | --- | --- |
+| A creature's melee hit that carries the attack spell | yes | yes |
+| `Actor.DoCombatSpellApply` with a disease spell | yes | yes |
+| A miss that applies the spell with no target | no | no |
+| `Actor.AddSpell`, or a spell or projectile delivered as usual | no | no |
+
+A script that adds a disease with `AddSpell` shows no contracted notice. The chance uses two
+built-in game settings, a base of 0 and a factor of 1.0, as `base + factor × (100 − resist)`;
+`Skyrim.esm` does not change them, so the formula above holds.
+
+## Where OpenSky differs
+
+- OpenSky shows the notice when a script gives the player a disease spell, and no hit gives a
+  disease yet.
+- The notice uses the spell's editor ID, such as "You have contracted
+  DiseaseSanguinareVampiris.", not its name.

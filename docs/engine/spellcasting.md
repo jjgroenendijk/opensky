@@ -245,9 +245,19 @@ A looping descriptor plays until the step ends; a one-shot plays once. The casti
 hands while preparing to cast": it shows from the press until the hand is idle again. A dual cast
 shows the dual casting art when the effect has one. NPC casters get the same cues.
 
-- [WARNING] No effect anchor names a hand bone, so the art rides the actor.
+In the game the hand art rides the hand's magic node, `NPC L MagicNode [LMag]` or
+`NPC R MagicNode [RMag]`; `NPC Head MagicNode [Hmag]` serves the voice. The casting light is
+the effect's casting light `LIGH`, with that record's radius and colour. It attaches to the
+node `AttachLight` in the casting art or hand model, or to the model's root when there is no
+such node. The three light-offset game settings in `Skyrim.esm`, with the values 13, −28,
+and −60, are never read, so the light gets no extra offset. At most 4 casting lights exist at
+once over all casters; a cast while 4 exist gets no light. When each part starts and stops was
+not found beyond the CK wiki text above.
+
+- [WARNING] OpenSky's effect anchors name no hand bone, so the art rides the actor.
 - The `MGEF` casting light shows while the casting art shows. No anchor names a hand, so it
-  floats where a held Light spell floats: in front of the caster's eye, along its aim.
+  floats where a held Light spell floats: in front of the caster's eye, along its aim. Near
+  Riverwood a readied fire spell showed no hand glow and no casting light.
 
 ## Saving
 

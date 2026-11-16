@@ -49,8 +49,46 @@ also has `HideMenu` and `ResetStatsButton`; OpenSky does not call them.
 Esc reaches the engine, not the movie. OpenSky answers it as the movie answers Tab: it plays
 the close animation and shuts the menu when the movie calls `CloseMenu`.
 
+In the movie, the first press of an arrow key highlights the entry that sits that way, and a
+second press of the same key opens it. Enter opens the highlighted entry. Hovering the mouse
+over an entry highlights it. A click opens the entry under the cursor, unless something else is
+on top of it or the close animation runs. Once the close animation starts, the movie ignores
+all input. While a level waits, `StartOpenMenuAnim` gets `true` as its first argument, and the
+movie writes `$LEVEL UP` into the Skills entry; the engine can set it back to `$SKILLS`. A
+werewolf cannot open the menu and sees `sTweenDisabledMessage` ("Character screen not
+available to werewolves.").
+
 Without the movie, OpenSky draws a text panel: the arrow keys pick the entry that sits that
 way, and Enter opens it.
+
+## Blur
+
+The world behind the menu is blurred by an image space modifier. The engine takes the
+"ImageSpaceModifier for inventory menu" default object (`IMID`), which is `ISMTween`
+(`000434BB`) in `Skyrim.esm`, and applies it at strength 1.0 when the menu opens. The inventory,
+magic, and other menus use the same modifier, so it is counted: it goes away only when the
+last menu that uses it closes.
+
+| `ISMTween` value | Time 0 | Time 1 |
+| --- | --- | --- |
+| Depth of field strength | 1 | 0 |
+| Depth of field distance and range | 128, 768 | 128, 768 |
+| Radial blur strength | 0.1 | 0 |
+| Radial blur ramp up and start | 0.2, 0.2 | 0.2, 0.2 |
+| Saturation add | −0.15 | 0 |
+
+Its duration is 1.0 s and its animated flag is off, and every multiply factor is 1. A modifier
+that is not animated most likely holds its time-0 values for as long as it is applied, with no
+fade ([image space](/rendering/image-space.md)).
+
+## Where OpenSky differs
+
+Seen beside the game:
+
+- [WARNING] Tab does not close the menu; only Esc does.
+- [WARNING] A mouse click on an entry opens nothing.
+- [WARNING] The world behind the menu is not blurred.
+- [WARNING] With a level waiting, the entry still reads SKILLS.
 
 ## Camera
 
