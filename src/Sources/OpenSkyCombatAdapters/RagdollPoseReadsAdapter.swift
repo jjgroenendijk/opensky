@@ -42,7 +42,11 @@ extension RagdollPoseReadsAdapter {
         let streamer = game.streamer
         return streamer.residentActorEntries().compactMap { entry in
             entry.placedActor.map {
-                RagdollResident(key: entry.key, position: $0.placement.position)
+                RagdollResident(
+                    key: entry.key,
+                    position: streamer.npcTransform(for: entry.key)?.position
+                        ?? $0.placement.position
+                )
             }
         }
     }
@@ -82,15 +86,12 @@ extension RagdollPoseReadsAdapter {
             let playback = game.actorPlayback(for: key),
             let animated = playback.clip.orderedWorldTransforms(at: renderer.animationTime)
         else { return nil }
+        let frame = streamer.drawnFrame(of: key, placed: actor.placement, scale: actor.scale)
         return RagdollActorPose(
             reference: actor.formID,
             cell: streamer.cellLocation(of: key) ?? .interior(actor.formID),
-            scale: actor.scale,
-            actorToWorld: MatrixMath.placement(
-                position: actor.placement.position,
-                rotation: actor.placement.rotation,
-                scale: actor.scale
-            ),
+            scale: frame.scale,
+            actorToWorld: frame.actorToWorld,
             skeletonMeshPath: playback.clip.skeletonMeshPath,
             skeleton: playback.clip.skeleton,
             animatedBoneMatrices: animated

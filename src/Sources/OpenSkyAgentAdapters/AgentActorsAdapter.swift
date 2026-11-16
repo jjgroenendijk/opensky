@@ -151,6 +151,14 @@ extension AgentActorsAdapter {
     func physicsConstraints(of key: ReferenceKey) -> AgentJSON {
         AgentRagdollLinks(hub: hub, game: game).physicsConstraints(of: key)
     }
+
+    /// Each ragdoll body of `key` with its bone and world position, or null with no ragdoll.
+    func ragdollBodies(of key: ReferenceKey) -> AgentJSON {
+        guard let ragdoll = game.ragdoll.runtime?.world.instance(for: key) else { return .null }
+        return .array(zip(ragdoll.definition.bones, ragdoll.bodies).map { bone, body in
+            ["bone": .string(bone.boneName), "position": .init(body.originPosition)]
+        })
+    }
 }
 
 /// The script links and pins between ragdoll bodies, for `AgentActorsAdapter`.

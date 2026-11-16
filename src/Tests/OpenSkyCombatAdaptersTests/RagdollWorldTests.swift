@@ -6,7 +6,9 @@ import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkySessionInterface
 import OpenSkySessionTesting
+import OpenSkyWorldState
 import simd
 import Testing
 
@@ -83,6 +85,26 @@ struct RagdollWorldTests {
         #expect(adapter.animatedPose(of: Self.actor) == nil)
         #expect(!adapter.raisePlayerGraphEvent("GetUpStart"))
         _ = adapter.ragdollStepWorld
+    }
+
+    /// A walked actor's bodies spawn where it walked to, at its drawn height.
+    @Test func theRagdollFrameIsWhereAndHowBigTheActorDraws() {
+        let placed = PlacedReference.Placement(position: SIMD3(0, 0, 0), rotation: .zero)
+        let moved = ReferenceTransformOverride(
+            placement: PlacedReference.Placement(position: SIMD3(800, 0, 0), rotation: .zero),
+            scale: 1
+        )
+        let frame = ActorDrawnFrame(
+            placed: placed, scale: 1, moved: moved, height: 1.3
+        )
+        #expect(frame.scale == 1.3)
+        #expect(frame.actorToWorld.columns.3.x == 800)
+        #expect(abs(frame.actorToWorld.columns.0.x - 1.3) < 1e-5)
+        let still = ActorDrawnFrame(
+            placed: placed, scale: 2, moved: nil, height: 1
+        )
+        #expect(still.scale == 2)
+        #expect(still.actorToWorld.columns.3.x == 0)
     }
 
     @Test func remainsWithoutRecordsKeepTheCorpseAndShowDefaultBlood() {

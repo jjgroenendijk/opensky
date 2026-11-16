@@ -127,6 +127,7 @@ extension AgentActorReadoutAdapter {
             ),
             "skinDecals": .array(render.skinDecalBones(of: actor.key).map(AgentJSON.string)),
             "constraints": actors.physicsConstraints(of: actor.key),
+            "ragdoll": actors.ragdollBodies(of: actor.key),
             "lagBones": .object(
                 (game.actorPlayback(for: actor.key)?.lagBoneOffsets ?? [:])
                     .mapValues(AgentJSON.init)
