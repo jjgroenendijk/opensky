@@ -305,6 +305,9 @@ void RunLine(const std::string &line)
     constexpr auto cameraVerb = "camera "sv;
     constexpr auto menuVariableVerb = "menuvar "sv;
     constexpr auto binkVerb = "playbink "sv;
+    if (RunMenuLine(line)) {
+        return;
+    }
     // `menuclick`, `menumove`, `menudown`, `menuup`, and `menuhit` act on a menu's movie.
     for (const auto action : {"click"sv, "move"sv, "down"sv, "up"sv, "hit"sv}) {
         const auto verb = std::format("menu{} ", action);

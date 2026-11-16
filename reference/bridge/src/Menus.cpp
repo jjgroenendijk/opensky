@@ -11,6 +11,7 @@ namespace {
 std::mutex menuLock;
 std::map<std::string, std::string> values;
 std::string lastClick;
+std::string lastCall;
 
 std::string Quoted(std::string_view text)
 {
@@ -155,6 +156,79 @@ void PlayBink(std::string_view arguments)
     machine->DispatchStaticCall("Game", "PlayBink", callArguments, result);
 }
 
+void OpenMenu(std::string_view menu, bool open)
+{
+    auto *queue = RE::UIMessageQueue::GetSingleton();
+    if (!queue || menu.empty()) {
+        return;
+    }
+    const auto type = open ? RE::UI_MESSAGE_TYPE::kShow : RE::UI_MESSAGE_TYPE::kHide;
+    queue->AddMessage(RE::BSFixedString(std::string(menu).c_str()), type, nullptr);
+}
+
+// A field that reads as a whole number, `true`, or `false` passes as that type, any other as text.
+RE::GFxValue Argument(const std::string &text)
+{
+    if (text == "true" || text == "false") {
+        return RE::GFxValue(text == "true");
+    }
+    double number = 0;
+    const auto *end = text.data() + text.size();
+    const auto parsed = std::from_chars(text.data(), end, number);
+    if (!text.empty() && parsed.ec == std::errc{} && parsed.ptr == end) {
+        return RE::GFxValue(number);
+    }
+    return RE::GFxValue(text.c_str());
+}
+
+void CallMenu(std::string_view arguments)
+{
+    const auto fields = Fields(arguments);
+    if (fields.size() < 2) {
+        return;
+    }
+    auto *movie = Movie(fields[0]);
+    std::vector<RE::GFxValue> callArguments;
+    for (std::size_t index = 2; index < fields.size(); ++index) {
+        callArguments.push_back(Argument(fields[index]));
+    }
+    RE::GFxValue result;
+    const bool called = movie && movie->Invoke(
+                                     fields[1].c_str(), &result, callArguments.data(),
+                                     static_cast<std::uint32_t>(callArguments.size()));
+    std::scoped_lock lock(menuLock);
+    lastCall = std::format(
+        "{{\"menu\":{},\"path\":{},\"open\":{},\"called\":{},\"result\":{}}}", Quoted(fields[0]),
+        Quoted(fields[1]), movie != nullptr, called, called ? Text(result) : "null");
+}
+
+void SetAutoMove(bool on)
+{
+    if (auto *controls = RE::PlayerControls::GetSingleton()) {
+        controls->data.autoMove = on;
+    }
+}
+
+bool RunMenuLine(std::string_view line)
+{
+    constexpr auto openVerb = "menuopen "sv;
+    constexpr auto closeVerb = "menuclose "sv;
+    constexpr auto callVerb = "menucall "sv;
+    constexpr auto autoMoveVerb = "automove "sv;
+    if (line.starts_with(openVerb)) {
+        OpenMenu(line.substr(openVerb.size()), true);
+    } else if (line.starts_with(closeVerb)) {
+        OpenMenu(line.substr(closeVerb.size()), false);
+    } else if (line.starts_with(callVerb)) {
+        CallMenu(line.substr(callVerb.size()));
+    } else if (line.starts_with(autoMoveVerb)) {
+        SetAutoMove(line.substr(autoMoveVerb.size()) == "on");
+    } else {
+        return false;
+    }
+    return true;
+}
+
 std::string MenuState()
 {
     std::scoped_lock lock(menuLock);
@@ -166,6 +240,20 @@ std::string MenuState()
     if (!lastClick.empty()) {
         state += ",\"menuClick\":" + lastClick;
     }
+    if (!lastCall.empty()) {
+        state += ",\"menuCall\":" + lastCall;
+    }
+    std::string open;
+    if (auto *ui = RE::UI::GetSingleton()) {
+        for (const auto &[name, entry] : ui->menuMap) {
+            if (entry.menu && ui->IsMenuOpen(name)) {
+                open += (open.empty() ? "" : ",") + Quoted(name.c_str());
+            }
+        }
+    }
+    const auto *controls = RE::PlayerControls::GetSingleton();
+    state += std::format(
+        ",\"openMenus\":[{}],\"autoMove\":{}", open, controls && controls->data.autoMove);
     return state;
 }
 } // namespace bridge
