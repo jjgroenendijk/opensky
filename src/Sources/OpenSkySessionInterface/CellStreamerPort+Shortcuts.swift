@@ -31,6 +31,10 @@ extension CellStreamerPort {
         actors.npcBodyHalfExtents
     }
 
+    public var npcHeightScale: ((ReferenceKey) -> Float)? {
+        actors.npcHeightScale
+    }
+
     public var npcMovement: Actors.NPCMovementRuntime {
         actors.npcMovement
     }

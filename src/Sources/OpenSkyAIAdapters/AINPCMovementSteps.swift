@@ -23,6 +23,7 @@ protocol NPCMovementHooks {
     var npcStandingActors: (() -> [NPCNeighbour])? { get nonmutating set }
     var npcMovementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)? { get nonmutating set }
     var npcBodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)? { get nonmutating set }
+    var npcHeightScale: ((ReferenceKey) -> Float)? { get nonmutating set }
     associatedtype Rebuilds: NPCCellRebuilds
     /// Held weakly by the cell handoff, so the hooks do not keep the streamer alive.
     var cellStreamer: Rebuilds { get }
@@ -53,6 +54,21 @@ struct AINPCMovementSteps {
         }
     }
 
+    /// An actor's height times its race's height, after its leveled template roll.
+    private func registerHeights(on streamer: any NPCMovementHooks) {
+        streamer.npcHeightScale = { [weak hosts] actor in
+            guard
+                let hosts,
+                let base = hosts.streamer.residents.residentActorEntry(key: actor)?
+                    .placedActor?.base,
+                let baselines = hosts.aiRecords?.actorValueBaselines,
+                let resolver = baselines.resolver
+            else { return 1 }
+            let roll = hosts.worldState.leveledRoll(of: actor, base: base, with: baselines.leveling)
+            return ActorIdentityRecords(resolver: resolver).heightScale(ofBase: base, roll: roll)
+        }
+    }
+
     private func registerMovementTypes(on streamer: any NPCMovementHooks) {
         streamer.npcMovementSpeeds = { [weak hosts] actor in
             hosts.flatMap { AIRecordReads(game: $0).movementSpeeds(of: actor) }
@@ -71,6 +87,7 @@ struct AINPCMovementSteps {
             hosts.map { AIBumpsAdapter(game: $0).standingActors() } ?? []
         }
         registerBodyShapes(on: streamer)
+        registerHeights(on: streamer)
         registerMovementTypes(on: streamer)
         // A walker drawn by the cell it left would vanish when that cell unloads, so
         // it moves into the cell it entered, and the cell it left drops it.

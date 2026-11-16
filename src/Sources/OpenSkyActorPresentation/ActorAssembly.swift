@@ -109,7 +109,7 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
             transform: MatrixMath.placement(
                 position: actor.placement.position,
                 rotation: actor.placement.rotation,
-                scale: actor.scale
+                scale: actor.scale * visual.heightScale
             ),
             visual: visual
         )

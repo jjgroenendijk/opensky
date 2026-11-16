@@ -75,6 +75,14 @@ struct ActorIdentityRecordsTests {
         #expect(records.name(of: FormID(0x13746)) == .inline("Nord"))
     }
 
+    /// No `NAM6` and a race with no heights draw at 1; an unknown base also gives 1.
+    @Test @MainActor
+    func theHeightScaleFallsBackToOne() throws {
+        let records = try Self.records()
+        #expect(records.heightScale(ofBase: FormID(0x100)) == 1)
+        #expect(records.heightScale(ofBase: FormID(0x999)) == 1)
+    }
+
     @Test
     func templateFlagsPassTraitsAndNameDown() throws {
         let records = try Self.records()

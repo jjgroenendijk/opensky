@@ -42,6 +42,7 @@ public struct NPCMover {
     let runSlowdown: FollowSettings?
     let walkRunBlend: Float?
     let longBody: LongBodyShape?
+    let heightScale: Float
     /// This step's movement type speeds, from the actor's graph state.
     var movementSpeeds: MovementType.Speeds?
     /// The other actors near this one for the step in progress.
@@ -67,6 +68,7 @@ public struct NPCMover {
         runSlowdown = start.runSlowdown
         walkRunBlend = start.walkRunBlend
         longBody = start.longBody
+        heightScale = start.heightScale
         legStart = start.placement.position
         yaw = NPCYawMath.yaw(fromHeading: start.placement.rotation.z)
         controller = WalkController(

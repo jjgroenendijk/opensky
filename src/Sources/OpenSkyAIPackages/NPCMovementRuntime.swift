@@ -91,6 +91,8 @@ public struct NPCMoveStart {
     public var walkRunBlend: Float?
     /// The end spheres of a long body such as a horse; nil for an upright one.
     public var longBody: LongBodyShape?
+    /// The actor's height times its race's height, which its speeds grow with.
+    public var heightScale: Float = 1
 
     public init(
         actor: ReferenceKey,

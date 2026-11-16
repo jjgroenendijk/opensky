@@ -55,7 +55,7 @@ extension NPCMover {
         controller.reset(cameraPosition: moved + SIMD3(0, 0, capsule.eyeHeight))
     }
 
-    /// A movement type's speeds grow with the actor's scale.
+    /// A movement type's speeds grow with the actor's scale and its height.
     func speed(of gait: LocomotionGait) -> Float {
         let base = switch gait {
         case .swim: configuration.swimSpeed.value
@@ -64,7 +64,8 @@ extension NPCMover {
         case .sneak: configuration.sneakSpeed.value
         case .walk: movementSpeeds?.forwardWalk ?? configuration.walkSpeed.value
         }
-        return scale > 0 && scale.isFinite ? base * scale : base
+        let size = scale * heightScale
+        return size > 0 && size.isFinite ? base * size : base
     }
 
     func stepPlan(frameTime: Float) -> NPCMoverStepPlan {

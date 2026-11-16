@@ -51,12 +51,14 @@ extension CellNPCMovers {
             return .noPath(reason)
         }
         let bounds = streamer.npcMovementState.bodyHalfExtents?(actor)
+        let height = streamer.npcMovementState.heightScale?(actor) ?? 1
+        let size = standing.scale * height
         var start = NPCMoveStart(
             actor: actor,
             formID: entry.formID,
             placement: standing.placement,
             scale: standing.scale,
-            capsule: bounds.flatMap { .upright(halfExtents: $0, scale: standing.scale) }
+            capsule: bounds.flatMap { .upright(halfExtents: $0, scale: size) }
                 ?? .standard,
             configuration: streamer.actors.npcMovementConfiguration,
             path: path,
@@ -65,7 +67,8 @@ extension CellNPCMovers {
         )
         start.runSlowdown = runSlowdown
         start.walkRunBlend = walkRunBlend
-        start.longBody = bounds.flatMap { LongBodyShape(halfExtents: $0, scale: standing.scale) }
+        start.longBody = bounds.flatMap { LongBodyShape(halfExtents: $0, scale: size) }
+        start.heightScale = height
         let started = streamer.actors.npcMovement.start(start)
         return started ? .started : .moverCapReached
     }
