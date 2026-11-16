@@ -234,13 +234,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
         ).map(\.part)
         parts = skinTextures.withSkinTextures(parts, skin: skin, race: raceID, female: female)
 
-        // FaceGen assets belong to the NPC_ that provides character-gen data
-        // — the traits source (head parts ride the traits flag). Gated on
-        // the RACE FaceGen-head flag: creature races bake no facegeom, and
-        // head-part-less humanoids (e.g. Nazeem) still do.
-        let face = race.flags.contains(.faceGenHead)
-            ? formIDResolver.resolve(appearance.headParts.source)
-            : nil
+        let face = faceGenSource(of: appearance, race: race)
         var visual = ResolvedActorVisual(
             appearance: appearance,
             skeletonPath: skeletonPath,
@@ -252,6 +246,9 @@ nonisolated public struct ActorVisualResolver: Sendable {
             faceGenMeshPath: face.map(FaceGenPaths.mesh(for:)),
             faceGenTintPath: face.map(FaceGenPaths.tint(for:)),
             skips: skips
+        )
+        visual.heightScale = ActorHeight.scale(
+            npcHeight: appearance.height, race: race, isFemale: female
         )
         if race.flags.contains(.faceGenHead) {
             visual.headParts = headPartResolver.resolve(
@@ -419,5 +416,18 @@ nonisolated extension Race {
     /// The race's `DFTM` or `DFTF` face texture set.
     func defaultFaceTexture(female: Bool) -> FormID? {
         (female ? details.headData.female : details.headData.male).defaultFaceTexture
+    }
+}
+
+nonisolated extension ActorVisualResolver {
+    /// FaceGen assets belong to the NPC_ that provides character-gen data: the traits
+    /// source, as head parts ride the traits flag. Creature races bake no facegeom, and
+    /// head-part-less humanoids (e.g. Nazeem) still do.
+    func faceGenSource(
+        of appearance: ResolvedActorAppearance,
+        race: Race
+    ) -> ResolvedFormID? {
+        race.flags.contains(.faceGenHead) ? formIDResolver
+            .resolve(appearance.headParts.source) : nil
     }
 }

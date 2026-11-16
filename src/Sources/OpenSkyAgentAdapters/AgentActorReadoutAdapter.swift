@@ -111,6 +111,7 @@ extension AgentActorReadoutAdapter {
             "ref": formID.map { .formID($0.rawValue) } ?? .null,
             "name": .string(game.dialogueWorld.speakerLabel(for: actor.key)),
             "position": .init(actor.feet),
+            "height": .init(game.streamer.npcHeightScale?(actor.key) ?? 1),
             "distance": .init(distance),
             "dead": .bool(actor.isDead),
             "hostility": .string("\(game.factions.hostility(of: actor.key))"),

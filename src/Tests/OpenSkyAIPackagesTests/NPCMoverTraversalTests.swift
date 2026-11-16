@@ -77,6 +77,24 @@ struct NPCMoverTraversalTests {
         #expect(abs(scaled.stepPlan(frameTime: 0.05).speed - 900) < 1e-3)
     }
 
+    /// A taller NPC walks faster by its height, on top of its reference scale.
+    @Test func theHeightMultipliesTheSpeed() {
+        let path = NPCMovementRuntimeTests.path(
+            waypoints: [SIMD3(100, 0, 0)], target: SIMD3(100, 0, 0)
+        )
+        var start = NPCMoveStart(
+            actor: Self.actor, formID: FormID(1),
+            placement: PlacedReference.Placement(position: .zero, rotation: .zero),
+            scale: 1, capsule: .standard, configuration: .synthetic, path: path, gait: .walk
+        )
+        start.heightScale = 1.1
+        var tall = NPCMover(start: start)
+        tall.movementSpeeds = MovementType.Speeds(values: [
+            100, 400, 100, 400, 125.11, 450, 108.08, 300, 1.57, 1.57, 4.71
+        ])
+        #expect(abs(tall.stepPlan(frameTime: 0.05).speed - 125.11 * 1.1) < 1e-3)
+    }
+
     @Test func arcPeaksAboveTheHigherEndAndLands() {
         var hop = NPCLedgeHop(from: .zero, landing: SIMD3(100, 0, 64), speed: 200)
         hop.advance(by: hop.duration / 2)

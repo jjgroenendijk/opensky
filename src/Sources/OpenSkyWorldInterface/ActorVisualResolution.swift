@@ -29,6 +29,8 @@ nonisolated public struct ResolvedActorVisual: Equatable, Sendable {
     public var faceGenSurface: ModelSurfaceOverride?
     /// The side of a decapitation the face and head parts draw; nil draws all of them.
     public var headCut: DismemberCut?
+    /// The actor's height times its race's height, over its reference scale.
+    public var heightScale: Float = 1
 
     public init(
         appearance: ResolvedActorAppearance,

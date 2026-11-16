@@ -28,6 +28,8 @@ public struct CellStreamerNPCMovementState {
     var waterPushRace: ((ReferenceKey) -> WaterPushRace)?
     /// The half size of an actor's skeleton bound (`BBX`), once it has loaded.
     public var bodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)?
+    /// The actor's height times its race's height; nil counts as 1.
+    public var heightScale: ((ReferenceKey) -> Float)?
     var movementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)?
     /// Rest writes no resident build has drawn yet, oldest first, per actor.
     var unbakedRests: [ReferenceKey: [NPCUnbakedRest]] = [:]
@@ -107,6 +109,11 @@ extension CellStreamer.ActorSteps {
     public var npcBodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)? {
         get { streamer.npcMovementState.bodyHalfExtents }
         nonmutating set { streamer.npcMovementState.bodyHalfExtents = newValue }
+    }
+
+    public var npcHeightScale: ((ReferenceKey) -> Float)? {
+        get { streamer.npcMovementState.heightScale }
+        nonmutating set { streamer.npcMovementState.heightScale = newValue }
     }
 
     /// The race facts that decide how a current pushes a walking NPC.

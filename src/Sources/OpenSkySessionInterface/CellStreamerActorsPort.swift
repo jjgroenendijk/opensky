@@ -24,6 +24,7 @@ public protocol CellStreamerActorsPort {
         turning headingTurn: Float
     )
     var npcBodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)? { get }
+    var npcHeightScale: ((ReferenceKey) -> Float)? { get }
     var npcMovement: NPCMovementRuntime { get }
     func npcMovementReadouts() -> [NPCMovementReadout]
     var npcMovementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)? { get }

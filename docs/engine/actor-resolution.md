@@ -235,6 +235,23 @@ clean-room read of `SkyrimSE.exe` on 2026-11-07.
 Where OpenSky differs: the weight rounds to tenths, so the cache holds at most 11 copies of one
 body. An actor with no `NAM7` reads as 50; no source gives the game's default.
 
+## Height
+
+An actor's height is its own `NPC_` `NAM6` value times its race's height for its sex, from
+`RACE` `DATA` ([actors format](/formats/actors.md)). `NAM6` is a Traits-tab field, so it follows
+the `useTraits` template link like the face. A missing or zero value counts as 1.
+
+Example: a Nord man with `NAM6` 1.05 and the `NordRace` male height 1.0 has height 1.05. Over a
+reference scale of 1, he draws 5% taller than a Nord of height 1.
+
+The height multiplies three things, on top of the reference scale:
+
+- The drawn model, so the skeleton, the body, the head, and what the actor wears grow together.
+- The walk and run speeds, so a taller actor walks faster by the same factor.
+- The collision shape from the skeleton's bound ([character shapes](/engine/character-shapes.md)).
+
+`openskycli game state actors` reports each actor's `height`.
+
 ## Armour texture swaps
 
 An ARMA model carries alternate textures in `MO2S` (male) and `MO3S` (female), in the same layout

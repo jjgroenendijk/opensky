@@ -35,7 +35,8 @@ nonisolated public struct RaceProperties: Equatable, Sendable {
     let skillBoosts: [SkillBoost]
     /// Two bytes xEdit leaves unnamed.
     let unknown: UInt16
-    let height: GenderPair<Float>
+    /// The height every actor of the race is drawn and moves at, per sex; 1 is the model's.
+    public let height: GenderPair<Float>
     let weight: GenderPair<Float>
     /// The flags `Race.Flags` names in part.
     let flags: UInt32
@@ -44,8 +45,8 @@ nonisolated public struct RaceProperties: Equatable, Sendable {
     let startingStamina: Float
     let baseCarryWeight: Float
     let baseMass: Float
-    let accelerationRate: Float
-    let decelerationRate: Float
+    public let accelerationRate: Float
+    public let decelerationRate: Float
     /// 0 small, 1 medium, 2 large, 3 extra large.
     public let size: UInt32
     /// Biped slot indices, -1 for none.

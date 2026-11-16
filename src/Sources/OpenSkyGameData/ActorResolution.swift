@@ -50,6 +50,8 @@ nonisolated public struct ResolvedActorAppearance: Equatable, Sendable {
     /// reads as 50, which is an assumption: no source gives the default.
     public var weight: Float = defaultWeight
     public static let defaultWeight: Float = 50
+    /// NAM6, the height as a share of the race's height. A Traits-tab field.
+    public var height: Float = 1
     /// QNAM, the skin colour of the body's skin-tint shapes. A Traits-tab field.
     public var skinTone: SIMD3<Float>?
     /// FTST, the face texture set (complexion). A Traits-tab field; nil uses the race's.
@@ -239,6 +241,9 @@ nonisolated public struct ActorTemplateResolver: Sendable {
             },
             weight: resolveField(in: npcs, flag: .useTraits) {
                 ActorSourcedField(value: $0.details.weight ?? 50, source: $0.formID)
+            }.value,
+            height: resolveField(in: npcs, flag: .useTraits) {
+                ActorSourcedField(value: $0.details.height ?? 1, source: $0.formID)
             }.value,
             skinTone: resolveField(in: npcs, flag: .useTraits) {
                 ActorSourcedField(value: $0.details.textureLighting, source: $0.formID)
