@@ -130,6 +130,9 @@ nonisolated extension BehaviorGraphInstance.Generators {
         let live = graph.nodeStates
         let liveParameter = graph.nodeMemory.blendParameterOverrides[blender]
         let wasMuted = graph.nodeMemory.mutesClipAnnotations
+        // The copy runs the live blender's nodes again, on its own states.
+        let shared = graph.generatedThisUpdate
+        graph.generatedThisUpdate = shared.map { _ in [:] }
         graph.nodeStates = copy.states
         copy.states = [:]
         graph.nodeMemory.blendParameterOverrides[blender] = copy.parameter
@@ -139,6 +142,7 @@ nonisolated extension BehaviorGraphInstance.Generators {
         graph.nodeStates = live
         graph.nodeMemory.blendParameterOverrides[blender] = liveParameter
         graph.nodeMemory.mutesClipAnnotations = wasMuted
+        graph.generatedThisUpdate = shared
         graph.nodeMemory.cyclicCopies[target] = copy
         return pose
     }

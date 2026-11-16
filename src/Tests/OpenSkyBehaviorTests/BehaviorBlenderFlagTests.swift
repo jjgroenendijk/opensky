@@ -163,6 +163,33 @@ struct BehaviorBlenderFlagTests {
         }
         #expect(footsteps == 3)
     }
+
+    /// A clip node two blender children share runs once per update, as the carry-arm
+    /// layers share the walk: its mark fires once a loop, not once per parent.
+    @Test func aNodeTwoParentsShareAdvancesOncePerUpdate() throws {
+        let walk = try BehaviorFixture.splineClip(annotations: [(time: 0.5, text: "FootLeft")])
+        var table = BehaviorObjectTable()
+        let clip = table.add(
+            BehaviorFixture.clipGenerator("walk", animationName: "walk"), at: 0x100
+        )
+        let children = [
+            table.add(BehaviorFixture.blenderChild(generator: clip, weight: 1), at: 0x200),
+            table.add(BehaviorFixture.blenderChild(generator: clip, weight: 1), at: 0x210)
+        ]
+        let root = table.add(
+            BehaviorStateMachineFixture.syncedBlender("layers", children: children, flags: 0),
+            at: 0x300
+        )
+        let graph = BehaviorFixture.instance(
+            root: root, table: table, clips: BehaviorClipTable(byName: ["walk": walk])
+        )
+        var footsteps = 0
+        for _ in 0 ..< 30 {
+            footsteps += graph.update(deltaTime: 0.1).unboundEvents.filter { $0 == "FootLeft" }
+                .count
+        }
+        #expect(footsteps == 3)
+    }
 }
 
 extension Array {

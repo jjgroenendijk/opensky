@@ -148,6 +148,10 @@ nonisolated public final class BehaviorGraphInstance {
     /// What each referenced graph produced during the update in progress, so a
     /// reference reached twice advances its child's clock once.
     public var referencedResults: [String: BehaviorUpdateResult] = [:]
+    /// What each generator produced during the update in progress, nil outside one. A
+    /// node that several parents share, as the carry-arm layers share the locomotion
+    /// machine, advances its clips and fires its events once per update.
+    var generatedThisUpdate: [HKXPointerTarget: BehaviorPose]?
     /// Event names pulled up out of each referenced graph on the last update
     /// that reached it, so pushing the parent's active set back down does not
     /// hand a child its own event a second time (see
@@ -340,7 +344,9 @@ nonisolated public final class BehaviorGraphInstance {
         physics.ragdollContactEvent = nil
         physics.physicsRequests = BehaviorPhysicsRequests()
         variablesWrittenThisUpdate = []
+        generatedThisUpdate = [:]
         let pose = skeleton.absolute(evaluateGenerator(at: root, depth: 0, deltaTime: step))
+        generatedThisUpdate = nil
         activeStates = activeStatesThisUpdate
         stateTag = stateTagThisUpdate
         gamebryoSequences = gamebryoSequencesThisUpdate

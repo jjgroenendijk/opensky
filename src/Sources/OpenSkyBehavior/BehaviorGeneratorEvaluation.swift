@@ -50,8 +50,13 @@ nonisolated extension BehaviorGraphInstance.Generators {
             graph.tally.note(.disabledNode)
             return graph.skeleton.restPose
         }
+        if let shared = graph.generatedThisUpdate?[target] {
+            return shared
+        }
         let visit = BehaviorVisit(target: target, bound: graph.boundValues(of: node), depth: depth)
-        return evaluate(node.object, visit, deltaTime: deltaTime)
+        let pose = evaluate(node.object, visit, deltaTime: deltaTime)
+        graph.generatedThisUpdate?[target] = pose
+        return pose
     }
 
     /// Routes one decoded object to its semantics. Split from the guard clauses
