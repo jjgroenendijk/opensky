@@ -7,10 +7,18 @@ import OpenSkyWorldState
 
 extension PackageCoordinator {
     /// Feeds one event to one running procedure. A procedure that ends moves the tree on.
+    /// A result deeper than `maxStepDepth` waits for the next tick.
     func step(_ actor: ReferenceKey, with event: PackageProcedureEvent, leaf: Int) {
+        let depth = stepDepth[actor, default: 0]
+        guard depth < Self.maxStepDepth else {
+            heldSteps[actor, default: []].append((event, leaf))
+            return
+        }
         guard let before = executions[actor]?.ends, var session = session(for: actor) else {
             return
         }
+        stepDepth[actor] = depth + 1
+        defer { stepDepth[actor] = depth == 0 ? nil : depth }
         // In place: a copy taken out and written back copies the whole tree state.
         let commands = executions[actor]?.runner.handle(event, leaf: leaf, host: &session) ?? []
         apply(commands, actor: actor, endsBefore: before)
@@ -18,6 +26,9 @@ extension PackageCoordinator {
 
     /// Senses then ticks every running procedure of the actor, in node order.
     func tick(_ actor: ReferenceKey, by delta: Float) {
+        for held in heldSteps.removeValue(forKey: actor) ?? [] {
+            step(actor, with: held.event, leaf: held.leaf)
+        }
         guard let execution = executions[actor], let session = session(for: actor) else {
             return
         }

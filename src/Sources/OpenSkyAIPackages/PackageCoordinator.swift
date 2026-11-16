@@ -254,6 +254,12 @@ public final class PackageCoordinator {
     /// loaded reference, and a cell of new actors built one per actor in a frame.
     private var frameContext: ConditionContext?
     private var sharesFrameContext = false
+    /// How deep each actor is in procedure steps now. An act the world finishes at once
+    /// feeds its result back in the same call, so a repeating tree would never return.
+    var stepDepth: [ReferenceKey: Int] = [:]
+    /// Results that came back too deep; each reaches its procedure on the next tick.
+    var heldSteps: [ReferenceKey: [(event: PackageProcedureEvent, leaf: Int)]] = [:]
+    static let maxStepDepth = 16
 
     public init(world: (any PackageWorld)?, data: PackageSessionData?) {
         self.world = world
@@ -292,6 +298,7 @@ public final class PackageCoordinator {
             runtime.unregister(actor: actor)
             registeredActors.removeValue(forKey: actor)
             executions.removeValue(forKey: actor)
+            heldSteps.removeValue(forKey: actor)
             mounts.removeValue(forKey: actor)
             movement.drop(actor)
         }

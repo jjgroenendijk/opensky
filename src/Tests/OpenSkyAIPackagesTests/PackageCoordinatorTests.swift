@@ -214,6 +214,25 @@ struct PackageCoordinatorTests {
         #expect(world.moves.isEmpty)
     }
 
+    /// A repeating tree whose act the world finishes at once stops deepening at the step
+    /// limit, and the held result goes on in the next tick.
+    @Test func aRepeatingInstantActWaitsForTheNextTick() throws {
+        let (coordinator, world) = try Self.coordinator()
+        world.residents = try [PackageRuntimeFixture.residentActor(0x500, base: 0x600)]
+        coordinator.advance()
+        let owner = PackageOverrideOwner(source: FormID(0x4000), slot: 0)
+        let override = PackageOverride(packages: [FormID(0x106)], owner: owner, aliasQuest: nil)
+
+        #expect(coordinator.runOverride(override, actor: Self.guardKey) != .notSimulated)
+        let first = world.actions.count
+        #expect((1 ... PackageCoordinator.maxStepDepth + 1).contains(first))
+        #expect(coordinator.stepDepth.isEmpty)
+        #expect(coordinator.heldSteps[Self.guardKey]?.count == 1)
+        coordinator.tick(Self.guardKey, by: 0.016)
+        #expect(world.actions.count > first)
+        #expect(coordinator.stepDepth.isEmpty)
+    }
+
     private static func coordinator() throws -> (PackageCoordinator, FakePackageWorld) {
         let morning = try PackageRuntimeFixture.package(
             id: 0x100,
@@ -247,13 +266,23 @@ struct PackageCoordinatorTests {
             type: "Procedure", procedureType: "LockDoors", successCompletesPackage: true,
             dataInputIndexes: [0]
         )]
+        var lockAgain = try PackageRuntimeFixture.package(
+            id: 0x106, editorID: "LockAgain", procedureNames: ["LockDoors"],
+            dataInputs: walk.dataInputs
+        )
+        lockAgain.details.branches = [
+            PackageDetails.Branch(type: "Sequence", branchCount: 1, rootFlags: 1),
+            PackageDetails.Branch(
+                type: "Procedure", procedureType: "LockDoors", dataInputIndexes: [0]
+            )
+        ]
         let actor = try PackageRuntimeFixture.actorBase(id: 0x600, packages: [0x100, 0x101])
         let player = try PackageRuntimeFixture.actorBase(id: 0x7, packages: [])
         let world = FakePackageWorld()
         let coordinator = PackageCoordinator(
             world: world,
             data: PackageSessionData(store: PackageStore(
-                packages: [morning, fallback, walk, ride, patrol, lockUp],
+                packages: [morning, fallback, walk, ride, patrol, lockUp, lockAgain],
                 actorTemplates: ActorTemplateResolver(
                     actors: [0x600: actor, 0x7: player], leveledActors: [:]
                 )
