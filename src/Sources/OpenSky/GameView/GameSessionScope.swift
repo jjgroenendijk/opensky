@@ -32,6 +32,7 @@ import OpenSkyMenus
 import OpenSkyObjectAnimation
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
+import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionAdapters
@@ -364,6 +365,12 @@ final class GameSessionScope {
     lazy var sequenceDoors = factories.makeSequenceDoors()
     lazy var nodeControllers = factories.makeNodeControllers()
 
+    /// What the player holds on a spring ahead of the camera.
+    lazy var playerGrab = PlayerGrabAdapter(
+        game: ports, stage: stage,
+        settings: worldData.map { GrabSettings.resolve(store: $0.gameSettings) } ?? .vanilla,
+        isEnabled: playerSettings.store.bool(.playerGrab)
+    )
     /// The capes that move as cloth on the loaded actors.
     lazy var clothWorld = ClothWorldAdapter(
         game: ports, stage: stage,

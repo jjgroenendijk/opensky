@@ -16,8 +16,8 @@ final class ActorHost: ActorGraphGraphEventsHost, ActorGraphWorldHost, ActorWorl
     AnimationEventWorldHost, ClothWorldHost, BeastFormWorldHost, DragonFlightCandidatesHost,
     DragonFlightWorldHost,
     EffectGraphWorldHost, IdlePlacementHost, IdleWorldHost, MountDragonRidingHost, MountWorldHost,
-    ObjectAnimationWorldHost, PlayerFaceHost, PlayerFirstPersonHost, PlayerWorldHost,
-    VehicleWorldHost
+    ObjectAnimationWorldHost, PlayerFaceHost, PlayerFirstPersonHost, PlayerGrabHost,
+    PlayerWorldHost, VehicleWorldHost
 {
     let fakeActorGraphWorld = FakeActorGraphWorldPort()
     let fakeRagdoll = FakeRagdollPort()
@@ -73,6 +73,7 @@ final class ActorHost: ActorGraphGraphEventsHost, ActorGraphWorldHost, ActorWorl
     var actorRecords: (any ActorRecordsPort)?
     var playbacks: [ReferenceKey: any ActorAnimationPlaybackPort] = [:]
     var poses: [ReferenceKey: [String: float4x4]] = [:]
+    var itemWeights: [FormID: Float] = [:]
     private(set) var playerBodyCount = 0
     private(set) var firstPersonRigCount = 0
 
@@ -222,6 +223,10 @@ final class ActorHost: ActorGraphGraphEventsHost, ActorGraphWorldHost, ActorWorl
 
     var ragdoll: any RagdollPort {
         fakeRagdoll
+    }
+
+    func itemWeight(of base: FormID) -> Float? {
+        itemWeights[base]
     }
 
     var streamer: any CellStreamerPort {

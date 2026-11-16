@@ -60,7 +60,7 @@ protocol SessionPortSet:
     InventoryMenuHost, InventoryWorldHost, JournalMenuHost, LoadingScreenWorldHost, LockWorldHost,
     LockpickingMenuHost, MagicWorldHost, MapWorldHost, MenuHotkeyHost,
     MenuTickHost, MenuPlayRoutesHost, MenuFrontRoutesHost, MenuScreensHost, MenuScreensWorldHost,
-    MenuSoundHost, MenuWorldHost, MessageWorldHost, MountWorldHost, MovieWorldHost,
+    MenuSoundHost, MenuWorldHost, MessageWorldHost, MountWorldHost, MovieWorldHost, PlayerGrabHost,
     ObjectAnimationWorldHost, PerkActivationWorldHost, PlayerWorldHost, ProgressionWorldHost,
     RagdollWorldHost, RuntimeStateWorldHost, SaveGameWorldHost, ScriptWorldHost,
     SkyrimSaveExportHost, SkyrimSaveImportHost, StoryWorldHost, VehicleWorldHost, SystemMenuWorld,

@@ -115,6 +115,7 @@ struct GameSessionScopeBuild {
         _ = scope.objectAnimationWorld
         _ = scope.effectGraphWorld
         _ = scope.clothWorld
+        _ = scope.playerGrab
         _ = scope.animationEvents
         _ = scope.dialogueWorld
         _ = scope.storyWorld
@@ -193,31 +194,6 @@ struct GameSessionScopeBuild {
             }
             scope.hud.updateFrame()
         }
-    }
-
-    /// A rider's use key dismounts, and in command mode it picks the follower's target,
-    /// instead of activating the world.
-    private func stepStreaming(
-        cameraAt position: SIMD3<Float>, gameSession: GameSession, input: CameraInputState
-    ) {
-        let pressed = input.consumeActivation()
-        let takesPress = scope.mountWorld.takeActivation()
-            || scope.followerCommandWorld.takeActivation()
-        let activate = pressed && !takesPress
-        scope.followerCommandWorld.advanceUseKey(
-            by: gameSession.lastCameraDelta, isDown: input.isActivationHeld
-        )
-        scope.streamer.update(
-            cameraPosition: position,
-            interactionRay: Self.interactionRay(
-                of: gameSession, reach: scope.followerCommandWorld.pickReach
-            ),
-            activate: activate,
-            playerCapsule: Self.playerCapsule(of: gameSession),
-            frameTime: gameSession.lastCameraDelta
-        )
-        let walk = gameSession.walkController
-        scope.streamer.actors.recordPlayerSwim(at: walk.feetPosition, isSwimming: walk.isSwimming)
     }
 
     /// The ground, collision, water, and worldspace the session reads from the streamer.
@@ -365,5 +341,36 @@ extension GameSessionScopeBuild {
         gameSession.motion.borderCheck = { @Sendable from, to in
             BorderRegionRule.allows(from: from, to: to, outlines: outlines)
         }
+    }
+}
+
+extension GameSessionScopeBuild {
+    /// A rider's use key dismounts, and in command mode it picks the follower's target,
+    /// instead of activating the world; a held press on a loose object grabs it.
+    func stepStreaming(
+        cameraAt position: SIMD3<Float>, gameSession: GameSession, input: CameraInputState
+    ) {
+        let pressed = input.consumeActivation()
+        let takesPress = scope.mountWorld.takeActivation()
+            || scope.followerCommandWorld.takeActivation()
+            || (pressed && scope.playerGrab.takeActivation())
+        let activate = pressed && !takesPress
+        scope.followerCommandWorld.advanceUseKey(
+            by: gameSession.lastCameraDelta, isDown: input.isActivationHeld
+        )
+        scope.playerGrab.advanceUseKey(
+            by: gameSession.lastCameraDelta, isDown: input.isActivationHeld
+        )
+        scope.streamer.update(
+            cameraPosition: position,
+            interactionRay: Self.interactionRay(
+                of: gameSession, reach: scope.followerCommandWorld.pickReach
+            ),
+            activate: activate,
+            playerCapsule: Self.playerCapsule(of: gameSession),
+            frameTime: gameSession.lastCameraDelta
+        )
+        let walk = gameSession.walkController
+        scope.streamer.actors.recordPlayerSwim(at: walk.feetPosition, isSwimming: walk.isSwimming)
     }
 }

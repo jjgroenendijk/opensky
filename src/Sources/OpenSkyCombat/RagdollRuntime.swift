@@ -286,6 +286,20 @@ public final class RagdollRuntime: DeathReporting {
         return world.update(key) { $0.push(awayFrom: source, speed: speed, weight: weight) }
     }
 
+    /// Sets one body's velocity in a ragdoll, as the grab spring does, and wakes the
+    /// ragdoll. False when `key` does not ragdoll or has no such body.
+    @discardableResult
+    public func steerBody(_ index: Int, of key: ReferenceKey, velocity: SIMD3<Float>) -> Bool {
+        var steered = false
+        world.update(key) { instance in
+            guard instance.bodies.indices.contains(index) else { return }
+            instance.wake()
+            instance.bodies[index].linearVelocity = velocity
+            steered = true
+        }
+        return steered
+    }
+
     /// The dev trigger: kills `key` if it is not dead already, then hands off
     /// without waiting for a graph. What the readout's button calls.
     ///

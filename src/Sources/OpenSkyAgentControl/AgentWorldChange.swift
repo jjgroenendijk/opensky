@@ -37,6 +37,8 @@ nonisolated public enum AgentWorldChange: Equatable, Sendable {
     case lock(reference: String, locked: Bool)
     /// Lets a looping sound finish its pass and end, as a `SoundRelease` event does.
     case release(sound: Int)
+    /// Grabs a loose object or a dead body as holding Activate does; nil lets go.
+    case grab(reference: String?)
     /// Activates a reference, as `ObjectReference.Activate` does.
     case activate(reference: String, activator: String)
     /// Places a blood hit decal on an actor, `height` units above its feet.
@@ -63,6 +65,7 @@ nonisolated public enum AgentWorldChange: Equatable, Sendable {
         case "lock":
             try .lock(reference: args.string("ref"), locked: args.bool("on", default: true))
         case "release": try .release(sound: args.int("id"))
+        case "grab": try .grab(reference: args.optionalString("ref"))
         case "activate":
             try .activate(
                 reference: args.string("ref"), activator: args.optionalString("by") ?? "player"

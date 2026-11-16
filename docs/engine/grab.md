@@ -11,8 +11,8 @@ tags: [engine, physics, havok, player, input]
 The player can hold a loose object or a dead body in front of the camera, carry it, and let go.
 A spring pulls the object toward a point ahead of the eye.
 
-OpenSky does not build this yet. Telekinesis and the magical grab-actor effect use the same
-spring with their own values, and are not on this page.
+Telekinesis and the magical grab-actor effect use the same spring with their own values, and are
+not on this page.
 
 All values below are the ones that apply in play. Where `Skyrim.esm` overrides the program's
 built-in default, the page gives the plugin value.
@@ -83,3 +83,19 @@ stateDiagram-v2
 Releasing the Activate key that started the grab keeps the object held. On letting go, the spring
 is removed and the object keeps its speed. Grab has no throw. It was not found whether opening a
 menu lets go.
+
+While the player holds an item whose carry weight is over 75, the player cannot run.
+
+## In OpenSky
+
+- The "Grab objects" setting on the launcher's settings page turns the grab on or off.
+- A tap of Activate on a grabbable object activates it as before. Only a hold of 0.2 seconds
+  grabs.
+- A loose object is held by its body. A dead actor is held by the ragdoll body nearest to the
+  grabbed point. The grab of a living actor is not built.
+- The let-go rule for a heavier touching body is not built: no contact query reaches the held
+  body yet. The stretch past 96 still lets go.
+- `openskycli game debug grab <ref>` turns the view to a reference and grabs it, and
+  `state grab` shows the hold ([game commands](/tools/game-commands.md)). The hold point is
+  ahead of the view, so without the turn a reference off the crosshair is past the stretch
+  limit at once. The hold lasts until `debug grab` with no reference or a press of Activate.

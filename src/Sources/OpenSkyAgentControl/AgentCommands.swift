@@ -29,6 +29,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case mount
     /// The cape cloth switch and how many capes stepped in the last frame.
     case cloth
+    /// The player's grab: its switch, the Activate phase, and what is held.
+    case grab
     /// Each paired animation playing, with both actors' graph roles and paired clips.
     case paired
     /// Follower command mode: its phase, the follower, and the last decision and outcome.
@@ -104,6 +106,7 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         switch name {
         case "mount": .mount
         case "cloth": .cloth
+        case "grab": .grab
         case "paired": .paired
         case "favor": .favor
         case "impulses": .impulses

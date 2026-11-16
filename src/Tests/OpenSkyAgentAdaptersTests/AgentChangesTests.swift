@@ -8,6 +8,7 @@ import OpenSkyAgentControl
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
+import OpenSkyPhysics
 import OpenSkyRenderCore
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
@@ -91,6 +92,24 @@ struct AgentChangesTests {
         host.gameSession = loop.session
         #expect(try result(.release(sound: id))["released"] == .bool(true))
         #expect(throws: AgentFailure.self) { try world.perform(.world(.release(sound: id + 1))) }
+    }
+
+    @Test func aGrabHoldsTheReferenceAndNoReferenceLetsGo() throws {
+        host.fakePlayerGrab.grabReadout = PlayerGrabReadout(
+            isEnabled: true, phase: "holding", held: 0xB8780, distance: 80,
+            strength: GrabStrength(force: 1, elasticity: 1)
+        )
+        host.fakePlayerGrab.grabResult = true
+        let held = try result(.grab(reference: "B8780"))
+        #expect(host.fakePlayerGrab.grabCalls == [spell])
+        #expect(held["phase"] == .string("holding"))
+        #expect(held["held"] == .formID(0xB8780))
+        _ = try result(.grab(reference: nil))
+        #expect(host.fakePlayerGrab.letGoCallCount == 1)
+        host.fakePlayerGrab.grabResult = false
+        #expect(throws: AgentFailure.self) {
+            try world.perform(.world(.grab(reference: "B8780")))
+        }
     }
 
     @Test func anActivationReachesTheBridgeAsAScriptWould() throws {

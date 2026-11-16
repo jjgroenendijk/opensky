@@ -57,6 +57,10 @@ nonisolated extension AgentCommandCatalog {
             positionals: [required("id", "The sound's id from state sounds.")]
         ),
         command(
+            "debug.grab", "Hold a loose object or a dead body as holding Activate does.",
+            positionals: [optional("ref", "The reference to hold; none lets go.")]
+        ),
+        command(
             "debug.activate", "Activate a reference, as ObjectReference.Activate does.",
             positionals: [required("ref", anyRefHelp)],
             options: [value("by", "ref", "The activator. Default: player.")]
