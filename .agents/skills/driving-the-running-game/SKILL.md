@@ -30,7 +30,9 @@ reads the commands from the running app.
 When the change is in the app's code, build with `make build-app CONFIG=Release` and
 `make build-cli CONFIG=Release` (background shell, root `AGENTS.md`) and launch with `--app`:
 in Debug a cell load can take minutes, longer than the 120 s a teleport waits.
-Run that CLI as `"$(make -s app-path CONFIG=Release | xargs dirname)/openskycli" game ...`.
+Both land in the main checkout's `.cache/Build/<checkout folder>/Build/Products/Release/`
+(`docs/tools/build-system.md`, Build trees): pass `OpenSky.app` there to `--app`, and run the
+`openskycli` beside it.
 
 To only look at an asset, an NPC, or a cell, do not launch the game:
 `openskycli preview --record <id> --angles all` renders it offscreen and writes a PNG and a
