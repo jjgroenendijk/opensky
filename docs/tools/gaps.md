@@ -96,7 +96,11 @@ uses the skeleton in the `character assets...` folder beside its `behaviors...` 
 by suffix: `canine\behaviors wolf` uses `canine\character assets wolf\skeleton.hkx`. A
 behaviour reference loads its file from the install, as in the game. The sweep
 runs 30 idle updates, then raises each event the graph declares and runs 3 more updates per
-event. A class is in one of three groups:
+event. Then it raises each event once more from a fresh start: the graph's starting variables
+and 30 idle updates. So a state that an earlier event left, or that a variable set by an
+earlier event hides, is reached too, such as the turn from standing. No event sets
+`i1stPerson`, so a graph that declares it also runs 30 idle updates with the value flipped. A
+class is in one of three groups:
 
 - done: an update reached it and the evaluator noted no gap,
 - left: the evaluator skipped it, ran it only in part, passed it through, or could not decode it,

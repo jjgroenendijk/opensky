@@ -530,6 +530,12 @@ nonisolated extension BehaviorGraphInstance {
         variables.setValue(value, of: name)
     }
 
+    /// Puts every variable back to `store`, such as a copy taken before the first update.
+    /// `deactivate()` keeps the variables, as Havok does.
+    public func restoreVariables(_ store: BehaviorVariableStore) {
+        variables = store
+    }
+
     public func variable(named name: String) -> BehaviorVariableValue? {
         variables.value(of: name)
     }

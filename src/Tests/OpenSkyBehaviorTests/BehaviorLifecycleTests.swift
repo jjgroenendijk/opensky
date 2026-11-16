@@ -81,6 +81,27 @@ struct BehaviorLifecycleTests {
         #expect(!graph.isActive)
     }
 
+    @Test func deactivatingKeepsTheVariablesUntilTheyAreRestored() {
+        var table = BehaviorObjectTable()
+        let root = table.add(
+            BehaviorFixture.clipGenerator("clip", animationName: "left"), at: 0x100
+        )
+        let graph = BehaviorFixture.instance(
+            root: root,
+            table: table,
+            data: BehaviorFixture.graphData(
+                variables: [BehaviorVariableSpec("iSelect", .int32, 0)]
+            ),
+            clips: BehaviorFixture.staticClipPair(left: 1, right: 2)
+        )
+        let initial = graph.variables
+        graph.setVariable(.int(1), named: "iSelect")
+        graph.deactivate()
+        #expect(graph.variable(named: "iSelect")?.intValue == 1)
+        graph.restoreVariables(initial)
+        #expect(graph.variable(named: "iSelect")?.intValue == 0)
+    }
+
     // MARK: - Determinism
 
     @Test func twoInstancesSteppedIdenticallyProduceIdenticalOutput() throws {

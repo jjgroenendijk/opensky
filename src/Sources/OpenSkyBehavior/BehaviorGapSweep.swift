@@ -120,17 +120,40 @@ nonisolated public struct BehaviorGapSweep {
         let source = HKXBehaviorObjectSource(graph: objectGraph)
         instance.characterProperties = properties
         instance.references = InstallBehaviorReferenceSource(fileSystem: fileSystem, rootPath: path)
+        let initial = instance.variables
         instance.activate()
         update(instance, times: Self.idleUpdates, source: source)
-        for name in instance.events.names.compactMap(\.self)
-            where instance.raiseEvent(named: name)
-        {
+        let events = instance.events.names.compactMap(\.self)
+        for name in events where instance.raiseEvent(named: name) {
             eventsFired += 1
             update(instance, times: Self.updatesPerEvent, source: source)
+        }
+        // A state that one event leaves before the next reaches it, such as the turn from
+        // standing, is reached from a fresh start, variables included, instead.
+        for name in events {
+            instance.deactivate()
+            instance.restoreVariables(initial)
+            instance.activate()
+            update(instance, times: Self.idleUpdates, source: source)
+            if instance.raiseEvent(named: name) {
+                update(instance, times: Self.updatesPerEvent, source: source)
+            }
+        }
+        // No event sets the perspective; the first-person graph holds both branches.
+        if let perspective = initial.value(of: Self.perspectiveVariable) {
+            instance.deactivate()
+            instance.restoreVariables(initial)
+            instance.activate()
+            _ = instance.setVariable(
+                .int(perspective.intValue == 0 ? 1 : 0), named: Self.perspectiveVariable
+            )
+            update(instance, times: Self.idleUpdates, source: source)
         }
         instance.deactivate()
         tally.merge(instance.tally)
     }
+
+    static let perspectiveVariable = "i1stPerson"
 
     private mutating func update(
         _ instance: BehaviorGraphInstance, times: Int, source: HKXBehaviorObjectSource
