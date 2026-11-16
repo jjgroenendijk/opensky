@@ -137,4 +137,16 @@ nonisolated public struct RaceDetails: Equatable, Sendable {
     public var morphRace: FormID?
     /// RNAM, a RACE.
     var armorRace: FormID?
+
+    /// The speeds this race uses instead of a movement type's own, from its MTYP and SPED pair.
+    public func movementOverride(forType type: FormID) -> MovementType.Speeds? {
+        movementTypes.last { $0.movementType == type }
+            .flatMap { MovementType.Speeds(values: $0.overrides) }
+    }
+
+    /// The race's own type for a movement slot: `WKMV`, `RNMV`, `SWMV`, `FLMV`, `SNMV`, or
+    /// `SPMV`.
+    public func baseMovementType(_ slot: FourCC) -> FormID? {
+        baseMovement[slot]
+    }
 }

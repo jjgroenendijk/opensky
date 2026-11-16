@@ -5,7 +5,7 @@
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
 
 /// One worn armour piece: its record weight and what the wearer's perks make of it.
@@ -25,13 +25,20 @@ extension InventoryCoordinator.ArmourWeights {
     /// The weight of the armour the player wears, after perks. UESP counts armour
     /// only in movement noise; a carried sword makes none.
     public var playerWornArmourWeight: Float {
-        wornArmourWeights().reduce(0) { $0 + $1.worn }
+        wornArmourWeight(of: .player)
     }
 
-    func wornArmourWeights() -> [WornArmourWeight] {
+    /// The weight of the armour `holder` wears, after its perks.
+    public func wornArmourWeight(of holder: InventoryHolder) -> Float {
+        wornArmourWeights(of: holder).reduce(0) { $0 + $1.worn }
+    }
+
+    func wornArmourWeights(of holder: InventoryHolder = .player) -> [WornArmourWeight] {
         guard let runtime = coordinator.runtime else { return [] }
         let items = runtime.inventory.baselines.items
-        return runtime.inventory.inventory(of: runtime.player).equipped.compactMap { item in
+        let owner = holder.key
+        let player = holder == .player ? runtime.player : holder
+        return runtime.inventory.inventory(of: player).equipped.compactMap { item in
             guard let definition = items.definition(item), definition.family == .armor else {
                 return nil
             }
@@ -39,8 +46,8 @@ extension InventoryCoordinator.ArmourWeights {
             let worn = coordinator.world.perkModified(
                 authored,
                 at: .modArmorWeight,
-                on: .player,
-                subjects: PerkEvaluationSubjects(owner: .player)
+                on: owner,
+                subjects: PerkEvaluationSubjects(owner: owner)
                     .binding(.item, to: items.conditionSubject(of: item)),
                 seams: ConditionContext()
             )

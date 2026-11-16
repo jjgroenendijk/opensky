@@ -18,8 +18,9 @@ struct AINPCMovementStepsTests {
         var onNPCLocomotionDrive: ((NPCLocomotionDriveUpdate) -> Void)?
         var onNPCLanding: ((ReferenceKey, WalkLanding) -> Void)?
         var npcStandingActors: (() -> [NPCNeighbour])?
-        var npcMovementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)?
+        var npcMovementSpeeds: ((ReferenceKey) -> ActorMovementSpeeds)?
         var npcBodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)?
+        var npcHeightScale: ((ReferenceKey) -> Float)?
         var rebuilt: [CellSceneLocation] = []
         var cellStreamer: Hooks {
             self
@@ -50,7 +51,7 @@ struct AINPCMovementStepsTests {
 
     @Test func withoutMovementRecordsAnActorHasNoSpeeds() {
         #expect(hooks.npcMovementSpeeds != nil)
-        #expect(hooks.npcMovementSpeeds?(Self.actor) == nil)
+        #expect(hooks.npcMovementSpeeds?(Self.actor) == ActorMovementSpeeds())
     }
 
     @Test func everyMovementHookIsHung() {

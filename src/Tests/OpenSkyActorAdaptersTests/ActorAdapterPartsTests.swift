@@ -96,9 +96,9 @@ struct ActorAdapterPartsTests {
         let store = GameSettingStore(plugins: [])
         let speeds = MovementSpeedSettings.resolve(store: store)
         let scale = PlayerSpeedScale.provider(settings: store, game: host)
-        #expect(scale() == speeds.speedScale(wornWeight: 0, weaponDrawn: false, speedMult: 100))
+        #expect(scale() == speeds.movement(wornWeight: 0, weaponDrawn: false, speedMult: 100))
         host.fakeInventory.armourWeights.playerWornArmourWeight = 50
         host.fakeCombat.isWeaponDrawn = true
-        #expect(scale() == speeds.speedScale(wornWeight: 50, weaponDrawn: true, speedMult: 100))
+        #expect(scale() == speeds.movement(wornWeight: 50, weaponDrawn: true, speedMult: 100))
     }
 }

@@ -106,11 +106,15 @@ struct AIRecordReads {
         }
     }
 
+    /// The type the actor's graph state names, else its race's walk type, with the race's
+    /// override pair for that type in place of the type's own speeds.
     func movementSpeeds(of actor: ReferenceKey) -> MovementType.Speeds? {
-        guard let name = game.actorGraphWorld.graphs.movementStateName(of: actor) else {
-            return nil
-        }
-        return game.aiRecords?.movementTypes.type(named: name)?.speeds
+        let name = game.actorGraphWorld.graphs.movementStateName(of: actor)
+        guard let types = game.aiRecords?.movementTypes else { return nil }
+        let race = game.effectsWorld.race(of: actor)?.details
+        let type = name.map { types.type(named: $0) }
+            ?? race?.baseMovementType("WKMV").flatMap { types.type(formID: $0) }
+        return type.flatMap { ActorMovementSpeeds.speeds(of: $0, race: race) }
     }
 }
 

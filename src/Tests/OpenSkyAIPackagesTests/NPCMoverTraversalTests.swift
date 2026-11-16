@@ -62,9 +62,9 @@ struct NPCMoverTraversalTests {
             waypoints: [SIMD3(100, 0, 0)], target: SIMD3(100, 0, 0)
         )
         var mover = Self.mover(path: path, gait: .walk)
-        mover.movementSpeeds = MovementType.Speeds(values: [
+        mover.movementSpeeds = ActorMovementSpeeds(speeds: MovementType.Speeds(values: [
             100, 400, 100, 400, 125.11, 450, 108.08, 300, 1.57, 1.57, 4.71
-        ])
+        ]))
         #expect(abs(mover.stepPlan(frameTime: 0.05).speed - 125.11) < 1e-3)
         var start = NPCMoveStart(
             actor: Self.actor, formID: FormID(1),
@@ -89,10 +89,26 @@ struct NPCMoverTraversalTests {
         )
         start.heightScale = 1.1
         var tall = NPCMover(start: start)
-        tall.movementSpeeds = MovementType.Speeds(values: [
+        tall.movementSpeeds = ActorMovementSpeeds(speeds: MovementType.Speeds(values: [
+            100, 400, 100, 400, 125.11, 450, 108.08, 300, 1.57, 1.57, 4.71
+        ]))
+        #expect(abs(tall.stepPlan(frameTime: 0.05).speed - 125.11 * 1.1) < 1e-3)
+    }
+
+    @Test func speedMultiplierWeightAndCannotRunChangeTheSpeed() {
+        let path = NPCMovementRuntimeTests.path(
+            waypoints: [SIMD3(1000, 0, 0)], target: SIMD3(1000, 0, 0)
+        )
+        var mover = Self.mover(path: path, gait: .run)
+        let speeds = MovementType.Speeds(values: [
             100, 400, 100, 400, 125.11, 450, 108.08, 300, 1.57, 1.57, 4.71
         ])
-        #expect(abs(tall.stepPlan(frameTime: 0.05).speed - 125.11 * 1.1) < 1e-3)
+        mover.movementSpeeds = ActorMovementSpeeds(speeds: speeds, multiplier: 1.2, runShare: 0.7)
+        #expect(abs(mover.stepPlan(frameTime: 0.05).speed - 450 * 1.2 * 0.7) < 1e-3)
+        mover.movementSpeeds.canRun = false
+        let walking = mover.stepPlan(frameTime: 0.05)
+        #expect(walking.gait == .walk)
+        #expect(abs(walking.speed - 125.11 * 1.2) < 1e-3)
     }
 
     @Test func arcPeaksAboveTheHigherEndAndLands() {

@@ -2,6 +2,7 @@
 // swimming, ledge hops, gliding without ground, and the cell hand-off.
 
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyWorldInterface
@@ -55,17 +56,22 @@ extension NPCMover {
         controller.reset(cameraPosition: moved + SIMD3(0, 0, capsule.eyeHeight))
     }
 
-    /// A movement type's speeds grow with the actor's scale and its height.
+    /// A movement type's speeds grow with the actor's scale, its height, and its speed
+    /// multiplier; worn weight then slows a run, but never below the walk.
     func speed(of gait: LocomotionGait) -> Float {
+        let speeds = movementSpeeds.speeds
+        let walk = speeds?.forwardWalk ?? configuration.walkSpeed.value
         let base = switch gait {
         case .swim: configuration.swimSpeed.value
-        case .run: movementSpeeds?.forwardRun ?? configuration.runSpeed.value
+        case .run: speeds?.forwardRun ?? configuration.runSpeed.value
         case .sprint: configuration.sprintSpeed.value
         case .sneak: configuration.sneakSpeed.value
-        case .walk: movementSpeeds?.forwardWalk ?? configuration.walkSpeed.value
+        case .walk: walk
         }
         let size = scale * heightScale
-        return size > 0 && size.isFinite ? base * size : base
+        let factor = (size > 0 && size.isFinite ? size : 1) * movementSpeeds.multiplier
+        guard gait == .run || gait == .sprint else { return base * factor }
+        return movementSpeeds.run(base * factor, walk: walk * factor)
     }
 
     func stepPlan(frameTime: Float) -> NPCMoverStepPlan {
@@ -76,9 +82,12 @@ extension NPCMover {
         )
         let distance = simd_length(delta)
         let byLeg: LocomotionGait = distance > NPCMover.runDistance ? .run : .walk
-        let nextGait = isSwimming ? .swim : preferredGait ?? byLeg
+        var nextGait = isSwimming ? .swim : preferredGait ?? byLeg
+        if !movementSpeeds.canRun, nextGait == .run || nextGait == .sprint {
+            nextGait = .walk
+        }
         var speed = speed(of: nextGait)
-        if let walkRunBlend, !isSwimming {
+        if let walkRunBlend, !isSwimming, movementSpeeds.canRun {
             let walk = self.speed(of: .walk)
             speed = walk + (self.speed(of: .run) - walk) * walkRunBlend
         }

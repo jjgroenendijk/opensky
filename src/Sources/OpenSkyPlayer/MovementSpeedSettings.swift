@@ -43,9 +43,13 @@ nonisolated public struct MovementSpeedSettings: Equatable, Sendable {
         return max(0, 1 - effect * share)
     }
 
-    /// The speed scale of the player's gaits: worn weight, then `SpeedMult` over 100.
-    public func speedScale(wornWeight: Float, weaponDrawn: Bool, speedMult: Float) -> Float {
-        let mult = speedMult.isFinite ? max(0, speedMult) / 100 : 1
-        return encumbranceFactor(weight: wornWeight, weaponDrawn: weaponDrawn) * mult
+    /// An actor's speed adjustments: `SpeedMult` on every gait, and worn weight on a run.
+    public func movement(
+        wornWeight: Float, weaponDrawn: Bool, speedMult: Float
+    ) -> ActorMovementSpeeds {
+        ActorMovementSpeeds(
+            multiplier: ActorMovementSpeeds.multiplier(speedMult: speedMult),
+            runShare: encumbranceFactor(weight: wornWeight, weaponDrawn: weaponDrawn)
+        )
     }
 }

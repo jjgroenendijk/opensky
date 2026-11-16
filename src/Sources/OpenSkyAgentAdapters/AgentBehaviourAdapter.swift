@@ -250,16 +250,23 @@ struct AgentPackageReadout {
     /// The movement type the actor's graph names, its speeds, and the shape it collides as.
     func movementReadout(_ key: ReferenceKey) -> AgentJSON {
         let name = game.actorGraphs.movementStateName(of: key)
-        let speeds = game.streamer.actors.npcMovementSpeeds?(key)
+        let movement = game.streamer.actors.npcMovementSpeeds?(key)
+        let speeds = movement?.speeds
         let scale = (game.streamer.npcTransform(for: key)?.scale ?? 1)
             * (game.streamer.npcHeightScale?(key) ?? 1)
+        let factor = scale * (movement?.multiplier ?? 1)
         let bounds = game.streamer.npcBodyHalfExtents?(key)
         let capsule = bounds.flatMap { PlayerCapsule.upright(halfExtents: $0, scale: scale) }
         let long = bounds.flatMap { LongBodyShape(halfExtents: $0, scale: scale) }
         return [
             "type": name.map(AgentJSON.string) ?? .null,
-            "walk": speeds.map { .init($0.forwardWalk * scale) } ?? .null,
-            "run": speeds.map { .init($0.forwardRun * scale) } ?? .null,
+            "walk": speeds.map { .init($0.forwardWalk * factor) } ?? .null,
+            "run": speeds.map { speeds in
+                .init(movement?.run(speeds.forwardRun * factor, walk: speeds.forwardWalk * factor)
+                    ?? speeds.forwardRun * factor)
+            } ?? .null,
+            "speedMult": movement.map { .init($0.multiplier) } ?? .null,
+            "runShare": movement.map { .init($0.runShare) } ?? .null,
             "capsuleRadius": capsule.map { .init($0.radius) } ?? .null,
             "capsuleHeight": capsule.map { .init($0.height) } ?? .null,
             "endRadius": long.map { .init($0.endRadius) } ?? .null,

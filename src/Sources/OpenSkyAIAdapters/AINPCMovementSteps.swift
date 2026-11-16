@@ -13,6 +13,7 @@ import OpenSkyRuntimeState
 import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
+import OpenSkyWorldState
 
 /// The cell streamer's NPC movement hooks, so a test can register them on a stand-in.
 protocol NPCMovementHooks {
@@ -21,7 +22,7 @@ protocol NPCMovementHooks {
     var onNPCLocomotionDrive: ((NPCLocomotionDriveUpdate) -> Void)? { get nonmutating set }
     var onNPCLanding: ((ReferenceKey, WalkLanding) -> Void)? { get nonmutating set }
     var npcStandingActors: (() -> [NPCNeighbour])? { get nonmutating set }
-    var npcMovementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)? { get nonmutating set }
+    var npcMovementSpeeds: ((ReferenceKey) -> ActorMovementSpeeds)? { get nonmutating set }
     var npcBodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)? { get nonmutating set }
     var npcHeightScale: ((ReferenceKey) -> Float)? { get nonmutating set }
     associatedtype Rebuilds: NPCCellRebuilds
@@ -74,8 +75,11 @@ struct AINPCMovementSteps {
     }
 
     private func registerMovementTypes(on streamer: any NPCMovementHooks) {
+        let settings = hosts.aiRecords.map { MovementSpeedSettings.resolve(store: $0.gameSettings) }
+            ?? .vanilla
         streamer.npcMovementSpeeds = { [weak hosts] actor in
-            hosts.flatMap { AIRecordReads(game: $0).movementSpeeds(of: actor) }
+            hosts.map { AINPCSpeedReads(hosts: $0, settings: settings).speeds(of: actor) }
+                ?? ActorMovementSpeeds()
         }
     }
 
