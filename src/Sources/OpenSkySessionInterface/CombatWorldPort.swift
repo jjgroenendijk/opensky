@@ -10,6 +10,8 @@ public protocol CombatWorldPort: AnyObject {
     func impact(dataSet: FormID, material: FormID?) -> ResolvedMeleeImpact?
     /// The impact the IPDS with this editor ID plays on `material`.
     func impact(dataSetEditorID: String, material: FormID?) -> ResolvedMeleeImpact?
+    /// The actor's race `NAM4`, the material a blade strikes.
+    func impactMaterial(of actor: ReferenceKey) -> FormID?
     func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>)
     func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>, gain: Float)
     func run(_ commands: [CombatCommand])

@@ -21,6 +21,7 @@ import simd
 public protocol AgentChangesHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var audio: any AudioPort { get }
+    var combatWorld: any CombatWorldPort { get }
     var effects: any EffectsPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var scripts: any ScriptPort { get }
@@ -158,24 +159,33 @@ extension AgentChangesAdapter {
         return try ["ref": formJSON(key), "enabled": .bool(stored)]
     }
 
-    /// A melee blood decal on the actor's side that faces the player, as a sword hit leaves.
+    /// A one-handed blade's hit on the actor's side that faces the player: its impact
+    /// for the actor's race material, struck at the actor, so the decal rides the body.
     private func placeDecal(on text: String, height: Float) throws(AgentFailure) -> AgentJSON {
         let key = try hub.resolveReference(text).key
         guard let actor = game.actorWorld.combatActor(key: key) else {
             throw AgentFailure(.invalidArgument, "\(text) is no loaded actor")
         }
+        let material = game.combatWorld.impactMaterial(of: key)
+        guard var impact = game.combatWorld.impact(
+            dataSetEditorID: Self.bladeImpacts, material: material
+        ) else { throw AgentFailure(.failed, "no blade impact for \(text)'s material") }
+        impact.target = key
         let player = game.actorWorld.combatActor(key: .player)?.feet ?? actor.feet
         var toward = SIMD2(player.x - actor.feet.x, player.y - actor.feet.y)
         toward = simd_length(toward) > 0 ? simd_normalize(toward) : SIMD2(0, 1)
         let point = actor.feet + SIMD3(toward * Self.bodyRadius, height)
         let before = skinDecalBones(of: key).count
-        game.effects.showDefaultBlood(on: key, at: point, melee: true)
+        game.combatWorld.playImpact(impact, at: point)
         let bones = skinDecalBones(of: key)
         return try [
             "ref": formJSON(key), "position": .init(point),
             "placed": .bool(bones.count > before), "skinDecals": .array(bones.map { .string($0) })
         ]
     }
+
+    /// The impact data set a one-handed sword's `INAM` names in Skyrim.esm.
+    private static let bladeImpacts = "WPNzBlade1HandImpactSet"
 
     /// The bone each skin decal on the actor rides, or `feet`.
     private func skinDecalBones(of actor: ReferenceKey) -> [String] {

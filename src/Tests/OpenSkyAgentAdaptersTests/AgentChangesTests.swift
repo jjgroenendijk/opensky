@@ -5,6 +5,7 @@ import Foundation
 
 import OpenSkyAgentAdapters
 import OpenSkyAgentControl
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyRenderCore
 import OpenSkySessionTesting
@@ -91,6 +92,29 @@ struct AgentChangesTests {
         host.fakeEffects.startModifierResult = false
         #expect(throws: AgentFailure.self) {
             try world.perform(.world(.imageSpaceModifier(request)))
+        }
+    }
+
+    @Test func aDecalStrikesTheActorsSideFacingThePlayer() throws {
+        host.fakeEffects.skinDecalsValue = SkinDecalRuntime()
+        host.fakeActorWorld.combatActorResult = CombatActorObservation(
+            key: .generated(9), feet: [10, 0, 0], name: "guard"
+        )
+        host.fakeCombatWorld.impactMaterialResult = FormID(0x1F)
+        host.fakeCombatWorld.impactDataSetEditorIDMaterialResult = ResolvedMeleeImpact(
+            sound: FormID(0x2)
+        )
+        let state = try result(.decal(reference: "player", height: 100))
+        let lookup = try #require(host.fakeCombatWorld.impactDataSetEditorIDMaterialCalls.first)
+        #expect(lookup.material == FormID(0x1F))
+        let call = try #require(host.fakeCombatWorld.playImpactImpactAtCalls.first)
+        #expect(call.impact.target == .player)
+        #expect(call.position.z == 100)
+        #expect(state["placed"] == .bool(false))
+        #expect(state["skinDecals"] == .array([]))
+        host.fakeCombatWorld.impactDataSetEditorIDMaterialResult = nil
+        #expect(throws: AgentFailure.self) {
+            try world.perform(.world(.decal(reference: "player", height: 100)))
         }
     }
 

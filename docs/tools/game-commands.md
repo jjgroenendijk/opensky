@@ -189,7 +189,7 @@ both games. A reference may also be one outside the loaded cells.
 | `debug cast <spell> [--ref <ref>] [--target <ref>]` | Casts a spell from a caster (default `player`) at a target, as `Spell.Cast` does |
 | `debug spell <spell> [on\|off] [--ref <ref>]` | Gives an actor (default `player`) a spell, as `Actor.AddSpell` does, or takes it with `off`. A disease shows the HUD notice |
 | `debug enable <ref>`, `debug disable <ref>` | Enables or disables a reference, as `ObjectReference.Enable` and `Disable` do. Answers `enabled` |
-| `debug decal <ref> [--height <units>]` | Places a melee blood hit decal on a loaded actor, on its side facing the player, 100 units above the feet by default. Answers `placed` and `skinDecals`, the bone each decal rides |
+| `debug decal <ref> [--height <units>]` | Strikes a loaded actor as a one-handed blade does: the blade's impact for the actor's race material plays on its side facing the player, 100 units above the feet by default, and leaves its decal on the body. Answers `placed` and `skinDecals`, the bone each decal rides |
 | `debug spawn <base> [--at <ref>]` | Places a new reference of a base object at a reference (default `player`), as `PlaceAtMe` does. Answers the new `ref` |
 
 ### Menus and screens
