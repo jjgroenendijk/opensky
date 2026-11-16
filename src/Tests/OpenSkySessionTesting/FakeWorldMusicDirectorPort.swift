@@ -7,6 +7,7 @@ public import OpenSkyWorldInterface
 
 /// Stores each property and records each call to `WorldMusicDirectorPort`.
 nonisolated public final class FakeWorldMusicDirectorPort: WorldMusicDirectorPort {
+    public var readoutValue: MusicReadout?
     public var addScriptedMusicCalls: [FormID] = []
     public var addScriptedMusicResult: MusicRefusal?
     public var handleMusicContextCalls: [MusicContext] = []
@@ -24,6 +25,15 @@ nonisolated public final class FakeWorldMusicDirectorPort: WorldMusicDirectorPor
 }
 
 nonisolated extension FakeWorldMusicDirectorPort {
+    public var readout: MusicReadout {
+        get {
+            guard let readoutValue
+            else { preconditionFailure("FakeWorldMusicDirectorPort.readout is unset") }
+            return readoutValue
+        }
+        set { readoutValue = newValue }
+    }
+
     @discardableResult
     public func addScriptedMusic(_ id: FormID) -> MusicRefusal? {
         addScriptedMusicCalls.append(id)

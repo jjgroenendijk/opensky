@@ -37,8 +37,17 @@ nonisolated extension AgentDebugCommand {
             try .settings(
                 args.optionalString("values")?.split(separator: ",").map(String.init) ?? []
             )
-        default: throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
+        default: try parseWorldChange(name, args)
         }
+    }
+
+    static func parseWorldChange(
+        _ name: String, _ args: AgentArguments
+    ) throws(AgentFailure) -> Self {
+        guard let change = try AgentWorldChange.parse(name, args) else {
+            throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
+        }
+        return .world(change)
     }
 
     static func parseKnock(_ args: AgentArguments) throws(AgentFailure) -> Self {

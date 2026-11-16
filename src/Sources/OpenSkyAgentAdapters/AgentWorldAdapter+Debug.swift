@@ -35,8 +35,8 @@ extension AgentWorldAdapter {
             return try done(render.forceWeather(editorID))
         case .setActorValue, .modActorValue, .addItem, .removeItem:
             return try done(items.changeActor(command))
-        case let .setQuestStage(quest, stage):
-            return try done(events.setQuestStage(quest, stage: stage))
+        case .setQuestStage, .world:
+            return try done(scriptedChange(command))
         case .kill, .resurrect, .decapitate, .flight, .drunk, .knock, .knockdown, .perk,
              .beastForm, .eyes, .link, .paired:
             return try done(actorDebug(command))
@@ -53,6 +53,15 @@ extension AgentWorldAdapter {
             return try done(behaviour.performFurniture(command))
         case .subGraphEvent, .subGraphVariable:
             return try done(objects.driveSubGraphs(command))
+        }
+    }
+
+    /// The changes a script or a console line makes: a quest stage or a world change.
+    private func scriptedChange(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
+        switch command {
+        case let .setQuestStage(quest, stage): try events.setQuestStage(quest, stage: stage)
+        case let .world(change): try changes.perform(change)
+        default: throw AgentFailure(.invalidArgument, "not a scripted change")
         }
     }
 

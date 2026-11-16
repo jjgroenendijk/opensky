@@ -93,6 +93,10 @@ public final class AgentWorldAdapter {
         AgentMenuReadoutAdapter(hub: hub, game: hub.hosts)
     }
 
+    var changes: AgentChangesAdapter {
+        AgentChangesAdapter(hub: hub, game: hub.hosts)
+    }
+
     var screens: AgentScreensAdapter {
         AgentScreensAdapter(hub: hub, game: hub.hosts)
     }

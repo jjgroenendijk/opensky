@@ -33,6 +33,7 @@ import OpenSkyWorldState
 /// Every host an `AgentWorldAdapter` part reads, all one object.
 public typealias AgentWorldHosts =
     AgentActorReadoutHost & AgentActorsHost & AgentBehaviourHost & AgentCaptureHost &
+    AgentChangesHost &
     AgentEventsHost & AgentFrameReadoutHost & AgentInputHost & AgentItemsHost &
     AgentMenuReadoutHost &
     AgentMotionHost & AgentObjectsHost & AgentPlayerReadoutHost & AgentRenderHost &

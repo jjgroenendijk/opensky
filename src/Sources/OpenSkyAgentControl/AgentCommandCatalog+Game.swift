@@ -88,7 +88,8 @@ nonisolated extension AgentCommandCatalog {
         command("state.newgame", "The last new game started at a chosen place.")
     ]
 
-    static let debug: [AgentCommandSpec] = teleportAndTime + actorChanges + menusAndRender
+    static let debug: [AgentCommandSpec] =
+        teleportAndTime + actorChanges + menusAndRender + worldChanges
 
     private static let teleportAndTime: [AgentCommandSpec] = [
         command(

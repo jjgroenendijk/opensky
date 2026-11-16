@@ -4,6 +4,7 @@ public import OpenSkyWorldInterface
 
 /// What the world adapters use of `WorldMusicDirector`.
 public protocol WorldMusicDirectorPort: AnyObject {
+    var readout: MusicReadout { get }
     @discardableResult func addScriptedMusic(_ id: FormID) -> MusicRefusal?
     func handleMusicContext(_ context: MusicContext)
     @discardableResult func playDiscoveryMusic(markerType: UInt8) -> MusicRefusal?

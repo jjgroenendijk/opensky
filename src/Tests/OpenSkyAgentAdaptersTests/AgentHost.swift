@@ -16,7 +16,8 @@ import OpenSkyWorldState
 
 @MainActor
 final class AgentHost: RendererSlotHost, AgentActorReadoutHost, AgentActorsHost, AgentBehaviourHost,
-    AgentCaptureHost, AgentEventsHost, AgentFrameReadoutHost, AgentInputHost, AgentItemsHost,
+    AgentCaptureHost, AgentChangesHost, AgentEventsHost, AgentFrameReadoutHost, AgentInputHost,
+    AgentItemsHost,
     AgentMenuReadoutHost, AgentMotionHost, AgentObjectsHost, AgentPlayerReadoutHost,
     AgentRenderHost, AgentScreensHost, AgentViewHost, AgentWorldHost, BenchmarkTourSettingsHost,
     BenchmarkWorldHost

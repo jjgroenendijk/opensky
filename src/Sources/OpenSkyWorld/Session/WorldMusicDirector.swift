@@ -26,7 +26,7 @@ public final class WorldMusicDirector {
     /// The playlist entry whose file is still loading; `tick` starts it once loaded.
     private var waitingTrackIndex: Int?
     /// Pauses nest: the music comes back when the last one ends.
-    private var pauses = 0
+    private(set) var pauses = 0
     static let pauseFadeSeconds: Float = 0.5
 
     /// Music playback. Toggling takes effect immediately: off fades the current
@@ -41,19 +41,19 @@ public final class WorldMusicDirector {
     /// Selection the last context (or force control) resolved to, whether or
     /// not it is playing. Diffed against a fresh context to skip no-op
     /// restarts, and re-used as what to start when music is switched back on.
-    private var desiredSelection = MusicSelection.silent(state: .exploration)
+    private(set) var desiredSelection = MusicSelection.silent(state: .exploration)
     /// The selection combat interrupted, held for as long as the fight lasts.
     /// Non-nil is also what "combat music is playing" means.
     /// The selection a special moment, such as a level up, interrupted.
-    private var preSpecialSelection: MusicSelection?
-    private var preCombatSelection: MusicSelection?
+    private(set) var preSpecialSelection: MusicSelection?
+    private(set) var preCombatSelection: MusicSelection?
     /// The music types scripts added with `MusicType.Add`, newest last. The newest plays
     /// over the cell's music until a script removes it.
     public private(set) var scriptedMusic: [FormID] = []
     /// What the cell's music chain chose, kept for when the scripted music ends.
     private var contextSelection = MusicSelection.silent(state: .exploration)
     /// Index into `desiredSelection.tracks` of the track that should sound.
-    private var trackIndex = 0
+    private(set) var trackIndex = 0
     /// The one source this director considers current. Nil while silent.
     private var currentSourceID: Int?
     /// Sources fading out on their way to retirement. Tracked separately so a
