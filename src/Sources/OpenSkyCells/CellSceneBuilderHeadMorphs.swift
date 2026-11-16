@@ -31,6 +31,9 @@ nonisolated extension CellSceneBuilder.CellMorphBuilder {
         if let race = raceMorphTarget(face.race) {
             fixed[race] = 1
         }
+        fixed[ChargenMorphs.skinnyTarget] = ChargenMorphs.skinnyWeight(
+            bodyWeight: face.weight ?? ResolvedActorAppearance.defaultWeight
+        )
         for model in assembly.models {
             guard case let .headPart(part) = model.role, let record = records[part.formID.rawValue]
             else { continue }
