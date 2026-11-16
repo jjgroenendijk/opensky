@@ -42,6 +42,8 @@ public final class ActiveAudioSource {
     public let soundCategory: FormID?
     /// Paused by the sound mix, as in a menu; the mix plays it again.
     public var mixPaused = false
+    /// A loop told to finish the pass it is in and then end.
+    public internal(set) var released = false
     /// The output model's distance curve, nil when the environment node attenuates.
     public let attenuation: AttenuationCurve?
     /// The curve's gain at the listener's distance, updated each tick.
@@ -362,6 +364,7 @@ extension WorldAudioEngine {
     public func releaseSource(id: Int) -> Bool {
         guard let source = sources.first(where: { $0.id == id }) else { return false }
         guard source.loops else { return true }
+        source.released = true
         if let streamer = source.streamer {
             streamer.requestRelease()
             return true
@@ -499,6 +502,7 @@ extension WorldAudioEngine {
     private func adoptSource(_ source: ActiveAudioSource) {
         source.startClockSeconds = playbackClockSeconds
         sources.append(source)
+        recordStart(of: source)
         updateDistanceGain(of: source)
     }
 

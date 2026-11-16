@@ -128,6 +128,7 @@ To look at one record, reference, mesh, or cell without the game window, use
 | `state view` | What the reference game's console takes: the player's `feet`, the angles, `fovYDegrees`, the cell, `gameHour`, and `weatherFormID` ([reference game](/tools/reference-game.md)) |
 | `state newgame` | The last new game started at a chosen place: `start`, `hour`, `weather`, `story`, `items`, and `raceMenu`. `start` is null before the first |
 | `state music` | The music the game plays: the `musicType` editor ID and its `musicTypeFormID`, the `state` (`exploration`, `town`, `interior`, `combat`, or `special`), the `track` file with its `trackIndex` of `trackCount` and `elapsedSeconds`, `paused` while a pause holds the music, `combat`, `special` (the music type a special moment interrupted, or null), the `scripted` music types, and the last `refusal` ([music](/engine/music.md)). How loud the music plays under dialogue is `soundMix` in `state frame` |
+| `state sounds` | The sounds the game plays: `running` while the sound engine runs, each `playing` sound with its `id`, `file`, `category`, world `position` (null for a sound with no place, such as music), `loops`, `released` once a loop was told to finish its pass, and the `seconds` it has played, and the newest 32 sounds `started`, newest first, with their `file`, `category`, `position`, `loops`, and `secondsAgo`, so a short sound such as a landing is still seen after it ends ([audio](/engine/audio.md)) |
 
 ## Debug
 

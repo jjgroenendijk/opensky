@@ -244,6 +244,10 @@ extension AgentRenderAdapter {
         stateReads.soundMixState()
     }
 
+    public func soundsState() -> AgentJSON {
+        stateReads.soundsState()
+    }
+
     func skinDecalBones(of actor: ReferenceKey) -> [String] {
         stateReads.skinDecalBones(of: actor)
     }

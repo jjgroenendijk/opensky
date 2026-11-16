@@ -47,6 +47,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case newGame
     /// The playing music type and track.
     case music
+    /// The playing sounds and the newest ones started.
+    case sounds
 
     public static let defaultActorRadius: Float = 4096
 
@@ -99,6 +101,7 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "impulses": .impulses
         case "newgame": .newGame
         case "music": .music
+        case "sounds": .sounds
         default: nil
         }
     }
