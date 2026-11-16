@@ -66,11 +66,22 @@ cell brings a new pose buffer, and its object starts again at its first state.
 | `GetAnimationVariableBool`, `Int`, `Float` | Reads the graph variable | Fails |
 | `SetAnimationVariableBool`, `Int`, `Float` | Writes the graph variable | Fails |
 
-`PlayAnimationAndWait` works only on an object that is not an actor; on an actor it returns
-at once. It sends the start event to the graph. If the graph refuses the event, it returns at
-once. If the object has no 3D loaded, it returns at once. Otherwise the script waits for the
-named end event from that object. Event names compare without case, so a wait for `trans02`
-ends on `Trans02`. What the game does when the object unloads during a wait was not found.
+`PlayAnimationAndWait` in the game:
+
+```mermaid
+flowchart TD
+    A["PlayAnimationAndWait(event, done)"] --> B{"Actor?"}
+    B -- yes --> R[Return at once]
+    B -- no --> C{"Graph accepts the event?"}
+    C -- no --> R
+    C -- yes --> D{"3D loaded?"}
+    D -- no --> R
+    D -- yes --> E["Wait for done from this object<br/>names compare without case"]
+    E --> F[Return true]
+```
+
+So a wait for `trans02` ends on `Trans02`. What the game does when the object unloads during a
+wait was not found.
 
 A wait ends with true when the event fires, and with false when the object's cell unloads.
 Every event a graph fires also reaches `OnAnimationEvent` of the scripts that registered

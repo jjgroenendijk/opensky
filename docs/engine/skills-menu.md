@@ -80,8 +80,24 @@ Both questions are the engine's own message boxes over the menu, not part of the
 | A perk | `sStatsPerkConfirm`: "Are you sure you want this perk?" | `sOk` "Ok", `sCancel` "Cancel" |
 | A level-up attribute | `sConfirmAttribute`: "Increase %s?", with Health, Magicka, or Stamina | `sOk`, `sCancel` |
 
-For an attribute the movie sends the pick at once with `UIMenuOK`, and the engine then asks.
-While a question is open, more presses are ignored.
+An attribute pick in the game:
+
+```mermaid
+sequenceDiagram
+    participant P as Player
+    participant M as Movie
+    participant E as Engine
+    P->>M: picks Health, Magicka, or Stamina
+    M->>E: addHealth, addMagicka, or addStamina
+    M->>P: UIMenuOK sound
+    E->>P: message box sConfirmAttribute "Increase %s?"
+    Note over M,E: more picks are ignored while the box is open
+    alt Ok
+        E->>E: apply the attribute
+    else Cancel
+        E->>M: stay on the level-up page
+    end
+```
 
 [WARNING] OpenSky has the perk question in its menu state but does not draw it, and it applies
 an attribute pick with no question.

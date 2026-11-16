@@ -123,6 +123,19 @@ sound `UILevelUp`, not music. In the reference game the level-up music is heard 
 after the level-up menu opens, while the menu is still up. The level-up menu pauses the world,
 so the music system keeps running while a menu pauses the world.
 
+```mermaid
+sequenceDiagram
+    participant G as Game
+    participant L as Level-up menu
+    participant M as Music system
+    G->>L: player opens the level-up menu
+    L->>G: world pauses
+    L->>M: start LUMS, MUSSpecialSuccess
+    Note over M: keeps running while the world is paused
+    M->>M: duck the current track, play one track
+    L->>G: menu closes, world runs
+```
+
 [WARNING] OpenSky picks `LUMS` when the menu opens, but its track starts only after the menu
 closes, because the music does not advance while a menu pauses the world.
 

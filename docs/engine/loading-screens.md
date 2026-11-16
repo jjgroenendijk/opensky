@@ -15,6 +15,23 @@ page.
 
 ## Timeline
 
+The game's load door, in seconds:
+
+```mermaid
+gantt
+    dateFormat x
+    axisFormat %S.%L s
+    section Normal load door
+    Wait                       :0, 10
+    Fade to black, 0.4 s       :10, 410
+    Load, as long as it takes     :410, 1410
+    World runs, 500 ms         :1410, 1910
+    Fade in, 1.0 s             :1910, 2910
+    section Automatic door
+    Fade to black, 0.5 s       :0, 500
+    Load, as long as it takes     :500, 1500
+```
+
 1. A door transition starts, and the world pauses. When the player uses a door, the view first
    fades to black: a normal door waits 0.01 seconds, then fades over 0.4 seconds; an automatic
    door fades over 0.5 seconds with no wait. The fade is linear. The new scene replaces the old

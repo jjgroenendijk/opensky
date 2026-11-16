@@ -149,6 +149,20 @@ model's procedural lightning controller; no game setting shapes it.
 | A | 6 | 0, variation 1 | 512 | 14 | 0.75 | 15 | child bolts only | 0 to 0.5 s |
 | B, C | 6 | 1, variation 1 | 512, variation 30 | 5 | 0.5 | about 20 | main and child | 0 to 1.4 s |
 
+One Lightning Bolt cast over time:
+
+```mermaid
+gantt
+    dateFormat x
+    axisFormat %S.%L s
+    section Projectile
+    Lifetime 0.35 s        :0, 350
+    Relaunched bolt           :150, 500
+    section Strands
+    Strand A active        :0, 500
+    Strands B and C active :0, 1400
+```
+
 Keyed float curves drive the generation, mutation, and arc offset over time, and the game
 samples them each frame. Generation and mutation make the shape regenerate and drift; one
 generation curve goes from 15 to about 18 at 0.125 s and to 45 at 0.5 s. Curve-driven

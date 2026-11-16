@@ -294,16 +294,24 @@ The movie lays out the quest page itself. The engine only sends the data.
   A divider row follows, then the completed quests. A `$MISCELLANEOUS` entry comes last when
   the engine reports miscellaneous objectives. Completed quests are grey (`0x606060`), the
   others white (`0xFFFFFF`). The active quest shows the equipped icon.
-- The description starts at a fixed top and wraps inside the panel's fixed width. The movie
-  then measures the bottom of its last line.
-- The `OBJECTIVES` header sits 25 px below that bottom. The objective list starts 10 px below
-  the header. Its height is the larger of 40 px and 470 px minus the list's top; the scroll bar
-  is 20 px shorter. For the Miscellaneous entry the header hides and the list starts where the
-  description would start.
+- The description starts at a fixed top and wraps inside the panel's fixed width. The
+  objectives follow it, as the flowchart below shows.
 - Each objective row shows the frame `Active`, `Completed`, `Failed`, or `Normal`, with a
   `Selected` variant for the highlighted row. A row without text shows `None`.
 - With no quest, the movie writes "No Active Quests" into its own text field, empties the
   title and the description, and hides the header.
+
+```mermaid
+flowchart TD
+    A[Quest chosen] --> B{"Miscellaneous?"}
+    B -- no --> C[Set the description, wrap to the panel width]
+    C --> D[Measure the bottom of its last line]
+    D --> E["OBJECTIVES header: bottom + 25 px"]
+    E --> F["List top: header + 10 px"]
+    B -- yes --> G[Hide the header<br/>list top at the description top]
+    F --> H["List height: max(40, 470 − list top)<br/>scroll bar 20 px shorter"]
+    G --> H
+```
 
 For example, a description that ends at y = 300 puts the header at 325 and the list at about
 335, so the list frame is 470 − 335 = 135 px high.
