@@ -25,6 +25,7 @@ public protocol AgentChangesHost: AnyObject, SendableMetatype {
     var combatWorld: any CombatWorldPort { get }
     var effects: any EffectsPort { get }
     var gameSession: (any GameSessionPort)? { get }
+    var playerGrab: any PlayerGrabPort { get }
     var scripts: any ScriptPort { get }
 }
 
@@ -45,6 +46,7 @@ extension AgentChangesAdapter {
         case let .lock(reference, locked): try setLocked(reference, locked: locked)
         case let .activate(reference, activator): try activate(reference, by: activator)
         case let .release(sound): try releaseSound(sound)
+        case let .grab(reference): try grab(reference)
         case let .decal(reference, height): try placeDecal(on: reference, height: height)
         case let .spawn(base, anchor): try spawn(base, at: anchor)
         }
@@ -83,14 +85,14 @@ extension AgentChangesAdapter {
     }
 
     /// `player`, `target`, or any reference by FormID, loaded or not.
-    private func reference(_ text: String) throws(AgentFailure) -> ReferenceKey {
+    func reference(_ text: String) throws(AgentFailure) -> ReferenceKey {
         switch text.lowercased() {
         case "player", "target": try hub.resolveReference(text).key
         default: try form(text)
         }
     }
 
-    private func formJSON(_ key: ReferenceKey) throws(AgentFailure) -> AgentJSON {
+    func formJSON(_ key: ReferenceKey) throws(AgentFailure) -> AgentJSON {
         if key == .player {
             return .formID(FormID.playerReference.rawValue)
         }

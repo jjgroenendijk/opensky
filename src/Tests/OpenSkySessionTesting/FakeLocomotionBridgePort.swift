@@ -12,6 +12,7 @@ nonisolated public final class FakeLocomotionBridgePort: LocomotionBridgePort {
     public var footIk = false
     public var graph: BehaviorGraphInstance?
     public var isRunAllowed = false
+    public var isCarryingHeavyItem = false
     public var isSprintAllowed = false
     public var drainMountEventsCallCount = 0
     public var drainMountEventsResult: [String] = []

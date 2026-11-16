@@ -9,6 +9,8 @@ public protocol LocomotionBridgePort: AnyObject {
     var footIk: Bool { get set }
     var graph: BehaviorGraphInstance? { get }
     var isRunAllowed: Bool { get set }
+    /// A held item heavier than the grab limit; it stops running like over-encumbrance.
+    var isCarryingHeavyItem: Bool { get set }
     var isSprintAllowed: Bool { get set }
     @discardableResult func drainMountEvents() -> [String]
     var pose: SkinnedPoseBuffer { get }

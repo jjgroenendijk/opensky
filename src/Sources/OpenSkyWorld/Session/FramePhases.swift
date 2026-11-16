@@ -31,6 +31,8 @@ public enum WorldTickStep: Int, FramePhase {
     /// After the magic effects, so a water breathing effect that started this frame counts.
     case breath
     case archery
+    /// Before the ragdolls step, so a held body moves with this frame's spring.
+    case grab
     case ragdoll
     /// Reads what melee, archery, and the ragdolls did this frame.
     case combatLoop

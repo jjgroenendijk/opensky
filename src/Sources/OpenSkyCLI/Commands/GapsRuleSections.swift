@@ -21,6 +21,7 @@ import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyPerceptionInterface
+import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyScripting
@@ -248,6 +249,7 @@ extension GapsGatherer {
     enum WorldSettingReaders {
         static func read(store: GameSettingStore) {
             _ = LargeReferenceSettings.resolve(store: store)
+            _ = GrabSettings.resolve(store: store)
         }
     }
 }

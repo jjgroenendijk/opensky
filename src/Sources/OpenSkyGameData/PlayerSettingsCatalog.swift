@@ -278,6 +278,8 @@ nonisolated extension PlayerSettingID {
     public static let objectAnimation = Self("world.objectAnimation")
     /// The player and package actors sit in chairs and lie in beds.
     public static let furniture = Self("world.furniture")
+    /// Holding Activate on a loose object or a dead body picks it up (docs/engine/grab.md).
+    public static let playerGrab = Self("world.playerGrab")
     /// NPCs and creatures run their own behaviour graphs.
     public static let actorGraphs = Self("characters.actorGraphs")
     /// Up to this many units from the camera an actor's graph steps every frame.
@@ -317,6 +319,7 @@ nonisolated extension PlayerSettingsCatalog {
         row(("characters.capeCloth", .opensky), .toggle, "Cape cloth", 1, applied: true),
         row(("world.objectAnimation", .opensky), .toggle, "Animated objects", 1, applied: true),
         row(("world.furniture", .opensky), .toggle, "Sit in furniture", 1, applied: true),
+        row(("world.playerGrab", .opensky), .toggle, "Grab objects", 1, applied: true),
         row(
             ("combat.temperament", .opensky),
             .toggle,

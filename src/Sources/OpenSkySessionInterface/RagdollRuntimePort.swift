@@ -15,4 +15,8 @@ public protocol RagdollRuntimePort: DeathReporting {
 
     func hasBody(_ end: PhysicsLinkEnd) -> Bool
     func ragdollsForConstraint(_ key: ReferenceKey) -> Bool
+    func isDead(_ key: ReferenceKey) -> Bool
+    @discardableResult func steerBody(
+        _ index: Int, of key: ReferenceKey, velocity: SIMD3<Float>
+    ) -> Bool
 }

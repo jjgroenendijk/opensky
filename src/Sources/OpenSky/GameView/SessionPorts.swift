@@ -16,6 +16,7 @@ import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyLoading
 import OpenSkyMagicInterface
@@ -333,6 +334,14 @@ extension SessionPorts {
 
     var mounts: any MountPort {
         scope.mounts
+    }
+
+    var playerGrab: any PlayerGrabPort {
+        scope.playerGrab
+    }
+
+    func itemWeight(of base: FormID) -> Float? {
+        scope.inventory.runtime?.inventory.baselines.items.definition(base)?.weight
     }
 
     var clothReadout: ClothReadout {

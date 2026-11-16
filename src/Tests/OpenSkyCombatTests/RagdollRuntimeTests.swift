@@ -69,6 +69,19 @@ struct RagdollRuntimeTests {
         #expect(runtime.world.ragdollCount == 0)
     }
 
+    /// The grab spring sets one body's velocity; a body the ragdoll lacks is refused.
+    @Test
+    func steeringABodySetsItsVelocity() {
+        let (runtime, world) = Self.session(declaring: RagdollGraphNames.deathEvents)
+        runtime.noteZeroHealth(of: Self.key)
+        runtime.handleGraphEvents([RagdollGraphNames.addRagdollToWorld], on: Self.key)
+        let velocity = SIMD3<Float>(0, 0, 50)
+        #expect(runtime.steerBody(1, of: Self.key, velocity: velocity))
+        #expect(runtime.world.instance(for: Self.key)?.bodies[1].linearVelocity == velocity)
+        #expect(!runtime.steerBody(9, of: Self.key, velocity: velocity))
+        withExtendedLifetime(world) {}
+    }
+
     /// An actor with no graph attached still falls: the death events go
     /// unclaimed, so the runtime hands off itself and says that it did.
     @Test

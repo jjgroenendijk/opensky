@@ -4,9 +4,9 @@
 // uses gait speed; the branch keys on `BehaviorRootMotion.isExtracted`, not a speed
 // threshold. See docs/engine/walk-mode.md.
 
-public import OpenSkyGameData
 public import OpenSkyBehavior
 public import OpenSkyCombatInterface
+public import OpenSkyGameData
 public import OpenSkyPhysics
 public import OpenSkyRenderCore
 import OpenSkyRendering
@@ -67,6 +67,8 @@ nonisolated public final class LocomotionBridge {
     public var footIk = true
     /// False while the player carries more than its carry weight: run and sprint walk.
     public var isRunAllowed = true
+    /// True while the player holds an item too heavy to run with (docs/engine/grab.md).
+    public var isCarryingHeavyItem = false
     /// What combat, magic, and the camera report this frame, for the actor-state
     /// graph inputs (ActorStateGraphCore.swift).
     public var actorState = ActorStateGraphInputs()
@@ -231,8 +233,7 @@ nonisolated public final class LocomotionBridge {
         archeryIntent = .still
         isShoutHeld = false
         status = LocomotionStatus(
-            graphAvailable: graph != nil,
-            firstPersonGraphAvailable: firstPersonGraph != nil
+            graphAvailable: graph != nil, firstPersonGraphAvailable: firstPersonGraph != nil
         )
         pose.clear()
         firstPersonPose.clear()
@@ -271,7 +272,7 @@ nonisolated public final class LocomotionBridge {
         if intent.sneak {
             return .sneak
         }
-        guard isRunAllowed else { return .walk }
+        guard isRunAllowed, !isCarryingHeavyItem, movement.canRun else { return .walk }
         if intent.sprint, isSprintAllowed {
             return .sprint
         }

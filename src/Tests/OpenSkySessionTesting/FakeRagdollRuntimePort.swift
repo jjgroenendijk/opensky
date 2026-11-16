@@ -23,10 +23,30 @@ nonisolated public final class FakeRagdollRuntimePort: RagdollRuntimePort {
     public var hasBodyResult = false
     public var ragdollsForConstraintCalls: [ReferenceKey] = []
     public var ragdollsForConstraintResult = false
+    public var isDeadCalls: [ReferenceKey] = []
+    public var isDeadResult = false
+    public var steerBodyCalls: [SteerBodyCall] = []
+    public var steerBodyResult = false
     public var noteZeroHealthCalls: [(key: ReferenceKey, killer: ReferenceKey?)] = []
     public var noteZeroHealthResult = false
 
     public init() {}
+}
+
+extension FakeRagdollRuntimePort {
+    nonisolated public struct SteerBodyCall: CustomStringConvertible {
+        public let index: Int
+        public let key: ReferenceKey
+        public let velocity: SIMD3<Float>
+
+        public var description: String {
+            [
+                "index: " + String(describing: index),
+                "key: " + String(describing: key),
+                "velocity: " + String(describing: velocity)
+            ].joined(separator: ", ")
+        }
+    }
 }
 
 nonisolated extension FakeRagdollRuntimePort {
@@ -82,6 +102,19 @@ nonisolated extension FakeRagdollRuntimePort {
     public func ragdollsForConstraint(_ key: ReferenceKey) -> Bool {
         ragdollsForConstraintCalls.append(key)
         return ragdollsForConstraintResult
+    }
+
+    public func isDead(_ key: ReferenceKey) -> Bool {
+        isDeadCalls.append(key)
+        return isDeadResult
+    }
+
+    @discardableResult
+    public func steerBody(
+        _ index: Int, of key: ReferenceKey, velocity: SIMD3<Float>
+    ) -> Bool {
+        steerBodyCalls.append(SteerBodyCall(index: index, key: key, velocity: velocity))
+        return steerBodyResult
     }
 
     @discardableResult

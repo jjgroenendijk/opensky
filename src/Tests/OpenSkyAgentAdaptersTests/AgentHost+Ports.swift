@@ -248,6 +248,10 @@ extension AgentHost {
         fakeScenes
     }
 
+    var playerGrab: any PlayerGrabPort {
+        fakePlayerGrab
+    }
+
     var scripts: any ScriptPort {
         fakeScripts
     }
