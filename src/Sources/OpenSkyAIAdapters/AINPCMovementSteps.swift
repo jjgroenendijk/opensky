@@ -50,7 +50,11 @@ struct AINPCMovementSteps {
                 return nil
             }
             _ = bounds.drain()
-            return bounds.value(for: ActorGraphCore.projectPath(modelPath: skeleton))
+            switch bounds.state(of: ActorGraphCore.projectPath(modelPath: skeleton)) {
+            case let .ready(halfExtents): return halfExtents
+            case .failed: return LongBodyShape.missingBoundHalfExtents
+            case .loading: return nil
+            }
         }
     }
 

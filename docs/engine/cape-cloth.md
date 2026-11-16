@@ -114,5 +114,5 @@ The setting "Cape cloth" turns the cloth on or off; off holds the cape at its re
 `openskycli game state cloth` lists the loaded capes and how many moved in the last frame.
 The solved positions reach the GPU as per-vertex offsets that are added before skinning,
 the same buffer face morphs use. The body capsule takes the radius of OpenSky's character
-controller, 24 units, which every actor shares. The bounds fallback would take the Vampire
+controller, 18 units, which every actor shares. The bounds fallback would take the Vampire
 Lord's wings and push the cape far out from the back.

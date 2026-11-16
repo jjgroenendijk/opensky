@@ -58,7 +58,7 @@ view:
 | Pivot height | 112 units | The capsule's eye height, where first person looks from |
 | Fill fraction | 0.6 | Chosen, not measured: the one taste decision, made once |
 | Orbit distance | about 167 units | `(height / 2 / fill) / tan(fov / 2)` for a 128-unit capsule at a 65 degree vertical field of view |
-| Shoulder offset | 24 units | One capsule radius, the shoulder line |
+| Shoulder offset | 24 units | A little wider than the 18-unit capsule radius, the shoulder line |
 | Collision radius | about 16.4 units | The distance from the eye to a corner of the 10-unit near plane at 16:9, so the near plane never cuts a wall the probe cleared |
 | Minimum distance | 24 units | The shoulder offset, so a squeezed camera still sits outside the capsule |
 

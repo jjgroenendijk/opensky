@@ -31,9 +31,11 @@ The game also builds an eight-sided prism with a pointed bottom of the same size
 selects the capsule. Only a debug console command switches to the prism.
 
 An NPC walks with this capsule once its skeleton's bound has loaded. Before that, and for the
-player, OpenSky uses an upright capsule of radius 24 and height 128.
+player, OpenSky uses the human capsule of radius 18 and height 128. A skeleton with no bound
+gets the game's half size of 25 on every axis, so an upright capsule of radius 25 and height 50.
 
-[WARNING] The player's capsule is not yet the game's radius 18.
+The bound is scaled by the reference scale times the actor's height
+([actor resolution](/engine/actor-resolution.md#height)).
 
 ## Long bodies
 
@@ -48,14 +50,24 @@ horse, the game builds three capsules:
 A horse gets a body capsule of radius 31.8 at z of about 137, and end spheres of radius 52.7
 centred 63.5 units in front of and behind its centre.
 
-OpenSky keeps the upright capsule for the ground, the steps, and the slopes, and adds the two end
-spheres. Each step, the ends slide with the planned move against the same collision the capsule
-sees, and the larger push back changes the move. So an escort horse stops with its nose at the
-prisoner cart instead of walking its head through it. The cart's bodies are on the props layer,
+OpenSky keeps the upright capsule for the ground, the steps, and the slopes, and adds the body
+capsule and the two end capsules. Each step, they slide with the planned move against the same
+collision the upright capsule sees, and the largest push back changes the move:
+
+- Each end stands on the ground under it and follows that ground through the move.
+- The body capsule is a row of balls of its radius, no more than one radius apart, along its
+  segment, so a beam that passes between two of them still meets one.
+- Only the push a move adds over standing still counts. So the slope an end stands on does not
+  push the horse back, and a horse that already touches a wall is not pushed away from it.
+
+So an escort horse stops with its nose at the prisoner cart instead of walking its head through
+it, and a low beam its legs pass under stops its back. The cart's bodies are on the props layer,
 and the game's character layer collides with the props layer, so the cart blocks a horse that
 does not tow it ([vehicles](/engine/vehicles.md)).
 
-[WARNING] OpenSky lifts the end spheres by the walk step height, 32 units, so the ground under
-them does not push the horse back on a slope. The game's ends reach the ground. The body capsule
-is not built. The bound loads off the main actor; a mover that starts before it is ready walks
-with the upright capsule alone until its next move.
+`openskycli game state packages <ref>` shows the shape under `movement`: `capsuleRadius` and
+`capsuleHeight` for an upright body, and `endRadius`, `endOffset`, `bodyRadius`, `bodyHeight`,
+and `bodyHalfLength` for a long one.
+
+The bound loads off the main actor; a mover that starts before it is ready walks with the upright
+capsule alone until its next move.

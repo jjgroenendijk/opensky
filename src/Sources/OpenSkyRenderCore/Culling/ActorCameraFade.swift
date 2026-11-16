@@ -16,7 +16,7 @@ nonisolated public struct ActorCameraFade: Equatable, Sendable {
     /// lowered by the player's height minus this before the player test.
     public static let playerHeightOffset: Float = 124
     /// The player's collision capsule radius, `PlayerCapsule.standard`.
-    public static let playerRadius: Float = 24
+    public static let playerRadius: Float = 18
     /// `fActorTeleportFadeSeconds`, for fading out and back in.
     public static let actorSeconds: Float = 0.5
     /// `fPlayerTeleportFadeSeconds`: the player fades at once.

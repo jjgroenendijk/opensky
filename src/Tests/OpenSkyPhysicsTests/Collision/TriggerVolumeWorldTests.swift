@@ -105,7 +105,7 @@ struct TriggerVolumeWorldTests {
         ))
         let set = TriggerVolumeSet(location: nil, volumes: [volume])
         // Feet 200 units out on X: the nearest box face is at x = 64, so the
-        // gap is 136 units, well beyond the 24-unit capsule radius.
+        // gap is 136 units, well beyond the 18-unit capsule radius.
         #expect(set.volumes(intersecting: capsule, at: SIMD3(200, 0, 0)).isEmpty)
     }
 
@@ -116,10 +116,10 @@ struct TriggerVolumeWorldTests {
             halfExtents: SIMD3(64, 64, 64)
         ))
         let set = TriggerVolumeSet(location: nil, volumes: [volume])
-        // Face at x = 64. Capsule radius 24, so a centre at x = 85 leaves a
-        // 21-unit gap (inside) and x = 95 leaves 31 units (outside).
-        #expect(set.volumes(intersecting: capsule, at: SIMD3(85, 0, 0)).count == 1)
-        #expect(set.volumes(intersecting: capsule, at: SIMD3(95, 0, 0)).isEmpty)
+        // Face at x = 64. Capsule radius 18, so a centre at x = 80 leaves a
+        // 16-unit gap (inside) and x = 90 leaves 26 units (outside).
+        #expect(set.volumes(intersecting: capsule, at: SIMD3(80, 0, 0)).count == 1)
+        #expect(set.volumes(intersecting: capsule, at: SIMD3(90, 0, 0)).isEmpty)
     }
 
     @Test func rotatedBoxIsTestedInItsOwnSpace() throws {
