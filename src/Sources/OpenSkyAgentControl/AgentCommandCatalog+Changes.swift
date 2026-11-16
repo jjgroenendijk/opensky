@@ -42,7 +42,7 @@ nonisolated extension AgentCommandCatalog {
             positionals: [required("ref", anyRefHelp)]
         ),
         command(
-            "debug.decal", "Place a melee blood decal on a loaded actor, on its side facing you.",
+            "debug.decal", "Strike a loaded actor with a blade hit on its side facing you.",
             positionals: [required("ref", "The actor: target or a loaded reference's FormID.")],
             options: [value("height", "units", "Height above the feet; 100 by default.")]
         ),

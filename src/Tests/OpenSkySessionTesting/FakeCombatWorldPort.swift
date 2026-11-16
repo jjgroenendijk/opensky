@@ -16,6 +16,8 @@ nonisolated public final class FakeCombatWorldPort: CombatWorldPort {
     public var impactDataSetEditorIDMaterialCalls: [(dataSetEditorID: String, material: FormID?)] =
         []
     public var impactDataSetEditorIDMaterialResult: ResolvedMeleeImpact?
+    public var impactMaterialCalls: [ReferenceKey] = []
+    public var impactMaterialResult: FormID?
     public var playImpactImpactAtCalls: [(impact: ResolvedMeleeImpact, position: SIMD3<Float>)] = []
     public var playImpactImpactAtGainCalls: [PlayImpactImpactAtGainCall] = []
     public var runCalls: [[CombatCommand]] = []
@@ -63,6 +65,11 @@ nonisolated extension FakeCombatWorldPort {
             material: material
         ))
         return impactDataSetEditorIDMaterialResult
+    }
+
+    public func impactMaterial(of actor: ReferenceKey) -> FormID? {
+        impactMaterialCalls.append(actor)
+        return impactMaterialResult
     }
 
     public func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
