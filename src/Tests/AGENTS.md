@@ -117,7 +117,7 @@ Every plan runs its tests in random order, with no `.serialized` (gate:
 A flaky test fails sometimes and passes sometimes on the same code. When you find one:
 
 1. Disable it with the issue that tracks it: `@Test(.disabled("flaky: #NNN"))`.
-2. Open a `bug` issue with the run directory of the failing run.
+2. Open a `bug` issue with the failure message and how often the test failed.
 3. Never add a retry. A retry hides the failure, and the bug stays.
 
 `make test T='Target/Suite/test()' N=100` reruns a test until it fails, to show it is flaky.

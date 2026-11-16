@@ -146,7 +146,7 @@ These guard the machine and are not optional:
 A test that fails, then passes on the same code, is flaky. Do not rerun it until it passes,
 and never add a retry: both hide a real bug. `make test T='Target/Suite/test()' N=100`
 shows it fails sometimes. Then follow the rule in `src/Tests/AGENTS.md`: disable it with
-`.disabled("flaky: #NNN")` and open a `bug` issue with the run directory.
+`.disabled("flaky: #NNN")` and open a `bug` issue with the failure message and how often it failed.
 
 ## Report it
 
