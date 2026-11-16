@@ -465,6 +465,11 @@ typedef struct
     /// Tree wind: x sway, y sway frequency, z leaf amplitude, w leaf frequency. A w above
     /// 0 marks the vertex alpha as the leaf's wind weight (docs/rendering/trees.md).
     vector_float4 windMotion;
+    /// A rigid shape below an NiBillboardNode: xyz the node's position in the shape's
+    /// frame, w its BillboardMode plus 1, or 0 for none (docs/rendering/scene-drawing.md).
+    vector_float4 billboardPivot;
+    /// The billboard node's rest rotation in the shape's frame, a quaternion (xyz, w).
+    vector_float4 billboardRotation;
 } DrawUniforms;
 
 /// Per-GROUP GRAS material + mesh-height controls. Fade/wind are per-frame;

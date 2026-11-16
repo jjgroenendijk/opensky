@@ -8,6 +8,8 @@ nonisolated public struct SceneDrawStats: Equatable, Sendable {
     public var culledInstances = 0
     /// Instances in a room the camera cannot see, inside `culledInstances`.
     public var roomCulledInstances = 0
+    /// Draw calls whose vertex shader turns a billboard shape to the camera.
+    public var billboardDrawCalls = 0
 
     public init(
         drawCalls: Int = 0,

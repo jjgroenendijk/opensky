@@ -144,7 +144,10 @@ extension Renderer {
             projectedColor: material.surface.projected?.color ?? .zero,
             windMotion: TreeMotion.uniform(
                 group.instances.first?.treeMotion, windWeighted: material.drawState.windWeighted
-            )
+            ),
+            billboardPivot: group.mesh.billboard.map { SIMD4($0.pivot, Float($0.mode) + 1) }
+                ?? .zero,
+            billboardRotation: group.mesh.billboard?.rotation.vector ?? SIMD4(0, 0, 0, 1)
         )
         unsafe drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<DrawUniforms>.size)
@@ -283,6 +286,9 @@ extension Renderer {
         )
         state.drawCursor += 1
         state.stats.drawCalls += 1
+        if group.mesh.billboard != nil {
+            state.stats.billboardDrawCalls += 1
+        }
         argumentTable.setAddress(
             group.mesh.vertexBuffer.gpuAddress,
             index: BufferIndex.vertices.rawValue

@@ -9,7 +9,8 @@ import Testing
 
 struct ReadyModelLayoutTests {
     static func quad(
-        name: String, offset: Float, vertices: Int = 4, segment: Int? = nil
+        name: String, offset: Float, vertices: Int = 4, segment: Int? = nil,
+        billboard: MeshBillboard? = nil
     ) -> Mesh {
         let positions = (0 ..< vertices).map { index in
             SIMD3<Float>(Float(index % 2) + offset, Float(index / 2), 0)
@@ -20,7 +21,8 @@ struct ReadyModelLayoutTests {
             normals: [SIMD3<Float>](repeating: SIMD3(0, 0, 1), count: vertices),
             tangents: [], bitangents: [],
             uvs: positions.map { SIMD2($0.x, $0.y) }, colors: [],
-            indices: [0, 1, 3, 0, 3, 2], materialSlot: 0, objectLODSegment: segment
+            indices: [0, 1, 3, 0, 3, 2], materialSlot: 0, objectLODSegment: segment,
+            billboard: billboard
         )
     }
 
@@ -62,6 +64,24 @@ struct ReadyModelLayoutTests {
         #expect(ModelCacheCodec.layoutByteCount(head: payload.prefix(8)) ?? 0 < payload.count)
         let head = payload.prefix(ModelCacheCodec.layoutByteCount(head: payload) ?? 0)
         #expect(try ModelCacheCodec.decodeLayout(head) == layout)
+    }
+
+    @Test func aBillboardKeepsItsPivotRotationAndModeInBothDecodes() throws {
+        let billboard = MeshBillboard(
+            pivot: [1, 2, 3], rotation: simd_quatf(angle: 0.5, axis: [0, 0, 1]), mode: 9
+        )
+        let model = Model(
+            meshes: [
+                Self.quad(name: "Glow", offset: 0, billboard: billboard),
+                Self.quad(name: "Plain", offset: 5)
+            ],
+            materials: [.fallback], skippedShapeCount: 0
+        )
+        let payload = ModelCacheCodec.encode(model)
+        #expect(try ModelCacheCodec.decodeLayout(payload).meshes.map(\.billboard) == [
+            billboard, nil
+        ])
+        #expect(try ModelCacheCodec.decode(payload).meshes.map(\.billboard) == [billboard, nil])
     }
 
     @Test func skinnedAndBrokenMeshesAreNotReady() throws {

@@ -109,6 +109,8 @@ reads the minimised turn as the shortest rotation that takes the node's authored
 target, so the node keeps its authored roll. The rigid turn builds the whole frame from the
 camera, with +Y toward camera up. The game's result for modes 0 and 3 is not yet compared.
 
+A rigid shape of a static draw turns in the vertex shader
+([scene drawing](/rendering/scene-drawing.md#billboard-shapes)), by the same rules.
 The billboards of a placed object that a behaviour graph or a sequence door moves turn
 too. Each billboard node becomes its own bone next to the graph's bones or the door's
 leaves, and rides the graph bone above it.

@@ -55,7 +55,7 @@ nonisolated extension Mesh {
             name: name, transform: transform, positions: pick(positions),
             normals: pick(normals), tangents: pick(tangents), bitangents: pick(bitangents),
             uvs: pick(uvs), colors: pick(colors), indices: local, materialSlot: materialSlot,
-            objectLODSegment: segment
+            objectLODSegment: segment, billboard: billboard
         )
     }
 }

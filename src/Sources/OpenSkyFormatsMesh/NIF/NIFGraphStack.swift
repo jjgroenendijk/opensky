@@ -15,6 +15,14 @@ nonisolated public struct NIFGraphStack: Sendable {
         public let ref: Int32
         public let parent: float4x4
         public let depth: Int
+        /// The nearest billboard node above the block, if any.
+        public var billboard: Billboard?
+    }
+
+    /// A billboard node's model-space transform and nif.xml `BillboardMode`.
+    public struct Billboard: Sendable {
+        public let transform: float4x4
+        public let mode: UInt16
     }
 
     private enum Step {
@@ -58,9 +66,13 @@ nonisolated public struct NIFGraphStack: Sendable {
 
     /// Queues `children` under the node just entered so they come back from
     /// `next()` in the order they appear in the block.
-    public mutating func push(children: [Int32], parent: float4x4, depth: Int) {
+    public mutating func push(
+        children: [Int32], parent: float4x4, depth: Int, billboard: Billboard? = nil
+    ) {
         for child in children.reversed() {
-            steps.append(.enter(Pending(ref: child, parent: parent, depth: depth)))
+            steps.append(.enter(Pending(
+                ref: child, parent: parent, depth: depth, billboard: billboard
+            )))
         }
     }
 }

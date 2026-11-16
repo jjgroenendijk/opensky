@@ -244,7 +244,8 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
             colors: colors,
             indices: mesh.indices,
             materialSlot: materialSlot,
-            skinning: mesh.skinning
+            skinning: mesh.skinning,
+            billboard: mesh.billboard
         )
     }
 }

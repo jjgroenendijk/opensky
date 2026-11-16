@@ -214,6 +214,7 @@ the detail and the sources it did find.
 | Strip particle order | One band through the particles in birth order | [particles](/rendering/particles.md#ribbons) |
 | Mesh particle size | The particle size scales the pool mesh | [particles](/rendering/particles.md#mesh-particles) |
 | Billboard minimised turn (modes 0, 3) | Shortest turn of own +Z to the target, from nif.xml's "minimized rotation" | [NIF sequences](/formats/nif-sequences.md#billboard-nodes) |
+| Billboard shadow | A rigid shape below a billboard casts no sun shadow | [scene drawing](/rendering/scene-drawing.md#billboard-shapes) |
 | Image space modifier weights | Two constants; at most 16 at once | [image space](/rendering/image-space.md) |
 | Radial blur shape | 8 taps reaching `strength` percent to the centre; radius as a share of centre-to-corner; centre in 0-1 screen units | [image space](/rendering/image-space.md#blur-effects) |
 | Motion blur trail | Camera turn only; 3 × `s / (1 - s)` frames, capped at a tenth of the screen | [image space](/rendering/image-space.md#blur-effects) |

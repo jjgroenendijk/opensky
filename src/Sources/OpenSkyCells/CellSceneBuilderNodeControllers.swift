@@ -1,6 +1,6 @@
 // Placed meshes with free-running node controllers or billboards in a cell build: a
 // reference that no object graph or door sequence animates, whose mesh has an active
-// controller or a billboard on a named node, draws its own node-skinned copy.
+// controller, or a billboard the vertex shader cannot turn, draws its own node-skinned copy.
 // See docs/engine/object-animation.md#node-controllers.
 
 import Foundation
@@ -22,7 +22,8 @@ nonisolated extension CellSceneBuilder.CellAnimatedObjectBuilder {
     /// A graph mesh's sequences are played by the graph's sequence generators.
     static let sequenceMarker = Data("NiControllerSequence".utf8)
 
-    /// The rig of a mesh, read once per mesh. Nil for a mesh without a playing controller.
+    /// The rig of a mesh, read once per mesh. Nil for a mesh without a playing controller
+    /// or a billboard that only the CPU can turn.
     /// A mesh that names a behaviour graph plays only its lag bones: its keyed controllers
     /// are a baked preview the graph replaces, such as the forge's 33-second smithing idle.
     func nodeControllerRig(modelPath: String) -> NodeControllerRig? {
@@ -39,13 +40,23 @@ nonisolated extension CellSceneBuilder.CellAnimatedObjectBuilder {
             Self.nodeControllerMarkers.contains(where: { data.range(of: $0) != nil })
             || lagOnly && data.range(of: Self.sequenceMarker) != nil
         {
-            rig = attempt { try NIFFile(data: data) }
-                .flatMap { element in
-                    attempt { try NodeControllerRig(file: element, lagOnly: lagOnly) }
+            rig = attempt { try NIFFile(data: data) }.flatMap { file in
+                attempt { try NodeControllerRig(file: file, lagOnly: lagOnly) }.flatMap {
+                    Self.turnsOnTheGPU($0, file: file) ? nil : $0
                 }
+            }
         }
         owner.caches.nodeControllerRigs[key] = .some(rig)
         return rig
+    }
+
+    /// The vertex shader turns the billboards of a rig that moves nothing else, so all
+    /// references of the mesh share one GPU mesh.
+    static func turnsOnTheGPU(_ rig: NodeControllerRig, file: NIFFile) -> Bool {
+        guard
+            rig.movesOnlyShaderBillboards(particleAncestors: []),
+            let systems = attempt({ try file.particleSystems() }) else { return false }
+        return rig.movesOnlyShaderBillboards(particleAncestors: systems.map(\.ancestorNodes))
     }
 
     /// Gives each instance whose mesh plays node controllers its own posed model and a playback.

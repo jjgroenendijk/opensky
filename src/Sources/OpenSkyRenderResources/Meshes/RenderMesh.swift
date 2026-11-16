@@ -152,6 +152,8 @@ nonisolated public final class RenderMesh: Sendable {
     public let lodIndexCounts: [Int]
     /// See `Mesh.objectLODSegment`.
     public let objectLODSegment: Int?
+    /// See `Mesh.billboard`. The static vertex shader turns the mesh by it.
+    public let billboard: MeshBillboard?
     public let skinningBuffer: any MTLBuffer?
     public let boneMatrixBuffer: any MTLBuffer?
     private let skinningPalette: SkinningPalette?
@@ -220,6 +222,7 @@ nonisolated public final class RenderMesh: Sendable {
         indexCount = mesh.indices.count
         lodIndexCounts = mesh.lodIndexCounts
         objectLODSegment = mesh.objectLODSegment
+        billboard = mesh.skinning == nil ? mesh.billboard : nil
         skinningBuffer = skinBuffers.attributes
         boneMatrixBuffer = skinBuffers.matrices
         skinningPalette = skinBuffers.palette
@@ -244,6 +247,7 @@ nonisolated public final class RenderMesh: Sendable {
         indexCount = layout.indexCount
         lodIndexCounts = layout.lodIndexCounts
         objectLODSegment = layout.objectLODSegment
+        billboard = layout.billboard
         skinningBuffer = nil
         boneMatrixBuffer = nil
         skinningPalette = nil
@@ -282,6 +286,7 @@ nonisolated public final class RenderMesh: Sendable {
         indexCount = source.indexCount
         lodIndexCounts = source.lodIndexCounts
         objectLODSegment = source.objectLODSegment
+        billboard = source.billboard
         skinningBuffer = source.skinningBuffer
         self.boneMatrixBuffer = boneMatrixBuffer
         skinningPalette = palette

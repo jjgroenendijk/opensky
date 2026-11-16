@@ -169,14 +169,19 @@ Like a sequence door, such a mesh draws its own node-skinned copy, with one root
 node at its model-frame rest. The cell build reads each mesh once, and parses it only when its
 bytes name `NiTransformController` or `BSLagBoneController`.
 
-A mesh with an `NiBillboardNode` takes the same path, with one root bone per named
-billboard node, even when no controller plays. After the controllers, each billboard node
-turns to the free-fly camera by its mode
+A mesh whose only moving nodes are billboards needs no copy. The static vertex shader
+turns each rigid shape below an `NiBillboardNode` to the camera
+([scene drawing](/rendering/scene-drawing.md#billboard-shapes)), so every reference of a
+torch or a window glow shares one GPU mesh and one instanced draw. A billboard-only mesh
+still takes the copy in three cases: a billboard sits below another billboard, a particle
+system sits below a billboard and must move with it, or a controller or sequence also
+plays. Then the mesh has one root bone per named billboard node. After the controllers,
+each billboard node turns to the free-fly camera by its mode
 ([billboard nodes](/formats/nif-sequences.md#billboard-nodes)), and the nodes below it
-follow. The cell build also parses a mesh whose bytes name `NiBillboardNode`. A static
-draw keeps a billboard at its authored rest. So does a reference that an object graph or
-a door sequence animates. The "Animated objects" setting off stops the controller clock,
-but billboards keep turning, because they follow the camera, not time. Effect models turn
+follow. The cell build also parses a mesh whose bytes name `NiBillboardNode`. The
+billboards of a reference that an object graph or a door sequence animates turn as
+graph or door bones. The "Animated objects" setting off stops the controller clock, but
+billboards keep turning, because they follow the camera, not time. Effect models turn
 their billboard bones the same way.
 
 `NodeControllerCoordinator` steps each such mesh on the main actor, in reference order, after the
@@ -188,4 +193,5 @@ with the object graphs.
 `openskycli game state nodes` lists the references that play node controllers. With a
 reference, it lists each driven node: its position and forward axis in the mesh, its controllers,
 whether one is active, and whether bone LOD froze it. A billboard node lists
-`NiBillboardNode mode <n>` as its controller.
+`NiBillboardNode mode <n>` as its controller. A mesh whose billboards the vertex shader
+turns is not listed. `openskycli render` prints its draws as `billboard draws`.
