@@ -27,16 +27,23 @@ no pose, because only a loop in plugin or script data can make one.
 ## Towing
 
 In the game, a towed cart is a set of physics bodies pulled by the horse
-([the game's tow rig](/engine/cart-tow-rig.md)). OpenSky does not simulate them. It moves the cart
-as a trailer instead:
+([the game's tow rig](/engine/cart-tow-rig.md)). OpenSky does not build those six bodies. It moves
+the cart as a trailer on a tow line that has mass, play, and drag:
 
 - `TetherToHorse` first moves a standing horse 200 units ahead of the cart's origin, on the cart's
   +Y axis, facing the cart's way, as the game does. A horse that walks at that moment stays where
   it is.
 - The link keeps the horizontal distance from the cart's origin to the horse's origin.
-- Each frame the cart moves along the line from where it was toward the horse, until it is that
-  distance behind the horse. So the cart trails the horse's path and cuts corners, and a horse
-  that turns on the spot does not swing the cart sideways.
+- Each frame the cart moves along the line from where it was toward the horse. So the cart trails
+  the horse's path and cuts corners, and a horse that turns on the spot does not swing the cart
+  sideways.
+- The cart has its own speed along that line. A spring pulls it back to the link's distance, as
+  the hitch holds the shaft tip, and the tip may move at most 24 units either way. So a cart lags
+  a horse that starts, and rolls on a little after a horse that stops, then settles back. On a
+  slope gravity pulls the cart along the line, so it rolls back a little when the horse stops
+  uphill. Wheel friction takes 0.4 of its own speed each second.
+- The front axle swings toward the horse on a damped spring. It does not snap to face the horse,
+  so in and after a curve the cart sways a little.
 - The front axle, where the cart's origin is, turns to face the horse. The body trails it: the rear
   axle follows the front one along the line between them, as a towed trailer does. So in a curve
   the front axle swivels against the body, by at most 40 degrees, the limit of the game's
@@ -65,8 +72,9 @@ as a trailer instead:
   The carts and horses in a link are not ground. Without ground the cart keeps its height
   relative to the horse.
 
-[WARNING] The trailer rule approximates the game's physics. In the game, the cart can lag, sway,
-and roll back, and its wheels can slip.
+[WARNING] The tow line approximates the game's physics. Its spring, play, and drag values have no
+source; they are chosen to give a small lag and roll. The wheels never slip sideways, and the cart
+cannot tip.
 
 ## Wheels
 
@@ -269,7 +277,7 @@ before it got on no longer counts as where it is.
 
 ## Where OpenSky differs
 
-- The cart is not a physics body: it follows the horse by the trailer rule above.
+- The cart is not a set of joined physics bodies: it follows the horse on the tow line above.
 - A rider with a live graph leaves `Cart_State` at the clip's trigger, as in the game. A rider
   whose exit idle plays without a graph gets its `ExitCartEnd` when the clip ends. For seat B
   that is 2 seconds later than in the game.

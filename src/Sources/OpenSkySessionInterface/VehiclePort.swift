@@ -12,7 +12,7 @@ public protocol VehiclePort: AnyObject {
     @discardableResult func seat(_ rider: ReferenceKey, on horse: ReferenceKey, bone: String)
         -> Bool
 
-    func advance() -> [VehicleCommand]
+    func advance(dt: Float) -> [VehicleCommand]
     func animationEvent(_ name: String, from actor: ReferenceKey) -> [VehicleCommand]
     func detach(_ follower: ReferenceKey, standing: Bool) -> [VehicleCommand]
     func setVehicle(_ rider: ReferenceKey, vehicle: ReferenceKey?) -> [VehicleCommand]

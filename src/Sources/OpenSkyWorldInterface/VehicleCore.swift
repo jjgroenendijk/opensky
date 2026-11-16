@@ -48,6 +48,8 @@ nonisolated public struct VehicleTow: Equatable, Sendable {
     /// The heading of the body, from the rear axle to the front one. Nil follows `heading`.
     public var bodyHeading: Float?
     public var turns = VehicleWheelTurns()
+    /// The cart's speed and swing, for the tow line's dynamics.
+    public var motion = VehicleTowMotion()
 
     public init(
         length: Float,
@@ -73,5 +75,21 @@ nonisolated public struct VehicleTow: Equatable, Sendable {
         self.rolled = rolled
         self.bodyHeading = bodyHeading
         self.turns = turns
+    }
+}
+
+/// The cart's state between frames that the tow line's dynamics need.
+nonisolated public struct VehicleTowMotion: Equatable, Sendable {
+    /// The cart's speed toward the hitch, in units per second.
+    public var speed: Float = 0
+    /// How fast the front axle turns, in radians per second.
+    public var swing: Float = 0
+    /// Where the hitch was last frame, for its speed.
+    public var hitch: SIMD3<Float>?
+
+    public init(speed: Float = 0, swing: Float = 0, hitch: SIMD3<Float>? = nil) {
+        self.speed = speed
+        self.swing = swing
+        self.hitch = hitch
     }
 }
