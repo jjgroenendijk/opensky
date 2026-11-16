@@ -14,6 +14,8 @@ nonisolated extension BehaviorGraphInstance {
         var conditionCache: [HKXPointerTarget: BehaviorConditionExpression?] = [:]
         /// Global wildcard routes per machine, built on first reach.
         var globalWildcardRouteCache: [HKXPointerTarget: [BehaviorGlobalWildcardRoute]] = [:]
+        /// The same routes indexed by event, per machine.
+        var globalWildcardTables: [HKXPointerTarget: BehaviorGlobalWildcardTable] = [:]
         /// The state machines' own random source, for random start states and transitions.
         var stateMachineRandom = BehaviorStateMachineRandom()
     }

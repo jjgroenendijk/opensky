@@ -15,39 +15,69 @@ nonisolated struct BehaviorGlobalWildcardRoute {
     let nestedStateIds: [Int]
     let owner: HKBStateMachine
     let info: HKBStateMachineTransitionInfo
-    /// The referenced graph that holds `owner`; nil when this graph holds it. That
-    /// graph takes the wildcard itself once it runs, so no start state crosses over.
-    var holder: BehaviorGraphInstance?
+    /// The behavior references from this graph down to the graph that holds `owner`;
+    /// empty when this graph holds it. That graph takes the wildcard itself once it
+    /// runs, so no start state crosses over. A path, not an instance, so every actor
+    /// over the same file shares the route.
+    var holderPath: [String] = []
 
     func entered(through stateId: Int, nested: [Int]) -> BehaviorGlobalWildcardRoute {
         BehaviorGlobalWildcardRoute(
-            stateId: stateId, nestedStateIds: nested, owner: owner, info: info, holder: holder
+            stateId: stateId, nestedStateIds: nested, owner: owner, info: info,
+            holderPath: holderPath
         )
     }
+}
+
+/// Which machine a shared table is for. A reference that would close a cycle is
+/// dropped, so the same machine can have other routes under another ancestry.
+nonisolated struct BehaviorGlobalWildcardTableKey: Hashable {
+    let machine: HKXPointerTarget
+    let ancestry: Set<String>
+    let followsReferences: Bool
+}
+
+/// The global wildcard routes of one machine, and which of them each event can fire.
+nonisolated struct BehaviorGlobalWildcardTable {
+    let routes: [BehaviorGlobalWildcardRoute]
+    /// Event id in the graph that runs the machine -> indices into `routes`, in order.
+    let routesByEvent: [Int: [Int]]
 }
 
 nonisolated extension BehaviorGraphInstance.StateMachines {
     /// Takes the first eligible global wildcard found below a state other than
     /// the current one. The current state's machines see their own wildcards.
+    /// Only the routes of the events active in this update are tested.
     func selectGlobalWildcard(
         _ state: inout BehaviorMachineState,
         machine: HKBStateMachine,
         at target: HKXPointerTarget
     ) -> Bool {
-        let routes = globalWildcardRoutes(of: machine, at: target)
-        var best: BehaviorGlobalWildcardRoute?
-        for route in routes where route.stateId != state.currentStateId {
-            guard isEligible(route), route.info.priority > best?.info.priority ?? Int.min
-            else {
-                continue
+        let active = graph.events.active
+        guard !active.isEmpty else { return false }
+        let table = globalWildcardTable(of: machine, at: target)
+        var bestIndex: Int?
+        for event in active {
+            for index in table.routesByEvent[event.id] ?? [] {
+                let route = table.routes[index]
+                guard route.stateId != state.currentStateId, permitsRoute(route) else { continue }
+                if let current = bestIndex {
+                    let held = table.routes[current].info.priority
+                    guard
+                        route.info.priority > held
+                        || (route.info.priority == held && index < current)
+                    else { continue }
+                }
+                bestIndex = index
             }
-            best = route
         }
-        guard let best, stateInfo(of: machine, id: best.stateId) != nil else { return false }
+        guard let bestIndex else { return false }
+        let best = table.routes[bestIndex]
+        guard stateInfo(of: machine, id: best.stateId) != nil else { return false }
         if let running = state.transition, running.refuses(best.info) {
             return false
         }
-        var effect = (best.holder?.stateMachines ?? self).effect(for: best.info)
+        var effect = holderMachines(of: best)?.effect(for: best.info)
         effect?.priority = best.info.priority
         effect?.interrupted = state.transition.map { [$0] } ?? []
         effect?.trim(to: machine.maxSimultaneousTransitions)
@@ -56,17 +86,60 @@ nonisolated extension BehaviorGraphInstance.StateMachines {
         return true
     }
 
-    private func isEligible(_ route: BehaviorGlobalWildcardRoute) -> Bool {
-        guard let holder = route.holder else {
-            return graph.events.isActive(id: route.info.eventId) && permits(route)
+    private func permitsRoute(_ route: BehaviorGlobalWildcardRoute) -> Bool {
+        holderMachines(of: route)?.permits(route) ?? false
+    }
+
+    /// The state machines of the graph that holds the route's machine.
+    private func holderMachines(
+        of route: BehaviorGlobalWildcardRoute
+    ) -> BehaviorGraphInstance.StateMachines? {
+        var holder = graph
+        for name in route.holderPath {
+            guard let child = holder.childGraphs.referencedGraph(named: name) else { return nil }
+            holder = child
         }
-        // Event ids differ per file, so the event is matched by name.
+        return holder.stateMachines
+    }
+
+    /// The routes of `machine`, indexed by the id of their event in this graph.
+    /// Event ids differ per file, so a route from a referenced file is matched by
+    /// name once, here, and not in every update. Graphs over the same file share
+    /// the table, so only the first actor of a race walks the referenced files.
+    func globalWildcardTable(
+        of machine: HKBStateMachine,
+        at target: HKXPointerTarget
+    ) -> BehaviorGlobalWildcardTable {
+        if let cached = graph.machineMemory.globalWildcardTables[target] {
+            return cached
+        }
+        let key = BehaviorGlobalWildcardTableKey(
+            machine: target, ancestry: graph.referenceAncestry,
+            followsReferences: graph.references != nil
+        )
+        if let shared = graph.fileCaches?.globalWildcardTables[key] {
+            graph.machineMemory.globalWildcardTables[target] = shared
+            return shared
+        }
+        let routes = globalWildcardRoutes(of: machine, at: target)
+        var byEvent: [Int: [Int]] = [:]
+        for (index, route) in routes.enumerated() {
+            guard let eventId = localEventId(of: route) else { continue }
+            byEvent[eventId, default: []].append(index)
+        }
+        let table = BehaviorGlobalWildcardTable(routes: routes, routesByEvent: byEvent)
+        graph.machineMemory.globalWildcardTables[target] = table
+        graph.fileCaches?.globalWildcardTables[key] = table
+        return table
+    }
+
+    private func localEventId(of route: BehaviorGlobalWildcardRoute) -> Int? {
+        let eventId = route.info.eventId
+        guard !route.holderPath.isEmpty else { return eventId >= 0 ? eventId : nil }
+        guard let holder = holderMachines(of: route)?.graph else { return nil }
         let names = holder.events.names
-        guard
-            names.indices.contains(route.info.eventId), let name = names[route.info.eventId],
-            let id = graph.events.index(of: name), graph.events.isActive(id: id)
-        else { return false }
-        return holder.stateMachines.permits(route)
+        guard names.indices.contains(eventId), let name = names[eventId] else { return nil }
+        return graph.events.index(of: name)
     }
 
     /// Whether the wildcard itself may fire, apart from its event.
@@ -127,7 +200,7 @@ nonisolated extension BehaviorGraphInstance.StateMachines {
             routes += child.stateMachines.globalWildcardRoutes(below: child.root, depth: depth + 1)
                 .map {
                     var route = $0.entered(through: -1, nested: [])
-                    route.holder = $0.holder ?? child
+                    route.holderPath = [name] + $0.holderPath
                     return route
                 }
         }
