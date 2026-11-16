@@ -49,6 +49,21 @@ also has `HideMenu` and `ResetStatsButton`; OpenSky does not call them.
 Esc reaches the engine, not the movie. OpenSky answers it as the movie answers Tab: it plays
 the close animation and shuts the menu when the movie calls `CloseMenu`.
 
+The game's menu:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Opening: Tween Menu key
+    Opening --> Open: open animation ends
+    Open --> Open: arrow key or hover / highlight the entry
+    Open --> EntryMenu: same arrow again, Enter, or click
+    Open --> Closing: Tab
+    Closing --> [*]: close animation ends
+    EntryMenu --> [*]
+    note right of Closing: every key and click is ignored
+    note right of Opening: blur ISMTween at strength 1.0
+```
+
 In the movie, the first press of an arrow key highlights the entry that sits that way, and a
 second press of the same key opens it. Enter opens the highlighted entry. Hovering the mouse
 over an entry highlights it. A click opens the entry under the cursor, unless something else is

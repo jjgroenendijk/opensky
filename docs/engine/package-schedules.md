@@ -346,6 +346,19 @@ builds a full path from the actor's place on that rough path, over the navmesh w
 loaded. So a resident who leaves home at 8:00 is already on the way, or at the market, when
 the player arrives. No setting for the speed of this walk was found.
 
+```mermaid
+stateDiagram-v2
+    [*] --> AtHome
+    AtHome --> RoughPath: package leads to another cell
+    RoughPath --> RoughPath: through load doors, cell by cell
+    RoughPath --> FullPath: the area around the actor loads
+    FullPath --> AtPlace: walks the navmesh path
+    RoughPath --> AtPlace: arrives while unloaded
+    AtPlace --> AtHome: package ends
+    note right of RoughPath: not loaded, no navmesh
+    note right of FullPath: placeholder nodes where no navmesh is loaded
+```
+
 The game picks a package again every 15 s and a procedure every 3 s. Actors far from the player
 are updated less often, and a sandbox looks for a new spot every 3 to 6 s, within 6000 units.
 

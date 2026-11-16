@@ -168,6 +168,15 @@ Whiterun's distant window lights are one Is Full LOD reference with the glow mes
 100 %, `FXWthrInvertWindowsWhiterun`. So the glow follows the game hour through that weather's
 colour keys, not the weather on screen, an image space, or a global.
 
+```mermaid
+erDiagram
+    REFR ||--|| STAT : "NAME WRLODWindowGlow01"
+    REFR ||--|| REGN : "XEMI emittance"
+    REGN ||--|| WTHR : "RDWT, 100 %"
+    WTHR ||--|{ COLOUR_ROW : "NAM0"
+    CLMT ||--|| WTHR : "TNAM key hours"
+```
+
 The weather's `NAM0` colour table has two rows that are not black, with keys for sunrise,
 day, sunset, and night:
 

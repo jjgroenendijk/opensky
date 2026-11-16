@@ -156,24 +156,39 @@ box's is 0 or 1. When the player leaves a changed page, the movie shows `$Saving
 ### Controls rows and remapping
 
 The movie asks for the rows with `RequestInputMappings` and the chosen category, then sorts them
-by each row's sort index. Only the Switch titles are fixed in the movie. A remap works in four
-steps:
+by each row's sort index. Only the Switch titles are fixed in the movie. While it waits, the
+list takes no selection. A failure shows `$That button is reserved.`
 
-1. A pressed row shows `$Press a button to map to this action.` and turns off list selection.
-2. After 200 ms the movie calls `StartRemapMode` with the row's text.
-3. The engine answers with success or failure. A failure shows `$That button is reserved.` for
-   1000 ms.
-4. A success sorts the list again and marks the page as changed.
+```mermaid
+stateDiagram-v2
+    [*] --> List
+    List --> Waiting: row pressed / show "Press a button to map to this action."
+    Waiting --> Remapping: 200 ms passed / StartRemapMode
+    Remapping --> Reserved: engine answers false
+    Reserved --> List: 1000 ms passed
+    Remapping --> List: engine answers true / sort rows, mark changed
+    List --> Saving: leave a changed page / show "Saving..."
+    Saving --> [*]: 1000 ms passed / SaveControls
+```
 
 The game keeps changed bindings in a custom control map file beside the default
 `Interface/Controls/PC/ControlMap.txt`, so they last after a restart.
 
 ### Quit
 
-On a computer the Quit page lists `$Main Menu` (0) and `$Desktop` (1), and the selection starts
-on `$Main Menu`. A row asks first, inside the movie: `$Quit to main menu?  Any unsaved progress
-will be lost.` or `$Quit to desktop?  Any unsaved progress will be lost.` On a console the main
-menu question shows at once.
+```mermaid
+flowchart TD
+    A[Quit page] --> B{"Computer?"}
+    B -- yes --> C["List: Main Menu (0), Desktop (1)<br/>selection starts on Main Menu"]
+    B -- no --> D[Main menu question at once]
+    C -- Main Menu --> D
+    C -- Desktop --> E[Desktop question]
+    D -- yes --> F[Title menu]
+    E -- yes --> G[Quit the game]
+```
+
+Both questions show inside the movie: `$Quit to main menu?  Any unsaved progress will be
+lost.` and `$Quit to desktop?  Any unsaved progress will be lost.`
 
 ### Where OpenSky differs
 

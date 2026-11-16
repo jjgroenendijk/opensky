@@ -133,6 +133,25 @@ each clip's own length ends its title; the timer only starts the next one.
 | `Sequence3` | 166 | not read | frame 111 | 5.5 s |
 | `Sequence4` | 166 | not read | frame 120 | 5.5 s |
 
+In seconds from the moment the titles open:
+
+```mermaid
+gantt
+    dateFormat x
+    axisFormat %S
+    section Script timer
+    Titles open, wait 4 s   :0, 4000
+    Wait 5 s                :4000, 9000
+    Wait 12 s               :9000, 21000
+    Wait 5 s                :21000, 26000
+    Wait 10 s               :26000, 36000
+    section On screen
+    Sequence1               :4000, 8500
+    Sequence2               :9000, 13500
+    Sequence3               :21000, 26500
+    Sequence4               :26000, 31500
+```
+
 A fade in raises the alpha from 0 to 1 while a 23-pixel blur shrinks to 0. A fade out lowers
 the alpha to 0 while the blur grows back to 23 pixels. The clip then stops on an invisible
 frame. In the reference game "Presents" was gone about 5 s after it started.

@@ -51,7 +51,23 @@ OpenSky reads the plugin value and falls back to the wiki value.
 The game also has values that are not in `Skyrim.esm`. The pair must be within 3000 units of
 the player, and the event reaches at most 500 units. An actor waits 120 s before it talks to
 the same partner again and 60 s before it talks to another one. An actor waits up to 20 s for
-its event, and walks away after 2 s.
+its event, and walks away after 2 s. One actor's check in the game, with the `Skyrim.esm`
+values:
+
+```mermaid
+flowchart TD
+    A["Actor timer runs out<br/>10 to 30 s"] --> B{"Package allows<br/>random conversations?"}
+    B -- yes --> C{"Roll under 10 %?"}
+    C -- yes --> D{"Partner within 500 units?"}
+    D -- yes --> E{"Pair within 3000 units<br/>of the player?"}
+    E -- yes --> F{"Same partner: 120 s passed?<br/>Other partner: 60 s passed?"}
+    F -- yes --> G[Fire ADIA]
+    B -- no --> H[No conversation]
+    C -- no --> H
+    D -- no --> H
+    E -- no --> H
+    F -- no --> H
+```
 
 ## The rules
 

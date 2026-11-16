@@ -292,13 +292,21 @@ stateDiagram-v2
 
 The quest starts when two actors fire the event
 ([random conversations](/engine/random-conversations.md)), and the
-[story manager](/engine/story-manager.md) picks it. For the Riften market the path is:
+[story manager](/engine/story-manager.md) picks it. For the Riften market:
 
-1. The `ADIA` event node.
-2. `RiftHoldScenes`: `GetIsEditorLocation` RiftHoldLocation.
-3. `RiftenCityScenes`: `GetInCurrentLoc` RiftenLocation.
-4. `GrandPlazaConversations`: a random quest node with 43 quests, for `GetInWorldspace`
-   RiftenWorld and `IsInInterior` 0.
+```mermaid
+flowchart TD
+    A[Two actors pass the social check] --> B[ADIA event]
+    B --> C{"RiftHoldScenes:<br/>editor location RiftHoldLocation?"}
+    C -- yes --> D{"RiftenCityScenes:<br/>in RiftenLocation?"}
+    D -- yes --> E{"GrandPlazaConversations:<br/>RiftenWorld and not interior?"}
+    E -- yes --> F[Pick one of 43 quests at random]
+    F --> G{"GetIsID: both actors fit<br/>Actor1 and Actor2?"}
+    G -- yes --> H[Quest starts, scene begins]
+    H --> I[One line per phase<br/>next phase when the line ends]
+    I --> J[Scene ends, quest stops]
+    G -- no --> K[Try the next quest]
+```
 
 A quest such as `DialogueRiftenGrandPlazaScene11` (priority 30) fills Actor1 and Actor2 from
 the event's two actors, each checked with `GetIsID` against its two named people, here Bolli

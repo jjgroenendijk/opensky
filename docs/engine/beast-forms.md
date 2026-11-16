@@ -84,6 +84,20 @@ is −1500 units/s², the solver runs 50 rounds per step with a fixed time step,
 the hem swings because the pinned edge moves. Two short sequences in the model show the cape
 (alpha test at 110) and hide it (alpha test at 255).
 
+```mermaid
+flowchart TD
+    A[Change to the Vampire Lord] --> B{"Who changes?"}
+    B -- player --> C[Script sets the race and equips the armour]
+    C --> D[Engine adds the cape from its default object]
+    B -- Harkon --> E[Outfit holds the cape]
+    B -- other NPC --> F[Turn quest script equips the cape]
+    D --> G[Cape model on NPC Spine2]
+    E --> G
+    F --> G
+    G --> H["12 pinned vertices follow the spine<br/>the rest fall under gravity −1500"]
+    H --> I[The hem swings while walking and settles after a stop]
+```
+
 The body has no tint layers. Its colour is the shader of `VampireLord.nif`: an environment map
 shader with `VampireLord.dds`, its normal map, a subsurface map, the cube map `ShinyDullDS_e`,
 and a mask. Glossiness is 14, the specular colour (0.725, 0.725, 0.788) at strength 2.9, and

@@ -254,6 +254,16 @@ and −60, are never read, so the light gets no extra offset. At most 4 casting 
 once over all casters; a cast while 4 exist gets no light. When each part starts and stops was
 not found beyond the CK wiki text above.
 
+```mermaid
+flowchart TD
+    A[Cast starts] --> B{"Fewer than 4 casting lights<br/>in the world?"}
+    B -- no --> C[No light]
+    B -- yes --> D["Light from the effect's casting light LIGH"]
+    D --> E{"Casting art or hand model<br/>has an AttachLight node?"}
+    E -- yes --> F[Attach to AttachLight]
+    E -- no --> G[Attach to the model root]
+```
+
 - [WARNING] OpenSky's effect anchors name no hand bone, so the art rides the actor.
 - The `MGEF` casting light shows while the casting art shows. No anchor names a hand, so it
   floats where a held Light spell floats: in front of the caster's eye, along its aim. Near
