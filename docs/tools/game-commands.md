@@ -135,7 +135,9 @@ Debug commands change the game state directly. `state` reads show the result
 
 ### World and time
 
-Every teleport ends with the player standing on the ground below the placed spot.
+Every teleport ends with the player standing on the ground below the placed spot. A spot under
+the world stands on the surface above it, and a spot in deep water floats at the surface
+([placement](/engine/player-camera.md)).
 
 | Command | Does |
 | --- | --- |

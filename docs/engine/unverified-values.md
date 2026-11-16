@@ -171,6 +171,7 @@ the detail and the sources it did find.
 
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
+| Under-the-world placement | A spot with a surface above it and no ground within 4,096 units below stands on the surface above | [player camera](/engine/player-camera.md) |
 | New game start hour | Midnight | [game clock](/engine/game-clock.md) |
 | Launcher start places | Map markers of type City, Town, Settlement, Orc Stronghold, the nine hold Capitol types, Raven Rock, and Tel Mithryn | [main menu](/engine/main-menu.md#new-game-at-a-chosen-place) |
 | Time scale ceiling | 10,000 | [game clock](/engine/game-clock.md) |

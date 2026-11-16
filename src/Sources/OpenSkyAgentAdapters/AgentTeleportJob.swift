@@ -259,11 +259,12 @@ public final class AgentTeleportJob {
             return
         }
         let center = Self.center(of: grid)
-        // A city world hides the terrain under its streets, so its collision is the ground.
-        let feet = streamer.sampleTerrain(at: center).map { SIMD3(center, $0.height) }
-            ?? streamer.topCollisionSurface(at: center)
-        guard let feet else { return }
-        place(at: feet, gameSession: gameSession, streamer: streamer)
+        // A city world hides the terrain under its streets, so the higher of the two is the ground.
+        let heights = [
+            streamer.sampleTerrain(at: center)?.height, streamer.topCollisionSurface(at: center)?.z
+        ]
+        guard let height = heights.compactMap(\.self).max() else { return }
+        place(at: SIMD3(center, height), gameSession: gameSession, streamer: streamer)
     }
 
     /// A position or a reference stays in the current cell, because interior
