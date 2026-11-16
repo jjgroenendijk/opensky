@@ -11,7 +11,8 @@ nonisolated public struct ProjectedMaterial: Hashable, Sendable {
     public var diffuseTexture: String?
     /// Breaks up the layer's edge.
     public var noiseTexture: String?
-    /// The world direction faces must point along, normalized.
+    /// The world direction faces must point along, normalized: up for a single-pass
+    /// material, the reverse of the `MATO` projection vector for an overlay.
     public var direction: SIMD3<Float>
     /// `STAT` `DNAM`: faces more than this many degrees from `direction` get none.
     public var maxAngle: Float
@@ -24,6 +25,8 @@ nonisolated public struct ProjectedMaterial: Hashable, Sendable {
     /// `MATO` `DATA` flags: drawn inside the shape's own shading, and snow.
     public var singlePass: Bool
     public var isSnow: Bool
+    /// Scales the x and y of the base normal map that lights an overlay.
+    public var normalDampener: Float
 
     public init(
         diffuseTexture: String?,
@@ -36,12 +39,14 @@ nonisolated public struct ProjectedMaterial: Hashable, Sendable {
         materialUVScale: Float,
         singlePassColor: SIMD3<Float>,
         singlePass: Bool = true,
-        isSnow: Bool = false
+        isSnow: Bool = false,
+        normalDampener: Float = 1
     ) {
         self.diffuseTexture = diffuseTexture
         self.noiseTexture = noiseTexture
         self.singlePass = singlePass
         self.isSnow = isSnow
+        self.normalDampener = normalDampener
         let length = simd_length(direction)
         self.direction = length > 0 ? direction / length : SIMD3(0, 0, 1)
         self.maxAngle = maxAngle
@@ -56,7 +61,8 @@ nonisolated public struct ProjectedMaterial: Hashable, Sendable {
     var cacheKey: String {
         let numbers = [
             direction.x, direction.y, direction.z, maxAngle, falloffScale, falloffBias,
-            noiseUVScale, materialUVScale, singlePassColor.x, singlePassColor.y, singlePassColor.z
+            noiseUVScale, materialUVScale, singlePassColor.x, singlePassColor.y, singlePassColor.z,
+            normalDampener
         ].map { unsafe String(format: "%.4f", $0) }
         return "projected:\(diffuseTexture ?? "-"),\(noiseTexture ?? "-"),"
             + "\(singlePass ? 1 : 0)\(isSnow ? 1 : 0)," + numbers.joined(separator: ",")

@@ -22,6 +22,9 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
     public let multiLayer: SIMD4<Float>
     /// A static's directional material; nil textures draw its single-pass colour.
     public let projected: RenderProjectedMaterial?
+    /// The NIF marks the shape as snow, and as snow under a directional material too.
+    public let isSnow: Bool
+    public let isSnowBase: Bool
 
     public init(material: Material, textureProvider: TextureProvider) {
         let shading = material.shading
@@ -30,7 +33,7 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
             key.map { textureProvider($0, usage) }
         }
         glow = load(shading.glowTexture, .color)
-        let height = !terms.isDisjoint(with: [.parallax, .landscapeNoise])
+        let height = !terms.isDisjoint(with: [.parallax, .landscapeNoise, .sparkle])
         detail = load(shading.detailTexture, height ? .data : .color)
         environment = load(shading.environmentTexture, .cube)
         environmentMask = load(shading.environmentMaskTexture, .data)
@@ -59,6 +62,8 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
                 noise: load($0.noiseTexture, .data)
             )
         }
+        isSnow = terms.contains(.snow)
+        isSnowBase = terms.contains(.snowBase)
     }
 
     func forEachTexture(_ body: (any MTLTexture) -> Void) {

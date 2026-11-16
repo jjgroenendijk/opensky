@@ -164,6 +164,19 @@ static SurfaceNormal surfaceNormal(
     return result;
 }
 
+// An overlay is lit with the base normal map, its x and y scaled by the dampener.
+static SurfaceNormal
+dampenedNormal(SurfaceNormal normal, float3x3 tangentFrame, float dampener, uint terms)
+{
+    if (!hasTerm(terms, ShadingTermNormalMap) || hasTerm(terms, ShadingTermModelSpaceNormals)) {
+        return normal;
+    }
+    float3 flattened = float3(normal.tangentSpace.xy * dampener, normal.tangentSpace.z);
+    normal.tangentSpace = normalize(flattened);
+    normal.world = normalize(tangentFrame * normal.tangentSpace);
+    return normal;
+}
+
 // FaceGen: the detail map and the face tint overlay the albedo, then it doubles.
 static float3 faceAlbedo(float3 albedo, float2 uv, uint terms, SurfaceMaps maps, sampler trilinear)
 {
@@ -211,7 +224,7 @@ struct LitInput
     float shadow;
     uint terms;
     PointShadows pointShadows;
-    /// Snow cover from a snow directional material, 0 to 1.
+    /// Snow cover from a snow mesh or directional material, 0 to 1.
     float snowMask;
 };
 
@@ -283,8 +296,19 @@ static float3 litSurface(
         specular = mix(specular, pointSpecular, input.snowMask);
     }
     if (hasTerm(terms, ShadingTermSparkle)) {
-        float glint = sparkle(input.uv, geometry, -frame.sunDirection, draw.multiLayer);
-        specular += frame.sunColor * input.shadow * glint;
+        SparkleInput sparkleInput = {input.uv, normal.world, draw.multiLayer, normal.mask};
+        specular += sparkleLight(
+            sparkleInput, frame.sunColor * input.shadow * (1.0 - input.snowMask),
+            -frame.sunDirection, maps.detail, trilinear);
+        for (uint index = 0; index < draw.pointLightCount; ++index) {
+            PointLightUniform light = pointLights[index];
+            float3 toLight = light.positionRadius.xyz - in.worldPosition;
+            float reach = saturate(length(toLight) / max(light.positionRadius.w, 0.0001));
+            float3 colour = light.colorFalloff.rgb * (1.0 - reach * reach) *
+                            pointShadowAt(input.pointShadows, index) * (1.0 - input.snowMask);
+            specular +=
+                sparkleLight(sparkleInput, colour, normalize(toLight), maps.detail, trilinear);
+        }
     }
     return toLinear(toGamma(input.albedo) * illumination + specular);
 }
@@ -428,15 +452,19 @@ fragment float4 staticMeshFragment(
     float3 vertexColour = linearVertexColour(in.color.rgb, frame);
     float3 albedo = diffuse.rgb * vertexColour;
     float snowMask = 0.0;
-    if (draw.projectedParameters.w > 0.5) {
-        ProjectedLayer layer = projectedLayer(
-            in.worldPosition, normal.world, in.color.a, draw, projectedDiffuse, projectedNoise,
-            trilinear);
-        albedo = mix(albedo, layer.albedo, layer.blend);
-        // The snow mask is the layer's blend, or the shape's own alpha under an overlay.
-        uint projected = uint(draw.projectedParameters.w);
-        float layerMask = (projected & 3u) == 3u ? diffuse.a : saturate(layer.blend);
-        snowMask = (projected & 4u) != 0 ? layerMask : 0.0;
+    uint projected = uint(draw.projectedParameters.w);
+    if (projected != 0) {
+        ProjectedLayer layer = {albedo, 0.0};
+        if ((projected & 3u) != 0) {
+            layer = projectedLayer(
+                in.worldPosition, normal.world, in.color.a, draw, projectedDiffuse, projectedNoise,
+                trilinear);
+            albedo = mix(albedo, layer.albedo, layer.blend);
+        }
+        snowMask = projectedSnowMask(projected, layer.blend, diffuse.a);
+        if ((projected & 3u) == 3u && layer.blend > 0.0) {
+            normal = dampenedNormal(normal, tangentFrame, draw.projectedColor.x, terms);
+        }
     }
     if (hasTerm(terms, ShadingTermLandscapeNoise)) {
         float noise = detailMap.sample(trilinear, in.worldPosition.xy * landscapeNoiseTile).r;

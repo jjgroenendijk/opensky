@@ -144,7 +144,7 @@ nonisolated struct NIFLightingShaderProperty: Sendable {
             tail.environmentMapScale = attempt { try reader.readFloat32() } ?? 1
         case 5, 6:
             tail.tintColor = attempt { try reader.readVector3() }
-        case 14:
+        case 10, 14:
             if
                 let sparkle = attempt({
                     try SIMD4(

@@ -48,7 +48,7 @@ Then a tail that depends on the shader type. A block that ends early keeps the d
 | 6 hair tint | float x 3 hair tint colour |
 | 7 parallax occlusion | (float max passes, float scale) |
 | 11 multi-layer parallax | float inner thickness, float refraction scale, float x 2 inner texture scale, float environment strength |
-| 14 sparkle snow | float x 4 sparkle parameters |
+| 10 snow, 14 sparkle snow | float x 4 sparkle parameters |
 | 16 eye | float eye cube map scale, (float x 3 left and right eye centres) |
 
 On the real install, Ralof's FaceGen head (`facegeom\skyrim.esm\0002bf9d.nif`) shows the
@@ -213,7 +213,6 @@ OpenSky already behaves as these flags ask, so it does not read them:
 | SLSF1 bit 1 `Skinned` | The skin instance decides skinning. Every vanilla shape with a skin instance sets the bit, and no other shape does |
 | SLSF1 bit 25 `Remappable_Textures` | Alternate textures (`MODS`) apply to any shape. 2311 of 2322 vanilla swaps target a shape with the bit. The other 11 are the ash-covered logs of Dragonborn, whose swap is wanted |
 | SLSF2 bit 3 `No_Fade` | OpenSky does not fade objects out with distance, so every shape behaves as if it set the bit |
-| SLSF2 bit 28 `Unused02` | `nif.xml` marks it unused |
 
 The same holds for `Skinned` and `No_Fade` on a `BSEffectShaderProperty`.
 
@@ -247,7 +246,8 @@ A term is on only when its texture slot names a texture. The rules follow NifSko
 | Anisotropic specular | SLSF2 bit 21 | None; the highlight follows the strand |
 | Reflection lit with the surface | Environment and SLSF2 bit 15 | Without the bit the reflection adds unlit |
 | External emittance | SLSF1 bit 29 | None; the reference's `XEMI` light or region colour replaces the emissive colour |
-| Sparkle | Type 14 | None; the tail parameters |
+| Sparkle | Type 10 or 14, SLSF1 bit 23, and SLSF2 bit 9 | The game's projected noise; the tail parameters |
+| Snow | SLSF2 bit 28 without bit 29, or SLSF1 bit 30; no LOD flag; improved snow on | None; the diffuse alpha is the mask |
 | Landscape noise | Type 18 | `textures\terrain\noise.dds`, which the shape does not name |
 
 nif.xml describes bit 18 as "keeps from going too bright under lights (hair shader only)".

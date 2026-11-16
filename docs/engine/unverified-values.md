@@ -236,7 +236,7 @@ the detail and the sources it did find.
 | Water screen-space reflection march | 24 steps from 24 units, each 1.25 times longer | [water](/rendering/water.md#screen-space-reflections) |
 | Water screen-space reflection length fade | Zero at one screen of distance | [water](/rendering/water.md#screen-space-reflections) |
 | Snow sparkle colour | The sun colour | [terrain](/engine/terrain.md#snow-ground) |
-| Directional material overlay | Drawn inside the shape, on world `(y, -x)` | [surface shading](/rendering/surface-shading.md#directional-materials) |
+| Directional material overlay | Drawn inside the shape, lit by the shape's terms; texture frame across the direction, with world y as its first axis | [surface shading](/rendering/surface-shading.md#directional-materials) |
 | Skin decal size and limit | At most 16 units; 35 kept when unset | [decals](/rendering/decals.md#skin-decals) |
 | Sky gradient heights | Horizon colour at 0 degrees, sky-lower at 17.5, sky-upper from 35 | [celestial sky](/engine/celestial-sky.md#drawing) |
 | Depth of field target focus ring | 8 points 5 percent of the screen from the centre; the centre weight times 8 against them | [post effects](/rendering/post-effects.md#focus-on-the-view-centre) |
