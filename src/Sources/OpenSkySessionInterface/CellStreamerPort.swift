@@ -67,6 +67,8 @@ public protocol CellStreamerPort: AnyObject, PapyrusWorldReferenceSource {
     var largeReferenceCount: Int { get }
     @discardableResult func requestDoorTransition(from sourceDoor: FormID) -> Bool
     func requestRebuild(of location: CellSceneLocation)
+    /// A rebuild that goes before the first loads still queued.
+    func requestUrgentRebuild(of location: CellSceneLocation)
 }
 
 /// One move order, so the port requirement stays under the parameter cap.

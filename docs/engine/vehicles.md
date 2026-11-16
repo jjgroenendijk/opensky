@@ -153,6 +153,11 @@ A follower is drawn by one cell. When its pose enters another loaded cell, it mo
 and the old cell is rebuilt without it, so it does not vanish when the old cell unloads. For the
 frames until the rebuild lands, the old cell still draws it, from its old placement.
 
+Only a cell build that knows the tow link draws a towed cart at its live pose. A script tether,
+such as the one in the opening ride, so makes its cell's rebuild urgent: it goes before the first
+loads of the cells around it. Without that, the rebuild waited behind every first load, and on a
+slow machine the riders sat on no cart for up to a minute.
+
 ## Leaving a vehicle
 
 A rider leaves its vehicle in one of four ways:

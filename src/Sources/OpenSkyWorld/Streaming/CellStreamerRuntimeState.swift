@@ -124,6 +124,15 @@ extension CellStreamer.RuntimeStateSteps {
         requestRebuild(coordinate)
     }
 
+    /// Rebuilds a resident exterior cell before the first loads still queued. A cell
+    /// whose first build has not landed keeps its place, and its re-queued rebuild is
+    /// urgent too.
+    public func requestUrgentRebuild(of location: CellSceneLocation) {
+        guard case let .exterior(coordinate) = location else { return }
+        streamer.urgentRebuilds.insert(coordinate)
+        requestRebuild(coordinate)
+    }
+
     /// Queues one rebuild, deduplicating against requests already queued. A
     /// cell that is not accounted for at all is skipped: it is neither drawn
     /// nor being built, so a return visit rebuilds it from the store anyway.
@@ -162,6 +171,7 @@ extension CellStreamer.RuntimeStateSteps {
     public func pruneRebuildState() {
         let accounted = streamer.core.accountedCells
         streamer.rebuildRequests.removeAll { !accounted.contains($0) }
+        streamer.urgentRebuilds.formIntersection(accounted)
         streamer.cellMutationSequence = streamer.cellMutationSequence
             .filter { accounted.contains($0.key) }
     }

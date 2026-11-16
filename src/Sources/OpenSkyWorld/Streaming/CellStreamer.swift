@@ -74,6 +74,9 @@ public final class CellStreamer {
     /// priority; rebuilds are dispatched only once the load queue is drained.
     /// Details in the CellStreamerRuntimeState satellite.
     public var rebuildRequests: [CellCoordinate] = []
+    /// Cells whose rebuild goes before the first loads, such as the cell of a cart a
+    /// script just tethered; kept until the rebuild is dispatched.
+    public var urgentRebuilds: Set<CellCoordinate> = []
     /// Highest journal sequence of a mutation attributed to each cell. A
     /// resident scene is current exactly while its `stateSequence` is at
     /// least this value.

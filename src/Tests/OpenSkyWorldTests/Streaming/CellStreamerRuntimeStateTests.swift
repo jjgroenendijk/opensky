@@ -417,3 +417,31 @@ extension CellStreamerRuntimeStateTests {
         #expect(Array(harness.runner.enqueued.dropFirst(before)) == [holder])
     }
 }
+
+// MARK: - Urgent rebuilds
+
+extension CellStreamerRuntimeStateTests {
+    @Test
+    func anUrgentRebuildGoesBeforeTheFirstLoads() {
+        var harness = Self.makeHarness(radius: 1)
+        let camera = Self.position(of: Self.coordinate(0, 0))
+        harness.streamer.update(cameraPosition: camera)
+        harness.runner.complete(Self.coordinate(0, 0), with: .success(
+            CellStreamerFixture.cellScene()
+        ))
+        harness.completedCount = 1
+        harness.streamer.update(cameraPosition: camera)
+
+        Self.disable(0x40, in: harness, at: Self.coordinate(0, 0))
+        harness.streamer.requestUrgentRebuild(of: .exterior(Self.coordinate(0, 0)))
+        // The neighbour in flight lands, and the next dispatch is the rebuild while first
+        // loads still wait.
+        Self.completeDispatchedBuilds(&harness)
+        harness.streamer.update(cameraPosition: camera)
+        #expect(!harness.streamer.requests.isEmpty)
+
+        #expect(harness.runner.enqueued.last == Self.coordinate(0, 0))
+        #expect(harness.streamer.runtimeStates.queuedRebuildCount == 0)
+        #expect(harness.streamer.urgentRebuilds.isEmpty)
+    }
+}
