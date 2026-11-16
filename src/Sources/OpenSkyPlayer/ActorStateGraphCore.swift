@@ -168,8 +168,32 @@ nonisolated public enum ActorStateGraphCore: Sendable {
 
     /// The game writes 1 when a get-up starts and 2 in deep water; 0, the reanimate pose
     /// matcher, is only the graph's start value.
-    static func getUpType(swimming: Bool) -> Int32 {
+    public static func getUpType(swimming: Bool) -> Int32 {
         swimming ? 2 : 1
+    }
+
+    /// The share of an actor's height that must be under water for a swimming get-up.
+    public static let swimmingGetUpShare: Float = 0.875
+    /// The ray down for ground below a ragdoll root reaches this share of the actor height.
+    public static let getUpGroundProbeShare: Float = 0.5
+
+    /// Whether a fallen actor gets up as a swimmer. Its body root counts first; else the
+    /// ground at most half its height below the root. With water there, no ground counts as
+    /// deep water.
+    public static func getsUpSwimming(
+        waterSurface: Float?, rootHeight: Float, actorHeight: Float, groundBelow: Float?
+    ) -> Bool {
+        func submerged(_ height: Float) -> Float {
+            guard let waterSurface, waterSurface.isFinite, actorHeight > 0 else { return 0 }
+            return min(1, max(0, waterSurface - height) / actorHeight)
+        }
+        if submerged(rootHeight) >= swimmingGetUpShare {
+            return true
+        }
+        guard let groundBelow, groundBelow >= rootHeight - actorHeight / 2 else {
+            return waterSurface?.isFinite == true
+        }
+        return submerged(groundBelow) >= swimmingGetUpShare
     }
 
     /// The readout name of an `iState` value: the constant that holds it, or the

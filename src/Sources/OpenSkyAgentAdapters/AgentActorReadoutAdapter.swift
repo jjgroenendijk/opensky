@@ -95,8 +95,17 @@ extension AgentActorReadoutAdapter {
         guard distance <= radius else { return nil }
         let entry = game.streamer.referenceEntry(key: actor.key)
         let formID = entry?.formID
-        let graph: AgentJSON = game.actorGraphs.readout(for: actor.key)
+        var graph: AgentJSON = game.actorGraphs.readout(for: actor.key)
             .map(details.graphState) ?? .null
+        if case var .object(fields) = graph {
+            let getUp = game.actorGraphs.variable(
+                named: ActorStateGraphNames.getUpType, on: actor.key
+            )
+            if case let .int(value) = getUp {
+                fields["iGetUpType"] = .init(Int(value))
+            }
+            graph = .object(fields)
+        }
         return (distance, [
             "leveled": details.leveledState(of: actor.key, base: entry?.placedActor?.base),
             "ref": formID.map { .formID($0.rawValue) } ?? .null,

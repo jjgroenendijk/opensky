@@ -8,6 +8,7 @@ public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenusInterface
+import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyScriptingInterface
@@ -151,7 +152,32 @@ extension RagdollRecoveryAdapter {
             let facing = yaw ?? streamer.actors.riddenHold(of: key)?.yaw ?? 0
             streamer.steerRiddenActor(key, to: feet, yaw: facing)
         }
-        _ = game.actorGraphWorld.graphs.raise(RagdollGraphNames.getUpStart, on: key)
+        // The pose matcher picks the get-up clip by this variable before the event starts it.
+        let swimming = getsUpSwimming(key, root: feet)
+        let graphs = game.actorGraphWorld.graphs
+        graphs.setVariable(
+            .int(ActorStateGraphCore.getUpType(swimming: swimming)),
+            named: ActorStateGraphNames.getUpType, on: key
+        )
+        _ = graphs.raise(RagdollGraphNames.getUpStart, on: key)
+    }
+
+    /// The water test of a get-up: the body root, then the ground below it.
+    private func getsUpSwimming(_ key: ReferenceKey, root: SIMD3<Float>) -> Bool {
+        let collision = game.streamer.collision
+        let height = PlayerCapsule.standard.height * (game.streamer.npcHeightScale?(key) ?? 1)
+        let probe = root + SIMD3(0, 0, 1)
+        let hit = InteractionRay(
+            origin: probe, direction: SIMD3(0, 0, -1),
+            maximumDistance: 1 + height * ActorStateGraphCore.getUpGroundProbeShare
+        ).flatMap { collision.nearestCollisionHit(ray: $0)?.position.z }
+        let terrain = (collision.sampleTerrain(at: SIMD2(root.x, root.y))?.height)
+            .flatMap { $0 <= probe.z ? $0 : nil }
+        let ground = [hit, terrain].compactMap(\.self).max()
+        return ActorStateGraphCore.getsUpSwimming(
+            waterSurface: collision.water(at: root)?.surface,
+            rootHeight: root.z, actorHeight: height, groundBelow: ground
+        )
     }
 
     public func endKnockdown(_ key: ReferenceKey) {
