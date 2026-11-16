@@ -227,18 +227,21 @@ nonisolated public struct ConditionEvaluator: Sendable {
 
     // MARK: - One condition
 
-    private mutating func result(of condition: Condition) -> Result<Bool, ConditionFailure> {
+    /// The left-hand side alone: what the function returns, before the comparison.
+    public mutating func value(of condition: Condition) -> Result<Float, ConditionFailure> {
         guard let function = context.functions[condition.functionIndex] else {
             return .failure(.unknownFunction(condition.functionIndex))
         }
-        let condition = translated(condition, for: function)
-        call.condition = condition
-        let value = function.body(&call)
-        switch value {
+        call.condition = translated(condition, for: function)
+        return function.body(&call)
+    }
+
+    private mutating func result(of condition: Condition) -> Result<Bool, ConditionFailure> {
+        switch value(of: condition) {
         case let .failure(failure):
-            return .failure(failure)
+            .failure(failure)
         case let .success(left):
-            return comparisonValue(of: condition).flatMap { right in
+            comparisonValue(of: call.condition).flatMap { right in
                 guard let isTrue = Self.compare(left, condition.comparison, right) else {
                     return .failure(.unknownOperator(Self.operatorBits(condition.comparison)))
                 }

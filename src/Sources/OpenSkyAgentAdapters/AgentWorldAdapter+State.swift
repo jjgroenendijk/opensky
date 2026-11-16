@@ -56,7 +56,7 @@ extension AgentWorldAdapter {
         case let .global(editorID): try frameReadout.globalState(editorID)
         case .time: frameReadout.timeState()
         case .frame: frameReadout.frameState()
-        case .view, .newGame, .music, .sounds: try sessionState(query)
+        case .view, .newGame, .music, .sounds, .condition: try sessionState(query)
         }
     }
 
@@ -65,6 +65,8 @@ extension AgentWorldAdapter {
         case .newGame: game.menuWorld.lastNewGame?.json ?? ["start": .null]
         case .music: changes.musicState()
         case .sounds: render.soundsState()
+        case let .condition(function, reference, parameter):
+            try conditionState(function: function, reference: reference, parameter: parameter)
         default: try view.viewState()
         }
     }

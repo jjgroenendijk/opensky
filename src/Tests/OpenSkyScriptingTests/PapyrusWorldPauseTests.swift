@@ -128,6 +128,9 @@ struct PapyrusWorldPauseTests {
         #expect(snapshot.implementedNativeNameCount == 1)
         #expect(snapshot.unimplementedNativeTotal == 0)
         #expect(snapshot.topUnimplementedNatives.isEmpty)
+        #expect(snapshot.noneReceiverCalls == 0)
+        world.runtime.tally.noteNoneReceiver()
+        #expect(world.readouts.scriptsSnapshot().noneReceiverCalls == 1)
     }
 
     @Test("an untargeted snapshot names no reference and no scripts")

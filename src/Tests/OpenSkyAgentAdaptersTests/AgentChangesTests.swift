@@ -7,7 +7,9 @@ import OpenSkyAgentAdapters
 import OpenSkyAgentControl
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 import OpenSkyRenderCore
+import OpenSkyScriptingInterface
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -65,6 +67,33 @@ struct AgentChangesTests {
         #expect(throws: AgentFailure.self) {
             try world.perform(.world(.enable(reference: "player", enabled: false)))
         }
+    }
+
+    @Test func aDeletionAndALockAreWrittenForTheReference() throws {
+        let deleted = try result(.delete(reference: "B8780"))
+        #expect(bridge.writeCalls.map(\.key) == [spell])
+        #expect(deleted["deleted"] == .bool(true))
+        bridge.lockStateResult = ReferenceLockState(isLocked: true, level: 50, key: nil)
+        let unlocked = try result(.lock(reference: "B8780", locked: false))
+        #expect(unlocked["locked"] == .bool(false))
+        #expect(unlocked["level"] == .init(50))
+        bridge.lockStateResult = nil
+        #expect(try result(.lock(reference: "B8780", locked: true))["level"] == .init(1))
+        #expect(throws: AgentFailure.self) {
+            try world.perform(.world(.delete(reference: "player")))
+        }
+    }
+
+    @Test func anActivationReachesTheBridgeAsAScriptWould() throws {
+        bridge.activateResult = PapyrusActivationOutcome(
+            recorded: true, queuedEvents: 2, cappedByRecursion: false
+        )
+        let answer = try result(.activate(reference: "B8780", activator: "player"))
+        #expect(bridge.activateCalls.map(\.target) == [spell])
+        #expect(bridge.activateCalls.map(\.activator) == [.player])
+        #expect(bridge.activateCalls.map(\.togglesOpen) == [false])
+        #expect(answer["queuedEvents"] == .init(2))
+        #expect(answer["cappedByRecursion"] == .bool(false))
     }
 
     @Test func aSpawnAnswersTheNewReference() throws {

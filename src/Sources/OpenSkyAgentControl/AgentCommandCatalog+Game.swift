@@ -79,6 +79,16 @@ nonisolated extension AgentCommandCatalog {
             "state.global", "A global variable's value.",
             positionals: [required("id", "The global editor ID.")]
         ),
+        command(
+            "state.condition", "What one condition function returns now, run on a reference.",
+            positionals: [
+                required("function", "The function's Creation Kit name, such as GetLocked.")
+            ],
+            options: [
+                value("ref", "ref", "The reference it runs on. Default: player."),
+                value("param", "value", "The first parameter: a hex FormID or a number.")
+            ]
+        ),
         command("state.time", "The game clock."),
         command("state.frame", "The frame counter and the timeline."),
         command(

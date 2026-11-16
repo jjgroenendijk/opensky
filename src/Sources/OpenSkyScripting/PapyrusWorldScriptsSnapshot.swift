@@ -20,7 +20,7 @@ extension PapyrusWorldRuntime.Readouts {
         questAliasFillFailures: Int = 0
     ) -> ScriptsSnapshot {
         let tally = world.runtime.tally
-        return ScriptsSnapshot(
+        var snapshot = ScriptsSnapshot(
             instanceCount: world.instancesByKey.count,
             targetDescription: targetDescription ?? target?.description,
             targetScripts: scriptNames(attachedTo: target),
@@ -57,6 +57,8 @@ extension PapyrusWorldRuntime.Readouts {
             usesGameTiming: world.runtime.nativeTiming == .game,
             lastStepDelayedCalls: world.lastStepDelayedCalls
         )
+        snapshot.noneReceiverCalls = tally.noneReceiverTotal
+        return snapshot
     }
 
     /// Runs `ticks` fixed steps now, whether or not the VM is paused. The

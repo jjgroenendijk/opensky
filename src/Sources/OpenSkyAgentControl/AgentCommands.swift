@@ -49,6 +49,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case music
     /// The playing sounds and the newest ones started.
     case sounds
+    /// What one condition function returns now, run on a reference.
+    case condition(function: String, reference: String, parameter: String?)
 
     public static let defaultActorRadius: Float = 4096
 
@@ -87,6 +89,12 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "nodes": try .nodes(reference: args.optionalString("ref"))
         case "changes": try .changes(limit: args.optionalInt("limit") ?? 20)
         case "flight": try .flight(reference: args.optionalString("ref"))
+        case "condition":
+            try .condition(
+                function: args.string("function"),
+                reference: args.optionalString("ref") ?? "player",
+                parameter: args.optionalString("param")
+            )
         default: session(name)
         }
     }
