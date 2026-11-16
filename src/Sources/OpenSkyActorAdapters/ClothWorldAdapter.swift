@@ -73,6 +73,24 @@ public final class ClothWorldAdapter: ClothWorld {
         )
     }
 
+    public func clothFrameMiss(for cloth: ClothPlayback) -> ClothFrameMiss? {
+        if cloth.actor == PlayerBody.actorFormID {
+            guard let session = game.gameSession, session.playerBody != nil else {
+                return .noPlayerBody
+            }
+            guard let pose = session.playerAnimation?.animatedBonesByName else {
+                return .noPlayerPose
+            }
+            return pose[cloth.bone] == nil ? .boneNotPosed : nil
+        }
+        guard
+            let entry = game.streamer.referenceEntry(formID: cloth.actor),
+            entry.placedActor != nil
+        else { return .actorNotLoaded }
+        guard let pose = game.animatedPose(for: entry.key) else { return .actorNotPosed }
+        return pose[cloth.bone] == nil ? .boneNotPosed : nil
+    }
+
     private func calves(
         of key: ReferenceKey, pose: [String: float4x4], actorToWorld: float4x4
     ) -> [ClothCapsule] {

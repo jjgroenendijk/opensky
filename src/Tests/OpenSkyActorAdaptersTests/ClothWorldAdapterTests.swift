@@ -44,12 +44,14 @@ struct ClothWorldAdapterTests {
         let adapter = ClothWorldAdapter(game: host, stage: nil)
         let cloth = try Self.cloth(actor: FormID(0x600))
         #expect(adapter.clothFrame(for: cloth) == nil, "the actor is not loaded")
+        #expect(adapter.clothFrameMiss(for: cloth) == .actorNotLoaded)
         let entry = try PackageRuntimeFixture.residentActor(0x600, base: 0x700)
         host.fakeStreamer.referenceEntryFormIDResult = entry
         var spine = matrix_identity_float4x4
         spine.columns.3.z = 100
         host.poses[entry.key] = [Self.bone: spine]
         let frame = try #require(adapter.clothFrame(for: cloth))
+        #expect(adapter.clothFrameMiss(for: cloth) == nil)
         #expect(frame.boneToActor.columns.3.z == 100)
         #expect(frame.scale == 1)
         #expect(frame.calves.isEmpty, "an actor without a ragdoll has no calf capsules")
@@ -61,5 +63,6 @@ struct ClothWorldAdapterTests {
         let adapter = ClothWorldAdapter(game: ActorHost(), stage: nil)
         let cloth = try Self.cloth(actor: PlayerBody.actorFormID)
         #expect(adapter.clothFrame(for: cloth) == nil)
+        #expect(adapter.clothFrameMiss(for: cloth) == .noPlayerBody)
     }
 }

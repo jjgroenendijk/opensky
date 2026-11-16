@@ -71,10 +71,14 @@ effects add perks with Filter Activation entries, such as `PlayerWerewolfFeed` a
 
 The cape is the armour `DLC1VampireLordCape` (`02015BC1` in `Dawnguard.esm`): not playable,
 biped slot 35, with the addon `DLC1VampireLordCapeAA` and the model
-`Actors\VampireLord\Character Assets\VampireCape.nif`. The player's change script never names
-it. `Dawnguard.esm` registers the cape and the vampire race in two engine default objects, so
-the engine puts the cape on the player itself. Harkon gets it from his outfit
+`Actors\VampireLord\Character Assets\VampireCape.nif`. Harkon gets it from his outfit
 `DLC1dunHarkonVampireLordRoyalOutfit`, and the NPC turn quest equips it by script.
+
+The player's Vampire Lord has no cape. The player's change script equips
+`DLC1ClothesVampireLordArmor`, which has no cape part, and the engine never equips the cape on
+its own. The engine default object "Verlet Cape" names the cape only to start its cloth
+([cape cloth](/engine/cape-cloth.md)), not to dress anyone. A cape equipped by hand on the player
+swings too.
 
 The cape is not Havok cloth. Its model is one unskinned shape, `VampLordCapeMesh`, with 70
 vertices and 108 triangles, parented to `NPC Spine2 [Spn2]`. The engine runs its own
@@ -88,10 +92,9 @@ the hem swings because the pinned edge moves. Two short sequences in the model s
 flowchart TD
     A[Change to the Vampire Lord] --> B{"Who changes?"}
     B -- player --> C[Script sets the race and equips the armour]
-    C --> D[Engine adds the cape from its default object]
+    C --> D[No cape]
     B -- Harkon --> E[Outfit holds the cape]
     B -- other NPC --> F[Turn quest script equips the cape]
-    D --> G[Cape model on NPC Spine2]
     E --> G
     F --> G
     G --> H["12 pinned vertices follow the spine<br/>the rest fall under gravity −1500"]
@@ -151,8 +154,7 @@ It does not put on the form's own clothes. `state player` shows `form` and the
 
 ## Where OpenSky differs
 
-- [WARNING] The change to the Vampire Lord shows no cape. A cape put on by hand follows the
-  spine but never swings or settles.
+- [WARNING] A cape put on by hand follows the spine but never swings or settles.
 - [WARNING] The Vampire Lord body draws black.
 
 - The game charges only the first witnessed change. OpenSky counts "first" per crime faction

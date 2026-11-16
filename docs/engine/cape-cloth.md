@@ -111,7 +111,9 @@ attached.
 ## In OpenSky
 
 The setting "Cape cloth" turns the cloth on or off; off holds the cape at its rest pose.
-`openskycli game state cloth` lists the loaded capes and how many moved in the last frame.
+`openskycli game state cloth` lists the loaded capes and how many moved in the last frame. For a
+cape that did not move, it says what was missing: the player's body, its pose, the actor, the
+actor's pose, or the cape's bone in that pose.
 The solved positions reach the GPU as per-vertex offsets that are added before skinning,
 the same buffer face morphs use. The body capsule takes the radius of OpenSky's character
 controller, 18 units, which every actor shares. The bounds fallback would take the Vampire

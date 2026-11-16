@@ -109,6 +109,7 @@ struct ClothPlaybackTests {
         coordinator.tick(deltaTime: 0.016)
         #expect(coordinator.lastSteppedCount == 1)
         #expect(coordinator.readout.capes.map(\.bone) == ["NPC Spine2 [Spn2]"])
+        #expect(coordinator.readout.capes.map(\.stepped) == [true])
         coordinator.tick(deltaTime: 0)
         #expect(coordinator.lastSteppedCount == 0, "a paused frame steps nothing")
         coordinator.isEnabled = false

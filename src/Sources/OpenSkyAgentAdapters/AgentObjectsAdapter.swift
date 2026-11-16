@@ -54,7 +54,11 @@ extension AgentObjectsAdapter {
             "enabled": .bool(readout.isEnabled),
             "stepped": .init(readout.steppedCount),
             "capes": .array(readout.capes.map { cape in
-                ["actor": .formID(cape.actor.rawValue), "bone": .string(cape.bone)]
+                [
+                    "actor": .formID(cape.actor.rawValue), "bone": .string(cape.bone),
+                    "stepped": .bool(cape.stepped),
+                    "miss": cape.miss.map { .string($0.rawValue) } ?? .null
+                ]
             })
         ]
     }
