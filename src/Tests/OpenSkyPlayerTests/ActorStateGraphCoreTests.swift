@@ -181,6 +181,30 @@ struct ActorStateGraphCoreTests {
         #expect(ActorStateGraphCore.getUpType(swimming: false) == 1)
     }
 
+    /// A knocked-down NPC gets up as a swimmer only in water deep enough to start a swim.
+    @Test func anNPCGetsUpSwimmingInDeepWaterOnly() {
+        // 112 of 128 units under water is the 0.875 share.
+        #expect(ActorStateGraphCore.getsUpSwimming(
+            waterSurface: 112, rootHeight: 0, actorHeight: 128, groundBelow: 0
+        ))
+        #expect(!ActorStateGraphCore.getsUpSwimming(
+            waterSurface: 40, rootHeight: 0, actorHeight: 128, groundBelow: 0
+        ))
+        #expect(!ActorStateGraphCore.getsUpSwimming(
+            waterSurface: nil, rootHeight: 0, actorHeight: 128, groundBelow: 0
+        ))
+        // With water, no ground within half the height below the root counts as deep water.
+        #expect(!ActorStateGraphCore.getsUpSwimming(
+            waterSurface: nil, rootHeight: 0, actorHeight: 128, groundBelow: nil
+        ))
+        #expect(ActorStateGraphCore.getsUpSwimming(
+            waterSurface: 10, rootHeight: 0, actorHeight: 128, groundBelow: nil
+        ))
+        #expect(ActorStateGraphCore.getsUpSwimming(
+            waterSurface: 40, rootHeight: 0, actorHeight: 128, groundBelow: -80
+        ))
+    }
+
     @Test func thePlayerGetsTheReferenceGamesAttackTiming() {
         let writes = Dictionary(uniqueKeysWithValues: ActorStateGraphCore.writes(
             ActorStateGraphInputs(), sprintAllowed: true, wantsBlock: false, stateValue: nil

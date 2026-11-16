@@ -34,7 +34,7 @@ The locomotion bridge writes these each step, to both the third-person and the f
 | `IsInCastState` | real | 1 while either hand casts, else 0 | Cast blends |
 | `iRightHandEquipped`, `iLeftHandEquipped` | int32 | The hand's `iRightHandType` value while drawn, else 0 | Jump, sprint, stagger, and shout selectors |
 | `IsBeastRace` | bool | The race has the `IsBeastRace` keyword | The unarmed attack selector |
-| `iGetUpType` | int32 | 2 while swimming, else 1 | The get-up pose matcher |
+| `iGetUpType` | int32 | 2 while swimming or deep in water, else 1 | The get-up pose matcher |
 | `weapAdj` | real | The player's weight / 100 | The expression that weights the [body-weight layer](/engine/behavior-clips.md#body-weight-layer) |
 | `attackPowerStartTime`, `attackIntroLength`, `attackComboStartFraction` | real | 0.3666667, 0, and 0.5 ([attack timing](#attack-timing)) | Attack blends |
 | `iState` | int32 | The value of one `iState_*` constant | State conditions |
@@ -48,7 +48,17 @@ unarmed child, so OpenSky writes 0 then. The `IsBeastRace` keyword is the defaul
 In the reference game, a living bandit reads `iGetUpType` 0 until something knocks it down.
 It reads 1 from the frame `pushactoraway` starts the ragdoll (observed 2026-11-04). So 0 is the
 graph's start value, and the game writes the value when a get-up starts. OpenSky writes 1 or 2
-each step instead, which picks the same child.
+each step on the player's graph, which picks the same child. An NPC's graph gets the value just
+before its `GetUpStart`. The game writes 2 when its body is deep in water, else 1:
+
+1. If at least 0.875 of the actor's height is under water at its body root, it is 2.
+2. Else the game looks for ground below the root, at most half the actor's height down. With no
+   ground there, it is 2.
+3. With ground, it is 2 when at least 0.875 of the height is under water at that ground, else 1.
+
+Example: a 128-unit actor lying on a lake bed 112 units under the surface gets up swimming.
+OpenSky uses the point where the body lies as its root, and counts missing ground as water only
+where there is water.
 
 [WARNING] A reanimated corpse was not observed: a reanimate spell cast from the console did not
 raise the corpse. OpenSky raises a reanimated corpse without a get-up, so no graph reads
