@@ -290,6 +290,23 @@ stateDiagram-v2
   the scene waits for as long as they are far away.
 - The scene counts as interruptible, with or without flag 0x10.
 
+The quest starts when two actors fire the event
+([random conversations](/engine/random-conversations.md)), and the
+[story manager](/engine/story-manager.md) picks it. For the Riften market the path is:
+
+1. The `ADIA` event node.
+2. `RiftHoldScenes`: `GetIsEditorLocation` RiftHoldLocation.
+3. `RiftenCityScenes`: `GetInCurrentLoc` RiftenLocation.
+4. `GrandPlazaConversations`: a random quest node with 43 quests, for `GetInWorldspace`
+   RiftenWorld and `IsInInterior` 0.
+
+A quest such as `DialogueRiftenGrandPlazaScene11` (priority 30) fills Actor1 and Actor2 from
+the event's two actors, each checked with `GetIsID` against its two named people, here Bolli
+and Grelka. Its scene has `FNAM` 0x7: it begins when the quest starts, stops the quest when it
+ends, and shows all text. Each line sits in its own phase, and the next phase starts when the
+line ends. A voiced line gets 0.25 s more. No limit on the number of scenes at once was found
+beyond the one-at-a-time rule above.
+
 OpenSky differs in two points. It does not make a partner walk: the scene begins as soon as
 both partners have a loaded body and are free. And it starts the gap when the conversation
 ends ([unverified values](/engine/unverified-values.md)).
@@ -309,5 +326,8 @@ its two speakers and ends.
 ## Not done yet
 
 - Observing combat is not known, so the observe-combat behaviour flags never act.
+- [WARNING] In the Riften market at 10:00, the game started two conversations within about
+  2 minutes. OpenSky started none in 5 minutes, because most speakers stayed in their houses
+  ([package schedules](/engine/package-schedules.md#actors-far-from-the-player)).
 - A conversation partner does not walk to the other partner before the scene begins.
 - A speaker does not wait to face its look target before its line.

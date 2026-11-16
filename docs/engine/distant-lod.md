@@ -160,6 +160,31 @@ reference that a mod adds or flags is drawn, and one that a mod deletes or unfla
 [WARNING] The objects merged into the object LOD blocks do not follow enable changes: the
 vanilla blocks were built with them, and only generated LOD could leave them out.
 
+### Window glow
+
+Whiterun's distant window lights are one Is Full LOD reference with the glow mesh
+`WRLODWindowGlow01.nif`. Its `XEMI` emittance names a region, not a light:
+`FXLightRegionInvertWindowWhiterun`. That region's `RDWT` weather list holds one weather at
+100 %, `FXWthrInvertWindowsWhiterun`. So the glow follows the game hour through that weather's
+colour keys, not the weather on screen, an image space, or a global.
+
+The weather's `NAM0` colour table has two rows that are not black, with keys for sunrise,
+day, sunset, and night:
+
+| Row | Sunrise | Day | Sunset | Night |
+| --- | --- | --- | --- | --- |
+| 5th | black | black | grey 178 | white |
+| 10th | 124, 70, 16 | black | 243, 118, 54 | 242, 176, 55 |
+
+The key hours come from the climate's `TNAM`. For `SkyrimClimate` the sunrise runs from 5:30
+to 10:00 and the sunset from 16:00 to 20:30. A built-in game setting of 0.5 h moves both night
+edges out, so the sunrise starts at 5:00 and the sunset ends at 21:00.
+
+Seen in the reference game from the Whiterun plains: no glow at 19:00 in clear weather, a
+faint red-orange glow at 21:00, a warm orange glow at 23:00, and no glow at 23:00 in
+`SkyrimStormRain`. Which colour row lights the mesh, the blend curve between the keys, and
+why a storm hides the glow are not known.
+
 ## Generated terrain
 
 The vanilla terrain LOD files were built from `Skyrim.esm` alone, so land that `Update.esm`,

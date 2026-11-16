@@ -130,6 +130,35 @@ ammunition's chain. The `PROJ` explosion then goes off with its own model, light
 The light fades and the use of the velocity for the model's facing are OpenSky's choices. The
 fade duration (0x30) and the decal link (0x54) are read by xEdit but not used.
 
+### Lightning beams
+
+A lightning spell's projectile has the type Beam. The bolt's whole shape comes from the
+model's procedural lightning controller; no game setting shapes it.
+
+| Projectile | Model | Speed | Range | Fade | Lifetime | Relaunch | Impact force |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `ShockBoltAim` (Lightning Bolt) | `Magic\LightningBolt02.nif` | 20000 | 3000 | 0.5 | 0.35 s | 0.15 s | 7 |
+| `ShockBoltAimChain` (Chain Lightning) | `Magic\LightningBolt02.nif` | | | 0.6 | 0.4 s | | 10 |
+| `ShockBoltAimStorm` (Storm Call) | `Magic\LightningBolt03.nif` | 90000 | 6000 | 0.5 | 0.35 s | 0.15 s | 56 |
+
+`LightningBolt02.nif` holds three strands, each a lightning controller between `start` and
+`end` nodes, with a `BeamEnd` node at the hit:
+
+| Strand | Subdivisions | Branches | Length | Width | Child width | Arc offset | Fades | Active |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| A | 6 | 0, variation 1 | 512 | 14 | 0.75 | 15 | child bolts only | 0 to 0.5 s |
+| B, C | 6 | 1, variation 1 | 512, variation 30 | 5 | 0.5 | about 20 | main and child | 0 to 1.4 s |
+
+Keyed float curves drive the generation, mutation, and arc offset over time, and the game
+samples them each frame. Generation and mutation make the shape regenerate and drift; one
+generation curve goes from 15 to about 18 at 0.125 s and to 45 at 0.5 s. Curve-driven
+subdivision and branch counts round to whole numbers. The shader's alpha and colour curves run
+about 1.33 s. How the branches are placed, and how the storm bolt picks its sky point, were not
+found.
+
+[WARNING] Near Riverwood OpenSky drew no bolt for Lightning Bolt or the Storm Call bolt, only a
+small spark and a short light at the hit point.
+
 ## What a landed spell reaches
 
 The struck actor is the direct target and gets every entry. Then every actor inside the widest area

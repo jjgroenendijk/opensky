@@ -79,15 +79,52 @@ with its whole shape: ramps, start points, and centre.
 
 ## Blur effects
 
-- **Radial blur.** Each pixel takes 8 taps on the line to the `DNAM` centre. The radius `r` is
-  the share of the centre-to-corner distance. The weight is
-  `clamp((r - start) * rampUp, 0, 1)`; when `downStart` is past `start`, it is also multiplied
-  by `clamp(1 - (r - downStart) * rampDown, 0, 1)`. The taps reach `strength` percent of the
-  way to the centre, times the weight.
-- **Motion blur.** The pass keeps last frame's view-projection. For each pixel it finds where
-  the same far-plane direction was last frame, so only the camera's turn makes a trail. The
-  trail is 3 × `s / (1 - s)` frames of that motion, the trail of a frame blend that keeps `s`
-  of the last frame. It is capped at a tenth of the screen.
+A modifier's curves are read at `t = elapsed / duration`, clamped to 0 to 1, where the
+duration is the second `DNAM` float. The key times in every curve use the same 0 to 1 range.
+The modifier's strength multiplies the radial strength, the blur radius, the double vision,
+the depth of field strength, and the fade and tint alpha. It does not multiply the radial
+ramps and start points, the centre, or the motion blur.
+
+```mermaid
+flowchart TD
+    A[Active modifiers] --> B[Read each curve at t]
+    B --> C[Blur radius: highest, clamped 0 to 7]
+    B --> D[Motion blur: highest]
+    B --> E[Radial blur: the modifier with the highest strength gives all its values]
+    E --> F{Strength above 0 and the radial blur option on?}
+    F -- yes --> G[Radial taps per pixel]
+    F -- no --> H[No radial blur]
+```
+
+- **Radial blur.** The centre is the `DNAM` centre, 0.5 and 0.5 (the screen centre) in the
+  vanilla records. With the use-target flag the centre is the target's place on screen, or
+  the screen centre when there is no target. For a pixel at distance `d` from the centre, in
+  screen units with no aspect correction:
+  - `up = strength × (1 − 1 / (1 + rampUp × (d − start)))` when `d > start`, else 0;
+  - `down = strength × (1 − 1 / (1 + rampDown × (d − downStart)))` when `d > downStart`,
+    else 0;
+  - `amount = max(up − down, 0)`; the step is the unit vector toward the centre times
+    `amount × 0.5`.
+
+  The pixel averages taps at `k × step` for `k` from `−N` to `N`, all with the same weight.
+  The radial blur quality option picks `N` = 2, 6, or 10: 5, 13, or 21 taps. The ramps are
+  rates: a larger value reaches full strength sooner.
+- **Full-screen blur.** The radius, rounded up to 1 to 7, picks a kernel of 3, 5, 7, up to 15
+  taps. Below a radius of 1 the blurred picture is mixed over the sharp one with the radius
+  as weight. From 1 up it replaces the sharp picture.
+- **Motion blur.** The value is the highest over the active modifiers. How strong it looks
+  on screen is not known. OpenSky keeps last frame's view-projection. For each pixel it finds
+  where the same far-plane direction was last frame, so only the camera's turn makes a trail.
+  The trail is 3 × `s / (1 - s)` frames of that motion, the trail of a frame blend that keeps
+  `s` of the last frame. It is capped at a tenth of the screen.
+
+Worked example, Whirlwind Sprint (`MAGShoutSprint03`, 3 s). The radial strength goes from 0
+to 0.9 at `t` = 0.02, to 0.6 at 0.13, and to 0 at 0.4. The ramp up falls from 0.2 to 0.1,
+the start is 0.1, and there is no ramp down. The blur radius peaks at 2.0 at `t` = 0.04 and
+is 0 by 0.46. At 0.06 s (`t` = 0.02), a pixel at the screen corner (`d` ≈ 0.71) gets
+`up = 0.9 × (1 − 1 / (1 + 0.2 × 0.61)) ≈ 0.098`, so its taps step 0.049 screen units toward
+the centre: a strong streak. The VATS modifier (`VATSImod`) holds a radial strength of
+0.125, a ramp up of 0.1, a start of 0.1, and a motion blur of 0.25.
 
 ## Bloom and light scales
 
@@ -149,11 +186,12 @@ The launcher's "Low-health pulse" switch stands for the game's `bLowHealthIModEn
   renders to a float target.
 - The bloom tap pattern, the radius step, and the receive-bloom threshold are not documented.
   OpenSky reads the receive threshold but does not use it.
-- The radial blur reach, its radius unit, and the centre's screen space are OpenSky's reading
-  of the CK wiki text. Motion blur follows only the camera's turn, not moving objects.
+- The radial blur takes 8 taps with a linear ramp, not the game's taps and curve above, and
+  the full-screen blur is a 12-tap disc. Beside the game, Whirlwind Sprint and VATS showed no
+  visible blur in OpenSky, only their tint. Motion blur follows only the camera's turn, not
+  moving objects.
 - Depth of field draws as a [post effect](/rendering/post-effects.md#depth-of-field) when its
-  game option is on. The blur radius is a 12-tap disc blur, and double vision is one ghost
-  image offset to the side.
+  game option is on. Double vision is one ghost image offset to the side.
 - A cross-fade rises and falls linearly over its fade time. The curve is OpenSky's choice.
   Only one cross-faded modifier is held, as in the game, and a new one replaces it; the old
   one fades out over the new one's fade time.

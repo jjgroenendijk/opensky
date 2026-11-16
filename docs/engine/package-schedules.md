@@ -337,6 +337,23 @@ A walk that ends reports its rest pose after the movement runtime has stored its
 listener may start the next move right away, as a patrol does at each marker. If the report came
 during the runtime's update, that update would write back its older copy and drop the new move.
 
+## Actors far from the player
+
+In the game, an actor whose package leads to another cell walks there even while it is not
+loaded. The game keeps a graph of cells and worldspaces, joined by their load doors, and the
+actor follows a rough path along it, door by door. When the area around it loads, the game
+builds a full path from the actor's place on that rough path, over the navmesh where one is
+loaded. So a resident who leaves home at 8:00 is already on the way, or at the market, when
+the player arrives. No setting for the speed of this walk was found.
+
+The game picks a package again every 15 s and a procedure every 3 s. Actors far from the player
+are updated less often, and a sandbox looks for a new spot every 3 to 6 s, within 6000 units.
+
+[WARNING] OpenSky moves an actor only while its cell is loaded. A persistent resident stays in
+the interior where the editor placed it. Seen in Riften at 10:00, Brand-Shei, Marise, Grelka,
+Mjoll, and Bolli never came to the market by 12:00. In Riverwood, Alvor's work package runs
+inside his house.
+
 ## Walking into another cell
 
 An actor that walks into another cell moves into that cell's references, the way `MoveTo` moves

@@ -66,6 +66,12 @@ cell brings a new pose buffer, and its object starts again at its first state.
 | `GetAnimationVariableBool`, `Int`, `Float` | Reads the graph variable | Fails |
 | `SetAnimationVariableBool`, `Int`, `Float` | Writes the graph variable | Fails |
 
+`PlayAnimationAndWait` works only on an object that is not an actor; on an actor it returns
+at once. It sends the start event to the graph. If the graph refuses the event, it returns at
+once. If the object has no 3D loaded, it returns at once. Otherwise the script waits for the
+named end event from that object. Event names compare without case, so a wait for `trans02`
+ends on `Trans02`. What the game does when the object unloads during a wait was not found.
+
 A wait ends with true when the event fires, and with false when the object's cell unloads.
 Every event a graph fires also reaches `OnAnimationEvent` of the scripts that registered
 for it. `PlayAnimation` of an event the graph does not declare falls back to the answer
@@ -105,6 +111,10 @@ Activators, doors, furniture, containers, and moving statics are checked for a g
 - `BGSGamebryoSequenceGenerator` plays its sequence whole. Its blend mode and percent are read
   but not used.
 - A node that only a mesh sequence moves draws in motion, but its collision stays at rest.
+- The text events in an object graph's clips do not reach the object's scripts or sounds. In
+  the Riften Ratway the bridge lever and the retractable bridge move to their end pose, but
+  their scripts keep waiting for `FullPushedUp` and `trans02`, and the bridge plays no
+  `SoundPlayAt` sound at `SoundNode01`.
 
 ## Sequence doors
 

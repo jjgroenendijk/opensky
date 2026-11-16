@@ -68,7 +68,10 @@ Differences from the game:
   The game asks before Continue only while a game is in progress: after a new game or a load
   in this run, the player quit to the main menu. Then OpenSky calls `ConfirmContinue` with
   `sConfirmContinue`, and loads the newest save when the movie calls `ContinueLastSavedGame`
-  after a yes. Otherwise Continue loads at once.
+  after a yes. Otherwise Continue loads at once. Both questions show in the movie's own
+  question panel, not in a message box: `sConfirmNew` is "Start a new game?" and
+  `sConfirmContinue` is "Continue from your last saved game?". The pause menu's Quit list
+  reaches this menu ([system menu](/engine/system-menu.md#quit)).
 - When the player's settings file cannot be read, an OK box over the main menu says so, once,
   with `sCantLoadSettings`. When only its controls cannot be read, it says `sCantLoadControls`.
   The defaults are used in both cases.
@@ -116,6 +119,25 @@ layer, and the titles do not come back. The movie's contract was read with
 `openskycli swf action-list --movie titles.swf` and checked with `openskycli swf movie-probe`.
 `openskycli game debug titles show`, then `debug titles Sequence1`, drives the same hooks, and
 `state menu` shows `titles`.
+
+### Title timing
+
+The quest stage fades the game out, opens the titles, and waits 4 s. The quest script's timer
+then starts `Sequence1`, waits 5 s, starts `Sequence2`, waits 12 s, starts `Sequence3`, waits 5 s,
+starts `Sequence4`, waits 10 s, and closes the titles. The movie runs at 30 frames a second, and
+each clip's own length ends its title; the timer only starts the next one.
+
+| Clip | Frames | Fade in | Fade out starts | Gone after |
+| --- | --- | --- | --- | --- |
+| `Sequence1`, `Sequence2` | 135 | frames 0 to 37 | frame 89 | 4.5 s |
+| `Sequence3` | 166 | not read | frame 111 | 5.5 s |
+| `Sequence4` | 166 | not read | frame 120 | 5.5 s |
+
+A fade in raises the alpha from 0 to 1 while a 23-pixel blur shrinks to 0. A fade out lowers
+the alpha to 0 while the blur grows back to 23 pixels. The clip then stops on an invisible
+frame. In the reference game "Presents" was gone about 5 s after it started.
+
+[WARNING] In OpenSky both titles were still on screen 12 s after they started.
 
 The `MQ101` aliases that name unique actors fill from the location records ([quest
 state](/engine/quest-state.md), "What does not fill yet").

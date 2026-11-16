@@ -74,8 +74,15 @@ events above, then a footstep tag, then the sound type events.
 A `SoundPlay` key means the same in a NIF text key ([NIF sequences](/formats/nif-sequences.md)).
 A door mesh's sequences write a sound as `Sound: <editor ID>` instead, which plays the same way
 ([sequence doors](/engine/object-animation.md#sequence-doors)).
-A descriptor whose `LNAM` loops keeps playing until the same source stops it. A one-shot is not
-tracked. A `SoundStop` for a sound that is not looping does nothing.
+A `SoundPlay` sound is attached to the source's root, so it follows the source as it moves. A
+`SoundPlayAt` payload is split at its dot: the first part is the descriptor, the second a node
+in the source's 3D. The sound attaches to that node and follows it, for example the end of a
+bridge as it lowers. With no node part the root is used.
+
+The game tracks these sounds per source and per exact event text. The same event on the same
+source replaces the sound it tracked before, and `SoundStop` and `SoundRelease` act on the
+tracked sound. A descriptor whose `LNAM` loops keeps playing until the same source stops it. A
+one-shot is not tracked. A `SoundStop` for a sound that is not looping does nothing.
 
 ## Animation objects
 

@@ -117,6 +117,13 @@ each use is OpenSky's reading:
   destination is shown only once this time has passed. A rebuild of the same interior does not
   wait.
 
+The game starts the fade of an automatic door at once, over 0.5 s, and the player sets it off
+by distance, at 350 units from the door. An NPC uses an automatic door at 250 units and fades
+out within 150 units of it. An NPC that goes through any door fades out over 0.5 s. A door with
+the `FNAM` "Minimal Use" flag (0x08) is left out of an NPC's path when another way exists. The
+open sound of a normal load door starts as it is used and plays over the fade, so most of an
+open animation is hidden by the black. Most automatic doors have no model and so no animation.
+
 The game refuses a door to a rider with `sNotAllowedToUseAutoDoorsWhileonHorse`. OpenSky refuses
 every door while the player sits on a mount, and posts that message ([riding](/engine/riding.md)).
 

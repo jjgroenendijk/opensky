@@ -284,6 +284,39 @@ Journal text fills `<Alias=Name>` tags and the pronoun subtags of the Creation K
 `PronounPos`, `PronounPosObj`, `PronounRef`, and `PronounInt`, each from its `sPronoun` setting.
 A `Cap` suffix capitalises the word. `<Alias=Player>` works without a `Player` alias.
 
+## Quest page layout
+
+The movie lays out the quest page itself. The engine only sends the data.
+
+- When the quest list arrives, the movie writes every list entry in capitals. The big title
+  above the description takes that text and shrinks it to fit on one line. It does not wrap.
+- The list shows the quests that are not complete first, in the order the engine sends them.
+  A divider row follows, then the completed quests. A `$MISCELLANEOUS` entry comes last when
+  the engine reports miscellaneous objectives. Completed quests are grey (`0x606060`), the
+  others white (`0xFFFFFF`). The active quest shows the equipped icon.
+- The description starts at a fixed top and wraps inside the panel's fixed width. The movie
+  then measures the bottom of its last line.
+- The `OBJECTIVES` header sits 25 px below that bottom. The objective list starts 10 px below
+  the header. Its height is the larger of 40 px and 470 px minus the list's top; the scroll bar
+  is 20 px shorter. For the Miscellaneous entry the header hides and the list starts where the
+  description would start.
+- Each objective row shows the frame `Active`, `Completed`, `Failed`, or `Normal`, with a
+  `Selected` variant for the highlighted row. A row without text shows `None`.
+- With no quest, the movie writes "No Active Quests" into its own text field, empties the
+  title and the description, and hides the header.
+
+For example, a description that ends at y = 300 puts the header at 325 and the list at about
+335, so the list frame is 470 − 335 = 135 px high.
+
+The bottom bar on the quest page shows `$Toggle Active` (Enter) and `$Show on Map` (M), and the
+date line from the engine's player information. Both buttons hide for a completed quest, and
+`$Show on Map` also hides when the engine says the quest cannot be shown on the map. The level
+meter shows only on the Stats and System pages.
+
+[WARNING] Seen beside the game, OpenSky draws the description on one clipped line, puts the
+header at a fixed height, lists no objective rows, keeps the title in mixed case, uses a larger
+list font, and shows the level meter in place of the button hints and the date.
+
 ## Not done yet
 
 - A quest the runtime does not track is not shown. The page shows runtime state, not the plugin.

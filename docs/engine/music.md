@@ -117,6 +117,15 @@ A clean-room read of `SkyrimSE.exe` 1.7.104.0 (2026-11-06, behaviour only) gave 
   and every boss reference is done ([cleared locations](/engine/cleared-locations.md)).
 - `DTMS` plays only if its `MUSC` has the "Plays One Selection" flag.
 
+`MUSSpecialSuccess` has the flags "Plays One Selection", "Abrupt Transition", and "Ducks Current
+Track", priority 1, and a ducking of 60 dB. The menu that opens on a skill increase plays the UI
+sound `UILevelUp`, not music. In the reference game the level-up music is heard within 1.5 s
+after the level-up menu opens, while the menu is still up. The level-up menu pauses the world,
+so the music system keeps running while a menu pauses the world.
+
+[WARNING] OpenSky picks `LUMS` when the menu opens, but its track starts only after the menu
+closes, because the music does not advance while a menu pauses the world.
+
 ### Discovery music
 
 When the player discovers a map marker with a name, the game plays a discovery music type as a

@@ -67,6 +67,29 @@ Containers, doors, locks, and the "Feed" choice on a corpse come from the data. 
 effects add perks with Filter Activation entries, such as `PlayerWerewolfFeed` and
 `DLC1VampireActivationBlocker`, and the [perk activation](/engine/perks.md) rules apply them.
 
+### The Vampire Lord's cape and skin
+
+The cape is the armour `DLC1VampireLordCape` (`02015BC1` in `Dawnguard.esm`): not playable,
+biped slot 35, with the addon `DLC1VampireLordCapeAA` and the model
+`Actors\VampireLord\Character Assets\VampireCape.nif`. The player's change script never names
+it. `Dawnguard.esm` registers the cape and the vampire race in two engine default objects, so
+the engine puts the cape on the player itself. Harkon gets it from his outfit
+`DLC1dunHarkonVampireLordRoyalOutfit`, and the NPC turn quest equips it by script.
+
+The cape is not Havok cloth. Its model is one unskinned shape, `VampLordCapeMesh`, with 70
+vertices and 108 triangles, parented to `NPC Spine2 [Spn2]`. The engine runs its own
+point-and-stick simulation (Verlet) on it: 12 vertices are pinned to the spine bone, gravity
+is −1500 units/s², the solver runs 50 rounds per step with a fixed time step, and a capsule
+50 units up stops the cape passing into the body. Walking and stopping need no extra data:
+the hem swings because the pinned edge moves. Two short sequences in the model show the cape
+(alpha test at 110) and hide it (alpha test at 255).
+
+The body has no tint layers. Its colour is the shader of `VampireLord.nif`: an environment map
+shader with `VampireLord.dds`, its normal map, a subsurface map, the cube map `ShinyDullDS_e`,
+and a mask. Glossiness is 14, the specular colour (0.725, 0.725, 0.788) at strength 2.9, and
+the environment map scale 2.05. The emissive colour is black. In the game the skin looks pale
+grey-green.
+
 ## The crime
 
 `Game.SendWereWolfTransformation` reports the change as a crime when an actor detects the
@@ -113,6 +136,10 @@ It does not put on the form's own clothes. `state player` shows `form` and the
 `behaviorProject` the body runs.
 
 ## Where OpenSky differs
+
+- [WARNING] The change to the Vampire Lord shows no cape. A cape put on by hand follows the
+  spine but never swings or settles.
+- [WARNING] The Vampire Lord body draws black.
 
 - The game charges only the first witnessed change. OpenSky counts "first" per crime faction
   ([crime](/engine/crime.md)); UESP does not say whether it is per hold or for the whole game.
