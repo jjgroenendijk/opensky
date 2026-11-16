@@ -97,7 +97,7 @@
     "files": [],
     "expected_behavior": [
       "Treats the test as flaky instead of trusting the second run",
-      "Disables it with .disabled(\"flaky: #NNN\") and opens a bug issue with the run directory",
+      "Disables it with .disabled(\"flaky: #NNN\") and opens a bug issue with the failure message and how often it failed",
       "Does not add a retry"
     ]
   },
