@@ -7,6 +7,7 @@ import OpenSkyAgentAdapters
 import OpenSkyAgentControl
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyRenderCore
 import OpenSkySessionTesting
 import Testing
 
@@ -50,6 +51,15 @@ struct AgentDebugTests {
     @Test func settingTheTimeMovesTheGameClock() {
         #expect(failure(of: .setTime(hour: 9)) == nil)
         #expect(host.fakeRuntimeState.setGameClockHourCalls == [9])
+    }
+
+    @Test func aGridTeleportStandsOnTheHigherOfTerrainAndCollision() {
+        let collision = FakeCellStreamerCollisionPort()
+        #expect(AgentTeleportJob.gridGround(at: .zero, in: collision) == nil)
+        collision.sampleTerrainResult = TerrainGroundSample(height: -14112, normal: [0, 0, 1])
+        #expect(AgentTeleportJob.gridGround(at: .zero, in: collision) == -14112)
+        collision.topCollisionSurfaceResult = [0, 0, -2704]
+        #expect(AgentTeleportJob.gridGround(at: .zero, in: collision) == -2704)
     }
 
     @Test func aTeleportBeforeTheWorldLoadsIsRefused() {
