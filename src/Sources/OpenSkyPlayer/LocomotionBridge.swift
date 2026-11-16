@@ -99,6 +99,8 @@ nonisolated public final class LocomotionBridge {
     private var previousYaw: Float?
     var wasMoving = false
     var wasSprinting = false
+    /// Whether the graph fired `JumpLandEnd` on the last update.
+    private var graphLandingEnded = false
     /// The `iCombatStance` the riding graph was last told about.
     var wasCombatStance = false
     private var wasSneaking = false
@@ -186,8 +188,10 @@ nonisolated public final class LocomotionBridge {
         plan.applyCurrent(water, state: state, configuration: configuration, race: waterPushRace)
 
         previousYaw = state.yaw
-        wasMoving = moving
-        wasSprinting = gait == .sprint
+        // The graph leaves its movement states for the fall and stands when the landing
+        // clip ends, so it hears `moveStart` and `sprintStart` again on the next step.
+        wasMoving = moving && !graphLandingEnded
+        wasSprinting = gait == .sprint && !graphLandingEnded
         wasSneaking = isSneakingNow
         wasSwimming = swim != nil
         wasGraphSwimming = swim != nil || gait == .swim
@@ -224,6 +228,7 @@ nonisolated public final class LocomotionBridge {
         wasSwimming = false
         wasGraphSwimming = false
         wasGrounded = true
+        graphLandingEnded = false
         hasGroundSample = false
         isAirborneFromJump = false
         pendingJump = false
@@ -313,18 +318,6 @@ nonisolated public final class LocomotionBridge {
     }
 
     // MARK: - Graph
-
-    /// Steps every attached graph and returns the third-person root travel. The
-    /// first-person graph's root motion is dropped, so the capsule is driven once.
-    func advanceGraph(deltaTime: Float) -> BehaviorRootMotion? {
-        advanceFirstPersonGraph(deltaTime: deltaTime)
-        guard let graph else { return nil }
-        let result = graph.update(deltaTime: deltaTime)
-        status.noteGraphUpdate(events: result.firedEvents)
-        graphEvents.enqueue(result.firedEvents, unbound: result.unboundEvents)
-        pose.publish(result.bones)
-        return result.rootMotion
-    }
 
     private func writeVariables(
         state: LocomotionStepState,
@@ -423,5 +416,21 @@ nonisolated extension LocomotionBridge {
     /// The paired clips' end events since the mount coordinator last asked.
     @discardableResult public func drainMountEvents() -> [String] {
         graphEvents.drain(mountEventConsumer)
+    }
+}
+
+nonisolated extension LocomotionBridge {
+    /// Steps every attached graph and returns the third-person root travel. The
+    /// first-person graph's root motion is dropped, so the capsule is driven once.
+    func advanceGraph(deltaTime: Float) -> BehaviorRootMotion? {
+        advanceFirstPersonGraph(deltaTime: deltaTime)
+        guard let graph else { return nil }
+        let result = graph.update(deltaTime: deltaTime)
+        graphLandingEnded = result.firedEvents
+            .contains { $0.name == LocomotionGraphNames.jumpLandEnd }
+        status.noteGraphUpdate(events: result.firedEvents)
+        graphEvents.enqueue(result.firedEvents, unbound: result.unboundEvents)
+        pose.publish(result.bones)
+        return result.rootMotion
     }
 }

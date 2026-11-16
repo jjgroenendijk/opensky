@@ -59,6 +59,44 @@ Ground events start only once the capsule is standing. A door is a reset, and a 
 spends one step finding the ground. Without this rule, every door would report a fall and a landing
 the player never made.
 
+## How the game drives the graph
+
+Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0, 2026-11-16, which
+returned behaviour only. Not yet confirmed in the reference game.
+
+The game does not raise `moveStart`, `SprintStart`, or `JumpLandEnd` by name; those names are not in
+the program. It performs action records (`AACT`) from `Skyrim.esm`, and the idles attached to those
+actions send the graph events.
+
+```mermaid
+flowchart LR
+    MS[Movement state changes] -- "to moving" --> AMS[ActionMoveStart]
+    MS -- "to stopped" --> AMT[ActionMoveStop]
+    MS -- "other change" --> CF[Other action<br/>sets CyclicFreeze or CyclicCrossBlend]
+    SW[Sprint switch] --> ASP[ActionSprintStart or ActionSprintStop]
+    FL[Per-frame fall and land check] -- "fall begins" --> AF[ActionFall]
+    FL -- "touch down" --> AL[ActionLand]
+    AMS --> I[Idle of the action]
+    AMT --> I
+    ASP --> I
+    AF --> I
+    AL --> I
+    I --> G[Graph event]
+```
+
+- The player's actions, and maybe a mount's, go through one shared action queue. NPCs perform them
+  directly.
+- The landing sends only `ActionLand`. Nothing on that path sends `ActionMoveStart` or
+  `ActionSprintStart`, on landing or after the landing clip.
+- The program handles these graph variables by name: `Speed`, `Direction`, `SpeedSampled`,
+  `IsSprinting`, `iSyncSprintState`, `iSyncForwardState`, `iSyncIdleLocomotion`, `bInJumpState`,
+  `VelocityZ`, `bCrashLand`, and `LandTypeIndex`. A read of `bInJumpState` blocks mounting. Which of
+  them are written every frame was not found.
+
+OpenSky raises the graph events directly from its own state changes, as listed above, with no
+action records in between. Of the variables above it also writes `VelocityZ`; it writes no
+`bCrashLand` or `LandTypeIndex`.
+
 ## Reporting a name the graph does not declare
 
 Writing a variable and raising an event both answer whether the graph declares the name. The bridge
