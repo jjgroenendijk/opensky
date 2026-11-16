@@ -39,6 +39,7 @@ struct ActorRecordsTests {
         let beasts = BeastFormWorldAdapter(game: host, stage: nil)
         let mounts = MountWorldAdapter(game: host, stage: nil)
         #expect(!beasts.force(.werewolf))
+        #expect(host.fakeInventory.scriptItems.scriptUnequipAllCalls.isEmpty)
         #expect(
             mounts.dismountOffset(of: PackageRuntimeFixture.key(0x20))
                 == RaceProperties.MountOffsets.fallbackDismount
