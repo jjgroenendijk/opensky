@@ -46,7 +46,7 @@ nonisolated public struct AgentCommandSpec: Sendable {
 }
 
 nonisolated public enum AgentCommandCatalog {
-    public static let all: [AgentCommandSpec] = session + time + input + state + debug
+    public static let all: [AgentCommandSpec] = session + time + input + state + musicRead + debug
 
     private static let byName = Dictionary(uniqueKeysWithValues: all.map { ($0.name, $0) })
 

@@ -62,6 +62,22 @@ struct WorldMusicDirectorTests {
         #expect(MusicDirectorFixture.musicSourceIDs(engine).count == 1)
     }
 
+    @Test func theReadoutNamesThePlayingTypeAndTrack() throws {
+        let engine = try MusicDirectorFixture.makeRunningEngine()
+        let director = MusicDirectorFixture.makeDirector(engine: engine)
+        director.handleMusicContext(MusicFixture.context(cellMusicType: 0x20))
+        let readout = director.readout
+        #expect(readout.musicType.hasPrefix("MUSExplore"))
+        #expect(readout.state == "exploration")
+        #expect(readout.trackPath == "music\\explore\\a.xwm")
+        #expect(readout.trackCount > 0)
+        #expect(!readout.paused)
+        #expect(!readout.combat)
+        #expect(readout.interruptedBySpecial == nil)
+        director.pauseMusic()
+        #expect(director.readout.paused)
+    }
+
     // MARK: - Crossfade
 
     @Test func selectionChangeCrossfadesOutgoingOutAndIncomingIn() throws {

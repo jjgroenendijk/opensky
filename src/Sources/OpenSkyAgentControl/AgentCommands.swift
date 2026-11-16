@@ -45,6 +45,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case view
     /// The last new game started at a chosen place.
     case newGame
+    /// The playing music type and track.
+    case music
 
     public static let defaultActorRadius: Float = 4096
 
@@ -96,6 +98,7 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "favor": .favor
         case "impulses": .impulses
         case "newgame": .newGame
+        case "music": .music
         default: nil
         }
     }
@@ -229,6 +232,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case sound(on: Bool)
     /// `id=value` player settings applied over the saved ones until the next call.
     case settings([String])
+    /// A change a script or a console line could make: a modifier, a spell, a decal.
+    case world(AgentWorldChange)
 
     public static func parse(_ name: String, _ args: AgentArguments) throws(AgentFailure) -> Self {
         switch name {
