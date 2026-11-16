@@ -35,6 +35,14 @@ struct AgentWorldChangeCommandTests {
             enabled: false
         )))
         #expect(try parse(["enable", "1A2B"]) == .world(.enable(reference: "1A2B", enabled: true)))
+        #expect(try parse(["delete", "1A2B"]) == .world(.delete(reference: "1A2B")))
+        #expect(try parse(["lock", "1A2B"]) == .world(.lock(reference: "1A2B", locked: true)))
+        #expect(try parse(["lock", "1A2B", "off"])
+            == .world(.lock(reference: "1A2B", locked: false)))
+        #expect(try parse(["activate", "1A2B"])
+            == .world(.activate(reference: "1A2B", activator: "player")))
+        #expect(try parse(["activate", "1A2B", "--by", "3C4D"])
+            == .world(.activate(reference: "1A2B", activator: "3C4D")))
     }
 
     @Test func decalsAndSpawnsHaveDefaults() throws {
@@ -43,6 +51,18 @@ struct AgentWorldChangeCommandTests {
         #expect(try parse(["spawn", "1A2B", "--at", "target"])
             == .world(.spawn(base: "1A2B", anchor: "target")))
         #expect(throws: (any Error).self) { try parse(["decal", "target", "--height", "-5"]) }
+    }
+
+    @Test func aConditionReadNamesItsFunctionReferenceAndParameter() throws {
+        let request = try AgentCommandLine.request(
+            ["state", "condition", "GetLocked", "--ref", "1A2B", "--param", "3C"]
+        )
+        let args = AgentArguments(command: "state.condition", values: request.args)
+        #expect(try AgentStateQuery.parse("condition", args)
+            == .condition(function: "GetLocked", reference: "1A2B", parameter: "3C"))
+        let bare = AgentArguments(command: "state.condition", values: ["function": "GetLocked"])
+        #expect(try AgentStateQuery.parse("condition", bare)
+            == .condition(function: "GetLocked", reference: "player", parameter: nil))
     }
 
     @Test func musicIsAStateRead() throws {

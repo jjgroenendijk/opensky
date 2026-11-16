@@ -42,6 +42,22 @@ nonisolated extension AgentCommandCatalog {
             positionals: [required("ref", anyRefHelp)]
         ),
         command(
+            "debug.delete", "Delete a reference, as ObjectReference.Delete does.",
+            positionals: [required("ref", anyRefHelp)]
+        ),
+        command(
+            "debug.lock", "Lock or unlock a reference, as ObjectReference.Lock does.",
+            positionals: [
+                required("ref", anyRefHelp),
+                optional("on", "Either on to lock it or off to unlock it; on by default.")
+            ]
+        ),
+        command(
+            "debug.activate", "Activate a reference, as ObjectReference.Activate does.",
+            positionals: [required("ref", anyRefHelp)],
+            options: [value("by", "ref", "The activator. Default: player.")]
+        ),
+        command(
             "debug.decal", "Strike a loaded actor with a blade hit on its side facing you.",
             positionals: [required("ref", "The actor: target or a loaded reference's FormID.")],
             options: [value("height", "units", "Height above the feet; 100 by default.")]

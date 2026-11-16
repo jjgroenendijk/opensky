@@ -163,6 +163,8 @@ nonisolated public struct ScriptsSnapshot: Equatable, Sendable {
     public var usesGameTiming = true
     /// Native calls that the latest fixed step made wait for the next step.
     public var lastStepDelayedCalls = 0
+    /// Method calls on `None` since load. Each returned its default, and the script went on.
+    public var noneReceiverCalls = 0
 
     public init(
         instanceCount: Int,

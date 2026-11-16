@@ -1,7 +1,6 @@
-// `openskycli game debug imod|cast|spell|enable|disable|decal|spawn` and `state music`: the
-// changes a script or a console line makes, through the same Papyrus world bridge the
-// natives use, and the music that plays. A form is the load-order FormID the reference
-// game's console takes.
+// `openskycli game debug` commands that change the world as a script or a console line
+// would, and `state music`: each goes through the same Papyrus world bridge the natives
+// use. A form is the load-order FormID the reference game's console takes.
 
 import Foundation
 import OpenSkyAgentControl
@@ -9,7 +8,9 @@ import OpenSkyAudio
 import OpenSkyCombatInterface
 import OpenSkyEffects
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 import OpenSkyRenderCore
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -40,6 +41,9 @@ extension AgentChangesAdapter {
         case let .cast(spell, caster, target): try cast(spell, from: caster, at: target)
         case let .spell(spell, reference, known): try setSpell(spell, on: reference, known: known)
         case let .enable(reference, enabled): try setEnabled(reference, enabled: enabled)
+        case let .delete(reference): try delete(reference)
+        case let .lock(reference, locked): try setLocked(reference, locked: locked)
+        case let .activate(reference, activator): try activate(reference, by: activator)
         case let .decal(reference, height): try placeDecal(on: reference, height: height)
         case let .spawn(base, anchor): try spawn(base, at: anchor)
         }
@@ -157,6 +161,43 @@ extension AgentChangesAdapter {
         try bridge.write(ReferenceEnableState(isEnabled: enabled).erased, for: key)
         let stored = try bridge.referenceState(for: key)?.enableState.isEnabled ?? enabled
         return try ["ref": formJSON(key), "enabled": .bool(stored)]
+    }
+
+    private func delete(_ text: String) throws(AgentFailure) -> AgentJSON {
+        let key = try reference(text)
+        guard key != .player else { throw AgentFailure(.invalidArgument, "the player stays") }
+        try bridge.write(ReferenceDeletionState.deleted.erased, for: key)
+        let stored = try bridge.referenceState(for: key)?.deletion.isDeleted ?? true
+        return try ["ref": formJSON(key), "deleted": .bool(stored)]
+    }
+
+    /// A reference with no lock gets the level a script's `Lock` gives it.
+    private func setLocked(_ text: String, locked: Bool) throws(AgentFailure) -> AgentJSON {
+        let key = try reference(text)
+        var lock = try bridge.lockState(for: key)
+            ?? ReferenceLockState(isLocked: false, level: Self.scriptLockLevel, key: nil)
+        lock.isLocked = locked
+        try bridge.write(lock.erased, for: key)
+        return try [
+            "ref": formJSON(key), "locked": .bool(locked), "level": .init(Int(lock.level))
+        ]
+    }
+
+    /// The level `ObjectReference.Lock` gives a reference that has no XLOC.
+    private static let scriptLockLevel: UInt8 = 1
+
+    /// A script activation, so it is not an open action, as the native's own call.
+    private func activate(
+        _ text: String, by activatorText: String
+    ) throws(AgentFailure) -> AgentJSON {
+        let key = try reference(text)
+        let activator = try reference(activatorText)
+        let outcome = try bridge.activate(key, by: activator, togglesOpen: false)
+        return try [
+            "ref": formJSON(key), "by": formJSON(activator),
+            "queuedEvents": .init(outcome.queuedEvents),
+            "cappedByRecursion": .bool(outcome.cappedByRecursion)
+        ]
     }
 
     /// A one-handed blade's hit on the actor's side that faces the player: its impact

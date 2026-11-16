@@ -1,6 +1,6 @@
 // The debug commands that change the world the way a script or a console line would:
-// image space modifiers, spells, enable state, hit decals, and placed objects. Each
-// takes the load-order FormID the reference game's console takes.
+// image space modifiers, spells, enable state, deletion, locks, activation, hit decals,
+// and placed objects. Each takes the load-order FormID the reference game's console takes.
 
 /// Starts or removes an image space modifier, as the `ImageSpaceModifier` natives do.
 nonisolated public struct AgentModifierRequest: Equatable, Sendable {
@@ -31,6 +31,12 @@ nonisolated public enum AgentWorldChange: Equatable, Sendable {
     case spell(spell: String, reference: String, known: Bool)
     /// Enables or disables a reference, as `ObjectReference.Enable` and `Disable` do.
     case enable(reference: String, enabled: Bool)
+    /// Deletes a reference, as `ObjectReference.Delete` does.
+    case delete(reference: String)
+    /// Locks or unlocks a reference, as `ObjectReference.Lock` does.
+    case lock(reference: String, locked: Bool)
+    /// Activates a reference, as `ObjectReference.Activate` does.
+    case activate(reference: String, activator: String)
     /// Places a blood hit decal on an actor, `height` units above its feet.
     case decal(reference: String, height: Float)
     /// Places a new reference of a base object at another reference, as `PlaceAtMe` does.
@@ -51,6 +57,13 @@ nonisolated public enum AgentWorldChange: Equatable, Sendable {
             )
         case "enable", "disable":
             try .enable(reference: args.string("ref"), enabled: name == "enable")
+        case "delete": try .delete(reference: args.string("ref"))
+        case "lock":
+            try .lock(reference: args.string("ref"), locked: args.bool("on", default: true))
+        case "activate":
+            try .activate(
+                reference: args.string("ref"), activator: args.optionalString("by") ?? "player"
+            )
         case "decal": try parseDecal(args)
         case "spawn":
             try .spawn(base: args.string("base"), anchor: args.optionalString("at") ?? "player")

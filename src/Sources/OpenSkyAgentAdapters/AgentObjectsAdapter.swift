@@ -98,6 +98,7 @@ extension AgentObjectsAdapter {
             "pendingWaits": .init(snapshot.pendingWaitCount),
             "recentEvents": .array(snapshot.recentEvents.map(AgentJSON.string)),
             "lastFault": snapshot.lastFault.map(AgentJSON.string) ?? .null,
+            "noneReceiverCalls": .init(snapshot.noneReceiverCalls),
             "unimplemented": .array(snapshot.topUnimplementedNatives.map {
                 ["name": .string($0.name), "count": .init($0.count)]
             })
