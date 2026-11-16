@@ -81,7 +81,7 @@ nonisolated extension BehaviorGraphInstance.Clips {
             )
         } ?? rootMotion(&state, clip: clip, samples: samples, crossing: crossing)
         pose.rootMotion = mirror?.mirroring(motion) ?? motion
-        fireTriggers(generator, state: state, window: window, wrapped: wrapped)
+        fireTriggers(generator, state: state, window: window, crossing: crossing)
         fireAnnotations(clip, state: state, window: window, crossing: crossing)
         graph.nodeStates[target] = state
         return pose
@@ -260,8 +260,9 @@ nonisolated extension BehaviorGraphInstance.Clips {
         _ generator: HKBClipGenerator,
         state: BehaviorNodeState,
         window: BehaviorClipWindow,
-        wrapped: Bool
+        crossing: BehaviorClipCrossing
     ) {
+        let (wrapped, justSeeded) = (crossing.wrapped, crossing.justSeeded)
         guard
             let arrayTarget = generator.triggers,
             let array = graph.object(at: arrayTarget, as: HKBClipTriggerArray.self)
@@ -277,7 +278,14 @@ nonisolated extension BehaviorGraphInstance.Clips {
             let at = trigger.relativeToEndOfClip
                 ? window.length + trigger.localTime
                 : trigger.localTime
-            guard crossed(at, state: state, window: window, wrapped: wrapped) else {
+            // Like an annotation, a trigger at the clip start fires on the seeding update,
+            // so the bridge's `SoundPlay` at 0.0 plays.
+            guard
+                crossed(
+                    at, state: state, window: window,
+                    wrapped: wrapped, includingStart: justSeeded
+                )
+            else {
                 continue
             }
             graph.events.raise(

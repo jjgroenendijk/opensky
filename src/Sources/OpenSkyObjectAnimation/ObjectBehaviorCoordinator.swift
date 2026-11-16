@@ -23,7 +23,7 @@ public protocol ObjectBehaviorWorld: AnyObject {
 
 public final class ObjectBehaviorCoordinator {
     final class Running {
-        let object: CellAnimatedObject
+        private(set) var object: CellAnimatedObject
         let instance: BehaviorGraphInstance
         let clips: InstallBehaviorClipSource
         /// The billboards and lag bones of the mesh, when its rig adds them.
@@ -43,6 +43,17 @@ public final class ObjectBehaviorCoordinator {
             self.instance = instance
             self.clips = clips
             animator = object.nodes?.nodes.map { NIFNodeAnimator(animation: $0.animation) }
+        }
+
+        /// A rebuilt cell brings a new pose buffer and rig for the same object. The graph
+        /// keeps its state, so a script that waits for its end event still gets it.
+        func rebind(to rebuilt: CellAnimatedObject) {
+            object = rebuilt
+            animator = rebuilt.nodes?.nodes.map { NIFNodeAnimator(animation: $0.animation) }
+            sequenceClocks = [:]
+            if rebuilt.nodes == nil, !graphBones.isEmpty {
+                rebuilt.pose.publish(graphBones)
+            }
         }
     }
 
@@ -80,13 +91,19 @@ public final class ObjectBehaviorCoordinator {
         }
     }
 
-    /// Starts graphs for new objects and drops departed ones. A rebuilt cell brings
-    /// a new pose buffer, so its object restarts at its first state.
+    /// Starts graphs for new objects and drops departed ones. A rebuilt cell brings a new
+    /// pose buffer; the object keeps its graph and poses the new buffer.
     public func sync() {
         let resident = world?.residentAnimatedObjects() ?? []
         var seen = Set<UInt32>()
         for object in resident where seen.insert(object.reference).inserted {
-            if let current = running[object.reference], current.object.pose === object.pose {
+            if
+                let current = running[object.reference],
+                current.object.asset.projectPath == object.asset.projectPath
+            {
+                if current.object.pose !== object.pose {
+                    current.rebind(to: object)
+                }
                 continue
             }
             running[object.reference] = start(object)
