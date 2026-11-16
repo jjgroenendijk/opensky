@@ -100,6 +100,7 @@ the detail and the sources it did find.
 | Navigation | 128-unit ledge rule; 512-unit gait rule | [navigation](/engine/navigation.md) |
 | `GetCurrentAIProcedure` of procedures not measured | -1 | [world condition functions](/engine/condition-functions-world.md#packages) |
 | Package fallback on a blocked path | A guess at the game's rule | [package schedules](/engine/package-schedules.md) |
+| Package steps in one call | 16 deep per actor; a deeper result waits for the next tick | [package schedules](/engine/package-schedules.md#procedure-tree) |
 | Scene package wait | A scene does not wait forever on its package | [scenes](/engine/scenes.md) |
 | Conversation scene gap | Starts when the conversation ends | [scenes](/engine/scenes.md#conversation-scenes) |
 | Conversation scene meeting | Begins when both partners have a loaded body, at any distance | [scenes](/engine/scenes.md#conversation-scenes) |

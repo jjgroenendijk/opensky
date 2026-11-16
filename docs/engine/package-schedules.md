@@ -197,6 +197,11 @@ page <https://ck.uesp.net/wiki/Category:Package_Templates>:
 - A branch whose `PRCB` repeat flag is set starts again when it succeeds.
 - A procedure with `FNAM` set ends the whole package when it succeeds.
 
+A repeating tree can restart in the same frame when its act ends at once, such as a
+LockDoors that the world finishes in one call. Each restart reaches the next act, so the
+tree would never give the frame back. OpenSky lets one actor go 16 steps deep in one call.
+A result that comes back deeper waits, and it reaches its procedure on the actor's next tick.
+
 Each procedure reads its parameters through its `PKC2` indexes. A Find writes what it found
 into its third parameter, an object list. A later procedure that names the same input, such
 as an Acquire, takes that list as its targets. A package with no branch list runs its own
