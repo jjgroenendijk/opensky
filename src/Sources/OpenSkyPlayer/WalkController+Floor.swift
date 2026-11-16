@@ -39,23 +39,43 @@ nonisolated extension WalkController {
             maximumHeight: eye,
             query: query
         )?.height
-        let belowEye = [terrain, support].compactMap(\.self).filter { $0 <= eye }
-        // Terrain above the eye means the spot is under the landscape: stand on top of it.
-        return belowEye.max() ?? terrain
+        let below = [terrain, support].compactMap(\.self).filter { $0 <= eye }.max()
+        if let below, eye - below <= Self.underWorldDrop {
+            return below
+        }
+        // A surface above and no ground near below means the spot is under the world, such
+        // as under the landscape or below a city's streets: stand on top of it.
+        let supportAbove = CapsuleWorldCollider(capsule: capsule).stepSupport(
+            at: spot,
+            minimumHeight: eye,
+            maximumHeight: eye + Self.groundSearchDepth,
+            query: query
+        )?.height
+        let above = [terrain, supportAbove].compactMap(\.self).filter { $0 > eye }.max()
+        return above ?? below ?? terrain
     }
+
+    /// The deepest drop below a placed eye that still counts as the ground under it when
+    /// a surface lies above the eye. A deeper drop means the spot is under the world.
+    public static let underWorldDrop: Float = 4096
 
     /// Stands the feet on `groundBelowEye`, so a teleport or a mode switch puts them on
     /// the ground instead of dropping them from the placed height.
     @discardableResult
     public mutating func standOnGround(
         sampleGround: GroundSampler,
-        query: CapsuleWorldCollider.CandidateQuery
+        query: CapsuleWorldCollider.CandidateQuery,
+        water: (SIMD3<Float>) -> WaterReading? = { _ in nil }
     ) -> Bool {
         guard let ground = groundBelowEye(sampleGround: sampleGround, query: query) else {
             return false
         }
         var feet = feetPosition
         feet.z = ground
+        // Water deep enough to swim in floats the player at the surface, as a swimmer.
+        if let surface = water(feet)?.surface, surface - ground >= LocomotionBridge.swimEnterDepth {
+            feet.z = surface - capsule.eyeHeight
+        }
         reset(cameraPosition: feet + SIMD3<Float>(0, 0, capsule.eyeHeight))
         return true
     }

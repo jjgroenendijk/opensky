@@ -62,6 +62,33 @@ struct WalkControllerGroundMaterialTests {
         #expect(nothingLoaded.feetPosition.z == 700 - nothingLoaded.capsule.eyeHeight)
     }
 
+    @Test func aPlacementUnderTheWorldStandsOnTheSurfaceAbove() {
+        let deepTerrain: WalkController.GroundSampler = { _ in
+            TerrainGroundSample(height: -60000, normal: SIMD3(0, 0, 1))
+        }
+        let streets = DynamicBodyScene.candidateQuery([DynamicBodyScene.floor(z: -2000)])
+        var belowStreets = WalkController(cameraPosition: SIMD3(0, 0, -2800))
+        belowStreets.standOnGround(sampleGround: deepTerrain, query: streets)
+        #expect(belowStreets.feetPosition.z == -2000)
+        var high = WalkController(cameraPosition: SIMD3(0, 0, 50000))
+        high.standOnGround(sampleGround: deepTerrain, query: { _ in [] })
+        #expect(high.feetPosition.z == -60000)
+    }
+
+    @Test func aPlacementInDeepWaterFloatsAtTheSurface() {
+        let lakeBed: WalkController.GroundSampler = { _ in
+            TerrainGroundSample(height: -2000, normal: SIMD3(0, 0, 1))
+        }
+        let lake: (SIMD3<Float>) -> WaterReading? = { _ in WaterReading(surface: 0) }
+        var swimmer = WalkController(cameraPosition: SIMD3(0, 0, 100))
+        swimmer.standOnGround(sampleGround: lakeBed, query: { _ in [] }, water: lake)
+        #expect(swimmer.feetPosition.z == -swimmer.capsule.eyeHeight)
+        let shallow: (SIMD3<Float>) -> WaterReading? = { _ in WaterReading(surface: -1950) }
+        var wader = WalkController(cameraPosition: SIMD3(0, 0, 100))
+        wader.standOnGround(sampleGround: lakeBed, query: { _ in [] }, water: shallow)
+        #expect(wader.feetPosition.z == -2000)
+    }
+
     @Test func fallingReportsNoMaterialAtAll() {
         var camera = Self.camera(feet: SIMD3(0, 0, 4000))
         var controller = WalkController(cameraPosition: camera.position)

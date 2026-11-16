@@ -161,7 +161,8 @@ extension GameSession.MovementSteps {
         var probe = session.walkController
         guard probe.standOnGround(
             sampleGround: session.motion.terrainSampler ?? { _ in nil },
-            query: session.motion.collisionQuery ?? { _ in [] }
+            query: session.motion.collisionQuery ?? { _ in [] },
+            water: { session.locomotion.sampleWater?($0) }
         ) else { return false }
         placePlayerFeet(at: probe.feetPosition)
         return true
