@@ -35,6 +35,11 @@ One frame runs in this order:
 4. The live ragdolls step. Any that came to rest write their resting transform into their death
    component.
 
+The bodies start on the body the frame drew: at the actor's live position, not its plugin
+placement, and at its scale times its height. A walked dog's bodies otherwise started about 245
+units away, where it once stood, and a chicken of height 1.3 started at its unscaled size.
+`openskycli game state actors` lists each ragdoll body's bone and world position.
+
 A death whose graph never hands off costs one death component and no bodies. That is wrong in a
 visible way: the actor is dead and still standing, not dead in a pose the engine made up.
 

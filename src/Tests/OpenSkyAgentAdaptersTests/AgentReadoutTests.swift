@@ -9,6 +9,7 @@ import OpenSkyAgentAdapters
 import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyCombatInterface
+import OpenSkyEngineTesting
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenusInterface
@@ -185,5 +186,40 @@ struct AgentReadoutTests {
             return
         }
         #expect(rows.count == 1)
+    }
+
+    /// A dead actor lists each ragdoll body with its bone, so a body far from the drawn
+    /// actor shows up; a living one shows null.
+    @Test func aDeadActorListsItsRagdollBodies() throws {
+        let session = FakeGameSessionPort()
+        session.freeFlyCameraValue = FreeFlyCamera(position: [0, 0, 0], yaw: 0, pitch: 0)
+        host.gameSession = session
+        host.fakeFactions.hostilityResult = .neutral
+        host.fakeEffects.skinDecalsValue = SkinDecalRuntime()
+        host.fakeStreamer.dynamicBodiesValue = DynamicBodyWorld()
+        let dead = ReferenceKey.generated(9)
+        host.fakeActorWorld.combatActorsResult = [
+            CombatActorObservation(key: dead, feet: [10, 0, 0], name: "chicken"),
+            CombatActorObservation(key: .generated(10), feet: [20, 0, 0], name: "dog")
+        ]
+        let runtime = FakeRagdollRuntimePort()
+        var ragdolls = RagdollWorld()
+        ragdolls.add(
+            RagdollFixture.pair(origin: SIMD3(10, 0, 0)), for: dead, in: .interior(FormID(0x10))
+        )
+        runtime.worldValue = ragdolls
+        host.fakeRagdoll.runtime = runtime
+        let state = try object(world.query(.actors(radius: 1024)))
+        guard case let .array(rows)? = state["actors"], rows.count == 2 else {
+            Issue.record("no actor list")
+            return
+        }
+        guard case let .array(bodies)? = object(rows[0])["ragdoll"] else {
+            Issue.record("no ragdoll bodies")
+            return
+        }
+        #expect(bodies.count == 2)
+        #expect(object(bodies[0])["bone"] != nil)
+        #expect(object(rows[1])["ragdoll"] == .null)
     }
 }
