@@ -118,7 +118,12 @@ struct AgentReadoutTests {
 
     @Test func theClothStateListsEachCape() throws {
         host.clothReadout = ClothReadout(
-            isEnabled: true, steppedCount: 1, capes: [(FormID(0x14), "NPC Spine2 [Spn2]")]
+            isEnabled: true, steppedCount: 1,
+            capes: [ClothCapeReadout(
+                actor: FormID(0x14),
+                bone: "NPC Spine2 [Spn2]",
+                miss: .noPlayerPose
+            )]
         )
         let state = try object(world.query(.cloth))
         #expect(state["enabled"] == .bool(true))
@@ -128,6 +133,7 @@ struct AgentReadoutTests {
             return
         }
         #expect(capes.count == 1)
+        #expect(capes.first?.objectValue?["miss"] == .string("noPlayerPose"))
     }
 
     @Test func thePlayerStateReadsItsSiblingParts() throws {
