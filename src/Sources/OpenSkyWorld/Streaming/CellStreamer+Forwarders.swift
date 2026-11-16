@@ -59,6 +59,10 @@ extension CellStreamer {
         runtimeStates.requestRebuild(of: location)
     }
 
+    public func requestUrgentRebuild(of location: CellSceneLocation) {
+        runtimeStates.requestUrgentRebuild(of: location)
+    }
+
     public func leaveInterior(camera: SceneCamera) {
         transitions.leaveInterior(camera: camera)
     }

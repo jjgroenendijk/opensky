@@ -182,6 +182,11 @@ extension VehicleWorldAdapter: PapyrusActorAIBridge {
         run(commands)
         let cell = game.streamer.cellLocation(of: vehicle)
         game.worldState.set(ReferenceVehicleLink(carrier: horse), for: vehicle, in: cell)
+        // Only a build that knows the link draws the cart at its live pose, so its
+        // rebuild must not wait behind the first loads of the cells around it.
+        if let cell {
+            game.streamer.requestUrgentRebuild(of: cell)
+        }
     }
 
     public func playIdle(_ idle: ResolvedFormID, on actor: ReferenceKey) -> Bool {

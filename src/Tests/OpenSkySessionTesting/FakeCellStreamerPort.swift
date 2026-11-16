@@ -69,6 +69,7 @@ nonisolated public final class FakeCellStreamerPort: CellStreamerPort {
     public var requestDoorTransitionCalls: [FormID] = []
     public var requestDoorTransitionResult = false
     public var requestRebuildCalls: [CellSceneLocation] = []
+    public var requestUrgentRebuildCalls: [CellSceneLocation] = []
     public var referenceEntryFormIDCalls: [FormID] = []
     public var referenceEntryFormIDResult: RuntimeReferenceEntry?
     public var referenceEntryKeyCalls: [ReferenceKey] = []
@@ -148,6 +149,10 @@ nonisolated extension FakeCellStreamerPort {
 
     public func requestRebuild(of location: CellSceneLocation) {
         requestRebuildCalls.append(location)
+    }
+
+    public func requestUrgentRebuild(of location: CellSceneLocation) {
+        requestUrgentRebuildCalls.append(location)
     }
 
     public func referenceEntry(formID: FormID) -> RuntimeReferenceEntry? {

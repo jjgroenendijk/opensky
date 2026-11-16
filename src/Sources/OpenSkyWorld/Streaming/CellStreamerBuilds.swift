@@ -41,6 +41,9 @@ extension CellStreamer.BuildSteps {
             streamer.activeBuild == nil,
             streamer.pending.isEmpty
         else { return }
+        if dispatchUrgentRebuild() {
+            return
+        }
         if !streamer.requests.isEmpty {
             let coordinate = streamer.requests.removeFirst()
             streamer.activeBuild = coordinate
@@ -48,6 +51,22 @@ extension CellStreamer.BuildSteps {
             return
         }
         dispatchNextRebuild()
+    }
+
+    /// Dispatches the first urgent rebuild whose cell is resident. One whose first build
+    /// has not landed leaves the queue but stays urgent, for its re-queued rebuild.
+    func dispatchUrgentRebuild() -> Bool {
+        while let index = streamer.rebuildRequests.firstIndex(where: {
+            streamer.urgentRebuilds.contains($0)
+        }) {
+            let coordinate = streamer.rebuildRequests.remove(at: index)
+            guard streamer.core.beginRebuild(coordinate) else { continue }
+            streamer.urgentRebuilds.remove(coordinate)
+            streamer.activeBuild = coordinate
+            streamer.runner.enqueue(coordinate, state: streamer.stateSource())
+            return true
+        }
+        return false
     }
 
     /// Takes the first rebuild request the core still accepts. A request whose
