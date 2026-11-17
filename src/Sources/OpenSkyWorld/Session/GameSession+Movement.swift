@@ -90,6 +90,9 @@ extension GameSession.MovementSteps {
         )
             * session.playerTimeScale * session.bowZoomTimeScale
         session.lastCameraDelta = min(max(dt, 0), WalkController.maximumFrameTime)
+        session.lastTransitionDelta = session.transitionClock.advance(
+            to: session.renderer.wallClock.now, paused: false
+        )
         var frameInput = input.makeInput(dt: dt)
         if session.motion.isPlayerParalysed, session.movementMode.isPlayerControlled {
             frameInput = frameInput.holdingStill

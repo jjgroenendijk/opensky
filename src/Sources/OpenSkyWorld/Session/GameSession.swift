@@ -102,6 +102,10 @@ public final class GameSession: RenderFrameDriver {
     /// The clamped delta `advanceCamera` last ran with. Dynamic bodies step on it, so they
     /// cannot drift from the player capsule in menu mode or after a stall.
     public var lastCameraDelta: Float = 0
+    /// Wall-clock delta that menus do not pause. A door's hold before its load counts in
+    /// it, because the loading menu that covers the door pauses the world.
+    public var transitionClock = FrameSimClock()
+    public var lastTransitionDelta: Float = 0
     /// CPU wall time of the last live frame's camera, frame steps, clock, world
     /// tick, and weather: everything before the renderer encodes.
     public var lastSimulationMS = 0.0

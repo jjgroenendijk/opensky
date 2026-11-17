@@ -55,6 +55,42 @@ extension CellStreamerTests {
         #expect(phases == [.motionStarted, .closed])
     }
 
+    /// The loading menu over a door pauses the world, so its frame time is zero. The hold
+    /// before the load counts in unpaused wall time, or the load never finishes.
+    @Test
+    func doorHoldCountsWallTimeWhileTheWorldIsPaused() {
+        let runner = ManualCellBuildRunner()
+        let streamer = Fixture.makeStreamer(runner: runner, radius: 0)
+        var finished: [CellScene?] = []
+        streamer.events.onDoorTransitionFinished = { finished.append($0) }
+        streamer.update(cameraPosition: Fixture.center)
+        let door = Fixture.door(reference: 0x10, destination: 0x20, position: Fixture.center)
+        runner.complete(Fixture.coordinate(0, 0), with: .success(Self.interactiveScene(
+            location: .exterior(Fixture.coordinate(0, 0)), door: door
+        )))
+        streamer.update(cameraPosition: Fixture.center)
+        Self.activate(
+            streamer, from: Fixture.center - SIMD3<Float>(10, 0, 0), toward: Fixture.center
+        )
+        runner.completeDoorTransition(from: FormID(0x10), with: .success(DoorTransition(
+            sourceDoor: FormID(0x10),
+            destinationDoor: FormID(0x20),
+            destinationPlacement: PlacedReference.Placement(
+                position: Fixture.center, rotation: .zero
+            ),
+            scene: Fixture.cellScene(location: .interior(FormID(0x138CA)))
+        )))
+        for _ in 0 ..< 100 {
+            streamer.update(cameraPosition: Fixture.center, frameTime: 0, transitionTime: 0)
+        }
+        #expect(finished.isEmpty)
+        streamer.update(cameraPosition: Fixture.center, frameTime: 0, transitionTime: 0.3)
+        #expect(finished.isEmpty)
+        streamer.update(cameraPosition: Fixture.center, frameTime: 0, transitionTime: 0.4)
+        #expect(finished.count == 1)
+        #expect(streamer.coverage.isInterior)
+    }
+
     @Test
     func failedPlayerDoorTransitionCancelsMotion() {
         enum DoorFailure: Error { case broken }

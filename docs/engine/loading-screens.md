@@ -35,9 +35,10 @@ gantt
 1. A door transition starts, and the world pauses. When the player uses a door, the view first
    fades to black: a normal door waits 0.01 seconds, then fades over 0.4 seconds; an automatic
    door fades over 0.5 seconds with no wait. The fade is linear. The new scene replaces the old
-   one only once the view is black. A teleport that is not the player using a door goes dark at
-   once. No screen is picked yet, because the destination's location is not known until its
-   cell record is read.
+   one only once the view is black. OpenSky counts that wait in real time, not in world time,
+   because the world is paused under the fade. A teleport that is not the player using a door
+   goes dark at once. No screen is picked yet, because the destination's location is not known
+   until its cell record is read.
 2. The destination scene is ready. OpenSky picks a screen for the destination's `XLCN`
    location and shows it.
 3. The screen holds for at least 1.5 seconds from that point. Then it fades out over 1
