@@ -99,6 +99,18 @@ move always shows the [kill cam](/engine/kill-cam.md).
 - When the player is the victim and the camera is in first person, the game switches to the
   third-person camera.
 
+Read from the game program, for the victim's side:
+
+- At the start, the victim's death waits. A safety timer of 15 seconds runs beside the 10 second
+  kill move timer.
+- The camera switch happens only when the killer is known, the kill camera is not playing, and the
+  camera is in one of the basic modes, such as first person.
+- At the end of the pair, the flag clears. When the kill was set off during the move, the victim
+  dies now.
+- There is no death menu. Once the player is dying or dead, a 5 second timer runs, and then the last
+  save loads. So the reload comes about 5 seconds after the death, at or after the end of the pair.
+- No code was found that locks the player's movement, look, attack, or menus during the move.
+
 ```mermaid
 sequenceDiagram
     participant N as NPC attacker
@@ -141,8 +153,6 @@ keywords, `IsEssential`, and `GetRandomPercent`.
 
 Example: a bandit with a sword swings at the player, on level ground. The swing would kill. If the
 `KillMove` global is 1, every row passes, and the idle tree may pick a kill move.
-
-The data does not show whether the controls lock during the kill move.
 
 ## Reaching the mark
 
@@ -208,7 +218,8 @@ as its identity, so the clips play ([animation](/formats/hka-animation.md#vector
 
 ## Where OpenSky differs
 
-- An NPC plays no kill move on the player. The game plays them, and then the player dies
-  in the kill move.
+- An NPC's killing swing on the player may play a kill move, as in the game. The camera leaves
+  first person for third person. [WARNING] The player dies at the clip's hit, not at the end of
+  the pair: OpenSky has no waiting death and no 15 second safety timer.
 - The dual-wield and left-hand kill moves, such as the DLC2 heart rip, are not tried. A
   swing tests only the right-hand action trees.

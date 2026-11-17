@@ -7,6 +7,7 @@ public import OpenSkyCombatInterface
 import OpenSkyEffects
 public import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyRenderCore
 public import OpenSkySessionInterface
 import OpenSkyWorldInterface
 import simd
@@ -20,6 +21,7 @@ public protocol CombatImpactEffectsHost: AnyObject, SendableMetatype {
     var menuWorld: any MenuWorldPort { get }
     var ragdollWorld: any RagdollWorldPort { get }
     var combatRecords: (any CombatRecordsPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
 }
 
 /// Part of `CombatWorldAdapter`, over its own narrow host.
@@ -111,6 +113,13 @@ extension CombatImpactEffectsAdapter {
             game.cinematicCamera.playKillCam(
                 attacker: .player, target: attempt.target, remainingHostiles: 0, force: true
             )
+        }
+        // The player as victim watches from behind (docs/engine/paired-animations.md).
+        if
+            attempt.target == .player, let session = game.gameSession,
+            session.movementMode == .walk
+        {
+            session.setMovementMode(.thirdPerson)
         }
         return true
     }
