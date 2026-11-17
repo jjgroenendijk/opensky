@@ -69,7 +69,7 @@ extension EffectGraphWorldAdapter: EffectGraphWorld {
         game.effects.visualEffects.instances.compactMap { instance in
             guard let model = instance.spec.artModel else { return nil }
             let anchor: SubGraphAnchor = switch instance.anchor {
-            case let .actor(actor): .actor(actor)
+            case let .actor(actor), let .node(actor, _): .actor(actor)
             case let .point(position), let .surface(position, _), let .facing(position, _):
                 .point(position)
             }

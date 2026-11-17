@@ -4,10 +4,13 @@ public import OpenSkyMagicInterface
 public import OpenSkyPhysics
 public import OpenSkyRenderCore
 public import OpenSkyScriptingInterface
+public import simd
 
 /// What the world adapters use of `EffectsWorldAdapter`.
 public protocol EffectsWorldPort: AnyObject, PapyrusEffectPresenting, PapyrusTrapWorldBridge {
     func detonateEffectExplosion(_ explosion: ReferenceKey, at position: SIMD3<Float>)
+    /// The actor's posed bones in world space, by name; empty when it has no pose.
+    func effectBones(of actor: ReferenceKey) -> [String: float4x4]
     var effects: any EffectsPort { get }
     func fadeOutHealthCues()
     func handleSpellHit(_ event: SpellHitEvent)

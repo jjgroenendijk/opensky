@@ -17,6 +17,8 @@ extension MagicCoordinator {
         var castingViews: [CastSlot: CastingHandView] = [:]
         var releaseLatch = SpellReleaseLatch()
         var wasWeaponsDrawn: Bool?
+        /// The spell whose art each hand shows now.
+        var handArt: [CastSlot: ReferenceKey] = [:]
         var castingCueCount = 0
         var lastCastingCue: String?
         /// An index into the player's known spells. Clamped on read.

@@ -115,6 +115,8 @@ struct EffectsCoordinatorShellTests {
         let actor = EffectsCoordinator.locate(.actor(.player), world: world)
         #expect(actor?.columns.3 == SIMD4(1, 2, 3, 1))
         #expect(EffectsCoordinator.locate(.actor(.player), world: nil) == nil)
+        #expect(EffectsCoordinator
+            .locate(.node(.player, "NPC L MagicNode [LMag]"), world: nil) == nil)
         let surface = EffectsCoordinator.locate(.surface(.zero, normal: SIMD3(0, 0, 1)), world: nil)
         #expect(surface?.columns.3 == SIMD4(0, 0, 0, 1))
         let facing = EffectsCoordinator.locate(.facing(.one, forward: SIMD3(0, 1, 0)), world: nil)
@@ -129,13 +131,13 @@ struct EffectsCoordinatorShellTests {
         #expect(!effects.showCastingArt(
             FormID(0x99),
             fromPlugin: "Skyrim.esm",
-            on: .player,
+            on: .node(.player, SpellHand.left.magicNode),
             shown: true
         ))
         #expect(!effects.showCastingArt(
             FormID(0x99),
             fromPlugin: "Skyrim.esm",
-            on: .player,
+            on: .node(.player, SpellHand.left.magicNode),
             shown: false
         ))
         #expect(!effects.startModifier(key, strength: 1, on: &imageSpace))

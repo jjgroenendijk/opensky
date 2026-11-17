@@ -178,14 +178,24 @@ extension MagicHeldMagicAdapter {
             }
             return position.flatMap { effects.renderLight(light.light, at: $0, strength: 1) }
         }
-        let casting = state.castingLights.keys.sorted { "\($0)" < "\($1)" }.compactMap { caster in
-            state.castingLights[caster].flatMap { light in
-                handLightPosition(of: caster).flatMap {
+        let casting = state.castingLights.keys.sorted {
+            ("\($0.caster)", $0.hand.rawValue) < ("\($1.caster)", $1.hand.rawValue)
+        }.compactMap { slot in
+            state.castingLights[slot].flatMap { light in
+                castingLightPosition(slot).flatMap {
                     effects.renderLight(light, at: $0, strength: 1)
                 }
             }
         }
         renderer.transientPointLights = spells + casting + effects.projectileAndFlashLights()
+    }
+
+    /// The hand's magic node, or in front of the eye when the actor has no posed bones.
+    private func castingLightPosition(_ slot: CastingLightSlot) -> SIMD3<Float>? {
+        if let node = game.effectsWorld.effectBones(of: slot.caster)[slot.hand.magicNode] {
+            return SIMD3(node.columns.3.x, node.columns.3.y, node.columns.3.z)
+        }
+        return handLightPosition(of: slot.caster)
     }
 
     private func handLightPosition(of key: ReferenceKey) -> SIMD3<Float>? {
@@ -195,15 +205,15 @@ extension MagicHeldMagicAdapter {
         )
     }
 
-    /// Shows or drops the `MGEF` casting light of `caster`, written in `plugin`.
+    /// Shows or drops the `MGEF` casting light of one caster's hand, written in `plugin`.
     func showCastingLight(
-        _ light: FormID, plugin: String, caster: ReferenceKey, shown: Bool
+        _ light: FormID, plugin: String, slot: CastingLightSlot, shown: Bool
     ) {
         guard shown else {
-            state.castingLights[caster] = nil
+            state.castingLights[slot] = nil
             return
         }
-        state.castingLights[caster] = game.effectsWorld.effects.records.resolve(
+        state.castingLights[slot] = game.effectsWorld.effects.records.resolve(
             light,
             fromPlugin: plugin
         )

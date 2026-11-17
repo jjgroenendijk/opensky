@@ -7,11 +7,14 @@ public import OpenSkyPhysics
 public import OpenSkyRenderCore
 public import OpenSkySessionInterface
 public import OpenSkyWorldState
+public import simd
 
 /// Stores each property and records each call to `EffectsWorldPort`.
 nonisolated public final class FakeEffectsWorldPort: EffectsWorldPort {
     public var detonateEffectExplosionCalls: [(explosion: ReferenceKey, position: SIMD3<Float>)] =
         []
+    public var effectBonesCalls: [ReferenceKey] = []
+    public var effectBonesResult: [String: float4x4] = [:]
     public var effects: any EffectsPort = FakeEffectsPort()
     public var fadeOutHealthCuesCallCount = 0
     public var handleSpellHitCalls: [SpellHitEvent] = []
@@ -193,6 +196,11 @@ extension FakeEffectsWorldPort {
 nonisolated extension FakeEffectsWorldPort {
     public func detonateEffectExplosion(_ explosion: ReferenceKey, at position: SIMD3<Float>) {
         detonateEffectExplosionCalls.append((explosion: explosion, position: position))
+    }
+
+    public func effectBones(of actor: ReferenceKey) -> [String: float4x4] {
+        effectBonesCalls.append(actor)
+        return effectBonesResult
     }
 
     public func fadeOutHealthCues() {

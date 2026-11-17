@@ -50,7 +50,7 @@ public protocol EffectsPort: AnyObject {
     @discardableResult func showCastingArt(
         _ art: FormID,
         fromPlugin plugin: String,
-        on actor: ReferenceKey,
+        on anchor: EffectAnchor,
         shown: Bool
     ) -> Bool
 

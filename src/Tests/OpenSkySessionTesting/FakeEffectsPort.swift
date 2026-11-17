@@ -136,14 +136,14 @@ extension FakeEffectsPort {
     nonisolated public struct ShowCastingArtCall: CustomStringConvertible {
         public let art: FormID
         public let plugin: String
-        public let actor: ReferenceKey
+        public let anchor: EffectAnchor
         public let shown: Bool
 
         public var description: String {
             [
                 "art: " + String(describing: art),
                 "plugin: " + String(describing: plugin),
-                "actor: " + String(describing: actor),
+                "anchor: " + String(describing: anchor),
                 "shown: " + String(describing: shown)
             ].joined(separator: ", ")
         }
@@ -360,13 +360,13 @@ nonisolated extension FakeEffectsPort {
     public func showCastingArt(
         _ art: FormID,
         fromPlugin plugin: String,
-        on actor: ReferenceKey,
+        on anchor: EffectAnchor,
         shown: Bool
     ) -> Bool {
         showCastingArtCalls.append(ShowCastingArtCall(
             art: art,
             plugin: plugin,
-            actor: actor,
+            anchor: anchor,
             shown: shown
         ))
         return showCastingArtResult
