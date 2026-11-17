@@ -23,7 +23,7 @@ struct WorldStateComponentKindOrderTests {
         .playerIdentity, .mapMarker, .localMapFog, .actorPresentation, .itemCopies,
         .relocation, .vehicleLink, .miscStats, .questTracking, .scriptedState, .cellReset,
         .createdPotions, .ingredientKnowledge, .weaponPoison, .favourites, .vendorRestock,
-        .enchanting, .playerSetMapMarker
+        .enchanting, .playerSetMapMarker, .doorLink
     ]
 
     @Test func everyKindHasItsOwnOrder() {

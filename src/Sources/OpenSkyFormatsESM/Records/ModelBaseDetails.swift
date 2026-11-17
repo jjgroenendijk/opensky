@@ -53,7 +53,7 @@ nonisolated public struct ModelBaseDetails: Equatable, Sendable {
     /// FURN XMRK, the marker model.
     var markerModelPath: String?
     /// DOOR TNAM: random teleport destinations, each a CELL or WRLD.
-    var randomTeleports: [FormID] = []
+    public var randomTeleports: [FormID] = []
     public var treeData: TreeData?
     /// MSTT DATA: 0x01 on local map, 0x02 unknown, 0x04 static.
     var movableStaticFlags: UInt8?

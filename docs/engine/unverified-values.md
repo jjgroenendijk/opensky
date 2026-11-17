@@ -177,6 +177,7 @@ the detail and the sources it did find.
 | New game start hour | Midnight | [game clock](/engine/game-clock.md) |
 | Launcher start places | Map markers of type City, Town, Settlement, Orc Stronghold, the nine hold Capitol types, Raven Rock, and Tel Mithryn | [main menu](/engine/main-menu.md#new-game-at-a-chosen-place) |
 | Time scale ceiling | 10,000 | [game clock](/engine/game-clock.md) |
+| Random door landing | 150 units along the target door's +Y axis, automatic doors too | [random doors](/engine/random-doors.md#in-opensky) |
 | Largest loaded cell grid | 10 rings (`uGridsToLoad` 21) | [cell streaming](/engine/cell-streaming.md) |
 | Sound purge ring | One ring past the loaded grid | [audio](/engine/audio.md) |
 | Global float to integer | Rounding, not truncation | [global variables](/engine/global-variables.md) |

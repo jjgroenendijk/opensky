@@ -13,12 +13,13 @@ import simd
 nonisolated public struct PlacedDoor: Equatable, Sendable {
     public let reference: FormID
     public let position: SIMD3<Float>
-    public let destination: PlacedReference.TeleportDestination
+    /// Nil for a random door, which finds its destination when used.
+    public let destination: PlacedReference.TeleportDestination?
 
     public init(
         reference: FormID,
         position: SIMD3<Float>,
-        destination: PlacedReference.TeleportDestination
+        destination: PlacedReference.TeleportDestination?
     ) {
         self.reference = reference
         self.position = position

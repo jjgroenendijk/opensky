@@ -44,6 +44,9 @@ extension CellStreamer.TransitionSteps {
         switch entry.result {
         case let .success(transition):
             emitDoorMotion(.closed, interaction: motionInteraction)
+            if !transition.newDoorLinks.isEmpty {
+                streamer.events.onDoorsLinked?(transition.newDoorLinks)
+            }
             apply(transition: transition, sourceDoor: entry.sourceDoor, isRebuild: isRebuild)
             if !isRebuild {
                 streamer.events.onDoorTransitionFinished?(transition.scene)
@@ -52,6 +55,9 @@ extension CellStreamer.TransitionSteps {
         case let .failure(error):
             emitDoorMotion(.cancelled, interaction: motionInteraction)
             streamer.noteDoorTransitionFailure()
+            if case .randomDoorLeadsNowhere? = error as? CellSceneError {
+                streamer.events.onRandomDoorLeadsNowhere?()
+            }
             if !isRebuild {
                 streamer.events.onDoorTransitionFinished?(nil)
             }

@@ -11,6 +11,8 @@ nonisolated public enum CellSceneError: Error, Equatable {
     case interiorCellNotFound(formID: FormID)
     case doorReferenceNotFound(formID: FormID)
     case doorHasNoTeleport(formID: FormID)
+    /// A random door found no free door in any of its destinations.
+    case randomDoorLeadsNowhere(formID: FormID)
     case teleportDestinationNotFound(formID: FormID)
     /// A record the build needs exists but its typed decode threw.
     case malformedRecord(type: FourCC, formID: FormID, reason: String)

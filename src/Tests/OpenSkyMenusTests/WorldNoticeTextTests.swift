@@ -34,4 +34,9 @@ struct WorldNoticeTextTests {
         #expect(WorldNoticeShape(.diseaseContracted(name: "Rockjoint"), texts: texts)
             == .line("You have contracted Rockjoint."))
     }
+
+    @Test func aRandomDoorWithNoTargetShowsItsLine() {
+        #expect(WorldNoticeShape(.randomDoorLeadsNowhere, texts: texts)
+            == .line("This door leads nowhere."))
+    }
 }

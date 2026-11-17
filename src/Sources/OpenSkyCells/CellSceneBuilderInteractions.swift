@@ -16,19 +16,19 @@ import OpenSkyWorldState
 import simd
 
 nonisolated extension CellSceneBuilder.CellSceneInteractions {
-    /// Keeps only REFRs whose base resolves to DOOR and whose XTEL decoded.
-    /// Interaction metadata independently includes non-teleport doors.
+    /// Keeps the DOOR refs with an XTEL, and the random doors, whose base lists
+    /// destinations. Interaction metadata independently includes the other doors.
     nonisolated func resolveDoors(refs: [PlacedReference]) -> [PlacedDoor] {
         let modelBaseIndex = owner.modelIndex.modelBaseIndexBuildingIfNeeded()
         return refs.compactMap { ref in
             guard
-                modelBaseIndex[ref.base.rawValue]?.recordType == "DOOR",
-                let destination = ref.teleportDestination
+                let base = modelBaseIndex[ref.base.rawValue], base.recordType == "DOOR",
+                ref.teleportDestination != nil || !base.details.randomTeleports.isEmpty
             else { return nil }
             return PlacedDoor(
                 reference: ref.formID,
                 position: ref.placement.position,
-                destination: destination
+                destination: ref.teleportDestination
             )
         }
     }

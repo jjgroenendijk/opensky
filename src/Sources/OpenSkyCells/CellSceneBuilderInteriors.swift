@@ -82,7 +82,7 @@ nonisolated extension CellSceneBuilder.CellInteriorBuilder {
 nonisolated extension CellSceneBuilder.CellInteriorBuilder {
     /// Groups whose labels match the object ID's ones and tens digits run first.
     /// The rest still run, because UESP warns labels may be stale.
-    nonisolated private func findInteriorCell(
+    nonisolated func findInteriorCell(
         formID: FormID,
         localized: Bool
     ) -> FoundCell? {

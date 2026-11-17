@@ -7,7 +7,7 @@ import OpenSkyFormatsCore
 nonisolated extension PlacedReferenceDetails {
     static let linkSignatures: Set<FourCC> = [
         "XTNM", "XMBR", "XSPC", "XLIB", "XLCN", "XEZN", "XLRL", "XATR", "XHOR", "XMRC", "XOWN",
-        "XEMI"
+        "XEMI", "XRTM"
     ]
 
     /// xEdit marks these unused; they are leftovers of an older script format.

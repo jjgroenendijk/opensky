@@ -15,6 +15,8 @@ nonisolated public struct DoorTransition: Sendable {
     public let scene: CellScene
     /// The worldspace of an exterior destination; nil for an interior.
     public var worldspaceEditorID: String?
+    /// The links a random door made on this use, both ways; empty for any other use.
+    public var newDoorLinks: [(key: ReferenceKey, link: ReferenceDoorLink)] = []
 }
 
 nonisolated extension CellSceneBuilder.CellDoorTransitionBuilder {
@@ -136,7 +138,15 @@ nonisolated extension CellSceneBuilder.CellDoorTransitionBuilder {
         }
         let source = try Self.placedReference(sourceRecord)
         guard let teleport = source.teleportDestination else {
-            throw CellSceneError.doorHasNoTeleport(formID: sourceDoor)
+            let target = try randomDoorTarget(source: source, index: index, state: state)
+            var transition = try buildTransition(
+                from: sourceDoor,
+                to: (target.door, target.arrival),
+                worldspaceEditorID: worldspaceEditorID,
+                state: state
+            )
+            transition.newDoorLinks = target.links
+            return transition
         }
         let destinationID = teleport.door
         guard
@@ -149,6 +159,24 @@ nonisolated extension CellSceneBuilder.CellDoorTransitionBuilder {
         guard index.record(withFormID: destination.base)?.record.type == "DOOR" else {
             throw CellSceneError.teleportDestinationNotFound(formID: destinationID)
         }
+        return try buildTransition(
+            from: sourceDoor,
+            to: (destination, teleport.placement),
+            worldspaceEditorID: worldspaceEditorID,
+            state: state
+        )
+    }
+
+    /// Builds the cell that holds the target door, with the player at its arrival.
+    nonisolated private func buildTransition(
+        from sourceDoor: FormID,
+        to target: (door: PlacedReference, arrival: PlacedReference.Placement),
+        worldspaceEditorID: String,
+        state: WorldStateSnapshot
+    ) throws -> DoorTransition {
+        let index = owner.recordIndex.loadOrderIndexBuildingIfNeeded()
+        let (destination, arrival) = target
+        let destinationID = destination.formID
 
         let scene: CellScene
         var worldspace: String?
@@ -172,7 +200,7 @@ nonisolated extension CellSceneBuilder.CellDoorTransitionBuilder {
         return DoorTransition(
             sourceDoor: sourceDoor,
             destinationDoor: destinationID,
-            destinationPlacement: teleport.placement,
+            destinationPlacement: arrival,
             scene: scene,
             worldspaceEditorID: worldspace
         )
