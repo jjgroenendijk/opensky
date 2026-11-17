@@ -106,13 +106,15 @@ when the target or the telekinesis target changes.
 
 ### In OpenSky
 
-The game view gives a view ray only in walk mode. In fly mode it gives none, which clears the target
-and makes F do nothing. The ray is normalized, finite, and 192 units long.
+The game view gives a view ray in first and third person. In fly mode it gives none, which clears
+the target and makes F do nothing. The ray is normalized, finite, and 192 units long. It runs along
+the view direction. In first person it starts at the eye. In third person it starts at the orbit
+pivot, the eye height above the feet, moved sideways by the camera's shoulder offset. It does not
+start at the camera, which sits about 167 units behind the player: from there a door 80 units in
+front of the player was out of reach. Grabbing a loose object aims along the same ray.
 
 - [WARNING] OpenSky casts a thin ray, not a 16-unit sphere, its reach is 192 units, not 180, and
   it has no fuzzy test, no follower or telekinesis reach, and no "extra large" race limit.
-- [WARNING] In a Riverwood run (2026-11-17), the crosshair picked no door, bench, or loose bucket,
-  in the open or inside the Sleeping Giant Inn, at 30 to 90 units. Only actors were picked.
 
 The broad phase searches the loaded static collision trees with the ray's bounds. The exact test
 checks triangle meshes, convex faces, boxes, spheres, and capsules, after moving the ray into each
