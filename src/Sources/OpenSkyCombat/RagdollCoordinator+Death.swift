@@ -17,6 +17,7 @@ nonisolated public struct DeathEffectCounts: Equatable, Sendable {
     var pushedBodies = 0
     var droppedWeapons = 0
     public var dismemberments = 0
+    public var explodedParts = 0
     var removedBodies = 0
 
     public init() {}
@@ -68,9 +69,42 @@ extension RagdollCoordinator {
         if deathRandom.percent() < deathSettings.dropWeaponChance, world.dropWeapon(of: key) {
             deathEffects.droppedWeapons += 1
         }
-        if hit?.canSever == true, deathRandom.percent() < deathSettings.dismemberChance {
+        if let part = world.explodablePart(of: key) {
+            let cut = BodyPartCut.of(
+                part,
+                roll: deathRandom.percent(),
+                explodePercent: deathSettings.explodePartChance,
+                dismemberChance: deathSettings.dismemberChance
+            )
+            switch cut {
+            case .explode: explode(key, node: part.node)
+            case .sever: dismember(key)
+            case .none: break
+            }
+        } else if hit?.canSever == true, deathRandom.percent() < deathSettings.dismemberChance {
             dismember(key)
         }
+    }
+
+    /// Blows `node` off `key`'s body. Nothing of the part is left to fall, so only the
+    /// node and the flag go into the death state, and the build draws the body alone.
+    /// See docs/engine/explosion-effects.md#exploding-body-parts.
+    @discardableResult
+    public func explode(_ key: ReferenceKey, node: String) -> Bool {
+        guard
+            let state = store.component(ActorDeathState.self, for: key), state.isDead,
+            state.severedNode == nil,
+            let pose = world.ragdollPose(of: key)
+        else { return false }
+        var blown = state
+        blown.severedNode = node
+        blown.partExploded = true
+        store.set(blown, for: key, in: pose.cell)
+        let local = (drawnPose(of: key, pose: pose)[node] ?? matrix_identity_float4x4).columns.3
+        let world4 = pose.actorToWorld * local
+        world.showPartExplosion(of: key, node: node, at: SIMD3(world4.x, world4.y, world4.z))
+        deathEffects.explodedParts += 1
+        return true
     }
 
     /// Cuts off `key`'s head. The node is kept with the death, so the body stays

@@ -44,6 +44,8 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
     var keptCorpses: Set<ReferenceKey> = []
     private(set) var removedCorpses: [ReferenceKey] = []
     private(set) var dismemberments: [(ReferenceKey, String)] = []
+    var explodable: ExplodablePart?
+    private(set) var partExplosions: [(ReferenceKey, String)] = []
 
     /// Actors that kneel at zero health instead of dying.
     var essentials: Set<ReferenceKey> = []
@@ -108,6 +110,14 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
 
     func showDismemberment(of key: ReferenceKey, node: String, at _: SIMD3<Float>) {
         dismemberments.append((key, node))
+    }
+
+    func explodablePart(of _: ReferenceKey) -> ExplodablePart? {
+        explodable
+    }
+
+    func showPartExplosion(of key: ReferenceKey, node: String, at _: SIMD3<Float>) {
+        partExplosions.append((key, node))
     }
 
     func isCorpseKept(_ key: ReferenceKey) -> Bool {

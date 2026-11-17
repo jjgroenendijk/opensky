@@ -17,10 +17,10 @@ nonisolated public struct BodyPartNodeData: Equatable, Sendable {
     /// An actor-value index, -1 for none.
     let actorValue: Int8
     let toHitChance: UInt8
-    let explosionChance: UInt8
+    public let explosionChance: UInt8
     let explodableDebrisCount: UInt16
     let explodableDebris: FormID?
-    let explodableExplosion: FormID?
+    public let explodableExplosion: FormID?
     let trackingMaxAngle: Float
     let explodableDebrisScale: Float
     let severableDebrisCount: Int32

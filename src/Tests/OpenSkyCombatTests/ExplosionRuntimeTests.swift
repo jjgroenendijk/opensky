@@ -108,7 +108,7 @@ struct ExplosionRuntimeTests {
         #expect(ExplosionFalloff.damage(50, radius: 200, distance: 250) == 0)
         #expect(ExplosionFalloff.damage(50, radius: 0, distance: 0) == 50)
         #expect(ExplosionFalloff.imageSpaceStrength(radius: 0, distance: 900) == 1)
-        #expect(ExplosionFalloff.imageSpaceStrength(radius: 1000, distance: 250) == 0.75)
+        #expect(ExplosionFalloff.imageSpaceStrength(radius: 1000, distance: 250) == 0.9375)
     }
 
     @Test func aDetonationDamagesSoundsAndPlacesItsHazard() throws {
@@ -128,9 +128,29 @@ struct ExplosionRuntimeTests {
         #expect(world.models == ["fx/blast.nif"])
         #expect(world.lights == [Self.key(0x903)])
         #expect(world.impacts == [Self.key(0x904)])
-        #expect(world.modifiers.first?.1 == 0.75)
+        #expect(world.modifiers.first?.1 == 0.9375)
         #expect(report.hazardPlaced)
+        #expect(!report.swapApplied)
         #expect(runtime.detonationTotal == 1)
+    }
+
+    @Test func aCloseBlastSwapsInTheFixedModifierAtFullStrength() throws {
+        let world = FakeExplosionWorld()
+        let runtime = try Self.runtime(world: world)
+        runtime.imageSpaceSwap = ExplosionImageSpaceSwap(modifier: Self.key(0x9FF))
+        let spec = try #require(runtime.spec(for: Self.key(0x900)))
+        // Radius 200: at 80 units the power is 0.84, above 0.75.
+        world.viewer = SIMD3(80, 0, 60)
+        #expect(runtime.detonate(spec, at: SIMD3(0, 0, 60), cause: .debug).swapApplied)
+        #expect(world.modifiers.last?.0 == Self.key(0x9FF))
+        #expect(world.modifiers.last?.1 == 1)
+        // At 100 units the power is exactly 0.75, which is not above it.
+        world.viewer = SIMD3(100, 0, 60)
+        #expect(!runtime.detonate(spec, at: SIMD3(0, 0, 60), cause: .debug).swapApplied)
+        var ignoring = spec
+        ignoring.ignoresImageSpaceSwap = true
+        world.viewer = SIMD3(10, 0, 60)
+        #expect(!runtime.detonate(ignoring, at: SIMD3(0, 0, 60), cause: .debug).swapApplied)
     }
 
     @Test func aDebrisPlacementThrowsPiecesThatFallAndExpire() throws {

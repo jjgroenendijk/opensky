@@ -24,6 +24,8 @@ nonisolated public struct ExplosionSpec: Equatable, Sendable {
     public var impactDataSet: ReferenceKey?
     /// Whether the blast knocks down the actors it reaches.
     public var knockdown = ExplosionKnockdown.never
+    /// `DATA` flag `0x40`: the fixed swap modifier never plays.
+    public var ignoresImageSpaceSwap = false
 
     public init(
         name: String,
@@ -60,6 +62,8 @@ nonisolated public struct ExplosionReport: Equatable, Sendable {
     public let imageSpaceStrength: Float?
     public let hazardPlaced: Bool
     public let debrisThrown: Int
+    /// Whether the fixed swap modifier started.
+    public var swapApplied = false
 
     public init(
         name: String,
@@ -79,6 +83,27 @@ nonisolated public struct ExplosionReport: Equatable, Sendable {
         self.imageSpaceStrength = imageSpaceStrength
         self.hazardPlaced = hazardPlaced
         self.debrisThrown = debrisThrown
+    }
+}
+
+/// The fixed modifier a close blast swaps in, and the power above which it does.
+/// See docs/engine/explosion-effects.md#the-swap-effect.
+nonisolated public struct ExplosionImageSpaceSwap: Equatable, Sendable {
+    /// `fExplosionImageSpaceSwapPower`.
+    public var threshold: Float = 0.75
+    /// The master file's swap modifier; nil plays none.
+    public var modifier: ReferenceKey?
+    /// The game looks the swap up by this FormID; no shipped master holds it.
+    public static let modifierFormID = FormID(0x0000_0166)
+
+    public init(threshold: Float = 0.75, modifier: ReferenceKey? = nil) {
+        self.threshold = threshold
+        self.modifier = modifier
+    }
+
+    /// Whether a blast with `power` at the viewer swaps the modifier in.
+    public func applies(power: Float, ignored: Bool) -> Bool {
+        !ignored && modifier != nil && power > threshold
     }
 }
 

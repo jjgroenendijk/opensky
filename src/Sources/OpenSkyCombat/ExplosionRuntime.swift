@@ -13,6 +13,8 @@ import simd
 @MainActor
 public final class ExplosionRuntime {
     public static let reportLimit = 8
+    /// `EXPL` `DATA` flag Ignore Image Space Swap.
+    static let ignoreSwapFlag: UInt32 = 0x40
 
     public weak let world: (any ExplosionWorld)?
     /// The load-order effect records. Empty without game data.
@@ -27,6 +29,7 @@ public final class ExplosionRuntime {
     var seed: UInt64 = 0x0E5D_1A57
     /// The push settings and the readout log. Nil pushes nothing.
     public var impulses: ImpulseRuntime?
+    public var imageSpaceSwap = ExplosionImageSpaceSwap()
 
     public init(
         records: EffectRecordStore = .empty,
@@ -84,12 +87,14 @@ public final class ExplosionRuntime {
         }
         push(spec, radius: radius, at: position, source: source)
         let strength = startImageSpace(spec, at: position)
+        let swapped = startImageSpaceSwap(spec, at: position)
         let (hazard, thrown) = place(spec, at: position)
-        let report = ExplosionReport(
+        var report = ExplosionReport(
             name: spec.name, cause: cause, position: position, damaged: damaged,
             soundsPlayed: world == nil ? 0 : spec.sounds.count, imageSpaceStrength: strength,
             hazardPlaced: hazard, debrisThrown: thrown
         )
+        report.swapApplied = swapped
         reports.append(report)
         if reports.count > Self.reportLimit {
             reports.removeFirst(reports.count - Self.reportLimit)
@@ -122,6 +127,21 @@ public final class ExplosionRuntime {
         guard strength > 0 else { return nil }
         world.startExplosionImageSpace(modifier, strength: strength)
         return strength
+    }
+
+    /// The fixed modifier at full strength when the blast is close enough.
+    private func startImageSpaceSwap(_ spec: ExplosionSpec, at position: SIMD3<Float>) -> Bool {
+        guard let world else { return false }
+        let viewer = world.explosionViewer() ?? position
+        let power = ExplosionFalloff.swapPower(
+            radius: spec.radius, distance: simd_distance(viewer, position)
+        )
+        guard
+            imageSpaceSwap.applies(power: power, ignored: spec.ignoresImageSpaceSwap),
+            let modifier = imageSpaceSwap.modifier
+        else { return false }
+        world.startExplosionImageSpace(modifier, strength: 1)
+        return true
     }
 
     private func place(_ spec: ExplosionSpec, at position: SIMD3<Float>) -> (Bool, Int) {
@@ -179,6 +199,7 @@ public final class ExplosionRuntime {
         spec.light = records.resolve(data?.light, from: resolved)
         spec.impactDataSet = records.resolve(data?.impactDataSet, from: resolved)
         spec.knockdown = ExplosionKnockdown(flags: data?.flags)
+        spec.ignoresImageSpaceSwap = (data?.flags ?? 0) & Self.ignoreSwapFlag != 0
         return spec
     }
 
