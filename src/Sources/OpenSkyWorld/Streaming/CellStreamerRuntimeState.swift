@@ -250,6 +250,11 @@ extension CellStreamer.RuntimeStateSteps {
             guard kind == .enableState else { return }
             streamer?.runtimeStates.noteEnableParentMutation(key, sequence: sequence)
         }
+        streamer.events.onDoorsLinked = { links in
+            for (key, link) in links {
+                store.set(link, for: key)
+            }
+        }
         streamer.events.onBodySettled = { [weak streamer] key, transform, placingCell in
             streamer?.isRecordingSettledBody = true
             store.set(transform, for: key, in: placingCell)

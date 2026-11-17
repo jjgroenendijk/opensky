@@ -11,7 +11,7 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyTerrain
 public import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyWorldState
 public import simd
 
 /// The frame schedules and callbacks through which the streamer reports what changed.
@@ -51,6 +51,10 @@ public final class CellStreamerEvents {
     public var onDoorTransitionStarted: ((DoorFade) -> Void)?
     /// A door transition ended: the destination scene, or nil when it failed.
     public var onDoorTransitionFinished: ((CellScene?) -> Void)?
+    /// A random door linked itself to another door; both sides, to store.
+    public var onDoorsLinked: (([(key: ReferenceKey, link: ReferenceDoorLink)]) -> Void)?
+    /// A random door found no door to lead to, so the player stays.
+    public var onRandomDoorLeadsNowhere: (() -> Void)?
     /// A live cell's placed hazards changed: attached, rebuilt, or detached.
     public let cellHazards = FrameSchedule<CellHazardStep, CellHazardEvent>()
     /// The player entered or left a trigger volume. Emitted in CellStreamerTriggers.

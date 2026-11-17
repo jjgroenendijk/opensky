@@ -135,6 +135,7 @@ chunk cannot read into the next.
 | `LOCK` | changed locks | world |
 | `RLOC` | references moved into another cell | world |
 | `RMOT` | motion types scripts set | world |
+| `RDLK` | doors random doors linked to | world |
 | `LVRL` | player level each leveled roll froze | world |
 | `SUMM` | save list row: name, level, race, location, play time | below |
 | `THMB` | save list picture | below |
@@ -162,6 +163,10 @@ moved back to its plugin cell writes no entry. See
 `RMOT` is a uint32 entry count, then per reference: the key, the cell, and a motion byte, 1
 for dynamic or 4 for keyframed. Any other byte fails the load. A reference no script set a
 motion type on writes no entry. See [traps](/engine/traps.md#motion-type).
+
+`RDLK` is a uint32 entry count, then per linked door: the key, the cell, and the key of the
+door it leads to. Both doors of a link write an entry. A door with no link writes none. See
+[random doors](/engine/random-doors.md).
 
 `LVRL` is a uint32 entry count, then per reference: the key, the cell, and the player level
 as a uint32. A level below 1 is dropped, so that reference rolls at the live level. See

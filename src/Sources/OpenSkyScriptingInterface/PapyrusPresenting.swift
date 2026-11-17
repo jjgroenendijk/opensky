@@ -53,6 +53,8 @@ nonisolated public enum WorldNotice: Equatable, Sendable {
     case mapMarkerAdded
     /// The player gained the disease spell with this name.
     case diseaseContracted(name: String)
+    /// A random door found no door to link to.
+    case randomDoorLeadsNowhere
 }
 
 @MainActor

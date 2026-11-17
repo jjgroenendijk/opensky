@@ -335,6 +335,7 @@ nonisolated extension OpenSkySaveDecoder.Body {
         var entries = OpenSkySaveDeltaMerge.merge(body.side.locks, into: merged)
         entries = OpenSkySaveDeltaMerge.merge(body.side.relocations, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.side.motionTypes, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.side.doorLinks, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.side.leveledRolls, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.side.pausedScenes, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.side.storyManagerQuests, into: entries)

@@ -19,7 +19,7 @@ extension NavigationCellContents {
                     door: RuntimeNavigationDoor(
                         position: interaction.position,
                         destination: scene.doors.first { $0.reference == interaction.reference }?
-                            .destination.door
+                            .destination?.door
                     )
                 )
             }
@@ -28,7 +28,7 @@ extension NavigationCellContents {
                 reference: door.reference.rawValue,
                 door: RuntimeNavigationDoor(
                     position: door.position,
-                    destination: door.destination.door
+                    destination: door.destination?.door
                 )
             )
         }

@@ -11,8 +11,8 @@ tags: [engine, doors, cells, travel]
 A random door has no fixed destination. The first time it is used, it finds a matching door in
 one of its destination cells or worldspaces, links to it, and sends the player there.
 
-OpenSky does not build this yet. It reads the destination list from the record, but nothing uses
-it.
+OpenSky builds this. The rest of the page is the game's behaviour; the last section lists where
+OpenSky differs.
 
 ## Which doors are random
 
@@ -55,3 +55,18 @@ flowchart TD
 The player lands at the target door's random teleport marker (`XRTM`) when it has one. Otherwise
 the player lands a fixed distance in front of the door, 150 units by default and more for an
 automatic door, and faces away from it.
+
+## In OpenSky
+
+- A link is stored on both doors and kept in the save, so both doors lead to each other from then
+  on.
+- The random choices use a seed made from the door and the world state, so the same game picks the
+  same door again.
+- The failure message is one HUD notification line.
+- [WARNING] OpenSky does not keep the last destination index. A link is never removed in OpenSky,
+  so a door never searches a second time, and the index would not change a result.
+- [WARNING] The landing is 150 units in front of every door, automatic doors too. The front is the
+  door's own +Y axis. Both are not checked against the game
+  ([unverified values](/engine/unverified-values.md)).
+- [WARNING] A target door counts as enabled from its own enable state only. An enable parent is not
+  checked.

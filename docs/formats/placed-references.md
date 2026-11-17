@@ -184,7 +184,7 @@ them so the record dump shows them and the coverage sweep can account for every 
 | `ONAM` | 0 bytes | Open by default |
 | `XLOD` | 3 floats | Distant LOD data, unnamed by xEdit |
 | `XCLP` | 8 bytes | Linked reference start and end colors |
-| `XTNM`, `XMBR`, `XSPC`, `XLIB`, `XLCN`, `XEZN`, `XLRL`, `XATR`, `XHOR`, `XMRC` | FormID | Teleport message, multibound, spawn container, leveled item base, persist location, encounter zone, location reference, attach reference, horse, merchant container |
+| `XTNM`, `XMBR`, `XSPC`, `XLIB`, `XLCN`, `XEZN`, `XLRL`, `XATR`, `XHOR`, `XMRC`, `XRTM` | FormID | Teleport message, multibound, spawn container, leveled item base, persist location, encounter zone, location reference, attach reference, horse, merchant container, random door teleport marker |
 
 A patrol stop opens with `XPRD` (idle time). `XPPA`, `INAM` (an `IDLE`), `PDTO` topics,
 and on `ACHR` `TNAM` (a `DIAL`) belong to the last stop. So `INAM` is a patrol idle after

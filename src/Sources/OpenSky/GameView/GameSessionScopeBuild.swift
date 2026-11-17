@@ -153,6 +153,9 @@ struct GameSessionScopeBuild {
         scope.streamer.events.onLoadDoorUsed = { [weak scope] door in
             scope?.objectAnimationWorld.doors.swingOpen(door.rawValue)
         }
+        scope.streamer.events.onRandomDoorLeadsNowhere = { [weak scope] in
+            _ = scope?.messages.postWorldNotice(.randomDoorLeadsNowhere)
+        }
         let input = scope.cameraInput
         gameSession.frameSteps.register(.streaming) { [weak scope, weak gameSession] position in
             guard scope != nil, let gameSession else { return }
@@ -278,8 +281,6 @@ struct GameSessionScopeBuild {
         )
     }
 
-    /// Player-controlled modes only: the fly camera never picks up a target.
-    /// Third person aims along the view direction from the orbit position.
     private static func interactionRay(
         of gameSession: GameSession, reach: Float?
     ) -> InteractionRay? {
@@ -368,7 +369,8 @@ extension GameSessionScopeBuild {
             ),
             activate: activate,
             playerCapsule: Self.playerCapsule(of: gameSession),
-            frameTime: gameSession.lastCameraDelta
+            frameTime: gameSession.lastCameraDelta,
+            transitionTime: gameSession.lastTransitionDelta
         )
         let walk = gameSession.walkController
         scope.streamer.actors.recordPlayerSwim(at: walk.feetPosition, isSwimming: walk.isSwimming)

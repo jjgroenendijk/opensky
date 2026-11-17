@@ -116,6 +116,7 @@ nonisolated struct OpenSkySaveSideChunks: Sendable {
     /// Absent `RLOC`: every reference is in its plugin cell.
     var relocations: [SaveRelocationEntry] = []
     var motionTypes: [SaveMotionTypeEntry] = []
+    var doorLinks: [SaveDoorLinkEntry] = []
     /// Absent `LVRL`: every reference rolls at the live player level.
     var leveledRolls: [SaveLeveledRollEntry] = []
     /// Absent `SCNS`: no scene is playing.

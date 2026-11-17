@@ -17,6 +17,7 @@ nonisolated public enum WorldNoticeText: String, GameSettingTextKey {
     case dragonSouls = "sMultipleDragonSoulCount"
     case mapUpdated = "sMapMarkerAdded"
     case contractedDisease = "sContractedDisease"
+    case randomDoorFailure = "sRandomDoorTeleportFailureMessage"
 
     public var fallback: String {
         switch self {
@@ -29,6 +30,7 @@ nonisolated public enum WorldNoticeText: String, GameSettingTextKey {
         case .dragonSouls: "%i Dragon Souls"
         case .mapUpdated: "Map updated."
         case .contractedDisease: "You have contracted"
+        case .randomDoorFailure: "This door leads nowhere."
         }
     }
 }
@@ -58,6 +60,8 @@ nonisolated public enum WorldNoticeShape: Equatable, Sendable {
             self = .line(texts[.mapUpdated])
         case let .diseaseContracted(name):
             self = .line("\(texts[.contractedDisease]) \(name).")
+        case .randomDoorLeadsNowhere:
+            self = .line(texts[.randomDoorFailure])
         }
     }
 }
