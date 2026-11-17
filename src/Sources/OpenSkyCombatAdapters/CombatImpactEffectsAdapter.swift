@@ -44,6 +44,19 @@ extension CombatImpactEffectsAdapter {
     }
 
     /// The race's `NAM4`, so a blade on flesh finds the blood impact.
+    /// `actor`'s race attack spells, or those of its `ATKR` race when it has none.
+    public func attackSpells(of actor: ReferenceKey) -> [FormID] {
+        guard
+            let race = game.menuWorld.race(of: actor),
+            let races = game.combatRecords?.actorValueBaselines?.resolver?.races,
+            let details = races[race.rawValue]?.details
+        else { return [] }
+        guard details.attackSpells.isEmpty, let other = details.attackRace else {
+            return details.attackSpells
+        }
+        return races[other.rawValue]?.details.attackSpells ?? []
+    }
+
     public func impactMaterial(of actor: ReferenceKey) -> FormID? {
         guard
             let race = game.menuWorld.race(of: actor),

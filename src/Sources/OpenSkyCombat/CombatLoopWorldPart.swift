@@ -142,6 +142,19 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
         shared.perks.applyPerkSwingSpell(blow, at: target)
     }
 
+    func combatAttackDisease(of attacker: ReferenceKey) -> ReferenceKey? {
+        shared.world.attackDisease(of: attacker)
+    }
+
+    func combatDiseaseResist(of target: ReferenceKey) -> Float? {
+        DiseaseContraction.resistIndex.flatMap { shared.world.actorValues(of: target)?($0) }
+    }
+
+    @discardableResult
+    func contractCombatDisease(_ disease: ReferenceKey, on target: ReferenceKey) -> Bool {
+        shared.world.contractDisease(disease, on: target)
+    }
+
     func combatAwareness(
         of observer: ReferenceKey, toward target: ReferenceKey
     ) -> CombatAwareness {

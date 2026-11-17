@@ -131,6 +131,18 @@ public final class CombatCastingChain {
 // MARK: - The fight
 
 extension CombatCastingChain: CombatLoopWorld {
+    public func combatAttackDisease(of _: ReferenceKey) -> ReferenceKey? {
+        nil
+    }
+
+    public func combatDiseaseResist(of _: ReferenceKey) -> Float? {
+        nil
+    }
+
+    public func contractCombatDisease(_: ReferenceKey, on _: ReferenceKey) -> Bool {
+        false
+    }
+
     public var combatPlayer: MeleeAttacker {
         MeleeAttacker(key: .player, feet: playerFeet, facing: 0)
     }

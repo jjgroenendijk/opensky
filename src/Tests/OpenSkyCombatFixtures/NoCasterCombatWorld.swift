@@ -11,6 +11,19 @@ public import OpenSkyGameData
 public protocol NoCasterCombatWorld: CombatLoopWorld {}
 
 extension NoCasterCombatWorld {
+    /// A world that reads no races carries no disease.
+    public func combatAttackDisease(of _: ReferenceKey) -> ReferenceKey? {
+        nil
+    }
+
+    public func combatDiseaseResist(of _: ReferenceKey) -> Float? {
+        nil
+    }
+
+    public func contractCombatDisease(_: ReferenceKey, on _: ReferenceKey) -> Bool {
+        false
+    }
+
     public func combatReaction(toPlayerOf _: ReferenceKey) -> ActorReaction? {
         nil
     }

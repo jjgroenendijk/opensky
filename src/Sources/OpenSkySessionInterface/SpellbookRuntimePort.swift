@@ -16,6 +16,7 @@ public protocol SpellbookRuntimePort {
 
     func occupancy(of spell: ResolvedSpell, in hand: SpellHand) -> HandSlots?
     func record(_ spell: ReferenceKey) -> ResolvedSpell?
+    @discardableResult func learn(_ spell: ReferenceKey, on holder: ActorValueHolder) -> Bool
 }
 
 /// The default arguments a protocol requirement cannot carry.

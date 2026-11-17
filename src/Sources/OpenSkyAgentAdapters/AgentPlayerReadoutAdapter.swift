@@ -53,6 +53,17 @@ public struct AgentPlayerReadoutAdapter {
 }
 
 extension AgentPlayerReadoutAdapter {
+    /// Abilities such as Rested show here; the game lists them in the magic menu.
+    private func knownSpellsState() -> [String: AgentJSON] {
+        let known = game.magic.playerKnownSpells()
+        return [
+            "spells": .array(known.map { .string($0.editorID ?? "\($0.id)") }),
+            "diseases": .array(known.filter { $0.spellType == .disease }.map {
+                .string($0.displayName)
+            })
+        ]
+    }
+
     public func playerState() throws(AgentFailure) -> AgentJSON {
         guard let gameSession = game.gameSession else { throw hub.notReady() }
         let camera = gameSession.freeFlyCamera
@@ -77,10 +88,7 @@ extension AgentPlayerReadoutAdapter {
             result["magicka"] = ["current": .init(current.magicka), "max": .init(maximum.magicka)]
             result["stamina"] = ["current": .init(current.stamina), "max": .init(maximum.stamina)]
         }
-        // Abilities such as Rested show here; the game lists them in the magic menu.
-        result["spells"] = .array(game.magic.playerKnownSpells().map { spell in
-            .string(spell.editorID ?? "\(spell.id)")
-        })
+        result.merge(knownSpellsState()) { $1 }
         result["perks"] = .array((game.perks.runtime.flatMap { runtime in
             game.actorWorld.actorValueHolder(for: .player).map { runtime.ownedPerks(of: $0) }
         } ?? []).map { .string($0.editorID ?? "\($0.id)") })

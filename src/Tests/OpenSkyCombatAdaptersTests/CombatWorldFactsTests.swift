@@ -57,6 +57,12 @@ struct CombatWorldFactsTests {
         #expect(!adapter.isInInterior)
     }
 
+    @Test func withoutAMagicRuntimeNoDiseaseIsFoundOrGiven() {
+        #expect(adapter.attackDisease(of: Self.foe) == nil)
+        #expect(!adapter.contractDisease(Self.foe, on: .player))
+        #expect(host.fakeMessages.postWorldNoticeCalls.isEmpty)
+    }
+
     @Test func perkValuesComeFromThePerkPort() {
         host.fakePerks.multiplierResult = 1.5
         #expect(adapter.perks.perkMultiplier(at: .modAttackDamage, on: .player) == 1.5)

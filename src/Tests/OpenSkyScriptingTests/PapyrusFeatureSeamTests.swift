@@ -43,7 +43,8 @@ struct PapyrusFeatureSeamTests {
         #expect(!bridge.removeSpell(Self.spell, from: bridge.playerKey))
     }
 
-    @Test func aDiseaseThePlayerGainsShowsItsNotice() throws {
+    /// `AddSpell` gives a disease with no notice; a contracted disease shows one, once.
+    @Test func aContractedDiseaseShowsItsNotice() throws {
         typealias Fixture = SpellbookFixture
         let disease = Fixture.spell(
             formID: 0x0A10, editorID: "Rockjoint", equipType: Fixture.Slot.eitherHand,
@@ -62,9 +63,13 @@ struct PapyrusFeatureSeamTests {
         bridge.ports.presenter = presenter
 
         #expect(bridge.addSpell(Fixture.key(0x0A11), to: bridge.playerKey))
-        #expect(presenter.worldNotices.isEmpty)
+        #expect(!bridge.spellEffects.isDisease(Fixture.key(0x0A11)))
+        #expect(bridge.spellEffects.isDisease(Fixture.key(0x0A10)))
         #expect(bridge.addSpell(Fixture.key(0x0A10), to: bridge.playerKey))
-        #expect(!bridge.addSpell(Fixture.key(0x0A10), to: bridge.playerKey))
+        #expect(presenter.worldNotices.isEmpty)
+        #expect(bridge.removeSpell(Fixture.key(0x0A10), from: bridge.playerKey))
+        #expect(bridge.spellEffects.contractDisease(Fixture.key(0x0A10), on: bridge.playerKey))
+        #expect(!bridge.spellEffects.contractDisease(Fixture.key(0x0A10), on: bridge.playerKey))
         #expect(presenter.worldNotices == [.diseaseContracted(name: "Rockjoint")])
     }
 }

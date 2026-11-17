@@ -101,8 +101,14 @@ nonisolated public struct RaceDetails: Equatable, Sendable {
     var faceGenMainClamp: Float?
     var faceGenFaceClamp: Float?
     /// ATKR, a RACE whose attacks this race uses.
-    var attackRace: FormID?
+    public var attackRace: FormID?
     var attacks: [RaceAttack] = []
+
+    /// Each ATKD's spell, in record order, such as a creature's disease.
+    public var attackSpells: [FormID] {
+        attacks.compactMap { $0.properties?.spell }
+    }
+
     var bodyParts = GenderPair<[RaceBodyPart]>(male: [], female: [])
     /// HNAM, HDPT records.
     var hairs: [FormID] = []

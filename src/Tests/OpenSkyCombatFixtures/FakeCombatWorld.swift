@@ -45,7 +45,28 @@ public final class FakeCombatWorld: CombatLoopWorld {
     /// `SkillAdvancementRuntimeTests` covers the conversion.
     public private(set) var skillUses: [SkillUseEvent] = []
 
+    /// The disease each attacker's race attacks carry.
+    public var attackDiseases: [ReferenceKey: ReferenceKey] = [:]
+    public var diseaseResists: [ReferenceKey: Float] = [:]
+    /// Each disease given, as (disease, target), in order.
+    public private(set) var contractedDiseases: [(disease: ReferenceKey, target: ReferenceKey)] = []
+
     public init() {}
+
+    public func combatAttackDisease(of attacker: ReferenceKey) -> ReferenceKey? {
+        attackDiseases[attacker]
+    }
+
+    public func combatDiseaseResist(of target: ReferenceKey) -> Float? {
+        diseaseResists[target]
+    }
+
+    @discardableResult
+    public func contractCombatDisease(_ disease: ReferenceKey, on target: ReferenceKey) -> Bool {
+        guard !contractedDiseases.contains(where: { $0 == (disease, target) }) else { return false }
+        contractedDiseases.append((disease, target))
+        return true
+    }
 
     @discardableResult
     public func reportSkillUse(_ use: SkillUseEvent) -> Float {

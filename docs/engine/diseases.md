@@ -11,8 +11,8 @@ tags: [engine, magic, combat, actor-values]
 Some creatures carry a disease. Their hits can give it to the target. The player then sees a
 notice with the disease's name.
 
-OpenSky does not build the infection yet: a hit never gives a disease. It shows the notice when
-a script gives the player a disease spell.
+OpenSky rolls the disease on an NPC's landed melee blow and on `DoCombatSpellApply`, as below.
+`openskycli game state player` lists the player's `diseases` by name.
 
 ## Which creatures carry one
 
@@ -82,7 +82,7 @@ built-in game settings, a base of 0 and a factor of 1.0, as `base + factor × (1
 
 ## Where OpenSky differs
 
-- OpenSky shows the notice when a script gives the player a disease spell, and no hit gives a
-  disease yet.
-- The notice uses the spell's editor ID, such as "You have contracted
-  DiseaseSanguinareVampiris.", not its name.
+- An NPC that fights has no attack data yet, so OpenSky takes the first Disease spell among the
+  race's attack spells, or among those of its `ATKR` race when it has none. The game uses the
+  spell of the attack the actor makes.
+- Only a landed blow rolls. A miss casts nothing, and a blocked hit that still lands rolls.
