@@ -17,32 +17,32 @@ nonisolated extension CellSceneBuilder.CellReferenceStateBuilder {
         )
     }
 
-    /// `refs` without the ones moved out of `location`, plus the ones moved in.
+    /// `refs` without the ones moved out of `cell`, plus the ones moved in. `cell` names an
+    /// exterior's worldspace editor ID; nil for an interior.
     nonisolated func relocating(
         _ refs: [PlacedReference],
-        into location: CellSceneLocation,
+        into cell: (location: CellSceneLocation, worldspace: String?),
         deltas: [ReferenceKey: ReferenceStateDelta]
     ) -> [PlacedReference] {
-        let movedIn = movedIn(to: location, deltas: deltas).compactMap(\.placedReference)
-        return keepingResident(refs, location: location, deltas: deltas, formID: \.formID)
-            + movedIn
+        let movedIn = movedIn(to: cell, deltas: deltas).compactMap(\.placedReference)
+        return keepingResident(refs, cell: cell, deltas: deltas, formID: \.formID) + movedIn
     }
 
     nonisolated func relocating(
         _ actors: [CollectedActor],
-        into location: CellSceneLocation,
+        into cell: (location: CellSceneLocation, worldspace: String?),
         deltas: [ReferenceKey: ReferenceStateDelta]
     ) -> [CollectedActor] {
-        let movedIn = movedIn(to: location, deltas: deltas).compactMap { entry in
+        let movedIn = movedIn(to: cell, deltas: deltas).compactMap { entry in
             entry.placedActor.map { CollectedActor(actor: $0, isPersistent: entry.isPersistent) }
         }
-        return keepingResident(actors, location: location, deltas: deltas, formID: \.actor.formID)
+        return keepingResident(actors, cell: cell, deltas: deltas, formID: \.actor.formID)
             + movedIn
     }
 
     nonisolated private func keepingResident<Item>(
         _ items: [Item],
-        location: CellSceneLocation,
+        cell: (location: CellSceneLocation, worldspace: String?),
         deltas: [ReferenceKey: ReferenceStateDelta],
         formID: (Item) -> FormID
     ) -> [Item] {
@@ -52,17 +52,20 @@ nonisolated extension CellSceneBuilder.CellReferenceStateBuilder {
             guard let key = ReferenceKey.resolve(formID(item), using: owner.formIDResolver) else {
                 return true
             }
-            return !(deltas[key]?.relocatesAway(from: location) ?? false)
+            return !(deltas[key]?.relocatesAway(from: cell.location, worldspace: cell.worldspace)
+                ?? false)
         }
     }
 
-    /// Records moved into `location` from elsewhere, in key order.
+    /// Records moved into `cell` from elsewhere, in key order.
     nonisolated private func movedIn(
-        to location: CellSceneLocation,
+        to cell: (location: CellSceneLocation, worldspace: String?),
         deltas: [ReferenceKey: ReferenceStateDelta]
     ) -> [RuntimeReferenceEntry] {
+        let location = cell.location
         let keys = deltas.compactMap { key, delta in
-            delta.component(ReferenceRelocation.self)?.location == location ? key : nil
+            delta.component(ReferenceRelocation.self)?
+                .lands(in: location, worldspace: cell.worldspace) == true ? key : nil
         }
         guard !keys.isEmpty else { return [] }
         let lookup = placedRecords

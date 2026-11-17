@@ -285,6 +285,7 @@ struct PapyrusNativeMenusTests {
         let fixture = try PapyrusNativeReferenceFixture.make()
         let menus = FakeMenuBridge()
         fixture.session.bridge.ports.menus = menus
+        fixture.session.references.residentWorldspace = "RiftenWorld"
         let prisoner = PapyrusNativeReferenceFixture.key(PapyrusNativeReferenceFixture.doorID)
         let record = try PapyrusWorldFixture.referenceEntry(
             objectID: PapyrusNativeReferenceFixture.doorID, scripts: [], placement: SIMD3(9, 9, 9)
@@ -306,7 +307,10 @@ struct PapyrusNativeMenusTests {
         ))
         #expect(
             store.component(ReferenceRelocation.self, for: prisoner)
-                == ReferenceRelocation(location: PapyrusWorldFixture.cell)
+                == ReferenceRelocation(
+                    location: PapyrusWorldFixture.cell,
+                    worldspace: "RiftenWorld"
+                )
         )
         #expect(menus.calls.isEmpty)
     }

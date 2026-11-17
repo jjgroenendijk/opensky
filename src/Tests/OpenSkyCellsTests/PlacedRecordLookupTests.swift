@@ -66,4 +66,22 @@ struct PlacedRecordLookupTests {
         #expect(lookup.recordType(ofBase: FormID(0x101)) == "STAT")
         #expect(lookup.recordType(ofBase: FormID(0x9999)) == nil)
     }
+
+    @Test
+    func aRecordNamesTheWorldspaceThatHoldsIt() throws {
+        let exterior = try ESMFile(data: fixtures.plugin(
+            worldspaceEditorID: "RiftenWorld",
+            temporaryRefs: fixtures.refrRecord(formID: 0x210, base: 0x100)
+        ))
+        let interior = try ESMFile(data: ESMFixture.tes4(masters: ["Skyrim.esm"])
+            + ESMFixture.topGroup("CELL", contents: fixtures.interiorCellGroup(
+                formID: 0x1234, refs: fixtures.refrRecord(formID: 0x211, base: 0x100)
+            )))
+        let lookup = PlacedRecordLookup(index: LoadOrderRecordIndex(
+            plugins: [("Skyrim.esm", exterior), ("Mod.esp", interior)]
+        ))
+        #expect(lookup.worldspaceEditorID(holding: FormID(0x210)) == "RiftenWorld")
+        #expect(lookup.worldspaceEditorID(holding: FormID(0x211)) == nil)
+        #expect(lookup.worldspaceEditorID(holding: FormID(0x9999)) == nil)
+    }
 }

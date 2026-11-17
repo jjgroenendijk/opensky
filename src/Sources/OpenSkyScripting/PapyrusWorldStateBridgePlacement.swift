@@ -12,13 +12,28 @@ import OpenSkyWorldState
 extension PapyrusWorldStateBridge.Placements {
     public func placement(of key: ReferenceKey) -> ReferencePlacement? {
         if let state = bridge.referenceState(for: key) {
-            return ReferencePlacement(state: state, location: bridge.cellLocation(of: key))
+            let location = bridge.cellLocation(of: key)
+            return ReferencePlacement(
+                state: state, location: location, worldspace: residentWorldspace(of: location)
+            )
         }
         guard let plugin = bridge.ports.references?.pluginPlacement(of: key) else { return nil }
         let delta = bridge.worldState.delta(for: key)
         let state = ReferenceState(baseline: plugin.entry).applying(delta)
-        let moved = delta?.component(ReferenceRelocation.self)?.location
-        return ReferencePlacement(state: state, location: moved ?? plugin.home)
+        guard let moved = delta?.component(ReferenceRelocation.self) else {
+            return ReferencePlacement(
+                state: state, location: plugin.home, worldspace: plugin.worldspace
+            )
+        }
+        return ReferencePlacement(
+            state: state, location: moved.location, worldspace: moved.worldspace
+        )
+    }
+
+    /// The resident worldspace for a resident exterior cell; nil for an interior.
+    private func residentWorldspace(of location: CellSceneLocation?) -> String? {
+        guard case .exterior = location else { return nil }
+        return bridge.ports.references?.residentWorldspace
     }
 
     /// A new reference of `base` where `anchor` stands, facing its way. It is a spawn, so
@@ -41,14 +56,23 @@ extension PapyrusWorldStateBridge.Placements {
         return key
     }
 
-    /// Sends `key` to `location`. Moving it back to its plugin cell drops the move.
+    /// Sends `key` to `location` of the resident worldspace.
     public func relocate(_ key: ReferenceKey, to location: CellSceneLocation) {
+        relocate(key, to: location, worldspace: residentWorldspace(of: location))
+    }
+
+    /// Sends `key` to `location` of `worldspace`, nil for an interior. Moving it back to its
+    /// plugin cell drops the move.
+    public func relocate(
+        _ key: ReferenceKey, to location: CellSceneLocation, worldspace: String?
+    ) {
         let origin = placement(of: key)?.location
-        let home = bridge.ports.references?.pluginPlacement(of: key)?.home
-        if home == location {
+        let moved = ReferenceRelocation(location: location, worldspace: worldspace)
+        let home = bridge.ports.references?.pluginPlacement(of: key)
+        if let home, moved.lands(in: home.home, worldspace: home.worldspace) {
             bridge.worldState.reset(.relocation, for: key)
         } else {
-            bridge.worldState.set(ReferenceRelocation(location: location), for: key, in: location)
+            bridge.worldState.set(moved, for: key, in: location)
         }
         queueCellAttachmentChange(of: key, from: origin, to: location)
     }

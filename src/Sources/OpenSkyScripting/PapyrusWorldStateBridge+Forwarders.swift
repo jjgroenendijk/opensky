@@ -104,6 +104,12 @@ extension PapyrusWorldStateBridge {
         referencePlacement.relocate(key, to: location)
     }
 
+    public func relocate(
+        _ key: ReferenceKey, to location: CellSceneLocation, worldspace: String?
+    ) {
+        referencePlacement.relocate(key, to: location, worldspace: worldspace)
+    }
+
     public func queueItemRead(base: ReferenceKey) {
         inventoryEvents.queueItemRead(base: base)
     }

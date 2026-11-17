@@ -22,6 +22,8 @@ nonisolated public protocol PapyrusWorldReferenceSource: AnyObject {
     func residentEntries() -> [RuntimeReferenceEntry]
     /// Every resident actor, in no fixed order. Cheaper than filtering `residentEntries()`.
     func residentActorEntries() -> [RuntimeReferenceEntry]
+    /// The editor ID of the worldspace whose exterior cells are resident; nil in an interior.
+    var residentWorldspace: String? { get }
 }
 
 nonisolated extension PapyrusWorldReferenceSource {
@@ -36,16 +38,23 @@ nonisolated extension PapyrusWorldReferenceSource {
     public func pluginPlacement(of _: ReferenceKey) -> PluginPlacement? {
         nil
     }
+
+    public var residentWorldspace: String? {
+        nil
+    }
 }
 
 /// A placed record and its plugin cell, as `MoveTo` needs them for an unloaded reference.
 nonisolated public struct PluginPlacement: Sendable {
     public let entry: RuntimeReferenceEntry
     public let home: CellSceneLocation
+    /// The editor ID of the worldspace of an exterior `home`; nil for an interior.
+    public let worldspace: String?
 
-    public init(entry: RuntimeReferenceEntry, home: CellSceneLocation) {
+    public init(entry: RuntimeReferenceEntry, home: CellSceneLocation, worldspace: String? = nil) {
         self.entry = entry
         self.home = home
+        self.worldspace = worldspace
     }
 }
 

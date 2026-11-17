@@ -30,6 +30,10 @@ extension CellStreamer {
         residents.residentEntries()
     }
 
+    public var residentWorldspace: String? {
+        interiorScene == nil ? worldspaceEditorID : nil
+    }
+
     public func pluginPlacement(of key: ReferenceKey) -> PluginPlacement? {
         residents.pluginPlacement(of: key)
     }

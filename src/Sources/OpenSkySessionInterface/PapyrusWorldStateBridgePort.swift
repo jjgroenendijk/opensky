@@ -59,6 +59,8 @@ public protocol PapyrusWorldStateBridgePort: AnyObject {
     func referenceState(for key: ReferenceKey) -> ReferenceState?
     func relationshipRank(of actor: ReferenceKey, toward other: ReferenceKey) -> Int8??
     func relocate(_ key: ReferenceKey, to location: CellSceneLocation)
+    /// `worldspace` is the editor ID of an exterior `location`'s worldspace; nil for an interior.
+    func relocate(_ key: ReferenceKey, to location: CellSceneLocation, worldspace: String?)
     @discardableResult func removeSpell(_ spell: ReferenceKey, from actor: ReferenceKey) -> Bool
     @discardableResult func resurrectActor(_ key: ReferenceKey) -> Bool
     @discardableResult func runPackageFragment(

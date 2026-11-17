@@ -66,7 +66,8 @@ nonisolated public final class FakePapyrusWorldStateBridgePort: PapyrusWorldStat
     public var referenceStateResult: ReferenceState?
     public var relationshipRankCalls: [(actor: ReferenceKey, other: ReferenceKey)] = []
     public var relationshipRankResult: Int8??
-    public var relocateCalls: [(key: ReferenceKey, location: CellSceneLocation)] = []
+    public var relocateKeyToCalls: [(key: ReferenceKey, location: CellSceneLocation)] = []
+    public var relocateKeyToWorldspaceCalls: [RelocateKeyToWorldspaceCall] = []
     public var removeSpellCalls: [(spell: ReferenceKey, actor: ReferenceKey)] = []
     public var removeSpellResult = false
     public var resurrectActorCalls: [ReferenceKey] = []
@@ -153,6 +154,20 @@ extension FakePapyrusWorldStateBridgePort {
                 "slot: " + String(describing: slot),
                 "package: " + String(describing: package),
                 "actor: " + String(describing: actor)
+            ].joined(separator: ", ")
+        }
+    }
+
+    nonisolated public struct RelocateKeyToWorldspaceCall: CustomStringConvertible {
+        public let key: ReferenceKey
+        public let location: CellSceneLocation
+        public let worldspace: String?
+
+        public var description: String {
+            [
+                "key: " + String(describing: key),
+                "location: " + String(describing: location),
+                "worldspace: " + String(describing: worldspace)
             ].joined(separator: ", ")
         }
     }
@@ -396,7 +411,15 @@ nonisolated extension FakePapyrusWorldStateBridgePort {
     }
 
     public func relocate(_ key: ReferenceKey, to location: CellSceneLocation) {
-        relocateCalls.append((key: key, location: location))
+        relocateKeyToCalls.append((key: key, location: location))
+    }
+
+    public func relocate(_ key: ReferenceKey, to location: CellSceneLocation, worldspace: String?) {
+        relocateKeyToWorldspaceCalls.append(RelocateKeyToWorldspaceCall(
+            key: key,
+            location: location,
+            worldspace: worldspace
+        ))
     }
 
     @discardableResult

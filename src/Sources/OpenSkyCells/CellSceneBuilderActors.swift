@@ -104,7 +104,7 @@ nonisolated extension CellSceneBuilder.CellActorBuilder {
         let collected = CellSceneBuilder.CellActorSpawnBuilder.standingOnFloors(
             owner.referenceBuilder.states.relocating(
                 byID.values.sorted { $0.actor.formID.rawValue < $1.actor.formID.rawValue },
-                into: .exterior(coordinate),
+                into: (.exterior(coordinate), world.worldspace?.editorID),
                 deltas: deltas
             ) + spawns.spawnedActors(in: .exterior(coordinate), deltas: deltas),
             collision: collision
@@ -132,7 +132,7 @@ nonisolated extension CellSceneBuilder.CellActorBuilder {
         var malformed: [String] = []
         let collected = CellSceneBuilder.CellActorSpawnBuilder.standingOnFloors(
             owner.referenceBuilder.states.relocating(
-                decodeActors(in: cell, malformed: &malformed), into: location, deltas: deltas
+                decodeActors(in: cell, malformed: &malformed), into: (location, nil), deltas: deltas
             ) + spawns.spawnedActors(in: location, deltas: deltas),
             collision: collision
         )
