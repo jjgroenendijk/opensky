@@ -129,8 +129,12 @@ extension PapyrusNativeFunctions.MenusNatives {
             ).erased,
             for: key
         )
-        if let destination = targetPlacement.location, destination != movedPlacement.location {
-            world.relocate(key, to: destination)
+        if
+            let destination = targetPlacement.location,
+            destination != movedPlacement.location
+            || targetPlacement.worldspace != movedPlacement.worldspace
+        {
+            world.relocate(key, to: destination, worldspace: targetPlacement.worldspace)
         }
         return .returned(.none)
     }

@@ -13,7 +13,9 @@ import Testing
 @MainActor
 struct RelocationSaveTests {
     private let prisoner = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x0001_B131)
-    private let cart = ReferenceRelocation(location: .exterior(CellCoordinate(x: 5, y: -24)))
+    private let cart = ReferenceRelocation(
+        location: .exterior(CellCoordinate(x: 5, y: -24)), worldspace: "Tamriel"
+    )
 
     @Test func aMovedReferenceSurvivesAnEncodeAndDecode() throws {
         let original = OpenSkySaveFixture.snapshot(

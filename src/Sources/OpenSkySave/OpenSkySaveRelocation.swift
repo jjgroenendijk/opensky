@@ -30,6 +30,7 @@ nonisolated enum OpenSkySaveRelocationWriter {
                 payload.writeKey(entry.key)
                 payload.writeCell(entry.delta.cell)
                 payload.writeCell(relocation.location)
+                payload.writeString(relocation.worldspace ?? "")
             }
         }
     }
@@ -53,8 +54,12 @@ nonisolated enum OpenSkySaveRelocationDecoder: Sendable {
             guard let location = try OpenSkySaveEntryDecoder.decodeCell(&reader) else {
                 throw OpenSkySaveError.invalidValue(context: "RLOC entry with no target cell")
             }
+            let worldspace = try reader.string("RLOC worldspace")
             entries.append(SaveRelocationEntry(
-                key: key, cell: cell, relocation: ReferenceRelocation(location: location)
+                key: key, cell: cell,
+                relocation: ReferenceRelocation(
+                    location: location, worldspace: worldspace.isEmpty ? nil : worldspace
+                )
             ))
         }
         return entries

@@ -155,8 +155,10 @@ resets ([cell reset](/engine/cell-reset.md)), not on a day count.
 1), the `XLOC` level byte, and the key `KEYM` as a uint32 FormID (0 for none). A lock that
 still matches its `XLOC` writes no entry. See [locks](/engine/locks.md).
 
-`RLOC` is a uint32 entry count, then per moved reference: the key, the cell, and the cell
-that draws it now, in the same cell encoding. The target cell is never absent. A reference
+`RLOC` is a uint32 entry count, then per moved reference: the key, the cell, the cell
+that draws it now, in the same cell encoding, and the editor ID of that cell's worldspace as a
+string. The string is empty for an interior. A city world and Tamriel share grid coordinates,
+so an exterior cell needs its worldspace. The target cell is never absent. A reference
 moved back to its plugin cell writes no entry. See
 [reference identity](/engine/reference-identity.md).
 

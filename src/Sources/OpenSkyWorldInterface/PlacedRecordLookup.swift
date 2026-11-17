@@ -154,6 +154,16 @@ nonisolated public struct PlacedRecordLookup: Sendable {
         return cell.grid.map { .exterior(CellCoordinate(x: $0.x, y: $0.y)) }
     }
 
+    /// The editor ID of the WRLD whose cells hold `formID`; nil for an interior record.
+    public func worldspaceEditorID(holding formID: FormID) -> String? {
+        guard
+            let world = index.worldFormID(containing: formID),
+            let found = index.record(withFormID: world), found.record.type == "WRLD"
+        else { return nil }
+        return attempt { try Worldspace(record: found.record, localized: found.localized) }?
+            .editorID
+    }
+
     /// The interior CELL whose children hold `formID`; nil for an exterior one.
     public func interiorCell(holding formID: FormID) -> FormID? {
         guard

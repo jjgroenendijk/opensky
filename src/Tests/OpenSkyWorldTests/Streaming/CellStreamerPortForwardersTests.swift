@@ -35,6 +35,24 @@ struct CellStreamerPortForwardersTests {
         #expect(streamer.cellLocation(of: Self.actor) == nil)
         #expect(streamer.residentReferenceCount == 0)
         #expect(streamer.residentAnimatedVehicles().isEmpty)
+        #expect(streamer.residentWorldspace == streamer.worldspaceEditorID)
+    }
+
+    /// An exterior home names its worldspace, so a city cell is not read as Tamriel's.
+    @Test func aPluginHomeOutsideNamesItsWorldspace() throws {
+        let fixtures = try CellSceneFixture()
+        let plugin = try ESMFile(data: fixtures.plugin(
+            worldspaceEditorID: "RiftenWorld",
+            temporaryRefs: fixtures.refrRecord(formID: 0x210, base: 0x100)
+        ))
+        streamer.placedRecords = PlacedRecordLookup(
+            index: LoadOrderRecordIndex(plugins: [("Skyrim.esm", plugin)])
+        )
+        let home = try #require(streamer.pluginPlacement(
+            of: .plugin(name: "Skyrim.esm", objectID: 0x210)
+        ))
+        #expect(home.home == .exterior(CellCoordinate(x: 0, y: 0)), "the cell its position is in")
+        #expect(home.worldspace == "RiftenWorld")
     }
 
     @Test func anEmptyStreamerHasNothingInFlight() {

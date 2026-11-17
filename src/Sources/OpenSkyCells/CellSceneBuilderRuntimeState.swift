@@ -59,6 +59,7 @@ nonisolated extension CellSceneBuilder.CellReferenceStateBuilder {
         _ references: (refs: [PlacedReference], collected: [CollectedReference]),
         state: WorldStateSnapshot,
         location: CellSceneLocation,
+        worldspace: String? = nil,
         parentPool: EnableParentPool = EnableParentPool(),
         counts: inout BuildCounts
     ) -> EffectiveReferences {
@@ -69,7 +70,7 @@ nonisolated extension CellSceneBuilder.CellReferenceStateBuilder {
             counts: &counts
         )
         let deltas = state.deltasByKey()
-        let placed = relocating(refs, into: location, deltas: deltas)
+        let placed = relocating(refs, into: (location, worldspace), deltas: deltas)
         let entries = owner.referenceBuilder
             .referenceEntries(refs: placed, collected: collected) + spawned.entries
         return EffectiveReferences(

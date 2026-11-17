@@ -133,7 +133,7 @@ nonisolated public final class CellSceneBuilder {
         let parents = doorTransitions.persistentParentPool(in: world, localized: pluginLocalized)
         let resolved = referenceBuilder.states.effectiveReferences(
             (refs, collected), state: state, location: location,
-            parentPool: parents, counts: &counts
+            worldspace: worldspaceEditorID, parentPool: parents, counts: &counts
         )
         let effective = resolved.references
         let collision = collisionBuilder.triggers

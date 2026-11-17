@@ -136,7 +136,11 @@ extension CellStreamer.ResidentSteps {
             let placedRecords = streamer.placedRecords, let entry = placedRecords.entry(for: key),
             let home = placedRecords.home(of: entry)
         else { return nil }
-        return PluginPlacement(entry: entry, home: home)
+        guard case .exterior = home else { return PluginPlacement(entry: entry, home: home) }
+        return PluginPlacement(
+            entry: entry, home: home,
+            worldspace: placedRecords.worldspaceEditorID(holding: entry.formID)
+        )
     }
 
     /// One resident ACHR in constant time. An interior scene replaces the

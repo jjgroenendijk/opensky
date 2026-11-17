@@ -8,12 +8,16 @@ public import OpenSkyWorldState
 public struct ReferencePlacement {
     public let state: ReferenceState
     public let location: CellSceneLocation?
+    /// The editor ID of the worldspace of an exterior `location`; nil for an interior.
+    public let worldspace: String?
 
     public init(
         state: ReferenceState,
-        location: CellSceneLocation?
+        location: CellSceneLocation?,
+        worldspace: String? = nil
     ) {
         self.state = state
         self.location = location
+        self.worldspace = worldspace
     }
 }
