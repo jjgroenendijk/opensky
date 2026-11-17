@@ -20,7 +20,7 @@ nonisolated public struct Worldspace: Sendable {
         public static let useMapData = ParentFlags(rawValue: 0x0004)
         public static let useWaterData = ParentFlags(rawValue: 0x0008)
         public static let useClimateData = ParentFlags(rawValue: 0x0010)
-        static let useSkyCell = ParentFlags(rawValue: 0x0040)
+        public static let useSkyCell = ParentFlags(rawValue: 0x0040)
     }
 
     /// DATA field (uint8).
@@ -201,5 +201,11 @@ nonisolated extension Worldspace {
             current = parent
         }
         return current
+    }
+
+    /// False when the world its sky comes from sets `noSky`. A child that sets the
+    /// "use sky cell" bit takes its sky from the parent.
+    public func drawsSky(in worldspaces: [UInt32: Worldspace]) -> Bool {
+        !source(of: .useSkyCell, in: worldspaces).flags.contains(.noSky)
     }
 }

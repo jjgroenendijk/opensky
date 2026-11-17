@@ -123,8 +123,8 @@ nonisolated public struct NavmeshGeometry: Sendable {
     public let triangles: [Triangle]
     public let edgeLinks: [EdgeLink]
     public let doorLinks: [DoorLink]
-    /// Cover-triangle list length. The list itself is validated and dropped.
-    public let coverTriangleCount: Int
+    /// The triangles that give cover, by index into `triangles`.
+    public let coverTriangles: [Int16]
     /// Navmesh-grid divisor: the grid is divisor x divisor squares. xEdit
     /// treats a value over 12 as "no grid follows"; this decoder does the same.
     public let gridDivisor: UInt32
@@ -132,9 +132,18 @@ nonisolated public struct NavmeshGeometry: Sendable {
     public let gridSize: SIMD2<Float>
     public let boundsMin: SIMD3<Float>
     public let boundsMax: SIMD3<Float>
-    /// Total triangle indices across every grid square, kept for the census;
-    /// the per-square lists themselves are validated and dropped.
-    public let gridTriangleIndexCount: Int
+    /// Each grid square's triangles, by index into `triangles`, row by row.
+    /// Empty when the divisor is over 12.
+    public let gridSquares: [[Int16]]
+
+    public var coverTriangleCount: Int {
+        coverTriangles.count
+    }
+
+    /// Total triangle indices across every grid square.
+    public var gridTriangleIndexCount: Int {
+        gridSquares.reduce(0) { $0 + $1.count }
+    }
 
     public init(data: Data) throws {
         var reader = BinaryReader(data)
@@ -144,12 +153,12 @@ nonisolated public struct NavmeshGeometry: Sendable {
         triangles = try Self.readTriangles(&reader)
         edgeLinks = try Self.readEdgeLinks(&reader)
         doorLinks = try Self.readDoorLinks(&reader)
-        coverTriangleCount = try Self.readTriangleIndices(&reader, of: "cover triangle").count
+        coverTriangles = try Self.readTriangleIndices(&reader, of: "cover triangle")
         gridDivisor = try reader.readUInt32()
         gridSize = try SIMD2(reader.readFloat32(), reader.readFloat32())
         boundsMin = try NavmeshDecoding.readVector3(&reader)
         boundsMax = try NavmeshDecoding.readVector3(&reader)
-        gridTriangleIndexCount = try Self.readGrid(&reader, divisor: gridDivisor)
+        gridSquares = try Self.readGrid(&reader, divisor: gridDivisor)
         try validate()
     }
 
@@ -220,8 +229,7 @@ nonisolated public struct NavmeshGeometry: Sendable {
         return links
     }
 
-    /// A counted int16 triangle-index list. Returned rather than stored so the
-    /// caller can range-check it and keep only the tally.
+    /// A counted int16 triangle-index list.
     private static func readTriangleIndices(
         _ reader: inout BinaryReader,
         of what: String
@@ -235,16 +243,15 @@ nonisolated public struct NavmeshGeometry: Sendable {
         return indices
     }
 
-    /// The divisor^2 per-square triangle lists, consumed for their tally.
-    /// A divisor outside 0...12 means no lists follow, matching xEdit's
-    /// `wbNavmeshGridCounter`.
-    private static func readGrid(_ reader: inout BinaryReader, divisor: UInt32) throws -> Int {
-        guard divisor <= 12 else { return 0 }
-        var total = 0
-        for _ in 0 ..< (divisor * divisor) {
-            total += try readTriangleIndices(&reader, of: "grid square").count
+    /// The divisor^2 per-square triangle lists. A divisor outside 0...12 means no
+    /// lists follow, matching xEdit's `wbNavmeshGridCounter`.
+    private static func readGrid(
+        _ reader: inout BinaryReader, divisor: UInt32
+    ) throws -> [[Int16]] {
+        guard divisor <= 12 else { return [] }
+        return try (0 ..< (divisor * divisor)).map { _ in
+            try readTriangleIndices(&reader, of: "grid square")
         }
-        return total
     }
 
     /// Every index the payload carries that points at something local,
@@ -265,6 +272,12 @@ nonisolated public struct NavmeshGeometry: Sendable {
         }
         for link in doorLinks {
             try validate(index: link.triangle, of: "door link")
+        }
+        for index in coverTriangles {
+            try validate(index: index, of: "cover")
+        }
+        for index in gridSquares.joined() {
+            try validate(index: index, of: "grid square")
         }
     }
 

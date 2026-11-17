@@ -89,7 +89,9 @@ cell (3, -20) are like this on the real install. OpenSky draws the default groun
 such a quadrant, as for a null `LTEX`, and uses its ground material. This is UNCONFIRMED against
 the game, but the layers there blend into dirt and snow, not into a blank surface.
 
-OpenSky does not read `MPCD` (multi-pass color data, rare).
+OpenSky does not read `MPCD`. xEdit lists it only as unknown data, and no `LAND` record in
+the 10 vanilla plugins of the install has it: the record census of `make rank-gaps` finds no
+`LAND` field left unread.
 
 ## LTEX
 

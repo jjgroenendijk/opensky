@@ -94,7 +94,7 @@ still applies.
 | dxgiFormat | See below |
 | resourceDimension | 3 (`TEXTURE2D`), or 4 (`TEXTURE3D`) for a volume. Others are not supported |
 | miscFlag | `0x4` (`TEXTURECUBE`) marks a cubemap, read only for a cube map use |
-| arraySize | More than 1 is not supported |
+| arraySize | More than 1 is not supported. Only the DX10 header carries it, and no vanilla file has that header (below) |
 | miscFlags2 | Alpha mode. Skipped |
 
 Accepted `dxgiFormat` values, UNORM: BC1 71, BC2 74, BC3 77, BC4 80, BC5 83, BC7 98. The

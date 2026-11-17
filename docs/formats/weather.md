@@ -167,8 +167,12 @@ its own". A wrong size or a null link is skipped, and an earlier value stays. Se
 `RDWT` or `RDSA` with a size that is not a multiple of 12, or outside its area type, is
 skipped. `RPLI` opens an area with its uint32 edge falloff, and each `RPLD` after it adds
 float32 X, Y points to that area. `RDMP` is the map name (lstring), and `RDOT` object data is
-kept raw. OpenSky does not read `RDGS`. `RDMD` comes from
-Oblivion and Skyrim SE does not use it.
+kept raw. `RDGS` is a list of 8-byte grass entries: a `GRAS` FormID and an `LTEX` landscape
+texture FormID (xEdit). OpenSky reads the list but places no grass from it, because the
+Creation Kit wiki says the region Grass tab is "Not used"
+([Region](https://ck.uesp.net/wiki/Region)). Skyrim places grass from the landscape texture
+instead. A list whose size is not a multiple of 8 is left unread. `RDMD` comes from Oblivion
+and Skyrim SE does not use it.
 
 ## Vanilla Skyrim.esm
 

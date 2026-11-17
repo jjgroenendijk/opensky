@@ -9,10 +9,11 @@ import Testing
 
 @Suite(.tags(.parser))
 struct WorldspaceParentTests {
-    private func world(_ formID: UInt32, _ name: String, parent: UInt32?, flags: UInt16) throws
-        -> Worldspace
-    {
+    private func world(
+        _ formID: UInt32, _ name: String, parent: UInt32?, flags: UInt16, data: UInt8 = 0
+    ) throws -> Worldspace {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring(name))
+            + ESMFixture.field("DATA", Data([data]))
         if let parent {
             var wnam = Data()
             wnam.appendUInt32(parent)
@@ -48,6 +49,21 @@ struct WorldspaceParentTests {
         #expect(city.source(of: .useClimateData, in: worlds).editorID == "Tamriel")
         #expect(markarth.source(of: .useMapData, in: worlds).editorID == "Tamriel")
         #expect(markarth.source(of: .useLODData, in: worlds).editorID == "MarkarthWorld")
+    }
+
+    @Test func aChildWithTheSkyCellBitTakesItsParentsSky() throws {
+        let interior = try world(0x60, "NoSkyParent", parent: nil, flags: 0, data: 0x20)
+        let follows = try world(0x61, "Follows", parent: 0x60, flags: 0x40)
+        let own = try world(0x62, "Own", parent: 0x60, flags: 0x3F)
+        let tamriel = try world(0x3C, "Tamriel", parent: nil, flags: 0)
+        let city = try world(0x63, "City", parent: 0x3C, flags: 0x7F, data: 0x20)
+        let worlds: [UInt32: Worldspace] = [
+            0x60: interior, 0x61: follows, 0x62: own, 0x3C: tamriel, 0x63: city
+        ]
+        #expect(!follows.drawsSky(in: worlds))
+        #expect(own.drawsSky(in: worlds))
+        #expect(city.drawsSky(in: worlds))
+        #expect(!interior.drawsSky(in: worlds))
     }
 
     @Test func aParentCycleStops() throws {

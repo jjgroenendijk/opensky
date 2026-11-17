@@ -161,8 +161,6 @@ mesh.
 | Skipped | Why |
 | --- | --- |
 | The two CRC markers | Constant values. Nothing depends on them |
-| Cover triangle list | Checked, then dropped. Nothing uses cover yet |
-| Navmesh grid lists | A speed-up structure for a search OpenSky does not do. Size and bounds are kept |
 | `NVMI` island data | Read only to reach the parent cell after it |
 | `NAVI NVPP` | A route preference, not a connection. Counted only |
 
@@ -171,8 +169,9 @@ mesh.
 - Every count is checked against the bytes left before it sizes an array. A broken count
   is an error, not a huge allocation.
 - Every vertex, triangle, and door index that points inside this navmesh is range-checked.
-  The edge link triangle is not (see above). The cover triangle list and the grid are read
-  only for their counts, so their indexes are not checked either.
+  The edge link triangle is not (see above). The cover triangle list and every grid square
+  list are kept and checked the same way: an index past the last triangle rejects the
+  navmesh.
 - A broken `NVMI` entry is counted and skipped. One bad entry must not lose every other
   navmesh.
 
