@@ -173,6 +173,9 @@ toward the depth that puts its eye at the surface, or up (jump) and down (sneak)
 to 200 units per second. A swimmer resting on a shallow bottom counts as grounded, so it can walk
 out.
 
+The game's own rules for swimming depth, floating, and leaving the water are on the
+[ground and water contact](/engine/ground-and-water-contact.md#water) page.
+
 ## Speed
 
 Worn armour weight slows the player's run and sprint, but never below the walk; the walk keeps
@@ -224,6 +227,9 @@ with no material. Three paths set it, one for each way the capsule becomes groun
 [Footstep sounds](/engine/footstep-sounds.md) read it once per frame.
 
 ## Collision response
+
+The game's rules for walkable slopes, steps, and staying on the ground are on the
+[ground and water contact](/engine/ground-and-water-contact.md) page.
 
 On terrain, grounded motion refuses a face steeper than the slope limit. An allowed rise snaps the
 feet to the drawn surface. Gravity and snap keep contact on the way down. A falling player stops
