@@ -339,33 +339,13 @@ during the runtime's update, that update would write back its older copy and dro
 
 ## Actors far from the player
 
-In the game, an actor whose package leads to another cell walks there even while it is not
-loaded. The game keeps a graph of cells and worldspaces, joined by their load doors, and the
-actor follows a rough path along it, door by door. When the area around it loads, the game
-builds a full path from the actor's place on that rough path, over the navmesh where one is
-loaded. So a resident who leaves home at 8:00 is already on the way, or at the market, when
-the player arrives. No setting for the speed of this walk was found.
+In the game, an actor's packages keep running while its cell is not loaded. It walks its path
+cell by cell through load doors, at a slower update rhythm, and a new game places each persistent
+actor where its package puts it at that hour. [Actors outside the loaded area](/engine/unloaded-actors.md)
+has the levels, the update rhythm, time skips, and placement on arrival.
 
-```mermaid
-stateDiagram-v2
-    [*] --> AtHome
-    AtHome --> RoughPath: package leads to another cell
-    RoughPath --> RoughPath: through load doors, cell by cell
-    RoughPath --> FullPath: the area around the actor loads
-    FullPath --> AtPlace: walks the navmesh path
-    RoughPath --> AtPlace: arrives while unloaded
-    AtPlace --> AtHome: package ends
-    note right of RoughPath: not loaded, no navmesh
-    note right of FullPath: placeholder nodes where no navmesh is loaded
-```
-
-The game picks a package again every 15 s and a procedure every 3 s. Actors far from the player
-are updated less often, and a sandbox looks for a new spot every 3 to 6 s, within 6000 units.
-
-[WARNING] OpenSky moves an actor only while its cell is loaded. A persistent resident stays in
-the interior where the editor placed it. Seen in Riften at 10:00, Brand-Shei, Marise, Grelka,
-Mjoll, and Bolli never came to the market by 12:00. In Riverwood, Alvor's work package runs
-inside his house.
+[WARNING] OpenSky moves an actor only while its cell is loaded, so a persistent resident stays in
+the interior where the editor placed it.
 
 ## Walking into another cell
 
