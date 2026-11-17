@@ -46,11 +46,11 @@ nonisolated extension NIFCollisionTriangleCollections {
         guard count <= reader.bytesRemaining / 12 else {
             throw NIFError.malformed("strip vertex count \(count) exceeds block size")
         }
-        let unitScale = NIFCollisionModel.havokToEngineScale
+        // Strip vertices are in game units already, unlike every other Havok shape.
         var vertices: [SIMD3<Float>] = []
         vertices.reserveCapacity(count)
         for _ in 0 ..< count {
-            try vertices.append(reader.readVector3() * scale * unitScale)
+            try vertices.append(reader.readVector3() * scale)
         }
         return vertices
     }

@@ -50,6 +50,8 @@ struct NIFCollisionStripsTests {
             return
         }
         #expect(vertices.count == 6)
+        // Strip vertices are game units: no Havok scale, unlike the other shapes.
+        #expect(vertices[5] == SIMD3<Float>(1, 0, 1))
         // Alternating winding within each strip, restarted per strip.
         #expect(indices == [0, 1, 2, 1, 3, 2, 1, 2, 4, 2, 4, 5])
     }
