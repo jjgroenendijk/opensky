@@ -179,12 +179,15 @@ public final class CellStreamer {
     /// integrates at most one drawable build, and sinks the scene on a change.
     /// Trigger occupancy is tested here once per frame, never in the 120 Hz
     /// substep loop. `playerCapsule` is nil when the player is not walking.
+    /// `transitionTime` is the frame's unpaused wall time, which a door's hold counts in;
+    /// nil uses `frameTime`.
     public func update(
         cameraPosition: SIMD3<Float>,
         interactionRay: InteractionRay? = nil,
         activate: Bool = false,
         playerCapsule: PlayerCapsuleState? = nil,
-        frameTime: Float = 0
+        frameTime: Float = 0,
+        transitionTime: Float? = nil
     ) {
         guard !isHeld else { return }
         viewerPosition = cameraPosition
@@ -194,7 +197,7 @@ public final class CellStreamer {
             activeBuild = nil
         }
         let completedLOD = runner.drainCompletedDistantLOD().filter(builds.builtHere)
-        let transition = transitions.drainDoorTransitions(frameTime: frameTime)
+        let transition = transitions.drainDoorTransitions(frameTime: transitionTime ?? frameTime)
         if transitions.finishDoorTransition(transition) {
             coverage.discardDistantLOD(completedLOD)
             return
