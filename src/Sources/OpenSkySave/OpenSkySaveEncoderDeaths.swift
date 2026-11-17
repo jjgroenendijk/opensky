@@ -33,7 +33,7 @@ nonisolated enum OpenSkySaveDeathsWriter {
                 payload.writeUInt8(each.state.isDead ? 1 : 0)
                 payload.writeUInt8(each.state.wasLooted ? 1 : 0)
                 writeRestingTransform(each.state.restingTransform, into: &payload)
-                payload.writeUInt8(each.state.severedNode == nil ? 0 : 1)
+                payload.writeUInt8(Self.cutByte(each.state))
                 if let node = each.state.severedNode {
                     payload.writeString(node)
                 }
@@ -45,6 +45,12 @@ nonisolated enum OpenSkySaveDeathsWriter {
     /// A presence byte, then position, rotation and scale when there is one.
     /// The same field order and float encoding `RDLT` gives a transform
     /// override, so the two read the same way in a hex dump.
+    /// 0 for a whole body, 1 for a cut node, 2 for a node blown off.
+    private static func cutByte(_ state: ActorDeathState) -> UInt8 {
+        guard state.severedNode != nil else { return 0 }
+        return state.partExploded ? 2 : 1
+    }
+
     private static func writeRestingTransform(
         _ transform: ReferenceTransformOverride?,
         into writer: inout BinaryWriter

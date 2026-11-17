@@ -148,7 +148,7 @@ At most 16 modifiers run at once. The oldest goes first. This is OpenSky's own l
 | Source | Strength |
 | --- | --- |
 | A spell hit on the player | 1, from the `MGEF` image-space modifier |
-| An explosion | 1 at the center, falling linearly to 0 at the `EXPL` image-space radius, measured to the camera; a zero radius plays at 1. The game falls off squared and adds a swap effect ([explosion effects](/engine/explosion-effects.md)) |
+| An explosion | 1 − (d / r)², d the distance to the camera and r the `EXPL` image-space radius; a zero radius plays at 1. A close blast also swaps in a fixed modifier at 1 ([explosion effects](/engine/explosion-effects.md)) |
 | `ImageSpaceModifier.Apply(float afStrength = 1.0)` or `PopTo(ImageSpaceModifier, float)` | The script's strength, clamped to 0 to 1 |
 | `ImageSpaceModifier.ApplyCrossFade(float afFadeDuration = 1.0)` | Rises from 0 to 1 over the fade time, held until `Remove` or the global `RemoveCrossFade(float afFadeDuration = 1.0)`, which falls back to 0 over its own fade time |
 

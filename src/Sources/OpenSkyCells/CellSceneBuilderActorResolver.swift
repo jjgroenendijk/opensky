@@ -106,7 +106,7 @@ nonisolated extension CellSceneBuilder.CellActorResolver {
             let death = entry.flatMap { deltas[$0.key]?.component(ActorDeathState.self) }
             guard death?.severedNode != nil else { return .resolved(placed, visual, head: nil) }
             let cut = visual.decapitated(gore: resolvers.visual.decapitationGore(for: visual))
-            return .resolved(placed, cut.body, head: cut.head)
+            return .resolved(placed, cut.body, head: death?.partExploded == true ? nil : cut.head)
         } catch {
             return .failed(String(describing: error))
         }

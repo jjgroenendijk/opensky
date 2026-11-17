@@ -84,6 +84,10 @@ public protocol RagdollSessionWorld: AnyObject {
     func severableNode(of key: ReferenceKey) -> String?
     /// The blood and gore of a cut at `node`, at the node's world `position`.
     func showDismemberment(of key: ReferenceKey, node: String, at position: SIMD3<Float>)
+    /// The race's explodable part, or nil when it has none.
+    func explodablePart(of key: ReferenceKey) -> ExplodablePart?
+    /// The part's explosion at the node's world `position`.
+    func showPartExplosion(of key: ReferenceKey, node: String, at position: SIMD3<Float>)
     /// A body a quest still needs, which the excess-dead rule keeps.
     func isCorpseKept(_ key: ReferenceKey) -> Bool
     /// Removes a body from the world for good.

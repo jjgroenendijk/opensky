@@ -123,6 +123,7 @@ extension GapsGatherer {
             _ = FollowerCommandSettings.resolve(store: store)
             _ = DeathSettings.resolve(store: store)
             _ = ImpulseSettings.resolve(store: store)
+            _ = ExplosionImageSpaceSwap.resolve(store: store)
             _ = WaterImpactSettings.resolve(store: store, text: { _ in nil })
             _ = FallDamageSettings.resolve(store: store)
             _ = BloodEffectSettings.resolve(store: store)

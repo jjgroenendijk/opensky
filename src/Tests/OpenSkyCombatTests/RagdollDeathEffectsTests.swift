@@ -110,6 +110,26 @@ struct RagdollDeathEffectsTests {
     }
 
     @Test
+    func anAbsoluteChanceOfAHundredAlwaysBlowsThePartOff() throws {
+        let (coordinator, world) = Self.session()
+        world.explodable = ExplodablePart(
+            node: "NPC Head [Head]",
+            chance: 100,
+            isChanceAbsolute: true
+        )
+        coordinator.noteHit(CombatHitRecord(damage: 40, kind: .melee), on: Self.victim)
+        Self.kill(coordinator, world)
+        #expect(coordinator.deathEffects.explodedParts == 1)
+        #expect(coordinator.severedHeads[Self.victim] == nil, "nothing of the part is left")
+        #expect(world.partExplosions.map(\.1) == ["NPC Head [Head]"])
+        let state = try #require(
+            coordinator.store.component(ActorDeathState.self, for: Self.victim)
+        )
+        #expect(state.severedNode == "NPC Head [Head]")
+        #expect(state.partExploded)
+    }
+
+    @Test
     func aBlowThatCannotSeverLeavesTheHead() {
         var settings = DeathSettings.vanilla
         settings.dismemberChance = 100

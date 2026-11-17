@@ -55,8 +55,8 @@ bytes minimum per entry, 16 per record.
 | uint8 | wasLooted | non-zero once the corpse was searched |
 | uint8 | present | non-zero when a resting transform follows |
 | bytes | resting | position, rotation, scale as in an `RDLT` transform |
-| uint8 | present | non-zero when a severed node follows |
-| string | severed node | the node a decapitation cut, such as `NPC Head [Head]` |
+| uint8 | cut | 0 none, 1 cut off, 2 blown off; any other value fails the load |
+| string | severed node | when the cut is not 0: the node, such as `NPC Head [Head]` |
 | uint8 | present | non-zero when the cut head's resting transform follows |
 | bytes | head resting | position, rotation, scale as in an `RDLT` transform |
 

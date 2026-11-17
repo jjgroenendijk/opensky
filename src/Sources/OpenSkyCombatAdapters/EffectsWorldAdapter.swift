@@ -112,6 +112,15 @@ public final class EffectsWorldAdapter {
             world: self
         )
         explosions.impulses = bodyImpulses.makeImpulses(world: self)
+        if let settings = game.combatRecords?.gameSettings {
+            let swap = records.resolve(
+                ExplosionImageSpaceSwap.modifierFormID, fromPlugin: EffectsBasePlugin.name
+            )
+            .flatMap { records.recordType($0) == "IMAD" ? $0 : nil }
+            explosions.imageSpaceSwap = ExplosionImageSpaceSwap.resolve(
+                store: settings, modifier: swap
+            )
+        }
         return explosions
     }
 }

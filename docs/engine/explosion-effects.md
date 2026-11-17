@@ -12,9 +12,7 @@ An explosion near the camera can show two screen effects: its own image space mo
 fixed "swap" effect from the master file. A killing hit can also blow off a body part that is
 marked as explodable.
 
-OpenSky does not build the swap effect or exploding body parts yet. It applies only the
-explosion's own image space, with a straight-line falloff
-([image space triggers](/rendering/image-space.md#triggers)).
+OpenSky builds all three. The last section lists where it differs.
 
 ## The explosion's own image space
 
@@ -25,11 +23,23 @@ block it.
 
 ## The swap effect
 
-1. Power = 1 − (d / R)² when d ≤ R, else 0. d is the distance from the camera, or from the player
-   when there is no camera position. R is the `EXPL` `DATA` radius times the explosion's scale.
-2. When the power is above the game's threshold, 0.75, a fixed image space modifier
-   from the master file applies at strength 1.
+Read from the game program. The check runs at the explosion's first update.
+
+1. Power = 1 − (d / R)² when d ≤ R, else 0. d is the distance from the player, or from the camera
+   while the kill camera plays. R is the radius the explosion is spawned with, times the scale
+   the spawner asks for.
+2. When the power is above the threshold, a fixed image space modifier applies at strength 1. The
+   threshold is `fExplosionImageSpaceSwapPower`: 0.6 in the program, and 0.75 in `Skyrim.esm`.
 3. An explosion whose `DATA` flags have bit `0x40` (Ignore Image Space Swap) skips step 2.
+
+The game finds the modifier by the fixed FormID `0x00000166`. No shipped master holds a record with
+that FormID: not `Skyrim.esm`, `Update.esm`, the three DLC masters, or the Creation Club masters.
+So in the shipped game the lookup finds nothing, and no swap effect shows. A plugin that adds an
+`IMAD` with that FormID turns it on.
+
+[WARNING] The program builds R from the `DATA` radius times 22 units per foot, unless `DATA` flag
+bit `0x01` is set, or from a magic effect's area times 22 when the explosion comes from a spell
+with an area. This read is not checked against a measurement.
 
 Example: an explosion with radius 200 at 80 units gives power 1 − 0.16 = 0.84. That is above 0.75,
 so the swap applies. At 100 units the power is exactly 0.75, which is not above it, so it does not.
@@ -76,3 +86,18 @@ flowchart TD
     C -- yes --> Cut[Part is cut off]
     C -- no --> Keep[Body stays whole]
 ```
+
+## In OpenSky
+
+- The explosion's own image space applies at every blast the viewer is near, also when the player
+  is not one of its targets ([image space triggers](/rendering/image-space.md#triggers)).
+- The swap modifier is looked up by its fixed FormID in the load order. Like the game, a load
+  order without that record shows no swap effect.
+- [WARNING] The swap power uses the `DATA` radius as it is, with no 22 units-per-foot factor and a
+  scale of 1, as OpenSky's blast damage does. The viewer is the camera.
+- An exploded part is kept in the death state like a cut head, with a flag. The body is drawn
+  without the part, and no piece of it is left to fall. A save keeps it
+  ([save actor chunks](/formats/opensky-save-actor-chunks.md#deth-deaths)).
+- A blown-off part plays the part's explodable explosion. Its debris and decals are not drawn.
+- A part that does not explode is cut off by the same roll, with no perk needed. A body with no
+  explodable part keeps the perk rule of [decapitation](/engine/ragdoll.md#decapitation).

@@ -25,12 +25,19 @@ nonisolated public enum ExplosionFalloff {
         return share >= 1 ? 0 : 1 - share * share
     }
 
-    /// Modifier strength for a viewer `distance` away: 1 at the center, 0 at the
+    /// Modifier strength for a viewer `distance` away: `1 - (d / r)^2`, 0 at the
     /// image-space radius. A zero radius plays at full strength, as for a spell hit.
     static func imageSpaceStrength(radius: Float, distance: Float) -> Float {
         guard radius.isFinite, radius > 0 else { return 1 }
         guard distance.isFinite else { return 0 }
-        return min(max(1 - max(distance, 0) / radius, 0), 1)
+        return fraction(radius: radius, distance: distance)
+    }
+
+    /// The swap power for a viewer `distance` away: `1 - (d / R)^2`, 0 past the
+    /// blast radius and for a blast with no radius.
+    static func swapPower(radius: Float, distance: Float) -> Float {
+        guard radius.isFinite, radius > 0, distance.isFinite else { return 0 }
+        return fraction(radius: radius, distance: distance)
     }
 }
 
