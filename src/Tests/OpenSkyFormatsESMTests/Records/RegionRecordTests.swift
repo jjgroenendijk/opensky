@@ -2,6 +2,7 @@
 // UESP "Skyrim Mod:Mod File Format/REGN"; see docs/formats/records.md.
 
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 import OpenSkyTagsTesting
@@ -213,6 +214,23 @@ struct RegionRecordTests {
             data: fields
         )))
         #expect(short.musicType == FormID(0x302))
+    }
+
+    @Test func decodesGrassEntries() throws {
+        let fields = ESMFixture.field(
+            "RDGS",
+            formID(0x400) + formID(0x500) + formID(0x401)
+                + formID(0x501)
+        )
+            + ESMFixture.field("RDGS", Data([1, 2, 3]))
+        let region = try Region(record: ESMFixture.parseRecord(ESMFixture.record(
+            "REGN", data: fields
+        )))
+        #expect(region.grasses == [
+            Region.GrassEntry(grass: FormID(0x400), landTexture: FormID(0x500)),
+            Region.GrassEntry(grass: FormID(0x401), landTexture: FormID(0x501))
+        ])
+        #expect(region.skipped.total == 1)
     }
 
     @Test func missingFieldsDecodeToEmptyAndNil() throws {

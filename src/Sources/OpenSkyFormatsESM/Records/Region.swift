@@ -83,7 +83,15 @@ nonisolated public struct Region: Sendable {
     public let iconPath: String?
     /// RDOT payloads, raw. Every vanilla RDOT is empty, so no decode can be checked.
     public let objectData: [Data]
+    /// RDGS: the grasses the region lists, each with the landscape texture it grows on.
+    public let grasses: [GrassEntry]
     public let skipped: FieldTally
+
+    /// One 8-byte RDGS entry (xEdit `wbDefinitionsTES5.pas`, REGN Grasses).
+    public struct GrassEntry: Equatable, Sendable {
+        public let grass: FormID
+        public let landTexture: FormID
+    }
 
     /// One RPLI edge falloff with the RPLD outline points after it.
     public struct Area: Equatable, Sendable {
@@ -112,6 +120,7 @@ nonisolated public struct Region: Sendable {
         mapName = extra.mapName
         iconPath = extra.iconPath
         objectData = extra.objectData
+        grasses = extra.grasses
         editorID = fields.editorID
         worldspace = fields.worldspace
         mapColor = fields.mapColor
@@ -211,6 +220,7 @@ nonisolated public struct Region: Sendable {
         var mapName: LString?
         var iconPath: String?
         var objectData: [Data] = []
+        var grasses: [GrassEntry] = []
 
         mutating func decode(field: ESMField, localized: Bool) throws -> Bool {
             var reader = BinaryReader(field.data)
@@ -230,6 +240,15 @@ nonisolated public struct Region: Sendable {
                 iconPath = try reader.readZString()
             case "RDOT":
                 objectData.append(field.data)
+            case "RDGS":
+                // An odd length is not a list of 8-byte entries; leave it unread.
+                guard field.data.count % 8 == 0 else { return false }
+                while reader.bytesRemaining >= 8 {
+                    try grasses.append(GrassEntry(
+                        grass: FormID(reader.readUInt32()),
+                        landTexture: FormID(reader.readUInt32())
+                    ))
+                }
             default:
                 return false
             }

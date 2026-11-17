@@ -54,11 +54,12 @@ its own fields. Source: xEdit `wbDefinitionsTES5.pas` (commit above), the `PNAM`
 | `0x08` | use water data | the default water type |
 | `0x10` | use climate data | the climate, so the weather |
 | `0x20` | use image space data, which xEdit marks unused | not read |
-| `0x40` | use sky cell | not read |
+| `0x40` | use sky cell | whether a sky is drawn: the parent's "no sky" flag `0x20` |
 
 A parent can have its own parent, so OpenSky walks up while the flag is set, and stops at a
 cycle. The vanilla city worlds (`WhiterunWorld`, `SolitudeWorld`, `WindhelmWorld`) set
 `0x7F` under Tamriel, and have no LOD folder of their own under `meshes/terrain`.
+`RiftenWorld` sets `0x77`. All of these set `0x40`, so their sky follows Tamriel.
 `MarkarthWorld` sets `0x44` and has its own LOD and its own `LAND` records. The cells of
 the `0x7F` cities (and `RiftenWorld`) have no `LAND` record, observed with `openskycli cell`
 on the install. Their ground is the parent's `LAND` at the same grid cell, so OpenSky draws

@@ -201,7 +201,10 @@ per-material split works on real data.
 
 ## Not done
 
-- MOPP bytecode is not run. The child geometry is used instead.
+- MOPP bytecode is not run. The child geometry is used instead. MOPP ("memory optimised
+  partial polytope", nif.xml) is a search tree over the child shape's triangles. It only
+  finds which triangles may touch a box faster, and holds no shape of its own. A test
+  against the child's triangles gives the same contacts, so no vanilla file needs it.
 - Welding data is checked and skipped. Nothing uses it.
 
 `openskycli collision` checks every model of an exterior cell (see [CLI](/tools/cli.md)).

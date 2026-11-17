@@ -77,7 +77,9 @@ nonisolated extension CellSceneBuilder.CellSceneAssembler {
                 waterHeight: water?.height
             ),
             water: water,
-            sky: worldspace?.flags.contains(.noSky) == false ? SkyParameters() : nil
+            sky: worldspace.map {
+                $0.drawsSky(in: owner.waterBuilder.worldspaceIndexBuildingIfNeeded())
+            } == true ? SkyParameters() : nil
         )
     }
 

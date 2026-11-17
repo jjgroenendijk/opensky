@@ -284,7 +284,7 @@ nonisolated extension RecordTextDump {
             + "version \(geometry.version), \(geometry.vertices.count) vertices, "
             + "\(geometry.triangles.count) triangles, \(geometry.edgeLinks.count) edge links, "
             + "\(geometry.doorLinks.count) door links, "
-            + "\(geometry.coverTriangleCount) cover triangles (skipped), "
+            + "\(geometry.coverTriangleCount) cover triangles, "
             + "grid divisor \(geometry.gridDivisor)"
     }
 

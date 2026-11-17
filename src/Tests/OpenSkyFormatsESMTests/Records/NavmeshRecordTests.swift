@@ -70,7 +70,27 @@ struct NavmeshRecordTests {
         #expect(navmesh.geometry.triangles[0].flags.contains(.edge01Link))
     }
 
-    @Test func decodesCoverAndGridTallies() throws {
+    @Test(arguments: [
+        (cover: [Int16(1)], grid: [[Int16(0)], [], [], []]),
+        (cover: [Int16(0)], grid: [[Int16(0)], [], [Int16(3)], []])
+    ])
+    func rejectsACoverOrGridIndexPastTheTriangles(
+        cover: [Int16], grid: [[Int16]]
+    ) {
+        let geometry = NavmeshFixture.geometry(
+            vertices: [SIMD3(0, 0, 0), SIMD3(1, 0, 0), SIMD3(0, 1, 0)],
+            triangles: [NavmeshFixture.Triangle(vertices: SIMD3(0, 1, 2))],
+            coverTriangles: cover,
+            divisor: 2,
+            gridSquares: grid
+        )
+        #expect(throws: ESMError.self) {
+            try Navmesh(record: NavmeshFixture
+                .record(NavmeshFixture.navmRecord(geometry: geometry)))
+        }
+    }
+
+    @Test func decodesCoverAndGridLists() throws {
         let geometry = NavmeshFixture.geometry(
             vertices: [SIMD3(0, 0, 0), SIMD3(1, 0, 0), SIMD3(0, 1, 0)],
             triangles: [NavmeshFixture.Triangle(vertices: SIMD3(0, 1, 2), coverFlags: 0x0A05)],
@@ -89,6 +109,8 @@ struct NavmeshRecordTests {
         #expect(navmesh.geometry.boundsMin == SIMD3(0, 0, 0))
         #expect(navmesh.geometry.boundsMax == SIMD3(1, 1, 1))
         #expect(navmesh.geometry.gridTriangleIndexCount == 2)
+        #expect(navmesh.geometry.coverTriangles == [0])
+        #expect(navmesh.geometry.gridSquares == [[0], [], [0], []])
     }
 
     /// The case `ESMField`'s XXXX handling exists for: a payload past the
