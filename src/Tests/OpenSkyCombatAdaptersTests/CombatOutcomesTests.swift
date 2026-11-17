@@ -4,6 +4,7 @@ import OpenSkyCombat
 import OpenSkyCombatAdapters
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyRenderCore
 import OpenSkySessionTesting
 import Testing
 
@@ -66,6 +67,19 @@ struct CombatOutcomesTests {
         idles.startKillMoveResult = false
         #expect(!adapter.startKillMove(attempt))
         #expect(!adapter.isInKillMove(Self.foe))
+    }
+
+    @Test func thePlayerAsVictimLeavesFirstPerson() {
+        idles.startKillMoveResult = true
+        let session = FakeGameSessionPort()
+        session.movementMode = .walk
+        host.gameSession = session
+        let attempt = KillMoveAttempt(
+            attacker: Self.foe, target: .player, action: KillMoveAttempt.attackAction, kills: true
+        )
+        #expect(adapter.startKillMove(attempt))
+        #expect(session.setMovementModeCalls == [.thirdPerson])
+        #expect(host.fakeCinematicCamera.playKillCamCalls.isEmpty)
     }
 
     @Test func aTargetCanBeKilledWhenZeroHealthMeansDeath() {

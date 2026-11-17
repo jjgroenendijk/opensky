@@ -221,8 +221,7 @@ extension CombatShared {
         func startCombatKillMove(
             by actor: ReferenceKey, on target: ReferenceKey, damage: Float
         ) -> Bool {
-            guard target != .player else { return false }
-            return shared.world.startKillMove(KillMoveAttempt(
+            shared.world.startKillMove(KillMoveAttempt(
                 attacker: actor, target: target, action: KillMoveAttempt.attackAction,
                 kills: attackKills(target, damage: damage, attacker: actor)
             ))

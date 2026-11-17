@@ -68,11 +68,12 @@ struct KillMoveTests {
         #expect(world.killMoves.map(\.kills) == [false, false])
     }
 
-    @Test func anNPCKillMoveNeverTakesThePlayer() {
+    @Test func anNPCKillMoveCanTakeThePlayer() {
         let (coordinator, world) = Self.coordinator(health: 20)
         world.healths[.player] = (1, 100)
-        #expect(!coordinator.loopWorld.startCombatKillMove(by: Self.npc, on: .player, damage: 30))
-        #expect(world.killMoves.isEmpty)
+        #expect(coordinator.loopWorld.startCombatKillMove(by: Self.npc, on: .player, damage: 30))
+        #expect(world.killMoves.map(\.target) == [.player])
+        #expect(world.killMoves.map(\.kills) == [true])
     }
 
     @Test func anActorInAKillMoveTakesTenfoldDamageAndLeavesTheFight() {
