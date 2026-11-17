@@ -104,6 +104,14 @@ public struct CollisionArguments: CLICommandArguments {
     @OptionGroup public var grid: GridOptions
     @Option(parsing: .unconditional, help: ArgumentHelp("Cells around the center.", valueName: "n"))
     public var radius: Int32 = 0
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp(
+            "List each grid shape over this world point, with its reference and heights.",
+            valueName: "x,y"
+        )
+    )
+    public var column: MapPoint?
 
     public init() {}
 

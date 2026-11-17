@@ -237,6 +237,7 @@ run "effects imad (first IMAD at 0.5 s)" effects imad "$(
 
 run "cell summary (first-render cell)" cell
 run "collision grid (5x5 around first-render cell)" collision --radius 2
+run "collision column (shapes over one point)" collision --column 26624,-6144
 
 # M7.2 distant LOD gate: every terrain/object and tree LOD file in Tamriel
 # parses, and tree-list indices resolve. No game data leaves the install.

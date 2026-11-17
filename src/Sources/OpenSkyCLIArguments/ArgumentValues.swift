@@ -44,6 +44,25 @@ public struct CommaList: ExpressibleByArgument, Equatable, Sendable {
     }
 }
 
+/// A world point seen from above, written `x,y`, such as `-100352,83968`.
+public struct MapPoint: ExpressibleByArgument, Equatable, Sendable {
+    public let x: Float
+    public let y: Float
+
+    public init(x: Float, y: Float) {
+        self.x = x
+        self.y = y
+    }
+
+    public init?(argument: String) {
+        let parts = argument.split(separator: ",", omittingEmptySubsequences: false)
+            .map { Float($0.trimmingCharacters(in: .whitespaces)) }
+        guard parts.count == 2, let x = parts[0], let y = parts[1], x.isFinite, y.isFinite
+        else { return nil }
+        self.init(x: x, y: y)
+    }
+}
+
 public enum GraphicsPresetName: String, CaseIterable, ExpressibleByArgument, Sendable {
     case low, medium, high, ultra
 }
