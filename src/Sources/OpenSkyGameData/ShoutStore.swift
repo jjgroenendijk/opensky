@@ -10,13 +10,18 @@ public import OpenSkyFormatsESM
 nonisolated public struct ResolvedWordOfPower: Equatable, Sendable {
     public let id: ResolvedFormID
     public let word: WordOfPower
+    /// FULL from the plugin's string table, when the store had the tables.
+    var localizedName: String?
 
     var editorID: String? {
         word.editorID
     }
 
     var displayName: String {
-        switch word.name {
+        if let localizedName {
+            return localizedName
+        }
+        return switch word.name {
         case let .inline(value): value
         case let .tableID(tableID), let .pluginTableID(tableID, _):
             word.editorID ?? "string #\(tableID)"
@@ -46,9 +51,14 @@ nonisolated public struct ResolvedShout: Sendable {
     public let id: ResolvedFormID
     public let shout: Shout
     public let words: [ResolvedShoutWord]
+    /// FULL from the plugin's string table, when the store had the tables.
+    public internal(set) var localizedName: String?
 
     public var displayName: String {
-        switch shout.name {
+        if let localizedName {
+            return localizedName
+        }
+        return switch shout.name {
         case let .inline(value): value
         case let .tableID(tableID), let .pluginTableID(tableID, _):
             shout.editorID ?? "string #\(tableID)"
@@ -76,7 +86,7 @@ nonisolated public struct ShoutStore: Sendable {
         shoutTable.skipped.merging(wordTable.skipped)
     }
 
-    public init(index: RecordIndex, spells: SpellStore) {
+    public init(index: RecordIndex, spells: SpellStore, names: RecordNameLookup = .none) {
         self.index = index
         // Words first: a shout joins against them as it is built.
         let words = ResolvedRecordTable(
@@ -84,7 +94,11 @@ nonisolated public struct ShoutStore: Sendable {
             types: ["WOOP"],
             decode: Self.word,
             editorID: \.editorID,
-            resolve: { id, word, _ in ResolvedWordOfPower(id: id, word: word) }
+            resolve: { id, word, plugin in
+                ResolvedWordOfPower(
+                    id: id, word: word, localizedName: names.text(word.name, plugin: plugin)
+                )
+            }
         )
         wordTable = words
         shoutTable = ResolvedRecordTable(
@@ -101,7 +115,8 @@ nonisolated public struct ShoutStore: Sendable {
                         sourcePlugin: sourcePlugin,
                         spells: spells,
                         lookup: (words, index)
-                    )
+                    ),
+                    localizedName: names.text(shout.name, plugin: sourcePlugin)
                 )
             }
         )

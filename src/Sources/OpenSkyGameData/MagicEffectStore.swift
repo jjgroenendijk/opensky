@@ -10,6 +10,8 @@ nonisolated public struct ResolvedMagicEffect: Equatable, Sendable {
     public let id: ResolvedFormID
     public let effect: MagicEffect
     public let sourcePlugin: String
+    /// FULL from the plugin's string table, when the store had the tables.
+    public internal(set) var localizedName: String?
 
     /// Runtime identity of this record, which is how an active effect names its MGEF.
     public var key: ReferenceKey {
@@ -17,7 +19,10 @@ nonisolated public struct ResolvedMagicEffect: Equatable, Sendable {
     }
 
     public var displayName: String {
-        switch effect.name {
+        if let localizedName {
+            return localizedName
+        }
+        return switch effect.name {
         case let .inline(value): value
         case let .tableID(id), let .pluginTableID(id, _): effect.editorID ?? "string #\(id)"
         case nil: effect.editorID ?? id.description
@@ -47,14 +52,19 @@ nonisolated public struct MagicEffectStore: Sendable {
         table.skipped
     }
 
-    public init(index: RecordIndex) {
+    public init(index: RecordIndex, names: RecordNameLookup = .none) {
         self.index = index
         table = ResolvedRecordTable(
             index: index,
             types: ["MGEF"],
             decode: Self.decode,
             editorID: \.editorID,
-            resolve: { ResolvedMagicEffect(id: $0, effect: $1, sourcePlugin: $2) }
+            resolve: { id, effect, plugin in
+                ResolvedMagicEffect(
+                    id: id, effect: effect, sourcePlugin: plugin,
+                    localizedName: names.text(effect.name, plugin: plugin)
+                )
+            }
         )
         effectsByKey = Dictionary(
             table.values.values.map { ($0.key, $0) },
