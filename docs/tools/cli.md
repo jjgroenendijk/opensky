@@ -123,7 +123,7 @@ the number. A summary line goes to stderr.
 | `cell [--worldspace/--x/--y] [--cell <editorID>] [--refs]` | An exterior cell of any worldspace, or an interior cell by editor ID, without Metal, merged over every active plugin: the winning plugin, reference count, and base type histogram. `--refs` lists each reference with its base editor ID and position |
 | `actor appearance [--worldspace/--x/--y] [--radius n] [--npc id]` | Placed actors in a block of cells: template chain, appearance sources, skeleton, parts, FaceGen path, and reason-tagged skips. Persistent actors are placed by position. `--npc` resolves one base record |
 | `actor values --npc <id>` or `--race <id>` `[--player-level n]` | How an actor's values are derived, with the record each part came from ([actor values](/engine/actor-values.md)) |
-| `collision [--worldspace/--x/--y] [--radius n]` | Collision for the center cell's models and the placed grid, with each surface's `MATT` ([collision world](/engine/collision-world.md)) |
+| `collision [--worldspace/--x/--y] [--radius n] [--column x,y]` | Collision for the center cell's models and the placed grid, with each surface's `MATT` ([collision world](/engine/collision-world.md)). `--column` lists each grid shape over one world point, highest first, with its reference and heights |
 | `interior --out <file> [--radius n]` | Finds a door near the target, goes into the interior and back, and renders the arrival pose |
 | `lod [--worldspace edid]` | Every LOD file of a world space through the real decoders ([distant LOD](/engine/distant-lod.md)) |
 

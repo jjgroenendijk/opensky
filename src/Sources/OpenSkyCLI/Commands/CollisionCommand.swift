@@ -46,13 +46,36 @@ enum CollisionCommand {
             throw CLIError.failure("no Metal 4 GPU available")
         }
         let builder = try RenderCommand.makeBuilder(context: context, device: device)
-        try printGrid(CellCollisionGridProbe.run(
+        let grid = try CellCollisionGridProbe.run(
             builder: builder,
             worldspaceEditorID: worldspace,
             center: CellCoordinate(x: gridX, y: gridY),
             radius: radius
-        ))
+        )
+        if let column = arguments.column {
+            printColumn(grid, at: column)
+        }
+        try printGrid(grid)
     }
+
+    /// Each shape whose bounds hold the vertical line through `point`, highest top first.
+    private static func printColumn(_ grid: CellCollisionGridResult, at point: MapPoint) {
+        let line = ModelBounds(
+            min: SIMD3(point.x, point.y, -columnReach), max: SIMD3(point.x, point.y, columnReach)
+        )
+        let shapes = grid.entries.flatMap { entry in
+            (entry.collision?.candidates(overlapping: line) ?? []).map { (entry.coordinate, $0) }
+        }.sorted { $0.1.bounds.max.z > $1.1.bounds.max.z }
+        print("[INFO] column (\(format(point.x)), \(format(point.y))): \(shapes.count) shapes")
+        for (cell, shape) in shapes {
+            print("  ref \(shape.reference) in cell (\(cell.x),\(cell.y)): "
+                + "z \(format(shape.bounds.min.z)) to \(format(shape.bounds.max.z)), "
+                + "\(shape.triangleCount) triangles")
+        }
+    }
+
+    /// Far above and below any ground in the game.
+    private static let columnReach: Float = 1_000_000
 
     private static func printGrid(_ grid: CellCollisionGridResult) throws {
         for entry in grid.entries {
