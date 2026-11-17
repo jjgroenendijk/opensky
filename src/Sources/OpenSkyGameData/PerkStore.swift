@@ -32,6 +32,8 @@ nonisolated public struct ResolvedPerk: Sendable {
     /// NNAM resolved against the load order. Nil when the perk is the last
     /// rank or the link does not resolve.
     public let nextPerk: ResolvedFormID?
+    /// FULL from the plugin's string table, when the store had the tables.
+    public internal(set) var localizedName: String?
 
     public var editorID: String? {
         record.editorID
@@ -45,7 +47,10 @@ nonisolated public struct ResolvedPerk: Sendable {
     }
 
     public var displayName: String {
-        switch record.name {
+        if let localizedName {
+            return localizedName
+        }
+        return switch record.name {
         case let .inline(value): value
         case .tableID, .pluginTableID: record.editorID ?? id.description
         case nil: record.editorID ?? id.description
@@ -101,7 +106,7 @@ nonisolated public struct PerkStore: Sendable {
             }
     }
 
-    public init(index: RecordIndex, spells: SpellStore) {
+    public init(index: RecordIndex, spells: SpellStore, names: RecordNameLookup = .none) {
         self.index = index
         table = ResolvedRecordTable(
             index: index,
@@ -109,12 +114,14 @@ nonisolated public struct PerkStore: Sendable {
             decode: Self.decode,
             editorID: \.editorID,
             resolve: { id, decoded, sourcePlugin in
-                Self.join(
+                var perk = Self.join(
                     (id, decoded),
                     sourcePlugin: sourcePlugin,
                     index: index,
                     spells: spells
                 )
+                perk.localizedName = names.text(decoded.name, plugin: sourcePlugin)
+                return perk
             }
         )
         for resolved in table.orderedValues {

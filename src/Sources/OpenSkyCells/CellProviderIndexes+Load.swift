@@ -41,6 +41,17 @@ nonisolated extension CellProviderIndexes {
         )
     }
 
+    /// The magic indexes, named from the base master's string tables.
+    private static func magicIndexes(
+        _ plugins: [(name: String, file: ESMFile)], _ fileSystem: any GameFileSource,
+        _ language: String, _ progress: WorldLoadProgress
+    ) throws -> MagicIndexes {
+        let names = RecordNameLookup(strings: LocalizedStrings(
+            vfs: fileSystem, pluginName: ActiveLoadOrder.baseFileName, language: language
+        ))
+        return try progress.measure(.magic) { MagicIndexes(plugins: plugins, names: names) }
+    }
+
     /// Builds the whole set and returns the session over it. Throws
     /// `CancellationError` when the calling task is cancelled.
     @concurrent
@@ -66,7 +77,7 @@ nonisolated extension CellProviderIndexes {
         let plugins = activeLoadOrder.files
         let tuning = try progress.measure(.settings) { SettingIndexes(plugins: plugins) }
         // The item index resolves enchantments, so magic comes before the fan-out.
-        let magic = try progress.measure(.magic) { MagicIndexes(plugins: plugins) }
+        let magic = try magicIndexes(plugins, fileSystem, localizationLanguage, progress)
         let globals = GlobalStore(loadOrder: activeLoadOrder.plugins)
         let context = LoadContext(
             file: file,

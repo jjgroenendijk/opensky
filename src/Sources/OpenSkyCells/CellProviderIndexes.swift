@@ -34,20 +34,21 @@ nonisolated public struct CellProviderIndexes {
         let perks: PerkStore
         let actorValues: ActorValueInformationStore
 
-        init(plugins: [(name: String, file: ESMFile)]) {
+        /// `names` turns the string IDs of a localized plugin into the names menus show.
+        init(plugins: [(name: String, file: ESMFile)], names: RecordNameLookup = .none) {
             let index = RecordIndex(
                 plugins: plugins,
                 recordTypes: [
                     "MGEF", "SPEL", "SCRL", "EQUP", "ENCH", "PERK", "AVIF", "SHOU", "WOOP"
                 ]
             )
-            let effects = MagicEffectStore(index: index)
+            let effects = MagicEffectStore(index: index, names: names)
             self.effects = effects
-            spells = SpellStore(index: index, effects: effects)
-            shouts = ShoutStore(index: index, spells: spells)
+            spells = SpellStore(index: index, effects: effects, names: names)
+            shouts = ShoutStore(index: index, spells: spells, names: names)
             equipSlots = EquipSlotStore(index: index)
-            enchantments = EnchantmentStore(index: index, effects: effects)
-            perks = PerkStore(index: index, spells: spells)
+            enchantments = EnchantmentStore(index: index, effects: effects, names: names)
+            perks = PerkStore(index: index, spells: spells, names: names)
             actorValues = ActorValueInformationStore(index: index)
         }
     }

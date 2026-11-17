@@ -13,6 +13,8 @@ nonisolated public struct ResolvedEnchantment: Sendable {
     /// The effect list joined against `MagicEffectStore`, costed once.
     public let effects: [ResolvedSpellEffect]
     public let cost: SpellCostResult
+    /// FULL from the plugin's string table, when the store had the tables.
+    public internal(set) var localizedName: String?
 
     public var editorID: String? {
         record.editorID
@@ -23,7 +25,10 @@ nonisolated public struct ResolvedEnchantment: Sendable {
     }
 
     public var displayName: String {
-        switch record.name {
+        if let localizedName {
+            return localizedName
+        }
+        return switch record.name {
         case let .inline(value): value
         case let .tableID(id), let .pluginTableID(id, _): record.editorID ?? "string #\(id)"
         case nil: record.editorID ?? id.description
@@ -56,7 +61,7 @@ nonisolated public struct EnchantmentStore: Sendable {
         table.skipped
     }
 
-    public init(index: RecordIndex, effects: MagicEffectStore) {
+    public init(index: RecordIndex, effects: MagicEffectStore, names: RecordNameLookup = .none) {
         self.index = index
         table = ResolvedRecordTable(
             index: index,
@@ -64,7 +69,11 @@ nonisolated public struct EnchantmentStore: Sendable {
             decode: Self.decode,
             editorID: \.editorID,
             resolve: { id, decoded, sourcePlugin in
-                Self.join(id: id, record: decoded, sourcePlugin: sourcePlugin, effects: effects)
+                var enchantment = Self.join(
+                    id: id, record: decoded, sourcePlugin: sourcePlugin, effects: effects
+                )
+                enchantment.localizedName = names.text(decoded.name, plugin: sourcePlugin)
+                return enchantment
             }
         )
     }
