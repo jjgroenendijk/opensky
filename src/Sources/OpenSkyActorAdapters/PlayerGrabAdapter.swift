@@ -264,12 +264,15 @@ extension PlayerGrabAdapter {
     }
 
     private var aim: (eye: SIMD3<Float>, look: SIMD3<Float>)? {
-        guard let session = game.gameSession, session.movementMode.isPlayerControlled else {
-            return nil
-        }
-        let look = session.freeFlyCamera.forward
-        guard simd_length(look) > 0 else { return nil }
-        return (session.freeFlyCamera.position, simd_normalize(look))
+        guard
+            let session = game.gameSession,
+            let ray = PlayerViewRay.make(
+                mode: session.movementMode,
+                camera: session.freeFlyCamera,
+                feetPosition: session.walkController.feetPosition
+            )
+        else { return nil }
+        return (ray.origin, ray.direction)
     }
 
     /// The activation target when it is grabbable, else the first collision hit.

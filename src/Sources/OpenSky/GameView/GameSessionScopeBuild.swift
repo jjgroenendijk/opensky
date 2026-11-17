@@ -283,11 +283,11 @@ struct GameSessionScopeBuild {
     private static func interactionRay(
         of gameSession: GameSession, reach: Float?
     ) -> InteractionRay? {
-        guard gameSession.movementMode.isPlayerControlled else { return nil }
-        return InteractionRay(
-            origin: gameSession.freeFlyCamera.position,
-            direction: gameSession.freeFlyCamera.forward,
-            maximumDistance: reach ?? InteractionRay.defaultMaximumDistance
+        PlayerViewRay.make(
+            mode: gameSession.movementMode,
+            camera: gameSession.freeFlyCamera,
+            feetPosition: gameSession.walkController.drawnFeetPosition,
+            reach: reach ?? InteractionRay.defaultMaximumDistance
         )
     }
 
