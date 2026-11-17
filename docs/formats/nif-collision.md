@@ -27,6 +27,13 @@ Havok stores meters. Skyrim uses its own units. Every Havok position, translatio
 extent, and radius is multiplied by `69.99125` engine units per meter. Rotations and shape
 scale have no unit. Matrices use column vectors: `parent * local`.
 
+The one exception is the `NiTriStripsData` under a `bhkNiTriStripsShape`. Its vertices are
+already in engine units, so they are not multiplied. The transforms above them still are.
+Example: in `landscape\trees\treepineforestuprooted01.nif` the strip vertices span 2400
+units in x, about the length of the drawn trunk, and a `bhkTransformShape` moves them by
+-16.66 meters (-1166 units). Multiplied by 70, the strips spanned 170,000 units, and the
+fallen pine held the player in the air far from the tree.
+
 The transform of a shape is built in this order:
 
 1. The model transform of the target `NiAVObject`, from the scene walk.
@@ -175,9 +182,13 @@ NiTriStripsData`):
 | Has Points | 1 byte | |
 | Points | uint16 each | The sum of the strip lengths |
 
-Reading Consistency Flags as 4 bytes once lost the collision of the only three vanilla
-meshes that use `bhkNiTriStripsShape`: `clutter\coffins\nordiccoffinstatic03`,
-`clutter\goatskin\goatpeltstatic`, and `clutter\nightmother\nmbody01`.
+Reading Consistency Flags as 4 bytes once lost the collision of every vanilla mesh that uses
+`bhkNiTriStripsShape`, such as `clutter\coffins\nordiccoffinstatic03` and the fallen pine
+`landscape\trees\treepineforestuprooted01`.
+
+One vanilla mesh, `dungeons\caves\green\epic\cavegemid01`, has two strip shapes. A
+`bhkTransformShape` moves one of them 146.3 meters (10,240 units) along x, away from the
+drawn rock. OpenSky keeps that collision where the data puts it.
 
 ## Surface material
 
