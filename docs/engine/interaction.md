@@ -40,8 +40,79 @@ whose marker flags turn off activation. The fields are on the
 
 ## Picking a target
 
+### In the game
+
+The game finds the target with one sphere cast along the camera's view direction. The sphere has
+a radius of 16 units. The cast starts at the first-person eye point. In third person, the game
+adds only the sideways and the upward part of the over-the-shoulder camera offset, not the zoom
+distance, so zooming out does not shorten the reach. The cast skips the player's own body.
+
+| Reach | Cast length | Activate limit |
+| --- | --- | --- |
+| Normal | 180 | 180 |
+| A telekinesis effect is active | the larger of 180 and the telekinesis range | 180 |
+| Commanding a follower | 800 | 800 |
+| The target's race is "extra large" (dragons, giants, mammoths) | as above | 500 |
+
+All values are in game units, and game settings control the 16, 180, and 500. The telekinesis
+range is 15 feet, at 22 units per foot, so 330 units; perks change it. A loose physics object
+past the activate limit but inside that range becomes the telekinesis target only, and the
+activate target is then none. Distance runs from the start point to the hit point.
+
+Only physics collision can be hit, so an object without collision is never picked. The cast has
+its own collision layer. The collision layer records in `Skyrim.esm` say which layers it meets:
+
+| Meets | Does not meet |
+| --- | --- |
+| static, animated static (door leaves), clutter, weapon, props, trees, terrain, ground, trigger, trap, debris, transparent, invisible wall, water, biped, dead ragdoll, character controller, projectile, spell | non-collidable, portal, acoustic space, critter, ward, biped without controller, avoid box, camera sphere, door detection |
+
+```mermaid
+flowchart TD
+    A[Sphere cast: every hit, sorted by distance] --> B[Exact test on up to 10 hit objects of each kind]
+    B --> C{Kind of body}
+    C -- clutter, weapon, some statics --> D[Ray against its collision shape]
+    C -- anything else --> E[Ray against its drawn 3D]
+    D --> F[Nearest exact hit]
+    E --> F
+    F --> G{Valid target?}
+    A --> H["Fuzzy test: hits not on static, terrain, ground, or portal layers"]
+    H --> I[Smallest side distance to the centre line, with a clear line of sight]
+    G -- no --> J[Fuzzy winner, if valid]
+    G -- yes --> K{Fuzzy winner differs?}
+    I --> K
+    I --> J
+    K -- same object --> L[Keep it, with the shorter distance]
+    K -- fuzzy is a carryable item, exact is not --> M[Fuzzy winner]
+    K -- otherwise --> N[Exact hit]
+```
+
+A hit body maps to its scene node, and the game walks up the node parents to the placed reference
+that owns them. So a hit on a moving door leaf targets the door. A hit is skipped when any node on
+that path is hidden, or when a perk's "Filter Activation" entry point refuses the object.
+
+The fuzzy test is on by default; a game setting turns it off. Its line-of-sight check runs for at
+most 5 candidates. It is how a door behind a wall's edge can still be targeted: the wall is the
+nearest exact hit, it is not valid, and the door wins through the fuzzy test when the line to its
+contact point is clear. Carryable items are weapons, armour, books, notes, scrolls, ingredients,
+potions, misc items, apparatus, ammunition, keys, soul gems, and lights marked carryable.
+
+Refused targets: an object with an empty display name, any static or static collection, and a
+light that cannot be carried. A moveable static is not refused here. Disabled and deleted
+references have no collision, so the cast cannot reach them. Dead actors are valid targets.
+
+The target is picked again in each player update, every frame, not only after the view moves.
+While some menus are open the update is skipped and the old target stays. The HUD hears only
+when the target or the telekinesis target changes.
+
+### In OpenSky
+
 The game view gives a view ray only in walk mode. In fly mode it gives none, which clears the target
 and makes F do nothing. The ray is normalized, finite, and 192 units long.
+
+- [WARNING] OpenSky casts a thin ray, not a 16-unit sphere, its reach is 192 units, not 180, and
+  it has no fuzzy test, no follower or telekinesis reach, and no "extra large" race limit.
+- [WARNING] In a Riverwood run (2026-11-17), the crosshair picked no door, bench, or loose bucket,
+  in the open or inside the Sleeping Giant Inn, at 30 to 90 units. Only actors were picked.
 
 The broad phase searches the loaded static collision trees with the ray's bounds. The exact test
 checks triangle meshes, convex faces, boxes, spheres, and capsules, after moving the ray into each
@@ -49,8 +120,7 @@ shape's local space. The ray keeps its original parameter through that move, so 
 right under rotation and uneven scale. Equal distances go to the lower `REFR` FormID.
 
 The nearest collision hit is found first, and only then is its usable data looked up. So a wall
-hides an activator behind it. This also means an object with no solid collision cannot be targeted
-yet.
+hides an activator behind it, also where the game's fuzzy test would find it.
 
 Actors are not in the collision trees. A second test checks the view ray against actor capsules,
 and an actor becomes a normal target with the action "Talk". The nearest solid hit still blocks
