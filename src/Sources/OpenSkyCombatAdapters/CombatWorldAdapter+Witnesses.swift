@@ -67,6 +67,15 @@ extension CombatWorldAdapter {
         impactEffects.actorFlies(actor)
     }
 
+    public func attackDisease(of key: ReferenceKey) -> ReferenceKey? {
+        spellCasts.disease(among: impactEffects.attackSpells(of: key))
+    }
+
+    @discardableResult
+    public func contractDisease(_ disease: ReferenceKey, on key: ReferenceKey) -> Bool {
+        spellCasts.contractDisease(disease, on: key)
+    }
+
     public func canBeKilled(_ target: ReferenceKey, by attacker: ReferenceKey) -> Bool {
         impactEffects.canBeKilled(target, by: attacker)
     }

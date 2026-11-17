@@ -49,20 +49,30 @@ extension PapyrusWorldStateBridge.SpellEffects {
         else {
             return false
         }
-        let learned = caster.spellbookAccess.learn(spell, on: holder)
-        if learned, actor == bridge.playerKey, let notice = Self.diseaseNotice(
-            for: caster.spellbookAccess.spells.spell(key: spell)
-        ) {
-            bridge.ports.presenter?.postWorldNotice(notice)
-        }
-        return learned
+        // `AddSpell` shows no contracted notice, also for a disease (docs/engine/diseases.md).
+        return caster.spellbookAccess.learn(spell, on: holder)
     }
 
-    /// The HUD line for a disease the player just gained; nil for any other spell.
-    /// See docs/engine/diseases.md.
-    static func diseaseNotice(for spell: ResolvedSpell?) -> WorldNotice? {
-        guard let spell, spell.spellType == .disease else { return nil }
-        return .diseaseContracted(name: spell.displayName)
+    /// Whether `spell` is a Disease spell.
+    public func isDisease(_ spell: ReferenceKey) -> Bool {
+        bridge.natives.magic.casterRuntime?()?.spellbookAccess.spells.spell(key: spell)?
+            .spellType == .disease
+    }
+
+    /// Gives `actor` the disease. The player also gets the notice and the "Diseases
+    /// Contracted" statistic. False when `actor` already has it. See docs/engine/diseases.md.
+    @discardableResult
+    public func contractDisease(_ spell: ReferenceKey, on actor: ReferenceKey) -> Bool {
+        guard
+            let caster = bridge.natives.magic.casterRuntime?(),
+            let holder = bridge.actorValues.actorHolder(for: actor),
+            caster.spellbookAccess.learn(spell, on: holder)
+        else { return false }
+        if actor == bridge.playerKey, let record = caster.spellbookAccess.spells.spell(key: spell) {
+            bridge.ports.presenter?.postWorldNotice(.diseaseContracted(name: record.displayName))
+            _ = bridge.roles.quests.incrementStat("Diseases Contracted", by: 1)
+        }
+        return true
     }
 
     @discardableResult

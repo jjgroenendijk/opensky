@@ -91,6 +91,13 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     func applyCombatHitSpell(_ blow: CombatBlow, on target: ReferenceKey)
     /// Lands the spell `target`'s perk applies when an enemy starts `blow` at it.
     func applyCombatSwingSpell(_ blow: CombatBlow, at target: ReferenceKey)
+    /// The Disease spell `attacker`'s race attacks carry, or nil.
+    func combatAttackDisease(of attacker: ReferenceKey) -> ReferenceKey?
+    /// `target`'s disease resistance, or nil when it has no actor values.
+    func combatDiseaseResist(of target: ReferenceKey) -> Float?
+    /// Gives `target` the disease. False when it already has it.
+    @discardableResult
+    func contractCombatDisease(_ disease: ReferenceKey, on target: ReferenceKey) -> Bool
 
     /// Charges `blocker` the stamina a blocked blow costs.
     func applyCombatBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey)

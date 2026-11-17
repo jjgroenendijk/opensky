@@ -47,6 +47,7 @@ struct CombatNPCBlowLanding {
         let landed = world.applyCombatBlow(damage.applied, to: target, blow: blow)
         if landed {
             world.applyCombatHitSpell(blow, on: target)
+            passDisease(from: actor, to: target, random: &random)
         }
         if damage.wasBlocked {
             world.applyCombatBlockStamina(damage, to: target)
@@ -85,6 +86,19 @@ struct CombatNPCBlowLanding {
     }
 
     // MARK: - Private
+
+    /// A landed blow rolls the attacker's disease against the target's resistance. The
+    /// roll is drawn only for an attacker that carries one, so other fights draw the same.
+    private func passDisease(
+        from actor: ReferenceKey, to target: ReferenceKey, random: inout ConditionRandom
+    ) {
+        guard let disease = world.combatAttackDisease(of: actor) else { return }
+        let roll = random.percent()
+        guard
+            DiseaseContraction.contracts(resist: world.combatDiseaseResist(of: target), roll: roll)
+        else { return }
+        world.contractCombatDisease(disease, on: target)
+    }
 
     private func damage(
         of blow: CombatBlow, weapon: MeleeWeaponProfile, on target: ReferenceKey

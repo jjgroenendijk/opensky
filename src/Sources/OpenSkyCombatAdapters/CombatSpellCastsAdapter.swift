@@ -4,6 +4,7 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyMagicInterface
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 
 /// What `CombatSpellCastsAdapter` reads from the session.
@@ -13,6 +14,8 @@ public protocol CombatSpellCastsHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var magic: any MagicPort { get }
     var magicWorld: any MagicWorldPort { get }
+    var messages: any MessageCoordinatorPort { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 /// Part of `CombatWorldAdapter`, over its own narrow host.
@@ -38,6 +41,30 @@ extension CombatSpellCastsAdapter {
                 .map { candidate($0, runtime: runtime) },
             shouts: game.magic.shoutVoice.npcShouts(of: holder).compactMap(shoutOption)
         )
+    }
+
+    /// The first of `spells` whose type is Disease. The ids are in the load-order space.
+    public func disease(among spells: [FormID]) -> ReferenceKey? {
+        guard let store = game.magic.caster?.spellbook.spells else { return nil }
+        return spells.lazy
+            .compactMap { store.resolve($0, fromPlugin: FormIDResolver.loadOrderSpaceName) }
+            .first { $0.spellType == .disease }?.key
+    }
+
+    /// Gives `key` the disease. The player also gets the notice and the statistic.
+    /// See docs/engine/diseases.md#contracting-it.
+    @discardableResult
+    public func contractDisease(_ disease: ReferenceKey, on key: ReferenceKey) -> Bool {
+        guard
+            let caster = game.magic.caster,
+            let holder = game.actorWorld.actorValueHolder(for: key),
+            caster.spellbook.learn(disease, on: holder)
+        else { return false }
+        if key == .player, let spell = caster.spellbook.spells.spell(key: disease) {
+            game.messages.postWorldNotice(.diseaseContracted(name: spell.displayName))
+            game.worldState.incrementMiscStat("Diseases Contracted")
+        }
+        return true
     }
 
     @discardableResult

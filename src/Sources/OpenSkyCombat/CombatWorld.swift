@@ -187,6 +187,24 @@ public protocol CombatWorld: AnyObject {
     func startKillMove(_ attempt: KillMoveAttempt) -> Bool
     /// True while `key` plays either half of a kill move.
     func isInKillMove(_ key: ReferenceKey) -> Bool
+    /// The Disease spell among `key`'s race attack spells, or nil.
+    func attackDisease(of key: ReferenceKey) -> ReferenceKey?
+    /// Gives `key` the disease spell; on the player, the notice and the statistic too.
+    /// False when `key` already has it.
+    @discardableResult
+    func contractDisease(_ disease: ReferenceKey, on key: ReferenceKey) -> Bool
+}
+
+extension CombatWorld {
+    /// A world without races carries no disease.
+    public func attackDisease(of _: ReferenceKey) -> ReferenceKey? {
+        nil
+    }
+
+    @discardableResult
+    public func contractDisease(_: ReferenceKey, on _: ReferenceKey) -> Bool {
+        false
+    }
 }
 
 extension CombatWorld where Self: CombatPerkReads {

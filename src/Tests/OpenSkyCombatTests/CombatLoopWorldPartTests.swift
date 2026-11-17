@@ -36,6 +36,14 @@ struct CombatLoopWorldPartTests {
         #expect(!part.combatFlies(Self.foe))
     }
 
+    @Test func aWorldWithoutRacesPassesNoDisease() {
+        let world = FakeCoordinatorWorld()
+        let part = Self.coordinator(world).loopWorld
+        #expect(part.combatAttackDisease(of: Self.foe) == nil)
+        #expect(part.combatDiseaseResist(of: Self.foe) == nil)
+        #expect(!part.contractCombatDisease(Self.ally, on: Self.foe))
+    }
+
     @Test func aLoopBlowWithoutAnAttackerLandsOnTheWorld() {
         let world = FakeCoordinatorWorld()
         let part = Self.coordinator(world).loopWorld

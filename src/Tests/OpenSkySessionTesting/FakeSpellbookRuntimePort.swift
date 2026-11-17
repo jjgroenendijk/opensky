@@ -18,6 +18,8 @@ nonisolated public final class FakeSpellbookRuntimePort: SpellbookRuntimePort {
     public var occupancyResult: HandSlots?
     public var recordCalls: [ReferenceKey] = []
     public var recordResult: ResolvedSpell?
+    public var learnCalls: [(spell: ReferenceKey, holder: ActorValueHolder)] = []
+    public var learnResult = false
 
     public init() {}
 }
@@ -80,5 +82,11 @@ nonisolated extension FakeSpellbookRuntimePort {
     public func record(_ spell: ReferenceKey) -> ResolvedSpell? {
         recordCalls.append(spell)
         return recordResult
+    }
+
+    @discardableResult
+    public func learn(_ spell: ReferenceKey, on holder: ActorValueHolder) -> Bool {
+        learnCalls.append((spell: spell, holder: holder))
+        return learnResult
     }
 }
