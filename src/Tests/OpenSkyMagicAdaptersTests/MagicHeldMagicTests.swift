@@ -2,6 +2,7 @@
 
 import Foundation
 import OpenSkyCombatInterface
+import OpenSkyEngineTesting
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
@@ -75,13 +76,21 @@ struct MagicHeldMagicTests {
         #expect(adapter.telekinesisTarget(for: .player, within: 100) == nil)
     }
 
-    @Test func anEndedCastingLightIsForgotten() {
+    @Test func anEndedCastingLightIsForgotten() throws {
         let adapter = adapter
         let held = adapter.heldMagic
-        adapter.state.castingLights[Self.actor] = Self.actor
-        held.showCastingLight(FormID(0x70), plugin: "base.esm", caster: Self.actor, shown: false)
+        adapter.state.castingLights[CastingLightSlot(caster: Self.actor, hand: .left)] = Self.actor
+        held.showCastingLight(
+            FormID(0x70), plugin: "base.esm",
+            slot: CastingLightSlot(caster: Self.actor, hand: .left), shown: false
+        )
         #expect(adapter.state.castingLights.isEmpty)
         held.publishMagicLights()
+        let renderer = try #require(FakeRendererPort())
+        host.renderer = renderer
+        adapter.state.castingLights[CastingLightSlot(caster: Self.actor, hand: .right)] = Self.actor
+        held.publishMagicLights()
+        #expect(renderer.transientPointLights.isEmpty)
         held.publishSummonFades()
     }
 

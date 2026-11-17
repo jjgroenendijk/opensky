@@ -10,6 +10,8 @@ public import simd
 /// What an effect follows.
 nonisolated public enum EffectAnchor: Hashable, Sendable {
     case actor(ReferenceKey)
+    /// One bone of an actor's skeleton, such as a hand's magic node.
+    case node(ReferenceKey, String)
     case point(SIMD3<Float>)
     /// A point on a surface, with the model's up turned to the surface normal.
     case surface(SIMD3<Float>, normal: SIMD3<Float>)
@@ -126,9 +128,15 @@ nonisolated public struct VisualEffectRuntime: Sendable {
         return id
     }
 
-    /// Removes every effect on `anchor`, for an actor that unloads or dies.
+    /// Removes every effect on `anchor`, for an actor that unloads or dies. An actor
+    /// anchor also takes the effects on that actor's bones.
     public mutating func detachAll(from anchor: EffectAnchor) {
-        instances.removeAll { $0.anchor == anchor }
+        instances.removeAll { instance in
+            if case let .actor(key) = anchor, case let .node(owner, _) = instance.anchor {
+                return owner == key
+            }
+            return instance.anchor == anchor
+        }
     }
 
     /// Removes the effects of `spec` on `anchor`. Returns how many went.

@@ -16,10 +16,10 @@ nonisolated public enum MagicCommand: Equatable, Sendable {
     case detonateRune(SpellPayload, at: SIMD3<Float>)
     /// Start or stop a casting hand's sound, a load-order `SNDR`, at the caster.
     case castingSound(FormID, caster: ReferenceKey, starts: Bool)
-    /// Show or hide a casting hand's `ARTO`, written in `plugin`, on the caster.
-    case castingArt(FormID, plugin: String, caster: ReferenceKey, starts: Bool)
+    /// Show or hide a casting hand's `ARTO`, written in `plugin`, on the hand's magic node.
+    case castingArt(FormID, plugin: String, caster: ReferenceKey, hand: SpellHand, starts: Bool)
     /// Show or drop the `MGEF` casting `LIGH`, written in `plugin`, at the caster's hand.
-    case castingLight(FormID, plugin: String, caster: ReferenceKey, starts: Bool)
+    case castingLight(FormID, plugin: String, caster: ReferenceKey, hand: SpellHand, starts: Bool)
     /// Show this line on the HUD, such as a refused cast's.
     case notice(String)
     /// The player's shout of `words` words went off: a witness may comment on it, and

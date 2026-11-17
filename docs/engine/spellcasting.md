@@ -230,7 +230,8 @@ is read from its prefix (`MRh`, `MLh`). The third spelling, `Spellfire`, has no 
 right hand when that hand holds a staff. [WARNING] Whether a staff's graph raises it is not
 confirmed; without it, the 0.4-second fallback releases the staff.
 
-The spell's costliest effect gives the hand its sounds and art. CK wiki "Magic Effect":
+The spell's main effect, defined under hand art below, gives the hand its sounds. CK wiki "Magic
+Effect":
 
 | `SNDD` kind | Plays |
 | --- | --- |
@@ -241,33 +242,51 @@ The spell's costliest effect gives the hand its sounds and art. CK wiki "Magic E
 | 4 Cast Loop | for a concentration spell, "loops while the button is pressed" |
 | 5 On Hit | "when this effect is applied to its target", at each struck actor |
 
-A looping descriptor plays until the step ends; a one-shot plays once. The casting art is "on the
-hands while preparing to cast": it shows from the press until the hand is idle again. A dual cast
-shows the dual casting art when the effect has one. NPC casters get the same cues.
+A looping descriptor plays until the step ends; a one-shot plays once. NPC casters get the same
+cues.
 
-In the game the hand art rides the hand's magic node, `NPC L MagicNode [LMag]` or
-`NPC R MagicNode [RMag]`; `NPC Head MagicNode [Hmag]` serves the voice. The casting light is
-the effect's casting light `LIGH`, with that record's radius and colour. It attaches to the
-node `AttachLight` in the casting art or hand model, or to the model's root when there is no
-such node. The three light-offset game settings in `Skyrim.esm`, with the values 13, −28,
-and −60, are never read, so the light gets no extra offset. At most 4 casting lights exist at
-once over all casters; a cast while 4 exist gets no light. When each part starts and stops was
-not found beyond the CK wiki text above.
+### Hand art and casting light
+
+Read from the game program. The hand art does not wait for a cast. It shows the whole time a hand
+holds a spell and the actor's weapons are drawn, also while the actor stands still.
+
+- When the draw ends, each hand that holds a spell turns its art on.
+- When the sheathe ends, each hand turns its art off, and a cast in that hand stops.
+- When the spell in a hand changes, the art follows the new spell while the weapons are drawn or
+  being sheathed. Otherwise it goes.
+- When a hand becomes empty, its art goes at the next update.
+
+The art and the light come from the spell's main effect. That is the effect with the highest cost,
+as a whole number; on a tie the earlier effect wins. An effect with flag bit 24 is skipped. For a
+concentration spell, an effect with no projectile is skipped too.
+
+The art model loads in the background. When it is ready, it hangs under the hand's magic node:
+`NPC L MagicNode [LMag]` for the left hand and `NPC R MagicNode [RMag]` for the right.
+`NPC Head MagicNode [Hmag]` serves the voice. For the player in first person, the node is in the
+first-person arms, with the same names. The casting light is the effect's casting light `LIGH`. It
+is made only once the art has attached, and it hangs under the same node. Turning the art off
+removes both.
+
+A dual cast shows no other art: with the same spell in both hands, each hand shows its own copy.
+The game sets no limit on casting lights. The three light-offset game settings in `Skyrim.esm`, with
+the values 13, −28, and −60, are never read.
 
 ```mermaid
 flowchart TD
-    A[Cast starts] --> B{"Fewer than 4 casting lights<br/>in the world?"}
-    B -- no --> C[No light]
-    B -- yes --> D["Light from the effect's casting light LIGH"]
-    D --> E{"Casting art or hand model<br/>has an AttachLight node?"}
-    E -- yes --> F[Attach to AttachLight]
-    E -- no --> G[Attach to the model root]
+    D[Draw ends] --> H{Hand holds a spell?}
+    H -- no --> X[No art]
+    H -- yes --> L[Load the main effect's art]
+    L --> A[Art hangs under the hand's magic node]
+    A --> G[Casting light hangs under the same node]
+    S[Sheathe ends, or the hand is emptied] --> O[Art and light go]
 ```
 
-- [WARNING] OpenSky's effect anchors name no hand bone, so the art rides the actor.
-- The `MGEF` casting light shows while the casting art shows. No anchor names a hand, so it
-  floats where a held Light spell floats: in front of the caster's eye, along its aim. Near
-  Riverwood a readied fire spell showed no hand glow and no casting light.
+In OpenSky the player's hands follow these rules. An NPC's hand shows its art while it casts,
+because NPC hands are only readied for a cast. The art and the light sit on the magic node of
+the actor's posed skeleton. An actor with no posed skeleton gets the light in front of its eye.
+
+- [WARNING] In first person, the art sits on the third-person skeleton's magic node, not on the
+  first-person arms, so it can show away from the visible hands.
 
 ## Saving
 

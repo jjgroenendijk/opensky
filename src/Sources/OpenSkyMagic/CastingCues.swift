@@ -52,8 +52,8 @@ nonisolated struct CastingHandView: Equatable, Sendable {
 nonisolated struct CastingCue: Equatable, Sendable {
     enum What: Equatable, Sendable {
         case sound(MagicEffectSoundKind)
-        /// The MGEF casting art, or its dual-cast art.
-        case art(dual: Bool)
+        /// The MGEF casting art and light of one hand.
+        case art(SpellHand)
     }
 
     let what: What
@@ -75,26 +75,43 @@ nonisolated enum CastingCueRule {
     ) -> [CastingCue] {
         var cues: [CastingCue] = []
         let changed = old.phase != new.phase || old.spell != new.spell
-        if changed, let spell = old.spell {
-            if let kind = loopKind(of: old) {
-                cues.append(CastingCue(.sound(kind), starts: false, spell: spell))
-            }
-            if old.phase.isCasting, !new.phase.isCasting || old.spell != new.spell {
-                cues.append(CastingCue(.art(dual: old.isDualCast), starts: false, spell: spell))
-            }
+        if changed, let spell = old.spell, let kind = loopKind(of: old) {
+            cues.append(CastingCue(.sound(kind), starts: false, spell: spell))
         }
         if let cast {
             cues.append(CastingCue(.sound(.release), starts: true, spell: cast))
         }
-        if changed, let spell = new.spell {
-            if let kind = loopKind(of: new) {
-                cues.append(CastingCue(.sound(kind), starts: true, spell: spell))
-            }
-            if new.phase.isCasting, !old.phase.isCasting || old.spell != new.spell {
-                cues.append(CastingCue(.art(dual: new.isDualCast), starts: true, spell: spell))
-            }
+        if changed, let spell = new.spell, let kind = loopKind(of: new) {
+            cues.append(CastingCue(.sound(kind), starts: true, spell: spell))
         }
         return cues
+    }
+
+    /// A hand's art goes from the spell that shows it to the one that should: the
+    /// spell in a drawn hand. See docs/engine/spellcasting.md#hand-art-and-casting-light.
+    static func artCues(
+        _ hand: SpellHand, shown: ReferenceKey?, wanted: ReferenceKey?
+    ) -> [CastingCue] {
+        guard shown != wanted else { return [] }
+        return [
+            shown.map { CastingCue(.art(hand), starts: false, spell: $0) },
+            wanted.map { CastingCue(.art(hand), starts: true, spell: $0) }
+        ].compactMap(\.self)
+    }
+
+    /// The spell's main effect: the highest whole-number cost, the earlier one on a tie.
+    /// `skipped` marks effects with flag bit 24, and a concentration spell's effects
+    /// with no projectile.
+    static func mainEffect(costs: [Float], skipped: [Bool]) -> Int? {
+        var best: (index: Int, cost: Int)?
+        for (index, cost) in costs.enumerated() where !skipped[index] {
+            let whole = cost.isFinite ? Int(cost) : 0
+            if let current = best, whole <= current.cost {
+                continue
+            }
+            best = (index, whole)
+        }
+        return best?.index
     }
 
     /// "The sound that plays when the player draws or sheathes their weapons with this

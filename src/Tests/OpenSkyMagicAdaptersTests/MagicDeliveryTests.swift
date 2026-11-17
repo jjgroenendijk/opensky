@@ -7,6 +7,7 @@ import OpenSkyGameData
 import OpenSkyMagicAdapters
 @testable import OpenSkyMagicInterface
 import OpenSkyPhysics
+import OpenSkyRendering
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import Testing
@@ -106,6 +107,27 @@ struct MagicDeliveryTests {
         #expect(host.fakeEffectsWorld.placeAtMeCalls.count == 1)
         #expect(host.fakeStoryWorld.commentOnPlayerCalls.count == 1)
         #expect(host.fakeControllerRumble.shoutCalls == [2])
+    }
+
+    @Test func aHandsArtGoesToItsMagicNodeAndItsLightToTheHand() throws {
+        let effects = FakeEffectsPort()
+        effects.recordsValue = EffectRecordStore(plugins: [])
+        host.fakeEffectsWorld.effects = effects
+        adapter.archetypeEffects.run([
+            .castingArt(
+                FormID(0x70),
+                plugin: "base.esm",
+                caster: Self.foe,
+                hand: .left,
+                starts: true
+            ),
+            .castingLight(
+                FormID(0x71), plugin: "base.esm", caster: Self.foe, hand: .right, starts: true
+            )
+        ])
+        let art = try #require(effects.showCastingArtCalls.first)
+        #expect(art.anchor == .node(Self.foe, "NPC L MagicNode [LMag]"))
+        #expect(art.shown)
     }
 
     @Test func aHitFromOutsideRunsItsCommandsAtOnce() {

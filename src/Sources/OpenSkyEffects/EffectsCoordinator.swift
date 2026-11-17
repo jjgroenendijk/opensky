@@ -115,15 +115,15 @@ public final class EffectsCoordinator {
         return visualEffects.detach(spec, from: anchor)
     }
 
-    /// Casting art is "on the hands while preparing to cast". No anchor names a hand,
-    /// so it rides the actor. Returns false when the art draws nothing.
+    /// A hand's casting art, under the hand's magic node. Returns false when the art
+    /// draws nothing. See docs/engine/spellcasting.md#hand-art-and-casting-light.
     @discardableResult
     public func showCastingArt(
-        _ art: FormID, fromPlugin plugin: String, on actor: ReferenceKey, shown: Bool
+        _ art: FormID, fromPlugin plugin: String, on anchor: EffectAnchor, shown: Bool
     ) -> Bool {
         guard let key = records.resolve(art, fromPlugin: plugin) else { return false }
-        guard shown else { return detach(key, from: .actor(actor)) > 0 }
-        return attach(key, to: .actor(actor), cause: .casting, duration: nil) != nil
+        guard shown else { return detach(key, from: anchor) > 0 }
+        return attach(key, to: anchor, cause: .casting, duration: nil) != nil
     }
 
     func removeAll(cause: VisualEffectCause? = nil) {
@@ -270,6 +270,8 @@ public final class EffectsCoordinator {
     static func locate(_ anchor: EffectAnchor, world: (any EffectsWorld)?) -> float4x4? {
         switch anchor {
         case let .actor(key): world?.effectTransform(of: key)
+        case let .node(key, node): world?.effectBones(of: key)[node] ?? world?
+            .effectTransform(of: key)
         case let .point(position): translation(position)
         case let .surface(position, normal): surfaceTransform(position, normal: normal)
         case let .facing(position, forward): VisualEffectRuntime.facing(position, forward: forward)

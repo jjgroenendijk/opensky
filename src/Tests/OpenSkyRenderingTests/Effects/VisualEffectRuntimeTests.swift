@@ -119,6 +119,10 @@ struct VisualEffectRuntimeTests {
         runtime.attach(Self.glow, to: .point(.zero), cause: .debug, duration: 3)
         runtime.removeAll(cause: .debug)
         #expect(runtime.instances.map(\.cause) == [.race])
+        runtime.attach(
+            Self.glow, to: .node(Self.actor, "NPC L MagicNode [LMag]"), cause: .casting,
+            duration: nil
+        )
         runtime.detachAll(from: .actor(Self.actor))
         #expect(runtime.instances.isEmpty)
     }

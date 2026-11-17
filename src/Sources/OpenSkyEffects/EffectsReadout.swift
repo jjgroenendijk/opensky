@@ -64,6 +64,7 @@ nonisolated public enum EffectsReadout {
     static func line(_ instance: VisualEffectInstance) -> String {
         let anchor = switch instance.anchor {
         case let .actor(key): key == .player ? "player" : key.description
+        case let .node(key, node): "\(key == .player ? "player" : key.description) \(node)"
         case .point: "a point"
         case .surface: "a surface"
         case .facing: "a muzzle"

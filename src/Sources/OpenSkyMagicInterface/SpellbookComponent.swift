@@ -15,6 +15,15 @@ nonisolated public enum SpellHand: UInt8, CaseIterable, Hashable, Sendable {
     case left = 0
     case right = 1
 
+    /// The skeleton node the hand's casting art and light hang under
+    /// (docs/engine/spellcasting.md#hand-art-and-casting-light).
+    public var magicNode: String {
+        switch self {
+        case .left: "NPC L MagicNode [LMag]"
+        case .right: "NPC R MagicNode [RMag]"
+        }
+    }
+
     /// The equipment-layer slot this hand is, so a spell and a weapon are
     /// arbitrated against the same occupancy value.
     public var slots: HandSlots {

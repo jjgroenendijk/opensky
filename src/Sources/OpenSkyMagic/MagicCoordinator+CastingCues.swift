@@ -44,6 +44,7 @@ extension MagicCoordinator.CastingCueTracker {
         guard let caster = coordinator.caster else { return }
         let completed = caster.takeCompletedCasts()
         var slots = Set(coordinator.castingState.castingViews.keys)
+            .union(coordinator.castingState.handArt.keys)
         for key in caster.castingActors + [.player] {
             for hand in SpellHand.allCases {
                 slots.insert(CastSlot(caster: key, hand: hand))
@@ -61,10 +62,18 @@ extension MagicCoordinator.CastingCueTracker {
             )
             emit(cues, by: slot.caster)
             coordinator.castingState.castingViews[slot] = new.phase == .idle ? nil : new
+            let wanted = slot.caster == .player
+                ? (weaponsDrawn == true ? readiedSpell(in: slot.hand) : nil)
+                : (new.phase.isCasting ? new.spell : nil)
+            emit(
+                CastingCueRule.artCues(
+                    slot.hand, shown: coordinator.castingState.handArt[slot], wanted: wanted
+                ),
+                by: slot.caster
+            )
+            coordinator.castingState.handArt[slot] = wanted
         }
-        let readied = coordinator.world.actorValueHolder(for: .player).map { holder in
-            SpellHand.allCases.compactMap { caster.spellbook.state(of: holder).spell(in: $0) }
-        } ?? []
+        let readied = SpellHand.allCases.compactMap(readiedSpell(in:))
         emit(
             CastingCueRule.drawCues(
                 drawn: coordinator.castingState.wasWeaponsDrawn,
@@ -77,6 +86,15 @@ extension MagicCoordinator.CastingCueTracker {
             coordinator.weaponArchetypes.dismissBoundWeaponsOnSheathe(of: .player)
         }
         coordinator.castingState.wasWeaponsDrawn = weaponsDrawn
+    }
+
+    /// The spell the player holds ready in `hand`.
+    private func readiedSpell(in hand: SpellHand) -> ReferenceKey? {
+        guard
+            let caster = coordinator.caster,
+            let holder = coordinator.world.actorValueHolder(for: .player)
+        else { return nil }
+        return caster.spellbook.state(of: holder).spell(in: hand)
     }
 
     /// The readout line: how many cues went out, the last one, and a waiting release.
@@ -103,11 +121,12 @@ extension MagicCoordinator.CastingCueTracker {
         for cue in cues {
             guard
                 let spell = coordinator.caster?.spellbook.record(cue.spell),
-                let effect = spell.effects.max(by: { $0.cost < $1.cost })?.effect
+                let effect = Self.mainEffect(of: spell)
             else { continue }
-            if case .art = cue.what, let light = effect.effect.data?.castingLight {
+            if case let .art(hand) = cue.what, let light = effect.effect.data?.castingLight {
                 coordinator.pendingCommands.append(.castingLight(
-                    light, plugin: effect.sourcePlugin, caster: key, starts: cue.starts
+                    light, plugin: effect.sourcePlugin, caster: key, hand: hand,
+                    starts: cue.starts
                 ))
             }
             guard let command = command(for: cue, effect: effect, caster: key) else { continue }
@@ -133,20 +152,34 @@ extension MagicCoordinator.CastingCueTracker {
                 let formID = store.loadOrderFormID(id)
             else { return nil }
             return .castingSound(formID, caster: key, starts: cue.starts)
-        case let .art(dual):
-            let data = effect.effect.data
-            guard let art = (dual ? data?.dualCastArt : nil) ?? data?.castingArt else { return nil }
+        case let .art(hand):
+            guard let art = effect.effect.data?.castingArt else { return nil }
             return .castingArt(
-                art, plugin: effect.sourcePlugin, caster: key, starts: cue.starts
+                art, plugin: effect.sourcePlugin, caster: key, hand: hand, starts: cue.starts
             )
         }
+    }
+
+    /// Flag bit 24 of an effect keeps it from being the main one.
+    private static let notMainFlag: UInt32 = 1 << 24
+
+    static func mainEffect(of spell: ResolvedSpell) -> ResolvedMagicEffect? {
+        let concentration = spell.data?.castingType == .concentration
+        let effects = spell.effects.map(\.effect)
+        let skipped = effects.map { effect in
+            guard let data = effect?.effect.data else { return effect == nil }
+            return data.flags.rawValue & notMainFlag != 0
+                || (concentration && data.projectile == nil)
+        }
+        return CastingCueRule.mainEffect(costs: spell.effects.map(\.cost), skipped: skipped)
+            .flatMap { effects[$0] }
     }
 
     private static func name(of what: CastingCue.What) -> String {
         switch what {
         case let .sound(kind): "\(kind.name) sound"
-        case .art(dual: true): "dual casting art"
-        case .art(dual: false): "casting art"
+        case .art(.left): "left hand art"
+        case .art(.right): "right hand art"
         }
     }
 }

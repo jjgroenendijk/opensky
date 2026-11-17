@@ -11,6 +11,7 @@ public import OpenSkyGameData
 import OpenSkyMagic
 public import OpenSkyMagicInterface
 import OpenSkyPlayer
+import OpenSkyRendering
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import simd
@@ -53,11 +54,15 @@ extension MagicArchetypeEffectsAdapter {
             castingSound(sound, caster: caster, starts: starts)
         case let .paintActor(actor, shader, plugin, shown):
             heldMagic.paintActor(actor, shader: shader, plugin: plugin, shown: shown)
-        case let .castingArt(art, plugin, caster, starts):
-            game.effectsWorld.effects
-                .showCastingArt(art, fromPlugin: plugin, on: caster, shown: starts)
-        case let .castingLight(light, plugin, caster, starts):
-            heldMagic.showCastingLight(light, plugin: plugin, caster: caster, shown: starts)
+        case let .castingArt(art, plugin, caster, hand, starts):
+            game.effectsWorld.effects.showCastingArt(
+                art, fromPlugin: plugin, on: .node(caster, hand.magicNode), shown: starts
+            )
+        case let .castingLight(light, plugin, caster, hand, starts):
+            heldMagic.showCastingLight(
+                light, plugin: plugin, slot: CastingLightSlot(caster: caster, hand: hand),
+                shown: starts
+            )
         case let .spellHit(event): game.effectsWorld.handleSpellHit(event)
         case let .notice(text): game.hud.showNotification(text)
         default: return false

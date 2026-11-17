@@ -18,12 +18,33 @@ struct CastingCueTests {
         )
     }
 
-    @Test func aPressChargesAndShowsTheCastingArt() {
+    @Test func aPressStartsTheChargeSound() {
         let cues = CastingCueRule.cues(from: Self.hand(.idle), to: Self.hand(.charging), cast: nil)
-        #expect(cues == [
-            CastingCue(.sound(.charge), starts: true, spell: Self.flames),
-            CastingCue(.art(dual: false), starts: true, spell: Self.flames)
+        #expect(cues == [CastingCue(.sound(.charge), starts: true, spell: Self.flames)])
+    }
+
+    private static let heal = ReferenceKey.plugin(name: "base.esm", objectID: 0x701)
+
+    @Test func aHandsArtFollowsTheSpellItShouldShow() {
+        #expect(CastingCueRule.artCues(.left, shown: nil, wanted: Self.flames) == [
+            CastingCue(.art(.left), starts: true, spell: Self.flames)
         ])
+        #expect(CastingCueRule.artCues(.left, shown: Self.flames, wanted: Self.flames).isEmpty)
+        #expect(CastingCueRule.artCues(.right, shown: Self.flames, wanted: Self.heal) == [
+            CastingCue(.art(.right), starts: false, spell: Self.flames),
+            CastingCue(.art(.right), starts: true, spell: Self.heal)
+        ])
+        #expect(CastingCueRule.artCues(.right, shown: Self.heal, wanted: nil) == [
+            CastingCue(.art(.right), starts: false, spell: Self.heal)
+        ])
+    }
+
+    @Test func theMainEffectIsTheCostliestOneNotSkipped() {
+        #expect(CastingCueRule
+            .mainEffect(costs: [3.9, 3.2, 1], skipped: [false, false, false]) == 0)
+        #expect(CastingCueRule.mainEffect(costs: [2, 9, 4], skipped: [false, true, false]) == 2)
+        #expect(CastingCueRule.mainEffect(costs: [5, 5.5], skipped: [false, false]) == 0)
+        #expect(CastingCueRule.mainEffect(costs: [1], skipped: [true]) == nil)
     }
 
     @Test func reachingReadySwapsTheChargeSoundForTheReadySound() {
@@ -40,7 +61,6 @@ struct CastingCueTests {
             from: Self.hand(.ready), to: Self.hand(.idle), cast: Self.flames
         )
         #expect(cast.contains(CastingCue(.sound(.release), starts: true, spell: Self.flames)))
-        #expect(cast.contains(CastingCue(.art(dual: false), starts: false, spell: Self.flames)))
 
         let cancelled = CastingCueRule.cues(
             from: Self.hand(.ready), to: Self.hand(.idle), cast: nil
