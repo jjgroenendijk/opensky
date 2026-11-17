@@ -3,7 +3,9 @@
 
 @testable import OpenSkyAIPackages
 @testable import OpenSkyConditions
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
@@ -30,6 +32,14 @@ final class FakePackageWorld: PackageWorld {
     private(set) var actions: [PackageAction] = []
     static let place = SIMD3<Float>(100, 0, 0)
     static let patrol = [SIMD3<Float>(10, 0, 0), SIMD3<Float>(20, 0, 0)]
+    var offscreenActorList: [OffscreenActor] = []
+    var offscreenLoaded = false
+    var offscreenExit: OffscreenPlace?
+    private(set) var offscreenMoves: [(actor: ReferenceKey, place: OffscreenPlace)] = []
+    static let stall = OffscreenPlace(
+        location: .exterior(CellCoordinate(x: 40, y: -24)), worldspace: "RiftenWorld",
+        point: place
+    )
 
     func packageActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>? {
         .zero
@@ -99,5 +109,27 @@ final class FakePackageWorld: PackageWorld {
     func packageConditionContext(clock _: GameClock) -> ConditionContext {
         contextReads += 1
         return ConditionContext()
+    }
+}
+
+extension FakePackageWorld: OffscreenScheduleWorld {
+    func offscreenActors() -> [OffscreenActor] {
+        offscreenActorList
+    }
+
+    func offscreenPlace(of location: Package.Location, actor _: OffscreenActor) -> OffscreenPlace? {
+        location.formID == FormID(0x700) ? Self.stall : nil
+    }
+
+    func isLoaded(_: OffscreenPlace) -> Bool {
+        offscreenLoaded
+    }
+
+    func loadedExit(from _: FormID) -> OffscreenPlace? {
+        offscreenExit
+    }
+
+    func placeOffscreenActor(_ actor: ReferenceKey, at place: OffscreenPlace) {
+        offscreenMoves.append((actor, place))
     }
 }

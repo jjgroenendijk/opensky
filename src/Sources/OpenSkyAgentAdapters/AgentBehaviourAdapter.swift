@@ -234,6 +234,7 @@ struct AgentPackageReadout {
             "vehicleLinks": .array(links.keys.sorted()
                 .map { .string("\($0) -> \(links[$0]?.carrier as Any)") }),
             "lastMove": game.packages.lastMoves[key].map { .string("\($0)") } ?? .null,
+            "offscreen": game.packages.offscreenReadout(for: key).map(AgentJSON.string) ?? .null,
             "walk": key == .player ? .array((game.gameSession?.playerWalkPath ?? []).map {
                 .string("\($0.x.rounded()), \($0.y.rounded()), \($0.z.rounded())")
             }) : .null,

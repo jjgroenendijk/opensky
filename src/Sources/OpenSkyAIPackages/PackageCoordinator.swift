@@ -236,6 +236,12 @@ public final class PackageCoordinator {
     public private(set) var lastMoves: [ReferenceKey: NPCMoveCommandResult] = [:]
     /// Actors a follower command drives; none of their packages runs meanwhile.
     public internal(set) var commandedActors: Set<ReferenceKey> = []
+    /// The schedules of the persistent actors no loaded cell holds.
+    public let offscreen: OffscreenSchedule
+
+    public func offscreenReadout(for actor: ReferenceKey) -> String? {
+        offscreen.readout(for: actor)
+    }
 
     weak let world: (any PackageWorld)?
     let store: PackageStore?
@@ -268,6 +274,7 @@ public final class PackageCoordinator {
             ActorPackageRuntime(store: $0.store, conditionFunctions: $0.conditionFunctions)
         }
         settings = PackageSettings(data)
+        offscreen = OffscreenSchedule(data: data)
         spectators = SpectatorMemory(settings: settings)
         movement = PackageMovement(world: world)
         movement.settled = { [weak self] actor, reason in
@@ -328,6 +335,11 @@ public final class PackageCoordinator {
         applySituations(to: &runtime, clock: clock, delta: delta, context: live)
         runtime.advance(clock: clock) { _ in live() }
         self.runtime = runtime
+        if let offscreenWorld = world as? any OffscreenScheduleWorld {
+            offscreen.advance(
+                world: offscreenWorld, clock: clock, residents: Set(bases.keys), context: live
+            )
+        }
         advanceTrees(by: delta)
     }
 

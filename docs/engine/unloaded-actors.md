@@ -123,9 +123,31 @@ places again by the hour.
 
 ## In OpenSky
 
-- [WARNING] OpenSky moves an actor only while its cell is loaded, and has no process levels. A
-  persistent resident stays in the interior where the editor placed them. A new game in Riverwood at
-  14:00 (2026-11-17) showed no named resident outside; the editor places them inside six interiors.
-  In Riften at 10:00, Brand-Shei, Marise, Grelka, Mjoll, and Bolli never came to the market by 12:00.
-  In Riverwood, the blacksmith's work package runs inside his house.
-- [WARNING] A new game, Wait, Sleep, and fast travel do not place actors at their package location.
+OpenSky runs the low level only. Every 54 game seconds (0.3 / 20 game hours), it updates each
+unique persistent actor that no loaded cell holds:
+
+1. It picks the actor's package by the same rules as for a loaded actor.
+2. It finds the place of the package's first location input: a reference, the editor place, or
+   the editor cell. A location it cannot place, such as an alias, keeps the actor where it is.
+3. An actor already in that cell and inside the location radius stays.
+4. When the place is in a loaded cell and the actor is in an interior, the actor comes out of
+   the loaded door that leads into its interior. The loaded package then walks it to the place.
+5. Otherwise the actor is put straight at the place.
+
+The unique persistent actors are the ones the location records list, plus each base with one
+persistent placed actor. A dead or disabled actor does not move. A moved actor keeps the
+worldspace of its new cell, because a city world and Tamriel share grid coordinates.
+
+For example, at 10:00 Brand-Shei's package names his stall in the Riften market. With the
+player in the market, he comes out of the door of his house and walks to the stall. With the
+player in Whiterun, he is put at the stall.
+
+`openskycli game state packages <ref>` shows the last update under `offscreen`, and
+`openskycli game debug time <hour>` or `debug rest <hours>` moves the clock that drives it.
+
+- [WARNING] An unloaded actor does not walk its path; it is put at the place at its next update,
+  so a long walk takes 54 game seconds, not its walking time. There is no middle level.
+- [WARNING] The place has no random point inside a location radius over 200 units, and no
+  navmesh search on arrival.
+- [WARNING] A Wait, Sleep, or fast travel updates the actors once, at the end. It does not run
+  the hourly batch in between.

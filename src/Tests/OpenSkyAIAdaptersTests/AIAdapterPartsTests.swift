@@ -4,7 +4,9 @@ import OpenSkyActorsInterface
 @testable import OpenSkyAIAdapters
 import OpenSkyAIPackages
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyRenderCore
@@ -46,6 +48,24 @@ struct AIAdapterPartsTests {
     @Test func theWorldsForwardActivationAndSituations() {
         #expect(adapter.worlds.activate(Self.actor, by: Self.actor) == .failed)
         #expect(adapter.worlds.packageSituations(of: []).isEmpty)
+    }
+
+    @Test func withoutRecordsOrScriptsTheOffscreenWorldIsEmpty() {
+        let worlds = adapter.worlds
+        let place = OffscreenPlace(
+            location: .exterior(CellCoordinate(x: 40, y: -24)), worldspace: "RiftenWorld",
+            point: .zero
+        )
+        let actor = OffscreenActor(key: Self.actor, base: FormID(0x600), place: place)
+        #expect(worlds.offscreenActors().isEmpty)
+        #expect(!worlds.isLoaded(place))
+        #expect(worlds.loadedExit(from: FormID(0x900)) == nil)
+        for kind: Int32 in [0, 1, 3, 4] {
+            let location = Package.Location(rawKind: kind, value: 0x700, radius: 0)
+            #expect(worlds.offscreenPlace(of: location, actor: actor) == nil)
+        }
+        worlds.placeOffscreenActor(Self.actor, at: place)
+        #expect(host.fakeWorldState.setCalls.isEmpty)
     }
 
     @Test func aPlayerAtRestMakesNoActionSound() {

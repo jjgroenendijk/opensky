@@ -334,8 +334,5 @@ its two speakers and ends.
 ## Not done yet
 
 - Observing combat is not known, so the observe-combat behaviour flags never act.
-- [WARNING] In the Riften market at 10:00, the game started two conversations within about
-  2 minutes. OpenSky started none in 5 minutes, because most speakers stayed in their houses
-  ([package schedules](/engine/package-schedules.md#actors-far-from-the-player)).
 - A conversation partner does not walk to the other partner before the scene begins.
 - A speaker does not wait to face its look target before its line.

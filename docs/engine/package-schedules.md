@@ -344,8 +344,9 @@ cell by cell through load doors, at a slower update rhythm, and a new game place
 actor where its package puts it at that hour. [Actors outside the loaded area](/engine/unloaded-actors.md)
 has the levels, the update rhythm, time skips, and placement on arrival.
 
-[WARNING] OpenSky moves an actor only while its cell is loaded, so a persistent resident stays in
-the interior where the editor placed it.
+OpenSky puts an unloaded persistent actor at its package's place once per low-level update,
+and has it step out of its house door when the place is loaded. It does not walk the path while
+unloaded ([in OpenSky](/engine/unloaded-actors.md#in-opensky)).
 
 ## Walking into another cell
 

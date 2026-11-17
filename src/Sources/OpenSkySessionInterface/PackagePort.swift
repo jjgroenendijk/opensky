@@ -18,6 +18,8 @@ public protocol PackagePort: AnyObject {
     func packageLocation(of actor: ReferenceKey) -> SIMD3<Float>?
     func readout(for actor: ReferenceKey) -> PackageActorReadout?
     func readouts() -> [PackageActorReadout]
+    /// The last off-screen update of an actor no loaded cell holds, as one line.
+    func offscreenReadout(for actor: ReferenceKey) -> String?
     func recordMove(_ result: NPCMoveCommandResult, for actor: ReferenceKey)
     func releaseCommanded(_ actor: ReferenceKey)
     func resume(_ actor: ReferenceKey)
