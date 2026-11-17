@@ -1,0 +1,152 @@
+// Persistent actors no loaded cell holds keep their schedules: the update rhythm, where each
+// update puts them, and the package shell that runs the pass. Synthetic records only.
+
+@testable import OpenSkyAIPackages
+import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
+import OpenSkyWorldConditions
+import OpenSkyWorldInterface
+@testable import OpenSkyWorldState
+import OpenSkyWorldTesting
+import Testing
+
+@MainActor
+struct OffscreenScheduleTests {
+    private static let actor = PackageRuntimeFixture.key(0x500)
+    private static let house = OffscreenPlace(
+        location: .interior(FormID(0x900)), worldspace: nil, point: .zero
+    )
+    private static let door = OffscreenPlace(
+        location: .exterior(CellCoordinate(x: 40, y: -24)), worldspace: "RiftenWorld",
+        point: SIMD3(10, 0, 0)
+    )
+
+    @Test func aLowActorUpdatesEvery54GameSeconds() {
+        #expect(OffscreenScheduleCore.updateSeconds() == 54)
+        #expect(OffscreenScheduleCore.updateSeconds(timescale: 0) == 1080)
+        #expect(OffscreenScheduleCore.isDue(now: 100, last: nil, interval: 54))
+        #expect(!OffscreenScheduleCore.isDue(now: 150, last: 100, interval: 54))
+        #expect(OffscreenScheduleCore.isDue(now: 154, last: 100, interval: 54))
+        #expect(OffscreenScheduleCore.isDue(now: 50, last: 100, interval: 54), "clock went back")
+    }
+
+    @Test func anActorGoesStraightToAPlaceThatIsNotLoaded() {
+        let stall = FakePackageWorld.stall
+        #expect(OffscreenScheduleCore.decide(
+            from: Self.house, to: stall, targetLoaded: false, exit: Self.door
+        ) == .place(stall))
+        #expect(OffscreenScheduleCore.decide(
+            from: stall, to: stall, targetLoaded: false, exit: nil
+        ) == .stays)
+        let tamriel = OffscreenPlace(
+            location: stall.location, worldspace: "Tamriel", point: stall.point
+        )
+        #expect(OffscreenScheduleCore.decide(
+            from: tamriel, to: stall, targetLoaded: false, exit: nil
+        ) == .place(stall), "the same square of another worldspace is not there")
+    }
+
+    @Test func anActorLeavesItsHouseByTheDoorWhenThePlaceIsLoaded() {
+        let stall = FakePackageWorld.stall
+        #expect(OffscreenScheduleCore.decide(
+            from: Self.house, to: stall, targetLoaded: true, exit: Self.door
+        ) == .stepOut(Self.door))
+        #expect(OffscreenScheduleCore.decide(
+            from: Self.house, to: stall, targetLoaded: true, exit: nil
+        ) == .place(stall))
+        #expect(OffscreenScheduleCore.decide(
+            from: Self.door, to: stall, targetLoaded: true, exit: Self.door
+        ) == .place(stall), "an actor outside has no door to use")
+    }
+
+    @Test func theReadoutNamesTheStepPackageCellAndHour() {
+        let step = OffscreenStep(
+            kind: .placed, package: FormID(0x102), place: FakePackageWorld.stall,
+            gameSeconds: 86400 * 3 + 37800
+        )
+        #expect(step.readout.hasPrefix("placed package "))
+        #expect(step.readout.contains("RiftenWorld"))
+        #expect(step.readout.hasSuffix("at 10.5"))
+        let none = OffscreenStep(kind: .stays, package: nil, place: nil, gameSeconds: 0)
+        #expect(none.readout == "stays no package at 0.0")
+    }
+
+    @Test func aPassPutsAnUnloadedActorAtItsPackagePlaceOncePerUpdate() throws {
+        let (coordinator, world) = try Self.coordinator(packages: [0x102])
+        world.offscreenActorList = [OffscreenActor(
+            key: Self.actor, base: FormID(0x600), place: Self.house
+        )]
+        coordinator.advance()
+        #expect(world.offscreenMoves.map(\.place) == [FakePackageWorld.stall])
+        #expect(coordinator.offscreen.steps[Self.actor]?.kind == .placed)
+        #expect(coordinator.offscreenReadout(for: Self.actor)?.hasPrefix("placed") == true)
+
+        coordinator.advance()
+        #expect(world.offscreenMoves.count == 1, "the next update is not due yet")
+
+        world.offscreenActorList = [OffscreenActor(
+            key: Self.actor, base: FormID(0x600), place: FakePackageWorld.stall
+        )]
+        world.packageClock = GameClock(hour: 10)
+        coordinator.advance()
+        #expect(world.offscreenMoves.count == 1)
+        #expect(coordinator.offscreen.steps[Self.actor]?.kind == .stays)
+
+        world.offscreenActorList = []
+        world.packageClock = GameClock(hour: 11)
+        coordinator.advance()
+        #expect(coordinator.offscreen.registered.isEmpty)
+        #expect(coordinator.offscreenReadout(for: Self.actor) == nil)
+    }
+
+    @Test func aLoadedPlaceIsReachedThroughTheHouseDoor() throws {
+        let (coordinator, world) = try Self.coordinator(packages: [0x102])
+        world.offscreenActorList = [OffscreenActor(
+            key: Self.actor, base: FormID(0x600), place: Self.house
+        )]
+        world.offscreenLoaded = true
+        world.offscreenExit = Self.door
+        coordinator.advance()
+        #expect(world.offscreenMoves.map(\.place) == [Self.door])
+        #expect(coordinator.offscreen.steps[Self.actor]?.kind == .steppedOut)
+    }
+
+    @Test func aLoadedActorOrOneWithoutAPlaceIsNotMoved() throws {
+        let (coordinator, world) = try Self.coordinator(packages: [0x101])
+        world.offscreenActorList = [
+            OffscreenActor(key: Self.actor, base: FormID(0x600), place: Self.house),
+            OffscreenActor(
+                key: PackageRuntimeFixture.key(0x501), base: FormID(0x600), place: Self.house
+            )
+        ]
+        world.residents = try [PackageRuntimeFixture.residentActor(0x501, base: 0x600)]
+        coordinator.advance()
+        #expect(world.offscreenMoves.isEmpty)
+        #expect(coordinator.offscreen.steps[Self.actor]?.kind == .stays)
+        #expect(coordinator.offscreen.steps[Self.actor]?.place == nil)
+        #expect(coordinator.offscreen.registered.keys.sorted() == [Self.actor])
+    }
+
+    private static func coordinator(
+        packages: [UInt32]
+    ) throws -> (PackageCoordinator, FakePackageWorld) {
+        let fallback = try PackageRuntimeFixture.package(id: 0x101, editorID: "Fallback")
+        let walk = try PackageRuntimeFixture.package(
+            id: 0x102, editorID: "WorkAtStall", procedureNames: ["Travel"],
+            dataInputs: [Package.DataInput(index: 0, type: "PLDT", value: .location(
+                Package.Location(rawKind: 0, value: 0x700, radius: 0)
+            ))]
+        )
+        let actor = try PackageRuntimeFixture.actorBase(id: 0x600, packages: packages)
+        let world = FakePackageWorld()
+        let coordinator = PackageCoordinator(
+            world: world,
+            data: PackageSessionData(store: PackageStore(
+                packages: [fallback, walk],
+                actorTemplates: ActorTemplateResolver(actors: [0x600: actor], leveledActors: [:])
+            ), conditionFunctions: .standard)
+        )
+        return (coordinator, world)
+    }
+}

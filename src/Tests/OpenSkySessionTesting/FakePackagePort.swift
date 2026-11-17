@@ -28,6 +28,8 @@ nonisolated public final class FakePackagePort: PackagePort {
     public var readoutResult: PackageActorReadout?
     public var readoutsCallCount = 0
     public var readoutsResult: [PackageActorReadout] = []
+    public var offscreenReadoutCalls: [ReferenceKey] = []
+    public var offscreenReadoutResult: String?
     public var recordMoveCalls: [(result: NPCMoveCommandResult, actor: ReferenceKey)] = []
     public var releaseCommandedCalls: [ReferenceKey] = []
     public var resumeCalls: [ReferenceKey] = []
@@ -104,6 +106,11 @@ nonisolated extension FakePackagePort {
     public func readouts() -> [PackageActorReadout] {
         readoutsCallCount += 1
         return readoutsResult
+    }
+
+    public func offscreenReadout(for actor: ReferenceKey) -> String? {
+        offscreenReadoutCalls.append(actor)
+        return offscreenReadoutResult
     }
 
     public func recordMove(_ result: NPCMoveCommandResult, for actor: ReferenceKey) {

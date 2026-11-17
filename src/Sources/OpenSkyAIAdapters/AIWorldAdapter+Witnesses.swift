@@ -41,6 +41,7 @@ extension AIWorldAdapter {
         let packageMoves: AIPackageMovesAdapter
         let packageState: AIPackageStateAdapter
         let packageActs: AIPackageActsAdapter
+        let offscreenHomes = OffscreenHomeCache()
 
         init(_ adapter: AIWorldAdapter) {
             seating = adapter.seating
@@ -331,6 +332,7 @@ extension AIWorldAdapter.Worlds: FurnitureWorld {}
 extension AIWorldAdapter.Worlds: PlayerFurnitureDriving {}
 extension AIWorldAdapter.Worlds: PapyrusFurnitureBridge {}
 extension AIWorldAdapter.Worlds: PackageWorld {}
+extension AIWorldAdapter.Worlds: OffscreenScheduleWorld {}
 extension AIWorldAdapter.Worlds: AINavigationWorld {}
 extension AIWorldAdapter.Worlds: NPCAnimationWorld {}
 extension AIWorldAdapter.Worlds: PerceptionSessionWorld {}
