@@ -224,6 +224,7 @@ public protocol InventoryScriptItemsPort {
         to other: ReferenceKey?
     ) -> InventoryResult<Bool>
     func scriptSetOutfit(_ outfit: FormID, on key: ReferenceKey) -> InventoryResult<Bool>
+    func scriptSetSleepOutfit(_ outfit: FormID, on key: ReferenceKey) -> InventoryResult<Bool>
     func scriptUnequipAll(on key: ReferenceKey) -> InventoryResult<Bool>
     func scriptUnequipItem(_ item: FormID, on key: ReferenceKey) -> InventoryResult<Bool>
     func scriptUnequipSlot(_ slot: Int32, on key: ReferenceKey) -> InventoryResult<Bool>

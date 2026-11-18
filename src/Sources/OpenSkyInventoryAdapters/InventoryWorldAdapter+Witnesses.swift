@@ -222,6 +222,10 @@ extension InventoryWorldAdapter {
         papyrus.setOutfit(outfit, on: actor)
     }
 
+    public func setSleepOutfit(_ outfit: FormID, on actor: ReferenceKey) -> Bool {
+        papyrus.setSleepOutfit(outfit, on: actor)
+    }
+
     public func isEquipped(_ item: FormID, on actor: ReferenceKey) -> Bool? {
         papyrus.isEquipped(item, on: actor)
     }

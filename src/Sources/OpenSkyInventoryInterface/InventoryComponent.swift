@@ -75,6 +75,11 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
     /// Equipped base FormIDs, sorted ascending and unique. Storage only;
     /// `EquipmentRuntime` arbitrates slots.
     public private(set) var equipped: [FormID]
+    /// The default outfit a script set with `SetOutfit`, which replaces the base's `DOFT`.
+    public var outfit: FormID?
+    /// The sleep outfit a script set. Stored only: the game never wears one
+    /// (docs/engine/inventory-state.md).
+    public var sleepOutfit: FormID?
 
     /// Nothing held and nothing equipped, which is also the player's baseline.
     public static let empty = ReferenceInventoryState()
@@ -89,7 +94,12 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
     /// save decoder's entry point, and a corrupt file must degrade rather than
     /// fail the whole load, while the mutation API above refuses the same
     /// arithmetic outright.
-    public init(stacks: [InventoryStack] = [], equipped: [FormID] = []) {
+    public init(
+        stacks: [InventoryStack] = [], equipped: [FormID] = [],
+        outfit: FormID? = nil, sleepOutfit: FormID? = nil
+    ) {
+        self.outfit = outfit
+        self.sleepOutfit = sleepOutfit
         var merged: [StackKey: Int32] = [:]
         // `signum()` rather than a comparison against zero: a stack count is a
         // quantity, not a collection size, so the lint rule that rewrites
@@ -121,7 +131,7 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
     // MARK: - Reading
 
     var isEmpty: Bool {
-        stacks.isEmpty && equipped.isEmpty
+        stacks.isEmpty && equipped.isEmpty && outfit == nil && sleepOutfit == nil
     }
 
     /// How many of `item` the owner holds, honest and stolen copies together;
@@ -281,7 +291,9 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
         let held = Set(kept.map(\.item))
         let remaining = ReferenceInventoryState(
             stacks: kept,
-            equipped: equipped.filter { held.contains($0) }
+            equipped: equipped.filter { held.contains($0) },
+            outfit: outfit,
+            sleepOutfit: sleepOutfit
         )
         return (remaining, taken)
     }
@@ -309,7 +321,9 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
     /// This inventory with the whole equipped set replaced, normalized the same
     /// way `init` normalizes it.
     public func settingEquipped(_ items: [FormID]) -> Self {
-        ReferenceInventoryState(stacks: stacks, equipped: items)
+        ReferenceInventoryState(
+            stacks: stacks, equipped: items, outfit: outfit, sleepOutfit: sleepOutfit
+        )
     }
 
     // MARK: - Private

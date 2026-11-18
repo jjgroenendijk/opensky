@@ -200,8 +200,9 @@ extension InventoryCoordinator.ScriptItems {
         return InventoryResult(true, commands: worn.isEmpty ? [] : [.equipmentChanged(holder)])
     }
 
-    /// `Actor.SetOutfit`: the default outfit's pieces leave, then the new pieces
+    /// `Actor.SetOutfit`: the current outfit's pieces leave, then the new pieces
     /// are given and worn. Slot rules unequip whatever else the new pieces cover.
+    /// The current outfit is the last one a script set, else the default outfit.
     public func scriptSetOutfit(_ outfit: FormID, on key: ReferenceKey) -> InventoryResult<Bool> {
         guard
             let equipment = coordinator.equipment, let holder = scriptHolder(key),
@@ -211,8 +212,10 @@ extension InventoryCoordinator.ScriptItems {
         else { return InventoryResult(false) }
         let inventory = equipment.inventory
         let kept = Set(pieces.map(\.item))
-        let defaults = inventory.baseline(of: holder).equipped
-        for item in defaults where !kept.contains(item) {
+        let current = inventory.inventory(of: holder).outfit.flatMap {
+            inventory.baselines.outfitStacks($0, roll: inventory.roll(of: holder))?.map(\.item)
+        } ?? inventory.baseline(of: holder).equipped
+        for item in current where !kept.contains(item) {
             let held = inventory.count(of: item, in: holder)
             if held > 0 {
                 _ = move(item, count: held, from: holder, to: nil)
@@ -226,8 +229,22 @@ extension InventoryCoordinator.ScriptItems {
             }
             _ = attempt { try equipment.equip(piece.item, on: holder) }
         }
+        inventory.setOutfit(outfit, of: holder)
         scriptNote("Script set the outfit of \(holderName(holder)).")
         return InventoryResult(true, commands: [.equipmentChanged(holder)])
+    }
+
+    /// `Actor.SetOutfit` with `abSleepOutfit`: stored, never worn, because the game
+    /// does not wear a sleep outfit (docs/engine/inventory-state.md).
+    public func scriptSetSleepOutfit(
+        _ outfit: FormID, on key: ReferenceKey
+    ) -> InventoryResult<Bool> {
+        guard
+            let inventory = coordinator.equipment?.inventory, let holder = scriptHolder(key),
+            inventory.baselines.outfitStacks(outfit, roll: inventory.roll(of: holder)) != nil
+        else { return InventoryResult(false) }
+        inventory.setOutfit(outfit, sleeping: true, of: holder)
+        return InventoryResult(true)
     }
 
     /// The plugin inventory of a resident holder, for a diff against its first write.

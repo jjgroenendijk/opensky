@@ -47,10 +47,11 @@ extension PapyrusNativeFunctions.InventoryNatives {
             else { return failure(call, "GetGoldValue needs the inventory bridge and a form") }
             return .returned(.integer(bridge.goldValue(of: item) ?? -1))
         })
-        // Sleep outfits are not modelled, so `abSleepOutfit` changes nothing.
+        // `abSleepOutfit` stores the outfit without wearing it, as the game does.
         withItem("Actor", "SetOutfit", into: &registry) { call, _, bridge, actor, outfit in
             if boolean(call, at: 1, default: false) {
-                return .returned(.none)
+                return bridge.setSleepOutfit(outfit, on: actor)
+                    ? .returned(.none) : failure(call, "SetOutfit needs an outfit and an actor")
             }
             return bridge.setOutfit(outfit, on: actor)
                 ? .returned(.none) : failure(call, "SetOutfit needs an outfit and an actor")

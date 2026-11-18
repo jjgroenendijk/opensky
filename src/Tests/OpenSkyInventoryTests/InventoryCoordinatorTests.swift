@@ -261,6 +261,26 @@ extension InventoryCoordinatorTests {
             .value == false)
     }
 
+    @Test func aSecondSetOutfitTakesOffTheOutfitAScriptSet() throws {
+        let harness = try Self.harness()
+        let items = harness.coordinator.scriptItems
+        #expect(items.scriptSetOutfit(Fixture.guardOutfit, on: .player).value)
+        #expect(items.scriptSetOutfit(Fixture.emptyOutfit, on: .player).value)
+        #expect(items.scriptItemCount(Fixture.cuirass, in: .player) == 0)
+    }
+
+    @Test func aSleepOutfitIsStoredButNotWorn() throws {
+        let harness = try Self.harness()
+        let coordinator = harness.coordinator
+        #expect(coordinator.scriptItems.scriptSetSleepOutfit(Fixture.guardOutfit, on: .player)
+            .value)
+        #expect(coordinator.scriptItems.scriptItemCount(Fixture.cuirass, in: .player) == 0)
+        let inventory = try #require(coordinator.equipment?.inventory)
+        #expect(inventory.inventory(of: .player).sleepOutfit == Fixture.guardOutfit)
+        #expect(coordinator.scriptItems.scriptSetSleepOutfit(Fixture.cuirass, on: .player)
+            .value == false)
+    }
+
     @Test func removeItemTakesNoMoreThanIsHeld() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator

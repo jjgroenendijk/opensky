@@ -351,3 +351,16 @@ public struct InventoryRuntime: InventoryAccess {
         store.reset(.inventory, for: holder.key)
     }
 }
+
+extension InventoryRuntime {
+    /// Records the outfit a script set, so the next `SetOutfit` knows what to take off.
+    public func setOutfit(_ outfit: FormID, sleeping: Bool = false, of holder: InventoryHolder) {
+        var state = inventory(of: holder)
+        if sleeping {
+            state.sleepOutfit = outfit
+        } else {
+            state.outfit = outfit
+        }
+        store.set(state, for: holder.key, in: holder.cell)
+    }
+}

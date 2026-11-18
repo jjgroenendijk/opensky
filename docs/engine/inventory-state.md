@@ -149,9 +149,18 @@ that covers biped slot `aiSlot`, 30 to 61; a slot outside that range fails.
   of the player, and returns the new reference. Only the player drops, because OpenSky places a
   drop only in front of the player's camera. A drop from another holder fails with that reason.
 
-`SetOutfit` replaces an actor's outfit. The pieces of the actor's default outfit (`DOFT`) leave its
+`SetOutfit` replaces an actor's outfit. The pieces of the actor's current outfit leave its
 inventory, then one of each new piece is given and worn. A leveled entry rolls for the actor's base,
 as a default outfit does. The equip-slot rules unequip anything else the new pieces cover.
-OpenSky differs from the game in two ways. It does not remember an outfit a script set, so a
-second `SetOutfit` removes only the default outfit's pieces. Sleep outfits are not modelled, so a
-call with `abSleepOutfit` set does nothing.
+
+The current outfit is the last one a script set, else the default outfit (`DOFT`). The game keeps
+a set outfit too: a save stores it on the actor base as `CHANGE_NPC_DEFAULT_OUTFIT`
+(<https://en.uesp.net/wiki/Skyrim_Mod:NPC_ChangeForm>). OpenSky keeps it in the actor's inventory
+state, so the save stores it with the inventory. Example: a quest sets a prisoner's outfit to rags,
+then to guard armour. The second call takes the rags off, not the prisoner's default clothes.
+
+With `abSleepOutfit` set, the outfit is stored as the sleep outfit and nothing is worn. The game
+does the same. The Creation Kit wiki says the Sleep Outfit field is "Not used"
+(<https://ck.uesp.net/wiki/Inventory_Tab>), and that the package flag that wore it "was removed
+from the final game" (<https://ck.uesp.net/wiki/Package_Flags>). A save still stores it
+(`CHANGE_NPC_SLEEP_OUTFIT`).

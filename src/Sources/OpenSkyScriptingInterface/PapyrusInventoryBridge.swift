@@ -20,6 +20,8 @@ public protocol PapyrusInventoryBridge: AnyObject {
     func equipItem(_ item: FormID, on actor: ReferenceKey) -> Bool
     func unequipItem(_ item: FormID, on actor: ReferenceKey) -> Bool
     func setOutfit(_ outfit: FormID, on actor: ReferenceKey) -> Bool
+    /// Stores the sleep outfit; the game never wears one.
+    func setSleepOutfit(_ outfit: FormID, on actor: ReferenceKey) -> Bool
     func isEquipped(_ item: FormID, on actor: ReferenceKey) -> Bool?
     /// The outer nil means no inventory; the inner nil means an empty hand.
     func equippedWeapon(on actor: ReferenceKey, leftHand: Bool) -> FormID??

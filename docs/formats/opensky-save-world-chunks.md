@@ -104,6 +104,8 @@ One entry per owner whose items differ from the plugins:
 | bytes | stacks | per stack: uint32 item FormID, int32 count |
 | uint32 | equippedCount | equipped items that follow |
 | bytes | equipped | uint32 FormID each |
+| uint32 | outfit | the default outfit a script set with `SetOutfit`, 0 for none |
+| uint32 | sleepOutfit | the sleep outfit a script set, 0 for none |
 
 One row per item. Stolen and honest copies are added together here; the stolen part is in
 `STOL` ([actor chunks](/formats/opensky-save-actor-chunks.md)). A flag cannot be added to
@@ -112,7 +114,7 @@ chunk.
 
 Stacks are sorted by FormID and equipped items ascend. A stack with a count of zero or less
 is dropped. Two stacks of one item are added together, stopping at the maximum instead of
-overflowing. Minimum sizes: 16 bytes per entry, 8 per stack, 4 per equipped item.
+overflowing. Minimum sizes: 24 bytes per entry, 8 per stack, 4 per equipped item.
 
 ## SPWN: spawned references
 

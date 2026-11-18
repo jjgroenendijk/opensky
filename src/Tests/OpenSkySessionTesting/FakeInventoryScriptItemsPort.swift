@@ -33,6 +33,8 @@ nonisolated public final class FakeInventoryScriptItemsPort: InventoryScriptItem
     public var scriptRemoveItemResult: InventoryResult<Bool>?
     public var scriptSetOutfitCalls: [(outfit: FormID, key: ReferenceKey)] = []
     public var scriptSetOutfitResult: InventoryResult<Bool>?
+    public var scriptSetSleepOutfitCalls: [(outfit: FormID, key: ReferenceKey)] = []
+    public var scriptSetSleepOutfitResult: InventoryResult<Bool>?
     public var scriptUnequipAllCalls: [ReferenceKey] = []
     public var scriptUnequipAllResult: InventoryResult<Bool>?
     public var scriptUnequipItemCalls: [(item: FormID, key: ReferenceKey)] = []
@@ -204,6 +206,17 @@ nonisolated extension FakeInventoryScriptItemsPort {
             preconditionFailure("FakeInventoryScriptItemsPort.scriptSetOutfit has no result")
         }
         return scriptSetOutfitResult
+    }
+
+    public func scriptSetSleepOutfit(
+        _ outfit: FormID,
+        on key: ReferenceKey
+    ) -> InventoryResult<Bool> {
+        scriptSetSleepOutfitCalls.append((outfit: outfit, key: key))
+        guard let scriptSetSleepOutfitResult else {
+            preconditionFailure("FakeInventoryScriptItemsPort.scriptSetSleepOutfit has no result")
+        }
+        return scriptSetSleepOutfitResult
     }
 
     public func scriptUnequipAll(on key: ReferenceKey) -> InventoryResult<Bool> {
