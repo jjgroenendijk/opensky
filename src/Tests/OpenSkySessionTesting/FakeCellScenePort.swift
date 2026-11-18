@@ -5,11 +5,13 @@ public import OpenSkyCrimeInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkySessionInterface
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 
 /// Stores each property and records each call to `CellScenePort`.
 nonisolated public final class FakeCellScenePort: CellScenePort {
     public typealias CellLoadSummary = FakeCellLoadSummaryPort
+    public var doors: [PlacedDoor] = []
     public var forbidsWaiting = false
     public var isInterior = false
     public var location: CellSceneLocation?

@@ -34,30 +34,55 @@ struct OffscreenScheduleTests {
     @Test func anActorGoesStraightToAPlaceThatIsNotLoaded() {
         let stall = FakePackageWorld.stall
         #expect(OffscreenScheduleCore.decide(
-            from: Self.house, to: stall, targetLoaded: false, exit: Self.door
+            from: Self.house, to: stall, targetLoaded: false, exit: { _ in Self.door }
         ) == .place(stall))
         #expect(OffscreenScheduleCore.decide(
-            from: stall, to: stall, targetLoaded: false, exit: nil
+            from: stall, to: stall, targetLoaded: false, exit: { _ in nil }
         ) == .stays)
         let tamriel = OffscreenPlace(
             location: stall.location, worldspace: "Tamriel", point: stall.point
         )
         #expect(OffscreenScheduleCore.decide(
-            from: tamriel, to: stall, targetLoaded: false, exit: nil
+            from: tamriel, to: stall, targetLoaded: false, exit: { _ in nil }
         ) == .place(stall), "the same square of another worldspace is not there")
     }
 
     @Test func anActorLeavesItsHouseByTheDoorWhenThePlaceIsLoaded() {
         let stall = FakePackageWorld.stall
         #expect(OffscreenScheduleCore.decide(
-            from: Self.house, to: stall, targetLoaded: true, exit: Self.door
+            from: Self.house, to: stall, targetLoaded: true, exit: { _ in Self.door }
         ) == .stepOut(Self.door))
         #expect(OffscreenScheduleCore.decide(
-            from: Self.house, to: stall, targetLoaded: true, exit: nil
+            from: Self.house, to: stall, targetLoaded: true, exit: { _ in nil }
         ) == .place(stall))
         #expect(OffscreenScheduleCore.decide(
-            from: Self.door, to: stall, targetLoaded: true, exit: Self.door
+            from: Self.door, to: stall, targetLoaded: true, exit: { _ in Self.door }
         ) == .place(stall), "an actor outside has no door to use")
+    }
+
+    @Test func theDoorsAreSearchedOnlyWhenAnActorCanStepOut() {
+        let stall = FakePackageWorld.stall
+        var asked: [FormID] = []
+        let exit: (FormID) -> OffscreenPlace? = { cell in
+            asked.append(cell)
+            return Self.door
+        }
+        _ = OffscreenScheduleCore.decide(
+            from: Self.house,
+            to: stall,
+            targetLoaded: false,
+            exit: exit
+        )
+        _ = OffscreenScheduleCore.decide(from: Self.door, to: stall, targetLoaded: true, exit: exit)
+        _ = OffscreenScheduleCore.decide(from: stall, to: stall, targetLoaded: true, exit: exit)
+        #expect(asked.isEmpty)
+        _ = OffscreenScheduleCore.decide(
+            from: Self.house,
+            to: stall,
+            targetLoaded: true,
+            exit: exit
+        )
+        #expect(asked == [FormID(0x900)])
     }
 
     @Test func theReadoutNamesTheStepPackageCellAndHour() {

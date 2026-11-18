@@ -78,12 +78,24 @@ public struct AIOffscreenScheduleAdapter {
         guard let lookup = game.streamer.placedRecords else { return nil }
         let streamer = game.streamer
         return OffscreenRoster.exit(from: cell, through: OffscreenRoster.Doors(
-            entries: streamer.residentEntries(),
+            entries: residentTeleportDoors(),
             interiorCell: { lookup.interiorCell(holding: $0) },
             arrival: { lookup.arrival(through: $0) },
             location: { streamer.cellLocation(of: $0) },
             worldspace: streamer.residentWorldspace
         ))
+    }
+
+    /// The loaded doors that lead somewhere, by FormID. Each scene lists its doors, so no
+    /// pass copies every resident reference.
+    private func residentTeleportDoors() -> [RuntimeReferenceEntry] {
+        let streamer = game.streamer
+        let scenes = streamer.interiorScene.map { [$0] } ?? Array(streamer.composition.cells.values)
+        return scenes.flatMap { scene in
+            scene.doors.compactMap { door in
+                door.destination == nil ? nil : scene.references.entry(for: door.reference)
+            }
+        }.sorted { $0.formID.rawValue < $1.formID.rawValue }
     }
 
     /// Writes the place into the cell that will draw the actor, so no other cell rebuilds.

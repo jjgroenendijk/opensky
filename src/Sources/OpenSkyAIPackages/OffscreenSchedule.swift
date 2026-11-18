@@ -111,15 +111,17 @@ nonisolated public enum OffscreenScheduleCore {
 
     /// Where the actor goes on this update. A place in a loaded cell is reached through
     /// the door of the house the actor is in, so it walks the last part in view.
+    /// `exit` is asked only then: it searches the loaded doors, and a pass runs it for
+    /// hundreds of actors.
     public static func decide(
         from current: OffscreenPlace, to target: OffscreenPlace,
-        targetLoaded: Bool, exit: OffscreenPlace?
+        targetLoaded: Bool, exit: (FormID) -> OffscreenPlace?
     ) -> Decision {
         let near = simd_distance(current.point, target.point) <= max(target.radius, 1)
         if current.sharesCell(with: target), near {
             return .stays
         }
-        if targetLoaded, case .interior = current.location, let exit {
+        if targetLoaded, case let .interior(cell) = current.location, let exit = exit(cell) {
             return .stepOut(exit)
         }
         return .place(target)
@@ -197,13 +199,9 @@ public final class OffscreenSchedule {
             )
             return
         }
-        let exit: OffscreenPlace? = if case let .interior(cell) = actor.place.location {
-            world.loadedExit(from: cell)
-        } else {
-            nil
-        }
         let step = switch OffscreenScheduleCore.decide(
-            from: actor.place, to: target, targetLoaded: world.isLoaded(target), exit: exit
+            from: actor.place, to: target, targetLoaded: world.isLoaded(target),
+            exit: { world.loadedExit(from: $0) }
         ) {
         case .stays:
             OffscreenStep(kind: .stays, package: formID, place: target, gameSeconds: now)

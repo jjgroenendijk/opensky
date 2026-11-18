@@ -2,11 +2,13 @@ public import OpenSkyConditions
 public import OpenSkyCrimeInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 
 /// What the world adapters use of `CellScene`.
 public protocol CellScenePort {
     associatedtype CellLoadSummary: CellLoadSummaryPort
+    var doors: [PlacedDoor] { get }
     var forbidsWaiting: Bool { get }
     var isInterior: Bool { get }
     var location: CellSceneLocation? { get }
