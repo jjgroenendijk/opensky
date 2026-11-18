@@ -273,7 +273,9 @@ public final class CasterRuntime {
     /// the same rule regeneration and the effect tick follow.
     public func advance(delta: Float, on caster: ActorValueHolder) {
         guard delta > 0 else { return }
+        let health = values.current(of: caster).health
         for hand in SpellHand.allCases {
+            casts[CastSlot(caster: caster.key, hand: hand)]?.noteDualCastHealth(health)
             advance(hand, delta: delta, on: caster)
         }
     }

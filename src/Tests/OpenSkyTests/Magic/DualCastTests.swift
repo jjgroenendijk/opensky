@@ -88,6 +88,26 @@ struct DualCastTests {
         #expect(harness.runtime.phase(of: .right) == .idle)
     }
 
+    /// CK wiki "IsDualCasting": damage taken mid-cast makes it 0 until the next dual cast.
+    @Test func damageMidCastMarksTheDualCastInterrupted() throws {
+        let harness = try harness(dualCastPerk: true)
+        harness.runtime.begin(.right, on: .player)
+        harness.runtime.begin(.left, on: .player)
+        harness.runtime.advance(delta: 0.1, on: .player)
+        #expect(!harness.runtime.state(of: .right).isDualCastInterrupted)
+
+        harness.values.damage(.health, by: 5, on: .player)
+        harness.runtime.advance(delta: 0.1, on: .player)
+        #expect(harness.runtime.state(of: .right).isDualCast)
+        #expect(harness.runtime.state(of: .right).isDualCastInterrupted)
+
+        harness.runtime.release(.left, on: .player)
+        harness.runtime.begin(.right, on: .player)
+        harness.runtime.begin(.left, on: .player)
+        harness.runtime.advance(delta: 0.1, on: .player)
+        #expect(!harness.runtime.state(of: .right).isDualCastInterrupted)
+    }
+
     @Test func aSecondHandBegunLateCastsAlone() throws {
         let harness = try harness(dualCastPerk: true)
         harness.runtime.begin(.right, on: .player)

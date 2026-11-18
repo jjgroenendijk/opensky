@@ -41,6 +41,11 @@ nonisolated public struct SpellCastState: Equatable, Sendable {
     /// The hand's part in a dual cast, nil for a single cast. The lead hand runs the
     /// cast; the partner only holds the spell, so the cast pays and applies once.
     private(set) var dualRole: DualCastRole?
+    /// The caster's health when last seen during a dual cast.
+    private var dualCastHealth: Float?
+    /// Damage taken during the dual cast. The cast goes on, but `IsDualCasting` reads 0
+    /// until the next dual cast (CK wiki "IsDualCasting").
+    public private(set) var isDualCastInterrupted = false
 
     public var isDualCast: Bool {
         dualRole != nil
@@ -48,6 +53,15 @@ nonisolated public struct SpellCastState: Equatable, Sendable {
 
     mutating func joinDualCast(as role: DualCastRole) {
         dualRole = role
+    }
+
+    /// Marks the dual cast interrupted when `health` fell since the last call.
+    mutating func noteDualCastHealth(_ health: Float) {
+        guard isDualCast, health.isFinite else { return }
+        if let seen = dualCastHealth, health < seen {
+            isDualCastInterrupted = true
+        }
+        dualCastHealth = health
     }
 
     /// Starts a charge.

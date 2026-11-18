@@ -186,7 +186,8 @@ letter: 88 X, 89 Y, 90 Z.
   spell's school is the magic skill of its costliest effect.
 - `GetDisease` (39) is 1 when the actor knows a spell of type disease.
 - `IsDualCasting` (627) is 1 while the actor runs a dual cast. The Creation Kit page adds that
-  damage taken mid-cast makes it 0 until the next dual cast; OpenSky does not do that yet.
+  damage taken mid-cast makes it 0 until the next dual cast. OpenSky checks the caster's health
+  each frame of a dual cast: any drop sets the cast's answer to 0, and the cast itself goes on.
 - `EffectWasDualCast` (724) is 1 for an effect a dual cast applied. It is answered at apply time
   and in the per-second check of the effect's entry conditions.
 - `IsWardState` (602) compares its parameter with the actor's ward state: 0 none, 1 absorbing,

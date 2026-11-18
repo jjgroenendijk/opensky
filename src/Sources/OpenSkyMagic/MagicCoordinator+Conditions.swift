@@ -30,7 +30,7 @@ extension MagicCoordinator.ConditionReads {
             )
             state.isDualCasting = SpellHand.allCases.contains { hand in
                 let cast = caster.state(of: hand, on: key)
-                return cast.isDualCast && cast.phase.isCasting
+                return cast.isDualCast && cast.phase.isCasting && !cast.isDualCastInterrupted
             }
             state.wardState = coordinator.wardShields.wardState(of: key).rawValue
             states[key] = state
