@@ -59,6 +59,7 @@ the detail and the sources it did find.
 | Cut head launch | 120 units/s away, 160 units/s up, 6 rad/s turn | [ragdoll](/engine/ragdoll.md#decapitation) |
 | Kill cam focus | 96 units above the feet, times the actor's scale; a frame steps the shot by at most 0.1 s | [kill cam](/engine/kill-cam.md) |
 | Splash ripple strength | 1 for a heavy splash, 0.6 for the others | [sky and water](/engine/sky-water.md) |
+| NPC archer range and ammunition | Shoots from up to 2048 units; needs one arrow and spends none | [archery](/engine/archery.md#npc-archers) |
 
 ## Magic
 

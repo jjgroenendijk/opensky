@@ -223,6 +223,9 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
         -> Bool
     /// What `key` makes of the player through factions and relationships.
     func combatReaction(toPlayerOf key: ReferenceKey) -> ActorReaction?
+    /// Looses an NPC's arrow. False when it has no arrow or nothing can fly.
+    @discardableResult
+    func fireCombatArrow(_ shot: CombatArrowShot) -> Bool
 }
 
 extension CombatLoopWorld {

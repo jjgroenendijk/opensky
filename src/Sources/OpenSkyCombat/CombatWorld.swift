@@ -68,6 +68,8 @@ public protocol CombatGearReads {
     func hasReadiedSpell(in hand: SpellHand) -> Bool
     /// The items the player carries, in the inventory's stable stack order.
     func playerCarriedItems() -> [FormID]
+    /// The items `key` carries, in the inventory's stable stack order. Empty when unknown.
+    func carriedItems(of key: ReferenceKey) -> [FormID]
     @discardableResult
     func removeOneFromPlayer(_ item: FormID) -> Bool
     /// What `key`'s running magic effects force on it, such as Calm or Etherealize.
@@ -96,6 +98,8 @@ public protocol CombatWorld: AnyObject {
     func residentActor(key: ReferenceKey) -> CombatActorObservation?
     /// The actor the readout's hostility control acts on.
     func selectedActor() -> ReferenceKey?
+    /// The cell `key` stands in, where its arrows stick. Nil outside a streamed world.
+    func cellLocation(of key: ReferenceKey) -> CellSceneLocation?
     /// The numbers of `key`'s resolved CSTY combat style, or nil when it has none.
     func combatStyle(of key: ReferenceKey) -> CombatStyleTuning?
     /// True while the fight is in an interior cell, which shortens a flee.
@@ -261,6 +265,10 @@ extension CombatGearReads {
         false
     }
 
+    public func carriedItems(of _: ReferenceKey) -> [FormID] {
+        []
+    }
+
     /// A session with no equipment wears nothing, so no armour stops a blow.
     public func equippedItems(of _: ReferenceKey) -> [(item: FormID, temperLevel: Int32)] {
         []
@@ -299,6 +307,10 @@ extension CombatWorld {
     @discardableResult
     public func shout(_: ReferenceKey, by _: ReferenceKey) -> Bool {
         false
+    }
+
+    public func cellLocation(of _: ReferenceKey) -> CellSceneLocation? {
+        nil
     }
 
     /// A search of the whole list, for a session without a lookup by key.

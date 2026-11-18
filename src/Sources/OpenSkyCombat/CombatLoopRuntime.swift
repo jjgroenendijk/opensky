@@ -56,6 +56,8 @@ public final class CombatLoopRuntime: CombatControlling {
     public var applyingGameSettings = false
     /// Seeded, so a fight replays; drawn from only for the `iStaggerAttackChance` roll.
     var staggerRandom = ConditionRandom()
+    /// Each target's feet at the last two steps, for an archer's lead.
+    var targetTracks: [ReferenceKey: TargetTrack] = [:]
 
     public private(set) var state = CombatLoopState.calm
     /// One machine per actor that is fighting or has fought, keyed by actor.

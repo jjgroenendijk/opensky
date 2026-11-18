@@ -270,6 +270,10 @@ extension CombatWorldAdapter {
         motion.residentCells()
     }
 
+    public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
+        motion.cellLocation(of: key)
+    }
+
     public func spawn(
         _ reference: ReferenceSpawnState,
         in location: CellSceneLocation

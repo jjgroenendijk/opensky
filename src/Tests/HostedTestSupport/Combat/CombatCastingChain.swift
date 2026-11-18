@@ -131,6 +131,10 @@ public final class CombatCastingChain {
 // MARK: - The fight
 
 extension CombatCastingChain: CombatLoopWorld {
+    public func fireCombatArrow(_: CombatArrowShot) -> Bool {
+        false
+    }
+
     public func combatAttackDisease(of _: ReferenceKey) -> ReferenceKey? {
         nil
     }

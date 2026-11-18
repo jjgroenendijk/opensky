@@ -80,6 +80,7 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public private(set) var raised: [String] = []
     public private(set) var variables: [String: BehaviorVariableValue] = [:]
     public private(set) var clips: [(clip: CombatActorClip, key: ReferenceKey)] = []
+    public private(set) var arrowShots: [CombatArrowShot] = []
     public private(set) var musicChanges: [Bool] = []
     public private(set) var moveRequests: [(key: ReferenceKey, point: SIMD3<Float>)] = []
     public private(set) var stopRequests: [ReferenceKey] = []
@@ -234,6 +235,11 @@ public final class FakeCombatWorld: CombatLoopWorld {
     }
 
     @discardableResult
+    public func fireCombatArrow(_ shot: CombatArrowShot) -> Bool {
+        arrowShots.append(shot)
+        return true
+    }
+
     public func playCombatClip(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool {
         clips.append((clip: clip, key: key))
         return true
