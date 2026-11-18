@@ -107,14 +107,14 @@ their shapes are mostly transform, capsule, convex, and sphere shapes.
 | `bhkCompressedMeshShape` | Reads scale and data. Gives big triangles and chunks, below |
 | `bhkPackedNiTriStripsShape` | Reads scale and `hkPackedNiTriStripsData` |
 | `bhkNiTriStripsShape` | Reads scale and each `NiTriStripsData` |
-| `bhkConvexVerticesShape` | Reads vertices and planes. Builds the hull faces once per model, below |
-| `bhkCylinderShape` | Reads the two end points and the radius. Becomes a 12-sided convex prism |
+| `bhkConvexVerticesShape` | Reads the radius, vertices, and planes. Builds the hull faces once per model, below |
+| `bhkCylinderShape` | Reads the convex radius, the two end points, and the radius. Becomes a 12-sided convex prism |
 | `bhkPlaneShape` | Reads the normal, the distance, and a bounding box. Becomes a quad clipped to the box |
-| `bhkBoxShape` | Half extents |
+| `bhkBoxShape` | Reads the convex radius and the half extents |
 | `bhkSphereShape` | Radius |
 | `bhkCapsuleShape` | End points and the larger of the stored radii |
 
-`bhkCylinderShape` is a material, 12 unused bytes (shell radius and padding), two
+`bhkCylinderShape` is a material, a float32 convex radius, 8 unused bytes, two
 `Vector4` end points, a float32 radius, and 12 unused bytes. `bhkPlaneShape` is a material,
 12 unused bytes, a `Vector3` normal, a float32 distance from the origin, then `Vector4`
 half extents and a `Vector4` centre. On the install, 70 cylinders are mostly in
@@ -128,16 +128,28 @@ units. The planes cannot be used as they are, because some sit outside the point
 shape's convex radius. For example, the leaf of `architecture\farmhouse\farmhouseldoor01.nif`
 has a radius of 0.05 Havok units, and each of its planes lies that far outside its points.
 
-- [WARNING] OpenSky does not read the convex radius, so a convex shape is that much smaller
-  than in the game: 3.5 units on each side for a radius of 0.05.
-
 An unknown shape type is counted. A broken collision root is recorded, and its sibling
 roots still decode. The walk stops at depth 64 and rejects loops. Every ref, count, index,
 strip, transform index, and triangle total is checked before use. The walk uses an explicit
 work stack, like the scene walk in [NIF](/formats/nif.md).
 
+### Convex radius
+
+A box, a convex hull, and a cylinder store a convex radius after the material: a shell
+around the shape, so the solid reaches that far past the stored points. For example, a
+radius of 0.05 Havok units is 3.5 game units on each side. OpenSky grows each of these
+shapes by its radius when it reads it:
+
+- A box adds the radius to each half extent.
+- A hull moves each face out along its normal, and each point to where its faces meet.
+- A cylinder adds the radius to its own radius and to each end.
+
+A sphere and a capsule store their whole radius, so nothing grows them.
+
+- [WARNING] The grown shape keeps sharp edges and corners. Havok rounds them with the radius.
+
 Convex planes: XYZ is the outward normal, with no unit. W is the signed distance and gets
-the unit factor. OpenSky groups the vertices on each plane, sorts them around the center,
+the unit factor. OpenSky groups the vertices of each face, sorts them around the center,
 and makes triangles once per model.
 
 ## Compressed mesh

@@ -112,10 +112,13 @@ public enum NIFCollisionFixture: Sendable {
         return data
     }
 
-    public static func box(_ halfExtents: SIMD3<Float>, material: UInt32 = 0) -> Data {
+    /// `radius` is the convex radius, in Havok units.
+    public static func box(
+        _ halfExtents: SIMD3<Float>, material: UInt32 = 0, radius: Float = 0
+    ) -> Data {
         var data = Data()
         data.appendUInt32(material)
-        data.appendFloat32(0.05)
+        data.appendFloat32(radius)
         data.append(Data(count: 8))
         data.appendVector3(halfExtents)
         data.appendFloat32(0)
@@ -142,11 +145,12 @@ public enum NIFCollisionFixture: Sendable {
     public static func convexVertices(
         _ vertices: [SIMD3<Float>],
         normals: [SIMD4<Float>] = [],
-        material: UInt32 = 0
+        material: UInt32 = 0,
+        radius: Float = 0
     ) -> Data {
         var data = Data()
         data.appendUInt32(material)
-        data.appendFloat32(0.05)
+        data.appendFloat32(radius)
         data.append(Data(count: 24))
         data.appendUInt32(UInt32(vertices.count))
         vertices.forEach { data.appendVector4(SIMD4($0, 0)) }

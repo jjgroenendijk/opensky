@@ -79,10 +79,13 @@ extension NIFBlockFixture {
         return out
     }
 
-    /// `bhkCylinderShape`, in Havok units.
-    public static func cylinder(first: SIMD3<Float>, second: SIMD3<Float>, radius: Float) -> Data {
+    /// `bhkCylinderShape`, in Havok units. `shell` is the convex radius.
+    public static func cylinder(
+        first: SIMD3<Float>, second: SIMD3<Float>, radius: Float, shell: Float = 0
+    ) -> Data {
         var out = uint32(0)
-        out.append(Data(count: 12))
+        out.append(floats([shell]))
+        out.append(Data(count: 8))
         out.appendVector4(SIMD4(first, 0))
         out.appendVector4(SIMD4(second, 0))
         out.append(floats([radius]))

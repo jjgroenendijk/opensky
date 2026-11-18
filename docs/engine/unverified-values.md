@@ -208,6 +208,8 @@ the detail and the sources it did find.
 | Speaker matrix on two speakers | Centre and surrounds add at -3 dB, LFE dropped, the mono row only | [sound output](/formats/sound-output-reverb.md#output-model-mapping) |
 | Special music triggers | Level up with the notice, cleared with the notice, death when the player dies | [music](/engine/music.md#special-music) |
 | Fast travel walk speed fallback | 80 units per second when no movement type gives one | [world map](/engine/world-map.md) |
+| Convex radius corners | A box, hull, or cylinder grows by its convex radius with sharp edges and corners, where Havok rounds them | [NIF collision](/formats/nif-collision.md#convex-radius) |
+| Cylinder convex radius | The radius widens the wall and lengthens both ends, as for the other convex shapes | [NIF collision](/formats/nif-collision.md#convex-radius) |
 
 ## Rendering
 
