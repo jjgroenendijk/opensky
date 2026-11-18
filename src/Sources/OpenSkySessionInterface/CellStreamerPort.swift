@@ -39,6 +39,7 @@ public protocol CellStreamerPort: AnyObject, PapyrusWorldReferenceSource {
     var coverageReadout: CellCoverageReadout { get }
     var inFlightCellCount: Int { get }
     var interactionTarget: InteractionTarget? { get }
+    var interactionRayHit: InteractionRayHit? { get }
     var interiorMutationSequence: UInt64 { get }
     var interiorRebuildInFlight: Bool { get set }
     var interiorScene: CellScene? { get }

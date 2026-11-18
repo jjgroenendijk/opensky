@@ -39,6 +39,7 @@ nonisolated public final class FakeCellStreamerPort: CellStreamerPort {
     public var coverageReadoutValue: CellCoverageReadout?
     public var inFlightCellCount = 0
     public var interactionTarget: InteractionTarget?
+    public var interactionRayHit: InteractionRayHit?
     public var interiorMutationSequence: UInt64 = 0
     public var interiorRebuildInFlight = false
     public var interiorScene: CellScene?

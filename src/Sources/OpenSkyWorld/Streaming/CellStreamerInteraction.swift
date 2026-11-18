@@ -15,7 +15,9 @@ import simd
 
 extension CellStreamer.ResidentSteps {
     public func updateInteractionTarget(ray: InteractionRay?) {
-        let pick = ray.map(pickInteraction(ray:)) ?? (target: nil, speaker: nil)
+        let hit = ray.flatMap(streamer.collision.nearestCollisionHit(ray:))
+        streamer.interactionRayHit = hit
+        let pick = ray.map { pickInteraction(ray: $0, hit: hit) } ?? (target: nil, speaker: nil)
         streamer.talk.speaker = pick.speaker
         guard pick.target != streamer.interactionTarget else { return }
         streamer.interactionTarget = pick.target
@@ -26,9 +28,8 @@ extension CellStreamer.ResidentSteps {
     /// actor in front of it. The solid hit is the occluder test, so an actor behind
     /// a shut door is not a Talk target.
     private func pickInteraction(
-        ray: InteractionRay
+        ray: InteractionRay, hit: InteractionRayHit?
     ) -> (target: InteractionTarget?, speaker: ReferenceKey?) {
-        let hit = streamer.collision.nearestCollisionHit(ray: ray)
         let solid = hit.flatMap { hit in
             activeInteraction(reference: hit.reference).flatMap {
                 $0.automaticArea == nil ? $0 : nil
