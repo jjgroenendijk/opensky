@@ -1,6 +1,7 @@
 // The combat loop's world over a fake `CombatWorld`: each answer reads the world, a
 // combat part, or the shared state, and each request reaches the world or the queue.
 
+import Foundation
 @testable import OpenSkyActorsInterface
 import OpenSkyBehavior
 @testable import OpenSkyCombat
@@ -37,7 +38,7 @@ struct CombatLoopWorldPartTests {
         #expect(!part.combatFlies(Self.foe))
     }
 
-    /// An NPC fights with its first equipped weapon.
+    /// An NPC fights with its first equipped weapon; a bow makes it an archer.
     @Test func anNPCSwingsItsEquippedWeapon() throws {
         let world = FakeCoordinatorWorld()
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("HuntingBow"))
@@ -61,6 +62,70 @@ struct CombatLoopWorldPartTests {
         #expect(weapon.handType == .bow)
         #expect(weapon.damage == 7)
         #expect(coordinator.loopWorld.combatWeapon(of: Self.ally) == .unarmed)
+        #expect(coordinator.loopWorld.fireCombatArrow(CombatArrowShot(
+            shooter: CombatActorObservation(key: Self.foe, feet: .zero),
+            target: MeleeTarget(key: .player, feet: SIMD3(500, 0, 0)),
+            targetVelocity: .zero, bow: weapon
+        )) == false)
+        #expect(world.carriedItems(of: Self.foe).isEmpty)
+        #expect(world.cellLocation(of: Self.foe) == nil)
+    }
+
+    /// An NPC with a bow and arrows fires one; the aim draws from the session's random.
+    @Test func anNPCArcherFiresAnArrowFromItsQuiver() throws {
+        let world = FakeCoordinatorWorld()
+        var bowFields = ESMFixture.field("EDID", ESMFixture.zstring("HuntingBow"))
+        bowFields += ESMFixture.field(
+            "DATA", InventoryFixture.weaponData(value: 50, weight: 7, damage: 7)
+        )
+        bowFields += ESMFixture.field("DNAM", InventoryFixture.weaponDNAM(
+            animation: 7, speed: 1, reach: 1, flags: 0
+        ))
+        var projectile = Data()
+        projectile.appendUInt16(0)
+        projectile.appendUInt16(0x01)
+        projectile.appendUInt32(Float(1).bitPattern)
+        projectile.appendUInt32(Float(3000).bitPattern)
+        projectile.appendUInt32(Float(8000).bitPattern)
+        let records = [
+            ESMFixture.record("WEAP", formID: 0x800, data: bowFields),
+            ESMFixture.record(
+                "AMMO", formID: 0x810,
+                data: ESMFixture.field("EDID", ESMFixture.zstring("IronArrow"))
+                    + ESMFixture.field("DATA", InventoryFixture.ammoData(
+                        projectile: 0x820, flags: 0, damage: 8, value: 1, weight: 0
+                    ))
+            ),
+            ESMFixture.record(
+                "PROJ", formID: 0x820,
+                data: ESMFixture.field("EDID", ESMFixture.zstring("ArrowProjectile"))
+                    + ESMFixture.field("DATA", projectile)
+            )
+        ]
+        let items = try ItemDefinitionStore(file: SpellStoreFixture.plugin(records: records))
+        let coordinator = CombatCoordinator(
+            world: world,
+            data: CombatSessionData(combat: .synthetic, archery: .synthetic, items: items)
+        )
+        world.equipped[Self.foe] = [
+            (item: FormID(0x800), temperLevel: 0), (item: FormID(0x810), temperLevel: 0)
+        ]
+        let archery = try #require(ActorValueIdentity.index(named: "Archery"))
+        world.values[Self.foe] = [archery: 40]
+        let part = coordinator.loopWorld
+        let before = coordinator.shared.archeryRandom
+        _ = part.fireCombatArrow(CombatArrowShot(
+            shooter: CombatActorObservation(key: Self.foe, feet: .zero),
+            target: MeleeTarget(key: .player, feet: SIMD3(1000, 0, 0)),
+            targetVelocity: SIMD3(0, 100, 0), bow: part.combatWeapon(of: Self.foe)
+        ))
+        #expect(coordinator.shared.archeryRandom != before)
+        world.equipped[Self.foe] = [(item: FormID(0x800), temperLevel: 0)]
+        #expect(!part.fireCombatArrow(CombatArrowShot(
+            shooter: CombatActorObservation(key: Self.foe, feet: .zero),
+            target: MeleeTarget(key: .player, feet: SIMD3(1000, 0, 0)),
+            targetVelocity: .zero, bow: part.combatWeapon(of: Self.foe)
+        )))
     }
 
     @Test func aWorldWithoutRacesPassesNoDisease() {

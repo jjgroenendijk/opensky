@@ -195,9 +195,9 @@ shows the last fall under `lastFall`.
 - No group tactics or morale. Assistance is decoded and unread.
 - Derived hostility is only asked about the player. The derivation takes any two actors, but
   engagement, perception, and the dialogue filter are all relative to the player.
-- No ranged weapon AI. An actor closes to melee reach whatever it holds.
 - An NPC swings the first weapon it has equipped, with its `WEAP` damage and reach and its
-  tempering, as the player's weapon is read. With none it swings unarmed.
+  tempering, as the player's weapon is read. With none it swings unarmed. An NPC with a bow shoots
+  ([archery](/engine/archery.md#npc-archers)).
 - A combat event aimed at an NPC, such as a stagger from the player's swing, goes to that NPC's
   behaviour graph ([actor graphs](/engine/actor-graphs.md)). An NPC that runs no graph, or whose
   graph lacks the event, answers false, and the trace says it did not play. The combat loop's own

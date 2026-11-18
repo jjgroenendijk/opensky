@@ -11,6 +11,11 @@ public import OpenSkyGameData
 public protocol NoCasterCombatWorld: CombatLoopWorld {}
 
 extension NoCasterCombatWorld {
+    /// A melee-only world looses no arrows.
+    public func fireCombatArrow(_: CombatArrowShot) -> Bool {
+        false
+    }
+
     /// A world that reads no races carries no disease.
     public func combatAttackDisease(of _: ReferenceKey) -> ReferenceKey? {
         nil

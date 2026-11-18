@@ -100,7 +100,9 @@ The skill term is applied once, when the arrow hits, with the shooter's Archery 
 The shot itself carries no skill term. The item and potion terms come from the Marksman Modifier
 and Marksman Power Modifier actor values,
 which Fortify Archery enchantments and Fortify Marksman potions move. The perk term comes from
-`Mod Attack Damage` ([perks](/engine/perks.md)). Smithing improvement is not applied. The shot
+`Mod Attack Damage` ([perks](/engine/perks.md)). Smithing improvement is in the bow damage: the
+bow's profile carries the tempering bonus of the player's best copy, as a melee weapon does
+([crafting](/engine/crafting.md#tempering)). The shot
 keeps the multiplier and the bow's enchantment from the moment it was loosed, so an arrow in the air
 applies what the bow had then. An enchanted bow's arrow casts the enchantment on the actor it hits
 and uses the bow's charge ([magic](/engine/magic.md)).
@@ -194,6 +196,35 @@ Where OpenSky differs:
   the same scene has not checked it yet.
 - The pause after a zoom comes from the setting's name and its default, not from an observation.
 
+## NPC archers
+
+An NPC with a bow equipped stands off and shoots instead of closing to melee reach. It keeps the
+combat loop's attack timing ([combat behaviour](/engine/combat-behavior.md)): the attack starts the
+attack clip, and the contact step looses the arrow. It shoots from up to 2048 units, an OpenSky
+value. The arrow is the first `AMMO` it has equipped or carries. A shot needs one, and does not use
+it up.
+
+The aim follows what was read from the game program:
+
+1. **Lead.** The aim point is the middle of the target's capsule. Flight time is distance divided by
+   the projectile speed, and the aim moves by the target's velocity times that time. This repeats up
+   to 10 times and stops once the flight time changes by less than 0.05 s. There is no lead under 1
+   unit or over 8192 units. The target's velocity is its movement over the last combat step.
+2. **Noise.** Each axis of the aim point moves by a random amount up to ± variance × 16 units. The
+   variance is 0.9. Both are program defaults with no record in the masters.
+3. **Arc.** The launch solves the low ballistic arc for the projectile's speed and gravity, so no
+   archery tilt-up is added. A point out of range is shot at 45 degrees.
+4. **Spread.** The shot leaves the aim line by up to
+   `fBowNPCSpreadAngle` × clamp((100 − Archery) / 100, 0, 1) degrees. The setting defaults to 5 in
+   the program, and `Skyrim.esm` sets 4. The angle is uniform from 0 to that maximum, not uniform
+   over the cone's area, so shots cluster near the centre. The direction around the line is uniform.
+   The sine part goes to pitch and the cosine part to heading. Example: an NPC with Archery 40 shoots
+   within 4 × 0.6 = 2.4 degrees of its aim. At Archery 100 there is no spread.
+
+The player's shots get no spread. The game also skips the spread under an "exact aim" flag of the AI;
+what sets it was not found, so OpenSky never sets it.
+
 ## Not done yet
 
-Crossbows and bolts, explosive projectiles, AI archery, and picking up spent arrows.
+Crossbows and bolts, explosive projectiles, and picking up spent arrows. NPC archers do not drive the
+bow graph events above: they play the combat loop's attack clip.

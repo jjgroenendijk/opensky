@@ -22,6 +22,9 @@ nonisolated public struct ArcherySettings: Equatable, Sendable {
     /// `fBowZoomStaminaDrainMult`: stamina a second while zoomed with a bow, before perks.
     /// The install sets 0.
     public var bowZoomStaminaDrain: Float = 0
+    /// `fBowNPCSpreadAngle`: the widest an unskilled NPC's arrow leaves its aim line, in
+    /// degrees. The program default is 5; `Skyrim.esm` sets 4.
+    public var npcSpreadDegrees: Float = 5
 
     /// Values for synthetic scenes and tests: the documented defaults, stated
     /// explicitly so a test never depends on an install being present.
@@ -45,6 +48,7 @@ nonisolated public struct ArcherySettings: Equatable, Sendable {
             visibleMoveDistance: float("fVisibleNavmeshMoveDist", store: store, fallback: 4096)
         )
         store.read("fBowZoomStaminaDrainMult", into: &settings, \.bowZoomStaminaDrain)
+        store.read("fBowNPCSpreadAngle", into: &settings, \.npcSpreadDegrees)
         return settings
     }
 

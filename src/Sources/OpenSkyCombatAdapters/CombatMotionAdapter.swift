@@ -145,6 +145,10 @@ extension CombatMotionAdapter {
         )
     }
 
+    public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
+        game.streamer.cellLocation(of: key)
+    }
+
     public func residentCells() -> Set<CellSceneLocation> {
         let streamer = game.streamer
         if let interior = streamer.interiorScene?.location {

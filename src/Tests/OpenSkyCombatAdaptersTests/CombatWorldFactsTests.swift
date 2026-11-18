@@ -80,6 +80,8 @@ struct CombatWorldFactsTests {
         #expect(adapter.gearReads.temperLevel(of: FormID(0x500)) == 0)
         #expect(adapter.gearReads.equippedItems(of: .player).isEmpty)
         #expect(adapter.gearReads.playerCarriedItems().isEmpty)
+        #expect(adapter.gearReads.carriedItems(of: Self.foe).isEmpty)
+        #expect(adapter.cellLocation(of: Self.foe) == nil)
         #expect(!adapter.gearReads.addItem(FormID(0x500), count: 1, to: Self.foe))
         #expect(!adapter.gearReads.removeOneFromPlayer(FormID(0x500)))
     }

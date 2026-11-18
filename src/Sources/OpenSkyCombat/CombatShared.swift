@@ -2,6 +2,7 @@
 // it, so each reads the runtimes and settings without holding the coordinator.
 
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
@@ -32,6 +33,8 @@ final class CombatShared {
     var allowsActorCasting = true
     var appliesCombatGameSettings = false
     var actorCastCount = 0
+    /// Draws an NPC archer's aim noise and spread.
+    var archeryRandom = ConditionRandom()
 
     init(world: any CombatWorld, data: CombatSessionData?, explosions: ExplosionRuntime) {
         self.world = world

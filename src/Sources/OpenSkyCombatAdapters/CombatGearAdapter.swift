@@ -81,6 +81,15 @@ extension CombatGearAdapter {
         return runtime.inventory.inventory(of: runtime.player).stacks.map(\.item)
     }
 
+    public func carriedItems(of key: ReferenceKey) -> [FormID] {
+        guard
+            let runtime = game.inventory.runtime,
+            let holder = key == .player ? runtime.player : game.streamer.residents
+                .inventoryHolder(of: key)
+        else { return [] }
+        return runtime.inventory.inventory(of: holder).stacks.map(\.item)
+    }
+
     @discardableResult
     public func addItem(_ item: FormID, count: Int32, to key: ReferenceKey) -> Bool {
         guard

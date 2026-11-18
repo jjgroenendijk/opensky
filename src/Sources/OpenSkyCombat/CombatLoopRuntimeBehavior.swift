@@ -134,11 +134,13 @@ extension CombatLoopRuntime {
     ) {
         targets[actor.key] = target.key
         let weapon = world.combatWeapon(of: actor.key)
+        let shoots = weapon.handType == .bow
+        track(target)
         var inputs = CombatBehaviorInputs(
             actorPosition: actor.feet,
             targetPosition: target.feet,
             awareness: world.combatAwareness(of: actor.key, toward: target.key),
-            reach: MeleeSwing.reach(
+            reach: shoots ? NPCArcheryAim.shootingRange : MeleeSwing.reach(
                 weapon: weapon, settings: settings, actorScale: actor.scale
             ),
             healthFraction: world.combatHealthFraction(of: actor.key),
@@ -155,7 +157,7 @@ extension CombatLoopRuntime {
         if behaviors[actor.key]?.pendingCast?.purpose == .shout {
             world.turnCombatActor(actor.key, toward: target.feet)
         }
-        if step.startedAttack, startsKillMove(
+        if step.startedAttack, !shoots, startsKillMove(
             actor: actor,
             weapon: weapon,
             target: target,
@@ -166,13 +168,22 @@ extension CombatLoopRuntime {
         }
         if step.startedAttack {
             world.playCombatClip(.attack, on: actor.key)
+        }
+        if step.startedAttack, !shoots {
             world.applyCombatSwingSpell(
                 CombatNPCBlowLanding.blow(by: actor.key, weapon: weapon), at: target.key
             )
         }
         resolveCast(step, actor: actor.key, world: world)
         if step.reachedContact, !influence.isEthereal {
-            resolveContact(actor: actor, weapon: weapon, target: target, world: world)
+            if shoots {
+                world.fireCombatArrow(CombatArrowShot(
+                    shooter: actor, target: target,
+                    targetVelocity: targetTracks[target.key]?.velocity ?? .zero, bow: weapon
+                ))
+            } else {
+                resolveContact(actor: actor, weapon: weapon, target: target, world: world)
+            }
         }
         if step.endedPursuit {
             world.resumeCombatPackage(for: actor.key)
@@ -180,6 +191,14 @@ extension CombatLoopRuntime {
         if let command = step.command {
             route(command, walks: step.walks, actor: actor.key, world: world)
         }
+    }
+
+    /// Notes where `target` stands this step; a second actor in the same step reads the
+    /// same two points.
+    private func track(_ target: MeleeTarget) {
+        var track = targetTracks[target.key] ?? TargetTrack(feet: target.feet, step: stepSeconds)
+        track.note(target.feet, step: stepSeconds, seconds: Self.fixedStepSeconds)
+        targetTracks[target.key] = track
     }
 
     /// The casting half of one step: only when to begin, release or cancel. The caster

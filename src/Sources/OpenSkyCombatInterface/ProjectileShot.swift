@@ -8,6 +8,8 @@ public import OpenSkyMagicInterface
 nonisolated public struct ProjectileShot: Equatable, Sendable {
     public let profile: ProjectileProfile
     public let payload: ProjectilePayload
+    /// False for a shot whose aim already allows for the drop, such as an NPC's.
+    public var tiltsUp = true
 
     public init(profile: ProjectileProfile, payload: ProjectilePayload) {
         self.profile = profile
@@ -34,7 +36,7 @@ nonisolated public struct ProjectileShot: Equatable, Sendable {
 
     /// Whether the archery tilt-up angle applies to this shot's aim ray.
     public var usesArcheryTilt: Bool {
-        payload.arrow != nil
+        payload.arrow != nil && tiltsUp
     }
 }
 
