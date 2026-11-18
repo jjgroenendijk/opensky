@@ -156,6 +156,7 @@ the detail and the sources it did find.
 | Lockpick widening per broken pick | Counts the picks broken on the open lock only | [locks](/engine/locks.md) |
 | Ingredient use settings | Not read: the install adds 0 uses, so no effect is ever taught | [alchemy](/engine/alchemy.md) |
 | Tempering skill use | Condition gain from `fHealthDataValue1`, one step per level | [crafting](/engine/crafting.md) |
+| Made enchantment default name | The base names joined by ` + ` when the player gives none | [enchanting](/engine/enchanting.md#enchanting-menu) |
 | Forge tab of each material keyword | Iron banded, steel plate, scaled, Stormcloak, dragonplate, dragonscale, and dragonbone as listed; other materials, such as silver and the Dawnguard sets, go under Misc | [crafting](/engine/crafting.md#crafting-menu) |
 | Leveled lock step | One band per 10 player levels, up to Master | [locks](/engine/locks.md#leveled-locks) |
 | Lock with no `XLOC` | Level 1 when Papyrus locks it | [locks](/engine/locks.md) |

@@ -37,7 +37,9 @@ The movie sends one event:
 The movie's own `TextInput` does not take keys in OpenSky. The game view sends typed
 characters to the screen instead, the same way the race menu takes a name:
 
-- A character key adds its character, up to 64.
+- A character key adds its character, up to 64, or up to the limit the caller sets. An
+  enchanted item's name takes 32 characters, the PC limit on
+  [UESP](https://en.uesp.net/wiki/Skyrim:Enchanting).
 - Delete and Backspace remove the last character.
 - Enter calls the movie's `onAccept`, and Escape calls `onCancel`, so the movie's own rule
   for an empty name holds.

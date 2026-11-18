@@ -261,7 +261,9 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
         case .enchanting:
             guard enchanting.selection.isComplete, model.selectedCategory != 0 else { return nil }
             let title = world.craftingButtonTexts[.enterItemName]
-            nameEntry?.open(title: title) { [weak self] name in
+            nameEntry?.open(
+                title: title, limit: CraftingMenuEnchanting.nameLimit
+            ) { [weak self] name in
                 self?.enchanting.rename(name)
             }
             return "Naming the item"
