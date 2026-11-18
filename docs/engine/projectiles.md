@@ -117,7 +117,9 @@ units", which is the same `fCombatDistance` the install gives ([melee combat](/e
 And UESP says most projectile ranges are "measured in the tens of thousands": every vanilla arrow
 has `range` 60000, so `fVisibleNavmeshMoveDist` is what really limits a shot.
 
-The two bolt settings are not read, because crossbows are not done.
+A crossbow bolt tilts up by its own two settings instead. UESP gives `f1PBoltTiltUpAngle` a default
+of 1 and names `f3PBoltTiltUpAngle` without one. Neither is a `GMST` on the local install, so both
+fall back to 1 unless a mod adds one.
 
 ## Impact
 

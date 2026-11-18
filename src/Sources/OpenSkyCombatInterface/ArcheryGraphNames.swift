@@ -7,6 +7,9 @@ nonisolated public enum ArcheryGraphNames: Sendable {
     /// `1hm_behavior.hkx` enters `Bow_AttackState` on it. The graph fires `bowDrawStart`
     /// back from the draw clip, so that name is not an input.
     public static let bowAttackStart = "bowAttackStart"
+    /// The crossbow's draw. The graph fires `bowDrawn` at once, so a bolt always leaves
+    /// at full draw.
+    public static let crossbowAttackStart = "crossbowAttackStart"
     /// Loose. Shared with melee's held power attack, which is the same button
     /// coming back up.
     public static let attackRelease = CombatGraphNames.attackRelease
@@ -15,7 +18,7 @@ nonisolated public enum ArcheryGraphNames: Sendable {
 
     /// Every event the archery runtime raises, in the order the runtime raises
     /// edges in.
-    public static let raisedEvents = [bowAttackStart, attackRelease, bowReset]
+    public static let raisedEvents = [bowAttackStart, crossbowAttackStart, attackRelease, bowReset]
 
     // MARK: - Events observed coming back out
 

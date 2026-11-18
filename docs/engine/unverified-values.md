@@ -55,6 +55,7 @@ the detail and the sources it did find.
 | Kill camera timing | OpenSky's numbers | [kill camera](/engine/kill-cam.md) |
 | Projectile settings | Formulas read from the setting names | [projectiles](/engine/projectiles.md) |
 | Arrow gravity unit | Read as the record value with no scale | [projectiles format](/formats/projectiles.md) |
+| Third-person bolt tilt | `f3PBoltTiltUpAngle` falls back to 1 degree, the first-person default | [projectiles](/engine/projectiles.md#range-settings) |
 | Trap scales, speed, repeat interval | OpenSky's numbers | [traps](/engine/traps.md) |
 | Combat style choice | Not confirmed against the game | [combat style](/formats/combat-style.md) |
 | Body parts on the head side of a cut | 30, 31, 41 to 44, 50, 55, 130 to 132, 141 to 143, 150 | [ragdoll](/engine/ragdoll.md#decapitation) |

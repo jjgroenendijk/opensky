@@ -14,6 +14,10 @@ nonisolated public struct ArcherySettings: Equatable, Sendable {
     public let firstPersonTiltUpAngle: MovementSetting
     /// `f3PArrowTiltUpAngle` — the same in third person. UESP gives 2.5.
     public let thirdPersonTiltUpAngle: MovementSetting
+    /// `f1PBoltTiltUpAngle` and `f3PBoltTiltUpAngle`: the same for a crossbow bolt. UESP
+    /// gives 1 for first person and no third-person default.
+    public var firstPersonBoltTiltUpAngle = MovementSetting(value: 1, source: "OpenSky synthetic")
+    public var thirdPersonBoltTiltUpAngle = MovementSetting(value: 1, source: "OpenSky synthetic")
     /// `fVisibleNavmeshMoveDist` — the distance past which a shot stops being
     /// able to hit anything, world units. UESP gives 4096 and notes the
     /// Unofficial Patch triples it, which is exactly the kind of load-order
@@ -35,8 +39,11 @@ nonisolated public struct ArcherySettings: Equatable, Sendable {
     )
 
     /// The tilt for one perspective, in degrees.
-    public func tiltUpAngle(firstPerson: Bool) -> MovementSetting {
-        firstPerson ? firstPersonTiltUpAngle : thirdPersonTiltUpAngle
+    public func tiltUpAngle(firstPerson: Bool, bolt: Bool = false) -> MovementSetting {
+        if bolt {
+            return firstPerson ? firstPersonBoltTiltUpAngle : thirdPersonBoltTiltUpAngle
+        }
+        return firstPerson ? firstPersonTiltUpAngle : thirdPersonTiltUpAngle
     }
 
     /// Reads every setting out of `store`, falling back to the UESP-documented
@@ -47,6 +54,8 @@ nonisolated public struct ArcherySettings: Equatable, Sendable {
             thirdPersonTiltUpAngle: float("f3PArrowTiltUpAngle", store: store, fallback: 2.5),
             visibleMoveDistance: float("fVisibleNavmeshMoveDist", store: store, fallback: 4096)
         )
+        settings.firstPersonBoltTiltUpAngle = float("f1PBoltTiltUpAngle", store: store, fallback: 1)
+        settings.thirdPersonBoltTiltUpAngle = float("f3PBoltTiltUpAngle", store: store, fallback: 1)
         store.read("fBowZoomStaminaDrainMult", into: &settings, \.bowZoomStaminaDrain)
         store.read("fBowNPCSpreadAngle", into: &settings, \.npcSpreadDegrees)
         return settings
@@ -58,6 +67,8 @@ nonisolated public struct ArcherySettings: Equatable, Sendable {
         [
             ("f1PArrowTiltUpAngle", firstPersonTiltUpAngle),
             ("f3PArrowTiltUpAngle", thirdPersonTiltUpAngle),
+            ("f1PBoltTiltUpAngle", firstPersonBoltTiltUpAngle),
+            ("f3PBoltTiltUpAngle", thirdPersonBoltTiltUpAngle),
             ("fVisibleNavmeshMoveDist", visibleMoveDistance)
         ]
     }

@@ -125,7 +125,7 @@ struct CombatLoopWorldPartTests {
                 "AMMO", formID: 0x810,
                 data: ESMFixture.field("EDID", ESMFixture.zstring("IronArrow"))
                     + ESMFixture.field("DATA", InventoryFixture.ammoData(
-                        projectile: 0x820, flags: 0, damage: 8, value: 1, weight: 0
+                        projectile: 0x820, flags: 0x04, damage: 8, value: 1, weight: 0
                     ))
             ),
             ESMFixture.record(

@@ -1,11 +1,13 @@
 // From the held button to raised events to a loosed arrow. Flight is in
 // `ProjectileRuntimeTests`.
 
+import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyPhysics
 import simd
 import Testing
 
@@ -153,6 +155,35 @@ struct ArcheryRuntimeTests {
         // A partial draw is slower as well as weaker.
         let speed = simd_length(launched.first?.state.velocity ?? SIMD3())
         #expect(abs(speed - 3600 * ArcheryDamage.minimumDrawFraction) < 1)
+    }
+
+    /// The crossbow graph reports full draw at once, so even a snap shot is a full one.
+    @Test func aCrossbowRaisesItsOwnDrawAndLoosesAFullBolt() {
+        let world = FakeProjectileWorld()
+        let runtime = Self.runtime(world: world)
+        runtime.bow = MeleeWeaponProfile(
+            damage: 19, reach: 1, weapon: FormID(0x800), handType: .crossbow
+        )
+        runtime.arrow = ArcheryAmmunition(
+            item: Self.arrow, damage: 10,
+            profile: ProjectileProfile(speed: 3600, gravityFactor: 0.35, range: 60000),
+            isBolt: true
+        )
+        runtime.acceptFrame(Self.held(true))
+        #expect(world.raised == [ArcheryGraphNames.crossbowAttackStart])
+
+        let launched = runtime.handleGraphEvents([ArcheryGraphNames.arrowRelease])
+        #expect(launched.first?.payload.arrow?.damage.drawFraction == 1)
+        #expect(runtime.settings.tiltUpAngle(firstPerson: true, bolt: true).value == 1)
+        #expect(runtime.settings.tiltUpAngle(firstPerson: false, bolt: true).value == 1)
+    }
+
+    @Test func theBoltTiltSettingsFallBackToOneDegree() {
+        let settings = ArcherySettings.resolve(store: GameSettingStore(plugins: []))
+        #expect(settings.tiltUpAngle(firstPerson: true, bolt: true).value == 1)
+        #expect(settings.tiltUpAngle(firstPerson: false, bolt: true).value == 1)
+        #expect(settings.tiltUpAngle(firstPerson: true).value == 2)
+        #expect(settings.report.map(\.editorID).contains("f3PBoltTiltUpAngle"))
     }
 
     @Test func theHoldClockRestartsAfterEveryShot() {

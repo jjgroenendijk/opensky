@@ -62,6 +62,23 @@ them.
 The crossbow release clips carry `bowZoomStop` right after `arrowRelease`. It ends the bow zoom
 (below).
 
+## Crossbows
+
+A crossbow is a `WEAP` with `DNAM` animation type crossbow. It raises `crossbowAttackStart`
+instead of `bowAttackStart`; `1hm_behavior.hkx` enters `CrossBowDraw` on it. Stepping that graph
+with `openskycli hkx` shows what happens next:
+
+- `crossbowAttackStart` fires `BowDraw` and `bowDrawn` in the same step, so a crossbow has no draw
+  time. A bolt always leaves at full draw: full damage and full launch speed.
+- `attackRelease` fires `arrowRelease`, then the reload sounds. The graph enters
+  `CrossBow_ReloadState` on `reloadStart` and leaves it on `reloadStop`. Both come from the clips,
+  so the engine raises no reload event, and a press during the reload starts no new draw.
+
+A crossbow fires only bolts, and a bow only arrows. A bolt is an `AMMO` without the Non-Bolt flag
+(`DATA` flags bit `0x04`). The choice is otherwise the same as for arrows: the equipped one, else
+the first carried one. An NPC with a crossbow picks bolts the same way. A bolt that hits counts
+as a crossbow blow for the strike rules.
+
 Archery is the third listener on the graph event queue, after footsteps and melee.
 
 ## The shot state machine
@@ -156,7 +173,8 @@ the hold. Capture loss clears the held state, so a button pressed inside the vie
 outside cannot leave a bow drawn forever.
 
 Which one acts depends on what is equipped: a `WEAP` with `DNAM` animation type bow. The animation
-type decides which attack set a weapon runs, so it is the right question. Crossbows are not done.
+type decides which attack set a weapon runs, so it is the right question. A crossbow acts the same
+way (above).
 
 The arrow a shot uses is the equipped ammunition when it resolves to a flyable `PROJ`. With none
 equipped, it is the first carried ammunition that does, in the inventory's fixed stack order. An
@@ -226,5 +244,5 @@ what sets it was not found, so OpenSky never sets it.
 
 ## Not done yet
 
-Crossbows and bolts, explosive projectiles, and picking up spent arrows. NPC archers do not drive the
+Explosive projectiles and picking up spent arrows. NPC archers do not drive the
 bow graph events above: they play the combat loop's attack clip.
