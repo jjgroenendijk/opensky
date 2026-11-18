@@ -234,6 +234,14 @@ extension InventoryCoordinatorTests {
         #expect(coordinator.scriptItems.scriptItemCount(Fixture.sword, in: chest.key) == before + 2)
     }
 
+    @Test func aRealJailHidesTheQuestItems() throws {
+        let harness = try Self.harness()
+        harness.world.questItems = [Fixture.sword]
+        #expect(harness.coordinator.scriptItems.hiddenItems.isEmpty)
+        harness.world.hidesQuestItems = true
+        #expect(harness.coordinator.scriptItems.hiddenItems == [Fixture.sword])
+    }
+
     @Test func removeAllItemsKeepsQuestItemsUnlessAsked() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator
@@ -458,6 +466,7 @@ extension InventoryCoordinatorTests {
         var caughtDays: [ReferenceKey: Float] = [:]
         var caughtFactions: [ReferenceKey: ReferenceKey] = [:]
         var questItems: Set<FormID> = []
+        var hidesQuestItems = false
 
         func questItemBases() -> Set<FormID> {
             questItems

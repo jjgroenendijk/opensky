@@ -152,6 +152,7 @@ the detail and the sources it did find.
 
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
+| Quest items in jail | They stay on the player in every stay; a real jail hides them from the inventory menu | [jail](/engine/jail.md#the-two-parameters-in-the-game) |
 | Lockpick widening per broken pick | Counts the picks broken on the open lock only | [locks](/engine/locks.md) |
 | Ingredient use settings | Not read: the install adds 0 uses, so no effect is ever taught | [alchemy](/engine/alchemy.md) |
 | Tempering skill use | Condition gain from `fHealthDataValue1`, one step per level | [crafting](/engine/crafting.md) |

@@ -22,9 +22,13 @@ extension CrimeCoordinator {
         let arrestedIn = world.currentCellLocation
         guard world.enterJail(through: marker) else { return false }
         let belongings = keepsBelongings ? nil : arrest.belongingsChest(of: settlement.faction)
+        let hidesQuestItems = hidesQuestItems
         keepsBelongings = false
+        self.hidesQuestItems = true
         if let belongings {
-            world.storeBelongings(in: belongings, keeping: world.lockpickItem)
+            world.storeBelongings(
+                in: belongings, keeping: world.lockpickItem, questItems: world.questItems
+            )
         }
         let outfit = arrest.jailOutfit(of: settlement.faction).map(world.wearJailOutfit) ?? []
         jailStay = JailStay(
@@ -35,7 +39,8 @@ extension CrimeCoordinator {
             exteriorMarker: marker,
             belongings: belongings,
             outfit: outfit,
-            arrestedIn: arrestedIn
+            arrestedIn: arrestedIn,
+            hidesQuestItems: hidesQuestItems
         )
         return true
     }

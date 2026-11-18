@@ -83,5 +83,7 @@ struct CrimeActorsJailTests {
         #expect(adapter.loseJailProgress(days: 4, maximumDays: 10) == 2)
         #expect(host.fakeProgression.loseJailProgressCalls.map(\.days) == [4])
         #expect(adapter.lockpickItem == nil)
+        host.fakeInventory.scriptItems.questItems = [FormID(0x71)]
+        #expect(adapter.questItems == [FormID(0x71)])
     }
 }

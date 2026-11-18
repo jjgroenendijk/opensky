@@ -114,6 +114,7 @@ extension RuntimeStateSaveContentsAdapter {
         static let jailNonViolent = "engine:jailNonViolentGold"
         static let jailViolent = "engine:jailViolentGold"
         static let jailDays = "engine:jailDays"
+        static let jailHidesQuestItems = "engine:jailHidesQuestItems"
         static let jailFaction = "engine:jailFaction"
         static let jailMarker = "engine:jailMarker"
         static let jailBelongings = "engine:jailBelongings"
@@ -133,6 +134,7 @@ extension RuntimeStateSaveContentsAdapter {
             state.setValue(Extra.jailNonViolent, stay.map { Float($0.nonViolentGold) })
             state.setValue(Extra.jailViolent, stay.map { Float($0.violentGold) })
             state.setValue(Extra.jailDays, stay.map { Float($0.sentenceDays) })
+            state.setValue(Extra.jailHidesQuestItems, stay.map { $0.hidesQuestItems ? 1 : 0 })
             state.setForm(Extra.jailFaction, stay?.faction)
             state.setForm(Extra.jailMarker, stay?.exteriorMarker)
             state.setForm(Extra.jailBelongings, stay?.belongings)
@@ -165,7 +167,8 @@ extension RuntimeStateSaveContentsAdapter {
             exteriorMarker: marker,
             belongings: state.form(Extra.jailBelongings),
             outfit: outfit,
-            arrestedIn: nil
+            arrestedIn: nil,
+            hidesQuestItems: state.value(Extra.jailHidesQuestItems) != 0
         ))
     }
 

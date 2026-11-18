@@ -82,6 +82,8 @@ public final class CrimeCoordinator {
     var lastBounties: [ReferenceKey: Int32]?
     /// `SendPlayerToJail(abRemoveInventory = false)`: the next stay takes nothing.
     var keepsBelongings = false
+    /// Whether the next stay is a real jail, which hides the player's quest items.
+    var hidesQuestItems = true
     /// The player's stay in jail, from the cell door to release or escape.
     public internal(set) var jailStay: JailStay?
     /// Blows between actors other than the player: who struck whom first.

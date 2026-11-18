@@ -98,6 +98,10 @@ extension CrimeJailAdapter {
         game.inventory.locks.lockpickItem
     }
 
+    var questItems: Set<FormID> {
+        game.inventory.scriptItems.questItems
+    }
+
     /// A marker outside the loaded cells loads its area, as `MoveTo` does.
     public func movePlayer(toMarker marker: ReferenceKey) -> Bool {
         guard

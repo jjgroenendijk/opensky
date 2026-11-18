@@ -67,6 +67,12 @@ The vanilla scripts call it 8 times (`openskycli pex-calls SendPlayerToJail`). S
 `true`. One dialogue fragment, `TIF__00020F99`, passes `false, true`, so it jails the player
 without taking their things.
 
+OpenSky reads both. `abRemoveInventory` false leaves every item on the player, and the jail outfit
+is still worn. A quest item never goes to the chest, because a quest item cannot leave the
+inventory ("Quest Items cannot be removed from your Inventory.", `sDropQuestItemWarning`). In a real
+jail the inventory menu does not list the quest items until the stay ends. Outside a real jail they
+are listed. Whether the stay is real is saved with it.
+
 The stay begins in the first cell the player stands in after the arrest. That is the jail cell.
 
 ## Serving the sentence
@@ -118,8 +124,5 @@ cell the player stands in counts as the jail cell.
 
 ## Not done yet
 
-- `SendPlayerToJail`'s `abRealJail` is not read, so quest items are moved to the chest like any
-  other item. The game hides them instead. `abRemoveInventory` is read: false leaves every item
-  on the player, and the jail outfit is still worn.
 - Followers do not go to the `WAIT` marker.
 - Cidhna Mine's pickaxe-and-ore way of serving time is a quest script, not part of this.

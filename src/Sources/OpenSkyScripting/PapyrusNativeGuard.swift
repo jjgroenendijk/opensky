@@ -92,15 +92,14 @@ extension PapyrusNativeFunctions.GuardNatives {
 
         // `Function SendPlayerToJail(bool abRemoveInventory = True, bool
         // abRealJail = True) native` (<https://ck.uesp.net/wiki/SendPlayerToJail_-_Faction>).
-        // `abRealJail` only decides whether quest items are hidden, which OpenSky does
-        // not do yet (docs/engine/jail.md).
         registry.register(PapyrusNativeFunction(
             scriptName: "Faction",
             functionName: "SendPlayerToJail"
         ) { call, context in
             PapyrusNativeFunctions.CrimeNatives.factionTarget(call, context) { world, faction in
                 settle(call, world, faction, .jail(
-                    removeInventory: boolean(call, at: 0, default: true)
+                    removeInventory: boolean(call, at: 0, default: true),
+                    realJail: boolean(call, at: 1, default: true)
                 ))
             }
         })

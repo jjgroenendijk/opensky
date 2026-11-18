@@ -199,6 +199,34 @@ struct CrimeReportingTests {
         #expect(inventory.count(of: Items.lockpick, in: .player) == 3)
     }
 
+    @Test func aQuestItemStaysWithThePlayerAndARealJailHidesIt() throws {
+        let (world, inventory) = try Self.jailedWorld()
+        world.questItemSet = [Items.sword]
+        let coordinator = try Self.coordinator(world)
+        coordinator.reporter?.runtime.setCrimeGold(300, of: Self.hold)
+        _ = coordinator.settleArrest(with: Self.hold, .jail())
+
+        let stay = try #require(coordinator.jailStay)
+        #expect(stay.hidesQuestItems)
+        #expect(stay.belongings != nil)
+        #expect(inventory.count(of: Items.sword, in: .player) == 1)
+        #expect(inventory.count(of: Items.lockpick, in: .player) == 1)
+    }
+
+    @Test func aJailThatIsNotRealLeavesQuestItemsShown() throws {
+        let (world, _) = try Self.jailedWorld()
+        let coordinator = try Self.coordinator(world)
+        coordinator.reporter?.runtime.setCrimeGold(300, of: Self.hold)
+        _ = coordinator.settleArrest(with: Self.hold, .jail(realJail: false))
+
+        #expect(coordinator.jailStay?.hidesQuestItems == false)
+        // The next stay is real again.
+        coordinator.clearPrison()
+        coordinator.reporter?.runtime.setCrimeGold(300, of: Self.hold)
+        _ = coordinator.settleArrest(with: Self.hold, .jail())
+        #expect(coordinator.jailStay?.hidesQuestItems == true)
+    }
+
     @Test func leavingTheCellIsAnEscapeThatOwesTheBountyAgain() throws {
         let (world, _) = try Self.jailedWorld()
         let recorder = StoryEventRecorder()
