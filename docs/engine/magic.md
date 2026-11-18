@@ -181,8 +181,28 @@ running under the stronger and takes over when the stronger ends first. OpenSky 
 The two differ only when a stronger armour spell ends before a weaker one, and only the running game
 can settle which one is right.
 
-Tapering is not applied. The Creation Kit documents it, but no vanilla potion or ingredient effect
-uses it, so it would be untested.
+## Tapering
+
+An `MGEF` can go on after its duration ends. The Creation Kit wiki gives three numbers
+(<https://ck.uesp.net/wiki/Magic_Effect>, Tapering):
+
+- Taper Duration: how many more seconds the effect lasts.
+- Taper Weight: the share of the magnitude when the duration ends. 0.5 is half as strong.
+- Taper Curve: how fast the share falls. A negative curve makes it grow.
+
+At `t` seconds after the duration, the magnitude is
+`magnitude * weight * (1 - t / taper duration) ^ curve`.
+
+OpenSky applies it to an effect that pays out each second (Recover clear). The payout at whole
+second `n` uses `t = n - duration`, so a payout inside the duration gets the full magnitude.
+For example, a 5 second Damage Health of 10 with weight 0.5, curve 1, and taper duration 4 pays
+10 for five seconds, then 3.75, 2.5, and 1.25. At `t = 4` the taper has ended and pays nothing.
+
+The wiki says a Recover effect keeps its magnitude in the taper: "taper weight is always 1 and
+taper curve is always 0". The taper duration still makes it last longer. So a held effect keeps
+its full modifier for the whole taper duration, then hands it back. A constant effect has no
+duration, so it has no taper. A zero-duration effect with a taper is stored, and pays only the
+taper.
 
 ## Hit notices
 

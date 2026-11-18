@@ -22,7 +22,7 @@ nonisolated public struct ActiveEffectState: WorldStateComponent, Sendable {
     /// above zero. A constant effect is kept whatever its duration.
     public init(effects: [ActiveEffect] = []) {
         self.effects = effects
-            .filter { !$0.values.isEmpty && ($0.duration > 0 || $0.isConstant) }
+            .filter { !$0.values.isEmpty && ($0.lifetime > 0 || $0.isConstant) }
             .sorted { $0.sequence < $1.sequence }
     }
 

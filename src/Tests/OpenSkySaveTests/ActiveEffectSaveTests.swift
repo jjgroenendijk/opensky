@@ -19,7 +19,8 @@ struct ActiveEffectSaveTests {
         mode: ActiveEffectMode = .modifier,
         elapsed: Float = 4,
         caster: ReferenceKey? = nil,
-        stackKeyword: ReferenceKey? = nil
+        stackKeyword: ReferenceKey? = nil,
+        taper: EffectTaper = .none
     ) -> ActiveEffect {
         ActiveEffect(
             sequence: sequence,
@@ -29,6 +30,7 @@ struct ActiveEffectSaveTests {
             mode: mode,
             isDetrimental: false,
             duration: 60,
+            taper: taper,
             elapsed: elapsed,
             paidSeconds: mode == .perSecond ? 4 : 0,
             values: [
@@ -70,7 +72,10 @@ struct ActiveEffectSaveTests {
     @Test func everyFieldSurvivesARoundTrip() throws {
         let state = ActiveEffectState(effects: [
             effect(sequence: 1, caster: .player, stackKeyword: keyword),
-            effect(sequence: 2, mode: .perSecond)
+            effect(
+                sequence: 2, mode: .perSecond,
+                taper: EffectTaper(weight: 0.5, curve: 2, duration: 8)
+            )
         ])
         let restored = try #require(try roundTrip(state))
         #expect(restored == state)
@@ -78,6 +83,7 @@ struct ActiveEffectSaveTests {
         #expect(restored.effects[0].stackKeyword == keyword)
         #expect(restored.effects[1].mode == .perSecond)
         #expect(restored.effects[1].paidSeconds == 4)
+        #expect(restored.effects[1].taper.duration == 8)
         #expect(restored.ownedModifiers == [41: 40, 43: 20])
     }
 

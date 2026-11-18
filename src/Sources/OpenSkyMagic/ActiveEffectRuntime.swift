@@ -274,6 +274,7 @@ public struct ActiveEffectRuntime {
             mode: application.mode,
             isDetrimental: application.isDetrimental,
             duration: application.duration,
+            taper: application.taper,
             values: application.values,
             stackKeyword: application.stackKeyword
         )

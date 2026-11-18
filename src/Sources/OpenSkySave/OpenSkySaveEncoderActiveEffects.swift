@@ -1,5 +1,5 @@
 // AEFF chunk writing. Per effect: sequence, source kind and key, MGEF key, optional
-// caster, mode, detrimental byte, duration, elapsed, seconds paid, optional stacking
+// caster, mode, detrimental byte, duration, taper, elapsed, seconds paid, optional stacking
 // keyword, then one record per actor value. `elapsed` is stored, not "remaining", so a
 // reload reports the same total duration.
 
@@ -54,6 +54,9 @@ nonisolated enum OpenSkySaveActiveEffectsWriter {
         writer.writeUInt32(effect.mode.rawValue)
         writer.writeUInt8(effect.isDetrimental ? 1 : 0)
         writer.writeFloat32(effect.duration)
+        writer.writeFloat32(effect.taper.weight)
+        writer.writeFloat32(effect.taper.curve)
+        writer.writeFloat32(effect.taper.duration)
         writer.writeFloat32(effect.elapsed)
         writer.writeUInt32(effect.paidSeconds)
         writeOptionalKey(effect.stackKeyword, into: &writer)

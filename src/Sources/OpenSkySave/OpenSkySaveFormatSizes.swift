@@ -155,9 +155,9 @@ nonisolated extension OpenSkySaveFormat {
     /// Smallest number of bytes one `AEFF` effect can occupy: the sequence (8),
     /// the source kind (4), a plugin key with an empty name for the source
     /// record and for the MGEF (7 each), the "no caster" and "no keyword" tags
-    /// (1 each), the mode (4), the detrimental byte (1), duration, elapsed and
-    /// paid-seconds words (4 each) and a zero value count (4).
-    static let minimumActiveEffectSize = 49
+    /// (1 each), the mode (4), the detrimental byte (1), duration, the three taper
+    /// words, elapsed and paid-seconds words (4 each) and a zero value count (4).
+    static let minimumActiveEffectSize = 61
     /// Bytes one `AEFF` value record occupies: the actor-value index, the
     /// magnitude and the applied modifier amount.
     static let activeEffectValueRecordSize = 12

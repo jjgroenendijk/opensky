@@ -73,6 +73,11 @@ nonisolated enum OpenSkySaveActiveEffectDecoder: Sendable {
         }
         let isDetrimental = try reader.uint8("AEFF detrimental flag") != 0
         let duration = try reader.float32("AEFF duration")
+        let taper = try EffectTaper(
+            weight: reader.float32("AEFF taper weight"),
+            curve: reader.float32("AEFF taper curve"),
+            duration: reader.float32("AEFF taper duration")
+        )
         let elapsed = try reader.float32("AEFF elapsed")
         let paidSeconds = try reader.uint32("AEFF paid seconds")
         let stackKeyword = try decodeOptionalKey(&reader)
@@ -84,6 +89,7 @@ nonisolated enum OpenSkySaveActiveEffectDecoder: Sendable {
             mode: mode,
             isDetrimental: isDetrimental,
             duration: duration,
+            taper: taper,
             elapsed: elapsed,
             paidSeconds: paidSeconds,
             values: decodeValues(&reader),

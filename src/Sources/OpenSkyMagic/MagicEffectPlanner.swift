@@ -22,6 +22,8 @@ nonisolated public struct MagicEffectApplication: Equatable, Sendable {
     public let isDetrimental: Bool
     /// EFIT duration in seconds; zero for an instantaneous effect.
     public let duration: Float
+    /// The MGEF taper, which goes on after `duration`.
+    public var taper = EffectTaper.none
     /// The actor values acted on, first value first. An archetype that acts on
     /// no actor value carries one value at `noneIndex` holding the magnitude.
     public let values: [ActiveEffectValue]
@@ -39,7 +41,7 @@ nonisolated public struct MagicEffectApplication: Equatable, Sendable {
     /// Whether the effect applies once rather than persisting. A constant effect also
     /// has zero duration but persists, so the mode is checked first.
     public var isInstant: Bool {
-        mode != .constant && duration <= 0
+        mode != .constant && duration <= 0 && taper.duration <= 0
     }
 
     /// The EFIT magnitude, which a level cap or a cloak radius reads.
@@ -149,6 +151,11 @@ nonisolated public enum MagicEffectPlanner: Sendable {
             refusesRecast: data.flags.contains(.noRecast)
         )
         application.area = entry.area
+        if !isConstant {
+            application.taper = EffectTaper(
+                weight: data.taperWeight, curve: data.taperCurve, duration: data.taperDuration
+            )
+        }
         application.spreadsFromCaster = data.delivery == .selfTarget && entry.area > 0
         return .apply(application)
     }

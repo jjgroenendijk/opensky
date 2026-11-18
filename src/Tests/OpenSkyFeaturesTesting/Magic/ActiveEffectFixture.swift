@@ -42,9 +42,15 @@ public enum ActiveEffectFixture {
         secondValueWeight: Float = 0,
         archetype: UInt32 = 0,
         primaryValue: Int32 = 24,
-        secondValue: Int32 = -1
+        secondValue: Int32 = -1,
+        taperWeight: Float = 0,
+        taperCurve: Float = 0,
+        taperDuration: Float = 0
     ) -> Data {
         var words = [UInt32](repeating: 0, count: 38)
+        words[7] = taperWeight.bitPattern
+        words[13] = taperCurve.bitPattern
+        words[14] = taperDuration.bitPattern
         words[0] = flags.rawValue
         words[2] = associatedItem
         words[15] = secondValueWeight.bitPattern
