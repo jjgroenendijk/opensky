@@ -5,9 +5,8 @@ import OpenSkyPhysics
 import simd
 
 nonisolated extension WalkController {
-    /// How fast a swimmer's vertical speed fades once its float point is near the surface,
-    /// per second, so it settles instead of bobbing.
-    static let swimSettleDamping: Float = 4
+    /// A float point this close above the rest depth counts as resting.
+    static let swimRestTolerance: Float = 0.01
 
     struct SwimStep {
         let surface: Float
@@ -17,22 +16,21 @@ nonisolated extension WalkController {
     }
 
     /// Buoyancy pushes up with gravity's strength while the float point is deeper than
-    /// `SwimRule.floatRestDepth`. Above that no push is added, and above the surface
-    /// gravity pulls it back. Rising ground lifts the feet as for a walker.
+    /// `SwimRule.floatRestDepth`. A rising swimmer stops at that depth instead of passing it;
+    /// above it gravity pulls it back. Rising ground lifts the feet as for a walker.
     mutating func swim(_ water: SwimStep, dt: Float, world: ContactWorld) {
         let floatPoint = SwimRule.floatPointHeight(
             feetHeight: feetPosition.z, bodyHeight: capsule.height, floatLevel: water.floatLevel
         )
-        let floatDepth = water.surface - floatPoint
+        let belowRest = water.surface - floatPoint - SwimRule.floatRestDepth
         if water.wantedVelocity != 0 {
             verticalVelocity = water.wantedVelocity
-        } else if floatDepth > SwimRule.floatRestDepth {
-            verticalVelocity += Self.gravity * dt
+        } else if belowRest > 0 {
+            verticalVelocity = min(verticalVelocity + Self.gravity * dt, belowRest / dt)
+        } else if belowRest < -Self.swimRestTolerance {
+            verticalVelocity -= Self.gravity * dt
         } else {
-            if floatDepth < 0 {
-                verticalVelocity -= Self.gravity * dt
-            }
-            verticalVelocity *= max(0, 1 - Self.swimSettleDamping * dt)
+            verticalVelocity = 0
         }
         let result = world.collider.move(
             from: feetPosition,
