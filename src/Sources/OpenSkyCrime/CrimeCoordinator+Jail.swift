@@ -21,7 +21,8 @@ extension CrimeCoordinator {
         else { return false }
         let arrestedIn = world.currentCellLocation
         guard world.enterJail(through: marker) else { return false }
-        let belongings = arrest.belongingsChest(of: settlement.faction)
+        let belongings = keepsBelongings ? nil : arrest.belongingsChest(of: settlement.faction)
+        keepsBelongings = false
         if let belongings {
             world.storeBelongings(in: belongings, keeping: world.lockpickItem)
         }

@@ -153,6 +153,5 @@ scripted alarm fail silently because the witness faced away. The wiki also notes
 
 ## Not done yet
 
-- A faction with no cell to enter moves the player to the jail marker only when it is loaded.
 - Guards do not arrest NPCs. A guard does not walk over to answer another actor's report. Only
   guards who see the player themselves act.

@@ -216,8 +216,18 @@ struct PapyrusNativeGuardTests {
         fixture.crime.setCrimeGold(300, of: hold)
         #expect(call("Faction", "SendPlayerToJail", fixture, receiver: fixture.faction)
             == .returned(.none))
-        #expect(fixture.arrests.outcomes == [.jail])
+        #expect(fixture.arrests.outcomes == [.jail()])
         #expect(fixture.crime.crimeGold(of: hold) == 0)
         #expect(isFailure(call("Faction", "SendPlayerToJail", fixture, receiver: fixture.faction)))
+    }
+
+    @Test func sendPlayerToJailCanKeepTheInventory() throws {
+        let fixture = try fixture()
+        fixture.crime.setCrimeGold(300, of: hold)
+        #expect(call(
+            "Faction", "SendPlayerToJail", fixture,
+            receiver: fixture.faction, arguments: [.boolean(false)]
+        ) == .returned(.none))
+        #expect(fixture.arrests.outcomes == [.jail(removeInventory: false)])
     }
 }

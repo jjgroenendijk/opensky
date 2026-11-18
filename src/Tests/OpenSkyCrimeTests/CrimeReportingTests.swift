@@ -163,7 +163,7 @@ struct CrimeReportingTests {
         let (world, inventory) = try Self.jailedWorld()
         let coordinator = try Self.coordinator(world)
         coordinator.reporter?.runtime.setCrimeGold(300, of: Self.hold)
-        _ = coordinator.settleArrest(with: Self.hold, .jail)
+        _ = coordinator.settleArrest(with: Self.hold, .jail())
 
         let stay = try #require(coordinator.jailStay)
         #expect(stay.sentenceDays == 3)
@@ -187,13 +187,25 @@ struct CrimeReportingTests {
         #expect(commands.contains(.incrementStat("Days Jailed", by: 3)))
     }
 
+    @Test func aJailThatKeepsTheInventoryTakesNothing() throws {
+        let (world, inventory) = try Self.jailedWorld()
+        let coordinator = try Self.coordinator(world)
+        coordinator.reporter?.runtime.setCrimeGold(300, of: Self.hold)
+        _ = coordinator.settleArrest(with: Self.hold, .jail(removeInventory: false))
+
+        let stay = try #require(coordinator.jailStay)
+        #expect(stay.belongings == nil)
+        #expect(inventory.count(of: Items.sword, in: .player) == 1)
+        #expect(inventory.count(of: Items.lockpick, in: .player) == 3)
+    }
+
     @Test func leavingTheCellIsAnEscapeThatOwesTheBountyAgain() throws {
         let (world, _) = try Self.jailedWorld()
         let recorder = StoryEventRecorder()
         let coordinator = try Self.coordinator(world, storyEvents: recorder)
         let runtime = try #require(coordinator.reporter?.runtime)
         runtime.setCrimeGold(300, of: Self.hold)
-        _ = coordinator.settleArrest(with: Self.hold, .jail)
+        _ = coordinator.settleArrest(with: Self.hold, .jail())
         world.currentCellLocation = Self.jail
         coordinator.advanceJail()
         #expect(coordinator.jailStay != nil)
@@ -215,7 +227,7 @@ struct CrimeReportingTests {
         world.jailCell = nil
         let coordinator = try Self.coordinator(world)
         coordinator.reporter?.runtime.setCrimeGold(300, of: Self.hold)
-        _ = coordinator.settleArrest(with: Self.hold, .jail)
+        _ = coordinator.settleArrest(with: Self.hold, .jail())
 
         #expect(coordinator.jailStay == nil)
         #expect(world.gameSeconds == Double(3 * 86400))
