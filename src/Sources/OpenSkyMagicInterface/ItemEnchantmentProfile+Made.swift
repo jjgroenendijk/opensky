@@ -16,8 +16,8 @@ nonisolated extension ItemEnchantmentProfile {
     ) -> ItemEnchantmentProfile? {
         let bases = made.bases.compactMap { store.enchantment(key: $0) }
         guard let first = bases.first, bases.count == made.bases.count else { return nil }
-        let entries = zip(bases, made.powers).flatMap { base, power in
-            base.effects.map { resolved in
+        let parts = zip(bases, made.powers).map { base, power in
+            ItemEnchantmentPart(plugin: base.sourcePlugin, entries: base.effects.map { resolved in
                 let flags = resolved.effect?.effect.data?.flags ?? []
                 let entry = resolved.item
                 return entry.with(
@@ -26,13 +26,12 @@ nonisolated extension ItemEnchantmentProfile {
                     duration: flags.contains(.powerAffectsDuration)
                         ? (Float(entry.duration) * power).rounded(.down) : Float(entry.duration)
                 )
-            }
+            })
         }
         return ItemEnchantmentProfile(
             item: item,
             enchantment: ReferenceKey(resolved: first.id),
-            sourcePlugin: first.sourcePlugin,
-            entries: entries,
+            parts: parts,
             name: made.name,
             castingType: first.data?.castingType ?? .constantEffect,
             delivery: first.data?.delivery ?? .selfTarget,

@@ -309,10 +309,11 @@ extension EnchantmentRuntimeFixture {
         }
     }
 
-    static func world() throws -> World {
+    /// Every name in `alsoLoadedAs` loads the same records once more, as a plugin of its own.
+    static func world(alsoLoadedAs extraPlugins: [String] = []) throws -> World {
         let file = try plugin()
         let index = RecordIndex(
-            plugins: [(pluginName, file)],
+            plugins: ([pluginName] + extraPlugins).map { ($0, file) },
             recordTypes: ["MGEF", "ENCH", "FLST"]
         )
         let effects = MagicEffectStore(index: index)

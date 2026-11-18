@@ -8,6 +8,17 @@ import Foundation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 
+/// Effects whose `EFID` links and conditions are relative to one plugin.
+nonisolated public struct ItemEnchantmentPart: Equatable, Sendable {
+    public let plugin: String
+    public let entries: [MagicItemEffect]
+
+    public init(plugin: String, entries: [MagicItemEffect]) {
+        self.plugin = plugin
+        self.entries = entries
+    }
+}
+
 /// One enchanted item's enchantment, resolved.
 nonisolated public struct ItemEnchantmentProfile: Equatable, Sendable {
     /// The WEAP or ARMO base record. What the charge and the worn effects are
@@ -15,10 +26,9 @@ nonisolated public struct ItemEnchantmentProfile: Equatable, Sendable {
     public let item: FormID
     /// The winning ENCH identity, which every applied effect is sourced to.
     public let enchantment: ReferenceKey
-    /// The plugin every `EFID` in `entries` is relative to.
-    public let sourcePlugin: String
-    /// The effect list as authored. Magnitudes are pre-resistance.
-    public let entries: [MagicItemEffect]
+    /// The effect list, one part per plugin its effects are relative to. A
+    /// made enchantment can combine bases from several plugins.
+    public let parts: [ItemEnchantmentPart]
     /// FULL name or editor ID of the enchantment, for the readout. Never empty.
     public let name: String
     public let castingType: MagicEffectCastingType
@@ -33,6 +43,11 @@ nonisolated public struct ItemEnchantmentProfile: Equatable, Sendable {
     /// nearest link in the base chain. Carried for inspection only; see the file
     /// header for why it gates nothing here.
     public let wornRestriction: FormID?
+
+    /// Every effect of every part. Magnitudes are pre-resistance.
+    public var entries: [MagicItemEffect] {
+        parts.flatMap(\.entries)
+    }
 
     /// The effects a worn item grants for as long as it is worn.
     public var isWorn: Bool {
@@ -96,8 +111,9 @@ nonisolated extension ItemEnchantmentProfile {
         return ItemEnchantmentProfile(
             item: definition.formID,
             enchantment: ReferenceKey(resolved: resolved.id),
-            sourcePlugin: resolved.sourcePlugin,
-            entries: resolved.record.effects,
+            parts: [ItemEnchantmentPart(
+                plugin: resolved.sourcePlugin, entries: resolved.record.effects
+            )],
             name: resolved.displayName,
             castingType: resolved.data?.castingType ?? .fireAndForget,
             delivery: resolved.data?.delivery ?? .touch,

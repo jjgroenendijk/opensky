@@ -126,7 +126,6 @@ extension MagicCoordinator.Enchanter {
         case .notEnchantable: "This item cannot be enchanted."
         case .unknownBase: "That enchantment is not known."
         case let .tooManyBases(allowed): "At most \(allowed) enchantments fit on one item."
-        case .mixedPlugins: "These enchantments come from different plugins."
         }
     }
 }

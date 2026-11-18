@@ -41,13 +41,15 @@ public enum WornEnchantmentApplication {
         for profile in profiles.sorted(by: { $0.item.rawValue < $1.item.rawValue })
             where ledger.state(of: holder).wornEffects(of: profile.item).isEmpty
         {
-            let stored = runtime.apply(
-                profile.entries,
-                fromPlugin: profile.sourcePlugin,
-                source: profile.source,
-                isConstant: true,
-                on: holder
-            )
+            let stored = profile.parts.flatMap { part in
+                runtime.apply(
+                    part.entries,
+                    fromPlugin: part.plugin,
+                    source: profile.source,
+                    isConstant: true,
+                    on: holder
+                )
+            }
             // An item whose every entry was refused establishes nothing and is
             // deliberately not recorded: recording it would make the next
             // reconcile skip an item that is granting nothing, and there would be

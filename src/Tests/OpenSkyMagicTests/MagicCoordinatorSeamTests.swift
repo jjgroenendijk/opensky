@@ -82,7 +82,7 @@ struct MagicCoordinatorSeamTests {
         let spell = try #require(coordinator.controlPanels.playerKnownSpells().first)
         let profile = ItemEnchantmentProfile(
             item: FormID(0x800), enchantment: .plugin(name: "base.esm", objectID: 0x801),
-            sourcePlugin: "Base.esm", entries: [], name: "Staff of Healing",
+            parts: [], name: "Staff of Healing",
             castingType: .fireAndForget, delivery: .touch, type: .staffEnchantment,
             capacity: 100, costPerUse: 10, wornRestriction: nil
         )
