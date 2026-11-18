@@ -1,5 +1,5 @@
-// The combat loop's world. An NPC's weapon is always unarmed: nothing resolves an NPC's
-// equipped WEAP into a swing profile yet (docs/engine/combat.md).
+// The combat loop's world over the shared combat state. An NPC swings or shoots the
+// weapon it has equipped (docs/engine/combat.md).
 
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
@@ -166,8 +166,15 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
         return CombatCore.healthFraction(current: health.current, maximum: health.maximum)
     }
 
+    /// The first weapon `key` has equipped, with its tempering; unarmed without one.
     func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile {
-        .unarmed
+        guard let items = shared.items else { return .unarmed }
+        for (item, level) in shared.world.gearReads.equippedItems(of: key) {
+            if let weapon = items.weapon(item) {
+                return MeleeWeaponProfile(weapon: weapon).tempered(level: level)
+            }
+        }
+        return .unarmed
     }
 
     func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
