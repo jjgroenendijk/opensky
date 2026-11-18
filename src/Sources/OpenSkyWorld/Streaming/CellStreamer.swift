@@ -134,6 +134,8 @@ public final class CellStreamer {
     private(set) var interiorActorPlacements: [ReferenceKey: ResidentActorPlacement]?
     public var transitionInFlight: FormID?
     public var interactionTarget: InteractionTarget?
+    /// The nearest collision the view ray met in the last pick, usable or not.
+    public var interactionRayHit: InteractionRayHit?
     /// Everything Talk activation needs from the streamer.
     public var talk = TalkTargetingSeam()
     /// The lock check in front of every use-key activation.

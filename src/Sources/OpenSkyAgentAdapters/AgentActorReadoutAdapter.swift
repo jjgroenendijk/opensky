@@ -65,8 +65,23 @@ extension AgentActorReadoutAdapter {
         ]
     }
 
+    /// Null only when the view ray met nothing; with no target, only `rayHit`.
     public func targetState() -> AgentJSON {
-        guard let target = game.streamer.interactionTarget else { return .null }
+        let streamer = game.streamer
+        let rayHit: AgentJSON = streamer.interactionRayHit.map { hit in
+            [
+                "ref": .formID(hit.reference.rawValue),
+                "base": streamer.referenceEntry(formID: hit.reference)?.placedReference.map {
+                    AgentJSON.formID($0.base.rawValue)
+                } ?? .null,
+                "distance": .init(hit.distance),
+                "usable": .bool(streamer.residentInteraction(reference: hit.reference) != nil)
+            ]
+        } ?? .null
+        guard let target = streamer.interactionTarget else {
+            guard case .object = rayHit else { return .null }
+            return ["rayHit": rayHit]
+        }
         let interaction = target.interaction
         return [
             "ref": .formID(interaction.reference.rawValue),
@@ -75,7 +90,8 @@ extension AgentActorReadoutAdapter {
             "action": .string(interaction.actionLabel),
             "distance": .init(target.distance),
             "position": .init(interaction.position),
-            "theft": .bool(game.inventory.itemPanels.targetOwnership()?.isTheft == true)
+            "theft": .bool(game.inventory.itemPanels.targetOwnership()?.isTheft == true),
+            "rayHit": rayHit
         ]
     }
 
