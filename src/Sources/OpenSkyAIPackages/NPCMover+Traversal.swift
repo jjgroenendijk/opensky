@@ -17,8 +17,18 @@ struct NPCMoverStepPlan {
 extension NPCMover {
     /// Water deep enough to swim, with the player's enter and exit depths, so an actor
     /// does not flicker between swimming and wading at the edge.
+    /// The surface to swim against, or nil to walk (`SwimRule.swims`).
     func swimSurface(_ water: WaterReading?) -> Float? {
-        water?.swimSurface(feetHeight: controller.feetPosition.z, isSwimming: isSwimming)
+        guard let surface = water?.surface, surface.isFinite else { return nil }
+        let contact = SwimContact(
+            submersion: SwimRule.submersion(
+                surface: surface, feetHeight: controller.feetPosition.z, bodyHeight: capsule.height
+            ),
+            wasSwimming: isSwimming,
+            hasGroundBelow: controller.isGrounded,
+            isRising: controller.verticalVelocity > 0
+        )
+        return SwimRule.swims(contact) ? surface : nil
     }
 
     /// Near on the ground, and within one capsule height up or down. A patrol marker
@@ -149,16 +159,5 @@ extension NPCMover {
         guard let next, previous != next else { return }
         currentCell = next
         emissions.persistence.append(persistence(reason: .cellHandoff))
-    }
-}
-
-extension WaterReading {
-    /// The surface when the water is deep enough to swim at `feetHeight`. A swimmer
-    /// leaves at a smaller depth than a wader enters at.
-    func swimSurface(feetHeight: Float, isSwimming: Bool) -> Float? {
-        guard surface.isFinite else { return nil }
-        let threshold = isSwimming
-            ? LocomotionBridge.swimExitDepth : LocomotionBridge.swimEnterDepth
-        return surface - feetHeight >= threshold ? surface : nil
     }
 }

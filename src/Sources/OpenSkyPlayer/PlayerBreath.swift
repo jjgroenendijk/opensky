@@ -2,6 +2,7 @@
 // The settings are on the CK wiki "Category:Settings" page. See docs/engine/walk-mode.md.
 
 public import OpenSkyGameData
+import OpenSkyPhysics
 
 /// The breath game settings. `Skyrim.esm` holds no `fActorSwimBreathBase`, so its CK
 /// wiki default applies.
@@ -42,10 +43,11 @@ nonisolated public struct PlayerBreath: Equatable, Sendable {
         remainingSeconds = settings.breathSeconds
     }
 
-    /// The eyes are below the water surface.
-    public static func isSubmerged(eyeZ: Float, waterSurface: Float?) -> Bool {
+    /// The head is under water: the submersion is at least `SwimRule.headUnderSubmersion`.
+    public static func isSubmerged(feetZ: Float, bodyHeight: Float, waterSurface: Float?) -> Bool {
         guard let waterSurface else { return false }
-        return eyeZ < waterSurface
+        return SwimRule.submersion(surface: waterSurface, feetHeight: feetZ, bodyHeight: bodyHeight)
+            >= SwimRule.headUnderSubmersion
     }
 
     /// Spends `seconds` of breath under water and returns the health lost this step.

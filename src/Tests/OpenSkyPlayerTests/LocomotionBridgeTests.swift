@@ -266,12 +266,17 @@ struct LocomotionBridgeTests {
         Self.advance(&controller, camera: &camera, bridge: bridge, steps: 4)
         #expect(controller.isSwimming)
         #expect(Self.raised(bridge, LocomotionGraphNames.swimStart) == 1)
-        // The swimmer rises to float with its eye at the surface rather than
-        // sinking under gravity.
-        Self.advance(&controller, camera: &camera, bridge: bridge, steps: 240)
-        let floating = surface - PlayerCapsule.standard.eyeHeight
-        #expect(abs(controller.feetPosition.z - floating) < 1)
-        #expect(abs(controller.verticalVelocity) <= WalkController.maximumSwimVerticalSpeed)
+        // The swimmer rises until its float point rests about 10 units under the surface,
+        // rather than sinking under gravity.
+        Self.advance(&controller, camera: &camera, bridge: bridge, steps: 600)
+        let floatPoint = SwimRule.floatPointHeight(
+            feetHeight: controller.feetPosition.z,
+            bodyHeight: PlayerCapsule.standard.height,
+            floatLevel: SwimRule.firstPersonFloatLevel
+        )
+        #expect(surface - floatPoint >= 0)
+        #expect(surface - floatPoint <= SwimRule.floatRestDepth + 1)
+        #expect(abs(controller.verticalVelocity) < 5)
 
         surface = 0
         Self.advance(&controller, camera: &camera, bridge: bridge, steps: 1)

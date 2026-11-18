@@ -105,20 +105,22 @@ struct WalkControllerTests {
     }
 
     @Test
-    func steepGroundBlocksGroundedHorizontalMove() {
+    func aSteepFaceRisingAboveTheFeetBlocksTheMove() {
         var camera = Self.camera()
         var controller = WalkController(cameraPosition: camera.position)
         Self.settle(&controller, camera: &camera)
         let start = controller.feetPosition
-        let steep = simd_normalize(SIMD3<Float>(1, 0, 0.5))
+        let steep = simd_normalize(SIMD3<Float>(-2, 0, 1))
 
         controller.update(
             camera: &camera,
             input: CameraInput(moveForward: 1, dt: 0.1)
         ) { position in
-            TerrainGroundSample(height: 0, normal: position.x > 0 ? steep : Self.up)
+            position.x > start.x
+                ? TerrainGroundSample(height: (position.x - start.x) * 2, normal: steep)
+                : TerrainGroundSample(height: 0, normal: Self.up)
         }
-        #expect(controller.feetPosition.x == start.x)
+        #expect(abs(controller.feetPosition.x - start.x) < 0.01)
         #expect(controller.isGrounded)
     }
 

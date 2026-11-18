@@ -58,10 +58,9 @@ leftover step time. Its settings are fixed when the renderer is set up, from the
 | Sneak speed | `NPC_Sneaking_MT` `SPED` forward walk, 47.2 units/s |
 | Swim speed | `NPC_Swimming_MT` `SPED` forward walk, 80.1 units/s |
 | Jump takeoff | `sqrt(2 g fJumpHeightMin)`, 461.3 units/s at 76 units |
-| Swim vertical limit | 200 units/s |
-| Gravity | 1,400 units/s² |
-| Largest walkable slope | 50 degrees |
-| Ground snap | 24 units |
+| Gravity | 1,400 units/s²; 1.35 times while falling, 4 times on the ground |
+| Largest walkable slope | 47 degrees, on the surface the body touches |
+| Ground search | 69.99 units (1 physics unit) below the feet |
 | Step height | 32 units. No confirmed Skyrim SE game setting |
 | Physics step | 1/120 s |
 | Longest accepted frame | 0.1 s |
@@ -165,16 +164,18 @@ changes to moving. What changes that state after a landing was not found, so the
 Water height is `CELL` `XCLW` over the worldspace default ([sky and water](/engine/sky-water.md)).
 Interiors report none: a vanilla interior places its water as geometry, not as a plane.
 
-Swimming starts when the feet are 90 units under the surface, and stops when they rise to within 70.
-The two values differ so a capsule bobbing at the edge cannot flip every step. Both are OpenSky's,
-measured against the capsule: the player swims at about chest depth and wades above that. No game
-setting gives either. While swimming there is no gravity, snap, or step support. The capsule moves
-toward the depth that puts its eye at the surface, or up (jump) and down (sneak) on request, limited
-to 200 units per second. A swimmer resting on a shallow bottom counts as grounded, so it can walk
-out.
+Ground, slopes, gravity, swimming, floating, and leaving the water follow the game's rules on the
+[ground and water contact](/engine/ground-and-water-contact.md) page. The capsule height is the
+body height those rules use. OpenSky adds three things of its own:
 
-The game's own rules for swimming depth, floating, and leaving the water are on the
-[ground and water contact](/engine/ground-and-water-contact.md#water) page.
+- The step height above. The game has none: its capsule's round bottom rides over an edge.
+- A swimmer's vertical speed fades by 4 per second while its float point is within 10 units of
+  the surface or above it, so it settles instead of bobbing. Above the surface, gravity pulls it
+  back down.
+- While swimming, sneak dives and a held jump key swims up. A jump press with the float point
+  within 350 units of the surface jumps out instead.
+
+The player's float level is 1.3 in first person and 1.6 in third person.
 
 ## Speed
 

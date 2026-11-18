@@ -17,6 +17,8 @@ nonisolated public struct LocomotionStepPlan: Equatable, Sendable {
     /// Vertical speed the swimmer is asking for, units per second, positive up.
     /// Ignored out of water.
     public var swimVerticalVelocity: Float = 0
+    /// Where on the body the swimmer floats, as a fraction of half the body height.
+    public var swimFloatLevel = SwimRule.characterFloatLevel
     /// Where `horizontalDisplacement` came from, for readouts and tests.
     public var motionSource: LocomotionMotionSource = .idle
     /// The water over the feet, or nil on dry land.

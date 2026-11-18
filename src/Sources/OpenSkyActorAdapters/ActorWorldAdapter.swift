@@ -324,10 +324,12 @@ struct ActorBreathStep {
         guard delta > 0 else { return }
         let runtime = game.actorValues.runtime
         let status = gameSession.locomotion.status
-        let eyeZ = gameSession.walkController.feetPosition.z
-            + gameSession.walkController.capsule.eyeHeight
+        let walk = gameSession.walkController
         let submerged = gameSession.movementMode.isPlayerControlled
-            && PlayerBreath.isSubmerged(eyeZ: eyeZ, waterSurface: status.waterSurfaceHeight)
+            && PlayerBreath.isSubmerged(
+                feetZ: walk.feetPosition.z, bodyHeight: walk.capsule.height,
+                waterSurface: status.waterSurfaceHeight
+            )
         let waterBreathing = ActorValueIdentity.index(named: "Water Breathing")
             .flatMap { runtime?.value(at: $0, on: .player) }
             .map { $0 > 0 } ?? false

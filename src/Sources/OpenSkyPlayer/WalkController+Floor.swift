@@ -72,9 +72,19 @@ nonisolated extension WalkController {
         }
         var feet = feetPosition
         feet.z = ground
-        // Water deep enough to swim in floats the player at the surface, as a swimmer.
-        if let surface = water(feet)?.surface, surface - ground >= LocomotionBridge.swimEnterDepth {
-            feet.z = surface - capsule.eyeHeight
+        // Water deep enough to swim in floats the player at the resting depth, as a swimmer.
+        if
+            let surface = water(feet)?.surface,
+            SwimRule.submersion(surface: surface, feetHeight: ground, bodyHeight: capsule.height)
+            >= SwimRule.swimSubmersion
+        {
+            feet.z = max(
+                ground,
+                SwimRule.restingFeetHeight(
+                    surface: surface, bodyHeight: capsule.height,
+                    floatLevel: SwimRule.characterFloatLevel
+                )
+            )
         }
         reset(cameraPosition: feet + SIMD3<Float>(0, 0, capsule.eyeHeight))
         return true

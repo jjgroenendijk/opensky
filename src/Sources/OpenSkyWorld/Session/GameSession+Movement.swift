@@ -243,6 +243,8 @@ extension GameSession.MovementSteps {
             pitch: session.freeFlyCamera.pitch
         )
         session.locomotion.acceptFrame(frameInput)
+        session.locomotion.swimFloatLevel = session.movementMode == .thirdPerson
+            ? SwimRule.characterFloatLevel : SwimRule.firstPersonFloatLevel
         session.locomotion.movement = session.motion.playerMovement?() ?? ActorMovementSpeeds()
         session.walkController.carryVelocity = session.motion.characterCarry?(
             session.walkController.capsule, session.walkController.feetPosition

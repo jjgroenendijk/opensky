@@ -20,4 +20,6 @@ nonisolated public struct LocomotionStepState: Equatable, Sendable {
     public var yaw: Float
     /// Length of the step about to run, seconds.
     public var dt: Float
+    /// Bounding box height times scale, for the swim rule.
+    public var bodyHeight: Float = PlayerCapsule.standard.height
 }

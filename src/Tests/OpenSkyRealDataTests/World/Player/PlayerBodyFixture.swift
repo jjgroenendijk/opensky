@@ -7,6 +7,7 @@ import Metal
 @testable import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyPhysics
 @testable import OpenSkyPlayer
 @testable import OpenSkyRendering
 @testable import OpenSkyRenderResources
@@ -33,7 +34,7 @@ enum PlayerBodyFixture {
     /// The graph, the gait resolution, and the body are the real ones; only the
     /// surface is synthetic, and it is called out here so nothing reads this as
     /// a claim about that cell's water.
-    static let swimSurfaceDepth = LocomotionBridge.swimEnterDepth + 20
+    static let swimSurfaceDepth = SwimRule.swimSubmersion * PlayerCapsule.standard.height + 20
 
     @MainActor
     static func assemble(
