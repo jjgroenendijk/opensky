@@ -263,6 +263,18 @@ struct CombatLoopRuntimeTests {
         #expect(world.clips.contains { $0.clip == .attack && $0.key == Fixture.opponent })
     }
 
+    @Test func anOpponentWithTwoWeaponsAlsoSwingsItsLeftHand() {
+        let (runtime, world) = Fixture.session()
+        world.weapons[Fixture.opponent] = MeleeWeaponProfile(damage: 5, reach: 1, handType: .sword)
+        world.leftWeapons[Fixture.opponent] = MeleeWeaponProfile(
+            damage: 3, reach: 1, handType: .dagger
+        )
+        Fixture.engage(runtime, world)
+        Fixture.run(runtime, seconds: Fixture.cycleSeconds * 3)
+        #expect(world.clips.contains { $0.clip == .leftAttack && $0.key == Fixture.opponent })
+        #expect((runtime.strikes[Fixture.opponent]?.count ?? 0) >= 2)
+    }
+
     @Test func hittingTheOpponentStaggersItAndPlaysTheStaggerClip() {
         let (runtime, world) = Fixture.session()
         Fixture.engage(runtime, world)

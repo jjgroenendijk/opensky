@@ -246,3 +246,8 @@ takes the block button. The player cannot block then; UESP
 - A left strike uses the left weapon's damage, reach, weight, and enchantment. A dual strike lands
   both weapons on its contact frame, one blow each, right first.
 - A left power attack pays the left weapon's stamina. A dual power attack pays both weapons'.
+
+An NPC with a sword, dagger, war axe, or mace in each hand swings right, then left, then with both,
+in turn. Its hands follow the same left-hand rule as the player's. A left swing plays the left
+punch clip, `h2h_attackleft.hkx`, the way a right swing plays the right punch clip. Each swing's
+kill move uses the action for its hand.

@@ -5,6 +5,7 @@ import OpenSkyActorsInterface
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 import simd
@@ -166,15 +167,28 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
         return CombatCore.healthFraction(current: health.current, maximum: health.maximum)
     }
 
-    /// The first weapon `key` has equipped, with its tempering; unarmed without one.
+    /// The weapon in `key`'s right hand, with its tempering; unarmed without one.
     func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile {
-        guard let items = shared.items else { return .unarmed }
-        for (item, level) in shared.world.gearReads.equippedItems(of: key) {
-            if let weapon = items.weapon(item) {
-                return MeleeWeaponProfile(weapon: weapon).tempered(level: level)
-            }
+        handWeapon(of: key, \.right) ?? .unarmed
+    }
+
+    func combatLeftWeapon(of key: ReferenceKey) -> MeleeWeaponProfile? {
+        handWeapon(of: key, \.left).flatMap { $0.handType.isOneHandedMelee ? $0 : nil }
+    }
+
+    /// One hand's weapon by the inventory's hand rule.
+    private func handWeapon(
+        of key: ReferenceKey, _ hand: KeyPath<WornWeapons, FormID?>
+    ) -> MeleeWeaponProfile? {
+        guard let items = shared.items else { return nil }
+        let reads = shared.world.gearReads
+        let worn = reads.equippedItems(of: key)
+        let hands = WornWeapons.resolve(in: worn.map(\.item), leftHand: reads.leftHand(of: key)) {
+            items.weapon($0) == nil ? nil : reads.equipment?.occupancy(of: $0).hands ?? .rightHand
         }
-        return .unarmed
+        guard let item = hands[keyPath: hand], let weapon = items.weapon(item) else { return nil }
+        let level = worn.first { $0.item == item }?.temperLevel ?? 0
+        return MeleeWeaponProfile(weapon: weapon).tempered(level: level)
     }
 
     func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
@@ -278,9 +292,9 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
     }
 
     func startCombatKillMove(
-        by actor: ReferenceKey, on target: ReferenceKey, damage: Float
+        by actor: ReferenceKey, on target: ReferenceKey, damage: Float, action: String
     ) -> Bool {
-        shared.damage.startCombatKillMove(by: actor, on: target, damage: damage)
+        shared.damage.startCombatKillMove(by: actor, on: target, damage: damage, action: action)
     }
 }
 

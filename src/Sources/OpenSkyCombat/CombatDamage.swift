@@ -219,10 +219,10 @@ extension CombatShared {
         /// An NPC's kill move. The player's own death has its own camera, so an NPC kill
         /// move takes only another NPC.
         func startCombatKillMove(
-            by actor: ReferenceKey, on target: ReferenceKey, damage: Float
+            by actor: ReferenceKey, on target: ReferenceKey, damage: Float, action: String
         ) -> Bool {
             shared.world.startKillMove(KillMoveAttempt(
-                attacker: actor, target: target, action: KillMoveAttempt.attackAction,
+                attacker: actor, target: target, action: action,
                 kills: attackKills(target, damage: damage, attacker: actor)
             ))
         }

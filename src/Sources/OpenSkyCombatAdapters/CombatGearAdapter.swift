@@ -12,7 +12,7 @@ import OpenSkyDialogueInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 public import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
 import OpenSkyNavigation
@@ -70,6 +70,15 @@ extension CombatGearAdapter {
         return equipment.equipped(on: holder).map {
             ($0, runtime.inventory.temperLevel(of: $0, in: holder))
         }
+    }
+
+    public func leftHand(of key: ReferenceKey) -> LeftHandHold? {
+        guard
+            let runtime = game.inventory.runtime,
+            let holder = key == .player ? runtime.player : game.streamer.residents
+                .inventoryHolder(of: key)
+        else { return nil }
+        return game.inventory.equipment?.leftHand(on: holder)
     }
 
     public func hasReadiedSpell(in hand: SpellHand) -> Bool {

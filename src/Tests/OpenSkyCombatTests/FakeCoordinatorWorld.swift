@@ -35,6 +35,7 @@ final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
     private(set) var spellHits: [SpellHit] = []
     var healths: [ReferenceKey: (current: Float, maximum: Float)] = [:]
     var equipped: [ReferenceKey: [(item: FormID, temperLevel: Int32)]] = [:]
+    var leftHands: [ReferenceKey: LeftHandHold] = [:]
     var unkillable: Set<ReferenceKey> = []
     var inKillMove: Set<ReferenceKey> = []
     var playsKillMoves = true
@@ -161,6 +162,10 @@ final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
 
     func equippedItems(of key: ReferenceKey) -> [(item: FormID, temperLevel: Int32)] {
         equipped[key] ?? []
+    }
+
+    func leftHand(of key: ReferenceKey) -> LeftHandHold? {
+        leftHands[key]
     }
 
     func temperLevel(of _: FormID) -> Int32 {

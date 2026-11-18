@@ -87,7 +87,9 @@ struct KillMoveTests {
     @Test func anNPCKillMoveCanTakeThePlayer() {
         let (coordinator, world) = Self.coordinator(health: 20)
         world.healths[.player] = (1, 100)
-        #expect(coordinator.loopWorld.startCombatKillMove(by: Self.npc, on: .player, damage: 30))
+        #expect(coordinator.loopWorld.startCombatKillMove(
+            by: Self.npc, on: .player, damage: 30, action: KillMoveAttempt.attackAction
+        ))
         #expect(world.killMoves.map(\.target) == [.player])
         #expect(world.killMoves.map(\.kills) == [true])
     }

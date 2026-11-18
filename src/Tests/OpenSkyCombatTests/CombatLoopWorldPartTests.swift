@@ -38,6 +38,38 @@ struct CombatLoopWorldPartTests {
         #expect(!part.combatFlies(Self.foe))
     }
 
+    /// Two one-handed weapons fill both hands; a left-hand hold puts its item left.
+    @Test func anNPCHoldsASecondOneHandedWeaponInItsLeftHand() throws {
+        let world = FakeCoordinatorWorld()
+        let records = [0x800, 0x801].map { id in
+            var fields = ESMFixture.field("EDID", ESMFixture.zstring("Sword\(id)"))
+            fields += ESMFixture.field(
+                "DATA", InventoryFixture.weaponData(
+                    value: 50,
+                    weight: 7,
+                    damage: id == 0x800 ? 7 : 5
+                )
+            )
+            fields += ESMFixture.field("DNAM", InventoryFixture.weaponDNAM(
+                animation: 1, speed: 1, reach: 1, flags: 0
+            ))
+            return ESMFixture.record("WEAP", formID: UInt32(id), data: fields)
+        }
+        let items = try ItemDefinitionStore(file: SpellStoreFixture.plugin(records: records))
+        let coordinator = CombatCoordinator(
+            world: world,
+            data: CombatSessionData(combat: .synthetic, archery: .synthetic, items: items)
+        )
+        world.equipped[Self.foe] = [
+            (item: FormID(0x800), temperLevel: 0), (item: FormID(0x801), temperLevel: 0)
+        ]
+        #expect(coordinator.loopWorld.combatWeapon(of: Self.foe).damage == 7)
+        #expect(coordinator.loopWorld.combatLeftWeapon(of: Self.foe)?.damage == 5)
+        world.leftHands[Self.foe] = LeftHandHold(item: FormID(0x800))
+        #expect(coordinator.loopWorld.combatWeapon(of: Self.foe).damage == 5)
+        #expect(coordinator.loopWorld.combatLeftWeapon(of: Self.foe)?.damage == 7)
+    }
+
     /// An NPC fights with its first equipped weapon; a bow makes it an archer.
     @Test func anNPCSwingsItsEquippedWeapon() throws {
         let world = FakeCoordinatorWorld()

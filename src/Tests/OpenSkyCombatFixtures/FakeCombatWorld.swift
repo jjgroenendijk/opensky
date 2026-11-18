@@ -27,6 +27,7 @@ public final class FakeCombatWorld: CombatLoopWorld {
     /// Actors whose current package has the Ignore Combat flag.
     public var ignoringCombat: Set<ReferenceKey> = []
     public var weapons: [ReferenceKey: MeleeWeaponProfile] = [:]
+    public var leftWeapons: [ReferenceKey: MeleeWeaponProfile] = [:]
     public var styles: [ReferenceKey: CombatStyleTuning] = [:]
     /// What each actor could cast, and what it can pay for.
     public var casting: [ReferenceKey: CombatCastingProfile] = [:]
@@ -182,6 +183,10 @@ public final class FakeCombatWorld: CombatLoopWorld {
 
     public func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile {
         weapons[key] ?? .unarmed
+    }
+
+    public func combatLeftWeapon(of key: ReferenceKey) -> MeleeWeaponProfile? {
+        leftWeapons[key]
     }
 
     public func combatCasting(of key: ReferenceKey) -> CombatCastingProfile {

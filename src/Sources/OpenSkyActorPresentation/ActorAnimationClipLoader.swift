@@ -74,7 +74,7 @@ nonisolated public enum ActorAnimationClipLoader: Sendable {
     public static func holdSeconds(for clip: CombatActorClip) -> Float {
         let combat = CombatBehaviorSettings.standard
         switch clip {
-        case .attack: return combat.windupSeconds + combat.recoverySeconds
+        case .attack, .leftAttack: return combat.windupSeconds + combat.recoverySeconds
         case .stagger: return combat.staggerSeconds
         case .hitReaction: return 0.4
         }
@@ -83,6 +83,7 @@ nonisolated public enum ActorAnimationClipLoader: Sendable {
     private static func fileName(for clip: CombatActorClip) -> String {
         switch clip {
         case .attack: "h2h_attackright.hkx"
+        case .leftAttack: "h2h_attackleft.hkx"
         case .stagger: "1hm_staggerbacksmall.hkx"
         case .hitReaction: "h2h_recoilright.hkx"
         }
