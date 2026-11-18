@@ -197,10 +197,17 @@ struct CrimeSessionReads {
                 )
             case let .speakTrespassWarning(witness):
                 game.storyWorld.sayTopic("TRES", speaker: witness, lookAt: .player)
+            case let .setStat(name, value):
+                let current = game.worldState.miscStats.value(name)
+                game.worldState.incrementMiscStat(
+                    name, by: Int32(clamping: Int64(value) - Int64(current))
+                )
             case let .raiseStat(name, value):
                 let current = game.worldState.miscStats.value(name)
                 if value > current {
-                    game.worldState.incrementMiscStat(name, by: value - current)
+                    game.worldState.incrementMiscStat(
+                        name, by: Int32(clamping: Int64(value) - Int64(current))
+                    )
                 }
             }
         }

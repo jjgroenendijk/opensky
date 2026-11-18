@@ -8,6 +8,8 @@ nonisolated public enum CrimeCommand: Equatable, Sendable {
     case applyGuardHostility(GuardCrimeHostility)
     /// A crime stat on the journal's Stats page, such as "Times Jailed".
     case incrementStat(String, by: Int32)
+    /// Sets a stat to `value`, up or down, such as a hold's hidden bounty stat.
+    case setStat(String, to: Int32)
     /// Raises a stat to `value` when it is lower, such as "Largest Bounty".
     case raiseStat(String, to: Int32)
     /// A witness of a trespass speaks its warning (`TRES`).

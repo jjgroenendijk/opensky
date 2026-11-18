@@ -143,5 +143,6 @@ The vanilla scripts count only these statistics:
   window ends, and only then sends `ADCR`.
 - OpenSky does not move the crime gold to the faction of the guard that answers.
 - OpenSky's guards do not fight NPC criminals.
-- OpenSky does not keep the ten hold bounty statistics. It counts "Assaults", "Murders", and
-  "Locks Picked" itself, as the game does.
+- OpenSky has no "bounty changed" event. Once per frame it compares the player's bounties with
+  the last frame's and applies the statistics rule above to each change. It counts "Horses
+  Stolen", "Assaults", "Murders", and "Locks Picked" itself, as the game does.

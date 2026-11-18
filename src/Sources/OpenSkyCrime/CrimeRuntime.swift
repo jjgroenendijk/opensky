@@ -320,6 +320,7 @@ extension CrimeEvent {
             stolenValue: stolenValue
         )
         seen.stolenCount = stolenCount
+        seen.isHorseTheft = isHorseTheft
         return seen
     }
 }

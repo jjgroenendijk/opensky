@@ -46,6 +46,12 @@ struct CrimeWorldTests {
         #expect(host.fakeWorldState.incrementMiscStatCalls.map(\.amount) == [3])
     }
 
+    @Test func aSetStatFollowsTheValueDown() {
+        host.fakeWorldState.miscStatsValue = MiscStatsState(values: ["Whiterun Bounty": 7])
+        adapter.run([.setStat("Whiterun Bounty", to: 2)])
+        #expect(host.fakeWorldState.incrementMiscStatCalls.map(\.amount) == [-5])
+    }
+
     @Test func cellsWithoutAResidentSceneHaveNoOwnerOrLink() {
         host.fakeStreamer.currentCellLocation = Self.cell
         #expect(adapter.currentCellLocation == Self.cell)
