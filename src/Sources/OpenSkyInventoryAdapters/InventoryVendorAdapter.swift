@@ -43,8 +43,13 @@ extension InventoryVendorAdapter {
         game.factions.memberships(of: actor)
     }
 
-    public func residentOwner(of key: ReferenceKey) -> InventoryOwner? {
-        guard let entry = game.streamer.referenceEntry(key: key) else { return nil }
+    /// A merchant chest in a cell that is not loaded reads its plugin placement.
+    public func placedOwner(of key: ReferenceKey) -> InventoryOwner? {
+        let streamer = game.streamer
+        guard
+            let entry = streamer.referenceEntry(key: key) ?? streamer.pluginPlacement(of: key)?
+                .entry
+        else { return nil }
         if let actor = entry.placedActor {
             return .actor(base: actor.base)
         }
@@ -52,7 +57,7 @@ extension InventoryVendorAdapter {
     }
 
     public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
-        game.streamer.cellLocation(of: key)
+        game.streamer.cellLocation(of: key) ?? game.streamer.pluginPlacement(of: key)?.home
     }
 
     public func itemKeywords(of item: FormID) -> [FormID]? {

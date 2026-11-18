@@ -11,9 +11,9 @@ public import OpenSkyInventoryInterface
 public protocol VendorWorld: AnyObject {
     /// `actor`'s faction memberships, seeded from its record on first use.
     func factionMemberships(of actor: ReferenceKey) -> ActorFactionState?
-    /// The owner a streamed-in reference stands for: `.actor` for an ACHR,
-    /// `.container` for a REFR. Nil when `key` is not streamed in.
-    func residentOwner(of key: ReferenceKey) -> InventoryOwner?
+    /// The owner a placed reference stands for: `.actor` for an ACHR, `.container`
+    /// for a REFR, loaded or not. Nil when no plugin places `key`.
+    func placedOwner(of key: ReferenceKey) -> InventoryOwner?
     func cellLocation(of key: ReferenceKey) -> CellSceneLocation?
     /// The item's `KWDA` keywords as the plugin wrote them.
     func itemKeywords(of item: FormID) -> [FormID]?
@@ -138,7 +138,7 @@ public final class VendorCoordinator {
     }
 
     private func stock(at key: ReferenceKey) -> VendorStock? {
-        guard let owner = world?.residentOwner(of: key) else { return nil }
+        guard let owner = world?.placedOwner(of: key) else { return nil }
         return VendorStock(owner: owner, cell: world?.cellLocation(of: key))
     }
 }
