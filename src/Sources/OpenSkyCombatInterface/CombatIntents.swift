@@ -37,6 +37,9 @@ nonisolated public struct MeleeIntent: Equatable, Sendable {
     public var toggleWeaponDrawn = false
     /// Attack button held, a level: a long hold turns the swing into a power attack.
     public var attackHeld = false
+    /// The left attack button held, a level. Only set while the left hand holds a
+    /// weapon; then the block button attacks instead of blocking.
+    public var leftAttackHeld = false
     /// Seconds since the previous frame, for the hold clock.
     public var deltaTime: Float = 0
     /// Movement axes, which pick the power attack's direction.
@@ -52,8 +55,10 @@ nonisolated public struct MeleeIntent: Equatable, Sendable {
         attackHeld: Bool = false,
         deltaTime: Float = 0,
         moveForward: Float = 0,
-        moveRight: Float = 0
+        moveRight: Float = 0,
+        leftAttackHeld: Bool = false
     ) {
+        self.leftAttackHeld = leftAttackHeld
         self.attack = attack
         self.block = block
         self.toggleWeaponDrawn = toggleWeaponDrawn

@@ -256,6 +256,11 @@ final class GraphBackedMeleeWorld: MeleeCombatWorld {
         []
     }
 
+    /// No idle tree here, so every swing plays.
+    func startMeleeKillMove(on _: ReferenceKey, damage _: Float, action _: String) -> Bool {
+        false
+    }
+
     func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {
         nil
     }

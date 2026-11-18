@@ -206,12 +206,12 @@ extension CombatShared {
         /// The attack kills when its hit, after difficulty, takes the target's health to zero
         /// and zero health kills the target.
         @discardableResult
-        func startMeleeKillMove(on target: ReferenceKey, damage: Float, power: Bool) -> Bool {
+        func startMeleeKillMove(on target: ReferenceKey, damage: Float, action: String) -> Bool {
             let attacker = shared.meleeAttacker.key
             return shared.world.startKillMove(KillMoveAttempt(
                 attacker: attacker,
                 target: target,
-                action: power ? KillMoveAttempt.powerAttackAction : KillMoveAttempt.attackAction,
+                action: action,
                 kills: attackKills(target, damage: damage, attacker: attacker)
             ))
         }

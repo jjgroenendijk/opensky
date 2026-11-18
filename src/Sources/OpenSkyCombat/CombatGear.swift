@@ -26,13 +26,18 @@ extension CombatShared {
             guard
                 let equipment = shared.world.gearReads.equipment,
                 let items = shared.items else { return [] }
-            return equipment.equipped(on: .player).map { item in
-                if let weapon = items.weapon(item) {
-                    let enchantment = shared.world.gearReads.enchantmentProfile(of: item)
-                    return .weapon(MeleeWeaponProfile(weapon: weapon, enchantment: enchantment)
-                        .tempered(level: shared.world.gearReads.temperLevel(of: item)))
+            let leftHand = equipment.leftHand(on: .player)
+            return equipment.equipped(on: .player).flatMap { item -> [CombatWornItem] in
+                guard let weapon = items.weapon(item) else {
+                    return [equipment.occupancy(of: item).slots
+                        .contains(.shield) ? .shield : .other]
                 }
-                return equipment.occupancy(of: item).slots.contains(.shield) ? .shield : .other
+                let enchantment = shared.world.gearReads.enchantmentProfile(of: item)
+                let profile = MeleeWeaponProfile(weapon: weapon, enchantment: enchantment)
+                    .tempered(level: shared.world.gearReads.temperLevel(of: item))
+                guard let leftHand, leftHand.item == item else { return [.weapon(profile)] }
+                return leftHand
+                    .paired ? [.weapon(profile), .leftWeapon(profile)] : [.leftWeapon(profile)]
             }
         }
 

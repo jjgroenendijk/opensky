@@ -118,7 +118,7 @@ public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponE
     func meleeBlockSkill(of target: ReferenceKey) -> Float
 
     /// Starts a paired kill move on `target` in place of the swing. False plays the swing.
-    func startMeleeKillMove(on target: ReferenceKey, damage: Float, power: Bool) -> Bool
+    func startMeleeKillMove(on target: ReferenceKey, damage: Float, action: String) -> Bool
 }
 
 extension MeleeCombatWorld {
@@ -132,11 +132,6 @@ extension MeleeCombatWorld {
 }
 
 nonisolated extension MeleeCombatWorld {
-    /// A session with no idle tree plays every swing.
-    public func startMeleeKillMove(on _: ReferenceKey, damage _: Float, power _: Bool) -> Bool {
-        false
-    }
-
     public func meleeBlockSkill(of _: ReferenceKey) -> Float {
         MeleeDamage.defaultBlockSkill
     }

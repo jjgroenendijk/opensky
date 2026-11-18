@@ -76,7 +76,8 @@ from the vanilla idle tree and a clean-room read of the game.
    ([ShouldAttackKill](https://ck.uesp.net/wiki/ShouldAttackKill)) suggests the reverse for a
    dead target; the clean-room read says false.
 4. The idle tree runs under `ActionRightPowerAttack` for a power attack, else under
-   `ActionRightAttack`, with that answer as `ShouldAttackKill`. The vanilla roots run it on the
+   `ActionRightAttack`, with that answer as `ShouldAttackKill`. A left or dual strike uses its
+   own action ([attack input](/engine/attack-input.md#kill-moves)). The vanilla roots run it on the
    subject with an empty target, so it reads the subject's own attack. The kill-move roots sit
    before the attack idles, and their other conditions test the angle, the target's height,
    the `KillMove` global, and the last-enemy rule for the player.

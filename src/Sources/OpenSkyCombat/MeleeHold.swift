@@ -31,6 +31,19 @@ nonisolated public enum MeleePowerDirection: Equatable, Sendable {
     }
 }
 
+nonisolated extension MeleePowerDirection {
+    /// The left hand's power attack this way. The idles spell backward `Back`.
+    var leftHandEventName: String {
+        switch self {
+        case .inPlace: CombatGraphNames.attackPowerStartInPlaceLeftHand
+        case .forward: CombatGraphNames.attackPowerStartForwardLeftHand
+        case .backward: CombatGraphNames.attackPowerStartBackLeftHand
+        case .left: CombatGraphNames.attackPowerStartLeftLeftHand
+        case .right: CombatGraphNames.attackPowerStartRightLeftHand
+        }
+    }
+}
+
 /// What a press became once it was released or held long enough.
 nonisolated enum MeleeHoldOutcome: Equatable, Sendable {
     /// Released early: a swing, or a bash with the guard up.
@@ -44,6 +57,9 @@ nonisolated enum MeleeHoldOutcome: Equatable, Sendable {
 nonisolated struct MeleeHold: Equatable, Sendable {
     /// The INI `fInitialPowerAttackDelay` default: a press held this long powers up.
     static let powerAttackDelay: Float = 0.3
+    /// A press of the other hand this soon after the first makes a dual strike
+    /// (docs/engine/attack-input.md#merging-two-presses).
+    static let dualPressWindow: Float = 0.05
 
     private(set) var heldSeconds: Float = 0
     private(set) var coolDownLeft: Float = 0

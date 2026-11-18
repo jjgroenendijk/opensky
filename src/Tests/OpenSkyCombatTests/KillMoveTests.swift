@@ -50,8 +50,16 @@ struct KillMoveTests {
 
     @Test func theAttackKillsWhenItsHitTakesHealthToZero() {
         let (coordinator, world) = Self.coordinator(health: 20)
-        #expect(coordinator.meleeWorld.startMeleeKillMove(on: Self.npc, damage: 30, power: true))
-        #expect(coordinator.meleeWorld.startMeleeKillMove(on: Self.npc, damage: 5, power: false))
+        #expect(coordinator.meleeWorld.startMeleeKillMove(
+            on: Self.npc,
+            damage: 30,
+            action: "ActionRightPowerAttack"
+        ))
+        #expect(coordinator.meleeWorld.startMeleeKillMove(
+            on: Self.npc,
+            damage: 5,
+            action: KillMoveAttempt.attackAction
+        ))
         #expect(world.killMoves.map(\.kills) == [true, false])
         #expect(world.killMoves.map(\.action) == [
             KillMoveAttempt.powerAttackAction, KillMoveAttempt.attackAction
@@ -61,10 +69,18 @@ struct KillMoveTests {
     @Test func anUnkillableOrDeadTargetIsNotKilled() {
         let (coordinator, world) = Self.coordinator(health: 20)
         world.unkillable = [Self.npc]
-        coordinator.meleeWorld.startMeleeKillMove(on: Self.npc, damage: 30, power: false)
+        coordinator.meleeWorld.startMeleeKillMove(
+            on: Self.npc,
+            damage: 30,
+            action: KillMoveAttempt.attackAction
+        )
         world.unkillable = []
         world.healths[Self.npc] = (0, 100)
-        coordinator.meleeWorld.startMeleeKillMove(on: Self.npc, damage: 30, power: false)
+        coordinator.meleeWorld.startMeleeKillMove(
+            on: Self.npc,
+            damage: 30,
+            action: KillMoveAttempt.attackAction
+        )
         #expect(world.killMoves.map(\.kills) == [false, false])
     }
 

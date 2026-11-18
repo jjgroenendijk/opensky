@@ -31,6 +31,11 @@ extension CombatAcceptanceChain: MeleeCombatWorld {
     /// Both combat worlds declare it; one answer settles which default applies.
     func showDefaultBlood(on _: ReferenceKey, at _: SIMD3<Float>, melee _: Bool) {}
 
+    /// No idle tree here, so every swing plays.
+    func startMeleeKillMove(on _: ReferenceKey, damage _: Float, action _: String) -> Bool {
+        false
+    }
+
     var meleeAttacker: MeleeAttacker {
         MeleeAttacker(
             key: Self.player,
