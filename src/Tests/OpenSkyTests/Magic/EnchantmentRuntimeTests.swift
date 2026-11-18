@@ -202,6 +202,36 @@ struct EnchantmentRuntimeTests {
         )
     }
 
+    /// A made ring may combine bases of two plugins: each base's effects resolve in
+    /// its own plugin, so wearing it grants both.
+    @Test func aMadeEnchantmentCombinesBasesOfTwoPlugins() throws {
+        var world = try EnchantmentRuntimeFixture.world(alsoLoadedAs: ["Patch.esp"])
+        let ring = EnchantmentRuntimeFixture.ringEnchantment
+        let made = MadeEnchantment(
+            bases: [
+                .plugin(name: EnchantmentRuntimeFixture.pluginName.lowercased(), objectID: ring),
+                .plugin(name: "patch.esp", objectID: ring)
+            ],
+            powers: [1, 1],
+            capacity: 0,
+            unskilledCostPerUse: 0,
+            name: "Two Rings"
+        )
+        let profile = try #require(ItemEnchantmentProfile.made(
+            made, item: FormID(EnchantmentRuntimeFixture.enchantedRing), using: world.enchantments
+        ))
+        #expect(profile.parts.map { $0.plugin.lowercased() } == ["base.esm", "patch.esp"])
+
+        let worn = WornEnchantmentApplication.reconcile(
+            worn: [profile], on: .player, using: &world.effects
+        )
+        #expect(worn.storedCount == 2)
+        #expect(
+            world.effects.values.value(at: CombatFortifyBonusIndices.oneHanded, on: .player)
+                == EnchantmentRuntimeFixture.ringFortifyPoints * 2
+        )
+    }
+
     /// Reconciling is idempotent and does the difference only: a second call with
     /// the same set changes nothing, and swapping one item for another applies one
     /// and removes one.

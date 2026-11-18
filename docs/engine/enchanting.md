@@ -109,6 +109,8 @@ Enchanting 0. A made
 enchantment takes a FormID in mod index `0xFF` from `0xFF600000` up, below the brewed potions. The
 enchanted [item copy](/engine/item-copies.md) names it. Its effects are rebuilt from the base
 records whenever they are needed, so they stay right if a base record changes in a mod update.
+Each base keeps its effects in the plugin that holds it, so one made enchantment can combine
+bases from different plugins.
 
 The equipped role goes to an item's best copy, and a made enchantment ranks above a plain copy of
 the same temper. So an enchanted copy is the one an equip wears. The save keeps the component in
@@ -138,7 +140,5 @@ item on Yes.
 
 ## Where OpenSky differs
 
-- A made enchantment combines bases of one plugin only, because one item profile reads all its
-  effect links from one plugin.
 - The magnitude slider is not modelled: a weapon always gets the highest magnitude.
 - An item is not renamed.

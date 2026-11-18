@@ -156,8 +156,9 @@ struct EnchantmentRuntimeRealDataTests {
             let profile = ItemEnchantmentProfile(
                 item: armor.formID,
                 enchantment: ReferenceKey(resolved: enchantment.id),
-                sourcePlugin: enchantment.sourcePlugin,
-                entries: enchantment.record.effects,
+                parts: [ItemEnchantmentPart(
+                    plugin: enchantment.sourcePlugin, entries: enchantment.record.effects
+                )],
                 name: enchantment.displayName,
                 castingType: enchantment.data?.castingType ?? .constantEffect,
                 delivery: enchantment.data?.delivery ?? .selfTarget,

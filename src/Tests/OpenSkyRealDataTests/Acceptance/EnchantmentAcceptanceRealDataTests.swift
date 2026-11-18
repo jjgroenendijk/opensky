@@ -95,20 +95,21 @@ struct EnchantmentAcceptanceRealDataTests {
             implementedOnly: Bool = false,
             detrimental: Bool = false
         ) -> Bool {
-            profile.entries.contains { entry in
-                guard
-                    let data = effects.resolve(entry, fromPlugin: profile.sourcePlugin)?
-                        .effect.data,
-                    data.relatedActorValue == actorValue
-                else { return false }
-                if
-                    implementedOnly,
-                    !MagicEffectPlanner.implements(data.archetype)
-                {
-                    return false
+            profile.parts.flatMap { part in part.entries.map { (part.plugin, $0) } }
+                .contains { plugin, entry in
+                    guard
+                        let data = effects.resolve(entry, fromPlugin: plugin)?
+                            .effect.data,
+                        data.relatedActorValue == actorValue
+                    else { return false }
+                    if
+                        implementedOnly,
+                        !MagicEffectPlanner.implements(data.archetype)
+                    {
+                        return false
+                    }
+                    return !detrimental || data.flags.contains(.detrimental)
                 }
-                return !detrimental || data.flags.contains(.detrimental)
-            }
         }
     }
 

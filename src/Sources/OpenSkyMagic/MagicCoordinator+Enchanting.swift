@@ -27,8 +27,6 @@ nonisolated enum EnchantingRefusal: Error, Equatable, Sendable {
     case unknownBase
     case baseDoesNotFit(String)
     case tooManyBases(allowed: Int)
-    /// OpenSky keeps one plugin per made enchantment; see docs/engine/enchanting.md.
-    case mixedPlugins
     case emptyGem
 }
 
@@ -105,9 +103,6 @@ extension MagicCoordinator.EnchantingTable {
         guard records.count == bases.count else { return .failure(.unknownBase) }
         if let misfit = records.first(where: { !fits($0, item: item, isWeapon: isWeapon) }) {
             return .failure(.baseDoesNotFit(misfit.displayName))
-        }
-        guard Set(records.map { $0.sourcePlugin.lowercased() }).count == 1 else {
-            return .failure(.mixedPlugins)
         }
         guard gem.soul != .empty else { return .failure(.emptyGem) }
         let input = EnchantingInput(

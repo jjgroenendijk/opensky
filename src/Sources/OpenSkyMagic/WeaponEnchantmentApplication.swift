@@ -41,29 +41,27 @@ public enum WeaponEnchantmentApplication {
         var tally = SpellHitReport()
         for target in hit.targets {
             guard let holder = holders[target.key] else { continue }
-            let reaching = SpellHitApplication.entries(
-                profile.entries, reaching: target, settings: settings
-            )
-            guard !reaching.isEmpty else { continue }
-            let scaled = SpellHitApplication.scale(
-                reaching,
-                source: (profile.sourcePlugin, false),
-                on: holder,
-                using: runtime,
-                resistances: resistances
-            )
-            let stored = runtime.apply(
-                scaled.entries,
-                fromPlugin: profile.sourcePlugin,
-                source: profile.source,
-                caster: hit.attacker,
-                on: holder
-            )
-            tally.note(
-                target: scaled.adjustments,
-                entries: scaled.entries.count,
-                stored: stored.count
-            )
+            var adjustments: [SpellMagnitudeAdjustment] = []
+            var entryCount = 0
+            var storedCount = 0
+            for part in profile.parts {
+                let reaching = SpellHitApplication.entries(
+                    part.entries, reaching: target, settings: settings
+                )
+                guard !reaching.isEmpty else { continue }
+                let scaled = SpellHitApplication.scale(
+                    reaching, source: (part.plugin, false), on: holder, using: runtime,
+                    resistances: resistances
+                )
+                storedCount += runtime.apply(
+                    scaled.entries, fromPlugin: part.plugin, source: profile.source,
+                    caster: hit.attacker, on: holder
+                ).count
+                adjustments += scaled.adjustments
+                entryCount += scaled.entries.count
+            }
+            guard entryCount > 0 else { continue }
+            tally.note(target: adjustments, entries: entryCount, stored: storedCount)
         }
         return WeaponEnchantmentReport(
             name: profile.name,
