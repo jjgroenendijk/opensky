@@ -20,11 +20,11 @@ struct InventoryVendorAdapterTests {
     private static let base = FormID(InventoryAdapterFixture.baseID)
 
     @Test func theOwnerFollowsThePlacedRecord() throws {
-        #expect(adapter.residentOwner(of: Self.key) == nil)
+        #expect(adapter.placedOwner(of: Self.key) == nil)
         host.fakeStreamer.referenceEntryKeyResult = try InventoryAdapterFixture.actorEntry()
-        #expect(adapter.residentOwner(of: Self.key) == .actor(base: Self.base))
+        #expect(adapter.placedOwner(of: Self.key) == .actor(base: Self.base))
         host.fakeStreamer.referenceEntryKeyResult = try InventoryAdapterFixture.referenceEntry()
-        #expect(adapter.residentOwner(of: Self.key) == .container(base: Self.base))
+        #expect(adapter.placedOwner(of: Self.key) == .container(base: Self.base))
     }
 
     @Test func membershipsAndCellsComeFromTheirPorts() {

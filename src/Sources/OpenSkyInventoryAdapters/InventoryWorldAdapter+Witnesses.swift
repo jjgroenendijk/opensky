@@ -140,8 +140,8 @@ extension InventoryWorldAdapter {
         vendor.factionMemberships(of: actor)
     }
 
-    public func residentOwner(of key: ReferenceKey) -> InventoryOwner? {
-        vendor.residentOwner(of: key)
+    public func placedOwner(of key: ReferenceKey) -> InventoryOwner? {
+        vendor.placedOwner(of: key)
     }
 
     public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {

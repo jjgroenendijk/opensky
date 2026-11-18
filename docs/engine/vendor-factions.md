@@ -102,9 +102,9 @@ container chosen by hand as a merchant keeps each item's stolen state.
 ## The chest
 
 Most merchant chests are in the shop's own interior. Of the 116 `VENC` references on the local
-install, 91 are in interior cells. So a player trading in person has the chest loaded. A chest
-that is not loaded is refused with a reason. It is not read as empty, because its stock is a
-leveled list, and an empty shop would look like a vendor with nothing to sell.
+install, 91 are in interior cells. So a player trading in person mostly has the chest loaded. A
+chest in a cell that is not loaded trades from its plugin placement: its stock comes from its base
+container, and it restocks on the same clock as a loaded one.
 
 ## Barter from dialogue
 
@@ -115,7 +115,3 @@ speaker's vendor, so dialogue needs no extra code for barter.
 
 The Creation Kit says the original shows an empty menu for an actor that is not loaded, or whose
 merchant conditions fail. OpenSky refuses instead, and says why.
-
-## Not done yet
-
-- A merchant chest that is not loaded cannot be traded from, and so it cannot restock either.

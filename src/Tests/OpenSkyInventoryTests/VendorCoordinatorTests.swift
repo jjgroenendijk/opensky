@@ -24,7 +24,7 @@ struct VendorCoordinatorTests {
             memberships[actor]
         }
 
-        func residentOwner(of key: ReferenceKey) -> InventoryOwner? {
+        func placedOwner(of key: ReferenceKey) -> InventoryOwner? {
             owners[key]
         }
 
