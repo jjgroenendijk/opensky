@@ -217,7 +217,7 @@ and leaves its decal ([impacts and decals](/rendering/decals.md)).
 | --- | --- | --- |
 | `R` | Draw or sheath | One press, one binding for both |
 | Left mouse | Attack | One press (the first click still captures the cursor) |
-| Right mouse | Block | Held, raised on press and release |
+| Right mouse | Block, or the left attack with a weapon in the left hand | Held, raised on press and release |
 
 These take the same input path as sneak, sprint, and jump. The fixed movement step never reads
 them: attacking does not move the capsule. The graph does that, if its attack clips carry movement.
@@ -227,3 +227,22 @@ The game's two-button rules, with left, dual, and power attacks, are in
 
 Losing cursor capture drops the guard, because a block held through a lost mouse-up would stay up
 forever. The drawn state stays, like sneak, because the player set it on purpose.
+
+## The left hand
+
+A one-handed weapon equipped into the left hand ([inventory state](/engine/inventory-state.md#the-left-hand))
+takes the block button. The player cannot block then; UESP
+([Block](https://en.uesp.net/wiki/Skyrim:Block)) says the same. The left button follows the
+[attack input](/engine/attack-input.md) rules:
+
+- A tap raises `attackStartLeftHand`. A hold past 0.3 seconds raises the left power attack for the
+  move direction: `attackPowerStartInPlaceLeftHand`, `attackPowerStartForwardLeftHand`,
+  `attackPowerStartBackLeftHand`, `attackPowerStartLeftLeftHand`, or
+  `attackPowerStartRightLeftHand`. These are the `animationEvent` of the install's left-hand
+  attack idles.
+- When both hands hold a sword, dagger, war axe, or mace, a press of the other button within 0.05
+  seconds of the first makes one dual press. A tap raises `attackStartDualWield`. A hold of both
+  buttons raises `attackPowerStartDualWield`.
+- A left strike uses the left weapon's damage, reach, weight, and enchantment. A dual strike lands
+  both weapons on its contact frame, one blow each, right first.
+- A left power attack pays the left weapon's stamina. A dual power attack pays both weapons'.

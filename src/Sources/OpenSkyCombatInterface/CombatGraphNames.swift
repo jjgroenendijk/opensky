@@ -24,6 +24,22 @@ nonisolated public enum CombatGraphNames: Sendable {
     public static let attackPowerStartRight = "attackPowerStartRight"
     /// An attack press with the guard up, and the held one.
     public static let bashStart = "bashStart"
+    /// The left hand's and both hands' attacks: the `animationEvent` of the install's
+    /// left-hand and dual-wield attack idles.
+    public static let attackStartLeftHand = "attackStartLeftHand"
+    public static let attackStartDualWield = "attackStartDualWield"
+    public static let attackPowerStartDualWield = "attackPowerStartDualWield"
+    public static let attackPowerStartInPlaceLeftHand = "attackPowerStartInPlaceLeftHand"
+    public static let attackPowerStartForwardLeftHand = "attackPowerStartForwardLeftHand"
+    public static let attackPowerStartBackLeftHand = "attackPowerStartBackLeftHand"
+    public static let attackPowerStartLeftLeftHand = "attackPowerStartLeftLeftHand"
+    public static let attackPowerStartRightLeftHand = "attackPowerStartRightLeftHand"
+    static let otherHandStarts = [
+        attackStartLeftHand, attackStartDualWield, attackPowerStartDualWield,
+        attackPowerStartInPlaceLeftHand, attackPowerStartForwardLeftHand,
+        attackPowerStartBackLeftHand, attackPowerStartLeftLeftHand,
+        attackPowerStartRightLeftHand
+    ]
     public static let bashPowerStart = "bashPowerStart"
     public static let bashStop = "bashStop"
     /// Raising and dropping the guard.
@@ -46,7 +62,8 @@ nonisolated public enum CombatGraphNames: Sendable {
         attackStart, attackRelease, attackStop,
         attackPowerStartInPlace, attackPowerStartForward, attackPowerStartBackward,
         attackPowerStartLeft, attackPowerStartRight,
-        bashStart, bashPowerStart,
+        bashStart, bashPowerStart
+    ] + otherHandStarts + [
         blockStart, blockStop,
         staggerStart, staggerStop,
         recoilStart, recoilStop
@@ -89,11 +106,11 @@ nonisolated public enum CombatGraphNames: Sendable {
     public static let blockHitStart = "blockHitStart"
 
     /// Every event that starts a swing or a bash.
-    public static let strikeStarts: Set<String> = [
+    public static let strikeStarts: Set<String> = Set([
         attackStart, bashStart, bashPowerStart,
         attackPowerStartInPlace, attackPowerStartForward, attackPowerStartBackward,
         attackPowerStartLeft, attackPowerStartRight
-    ]
+    ]).union(otherHandStarts)
 
     /// Every event the melee state machine acts on when the graph fires it.
     public static let observedEvents = [

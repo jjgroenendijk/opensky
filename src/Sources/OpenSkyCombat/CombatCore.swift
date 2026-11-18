@@ -11,6 +11,8 @@ import OpenSkyProgressionInterface
 /// One item the player wears, as the hand rules see it.
 nonisolated public enum CombatWornItem: Equatable, Sendable {
     case weapon(MeleeWeaponProfile)
+    /// A one-handed weapon equipped into the left hand.
+    case leftWeapon(MeleeWeaponProfile)
     case shield
     case other
 }
@@ -27,10 +29,15 @@ nonisolated public struct ReadiedHands: Equatable, Sendable {
 nonisolated public struct CombatHands: Equatable, Sendable {
     public let weapon: MeleeWeaponProfile
     public let offHand: CombatHandType
+    /// The left hand's melee weapon, which then attacks instead of blocking.
+    public let leftWeapon: MeleeWeaponProfile?
 
-    public init(weapon: MeleeWeaponProfile, offHand: CombatHandType) {
+    public init(
+        weapon: MeleeWeaponProfile, offHand: CombatHandType, leftWeapon: MeleeWeaponProfile? = nil
+    ) {
         self.weapon = weapon
         self.offHand = offHand
+        self.leftWeapon = leftWeapon
     }
 }
 
@@ -80,7 +87,8 @@ nonisolated public enum CombatCore {
         let held = wornHands(worn)
         return CombatHands(
             weapon: readied.right ? .readiedSpell : held.weapon,
-            offHand: readied.left ? .spell : held.offHand
+            offHand: readied.left ? .spell : held.offHand,
+            leftWeapon: readied.left ? nil : held.leftWeapon
         )
     }
 
@@ -90,6 +98,14 @@ nonisolated public enum CombatCore {
             return profile
         }
         let emptyOffHand: CombatHandType = worn.contains(.shield) ? .shield : .handToHand
+        let left = worn.lazy.compactMap { item -> MeleeWeaponProfile? in
+            guard case let .leftWeapon(profile) = item else { return nil }
+            return profile
+        }.first
+        if let left {
+            let right = weapons.first { !$0.handType.occupiesBothHands } ?? .unarmed
+            return CombatHands(weapon: right, offHand: left.handType, leftWeapon: left)
+        }
         guard let right = weapons.first else {
             return CombatHands(weapon: .unarmed, offHand: emptyOffHand)
         }
@@ -97,7 +113,11 @@ nonisolated public enum CombatCore {
             return CombatHands(weapon: right, offHand: right.handType)
         }
         if weapons.count > 1 {
-            return CombatHands(weapon: right, offHand: weapons[1].handType)
+            let second = weapons[1]
+            return CombatHands(
+                weapon: right, offHand: second.handType,
+                leftWeapon: second.handType.isOneHandedMelee ? second : nil
+            )
         }
         return CombatHands(weapon: right, offHand: emptyOffHand)
     }
@@ -115,9 +135,13 @@ nonisolated public enum CombatCore {
     /// While a shot is nocked or drawn, block zooms the bow and raises no guard.
     public static func meleeIntent(
         _ intent: MeleeIntent, readied: ReadiedHands, staffInRight: Bool = false,
-        bowAiming: Bool = false
+        bowAiming: Bool = false, leftArmed: Bool = false
     ) -> MeleeIntent {
         var masked = intent
+        if leftArmed {
+            masked.leftAttackHeld = masked.block
+            masked.block = false
+        }
         if bowAiming {
             masked.block = false
         }

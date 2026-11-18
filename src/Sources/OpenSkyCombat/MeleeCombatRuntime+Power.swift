@@ -20,7 +20,7 @@ extension MeleeCombatRuntime {
         let forced = pendingPower
         pendingPower = false
         let outcome = hold.advance(
-            held: intent.attackHeld || forced,
+            held: isHeld(intent) || forced,
             deltaTime: forced ? MeleeHold.powerAttackDelay : intent.deltaTime
         )
         if let outcome {
@@ -49,8 +49,10 @@ extension MeleeCombatRuntime {
     }
 
     /// The hit of the swing in progress, with its power or bash terms.
-    func resolveDamage(on target: ReferenceKey, world: any MeleeCombatWorld) -> MeleeDamageResult {
-        var strike = world.meleeStrike(blow(world: world), on: target)
+    func resolveDamage(
+        on target: ReferenceKey, weapon: MeleeWeaponProfile, world: any MeleeCombatWorld
+    ) -> MeleeDamageResult {
+        var strike = world.meleeStrike(blow(world: world, weapon: weapon), on: target)
         if strikeKind == .power {
             strike.powerMultiplier *= 1 + powerAttacks.damageBonus
         }
@@ -82,7 +84,7 @@ extension MeleeCombatRuntime {
     }
 
     /// The swing in progress, as the perk terms read it.
-    func blow(world: any MeleeCombatWorld) -> CombatBlow {
+    func blow(world: any MeleeCombatWorld, weapon: MeleeWeaponProfile) -> CombatBlow {
         CombatBlow(
             attacker: world.meleeAttacker.key,
             weapon: weapon.weapon,
@@ -95,14 +97,20 @@ extension MeleeCombatRuntime {
     /// CK wiki "Perk Entry Point", Set Sweep Attack: without the perk a swing strikes
     /// the nearest actor once.
     func struck(_ hits: [MeleeHit], world: any MeleeCombatWorld) -> [MeleeHit] {
-        guard let nearest = hits.first, !world.meleeSweeps(blow(world: world)) else { return hits }
+        guard
+            let nearest = hits.first, !world.meleeSweeps(blow(world: world, weapon: strikeWeapon))
+        else { return hits }
         return hitThisSwing.isEmpty ? [nearest] : []
     }
 
     /// A bash reaches `fCombatBashReach` whatever the weapon.
     func strikeReach(actorScale: Float) -> Float {
         guard strikeKind.isBash else {
-            return MeleeSwing.reach(weapon: weapon, settings: settings, actorScale: actorScale)
+            return MeleeSwing.reach(
+                weapon: strikeWeapon,
+                settings: settings,
+                actorScale: actorScale
+            )
         }
         let scale = actorScale.isFinite && actorScale > 0 ? actorScale : 1
         return max(0, powerAttacks.bashReach) * scale
@@ -116,16 +124,12 @@ extension MeleeCombatRuntime {
             return
         }
         strikeKind = kind
+        strikeHand = pendingHand
         powerDirection = kind == .power ? direction : nil
         if startsKillMove(world: world) {
             return
         }
-        let event = switch kind {
-        case .normal: CombatGraphNames.attackStart
-        case .power: direction.eventName
-        case .bash: CombatGraphNames.bashStart
-        case .powerBash: CombatGraphNames.bashPowerStart
-        }
+        let event = startEvent(kind, direction: direction)
         if kind == .power {
             hold.startedPowerAttack(coolDown: powerAttacks.coolDown)
         }
@@ -137,9 +141,11 @@ extension MeleeCombatRuntime {
     private func pay(for kind: MeleeStrikeKind, world: any MeleeCombatWorld) -> Bool {
         switch kind {
         case .power:
-            world.payMeleeStamina(world.meleePowerAttackStamina(
-                powerAttacks.powerAttackStamina(weight: weapon.weight), weapon: weapon.weapon
-            ))
+            world.payMeleeStamina(strikeWeapons(for: pendingHand).reduce(0) { cost, swung in
+                cost + world.meleePowerAttackStamina(
+                    powerAttacks.powerAttackStamina(weight: swung.weight), weapon: swung.weapon
+                )
+            })
         case .powerBash:
             world.canPowerBash() && world.payMeleeStamina(powerAttacks.powerBashStamina)
         case .normal, .bash:

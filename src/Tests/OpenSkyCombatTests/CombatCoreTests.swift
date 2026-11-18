@@ -40,7 +40,28 @@ struct CombatCoreTests {
     @Test func aSecondWeaponIsTheOffHandBeforeAShield() {
         let worn: [CombatWornItem] = [.weapon(Self.sword), .shield, .weapon(Self.dagger)]
         let hands = CombatCore.hands(worn: worn, readied: .none)
-        #expect(hands == CombatHands(weapon: Self.sword, offHand: .dagger))
+        #expect(hands == CombatHands(weapon: Self.sword, offHand: .dagger, leftWeapon: Self.dagger))
+    }
+
+    @Test func theLeftHandWeaponFillsTheOffHandAndAPairFillsBoth() {
+        let left = CombatCore.hands(worn: [.leftWeapon(Self.dagger), .shield], readied: .none)
+        #expect(left == CombatHands(weapon: .unarmed, offHand: .dagger, leftWeapon: Self.dagger))
+        let pair = CombatCore.hands(
+            worn: [.weapon(Self.sword), .leftWeapon(Self.sword)], readied: .none
+        )
+        #expect(pair == CombatHands(weapon: Self.sword, offHand: .sword, leftWeapon: Self.sword))
+        let spell = CombatCore.hands(
+            worn: [.leftWeapon(Self.sword)], readied: ReadiedHands(right: false, left: true)
+        )
+        #expect(spell.leftWeapon == nil)
+    }
+
+    @Test func anArmedLeftHandTurnsBlockIntoItsAttack() {
+        let intent = CombatCore.meleeIntent(
+            MeleeIntent(block: true), readied: .none, leftArmed: true
+        )
+        #expect(!intent.block)
+        #expect(intent.leftAttackHeld)
     }
 
     @Test func aReadiedSpellReplacesTheHandItIsIn() {

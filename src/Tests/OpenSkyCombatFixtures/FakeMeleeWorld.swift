@@ -21,6 +21,8 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
     /// The player's stamina; nil pays for everything without counting.
     public var stamina: Float?
     public private(set) var staminaPaid: [Float] = []
+    /// The AACT action of each kill move asked for, in order.
+    public private(set) var killMoveActions: [String] = []
     public var ownsPowerBash = false
     /// Whether the attacker's perks make a swing hit every actor it reaches.
     public var sweeps = false
@@ -98,8 +100,9 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
         impacts.append(impact)
     }
 
-    public func startMeleeKillMove(on target: ReferenceKey, damage: Float, power _: Bool) -> Bool {
+    public func startMeleeKillMove(on target: ReferenceKey, damage: Float, action: String) -> Bool {
         killMoveDamage[target] = damage
+        killMoveActions.append(action)
         return playsKillMoves
     }
 

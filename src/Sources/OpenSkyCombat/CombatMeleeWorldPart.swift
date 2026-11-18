@@ -99,8 +99,8 @@ final class CombatMeleeWorldPart: CombatSharedPart, MeleeCombatWorld {
     }
 
     @discardableResult
-    func startMeleeKillMove(on target: ReferenceKey, damage: Float, power: Bool) -> Bool {
-        shared.damage.startMeleeKillMove(on: target, damage: damage, power: power)
+    func startMeleeKillMove(on target: ReferenceKey, damage: Float, action: String) -> Bool {
+        shared.damage.startMeleeKillMove(on: target, damage: damage, action: action)
     }
 }
 

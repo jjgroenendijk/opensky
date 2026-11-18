@@ -43,6 +43,14 @@ public final class MeleeCombatRuntime {
     /// two-handed weapon occupies both hands while still being one profile.
     /// Empty until equipment resolves one.
     public var offHand = CombatHandType.handToHand
+    /// The left hand's melee weapon. With one, the block button attacks with it.
+    public var leftWeapon: MeleeWeaponProfile?
+    /// The hand of the swing in progress, set with `strikeKind`.
+    public internal(set) var strikeHand = MeleeStrikeHand.right
+    /// The hand of the press the hold clock is timing.
+    var pendingHand = MeleeStrikeHand.right
+    var pendingLeftAttack = false
+    var wasLeftHeld = false
 
     /// Resolves the IPCT chain for a landed hit. Nil in a synthetic session,
     /// and then hits are silent rather than absent.
@@ -108,6 +116,7 @@ public final class MeleeCombatRuntime {
         if intent.toggleWeaponDrawn {
             requestWeaponToggle()
         }
+        noteLeftButton(intent.leftAttackHeld)
         // Variables before events, the same write-then-raise order the stagger
         // path uses: the equip event a draw raises is acted on against the hand
         // types, so a frame that equips a sword and draws it in one go must not
@@ -181,6 +190,7 @@ public final class MeleeCombatRuntime {
         pendingPower = false
         queuedOutcome = nil
         hold.reset()
+        resetHands()
         strikeKind = .normal
         powerDirection = nil
     }
@@ -224,15 +234,7 @@ public final class MeleeCombatRuntime {
                 on: nil
             )
         }
-        if pendingAttack {
-            pendingAttack = false
-            // Dropped rather than queued when the weapon is away: a press that
-            // sat in a latch would fire a swing the moment the draw finished,
-            // seconds after the player asked for it. Mid-swing it may chain.
-            if state.drawState.canAttack, hold.pending == nil, queuedOutcome == nil {
-                hold.pressed(asBash: blocking)
-            }
-        }
+        latchPresses(blocking: blocking)
     }
 
     /// Raises the pair of events one draw or sheath request implies. `weaponDraw`
@@ -302,14 +304,18 @@ public final class MeleeCombatRuntime {
             attacker: attacker.key,
             alreadyHit: hitThisSwing
         )
-        return struck(hits, world: world).map { apply($0, world: world) }
+        return struck(hits, world: world).flatMap { hit in
+            strikeWeapons.map { apply(hit, weapon: $0, world: world) }
+        }
     }
 
     /// Damage, stagger, enchantment and impact sound for one hit.
-    private func apply(_ hit: MeleeHit, world: any MeleeCombatWorld) -> MeleeHitRecord {
+    private func apply(
+        _ hit: MeleeHit, weapon: MeleeWeaponProfile, world: any MeleeCombatWorld
+    ) -> MeleeHitRecord {
         hitThisSwing.insert(hit.target)
         hitCount += 1
-        let damage = resolveDamage(on: hit.target, world: world)
+        let damage = resolveDamage(on: hit.target, weapon: weapon, world: world)
         let landing = MeleeBlowLanding(
             world: world, weapon: weapon, kind: strikeKind,
             skillUses: skillUses, staggers: staggers, impacts: impacts

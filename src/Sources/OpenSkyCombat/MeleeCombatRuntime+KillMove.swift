@@ -22,9 +22,12 @@ extension MeleeCombatRuntime {
             swing: volume, targets: world.meleeTargets(), attacker: attacker.key
         )
         guard let target = hits.first?.target else { return false }
-        let damage = resolveDamage(on: target, world: world)
+        let damage = strikeWeapons.reduce(0) {
+            $0 + resolveDamage(on: target, weapon: $1, world: world).applied
+        }
         return world.startMeleeKillMove(
-            on: target, damage: damage.applied, power: strikeKind == .power
+            on: target, damage: damage,
+            action: KillMoveAttempt.action(hand: strikeHand, power: strikeKind == .power)
         )
     }
 }

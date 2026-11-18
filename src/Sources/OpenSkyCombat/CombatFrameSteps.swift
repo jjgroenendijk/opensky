@@ -22,10 +22,12 @@ struct CombatFrameSteps {
         let hands = CombatCore.hands(worn: gear.wornItems(), readied: readied)
         melee.weapon = hands.weapon
         melee.offHand = hands.offHand
+        melee.leftWeapon = hands.leftWeapon
         let swing = melee.state.swingID
         melee.acceptFrame(CombatCore.meleeIntent(
             intent, readied: readied, staffInRight: hands.weapon.handType == .staff,
-            bowAiming: shared.archery?.state.phase.isDrawing == true
+            bowAiming: shared.archery?.state.phase.isDrawing == true,
+            leftArmed: hands.leftWeapon != nil
         ))
         noteHits(melee.handleGraphEvents(events))
         noteWeaponUse(.swing, changed: melee.state.swingID != swing)
