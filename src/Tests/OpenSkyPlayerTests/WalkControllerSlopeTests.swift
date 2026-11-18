@@ -91,6 +91,29 @@ struct WalkControllerSlopeTests {
     }
 
     @Test
+    func aStairOfSeveralTreadsIsClimbedTreadByTread() {
+        // Three treads of 18 units, each 40 deep, as on the Riverwood walkway stairs.
+        let floor = DynamicBodyScene.floor(extent: 400)
+        let treads = (0 ..< 3).map { index in
+            let top = Float(index + 1) * 18
+            let start = 40 + Float(index) * 40
+            return DynamicBodyScene.box(
+                center: SIMD3((start + 400) / 2, 0, top / 2),
+                half: SIMD3((400 - start) / 2, 100, top / 2)
+            )
+        }
+        var camera = CapsuleCollisionTests.camera(feet: .zero)
+        var controller = WalkController(cameraPosition: camera.position)
+        Self.walk(
+            &controller, camera: &camera, forward: 1, steps: 120,
+            query: DynamicBodyScene.candidateQuery([floor] + treads)
+        )
+
+        #expect(abs(controller.feetPosition.z - 54) < 0.5)
+        #expect(controller.isGrounded)
+    }
+
+    @Test
     func aDropWithinTheGroundSearchKeepsTheWalkerOnTheGround() {
         let ledge = DynamicBodyScene.box(center: SIMD3(-100, 0, 20), half: SIMD3(100, 100, 20))
         let floor = DynamicBodyScene.floor(extent: 400)
