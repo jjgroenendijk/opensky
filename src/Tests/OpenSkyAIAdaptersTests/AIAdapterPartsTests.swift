@@ -68,6 +68,23 @@ struct AIAdapterPartsTests {
         #expect(host.fakeWorldState.setCalls.isEmpty)
     }
 
+    @Test func aHouseExitReadsOnlyTheLoadedDoorsThatLeadSomewhere() {
+        let scene = FakeCellScenePort()
+        scene.referencesValue = .empty
+        let destination = PlacedReference.TeleportDestination(
+            door: FormID(0x41), placement: .init(position: .zero, rotation: .zero),
+            flags: .init(rawValue: 0)
+        )
+        scene.doors = [
+            PlacedDoor(reference: FormID(0x40), position: .zero, destination: destination),
+            PlacedDoor(reference: FormID(0x42), position: .zero, destination: nil)
+        ]
+        host.fakeStreamer.interiorScene = scene
+        host.fakeStreamer
+            .placedRecords = PlacedRecordLookup(index: LoadOrderRecordIndex(plugins: []))
+        #expect(adapter.worlds.loadedExit(from: FormID(0x900)) == nil, "no door entry is loaded")
+    }
+
     @Test func aPlayerAtRestMakesNoActionSound() {
         let traits = adapter.frames.detectionSense.playerDetectionTraits(at: .zero, eyeHeight: 120)
         #expect(traits.actionSound == 0)
