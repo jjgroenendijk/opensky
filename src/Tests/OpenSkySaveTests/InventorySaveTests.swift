@@ -34,7 +34,8 @@ struct InventorySaveTests {
                 InventoryStack(item: gold, count: count),
                 InventoryStack(item: helmet, count: 2)
             ],
-            equipped: [helmet, sword]
+            equipped: [helmet, sword],
+            leftHand: LeftHandHold(item: sword)
         )
     }
 
@@ -273,6 +274,8 @@ struct InventorySaveTests {
         writer.writeUInt32(0)
         writer.writeUInt32(0)
         writer.writeUInt32(0)
+        writer.writeUInt32(0)
+        writer.writeUInt8(0)
         let data = OpenSkySaveFixture.file(chunks: [
             OpenSkySaveFixture.chunk(OpenSkySaveFormat.ChunkTag.inventories, writer.data)
         ])

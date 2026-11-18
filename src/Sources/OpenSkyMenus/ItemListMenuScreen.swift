@@ -55,7 +55,7 @@ public class ItemListMenuScreen: MenuScreen<ItemListMovieEvent> {
         case .move(.left): model.moveCategory(by: -1)
         case .move(.right): model.moveCategory(by: 1)
         case .button(.accept): chooseSelected(alternate: false)
-        case .button(.xButton): chooseSelected(alternate: true)
+        case .button(.xButton), .button(.leftEquip): chooseSelected(alternate: true)
         case .button(.cancel): requestClose()
         case .button(.yButton): runAuxiliary()
         case .pointer, .release, .activate: return

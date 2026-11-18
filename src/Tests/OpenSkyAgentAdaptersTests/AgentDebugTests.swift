@@ -3,10 +3,11 @@ import Foundation
 // Debug commands that name a reference fail before they reach a port when the reference
 // is not loaded, and the clock commands reach the runtime state.
 
-import OpenSkyAgentAdapters
+@testable import OpenSkyAgentAdapters
 import OpenSkyAgentControl
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyRenderCore
 import OpenSkySessionTesting
 import Testing
@@ -33,6 +34,16 @@ struct AgentDebugTests {
             }
         } catch {
             return error.code
+        }
+    }
+
+    @Test func anEquipThatPutNothingOnFails() throws {
+        try AgentItemsAdapter.requireEquipped(
+            .equipped(item: "Iron Sword", target: "player", changed: true, unequipped: []),
+            text: ""
+        )
+        #expect(throws: AgentFailure.self) {
+            try AgentItemsAdapter.requireEquipped(.noEquipment, text: "No equipment.")
         }
     }
 

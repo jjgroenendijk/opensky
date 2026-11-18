@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 public import OpenSkyInventoryInterface
 public import OpenSkyWorldState
 
@@ -38,7 +39,8 @@ nonisolated enum OpenSkySaveInventoryWriter {
     }
 
     /// Stack count, then item and count per stack; equipped count, then FormIDs; then the
-    /// script-set outfit and sleep outfit, 0 for none. Both lists are pre-sorted. One row per item,
+    /// script-set outfit and sleep outfit, 0 for none; then the left-hand item, 0 for none, and
+    /// a pair byte. Both lists are pre-sorted. One row per item,
     /// stolen copies summed: the layout has no per-entry
     /// length, so the stolen split goes in the additive `STOL` chunk.
     private static func writeItems(
@@ -57,6 +59,8 @@ nonisolated enum OpenSkySaveInventoryWriter {
         }
         writer.writeUInt32(inventory.outfit?.rawValue ?? 0)
         writer.writeUInt32(inventory.sleepOutfit?.rawValue ?? 0)
+        writer.writeUInt32(inventory.leftHand?.item.rawValue ?? 0)
+        writer.writeUInt8(inventory.leftHand?.paired == true ? 1 : 0)
     }
 
     /// One row per item with honest and stolen copies summed, in the same

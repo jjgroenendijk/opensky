@@ -80,4 +80,14 @@ public protocol EquipmentAccess {
     /// Unequips `item` on `holder`. Returns true when the stored state changed.
     @discardableResult
     func unequip(_ item: FormID, on holder: InventoryHolder) -> Bool
+
+    /// Takes worn weapons and shields out of `hands`. Returns the items no longer worn.
+    @discardableResult
+    func emptyHands(_ hands: HandSlots, on holder: InventoryHolder) -> [FormID]
+
+    /// Every hand a worn item holds.
+    func heldHands(on holder: InventoryHolder) -> HandSlots
+
+    /// The weapon in `holder`'s left hand, or nil.
+    func leftHand(on holder: InventoryHolder) -> LeftHandHold?
 }

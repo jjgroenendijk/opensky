@@ -12,6 +12,8 @@ nonisolated public struct PlayerRigRequest: Equatable, Sendable {
     public let eyeTextureSet: FormID?
     /// The first-person NIF rig from `sFirstPersonSkeleton`; nil keeps the vanilla path.
     public var firstPersonSkeletonPath: String?
+    /// The weapon in the left hand; nil draws a second weapon there only by set order.
+    public var leftHand: LeftHandHold?
 
     public init(
         generation: Int, firstPerson: Bool, equipped: [FormID]?,

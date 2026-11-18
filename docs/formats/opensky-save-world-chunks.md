@@ -106,6 +106,8 @@ One entry per owner whose items differ from the plugins:
 | bytes | equipped | uint32 FormID each |
 | uint32 | outfit | the default outfit a script set with `SetOutfit`, 0 for none |
 | uint32 | sleepOutfit | the sleep outfit a script set, 0 for none |
+| uint32 | leftHand | the equipped weapon in the left hand, 0 for none |
+| uint8 | paired | 1 when a second copy of `leftHand` is in the right hand |
 
 One row per item. Stolen and honest copies are added together here; the stolen part is in
 `STOL` ([actor chunks](/formats/opensky-save-actor-chunks.md)). A flag cannot be added to

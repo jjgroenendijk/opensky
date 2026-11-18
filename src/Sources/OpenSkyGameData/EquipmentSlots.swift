@@ -89,7 +89,7 @@ nonisolated public struct EquippableItem: Equatable, Sendable {
     }
 
     /// A WEAP: held in a hand, with a world model of its own.
-    var isWeapon: Bool {
+    public var isWeapon: Bool {
         !occupancy.hands.isEmpty && modelPath != nil
     }
 }

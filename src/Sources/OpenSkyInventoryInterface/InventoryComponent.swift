@@ -6,6 +6,7 @@
 
 import Foundation
 public import OpenSkyFormatsESM
+public import OpenSkyGameData
 public import OpenSkyWorldState
 
 /// One stack of identical items: a base FormID, a stolen flag, and a count. The
@@ -80,6 +81,9 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
     /// The sleep outfit a script set. Stored only: the game never wears one
     /// (docs/engine/inventory-state.md).
     public var sleepOutfit: FormID?
+    /// The weapon in the left hand, an item of `equipped`. Nil when the left hand holds no
+    /// weapon, or when a second weapon is only worn by a baseline outfit.
+    public private(set) var leftHand: LeftHandHold?
 
     /// Nothing held and nothing equipped, which is also the player's baseline.
     public static let empty = ReferenceInventoryState()
@@ -96,7 +100,7 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
     /// arithmetic outright.
     public init(
         stacks: [InventoryStack] = [], equipped: [FormID] = [],
-        outfit: FormID? = nil, sleepOutfit: FormID? = nil
+        outfit: FormID? = nil, sleepOutfit: FormID? = nil, leftHand: LeftHandHold? = nil
     ) {
         self.outfit = outfit
         self.sleepOutfit = sleepOutfit
@@ -114,6 +118,17 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
             return InventoryStack(item: FormID(key.item), count: count, stolen: key.stolen)
         }
         self.equipped = Set(equipped.map(\.rawValue)).sorted().map(FormID.init(stored:))
+        self.leftHand = Self.normalized(leftHand, equipped: self.equipped, stacks: self.stacks)
+    }
+
+    /// The hold only names a worn item, and a pair needs two copies.
+    private static func normalized(
+        _ hold: LeftHandHold?, equipped: [FormID], stacks: [InventoryStack]
+    ) -> LeftHandHold? {
+        guard let hold, equipped.contains(hold.item) else { return nil }
+        let held = stacks.reduce(Int64(0)) { $0 + ($1.item == hold.item ? Int64($1.count) : 0) }
+        // A pair with one copy left keeps it in the right hand, as a removal does.
+        return hold.paired && held < 2 ? nil : hold
     }
 
     /// The compound stack key: base form, then honest before stolen. Ordering
@@ -132,6 +147,7 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
 
     var isEmpty: Bool {
         stacks.isEmpty && equipped.isEmpty && outfit == nil && sleepOutfit == nil
+            && leftHand == nil
     }
 
     /// How many of `item` the owner holds, honest and stolen copies together;
@@ -254,9 +270,16 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
                 item, stolen: true, with: self.count(of: item, stolen: true) - split.stolen
             )
         }
-        // Nothing can stay worn once none of it is held.
+        // Nothing can stay worn once none of it is held, and a pair needs two copies:
+        // the right hand keeps the last one.
         if result.count(of: item) == 0 {
             result.equipped.removeAll { $0 == item }
+        }
+        if let hold = result.leftHand, hold.item == item {
+            let remaining = result.count(of: item)
+            if remaining == 0 || (hold.paired && remaining < 2) {
+                result.leftHand = nil
+            }
         }
         return result
     }
@@ -293,7 +316,8 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
             stacks: kept,
             equipped: equipped.filter { held.contains($0) },
             outfit: outfit,
-            sleepOutfit: sleepOutfit
+            sleepOutfit: sleepOutfit,
+            leftHand: leftHand
         )
         return (remaining, taken)
     }
@@ -311,18 +335,27 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
         return result
     }
 
-    /// This inventory with `item` no longer equipped.
+    /// This inventory with `item` no longer equipped, in either hand.
     public func unequipping(_ item: FormID) -> Self {
         var result = self
         result.equipped = equipped.filter { $0 != item }
+        if leftHand?.item == item {
+            result.leftHand = nil
+        }
         return result
     }
 
     /// This inventory with the whole equipped set replaced, normalized the same
-    /// way `init` normalizes it.
+    /// way `init` normalizes it. The left hand keeps its item while it stays worn.
     public func settingEquipped(_ items: [FormID]) -> Self {
+        settingEquipped(items, leftHand: leftHand)
+    }
+
+    /// This inventory with the equipped set and the left hand replaced together.
+    public func settingEquipped(_ items: [FormID], leftHand: LeftHandHold?) -> Self {
         ReferenceInventoryState(
-            stacks: stacks, equipped: items, outfit: outfit, sleepOutfit: sleepOutfit
+            stacks: stacks, equipped: items, outfit: outfit, sleepOutfit: sleepOutfit,
+            leftHand: leftHand
         )
     }
 

@@ -41,6 +41,15 @@ public struct EquipmentRuntime: EquipmentAccess {
     /// - Throws: `EquipmentError.notHeld`, `EquipmentError.notEquippable`.
     @discardableResult
     public func equip(_ item: FormID, on holder: InventoryHolder) throws -> EquipmentChange {
+        try equip(item, on: holder, hand: .rightHand)
+    }
+
+    /// Equips `item` into `hand`. Only a one-handed weapon goes to the left hand; any
+    /// other item ignores the hand.
+    @discardableResult
+    public func equip(
+        _ item: FormID, on holder: InventoryHolder, hand: HandSlots
+    ) throws -> EquipmentChange {
         let state = inventory.inventory(of: holder)
         guard state.count(of: item) > 0 else {
             throw EquipmentError.notHeld(item: item, owner: holder.key)
@@ -49,12 +58,39 @@ public struct EquipmentRuntime: EquipmentAccess {
         guard !incoming.isEmpty else {
             throw EquipmentError.notEquippable(item: item)
         }
-        let displaced = state.equipped.filter {
-            $0 != item && catalog.occupancy(of: $0).conflicts(with: incoming)
+        let toLeft = hand == .leftHand && incoming.hands == .rightHand
+            && catalog.item(item)?.isWeapon == true
+        let result = HandEquip.equip(item, toLeft: toLeft, in: state, occupancy: catalog.occupancy)
+        let changed = inventory.setEquipped(
+            result.equipped, leftHand: result.leftHand, on: holder
+        )
+        return EquipmentChange(unequipped: result.displaced, changed: changed)
+    }
+
+    /// Takes worn weapons and shields out of `hands`. A pair of one weapon loses only
+    /// the copy in an emptied hand.
+    /// - Returns: the items no longer worn at all.
+    @discardableResult
+    public func emptyHands(_ hands: HandSlots, on holder: InventoryHolder) -> [FormID] {
+        let state = inventory.inventory(of: holder)
+        let result = HandEquip.emptying(hands, in: state, occupancy: catalog.occupancy)
+        inventory.setEquipped(result.equipped, leftHand: result.leftHand, on: holder)
+        return result.displaced
+    }
+
+    /// Every hand a worn item holds.
+    public func heldHands(on holder: InventoryHolder) -> HandSlots {
+        let state = inventory.inventory(of: holder)
+        return state.equipped.reduce(into: HandSlots()) {
+            $0.formUnion(HandEquip.held(
+                $1, occupancy: catalog.occupancy(of: $1), leftHand: state.leftHand
+            ))
         }
-        let resolved = state.equipped.filter { !displaced.contains($0) } + [item]
-        let changed = inventory.setEquipped(resolved, on: holder)
-        return EquipmentChange(unequipped: displaced, changed: changed)
+    }
+
+    /// The weapon in `holder`'s left hand, or nil.
+    public func leftHand(on holder: InventoryHolder) -> LeftHandHold? {
+        inventory.inventory(of: holder).leftHand
     }
 
     /// Unequips `item` on `holder`. Unequipping something that is not equipped

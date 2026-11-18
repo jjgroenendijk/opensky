@@ -47,7 +47,7 @@ nonisolated extension ActorOutfitResolver {
         let picks = equipment.carriedPicks(
             worn: outfit.map(\.formID), carried: items, preference: preference
         )
-        let extra = wornEquipment(equipped: picks, skips: &skips)
+        let extra = wornEquipment(picks, skips: &skips)
         return WornEquipment(armors: outfit + extra.armors, attachments: extra.attachments)
     }
 

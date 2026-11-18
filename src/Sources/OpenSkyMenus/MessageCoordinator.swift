@@ -124,7 +124,8 @@ public final class MessageCoordinator {
         case .move(.down), .move(.right): boxes.moveSelection(by: 1)
         case .button(.accept): finish(boxes.accept())
         case .button(.cancel): finish(boxes.cancel())
-        case .button(.xButton), .button(.yButton), .pointer, .release, .activate: return
+        case .button(.xButton), .button(.yButton), .button(.leftEquip), .pointer, .release,
+             .activate: return
         }
         publish()
     }

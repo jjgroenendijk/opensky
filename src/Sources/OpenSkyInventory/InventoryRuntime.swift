@@ -364,3 +364,18 @@ extension InventoryRuntime {
         store.set(state, for: holder.key, in: holder.cell)
     }
 }
+
+extension InventoryRuntime {
+    /// Replaces `holder`'s equipped set and left hand together.
+    ///
+    /// - Returns: true when the stored state changed.
+    @discardableResult
+    public func setEquipped(
+        _ items: [FormID], leftHand: LeftHandHold?, on holder: InventoryHolder
+    ) -> Bool {
+        store.set(
+            inventory(of: holder).settingEquipped(items, leftHand: leftHand),
+            for: holder.key, in: holder.cell
+        )
+    }
+}

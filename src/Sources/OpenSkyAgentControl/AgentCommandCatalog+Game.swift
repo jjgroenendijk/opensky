@@ -172,7 +172,8 @@ nonisolated extension AgentCommandCatalog {
             options: [
                 value("count", "n", "Default: 1."),
                 value("ref", "ref", "The container. Default: player."),
-                flag("equip", "Then equip it on the player.")
+                flag("equip", "Then equip it on the player."),
+                flag("left", "Then equip it in the player's left hand: a one-handed weapon.")
             ]
         ),
         command(

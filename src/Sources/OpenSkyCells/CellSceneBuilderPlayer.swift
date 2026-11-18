@@ -79,7 +79,9 @@ nonisolated extension CellSceneBuilder.CellPlayerRigBuilder {
             if let override {
                 appearance = appearance.applying(override)
             }
-            var visual = try resolvers.visual.resolve(appearance: appearance, equipped: equipped)
+            var visual = try resolvers.visual.resolve(
+                appearance: appearance, equipped: equipped, leftHand: request.leftHand
+            )
             // The install bakes no FaceGen head for the player base, so the
             // player's head is always built from its head parts.
             visual = visual.presenting(

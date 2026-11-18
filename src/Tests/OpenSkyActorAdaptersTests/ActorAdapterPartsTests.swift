@@ -76,6 +76,7 @@ struct ActorAdapterPartsTests {
         let player = PlayerWorldAdapter(game: host, stage: nil)
         #expect(player.playerAppearanceOverride == nil)
         #expect(player.playerBehaviorProject == nil)
+        #expect(player.playerLeftHand == nil)
         host.fakeMapWorld.settingTextsResult = GameSettingTexts<ActorResourcePath>.vanilla
         #expect(player.firstPersonSkeletonPath.lowercased().hasSuffix("skeleton.nif"))
     }

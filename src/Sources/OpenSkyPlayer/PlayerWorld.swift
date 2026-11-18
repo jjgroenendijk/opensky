@@ -12,6 +12,8 @@ public protocol PlayerWorld: AnyObject {
     /// Nil while nothing has touched the player's inventory. The body then
     /// wears the plugin's default outfit.
     var playerEquippedSet: [FormID]? { get }
+    /// The weapon in the player's left hand, for the rig's off-hand attachment.
+    var playerLeftHand: LeftHandHold? { get }
     /// The race menu choices; nil keeps the `Player` record.
     var playerAppearanceOverride: PlayerAppearanceOverride? { get }
     /// The behaviour project the player's race and sex name, such as a beast form's or

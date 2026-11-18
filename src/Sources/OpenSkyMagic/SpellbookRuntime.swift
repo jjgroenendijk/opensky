@@ -214,9 +214,7 @@ public struct SpellbookRuntime: SpellbookAccess {
         on holder: ActorValueHolder
     ) -> [ReferenceKey] {
         guard let equipment else { return [] }
-        let worn = equipment.equipped(on: inventory).reduce(into: HandSlots()) {
-            $0.formUnion(equipment.occupancy(of: $1).hands)
-        }
+        let worn = equipment.heldHands(on: inventory)
         let state = state(of: holder)
         let released = Set(SpellHand.allCases.compactMap { hand in
             worn.contains(hand.slots) ? state.spell(in: hand) : nil
@@ -244,13 +242,7 @@ public struct SpellbookRuntime: SpellbookAccess {
         inventory: InventoryHolder?
     ) -> [FormID] {
         guard let equipment, let inventory, !hands.isEmpty else { return [] }
-        let doomed = equipment.equipped(on: inventory)
-            .filter { equipment.occupancy(of: $0).hands.overlaps(hands) }
-            .sorted { $0.rawValue < $1.rawValue }
-        for item in doomed {
-            equipment.unequip(item, on: inventory)
-        }
-        return doomed
+        return equipment.emptyHands(hands, on: inventory).sorted { $0.rawValue < $1.rawValue }
     }
 
     /// Stores `state`, dropping the whole component once it is empty so an

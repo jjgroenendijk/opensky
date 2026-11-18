@@ -160,6 +160,8 @@ final class InventoryMenuController {
             requestDrop()
         case .button(.yButton):
             toggleFavouriteSelection()
+        case .button(.leftEquip):
+            perform { itemActions.useInLeftHand($0.item) }
         case .pointer, .release, .activate:
             return
         case let .move(direction):

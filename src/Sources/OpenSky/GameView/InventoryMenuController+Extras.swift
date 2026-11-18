@@ -87,7 +87,7 @@ extension InventoryMenuController {
             }
             model.quantity?.adjust(by: step)
             lastActionText = model.quantity?.text
-        case .button(.yButton), .pointer, .release, .activate:
+        case .button(.yButton), .button(.leftEquip), .pointer, .release, .activate:
             return
         }
     }

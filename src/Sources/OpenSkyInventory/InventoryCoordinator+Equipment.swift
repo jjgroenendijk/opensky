@@ -2,7 +2,7 @@
 // queues a cell rebuild, so the actor redraws from its new equipped set.
 
 public import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 public import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
@@ -11,6 +11,13 @@ extension InventoryCoordinator.EquipmentChanges {
     /// the first equippable stack.
     public func equipItem(
         _ item: FormID?, on target: EquipmentTargetSelector
+    ) -> InventoryResult<ItemActionOutcome> {
+        equipItem(item, on: target, hand: .rightHand)
+    }
+
+    /// Equips into `hand`. Only a one-handed weapon goes to the left hand.
+    public func equipItem(
+        _ item: FormID?, on target: EquipmentTargetSelector, hand: HandSlots
     ) -> InventoryResult<ItemActionOutcome> {
         guard let equipment = coordinator.equipment else { return InventoryResult(.noEquipment) }
         guard let holder = holder(for: target) else {
@@ -23,7 +30,7 @@ extension InventoryCoordinator.EquipmentChanges {
             )
         else { return InventoryResult(coordinator.note(.nothingEquippable)) }
         do {
-            let change = try equipment.equip(chosen, on: holder)
+            let change = try equipment.equip(chosen, on: holder, hand: hand)
             let outcome = coordinator.note(.equipped(
                 item: coordinator.name(of: chosen),
                 target: label(target),

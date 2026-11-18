@@ -143,14 +143,11 @@ extension InventoryCoordinator.ScriptItems {
         guard
             let equipment = coordinator.equipment,
             let holder = scriptHolder(key) else { return nil }
-        return .some(equipment.equipped(on: holder).first { item in
-            guard
-                let equippable = equipment.catalog.item(item),
-                equippable.animationType != nil
-            else { return false }
-            let hands = equippable.occupancy.hands
-            return leftHand ? hands == .leftHand : hands.contains(.rightHand)
-        })
+        let catalog = equipment.catalog
+        let hands = WornWeapons.resolve(
+            in: equipment.equipped(on: holder), leftHand: equipment.leftHand(on: holder)
+        ) { catalog.item($0).flatMap { $0.isWeapon ? $0.occupancy.hands : nil } }
+        return .some(leftHand ? hands.left : hands.right)
     }
 
     /// `Actor.GetEquippedShield`: the worn armour in biped slot 39.

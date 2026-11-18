@@ -87,9 +87,11 @@ nonisolated extension CellSceneBuilder.CellActorResolver {
             }
             let templates = resolvers.template.rolling(roll)
             let appearance = try templates.resolve(base: actor.base)
+            let worn = runtimeEquipment(entry: entry, deltas: deltas)
             var visual = try resolvers.visual.resolve(
                 appearance: appearance,
-                equipped: runtimeEquipment(entry: entry, deltas: deltas),
+                equipped: worn?.equipped,
+                leftHand: worn?.leftHand,
                 roll: roll,
                 carried: templates.carriedItems(base: actor.base)
             ).presenting(
@@ -183,8 +185,8 @@ nonisolated extension CellSceneBuilder.CellActorResolver {
     nonisolated private func runtimeEquipment(
         entry: RuntimeReferenceEntry?,
         deltas: [ReferenceKey: ReferenceStateDelta]
-    ) -> [FormID]? {
+    ) -> ReferenceInventoryState? {
         guard let entry, let delta = deltas[entry.key] else { return nil }
-        return delta.component(ReferenceInventoryState.self)?.equipped
+        return delta.component(ReferenceInventoryState.self)
     }
 }
