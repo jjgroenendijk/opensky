@@ -169,9 +169,9 @@ Ground, slopes, gravity, swimming, floating, and leaving the water follow the ga
 body height those rules use. OpenSky adds three things of its own:
 
 - The step height above. The game has none: its capsule's round bottom rides over an edge.
-- A swimmer's vertical speed fades by 4 per second while its float point is within 10 units of
-  the surface or above it, so it settles instead of bobbing. Above the surface, gravity pulls it
-  back down.
+- A rising swimmer stops when its float point reaches the 10-unit rest depth, instead of
+  passing it. Above that depth, where the game adds no push, gravity pulls it back down. So a
+  swimmer settles at the rest depth instead of bobbing.
 - While swimming, sneak dives and a held jump key swims up. A jump press with the float point
   within 350 units of the surface jumps out instead.
 

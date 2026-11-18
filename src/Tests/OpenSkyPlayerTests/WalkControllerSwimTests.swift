@@ -71,6 +71,31 @@ struct WalkControllerSwimTests {
     }
 
     @Test
+    func aSwimmerOverAShallowBedKeepsSwimmingForward() {
+        // The bed is 40 units under the resting feet: inside the ground search, but the
+        // water is still deeper than 0.7 of the body. The swimmer starts low and rises.
+        let drive = SwimDrive(ground: { _ in
+            TerrainGroundSample(height: -135, normal: SIMD3(0, 0, 1))
+        })
+        var camera = CapsuleCollisionTests.camera(feet: SIMD3(0, 0, -125))
+        var controller = WalkController(cameraPosition: camera.position)
+        var stopped = false
+        for _ in 0 ..< 240 {
+            drive.run(&controller, camera: &camera, input: SwimDrive.forward, steps: 1)
+            stopped = stopped || !controller.isSwimming
+        }
+
+        #expect(!stopped)
+        #expect(controller.feetPosition.x > 200)
+        let floatPoint = SwimRule.floatPointHeight(
+            feetHeight: controller.feetPosition.z,
+            bodyHeight: PlayerCapsule.standard.height,
+            floatLevel: SwimRule.firstPersonFloatLevel
+        )
+        #expect(abs(-floatPoint - SwimRule.floatRestDepth) < 1)
+    }
+
+    @Test
     func aSwimmerWalksOutOntoAShore() {
         let drive = SwimDrive(ground: SwimDrive.shore(degrees: 30))
         var camera = CapsuleCollisionTests.camera(feet: SIMD3(-200, 0, -93))
