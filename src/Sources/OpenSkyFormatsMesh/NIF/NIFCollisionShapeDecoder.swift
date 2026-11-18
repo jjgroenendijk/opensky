@@ -147,7 +147,8 @@ nonisolated extension NIFFile.CollisionDecoder {
     ) throws -> NIFCollisionShape {
         var reader = BinaryReader(block.data)
         let material = try reader.readUInt32()
-        reader.skip(28) // radius, vertex/normal properties
+        let radius = try reader.readFloat32() * NIFCollisionModel.havokToEngineScale
+        reader.skip(24) // vertex and normal properties
         let count = try Int(reader.readUInt32())
         guard count <= reader.bytesRemaining / 16 else {
             throw NIFError.malformed("convex vertex count \(count) exceeds block size")
@@ -169,15 +170,10 @@ nonisolated extension NIFFile.CollisionDecoder {
             plane.w *= scale
             planes.append(plane)
         }
+        let hull = NIFCollisionConvexHull.grown(vertices: vertices, planes: planes, radius: radius)
         return NIFCollisionShape(
             transform: parent,
-            geometry: .convexVertices(
-                vertices: vertices,
-                hullIndices: NIFCollisionConvexHull.indices(
-                    vertices: vertices,
-                    planes: planes
-                )
-            ),
+            geometry: .convexVertices(vertices: hull.vertices, hullIndices: hull.indices),
             material: material
         )
     }
@@ -188,8 +184,11 @@ nonisolated extension NIFFile.CollisionDecoder {
     ) throws -> NIFCollisionShape {
         var reader = BinaryReader(block.data)
         let material = try reader.readUInt32()
-        reader.skip(12) // shell radius, padding
-        let halfExtents = try reader.readVector3() * NIFCollisionModel.havokToEngineScale
+        let scale = NIFCollisionModel.havokToEngineScale
+        let radius = try max(0, reader.readFloat32() * scale)
+        reader.skip(8) // padding
+        // The convex radius is a shell outside the half extents.
+        let halfExtents = try reader.readVector3() * scale + radius
         return NIFCollisionShape(
             transform: parent,
             geometry: .box(halfExtents: halfExtents),

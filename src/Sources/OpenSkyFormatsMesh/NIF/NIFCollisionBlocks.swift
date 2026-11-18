@@ -52,14 +52,22 @@ nonisolated struct NIFCylinderShape: Equatable, Sendable {
     /// Engine units.
     let radius: Float
 
+    /// The convex radius is a shell around the cylinder, so it widens the wall and
+    /// lengthens both ends.
     init(reader: inout BinaryReader) throws {
         material = try reader.readUInt32()
-        reader.skip(4 + 8) // shell radius, unused bytes
         let scale = NIFCollisionModel.havokToEngineScale
-        first = try reader.readVector4().xyz * scale
-        second = try reader.readVector4().xyz * scale
-        radius = try reader.readFloat32() * scale
+        let shell = try max(0, reader.readFloat32() * scale)
+        reader.skip(8) // unused bytes
+        let start = try reader.readVector4().xyz * scale
+        let end = try reader.readVector4().xyz * scale
+        radius = try reader.readFloat32() * scale + shell
         reader.skip(12)
+        let axis = end - start
+        let length = simd_length(axis)
+        let along = length > .ulpOfOne ? axis / length * shell : .zero
+        first = start - along
+        second = end + along
     }
 
     /// A prism around the axis, with its hull, so the convex path collides with it.
