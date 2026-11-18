@@ -107,7 +107,7 @@ their shapes are mostly transform, capsule, convex, and sphere shapes.
 | `bhkCompressedMeshShape` | Reads scale and data. Gives big triangles and chunks, below |
 | `bhkPackedNiTriStripsShape` | Reads scale and `hkPackedNiTriStripsData` |
 | `bhkNiTriStripsShape` | Reads scale and each `NiTriStripsData` |
-| `bhkConvexVerticesShape` | Reads vertices and planes. Builds the hull faces once per model |
+| `bhkConvexVerticesShape` | Reads vertices and planes. Builds the hull faces once per model, below |
 | `bhkCylinderShape` | Reads the two end points and the radius. Becomes a 12-sided convex prism |
 | `bhkPlaneShape` | Reads the normal, the distance, and a bounding box. Becomes a quad clipped to the box |
 | `bhkBoxShape` | Half extents |
@@ -121,6 +121,15 @@ half extents and a `Vector4` centre. On the install, 70 cylinders are mostly in
 `_resourcepack` meshes, and the one plane is in
 `plants\switchnodechildren\slaughterfisheggcluster01_1.nif`. The prism stands in for the
 round wall so the convex path can collide with it; its sides lie on the cylinder.
+
+A `bhkConvexVerticesShape` stores points and plane equations, but no faces. OpenSky uses each
+plane only for its normal: the face is every point furthest along that normal, within 0.02
+units. The planes cannot be used as they are, because some sit outside the points by the
+shape's convex radius. For example, the leaf of `architecture\farmhouse\farmhouseldoor01.nif`
+has a radius of 0.05 Havok units, and each of its planes lies that far outside its points.
+
+- [WARNING] OpenSky does not read the convex radius, so a convex shape is that much smaller
+  than in the game: 3.5 units on each side for a radius of 0.05.
 
 An unknown shape type is counted. A broken collision root is recorded, and its sibling
 roots still decode. The walk stops at depth 64 and rejects loops. Every ref, count, index,

@@ -1,6 +1,6 @@
 // Derived triangle connectivity for bhkConvexVerticesShape. NIF supplies a
 // point cloud + half-space planes, not indexed faces; compute once per decoded
-// model so every placed REFR shares it.
+// model so every placed REFR shares it. See docs/formats/nif-collision.md.
 
 import Foundation
 import simd
@@ -16,9 +16,11 @@ nonisolated enum NIFCollisionConvexHull: Sendable {
             let normalLength = simd_length(rawNormal)
             guard normalLength > Float.ulpOfOne else { continue }
             let normal = rawNormal / normalLength
-            let signedDistance = plane.w / normalLength
+            // A plane may sit outside the points by the shape's convex radius, so only its
+            // normal is used: the face is the points furthest along it.
+            let extent = vertices.map { simd_dot(normal, $0) }.max() ?? 0
             let face = vertices.indices.filter {
-                abs(simd_dot(normal, vertices[$0]) + signedDistance) <= tolerance
+                extent - simd_dot(normal, vertices[$0]) <= tolerance
             }
             guard face.count >= 3 else { continue }
             let faceKey = face.sorted()
