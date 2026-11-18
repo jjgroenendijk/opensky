@@ -97,6 +97,7 @@ extension AgentPlayerReadoutAdapter {
         result["cloak"] = .string(cloak.map { $0 ? "running" : "suspended" } ?? "none")
         result["firstPerson"] = statusReadout.firstPersonState(gameSession: gameSession)
         result["melee"] = statusReadout.meleeState()
+        result["walk"] = statusReadout.walkState(gameSession: gameSession)
         result.merge(statusReadout.playerStatusState()) { _, new in new }
         result.merge(statusReadout.playerWeaponState(gameSession: gameSession)) { _, new in new }
         let status = gameSession.locomotion.status
