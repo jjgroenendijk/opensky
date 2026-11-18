@@ -8,6 +8,12 @@ nonisolated public final class FakeWalkPort: WalkPort {
     public var capsuleValue: PlayerCapsule?
     public var feetPosition: SIMD3<Float> = .zero
     public var isGrounded = false
+    public var isSwimming = false
+    public var verticalVelocity: Float = 0
+    public var groundNormal: SIMD3<Float>?
+    public var activeStepSupport: CapsuleStepSupport?
+    public var isHeldAtEdge = false
+    public var hasUnresolvedPenetration = false
 
     public init() {}
 }
