@@ -75,6 +75,8 @@ public final class CrimeCoordinator {
     public internal(set) var trespassWatch = TrespassWatch()
     /// Crimes charged while no guard knows yet. Session state, as `assaultedActors` is.
     public internal(set) var pendingReports: [PendingCrimeReport] = []
+    /// The player's bounty per faction at the last tick; nil before the first look.
+    var lastBounties: [ReferenceKey: Int32]?
     /// The player's stay in jail, from the cell door to release or escape.
     public internal(set) var jailStay: JailStay?
     /// Blows between actors other than the player: who struck whom first.
@@ -148,8 +150,8 @@ public final class CrimeCoordinator {
         reporter.onCrimeCharged = { [weak self] event, outcome, witnesses in
             self?.track(event, outcome: outcome, witnesses: witnesses)
         }
-        reporter.onCrimeRecorded = { [weak self] event, outcome in
-            self?.count(event, outcome: outcome)
+        reporter.onCrimeRecorded = { [weak self] event, _ in
+            self?.count(event)
         }
         self.reporter = reporter
     }

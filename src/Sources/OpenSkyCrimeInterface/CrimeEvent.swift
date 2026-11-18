@@ -96,6 +96,8 @@ nonisolated public struct CrimeEvent: Equatable, Sendable {
     public let stolenValue: Int64
     /// How many items a theft took, for the "Items Stolen" stat.
     public var stolenCount: Int32 = 0
+    /// True for riding an owned horse, which counts "Horses Stolen" instead.
+    public var isHorseTheft = false
 
     public init(
         kind: CrimeKind,

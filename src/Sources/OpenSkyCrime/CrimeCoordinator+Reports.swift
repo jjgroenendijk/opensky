@@ -34,6 +34,7 @@ extension CrimeCoordinator {
     /// One tick: delivers each report a witness carried to a guard, and takes back
     /// the gold of each report whose witnesses all died.
     public func advanceReports() {
+        countBountyChanges()
         guard !pendingReports.isEmpty, let reporter else { return }
         let living = world.livingActors()
         let distance = reporter.runtime.settings.alarmDistance
@@ -97,11 +98,13 @@ extension CrimeSessionWorld {
 extension CrimeCoordinator {
     /// The journal's crime stats (<https://ck.uesp.net/wiki/QueryStat_-_Game>). The
     /// container menu counts pickpockets itself.
-    func count(_ event: CrimeEvent, outcome: CrimeOutcome) {
+    func count(_ event: CrimeEvent) {
         guard event.perpetrator == .player else { return }
         switch event.kind {
         case .theft where event.stolenCount > 0:
-            pendingCommands.append(.incrementStat("Items Stolen", by: event.stolenCount))
+            pendingCommands.append(event.isHorseTheft
+                ? .incrementStat("Horses Stolen", by: 1)
+                : .incrementStat("Items Stolen", by: event.stolenCount))
             if let faction = event.crimeFaction, event.stolenValue > 0 {
                 pendingCommands.append(.stoleFromFaction(
                     faction, value: event.stolenValue, witnessed: event.witnessed
@@ -112,8 +115,5 @@ extension CrimeCoordinator {
         case .trespass: pendingCommands.append(.incrementStat("Trespasses", by: 1))
         default: break
         }
-        guard outcome.gold > 0, let faction = outcome.faction, let reporter else { return }
-        pendingCommands.append(.incrementStat("Total Lifetime Bounty", by: outcome.gold))
-        pendingCommands.append(.raiseStat("Largest Bounty", to: reporter.crimeGold(of: faction)))
     }
 }

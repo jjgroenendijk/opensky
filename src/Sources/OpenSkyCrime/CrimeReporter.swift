@@ -118,6 +118,7 @@ public final class CrimeReporter: CrimeReporting {
             stolenValue: Int64(runtime.settings.stolenHorseValue)
         )
         event.stolenCount = 1
+        event.isHorseTheft = true
         return record(event)
     }
 
