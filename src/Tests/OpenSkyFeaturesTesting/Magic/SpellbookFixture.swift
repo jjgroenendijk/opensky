@@ -52,6 +52,8 @@ public enum SpellbookFixture {
         /// Fire and forget, self, one area entry and one point entry: the shape of a
         /// cloud around the caster, such as vanilla `Harmony` or `FireStorm`.
         public static let fireStorm: UInt32 = 0x02C0
+        /// Concentration, target actor: the shape of vanilla `HealingHands`.
+        public static let healOther: UInt32 = 0x02D0
     }
 
     public enum Book {

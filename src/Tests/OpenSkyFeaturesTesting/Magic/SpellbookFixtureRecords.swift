@@ -212,6 +212,14 @@ extension SpellbookFixture {
                 effects: [EffectSpec(fireDamage, 12, 0)]
             ),
             spell(
+                formID: Spell.healOther, editorID: "HealOther", equipType: Slot.eitherHand,
+                spit: spit(
+                    type: 0, chargeTime: 0, casting: 2, delivery: 3, castDuration: 0.5,
+                    range: 1500
+                ),
+                effects: [EffectSpec(restoreHealth, 10, 0)]
+            ),
+            spell(
                 formID: Spell.touchOfDeath, editorID: "TouchOfDeath",
                 equipType: Slot.eitherHand,
                 spit: spit(type: 0, chargeTime: 0, casting: 1, delivery: 1),

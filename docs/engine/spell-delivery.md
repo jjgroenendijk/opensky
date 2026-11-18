@@ -27,12 +27,14 @@ Magic Overview describes the shapes:
 | --- | --- | --- |
 | Self | Applies to the caster; an entry with an area reaches the actors around the caster instead | Applies to the caster once a second |
 | Aimed | Fires the `MGEF`'s `PROJ` | Applies to whatever the aim ray reaches, once a second |
-| Target Actor | Applies to the aimed actor, within `SPIT` range | Refused |
+| Target Actor | Applies to the aimed actor, within `SPIT` range | The same, once a second |
 | Touch | Applies to the aimed actor within touch reach | Applies to the aimed actor within touch reach, once a second |
 | Target Location | Lands where the caster aims, or waits there as a rune | Refused |
 
-A refusal is the `deliveryUnsupported` failure, with a sentence and a count. Holding a beam on a
-named actor, or on a point, needs targeting OpenSky does not do.
+A refusal is the `deliveryUnsupported` failure, with a sentence and a count. A concentration cast
+at a target actor works like an aimed one: each application finds the actor the aim ray reaches
+within the `SPIT` range. A concentration cast at a target location is refused, and no spell on the
+install has that shape.
 
 A self cast with an area is a cloud around the caster. The CK wiki "Spell" page says "effects with a
 non-zero Area are AoEs centered at the caster, affecting every actor in range *except* the caster",
@@ -71,7 +73,8 @@ Any other target-location spell applies at once to the actor the ray struck and 
 inside an entry's area.
 
 The install has 1,452 `SPEL` records: 733 self, 451 aimed, 155 touch, 74 target location, and 39
-target actor. Every delivery runs except a concentration cast at a target actor or location.
+target actor. Five spells are concentration casts at a target actor, such as `HealingHands` (Heal
+Other). Every delivery runs except a concentration cast at a target location, which none uses.
 
 Touch reach is `fCombatDistance`, 141 units in the install, the same reach an unarmed swing has. A
 touch spell lands on the actor the aim ray finds within that reach, at the moment of release. It does
