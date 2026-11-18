@@ -24,6 +24,8 @@ public struct CrimeRuntime {
     public var witnesses: any CrimeWitnessSource = NoCrimeWitnesses()
     /// The default prices, the sentence, and the alarm reach, from the load order.
     public var settings = CrimeSettings.vanilla
+    /// The `NPC_` faction lists, for a victim that `XOWN` names by its base record.
+    public var authoredFactions: AuthoredFactions?
     /// Papyrus `Game.SetPlayerReportCrime`: off, the player's crimes cost nothing.
     public var reportsPlayerCrimes: Bool {
         get { worldState.playerRules.reportsCrime }
@@ -265,11 +267,12 @@ public struct CrimeRuntime {
     }
 
     /// Whether the crime's victim belongs to the faction that would charge for it: a
-    /// placed actor by its memberships, or the faction itself. A theft from an
-    /// NPC_-owned reference cannot check this, because `XOWN` names a base record
-    /// (docs/engine/crime.md).
+    /// placed actor by its memberships, an `NPC_` base by its authored `SNAM` list,
+    /// or the faction itself (docs/engine/crime.md).
     private func isMember(_ victim: ReferenceKey, of faction: ReferenceKey) -> Bool {
         victim == faction || memberships(of: victim).isMember(of: faction)
+            || authoredFactions?.memberships(ofBase: victim, factions: factions)
+            .isMember(of: faction) == true
     }
 
     /// One more crime of this kind on the perpetrator's ledger.
