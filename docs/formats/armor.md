@@ -67,7 +67,12 @@ skin-tint shape (shader type 5) the actor draws:
 A `TXST` stores the subsurface map in `TX03` and the specular map in `TX07`, while the body
 NIF holds them in texture slots 2 and 7. `SkinBodyFemale_1` and `FemaleBody_1.nif` name the
 same files, which confirms the mapping: `TX00` to slot 0, `TX01` to 1, `TX03` to 2, `TX07`
-to 7. The swap list in `NAM2`/`NAM3` is not read yet.
+to 7.
+
+The swap list in `NAM2`/`NAM3` "would be used if the skinny and large versions of the NPC had a
+different texture set" (<https://ck.uesp.net/wiki/ArmorAddon>). Five vanilla skin ARMAs set one,
+such as `NakedTorso` with `SkinFemaleHumanBody`, and every one of those `FLST`s is empty. So the
+game has no texture to swap to, and OpenSky draws the skin set alone, as the game does.
 
 `DNAM`: `0x00` uint8 male priority, `0x01` uint8 female priority, `0x02` 4 bytes (xEdit:
 weight-slider flags; UESP: one unknown uint32), `0x06` uint8 detection sound value, `0x07`
