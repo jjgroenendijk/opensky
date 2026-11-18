@@ -14,6 +14,7 @@ import OpenSkyPlayer
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 public import OpenSkyRendering
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -26,6 +27,7 @@ public protocol CrimeJailHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var inventory: any InventoryPort { get }
     var inventoryWorld: any InventoryWorldPort { get }
+    var menuWorld: any MenuWorldPort { get }
     var progression: any ProgressionPort { get }
     var renderer: (any RendererPort)? { get }
     var streamer: any CellStreamerPort { get }
@@ -96,11 +98,18 @@ extension CrimeJailAdapter {
         game.inventory.locks.lockpickItem
     }
 
+    /// A marker outside the loaded cells loads its area, as `MoveTo` does.
     public func movePlayer(toMarker marker: ReferenceKey) -> Bool {
         guard
-            let renderer = game.renderer, let gameSession = game.gameSession,
             let placement = game.streamer.referenceEntry(key: marker)?.placedReference?.placement
-        else { return false }
+        else {
+            guard case .plugin("skyrim.esm", _) = marker else { return false }
+            game.menuWorld.movePlayer(to: marker)
+            return true
+        }
+        guard let renderer = game.renderer, let gameSession = game.gameSession else {
+            return false
+        }
         let camera = SceneCamera.teleport(placement: placement)
         renderer.camera = camera
         gameSession.reseedMovement(camera: camera)

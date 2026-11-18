@@ -33,6 +33,7 @@ final class StoryHost: CrimeActorsHost, CrimeFactionsHost, CrimeJailHost, CrimeW
     let fakeInventory = FakeInventoryPort()
     let fakeInventoryWorld = FakeInventoryWorldPort()
     let fakeMapWorld = FakeMapWorldPort()
+    let fakeMenuWorld = FakeMenuWorldPort()
     let fakeMountWorld = FakeMountWorldPort()
     let fakePackages = FakePackagePort()
     let fakePerception = FakePerceptionPort()
@@ -176,6 +177,10 @@ final class StoryHost: CrimeActorsHost, CrimeFactionsHost, CrimeJailHost, CrimeW
 
     var streamer: any CellStreamerPort {
         fakeStreamer
+    }
+
+    var menuWorld: any MenuWorldPort {
+        fakeMenuWorld
     }
 
     var subtitles: any SubtitlePort {

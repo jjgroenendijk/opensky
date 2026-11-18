@@ -42,7 +42,10 @@ one is "where the player ends up after paying the fine or being released from ja
 5. The `JOUT` pieces are given and worn.
 
 A faction with no `JAIL` door, or a door that cannot be entered, falls back to serving the
-sentence at once: the clock moves forward and the player stands on the marker if it is loaded.
+sentence at once: the clock moves forward and the player stands on the marker. A marker outside
+the loaded cells loads its area behind a loading screen, as `MoveTo` does. That works for a
+`Skyrim.esm` marker only. A marker from another plugin, such as a `Dragonborn.esm` one, is still
+reached only when it is loaded.
 
 ### The two parameters in the game
 
@@ -115,7 +118,8 @@ cell the player stands in counts as the jail cell.
 
 ## Not done yet
 
-- `SendPlayerToJail`'s two parameters are not read.
-- Quest items are moved to the chest like any other item. The game hides them instead.
+- `SendPlayerToJail`'s `abRealJail` is not read, so quest items are moved to the chest like any
+  other item. The game hides them instead. `abRemoveInventory` is read: false leaves every item
+  on the player, and the jail outfit is still worn.
 - Followers do not go to the `WAIT` marker.
 - Cidhna Mine's pickaxe-and-ore way of serving time is a quest script, not part of this.

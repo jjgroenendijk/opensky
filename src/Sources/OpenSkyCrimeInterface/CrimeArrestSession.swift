@@ -13,8 +13,9 @@ nonisolated public enum ArrestOutcome: Equatable, Sendable {
     /// to the spot where you'd be if you served time and were released from
     /// jail" (<https://ck.uesp.net/wiki/PlayerPayCrimeGold_-_Faction>).
     case pay(removeStolen: Bool, goToJail: Bool)
-    /// Serve the sentence.
-    case jail
+    /// Serve the sentence. `removeInventory` false keeps the player's belongings on them
+    /// (`SendPlayerToJail`'s `abRemoveInventory`).
+    case jail(removeInventory: Bool = true)
 }
 
 /// An arrest outcome run to completion by the session.

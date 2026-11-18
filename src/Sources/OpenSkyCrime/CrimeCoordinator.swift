@@ -80,6 +80,8 @@ public final class CrimeCoordinator {
     public internal(set) var pendingReports: [PendingCrimeReport] = []
     /// The player's bounty per faction at the last tick; nil before the first look.
     var lastBounties: [ReferenceKey: Int32]?
+    /// `SendPlayerToJail(abRemoveInventory = false)`: the next stay takes nothing.
+    var keepsBelongings = false
     /// The player's stay in jail, from the cell door to release or escape.
     public internal(set) var jailStay: JailStay?
     /// Blows between actors other than the player: who struck whom first.

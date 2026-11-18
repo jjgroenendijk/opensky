@@ -62,6 +62,13 @@ struct CrimeActorsJailTests {
         #expect(adapter.playerFeet == nil)
         adapter.passGameTime(days: 3)
         #expect(!adapter.movePlayer(toMarker: Self.marker))
+        #expect(host.fakeMenuWorld.movePlayerCalls.isEmpty)
+    }
+
+    @Test func aJailMarkerOutsideTheLoadedCellsIsReachedByLoadingItsArea() {
+        let marker = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x60)
+        #expect(adapter.movePlayer(toMarker: marker))
+        #expect(host.fakeMenuWorld.movePlayerCalls == [marker])
     }
 
     @Test func jailDoorsNeedAPlacedMarker() {
