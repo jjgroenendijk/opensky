@@ -26,9 +26,10 @@ each time. The placement stands the feet on the highest ground below the eye: a 
 the terrain, searched up to 16,384 units down. A fly camera far above the ground therefore lands
 on it instead of falling. A spot under the world stands on the highest surface above it: under
 the terrain, or with a surface above and no ground within 4,096 units below, such as below a
-city's streets (OpenSky's choice). Water at least 90 units deep, the depth that starts a swim,
-floats the player at the surface with the eye at the water line. A teleport ends with the same
-placement. A teleport by cell grid stands on the higher of the terrain and the highest collision
+city's streets (OpenSky's choice). Water deep enough to start a swim floats the player at the
+resting depth of a swimmer
+([ground and water contact](/engine/ground-and-water-contact.md#water)). A teleport ends with the
+same placement. A teleport by cell grid stands on the higher of the terrain and the highest collision
 surface at the cell centre, because a city worldspace hides its terrain far below the streets.
 
 The dialogue camera is not a fourth mode. It overrides the view on top of the current mode and

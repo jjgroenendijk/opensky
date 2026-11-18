@@ -82,7 +82,8 @@ struct WalkControllerGroundMaterialTests {
         let lake: (SIMD3<Float>) -> WaterReading? = { _ in WaterReading(surface: 0) }
         var swimmer = WalkController(cameraPosition: SIMD3(0, 0, 100))
         swimmer.standOnGround(sampleGround: lakeBed, query: { _ in [] }, water: lake)
-        #expect(swimmer.feetPosition.z == -swimmer.capsule.eyeHeight)
+        // A 128-unit body at float level 1.6 rests with its feet 112.4 units under.
+        #expect(abs(swimmer.feetPosition.z + 112.4) < 1e-3)
         let shallow: (SIMD3<Float>) -> WaterReading? = { _ in WaterReading(surface: -1950) }
         var wader = WalkController(cameraPosition: SIMD3(0, 0, 100))
         wader.standOnGround(sampleGround: lakeBed, query: { _ in [] }, water: shallow)

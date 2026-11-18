@@ -12,7 +12,7 @@ import OpenSkyPhysics
 import simd
 
 /// The synthetic terrain and water, west to east along +X. Slopes stay under
-/// `WalkController.maximumSlopeDegrees` (50), so the capsule walks them.
+/// `WalkController.maximumSlopeDegrees` (47), so the capsule walks them.
 ///     x < 1600 flat z 0 | 1600-2000 rise to 144 | 2000-2300 plateau 144
 ///     2300-2500 fall to -56 | 2500-2900 basin -56, swim | 2900-3100 rise to 144
 ///     x > 3100 plateau 144 to the cell boundary
@@ -20,8 +20,8 @@ nonisolated enum LocomotionAcceptanceWorld {
     static let flatHeight: Float = 0
     static let plateauHeight: Float = 144
     static let basinHeight: Float = -56
-    /// Water surface over the basin. 156 units above the floor, comfortably
-    /// past `LocomotionBridge.swimEnterDepth` (90).
+    /// Water surface over the basin. 156 units above the floor, comfortably past the
+    /// 0.7 submersion that starts a swim (89.6 units for a 128-unit body).
     static let waterSurface: Float = 100
     static let waterStartX: Float = 2350
     static let waterEndX: Float = 3050

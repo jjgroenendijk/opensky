@@ -164,17 +164,4 @@ nonisolated extension WalkController {
         let minimumUp = cosf(MatrixMath.radians(fromDegrees: Self.maximumSlopeDegrees))
         return normal.z >= minimumUp
     }
-
-    func isBlockedSlope(
-        at position: SIMD2<Float>,
-        direction: SIMD2<Float>,
-        sampleGround: GroundSampler
-    ) -> Bool {
-        guard
-            isGrounded,
-            simd_length_squared(direction) > .ulpOfOne,
-            let candidate = sampleGround(position)
-        else { return false }
-        return !isWalkable(candidate.normal)
-    }
 }

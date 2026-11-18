@@ -116,9 +116,10 @@ long frame is clamped to 100 ms, so it cannot jump.
 - At a ledge crossing, the mover leaves its walk controller and follows an arc to the landing
   point. The arc peaks 32 units above the higher end. It takes the horizontal distance over the
   run speed, between 0.35 and 1.2 seconds. The controller starts again at the landing.
-- In water, the mover swims with the player's depths: water at least 90 units deep over its feet
-  starts a swim, and less than 70 ends it. A swimmer floats at the surface, uses the swim gait
-  and the swim speed, and reaches a waypoint on the bed below it.
+- In water, the mover swims by the player's rule
+  ([ground and water contact](/engine/ground-and-water-contact.md#water)), with float level 1.6.
+  It walks out where the ground rises under it. A swimmer uses the swim gait and the swim speed,
+  and reaches a waypoint on the bed below it.
 - Walkers steer around each other, and around the player and standing NPCs. Actors are not
   collision shapes, so this bends the walk direction instead. A neighbour ahead, within 96 units
   past touching, turns the walker to the side away from it. A neighbour dead ahead is passed on

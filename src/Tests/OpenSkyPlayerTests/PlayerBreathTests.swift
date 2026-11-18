@@ -54,9 +54,10 @@ struct PlayerBreathTests {
         #expect(settings.breathSeconds == 55)
     }
 
-    @Test func theEyesDecideWhetherThePlayerIsUnderWater() {
-        #expect(PlayerBreath.isSubmerged(eyeZ: 90, waterSurface: 100))
-        #expect(!PlayerBreath.isSubmerged(eyeZ: 110, waterSurface: 100))
-        #expect(!PlayerBreath.isSubmerged(eyeZ: 0, waterSurface: nil))
+    @Test func theHeadDecidesWhetherThePlayerIsUnderWater() {
+        // A 128-unit body: the head goes under at 0.875, with the feet 112 units deep.
+        #expect(PlayerBreath.isSubmerged(feetZ: -12, bodyHeight: 128, waterSurface: 100))
+        #expect(!PlayerBreath.isSubmerged(feetZ: -11, bodyHeight: 128, waterSurface: 100))
+        #expect(!PlayerBreath.isSubmerged(feetZ: 0, bodyHeight: 128, waterSurface: nil))
     }
 }

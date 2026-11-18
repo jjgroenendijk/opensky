@@ -14,12 +14,6 @@ public import OpenSkyWorldInterface
 import simd
 
 nonisolated public final class LocomotionBridge {
-    /// Swim enter and exit depths of the capsule bottom below water: swim at about chest
-    /// deep, so wading stays walking. They differ so the mode cannot flicker. Ours; no
-    /// GMST states them.
-    public static let swimEnterDepth: Float = 90
-    public static let swimExitDepth: Float = 70
-
     public let configuration: PlayerMovementConfiguration
     /// The graph this bridge feeds, or nil. A nil graph is a supported
     /// configuration and not a degraded one: locomotion still resolves, and
@@ -32,6 +26,8 @@ nonisolated public final class LocomotionBridge {
     /// The water at a world point, or nil where there is none.
     public var sampleWater: ((SIMD3<Float>) -> WaterReading?)?
     public var waterPushRace = WaterPushRace.normal
+    /// Where on the body the player floats; the app sets it from the camera view.
+    public var swimFloatLevel = SwimRule.firstPersonFloatLevel
     /// The pose the last graph update produced, published here because only this steps
     /// the graph, on the simulation clock (SkinnedPosePlayback.swift).
     public let pose: SkinnedPoseBuffer
@@ -107,7 +103,7 @@ nonisolated public final class LocomotionBridge {
     private var wasSwimming = false
     /// The swim edge the graph was last told about. Kept apart from
     /// `wasSwimming`, which drives the water-depth hysteresis: a forced swim
-    /// gait must reach the graph without also telling `resolveSwim` that the
+    /// gait must reach the graph without also telling `swimSurface` that the
     /// capsule is already in water and may leave at the shallower threshold.
     private var wasGraphSwimming = false
     var wasGrounded = true
@@ -156,11 +152,14 @@ nonisolated public final class LocomotionBridge {
             return .still
         }
         let water = sampleWater?(state.feetPosition)
-        let swim = resolveSwim(water, at: state)
+        var swim = swimSurface(water, at: state, wasSwimming: wasSwimming)
+        let jumpImpulse = resolveJump(state: state, swimSurface: swim)
+        if jumpImpulse != nil {
+            swim = nil
+        }
         let gait = resolveGait(swimming: swim != nil)
         let direction = intentDirection(yaw: state.yaw)
         let moving = direction != SIMD2<Float>()
-        let jumpImpulse = resolveJump(state: state, swimming: swim != nil)
 
         writeVariables(state: state, gait: gait, direction: direction, moving: moving)
         if let pendingIdle {
@@ -177,6 +176,7 @@ nonisolated public final class LocomotionBridge {
         plan.jumpImpulse = jumpImpulse
         plan.swimSurfaceHeight = swim
         plan.swimVerticalVelocity = swimVerticalVelocity(swimming: swim != nil)
+        plan.swimFloatLevel = swim == nil ? plan.swimFloatLevel : swimFloatLevel
         let resolved = resolveDisplacement(
             rootMotion: rootMotion,
             direction: direction,
@@ -257,16 +257,6 @@ nonisolated public final class LocomotionBridge {
 
     // MARK: - Resolution
 
-    /// The water surface to swim against, or nil to stay on land. Hysteresis:
-    /// entering needs `swimEnterDepth`, leaving needs the shallower
-    /// `swimExitDepth`.
-    private func resolveSwim(_ water: WaterReading?, at state: LocomotionStepState) -> Float? {
-        guard let surface = water?.surface, surface.isFinite else { return nil }
-        let depth = surface - state.feetPosition.z
-        let threshold = wasSwimming ? Self.swimExitDepth : Self.swimEnterDepth
-        return depth >= threshold ? surface : nil
-    }
-
     private func resolveGait(swimming: Bool) -> LocomotionGait {
         if let forcedGait {
             return forcedGait
@@ -287,12 +277,18 @@ nonisolated public final class LocomotionBridge {
     /// The one-shot takeoff impulse, or nil. A jump needs solid ground: it is
     /// dropped in the air rather than queued, which is what stops a held key
     /// from turning into a second jump the moment the capsule lands.
-    private func resolveJump(state: LocomotionStepState, swimming: Bool) -> Float? {
+    /// A swimmer near the surface jumps out of the water, twice as high.
+    private func resolveJump(state: LocomotionStepState, swimSurface: Float?) -> Float? {
         guard pendingJump else { return nil }
         pendingJump = false
-        guard state.isGrounded, !swimming else { return nil }
-        isAirborneFromJump = true
-        return configuration.jumpTakeoffSpeed.value
+        guard let swimSurface else {
+            guard state.isGrounded else { return nil }
+            isAirborneFromJump = true
+            return configuration.jumpTakeoffSpeed.value
+        }
+        let impulse = swimJumpImpulse(state: state, surface: swimSurface)
+        isAirborneFromJump = impulse != nil
+        return impulse
     }
 
     /// The step's horizontal displacement and where it came from.

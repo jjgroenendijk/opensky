@@ -1,5 +1,6 @@
 // Fixed-step player movement: capsule pose, gravity, terrain grounding, static
 // mesh collide-and-slide, slope limit, and bounded step response.
+// See docs/engine/ground-and-water-contact.md.
 
 public import OpenSkyFormatsESM
 public import OpenSkyPhysics
@@ -28,15 +29,12 @@ nonisolated public struct WalkController: Sendable {
     static let maximumSlopeDegrees = PhysicsStep.maximumSlopeDegrees
     static let fixedTimeStep = PhysicsStep.fixedTimeStep
     public static let maximumFrameTime = PhysicsStep.maximumFrameTime
-    static let groundSnapDistance: Float = 24
-    /// How fast a swimmer may rise or sink, units per second. The capsule is
-    /// held at the surface by a clamped correction rather than by buoyancy
-    /// integration, so a swimmer cannot be launched by a deep step.
-    static let maximumSwimVerticalSpeed: Float = 200
+    /// How far below the feet the ground search looks while on the ground: 1 physics unit.
+    static let groundProbeDepth: Float = 69.99
 
     public let capsule: PlayerCapsule
     public let configuration: PlayerMovementConfiguration
-    public private(set) var feetPosition: SIMD3<Float>
+    public internal(set) var feetPosition: SIMD3<Float>
     /// Whether a step may go from the first point to the second; nil moves freely.
     public var mayMove: (@Sendable (SIMD2<Float>, SIMD2<Float>) -> Bool)?
     /// The last update held the player back at a `mayMove` edge.
@@ -47,16 +45,18 @@ nonisolated public struct WalkController: Sendable {
     /// The velocity of a heavy moving body that carries or pushes the capsule this frame.
     public var carryVelocity = SIMD3<Float>()
     public internal(set) var isGrounded = false
-    public private(set) var hasUnresolvedPenetration = false
-    /// True while the last step resolved in water deep enough to swim. Gravity,
-    /// ground snap, and step support are all suspended there.
-    public private(set) var isSwimming = false
+    public internal(set) var hasUnresolvedPenetration = false
+    /// True while the last step resolved in water deep enough to swim. Buoyancy
+    /// replaces gravity there, and step support is suspended.
+    public internal(set) var isSwimming = false
+    /// The normal of the walkable ground the last step found; nil off the ground.
+    public internal(set) var groundNormal: SIMD3<Float>?
     /// The MATT material of whatever the capsule is currently standing on:
     /// the terrain texture under the feet, or the material of the
     /// collision shape it rests against. Nil while airborne, and nil on a
     /// surface that names no material. This is the argument the footstep chain
     /// was missing — the impact table is keyed by it.
-    public private(set) var groundMaterial: FormID?
+    public internal(set) var groundMaterial: FormID?
     private var accumulatedTime: Float = 0
     /// Seconds of one fixed step. A far NPC takes longer steps, so a walk that steps
     /// less often also runs fewer steps.
@@ -92,6 +92,7 @@ nonisolated public struct WalkController: Sendable {
         isGrounded = false
         hasUnresolvedPenetration = false
         isSwimming = false
+        groundNormal = nil
         groundMaterial = nil
         accumulatedTime = 0
         activeStepSupport = nil
@@ -146,21 +147,14 @@ nonisolated public struct WalkController: Sendable {
             verticalVelocity: verticalVelocity,
             isGrounded: isGrounded,
             yaw: yaw,
-            dt: dt
+            dt: dt,
+            bodyHeight: capsule.height
         )) ?? Self.plan(input: input, yaw: yaw, dt: dt, configuration: configuration)
 
         let currentXY = SIMD2<Float>(currentPosition.x, currentPosition.y)
-        let direction = simd_length(plan.horizontalDisplacement) > 0
-            ? simd_normalize(plan.horizontalDisplacement)
-            : SIMD2<Float>()
         var candidateXY = currentXY + plan.horizontalDisplacement + pushStep(dt: dt)
         holdAtEdge(&candidateXY, from: currentXY)
-        if
-            !plan.isSwimming,
-            isBlockedSlope(at: candidateXY, direction: direction, sampleGround: sampleGround)
-        {
-            candidateXY = currentXY
-        }
+        wallOffSteepTerrain(&candidateXY, from: currentPosition, sampleGround: sampleGround)
         let collider = CapsuleWorldCollider(capsule: capsule)
         let horizontal = SIMD3<Float>(
             candidateXY.x - currentXY.x,
@@ -181,119 +175,31 @@ nonisolated public struct WalkController: Sendable {
         if let impulse = plan.jumpImpulse, impulse > 0 {
             verticalVelocity = impulse
             isGrounded = false
+            groundNormal = nil
             groundMaterial = nil
             activeStepSupport = nil
         }
         isSwimming = plan.isSwimming
+        let contact = ContactWorld(
+            collider: collider, sampleGround: sampleGround, collisionQuery: collisionQuery
+        )
         if let surface = plan.swimSurfaceHeight {
             swim(
-                to: (surface, plan.swimVerticalVelocity),
-                collider: collider,
+                SwimStep(
+                    surface: surface,
+                    wantedVelocity: plan.swimVerticalVelocity,
+                    floatLevel: plan.swimFloatLevel
+                ),
                 dt: dt,
-                collisionQuery: collisionQuery
+                world: contact
             )
             return
         }
         resolveVerticalMovement(
-            collider: collider,
             dt: dt,
-            sampleGround: sampleGround,
-            collisionQuery: collisionQuery
+            slopeDrop: groundSlopeDrop(moved: feetPosition - currentPosition),
+            world: contact
         )
-    }
-
-    /// Vertical handling while swimming: no gravity, no ground snap, and no
-    /// step support. The capsule is driven toward the depth its eye sits at the
-    /// surface, or up and down at the swimmer's own request, both clamped to
-    /// `maximumSwimVerticalSpeed` so nothing can be flung by a deep step.
-    private mutating func swim(
-        to depth: (surface: Float, wanted: Float),
-        collider: CapsuleWorldCollider,
-        dt: Float,
-        collisionQuery: CollisionQuery
-    ) {
-        let (surface, wanted) = depth
-        let floatingZ = surface - capsule.eyeHeight
-        let correction = wanted != 0 ? wanted : (floatingZ - feetPosition.z) / dt
-        verticalVelocity = min(
-            max(correction, -Self.maximumSwimVerticalSpeed), Self.maximumSwimVerticalSpeed
-        )
-        let result = collider.move(
-            from: feetPosition,
-            displacement: SIMD3<Float>(0, 0, verticalVelocity * dt),
-            query: collisionQuery
-        )
-        feetPosition = result.position
-        hasUnresolvedPenetration = hasUnresolvedPenetration || result.hasUnresolvedPenetration
-        // A swimmer resting on a shallow bottom is still grounded, which is
-        // what lets it walk back out; nothing snaps it there.
-        isGrounded = hasWalkableContact(result.contacts)
-        groundMaterial = isGrounded ? walkableMaterial(result.contacts) : nil
-    }
-
-    private mutating func resolveVerticalMovement(
-        collider: CapsuleWorldCollider,
-        dt: Float,
-        sampleGround: GroundSampler,
-        collisionQuery: CollisionQuery
-    ) {
-        if let support = activeStepSupport {
-            feetPosition.z = support.height
-            verticalVelocity = 0
-            isGrounded = true
-            groundMaterial = support.material
-            return
-        }
-        verticalVelocity -= Self.gravity * dt
-        let verticalResult = collider.move(
-            from: feetPosition,
-            displacement: SIMD3<Float>(0, 0, verticalVelocity * dt),
-            query: collisionQuery
-        )
-        feetPosition = verticalResult.position
-        hasUnresolvedPenetration = hasUnresolvedPenetration
-            || verticalResult.hasUnresolvedPenetration
-        var grounded = hasWalkableContact(verticalResult.contacts)
-        var material = walkableMaterial(verticalResult.contacts)
-        let hitCeiling = verticalResult.contacts.contains { $0.normal.z < -0.1 }
-        if grounded, verticalVelocity <= 0 {
-            verticalVelocity = 0
-        } else if verticalVelocity > 0, hitCeiling {
-            verticalVelocity = 0
-        }
-
-        let wasGrounded = isGrounded
-        if let ground = sampleGround(SIMD2(feetPosition.x, feetPosition.y)) {
-            let separation = feetPosition.z - ground.height
-            let withinSnap = (wasGrounded || grounded)
-                && separation <= Self.groundSnapDistance
-            if isWalkable(ground.normal), separation <= 0 || withinSnap {
-                feetPosition.z = ground.height
-                verticalVelocity = 0
-                grounded = true
-                // Terrain wins over a mesh contact here because this branch is
-                // the one that put the feet on the ground: the capsule is
-                // standing on the landscape, whatever else it was brushing.
-                material = ground.material
-            }
-        }
-        if !grounded, wasGrounded, verticalVelocity <= 0 {
-            let snap = collider.move(
-                from: feetPosition,
-                displacement: SIMD3<Float>(0, 0, -Self.groundSnapDistance),
-                query: collisionQuery
-            )
-            if hasWalkableContact(snap.contacts), snap.position.z <= feetPosition.z {
-                feetPosition = snap.position
-                verticalVelocity = 0
-                grounded = true
-                material = walkableMaterial(snap.contacts)
-                hasUnresolvedPenetration = hasUnresolvedPenetration
-                    || snap.hasUnresolvedPenetration
-            }
-        }
-        isGrounded = grounded
-        groundMaterial = grounded ? material : nil
     }
 }
 
