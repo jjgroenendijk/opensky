@@ -90,7 +90,5 @@ UESP gives two ways to end the refusal early:
 
 ## Where OpenSky differs
 
-- The CK settings list `fPickpocketSkillUsesCurve` (0.8). No source explains it, so OpenSky does not
-  apply it.
 - The target does not turn hostile or start a dialogue after a failure. The crime is charged, and
   the guards react as for any other bounty.
