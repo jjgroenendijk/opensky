@@ -39,6 +39,8 @@ struct CraftingMenuEnchantingTests {
         #expect(!enchanting.isDestroyRow(tabs[1].rows[0]))
         enchanting.rename("Blade")
         #expect(enchanting.selection.name == "Blade")
+        enchanting.rename(String(repeating: "a", count: 40))
+        #expect(enchanting.selection.name?.count == CraftingMenuEnchanting.nameLimit)
         enchanting.rename("")
         #expect(enchanting.selection.name == nil)
         _ = enchanting.choose(tabs[0].rows[0], alternate: false, world: world) {}

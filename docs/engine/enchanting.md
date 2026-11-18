@@ -138,7 +138,14 @@ second key makes the item. Without an item, an enchantment, and a gem it shows
 and an empty gem `sEnchantInsufficientCharge`. Otherwise it asks `sEnchantItem` and makes the
 item on Yes.
 
+With a full choice, the third key opens the [name field](/engine/text-entry.md) titled by the
+`sEnterItemName` button text. The name takes at most 32 characters, the PC limit on
+[UESP](https://en.uesp.net/wiki/Skyrim:Enchanting). Without a name, the made enchantment is named
+after its bases, joined by ` + `.
+
 ## Where OpenSky differs
 
 - The magnitude slider is not modelled: a weapon always gets the highest magnitude.
-- An item is not renamed.
+- A new name from the enchanter names the enchantment only. The game also shows it in the
+  inventory and favourites menus; OpenSky shows one inventory row per item, not per copy, so the
+  row keeps the item's own name.

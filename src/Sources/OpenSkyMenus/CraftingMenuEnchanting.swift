@@ -114,9 +114,12 @@ struct CraftingMenuEnchanting {
         return true
     }
 
+    /// The longest name the game takes on PC (UESP "Skyrim:Enchanting").
+    static let nameLimit = 32
+
     /// Names the item to make; nil or empty keeps the made name.
     mutating func rename(_ name: String?) {
-        selection.name = name.flatMap { $0.isEmpty ? nil : $0 }
+        selection.name = name.flatMap { $0.isEmpty ? nil : String($0.prefix(Self.nameLimit)) }
     }
 
     private mutating func make(

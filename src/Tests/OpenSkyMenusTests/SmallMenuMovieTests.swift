@@ -70,6 +70,11 @@ struct SmallMenuMovieTests {
         menu.route(.button(.cancel))
         #expect(finished == ["Ab", nil])
         #expect(menu.lastResult == "Cancelled")
+        #expect(menu.open(title: "Name", text: "Abcdef", limit: 3) { finished.append($0) })
+        #expect(menu.text == "Abc")
+        #expect(menu.type("d"))
+        #expect(menu.text == "Abc")
+        menu.route(.button(.cancel))
         #expect(menuMode.topMenu == nil)
     }
 

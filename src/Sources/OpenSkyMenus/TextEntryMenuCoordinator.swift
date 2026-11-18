@@ -12,6 +12,7 @@ public final class TextEntryMenuCoordinator: MenuScreen<Bool> {
 
     public private(set) var text = ""
     private var title = ""
+    private var limit = lengthLimit
     private var onFinish: ((String?) -> Void)?
 
     public init(
@@ -26,14 +27,17 @@ public final class TextEntryMenuCoordinator: MenuScreen<Bool> {
         )
     }
 
-    /// `onFinish` gets the accepted text, or nil when the player cancels.
+    /// `onFinish` gets the accepted text, or nil when the player cancels. `limit`
+    /// caps the characters the field takes.
     @discardableResult
     func open(
-        title: String, text: String = "", onFinish: ((String?) -> Void)? = nil
+        title: String, text: String = "", limit: Int = lengthLimit,
+        onFinish: ((String?) -> Void)? = nil
     ) -> Bool {
         guard !isOpen else { return false }
         self.title = title
-        self.text = String(text.prefix(Self.lengthLimit))
+        self.limit = max(1, min(limit, Self.lengthLimit))
+        self.text = String(text.prefix(self.limit))
         self.onFinish = onFinish
         present(path: TextEntryMenuMovieBridge.moviePath) { [weak self] runtime in
             TextEntryMenuMovieBridge.activate(runtime: runtime) { self?.movie.post($0) }
@@ -49,7 +53,7 @@ public final class TextEntryMenuCoordinator: MenuScreen<Bool> {
                 if !text.isEmpty {
                     text.removeLast()
                 }
-            } else if !character.isNewline, text.count < Self.lengthLimit {
+            } else if !character.isNewline, text.count < limit {
                 text.append(character)
             }
         }
