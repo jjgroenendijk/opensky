@@ -91,6 +91,8 @@ public final class CombatLoopRuntime: CombatControlling {
     public internal(set) var commanders: [ReferenceKey: ReferenceKey] = [:]
     /// Who each engaged actor fought at the last step.
     public internal(set) var targets: [ReferenceKey: ReferenceKey] = [:]
+    /// The hand of each actor's swing in progress, and how many swings it started.
+    public internal(set) var strikes: [ReferenceKey: NPCStrikes] = [:]
     /// Allies walking back to their commander, with the point each walks to.
     public internal(set) var following: [ReferenceKey: SIMD3<Float>] = [:]
 
@@ -311,6 +313,7 @@ public final class CombatLoopRuntime: CombatControlling {
         forcedTargets.removeValue(forKey: key)
         provoked.remove(key)
         targets.removeValue(forKey: key)
+        strikes.removeValue(forKey: key)
         following.removeValue(forKey: key)
     }
 

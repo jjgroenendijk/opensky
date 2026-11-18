@@ -121,6 +121,8 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
 
     /// The profile `key` swings with, which sizes its reach and its damage.
     func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile
+    /// The one-handed melee weapon in `key`'s left hand, or nil.
+    func combatLeftWeapon(of key: ReferenceKey) -> MeleeWeaponProfile?
 
     /// The numbers of `key`'s resolved CSTY combat style, or nil when it has none.
     func combatStyle(of key: ReferenceKey) -> CombatStyleTuning?
@@ -219,8 +221,9 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// True when `helper`'s Assistance and its regard for `ally` make it join `ally`'s fight.
     func combatAssists(_ helper: ReferenceKey, ally: ReferenceKey) -> Bool
     /// Starts a paired kill move by `actor` on `target` in place of its swing.
-    func startCombatKillMove(by actor: ReferenceKey, on target: ReferenceKey, damage: Float)
-        -> Bool
+    func startCombatKillMove(
+        by actor: ReferenceKey, on target: ReferenceKey, damage: Float, action: String
+    ) -> Bool
     /// What `key` makes of the player through factions and relationships.
     func combatReaction(toPlayerOf key: ReferenceKey) -> ActorReaction?
     /// Looses an NPC's arrow. False when it has no arrow or nothing can fly.
@@ -301,9 +304,14 @@ nonisolated extension CombatLoopWorld {
 
     /// A session with no idle tree plays every swing.
     public func startCombatKillMove(
-        by _: ReferenceKey, on _: ReferenceKey, damage _: Float
+        by _: ReferenceKey, on _: ReferenceKey, damage _: Float, action _: String
     ) -> Bool {
         false
+    }
+
+    /// A world that tracks no hands fights with the right hand only.
+    public func combatLeftWeapon(of _: ReferenceKey) -> MeleeWeaponProfile? {
+        nil
     }
 
     /// A session with no actor values keeps the health-fraction rule.

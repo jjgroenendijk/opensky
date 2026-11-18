@@ -5,6 +5,8 @@
 /// picks which; a name would let a caller ask for something no rig carries.
 nonisolated public enum CombatActorClip: String, Equatable, Sendable, CaseIterable {
     case attack
+    /// A swing of the left hand's weapon.
+    case leftAttack
     case stagger
     case hitReaction
 }

@@ -40,6 +40,7 @@ the detail and the sources it did find.
 | Image space cross-fade curve | Linear rise and fall over the script's fade time | [image space](/rendering/image-space.md#where-opensky-differs) |
 | Terrain LOD cut skirt depth | 1000 units per level step: 1000 at level 4 up to 4000 at level 32 | [distant LOD](/engine/distant-lod.md#skirts) |
 | Dual power attack stamina | The sum of both weapons' power attack costs | [melee combat](/engine/melee-combat.md#the-left-hand) |
+| NPC dual-wield swing order | Right, left, then both, in turn | [melee combat](/engine/melee-combat.md#the-left-hand) |
 | Dual strike damage | Each weapon lands one blow on the contact frame, right first | [melee combat](/engine/melee-combat.md#the-left-hand) |
 | Melee hit volume | Half height 0.25 x capsule height, radius 0.75 x capsule radius | [melee combat](/engine/melee-combat.md) |
 | NPC combo chance | 0.3 per swing, at most 3 swings, no Offensive Mult term | [combat behaviour](/engine/combat-behavior.md) |

@@ -133,15 +133,17 @@ extension CombatLoopRuntime {
         world: any CombatLoopWorld
     ) {
         targets[actor.key] = target.key
-        let weapon = world.combatWeapon(of: actor.key)
-        let shoots = weapon.handType == .bow
+        let right = world.combatWeapon(of: actor.key)
+        let shoots = right.handType == .bow
+        let left = shoots ? nil : world.combatLeftWeapon(of: actor.key)
+        let reachWeapon = strikes[actor.key]?.weapon(right: right, left: left) ?? right
         track(target)
         var inputs = CombatBehaviorInputs(
             actorPosition: actor.feet,
             targetPosition: target.feet,
             awareness: world.combatAwareness(of: actor.key, toward: target.key),
             reach: shoots ? NPCArcheryAim.shootingRange : MeleeSwing.reach(
-                weapon: weapon, settings: settings, actorScale: actor.scale
+                weapon: reachWeapon, settings: settings, actorScale: actor.scale
             ),
             healthFraction: world.combatHealthFraction(of: actor.key),
             isTargetAlive: true,
@@ -152,37 +154,27 @@ extension CombatLoopRuntime {
         )
         inputs.facingError = facingError(of: actor, toward: target.feet)
         inputs.flies = world.combatFlies(actor.key)
-        inputs.canChain = [.sword, .dagger, .axe, .mace].contains(weapon.handType)
+        inputs.canChain = reachWeapon.handType.isOneHandedMelee
         let step = stepBehavior(of: actor.key, inputs: inputs)
+        let swing = swing(of: actor.key, started: step.startedAttack, right: right, left: left)
         if behaviors[actor.key]?.pendingCast?.purpose == .shout {
             world.turnCombatActor(actor.key, toward: target.feet)
         }
-        if step.startedAttack, !shoots, startsKillMove(
-            actor: actor,
-            weapon: weapon,
-            target: target,
-            world: world
-        ) {
+        if step.startedAttack, startSwing(swing, by: actor, at: target, world: world) {
             parkBehavior(of: actor.key)
             return
-        }
-        if step.startedAttack {
-            world.playCombatClip(.attack, on: actor.key)
-        }
-        if step.startedAttack, !shoots {
-            world.applyCombatSwingSpell(
-                CombatNPCBlowLanding.blow(by: actor.key, weapon: weapon), at: target.key
-            )
         }
         resolveCast(step, actor: actor.key, world: world)
         if step.reachedContact, !influence.isEthereal {
             if shoots {
                 world.fireCombatArrow(CombatArrowShot(
                     shooter: actor, target: target,
-                    targetVelocity: targetTracks[target.key]?.velocity ?? .zero, bow: weapon
+                    targetVelocity: targetTracks[target.key]?.velocity ?? .zero, bow: right
                 ))
             } else {
-                resolveContact(actor: actor, weapon: weapon, target: target, world: world)
+                for swung in swing.weapons {
+                    resolveContact(actor: actor, weapon: swung, target: target, world: world)
+                }
             }
         }
         if step.endedPursuit {
@@ -248,16 +240,53 @@ extension CombatLoopRuntime {
         apply(from: actor, weapon: weapon, to: target.key, world: world)
     }
 
-    /// A swing whose target is in reach may play a kill move instead.
-    private func startsKillMove(
-        actor: CombatActorObservation,
-        weapon: MeleeWeaponProfile,
-        target: MeleeTarget,
+    /// Which hand a swing that starts now uses, and with which weapons. A bow always
+    /// shoots with the right hand.
+    private func swing(
+        of key: ReferenceKey, started: Bool, right: MeleeWeaponProfile, left: MeleeWeaponProfile?
+    ) -> NPCSwing {
+        let shoots = right.handType == .bow
+        if started, !shoots {
+            strikes[key, default: NPCStrikes()]
+                .start(dual: left != nil && right.handType.isOneHandedMelee)
+        }
+        let hand = shoots ? .right : strikes[key]?.hand ?? .right
+        return NPCSwing(hand: hand, weapons: hand.weapons(right: right, left: left), shoots: shoots)
+    }
+
+    /// Plays the swing's clip and arms its swing spell, or starts a kill move instead.
+    /// True when a kill move started.
+    private func startSwing(
+        _ swing: NPCSwing, by actor: CombatActorObservation, at target: MeleeTarget,
         world: any CombatLoopWorld
     ) -> Bool {
-        guard reaches(actor: actor, weapon: weapon, target: target) else { return false }
-        let damage = landing(world).appliedDamage(by: actor.key, weapon: weapon, on: target.key)
-        return world.startCombatKillMove(by: actor.key, on: target.key, damage: damage)
+        if !swing.shoots, startsKillMove(actor: actor, swing: swing, target: target, world: world) {
+            return true
+        }
+        world.playCombatClip(swing.hand == .left ? .leftAttack : .attack, on: actor.key)
+        if !swing.shoots, let weapon = swing.weapons.first {
+            world.applyCombatSwingSpell(
+                CombatNPCBlowLanding.blow(by: actor.key, weapon: weapon), at: target.key
+            )
+        }
+        return false
+    }
+
+    /// A swing whose target is in reach may play a kill move instead.
+    private func startsKillMove(
+        actor: CombatActorObservation, swing: NPCSwing, target: MeleeTarget,
+        world: any CombatLoopWorld
+    ) -> Bool {
+        guard
+            let first = swing.weapons.first, reaches(actor: actor, weapon: first, target: target)
+        else { return false }
+        let damage = swing.weapons.reduce(0) {
+            $0 + landing(world).appliedDamage(by: actor.key, weapon: $1, on: target.key)
+        }
+        return world.startCombatKillMove(
+            by: actor.key, on: target.key, damage: damage,
+            action: KillMoveAttempt.action(hand: swing.hand, power: false)
+        )
     }
 
     private func reaches(

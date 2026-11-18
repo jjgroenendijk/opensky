@@ -65,6 +65,8 @@ public protocol CombatGearReads {
     func temperLevel(of item: FormID) -> Int32
     /// What `key` wears, each item with its tempering level. Empty when unknown.
     func equippedItems(of key: ReferenceKey) -> [(item: FormID, temperLevel: Int32)]
+    /// What `key` holds in its left hand by choice. Nil when unknown or unset.
+    func leftHand(of key: ReferenceKey) -> LeftHandHold?
     func hasReadiedSpell(in hand: SpellHand) -> Bool
     /// The items the player carries, in the inventory's stable stack order.
     func playerCarriedItems() -> [FormID]
