@@ -34,6 +34,7 @@ final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
     private(set) var perkQuestions: [PerkEntryPoint: PerkEvaluationSubjects] = [:]
     private(set) var spellHits: [SpellHit] = []
     var healths: [ReferenceKey: (current: Float, maximum: Float)] = [:]
+    var equipped: [ReferenceKey: [(item: FormID, temperLevel: Int32)]] = [:]
     var unkillable: Set<ReferenceKey> = []
     var inKillMove: Set<ReferenceKey> = []
     var playsKillMoves = true
@@ -156,6 +157,10 @@ final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
 
     func enchantmentProfile(of _: FormID) -> ItemEnchantmentProfile? {
         nil
+    }
+
+    func equippedItems(of key: ReferenceKey) -> [(item: FormID, temperLevel: Int32)] {
+        equipped[key] ?? []
     }
 
     func temperLevel(of _: FormID) -> Int32 {

@@ -6,6 +6,7 @@ import OpenSkyBehavior
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyPhysics
@@ -34,6 +35,32 @@ struct CombatLoopWorldPartTests {
         #expect(part.combatWeapon(of: Self.foe) == .unarmed)
         #expect(!part.combatInInterior)
         #expect(!part.combatFlies(Self.foe))
+    }
+
+    /// An NPC fights with its first equipped weapon.
+    @Test func anNPCSwingsItsEquippedWeapon() throws {
+        let world = FakeCoordinatorWorld()
+        var fields = ESMFixture.field("EDID", ESMFixture.zstring("HuntingBow"))
+        fields += ESMFixture.field(
+            "DATA", InventoryFixture.weaponData(value: 50, weight: 7, damage: 7)
+        )
+        fields += ESMFixture.field("DNAM", InventoryFixture.weaponDNAM(
+            animation: 7, speed: 1, reach: 1, flags: 0
+        ))
+        let bow = ESMFixture.record("WEAP", formID: 0x800, data: fields)
+        let items = try ItemDefinitionStore(file: SpellStoreFixture.plugin(records: [bow]))
+        let coordinator = CombatCoordinator(
+            world: world,
+            data: CombatSessionData(combat: .synthetic, archery: .synthetic, items: items)
+        )
+        world.equipped[Self.foe] = [
+            (item: FormID(0x900), temperLevel: 0),
+            (item: FormID(0x800), temperLevel: 0)
+        ]
+        let weapon = coordinator.loopWorld.combatWeapon(of: Self.foe)
+        #expect(weapon.handType == .bow)
+        #expect(weapon.damage == 7)
+        #expect(coordinator.loopWorld.combatWeapon(of: Self.ally) == .unarmed)
     }
 
     @Test func aWorldWithoutRacesPassesNoDisease() {
