@@ -9,6 +9,12 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 import simd
 
+/// The assault charged for the player's first blow on a victim, and the blows since.
+struct AssaultBlows: Equatable {
+    let outcome: CrimeOutcome
+    var blows = 1
+}
+
 /// One charged crime no guard has heard of yet.
 nonisolated public struct PendingCrimeReport: Equatable, Sendable {
     public let faction: ReferenceKey
@@ -62,6 +68,18 @@ extension CrimeCoordinator {
                 faction: factionName(report.faction), by: world.actorName(witness)
             )
             return false
+        }
+    }
+
+    /// Takes back an assault charge: its gold, its open report, and its count.
+    func withdraw(_ assault: CrimeOutcome) {
+        pendingCommands.append(.incrementStat("Assaults", by: -1))
+        guard let faction = assault.faction, assault.gold > 0, let reporter else { return }
+        reporter.modifyCrimeGold(by: -assault.gold, violent: true, of: faction)
+        if let open = pendingReports.firstIndex(where: {
+            $0.faction == faction && $0.gold == assault.gold && $0.violent
+        }) {
+            pendingReports.remove(at: open)
         }
     }
 

@@ -61,6 +61,9 @@ public final class CrimeCoordinator {
         didSet { conditionRevision &+= 1 }
     }
 
+    /// The player's assault charge on each victim, and how many blows landed since.
+    var assaultBlows: [ReferenceKey: AssaultBlows] = [:]
+
     /// Each murder's outcome, so a death reports once and `KILL` can read it.
     var murders: [ReferenceKey: CrimeOutcome] = [:] {
         didSet { conditionRevision &+= 1 }
@@ -194,17 +197,19 @@ public final class CrimeCoordinator {
             reportActorAssault(on: target, by: aggressor)
             return
         }
-        guard
-            target != .player,
-            !wasHostile,
-            let reporter,
-            assaultedActors.insert(target).inserted
-        else { return }
-        note(reporter.reportAssault(on: target), as: "Assault")
+        if assaultedActors.contains(target) {
+            assaultBlows[target]?.blows += 1
+            return
+        }
+        guard target != .player, !wasHostile, let reporter else { return }
+        assaultedActors.insert(target)
+        let outcome = reporter.reportAssault(on: target)
+        assaultBlows[target] = AssaultBlows(outcome: outcome)
+        note(outcome, as: "Assault")
     }
 
     /// A death is murder when the player struck the victim first. A one-hit
-    /// kill charges assault and murder (docs/engine/crime.md).
+    /// kill is murder only (docs/engine/crime.md), so its assault is taken back.
     public func reportMurder(of victim: ReferenceKey) {
         guard
             victim != .player,
@@ -212,6 +217,9 @@ public final class CrimeCoordinator {
             murders[victim] == nil,
             let reporter
         else { return }
+        if let assault = assaultBlows.removeValue(forKey: victim), assault.blows == 1 {
+            withdraw(assault.outcome)
+        }
         let outcome = reporter.reportMurder(of: victim)
         murders[victim] = outcome
         note(outcome, as: "Murder")
