@@ -271,6 +271,8 @@ struct InventorySaveTests {
         writer.writeUInt32(sword.rawValue)
         writer.writeUInt32(4)
         writer.writeUInt32(0)
+        writer.writeUInt32(0)
+        writer.writeUInt32(0)
         let data = OpenSkySaveFixture.file(chunks: [
             OpenSkySaveFixture.chunk(OpenSkySaveFormat.ChunkTag.inventories, writer.data)
         ])

@@ -36,6 +36,8 @@ nonisolated public final class FakeInventoryWorldPort: InventoryWorldPort {
     public var equipItemResult = false
     public var unequipItemCalls: [(item: FormID, actor: ReferenceKey)] = []
     public var unequipItemResult = false
+    public var setSleepOutfitCalls: [(outfit: FormID, actor: ReferenceKey)] = []
+    public var setSleepOutfitResult = false
     public var isEquippedCalls: [(item: FormID, actor: ReferenceKey)] = []
     public var isEquippedResult: Bool?
     public var equippedWeaponCalls: [(actor: ReferenceKey, leftHand: Bool)] = []
@@ -208,6 +210,11 @@ nonisolated extension FakeInventoryWorldPort {
     public func unequipItem(_ item: FormID, on actor: ReferenceKey) -> Bool {
         unequipItemCalls.append((item: item, actor: actor))
         return unequipItemResult
+    }
+
+    public func setSleepOutfit(_ outfit: FormID, on actor: ReferenceKey) -> Bool {
+        setSleepOutfitCalls.append((outfit: outfit, actor: actor))
+        return setSleepOutfitResult
     }
 
     public func isEquipped(_ item: FormID, on actor: ReferenceKey) -> Bool? {

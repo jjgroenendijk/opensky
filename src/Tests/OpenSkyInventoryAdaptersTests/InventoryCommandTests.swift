@@ -68,6 +68,9 @@ struct InventoryCommandTests {
         #expect(host.fakeHUD.showNotificationCalls.count == 8)
         #expect(inventory.scriptItems.scriptRemoveItemCalls.map(\.other) == [Self.actor])
         #expect(inventory.scriptItems.scriptUnequipSlotCalls.map(\.slot) == [32])
+        inventory.scriptItems.scriptSetSleepOutfitResult = Self.done
+        #expect(adapter.setSleepOutfit(Self.item, on: Self.actor))
+        #expect(inventory.scriptItems.scriptSetSleepOutfitCalls.map(\.key) == [Self.actor])
     }
 
     @Test func scriptQuestionsReadTheInventory() {

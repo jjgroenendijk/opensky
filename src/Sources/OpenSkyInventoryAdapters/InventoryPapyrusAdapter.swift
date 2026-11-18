@@ -93,6 +93,12 @@ extension InventoryPapyrusAdapter {
         ))
     }
 
+    public func setSleepOutfit(_ outfit: FormID, on actor: ReferenceKey) -> Bool {
+        InventoryCommandRunner(game: game).run(
+            game.inventory.scriptItems.scriptSetSleepOutfit(outfit, on: actor)
+        )
+    }
+
     public func isEquipped(_ item: FormID, on actor: ReferenceKey) -> Bool? {
         game.inventory.scriptItems.scriptIsEquipped(item, on: actor)
     }

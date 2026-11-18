@@ -37,8 +37,9 @@ nonisolated enum OpenSkySaveInventoryWriter {
         }
     }
 
-    /// Stack count, then item and count per stack; equipped count, then FormIDs. Both are
-    /// pre-sorted. One row per item, stolen copies summed: the layout has no per-entry
+    /// Stack count, then item and count per stack; equipped count, then FormIDs; then the
+    /// script-set outfit and sleep outfit, 0 for none. Both lists are pre-sorted. One row per item,
+    /// stolen copies summed: the layout has no per-entry
     /// length, so the stolen split goes in the additive `STOL` chunk.
     private static func writeItems(
         _ inventory: ReferenceInventoryState,
@@ -54,6 +55,8 @@ nonisolated enum OpenSkySaveInventoryWriter {
         for item in inventory.equipped {
             writer.writeUInt32(item.rawValue)
         }
+        writer.writeUInt32(inventory.outfit?.rawValue ?? 0)
+        writer.writeUInt32(inventory.sleepOutfit?.rawValue ?? 0)
     }
 
     /// One row per item with honest and stolen copies summed, in the same
