@@ -230,4 +230,14 @@ struct PapyrusNativeGuardTests {
         ) == .returned(.none))
         #expect(fixture.arrests.outcomes == [.jail(removeInventory: false)])
     }
+
+    @Test func sendPlayerToJailReadsWhetherTheJailIsReal() throws {
+        let fixture = try fixture()
+        fixture.crime.setCrimeGold(300, of: hold)
+        #expect(call(
+            "Faction", "SendPlayerToJail", fixture,
+            receiver: fixture.faction, arguments: [.boolean(false), .boolean(false)]
+        ) == .returned(.none))
+        #expect(fixture.arrests.outcomes == [.jail(removeInventory: false, realJail: false)])
+    }
 }

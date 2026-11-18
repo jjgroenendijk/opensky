@@ -204,6 +204,7 @@ public protocol InventoryReadoutLinesPort {
 public protocol InventoryScriptItemsPort {
     func isQuestItem(_ item: FormID) -> Bool
     var questItems: Set<FormID> { get }
+    var hiddenItems: Set<FormID> { get }
     func scriptAddItem(_ item: FormID, count: Int32, to key: ReferenceKey) -> Bool
     func scriptBaselineInventory(of key: ReferenceKey) -> ReferenceInventoryState?
     func scriptDropObject(

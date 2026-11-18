@@ -74,6 +74,12 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
         lockpick
     }
 
+    var questItemSet: Set<FormID> = []
+
+    var questItems: Set<FormID> {
+        questItemSet
+    }
+
     func cellOwnership(at location: CellSceneLocation) -> RecordOwnership? {
         cellOwners[location]
     }

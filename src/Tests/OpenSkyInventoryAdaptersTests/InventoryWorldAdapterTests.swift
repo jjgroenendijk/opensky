@@ -26,6 +26,7 @@ struct InventoryWorldAdapterTests {
 
     @Test func withoutRuntimesTheReadoutsAnswerNothing() {
         #expect(adapter.questItemBases().isEmpty)
+        #expect(!adapter.hidesQuestItems)
         #expect(adapter.dropPlacement() == nil)
         #expect(adapter.nearestActorEntry() == nil)
         #expect(adapter.gameDaysPassed == nil)

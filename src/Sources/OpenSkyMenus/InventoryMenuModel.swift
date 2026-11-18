@@ -181,6 +181,12 @@ nonisolated public struct InventoryMenuModel: Equatable, Sendable {
         }
     }
 
+    /// Drops the rows of `items`, as a real jail hides the player's quest items.
+    public mutating func hide(_ items: Set<FormID>) {
+        guard !items.isEmpty else { return }
+        allEntries.removeAll { items.contains($0.item) }
+    }
+
     // MARK: - Reading
 
     /// The rows the selected category shows, which is what the movie's

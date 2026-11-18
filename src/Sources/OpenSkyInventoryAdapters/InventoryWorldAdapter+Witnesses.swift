@@ -27,6 +27,10 @@ extension InventoryWorldAdapter {
         readouts.questItemBases()
     }
 
+    public var hidesQuestItems: Bool {
+        readouts.hidesQuestItems
+    }
+
     public var isPlayerSneaking: Bool {
         readouts.isPlayerSneaking
     }

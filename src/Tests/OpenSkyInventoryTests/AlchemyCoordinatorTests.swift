@@ -249,6 +249,10 @@ struct AlchemyCoordinatorTests {
 
 @MainActor
 final class FakeAlchemyWorld: InventoryWorld {
+    var hidesQuestItems: Bool {
+        false
+    }
+
     var crosshairInteraction: PlacedInteraction?
     var gameDaysPassed: Float?
     var perkFactors: [PerkEntryPoint: Float] = [:]

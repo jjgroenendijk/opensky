@@ -35,7 +35,10 @@ extension CrimeCoordinator: CrimeArrestSession {
         switch result {
         case let .success(settlement):
             showBountyNotice(gold: settlement.bounty, added: false, faction: faction)
-            keepsBelongings = outcome == .jail(removeInventory: false)
+            if case let .jail(removeInventory, realJail) = outcome {
+                keepsBelongings = !removeInventory
+                hidesQuestItems = realJail
+            }
             reportArrest(settlement)
             serve(settlement, owed: owed)
         case let .failure(refusal):

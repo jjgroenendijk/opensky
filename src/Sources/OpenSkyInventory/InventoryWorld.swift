@@ -58,6 +58,8 @@ public protocol InventoryWorld: AnyObject {
     func isBook(_ base: FormID) -> Bool
     /// Bases of the items a running quest holds in a Quest Object alias.
     func questItemBases() -> Set<FormID>
+    /// True during a real jail stay, which hides the player's quest items.
+    var hidesQuestItems: Bool { get }
     var isPlayerSneaking: Bool { get }
     /// What `key`'s perks make of `value`, with `subjects` bound and `seams` laid over
     /// the live conditions.

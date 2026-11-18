@@ -9,6 +9,7 @@ nonisolated public final class FakeInventoryScriptItemsPort: InventoryScriptItem
     public var isQuestItemCalls: [FormID] = []
     public var isQuestItemResult = false
     public var questItems: Set<FormID> = []
+    public var hiddenItems: Set<FormID> = []
     public var scriptAddItemCalls: [ScriptAddItemCall] = []
     public var scriptAddItemResult = false
     public var scriptBaselineInventoryCalls: [ReferenceKey] = []

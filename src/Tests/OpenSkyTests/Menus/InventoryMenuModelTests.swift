@@ -66,6 +66,16 @@ struct InventoryMenuModelTests {
         #expect(cuirass.isEquipped == false)
     }
 
+    /// A real jail hides the player's quest items from the list.
+    @Test func hiddenItemsLoseTheirRows() throws {
+        var model = try model()
+        model.markQuestItems([Fixture.sword])
+        model.hide([Fixture.sword])
+        model.hide([])
+        #expect(!model.allEntries.contains { $0.item == Fixture.sword })
+        #expect(model.allEntries.contains { $0.item == Fixture.cuirass })
+    }
+
     /// A form no loaded plugin describes still gets a row: it is something the
     /// player is genuinely carrying, and hiding it would lose the item.
     @Test func anUndescribedFormStillGetsANamedRow() throws {

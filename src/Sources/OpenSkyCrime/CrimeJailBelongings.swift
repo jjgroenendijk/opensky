@@ -13,9 +13,12 @@ import OpenSkyWorldState
 import simd
 
 extension CrimeSessionWorld {
-    /// Every stack the player carries but one `kept` goes into `chest`.
-    func storeBelongings(in chest: ReferenceKey, keeping kept: FormID?) {
-        moveAll(from: .player, to: chestHolder(chest), keeping: kept)
+    /// Every stack the player carries but one `kept` and the quest items goes into
+    /// `chest`. A quest item cannot leave the inventory, so it stays with the player.
+    func storeBelongings(
+        in chest: ReferenceKey, keeping kept: FormID?, questItems: Set<FormID> = []
+    ) {
+        moveAll(from: .player, to: chestHolder(chest), keeping: kept, questItems: questItems)
     }
 
     /// The jail outfit goes, and the belongings come back from their chest.
@@ -33,11 +36,12 @@ extension CrimeSessionWorld {
     private func moveAll(
         from source: InventoryHolder,
         to target: InventoryHolder,
-        keeping kept: FormID?
+        keeping kept: FormID?,
+        questItems: Set<FormID> = []
     ) {
         guard let inventory else { return }
         var keptOne = false
-        for stack in inventory.inventory(of: source).stacks {
+        for stack in inventory.inventory(of: source).stacks where !questItems.contains(stack.item) {
             var count = stack.count
             if stack.item == kept, !keptOne {
                 keptOne = true

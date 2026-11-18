@@ -20,14 +20,17 @@ nonisolated public struct JailStay: Equatable, Sendable {
     public let outfit: [FormID]
     /// Where the arrest happened. The stay begins once the player is somewhere else.
     public let arrestedIn: CellSceneLocation?
+    /// A real jail: the player's quest items stay hidden for the stay.
+    public let hidesQuestItems: Bool
     /// The jail cell, once the player stands in it.
     public private(set) var cell: CellSceneLocation?
 
     public init(
         faction: ReferenceKey, nonViolentGold: Int32, violentGold: Int32, sentenceDays: Int,
         exteriorMarker: ReferenceKey, belongings: ReferenceKey?, outfit: [FormID],
-        arrestedIn: CellSceneLocation?
+        arrestedIn: CellSceneLocation?, hidesQuestItems: Bool = true
     ) {
+        self.hidesQuestItems = hidesQuestItems
         self.faction = faction
         self.nonViolentGold = nonViolentGold
         self.violentGold = violentGold

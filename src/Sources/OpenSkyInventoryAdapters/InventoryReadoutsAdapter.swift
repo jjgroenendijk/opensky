@@ -42,6 +42,10 @@ public struct InventoryReadoutsAdapter {
 
 extension InventoryReadoutsAdapter {
     /// A created alias reference has a spawn base; a placed one has its record's.
+    var hidesQuestItems: Bool {
+        game.crime.jailStay?.hidesQuestItems == true
+    }
+
     public func questItemBases() -> Set<FormID> {
         guard let references = game.journal.runtime?.questObjectReferences() else { return [] }
         return Set(references.compactMap { key in

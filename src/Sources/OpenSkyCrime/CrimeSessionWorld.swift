@@ -76,6 +76,8 @@ public protocol CrimeSessionWorld: AnyObject {
     func loseJailProgress(days: Int, maximumDays: Int) -> Int
     /// The one item an inmate keeps, the lockpick. Nil without lock data.
     var lockpickItem: FormID? { get }
+    /// The bases a quest alias marks as quest items, which never leave the player.
+    var questItems: Set<FormID> { get }
 
     // MARK: - Guards
 

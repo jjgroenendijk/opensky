@@ -104,6 +104,7 @@ final class InventoryMenuController {
         )
         refreshed.carriedWeight = game.inventory.armourWeights.playerCarriedWeight
         refreshed.markQuestItems(game.inventory.scriptItems.questItems)
+        refreshed.hide(game.inventory.scriptItems.hiddenItems)
         if !model.categories.isEmpty {
             refreshed.selectCategory(model.selectedCategoryIndex)
             refreshed.select(model.selectedIndex)

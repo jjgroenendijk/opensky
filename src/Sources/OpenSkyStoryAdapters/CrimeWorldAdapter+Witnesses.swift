@@ -81,6 +81,10 @@ extension CrimeWorldAdapter {
         jail.lockpickItem
     }
 
+    public var questItems: Set<FormID> {
+        jail.questItems
+    }
+
     public func movePlayer(toMarker marker: ReferenceKey) -> Bool {
         jail.movePlayer(toMarker: marker)
     }

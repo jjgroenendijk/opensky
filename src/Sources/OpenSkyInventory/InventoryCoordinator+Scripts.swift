@@ -102,6 +102,11 @@ extension InventoryCoordinator.ScriptItems {
         coordinator.world.questItemBases()
     }
 
+    /// The items the inventory menu leaves out: the quest items in a real jail.
+    public var hiddenItems: Set<FormID> {
+        coordinator.world.hidesQuestItems ? questItems : []
+    }
+
     /// `ObjectReference.GetItemCount`. Nil without a holder.
     public func scriptItemCount(_ item: FormID, in key: ReferenceKey) -> Int32? {
         guard let runtime = coordinator.runtime, let holder = scriptHolder(key) else { return nil }
