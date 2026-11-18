@@ -49,11 +49,12 @@ extension CombatShared {
             return equipment.equipped(on: .player).lazy.compactMap { items.weapon($0) }.first
         }
 
-        func selectedArrow() -> ArcheryAmmunition? {
+        func selectedArrow(bolts: Bool = false) -> ArcheryAmmunition? {
             guard let items = shared.items else { return nil }
             return CombatCore.arrow(
                 equipped: shared.world.gearReads.equipment?.equipped(on: .player) ?? [],
                 carried: shared.world.gearReads.playerCarriedItems(),
+                bolts: bolts,
                 resolve: items.archeryAmmunition
             )
         }

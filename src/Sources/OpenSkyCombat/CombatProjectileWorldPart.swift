@@ -41,8 +41,11 @@ final class CombatProjectileWorldPart: CombatSharedPart, ProjectileWorld {
         guard shooter == projectileShooter.key else {
             return damage.applyHealthDamage(amount, to: target, attacker: shooter, kind: .ranged)
         }
+        let weapon = shared.gear.playerWeapon()
         let blow = CombatBlow(
-            attacker: shooter, weapon: shared.gear.playerWeapon()?.formID, handType: .bow,
+            attacker: shooter, weapon: weapon?.formID,
+            handType: CombatHandType(weapon: weapon?.animationType) == .crossbow
+                ? .crossbow : .bow,
             baseDamage: amount
         )
         let strikes = shared.strikes

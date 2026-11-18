@@ -10,6 +10,8 @@ nonisolated public struct ProjectileShot: Equatable, Sendable {
     public let payload: ProjectilePayload
     /// False for a shot whose aim already allows for the drop, such as an NPC's.
     public var tiltsUp = true
+    /// A crossbow bolt, which tilts up by the bolt settings instead of the arrow ones.
+    public var isBolt = false
 
     public init(profile: ProjectileProfile, payload: ProjectilePayload) {
         self.profile = profile

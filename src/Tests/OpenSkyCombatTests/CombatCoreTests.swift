@@ -113,6 +113,20 @@ struct CombatCoreTests {
         #expect(chosen == steel)
     }
 
+    @Test func aCrossbowIsWornAsTheBowAndFiresOnlyBolts() {
+        let crossbow = MeleeWeaponProfile(
+            damage: 19, reach: 1, weapon: FormID(0x800), handType: .crossbow
+        )
+        #expect(CombatCore.bow(worn: [.weapon(Self.sword), .weapon(crossbow)]) == crossbow)
+        let profile = ProjectileProfile(speed: 3600, gravityFactor: 0.35, range: 60000)
+        let arrow = ArcheryAmmunition(item: FormID(0x1397D), damage: 8, profile: profile)
+        let bolt = ArcheryAmmunition(item: FormID(0x2), damage: 10, profile: profile, isBolt: true)
+        let quiver = [arrow.item: arrow, bolt.item: bolt]
+        let carried = [arrow.item, bolt.item]
+        #expect(CombatCore.arrow(carried: carried) { quiver[$0] } == arrow)
+        #expect(CombatCore.arrow(carried: carried, bolts: true) { quiver[$0] } == bolt)
+    }
+
     @Test func healthFractionIsClampedAndFullWithoutAMaximum() {
         #expect(CombatCore.healthFraction(current: 25, maximum: 100) == 0.25)
         #expect(CombatCore.healthFraction(current: -5, maximum: 100) == 0)

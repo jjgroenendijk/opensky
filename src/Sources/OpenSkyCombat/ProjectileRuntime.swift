@@ -85,7 +85,7 @@ public final class ProjectileRuntime {
         // applies to a bow's shot and to nothing else; a spell leaves straight
         // down the aim ray.
         let tilt = shot.usesArcheryTilt
-            ? settings.tiltUpAngle(firstPerson: shooter.isFirstPerson).value
+            ? settings.tiltUpAngle(firstPerson: shooter.isFirstPerson, bolt: shot.isBolt).value
             : 0
         let direction = ProjectileFlight.aimDirection(
             cameraForward: shooter.aim, tiltDegrees: tilt

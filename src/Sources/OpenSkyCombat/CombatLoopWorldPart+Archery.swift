@@ -38,6 +38,7 @@ extension CombatLoopWorldPart {
             let arrow = CombatCore.arrow(
                 equipped: gear.equippedItems(of: key).map(\.item),
                 carried: gear.carriedItems(of: key),
+                bolts: shot.bow.handType == .crossbow,
                 resolve: items.archeryAmmunition
             )
         else { return false }

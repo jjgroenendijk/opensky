@@ -122,9 +122,11 @@ nonisolated public enum CombatCore {
         return CombatHands(weapon: right, offHand: emptyOffHand)
     }
 
-    /// The first worn bow. Crossbows are out of scope (docs/engine/archery.md).
+    /// The first worn bow or crossbow.
     public static func bow(worn: [CombatWornItem]) -> MeleeWeaponProfile {
-        for case let .weapon(profile) in worn where profile.handType == .bow {
+        for case let .weapon(profile) in worn
+            where profile.handType == .bow || profile.handType == .crossbow
+        {
             return profile
         }
         return .unarmed
@@ -156,13 +158,15 @@ nonisolated public enum CombatCore {
     }
 
     /// The equipped arrow, else the first carried arrow that flies in stable stack order.
+    /// `bolts` asks for crossbow bolts instead of arrows.
     static func arrow(
         equipped: [FormID] = [],
         carried: [FormID],
+        bolts: Bool = false,
         resolve: (FormID) -> ArcheryAmmunition?
     ) -> ArcheryAmmunition? {
         for item in equipped + carried {
-            if let arrow = resolve(item) {
+            if let arrow = resolve(item), arrow.isBolt == bolts {
                 return arrow
             }
         }

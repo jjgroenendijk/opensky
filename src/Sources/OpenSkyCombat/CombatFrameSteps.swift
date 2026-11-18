@@ -47,7 +47,7 @@ struct CombatFrameSteps {
         let gear = shared.gear
         if isPlayerControlled {
             archery.bow = CombatCore.bow(worn: gear.wornItems())
-            archery.arrow = gear.selectedArrow()
+            archery.arrow = gear.selectedArrow(bolts: archery.bow.handType == .crossbow)
             archery.attackMultiplier = gear.archeryAttackMultiplier()
             archery.zoomConditions = gear.bowZoomConditions(bow: archery.bow.weapon)
             var intent = intent

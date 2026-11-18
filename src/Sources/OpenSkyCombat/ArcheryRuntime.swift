@@ -124,8 +124,9 @@ public final class ArcheryRuntime {
     public func loose(consumesArrow: Bool = true) -> LiveProjectile? {
         guard let arrow else { return nil }
         lastHeldSeconds = heldSeconds
-        lastDrawFraction = ArcheryDamage.drawFraction(heldSeconds: heldSeconds, speed: bow.speed)
-        let shot = ProjectileShot.arrow(
+        lastDrawFraction = bow.handType == .crossbow
+            ? 1 : ArcheryDamage.drawFraction(heldSeconds: heldSeconds, speed: bow.speed)
+        var shot = ProjectileShot.arrow(
             profile: arrow.profile,
             damage: ArcheryDamage.resolve(
                 bowDamage: bow.damage,
@@ -139,6 +140,7 @@ public final class ArcheryRuntime {
             ammunition: consumesArrow ? arrow.item : nil,
             enchantment: bow.enchantment
         )
+        shot.isBolt = arrow.isBolt
         heldSeconds = 0
         return projectiles.fire(shot)
     }
@@ -170,7 +172,10 @@ public final class ArcheryRuntime {
         guard let world, drawing != wasDrawing else { return }
         if drawing {
             drawRequestCount += 1
-            world.raiseArcheryEvent(ArcheryGraphNames.bowAttackStart)
+            world.raiseArcheryEvent(
+                bow.handType == .crossbow
+                    ? ArcheryGraphNames.crossbowAttackStart : ArcheryGraphNames.bowAttackStart
+            )
         } else {
             world.raiseArcheryEvent(ArcheryGraphNames.attackRelease)
         }
