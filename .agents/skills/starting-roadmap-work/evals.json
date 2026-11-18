@@ -145,23 +145,23 @@
     "skills": [
       "starting-roadmap-work"
     ],
-    "query": "The code for the performance issue is merged, but its benchmark before and after is not run yet. Can the issue close?",
+    "query": "The code for the performance issue is done, but its benchmark before and after is not run yet. Can the PR merge?",
     "files": [],
     "expected_behavior": [
-      "Closes the issue now instead of keeping it open for the measurement",
-      "Adds the benchmark as an item to the single open verification-needed issue, and does not open a new one",
-      "Leaves the benchmark for the batch run once the planned work is done"
+      "Runs the benchmark before and after in this session, before the merge",
+      "Writes the result in the PR body",
+      "Does not add the check to a separate issue for a later batch"
     ]
   },
   {
     "skills": [
       "starting-roadmap-work"
     ],
-    "query": "In the verification batch, the benchmark for a closed performance issue shows no gain. What now?",
+    "query": "The benchmark for a performance PR shows no gain. What now?",
     "files": [],
     "expected_behavior": [
-      "Opens a new issue with the result and a link to the closed issue",
-      "Leaves the closed issue closed instead of reopening it"
+      "Fixes it in the same PR, or opens a new issue with the result",
+      "Does not merge the PR as if the gain were shown"
     ]
   }
 ]

@@ -2,8 +2,8 @@
 name: starting-roadmap-work
 description: Picks up and finishes OpenSky roadmap work on GitHub - how milestones map to
   Mn, choosing the next issue, writing an issue body, one branch and one PR per issue,
-  labels, assigning an issue, the draft PR flow, the single verification-needed issue for
-  checks that wait, and closing a milestone. Use when choosing what to work on, filing or
+  labels, assigning an issue, the draft PR flow, verifying in the same session, and
+  closing a milestone. Use when choosing what to work on, filing or
   editing an issue, starting or closing an issue, or finishing a milestone.
 ---
 
@@ -73,22 +73,17 @@ code itself.
 4. When the acceptance gate is met and verified, mark the PR ready:
    `gh pr ready <pr>`.
 
-## Verification that waits
+## Verification in the same session
 
-Some gates need a slow check after the code is done: a benchmark before and after, a live
-game run, or a reference-game comparison. Each such run costs minutes and slows the machine,
-so these checks run together in one batch, not one per issue.
+Each gate is checked in the session that does the work, before the PR merges, slow checks
+included: a live game run, a benchmark before and after, or a reference-game comparison.
+Never park a check in a separate issue for a later batch. Such an issue grows into a long
+list nobody runs, and the session that knew the change is gone.
 
-1. When the implementation is done but its check is not, close the issue anyway: the PR
-   body says `Closes #NNN`, or `gh issue close NNN` names the commit.
-2. Add the check to the one open issue with the `verification-needed` label, as a task
-   list item: the issue number, what to run, and what result passes. Never open a second
-   such issue; `gh issue list --label verification-needed` finds the one.
-3. When the planned work is done, run every check on the list in one batch, such as one
-   base and one branch benchmark for all performance issues. Tick each item that passes.
-   A check that fails opens a new issue with the result and a link to the closed one.
-   The closed issue stays closed, so its history shows what was built and the new issue
-   shows what is still wrong.
+1. Run the check once the code is done, and write the result in the PR body.
+2. A check that cannot run in this session, such as one blocked by a missing tool or a
+   broken reference game, keeps the issue open. Say in the PR and the issue what blocked it.
+3. A check that fails is fixed in the same PR, or opens a new issue with the result.
 
 - One branch and one PR per issue.
 - A new check that fails across the tree lands in slices, each its own PR: first the check as
