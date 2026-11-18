@@ -113,6 +113,35 @@ actor resolves its appearance from the equipped set instead of its default outfi
 
 Removing the last copy of a worn item also unequips it. An owner never wears what it does not hold.
 
+## The left hand
+
+A one-handed weapon can go into the left hand. In the game the player does this with the left
+attack button in an item menu: the install's `controlmap.txt` binds `LeftEquip` to the same button
+as `Left Attack/Block`. UESP calls a weapon in each hand dual wielding
+(<https://en.uesp.net/wiki/Skyrim:Block>).
+
+The equipped set holds every worn item once. The inventory also keeps the left-hand item, and
+whether a second copy of it is in the right hand. So two iron swords from one stack can be worn
+together. Example: the player holds two iron swords and equips one, then puts one in the left hand.
+The equipped set is the iron sword, and the left hand is the iron sword, paired.
+
+- A weapon equipped into the left hand takes off a shield, a two-handed weapon, and the old
+  left-hand weapon. The right-hand weapon stays.
+- A weapon equipped into the right hand keeps the left-hand weapon. A shield or a two-handed
+  weapon takes it off.
+- The left-hand item equipped again into the right hand makes a pair, when the owner holds two.
+  With one copy, the weapon moves to the right hand. A one-copy right-hand weapon equipped into the
+  left hand moves there too.
+- A pair loses only the copy in the hand something else takes. Removing a copy of a pair keeps the
+  last one in the right hand.
+- Readying a spell in one hand takes the weapon out of that hand only.
+- Only a weapon whose `ETYP` resolves to `EitherHand` goes to the left hand. Anything else asked
+  for the left hand is equipped as usual.
+
+An outfit can list two one-handed weapons, and nothing records a hand for them. The second one,
+in form ID order, is the left-hand weapon. This rule decides only while no left-hand item is
+stored.
+
 ## Script item natives
 
 Papyrus scripts change inventories through `AddItem`, `RemoveItem`, `RemoveAllItems`,

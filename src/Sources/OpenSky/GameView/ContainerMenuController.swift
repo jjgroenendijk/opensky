@@ -223,7 +223,8 @@ final class ContainerMenuController {
             activateSelection()
         case .button(.cancel):
             close()
-        case .button(.xButton), .button(.yButton), .pointer, .release, .activate:
+        case .button(.xButton), .button(.yButton), .button(.leftEquip), .pointer, .release,
+             .activate:
             return
         case let .move(direction):
             move(direction)

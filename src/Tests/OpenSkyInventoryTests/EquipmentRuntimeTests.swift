@@ -124,6 +124,34 @@ struct EquipmentRuntimeTests {
         #expect(equipment.equipped(on: player) == [Fixture.greatsword])
     }
 
+    @Test func twoSwordsFromOneStackFillBothHands() throws {
+        let store = WorldStateStore()
+        let equipment = try makeRuntime(store)
+        try equipment.inventory.add(Fixture.sword, count: 2, to: player)
+
+        try equipment.equip(Fixture.sword, on: player)
+        try equipment.equip(Fixture.sword, on: player, hand: .leftHand)
+
+        #expect(equipment.leftHand(on: player) == LeftHandHold(item: Fixture.sword, paired: true))
+        #expect(equipment.heldHands(on: player) == .bothHands)
+        #expect(equipment.emptyHands(.leftHand, on: player).isEmpty)
+        #expect(equipment.leftHand(on: player) == nil)
+        #expect(equipment.heldHands(on: player) == .rightHand)
+        #expect(equipment.emptyHands(.rightHand, on: player) == [Fixture.sword])
+        #expect(equipment.equipped(on: player).isEmpty)
+    }
+
+    @Test func aTwoHandedWeaponAskedForTheLeftHandFillsBoth() throws {
+        let store = WorldStateStore()
+        let equipment = try makeRuntime(store)
+        try equipment.inventory.add(Fixture.greatsword, count: 1, to: player)
+
+        try equipment.equip(Fixture.greatsword, on: player, hand: .leftHand)
+
+        #expect(equipment.leftHand(on: player) == nil)
+        #expect(equipment.heldHands(on: player) == .bothHands)
+    }
+
     @Test func weaponsAndArmourNeverConflict() throws {
         let store = WorldStateStore()
         let equipment = try makeRuntime(store)

@@ -118,6 +118,11 @@ public protocol InventoryEquipmentChangesPort {
         _ item: FormID?,
         on target: EquipmentTargetSelector
     ) -> InventoryResult<ItemActionOutcome>
+    func equipItem(
+        _ item: FormID?,
+        on target: EquipmentTargetSelector,
+        hand: HandSlots
+    ) -> InventoryResult<ItemActionOutcome>
     func unequipItem(
         _ item: FormID?,
         on target: EquipmentTargetSelector

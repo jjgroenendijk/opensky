@@ -191,6 +191,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
     public func resolve(
         appearance: ResolvedActorAppearance,
         equipped: [FormID]? = nil,
+        leftHand: LeftHandHold? = nil,
         roll: LeveledRoll? = nil,
         carried: CarriedItems = .none
     ) throws -> ResolvedActorVisual {
@@ -207,7 +208,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
             skips.append(AppearanceSkip(subject: race.formID, reason: .noSkeletonForGender))
         }
 
-        let worn = try equipped.map { outfitter.wornEquipment(equipped: $0, skips: &skips) }
+        let worn = try equipped.map { outfitter.wornEquipment($0, leftHand, skips: &skips) }
             ?? outfitter.defaultEquipment(
                 of: appearance, roll: roll, carried: carried, skips: &skips
             )

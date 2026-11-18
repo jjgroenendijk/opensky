@@ -106,6 +106,10 @@ struct AgentCommandParsingTests {
     @Test func anAddedItemCanBeEquipped() throws {
         #expect(try AgentDebugCommand.parse("item", args(["id": "IronSword", "equip": true]))
             == .addItem(reference: "player", item: "IronSword", count: 1, equip: true))
+        #expect(try AgentDebugCommand.parse("item", args(["id": "IronSword", "left": true]))
+            == .addItem(
+                reference: "player", item: "IronSword", count: 1, equip: true, leftHand: true
+            ))
         #expect(throws: AgentFailure.self) {
             try AgentDebugCommand.parse(
                 "item",

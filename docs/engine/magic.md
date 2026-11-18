@@ -260,4 +260,5 @@ goes under the school of its costliest effect, and a lesser power goes under pow
 with nothing in it is left out. The titles are string settings, because
 `interface\translate_english.txt` has no `$` key for them: `sAlteration` to `sRestoration`,
 `sShouts`, `sPowers`, and `sActiveEffects`. Accept, or the movie's `ItemSelect`, readies the
-spell in the right hand; the X key readies it in the left hand.
+spell in the right hand. The X key, or the right mouse button (`LeftEquip`), readies it in the
+left hand.

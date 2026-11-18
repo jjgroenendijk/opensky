@@ -47,8 +47,11 @@ extension AgentItemsAdapter {
             try writeActorValue(reference, name: name) { values, index, holder, before in
                 values.setValue(at: index, to: before + delta, on: holder)
             }
-        case let .addItem(reference, item, count, equip):
-            try changeItem(reference, item: item, by: count, equip: equip)
+        case let .addItem(reference, item, count, equip, leftHand):
+            try changeItem(
+                reference, item: item, by: count, equip: equip,
+                hand: leftHand ? .leftHand : .rightHand
+            )
         case let .removeItem(reference, item, count):
             try changeItem(reference, item: item, by: -count)
         default:
@@ -81,7 +84,8 @@ extension AgentItemsAdapter {
         _ text: String,
         item editorID: String,
         by count: Int32,
-        equip: Bool = false
+        equip: Bool = false,
+        hand: HandSlots = .rightHand
     ) throws(AgentFailure) -> AgentJSON {
         guard text.lowercased() == "player" else {
             throw AgentFailure(.unsupported, "items can only be changed on the player")
@@ -107,22 +111,21 @@ extension AgentItemsAdapter {
             "count": .init(Int(runtime.inventory.count(of: definition.formID, in: runtime.player)))
         ]
         if equip {
-            try equipOnPlayer(definition.formID)
+            let outcome = game.inventoryWorld.run(game.inventory.equipmentChanges.equipItem(
+                definition.formID, on: .player, hand: hand
+            ))
+            try Self.requireEquipped(outcome, text: game.inventory.readoutLines.text(of: outcome))
             result["equipped"] = true
         }
         return .object(result)
     }
 
-    private func equipOnPlayer(_ item: FormID) throws(AgentFailure) {
-        let outcome = game.inventoryWorld.run(game.inventory.equipmentChanges.equipItem(
-            item,
-            on: .player
-        ))
+    /// Throws unless `outcome` put the item on; `text` says why it did not.
+    static func requireEquipped(
+        _ outcome: ItemActionOutcome, text: String
+    ) throws(AgentFailure) {
         guard case .equipped = outcome else {
-            throw AgentFailure(
-                .invalidArgument,
-                "equip refused: \(game.inventory.readoutLines.text(of: outcome))"
-            )
+            throw AgentFailure(.invalidArgument, "equip refused: \(text)")
         }
     }
 

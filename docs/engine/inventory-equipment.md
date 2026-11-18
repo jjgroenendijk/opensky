@@ -111,7 +111,7 @@ Which hands a weapon fills does not come from a bit field on the item. It comes 
 
 | Slot | Hands |
 | --- | --- |
-| `EitherHand` | right |
+| `EitherHand` | right, or left when equipped into the left hand |
 | `BothHands` | both |
 | `Shield` | left |
 | A slot that names no hand, like `Voice` or `Potion` | none |

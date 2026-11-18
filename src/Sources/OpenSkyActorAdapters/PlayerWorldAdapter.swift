@@ -108,6 +108,10 @@ extension PlayerWorldAdapter: PlayerWorld {
         return equipment.equipped(on: InventoryHolder.player)
     }
 
+    public var playerLeftHand: LeftHandHold? {
+        game.inventory.equipment?.leftHand(on: InventoryHolder.player)
+    }
+
     public var playerWeaponsDrawn: Bool {
         game.combat.isWeaponDrawn
     }

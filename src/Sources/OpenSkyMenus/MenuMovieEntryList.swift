@@ -67,7 +67,8 @@ nonisolated extension MenuInputEvent {
         case .move(.right): (SWFKeyCode.right, 0)
         case .button(.accept): (SWFKeyCode.enter, 13)
         case .button(.cancel): (SWFKeyCode.escape, 0)
-        case .button(.xButton), .button(.yButton), .pointer, .release, .activate: nil
+        case .button(.xButton), .button(.yButton), .button(.leftEquip), .pointer, .release,
+             .activate: nil
         }
     }
 }

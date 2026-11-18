@@ -41,13 +41,17 @@ nonisolated enum OpenSkySaveInventoryDecoder: Sendable {
         let equipped = try decodeEquipped(&reader)
         let outfit = try reader.uint32("INVN outfit")
         let sleepOutfit = try reader.uint32("INVN sleep outfit")
+        let leftHand = try reader.uint32("INVN left hand")
+        let paired = try reader.uint8("INVN left hand pair")
         return SaveInventoryEntry(
             key: key,
             cell: cell,
             inventory: ReferenceInventoryState(
                 stacks: stacks, equipped: equipped,
                 outfit: outfit == 0 ? nil : FormID(outfit),
-                sleepOutfit: sleepOutfit == 0 ? nil : FormID(sleepOutfit)
+                sleepOutfit: sleepOutfit == 0 ? nil : FormID(sleepOutfit),
+                leftHand: leftHand == 0
+                    ? nil : LeftHandHold(item: FormID(leftHand), paired: paired != 0)
             )
         )
     }

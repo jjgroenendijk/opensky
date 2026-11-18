@@ -169,7 +169,10 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case setActorValue(reference: String, name: String, value: Float)
     case modActorValue(reference: String, name: String, delta: Float)
     /// `equip` then equips the item on the player, as `EquipItem` does.
-    case addItem(reference: String, item: String, count: Int32, equip: Bool = false)
+    case addItem(
+        reference: String, item: String, count: Int32, equip: Bool = false,
+        leftHand: Bool = false
+    )
     case removeItem(reference: String, item: String, count: Int32)
     case setQuestStage(quest: String, stage: Int)
     case kill(String)
@@ -406,7 +409,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         let reference = try args.optionalString("ref") ?? "player"
         let item = try args.string("id")
         let count = try args.optionalInt("count") ?? 1
-        let equip = try args.bool("equip", default: false)
+        let leftHand = try args.bool("left", default: false)
+        let equip = try args.bool("equip", default: false) || leftHand
         guard let amount = Int32(exactly: count), amount != 0 else {
             throw args.invalid("count", "a non-zero whole number")
         }
@@ -416,7 +420,9 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
             }
             return .removeItem(reference: reference, item: item, count: -amount)
         }
-        return .addItem(reference: reference, item: item, count: amount, equip: equip)
+        return .addItem(
+            reference: reference, item: item, count: amount, equip: equip, leftHand: leftHand
+        )
     }
 }
 

@@ -28,4 +28,18 @@ final class FakeHandEquipment: EquipmentAccess {
         worn.removeAll { $0 == item }
         return worn.count != before
     }
+
+    func emptyHands(_ hands: HandSlots, on _: InventoryHolder) -> [FormID] {
+        let doomed = worn.filter { occupancy(of: $0).hands.overlaps(hands) }
+        worn.removeAll { doomed.contains($0) }
+        return doomed
+    }
+
+    func heldHands(on _: InventoryHolder) -> HandSlots {
+        worn.reduce(into: HandSlots()) { $0.formUnion(occupancy(of: $1).hands) }
+    }
+
+    func leftHand(on _: InventoryHolder) -> LeftHandHold? {
+        nil
+    }
 }

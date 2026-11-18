@@ -28,8 +28,9 @@ nonisolated extension OpenSkySaveFormat {
     static let minimumScriptVariableSize = 5
     /// Smallest number of bytes a single `INVN` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1), a zero stack
-    /// count (4), a zero equipped count (4), and the two outfit words (4 each).
-    static let minimumInventoryEntrySize = 24
+    /// count (4), a zero equipped count (4), the two outfit words (4 each), and the left
+    /// hand (4 + 1).
+    static let minimumInventoryEntrySize = 29
     /// Bytes one `INVN` stack occupies: item FormID plus count, both `UInt32`.
     /// Fixed width, so this is the exact size rather than a lower bound.
     static let inventoryStackSize = 8

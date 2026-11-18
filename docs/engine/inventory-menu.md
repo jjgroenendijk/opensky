@@ -93,6 +93,9 @@ the movie, which draws both lists again.
 ## Actions
 
 - Activate equips a row, or unequips it if it is equipped. This is the vanilla toggle.
+- The right mouse button is `LeftEquip`: it puts a one-handed weapon into the left hand, or
+  takes the left-hand weapon off ([the left hand](/engine/inventory-state.md#the-left-hand)).
+  On any other row it acts as Activate.
 - Eating an ingredient also teaches its first effect, and using a poison puts it on the drawn weapon
   ([alchemy](/engine/alchemy.md)). Any other row says so and changes nothing.
 - R drops the row. A stack of more than five opens the quantity prompt first; a smaller one drops

@@ -135,14 +135,12 @@ nonisolated struct ActorOutfitResolver: Sendable {
         }
     }
 
-    /// Splits a runtime equipped set into worn armour, hand attachments, and the quiver.
-    ///
-    /// Order follows the equipped set, which `ReferenceInventoryState` keeps
-    /// sorted by FormID — so two stores that reached the same equipped set
-    /// resolve to the same part list in the same order.
-    /// A second one-handed weapon goes to the left hand, which is dual wield.
+    /// Splits a runtime equipped set, kept in FormID order, into armour, hand attachments,
+    /// and the quiver. The `leftHand` item hangs off the off-hand node, and a pair draws
+    /// twice. Without one, a second one-handed weapon is the left one (dual wield).
     func wornEquipment(
-        equipped: [FormID],
+        _ equipped: [FormID],
+        _ leftHand: LeftHandHold? = nil,
         skips: inout [AppearanceSkip]
     ) -> WornEquipment {
         var armors: [Armor] = []
@@ -172,14 +170,21 @@ nonisolated struct ActorOutfitResolver: Sendable {
                 skips.append(AppearanceSkip(subject: item, reason: .unrenderableEquipment))
                 continue
             }
-            let offHand = entry.occupancy.hands == .leftHand
-                || (rightHandTaken && entry.occupancy.hands == .rightHand)
-            rightHandTaken = rightHandTaken || !offHand
-            attachments.append(ResolvedAttachment(
-                modelPath: modelPath,
-                bone: offHand ? ActorAttachmentBone.drawnOffHand : ActorAttachmentBone.drawnWeapon,
-                sheathBone: ActorAttachmentBone.sheathNode(for: entry.animationType)
-            ))
+            let hands: [Bool] = if let leftHand, leftHand.item == item {
+                leftHand.paired ? [false, true] : [true]
+            } else {
+                [entry.occupancy.hands == .leftHand
+                    || (leftHand == nil && rightHandTaken && entry.occupancy.hands == .rightHand)]
+            }
+            for offHand in hands {
+                rightHandTaken = rightHandTaken || !offHand
+                attachments.append(ResolvedAttachment(
+                    modelPath: modelPath,
+                    bone: offHand
+                        ? ActorAttachmentBone.drawnOffHand : ActorAttachmentBone.drawnWeapon,
+                    sheathBone: ActorAttachmentBone.sheathNode(for: entry.animationType)
+                ))
+            }
         }
         return WornEquipment(armors: armors, attachments: attachments)
     }

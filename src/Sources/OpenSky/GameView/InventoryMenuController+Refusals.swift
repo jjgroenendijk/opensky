@@ -63,6 +63,21 @@ struct InventoryItemActions {
         .armor, .ammunition, .ingestible, .ingredient, .scroll, .weapon
     ]
 
+    /// The left attack button puts a weapon into the left hand, or takes the left-hand
+    /// weapon off. Any other row is used as activate uses it.
+    func useInLeftHand(_ item: FormID) -> String {
+        let inventory = game.inventory
+        let use = inventory.consumables.use(of: item)
+        let inLeft = inventory.equipment?.leftHand(on: .player)?.item == item
+        guard use == .equip || (use == .unequip && !inLeft) else { return self.use(item) }
+        if let refused = refusal(request(for: .equip, item: item), of: item) {
+            return refused
+        }
+        return game.inventoryWorld.run(
+            inventory.equipmentChanges.equipItem(item, on: .player, hand: .leftHand)
+        ).text
+    }
+
     func use(_ item: FormID) -> String {
         let inventory = game.inventory
         let use = inventory.consumables.use(of: item)

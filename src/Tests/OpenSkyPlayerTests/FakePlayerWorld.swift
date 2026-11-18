@@ -15,6 +15,7 @@ final class FakePlayerWorld: PlayerWorld {
     var playerLocomotion: LocomotionBridge? = LocomotionBridge(configuration: .synthetic)
     var isPlayerGrounded = true
     var playerEquippedSet: [FormID]?
+    var playerLeftHand: LeftHandHold?
     var playerAppearanceOverride: PlayerAppearanceOverride?
     var playerBehaviorProject: String?
     var playerWeaponsDrawn = false

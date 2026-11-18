@@ -40,6 +40,7 @@ public final class PlayerCoordinator {
     public private(set) var raceGraphFailureReason: String?
     /// The set the newest rigs were requested for, to detect a change.
     private var equipped: [FormID]?
+    private var leftHand: LeftHandHold?
     private var appearance: PlayerAppearanceOverride?
     /// The eye texture the drawn body was built with.
     private var builtEyeTextureSet: FormID?
@@ -222,6 +223,7 @@ public final class PlayerCoordinator {
         }
         guard
             world?.playerEquippedSet != equipped
+            || world?.playerLeftHand != leftHand
             || world?.playerAppearanceOverride != appearance
             || eyeTextureSet != builtEyeTextureSet
         else { return }
@@ -233,7 +235,7 @@ public final class PlayerCoordinator {
         guard let source, let world, graph != nil, wantedProject == graphProject else { return }
         let equipped = world.playerEquippedSet
         let appearance = world.playerAppearanceOverride
-        self.equipped = equipped
+        (self.equipped, leftHand) = (equipped, world.playerLeftHand)
         self.appearance = appearance
         builtEyeTextureSet = eyeTextureSet
         generation += 1
@@ -242,6 +244,7 @@ public final class PlayerCoordinator {
                 generation: generation, firstPerson: firstPerson,
                 equipped: equipped, appearance: appearance, eyeTextureSet: eyeTextureSet
             )
+            request.leftHand = leftHand
             if firstPerson {
                 request.firstPersonSkeletonPath = world.firstPersonSkeletonPath
             }

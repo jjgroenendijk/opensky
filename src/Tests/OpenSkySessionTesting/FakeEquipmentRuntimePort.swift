@@ -18,6 +18,12 @@ nonisolated public final class FakeEquipmentRuntimePort: EquipmentRuntimePort {
     public var equipResult: EquipmentChange?
     public var unequipCalls: [(item: FormID, holder: InventoryHolder)] = []
     public var unequipResult = false
+    public var emptyHandsCalls: [(hands: HandSlots, holder: InventoryHolder)] = []
+    public var emptyHandsResult: [FormID] = []
+    public var heldHandsCalls: [InventoryHolder] = []
+    public var heldHandsResult: HandSlots?
+    public var leftHandCalls: [InventoryHolder] = []
+    public var leftHandResult: LeftHandHold?
 
     public init() {}
 }
@@ -61,5 +67,24 @@ nonisolated extension FakeEquipmentRuntimePort {
     public func unequip(_ item: FormID, on holder: InventoryHolder) -> Bool {
         unequipCalls.append((item: item, holder: holder))
         return unequipResult
+    }
+
+    @discardableResult
+    public func emptyHands(_ hands: HandSlots, on holder: InventoryHolder) -> [FormID] {
+        emptyHandsCalls.append((hands: hands, holder: holder))
+        return emptyHandsResult
+    }
+
+    public func heldHands(on holder: InventoryHolder) -> HandSlots {
+        heldHandsCalls.append(holder)
+        guard let heldHandsResult else {
+            preconditionFailure("FakeEquipmentRuntimePort.heldHands has no result")
+        }
+        return heldHandsResult
+    }
+
+    public func leftHand(on holder: InventoryHolder) -> LeftHandHold? {
+        leftHandCalls.append(holder)
+        return leftHandResult
     }
 }

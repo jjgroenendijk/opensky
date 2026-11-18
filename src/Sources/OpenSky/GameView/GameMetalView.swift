@@ -227,9 +227,14 @@ final class GameMetalView: MTKView {
 
     override func rightMouseDown(with event: NSEvent) {
         // A held action, block by default, is a button-down/up pair. Menu mode
-        // swallows it, except as the key the Controls page waits for.
+        // swallows it, except as the key the Controls page waits for and as `LeftEquip`.
         guard menuMode?.isMenuMode != true, captured else {
-            if !(inMenu && captureMouse(1)) {
+            if inMenu, captureMouse(1) {
+                return
+            }
+            if inMenu, captured {
+                menuMode?.routeMenuInput(.button(.leftEquip))
+            } else {
                 super.rightMouseDown(with: event)
             }
             return
@@ -255,10 +260,6 @@ final class GameMetalView: MTKView {
     }
 
     /// The Controls page waiting for a key takes a mouse button too.
-    private func captureMouse(_ button: Int) -> Bool {
-        onCapturedKey?(InputCode.mouse(button)) == true
-    }
-
     private func pressMouse(_ button: Int) {
         guard let action = bindings.action(forMouseButton: button) else { return }
         if let name = action.helpEvent {
@@ -354,5 +355,12 @@ final class GameMetalView: MTKView {
     override func resignFirstResponder() -> Bool {
         releaseCapture()
         return super.resignFirstResponder()
+    }
+}
+
+extension GameMetalView {
+    /// True when the Controls page took the button as the key it waits for.
+    private func captureMouse(_ button: Int) -> Bool {
+        onCapturedKey?(InputCode.mouse(button)) == true
     }
 }
