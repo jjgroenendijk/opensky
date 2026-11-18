@@ -96,7 +96,8 @@ The [shout runtime](/engine/shouts.md) reads them to know which words the player
 `SetActorOwner(ActorBase)` and `SetFactionOwner(Faction)` work on a reference and on a cell. A form
 has one owner at a time, so setting one clears the other. A `None` argument clears the owner.
 
-The crime check reads the owner a script set on a reference before the reference's own `XOWN`
+The crime check reads the owner a script set on a reference before the reference's own `XOWN`,
+and the owner a script set on an interior cell before the cell's `XOWN`
 ([crime](/engine/crime.md#ownership)). So `SetActorOwner` with the player's base makes taking an
 item no theft. A faction owner set by a script needs rank 0.
 

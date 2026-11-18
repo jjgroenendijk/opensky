@@ -21,8 +21,15 @@ The first match wins:
 1. The owner a script set on the reference with `SetActorOwner` or `SetFactionOwner`, including
    no owner ([script state](/engine/papyrus-script-state.md#ownership)).
 2. The reference's own `XOWN`.
-3. The `XOWN` of the cell it stands in.
-4. No owner.
+3. The owner a script set on the cell it stands in with `Cell.SetActorOwner` or
+   `Cell.SetFactionOwner`, including no owner. Only an interior cell is checked, because OpenSky
+   names an exterior cell by its grid, not by its `CELL` record.
+4. The `XOWN` of the cell it stands in.
+5. No owner.
+
+Trespass reads steps 3 and 4 for the player's cell. Example: a quest script calls
+`SetFactionOwner(None)` on a house cell; the house is then free to enter, and its unowned chests
+free to take.
 
 The rules do not merge. A chest in an owned shop that names its own owner belongs to that owner
 only.
@@ -265,5 +272,4 @@ The game's own rules for alarms, witnesses, guards, and statistics are in
   followers, animal witnesses, and children telling adults are not modelled.
 - For an `NPC_`-owned victim, `doNotReportCrimesAgainstMembers` reads the base record's authored
   factions. A faction a script gave that actor later is not seen.
-- A cell owner set by `Cell.SetActorOwner` or `Cell.SetFactionOwner` is kept in the script state,
-  but the crime check does not read it. It reads a script owner on the reference only.
+- A script-set owner on an exterior cell is not read.
