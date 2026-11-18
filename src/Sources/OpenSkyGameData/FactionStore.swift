@@ -122,6 +122,13 @@ nonisolated public struct FactionStore: Sendable {
         index.resolvedID(id, fromPlugin: pluginName)
     }
 
+    /// The raw FormID `pluginName` writes for `key`: the inverse of `resolvedID`.
+    public func localFormID(of key: ReferenceKey, inPlugin pluginName: String) -> FormID? {
+        guard case let .plugin(name, objectID) = key else { return nil }
+        return index.resolver(ofPlugin: pluginName)?
+            .localFormID(of: ResolvedFormID(plugin: name, objectID: objectID))
+    }
+
     /// One of `faction`'s own links, such as `JOUT`, in the load-order FormID space
     /// that inventories use.
     public func linkFormID(_ link: FormID?, of faction: ResolvedFaction) -> FormID? {

@@ -148,7 +148,10 @@ A faction with no `CRVA` charges nothing, but the crime is still counted.
 
 Faction flags control the charge. `trackCrime` must be set. The ignore bit for the crime
 (`ignoreStealing`, `ignoreAssault`, `ignoreMurder`, `ignoreTrespass`) must be clear. A faction
-with `doNotReportCrimesAgainstMembers` does not charge a crime against one of its members. The
+with `doNotReportCrimesAgainstMembers` does not charge a crime against one of its members: a placed
+actor in the faction, the faction itself, or an `NPC_` base whose own `SNAM` list (through its
+template chain) names the faction. The base case is a theft from something `XOWN` gives to an
+`NPC_`, because then the victim is the base record, not a placed actor. The
 bit names and values are from xEdit's `wbFACT` `DATA` flags ([factions](/formats/factions.md)).
 
 ## Witnesses
@@ -260,8 +263,7 @@ The game's own rules for alarms, witnesses, guards, and statistics are in
 
 - A witness does not walk to a guard. It reports only when a guard is near it already. Crimes by
   followers, animal witnesses, and children telling adults are not modelled.
-- `doNotReportCrimesAgainstMembers` does not see an actor-owned reference. The flag checks the
-  victim's memberships, which are stored per placed actor, but `XOWN` names a base record. A
-  faction-owned reference works, because a faction counts as its own member.
+- For an `NPC_`-owned victim, `doNotReportCrimesAgainstMembers` reads the base record's authored
+  factions. A faction a script gave that actor later is not seen.
 - A cell owner set by `Cell.SetActorOwner` or `Cell.SetFactionOwner` is kept in the script state,
   but the crime check does not read it. It reads a script owner on the reference only.

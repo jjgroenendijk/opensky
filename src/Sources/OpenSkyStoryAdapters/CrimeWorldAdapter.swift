@@ -80,11 +80,17 @@ public final class CrimeWorldAdapter {
             let factionStore = provider.factionStore,
             let pluginName = provider.magicItemPluginName
         else { return nil }
+        var runtime = CrimeRuntime(
+            store: store, factions: factionStore,
+            settings: CrimeSettings.resolve(store: provider.gameSettings)
+        )
+        runtime.authoredFactions = provider.actorValueBaselines?.resolver.map {
+            AuthoredFactions(
+                baselines: ActorFactionBaselineResolver(actorValues: $0), pluginName: pluginName
+            )
+        }
         return CrimeSessionData(
-            runtime: CrimeRuntime(
-                store: store, factions: factionStore,
-                settings: CrimeSettings.resolve(store: provider.gameSettings)
-            ),
+            runtime: runtime,
             locations: provider.locationStore,
             pluginName: pluginName,
             texts: CrimeTexts
