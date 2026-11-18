@@ -15,8 +15,8 @@ nonisolated public enum SpellDelivery: Sendable {
         castingType: MagicEffectCastingType?
     ) -> Bool {
         switch delivery {
-        case .selfTarget, .aimed, .touch: true
-        case .targetActor, .targetLocation: castingType != .concentration
+        case .selfTarget, .aimed, .touch, .targetActor: true
+        case .targetLocation: castingType != .concentration
         case .unknown: false
         }
     }

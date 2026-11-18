@@ -220,6 +220,24 @@ struct CasterDeliveryTests {
         #expect(harness.runtime.tally.concentrationSeconds == 3)
     }
 
+    /// Heal Other's shape: a concentration cast at a target actor applies to the aimed
+    /// actor within the SPIT range, once on entry and once per whole second.
+    @Test func aConcentrationCastAtATargetActorAppliesEverySecond() throws {
+        let harness = try harness()
+        harness.world.aim = aim(at: Self.victim)
+        try ready(SpellbookFixture.Spell.healOther, in: .right, harness)
+
+        harness.runtime.begin(.right, on: .player)
+        #expect(harness.runtime.phase(of: .right) == .concentrating)
+        for _ in 0 ..< 60 {
+            harness.runtime.advance(delta: 1.0 / 60, on: .player)
+        }
+
+        #expect(harness.world.spellHits.count == 2)
+        #expect(harness.world.spellHits.allSatisfy { $0.targets.map(\.key) == [Self.victim] })
+        #expect(harness.world.aimRanges.allSatisfy { $0 == 1500 })
+    }
+
     /// The ray is resampled on every application, so sweeping a beam off a
     /// target stops applying to it while the cast keeps running.
     @Test func sweepingTheBeamOffATargetStopsApplyingToIt() throws {
@@ -246,10 +264,8 @@ struct CasterDeliveryTests {
         #expect(SpellDelivery.isImplemented(.targetLocation, castingType: .fireAndForget))
         #expect(!SpellDelivery.isImplemented(.targetLocation, castingType: .concentration))
         #expect(!SpellDelivery.isImplemented(.unknown(raw: 9), castingType: .fireAndForget))
-        // Target-actor concentration needs a tracked AI target, which this
-        // build lacks, so only the fire-and-forget half runs.
         #expect(SpellDelivery.isImplemented(.targetActor, castingType: .fireAndForget))
-        #expect(!SpellDelivery.isImplemented(.targetActor, castingType: .concentration))
+        #expect(SpellDelivery.isImplemented(.targetActor, castingType: .concentration))
         #expect(SpellDelivery.isImplemented(.aimed, castingType: .concentration))
         #expect(SpellDelivery.isImplemented(.selfTarget, castingType: nil))
     }
