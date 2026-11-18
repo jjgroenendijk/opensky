@@ -20,24 +20,27 @@ nonisolated extension WalkController {
             collider: collider,
             collisionQuery: collisionQuery
         )
-        if let maintained {
+        let blocked = isHorizontallyBlocked(direct, start: start, desired: displacement)
+        // A tread that still holds the feet keeps them there, unless the next riser blocks
+        // the move: then the step up below is tried.
+        if let maintained, !blocked {
             return HorizontalMove(result: direct, support: maintained)
         }
         guard
-            isGrounded, isHorizontallyBlocked(direct, start: start, desired: displacement),
+            isGrounded, blocked,
             let support = stepSupport(
                 from: start,
                 displacement: displacement,
                 collider: collider,
                 collisionQuery: collisionQuery
-            ) else { return HorizontalMove(result: direct, support: nil) }
+            ) else { return HorizontalMove(result: direct, support: maintained) }
         let raised = collider.move(
             from: start,
             displacement: SIMD3<Float>(0, 0, configuration.stepHeight.value),
             query: collisionQuery
         )
         guard raised.position.z >= start.z + configuration.stepHeight.value - 0.05 else {
-            return HorizontalMove(result: direct, support: nil)
+            return HorizontalMove(result: direct, support: maintained)
         }
         let across = collider.move(
             from: raised.position,
@@ -45,7 +48,7 @@ nonisolated extension WalkController {
             query: collisionQuery
         )
         guard horizontalProgress(across.position - start, along: displacement) > 0 else {
-            return HorizontalMove(result: direct, support: nil)
+            return HorizontalMove(result: direct, support: maintained)
         }
         var steppedPosition = across.position
         steppedPosition.z = support.height
