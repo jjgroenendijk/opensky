@@ -43,6 +43,28 @@ struct CrimeStoryReportsTests {
         #expect(coordinator.scriptedOwner != nil)
     }
 
+    @Test func aScriptSetCellOwnerWinsOverTheCellsOwnAndIsInherited() throws {
+        let shop = CellSceneLocation.interior(FormID(0x900))
+        let fake = FakeCrimeSessionWorld()
+        fake.references = FakeCrimeReferences(cell: shop)
+        fake.cellOwners[shop] = RecordOwnership(owner: FormID(CrimeFixture.Factions.hold))
+        let world = try CrimeOwnershipWorld(
+            world: fake,
+            data: CrimeSessionData(
+                runtime: CrimeFixture.runtime(), locations: nil,
+                pluginName: CrimeFixture.pluginName
+            )
+        )
+        let hold = CrimeFixture.key(CrimeFixture.Factions.hold)
+        #expect(world.crimeOwner(of: .generated(7)) == .faction(hold, requiredRank: 0))
+
+        let owner = CrimeFixture.key(CrimeFixture.Actors.resident)
+        world.scriptedOwner = { $0 == CrimeFixture.key(0x900) ? .some(.actor(owner)) : nil }
+        #expect(world.cellOwner(at: shop) == .actor(owner))
+        #expect(world.crimeOwner(of: .generated(7)) == .actor(owner))
+        #expect(world.cellOwner(at: .interior(FormID(0x901))) == nil)
+    }
+
     @Test func aFactionWithoutAnAllowanceHasNone() throws {
         let world = try CrimeOwnershipWorld(
             world: FakeCrimeSessionWorld(),

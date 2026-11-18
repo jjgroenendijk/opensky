@@ -38,9 +38,23 @@ final class CrimeOwnershipWorld: CrimeWorld {
         }
     }
 
+    /// A script-set owner first (`Cell.SetActorOwner`, `Cell.SetFactionOwner`), then
+    /// the cell's own `XOWN`.
     func cellOwner(at location: CellSceneLocation?) -> ReferenceOwner? {
+        if let scripted = scriptedCellOwner(at: location) {
+            return scripted
+        }
         guard let location, let ownership = world.cellOwnership(at: location) else { return nil }
         return self.ownership?.owner(of: ownership)
+    }
+
+    /// Only an interior is named by its `CELL` FormID here; an exterior is a grid.
+    private func scriptedCellOwner(at location: CellSceneLocation?) -> ReferenceOwner?? {
+        guard
+            case let .interior(cell)? = location, let pluginName,
+            let resolved = runtime?.factions.resolvedID(cell, fromPlugin: pluginName)
+        else { return nil }
+        return scriptedOwner?(ReferenceKey(resolved: resolved))
     }
 
     func favourAllowance(in faction: ReferenceKey) -> Int32? {
@@ -48,18 +62,19 @@ final class CrimeOwnershipWorld: CrimeWorld {
     }
 
     /// A script-set owner first, then the reference's own `XOWN`, then the owner of the
-    /// cell it stands in.
+    /// cell it stands in, which a script may have set too.
     func crimeOwner(of key: ReferenceKey) -> ReferenceOwner? {
         if let scripted = scriptedOwner?(key) {
             return scripted
         }
-        guard let ownership else { return nil }
         let reference = world.references?.referenceEntry(key: key)?.placedReference
-        let cell = crimeCell(of: key).flatMap { world.cellOwnership(at: $0) }
-        return ownership.owner(
-            reference: reference.flatMap(RecordOwnership.init(reference:)),
-            cell: cell
-        )
+        if
+            let authored = reference.flatMap(RecordOwnership.init(reference:)),
+            let owner = ownership?.owner(of: authored)
+        {
+            return owner
+        }
+        return cellOwner(at: crimeCell(of: key))
     }
 
     func crimeFaction(in cell: CellSceneLocation?) -> ReferenceKey? {
