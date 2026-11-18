@@ -1,8 +1,8 @@
 // One magic effect acting on an actor. The Recover flag picks the mode
 // (<https://ck.uesp.net/wiki/Magic_Effect>): `modifier` holds a temporary slice
 // and returns it on expiry; `perSecond` pays out each second and reverses nothing.
-// A zero-duration effect applies once and is never stored. Tapering is not
-// applied; no vanilla effect used here needs it. See docs/engine/magic.md.
+// A zero-duration effect applies once and is never stored. A taper keeps it going
+// past its duration. See docs/engine/magic.md.
 
 import Foundation
 public import OpenSkyFormatsESM
@@ -128,7 +128,9 @@ nonisolated public struct ActiveEffect: Equatable, Sendable {
     /// zero-duration one applies once and is never stored — and normally zero
     /// for a `constant` effect, which no duration bounds.
     public let duration: Float
-    /// Seconds since application, capped at `duration`.
+    /// What happens after `duration`; `.none` ends the effect there.
+    public let taper: EffectTaper
+    /// Seconds since application, capped at `lifetime`.
     public private(set) var elapsed: Float
     /// Whole seconds a `perSecond` effect has already paid out, so a tick that
     /// crosses two second boundaries pays twice and one that crosses none pays
@@ -153,6 +155,7 @@ nonisolated public struct ActiveEffect: Equatable, Sendable {
         mode: ActiveEffectMode,
         isDetrimental: Bool,
         duration: Float,
+        taper: EffectTaper = .none,
         elapsed: Float = 0,
         paidSeconds: UInt32 = 0,
         values: [ActiveEffectValue],
@@ -165,7 +168,9 @@ nonisolated public struct ActiveEffect: Equatable, Sendable {
         self.mode = mode
         self.isDetrimental = isDetrimental
         self.duration = duration.isFinite ? max(0, duration) : 0
-        self.elapsed = elapsed.isFinite ? min(max(0, elapsed), self.duration) : 0
+        self.taper = taper
+        let lifetime = self.duration + taper.duration
+        self.elapsed = elapsed.isFinite ? min(max(0, elapsed), lifetime) : 0
         self.paidSeconds = paidSeconds
         self.values = values
         self.stackKeyword = stackKeyword
@@ -179,11 +184,16 @@ nonisolated public struct ActiveEffect: Equatable, Sendable {
     /// Seconds left before the effect expires. Zero for a constant effect,
     /// which has no remaining duration to report; ask `isConstant` first.
     public var remaining: Float {
-        max(0, duration - elapsed)
+        max(0, lifetime - elapsed)
+    }
+
+    /// The duration and the taper after it.
+    public var lifetime: Float {
+        duration + taper.duration
     }
 
     var isExpired: Bool {
-        !isConstant && elapsed >= duration
+        !isConstant && elapsed >= lifetime
     }
 
     /// The largest magnitude the effect carries, which is what the Peak Value
@@ -197,7 +207,7 @@ nonisolated public struct ActiveEffect: Equatable, Sendable {
     /// A millisecond is far above the error and far below what a player sees.
     public static let secondTolerance: Float = 1e-3
 
-    /// This effect advanced by `seconds`, clamped at its duration.
+    /// This effect advanced by `seconds`, clamped at its lifetime.
     ///
     /// An effect with less than half a step left is snapped to its duration
     /// rather than left a microsecond short: it cannot survive another step
@@ -207,7 +217,7 @@ nonisolated public struct ActiveEffect: Equatable, Sendable {
         guard !isConstant, seconds.isFinite, seconds > 0 else { return self }
         var copy = self
         let next = elapsed + seconds
-        copy.elapsed = duration - next < seconds / 2 ? duration : min(duration, next)
+        copy.elapsed = lifetime - next < seconds / 2 ? lifetime : min(lifetime, next)
         return copy
     }
 
@@ -246,6 +256,12 @@ nonisolated public struct ActiveEffect: Equatable, Sendable {
             copy.values = values.map { $0.owning(0) }
         }
         return copy
+    }
+
+    /// The share of the magnitude the `second`-th payout gives, one-based. A payout
+    /// inside the duration gives all of it; one in the taper gives the taper's share.
+    public func payoutShare(ofSecond second: UInt32) -> Float {
+        taper.share(after: Float(second) - duration)
     }
 
     /// The signed change one application of `value` makes to an actor value.

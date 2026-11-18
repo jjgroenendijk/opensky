@@ -99,6 +99,9 @@ Key, cell, uint32 effect count, then effects:
 | uint32 | mode | 0 held modifier, 1 per second |
 | uint8 | detrimental | 1 when the magnitude is taken off |
 | float32 | duration | seconds, from `EFIT` |
+| float32 | taperWeight | the `MGEF` taper weight, 0 for none |
+| float32 | taperCurve | the `MGEF` taper curve |
+| float32 | taperDuration | seconds the effect goes on after `duration` |
 | float32 | elapsed | seconds since it started |
 | uint32 | paidSeconds | whole seconds a per-second effect has paid |
 | optional key | stackKeyword | the no-stack keyword |
@@ -109,7 +112,7 @@ Key, cell, uint32 effect count, then effects:
 `applied` is how much of the temporary modifier each effect owns, so the modifier is rebuilt
 from it ([magic](/engine/magic.md)). Instant effects are not stored; their result is already
 in `AVAL` and `AVOV`. An unknown `sourceKind` or `mode` is `invalidValue`. An effect with no
-duration or no values is dropped. Sizes: 12 bytes minimum per entry, 49 per effect, 12 per
+duration or no values is dropped. Sizes: 12 bytes minimum per entry, 61 per effect, 12 per
 value.
 
 ## ECHG: enchanted items

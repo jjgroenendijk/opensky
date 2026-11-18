@@ -56,7 +56,7 @@ extension MagicCoordinator.EffectsPanel {
                 .map { ActorValueIdentity.description(of: $0.index) },
             archetype: archetypeText(of: effect, runtime: runtime)
         )
-        if effect.duration > 0 {
+        if effect.lifetime > 0 {
             readout.timeLeftText = coordinator.texts.magic.timeLeft(effect.remaining)
         }
         return readout

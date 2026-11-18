@@ -93,8 +93,11 @@ extension ActiveEffectRuntime {
         let owed = effect.unpaidSeconds
         guard owed > 0 else { return effect }
         let absorbs = rule(of: effect) == .absorb
+        let share = (1 ... owed).reduce(Float(0)) {
+            $0 + effect.payoutShare(ofSecond: effect.paidSeconds &+ $1)
+        }
         for value in effect.values where ActorValueIdentity.isVanilla(index: value.index) {
-            let amount = value.magnitude * Float(owed)
+            let amount = value.magnitude * share
             if absorbs {
                 absorb(amount, at: value.index, effect.isDetrimental, (effect.caster, holder))
             } else if effect.isDetrimental {

@@ -59,14 +59,14 @@ nonisolated public struct MagicEffectData: Equatable, Sendable {
     public let resistanceActorValue: Int32
     let counterEffectCount: UInt16
     public let castingLight: FormID?
-    let taperWeight: Float
+    public let taperWeight: Float
     public let hitShader: FormID?
     let enchantShader: FormID?
     let minimumSkillLevel: UInt32
     let spellmakingArea: UInt32
     let castingTime: Float
-    let taperCurve: Float
-    let taperDuration: Float
+    public let taperCurve: Float
+    public let taperDuration: Float
     public let secondActorValueWeight: Float
     public let archetype: MagicEffectArchetype
     public let relatedActorValue: Int32
