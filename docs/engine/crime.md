@@ -198,6 +198,12 @@ first is a murder victim. This also matches UESP: "if you kill an NPC ... after 
 making them hostile, you can be simultaneously guilty of both assault and murder". A bandit that
 attacked first is not a murder victim.
 
+UESP goes on: "if your attack is a one-hit kill then you will only be charged with the latter".
+The hit is reported before the zero-health check sees the death, so the assault is charged first.
+The session counts the player's blows on each victim. When the victim dies after one blow, the
+assault is taken back: its gold, its open report, and its "Assaults" count. Example: one arrow
+kills a Whiterun guard; the bounty is 1000, not 1040. Two blows cost 1040.
+
 ## Trespass
 
 UESP "Skyrim:Crime": an owner who sees the player in a private place first warns them, and
@@ -254,8 +260,6 @@ The game's own rules for alarms, witnesses, guards, and statistics are in
 
 - A witness does not walk to a guard. It reports only when a guard is near it already. Crimes by
   followers, animal witnesses, and children telling adults are not modelled.
-- A one-hit kill charges assault and murder. UESP says only murder. The hit is reported before the
-  zero-health check notices the death.
 - `doNotReportCrimesAgainstMembers` does not see an actor-owned reference. The flag checks the
   victim's memberships, which are stored per placed actor, but `XOWN` names a base record. A
   faction-owned reference works, because a faction counts as its own member.
