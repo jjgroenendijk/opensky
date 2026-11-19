@@ -106,6 +106,13 @@ transforms, so the result is the identity within float error. For FaceGen, it co
 the world transforms of the referenced nodes. Animation later replaces the current bone
 transforms without changing weights or GPU layout.
 
+A tree, a file whose root is a `BSTreeNode`, is skinned to its own bone nodes, and those
+nodes can stand far from the skin's bind data. In `TreePineForestSnowL04.nif` the stored
+branch vertices reach 1,187 units below the root, while the branch bones place them up the
+trunk. The game draws the bones' pose, so OpenSky moves each tree vertex by
+`rootParentToSkin * boneNodeToRootParent * skinToBone` of its weighted bones once, when it
+loads the model. The bounds, the shadows, and the draw then all use the posed tree.
+
 ## Vanilla examples
 
 - `malebody_1.nif`: 2 skinned meshes, 1,802 vertices, 2,948 triangles. The underwear has
