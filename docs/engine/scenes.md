@@ -66,7 +66,10 @@ forward by the length of the pause. So a timer or a line keeps the time it had l
 A dead actor's dialogue or package action is done at once. The game also lets a scene go on
 past a dead actor.
 
-OpenSky does not know yet when an actor observes combat, so bits 0x40 and 0x80 never match.
+An actor of a scene observes combat when it detects a fight that it could watch, as described in
+[watching a fight](/engine/random-conversations.md#watching-a-fight). It keeps its scene package,
+and bits 0x40 and 0x80 then match. OpenSky does not build watching a fight yet, so these bits
+never match.
 
 ## Phases
 
@@ -334,5 +337,6 @@ its two speakers and ends.
 ## Not done yet
 
 - Observing combat is not known, so the observe-combat behaviour flags never act.
-- A conversation partner does not walk to the other partner before the scene begins.
+- A conversation partner does not walk to the other partner before the scene begins. The game's
+  walk is in [walking together](/engine/random-conversations.md#walking-together).
 - A speaker does not wait to face its look target before its line.

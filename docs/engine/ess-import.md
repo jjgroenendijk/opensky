@@ -94,7 +94,7 @@ imports to the same keys.
 
 | Data | Why |
 | --- | --- |
-| Actor data after the animation part: health, death, actor values, perks | The layout is undocumented ([change forms](/formats/ess-change-forms.md#references)) |
+| Actor data after the animation part: health, death, actor values, perks | Not read yet. It is readable for an actor with no AI process ([change forms](/formats/ess-change-forms.md#actor-data-after-the-animation-part)) |
 | Base attributes of an `NPC_` change, and anything after them | The layout is undocumented |
 | Changes to an actor base other than the player's | OpenSky keeps actor state on the placed actor |
 | A reference moved to another cell | OpenSky's transform override cannot move a reference between cells |
@@ -125,3 +125,11 @@ The game keeps a whole running world in its save. OpenSky imports the parts it c
 reports the rest. An imported game therefore starts with all scripts idle, no actor
 remembers damage, and the dead are alive again. The report says how much of each was left
 out.
+
+The game saves each running script stack with all its frames. On load it runs the version of a
+function stored in the save when it differs from the installed script. A function that was
+native in the save but is not native in the game cannot come back, and a variable whose type
+changed stops its function. Frames on objects that are no longer valid do not resume. A wait
+that is too long, and an update time too far in the past, become 1 second. Suspended stacks are
+kept in a queue and come back with it. Health and death sit after the actor's process data
+([change forms](/formats/ess-change-forms.md#actor-data-after-the-animation-part)).

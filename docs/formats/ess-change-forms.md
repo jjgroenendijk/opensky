@@ -74,21 +74,55 @@ Nothing after it is guessed.
 | | Moved (0x2) or Havok moved (0x4) | `refID` space, vector position, vector rotation |
 | | Also cell changed (0x8) or promoted (0x2000000) | then `refID` starting space and 4 bytes of cell offsets |
 | Havok data | 0x4 | `vsval` count, then that many bytes. Skipped |
-| Actor header | `ACHR` | 8 bytes. Skipped |
+| Actor header | `ACHR` | `uint32` process level, `uint32` actor flags. Skipped |
 | Form flags | 0x1 | `uint32` flags, `uint16` unknown. `0x800` disabled, `0x20` deleted, as in a plugin |
 | Base object | 0x80 | `refID` |
 | Scale | 0x10 | `float32` |
-| Extra data | Any extra data flag | An extra data list, below |
+| Extra data | Any extra data flag | An extra data list, below. A running `TranslateTo` move is type 161 ([translation](/engine/papyrus-translation.md#a-move-in-a-save)) |
 | Inventory | 0x20 or 0x8000000 | `vsval` count of items: `refID` item, `int32` count, `vsval` count of extra data lists |
-| Animation | 0x10000000 | `vsval` length, then bytes. Skipped |
+| Animation | 0x10000000 | `vsval` length, then bytes. Skipped. Inside: a flag, then for each behaviour graph a count, the project name, and the graph state; then the number 42 (body slots), the third-person slots, and the first-person slots or a 0 when they are the same |
 
 Rotation is in radians, as in a plugin's placement. An inventory count is a change against
 the base container, so it can be negative.
 
-After the animation part an actor has more data: life state, packages, actor values,
-perks. UESP does not document its layout. An `ACHR` with bytes left there is
-`partial(blockedBy: "actor data after animation")`. So death, health, and perks are not
-read from a save.
+### Actor data after the animation part
+
+An actor has more data after the animation part, in this order. The process data comes first.
+An actor with process level `0xFFFFFFFF` in its actor header has no AI process and writes no
+process data. Process data has no length in front, and parts of it are not decoded
+([actor process data](/formats/ess-actor-process.md)). So a decoder reads the parts below only
+for an actor with no process. Any other `ACHR` with bytes left there is
+`partial(blockedBy: "actor data after animation")`.
+
+A refID here is the usual 3 bytes, and 3 zero bytes mean none.
+
+| Part | Layout |
+| --- | --- |
+| Process data | Present when the process level is not `0xFFFFFFFF` |
+| Unknown | `uint8` |
+| Timers | 4 `float32`: update target, voice, time since the last update, dead-body check |
+| Action | `int32` action, `float32` action timer, `int32` unknown |
+| Emotion | `int32` type, `int32` value |
+| Crime and combat | `int32` critical stage, `int32` thief crime stamp, `int32` the time combat last saw its target. With combat data, combat stops on load when this stamp plus a fixed time limit is past |
+| Weight | `float32`, the `NPC_` weight (`NAM7`). A value other than the base's sets the base's weight on load |
+| Killer | `refID` |
+| Actor state | `uint16` (low 14 bits used); `uint8` each: sit or bed state (3 sitting, 7 in bed), fly state, life state (1 dying, 3 unconscious, 5 recycle, 7 essential down), knock state, attack state; then 9 flag bytes |
+| Support | `refID`, the moving reference the actor stands on, or none |
+| Spell casters | `uint8` mask of 4 casters. For each set bit: `uint32`, `refID` spell, `uint32`, `uint32`, `refID` target, `uint32`, `uint32`, `refID`, `uint32`, then a `vsval` length and that many bytes |
+| Selected spells | 4 `refID`s, then the `refID` of the selected power |
+| Health, magicka, stamina, voice | Actor values 24, 25, 26, and 38. Each: `uint32` 3, then `float32` permanent, temporary, and damage modifiers |
+| Other actor values | `vsval` count of (`int32` index, `float32` base value), then `vsval` count of (`int32` index, 3 `float32` modifiers) |
+| Added spells | `uint32` count of `refID` |
+| Movement | `uint8` flag, then data with no length. Not decoded |
+| More flags | `uint32` |
+| Combat | `uint8` flag, then data with no length. Not decoded |
+| Spell pairs | `uint32` count of (`refID` spell, `int32`) |
+| Last part | `uint32` day of the last bribe or intimidation, `float32` underwater timer, `refID` dialogue branch, `uint8` flag |
+
+The actor state's third byte is the life state. Values 1 (dying), 2 (dead), and 5 (recycle) mean
+dead; 7 is essential down. A health damage modifier below zero is damage the actor still carries.
+The movement and combat data have no known layout, so a decoder stops at the first set flag of the
+two. Everything before them is decoded.
 
 ### Extra data list
 

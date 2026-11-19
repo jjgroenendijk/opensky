@@ -79,7 +79,9 @@ Where OpenSky differs from the game:
 - The game picks each activity from a weighted list of nearby objects. OpenSky takes the
   nearest allowed seat after each activity without furniture, and a free idle marker when
   one is in the place.
-- Conversations are not used yet.
+- Conversations are not used yet. In the game, Allow Conversation turns on the running package's
+  random conversation flag, and the actor then follows the
+  [random conversation](/engine/random-conversations.md#random-conversations-adia) check.
 - That the durations are game hours is an inference: the wiki gives hours only for meals and
   sleep. With game hours, a sandboxing actor stays at a marker for about a minute of real
   time, as in the game.

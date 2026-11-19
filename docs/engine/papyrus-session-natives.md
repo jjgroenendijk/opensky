@@ -34,7 +34,7 @@ Signatures and behaviour come from the Creation Kit wiki pages named after each 
 | `Debug.TakeScreenshot` | Writes a PNG of the view, at its size, to `~/Pictures/OpenSky/` |
 | `Debug.ToggleCollisions` | Switches the player between flying and walking |
 | `Debug.SetGodMode` | The player takes no damage while it is on. A save keeps it |
-| `Debug.SetFootIK` | Turns foot IK on or off for the player and every actor, until the session ends |
+| `Debug.SetFootIK` | Turns foot IK on or off for the player and every actor. As in the game, it is one program-wide setting that no save holds, so it stays through a new game and a load until the program quits |
 | `Debug.CenterOnCellAndWait` | Moves the player to the cell |
 | `Game.ClearPrison`, `Game.SetPlayerReportCrime` | Ends a jail stay; stops crime reports against the player. A save keeps the switch |
 | `Game.GetPlayerGrabbedRef` | The body the player holds with telekinesis |
@@ -184,7 +184,5 @@ The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
   5 degrees of it. No open source or game setting gives the game's angle.
 - `KnockAreaEffect` knocks down at 14 Havok metres a second for a magnitude of 1. No open source
   or game setting gives the game's scale.
-- `Debug.SetFootIK` lasts until the session ends and is not kept in a save. No source says
-  whether the game keeps it.
 - A loose body and a ragdoll do not link to each other, and neither do two loose bodies. No
   vanilla script makes such a pair.

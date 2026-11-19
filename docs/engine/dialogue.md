@@ -270,10 +270,16 @@ is the scene clock: game seconds over the timescale.
 
 Who speaks:
 
-- A hello comes from the nearest NPC that detects the player inside the greeting distance, is not
-  fighting, not in a scene or the conversation, and whose package allows hellos (`PKDT` interrupt
-  flag 0x01). It looks at the player.
-- An idle line comes from a free NPC within 1000 units of the player. Each pass, one such
+- A hello comes from the nearest NPC that detects the player with a line of sight inside the
+  greeting distance, is not fighting, sleeping, in a scene, or in the conversation, and whose
+  package allows hellos (`PKDT` interrupt flag 0x01). It looks at the player. In the game each NPC
+  has its own greeting timer: after a hello it waits `fAIGreetingTimer`, and no NPC greets for
+  `fAIExclusiveGreetingTimer`. Any line an NPC says to a target also restarts its own greeting
+  timer.
+- An idle line comes from a free NPC within 1000 units of the player. In the game an NPC says
+  idle lines only when its package has `PKDT` interrupt flag 0x80, it is not watching a fight,
+  and no dialogue is active. Each NPC has its own idle line timer in the
+  `fIdleChatterCommentTimer` window, and the line has no target. Each pass, one such
   NPC, picked by the seeded random source, looks for a line, so a crowd costs no more frame
   time than one NPC. The distance is OpenSky's; no setting names it. An NPC that finds no line
   waits the same seeded idle-line time before it looks again; that wait is OpenSky's choice.
@@ -292,9 +298,13 @@ queued; the queue is not saved.
 
 Topics are scoped by branch, not by dialogue view (`DLVW`): "Dialogue Views do not have any
 in-game functional effect" ([Dialogue Views Tab](https://ck.uesp.net/wiki/Dialogue_Views_Tab)).
+The game keeps no `DLVW` record at runtime: it skips them when it loads plugins. So a dialogue
+view changes no topic, line, or branch, and OpenSky reads none.
 
 ## Not done yet
 
+- The greeting and idle line timers are shared by all NPCs, not kept per NPC, and idle lines do
+  not check `PKDT` interrupt flag 0x80.
 - Scene topics are spoken only by the [scene runtime](/engine/scenes.md).
 - A topic row shows the chosen `INFO`'s own prompt (`RNAM`), and the shared target's prompt only
   when the `INFO` has none. No source says which the game shows.
