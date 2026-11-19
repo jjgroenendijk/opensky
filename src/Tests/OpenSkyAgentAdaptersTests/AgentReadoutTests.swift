@@ -17,6 +17,7 @@ import OpenSkyGameData
 import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkySessionInterface
 import OpenSkySessionTesting
@@ -71,6 +72,38 @@ struct AgentReadoutTests {
         }
         #expect(object(event)["event"] == .string("QSTR"))
         #expect(object(event)["r1"] == .null)
+    }
+
+    @Test func theSocialStateListsEachConversationWatcherAndSentEvent() throws {
+        let speaker = ReferenceKey.plugin(name: "test.esm", objectID: 0x100)
+        let partner = ReferenceKey.plugin(name: "test.esm", objectID: 0x101)
+        var saved = SocialState()
+        saved.conversations = [SocialConversation(
+            speaker: speaker, partner: partner, startedAt: 3, phase: .approaching
+        )]
+        saved.spectators[partner] = SocialSpectator(fighter: speaker, lastSeenFighting: 1)
+        saved.bodyChecks[partner] = 4
+        saved.socialTimers[speaker] = 9
+        saved.recentPartners[speaker] = [partner]
+        saved.lookTargets[speaker] = partner
+        let social = FakeSocialEventPort()
+        social.state = saved
+        social.sentCounts = ["ADIA": 1]
+        host.fakeStoryManager.social = social
+        let state = try object(world.query(.social))
+        #expect(state["sent"] == .object(["ADIA": .number(1)]))
+        #expect(state["socialTimers"] == .object([speaker.description: .number(9)]))
+        guard case let .array(talks) = state["conversations"], let talk = talks.first else {
+            Issue.record("no conversation")
+            return
+        }
+        #expect(object(talk)["phase"] == .string("approaching"))
+        #expect(object(talk)["partner"] == .string(partner.description))
+        guard case let .array(watchers) = state["watchers"], let watcher = watchers.first else {
+            Issue.record("no watcher")
+            return
+        }
+        #expect(object(watcher)["lastComment"] == .null)
     }
 
     @Test func theMenuStateShowsEachScreen() throws {

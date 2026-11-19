@@ -20,6 +20,8 @@ nonisolated public final class FakeStoryWorldPort: StoryWorldPort {
     public var reportKillCalls: [(victim: ReferenceKey, killer: ReferenceKey?)] = []
     public var reportStoryEventCalls: [StoryEventData] = []
     public var rerunSessionStartCallCount = 0
+    public var requestConversationCalls: [(speaker: ReferenceKey, partner: ReferenceKey)] = []
+    public var requestConversationResult = false
     public var sayCalls: [(id: FormID, speaker: ReferenceKey)] = []
     public var sayOwnLineCalls: [(line: NPCSpeechLine, speaker: ReferenceKey)] = []
     public var sayTopicCalls: [SayTopicCall] = []
@@ -122,6 +124,11 @@ nonisolated extension FakeStoryWorldPort {
 
     public func rerunSessionStart() {
         rerunSessionStartCallCount += 1
+    }
+
+    public func requestConversation(speaker: ReferenceKey, partner: ReferenceKey) -> Bool {
+        requestConversationCalls.append((speaker: speaker, partner: partner))
+        return requestConversationResult
     }
 
     public func say(_ id: FormID, speaker: ReferenceKey) {

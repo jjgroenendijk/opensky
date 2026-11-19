@@ -1,12 +1,14 @@
-// Which story events NPCs send to each other: `ADIA` (a random conversation),
-// `AHEL` (a hello in passing), and `DEAD` (an actor finds a body). Values in,
-// values out; the coordinator fires them. Rules: docs/engine/random-conversations.md.
+// What NPCs do with each other: random conversations (`ADIA`) and the walk to the
+// partner, hellos in passing (`AHEL`), watching a fight, and finding a body (`DEAD`).
+// Values in, values out; the coordinator runs the commands. Rules:
+// docs/engine/random-conversations.md.
 
 import Foundation
-public import OpenSkyConditions
-public import OpenSkyFormatsCore
+import OpenSkyConditions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyQuestsInterface
 import simd
 
 /// One loaded actor as the social pass sees it.
@@ -17,21 +19,33 @@ nonisolated public struct SocialActor: Equatable, Sendable {
     public let interruptFlags: UInt16?
     public let isDead: Bool
     public let isInScene: Bool
+    public let isInCombat: Bool
+    public let combatTarget: ReferenceKey?
 
     public init(
         key: ReferenceKey, feet: SIMD3<Float>, interruptFlags: UInt16?,
-        isDead: Bool = false, isInScene: Bool = false
+        isDead: Bool = false, isInScene: Bool = false, isInCombat: Bool = false,
+        combatTarget: ReferenceKey? = nil
     ) {
         self.key = key
         self.feet = feet
         self.interruptFlags = interruptFlags
         self.isDead = isDead
         self.isInScene = isInScene
+        self.isInCombat = isInCombat
+        self.combatTarget = combatTarget
     }
 
-    /// `PKDT` interrupt flag 0x02: the package allows random conversations.
-    var allowsRandomConversation: Bool {
-        (interruptFlags ?? 0) & 0x02 != 0
+    /// `PKDT` interrupt flag 0x02: random conversations and hellos in passing.
+    public static let conversationFlag: UInt16 = 0x02
+
+    var allowsConversation: Bool {
+        (interruptFlags ?? 0) & Self.conversationFlag != 0
+    }
+
+    /// `PKDT` interrupt flag 0x04: observe combat behaviour.
+    var observesCombat: Bool {
+        (interruptFlags ?? 0) & 0x04 != 0
     }
 
     /// `PKDT` interrupt flag 0x08: greet corpse behaviour.
@@ -39,8 +53,9 @@ nonisolated public struct SocialActor: Equatable, Sendable {
         (interruptFlags ?? 0) & 0x08 != 0
     }
 
+    /// Alive, not the player, not in a scene, and not fighting.
     var isFree: Bool {
-        !isDead && !isInScene && key != .player
+        !isDead && !isInScene && !isInCombat && combatTarget == nil && key != .player
     }
 }
 
@@ -52,173 +67,83 @@ nonisolated public struct SocialFrame: Sendable {
     public var isInterior: Bool
     /// The player is in the dialogue menu, which the CK counts as an important conversation.
     public var playerInConversation: Bool
+    /// The player's feet. Nil: no player, and no actor is near enough to talk.
+    public var player: SIMD3<Float>?
 
-    public init(actors: [SocialActor], now: Double, isInterior: Bool, playerInConversation: Bool) {
+    public init(
+        actors: [SocialActor], now: Double, isInterior: Bool, playerInConversation: Bool,
+        player: SIMD3<Float>?
+    ) {
         self.actors = actors
         self.now = now
         self.isInterior = isInterior
         self.playerInConversation = playerInConversation
-    }
-}
-
-/// An unordered pair of actors.
-nonisolated struct SocialPair: Hashable, Sendable {
-    let first: ReferenceKey
-    let second: ReferenceKey
-
-    init(_ one: ReferenceKey, _ other: ReferenceKey) {
-        if one < other {
-            first = one
-            second = other
-        } else {
-            first = other
-            second = one
-        }
-    }
-}
-
-/// What the social pass remembers between calls. Not saved: a loaded game rolls
-/// its timers again.
-nonisolated public struct SocialState: Sendable {
-    var nextAttempt: [ReferenceKey: Double] = [:]
-    var lastPosition: [ReferenceKey: SIMD3<Float>] = [:]
-    var lastTalk: [SocialPair: Double] = [:]
-    var lastHello: [SocialPair: Double] = [:]
-    /// Observer and body pairs that already sent `DEAD`.
-    var foundBodies: Set<FoundBody> = []
-    var random = SplitMix64(seed: 0x50C1A1)
-
-    public init() {}
-
-    nonisolated struct FoundBody: Hashable, Sendable {
-        let observer: ReferenceKey
-        let body: ReferenceKey
+        self.player = player
     }
 }
 
 nonisolated public enum SocialEventCore {
-    /// Game units an actor must move between passes to count as moving.
-    static let movingDistance: Float = 8
-
-    /// The events this pass sends, in actor order. `canSee` tests a sight line.
-    public static func events(
+    /// The commands this pass sends, in a fixed order: bodies, watchers, hellos,
+    /// conversations, then the conversations already running.
+    public static func pass(
         _ frame: SocialFrame,
         settings: SocialSettings,
         state: inout SocialState,
         canSee: (SocialActor, SocialActor) -> Bool
-    ) -> [StoryEventData] {
-        let actors = frame.actors.sorted { $0.key < $1.key }
+    ) -> [SocialEventCommand] {
+        var frame = frame
+        frame.actors.sort { $0.key < $1.key }
+        let elapsed = state.lastPass.map { max(0, frame.now - $0) } ?? 0
+        state.lastPass = frame.now
+        let moving = movingActors(frame.actors, state: &state)
+        var commands = bodies(frame, settings: settings, state: &state, canSee: canSee)
+        commands += spectators(frame, settings: settings, state: &state, canSee: canSee)
+        if !frame.playerInConversation {
+            commands += hellos(frame.actors, moving: moving, state: &state)
+            commands += conversations(frame, settings: settings, elapsed: elapsed, state: &state)
+        }
+        commands += progress(frame, settings: settings, state: &state, canSee: canSee)
+        return commands
+    }
+
+    static func movingActors(
+        _ actors: [SocialActor],
+        state: inout SocialState
+    ) -> Set<ReferenceKey> {
         var moving: Set<ReferenceKey> = []
         for actor in actors {
             if
                 let last = state.lastPosition[actor.key],
-                simd_distance(last, actor.feet) >= movingDistance
+                simd_distance(last, actor.feet) >= SocialLimits.movingDistance
             {
                 moving.insert(actor.key)
             }
             state.lastPosition[actor.key] = actor.feet
         }
-        let radius = frame.isInterior ? settings.interiorRadius : settings.radius
-        var events = bodies(actors, radius: radius, state: &state, canSee: canSee)
-        guard !frame.playerInConversation else { return events }
-        events += hellos(actors, moving: moving, in: (frame, settings), state: &state)
-        events += conversations(actors, frame: frame, settings: settings, state: &state)
-        return events
+        return moving
     }
 
-    /// `DEAD`: a free actor whose package greets corpses sees a body it has not found
-    /// yet, within the social radius. The radius is OpenSky's choice; no GMST names one.
-    static func bodies(
-        _ actors: [SocialActor],
-        radius: Float,
-        state: inout SocialState,
-        canSee: (SocialActor, SocialActor) -> Bool
-    ) -> [StoryEventData] {
-        let bodies = actors.filter(\.isDead)
-        guard !bodies.isEmpty else { return [] }
-        var events: [StoryEventData] = []
-        for observer in actors where observer.isFree && observer.greetsCorpses {
-            for body in bodies {
-                let pair = SocialState.FoundBody(observer: observer.key, body: body.key)
-                guard
-                    !state.foundBodies.contains(pair),
-                    simd_distance(observer.feet, body.feet) <= radius,
-                    canSee(observer, body)
-                else { continue }
-                state.foundBodies.insert(pair)
-                events.append(event("DEAD", observer.key, body.key))
-            }
-        }
-        return events
-    }
-
-    /// `AHEL`: a moving actor passes a standing actor within the trigger distance.
+    /// `AHEL`: a walker with flag 0x02 looks at the nearest other free NPC, and a new
+    /// look target sends the event. A walker that stops forgets its target.
     static func hellos(
-        _ actors: [SocialActor],
-        moving: Set<ReferenceKey>,
-        in context: (frame: SocialFrame, settings: SocialSettings),
-        state: inout SocialState
-    ) -> [StoryEventData] {
-        let (frame, settings) = context
-        var events: [StoryEventData] = []
-        for walker in actors
-            where walker.isFree && walker.allowsRandomConversation && moving.contains(walker.key)
-        {
-            let target = actors.first { other in
-                other.key != walker.key && other.isFree && !moving.contains(other.key)
-                    && simd_distance(other.feet, walker.feet) <= settings.triggerDistance
-                    && frame.now - (state.lastHello[SocialPair(walker.key, other.key)]
-                        ?? -.infinity) >= Double(settings.sameActorSeconds)
-            }
-            guard let target else { continue }
-            state.lastHello[SocialPair(walker.key, target.key)] = frame.now
-            events.append(event("AHEL", walker.key, target.key))
-        }
-        return events
-    }
-
-    /// `ADIA`: on its timer, an actor rolls the social chance and talks to a valid
-    /// target within the trigger distance.
-    static func conversations(
-        _ actors: [SocialActor],
-        frame: SocialFrame,
-        settings: SocialSettings,
-        state: inout SocialState
-    ) -> [StoryEventData] {
-        let radius = frame.isInterior ? settings.interiorRadius : settings.radius
-        let chance = frame.isInterior ? settings.interiorChance : settings.chance
-        var talking: Set<ReferenceKey> = []
-        var events: [StoryEventData] = []
-        for speaker in actors where speaker.isFree && speaker.allowsRandomConversation {
-            guard let due = state.nextAttempt[speaker.key] else {
-                state.nextAttempt[speaker.key] = frame.now + rollTimer(settings, &state.random)
+        _ actors: [SocialActor], moving: Set<ReferenceKey>, state: inout SocialState
+    ) -> [SocialEventCommand] {
+        var commands: [SocialEventCommand] = []
+        for walker in actors where walker.isFree && walker.allowsConversation {
+            guard moving.contains(walker.key), !state.isBusy(walker.key) else {
+                state.lookTargets[walker.key] = nil
                 continue
             }
-            guard due <= frame.now, !talking.contains(speaker.key) else { continue }
-            state.nextAttempt[speaker.key] = frame.now + rollTimer(settings, &state.random)
-            let targets = actors.filter { other in
-                other.key != speaker.key && other.isFree && other.allowsRandomConversation
-                    && !talking.contains(other.key)
-                    && simd_distance(other.feet, speaker.feet) <= radius
-                    && frame.now - (state.lastTalk[SocialPair(speaker.key, other.key)]
-                        ?? -.infinity) >= Double(settings.sameActorSeconds)
-            }
-            guard
-                !targets.isEmpty,
-                Float(state.random.next() % 10000) / 100 < chance
-            else { continue }
-            let nearest = targets.min {
-                simd_distance($0.feet, speaker.feet) < simd_distance($1.feet, speaker.feet)
-            }
-            guard
-                let target = nearest,
-                simd_distance(target.feet, speaker.feet) <= settings.triggerDistance
-            else { continue }
-            state.lastTalk[SocialPair(speaker.key, target.key)] = frame.now
-            talking.formUnion([speaker.key, target.key])
-            events.append(event("ADIA", speaker.key, target.key))
+            let target = actors.filter { other in
+                other.key != walker.key && other.isFree
+                    && simd_distance(other.feet, walker.feet) <= SocialLimits.lookDistance
+            }.min { simd_distance($0.feet, walker.feet) < simd_distance($1.feet, walker.feet) }
+            guard let target, state.lookTargets[walker.key] != target.key else { continue }
+            state.lookTargets[walker.key] = target.key
+            commands.append(.look(walker.key, at: target.key))
+            commands.append(.reportStoryEvent(event("AHEL", walker.key, target.key)))
         }
-        return events
+        return commands
     }
 
     static func rollTimer(_ settings: SocialSettings, _ random: inout SplitMix64) -> Double {

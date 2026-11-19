@@ -49,6 +49,12 @@ extension StoryWorldAdapter {
         ambientTalk.sayTopic(subtype, speaker: speaker, lookAt: lookAt)
     }
 
+    public func requestConversation(speaker: ReferenceKey, partner: ReferenceKey) -> Bool {
+        storyManager.social.requestConversation(
+            speaker: speaker, partner: partner, now: sceneSeconds
+        )
+    }
+
     public func questAccess(
         store: WorldStateStore, quests: QuestStore, locations: LocationStore?
     ) -> any QuestAccess {

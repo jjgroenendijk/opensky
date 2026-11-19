@@ -42,6 +42,8 @@ nonisolated public final class FakePackagePort: PackagePort {
     public var trespassWarnings: [ReferenceKey: Int] = [:]
     public var sandboxAreaCalls: [ReferenceKey] = []
     public var sandboxAreaResult: IdleSearchArea?
+    public var allowsSandboxConversationCalls: [ReferenceKey] = []
+    public var allowsSandboxConversationResult = false
     public var executions: [ReferenceKey: PackageOverrideExecution] = [:]
     public var lastMoves: [ReferenceKey: NPCMoveCommandResult] = [:]
 
@@ -148,5 +150,10 @@ nonisolated extension FakePackagePort {
     public func sandboxArea(of actor: ReferenceKey) -> IdleSearchArea? {
         sandboxAreaCalls.append(actor)
         return sandboxAreaResult
+    }
+
+    public func allowsSandboxConversation(_ actor: ReferenceKey) -> Bool {
+        allowsSandboxConversationCalls.append(actor)
+        return allowsSandboxConversationResult
     }
 }

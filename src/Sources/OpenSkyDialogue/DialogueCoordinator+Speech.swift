@@ -111,7 +111,7 @@ extension DialogueCoordinator {
     private func idleChatter(_ frame: AmbientSpeechFrame) -> [AmbientLine] {
         guard speechClock.isSharedReady(.idleChatter, now: frame.now) else { return [] }
         let candidates = frame.speakers
-            .filter { $0.isFree && !$0.isFighting }
+            .filter { $0.isFree && !$0.isFighting && $0.allowsIdleChatter }
             .filter { $0.distanceToPlayer <= AmbientSpeechFrame.idleChatterDistance }
         guard !candidates.isEmpty else { return [] }
         // One speaker a pass: a line search runs every IDLE topic's conditions, so a

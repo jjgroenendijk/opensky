@@ -11,6 +11,7 @@ import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 import OpenSkySessionTesting
 @testable import OpenSkyStoryAdapters
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import Testing
 
@@ -49,9 +50,33 @@ struct StoryWorldTests {
     @Test func theSocialTickRunsOncePerFrame() {
         let social = FakeSocialEventPort()
         host.fakeStoryManager.social = social
-        adapter.socialSearch.tick()
+        adapter.socialActs.tick()
         #expect(social.tickCallCount == 1)
         #expect(host.fakeStoryManager.fireCalls.isEmpty)
+    }
+
+    @Test func theSocialCommandsHoldWalkAndTurnTheActors() {
+        let social = FakeSocialEventPort()
+        social.tickResult = [
+            .hold(Self.actor), .walk(Self.killer, to: SIMD3(1, 2, 3)),
+            .look(Self.actor, at: Self.killer), .stopWalking(Self.killer), .release(Self.actor)
+        ]
+        host.fakeStoryManager.social = social
+        host.fakeAiWorld.movePackageActorResult = .started
+        adapter.socialActs.tick()
+        #expect(host.fakePackages.holdCommandedCalls == [Self.actor, Self.killer])
+        #expect(host.fakeAiWorld.movePackageActorCalls.map(\.actor) == [Self.killer])
+        #expect(host.fakeAiWorld.stopPackageActorCalls == [Self.killer])
+        #expect(host.fakePackages.releaseCommandedCalls == [Self.killer, Self.actor])
+        #expect(host.fakeHeadTracking.setLookTargetCalls.count == 1)
+    }
+
+    @Test func aDialogueActivatePackageAsksTheSocialPass() {
+        let social = FakeSocialEventPort()
+        social.requestConversationResult = true
+        host.fakeStoryManager.social = social
+        #expect(adapter.requestConversation(speaker: Self.actor, partner: Self.killer))
+        #expect(social.requestConversationCalls.map(\.partner) == [Self.killer])
     }
 
     @Test func aKillIsReportedAsMurderAndAStoryEvent() {

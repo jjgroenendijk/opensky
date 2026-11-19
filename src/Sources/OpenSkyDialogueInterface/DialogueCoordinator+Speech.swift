@@ -14,10 +14,12 @@ nonisolated public struct AmbientSpeaker: Equatable, Sendable {
     public let isFree: Bool
     /// Its package allows hellos to the player (`PKDT` interrupt flag 0x01).
     public let allowsHello: Bool
+    /// Its package allows idle lines (`PKDT` interrupt flag 0x80).
+    public let allowsIdleChatter: Bool
 
     public init(
         key: ReferenceKey, distanceToPlayer: Float, seesPlayer: Bool, isFighting: Bool,
-        isFree: Bool, allowsHello: Bool
+        isFree: Bool, allowsHello: Bool, allowsIdleChatter: Bool = true
     ) {
         self.key = key
         self.distanceToPlayer = distanceToPlayer
@@ -25,6 +27,7 @@ nonisolated public struct AmbientSpeaker: Equatable, Sendable {
         self.isFighting = isFighting
         self.isFree = isFree
         self.allowsHello = allowsHello
+        self.allowsIdleChatter = allowsIdleChatter
     }
 }
 

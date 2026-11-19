@@ -77,7 +77,7 @@ extension StoryFrameSteps {
             self?.state.voiceTimer?.drain()
             self?.ambientTalk.tickAmbientSpeech()
             self?.sceneLines.run(self?.hosts.scenes.tick() ?? [])
-            self?.socialSearch.tick()
+            self?.socialActs.tick()
             self?.events.checkPlayerLocation()
         }
     }

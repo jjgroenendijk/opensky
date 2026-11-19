@@ -205,13 +205,17 @@ is not saved. Each body keeps its 20 s timer.
 
 ## Where OpenSky differs
 
-- OpenSky rolls the social chance before an `ADIA` and takes the nearest partner. The game rolls
-  no chance and takes the first valid partner.
-- OpenSky has no walk: `ADIA` fires only when the pair already stands within the trigger
-  distance, and `DialogueActivate` only turns the head.
-- OpenSky sends `AHEL` when an actor that moved 8 units passes a standing one, not from head
-  tracking.
-- OpenSky sends `DEAD` once per finder and body within the social radius on a sight line, with
-  no ReactToDead package or line.
-- Watching a fight is not built, so flag 0x04 does nothing.
-- The timers, the pairs that talked, and the bodies found are not saved.
+- The social pass runs every 30 frames, not every frame. Times are counted in real seconds.
+- A pair waits 2 s for a quest to answer its `ADIA` with a scene. The game waits as long as its
+  story manager queue takes. A `DialogueActivate` package waits the game's 20 s.
+- A hello in passing needs a walker that moved 8 units since the last pass. Its look target is
+  the nearest free NPC within 384 units, the distance at which an NPC notices the player.
+  A new target sends `AHEL` and turns the head for 10 s.
+- The partner's wait package, the watcher's Spectator package, and ReactToDead are not
+  packages: the actor's own package is held, and its head turns to the other actor. The finder
+  of a body says its `NoticeCorpse` line where it stands; it does not walk to the body.
+- A watcher rolls its comment chance on each pass.
+- The speaker's sitting and sleeping are not read: the extra 20 units for a seated speaker and
+  the stand-up step of `DialogueActivate` are not built.
+- With the player as its target, `DialogueActivate` opens the conversation where the actor
+  stands.

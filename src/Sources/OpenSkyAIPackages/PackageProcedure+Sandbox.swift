@@ -17,6 +17,8 @@ nonisolated public struct PackageSandboxSetup: Equatable, Sendable {
     var sits = true
     var sleeps = false
     var usesSpecialFurniture = false
+    /// Allow Conversation: the running package takes random conversations.
+    public var allowsConversation = true
     /// Where the actor stood when the procedure started.
     var start: SIMD3<Float>
 }

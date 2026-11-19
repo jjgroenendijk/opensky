@@ -53,6 +53,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case sounds
     /// The story-manager events fired this session, by code, and the newest ones.
     case story
+    /// NPC conversations, walks, watchers, checked bodies, and social timers.
+    case social
     /// What one condition function returns now, run on a reference.
     case condition(function: String, reference: String, parameter: String?)
 
@@ -116,6 +118,7 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "music": .music
         case "sounds": .sounds
         case "story": .story
+        case "social": .social
         default: nil
         }
     }

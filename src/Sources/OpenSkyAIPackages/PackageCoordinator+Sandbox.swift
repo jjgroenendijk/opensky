@@ -12,4 +12,10 @@ extension PackageCoordinator {
         }
         return machine.idleArea(defaults: settings.sandbox)
     }
+
+    /// A sandbox with Allow Conversation sets the running package's random conversation
+    /// flag, 0x02 (docs/engine/random-conversations.md#package-interrupt-flags).
+    public func allowsSandboxConversation(_ actor: ReferenceKey) -> Bool {
+        executions[actor]?.sandboxMachine?.setup.sandbox?.allowsConversation ?? false
+    }
 }

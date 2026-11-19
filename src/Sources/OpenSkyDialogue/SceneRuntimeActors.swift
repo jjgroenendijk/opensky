@@ -21,7 +21,10 @@ nonisolated public struct SceneActorStatus: OptionSet, Equatable, Sendable {
     public static let inCombat = SceneActorStatus(rawValue: 0x02)
     /// In the dialogue menu with the player.
     public static let inPlayerDialogue = SceneActorStatus(rawValue: 0x04)
-    static let observingCombat = SceneActorStatus(rawValue: 0x08)
+    /// Watching a fight; the scene's observe-combat flags decide.
+    public static let observingCombat = SceneActorStatus(rawValue: 0x08)
+    /// A speaker walking to its random conversation partner. The scene always waits.
+    public static let walkingToPartner = SceneActorStatus(rawValue: 0x10)
 }
 
 @MainActor
@@ -125,7 +128,7 @@ extension SceneRuntime.Playback {
                 end(.actorBehavior)
                 return false
             }
-            pauses = pauses
+            pauses = pauses || status.contains(.walkingToPartner)
                 || (status.contains(.inCombat) && flags.contains(.combatPause))
                 || (status.contains(.inPlayerDialogue) && flags.contains(.dialoguePause))
                 || (status.contains(.observingCombat) && flags.contains(.observeCombatPause))

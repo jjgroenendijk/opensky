@@ -19,6 +19,8 @@ public protocol StoryWorldPort: AnyObject, PapyrusStoryBridge {
     func reportKill(victim: ReferenceKey, killer: ReferenceKey?)
     func reportStoryEvent(_ event: StoryEventData)
     func rerunSessionStart()
+    /// A `DialogueActivate` package's conversation with an NPC. False when either is busy.
+    func requestConversation(speaker: ReferenceKey, partner: ReferenceKey) -> Bool
     func say(_ id: FormID, speaker: ReferenceKey)
     func sayOwnLine(_ line: NPCSpeechLine, speaker: ReferenceKey)
     @discardableResult func sayTopic(

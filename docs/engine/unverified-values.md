@@ -110,6 +110,10 @@ the detail and the sources it did find.
 | Scene package wait | A scene does not wait forever on its package | [scenes](/engine/scenes.md) |
 | Conversation scene gap | Starts when the conversation ends | [scenes](/engine/scenes.md#conversation-scenes) |
 | Conversation scene meeting | Begins when both partners have a loaded body, at any distance | [scenes](/engine/scenes.md#conversation-scenes) |
+| Random conversation answer wait | 2 s for a quest to answer `ADIA` with a scene | [random conversations](/engine/random-conversations.md#where-opensky-differs) |
+| Hello in passing look target | The nearest free NPC within 384 units of a walker that moved 8 units; the head turns for 10 s | [random conversations](/engine/random-conversations.md#where-opensky-differs) |
+| Fight comment roll | The comment chance is rolled once per social pass | [random conversations](/engine/random-conversations.md#where-opensky-differs) |
+| Sandbox Allow Conversation default | On when the package sets no value | [sandbox](/engine/sandbox.md) |
 | Idle line search miss | The NPC waits the idle-line window before it searches again | [dialogue](/engine/dialogue.md) |
 | Follower commands | 0.5 s wait; acts at 128 units | [follower commands](/engine/follower-commands.md) |
 | Assault alarm member | The resident member nearest the player | [guard response](/engine/guard-response.md) |
@@ -125,7 +129,7 @@ the detail and the sources it did find.
 | Dismount without race data | 50 units left of the saddle, 65 up | [riding](/engine/riding.md#mounting-and-dismounting) |
 | Driven actor stands still | Below 0.5 units per second | [riding](/engine/riding.md) |
 | Follower without a Morality value | Morality 3: commits no crime | [package schedules](/engine/package-schedules.md) |
-| Package line and look times | 3 s for a line with no voice length, 3 s of head turn for DialogueActivate | [package schedules](/engine/package-schedules.md) |
+| Package line time | 3 s for a line with no voice length | [package schedules](/engine/package-schedules.md) |
 | Aim and light points on a body | A spell aims at the capsule's middle; detection reads light at half the eye height | [detection](/engine/detection.md) |
 
 ## Animation graphs

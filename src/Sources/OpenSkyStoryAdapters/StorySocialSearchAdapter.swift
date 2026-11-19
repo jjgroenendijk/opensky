@@ -1,3 +1,4 @@
+import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCombatInterface
 import OpenSkyConditions
@@ -22,6 +23,7 @@ import simd
 public protocol StorySocialSearchHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var aiWorld: any AIWorldPort { get }
+    var combat: any CombatPort { get }
     var dialogue: any DialoguePort { get }
     var gameSession: (any GameSessionPort)? { get }
     var packages: any PackagePort { get }
@@ -31,7 +33,6 @@ public protocol StorySocialSearchHost: AnyObject, SendableMetatype {
     var scenes: any ScenePort { get }
     var dialogueWorld: any DialogueWorldPort { get }
     var storyManager: any StoryManagerPort { get }
-    var runtimeState: any RuntimeStatePort { get }
 }
 
 /// Part of `StoryWorldAdapter`, over its own narrow host.
@@ -104,21 +105,29 @@ extension StorySocialSearchAdapter.QuestReferences {
 extension StorySocialSearchAdapter {
     public func socialFrame() -> SocialFrame? {
         let inScenes = game.scenes.actorsInScenes()
+        let combat = game.combat.loop
         let actors = game.actorWorld.combatActors().map { actor in
-            SocialActor(
+            var flags = game.packages.runtime?.currentPackage(for: actor.key)?
+                .package.general.interruptFlags
+            if flags != nil, game.packages.allowsSandboxConversation(actor.key) {
+                flags = (flags ?? 0) | SocialActor.conversationFlag
+            }
+            return SocialActor(
                 key: actor.key,
                 feet: actor.feet,
-                interruptFlags: game.packages.runtime?.currentPackage(for: actor.key)?
-                    .package.general.interruptFlags,
+                interruptFlags: flags,
                 isDead: actor.isDead,
-                isInScene: inScenes.contains(actor.key)
+                isInScene: inScenes.contains(actor.key),
+                isInCombat: (combat?.activity(of: actor.key) ?? .notFighting) != .notFighting,
+                combatTarget: combat?.combatTarget(of: actor.key)
             )
         }
         return SocialFrame(
             actors: actors,
             now: sceneCast.sceneSeconds,
             isInterior: game.streamer.interiorScene != nil,
-            playerInConversation: game.dialogue.conversationSpeaker != nil
+            playerInConversation: game.dialogue.conversationSpeaker != nil,
+            player: game.gameSession?.walkController.feetPosition
         )
     }
 
@@ -127,15 +136,5 @@ extension StorySocialSearchAdapter {
         let eye = observer.feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight)
         let chest = body.feet + SIMD3(0, 0, PlayerCapsule.standard.torsoHeight)
         return game.aiWorld.perceptionHasLineOfSight(from: eye, to: chest)
-    }
-
-    func tick() {
-        run(game.storyManager.social.tick())
-    }
-
-    func run(_ commands: [SocialEventCommand]) {
-        for case let .reportStoryEvent(event) in commands {
-            game.storyManager.fireLocated(event) { [game] in game.runtimeState.conditionContext() }
-        }
     }
 }

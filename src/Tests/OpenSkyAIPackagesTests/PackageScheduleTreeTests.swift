@@ -136,6 +136,8 @@ struct PackageScheduleTreeTests {
         coordinator.advance(by: 5)
         #expect(world.moves.isEmpty)
         #expect(coordinator.executions[Self.guardKey]?.machine?.kind == .sandbox)
+        #expect(coordinator.allowsSandboxConversation(Self.guardKey), "input 3 is on by default")
+        #expect(!coordinator.allowsSandboxConversation(Self.otherKey))
     }
 
     @Test func restartStartsTheTreeFromItsRoot() throws {

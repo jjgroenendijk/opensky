@@ -35,10 +35,22 @@ struct AIActsSensesTests {
         #expect(host.fakeStoryWorld.sayTopicCalls.map(\.lookAt) == [Self.other])
     }
 
-    @Test func talkingLooksAtTheTarget() {
+    /// With an NPC, DialogueActivate asks for a conversation and waits for an answer.
+    @Test func talkingToAnNPCAsksForAConversation() {
+        host.fakeActorWorld.combatActorsResult = [CombatActorObservation(
+            key: Self.other,
+            feet: .zero
+        )]
+        host.fakeStoryWorld.requestConversationResult = true
         let result = adapter.worlds.packageAction(.talk(to: Self.other), actor: Self.actor)
-        #expect(result == .lasts(seconds: PackageActionResult.lookSeconds))
-        #expect(host.fakeHeadTracking.setLookTargetCalls.count == 1)
+        #expect(result == .lasts(seconds: 20))
+        #expect(host.fakeStoryWorld.requestConversationCalls.map(\.partner) == [Self.other])
+    }
+
+    @Test func talkingToAMissingNPCFails() {
+        let result = adapter.worlds.packageAction(.talk(to: Self.other), actor: Self.actor)
+        #expect(result == .failed)
+        #expect(host.fakeStoryWorld.requestConversationCalls.isEmpty)
     }
 
     @Test func aForcedGreetingOpensTheDialogueMenu() {

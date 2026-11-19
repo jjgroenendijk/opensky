@@ -58,8 +58,9 @@ named `Sandbox` in `Skyrim.esm`) has ten, read from its `PKC2` indexes and `BNAM
 the install: Location, Allow Eating, Allow Sleeping, Allow Conversation, Allow Idle Markers,
 Allow Sitting, Allow Wandering, Prefered Path Only?, Energy (default 50), and Allow Special
 Furniture. There is no Allow Furniture or Min Wander Distance. OpenSky reads Allow Eating
-(position 1), Allow Sleeping (2), Allow Idle Markers (4), Allow Sitting (5), Energy (8),
-and Allow Special Furniture (9).
+(position 1), Allow Sleeping (2), Allow Conversation (3), Allow Idle Markers (4), Allow
+Sitting (5), Energy (8), and Allow Special Furniture (9). A missing Allow Conversation counts
+as on.
 
 `Skyrim.esm` holds only 14 of the settings: the duration base, the cylinder bottom, the
 radius hysteresis, the lunch, dinner, and meal-length bounds, and the duration multipliers
@@ -79,9 +80,10 @@ Where OpenSky differs from the game:
 - The game picks each activity from a weighted list of nearby objects. OpenSky takes the
   nearest allowed seat after each activity without furniture, and a free idle marker when
   one is in the place.
-- Conversations are not used yet. In the game, Allow Conversation turns on the running package's
-  random conversation flag, and the actor then follows the
+- Allow Conversation turns on the running package's random conversation flag, as in the game,
+  and the actor then follows the
   [random conversation](/engine/random-conversations.md#random-conversations-adia) check.
+  OpenSky sets it while the sandbox runs, not once when it starts.
 - That the durations are game hours is an inference: the wiki gives hours only for meals and
   sleep. With game hours, a sandboxing actor stays at a marker for about a minute of real
   time, as in the game.
