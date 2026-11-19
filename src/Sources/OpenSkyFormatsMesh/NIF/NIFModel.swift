@@ -47,6 +47,14 @@ nonisolated extension NIFFile {
             NIFLegacyTriShape.typeName, NIFLegacyTriShape.lodTypeName
         ]
 
+        /// A tree's bones hold the pose the game draws; its skin bind data can differ
+        /// from it (docs/formats/nif-skinning.md).
+        var isTree: Bool {
+            file.roots.first.map { $0 >= 0 && Int($0) < file.blocks.count
+                && file.blocks[Int($0)].typeName == "BSTreeNode"
+            } ?? false
+        }
+
         public init(file: NIFFile, skeleton: NIFSkeleton?, keepingRoot: Bool = false) throws {
             self.file = file
             hierarchy = try file.nodeHierarchy(keepingRoot: keepingRoot)
@@ -209,7 +217,8 @@ nonisolated extension NIFFile {
             }
             return try resolveSkinnedGeometry(
                 shape: shape,
-                usesNodeReferencePose: usesNodeReferencePose
+                usesNodeReferencePose: usesNodeReferencePose,
+                bakesNodePose: isTree
             )
         }
     }

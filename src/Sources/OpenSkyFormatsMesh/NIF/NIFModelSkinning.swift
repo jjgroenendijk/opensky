@@ -11,7 +11,8 @@ nonisolated extension NIFFile.Flattener {
     /// rootParentToSkin * currentBoneToRootParent * skinToBoneBind.
     func resolveSkinnedGeometry(
         shape: NIFTriShape,
-        usesNodeReferencePose: Bool
+        usesNodeReferencePose: Bool,
+        bakesNodePose: Bool = false
     ) throws -> NIFFile.FlattenerShapeGeometry {
         let instanceBlock = try block(at: Int(shape.skinRef))
         guard
@@ -39,23 +40,7 @@ nonisolated extension NIFFile.Flattener {
             throw NIFError.malformed("skin data/instance bone counts differ")
         }
 
-        // BSDynamicTriShape keeps positions in its appended Vector4 array,
-        // while FaceGen's NiSkinPartition top-level stream keeps UVs,
-        // normals, colors, and influences with the vertex bit clear.
-        // Ordinary skinned BSTriShape keeps every array in the partition.
-        let stored = partition.vertices
-        let arrays = NIFTriShape.VertexArrays(
-            positions: shape.positions.isEmpty ? stored.positions : shape.positions,
-            uvs: shape.uvs.isEmpty ? stored.uvs : shape.uvs,
-            normals: shape.normals.isEmpty ? stored.normals : shape.normals,
-            tangents: shape.tangents.isEmpty ? stored.tangents : shape.tangents,
-            bitangents: shape.bitangents.isEmpty ? stored.bitangents : shape.bitangents,
-            colors: shape.colors.isEmpty ? stored.colors : shape.colors,
-            boneWeights: shape.boneWeights.isEmpty
-                ? stored.boneWeights : shape.boneWeights,
-            boneIndices: shape.boneIndices.isEmpty
-                ? stored.boneIndices : shape.boneIndices
-        )
+        var arrays = Self.mergedArrays(shape: shape, stored: partition.vertices)
         let parted = Self.bodyPartTriangles(
             instance: instance, partition: partition, shapeIndexCount: shape.indices.count
         )
@@ -67,6 +52,9 @@ nonisolated extension NIFFile.Flattener {
             skin: (instance, skinData),
             usesNodeReferencePose: usesNodeReferencePose
         ).withBodyParts(parted?.parts ?? [])
+        if bakesNodePose, !usesNodeReferencePose {
+            arrays = try nodePosed(arrays, skin: (instance, skinData), skinning: skinning)
+        }
         return NIFFile.FlattenerShapeGeometry(
             positions: arrays.positions,
             normals: arrays.normals,
@@ -77,6 +65,75 @@ nonisolated extension NIFFile.Flattener {
             indices: triangles,
             skinning: skinning
         )
+    }
+
+    /// BSDynamicTriShape keeps positions in its appended Vector4 array,
+    /// while FaceGen's NiSkinPartition top-level stream keeps UVs,
+    /// normals, colors, and influences with the vertex bit clear.
+    /// Ordinary skinned BSTriShape keeps every array in the partition.
+    private static func mergedArrays(
+        shape: NIFTriShape, stored: NIFTriShape.VertexArrays
+    ) -> NIFTriShape.VertexArrays {
+        NIFTriShape.VertexArrays(
+            positions: shape.positions.isEmpty ? stored.positions : shape.positions,
+            uvs: shape.uvs.isEmpty ? stored.uvs : shape.uvs,
+            normals: shape.normals.isEmpty ? stored.normals : shape.normals,
+            tangents: shape.tangents.isEmpty ? stored.tangents : shape.tangents,
+            bitangents: shape.bitangents.isEmpty ? stored.bitangents : shape.bitangents,
+            colors: shape.colors.isEmpty ? stored.colors : shape.colors,
+            boneWeights: shape.boneWeights.isEmpty ? stored.boneWeights : shape.boneWeights,
+            boneIndices: shape.boneIndices.isEmpty ? stored.boneIndices : shape.boneIndices
+        )
+    }
+
+    /// A tree's bones can stand apart from its skin bind data, and the game draws the
+    /// bones' pose. Baking it keeps the bounds, the shadows, and the draw in one place.
+    private func nodePosed(
+        _ arrays: NIFTriShape.VertexArrays,
+        skin: (instance: NIFSkinInstance, data: NIFSkinData),
+        skinning: MeshSkinning
+    ) throws -> NIFTriShape.VertexArrays {
+        let palette = try bindPoseMatrices(
+            instance: skin.instance, data: skin.data, usesNodeReferencePose: true
+        )
+        return Self.posed(arrays, by: palette, skinning: skinning)
+    }
+
+    /// The vertex arrays moved by a bone palette, each vertex by its weighted bones.
+    static func posed(
+        _ arrays: NIFTriShape.VertexArrays, by palette: [float4x4], skinning: MeshSkinning
+    ) -> NIFTriShape.VertexArrays {
+        var result = arrays
+        for index in arrays.positions.indices {
+            var matrix = float4x4()
+            for influence in 0 ..< 4 {
+                let bone = Int(skinning.boneIndices[index][influence])
+                matrix += skinning.weights[index][influence] * palette[bone]
+            }
+            let point = matrix * SIMD4(arrays.positions[index], 1)
+            result.positions[index] = SIMD3(point.x, point.y, point.z)
+            let linear = float3x3(
+                SIMD3(matrix.columns.0.x, matrix.columns.0.y, matrix.columns.0.z),
+                SIMD3(matrix.columns.1.x, matrix.columns.1.y, matrix.columns.1.z),
+                SIMD3(matrix.columns.2.x, matrix.columns.2.y, matrix.columns.2.z)
+            )
+            func turned(_ vectors: [SIMD3<Float>]) -> SIMD3<Float>? {
+                guard index < vectors.count else { return nil }
+                let vector = linear * vectors[index]
+                let length = simd_length(vector)
+                return length > .ulpOfOne ? vector / length : vectors[index]
+            }
+            if let normal = turned(arrays.normals) {
+                result.normals[index] = normal
+            }
+            if let tangent = turned(arrays.tangents) {
+                result.tangents[index] = tangent
+            }
+            if let bitangent = turned(arrays.bitangents) {
+                result.bitangents[index] = bitangent
+            }
+        }
+        return result
     }
 
     private func resolveSkinning(
