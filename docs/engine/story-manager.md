@@ -136,23 +136,52 @@ The game itself sends these events, each from the system named:
 | `CLOC` | An actor's location change |
 | `SCPT` | `SendStoryEvent` and `SendStoryEventAndWait`, which fail with an error before the start-up quests are set up |
 | `ADIA` | Dialogue, including a conversation one NPC starts with another |
-| `AHEL` | A greeting in passing |
+| `AHEL` | A new head-tracking target ([hellos in passing](/engine/random-conversations.md#hellos-in-passing-ahel)) |
 | `AIPL`, `REMP` | An item added to or removed from the player |
 | `CRFT` | Alchemy, enchanting, and smithing, both making and improving |
-| `INFC`, `CURE` | Catching and curing a disease ([diseases](/engine/diseases.md)) |
-| `NVPE` | Learning a new shout or word |
-| `DEAD` | The timed check for dead bodies |
+| `INFC`, `CURE` | A disease added to or removed from any actor, the player or not. `INFC` only when the actor did not have it and did not resist it ([diseases](/engine/diseases.md)). Data: `R1` the actor, `F1` the disease |
+| `NVPE` | The player gets a shout it did not know, or any actor gets a voice power spell. Data: `R1` the actor, `F1` the shout or voice power |
+| `DEAD` | An actor reacts to a body it detects ([finding a body](/engine/random-conversations.md#finding-a-body-dead)) |
 | `SKIL`, `LEVL` | A skill level, and a player level |
 | `CHRR` | A relationship rank change, by a script or by the game |
-| `PFIN`, `JAIL`, `STIJ`, `ESJA` | Paying a fine, going to jail, serving time, and escaping |
-| `TRES` | Trespass |
+| `PFIN` | The player pays a fine, before the gold is taken and the bounty cleared. Data: `R1` the player, `R2` the guard in the conversation, `F1` the crime faction, `V1` the bounty |
+| `JAIL`, `STIJ`, `ESJA` | Going to jail, serving time, and escaping |
+| `TRES` | A trespass, in two ways below |
 | `ADCR` | A crime when it becomes final ([crime reports](/engine/crime-reports.md)) |
 | `ARRT` | An arrest |
 | `CAST` | A spell cast |
-| `QSTR` | A quest start |
+| `QSTR` | A quest start that is not immediate, below. Data: `Q1` the quest |
 
 The game never sends `AFAV`, `LOCK`, `INTM`, `BRIB`, `FLAT`, or `PRFV`. These reach a quest only
 through `SendStoryEvent` from a script.
+
+`TRES` comes from two places:
+
+- The player enters a cell they may not be in. A trespass crime is made, and `TRES` fires once
+  for that entry, with no victim: `R2` the player, `L1` the cell's location, `V1` 0.
+- A witness or an owner reports a trespass: from a door or an activator the player uses, or from
+  a trespass package. Data: `R1` the witness, `R2` the player, `L1` the player's location, `V1`
+  the crime value.
+
+`QSTR` is the story manager's own way to start a quest later. The start goes into the story
+manager's queue, and when the queue reaches it, the quest starts at once, without a walk of the
+event nodes. The queue spreads its work over frames. These starts go through `QSTR`:
+
+- `Quest.Start()` from a script. It is latent: the script waits for the start. An event-scoped
+  quest refuses it with the error "attempting to start event scoped quest outside of story
+  manager".
+- `SetStage()` on a quest that is stopped. The log says the quest "will be started first".
+- Showing an objective of a quest that is stopped.
+
+Console starts, perk quest entries, the character creation quest at a new game, the restart of
+running quests after a load, and starts by the story manager walk itself start the quest directly
+and send no `QSTR`.
+
+At a new game, before the player is placed, the game walks every quest once in load order. Each
+quest with `QUST DNAM` flag 0x0010 (Start Game Enabled) starts directly: its aliases fill, and it
+runs. No `QSTR` is sent and no event node is walked. All 329 such quests of `Skyrim.esm` have
+flags 0x0011. After a load, the same walk starts the flagged quests that have no saved state and
+are not running, such as quests a new plugin adds.
 
 ```mermaid
 flowchart LR

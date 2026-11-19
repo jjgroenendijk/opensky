@@ -56,6 +56,27 @@ one transform write, when the move ends or stops.
 While a move runs, `GetPositionX`, `GetAngleZ`, `GetDistance`, and the other script reads see the
 live pose. A walking actor's position still comes from its locomotion.
 
+## A move in a save
+
+The game saves a running move with its reference, and the move goes on after a load. The save
+keeps, as 4-byte little-endian floats:
+
+| Part | Values |
+| --- | --- |
+| Start position | 3 |
+| Start tangent | 3 |
+| Start rotation, radians | 3 |
+| Target position | 3 |
+| Target tangent | 3 |
+| Target rotation, radians | 3. The start rotation plus the short way round to the target |
+| Speed | 1 |
+| Max rotation speed | 1. A 0 is saved as the default cap |
+| Progress | 1 |
+| Rotation mode | `uint32`: 0 turns from the start to the target rotation along the move, 1 faces along the path, any other value turns nothing. `TranslateTo` always saves 0 |
+
+In a `.ess` save this is extra data type 161 on the reference's change form. On load the game
+rebuilds the move from these values and adds it back to its cell's moving references.
+
 ## Loose bodies in the way
 
 The moving reference keeps its built collision, which is not a physics body. So each frame
@@ -70,6 +91,6 @@ rotation does not push.
 | `SplineTranslateTo` | Moves in a straight line | The wiki does not define the spline from the tangent magnitude |
 | `StopTranslation` | Sends no event | The failure event names a new request, and a stop is not one |
 | `SetPosition`, `SetAngle`, `MoveTo` during a move | End the move, with no event | The script placed the reference on purpose, so the move must not undo it |
-| A move in a save | Not saved | The save holds the last stored transform. A loaded game starts with no move |
+| A move in a save | Not saved | The save holds the last stored transform. A loaded game starts with no move, while the game goes on with it |
 | A reference whose cell unloads | The move ends with no event | There is nothing resident to move |
 | Collision | The moving reference does not push bodies | The move is drawn, not simulated |

@@ -213,6 +213,19 @@ changes only that actor's draw list and rebuilds no cell. When the actor's cell 
 another reason, the actor gets a new animation object, and the next drawn scene binds the prop to
 it.
 
+## What a save keeps
+
+The game saves each loaded reference's animation part: for each behaviour graph, the project name
+and the graph's state. A reference whose model is not loaded keeps the animation part it had in
+the save. An actor near the player also saves the idle it plays and the idle's target. On load
+the game plays that idle again on the target
+([actor process data](/formats/ess-actor-process.md#high-block)).
+
+The save keeps the furniture an actor uses, with its marker index, and the sit or bed state. On
+load, an actor that sits or lies in bed but has no marker index stands up. The animation part
+ends with the body-slot data, first in third person, then in first person, or a 0 when the two
+are the same ([ESS change forms](/formats/ess-change-forms.md#references)).
+
 ## Differences from the game
 
 - An actor without a running graph, such as one past the graph distance, gets its clip and prop
@@ -220,4 +233,5 @@ it.
   whose share is below one twelfth may never play. A selector bound to a variable always plays
   its authored child, and a transition that waits for a condition or a variable is taken at once.
   An actor that runs its own graph plays the idle as the game does.
-- Props and idles are not saved. A loaded game starts with no idle playing.
+- Props and idles are not saved. A loaded game starts with no idle playing, while the game
+  brings back the graph state.

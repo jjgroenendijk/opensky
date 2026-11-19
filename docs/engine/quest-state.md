@@ -178,12 +178,28 @@ and a disabled one "Allow Disabled" (bit 7). A reference another alias of the qu
 "Allow Reuse in Quest". "Closest" (bit 13) takes the candidate nearest the player; otherwise a
 random match fills the alias.
 
-The candidates are the loaded references. A near alias with type 0 ("Linked Ref Child")
-narrows them to the references whose untagged linked ref (`XLKR`) is the near alias's
-reference. OpenSky does not search persistent references outside the loaded cells. So a miss
-fails a required alias only with "In Loaded Area" (bit 5), where the game searches the same
-set. Without it, the reference may wait in an unloaded cell, so the miss is counted and never
-fails the start.
+The game searches in three steps, and stops at the first that finds a candidate:
+
+1. The loaded area: the loaded exterior cells, or the current interior.
+2. Unless "In Loaded Area" (bit 5) is set: every interior cell and every worldspace, loaded or
+   not.
+3. Unless "In Loaded Area" is set: the references a location stores for its unloaded cells. A
+   pick from this step can create the actor at its stored place.
+
+"Closest" (bit 13) takes the candidate nearest the player; a candidate from step 3 has no place
+to measure, so it is never the closest. Without "Closest", the pick is random with the same
+chance for each candidate. A pick that another alias of the quest holds is dropped, and the
+pick is made again, unless "Allow Reuse in Quest" (bit 3) is set. The game caches the result of
+one set of conditions, and spreads a long fill over several frames.
+
+A specific reference or a unique actor fill does not need the reference to be loaded. The alias
+conditions still run on it.
+
+A near alias with type 0 ("Linked Ref Child") narrows the candidates to the references whose
+untagged linked ref (`XLKR`) is the near alias's reference. OpenSky searches only step 1. So a
+miss fails a required alias only with "In Loaded Area", where the game searches the same set.
+Without it, the reference may wait in an unloaded cell, so the miss is counted and never fails
+the start.
 
 A "find matching reference from event" fill also runs the match conditions on the event's
 reference, and a reference that fails them does not fill the alias.
