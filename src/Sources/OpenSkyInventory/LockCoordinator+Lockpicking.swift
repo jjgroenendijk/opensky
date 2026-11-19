@@ -2,7 +2,6 @@
 // use is reported, and an opened lock unlocks. See docs/engine/locks.md.
 
 import Foundation
-import OpenSkyConditions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 public import OpenSkyInventoryInterface
@@ -81,9 +80,6 @@ extension LockCoordinator {
             uses: settings.successUses[target.difficulty] ?? 0, action: .lockpickSuccess
         )
         let rewarded = rewardKey(target)
-        if let items {
-            storyEvents?.reportStoryEvent(.lockPick(actor: items.player.key, lock: target.key))
-        }
         world.countLockPicked()
         finish(opened: true, keyRewarded: rewarded)
         lastAction = .picked(name: sessionTarget?.interaction.name)

@@ -3,7 +3,6 @@
 // See docs/engine/locks.md.
 
 import Foundation
-public import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyInventoryInterface
 public import OpenSkyProgressionInterface
@@ -78,8 +77,6 @@ public final class LockCoordinator {
     public var playerCarriesEveryKey = false
     public var random = LockpickingRandom(seed: 0x4F_7065_6E53_6B79)
     let world: any LockWorld
-    /// Takes `LOCK`.
-    public weak let storyEvents: (any StoryEventReporting)?
     /// Health of the pick in hand. UESP: it carries over between locks.
     public internal(set) var pickHealth: Float = 1
     public internal(set) var session: LockpickingSession?
@@ -98,15 +95,13 @@ public final class LockCoordinator {
     public init(
         world: any LockWorld,
         items: WorldItemRuntime?,
-        data: LockSessionData = LockSessionData(),
-        storyEvents: (any StoryEventReporting)? = nil
+        data: LockSessionData = LockSessionData()
     ) {
         self.world = world
         self.items = items
         settings = data.settings
         texts = data.texts
         lockpickItem = data.lockpickItem
-        self.storyEvents = storyEvents
     }
 
     // MARK: - Lock state

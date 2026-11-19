@@ -2,6 +2,7 @@
 // hand its ETYP's EQUP slot names.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -37,6 +38,27 @@ struct SpellbookRuntimeTests {
         #expect(!spellbook.forget(healing, on: .player))
         // The component is dropped entirely once it empties.
         #expect(store.component(SpellbookState.self, for: .player) == nil)
+    }
+
+    /// A new disease sends `INFC` and its removal `CURE`, for any actor; a spell sends neither.
+    @Test func catchingAndCuringADiseaseSendStoryEvents() throws {
+        var (spellbook, _) = try SpellbookFixture.runtime()
+        let recorder = StoryEventRecorder()
+        spellbook.storyEvents = recorder
+        let disease = SpellbookFixture.key(SpellbookFixture.Spell.rockjoint)
+        let npc = ActorValueHolder(
+            key: .plugin(name: "base.esm", objectID: 0x9000), subject: .actor(base: FormID(0x9001))
+        )
+
+        #expect(spellbook.learn(disease, on: npc))
+        #expect(!spellbook.learn(disease, on: npc))
+        #expect(spellbook.forget(disease, on: npc))
+        #expect(spellbook.learn(SpellbookFixture.key(SpellbookFixture.Spell.healing), on: .player))
+
+        #expect(recorder.events("INFC").count == 1)
+        #expect(recorder.events("CURE").count == 1)
+        #expect(recorder.events.count == 2)
+        #expect(recorder.events.allSatisfy { $0.actor1 == npc.key })
     }
 
     /// The start-spell set is looked up by the editor IDs UESP names, through

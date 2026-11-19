@@ -83,7 +83,6 @@ when it has no `R1`.
 | `JAIL` | The arrest sends the player to jail | `R1` guard, `F1` crime faction, `V1` bounty |
 | `ESJA` | The player leaves the jail cell without serving | `R1` player, `F1` crime faction |
 | `STIJ` | The player serves a sentence | `F1` crime faction, `V1` bounty, `V2` days |
-| `LOCK` | The player picks a lock | `R1` player, `R2` the locked reference |
 | `CAST` | The player casts a spell | `R1` player, `R2` aimed target, `F1` spell |
 | `AIPL` | The player takes, steals, pickpockets, or buys an item | `R1` source container, `R2` owner, `F1` item, `V1` acquire type |
 | `REMP` | The player drops, stores, or sells an item | `R1` container, `R2` owner, `F1` item, `V1` remove type |
@@ -91,7 +90,12 @@ when it has no `R1`.
 | `ADIA` | Two actors start a conversation | `R1` the speaker, `R2` the listener |
 | `AHEL` | An actor says hello in passing | `R1` the walker, `R2` the actor greeted |
 | `DEAD` | An actor finds a dead body | `R1` the finder, `R2` the body |
-| `BRIB`, `INTM`, `FLAT` | The player wins a bribe, intimidation, or persuasion | `R1` the actor in the conversation |
+| `NVPE` | The player gets a shout it did not know, or any actor learns a voice power | `R1` the actor, `F1` the shout or voice power |
+| `INFC` | Any actor gets a disease it did not have | `R1` the actor, `F1` the disease |
+| `CURE` | A disease is removed from any actor | `R1` the actor, `F1` the disease |
+| `PFIN` | The player pays a fine | `R1` player, `R2` the guard who confronted the player, `F1` crime faction, `V1` bounty |
+| `TRES` | The player enters a cell they may not be in, or a witness reports a trespass | `R1` the witness or none, `R2` player, `V1` the crime gold, 0 on entry |
+| `QSTR` | A script starts a stopped quest with `Start()` or `SetStage()` | `Q1` the quest |
 
 `KILL` crime status is 0 (not murder), 1 (murder), or 2 (murder that cost crime gold). A death
 is murder when the player struck the victim first ([crime](/engine/crime.md)). The rank is the
@@ -101,29 +105,19 @@ acquire type is 1 steal, 2 buy, 3 pickpocket, 4 pick up, 5 container, 6 dead bod
 is 4
 dropped, 5 given (sold), 6 put in a container.
 
-`ADIA`, `AHEL`, and `DEAD` come from the [social pass](/engine/random-conversations.md). A
-speech event fires when the player picks a response that wins a speech check: a response whose
-conditions test `GetBribeSuccess` == 1, `GetIntimidateSuccess` == 1, or the Speechcraft actor
-value (17) >= a value. That is how the success lines of `Skyrim.esm` are gated. Persuasion
-sends `FLAT`, because the Creation Kit names the event "Flatter".
+`ADIA`, `AHEL`, and `DEAD` come from the [social pass](/engine/random-conversations.md).
+`TRES` leaves `L1` unset, so it gets the location of the witness, or of the player on entry.
+`QSTR` walks no event node; the quest has already started in the script call.
 
 `SKIL` fires once when one use raises a skill by more than one level, as the wiki says. `CLOC` is
 checked every 30 frames.
 
 `SendStoryEventAndWait()` returns at once with the result, because the walk is synchronous.
 
-### Events that do not fire from play
-
-These have vanilla nodes, but OpenSky has no system that does what they describe:
-
-| Code | Event | Why it does not fire |
-| --- | --- | --- |
-| `AFAV` | The player receives a favor | No favor system |
-| `NVPE` | The player learns a word of power | No shout learning |
-
-`PFIN`, `INFC`, `CURE`, and `QSTR` exist in the event list, but `Skyrim.esm` has no node for
-them, so firing them would start nothing. `STIJ` (served time) has no vanilla node either, but it
-fires when a sentence is served, for mods ([jail](/engine/jail.md)).
+`PFIN`, `INFC`, `CURE`, and `QSTR` have no node in `Skyrim.esm`, so they start nothing there;
+they fire for mods. `STIJ` (served time) has no vanilla node either, but it fires when a
+sentence is served ([jail](/engine/jail.md)). `AFAV`, `LOCK`, `BRIB`, `INTM`, `FLAT`, and `PRFV`
+reach a quest only from a script, as in the game.
 
 ### Which events the game sends
 
@@ -190,9 +184,9 @@ flowchart LR
     S --> Q[Start the quest of the first node that passes]
 ```
 
-So OpenSky differs in two ways. It sends `LOCK`, `BRIB`, `INTM`, and `FLAT` from play, which the
-game does not. It does not send `NVPE`, `PFIN`, `INFC`, `CURE`, `QSTR`, or `TRES`, which the game
-does.
+OpenSky sends the same events from play. It differs in how `QSTR` starts a quest: the game
+queues the start and runs it on a later frame, and OpenSky starts the quest inside the script
+call, then sends `QSTR` only for the record and for mods.
 
 ## Papyrus events for a started quest
 
@@ -243,7 +237,7 @@ starts `EscapeJailAchievementQuest` and `EscapeJailQuest`, with no condition fai
 
 ## Not done yet
 
-- The events in "Events that do not fire from play" above.
+- The `QSTR` queue, above.
 - `AIPL` and `REMP` name the owner in `R2` only for a pickpocket, a trade, and a container an
   actor owns. An item picked up from the world, and a faction's container, name no owner.
   Eating and items a script moves fire neither event.

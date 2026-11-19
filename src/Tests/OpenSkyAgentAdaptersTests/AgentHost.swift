@@ -98,6 +98,7 @@ final class AgentHost: RendererSlotHost, AgentActorReadoutHost, AgentActorsHost,
 
     let fakeScenes = FakeScenePort()
     let fakeScripts = FakeScriptPort()
+    let fakeStoryManager = FakeStoryManagerPort()
     let fakePlayerGrab = FakePlayerGrabPort()
     let fakeSimulationClock = FakeSteppedWallClockPort()
     let fakeSkillsMenu = FakeSkillsMenuPort()

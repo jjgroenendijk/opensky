@@ -251,6 +251,9 @@ public final class CrimeCoordinator {
             trespassWatch.enterNewCell()
             isPlayerTrespassing = !world.isPublicArea(location)
                 && owners.cellOwner(at: location).map { !crimeActor(.player).mayUse($0) } == true
+            if isPlayerTrespassing {
+                storyEvents?.reportStoryEvent(.trespass(witness: nil, location: nil, crimeGold: 0))
+            }
         }
         guard isPlayerTrespassing, let reporter else { return }
         let step = trespassWatch.advance(

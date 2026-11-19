@@ -32,7 +32,7 @@ nonisolated public struct StoryEventData: Equatable, Sendable {
     public var keyword: FormID?
     public var location1: ResolvedFormID?
     public var location2: ResolvedFormID?
-    var quest: FormID?
+    public var quest: FormID?
     public var value1: Float = 0
     public var value2: Float = 0
 

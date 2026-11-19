@@ -34,6 +34,9 @@ extension CrimeCoordinator: CrimeArrestSession {
         }
         switch result {
         case let .success(settlement):
+            if case .pay = outcome {
+                reportFinePaid(settlement)
+            }
             showBountyNotice(gold: settlement.bounty, added: false, faction: faction)
             if case let .jail(removeInventory, realJail) = outcome {
                 keepsBelongings = !removeInventory
@@ -90,6 +93,17 @@ extension CrimeCoordinator: CrimeArrestSession {
         if settlement.sentenceDays > 0 {
             pendingCommands.append(.incrementStat("Times Jailed", by: 1))
         }
+    }
+
+    /// `PFIN`, with the guard who confronted the player as `R2`.
+    private func reportFinePaid(_ settlement: ArrestSettlement) {
+        var guardKey: ReferenceKey?
+        if case let .confront(key, faction, _) = guards.active, faction == settlement.faction {
+            guardKey = key
+        }
+        storyEvents?.reportStoryEvent(.payFine(
+            guardActor: guardKey, crimeFaction: settlement.faction, bounty: settlement.bounty
+        ))
     }
 
     /// `ARRT`, and `JAIL` when the player serves time. The location is left for

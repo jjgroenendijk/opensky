@@ -160,10 +160,52 @@ nonisolated extension StoryEventData {
         return event
     }
 
-    public static func lockPick(actor: ReferenceKey, lock: ReferenceKey) -> StoryEventData {
-        var event = StoryEventData(event: "LOCK")
+    /// `NVPE`: an actor got a shout it did not know, or a voice power spell.
+    public static func newVoicePower(actor: ReferenceKey, power: FormID?) -> StoryEventData {
+        var event = StoryEventData(event: "NVPE")
         event.actor1 = actor
-        event.actor2 = lock
+        event.form = power
+        return event
+    }
+
+    /// `INFC` when an actor catches a disease, `CURE` when it loses one.
+    public static func disease(
+        _ disease: FormID?, actor: ReferenceKey, cured: Bool
+    ) -> StoryEventData {
+        var event = StoryEventData(event: cured ? "CURE" : "INFC")
+        event.actor1 = actor
+        event.form = disease
+        return event
+    }
+
+    /// `PFIN`: the player pays the bounty of a crime faction, `R2` the guard who asked.
+    public static func payFine(
+        guardActor: ReferenceKey?, crimeFaction: ReferenceKey, bounty: Int32
+    ) -> StoryEventData {
+        var event = StoryEventData(event: "PFIN")
+        event.actor1 = .player
+        event.actor2 = guardActor
+        event.form = form(of: crimeFaction)
+        event.value1 = Float(bounty)
+        return event
+    }
+
+    /// `TRES`: no witness when the player enters a cell, else the witness who reports it.
+    public static func trespass(
+        witness: ReferenceKey?, location: ResolvedFormID?, crimeGold: Int32
+    ) -> StoryEventData {
+        var event = StoryEventData(event: "TRES")
+        event.actor1 = witness
+        event.actor2 = .player
+        event.location1 = location
+        event.value1 = Float(crimeGold)
+        return event
+    }
+
+    /// `QSTR`: a quest start that goes through the story manager's queue.
+    public static func questStart(_ quest: FormID) -> StoryEventData {
+        var event = StoryEventData(event: "QSTR")
+        event.quest = quest
         return event
     }
 

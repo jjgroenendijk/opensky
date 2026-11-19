@@ -237,30 +237,28 @@ nonisolated public enum QuestAliasFiller: Sendable {
         }
 
         /// Find Matching Reference: the loaded candidates, or the near alias's linked
-        /// children, that pass the match conditions. A miss fails a required alias only
-        /// when the search is limited to the loaded area, because OpenSky does not
-        /// search persistent references outside it.
+        /// children, that pass the match conditions. Without "In Loaded Area", a loaded
+        /// miss searches the persistent references outside it
+        /// (docs/engine/quest-state.md). A miss fails a required alias only when every
+        /// step that applies has run.
         private mutating func fillMatching(_ alias: Quest.Alias, scope: QuestAliasSearchScope) {
-            let candidates: [ReferenceKey]
-            if case .nearAlias = alias.fillType {
-                // Only type 0, "Linked Ref Child", is searched.
-                guard
-                    let near = alias.nearAlias, near >= 0, (alias.nearType ?? 0) == 0,
-                    let parent = state.reference(forAlias: UInt32(near))
-                else {
-                    skipped.note(.unresolvedReference)
-                    return
-                }
-                candidates = scope.search.linkedChildren(of: parent)
-            } else {
-                candidates = scope.search.references.sortedKeys()
+            guard let candidates = matchCandidates(alias, in: scope.search) else {
+                skipped.note(.unresolvedReference)
+                return
             }
-            let match = scope.match(alias, quest: quest, filled: state)
-            let held = state
-            let found = match.choose(from: match.matches(candidates) { held.holds($0) })
+            var found = chooseMatch(alias, from: candidates, scope: scope)
+            var searchedEverywhere = alias.flags.contains(.matchInLoadedArea)
+            if found == nil, !searchedEverywhere, let outside = scope.search.outsideLoadedArea() {
+                searchedEverywhere = true
+                let loaded = scope.search.references
+                var outsideScope = scope
+                outsideScope.search = outside
+                let unloaded = matchCandidates(alias, in: outside)?.filter { loaded[$0] == nil }
+                found = chooseMatch(alias, from: unloaded ?? [], scope: outsideScope)
+            }
             guard let found else {
                 skipped.note(.noMatch)
-                if alias.flags.contains(.matchInLoadedArea) {
+                if searchedEverywhere {
                     note(unfilled: alias)
                 }
                 return
@@ -269,6 +267,27 @@ nonisolated public enum QuestAliasFiller: Sendable {
             if let forced = alias.forceIntoAlias, forced >= 0 {
                 store(UInt32(bitPattern: forced), found)
             }
+        }
+
+        /// The near alias's linked children, or every reference of `search`. Nil when the
+        /// near alias is empty or names a near type other than 0, "Linked Ref Child".
+        private func matchCandidates(
+            _ alias: Quest.Alias, in search: QuestReferenceSearch
+        ) -> [ReferenceKey]? {
+            guard case .nearAlias = alias.fillType else { return search.references.sortedKeys() }
+            guard
+                let near = alias.nearAlias, near >= 0, (alias.nearType ?? 0) == 0,
+                let parent = state.reference(forAlias: UInt32(near))
+            else { return nil }
+            return search.linkedChildren(of: parent)
+        }
+
+        private func chooseMatch(
+            _ alias: Quest.Alias, from candidates: [ReferenceKey], scope: QuestAliasSearchScope
+        ) -> ReferenceKey? {
+            let match = scope.match(alias, quest: quest, filled: state)
+            let held = state
+            return match.choose(from: match.matches(candidates) { held.holds($0) })
         }
 
         /// Records the fill, and the forced-into fill, under one rule so both

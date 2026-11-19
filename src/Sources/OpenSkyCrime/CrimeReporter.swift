@@ -167,13 +167,19 @@ public final class CrimeReporter: CrimeReporting {
         owner: ReferenceOwner?,
         by actor: ReferenceKey = .player
     ) -> CrimeOutcome {
-        record(CrimeEvent(
+        let outcome = record(CrimeEvent(
             kind: .trespass,
             perpetrator: actor,
             victim: owner.map(\.key),
             crimeFaction: world?.crimeFaction(in: cell),
             cell: cell
         ))
+        if actor == .player, let witness = runtime.witnesses.witnesses(of: actor).first {
+            storyEvents?.reportStoryEvent(
+                .trespass(witness: witness, location: nil, crimeGold: outcome.gold)
+            )
+        }
+        return outcome
     }
 
     /// `Game.SendWereWolfTransformation`: "Has an actor in high who can detect the

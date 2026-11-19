@@ -5,6 +5,7 @@
 // docs/engine/spellcasting.md and docs/engine/inventory-equipment.md.
 
 import Foundation
+public import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
@@ -23,6 +24,8 @@ public struct SpellbookRuntime: SpellbookAccess {
     /// the same hand. Nil in a session with no item index, and then readying a
     /// spell arbitrates against other spells only.
     public let equipment: (any EquipmentAccess)?
+    /// Hears `INFC`, `CURE`, and `NVPE` when a disease or a voice power comes or goes.
+    public weak var storyEvents: (any StoryEventReporting)?
 
     public init(
         store: WorldStateStore,
@@ -76,7 +79,26 @@ public struct SpellbookRuntime: SpellbookAccess {
     /// - Returns: true when the spell was not already known.
     @discardableResult
     public func learn(_ spell: ReferenceKey, on holder: ActorValueHolder) -> Bool {
-        write(state(of: holder).learning(spell), for: holder)
+        let learned = write(state(of: holder).learning(spell), for: holder)
+        if learned {
+            reportStoryEvent(for: spell, actor: holder.key, removed: false)
+        }
+        return learned
+    }
+
+    /// Any actor, as the game sends them from adding or removing a spell
+    /// (docs/engine/story-manager.md#which-events-the-game-sends).
+    private func reportStoryEvent(for spell: ReferenceKey, actor: ReferenceKey, removed: Bool) {
+        guard let storyEvents, let type = record(spell)?.spellType else { return }
+        let form = StoryEventData.form(of: spell)
+        switch (type, removed) {
+        case (.disease, _):
+            storyEvents.reportStoryEvent(.disease(form, actor: actor, cured: removed))
+        case (.voice, false):
+            storyEvents.reportStoryEvent(.newVoicePower(actor: actor, power: form))
+        default:
+            break
+        }
     }
 
     /// Grants the spells the player starts knowing, plus anything `additional`
@@ -118,7 +140,11 @@ public struct SpellbookRuntime: SpellbookAccess {
     /// - Returns: true when the spell was known.
     @discardableResult
     public func forget(_ spell: ReferenceKey, on holder: ActorValueHolder) -> Bool {
-        write(state(of: holder).forgetting(spell), for: holder)
+        let forgot = write(state(of: holder).forgetting(spell), for: holder)
+        if forgot {
+            reportStoryEvent(for: spell, actor: holder.key, removed: true)
+        }
+        return forgot
     }
 
     // MARK: - Reading a tome

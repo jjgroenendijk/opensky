@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyActorsInterface
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
@@ -12,6 +13,11 @@ extension MagicCoordinator.ShoutReadout {
     func learnShout(_ shout: ReferenceKey) -> ShoutOutcome {
         guard let resolved = coordinator.shouts[shout]
         else { return coordinator.shoutVoice.noteShout(.refused(.unknownShout)) }
+        if !coordinator.world.shoutKnowledge.shouts.contains(shout) {
+            coordinator.storyEvents?.reportStoryEvent(
+                .newVoicePower(actor: .player, power: StoryEventData.form(of: shout))
+            )
+        }
         coordinator.world.changeShoutKnowledge(.addShout(shout))
         for word in coordinator.shoutVoice.wordKeys(of: resolved).compactMap(\.self) {
             coordinator.world.changeShoutKnowledge(.teachWord(word))

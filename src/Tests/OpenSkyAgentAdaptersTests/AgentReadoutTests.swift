@@ -9,7 +9,9 @@ import OpenSkyAgentAdapters
 import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyEngineTesting
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenusInterface
@@ -56,6 +58,19 @@ struct AgentReadoutTests {
         #expect(object(layer)["layer"] == .init(1))
         #expect(object(layer)["velocity"] == .init(SIMD2<Float>(0.01, -0.02)))
         #expect(object(layer)["offset"] == .init(drift.offset(layer: 1)))
+    }
+
+    @Test func theStoryStateCountsEachEventAndListsTheNewest() throws {
+        host.fakeStoryManager.firedCounts = ["QSTR": 2]
+        host.fakeStoryManager.recentEvents = [.questStart(FormID(0x0100))]
+        let state = try object(world.query(.story))
+        #expect(state["fired"] == .object(["QSTR": .init(2)]))
+        guard case let .array(recent) = state["recent"], let event = recent.first else {
+            Issue.record("no recent event")
+            return
+        }
+        #expect(object(event)["event"] == .string("QSTR"))
+        #expect(object(event)["r1"] == .null)
     }
 
     @Test func theMenuStateShowsEachScreen() throws {

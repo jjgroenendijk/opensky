@@ -17,6 +17,9 @@ nonisolated public struct QuestReferenceSearch: Sendable {
     /// Read only for the candidates a match tests, so a search walks no references.
     /// Conditions and searches run on the main actor, as the whole simulation does.
     public var isDisabled: @MainActor @Sendable (ReferenceKey) -> Bool
+    /// Every persistent reference of the load order, loaded or not. A match search not
+    /// limited to the loaded area reads it after a loaded miss.
+    public var persistent: RuntimeReferenceIndex?
 
     public init(
         references: RuntimeReferenceIndex,
@@ -30,6 +33,19 @@ nonisolated public struct QuestReferenceSearch: Sendable {
         self.context = context
         self.dead = dead
         self.isDisabled = isDisabled
+    }
+
+    /// The same search over the persistent references outside the loaded area, or nil
+    /// without a persistent index. Nothing outside is disabled or dead to it.
+    public func outsideLoadedArea() -> QuestReferenceSearch? {
+        guard let persistent else { return nil }
+        var outside = self
+        outside.references = persistent
+        outside.context.references = persistent
+        outside.dead = []
+        outside.isDisabled = { _ in false }
+        outside.persistent = nil
+        return outside
     }
 
     public func disables(_ key: ReferenceKey) -> Bool {
