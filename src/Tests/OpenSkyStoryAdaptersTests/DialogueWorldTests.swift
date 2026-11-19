@@ -99,11 +99,10 @@ struct DialogueWorldTests {
         #expect(host.fakeStreamer.actors.releaseActorFacingCalls == [Self.speaker])
     }
 
-    @Test func aWonBribeReportsTheEventStatAndSkill() {
+    /// The game sends no `BRIB` for a win (docs/engine/story-manager.md).
+    @Test func aWonBribeCountsTheStatAndSkillButSendsNoEvent() {
         adapter.run([.speechChallengeWon(.bribe, speaker: Self.speaker)])
-        let event = host.fakeStoryWorld.reportStoryEventCalls.first
-        #expect(event?.event == "BRIB")
-        #expect(event?.actor1 == Self.speaker)
+        #expect(host.fakeStoryWorld.reportStoryEventCalls.isEmpty)
         #expect(host.fakeWorldState.incrementMiscStatCalls.map(\.name) == ["Bribes"])
         #expect(host.fakeProgression.reportSpeechCheckWonCallCount == 1)
     }

@@ -1,6 +1,6 @@
 // The Find Matching Reference fill over synthetic loaded references: match
-// conditions on each candidate, "Closest", "In Loaded Area", and the near-alias
-// linked children.
+// conditions on each candidate, "Closest", "In Loaded Area", the persistent
+// references outside the loaded area, and the near-alias linked children.
 
 import Foundation
 import OpenSkyConditions
@@ -124,10 +124,49 @@ struct QuestMatchingAliasTests {
         #expect(throws: QuestError.self) { try quests.startQuest(quest) }
     }
 
-    /// Outside "In Loaded Area" the reference may be unloaded, so a miss never refuses.
-    @Test func noMatchAnywhereElseStillStarts() throws {
+    /// Without a persistent index OpenSky cannot search outside, so a miss never refuses.
+    @Test func noMatchWithoutThePersistentIndexStillStarts() throws {
         let world = try search([reference(0x1002, base: tableBase, x: 10)])
         let alias = QuestFixture.alias(id: 0, name: "Chair", extras: isID(chairBase))
+        let quests = try runtime(aliases: alias, search: world)
+        try quests.startQuest(quest)
+        #expect(try quests.aliasState(of: quest).reference(forAlias: 0) == nil)
+    }
+
+    /// Outside "In Loaded Area", a loaded miss takes a persistent reference from an
+    /// unloaded cell.
+    @Test func aLoadedMissSearchesThePersistentReferencesOutside() throws {
+        var world = try search([reference(0x1002, base: tableBase, x: 10)])
+        world.persistent = try RuntimeReferenceIndex(entries: [
+            reference(0x1002, base: tableBase, x: 10),
+            reference(0x2000, base: chairBase, x: 9000)
+        ])
+        let alias = QuestFixture.alias(id: 0, name: "Chair", extras: isID(chairBase))
+        let quests = try runtime(aliases: alias, search: world)
+        try quests.startQuest(quest)
+        #expect(try quests.aliasState(of: quest).reference(forAlias: 0) == key(0x2000))
+    }
+
+    /// With every step searched, a required alias with no match refuses the start.
+    @Test func noMatchAnywhereRefusesTheStart() throws {
+        var world = try search([reference(0x1002, base: tableBase, x: 10)])
+        world.persistent = try RuntimeReferenceIndex(entries: [
+            reference(0x2001, base: tableBase, x: 9000)
+        ])
+        let alias = QuestFixture.alias(id: 0, name: "Chair", extras: isID(chairBase))
+        let quests = try runtime(aliases: alias, search: world)
+        #expect(throws: QuestError.self) { try quests.startQuest(quest) }
+    }
+
+    /// "In Loaded Area" never reads the persistent references outside; the alias is optional.
+    @Test func inLoadedAreaNeverSearchesOutside() throws {
+        var world = try search([reference(0x1002, base: tableBase, x: 10)])
+        world.persistent = try RuntimeReferenceIndex(entries: [
+            reference(0x2000, base: chairBase, x: 9000)
+        ])
+        let alias = QuestFixture.alias(
+            id: 0, name: "Chair", flags: 0x22, extras: isID(chairBase)
+        )
         let quests = try runtime(aliases: alias, search: world)
         try quests.startQuest(quest)
         #expect(try quests.aliasState(of: quest).reference(forAlias: 0) == nil)

@@ -5,15 +5,6 @@ nonisolated public enum SpeechChallenge: Equatable, Sendable {
     case intimidate
     case persuade
 
-    /// The story-manager event code the win sends.
-    public var eventCode: String {
-        switch self {
-        case .bribe: "BRIB"
-        case .intimidate: "INTM"
-        case .persuade: "FLAT"
-        }
-    }
-
     /// The misc stat a win counts.
     public var statName: String {
         switch self {

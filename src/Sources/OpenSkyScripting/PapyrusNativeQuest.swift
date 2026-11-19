@@ -6,7 +6,10 @@
 // Documented in docs/engine/papyrus-quests.md, with the natives left out on purpose.
 
 import Foundation
+import OpenSkyConditions
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 
@@ -55,7 +58,10 @@ extension PapyrusNativeFunctions.QuestNatives {
     /// (<https://ck.uesp.net/wiki/Start_-_Quest>). Only `Start` returns a value.
     private static func installQuestRunState(into registry: inout PapyrusNativeRegistry) {
         registerMutation(&registry, ["Start"]) { _, world, key in
-            try latent(.boolean(world.roles.quests.startQuest(for: key)), quest: key, world: world)
+            let wasRunning = isRunning(key, in: world)
+            let started = try world.roles.quests.startQuest(for: key)
+            reportQueuedStart(of: key, wasRunning: wasRunning, in: world)
+            return latent(.boolean(started), quest: key, world: world)
         }
         registerMutation(&registry, ["Stop"]) { _, world, key in
             try world.roles.quests.stopQuest(for: key)
@@ -75,12 +81,29 @@ extension PapyrusNativeFunctions.QuestNatives {
             guard let stage = stageArgument(call, at: 0) else {
                 return failure(call, "\(call.functionName) needs a stage index")
             }
-            return try latent(
-                .boolean(world.roles.quests.setQuestStage(stage, for: key)),
-                quest: key,
-                world: world
-            )
+            let wasRunning = isRunning(key, in: world)
+            let set = try world.roles.quests.setQuestStage(stage, for: key)
+            reportQueuedStart(of: key, wasRunning: wasRunning, in: world)
+            return latent(.boolean(set), quest: key, world: world)
         }
+    }
+
+    private static func isRunning(_ key: ReferenceKey, in world: any PapyrusWorldBridge) -> Bool {
+        attempt { try world.roles.quests.questState(for: key).isRunning } ?? false
+    }
+
+    /// `QSTR` for a stopped quest a script started, with `Start` or `SetStage`. The game
+    /// queues the start in the story manager; OpenSky starts it in the call
+    /// (docs/engine/story-manager.md#which-events-the-game-sends).
+    private static func reportQueuedStart(
+        of key: ReferenceKey, wasRunning: Bool, in world: any PapyrusWorldBridge
+    ) {
+        guard
+            !wasRunning, isRunning(key, in: world),
+            let bridge = world as? PapyrusWorldStateBridge,
+            let quest = bridge.questRuntime?.quests.formID(for: key)
+        else { return }
+        _ = bridge.ports.story?.sendStoryEvent(.questStart(quest))
     }
 
     /// The answer once the fragments the call queued have run.
@@ -101,11 +124,14 @@ extension PapyrusNativeFunctions.QuestNatives {
             guard let objective = stageArgument(call, at: 0) else {
                 return failure(call, "\(call.functionName) needs an objective index")
             }
-            try world.roles.quests.setQuestObjectiveDisplayed(
-                objective,
-                flag(call, at: 1),
-                for: key
-            )
+            let displayed = flag(call, at: 1)
+            // Showing an objective of a stopped quest starts the quest first.
+            let wasRunning = isRunning(key, in: world)
+            if displayed, !wasRunning {
+                _ = try world.roles.quests.startQuest(for: key)
+                reportQueuedStart(of: key, wasRunning: wasRunning, in: world)
+            }
+            try world.roles.quests.setQuestObjectiveDisplayed(objective, displayed, for: key)
             return .returned(.none)
         }
         registerMutation(&registry, ["SetObjectiveCompleted"]) { call, world, key in

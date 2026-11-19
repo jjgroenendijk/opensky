@@ -101,8 +101,10 @@ public final class MagicCoordinator {
         rules = data.rules
         texts = data.texts
         if let casting = data.casting {
+            var spellbook = casting.spellbook
+            spellbook.storyEvents = storyEvents
             let runtime = CasterRuntime(
-                spellbook: casting.spellbook, values: casting.values, world: casterBridge
+                spellbook: spellbook, values: casting.values, world: casterBridge
             )
             runtime.costSettings = rules.spellCost
             caster = runtime

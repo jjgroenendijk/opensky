@@ -5,6 +5,7 @@
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
+@testable import OpenSkyGameData
 @testable import OpenSkyWorldState
 import simd
 import Testing
@@ -188,5 +189,23 @@ struct RuntimeReferenceIndexTests {
         let reversed = RuntimeReferenceIndex(entries: entries.reversed())
         #expect(reversed.sortedKeys() == index.sortedKeys())
         #expect(reversed.sortedEntries().map(\.formID) == index.sortedEntries().map(\.formID))
+    }
+
+    @Test func aPersistentIndexMarksEveryPlacementPersistent() throws {
+        let reference = ReferenceKey.plugin(name: "test.esm", objectID: 0x800)
+        let actor = ReferenceKey.plugin(name: "test.esm", objectID: 0x801)
+        let index = try RuntimeReferenceIndex(persistent: [
+            PersistentPlacement(
+                key: reference, formID: FormID(0x800),
+                record: .reference(placedReference(formID: 0x800)), actorBase: nil
+            ),
+            PersistentPlacement(
+                key: actor, formID: FormID(0x801),
+                record: .actor(placedActor(formID: 0x801)), actorBase: nil
+            )
+        ])
+        #expect(index.sortedKeys() == [reference, actor])
+        #expect(index[reference]?.isPersistent == true)
+        #expect(index[actor]?.isPersistent == true)
     }
 }

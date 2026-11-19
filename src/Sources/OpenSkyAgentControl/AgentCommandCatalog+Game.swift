@@ -20,6 +20,7 @@ nonisolated extension AgentCommandCatalog {
             positionals: [required("id", "The quest editor ID.")]
         ),
         command("state.scenes", "Each playing scene with its quest and phase."),
+        command("state.story", "The story-manager events fired, by code, and the newest ones."),
         command(
             "state.scripts", "The script queue, waits, events, faults, and missing natives.",
             positionals: [optional("ref", "Also list the scripts on this reference or quest.")]

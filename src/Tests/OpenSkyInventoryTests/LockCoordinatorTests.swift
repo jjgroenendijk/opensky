@@ -81,14 +81,13 @@ struct LockCoordinatorTests {
 
     static func coordinator(
         picks: Int32 = 0,
-        world: FakeLockWorld = FakeLockWorld(),
-        storyEvents: StoryEventRecorder? = nil
+        world: FakeLockWorld = FakeLockWorld()
     ) throws -> Rig {
         let harness = try Items.harness(entries: [Items.entry(formID: door, base: doorBase)])
         var data = LockSessionData()
         data.lockpickItem = Fixture.lockpick
         let locks = LockCoordinator(
-            world: world, items: harness.runtime, data: data, storyEvents: storyEvents
+            world: world, items: harness.runtime, data: data
         )
         if picks > 0 {
             _ = try harness.runtime.inventory.add(Fixture.lockpick, count: picks, to: .player)
@@ -187,8 +186,7 @@ struct LockCoordinatorTests {
 
     @Test func anOpenedLockUnlocksAndReportsSkillUse() throws {
         let world = FakeLockWorld()
-        let recorder = StoryEventRecorder()
-        let rig = try Self.coordinator(picks: 2, world: world, storyEvents: recorder)
+        let rig = try Self.coordinator(picks: 2, world: world)
         let locks = rig.locks
         let target = Self.door(level: .novice)
         try locks.beginLockpicking(target)
@@ -210,7 +208,6 @@ struct LockCoordinatorTests {
         #expect(world.uses.map(\.action) == [.lockpick])
         #expect(world.uses.first?.amount == 2)
         #expect(locks.lastOutcome?.opened == true)
-        #expect(recorder.events("LOCK").map(\.actor1) == [.player])
         locks.closeLockpicking()
         #expect(locks.session == nil)
         withExtendedLifetime(rig) {}

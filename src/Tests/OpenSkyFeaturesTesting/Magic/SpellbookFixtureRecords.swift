@@ -234,6 +234,11 @@ extension SpellbookFixture {
                 ]
             ),
             spell(
+                formID: Spell.rockjoint, editorID: "Rockjoint", equipType: Slot.voice,
+                spit: spit(type: 1, chargeTime: 0, casting: 0, delivery: 0),
+                effects: [EffectSpec(restoreHealth, 1, 0)]
+            ),
+            spell(
                 formID: Spell.dragonskin, editorID: "Dragonskin", equipType: Slot.voice,
                 spit: spit(type: 2, chargeTime: 0, casting: 1, delivery: 0),
                 effects: [EffectSpec(restoreHealth, 5, 0)]

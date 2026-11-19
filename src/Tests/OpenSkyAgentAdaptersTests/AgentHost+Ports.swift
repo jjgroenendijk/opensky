@@ -256,6 +256,10 @@ extension AgentHost {
         fakeScripts
     }
 
+    var storyManager: any StoryManagerPort {
+        fakeStoryManager
+    }
+
     var simulationClock: any SteppedWallClockPort {
         fakeSimulationClock
     }

@@ -76,8 +76,7 @@ public final class InventoryCoordinator {
         locks = LockCoordinator(
             world: lockWorld,
             items: data?.items,
-            data: data?.locks ?? LockSessionData(),
-            storyEvents: seams.storyEvents
+            data: data?.locks ?? LockSessionData()
         )
         vendors = data?.vendors
         craftingCatalog = data?.crafting

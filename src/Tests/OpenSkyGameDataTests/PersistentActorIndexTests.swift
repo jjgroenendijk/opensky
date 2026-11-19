@@ -20,10 +20,21 @@ struct PersistentActorIndexTests {
         )
     }
 
+    private static func reference(_ formID: UInt32, base: UInt32) -> Data {
+        var name = Data()
+        name.appendUInt32(base)
+        let data = ESMFixture.f32([0, 0, 0, 0, 0, 0])
+        return ESMFixture.record(
+            "REFR", formID: formID,
+            data: ESMFixture.field("NAME", name) + ESMFixture.field("DATA", data)
+        )
+    }
+
     private static func plugin() throws -> ESMFile {
         let persistent = ESMFixture.childGroup(
             parent: cell, groupType: 8,
             contents: actor(0x200, base: 0x50) + actor(0x201, base: 0x60) + actor(0x202, base: 0x60)
+                + reference(0x204, base: 0x80)
         )
         let temporary = ESMFixture.childGroup(
             parent: cell, groupType: 9, contents: actor(0x203, base: 0x70)
@@ -40,7 +51,8 @@ struct PersistentActorIndexTests {
     @Test func aBaseWithOnePersistentActorMapsToIt() throws {
         let plugins = try [(name: "Test.esm", file: Self.plugin())]
         let index = RecordIndex(plugins: plugins, recordTypes: RecordIndex.referenceRecordTypes)
-        let found = PersistentActorIndex.singleReferences(plugins: plugins, index: index)
+        let placements = PersistentActorIndex.placements(plugins: plugins, index: index)
+        let found = PersistentActorIndex.singleReferences(in: placements)
         func key(_ id: UInt32) throws -> ReferenceKey {
             try ReferenceKey(resolved: #require(index.resolvedID(
                 FormID(id),
@@ -49,5 +61,13 @@ struct PersistentActorIndexTests {
         }
         #expect(try found == [key(0x50): key(0x200)])
         #expect(try LocationStore(plugins: plugins).uniqueActorReferences[key(0x50)] == key(0x200))
+    }
+
+    @Test func placementsHoldEveryPersistentReferenceAndNoTemporaryOne() throws {
+        let plugins = try [(name: "Test.esm", file: Self.plugin())]
+        let index = RecordIndex(plugins: plugins, recordTypes: RecordIndex.referenceRecordTypes)
+        let placements = PersistentActorIndex.placements(plugins: plugins, index: index)
+        #expect(placements.map(\.formID.rawValue) == [0x200, 0x201, 0x202, 0x204])
+        #expect(placements.last?.actorBase == nil)
     }
 }

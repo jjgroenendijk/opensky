@@ -73,6 +73,18 @@ struct CrimeReportingTests {
         #expect(coordinator.takeCommands().contains(.incrementStat("Trespasses", by: 1)))
     }
 
+    @Test func enteringAnOwnedCellAndBeingSeenThereRaiseTrespassEvents() throws {
+        let world = FakeCrimeSessionWorld()
+        world.cellOwners[Self.shop] = RecordOwnership(owner: FormID(CrimeFixture.Factions.hold))
+        let recorder = StoryEventRecorder()
+        let coordinator = try Self.coordinator(world, storyEvents: recorder)
+        coordinator.advanceTrespass(by: 0)
+        #expect(recorder.events("TRES").map(\.actor1) == [nil])
+        coordinator.advanceTrespass(by: 30)
+        coordinator.advanceTrespass(by: 60)
+        #expect(recorder.events("TRES").last?.actor1 == Self.victim)
+    }
+
     @Test func anOffLimitsCellChargesWithNoWarningAndAPublicOneNever() throws {
         let world = FakeCrimeSessionWorld()
         world.cellOwners[Self.shop] = RecordOwnership(owner: FormID(CrimeFixture.Factions.hold))
@@ -185,6 +197,17 @@ struct CrimeReportingTests {
         let commands = coordinator.takeCommands()
         #expect(commands.contains(.incrementStat("Times Jailed", by: 1)))
         #expect(commands.contains(.incrementStat("Days Jailed", by: 3)))
+    }
+
+    @Test func payingTheBountyRaisesAFineEvent() throws {
+        let (world, _) = try Self.jailedWorld()
+        let recorder = StoryEventRecorder()
+        let coordinator = try Self.coordinator(world, storyEvents: recorder)
+        coordinator.reporter?.runtime.setCrimeGold(40, of: Self.hold)
+        _ = coordinator.settleArrest(with: Self.hold, .pay(removeStolen: false, goToJail: false))
+        let fine = try #require(recorder.events("PFIN").first)
+        #expect(fine.actor1 == .player)
+        #expect(fine.value1 == 40)
     }
 
     @Test func aJailThatKeepsTheInventoryTakesNothing() throws {

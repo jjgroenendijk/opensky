@@ -41,8 +41,14 @@ nonisolated public struct LocationStore: Sendable {
         table.skipped
     }
 
-    public init(index: RecordIndex, persistentActors: [ReferenceKey: ReferenceKey] = [:]) {
+    /// Every persistent placed reference of the load order, loaded or not, which an
+    /// alias search outside the loaded area reads.
+    public let persistentPlacements: [PersistentPlacement]
+
+    public init(index: RecordIndex, persistentPlacements: [PersistentPlacement] = []) {
         self.index = index
+        self.persistentPlacements = persistentPlacements
+        let persistentActors = PersistentActorIndex.singleReferences(in: persistentPlacements)
         keywordStore = KeywordStore(index: index)
         table = ResolvedRecordTable(
             index: index,
@@ -92,7 +98,7 @@ nonisolated public struct LocationStore: Sendable {
         let index = RecordIndex(plugins: plugins, recordTypes: RecordIndex.referenceRecordTypes)
         self.init(
             index: index,
-            persistentActors: PersistentActorIndex.singleReferences(plugins: plugins, index: index)
+            persistentPlacements: PersistentActorIndex.placements(plugins: plugins, index: index)
         )
     }
 

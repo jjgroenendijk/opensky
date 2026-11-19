@@ -2,6 +2,7 @@ import Foundation
 import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyAIPackages
+import OpenSkyConditions
 import OpenSkyDialogueInterface
 import OpenSkyEffects
 import OpenSkyFactionsInterface
@@ -39,6 +40,7 @@ public protocol AgentObjectsHost: AnyObject, SendableMetatype {
     var objectAnimationWorld: any ObjectAnimationWorldPort { get }
     var scenes: any ScenePort { get }
     var scripts: any ScriptPort { get }
+    var storyManager: any StoryManagerPort { get }
 }
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
@@ -87,6 +89,32 @@ extension AgentObjectsAdapter {
             "trace": .array(snapshot.trace.map(AgentJSON.string)),
             "lines": .array(snapshot.lines.map(AgentJSON.string))
         ]
+    }
+
+    /// The answer to `openskycli game state story`: the count of each event code fired
+    /// this session, and the newest events with their data, oldest first.
+    public func storyState() -> AgentJSON {
+        let story = game.storyManager
+        var fired: [String: AgentJSON] = [:]
+        for (code, count) in story.firedCounts {
+            fired[code.description] = .init(count)
+        }
+        let recent = story.recentEvents.map { event -> AgentJSON in
+            func key(_ key: ReferenceKey?) -> AgentJSON {
+                key.map { .string($0.description) } ?? .null
+            }
+            return [
+                "event": .string(event.event.description),
+                "r1": key(event.actor1),
+                "r2": key(event.actor2),
+                "f1": event.form.map { .formID($0.rawValue) } ?? .null,
+                "l1": event.location1.map { .string("\($0)") } ?? .null,
+                "q1": event.quest.map { .formID($0.rawValue) } ?? .null,
+                "v1": .init(event.value1),
+                "v2": .init(event.value2)
+            ]
+        }
+        return ["fired": .object(fired), "recent": .array(recent)]
     }
 
     /// The answer to `openskycli game state scripts`: queue, waits, the newest events,

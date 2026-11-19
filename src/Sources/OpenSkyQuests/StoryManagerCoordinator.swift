@@ -25,6 +25,9 @@ public final class StoryManagerCoordinator {
     public private(set) var sessionStart = SessionStartReport.empty
     /// Events fired this session, by code.
     public private(set) var firedCounts: [FourCC: Int] = [:]
+    /// The newest events, oldest first, for the `state story` read.
+    public private(set) var recentEvents: [StoryEventData] = []
+    static let recentEventLimit = 16
     /// NPC conversations, hellos, and found bodies, which fire through this coordinator.
     public let social: SocialEventCoordinator
     let world: any StoryManagerWorld
@@ -48,10 +51,16 @@ public final class StoryManagerCoordinator {
         )
     }
 
-    /// Fires one event. Nil without a runtime.
+    /// Fires one event. Nil without a runtime, and for `QSTR`, whose quest starts with
+    /// no walk of the event nodes.
     @discardableResult
     public func fire(_ event: StoryEventData) -> StoryManagerWalk? {
         firedCounts[event.event, default: 0] += 1
+        recentEvents.append(event)
+        if recentEvents.count > Self.recentEventLimit {
+            recentEvents.removeFirst(recentEvents.count - Self.recentEventLimit)
+        }
+        guard event.event != "QSTR" else { return nil }
         return runtime?.fire(event)
     }
 

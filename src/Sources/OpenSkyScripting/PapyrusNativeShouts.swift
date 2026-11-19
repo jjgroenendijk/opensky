@@ -4,15 +4,25 @@
 // runtime reads. See docs/engine/papyrus-script-state.md and docs/engine/shouts.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 extension PapyrusNativeFunctions.ShoutsNatives {
     public static func installShouts(into registry: inout PapyrusNativeRegistry) {
         installWords(into: &registry)
+        // The player getting a shout it did not know sends `NVPE`
+        // (docs/engine/story-manager.md#which-events-the-game-sends).
         withForm("Actor", "AddShout", into: &registry) { _, bridge, actor, shout in
+            let fromRecord = bridge.scriptState.recordShouts(of: actor).contains(shout)
+            let knew = bridge.scriptState.knowsShout(shout, actor: actor, fromRecord: fromRecord)
             bridge.updateScriptedState(of: actor) {
                 $0.setFlag(ScriptedStateName.shout(shout), true)
+            }
+            if actor == bridge.playerKey, !knew {
+                _ = bridge.ports.story?.sendStoryEvent(
+                    .newVoicePower(actor: actor, power: StoryEventData.form(of: shout))
+                )
             }
             return .returned(.none)
         }

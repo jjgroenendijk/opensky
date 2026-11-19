@@ -54,6 +54,8 @@ public enum SpellbookFixture {
         public static let fireStorm: UInt32 = 0x02C0
         /// Concentration, target actor: the shape of vanilla `HealingHands`.
         public static let healOther: UInt32 = 0x02D0
+        /// A disease, which sends `INFC` when caught and `CURE` when removed.
+        public static let rockjoint: UInt32 = 0x02E0
     }
 
     public enum Book {

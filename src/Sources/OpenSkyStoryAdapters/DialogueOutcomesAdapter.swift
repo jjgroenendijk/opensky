@@ -76,11 +76,8 @@ extension DialogueOutcomesAdapter {
         }
     }
 
-    /// `BRIB`, `INTM`, or `FLAT`, with the actor the player won over as `R1`.
-    private func speechChallengeWon(_ challenge: SpeechChallenge, speaker: ReferenceKey) {
-        var event = StoryEventData(event: FourCC(code: challenge.eventCode))
-        event.actor1 = speaker
-        game.storyWorld.reportStoryEvent(event)
+    /// The game sends no `BRIB`, `INTM`, or `FLAT` for a win; only scripts do.
+    private func speechChallengeWon(_ challenge: SpeechChallenge, speaker _: ReferenceKey) {
         game.worldState.incrementMiscStat(challenge.statName)
         game.progression.reportSpeechCheckWon()
     }

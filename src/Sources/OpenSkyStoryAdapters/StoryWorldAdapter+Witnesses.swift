@@ -53,7 +53,13 @@ extension StoryWorldAdapter {
         store: WorldStateStore, quests: QuestStore, locations: LocationStore?
     ) -> any QuestAccess {
         var runtime = QuestRuntime(store: store, quests: quests, locations: locations)
-        runtime.referenceSearch = { [weak self] in self?.questReferenceSearch() }
+        let persistent = locations
+            .map { RuntimeReferenceIndex(persistent: $0.persistentPlacements) }
+        runtime.referenceSearch = { [weak self] in
+            var search = self?.questReferenceSearch()
+            search?.persistent = persistent
+            return search
+        }
         runtime.referenceCreator = { [weak self] base, anchor in
             self?.createQuestReference(base, at: anchor)
         }

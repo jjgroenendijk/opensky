@@ -21,7 +21,6 @@ struct SpeechChallengeTests {
         #expect(SpeechChallenge.won(by: bribe) == .bribe)
         #expect(SpeechChallenge.won(by: threat) == .intimidate)
         #expect(SpeechChallenge.won(by: persuade) == .persuade)
-        #expect(SpeechChallenge.won(by: persuade)?.eventCode == "FLAT")
     }
 
     /// A failed intimidation tests the function against 0, and wins nothing.

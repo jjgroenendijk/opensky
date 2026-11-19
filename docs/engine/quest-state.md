@@ -196,10 +196,14 @@ A specific reference or a unique actor fill does not need the reference to be lo
 conditions still run on it.
 
 A near alias with type 0 ("Linked Ref Child") narrows the candidates to the references whose
-untagged linked ref (`XLKR`) is the near alias's reference. OpenSky searches only step 1. So a
-miss fails a required alias only with "In Loaded Area", where the game searches the same set.
-Without it, the reference may wait in an unloaded cell, so the miss is counted and never fails
-the start.
+untagged linked ref (`XLKR`) is the near alias's reference.
+
+OpenSky runs steps 1 and 2. For step 2 it reads every persistent `REFR` and `ACHR` of the load
+order once, at load, because an alias can only hold a persistent reference. A step 1 match wins;
+step 2 tries only the references step 1 did not see. The references of step 3 are persistent too,
+so step 2 already holds them. A candidate outside the loaded area counts as alive and enabled,
+because its runtime state lives with its cell. A miss fails a required alias once every step
+that applies has run.
 
 A "find matching reference from event" fill also runs the match conditions on the event's
 reference, and a reference that fails them does not fill the alias.
@@ -212,7 +216,8 @@ The reuse rule refuses the fill, not the start. The page says the rule "is not r
 types" and names one exception, so which types it covers is not documented. Failing the start would
 refuse thirteen quests `Skyrim.esm` ships that way.
 
-Also not done: Find Matching Reference outside the loaded cells, near alias types other than
+Also not done: the dead and disabled state of a reference outside the loaded area, near alias
+types other than
 "Linked Ref Child", "Reserves Reference" (a rule across quests), and any check that a forced
 reference exists, is alive, enabled, or not destroyed.
 
