@@ -25,6 +25,7 @@ public protocol StoryAmbientTalkHost: AnyObject, SendableMetatype {
     var perception: any PerceptionPort { get }
     var streamer: any CellStreamerPort { get }
     var scenes: any ScenePort { get }
+    var storyManager: any StoryManagerPort { get }
 }
 
 /// Part of `StoryWorldAdapter`, over its own narrow host.
@@ -33,6 +34,9 @@ public struct StoryAmbientTalkAdapter {
     public let state: StoryPartState
     public let sceneCast: StorySceneCastAdapter
     public let sceneLines: StorySceneLinesAdapter
+
+    /// `PKDT` interrupt flag 0x80: the package allows idle chatter.
+    static let idleChatterFlag: UInt16 = 0x80
 }
 
 extension StoryAmbientTalkAdapter {
@@ -136,8 +140,10 @@ extension StoryAmbientTalkAdapter {
                 distanceToPlayer: simd_distance(actor.feet, player),
                 seesPlayer: state == .detected,
                 isFighting: loop?.phase(of: actor.key)?.isEngaged ?? false,
-                isFree: !actor.isDead && !inScenes.contains(actor.key) && actor.key != conversation,
-                allowsHello: flags & 0x01 != 0
+                isFree: !actor.isDead && !inScenes.contains(actor.key) && actor.key != conversation
+                    && !game.storyManager.social.isWatchingCombat(actor.key),
+                allowsHello: flags & 0x01 != 0,
+                allowsIdleChatter: flags & Self.idleChatterFlag != 0
             )
         }
         return AmbientSpeechFrame(

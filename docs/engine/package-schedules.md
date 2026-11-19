@@ -128,7 +128,7 @@ input names of the vanilla templates.
 | Activate | Walk to the target, then activate it |
 | Say | Speak one line of the topic, and finish when the line ends |
 | ForceGreet | Wait for the player in the trigger place, walk up, open the conversation |
-| DialogueActivate | Walk to the target, then turn the head to it for 3 seconds. The game's steps are in [random conversations](/engine/random-conversations.md#the-dialogueactivate-procedure) |
+| DialogueActivate | Walk to the place. With the player as target, open the conversation; with an NPC, send `ADIA` and wait up to 20 s for a quest to answer, as in [random conversations](/engine/random-conversations.md#the-dialogueactivate-procedure) |
 | Follow | Walk to the target each time it is out of range; sprint or sneak with it |
 | Escort | Walk to the place; stop while the escorted actor is too far behind |
 | Flee | Run to the place, or straight away from the threat until far enough |
@@ -138,7 +138,6 @@ input names of the vanilla templates.
 Where OpenSky differs from the game:
 
 - ForceGreet opens the normal greeting. The package's own topic is not forced yet.
-- DialogueActivate only turns the head. OpenSky has no conversations between two NPCs.
 - UseWeapon can attack only by starting real combat, so it acts only when its
   "Allow Combat Start" input is true. Otherwise it fails.
 - HoldPosition, KeepAnEyeOn, and FlightGrab hold the place. They do not look at the target

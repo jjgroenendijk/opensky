@@ -32,6 +32,7 @@ public protocol StorySceneCastHost: AnyObject, SendableMetatype {
     var scripts: any ScriptPort { get }
     var worldState: any WorldStateStorePort { get }
     var scenes: any ScenePort { get }
+    var storyManager: any StoryManagerPort { get }
 }
 
 /// Part of `StoryWorldAdapter`, over its own narrow host.
@@ -67,7 +68,6 @@ extension StorySceneCastAdapter {
         )
     }
 
-    /// OpenSky has no observe-combat behaviour, so that status is never set.
     public func sceneActorStatus(_ actor: ReferenceKey) -> SceneActorStatus {
         var status: SceneActorStatus = []
         if game.worldState.component(ActorDeathState.self, for: actor)?.isDead == true {
@@ -77,6 +77,13 @@ extension StorySceneCastAdapter {
         }
         if game.dialogue.conversationSpeaker == actor {
             status.insert(.inPlayerDialogue)
+        }
+        let social = game.storyManager.social
+        if social.isWatchingCombat(actor) {
+            status.insert(.observingCombat)
+        }
+        if social.approachingSpeakers.contains(actor) {
+            status.insert(.walkingToPartner)
         }
         return status
     }

@@ -29,6 +29,7 @@ public protocol PackagePort: AnyObject {
     func template(of package: FormID) -> FormID?
     var trespassWarnings: [ReferenceKey: Int] { get }
     func sandboxArea(of actor: ReferenceKey) -> IdleSearchArea?
+    func allowsSandboxConversation(_ actor: ReferenceKey) -> Bool
 
     var executions: [ReferenceKey: PackageOverrideExecution] { get }
     var lastMoves: [ReferenceKey: NPCMoveCommandResult] { get }

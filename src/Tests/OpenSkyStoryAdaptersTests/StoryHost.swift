@@ -12,7 +12,7 @@ import simd
 final class StoryHost: CrimeActorsHost, CrimeFactionsHost, CrimeJailHost, CrimeWorldHost,
     DialogueCameraFocusHost, DialogueOutcomesHost, DialogueSpeakersHost, DialogueWorldHost,
     StoryAmbientTalkHost, StorySceneCastHost, StorySceneLinesHost, StorySocialSearchHost,
-    StoryWorldHost
+    StorySocialActsHost, StoryWorldHost
 {
     let fakeActorWorld = FakeActorWorldPort()
     let fakeAiWorld = FakeAIWorldPort()

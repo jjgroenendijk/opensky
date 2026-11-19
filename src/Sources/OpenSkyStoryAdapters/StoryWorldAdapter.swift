@@ -44,7 +44,7 @@ public protocol StoryWorldHost: AnyObject, SendableMetatype {
 
 /// Every host a `StoryWorldAdapter` part reads, all one object.
 public typealias StoryWorldHosts = StoryAmbientTalkHost & StorySceneCastHost &
-    StorySceneLinesHost & StorySocialSearchHost & StoryWorldHost
+    StorySceneLinesHost & StorySocialActsHost & StorySocialSearchHost & StoryWorldHost
 
 public final class StoryWorldAdapter {
     public let game: any StoryWorldHost
@@ -76,6 +76,10 @@ public final class StoryWorldAdapter {
 
     public var socialSearch: StorySocialSearchAdapter {
         frames.socialSearch
+    }
+
+    public var socialActs: StorySocialActsAdapter {
+        frames.socialActs
     }
 
     public var sceneLines: StorySceneLinesAdapter {
@@ -374,6 +378,10 @@ final class StoryFrameSteps {
 
     var socialSearch: StorySocialSearchAdapter {
         StorySocialSearchAdapter(game: hosts, sceneCast: sceneCast)
+    }
+
+    var socialActs: StorySocialActsAdapter {
+        StorySocialActsAdapter(game: hosts, ambientTalk: ambientTalk)
     }
 
     var sceneLines: StorySceneLinesAdapter {

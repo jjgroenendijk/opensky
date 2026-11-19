@@ -13,6 +13,4 @@ nonisolated public enum PackageActionResult: Equatable, Sendable {
 
     /// How long a spoken line lasts when its voice file gives no length.
     public static let unvoicedLineSeconds: Float = 3
-    /// How long DialogueActivate turns the actor's head to its target.
-    public static let lookSeconds: Float = 3
 }

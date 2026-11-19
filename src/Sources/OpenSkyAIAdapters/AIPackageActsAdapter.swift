@@ -10,6 +10,7 @@ public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyInventoryInterface
+import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -66,7 +67,7 @@ extension AIPackageActsAdapter {
         case .forceGreet:
             greet(actor)
         case let .talk(target):
-            look(at: target, from: actor)
+            talk(to: target, from: actor)
         case let .warn(intruder, _):
             warn(intruder, from: actor)
         case .standDown:
@@ -151,8 +152,8 @@ extension AIPackageActsAdapter {
         speech.greet(actor)
     }
 
-    public func look(at target: ReferenceKey, from actor: ReferenceKey) -> PackageActionResult {
-        speech.look(at: target, from: actor)
+    public func talk(to target: ReferenceKey, from actor: ReferenceKey) -> PackageActionResult {
+        speech.talk(to: target, from: actor)
     }
 
     public func warn(_ intruder: ReferenceKey, from guardKey: ReferenceKey) -> PackageActionResult {
@@ -202,12 +203,20 @@ extension AIPackageActsAdapter.Speech {
         return game.dialogueMenu.isOpen ? .done : .failed
     }
 
-    /// DialogueActivate: OpenSky has no conversations between two NPCs, so the actor
-    /// turns its head to the target.
-    func look(at target: ReferenceKey, from actor: ReferenceKey) -> PackageActionResult {
-        let seconds = PackageActionResult.lookSeconds
-        game.headTracking.setLookTarget(target, for: actor, seconds: seconds)
-        return .lasts(seconds: seconds)
+    /// DialogueActivate: with the player, the actor opens the conversation; with an NPC,
+    /// it sends `ADIA` and waits for a quest to answer, and the social pass walks it to
+    /// the partner (docs/engine/random-conversations.md#the-dialogueactivate-procedure).
+    func talk(to target: ReferenceKey, from actor: ReferenceKey) -> PackageActionResult {
+        if target == .player {
+            game.headTracking.setLookTarget(.player, for: actor, dialogue: true)
+            game.dialogueMenu.begin(with: actor)
+            return game.dialogueMenu.isOpen ? .done : .failed
+        }
+        guard
+            game.actorWorld.combatActors().contains(where: { $0.key == target && !$0.isDead }),
+            game.storyWorld.requestConversation(speaker: actor, partner: target)
+        else { return .failed }
+        return .lasts(seconds: Float(SocialLimits.dialogueActivateAnswerSeconds))
     }
 
     /// The guard draws its weapon and says a trespass line, when the load order has one

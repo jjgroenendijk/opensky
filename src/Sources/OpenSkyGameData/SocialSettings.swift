@@ -1,42 +1,39 @@
-// When NPCs start random conversations: the GMSTs the Creation Kit's Scenes page
-// lists under "Controlling Random Conversations". The fallbacks are that page's
-// values; Skyrim.esm overrides most of them. See docs/engine/random-conversations.md.
+// The game settings of random conversations and of watching a fight, with the
+// `Skyrim.esm` values as fallbacks. See docs/engine/random-conversations.md.
 
 import Foundation
 import OpenSkyFormatsESM
 
 nonisolated public struct SocialSettings: Equatable, Sendable {
-    /// Game units. A target further away is not considered.
+    /// Game units. A partner further away is not considered.
     public var radius: Float
     public var interiorRadius: Float
-    /// Percent chance per attempt.
-    public var chance: Float
-    public var interiorChance: Float
-    /// Seconds between one actor's attempts, rolled between the two.
+    /// Seconds between one actor's tries, rolled between the two.
     public var timerMin: Float
     public var timerMax: Float
-    /// Game units. The pair must be this close for the event to fire.
+    /// Game units. A scene's pair closer than this talks without a walk.
     public var triggerDistance: Float
-    /// Seconds before an actor talks to the same actor again.
-    public var sameActorSeconds: Float
+    /// Percent chance that a watcher of a fight comments.
+    public var observeCombatChance: Float
+    /// Seconds a watcher remembers a fighter it no longer sees fight.
+    public var spectatorRememberSeconds: Float
 
     public static let documentedDefaults = SocialSettings(
-        radius: 2000, interiorRadius: 1000, chance: 25, interiorChance: 25,
-        timerMin: 30, timerMax: 60, triggerDistance: 120, sameActorSeconds: 120
+        radius: 500, interiorRadius: 500, timerMin: 10, timerMax: 30, triggerDistance: 200,
+        observeCombatChance: 10, spectatorRememberSeconds: 5
     )
 
     public init(
-        radius: Float, interiorRadius: Float, chance: Float, interiorChance: Float,
-        timerMin: Float, timerMax: Float, triggerDistance: Float, sameActorSeconds: Float
+        radius: Float, interiorRadius: Float, timerMin: Float, timerMax: Float,
+        triggerDistance: Float, observeCombatChance: Float, spectatorRememberSeconds: Float
     ) {
         self.radius = radius
         self.interiorRadius = interiorRadius
-        self.chance = chance
-        self.interiorChance = interiorChance
         self.timerMin = timerMin
         self.timerMax = max(timerMin, timerMax)
         self.triggerDistance = triggerDistance
-        self.sameActorSeconds = sameActorSeconds
+        self.observeCombatChance = observeCombatChance
+        self.spectatorRememberSeconds = spectatorRememberSeconds
     }
 
     public static func resolve(store: GameSettingStore) -> SocialSettings {
@@ -53,12 +50,11 @@ nonisolated public struct SocialSettings: Equatable, Sendable {
         }
         read("fAISocialRadiusToTriggerConversation", \.radius)
         read("fAISocialRadiusToTriggerConversationInterior", \.interiorRadius)
-        read("fAISocialchanceForConversation", \.chance)
-        read("fAISocialchanceForConversationInterior", \.interiorChance)
         read("fAISocialTimerForConversationsMin", \.timerMin)
         read("fAISocialTimerForConversationsMax", \.timerMax)
         read("iAISocialDistanceToTriggerEvent", \.triggerDistance)
-        read("fAItalktosameNPCTimer", \.sameActorSeconds)
+        read("fAISocialchanceForConversation", \.observeCombatChance)
+        read("fAISpectatorRememberThreatTimer", \.spectatorRememberSeconds)
         settings.timerMax = max(settings.timerMin, settings.timerMax)
         return settings
     }

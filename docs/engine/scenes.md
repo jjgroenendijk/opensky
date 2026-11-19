@@ -288,9 +288,10 @@ stateDiagram-v2
   gap between `fRandomSceneAgainMinTime` and `fRandomSceneAgainMaxTime` (10 to 30 s in
   `Skyrim.esm`). The gap counts down only while no conversation scene plays, and the next one
   waits until it is over.
-- In the game, one partner walks to the other before the first phase, and the scene stays
-  paused until they are near and face each other. Partners with no loaded body never meet, so
-  the scene waits for as long as they are far away.
+- One partner walks to the other before the first phase, and the scene stays paused until
+  they are near and face each other
+  ([walking together](/engine/random-conversations.md#walking-together)). Partners with no
+  loaded body never meet, so the scene waits for as long as they are far away.
 - The scene counts as interruptible, with or without flag 0x10.
 
 The quest starts when two actors fire the event

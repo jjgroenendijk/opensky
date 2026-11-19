@@ -276,9 +276,9 @@ Who speaks:
   has its own greeting timer: after a hello it waits `fAIGreetingTimer`, and no NPC greets for
   `fAIExclusiveGreetingTimer`. Any line an NPC says to a target also restarts its own greeting
   timer.
-- An idle line comes from a free NPC within 1000 units of the player. In the game an NPC says
-  idle lines only when its package has `PKDT` interrupt flag 0x80, it is not watching a fight,
-  and no dialogue is active. Each NPC has its own idle line timer in the
+- An idle line comes from a free NPC within 1000 units of the player. An NPC says idle lines
+  only when its package has `PKDT` interrupt flag 0x80, it is not watching a fight, and no
+  dialogue is active. Each NPC has its own idle line timer in the
   `fIdleChatterCommentTimer` window, and the line has no target. Each pass, one such
   NPC, picked by the seeded random source, looks for a line, so a crowd costs no more frame
   time than one NPC. The distance is OpenSky's; no setting names it. An NPC that finds no line

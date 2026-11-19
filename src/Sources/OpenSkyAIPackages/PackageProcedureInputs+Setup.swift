@@ -54,13 +54,14 @@ extension PackageProcedureInputs {
     }
 
     /// The vanilla `Sandbox` template's ten inputs by `BNAM` name, which differ from the
-    /// wiki's twelve: Allow Eating 1, Allow Sleeping 2, Allow Idle Markers 4, Allow Sitting 5,
-    /// Energy 8, Allow Special Furniture 9 (docs/engine/sandbox.md).
+    /// wiki's twelve: Allow Eating 1, Allow Sleeping 2, Allow Conversation 3, Allow Idle
+    /// Markers 4, Allow Sitting 5, Energy 8, Allow Special Furniture 9 (docs/engine/sandbox.md).
     private func sandbox() -> PackageSandboxSetup {
         var sandbox = PackageSandboxSetup(settings: sandboxSettings, start: start)
         sandbox.eats = (number(at: 1) ?? 0) != 0
         sandbox.usesIdleMarkers = (number(at: 4) ?? 1) != 0
         sandbox.sleeps = (number(at: 2) ?? 0) != 0
+        sandbox.allowsConversation = (number(at: 3) ?? 1) != 0
         sandbox.sits = (number(at: 5) ?? 1) != 0
         sandbox.usesSpecialFurniture = (number(at: 9) ?? 0) != 0
         sandbox.energy = min(max(number(at: 8) ?? sandbox.energy, 0), 100)
