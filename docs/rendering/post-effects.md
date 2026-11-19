@@ -84,7 +84,8 @@ beside the occlusion trace, and the composite adds its colour before the occlusi
 steps follow a clean-room read of the game's shaders (2026-11-06, behaviour only):
 
 - 15 taps on a spiral, at angles `(i + 0.5) × 3.3493` radians plus the per-pixel turn, out to
-  a radius `R` of 100 units.
+  a radius `R` of 100 units. The reach is in world units at every distance, so close to the
+  camera the taps spread across much of the screen. A tap off the screen adds nothing.
 - Each tap adds its scene colour times
   `max(((v . N)(-v . N_t) - b) / (|v|⁴ + 0.01), 0) × max(R² - |v|², 0)³ × (1 - |v| / R)`,
   where `v` runs from the pixel to the tap and `N_t` is the tap's normal. The bias is

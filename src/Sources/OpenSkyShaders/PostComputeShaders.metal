@@ -180,12 +180,17 @@ kernel void indirectLightTrace(
     float radius = post.indirectLight.x;
     float2 ndc = uv * 2.0 - 1.0;
     float bias = post.indirectLight.z + 5.0 * dot(ndc, ndc) + 10.0 * max(range / 7000.0 - 0.3, 0.0);
-    float2 reach = min(radius * post.projection.xy * 0.5 / max(range, 1.0), float2(0.1));
+    // The taps reach R in world units at any range. A cap on screen would squeeze them
+    // close to a near pixel, where the 1/|v|^2 falloff makes the light blow up.
+    float2 reach = radius * post.projection.xy * 0.5 / max(range, 1.0);
     float turn = (postNoise(pixel.pixel) + post.camera.w * 0.618034) * 6.2831853;
     float3 sum = 0.0;
     for (int tap = 0; tap < 15; ++tap) {
         float angle = turn + (float(tap) + 0.5) * 3.3493;
         float2 tapUV = uv + float2(cos(angle), sin(angle)) * reach * ((float(tap) + 0.5) / 15.0);
+        if (any(tapUV < 0.0) || any(tapUV > 1.0)) {
+            continue;
+        }
         float tapStored = depth.sample(postNearest, tapUV);
         if (tapStored >= 1.0) {
             continue;
