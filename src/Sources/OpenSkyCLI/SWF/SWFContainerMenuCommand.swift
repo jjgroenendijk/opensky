@@ -16,7 +16,8 @@ import OpenSkyWorldState
 enum SWFContainerMenuCommand {
     /// How many of the plugin's own item forms seed each side.
     private static let seedPerFamily = 3
-    private static let seedCount: Int32 = 2
+    /// Above the quantity slider's limit of five, so `--quantity` has room to move.
+    private static let seedCount: Int32 = 8
     private static let playerSeedGold: Int32 = 5000
     private static let merchantSeedGold: Int32 = 800
 
@@ -34,7 +35,9 @@ enum SWFContainerMenuCommand {
         )
         ContainerMenuMovieBridge.prepare(runtime: runtime)
         runtime.start()
-        ContainerMenuMovieBridge.activate(runtime: runtime, mode: mode) { _ in }
+        ContainerMenuMovieBridge.activate(runtime: runtime, mode: mode) { action in
+            print("[INFO] menu container action: \(action)")
+        }
         for _ in 0 ..< ticks {
             runtime.advance()
         }
@@ -42,8 +45,11 @@ enum SWFContainerMenuCommand {
         let world = try makeWorld(context: context, mode: mode)
         var model = world.model
         model.select(side: side)
+        ItemCardSubMenuBridge.showItemsList(runtime: runtime)
         ContainerMenuMovieBridge.publish(model, runtime: runtime)
-        runtime.advance()
+        for _ in 0 ..< ticks {
+            runtime.advance()
+        }
         printState(runtime, model: model, stage: "published")
 
         for _ in 0 ..< downCount {
@@ -58,7 +64,32 @@ enum SWFContainerMenuCommand {
         if transfers > 0 {
             printState(runtime, model: model, stage: "traded")
         }
+        if let steps = arguments.quantity {
+            slide(steps, runtime: runtime, model: model)
+        }
+        if arguments.confirm {
+            print("[INFO] menu container confirm: one item")
+            ItemCardSubMenuBridge.showConfirm("Sell for less?", amount: 1, runtime: runtime)
+            runtime.advance()
+            ItemCardSubMenuBridge.handle(.button(.accept), runtime: runtime)
+            runtime.advance()
+        }
         printDiagnostics(runtime, mode: mode, model: model)
+    }
+
+    /// Opens the item card's slider at the selected stack, steps it, and accepts.
+    private static func slide(_ steps: Int, runtime: SWFMovieRuntime, model: ContainerMenuModel) {
+        let count = Int(model.selectedEntry?.count ?? 1)
+        print("[INFO] menu container quantity: slider at \(count), \(steps) steps")
+        ItemCardSubMenuBridge.showQuantity(maximum: count, runtime: runtime)
+        runtime.advance()
+        let step: MenuInputEvent = steps < 0 ? .move(.left) : .move(.right)
+        for _ in 0 ..< abs(steps) {
+            ItemCardSubMenuBridge.handle(step, runtime: runtime)
+            runtime.advance()
+        }
+        ItemCardSubMenuBridge.handle(.button(.accept), runtime: runtime)
+        runtime.advance()
     }
 
     private static func mode(_ name: ContainerMenuMode) -> ContainerMenuModel.Mode {

@@ -105,16 +105,18 @@ nonisolated extension ContainerMenuMovieBridge {
     /// `inventorymenu.swf`. A call carrying none acts on the selected row, which
     /// index 0 stands for only because the caller re-selects before acting.
     public static func action(named name: String, arguments: [AS2Value]) -> ContainerMenuAction {
-        let index = arguments.lazy.compactMap { value -> Int? in
-            guard case let .number(number) = value, number.isFinite, number >= 0 else {
+        let amount = arguments.lazy.compactMap { value -> Int? in
+            guard case let .number(number) = value, number.isFinite, number >= 1 else {
                 return nil
             }
             return Int(number)
-        }.first ?? 0
+        }.first ?? 1
         switch name {
-        case "ItemTransfer", "ItemSelect": return .transfer(index: index)
+        case "ItemTransfer", "ItemSelect": return .transfer(count: amount)
         case "TakeAllItems": return .takeAll
-        case "EquipItem": return .equip(index: index)
+        case "EquipItem": return .equipSelected
+        case "QuantitySliderOpen":
+            return .subMenu(open: arguments.first == .boolean(true))
         default: return .close
         }
     }

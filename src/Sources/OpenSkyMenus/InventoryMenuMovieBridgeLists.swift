@@ -91,17 +91,20 @@ nonisolated extension InventoryMenuMovieBridge {
     /// that carries none acts on whatever is selected, which is index 0's
     /// meaning here only because the caller re-selects before acting.
     public static func action(named name: String, arguments: [AS2Value]) -> InventoryMenuAction {
-        let index = arguments.lazy.compactMap { value -> Int? in
+        let number = arguments.lazy.compactMap { value -> Int? in
             guard case let .number(number) = value, number.isFinite, number >= 0 else {
                 return nil
             }
             return Int(number)
         }.first ?? 0
+        let flag = arguments.first.map { $0 == .boolean(true) } ?? false
         switch name {
-        case "ItemSelect": return .equip(index: index)
-        case "DropItem": return .drop(index: index)
+        case "ItemSelect": return .equipSelected
+        case "ItemDrop": return .drop(count: max(1, number))
+        case "QuantitySliderOpen": return .quantitySlider(open: flag)
+        case "UpdateItem3D": return .item3D(visible: flag)
         case "ShowSoulGemList": return .showSoulGems
-        case "ItemCardListCallback": return .chooseCardListEntry(index: index)
+        case "ItemCardListCallback": return .chooseCardListEntry(index: number)
         default: return .close
         }
     }

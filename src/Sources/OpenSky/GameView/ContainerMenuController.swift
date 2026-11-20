@@ -63,6 +63,9 @@ final class ContainerMenuController {
     var quantity: InventoryQuantityPrompt?
     /// A sale the merchant cannot pay in full, waiting for accept or cancel.
     var pendingSale: (entry: InventoryMenuEntry, count: Int32)?
+    /// The movie's item card shows its quantity slider or confirm message, so
+    /// keys go to the movie.
+    var movieSubMenuOpen = false
     /// On by default, so play mode draws the menu. The HUD is suspended while
     /// the movie holds the single SWF layer.
     private(set) var movieEnabled = true
@@ -109,6 +112,7 @@ final class ContainerMenuController {
         isOpen = false
         quantity = nil
         pendingSale = nil
+        movieSubMenuOpen = false
         game.menuMode.dismiss(activeIdentifier)
         movie.stop()
     }
@@ -206,7 +210,11 @@ final class ContainerMenuController {
                     self?.apply($0)
                 }
             },
-            didLoad: { [weak self] in self?.publishModel() }
+            didLoad: { [weak self] in
+                // The item panel opens beside the categories, and the item card with it.
+                self?.movie.publish(ItemCardSubMenuBridge.showItemsList(runtime:))
+                self?.publishModel()
+            }
         ))
     }
 
@@ -214,6 +222,10 @@ final class ContainerMenuController {
 
     func route(_ event: MenuInputEvent) {
         guard isOpen else { return }
+        if movieSubMenuOpen {
+            routeMovieSubMenu(event)
+            return
+        }
         if quantity != nil || pendingSale != nil {
             routePrompt(event)
             return
@@ -265,14 +277,14 @@ final class ContainerMenuController {
         switch action {
         case .close:
             close()
-        case let .transfer(index):
-            model.select(index)
-            activateSelection()
+        case let .transfer(count):
+            transferFromMovie(count: Int32(clamping: count))
         case .takeAll:
             takeAll()
-        case let .equip(index):
-            model.select(index)
+        case .equipSelected:
             equipSelection()
+        case let .subMenu(open):
+            movieSubMenuOpen = open
         }
     }
 

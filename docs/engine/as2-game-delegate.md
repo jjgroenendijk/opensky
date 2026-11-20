@@ -109,9 +109,9 @@ register functions before bring-up.
 The movie brings up with no fault, but it places three characters it never defines. Until
 characters could be imported from other movies ([SWF container](/formats/swf.md)), the whole list
 subtree created nothing and the movie had 11 nodes. With imports it has 373 nodes and 16 classes.
-`UpdateItem3D` and `EndItem3D` are answered as no-ops, because the rotating item preview is not done.
-`InventoryDefines` is not read: the menu groups items by OpenSky's record families
-([inventory menu](/engine/inventory-menu.md)).
+`UpdateItem3D(true)` and `UpdateItem3D(false)` show and hide the turning item. No vanilla movie
+calls `EndItem3D`. `InventoryDefines` is not read: the menu groups items by OpenSky's record
+families ([inventory menu](/engine/inventory-menu.md)).
 
 ### quest_journal.swf
 
