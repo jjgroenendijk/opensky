@@ -69,6 +69,12 @@ extension MenuWorldAdapter {
         skillsRace.playLevelUpMusic()
     }
 
+    public func askSkillsMenuQuestion(
+        _ text: String, buttons: [String], answer: @escaping (Int) -> Void
+    ) {
+        skillsRace.askSkillsMenuQuestion(text, buttons: buttons, answer: answer)
+    }
+
     public var skillsMenuTexts: GameSettingTexts<SkillsMenuText> {
         skillsRace.skillsMenuTexts
     }

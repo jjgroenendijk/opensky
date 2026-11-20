@@ -30,6 +30,8 @@ public final class HUDCoordinator {
     private let movies: any MenuMovieLoading
     /// Bumped by each start and suspend, so only the newest start shows the HUD.
     private var startRequest = 0
+    /// The menu movies holding the layer, the one drawn last on top.
+    var layerHolders: [WeakLayerHolder] = []
     /// Change gate in front of the HUD meter calls.
     var meterBinding = HUDMeterBinding()
     /// What the enemy health bar last showed; nil when it is hidden.

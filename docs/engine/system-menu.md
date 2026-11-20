@@ -203,7 +203,6 @@ Seen beside the game:
 - [WARNING] A mouse click on a check box, a stepper arrow, or a slider changes nothing. The
   Settings page also draws over its category list, and after Esc the old list stays on screen
   while the selection is stuck.
-- [WARNING] The Quit list stays on Cancel and cannot be moved.
 
 ## The cursor
 

@@ -106,6 +106,12 @@ the subclass's `prototype`. `super` is then a binding object whose prototype is 
 prototype and which binds `this` back to the original receiver. So both `super.method()` and a bare
 `super(...)` call work from one object.
 
+`ActionCastOp` pops the object first and the constructor second, the reverse of
+`ActionInstanceOf`. A compiled cast such as `Button(clip.attachMovie(...))` pushes the class, then
+the object. It returns the object when the class's prototype is on its chain, else `null`.
+`messagebox.swf` casts each button it attaches this way, so a reversed pop leaves every button
+unset.
+
 ## Where super starts
 
 A `super` built from `this.__proto__` is only right one level deep. `this` stays the same while a

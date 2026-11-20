@@ -283,19 +283,13 @@ struct SystemMenuCoordinatorTests {
     func controlsPageRebindsTheNextKey() {
         let harness = Harness()
         harness.open(.controls)
+        #expect(harness.menu.snapshot.page.rows == harness.settings.controlsRows, "no movie")
+        #expect(!harness.menu.movieMappingRows().isEmpty)
         harness.menu.route(.button(.accept))
         #expect(harness.menu.isWaitingForKey)
         #expect(harness.menu.captureKey(scanCode: 0x48))
         #expect(harness.settings.bindings.scanCode(for: .forward) == 0x48)
         #expect(!harness.menu.captureKey(scanCode: 0x11), "not waiting any more")
-    }
-
-    @Test @MainActor
-    func withoutTheMovieTheControlsReadoutListsTheEngineRows() {
-        let harness = Harness()
-        harness.open(.controls)
-        #expect(harness.menu.snapshot.page.rows == harness.settings.controlsRows)
-        #expect(!harness.menu.movieMappingRows().isEmpty)
     }
 
     @Test @MainActor

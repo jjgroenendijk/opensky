@@ -20,6 +20,11 @@ nonisolated public struct ConfirmationModel: Equatable, Sendable {
         selectedIndex = self.options.count - 1
     }
 
+    mutating func select(_ index: Int) {
+        guard options.indices.contains(index) else { return }
+        selectedIndex = index
+    }
+
     mutating func handle(_ event: MenuInputEvent) -> ConfirmationChoice? {
         switch event {
         case .move(.up), .move(.left):

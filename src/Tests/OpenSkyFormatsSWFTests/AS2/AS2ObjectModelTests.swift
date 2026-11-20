@@ -82,18 +82,19 @@ struct AS2ObjectModelTests {
         #expect(AS2Fixture.boolean(AS2Fixture.evaluate(actions)) == false)
     }
 
+    /// A compiled `Button(attachMovie(...))` pushes the class first, then the object.
     @Test func castOpReturnsTheObjectOrNull() {
         let matching = Self.classPair
             + AS2Fixture.getVariable("Derived") + AS2Fixture.getVariable("Base")
             + [AS2Fixture.opcode(0x69)]
-            + Self.construct("Derived")
             + AS2Fixture.getVariable("Base")
+            + Self.construct("Derived")
             + [AS2Fixture.opcode(0x2B)]
         #expect(AS2Fixture.evaluate(matching).objectValue != nil)
 
         let mismatched = Self.classPair
-            + Self.construct("Base")
             + AS2Fixture.getVariable("Derived")
+            + Self.construct("Base")
             + [AS2Fixture.opcode(0x2B)]
         #expect(AS2Fixture.evaluate(mismatched) == .null)
     }

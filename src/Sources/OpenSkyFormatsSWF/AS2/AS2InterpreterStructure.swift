@@ -24,8 +24,9 @@ nonisolated extension AS2Interpreter {
             let value = frame.pop()
             try frame.push(.boolean(isInstance(value, of: constructor)))
         case AS2Opcode.castOp:
-            let constructor = frame.pop()
+            // The object is on top, the constructor below it: the reverse of `instanceOf`.
             let value = frame.pop()
+            let constructor = frame.pop()
             try frame.push(isInstance(value, of: constructor) ? value : .null)
         case AS2Opcode.extends:
             try applyExtends(frame)

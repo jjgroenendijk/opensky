@@ -219,7 +219,7 @@ extension SystemMenuCoordinator {
                 rows: saveLoadPage?.titles ?? [], selected: saveLoadPage?.selectedIndex ?? 0
             )
         case .quit:
-            return page(rows: quitPage?.options ?? [], selected: quitPage?.selectedIndex ?? 0)
+            return quitRowsShown
         case .installedContent, .help:
             if let topic = topicPage?.openTopic {
                 return page(rows: [topic.title, topic.text], selected: 0)
@@ -239,6 +239,17 @@ extension SystemMenuCoordinator {
         return MenuMovieEntryList.labels(
             atPath: SystemMenuMovieBridge.mappingListPath, runtime: runtime
         )
+    }
+
+    private var quitRowsShown: SystemMenuPageSnapshot {
+        movieList(SystemMenuMovieBridge.quitListPath)
+            ?? page(rows: quitPage?.options ?? [], selected: quitPage?.selectedIndex ?? 0)
+    }
+
+    /// With the movie, its own list and highlight, which the keys move.
+    private func movieList(_ path: String) -> SystemMenuPageSnapshot? {
+        guard movieLoaded, let runtime = renderer?.swfRuntime else { return nil }
+        return SystemMenuMovieBridge.listRows(atPath: path, runtime: runtime)
     }
 
     private func page(rows: [String], selected: Int) -> SystemMenuPageSnapshot {
