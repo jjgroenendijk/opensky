@@ -91,5 +91,17 @@
       "Explains that a gate with findings across the tree lands as report, fixes per module, then gate",
       "Proposes splitting the work into several PRs instead of one"
     ]
+  },
+  {
+    "skills": [
+      "committing-and-landing-work"
+    ],
+    "query": "Add the before and after screenshots to the PR description, without committing them.",
+    "files": [],
+    "expected_behavior": [
+      "Runs gh pr edit <pr> --attach '<file>#<alt text>' for each capture",
+      "Does not commit the captures or copy them out of .logs/",
+      "Does not say that GitHub has no way to upload an image from the command line"
+    ]
   }
 ]
