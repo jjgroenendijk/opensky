@@ -80,9 +80,15 @@ hidden subtree catches nothing), `_alpha`, the matrix chain (the point is moved 
 space), and clip layers (a masked node is hit only where the mask is, the same
 `(depth, clipDepth]` rule scene generation uses).
 
-A subtree drawn at alpha 0 catches nothing. The pause menu shows why: its hidden Quests and General
-Stats pages stay above the System page at alpha 0, and the faded-out Settings category list stays
-above the option rows. In the game a click still reaches the System page and the option rows.
+Nothing inside a subtree drawn at alpha 0 catches the pointer. The pause menu shows why: its hidden
+Quests and General Stats pages stay above the System page at alpha 0, and the faded-out Settings
+category list stays above the option rows. In the game a click still reaches the System page and
+the option rows.
+
+An alpha-0 clip with a mouse handler of its own is a hit area: it catches the pointer over its
+bounds, and `Mouse.getTopMostEntity()` answers it. The Tween menu needs this. Each of its four
+entries has an `InputRect` clip at alpha 0 above the entry, and its `onMouseDown` opens the entry
+only when `getTopMostEntity()` is that clip.
 
 A clip is mouse-enabled when it has `onPress`, `onRelease`, `onReleaseOutside`, `onRollOver`,
 `onRollOut`, `onDragOver`, `onDragOut`, `onMouseDown`, or `onMouseUp`, or a mouse `CLIPACTIONS`
