@@ -62,7 +62,8 @@ nonisolated public struct MagicEffectData: Equatable, Sendable {
     public let taperWeight: Float
     public let hitShader: FormID?
     let enchantShader: FormID?
-    let minimumSkillLevel: UInt32
+    /// The skill level the magic menu shows a spell of this effect at.
+    public let minimumSkillLevel: UInt32
     let spellmakingArea: UInt32
     let castingTime: Float
     public let taperCurve: Float

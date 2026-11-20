@@ -33,7 +33,8 @@ extension MenuScreensGiftListsAdapter {
         let menu = game.magic.magicMenu
         let spells = menu.magicMenuSpells.enumerated().map { index, spell in
             (category: spell.category, row: ItemListRow(
-                tag: UInt32(index), name: spell.name, isEquipped: spell.isReadied
+                tag: UInt32(index), name: spell.name, isEquipped: spell.isReadied,
+                spellCard: spell.card
             ))
         }
         let shouts = menu.magicMenuShouts.enumerated().map { index, shout in

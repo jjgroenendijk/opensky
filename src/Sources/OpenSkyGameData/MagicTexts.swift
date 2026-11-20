@@ -68,7 +68,7 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
     }
 
     /// Novice below 25, Apprentice below 50, Adept below 75, Expert below 100, then Master.
-    func level(minimumSkill: UInt32) -> String {
+    public func level(minimumSkill: UInt32) -> String {
         let index = min(Int(minimumSkill) / 25, Self.levels.count - 1)
         let (setting, fallback) = Self.levels[index]
         return word("s\(setting)DisplayName") ?? fallback

@@ -86,6 +86,35 @@ nonisolated extension InventoryMenuMovieBridge {
         ], runtime: runtime)
     }
 
+    /// A spell's card: `ICT_SPELL`, or `ICT_SPELL_DEFAULT` for a power, which shows no
+    /// cost. A row with no card hides the card, as an empty list does.
+    public static func publishSpellCard(
+        _ card: MagicMenuSpellCard?, name: String, runtime: SWFMovieRuntime
+    ) {
+        guard let card else {
+            send(["type": .integer(0)], runtime: runtime)
+            return
+        }
+        switch card.kind {
+        case .power:
+            send([
+                "type": .integer(spellDefaultType), "name": .string(name),
+                "effects": .string(card.effects)
+            ], runtime: runtime)
+        case .spell:
+            send([
+                "type": .integer(spellType), "name": .string(name),
+                "effects": .string(card.effects), "spellCost": .integer(card.cost),
+                "castTime": .integer(card.costIsPerSecond ? 1 : 0),
+                "castLevel": .string(card.level)
+            ], runtime: runtime)
+        }
+    }
+
+    /// `ICT_SPELL` and `ICT_SPELL_DEFAULT` in the movie's `InventoryDefines`.
+    public static let spellType = 7
+    public static let spellDefaultType = 13
+
     /// `ICT_LIST` in the movie's `InventoryDefines`.
     public static let soulGemListType = 14
 

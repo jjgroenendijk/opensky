@@ -44,6 +44,12 @@ extension MenuArguments.Inventory: CLIRunnable {
     }
 }
 
+extension MenuArguments.Magic: CLIRunnable {
+    func execute() throws {
+        try SWFMagicMenuCommand.run(context: context(), arguments: self)
+    }
+}
+
 extension MenuArguments.QuestJournal: CLIRunnable {
     func execute() throws {
         try SWFQuestJournalCommand.run(context: context(), arguments: self)

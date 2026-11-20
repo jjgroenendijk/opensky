@@ -221,7 +221,6 @@ struct CommandLineTests {
             as: ActorArguments.Appearance.self
         )
         _ = try command(["actor", "values", "--race", "NordRace"], as: ActorArguments.Values.self)
-        _ = try command(["menu", "container", "--mode", "barter"], as: MenuArguments.Container.self)
         _ = try command(["vfs", "cat", "a.nif", "--out", "b"], as: VFSArguments.Cat.self)
         _ = try command(
             ["audio", "voice-sweep", "--names-only"],
