@@ -38,7 +38,7 @@ extension AgentWorldAdapter {
         case .setQuestStage, .world:
             return try done(scriptedChange(command))
         case .kill, .resurrect, .decapitate, .flight, .drunk, .knock, .knockdown, .perk,
-             .beastForm, .eyes, .link, .paired:
+             .beastForm, .eyes, .link, .paired, .translate:
             return try done(actorDebug(command))
         case .overlay, .channel, .shadows, .fade, .cartMode, .playBink, .skipBink, .titles,
              .loadScreen, .sound, .settings:
@@ -105,9 +105,17 @@ extension AgentWorldAdapter {
         case let .beastForm(name): try actors.forceBeastForm(name)
         case let .eyes(reference, textureSet): try actors.setEyes(reference, textureSet: textureSet)
         case let .link(link, linked): try actors.setRagdollLink(link, linked: linked)
-        case .knock, .knockdown: try motion.knockDebug(command)
+        case .knock, .knockdown, .translate: try motionDebug(command)
         default: throw AgentFailure(.invalidArgument, "not an actor debug command")
         }
+    }
+
+    /// The commands that push an actor or move a reference.
+    private func motionDebug(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
+        guard case let .translate(reference, position, speed) = command else {
+            return try motion.knockDebug(command)
+        }
+        return try objects.translate(reference, to: position, speed: speed)
     }
 
     private func done(_ value: AgentJSON) -> AgentHandling {

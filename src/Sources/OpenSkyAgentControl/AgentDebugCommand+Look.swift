@@ -14,8 +14,19 @@ nonisolated extension AgentDebugCommand {
                 reference: args.string("ref"), target: args.string("target"),
                 idle: args.string("idle")
             )
+        case "translate":
+            try .translate(
+                reference: args.string("ref"), position: args.vector("to"),
+                speed: parseSpeed(args)
+            )
         default: try parseScreen(name, args)
         }
+    }
+
+    private static func parseSpeed(_ args: AgentArguments) throws(AgentFailure) -> Float {
+        let speed = try args.optionalFloat("speed") ?? 100
+        guard speed.isFinite, speed > 0 else { throw args.invalid("speed", "above 0") }
+        return speed
     }
 
     /// The commands that cover the screen: fades, the cart HUD, movies, and titles, and

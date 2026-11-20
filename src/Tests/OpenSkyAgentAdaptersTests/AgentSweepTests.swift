@@ -102,7 +102,8 @@ struct AgentSweepTests {
             .removeItem(reference: "player", item: "NoSuchItem", count: 1),
             .subGraphEvent(reference: "player", event: "Idle"),
             .subGraphVariable(reference: "player", name: "x", value: 1),
-            .knock(reference: "player", damage: 1), .fastTravel(marker: "NoSuchMarker")
+            .knock(reference: "player", damage: 1), .fastTravel(marker: "NoSuchMarker"),
+            .translate(reference: "player", position: SIMD3(0, 0, 100), speed: 100)
         ]
         for command in commands {
             _ = handles(command)
