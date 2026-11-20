@@ -28,6 +28,8 @@ public final class StoryManagerCoordinator {
     /// The newest events, oldest first, for the `state story` read.
     public private(set) var recentEvents: [StoryEventData] = []
     static let recentEventLimit = 16
+    /// The newest quests a walk tried and did not start, oldest first.
+    public private(set) var recentRejections: [StoryRejectedQuest] = []
     /// NPC conversations, hellos, and found bodies, which fire through this coordinator.
     public let social: SocialEventCoordinator
     let world: any StoryManagerWorld
@@ -60,8 +62,19 @@ public final class StoryManagerCoordinator {
         if recentEvents.count > Self.recentEventLimit {
             recentEvents.removeFirst(recentEvents.count - Self.recentEventLimit)
         }
-        guard event.event != "QSTR" else { return nil }
-        return runtime?.fire(event)
+        guard event.event != "QSTR", let walk = runtime?.fire(event) else { return nil }
+        for step in walk.steps {
+            guard case let .questRejected(quest, reason) = step.outcome else { continue }
+            recentRejections.append(StoryRejectedQuest(
+                event: event.event,
+                quest: quest,
+                reason: reason
+            ))
+        }
+        if recentRejections.count > Self.recentEventLimit {
+            recentRejections.removeFirst(recentRejections.count - Self.recentEventLimit)
+        }
+        return walk
     }
 
     /// Starts every quest the plugins' `.seq` lists name that has no state yet.

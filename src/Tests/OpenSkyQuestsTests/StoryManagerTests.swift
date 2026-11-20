@@ -214,4 +214,41 @@ struct StoryManagerTests {
         #expect(report.entries.first?.quest == ResolvedFormID(plugin: "Test.esm", objectID: 0x100))
         #expect(report.entries.first?.editorID == "OwnQuest")
     }
+
+    private final class QuestWorld: StoryManagerWorld, SocialEventWorld {
+        let questRuntime: QuestRuntime?
+
+        init(_ runtime: QuestRuntime) {
+            questRuntime = runtime
+        }
+
+        var questStarter: (any QuestStarting)? {
+            nil
+        }
+
+        func conditionContext() -> ConditionContext {
+            ConditionContext().using(ConditionFunctionRegistry())
+        }
+
+        func socialFrame() -> SocialFrame? {
+            nil
+        }
+
+        func socialCanSee(_: SocialActor, _: SocialActor) -> Bool {
+            false
+        }
+    }
+
+    /// The coordinator keeps each quest a walk passed over, for the `state story` read.
+    @Test func theCoordinatorKeepsTheRejectedQuests() throws {
+        let store = WorldStateStore()
+        let world = try QuestWorld(QuestRuntime(store: store, quests: Self.quests()))
+        let coordinator = try StoryManagerCoordinator(
+            world: world, social: SocialEventCoordinator(world: world), story: Self.story()
+        )
+        #expect(coordinator.fire(Self.kill)?.startedQuests == [Self.first])
+        #expect(coordinator.recentRejections == [StoryRejectedQuest(
+            event: "KILL", quest: Self.second, reason: .limitReached
+        )])
+    }
 }
