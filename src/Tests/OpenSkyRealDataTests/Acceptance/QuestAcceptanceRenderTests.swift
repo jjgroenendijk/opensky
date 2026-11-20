@@ -60,7 +60,7 @@ struct QuestAcceptanceRenderTests {
         // The page that drew is the page the engine holds, and it drew cleanly.
         #expect(
             QuestJournalMovieBridge.titleText(runtime: runtime)
-                == walked.advancedPage.selectedEntry?.title
+                == walked.advancedPage.selectedEntry?.title.uppercased()
         )
         #expect(QuestJournalMovieBridge.diagnostics(runtime: runtime).faults == 0)
         #expect(renderer.lastSWFDrawStats.drawCalls > 0, "the journal drew nothing")
@@ -78,7 +78,7 @@ struct QuestAcceptanceRenderTests {
         renderer: Renderer
     ) throws -> (texture: any MTLTexture, pixels: [UInt8]) {
         try renderer.updateSWFRuntime { runtime in
-            QuestJournalMovieBridge.publish(model, runtime: runtime)
+            QuestJournalMovieBridge.show(model, runtime: runtime)
         }
         try renderer.advanceSWFRuntime()
         return try render(renderer)
@@ -177,7 +177,7 @@ struct QuestAcceptanceRenderWalk {
         // The last stage completes and stops the quest, which moves it to the completed tab.
         var model = try session.journal()
         if !model.entries.contains(where: { $0.editorID == editorID }) {
-            model = try session.journal(showsCompleted: true)
+            model = try session.journal()
         }
         let row = try #require(
             model.entries.firstIndex { $0.editorID == editorID },

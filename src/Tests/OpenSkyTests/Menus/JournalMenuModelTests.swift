@@ -241,18 +241,15 @@ struct JournalMenuModelTests {
         #expect(built.selectedEntry == nil)
     }
 
+    /// A finished quest that still runs is listed once, below the running ones.
     @Test
-    func switchingToCompletedReselectsIntoTheOtherList() throws {
+    func finishedQuestsFollowTheRunningOnes() throws {
         let runtime = try runtime()
         try startSideQuest(runtime)
         try runtime.completeQuest(sideQuest)
         var built = model(runtime)
-        built.select(1)
-        #expect(built.selectedEntry?.editorID == "MQ101")
-
-        built.setShowsCompleted(true)
-        #expect(built.showsCompleted)
-        #expect(built.entries.map(\.editorID) == ["FreeformRiften"])
-        #expect(built.selectedIndex == 0)
+        #expect(built.entries.map(\.editorID) == ["MQ101", "FreeformRiften"])
+        built.select(quest: built.entries[1].formID)
+        #expect(built.selectedEntry?.editorID == "FreeformRiften")
     }
 }

@@ -14,10 +14,23 @@ nonisolated enum MenuMovieEntryList {
         runtime: SWFMovieRuntime
     ) {
         guard let list = runtime.node(atPath: path, from: runtime.root) else { return }
-        let entries = runtime.runtime.makeArray(
-            rows.map { .object(makeRow($0, runtime: runtime)) }
-        )
-        list.object.assign(.object(entries), for: arrayName)
+        fill(list.object, with: rows, runtime: runtime)
+    }
+
+    /// Replaces the `EntriesA` of a list object the movie handed over.
+    static func fill(_ list: AS2Object, with rows: [[String: AS2Value]], runtime: SWFMovieRuntime) {
+        list.assign(.object(makeArray(rows, runtime: runtime)), for: arrayName)
+    }
+
+    /// An AS2 array of row objects.
+    static func makeArray(_ rows: [[String: AS2Value]], runtime: SWFMovieRuntime) -> AS2Object {
+        runtime.runtime.makeArray(rows.map { .object(makeRow($0, runtime: runtime)) })
+    }
+
+    /// The row object at `index` of a list's `EntriesA`, or nil.
+    static func row(at index: Int, of list: AS2Object) -> AS2Object? {
+        list.lookup(arrayName)?.property.value.objectValue?
+            .lookup(String(index))?.property.value.objectValue
     }
 
     /// Row `text` values in numeric row order. The rows are numeric property

@@ -126,6 +126,15 @@ nonisolated extension SWFMovieRuntime {
         public let arguments: [AS2Value]
         /// The movie making the call, for a handler that must answer inside it.
         public unowned let movie: SWFMovieRuntime
+        /// The `GameDelegate` response id, or nil for a call that wants no answer.
+        public var responseId: Int?
+
+        /// Answers with several values: `receiveResponse` passes all of them to the
+        /// movie's callback. The handler then returns nil, so nothing is sent twice.
+        public func respond(_ values: [AS2Value]) {
+            guard let responseId, responseId >= 0 else { return }
+            movie.respond(to: responseId, with: values)
+        }
     }
 }
 
@@ -154,23 +163,30 @@ nonisolated extension SWFMovieRuntime {
         }
         let responseId = responseId(values)
         let arguments = Array(values.dropFirst(responseId == nil ? 1 : 2))
-        let result = callHost(name, arguments: arguments)
+        let result = callHost(name, arguments: arguments, responseId: responseId)
         if let responseId, responseId >= 0, let result {
-            respond(to: responseId, with: result)
+            respond(to: responseId, with: [result])
         }
         return result ?? .undefined
     }
 
     /// Dispatches to a registered handler and logs the call either way.
     @discardableResult
-    public func callHost(_ name: String, arguments: [AS2Value]) -> AS2Value? {
+    public func callHost(
+        _ name: String,
+        arguments: [AS2Value],
+        responseId: Int? = nil
+    ) -> AS2Value? {
         guard let handler = hostFunctions[name] else {
             runtime.noteMissing(name)
             invokeLog.noteToEngine(name, arguments: arguments, result: nil)
             return nil
         }
         lastHostArguments[name] = arguments
-        let result = handler(SWFMovieRuntime.HostCall(arguments: arguments, movie: self))
+        let call = SWFMovieRuntime.HostCall(
+            arguments: arguments, movie: self, responseId: responseId
+        )
+        let result = handler(call)
         invokeLog.noteToEngine(name, arguments: arguments, result: result ?? .undefined)
         return result
     }
@@ -200,11 +216,11 @@ nonisolated extension SWFMovieRuntime {
         return identifier
     }
 
-    private func respond(to responseId: Int, with value: AS2Value) {
+    private func respond(to responseId: Int, with values: [AS2Value]) {
         guard let delegate = gameDelegate else {
             return
         }
-        invokeMember("receiveResponse", of: delegate, arguments: [.integer(responseId), value])
+        invokeMember("receiveResponse", of: delegate, arguments: [.integer(responseId)] + values)
     }
 
     // MARK: - Engine to movie

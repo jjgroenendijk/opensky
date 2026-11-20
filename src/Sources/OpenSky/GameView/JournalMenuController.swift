@@ -1,4 +1,5 @@
-// The journal: the Quests page of `quest_journal.swf` over `JournalMenuModel`.
+// The journal: the Quests page of `quest_journal.swf`, which asks for its rows
+// from `JournalMenuModel`.
 // The system menu is the same movie, so its bridge makes the lifecycle calls
 // and carries the input, and the two cannot be open at once. Every quest
 // change is a `JournalCoordinator` call. See docs/engine/journal.md.
@@ -51,6 +52,8 @@ final class JournalMenuController {
     let runtimeState: any RuntimeStatePort
     private(set) var model = JournalMenuModel.empty
     private(set) var isOpen = false
+    /// The date and level the bottom bar shows.
+    weak var bottomBar: (any JournalBottomBarSource)?
     let movie: MenuMovieSession
 
     init(game: any JournalMenuHost, runtimeState: any RuntimeStatePort) {
@@ -93,7 +96,6 @@ final class JournalMenuController {
             runtime: runtime,
             strings: journal.strings,
             aliases: aliasNaming(runtime: runtime),
-            showsCompleted: model.showsCompleted,
             selectedIndex: max(model.selectedIndex, 0)
         )
         let wanted = journal.selectedEditorID.lowercased()
@@ -120,8 +122,8 @@ final class JournalMenuController {
 
     // MARK: - Input
 
-    /// The movie gets the event first, so its tab strip still switches pages.
-    /// Its title-list selection is then read back into the model.
+    /// The movie gets the event first and lays out the page itself. Its
+    /// title-list selection is then read back into the model.
     func route(_ event: MenuInputEvent) {
         guard isOpen else { return }
         if case .button(.cancel) = event {
@@ -134,17 +136,9 @@ final class JournalMenuController {
         }
         do {
             _ = try SystemMenuMovieBridge.send(event, renderer: renderer)
-            let selected = renderer.swfRuntime.flatMap { runtime in
-                QuestJournalMovieBridge.selectedIndex(
-                    runtime: runtime, atPath: QuestJournalMovieBridge.titleListPath
-                )
+            if let quest = renderer.swfRuntime.flatMap(QuestJournalMovieBridge.selectedQuest) {
+                model.select(quest: quest)
             }
-            if let selected {
-                model.select(selected)
-            } else {
-                applyFallback(event)
-            }
-            publishModel()
         } catch {
             movie.record(error)
         }
@@ -173,13 +167,17 @@ final class JournalMenuController {
                     self?.close()
                 }
                 QuestJournalMovieBridge.activate(runtime: runtime)
+                SystemMenuMovieBridge.showPlayerInfo(from: self?.bottomBar, runtime: runtime)
                 self?.registerMovieCalls(runtime: runtime)
-            },
-            didLoad: { [weak self] in self?.publishModel() }
+                QuestJournalMovieBridge.startQuestsPage(runtime: runtime)
+            }
         ))
     }
 
     private func registerMovieCalls(runtime: SWFMovieRuntime) {
+        QuestJournalMovieBridge.registerRequests(runtime: runtime) { [weak self] in
+            self?.model ?? .empty
+        }
         QuestJournalMovieBridge.registerCalls(
             runtime: runtime,
             toggleTracking: { [weak self] quest in
@@ -194,11 +192,6 @@ final class JournalMenuController {
         )
         let stats = JournalStatRow.rows(game.worldState.miscStats)
         QuestJournalMovieBridge.publishStats(stats, runtime: runtime)
-    }
-
-    private func publishModel() {
-        let model = model
-        movie.publish { QuestJournalMovieBridge.publish(model, runtime: $0) }
     }
 }
 

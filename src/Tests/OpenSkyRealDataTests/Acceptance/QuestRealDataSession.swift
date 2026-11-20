@@ -93,12 +93,11 @@ final class QuestRealDataSession {
     /// The journal page as the player would see it, resolved through the
     /// plugin's own string tables and the quest's filled aliases — the same
     /// call `GameViewController` makes.
-    func journal(showsCompleted: Bool = false) throws -> JournalMenuModel {
+    func journal() throws -> JournalMenuModel {
         try JournalMenuModel.build(
             runtime: runtime,
             strings: LocalizedStrings(vfs: fileSystem, pluginName: "Skyrim.esm"),
-            aliases: .none,
-            showsCompleted: showsCompleted
+            aliases: .none
         )
     }
 
@@ -196,7 +195,7 @@ enum QuestRealDataReport {
         conditions: ConditionTally
     ) -> String {
         let world = session.world
-        let page = try? session.journal(showsCompleted: true).entries
+        let page = try? session.journal().entries
             .first { $0.formID == quest.formID }
         var lines = [
             "OpenSky M13 acceptance (issue #185)",

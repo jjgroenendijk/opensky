@@ -134,4 +134,13 @@ struct SWFRuntimeTextScrollTests {
         #expect(runtime.member("maxscroll", of: field) == .number(1))
         #expect(firstLine(runtime) == nil)
     }
+
+    /// GFx `verticalAutoSize` grows the field to its lines; "none" keeps the window.
+    @Test func aVerticallyAutoSizedFieldDrawsEveryLine() throws {
+        let (runtime, field) = try Self.started()
+        field.object.assign(.string("none"), for: "verticalAutoSize")
+        #expect(firstLine(runtime) != nil)
+        field.object.assign(.string("top"), for: "verticalAutoSize")
+        #expect(firstLine(runtime) == nil)
+    }
 }

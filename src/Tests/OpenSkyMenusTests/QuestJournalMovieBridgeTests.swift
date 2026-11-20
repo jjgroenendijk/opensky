@@ -1,7 +1,6 @@
 // Quests-page bridge coverage over a synthetic runtime. The measured node
-// names, `EntriesA`, `iSelectedIndex` (-1 for none), `InvalidateData()` and
-// `ClearList()` are installed in code, so the tests check the bridge against
-// its contract.
+// names, `EntriesA` and `iSelectedIndex` (-1 for none) are installed in code,
+// so the tests check the bridge against its contract.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -10,27 +9,17 @@ import OpenSkyFormatsTesting
 @testable import OpenSkyMenus
 import Testing
 
-private final class JournalCallLog: @unchecked Sendable {
-    private(set) var calls: [String] = []
-
-    func append(_ name: String) {
-        calls.append(name)
-    }
-}
-
 @Suite("Quest journal movie bridge")
 struct QuestJournalMovieBridgeTests {
     private struct Harness {
         let runtime: SWFMovieRuntime
         let titleList: SWFDisplayObject
-        let log: JournalCallLog
     }
 
     /// Builds `/QuestJournalFader/Menu_mc/QuestsFader/Page_mc/...` down to the
     /// two lists, so the bridge's pinned paths are what is exercised.
     private func harness() throws -> Harness {
         let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
-        let log = JournalCallLog()
         var parent = runtime.root
         for name in ["QuestJournalFader", "Menu_mc", "QuestsFader", "Page_mc"] {
             parent = Self.clip(named: name, under: parent)
@@ -40,18 +29,8 @@ struct QuestJournalMovieBridgeTests {
         let objectiveList = Self.clip(named: "objectiveList", under: parent)
         for list in [titleList, objectiveList] {
             list.object.define(.integer(-1), for: QuestJournalMovieBridge.selectedIndexName)
-            for method in [
-                QuestJournalMovieBridge.invalidateMethod, QuestJournalMovieBridge.clearMethod
-            ] {
-                AS2Runtime.method(runtime.runtime, on: list.object, name: method) { _ in
-                    log.append(method)
-                    return .undefined
-                }
-            }
         }
-        return Harness(
-            runtime: runtime, titleList: titleList, log: log
-        )
+        return Harness(runtime: runtime, titleList: titleList)
     }
 
     private static func clip(
@@ -100,77 +79,77 @@ struct QuestJournalMovieBridgeTests {
         )
     }
 
-    // MARK: - Publishing
+    // MARK: - Requests
 
-    @Test
-    func publishesQuestRowsObjectiveRowsAndTheSelection() throws {
+    @Test @MainActor
+    func theQuestsRequestFillsTheListTheMovieHandsOver() throws {
         let harness = try harness()
-        QuestJournalMovieBridge.publish(model(), runtime: harness.runtime)
+        QuestJournalMovieBridge.registerRequests(runtime: harness.runtime) { model() }
+        harness.runtime.callHost(
+            QuestJournalMovieBridge.questsDataCall, arguments: [.object(harness.titleList.object)]
+        )
 
         #expect(
             QuestJournalMovieBridge.questLabels(runtime: harness.runtime)
                 == ["Unbound", "Supply and Demand"]
         )
-        #expect(
-            QuestJournalMovieBridge.objectiveLabels(runtime: harness.runtime)
-                == ["Escape Helgen", "Follow Hadvar"]
-        )
-        #expect(
-            QuestJournalMovieBridge.selectedIndex(
-                runtime: harness.runtime, atPath: QuestJournalMovieBridge.titleListPath
-            ) == 0
-        )
-        // The objective list is a readout of the selected quest, not a second
-        // cursor, so it is rebuilt with nothing selected.
-        #expect(
-            QuestJournalMovieBridge.selectedIndex(
-                runtime: harness.runtime, atPath: QuestJournalMovieBridge.objectiveListPath
-            ) == nil
-        )
+        let row = MenuMovieEntryList.row(at: 0, of: harness.titleList.object)
+        #expect(row?.lookup("description")?.property.value == .string("A dragon attacked."))
     }
 
-    /// The selection is written *after* the rebuild, because `InvalidateData`
-    /// resets it to -1 as it goes. The call order is the contract.
+    /// The misc group is left to the movie, which adds its own row, and the
+    /// finished quests follow the running ones with `completed` set.
     @Test
-    func rebuildsBeforeSelecting() throws {
-        let harness = try harness()
-        var built = model()
-        built.select(1)
-        QuestJournalMovieBridge.publish(built, runtime: harness.runtime)
-
-        #expect(harness.log.calls.contains(QuestJournalMovieBridge.invalidateMethod))
-        #expect(
-            QuestJournalMovieBridge.selectedIndex(
-                runtime: harness.runtime, atPath: QuestJournalMovieBridge.titleListPath
-            ) == 1
+    func questRowsLeaveTheMiscGroupToTheMovie() {
+        var misc = Self.entry(title: "Miscellaneous", kind: .miscellaneous)
+        misc.miscQuests = [FormID(0x200)]
+        misc.isTracked = true
+        let finished = JournalQuestEntry(
+            formID: FormID(0x300), editorID: "Done", title: "Done", kind: .sideQuests,
+            isCompleted: true, stage: 200, objectives: [], logEntries: []
         )
+        let built = JournalMenuModel(
+            active: [Self.entry(title: "Unbound", kind: .mainQuest), misc], completed: [finished]
+        )
+        let rows = QuestJournalMovieBridge.questRows(built)
+
+        #expect(rows.map { $0["text"] } == [.string("Unbound"), .string("Done")])
+        #expect(rows.last?["completed"] == .boolean(true))
+        let answer = QuestJournalMovieBridge.questsDataAnswer(built)
+        #expect(answer == [
+            .number(256),
+            .number(256),
+            .boolean(true),
+            .boolean(true),
+            .boolean(true)
+        ])
     }
 
-    /// A list that ends up empty is cleared as well as invalidated: the
-    /// rebuild only touches as many clips as there are rows, so the previous
-    /// quest's first objective would otherwise stay on screen.
-    @Test
-    func anEmptyListIsClearedNotOnlyInvalidated() throws {
+    @Test @MainActor
+    func theObjectivesRequestFillsTheSelectedRow() throws {
         let harness = try harness()
-        var built = model()
-        built.select(1)
-        QuestJournalMovieBridge.publish(built, runtime: harness.runtime)
+        QuestJournalMovieBridge.registerRequests(runtime: harness.runtime) { model() }
+        harness.runtime.callHost(
+            QuestJournalMovieBridge.questsDataCall, arguments: [.object(harness.titleList.object)]
+        )
+        harness.titleList.object.assign(.integer(0), for: QuestJournalMovieBridge.selectedIndexName)
+        harness.runtime.callHost(QuestJournalMovieBridge.objectivesDataCall, arguments: [])
 
-        #expect(QuestJournalMovieBridge.objectiveLabels(runtime: harness.runtime).isEmpty)
-        #expect(harness.log.calls.contains(QuestJournalMovieBridge.clearMethod))
+        let row = MenuMovieEntryList.row(at: 0, of: harness.titleList.object)
+        let objectives = row?.lookup("objectives")?.property.value.objectValue
+        let first = objectives?.lookup("0")?.property.value.objectValue
+        #expect(first?.lookup("text")?.property.value == .string("Escape Helgen"))
+        #expect(QuestJournalMovieBridge.selectedQuest(runtime: harness.runtime) == FormID(0x100))
     }
 
-    @Test
-    func selectionOfAnEmptyPageIsTheMoviesOwnSentinel() throws {
+    @Test @MainActor
+    func anObjectivesRequestWithNothingSelectedIsTallied() throws {
         let harness = try harness()
-        QuestJournalMovieBridge.publish(.empty, runtime: harness.runtime)
+        QuestJournalMovieBridge.registerRequests(runtime: harness.runtime) { .empty }
+        harness.runtime.callHost(QuestJournalMovieBridge.objectivesDataCall, arguments: [])
 
-        #expect(QuestJournalMovieBridge.questLabels(runtime: harness.runtime).isEmpty)
-        #expect(
-            harness.titleList.object
-                .lookup(QuestJournalMovieBridge.selectedIndexName)?.property.value
-                == .number(-1)
-        )
+        #expect(harness.runtime.tally.missingNames[QuestJournalMovieBridge.objectivesDataCall] == 1)
+        #expect(QuestJournalMovieBridge.selectedQuest(runtime: harness.runtime) == nil)
     }
 
     // MARK: - Rows
@@ -229,7 +208,7 @@ struct QuestJournalMovieBridgeTests {
     @Test
     func aMissingPageDegradesToEmptyReadouts() throws {
         let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
-        QuestJournalMovieBridge.publish(model(), runtime: runtime)
+        QuestJournalMovieBridge.startQuestsPage(runtime: runtime)
 
         #expect(QuestJournalMovieBridge.questLabels(runtime: runtime).isEmpty)
         #expect(QuestJournalMovieBridge.objectiveLabels(runtime: runtime).isEmpty)

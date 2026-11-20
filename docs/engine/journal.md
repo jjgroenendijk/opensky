@@ -15,8 +15,9 @@ page covers the movie's start-up. This page covers the Quests page and its data.
 
 ## What a row shows
 
-The row model has an active list, a completed list, which of the two is shown, and a selected
-row. "Nothing selected" is `-1`, the movie's own value, so the model and the list agree without
+The row model has an active list, a completed list, and a selected row. The page lists both:
+the running quests first, then the finished ones, the order the movie's own sort gives.
+"Nothing selected" is `-1`, the movie's own value, so the model and the list agree without
 translation. The selection stops at the ends and does not wrap, like the vanilla title list,
 whose `moveSelectionUp` and `moveSelectionDown` stop there.
 
@@ -31,15 +32,16 @@ Two record facts decide what shows:
 - An objective whose `FNAM` has the ORed-with-previous flag is an alternative to the one before
   it. Its text starts with `sOr`, "OR", on the page and in the HUD notice.
 
-A quest can be on both lists. `CompleteQuest()` marks a quest complete but does not stop it. A
+A quest can be on both lists. `CompleteQuest()` marks a quest complete but does not stop it.
+The page then lists it once, as finished. A
 quest a Fail Quest stage item failed leaves the active list and is listed with the completed ones,
 marked failed ([quest state](/engine/quest-state.md#stage-items)).
 
 Running misc quests (type 6) share one row at the end of the active list, as in the game. Its
-objectives are the open objectives of all of them, and each keeps its own quest. The row has
-the shape the movie's own `onQuestsDataComplete` builds: text `$MISCELLANEOUS`, FormID 0, and
-type 0. Completed misc quests stay separate rows on the completed list; OpenSky did not confirm
-how the game lists them.
+objectives are the open objectives of all of them, and each keeps its own quest. The movie
+builds that row itself in `onQuestsDataComplete`: text `$MISCELLANEOUS`, FormID 0, and type 0.
+Completed misc quests stay separate rows on the completed list; OpenSky did not confirm how the
+game lists them.
 
 ### Tracked quests
 
@@ -103,7 +105,7 @@ Row fields are the names the movie's own code uses, checked by driving them:
 
 | Row | Fields |
 | --- | --- |
-| Quest title | `text`, `formID`, `instance`, `type`, `completed`, `active` |
+| Quest title | `text`, `formID`, `instance`, `type`, `completed`, `active`, `description` |
 | Objective | `text`, `formID`, `instance`, `completed`, `failed`, `active`, `questTargetID` |
 
 `text` is what the list base's `SetEntryText` draws. The System page's `SystemCategoriesList`
@@ -130,11 +132,37 @@ the label from its own table, indexed by the row's `type`, which is the QUST `DN
 
 A type the movie does not know uses `Misc`.
 
-The page also has two flags and two calls to the engine, read with `openskycli swf
-action-list --movie quest_journal.swf`:
+### How the page asks for its data
 
-- `bHasMiscQuests` says a misc row ends the list. `bAllowShowOnMap` enables the "Show on map"
-  button. OpenSky sets both when it publishes the rows.
+The page asks the engine for its data; the engine never writes the lists or the text fields.
+Read with `openskycli swf action-list --movie quest_journal`:
+
+```mermaid
+sequenceDiagram
+    participant Page as QuestsPage
+    participant Engine as OpenSky
+    Page->>Engine: RequestQuestsData(TitleList)
+    Engine->>Page: fill the title list's rows
+    Engine->>Page: onQuestsDataComplete(formID, instance, misc row, misc active, show on map)
+    Page->>Page: add the misc row and the divider, sort, write capitals
+    Page->>Page: select the saved quest, onQuestHighlight
+    Page->>Engine: RequestObjectivesData()
+    Engine->>Page: set objectives on the selected row
+    Page->>Page: title, description, objectives, layout
+```
+
+- `startPage` sends `RequestQuestsData` once per open, while `bUpdated` is false. A tab change
+  calls `startPage`; OpenSky calls it when the journal opens on the Quests page.
+- The answer goes through `GameDelegate`'s callback with five values. The first two name the
+  quest to select: OpenSky sends the FormID of the model's selected quest twice, because it
+  also uses the FormID as the row's `instance`. The third adds the misc row and sets
+  `bHasMiscQuests`. The fifth, `bAllowShowOnMap`, enables the "Show on map" button.
+- `onQuestHighlight` sends `RequestObjectivesData` with no arguments when the highlighted row
+  has no `objectives`, and reads them straight after the call. The engine finds the row through
+  the title list's selection. FormID 0 is the misc row.
+
+The page makes two more calls to the engine:
+
 - `ToggleQuestActiveStatus(formID, instance)` asks to flip tracking of the selected quest. The
   answer is the new state, which the movie writes into the row's `active`.
 - "Show on map" closes the menu and calls `ShowTargetOnMap(questTargetID)` with the selected
@@ -150,8 +178,7 @@ display nodes. None of the unresolved names stops the page from showing its data
 
 `_listeners`, `invalidationIntervalID`, `textField`, `width`, and `height` are not gaps. The page
 reads them before it sets them, or tests them against `null`, and Flash answers `undefined` too
-([AS2 input](/engine/as2-input.md)). A row is read back from `EntriesA`, not from the clip. On a long
-journal text the description and the objective list overlap; the cause is not known yet.
+([AS2 input](/engine/as2-input.md)). A row is read back from `EntriesA`, not from the clip.
 
 ## Alias text
 
@@ -208,8 +235,8 @@ the data belong to the journal. The journal and the system menu cannot be open t
 they are the same movie on the renderer's one SWF layer.
 
 Input goes to the movie first, so the tabs across the top still switch to Stats and System. The
-movie owns the selection: OpenSky reads the title list's `iSelectedIndex` back into the model and
-publishes again, so the objectives and description follow the highlighted quest. `Esc` closes.
+movie owns the selection and asks for the objectives of each quest it highlights. OpenSky reads
+the selected row's `formID` back into the model, for the readout and the next open. `Esc` closes.
 With no movie loaded, Up and Down still move the model's selection.
 
 ## How a stage reaches the page
@@ -317,13 +344,14 @@ For example, a description that ends at y = 300 puts the header at 325 and the l
 335, so the list frame is 470 − 335 = 135 px high.
 
 The bottom bar on the quest page shows `$Toggle Active` (Enter) and `$Show on Map` (M), and the
-date line from the engine's player information. Both buttons hide for a completed quest, and
+date line from the engine's player information. The bar's `InitBar` asks for that information
+with `RequestPlayerInfo`, and `SetPlayerInfo(date, level, percent)` writes it: the date line, the
+level number, and the progress to the next level from 0 to 100. OpenSky calls `SetPlayerInfo`
+when the menu opens, with the date line and level the Tween menu shows. `SwitchPageToFront` sets
+the bar's mode from the menu's `iCurrentTab`, not from its own argument, so the tab index is set
+first. Both buttons hide for a completed quest, and
 `$Show on Map` also hides when the engine says the quest cannot be shown on the map. The level
 meter shows only on the Stats and System pages.
-
-[WARNING] Seen beside the game, OpenSky draws the description on one clipped line, puts the
-header at a fixed height, lists no objective rows, keeps the title in mixed case, uses a larger
-list font, and shows the level meter in place of the button hints and the date.
 
 ## Not done yet
 

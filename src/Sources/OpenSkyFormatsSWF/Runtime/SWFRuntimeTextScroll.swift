@@ -6,7 +6,8 @@ import Foundation
 
 nonisolated extension SWFMovieRuntime {
     /// Whether the field shows a window of its lines. GFx `textAutoSize` resizes the text
-    /// to fit instead, so a field with it set draws every line.
+    /// to fit, and GFx `verticalAutoSize` grows the field to its lines, so a field with
+    /// either set draws every line.
     func windowsLines(_ node: SWFDisplayObject) -> Bool {
         guard
             let field = textField(of: node), field.flags.multiline, field.flags.wordWrap,
@@ -14,10 +15,16 @@ nonisolated extension SWFMovieRuntime {
         else {
             return false
         }
-        switch node.object.lookup("textAutoSize")?.property.value ?? .undefined {
-        case .undefined, .null: return true
-        case let .string(mode): return mode == "none"
-        default: return false
+        return isOff(node.object.lookup("textAutoSize")?.property.value)
+            && isOff(node.object.lookup("verticalAutoSize")?.property.value)
+    }
+
+    /// An auto-size mode that is unset or "none".
+    private func isOff(_ mode: AS2Value?) -> Bool {
+        switch mode ?? .undefined {
+        case .undefined, .null: true
+        case let .string(mode): mode == "none"
+        default: false
         }
     }
 

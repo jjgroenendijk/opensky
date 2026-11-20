@@ -67,16 +67,18 @@ nonisolated public struct JournalQuestEntry: Equatable, Sendable {
     }
 }
 
-/// Rows, selection and the completed-quests toggle of the Quests page.
+/// Rows and selection of the Quests page.
 nonisolated public struct JournalMenuModel: Equatable, Sendable {
-    /// Running quests, in editor-ID order.
+    /// Running quests, in editor-ID order, with the misc group last.
     public let active: [JournalQuestEntry]
-    /// Quests flagged completed, in the same order. A quest can be in both:
-    /// `CompleteQuest()` does not stop a quest (`QuestRuntimeState.completing`).
+    /// Quests flagged completed or failed, in the same order. A quest can be in
+    /// both: `CompleteQuest()` does not stop a quest (`QuestRuntimeState.completing`).
     public let completed: [JournalQuestEntry]
-    /// Which of the two lists the page is showing.
-    public private(set) var showsCompleted: Bool
-    /// Row index into `entries`, or -1 when the shown list is empty. -1 is the
+    /// The page's rows: the running quests, then the finished ones below them, the
+    /// order the movie's own `completedQuestSort` gives. A finished quest that still
+    /// runs is listed once, as finished.
+    public let entries: [JournalQuestEntry]
+    /// Row index into `entries`, or -1 when the list is empty. -1 is the
     /// movie's own nothing-selected sentinel, measured on `iSelectedIndex`.
     public private(set) var selectedIndex: Int
 
@@ -85,19 +87,13 @@ nonisolated public struct JournalMenuModel: Equatable, Sendable {
     public init(
         active: [JournalQuestEntry],
         completed: [JournalQuestEntry],
-        showsCompleted: Bool = false,
         selectedIndex: Int = 0
     ) {
         self.active = active
         self.completed = completed
-        self.showsCompleted = showsCompleted
-        let shown = showsCompleted ? completed : active
-        self.selectedIndex = shown.isEmpty ? -1 : min(max(selectedIndex, 0), shown.count - 1)
-    }
-
-    /// The rows currently on the page.
-    public var entries: [JournalQuestEntry] {
-        showsCompleted ? completed : active
+        let finished = Set(completed.map(\.formID))
+        entries = active.filter { !finished.contains($0.formID) || $0.isMiscGroup } + completed
+        self.selectedIndex = entries.isEmpty ? -1 : min(max(selectedIndex, 0), entries.count - 1)
     }
 
     public var selectedEntry: JournalQuestEntry? {
@@ -123,11 +119,12 @@ nonisolated public struct JournalMenuModel: Equatable, Sendable {
         select(selectedIndex + delta)
     }
 
-    /// Switches between the active and completed lists, re-clamping the
-    /// selection into whichever list is now shown.
-    mutating func setShowsCompleted(_ flag: Bool) {
-        guard flag != showsCompleted else { return }
-        showsCompleted = flag
-        select(0)
+    /// Points the page at the row of `quest`. The misc group carries FormID 0, as the
+    /// movie's own misc row does.
+    /// An unknown quest leaves the selection as it is.
+    public mutating func select(quest: FormID) {
+        if let row = entries.firstIndex(where: { $0.formID == quest }) {
+            selectedIndex = row
+        }
     }
 }

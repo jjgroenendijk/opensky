@@ -33,18 +33,6 @@ nonisolated extension QuestJournalMovieBridge {
     public static let toggleTrackingCall = "ToggleQuestActiveStatus"
     public static let showOnMapCall = "ShowTargetOnMap"
 
-    /// `bHasMiscQuests` says a misc row ends the list; `bAllowShowOnMap` enables
-    /// the "Show on map" button.
-    public static func publishPageFlags(_ model: JournalMenuModel, runtime: SWFMovieRuntime) {
-        guard let page = runtime.node(atPath: pagePath, from: runtime.root) else {
-            runtime.runtime.noteMissing(pagePath)
-            return
-        }
-        let hasMisc = model.active.contains(where: \.isMiscGroup)
-        page.object.assign(.boolean(hasMisc), for: "bHasMiscQuests")
-        page.object.assign(.boolean(true), for: "bAllowShowOnMap")
-    }
-
     /// Quest FormID in the high bits, objective index in the low 16. An AS2 number
     /// holds 53 bits exactly, so both survive the round trip.
     public static func questTargetID(_ objective: JournalObjectiveEntry) -> Double {

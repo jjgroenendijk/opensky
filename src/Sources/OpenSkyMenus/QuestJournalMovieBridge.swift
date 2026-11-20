@@ -54,6 +54,10 @@ nonisolated public enum QuestJournalMovieBridge: Sendable {
     /// the movie's lifecycle calls; this only switches pages, so the two can be
     /// called in either order without the journal opening twice.
     public static func activate(runtime: SWFMovieRuntime) {
+        // `SwitchPageToFront` sets the bottom bar's mode from `iCurrentTab`, not from
+        // its argument, so the tab goes in first.
+        runtime.node(atPath: menuPath, from: runtime.root)?.object
+            .assign(.integer(questsTabIndex), for: "iCurrentTab")
         runtime.callMovie(
             "SwitchPageToFront",
             atPath: menuPath,

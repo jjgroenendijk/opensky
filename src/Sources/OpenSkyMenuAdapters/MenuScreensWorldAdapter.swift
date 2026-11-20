@@ -111,6 +111,9 @@ extension MenuScreensWorldAdapter: TweenMenuWorld {
     }
 }
 
+/// The journal's bottom bar reads the same date and level as the Tween menu.
+extension MenuScreensWorldAdapter: JournalBottomBarSource {}
+
 extension MenuScreensWorldAdapter: SleepWaitWorld {
     public var gameDateText: String? {
         game.gameSession.map { game.runtimeState.dateLine(of: $0.gameClock) }
