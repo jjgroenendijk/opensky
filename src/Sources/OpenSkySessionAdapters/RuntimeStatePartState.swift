@@ -1,4 +1,5 @@
 import OpenSkyCells
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkySave
 import OpenSkyWorldInterface
@@ -27,4 +28,5 @@ struct ResidentReferencePlaces {
     let count: Int
     let current: CellSceneLocation?
     let places: ReferencePlaces
+    let editorLocations: [ReferenceKey: ResolvedFormID]
 }

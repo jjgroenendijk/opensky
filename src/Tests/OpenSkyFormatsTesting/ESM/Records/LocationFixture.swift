@@ -18,7 +18,7 @@ public enum LocationFixture: Sendable {
     }
 
     /// An LCTN with an EDID, an optional PNAM parent, optional keywords, and
-    /// optional `LCUN` triples of actor base, reference, and location.
+    /// optional `LCUN` and `ACUN` triples of actor base, reference, and location.
     public static func recordBytes(
         _ formID: UInt32,
         _ editorID: String,
@@ -26,6 +26,7 @@ public enum LocationFixture: Sendable {
         music: UInt32? = nil,
         keywords: [UInt32] = [],
         uniqueActors: [UInt32] = [],
+        addedUniqueActors: [UInt32] = [],
         cellLists: [CellList] = []
     ) -> Data {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
@@ -41,6 +42,9 @@ public enum LocationFixture: Sendable {
         }
         if !uniqueActors.isEmpty {
             fields += ESMFixture.field("LCUN", ESMFixture.words(uniqueActors))
+        }
+        if !addedUniqueActors.isEmpty {
+            fields += ESMFixture.field("ACUN", ESMFixture.words(addedUniqueActors))
         }
         for list in cellLists {
             var data = ESMFixture.words([list.worldspace])

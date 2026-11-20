@@ -62,7 +62,8 @@ nonisolated public struct Location: Equatable, Sendable {
     public struct UniqueActor: Equatable, Sendable {
         public let actorBase: FormID
         public let actorReference: FormID
-        let location: FormID
+        /// The location the reference was placed in, its editor location.
+        public let location: FormID
     }
 
     public struct SpecialReference: Equatable, Sendable {

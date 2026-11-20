@@ -17,10 +17,13 @@ nonisolated public struct LocationStore: Sendable {
     private let index: RecordIndex
     private let keywordStore: KeywordStore
     private let table: ResolvedRecordTable<ResolvedLocation>
-    /// Each unique NPC base's placed reference, from the `LCUN` lists. The last
+    /// Each unique NPC base's placed reference, from the `LCUN` and `ACUN` lists. The last
     /// location that names an actor wins. A base the lists miss, such as `Ralof`,
     /// falls back to its one persistent placed actor.
     public let uniqueActorReferences: [ReferenceKey: ReferenceKey]
+    /// Each unique actor reference's editor location, from the same lists
+    /// (docs/formats/locations.md#editor-location).
+    public let editorLocations: [ReferenceKey: ResolvedFormID]
     /// The location ref types each reference is listed under, over every location.
     private let referenceTypes: [ReferenceKey: Set<ReferenceKey>]
     /// The `DOBJ` `LRTB` ref type, which marks a location's bosses.
@@ -57,9 +60,9 @@ nonisolated public struct LocationStore: Sendable {
             editorID: \.editorID,
             resolve: { ResolvedLocation(id: $0, location: $1, sourcePlugin: $2) }
         )
-        uniqueActorReferences = persistentActors.merging(
-            Self.uniqueActors(in: table.values.values, index: index)
-        ) { _, listed in listed }
+        let listed = Self.uniqueActors(in: table.values.values, index: index)
+        uniqueActorReferences = persistentActors.merging(listed.references) { _, listed in listed }
+        editorLocations = listed.locations
         referenceTypes = Self.referenceTypes(in: table.values.values, index: index)
         let defaults = DefaultObjectStore(index: index)
         bossType = defaults.object(tag: "LRTB").map(ReferenceKey.init(resolved:))
@@ -75,23 +78,26 @@ nonisolated public struct LocationStore: Sendable {
         referenceTypes[reference] ?? []
     }
 
+    /// `ACUN` adds to the master's `LCUN`; the shipped masters keep most actors in `ACUN`.
     private static func uniqueActors(
         in locations: some Sequence<ResolvedLocation>,
         index: RecordIndex
-    ) -> [ReferenceKey: ReferenceKey] {
+    ) -> (references: [ReferenceKey: ReferenceKey], locations: [ReferenceKey: ResolvedFormID]) {
         var references: [ReferenceKey: ReferenceKey] = [:]
+        var places: [ReferenceKey: ResolvedFormID] = [:]
         for location in locations.sorted(by: { $0.id.description < $1.id.description }) {
-            for actor in location.location.uniqueActors {
+            let plugin = location.sourcePlugin
+            for actor in location.location.uniqueActors + location.location.addedUniqueActors {
                 guard
-                    let base = index.resolvedID(actor.actorBase, fromPlugin: location.sourcePlugin),
-                    let reference = index.resolvedID(
-                        actor.actorReference, fromPlugin: location.sourcePlugin
-                    )
+                    let base = index.resolvedID(actor.actorBase, fromPlugin: plugin),
+                    let reference = index.resolvedID(actor.actorReference, fromPlugin: plugin)
                 else { continue }
-                references[ReferenceKey(resolved: base)] = ReferenceKey(resolved: reference)
+                let key = ReferenceKey(resolved: reference)
+                references[ReferenceKey(resolved: base)] = key
+                places[key] = index.resolvedID(actor.location, fromPlugin: plugin)
             }
         }
-        return references
+        return (references, places)
     }
 
     public init(plugins: [(name: String, file: ESMFile)]) {

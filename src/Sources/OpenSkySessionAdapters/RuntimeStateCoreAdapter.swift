@@ -171,16 +171,29 @@ extension RuntimeStateCoreAdapter {
 extension RuntimeStateCoreAdapter {
     public func conditionData() -> ConditionDataResolution {
         let locationStore = game.sessionRecords?.locationStore
-        let places = currentReferencePlaces()
+        let resident = currentReferencePlaces()
+        let places = resident.places
         return ConditionDataResolution(
             keywords: locationStore?.keywords,
             formLists: game.sessionRecords?.formListStore,
             locations: locationStore,
             sourcePlugin: FormIDResolver.loadOrderSpaceName,
             currentLocations: places.locations,
+            editorLocations: resident.editorLocations,
             interiors: places.interiors,
             cells: places.cells
         )
+    }
+
+    /// A listed unique actor keeps the location its record names. Any other resident
+    /// reference takes the location of the cell that holds its record, where it was placed
+    /// (docs/formats/locations.md#editor-location).
+    static func editorLocations(
+        places: ReferencePlaces, store: LocationStore?
+    ) -> [ReferenceKey: ResolvedFormID] {
+        var locations = places.locations
+        locations[.player] = nil
+        return locations.merging(store?.editorLocations ?? [:]) { _, listed in listed }
     }
 
     /// The location a resident cell belongs to; nil without location data.
@@ -209,7 +222,7 @@ extension RuntimeStateCoreAdapter {
     /// Where the player and each resident reference are now.
     /// Kept while the resident cells, their reference count, and the player's cell stay
     /// the same, with the player's place in it, so a build copies none of the maps.
-    private func currentReferencePlaces() -> ReferencePlaces {
+    private func currentReferencePlaces() -> ResidentReferencePlaces {
         let streamer = game.streamer
         let cells = streamer.residentCellLocations
         let count = streamer.residentReferenceCount
@@ -218,7 +231,7 @@ extension RuntimeStateCoreAdapter {
             let cached = state.referencePlaces, cached.cells == cells, cached.count == count,
             cached.current == current
         {
-            return cached.places
+            return cached
         }
         var places = streamer.residentReferencePlaces { [self] in location(of: $0) }
         if let current, let scene = streamer.residentScene(at: current) {
@@ -226,10 +239,14 @@ extension RuntimeStateCoreAdapter {
             places.interiors[.player] = scene.isInterior
             places.cells[.player] = scene.referenceCell
         }
-        state.referencePlaces = ResidentReferencePlaces(
-            cells: cells, count: count, current: current, places: places
+        let resident = ResidentReferencePlaces(
+            cells: cells, count: count, current: current, places: places,
+            editorLocations: Self.editorLocations(
+                places: places, store: game.sessionRecords?.locationStore
+            )
         )
-        return places
+        state.referencePlaces = resident
+        return resident
     }
 }
 
