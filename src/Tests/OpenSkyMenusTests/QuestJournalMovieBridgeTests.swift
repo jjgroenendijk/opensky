@@ -97,6 +97,22 @@ struct QuestJournalMovieBridgeTests {
         #expect(row?.lookup("description")?.property.value == .string("A dragon attacked."))
     }
 
+    /// `show` answers the next request with the new model and lets the page ask again.
+    @Test @MainActor
+    func showingAModelLetsThePageAskAgain() throws {
+        let harness = try harness()
+        let page = try #require(harness.runtime.node(
+            atPath: QuestJournalMovieBridge.pagePath, from: harness.runtime.root
+        ))
+        page.object.assign(.boolean(true), for: "bUpdated")
+        QuestJournalMovieBridge.show(model(), runtime: harness.runtime)
+        #expect(page.object.lookup("bUpdated")?.property.value == .boolean(false))
+        harness.runtime.callHost(
+            QuestJournalMovieBridge.questsDataCall, arguments: [.object(harness.titleList.object)]
+        )
+        #expect(QuestJournalMovieBridge.questLabels(runtime: harness.runtime).count == 2)
+    }
+
     /// The misc group is left to the movie, which adds its own row, and the
     /// finished quests follow the running ones with `completed` set.
     @Test
