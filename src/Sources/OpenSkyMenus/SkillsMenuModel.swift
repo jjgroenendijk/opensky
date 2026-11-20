@@ -141,9 +141,8 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
             attributePosition = (attributePosition + 1) % 3
         case .button(.accept):
             askAttribute()
-        case .button(.cancel):
-            return .close
         default:
+            // Cancel stays: the game holds the menu open until the pick is made.
             break
         }
         return nil

@@ -51,8 +51,8 @@ controlmap gives both keys to Cancel. OpenSky answers Cancel as the movie answer
 close animation and shuts the menu when the movie calls `CloseMenu`. Each entry's click area is an
 `InputRect` clip at alpha 0 above the entry ([AS2 input](/engine/as2-input.md)).
 
-OpenSky also reads a level as waiting while an attribute pick is still owed, because its skills
-menu can close before the pick is made.
+OpenSky also reads a level as waiting while an attribute pick is still owed, because a level is
+not finished until its pick is made.
 
 The game's menu:
 

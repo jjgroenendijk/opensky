@@ -118,4 +118,18 @@ struct MenuRendererPortTests {
         menu.publish(renderer: port)
         #expect(port.overlayUpdates == (menu.model?.page == .levelUp ? 1 : 0))
     }
+
+    /// A close that waits for the perk sky's outro starts no level-up movie again.
+    @Test func aClosingSkillsMenuStartsNoLevelUpMovie() {
+        let menu = SkillsMenuCoordinator(menuMode: MenuModeController())
+        menu.model = SkillsMenuModel(
+            player: SkillsMenuModelTests.player(picks: 1), skills: SkillsMenuModelTests.allSkills
+        )
+        menu.isClosing = true
+        menu.syncMovie()
+        #expect(!menu.levelUpShown)
+        menu.isClosing = false
+        menu.syncMovie()
+        #expect(menu.levelUpShown)
+    }
 }

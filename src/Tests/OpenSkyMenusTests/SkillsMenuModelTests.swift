@@ -36,6 +36,8 @@ struct SkillsMenuModelTests {
         var model = SkillsMenuModel(player: Self.player(picks: 1), skills: Self.allSkills)
         #expect(model.page == .levelUp)
         #expect(model.selectedAttribute == .health)
+        #expect(model.handle(.button(.cancel)) == nil, "the pick must be made first")
+        #expect(model.page == .levelUp)
         _ = model.handle(.move(.left))
         #expect(model.handle(.button(.accept)) == nil, "the pick asks first")
         #expect(model.question?.question == "Increase Magicka?")

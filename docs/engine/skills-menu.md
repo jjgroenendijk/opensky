@@ -22,11 +22,15 @@ The menu has three parts:
 
 | Page | Shown when | Keys |
 | --- | --- | --- |
-| Level up | An attribute pick is owed | Left and right pick Magicka, Health, or Stamina; accept spends the pick |
+| Level up | An attribute pick is owed | Left and right pick Magicka, Health, or Stamina; accept spends the pick; cancel does nothing, so the menu stays until the pick is made |
 | Skills | No pick is owed | Left and right turn the ring; up or accept opens the tree |
 | Perks | A tree is open | Arrows move between boxes on the grid; accept asks before it buys the next rank; down from the lowest box or cancel goes back |
 | Perk question | Accept was pressed on a box the player can buy | `sStatsPerkConfirm`, a yes or no question; yes buys the rank |
 | Legendary | Jump was pressed on a skill at 100 | `sLegendaryResetConfirm` (set by `Update.esm`), a yes or no question; yes makes the skill legendary |
+
+The game does not let the player leave the level-up page. UESP "Skyrim:Leveling"
+(<https://en.uesp.net/wiki/Skyrim:Leveling>) says that leaving with levels still banked needs the
+exit button pressed right after a pick is confirmed, in a very small window.
 
 A yes to the first question asks a second one, `sLegendaryResetSecondConfirm` (also set by
 `Update.esm`): "Are you sure you want to make this skill Legendary?". Only a yes to both makes
