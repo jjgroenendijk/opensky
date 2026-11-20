@@ -19,7 +19,7 @@ nonisolated public struct ParticleSystemDefinition: Equatable, Sendable {
     public let maxParticles: Int
     public let emitters: [ParticleEmitter]
     public let modifiers: [ParticleModifier]
-    /// NiPSysData subtexture atlas offsets (UV quads), empty when unused.
+    /// Each atlas frame as u, v, width, height in texture space; empty when unused.
     public let subtextureOffsets: [SIMD4<Float>]
     /// BSShaderProperty block index; -1 = none. Kept raw so callers can spot
     /// systems whose shader is not a BSEffectShaderProperty.
