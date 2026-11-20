@@ -97,6 +97,21 @@ struct QuestJournalMovieBridgeTests {
         #expect(row?.lookup("description")?.property.value == .string("A dragon attacked."))
     }
 
+    /// The movie's highlighted quest becomes the model's selection; an unknown one is ignored.
+    @Test func selectingAQuestByFormIDMovesTheSelection() {
+        let quests = [0x100, 0x200].map { id in
+            JournalQuestEntry(
+                formID: FormID(UInt32(id)), editorID: "Q\(id)", title: "Q\(id)",
+                kind: .sideQuests, isCompleted: false, stage: 10, objectives: [], logEntries: []
+            )
+        }
+        var journal = JournalMenuModel(active: quests, completed: [])
+        journal.select(quest: FormID(0x200))
+        #expect(journal.selectedIndex == 1)
+        journal.select(quest: FormID(0xDEAD_BEEF))
+        #expect(journal.selectedIndex == 1)
+    }
+
     /// `show` answers the next request with the new model and lets the page ask again.
     @Test @MainActor
     func showingAModelLetsThePageAskAgain() throws {
