@@ -159,6 +159,12 @@ The movie asks for the rows with `RequestInputMappings` and the chosen category,
 by each row's sort index. Only the Switch titles are fixed in the movie. While it waits, the
 list takes no selection. A failure shows `$That button is reserved.`
 
+The sort and the draw, `MappingList.InvalidateData`, run in the same script as the request,
+and the movie asks only while its list is empty. So the engine fills the list during the call.
+An answer after the call would land in a list the movie has already drawn empty. `MappingList`
+is the `List_mc` clip inside `InputMappingPanel`; the panel itself has no `InvalidateData`.
+After a reset the engine redraws `InputMappingPanel/List_mc` itself.
+
 ```mermaid
 stateDiagram-v2
     [*] --> List
@@ -197,7 +203,6 @@ Seen beside the game:
 - [WARNING] A mouse click on a check box, a stepper arrow, or a slider changes nothing. The
   Settings page also draws over its category list, and after Esc the old list stays on screen
   while the selection is stuck.
-- [WARNING] The Controls page draws no rows, though the engine sends them.
 - [WARNING] The Quit list stays on Cancel and cannot be moved.
 
 ## The cursor

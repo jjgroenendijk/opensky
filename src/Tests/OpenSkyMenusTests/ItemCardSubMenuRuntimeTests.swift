@@ -95,8 +95,11 @@ struct ItemCardSubMenuRuntimeTests {
 
     @Test func shownClipsCountVisibleEntriesOnly() throws {
         let movie = try Self.movie()
-        Self.clip("Entry0", in: movie.categories)
-        Self.clip("Entry1", in: movie.categories).isVisible = false
+        Self.clip("Entry0", in: movie.categories).object.assign(.integer(0), for: "itemIndex")
+        let hidden = Self.clip("Entry1", in: movie.categories)
+        hidden.object.assign(.integer(1), for: "itemIndex")
+        hidden.isVisible = false
+        Self.clip("Entry2", in: movie.categories)
         Self.clip("border", in: movie.categories)
         let path = InventoryMenuMovieBridge.categoryListPath
         #expect(InventoryMenuMovieBridge.shownClipCount(runtime: movie.runtime, atPath: path) == 1)

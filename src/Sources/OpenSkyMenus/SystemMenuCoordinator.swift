@@ -198,9 +198,11 @@ public final class SystemMenuCoordinator {
                 onRequest: { [weak self] group in self?.openSettingsCategory(group) },
                 onChange: { [weak self] row, value in self?.changeSetting(row: row, to: value) }
             )
-            SystemMenuMovieBridge.registerCalls(runtime: runtime) { [weak self] call in
-                self?.pendingMovieCalls.append(call)
-            }
+            SystemMenuMovieBridge.registerCalls(
+                runtime: runtime,
+                mappings: { [weak self] in self?.movieMappingRows() ?? [] },
+                onCall: { [weak self] call in self?.pendingMovieCalls.append(call) }
+            )
             SystemMenuMovieBridge.registerTopics(
                 runtime: runtime,
                 topics: { [weak self] page in self?.showTopicPage(page)?.topics ?? [] },

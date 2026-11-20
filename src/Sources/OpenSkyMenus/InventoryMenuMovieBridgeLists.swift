@@ -70,10 +70,17 @@ nonisolated extension InventoryMenuMovieBridge {
 
     // MARK: - Reading
 
-    /// The visible row clips of the list at `path`: the rows the movie draws.
+    /// The rows the list at `path` draws: its visible `Entry` clips that hold a row.
+    /// The list sets a clip's `itemIndex` to its row, and clears it on an empty clip.
     public static func shownClipCount(runtime: SWFMovieRuntime, atPath path: String) -> Int {
         let list = runtime.node(atPath: path, from: runtime.root)
-        return list?.children.count { $0.isVisible && $0.name?.hasPrefix("Entry") == true } ?? 0
+        return list?.children.count { clip in
+            guard clip.isVisible, clip.name?.hasPrefix("Entry") == true else { return false }
+            if case .number = clip.object.lookup("itemIndex")?.property.value {
+                return true
+            }
+            return false
+        } ?? 0
     }
 
     /// Row `text` values of one list in numeric row order.
