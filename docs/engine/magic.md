@@ -262,3 +262,38 @@ with nothing in it is left out. The titles are string settings, because
 `sShouts`, `sPowers`, and `sActiveEffects`. Accept, or the movie's `ItemSelect`, readies the
 spell in the right hand. The X key, or the right mouse button (`LeftEquip`), readies it in the
 left hand.
+
+Each tab row carries a `flag` and `bDontHide`, as the inventory's do, because a tab with a
+`flag` of 0 draws as a divider. The movie opens with its item panel hidden. On the first write
+with rows, OpenSky opens the panel with `ShowItemsList`, as the inventory does
+([inventory navigation](/engine/inventory-menu.md#navigation)). Without both, the menu shows
+an empty list. `openskycli menu magic` fills the movie with a made-up spell list and prints how
+many tab and spell rows it drew, and the texts on the spell card.
+
+The selected spell's card goes to the movie's `UpdateItemCardInfo` callback. These are the
+fields the movie's item card reads for a spell:
+
+| Field | Value |
+| --- | --- |
+| `type` | 7 (`ICT_SPELL`), or 13 (`ICT_SPELL_DEFAULT`) for a power or lesser power |
+| `name` | The spell's name |
+| `effects` | Each effect's name, magnitude, and duration, joined with commas |
+| `spellCost` | Magicka per cast, after the player's skill and perks; a spell only |
+| `castTime` | 1 for a concentration spell, else 0 |
+| `castLevel` | The level of the costliest effect, from its Minimum Skill Level |
+
+The level names come from `sNoviceDisplayName`, `sApprenticeDisplayName`,
+`sJourneymanDisplayName`, `sExpertDisplayName`, and `sMasterDisplayName`: below 25 is
+Novice, below 50 Apprentice, and so on to Master at 100. The CK wiki's Magic Effect page says
+the Minimum Skill Level "governs which level the spell will display as in the user interface"
+(<https://ck.uesp.net/wiki/Magic_Effect>). A shout or active effect row has no card yet, so the
+card is hidden on those rows.
+
+Not done yet:
+
+- The game writes each effect from its description, with the magnitude and duration filled
+  in. OpenSky writes the effect name and the numbers.
+- OpenSky lists every effect of the spell, also one whose conditions fail, such as a perk's
+  extra effect.
+- A concentration spell does not show its cost as per second; `castTime` of 1 does not pick
+  the movie's per-second layout.

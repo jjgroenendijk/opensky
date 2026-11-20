@@ -69,6 +69,13 @@ probe_swf_gates() {
     || fail "inventorymenu.swf drew no category rows"
   grep 'menu inventory diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 faults' \
     || fail "inventorymenu.swf faulted during bring-up"
+  run "menu magic (magicmenu.swf)" menu magic
+  grep 'row clips shown:' "$swf_log" | tail -1 | grep -qv 'shown: 0$' \
+    || fail "magicmenu.swf drew no spell rows"
+  grep 'category clips shown:' "$swf_log" | tail -1 | grep -qv 'shown: 0$' \
+    || fail "magicmenu.swf drew no category rows"
+  grep 'item card texts:' "$swf_log" | tail -1 | grep -q 'Novice' \
+    || fail "magicmenu.swf drew no spell card"
   run "menu quest-journal (quest_journal.swf Quests page)" menu quest-journal
   grep 'menu quest-journal diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 faults' \
     || fail "quest_journal.swf faulted during bring-up"

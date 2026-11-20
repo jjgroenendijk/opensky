@@ -50,7 +50,8 @@ public struct MenuArguments: ParsableCommand, Sendable {
         commandName: "menu",
         abstract: "Drive one vanilla menu movie through its bridge and print what it built.",
         subcommands: [
-            Inventory.self, QuestJournal.self, Container.self, System.self, Dialogue.self
+            Inventory.self, Magic.self, QuestJournal.self, Container.self, System.self,
+            Dialogue.self
         ]
     )
 
@@ -89,6 +90,17 @@ public struct MenuArguments: ParsableCommand, Sendable {
                 throw ValidationError("--quantity and --cancel need --drop.")
             }
         }
+    }
+
+    public struct Magic: CLICommandArguments {
+        public static let configuration = CommandConfiguration(
+            commandName: "magic",
+            abstract: "Drive the magic menu with a seeded spell list; print its rows."
+        )
+        @OptionGroup public var global: GlobalOptions
+        @OptionGroup public var drive: MenuDriveOptions
+
+        public init() {}
     }
 
     public struct QuestJournal: CLICommandArguments {

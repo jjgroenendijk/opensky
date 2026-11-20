@@ -15,9 +15,36 @@ extension MagicCoordinator.MagicMenu {
             MagicMenuSpell(
                 name: spell.displayName,
                 isReadied: !book.hands(of: spell.key).isEmpty,
-                category: texts.menuCategory(of: spell.spellType, magicSkill: spell.magicSkill)
+                category: texts.menuCategory(of: spell.spellType, magicSkill: spell.magicSkill),
+                card: card(of: spell, caster: caster, texts: texts)
             )
         }
+    }
+
+    /// The level is the minimum skill level of the costliest effect, the effect that
+    /// also picks the school.
+    private func card(
+        of spell: ResolvedSpell, caster: CasterRuntime, texts: MagicTexts
+    ) -> MagicMenuSpellCard {
+        let effects = spell.effects.map { entry in
+            var line = entry.displayName
+            if entry.item.magnitude > 0 {
+                line += " \(Int(entry.item.magnitude.rounded()))"
+            }
+            if entry.item.duration > 0 {
+                line += " for \(entry.item.duration) s"
+            }
+            return line
+        }
+        let costliest = spell.effects.max { $0.cost < $1.cost }
+        let isPower = spell.spellType == .power || spell.spellType == .lesserPower
+        return MagicMenuSpellCard(
+            kind: isPower ? .power : .spell,
+            effects: effects.joined(separator: ", "),
+            cost: Int(caster.cost(of: spell, caster: .player).rounded()),
+            costIsPerSecond: spell.data?.castingType == .concentration,
+            level: texts.level(minimumSkill: costliest?.effect?.effect.data?.minimumSkillLevel ?? 0)
+        )
     }
 
     /// The names of the effects on the player, for the menu's last tab.

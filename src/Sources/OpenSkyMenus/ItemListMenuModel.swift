@@ -2,6 +2,7 @@
 // gift menu's items. Categories hold rows; the engine owns the selection.
 
 import Foundation
+public import OpenSkyMagicInterface
 
 nonisolated public struct ItemListRow: Equatable, Sendable {
     /// What the screen's world finds the row's thing by: an item's FormID, or a spell's
@@ -10,12 +11,18 @@ nonisolated public struct ItemListRow: Equatable, Sendable {
     public var name: String
     public var count: Int32
     public var isEquipped: Bool
+    /// The item card of a spell row; nil hides the card.
+    public var spellCard: MagicMenuSpellCard?
 
-    public init(tag: UInt32, name: String, count: Int32 = 1, isEquipped: Bool = false) {
+    public init(
+        tag: UInt32, name: String, count: Int32 = 1, isEquipped: Bool = false,
+        spellCard: MagicMenuSpellCard? = nil
+    ) {
         self.tag = tag
         self.name = name
         self.count = count
         self.isEquipped = isEquipped
+        self.spellCard = spellCard
     }
 
     /// The row as the text panel lists it.

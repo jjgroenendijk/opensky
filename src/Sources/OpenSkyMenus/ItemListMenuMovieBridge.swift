@@ -3,7 +3,7 @@
 // `ItemSelect` acts on the row its list has selected. See docs/engine/inventory-menu.md.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 /// A call a list menu's movie makes.
 nonisolated public enum ItemListMovieEvent: Equatable, Sendable {
@@ -55,7 +55,7 @@ nonisolated public enum ItemListMenuMovieBridge: Sendable {
         }
     }
 
-    static func activate(runtime: SWFMovieRuntime) {
+    public static func activate(runtime: SWFMovieRuntime) {
         runtime.callMovie("SetPlatform", arguments: [.number(SystemMenuMovieBridge.pcPlatform)])
         runtime.callMovie("InitExtensions")
         InventoryMenuMovieBridge.focusItemList(runtime: runtime)
@@ -68,15 +68,61 @@ nonisolated public enum ItemListMenuMovieBridge: Sendable {
         InventoryMenuMovieBridge.selectedIndex(runtime: runtime, atPath: layout.itemListPath)
     }
 
+    /// Writes the rows. The first write with rows also slides the item panel out, as
+    /// the inventory does, then writes again, because the slide resets the selection.
     static func publish(
         _ model: ItemListMenuModel,
         layout: ItemListMovieLayout = .inventory,
         runtime: SWFMovieRuntime
     ) {
+        write(model, layout: layout, runtime: runtime)
+        let card = ItemCardSubMenuBridge.self
+        guard let selected = model.selected else { return }
+        if card.listsState(runtime: runtime) != card.twoPanelsState {
+            card.showItemsList(runtime: runtime)
+            write(model, layout: layout, runtime: runtime)
+        }
+        card.fadeInCard(runtime: runtime)
+        let listsSpells = model.categories.contains { $0.rows.contains { $0.spellCard != nil } }
+        if listsSpells {
+            InventoryMenuMovieBridge.publishSpellCard(
+                selected.spellCard, name: selected.name, runtime: runtime
+            )
+        }
+    }
+
+    /// The CLI's way in: `categories` with the first tab and row selected.
+    public static func publish(_ categories: [ItemListCategory], runtime: SWFMovieRuntime) {
+        publish(ItemListMenuModel(categories: categories), runtime: runtime)
+    }
+
+    public static func prepare(runtime: SWFMovieRuntime) {
+        prepare(runtime: runtime) { _ in }
+    }
+
+    /// The row labels and the selection the movie holds, for the CLI.
+    public static func rowLabels(runtime: SWFMovieRuntime)
+        -> (categories: [String], rows: [String])
+    {
+        let layout = ItemListMovieLayout.inventory
+        let bridge = InventoryMenuMovieBridge.self
+        return (
+            bridge.entryLabels(runtime: runtime, atPath: layout.categoryListPath),
+            bridge.entryLabels(runtime: runtime, atPath: layout.itemListPath)
+        )
+    }
+
+    private static func write(
+        _ model: ItemListMenuModel, layout: ItemListMovieLayout, runtime: SWFMovieRuntime
+    ) {
         let bridge = InventoryMenuMovieBridge.self
         bridge.publish(
             rows: model.categories.enumerated().map { index, category in
-                ["text": .string(category.label), "index": .integer(index)]
+                [
+                    "text": .string(category.label), "index": .integer(index),
+                    "flag": .integer(InventoryMenuModel.categoryFlag(index)),
+                    "bDontHide": .boolean(true), "savedItemIndex": .integer(0)
+                ]
             },
             atPath: layout.categoryListPath, runtime: runtime
         )
