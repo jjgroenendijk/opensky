@@ -84,7 +84,11 @@ extension AgentMenuReadoutAdapter {
             result["tween"] = screens.tweenState
         }
         if game.titleMenu.isOpen {
+            let snapshot = game.titleMenu.snapshot
             result["credits"] = .bool(game.titleMenu.creditsShown)
+            // The movie's state shows the question New and Continue ask before they act.
+            result["titleState"] = .init(snapshot.movie.state)
+            result["titleResult"] = .init(snapshot.lastResult)
         }
         return .object(result)
     }

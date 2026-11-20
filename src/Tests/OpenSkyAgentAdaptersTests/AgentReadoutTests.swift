@@ -121,6 +121,20 @@ struct AgentReadoutTests {
         }
     }
 
+    /// New asks first, so a script sees the question instead of a lost accept.
+    @Test func anOpenTitleMenuShowsTheQuestionItAsks() throws {
+        host.fakeTitleMenu.isOpen = true
+        host.fakeTitleMenu.snapshotValue = TitleMenuSnapshot(
+            rows: [], selectedIndex: 1, isLoadPageOpen: false,
+            lastResult: "Asked: Start a new game?",
+            movie: TitleMenuMovieSnapshot(isLoaded: true, state: "MainConfirm")
+        )
+        let state = try object(world.query(.menu))
+        #expect(state["titleState"] == .string("MainConfirm"))
+        #expect(state["titleResult"] == .string("Asked: Start a new game?"))
+        #expect(state["credits"] == .bool(false))
+    }
+
     @Test func anOpenTweenMenuShowsItsHighlight() throws {
         let tween = FakeTweenMenuPort()
         tween.isOpen = true
