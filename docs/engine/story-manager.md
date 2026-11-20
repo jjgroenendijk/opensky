@@ -159,7 +159,9 @@ through `SendStoryEvent` from a script.
 
 `QSTR` is the story manager's own way to start a quest later. The start goes into the story
 manager's queue, and when the queue reaches it, the quest starts at once, without a walk of the
-event nodes. The queue spreads its work over frames. These starts go through `QSTR`:
+event nodes. The queue spreads its work over frames. What the script sees while it waits, and
+what each call answers, is on the [quest state](/engine/quest-state.md#starting-a-quest) page.
+These starts go through `QSTR`:
 
 - `Quest.Start()` from a script. It is latent: the script waits for the start. An event-scoped
   quest refuses it with the error "attempting to start event scoped quest outside of story

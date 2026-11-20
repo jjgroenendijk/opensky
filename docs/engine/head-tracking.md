@@ -19,11 +19,36 @@ The first rule that applies wins:
 1. A given target. The dialogue menu makes the speaker look at the player for the whole
    conversation. A scene line makes its speaker look at the action's `HTID` alias for the
    length of the line ([scene records](/formats/scenes.md)). Both count as dialogue.
-2. The player, when the player is within 384 units, and for `fAIHoldDefaultHeadTrackTimer`
-   seconds after the player leaves that distance.
+2. The default target, below.
 3. Nothing: the head returns to the body's forward axis.
 
-A dead actor does not look at anything. The 384 units are OpenSky's own number.
+A dead actor does not look at anything.
+
+### The default target
+
+Each actor checks its default head-tracking target every 1.0 to 1.5 s. At most 10 actors check
+in one frame, and only actors within 2000 units of the player check at all. An actor picks a
+new target only when no stronger look target is active, such as one from a script, dialogue,
+or combat, and its hold time is over. The hold time is 5 s from each pick, so an actor looks at
+a target for at least 5 s. It may pick the same target again.
+
+The player is tested first and always wins when valid. Otherwise the first valid actor in the
+list of nearby actors with full AI wins. There is no nearest-first order. A valid target:
+
+- is a loaded, enabled actor other than the looker;
+- is within 400 units, or 12000 units for a large creature looker;
+- is within 120 degrees either side of the looker's heading, when it is a new target;
+- is not a non-player actor closer than 100 units;
+- is detected by the looker;
+- is not, together with the looker, sitting or lying.
+
+A non-player actor that walks along a path and picks a new NPC as its default target may greet
+it in passing ([random conversations](/engine/random-conversations.md#hellos-in-passing-ahel)).
+
+In OpenSky the default target is only the player, within 384 units and for
+`fAIHoldDefaultHeadTrackTimer` seconds after the player leaves that distance. Walkers look at
+NPCs by the rule for hellos in passing
+([random conversations](/engine/random-conversations.md#where-opensky-differs)).
 
 ## How the head turns
 

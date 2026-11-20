@@ -79,6 +79,77 @@ Tab](https://ck.uesp.net/wiki/Quest_Stages_Tab) says of setting a stage. Stage f
 record data, and a stage index may repeat within a `QUST`, so the flags of every matching stage are
 combined.
 
+## Starting a quest
+
+A quest start from a script does not happen inside the call. `Start()`, `SetStage()` on a
+stopped quest, and showing an objective of a stopped quest each put a start request into the
+[story manager](/engine/story-manager.md)'s queue as a `QSTR` event, and the script waits. The
+queue runs once per frame, oldest first, with a small time budget per frame.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Stopped
+    Stopped --> Queued: Start, SetStage, or objective shown
+    Queued --> Filling: the queue reaches the request
+    Filling --> Filling: time budget used up, go on next frame
+    Filling --> Stopped: a required alias does not fill
+    Filling --> Preparing: every alias filled, quest reset
+    Preparing --> StartUp: alias references ready
+    StartUp --> Running: every start-up stage fragment finished
+    Running --> Stopping: Stop or a shut-down stage
+    Stopping --> Stopped: every shut-down stage fragment finished
+```
+
+- **Queued.** The request lives only in the queue; the quest is unchanged. `IsRunning()` and
+  `IsStarting()` are false, `IsStopped()` is true, and `GetStage()` and `IsStageDone()` still
+  answer from the last run, or 0 and false for a quest that never ran.
+- **Filling.** The aliases fill in list order. The time budget is checked between aliases and
+  every 5 candidates of a Find Matching Reference search. When it runs out, the fill goes on
+  from the same alias in a later frame. Only one quest at a time waits like this. A failure
+  clears the aliases, and every waiting script gets `false`.
+- **Reset.** After the last alias fills, the quest is reset: every stage is marked not done, the
+  current stage becomes 0, objectives reset, and `IsCompleted()` becomes false. A quest resets
+  when it starts, not when it stops, so a stopped quest keeps its stages until the next start.
+  From here `IsStarting()` is true and `IsRunning()` is false.
+- **Preparing.** The alias references are made ready, including references in cells that are
+  not loaded. This usually ends on a later frame. Then "Create Reference" aliases are created,
+  "Initially Disabled" aliases are disabled, and alias scripts bind to their references.
+- **Start-up.** On the next quest update, the quest and alias scripts reset and `OnInit` runs.
+  Next, a quest the story manager started gets its `OnStory` event; a quest started by a script
+  gets none. Then every stage flagged "Start Up Stage" runs and is marked done at once, and the
+  current stage becomes the highest of them. Stage 0 runs only when it has this flag.
+- **Running.** Once every start-up fragment has finished, `IsRunning()` becomes true, and every
+  waiting `Start()` returns `true`. With no start-up fragments, start-up and running come in
+  the same update. `Start()` does not wait for `OnInit` to finish.
+
+So a start takes at least two frames. OpenSky starts the quest inside the script call instead
+([story manager](/engine/story-manager.md#events-opensky-fires)).
+
+What a call answers:
+
+| Call | Answer |
+| --- | --- |
+| `Start()` on a running quest, or one in start-up | `true` at once; nothing is queued |
+| `Start()` on a quest that is filling or preparing | Waits for the same start as the first caller |
+| `Start()` on a "Run Once" quest that has run | `false` at once; nothing is queued. A start marks the quest as run only when it succeeds |
+| `Start()` on a quest with a story manager event (`QUST` `ENAM`) | `false` at once, with the log error "attempting to start event scoped quest outside of story manager". `SetStage()` on such a stopped quest does the same |
+| `Start()` otherwise | Waits; `true` when the quest runs, `false` when a required alias does not fill. The quest's story manager conditions are not checked |
+| `SetStage()` on a stopped quest | Queues the start; the log adds " (quest will be started first)". The stage is set when the quest runs, in the same frame, after the start-up stages. The call returns once that stage's fragments have finished, or `false` when the start fails |
+
+`SetStage()` also answers `false` when the stage does not exist, when it is done and the quest
+does not allow repeated stages, and when the stage has no log entries; the stage is still
+marked done then.
+
+A second `Start()` before the queue reaches the first queues a second request, which finds the
+quest started and does nothing. Both scripts get the one result. `Stop()` on a quest that is not
+yet running does nothing, so the queued start still runs. A quest stopped during start-up
+releases its waiting scripts with `true`.
+
+The save keeps the story manager queue with its waiting starts, the quests in start-up, running,
+and stopping, and the start-up fragments still to run. The Papyrus save keeps which scripts wait
+for which start or stage. So a save made before the queue reached a request still starts the
+quest after a load, and the waiting script still gets its answer.
+
 ## Stage items
 
 A stage holds items (log entries), each with conditions, text, and flags. "The script fragments will
@@ -174,9 +245,14 @@ An alias with no fill subrecord but with match conditions, or with a near alias 
 Find Matching Reference fill ([Quest Alias Tab](https://ck.uesp.net/wiki/Quest_Alias_Tab)). Each
 candidate runs the alias's match conditions with the candidate as subject, the quest as the
 alias quest, and the aliases filled so far. A dead candidate needs "Allow Dead" (`FNAM` bit 4),
-and a disabled one "Allow Disabled" (bit 7). A reference another alias of the quest holds needs
-"Allow Reuse in Quest". "Closest" (bit 13) takes the candidate nearest the player; otherwise a
-random match fills the alias.
+and a disabled one "Allow Disabled" (bit 7). A destroyed candidate needs "Allow Destroyed", and
+one that another quest's alias reserves needs "Allow Reserved". A reference another alias of
+the quest holds needs "Allow Reuse in Quest". "Closest" (bit 13) takes the candidate nearest the
+player; otherwise a random match fills the alias. The conditions run first, then these flag
+checks. A deleted reference and the player are never candidates.
+
+A dead actor whose base has "Respawn" set and whose cell is due to reset still passes without
+"Allow Dead".
 
 The game searches in three steps, and stops at the first that finds a candidate:
 
@@ -194,6 +270,35 @@ one set of conditions, and spreads a long fill over several frames.
 
 A specific reference or a unique actor fill does not need the reference to be loaded. The alias
 conditions still run on it.
+
+### Dead and disabled outside the loaded area
+
+A reference in the loaded area, and a persistent reference in a cell that is not loaded, both
+answer from their own state: the actor's dead state and the reference's disabled flag, as the
+save restored them. The conditions run on the real reference.
+
+A reference that a location stores for a cell that is not loaded (step 3) has no state in
+memory. The game checks it from saved data before the conditions, without loading the cell:
+
+- **Dead:** the candidate counts as dead when the dead count of its base actor is above 0, the
+  number `GetDeadCount` reports. So once one actor of that base has died, every stored reference
+  of that base counts as dead.
+- **Disabled:** a reference with an enable parent follows the parent's state, inverted when it is
+  set opposite to the parent. Otherwise its own saved enable state counts, and without one the
+  plugin's "Initially Disabled" flag.
+
+Its conditions then run on a blank stand-in actor with the candidate's base, form ID, and cell,
+and nothing else. `GetDead` and `GetDisabled` answer false on it, `GetIsID` answers correctly,
+and `GetDistance` is not reliable, because the stand-in has no position.
+
+### Flags by fill type
+
+| Fill | "Allow Dead", "Allow Disabled" | "Allow Reserved", "Allow Destroyed" | Condition subject |
+| --- | --- | --- | --- |
+| Find Matching Reference | Apply | Apply | The candidate |
+| Specific Reference | Do not apply: a dead or disabled reference fills | "Allow Reserved" applies; a deleted reference fails | The reference |
+| Unique Actor | Apply; an actor not in memory is checked by the step 3 rules | Apply | The player |
+| Create Reference | | | The player |
 
 A near alias with type 0 ("Linked Ref Child") narrows the candidates to the references whose
 untagged linked ref (`XLKR`) is the near alias's reference.
@@ -216,10 +321,13 @@ The reuse rule refuses the fill, not the start. The page says the rule "is not r
 types" and names one exception, so which types it covers is not documented. Failing the start would
 refuse thirteen quests `Skyrim.esm` ships that way.
 
-Also not done: the dead and disabled state of a reference outside the loaded area, near alias
-types other than
-"Linked Ref Child", "Reserves Reference" (a rule across quests), and any check that a forced
-reference exists, is alive, enabled, or not destroyed.
+Also not done:
+
+- The dead and disabled rules for a reference outside the loaded area, above. OpenSky counts
+  such a candidate as alive and enabled.
+- Near alias types other than "Linked Ref Child".
+- "Reserves Reference" and "Allow Reserved", a rule across quests.
+- "Allow Destroyed", and the check that a forced reference is not deleted.
 
 `Skyrim.esm` has 12,891 aliases across 1,607 quests. 5,591 fill: 2,688 specific references,
 162 direct locations, and 2,741 unique actors. No quest is blocked from starting. The largest
