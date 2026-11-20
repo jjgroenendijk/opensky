@@ -72,7 +72,7 @@ extension LoadingScreenWorldAdapter {
             guard let self else { return }
             liftStartCoverIfReady()
             game.loadingScreens.tick(time: now)
-            movie.tick()
+            movie.tick(now: now)
         }
         registerLoadingScreenCameraPaths(stage: stage)
     }

@@ -154,9 +154,10 @@ gantt
 
 A fade in raises the alpha from 0 to 1 while a 23-pixel blur shrinks to 0. A fade out lowers
 the alpha to 0 while the blur grows back to 23 pixels. The clip then stops on an invisible
-frame. In the reference game "Presents" was gone about 5 s after it started.
-
-[WARNING] In OpenSky both titles were still on screen 12 s after they started.
+frame. In the reference game "Presents" was gone about 5 s after it started. OpenSky steps the
+movie at its own 30 frames a second from the wall clock, not once per drawn frame, so a title
+lasts as long on a slow machine. The quest script's waits run on game time, so on a slow machine
+the gaps between the titles grow.
 
 The `MQ101` aliases that name unique actors fill from the location records ([quest
 state](/engine/quest-state.md), "What does not fill yet").

@@ -100,7 +100,7 @@ extension SkillsMenuCoordinator {
         do {
             for _ in 0 ..< framePacer.ticks(at: now, frameRate: rate) {
                 try renderer.advanceSWFRuntime()
-                levelUpMovie.tick()
+                levelUpMovie.step()
             }
         } catch {
             movie.record(error)

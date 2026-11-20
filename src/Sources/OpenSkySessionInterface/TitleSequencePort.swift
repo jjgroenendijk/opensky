@@ -5,5 +5,5 @@ public protocol TitleSequencePort: AnyObject {
     var lastSequence: String? { get }
     func show(_ shown: Bool)
     @discardableResult func start(_ sequence: String) -> Bool
-    func tick()
+    func tick(now: Double)
 }

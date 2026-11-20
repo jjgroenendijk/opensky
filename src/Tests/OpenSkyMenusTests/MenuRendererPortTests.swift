@@ -66,6 +66,23 @@ struct MenuRendererPortTests {
         #expect(activations == 0)
     }
 
+    /// A 24-frame movie runs 6 frames in 0.25 s, whatever the render rate.
+    @Test func anOverlayStepsAtItsOwnFrameRate() throws {
+        let port = try #require(FakeRendererPort())
+        port.swfOverlayRuntime = try SWFRuntimeFixture
+            .started(tags: [SWFDisplayFixture.showFrameTag])
+        let overlay = try MenuMovieOverlay(movies: ImmediateMovies()) { port }
+        overlay.start(path: "Interface/Overlay.swf") { _ in }
+        #expect(overlay.isLoaded)
+        overlay.tick(now: 10)
+        for frame in 1 ... 15 {
+            overlay.tick(now: 10 + Double(frame) / 60)
+        }
+        #expect(port.swfOverlayAdvances == 6)
+        overlay.step()
+        #expect(port.swfOverlayAdvances == 7)
+    }
+
     @Test func theHUDStartsAndRepublishesThroughThePort() throws {
         let port = try #require(FakeRendererPort())
         let harness = try HUDMovieBridgeTests.makeRuntime()

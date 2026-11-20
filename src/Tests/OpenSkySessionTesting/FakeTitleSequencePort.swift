@@ -10,7 +10,7 @@ nonisolated public final class FakeTitleSequencePort: TitleSequencePort {
     public var showCalls: [Bool] = []
     public var startCalls: [String] = []
     public var startResult = false
-    public var tickCallCount = 0
+    public var tickCalls: [Double] = []
 
     public init() {}
 }
@@ -26,7 +26,7 @@ nonisolated extension FakeTitleSequencePort {
         return startResult
     }
 
-    public func tick() {
-        tickCallCount += 1
+    public func tick(now: Double) {
+        tickCalls.append(now)
     }
 }
