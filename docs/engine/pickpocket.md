@@ -88,7 +88,33 @@ UESP gives two ways to end the refusal early:
   aimed. So OpenSky forgets the catch for a calm effect delivered from self with an area, on any
   actor but the caster.
 
+## A failure in the game
+
+The game rolls a whole number from 0 to 99. The try fails when the roll is equal to or above the
+chance. Example: a chance of 60 on a target that sees the player drops to 35, so a roll from 35 to
+99 fails. A chance of 120 is capped at 90, so a roll from 90 to 99 still fails.
+
+```mermaid
+flowchart TD
+    F[Failed roll] --> D[Target now detects the player]
+    D --> W{Already warning the player?}
+    W -- yes --> X[Nothing more]
+    W -- no --> I{Target's faction ignores pickpocketing,<br/>or target is trespassing?}
+    I -- yes --> N[Says its PICN line. No crime, no combat]
+    I -- no --> C[Pickpocket crime, says its PICC line]
+    C --> A[Alarm sent when the crime has a faction]
+    A --> G{Target is a guard?}
+    G -- no --> H[Target marked alerted, attacks if no guard took the crime]
+    G -- yes --> P[Takes the crime and pursues: normal guard confrontation]
+```
+
+- The HUD shows the failure message in every case.
+- The crime costs the faction's pickpocket price, 25 gold when the faction sets none.
+- The thief also gets the recent theft mark, so a victim who comes to take items back attacks
+  instead ([crime reports](/engine/crime-reports.md#the-alarm-package)).
+- A guard target does not attack at once unless the player is already an enemy of its faction.
+
 ## Where OpenSky differs
 
-- The target does not turn hostile or start a dialogue after a failure. The crime is charged, and
-  the guards react as for any other bounty.
+- The target does not turn hostile, speak its `PICC` or `PICN` line, or skip the crime for a faction
+  that ignores pickpocketing. The crime is charged, and the guards react as for any other bounty.

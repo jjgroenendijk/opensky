@@ -37,8 +37,12 @@ The gift menu has the same weight limit, as observed in the game: a gift the rec
 carry shows `sItemTooHeavy` ("The item is too heavy to carry.") and stays with the player.
 
 The trade list hides the outfit's copies, as the game does; an extra copy shows.
-`sTeammateCantGiveOutfit` ("Your teammate already owns that armor.") is not used, because no
-source says when it shows.
+`sTeammateCantGiveOutfit` ("Your teammate already owns that armor.") is not used.
+
+The game program defines both messages, `sTeammateCantGiveOutfit` and `sTeammateCantTakeOutfit`,
+but no part of it reads either one. So the game never shows them, and hiding the outfit rows is
+what keeps the outfit with the follower. A follower's quest items are also left out of its list.
+OpenSky still shows `sTeammateCantTakeOutfit` for a take that would reach an outfit copy.
 
 ## The price formula
 

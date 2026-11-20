@@ -26,6 +26,17 @@ A horse somebody else owns asks `sStealHorse` ("Do you want to steal this horse?
 mounts it and reports a theft worth `iCrimeGoldStealHorse` (100), with the owner as the victim
 ([crime](/engine/crime.md)). The crosshair prompt on a mountable actor reads `sRide`.
 
+In the game:
+
+- Mounting a horse the rider does not own is a theft, with the horse's base as the item and its
+  owner as the victim. Ownership is checked as for any reference, faction rank included. A horse
+  with no owner counts as the rider's.
+- The theft costs a flat 100 gold, not the horse's value times a count.
+- A theft by a follower is charged to the player.
+- Only a horse the player owns becomes the player's last ridden horse. A stolen horse does not, and
+  its owner stays the same.
+- The game program holds the steal question's text, but no use of it was found.
+
 Sources: <https://ck.uesp.net/wiki/Settings>, the game settings read on the install.
 
 ## Mounting and dismounting

@@ -66,6 +66,33 @@ so it reads its leveled `CNTO` list again. The time each chest was stocked is th
 `vendorRestock` world-state component, which a save stores in the `VRST` chunk
 ([world chunks](/formats/opensky-save-world-chunks.md)).
 
+## Stock, gold, and what a vendor takes in the game
+
+- The vendor's side of the barter menu is the merchant's own inventory and the `VENC` chest
+  together. The vendor's gold is the gold in both, so it refills when the chest restocks.
+- When the vendor cannot pay, the menu shows `sNotEnoughVendorGold` ("Vendor only has %d gold.").
+- A restock resets the chest to its listed items and gold. Items the player sold to it go.
+- The vendor's own side is filtered by the same `VEND` check as the player's, so it lists only
+  what it trades.
+
+What the vendor buys from the player:
+
+1. Never a key, and never a quest item.
+2. A vendor with no vendor faction buys anything.
+3. Otherwise an item must have a keyword in the `VEND` list, or lack all of them under "Not
+   Buy/Sell".
+4. The player's `BypassVendorKeywordCheck` actor value (94) skips step 3. The Merchant perk sets it
+   through its ability.
+5. A stolen copy is left out, unless the faction has "Only Buys Stolen Goods", or the player's
+   `BypassVendorStolenCheck` actor value (93) is not zero.
+
+OpenSky differs: the vendor trades from the `VENC` chest alone, not the chest and its own
+inventory together, and the two bypass actor values are not read, so the Merchant perk does not
+open every vendor.
+
+Investor is not a rule of the barter menu. It is a quest stage the perk sets, and the dialogue and
+scripts do the rest.
+
 ## Investment and trainers
 
 Neither is part of the vendor faction. Both come from the load order:

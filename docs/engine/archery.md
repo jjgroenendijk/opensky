@@ -79,6 +79,12 @@ A crossbow fires only bolts, and a bow only arrows. A bolt is an `AMMO` without 
 the first carried one. An NPC with a crossbow picks bolts the same way. A bolt that hits counts
 as a crossbow blow for the strike rules.
 
+In the game a bolt tilts up 1 degree in first person and 2.5 degrees in third person, the same as
+an arrow in third person. A sneak attack with a crossbow doubles the damage, as with a bow. The
+Dawnguard perk `DLC1EnchancedCrossbowArmorPiercingPerk` halves the target's armour rating through
+Mod Target Damage Resistance, when the crossbow has the keyword `DLC1CrossbowIsEnhanced`. No reload
+time rule outside the behaviour graph was found.
+
 Archery is the third listener on the graph event queue, after footsteps and melee.
 
 ## The shot state machine
@@ -139,6 +145,21 @@ claim the middle branch matches the game exactly.
 
 `Speed` is `WEAP` `DNAM` `speed`. `WeaponSpeedMult` is the graph variable melee writes from it.
 With no extra multiplier they are the same number, so the draw fraction takes one speed value.
+
+The game program gives the same curve in seconds:
+
+```text
+elapsed  = draw time - 0.8
+full     = (1.6667 - 0.8) / Speed
+power    = 0.35                                 if elapsed <= 0
+power    = min(1, 0.35 + 0.65 x elapsed / full)  otherwise
+velocity = 0.2 + 0.8 x (power - 0.35) / 0.65
+```
+
+Example: Speed 1 and a draw of 1.3 s. `elapsed` is 0.5 and `full` is 0.8667, so the power is
+`0.35 + 0.65 x 0.577 = 0.725`, and the launch speed is `0.2 + 0.8 x 0.577 = 0.66` of the `PROJ`
+speed. A weak shot also falls faster: its gravity mixes from the normal 0.3 at full power to 1.75
+at no power.
 
 The draw fraction scales the launch speed as well as the damage. A quick shot is slower and drops
 more, as well as hitting softer.
@@ -239,10 +260,27 @@ The aim follows what was read from the game program:
    The sine part goes to pitch and the cosine part to heading. Example: an NPC with Archery 40 shoots
    within 4 × 0.6 = 2.4 degrees of its aim. At Archery 100 there is no spread.
 
+How an NPC archer picks its range and its shots, from the game program:
+
+| Rule | Value |
+| --- | --- |
+| Preferred ranged distance | 1024 units |
+| Closest it wants to be | 256 units |
+| Longest shot | 4096 units, used up to 0.9 of it; it aims to stand at 0.85 |
+| Chance to shoot | from 0.05 to 1, plus 0.5 for 10 s after its last shot |
+| Hold at full draw | 0.25 to 1.5 s, at least 0.1 s, at most 10 s |
+| Time between aim updates | 0.25 s |
+| Turn allowed while it keeps its distance | 20 degrees |
+
+The lead and the noise above also hold for spells: a fire-and-forget spell has a variance of 0.5,
+and a concentration spell 0.
+
 The player's shots get no spread. The game also skips the spread under an "exact aim" flag of the AI;
 what sets it was not found, so OpenSky never sets it.
 
 ## Not done yet
 
-Explosive projectiles and picking up spent arrows. NPC archers do not drive the
-bow graph events above: they play the combat loop's attack clip.
+Explosive projectiles ([explosions](/engine/explosions.md)) and picking up spent arrows
+([projectiles](/engine/projectiles.md#pick-up-bounce-and-stick-in-the-game)). NPC archers do not
+drive the bow graph events above: they play the combat loop's attack clip. They shoot from up to
+2048 units, not the game's range rules above. A bolt tilts up 1 degree in third person, not 2.5.

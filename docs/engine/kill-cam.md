@@ -32,10 +32,57 @@ Differences from the game:
 
 - The game also knows the weapon and plays bow, spell, and melee paths. OpenSky has no
   projectile anchor yet, so a shot placed on the projectile uses the target instead.
-- The game starts a bow kill cam before the arrow lands. OpenSky starts every kill cam after
-  the death.
+- The game starts a bow or spell kill cam at the release, before the projectile lands, with the
+  rules below. OpenSky starts every kill cam after the death.
 - A melee kill without a kill move finds no kill-cam path and ends on an `Exit` path: no
   kill cam plays.
+
+## Bow and spell kill cams in the game
+
+The game decides a ranged kill cam at the release: when the bow, crossbow, or staff looses, or the
+spell leaves the hand. This is before the projectile lands. A melee kill uses kill moves instead.
+
+```mermaid
+flowchart TD
+    R[Release] --> A{Kill cams on, none running?}
+    A -- no --> N[No kill cam]
+    A -- yes --> B{At most one enemy in combat?}
+    B -- no --> N
+    B -- yes --> T{Aim target alive, and the hit will kill?}
+    T -- no --> N
+    T -- yes --> D{Bow drawn to at least 0.8? Crossbows skip this}
+    D -- no --> N
+    D -- yes --> L{Clear line from the player to the target?}
+    L -- no --> N
+    L -- yes --> C{Chance check passes?}
+    C -- no --> N
+    C -- yes --> K[Kill cam follows the projectile]
+```
+
+The target is the aim help target ([projectiles](/engine/projectiles.md#aim-help-in-the-game)), or
+when there is none, the result of a wider search around the aim.
+
+The chance check passes at once when the target is 2500 units or more away, when its level is
+higher than the player's, or when the player's health is below 5 percent. Otherwise:
+
+```text
+chance % = max(distance / 25, 50) - bonus
+```
+
+The bonus is 20 for a sneak kill with a bow or crossbow while undetected, 0 for a target that is a
+hostile threat, and 10 for any other target. It goes up by 10 more when the target's level is below
+0.3 times the player's. Example: a target 1500 units away that is no threat gives
+`max(60, 50) - 10 = 50` percent.
+
+During the shot:
+
+- The `CAMS` location and target can be the projectile. `ArrowCloseUp` in `Skyrim.esm` flies with
+  the projectile, with a global time of 0.33, a max time of 5 s, and a min time of 0.05 s.
+- A shot's player and target time multipliers of 0 or less fall back to 6 for the player and 1 for
+  the target.
+- The shot ends at 20 seconds at most, or 6 seconds while the target is not dead yet.
+- The projectile turns toward the target by up to 15 degrees, aimed to make up for gravity.
+- The camera stops following the projectile when its impact is resolved.
 
 ## Playing a shot
 
