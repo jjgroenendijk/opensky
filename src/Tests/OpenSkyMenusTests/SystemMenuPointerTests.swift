@@ -42,6 +42,28 @@ struct SystemMenuPointerTests {
         menu.changeSetting(row: 999, to: 1)
     }
 
+    @Test @MainActor
+    func aCategoryRequestFillsTheMovieRows() throws {
+        let (menu, _) = Self.makeMenu()
+        let gameplay = menu.openSettingsCategory(.gameplay).map(\.definition.title)
+        #expect(!gameplay.contains("$Use Kinect Commands"))
+        let rows = menu.openSettingsCategory(.audio)
+        let runtime = AS2Runtime()
+        let master = runtime.makeObject()
+        master.assign(.string("$Master"), for: "text")
+        let unknown = runtime.makeObject()
+        unknown.assign(.string("$Kinect"), for: "text")
+        let list = runtime.makeArray([.object(master), .object(unknown)])
+        SettingsMovieBridge.fill(list, with: rows, runtime: runtime)
+        #expect(master.lookup("ID")?.property.value == .integer(0))
+        #expect(master.lookup("value")?.property.value == .number(1))
+        #expect(unknown.lookup("ID") == nil, "the movie drops a row without an ID")
+        #expect(list.arrayLength == 2 + rows.count - 1, "the category volumes are added")
+        let added = try #require(list.element(at: 2).objectValue)
+        #expect(added.lookup("movieType")?.property.value == .integer(0))
+        #expect(added.lookup("ID")?.property.value == .integer(1))
+    }
+
     @Test func anOptionChangeCarriesTheRowAndTheValue() {
         let change = SettingsMovieBridge.optionChange([.integer(3), .number(0.25)])
         #expect(change?.row == 3)

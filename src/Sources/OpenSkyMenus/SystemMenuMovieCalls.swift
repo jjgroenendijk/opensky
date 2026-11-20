@@ -44,13 +44,20 @@ nonisolated extension SystemMenuMovieBridge {
         case resetControls = "ResetControlsToDefaults"
         case quitToMainMenu = "QuitToMainMenu"
         case quitToDesktop = "QuitToDesktop"
+        /// The movie waits for `onSettingsSaved` after either call.
+        case saveSettings = "SaveSettings"
+        case saveControls = "SaveControls"
     }
 
-    /// Calls that need no answer: the list fills at once, and settings save as they change.
+    /// Calls that need no answer: the list fills at once.
     static let quietRequests = [
-        "UseCurrentCharacterFilter", "ForceStopSaveListLoading", "SaveControls", "SaveSettings",
-        "SetSaveDisabled"
+        "UseCurrentCharacterFilter", "ForceStopSaveListLoading", "SetSaveDisabled"
     ]
+
+    /// Ends the movie's `$Saving...` wait, which holds its input.
+    static func finishSaving(runtime: SWFMovieRuntime) {
+        runtime.callMovie("onSettingsSaved", atPath: systemPagePath)
+    }
 
     struct Call: Equatable, Sendable {
         let request: Request

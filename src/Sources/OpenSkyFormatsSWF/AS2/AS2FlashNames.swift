@@ -70,6 +70,7 @@ nonisolated enum AS2FlashNames {
         "atan", "atan2", "ceil", "cos", "exp", "floor", "log", "max", "min", "pow", "random",
         "round", "sin", "sqrt", "tan", "addListener", "removeListener", "broadcastMessage",
         "initialize", "getAscii", "getCode", "isDown", "isToggled", "hide", "show",
+        "getTopMostEntity",
         "getBeginIndex", "getCaretIndex", "getEndIndex", "getFocus", "setFocus",
         "setSelection", "getRGB", "getTransform", "setRGB", "setTransform", "loadClip",
         "unloadClip", "getProgress", "getTextExtent", "addCallback", "clone", "contains",

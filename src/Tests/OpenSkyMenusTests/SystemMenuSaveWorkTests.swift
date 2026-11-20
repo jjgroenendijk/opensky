@@ -79,7 +79,5 @@ struct PlayerSettingsReadoutTests {
         settings.masterVolume = 0.25
         #expect(settings.masterVolume == 0.25)
         #expect(settings.controlsRows.last == ControlsPageModel.resetTitle)
-        let rows = settings.store.movieRows([.masterVolume])
-        #expect(rows.first?.value == 0.25)
     }
 }

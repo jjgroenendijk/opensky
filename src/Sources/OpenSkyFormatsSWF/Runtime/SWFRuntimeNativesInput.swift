@@ -79,8 +79,28 @@ nonisolated extension SWFMovieRuntime {
         AS2Runtime.method(runtime, on: mouse, name: "hide") { context in
             setCursorVisible(context, to: false)
         }
+        // Scaleform's extension: the object under the cursor, so a row can tell which
+        // of its parts was clicked.
+        AS2Runtime.method(runtime, on: mouse, name: "getTopMostEntity") { context in
+            movieRuntime(context)?.topMostEntity().map { .object($0.object) } ?? .undefined
+        }
         installListenerList(runtime, on: mouse)
         runtime.globalObject.define(.object(mouse), for: "Mouse", flags: .dontEnumerate)
+    }
+
+    /// The mouse-enabled object under the pointer, which a press reaches.
+    public var pointerTarget: SWFDisplayObject? {
+        input.hoverTarget
+    }
+
+    /// The topmost clip or text field under the pointer. A shape has no script
+    /// object, so a hit on one answers the clip that holds it.
+    public func topMostEntity() -> SWFDisplayObject? {
+        guard let hit = hitTest(stageTwips: input.pointer).topmost else { return nil }
+        switch hit.content {
+        case .clip, .editText: return hit
+        case .shape, .staticText: return hit.parent
+        }
     }
 
     /// `Mouse.show()` / `Mouse.hide()` answer the *previous* visibility as 1 or

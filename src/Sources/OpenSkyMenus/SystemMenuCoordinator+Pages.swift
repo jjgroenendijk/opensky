@@ -1,7 +1,7 @@
 // The sub-pages of the system menu: Settings, Controls, Save, Load, Quit, Help, and
 // Installed Content.
 // Each page has its own model; this routes events to it and carries out what it
-// returns. The movie mirrors the Settings page (docs/engine/system-menu.md).
+// returns. With the movie up, the movie runs each page (docs/engine/system-menu.md).
 
 import Foundation
 import OpenSkyFormatsCore
@@ -16,10 +16,8 @@ extension SystemMenuCoordinator {
         switch page {
         case .main:
             model.showMain()
-            mirrorMovie(SettingsMovieBridge.mainState)
         case .settings:
             settingsPage = SettingsPageModel(catalog: settings.store.catalog)
-            mirrorMovie(SettingsMovieBridge.categoryState)
         case .controls:
             controlsPage = ControlsPageModel()
         case .save, .load:
@@ -71,14 +69,20 @@ extension SystemMenuCoordinator {
     }
 
     /// The movie's request for a category opens it here too.
-    func openSettingsCategory(_ group: PlayerSettingGroup) {
-        guard model.page == .settings else { return }
+    /// The movie asked for a category's rows; it shows them with these values.
+    @discardableResult
+    func openSettingsCategory(_ group: PlayerSettingGroup) -> [SettingsMovieBridge.Row] {
         settingsPage.openCategory(group)
-        publishSettingsRows()
+        return settingsPage.rows.enumerated().compactMap { index, id in
+            guard !SettingsMovieBridge.hiddenRows.contains(id) else { return nil }
+            return settings.store.catalog.definition(id).map {
+                SettingsMovieBridge.Row(id: index, definition: $0, value: settings.store.value(id))
+            }
+        }
     }
 
-    /// The movie changed a row itself, after a click or its Defaults button. The
-    /// movie already shows the value, so the rows are not published again.
+    /// The movie changed a row itself, after a click, an arrow key, or its Defaults
+    /// button. The movie already shows the value.
     func changeSetting(row: Int, to value: Double) {
         guard model.page == .settings, settingsPage.rows.indices.contains(row) else { return }
         settingsPage.select(row: row)
@@ -127,23 +131,13 @@ extension SystemMenuCoordinator {
     }
 
     private func routeSettings(_ event: MenuInputEvent) {
-        let wasOpen = settingsPage.openGroup
         switch settingsPage.handle(event) {
         case let .adjust(id, direction):
             settings.store.step(id, by: direction)
-            publishSettingsRows()
         case .back:
             showPage(.main)
         case nil:
-            if wasOpen != settingsPage.openGroup {
-                if settingsPage.openGroup == nil {
-                    mirrorMovie(SettingsMovieBridge.categoryState)
-                } else {
-                    publishSettingsRows()
-                }
-            } else if settingsPage.openGroup != nil {
-                publishSettingsRows()
-            }
+            break
         }
     }
 
@@ -180,29 +174,6 @@ extension SystemMenuCoordinator {
         }
     }
 
-    // MARK: - Movie mirror
-
-    private func mirrorMovie(_ state: String) {
-        guard movieLoaded, let renderer else { return }
-        attempt {
-            try renderer.updateSWFRuntime { runtime in
-                SettingsMovieBridge.startState(state, runtime: runtime)
-            }
-        }
-    }
-
-    private func publishSettingsRows() {
-        guard movieLoaded, let renderer, settingsPage.openGroup != nil else { return }
-        let rows = settings.store.movieRows(settingsPage.rows)
-        let selected = settingsPage.rowIndex
-        attempt {
-            try renderer.updateSWFRuntime { runtime in
-                SettingsMovieBridge.startState(SettingsMovieBridge.optionsState, runtime: runtime)
-                SettingsMovieBridge.publish(rows, selected: selected, runtime: runtime)
-            }
-        }
-    }
-
     // MARK: - Readout
 
     var pageSnapshot: SystemMenuPageSnapshot {
@@ -210,7 +181,7 @@ extension SystemMenuCoordinator {
         case .main:
             return page(rows: model.entries.map(\.title), selected: model.selectedIndex)
         case .settings:
-            let shown = settings.settingsRows(settingsPage)
+            let shown = movieSettingsRows ?? settings.settingsRows(settingsPage)
             return page(rows: shown.rows, selected: shown.selected)
         case .controls:
             return page(rows: controlsRowsShown, selected: controlsPage.selectedIndex)
@@ -247,6 +218,21 @@ extension SystemMenuCoordinator {
         }
         guard shown.rows.count == rows.count else { return shown }
         return page(rows: rows, selected: shown.selectedIndex)
+    }
+
+    /// The option rows the movie shows, by engine text, and its highlight.
+    private var movieSettingsRows: (rows: [String], selected: Int)? {
+        guard movieLoaded, let runtime = renderer?.swfRuntime else { return nil }
+        guard settingsPage.openGroup != nil else {
+            let shown = SystemMenuMovieBridge.listRows(
+                atPath: SettingsMovieBridge.categoryListPath, runtime: runtime
+            )
+            return (SettingsPageModel.categories.map(\.title), shown.selectedIndex)
+        }
+        guard let shown = SettingsMovieBridge.shownRows(runtime: runtime) else { return nil }
+        let all = settings.settingsRows(settingsPage).rows
+        let rows = shown.ids.map { all.indices.contains($0) ? all[$0] : "\($0)" }
+        return (rows, shown.selected)
     }
 
     private var quitRowsShown: SystemMenuPageSnapshot {
