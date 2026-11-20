@@ -5,7 +5,7 @@ import Foundation
 
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkySessionAdapters
+@testable import OpenSkySessionAdapters
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import Testing
@@ -27,6 +27,15 @@ struct RuntimeStateReferencePlacesTests {
         _ = world.conditionData()
         _ = world.conditionData()
         #expect(host.fakeStreamer.residents.residentReferencePlacesCallCount == 1)
+    }
+
+    @Test func theEditorLocationIsTheResidentCellsLocationWithoutThePlayer() {
+        let guardKey = ReferenceKey.plugin(name: "base.esm", objectID: 0x20)
+        let town = ResolvedFormID(plugin: "Base.esm", objectID: 0x10)
+        var places = ReferencePlaces()
+        places.locations = [guardKey: town, .player: town]
+        let locations = RuntimeStateCoreAdapter.editorLocations(places: places, store: nil)
+        #expect(locations == [guardKey: town])
     }
 
     @Test func aNewPlayerCellOrReferenceCountBuildsThePlacesAgain() {

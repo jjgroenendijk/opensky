@@ -76,6 +76,25 @@ When two locations list one cell, the one deeper in the `PNAM` chain wins, so a 
 over its hold. [WARNING] That tie rule is inferred, not taken from an open spec. A cell
 that no location claims has no location.
 
+## Editor location
+
+A reference's editor location is the location of the cell it was placed in. The
+reference keeps it after it walks away. `GetIsEditorLocation` and `GetEditorLocation`
+read it ([GetEditorLocation](https://ck.uesp.net/wiki/GetEditorLocation_-_ObjectReference)).
+
+A unique actor's `LCUN` or `ACUN` entry names its reference and a location. On the
+install, `RiverwoodLocation` lists Gerdur in `RiverwoodGerdursHouseLocation` and Alvor in
+`RiverwoodAlvorsHouseLocation`, the houses they start in. OpenSky takes that location as
+the actor's editor location. [WARNING] This is inferred from the data, not taken from an
+open spec. Any other reference takes the location of the cell that holds its record.
+
+`ACUN` and `LCUN` hold the same triples. The shipped masters keep most unique actors in
+`ACUN`: the winning `RiverwoodLocation` record has no `LCUN` at all. So OpenSky reads both.
+
+Story-manager branches depend on this. `RiverwoodConvoScenes` asks
+`GetIsEditorLocation RiverwoodLocation` of both actors of an `ADIA` event, so without an
+editor location no Riverwood conversation can start.
+
 ## Quest aliases
 
 A quest alias (`ALLS`) with an `ALFL` field names one `LCTN` directly. OpenSky fills the

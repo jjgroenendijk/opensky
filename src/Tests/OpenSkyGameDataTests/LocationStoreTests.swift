@@ -46,6 +46,21 @@ struct LocationStoreTests {
     }
 
     @Test
+    func addedUniqueActorsGiveTheReferenceAndItsEditorLocation() throws {
+        let file = try plugin(locations: [
+            LocationFixture.recordBytes(0x10, "Town"),
+            LocationFixture.recordBytes(
+                0x11, "House", parent: 0x10, addedUniqueActors: [0x50, 0x51, 0x11]
+            )
+        ])
+        let store = LocationStore(plugins: [("Base.esm", file)])
+        let reference = ReferenceKey.plugin(name: "base.esm", objectID: 0x51)
+
+        #expect(store.uniqueActorReferences[.plugin(name: "base.esm", objectID: 0x50)] == reference)
+        #expect(store.editorLocations[reference] == id("Base.esm", 0x11))
+    }
+
+    @Test
     func laterPluginWinsByIdentityAndEditorID() throws {
         let base = try plugin(locations: [LocationFixture.recordBytes(0x10, "OldName")])
         let patch = try plugin(
