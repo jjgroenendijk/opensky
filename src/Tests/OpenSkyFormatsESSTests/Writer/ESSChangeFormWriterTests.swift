@@ -46,7 +46,9 @@ struct ESSChangeFormWriterTests {
         )
         let actorForm = try actor.changeForm()
         #expect(actorForm.type?.signature == "ACHR")
-        #expect(try ESSReferenceChange(actorForm) == actor)
+        var readBack = actor
+        readBack.processLevel = 0
+        #expect(try ESSReferenceChange(actorForm) == readBack)
         let created = ESSReferenceChange(
             form: ESSRefID(kind: .created, value: 1), isActor: false,
             placement: ESSPlacement(

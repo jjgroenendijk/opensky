@@ -15,6 +15,8 @@ enum ESSImportSaveFixture {
     static let sword: UInt32 = 0x12EB7
     static let movedReference: UInt32 = 0x1000
     static let aliasReference: UInt32 = 0x1001
+    static let deadActor: UInt32 = 0x1002
+    static let hurtActor: UInt32 = 0x1003
 
     static var records: FakeESSImportRecords {
         var records = FakeESSImportRecords()
@@ -45,6 +47,14 @@ enum ESSImportSaveFixture {
         fixture.changeForms = [
             playerBase(), playerReference(), movedChange(), unmappedReference(),
             aliasChange(), createdReference(), questChange(),
+            ESSFixtureChangeForm(
+                kind: 1, value: deadActor, flags: 0, typeIndex: 1,
+                data: ESSActorDataBytes.actor(lifeState: 2)
+            ),
+            ESSFixtureChangeForm(
+                kind: 1, value: hurtActor, flags: 0, typeIndex: 1,
+                data: ESSActorDataBytes.actor(lifeState: 0, damage: -40)
+            ),
             ESSFixtureChangeForm(
                 kind: 1, value: 0x2000, flags: ESSChangeFlag.Topic.saidOnce, typeIndex: 7,
                 data: Data()

@@ -5,6 +5,7 @@
 // docs/engine/papyrus-translation.md.
 
 import Foundation
+public import OpenSkyScriptingInterface
 public import OpenSkyWorldState
 import simd
 
@@ -47,6 +48,27 @@ nonisolated public struct PapyrusTranslation: Equatable, Sendable {
         self.targetRotation = targetRotation
         self.speed = speed
         self.maxRotationSpeed = max(0, maxRotationSpeed)
+    }
+
+    /// The move as a save keeps it.
+    public var saved: SavedTranslation {
+        SavedTranslation(
+            position: position, rotation: rotation,
+            targetPosition: targetPosition, targetRotation: targetRotation,
+            speed: speed, maxRotationSpeed: maxRotationSpeed,
+            sentAlmostComplete: sentAlmostComplete
+        )
+    }
+
+    /// The move a save kept, going on from the saved pose. Nil for a value the
+    /// starting init rejects.
+    public init?(saved: SavedTranslation) {
+        self.init(
+            from: saved.position, rotation: saved.rotation,
+            to: saved.targetPosition, rotation: saved.targetRotation,
+            speed: saved.speed, maxRotationSpeed: saved.maxRotationSpeed
+        )
+        sentAlmostComplete = saved.sentAlmostComplete
     }
 
     public func pose(scale: Float) -> ReferenceTransformOverride {

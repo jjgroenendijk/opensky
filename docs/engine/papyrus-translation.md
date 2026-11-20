@@ -91,6 +91,6 @@ rotation does not push.
 | `SplineTranslateTo` | Moves in a straight line | The wiki does not define the spline from the tangent magnitude |
 | `StopTranslation` | Sends no event | The failure event names a new request, and a stop is not one |
 | `SetPosition`, `SetAngle`, `MoveTo` during a move | End the move, with no event | The script placed the reference on purpose, so the move must not undo it |
-| A move in a save | Not saved | The save holds the last stored transform. A loaded game starts with no move, while the game goes on with it |
+| A move in a save | Kept with the drawn pose instead of the start pose and progress. It goes on once a resident cell holds the reference | The move is the same; OpenSky keeps its pose, not its path |
 | A reference whose cell unloads | The move ends with no event | There is nothing resident to move |
 | Collision | The moving reference does not push bodies | The move is drawn, not simulated |

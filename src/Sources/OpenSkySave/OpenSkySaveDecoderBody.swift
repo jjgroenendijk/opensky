@@ -128,6 +128,14 @@ nonisolated struct OpenSkySaveSideChunks: Sendable {
     /// Absent `DLBS`: no speaker is in an exclusive branch.
     var dialogueBranches: [SaveStoryEntry<DialogueBranchState>] = []
     var helpMessages: [SaveStoryEntry<HelpMessageState>] = []
+    /// Absent `IDLP`: no actor plays an idle after the load.
+    var idlePlays: [SaveStoryEntry<SavedIdlePlay>] = []
+    /// Absent `TRNS`: no scripted move runs.
+    var translations: [SaveStoryEntry<SavedTranslation>] = []
+    /// Absent `SOCL`: every social timer starts empty.
+    var socialStates: [SaveStoryEntry<SavedSocialState>] = []
+    /// Absent `AVDM`: no actor carries damage from an imported save.
+    var importedDamage: [SaveStoryEntry<ImportedActorDamage>] = []
     /// Absent `PRUL`: god mode is off and the player's crimes are reported.
     var playerRules: [SaveStoryEntry<PlayerRuleSwitches>] = []
     /// Absent `SCRS`: no script set a flag the save keeps.

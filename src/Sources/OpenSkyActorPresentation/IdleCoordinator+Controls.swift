@@ -63,6 +63,9 @@ extension IdleCoordinator {
             ), trace: selection.trace)
         }
         let report = play(selection, on: actor, source: "fired", now: now)
+        if let target, let chosen = selection.chosen {
+            sessions[actor]?.savedPlay = SavedIdlePlay(idle: chosen.id, target: target)
+        }
         // A dependent takes the same event from wherever its own graph is.
         guard let chosen = selection.chosen else { return report }
         for dependent in withDependents(actor).dropFirst() {

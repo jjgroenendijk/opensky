@@ -283,6 +283,11 @@ timers, the partner, and whether it is in a conversation
 ([actor process data](/formats/ess-actor-process.md#high-block)). The recent-partner list itself
 is not saved. Each body keeps its 20 s timer.
 
+OpenSky keeps the social timer, the recent-partner timer, each body's timer, and a running
+conversation with its partner, phase, and age. A load counts the times on from the clock at
+the load. Like the game, it keeps no recent-partner list. It also keeps no fight watchers and
+no hello look targets, which the next pass finds again.
+
 ## Where OpenSky differs
 
 - The social pass runs every 30 frames, not every frame. Times are counted in real seconds.

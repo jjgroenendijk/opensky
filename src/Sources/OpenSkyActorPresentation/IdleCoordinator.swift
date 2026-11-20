@@ -102,6 +102,8 @@ public final class IdleCoordinator {
         var playing: Playing?
         /// The chosen idle while its plan or clip loads; it plays when both arrive.
         var waiting: Waiting?
+        /// The idle a save keeps while `playing` or `waiting` holds it.
+        var savedPlay: SavedIdlePlay?
     }
 
     struct Waiting {
@@ -162,6 +164,8 @@ public final class IdleCoordinator {
     /// The paired animations playing now, oldest first.
     public internal(set) var pairs: [PairedAnimationPlay] = []
     var reports: [ReferenceKey: IdleReport] = [:]
+    /// Idles a save kept, played again once their actor is loaded.
+    var savedPlays: [ReferenceKey: SavedIdlePlay] = [:]
     let markerClaims = IdleCoordinator.IdleMarkerClaims()
     /// The world context one `advance` shares between its actors.
     var passContext: (sequence: UInt64, context: ConditionContext)?
@@ -212,6 +216,7 @@ public final class IdleCoordinator {
         let actors = Dictionary(
             world.idleActors().map { ($0.key, $0) }, uniquingKeysWith: { first, _ in first }
         )
+        replaySavedPlays(actors: actors)
         releaseDeparted(actors: actors, now: now)
         advanceSitStates(now: now)
         expirePairs(now: now)
@@ -351,6 +356,7 @@ extension IdleCoordinator {
                 seconds: 0, failure: "no idle passed its conditions"
             ))
         }
+        sessions[actor, default: Session()].savedPlay = SavedIdlePlay(idle: picked.id)
         let chosen = store?.inheritingBehaviorFile(picked) ?? picked
         let waiting = Waiting(selection: selection, source: source, timer: timer, variant: variant)
         let loaded = plans.plan(for: IdlePlanKey(chosen, from: positions[actor], variant: variant))

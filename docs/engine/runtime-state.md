@@ -224,6 +224,11 @@ collide with saved ones, and journals nothing: a load is not a series of meaning
 fires one unattributed change, so every loaded cell rebuilds, and one global change, so weather and
 other readers take the restored values.
 
+Some running state lives in a coordinator, not the store: the idle each actor plays, the
+running `TranslateTo` moves, and the social timers. A save writes them into the store as
+components just before the snapshot. A load hands them back to their coordinators and clears
+them from the store, where they would go stale.
+
 Papyrus state is restored last, after the snapshot and the clock. The rebuild queued by the restore
 attaches scripts on a later streaming update and checks the VM's record of which `OnInit` events
 already ran. Restoring that record before any rebuild attach reads it stops every script from

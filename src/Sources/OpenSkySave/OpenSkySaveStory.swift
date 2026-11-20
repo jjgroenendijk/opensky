@@ -264,7 +264,8 @@ nonisolated extension OpenSkySaveDecoder {
             if
                 try !applyPlayerItems(tag: tag, payload: payload, to: &body),
                 try !applyIdentityAndMap(tag: tag, payload: payload, to: &body),
-                try !applyPlacement(tag: tag, payload: payload, to: &body)
+                try !applyPlacement(tag: tag, payload: payload, to: &body),
+                try !applyRunningState(tag: tag, payload: payload, to: &body)
             {
                 try applyJournal(tag: tag, payload: payload, to: &body)
             }

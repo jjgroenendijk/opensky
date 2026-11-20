@@ -126,4 +126,26 @@ struct PapyrusNativeTranslationTests {
         session.bridge.scriptedMoves.clearTranslations()
         #expect(published.map(\.count) == [1, 0])
     }
+
+    @Test func aSavedMoveGoesOnAfterALoad() {
+        let bridge = session.bridge
+        #expect(bridge.translate(Self.moverKey, to: SIMD3(100, 0, 0), speed: 100))
+        advance(0.5)
+        let saved = bridge.savedTranslations()
+        #expect(saved[Self.moverKey]?.position.x == 50)
+        bridge.restoreTranslations(saved)
+        #expect(bridge.scriptedMoves.translationPoses[Self.moverKey]?.position.x == 50)
+        #expect(bridge.savedTranslations() == saved)
+    }
+
+    @Test func aMoveForAnAbsentReferenceWaitsForItsCell() throws {
+        let bridge = session.bridge
+        let absent = ReferenceKey.plugin(name: PapyrusWorldFixture.pluginName, objectID: 0x2001)
+        #expect(!bridge.translate(absent, to: SIMD3(100, 0, 0), speed: 100))
+        #expect(bridge.translate(Self.moverKey, to: SIMD3(100, 0, 0), speed: 100))
+        let move = try #require(bridge.savedTranslations()[Self.moverKey])
+        bridge.restoreTranslations([absent: move])
+        #expect(bridge.scriptedMoves.translationPoses.isEmpty)
+        #expect(bridge.savedTranslations() == [absent: move])
+    }
 }

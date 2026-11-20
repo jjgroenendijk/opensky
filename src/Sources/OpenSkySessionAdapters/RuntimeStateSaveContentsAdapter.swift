@@ -32,15 +32,13 @@ import OpenSkyWorldState
 
 /// What `RuntimeStateSaveContentsAdapter` reads from the session.
 @MainActor
-public protocol RuntimeStateSaveContentsHost: AnyObject, SendableMetatype {
+public protocol RuntimeStateSaveContentsHost: RuntimeStateRunningStateHost {
     var combat: any CombatPort { get }
     var combatWorld: any CombatWorldPort { get }
     var crime: any CrimePort { get }
     var gameSession: (any GameSessionPort)? { get }
     var magic: any MagicPort { get }
-    var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldState: any WorldStateStorePort { get }
 }
 
 /// Part of `RuntimeStateWorldAdapter`, over its own narrow host.
@@ -125,6 +123,7 @@ extension RuntimeStateSaveContentsAdapter {
 
     /// Writes the state just before the snapshot is taken.
     public func storeRuntimeExtras() {
+        RuntimeStateRunningStateSave.store(from: game)
         guard let bridge = game.scripts.bridge else { return }
         let cooldown = game.magic.shoutMachine.cooldown
         let stay = game.crime.jailStay
@@ -146,6 +145,7 @@ extension RuntimeStateSaveContentsAdapter {
 
     /// Reads the state back after the world state of a save is restored.
     public func restoreRuntimeExtras() {
+        RuntimeStateRunningStateSave.restore(into: game)
         guard let bridge = game.scripts.bridge else { return }
         let state = bridge.scriptedState(of: .player)
         game.magic.shoutVoice.restoreShoutCooldown(state.value(Extra.shoutCooldown) ?? 0)

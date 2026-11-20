@@ -73,7 +73,7 @@ nonisolated extension ESSReferenceChange {
         let data = try ESSWriter.build { writer throws(ESSError) in
             try writeInitial(&writer, flags: &flags)
             if isActor {
-                // Undocumented actor header; the reader skips it.
+                // Process level 0 and no actor flags: the reader then reads no actor data.
                 writer.bytes(Data(count: 8))
             }
             if let formFlags {

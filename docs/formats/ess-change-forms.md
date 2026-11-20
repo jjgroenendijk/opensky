@@ -92,7 +92,7 @@ An actor with process level `0xFFFFFFFF` in its actor header has no AI process a
 process data. Process data has no length in front, and parts of it are not decoded
 ([actor process data](/formats/ess-actor-process.md)). So a decoder reads the parts below only
 for an actor with no process. Any other `ACHR` with bytes left there is
-`partial(blockedBy: "actor data after animation")`.
+`partial(blockedBy: "actor process data")`.
 
 A refID here is the usual 3 bytes, and 3 zero bytes mean none.
 

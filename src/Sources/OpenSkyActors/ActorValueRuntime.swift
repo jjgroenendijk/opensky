@@ -61,11 +61,22 @@ public struct ActorValueRuntime: ActorValueAccess {
         )
     }
 
-    /// `holder`'s effective state: its runtime component when it has one, a
-    /// full baseline when it does not.
+    /// `holder`'s effective state: its runtime component when it has one, else a
+    /// full baseline less any damage an imported save gave it.
     public func state(of holder: ActorValueHolder) -> ActorValueState {
-        store.component(ActorValueState.self, for: holder.key)
-            ?? ActorValueState.baseline(maximums: baseline(of: holder).maximums)
+        if let state = store.component(ActorValueState.self, for: holder.key) {
+            return state
+        }
+        let maximums = baseline(of: holder).maximums
+        return store.component(ImportedActorDamage.self, for: holder.key)?.applied(to: maximums)
+            ?? ActorValueState.baseline(maximums: maximums)
+    }
+
+    /// Writes `holder`'s state. The first write holds any imported damage, so that
+    /// damage is dropped then.
+    func persist(_ state: ActorValueState, for holder: ActorValueHolder) {
+        store.set(state, for: holder.key, in: holder.cell)
+        store.reset(.importedActorDamage, for: holder.key)
     }
 
     /// `holder`'s effective maximums: re-derived each time, plus base offsets and the
@@ -254,7 +265,8 @@ public struct ActorValueRuntime: ActorValueAccess {
     /// - Returns: true when runtime state was actually removed.
     @discardableResult
     func reset(_ holder: ActorValueHolder) -> Bool {
-        store.reset(.actorValues, for: holder.key)
+        let imported = store.reset(.importedActorDamage, for: holder.key)
+        return store.reset(.actorValues, for: holder.key) || imported
     }
 
     // MARK: - Private
@@ -269,7 +281,7 @@ public struct ActorValueRuntime: ActorValueAccess {
         guard hasRuntimeState(holder) || state != self.state(of: holder) else {
             return state
         }
-        store.set(state, for: holder.key, in: holder.cell)
+        persist(state, for: holder)
         return state
     }
 
@@ -305,11 +317,7 @@ public struct ActorValueRuntime: ActorValueAccess {
             guard updated != state.current else { continue }
             // Keep the override table in the write, or 60 regeneration writes a second
             // would drop a magic effect's temporary modifier.
-            store.set(
-                ActorValueState(current: updated, overrides: state.overrides),
-                for: holder.key,
-                in: holder.cell
-            )
+            persist(ActorValueState(current: updated, overrides: state.overrides), for: holder)
             changed.append(holder)
         }
         return changed

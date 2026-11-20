@@ -517,5 +517,7 @@ extension PapyrusWorldStateBridge {
         public var wasSunGazing = false
         /// Scripted moves in progress. See `PapyrusWorldTranslations.swift`.
         public var translations: [ReferenceKey: PapyrusTranslation] = [:]
+        /// Moves a save kept whose reference no resident cell holds yet.
+        public var pendingTranslations: [ReferenceKey: PapyrusTranslation] = [:]
     }
 }

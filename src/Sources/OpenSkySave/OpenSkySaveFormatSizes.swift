@@ -130,6 +130,16 @@ nonisolated extension OpenSkySaveFormat {
     static let minimumScriptedStateEntrySize = 24
     /// `HELP` entry: the smallest key and cell (8) and the record count (4).
     static let minimumHelpMessageEntrySize = 12
+    /// `IDLP` entry: the smallest key and cell (8), an empty plugin name (2), the object
+    /// ID (4), and the target byte.
+    static let minimumIdlePlayEntrySize = 15
+    /// `TRNS` entry: the smallest key and cell (8), four vectors (48), two speeds (8),
+    /// and the warning byte.
+    static let translationEntrySize = 65
+    /// `SOCL` entry: the smallest key and cell (8) and the flag byte.
+    static let minimumSocialStateEntrySize = 9
+    /// `AVDM` entry: the smallest key and cell (8) and three amounts (12).
+    static let minimumImportedDamageEntrySize = 20
     /// One `HELP` record: an empty event name (2), the count (4), the done byte.
     static let minimumHelpMessageRecordSize = 7
     /// `PRUL` entry: the smallest key and cell (8) and two switch bytes.

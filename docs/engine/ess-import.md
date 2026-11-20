@@ -77,6 +77,8 @@ counted as dropped, never fatal. Light plugins map the same way.
 | Global variables | Global values, with the type the current `GLOB` declares |
 | `GameDaysPassed`, else the calendar globals | The game clock |
 | Reference form flags | Enabled or disabled, and deleted |
+| Life state of an actor with no AI process: dying, dead, or recycle | Dead |
+| Health, magicka, and stamina damage of a living actor with no AI process | Damage taken off the maximums the actor value runtime derives, the first time it reads the actor |
 | Reference moves | A transform override |
 | Created references | A spawned reference with a generated key |
 | Inventory changes | The inventory: the base container's items plus the save's counts |
@@ -94,7 +96,7 @@ imports to the same keys.
 
 | Data | Why |
 | --- | --- |
-| Actor data after the animation part: health, death, actor values, perks | Not read yet. It is readable for an actor with no AI process ([change forms](/formats/ess-change-forms.md#actor-data-after-the-animation-part)) |
+| The data of an actor with an AI process, after its animation part | Its process data has parts with no known layout, so the reader cannot find the end ([change forms](/formats/ess-change-forms.md#actor-data-after-the-animation-part)) |
 | Base attributes of an `NPC_` change, and anything after them | The layout is undocumented |
 | Changes to an actor base other than the player's | OpenSky keeps actor state on the placed actor |
 | A reference moved to another cell | OpenSky's transform override cannot move a reference between cells |
@@ -122,9 +124,9 @@ These follow the plugin formats and UESP, and wait for a real save to confirm:
 ## Where OpenSky differs from the game
 
 The game keeps a whole running world in its save. OpenSky imports the parts it can name and
-reports the rest. An imported game therefore starts with all scripts idle, no actor
-remembers damage, and the dead are alive again. The report says how much of each was left
-out.
+reports the rest. An imported game therefore starts with all scripts idle. An actor near the
+player when the game saved has an AI process, so it forgets its damage and is alive again
+even if it was dead. The report says how much of each was left out.
 
 The game saves each running script stack with all its frames. On load it runs the version of a
 function stored in the save when it differs from the installed script. A function that was

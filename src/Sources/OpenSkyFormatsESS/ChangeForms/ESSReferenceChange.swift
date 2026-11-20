@@ -1,5 +1,5 @@
 // Reference and actor change data: the initial block, flags, base object, scale, extra
-// data, inventory, and animation. The rest of an actor's data is undocumented.
+// data, inventory, and animation; then, for an actor with no AI process, its actor data.
 // See docs/formats/ess-change-forms.md#references.
 
 import Foundation
@@ -52,10 +52,15 @@ nonisolated public struct ESSReferenceChange: Equatable, Sendable {
     public var scale: Float?
     public var extraData: ESSExtraDataList?
     public var inventory: [ESSInventoryItem]?
+    /// The actor header's process level; `noProcess` writes no process data.
+    public var processLevel: UInt32?
+    /// The data after the animation part, read only for an actor with no process.
+    public var actorData: ESSActorData?
     public internal(set) var status = ESSDecodeStatus.complete
 
     public static let disabledFlag: UInt32 = 0x0000_0800
     public static let deletedFlag: UInt32 = 0x0000_0020
+    public static let noProcess: UInt32 = 0xFFFF_FFFF
 
     public var isDisabled: Bool? {
         formFlags.map { $0 & Self.disabledFlag != 0 }
@@ -90,11 +95,20 @@ nonisolated public struct ESSReferenceChange: Equatable, Sendable {
             try reader.skip(reader.count("havok data"), "havok data")
         }
         if isActor {
-            try reader.skip(8, "actor header")
+            processLevel = try reader.uint32("actor process level")
+            _ = try reader.uint32("actor flags")
         }
         try readFlaggedFields(&reader, change: change)
         if status.isComplete, isActor, !reader.isAtEnd {
-            status = .partial(blockedBy: "actor data after animation")
+            guard processLevel == Self.noProcess else {
+                status = .partial(blockedBy: "actor process data")
+                return
+            }
+            let (data, blockedBy) = try ESSActorData.read(&reader)
+            actorData = data
+            if let blockedBy {
+                status = .partial(blockedBy: blockedBy)
+            }
         } else if status.isComplete, !reader.isAtEnd {
             status = .partial(blockedBy: "\(reader.bytesRemaining) unread bytes")
         }
