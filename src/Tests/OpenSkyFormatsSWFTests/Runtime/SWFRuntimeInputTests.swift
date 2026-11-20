@@ -168,6 +168,8 @@ struct SWFRuntimeInputTests {
         record(runtime, on: button, "onPress", into: log)
         record(runtime, on: button, "onRelease", into: log)
         record(runtime, on: button, "onReleaseOutside", into: log)
+        runtime.handle(.pointerMoved(x: 50, y: 40))
+        #expect(runtime.pointerTarget === button)
         runtime.handle(.pointerPressed(x: 50, y: 40))
         #expect(log.entries == ["onPress"])
         runtime.handle(.pointerReleased(x: 55, y: 45))

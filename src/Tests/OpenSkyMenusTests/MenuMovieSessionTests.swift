@@ -35,6 +35,8 @@ struct MenuMovieSessionTests {
         #expect(!session.isLoaded)
         #expect(session.error != nil)
         #expect(session.path == Self.movie.path)
+        session.reclaimLayer()
+        #expect(session.holdsLayer)
         session.stop()
         #expect(!session.holdsLayer)
         #expect(session.error == nil)
