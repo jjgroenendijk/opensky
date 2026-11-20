@@ -14,6 +14,10 @@ import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import Testing
 
+private final class LayerHolder: MenuLayerHolder {
+    func reclaimLayer() {}
+}
+
 @MainActor
 struct MenuWorldScreensTests {
     private let host = MenuHost()
@@ -28,6 +32,23 @@ struct MenuWorldScreensTests {
         #expect(!host.fakeAudio.audioEnabled)
         #expect(host.fakeAudio.audioMasterVolume == 0.5)
         #expect(host.fakeAudio.setAudioVolumeCalls.isEmpty)
+    }
+
+    @Test func aSkillsMenuQuestionGoesToTheMessageBox() {
+        let menus = MenuWorldAdapter(game: host, now: { Date(timeIntervalSinceReferenceDate: 0) })
+        menus.askSkillsMenuQuestion("Unlock this perk?", buttons: ["Yes", "No"]) { _ in }
+        #expect(host.fakeMessages.presentChoicesCalls.map(\.text) == ["Unlock this perk?"])
+        #expect(host.fakeMessages.presentChoicesCalls.map(\.buttons) == [["Yes", "No"]])
+    }
+
+    /// An owner without a layer stack suspends and restarts for any holder.
+    @Test func aPlainLayerOwnerSuspendsAndRestartsForAnyHolder() {
+        let hud = FakeHUDPort()
+        let holder = LayerHolder()
+        hud.suspend(for: holder)
+        hud.release(by: holder)
+        #expect(hud.suspendCallCount == 1)
+        #expect(hud.startCallCount == 1)
     }
 
     @Test func mapCallsGoThroughTheMapMenu() {

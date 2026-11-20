@@ -32,11 +32,6 @@ extension SkillsMenuWorld {
     public var isPlayerInBeastForm: Bool {
         false
     }
-
-    /// Without a message box the menu's own keys answer the question.
-    public func askSkillsMenuQuestion(
-        _: String, buttons _: [String], answer _: @escaping (Int) -> Void
-    ) {}
 }
 
 public final class SkillsMenuCoordinator {

@@ -249,6 +249,7 @@ struct SystemMenuCoordinatorTests {
         let harness = Harness()
         harness.open(.save)
         #expect(harness.menu.saveLoadPage?.titles.last == SaveTexts.vanilla.exportSkyrim)
+        #expect(harness.menu.snapshot.page.rows.last == SaveTexts.vanilla.exportSkyrim)
         harness.menu.route(.move(.up))
         harness.menu.route(.button(.accept))
         await harness.menu.saveWork?.value
@@ -387,5 +388,22 @@ extension SystemMenuCoordinatorTests {
         #expect(!harness.menu.isWaitingForKey)
         #expect(harness.settings.buttonName(forUserEvent: "Zoom In", gamepad: true) == nil)
         #expect(harness.settings.buttonName(forUserEvent: "Activate", gamepad: false) != nil)
+    }
+}
+
+@MainActor
+extension SystemMenuCoordinatorTests {
+    /// The movie's own Quit list answers through the same quit paths.
+    @Test func theMoviesQuitCallsLeaveTheGame() {
+        let harness = Harness()
+        harness.open(.quit)
+        harness.menu.pendingMovieCalls = [.init(request: .quitToMainMenu, index: nil, text: nil)]
+        harness.menu.answerMovieCalls()
+        #expect(harness.world.mainMenuCount == 1)
+        #expect(!harness.menu.isOpen)
+        harness.open(.quit)
+        harness.menu.pendingMovieCalls = [.init(request: .quitToDesktop, index: nil, text: nil)]
+        harness.menu.answerMovieCalls()
+        #expect(harness.world.quitCount == 1)
     }
 }
