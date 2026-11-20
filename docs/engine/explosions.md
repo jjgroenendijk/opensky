@@ -1,0 +1,127 @@
+---
+type: Subsystem
+title: Explosions in the game
+description: When a projectile explodes, how the game picks what an explosion damages, the mine
+  trigger, and what an explosion leaves behind.
+tags: [engine, explosions, projectiles, combat]
+---
+
+# Explosions in the game
+
+This page gives the game's rules for a projectile that explodes, and for the explosion itself. The
+`EXPL` and `PROJ` fields are on the [explosion records](/formats/explosions.md) page, with what
+OpenSky does today. The push on loose bodies is on the [impulses](/engine/impulses.md#explosions)
+page. The screen effects are on the [explosion effects](/engine/explosion-effects.md) page.
+
+## When a projectile explodes
+
+A projectile explodes only when it names an explosion and its model is loaded.
+
+- Without the `PROJ` flag Alt Trigger (`0x4`), it explodes at its first impact.
+- With Alt Trigger, it works as a mine (below).
+
+The explosion takes the projectile's position, rotation, shooter, and weapon. The impact normal
+becomes the explosion's direction. An explosion makes a noise for detection at its `EXPL` sound
+level.
+
+## Mines
+
+```mermaid
+stateDiagram-v2
+    [*] --> Armed
+    Armed --> Fuse: a hostile living actor inside the proximity radius
+    Armed --> Fuse: hits an actor, with no proximity radius
+    Fuse --> Exploded: fuse runs out
+    Exploded --> [*]
+```
+
+- The proximity radius is the `PROJ` explosion proximity. In an exterior cell it is 1.6 times
+  larger.
+- Only a living hostile actor sets it off. The shooter does not.
+- When an actor comes in range, the fuse is set to 0.2 seconds.
+- The player must also pass a roll. The chance starts at 100 and goes through the perk entry
+  point Calculate Mine Explode Chance. If the roll fails, that mine never checks the player again.
+- While the fuse runs, a light blinks every 0.25 seconds. In the last 2 seconds the blink speeds
+  up toward every 0.1 seconds.
+- A mine with no proximity radius that hits an actor gets a short fuse.
+- With no trigger, the fuse never ends.
+
+Example: a rune with proximity 150 lies outside. A hostile wolf comes within 240 units. After
+0.2 seconds the rune explodes.
+
+## Damage
+
+An explosion hits each object inside its radius once. The falloff is `1 - (d / R)^2`, where `d`
+is the distance from the centre and `R` the `EXPL` radius. It is 0 at and past the radius.
+
+When the source weapon has a skill, the damage is scaled by the shooter's skill:
+
+```text
+player: 1 + 0.5 x skill / 100
+NPC:    1 + 2 x skill / 100
+```
+
+- An object that is not an actor takes the damage times the falloff as destruction damage
+  ([destruction](/engine/papyrus-destruction.md#in-the-game)).
+- An actor needs a clear line from the explosion, unless the `EXPL` flag Ignore LOS (`0x10`) is
+  set. The line starts 24 units from the centre along the explosion's direction, and ends at the
+  actor's centre, or at the camera for the player. When the explosion points almost straight
+  down, a hit closer than 3 units to the start does not block the line.
+- The shooter never takes the explosion's damage.
+- The `EXPL` enchantment is cast from the shooter. It reaches the shooter only when it is not
+  hostile.
+
+Example: damage 50, radius 200, an object 100 units away. The falloff is `1 - 0.25 = 0.75`, so a
+barrel there takes 37.5 destruction damage.
+
+## Knockdown
+
+The `EXPL` flags give three modes. Every mode needs a falloff above 0.15.
+
+| Flags | Knocks down |
+| --- | --- |
+| Knock Down Always (`0x4`) | Always |
+| Knock Down By Formula (`0x8`) | By the formula below |
+| Both | Always, but never the player |
+
+The formula only runs when the actor lives through the hit:
+
+1. Knocked down when the damage is more than 75 percent of its base health.
+2. Else, when the damage is more than 50 percent of its current health, a roll decides. The chance
+   is `damage x 0.3 / 50`, at most 0.25.
+
+Example: damage 30 on an actor with base health 200 and current health 50. 15 percent of the base
+is not above 75. 60 percent of the current health is above 50. The chance is `9 / 50 = 0.18`.
+
+A dead or ragdolled actor gets the push instead.
+
+## Push
+
+The push is on the [impulses](/engine/impulses.md#explosions) page. Two more rules:
+
+- With the `EXPL` flag Push Explosion Source Ref Only (`0x20`), only the bodies of the source
+  reference are pushed.
+- A living actor that walks on a character controller is not pushed.
+
+## What it leaves
+
+- **Placed object.** A new reference of the `EXPL` placed object is made at the explosion's
+  position and rotation, in the same cell, with the same owner.
+- **Vertical offset.** When a magic effect places its explosion on an actor, the explosion's
+  height is the actor's height times the `EXPL` vertical offset multiplier, above the actor's
+  feet.
+- **Water.** An explosion whose centre is lower than the water height minus a tenth of its radius
+  makes a splash. The splash size is the radius divided by 250.
+- **Life.** The explosion is removed when its age reaches its duration.
+
+What the spawn projectile, the Always Uses World Orientation flag (`0x2`), and the Chain flag
+(`0x80`) do was not found.
+
+## Where OpenSky differs
+
+- No mine trigger beyond the timer and the proximity check; no perk roll for the player and no
+  blinking light.
+- No line of sight check and no skill scaling. Both knockdown flags together do not spare the
+  player.
+- No placed reference, vertical offset, or water splash.
+- Explosions do not damage destructible objects.

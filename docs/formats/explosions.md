@@ -56,7 +56,8 @@ Each `DATA` field is one model: a uint8 percentage, a zstring path, and a uint8 
 
 ## Runtime
 
-On detonation OpenSky:
+The game's own rules, and where OpenSky differs from them, are on the
+[explosions](/engine/explosions.md) page. On detonation OpenSky:
 
 1. Damages every actor whose capsule axis is within the radius. Damage is the full `DATA`
    damage times `1 - (d / R)^2`, at distance `d` in radius `R`

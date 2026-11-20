@@ -39,3 +39,18 @@ when picked up again, and a filled soul gem left in a chest is still filled.
 
 The save keeps the levels in `TMPR` and the whole copy in `ICPY`
 ([save chunks](/formats/opensky-save-actor-chunks.md)).
+
+## Names and poisons in the game
+
+The game keeps two more facts on each copy:
+
+- **A custom name.** The name typed at the enchanter is checked by a word filter first; a name
+  that fails is not used. An accepted name goes on the new copy, not on the base record. The
+  inventory and favourites menus show one row per copy whose own facts differ, such as a name, an
+  enchantment, a charge, a poison, or a temper level. That row shows the custom name, and the
+  other rows show the base name. The name stays with the copy when it is dropped, worn, or sold.
+- **A poison.** The poison and its doses left belong to the weapon copy it was put on, not to the
+  base weapon. Taking the weapon off keeps the poison on that copy.
+
+OpenSky keeps neither on the copy. A made enchantment takes the name, the inventory shows one row
+per base item, and a poison sits on the base weapon of its owner.

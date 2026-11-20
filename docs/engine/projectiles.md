@@ -166,3 +166,59 @@ is not confirmed, so the depth may need a sign or an offset once a capture shows
 
 An arrow stuck in an actor does not follow its bones, so it would float after the actor moves. The
 age limit removes it after 10 seconds. A wall arrow has no age limit; only the cap of 15 removes it.
+
+## Pick-up, bounce, and stick in the game
+
+Each impact ends in one of four ways: the projectile vanishes, bounces, impales, or sticks.
+
+- On a world surface, the material decides. A material that lets arrows stick holds the arrow.
+  Any other material makes it bounce.
+- A stuck arrow follows a moving physics body, or stays fixed on a static one.
+- A bolt sticks 5 units deep, any other ammunition 20. An impaled arrow goes 12 units deep.
+- A bounce turns the arrow into a free physics object. It leaves along its flight direction
+  reflected about the surface normal, at a tenth of the `PROJ` speed. A bounced arrow does not
+  stick. Example: an arrow with speed 5000 bounces off at 500 units a second.
+
+At most 15 stuck projectiles stay in the world. A new one removes the oldest. An actor shows at most
+3 arrows stuck in it, and a fourth replaces the oldest. Each one is removed after 10 seconds of
+real time. These are only for show.
+
+Activating a projectile in the world:
+
+- With the `PROJ` flag Can Be Picked Up (`0x40`), the prompt is "Take", or "Steal" when it is
+  owned, then the name, then "(count)" when the count is 2 or more. The `AMMO` is placed where the
+  projectile is, with the same owner, and the activator picks it up. The normal theft rules apply.
+  There is no roll.
+- With the `PROJ` flag Can Be Disabled (`0x20`), the projectile is disabled.
+
+An arrow that hits an actor joins its inventory on a roll of 0 to 99 below the chance. A
+non-playable `AMMO` never joins.
+
+### A deflected arrow
+
+Only a hit on the shield's own collision body can deflect. The chance is the perk entry point Mod
+Shield Deflect Arrow Chance, from 0, at most 100. A deflected arrow bounces, as on a material that
+does not hold arrows. The weapon's enchantment and Apply Combat Hit Spell still run. Whether the
+physical damage is cancelled was not found.
+
+## Aim help in the game
+
+The player's projectile turns a little toward a target near the crosshair.
+
+- A target is an actor with full AI processing, alive, and within 1800 units. Its bounds on screen
+  must be within 6 percent of the screen centre. The one nearest the crosshair wins.
+- The shot turns toward it by at most 1 degree in first person, 2 degrees in third person, and 15
+  degrees during a kill cam.
+- The player's shot gets no lead for a moving target. During a kill cam it is aimed to make up for
+  gravity.
+
+Example: in first person a target sits 0.6 degrees off the crosshair. The shot turns the full
+0.6 degrees. At 1.5 degrees off, it turns only 1 degree.
+
+## Where OpenSky differs
+
+- Spent arrows cannot be picked up, and no arrow bounces: every arrow sticks, whatever the
+  material, and a deflected arrow sticks where it struck.
+- An actor shows every arrow stuck in it, not at most 3, and the stick depth is the same for
+  bolts.
+- The player's shots get no aim help.

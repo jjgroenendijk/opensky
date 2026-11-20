@@ -55,6 +55,31 @@ Who may use it:
 
 The answer is one of: no owner, permitted, forbidden. Only forbidden is theft.
 
+### Ownership in the game
+
+The game's order is different. An actor uses only its own owner. Any other reference takes the
+first owner found:
+
+1. Its own owner.
+2. For a door with a teleport link: the owner of the door at the other end.
+3. Except for activators, doors, and furniture: the owner of the encounter zone. That is the
+   reference's own zone, else the cell's zone, else the worldspace's zone. The default zone does
+   not count.
+4. The cell's owner.
+
+Example: a plate in a house has no owner and no zone, so it takes the cell's owner, the person who
+lives there. A door in the same house skips step 3.
+
+- An actor owner matches the actor's own base.
+- A faction owner matches a member whose rank is at least the reference's required rank. A
+  reference with no required rank lets any member use it. The rank a script gave counts before the
+  rank in the `NPC_` record.
+- For the player and a faction owner, membership alone is enough, so the required rank is
+  not checked.
+- Only the reference's own rank requirement is checked, never one for the cell or the zone.
+
+OpenSky has no door step and no encounter zone step, and checks the rank for the player too.
+
 ### Friends let the player take cheap things
 
 A friend lets the player take an item from their faction's property without theft, up to a gold
@@ -268,8 +293,8 @@ disagree about what is a first strike.
 The game's own rules for alarms, witnesses, guards, and statistics are in
 [crime reports](/engine/crime-reports.md).
 
-- A witness does not walk to a guard. It reports only when a guard is near it already. Crimes by
-  followers, animal witnesses, and children telling adults are not modelled.
+- The alarm, the Alarm package, followers' crimes, and animal witnesses are not modelled. A crime
+  reports only when a guard is near a witness already.
 - For an `NPC_`-owned victim, `doNotReportCrimesAgainstMembers` reads the base record's authored
   factions. A faction a script gave that actor later is not seen.
 - A script-set owner on an exterior cell is not read.

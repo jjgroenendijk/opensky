@@ -230,6 +230,11 @@ is read from its prefix (`MRh`, `MLh`). The third spelling, `Spellfire`, has no 
 right hand when that hand holds a staff. [WARNING] Whether a staff's graph raises it is not
 confirmed; without it, the 0.4-second fallback releases the staff.
 
+In the game the spell-fire event is also where the magicka cost is checked. A cast that cannot pay
+then fails with the not-enough-magicka notice and the hand resets. A concentration spell enters its
+held state at the same event, not at the press. `BeginCastLeft` and `BeginCastRight` only start the
+charge. NPCs use the same events. OpenSky starts a concentration spell at the press.
+
 The spell's main effect, defined under hand art below, gives the hand its sounds. CK wiki "Magic
 Effect":
 

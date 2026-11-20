@@ -153,5 +153,6 @@ scripted alarm fail silently because the witness faced away. The wiki also notes
 
 ## Not done yet
 
-- Guards do not arrest NPCs. A guard does not walk over to answer another actor's report. Only
-  guards who see the player themselves act.
+- A guard does not answer another actor's alarm, and does not pursue or fight an NPC criminal.
+  Only guards who see the player themselves act. The game never arrests an NPC
+  ([crime reports](/engine/crime-reports.md#guards)).

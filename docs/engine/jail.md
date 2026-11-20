@@ -115,6 +115,20 @@ under "Major Crimes", and the ledger counts it. The escape
 fires `ESJA` with the player as `R1` and the faction as `F1`, and counts "Jail Escapes". The
 belongings stay in the `PLCN` chest for the player to find.
 
+## Followers
+
+At the arrest, the game moves each follower that is with the player: an actor whose package
+targets the player, that is not waiting, alive, and enabled.
+
+- The follower goes to the faction's `JAIL` marker. That marker is a door, and the follower stands
+  at the door itself. The player goes through the door into the cell.
+- The follower's package is set to wait. It is not dismissed.
+- When the sentence is served, each waiting follower within 40000 units of the `JAIL` marker
+  follows the player again.
+- An escape releases the waiting followers within 40000 units of the marker in the same way.
+
+The faction's `WAIT` marker field is not used for this.
+
 ## Saving
 
 A save keeps the stay on the player's script state
@@ -124,5 +138,5 @@ cell the player stands in counts as the jail cell.
 
 ## Not done yet
 
-- Followers do not go to the `WAIT` marker.
+- Followers do not wait at the `JAIL` marker, and do not follow again after the stay.
 - Cidhna Mine's pickaxe-and-ore way of serving time is a quest script, not part of this.

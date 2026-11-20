@@ -87,6 +87,55 @@ costs the whole soul: a use at power share `s` costs `s^1.1` of the full cost, s
 `s = (soul / full cost)^(1/1.1)`. The game also has a slider to choose a lower magnitude. OpenSky
 always uses the highest magnitude the soul allows.
 
+## The magnitude slider in the game
+
+The slider shows only for a weapon enchantment whose highest magnitude is above 1. Apparel never
+gets one. It runs from 1 to the highest magnitude. Its step grows with that maximum:
+
+| Highest magnitude | Step |
+| --- | --- |
+| 30 or less | 1 |
+| Above 30 | 2 |
+| Above 60 | 5 |
+| Above 120 | 10 |
+
+The highest magnitude is the strength above, rounded down. A base whose effect has Power Affects
+Duration and not Power Affects Magnitude scales its duration instead. The chosen value is kept
+within 1 and the maximum. When the maximum changes, the chosen value jumps to the new maximum.
+
+The soul's share is its value over a grand soul's 3000. For apparel the magnitude is the maximum
+times that share, at least 1. For a weapon the soul does not change the slider; it only gives the
+charge. Before a gem is chosen, the menu previews with the largest soul among the listed gems. The
+UESP rule that a tiny soul lowers a weapon's maximum was not found in the game program.
+
+Charge and uses:
+
+```text
+total charge = soul value, through Mod Soul Gem Enchanting, at least 0
+per use      = 3 x (sum of base cost x chosen / maximum)^1.1 x (1 - sqrt(skill / 200))
+uses shown   = floor(total charge / per use)
+```
+
+The base cost is the `ENIT` cost under the manual cost flag, else the sum of the effect costs, then
+Mod Spell Cost. The cost follows the chosen share of the maximum, so a perk that raises the maximum
+does not raise the cost at the maximum. The new enchantment stores the per-use cost, fraction
+dropped, with the manual cost flag set. The new item gets the total charge, fraction dropped.
+
+The made item's gold value:
+
+```text
+apparel: item value + enchantment cost, rounded half up
+weapon:  item value + 0.12 x charge + 8 x enchantment cost, fraction dropped
+```
+
+Example: a 25 gold sword, Fire Damage with base magnitude 10, Enchanting 15, no perks, a grand
+soul. The base cost is `0.9 x 10^1.1 = 11.33`. The maximum is 10, so the slider runs 1 to 10 in
+steps of 1.
+
+- At 10: one use costs `3 x 11.33^1.1 x 0.7261 = 31.46`, so 95 uses. The sword is worth
+  `25 + 0.12 x 3000 + 8 x 31 = 633`.
+- At 5: one use costs `3 x 5.665^1.1 x 0.7261 = 14.68`, so 204 uses.
+
 ## Experience
 
 UESP "Skyrim:Leveling" gives the base experience, which Enchanting's skill use multiplier then
@@ -145,7 +194,9 @@ after its bases, joined by ` + `.
 
 ## Where OpenSky differs
 
-- The magnitude slider is not modelled: a weapon always gets the highest magnitude.
+- The magnitude slider is not modelled: a weapon always gets the highest magnitude the soul allows.
+  The game keeps the full maximum for any soul, and stores the per-use cost with the skill term of
+  the moment of making, where OpenSky applies the wielder's skill at each hit.
 - A new name from the enchanter names the enchantment only. The game also shows it in the
   inventory and favourites menus; OpenSky shows one inventory row per item, not per copy, so the
   row keeps the item's own name.
