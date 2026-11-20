@@ -181,14 +181,17 @@ extension AgentBehaviourAdapter {
         }
     }
 
-    /// The last idle the actor played, such as its furniture entry or exit idle.
+    /// The last idle the actor played, such as its furniture entry or exit idle, and the
+    /// idle a save made now would keep.
     private func idleReport(of actor: ReferenceKey) -> AgentJSON {
-        guard let report = game.idleWorld.idles.lastReport(of: actor) else { return .null }
+        let idles = game.idleWorld.idles
+        guard let report = idles.lastReport(of: actor) else { return .null }
         return [
             "chosen": report.chosen.map { .string($0) } ?? .null,
             "failure": report.failure.map { .string($0) } ?? .null,
             "seconds": report.seconds.isFinite ? .init(report.seconds) : .string("held"),
-            "rootMotion": .bool(report.plan?.rootMotion != nil)
+            "rootMotion": .bool(report.plan?.rootMotion != nil),
+            "saved": AgentJSON(idles.savedIdlePlays()[actor]?.idle.description)
         ]
     }
 

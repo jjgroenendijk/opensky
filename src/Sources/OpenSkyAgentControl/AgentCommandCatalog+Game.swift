@@ -255,6 +255,14 @@ nonisolated extension AgentCommandCatalog {
             ]
         ),
         command(
+            "debug.translate", "Move a reference over time, as TranslateTo does.",
+            positionals: [
+                required("ref", refHelp),
+                required("to", "The target position as x,y,z; the rotation stays."),
+                optional("speed", "Units a second; 100 by default.")
+            ]
+        ),
+        command(
             "debug.knock", "Knock an actor back as a melee hit from the player would.",
             positionals: [
                 required("ref", refHelp),

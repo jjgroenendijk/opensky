@@ -186,10 +186,36 @@ extension AgentObjectsAdapter {
             "recentEvents": .array(snapshot.recentEvents.map(AgentJSON.string)),
             "lastFault": snapshot.lastFault.map(AgentJSON.string) ?? .null,
             "noneReceiverCalls": .init(snapshot.noneReceiverCalls),
+            "translations": translationsJSON(),
             "unimplemented": .array(snapshot.topUnimplementedNatives.map {
                 ["name": .string($0.name), "count": .init($0.count)]
             })
         ]
+    }
+
+    /// Starts a `TranslateTo` move that keeps the reference's rotation.
+    func translate(
+        _ reference: String, to position: SIMD3<Float>, speed: Float
+    ) throws(AgentFailure) -> AgentJSON {
+        let key = try hub.resolveReference(reference).key
+        guard let bridge = game.scripts.bridge else {
+            throw AgentFailure(.notReady, "no scripts are loaded")
+        }
+        let started = bridge.translate(key, to: position, speed: speed)
+        return ["started": .bool(started), "translations": translationsJSON()]
+    }
+
+    /// Every running or waiting scripted move, in key order.
+    private func translationsJSON() -> AgentJSON {
+        let moves = game.scripts.bridge?.savedTranslations() ?? [:]
+        return .array(moves.keys.sorted().compactMap { key in
+            moves[key].map { move in
+                [
+                    "ref": .string(key.description), "position": .init(move.position),
+                    "target": .init(move.targetPosition), "speed": .init(move.speed)
+                ]
+            }
+        })
     }
 
     /// A quest editor ID, else a reference as `resolveReference` reads it.

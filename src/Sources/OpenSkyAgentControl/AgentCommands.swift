@@ -233,6 +233,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     /// Plays an `IDLE` with a target, as `PlayIdleWithTarget` does: a paired idle plays
     /// on both actors.
     case paired(reference: String, target: String, idle: String)
+    /// Moves a reference to a position over time, as `TranslateTo` does.
+    case translate(reference: String, position: SIMD3<Float>, speed: Float)
     /// Knocks an actor back as a melee hit of `damage` from the player would.
     case knock(reference: String, damage: Float)
     /// Knocks an actor down as a ragdoll, away from the player, as `PushActorAway` does.
