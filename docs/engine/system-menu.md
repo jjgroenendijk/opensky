@@ -213,9 +213,18 @@ Without the movie, a click is the accept button.
 ## Help and Installed Content
 
 The movie builds both rows itself. `SystemPage.onCategoryButtonPress` maps a row to a case of
-its switch, so the row index is not the case number. Without the `$CREATIONS` row
-(`SetShowMod(false)`), every row from `MOD_MANAGER_BUTTON_INDEX` (4) on moves up one case.
-`$INSTALLED CONTENT` is row 3 and `$HELP` is row 6.
+its switch, so the row index is not the case number. The base asks `ShouldShowMod` in
+`InitExtensions` and names `SetShowMod` as the callback. `SetShowMod(true)` adds the
+`$CREATIONS` row at `MOD_MANAGER_BUTTON_INDEX` (4), but only to a list that already has rows.
+`SystemPage.onLoad` fills the list after `InitExtensions` runs, so the game's later answer finds
+the rows. OpenSky answers nothing at once and calls `SetShowMod(true)` once the page has
+started. Without that row, every row from 4 on
+moves up one case. `$INSTALLED CONTENT` is row 3 and `$HELP` is row 7. Pressing `$CREATIONS`
+calls `ModManager`, which opens the online Creations store in the game. OpenSky has no store and
+does nothing.
+
+The System page's `startPage` calls `SetVersionText([VersionText])`. The engine writes its
+version into that field, which sits in the page's corner. OpenSky writes its own version.
 
 | Row | Movie calls | Then |
 | --- | --- | --- |
@@ -241,6 +250,9 @@ first input in `controlmap.txt`.
 Help lists the `HelpManualPC` form list, which the `HMPC` default object names
 ([UESP DOBJ](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DOBJ)). Each entry is a
 `MESG`: its `FULL` is the title and its `DESC` the text.
+DLC and Creation scripts add their own topics to the list with `AddForm`, such as the quest
+script `DefaultAddMessageToHelpMenuScript` and the fishing Creation's `AddHelpArticles`. The page
+lists the plugin entries, then the forms scripts added.
 
 Installed Content works the same way with the `HelpManualInstalledContent` form list in
 `Update.esm`, which the `HMCC` default object names. It holds seven messages, such as

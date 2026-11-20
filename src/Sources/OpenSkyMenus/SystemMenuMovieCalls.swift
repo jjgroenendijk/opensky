@@ -51,7 +51,7 @@ nonisolated extension SystemMenuMovieBridge {
 
     /// Calls that need no answer: the list fills at once.
     static let quietRequests = [
-        "UseCurrentCharacterFilter", "ForceStopSaveListLoading", "SetSaveDisabled"
+        "UseCurrentCharacterFilter", "ForceStopSaveListLoading"
     ]
 
     /// Ends the movie's `$Saving...` wait, which holds its input.

@@ -30,11 +30,25 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
     /// consumers are outside the system-page surface.
     public static let sinkHostFunctions = [
         "myLog", "PlaySound", "PlayOKSound", "RememberCurrentTabIndex",
-        "RequestPlayerInfo", "SetVersionText", "ShouldShowKinectTunerOption"
+        "RequestPlayerInfo", "ShouldShowKinectTunerOption", "ModManager", showModCall,
+        // The list asks this whenever it refreshes its rows, such as after `SetShowMod`.
+        "SetSaveDisabled"
     ]
-    public static let falseHostFunctions = ["ShouldShowMod", "GetIsRemoteDevice"]
-    /// The Quit row asks this and builds its Main Menu and Desktop list only on true.
+    public static let falseHostFunctions = ["GetIsRemoteDevice"]
+    /// The Quit row asks `RequestIsOnPC` and builds its Main Menu and Desktop list only on
+    /// true.
     public static let trueHostFunctions = ["RequestIsOnPC"]
+    /// `InitExtensions` asks this before `SystemPage.onLoad` fills the list, and the
+    /// answer adds `$CREATIONS` only to a filled list. So the answer waits for `activate`.
+    static let showModCall = "ShouldShowMod"
+    /// The callback `ShouldShowMod` names; true adds the `$CREATIONS` row.
+    static let showModCallback = "SetShowMod"
+    static let creationsLabel = "$CREATIONS"
+    /// `SetVersionText([field])`: the System page asks for the version in its corner.
+    public static let versionTextCall = "SetVersionText"
+    /// The app's own version, or "dev" for a tool without one.
+    public static let appVersion = Bundle.main
+        .object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
 
     /// Scaleform's UI-sound hook, which the movie reaches for as a plain
     /// `_global` function rather than through `GameDelegate`. OpenSky has no UI
@@ -58,6 +72,10 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
         }
         for name in trueHostFunctions {
             runtime.registerHostFunction(name) { _ in .boolean(true) }
+        }
+        runtime.registerHostFunction(versionTextCall) { call in
+            writeText(appVersion, to: call.arguments.first, runtime: call.movie)
+            return .undefined
         }
         let global = runtime.runtime.globalObject
         for name in globalSinkFunctions {
@@ -90,6 +108,9 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
             arguments: [.integer(systemTabIndex), .boolean(true)]
         )
         showSystemPage(runtime: runtime)
+        if !entryLabels(runtime: runtime).contains(creationsLabel) {
+            runtime.callMovie(showModCallback, atPath: menuPath, arguments: [.boolean(true)])
+        }
     }
 
     /// `activate(runtime:onClose:)`, with the button art the movie asks for by user event.
@@ -197,10 +218,7 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
 
     private static func openSelectedSystemPage(runtime: SWFMovieRuntime) -> Bool {
         guard
-            let list = runtime.node(atPath: systemCategoryListPath, from: runtime.root),
-            case let .number(selected) =
-            list.object.lookup("iSelectedIndex")?.property.value,
-            selected == Double(settingsCategoryIndex),
+            selectedEntry(runtime: runtime) == .settings,
             let state = runtime.runtime.registeredClass(named: "SystemPage")?
                 .lookup("SETTINGS_CATEGORY_STATE")?.property.value
         else {
@@ -209,8 +227,6 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
         runtime.callMovie("StartState", atPath: systemPagePath, arguments: [state])
         return true
     }
-
-    static let settingsCategoryIndex = 4
 
     /// The movie's row text for each engine row.
     public static let rowEntries: [String: SystemMenuEntry] = [

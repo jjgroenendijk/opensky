@@ -112,6 +112,7 @@ struct SystemMenuAcceptanceRealDataTests {
         #expect(rows.contains("$QUIT"), "movie rows were \(rows)")
         #expect(rows.contains("$SETTINGS"), "movie rows were \(rows)")
         #expect(rows.contains("$CONTROLS"), "movie rows were \(rows)")
+        #expect(rows.firstIndex(of: "$CREATIONS") == 4, "movie rows were \(rows)")
         #expect(!rows.contains("$NEW"), "title-screen rows leaked into \(rows)")
         #expect(runtime.movieCallbackNames.contains("ShowMenu"))
         #expect(runtime.invokeLog.unhandled == 0, "the movie made an unanswered engine call")
