@@ -61,7 +61,8 @@ The game also has values that are not in `Skyrim.esm`:
 | 500 units | The scene's trigger distance when the speaker sees the partner, or both sit or sleep |
 | 400 units | How far an actor reacts to a body |
 | 20 s | How long a checked body waits before another actor reacts to it |
-| 1000 units | A watcher of a fight stops watching beyond this distance |
+| 2000 units | A watcher of a fight stops watching at this distance from the fight's centre |
+| 100 units | How close the finder of a body walks to it |
 | 20 s | Shortest time between two comments of one watcher |
 
 ## Random conversations (`ADIA`)
@@ -105,6 +106,24 @@ runs, so an actor whose check stops keeps its list.
 
 The event carries the speaker's location, `R1` the speaker, and `R2` the partner.
 
+### When no quest answers
+
+The event goes into the story manager's queue, like every other event. The queue runs once per
+frame, oldest event first, with a small time budget per frame, so the walk for one `ADIA` ends
+in the same frame or a few frames later. No timer runs on this path. When the walk ends, the
+result goes back to both actors:
+
+- No quest started: both actors leave the conversation at once, and their requests are cleared.
+  The speaker rolls a new social timer.
+- A quest started: both stay in the conversation, and both roll a new social timer.
+
+The 20 s wait belongs only to `DialogueActivate` and the In Game Dialogue package, which send
+their own `ADIA`.
+
+When the answering quest's [scene](/engine/scenes.md#conversation-scenes) is about to begin, the
+game checks both actors again by the partner rules above. A failed check stops the scene. A
+partner that is in another dialogue makes the game try again after 1 s.
+
 ## Walking together
 
 The answering quest's scene takes the pair. Both get an In Game Dialogue package. The target
@@ -112,7 +131,7 @@ place is the partner, with the partner's radius plus 384 units. The scene's trig
 `iAISocialDistanceToTriggerEvent`, raised to 500 units when the speaker sees the partner or both
 sit or sleep, plus 20 when the speaker sits.
 
-- The scene pauses while the speaker walks. The partner gets a short wait package, so it stays
+- The scene pauses while the speaker walks. The partner gets a wait package, so it stays
   where it is.
 - The speaker stops within 170 units of the partner, or the package's own radius when it has
   one. A height difference of more than 20 units adds 20 units to the radius.
@@ -121,6 +140,22 @@ sit or sleep, plus 20 when the speaker sits.
 - A speaker that enters combat on the way gives up the walk.
 - The speaker walks. It runs only when the actor always runs. The walk has no time limit: the
   speaker paths again when its goal is more than 100 units from the partner.
+
+### The partner's wait package
+
+The wait package is a copy of the default object Wait-For-Dialogue Package, which is
+`zzzDEFAULTzzzWaitForDialogue` (`0x01CC5A`) in `Skyrim.esm`. It has two steps: a wait with
+timeout 0 and "stop" on, then a travel to its own place within 1000 units. The copy is marked
+"Must Complete" and is released when the dialogue ends.
+
+- A wait with timeout 0 never ends by itself, so the partner waits with no time limit. A wait
+  with no timeout given lasts 10 s.
+- The partner stands still. The package sets no idle and no facing; the facing comes from the
+  turn when the speaker arrives. A seated partner does not turn.
+- The partner gets the package only when its AI runs every frame: when `DialogueActivate` fires
+  its `ADIA`, and when the speaker arrives within 170 units.
+- When the speaker's conversation ends, `DialogueActivate` succeeds and the partner picks a new
+  package. Only a package with the release mark is replaced.
 
 ## The `DialogueActivate` procedure
 
@@ -157,6 +192,12 @@ package must have flag 0x02. The event carries the location, `R1` the
 actor, and `R2` the target. It does not use the greeting distance or timers of hellos to the
 player.
 
+The head-tracking target is chosen by the rules on the
+[head tracking](/engine/head-tracking.md#the-default-target) page.
+
+`AHEL` fires only when the new target differs from the old one, so an NPC greets another NPC in
+passing only while the player is not a valid target.
+
 ## Watching a fight
 
 Watching a fight is a reaction to detection. An actor starts to watch when it detects a fighter
@@ -172,11 +213,40 @@ Spectator package, unless it already runs a Guard-type package. A watcher in a s
 change package: the scene is told instead, and the scene's "observing combat" flags decide
 whether it pauses or ends ([scenes](/engine/scenes.md#actor-behaviour-flags)).
 
-While it watches, the actor checks its place about every 1.5 s, and stops watching beyond
-1000 units. It comments with a line of subtype `ObserveCombat` at the
-`fAISocialchanceForConversation` chance, at least 20 s apart. It remembers a threat for
-`fAISpectatorRememberThreatTimer` seconds. A watcher is not free for a random conversation,
-because it is in no state to talk: its new package has no flag 0x02.
+A watcher is not free for a random conversation, because its new package has no flag 0x02.
+
+### What a watcher does
+
+The Spectator package has one step and never walks toward the fight. When it starts, the
+watcher stands up from furniture if needed and ends any dialogue it is in.
+
+The watcher keeps a list of threats: each attacker and its target. An entry is refreshed every
+2 s while the watcher detects the attacker, and an entry not refreshed for
+`fAISpectatorRememberThreatTimer` seconds (5 s in `Skyrim.esm`) is dropped.
+
+The fight area is a box around every known attacker and target position. Each position is
+widened by a threat distance: 512 units for melee and explosions, 256 for ranged attacks and
+mines. The fight radius is the distance from the box's centre to the farthest participant, plus
+that participant's threat distance.
+
+```mermaid
+flowchart TD
+    A[Each AI update] --> B{"Threat list empty,<br/>or 2000 units or more<br/>from the fight centre?"}
+    B -- yes --> C[Watching ends]
+    B -- no --> D[Head-track the first threat's attacker]
+    D --> E{"Comment timer at 0<br/>and not talking?"}
+    E -- yes --> F["Roll the comment chance;<br/>on success say ObserveCombat,<br/>timer to 20 s"]
+    E -- no --> G
+    F --> G{"1.5 s since the last step<br/>and not moving?"}
+    G -- yes --> H{"Inside the fight radius?"}
+    H -- yes --> I["Sheathe the weapon, back off to<br/>the radius plus 128 units,<br/>end facing the centre"]
+    H -- no --> J[Stay where it is]
+```
+
+The comment chance is `fAISocialchanceForConversation`, 10 percent in `Skyrim.esm`, indoors too.
+The comment timer starts at 0, so the first comment can come as soon as watching starts. It
+counts down only on updates that have a valid attacker. Watchers near the player update every
+frame, so once the timer is over, a comment comes within a few frames.
 
 ## Finding a body (`DEAD`)
 
@@ -190,10 +260,20 @@ Then:
 1. `DEAD` fires with `R1` the finder, `R2` the body, and the finder's location.
 2. The finder ends any dialogue it is in.
 3. The finder gets its actor base's dead-body override package when it has one, otherwise a
-   ReactToDead package aimed at the body.
+   ReactToDead package aimed at the body, with "Must Complete" on and its place near the body
+   within 100 units.
 4. The body's timer starts at 20 s, so no other actor reacts to it until the timer ends.
-5. Inside ReactToDead, within 400 units of the body, the finder says a `NoticeCorpse` line once.
-   The killer says nothing.
+
+ReactToDead has three steps:
+
+1. The finder walks to within 100 units of the body.
+2. Within 400 units of the body, the finder says a `NoticeCorpse` line once, and waits while it
+   speaks. A finder that the body remembers, most likely its killer, says nothing. Farther than
+   400 units, the finder skips the line.
+3. The finder stops any idle with the `ActionIdleStop` action, the package ends, and the finder
+   picks a new package.
+
+The finder does not stay at the body: there is no stay timer and no idle there.
 
 ## What a save keeps
 
@@ -206,15 +286,16 @@ is not saved. Each body keeps its 20 s timer.
 ## Where OpenSky differs
 
 - The social pass runs every 30 frames, not every frame. Times are counted in real seconds.
-- A pair waits 2 s for a quest to answer its `ADIA` with a scene. The game waits as long as its
-  story manager queue takes. A `DialogueActivate` package waits the game's 20 s.
+- A pair waits 2 s for a quest to answer its `ADIA` with a scene, instead of the end of the
+  event's walk. A `DialogueActivate` package waits the game's 20 s.
 - A hello in passing needs a walker that moved 8 units since the last pass. Its look target is
-  the nearest free NPC within 384 units, the distance at which an NPC notices the player.
-  A new target sends `AHEL` and turns the head for 10 s.
+  the nearest free NPC within 384 units, with no angle, detection, or hold rule, and the
+  player does not take precedence. A new target sends `AHEL` and turns the head for 10 s.
 - The partner's wait package, the watcher's Spectator package, and ReactToDead are not
   packages: the actor's own package is held, and its head turns to the other actor. The finder
   of a body says its `NoticeCorpse` line where it stands; it does not walk to the body.
-- A watcher rolls its comment chance on each pass.
+- A watcher keeps no threat list and does not back off from the fight. It stops at 1000 units
+  from the fighter, and rolls its comment chance once per pass.
 - The speaker's sitting and sleeping are not read: the extra 20 units for a seated speaker and
   the stand-up step of `DialogueActivate` are not built.
 - With the player as its target, `DialogueActivate` opens the conversation where the actor
