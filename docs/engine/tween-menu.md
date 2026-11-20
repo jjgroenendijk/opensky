@@ -46,8 +46,13 @@ The movie calls the engine back:
 The entry number `n` is 1 for Skills, 2 for Magic, 3 for Items, and 4 for Map. The movie
 also has `HideMenu` and `ResetStatsButton`; OpenSky does not call them.
 
-Esc reaches the engine, not the movie. OpenSky answers it as the movie answers Tab: it plays
-the close animation and shuts the menu when the movie calls `CloseMenu`.
+In OpenSky, Tab and Esc both reach the engine, not the movie, because in Menu Mode the
+controlmap gives both keys to Cancel. OpenSky answers Cancel as the movie answers Tab: it plays the
+close animation and shuts the menu when the movie calls `CloseMenu`. Each entry's click area is an
+`InputRect` clip at alpha 0 above the entry ([AS2 input](/engine/as2-input.md)).
+
+OpenSky also reads a level as waiting while an attribute pick is still owed, because its skills
+menu can close before the pick is made.
 
 The game's menu:
 
@@ -92,18 +97,13 @@ last menu that uses it closes.
 | Radial blur ramp up and start | 0.2, 0.2 | 0.2, 0.2 |
 | Saturation add | −0.15 | 0 |
 
+OpenSky holds it while the Tween, inventory, or magic menu is open, and stops it when the last of
+them closes ([unverified values](/engine/unverified-values.md)). `state frame` lists it under
+`imageSpaceModifiers` as `ISMTween`, `held`.
+
 Its duration is 1.0 s and its animated flag is off, and every multiply factor is 1. A modifier
 that is not animated most likely holds its time-0 values for as long as it is applied, with no
 fade ([image space](/rendering/image-space.md)).
-
-## Where OpenSky differs
-
-Seen beside the game:
-
-- [WARNING] Tab does not close the menu; only Esc does.
-- [WARNING] A mouse click on an entry opens nothing.
-- [WARNING] The world behind the menu is not blurred.
-- [WARNING] With a level waiting, the entry still reads SKILLS.
 
 ## Camera
 

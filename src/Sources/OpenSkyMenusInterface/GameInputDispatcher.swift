@@ -175,7 +175,8 @@ public struct GameInputDispatcher {
         }
         let event: MenuInputEvent? = switch (action, phase) {
         case (.menuAccept, .press): .button(.accept)
-        case (.menuCancel, .press): .button(.cancel)
+        // In Menu Mode, the Tween Menu and Pause keys are Cancel, as the controlmap says.
+        case (.menuCancel, .press), (.tweenMenu, .press), (.pause, .press): .button(.cancel)
         case (.activate, .press): .activate
         case (.readyWeapon, .press): .button(.xButton)
         case (.jump, .press): .button(.yButton)

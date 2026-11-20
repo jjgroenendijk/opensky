@@ -33,6 +33,8 @@ nonisolated public struct EffectRecordStore: Sendable {
     public let lowHealthModifier: ReferenceKey?
     public let slowHeartbeat: ReferenceKey?
     public let fastHeartbeat: ReferenceKey?
+    /// The default object `IMID`, the blur behind the Tween, inventory, and magic menus.
+    public let menuModifier: ReferenceKey?
 
     public init(index: RecordIndex) {
         imageSpaces = Self.store(index, "IMGS") { try ImageSpace(record: $0.record) }
@@ -61,6 +63,7 @@ nonisolated public struct EffectRecordStore: Sendable {
         lowHealthModifier = defaults.object(tag: "IMLH").map(ReferenceKey.init(resolved:))
         slowHeartbeat = defaults.object(tag: "HSSD").map(ReferenceKey.init(resolved:))
         fastHeartbeat = defaults.object(tag: "HFSD").map(ReferenceKey.init(resolved:))
+        menuModifier = defaults.object(tag: "IMID").map(ReferenceKey.init(resolved:))
     }
 
     public init(plugins: [(name: String, file: ESMFile)]) {

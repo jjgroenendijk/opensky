@@ -113,4 +113,14 @@ struct TweenMenuCoordinatorTests {
         #expect(TweenMenuMovieBridge.choice(.number(0)) == nil)
         #expect(TweenMenuMovieBridge.choice(.string("2")) == nil)
     }
+
+    @Test func aLevelWaitsForLevelsToApplyOrAttributePicksOwed() {
+        func ready(_ levels: Int, _ picks: Int) -> Bool {
+            TweenMenuLevel(level: 2, progress: 0, levelsReady: levels, pendingAttributePicks: picks)
+                .levelUpReady
+        }
+        #expect(!ready(0, 0))
+        #expect(ready(1, 0))
+        #expect(ready(0, 1))
+    }
 }
