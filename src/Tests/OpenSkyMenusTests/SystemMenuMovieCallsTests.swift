@@ -2,7 +2,7 @@
 // the key name table, and the calls the page makes by name.
 
 import Foundation
-import OpenSkyFormatsSWF
+@testable import OpenSkyFormatsSWF
 import OpenSkyFormatsTesting
 @testable import OpenSkyMenus
 import OpenSkyMenusInterface
@@ -93,6 +93,31 @@ struct SystemMenuMovieCallsTests {
         )
         #expect(shown.rows == ["Main Menu", "Desktop"])
         #expect(shown.selectedIndex == 1)
+    }
+
+    /// The game shows the `$CREATIONS` row; its press opens a store OpenSky does not have.
+    @Test func theCreationsAnswerWaitsForTheFilledList() throws {
+        let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
+        SystemMenuMovieBridge.prepare(runtime: runtime)
+        #expect(runtime.callHost(SystemMenuMovieBridge.showModCall, arguments: []) == .undefined)
+        #expect(runtime.callHost("ModManager", arguments: []) == .undefined)
+    }
+
+    /// The version field gets the app's version, never the movie's placeholder.
+    @Test func theVersionFieldGetsTheAppVersion() throws {
+        let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
+        SystemMenuMovieBridge.prepare(runtime: runtime)
+        let field = runtime.runtime.makeObject()
+        let log = runtime.runtime.makeObject()
+        AS2Runtime.method(runtime.runtime, on: log, name: "set") { context in
+            log.assign(context.arguments.first ?? .undefined, for: "written")
+            return .undefined
+        }
+        let setter = log.lookup("set")?.property.value.objectValue
+        _ = field.addAccessor(name: "text", getter: nil, setter: setter)
+        runtime.callHost(SystemMenuMovieBridge.versionTextCall, arguments: [.object(field)])
+        let written = log.lookup("written")?.property.value
+        #expect(written == .string(SystemMenuMovieBridge.appVersion))
     }
 
     /// `SystemPage.handleInput` goes back on `NavigationCode.TAB` and ignores `ESCAPE`.
