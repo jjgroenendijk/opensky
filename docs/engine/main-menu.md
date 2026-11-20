@@ -162,12 +162,11 @@ the gaps between the titles grow.
 The `MQ101` aliases that name unique actors fill from the location records ([quest
 state](/engine/quest-state.md), "What does not fill yet").
 
-The race menu then opens where `MQ101` calls `Game.ShowRaceMenu` ([race
-menu](/engine/race-menu.md)). In the game that call comes in Helgen, after the cart scene. OpenSky
-does not play that scene yet, so a new game waits beside the carts. The riders who live in other
-cells, such as `Ulfric` and `Lokir`, stay there, because `MoveTo` moves a reference only inside the
-loaded cells. `debug quest MQ101 75` in the [agent control](/tools/agent-control.md) runs the stage
-that opens the race menu.
+OpenSky plays the opening cart ride. The player sits in a cart, in cart mode. The horses pull the
+carts with their riders from the start, through the Helgen gate, and into Helgen. The race menu
+then opens where `MQ101` calls `Game.ShowRaceMenu` ([race menu](/engine/race-menu.md)), in Helgen
+after the cart scene, as in the game. `debug quest MQ101 75` in the [agent
+control](/tools/agent-control.md) runs the stage that opens the race menu.
 
 `MoveTo` on the player ignores the offset and rotation arguments. A target outside the loaded cells
 is looked up in the worldspace records of `Skyrim.esm`, off the main actor, and its cell loads
