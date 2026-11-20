@@ -45,6 +45,7 @@ enum SWFContainerMenuCommand {
         let world = try makeWorld(context: context, mode: mode)
         var model = world.model
         model.select(side: side)
+        ContainerMenuMovieBridge.publish(model, runtime: runtime)
         ItemCardSubMenuBridge.showItemsList(runtime: runtime)
         ContainerMenuMovieBridge.publish(model, runtime: runtime)
         for _ in 0 ..< ticks {

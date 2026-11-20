@@ -69,6 +69,23 @@ Both lists are `Shared.BSScrollingList` objects with `EntriesA` and `iSelectedIn
 one plain object per row into `EntriesA`: `text`, `index`, `count`, `weight`, `value`, `equipped`,
 and `enabled`.
 
+A category row also needs a `flag`. `InventoryLists.SetCategoriesList` builds each category as
+`text`, `flag`, `bDontHide`, `savedItemIndex`, and `filterFlag`, and a `flag` of 0 makes the row a
+divider, which draws no name. OpenSky gives each tab its own bit, `1 << index`, and sets `bDontHide`,
+so the movie hides no tab and its category indices stay the engine's.
+
+After it writes both arrays, OpenSky calls the category list's own `InvalidateData`, then the
+`InvalidateListData` callback. `InvalidateListData` redraws the category list but does not hand
+the new array to that list's filter. The filter then matches no row, and the column stays empty.
+`InvalidateData` does hand it over, as `SetCategoriesList` does.
+
+An item row has no `filterFlag`. The item list's filter keeps a row whose `filterFlag` is missing or
+shares a bit with the selected tab's `flag`. The movie sets that filter only when its centred
+category changes, so with a `filterFlag` the rows are hidden after the engine changes the tab. The
+engine has already filtered the rows. The cost: the bottom bar's button reads
+`filterFlag & entryList[0].flag`, the Favorites bit, to choose between `$Favorite` and
+`$Unfavorite`, so it always shows `$Favorite`.
+
 The order of calls matters, and was measured. `InvalidateListData`, a `GameDelegate` callback the
 movie registers for itself, rebuilds a list and resets `iSelectedIndex` to -1. A selection written
 before it is lost. So OpenSky writes the rows, then calls `InvalidateListData` by name through the
@@ -83,6 +100,18 @@ When the movie has loaded, the engine calls `InventoryLists.ShowItemsList(false,
 lists move to their `TWO_PANELS` state: the item panel opens beside the categories, and the item
 card fades in. The movie needs this state for the drop key: its `ShouldProcessItemsListInput`
 answers false in any other state, so `DropItem` does nothing.
+
+The panel slides out over a few frames, through state 5, `TRANSITIONING_TO_TWO_PANELS`, and the
+item list takes no keys until the slide ends. So the engine plays the slide to its end at once,
+at most 60 frames. The order of the first publish matters:
+
+1. Write the rows.
+2. Call `ShowItemsList` and play the slide.
+3. Write the rows again, and call `ItemCard.FadeInCard`.
+
+`ShowItemsList` fades the card in only when a row is selected, and it resets the selection, so
+the second write sets the selected row back. Each later write also fades the card in when the
+list has rows; otherwise a slider opens on an invisible card.
 
 Up and down go through the movie's own CLIK focus path. The engine adopts the `iSelectedIndex` the
 movie ends up with, so the movie owns the row selection. The engine does the one step the missing

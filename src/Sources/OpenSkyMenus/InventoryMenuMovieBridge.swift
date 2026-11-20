@@ -147,13 +147,7 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
     public static func publish(_ model: InventoryMenuModel, runtime: SWFMovieRuntime) {
         let categories = model.categoryLabels
         let entries = model.entries
-        publish(
-            rows: categories.enumerated().map { index, label in
-                ["text": .string(label), "index": .integer(index)]
-            },
-            atPath: categoryListPath,
-            runtime: runtime
-        )
+        publish(rows: categoryRows(model), atPath: categoryListPath, runtime: runtime)
         publish(
             rows: entries.enumerated().map { row(for: $1, index: $0) },
             atPath: itemListPath,
@@ -170,11 +164,15 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
         )
         publishTotals(model, runtime: runtime)
         focusItemList(runtime: runtime)
+        if !entries.isEmpty {
+            ItemCardSubMenuBridge.fadeInCard(runtime: runtime)
+        }
     }
 
     /// One `EntriesA` row. `text`, `count`, `weight`, `value` and `equipped`
     /// are what a vanilla item row displays; `index` is what the movie hands
-    /// back on an outbound call.
+    /// back on an outbound call. A row has no `filterFlag`, so the movie's tab
+    /// filter keeps every row; the engine has already filtered them.
     public static func row(for entry: InventoryMenuEntry, index: Int) -> [String: AS2Value] {
         [
             "text": .string(entry.name),
@@ -185,6 +183,19 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
             "equipped": .boolean(entry.isEquipped),
             "enabled": .boolean(true)
         ]
+    }
+
+    /// The category rows `InventoryLists.SetCategoriesList` would build: a `flag`
+    /// of 0 draws a divider, so each tab gets its own bit. `bDontHide` keeps every
+    /// tab, so the movie's indices stay the engine's.
+    public static func categoryRows(_ model: InventoryMenuModel) -> [[String: AS2Value]] {
+        model.categoryLabels.enumerated().map { index, label in
+            [
+                "text": .string(label), "index": .integer(index),
+                "flag": .integer(InventoryMenuModel.categoryFlag(index)),
+                "bDontHide": .boolean(true), "savedItemIndex": .integer(0)
+            ]
+        }
     }
 
     // MARK: - Input

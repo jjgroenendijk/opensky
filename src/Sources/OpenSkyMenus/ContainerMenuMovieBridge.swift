@@ -159,9 +159,7 @@ nonisolated public enum ContainerMenuMovieBridge: Sendable {
         let categories = pane.categoryLabels
         let entries = pane.entries
         InventoryMenuMovieBridge.publish(
-            rows: categories.enumerated().map { index, label in
-                ["text": .string(label), "index": .integer(index)]
-            },
+            rows: InventoryMenuMovieBridge.categoryRows(pane),
             atPath: categoryListPath,
             runtime: runtime
         )
@@ -172,7 +170,7 @@ nonisolated public enum ContainerMenuMovieBridge: Sendable {
             atPath: itemListPath,
             runtime: runtime
         )
-        runtime.callMovie(invalidateCallback)
+        InventoryMenuMovieBridge.invalidate(runtime: runtime)
         InventoryMenuMovieBridge.select(
             pane.selectedCategoryIndex, count: categories.count,
             atPath: categoryListPath, runtime: runtime
@@ -183,6 +181,9 @@ nonisolated public enum ContainerMenuMovieBridge: Sendable {
         )
         publishTotals(model, runtime: runtime)
         focusItemList(runtime: runtime)
+        if !entries.isEmpty {
+            ItemCardSubMenuBridge.fadeInCard(runtime: runtime)
+        }
     }
 
     /// One `EntriesA` row: the inventory row plus the barter price. `value`

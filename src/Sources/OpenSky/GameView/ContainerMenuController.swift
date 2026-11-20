@@ -211,7 +211,9 @@ final class ContainerMenuController {
                 }
             },
             didLoad: { [weak self] in
-                // The item panel opens beside the categories, and the item card with it.
+                // The panel opens on the rows, and the item card with it; it moves the
+                // selection, so the rows are written again after it.
+                self?.publishModel()
                 self?.movie.publish(ItemCardSubMenuBridge.showItemsList(runtime:))
                 self?.publishModel()
             }
