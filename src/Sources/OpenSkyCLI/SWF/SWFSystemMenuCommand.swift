@@ -25,6 +25,7 @@ enum SWFSystemMenuCommand {
             movieScene: SWFMovieLoader(fileSystem: vfs).load(path: SystemMenuMovieBridge.moviePath)
         )
         SystemMenuMovieBridge.prepare(runtime: runtime)
+        SystemMenuMovieBridge.registerDefaultCalls(runtime: runtime)
         for name in captures {
             runtime.registerHostFunction(name) { call in
                 printArguments(name, call.arguments)
@@ -67,6 +68,10 @@ enum SWFSystemMenuCommand {
         for path in dumps {
             printNode(path, runtime: runtime)
         }
+        print(
+            "[INFO] swf probe controls rows shown: "
+                + "\(SystemMenuMovieBridge.shownMappingRows(runtime: runtime))"
+        )
         printFaults(runtime)
     }
 

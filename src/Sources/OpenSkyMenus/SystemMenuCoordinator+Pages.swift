@@ -213,7 +213,7 @@ extension SystemMenuCoordinator {
             let shown = settings.settingsRows(settingsPage)
             return page(rows: shown.rows, selected: shown.selected)
         case .controls:
-            return page(rows: settings.controlsRows, selected: controlsPage.selectedIndex)
+            return page(rows: controlsRowsShown, selected: controlsPage.selectedIndex)
         case .save, .load:
             return page(
                 rows: saveLoadPage?.titles ?? [], selected: saveLoadPage?.selectedIndex ?? 0
@@ -228,6 +228,17 @@ extension SystemMenuCoordinator {
                 rows: topicPage?.topics.map(\.title) ?? [], selected: topicPage?.selectedIndex ?? 0
             )
         }
+    }
+
+    /// With the movie, the rows its Controls list draws, so an empty page reads empty.
+    private var controlsRowsShown: [String] {
+        guard movieLoaded, let runtime = renderer?.swfRuntime else {
+            return settings.controlsRows
+        }
+        guard SystemMenuMovieBridge.shownMappingRows(runtime: runtime) > 0 else { return [] }
+        return MenuMovieEntryList.labels(
+            atPath: SystemMenuMovieBridge.mappingListPath, runtime: runtime
+        )
     }
 
     private func page(rows: [String], selected: Int) -> SystemMenuPageSnapshot {

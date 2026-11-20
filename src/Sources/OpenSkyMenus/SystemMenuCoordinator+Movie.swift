@@ -116,19 +116,24 @@ extension SystemMenuCoordinator {
         refreshMovieMappings(request)
     }
 
-    /// The movie sorts and redraws the list itself after a remap; after a plain
-    /// request it has already drawn the empty list, so it is redrawn here.
+    /// The movie sorts and redraws the list itself after a remap; after a reset the
+    /// list is redrawn here.
     func refreshMovieMappings(_ request: SystemMenuMovieBridge.Request) {
-        let rows = SystemMenuMovieBridge.mappingRows(
-            settings.bindings, keyName: settings.keyName,
-            gamepad: (renderer?.swfGamepadCount ?? 0) > 0
-        )
+        let rows = movieMappingRows().map(\.fields)
         updateMovie { runtime in
             SystemMenuMovieBridge.fillMappings(rows, request: request, runtime: runtime)
             if request != .startRemap {
                 runtime.callMovie("InvalidateData", atPath: SystemMenuMovieBridge.mappingListPath)
             }
         }
+    }
+
+    /// The Controls rows in the movie's sort order, which is the `sortIndex` order.
+    func movieMappingRows() -> [SystemMenuMovieBridge.MappingEntry] {
+        SystemMenuMovieBridge.mappingEntries(
+            settings.bindings, keyName: settings.keyName,
+            gamepad: (renderer?.swfGamepadCount ?? 0) > 0
+        )
     }
 
     private func beginMovieRemap(_ event: String?) {

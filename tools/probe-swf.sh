@@ -89,6 +89,9 @@ probe_swf_gates() {
   # menu movie starts and makes host calls.
   run "menu system (quest_journal.swf System page)" menu system
   grep -q 'swf probe ' "$swf_log" || fail "menu system printed no host calls"
+  run "menu system Controls (quest_journal.swf)" menu system --state CONTROLS_CATEGORY_STATE --row 0
+  grep 'controls rows shown:' "$swf_log" | tail -1 | grep -qv 'shown: 0$' \
+    || fail "quest_journal.swf drew no Controls rows"
   run "swf movie-probe (racesex_menu.swf)" swf movie-probe --movie 'interface\racesex_menu.swf'
   grep -q 'swf probe ' "$swf_log" || fail "swf movie-probe printed no host calls"
 

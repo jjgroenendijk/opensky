@@ -3,13 +3,14 @@
 // `GameDelegate`; this names those calls and fills the lists it hands over.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 import OpenSkyMenusInterface
 
 nonisolated extension SystemMenuMovieBridge {
     static let saveLoadListPath = "\(systemPagePath)/SaveLoadPanel/List_mc"
-    /// `MappingList` is the `InputMappingPanel` clip itself.
-    static let mappingListPath = "\(systemPagePath)/InputMappingPanel"
+    /// `MappingList`, the list clip inside `InputMappingPanel`. The panel has no
+    /// `InvalidateData` of its own.
+    static let mappingListPath = "\(systemPagePath)/InputMappingPanel/List_mc"
 
     /// The `SystemPage` state the movie shows, such as 1 for the save list.
     static func pageState(runtime: SWFMovieRuntime) -> Int? {
@@ -58,12 +59,21 @@ nonisolated extension SystemMenuMovieBridge {
     }
 
     /// Queues each call; the coordinator answers it after the event that made it.
+    /// `RequestInputMappings` is answered during the call instead, with `mappings`:
+    /// in the same script the movie sorts the list it passed and draws it.
     static func registerCalls(
         runtime: SWFMovieRuntime,
+        mappings: @escaping @MainActor @Sendable () -> [MappingEntry],
         onCall: @escaping @MainActor @Sendable (Call) -> Void
     ) {
         for request in Request.allCases {
             runtime.registerHostFunction(request.rawValue) { call in
+                if request == .inputMappings {
+                    let list = call.arguments.first { $0.objectValue != nil }
+                    let rows = MainActor.assumeIsolated { mappings() }.map(\.fields)
+                    TitleMenuLoadBridge.fill(rows, list: list, runtime: call.movie)
+                    return .undefined
+                }
                 let made = Call(
                     request: request, index: TitleMenuLoadBridge.index(call.arguments),
                     text: call.arguments.lazy.compactMap(Self.string).first
@@ -75,6 +85,21 @@ nonisolated extension SystemMenuMovieBridge {
         for name in quietRequests {
             runtime.registerHostFunction(name) { _ in .undefined }
         }
+    }
+
+    /// The CLI's way in: the Controls request gets the default bindings, and every
+    /// other call is dropped.
+    public static func registerDefaultCalls(runtime: SWFMovieRuntime) {
+        registerCalls(
+            runtime: runtime,
+            mappings: { mappingEntries(InputBindings()) { "Key \($0)" } },
+            onCall: { _ in }
+        )
+    }
+
+    /// The Controls rows the movie draws.
+    public static func shownMappingRows(runtime: SWFMovieRuntime) -> Int {
+        InventoryMenuMovieBridge.shownClipCount(runtime: runtime, atPath: mappingListPath)
     }
 
     private static func string(_ value: AS2Value) -> String? {
@@ -103,6 +128,28 @@ nonisolated extension SystemMenuMovieBridge {
     static func mappingRows(
         _ bindings: InputBindings, keyName: (UInt32) -> String, gamepad: Bool = false
     ) -> [[String: AS2Value]] {
+        mappingEntries(bindings, keyName: keyName, gamepad: gamepad).map(\.fields)
+    }
+
+    /// One Controls row as plain values, so it can leave the main actor.
+    struct MappingEntry: Sendable {
+        let text: String
+        let sortIndex: Int
+        let buttonName: String
+        let buttonID: UInt32?
+
+        var fields: [String: AS2Value] {
+            [
+                "text": .string(text), "sortIndex": .integer(sortIndex),
+                "buttonName": .string(buttonName),
+                "buttonID": buttonID.map { .integer(Int($0)) } ?? .undefined
+            ]
+        }
+    }
+
+    static func mappingEntries(
+        _ bindings: InputBindings, keyName: (UInt32) -> String, gamepad: Bool = false
+    ) -> [MappingEntry] {
         if gamepad {
             return gamepadMappingRows(bindings)
         }
@@ -112,26 +159,23 @@ nonisolated extension SystemMenuMovieBridge {
                 !bindings.fixedKeys.contains(slot.key)
             else { return nil }
             let code = bindings.scanCode(for: slot.action)
-            return [
-                "text": .string(slot.event), "sortIndex": .integer(index),
-                "buttonName": .string(code.map(keyName) ?? ""),
-                "buttonID": code.map { .integer(Int($0)) } ?? .undefined
-            ]
+            return MappingEntry(
+                text: slot.event, sortIndex: index, buttonName: code.map(keyName) ?? "",
+                buttonID: code
+            )
         }
     }
 
-    private static func gamepadMappingRows(_ bindings: InputBindings) -> [[String: AS2Value]] {
+    private static func gamepadMappingRows(_ bindings: InputBindings) -> [MappingEntry] {
         InputBindings.slots.enumerated().compactMap { index, slot in
             guard slot.context == .gameplay, bindings.gamepadKeys.contains(slot.key) else {
                 return nil
             }
             let code = bindings.gamepadCodes(for: slot.action).first
             let art = code.flatMap { GamepadButton(controlMapCode: $0)?.artName }
-            return [
-                "text": .string(slot.event), "sortIndex": .integer(index),
-                "buttonName": .string(art ?? ""),
-                "buttonID": code.map { .integer(Int($0)) } ?? .undefined
-            ]
+            return MappingEntry(
+                text: slot.event, sortIndex: index, buttonName: art ?? "", buttonID: code
+            )
         }
     }
 

@@ -39,6 +39,39 @@ struct SystemMenuMovieCallsTests {
         #expect(runtime.callHost("RequestIsOnPC", arguments: []) == .boolean(true))
     }
 
+    /// The movie sorts and draws the list in the same script as its request, so the
+    /// rows must be in it when the call returns. Other calls wait in the queue.
+    @MainActor
+    @Test func controlsRowsFillTheListDuringTheRequest() throws {
+        let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
+        var queued: [SystemMenuMovieBridge.Request] = []
+        SystemMenuMovieBridge.registerCalls(
+            runtime: runtime,
+            mappings: {
+                [.init(text: "Forward", sortIndex: 0, buttonName: "W", buttonID: 0x11)]
+            },
+            onCall: { queued.append($0.request) }
+        )
+        let list = runtime.runtime.makeArray([])
+        _ = runtime.callHost("RequestInputMappings", arguments: [.object(list)])
+        let row = list.lookup("0")?.property.value.objectValue
+        #expect(row?.lookup("text")?.property.value == .string("Forward"))
+        #expect(queued.isEmpty)
+        _ = runtime.callHost("SAVE", arguments: [])
+        #expect(queued == [.saveList])
+        #expect(SystemMenuMovieBridge.mappingListPath.hasSuffix("InputMappingPanel/List_mc"))
+    }
+
+    @MainActor
+    @Test func theProbeAnswersControlsWithTheDefaultBindings() throws {
+        let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
+        SystemMenuMovieBridge.registerDefaultCalls(runtime: runtime)
+        let list = runtime.runtime.makeArray([])
+        _ = runtime.callHost("RequestInputMappings", arguments: [.object(list)])
+        #expect(list.lookup("0")?.property.value.objectValue != nil)
+        #expect(SystemMenuMovieBridge.shownMappingRows(runtime: runtime) == 0, "no list clip")
+    }
+
     /// `SystemPage.handleInput` goes back on `NavigationCode.TAB` and ignores `ESCAPE`.
     @Test func cancelReachesThePagesAsTab() {
         #expect(SystemMenuMovieBridge.pageKey(.button(.cancel))?.code == SWFKeyCode.tab)

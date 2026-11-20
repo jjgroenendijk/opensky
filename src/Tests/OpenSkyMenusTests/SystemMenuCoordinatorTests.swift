@@ -291,6 +291,14 @@ struct SystemMenuCoordinatorTests {
     }
 
     @Test @MainActor
+    func withoutTheMovieTheControlsReadoutListsTheEngineRows() {
+        let harness = Harness()
+        harness.open(.controls)
+        #expect(harness.menu.snapshot.page.rows == harness.settings.controlsRows)
+        #expect(!harness.menu.movieMappingRows().isEmpty)
+    }
+
+    @Test @MainActor
     func inputWhileClosedIsIgnored() {
         let harness = Harness()
         harness.menu.route(.move(.down))
