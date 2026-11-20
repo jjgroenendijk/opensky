@@ -201,12 +201,13 @@ struct NIFParticleTests {
     // MARK: NiPSysData
 
     @Test func decodesPSysDataFlagsAndSubtextures() throws {
-        let offsets = [SIMD4<Float>(0, 0, 0.5, 0.5), SIMD4(0.5, 0, 1, 0.5)]
+        // A 4 by 2 grid, stored as u, width, v, height.
+        let stored = [SIMD4<Float>(0, 0.25, 0, 0.5), SIMD4(0.75, 0.25, 0.5, 0.5)]
         let payload = NIFParticleFixture.psysData(
             maxParticles: 512,
             hasRadii: true, hasSizes: true, hasRotations: true,
             hasRotationAngles: true, hasRotationAxes: true,
-            hasTextureIndices: true, subtextureOffsets: offsets,
+            hasTextureIndices: true, subtextureOffsets: stored,
             hasRotationSpeeds: true
         )
         let data = try NIFParticleData(data: payload, header: header())
@@ -218,7 +219,7 @@ struct NIFParticleTests {
         #expect(data.hasRotationAxes)
         #expect(data.hasTextureIndices)
         #expect(data.hasRotationSpeeds)
-        #expect(data.subtextureOffsets == offsets)
+        #expect(data.subtextureOffsets == [SIMD4(0, 0, 0.25, 0.5), SIMD4(0.75, 0.5, 0.25, 0.5)])
         #expect(data.maxPointCount == nil)
     }
 

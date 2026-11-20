@@ -67,10 +67,12 @@ nonisolated struct NIFParticleData: Sendable {
         var offsets: [SIMD4<Float>] = []
         offsets.reserveCapacity(subtextureCount)
         for _ in 0 ..< subtextureCount {
-            try offsets.append(SIMD4(
+            // Stored as u, width, v, height (docs/formats/nif-particles.md#nipsysdata-atlas).
+            let stored = try SIMD4(
                 reader.readFloat32(), reader.readFloat32(),
                 reader.readFloat32(), reader.readFloat32()
-            ))
+            )
+            offsets.append(SIMD4(stored.x, stored.z, stored.y, stored.w))
         }
         subtextureOffsets = offsets
         reader.skip(4) // Aspect Ratio

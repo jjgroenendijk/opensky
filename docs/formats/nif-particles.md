@@ -93,11 +93,22 @@ flags and the fixed values are stored. In order:
 - `NiParticlesData`: Has Radii (bool), Num Active (uint16), Has Sizes (bool), Has Rotations
   (bool), Has Rotation Angles (bool), Has Rotation Axes (bool), Has Texture Indices (bool),
   Num Subtexture Offsets (uint32), Subtexture Offsets (N x Vector4, the atlas rectangles
-  for `BSPSysSubTexModifier`), Aspect Ratio (float32), Aspect Flags (uint16), Speed to
-  Aspect (3 x float32).
+  for `BSPSysSubTexModifier`, see [the atlas](#nipsysdata-atlas)), Aspect Ratio (float32),
+  Aspect Flags (uint16), Speed to Aspect (3 x float32).
 - `NiPSysData`: Has Rotation Speeds (bool).
 - `BSStripPSysData` adds: Max Point Count (uint16), Start Cap Size (float32), End Cap Size
   (float32), Do Z Prepass (bool).
+
+### NiPSysData atlas
+
+Each subtexture offset is one atlas frame. Its four floats are u, width, v, and height, in
+that order. `nif.xml` does not name them. The vanilla files show the order. For example,
+`meshes\interface\intmenufogparticles.nif` stores 64 frames, and frame 9 is
+(0.125, 0.125, 0.125, 0.125): column 1 and row 1 of an 8 by 8 grid. Frame 1 of
+`meshes\effects\fxcameraattachdrips.nif` is (0.25, 0.25, 0, 0.5): a 4 by 2 grid of
+frames that are twice as tall as they are wide. Read as u, v, width, height instead, every
+frame of an 8 by 8 grid has zero width, and each card draws one column of texels as a
+vertical streak. All 61 sampled effect meshes with an atlas fit this order.
 
 ## Modifiers and emitters
 
