@@ -1,5 +1,6 @@
 import Foundation
 public import OpenSkyConditions
+public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 
 nonisolated public struct StoryManagerWalk: Equatable, Sendable {
@@ -51,4 +52,17 @@ nonisolated public enum StoryNodeOutcome: Equatable, Sendable {
     case concurrentLimit
     /// A quest node that started a quest and does not share the event.
     case consumed
+}
+
+/// One quest a walk tried and did not start, for the `state story` read.
+nonisolated public struct StoryRejectedQuest: Equatable, Sendable {
+    public let event: FourCC
+    public let quest: FormID
+    public let reason: StoryQuestRejection
+
+    public init(event: FourCC, quest: FormID, reason: StoryQuestRejection) {
+        self.event = event
+        self.quest = quest
+        self.reason = reason
+    }
 }

@@ -12,6 +12,7 @@ nonisolated public final class FakeStoryManagerPort: StoryManagerPort {
     public var fireResult: StoryManagerWalk?
     public var firedCounts: [FourCC: Int] = [:]
     public var recentEvents: [StoryEventData] = []
+    public var recentRejections: [StoryRejectedQuest] = []
     public var runSessionStartCalls: [[PluginQuestList]] = []
     public var runSessionStartResult: SessionStartReport?
     public var social: SocialEventCoordinator = FakeSocialEventPort()

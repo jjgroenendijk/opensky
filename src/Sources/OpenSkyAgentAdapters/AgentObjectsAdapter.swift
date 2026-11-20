@@ -114,7 +114,14 @@ extension AgentObjectsAdapter {
                 "v2": .init(event.value2)
             ]
         }
-        return ["fired": .object(fired), "recent": .array(recent)]
+        let rejected = story.recentRejections.map { rejection -> AgentJSON in
+            [
+                "event": .string(rejection.event.description),
+                "quest": .formID(rejection.quest.rawValue),
+                "reason": .string(String(describing: rejection.reason))
+            ]
+        }
+        return ["fired": .object(fired), "recent": .array(recent), "rejected": .array(rejected)]
     }
 
     /// The answer to `openskycli game state social`: each conversation and its phase,

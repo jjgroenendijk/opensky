@@ -64,7 +64,15 @@ struct AgentReadoutTests {
     @Test func theStoryStateCountsEachEventAndListsTheNewest() throws {
         host.fakeStoryManager.firedCounts = ["QSTR": 2]
         host.fakeStoryManager.recentEvents = [.questStart(FormID(0x0100))]
+        host.fakeStoryManager.recentRejections = [StoryRejectedQuest(
+            event: "ADIA", quest: FormID(0x0200), reason: .conditionsFailed
+        )]
         let state = try object(world.query(.story))
+        guard case let .array(rejected) = state["rejected"], let rejection = rejected.first else {
+            Issue.record("no rejected quest")
+            return
+        }
+        #expect(object(rejection)["reason"] == .string("conditionsFailed"))
         #expect(state["fired"] == .object(["QSTR": .init(2)]))
         guard case let .array(recent) = state["recent"], let event = recent.first else {
             Issue.record("no recent event")
