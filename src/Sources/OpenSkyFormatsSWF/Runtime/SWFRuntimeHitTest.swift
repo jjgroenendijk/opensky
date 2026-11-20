@@ -11,7 +11,8 @@ nonisolated struct SWFHitResult {
     /// The node that should receive `onPress`, or nil when the pointer is over
     /// nothing interactive.
     let target: SWFDisplayObject?
-    /// The topmost drawable node under the pointer, interactive or not.
+    /// The topmost drawable node or alpha-0 hit area under the pointer, interactive
+    /// or not.
     let topmost: SWFDisplayObject?
 }
 
@@ -55,7 +56,7 @@ nonisolated extension SWFMovieRuntime {
 }
 
 nonisolated extension SWFDisplayObject {
-    /// A node drawn at alpha 0 catches no pointer, and neither does anything inside it.
+    /// A node drawn at alpha 0 catches the pointer only as a hit area; nothing inside it does.
     var isTransparent: Bool {
         colorTransform.multiply.w <= 0 && colorTransform.add.w <= 0
     }
@@ -91,18 +92,39 @@ nonisolated extension SWFMovieRuntime {
                 return
             }
             let masks = maskRanges(of: node, transform: transform)
-            for child in node.children.reversed()
-                where child.isVisible && child.clipDepth == nil && !child.isTransparent
-            {
+            for child in node.children.reversed() where child.isVisible && child.clipDepth == nil {
                 guard !isMasked(child, by: masks) else {
                     continue
                 }
                 let childTransform = transform
                     .concatenating(SWFTransform(matrix: child.matrix))
-                visit(child, transform: childTransform, depth: depth)
+                if child.isTransparent {
+                    visitHitArea(child, transform: childTransform)
+                } else {
+                    visit(child, transform: childTransform, depth: depth)
+                }
                 if isSettled {
                     return
                 }
+            }
+        }
+
+        /// An alpha-0 clip with its own mouse handler is a hit area, as in Flash: it
+        /// catches the pointer over its bounds. Nothing inside it is tested, so a
+        /// page faded to alpha 0 does not take its rows' clicks.
+        private mutating func visitHitArea(_ child: SWFDisplayObject, transform: SWFTransform) {
+            guard
+                runtime.isMouseEnabled(child),
+                let inverse = transform.inverted,
+                runtime.containsLocally(child, localPoint: inverse.apply(point))
+            else {
+                return
+            }
+            if topmost == nil {
+                topmost = child
+            }
+            if target == nil {
+                target = child
             }
         }
 
