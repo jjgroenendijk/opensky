@@ -63,6 +63,9 @@ public final class FakeRendererPort: RendererPort {
     public private(set) var hadMenuMoviePreparation: [Bool] = []
     public private(set) var swfInputs: [SWFInputEvent] = []
     public private(set) var swfOverlays: [SWFMovieScene?] = []
+    /// What `setSWFOverlay` hands back for a scene; nil refuses the overlay.
+    public var swfOverlayRuntime: SWFMovieRuntime?
+    public private(set) var swfOverlayAdvances = 0
     public private(set) var swfRuntimeLimits: [AS2Limits] = []
     public private(set) var moviePictures: [(picture: MoviePicture?, letterbox: Bool)] = []
     public private(set) var loadingCovers: [LoadingCover] = []
@@ -95,10 +98,12 @@ public final class FakeRendererPort: RendererPort {
         _ scene: SWFMovieScene?, prepare _: ((SWFMovieRuntime) -> Void)?
     ) throws -> SWFMovieRuntime? {
         swfOverlays.append(scene)
-        return nil
+        return scene == nil ? nil : swfOverlayRuntime
     }
 
-    public func advanceSWFOverlay() throws {}
+    public func advanceSWFOverlay() throws {
+        swfOverlayAdvances += 1
+    }
 
     public func setSWFMovie(_: SWFMovieScene?) throws {}
 

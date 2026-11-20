@@ -120,7 +120,7 @@ public final class BookMenuCoordinator: MenuScreen<Never> {
 
     override public func tick(now: Double) {
         super.tick(now: now)
-        bar.tick()
+        bar.tick(now: now)
     }
 
     /// Takes a book read where it lies, then closes; a carried book only closes.

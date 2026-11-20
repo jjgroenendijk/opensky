@@ -63,7 +63,7 @@ public final class TitleSequenceCoordinator {
         return true
     }
 
-    public func tick() {
-        overlay.tick()
+    public func tick(now: Double) {
+        overlay.tick(now: now)
     }
 }

@@ -139,7 +139,7 @@ struct MenuFrameTick {
             monitor.poll(now: now, renderer: renderer, menuMode: game.menuMode)
         }
         game.movies.tick(now: now)
-        game.titleSequence.tick()
+        game.titleSequence.tick(now: now)
         game.titleMenu.tick(now: now)
         game.raceMenu.tick(now: now)
         game.skillsMenu.tick(now: now)

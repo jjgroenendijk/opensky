@@ -12,6 +12,8 @@ public import OpenSkyRendering
 public final class MenuMovieOverlay {
     public private(set) var isLoaded = false
     private var request = 0
+    private var framePacer = MenuMovieFramePacer()
+    private var frameRate = 0.0
     private let movies: (any MenuMovieLoading)?
     private let renderer: () -> (any RendererPort)?
 
@@ -38,12 +40,23 @@ public final class MenuMovieOverlay {
 
     public func stop() {
         request += 1
+        framePacer = MenuMovieFramePacer()
         guard isLoaded else { return }
         isLoaded = false
         record { try $0.setSWFOverlay(nil) }
     }
 
-    public func tick() {
+    /// Steps the movie at its own frame rate, so a fade lasts as long as in the game
+    /// whatever the render rate.
+    public func tick(now: Double) {
+        guard isLoaded else { return }
+        for _ in 0 ..< framePacer.ticks(at: now, frameRate: frameRate) where isLoaded {
+            step()
+        }
+    }
+
+    /// One movie frame, for a menu that paces its movies itself.
+    public func step() {
         guard isLoaded else { return }
         record { try $0.advanceSWFOverlay() }
     }
@@ -60,7 +73,10 @@ public final class MenuMovieOverlay {
         activate: @escaping (SWFMovieRuntime) -> Void
     ) {
         record { renderer in
-            guard try renderer.setSWFOverlay(result.get(), prepare: prepare) != nil else { return }
+            guard let runtime = try renderer.setSWFOverlay(result.get(), prepare: prepare) else {
+                return
+            }
+            frameRate = Double(runtime.movie.frameRate)
             isLoaded = true
             try renderer.updateSWFOverlay(activate)
         }

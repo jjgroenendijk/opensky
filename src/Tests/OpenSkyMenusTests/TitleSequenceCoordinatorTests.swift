@@ -26,4 +26,14 @@ struct TitleSequenceCoordinatorTests {
         #expect(!titles.isShown)
         #expect(!titles.start("Sequence3"))
     }
+
+    /// The titles tick from the clock; without a loaded movie a tick does nothing.
+    @Test func aTickBeforeTheMovieLoadsDoesNothing() {
+        let titles = TitleSequenceCoordinator(movies: nil) { nil }
+        titles.show(true)
+        titles.tick(now: 1)
+        titles.tick(now: 2)
+        #expect(!titles.isLoaded)
+        #expect(titles.isShown)
+    }
 }
