@@ -4,6 +4,8 @@ public import OpenSkyGameData
 /// Steps that run after the camera advances, with the camera position.
 public enum FrameStep: Int, FramePhase {
     case menuRouting
+    /// Holds the menu blur modifier while a menu that blurs the world is open.
+    case menuBlur
     /// Places the benchmark camera before anything reads the view.
     case benchmark
     /// May call `setScene` before this frame encodes.

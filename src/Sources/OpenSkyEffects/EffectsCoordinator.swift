@@ -75,6 +75,8 @@ public final class EffectsCoordinator {
     public internal(set) var flashLights: [FlashLight] = []
     /// The heartbeat and pulse while the player's health is low.
     public var healthCues = PlayerHealthCues()
+    /// The menu blur modifier runs.
+    public private(set) var holdsMenuBlur = false
 
     /// Without records there is no game, and every effect draws nothing.
     public init(
@@ -164,6 +166,18 @@ public final class EffectsCoordinator {
         _ key: ReferenceKey, fadeOut: Float = 0, on imageSpace: inout ImageSpaceState
     ) {
         imageSpace.stopModifier(key, fadeOut: fadeOut)
+    }
+
+    /// Starts the `IMID` modifier at strength 1 while `wanted`, and stops it when not.
+    /// The menus share one instance, so a menu that opens over another starts nothing.
+    public func setMenuBlur(_ wanted: Bool, on imageSpace: inout ImageSpaceState) {
+        guard wanted != holdsMenuBlur, let key = records.menuModifier else { return }
+        if wanted {
+            holdsMenuBlur = startModifier(key, strength: 1, looping: true, on: &imageSpace)
+        } else {
+            stopModifier(key, on: &imageSpace)
+            holdsMenuBlur = false
+        }
     }
 
     /// One landed spell: the modifier when the player was hit, and the hit shader and art

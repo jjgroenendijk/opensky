@@ -130,6 +130,16 @@ struct GameInputDispatcherTests {
         #expect(input.makeInput(dt: 0.1).moveForward == 0)
     }
 
+    @Test func theTweenMenuAndPauseKeysCancelInAMenu() {
+        let consumer = SpyMenuConsumer()
+        menuMode.inputConsumer = consumer
+        menuMode.present(MenuIdentifier("TweenMenu"))
+        #expect(dispatcher.apply(.tweenMenu, .press) == .menu(.button(.cancel)))
+        #expect(dispatcher.apply(.pause, .press) == .menu(.button(.cancel)))
+        #expect(dispatcher.apply(.tweenMenu, .release) == .swallowed)
+        #expect(consumer.events == [.button(.cancel), .button(.cancel)])
+    }
+
     @Test func quickKeysInAMenuAreRefused() {
         var refused: [PlayerControlRefusal] = []
         let dispatcher = GameInputDispatcher(

@@ -69,6 +69,8 @@ the detail and the sources it did find.
 
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
+| Alpha-0 hit areas | An alpha-0 clip with its own mouse handler catches the pointer; nothing inside an alpha-0 subtree does | [AS2 input](/engine/as2-input.md) |
+| Menus that blur the world | The Tween, inventory, and magic menus hold the `IMID` modifier; other menus do not | [Tween menu](/engine/tween-menu.md#blur) |
 | Magic menu tab order | Schools as Alteration, Illusion, Destruction, Conjuration, Restoration, then shouts, powers, active effects | [magic](/engine/magic.md#magic-menu) |
 | Cone spell world test | Looks 192 units ahead every 0.125 s and stops at the first surface seen | [spell delivery](/engine/spell-delivery.md) |
 | Ward power cap | `strongest ward x (base + mult x Restoration)`, so 1.3 x the stronger ward | [magic archetypes](/engine/magic-archetypes.md) |

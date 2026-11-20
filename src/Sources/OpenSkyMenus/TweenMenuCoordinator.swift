@@ -27,6 +27,14 @@ nonisolated public struct TweenMenuLevel: Equatable, Sendable {
         self.progress = progress
         self.levelUpReady = levelUpReady
     }
+
+    /// A level waits while the skills menu has levels to apply or attribute picks owed.
+    public init(level: Int, progress: Float, levelsReady: Int, pendingAttributePicks: Int) {
+        self.init(
+            level: level, progress: progress,
+            levelUpReady: levelsReady > 0 || pendingAttributePicks > 0
+        )
+    }
 }
 
 public final class TweenMenuCoordinator: MenuScreen<TweenMovieEvent> {

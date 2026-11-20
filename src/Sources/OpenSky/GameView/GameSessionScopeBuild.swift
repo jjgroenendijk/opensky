@@ -11,6 +11,7 @@ import OpenSkyAIAdapters
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatAdapters
+import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -254,6 +255,14 @@ struct GameSessionScopeBuild {
         let monitor = router.monitor
         gameSession.frameSteps.register(.menuRouting) { [ticks, weak renderer, monitor] _ in
             ticks.tick(renderer: renderer, monitor: monitor)
+        }
+        let menus = scope.menuMode
+        let blur = scope.effects
+        gameSession.frameSteps.register(.menuBlur) { [weak gameSession, weak menus, weak blur] _ in
+            guard let gameSession, let menus, let blur else { return }
+            blur.setMenuBlur(
+                MenuBlur.wanted(open: menus.stack.identifiers), on: &gameSession.imageSpace
+            )
         }
         let input = scope.cameraInput
         scope.menuMode.onModeChange = { [weak scope, weak gameSession, weak input] route, paused in

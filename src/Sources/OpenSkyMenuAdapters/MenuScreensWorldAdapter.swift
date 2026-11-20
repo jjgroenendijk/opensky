@@ -100,9 +100,11 @@ extension MenuScreensWorldAdapter: TweenMenuWorld {
     public var tweenLevel: TweenMenuLevel {
         let progression = hosts.progression
         let player = progression.skillsMenuPlayer
+        let leveling = progression.leveling
         return TweenMenuLevel(
             level: player.level, progress: player.levelProgress,
-            levelUpReady: (progression.leveling?.levelsReady ?? 0) > 0
+            levelsReady: leveling?.levelsReady ?? 0,
+            pendingAttributePicks: leveling?.state.pendingAttributePicks ?? 0
         )
     }
 
