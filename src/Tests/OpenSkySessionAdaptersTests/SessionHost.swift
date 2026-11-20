@@ -2,6 +2,7 @@
 
 import Foundation
 import OpenSkyAudio
+import OpenSkyConditions
 import OpenSkyGameData
 import OpenSkyMenusInterface
 import OpenSkyQuestsInterface
@@ -65,7 +66,13 @@ final class SessionHost: AudioListenerHost, AudioMixHost, AudioWorldHost,
     let fakeQuestNotices = FakeQuestNoticePort()
     let fakeRagdoll = FakeRagdollPort()
     let fakeRuntimeState = FakeRuntimeStatePort()
-    let fakeRuntimeStateWorld = FakeRuntimeStateWorldPort()
+    /// A save names its place from the condition data, so it starts empty.
+    let fakeRuntimeStateWorld = {
+        let port = FakeRuntimeStateWorldPort()
+        port.conditionDataResult = .empty
+        return port
+    }()
+
     let fakeScenes = FakeScenePort()
     let fakeScripts = FakeScriptPort()
     let fakeStreamer = FakeCellStreamerPort()

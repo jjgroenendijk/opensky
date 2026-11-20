@@ -215,9 +215,7 @@ extension SystemMenuCoordinator {
         case .controls:
             return page(rows: controlsRowsShown, selected: controlsPage.selectedIndex)
         case .save, .load:
-            return page(
-                rows: saveLoadPage?.titles ?? [], selected: saveLoadPage?.selectedIndex ?? 0
-            )
+            return saveLoadRowsShown
         case .quit:
             return quitRowsShown
         case .installedContent, .help:
@@ -239,6 +237,16 @@ extension SystemMenuCoordinator {
         return MenuMovieEntryList.labels(
             atPath: SystemMenuMovieBridge.mappingListPath, runtime: runtime
         )
+    }
+
+    /// The engine rows carry the place and play time; the movie's list has the highlight.
+    private var saveLoadRowsShown: SystemMenuPageSnapshot {
+        let rows = saveLoadPage?.titles ?? []
+        guard let shown = movieList(SystemMenuMovieBridge.saveLoadListPath) else {
+            return page(rows: rows, selected: saveLoadPage?.selectedIndex ?? 0)
+        }
+        guard shown.rows.count == rows.count else { return shown }
+        return page(rows: rows, selected: shown.selectedIndex)
     }
 
     private var quitRowsShown: SystemMenuPageSnapshot {

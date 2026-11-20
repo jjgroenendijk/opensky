@@ -2,13 +2,19 @@
 
 import Foundation
 import OpenSkyGameData
-import OpenSkySessionAdapters
+@testable import OpenSkySessionAdapters
 import OpenSkySessionTesting
 import Testing
 
 @MainActor
 struct SaveGameWorldTests {
     private let host = SessionHost()
+
+    /// A nameless location gives way to its nearest named parent.
+    @Test func thePlaceIsTheNearestNamedLocation() {
+        #expect(SaveSnapshot.placeName([nil, "", "Whiterun Hold"]) == "Whiterun Hold")
+        #expect(SaveSnapshot.placeName([nil]) == nil)
+    }
 
     @Test func aNewSlotSkipsTakenNames() {
         #expect(SaveGameWorldAdapter.newSlotName(existing: []) == "Save 1")
