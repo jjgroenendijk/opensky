@@ -25,13 +25,7 @@ enum SWFSystemMenuCommand {
             movieScene: SWFMovieLoader(fileSystem: vfs).load(path: SystemMenuMovieBridge.moviePath)
         )
         SystemMenuMovieBridge.prepare(runtime: runtime)
-        SystemMenuMovieBridge.registerDefaultCalls(runtime: runtime)
-        for name in captures {
-            runtime.registerHostFunction(name) { call in
-                printArguments(name, call.arguments)
-                return .undefined
-            }
-        }
+        registerHosts(runtime: runtime, captures: captures)
         runtime.start()
         SystemMenuMovieBridge.activate(runtime: runtime) {}
         registerSampleTopics(runtime)
@@ -75,6 +69,18 @@ enum SWFSystemMenuCommand {
         printFaults(runtime)
     }
 
+    /// The engine's default answers, then a printing handler for each captured name.
+    private static func registerHosts(runtime: SWFMovieRuntime, captures: [String]) {
+        SystemMenuMovieBridge.registerDefaultCalls(runtime: runtime)
+        SettingsMovieBridge.registerDefaults(runtime: runtime)
+        for name in captures {
+            runtime.registerHostFunction(name) { call in
+                printArguments(name, call.arguments)
+                return .undefined
+            }
+        }
+    }
+
     /// Two topics on each topic page, with key-art tags and the CRLF breaks of `DESC`.
     private static func registerSampleTopics(_ runtime: SWFMovieRuntime) {
         let topics = [
@@ -98,9 +104,12 @@ enum SWFSystemMenuCommand {
         )
     }
 
-    /// A menu key, `state:<CONSTANT>`, `focus:<path>`, or `call:<path>:<method>`.
+    /// A menu key, `state:<CONSTANT>`, `focus:<path>`, `call:<path>:<method>`,
+    /// `point:<x>/<y>`, or `click:<x>/<y>`.
     private static func perform(_ step: String, runtime: SWFMovieRuntime) throws {
-        if step.hasPrefix("state:") {
+        if step.hasPrefix("point:") || step.hasPrefix("click:") {
+            try SWFMovieProbeCommand.pointer(step, runtime: runtime)
+        } else if step.hasPrefix("state:") {
             let name = String(step.dropFirst(6))
             guard
                 let value = runtime.runtime.registeredClass(named: "SystemPage")?

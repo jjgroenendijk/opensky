@@ -246,7 +246,7 @@ both games. A reference may also be one outside the loaded cells.
 | `debug spell` | `state player` `spells`, and the HUD line in `state menu` `hud.notifications` |
 | `debug enable`, `debug disable` | `state frame` `largeReferences` for a large reference's enable parent |
 | `debug decal` | `state actors` `skinDecals` |
-| `debug gamepad` | `state menu` `movie.focus`, `movie.focusLabel`, `movie.controllers`, and `movie.platform`; `gamepad.count` and `gamepad.lastUserEvent`, the last gameplay event a gamepad pressed, such as `Jump` |
+| `debug gamepad` | `state menu` `movie.focus`, `movie.focusLabel`, `movie.pointerTarget` (the clip a click reaches), `movie.pointerTop` (the topmost clip under the cursor), `movie.controllers`, and `movie.platform`; `gamepad.count` and `gamepad.lastUserEvent`, the last gameplay event a gamepad pressed, such as `Jump` |
 
 ## Benchmark
 

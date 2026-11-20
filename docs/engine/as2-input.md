@@ -76,9 +76,13 @@ Key routing:
 
 Hit testing walks the tree in reverse paint order and finds two things: the topmost drawn node under
 the pointer, and the topmost mouse-enabled node, which gets `onPress`. It respects `_visible` (a
-hidden subtree catches nothing), the matrix chain (the point is moved into each node's space), and
-clip layers (a masked node is hit only where the mask is, the same `(depth, clipDepth]` rule scene
-generation uses).
+hidden subtree catches nothing), `_alpha`, the matrix chain (the point is moved into each node's
+space), and clip layers (a masked node is hit only where the mask is, the same
+`(depth, clipDepth]` rule scene generation uses).
+
+A subtree drawn at alpha 0 catches nothing. The pause menu shows why: its hidden Quests and General
+Stats pages stay above the System page at alpha 0, and the faded-out Settings category list stays
+above the option rows. In the game a click still reaches the System page and the option rows.
 
 A clip is mouse-enabled when it has `onPress`, `onRelease`, `onReleaseOutside`, `onRollOver`,
 `onRollOut`, `onDragOver`, `onDragOut`, `onMouseDown`, or `onMouseUp`, or a mouse `CLIPACTIONS`

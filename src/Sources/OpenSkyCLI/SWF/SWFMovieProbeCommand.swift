@@ -52,9 +52,13 @@ enum SWFMovieProbeCommand {
     }
 
     /// `call:<path>:<method>[:<JSON array of arguments>]`, `focus:<path>`,
-    /// `gamepads:<count>`, or `key:<Flash key code>`. An
-    /// empty path calls a GameDelegate callback.
+    /// `gamepads:<count>`, `key:<Flash key code>`, `point:<x>,<y>`, or `click:<x>,<y>`.
+    /// An empty path calls a GameDelegate callback.
     private static func perform(_ step: String, runtime: SWFMovieRuntime) throws {
+        if step.hasPrefix("point:") || step.hasPrefix("click:") {
+            try pointer(step, runtime: runtime)
+            return
+        }
         if step.hasPrefix("focus:") {
             runtime.focus(runtime.node(
                 atPath: String(step.dropFirst(6)),
@@ -88,6 +92,26 @@ enum SWFMovieProbeCommand {
             runtime.callMovie(parts[2], arguments: arguments)
         } else {
             runtime.callMovie(parts[2], atPath: parts[1], arguments: arguments)
+        }
+    }
+
+    /// Moves the cursor to a stage point in pixels, presses and releases for a click,
+    /// and prints what a press reaches and the clip on top.
+    static func pointer(_ step: String, runtime: SWFMovieRuntime) throws {
+        let numbers = step.dropFirst(6).split { $0 == "," || $0 == "/" }.compactMap { Double($0) }
+        guard numbers.count == 2 else {
+            throw CLIError.usage("swf movie-probe: \(step) needs <x>,<y>")
+        }
+        let (pointX, pointY) = (numbers[0], numbers[1])
+        runtime.handle(.pointerMoved(x: pointX, y: pointY))
+        print(
+            "[INFO] swf probe pointer \(pointX),\(pointY): target "
+                + "\(runtime.pointerTarget?.targetPath ?? "none"), top "
+                + "\(runtime.topMostEntity()?.targetPath ?? "none")"
+        )
+        if step.hasPrefix("click:") {
+            runtime.handle(.pointerPressed(x: pointX, y: pointY))
+            runtime.handle(.pointerReleased(x: pointX, y: pointY))
         }
     }
 

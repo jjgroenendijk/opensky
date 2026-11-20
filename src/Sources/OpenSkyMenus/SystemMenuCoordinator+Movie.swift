@@ -12,30 +12,27 @@ import OpenSkyRendering
 extension SystemMenuCoordinator {
     /// `SystemPage` state numbers, measured from the movie's class constants.
     static let moviePages: [Int: SystemMenuPage] = [
-        0: .main, 3: .settings, 4: .settings, 5: .settings, 6: .controls,
+        0: .main, movieCategoryState: .settings, 4: .settings, 5: .settings, 6: .controls,
         7: .quit, 8: .quit, 9: .quit, 11: .installedContent, 12: .installedContent,
         13: .help, 14: .help
     ]
     static let movieSaveLoadStates: Set = [1, 2, 10, 16, 17]
+    /// `SETTINGS_CATEGORY_STATE`: the Gameplay, Display, and Audio list.
+    static let movieCategoryState = 3
     /// `CREATIONS_LIST_STATE` and `HELP_LIST_STATE`: the list, with no topic open.
     static let movieTopicListStates: Set = [11, 13]
     static let movieTopicTextStates: Set = [12, 14]
 
-    /// Settings stays with the engine model, which the movie mirrors. Cancel on the
-    /// main page is Resume.
+    /// Cancel on the main page is Resume; every other page is the movie's.
     func sendsToMovie(_ event: MenuInputEvent) -> Bool {
         guard movieLoaded else { return false }
         switch model.page {
-        case .settings:
-            return false
         case .main:
             if case .move = event {
                 return true
             }
-            guard event == .button(.accept) else { return false }
-            let entry = renderer?.swfRuntime.flatMap(SystemMenuMovieBridge.selectedEntry)
-            return entry != .settings
-        case .save, .load, .controls, .quit, .installedContent, .help:
+            return event == .button(.accept)
+        case .settings, .save, .load, .controls, .quit, .installedContent, .help:
             return true
         }
     }
@@ -99,12 +96,20 @@ extension SystemMenuCoordinator {
         case .deleteSave: saving.deleteFromMovie(index: call.index)
         case .inputMappings, .resetControls: answerMappings(call.request)
         case .startRemap: beginMovieRemap(call.text)
-        case .quitToMainMenu:
-            close()
-            world?.quitToMainMenu()
-        case .quitToDesktop:
-            close()
+        case .saveSettings, .saveControls:
+            // The store writes each change as it happens.
+            updateMovie(SystemMenuMovieBridge.finishSaving)
+        case .quitToMainMenu, .quitToDesktop:
+            quit(toDesktop: call.request == .quitToDesktop)
+        }
+    }
+
+    private func quit(toDesktop: Bool) {
+        close()
+        if toDesktop {
             world?.quitApplication()
+        } else {
+            world?.quitToMainMenu()
         }
     }
 
@@ -168,6 +173,9 @@ extension SystemMenuCoordinator {
             topicPage?.showList()
         }
         lastMovieState = state
+        if state == Self.movieCategoryState {
+            settingsPage.closeCategory()
+        }
         defer {
             if
                 Self.movieTopicListStates.contains(state),
@@ -187,7 +195,10 @@ extension SystemMenuCoordinator {
         case .quit:
             model.show(page)
             quitPage = ConfirmationModel(question: "Quit", options: Self.quitOptions)
-        case .settings, .controls:
+        case .settings:
+            settingsPage = SettingsPageModel(catalog: settings.store.catalog)
+            model.show(page)
+        case .controls:
             model.show(page)
         case .installedContent, .help:
             showTopicPage(page)

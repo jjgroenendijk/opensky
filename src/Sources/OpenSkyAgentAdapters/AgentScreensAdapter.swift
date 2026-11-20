@@ -81,12 +81,15 @@ extension AgentScreensAdapter {
         ])
     }
 
-    /// The menu movie's focused clip, its frame label, controllers, and button-art platform.
+    /// The menu movie's focused clip, its frame label, the clip a click would reach and
+    /// the clip on top under the cursor, controllers, and button-art platform.
     var movieFocusState: AgentJSON {
         guard let runtime = game.renderer?.swfRuntime else { return .null }
         let focus = runtime.focusTarget
         return [
             "focus": .init(focus?.targetPath),
+            "pointerTarget": .init(runtime.pointerTarget?.targetPath),
+            "pointerTop": .init(runtime.topMostEntity()?.targetPath),
             "focusLabel": .init(focus.flatMap(runtime.currentFrameLabel(of:))),
             "controllers": .init(runtime.controllerCount),
             "platform": .number(runtime.inputPlatform)

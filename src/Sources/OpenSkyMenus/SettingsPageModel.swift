@@ -48,6 +48,10 @@ nonisolated public struct SettingsPageModel: Equatable, Sendable {
         rowIndex = 0
     }
 
+    mutating func closeCategory() {
+        openGroup = nil
+    }
+
     /// The cursor picked a row of the open category.
     mutating func select(row: Int) {
         guard rows.indices.contains(row) else { return }

@@ -85,10 +85,10 @@ The other two pages fade to `hide`. System stops at its `forceFade` label.
 
 Menu events become Flash key down and key up events. Cancel becomes Tab, not Escape:
 `SystemPage.handleInput` goes back a page on `NavigationCode.TAB` and ignores `ESCAPE`, as the
-vanilla inventory menus do. The Settings row opens
-`SystemPage.SETTINGS_CATEGORY_STATE` by its named constant, through `StartState(aiState)`. No state
-number is written into OpenSky. The movie's `CloseMenu` call closes the engine menu. If the movie
-is missing or refuses the input, the engine selector handles it.
+vanilla inventory menus do. The movie's own Settings row opens
+`SystemPage.SETTINGS_CATEGORY_STATE` through `StartState(aiState)`. The movie's `CloseMenu` call
+closes the engine menu. If the movie is missing or refuses the input, the engine selector handles
+it.
 
 Input must go through the renderer's SWF update batch. That batch rebuilds the draw commands before
 it returns. Sending input to the runtime directly changes the movie's selection without redrawing.
@@ -129,12 +129,18 @@ the quicksave slot `sQuicksaveAbbrev`. The detail line follows the game's save d
 for an exterior cell and `sMenuDisplayUnknownLocationString` when there is no cell. Without game
 data, the pages keep OpenSky's English words.
 
-The Settings page keeps its values in the [player settings](/engine/settings.md). The engine
-fills each category's rows when the movie asks for them. Each row carries `text`, `movieType`,
-`value`, `ID` (its index in the category), and `defaultVal`. A row that the movie changes itself
-calls `OptionChange([ID, value])`, and the engine writes that value to the store. A click on a
-stepper arrow, a slider, or a check box does this. So does the movie's `$Defaults` button, which
-sets each row to its `defaultVal`.
+The Settings page keeps its values in the [player settings](/engine/settings.md). The movie runs
+the page: its category list, its option lists, the keys, and the cursor. A category builds its own
+rows, each with `text`, `movieType`, and stepper `options`, and passes the array in
+`RequestGameplayOptions`, `RequestDisplayOptions`, or `RequestAudioOptions`. During that call the
+engine gives each row it knows a `value`, an `ID`, and a `defaultVal`. The same script then
+removes every row without an `ID`, so a row the game does not support, such as
+`$Use Kinect Commands`, disappears. For Audio the engine also adds one slider per sound category
+after `$Master`. The movie then draws the list and starts `OPTIONS_LISTS_STATE` itself.
+
+A row that the movie changes calls `OptionChange([ID, value])`, and the engine writes that value
+to the store. An arrow key, a click on a stepper arrow, a slider, or a check box does this. So
+does the movie's `$Defaults` button, which sets each row to its `defaultVal`.
 
 ### Settings rows and saving
 
@@ -151,7 +157,9 @@ cursor the row finds the part on top:
 Each change calls `OptionChange(ID, value)` and plays `UIMenuPrevNext`. A slider's value is its
 scroll position divided by 20, so 0 to 1. A stepper's value is the chosen index, and a check
 box's is 0 or 1. When the player leaves a changed page, the movie shows `$Saving...` and,
-1000 ms later, calls `SaveSettings`, or `SaveControls` for the Controls page.
+1000 ms later, calls `SaveSettings`, or `SaveControls` for the Controls page. It then ignores
+every key until the engine calls `onSettingsSaved` on the System page. OpenSky saves each change
+as it happens, so it answers both calls at once.
 
 ### Controls rows and remapping
 
@@ -195,14 +203,6 @@ flowchart TD
 
 Both questions show inside the movie: `$Quit to main menu?  Any unsaved progress will be
 lost.` and `$Quit to desktop?  Any unsaved progress will be lost.`
-
-### Where OpenSky differs
-
-Seen beside the game:
-
-- [WARNING] A mouse click on a check box, a stepper arrow, or a slider changes nothing. The
-  Settings page also draws over its category list, and after Esc the old list stays on screen
-  while the selection is stuck.
 
 ## The cursor
 

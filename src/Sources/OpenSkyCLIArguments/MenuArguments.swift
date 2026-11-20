@@ -234,7 +234,7 @@ extension SWFArguments {
             commandName: "movie-probe",
             abstract: "Start any movie, run steps, and print host calls and nodes.",
             discussion: "Steps, split by ';', are call:<path>:<method>[:<JSON args>], "
-                + "focus:<path>, or key:<code>."
+                + "focus:<path>, key:<code>, point:<x>,<y>, or click:<x>,<y> in stage pixels."
         )
         @OptionGroup public var global: GlobalOptions
         @OptionGroup public var probe: MovieProbeOptions

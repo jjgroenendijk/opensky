@@ -195,7 +195,7 @@ public final class SystemMenuCoordinator {
             })
             SettingsMovieBridge.register(
                 runtime: runtime,
-                onRequest: { [weak self] group in self?.openSettingsCategory(group) },
+                onRequest: { [weak self] group in self?.openSettingsCategory(group) ?? [] },
                 onChange: { [weak self] row, value in self?.changeSetting(row: row, to: value) }
             )
             SystemMenuMovieBridge.registerCalls(

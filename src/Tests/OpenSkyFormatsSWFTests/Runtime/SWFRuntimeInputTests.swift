@@ -145,6 +145,23 @@ struct SWFRuntimeInputTests {
         #expect(log.entries == ["onRollOver", "onRollOut"])
     }
 
+    @Test func aTransparentClipCatchesNoPointer() throws {
+        let (runtime, button) = try startedButton()
+        record(runtime, on: button, "onPress", into: RoutingLog())
+        button.alpha = 0
+        #expect(runtime.hitTest(stageTwips: SIMD2(500, 400)).target == nil)
+        button.alpha = 0.01
+        #expect(runtime.hitTest(stageTwips: SIMD2(500, 400)).target === button)
+    }
+
+    @Test func theTopMostEntityIsTheClipThatHoldsTheShapeUnderThePointer() throws {
+        let (runtime, button) = try startedButton()
+        runtime.handle(.pointerMoved(x: 50, y: 40))
+        #expect(runtime.topMostEntity() === button)
+        runtime.handle(.pointerMoved(x: 400, y: 400))
+        #expect(runtime.topMostEntity() == nil)
+    }
+
     @Test func pressAndReleaseOverTheSameObjectRoutesRelease() throws {
         let (runtime, button) = try startedButton()
         let log = RoutingLog()

@@ -54,6 +54,13 @@ nonisolated extension SWFMovieRuntime {
     }
 }
 
+nonisolated extension SWFDisplayObject {
+    /// A node drawn at alpha 0 catches no pointer, and neither does anything inside it.
+    var isTransparent: Bool {
+        colorTransform.multiply.w <= 0 && colorTransform.add.w <= 0
+    }
+}
+
 nonisolated extension SWFClipEventFlags {
     /// Every mouse-driven clip event, for deciding whether a node is a mouse
     /// target without naming each flag at the call site.
@@ -84,7 +91,9 @@ nonisolated extension SWFMovieRuntime {
                 return
             }
             let masks = maskRanges(of: node, transform: transform)
-            for child in node.children.reversed() where child.isVisible && child.clipDepth == nil {
+            for child in node.children.reversed()
+                where child.isVisible && child.clipDepth == nil && !child.isTransparent
+            {
                 guard !isMasked(child, by: masks) else {
                     continue
                 }
@@ -114,7 +123,8 @@ nonisolated extension SWFMovieRuntime {
             else {
                 return
             }
-            if topmost == nil {
+            // A clip draws nothing itself; what it holds was tested above.
+            if topmost == nil, !child.isClip {
                 topmost = child
             }
             if target == nil, runtime.isMouseEnabled(child) {
