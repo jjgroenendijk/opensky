@@ -49,6 +49,7 @@ enum AssetCommand {
         }
         if arguments.sequences {
             NIFSequenceReport.print(file: file)
+            NIFParticleReport.print(file: file)
         }
         if arguments.controllers {
             NIFControllerReport.print(file: file)
