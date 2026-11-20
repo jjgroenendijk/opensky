@@ -79,7 +79,11 @@ esac
 for selector in $(selectors "$bundle"); do set -- "$@" "$selector"; done
 
 status=0
-TEST_RUNNER_OPENSKY_DATA_ROOT="${OPENSKY_DATA_ROOT:-}" tools/xcodebuild.sh "test-$plan" "$@" || status=$?
+# An empty runner override would hide the install path the real-data plans hold.
+if [ -n "${OPENSKY_DATA_ROOT:-}" ]; then
+    export TEST_RUNNER_OPENSKY_DATA_ROOT="$OPENSKY_DATA_ROOT"
+fi
+tools/xcodebuild.sh "test-$plan" "$@" || status=$?
 [ "$status" -eq 0 ] && [ -n "${COVERAGE:-}" ] || exit "$status"
 # Each run overwrites Xcode's one profile; a copy per plan lets the checks merge plans.
 profiles="$OPENSKY_DERIVED_DATA/Build/ProfileData"

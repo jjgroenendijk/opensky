@@ -197,7 +197,9 @@ runs the whole bundle, for a milestone acceptance.
 `src/config/TestPlans/RealData.xctestplan` holds a literal install path. A plan value is not
 macro-expanded, so `$(OPENSKY_DATA_ROOT)` would arrive as those characters. The `RealDataAll` and
 Perf plans hold the same path, and `tools/lint/test-plans.sh` fails when they differ. An exported
-`OPENSKY_DATA_ROOT` does not change it. To use another install, edit all three plans.
+`OPENSKY_DATA_ROOT` wins over it for one run: `make test` passes it on as
+`TEST_RUNNER_OPENSKY_DATA_ROOT`, and only when it is set. An empty override would hide the plan's
+path.
 
 A plan's `selectedTests` does not match Swift Testing tests: selecting any runs zero tests. So the
 plans select the whole target, or a tag, which do work. That is why the real-data suites are their
