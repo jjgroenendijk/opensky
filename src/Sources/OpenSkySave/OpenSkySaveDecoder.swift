@@ -351,6 +351,7 @@ nonisolated extension OpenSkySaveDecoder.Body {
         entries = OpenSkySaveDeltaMerge.merge(body.side.fog, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.side.temperedItems, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.side.itemCopies, into: entries)
+        entries = mergeRunningState(body, into: entries)
         entries = mergePlayerState(body, into: entries)
         // After `INVN`: `STOL` re-flags stacks the inventory merge has already
         // restored, so it cannot run before those totals are in place.

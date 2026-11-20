@@ -233,5 +233,5 @@ are the same ([ESS change forms](/formats/ess-change-forms.md#references)).
   whose share is below one twelfth may never play. A selector bound to a variable always plays
   its authored child, and a transition that waits for a condition or a variable is taken at once.
   An actor that runs its own graph plays the idle as the game does.
-- Props and idles are not saved. A loaded game starts with no idle playing, while the game
-  brings back the graph state.
+- A save keeps the idle each actor plays and its target, but not the graph state. A load
+  plays the idle again from its start once the actor is loaded. A paired idle is not kept.

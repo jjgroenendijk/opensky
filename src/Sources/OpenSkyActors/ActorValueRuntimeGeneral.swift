@@ -230,7 +230,7 @@ extension ActorValueRuntime {
             updated = Self.carryingCurrent(kind, from: state, to: updated, derived: derived)
         }
         guard updated != state else { return true }
-        store.set(updated, for: holder.key, in: holder.cell)
+        persist(updated, for: holder)
         return true
     }
 

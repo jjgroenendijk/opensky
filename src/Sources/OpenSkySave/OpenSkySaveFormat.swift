@@ -185,6 +185,20 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         static let cellResets = "CRST"
         /// The game hour each merchant chest was last stocked, for the vendor restock.
         static let vendorRestocks = "VRST"
+        /// The idle each actor plays and the idle's target.
+        static let idlePlays = "IDLP"
+        /// Running `TranslateTo` moves.
+        static let translations = "TRNS"
+        /// Each actor's social timers and the conversation it started.
+        static let socialStates = "SOCL"
+        /// Damage an imported Skyrim save gave an actor, before its values are first written.
+        static let importedDamage = "AVDM"
+    }
+
+    /// Bits of a `SOCL` entry's flag byte. Bits 0 to 2 mark the social timer, the
+    /// recent-partner timer, and the body check age; each set bit adds one float64.
+    enum SocialFlag: Sendable {
+        static let conversation: UInt8 = 1 << 3
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.

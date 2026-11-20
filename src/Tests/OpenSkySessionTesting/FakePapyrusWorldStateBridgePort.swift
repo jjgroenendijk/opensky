@@ -45,6 +45,11 @@ nonisolated public final class FakePapyrusWorldStateBridgePort: PapyrusWorldStat
     public var lockStateCalls: [ReferenceKey] = []
     public var lockStateResult: ReferenceLockState?
     public var markLocationClearedCalls: [(location: ReferenceKey, playsMusic: Bool)] = []
+    public var restoreTranslationsCalls: [[ReferenceKey: SavedTranslation]] = []
+    public var translateCalls: [TranslateCall] = []
+    public var translateResult = false
+    public var savedTranslationsCallCount = 0
+    public var savedTranslationsResult: [ReferenceKey: SavedTranslation] = [:]
     public var menus: (any PapyrusMenuBridge)?
     public var noteStolenValueCalls: [NoteStolenValueCall] = []
     public var placementCalls: [ReferenceKey] = []
@@ -130,6 +135,20 @@ extension FakePapyrusWorldStateBridgePort {
         }
     }
 
+    nonisolated public struct TranslateCall: CustomStringConvertible {
+        public let key: ReferenceKey
+        public let position: SIMD3<Float>
+        public let speed: Float
+
+        public var description: String {
+            [
+                "key: " + String(describing: key),
+                "position: " + String(describing: position),
+                "speed: " + String(describing: speed)
+            ].joined(separator: ", ")
+        }
+    }
+
     nonisolated public struct NoteStolenValueCall: CustomStringConvertible {
         public let value: Int64
         public let faction: ReferenceKey
@@ -200,333 +219,5 @@ extension FakePapyrusWorldStateBridgePort {
                 "activation: " + String(describing: activation)
             ].joined(separator: ", ")
         }
-    }
-}
-
-nonisolated extension FakePapyrusWorldStateBridgePort {
-    public var dialogueFragments: any DialogueFragmentDispatching {
-        get {
-            guard let dialogueFragmentsValue
-            else {
-                preconditionFailure("FakePapyrusWorldStateBridgePort.dialogueFragments is unset")
-            }
-            return dialogueFragmentsValue
-        }
-        set { dialogueFragmentsValue = newValue }
-    }
-
-    public var sceneFragments: any SceneFragmentDispatching {
-        get {
-            guard let sceneFragmentsValue
-            else {
-                preconditionFailure("FakePapyrusWorldStateBridgePort.sceneFragments is unset")
-            }
-            return sceneFragmentsValue
-        }
-        set { sceneFragmentsValue = newValue }
-    }
-
-    @discardableResult
-    public func activate(
-        _ target: ReferenceKey,
-        by activator: ReferenceKey,
-        togglesOpen: Bool
-    ) -> PapyrusActivationOutcome {
-        activateCalls.append(ActivateCall(
-            target: target,
-            activator: activator,
-            togglesOpen: togglesOpen
-        ))
-        guard let activateResult else {
-            preconditionFailure("FakePapyrusWorldStateBridgePort.activate has no result")
-        }
-        return activateResult
-    }
-
-    public func actorFlags(of key: ReferenceKey, record: ActorBase.Flags?) -> ActorBase.Flags? {
-        actorFlagsCalls.append((key: key, record: record))
-        return actorFlagsResult
-    }
-
-    @discardableResult
-    public func addSpell(_ spell: ReferenceKey, to actor: ReferenceKey) -> Bool {
-        addSpellCalls.append((spell: spell, actor: actor))
-        return addSpellResult
-    }
-
-    @discardableResult
-    public func attachRunningQuestScripts() -> Int {
-        attachRunningQuestScriptsCallCount += 1
-        return attachRunningQuestScriptsResult
-    }
-
-    @discardableResult
-    public func attachScripts(ofQuest id: FormID) -> Int {
-        attachScriptsCalls.append(id)
-        return attachScriptsResult
-    }
-
-    public func baseObject(of key: ReferenceKey) -> FormID? {
-        baseObjectCalls.append(key)
-        return baseObjectResult
-    }
-
-    @discardableResult
-    public func castSpell(
-        _ spell: ReferenceKey,
-        from source: ReferenceKey,
-        at target: ReferenceKey?,
-        blame: ReferenceKey?
-    ) -> Bool {
-        castSpellCalls.append(CastSpellCall(
-            spell: spell,
-            source: source,
-            target: target,
-            blame: blame
-        ))
-        return castSpellResult
-    }
-
-    public func formHasKeyword(_ form: ReferenceKey, keyword: ReferenceKey) -> Bool? {
-        formHasKeywordCalls.append((form: form, keyword: keyword))
-        return formHasKeywordResult
-    }
-
-    public var gameNatives: PapyrusGameNatives {
-        get {
-            guard let gameNativesValue
-            else { preconditionFailure("FakePapyrusWorldStateBridgePort.gameNatives is unset") }
-            return gameNativesValue
-        }
-        set { gameNativesValue = newValue }
-    }
-
-    public func isHostile(_ actor: ReferenceKey, toward other: ReferenceKey) -> Bool? {
-        isHostileCalls.append((actor: actor, other: other))
-        return isHostileResult
-    }
-
-    public func isInFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
-        isInFactionCalls.append((actor: actor, faction: faction))
-        return isInFactionResult
-    }
-
-    @discardableResult
-    public func killActor(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool {
-        killActorCalls.append((key: key, killer: killer))
-        return killActorResult
-    }
-
-    public func localFormID(of key: ReferenceKey) -> FormID? {
-        localFormIDCalls.append(key)
-        return localFormIDResult
-    }
-
-    public func lockState(for key: ReferenceKey) -> ReferenceLockState? {
-        lockStateCalls.append(key)
-        return lockStateResult
-    }
-
-    public func markLocationCleared(_ location: ReferenceKey, playsMusic: Bool) {
-        markLocationClearedCalls.append((location: location, playsMusic: playsMusic))
-    }
-
-    public func noteStolenValue(_ value: Int64, from faction: ReferenceKey, witnessed: Bool) {
-        noteStolenValueCalls.append(NoteStolenValueCall(
-            value: value,
-            faction: faction,
-            witnessed: witnessed
-        ))
-    }
-
-    public func placement(of key: ReferenceKey) -> ReferencePlacement? {
-        placementCalls.append(key)
-        return placementResult
-    }
-
-    public var playerControlLocks: PlayerControlLocks {
-        get {
-            guard let playerControlLocksValue
-            else {
-                preconditionFailure("FakePapyrusWorldStateBridgePort.playerControlLocks is unset")
-            }
-            return playerControlLocksValue
-        }
-        set { playerControlLocksValue = newValue }
-    }
-
-    public func publishFactionReactions() {
-        publishFactionReactionsCallCount += 1
-    }
-
-    public func publishLeveledEdits() {
-        publishLeveledEditsCallCount += 1
-    }
-
-    public func queueItemRead(base: ReferenceKey) {
-        queueItemReadCalls.append(base)
-    }
-
-    @discardableResult
-    public func queuePackageEvent(
-        slot: UInt32,
-        package: FormID,
-        actor: ReferenceKey
-    ) -> Int {
-        queuePackageEventCalls.append(QueuePackageEventCall(
-            slot: slot,
-            package: package,
-            actor: actor
-        ))
-        return queuePackageEventResult
-    }
-
-    @discardableResult
-    public func queueStoryStartEvent(quest id: FormID, event: StoryEventData) -> Int {
-        queueStoryStartEventCalls.append((id: id, event: event))
-        return queueStoryStartEventResult
-    }
-
-    public func recordHit(_ hit: ScriptHitEvent, targetWasHostile: Bool) {
-        recordHitCalls.append((hit: hit, targetWasHostile: targetWasHostile))
-    }
-
-    public func recordKill(victim: ReferenceKey, killer: ReferenceKey?) {
-        recordKillCalls.append((victim: victim, killer: killer))
-    }
-
-    public func referenceKey(forFormID formID: FormID) -> ReferenceKey? {
-        referenceKeyCalls.append(formID)
-        return referenceKeyResult
-    }
-
-    public func referenceState(for key: ReferenceKey) -> ReferenceState? {
-        referenceStateCalls.append(key)
-        return referenceStateResult
-    }
-
-    public func relationshipRank(of actor: ReferenceKey, toward other: ReferenceKey) -> Int8?? {
-        relationshipRankCalls.append((actor: actor, other: other))
-        return relationshipRankResult
-    }
-
-    public func relocate(_ key: ReferenceKey, to location: CellSceneLocation) {
-        relocateKeyToCalls.append((key: key, location: location))
-    }
-
-    public func relocate(_ key: ReferenceKey, to location: CellSceneLocation, worldspace: String?) {
-        relocateKeyToWorldspaceCalls.append(RelocateKeyToWorldspaceCall(
-            key: key,
-            location: location,
-            worldspace: worldspace
-        ))
-    }
-
-    @discardableResult
-    public func removeSpell(_ spell: ReferenceKey, from actor: ReferenceKey) -> Bool {
-        removeSpellCalls.append((spell: spell, actor: actor))
-        return removeSpellResult
-    }
-
-    @discardableResult
-    public func resurrectActor(_ key: ReferenceKey) -> Bool {
-        resurrectActorCalls.append(key)
-        return resurrectActorResult
-    }
-
-    @discardableResult
-    public func runPackageFragment(
-        of package: Package,
-        slot: UInt32,
-        actor: ReferenceKey
-    ) -> Bool {
-        runPackageFragmentCalls.append(RunPackageFragmentCall(
-            package: package,
-            slot: slot,
-            actor: actor
-        ))
-        return runPackageFragmentResult
-    }
-
-    @discardableResult
-    public func runPerkFragment(
-        of perk: Perk,
-        key: ReferenceKey,
-        index: UInt16,
-        activation: PerkFragmentActivation
-    ) -> Bool {
-        runPerkFragmentCalls.append(RunPerkFragmentCall(
-            perk: perk,
-            key: key,
-            index: index,
-            activation: activation
-        ))
-        return runPerkFragmentResult
-    }
-
-    public func scriptedState(of key: ReferenceKey) -> ScriptedReferenceState {
-        scriptedStateCalls.append(key)
-        guard let scriptedStateResult else {
-            preconditionFailure("FakePapyrusWorldStateBridgePort.scriptedState has no result")
-        }
-        return scriptedStateResult
-    }
-
-    public func scriptedStateResolution() -> ScriptedStateConditionResolution {
-        scriptedStateResolutionCallCount += 1
-        guard let scriptedStateResolutionResult else {
-            preconditionFailure(
-                "FakePapyrusWorldStateBridgePort.scriptedStateResolution has no result"
-            )
-        }
-        return scriptedStateResolutionResult
-    }
-
-    @discardableResult
-    public func setQuestStage(_ stage: UInt16, for key: ReferenceKey) throws -> Bool {
-        setQuestStageCalls.append((stage: stage, key: key))
-        if let setQuestStageError {
-            throw setQuestStageError
-        }
-        return setQuestStageResult
-    }
-
-    public func spawnReference(of base: ReferenceKey, at anchor: ReferenceKey) -> ReferenceKey? {
-        spawnReferenceCalls.append((base: base, anchor: anchor))
-        return spawnReferenceResult
-    }
-
-    @discardableResult
-    public func startActorCombat(_ key: ReferenceKey, target: ReferenceKey) -> Bool {
-        startActorCombatCalls.append((key: key, target: target))
-        return startActorCombatResult
-    }
-
-    @discardableResult
-    public func stopActorCombat(_ key: ReferenceKey) -> Bool {
-        stopActorCombatCalls.append(key)
-        return stopActorCombatResult
-    }
-
-    public func stopQuest(for key: ReferenceKey) throws {
-        stopQuestCalls.append(key)
-        if let stopQuestError {
-            throw stopQuestError
-        }
-    }
-
-    public func updateScriptedState(
-        of key: ReferenceKey,
-        _ change: (inout ScriptedReferenceState) -> Void
-    ) {
-        updateScriptedStateCalls.append(key)
-    }
-
-    @discardableResult
-    public func write(_ component: WorldStateComponentValue, for key: ReferenceKey)
-        -> Bool
-    {
-        writeCalls.append((component: component, key: key))
-        return writeResult
     }
 }

@@ -38,6 +38,13 @@ public protocol PapyrusWorldStateBridgePort: AnyObject {
     func localFormID(of key: ReferenceKey) -> FormID?
     func lockState(for key: ReferenceKey) -> ReferenceLockState?
     func markLocationCleared(_ location: ReferenceKey, playsMusic: Bool)
+    func restoreTranslations(_ saved: [ReferenceKey: SavedTranslation])
+    @discardableResult func translate(
+        _ key: ReferenceKey,
+        to position: SIMD3<Float>,
+        speed: Float
+    ) -> Bool
+    func savedTranslations() -> [ReferenceKey: SavedTranslation]
     var menus: (any PapyrusMenuBridge)? { get }
     func noteStolenValue(_ value: Int64, from faction: ReferenceKey, witnessed: Bool)
     func placement(of key: ReferenceKey) -> ReferencePlacement?

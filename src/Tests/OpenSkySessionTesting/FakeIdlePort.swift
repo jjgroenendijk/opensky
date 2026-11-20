@@ -46,6 +46,9 @@ nonisolated public final class FakeIdlePort: IdlePort {
     public var store: IdleStore?
     public var idleSnapshotCalls: [ReferenceKey?] = []
     public var idleSnapshotResult: IdleControlSnapshot?
+    public var savedIdlePlaysCallCount = 0
+    public var savedIdlePlaysResult: [ReferenceKey: SavedIdlePlay] = [:]
+    public var restoreIdlePlaysCalls: [[ReferenceKey: SavedIdlePlay]] = []
     public var advanceCallCount = 0
 
     public init() {}
@@ -230,6 +233,15 @@ nonisolated extension FakeIdlePort {
             preconditionFailure("FakeIdlePort.idleSnapshot has no result")
         }
         return idleSnapshotResult
+    }
+
+    public func savedIdlePlays() -> [ReferenceKey: SavedIdlePlay] {
+        savedIdlePlaysCallCount += 1
+        return savedIdlePlaysResult
+    }
+
+    public func restoreIdlePlays(_ saved: [ReferenceKey: SavedIdlePlay]) {
+        restoreIdlePlaysCalls.append(saved)
     }
 
     public func advance() {

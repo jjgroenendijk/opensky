@@ -3,10 +3,12 @@
 // map is counted with its reason.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsESS
+import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyQuestsInterface
 import OpenSkyWorldState
@@ -76,8 +78,8 @@ nonisolated extension ESSChangeFormImport {
                 importer.add(ReferenceDeletionState.deleted, to: key)
             }
         }
-        if decoded.isActor, change.has(ESSChangeFlag.Actor.lifeState) {
-            importer.report.update("actors") { $0.skip("life state (layout undocumented)") }
+        if decoded.isActor {
+            importActorData(decoded, change: change, key: key)
         }
         let relocated = change.has(ESSChangeFlag.Reference.cellChanged)
             || change.has(ESSChangeFlag.Reference.promoted)
@@ -99,6 +101,35 @@ nonisolated extension ESSChangeFormImport {
             )
             importer.report.update("references") { $0.imported += 1 }
         }
+    }
+
+    /// Death maps, and so does the damage a living actor carries. The import cannot
+    /// read the actor's maximums, so the actor value runtime applies the damage.
+    private func importActorData(
+        _ decoded: ESSReferenceChange, change: ESSChangeForm, key: ReferenceKey
+    ) {
+        guard let data = decoded.actorData, key != .player else {
+            if change.has(ESSChangeFlag.Actor.lifeState) {
+                importer.report.update("actors") { $0.skip("life state behind process data") }
+            }
+            return
+        }
+        if data.isDead {
+            importer.add(ActorDeathState(isDead: true), to: key)
+            importer.report.update("actors") { $0.imported += 1 }
+        } else if let damage = Self.damage(data), damage != .zero {
+            importer.add(ImportedActorDamage(amounts: damage), to: key)
+            importer.report.update("actors") { $0.imported += 1 }
+        }
+    }
+
+    /// The damage modifiers of health, magicka, and stamina, as positive amounts.
+    static func damage(_ data: ESSActorData) -> ActorValues? {
+        let values = data.primaryValues
+        guard values.count >= 3 else { return nil }
+        return ActorValues(
+            health: -values[0].damage, magicka: -values[1].damage, stamina: -values[2].damage
+        )
     }
 
     private func importSpawn(

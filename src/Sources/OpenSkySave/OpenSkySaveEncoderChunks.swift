@@ -75,6 +75,7 @@ nonisolated enum OpenSkySaveItemAndWorldChunks {
         OpenSkySaveStoryWriter.writeStoryManagerQuests(entries, into: &writer)
         OpenSkySaveStoryWriter.writeDialogueBranches(entries, into: &writer)
         OpenSkySaveHelpMessagesWriter.writeHelpMessages(entries, into: &writer)
+        OpenSkySaveRunningStateWriter.write(entries, into: &writer)
         OpenSkySavePlayerRulesWriter.writePlayerRules(entries, into: &writer)
         OpenSkySaveScriptedStateWriter.writeScriptedStates(entries, into: &writer)
         OpenSkySaveJournalWriter.writeJournal(entries, into: &writer)

@@ -4,6 +4,7 @@ import Foundation
 import OpenSkyAudio
 import OpenSkyGameData
 import OpenSkyMenusInterface
+import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkySessionAdapters
 import OpenSkySessionInterface
@@ -38,6 +39,14 @@ final class SessionHost: AudioListenerHost, AudioMixHost, AudioWorldHost,
     let fakeInventory = FakeInventoryPort()
     let fakeLoadingScreens = FakeLoadingScreenPort()
     let fakeMagic = FakeMagicPort()
+    /// A save reads the social state, so the fake starts with an empty one.
+    let fakeStoryManager: FakeStoryManagerPort = {
+        let manager = FakeStoryManagerPort()
+        manager.social.stateValue = SocialState()
+        return manager
+    }()
+
+    let fakeStoryWorld = FakeStoryWorldPort()
     let fakeMapWorld = FakeMapWorldPort()
     let fakeMenuMode: FakeMenuModePort = {
         let fake = FakeMenuModePort()
@@ -144,6 +153,14 @@ final class SessionHost: AudioListenerHost, AudioMixHost, AudioWorldHost,
 
     var idleWorld: any IdleWorldPort {
         fakeIdleWorld
+    }
+
+    var storyManager: any StoryManagerPort {
+        fakeStoryManager
+    }
+
+    var storyWorld: any StoryWorldPort {
+        fakeStoryWorld
     }
 
     var inventory: any InventoryPort {

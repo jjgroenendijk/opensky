@@ -1,8 +1,8 @@
 ---
 type: File Format
 title: OpenSky save chunks — world and scripts
-description: Payload layouts of the GVAR, CLOK, PSCR, PTMR, INVN, SPWN, QSTS, QJLG, QALS, and
-  QLOC chunks in an .osav save.
+description: Payload layouts of the world, script, inventory, quest, story, and running-state
+  chunks in an .osav save, such as GVAR, PSCR, INVN, QSTS, IDLP, TRNS, and SOCL.
 tags: [format, save, world-state, papyrus, inventory, quests]
 ---
 
@@ -224,6 +224,34 @@ One entry for the player: the player's key, the cell, a uint32 record count, the
 per input event, sorted by event name. A record is the event name as a string, a uint32
 count of times the [help message](/engine/messages.md#help-messages) showed, and a done
 byte: 1 once the player did the event. Minimum size: 12 bytes per entry, 7 per record.
+
+## IDLP: playing idles
+
+One entry per actor that plays an idle: the actor's key, the cell, the `IDLE` record as its
+plugin name (a string) and a uint32 object ID, then a byte, 1 when the idle's target key
+follows. The name keeps the record found when the load order changes. A load plays the idle
+again once the actor is loaded ([idle runtime](/engine/idle-runtime.md#what-a-save-keeps)).
+Minimum size: 15 bytes per entry.
+
+## TRNS: scripted moves
+
+One entry per running `TranslateTo` move: the moving reference's key, the cell, then four
+float32 vectors (the drawn position, the drawn rotation in radians, the target position, the
+target rotation), a float32 speed in units per second, a float32 rotation cap in radians per
+second (0 for none), and a byte, 1 once `OnTranslationAlmostComplete` was sent. A load goes on
+with the move from the saved pose
+([translation](/engine/papyrus-translation.md#a-move-in-a-save)). Size: 65 bytes per entry.
+
+## SOCL: social state
+
+One entry per actor with [social](/engine/random-conversations.md#what-a-save-keeps) state:
+the key, the cell, and a flag byte. Bits 0, 1, and 2 mark the social timer, the
+recent-partner timer, and the time since a finder last reacted to the actor's body; each set
+bit adds one float64 of seconds, in that order. Bit 3 marks a conversation the actor started:
+the partner's key, a phase byte (0 waiting for an answer, 1 approaching, 2 talking), a float64
+age in seconds, a float64 answer time, and a byte, 1 when a float32 vector of the speaker's goal
+follows. An unknown phase is rejected; a time that is not finite is dropped. Minimum size: 9
+bytes per entry.
 
 ## PRUL: player rules
 

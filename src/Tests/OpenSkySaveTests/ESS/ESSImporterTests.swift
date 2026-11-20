@@ -94,6 +94,17 @@ struct ESSImporterTests {
             .saidCount == 1)
     }
 
+    @Test func actorsKeepTheirDeathAndDamage() throws {
+        let result = try Self.run()
+        let dead = Self.skyrim(Fixture.deadActor)
+        #expect(Self.component(ActorDeathState.self, of: dead, in: result)?.isDead == true)
+        let hurt = Self.skyrim(Fixture.hurtActor)
+        #expect(Self.component(ActorDeathState.self, of: hurt, in: result) == nil)
+        #expect(Self.component(ImportedActorDamage.self, of: hurt, in: result)?.amounts
+            == ActorValues(health: 40, magicka: 0, stamina: 0))
+        #expect(result.report.category("actors")?.imported == 2)
+    }
+
     @Test func globalsClockAndScripts() throws {
         let result = try Self.run()
         let globals = result.contents.snapshot.globals

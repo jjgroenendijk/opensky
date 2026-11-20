@@ -1,8 +1,9 @@
 // The pure move behind `TranslateTo`: travel at the given speed, rotation that arrives with
-// the position unless a cap slows it, and the one almost-complete step.
+// the position unless a cap slows it, the one almost-complete step, and a saved move.
 
 import Foundation
 @testable import OpenSkyScripting
+import OpenSkyScriptingInterface
 import Testing
 
 struct PapyrusTranslationTests {
@@ -73,5 +74,16 @@ struct PapyrusTranslationTests {
         #expect(PapyrusTranslation(
             from: .zero, rotation: .zero, to: SIMD3(.nan, 0, 0), rotation: .zero, speed: 1
         ) == nil)
+    }
+
+    @Test func aSavedMoveGoesOnFromItsPose() throws {
+        var move = try Self.move(rotation: SIMD3(0, 0, 1))
+        _ = move.advance(by: 0.5)
+        let saved = move.saved
+        #expect(saved.position == SIMD3(50, 0, 0))
+        var restored = try #require(PapyrusTranslation(saved: saved))
+        #expect(restored == move)
+        #expect(restored.advance(by: 0.5) == move.advance(by: 0.5))
+        #expect(restored.isComplete)
     }
 }

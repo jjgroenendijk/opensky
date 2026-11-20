@@ -5,8 +5,8 @@
 // transform write rebuilds the cell. See docs/engine/papyrus-translation.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsESM
+public import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
@@ -38,6 +38,7 @@ extension PapyrusWorldStateBridge.ScriptedMoves {
 
     /// Leaves the reference where it is now, with no event.
     public func stopTranslation(of key: ReferenceKey) {
+        bridge.runState.pendingTranslations[key] = nil
         guard let move = bridge.runState.translations[key] else { return }
         settle(key, at: move)
     }
@@ -45,6 +46,7 @@ extension PapyrusWorldStateBridge.ScriptedMoves {
     /// Moves every running translation one frame on, in key order. A move whose
     /// reference left the resident cells ends without an event.
     public func advanceTranslations(by seconds: Float) {
+        resumePendingTranslations()
         guard !bridge.runState.translations.isEmpty else { return }
         for key in bridge.runState.translations.keys.sorted() {
             guard var move = bridge.runState.translations[key] else { continue }
@@ -67,11 +69,42 @@ extension PapyrusWorldStateBridge.ScriptedMoves {
         bridge.natives.session.publishTranslationPoses?(translationPoses)
     }
 
-    /// A loaded game starts with no move running: the save holds none.
+    /// A loaded game first drops the moves of the session it replaces.
     public func clearTranslations() {
+        bridge.runState.pendingTranslations = [:]
         guard !bridge.runState.translations.isEmpty else { return }
         bridge.runState.translations = [:]
         bridge.natives.session.publishTranslationPoses?(translationPoses)
+    }
+
+    /// Every move a save keeps, running or still waiting for its cell.
+    public func savedTranslations() -> [ReferenceKey: SavedTranslation] {
+        bridge.runState.pendingTranslations.merging(bridge.runState.translations) { _, running in
+            running
+        }.mapValues(\.saved)
+    }
+
+    /// The moves a save kept. Each goes on once a resident cell holds its reference.
+    public func restoreTranslations(_ saved: [ReferenceKey: SavedTranslation]) {
+        clearTranslations()
+        bridge.runState.pendingTranslations = saved
+            .compactMapValues(PapyrusTranslation.init(saved:))
+        resumePendingTranslations()
+    }
+
+    private func resumePendingTranslations() {
+        guard !bridge.runState.pendingTranslations.isEmpty else { return }
+        var resumed = false
+        for key in bridge.runState.pendingTranslations.keys.sorted()
+            where bridge.ports.references?.referenceEntry(key: key) != nil
+        {
+            bridge.runState.translations[key] = bridge.runState.pendingTranslations
+                .removeValue(forKey: key)
+            resumed = true
+        }
+        if resumed {
+            bridge.natives.session.publishTranslationPoses?(translationPoses)
+        }
     }
 
     /// Where each moving reference is drawn this frame, without scale.
@@ -80,6 +113,7 @@ extension PapyrusWorldStateBridge.ScriptedMoves {
     }
 
     func endTranslation(of key: ReferenceKey) {
+        bridge.runState.pendingTranslations[key] = nil
         guard bridge.runState.translations.removeValue(forKey: key) != nil else { return }
         bridge.natives.session.publishTranslationPoses?(translationPoses)
     }
@@ -97,5 +131,27 @@ extension PapyrusWorldStateBridge.ScriptedMoves {
         ) {
             world.enqueue(PapyrusScriptEvent(target: instance, functionName: name, arguments: []))
         }
+    }
+}
+
+extension PapyrusWorldStateBridge {
+    /// Every scripted move a save keeps.
+    public func savedTranslations() -> [ReferenceKey: SavedTranslation] {
+        scriptedMoves.savedTranslations()
+    }
+
+    /// Starts a move to `position` that keeps the reference's rotation. False for a
+    /// reference no resident cell holds.
+    public func translate(_ key: ReferenceKey, to position: SIMD3<Float>, speed: Float) -> Bool {
+        guard let rotation = referenceState(for: key)?.transform.rotation else { return false }
+        return scriptedMoves.startTranslation(
+            of: key, to: ReferenceTransformOverride(position: position, rotation: rotation),
+            speed: speed, maxRotationSpeed: 0
+        )
+    }
+
+    /// The scripted moves a save kept, after the scripts are restored.
+    public func restoreTranslations(_ saved: [ReferenceKey: SavedTranslation]) {
+        scriptedMoves.restoreTranslations(saved)
     }
 }

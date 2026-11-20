@@ -1,7 +1,7 @@
 ---
 type: File Format
 title: OpenSky save chunks — actors
-description: Payload layouts of the AVAL, AVOV, DETH, CBTS, DLGS, DLGT, AEFF, ECHG, SPLB, PRKS,
+description: Payload layouts of the AVAL, AVDM, AVOV, DETH, CBTS, DLGS, DLGT, AEFF, ECHG, SPLB, PRKS,
   PLVL, PLGD, PTRN, FCTN, RELS, RELF, CRIM, STOL, STOF, TMPR, ICPY, CRVG, CPOT, INGK, WPSN, FAVS,
   and ENCK chunks in an .osav save.
 tags: [format, save, world-state, actors, magic, crime]
@@ -24,6 +24,14 @@ One entry per actor whose health, magicka, or stamina is not full: key, cell, th
 health, magicka, and stamina (current values). Maximums are not stored; they come from the
 RACE, CLAS, and NPC_ records ([actor values](/engine/actor-values.md)). A value that is
 negative or not finite becomes 0. Minimum entry size: 20 bytes.
+
+## AVDM: imported damage
+
+One entry per actor an imported Skyrim save left damaged: key, cell, then float32 health,
+magicka, and stamina damage, each 0 or more. The actor value runtime takes it off the actor's
+derived maximums until it first writes the actor's values, and then drops it
+([ESS import](/engine/ess-import.md)). A value that is negative or not finite becomes 0.
+Minimum entry size: 20 bytes.
 
 ## AVOV: actor-value overrides
 

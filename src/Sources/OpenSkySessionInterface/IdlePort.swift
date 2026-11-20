@@ -39,6 +39,8 @@ public protocol IdlePort: AnyObject {
     var store: IdleStore? { get }
 
     func idleSnapshot(for actor: ReferenceKey?) -> IdleControlSnapshot
+    func savedIdlePlays() -> [ReferenceKey: SavedIdlePlay]
+    func restoreIdlePlays(_ saved: [ReferenceKey: SavedIdlePlay])
 
     func advance()
 }

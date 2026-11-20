@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyConditions
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenusInterface
 import OpenSkySaveInterface
@@ -53,5 +54,17 @@ struct SaveSessionFlowTests {
         host.fakeWorldState.snapshotResult = .empty
         let contents = world.saveContents.sessionContents(summary: nil, thumbnail: nil)
         #expect(contents.metadata.creationTimestamp == UInt64(Self.start.timeIntervalSince1970))
+    }
+
+    @Test func aLoadHandsTheRunningStateBackAndClearsIt() throws {
+        let actor = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x0001_3BBD)
+        host.fakeWorldState.sortedDirtyKeysResult = [actor]
+        host.fakeWorldState.componentResult = nil
+        RuntimeStateRunningStateSave.restore(into: host)
+        let idles = try #require(host.fakeIdleWorld.idles as? FakeIdlePort)
+        #expect(idles.restoreIdlePlaysCalls == [[:]])
+        #expect(host.fakeStoryManager.social.restoreCalls.count == 1)
+        // No bridge runs here, so the moves stay in the store.
+        #expect(host.fakeWorldState.componentCalls == [actor, actor])
     }
 }
