@@ -239,6 +239,9 @@ enum SWFSystemMenuCommand {
                 )
             }
         }
+        if let text = runtime.text(of: node) {
+            print("[INFO]   text = \"\(text)\"")
+        }
         printPlacement(node, runtime: runtime)
         for child in node.children {
             print("[INFO]   child \(child.depth) \(child.name ?? "-") \(child.content)")
