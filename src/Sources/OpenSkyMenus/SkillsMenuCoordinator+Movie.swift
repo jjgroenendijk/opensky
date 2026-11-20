@@ -15,6 +15,8 @@ extension SkillsMenuCoordinator {
 
     /// Loads the stats movie, or sends the model to the one already up.
     func syncMovie() {
+        // The movies stopped when the close began; the sky outro needs neither.
+        guard !isClosing else { return }
         syncLevelUpMovie()
         guard let wanted = wantedMoviePath else { return }
         guard wanted == movie.path else {
