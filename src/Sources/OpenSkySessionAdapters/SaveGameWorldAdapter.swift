@@ -4,7 +4,9 @@
 public import Foundation
 import Metal
 import OpenSkyCells
+import OpenSkyConditions
 import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyMenusInterface
 import OpenSkyProgressionInterface
@@ -303,13 +305,25 @@ struct SaveSnapshot {
         )
     }
 
+    /// The player's location by name, as the game's save list shows it; a nameless
+    /// location takes its nearest named parent.
     private func locationName() -> String {
         let texts = saveTexts
+        let data = game.runtimeStateWorld.conditionData()
+        let chain = data.currentLocation(of: .player)
+            .flatMap { id in data.locations?.parentChain(of: id) } ?? []
+        if let name = Self.placeName(chain.map { game.mapWorld.text($0.location.name) }) {
+            return name
+        }
         return switch game.streamer.currentCellLocation {
         case let .exterior(cell): "\(texts.wilderness) \(cell.x), \(cell.y)"
         case let .interior(formID): "Interior \(formID)"
         case nil: texts.unknownLocation
         }
+    }
+
+    static func placeName(_ names: [String?]) -> String? {
+        names.lazy.compactMap(\.self).first { !$0.isEmpty }
     }
 
     func thumbnail() -> SaveThumbnail? {
