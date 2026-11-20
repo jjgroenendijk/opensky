@@ -10,9 +10,14 @@ public import OpenSkyMenusInterface
 /// What the movie asked the engine to do, as reported through its outbound
 /// `GameDelegate` calls.
 nonisolated public enum InventoryMenuAction: Equatable, Sendable {
-    /// Equip or unequip the row at this index of the current category.
-    case equip(index: Int)
-    case drop(index: Int)
+    /// Equip or unequip the selected row. `ItemSelect` carries a hand slot, not a row.
+    case equipSelected
+    /// `ItemDrop`: drop this many of the selected row, after the quantity slider.
+    case drop(count: Int)
+    /// `QuantitySliderOpen`: the item card's quantity slider opened or closed.
+    case quantitySlider(open: Bool)
+    /// `UpdateItem3D`: show the selected row's 3D item, or hide it.
+    case item3D(visible: Bool)
     /// The Charge button on an enchanted weapon below full charge.
     case showSoulGems
     /// A press on the card's list: the soul gem at this index.
@@ -59,19 +64,19 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
 
     /// Movie-to-engine calls that change no OpenSky state. Boolean queries answer
     /// false. Installed in `prepare`, because bring-up already makes `myLog` calls.
-    /// `UpdateItem3D` (the item preview) is deferred and answered as a no-op.
     public static let sinkHostFunctions = [
         "myLog", "PlaySound", "PlayOKSound", "RequestPlayerInfo",
         "RequestItemCardInfo", "SetSelectedItem", "ShowShoutFistHelp",
-        "UpdateItem3D", "EndItem3D"
+        "DisabledItemSelect", "CheckForMouseEquip"
     ]
     public static let falseHostFunctions = ["ShouldShowMod", "GetIsRemoteDevice"]
 
     /// The outbound calls that reach an engine action, registered in `activate`
-    /// because each needs the caller's callback. Only `CloseMenu` has been seen
-    /// in a run; `ItemSelect` and `DropItem` come from the movie's bytecode.
+    /// because each needs the caller's callback. `UpdateItem3D` runs during
+    /// bring-up, so it is registered in `prepare` too, as a no-op until then.
     public static let actionHostFunctions = [
-        "CloseMenu", "ItemSelect", "DropItem", "ShowSoulGemList", "ItemCardListCallback"
+        "CloseMenu", "ItemSelect", "ItemDrop", "QuantitySliderOpen", "UpdateItem3D",
+        "ShowSoulGemList", "ItemCardListCallback"
     ]
 
     /// Scaleform's UI-sound hook, reached as a plain `_global` function rather
@@ -86,6 +91,9 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
     /// the runtime is started (`Renderer.startSWFRuntime(prepare:)`).
     public static func prepare(runtime: SWFMovieRuntime) {
         for name in sinkHostFunctions {
+            runtime.registerHostFunction(name) { _ in .undefined }
+        }
+        for name in actionHostFunctions {
             runtime.registerHostFunction(name) { _ in .undefined }
         }
         for name in falseHostFunctions {

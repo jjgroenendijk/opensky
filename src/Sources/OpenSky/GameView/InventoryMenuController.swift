@@ -56,6 +56,12 @@ final class InventoryMenuController {
     var preview = InventoryItemPreview()
     var previewSource: InventoryItemPreviewSource?
     var previewShown = false
+    /// The movie's own quantity slider is open, so keys go to the movie.
+    var movieQuantityOpen = false
+    /// The movie's last `UpdateItem3D`: whether its item list shows the 3D item.
+    var movieShowsItem3D = false
+    /// Set by a movie answer to `DropItem`, so a drop the movie ignored falls back.
+    var movieAnsweredDrop = false
 
     init(game: any InventoryMenuHost, itemDetails: InventoryMenuItemDetails) {
         self.game = game
@@ -83,6 +89,8 @@ final class InventoryMenuController {
         guard isOpen else { return }
         isOpen = false
         model.quantity = nil
+        movieQuantityOpen = false
+        movieShowsItem3D = false
         game.menuMode.dismiss(Self.identifier)
         movie.stop()
         hidePreview()
@@ -138,7 +146,11 @@ final class InventoryMenuController {
                     self?.apply(action)
                 }
             },
-            didLoad: { [weak self] in self?.publishModel() }
+            didLoad: { [weak self] in
+                // The item panel opens beside the categories, as the drop key needs.
+                self?.movie.publish(ItemCardSubMenuBridge.showItemsList(runtime:))
+                self?.publishModel()
+            }
         ))
     }
 
@@ -148,6 +160,10 @@ final class InventoryMenuController {
     /// install-side movie.
     func route(_ event: MenuInputEvent) {
         guard isOpen else { return }
+        if movieQuantityOpen {
+            routeMovieQuantity(event)
+            return
+        }
         if model.quantity != nil {
             routeQuantity(event)
             return
@@ -212,12 +228,17 @@ final class InventoryMenuController {
         switch action {
         case .close:
             close()
-        case let .equip(index):
-            model.select(index)
+        case .equipSelected:
             activateSelection()
-        case let .drop(index):
-            model.select(index)
-            requestDrop()
+        case let .drop(count):
+            movieAnsweredDrop = true
+            movieQuantityOpen = false
+            dropSelection(count: Int32(clamping: count))
+        case let .quantitySlider(open):
+            movieAnsweredDrop = movieAnsweredDrop || open
+            movieQuantityOpen = open
+        case let .item3D(visible):
+            movieShowsItem3D = visible
         case .showSoulGems:
             showSoulGems()
         case let .chooseCardListEntry(index):

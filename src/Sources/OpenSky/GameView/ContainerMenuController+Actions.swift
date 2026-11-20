@@ -92,6 +92,9 @@ extension ContainerMenuController {
                     : model.transferLabel
             )
         {
+            if showMovieQuantity(prompt.maximum) {
+                return
+            }
             quantity = prompt
             note(prompt.text)
             return
@@ -142,7 +145,10 @@ extension ContainerMenuController {
             let reply = try deals.transfer(deal, acceptingLess: acceptingLess)
             if reply.merchantShort {
                 pendingSale = (entry, count)
-                note(reply.text + " Accept sells for the merchant's gold; cancel keeps the item.")
+                if !showMovieConfirm(reply.text, count: count) {
+                    note(reply
+                        .text + " Accept sells for the merchant's gold; cancel keeps the item.")
+                }
             } else {
                 note(reply.text)
             }

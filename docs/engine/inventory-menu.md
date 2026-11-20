@@ -79,6 +79,11 @@ They are set with the GFx `SetText` extension.
 
 ## Navigation
 
+When the movie has loaded, the engine calls `InventoryLists.ShowItemsList(false, true)`. The
+lists move to their `TWO_PANELS` state: the item panel opens beside the categories, and the item
+card fades in. The movie needs this state for the drop key: its `ShouldProcessItemsListInput`
+answers false in any other state, so `DropItem` does nothing.
+
 Up and down go through the movie's own CLIK focus path. The engine adopts the `iSelectedIndex` the
 movie ends up with, so the movie owns the row selection. The engine does the one step the missing
 `InputDelegate` would do: it points `focusTarget` at the item list. Without that, the movie takes
@@ -88,7 +93,11 @@ Categories are changed by the engine, on purpose. Sending up or down to the focu
 was tried and moves nothing. The movie changes categories through the `strHideItemsCode` and
 `strShowItemsCode` states of `InventoryLists_mc`, and with no live `InputDelegate` nothing starts
 that change. So left and right change the category in the engine, and the new rows are written to
-the movie, which draws both lists again.
+the movie, which draws both lists again. The item panel stays open while the category changes.
+
+The game opens on the category list alone, with the category list focused. The item panel slides
+out only when the player picks a category. OpenSky opens with both panels and the item list
+focused.
 
 ## Actions
 
@@ -98,15 +107,25 @@ the movie, which draws both lists again.
   On any other row it acts as Activate.
 - Eating an ingredient also teaches its first effect, and using a poison puts it on the drawn weapon
   ([alchemy](/engine/alchemy.md)). Any other row says so and changes nothing.
-- R drops the row. A stack of more than five opens the quantity prompt first; a smaller one drops
-  one copy. The limit is `QUANTITY_MENU_COUNT_LIMIT` in the movie's `InventoryDefines`.
+- R drops the row. A stack of more than five opens the quantity slider first; a smaller one drops
+  one copy. The limit is `QUANTITY_MENU_COUNT_LIMIT` in the movie's `InventoryDefines`
+  ([quantity](#quantity)).
 - Space marks the row as a favourite, or unmarks it. The game uses F; OpenSky's menu bindings have
   no F, so the jump key stands in.
 
 Every change reads the inventory again and writes it to the movie, so weight and gold stay current.
 
-`ItemSelect` and `DropItem` are registered as host functions, because they appear in the movie's
-bytecode. No measured run has called either, so they are not confirmed. Only `CloseMenu` is.
+The movie's own outbound calls, read from `InventoryMenu` in the installed movie:
+
+| Call | Arguments | When |
+| --- | --- | --- |
+| `ItemSelect` | the hand slot, or none | a mouse press on a row, or the engine's `AttemptEquip(aiSlot)` callback; it equips the selected row |
+| `ItemDrop` | the amount | after the drop key, see [quantity](#quantity) |
+| `QuantitySliderOpen` | true or false | an item card sub-menu opens or closes |
+| `UpdateItem3D` | true or false | true when a row is highlighted or the item panel opens, false when it closes |
+| `CloseMenu` | none | Tab, or the fade after Tab ends |
+
+`ItemSelect` carries a hand slot, not a row index. The row is always the list's selection.
 
 ## Refused actions
 
@@ -150,10 +169,38 @@ so every copy of the alias reference's base is a quest item while the alias hold
 
 ## Quantity
 
-The quantity prompt asks how many of a stack to drop. It starts at the whole stack: the movie's
-`ItemCard.ShowQuantityMenu` sets the slider's maximum and value to the stack count. Left and right
-change the count by 1. Down and up change it by 10, which is OpenSky's own step. The count stays
-between 1 and the stack. Accept or R drops that many, and cancel drops none.
+The drop key does not decide the count itself. The engine calls the movie's `DropItem` callback,
+which `InventoryMenu.InitExtensions` registers. The movie then follows these steps:
+
+```mermaid
+flowchart TD
+    drop[Engine calls DropItem] --> ready{ShouldProcessItemsListInput}
+    ready -- false --> none[Nothing happens]
+    ready -- true --> limit{count above QUANTITY_MENU_COUNT_LIMIT}
+    limit -- no --> one[ItemDrop 1]
+    limit -- yes --> slider[ItemCard.ShowQuantityMenu count]
+    slider --> keys{Key}
+    keys -- left or right --> slider
+    keys -- Enter --> amount[ItemDrop with the slider value]
+    keys -- Tab --> cancel[Slider closes, nothing dropped]
+```
+
+`ShowQuantityMenu(aiMaxAmount)` sets the slider's maximum and its value to the stack count, so it
+starts at the whole stack. The slider is the item card's `QuantitySlider_mc`. While it is open,
+the card's `HandleQuantityMenuInput` reads the keys: `ENTER` accepts and `TAB` cancels. Left and
+right reach the focused slider and move it by one. The value is rounded down before it is sent.
+Opening and closing the slider calls `QuantitySliderOpen(true)` and `QuantitySliderOpen(false)`.
+
+The engine sends left, right, accept, and cancel to the movie while the slider is open. Up and down
+do nothing there. Worked example on the install: a stack of 12, three presses of left, then
+accept, sends `ItemDrop(9)`.
+
+Without a movie, the engine shows its own prompt with the same start and limits. Left and right
+change the count by 1, and down and up by 10, which is OpenSky's own step. Accept or R drops that
+many, and cancel drops none. A movie that ignores `DropItem` also falls back to this prompt.
+
+The container and barter movies use the same slider and the same keys
+([barter](/engine/barter.md#quantity-and-selling-for-less)).
 
 ## Favourites and hotkeys
 
@@ -203,14 +250,16 @@ only weapons and staves offer it. Where the game puts the title is not confirmed
 
 ## Item preview
 
-The selected row's model turns beside the list. The model path is the record's `MODL`, or the male
-world model for armour. It is drawn unlit with its diffuse texture, in front of the world, through
-the menu scene that the [crafting menu](/engine/crafting.md#crafting-menu) uses. It
-draws into a thin slice of depth near the camera, so the world cannot cover it. The model turns at
-0.6 radians a second; the game's rate is not measured. A model with a `BSInvMarker` is first turned
-by the marker's angles, and its fit size is multiplied by the marker's zoom
-([NIF extra data](/formats/nif-extra-data.md#inventory-marker)). A model that fails to load logs its
-reason and draws nothing.
+The selected row's model turns beside the list. With a movie, the movie decides when it shows: the
+last `UpdateItem3D` call shows it or hides it. Without a movie, the selected row always shows.
+
+The model path is the record's `MODL`, or the male world model for armour. It is drawn unlit with
+its diffuse texture, in front of the world, through the menu scene that the [crafting
+menu](/engine/crafting.md#crafting-menu) uses. It draws into a thin slice of depth near the camera,
+so the world cannot cover it. The model turns at 0.6 radians a second; the game's rate is not
+measured. A model with a `BSInvMarker` is first turned by the marker's angles, and its fit size is
+multiplied by the marker's zoom ([NIF extra data](/formats/nif-extra-data.md#inventory-marker)). A
+model that fails to load logs its reason and draws nothing.
 
 ## Gift menu
 
@@ -230,9 +279,9 @@ gained. OpenSky's native returns at once, with 0.
 
 ## Not done yet
 
-- Category focus through the movie. It needs a live `InputDelegate`.
-- The quantity slider and the 3D item in the movie itself. The engine holds the data;
-  `ShowQuantityMenu` is not called, and `UpdateItem3D` and `EndItem3D` are answered with no action.
+- The opening state with the category list alone and focused (see [navigation](#navigation)).
+- The `ItemRotating` callback, which the movie registers for a turn of the item by the mouse, is
+  never called. The item turns on its own.
 
 The container and barter menus reuse this row list and list code, one pane per side
 ([barter](/engine/barter.md)).

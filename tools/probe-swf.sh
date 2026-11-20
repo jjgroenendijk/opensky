@@ -47,16 +47,22 @@ probe_swf_gates() {
   # every engine call they make. Vanilla install: 0 faults and 0 unhandled
   # invokes each, and the barter movie's own vendor-gold field carries the
   # merchant purse.
-  run "menu container (containermenu.swf)" menu container --mode container --down 1
+  run "menu container (containermenu.swf)" menu container --mode container --down 1 --quantity -2
+  grep -q 'menu container action: transfer(count: 6)' "$swf_log" \
+    || fail "containermenu.swf quantity slider did not move 6 of 8"
   grep 'menu container diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 faults' \
     || fail "containermenu.swf faulted during bring-up"
-  run "menu container (bartermenu.swf)" menu container --mode barter --transfer 1
+  run "menu container (bartermenu.swf)" menu container --mode barter --transfer 1 --confirm
+  grep -q 'menu container action: transfer(count: 1)' "$swf_log" \
+    || fail "bartermenu.swf confirm message did not sell one item"
   grep 'menu container diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 unhandled of ' \
     || fail "bartermenu.swf made unanswered engine calls"
 
   # Inventory and journal menus: both movies come up and say how many rows the
   # movie built from the published lists.
-  run "menu inventory (inventorymenu.swf)" menu inventory --down 1
+  run "menu inventory (inventorymenu.swf)" menu inventory --down 1 --drop --quantity -3
+  grep -q 'movie->engine ItemDrop(' "$swf_log" \
+    || fail "inventorymenu.swf answered the drop key with no ItemDrop"
   grep 'menu inventory diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 faults' \
     || fail "inventorymenu.swf faulted during bring-up"
   run "menu quest-journal (quest_journal.swf Quests page)" menu quest-journal

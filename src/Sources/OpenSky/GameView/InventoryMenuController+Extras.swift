@@ -50,10 +50,14 @@ extension InventoryMenuController {
 
     // MARK: - Quantity
 
-    /// R, or the movie's drop: a stack of more than five asks how many first.
+    /// R: a stack of more than five asks how many first. The movie's `DropItem`
+    /// opens its own quantity slider; without a movie the engine asks.
     func requestDrop() {
         guard let entry = model.selectedEntry else {
             lastActionText = "No row selected."
+            return
+        }
+        if requestMovieDrop() {
             return
         }
         guard
@@ -66,6 +70,28 @@ extension InventoryMenuController {
         }
         model.quantity = prompt
         lastActionText = prompt.text
+    }
+
+    /// True when the movie took the drop: it dropped one or opened its slider.
+    private func requestMovieDrop() -> Bool {
+        movieAnsweredDrop = false
+        var called = false
+        movie.publish { called = InventoryMenuMovieBridge.requestDrop(runtime: $0) }
+        return called && movieAnsweredDrop
+    }
+
+    /// Keys for the movie's slider: left and right move it, accept drops, cancel keeps all.
+    func routeMovieQuantity(_ event: MenuInputEvent) {
+        guard let renderer = movie.loadedRenderer else {
+            movieQuantityOpen = false
+            return
+        }
+        do {
+            try ItemCardSubMenuBridge.send(event, renderer: renderer)
+        } catch {
+            movie.record(error)
+            movieQuantityOpen = false
+        }
     }
 
     /// Left and right move by one, up and down by ten; accept drops, cancel keeps all.
@@ -97,10 +123,12 @@ extension InventoryMenuController {
     /// Each frame while the menu is open: turns the selected row's model.
     func tick(now: Double) {
         guard isOpen, previewEnabled, let renderer = game.renderer else { return }
+        // A live movie decides through `UpdateItem3D`; without one the row shows.
+        let shown = movie.loadedRenderer == nil || movieShowsItem3D
         let path = model.selectedEntry.flatMap {
             game.inventory.runtime?.inventory.baselines.items.definition($0.item)?.modelPath
         }
-        preview.show(path)
+        preview.show(shown ? path : nil)
         preview.tick(now: now)
         if previewSource == nil, let files = game.worldData?.scriptFileSystem {
             previewSource = InventoryItemPreviewSource(fileSystem: files)

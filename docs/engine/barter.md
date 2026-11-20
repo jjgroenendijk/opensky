@@ -130,13 +130,46 @@ hands: the gold part of the exchange is skipped, not refused.
 
 ## Quantity and selling for less
 
-Moving a stack of more than five opens a quantity prompt: left and right change the count by one,
-up and down by ten, and accept confirms. A smaller stack moves one item. The same prompt places
-items into pockets.
+Moving a stack of more than five opens the quantity slider. A smaller stack moves one item. The
+same slider places items into pockets.
 
 A sale the merchant cannot fully pay for asks first. Confirming sells for all the gold the
 merchant has; cancelling keeps the item. UESP "Skyrim:Merchants": "you'll be given the option to
 sell the item for less gold (or none if the merchant has run out of gold), or back off".
+
+With a movie, both questions are drawn on the item card, at
+`/Menu_mc/ItemCardFadeHolder_mc/ItemCard_mc`, the same path as in the inventory movie. The engine
+decides when to ask, and the card asks:
+
+- The count: `ShowQuantityMenu(count)`. The slider starts at the whole stack, and left and right
+  move it by one ([inventory quantity](/engine/inventory-menu.md#quantity)).
+- The sale: `ShowConfirmMessage(text)` with the `sNotEnoughVendorGold` text. The engine first
+  writes the count to the barter menu's `iConfirmAmount`, which `onTransactionConfirm` sells.
+
+On both, `ENTER` accepts and `TAB` cancels. The movie answers through its own code:
+
+| Movie | Answer | Arguments |
+| --- | --- | --- |
+| `containermenu.swf` | `ItemTransfer` | the amount, and whether the container side is shown |
+| `bartermenu.swf` | `ItemSelect`, from `doTransaction` | the amount, the card's value, and whether the merchant's side is shown |
+
+The engine reads only the amount, and takes the side from its own model. Both movies call
+`QuantitySliderOpen(true)` when a card sub-menu opens and `QuantitySliderOpen(false)` when it
+closes. The barter movie calls it for the confirm message too. The engine sends keys to the movie
+while one is open. Worked example on the install: a container stack of 8 with two presses of left
+sends `ItemTransfer(6, ...)`.
+
+Without a movie, the engine asks with its own prompts: left and right change the count by one,
+up and down by ten, and accept confirms.
+
+Rules the movies hold that the engine does not follow yet:
+
+- `ContainerMenu.StartItemTransfer` takes a whole stack of weightless items from a container with
+  no slider.
+- `BarterMenu.onQuantityMenuSelect` asks its own question when the amount times the card's value
+  is more than its `iVendorGold`. It gets the text from `GetRawDealWarningString`, which
+  OpenSky answers with the empty string. OpenSky sends no item card value to these movies, so the
+  movie never asks; the engine asks instead.
 
 ## The two-pane list
 
@@ -187,8 +220,8 @@ the names, not measured. The engine's prices never come from the movie, so nothi
 `BottomBar.SetBarterInfo(aiPlayerGold, aiVendorGold, aiGoldDelta, astrVendorName)` moves the
 player info card to its `Barter` frame. `VendorGoldValue` is placed by that frame and does not
 exist before it. That is why the container movie has no vendor gold field at all. The gold delta
-is 0: it is what a pending transaction would move, and nothing is ever pending, because the
-quantity slider and the confirm step are not used.
+is 0: it is what a pending transaction would move. The barter movie updates it itself while its
+quantity slider moves.
 
 ### Engine calls
 
@@ -196,7 +229,7 @@ Each movie's constant pool gives its engine calls:
 
 | Call | Movie |
 | --- | --- |
-| `CloseMenu`, `ItemSelect` | Both |
+| `CloseMenu`, `ItemSelect`, `QuantitySliderOpen` | Both |
 | `ItemTransfer`, `TakeAllItems`, `EquipItem` | `containermenu.swf` |
 | `ShowRawDealWarning`, `GetRawDealWarningString` | `bartermenu.swf` |
 
@@ -219,13 +252,14 @@ navigation step, and one transaction from each side:
 
 ## Not done yet
 
-- The quantity and the confirm step are OpenSky's own prompts on the menu, not the vanilla
-  `QuantitySlider` and `ShowConfirmMessage` movie clips.
 - Category changes are made by the engine, as in the inventory menu, for the same measured
   reason.
+- The two movie rules listed under [quantity](#quantity-and-selling-for-less).
 
 ## Checking it
 
 To repeat a run without the app:
-`make run-cli ARGS="menu container --mode barter --side player --down 2 --transfer 1"`.
+`make run-cli ARGS="menu container --mode barter --side player --down 2 --transfer 1"`. Add
+`--quantity -2` to open the slider on the selected stack, or `--confirm` to open the confirm
+message.
 Frames go to the gitignored `.logs/` folder.

@@ -68,11 +68,26 @@ public struct MenuArguments: ParsableCommand, Sendable {
             help: ArgumentHelp("Move to this many categories to the right.", valueName: "n")
         )
         public var right = 0
+        @Flag(help: "Press drop on the selected row, as the drop key does.")
+        public var drop = false
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp(
+                "After --drop, move the quantity slider this many steps; below 0 moves left.",
+                valueName: "n"
+            )
+        )
+        public var quantity = 0
+        @Flag(help: "After --drop, cancel the quantity slider instead of accepting it.")
+        public var cancel = false
 
         public init() {}
 
         public func validate() throws {
             try OptionCheck.atLeast(right, 0, "--right")
+            if !drop, quantity != 0 || cancel {
+                throw ValidationError("--quantity and --cancel need --drop.")
+            }
         }
     }
 
@@ -121,6 +136,17 @@ public struct MenuArguments: ParsableCommand, Sendable {
             help: ArgumentHelp("Move the selected item this many times.", valueName: "n")
         )
         public var transfer = 0
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp(
+                "Open the quantity slider on the selected row, move it this many steps "
+                    + "(below 0 moves left), and accept it.",
+                valueName: "n"
+            )
+        )
+        public var quantity: Int?
+        @Flag(help: "Open the item card's confirm message for one item and accept it.")
+        public var confirm = false
 
         public init() {}
 

@@ -10,14 +10,16 @@ public import OpenSkyFormatsSWF
 
 /// What the movie asked the engine to do.
 nonisolated public enum ContainerMenuAction: Equatable, Sendable {
-    /// Move the row at this index across: take, store, buy or sell, according
-    /// to the model's mode and side.
-    case transfer(index: Int)
+    /// Move this many of the selected row across: take, store, buy or sell,
+    /// according to the model's mode and side. `ItemTransfer` and the barter
+    /// menu's `ItemSelect` both carry the amount first.
+    case transfer(count: Int)
     /// The container menu's `TakeAllItems`.
     case takeAll
-    /// Equip the row at this index, which the container menu offers on the
-    /// player's side.
-    case equip(index: Int)
+    /// Equip the selected row, which the container menu offers on the player's side.
+    case equipSelected
+    /// `QuantitySliderOpen`: an item card sub-menu opened or closed.
+    case subMenu(open: Bool)
     case close
 }
 
@@ -89,7 +91,7 @@ nonisolated public enum ContainerMenuMovieBridge: Sendable {
     /// `TakeAllItems` and `EquipItem` are in `containermenu.swf`'s pool and not
     /// in `bartermenu.swf`'s; `ItemSelect` and `CloseMenu` are in both.
     public static func actionHostFunctions(for mode: ContainerMenuModel.Mode) -> [String] {
-        let shared = ["CloseMenu", "ItemSelect"]
+        let shared = ["CloseMenu", "ItemSelect", "QuantitySliderOpen"]
         guard mode == .container else { return shared }
         return shared + ["ItemTransfer", "TakeAllItems", "EquipItem"]
     }

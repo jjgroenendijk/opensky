@@ -1,11 +1,54 @@
 // The container and barter menu's two prompts: the count slider for a stack of more
 // than five, and the confirm a sale opens when the merchant has too little gold
-// (`sNotEnoughVendorGold`). See docs/engine/barter.md.
+// (`sNotEnoughVendorGold`). A live movie draws both on its item card; without one
+// the engine asks. See docs/engine/barter.md.
 
 import OpenSkyMenus
 import OpenSkyMenusInterface
 
 extension ContainerMenuController {
+    /// Opens the movie's quantity slider at `count`. False without a movie.
+    func showMovieQuantity(_ count: Int32) -> Bool {
+        movie.publish { ItemCardSubMenuBridge.showQuantity(maximum: Int(count), runtime: $0) }
+        return movieSubMenuOpen
+    }
+
+    /// Opens the movie's confirm message for a sale the merchant cannot pay.
+    func showMovieConfirm(_ text: String, count: Int32) -> Bool {
+        movie.publish { ItemCardSubMenuBridge.showConfirm(text, amount: Int(count), runtime: $0) }
+        return movieSubMenuOpen
+    }
+
+    /// The movie's answer: the slider's amount, or a confirmed sale.
+    func transferFromMovie(count: Int32) {
+        movieSubMenuOpen = false
+        if let sale = pendingSale {
+            pendingSale = nil
+            move(sale.entry, count: sale.count, acceptingLess: true)
+            return
+        }
+        guard let entry = model.selectedEntry else { return }
+        move(entry, count: count)
+    }
+
+    /// Keys for the movie's slider or confirm message. Cancel keeps the item.
+    func routeMovieSubMenu(_ event: MenuInputEvent) {
+        if event == .button(.cancel), let sale = pendingSale {
+            pendingSale = nil
+            noteAction("Kept \(sale.entry.name).")
+        }
+        guard let renderer = movie.loadedRenderer else {
+            movieSubMenuOpen = false
+            return
+        }
+        do {
+            try ItemCardSubMenuBridge.send(event, renderer: renderer)
+        } catch {
+            movie.record(error)
+            movieSubMenuOpen = false
+        }
+    }
+
     /// Left and right move by one, up and down by ten. Accept moves the count or
     /// takes the merchant's gold; cancel moves nothing.
     func routePrompt(_ event: MenuInputEvent) {
