@@ -44,6 +44,8 @@ public final class SystemMenuCoordinator {
     private let movies: any MenuMovieLoading
     let hud: HUDCoordinator
     weak let world: any SystemMenuWorld?
+    /// The date and level the bottom bar shows.
+    public weak var bottomBar: (any JournalBottomBarSource)?
     let saving: SystemMenuSaveWork
 
     public init(
@@ -193,6 +195,7 @@ public final class SystemMenuCoordinator {
             }, onClose: { [weak self] in
                 self?.close()
             })
+            SystemMenuMovieBridge.showPlayerInfo(from: self?.bottomBar, runtime: runtime)
             SettingsMovieBridge.register(
                 runtime: runtime,
                 onRequest: { [weak self] group in self?.openSettingsCategory(group) ?? [] },

@@ -63,6 +63,7 @@ extension GameSessionScopeFactories {
             world: scope.ports
         )
         menu.topicSource = scope.messageWorld
+        menu.bottomBar = scope.menuScreensWorld
         return menu
     }
 

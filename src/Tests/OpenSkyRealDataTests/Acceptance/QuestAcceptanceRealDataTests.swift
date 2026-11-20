@@ -85,7 +85,7 @@ struct QuestAcceptanceRealDataTests {
         _ session: QuestRealDataSession,
         quest: Quest
     ) throws -> JournalQuestEntry {
-        let model = try session.journal(showsCompleted: true)
+        let model = try session.journal()
         let row = try #require(
             model.entries.first { $0.editorID == targetEditorID },
             "the target quest is not on the journal page"
@@ -173,7 +173,7 @@ struct QuestAcceptanceRealDataTests {
         )
         #expect(restored.world.skips.counts[.unknownSaveScript] == nil)
         let restoredRow = try #require(
-            restored.journal(showsCompleted: true).entries.first { $0.editorID == targetEditorID }
+            restored.journal().entries.first { $0.editorID == targetEditorID }
         )
         #expect(restoredRow == page)
     }

@@ -50,7 +50,6 @@ extension JournalMenuModel {
         runtime: any QuestAccess,
         strings: LocalizedStrings?,
         aliases: QuestAliasNaming = .none,
-        showsCompleted: Bool = false,
         selectedIndex: Int = 0
     ) -> JournalMenuModel {
         var active: [JournalQuestEntry] = []
@@ -86,7 +85,6 @@ extension JournalMenuModel {
         return JournalMenuModel(
             active: active,
             completed: completed,
-            showsCompleted: showsCompleted,
             selectedIndex: selectedIndex
         )
     }

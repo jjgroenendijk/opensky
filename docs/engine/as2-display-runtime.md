@@ -137,8 +137,10 @@ A multiline field that wraps shows only the lines that fit its bounds, from `scr
 `bottomScroll`, and the GFx `numLines` come from the same layout, so CLIK's `TextArea` and `ScrollBar`
 scroll it. A field
 with the `AutoSize` flag, or with GFx `textAutoSize` set by script, sizes its text to fit instead, so
-it draws every line. When the bottom edge cuts the next line, that line is drawn too, clipped at
-the edge. It does not count for `bottomScroll` or `maxscroll`.
+it draws every line. A field with GFx `verticalAutoSize` set to `top`, `center`, or `bottom` grows
+to hold its lines, so it draws every line too. The journal's quest description is one.
+When the bottom edge cuts the next line, that line is drawn too, clipped at the edge.
+It does not count for `bottomScroll` or `maxscroll`.
 
 `htmlText` drops its tags, except `<img src='name' width='w' height='h' vspace='v'>`. That tag
 draws the bitmap the movie exports under `name` in the line, `w` by `h` pixels. A size the tag

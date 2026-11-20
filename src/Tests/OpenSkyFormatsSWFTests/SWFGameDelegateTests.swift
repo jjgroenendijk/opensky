@@ -92,21 +92,27 @@ struct SWFGameDelegateTests {
         let runtime = try SWFRuntimeFixture.runtime(
             tags: Self.movie(Self.externalCall("Ask", [.integer(7), .string("question")]))
         )
-        let delegate = runtime.runtime.makeObject()
-        let hash = runtime.runtime.makeObject()
-        hash.define(.boolean(true), for: "7")
-        delegate.define(.object(hash), for: "responseHash")
-        let responses = CallLog()
-        AS2Runtime.method(runtime.runtime, on: delegate, name: "receiveResponse") { context in
-            responses.append(context.arguments)
-            return .undefined
-        }
-        Self.installDelegate(delegate, in: runtime)
+        let responses = Self.delegateAwaiting(response: 7, in: runtime)
         runtime.registerHostFunction("Ask") { _ in .number(42) }
         runtime.start()
         #expect(responses.calls.count == 1)
         #expect(responses.calls.first?.first == .number(7))
         #expect(responses.calls.first?.last == .number(42))
+    }
+
+    /// A handler that answers with several values passes all of them to the
+    /// callback, and returning nil keeps the answer from being sent twice.
+    @Test func aHandlerCanAnswerWithSeveralValues() throws {
+        let runtime = try SWFRuntimeFixture.runtime(
+            tags: Self.movie(Self.externalCall("Ask", [.integer(7)]))
+        )
+        let responses = Self.delegateAwaiting(response: 7, in: runtime)
+        runtime.registerHostFunction("Ask") { call in
+            call.respond([.number(1), .boolean(true)])
+            return nil
+        }
+        runtime.start()
+        #expect(responses.calls == [[.number(7), .number(1), .boolean(true)]])
     }
 
     /// -1 is the delegate's "no callback" marker: it is consumed as an id and
@@ -273,6 +279,21 @@ struct SWFGameDelegateTests {
     }
 
     /// Installs `_global.gfx.io.GameDelegate`, the path the bridge resolves.
+    /// A delegate whose `responseHash` holds `response`, logging what it receives.
+    private static func delegateAwaiting(response: Int, in runtime: SWFMovieRuntime) -> CallLog {
+        let delegate = runtime.runtime.makeObject()
+        let hash = runtime.runtime.makeObject()
+        hash.define(.boolean(true), for: String(response))
+        delegate.define(.object(hash), for: "responseHash")
+        let responses = CallLog()
+        AS2Runtime.method(runtime.runtime, on: delegate, name: "receiveResponse") { context in
+            responses.append(context.arguments)
+            return .undefined
+        }
+        installDelegate(delegate, in: runtime)
+        return responses
+    }
+
     private static func installDelegate(_ delegate: AS2Object, in runtime: SWFMovieRuntime) {
         let io = runtime.runtime.makeObject()
         io.define(.object(delegate), for: "GameDelegate")

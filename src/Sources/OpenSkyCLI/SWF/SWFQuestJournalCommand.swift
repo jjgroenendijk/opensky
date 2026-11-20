@@ -1,6 +1,7 @@
 // `menu quest-journal`: drives the Quests page of `interface\quest_journal.swf`
-// through `QuestJournalMovieBridge` for a real quest and reports what the movie
-// built. `--text` resolves the quest's FULL, CNAM and NNAM from all three
+// for a real quest: the movie asks for its rows as in the game, and the
+// command reports what the movie built. `--text` resolves the quest's FULL, CNAM and NNAM from all
+// three
 // string tables. `--probe-rows` publishes empty rows and prints the
 // missing-name delta, which is how the row field names were measured.
 
@@ -19,6 +20,8 @@ enum SWFQuestJournalCommand {
     /// `MGRArniel01`: the cheapest journal-visible quest in vanilla
     /// `Skyrim.esm` (2 stages, 1 objective, no conditions).
     private static let defaultQuest = "MGRArniel01"
+    /// The date line the bottom bar gets, since no game clock runs here.
+    private static let sampleDate = "Sundas, 8:00 AM, 17th of Last Seed, 4E 201"
 
     static func run(context: CLIContext, arguments: MenuArguments.QuestJournal) throws {
         let editorID = arguments.quest ?? defaultQuest
@@ -44,24 +47,31 @@ enum SWFQuestJournalCommand {
         runtime.start()
         SystemMenuMovieBridge.activate(runtime: runtime) {}
         QuestJournalMovieBridge.activate(runtime: runtime)
+        if let probeRows {
+            printRowProbe(runtime, rows: probeRows)
+        }
+        var model = session.model
+        let shown = model
+        QuestJournalMovieBridge.registerRequests(runtime: runtime) { shown }
+        QuestJournalMovieBridge.startQuestsPage(runtime: runtime)
+        SystemMenuMovieBridge.showPlayerInfo(
+            date: sampleDate, level: TweenMenuLevel(level: 3, progress: 0.5, levelUpReady: false),
+            runtime: runtime
+        )
         for _ in 0 ..< ticks {
             runtime.advance()
         }
         printPage(runtime)
+        printBottomBar(runtime)
 
-        if let probeRows {
-            printRowProbe(runtime, rows: probeRows)
-        }
-
-        var model = session.model
-        QuestJournalMovieBridge.publish(model, runtime: runtime)
-        runtime.advance()
-        printState(runtime, model: model, stage: "published")
+        printState(runtime, model: model, stage: "started")
 
         for _ in 0 ..< downCount {
-            model.moveSelection(by: 1)
-            QuestJournalMovieBridge.publish(model, runtime: runtime)
+            SystemMenuMovieBridge.handle(.move(.down), runtime: runtime)
             runtime.advance()
+            if let quest = QuestJournalMovieBridge.selectedQuest(runtime: runtime) {
+                model.select(quest: quest)
+            }
         }
         if downCount > 0 {
             printState(runtime, model: model, stage: "navigated")
@@ -166,6 +176,17 @@ extension SWFQuestJournalCommand {
                 + "\(measured.map(String.init) ?? "unregistered"), "
                 + "bridge uses \(QuestJournalMovieBridge.questsTabIndex), "
                 + "frontmost \(QuestJournalMovieBridge.isFrontmost(runtime: runtime))"
+        )
+    }
+
+    private static func printBottomBar(_ runtime: SWFMovieRuntime) {
+        let bar = SystemMenuMovieBridge.bottomBarPath
+        let date = runtime.node(atPath: "\(bar)/DateText", from: runtime.root)
+            .flatMap { runtime.text(of: $0) }
+        let level = runtime.node(atPath: "\(bar)/LevelMeterRect", from: runtime.root)
+        print(
+            "[INFO] menu quest-journal bottom bar: date \(date.map { "\"\($0)\"" } ?? "-"), "
+                + "level meter visible \(level?.isVisible.description ?? "-")"
         )
     }
 

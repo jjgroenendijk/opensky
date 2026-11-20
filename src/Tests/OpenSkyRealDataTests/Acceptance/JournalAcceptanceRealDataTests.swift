@@ -45,7 +45,7 @@ struct JournalAcceptanceRealDataTests {
 
         let session = try makeModel(root: root, fileSystem: fileSystem)
         try renderer.updateSWFRuntime { runtime in
-            QuestJournalMovieBridge.publish(session.model, runtime: runtime)
+            QuestJournalMovieBridge.show(session.model, runtime: runtime)
         }
         try renderer.advanceSWFRuntime()
         let published = try render(renderer)
@@ -91,7 +91,7 @@ struct JournalAcceptanceRealDataTests {
     private func verifyPublished(quest: JournalQuestEntry, runtime: SWFMovieRuntime) {
         #expect(quest.editorID == Self.targetQuest)
         #expect(
-            QuestJournalMovieBridge.titleText(runtime: runtime) == quest.title,
+            QuestJournalMovieBridge.titleText(runtime: runtime) == quest.title.uppercased(),
             "the page's title field is not the engine's title"
         )
         #expect(
