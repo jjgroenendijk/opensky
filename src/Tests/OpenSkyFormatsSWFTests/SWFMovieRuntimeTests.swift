@@ -114,6 +114,19 @@ struct SWFMovieRuntimeTests {
         #expect(runtime.root.child(named: "second") == nil)
     }
 
+    /// As in Flash, a clip a script moved or faded no longer follows its placement.
+    @Test func gotoLeavesWhatAScriptSetOnAPlacedClip() throws {
+        let runtime = try SWFRuntimeFixture.started(tags: Self.threeFrameMovie())
+        let first = try #require(runtime.root.child(named: "first"))
+        runtime.setDisplayProperty(.positionX, of: first, to: .number(-500))
+        runtime.setDisplayProperty(.alpha, of: first, to: .number(30))
+        runtime.gotoFrame(2, of: runtime.root, play: false)
+        runtime.gotoFrame(0, of: runtime.root, play: false)
+        #expect(runtime.root.child(named: "first") === first)
+        #expect(first.matrix.translateX == -500 * 20)
+        #expect(abs(first.alpha - 0.3) < 0.001)
+    }
+
     @Test func gotoByLabelFindsTheLabelledFrame() throws {
         let runtime = try SWFRuntimeFixture.started(tags: Self.threeFrameMovie())
         runtime.gotoLabel("end", of: runtime.root, play: false)

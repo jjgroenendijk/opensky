@@ -231,11 +231,15 @@ nonisolated extension SWFDisplayObject {
 
     var alpha: Float {
         get { colorTransform.multiply.w }
-        set { colorTransform.multiply.w = newValue }
+        set {
+            colorTransform.multiply.w = newValue
+            scriptOwnsColor = true
+        }
     }
 
     /// Moves the node in its parent. A nil coordinate stays where it is.
     func moveTo(twipsX: Int32?, twipsY: Int32?) {
+        scriptOwnsMatrix = true
         if let twipsX {
             matrix.translateX = twipsX
         }
@@ -245,6 +249,7 @@ nonisolated extension SWFDisplayObject {
     }
 
     func setBasisScale(_ scale: Float, horizontal: Bool) {
+        scriptOwnsMatrix = true
         if horizontal {
             matrix.setHorizontalScale(scale)
         } else {
@@ -253,11 +258,13 @@ nonisolated extension SWFDisplayObject {
     }
 
     func setRotation(degrees: Float) {
+        scriptOwnsMatrix = true
         matrix.setRotation(degrees: degrees)
     }
 
     /// Scales one basis vector by `factor`, which stretches the transformed box.
     func scaleBasis(by factor: Float, horizontal: Bool) {
+        scriptOwnsMatrix = true
         if horizontal {
             matrix.scaleX *= factor
             matrix.rotateSkew0 *= factor

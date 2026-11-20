@@ -50,6 +50,23 @@ struct TitleMenuMovieRealDataTests {
         #expect(requests.seen.last == .quit)
     }
 
+    /// The console notices sit off the stage on a computer, as in the game.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot)) @MainActor
+    func theConsoleNoticesStayOffTheStage() throws {
+        let (runtime, _) = try startMovie()
+        for name in ["Error_NotSignedInOrbis", "Error_AgeRestrictOrbis", "Error_NeedUpdateOrbis"] {
+            let node = try #require(runtime.node(
+                atPath: "\(TitleMenuMovieBridge.menuPath)/\(name)", from: runtime.root
+            ))
+            let transform = try #require(runtime.transform(of: node))
+            let box = runtime.localBounds(of: node).transformed(by: transform)
+            #expect(
+                box.maxX < 0,
+                "\(name) reaches stage x \(box.maxX / SWFMovieRuntime.twipsPerPixel)"
+            )
+        }
+    }
+
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot)) @MainActor
     func theRowUnderTheCursorHighlightsAndAClickPicksIt() throws {
         let (runtime, requests) = try startMovie()
