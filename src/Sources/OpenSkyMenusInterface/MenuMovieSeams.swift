@@ -15,10 +15,30 @@ public protocol MenuMovieLoading: AnyObject {
     )
 }
 
+/// A menu movie that can take the layer back once a movie opened over it stops,
+/// such as a message box over the skills menu.
+public protocol MenuLayerHolder: AnyObject {
+    func reclaimLayer()
+}
+
 /// The HUD, which gives the single SWF layer to a menu movie and takes it back.
 public protocol MenuLayerOwner: AnyObject {
     func suspend()
     func start()
+    /// `holder` takes the layer from whatever holds it now.
+    func suspend(for holder: any MenuLayerHolder)
+    /// `holder` lets go. The holder below it, or else the HUD, gets the layer back.
+    func release(by holder: any MenuLayerHolder)
+}
+
+extension MenuLayerOwner {
+    public func suspend(for _: any MenuLayerHolder) {
+        suspend()
+    }
+
+    public func release(by _: any MenuLayerHolder) {
+        start()
+    }
 }
 
 /// Menu mode, which takes the keys while a menu is open.

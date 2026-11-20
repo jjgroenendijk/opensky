@@ -99,8 +99,8 @@ sequenceDiagram
     end
 ```
 
-[WARNING] OpenSky has the perk question in its menu state but does not draw it, and it applies
-an attribute pick with no question.
+OpenSky asks all three skills menu questions, the legendary ones too, in the engine's message
+box over the menu. A click on a level-up button asks as the accept key does.
 
 ### statsmenu.swf
 

@@ -18,6 +18,8 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
         case legendaryAgain(ConfirmationModel)
         /// The question before a perk is bought.
         case perkConfirm(ConfirmationModel)
+        /// The question before a level-up pick is spent.
+        case attributeConfirm(ActorValueKind, ConfirmationModel)
     }
 
     public enum Action: Equatable, Sendable {
@@ -37,7 +39,7 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
     /// Left to right, as the three buttons of `levelupmenu.swf` stand.
     static let attributes: [ActorValueKind] = [.magicka, .health, .stamina]
 
-    public private(set) var page: Page
+    public internal(set) var page: Page
     public private(set) var player: SkillsMenuPlayer
     /// In ring order.
     public private(set) var skills: [SkillsMenuSkill]
@@ -117,7 +119,16 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
         case let .legendary(confirmation): handleLegendary(event, confirmation, isSecond: false)
         case let .legendaryAgain(confirmation): handleLegendary(event, confirmation, isSecond: true)
         case let .perkConfirm(confirmation): handlePerkConfirm(event, confirmation)
+        case let .attributeConfirm(kind, confirmation):
+            handleAttributeConfirm(event, kind: kind, confirmation)
         }
+    }
+
+    /// A click on a level-up button asks as the accept key does.
+    mutating func pickAttribute(_ kind: ActorValueKind) {
+        guard page == .levelUp, let position = Self.attributes.firstIndex(of: kind) else { return }
+        attributePosition = position
+        askAttribute()
     }
 
     // MARK: - Pages
@@ -129,7 +140,7 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
         case .move(.right), .move(.down):
             attributePosition = (attributePosition + 1) % 3
         case .button(.accept):
-            return .chooseAttribute(selectedAttribute)
+            askAttribute()
         case .button(.cancel):
             return .close
         default:

@@ -285,7 +285,6 @@ nonisolated private let falloutSystemsSettings = [
     "sChemsAddicted",
     "sChemsWithdrawal",
     "sChemsWornOff",
-    "sConfirmAttribute",
     "sInaccessible",
     "sLockBroken",
     "sMagicTypeAddiction",

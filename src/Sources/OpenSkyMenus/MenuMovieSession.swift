@@ -62,6 +62,9 @@ public final class MenuMovieSession {
     private let label: String
     private let logger: EngineLogger?
     private var framePacer = MenuMovieFramePacer()
+    /// The movie last started, to start again when the layer comes back.
+    private var lastMovie: MenuMovie?
+    private var lastWanted: () -> Bool = { true }
 
     public init(
         movies: (any MenuMovieLoading)?,
@@ -105,9 +108,11 @@ public final class MenuMovieSession {
             return
         }
         if !holdsLayer {
-            hud.suspend()
+            hud.suspend(for: self)
             holdsLayer = true
         }
+        lastMovie = movie
+        lastWanted = isWanted
         path = movie.path
         isLoaded = false
         request += 1
@@ -159,7 +164,8 @@ public final class MenuMovieSession {
         guard holdsLayer else { return }
         holdsLayer = false
         error = nil
-        hud?.start()
+        lastMovie = nil
+        hud?.release(by: self)
     }
 
     /// Applies `body` to the live movie. Without a movie it does nothing.
@@ -209,5 +215,13 @@ public final class MenuMovieSession {
             isLoaded = false
             record(error)
         }
+    }
+}
+
+extension MenuMovieSession: MenuLayerHolder {
+    /// The movie above stopped: this menu's movie starts again and republishes on load.
+    public func reclaimLayer() {
+        guard holdsLayer, let movie = lastMovie else { return }
+        start(movie, while: lastWanted)
     }
 }

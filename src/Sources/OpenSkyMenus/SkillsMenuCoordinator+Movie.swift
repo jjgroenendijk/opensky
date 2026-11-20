@@ -114,8 +114,9 @@ extension SkillsMenuCoordinator {
         let choices = pendingChoices
         pendingChoices = []
         for kind in choices where model?.page == .levelUp {
-            perform(.chooseAttribute(kind))
+            model?.pickAttribute(kind)
         }
+        askQuestion()
         syncMovie()
     }
 }

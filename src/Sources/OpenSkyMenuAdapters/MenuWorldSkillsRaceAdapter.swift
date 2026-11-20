@@ -36,6 +36,7 @@ public protocol MenuWorldSkillsRaceHost: MenuInputConsumer, SendableMetatype {
     var scripts: any ScriptPort { get }
     var swfMovies: any SWFMovieSourcePort { get }
     var menuRecords: (any MenuRecordsPort)? { get }
+    var messages: any MessageCoordinatorPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -61,6 +62,12 @@ extension MenuWorldSkillsRaceAdapter {
 
     public func playLevelUpMusic() {
         game.audio.musicDirector?.playSpecialMusic(.levelUp)
+    }
+
+    func askSkillsMenuQuestion(
+        _ text: String, buttons: [String], answer: @escaping (Int) -> Void
+    ) {
+        game.messages.presentChoices(title: nil, text: text, buttons: buttons, answer: answer)
     }
 
     var skillsMenuTexts: GameSettingTexts<SkillsMenuText> {

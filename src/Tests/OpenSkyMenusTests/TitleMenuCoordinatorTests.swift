@@ -252,6 +252,14 @@ struct TitleMenuCoordinatorTests {
         #expect(world.loaded == ["Save1", "Save1"])
     }
 
+    @Test @MainActor
+    func quittingToTheMainMenuLeavesAGameInProgress() {
+        let (menu, _) = Self.make()
+        menu.openAfterGame()
+        #expect(menu.isOpen)
+        #expect(menu.gameStarted)
+    }
+
     @Test func thePropertiesShowQuitAndContinueAndSkipTheLogin() {
         let flags = TitleMenuMovieBridge.menuProperties(hasSaves: true, version: "OpenSky")
         #expect(flags.count == 14)

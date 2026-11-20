@@ -93,6 +93,12 @@ public final class TitleMenuCoordinator {
         return TitleMenuEntry.allCases.filter { $0 != .resume || hasSaves }
     }
 
+    /// Quit to Main Menu leaves a game behind it, so Continue asks first.
+    public func openAfterGame() {
+        gameStarted = true
+        open()
+    }
+
     public func open() {
         guard !isOpen else { return }
         isOpen = true

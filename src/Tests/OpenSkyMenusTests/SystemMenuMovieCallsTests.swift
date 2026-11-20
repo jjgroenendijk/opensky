@@ -72,6 +72,29 @@ struct SystemMenuMovieCallsTests {
         #expect(SystemMenuMovieBridge.shownMappingRows(runtime: runtime) == 0, "no list clip")
     }
 
+    /// The movie's Quit list has no Cancel row, and its highlight is the selection.
+    @MainActor
+    @Test func theQuitReadoutFollowsTheMovieList() throws {
+        let runtime = try MenuMovieCallLog.emptyRuntime()
+        var parent = runtime.root
+        for name in SystemMenuMovieBridge.quitListPath.split(separator: "/") {
+            let child = SWFDisplayObject(content: .clip(nil))
+            child.name = String(name)
+            parent.addChild(child, atDepth: 1)
+            parent = child
+        }
+        MenuMovieEntryList.publish(
+            [["text": .string("Main Menu")], ["text": .string("Desktop")]],
+            atPath: SystemMenuMovieBridge.quitListPath, runtime: runtime
+        )
+        parent.object.assign(.integer(1), for: "iSelectedIndex")
+        let shown = SystemMenuMovieBridge.listRows(
+            atPath: SystemMenuMovieBridge.quitListPath, runtime: runtime
+        )
+        #expect(shown.rows == ["Main Menu", "Desktop"])
+        #expect(shown.selectedIndex == 1)
+    }
+
     /// `SystemPage.handleInput` goes back on `NavigationCode.TAB` and ignores `ESCAPE`.
     @Test func cancelReachesThePagesAsTab() {
         #expect(SystemMenuMovieBridge.pageKey(.button(.cancel))?.code == SWFKeyCode.tab)

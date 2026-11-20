@@ -20,6 +20,8 @@ public protocol SkillsMenuWorld: SWFLayerWorld {
     var isPlayerInBeastForm: Bool { get }
     /// The level-up music (`DOBJ` `LUMS`), which the game starts as the level-up page opens.
     func playLevelUpMusic()
+    /// An engine message box over the menu; `answer` gets the pressed button's index.
+    func askSkillsMenuQuestion(_ text: String, buttons: [String], answer: @escaping (Int) -> Void)
 }
 
 extension SkillsMenuWorld {
@@ -30,6 +32,11 @@ extension SkillsMenuWorld {
     public var isPlayerInBeastForm: Bool {
         false
     }
+
+    /// Without a message box the menu's own keys answer the question.
+    public func askSkillsMenuQuestion(
+        _: String, buttons _: [String], answer _: @escaping (Int) -> Void
+    ) {}
 }
 
 public final class SkillsMenuCoordinator {
@@ -40,6 +47,8 @@ public final class SkillsMenuCoordinator {
     public internal(set) var skyEnabled = true
     /// True while the sky plays `CameraOutro` after a close; input waits.
     public internal(set) var isClosing = false
+    /// The open question already has its message box.
+    var questionAsked = false
     var framePacer = MenuMovieFramePacer()
     /// Buttons the level-up movie pressed, applied after it returns.
     var pendingChoices: [ActorValueKind] = []
@@ -130,6 +139,7 @@ public final class SkillsMenuCoordinator {
 
     func finishClose() {
         model = nil
+        questionAsked = false
         isClosing = false
         hideSky()
         menuMode.dismiss(Self.identifier)
@@ -143,6 +153,7 @@ public final class SkillsMenuCoordinator {
         if let action {
             perform(action)
         }
+        askQuestion()
         syncMovie()
     }
 
@@ -211,7 +222,7 @@ public final class SkillsMenuCoordinator {
             rows = model.perks.map(Self.perkRow)
             selected = model.perkPosition
         case let .legendary(confirmation), let .legendaryAgain(confirmation),
-             let .perkConfirm(confirmation):
+             let .perkConfirm(confirmation), let .attributeConfirm(_, confirmation):
             page = confirmation.question
             rows = confirmation.options
             selected = confirmation.selectedIndex

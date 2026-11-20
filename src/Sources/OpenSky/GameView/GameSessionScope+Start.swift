@@ -200,7 +200,7 @@ extension GameSessionScope {
 
     func quitToMainMenu() {
         systemMenu.close()
-        titleMenu.open()
+        titleMenu.openAfterGame()
     }
 
     func runCommand(_ action: GameInputAction) {

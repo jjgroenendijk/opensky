@@ -11,6 +11,8 @@ nonisolated extension SystemMenuMovieBridge {
     /// `MappingList`, the list clip inside `InputMappingPanel`. The panel has no
     /// `InvalidateData` of its own.
     static let mappingListPath = "\(systemPagePath)/InputMappingPanel/List_mc"
+    /// The computer's Quit list: Main Menu and Desktop, with no Cancel row.
+    static let quitListPath = "\(systemPagePath)/PCQuitPanel/List_mc"
 
     /// The `SystemPage` state the movie shows, such as 1 for the save list.
     static func pageState(runtime: SWFMovieRuntime) -> Int? {
@@ -100,6 +102,15 @@ nonisolated extension SystemMenuMovieBridge {
     /// The Controls rows the movie draws.
     public static func shownMappingRows(runtime: SWFMovieRuntime) -> Int {
         InventoryMenuMovieBridge.shownClipCount(runtime: runtime, atPath: mappingListPath)
+    }
+
+    /// The rows a movie list draws and the one it highlights.
+    static func listRows(atPath path: String, runtime: SWFMovieRuntime) -> SystemMenuPageSnapshot {
+        SystemMenuPageSnapshot(
+            rows: MenuMovieEntryList.labels(atPath: path, runtime: runtime),
+            selectedIndex: InventoryMenuMovieBridge.selectedIndex(runtime: runtime, atPath: path)
+                ?? 0
+        )
     }
 
     private static func string(_ value: AS2Value) -> String? {
