@@ -47,6 +47,11 @@ nonisolated public final class SWFDisplayObject {
     public var name: String?
     public var matrix = SWFMatrix.identity
     public var colorTransform = SWFColorTransform.identity
+    /// A script set the position, scale, or rotation: as in Flash, the timeline no
+    /// longer moves the node.
+    var scriptOwnsMatrix = false
+    /// A script set `_alpha`: the timeline no longer changes the node's colour.
+    var scriptOwnsColor = false
     /// PlaceObject `ClipDepth`: this node masks depths (depth, clipDepth].
     var clipDepth: UInt16?
     public var isVisible = true

@@ -142,10 +142,10 @@ nonisolated extension SWFMovieRuntime {
     }
 
     func apply(_ placement: SWFPlacement, to node: SWFDisplayObject) {
-        if let matrix = placement.matrix {
+        if let matrix = placement.matrix, !node.scriptOwnsMatrix {
             node.matrix = matrix
         }
-        if let colorTransform = placement.colorTransform {
+        if let colorTransform = placement.colorTransform, !node.scriptOwnsColor {
             node.colorTransform = colorTransform
         }
         if let name = placement.name {

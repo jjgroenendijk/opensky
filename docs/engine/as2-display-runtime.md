@@ -94,6 +94,13 @@ does exactly that: it puts `onRollOver` and `onMouseDown` on its four input rect
 menu unclickable. Children the target frame does not place are unloaded, except clips a script
 made at depth 0 or above: Flash keeps those. New depths are created.
 
+A kept child takes the target frame's matrix and colour, unless a script set them. Once a script
+sets `_x`, `_y`, `_xscale`, `_yscale`, `_rotation`, `_width`, or `_height`, the timeline no longer
+moves that child. Once it sets `_alpha`, the timeline no longer changes its colour. Flash does the
+same. For example, the `startmenu.swf` constructor moves three PlayStation notices to
+`_x = -10000`, off the stage. `sendMenuProperties` then starts a state that jumps the menu's
+timeline, and the notices must stay where the script put them.
+
 The target frame's `DoAction` blocks run. Skipped frames' blocks do not, matching `gotoAndStop`. A
 frame action that jumps its own clip comes back into this path, so this nests at most 8 deep, and
 dropped blocks are counted.
