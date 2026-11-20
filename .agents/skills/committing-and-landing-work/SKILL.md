@@ -64,6 +64,10 @@ or `Model:`. Allowed trailers:
    the runner tests; a newer push cancels the older run. Before the push that should
    merge, check the changed lines locally (`testing-and-verifying` skill): a run that
    fails there costs a second run.
+   A capture that shows the change, such as a before and after pair, goes into the PR
+   body with `gh pr edit <pr> --attach '<file>.png#<alt text>'`. It uploads the image to
+   GitHub and appends it to the body, so the capture stays in `.logs/` and never enters a
+   commit (root `AGENTS.md`, Legal & IP boundary).
 5. Closing a milestone acceptance issue -> the PR body carries the acceptance record, in
    the format defined by `docs/tools/acceptance-record.md`. Nothing enforces this, so it
    is checked here.
