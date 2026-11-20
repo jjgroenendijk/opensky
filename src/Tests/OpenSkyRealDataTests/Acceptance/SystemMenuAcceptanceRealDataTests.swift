@@ -175,10 +175,11 @@ struct SystemMenuAcceptanceRealDataTests {
     /// The engine-side selector must work with no install at all, so the
     /// milestone surface never depends on the movie coming up.
     @Test
-    func selectorIsIndependentOfTheMovie() {
+    func selectorIsIndependentOfTheMovie() throws {
         var model = SystemMenuModel()
         model.open()
-        for _ in 0 ..< 4 {
+        let settings = try #require(model.entries.firstIndex(of: .settings))
+        for _ in 0 ..< settings {
             model.handle(.move(.down))
         }
         #expect(model.handle(.button(.accept)) == .showPage(.settings))
