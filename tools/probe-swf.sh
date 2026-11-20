@@ -63,6 +63,10 @@ probe_swf_gates() {
   run "menu inventory (inventorymenu.swf)" menu inventory --down 1 --drop --quantity -3
   grep -q 'movie->engine ItemDrop(' "$swf_log" \
     || fail "inventorymenu.swf answered the drop key with no ItemDrop"
+  grep 'item card shown:' "$swf_log" | tail -1 | grep -q 'true' \
+    || fail "inventorymenu.swf did not show the item card"
+  grep 'category clips shown:' "$swf_log" | tail -1 | grep -qv 'shown: 0$' \
+    || fail "inventorymenu.swf drew no category rows"
   grep 'menu inventory diagnostics:' "$swf_log" | tail -1 | grep -q ' 0 faults' \
     || fail "inventorymenu.swf faulted during bring-up"
   run "menu quest-journal (quest_journal.swf Quests page)" menu quest-journal

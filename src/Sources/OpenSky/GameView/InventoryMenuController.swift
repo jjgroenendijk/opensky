@@ -147,7 +147,9 @@ final class InventoryMenuController {
                 }
             },
             didLoad: { [weak self] in
-                // The item panel opens beside the categories, as the drop key needs.
+                // The panel opens on the rows, as the drop key needs; it moves the
+                // selection, so the rows are written again after it.
+                self?.publishModel()
                 self?.movie.publish(ItemCardSubMenuBridge.showItemsList(runtime:))
                 self?.publishModel()
             }

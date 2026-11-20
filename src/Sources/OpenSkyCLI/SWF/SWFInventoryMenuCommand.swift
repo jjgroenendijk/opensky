@@ -34,6 +34,7 @@ enum SWFInventoryMenuCommand {
         }
 
         var model = try makeModel(context: context)
+        InventoryMenuMovieBridge.publish(model, runtime: runtime)
         ItemCardSubMenuBridge.showItemsList(runtime: runtime)
         InventoryMenuMovieBridge.publish(model, runtime: runtime)
         for _ in 0 ..< ticks {
@@ -123,14 +124,11 @@ extension SWFInventoryMenuCommand {
             return
         }
         runtime.advance()
-        let step: MenuInputEvent = arguments.quantity < 0 ? .move(.left) : .move(.right)
-        for _ in 0 ..< abs(arguments.quantity) {
-            ItemCardSubMenuBridge.handle(step, runtime: runtime)
-            runtime.advance()
+        let opened = runtime.invokeLog.entries.suffix(runtime.invokeLog.total - start)
+            .contains { $0.name == "QuantitySliderOpen" }
+        if opened {
+            slide(arguments, runtime: runtime)
         }
-        let finish: MenuInputEvent = arguments.cancel ? .button(.cancel) : .button(.accept)
-        ItemCardSubMenuBridge.handle(finish, runtime: runtime)
-        runtime.advance()
         let names: Set = [
             InventoryMenuMovieBridge.dropCallback, "ShowQuantityMenu", "ItemDrop",
             "QuantitySliderOpen", "UpdateItem3D"
@@ -139,6 +137,18 @@ extension SWFInventoryMenuCommand {
         for call in runtime.invokeLog.entries.suffix(recorded) where names.contains(call.name) {
             print("[INFO]   \(call.direction.rawValue) \(call.name)(\(call.arguments))")
         }
+    }
+
+    /// Moves the open quantity slider, then accepts or cancels it.
+    private static func slide(_ arguments: MenuArguments.Inventory, runtime: SWFMovieRuntime) {
+        let step: MenuInputEvent = arguments.quantity < 0 ? .move(.left) : .move(.right)
+        for _ in 0 ..< abs(arguments.quantity) {
+            ItemCardSubMenuBridge.handle(step, runtime: runtime)
+            runtime.advance()
+        }
+        let finish: MenuInputEvent = arguments.cancel ? .button(.cancel) : .button(.accept)
+        ItemCardSubMenuBridge.handle(finish, runtime: runtime)
+        runtime.advance()
     }
 }
 
@@ -158,8 +168,13 @@ extension SWFInventoryMenuCommand {
                 + "\(model.entries.count)"
         )
         print("[INFO]   movie categories: \(categories.joined(separator: ", "))")
+        let shown = InventoryMenuMovieBridge.shownClipCount(
+            runtime: runtime, atPath: InventoryMenuMovieBridge.categoryListPath
+        )
+        print("[INFO]   category clips shown: \(shown)")
         let state = ItemCardSubMenuBridge.listsState(runtime: runtime).map(String.init) ?? "none"
         print("[INFO]   movie lists state: \(state)")
+        print("[INFO]   item card shown: \(ItemCardSubMenuBridge.isCardVisible(runtime: runtime))")
         print("[INFO]   movie rows: \(rows.prefix(12).joined(separator: ", "))")
         let category = InventoryMenuMovieBridge.selectedCategoryIndex(runtime: runtime)
         let row = InventoryMenuMovieBridge.selectedIndex(runtime: runtime)

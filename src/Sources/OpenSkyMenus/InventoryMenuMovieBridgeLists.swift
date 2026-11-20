@@ -57,15 +57,24 @@ nonisolated extension InventoryMenuMovieBridge {
 
     /// Rebuilds both lists' rows from the `EntriesA` arrays just written.
     ///
-    /// `InvalidateListData` is a `GameDelegate` callback the movie registers
-    /// for itself, so it is invoked by name through the delegate rather than as
-    /// a function on a display instance — calling it `atPath:` finds nothing
-    /// and lands in the unhandled-invoke count.
+    /// `InvalidateListData` is a `GameDelegate` callback, so it goes through the
+    /// delegate. It rebuilds the category list without handing the new array to
+    /// that list's filter, which then matches no row; the category list's own
+    /// `InvalidateData` does, as `SetCategoriesList` does.
     public static func invalidate(runtime: SWFMovieRuntime) {
+        runtime.callMovie(categoryInvalidateName, atPath: categoryListPath)
         runtime.callMovie(invalidateCallback)
     }
 
+    static let categoryInvalidateName = "InvalidateData"
+
     // MARK: - Reading
+
+    /// The visible row clips of the list at `path`: the rows the movie draws.
+    public static func shownClipCount(runtime: SWFMovieRuntime, atPath path: String) -> Int {
+        let list = runtime.node(atPath: path, from: runtime.root)
+        return list?.children.count { $0.isVisible && $0.name?.hasPrefix("Entry") == true } ?? 0
+    }
 
     /// Row `text` values of one list in numeric row order.
     public static func entryLabels(runtime: SWFMovieRuntime, atPath path: String) -> [String] {
