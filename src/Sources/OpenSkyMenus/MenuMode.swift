@@ -115,9 +115,26 @@ public final class MenuModeController {
     @discardableResult
     public func routeMenuInput(_ event: MenuInputEvent) -> Bool {
         guard stack.isMenuMode else { return false }
+        keyRepeat.note(event)
         inputConsumer?.handleMenuInput(event)
         return true
     }
+
+    /// Sends a held direction again when its repeat is due. The journal, and the System
+    /// page inside it, repeat faster.
+    public func repeatHeldDirection(now: Double) {
+        guard stack.isMenuMode else {
+            keyRepeat.reset()
+            return
+        }
+        let inJournal = topMenu.map { [.journalMenu, .systemMenu].contains($0) } ?? false
+        let timing: MenuKeyRepeat.Timing = inJournal ? .journal : .standard
+        if let direction = keyRepeat.due(now: now, timing: timing) {
+            inputConsumer?.handleMenuInput(.move(direction))
+        }
+    }
+
+    private var keyRepeat = MenuKeyRepeat()
 
     /// The pointer twin of `routeMenuInput`.
     @discardableResult

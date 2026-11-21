@@ -37,23 +37,20 @@ nonisolated public struct GamepadSnapshot: Equatable, Sendable {
     }
 }
 
-/// Turns gamepad snapshots into the menu events the keyboard also sends. A held
-/// direction repeats, as a held arrow key does.
+/// Turns gamepad snapshots into the menu events the keyboard also sends. Menu mode
+/// repeats a held direction for both devices (`MenuKeyRepeat`).
 nonisolated public struct GamepadMenuInput: Sendable {
     /// How far the stick must lean to move, and how far back it must come to stop.
     static let stickPress: Float = 0.5
     static let stickRelease: Float = 0.3
-    public static let repeatDelay = 0.5
-    public static let repeatInterval = 0.12
 
     private var heldButtons: Set<GamepadButton> = []
     private var heldDirection: MenuInputEvent.Direction?
-    private var nextRepeat = 0.0
 
     public init() {}
 
-    /// The events since the last snapshot. `now` is in seconds, for the repeat.
-    public mutating func events(for snapshot: GamepadSnapshot, now: Double) -> [MenuInputEvent] {
+    /// The events since the last snapshot.
+    public mutating func events(for snapshot: GamepadSnapshot) -> [MenuInputEvent] {
         var events: [MenuInputEvent] = []
         let newButtons = snapshot.pressed.subtracting(heldButtons)
         heldButtons = snapshot.pressed
@@ -69,12 +66,8 @@ nonisolated public struct GamepadMenuInput: Sendable {
             }
             if let direction {
                 events.append(.move(direction))
-                nextRepeat = now + Self.repeatDelay
             }
             heldDirection = direction
-        } else if let direction, now >= nextRepeat {
-            events.append(.move(direction))
-            nextRepeat = now + Self.repeatInterval
         }
         return events
     }

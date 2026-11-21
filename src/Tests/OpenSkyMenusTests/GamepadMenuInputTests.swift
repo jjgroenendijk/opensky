@@ -1,4 +1,4 @@
-// Gamepad snapshots to menu events: button edges, the D-pad and stick, and the repeat.
+// Gamepad snapshots to menu events: button edges, the D-pad, and the stick.
 
 import OpenSkyMenus
 import OpenSkyMenusInterface
@@ -13,37 +13,34 @@ struct GamepadMenuInputTests {
 
     @Test func faceButtonsSendTheMenuButtonsOncePerPress() {
         var input = GamepadMenuInput()
-        #expect(input.events(for: snapshot([.a, .y]), now: 0) == [
+        #expect(input.events(for: snapshot([.a, .y])) == [
             .button(.accept),
             .button(.yButton)
         ])
-        #expect(input.events(for: snapshot([.a, .y]), now: 0.1).isEmpty)
-        #expect(input.events(for: snapshot([.b, .x]), now: 0.2) == [
+        #expect(input.events(for: snapshot([.a, .y])).isEmpty)
+        #expect(input.events(for: snapshot([.b, .x])) == [
             .button(.cancel),
             .button(.xButton)
         ])
     }
 
-    @Test func aHeldDirectionMovesThenRepeatsThenReleases() {
+    @Test func aHeldDirectionMovesOnceThenReleases() {
         var input = GamepadMenuInput()
-        #expect(input.events(for: snapshot([.dpadDown]), now: 0) == [.move(.down)])
-        #expect(input.events(for: snapshot([.dpadDown]), now: 0.3).isEmpty)
-        #expect(input.events(for: snapshot([.dpadDown]), now: 0.5) == [.move(.down)])
-        #expect(input.events(for: snapshot([.dpadDown]), now: 0.55).isEmpty)
-        #expect(input.events(for: snapshot([.dpadDown]), now: 0.63) == [.move(.down)])
-        #expect(input.events(for: snapshot(), now: 0.7) == [.release(.down)])
+        #expect(input.events(for: snapshot([.dpadDown])) == [.move(.down)])
+        #expect(input.events(for: snapshot([.dpadDown])).isEmpty)
+        #expect(input.events(for: snapshot()) == [.release(.down)])
     }
 
     @Test func theStickMovesPastHalfAndHoldsUntilItReturns() {
         var input = GamepadMenuInput()
-        #expect(input.events(for: snapshot(stick: [0.4, 0]), now: 0).isEmpty)
-        #expect(input.events(for: snapshot(stick: [-0.8, 0.2]), now: 0.1) == [.move(.left)])
-        #expect(input.events(for: snapshot(stick: [-0.35, 0]), now: 0.2).isEmpty)
-        #expect(input.events(for: snapshot(stick: [0, 0.9]), now: 0.3) == [
+        #expect(input.events(for: snapshot(stick: [0.4, 0])).isEmpty)
+        #expect(input.events(for: snapshot(stick: [-0.8, 0.2])) == [.move(.left)])
+        #expect(input.events(for: snapshot(stick: [-0.35, 0])).isEmpty)
+        #expect(input.events(for: snapshot(stick: [0, 0.9])) == [
             .release(.left),
             .move(.up)
         ])
-        #expect(input.events(for: snapshot(stick: [0, 0.1]), now: 0.4) == [.release(.up)])
+        #expect(input.events(for: snapshot(stick: [0, 0.1])) == [.release(.up)])
     }
 
     @Test func twoGamepadsMergeTheirButtonsAndTheFurthestStick() {

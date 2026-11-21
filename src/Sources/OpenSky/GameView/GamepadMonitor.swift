@@ -58,23 +58,23 @@ final class GamepadMonitor {
             return
         }
         if menuMode.isMenuMode {
-            pollMenu(snapshot, now: now, menuMode: menuMode)
+            pollMenu(snapshot, menuMode: menuMode)
         } else {
             pollWorld(snapshot, dt: dt)
         }
     }
 
-    private func pollMenu(_ snapshot: GamepadSnapshot, now: Double, menuMode: any MenuModePort) {
+    private func pollMenu(_ snapshot: GamepadSnapshot, menuMode: any MenuModePort) {
         // Buttons held into the menu do not fire again when it closes.
         _ = gameplay.frame(for: snapshot, bindings: bindings())
         cameraInput?.setAnalogMove(.zero)
         let fresh = snapshot.pressed.subtracting(menuHeld)
         menuHeld = snapshot.pressed
         if fresh.contains(where: { onCapturedButton?($0.controlMapCode) == true }) {
-            _ = input.events(for: snapshot, now: now)
+            _ = input.events(for: snapshot)
             return
         }
-        for event in input.events(for: snapshot, now: now) {
+        for event in input.events(for: snapshot) {
             _ = menuMode.routeMenuInput(event)
             // The gamepad's A is Activate as well as Accept.
             if event == .button(.accept) {
@@ -85,7 +85,7 @@ final class GamepadMonitor {
 
     private func pollWorld(_ snapshot: GamepadSnapshot, dt: Float) {
         menuHeld = snapshot.pressed
-        _ = input.events(for: snapshot, now: 0)
+        _ = input.events(for: snapshot)
         let frame = gameplay.frame(for: snapshot, bindings: bindings())
         for edge in frame.edges {
             if edge.phase == .press {

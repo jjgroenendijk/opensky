@@ -16,6 +16,7 @@ nonisolated public final class FakeMenuModePort: MenuModePort {
     public var stackValue: MenuStack?
     public var topMenu: MenuIdentifier?
     public var inputConsumer: (any MenuInputConsumer)?
+    public var repeatHeldDirectionCalls: [Double] = []
     public var routeMenuInputCalls: [MenuInputEvent] = []
     public var routeMenuInputResult = false
 
@@ -47,6 +48,10 @@ nonisolated extension FakeMenuModePort {
             return stackValue
         }
         set { stackValue = newValue }
+    }
+
+    public func repeatHeldDirection(now: Double) {
+        repeatHeldDirectionCalls.append(now)
     }
 
     @discardableResult
