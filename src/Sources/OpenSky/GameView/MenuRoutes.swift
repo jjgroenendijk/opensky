@@ -138,6 +138,7 @@ struct MenuFrameTick {
         if let renderer {
             monitor.poll(now: now, renderer: renderer, menuMode: game.menuMode)
         }
+        game.menuMode.repeatHeldDirection(now: now)
         game.movies.tick(now: now)
         game.titleSequence.tick(now: now)
         game.titleMenu.tick(now: now)

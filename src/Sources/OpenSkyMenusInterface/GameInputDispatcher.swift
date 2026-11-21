@@ -31,7 +31,15 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
 
     /// Activate also sends its release, so holding it on a follower opens command mode.
     public var sendsRelease: Bool {
-        isHeld || self == .activate
+        isHeld || isMenuMove || self == .activate
+    }
+
+    /// A menu direction repeats while down, so its press always gets a release.
+    public var isMenuMove: Bool {
+        switch self {
+        case .menuUp, .menuDown, .menuLeft, .menuRight: true
+        default: false
+        }
     }
 
     /// A beast form cannot open the character menus or the map, switch the camera, or

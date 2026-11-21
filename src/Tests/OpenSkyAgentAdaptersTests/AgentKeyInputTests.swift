@@ -43,6 +43,16 @@ struct AgentKeyInputTests {
         #expect(result["action"] == .null)
     }
 
+    @Test func aMenuDirectionPressIsATapAndAHoldEndsWithARelease() throws {
+        host.fakeMenuMode.isMenuMode = true
+        let held = try input.applyInput("menuDown", phase: .press)
+        #expect(!held)
+        #expect(try input.applyInput("menuDown", phase: .hold))
+        #expect(host.fakeMenuMode.routeMenuInputCalls == [
+            .move(.down), .release(.down), .move(.down)
+        ])
+    }
+
     @Test func anUnknownKeyFails() {
         #expect(throws: AgentFailure.self) { try input.pressKey("NoSuchKey") }
     }

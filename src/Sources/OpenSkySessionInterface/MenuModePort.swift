@@ -10,6 +10,7 @@ public protocol MenuModePort: AnyObject, MenuInputRouting {
     var stack: MenuStack { get }
     var topMenu: MenuIdentifier? { get }
     var inputConsumer: (any MenuInputConsumer)? { get set }
+    func repeatHeldDirection(now: Double)
 }
 
 /// The default arguments a protocol requirement cannot carry.

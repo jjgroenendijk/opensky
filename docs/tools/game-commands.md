@@ -70,9 +70,9 @@ To look at one record, reference, mesh, or cell without the game window, use
 
 | Command | Does |
 | --- | --- |
-| `input press <action>` | Presses an action. A held action stays down until `input release`. `input press activate` is a tap: down and up in one frame |
+| `input press <action>` | Presses an action. A held action stays down until `input release`. `input press activate` and a menu direction such as `menuDown` are a tap: down and up in one frame |
 | `input release <action>` | Releases a held action |
-| `input hold <action> --frames <n>` or `--seconds <s>` | Holds an action while the game steps, then releases it: 1 to 100000 frames, or up to 600 s. Only for held actions and `activate`. Hold `activate` on a follower for command mode |
+| `input hold <action> --frames <n>` or `--seconds <s>` | Holds an action while the game steps, then releases it: 1 to 100000 frames, or up to 600 s. Only for held actions, the menu directions, and `activate`. A held menu direction repeats as a held key does. Hold `activate` on a follower for command mode |
 | `input look --dx <deg> --dy <deg>` | Turns the view. A positive `dx` turns right, a positive `dy` looks up |
 | `input select <label>` | Moves the open menu's selection to the row with that label. A message box's buttons count as rows, so `input select No`, then `input press menuAccept`, answers a question box |
 | `input point --x <0..1> --y <0..1>` | Moves the cursor over the open menu. The values are fractions of the game view, from the top left |

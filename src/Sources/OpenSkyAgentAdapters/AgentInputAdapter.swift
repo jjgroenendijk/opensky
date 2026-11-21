@@ -84,8 +84,10 @@ extension AgentInputAdapter {
         if outcome == .noMenu {
             throw AgentFailure(.invalidArgument, "'\(name)' needs an open menu")
         }
-        // A press of activate is a tap; only `input hold` keeps it down.
-        if phase == .press, action == .activate, !game.menuMode.isMenuMode {
+        // A press of activate or a menu direction is a tap; only `input hold` keeps
+        // it down.
+        let taps = action == .activate ? !game.menuMode.isMenuMode : action.isMenuMove
+        if phase == .press, taps {
             _ = dispatcher.apply(action, .release)
         }
         return phase == .hold ? action.sendsRelease : action.isHeld
