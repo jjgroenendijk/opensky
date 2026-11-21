@@ -31,6 +31,9 @@ nonisolated public struct SWFSceneItem: Equatable, Sendable {
     /// An `editText` item's box when a script resized the field; nil keeps the
     /// character's bounds.
     public var textBounds: SWFRect?
+    /// An `editText` item's field as the runtime holds it: a field a script made, or one
+    /// with a script's box or format. nil reads the character from the movie.
+    public var textField: SWFEditText?
     /// The inline `<img>` pictures of an `editText` item's `textOverride`.
     public var textImages: [SWFInlineImage] = []
     /// The `<font>` and `<p>` styles of the `textOverride`.

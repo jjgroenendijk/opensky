@@ -93,4 +93,78 @@ struct SWFRuntimeTextFieldTests {
         #expect(try call(runtime, "getNewTextFormat", on: field).objectValue != nil)
         #expect(try call(runtime, "setNewTextFormat", on: field, [.null]) == .undefined)
     }
+
+    /// A movie with the `TestFont` triangle font, so a format can name a font that exists.
+    private func startedWithFont() throws -> SWFMovieRuntime {
+        let font = SWFFontBodyBuilder.abFont(fontID: 1)
+        return try SWFRuntimeFixture.started(tags: [
+            SWFFixture.Tag(code: 48, body: font.build()), SWFDisplayFixture.showFrameTag
+        ])
+    }
+
+    private func format(_ runtime: SWFMovieRuntime, _ arguments: [AS2Value]) throws -> AS2Value {
+        let constructor = try #require(runtime.runtime.globalValue("TextFormat").objectValue)
+        return AS2Interpreter.construct(in: runtime.runtime, constructor, arguments: arguments)
+    }
+
+    @Test func aCreatedFieldAsksForTheDefaultFontAndFindsNone() throws {
+        let runtime = try startedWithFont()
+        let field = try createdField(runtime)
+        let text = try #require(runtime.textField(of: field))
+        #expect(text.fontClass == "Times New Roman")
+        #expect(text.fontHeight == 240)
+        #expect(runtime.movieScene.resolvedFont(for: text) == nil)
+        let answer = try #require(try call(runtime, "getTextFormat", on: field).objectValue)
+        #expect(answer.lookup("font")?.property.value == .string("Times New Roman"))
+        #expect(answer.lookup("size")?.property.value == .number(12))
+    }
+
+    @Test func aTextFormatSetsTheFieldsFontSizeAndColour() throws {
+        let runtime = try startedWithFont()
+        let field = try createdField(runtime)
+        let style = try format(runtime, [.string("TestFont"), .number(18), .number(0xFF8000)])
+        _ = try call(runtime, "setTextFormat", on: field, [style])
+        let text = try #require(runtime.textField(of: field))
+        #expect(runtime.movieScene.resolvedFont(for: text)?.fontID == 1)
+        #expect(text.fontHeight == 360)
+        #expect(text.color == SWFColor(red: 255, green: 128, blue: 0, alpha: 255))
+        let answer = try #require(try call(runtime, "getNewTextFormat", on: field).objectValue)
+        #expect(answer.lookup("size")?.property.value == .number(18))
+        #expect(answer.lookup("color")?.property.value == .number(Double(0xFF8000)))
+        #expect(answer.lookup("font")?.property.value == .string("TestFont"))
+    }
+
+    @Test func aFormatKeepsWhatItDoesNotSetAndIgnoresARange() throws {
+        let runtime = try startedWithFont()
+        let field = try createdField(runtime)
+        _ = try call(
+            runtime,
+            "setNewTextFormat",
+            on: field,
+            [format(runtime, [.string("TestFont")])]
+        )
+        _ = try call(
+            runtime,
+            "setTextFormat",
+            on: field,
+            [format(runtime, [.undefined, .number(30)])]
+        )
+        _ = try call(
+            runtime,
+            "setTextFormat",
+            on: field,
+            [.number(0), format(runtime, [.string("X")])]
+        )
+        let text = try #require(runtime.textField(of: field))
+        #expect(text.fontClass == "TestFont")
+        #expect(text.fontHeight == 600)
+        let scene = runtime.makeScene()
+        let items = scene.commands.compactMap { command -> SWFSceneItem? in
+            if case let .draw(item, _) = command {
+                return item
+            }
+            return nil
+        }
+        #expect(items.contains { $0.textField?.fontClass == "TestFont" })
+    }
 }
