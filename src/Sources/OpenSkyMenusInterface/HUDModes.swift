@@ -5,6 +5,15 @@ nonisolated public enum HUDMode: String, CaseIterable, Sendable {
     case warHorse = "WarHorseMode"
     case cart = "CartMode"
     case movementDisabled = "MovementDisabled"
+    case favor = "Favor"
+    case dialogue = "DialogueMode"
+    case inventory = "InventoryMode"
+    case barter = "BarterMode"
+    case tween = "TweenMode"
+    case journal = "JournalMode"
+    case worldMap = "WorldMapMode"
+    case book = "BookMode"
+    case sleepWait = "SleepWaitMode"
 
     /// The clips OpenSky also shows and hides that this mode hides, as the movie's
     /// element list says. OpenSky's own switches must not show them again.
@@ -13,7 +22,9 @@ nonisolated public enum HUDMode: String, CaseIterable, Sendable {
         case .stealth, .swimming: []
         case .horse: [.stamina, .itemInfo]
         case .warHorse: [.itemInfo]
-        case .cart, .movementDisabled: Set(HUDModeClip.allCases)
+        case .favor: [.health, .magicka, .stamina]
+        case .cart, .movementDisabled, .dialogue, .inventory, .barter, .tween, .journal,
+             .worldMap, .book, .sleepWait: Set(HUDModeClip.allCases)
         }
     }
 }

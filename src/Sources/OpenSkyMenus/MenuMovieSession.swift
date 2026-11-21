@@ -108,7 +108,7 @@ public final class MenuMovieSession {
             return
         }
         if !holdsLayer {
-            hud.suspend(for: self)
+            hud.takeLayer(for: self)
             holdsLayer = true
         }
         lastMovie = movie

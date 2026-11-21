@@ -21,24 +21,15 @@ public protocol MenuLayerHolder: AnyObject {
     func reclaimLayer()
 }
 
-/// The HUD, which gives the single SWF layer to a menu movie and takes it back.
+/// The HUD, which keeps the stack of menu movies on the menu layer. The HUD itself
+/// draws on its own layer under it.
 public protocol MenuLayerOwner: AnyObject {
-    func suspend()
     func start()
-    /// `holder` takes the layer from whatever holds it now.
-    func suspend(for holder: any MenuLayerHolder)
-    /// `holder` lets go. The holder below it, or else the HUD, gets the layer back.
+    /// `holder` takes the menu layer from whatever holds it now.
+    func takeLayer(for holder: any MenuLayerHolder)
+    /// `holder` lets go. The holder below it gets the layer back, or else the layer
+    /// empties.
     func release(by holder: any MenuLayerHolder)
-}
-
-extension MenuLayerOwner {
-    public func suspend(for _: any MenuLayerHolder) {
-        suspend()
-    }
-
-    public func release(by _: any MenuLayerHolder) {
-        start()
-    }
 }
 
 /// Menu mode, which takes the keys while a menu is open.

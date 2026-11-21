@@ -38,6 +38,11 @@ final class ImmediateMovies: MenuMovieLoading {
 }
 
 @MainActor
+private final class LayerHolder: MenuLayerHolder {
+    func reclaimLayer() {}
+}
+
+@MainActor
 struct MenuRendererPortTests {
     @Test func eachListBridgeSendsAKeyDownAndUpThroughThePort() throws {
         let port = try #require(FakeRendererPort())
@@ -86,15 +91,36 @@ struct MenuRendererPortTests {
     @Test func theHUDStartsAndRepublishesThroughThePort() throws {
         let port = try #require(FakeRendererPort())
         let harness = try HUDMovieBridgeTests.makeRuntime()
-        port.swfRuntime = harness.runtime
+        port.swfHUDRuntime = harness.runtime
         let world = FakeSWFLayerWorld(renderer: port)
         let hud = try HUDCoordinator(movies: ImmediateMovies(), world: world)
         hud.start()
         #expect(hud.isLoaded)
+        #expect(port.swfHUDScenes.count == 1)
         let published = harness.log.calls["SetCrosshairEnabled"]?.count ?? 0
         #expect(published > 0)
         hud.update { $0.crosshairEnabled = false }
         #expect(harness.log.calls["SetCrosshairEnabled"]?.count == published + 1)
+    }
+
+    /// A menu takes the menu layer; the HUD stays loaded under it in the menu's mode.
+    @Test func theHUDStaysUnderAMenuInItsMode() throws {
+        let port = try #require(FakeRendererPort())
+        let harness = try HUDMovieBridgeTests.makeRuntime()
+        port.swfHUDRuntime = harness.runtime
+        let world = FakeSWFLayerWorld(renderer: port)
+        let hud = try HUDCoordinator(movies: ImmediateMovies(), world: world)
+        hud.start()
+        hud.takeLayer(for: LayerHolder())
+        #expect(hud.isLoaded)
+        hud.updatePlayerModes(HUDModeInputs(menus: [.inventoryMenu]))
+        #expect(hud.shownModes == [.inventory])
+        hud.updatePlayerModes(HUDModeInputs())
+        #expect(hud.shownModes.isEmpty)
+        hud.setCovered(true)
+        #expect(port.swfHUDHidden)
+        hud.setCovered(false)
+        #expect(!port.swfHUDHidden)
     }
 
     @Test func aHUDWithoutAMovieLoaderFailsThroughThePort() throws {

@@ -29,7 +29,10 @@ public final class FakeRendererPort: RendererPort {
     public var skyCelestial: SkyCelestial?
     public var skyClouds: SkyClouds?
     public var swfScale: Float = 1
-    public var swfMainMovieHidden = false
+    public var swfHUDHidden = false
+    /// What `setSWFHUD` hands back for a scene, and the HUD the updates reach.
+    public var swfHUDRuntime: SWFMovieRuntime?
+    public private(set) var swfHUDScenes: [SWFMovieScene?] = []
     public var swfGamepadCount = 0
     public var swfSoundPlayer: (@MainActor (String?) -> Void)?
     public var animationTime: Float = 0
@@ -101,6 +104,17 @@ public final class FakeRendererPort: RendererPort {
     ) throws -> SWFMovieRuntime? {
         swfOverlays.append(scene)
         return scene == nil ? nil : swfOverlayRuntime
+    }
+
+    public func setSWFHUD(
+        _ scene: SWFMovieScene?, prepare _: ((SWFMovieRuntime) -> Void)?
+    ) throws -> SWFMovieRuntime? {
+        swfHUDScenes.append(scene)
+        return scene == nil ? nil : swfHUDRuntime
+    }
+
+    public func updateSWFHUD(_ body: (SWFMovieRuntime) -> Void) throws {
+        swfHUDRuntime.map(body)
     }
 
     public func advanceSWFOverlay() throws {

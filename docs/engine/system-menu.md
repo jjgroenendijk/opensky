@@ -93,8 +93,9 @@ it.
 Input must go through the renderer's SWF update batch. That batch rebuilds the draw commands before
 it returns. Sending input to the runtime directly changes the movie's selection without redrawing.
 
-The renderer has one SWF layer. The system menu takes it from the HUD while the movie is up, and
-gives it back on Resume. The movie is on by default, so play mode shows the menu as the game does.
+The system menu's movie draws on the renderer's menu layer, over the HUD, which stays in
+`JournalMode` while the menu is open. The movie is on by default, so play mode shows the menu as
+the game does.
 
 No movie problem throws out of a control.
 

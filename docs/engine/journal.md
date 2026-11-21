@@ -235,7 +235,7 @@ Opening pushes the menu `Journal`, which pauses the world, then starts the movie
 `PAGE_QUEST`. The movie's life cycle calls (`SetPlatform`, `InitExtensions`, `ShowMenu`,
 `CloseMenu`) belong to the whole movie and stay with the system menu. Only the page switch and
 the data belong to the journal. The journal and the system menu cannot be open together, because
-they are the same movie on the renderer's one SWF layer.
+they are the same movie on the renderer's menu layer.
 
 Input goes to the movie first, so the tabs across the top still switch to Stats and System. The
 movie owns the selection and asks for the objectives of each quest it highlights. OpenSky reads
