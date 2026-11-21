@@ -64,11 +64,17 @@ nonisolated public struct SWFEditText: Equatable, Sendable {
         )
     }
 
-    /// Plain-text view of `initialText`: markup stripped when the field is HTML,
-    /// otherwise the stored string. Full HTML text layout is deferred to 8.3.x.
+    /// Plain-text view of `initialText`: the text of its HTML when the field is HTML,
+    /// otherwise the stored string.
     public var plainText: String? {
         guard let initialText else { return nil }
-        return flags.html ? SWFEditText.stripHTML(initialText) : initialText
+        return htmlContent?.text ?? initialText
+    }
+
+    /// The HTML of `initialText` taken apart, for an HTML field.
+    public var htmlContent: SWFHTMLContent? {
+        guard flags.html, let initialText else { return nil }
+        return SWFHTMLText.parseStyled(initialText)
     }
 
     /// Decodes a DefineEditText (37) tag body.

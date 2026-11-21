@@ -23,6 +23,8 @@ nonisolated public struct SWFTextRun: Equatable, Sendable {
     /// Straight text color.
     public let color: SWFColor
     public let glyphs: [SWFGlyphPlacement]
+    /// The `<font face>` this run draws in, when the caller resolved it; nil is the field's font.
+    public var face: String?
 }
 
 nonisolated public struct SWFTextLayoutResult: Equatable, Sendable {
@@ -58,6 +60,9 @@ nonisolated public struct SWFCharacterBox: Equatable, Sendable {
 }
 
 nonisolated public enum SWFTextLayout: Sendable {
+    /// The glyphs of one style span, nil for the field's own style.
+    private typealias SpanGlyphs = (span: Int?, glyphs: [SWFGlyphPlacement])
+
     static let twipsPerPixel: Float = 20
 
     /// Lays out a DefineText/DefineText2 block. Record state (font, height,
@@ -112,32 +117,30 @@ nonisolated public enum SWFTextLayout: Sendable {
         content override: String? = nil,
         firstLine: Int? = nil,
         images: [SWFInlineImage] = [],
+        styles: SWFTextStyles = .none,
+        fonts: (String) -> SWFFontDefinition? = { _ in nil },
         measuresCharacters: Bool = false
     ) -> SWFTextLayoutResult {
         let content = override ?? text.plainText
         guard let content, !content.isEmpty, !font.glyphs.isEmpty else {
             return SWFTextLayoutResult(runs: [], missingGlyphs: 0)
         }
+        let authored = override == nil ? text.htmlContent : nil
+        let styles = authored?.styles ?? styles
+        let images = authored?.images ?? images
         let metrics = FontScaledMetrics(
             font: font, emTwips: Float(text.fontHeight ?? 240)
         )
-        let availableWidth = text.availableWidth
-        var shaper = LineShaper(metrics: metrics, images: images)
-        let paragraphs = content
-            .replacingOccurrences(of: "\r\n", with: "\n")
-            .replacingOccurrences(of: "\r", with: "\n")
-            .split(separator: "\n", omittingEmptySubsequences: false)
-        var lines: [ShapedLine] = []
-        var paragraphStart = 0
-        for paragraph in paragraphs {
-            let shaped = shaper.shape(String(paragraph), start: paragraphStart)
-            paragraphStart += paragraph.utf16.count + 1
-            if text.flags.wordWrap, availableWidth > 0 {
-                lines.append(contentsOf: shaper.wrap(shaped, width: availableWidth))
-            } else {
-                lines.append(shaped)
-            }
+        let faces = styles.spans.map { span in
+            span.face.flatMap { face in fonts(face).map { (face, $0) } }
         }
+        let spanMetrics = zip(styles.spans, faces).map { span, face in
+            FontScaledMetrics(font: face?.1 ?? font, emTwips: span.sizeTwips ?? metrics.emTwips)
+        }
+        var shaper = LineShaper(
+            metrics: metrics, images: images, styles: styles, spanMetrics: spanMetrics
+        )
+        let lines = shapeLines(content, text: text, shaper: &shaper)
         var shown = lines[...]
         var drawn = lines[...]
         var clipBottom: Float?
@@ -154,11 +157,15 @@ nonisolated public enum SWFTextLayout: Sendable {
                 clipBottom = Float(text.bounds.yMax)
             }
         }
-        let placed = place(lines: Array(drawn), text: text, metrics: metrics, images: images)
+        let placed = place(lines: Array(drawn), text: text, shaper: shaper)
         let color = text.color ?? SWFColor(red: 0, green: 0, blue: 0, alpha: 255)
-        let runs = placed.glyphs.isEmpty ? [] : [SWFTextRun(
-            fontID: nil, emTwips: metrics.emTwips, color: color, glyphs: placed.glyphs
-        )]
+        let runs = placed.glyphs.map { span, glyphs in
+            SWFTextRun(
+                fontID: nil, emTwips: span.map { spanMetrics[$0].emTwips } ?? metrics.emTwips,
+                color: span.flatMap { styles.spans[$0].color } ?? color, glyphs: glyphs,
+                face: span.flatMap { faces[$0]?.0 }
+            )
+        }
         var result = SWFTextLayoutResult(runs: runs, missingGlyphs: shaper.missingGlyphs)
         result.lineCount = lines.count
         result.visibleLineCount = shown.count
@@ -169,9 +176,33 @@ nonisolated public enum SWFTextLayout: Sendable {
         result.lineHeight = metrics.ascent + metrics.descent
         result.ascent = metrics.ascent
         if measuresCharacters {
-            result.characterBoxes = characterBoxes(lines: lines, text: text)
+            result.characterBoxes = characterBoxes(lines: lines, text: text, styles: styles)
         }
         return result
+    }
+
+    /// One shaped line per paragraph, or more when the field wraps.
+    private static func shapeLines(
+        _ content: String, text: SWFEditText, shaper: inout LineShaper
+    ) -> [ShapedLine] {
+        let availableWidth = text.availableWidth
+        let paragraphs = content
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+            .split(separator: "\n", omittingEmptySubsequences: false)
+        var lines: [ShapedLine] = []
+        var paragraphStart = 0
+        for (index, paragraph) in paragraphs.enumerated() {
+            var shaped = shaper.shape(String(paragraph), start: paragraphStart)
+            shaped.paragraph = index
+            paragraphStart += paragraph.utf16.count + 1
+            if text.flags.wordWrap, availableWidth > 0 {
+                lines.append(contentsOf: shaper.wrap(shaped, width: availableWidth))
+            } else {
+                lines.append(shaped)
+            }
+        }
+        return lines
     }
 
     private static func lineAdvance(_ text: SWFEditText, _ metrics: FontScaledMetrics) -> Float {
@@ -187,12 +218,15 @@ nonisolated public enum SWFTextLayout: Sendable {
         return Int(room / advance) + 1
     }
 
-    /// Where a line starts after the margins and the alignment.
-    private static func lineStartX(_ line: ShapedLine, text: SWFEditText) -> Float {
+    /// Where a line starts after the margins and the alignment. A paragraph's `<p align>`
+    /// overrides the field's.
+    private static func lineStartX(
+        _ line: ShapedLine, text: SWFEditText, styles: SWFTextStyles
+    ) -> Float {
         let availableWidth = text.availableWidth
         var startX = Float(text.bounds.xMin) + text.leftInset
         guard availableWidth > 0 else { return startX }
-        switch text.layout?.align ?? 0 {
+        switch styles.alignments[line.paragraph] ?? text.layout?.align ?? 0 {
         case 1: startX += availableWidth - line.width
         case 2: startX += (availableWidth - line.width) / 2
         default: break
@@ -202,10 +236,11 @@ nonisolated public enum SWFTextLayout: Sendable {
 
     private static func characterBoxes(
         lines: [ShapedLine],
-        text: SWFEditText
+        text: SWFEditText,
+        styles: SWFTextStyles
     ) -> [SWFCharacterBox] {
         lines.enumerated().flatMap { index, line in
-            let startX = lineStartX(line, text: text) - Float(text.bounds.xMin)
+            let startX = lineStartX(line, text: text, styles: styles) - Float(text.bounds.xMin)
             return line.glyphs.map {
                 SWFCharacterBox(
                     character: $0.character, line: index, x: startX + $0.x, width: $0.advance
@@ -216,19 +251,20 @@ nonisolated public enum SWFTextLayout: Sendable {
 
     /// Positions shaped lines inside the field bounds: first baseline sits one
     /// ascent below the top, subsequent lines advance by
-    /// ascent + descent + font leading + field leading.
+    /// ascent + descent + font leading + field leading. Glyphs group by their style span,
+    /// in the order each span first draws.
     private static func place(
         lines: [ShapedLine],
         text: SWFEditText,
-        metrics: FontScaledMetrics,
-        images: [SWFInlineImage]
-    ) -> (glyphs: [SWFGlyphPlacement], images: [SWFInlineImagePlacement]) {
+        shaper: LineShaper
+    ) -> (glyphs: [SpanGlyphs], images: [SWFInlineImagePlacement]) {
+        let metrics = shaper.metrics, images = shaper.images, styles = shaper.styles
         let advance = lineAdvance(text, metrics)
-        var placed: [SWFGlyphPlacement] = []
+        var placed: [SpanGlyphs] = []
         var placedImages: [SWFInlineImagePlacement] = []
         var baseline = Float(text.bounds.yMin) + metrics.ascent
         for line in lines {
-            let startX = lineStartX(line, text: text)
+            let startX = lineStartX(line, text: text, styles: styles)
             for glyph in line.glyphs {
                 if let index = glyph.imageIndex {
                     // The picture's bottom sits on the baseline; a negative vspace moves it down.
@@ -239,9 +275,14 @@ nonisolated public enum SWFTextLayout: Sendable {
                     ))
                     continue
                 }
-                placed.append(SWFGlyphPlacement(
+                let placement = SWFGlyphPlacement(
                     glyphIndex: glyph.glyphIndex, x: startX + glyph.x, y: baseline
-                ))
+                )
+                if let run = placed.firstIndex(where: { $0.span == glyph.span }) {
+                    placed[run].glyphs.append(placement)
+                } else {
+                    placed.append((glyph.span, [placement]))
+                }
             }
             baseline += advance
         }
@@ -303,6 +344,8 @@ nonisolated private struct ShapedGlyph {
     let isSpace: Bool
     /// The character's index in the whole text, in UTF-16 units, as ActionScript counts.
     let character: Int
+    /// The style span the glyph draws in, nil for the field's own style.
+    var span: Int?
 
     /// An inline image stands in the line as a glyph with a negative index.
     var imageIndex: Int? {
@@ -313,6 +356,7 @@ nonisolated private struct ShapedGlyph {
 nonisolated private struct ShapedLine {
     /// The index of the line's first character, even when the line has no glyph.
     var start: Int
+    var paragraph = 0
     var glyphs: [ShapedGlyph] = []
 
     var width: Float {
@@ -324,6 +368,9 @@ nonisolated private struct ShapedLine {
 nonisolated private struct LineShaper {
     let metrics: FontScaledMetrics
     let images: [SWFInlineImage]
+    var styles = SWFTextStyles.none
+    /// The metrics of each style span, in span order.
+    var spanMetrics: [FontScaledMetrics] = []
     private(set) var missingGlyphs = 0
     private(set) var nextImage = 0
 
@@ -334,14 +381,21 @@ nonisolated private struct LineShaper {
         var line = ShapedLine(start: start)
         var penX: Float = 0
         var previousCode: UInt16?
+        var previousSpan: Int?
         var character = start
         for scalar in text.unicodeScalars {
             defer { character += scalar.utf16.count }
+            let span = styles.spans.isEmpty ? nil : styles.spanIndex(at: character)
+            let metrics = span.map { spanMetrics[$0] } ?? metrics
+            if span != previousSpan {
+                previousCode = nil
+                previousSpan = span
+            }
             if scalar == Self.imageScalar, nextImage < images.count {
                 let advance = images[nextImage].width * SWFTextLayout.twipsPerPixel
                 line.glyphs.append(ShapedGlyph(
                     glyphIndex: -1 - nextImage, x: penX, advance: advance, isSpace: false,
-                    character: character
+                    character: character, span: span
                 ))
                 nextImage += 1
                 penX += advance
@@ -361,13 +415,15 @@ nonisolated private struct LineShaper {
             if let previous = previousCode {
                 penX += metrics.kerning(previous, code)
             }
-            let advance = metrics.advance(ofGlyphAt: glyphIndex)
+            let spacing = span.map { styles.spans[$0].letterSpacingTwips } ?? 0
+            let advance = metrics.advance(ofGlyphAt: glyphIndex) + spacing
             line.glyphs.append(ShapedGlyph(
                 glyphIndex: glyphIndex,
                 x: penX,
                 advance: advance,
                 isSpace: scalar == " " || scalar == "\t",
-                character: character
+                character: character,
+                span: span
             ))
             penX += advance
             previousCode = code
@@ -381,12 +437,14 @@ nonisolated private struct LineShaper {
     func wrap(_ line: ShapedLine, width: Float) -> [ShapedLine] {
         guard line.width > width, !line.glyphs.isEmpty else { return [line] }
         var lines: [ShapedLine] = []
-        var current = ShapedLine(start: line.start)
+        var current = ShapedLine(start: line.start, paragraph: line.paragraph)
         for word in words(of: line) {
             let wordWidth = word.last.map { $0.x - (word.first?.x ?? 0) + $0.advance } ?? 0
             if !current.glyphs.isEmpty, current.width + wordWidth > width {
                 lines.append(current)
-                current = ShapedLine(start: word.first?.character ?? current.start)
+                current = ShapedLine(
+                    start: word.first?.character ?? current.start, paragraph: line.paragraph
+                )
             }
             let startX = current.width
             let wordStart = word.first?.x ?? 0

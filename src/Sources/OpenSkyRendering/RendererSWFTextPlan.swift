@@ -38,10 +38,7 @@ nonisolated extension SWFMovieResources {
                 case let .editText(id):
                     guard let field = scene.movie.editText(id) else { continue }
                     let text = item.textBounds.map(field.withBounds) ?? field
-                    plans[index] = planEditText(
-                        text, content: item.textOverride, firstLine: item.textFirstLine,
-                        images: item.textImages
-                    )
+                    plans[index] = planEditText(text, item: item)
                 }
             }
             return plans
@@ -73,8 +70,9 @@ nonisolated extension SWFMovieResources {
         /// `content` is the runtime string an `SWFSceneItem` carried; nil keeps the
         /// character's authored `InitialText`.
         private func planEditText(
-            _ text: SWFEditText, content: String?, firstLine: Int?, images: [SWFInlineImage]
+            _ text: SWFEditText, item: SWFSceneItem
         ) -> [SWFMovieResources.PlannedTextRun] {
+            let content = item.textOverride
             let resolved = content ?? text.plainText
             guard resolved?.isEmpty == false else { return [] }
             guard let font = scene.resolvedFont(for: text) else {
@@ -82,12 +80,15 @@ nonisolated extension SWFMovieResources {
                 return []
             }
             let layout = SWFTextLayout.editText(
-                text, font: font, content: content, firstLine: firstLine, images: images
+                text, font: font, content: content, firstLine: item.textFirstLine,
+                images: item.textImages, styles: item.textStyles, fonts: scene.font(named:)
             )
             var planned = layout.runs.map { run in
-                SWFMovieResources.PlannedTextRun(
-                    font: font,
-                    fontKey: fontKey(for: font, editText: text),
+                let face = run.face.flatMap(scene.font(named:))
+                return SWFMovieResources.PlannedTextRun(
+                    font: face ?? font,
+                    fontKey: face.map { externalFontKey($0.name) }
+                        ?? fontKey(for: font, editText: text),
                     emTwips: run.emTwips,
                     color: Self.straightColor(run.color),
                     glyphs: run.glyphs,
@@ -130,7 +131,10 @@ nonisolated extension SWFMovieResources {
             {
                 return internalFontKey(fontID)
             }
-            let name = font.name
+            return externalFontKey(font.name)
+        }
+
+        private func externalFontKey(_ name: String) -> Int {
             if let existing = externalFontKeys[name] {
                 return existing
             }

@@ -119,7 +119,8 @@ nonisolated extension SWFMovieRuntime {
                         textFirstLine: runtime.windowsLines(node) ? runtime
                             .textScroll(of: node) - 1 : nil,
                         textBounds: node.textBounds,
-                        textImages: node.textImages
+                        textImages: runtime.textImages(of: node),
+                        textStyles: runtime.textStyles(of: node)
                     ),
                     clipCount: state.clipCount
                 )

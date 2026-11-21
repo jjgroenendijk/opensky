@@ -228,6 +228,7 @@ the detail and the sources it did find.
 | Actor camera fade shapes | Each drawn shape's world box grown by the probe radius; half its diagonal as the radius; the player's capsule radius 24 at the centre of its drawn shapes; the pivot 112 over the feet in place of the `Cam3` node height | [graphics options](/engine/graphics-options.md#actor-fade-near-the-camera) |
 | Far shadow cascade reuse | A far cascade map kept while it covers its slice, at most 2 or 4 frames, 0.25 degrees of sun turn, 10% wider fit | [shadows](/rendering/shadows.md#far-cascade-reuse) |
 | Particle lifetime and limits | OpenSky's policies | [particles](/rendering/particles.md) |
+| Interface HTML text lines | A line's height and baseline come from the field's own font and size, whatever size its `<font>` tags set | [SWF text](/formats/swf-text.md#html-text) |
 | Interface line strokes | A line thinner than 20 twips (one pixel) draws 20 twips wide; round caps and joins step until the arc strays at most 1 twip; overlapping pieces of a translucent line blend twice | [SWF shapes](/formats/swf-shapes.md#strokes) |
 | Lightning bolt between sequences | A sequence that leaves the generation unset keeps the bolt, its tree, and its track values; at most 2,048 quads per bolt tree | [particles](/rendering/particles.md#lightning) |
 | Ribbon texture direction | U along the band for strips | [particles](/rendering/particles.md#ribbons) |

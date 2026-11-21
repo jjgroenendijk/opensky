@@ -91,8 +91,8 @@ The flags turn on these fields, in order:
 
 STRINGs end with a zero byte. SWF 6 and later say strings are UTF-8, but older movies use
 code-page bytes, so OpenSky decodes them leniently
-([string decoding](/decisions/string-decoding.md)). An HTML field keeps its markup; OpenSky
-shows the text with the tags removed.
+([string decoding](/decisions/string-decoding.md)). An HTML field keeps its markup; see
+[HTML text](#html-text).
 
 Byte alignment: the spec says only RECT and MATRIX align. OpenSky aligns before the flag
 word and reads it as two whole bytes, so the UI16 fields after it are aligned. All vanilla
@@ -119,14 +119,36 @@ the font libraries: exact match first, then without regard to case. It is not kn
 GFx matches a `map` name against a font's export name (see ExportAssets on
 [SWF display list](/formats/swf-display-list.md)) or its internal name, so both are tried.
 
+## HTML text
+
+An HTML field's `InitialText`, and a string a script assigns to `htmlText`, is a small set of
+Flash HTML. The tags vanilla uses are `<p align>`, `<font face size color letterSpacing
+kerning>`, `<b>`, and `<img>`.
+
+- `<font>` starts a style that holds until its `</font>`. `color` is `#RRGGBB`. `size` is in
+  pixels, so `size='20'` is 400 twips. `face` names a font, usually a fontconfig alias such as
+  `$EverywhereBoldFont`. `letterSpacing` adds pixels after each character. A tag inside
+  another keeps the outer values it does not set.
+- `<p align>` sets the paragraph's alignment: `left`, `right`, `center`, or `justify`.
+  `</p>` and `<br>` end a line. The plain text gets a carriage return there, as Flash's `text`
+  shows it, but not for the last `</p>`.
+- `&amp;`, `&lt;`, `&gt;`, `&quot;`, `&apos;`, `&nbsp;`, and numeric entities such as `&#65;`
+  decode to their characters. An unknown one stays as written.
+- Each style draws as its own run, in its own font, size, and colour. Kerning applies only
+  inside one style.
+- `<img>` draws a bitmap in the line ([AS2 display runtime](/engine/as2-display-runtime.md#text)).
+- `<b>` and `kerning` change nothing: vanilla picks a bold font through `face`.
+
 ## Vanilla fonts and text
 
 - 97 fonts. 96 have a layout block. 54,988 glyphs: 54,987 have a code, and 34,379 have
   edges (the rest are blank, such as spaces). 17,336 kerning pairs.
-- 665 DefineEditText (644 with initial text, 571 HTML) and no DefineText or DefineText2.
-  All vanilla UI text is dynamic.
+- 676 DefineEditText (655 with initial text, 582 HTML) and no DefineText or DefineText2.
+  All vanilla UI text is dynamic. The HTML tags in the initial texts: 642 `<p>` (60 with
+  `align`), 589 `<font>` (all with `face`, 586 also with `size`, `color`, `letterSpacing`, and
+  `kerning`), and 84 `<b>`.
 - `fontconfig.txt` declares 3 font libraries (`fonts_console.swf`, `fonts_en.swf`,
   `fonts_cclub.swf`) and 20 `map` aliases. All 20 resolve.
-- All 595 edit texts with content find a font and lay out 15,238 glyphs, none missing.
+- All 595 edit texts with content find a font and lay out 14,643 glyphs, none missing.
   Without ImportAssets, 523 of them find no font. One font name has no match anywhere:
   `Times New Roman` in `hudmenu.swf`.

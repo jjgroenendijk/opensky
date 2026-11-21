@@ -145,6 +145,9 @@ nonisolated extension SWFMovieRuntime {
             return nil
         }
         let plain = text(of: node) ?? ""
+        if html, let source = node.textHTML ?? authoredHTML(of: node) {
+            return .string(source)
+        }
         guard html, !node.textImages.isEmpty else { return .string(plain) }
         return .string(SWFHTMLText.restoringImages(in: plain, images: node.textImages))
     }
@@ -155,6 +158,8 @@ nonisolated extension SWFMovieRuntime {
     public func setText(_ value: String, of node: SWFDisplayObject) {
         node.textOverride = value
         node.textImages = []
+        node.textStyles = .none
+        node.textHTML = nil
         if
             let characterId = node.characterId,
             let field = editText(characterId), !field.variableName.isEmpty
@@ -167,8 +172,10 @@ nonisolated extension SWFMovieRuntime {
     /// Assigns `htmlText`: the tags drop out, and each `<img>` keeps its place in the line.
     /// A size the tag leaves out comes from the bitmap the movie exports under that name.
     public func setHTMLText(_ html: String, of node: SWFDisplayObject) {
-        let parsed = SWFHTMLText.parse(html)
+        let parsed = SWFHTMLText.parseStyled(html)
         setText(parsed.text, of: node)
+        node.textStyles = parsed.styles
+        node.textHTML = html
         node.textImages = parsed.images.map { image in
             var sized = image
             if let id = movie.exportedNames[image.source], let bitmap = movie.bitmap(id) {
@@ -177,6 +184,26 @@ nonisolated extension SWFMovieRuntime {
             }
             return sized
         }
+    }
+
+    private func authoredHTML(of node: SWFDisplayObject) -> String? {
+        guard
+            node.textOverride == nil, let field = node.characterId.flatMap(editText),
+            field.flags.html else { return nil }
+        return field.initialText
+    }
+
+    /// The pictures a field draws in its lines: those of the last `htmlText`, else those of
+    /// its authored HTML.
+    func textImages(of node: SWFDisplayObject) -> [SWFInlineImage] {
+        guard node.textOverride == nil else { return node.textImages }
+        return node.characterId.flatMap(editText)?.htmlContent?.images ?? []
+    }
+
+    /// The styles a field draws in, from the same source as `textImages(of:)`.
+    func textStyles(of node: SWFDisplayObject) -> SWFTextStyles {
+        guard node.textOverride == nil else { return node.textStyles }
+        return node.characterId.flatMap(editText)?.htmlContent?.styles ?? .none
     }
 
     /// The string a field currently draws: an explicit assignment first, then
