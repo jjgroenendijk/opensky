@@ -170,6 +170,11 @@ extension AgentObjectsAdapter {
                 ($0.key.description, .string($0.value.description))
             })),
             "sent": .object(sent),
+            "dialogueMode": .object(Dictionary(
+                uniqueKeysWithValues: game.dialogue.dialogueMode.countdowns.map {
+                    ($0.key.description, .number(Double($0.value)))
+                }
+            )),
             "detection": .object(Dictionary(
                 uniqueKeysWithValues: game.dialogue.detectionRecords.map {
                     ($0.key.description, .string($0.value.rawValue))

@@ -42,6 +42,9 @@ public final class DialogueCoordinator {
     /// Each combat group's record of its target, and its detection line waits.
     public internal(set) var detectionDialogue = DetectionDialogueState()
     var speechRandom = ConditionRandom()
+    /// How long each actor stays in conversation with the player after they talked.
+    public internal(set) var dialogueMode = DialogueModeState()
+    var dialogueModeClock: Double?
     private var cachedStrings: LocalizedStrings?
     private var stringsResolved = false
 
@@ -74,6 +77,7 @@ public final class DialogueCoordinator {
         guard let index, let quests = world.questStates() else { return nil }
         let speaker = conversationSpeaker
         let line = spokenLine
+        let talking = dialogueMode.talkingActors
         return DialogueRuntime(
             store: store,
             dialogue: index,
@@ -82,7 +86,11 @@ public final class DialogueCoordinator {
             fragments: world.fragments
         ) { [world] in
             var context = world.conditionContext()
-            context.transform(DialogueResolution.self) { $0.talking(to: speaker).saying(line) }
+            context.transform(DialogueResolution.self) {
+                var resolution = $0.talking(to: speaker).saying(line)
+                resolution.talkingActors = talking
+                return resolution
+            }
             return context
         }
     }
@@ -95,9 +103,11 @@ public final class DialogueCoordinator {
         conversationSpeaker = speaker
         guard let runtime else {
             conversationSpeaker = nil
+            dialogueMode.dialogueFailed(with: speaker)
             lastOutcome = "no dialogue index loaded"
             return nil
         }
+        dialogueMode.dialogueStarted(with: speaker, time: speechTimers.dialogueModeSeconds)
         selection = runtime.topics(for: speaker)
         return runtime
     }
@@ -110,6 +120,7 @@ public final class DialogueCoordinator {
         do {
             _ = try runtime.choose(info, speaker: speaker)
             spokenLine = Self.line(runtime.dialogue.info(info), speaker: speaker, greeting: true)
+            dialogueMode.lineStarted(by: speaker, time: speechTimers.dialogueModeSeconds)
             return [.spokeToPlayer(speaker)]
         } catch {
             lastOutcome = "greeting not recorded: \(String(describing: error))"
@@ -136,6 +147,7 @@ public final class DialogueCoordinator {
             walkAwayTopic = nil
             lastOutcome = DialogueCore.saidText(info: id, choice: choice)
             spokenLine = Self.line(info, speaker: speaker, greeting: false)
+            dialogueMode.lineStarted(by: speaker, time: speechTimers.dialogueModeSeconds)
             var commands = [DialogueCommand.spokeToPlayer(speaker)]
             if let challenge = SpeechChallenge.won(by: info) {
                 commands.append(.speechChallengeWon(challenge, speaker: speaker))
@@ -181,6 +193,7 @@ public final class DialogueCoordinator {
         walkAwayTopic = nil
         spokenLine = nil
         conversationSpeaker = nil
+        dialogueMode.dialogueEnded()
     }
 
     /// Records the walk-away line of the shown choice list as said and returns it, or

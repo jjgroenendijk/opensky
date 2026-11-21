@@ -32,6 +32,8 @@ public protocol DialoguePort: AnyObject {
     func begin(with speaker: ReferenceKey) -> DialogueRuntime?
     func choose(_ id: FormID, speaker: ReferenceKey) -> DialogueResult<TopicInfo?>
     func endConversation()
+    var dialogueMode: DialogueModeState { get }
+    func advanceDialogueMode(now: Double)
     func finishResponse(speaker: ReferenceKey?) -> DialogueResponseEnd
     func forcedGoodbye(for speaker: ReferenceKey) -> FormID?
     func recordGreeting(_ info: FormID, speaker: ReferenceKey) -> [DialogueCommand]

@@ -66,13 +66,21 @@ struct DialogueCoordinatorTests {
         })
     }
 
-    /// `IsInDialogueWithPlayer` reads the open conversation, from its first selection on.
-    @Test func theSpeakerIsInDialogueOnlyWhileTheConversationRuns() throws {
+    /// `IsInDialogueWithPlayer` reads the open conversation, from its first selection
+    /// on, and stays true until the dialogue mode time has run out.
+    @Test func theSpeakerIsInDialogueUntilTheCountdownEnds() throws {
         let world = try world()
         let coordinator = try coordinator(world: world)
         let opened = try #require(coordinator.begin(with: speaker))
         #expect(opened.context.dialogue.isInDialogueWithPlayer(speaker))
+        #expect(coordinator.dialogueMode.countdown(of: speaker) == 60)
         coordinator.endConversation()
+        #expect(coordinator.dialogueMode.playerCountdown == 0)
+        coordinator.advanceDialogueMode(now: 100)
+        coordinator.advanceDialogueMode(now: 130)
+        let waiting = try #require(coordinator.runtime)
+        #expect(waiting.context.dialogue.isInDialogueWithPlayer(speaker))
+        coordinator.advanceDialogueMode(now: 161)
         let closed = try #require(coordinator.runtime)
         #expect(!closed.context.dialogue.isInDialogueWithPlayer(speaker))
     }

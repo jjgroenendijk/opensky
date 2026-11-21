@@ -34,6 +34,8 @@ nonisolated public struct DialogueResolution: Sendable {
     public let speakerInDialogue: ReferenceKey?
     /// The line being said, or nil between lines.
     public let line: DialogueSpokenLine?
+    /// The actors whose dialogue mode countdown still runs (docs/engine/dialogue-mode.md).
+    public var talkingActors: Set<ReferenceKey> = []
     /// False in a context with no dialogue seam, so the line functions fail honestly.
     public let isAvailable: Bool
 
@@ -58,24 +60,28 @@ nonisolated public struct DialogueResolution: Sendable {
 
     /// Whether `key` is the actor the player is talking to right now.
     public func isInDialogueWithPlayer(_ key: ReferenceKey) -> Bool {
-        speakerInDialogue == key
+        speakerInDialogue == key || talkingActors.contains(key)
     }
 
     /// This resolution with `line` as the line being said.
     public func saying(_ line: DialogueSpokenLine?) -> Self {
-        DialogueResolution(
+        var copy = DialogueResolution(
             voiceTypes: voiceTypes, speakerInDialogue: speakerInDialogue, line: line,
             isAvailable: isAvailable
         )
+        copy.talkingActors = talkingActors
+        return copy
     }
 
     /// This resolution with `speaker` marked as the conversation partner, which
     /// is what opening a conversation produces.
     public func talking(to speaker: ReferenceKey?) -> Self {
-        DialogueResolution(
+        var copy = DialogueResolution(
             voiceTypes: voiceTypes, speakerInDialogue: speaker, line: line,
             isAvailable: isAvailable
         )
+        copy.talkingActors = talkingActors
+        return copy
     }
 }
 

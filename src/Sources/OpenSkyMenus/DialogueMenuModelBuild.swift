@@ -98,7 +98,8 @@ extension DialogueMenuModel {
         speaker: ReferenceKey,
         name: String,
         runtime: any DialogueAccess,
-        strings: LocalizedStrings?
+        strings: LocalizedStrings?,
+        greets: Bool = true
     ) -> DialogueMenuModel {
         var model = DialogueMenuModel(
             speaker: name.isEmpty ? speaker.description : name,
@@ -106,6 +107,7 @@ extension DialogueMenuModel {
             topics: rows(runtime.topics(for: speaker), runtime: runtime, strings: strings)
         )
         if
+            greets,
             let greeting = runtime.greeting(for: speaker),
             let info = runtime.dialogue.responseSource(ofInfo: greeting.info)
         {

@@ -20,6 +20,14 @@ extension DialogueCoordinator {
         return true
     }
 
+    /// Counts the dialogue mode time down to `now`, in scene seconds. The actor in the
+    /// open conversation keeps its time while it says a line.
+    public func advanceDialogueMode(now: Double) {
+        let last = dialogueModeClock ?? now
+        dialogueModeClock = now
+        _ = dialogueMode.advance(by: Float(now - last), speaking: spokenLine?.speaker)
+    }
+
     /// The combat line `speaker` says now, recorded as said, or nil when its window has
     /// not passed, the chance roll fails, or no topic of the line's subtype passes.
     public func combatLine(
@@ -40,6 +48,9 @@ extension DialogueCoordinator {
             let selection = runtime?.topics(subtype: subtype, speaker: speaker),
             let info = sayAlone(selection, speaker: speaker)
         else { return nil }
+        if line == .hello {
+            dialogueMode.lineStarted(by: speaker, time: speechTimers.dialogueModeSeconds)
+        }
         let unit = Float(speechRandom.percent()) / 99
         speechClock.note(
             line, speaker: speaker, now: now,

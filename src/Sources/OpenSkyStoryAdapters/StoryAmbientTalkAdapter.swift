@@ -1,4 +1,5 @@
 import OpenSkyActorPresentation
+import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCombatInterface
 import OpenSkyDialogue
@@ -49,6 +50,7 @@ extension StoryAmbientTalkAdapter {
     /// Starts the lines whose delay has passed, then runs the ambient pass on its interval.
     public func tickAmbientSpeech() {
         let now = sceneCast.sceneSeconds
+        game.dialogue.advanceDialogueMode(now: now)
         let due = state.delayedLines.filter { $0.due <= now }
         state.delayedLines.removeAll { $0.due <= now }
         for line in due {
