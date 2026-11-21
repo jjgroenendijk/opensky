@@ -7,6 +7,7 @@ import Foundation
 public import OpenSkyCrimeInterface
 public import OpenSkyFormatsESM
 public import OpenSkyInventoryInterface
+import OpenSkyQuestsInterface
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 
@@ -84,6 +85,7 @@ public final class ContainerSession {
         try inventory.transfer(
             item, count: count, from: container, to: player, markingStolen: verdict.isTheft
         )
+        inventory.countPickUp(of: item, count: count, by: player)
         guard verdict.isTheft else { return 0 }
         return runtime.crime?.reportTheft(
             of: item, count: count, from: container.key, owner: verdict.owner
@@ -158,6 +160,7 @@ public final class ContainerSession {
             )
         )
         session.setOpen(true)
+        runtime.store.incrementMiscStat("Chests Looted")
         return session
     }
 }

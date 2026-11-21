@@ -160,6 +160,11 @@ above leave a choice, and OpenSky reads them like this:
 - Eating food raises Food Eaten, and drinking a potion Potions Used. The food flag on the `ALCH`
   record tells them apart. Drinking a poison raises nothing. Eating an ingredient raises
   Ingredients Eaten. Putting a poison on a weapon raises Poisons Used.
+- Gold the player takes from the world, a container, or a body raises Gold Found by the amount.
+  Gold from a sale, a reward, or a script does not. Most Gold Carried takes the player's gold after
+  each such take and each trade, when it is higher.
+- Each buy and each sell with a merchant raises Barters, whatever the number of items.
+- Opening a container that is not a body raises Chests Looted, each time.
 - A book counts the first time the player reads it. A skill book raises Skill Books Read, and any
   other book, a note or a spell tome too, raises Books Read. A tome that teaches a new spell also
   raises Spells Learned. A spell from a script does not count.

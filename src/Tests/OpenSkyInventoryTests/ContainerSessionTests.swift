@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyFeaturesTesting
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
+import OpenSkyQuestsInterface
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing
@@ -64,6 +65,8 @@ struct ContainerSessionTests {
         #expect(carried.totalCount == before)
         #expect(carried.count(of: Fixture.lockpick) == 3)
         #expect(carried.count(of: Fixture.gold) == 1)
+        let stats = opened.harness.store.miscStats
+        #expect(stats.values == ["Chests Looted": 1, "Gold Found": 1, "Most Gold Carried": 1])
     }
 
     @Test func depositMovesItemsBackAndConservesTheTotal() throws {

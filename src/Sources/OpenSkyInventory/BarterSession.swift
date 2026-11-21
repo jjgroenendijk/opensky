@@ -171,6 +171,7 @@ public final class BarterSession {
             to: merchant,
             laundering: rules.vendor != nil
         )
+        inventory.countBarter()
         return BarterTransaction(count: count, gold: price, unitValue: value(of: item))
     }
 
@@ -209,6 +210,7 @@ public final class BarterSession {
             to: merchant,
             laundering: rules.vendor?.buysStolen == true
         )
+        inventory.countBarter()
         return BarterTransaction(count: count, gold: price, unitValue: value(of: item))
     }
 

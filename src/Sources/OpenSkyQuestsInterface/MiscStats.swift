@@ -89,7 +89,7 @@ nonisolated public enum MiscStats {
 }
 
 /// The counted stats, keyed on the player. A stat never counted reads 0.
-nonisolated public struct MiscStatsState: WorldStateComponent, Sendable {
+nonisolated public struct MiscStatsState: WorldStateComponent, Equatable, Sendable {
     /// Keyed by the catalog's spelling.
     public var values: [String: Int32]
 
@@ -113,6 +113,14 @@ nonisolated public struct MiscStatsState: WorldStateComponent, Sendable {
         values[stat.name] = overflow ? (amount > 0 ? .max : .min) : sum
         return true
     }
+
+    /// Raises a "most" stat, such as "Most Gold Carried", to `value` when it is lower.
+    public mutating func raise(_ name: String, to value: Int32) {
+        let current = self.value(name)
+        if value > current {
+            increment(name, by: Int32(clamping: Int64(value) - Int64(current)))
+        }
+    }
 }
 
 extension WorldStateStore {
@@ -127,6 +135,15 @@ extension WorldStateStore {
         guard stats.increment(name, by: amount) else { return false }
         set(stats, for: .player)
         return true
+    }
+
+    /// Several stat changes in one write.
+    public func updateMiscStats(_ change: (inout MiscStatsState) -> Void) {
+        var stats = miscStats
+        change(&stats)
+        if stats != miscStats {
+            set(stats, for: .player)
+        }
     }
 }
 

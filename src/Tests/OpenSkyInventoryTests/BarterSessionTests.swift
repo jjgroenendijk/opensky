@@ -8,6 +8,7 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
+import OpenSkyQuestsInterface
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing
@@ -88,6 +89,8 @@ struct BarterSessionTests {
         #expect(shop.inventory.count(of: Fixture.cuirass, in: shop.merchant) == 2)
         #expect(shop.session.playerGold == 1000 - 388)
         #expect(shop.session.merchantGold == 1000 + 388 + 1, "the chest's own gold stays")
+        #expect(shop.inventory.store.miscStats.value("Barters") == 1)
+        #expect(shop.inventory.store.miscStats.value("Most Gold Carried") == 1000 - 388)
         #expect(totals(shop) == before, "buying created or destroyed something")
     }
 
@@ -192,8 +195,8 @@ struct BarterSessionTests {
         let before = shop.harness.store.nextJournalSequence
         try shop.session.buy(Fixture.cuirass)
         #expect(
-            shop.harness.store.nextJournalSequence == before + 2,
-            "one journal entry per owner, buyer then seller"
+            shop.harness.store.nextJournalSequence == before + 3,
+            "one journal entry per owner, buyer then seller, then the player's stats"
         )
         let dirty = shop.harness.store.snapshot().entries.map(\.key)
         #expect(dirty.contains(.player))
