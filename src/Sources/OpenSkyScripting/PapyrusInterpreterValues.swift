@@ -6,6 +6,12 @@ import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
 extension PapyrusRuntime.Interpreter {
+    /// The compiler's hidden state variable. A script that overrides `GotoState`, as
+    /// `Critter` does, assigns it directly, and no script declares it.
+    static func isStateVariable(_ name: String) -> Bool {
+        name.caseInsensitiveCompare("::State") == .orderedSame
+    }
+
     func read(
         _ operand: PexValue,
         frame: PapyrusFrame
@@ -58,6 +64,13 @@ extension PapyrusRuntime.Interpreter {
             )
             return
         }
+        if
+            Self.isStateVariable(name),
+            let instance = frame.instanceHandle.flatMap(runtime.instance(for:))
+        {
+            instance.activeState = runtime.coercion.toString(value)
+            return
+        }
         throw .invalidOperand(
             instruction: instructionIndex,
             detail: "unknown destination \(name)"
@@ -79,6 +92,9 @@ extension PapyrusRuntime.Interpreter {
         }
         if let declared = try declaredVariable(name, frame: frame) {
             return PapyrusType(name: declared.variable.typeName)
+        }
+        if Self.isStateVariable(name) {
+            return .string
         }
         throw .invalidOperand(
             instruction: instructionIndex,
@@ -237,6 +253,12 @@ extension PapyrusRuntime.Interpreter {
             if let value = instance.value(named: name, declaredBy: owner) {
                 return value
             }
+        }
+        if
+            Self.isStateVariable(name),
+            let instance = frame.instanceHandle.flatMap(runtime.instance(for:))
+        {
+            return .string(instance.activeState)
         }
         throw .invalidOperand(
             instruction: instructionIndex,
