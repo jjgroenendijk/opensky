@@ -31,6 +31,7 @@ import simd
 @MainActor
 public protocol AgentObjectsHost: AnyObject, SendableMetatype {
     var clothReadout: ClothReadout { get }
+    var dialogue: any DialoguePort { get }
     var effectGraphs: any EffectGraphPort { get }
     var effectModelPoser: any EffectModelPoserPort { get }
     var factions: any FactionPort { get }
@@ -168,7 +169,12 @@ extension AgentObjectsAdapter {
             "lookTargets": .object(Dictionary(uniqueKeysWithValues: state.lookTargets.map {
                 ($0.key.description, .string($0.value.description))
             })),
-            "sent": .object(sent)
+            "sent": .object(sent),
+            "detection": .object(Dictionary(
+                uniqueKeysWithValues: game.dialogue.detectionRecords.map {
+                    ($0.key.description, .string($0.value.rawValue))
+                }
+            ))
         ]
     }
 

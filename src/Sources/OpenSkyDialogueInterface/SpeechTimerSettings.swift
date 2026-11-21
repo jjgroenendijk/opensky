@@ -53,6 +53,10 @@ nonisolated public struct SpeechTimerSettings: Equatable, Sendable {
     /// `fCombatDialogueTauntMinElapsedTime` and `...Max...`: the taunt window.
     public var tauntMinSeconds: Float = 10
     public var tauntMaxSeconds: Float = 30
+    /// `fCombatDetectionDialogueIdleMinElapsedTime` and `...Max...`: the wait between two
+    /// idle detection lines of one combat group.
+    public var detectionIdleMinSeconds: Float = 10
+    public var detectionIdleMaxSeconds: Float = 25
     /// `fCombatSpeakAttackChance`, `fCombatSpeakHitChance`, `fCombatSpeakTauntChance`:
     /// the chance, 0 to 1, that a line speaks once its window has passed.
     public var attackLineChance: Float = 0.01
@@ -84,6 +88,12 @@ nonisolated public struct SpeechTimerSettings: Equatable, Sendable {
     public static let vanilla = Self()
 
     public init() {}
+
+    /// The idle detection wait as a range, lowest first.
+    public var detectionIdleWait: ClosedRange<Double> {
+        let low = Double(min(detectionIdleMinSeconds, detectionIdleMaxSeconds))
+        return low ... Double(max(detectionIdleMinSeconds, detectionIdleMaxSeconds))
+    }
 
     /// The waits and chances for the Dialogue readout.
     public var readout: String {

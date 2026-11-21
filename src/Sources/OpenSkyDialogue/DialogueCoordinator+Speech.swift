@@ -69,6 +69,29 @@ extension DialogueCoordinator {
         return lines
     }
 
+    public var detectionRecords: [ReferenceKey: DetectionRecord] {
+        detectionDialogue.records
+    }
+
+    /// The detection lines the combat groups say this pass, each recorded as said.
+    public func detectionLines(_ frame: DetectionDialogueFrame) -> [DetectionLine] {
+        var lines: [DetectionLine] = []
+        var state = detectionDialogue
+        let idle = speechTimers.detectionIdleWait
+        DetectionDialogueCore.pass(frame, idleWait: idle, state: &state) { request in
+            guard
+                let selection = runtime?.topics(
+                    subtype: request.subtype.code, speaker: request.speaker
+                ),
+                let info = sayAlone(selection, speaker: request.speaker)
+            else { return false }
+            lines.append(DetectionLine(info: info, request: request))
+            return true
+        }
+        detectionDialogue = state
+        return lines
+    }
+
     /// Whether the shared wait of `line` has passed, so a caller can skip building a frame.
     public func isSharedReady(_ line: NPCSpeechLine, now: Double) -> Bool {
         speechClock.isSharedReady(line, now: now)

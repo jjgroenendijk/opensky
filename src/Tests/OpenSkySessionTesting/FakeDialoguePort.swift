@@ -13,6 +13,9 @@ nonisolated public final class FakeDialoguePort: DialoguePort {
     public var ambientLinesResult: [AmbientLine] = []
     public var claimForceGreetCalls: [(speaker: ReferenceKey, now: Double)] = []
     public var claimForceGreetResult = false
+    public var detectionLinesCalls: [DetectionDialogueFrame] = []
+    public var detectionLinesResult: [DetectionLine] = []
+    public var detectionRecords: [ReferenceKey: DetectionRecord] = [:]
     public var combatLineCalls: [CombatLineCall] = []
     public var combatLineResult: FormID?
     public var commentOnPlayerCalls: [CommentOnPlayerCall] = []
@@ -39,6 +42,8 @@ nonisolated public final class FakeDialoguePort: DialoguePort {
     public var chooseCalls: [(id: FormID, speaker: ReferenceKey)] = []
     public var chooseResult: DialogueResult<TopicInfo?>?
     public var endConversationCallCount = 0
+    public var dialogueModeValue: DialogueModeState?
+    public var advanceDialogueModeCalls: [Double] = []
     public var finishResponseCalls: [ReferenceKey?] = []
     public var finishResponseResult: DialogueResponseEnd?
     public var forcedGoodbyeCalls: [ReferenceKey] = []
@@ -107,6 +112,11 @@ nonisolated extension FakeDialoguePort {
         return claimForceGreetResult
     }
 
+    public func detectionLines(_ frame: DetectionDialogueFrame) -> [DetectionLine] {
+        detectionLinesCalls.append(frame)
+        return detectionLinesResult
+    }
+
     public func combatLine(_ line: NPCSpeechLine, speaker: ReferenceKey, now: Double) -> FormID? {
         combatLineCalls.append(CombatLineCall(line: line, speaker: speaker, now: now))
         return combatLineResult
@@ -170,6 +180,19 @@ nonisolated extension FakeDialoguePort {
 
     public func endConversation() {
         endConversationCallCount += 1
+    }
+
+    public var dialogueMode: DialogueModeState {
+        get {
+            guard let dialogueModeValue
+            else { preconditionFailure("FakeDialoguePort.dialogueMode is unset") }
+            return dialogueModeValue
+        }
+        set { dialogueModeValue = newValue }
+    }
+
+    public func advanceDialogueMode(now: Double) {
+        advanceDialogueModeCalls.append(now)
     }
 
     public func finishResponse(speaker: ReferenceKey?) -> DialogueResponseEnd {

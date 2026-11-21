@@ -35,6 +35,8 @@ public struct StoryAmbientTalkAdapter {
     public let sceneCast: StorySceneCastAdapter
     public let sceneLines: StorySceneLinesAdapter
 
+    /// How near the player a fighter must be for its detection line to be heard.
+    static let detectionHearingDistance: Float = 4096
     /// `PKDT` interrupt flag 0x80: the package allows idle chatter.
     static let idleChatterFlag: UInt16 = 0x80
 }
@@ -68,6 +70,44 @@ extension StoryAmbientTalkAdapter {
         guard let frame = ambientSpeechFrame(now: now) else { return }
         for line in game.dialogue.ambientLines(frame, seconds: elapsed) {
             sayAmbient(line)
+        }
+        sayDetectionLines(frame)
+    }
+
+    /// The fighters grouped by target say their detection lines, such as when they lose
+    /// the target or find it again.
+    private func sayDetectionLines(_ ambient: AmbientSpeechFrame) {
+        guard
+            let loop = game.combat.loop,
+            let player = game.gameSession?.walkController.feetPosition
+        else { return }
+        let actors = game.actorWorld.combatActors()
+        let free = Dictionary(ambient.speakers.map { ($0.key, $0) }) { first, _ in first }
+        var positions: [ReferenceKey: SIMD3<Float>] = [.player: player]
+        for actor in actors {
+            positions[actor.key] = actor.feet
+        }
+        let members = actors.compactMap { actor -> DetectionMember? in
+            guard !actor.isDead, let target = loop.combatTarget(of: actor.key) else { return nil }
+            let speaker = free[actor.key]
+            return DetectionMember(
+                key: actor.key, target: target, feet: actor.feet,
+                isSearching: loop.activity(of: actor.key) == .searching,
+                canSpeak: speaker?.isFree == true
+                    && (speaker?.distanceToPlayer ?? .infinity) <= Self.detectionHearingDistance
+            )
+        }
+        let frame = DetectionDialogueFrame(
+            members: members, now: ambient.now, targetPositions: positions,
+            deadTargets: Set(actors.filter(\.isDead).map(\.key)), playerFeet: player
+        )
+        for line in game.dialogue.detectionLines(frame) {
+            guard let info = game.dialogue.runtime?.dialogue.info(line.info) else { continue }
+            let seconds = sceneLines.lineDuration(of: info, speaker: line.request.speaker)
+                ?? SceneLine.defaultSeconds
+            sceneLines.speak(
+                info: line.info, speaker: line.request.speaker, lookAt: nil, seconds: seconds
+            )
         }
     }
 

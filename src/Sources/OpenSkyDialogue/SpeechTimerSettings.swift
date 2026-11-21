@@ -17,6 +17,8 @@ nonisolated extension SpeechTimerSettings {
             ("fCombatDialogueAttackMaxElapsedTime", \.attackLineMaxSeconds),
             ("fCombatDialogueTauntMinElapsedTime", \.tauntMinSeconds),
             ("fCombatDialogueTauntMaxElapsedTime", \.tauntMaxSeconds),
+            ("fCombatDetectionDialogueIdleMinElapsedTime", \.detectionIdleMinSeconds),
+            ("fCombatDetectionDialogueIdleMaxElapsedTime", \.detectionIdleMaxSeconds),
             ("fCombatSpeakAttackChance", \.attackLineChance),
             ("fCombatSpeakHitChance", \.hitLineChance),
             ("fCombatSpeakTauntChance", \.tauntChance),
