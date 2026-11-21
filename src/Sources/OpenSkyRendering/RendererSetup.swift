@@ -322,7 +322,8 @@ extension Renderer {
     ) throws -> ParticlePipelines {
         try makeBlendPipelines(
             BlendPipelineNames(
-                vertex: "ribbonVertex", fragment: "particleFragment", label: "Ribbons"
+                vertex: "ribbonVertex", fragment: "particleFragment", label: "Ribbons",
+                alphaFragment: "particleGammaFragment"
             ),
             library: library, compiler: compiler, view: view
         )
@@ -335,7 +336,8 @@ extension Renderer {
     ) throws -> ParticlePipelines {
         try makeBlendPipelines(
             BlendPipelineNames(
-                vertex: "particleVertex", fragment: "particleFragment", label: "Particles"
+                vertex: "particleVertex", fragment: "particleFragment", label: "Particles",
+                alphaFragment: "particleGammaFragment"
             ),
             library: library, compiler: compiler, view: view
         )
@@ -346,6 +348,9 @@ extension Renderer {
         let vertex: String
         let fragment: String
         let label: String
+        /// A fragment function that mixes with the colour behind it in gamma space, for the
+        /// alpha mode with hardware blending off (docs/rendering/image-space.md#blending).
+        var alphaFragment: String?
     }
 
     /// One pipeline per blend mode for a vertex and fragment function pair.
@@ -456,7 +461,8 @@ extension Renderer {
         vertexFunction.name = names.vertex
         let fragmentFunction = MTL4LibraryFunctionDescriptor()
         fragmentFunction.library = library
-        fragmentFunction.name = names.fragment
+        let gammaFragment = mode == .alpha ? names.alphaFragment : nil
+        fragmentFunction.name = gammaFragment ?? names.fragment
         let descriptor = MTL4RenderPipelineDescriptor()
         descriptor.label = "\(names.label).\(mode)"
         descriptor.rasterSampleCount = view.sampleCount
@@ -466,6 +472,9 @@ extension Renderer {
             throw RendererError.pipelineAttachmentMissing
         }
         color.pixelFormat = view.colorPixelFormat
+        guard gammaFragment == nil else {
+            return try compiler.makeRenderPipelineState(descriptor: descriptor)
+        }
         color.blendingState = .enabled
         switch mode {
         case .alpha:

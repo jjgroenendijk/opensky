@@ -271,16 +271,9 @@ extension Renderer {
             color.sourceAlphaBlendFactor = .zero
             color.destinationAlphaBlendFactor = .one
             color.alphaBlendOperation = .add
-        } else if variant.blended {
-            // The same straight-alpha blend as the cell water plane.
-            color.blendingState = .enabled
-            color.sourceRGBBlendFactor = .sourceAlpha
-            color.destinationRGBBlendFactor = .oneMinusSourceAlpha
-            color.rgbBlendOperation = .add
-            color.sourceAlphaBlendFactor = .one
-            color.destinationAlphaBlendFactor = .oneMinusSourceAlpha
-            color.alphaBlendOperation = .add
         }
+        // A blended surface mixes with the colour behind it in its fragment function, in
+        // gamma space (docs/rendering/image-space.md#blending), so hardware blending stays off.
         return try compiler.makeRenderPipelineState(descriptor: descriptor)
     }
 }
