@@ -88,7 +88,25 @@ OpenSky turns each shape into a triangle list in twips, grouped by fill style.
   The fill rule picks the spans, and each span becomes two triangles. Holes and separate
   outlines need no special handling. The fill rule is even-odd, or nonzero winding when
   DefineShape4 sets `UsesFillWindingRule`.
-- Line styles are decoded but no line geometry is made. Vanilla UI art is almost all fills.
+- Strokes are cut after the fills and drawn over them (see below).
+
+## Strokes
+
+A LINESTYLE gives a width in twips and a colour. LINESTYLE2 adds cap and join styles, a
+miter limit, and an optional fill in place of the colour (spec pp. 123-125). LINESTYLE has
+round caps and round joins.
+
+- Edges with the same line style chain into one path when an edge starts where the last one
+  ended. A path whose last point is its first is closed.
+- Each straight piece of a path becomes a quad as wide as the line. A curve is flattened
+  first, as for fills.
+- Between two pieces that turn, the join fills the gap on the outer side. A round join is a
+  disc. A bevel join is one triangle. A miter join runs to where the two outer edges meet,
+  and bevels when that point is further than the limit times half the width.
+- An open path gets a cap at each end. A round cap is a disc, a square cap reaches half the
+  width past the end, and no cap stops at the end. A closed path has no caps; its first
+  corner gets a join unless `NoClose` is set.
+- A line thinner than one pixel draws one pixel wide, which is how Flash draws a hairline.
 
 ## Lossless bitmaps
 

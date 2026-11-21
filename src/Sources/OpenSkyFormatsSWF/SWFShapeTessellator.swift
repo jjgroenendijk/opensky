@@ -1,7 +1,7 @@
 // CPU tessellation of decoded shapes into twip-space triangles, cached per
 // character. Curves are flattened, then each fill's edges are swept in bands.
 // FillStyle0 edges enter reversed, so every boundary has one orientation.
-// Fill rules and line deferral: docs/formats/swf-shapes.md.
+// Fill rules and strokes: docs/formats/swf-shapes.md.
 
 import Foundation
 import simd
@@ -18,8 +18,16 @@ nonisolated public struct SWFShapeMesh: Equatable, Sendable {
         public let triangleRange: Range<Int>
     }
 
+    /// The triangles of one line style, after every fill.
+    public struct StrokeRun: Equatable, Sendable {
+        /// 1-based index into `SWFShapeDefinition.lineStyles`.
+        public let lineStyleIndex: Int
+        public let triangleRange: Range<Int>
+    }
+
     public let vertices: [SIMD2<Float>]
     public let runs: [FillRun]
+    public var strokeRuns: [StrokeRun] = []
 
     public var triangleCount: Int {
         vertices.count / 3
@@ -55,7 +63,27 @@ nonisolated public enum SWFShapeTessellator: Sendable {
                 ))
             }
         }
-        return SWFShapeMesh(vertices: vertices, runs: runs)
+        var mesh = SWFShapeMesh(vertices: vertices, runs: runs)
+        appendStrokes(of: shape, to: &mesh)
+        return mesh
+    }
+
+    private static func appendStrokes(of shape: SWFShapeDefinition, to mesh: inout SWFShapeMesh) {
+        let used = Set(shape.segments.map(\.lineStyle))
+            .filter { shape.lineStyles.indices.contains($0 - 1) }
+        var vertices = mesh.vertices
+        var strokeRuns: [SWFShapeMesh.StrokeRun] = []
+        for style in used.sorted() {
+            let start = vertices.count / 3
+            vertices += SWFShapeStroker.stroke(shape, style: style, flatten: flatten)
+            let end = vertices.count / 3
+            if end > start {
+                strokeRuns.append(SWFShapeMesh.StrokeRun(
+                    lineStyleIndex: style, triangleRange: start ..< end
+                ))
+            }
+        }
+        mesh = SWFShapeMesh(vertices: vertices, runs: mesh.runs, strokeRuns: strokeRuns)
     }
 
     /// A directed straight boundary piece after curve flattening.

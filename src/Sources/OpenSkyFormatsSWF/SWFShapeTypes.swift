@@ -93,7 +93,6 @@ nonisolated public enum SWFFillStyle: Equatable, Sendable {
 /// One LINESTYLE or LINESTYLE2 entry. LINESTYLE (DefineShape-DefineShape3)
 /// fills only `width` and `color`; the remaining members keep the spec
 /// defaults for pre-SWF8 lines (round caps and joins, closed, scaling).
-/// Stroke tessellation is deferred — see docs/formats/swf-shapes.md.
 nonisolated public struct SWFLineStyle: Equatable, Sendable {
     public enum CapStyle: UInt8, Sendable {
         case round = 0
