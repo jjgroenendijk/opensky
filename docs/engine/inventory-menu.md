@@ -39,8 +39,8 @@ Favorites takes the rows the player marked, of any type. Food takes the `ALCH` r
 flag, and Potions takes the rest, poisons included. Misc also holds soul gems (`SLGM`), alchemy
 apparatus (`APPA`), and lights that can be carried, such as torches (`LIGH`). This is OpenSky's
 own grouping of the [item records](/formats/item-records.md), not Bethesda's category numbers.
-The order is the one the game shows; it is not yet confirmed against `InventoryDefines` in the
-movie. An item of unknown type shows under Misc, so All is not the
+The order is the one the game shows. The movie does not define it: `InventoryDefines` holds no
+category list ([list data](#list-data)). An item of unknown type shows under Misc, so All is not the
 only way to find it. The menu opens on All, as the game does.
 
 Each tab takes its name from a string setting: `sFavorites`, `sAllItems`, `sWeapons`, `sApparel`,
@@ -67,7 +67,30 @@ These paths were read from the installed movie. All three lists come from the im
 
 Both lists are `Shared.BSScrollingList` objects with `EntriesA` and `iSelectedIndex`. OpenSky writes
 one plain object per row into `EntriesA`: `text`, `index`, `count`, `weight`, `value`, `equipped`,
-and `enabled`.
+`equipState`, `favorite`, and `enabled`.
+
+`InventoryScrollingList.SetEntryText` draws a row from these fields, read from the installed movie:
+
+| Field | What the row draws |
+| --- | --- |
+| `text`, `count` | The name, with `(n)` after it for more than one |
+| `soulLVL` | The soul in a soul gem, in brackets after the name |
+| `bestInClass` | The `BestIcon.png` star after the name |
+| `negativeEffect`, `isStealing` | The name in red |
+| `enabled` | The name in grey when false |
+| `equipState` | The equip icon: the frame `None`, `Equipped`, `LeftEquip`, `RightEquip`, or `LeftAndRightEquip` for 0 to 4 |
+| `favorite` | The favourite icon, but only when `equipState` is 0 or 1 |
+
+The numbers of `equipState` are the `ES_` constants of `InventoryDefines`: `ES_NONE` 0,
+`ES_EQUIPPED` 1, `ES_LEFT_EQUIPPED` 2, `ES_RIGHT_EQUIPPED` 3, and `ES_BOTH_EQUIPPED` 4. OpenSky
+sends 2 for the item in the left hand, 4 when a second copy is in the right hand, 3 for any other
+worn weapon, 1 for anything else worn, and 0 for the rest. A two-handed weapon gets 3; which icon
+the game shows for it is not confirmed ([unverified values](/engine/unverified-values.md)).
+The magic menu sends a readied spell's hands the same way, and `negativeEffect` for a harmful
+effect on the player. `soulLVL`, `bestInClass`, and `isStealing` are not sent.
+
+`InventoryDefines` holds no category list. It names the item card pages (`ICT_`), the equip states
+(`ES_`), and `QUANTITY_MENU_COUNT_LIMIT`, 5. The tabs come from the engine, as below.
 
 A category row also needs a `flag`. `InventoryLists.SetCategoriesList` builds each category as
 `text`, `flag`, `bDontHide`, `savedItemIndex`, and `filterFlag`, and a `flag` of 0 makes the row a

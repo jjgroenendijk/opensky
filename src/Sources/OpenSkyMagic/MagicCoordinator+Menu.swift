@@ -12,12 +12,14 @@ extension MagicCoordinator.MagicMenu {
         let book = caster.spellbook.state(of: .player)
         let texts = coordinator.texts.magic
         return coordinator.controlPanels.playerKnownSpells().map { spell in
-            MagicMenuSpell(
+            var row = MagicMenuSpell(
                 name: spell.displayName,
                 isReadied: !book.hands(of: spell.key).isEmpty,
                 category: texts.menuCategory(of: spell.spellType, magicSkill: spell.magicSkill),
                 card: card(of: spell, caster: caster, texts: texts)
             )
+            row.hands = book.hands(of: spell.key)
+            return row
         }
     }
 
@@ -85,12 +87,14 @@ extension MagicCoordinator.MagicMenu {
         return runtime.active(on: .player).map { effect in
             let name = coordinator.effectsPanel.readout(of: effect, runtime: runtime).name
             let secondsLeft = effect.lifetime > 0 ? Int(effect.remaining.rounded(.down)) : nil
-            return MagicMenuSpell(
+            var row = MagicMenuSpell(
                 name: name, isReadied: false, card: MagicMenuSpellCard(
                     kind: .activeEffect(secondsLeft: secondsLeft),
                     effects: activeEffectText(of: effect, runtime: runtime, name: name)
                 )
             )
+            row.isNegative = effect.isDetrimental
+            return row
         }
     }
 

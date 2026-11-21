@@ -34,7 +34,7 @@ extension MenuScreensGiftListsAdapter {
         let spells = menu.magicMenuSpells.enumerated().map { index, spell in
             (category: spell.category, row: ItemListRow(
                 tag: UInt32(index), name: spell.name, isEquipped: spell.isReadied,
-                spellCard: spell.card
+                hands: spell.hands, spellCard: spell.card
             ))
         }
         let shouts = menu.magicMenuShouts.enumerated().map { index, shout in
@@ -50,7 +50,8 @@ extension MenuScreensGiftListsAdapter {
         }
         let effects = menu.magicMenuActiveEffects.enumerated().map { index, effect in
             ItemListRow(
-                tag: UInt32(spells.count + index), name: effect.name, spellCard: effect.card
+                tag: UInt32(spells.count + index), name: effect.name, spellCard: effect.card,
+                isNegative: effect.isNegative
             )
         }
         let effectsTab = effects.isEmpty

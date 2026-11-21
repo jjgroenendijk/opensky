@@ -35,6 +35,8 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
     public let isFavourite: Bool
     /// A running quest holds the item in a Quest Object alias.
     public var isQuestItem = false
+    /// The hands a worn weapon or torch holds; empty for anything else.
+    public var hands: HandSlots = []
 
     public init(
         item: FormID,
