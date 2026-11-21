@@ -440,10 +440,11 @@ nonisolated struct SWFFrameBuilder {
             uniforms.fillTranslation = toUV.packedTranslation
             uniforms.bitmapTiled = tiled ? 1 : 0
             uniforms.sourcePremultiplied = movie.bitmaps[id]?.premultiplied == true ? 1 : 0
-        case let .gradient(row, toSquare, radial, spread):
-            uniforms.fillMode = UInt32(
-                (radial ? SWFFillMode.radialGradient : SWFFillMode.linearGradient).rawValue
-            )
+        case let .gradient(row, toSquare, radial, focal, spread):
+            let mode: SWFFillMode = focal != nil
+                ? .focalRadialGradient : radial ? .radialGradient : .linearGradient
+            uniforms.fillMode = UInt32(mode.rawValue)
+            uniforms.gradientFocal = focal ?? 0
             uniforms.fillRotation = toSquare.packedLinear
             uniforms.fillTranslation = toSquare.packedTranslation
             uniforms.gradientSpread = UInt32(spread.rawValue)

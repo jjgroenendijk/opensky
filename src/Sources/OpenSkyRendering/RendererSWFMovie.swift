@@ -15,8 +15,12 @@ nonisolated public final class SWFMovieResources {
         case solid(SIMD4<Float>)
         /// `toUV` maps shape-local twips to normalized texture coordinates.
         case bitmap(characterId: UInt16, toUV: SWFTransform, tiled: Bool)
-        /// `toSquare` maps shape-local twips to the -1..1 gradient square.
-        case gradient(row: Int, toSquare: SWFTransform, radial: Bool, spread: SWFGradientSpread)
+        /// `toSquare` maps shape-local twips to the -1..1 gradient square. `focal` is the
+        /// focal point of a focal radial fill, nil for any other gradient.
+        case gradient(
+            row: Int, toSquare: SWFTransform, radial: Bool, focal: Float?,
+            spread: SWFGradientSpread
+        )
     }
 
     public struct RunEntry: Sendable {

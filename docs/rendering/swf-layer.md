@@ -22,7 +22,8 @@ A package is built once when a movie is assigned:
 - Every shape in the dictionary is cut into triangles and put in one static vertex buffer in twips,
   with a table of runs, one per fill.
 - Bitmaps upload as `rgba8Unorm` textures, and keep the decoder's premultiplied-alpha flag.
-- Gradient fills are baked into a ramp atlas, one 256-texel row per fill.
+- Gradient fills are baked into a ramp atlas, one 256-texel row per fill, mixed in the
+  gradient's interpolation mode ([SWF shapes](/formats/swf-shapes.md#gradients)).
 - Text is laid out in twips, so the layout does not depend on the viewport.
 - Per-draw uniform rings and glyph vertex rings have three slots. They are sized to the current
   command stream plus half again, at least 64, because a display list that ActionScript changes
@@ -66,9 +67,9 @@ under the premultiplied blend, so no color write mask is needed. The scene pass 
 ## The shader
 
 The fragment shader works out solid color, bitmap (clamp or repeat, with a premultiplied source
-turned back to straight alpha), linear or radial gradient with the gradient's spread mode, or glyph
-coverage. It does this in straight alpha, applies the color transform, then premultiplies for the
-blend.
+turned back to straight alpha), linear, radial, or focal radial gradient with the gradient's
+spread mode, or glyph coverage. It does this in straight alpha, applies the color transform, then
+premultiplies for the blend.
 
 ## A running movie
 
@@ -117,8 +118,6 @@ for the same reason.
 ## Known visual gaps
 
 - Line styles are not stroked. Only fills draw.
-- A focal radial gradient draws as a plain radial gradient.
-- `linearRGB` gradient interpolation is treated as normal RGB.
 - `PlaceObject3` filters and blend modes are ignored.
 - Glyph quads follow a transform's position and scale, but not rotation or skew. Vanilla UI text is
   not rotated.

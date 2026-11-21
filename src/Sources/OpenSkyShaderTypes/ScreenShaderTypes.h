@@ -46,6 +46,8 @@ typedef NS_ENUM(EnumBackingType, SWFFillMode)
     SWFFillModeLinearGradient = 3,
     /// Sample the gradient ramp at the radial-gradient parameter.
     SWFFillModeRadialGradient = 4,
+    /// Radial, measured from the focal point on the x axis (gradientFocal).
+    SWFFillModeFocalRadialGradient = 5,
 };
 
 /// GRADIENT SpreadMode (SWF spec v19 p. 135) applied to the ramp parameter.
@@ -85,6 +87,8 @@ typedef struct
     vector_float4 baseColor;
     /// Ramp-row v coordinate for gradient fills.
     float gradientV;
+    /// FOCALGRADIENT FocalPoint, -1..1 along the gradient square's x axis.
+    float gradientFocal;
     /// SWFFillMode.
     unsigned int fillMode;
     /// SWFGradientSpread for gradient fills.
