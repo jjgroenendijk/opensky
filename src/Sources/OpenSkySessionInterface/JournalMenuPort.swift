@@ -9,4 +9,6 @@ public protocol JournalMenuPort: AnyObject {
     var currentAliasNaming: QuestAliasNaming? { get }
 
     func route(_ event: MenuInputEvent)
+    /// Steps the open menu's movie, so its highlights, slides and fades run.
+    func tick(now: Double)
 }

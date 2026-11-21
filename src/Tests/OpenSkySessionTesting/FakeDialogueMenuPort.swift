@@ -14,6 +14,7 @@ nonisolated public final class FakeDialogueMenuPort: DialogueMenuPort {
     public var snapshotValue: DialogueControlSnapshot?
     public var speakerOrTarget: ReferenceKey?
     public var routeCalls: [MenuInputEvent] = []
+    public var tickCalls: [Double] = []
 
     public init() {}
 }
@@ -38,5 +39,9 @@ nonisolated extension FakeDialogueMenuPort {
 
     public func route(_ event: MenuInputEvent) {
         routeCalls.append(event)
+    }
+
+    public func tick(now: Double) {
+        tickCalls.append(now)
     }
 }

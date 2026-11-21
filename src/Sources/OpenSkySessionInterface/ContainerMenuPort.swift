@@ -19,6 +19,8 @@ public protocol ContainerMenuPort: AnyObject {
     func route(_ event: MenuInputEvent)
 
     var vendor: Vendor? { get }
+    /// Steps the open menu's movie, so its highlights, slides and fades run.
+    func tick(now: Double)
 }
 
 /// The default arguments a protocol requirement cannot carry.

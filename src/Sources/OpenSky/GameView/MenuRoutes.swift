@@ -26,7 +26,6 @@ protocol MenuHotkeyHost: AnyObject, SendableMetatype {
 /// The menus that advance their movies each frame.
 @MainActor
 protocol MenuTickHost: AnyObject, SendableMetatype {
-    var inventoryMenu: any InventoryMenuPort { get }
     var mapMenu: any MapMenuPort { get }
     var menuMode: any MenuModePort { get }
     var menuScreens: any MenuScreensPort { get }
@@ -131,6 +130,7 @@ struct MenuHotkeys {
 /// Polls the gamepads and advances every menu movie once a frame.
 struct MenuFrameTick {
     unowned let game: any MenuTickHost
+    unowned let play: any MenuPlayRoutesHost
 
     func tick(renderer: Renderer?, monitor: GamepadMonitor) {
         game.mapMenu.tick()
@@ -145,7 +145,10 @@ struct MenuFrameTick {
         game.skillsMenu.tick(now: now)
         game.systemMenu.tick(now: now)
         game.menuScreens.tick(now: now)
-        game.inventoryMenu.tick(now: now)
+        play.inventoryMenu.tick(now: now)
+        play.containerMenu.tick(now: now)
+        play.journalMenu.tick(now: now)
+        play.dialogueMenu.tick(now: now)
         game.menuWorld.refreshTitleBackdrop()
     }
 }

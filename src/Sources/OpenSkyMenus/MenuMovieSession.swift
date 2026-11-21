@@ -140,7 +140,7 @@ public final class MenuMovieSession {
     /// Steps the loaded movie at its own frame rate, so its fades and timers run.
     /// False without a loaded movie; the pacer then starts over.
     @discardableResult
-    func advance(now: Double) -> Bool {
+    public func advance(now: Double) -> Bool {
         guard let renderer = loadedRenderer else {
             framePacer = MenuMovieFramePacer()
             return false

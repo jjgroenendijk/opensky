@@ -253,3 +253,10 @@ struct JournalAliasNamer {
         return naming
     }
 }
+
+extension JournalMenuController {
+    func tick(now: Double) {
+        guard isOpen else { return }
+        movie.advance(now: now)
+    }
+}

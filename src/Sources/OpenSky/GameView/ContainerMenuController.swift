@@ -308,3 +308,10 @@ enum ContainerMenuLog {
         logger.info("\(text, privacy: .public)")
     }
 }
+
+extension ContainerMenuController {
+    func tick(now: Double) {
+        guard isOpen else { return }
+        movie.advance(now: now)
+    }
+}

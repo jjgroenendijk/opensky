@@ -191,3 +191,10 @@ final class DialogueMenuController {
 
 /// Speech and the speaker's face, outside the class body for its length cap.
 extension DialogueMenuController {}
+
+extension DialogueMenuController {
+    func tick(now: Double) {
+        guard isOpen else { return }
+        movie.advance(now: now)
+    }
+}
