@@ -23,7 +23,7 @@ final class MenuRouter {
 
     init(game: some MenuHotkeyHost & MenuTickHost & MenuRouteHosts) {
         hotkeys = MenuHotkeys(game: game)
-        ticks = MenuFrameTick(game: game)
+        ticks = MenuFrameTick(game: game, play: game)
         routeHosts = MenuRoutes(play: game, front: game)
     }
 

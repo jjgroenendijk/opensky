@@ -11,6 +11,7 @@ nonisolated public final class FakeJournalMenuPort: JournalMenuPort {
     public var snapshotValue: JournalControlSnapshot?
     public var currentAliasNaming: QuestAliasNaming?
     public var routeCalls: [MenuInputEvent] = []
+    public var tickCalls: [Double] = []
 
     public init() {}
 }
@@ -31,5 +32,9 @@ nonisolated extension FakeJournalMenuPort {
 
     public func route(_ event: MenuInputEvent) {
         routeCalls.append(event)
+    }
+
+    public func tick(now: Double) {
+        tickCalls.append(now)
     }
 }

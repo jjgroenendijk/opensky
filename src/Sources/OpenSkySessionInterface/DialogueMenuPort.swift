@@ -11,4 +11,6 @@ public protocol DialogueMenuPort: AnyObject {
     var snapshot: DialogueControlSnapshot { get }
     var speakerOrTarget: ReferenceKey? { get }
     func route(_ event: MenuInputEvent)
+    /// Steps the open menu's movie, so its highlights, slides and fades run.
+    func tick(now: Double)
 }

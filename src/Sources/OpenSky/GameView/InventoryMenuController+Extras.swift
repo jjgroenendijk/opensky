@@ -120,9 +120,12 @@ extension InventoryMenuController {
 
     // MARK: - Preview
 
-    /// Each frame while the menu is open: turns the selected row's model.
+    /// Each frame while the menu is open: steps the movie, so its slides and fades
+    /// run, and turns the selected row's model.
     func tick(now: Double) {
-        guard isOpen, previewEnabled, let renderer = game.renderer else { return }
+        guard isOpen else { return }
+        movie.advance(now: now)
+        guard previewEnabled, let renderer = game.renderer else { return }
         // A live movie decides through `UpdateItem3D`; without one the row shows.
         let shown = movie.loadedRenderer == nil || movieShowsItem3D
         let path = model.selectedEntry.flatMap {

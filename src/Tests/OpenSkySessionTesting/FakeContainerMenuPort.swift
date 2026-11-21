@@ -19,6 +19,7 @@ nonisolated public final class FakeContainerMenuPort: ContainerMenuPort {
     public var openPickpocketResult = false
     public var routeCalls: [MenuInputEvent] = []
     public var vendor: Vendor?
+    public var tickCalls: [Double] = []
 
     public init() {}
 }
@@ -89,5 +90,9 @@ nonisolated extension FakeContainerMenuPort {
 
     public func route(_ event: MenuInputEvent) {
         routeCalls.append(event)
+    }
+
+    public func tick(now: Double) {
+        tickCalls.append(now)
     }
 }
