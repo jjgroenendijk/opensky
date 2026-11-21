@@ -106,6 +106,23 @@ struct AssetPayloadCodecTests {
         }
     }
 
+    /// A field the cache drops reads back as its default, so every flag here differs from it.
+    @Test func everyDrawStateFlagSurvivesTheCache() throws {
+        var state = MaterialDrawState()
+        (state.depthTest, state.depthWrite, state.decal) = (false, false, true)
+        (state.castsShadows, state.receivesShadows) = (false, false)
+        (state.distantLOD, state.screenDoor, state.windWeighted) = (true, true, true)
+        #expect(
+            Mirror(reflecting: state).children.count == 8,
+            "a new MaterialDrawState field needs the cache codec and a mesh version bump"
+        )
+        var out = CachePayloadWriter()
+        ModelCacheCodec.encode(state, into: &out)
+        var input = CachePayloadReader(out.data)
+        #expect(try ModelCacheCodec.drawState(&input) == state)
+        #expect(input.isAtEnd)
+    }
+
     @Test func aTruncatedModelPayloadThrows() {
         let data = ModelCacheCodec.encode(skinnedModel)
         #expect(throws: CachePayloadError.self) {

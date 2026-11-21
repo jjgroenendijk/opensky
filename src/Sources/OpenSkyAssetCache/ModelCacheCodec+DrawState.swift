@@ -1,4 +1,4 @@
-// The draw state of a cached material: its seven flags, in field order.
+// The draw state of a cached material: its eight flags, in field order.
 
 import OpenSkyFormatsCore
 
@@ -6,7 +6,7 @@ nonisolated extension ModelCacheCodec {
     static func encode(_ state: MaterialDrawState, into out: inout CachePayloadWriter) {
         for flag in [
             state.depthTest, state.depthWrite, state.decal, state.castsShadows,
-            state.receivesShadows, state.distantLOD, state.screenDoor
+            state.receivesShadows, state.distantLOD, state.screenDoor, state.windWeighted
         ] {
             out.bool(flag)
         }
@@ -21,6 +21,7 @@ nonisolated extension ModelCacheCodec {
         state.receivesShadows = try input.bool()
         state.distantLOD = try input.bool()
         state.screenDoor = try input.bool()
+        state.windWeighted = try input.bool()
         return state
     }
 }
