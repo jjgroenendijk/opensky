@@ -66,9 +66,12 @@ public struct MenuArguments: ParsableCommand, Sendable {
         @OptionGroup public var drive: MenuDriveOptions
         @Option(
             parsing: .unconditional,
-            help: ArgumentHelp("Move to this many categories to the right.", valueName: "n")
+            help: ArgumentHelp(
+                "Move the category list down this many rows before the rows open.",
+                valueName: "n"
+            )
         )
-        public var right = 0
+        public var category = 0
         @Flag(help: "Press drop on the selected row, as the drop key does.")
         public var drop = false
         @Option(
@@ -85,7 +88,7 @@ public struct MenuArguments: ParsableCommand, Sendable {
         public init() {}
 
         public func validate() throws {
-            try OptionCheck.atLeast(right, 0, "--right")
+            try OptionCheck.atLeast(category, 0, "--category")
             if !drop, quantity != 0 || cancel {
                 throw ValidationError("--quantity and --cancel need --drop.")
             }

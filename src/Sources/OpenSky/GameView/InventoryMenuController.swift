@@ -147,10 +147,7 @@ final class InventoryMenuController {
                 }
             },
             didLoad: { [weak self] in
-                // The panel opens on the rows, as the drop key needs; it moves the
-                // selection, so the rows are written again after it.
-                self?.publishModel()
-                self?.movie.publish(ItemCardSubMenuBridge.showItemsList(runtime:))
+                // The movie opens on its category list; right or accept opens the rows.
                 self?.publishModel()
             }
         ))
@@ -171,56 +168,71 @@ final class InventoryMenuController {
             return
         }
         switch event {
-        case .button(.accept):
-            activateSelection()
         case .button(.cancel):
             close()
+        case .pointer, .release, .activate:
+            return
+        case let .move(direction):
+            move(direction)
+        case .button(.accept) where !showsItems:
+            move(.right)
+        case .button:
+            guard showsItems else { return }
+            routeItemKey(event)
+        }
+    }
+
+    /// The row keys, which act only while the item panel shows.
+    private func routeItemKey(_ event: MenuInputEvent) {
+        switch event {
+        case .button(.accept):
+            activateSelection()
         case .button(.xButton):
             requestDrop()
         case .button(.yButton):
             toggleFavouriteSelection()
         case .button(.leftEquip):
             perform { itemActions.useInLeftHand($0.item) }
-        case .pointer, .release, .activate:
+        default:
             return
-        case let .move(direction):
-            move(direction)
         }
     }
 
-    /// Left and right change category here, because the movie routes them
-    /// through readout-state codes that nothing drives without a live
-    /// `InputDelegate` (docs/engine/inventory-menu.md).
+    /// True with no movie, whose row list is always shown.
+    private var showsItems: Bool {
+        guard let runtime = movie.loadedRenderer?.swfRuntime else { return true }
+        return InventoryMenuMovieBridge.showsItems(runtime: runtime)
+    }
+
+    /// The movie moves its own focus and lists. With no movie, left and right
+    /// change category here.
     private func move(_ direction: MenuInputEvent.Direction) {
+        if let renderer = movie.loadedRenderer {
+            driveMovie(direction, renderer: renderer)
+            return
+        }
         switch direction {
         case .left, .right:
             model.moveCategory(by: direction == .right ? 1 : -1)
             publishModel()
         case .up, .down:
-            guard !driveMovie(direction) else { return }
             model.moveSelection(by: direction == .down ? 1 : -1)
             publishModel()
         }
     }
 
-    /// False when there is no movie, or the movie declined the key.
-    private func driveMovie(_ direction: MenuInputEvent.Direction) -> Bool {
-        guard let renderer = movie.loadedRenderer else { return false }
+    /// A key the movie declines, such as right on the open rows, does nothing.
+    private func driveMovie(_ direction: MenuInputEvent.Direction, renderer: any RendererPort) {
+        guard let runtime = renderer.swfRuntime else { return }
         do {
-            let consumed = try InventoryMenuMovieBridge.send(.move(direction), renderer: renderer)
-            guard consumed, let runtime = renderer.swfRuntime else { return false }
-            // The movie's list decides where a key landed.
-            if let index = InventoryMenuMovieBridge.selectedCategoryIndex(runtime: runtime) {
-                model.selectCategory(index)
+            let moved = try InventoryMenuMovieBridge.navigate(
+                direction, model: &model, runtime: runtime
+            ) { try InventoryMenuMovieBridge.send($0, renderer: renderer) }
+            if moved {
+                publishModel()
             }
-            if let index = InventoryMenuMovieBridge.selectedIndex(runtime: runtime) {
-                model.select(index)
-            }
-            publishModel()
-            return true
         } catch {
             movie.record(error)
-            return false
         }
     }
 
