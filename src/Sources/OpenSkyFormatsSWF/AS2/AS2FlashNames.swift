@@ -10,6 +10,44 @@ nonisolated enum AS2FlashNames {
         globals.contains(name) || displayMembers.contains(name) || nativeMethods.contains(name)
     }
 
+    /// A member of a host-backed object: a movie clip does not have a text field's own
+    /// members, and a text field does not have a clip's.
+    static func isDefined(_ name: String, onMovieClip: Bool) -> Bool {
+        let other = onMovieClip ? textFieldOnlyMembers : movieClipOnlyMembers
+        return !other.contains(name) && isDefined(name)
+    }
+
+    /// `TextField` members that `MovieClip` lacks, with the GFx text extensions.
+    static let textFieldOnlyMembers: Set = [
+        "antiAliasType", "autoSize", "background", "backgroundColor", "border", "borderColor",
+        "bottomScroll", "condenseWhite", "embedFonts", "gridFitType", "hscroll", "html",
+        "htmlText", "length", "maxChars", "maxhscroll", "maxscroll", "mouseWheelEnabled",
+        "multiline", "password", "restrict", "scroll", "selectable", "sharpness", "styleSheet",
+        "text", "textColor", "textHeight", "textWidth", "thickness", "type", "variable",
+        "wordWrap", "getFontList", "getNewTextFormat", "getTextFormat", "removeTextField",
+        "replaceSel", "replaceText", "setNewTextFormat", "setTextFormat", "autoFit",
+        "caretIndex", "fontScaleFactor", "noTranslate", "numLines", "textAutoSize",
+        "verticalAlign", "verticalAutoSize", "appendText", "appendHtml", "getCharBoundaries",
+        "getCharIndexAtPoint", "getExactCharBoundaries", "getFirstCharInParagraph",
+        "getLineIndexAtPoint", "getLineLength", "getLineMetrics", "getLineOffset",
+        "getLineText", "selectionBeginIndex", "selectionEndIndex"
+    ]
+
+    /// `MovieClip` members that `TextField` lacks.
+    static let movieClipOnlyMembers: Set = [
+        "_currentframe", "_droptarget", "_framesloaded", "_lockroot", "_totalframes",
+        "blendMode", "cacheAsBitmap", "enabled", "focusEnabled", "forceSmoothing", "hitArea",
+        "opaqueBackground", "scale9Grid", "scrollRect", "tabChildren", "trackAsMenu",
+        "useHandCursor", "attachAudio", "attachBitmap", "attachMovie", "beginBitmapFill",
+        "beginFill", "beginGradientFill", "clear", "createEmptyMovieClip", "createTextField",
+        "curveTo", "duplicateMovieClip", "endFill", "getBounds", "getBytesLoaded",
+        "getBytesTotal", "getInstanceAtDepth", "getNextHighestDepth", "getRect",
+        "getSWFVersion", "getTextSnapshot", "globalToLocal", "gotoAndPlay", "gotoAndStop",
+        "hitTest", "lineGradientStyle", "lineStyle", "lineTo", "loadMovie", "loadVariables",
+        "localToGlobal", "moveTo", "nextFrame", "play", "prevFrame", "removeMovieClip",
+        "setMask", "startDrag", "stop", "stopDrag", "swapDepths", "unloadMovie"
+    ]
+
     /// `_global` names and the classes of the `flash.*` packages.
     static let globals: Set = [
         "Accessibility", "Array", "AsBroadcaster", "ASSetPropFlags", "BitmapData", "Boolean",

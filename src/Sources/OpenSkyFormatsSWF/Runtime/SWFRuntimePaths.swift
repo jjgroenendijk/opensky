@@ -73,6 +73,10 @@ nonisolated extension SWFMovieRuntime {
             if case let .editText(id) = node.content, let field = editText(id) {
                 return .boolean(!field.flags.noSelect)
             }
+        case "border":
+            if case let .editText(id) = node.content, let field = editText(id) {
+                return .boolean(field.flags.border)
+            }
         default:
             break
         }
