@@ -117,7 +117,7 @@ extension Renderer {
         let resources = try SWFPassResources(
             contentPipeline: makeSWFPipeline(
                 view: view, library: library, compiler: compiler,
-                function: ("swfFragment", "SWFContent")
+                function: ("swfFragment", "SWFContent"), blendsInShader: true
             ),
             maskPipeline: makeSWFPipeline(
                 view: view, library: library, compiler: compiler,
@@ -136,7 +136,7 @@ extension Renderer {
         )
         resources.additivePipeline = try makeSWFPipeline(
             view: view, library: library, compiler: compiler,
-            function: ("swfFragment", "SWFContentAdd"), additive: true
+            function: ("swfAddFragment", "SWFContentAdd"), blendsInShader: true
         )
         return resources
     }
@@ -146,7 +146,7 @@ extension Renderer {
         library: any MTLLibrary,
         compiler: PipelineCache,
         function: (fragment: String, label: String),
-        additive: Bool = false
+        blendsInShader: Bool = false
     ) throws -> any MTLRenderPipelineState {
         let (fragment, label) = function
         let vertexFunction = MTL4LibraryFunctionDescriptor()
@@ -163,14 +163,16 @@ extension Renderer {
         guard let color = descriptor.colorAttachments[0] else {
             throw RendererError.pipelineAttachmentMissing
         }
-        // Premultiplied source-one over blend, matching the UI pass. The mask
-        // fragment outputs zero, which leaves the destination untouched under
-        // this blend — no color-write-mask special case needed.
         color.pixelFormat = view.colorPixelFormat
+        // The content fragments read the target and blend in gamma values
+        // (docs/rendering/swf-layer.md#the-shader). The mask fragment outputs zero,
+        // which leaves the target untouched under the premultiplied over blend.
+        guard !blendsInShader else {
+            return try compiler.makeRenderPipelineState(descriptor: descriptor)
+        }
         color.blendingState = .enabled
         color.sourceRGBBlendFactor = .one
-        // Blend mode add keeps the destination whole and adds the premultiplied source.
-        color.destinationRGBBlendFactor = additive ? .one : .oneMinusSourceAlpha
+        color.destinationRGBBlendFactor = .oneMinusSourceAlpha
         color.rgbBlendOperation = .add
         color.sourceAlphaBlendFactor = .one
         color.destinationAlphaBlendFactor = .oneMinusSourceAlpha
