@@ -52,9 +52,11 @@ same rule as taking any item ([crime](/engine/crime.md)).
 
 In the game the book is a 3D model with the movie drawn on its pages:
 
-- The model is placed from a share of the screen width and height, a distance, and a turn about
-  the X axis. A note uses its own height. The book moves, turns, and scales from its start to that
-  place over the book-open time, lit by a light of its own.
+- The model sits at 0.5 of the screen width and 0.445 of its height, turned -25 degrees about the
+  X axis. Its distance is 110 for a book and 90 for a note, times the screen width over its height.
+  It moves, turns, and scales from its start to that place over 1 s.
+- Two lights of colour (0.98, 0.95, 0.83) and radius 400 light it: one at (100, -350, 100) with
+  dimmer 1.75, one at (10, -75, 10) with dimmer 1.
 - The pages are the model's nodes `Base Page1` to `Base Page4`. A model without `Base Page1` opens
   as a note. For each page the engine calls `BookMenu.BookMenuInstance.ShowPageAtOffset(i)` and
   draws the movie onto that node.
@@ -77,9 +79,14 @@ also takes up for back and down for forward. Accept takes a book that lies in th
 the menu; Cancel closes it. Neither works during a page flip. On close the engine calls
 `PrepForClose`, then moves the book back over the same open time.
 
-A skill book teaches once. After it teaches, it never teaches again. A spell tome whose spell the
-player already knows shows a notice with the spell's name and plays no sound. A new spell plays
-`UISpellLearned`. The first read of any book marks it read and counts it for the stats
+A skill book teaches once, when its skill is one of the 18. The gain is 1 level, changed by the
+`Adjust Book Skill Points` perk entry point, rounded down, at least 1. A skill at 100 gains
+nothing, but the book is still used up.
+
+A spell tome read from the inventory teaches its spell without opening the book menu. A new spell
+plays `UISpellLearned`, shows the spell-added notice, and uses up one tome. A known spell shows the
+already-known notice, plays no sound, and keeps the tome. A tome read from a container is removed
+only for a new spell. The first read of any book marks it read and counts it for the stats
 ([general stats](/engine/statistics.md)).
 
 ## Differences from the game
