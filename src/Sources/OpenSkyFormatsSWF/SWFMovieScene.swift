@@ -44,7 +44,7 @@ nonisolated public struct SWFMovieScene: Sendable {
         {
             return substituted
         }
-        if let fontClass = text.fontClass, let substituted = externalFont(named: fontClass) {
+        if let fontClass = text.fontClass, let substituted = font(named: fontClass) {
             return substituted
         }
         return nil

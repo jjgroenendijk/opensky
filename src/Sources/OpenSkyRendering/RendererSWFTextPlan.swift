@@ -36,7 +36,7 @@ nonisolated extension SWFMovieResources {
                     guard let text = scene.movie.staticText(id) else { continue }
                     plans[index] = planStaticText(text)
                 case let .editText(id):
-                    guard let field = scene.movie.editText(id) else { continue }
+                    guard let field = item.textField ?? scene.movie.editText(id) else { continue }
                     let text = item.textBounds.map(field.withBounds) ?? field
                     plans[index] = planEditText(text, item: item)
                 }

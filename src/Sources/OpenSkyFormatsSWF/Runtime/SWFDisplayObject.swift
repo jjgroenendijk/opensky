@@ -71,6 +71,8 @@ nonisolated public final class SWFDisplayObject {
     /// A text field's own box after a script set `_width` or `_height`; nil keeps the
     /// character's bounds.
     public var textBounds: SWFRect?
+    /// The format a script set on a text node; nil keeps the character's.
+    public var textFormat: SWFTextFormat?
     /// `TextField.scroll`: the one-based first line shown.
     var textScroll = 1
     /// CLIPACTIONS handlers the placement attached, if any.

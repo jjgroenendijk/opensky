@@ -14,12 +14,13 @@ nonisolated extension SWFMovieRuntime {
     /// the character every instance shares.
     public func textField(of node: SWFDisplayObject) -> SWFEditText? {
         guard case let .editText(id) = node.content, let field = editText(id) else { return nil }
-        return node.textBounds.map(field.withBounds) ?? field
+        let sized = node.textBounds.map(field.withBounds) ?? field
+        return node.textFormat.map(sized.withFormat) ?? sized
     }
 
-    /// `createTextField(name, depth, x, y, width, height)`, with `frame` in parent twips. Flash
-    /// gives the field a
-    /// device font, and OpenSky has none, so the field holds text but draws nothing.
+    /// `createTextField(name, depth, x, y, width, height)`, with `frame` in parent twips. The
+    /// field asks for the default font, which draws only through a font library, as in the
+    /// game; a script's `setTextFormat` names another.
     func createTextField(
         named name: String,
         in parent: SWFDisplayObject,
@@ -33,7 +34,8 @@ nonisolated extension SWFMovieRuntime {
                 xMin: 0, xMax: frame.xMax - frame.xMin,
                 yMin: 0, yMax: frame.yMax - frame.yMin
             ),
-            flags: SWFEditTextFlags(), fontID: nil, fontClass: nil, fontHeight: nil,
+            flags: SWFEditTextFlags(), fontID: nil, fontClass: Self.defaultTextFont,
+            fontHeight: 240,
             color: nil, maxLength: nil, layout: nil, variableName: "", initialText: nil
         )
         let created = SWFDisplayObject(content: .editText(characterId))

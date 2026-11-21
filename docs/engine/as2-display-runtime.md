@@ -166,6 +166,18 @@ The journal uses the first two to start its objective list below the last line o
 description, and the third to place each bottom bar button after its label. `numLines` counts
 every laid-out line of any field. A `Rectangle` reads `left`, `top`, `right`, and `bottom`.
 
+`createTextField` makes a field with the given name, depth, position, and size, and the runtime
+keeps its definition under a character id counted down from 65535. As in the game, the field asks
+for `Times New Roman` at 12 points in black, which draws only when a font library maps that name
+([finding a font](/formats/swf-text.md#finding-a-font-in-the-game)). The one vanilla use, the
+journal's `LevelText`, is hidden.
+
+`setTextFormat(format)` and `setNewTextFormat(format)` set the `font`, `size`, and `color` a
+`TextFormat` gives, and keep what it leaves out. A field draws in one format, so both apply to the
+whole field, and the forms with a character range are ignored. `getTextFormat` and
+`getNewTextFormat` answer the field's font name, size in points, and colour as `0xRRGGBB`. The
+font name is looked up like a field's own: through the font map, then the movie's fonts by name.
+
 ## Scene generation
 
 The runtime produces the same scene command stream as the static scene builder, with the same clip
@@ -227,10 +239,6 @@ reports `onLoadError` on the next tick. Flash reports later too, and a component
   interpreter runs.
 - Shape-level hit testing. Both `MovieClip.hitTest` and pointer routing use bounding boxes.
 - Text input. No key event edits a field.
-- Device fonts. `createTextField` makes a field with the given name, depth, position, and size, and
-  the runtime keeps its definition under a character id counted down from 65535. Flash draws such a
-  field in a device font, and OpenSky has none, so the field holds text but draws nothing. The one
-  vanilla use, the journal's `LevelText`, is hidden.
 - Opcodes no vanilla movie uses: `ActionWith`, `ActionTry`, `ActionThrow`, `ActionSetTarget`,
   `ActionSetTarget2`, `ActionGetURL`, `ActionGetURL2`, `ActionWaitForFrame`, `ActionWaitForFrame2`,
   and `ActionEnumerate` (only `ActionEnumerate2` occurs). They parse and run as counted no-ops.
