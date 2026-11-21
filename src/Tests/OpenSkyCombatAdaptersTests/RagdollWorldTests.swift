@@ -127,4 +127,16 @@ struct RagdollWorldTests {
         #expect(adapter.playerFeetPosition == nil)
         #expect(!adapter.searchCorpse(Self.actor))
     }
+
+    @Test func aKillByThePlayerCountsTheVictimsActorTypes() {
+        host.fakeMagicWorld.actorHasKeywordResult = true
+        _ = adapter.queueActorDeathEvents(for: .player, killer: .player)
+        #expect(host.fakeWorldState.incrementMiscStatCalls.map(\.name) == [
+            "People Killed", "Animals Killed", "Undead Killed", "Daedra Killed",
+            "Automatons Killed"
+        ])
+        host.fakeWorldState.incrementMiscStatCalls = []
+        _ = adapter.queueActorDeathEvents(for: .player, killer: Self.actor)
+        #expect(host.fakeWorldState.incrementMiscStatCalls.isEmpty, "only the player's kills count")
+    }
 }

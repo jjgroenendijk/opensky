@@ -183,6 +183,10 @@ the detail and the sources it did find.
 | Tab of a carried light (torch) | Misc | [inventory menu](/engine/inventory-menu.md) |
 | When the skills menu text fades in | As the menu opens, with the camera rise | [perk sky](/engine/perk-sky.md) |
 | `GetGoldValue` for a non-item | -1 | [inventory state](/engine/inventory-state.md) |
+| Kill stat of an actor | Its `ActorType*` keywords on the race or the base pick the stats; one kill can raise two | [statistics](/engine/statistics.md#how-opensky-counts) |
+| Potions Mixed per brew | One per brew, whatever number of potions it makes | [statistics](/engine/statistics.md#how-opensky-counts) |
+| Skill Increases from training | Training counts, one per level the skill rises | [statistics](/engine/statistics.md#how-opensky-counts) |
+| Dungeons Cleared | Every location that clears counts, by its last boss or by `Location.SetCleared` | [statistics](/engine/statistics.md#how-opensky-counts) |
 
 ## World, time, and sound
 

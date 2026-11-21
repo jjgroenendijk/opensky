@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 
 extension PapyrusNativeFunctions.ScriptStateNatives {
@@ -109,10 +110,11 @@ extension PapyrusNativeFunctions.ScriptStateNatives {
                 bridge.updateScriptedState(of: key) {
                     $0.setFlag(flag.name, isSet ? true : cleared)
                 }
-                if
-                    flag.name == ScriptedStateName.cleared, isSet, !wasSet,
-                    let name = bridge.itemNoticeLines.formName(of: key)
-                {
+                let clears = flag.name == ScriptedStateName.cleared && isSet && !wasSet
+                if clears {
+                    bridge.worldState.incrementMiscStat("Dungeons Cleared")
+                }
+                if clears, let name = bridge.itemNoticeLines.formName(of: key) {
                     bridge.ports.presenter?.postWorldNotice(.locationCleared(
                         name: name,
                         playsMusic: true

@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 
 extension PapyrusWorldStateBridge.RecordReads {
@@ -24,6 +25,7 @@ extension PapyrusWorldStateBridge.RecordReads {
         bridge.updateScriptedState(of: location) {
             $0.setFlag(ScriptedStateName.cleared, true)
         }
+        bridge.worldState.incrementMiscStat("Dungeons Cleared")
         if let name = bridge.itemNoticeLines.formName(of: location) {
             bridge.ports.presenter?.postWorldNotice(.locationCleared(
                 name: name,

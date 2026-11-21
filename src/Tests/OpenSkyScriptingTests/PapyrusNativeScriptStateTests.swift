@@ -4,6 +4,7 @@
 import Foundation
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyFormatsESM
+import OpenSkyQuestsInterface
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
@@ -26,6 +27,19 @@ struct PapyrusNativeScriptStateTests {
 
     private func state(_ fixture: Fixture) -> ScriptedReferenceState? {
         fixture.session.worldState.component(ScriptedReferenceState.self, for: fixture.key)
+    }
+
+    /// A location counts once on Dungeons Cleared, by script or by its last boss.
+    @Test func aClearedLocationCountsOnce() throws {
+        let fixture = try Fixture.make()
+        #expect(call(fixture, "Location", "SetCleared") == .returned(.none))
+        #expect(call(fixture, "Location", "SetCleared") == .returned(.none))
+        fixture.session.bridge.markLocationCleared(fixture.key, playsMusic: false)
+        #expect(fixture.session.worldState.miscStats.value("Dungeons Cleared") == 1)
+        let other = try Fixture.make()
+        other.session.bridge.markLocationCleared(other.key, playsMusic: false)
+        other.session.bridge.markLocationCleared(other.key, playsMusic: false)
+        #expect(other.session.worldState.miscStats.value("Dungeons Cleared") == 1)
     }
 
     /// Ghost is also a record flag, so clearing it stores false: that hides the record's flag.

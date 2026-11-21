@@ -660,14 +660,16 @@ targets += feature(
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
         "OpenSkyFactionsInterface", "OpenSkyCrimeInterface", "OpenSkyMagicInterface",
-        "OpenSkyProgressionInterface", "OpenSkyWorldInterface", "OpenSkyConditions"
+        "OpenSkyProgressionInterface", "OpenSkyQuestsInterface", "OpenSkyWorldInterface",
+        "OpenSkyConditions"
     ],
     tests: [
         "OpenSkyFeaturesTesting", "OpenSkyFormatsTesting", "OpenSkyEngineTesting",
         "OpenSkyConditions", "OpenSkyCrimeInterface",
         "OpenSkyFactionsInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
         "OpenSkyGameData", "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
-        "OpenSkyProgressionInterface", "OpenSkyWorldInterface", "OpenSkyWorldState"
+        "OpenSkyProgressionInterface", "OpenSkyQuestsInterface", "OpenSkyWorldInterface",
+        "OpenSkyWorldState"
     ]
 )
 targets += feature(
@@ -732,7 +734,7 @@ targets += feature(
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsPEX", "OpenSkyGameData",
         "OpenSkyInventoryInterface",
         "OpenSkyMagicInterface", "OpenSkyPerceptionInterface", "OpenSkyPhysics",
-        "OpenSkyFeaturesTesting",
+        "OpenSkyFeaturesTesting", "OpenSkyQuestsInterface",
         "OpenSkyScriptingFixtures",
         "OpenSkyScriptingInterface", "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]

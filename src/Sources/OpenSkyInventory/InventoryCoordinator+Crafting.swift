@@ -114,6 +114,13 @@ extension InventoryCoordinator.CraftingBench {
         guard let crafting = coordinator.crafting else { return noteCraft(.notOpen) }
         do {
             let outcome = try crafting.craft(recipe)
+            if let runtime = coordinator.runtime {
+                CraftingStats.count(
+                    outcome,
+                    items: runtime.inventory.baselines.items,
+                    in: runtime.store
+                )
+            }
             if let step = outcome.improved {
                 let from = coordinator.craftingReadout.qualityName(
                     step.from,
