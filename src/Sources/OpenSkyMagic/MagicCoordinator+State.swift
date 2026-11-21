@@ -16,6 +16,8 @@ extension MagicCoordinator {
         /// Each casting hand as the cues saw it last frame; an idle hand is left out.
         var castingViews: [CastSlot: CastingHandView] = [:]
         var releaseLatch = SpellReleaseLatch()
+        /// Hands pressed while the hands were away; each stays still until released.
+        var sheathedPress: Set<SpellHand> = []
         var wasWeaponsDrawn: Bool?
         /// The spell whose art each hand shows now.
         var handArt: [CastSlot: ReferenceKey] = [:]

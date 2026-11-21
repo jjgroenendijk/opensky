@@ -12,6 +12,29 @@ import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
 extension MagicCoordinator.FrameStep {
+    /// A press while the hands are away only draws them, so it casts nothing, and the
+    /// hand stays still until the button is let go (docs/engine/attack-input.md).
+    /// Unknown draw state, as in a test without melee, never holds a press.
+    func holdingSheathedPresses(_ intent: CastingIntent, weaponsDrawn: Bool?) -> CastingIntent {
+        var held = intent
+        for hand in SpellHand.allCases {
+            if !intent.isHeld(hand) {
+                coordinator.castingState.sheathedPress.remove(hand)
+            } else if
+                weaponsDrawn == false,
+                !(coordinator.caster?.phase(of: hand).isCasting ?? false)
+            {
+                coordinator.castingState.sheathedPress.insert(hand)
+            }
+            guard coordinator.castingState.sheathedPress.contains(hand) else { continue }
+            switch hand {
+            case .left: held.leftHeld = false
+            case .right: held.rightHeld = false
+            }
+        }
+        return held
+    }
+
     /// A hand pressed while the player shouts does not begin its cast, and a new press
     /// says why. A cast already running is left to finish.
     func refusingCastsDuringShout(_ intent: CastingIntent) -> CastingIntent {
@@ -102,8 +125,9 @@ extension MagicCoordinator.FrameStep {
     ) -> [MagicCommand] {
         guard let caster = coordinator.caster else { return takeCommands() }
         let playerIntent = isPlayerControlled
-            ? refusingCastsDuringShout(coordinator.castingCues.latched(intent, events: events)) :
-            .still
+            ? refusingCastsDuringShout(coordinator.castingCues.latched(
+                holdingSheathedPresses(intent, weaponsDrawn: weaponsDrawn), events: events
+            )) : .still
         caster.acceptFrame(playerIntent, on: .player)
         for failure in caster.takePlayerFailures() {
             let text = coordinator.texts.castNotices[CastNoticeText.notice(for: failure) ?? .ok]

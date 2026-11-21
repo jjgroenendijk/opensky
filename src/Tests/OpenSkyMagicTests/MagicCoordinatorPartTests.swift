@@ -187,4 +187,30 @@ struct MagicCastingPartTests {
         _ = coordinator.wantsCast(.right)
         #expect(panels.castingControlSnapshot.castingCueText.hasPrefix("Casting cues:"))
     }
+
+    /// A press with the hands away only draws them; holding on once they are out casts
+    /// nothing until the button is let go and pressed again.
+    @Test func aPressWithTheHandsAwayCastsNothingUntilPressedAgain() throws {
+        let world = FakeMagicWorld()
+        let coordinator = try MagicCoordinatorTests.castingWired(world)
+        let panels = coordinator.controlPanels
+        _ = panels.readSpellTome(
+            FormID(SpellbookFixture.Book.healingTome),
+            spell: FormID(SpellbookFixture.Spell.healing)
+        )
+        _ = panels.selectNextKnownSpell()
+        _ = panels.readySelectedSpell(in: .right)
+        let step = coordinator.frameStep
+        let caster = try #require(coordinator.caster)
+        let held = CastingIntent(rightHeld: true, deltaTime: 0.1)
+        for drawn in [false, true] {
+            _ = step.advanceCasting(held, isPlayerControlled: true, weaponsDrawn: drawn)
+            #expect(!caster.phase(of: .right).isCasting)
+        }
+        _ = step.advanceCasting(
+            CastingIntent(deltaTime: 0.1), isPlayerControlled: true, weaponsDrawn: true
+        )
+        _ = step.advanceCasting(held, isPlayerControlled: true, weaponsDrawn: true)
+        #expect(caster.phase(of: .right).isCasting)
+    }
 }
