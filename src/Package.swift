@@ -1356,8 +1356,8 @@ targets += composition(
         "OpenSkyEngineTesting", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
         "OpenSkyFormatsTesting", "OpenSkyGameData", "OpenSkyInventoryInterface", "OpenSkyMagic",
         "OpenSkyMagicInterface", "OpenSkyPhysics", "OpenSkyProgressionInterface",
-        "OpenSkyRendering", "OpenSkySessionInterface", "OpenSkySessionTesting",
-        "OpenSkyWorldInterface", "OpenSkyWorldState"
+        "OpenSkyRendering", "OpenSkyScriptingInterface", "OpenSkySessionInterface",
+        "OpenSkySessionTesting", "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 
@@ -1388,7 +1388,7 @@ targets += composition(
         "OpenSkyMenusInterface", "OpenSkyPlayer", "OpenSkyProgressionInterface",
         "OpenSkyRenderCore",
         "OpenSkyRendering", "OpenSkySessionInterface", "OpenSkySessionTesting",
-        "OpenSkyWorldInterface"
+        "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 

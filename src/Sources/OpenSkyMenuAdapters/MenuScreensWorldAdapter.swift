@@ -38,9 +38,15 @@ public protocol MenuScreensWorldHost: MenuInputConsumer, SendableMetatype {
     var streamer: any CellStreamerPort { get }
 }
 
+/// What resting writes beside the clock: the journal's rest stats.
+@MainActor
+public protocol MenuScreensRestHost: AnyObject, SendableMetatype {
+    var worldState: any WorldStateStorePort { get }
+}
+
 /// Every host a `MenuScreensWorldAdapter` part reads, all one object.
 public typealias MenuScreensWorldHosts = MenuScreensCraftingDeskHost & MenuScreensGiftListsHost &
-    MenuScreensGuidesHost & MenuScreensWorldHost
+    MenuScreensGuidesHost & MenuScreensRestHost & MenuScreensWorldHost
 
 public final class MenuScreensWorldAdapter {
     public let game: any MenuScreensWorldHost
@@ -129,6 +135,10 @@ extension MenuScreensWorldAdapter: SleepWaitWorld {
     /// scripts' game-time timers; health, magicka, and stamina refill at the end.
     public func passTime(hours: Int, sleeping: Bool) {
         guard let gameSession = game.gameSession else { return }
+        hosts.worldState.incrementMiscStat(
+            sleeping ? "Hours Slept" : "Hours Waiting",
+            by: Int32(hours)
+        )
         let start = gameSession.gameClock
         let timescale = Double(max(gameSession.currentTimescale, 1))
         for step in RestTimeSteps.steps(hours: hours) {

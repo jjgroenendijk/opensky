@@ -6,6 +6,7 @@
 import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 
 extension PapyrusNativeFunctions.ShoutsNatives {
@@ -124,12 +125,19 @@ extension PapyrusNativeFunctions.ShoutsNatives {
         ]
         for (name, flags) in names {
             withForm("Game", name, into: &registry) { _, bridge, player, word in
-                let known = bridge.scriptedState(of: player)
-                    .flag(ScriptedStateName.wordKnown(word)) == true
+                let before = bridge.scriptedState(of: player)
+                let known = before.flag(ScriptedStateName.wordKnown(word)) == true
+                let unlocked = before.flag(ScriptedStateName.wordUnlocked(word)) == true
                 bridge.updateScriptedState(of: player) { state in
                     for flag in flags {
                         state.setFlag(flag(word), true)
                     }
+                }
+                if !known {
+                    bridge.worldState.incrementMiscStat("Words Of Power Learned")
+                }
+                if name == "UnlockWord", !unlocked {
+                    bridge.worldState.incrementMiscStat("Words Of Power Unlocked")
                 }
                 if
                     name == "TeachWord", !known,

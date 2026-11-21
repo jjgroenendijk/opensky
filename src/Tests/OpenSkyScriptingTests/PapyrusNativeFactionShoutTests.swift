@@ -5,6 +5,7 @@
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyQuestsInterface
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
@@ -78,8 +79,11 @@ struct PapyrusNativeFactionShoutTests {
         #expect(call(fixture, "Game", "IsWordUnlocked", [.object(word)], returnType: .boolean)
             == .returned(.boolean(false)))
         _ = call(fixture, "Game", "UnlockWord", [.object(word)])
+        _ = call(fixture, "Game", "UnlockWord", [.object(word)])
         #expect(call(fixture, "Game", "IsWordUnlocked", [.object(word)], returnType: .boolean)
             == .returned(.boolean(true)))
+        let stats = fixture.session.worldState.miscStats
+        #expect(stats.values == ["Words Of Power Learned": 1, "Words Of Power Unlocked": 1])
 
         _ = call(fixture, "Actor", "AddShout", [.object(word)])
         _ = call(fixture, "Actor", "EquipShout", [.object(word)])

@@ -22,6 +22,7 @@ nonisolated extension AgentCommandCatalog {
         command("state.scenes", "Each playing scene with its quest and phase."),
         command("state.story", "The story-manager events fired, by code, and the newest ones."),
         command("state.social", "NPC conversations, walks, fight watchers, and checked bodies."),
+        command("state.stats", "The journal's misc stats counted so far, by name."),
         command(
             "state.scripts", "The script queue, waits, events, faults, and missing natives.",
             positionals: [optionalText("ref", "Also list the scripts on this reference or quest.")]

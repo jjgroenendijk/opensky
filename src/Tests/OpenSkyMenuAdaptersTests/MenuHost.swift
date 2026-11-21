@@ -14,7 +14,8 @@ import OpenSkyWorldInterface
 @MainActor
 final class MenuHost: LoadingScreenPresentationHost, LoadingScreenWorldHost, MapQuestsHost,
     MapRecordsHost, MapTravelHost, MapWorldHost, MenuScreensCraftingDeskHost,
-    MenuScreensGiftListsHost, MenuScreensGuidesHost, MenuScreensWorldHost, MenuWorldHost,
+    MenuScreensGiftListsHost, MenuScreensGuidesHost, MenuScreensRestHost, MenuScreensWorldHost,
+    MenuWorldHost,
     MenuWorldNewGameHost, MenuWorldScriptMenusHost, MenuWorldSettingsApplyHost,
     MenuWorldSkillsRaceHost, MenuWorldTeleportsHost, MessageCameraEffectsHost, MessageWorldHost,
     MovieWorldHost, PerkActivationWorldHost

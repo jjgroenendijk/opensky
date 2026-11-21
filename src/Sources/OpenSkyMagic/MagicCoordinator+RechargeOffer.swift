@@ -82,6 +82,7 @@ extension MagicCoordinator.WeaponRecharge {
             let weapon = recharge.weapon(item), gems.indices.contains(gemIndex)
         else { return false }
         _ = recharge.recharge(weapon, with: gems[gemIndex], runtime: runtime, inventory: inventory)
+        coordinator.incrementStat("Soul Gems Used")
         return true
     }
 

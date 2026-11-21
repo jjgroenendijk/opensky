@@ -55,6 +55,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case story
     /// NPC conversations, walks, watchers, checked bodies, and social timers.
     case social
+    /// The journal's misc stats counted so far.
+    case stats
     /// What one condition function returns now, run on a reference.
     case condition(function: String, reference: String, parameter: String?)
 
@@ -119,7 +121,7 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "sounds": .sounds
         case "story": .story
         case "social": .social
-        default: nil
+        default: name == "stats" ? .stats : nil
         }
     }
 }

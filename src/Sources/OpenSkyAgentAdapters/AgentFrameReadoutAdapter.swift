@@ -38,6 +38,7 @@ public protocol AgentFrameReadoutHost: AnyObject, SendableMetatype {
     var renderer: (any RendererPort)? { get }
     var runtimeState: any RuntimeStatePort { get }
     var streamer: any CellStreamerPort { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
@@ -55,6 +56,13 @@ extension AgentFrameReadoutAdapter {
             "id": .string(global.editorID), "value": .init(global.currentValue),
             "default": .init(global.defaultValue), "overridden": .bool(global.isOverridden)
         ]
+    }
+
+    /// The answer to `openskycli game state stats`: each journal stat counted so far,
+    /// by name. A stat that was never counted reads 0 and is left out.
+    public func statsState() -> AgentJSON {
+        let values = game.worldState.miscStats.values.filter { $0.value != 0 }
+        return ["stats": .object(values.mapValues { AgentJSON(Int($0)) })]
     }
 
     public func timeState() -> AgentJSON {

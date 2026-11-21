@@ -140,6 +140,7 @@ struct EnchantingTests {
             Issue.record("expected an enchanted ring, got \(outcome)")
             return
         }
+        #expect(trial.coordinator.journalStat("Magic Items Made") == 1)
         let profile = try #require(trial.coordinator.weaponEnchantments.enchantmentProfile(
             of: Records.ring,
             on: .player

@@ -182,6 +182,7 @@ extension MagicCoordinator.ShoutVoice {
         )
         coordinator.shoutMachine.startCooldown(cooldown)
         coordinator.pendingCommands.append(.playerShouted(words: words))
+        coordinator.incrementStat("Times Shouted")
         noteShout(.shouted(shout: shout.displayName, words: words, cooldown: cooldown))
     }
 

@@ -75,3 +75,10 @@ struct ItemUseStatsTests {
         #expect(stats.values == ["Books Read": 1, "Spells Learned": 1, "Skill Books Read": 1])
     }
 }
+
+extension MagicCoordinator {
+    /// The journal stat `name`, from the store the coordinator counts in.
+    func journalStat(_ name: String) -> Int32 {
+        (effects?.store ?? caster?.spellbook.store)?.miscStats.value(name) ?? -1
+    }
+}

@@ -16,6 +16,7 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
+import OpenSkyWorldState
 import Testing
 
 @MainActor
@@ -126,6 +127,20 @@ struct MenuWorldScreensTests {
         #expect(screens.gameDateText == nil)
         screens.passTime(hours: 2, sleeping: true)
         #expect(host.fakeScripts.reportSleepCalls.isEmpty)
+    }
+
+    @Test func restingCountsItsHoursOnTheJournal() {
+        let screens = MenuScreensWorldAdapter(game: host)
+        let session = FakeGameSessionPort()
+        session.gameClockValue = GameClock()
+        session.gameTimeValue = RendererGameTime()
+        host.gameSession = session
+        screens.passTime(hours: 3, sleeping: true)
+        screens.passTime(hours: 2, sleeping: false)
+        #expect(host.fakeWorldState.incrementMiscStatCalls.map(\.name) == [
+            "Hours Slept", "Hours Waiting"
+        ])
+        #expect(host.fakeWorldState.incrementMiscStatCalls.map(\.amount) == [3, 2])
     }
 
     @Test func guidesReadMessagesAndTrainers() {

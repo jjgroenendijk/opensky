@@ -34,4 +34,17 @@ struct CraftingStatsTests {
         CraftingStats.count(picks, items: harness.inventory.baselines.items, in: store)
         #expect(store.miscStats.values == ["Weapons Made": 1])
     }
+
+    @Test func aHarvestCountsItsIngredients() throws {
+        let items = try AlchemyFixture.resolver().items
+        let stats = CraftingStats.harvestStats(
+            of: [
+                InventoryStack(item: AlchemyFixture.wheat, count: 2),
+                InventoryStack(item: InventoryBaselineFixture.lockpick, count: 1)
+            ],
+            items: items
+        )
+        #expect(stats.map(\.name) == ["Ingredients Harvested"])
+        #expect(stats.map(\.count) == [2])
+    }
 }

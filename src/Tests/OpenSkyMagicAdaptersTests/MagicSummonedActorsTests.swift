@@ -7,6 +7,7 @@ import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyMagicAdapters
 import OpenSkyMagicInterface
+import OpenSkyScriptingInterface
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -95,5 +96,19 @@ struct MagicSummonedActorsTests {
         #expect(adapter.shoutKnowledge.shouts.isEmpty)
         adapter.changeShoutKnowledge(.addShout(Self.actor))
         #expect(adapter.shoutKnowledge.shouts.isEmpty)
+    }
+
+    @Test func spendingASoulOnANewWordCountsItUnlocked() {
+        let bridge = FakePapyrusWorldStateBridgePort()
+        host.fakeScripts.bridge = bridge
+        bridge.scriptedStateResult = ScriptedReferenceState()
+        adapter.changeShoutKnowledge(.unlockWord(Self.actor))
+        #expect(host.fakeWorldState.incrementMiscStatCalls
+            .map(\.name) == ["Words Of Power Unlocked"])
+        bridge.scriptedStateResult = ScriptedReferenceState(
+            flags: [ScriptedStateName.wordUnlocked(Self.actor): true]
+        )
+        adapter.changeShoutKnowledge(.unlockWord(Self.actor))
+        #expect(host.fakeWorldState.incrementMiscStatCalls.count == 1, "a word unlocks once")
     }
 }

@@ -57,6 +57,7 @@ extension MagicCoordinator.SoulTrapping {
             return .noGem(soul)
         }
         fill(chosen, with: soul, in: inventory)
+        coordinator.incrementStat("Souls Trapped")
         coordinator.world.postNotification(coordinator.texts.magic.word(
             "sSoulCaptured",
             or: "Soul captured!"

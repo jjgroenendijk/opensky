@@ -121,6 +121,7 @@ struct SoulRechargeTests {
         #expect(offer.currentPercent < 100)
         #expect(blade.recharge(Gems.enchantedBlade, gemIndex: 0))
         #expect(blade.chargePercent(of: Gems.enchantedBlade) == 100)
+        #expect(trial.coordinator.journalStat("Soul Gems Used") == 1)
         #expect(blade.rechargeOffer(for: Gems.enchantedBlade) == nil)
         #expect(!blade.recharge(Gems.enchantedBlade, gemIndex: 0))
     }
