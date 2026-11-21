@@ -142,7 +142,9 @@ opening cells load, and the cart horses wait for this event before the opening c
 
 ## Where OpenSky differs
 
-- `SetStage` and `Start` are latent: they return once the fragments the call queued have run
+- `Start`, and `SetStage` on a stopped quest, queue the start and wait for it
+  ([quest state](/engine/quest-state.md#starting-a-quest)).
+- `SetStage` is latent: it returns once the fragments the call queued have run
   ([SetCurrentStageID - Quest](https://ck.uesp.net/wiki/SetCurrentStageID_-_Quest)). OpenSky
   checks this after each script step, so the caller resumes on the step after its fragments.
   A fragment on an instance whose call is waiting does not hold the caller. In the game the

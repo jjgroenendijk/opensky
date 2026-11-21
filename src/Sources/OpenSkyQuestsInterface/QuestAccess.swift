@@ -125,6 +125,41 @@ public protocol QuestAccess {
 
     /// Whether the player tracks the quest: its targets show on the compass and map.
     func isTracked(_ id: FormID) -> Bool
+
+    /// Puts a start request for a stopped quest in the queue, or adds `stage` or
+    /// `objective` to the request that already waits (docs/engine/quest-state.md).
+    @discardableResult
+    func queueStart(_ id: FormID, stage: UInt16?, objective: UInt16?) throws -> QuestRuntimeState
+
+    /// The quests with a start in the queue or in start-up, oldest request first.
+    func pendingStarts() -> [QuestPendingStart]
+
+    /// Fills the aliases of a queued quest and resets it. A required alias that
+    /// stays empty drops the request and the aliases.
+    /// - Throws: `QuestError.aliasFillFailed`.
+    @discardableResult
+    func prepareStart(_ id: FormID) throws -> QuestRuntimeState
+
+    /// Lets the start-up stages of a prepared quest run.
+    @discardableResult
+    func beginStartUp(_ id: FormID) throws -> QuestRuntimeState
+
+    /// Ends the start: scripts see a running quest from here.
+    @discardableResult
+    func finishStart(_ id: FormID) throws -> QuestRuntimeState
+}
+
+/// One quest whose start a script asked for and that does not run for scripts yet.
+nonisolated public struct QuestPendingStart: Sendable {
+    public let quest: Quest
+    public let key: ReferenceKey
+    public let start: QuestStartState
+
+    public init(quest: Quest, key: ReferenceKey, start: QuestStartState) {
+        self.quest = quest
+        self.key = key
+        self.start = start
+    }
 }
 
 extension QuestAccess {

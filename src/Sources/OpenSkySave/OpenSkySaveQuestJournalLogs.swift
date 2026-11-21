@@ -82,7 +82,7 @@ nonisolated extension OpenSkySaveQuestDecoder {
                 objectives: state.objectives,
                 isFailed: state.isFailed,
                 journalLog: log
-            ))
+            ).restoringStart(state.start))
         }
     }
 }

@@ -146,6 +146,13 @@ nonisolated enum OpenSkySaveQuestDecoder: Sendable {
         let flags = try reader.uint8("QSTS quest flags")
         let stages = try decodeStages(&reader)
         let objectives = try decodeObjectives(&reader)
+        var start = QuestStartState(hasRun: flags & OpenSkySaveFormat.QuestFlag.hasRun != 0)
+        if flags & OpenSkySaveFormat.QuestFlag.startRequest != 0 {
+            start.phase = try QuestStartPhase(rawValue: reader.uint8("QSTS start phase")) ?? .idle
+            start.order = try reader.uint32("QSTS start order")
+            start.stages = try decodeStartList(&reader)
+            start.objectives = try decodeStartList(&reader)
+        }
         return SaveQuestEntry(
             key: key,
             state: QuestRuntimeState(
@@ -154,8 +161,23 @@ nonisolated enum OpenSkySaveQuestDecoder: Sendable {
                 stagesReached: stages,
                 objectives: objectives,
                 isFailed: flags & OpenSkySaveFormat.QuestFlag.failed != 0
-            )
+            ).restoringStart(start)
         )
+    }
+
+    private static func decodeStartList(_ reader: inout SaveReader) throws -> [UInt16] {
+        let count = try reader.uint32("QSTS start list count")
+        try SaveCountCheck.validate(
+            count: count,
+            minimumElementSize: OpenSkySaveFormat.questStageSize,
+            remaining: reader.bytesRemaining,
+            chunk: OpenSkySaveFormat.ChunkTag.questStates
+        )
+        var list: [UInt16] = []
+        for _ in 0 ..< count {
+            try list.append(reader.uint16("QSTS start list index"))
+        }
+        return list
     }
 
     /// Duplicate or unsorted stage indices are collapsed and sorted by

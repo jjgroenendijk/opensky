@@ -190,4 +190,92 @@ struct QuestMatchingAliasTests {
         try quests.startQuest(quest)
         #expect(try quests.aliasState(of: quest).reference(forAlias: 1) == key(0x1001))
     }
+
+    // MARK: - Saved state outside the loaded area
+
+    private func outsideChairs() throws -> QuestReferenceSearch {
+        var world = try search([reference(0x1002, base: tableBase, x: 10)])
+        world.persistent = try RuntimeReferenceIndex(entries: [
+            reference(0x2000, base: chairBase, x: 9000),
+            reference(0x2001, base: chairBase, x: 9500)
+        ])
+        return world
+    }
+
+    @Test func aDisabledReferenceOutsideTheLoadedAreaDoesNotMatch() throws {
+        let alias = QuestFixture.alias(id: 0, name: "Chair", extras: isID(chairBase))
+        let quests = try runtime(aliases: alias, search: outsideChairs())
+        quests.store.set(ReferenceEnableState.disabled, for: key(0x2000))
+        try quests.startQuest(quest)
+        #expect(try quests.aliasState(of: quest).reference(forAlias: 0) == key(0x2001))
+
+        let none = try runtime(aliases: alias, search: outsideChairs())
+        none.store.set(ReferenceEnableState.disabled, for: key(0x2000))
+        none.store.set(ReferenceEnableState.disabled, for: key(0x2001))
+        #expect(throws: QuestError.self) { try none.startQuest(quest) }
+    }
+
+    @Test func aSavedDeadReferenceOutsideTheLoadedAreaDoesNotMatch() throws {
+        var world = try outsideChairs()
+        world.savedDead = [key(0x2000)]
+        let alias = QuestFixture.alias(id: 0, name: "Chair", extras: isID(chairBase))
+        let quests = try runtime(aliases: alias, search: world)
+        try quests.startQuest(quest)
+        #expect(try quests.aliasState(of: quest).reference(forAlias: 0) == key(0x2001))
+
+        let allowing = QuestFixture.alias(
+            id: 0, name: "Chair", flags: 0x2010, extras: isID(chairBase)
+        )
+        world.savedDead = [key(0x2000), key(0x2001)]
+        let allowed = try runtime(aliases: allowing, search: world)
+        try allowed.startQuest(quest)
+        #expect(try allowed.aliasState(of: quest).reference(forAlias: 0) != nil)
+    }
+
+    /// A specific reference fills when disabled, and fails when deleted.
+    @Test func aSpecificReferenceIgnoresDisabledAndFailsWhenDeleted() throws {
+        let entries = try [reference(0x1000, base: tableBase, x: 0)]
+        let table = QuestFixture.alias(
+            id: 0, name: "Table", fill: QuestFixture.word("ALFR", 0x1000)
+        )
+        let quests = try runtime(
+            aliases: table, search: search(entries, disabled: [key(0x1000)])
+        )
+        try quests.startQuest(quest)
+        #expect(try quests.aliasState(of: quest).reference(forAlias: 0) == key(0x1000))
+
+        let deleted = try runtime(aliases: table, search: search(entries))
+        deleted.store.set(ReferenceDeletionState.deleted, for: key(0x1000))
+        #expect(throws: QuestError.self) { try deleted.startQuest(quest) }
+    }
+
+    /// "Reserves Reference" (bit 0) keeps another quest's alias off the target
+    /// unless that alias has "Allow Reserved" (bit 9).
+    @Test func aReservedReferenceFillsOnlyAnAliasThatAllowsIt() throws {
+        let world = try search([reference(0x1000, base: chairBase, x: 0)])
+        let holder = QuestFixture.record(
+            formID: 0x0200,
+            fields: QuestFixture.editorID("Holder") + QuestFixture.marker("ANAM")
+                + QuestFixture.alias(
+                    id: 0, name: "Mine", flags: 0x1, fill: QuestFixture.word("ALFR", 0x1000)
+                )
+        )
+        for (flags, fills) in [(UInt32(0x22), false), (UInt32(0x222), true)] {
+            let seeker = QuestFixture.record(
+                formID: 0x0100,
+                fields: QuestFixture.editorID("Seeker") + QuestFixture.marker("ANAM")
+                    + QuestFixture.alias(
+                        id: 0, name: "Chair", flags: flags, extras: isID(chairBase)
+                    )
+            )
+            var quests = try QuestRuntime(
+                store: WorldStateStore(), quests: QuestFixture.store(holder + seeker)
+            )
+            quests.referenceSearch = { world }
+            try quests.startQuest(FormID(0x0200))
+            try quests.startQuest(quest)
+            let filled = try quests.aliasState(of: quest).reference(forAlias: 0)
+            #expect((filled == key(0x1000)) == fills)
+        }
+    }
 }

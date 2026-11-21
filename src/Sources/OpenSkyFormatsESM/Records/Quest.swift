@@ -216,4 +216,9 @@ nonisolated extension Quest {
     public var allowsRepeatedStages: Bool {
         flags.contains(.allowRepeatedStages)
     }
+
+    /// "Run Once": the quest starts one time only (<https://ck.uesp.net/wiki/Quest_Data_Tab>).
+    public var runsOnce: Bool {
+        flags.contains(.runOnce)
+    }
 }

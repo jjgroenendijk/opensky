@@ -122,8 +122,19 @@ stateDiagram-v2
   waiting `Start()` returns `true`. With no start-up fragments, start-up and running come in
   the same update. `Start()` does not wait for `OnInit` to finish.
 
-So a start takes at least two frames. OpenSky starts the quest inside the script call instead
-([story manager](/engine/story-manager.md#events-opensky-fires)).
+So a start takes at least two frames.
+
+OpenSky queues a start that a script asks for, and runs it over two script steps. The first
+step after the call fills the aliases and resets the quest. The next step attaches the scripts,
+runs the start-up stages, and reports the quest as running once their fragments have finished.
+The calls answer as the table below says. These parts differ from the game:
+
+- The whole fill happens in one step. There is no time budget, so no fill goes on in a later
+  frame.
+- A stop finishes at once, so there is no stopping phase.
+- A quest that the story manager, the journal, or the session start begins still starts at once.
+- The save keeps the queue and the phase of each start. It does not keep which script waits, so
+  a script that waited when the save was made gets no answer after a load.
 
 What a call answers:
 
@@ -306,9 +317,11 @@ untagged linked ref (`XLKR`) is the near alias's reference.
 OpenSky runs steps 1 and 2. For step 2 it reads every persistent `REFR` and `ACHR` of the load
 order once, at load, because an alias can only hold a persistent reference. A step 1 match wins;
 step 2 tries only the references step 1 did not see. The references of step 3 are persistent too,
-so step 2 already holds them. A candidate outside the loaded area counts as alive and enabled,
-because its runtime state lives with its cell. A miss fails a required alias once every step
-that applies has run.
+so step 2 already holds them. A candidate outside the loaded area answers from the saved state:
+it is disabled by its enable parent, its saved enable state, or its "Initially Disabled" flag,
+and dead when the save marks it dead. One with a location ref type also counts as dead once an
+actor of its base has died. Its conditions run on the persistent record, not on a blank
+stand-in. A miss fails a required alias once every step that applies has run.
 
 A "find matching reference from event" fill also runs the match conditions on the event's
 reference, and a reference that fails them does not fill the alias.
@@ -323,11 +336,9 @@ refuse thirteen quests `Skyrim.esm` ships that way.
 
 Also not done:
 
-- The dead and disabled rules for a reference outside the loaded area, above. OpenSky counts
-  such a candidate as alive and enabled.
 - Near alias types other than "Linked Ref Child".
-- "Reserves Reference" and "Allow Reserved", a rule across quests.
-- "Allow Destroyed", and the check that a forced reference is not deleted.
+- "Allow Destroyed": the flag is read, but OpenSky does not yet tell the alias search which
+  objects are destroyed.
 
 `Skyrim.esm` has 12,891 aliases across 1,607 quests. 5,591 fill: 2,688 specific references,
 162 direct locations, and 2,741 unique actors. No quest is blocked from starting. The largest

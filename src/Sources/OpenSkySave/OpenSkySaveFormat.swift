@@ -235,6 +235,10 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         static let running: UInt8 = 1 << 0
         static let completed: UInt8 = 1 << 1
         static let failed: UInt8 = 1 << 2
+        /// A start succeeded before, for "Run Once".
+        static let hasRun: UInt8 = 1 << 3
+        /// A queued start follows the objectives: phase, order, stages, objectives.
+        static let startRequest: UInt8 = 1 << 4
     }
 
     /// Bits of a `QSTS` objective's flag byte, in the order the three Papyrus
@@ -243,5 +247,9 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         static let displayed: UInt8 = 1 << 0
         static let completed: UInt8 = 1 << 1
         static let failed: UInt8 = 1 << 2
+        /// A start succeeded before, for "Run Once".
+        static let hasRun: UInt8 = 1 << 3
+        /// A queued start follows the objectives: phase, order, stages, objectives.
+        static let startRequest: UInt8 = 1 << 4
     }
 }

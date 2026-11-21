@@ -33,6 +33,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
                 .isQuestRunning = { [weak self] key in
                     self?.questScripts.isQuestRunning(key) ?? false
                 }
+            world?.advanceQuestStarts = { [weak self] in self?.questScripts.advanceQueuedStarts() }
+            world?.finishQuestStartUps = { [weak self] in self?.questScripts.finishQuestStartUps() }
         }
     }
 

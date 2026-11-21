@@ -107,7 +107,7 @@ dropped, 5 given (sold), 6 put in a container.
 
 `ADIA`, `AHEL`, and `DEAD` come from the [social pass](/engine/random-conversations.md).
 `TRES` leaves `L1` unset, so it gets the location of the witness, or of the player on entry.
-`QSTR` walks no event node; the quest has already started in the script call.
+`QSTR` walks no event node. OpenSky sends it when the queued start has finished.
 
 `SKIL` fires once when one use raises a skill by more than one level, as the wiki says. `CLOC` is
 checked every 30 frames.
@@ -186,9 +186,9 @@ flowchart LR
     S --> Q[Start the quest of the first node that passes]
 ```
 
-OpenSky sends the same events from play. It differs in how `QSTR` starts a quest: the game
-queues the start and runs it on a later frame, and OpenSky starts the quest inside the script
-call, then sends `QSTR` only for the record and for mods.
+OpenSky sends the same events from play. A start that a script asks for waits in a queue of
+its own and runs on later frames ([quest state](/engine/quest-state.md#starting-a-quest)). `QSTR`
+is sent when that start has finished, only for the record and for mods.
 
 ## Papyrus events for a started quest
 
@@ -239,7 +239,8 @@ starts `EscapeJailAchievementQuest` and `EscapeJailQuest`, with no condition fai
 
 ## Not done yet
 
-- The `QSTR` queue, above.
+- One queue for every start. Only a start that a script asks for is queued; a story manager
+  node still starts its quest at once.
 - `AIPL` and `REMP` name the owner in `R2` only for a pickpocket, a trade, and a container an
   actor owns. An item picked up from the world, and a faction's container, name no owner.
   Eating and items a script moves fire neither event.

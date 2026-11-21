@@ -47,6 +47,14 @@ extension PapyrusWorldStateBridge.QuestScripts {
     /// stay; instances go, so a later `Start` runs `OnInit` again.
     public func stopQuest(for key: ReferenceKey) throws {
         let resolved = try resolveQuest(key)
+        let before = try resolved.runtime.state(of: resolved.quest.formID)
+        // A stop before the quest runs does nothing, so the queued start still runs.
+        guard !before.awaitsStart else { return }
+        defer {
+            if before.start.phase == .startUp {
+                bridge.world?.questRuns.answerStartWaits(of: key, started: true)
+            }
+        }
         try resolved.runtime.stopQuest(resolved.quest.formID)
         bridge.world?.questRuns.detachQuest(key: key)
         // The table went with the stop, so the binding seam must not keep
@@ -277,7 +285,7 @@ extension PapyrusWorldStateBridge.QuestScripts {
     /// which resolves only same-plugin FormIDs — the same fallback the
     /// reference path takes.
     @discardableResult
-    private func attachQuestScripts(
+    func attachQuestScripts(
         _ quest: Quest,
         key: ReferenceKey,
         waitsForTargets: Bool = true

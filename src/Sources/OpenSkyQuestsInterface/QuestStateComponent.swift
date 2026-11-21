@@ -74,6 +74,8 @@ nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
     public private(set) var stagesReached: [UInt16]
     /// Objectives whose display state deviates from untouched, sorted by index.
     public private(set) var objectives: [QuestObjectiveState]
+    /// Where a start a script asked for stands. See `QuestStartState.swift`.
+    public internal(set) var start = QuestStartState()
 
     /// A quest nothing has started: the baseline of every quest whose DNAM does
     /// not say start-game-enabled.
@@ -161,6 +163,31 @@ nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
     public func stopping() -> Self {
         var result = self
         result.isRunning = false
+        if start.phase == .startUp {
+            result.start = QuestStartState(hasRun: true)
+        }
+        return result
+    }
+
+    /// The reset a queued start makes after its aliases fill: no stage done, no
+    /// objective touched, not completed. `isRunning` comes with `startingUp()`.
+    public func preparedForStart() -> Self {
+        var result = self
+        result.isCompleted = false
+        result.isFailed = false
+        result.journalLog = nil
+        result.stagesReached = []
+        result.objectives = []
+        result.start.phase = .prepared
+        return result
+    }
+
+    /// This state with the start-up stages allowed to run. Code inside OpenSky sees
+    /// a running quest from here; a script sees one only after `finishingStart()`.
+    public func startingUp() -> Self {
+        var result = self
+        result.isRunning = true
+        result.start.phase = .startUp
         return result
     }
 

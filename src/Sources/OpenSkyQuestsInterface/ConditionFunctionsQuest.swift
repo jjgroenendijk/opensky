@@ -49,7 +49,7 @@ nonisolated public enum ConditionFunctionsQuest {
             name: "GetQuestRunning",
             parameter1: .formID
         ) { call in
-            Self.questState(call, index: 56).map { ConditionFunctions.isTrue($0.isRunning) }
+            Self.questState(call, index: 56).map { ConditionFunctions.isTrue($0.reportsRunning) }
         })
 
         // "Returns 0 if a quest has not yet been completed, 1 if it has."

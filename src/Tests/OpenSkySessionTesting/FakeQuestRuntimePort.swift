@@ -66,6 +66,20 @@ nonisolated public final class FakeQuestRuntimePort: QuestRuntimePort {
     public var forceLocationAliasResult: QuestAliasState?
     public var isTrackedCalls: [FormID] = []
     public var isTrackedResult = false
+    public var queueStartCalls: [QueueStartCall] = []
+    public var queueStartError: (any Error)?
+    public var queueStartResult: QuestRuntimeState?
+    public var pendingStartsCallCount = 0
+    public var pendingStartsResult: [QuestPendingStart] = []
+    public var prepareStartCalls: [FormID] = []
+    public var prepareStartError: (any Error)?
+    public var prepareStartResult: QuestRuntimeState?
+    public var beginStartUpCalls: [FormID] = []
+    public var beginStartUpError: (any Error)?
+    public var beginStartUpResult: QuestRuntimeState?
+    public var finishStartCalls: [FormID] = []
+    public var finishStartError: (any Error)?
+    public var finishStartResult: QuestRuntimeState?
 
     public init() {}
 }
@@ -151,6 +165,20 @@ extension FakeQuestRuntimePort {
                 "aliasID: " + String(describing: aliasID),
                 "location: " + String(describing: location),
                 "id: " + String(describing: id)
+            ].joined(separator: ", ")
+        }
+    }
+
+    nonisolated public struct QueueStartCall: CustomStringConvertible {
+        public let id: FormID
+        public let stage: UInt16?
+        public let objective: UInt16?
+
+        public var description: String {
+            [
+                "id: " + String(describing: id),
+                "stage: " + String(describing: stage),
+                "objective: " + String(describing: objective)
             ].joined(separator: ", ")
         }
     }
@@ -410,5 +438,59 @@ nonisolated extension FakeQuestRuntimePort {
     public func isTracked(_ id: FormID) -> Bool {
         isTrackedCalls.append(id)
         return isTrackedResult
+    }
+
+    @discardableResult
+    public
+    func queueStart(_ id: FormID, stage: UInt16?, objective: UInt16?) throws -> QuestRuntimeState {
+        queueStartCalls.append(QueueStartCall(id: id, stage: stage, objective: objective))
+        if let queueStartError {
+            throw queueStartError
+        }
+        guard let queueStartResult else {
+            preconditionFailure("FakeQuestRuntimePort.queueStart has no result")
+        }
+        return queueStartResult
+    }
+
+    public func pendingStarts() -> [QuestPendingStart] {
+        pendingStartsCallCount += 1
+        return pendingStartsResult
+    }
+
+    @discardableResult
+    public func prepareStart(_ id: FormID) throws -> QuestRuntimeState {
+        prepareStartCalls.append(id)
+        if let prepareStartError {
+            throw prepareStartError
+        }
+        guard let prepareStartResult else {
+            preconditionFailure("FakeQuestRuntimePort.prepareStart has no result")
+        }
+        return prepareStartResult
+    }
+
+    @discardableResult
+    public func beginStartUp(_ id: FormID) throws -> QuestRuntimeState {
+        beginStartUpCalls.append(id)
+        if let beginStartUpError {
+            throw beginStartUpError
+        }
+        guard let beginStartUpResult else {
+            preconditionFailure("FakeQuestRuntimePort.beginStartUp has no result")
+        }
+        return beginStartUpResult
+    }
+
+    @discardableResult
+    public func finishStart(_ id: FormID) throws -> QuestRuntimeState {
+        finishStartCalls.append(id)
+        if let finishStartError {
+            throw finishStartError
+        }
+        guard let finishStartResult else {
+            preconditionFailure("FakeQuestRuntimePort.finishStart has no result")
+        }
+        return finishStartResult
     }
 }
