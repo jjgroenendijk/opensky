@@ -368,9 +368,9 @@ nonisolated private struct ShapedLine {
 nonisolated private struct LineShaper {
     let metrics: FontScaledMetrics
     let images: [SWFInlineImage]
-    var styles = SWFTextStyles.none
+    let styles: SWFTextStyles
     /// The metrics of each style span, in span order.
-    var spanMetrics: [FontScaledMetrics] = []
+    let spanMetrics: [FontScaledMetrics]
     private(set) var missingGlyphs = 0
     private(set) var nextImage = 0
 
