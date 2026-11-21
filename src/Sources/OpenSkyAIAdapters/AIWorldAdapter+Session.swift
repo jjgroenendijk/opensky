@@ -92,6 +92,7 @@ struct AIRecordReads {
         data.bumpSettings = BumpReactionSettings.resolve(store: settings)
         data.followSettings = FollowSettings.resolve(store: settings)
         data.movementSpeeds = MovementSpeedSettings.resolve(store: settings)
+        data.furnitureArrival = FurnitureArrivalSettings.resolve(store: settings)
         return data
     }
 

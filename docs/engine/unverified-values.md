@@ -124,6 +124,8 @@ the detail and the sources it did find.
 | Combat weapon choice | Picked once, not scored again in a fight | [actor resolution](/engine/actor-resolution.md) |
 | Idle naming and entry side rules | Read from names seen on the install | [idle runtime](/engine/idle-runtime.md) |
 | Furniture rotation | Reset on standing up | [furniture](/engine/furniture.md) |
+| Height limit for arriving at furniture | 128 units | [furniture](/engine/furniture.md#arriving-at-the-seat) |
+| Longest wait for the turn to a seat's heading | 3 s, then the actor sits | [furniture](/engine/furniture.md#arriving-at-the-seat) |
 | Weapon change while drawn | Sheathe the old hand, then draw the new one | [combat graph names](/engine/combat-graph-names.md) |
 | Vehicle trailer and gait clips | An approximation of the game | [vehicles](/engine/vehicles.md) |
 | Cart tow line | Spring 6 rad/s at damping 0.35, play 24 units, wheel drag 0.4 per second, front axle swing 7 rad/s at damping 0.5 | [vehicles](/engine/vehicles.md#towing) |

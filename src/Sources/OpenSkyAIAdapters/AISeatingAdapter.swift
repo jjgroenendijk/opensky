@@ -63,6 +63,14 @@ extension AISeatingAdapter {
         game.scripts.bridge?.activate(seat.furniture, by: actor, togglesOpen: false)
     }
 
+    /// A dragon lands on its perch, so it does not turn first.
+    public func turnPackageActor(
+        _ actor: ReferenceKey, toHeading heading: Float, within tolerance: Float
+    ) -> Float? {
+        guard !packageMoves.packageActorFlies(actor) else { return nil }
+        return game.streamer.turnActor(actor, toHeading: heading, within: tolerance)
+    }
+
     public func unseatPackageActor(_ actor: ReferenceKey, from seat: PackageSeat?) {
         if seat != nil, game.furniture.occupancies[actor]?.seat == seat {
             game.furniture.stand(actor)

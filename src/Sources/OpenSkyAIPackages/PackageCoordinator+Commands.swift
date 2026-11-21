@@ -29,6 +29,7 @@ extension PackageCoordinator {
         for held in heldSteps.removeValue(forKey: actor) ?? [] {
             step(actor, with: held.event, leaf: held.leaf)
         }
+        turnToSeat(actor, by: delta)
         guard let execution = executions[actor], let session = session(for: actor) else {
             return
         }
@@ -74,7 +75,8 @@ extension PackageCoordinator {
             case .sit:
                 guard let seat = executions[actor]?.seat(of: tagged.leaf) else { continue }
                 executions[actor]?.seat = seat
-                world?.seatPackageActor(actor, in: seat)
+                seatTurns[actor] = FurnitureSeatTurn(seat: seat)
+                turnToSeat(actor, by: 0)
             case let .act(action):
                 let result = world?.packageAction(action, actor: actor) ?? .failed
                 step(actor, with: .acted(result), leaf: tagged.leaf)
@@ -87,6 +89,7 @@ extension PackageCoordinator {
                 continue
             case let .endActivity(activity):
                 if PackageProcedureMachine.isSeatActivity(activity) {
+                    seatTurns[actor] = nil
                     let seat = executions[actor]?.seat
                     executions[actor]?.seat = nil
                     world?.unseatPackageActor(actor, from: seat)
@@ -97,6 +100,40 @@ extension PackageCoordinator {
                 step(actor, with: .seatOffered(seat), leaf: tagged.leaf)
             }
         }
+    }
+
+    /// Turns an actor at its seat to the seat's heading, and seats it once the turn left
+    /// is inside the furniture angle. The entry clip starts with the seating.
+    func turnToSeat(_ actor: ReferenceKey, by delta: Float) {
+        guard var turn = seatTurns[actor] else { return }
+        turn.seconds += delta
+        let arrival = settings.furnitureArrival
+        let remaining = world?.turnPackageActor(
+            actor, toHeading: turn.seat.seat.heading, within: arrival.angleToleranceRadians
+        )
+        guard
+            FurnitureArrival.mayEnter(
+                remainingTurn: remaining, seconds: turn.seconds, settings: arrival
+            )
+        else {
+            seatTurns[actor] = turn
+            return
+        }
+        seatTurns[actor] = nil
+        world?.seatPackageActor(actor, in: turn.seat)
+    }
+
+    /// A walk to a seat that gave up inside the furniture radius has arrived.
+    func reachedFurniture(_ actor: ReferenceKey) -> Bool {
+        guard
+            let execution = executions[actor], let leaf = execution.runner.mover,
+            let seat = execution.seat(of: leaf), let feet = world?.packageActorPosition(actor)
+        else { return false }
+        return FurnitureArrival.hasArrived(
+            feet: feet, seat: seat.seat,
+            askedRadius: execution.runner.running[leaf]?.setup.setup.radius ?? 0,
+            settings: settings.furnitureArrival
+        )
     }
 
     /// A sandboxing actor that holds an idle marker uses it as its next activity.
