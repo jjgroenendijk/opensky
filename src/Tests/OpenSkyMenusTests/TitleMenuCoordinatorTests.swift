@@ -76,6 +76,12 @@ struct TitleMenuCoordinatorTests {
         return (menu, world)
     }
 
+    @Test @MainActor
+    func aServiceWithoutAFrameShowsNoPicture() {
+        let world = FakeTitleWorld()
+        #expect(world.currentFramePicture() == nil)
+    }
+
     /// The movie asks for the Load list after an event; each call is answered once.
     @Test @MainActor
     func loadCallsAreAnsweredThroughThePort() throws {
