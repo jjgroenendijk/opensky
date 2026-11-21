@@ -71,6 +71,14 @@ turned back to straight alpha), linear, radial, or focal radial gradient with th
 spread mode, or glyph coverage. It does this in straight alpha, applies the color transform, then
 premultiplies for the blend.
 
+Every colour a movie holds is a gamma value: shape colours, bitmaps, gradient stops, and the
+colour transform's terms. The shader applies the transform to the gamma value, then turns the
+result linear (power 2.2), because the window's colour target encodes linear values on write.
+Without that step every mid-tone draws too bright. For example, the inventory tints its
+category column with multiply 0.66 and add 0.34 while the item list has focus. Its black
+background at 60% alpha then turns into grey 0.34 at 60% alpha: about 54 of 255 over a dark
+scene, as in the game. Written out without the step, the same pixel came out at 125.
+
 ## Filters and blend modes
 
 A `PlaceObject3` filter list and blend mode apply to every draw of the object's subtree. The layer
@@ -160,6 +168,9 @@ for the same reason.
 - A glyph is rasterized upright at the text's even scale, then its quad turns, slants, and
   stretches with the transform. A strongly stretched or slanted glyph is sampled from that upright
   picture, so it looks softer than a glyph drawn at its own shape.
+- The blend runs on linear values, but Flash blends gamma values. A part that is not fully opaque
+  therefore draws a little lighter than in the game over a dark scene. Black at 60% alpha over a
+  scene at gamma 0.5 gives 0.32, where the game gives 0.2.
 
 ## Checking it
 
