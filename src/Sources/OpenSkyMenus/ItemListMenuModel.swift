@@ -2,6 +2,7 @@
 // gift menu's items. Categories hold rows; the engine owns the selection.
 
 import Foundation
+public import OpenSkyGameData
 public import OpenSkyMagicInterface
 
 nonisolated public struct ItemListRow: Equatable, Sendable {
@@ -11,18 +12,24 @@ nonisolated public struct ItemListRow: Equatable, Sendable {
     public var name: String
     public var count: Int32
     public var isEquipped: Bool
+    /// The hands a readied spell holds; empty for any other row.
+    public var hands: HandSlots
     /// The item card of a spell row; nil hides the card.
     public var spellCard: MagicMenuSpellCard?
+    /// Drawn in the movie's warning colour, such as a harmful effect on the player.
+    public var isNegative: Bool
 
     public init(
         tag: UInt32, name: String, count: Int32 = 1, isEquipped: Bool = false,
-        spellCard: MagicMenuSpellCard? = nil
+        hands: HandSlots = [], spellCard: MagicMenuSpellCard? = nil, isNegative: Bool = false
     ) {
         self.tag = tag
         self.name = name
         self.count = count
         self.isEquipped = isEquipped
+        self.hands = hands
         self.spellCard = spellCard
+        self.isNegative = isNegative
     }
 
     /// The row as the text panel lists it.

@@ -18,6 +18,7 @@ nonisolated extension InventoryMenuModel {
                 isFood: entry.isFood, isFavourite: entry.isFavourite
             )
             row.isQuestItem = entry.isQuestItem
+            row.hands = row.isEquipped ? entry.hands : []
             return row
         }
         return InventoryMenuModel(

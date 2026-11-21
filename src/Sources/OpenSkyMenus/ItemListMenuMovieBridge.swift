@@ -135,7 +135,10 @@ nonisolated public enum ItemListMenuMovieBridge: Sendable {
                 [
                     "text": .string(row.name), "index": .integer(index),
                     "count": .integer(Int(row.count)), "equipped": .boolean(row.isEquipped),
-                    "enabled": .boolean(true)
+                    "equipState": .integer(
+                        InventoryEquipState(isEquipped: row.isEquipped, hands: row.hands).rawValue
+                    ),
+                    "negativeEffect": .boolean(row.isNegative), "enabled": .boolean(true)
                 ]
             },
             atPath: layout.itemListPath, runtime: runtime

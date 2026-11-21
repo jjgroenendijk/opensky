@@ -28,20 +28,20 @@ nonisolated extension InventoryMenuModel {
             let total = inventory.count(of: stack.item)
             weight += Double(definition?.weight ?? 0) * Double(total)
             guard stack.item != goldFormID else { continue }
-            rows.append(
-                InventoryMenuEntry(
-                    item: stack.item,
-                    name: name(of: stack.item, in: items),
-                    count: total,
-                    weight: definition?.weight ?? 0,
-                    value: items.gameValue(of: stack.item),
-                    isEquipped: inventory.isEquipped(stack.item),
-                    family: definition?.family,
-                    stolenCount: inventory.stolenCount(of: stack.item),
-                    isFood: items.ingestibles[stack.item.rawValue]?.flags.contains(.food) == true,
-                    isFavourite: favourites.contains(stack.item)
-                )
+            var row = InventoryMenuEntry(
+                item: stack.item,
+                name: name(of: stack.item, in: items),
+                count: total,
+                weight: definition?.weight ?? 0,
+                value: items.gameValue(of: stack.item),
+                isEquipped: inventory.isEquipped(stack.item),
+                family: definition?.family,
+                stolenCount: inventory.stolenCount(of: stack.item),
+                isFood: items.ingestibles[stack.item.rawValue]?.flags.contains(.food) == true,
+                isFavourite: favourites.contains(stack.item)
             )
+            row.hands = heldHands(row, leftHand: inventory.leftHand)
+            rows.append(row)
         }
         return InventoryMenuModel(
             allEntries: rows.sorted(by: precedes),
@@ -49,6 +49,17 @@ nonisolated extension InventoryMenuModel {
             carriedWeight: Float(weight),
             gold: inventory.count(of: goldFormID)
         )
+    }
+
+    /// The left-hand item holds the left hand, or both with a second copy in the right.
+    /// Any other worn weapon holds the right hand, a two-handed one too
+    /// (docs/engine/unverified-values.md).
+    static func heldHands(_ row: InventoryMenuEntry, leftHand: LeftHandHold?) -> HandSlots {
+        guard row.isEquipped else { return [] }
+        if let leftHand, leftHand.item == row.item {
+            return leftHand.paired ? .bothHands : .leftHand
+        }
+        return row.family == .weapon ? .rightHand : []
     }
 
     /// FULL name, else editor ID, else the FormID — never empty, matching how

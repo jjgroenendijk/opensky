@@ -163,10 +163,11 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
         }
     }
 
-    /// One `EntriesA` row. `text`, `count`, `weight`, `value` and `equipped`
-    /// are what a vanilla item row displays; `index` is what the movie hands
-    /// back on an outbound call. A row has no `filterFlag`, so the movie's tab
-    /// filter keeps every row; the engine has already filtered them.
+    /// One `EntriesA` row. `text`, `count`, `weight`, and `value` are what a vanilla
+    /// item row displays, `equipState` picks its equip icon and `favorite` its favourite
+    /// icon; `index` is what the movie hands back on an outbound call. A row has no
+    /// `filterFlag`, so the movie's tab filter keeps every row; the engine has already
+    /// filtered them.
     public static func row(for entry: InventoryMenuEntry, index: Int) -> [String: AS2Value] {
         [
             "text": .string(entry.name),
@@ -175,6 +176,10 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
             "weight": .number(Double(entry.weight)),
             "value": .integer(Int(entry.value)),
             "equipped": .boolean(entry.isEquipped),
+            "equipState": .integer(
+                InventoryEquipState(isEquipped: entry.isEquipped, hands: entry.hands).rawValue
+            ),
+            "favorite": .boolean(entry.isFavourite),
             "enabled": .boolean(true)
         ]
     }

@@ -32,4 +32,37 @@ struct InventoryMenuFilterFlagTests {
         let row = InventoryMenuMovieBridge.row(for: entry(1), index: 0)
         #expect(row["filterFlag"] == nil)
     }
+
+    /// `equipState` takes the `ES_` values of `InventoryDefines`, and `favorite` the
+    /// player's mark.
+    @Test func aRowSendsItsEquipStateAndFavourite() {
+        let weapon = InventoryMenuEntry(
+            item: FormID(7), name: "Sword", count: 2, weight: 9, value: 25,
+            isEquipped: true, family: .weapon, isFavourite: true
+        )
+        let built = InventoryMenuModel.heldHands
+        #expect(built(weapon, nil) == .rightHand)
+        #expect(built(weapon, LeftHandHold(item: FormID(7))) == .leftHand)
+        #expect(built(weapon, LeftHandHold(item: FormID(7), paired: true)) == .bothHands)
+        var held = weapon
+        held.hands = .leftHand
+        let row = InventoryMenuMovieBridge.row(for: held, index: 0)
+        #expect(row["equipState"] == .integer(InventoryEquipState.leftHand.rawValue))
+        #expect(row["favorite"] == .boolean(true))
+        let armour = InventoryMenuEntry(
+            item: FormID(8), name: "Helmet", count: 1, weight: 2, value: 10,
+            isEquipped: true, family: .armor
+        )
+        #expect(built(armour, nil).isEmpty)
+        #expect(
+            InventoryMenuMovieBridge.row(for: armour, index: 1)["equipState"]
+                == .integer(InventoryEquipState.equipped.rawValue)
+        )
+        #expect(
+            InventoryMenuMovieBridge.row(for: entry(1), index: 2)["equipState"]
+                == .integer(InventoryEquipState.none.rawValue)
+        )
+        #expect(InventoryEquipState(isEquipped: true, hands: .bothHands) == .bothHands)
+        #expect(InventoryEquipState(isEquipped: true, hands: .rightHand).rawValue == 3)
+    }
 }

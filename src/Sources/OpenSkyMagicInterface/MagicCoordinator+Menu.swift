@@ -1,6 +1,6 @@
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// One known spell as the magic menu lists it.
 nonisolated public struct MagicMenuSpell: Equatable, Sendable {
@@ -9,6 +9,10 @@ nonisolated public struct MagicMenuSpell: Equatable, Sendable {
     /// The tab's title: a school, "SHOUTS", or "POWERS", or nil for no tab of its own.
     public let category: String?
     public let card: MagicMenuSpellCard?
+    /// The hands the spell is readied in.
+    public var hands: HandSlots = []
+    /// A harmful effect on the player, which the movie draws in red.
+    public var isNegative = false
 
     public init(
         name: String,
