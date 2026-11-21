@@ -3,6 +3,8 @@ public import OpenSkyFormatsESM
 /// What the world adapters use of `FaceMorphCoordinator`.
 public protocol FaceMorphPort: AnyObject {
     func clearEmotion(on actor: FormID)
+    /// The emotion value each speaking face shows now, 0 to 100.
+    var emotionValues: [FormID: Int] { get }
     func showEmotion(
         _ emotion: TopicInfo.ResponseEmotion,
         value: UInt32,

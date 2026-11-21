@@ -24,11 +24,13 @@ extension FaceMorphWorld {
 }
 
 public final class FaceMorphCoordinator {
-    /// An emotion on one face, until an animation time, or until cleared.
+    /// An emotion on one face, until an animation time, or until cleared. After that
+    /// its value falls back, and the entry goes when it has.
     private struct HeldEmotion {
         let emotion: TopicInfo.ResponseEmotion
-        let value: UInt32
-        let until: Float?
+        var speaking: SpeakingEmotion
+        var until: Float?
+        var isSettling = false
     }
 
     /// One face's automatic state between frames.
@@ -80,19 +82,43 @@ public final class FaceMorphCoordinator {
         now: Float, seconds: Float? = nil
     ) {
         emotions[actor] = HeldEmotion(
-            emotion: emotion, value: value, until: seconds.map { now + max($0, 0) }
+            emotion: emotion, speaking: SpeakingEmotion(base: value),
+            until: seconds.map { now + max($0, 0) }
         )
     }
 
+    /// Ends the line on `actor`'s face. The value then falls back over the next ticks.
     public func clearEmotion(on actor: FormID) {
-        emotions[actor] = nil
+        emotions[actor]?.isSettling = true
+    }
+
+    public var emotionValues: [FormID: Int] {
+        emotions.mapValues(\.speaking.value)
+    }
+
+    private func advanceEmotions(now: Float, elapsed: Float) {
+        for actor in emotions.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard var held = emotions[actor] else { continue }
+            if let until = held.until, until <= now {
+                held.isSettling = true
+            }
+            if held.isSettling {
+                emotions[actor] = held.speaking.settle(settings: settings.speakingEmotion)
+                    ? held : nil
+                continue
+            }
+            held.speaking.speak(
+                elapsed: elapsed, settings: settings.speakingEmotion, unit: random
+            )
+            emotions[actor] = held
+        }
     }
 
     /// Sets every loaded face's automatic weights for animation time `now`.
     public func tick(now: Float) {
         let elapsed = lastTick.map { max(now - $0, 0) } ?? 0
         lastTick = now
-        emotions = emotions.filter { $0.value.until.map { $0 > now } ?? true }
+        advanceEmotions(now: now, elapsed: elapsed)
         var next: [FormID: FaceState] = [:]
         for playback in world?.faceMorphPlaybacks ?? [] {
             let actor = playback.actor
@@ -100,7 +126,7 @@ public final class FaceMorphCoordinator {
             let held = emotions[actor]
             let goal = dialogueExpressionsEnabled ? FacialMoodRules.goal(
                 world?.faceMood(of: actor) ?? .calm,
-                speaking: held.map { ($0.emotion, $0.value) }
+                speaking: held.map { ($0.emotion, UInt32($0.speaking.value)) }
             ) : [:]
             let step = FacialMoodRules.rate(toward: goal) * elapsed
             face.shown = FacialExpressionCore.ease(face.shown, toward: goal, step: step)

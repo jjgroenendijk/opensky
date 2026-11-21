@@ -6,6 +6,7 @@ public import OpenSkySessionInterface
 /// Stores each property and records each call to `FaceMorphPort`.
 nonisolated public final class FakeFaceMorphPort: FaceMorphPort {
     public var clearEmotionCalls: [FormID] = []
+    public var emotionValues: [FormID: Int] = [:]
     public var showEmotionCalls: [ShowEmotionCall] = []
     public var tickCalls: [Float] = []
 
