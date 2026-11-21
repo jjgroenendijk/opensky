@@ -269,6 +269,9 @@ nonisolated extension Quest {
             self.rawValue = rawValue
         }
 
+        /// "Reserves Reference": no alias of another quest may take the target,
+        /// unless that alias has `allowReserved`.
+        public static let reservesReference = AliasFlags(rawValue: 1 << 0)
         public static let optional = AliasFlags(rawValue: 1 << 1)
         /// Ref. The alias target is a quest object, undroppable while the
         /// quest runs.
@@ -282,8 +285,12 @@ nonisolated extension Quest {
         public static let essential = AliasFlags(rawValue: 1 << 6)
         /// Ref. A disabled reference may fill the alias.
         public static let allowDisabled = AliasFlags(rawValue: 1 << 7)
+        /// Ref. A reference another quest reserved may fill the alias.
+        public static let allowReserved = AliasFlags(rawValue: 1 << 9)
         /// Ref. Makes the target protected while the quest runs.
         public static let protected = AliasFlags(rawValue: 1 << 10)
+        /// Ref. A destroyed object may fill the alias.
+        public static let allowDestroyed = AliasFlags(rawValue: 1 << 12)
         /// Ref. Find Matching Reference prefers the match closest to the player.
         public static let matchClosest = AliasFlags(rawValue: 1 << 13)
     }

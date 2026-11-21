@@ -52,6 +52,12 @@ nonisolated enum OpenSkySaveQuestsWriter {
         if state.isFailed {
             flags |= OpenSkySaveFormat.QuestFlag.failed
         }
+        if state.start.hasRun {
+            flags |= OpenSkySaveFormat.QuestFlag.hasRun
+        }
+        if state.start.hasRequest {
+            flags |= OpenSkySaveFormat.QuestFlag.startRequest
+        }
         writer.writeUInt8(flags)
         writer.writeUInt32(UInt32(clamping: state.stagesReached.count))
         for stage in state.stagesReached {
@@ -61,6 +67,22 @@ nonisolated enum OpenSkySaveQuestsWriter {
         for objective in state.objectives {
             writer.writeUInt16(objective.index)
             writer.writeUInt8(objectiveFlags(objective))
+        }
+        if state.start.hasRequest {
+            writeStartRequest(state.start, into: &writer)
+        }
+    }
+
+    private static func writeStartRequest(
+        _ start: QuestStartState, into writer: inout BinaryWriter
+    ) {
+        writer.writeUInt8(start.phase.rawValue)
+        writer.writeUInt32(start.order)
+        for list in [start.stages, start.objectives] {
+            writer.writeUInt32(UInt32(clamping: list.count))
+            for index in list {
+                writer.writeUInt16(index)
+            }
         }
     }
 

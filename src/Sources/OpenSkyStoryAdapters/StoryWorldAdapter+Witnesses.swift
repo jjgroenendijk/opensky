@@ -64,12 +64,28 @@ extension StoryWorldAdapter {
         runtime.referenceSearch = { [weak self] in
             var search = self?.questReferenceSearch()
             search?.persistent = persistent
+            if let self, let persistent {
+                let dead = savedDead(in: store)
+                search?.savedDead = dead
+                search?.deadBases = Set(dead.compactMap { persistent[$0]?.placedActor?.base })
+            }
             return search
         }
         runtime.referenceCreator = { [weak self] base, anchor in
             self?.createQuestReference(base, at: anchor)
         }
         return runtime
+    }
+
+    /// Every actor the world state marks dead, in a loaded cell or not.
+    private func savedDead(in store: WorldStateStore) -> Set<ReferenceKey> {
+        var dead: Set<ReferenceKey> = []
+        for key in store.sortedDirtyKeys()
+            where store.component(ActorDeathState.self, for: key)?.isDead == true
+        {
+            dead.insert(key)
+        }
+        return dead
     }
 
     public func questReferenceSearch() -> QuestReferenceSearch? {

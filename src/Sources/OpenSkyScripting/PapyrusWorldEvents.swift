@@ -21,12 +21,14 @@ extension PapyrusWorldRuntime.ScriptEvents {
             world.lastStepDelayedCalls = world.runtime.tally.delayedNativeTotal - delayedBefore
             world.runtime.stepInstructionsLeft = .max
         }
+        world.advanceQuestStarts()
         _ = world.scheduler.tick(gameClock: gameClock)
         let resumes = world.suspensionTracker.drainStep()
         world.timers.advanceUpdateTimers(gameClock: gameClock)
         var dispatched = 0
         var faulted = resumes.faulted
         drainQueue(dispatched: &dispatched, faulted: &faulted)
+        world.finishQuestStartUps()
         world.questRuns.answerLatentQuestWaits()
         world.questRuns.retireShutDownQuests()
         world.lifecycle.retireDrainedInstances()

@@ -40,7 +40,7 @@ nonisolated public enum QuestAliasFiller: Sendable {
 
     /// Accumulating state of one pass, so `fill(_:resolver:)` stays a
     /// statement per documented rule rather than one long function.
-    private struct FillPass {
+    fileprivate struct FillPass {
         let resolver: FormIDResolver
         let locations: LocationStore?
         let event: StoryEventData?
@@ -94,6 +94,11 @@ nonisolated public enum QuestAliasFiller: Sendable {
                 note(unfilled: alias)
                 return
             }
+            guard allows(key, in: alias) else {
+                skipped.note(.noMatch)
+                note(unfilled: alias)
+                return
+            }
             guard alias.flags.contains(.allowReuseInQuest) || !state.holds(key) else {
                 // Refused, but never a start failure: the wiki does not say
                 // which fill types the reuse rule covers.
@@ -106,6 +111,27 @@ nonisolated public enum QuestAliasFiller: Sendable {
                 // same target simply overwrites this.
                 store(UInt32(bitPattern: forced), key)
             }
+        }
+
+        /// The flag rules of a specific reference and a unique actor. A specific
+        /// reference ignores "Allow Dead" and "Allow Disabled", and fails when deleted.
+        private func allows(_ key: ReferenceKey, in alias: Quest.Alias) -> Bool {
+            guard let scope else { return true }
+            let flags = alias.flags
+            if !flags.contains(.allowReserved), scope.reserved.contains(key) {
+                return false
+            }
+            if case .specificReference = alias.fillType {
+                return !scope.search.deletes(key)
+            }
+            let state = scope.search.state(of: key)
+            if state.isDead, !flags.contains(.allowDead) {
+                return false
+            }
+            if state.isDisabled, !flags.contains(.allowDisabled) {
+                return false
+            }
+            return flags.contains(.allowDestroyed) || !scope.search.destroys(key)
         }
 
         /// The fill types with their own rule. False when `alias` is none of them.
@@ -289,19 +315,21 @@ nonisolated public enum QuestAliasFiller: Sendable {
             let held = state
             return match.choose(from: match.matches(candidates) { held.holds($0) })
         }
+    }
+}
 
-        /// Records the fill, and the forced-into fill, under one rule so both
-        /// land in the same normalized table.
-        private mutating func store(_ aliasID: UInt32, _ key: ReferenceKey) {
-            state = state.filling(aliasID, with: key)
-        }
+nonisolated extension QuestAliasFiller.FillPass {
+    /// Records the fill, and the forced-into fill, under one rule so both
+    /// land in the same normalized table.
+    private mutating func store(_ aliasID: UInt32, _ key: ReferenceKey) {
+        state = state.filling(aliasID, with: key)
+    }
 
-        /// A non-optional alias an implemented path could not fill is what
-        /// stops the quest from starting.
-        private mutating func note(unfilled alias: Quest.Alias) {
-            guard !alias.flags.contains(.optional) else { return }
-            unfilledRequired.append(alias.id)
-        }
+    /// A non-optional alias an implemented path could not fill is what
+    /// stops the quest from starting.
+    private mutating func note(unfilled alias: Quest.Alias) {
+        guard !alias.flags.contains(.optional) else { return }
+        unfilledRequired.append(alias.id)
     }
 }
 

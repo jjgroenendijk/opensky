@@ -101,8 +101,9 @@ extension QuestRuntime {
                 state: existing, skipped: QuestAliasTally(), unfilledRequired: []
             )
         }
-        let scope = referenceSearch?().map { search in
-            QuestAliasSearchScope(
+        let scope = referenceSearch?().map { found in
+            let search = withSavedState(found)
+            return QuestAliasSearchScope(
                 search: search, questKey: key, quests: quests, otherTables: aliasTables(),
                 translation: quests.translation(of: quest.formID)
             )
@@ -125,6 +126,25 @@ extension QuestRuntime {
             store.set(filled.state, for: key)
         }
         return filled
+    }
+
+    /// Adds what the world state knows about references outside the loaded area:
+    /// the enable state, through the enable parent, and the deleted flag.
+    private func withSavedState(_ search: QuestReferenceSearch) -> QuestReferenceSearch {
+        var search = search
+        let store = store
+        search.isDeleted = { key in
+            store.component(ReferenceDeletionState.self, for: key)?.isDeleted ?? false
+        }
+        if let persistent = search.persistent {
+            search.isDisabledOutside = { key in
+                let enable = EnableParentResolver(
+                    delta: { store.delta(for: $0) }, parent: { persistent.entry(for: $0) }
+                )
+                return persistent[key].map { !enable.isEnabled($0) } ?? false
+            }
+        }
+        return search
     }
 
     /// Makes each requested reference only once the quest may start, so a refused

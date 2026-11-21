@@ -76,6 +76,23 @@ struct QuestSaveTests {
         #expect(decoded.journalLog == QuestJournalLog(stage: 20, items: [0, 2]))
     }
 
+    /// A start that waits in the queue is saved, so the quest still starts after a load.
+    @Test func aQueuedStartSurvivesAnEncodeAndDecode() throws {
+        let queued = QuestRuntimeState(stagesReached: [5]).restoringStart(QuestStartState(
+            phase: .queued, order: 7, stages: [10, 20], objectives: [3], hasRun: true
+        ))
+        let original = OpenSkySaveFixture.snapshot(
+            [OpenSkySaveFixture.entry(key: mainQuest, cell: nil, components: [queued.erased])],
+            bystanderCell: OpenSkySaveFixture.whiterun,
+            nextGeneratedSequence: 3,
+            sequence: 42
+        )
+        let file = try OpenSkySaveDecoder.decode(encode(original))
+        let decoded = try #require(file.snapshot[mainQuest]?.component(QuestRuntimeState.self))
+        #expect(decoded == queued)
+        #expect(decoded.start.stages == [10, 20] && decoded.start.order == 7)
+    }
+
     @Test func decodedEntriesStayInReferenceKeyOrder() throws {
         let file = try OpenSkySaveDecoder.decode(encode(snapshot()))
         #expect(file.snapshot.keys == file.snapshot.keys.sorted())

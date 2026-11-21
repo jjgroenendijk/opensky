@@ -30,6 +30,12 @@ public protocol PapyrusWorldQuestBridge: Sendable {
     @discardableResult
     func startQuest(for key: ReferenceKey) throws -> Bool
 
+    /// Queues the start of a stopped quest, as a script call does. `stage` and
+    /// `objective` are set once the quest runs.
+    func requestQuestStart(
+        for key: ReferenceKey, stage: UInt16?, objective: UInt16?
+    ) throws -> PapyrusQuestStartAnswer
+
     /// Stops the quest and retires its script instances.
     func stopQuest(for key: ReferenceKey) throws
 

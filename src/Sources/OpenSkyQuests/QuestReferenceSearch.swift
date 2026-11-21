@@ -1,7 +1,7 @@
 // The Find Matching Reference fill: the alias's match conditions run on each
 // candidate reference, with the candidate as subject. Rules from the Creation Kit's
-// Quest Alias Tab (<https://ck.uesp.net/wiki/Quest_Alias_Tab>). OpenSky searches the
-// loaded area only. See docs/engine/quest-state.md.
+// Quest Alias Tab (<https://ck.uesp.net/wiki/Quest_Alias_Tab>). See
+// docs/engine/quest-state.md.
 
 import Foundation
 import OpenSkyConditions
@@ -31,11 +31,25 @@ nonisolated public struct QuestAliasSearchScope: Sendable {
         self.translation = translation
     }
 
+    /// The references that an alias of another quest holds with "Reserves Reference".
+    var reserved: Set<ReferenceKey> {
+        var found: Set<ReferenceKey> = []
+        for (key, table) in otherTables where key != questKey {
+            guard let quest = quests.quest(key: key) else { continue }
+            for fill in table.fills
+                where quest.alias(id: fill.aliasID)?.flags.contains(.reservesReference) == true
+            {
+                found.insert(fill.reference)
+            }
+        }
+        return found
+    }
+
     func match(_ alias: Quest.Alias, quest: FormID, filled: QuestAliasState) -> QuestAliasMatch {
         var tables = otherTables
         tables[questKey] = filled
         return QuestAliasMatch(
-            alias: alias, quest: quest, search: search,
+            alias: alias, quest: quest, search: search, reserved: reserved,
             aliases: QuestAliasResolution(defaults: quests, tables: tables),
             translation: translation
         )
@@ -47,6 +61,7 @@ nonisolated struct QuestAliasMatch {
     let alias: Quest.Alias
     let quest: FormID
     let search: QuestReferenceSearch
+    var reserved: Set<ReferenceKey> = []
     let aliases: QuestAliasResolution
     let translation: FormIDTranslation?
 
@@ -57,10 +72,16 @@ nonisolated struct QuestAliasMatch {
         var evaluator = evaluator()
         let flags = alias.flags
         return candidates.filter { candidate in
-            if search.dead.contains(candidate), !flags.contains(.allowDead) {
+            if !flags.contains(.allowDead), search.countsAsDead(candidate) {
                 return false
             }
             if !flags.contains(.allowDisabled), search.disables(candidate) {
+                return false
+            }
+            if !flags.contains(.allowReserved), reserved.contains(candidate) {
+                return false
+            }
+            if !flags.contains(.allowDestroyed), search.destroys(candidate) {
                 return false
             }
             if held(candidate), !flags.contains(.allowReuseInQuest) {

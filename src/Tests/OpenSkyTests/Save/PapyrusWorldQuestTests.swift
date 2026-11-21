@@ -56,6 +56,31 @@ struct PapyrusWorldQuestTests {
         #expect(session.dispatch.notes.filter { $0 == "quest.oninit" }.count == 1)
     }
 
+    /// A start a script asks for waits in the queue: the aliases fill on the next
+    /// step, and the scripts and the running state come on the step after.
+    @Test func aQueuedStartRunsOnALaterStep() throws {
+        let quest = try PapyrusQuestFixture.quest(startGameEnabled: false)
+        let session = PapyrusQuestFixture.session(quest: quest)
+        let scripts = session.bridge.questScripts
+        let key = PapyrusQuestFixture.questKey
+
+        #expect(try scripts.requestQuestStart(for: key, stage: nil, objective: nil) == .queued)
+        #expect(try scripts.questState(for: key).reportsStopped)
+        // A stop before the quest runs leaves the request in the queue.
+        try scripts.stopQuest(for: key)
+
+        session.world.scriptEvents.stepFixed()
+        let prepared = try scripts.questState(for: key)
+        #expect(prepared.isStarting && !prepared.reportsRunning)
+        #expect(session.world.questInstanceKeys.isEmpty)
+
+        PapyrusWorldFixture.drain(session.world)
+        #expect(try scripts.questState(for: key).reportsRunning)
+        #expect(session.dispatch.notes.filter { $0 == "quest.oninit" }.count == 1)
+        #expect(try scripts.requestQuestStart(for: key, stage: nil, objective: nil)
+            == .answered(true))
+    }
+
     /// A coordinator built over the quest layer starts no script until session start asks.
     @Test func questScriptsStartOnTheStartCall() throws {
         let session = try PapyrusQuestFixture.session(
@@ -269,7 +294,9 @@ struct PapyrusWorldQuestTests {
         #expect(session.world.instancesByKey.count == 2)
         #expect(session.world.questInstanceKeys.count == 2)
     }
+}
 
+extension PapyrusWorldQuestTests {
     /// The M13 gameplay loop end to end: a world event fires a reference
     /// script, the script sets a stage on its quest property, and the fragment
     /// for that stage runs and mutates world state.

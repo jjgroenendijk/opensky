@@ -125,6 +125,10 @@ public final class PapyrusWorldRuntime {
     var shutDownQuests: Set<ReferenceKey> = []
     /// Whether a quest runs again, so a restart keeps the instances a shut-down would retire.
     var isQuestRunning: (ReferenceKey) -> Bool = { _ in false }
+    /// Moves the queued quest starts one phase on, at the start of a step.
+    var advanceQuestStarts: () -> Void = {}
+    /// Ends the starts whose start-up fragments have run, at the end of a step.
+    var finishQuestStartUps: () -> Void = {}
     /// The single main-actor FIFO event queue; global order is preserved.
     public var eventQueue: [PapyrusScriptEvent] = []
     /// The next queue position a running drain reads. `retire` moves it back when it

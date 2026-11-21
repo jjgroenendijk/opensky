@@ -10,6 +10,13 @@ nonisolated struct PapyrusLatentQuestWait: Equatable, Sendable {
     let token: UInt64
     let quest: ReferenceKey
     let value: PapyrusValue
+    /// Set while the wait is for a queued quest start, not yet for fragments.
+    var start: StartWait?
+
+    enum StartWait: Equatable, Sendable {
+        case only
+        case thenFragments
+    }
 }
 
 extension PapyrusWorldRuntime.QuestScriptRuns {
@@ -39,7 +46,7 @@ extension PapyrusWorldRuntime.QuestScriptRuns {
 
     func answerLatentQuestWaits() {
         world.latentQuestWaits.removeAll { wait in
-            !hasPendingFragments(of: wait.quest)
+            wait.start == nil && !hasPendingFragments(of: wait.quest)
                 && world.scheduler.answer(wait.token, returning: wait.value)
         }
     }

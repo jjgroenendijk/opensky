@@ -46,6 +46,19 @@ struct PapyrusNativeQuestTests {
         ))
     }
 
+    /// A queued start fills its aliases on one step and runs on the next.
+    private func runQueuedStart(_ fixture: Fixture) {
+        fixture.session.world.scriptEvents.stepFixed()
+        PapyrusWorldFixture.drain(fixture.session.world)
+    }
+
+    private func isSuspended(_ result: PapyrusNativeResult) -> Bool {
+        if case .suspended = result {
+            return true
+        }
+        return false
+    }
+
     /// A handle no quest is behind: the natives fail with a reason rather than
     /// answering for a quest this session does not define.
     private func strangerHandle(_ fixture: Fixture) -> PapyrusObjectHandle {
@@ -152,7 +165,9 @@ struct PapyrusNativeQuestTests {
             "SetStage", fixture, receiver: fixture.handle, returnType: .boolean
         )))
     }
+}
 
+extension PapyrusNativeQuestTests {
     /// `Start` and `Stop` move the running flag and the script instances with
     /// it. Stopping keeps the stages the quest reached.
     @Test func startAndStopMoveTheRunningFlag() throws {
@@ -161,8 +176,12 @@ struct PapyrusNativeQuestTests {
             "IsRunning", fixture, receiver: fixture.handle, returnType: .boolean
         ) == .returned(.boolean(false)))
 
+        // The start is queued, and the calling script waits for it.
+        let start = call("Start", fixture, receiver: fixture.handle, returnType: .boolean)
+        #expect(isSuspended(start))
+        runQueuedStart(fixture)
         #expect(call(
-            "Start", fixture, receiver: fixture.handle, returnType: .boolean
+            "IsRunning", fixture, receiver: fixture.handle, returnType: .boolean
         ) == .returned(.boolean(true)))
         #expect(fixture.session.world.questInstanceKeys.count == 2)
         call(
@@ -182,13 +201,15 @@ struct PapyrusNativeQuestTests {
     /// Setting any stage starts a stopped quest and attaches its scripts.
     @Test func setStageStartsAStoppedQuest() throws {
         let fixture = try fixture(startGameEnabled: false)
-        #expect(call(
+        let set = call(
             "SetStage", fixture, receiver: fixture.handle,
             arguments: [.integer(20)], returnType: .boolean
-        ) == .returned(.boolean(true)))
+        )
+        #expect(isSuspended(set))
+        runQueuedStart(fixture)
         let state = try PapyrusQuestFixture.state(fixture.session)
         #expect(state.isRunning)
-        #expect(state.stagesReached == [20])
+        #expect(state.isStageDone(20))
         #expect(fixture.session.world.questInstanceKeys.count == 2)
     }
 
@@ -196,6 +217,7 @@ struct PapyrusNativeQuestTests {
     @Test func startSetsTheStartUpStage() throws {
         let fixture = try fixture(startGameEnabled: false)
         call("Start", fixture, receiver: fixture.handle, returnType: .boolean)
+        runQueuedStart(fixture)
         let state = try PapyrusQuestFixture.state(fixture.session)
         #expect(state.isStageDone(PapyrusQuestFixture.startUpStage))
     }
