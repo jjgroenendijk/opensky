@@ -172,9 +172,12 @@ The page makes two more calls to the engine:
 
 ### Coverage
 
-The driven page has 0 faults, 0 unimplemented opcodes, and 0 unhandled invokes of 52, at 1052
-display nodes. None of the unresolved names stops the page from showing its data. Without
-`statusIcon`, the objective status icon is not drawn.
+The driven page has 0 faults, 0 unimplemented opcodes, and 0 unhandled invokes of 52, at 1081
+display nodes, with no missing name. An objective row shows its status through its own
+frame: `ObjectiveScrollingList` sends the clip to `Active`, `Completed`, `Failed`, or `Normal`
+from the row's `active`, `completed`, and `failed` fields, and adds `Selected` on the selected
+row. `openskycli menu quest-journal --objective-state completed` prints the frame each row
+reached.
 
 `_listeners`, `invalidationIntervalID`, `textField`, `width`, and `height` are not gaps. The page
 reads them before it sets them, or tests them against `null`, and Flash answers `undefined` too
