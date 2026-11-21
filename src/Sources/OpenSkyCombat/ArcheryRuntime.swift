@@ -49,6 +49,8 @@ public final class ArcheryRuntime {
     private weak var world: (any ProjectileWorld)?
     private var wasDrawing = false
     private var wasPressed = false
+    /// A press made with the bow away only draws it, so it aims nothing until let go.
+    private var pressedWhileAway = false
 
     init(
         settings: ArcherySettings,
@@ -64,7 +66,9 @@ public final class ArcheryRuntime {
 
     /// Takes one frame of archery intent and raises the events its edges imply.
     public func acceptFrame(_ intent: ArcheryIntent) {
-        let pressed = intent.drawing && intent.hasBowEquipped
+        let held = intent.drawing && intent.hasBowEquipped
+        pressedWhileAway = held && (pressedWhileAway || !intent.weaponDrawn)
+        let pressed = held && !pressedWhileAway
         if pressed, !wasPressed, arrow == nil {
             let arrows = projectiles.arrows
             world?.showArcheryNotice(
@@ -161,6 +165,7 @@ public final class ArcheryRuntime {
         drawRequestCount = 0
         wasDrawing = false
         wasPressed = false
+        pressedWhileAway = false
         zoom = BowZoom()
         projectiles.despawnAll()
     }
