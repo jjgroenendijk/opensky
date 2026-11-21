@@ -52,6 +52,7 @@ struct CombatFrameSteps {
             archery.zoomConditions = gear.bowZoomConditions(bow: archery.bow.weapon)
             var intent = intent
             intent.hasBowEquipped = archery.bow.weapon != nil
+            intent.weaponDrawn = shared.melee.map { $0.state.drawState == .drawn } ?? true
             let shots = archery.state.shotCount
             archery.acceptFrame(intent)
             for _ in archery.handleGraphEvents(events) {

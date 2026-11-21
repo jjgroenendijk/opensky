@@ -3,11 +3,23 @@
 // themselves are tested.
 
 import AppKit
+import OpenSkyCombatInterface
+import OpenSkyPlayer
 import Testing
 
 @MainActor
 extension CombatAcceptanceChain {
     // MARK: - Input, through the shipping path
+
+    /// The drained melee intent, without the attack button once the bow holds it.
+    var meleeIntent: MeleeIntent {
+        var intent = bridge.meleeIntent
+        if bowInHand {
+            intent.attack = false
+            intent.attackHeld = false
+        }
+        return intent
+    }
 
     func press(_ key: Key) {
         route(key, down: true)

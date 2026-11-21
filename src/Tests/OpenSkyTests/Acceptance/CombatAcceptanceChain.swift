@@ -107,6 +107,8 @@ final class CombatAcceptanceChain {
     private(set) var camera: FreeFlyCamera
     private(set) var controller: WalkController
     private(set) var frames = 0
+    /// The bow holds the attack button, so the sheathed sword does not draw on it.
+    var bowInHand = false
 
     /// Where the opponent is standing. Settable so the route can put it out of
     /// reach for the leg that shoots it.
@@ -302,7 +304,7 @@ final class CombatAcceptanceChain {
     /// Melee, on the drawn frame, exactly as `advanceMelee(renderer:)` runs it.
     private func advanceMelee() {
         let events = bridge.graphEvents.drain(bridge.meleeEventConsumer)
-        melee.acceptFrame(bridge.meleeIntent)
+        melee.acceptFrame(meleeIntent)
         let hits = melee.handleGraphEvents(events)
         combat.notePlayerHits(
             hits.map(\.target), staggered: Set(hits.filter(\.staggered).map(\.target))

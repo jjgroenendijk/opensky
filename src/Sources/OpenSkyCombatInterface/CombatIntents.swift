@@ -12,17 +12,20 @@ nonisolated public struct ArcheryIntent: Equatable, Sendable {
     public var deltaTime: Float = 0
     /// Block key held, a level: with Eagle Eye it zooms while aiming.
     public var zooming = false
+    /// Whether the bow is out. A press while it is away only draws it.
+    public var weaponDrawn = true
 
     public static let still = ArcheryIntent()
 
     public init(
         drawing: Bool = false, hasBowEquipped: Bool = false, deltaTime: Float = 0,
-        zooming: Bool = false
+        zooming: Bool = false, weaponDrawn: Bool = true
     ) {
         self.drawing = drawing
         self.hasBowEquipped = hasBowEquipped
         self.deltaTime = deltaTime
         self.zooming = zooming
+        self.weaponDrawn = weaponDrawn
     }
 }
 

@@ -138,9 +138,9 @@ extension CombatAcceptanceTests {
         #expect(!chain.melee.state.isBlocking)
     }
 
-    /// Step 6: back out of reach and sheathe the melee weapon, which gives the
-    /// attack button to archery. Distance makes the arrow's flight real. A
-    /// click while sheathed resolves nothing, so one button cannot do both.
+    /// Step 6: back out of reach, sheathe the melee weapon, and take the bow,
+    /// which then holds the attack button. Distance makes the arrow's flight
+    /// real.
     static func switchToTheBow(_ chain: Chain) throws {
         let start = chain.feetPosition.x
         chain.press(.keyS)
@@ -159,6 +159,7 @@ extension CombatAcceptanceTests {
         )
         #expect(chain.visitedStates.contains(State.sheathe.name))
         #expect(chain.bridge.status.raisedEvents.contains(CombatGraphNames.unequip))
+        chain.bowInHand = true
     }
 
     /// Step 7 — hold the button to draw, release to loose. The arrow leaves on
