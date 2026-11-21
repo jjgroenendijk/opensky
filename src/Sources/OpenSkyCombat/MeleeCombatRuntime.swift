@@ -213,6 +213,7 @@ public final class MeleeCombatRuntime {
     /// on every run.
     private func raiseIntentEvents(blocking: Bool) {
         guard let world else { return }
+        drawOnSheathedPress(blockPressed: blocking && !wasBlocking)
         if pendingToggle {
             pendingToggle = false
             redraw = nil
@@ -235,6 +236,17 @@ public final class MeleeCombatRuntime {
             )
         }
         latchPresses(blocking: blocking)
+    }
+
+    /// With the weapon sheathed, a press of either button only draws, as Ready Weapon
+    /// does (docs/engine/attack-input.md#each-button). The press itself is spent.
+    private func drawOnSheathedPress(blockPressed: Bool) {
+        guard
+            state.drawState == .sheathed, pendingAttack || pendingLeftAttack || blockPressed
+        else { return }
+        pendingAttack = false
+        pendingLeftAttack = false
+        pendingToggle = true
     }
 
     /// Raises the pair of events one draw or sheath request implies. `weaponDraw`

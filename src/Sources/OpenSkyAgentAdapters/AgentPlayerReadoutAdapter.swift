@@ -211,6 +211,7 @@ struct AgentPlayerStatusReadout {
             "attackPhase": .string(melee.state.attackPhase.rawValue),
             "attackState": .init(game.combat.playerActionFacts?.attackState.rawValue ?? 0),
             "chainWindowOpen": .bool(melee.state.isChainWindowOpen),
+            "drawState": .string(melee.state.drawState.rawValue),
             "swingID": .init(melee.state.swingID)
         ]
     }
