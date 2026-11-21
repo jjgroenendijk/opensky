@@ -121,8 +121,9 @@ OpenSky does not build this yet. It holds one value for the whole line.
 - When a line starts, the actor's emotion type and value come from the response's `TRDT` emotion
   type and value. That value is also the base value. Combat lines do the same. Starting dialogue
   also resets the timer.
-- When the current value is at the neutral listening value (50) and the timer has run
-  out, a new value is rolled:
+- A new value is rolled only when the current value is exactly the neutral listening value
+  (`iGameplayiSpeakingEmotionListenValue`, 50) and the timer has run out. The timer counts down
+  only while the value is 50. This holds whether a line plays or not. The roll:
   - low = base − base × the minimum change percent / 100, and high = base + base × the maximum
     change percent / 100. Both percents are 100. Each part is rounded down to a whole
     number.
@@ -130,8 +131,12 @@ OpenSky does not build this yet. It holds one value for the whole line.
   - The new value = low + a random whole number from 0 up to, but not including, high − low.
   - The timer is set to a random time between the game's minimum and maximum. Both are 1.5
     seconds, so the timer is a fixed 1.5 seconds.
-- While the actor does not speak, a value above the neutral value falls toward it by a fixed step
-  each update, 10.
+- The value jumps straight to the rolled number. It does not step toward it.
+- Between rolls the value stays where it is. Only after the line's voice time has run out does a
+  value above 50 fall, by `iGameplayiSpeakingEmotionDeltaChange` (10) each update, and never
+  below 50. A value below 50 is never raised.
+- So a line whose value is not 50 never rolls again while it plays. A roll during a line needs
+  the value to be exactly 50 first.
 - The face shows the expression of the emotion type (types 1 to 7) at strength = value / 100. A
   neutral line takes its strength from the game's mood face value (50) and the `Mood` actor value.
 - The Papyrus functions `GetEmotion` and `GetEmotionValue` return the current type and value.
@@ -144,8 +149,8 @@ moves a lot.
 stateDiagram-v2
     [*] --> Quiet
     Quiet --> Speaking: line starts / type and value from TRDT, base = value, reset timer
-    Speaking --> Speaking: value at neutral and timer done / roll value in [low, high), roll timer
-    Speaking --> Speaking: update / timer -= frame time
+    Speaking --> Speaking: value is 50 and timer done / roll value in [low, high), roll timer
+    Speaking --> Speaking: update, value is 50 / timer -= frame time
     Speaking --> Settling: line ends
     Settling --> Settling: value above neutral / value -= step
     Settling --> Quiet: value at or below neutral

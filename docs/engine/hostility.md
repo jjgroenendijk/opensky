@@ -80,6 +80,15 @@ Aggression value, "in conjunction with Faction Relationships"
 | Very Aggressive | Enemies and neutrals |
 | Frenzied | Everybody |
 
+In the game, hostility by aggression has more cases than this table:
+
+- An Unaggressive actor is hostile only to an Enemy that carries a special "attack on sight"
+  mark.
+- An Aggressive actor is hostile to an Enemy only. A Very Aggressive one is hostile to an Enemy
+  or a Neutral. A Frenzied one is always hostile.
+- A target that fights the observer is hostile, unless the observer counts it as an Ally or a
+  Friend. That exception does not hold when the target is Frenzied.
+
 An aggression value the spec does not name attacks nobody. An actor with no readable `AIDT` is
 unaggressive. Guessing upward, into a drawn weapon, is the harmful direction.
 

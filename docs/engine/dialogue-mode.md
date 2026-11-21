@@ -18,11 +18,27 @@ OpenSky does not build this yet. It ends the talking state when the dialogue men
 - Each actor has a countdown in seconds. The player has one too.
 - Starting dialogue with the player adds the game's dialogue mode time (60 seconds)
   to the actor's countdown and to the player's.
-- An actor spoken to again while its countdown is above 1 second gets the full time again. At 1
-  second or below, the time is added instead. A second way of starting dialogue adds the full
-  time with no 1 second check, and sets the actor's countdown back to 0 when the dialogue fails
-  to start. Which case uses which way is not yet known.
-- Most likely, ending dialogue sets the player's countdown to 0. The NPC keeps its own.
+- Each time an actor starts to say a response line, its dialogue target becomes the player, and
+  its countdown is written: above 1 second it gets the full time again, and at 1 second or below
+  the time is added. This covers hellos, greetings, and every line inside a conversation with
+  the player. It is skipped while the actor's package controls its speech, which is most likely
+  scene and script speech. So a scene line most likely leaves the countdown alone.
+- Starting dialogue with the player always adds the full time, with no 1 second check, and sets
+  the actor's countdown to 0 when the start fails. It has two forms:
+  - The player activates the NPC. The start is refused while the player is in certain states.
+    On success the player is marked as in dialogue too.
+  - The NPC starts it, most likely from a force-greet package or a greeting. The NPC picks its own
+    greeting topic. When none fits, it sets its greeting timers to `fAIExclusiveGreetingTimer`
+    (2.5 seconds) and `fAIGreetingTimer`.
+- The player's own countdown gets the full time added when its start succeeds, with no 1 second
+  check.
+- Stopping dialogue through the same routine sets the NPC's countdown to 0, clears its dialogue
+  target, and makes it evaluate its packages again. A seated or sleeping NPC takes a separate
+  path. The player's countdown is set to 0 too. Which of these the closing dialogue menu calls
+  was not found.
+- The dialogue mode time is `fAIInDialogueModewithPlayerTimer`: 30 in the program and 60 in
+  `Skyrim.esm`. `fAIInDialogueModeWithPlayerDistance` (500) is never read.
+- No way for a script to start dialogue mode was found.
 - Each update the countdown drops by the frame time. Talking mode lasts while it is above 0.
 - A separate "aware of player" time, 5 seconds, writes the same countdown.
 - "In conversation with the player" is true while the countdown is above 0. The In Game
@@ -30,9 +46,19 @@ OpenSky does not build this yet. It ends the talking state when the dialogue men
 
 ## While the NPC is the dialogue target
 
-The NPC's AI update counts the countdown down. When it reaches 0, the NPC evaluates its packages
-again and goes back to normal AI, and the state is cleared. It also evaluates its packages again
-while a dialogue menu is open, or while the player is within activation reach.
+Each AI update, an NPC flagged as talking with the player does one of three things:
+
+- **It is the conversation's current actor and is not speaking.** The countdown drops by the frame
+  time. The rest of the AI update is skipped: the package does not run, and the NPC stands where
+  it is. When the countdown goes below 0, the NPC evaluates its packages, and the flag clears if
+  that works.
+- **It is speaking and the dialogue system is busy.** It stops any movement and skips the rest of
+  the update.
+- **It is no longer the current actor.** It evaluates its packages and the flag clears, when the
+  dialogue system is busy or the player is within `fAIActivateReach` (300 units). Otherwise it
+  asks the dialogue menu to close.
+
+Whether the NPC keeps facing or head-tracking the player during the countdown was not found.
 
 When the player activates the NPC with the countdown at 0, a fresh greeting starts. Above 0, the
 conversation goes on without a new greeting.

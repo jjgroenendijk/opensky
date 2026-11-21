@@ -137,6 +137,9 @@ sit or sleep, plus 20 when the speaker sits.
   one. A height difference of more than 20 units adds 20 units to the radius.
 - Once the speaker stands still, both turn to face each other, the partner gets the wait package
   again, and the scene resumes.
+- A scene line starts only when each speaker's head points within
+  `fAIMinAngleRangeToStartSceneDialogue` (20 degrees) of the partner. While the speaker moves at 5
+  units a second or more, the limit is `fAIMaxAngleRangeMovingToStartSceneDialogue` (80 degrees).
 - A speaker that enters combat on the way gives up the walk.
 - The speaker walks. It runs only when the actor always runs. The walk has no time limit: the
   speaker paths again when its goal is more than 100 units from the partner.

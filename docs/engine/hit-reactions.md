@@ -44,12 +44,20 @@ flowchart TD
     M -- no --> E
 ```
 
-- The hit kind that gives a Large Recoil is most likely a bash.
-- The player is always staggered by a hit that has a magnitude, because a game option says so and
-  is on.
-- Some hit kinds, most likely a blocked hit or a power attack, always stagger.
-- Any other hit staggers on a roll: a whole number from 0 to 99 below 50.
+- The game files two hit flags together as "bash". One of them gives the Large Recoil, most
+  likely the bash itself. A hit with that flag never staggers.
+- A hit with a magnitude above 0 always staggers, with no roll, in these cases:
+  - the target is the player and `bPlayerAlwaysStaggered` is on, which it is;
+  - the hit has the first "blocked" flag;
+  - the hit has the second "bash" flag, the one that gives no Large Recoil;
+  - the weapon is a bow, a staff, or a crossbow.
+- That a power attack always staggers is not confirmed.
+- Any other hit staggers on a roll: a whole number from 0 to 99 below `iStaggerAttackChance`, 50.
+- The hit's critical flag shows the "critical strike" message, and its sneak attack flag the
+  "sneak attack" message.
 - One kind of melee hit does not make the attacker recoil when blocked. What it is was not found.
+- How long a recoil or a block hit holds the actor was not found. A stagger marks the actor as
+  staggered for at most `fStaggerMaxDuration`, 3 seconds.
 
 ## Stagger magnitude
 

@@ -66,12 +66,32 @@ stateDiagram-v2
     Dodging --> Watching: sidestep done
 ```
 
-The check compares the score with half of a reference score, and uses a reaction time that differs
-for a moving and a standing actor. The sidestep uses the dodge speed-up and slow-down factors. The
-exact way the escape point is chosen was not found.
+The dodge step works like this:
 
-The combat style's Avoid Threat Chance (`CSTY`) exists in the data, but its reader was not found.
-Several threat settings, such as the time to avoid a rune, are never read.
+1. The reaction time is `fCombatDodgeReactionTime` (0.15 seconds) for a standing actor and
+   `fCombatDodgeMovingReactionTime` (0.25 seconds) for a moving one.
+2. A moving actor first checks its current path for threats over the next
+   `fCombatDodgeAnticipateThreatTime` (2 seconds). A clear path is kept, and the step ends.
+3. The reference score is the score that the "Check Should Dodge" condition found. The step goes
+   on only when the score at the actor's own position within the reaction time is below it.
+4. The escape point comes from the direction the most significant threat travels in, on the
+   ground plane. The actor leaves to the side of that line it already stands on. When it is less
+   than half its own radius from the line, the side is random.
+5. Each side has one point, at a right angle to the line. Its distance from the actor is the
+   threat's radius, less the actor's offset from the line on its own side or plus it on the other
+   side, plus the actor's radius, plus `fCombatDodgeBufferDistance` (64 units).
+6. The preferred side is tried first, then the other. A point is rejected when:
+   - the navmesh does not reach it;
+   - the score along the move, with time = distance / the actor's move speed, is at least
+     `fCombatDodgeAcceptableThreatScoreMult` (0.5) times the reference score;
+   - the move, when shorter than 2 seconds, followed by standing there until 2 seconds have
+     passed, collects any score at all. That total must be exactly 0.
+7. The move uses `fCombatDodgeAccelerationMult` and `fCombatDodgeDecelerationMult`, 10 each.
+
+Most likely, the chance to dodge is `fCombatDodgeChanceMin` (0) + (`fCombatDodgeChanceMax` (1)
+− the minimum) × the combat style's Avoid Threat Chance (`CSTY`). With these values it is the
+style's own value. `fCombatAvoidThreatsChance` is never read. Several other threat settings, such
+as the time to avoid a rune, are never read either.
 
 ## Onlookers
 
@@ -86,4 +106,6 @@ radius set by the source's weapon. A higher level replaces a lower one, never th
 | Mine | 256 | 3 |
 | None | unchanged | unchanged |
 
-What the onlooker then does, such as fleeing or a comment, was not found.
+What the onlooker then does is in
+[random conversations](/engine/random-conversations.md#what-a-watcher-does): it head-tracks the
+fight, says the ObserveCombat line, and steps away.

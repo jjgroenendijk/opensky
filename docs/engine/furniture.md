@@ -60,12 +60,25 @@ In the game, a walk counts as arrived by the kind of goal it walks to.
   units) and the radius the walk asks for.
 - An X marker or a heading marker: the marker radius, 50 units. A heading marker allows 5
   degrees of facing, and an idle marker 1 degree.
-- Any other reference: the default radius, and a facing of 5 degrees. In combat the facing is 1
-  degree.
-- Arrival also needs the height difference to be within a separate limit.
+- Any other reference: the larger of `fAIDistanceRadiusMinLocation` (100 units) and the radius
+  the walk asks for, and a facing of 5 degrees (`fDefaultAngleTolerance`). In combat the facing
+  is 1 degree.
+- The radius is measured on the ground plane only. Arrival also needs the height difference to
+  be at most the larger of `fAIMinLocationHeight` (100 units) and the radius the walk asks for.
 - A walk to a furniture entry marker asks to end facing the marker's heading. The allowed
   difference is the game's furniture angle, 10 degrees. The entry clip starts after
   that.
+
+How the actor gets onto the entry point, most likely:
+
+- An NPC is not moved by hand. It gets a path to the entry point with a radius of 50 units, the
+  marker's heading as the end heading, and 10 degrees allowed. So the movement system turns it
+  while it arrives, at its normal turn speed, 2π radians a second. It has arrived within 50 units
+  of the point.
+- The player's movement is stopped, and the player is placed exactly on the entry point with the
+  marker's heading.
+- An actor in one furniture state that is already within 50 units on the ground plane is stopped
+  and placed on the point.
 
 ```mermaid
 flowchart TD

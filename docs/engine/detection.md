@@ -222,6 +222,28 @@ tracks it and no observer has detected it. UESP "Skyrim:Leveling" gives the rate
 becoming hidden. OpenSky does not give those, because no setting holds them and the moment of
 becoming hidden is not defined.
 
+## Who runs detection in the game
+
+- Each actor runs its detection pass inside its own AI update. The update must not have ended
+  early: the actor has 3D, its cell is attached, it is not the player, and it is not held in
+  [dialogue mode](/engine/dialogue-mode.md).
+- A pass runs when the real time since the actor's last pass is over its interval. The next
+  interval is random between `fDetectionUpdateTimeMin` (1 second) and `fDetectionUpdateTimeMax`
+  (2 seconds). In a complex scene it is between 2.5 and 5 seconds. A scene is most likely complex
+  with more than `iAINumberActorsComplexScene` (20) actors in the high process level.
+- `iUpdateDetectionsAllowedPerFrame` (100) limits the checks in one frame. Each observer and
+  target pair counts as one. Once the limit is reached, no new pass starts, and the actor tries
+  again on the next frame.
+- A pass checks each actor in the high process level that has 3D, then the player.
+- The observer keeps tracking a target only for a reason. There are nine: the observer is
+  [hostile](/engine/hostility.md#aggression-draws-the-weapon) to it, the target is in combat, a
+  teammate is involved, the observer watches for crime or trespass, the target is a corpse within
+  a set range, and others. Without a reason the detection state of the pair is dropped. An old
+  state expires after `fDetectionStateExpireTime`.
+- An actor that runs its warn package for the aggro radius skips one of the hostility reasons.
+- The detection level at which combat starts was not found. `iAICombatMinDetection` is never
+  read. How the aggro radius acts beyond the warn package check was not found either.
+
 ## Limits and repeatability
 
 Every observer against every target, with a ray per pair, grows fast with the world. Three
