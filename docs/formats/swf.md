@@ -105,7 +105,6 @@ because a rendered vanilla movie contains game art.
 ## Not implemented
 
 - `ZWS` (LZMA) decompression.
-- Stroke geometry for line styles.
 - HTML text layout in DefineEditText.
 - `Ratio` morph shapes.
 - PlaceObject3 filters and blend modes (decoded and counted, not applied).

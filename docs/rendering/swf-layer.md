@@ -117,7 +117,6 @@ for the same reason.
 
 ## Known visual gaps
 
-- Line styles are not stroked. Only fills draw.
 - `PlaceObject3` filters and blend modes are ignored.
 - Glyph quads follow a transform's position and scale, but not rotation or skew. Vanilla UI text is
   not rotated.

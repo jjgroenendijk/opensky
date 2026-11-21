@@ -46,6 +46,18 @@ nonisolated extension SWFMovieResources {
                         fill: fill
                     ))
                 }
+                for run in mesh.strokeRuns {
+                    let style = shape.lineStyles[run.lineStyleIndex - 1]
+                    guard let fill = resolveFill(style.fill ?? .solid(style.color)) else {
+                        skipped += 1
+                        continue
+                    }
+                    runs.append(SWFMovieResources.RunEntry(
+                        vertexStart: start + run.triangleRange.lowerBound * 3,
+                        vertexCount: run.triangleRange.count * 3,
+                        fill: fill
+                    ))
+                }
                 shapes[id] = SWFMovieResources.ShapeEntry(
                     vertexStart: start, vertexCount: mesh.vertices.count, runs: runs
                 )
