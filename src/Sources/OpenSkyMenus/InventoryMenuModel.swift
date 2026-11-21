@@ -37,6 +37,8 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
     public var isQuestItem = false
     /// The hands a worn weapon or torch holds; empty for anything else.
     public var hands: HandSlots = []
+    /// A potion the game files under Misc, by its forge keyword.
+    public var isMiscPotion = false
 
     public init(
         item: FormID,
@@ -104,6 +106,7 @@ nonisolated public struct InventoryMenuCategory: Equatable, Sendable {
     func accepts(_ entry: InventoryMenuEntry) -> Bool {
         guard !favourites else { return entry.isFavourite }
         guard !families.isEmpty else { return true }
+        guard !entry.isMiscPotion else { return families.contains(.miscellaneous) }
         guard food == nil || food == entry.isFood else { return false }
         return families.contains(entry.family ?? .miscellaneous)
     }

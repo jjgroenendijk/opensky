@@ -37,11 +37,12 @@ Categories group items by record type, in the vanilla tab order: Favorites, All,
 and `AMMO`), Apparel, Potions, Scrolls (`SCRL`), Food, Ingredients, Books, Keys (`KEYM`), and Misc.
 Favorites takes the rows the player marked, of any type. Food takes the `ALCH` records with the food
 flag, and Potions takes the rest, poisons included. Misc also holds soul gems (`SLGM`), alchemy
-apparatus (`APPA`), and lights that can be carried, such as torches (`LIGH`). This is OpenSky's
-own grouping of the [item records](/formats/item-records.md), not Bethesda's category numbers.
-The order is the one the game shows. The movie does not define it: `InventoryDefines` holds no
-category list ([list data](#list-data)). An item of unknown type shows under Misc, so All is not the
-only way to find it. The menu opens on All, as the game does.
+apparatus (`APPA`), and lights that can be carried, such as torches (`LIGH`). A potion with the
+forge keyword goes under Misc too. This matches the game's `filterFlag` for each item kind
+([item kinds and tabs](#item-kinds-and-tabs)). The order is the one the game shows. The movie
+does not define it: `InventoryDefines` holds no category list ([list data](#list-data)). An item
+of unknown type shows under Misc, so All is not the only way to find it. The menu opens on All, as
+the game does.
 
 Each tab takes its name from a string setting: `sFavorites`, `sAllItems`, `sWeapons`, `sApparel`,
 `sPotions`, `sScrolls`, `sFood`, `sIngredients`, `sBooks`, `sKeys`, and `sMisc`. Without a plugin

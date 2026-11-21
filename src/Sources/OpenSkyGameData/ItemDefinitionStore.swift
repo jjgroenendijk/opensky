@@ -154,6 +154,9 @@ nonisolated public final class ItemDefinitionStore {
 
     /// The weapon terms of `enchantedValue(of:settings:)`, from the load order.
     public var enchantedValueSettings = EnchantedValueSettings.vanilla
+    /// A potion with this keyword goes under the inventory's Misc tab
+    /// (docs/engine/inventory-menu.md#item-kinds-and-tabs).
+    public var miscPotionKeyword: FormID?
 
     /// Potions brewed this session, which no plugin holds (`registerCreated(_:)`).
     public private(set) var createdPotions: Set<UInt32> = []

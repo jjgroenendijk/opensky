@@ -50,6 +50,25 @@ struct InventoryMenuTabsTests {
         #expect(model.entries.count == 3)
     }
 
+    @Test func aPotionWithTheForgeKeywordGoesUnderMisc() {
+        let forge = FormID(0x88105)
+        func potion(_ keywords: [FormID]) -> ItemDefinition {
+            ItemDefinition(
+                formID: FormID(7), family: .ingestible, editorID: "Stone", name: nil, value: 0,
+                weight: 0, keywords: keywords, enchantment: nil, modelPath: nil
+            )
+        }
+        #expect(InventoryMenuModel.isMiscPotion(potion([forge]), isFood: false, keyword: forge))
+        #expect(!InventoryMenuModel.isMiscPotion(potion([forge]), isFood: true, keyword: forge))
+        #expect(!InventoryMenuModel.isMiscPotion(potion([]), isFood: false, keyword: forge))
+        #expect(!InventoryMenuModel.isMiscPotion(potion([forge]), isFood: false, keyword: nil))
+        var stone = entry(7, .ingestible)
+        stone.isMiscPotion = true
+        let tabs = InventoryMenuCategory.engineOrder
+        let holding = tabs.filter { $0.accepts(stone) }.map(\.label)
+        #expect(holding == ["All", "Misc"])
+    }
+
     @Test func theQuantityStaysBetweenOneAndTheStack() {
         var prompt = InventoryQuantityPrompt(item: FormID(1), name: "Arrow", maximum: 12)
         #expect(prompt.value == 12)

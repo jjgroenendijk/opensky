@@ -41,6 +41,9 @@ nonisolated extension InventoryMenuModel {
                 isFavourite: favourites.contains(stack.item)
             )
             row.hands = heldHands(row, leftHand: inventory.leftHand)
+            row.isMiscPotion = isMiscPotion(
+                definition, isFood: row.isFood, keyword: items.miscPotionKeyword
+            )
             rows.append(row)
         }
         return InventoryMenuModel(
@@ -49,6 +52,18 @@ nonisolated extension InventoryMenuModel {
             carriedWeight: Float(weight),
             gold: inventory.count(of: goldFormID)
         )
+    }
+
+    /// A potion that is not food, with the keyword the game files under Misc.
+    static func isMiscPotion(
+        _ definition: ItemDefinition?,
+        isFood: Bool,
+        keyword: FormID?
+    ) -> Bool {
+        guard let definition, definition.family == .ingestible, !isFood, let keyword else {
+            return false
+        }
+        return definition.keywords.contains(keyword)
     }
 
     /// The left-hand item holds the left hand, or both with a second copy in the right.

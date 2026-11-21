@@ -145,6 +145,7 @@ public struct InventorySessionBuilder {
         guard let baselines = provider.inventoryBaselines else { return nil }
         let settings = provider.gameSettings
         baselines.items.enchantedValueSettings = EnchantedValueSettings.resolve(store: settings)
+        baselines.items.miscPotionKeyword = provider.rules.craftingCatalog?.categories.forgeKeyword
         var data = InventorySessionData(items: WorldItemRuntime(
             inventory: InventoryRuntime(store: store, baselines: baselines),
             references: streamer,
