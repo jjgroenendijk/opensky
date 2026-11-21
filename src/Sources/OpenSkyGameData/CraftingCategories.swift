@@ -89,6 +89,9 @@ nonisolated public enum CraftingCategoryText: String, GameSettingTextKey {
 nonisolated public struct CraftingCategories: Equatable, Sendable {
     /// Item-plugin keyword FormID -> the tab it puts an item under.
     public let tabByKeyword: [FormID: CraftingCategoryText]
+    /// The item-plugin keyword of the default object `FORG`, `CraftingSmithingForge` in
+    /// `Skyrim.esm`. A potion with it goes under the inventory's Misc tab.
+    public var forgeKeyword: FormID?
 
     public static let empty = Self(tabByKeyword: [:])
 
@@ -118,7 +121,11 @@ nonisolated public struct CraftingCategories: Equatable, Sendable {
             }
         }
         self.init(tabByKeyword: table)
+        forgeKeyword = defaults.object(tag: Self.forgeTag)
+            .flatMap { itemPlugin.localFormID(of: $0) }
     }
+
+    static let forgeTag = "FORG"
 
     /// The tab of an item with `keywords`: food first, then the first keyword in the
     /// table, else Misc. An item with no keywords has no tab.
