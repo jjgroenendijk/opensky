@@ -102,6 +102,11 @@ nonisolated public struct GameClock: Equatable, Sendable {
         Int(totalGameSeconds / Self.secondsPerDay)
     }
 
+    /// Whole days since the epoch; it rises by one at each midnight.
+    public var dayNumber: Int {
+        totalDays
+    }
+
     /// Fractional hour of day in [0, 24).
     public var hourOfDay: Float {
         Float(totalGameSeconds.truncatingRemainder(dividingBy: Self.secondsPerDay)

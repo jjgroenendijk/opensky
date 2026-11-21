@@ -86,9 +86,9 @@ extension MapTravelAdapter {
             speedMultiplier: mapRecords.mapSettings.fastTravelSpeedMultiplier,
             timeScale: gameSession.currentTimescale
         )
-        gameSession
-            .gameClock = GameClock(totalGameSeconds: gameSession.gameClock
-                .totalGameSeconds + seconds)
+        gameSession.gameTime.skipTime(
+            to: GameClock(totalGameSeconds: gameSession.gameClock.totalGameSeconds + seconds)
+        )
         // The game shows a loading screen for every fast travel.
         game.loadingWorld.coverMove(to: marker.position)
         let rotation = SIMD3<Float>(0, 0, gameSession.freeFlyCamera.yaw)

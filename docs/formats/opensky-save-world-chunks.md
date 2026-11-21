@@ -264,8 +264,10 @@ the player's crimes are reported. Size: 10 bytes per entry.
 
 One entry for the player: the key, the cell, a uint32 stat count, then per stat its name as a
 string and an int32 value, sorted by name. The names are the
-[journal's stats](/engine/journal.md#stats-page). Minimum size: 12 bytes per entry, 6 per
-stat.
+[journal's stats](/engine/journal.md#stats-page). Three use lists follow, for the weapons, the
+spells, and the shouts the player used last: each a uint32 count, then that many keys, oldest
+first, at most 100 ([favourites](/engine/statistics.md#favourites)). Minimum size: 24 bytes per
+entry, 6 per stat.
 
 ## QTRK: quest tracking
 

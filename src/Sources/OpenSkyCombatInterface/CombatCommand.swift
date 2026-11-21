@@ -25,6 +25,10 @@ nonisolated public enum CombatCommand: Equatable, Sendable {
     case muzzleFlash(ProjectileVisuals, at: SIMD3<Float>, along: SIMD3<Float>)
     /// The player loosed an arrow; `power` below 1 is a dud.
     case playerBowShot(weapon: FormID?, ammunition: FormID?, power: Float)
+    /// Raises the misc stat with this name by one.
+    case incrementStat(String)
+    /// The player swung or fired this `WEAP`: one use for Favorite Weapon.
+    case playerUsedWeapon(FormID)
 }
 
 /// What the player did with a weapon outside a fight.

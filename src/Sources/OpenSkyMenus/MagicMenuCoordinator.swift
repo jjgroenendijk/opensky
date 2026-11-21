@@ -4,6 +4,7 @@
 import Foundation
 public import OpenSkyMagicInterface
 public import OpenSkyMenusInterface
+import OpenSkyRendering
 
 /// What the magic menu needs from the app.
 public protocol MagicMenuWorld: MenuScreenWorld {
@@ -13,7 +14,7 @@ public protocol MagicMenuWorld: MenuScreenWorld {
     func readySpell(at index: Int, leftHand: Bool) -> String
     /// What the unlock key does on the row at `index`; nil for a row that is no shout.
     func shoutUnlockStep(at index: Int) -> ShoutUnlockStep?
-    func unlockShout(at index: Int) -> String
+    func unlockShout(at index: Int) -> ShoutUnlockReply
     func confirm(_ text: String, answer: @escaping (Bool) -> Void)
 }
 
@@ -64,7 +65,11 @@ public final class MagicMenuCoordinator: ItemListMenuScreen {
         case let .ask(text):
             world.confirm(text) { [weak self] yes in
                 guard yes, let self, let world = self.world else { return }
-                lastResult = world.unlockShout(at: index)
+                let reply = world.unlockShout(at: index)
+                lastResult = reply.text
+                if let sound = reply.sound {
+                    world.renderer?.swfSoundPlayer?(sound)
+                }
                 reload()
                 playLearnedWord()
             }

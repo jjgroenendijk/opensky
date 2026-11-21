@@ -180,6 +180,9 @@ struct GameSessionScopeBuild {
         gameSession.worldTick.register(.survivalMode) { [weak scope] _ in
             scope?.survivalMode.tick()
         }
+        gameSession.worldTick.register(.miscStats) { [weak scope] _ in
+            scope?.miscStatsDays.tick()
+        }
         // After streaming, so the HUD reads the streamer's update of this frame.
         gameSession.frameSteps.register(.hud) { [weak scope, weak gameSession] _ in
             guard let scope, let gameSession else { return }

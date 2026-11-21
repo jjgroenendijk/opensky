@@ -128,6 +128,8 @@ public protocol CombatWorld: AnyObject {
     func recordHealthHit(_ hit: CombatHitRecord, on key: ReferenceKey)
     /// Whether `key` owns the perk with `editorID`.
     func ownsPerk(editorID: String, on key: ReferenceKey) -> Bool
+    /// Whether any perk `key` owns has an entry at `entryPoint`, whatever its conditions.
+    func ownsPerkEntry(at entryPoint: PerkEntryPoint, on key: ReferenceKey) -> Bool
 
     /// Nil when `key` cannot cast in this session.
     func castingFacts(of key: ReferenceKey) -> CombatCastingFacts?

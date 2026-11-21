@@ -273,3 +273,38 @@ struct CombatCoordinatorTests {
         #expect(coordinator.combatLoopSnapshot.lastActionText == "Hostility: Guard is now hostile.")
     }
 }
+
+@MainActor
+struct CombatCriticalStatTests {
+    private static let target = ReferenceKey.generated(1)
+
+    /// docs/engine/statistics.md, Critical hits: a living target only.
+    @Test func aSneakAttackOnALivingTargetCountsItsStats() {
+        let world = FakeCoordinatorWorld()
+        world.perkEntriesOwned = [.modSneakAttackMult]
+        let coordinator = CombatCoordinator(
+            world: world, data: CombatSessionData(combat: .synthetic, archery: .synthetic)
+        )
+        world.healths[Self.target] = (current: 0, maximum: 50)
+        _ = coordinator.meleeWorld.meleeStrike(
+            CombatBlow(attacker: .player, handType: .dagger), on: Self.target
+        )
+        #expect(!coordinator.takeCommands().contains(.incrementStat("Sneak Attacks")))
+
+        world.healths[Self.target] = (current: 50, maximum: 50)
+        _ = coordinator.meleeWorld.meleeStrike(
+            CombatBlow(attacker: .player, handType: .dagger), on: Self.target
+        )
+        let stats = coordinator.takeCommands().filter {
+            if case .incrementStat = $0 {
+                true
+            } else {
+                false
+            }
+        }
+        #expect(stats == [
+            .incrementStat("Critical Strikes"), .incrementStat("Sneak Attacks"),
+            .incrementStat("Backstabs")
+        ])
+    }
+}

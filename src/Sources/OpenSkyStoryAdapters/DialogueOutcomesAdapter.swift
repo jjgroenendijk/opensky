@@ -76,9 +76,9 @@ extension DialogueOutcomesAdapter {
         }
     }
 
-    /// The game sends no `BRIB`, `INTM`, or `FLAT` for a win; only scripts do.
-    private func speechChallengeWon(_ challenge: SpeechChallenge, speaker _: ReferenceKey) {
-        game.worldState.incrementMiscStat(challenge.statName)
+    /// The game sends no `BRIB`, `INTM`, or `FLAT` for a win, and raises no stat; the
+    /// dialogue scripts raise Bribes, Intimidations, and Persuasions.
+    private func speechChallengeWon(_: SpeechChallenge, speaker _: ReferenceKey) {
         game.progression.reportSpeechCheckWon()
     }
 

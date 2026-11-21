@@ -307,5 +307,6 @@ nonisolated extension CellProviderIndexes.WorldRecords {
         relationships = RelationshipStore(plugins: context.plugins)
         formLists = FormListStore(plugins: context.plugins)
         encounterZones = EncounterZoneStore(plugins: context.plugins)
+        miscStatSources = MiscStatSources(loadOrder: context.loadOrder)
     }
 }

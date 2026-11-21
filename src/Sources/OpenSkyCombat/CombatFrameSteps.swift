@@ -31,6 +31,9 @@ struct CombatFrameSteps {
         ))
         noteHits(melee.handleGraphEvents(events))
         noteWeaponUse(.swing, changed: melee.state.swingID != swing)
+        if melee.state.swingID != swing, let weapon = melee.weapon.weapon {
+            shared.pendingCommands.append(.playerUsedWeapon(weapon))
+        }
         return shared.pendingCommands
     }
 
@@ -60,6 +63,9 @@ struct CombatFrameSteps {
                     weapon: archery.bow.weapon, ammunition: archery.arrow?.item,
                     power: archery.lastDrawFraction
                 ))
+                if let bow = archery.bow.weapon {
+                    shared.pendingCommands.append(.playerUsedWeapon(bow))
+                }
             }
             gear.drainBowZoomStamina(bow: archery.bow.weapon, delta: delta)
             noteWeaponUse(.shot, changed: archery.state.shotCount != shots)

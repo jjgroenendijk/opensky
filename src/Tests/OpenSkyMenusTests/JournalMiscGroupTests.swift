@@ -67,10 +67,13 @@ struct JournalMiscGroupTests {
     @Test func statRowsListTheCatalogInCategoryOrder() {
         var stats = MiscStatsState()
         stats.increment("Bribes", by: 3)
-        let rows = JournalStatRow.rows(stats)
+        let rows = JournalStatRow.rows(stats, favorites: ["Favorite Weapon": "Iron Sword"])
         #expect(rows.first?.name == "Locations Discovered")
         #expect(rows.first { $0.name == "Bribes" }?.value == 3)
-        #expect(!rows.contains { $0.name.hasPrefix("Favorite") || $0.name == "Whiterun Bounty" })
+        #expect(rows.first { $0.name == "Bribes" }?.text == nil)
+        #expect(rows.first { $0.name == "Favorite Weapon" }?.text == "Iron Sword")
+        #expect(rows.first { $0.name == "Favorite Shout" }?.text == "None")
+        #expect(!rows.contains { $0.name == "Whiterun Bounty" })
         #expect(rows.map(\.category.rawValue) == rows.map(\.category.rawValue).sorted())
         #expect(rows.last?.category == .crime)
     }

@@ -273,7 +273,7 @@ The stats are the misc stats `Game.QueryStat` reads. The names come from the Cre
 categories. The list runs in the six groups' order, so OpenSky splits it there: General ends at
 "Mauls", Quest at "Questlines Completed", Combat at "Bunnies Slaughtered", Magic at "Souls
 Trapped", Crafting at "Wings Plucked", and Crime holds the rest. The page leaves out the
-"Favorite" stats, which are text, and the ten per-hold bounties. Both are OpenSky's reading.
+ten per-hold bounties, which is OpenSky's reading.
 
 The stats are saved in the `MSTS` chunk. OpenSky counts these:
 
@@ -285,7 +285,6 @@ The stats are saved in the `MSTS` chunk. OpenSky counts these:
 | Dungeons Cleared | A location clears |
 | Skill Increases | A skill gains a level |
 | Training Sessions | A trainer trains the player |
-| Bribes, Intimidations, Persuasions | The player wins a speech check |
 | Diseases Contracted | The player catches a disease |
 | People, Animals, Creatures, Undead, Daedra, and Automatons Killed | The player kills an actor of that type |
 | Weapons Made, Armor Made, Weapons Improved, Armor Improved | The player crafts or tempers one |
@@ -303,10 +302,20 @@ The stats are saved in the `MSTS` chunk. OpenSky counts these:
 | Total Lifetime Bounty, Largest Bounty, Fines Paid | A bounty is placed or paid |
 | Times Jailed, Days Jailed, Jail Escapes | The player is jailed, serves, or escapes |
 | Items Stolen, Horses Stolen, Assaults, Murders, Trespasses | The player commits the crime |
+| Days Passed, Days as a Vampire, Days as a Werewolf | The clock passes midnight |
+| Mauls, Bunnies Slaughtered | The player kills in beast form, or kills a rabbit |
+| Critical Strikes, Sneak Attacks, Backstabs | The player lands a critical hit or a sneak attack |
+| Weapons Disarmed, Dragon Souls Collected | The player disarms an actor, or gains a dragon soul |
+| Shouts Learned, Shouts Unlocked, Shouts Mastered | A script teaches or unlocks a word, or a soul unlocks a shout's last word |
 
 `Game.IncrementStat` and `Game.QueryStat` change and read any of them. The quest type's stat is
 the one its name gives: main quests count "Main Quests Completed", Dawnguard quests (type 10)
-"Dawnguard Quests Completed", and so on. Every other stat stays 0 until a script counts it.
+"Dawnguard Quests Completed", and so on. Every other stat stays 0 until a script counts it, as
+Persuasions, Bribes, and Intimidations do in the game too.
+
+The four "Favorite" rows show a name instead of a count: the weapon, the spell, the school, and
+the shout the player used most, or "None"
+([general stats](/engine/statistics.md#favourites)).
 
 What raises each stat in the game is on [General stats](/engine/statistics.md).
 

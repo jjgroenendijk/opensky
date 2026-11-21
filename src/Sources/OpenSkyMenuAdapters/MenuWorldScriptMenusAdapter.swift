@@ -15,6 +15,7 @@ import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyPlayer
 import OpenSkyProgressionInterface
+public import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkySaveInterface
@@ -29,6 +30,7 @@ import OpenSkyWorldState
 public protocol MenuWorldScriptMenusHost: AnyObject, SendableMetatype {
     var containerMenu: any ContainerMenuPort { get }
     var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
     var magic: any MagicPort { get }
     var mapMenu: any MapMenuPort { get }
     var mapWorld: any MapWorldPort { get }
@@ -142,6 +144,27 @@ extension MenuWorldScriptMenusAdapter {
         else { return [] }
         let shouts = game.magic.shouts
         return spells.compactMap(bridge.referenceKey(forFormID:)).filter { shouts[$0] != nil }
+    }
+
+    public func shoutWordSlots() -> [ReferenceKey: [ReferenceKey?]] {
+        game.magic.shouts.mapValues { shout in
+            shout.words.map { slot in
+                slot.spell == nil ? nil : slot.word.map { ReferenceKey(resolved: $0.id) }
+            }
+        }
+    }
+
+    /// The names the journal's "Favorite" stats show: the magic ones, and the weapon.
+    public func journalFavorites(_ stats: MiscStatsState) -> [String: String] {
+        var favorites = game.magic.magicMenu.favoriteTexts(stats)
+        if
+            let weapon = MiscStats.favorite(of: stats.recentUses[.weapon] ?? []),
+            let form = game.scripts.bridge?.localFormID(of: weapon),
+            case let name = game.inventory.name(of: form), !name.isEmpty
+        {
+            favorites[FavoriteUse.weapon.statName] = name
+        }
+        return favorites
     }
 
     public func voiceType(ofBase base: FormID) -> FormID? {

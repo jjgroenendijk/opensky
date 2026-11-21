@@ -96,6 +96,21 @@ extension PapyrusWorldStateBridge.ScriptState {
         return bridge.menus?.recordShouts(ofBase: base) ?? []
     }
 
+    /// The shouts with `word` that the player had no way to use before: no script gave
+    /// them, the record does not, and no other word of theirs is known.
+    func shoutsGained(
+        by word: ReferenceKey, slots: [ReferenceKey: [ReferenceKey?]], player: ReferenceKey
+    ) -> Int {
+        let state = bridge.scriptedState(of: player)
+        let record = recordShouts(of: player)
+        return MiscStats.shouts(with: word, slots: slots).count { shout in
+            let known = (slots[shout] ?? []).contains { other in
+                other.map { state.flag(ScriptedStateName.wordKnown($0)) == true } ?? false
+            }
+            return !known && !knowsShout(shout, actor: player, fromRecord: record.contains(shout))
+        }
+    }
+
     /// A script's `AddShout` or `RemoveShout` wins over the record's spell list.
     func knowsShout(_ shout: ReferenceKey, actor: ReferenceKey, fromRecord: Bool) -> Bool {
         scriptedState(of: actor).flag(ScriptedStateName.shout(shout)) ?? fromRecord
@@ -128,6 +143,9 @@ extension PapyrusNativeFunctions.ShoutsNatives {
                 let before = bridge.scriptedState(of: player)
                 let known = before.flag(ScriptedStateName.wordKnown(word)) == true
                 let unlocked = before.flag(ScriptedStateName.wordUnlocked(word)) == true
+                let slots = bridge.menus?.shoutWordSlots() ?? [:]
+                let gained = name == "TeachWord" && !known
+                    ? bridge.scriptState.shoutsGained(by: word, slots: slots, player: player) : 0
                 bridge.updateScriptedState(of: player) { state in
                     for flag in flags {
                         state.setFlag(flag(word), true)
@@ -136,8 +154,14 @@ extension PapyrusNativeFunctions.ShoutsNatives {
                 if !known {
                     bridge.worldState.incrementMiscStat("Words Of Power Learned")
                 }
+                if gained > 0 {
+                    bridge.worldState.incrementMiscStat("Shouts Learned", by: Int32(gained))
+                }
                 if name == "UnlockWord", !unlocked {
                     bridge.worldState.incrementMiscStat("Words Of Power Unlocked")
+                    for stat in MiscStats.wordUnlocked(word, slots: slots) {
+                        bridge.worldState.incrementMiscStat(stat)
+                    }
                 }
                 if
                     name == "TeachWord", !known,

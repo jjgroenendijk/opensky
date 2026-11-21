@@ -51,6 +51,7 @@ final class CombatProjectileWorldPart: CombatSharedPart, ProjectileWorld {
         let strikes = shared.strikes
         let strike = strikes.strike(blow, on: target)
         strikes.reportSneakAttack(strike, ranged: true)
+        strikes.countCriticalStats(strike, blow: blow, on: target)
         strikes.reportCriticalStrike(strike, blow: blow, on: target)
         let landed = damage.applyHealthDamage(
             strike.damage(base: amount), to: target, attacker: shooter, kind: .ranged

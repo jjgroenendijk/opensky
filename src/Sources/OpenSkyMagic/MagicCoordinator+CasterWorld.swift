@@ -9,6 +9,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyProgressionInterface
+import OpenSkyQuestsInterface
 import OpenSkyWorldState
 import simd
 
@@ -66,6 +67,13 @@ extension MagicCoordinator.CasterBridge {
     func spellWasCast(_ spell: ReferenceKey, by caster: ReferenceKey) {
         coordinator.world.noteSpellCast(spell, by: caster)
         coordinator.archetypeActions.breakInvisibility(of: caster)
+        if
+            caster == .player,
+            let type = coordinator.caster?.spellbook.spells.spell(key: spell)?.spellType,
+            MagicCoordinator.countsForFavoriteSpell(type)
+        {
+            coordinator.noteFavoriteUse(.spell, of: spell)
+        }
         guard caster == .player, let storyEvents = coordinator.storyEvents else { return }
         storyEvents.reportStoryEvent(.castMagic(
             caster: caster,

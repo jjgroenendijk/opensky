@@ -53,7 +53,13 @@ extension MagicCoordinator.ShoutReadout {
         coordinator.effects?.values.addModifier(-1, to: .permanent, at: index, on: .player)
         coordinator.world.changeShoutKnowledge(.unlockWord(word))
         let name = resolved.words[unlocked].wordName
-        return coordinator.shoutVoice.noteShout(.unlocked(word: name, soulsLeft: dragonSouls))
+        let mastered = !words[(unlocked + 1)...].contains { $0 != nil }
+        if mastered {
+            coordinator.incrementStat("Shouts Mastered")
+        }
+        return coordinator.shoutVoice.noteShout(
+            .unlocked(word: name, soulsLeft: dragonSouls, mastered: mastered)
+        )
     }
 
     var dragonSouls: Int {

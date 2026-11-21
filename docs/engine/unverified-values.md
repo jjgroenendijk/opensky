@@ -349,3 +349,6 @@ the detail and the sources it did find.
 | Spell card numbers | A whole number shows no decimals; any other shows up to two | [magic](/engine/magic.md#magic-menu) |
 | Spell card `castTime` | 1 for a spell that is not concentration; the movie only tests for 0 | [magic](/engine/magic.md#magic-menu) |
 | Loading screen image space | A loading screen draws through `LSIS`, as the main menu does; the name says so, but only the main menu was read. The world's modifiers and screen fade are left out | [loading screens](/engine/loading-screens.md#image-space) |
+| Favourite tie | Two forms used as often: the one used last wins; the game leaves the order open | [general stats](/engine/statistics.md#how-opensky-counts) |
+| Favourite weapon uses | Each melee swing and bow or crossbow shot; staves and scrolls do not count | [general stats](/engine/statistics.md#how-opensky-counts) |
+| Shouts Learned | A taught word counts for a shout the player could not use before; the game's "adds a shout" check is read that way | [general stats](/engine/statistics.md#how-opensky-counts) |

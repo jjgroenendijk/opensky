@@ -139,6 +139,7 @@ nonisolated public struct CellProviderIndexes {
         let relationships: RelationshipStore
         let formLists: FormListStore
         let encounterZones: EncounterZoneStore
+        let miscStatSources: MiscStatSources
     }
 
     /// Owns the builder, which never reaches the main actor.
@@ -210,6 +211,7 @@ nonisolated public struct CellProviderIndexes {
         stores.rules.cellResetSettings = tuning.cellReset
         stores.rules.encounterZoneStore = records.world.encounterZones
         stores.speechCheckSettings = tuning.speechChecks
+        stores.miscStatSources = records.world.miscStatSources
         stores.gameSettings = tuning.store
         stores.mountMovementConfiguration = tuning.mountMovement
         stores.movementTypes = tuning.movementTypes

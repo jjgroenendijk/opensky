@@ -34,6 +34,7 @@ import simd
 @MainActor
 public protocol AgentFrameReadoutHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
+    var menuWorld: any MenuWorldPort { get }
     var renderControls: any WorldRenderControlsPort { get }
     var renderer: (any RendererPort)? { get }
     var runtimeState: any RuntimeStatePort { get }
@@ -59,10 +60,14 @@ extension AgentFrameReadoutAdapter {
     }
 
     /// The answer to `openskycli game state stats`: each journal stat counted so far,
-    /// by name. A stat that was never counted reads 0 and is left out.
+    /// by name, and the names the "Favorite" stats show. A stat never counted is left out.
     public func statsState() -> AgentJSON {
-        let values = game.worldState.miscStats.values.filter { $0.value != 0 }
-        return ["stats": .object(values.mapValues { AgentJSON(Int($0)) })]
+        let stats = game.worldState.miscStats
+        let values = stats.values.filter { $0.value != 0 }
+        return [
+            "stats": .object(values.mapValues { AgentJSON(Int($0)) }),
+            "favorites": .object(game.menuWorld.journalFavorites(stats).mapValues(AgentJSON.string))
+        ]
     }
 
     public func timeState() -> AgentJSON {

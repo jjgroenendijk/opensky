@@ -49,10 +49,10 @@ extension CrimeJailAdapter {
 
     public func passGameTime(days: Int) {
         guard let gameSession = game.gameSession else { return }
-        gameSession.gameClock = GameClock(
+        gameSession.gameTime.skipTime(to: GameClock(
             totalGameSeconds: gameSession.gameClock.totalGameSeconds
                 + Double(days) * GameClock.secondsPerDay
-        )
+        ))
     }
 
     var playerFeet: SIMD3<Float>? {

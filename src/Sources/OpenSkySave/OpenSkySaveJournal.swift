@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
@@ -37,6 +38,13 @@ nonisolated enum OpenSkySaveJournalWriter {
                 payload.writeString(name)
                 payload.writeUInt32(UInt32(bitPattern: value))
             }
+            for use in FavoriteUse.allCases {
+                let forms = state.recentUses[use] ?? []
+                payload.writeUInt32(UInt32(clamping: forms.count))
+                for form in forms {
+                    payload.writeKey(form)
+                }
+            }
         }
     }
 
@@ -69,7 +77,18 @@ nonisolated extension OpenSkySaveStoryDecoder {
                 let name = try reader.string("MSTS stat name")
                 values[name] = try Int32(bitPattern: reader.uint32("MSTS stat value"))
             }
-            return MiscStatsState(values: values)
+            var uses: [FavoriteUse: [ReferenceKey]] = [:]
+            for use in FavoriteUse.allCases {
+                let forms = try reader.uint32("MSTS recent use count")
+                try SaveCountCheck.validate(
+                    count: forms, minimumElementSize: OpenSkySaveFormat.minimumSpellbookKeySize,
+                    remaining: reader.bytesRemaining, chunk: tag
+                )
+                uses[use] = try (0 ..< forms).map { _ in
+                    try OpenSkySaveEntryDecoder.decodeKey(&reader)
+                }
+            }
+            return MiscStatsState(values: values, recentUses: uses.filter { !$0.value.isEmpty })
         }
     }
 

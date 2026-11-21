@@ -8,6 +8,7 @@ import OpenSkyActorsInterface
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -82,6 +83,7 @@ extension PapyrusWorldStateBridge.ActorValueCalls {
         else {
             return nil
         }
+        let before = values.value(at: index, on: holder)
         let written = switch write {
         case .setBase: values.setBase(at: index, to: value, on: holder)
         case .modify: values.addModifier(value, to: .permanent, at: index, on: holder)
@@ -98,11 +100,16 @@ extension PapyrusWorldStateBridge.ActorValueCalls {
             bridge.natives.actor.ragdollRuntime?()?.noteZeroHealth(of: key)
         }
         if
-            write == .modify, value > 0, key == .player,
-            index == ActorValueIdentity.index(named: "Dragon Souls"),
+            key == .player, index == ActorValueIdentity.index(named: "Dragon Souls"),
             let souls = values.value(at: index, on: holder)
         {
-            bridge.ports.presenter?.postWorldNotice(.dragonSoulAbsorbed(souls: Int(souls)))
+            if write == .modify, value > 0 {
+                bridge.ports.presenter?.postWorldNotice(.dragonSoulAbsorbed(souls: Int(souls)))
+            }
+            // Once per rise, whatever the number of souls (docs/engine/statistics.md).
+            if souls > before ?? souls {
+                bridge.worldState.incrementMiscStat("Dragon Souls Collected")
+            }
         }
         return actorState(for: key)
     }

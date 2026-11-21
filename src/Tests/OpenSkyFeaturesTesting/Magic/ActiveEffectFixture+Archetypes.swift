@@ -31,6 +31,7 @@ extension ActiveEffectFixture {
         /// The `NPC_` the summon effect names.
         public static let summonedActor: UInt32 = 0x44
         public static let light: UInt32 = 0x45
+        public static let disarm: UInt32 = 0x46
         /// `Ward Power` in the vanilla actor-value table.
         public static let wardPower: Int32 = 63
     }
@@ -78,6 +79,7 @@ extension ActiveEffectFixture {
                 flags: [.recover], archetype: 32, value: Archetype.wardPower
             ),
             ArchetypeSpec(formID: Archetype.stagger, editorID: "Stagger", flags: [], archetype: 33),
+            ArchetypeSpec(formID: Archetype.disarm, editorID: "Disarm", flags: [], archetype: 9),
             ArchetypeSpec(
                 formID: Archetype.spawnHazard, editorID: "SpawnHazard",
                 flags: [], archetype: 40, item: Archetype.hazard

@@ -75,11 +75,12 @@ struct CraftingDeskWitnessTests {
     @Test func shoutRowsReachTheShoutList() {
         let screens = MenuScreensWorldAdapter(game: host)
         let menu = host.fakeMagic.magicMenu
-        menu.unlockShoutResult = "Unlocked"
+        menu.unlockShoutResult = ShoutUnlockReply(text: "Unlocked")
         host.fakeMapWorld.settingTextsResult = GameSettingTexts<ShoutMenuText>.vanilla
         #expect(screens.shoutUnlockStep(at: 0) == nil)
         #expect(screens.shoutUnlockStep(at: MenuScreensGiftListsAdapter.shoutTagBase) == nil)
-        #expect(screens.unlockShout(at: MenuScreensGiftListsAdapter.shoutTagBase) == "Unlocked")
+        #expect(screens.unlockShout(at: MenuScreensGiftListsAdapter.shoutTagBase)
+            .text == "Unlocked")
         #expect(screens.giftRefusal(FormID(1), actor: .player, giving: false) == nil)
     }
 }

@@ -190,8 +190,9 @@ final class JournalMenuController {
                 self?.game.mapMenu.showQuestTarget(quest: quest, objective: objective)
             }
         )
-        let stats = JournalStatRow.rows(game.worldState.miscStats)
-        QuestJournalMovieBridge.publishStats(stats, runtime: runtime)
+        let stats = game.worldState.miscStats
+        let rows = JournalStatRow.rows(stats, favorites: game.menuWorld.journalFavorites(stats))
+        QuestJournalMovieBridge.publishStats(rows, runtime: runtime)
     }
 }
 

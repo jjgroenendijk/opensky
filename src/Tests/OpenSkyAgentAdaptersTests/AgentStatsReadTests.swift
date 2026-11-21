@@ -14,6 +14,7 @@ struct AgentStatsReadTests {
         host.fakeWorldState.miscStatsValue = MiscStatsState(
             values: ["Locks Picked": 3, "Barters": 0]
         )
+        host.fakeMenuWorld.journalFavoritesResult = ["Favorite Shout": "Unrelenting Force"]
         let world = AgentWorldAdapter(game: host, now: { Date(timeIntervalSinceReferenceDate: 0) })
         let args = AgentArguments(command: "state.stats", values: [:])
         #expect(try AgentStateQuery.parse("stats", args) == .stats)
@@ -22,5 +23,6 @@ struct AgentStatsReadTests {
             return
         }
         #expect(state["stats"] == ["Locks Picked": .init(3)])
+        #expect(state["favorites"] == ["Favorite Shout": "Unrelenting Force"])
     }
 }

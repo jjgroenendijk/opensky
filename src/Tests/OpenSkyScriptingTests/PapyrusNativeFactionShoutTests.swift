@@ -96,4 +96,19 @@ struct PapyrusNativeFactionShoutTests {
         #expect(call(fixture, "Actor", "RemoveShout", [.object(word)], returnType: .boolean)
             == .returned(.boolean(false)))
     }
+
+    /// docs/engine/statistics.md, Shouts: the stats a one-word shout's word raises.
+    @Test func teachingAndUnlockingAShoutsOnlyWordCountsTheShout() throws {
+        let fixture = try Fixture.make()
+        let menus = FakeMenuBridge()
+        let word = Fixture.key(Fixture.doorID)
+        menus.wordSlots = [Fixture.key(Fixture.leverID): [word, nil, nil]]
+        fixture.session.bridge.ports.menus = menus
+        _ = call(fixture, "Game", "TeachWord", [.object(fixture.handle(Fixture.doorID))])
+        _ = call(fixture, "Game", "UnlockWord", [.object(fixture.handle(Fixture.doorID))])
+        #expect(fixture.session.worldState.miscStats.values == [
+            "Words Of Power Learned": 1, "Shouts Learned": 1,
+            "Words Of Power Unlocked": 1, "Shouts Unlocked": 1, "Shouts Mastered": 1
+        ])
+    }
 }

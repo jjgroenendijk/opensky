@@ -24,6 +24,8 @@ public enum AssetDrain: Int, FramePhase {
 public enum WorldTickStep: Int, FramePhase {
     /// Before scripts, so the Survival Mode plugin sees the answer before it asks.
     case survivalMode
+    /// After the clock moved, so a day that passed this frame counts this frame.
+    case miscStats
     case scripts
     /// Magic effects write through actor values, so these come first.
     case actorValues

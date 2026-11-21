@@ -34,6 +34,7 @@ final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
     private(set) var perkQuestions: [PerkEntryPoint: PerkEvaluationSubjects] = [:]
     private(set) var spellHits: [SpellHit] = []
     var healths: [ReferenceKey: (current: Float, maximum: Float)] = [:]
+    var perkEntriesOwned: Set<PerkEntryPoint> = []
     var equipped: [ReferenceKey: [(item: FormID, temperLevel: Int32)]] = [:]
     var leftHands: [ReferenceKey: LeftHandHold] = [:]
     var unkillable: Set<ReferenceKey> = []
@@ -124,6 +125,10 @@ final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
         }
         guard let spell = perkSpells[entryPoint] else { return [] }
         return [PerkEntryPointChoice(spell: spell)]
+    }
+
+    func ownsPerkEntry(at entryPoint: PerkEntryPoint, on _: ReferenceKey) -> Bool {
+        perkEntriesOwned.contains(entryPoint)
     }
 
     func health(of key: ReferenceKey) -> (current: Float, maximum: Float)? {

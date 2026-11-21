@@ -94,7 +94,7 @@ protocol SessionPortSet:
     ProgressionTrainingHost, ProgressionEffectsHost, MapRecordsHost, MapTravelHost, MapQuestsHost,
     DialogueCameraFocusHost, DialogueSpeakersHost, DialogueOutcomesHost, InventoryReadoutsHost,
     InventoryPickpocketHost, InventoryPerksHost, InventoryRecipesHost, InventoryVendorHost,
-    InventoryCommandsHost {}
+    InventoryCommandsHost, MiscStatsDaysHost {}
 
 /// The parts of the session scope that take more than one line to build.
 protocol GameSessionParts {

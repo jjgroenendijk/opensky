@@ -22,3 +22,18 @@ nonisolated public enum ShoutUnlockStep: Equatable, Sendable {
     case ask(String)
     case refuse(String)
 }
+
+/// What spending a dragon soul did: its outcome text, and the sound the menu plays.
+nonisolated public struct ShoutUnlockReply: Equatable, Sendable {
+    public static let learnAllSound = "UIShoutLearnAll"
+    public static let learnSingleSound = "UIShoutLearnSingle"
+
+    public var text: String
+    /// Nil when no word was unlocked.
+    public var sound: String?
+
+    public init(text: String, sound: String? = nil) {
+        self.text = text
+        self.sound = sound
+    }
+}

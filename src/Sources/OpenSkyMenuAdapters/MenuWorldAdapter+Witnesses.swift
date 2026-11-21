@@ -14,6 +14,7 @@ public import OpenSkyMenus
 public import OpenSkyMenusInterface
 import OpenSkyPlayer
 public import OpenSkyProgressionInterface
+public import OpenSkyQuestsInterface
 public import OpenSkyRenderCore
 public import OpenSkyRendering
 public import OpenSkySaveInterface
@@ -215,6 +216,14 @@ extension MenuWorldAdapter {
 
     public func recordShouts(ofBase base: FormID) -> [ReferenceKey] {
         scriptMenus.recordShouts(ofBase: base)
+    }
+
+    public func shoutWordSlots() -> [ReferenceKey: [ReferenceKey?]] {
+        scriptMenus.shoutWordSlots()
+    }
+
+    public func journalFavorites(_ stats: MiscStatsState) -> [String: String] {
+        scriptMenus.journalFavorites(stats)
     }
 
     public func voiceType(ofBase base: FormID) -> FormID? {

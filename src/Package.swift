@@ -1310,7 +1310,8 @@ targets += composition(
         "OpenSkyDialogueInterface", "OpenSkyFormatsESM", "OpenSkyFormatsTesting", "OpenSkyGameData",
         "OpenSkyInventoryInterface",
         "OpenSkyMagicInterface", "OpenSkyPerceptionInterface",
-        "OpenSkyPhysics", "OpenSkyProgressionInterface", "OpenSkyRenderCore", "OpenSkyRendering",
+        "OpenSkyPhysics", "OpenSkyProgressionInterface", "OpenSkyQuestsInterface",
+        "OpenSkyRenderCore", "OpenSkyRendering", "OpenSkyScriptingInterface",
         "OpenSkySessionInterface", "OpenSkySessionTesting", "OpenSkyWorldInterface",
         "OpenSkyWorldState"
     ]
@@ -1386,7 +1387,7 @@ targets += composition(
         "OpenSkyInventoryInterface", "OpenSkyLaunch", "OpenSkyLoading", "OpenSkyMagicInterface",
         "OpenSkyMenus",
         "OpenSkyMenusInterface", "OpenSkyPlayer", "OpenSkyProgressionInterface",
-        "OpenSkyRenderCore",
+        "OpenSkyQuestsInterface", "OpenSkyRenderCore",
         "OpenSkyRendering", "OpenSkySessionInterface", "OpenSkySessionTesting",
         "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
@@ -1481,8 +1482,8 @@ targets += composition(
     tests: [
         "OpenSkyActorsInterface", "OpenSkyCombatInterface", "OpenSkyConditions", "OpenSkyCrime",
         "OpenSkyCrimeInterface", "OpenSkyDialogue", "OpenSkyDialogueInterface",
-        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsTesting", "OpenSkyGameData",
-        "OpenSkyMenusInterface",
+        "OpenSkyEngineTesting", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsTesting",
+        "OpenSkyGameData", "OpenSkyMenusInterface",
         "OpenSkyPhysics", "OpenSkyQuests", "OpenSkyQuestsInterface", "OpenSkyRendering",
         "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkySessionTesting",
         "OpenSkyWorldInterface", "OpenSkyWorldState"

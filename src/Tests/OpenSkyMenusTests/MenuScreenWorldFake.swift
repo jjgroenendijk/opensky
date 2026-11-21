@@ -123,9 +123,9 @@ extension FakeMenuScreenWorld: MagicMenuWorld, GiftMenuWorld, CraftingMenuWorld,
         shoutSteps[index]
     }
 
-    func unlockShout(at index: Int) -> String {
+    func unlockShout(at index: Int) -> ShoutUnlockReply {
         actions.append("unlock \(index)")
-        return "Unlocked"
+        return ShoutUnlockReply(text: "Unlocked", sound: ShoutUnlockReply.learnSingleSound)
     }
 
     func giftCategories(actor: ReferenceKey, request: GiftMenuRequest) -> [ItemListCategory] {

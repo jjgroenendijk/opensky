@@ -66,7 +66,7 @@ extension MagicCoordinator.ArchetypeActions {
         case (.boundWeapon, .ended):
             dismissBoundWeapon(action)
         case (.disarm, .began):
-            disarm(action.target)
+            disarm(action.target, by: action.caster)
         case (.summon, _), (.reanimate, _):
             coordinator.summonCommands.performCommanding(action)
         case (.detectLife, .began), (.telekinesis, .began), (.grabActor, .began),
@@ -125,7 +125,7 @@ extension MagicCoordinator.ArchetypeActions {
 
     /// Unequips every weapon `target` holds. The weapon stays in the inventory,
     /// because nothing can drop an actor's item to the ground yet.
-    private func disarm(_ target: ActorValueHolder) {
+    private func disarm(_ target: ActorValueHolder, by caster: ReferenceKey?) {
         guard
             let inventory = coordinator.world.inventory,
             let equipment = coordinator.world.equipment else { return }
@@ -140,6 +140,9 @@ extension MagicCoordinator.ArchetypeActions {
         if unequipped, case .player = target.subject {
             coordinator.pendingCommands
                 .append(.notice(coordinator.texts.castNotices[.playerDisarmed]))
+        }
+        if unequipped, caster == .player {
+            coordinator.incrementStat("Weapons Disarmed")
         }
     }
 

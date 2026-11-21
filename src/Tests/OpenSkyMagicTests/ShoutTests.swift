@@ -12,6 +12,7 @@ import OpenSkyFormatsTesting
 import OpenSkyMagicFixtures
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
+import OpenSkyQuestsInterface
 import Testing
 
 @MainActor
@@ -47,12 +48,21 @@ struct ShoutTests {
     }
 
     private func session(allowed: Bool = true) throws -> Session {
-        let file = try ShoutPluginFixture.plugin()
         let world = FakeMagicWorld()
         world.perkValues[.modShoutOK] = allowed ? 1 : 0
+        let data = try sessionData()
+        let coordinator = MagicCoordinator(world: world, data: data)
+        let shout = try #require(coordinator.shouts.keys.first)
+        coordinator.shoutReadout.learnShout(shout)
+        coordinator.shoutReadout.equipShout(shout)
+        return Session(coordinator: coordinator, world: world, shout: shout)
+    }
+
+    private func sessionData(souls: Float? = nil) throws -> MagicSessionData {
+        let file = try ShoutPluginFixture.plugin()
         var data = MagicSessionData()
         data.effects = MagicEffectsData(
-            values: FixedActorValues(),
+            values: FixedActorValues(indexedValue: souls),
             store: MagicEffectStore(plugins: [(Self.plugin, file)]),
             pluginName: Self.plugin,
             conditionRegistry: ConditionFunctionRegistry()
@@ -62,11 +72,7 @@ struct ShoutTests {
             spellPluginName: Self.plugin, baselines: nil
         )
         data.shouts = ShoutStore(plugins: [(Self.plugin, file)])
-        let coordinator = MagicCoordinator(world: world, data: data)
-        let shout = try #require(coordinator.shouts.keys.first)
-        coordinator.shoutReadout.learnShout(shout)
-        coordinator.shoutReadout.equipShout(shout)
-        return Session(coordinator: coordinator, world: world, shout: shout)
+        return data
     }
 
     private func spell(_ id: UInt32) -> ReferenceKey {
@@ -170,7 +176,7 @@ struct ShoutTests {
         #expect(menu.readyShout(at: 0, texts: .vanilla).hasPrefix("Equipped"))
         #expect(menu.readyShout(at: 9, texts: .vanilla) == "No shout selected.")
         #expect(menu.shoutUnlockStep(at: 9, texts: .vanilla) == nil)
-        #expect(menu.unlockShout(at: 9) == "No shout selected.")
+        #expect(menu.unlockShout(at: 9).text == "No shout selected.")
     }
 
     /// The card lists each word in dragon letters and translated, and the recharge of the
@@ -204,6 +210,44 @@ struct ShoutTests {
         let menu = coordinator.magicMenu
         let texts = GameSettingTexts<ShoutMenuText>.vanilla
         #expect(menu.shoutUnlockStep(at: 0, texts: texts) == .refuse(texts[.failSpendSoul]))
-        #expect(menu.unlockShout(at: 0).contains("noDragonSoul"))
+        #expect(menu.unlockShout(at: 0).text.contains("noDragonSoul"))
+    }
+
+    /// docs/engine/statistics.md, Shouts: the soul that fills the last word masters it.
+    @Test func theLastUnlockedWordMastersTheShoutAndPlaysLearnAll() throws {
+        let trial = try session()
+        let world = FakeMagicWorld()
+        let fresh = try MagicCoordinator(world: world, data: sessionData(souls: 5))
+        world.changeShoutKnowledge(.addShout(trial.shout))
+        for word in [ShoutPluginFixture.Form.word1, ShoutPluginFixture.Form.word2] {
+            world.changeShoutKnowledge(.teachWord(.plugin(
+                name: Self.plugin.lowercased(), objectID: word
+            )))
+        }
+        let menu = fresh.magicMenu
+        let first = menu.unlockShout(at: 0)
+        let last = menu.unlockShout(at: 0)
+        #expect(first.sound == ShoutUnlockReply.learnSingleSound)
+        #expect(last.sound == ShoutUnlockReply.learnAllSound)
+        #expect(fresh.effects?.store.miscStats.value("Shouts Mastered") == 1)
+    }
+
+    /// docs/engine/statistics.md, Favourites: the Stats page names the most used.
+    @Test func aShoutJoinsTheFavouritesAndTheStatsPageNamesIt() throws {
+        var trial = try session()
+        _ = trial.shout(holding: Self.frame)
+        let store = try #require(trial.coordinator.effects?.store)
+        #expect(store.miscStats.recentUses[.shout] == [trial.shout])
+
+        let bolt = ReferenceKey.plugin(
+            name: SpellbookFixture.pluginName.lowercased(),
+            objectID: SpellbookFixture.Spell.firebolt
+        )
+        var stats = store.miscStats
+        stats.noteUse(.spell, of: bolt)
+        let texts = trial.coordinator.magicMenu.favoriteTexts(stats)
+        #expect(texts["Favorite Shout"] == "Fire Breath")
+        #expect(texts["Favorite Spell"] != nil)
+        #expect(texts["Favorite School"] == "Destruction")
     }
 }

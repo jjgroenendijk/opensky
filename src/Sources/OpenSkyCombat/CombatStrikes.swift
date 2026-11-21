@@ -78,6 +78,23 @@ extension CombatShared {
             )
         }
 
+        /// The player's hit on another living actor counts its critical and sneak events.
+        func countCriticalStats(_ strike: WeaponStrike, blow: CombatBlow, on target: ReferenceKey) {
+            guard
+                blow.attacker == .player, target != .player,
+                (shared.world.health(of: target)?.current ?? 0) > 0
+            else { return }
+            let stats = CriticalHitStats.stats(
+                critical: strike.isCritical, sneakAttack: strike.isSneakAttack,
+                handType: blow.handType,
+                ownsSneakAttackPerk: shared.world.ownsPerkEntry(
+                    at: .modSneakAttackMult,
+                    on: .player
+                )
+            )
+            shared.pendingCommands.append(contentsOf: stats.map(CombatCommand.incrementStat))
+        }
+
         /// The blow before the block, so a stronger hit costs more to stop.
         func applyBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey) {
             let incoming = damage.strike.damage(base: damage.base, attack: damage.attackMultiplier)

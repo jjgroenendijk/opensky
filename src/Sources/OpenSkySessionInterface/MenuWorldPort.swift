@@ -1,6 +1,7 @@
 public import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 public import OpenSkyFormatsESM
+public import OpenSkyQuestsInterface
 public import OpenSkySaveInterface
 public import OpenSkyScriptingInterface
 
@@ -18,4 +19,6 @@ public protocol MenuWorldPort: AnyObject, PapyrusMenuBridge {
     func startNewGame(_ request: AgentNewGameRequest) throws(AgentFailure)
     /// The last new game started at a chosen place; nil before the first.
     var lastNewGame: AgentNewGameRequest? { get }
+    /// The names the journal's "Favorite" stats show, by stat name.
+    func journalFavorites(_ stats: MiscStatsState) -> [String: String]
 }

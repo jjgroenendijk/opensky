@@ -3,6 +3,7 @@ public import OpenSkyGameData
 public import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
 public import OpenSkyProgressionInterface
+public import OpenSkyQuestsInterface
 
 /// What the world adapters use of `MagicCoordinator`.
 public protocol MagicPort: AnyObject {
@@ -138,6 +139,8 @@ public protocol MagicMenuLinesPort {
 
 /// What the Magic menu lists.
 public protocol MagicMenuListPort {
+    /// The text of each magic "Favorite" stat the player has a use for, by stat name.
+    func favoriteTexts(_ stats: MiscStatsState) -> [String: String]
     var isPlayerTakingHealthDamage: Bool { get }
     var magicMenuSpells: [MagicMenuSpell] { get }
     /// The tab titles in the menu's order.
@@ -147,7 +150,7 @@ public protocol MagicMenuListPort {
     var magicMenuShouts: [MagicMenuSpell] { get }
     func readyShout(at index: Int, texts: GameSettingTexts<ShoutMenuText>) -> String
     func shoutUnlockStep(at index: Int, texts: GameSettingTexts<ShoutMenuText>) -> ShoutUnlockStep?
-    func unlockShout(at index: Int) -> String
+    func unlockShout(at index: Int) -> ShoutUnlockReply
 }
 
 /// Effects that act on the world when a spell or a weapon lands.
