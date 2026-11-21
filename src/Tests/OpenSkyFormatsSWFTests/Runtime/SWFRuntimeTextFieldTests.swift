@@ -76,12 +76,15 @@ struct SWFRuntimeTextFieldTests {
         #expect(runtime.hitTest(stageTwips: SIMD2(170 * 20, 50 * 20)).topmost !== field)
     }
 
-    /// DefineEditText `NoSelect` clear means selectable, as Flash reports it.
+    /// DefineEditText `NoSelect` clear means selectable and `Border` clear means no border,
+    /// as Flash reports them.
     @Test func aFieldIsSelectableUnlessItsCharacterSaysNot() throws {
         let runtime = try SWFRuntimeFixture.started(tags: SWFRuntimeFixture.classMovieTags())
         let field = try createdField(runtime)
         #expect(runtime.member("selectable", of: field) == .boolean(true))
         #expect(runtime.member("selectable", of: runtime.root) == nil)
+        #expect(runtime.member("border", of: field) == .boolean(false))
+        #expect(runtime.member("border", of: runtime.root) == nil)
     }
 
     @Test func theNewTextFormatCallsAnswer() throws {

@@ -149,7 +149,16 @@ nonisolated public final class AS2Runtime {
     /// A name the movie read and nothing answered: a runtime gap when Flash defines the
     /// name, else a value the movie never set.
     public func noteUnanswered(_ name: String) {
-        if AS2FlashNames.isDefined(name) {
+        noteUnanswered(name, defined: AS2FlashNames.isDefined(name))
+    }
+
+    /// A member a movie clip or text field did not answer, judged by that class's members.
+    func noteUnansweredMember(_ name: String, onMovieClip: Bool) {
+        noteUnanswered(name, defined: AS2FlashNames.isDefined(name, onMovieClip: onMovieClip))
+    }
+
+    private func noteUnanswered(_ name: String, defined: Bool) {
+        if defined {
             tally.noteMissing(name)
         } else {
             tally.noteUnset(name)

@@ -73,6 +73,18 @@ struct SWFRuntimeControllerTests {
         #expect(runtime.tally.unsetNames["unknownChild"] == 1)
     }
 
+    /// A list reads its `border` child clip before it exists. `border` is a text field
+    /// member, so on a movie clip Flash answers `undefined` and the miss is no runtime gap.
+    @Test func aTextFieldMemberReadOnAClipIsUnset() throws {
+        let runtime = try started(readMember("border") + readMember("htmlText"))
+        #expect(runtime.tally.missingNames["border"] == nil)
+        #expect(runtime.tally.unsetNames["border"] == 1)
+        #expect(runtime.tally.unsetNames["htmlText"] == 1)
+        #expect(AS2FlashNames.isDefined("border", onMovieClip: false))
+        #expect(!AS2FlashNames.isDefined("gotoAndStop", onMovieClip: false))
+        #expect(AS2FlashNames.isDefined("gotoAndStop", onMovieClip: true))
+    }
+
     /// Read both as a bare variable and as a `_global` member, as the class preambles do.
     @Test func unsetGlobalsAreUndefinedWithoutATally() throws {
         let names = SWFMovieRuntime.unsetGlobals.sorted() + ["UnknownPackage"]

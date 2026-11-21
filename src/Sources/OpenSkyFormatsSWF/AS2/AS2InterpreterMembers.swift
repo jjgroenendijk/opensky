@@ -148,6 +148,10 @@ nonisolated extension AS2Interpreter {
         guard demanded else {
             return
         }
-        runtime.noteUnanswered(name)
+        guard object.isHostBacked else {
+            runtime.noteUnanswered(name)
+            return
+        }
+        runtime.noteUnansweredMember(name, onMovieClip: object.typeName == "movieclip")
     }
 }

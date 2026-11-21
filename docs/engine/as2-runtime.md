@@ -210,6 +210,10 @@ A read that nothing answers goes to one of two tables:
   already counted.
 
 `AS2FlashNames` lists the names Flash defines: the global classes and functions, the members of
-movie clips, text fields, and buttons, and the methods of the native classes. The lists come
+movie clips, text fields, and buttons, and the methods of the native classes. A member read on a
+movie clip or a text field is judged by that class: a movie clip has no text field members, and a
+text field has no movie clip members. Example: `_totalframes` read on a text field is a name the
+movie never set, as in Flash. A text field's `border` comes from its DefineEditText `Border`
+flag. The lists come
 from the Adobe "ActionScript 2.0 Language Reference" and the Scaleform "GFx AS2 Extensions
 Reference".
