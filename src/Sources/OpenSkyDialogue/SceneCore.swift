@@ -47,12 +47,18 @@ public enum SceneCore {
             "phase \(phase + 1) done by \(byConditions ? "conditions" : "actions")"
         case let .fragment(name): "fragment \(name)"
         case let .fragmentUnrun(name): "fragment \(name) not run"
+        case let .ended(reason): "ended (\(text(reason: reason)))"
+        default: flowText(step) ?? actionText(step)
+        }
+    }
+
+    private static func flowText(_ step: SceneStep) -> String? {
+        switch step {
         case .repeated: "repeated"
         case .waitingForActors: "waiting for actors in another scene"
         case .paused: "paused by an actor"
         case .resumed: "resumed"
-        case let .ended(reason): "ended (\(text(reason: reason)))"
-        default: actionText(step)
+        default: nil
         }
     }
 
@@ -68,7 +74,15 @@ public enum SceneCore {
         case let .emptyAlias(action): "action \(action): actor alias empty"
         case let .actorUnavailable(action): "action \(action): actor dead or busy"
         case let .unsupportedAction(action, type): "action \(action): type \(type) not run"
+        default: waitText(step)
+        }
+    }
+
+    private static func waitText(_ step: SceneStep) -> String {
+        switch step {
         case .waitingForConversation: "waiting for its conversation partners or its turn"
+        case .waitingForPartners: "waiting for its partners to meet"
+        case let .turningToListener(action): "action \(action): speaker turns to the listener"
         default: ""
         }
     }

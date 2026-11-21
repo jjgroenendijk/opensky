@@ -84,6 +84,34 @@ extension SceneRuntime.Playback {
         }
     }
 
+    /// False while the speaker still turns to its listener: the look target of the
+    /// line, else the other partner of a conversation scene. The wait has a limit.
+    private mutating func speakerFaces(_ index: UInt32, _ line: SceneLine) -> Bool {
+        let lines = runtime.pendingLines
+        let listener = line.lookAt ?? conversationPartner(of: line.speaker)
+        guard
+            let listener, listener != line.speaker,
+            runtime.host?.sceneSpeakerFaces(line.speaker, listener) == false
+        else {
+            lines.facingSince[owner(index)] = nil
+            return true
+        }
+        guard let since = lines.facingSince[owner(index)] else {
+            lines.facingSince[owner(index)] = runtime.now
+            note(.turningToListener(index))
+            return false
+        }
+        guard runtime.now - since > SceneRuntime.facingSeconds else { return false }
+        lines.facingSince[owner(index)] = nil
+        return true
+    }
+
+    private func conversationPartner(of speaker: ReferenceKey) -> ReferenceKey? {
+        guard entry.isConversation else { return nil }
+        return runtime.filledActors(of: entry).prefix(2).map(\.reference)
+            .first { $0 != speaker }
+    }
+
     /// Starts the line's clock once its length is known, so the next line starts
     /// when this one ends: no overlap and no gap.
     private mutating func startLineClock(_ index: UInt32) {
@@ -91,6 +119,7 @@ extension SceneRuntime.Playback {
             complete(index)
             return
         }
+        guard speakerFaces(index, line) else { return }
         let seconds: Float? = if
             let host = runtime.host,
             let info = runtime.dialogue.dialogue.info(line.info)

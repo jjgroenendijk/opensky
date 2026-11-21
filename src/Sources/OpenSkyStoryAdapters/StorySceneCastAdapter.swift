@@ -88,6 +88,12 @@ extension StorySceneCastAdapter {
         return status
     }
 
+    public func conversationPartnersMeet(_ speaker: ReferenceKey, _ partner: ReferenceKey) -> Bool {
+        game.storyManager.social.meetForScene(
+            speaker: speaker, partner: partner, now: sceneSeconds
+        )
+    }
+
     public func stopQuest(_ quest: FormID) {
         guard
             let runtime = (game.scripts.bridge?.questRuntime as? QuestRuntime),

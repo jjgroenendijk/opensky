@@ -319,9 +319,22 @@ ends, and shows all text. Each line sits in its own phase, and the next phase st
 line ends. A voiced line gets 0.25 s more. No limit on the number of scenes at once was found
 beyond the one-at-a-time rule above.
 
-OpenSky differs in two points. It does not make a partner walk: the scene begins as soon as
-both partners have a loaded body and are free. And it starts the gap when the conversation
-ends ([unverified values](/engine/unverified-values.md)).
+In OpenSky, a conversation scene whose partners are loaded and free asks the
+[social pass](/engine/random-conversations.md#walking-together) to bring them together. The first
+partner walks to the second, by the same distances as after an `ADIA` event, and the scene
+begins when they stand together. Before each line of any scene, the speaker turns to its
+listener: the action's look target, or the other partner of a conversation scene. The line
+starts within 20 degrees, or 80 degrees while the speaker walks. The trace of
+`openskycli game state scenes` shows "waiting for its partners to meet" and "speaker turns to
+the listener".
+
+OpenSky differs in these points:
+
+- It tests and turns the body, where the game tests the head.
+- One pair walks together at a time. A pair that has not met after 30 seconds gives its turn to
+  another scene and tries again 60 seconds later. A line waits at most 3 seconds for its speaker
+  to turn. These times are OpenSky's choices ([unverified values](/engine/unverified-values.md)).
+- It starts the gap when the conversation ends.
 
 For example, `RiftenGrandPlazaScene30` starts with its quest at the start of the game. From
 Riverwood both speakers are unloaded, so it waits. When the player walks into the Riften

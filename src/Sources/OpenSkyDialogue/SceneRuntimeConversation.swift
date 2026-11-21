@@ -9,6 +9,13 @@ import OpenSkyWorldState
 
 @MainActor
 extension SceneRuntime {
+    /// How long a pair may take to meet, and how long its scene then waits before it
+    /// tries again. OpenSky's choices (docs/engine/unverified-values.md).
+    static let meetingSeconds: Double = 30
+    static let meetingRetrySeconds: Double = 60
+    /// How long a line waits for its speaker to face the listener. OpenSky's choice.
+    static let facingSeconds: Double = 3
+
     /// The conversation scene that has begun, other than `scene`.
     func playingConversation(except scene: FormID) -> CatalogScene? {
         playingScenes().first { other in
@@ -38,18 +45,53 @@ extension SceneRuntime.Playback {
         }
         let free = runtime.playingConversation(except: entry.formID) == nil
             && runtime.now >= runtime.pendingLines.conversationFreeAt
-        guard ready, free else {
+        if !ready, runtime.pendingLines.meeting?.scene == entry.formID {
+            runtime.pendingLines.meeting = nil
+        }
+        guard ready, free, mayMeet() else {
             // Noted once, at the start call, so ticks do not flood the trace.
             if isNew {
                 note(.waitingForConversation)
             }
             return false
         }
-        return true
+        return partnersMet(partners[0], partners[1])
+    }
+
+    /// One pair walks together at a time, and a pair that did not meet waits its turn.
+    private func mayMeet() -> Bool {
+        let lines = runtime.pendingLines
+        if let meeting = lines.meeting, meeting.scene != entry.formID {
+            return false
+        }
+        return runtime.now >= (lines.meetingRetryAt[entry.formID] ?? 0)
+    }
+
+    /// False while one partner still walks to the other. A pair that does not meet
+    /// in `meetingSeconds` gives its turn to another scene.
+    private mutating func partnersMet(_ speaker: ReferenceKey, _ partner: ReferenceKey) -> Bool {
+        let lines = runtime.pendingLines
+        if runtime.host?.conversationPartnersMeet(speaker, partner) != false {
+            lines.meeting = nil
+            return true
+        }
+        guard let meeting = lines.meeting else {
+            lines.meeting = (entry.formID, runtime.now)
+            note(.waitingForPartners)
+            return false
+        }
+        if runtime.now - meeting.since > SceneRuntime.meetingSeconds {
+            lines.meeting = nil
+            lines.meetingRetryAt[entry.formID] = runtime.now + SceneRuntime.meetingRetrySeconds
+        }
+        return false
     }
 
     /// Starts the gap before the next conversation scene, when this one had begun.
     func endConversation() {
+        if runtime.pendingLines.meeting?.scene == entry.formID {
+            runtime.pendingLines.meeting = nil
+        }
         guard entry.isConversation, state.holdsActors else { return }
         let gap = Double(runtime.loopPause(runtime.conversationGap))
         runtime.pendingLines.conversationFreeAt = runtime.now + max(gap, 0)

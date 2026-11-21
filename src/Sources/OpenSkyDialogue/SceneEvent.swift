@@ -40,6 +40,10 @@ nonisolated public enum SceneStep: Equatable, Sendable {
     /// A conversation scene waits: for its two partners to be loaded and free, or for
     /// the conversation that plays now and the gap after it.
     case waitingForConversation
+    /// A conversation scene waits while one partner walks to the other.
+    case waitingForPartners
+    /// The line waits while its speaker turns to the listener.
+    case turningToListener(UInt32)
     /// An actor's behaviour flags paused the scene, for example in combat.
     case paused
     case resumed

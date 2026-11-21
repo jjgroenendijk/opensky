@@ -355,3 +355,5 @@ the detail and the sources it did find.
 | Favourite tie | Two forms used as often: the one used last wins; the game leaves the order open | [general stats](/engine/statistics.md#how-opensky-counts) |
 | Favourite weapon uses | Each melee swing and bow or crossbow shot; staves and scrolls do not count | [general stats](/engine/statistics.md#how-opensky-counts) |
 | Shouts Learned | A taught word counts for a shout the player could not use before; the game's "adds a shout" check is read that way | [general stats](/engine/statistics.md#how-opensky-counts) |
+| Conversation scene meeting | A pair may walk together for 30 s; after that its scene waits 60 s before it tries again; a meeting no scene asks for in 2 s ends | [scenes](/engine/scenes.md#conversation-scenes) |
+| Scene line facing wait | A line waits at most 3 s for its speaker to turn to the listener | [scenes](/engine/scenes.md#conversation-scenes) |
