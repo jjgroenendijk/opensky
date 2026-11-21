@@ -73,6 +73,45 @@ struct ItemListMenuSpellCardTests {
         #expect(Self.value("type", in: Self.info(root)) == .integer(0))
     }
 
+    @Test func aShoutCardSendsItsWordsAndAnEffectCardItsTime() throws {
+        let runtime = try MenuMovieCallLog.emptyRuntime()
+        let root = MenuMovieCallLog(
+            runtime: runtime, names: [InventoryMenuMovieBridge.itemCardCallback]
+        )
+        let shout = MagicMenuSpellCard(kind: .shout(words: [
+            MagicMenuShoutWord(dragon: "Fus", translation: "Force", isUnlocked: true),
+            MagicMenuShoutWord(dragon: "Ro", translation: "Balance", isUnlocked: false)
+        ]), effects: "Push", cost: 15)
+        InventoryMenuMovieBridge.publishSpellCard(
+            shout,
+            name: "Unrelenting Force",
+            runtime: runtime
+        )
+        var info = Self.info(root)
+        #expect(Self.value("type", in: info) == .integer(InventoryMenuMovieBridge.shoutType))
+        #expect(Self.value("dragonWord0", in: info) == .string("Fus"))
+        #expect(Self.value("word1", in: info) == .string("Balance"))
+        #expect(Self.value("unlocked0", in: info) == .boolean(true))
+        #expect(Self.value("unlocked1", in: info) == .boolean(false))
+        #expect(Self.value("word2", in: info) == nil)
+        #expect(Self.value("spellCost", in: info) == .integer(15))
+        #expect(Self.value("soulSpent", in: info) == nil)
+        InventoryMenuMovieBridge.publishSpellCard(
+            shout, name: "Unrelenting Force", soulSpent: true, runtime: runtime
+        )
+        #expect(Self.value("soulSpent", in: Self.info(root)) == .boolean(true))
+        let effect = MagicMenuSpellCard(kind: .activeEffect(secondsLeft: 42), effects: "Heals")
+        InventoryMenuMovieBridge.publishSpellCard(effect, name: "Restore Health", runtime: runtime)
+        info = Self.info(root)
+        #expect(
+            Self.value("type", in: info) == .integer(InventoryMenuMovieBridge.activeEffectType)
+        )
+        #expect(Self.value("timeRemaining", in: info) == .integer(42))
+        let lasting = MagicMenuSpellCard(kind: .activeEffect(secondsLeft: nil), effects: "Ward")
+        InventoryMenuMovieBridge.publishSpellCard(lasting, name: "Ward", runtime: runtime)
+        #expect(Self.value("timeRemaining", in: Self.info(root)) == .integer(0))
+    }
+
     @Test func aGiftListSendsNoCard() throws {
         let runtime = try MenuMovieCallLog.emptyRuntime()
         let root = MenuMovieCallLog(

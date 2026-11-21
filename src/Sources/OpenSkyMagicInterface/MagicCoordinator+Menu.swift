@@ -29,6 +29,11 @@ nonisolated public struct MagicMenuSpellCard: Equatable, Sendable {
         case spell
         /// A power or lesser power: no cost and no level.
         case power
+        /// A shout: its words, and `cost` holds the recharge in seconds.
+        case shout(words: [MagicMenuShoutWord])
+        /// An effect on the player, with the whole seconds it has left; nil for one with
+        /// no end.
+        case activeEffect(secondsLeft: Int?)
     }
 
     public let kind: Kind
@@ -46,5 +51,27 @@ nonisolated public struct MagicMenuSpellCard: Equatable, Sendable {
         self.cost = cost
         self.costIsPerSecond = costIsPerSecond
         self.level = level
+    }
+}
+
+/// One word of a shout as its card shows it.
+nonisolated public struct MagicMenuShoutWord: Equatable, Sendable {
+    /// The word in dragon letters, such as "Fus".
+    public let dragon: String
+    /// The word in the player's language, such as "Force".
+    public let translation: String
+    public let isUnlocked: Bool
+
+    public init(dragon: String, translation: String, isUnlocked: Bool) {
+        self.dragon = dragon
+        self.translation = translation
+        self.isUnlocked = isUnlocked
+    }
+}
+
+extension MagicMenuSpellCard {
+    /// A card with only a kind and a text, for a shout or an effect.
+    public init(kind: Kind, effects: String, cost: Int = 0) {
+        self.init(kind: kind, effects: effects, cost: cost, costIsPerSecond: false, level: "")
     }
 }

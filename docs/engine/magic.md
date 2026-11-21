@@ -286,8 +286,30 @@ The level names come from `sNoviceDisplayName`, `sApprenticeDisplayName`,
 `sJourneymanDisplayName`, `sExpertDisplayName`, and `sMasterDisplayName`: below 25 is
 Novice, below 50 Apprentice, and so on to Master at 100. The CK wiki's Magic Effect page says
 the Minimum Skill Level "governs which level the spell will display as in the user interface"
-(<https://ck.uesp.net/wiki/Magic_Effect>). A shout or active effect row has no card yet, so the
-card is hidden on those rows.
+(<https://ck.uesp.net/wiki/Magic_Effect>).
+
+A shout row sends `type` 10 (`ICT_SHOUT`). The movie goes to its `Shouts_reg` frame and reads
+these fields:
+
+| Field | Value |
+| --- | --- |
+| `word0` to `word2` | Each word in the player's language, the word's `TNAM`, such as "Force" |
+| `dragonWord0` to `dragonWord2` | Each word in dragon letters, the word's `FULL`, such as "Fus" |
+| `unlocked0` to `unlocked2` | Whether the player unlocked the word |
+| `effects` | The shout's `DESC` |
+| `spellCost` | The recharge in seconds, shown under `$RECHARGE` |
+
+The recharge is the recovery time of the last unlocked word, or of the first word when none is
+unlocked, times the player's Shout Recovery Mult. Which word the game uses is not confirmed
+([unverified values](/engine/unverified-values.md)). The movie also reads `soulSpent` on the
+card it last got: when it is true, the last unlocked word plays its `Learn` animation. After
+the player spends a dragon soul, OpenSky sends the shout's card again with `soulSpent` set.
+
+An active effect row sends `type` 11 (`ICT_ACTIVE_EFFECT`). The movie goes to its
+`ActiveEffects` frame and shows `effects` and `timeRemaining`. `effects` is the effect's
+description, filled with its running magnitude and duration as a spell's is. `timeRemaining` is
+the whole seconds left. The movie shows it in hours over 3600, in minutes over 60, and else in
+seconds (`$hour`, `$min`, `$secs`). An effect with no end sends 0, and the movie hides the time.
 
 The `effects` text is the spell's own `DESC` when it has one. Otherwise it is the `DNAM`
 description of each effect, joined with spaces. The CK wiki's Magic Effect page gives the

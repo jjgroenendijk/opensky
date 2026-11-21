@@ -66,8 +66,19 @@ public final class MagicMenuCoordinator: ItemListMenuScreen {
                 guard yes, let self, let world = self.world else { return }
                 lastResult = world.unlockShout(at: index)
                 reload()
+                playLearnedWord()
             }
             return text
+        }
+    }
+
+    /// The card again with `soulSpent`, so the movie plays the new word's `Learn` animation.
+    private func playLearnedWord() {
+        guard let row = model.selected, let card = row.spellCard else { return }
+        movie.publish { runtime in
+            InventoryMenuMovieBridge.publishSpellCard(
+                card, name: row.name, soulSpent: true, runtime: runtime
+            )
         }
     }
 }

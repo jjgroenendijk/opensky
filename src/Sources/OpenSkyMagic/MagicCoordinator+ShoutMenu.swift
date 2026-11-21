@@ -1,6 +1,7 @@
 // Shouts in the magic menu: Accept equips one, and the unlock key spends a dragon soul
 // on its next learned word after a question. See docs/engine/shouts.md#magic-menu.
 
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyMagicInterface
@@ -32,9 +33,35 @@ extension MagicCoordinator.MagicMenu {
                 isReadied: $0.key == equipped, category: texts.menuCategory(
                     of: .voice,
                     magicSkill: nil
-                )
+                ),
+                card: shoutCard(of: $0.shout)
             )
         }
+    }
+
+    /// The recharge is that of the last unlocked word, or of the first word with none
+    /// unlocked, after the player's Shout Recovery Mult (docs/engine/unverified-values.md).
+    private func shoutCard(of shout: ResolvedShout) -> MagicMenuSpellCard {
+        let voice = coordinator.shoutVoice
+        let unlocked = voice.unlockedWordCount(of: shout)
+        let words = shout.words.enumerated().map { index, word in
+            MagicMenuShoutWord(
+                dragon: word.dragonName, translation: word.word?.translationText ?? "",
+                isUnlocked: index < unlocked
+            )
+        }
+        let multiplier = ActorValueIdentity.index(named: "Shout Recovery Mult")
+            .flatMap { coordinator.effects?.values.value(at: $0, on: .player) } ?? 1
+        let recharge = shout.words.indices.contains(max(unlocked, 1) - 1)
+            ? ShoutCore.cooldown(
+                recovery: shout.words[max(unlocked, 1) - 1].entry.recoveryTime,
+                multiplier: multiplier
+            )
+            : 0
+        return MagicMenuSpellCard(
+            kind: .shout(words: words), effects: shout.descriptionText,
+            cost: Int(recharge.rounded())
+        )
     }
 
     /// Equips the shout; a shout in progress keeps the old one.

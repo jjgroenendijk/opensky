@@ -9,7 +9,7 @@ nonisolated public final class FakeMagicMenuListPort: MagicMenuListPort {
     public var isPlayerTakingHealthDamage = false
     public var magicMenuSpells: [MagicMenuSpell] = []
     public var magicMenuCategoryOrder: [String] = []
-    public var magicMenuActiveEffects: [String] = []
+    public var magicMenuActiveEffects: [MagicMenuSpell] = []
     public var magicMenuActiveEffectsTitle = ""
     public var magicMenuShouts: [MagicMenuSpell] = []
     public var readyShoutCalls: [(index: Int, texts: GameSettingTexts<ShoutMenuText>)] = []

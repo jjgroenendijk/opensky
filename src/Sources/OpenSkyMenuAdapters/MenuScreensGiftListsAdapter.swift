@@ -40,7 +40,7 @@ extension MenuScreensGiftListsAdapter {
         let shouts = menu.magicMenuShouts.enumerated().map { index, shout in
             (category: shout.category, row: ItemListRow(
                 tag: UInt32(Self.shoutTagBase + index), name: shout.name,
-                isEquipped: shout.isReadied
+                isEquipped: shout.isReadied, spellCard: shout.card
             ))
         }
         let order = menu.magicMenuCategoryOrder
@@ -48,8 +48,10 @@ extension MenuScreensGiftListsAdapter {
             let rows = (spells + shouts).filter { $0.category == title }.map(\.row)
             return rows.isEmpty ? nil : ItemListCategory(label: title, rows: rows)
         }
-        let effects = menu.magicMenuActiveEffects.enumerated().map { index, name in
-            ItemListRow(tag: UInt32(spells.count + index), name: name)
+        let effects = menu.magicMenuActiveEffects.enumerated().map { index, effect in
+            ItemListRow(
+                tag: UInt32(spells.count + index), name: effect.name, spellCard: effect.card
+            )
         }
         let effectsTab = effects.isEmpty
             ? []

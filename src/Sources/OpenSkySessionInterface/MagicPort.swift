@@ -142,7 +142,7 @@ public protocol MagicMenuListPort {
     var magicMenuSpells: [MagicMenuSpell] { get }
     /// The tab titles in the menu's order.
     var magicMenuCategoryOrder: [String] { get }
-    var magicMenuActiveEffects: [String] { get }
+    var magicMenuActiveEffects: [MagicMenuSpell] { get }
     var magicMenuActiveEffectsTitle: String { get }
     var magicMenuShouts: [MagicMenuSpell] { get }
     func readyShout(at index: Int, texts: GameSettingTexts<ShoutMenuText>) -> String

@@ -12,6 +12,8 @@ nonisolated public struct ResolvedWordOfPower: Equatable, Sendable {
     public let word: WordOfPower
     /// FULL from the plugin's string table, when the store had the tables.
     var localizedName: String?
+    /// TNAM from the plugin's string table, when the store had the tables.
+    var localizedTranslation: String?
 
     var editorID: String? {
         word.editorID
@@ -28,6 +30,17 @@ nonisolated public struct ResolvedWordOfPower: Equatable, Sendable {
         case nil: word.editorID ?? id.description
         }
     }
+
+    /// The word in the plugin's language, such as "Force"; empty when the record has none.
+    public var translationText: String {
+        if let localizedTranslation {
+            return localizedTranslation
+        }
+        if case let .inline(value) = word.translation {
+            return value
+        }
+        return ""
+    }
 }
 
 /// One SNAM entry with both of its links chased.
@@ -39,6 +52,11 @@ nonisolated public struct ResolvedShoutWord: Sendable {
     public var wordName: String {
         guard let entry = entry.word else { return "NULL" }
         return word?.displayName ?? "[UNRESOLVED] \(entry)"
+    }
+
+    /// The word in dragon letters, such as "Fus"; empty for a missing word.
+    public var dragonName: String {
+        entry.word == nil ? "" : word?.displayName ?? ""
     }
 
     public var spellName: String {
@@ -53,6 +71,19 @@ nonisolated public struct ResolvedShout: Sendable {
     public let words: [ResolvedShoutWord]
     /// FULL from the plugin's string table, when the store had the tables.
     public internal(set) var localizedName: String?
+    /// DESC from the plugin's string table, when the store had the tables.
+    public internal(set) var localizedDescription: String?
+
+    /// The description the magic menu's card shows; empty when there is none.
+    public var descriptionText: String {
+        if let localizedDescription {
+            return localizedDescription
+        }
+        if case let .inline(value) = shout.description {
+            return value
+        }
+        return ""
+    }
 
     public var displayName: String {
         if let localizedName {
@@ -96,7 +127,8 @@ nonisolated public struct ShoutStore: Sendable {
             editorID: \.editorID,
             resolve: { id, word, plugin in
                 ResolvedWordOfPower(
-                    id: id, word: word, localizedName: names.text(word.name, plugin: plugin)
+                    id: id, word: word, localizedName: names.text(word.name, plugin: plugin),
+                    localizedTranslation: names.text(word.translation, plugin: plugin)
                 )
             }
         )
@@ -116,7 +148,10 @@ nonisolated public struct ShoutStore: Sendable {
                         spells: spells,
                         lookup: (words, index)
                     ),
-                    localizedName: names.text(shout.name, plugin: sourcePlugin)
+                    localizedName: names.text(shout.name, plugin: sourcePlugin),
+                    localizedDescription: names.text(
+                        shout.description, plugin: sourcePlugin, kind: .dlstrings
+                    )
                 )
             }
         )

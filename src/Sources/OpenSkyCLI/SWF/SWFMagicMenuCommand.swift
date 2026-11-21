@@ -20,7 +20,7 @@ enum SWFMagicMenuCommand {
         for _ in 0 ..< arguments.drive.ticks {
             runtime.advance()
         }
-        ItemListMenuMovieBridge.publish(seed, runtime: runtime)
+        ItemListMenuMovieBridge.publish(seed, row: arguments.drive.down, runtime: runtime)
         for _ in 0 ..< arguments.drive.ticks {
             runtime.advance()
         }
@@ -67,9 +67,31 @@ enum SWFMagicMenuCommand {
         kind: .spell, effects: "Restore Health 10", cost: 12, costIsPerSecond: false,
         level: "Novice"
     ))
+    private static let force = ItemListRow(
+        tag: 2,
+        name: "Unrelenting Force",
+        spellCard: MagicMenuSpellCard(
+            kind: .shout(words: [
+                MagicMenuShoutWord(dragon: "Fus", translation: "Force", isUnlocked: true),
+                MagicMenuShoutWord(dragon: "Ro", translation: "Balance", isUnlocked: false),
+                MagicMenuShoutWord(dragon: "Dah", translation: "Push", isUnlocked: false)
+            ]),
+            effects: "Your Voice is raw power, pushing aside anything that stands in your path.",
+            cost: 15
+        )
+    )
+    private static let fortify = ItemListRow(
+        tag: 3,
+        name: "Fortify Health",
+        spellCard: MagicMenuSpellCard(
+            kind: .activeEffect(secondsLeft: 95), effects: "Health is increased by 20 points."
+        )
+    )
     private static let seed = [
-        ItemListCategory(label: "All", rows: [flames, healing]),
+        ItemListCategory(label: "All", rows: [flames, healing, force, fortify]),
         ItemListCategory(label: "Destruction", rows: [flames]),
-        ItemListCategory(label: "Restoration", rows: [healing])
+        ItemListCategory(label: "Restoration", rows: [healing]),
+        ItemListCategory(label: "Shouts", rows: [force]),
+        ItemListCategory(label: "Active Effects", rows: [fortify])
     ]
 }

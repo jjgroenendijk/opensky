@@ -172,6 +172,25 @@ struct ShoutTests {
         #expect(menu.unlockShout(at: 9) == "No shout selected.")
     }
 
+    /// The card lists each word in dragon letters and translated, and the recharge of the
+    /// last unlocked word.
+    @Test func theShoutCardListsItsWordsAndRecharge() throws {
+        let trial = try session()
+        let card = try #require(trial.coordinator.magicMenu.magicMenuShouts.first?.card)
+        guard case let .shout(words) = card.kind else {
+            Issue.record("expected a shout card")
+            return
+        }
+        #expect(words.map(\.dragon) == ["Y3", "Toor", ""])
+        #expect(words.map(\.translation) == ["Yol", "Toor", ""])
+        let unlocked = try trial.coordinator.shoutVoice.unlockedWordCount(
+            of: #require(trial.coordinator.shouts[trial.shout])
+        )
+        #expect(words.map(\.isUnlocked) == (0 ..< 3).map { $0 < unlocked })
+        #expect(card.effects == "Your voice is fire.")
+        #expect(card.cost == (unlocked >= 2 ? 45 : 20))
+    }
+
     @Test func aKnownWordWithoutASoulIsRefusedInTheMenu() throws {
         let file = try ShoutPluginFixture.plugin()
         var data = MagicSessionData()
