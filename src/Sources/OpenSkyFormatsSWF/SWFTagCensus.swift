@@ -17,6 +17,7 @@ nonisolated public struct SWFTagCensus: Sendable {
     /// Tags `SWFMovieDecoder`, the timeline, or the font library read. End closes a
     /// stream, and the font companion tags hold hinting the glyph path does not need.
     public static let handledCodes: Set<UInt16> = SWFShapeDefinition.tagCodes
+        .union(SWFMorphShapeDefinition.tagCodes)
         .union(SWFBitmapDecoder.tagCodes)
         .union(SWFFontDefinition.tagCodes)
         .union(SWFTextDefinition.tagCodes)

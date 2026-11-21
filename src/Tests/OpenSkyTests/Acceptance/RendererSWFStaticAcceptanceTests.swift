@@ -220,6 +220,34 @@ struct RendererSWFStaticAcceptanceTests {
         }
     }
 
+    /// A morph placed at the middle ratio fills the middle form: a point inside it
+    /// but outside the start form changes, and a point past it does not.
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
+    func aMorphDrawsItsMiddleForm() throws {
+        func render(ratio: UInt16) throws -> [UInt8] {
+            let movie = try SWFDisplayFixture.movie(tags: [
+                SWFMorphShapeFixture.tag(characterId: 1, scale: 20),
+                SWFDisplayFixture.placeObject2Tag(.init(depth: 1, characterId: 1, ratio: ratio)),
+                SWFDisplayFixture.showFrameTag
+            ])
+            let renderer = try Self.canvas.makeRenderer()
+            try renderer.setSWFMovie(SWFMovieScene(movie: movie))
+            return try Self.canvas.render(renderer)
+        }
+        // The 8000 by 6000 twip stage fits the canvas height and is centred.
+        let scale = Double(Self.canvas.height) / 6000
+        let left = (Double(Self.canvas.width) - 8000 * scale) / 2
+        func pixel(_ pixels: [UInt8], x: Double, y: Double) -> [UInt8] {
+            let offset = (Int(y * scale) * Self.canvas.width + Int(left + x * scale)) * 4
+            return Array(pixels[offset ..< offset + 3])
+        }
+        let start = try render(ratio: 0)
+        let middle = try render(ratio: 0x8000)
+        #expect(pixel(middle, x: 3000, y: 1500) != pixel(start, x: 3000, y: 1500))
+        #expect(pixel(middle, x: 5000, y: 1500) == pixel(start, x: 5000, y: 1500))
+    }
+
     /// Reassigning the same movie must land on the same frame: the acceptance
     /// path in the app swaps movies repeatedly through the picker.
     @Test(.enabled(if: Self.hasMetal4Device))

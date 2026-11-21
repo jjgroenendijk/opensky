@@ -297,7 +297,6 @@ nonisolated public struct SWFMovie: Sendable {
         var decoder = SWFMovieDecoder(version: file.version, jpegTables: jpegTables)
         try decoder.run(tags: file.tags)
         backgroundColor = decoder.timeline.backgroundColor
-        characters = decoder.characters
         fileAttributes = decoder.fileAttributes
         metadata = decoder.metadata
         importedNames = decoder.importedNames
@@ -310,7 +309,14 @@ nonisolated public struct SWFMovie: Sendable {
         }
         exportedIds = byId
         initActions = decoder.initActions
-        let mainTimeline = decoder.timeline.finish()
+        let expanded = SWFMorphExpansion.expand(
+            morphs: decoder.morphShapes,
+            characters: decoder.characters,
+            timeline: decoder.timeline.finish(),
+            reservedIds: Set(decoder.importedNames.keys).union(decoder.exportedNames.values)
+        )
+        characters = expanded.characters
+        let mainTimeline = expanded.timeline
         timeline = mainTimeline
         var total = mainTimeline.tally
         total.add(mainTimeline.actionTally)

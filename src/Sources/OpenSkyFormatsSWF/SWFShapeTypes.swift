@@ -15,6 +15,9 @@ nonisolated public enum SWFShapeError: Error, Equatable, Sendable {
     case newStylesInGlyph
     /// A style-change record selected a style index past its style array.
     case styleIndexOutOfRange(index: Int, count: Int)
+    /// A morph shape's start and end forms hold a different number of edges, so
+    /// the edges cannot be paired.
+    case morphEdgeCountMismatch(start: Int, end: Int)
 }
 
 /// 8-bit RGBA color. RGB records (DefineShape/DefineShape2) parse with
