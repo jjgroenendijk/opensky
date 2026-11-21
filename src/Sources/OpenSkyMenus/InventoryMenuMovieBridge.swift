@@ -126,16 +126,10 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
         }
         runtime.callMovie("SetPlatform", arguments: [.number(pcPlatform)])
         runtime.callMovie("InitExtensions")
-        // The engine performs the step the absent `InputDelegate` would: a key
-        // reaches a CLIK list only through the focus path, so an unfocused
-        // movie consumes every arrow key and moves nothing.
-        focusItemList(runtime: runtime)
     }
 
-    /// Focuses the item list, which up and down move. Focusing the category list
-    /// moves nothing (measured), so the engine changes category and republishes.
-    /// The movie focuses the category list a few ticks after `InitExtensions`, so
-    /// each publish calls this again.
+    /// Focuses the item list, for a menu that opens on its rows. The inventory keeps
+    /// the movie's own focus, which `InitExtensions` puts on the category list.
     public static func focusItemList(runtime: SWFMovieRuntime) {
         runtime.focus(runtime.node(atPath: itemListPath, from: runtime.root))
     }
@@ -158,13 +152,13 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
             model.selectedCategoryIndex, count: categories.count,
             atPath: categoryListPath, runtime: runtime
         )
+        centre(model.selectedCategoryIndex, atPath: categoryListPath, runtime: runtime)
         select(
             model.selectedIndex, count: entries.count,
             atPath: itemListPath, runtime: runtime
         )
         publishTotals(model, runtime: runtime)
-        focusItemList(runtime: runtime)
-        if !entries.isEmpty {
+        if !entries.isEmpty, showsItems(runtime: runtime) {
             ItemCardSubMenuBridge.fadeInCard(runtime: runtime)
         }
     }

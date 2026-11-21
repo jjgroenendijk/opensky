@@ -17,7 +17,7 @@ enum SWFInventoryMenuCommand {
     static func run(context: CLIContext, arguments: MenuArguments.Inventory) throws {
         let ticks = arguments.drive.ticks
         let downCount = arguments.drive.down
-        let rightCount = arguments.right
+        let categoryCount = arguments.category
 
         let vfs = context.makeFileSystem()
         let runtime = try SWFMovieRuntime(
@@ -35,20 +35,23 @@ enum SWFInventoryMenuCommand {
 
         var model = try makeModel(context: context)
         InventoryMenuMovieBridge.publish(model, runtime: runtime)
-        ItemCardSubMenuBridge.showItemsList(runtime: runtime)
-        InventoryMenuMovieBridge.publish(model, runtime: runtime)
         for _ in 0 ..< ticks {
             runtime.advance()
         }
         printState(runtime, model: model, stage: "published")
 
-        for _ in 0 ..< rightCount {
-            drive(.move(.right), runtime: runtime, model: &model)
+        for _ in 0 ..< categoryCount {
+            drive(.down, runtime: runtime, model: &model)
         }
+        drive(.right, runtime: runtime, model: &model)
+        for _ in 0 ..< ItemCardSubMenuBridge.slideTickLimit {
+            runtime.advance()
+        }
+        printState(runtime, model: model, stage: "opened")
         for _ in 0 ..< downCount {
-            drive(.move(.down), runtime: runtime, model: &model)
+            drive(.down, runtime: runtime, model: &model)
         }
-        if downCount > 0 || rightCount > 0 {
+        if downCount > 0 {
             printState(runtime, model: model, stage: "navigated")
         }
         if arguments.drop {
@@ -77,26 +80,18 @@ enum SWFInventoryMenuCommand {
         return InventoryMenuModel.build(holder: .player, runtime: inventory)
     }
 
+    /// One arrow key through the movie, as the app sends it.
     private static func drive(
-        _ event: MenuInputEvent,
+        _ direction: MenuInputEvent.Direction,
         runtime: SWFMovieRuntime,
         model: inout InventoryMenuModel
     ) {
-        if case let .move(direction) = event, direction == .left || direction == .right {
-            model.moveCategory(by: direction == .right ? 1 : -1)
-            InventoryMenuMovieBridge.publish(model, runtime: runtime)
-            runtime.advance()
+        let moved = InventoryMenuMovieBridge.navigate(direction, model: &model, runtime: runtime) {
+            InventoryMenuMovieBridge.handle($0, runtime: runtime)
+        }
+        guard moved else {
+            print("[WARNING] menu inventory: the movie declined \(direction)")
             return
-        }
-        guard InventoryMenuMovieBridge.handle(event, runtime: runtime) else {
-            print("[WARNING] menu inventory: the movie declined \(event)")
-            return
-        }
-        if let index = InventoryMenuMovieBridge.selectedCategoryIndex(runtime: runtime) {
-            model.selectCategory(index)
-        }
-        if let index = InventoryMenuMovieBridge.selectedIndex(runtime: runtime) {
-            model.select(index)
         }
         InventoryMenuMovieBridge.publish(model, runtime: runtime)
         runtime.advance()

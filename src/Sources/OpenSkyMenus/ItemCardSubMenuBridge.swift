@@ -20,7 +20,7 @@ nonisolated public enum ItemCardSubMenuBridge: Sendable {
     /// `InventoryLists.TWO_PANELS`, the state the drop key and the list keys need.
     public static let twoPanelsState = 2
     /// Ticks the slide may take. It takes about 20 on the install.
-    static let slideTickLimit = 60
+    public static let slideTickLimit = 60
 
     /// `InventoryLists.ShowItemsList(abPlayBladeSound, abPlayAnim)`: the item panel
     /// opens beside the categories. The card fades in, and the movie asks for the 3D

@@ -33,6 +33,13 @@ nonisolated extension InventoryMenuMovieBridge {
         list.object.assign(.integer(clamped), for: selectedIndexName)
     }
 
+    /// The category list is a centred list: it draws the entry at its scroll position
+    /// large, and its keys move the scroll position and the selection together. So a
+    /// selection the engine writes also sets the scroll position.
+    public static func centre(_ index: Int, atPath path: String, runtime: SWFMovieRuntime) {
+        runtime.callMovie("__set__scrollPosition", atPath: path, arguments: [.integer(index)])
+    }
+
     /// Publishes the two totals the vanilla menu keeps on screen.
     ///
     /// `PlayerGoldValue` and `CarryWeightValue` are `TextField` instances on

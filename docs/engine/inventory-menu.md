@@ -96,37 +96,36 @@ They are set with the GFx `SetText` extension.
 
 ## Navigation
 
-When the movie has loaded, the engine calls `InventoryLists.ShowItemsList(false, true)`. The
-lists move to their `TWO_PANELS` state: the item panel opens beside the categories, and the item
-card fades in. The movie needs this state for the drop key: its `ShouldProcessItemsListInput`
-answers false in any other state, so `DropItem` does nothing.
+The movie owns the focus, as in the game. It opens on the category list alone, in the
+`ONE_PANEL` state of `InventoryLists_mc`. Every arrow key goes to the movie through the engine's
+`InputDelegate` step ([AS2 input](/engine/as2-input.md#focus-and-menu-navigation)):
 
-The panel slides out over a few frames, through state 5, `TRANSITIONING_TO_TWO_PANELS`, and the
-item list takes no keys until the slide ends. So the engine plays the slide to its end at once,
-at most 60 frames. The order of the first publish matters:
+| State | Key | What the movie does |
+| --- | --- | --- |
+| One panel | Up, down | Moves the category selection |
+| One panel | Right (`strShowItemsCode`), or Accept | `ShowItemsList`: the item panel slides out, and focus moves to the rows |
+| Two panels | Up, down | Moves the row selection |
+| Two panels | Left (`strHideItemsCode`) | `HideItemsList`: the item panel closes, and focus goes back to the categories |
 
-1. Write the rows.
-2. Call `ShowItemsList` and play the slide.
-3. Write the rows again, and call `ItemCard.FadeInCard`.
+The category list is a centred list: it draws the entry at its scroll position large, and its keys
+move the scroll position and `iSelectedIndex` together. So when the engine writes the category
+selection, it also sets the scroll position through the list's `scrollPosition` setter. Otherwise
+the large entry stays one row away from the selected one.
 
-`ShowItemsList` fades the card in only when a row is selected, and it resets the selection, so
-the second write sets the selected row back. Each later write also fades the card in when the
-list has rows; otherwise a slider opens on an invisible card.
+After each key, the engine reads the movie's selections. A new category refilters the rows,
+and the first row is selected, so the movie's row index is not taken. Otherwise the engine
+takes the movie's row. Then it writes the rows again.
 
-Up and down go through the movie's own CLIK focus path. The engine adopts the `iSelectedIndex` the
-movie ends up with, so the movie owns the row selection. The engine does the one step the missing
-`InputDelegate` would do: it points `focusTarget` at the item list. Without that, the movie takes
-every arrow key and moves nothing.
+The item keys need the `TWO_PANELS` state. The movie's `ShouldProcessItemsListInput` answers
+false in any other state, so `DropItem` does nothing. The panel slides out over a few frames,
+through state 5, `TRANSITIONING_TO_TWO_PANELS`, and the lists take no keys until the slide ends.
+`ShowItemsList` resets the row selection and fades the item card in only when a row is selected,
+so the write after the key sets the row back. A later write fades the card in only while two
+panels show.
 
-Categories are changed by the engine, on purpose. Sending up or down to the focused category list
-was tried and moves nothing. The movie changes categories through the `strHideItemsCode` and
-`strShowItemsCode` states of `InventoryLists_mc`, and with no live `InputDelegate` nothing starts
-that change. So left and right change the category in the engine, and the new rows are written to
-the movie, which draws both lists again. The item panel stays open while the category changes.
-
-The game opens on the category list alone, with the category list focused. The item panel slides
-out only when the player picks a category. OpenSky opens with both panels and the item list
-focused.
+Activate, drop, favourite and the left hand act only while the item panel shows. Accept on
+the category list opens the rows, as right does. With no movie, left and right change the
+category in the engine, and up and down move the row.
 
 ## Actions
 
