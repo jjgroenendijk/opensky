@@ -76,3 +76,20 @@ stateDiagram-v2
     Talking --> Continue: player activates, countdown > 0
     Continue --> Talking
 ```
+
+## In OpenSky
+
+- Opening a conversation adds the dialogue mode time to the actor and to the player. A hello, a
+  greeting, and each line of the conversation write the actor's countdown by the 1 second rule.
+  The time comes from `fAIInDialogueModewithPlayerTimer`.
+- Closing the conversation sets the player's countdown to 0. The actor keeps its own, and it
+  drops by the frame time while the actor says no line of an open conversation.
+- While the countdown is above 0, `IsInDialogueWithPlayer` is true for the actor, and activating
+  it again opens the topic list without a new greeting.
+- `openskycli game state social` shows each countdown under `dialogueMode`.
+
+OpenSky holds the actor in place only while the dialogue menu is open. When the menu closes, the
+actor goes back to its package while the countdown still runs. The game holds the actor for as
+long as it is the conversation's current actor, and which state the closing menu leaves was not
+found, so this is OpenSky's choice. Combat lines, idle chatter, and scene lines do not write the
+countdown.

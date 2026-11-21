@@ -85,10 +85,12 @@ extension RuntimeStateLiveSeamsAdapter {
             )
         }
         context.setDeferred { [game] in
-            DialogueResolution(
+            var resolution = DialogueResolution(
                 speakerInDialogue: game.dialogue.conversationSpeaker,
                 line: game.dialogue.spokenLine
             )
+            resolution.talkingActors = game.dialogue.dialogueMode.talkingActors
+            return resolution
         }
         context.setDeferred { [game] in
             game.packages.runtime?.conditionResolution { location, actor in

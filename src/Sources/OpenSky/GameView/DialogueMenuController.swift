@@ -90,13 +90,16 @@ final class DialogueMenuController {
             game.storyWorld.say(goodbye, speaker: speaker)
             return
         }
+        // An actor still in dialogue mode goes on without a new greeting.
+        let continues = dialogue.dialogueMode.isTalking(speaker)
         guard let runtime = dialogue.begin(with: speaker) else { return }
         game.furniture.greet(speaker)
         model = DialogueMenuModel.build(
             speaker: speaker,
             name: game.dialogueWorld.speakerLabel(for: speaker),
             runtime: runtime,
-            strings: dialogue.strings
+            strings: dialogue.strings,
+            greets: !continues
         )
         isOpen = true
         if model.state == .greeting, let info = model.line?.info {

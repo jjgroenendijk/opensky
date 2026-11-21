@@ -56,6 +56,8 @@ nonisolated public struct SpeechTimerSettings: Equatable, Sendable {
     /// `fCombatDetectionDialogueIdleMinElapsedTime` and `...Max...`: the wait between two
     /// idle detection lines of one combat group.
     public var detectionIdleMinSeconds: Float = 10
+    /// `fAIInDialogueModewithPlayerTimer`: how long dialogue mode lasts, as `Skyrim.esm` sets it.
+    public var dialogueModeSeconds: Float = 60
     public var detectionIdleMaxSeconds: Float = 25
     /// `fCombatSpeakAttackChance`, `fCombatSpeakHitChance`, `fCombatSpeakTauntChance`:
     /// the chance, 0 to 1, that a line speaks once its window has passed.

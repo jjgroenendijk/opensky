@@ -13,6 +13,7 @@ nonisolated extension SpeechTimerSettings {
             ("fAIExclusiveGreetingTimer", \.exclusiveGreetingSeconds),
             ("fAIMinGreetingDistance", \.greetingDistance),
             ("fAIInDialogueModeWithPlayerDistance", \.playerCommentDistance),
+            ("fAIInDialogueModewithPlayerTimer", \.dialogueModeSeconds),
             ("fCombatDialogueAttackMinElapsedTime", \.attackLineMinSeconds),
             ("fCombatDialogueAttackMaxElapsedTime", \.attackLineMaxSeconds),
             ("fCombatDialogueTauntMinElapsedTime", \.tauntMinSeconds),
