@@ -182,6 +182,14 @@ extension CombatActorFactsAdapter {
         return owned.contains(ReferenceKey(resolved: perk.id))
     }
 
+    public func ownsPerkEntry(at entryPoint: PerkEntryPoint, on key: ReferenceKey) -> Bool {
+        guard let store = game.perks.runtime?.perks, let owned = game.perks.ownership(of: key)
+        else { return false }
+        return owned.contains { perk in
+            store.perk(key: perk)?.effects.contains { $0.effect.entryPoint == entryPoint } ?? false
+        }
+    }
+
     public func damageStamina(by amount: Float, of key: ReferenceKey) {
         guard
             let runtime = game.actorValues.runtime,

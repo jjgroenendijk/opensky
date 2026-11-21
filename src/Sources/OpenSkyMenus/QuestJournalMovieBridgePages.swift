@@ -13,17 +13,26 @@ nonisolated public struct JournalStatRow: Equatable, Sendable {
     public let name: String
     public let value: Int32
     public let category: MiscStatCategory
+    /// Shown instead of `value` by a "Favorite" stat.
+    public let text: String?
 
-    public init(name: String, value: Int32, category: MiscStatCategory) {
+    public init(name: String, value: Int32, category: MiscStatCategory, text: String? = nil) {
         self.name = name
         self.value = value
         self.category = category
+        self.text = text
     }
 
-    /// Every listed stat in the catalog's order, 0 when never counted.
-    public static func rows(_ stats: MiscStatsState) -> [JournalStatRow] {
+    /// Every listed stat in the catalog's order, 0 when never counted. A "Favorite"
+    /// stat shows its name from `favorites`, or "None".
+    public static func rows(
+        _ stats: MiscStatsState, favorites: [String: String] = [:]
+    ) -> [JournalStatRow] {
         MiscStats.catalog.filter(\.isListed).map {
-            JournalStatRow(name: $0.name, value: stats.value($0.name), category: $0.category)
+            JournalStatRow(
+                name: $0.name, value: stats.value($0.name), category: $0.category,
+                text: $0.isText ? favorites[$0.name] ?? MiscStats.noFavorite : nil
+            )
         }
     }
 }
@@ -84,7 +93,7 @@ nonisolated extension QuestJournalMovieBridge {
         }
         let arguments = rows.flatMap { row -> [AS2Value] in
             [
-                .string(row.name), .integer(Int(row.value)),
+                .string(row.name), row.text.map(AS2Value.string) ?? .integer(Int(row.value)),
                 .integer(row.category.rawValue), .integer(0)
             ]
         }

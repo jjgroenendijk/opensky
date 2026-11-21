@@ -6,6 +6,7 @@ import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkySessionTesting
 import OpenSkyWorldState
@@ -138,5 +139,23 @@ struct RagdollWorldTests {
         host.fakeWorldState.incrementMiscStatCalls = []
         _ = adapter.queueActorDeathEvents(for: .player, killer: Self.actor)
         #expect(host.fakeWorldState.incrementMiscStatCalls.isEmpty, "only the player's kills count")
+    }
+
+    @Test func aBeastFormKillOfABunnyMaulsAndCountsTheBunny() {
+        let bridge = FakePapyrusWorldStateBridgePort()
+        host.fakeScripts.bridge = bridge
+        bridge.isInFactionResult = true
+        bridge.scriptedStateResult = ScriptedReferenceState(
+            flags: [ScriptedStateName.beastForm: true]
+        )
+        let records = FakeCombatRecords()
+        records.miscStatSources = MiscStatSources(bunnyFaction: .generated(9))
+        host.combatRecords = records
+        host.fakeMagicWorld.actorHasKeywordResult = false
+        _ = adapter.queueActorDeathEvents(for: .player, killer: .player)
+        #expect(host.fakeWorldState.incrementMiscStatCalls.map(\.name) == [
+            "Mauls", "Bunnies Slaughtered"
+        ])
+        #expect(bridge.isInFactionCalls.map(\.faction) == [.generated(9)])
     }
 }

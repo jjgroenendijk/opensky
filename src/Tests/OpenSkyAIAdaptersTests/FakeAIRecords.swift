@@ -18,6 +18,7 @@ final class FakeAIRecords: AIRecordsPort {
     var leveledScriptEdits: LeveledScriptEdits?
     var actorValueBaselines: ActorValueBaselineResolver?
     var speechCheckSettings = SpeechCheckSettings.fallback
+    var miscStatSources = MiscStatSources()
     var movementTypes = MovementTypeStore.empty
     var packageStore: PackageStore?
     var scriptFileSystem: (any GameFileSource)? = InMemoryFileSource()

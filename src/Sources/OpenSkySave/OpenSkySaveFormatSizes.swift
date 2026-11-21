@@ -112,8 +112,9 @@ nonisolated extension OpenSkySaveFormat {
     /// Smallest `SCNS` entry: the smallest key and cell (8), the phase (4), the
     /// entered byte, and the two empty list counts (8).
     static let minimumSceneEntrySize = 21
-    /// Smallest `MSTS` entry: the smallest key and cell (8) and the stat count (4).
-    static let minimumMiscStatsEntrySize = 12
+    /// Smallest `MSTS` entry: the smallest key and cell (8), the stat count (4), and the
+    /// three use list counts (12).
+    static let minimumMiscStatsEntrySize = 24
     /// Smallest `MSTS` stat: the empty name's length (2) and the value (4).
     static let minimumMiscStatRecordSize = 6
     /// `QTRK` entry: the smallest key and cell (8) and the tracked byte.

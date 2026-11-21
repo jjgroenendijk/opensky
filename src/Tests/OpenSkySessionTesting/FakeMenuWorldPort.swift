@@ -3,6 +3,7 @@
 public import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 public import OpenSkyFormatsESM
+public import OpenSkyQuestsInterface
 public import OpenSkySaveInterface
 public import OpenSkySessionInterface
 
@@ -22,6 +23,8 @@ nonisolated public final class FakeMenuWorldPort: MenuWorldPort {
     public var startNewGameCalls: [AgentNewGameRequest] = []
     public var startNewGameError: AgentFailure?
     public var lastNewGame: AgentNewGameRequest?
+    public var journalFavoritesCalls: [MiscStatsState] = []
+    public var journalFavoritesResult: [String: String] = [:]
     public var showRaceMenuCalls: [Bool] = []
     public var fastTravelCalls: [ReferenceKey] = []
     public var fastTravelResult = false
@@ -39,6 +42,8 @@ nonisolated public final class FakeMenuWorldPort: MenuWorldPort {
     public var recordFlagsResult: ActorBase.Flags?
     public var recordShoutsCalls: [FormID] = []
     public var recordShoutsResult: [ReferenceKey] = []
+    public var shoutWordSlotsCallCount = 0
+    public var shoutWordSlotsResult: [ReferenceKey: [ReferenceKey?]] = [:]
     public var leveledBaseCalls: [(actor: ReferenceKey, base: FormID)] = []
     public var leveledBaseResult: FormID?
     public var voiceTypeCalls: [FormID] = []
@@ -118,6 +123,11 @@ nonisolated extension FakeMenuWorldPort {
         }
     }
 
+    public func journalFavorites(_ stats: MiscStatsState) -> [String: String] {
+        journalFavoritesCalls.append(stats)
+        return journalFavoritesResult
+    }
+
     public func showRaceMenu(limited: Bool) {
         showRaceMenuCalls.append(limited)
     }
@@ -162,6 +172,11 @@ nonisolated extension FakeMenuWorldPort {
     public func recordShouts(ofBase base: FormID) -> [ReferenceKey] {
         recordShoutsCalls.append(base)
         return recordShoutsResult
+    }
+
+    public func shoutWordSlots() -> [ReferenceKey: [ReferenceKey?]] {
+        shoutWordSlotsCallCount += 1
+        return shoutWordSlotsResult
     }
 
     public func leveledBase(of actor: ReferenceKey, base: FormID) -> FormID? {

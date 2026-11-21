@@ -129,7 +129,7 @@ extension MenuScreensWorldAdapter {
         giftLists.shoutUnlockStep(at: index)
     }
 
-    public func unlockShout(at index: Int) -> String {
+    public func unlockShout(at index: Int) -> ShoutUnlockReply {
         giftLists.unlockShout(at: index)
     }
 

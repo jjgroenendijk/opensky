@@ -44,6 +44,13 @@ extension WorldStateStorePort {
         incrementMiscStat(name, by: 1)
     }
 
+    /// One use for a "Favorite" stat.
+    public func noteFavoriteUse(_ use: FavoriteUse, of form: ReferenceKey) {
+        var stats = miscStats
+        stats.noteUse(use, of: form)
+        set(stats, for: .player)
+    }
+
     @discardableResult public func set(
         _ component: some WorldStateComponent,
         for key: ReferenceKey

@@ -18,6 +18,7 @@ final class FakeMenuRecords: MenuRecordsPort {
     var leveledScriptEdits: LeveledScriptEdits?
     var actorValueBaselines: ActorValueBaselineResolver?
     var speechCheckSettings = SpeechCheckSettings.fallback
+    var miscStatSources = MiscStatSources()
     var menuRecords: MenuRecordData?
     var movementConfiguration = PlayerMovementConfiguration.synthetic
     var presentationRecords: PresentationRecordStore?

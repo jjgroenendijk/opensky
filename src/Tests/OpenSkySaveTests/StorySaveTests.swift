@@ -33,7 +33,13 @@ struct StorySaveTests {
     )
     private let questState = StoryManagerQuestState(lastStartSeconds: 86400.25, startCount: 3)
     private let branchState = DialogueBranchState(exclusiveBranch: FormID(0x0002_1A3C))
-    private let stats = MiscStatsState(values: ["Bribes": 2, "Quests Completed": -1])
+    private let stats = MiscStatsState(
+        values: ["Bribes": 2, "Quests Completed": -1],
+        recentUses: [
+            .weapon: [.plugin(name: "skyrim.esm", objectID: 0x139B9)],
+            .shout: [.generated(4), .plugin(name: "skyrim.esm", objectID: 0x13E09)]
+        ]
+    )
     private let untracked = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x0004_0002)
 
     private func snapshot() -> WorldStateSnapshot {

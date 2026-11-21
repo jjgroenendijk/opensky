@@ -174,8 +174,8 @@ A kill counts when the player is the killer and there is a victim:
 - Mauls rises by 1 while the player's beast form flag is on. `Game.SetBeastForm` sets and clears
   the flag, and a transformation effect on the player turns it on. The same flag stops a shout
   from the favourites menu.
-- Bunnies Slaughtered rises by 1 when the victim is in the faction that the `Bunny Faction`
-  default object names. No race, keyword, or form is checked.
+- Bunnies Slaughtered rises by 1 when the victim is in the faction that the `AWWW` (Bunny
+  Faction) default object names. No race, keyword, or form is checked.
 
 ### Critical hits
 
@@ -263,3 +263,11 @@ above leave a choice, and OpenSky reads them like this:
 - A book counts the first time the player reads it. A skill book raises Skill Books Read, and any
   other book, a note or a spell tome too, raises Books Read. A tome that teaches a new spell also
   raises Spells Learned. A spell from a script does not count.
+- A clock move that passes midnight sends one day-passed event: a frame, a step of the rest
+  menu, fast travel, or a jail term. Setting the clock, as a load or a script's set time does,
+  sends none.
+- `Game.TeachWord` counts Shouts Learned for each shout with the word that the player could not
+  use before: no `AddShout`, not on the player's record, and no other word of it known.
+- A tie between two favourites goes to the one used last. A weapon counts on each melee swing
+  and each bow or crossbow shot; a staff does not count. Scrolls do not count for Favorite
+  Spell.

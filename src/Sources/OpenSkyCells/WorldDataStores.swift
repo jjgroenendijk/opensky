@@ -62,6 +62,8 @@ nonisolated public struct WorldDataStores {
     public var difficultySettings = DifficultySettings.synthetic
     /// The bribe and intimidation settings; OpenSky's fallbacks on a synthetic scene.
     public var speechCheckSettings = SpeechCheckSettings.fallback
+    /// The default objects some misc stats read; empty on a synthetic scene.
+    public var miscStatSources = MiscStatSources()
     /// Every GMST of the load order, which each subsystem resolves its settings from
     /// when it is wired. Empty on a synthetic scene, so every subsystem reads vanilla.
     public var gameSettings = GameSettingStore(plugins: [])

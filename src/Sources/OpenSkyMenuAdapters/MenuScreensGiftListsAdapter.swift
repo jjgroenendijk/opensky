@@ -80,7 +80,7 @@ extension MenuScreensGiftListsAdapter {
         )
     }
 
-    public func unlockShout(at index: Int) -> String {
+    public func unlockShout(at index: Int) -> ShoutUnlockReply {
         game.magic.magicMenu.unlockShout(at: index - Self.shoutTagBase)
     }
 }

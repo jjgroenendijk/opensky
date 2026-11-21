@@ -19,6 +19,7 @@ import OpenSkyMenusInterface
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
 import OpenSkyProgressionInterface
+import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScriptingInterface
@@ -61,17 +62,36 @@ extension CombatOutcomesAdapter {
             case let .setCombatMusic(active): game.audio.musicDirector?.setCombatActive(active)
             case let .playerAttackedOutsideCombat(use):
                 game.storyWorld.commentOnPlayer(.playerAction(use == .swing ? "SWMW" : "FIWE"))
-            case let .drewBlood(hit, target): impactEffects.drewBlood(hit, target: target)
+            case .drewBlood, .showDefaultBlood, .muzzleFlash: showImpact(command)
+            case .incrementStat, .playerUsedWeapon: countStat(command)
             case let .playerBowShot(weapon, ammunition, power):
                 game.scripts.runtime?.queuePlayerBowShot(
                     weapon: weapon, ammunition: ammunition, power: power,
                     sunGazing: game.scripts.bridge?.isPlayerSunGazing ?? false
                 )
-            case let .showDefaultBlood(target, position, melee):
-                impactEffects.showDefaultBlood(on: target, at: position, melee: melee)
-            case let .muzzleFlash(visuals, position, direction):
-                game.effectsWorld.showMuzzleFlash(visuals, at: position, along: direction)
             }
+        }
+    }
+
+    private func showImpact(_ command: CombatCommand) {
+        switch command {
+        case let .drewBlood(hit, target): impactEffects.drewBlood(hit, target: target)
+        case let .showDefaultBlood(target, position, melee):
+            impactEffects.showDefaultBlood(on: target, at: position, melee: melee)
+        case let .muzzleFlash(visuals, position, direction):
+            game.effectsWorld.showMuzzleFlash(visuals, at: position, along: direction)
+        default: return
+        }
+    }
+
+    private func countStat(_ command: CombatCommand) {
+        switch command {
+        case let .incrementStat(name): game.worldState.incrementMiscStat(name)
+        case let .playerUsedWeapon(weapon):
+            if let key = game.scripts.bridge?.referenceKey(forFormID: weapon) {
+                game.worldState.noteFavoriteUse(.weapon, of: key)
+            }
+        default: return
         }
     }
 }

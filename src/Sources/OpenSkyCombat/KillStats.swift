@@ -1,10 +1,18 @@
 // Which kill stats a death by the player raises, from the victim's `ActorType*`
-// keywords. See docs/engine/statistics.md, Combat.
+// keywords, its factions, and the player's beast form. See docs/engine/statistics.md,
+// Combat and Kills.
 
 nonisolated public enum KillStats {
     /// The stat names to raise. `hasKeyword` answers for the victim's race and base.
-    public static func stats(hasKeyword: (String) -> Bool) -> [String] {
-        var stats: [String] = []
+    /// `isBunny` is membership in the `AWWW` faction; `inBeastForm` is the player's
+    /// `Game.SetBeastForm` flag.
+    public static func stats(
+        hasKeyword: (String) -> Bool, isBunny: Bool = false, inBeastForm: Bool = false
+    ) -> [String] {
+        var stats: [String] = inBeastForm ? ["Mauls"] : []
+        if isBunny {
+            stats.append("Bunnies Slaughtered")
+        }
         if hasKeyword("ActorTypeNPC") {
             stats.append("People Killed")
         }

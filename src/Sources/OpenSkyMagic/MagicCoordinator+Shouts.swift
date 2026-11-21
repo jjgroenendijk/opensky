@@ -9,6 +9,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
+import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 /// The graph names a shout uses (`0_master.hkx`, `shout_behavior.hkx`).
@@ -41,7 +42,8 @@ nonisolated enum ShoutOutcome: Equatable, Sendable {
     case idle
     case shouted(shout: String, words: Int, cooldown: Float)
     case refused(ShoutRefusal)
-    case unlocked(word: String, soulsLeft: Int)
+    /// `mastered` when the unlock left every word of the shout unlocked.
+    case unlocked(word: String, soulsLeft: Int, mastered: Bool)
     case learned(shout: String)
     case equipped(shout: String)
 }
@@ -183,6 +185,7 @@ extension MagicCoordinator.ShoutVoice {
         coordinator.shoutMachine.startCooldown(cooldown)
         coordinator.pendingCommands.append(.playerShouted(words: words))
         coordinator.incrementStat("Times Shouted")
+        coordinator.noteFavoriteUse(.shout, of: key)
         noteShout(.shouted(shout: shout.displayName, words: words, cooldown: cooldown))
     }
 

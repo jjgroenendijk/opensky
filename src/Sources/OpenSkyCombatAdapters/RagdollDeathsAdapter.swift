@@ -88,7 +88,15 @@ extension RagdollDeathsAdapter {
     private func countKill(of victim: ReferenceKey) {
         guard let holder = poseReads.holder(of: victim) else { return }
         let magicWorld = game.magicWorld
-        for stat in KillStats.stats(hasKeyword: { magicWorld.actorHasKeyword($0, on: holder) }) {
+        let bridge = game.scripts.bridge
+        let bunnies = game.combatRecords?.miscStatSources.bunnyFaction
+        let stats = KillStats.stats(
+            hasKeyword: { magicWorld.actorHasKeyword($0, on: holder) },
+            isBunny: bunnies.flatMap { bridge?.isInFaction(victim, faction: $0) } ?? false,
+            inBeastForm: bridge?.scriptedState(of: .player)
+                .flag(ScriptedStateName.beastForm) == true
+        )
+        for stat in stats {
             game.worldState.incrementMiscStat(stat)
         }
     }

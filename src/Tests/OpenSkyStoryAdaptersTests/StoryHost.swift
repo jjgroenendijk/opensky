@@ -11,6 +11,7 @@ import simd
 @MainActor
 final class StoryHost: CrimeActorsHost, CrimeFactionsHost, CrimeJailHost, CrimeWorldHost,
     DialogueCameraFocusHost, DialogueOutcomesHost, DialogueSpeakersHost, DialogueWorldHost,
+    MiscStatsDaysHost,
     StoryAmbientTalkHost, StorySceneCastHost, StorySceneLinesHost, StorySocialSearchHost,
     StorySocialActsHost, StoryWorldHost
 {

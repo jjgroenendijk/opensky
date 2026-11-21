@@ -144,6 +144,7 @@ final class GameSessionScope {
         store: playerSettings.store, world: survivalModeWorld
     )
     lazy var survivalModeWorld = SurvivalModeWorldAdapter(runtimeState: runtimeState)
+    lazy var miscStatsDays = MiscStatsDaysAdapter(game: ports)
 
     lazy var saveGames = SaveGameWorldAdapter(game: ports, now: { Date() })
     lazy var menuWorld = factories.makeMenuWorld()

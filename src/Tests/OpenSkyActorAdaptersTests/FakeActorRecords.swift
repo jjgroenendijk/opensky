@@ -18,6 +18,7 @@ final class FakeActorRecords: ActorRecordsPort {
     var leveledScriptEdits: LeveledScriptEdits?
     var actorValueBaselines: ActorValueBaselineResolver?
     var speechCheckSettings = SpeechCheckSettings.fallback
+    var miscStatSources = MiscStatSources()
     var dragonFlightSettings = DragonFlightSettings()
     var idleStore: IdleStore?
     var mountMovementConfiguration = PlayerMovementConfiguration.synthetic

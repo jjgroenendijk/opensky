@@ -10,6 +10,7 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
+import OpenSkyQuestsInterface
 import Testing
 
 @MainActor
@@ -234,6 +235,14 @@ struct MagicArchetypeTests {
         Self.cast(Archetype.stagger, magnitude: 0.5, duration: 2, on: coordinator)
         Self.cast(Archetype.stagger, magnitude: 0.5, duration: 2, on: coordinator)
         #expect(coordinator.frameStep.takeCommands() == [.stagger(.player, magnitude: 0.5)])
+    }
+
+    /// With nothing equipped to drop, a disarm unequips nothing and counts nothing.
+    @Test func aDisarmWithNoWeaponCountsNoStat() throws {
+        let coordinator = try makeCoordinator()
+        Self.cast(Archetype.disarm, magnitude: 50, on: coordinator)
+        #expect(coordinator.frameStep.takeCommands().isEmpty)
+        #expect(coordinator.effects?.store.miscStats.value("Weapons Disarmed") == 0)
     }
 
     @Test func spawnHazardPlacesTheAssociatedHazard() throws {

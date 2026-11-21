@@ -19,6 +19,11 @@ final class FakeMenuBridge: PapyrusMenuBridge {
     var races: [ReferenceKey: FormID] = [:]
     var voiceTypes: [FormID: FormID] = [:]
     var giftFilters: [FormID: FormID] = [:]
+    var wordSlots: [ReferenceKey: [ReferenceKey?]] = [:]
+
+    func shoutWordSlots() -> [ReferenceKey: [ReferenceKey?]] {
+        wordSlots
+    }
 
     func showRaceMenu(limited: Bool) {
         calls.append("race(\(limited))")

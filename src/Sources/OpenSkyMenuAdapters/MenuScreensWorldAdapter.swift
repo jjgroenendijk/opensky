@@ -143,9 +143,9 @@ extension MenuScreensWorldAdapter: SleepWaitWorld {
         let timescale = Double(max(gameSession.currentTimescale, 1))
         for step in RestTimeSteps.steps(hours: hours) {
             let before = gameSession.gameClock.totalGameSeconds
-            gameSession.gameTime.clock = GameClock(
+            gameSession.gameTime.passTime(to: GameClock(
                 totalGameSeconds: start.totalGameSeconds + step * GameClock.secondsPerHour
-            )
+            ))
             gameSession.updateWeather(deltaTime: 0)
             game.scripts.advanceRestStep()
             // Effect durations are real seconds: game seconds over the timescale.

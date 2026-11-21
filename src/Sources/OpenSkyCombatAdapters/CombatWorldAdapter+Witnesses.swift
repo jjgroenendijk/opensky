@@ -165,6 +165,10 @@ extension CombatWorldAdapter {
         actorFacts.ownsPerk(editorID: editorID, on: key)
     }
 
+    public func ownsPerkEntry(at entryPoint: PerkEntryPoint, on key: ReferenceKey) -> Bool {
+        actorFacts.ownsPerkEntry(at: entryPoint, on: key)
+    }
+
     public func damageStamina(by amount: Float, of key: ReferenceKey) {
         actorFacts.damageStamina(by: amount, of: key)
     }

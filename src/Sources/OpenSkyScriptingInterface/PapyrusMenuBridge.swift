@@ -29,6 +29,9 @@ public protocol PapyrusMenuBridge: AnyObject {
     func recordFlags(ofBase base: FormID) -> ActorBase.Flags?
     /// The shouts the base's `SPLO` list gives, in record order.
     func recordShouts(ofBase base: FormID) -> [ReferenceKey]
+    /// Each shout's word slots in order: the word, or nil for a slot without both a word
+    /// and a spell.
+    func shoutWordSlots() -> [ReferenceKey: [ReferenceKey?]]
     /// The base the leveled list chose for this placed actor.
     func leveledBase(of actor: ReferenceKey, base: FormID) -> FormID?
     /// The `VTCK` voice type after template inheritance.

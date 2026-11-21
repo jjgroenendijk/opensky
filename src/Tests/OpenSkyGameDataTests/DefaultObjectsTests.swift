@@ -70,6 +70,20 @@ struct DefaultObjectsTests {
         ))?.record.entries.count == 1)
     }
 
+    @Test func miscStatSourcesReadTheBunnyFactionAndTheBeastGlobals() throws {
+        let base = try plugin(records: [ESMFixture.record(
+            "DOBJ", formID: 0x31,
+            data: ESMFixture.field("DNAM", entries([
+                ("AWWW", 0x40), ("PIVV", 0x41), ("PIWV", 0x42)
+            ]))
+        )])
+        let sources = MiscStatSources(loadOrder: LoadOrderPlugins([("Base.esm", base)]))
+        #expect(sources.bunnyFaction == .plugin(name: "base.esm", objectID: 0x40))
+        #expect(sources.playerIsVampire == FormID(0x41))
+        #expect(sources.playerIsWerewolf == FormID(0x42))
+        #expect(MiscStatSources(loadOrder: LoadOrderPlugins([])) == MiscStatSources())
+    }
+
     private func entries(_ values: [(String?, UInt32)]) -> Data {
         var data = Data()
         for value in values {

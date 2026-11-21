@@ -5,15 +5,6 @@ nonisolated public enum SpeechChallenge: Equatable, Sendable {
     case intimidate
     case persuade
 
-    /// The misc stat a win counts.
-    public var statName: String {
-        switch self {
-        case .bribe: "Bribes"
-        case .intimidate: "Intimidations"
-        case .persuade: "Persuasions"
-        }
-    }
-
     static let getActorValue: UInt16 = 14
     static let speechcraft: UInt32 = 17
     static let getBribeSuccess: UInt16 = 654

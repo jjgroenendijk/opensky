@@ -2,10 +2,13 @@
 
 public import OpenSkyGameData
 public import OpenSkyMagicInterface
+public import OpenSkyQuestsInterface
 public import OpenSkySessionInterface
 
 /// Stores each property and records each call to `MagicMenuListPort`.
 nonisolated public final class FakeMagicMenuListPort: MagicMenuListPort {
+    public var favoriteTextsCalls: [MiscStatsState] = []
+    public var favoriteTextsResult: [String: String] = [:]
     public var isPlayerTakingHealthDamage = false
     public var magicMenuSpells: [MagicMenuSpell] = []
     public var magicMenuCategoryOrder: [String] = []
@@ -17,12 +20,17 @@ nonisolated public final class FakeMagicMenuListPort: MagicMenuListPort {
     public var shoutUnlockStepCalls: [(index: Int, texts: GameSettingTexts<ShoutMenuText>)] = []
     public var shoutUnlockStepResult: ShoutUnlockStep?
     public var unlockShoutCalls: [Int] = []
-    public var unlockShoutResult = ""
+    public var unlockShoutResult: ShoutUnlockReply?
 
     public init() {}
 }
 
 nonisolated extension FakeMagicMenuListPort {
+    public func favoriteTexts(_ stats: MiscStatsState) -> [String: String] {
+        favoriteTextsCalls.append(stats)
+        return favoriteTextsResult
+    }
+
     public func readyShout(at index: Int, texts: GameSettingTexts<ShoutMenuText>) -> String {
         readyShoutCalls.append((index: index, texts: texts))
         return readyShoutResult
@@ -36,8 +44,11 @@ nonisolated extension FakeMagicMenuListPort {
         return shoutUnlockStepResult
     }
 
-    public func unlockShout(at index: Int) -> String {
+    public func unlockShout(at index: Int) -> ShoutUnlockReply {
         unlockShoutCalls.append(index)
+        guard let unlockShoutResult else {
+            preconditionFailure("FakeMagicMenuListPort.unlockShout has no result")
+        }
         return unlockShoutResult
     }
 }

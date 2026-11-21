@@ -14,4 +14,5 @@ nonisolated public protocol WorldRecordsPort {
     var leveledScriptEdits: LeveledScriptEdits? { get }
     var actorValueBaselines: ActorValueBaselineResolver? { get }
     var speechCheckSettings: SpeechCheckSettings { get }
+    var miscStatSources: MiscStatSources { get }
 }

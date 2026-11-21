@@ -4,6 +4,7 @@ import OpenSkyCombat
 import OpenSkyCombatAdapters
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkySessionTesting
 import Testing
@@ -35,6 +36,17 @@ struct CombatOutcomesTests {
         #expect(host.fakeHud.showNotificationCalls == ["You are being attacked"])
         #expect(host.fakeWorldState.resetKeyCalls == [Self.foe])
         #expect(host.fakeStoryWorld.commentOnPlayerCalls.count == 1)
+    }
+
+    @Test func aStatCommandCountsAndAWeaponUseJoinsTheFavourites() {
+        let bridge = FakePapyrusWorldStateBridgePort()
+        host.fakeScripts.bridge = bridge
+        host.fakeWorldState.miscStatsValue = MiscStatsState()
+        bridge.referenceKeyResult = Self.foe
+        adapter.run([.incrementStat("Backstabs"), .playerUsedWeapon(FormID(0x139B9))])
+        #expect(host.fakeWorldState.incrementMiscStatCalls.map(\.name) == ["Backstabs"])
+        let saved = host.fakeWorldState.setCalls.compactMap { $0.component as? MiscStatsState }
+        #expect(saved.last?.recentUses[.weapon] == [Self.foe])
     }
 
     @Test func aMeleeHitOnThePlayerSplattersTheScreenAndBloodiesTheWeapon() {

@@ -15,6 +15,7 @@ nonisolated public final class FakeWorldRecords: WorldRecordsPort {
     public var leveledScriptEdits: LeveledScriptEdits?
     public var actorValueBaselines: ActorValueBaselineResolver?
     public var speechCheckSettings = SpeechCheckSettings.fallback
+    public var miscStatSources = MiscStatSources()
 
     public init() {}
 }

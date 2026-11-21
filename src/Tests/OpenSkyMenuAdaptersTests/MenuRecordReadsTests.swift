@@ -6,11 +6,12 @@ import OpenSkyAgentControl
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
-import OpenSkyGameData
+@testable import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyMenuAdapters
 import OpenSkyMenus
 import OpenSkyMenusInterface
+import OpenSkyQuestsInterface
 import OpenSkySessionTesting
 import Testing
 
@@ -42,6 +43,36 @@ struct MenuRecordReadsTests {
         let loading = LoadingScreenWorldAdapter(game: host, stage: nil, clock: { Date() })
         #expect(loading.assetLoaders.cameraPathLoader() != nil)
         #expect(menus().scriptMenus.leveledBase(of: Self.actor, base: FormID(0x40)) == FormID(0x40))
+    }
+
+    /// Each word slot with a spell, so scripts can tell a shout's first and last word.
+    @Test func theShoutWordSlotsListEachWordThatCasts() throws {
+        let store = try ShoutStore(plugins: [("Base.esm", ShoutPluginFixture.plugin())])
+        let shout = try #require(store.resolve(
+            FormID(ShoutPluginFixture.Form.shout), fromPlugin: "Base.esm"
+        ))
+        let key = ReferenceKey.plugin(name: "base.esm", objectID: ShoutPluginFixture.Form.shout)
+        host.fakeMagic.shouts = [key: shout]
+        #expect(menus().shoutWordSlots()[key] == [
+            .plugin(name: "base.esm", objectID: ShoutPluginFixture.Form.word1),
+            .plugin(name: "base.esm", objectID: ShoutPluginFixture.Form.word2),
+            nil
+        ])
+    }
+
+    /// docs/engine/statistics.md, Favourites: the weapon's name joins the magic ones.
+    @Test func theJournalFavoritesNameTheMostUsedWeapon() {
+        let magicMenu = host.fakeMagic.magicMenu
+        magicMenu.favoriteTextsResult = ["Favorite Spell": "Flames"]
+        let bridge = FakePapyrusWorldStateBridgePort()
+        bridge.localFormIDResult = FormID(0x139B9)
+        host.fakeScripts.bridge = bridge
+        host.fakeInventory.nameResult = "Iron Sword"
+        var stats = MiscStatsState()
+        stats.noteUse(.weapon, of: Self.actor)
+        #expect(menus().journalFavorites(stats) == [
+            "Favorite Spell": "Flames", "Favorite Weapon": "Iron Sword"
+        ])
     }
 
     @Test func aFailedMoveLiftsItsCoverOnTheClock() throws {

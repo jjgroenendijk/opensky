@@ -91,11 +91,18 @@ extension MagicCoordinator.MagicMenu {
             ? .ask(texts[.confirmSpendSoul]) : .refuse(texts[.failSpendSoul])
     }
 
-    public func unlockShout(at index: Int) -> String {
+    public func unlockShout(at index: Int) -> ShoutUnlockReply {
         let shouts = menuShouts
-        guard shouts.indices.contains(index) else { return "No shout selected." }
+        guard shouts.indices.contains(index) else {
+            return ShoutUnlockReply(text: "No shout selected.")
+        }
         let outcome = coordinator.shoutReadout.unlockNextWord(of: shouts[index].key)
-        guard case let .unlocked(word, soulsLeft) = outcome else { return "\(outcome)" }
-        return "Unlocked \(word); \(soulsLeft) dragon souls left."
+        guard case let .unlocked(word, soulsLeft, mastered) = outcome else {
+            return ShoutUnlockReply(text: "\(outcome)")
+        }
+        return ShoutUnlockReply(
+            text: "Unlocked \(word); \(soulsLeft) dragon souls left.",
+            sound: mastered ? ShoutUnlockReply.learnAllSound : ShoutUnlockReply.learnSingleSound
+        )
     }
 }

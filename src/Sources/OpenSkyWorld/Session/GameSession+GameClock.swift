@@ -38,7 +38,7 @@ extension GameSession.ClockSteps {
         let delta = session.gameTime.frameClock.advance(
             to: session.renderer.wallClock.now, paused: session.worldSimPaused
         )
-        session.gameTime.clock.advance(wallDelta: delta, timescale: currentTimescale)
+        session.gameTime.passTime(wallDelta: delta, timescale: currentTimescale)
     }
 
     /// Per-frame world simulation tick, after the clock advances, so a script sees this

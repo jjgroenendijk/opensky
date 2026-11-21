@@ -45,6 +45,7 @@ final class CombatMeleeWorldPart: CombatSharedPart, MeleeCombatWorld {
         let strikes = shared.strikes
         let strike = strikes.strike(blow, on: target)
         strikes.reportSneakAttack(strike, ranged: false)
+        strikes.countCriticalStats(strike, blow: blow, on: target)
         strikes.reportCriticalStrike(strike, blow: blow, on: target)
         return strike
     }
