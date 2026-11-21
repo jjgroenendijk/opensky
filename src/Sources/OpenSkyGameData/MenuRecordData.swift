@@ -91,7 +91,6 @@ nonisolated public struct MenuRecordData: Sendable {
     private struct Content: Sendable {
         let installedContent: ResolvedFormID?
         let helpManual: ResolvedFormID?
-        let mainMenuLighting: MainMenuCellLighting?
     }
 
     private let races: FirstUseValue<Races>
@@ -144,11 +143,6 @@ nonisolated public struct MenuRecordData: Sendable {
         content.value.helpManual
     }
 
-    /// The light the main menu's logo and smoke are drawn under.
-    public var mainMenuLighting: MainMenuCellLighting? {
-        content.value.mainMenuLighting
-    }
-
     /// The highest type each race and sex's chargen TRI holds, by `NAMA` index. Empty
     /// until `readChargenTypes(with:)` names how to read them.
     public var chargenTypes: [ChargenTypeKey: [Int: Int]] {
@@ -182,10 +176,7 @@ nonisolated public struct MenuRecordData: Sendable {
             let defaultObjects = DefaultObjectStore(plugins: loadOrder.files)
             return Content(
                 installedContent: defaultObjects.object(tag: Self.installedContentTag),
-                helpManual: defaultObjects.object(tag: Self.helpManualTag),
-                mainMenuLighting: MainMenuCellLighting(
-                    loadOrder: loadOrder, defaultObjects: defaultObjects
-                )
+                helpManual: defaultObjects.object(tag: Self.helpManualTag)
             )
         }
         mapSettings = MenuMapSettings(store: settings)

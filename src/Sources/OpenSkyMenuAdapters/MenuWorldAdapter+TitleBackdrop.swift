@@ -1,17 +1,16 @@
 // The title menu's logo and smoke: the loading cover layer, so the world is hidden
-// while the main menu movie shows. The placement math is `TitleBackdrop`.
+// while the main menu movie shows, drawn in the loading screen's own scene.
 
 import Foundation
-import OpenSkyCells
 import OpenSkyFormatsCore
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyMenus
-public import OpenSkyRenderCore
-public import OpenSkyRendering
+import OpenSkyRenderCore
+import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkySessionInterface
-import OpenSkyWorld
 import simd
 
 extension MenuWorldAdapter {
@@ -22,77 +21,73 @@ extension MenuWorldAdapter {
     public func refreshTitleBackdrop() {
         titleBackdrop.refreshTitleBackdrop()
     }
-
-    public var titleLighting: RenderLighting? {
-        titleBackdrop.titleLighting
-    }
 }
 
 /// The title backdrop and the state it keeps between frames.
 final class MenuTitleBackdrop {
-    let game: any MenuWorldHost
+    let game: any MenuWorldHosts
     /// Built on first use, because it walks the install.
     var titleMeshes: MeshLibrary?
-    /// The camera the logo was placed for, while the title backdrop shows.
-    var titleLogoView: (eye: SIMD3<Float>, forward: SIMD3<Float>)?
+    /// Whether the title asked for the backdrop, and whether it reached the renderer.
+    private(set) var isWanted = false
+    private(set) var isPlaced = false
 
-    init(game: any MenuWorldHost) {
+    init(game: any MenuWorldHosts) {
         self.game = game
     }
 
     func showTitleBackdrop(_ shown: Bool) {
-        titleLogoView = nil
-        guard let gameSession = game.gameSession else { return }
-        place(shown ? backdrop(gameSession: gameSession) : nil, gameSession: gameSession)
+        isWanted = shown
+        isPlaced = false
+        guard let renderer = game.renderer else { return }
+        place(shown ? backdrop(renderer: renderer) : nil, renderer: renderer)
     }
 
-    /// The camera settles after the title opens, so the logo follows it. The loading
-    /// screen owns the cover while it shows.
+    /// Places the backdrop when the title asked for it before a session existed. The
+    /// loading screen owns the cover while it shows.
     func refreshTitleBackdrop() {
         guard
-            !game.loadingScreens.isCovering,
-            let view = titleLogoView, let gameSession = game.gameSession else { return }
-        let camera = gameSession.freeFlyCamera
-        guard view.eye != camera.position || view.forward != camera.forward else { return }
-        place(backdrop(gameSession: gameSession), gameSession: gameSession)
+            isWanted, !isPlaced, !game.loadingScreens.isCovering,
+            let renderer = game.renderer else { return }
+        place(backdrop(renderer: renderer), renderer: renderer)
     }
 
     /// A logo that fails to load still hides the world behind a dark screen.
-    private func backdrop(gameSession: any GameSessionPort) -> TitleBackdropScene {
+    private func backdrop(renderer: any RendererPort) -> LoadingCoverScene {
         do {
-            return try backdropScene(gameSession: gameSession)
+            return try backdropScene(renderer: renderer)
         } catch {
             MenusLog.logger
                 .error("[ERROR] title logo: \(String(describing: error), privacy: .public)")
-            return .empty
+            return Self.emptyScene
         }
     }
 
-    private func place(_ backdrop: TitleBackdropScene?, gameSession: any GameSessionPort) {
+    private func place(_ backdrop: LoadingCoverScene?, renderer: any RendererPort) {
         do {
-            try gameSession.renderer.setLoadingCover(
-                backdrop?.placements,
-                particles: backdrop?.particles ?? [],
-                lighting: backdrop.flatMap { _ in titleLighting }
-            )
+            try renderer.setLoadingScene(backdrop)
+            isPlaced = backdrop != nil
         } catch {
             MenusLog.logger
                 .error("[ERROR] title logo: \(String(describing: error), privacy: .public)")
         }
     }
 
-    /// The game draws the logo in `MainMenuCell`, so it takes that cell's light.
-    var titleLighting: RenderLighting? {
-        game.menuRecords?.menuRecords?.mainMenuLighting.flatMap {
-            CellSceneBuilder.CellInteriorLighting.renderLighting(
-                cell: $0.cell,
-                template: $0.template
+    /// The loading screen's scene with no model: its camera and lights on black.
+    static var emptyScene: LoadingCoverScene {
+        LoadingCoverScene(
+            placements: [], pointLights: LoadingScreenScene.lights,
+            lighting: LoadingScreenScene.lighting,
+            camera: LoadingCoverCamera(
+                view: LoadingScreenScene.camera(),
+                horizontalFieldOfView: LoadingScreenScene.horizontalFieldOfView(
+                    LoadingScreenScene.defaultFieldOfView
+                )
             )
-        }
+        )
     }
 
-    private func backdropScene(gameSession: any GameSessionPort) throws -> TitleBackdropScene {
-        let renderer = gameSession.renderer
+    private func backdropScene(renderer: any RendererPort) throws -> LoadingCoverScene {
         if
             titleMeshes == nil,
             let fileSystem = game.menuRecords?.scriptFileSystem
@@ -102,42 +97,39 @@ final class MenuTitleBackdrop {
                 fileSystem: fileSystem, device: renderer.device, textures: textures
             )
         }
+        var scene = Self.emptyScene
+        guard let meshes = titleMeshes else { return scene }
+        addMist(to: &scene, meshes: meshes)
         let path = TitleBackdrop.logoPath
-        guard let meshes = titleMeshes else { return .empty }
-        let model = try meshes.model(path: path)
-        guard let bounds = meshes.bounds(forPath: path) else { return .empty }
-        let camera = gameSession.freeFlyCamera
-        titleLogoView = (camera.position, camera.forward)
-        let view = TitleBackdrop.View(
-            eye: camera.position, forward: camera.forward, right: camera.right
+        let pose = try LoadingScreenScene.ModelPose(
+            rotationDegrees: .zero, scale: 1, translation: .zero,
+            markerRotation: markerRotation(of: path)
         )
-        let logo = TitleBackdrop.Box(min: bounds.min, max: bounds.max)
-        var scene = TitleBackdropScene(
-            placements: [RenderPlacement(
-                model: model, transform: TitleBackdrop.logoTransform(view: view, logo: logo),
-                castsShadows: false, layer: .loadingCover
-            )],
-            particles: []
-        )
-        addFog(to: &scene, meshes: meshes) {
-            TitleBackdrop.fogTransform(view: view, logo: logo, fog: $0)
-        }
+        try scene.placements.append(RenderPlacement(
+            model: meshes.model(path: path),
+            transform: LoadingScreenScene.modelTransform(
+                pose, aspectRatio: renderer.drawableAspectRatio
+            ),
+            castsShadows: true, layer: .loadingCover
+        ))
         return scene
     }
 
+    /// The logo's inventory marker turn, which the game adds as it does for a loading
+    /// screen model.
+    private func markerRotation(of path: String) throws -> SIMD3<Float>? {
+        guard let files = game.menuRecords?.scriptFileSystem else { return nil }
+        return try NIFFile(data: files.contents(forPath: path)).inventoryMarker?.rotation
+    }
+
     /// The logo still shows when the smoke fails to load.
-    private func addFog(
-        to scene: inout TitleBackdropScene,
-        meshes: MeshLibrary,
-        transform placing: (TitleBackdrop.Box) -> float4x4
-    ) {
-        let path = TitleBackdrop.fogPath
+    private func addMist(to scene: inout LoadingCoverScene, meshes: MeshLibrary) {
+        let path = LoadingScreenScene.mistPath
+        let transform = LoadingScreenScene.mistTransform
         do {
-            let model = try meshes.model(path: path)
-            guard let bounds = meshes.bounds(forPath: path) else { return }
-            let transform = placing(TitleBackdrop.Box(min: bounds.min, max: bounds.max))
-            scene.placements.append(RenderPlacement(
-                model: model, transform: transform, castsShadows: false, layer: .loadingCover
+            try scene.placements.append(RenderPlacement(
+                model: meshes.model(path: path), transform: transform,
+                castsShadows: false, layer: .loadingCover
             ))
             scene.particles = try meshes.particlePlaybacks(
                 path: path, placementTransform: transform, formID: 0
@@ -147,12 +139,4 @@ final class MenuTitleBackdrop {
                 .error("[ERROR] title smoke: \(String(describing: error), privacy: .public)")
         }
     }
-}
-
-/// The logo and its smoke, drawn in place of the world.
-struct TitleBackdropScene {
-    var placements: [RenderPlacement]
-    var particles: [ParticlePlayback]
-
-    static let empty = TitleBackdropScene(placements: [], particles: [])
 }

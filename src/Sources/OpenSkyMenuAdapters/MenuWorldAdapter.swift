@@ -45,7 +45,7 @@ public typealias MenuWorldHosts = MenuWorldHost & MenuWorldNewGameHost & MenuWor
 public final class MenuWorldAdapter {
     public let game: any MenuWorldHost
     public let state: MenuPartState
-    lazy var titleBackdrop = MenuTitleBackdrop(game: game)
+    lazy var titleBackdrop = MenuTitleBackdrop(game: hosts)
 
     let hosts: any MenuWorldHosts
 

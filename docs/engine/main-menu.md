@@ -39,26 +39,6 @@ install with `openskycli swf movie-probe` and `swf action-list`:
 
 Differences from the game:
 
-- Behind the movie, the game draws the 3D logo `meshes\interface\logo\logo.nif` on black,
-  with smoke around it. The smoke is the model of the `INTMenuFogParticles` `STAT` in
-  `Skyrim.esm`, `meshes\interface\intmenufogparticles.nif`: a particle system that
-  emits `fxsteamthinanim.dds` cards from a mesh, plus that mesh. OpenSky draws both
-  through the loading screen's cover layer, so the world is hidden. The cover's particle
-  systems run on wall time, because the menu pauses the world. The logo faces the camera
-  with its +Y side, which was checked by eye in a capture. [WARNING] How the game places
-  the smoke is not confirmed. The smoke volume is about 850 units wide, so with the logo's
-  transform the camera stands inside it and the screen turns a flat grey. OpenSky faces the
-  smoke's +Y side to the camera too and puts that side at the logo, so the smoke drifts
-  behind it.
-- The game draws the logo in `MainMenuCell` (`Skyrim.esm` `CELL 0006F3EB`), the cell the
-  `MMCL` default object names. The cell holds only a `COCMarker`. Its `XCLL` gives a dim
-  blue ambient light, no directional light, and fog distances of 0, so there is no fog.
-  OpenSky lights the logo and the smoke with this cell's light over its `LTMP` template, and
-  clears the screen to black. Sources: UESP "Skyrim Mod:Mod File Format/DOBJ" and
-  "Skyrim:Inaccessible Cells", and `openskycli cell --cell MainMenuCell --refs`.
-- The smoke model's emitter mesh is not drawn in the game: all of its 538 vertices have
-  alpha 0, and its shader sets `Vertex_Alpha`, so the palette lookup gives alpha 0. Only the
-  particles show.
 - Credits returns the movie to its main rows. OpenSky has no credits roll.
 - Delete in the Load list does nothing. Saves are deleted in the System menu.
 - The movie has `ConfirmNewGame` and `ConfirmContinue` callbacks, so the game can ask a
@@ -75,6 +55,40 @@ Differences from the game:
 - When the player's settings file cannot be read, an OK box over the main menu says so, once,
   with `sCantLoadSettings`. When only its controls cannot be read, it says `sCantLoadControls`.
   The defaults are used in both cases.
+
+## The backdrop
+
+Behind the movie, the game draws the 3D logo `meshes\interface\logo\logo.nif` and the
+smoke `meshes\interface\intmenufogparticles.nif` on black. It does not use a cell: it
+builds the same small scene as a loading screen, with its own camera and lights
+([loading screens](/engine/loading-screens.md#the-games-scene)). OpenSky draws it through
+the loading screen's cover layer, so the world is hidden.
+
+| Part | Value |
+| --- | --- |
+| Camera | At (-50, 600, 80), looking at (-50, 0, 0), with +Z up |
+| Field of view | The loading screen's 75, about 17 degrees wide |
+| Logo | At the origin, turned 180 degrees about Z, scale 1; on a screen wider than 16:9 its scale shrinks by (16/9) / aspect |
+| Smoke | At the origin, turned -180 degrees about Z |
+| Light | The loading screen's three point lights; a black ambient light from every side |
+
+The logo has no inventory marker, so the 180-degree turn is all its rotation. Its bounds
+run from 4 to 43 on X, so after the turn it sits 26 units to the camera's left. In a
+reference game capture the logo stands about 14% of the screen width left of the centre
+and fills about 70% of the screen height, which this scene gives.
+
+The smoke volume is about 850 units wide, while the camera sees about 180 units across at
+the logo. So only a small part of the smoke shows, mostly at the edges.
+
+- The smoke's controllers start at 0 when the menu opens. There is no warm-up.
+- The smoke model's emitter mesh is not drawn: all of its 538 vertices have alpha 0, and
+  its shader sets `Vertex_Alpha`, so the palette lookup gives alpha 0. Only the particles
+  show.
+- The cover's particle systems run on wall time, because the menu pauses the world.
+- When the menu closes, the game sends the smoke the `StopEffect` event, so it can fade
+  out. OpenSky removes the smoke at once.
+- While the menu is open, the game uses the `LSIS` default object (`LoadScreenIS`) as the
+  image space. OpenSky keeps its own image space.
 
 ## The held world
 

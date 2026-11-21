@@ -4,12 +4,16 @@ import Foundation
 
 import OpenSkyAgentControl
 import OpenSkyCombatInterface
+import OpenSkyEngineTesting
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyLaunch
+import OpenSkyLoading
 @testable import OpenSkyMenuAdapters
 import OpenSkyMenus
 import OpenSkyMenusInterface
+import OpenSkyRenderCore
+import OpenSkyRendering
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import Testing
@@ -74,13 +78,47 @@ struct MenuWorldScreensTests {
         #expect(host.fakeMapMenu.travelToSelectedCallCount == 0)
     }
 
-    @Test func withoutASessionTheTitleBackdropPlacesNothing() {
+    @Test func withoutARendererTheTitleBackdropPlacesNothing() {
         let menus = MenuWorldAdapter(game: host, now: { Date(timeIntervalSinceReferenceDate: 0) })
         menus.showTitleBackdrop(true)
         menus.refreshTitleBackdrop()
         host.fakeLoadingScreens.isCovering = true
         menus.refreshTitleBackdrop()
-        #expect(menus.titleBackdrop.titleLogoView == nil)
+        #expect(menus.titleBackdrop.isWanted)
+        #expect(!menus.titleBackdrop.isPlaced)
+    }
+
+    @Test func aBackdropWithoutItsFilesIsTheLoadingScenesDarkScreen() throws {
+        let renderer = try #require(FakeRendererPort())
+        let menus = MenuWorldAdapter(game: host, now: { Date(timeIntervalSinceReferenceDate: 0) })
+        menus.showTitleBackdrop(true)
+        host.renderer = renderer
+        host.fakeLoadingScreens.isCovering = true
+        menus.refreshTitleBackdrop()
+        #expect(renderer.loadingCovers.isEmpty)
+        host.fakeLoadingScreens.isCovering = false
+        menus.refreshTitleBackdrop()
+        host.menuRecords = FakeMenuRecords()
+        menus.showTitleBackdrop(true)
+        menus.refreshTitleBackdrop()
+        #expect(menus.titleBackdrop.isPlaced)
+        #expect(renderer.loadingCovers.count == 2)
+        for cover in renderer.loadingCovers {
+            #expect(cover.placements?.isEmpty == true)
+            #expect(cover.pointLightCount == LoadingScreenScene.lights.count)
+            #expect(cover.hasLighting)
+        }
+        menus.showTitleBackdrop(false)
+        #expect(renderer.loadingCovers.last?.placements == nil)
+        #expect(!menus.titleBackdrop.isPlaced)
+    }
+
+    @Test func theEmptyBackdropLooksThroughTheLoadingScreenCamera() {
+        let camera = MenuTitleBackdrop.emptyScene.camera
+        #expect(camera?.view.position == LoadingScreenScene.cameraBase)
+        #expect(camera?.horizontalFieldOfView == LoadingScreenScene.horizontalFieldOfView(
+            LoadingScreenScene.defaultFieldOfView
+        ))
     }
 
     @Test func onlyThePlayerChangesRace() {
