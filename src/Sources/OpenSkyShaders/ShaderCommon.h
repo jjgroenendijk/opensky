@@ -24,6 +24,15 @@ static inline float3 toLinear(float3 gamma)
     return pow(max(gamma, 0.0), 2.2);
 }
 
+// The game mixes a translucent surface with the colour behind it as stored, gamma-space
+// values (docs/rendering/image-space.md#blending). The target holds linear colour, so a
+// translucent pipeline reads the colour behind and mixes after the 1/2.2 power.
+static inline float4 gammaBlend(float4 source, float4 behind)
+{
+    float3 mixed = mix(toGamma(behind.rgb), toGamma(source.rgb), source.a);
+    return float4(toLinear(mixed), source.a + behind.a * (1.0 - source.a));
+}
+
 static inline float3 directionalAmbient(float3 normal, constant FrameUniforms &frame)
 {
     float3 weights = abs(normal);

@@ -110,6 +110,9 @@ in the fog color, because the sum already shows the fogged scene behind it.
 | `DEST_COLOR`, `ZERO` (4 and 1) | Multiply | Modulation effects |
 | Anything else, or none | Alpha | Smoke, steam, water |
 
+The alpha pipeline mixes in gamma space, as the game does
+([blending](/rendering/image-space.md#blending)).
+
 Placed and effect systems draw far to near, by the distance from the camera to the emitter
 origin. Inside an alpha or multiply system, the particles also draw far to near. Additive
 systems are not sorted inside, because a sum does not depend on order. Rain and snow follow

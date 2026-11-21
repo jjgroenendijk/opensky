@@ -102,16 +102,27 @@ precipitationOccluded(float3 world, constant FrameUniforms &frame, depth2d_array
 
 // A particle shades like an effect shape that faces the eye: the particle colour is
 // its vertex colour (docs/rendering/particles.md).
-fragment float4 particleFragment(
-    ParticleVertexOut in [[stage_in]],
-    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
-    constant ParticleEffectUniforms &effect [[buffer(BufferIndexDrawUniforms)]],
-    const device PointLightUniform *pointLights [[buffer(BufferIndexPointLights)]],
-    texture2d<float> sourceMap [[texture(TextureIndexDiffuse)]],
-    texture2d<float> palette [[texture(TextureIndexEffectPalette)]],
-    depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],
-    depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],
-    sampler trilinear [[sampler(SamplerIndexTrilinear)]])
+#define PARTICLE_FRAGMENT_ARGUMENTS                                                                \
+    ParticleVertexOut in [[stage_in]],                                                             \
+        constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],                        \
+        constant ParticleEffectUniforms &effect [[buffer(BufferIndexDrawUniforms)]],               \
+        const device PointLightUniform *pointLights [[buffer(BufferIndexPointLights)]],            \
+        texture2d<float> sourceMap [[texture(TextureIndexDiffuse)]],                               \
+        texture2d<float> palette [[texture(TextureIndexEffectPalette)]],                           \
+        depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],                             \
+        depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],                \
+        sampler trilinear [[sampler(SamplerIndexTrilinear)]]
+
+static float4 particleColor(
+    ParticleVertexOut in,
+    constant FrameUniforms &frame,
+    constant ParticleEffectUniforms &effect,
+    const device PointLightUniform *pointLights,
+    texture2d<float> sourceMap,
+    texture2d<float> palette,
+    depth2d<float> sceneDepth,
+    depth2d_array<float> auxiliary,
+    sampler trilinear)
 {
     if ((effect.flags & EffectFlagPrecipitation) != 0 &&
         precipitationOccluded(in.worldPosition, frame, auxiliary)) {
@@ -137,6 +148,21 @@ fragment float4 particleFragment(
     float3 fogged = adds ? applyAdditiveFog(rgb, in.worldPosition, frame)
                          : applyFog(rgb, in.worldPosition, frame);
     return float4(fogged, alpha);
+}
+
+fragment float4 particleFragment(PARTICLE_FRAGMENT_ARGUMENTS)
+{
+    return particleColor(
+        in, frame, effect, pointLights, sourceMap, palette, sceneDepth, auxiliary, trilinear);
+}
+
+// The alpha pipelines mix in gamma space with hardware blending off.
+fragment float4 particleGammaFragment(PARTICLE_FRAGMENT_ARGUMENTS, float4 behind [[color(0)]])
+{
+    return gammaBlend(
+        particleColor(
+            in, frame, effect, pointLights, sourceMap, palette, sceneDepth, auxiliary, trilinear),
+        behind);
 }
 
 // Decals (docs/rendering/decals.md): a flat quad on the struck surface, lit by the

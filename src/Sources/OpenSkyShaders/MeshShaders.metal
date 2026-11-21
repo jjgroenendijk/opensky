@@ -363,7 +363,8 @@ fragment float4 staticMeshFragment(
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]],
     raytracing::instance_acceleration_structure rayScene
-    [[buffer(BufferIndexRayScene), function_constant(rayTracedShadows)]])
+    [[buffer(BufferIndexRayScene), function_constant(rayTracedShadows)]],
+    float4 behind [[color(0), function_constant(alphaBlendValue)]])
 {
     SurfaceMaps maps = {normalMap,       glowMap,  detailMap,   environmentMap,
                         environmentMask, layerMap, backLightMap};
@@ -505,6 +506,9 @@ fragment float4 staticMeshFragment(
     output.rgb = clampLitOutput(output.rgb);
     if (!alphaBlendEnabled && draw.additiveBlend == 0) {
         output.a = snowCoverageAlpha(snowMask);
+    }
+    if (alphaBlendEnabled && draw.additiveBlend == 0) {
+        output = gammaBlend(output, behind);
     }
     return shownPixel(output, screenDoorHidden);
 }
