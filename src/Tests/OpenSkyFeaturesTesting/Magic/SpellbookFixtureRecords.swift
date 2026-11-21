@@ -46,7 +46,8 @@ extension SpellbookFixture {
             magicEffect(
                 formID: restoreHealth, editorID: "RestoreHealth",
                 data: effectData(archetype: 0, primaryValue: 24),
-                keywords: [restorationKeyword]
+                keywords: [restorationKeyword],
+                description: "Heals <mag> points over <dur> s. <Restoration.School>"
             ),
             magicEffect(
                 formID: fortifyResistFire, editorID: "FortifyResistFire",
@@ -139,10 +140,14 @@ extension SpellbookFixture {
         formID: UInt32,
         editorID: String,
         data: Data,
-        keywords: [UInt32] = []
+        keywords: [UInt32] = [],
+        description: String? = nil
     ) -> Data {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
             + ESMFixture.field("FULL", ESMFixture.zstring(editorID))
+        if let description {
+            fields += ESMFixture.field("DNAM", ESMFixture.zstring(description))
+        }
         if !keywords.isEmpty {
             var count = Data()
             count.appendUInt32(UInt32(keywords.count))
@@ -255,6 +260,17 @@ extension SpellbookFixture {
                 formID: Spell.flames, editorID: "Flames", equipType: Slot.eitherHand,
                 spit: spit(type: 0, chargeTime: 0, casting: 1, delivery: 0),
                 effects: [EffectSpec(restoreHealth, 5, 0)]
+            ),
+            spell(
+                formID: Spell.wardedHeal, editorID: "WardedHeal", equipType: Slot.eitherHand,
+                spit: spit(type: 0, chargeTime: 0, casting: 1, delivery: 0),
+                effects: [
+                    EffectSpec(restoreHealth, 15, 3),
+                    EffectSpec(
+                        fortifyResistFire, 25, 30,
+                        conditions: ActiveEffectFixture.firstPersonCondition
+                    )
+                ]
             )
         ]
     }
@@ -300,12 +316,18 @@ extension SpellbookFixture {
         public let duration: UInt32
         /// EFIT area, in feet. Zero is a point effect.
         public let area: UInt32
+        /// The entry's CTDA fields; empty for an unconditioned entry.
+        public let conditions: Data
 
-        public init(_ effect: UInt32, _ magnitude: Float, _ duration: UInt32, area: UInt32 = 0) {
+        public init(
+            _ effect: UInt32, _ magnitude: Float, _ duration: UInt32, area: UInt32 = 0,
+            conditions: Data = Data()
+        ) {
             self.effect = effect
             self.magnitude = magnitude
             self.duration = duration
             self.area = area
+            self.conditions = conditions
         }
     }
 
@@ -326,7 +348,7 @@ extension SpellbookFixture {
                 magnitude: effect.magnitude,
                 area: effect.area,
                 duration: effect.duration
-            )
+            ) + effect.conditions
         }
         return ESMFixture.record("SPEL", formID: formID, data: fields)
     }

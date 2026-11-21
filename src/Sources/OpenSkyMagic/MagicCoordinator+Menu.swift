@@ -26,25 +26,56 @@ extension MagicCoordinator.MagicMenu {
     private func card(
         of spell: ResolvedSpell, caster: CasterRuntime, texts: MagicTexts
     ) -> MagicMenuSpellCard {
-        let effects = spell.effects.map { entry in
-            var line = entry.displayName
-            if entry.item.magnitude > 0 {
-                line += " \(Int(entry.item.magnitude.rounded()))"
-            }
-            if entry.item.duration > 0 {
-                line += " for \(entry.item.duration) s"
-            }
-            return line
-        }
         let costliest = spell.effects.max { $0.cost < $1.cost }
         let isPower = spell.spellType == .power || spell.spellType == .lesserPower
         return MagicMenuSpellCard(
             kind: isPower ? .power : .spell,
-            effects: effects.joined(separator: ", "),
+            effects: cardText(of: spell),
             cost: Int(caster.cost(of: spell, caster: .player).rounded()),
             costIsPerSecond: spell.data?.castingType == .concentration,
             level: texts.level(minimumSkill: costliest?.effect?.effect.data?.minimumSkillLevel ?? 0)
         )
+    }
+
+    /// The spell's own description, or else the description of each effect the player
+    /// would get, with its numbers after the player's perks. See docs/engine/magic.md.
+    private func cardText(of spell: ResolvedSpell) -> String {
+        if let own = spell.localizedDescription, !own.isEmpty {
+            return own
+        }
+        let shown = spell.effects.filter { entry in
+            !(entry.effect?.effect.data?.flags.contains(.hideInUI) ?? false)
+                && entryHoldsForPlayer(entry.item.conditions)
+        }
+        let scaled = coordinator.perkEffects.perkScaledForMenu(shown.map(\.item), of: spell)
+        return zip(shown, scaled).map { entry, values in
+            Self.line(of: entry, values: values)
+        }.joined(separator: " ")
+    }
+
+    private static func line(of entry: ResolvedSpellEffect, values: MagicItemEffect) -> String {
+        let flags = entry.effect?.effect.data?.flags ?? []
+        let filled = MagicDescriptionText.Values(
+            magnitude: flags.contains(.noMagnitude) ? nil : values.magnitude,
+            duration: flags.contains(.noDuration) ? nil : Float(values.duration),
+            area: flags.contains(.noArea) ? nil : Float(values.area)
+        )
+        guard let template = entry.effect?.localizedDescription, !template.isEmpty else {
+            return [entry.displayName, filled.magnitude.map(MagicDescriptionText.number)]
+                .compactMap(\.self).joined(separator: " ")
+        }
+        return MagicDescriptionText.filled(template, values: filled)
+    }
+
+    /// An entry's conditions ask about the actor that gets the effect, here the player.
+    /// Without an effect runtime every entry shows.
+    private func entryHoldsForPlayer(_ list: ConditionList) -> Bool {
+        guard
+            !list.conditions.isEmpty,
+            coordinator.effects != nil,
+            let player = coordinator.world.actorValueHolder(for: .player)
+        else { return true }
+        return coordinator.effects?.allows(list, on: player) ?? true
     }
 
     /// The names of the effects on the player, for the menu's last tab.

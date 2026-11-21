@@ -38,6 +38,11 @@ entry is stored:
 | `.dlstrings` | uint32 length (with the null) + zstring | Books and descriptions |
 | `.ilstrings` | Same as `.dlstrings` | Dialogue lines |
 
+A description is not always in `.dlstrings`. A magic effect's `MGEF DNAM` description is in
+`.strings`: `Dragonborn.esm` string 74565, the description of `FireDamageConcAimed`, is in
+`dragonborn_english.strings` ("A gout of fire that does <mag> points per second...") and
+in neither of the other two tables.
+
 ## Decode rules
 
 - If an ID appears twice in the directory, the first one wins. xEdit does the same.

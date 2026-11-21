@@ -277,9 +277,9 @@ fields the movie's item card reads for a spell:
 | --- | --- |
 | `type` | 7 (`ICT_SPELL`), or 13 (`ICT_SPELL_DEFAULT`) for a power or lesser power |
 | `name` | The spell's name |
-| `effects` | Each effect's name, magnitude, and duration, joined with commas |
+| `effects` | The spell's description, or each shown effect's description (see below) |
 | `spellCost` | Magicka per cast, after the player's skill and perks; a spell only |
-| `castTime` | 1 for a concentration spell, else 0 |
+| `castTime` | 0 for a concentration spell, else 1 |
 | `castLevel` | The level of the costliest effect, from its Minimum Skill Level |
 
 The level names come from `sNoviceDisplayName`, `sApprenticeDisplayName`,
@@ -289,11 +289,35 @@ the Minimum Skill Level "governs which level the spell will display as in the us
 (<https://ck.uesp.net/wiki/Magic_Effect>). A shout or active effect row has no card yet, so the
 card is hidden on those rows.
 
+The `effects` text is the spell's own `DESC` when it has one. Otherwise it is the `DNAM`
+description of each effect, joined with spaces. The CK wiki's Magic Effect page gives the
+rules (<https://ck.uesp.net/wiki/Magic_Effect>): an item's description overrides the effect
+descriptions, and an effect's description fills these tags:
+
+| Tag | Shows |
+| --- | --- |
+| `<mag>` | The magnitude; nothing when the effect is flagged No Magnitude |
+| `<dur>` | The duration; nothing when it is flagged No Duration |
+| `<area>` | The area; nothing when it is flagged No Area |
+| `<global=EditorID>` | The global's value; nothing when there is no such global |
+| Any other `<tag>` | The tag's name, cut at the first `.` or `=` |
+
+For example, `Heals <mag> points over <dur> s.` on a 10-point, 1-second entry reads
+`Heals 10 points over 1 s.`. The magnitude and duration are the values after the player's
+Mod Spell Magnitude and Mod Spell Duration perks, because the player is the caster. A whole
+number shows no decimals.
+
+An effect shows only when the effect is not flagged Hide in UI and the entry's conditions
+hold for the player, so a perk's extra effect shows only with the perk. An effect with no
+description shows its name and magnitude.
+
+The movie picks the cost layout from `castTime`. When it is 0, the movie goes to its
+`Magic_time_label` frame and writes the cost into `MagicCostTimeValue`, the per-second
+cost field. Any other value goes to `Magic_reg` and `MagicCostValue`. So a concentration
+spell sends 0, and any other spell sends 1.
+
 Not done yet:
 
-- The game writes each effect from its description, with the magnitude and duration filled
-  in. OpenSky writes the effect name and the numbers.
-- OpenSky lists every effect of the spell, also one whose conditions fail, such as a perk's
-  extra effect.
-- A concentration spell does not show its cost as per second; `castTime` of 1 does not pick
-  the movie's per-second layout.
+- The game shows a filled-in tag in bold. OpenSky shows plain text, because `SetText`
+  ignores its HTML argument.
+- `<global=EditorID>` always shows nothing: the magic menu reads no globals yet.

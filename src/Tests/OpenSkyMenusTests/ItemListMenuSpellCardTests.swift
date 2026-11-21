@@ -49,7 +49,8 @@ struct ItemListMenuSpellCardTests {
         let info = Self.info(root)
         #expect(Self.value("type", in: info) == .integer(InventoryMenuMovieBridge.spellType))
         #expect(Self.value("spellCost", in: info) == .integer(14))
-        #expect(Self.value("castTime", in: info) == .integer(1))
+        // Concentration: 0 picks the movie's per-second layout.
+        #expect(Self.value("castTime", in: info) == .integer(0))
         #expect(Self.value("castLevel", in: info) == .string("Novice"))
         #expect(ItemListMenuMovieBridge.rowLabels(runtime: runtime).rows.isEmpty)
     }

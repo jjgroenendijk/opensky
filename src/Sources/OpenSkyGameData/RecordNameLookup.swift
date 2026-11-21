@@ -1,6 +1,7 @@
 // Finds a record's FULL name in its plugin's string table. A localized plugin such as
 // Skyrim.esm stores only a string ID in the record. See docs/formats/strings.md.
 
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 nonisolated public struct RecordNameLookup: Sendable {
@@ -15,11 +16,11 @@ nonisolated public struct RecordNameLookup: Sendable {
 
     /// The text of `name` from the tables of `plugin`, the plugin that wrote the record.
     /// Nil without tables, or when the table lacks the ID.
-    func text(_ name: LString?, plugin: String) -> String? {
+    func text(_ name: LString?, plugin: String, kind: StringTable.Kind = .strings) -> String? {
         switch name {
         case nil: nil
         case let .inline(value): value
-        case .tableID, .pluginTableID: strings?.scoped(to: plugin).resolve(name)
+        case .tableID, .pluginTableID: strings?.scoped(to: plugin).resolve(name, kind: kind)
         }
     }
 }

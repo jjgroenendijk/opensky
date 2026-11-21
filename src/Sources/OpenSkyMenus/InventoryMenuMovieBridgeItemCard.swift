@@ -105,7 +105,8 @@ nonisolated extension InventoryMenuMovieBridge {
             send([
                 "type": .integer(spellType), "name": .string(name),
                 "effects": .string(card.effects), "spellCost": .integer(card.cost),
-                "castTime": .integer(card.costIsPerSecond ? 1 : 0),
+                // The movie shows the per-second cost layout when castTime is 0.
+                "castTime": .integer(card.costIsPerSecond ? 0 : 1),
                 "castLevel": .string(card.level)
             ], runtime: runtime)
         }

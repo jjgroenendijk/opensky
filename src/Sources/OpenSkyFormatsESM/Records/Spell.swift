@@ -118,6 +118,15 @@ nonisolated public enum MagicCastingRecord: Sendable {
         }
     }
 
+    /// DESC: the spell or scroll's own description; nil on a staff enchantment.
+    public var description: LString? {
+        switch self {
+        case let .spell(spell): spell.header.description
+        case let .scroll(scroll): scroll.header.description
+        case .staff: nil
+        }
+    }
+
     /// ETYP: the EQUP slot the record links to, raw and relative to the
     /// authoring plugin. It says which hands a readied spell takes.
     public var equipType: FormID? {
