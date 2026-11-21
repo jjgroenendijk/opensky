@@ -10,6 +10,7 @@ import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
 import OpenSkyPhysics
 public import OpenSkyProgressionInterface
+import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 extension MagicCoordinator.ItemUse {
@@ -55,6 +56,17 @@ extension MagicCoordinator.ItemUse {
             }
             if outcome?.kind == .ingredient {
                 coordinator.world.playerAteIngredient(item)
+            }
+            if let kind = outcome?.kind {
+                let flags = inventory.baselines.items.ingestibles[item.rawValue]?.flags
+                let stat = ItemUseStats.stat(
+                    of: kind,
+                    isFood: flags?.contains(.food) == true,
+                    isPoison: flags?.contains(.poison) == true
+                )
+                if let stat, let store = coordinator.effects?.store {
+                    store.incrementMiscStat(stat)
+                }
             }
             return coordinator.recordEffect(.consumed(item: name, outcome))
         } catch {

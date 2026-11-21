@@ -233,6 +233,7 @@ struct AlchemyCoordinatorTests {
         #expect(lab.consumables.playerWeaponPoisons.poisons[InventoryBaselineFixture.sword]?
             .doses == 2)
         #expect(harness.inventory.count(of: Fixture.poison, in: .player) == 1)
+        #expect(harness.store.miscStats.value("Poisons Used") == 1)
         #expect(lab.consumables.applyPoison(Fixture.poison) == .alreadyPoisoned)
         #expect(harness.inventory.count(of: Fixture.poison, in: .player) == 1)
         #expect(lab.consumables.applyPoison(Fixture.wheat) == .notAPoison("Wheat"))
