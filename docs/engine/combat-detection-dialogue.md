@@ -81,8 +81,9 @@ Who speaks each line:
 - AlertToCombat and LostToCombat: a member that detects the target again. The player never says
   it.
 - AlertIdle and LostIdle: on each search update, every second, one member, never the player, about
-  its own combat target. The pick is most likely random. LostIdle when the group's record of that
-  target is Lost, else AlertIdle, also when there is no record.
+  its own combat target. The members who are not the player and who pass a combat-state check
+  are collected, and one is picked at random, each with the same chance. LostIdle when the
+  group's record of that target is Lost, else AlertIdle, also when there is no record.
 - AlertToNormal and LostToNormal: the member nearest the target's position, or else the member
   nearest the player. LostToNormal when the record was Lost, else AlertToNormal.
 - CombatToNormal: an actor whose combat target becomes nothing, while its old target is dead or

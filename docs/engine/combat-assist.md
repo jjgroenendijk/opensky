@@ -31,7 +31,10 @@ ends.
   bash reach, 141 units.
 - The aim is refreshed every 0.25 seconds. It is refreshed every 0.1 seconds while the target is
   inside the band and is the high-priority target, which in practice is the player.
-- The turn most likely uses the general actor turn speed of 2π radians a second.
+- The tracker runs at priority 3.
+- The turn most likely uses the general actor turn speed of 2π radians a second. The attack also
+  reads a rate from an animation graph variable. No separate turn speed, and no point in the
+  attack where the tracking stops, was found.
 - The NPC does not slide toward the target.
 
 ## Projectile auto-aim

@@ -88,5 +88,9 @@ sequenceDiagram
 ```
 
 The time is checked after every 10 actors. Over budget, the pass stops, and the next frame goes on
-from the same place. Each level uses the same actor update. What a lower level skips inside it was
-not found.
+from the same place. Each level uses the same actor update.
+
+Most likely, the actor update does nothing unless the actor's cell is fully attached. So an actor
+in a cell that is loaded but not attached, the middle-high level, runs no packages and no
+detection. The update also skips an actor without 3D and an actor in certain life states. What
+the middle-low and low levels skip in detail was not found.
