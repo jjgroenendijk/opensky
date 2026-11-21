@@ -1,5 +1,6 @@
 // A translucent surface mixes with the colour behind it in gamma space, as the game
 // stores colour: over black, a quarter-alpha box shows a quarter of its opaque value.
+// Lit and effect shapes leave the mesh shader through different returns; both mix.
 
 import Metal
 import MetalKit
@@ -18,11 +19,17 @@ struct GammaBlendTests {
     private static let size = 64
     private static let alpha: Float = 0.25
 
-    private static func material(blended: Bool) -> Material {
+    private static let effect = EffectShading(
+        baseColor: SIMD4(1, 1, 1, 1), baseColorScale: 1, paletteTexture: nil,
+        paletteColor: false, paletteAlpha: false, falloff: nil, vertexColors: false,
+        vertexAlpha: false
+    )
+
+    private static func material(blended: Bool, effect: EffectShading?) -> Material {
         Material(
             diffuseTexture: "texture", normalTexture: nil, uvOffset: .zero, uvScale: SIMD2(1, 1),
             alpha: blended ? alpha : 1, glossiness: 0, specularColor: .zero, specularStrength: 0,
-            doubleSided: false, alphaBlend: blended, alphaTestThreshold: nil
+            doubleSided: false, alphaBlend: blended, alphaTestThreshold: nil, effect: effect
         )
     }
 
@@ -38,12 +45,12 @@ struct GammaBlendTests {
         return texture
     }
 
-    private static func centre(blended: Bool) throws -> Int {
+    private static func centre(blended: Bool, effect: EffectShading? = nil) throws -> Int {
         let device = try #require(OffscreenRendererFixture.device)
         let texture = try opaqueGrey(device: device)
         let model = Model(
             meshes: [DemoScene.boxMesh(halfWidth: 200, halfDepth: 200, height: 200)],
-            materials: [material(blended: blended)],
+            materials: [material(blended: blended, effect: effect)],
             skippedShapeCount: 0
         )
         let placement = try RenderPlacement(
@@ -67,10 +74,11 @@ struct GammaBlendTests {
         return Int(pixels[offset + 1])
     }
 
-    @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
-    func aTranslucentBoxOverBlackShowsItsAlphaTimesTheOpaqueValue() throws {
-        let opaque = try Self.centre(blended: false)
-        let blended = try Self.centre(blended: true)
+    @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device), arguments: [false, true])
+    func aTranslucentBoxOverBlackShowsItsAlphaTimesTheOpaqueValue(isEffect: Bool) throws {
+        let shading = isEffect ? Self.effect : nil
+        let opaque = try Self.centre(blended: false, effect: shading)
+        let blended = try Self.centre(blended: true, effect: shading)
         #expect(opaque > 40, "the opaque box is too dark to compare: \(opaque)")
         let expected = Int((Float(opaque) * Self.alpha).rounded())
         #expect(abs(blended - expected) <= 6, "blended \(blended), expected about \(expected)")

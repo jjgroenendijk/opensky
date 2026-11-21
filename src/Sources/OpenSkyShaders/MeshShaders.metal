@@ -330,13 +330,14 @@ static inline float4 blendOutput(
     return float4(applyFog(colour, worldPosition, frame), alphaBlendEnabled ? alpha : 1.0);
 }
 
-// Drops a screen-door pixel once its quad has finished every texture read.
-static inline float4 shownPixel(float4 colour, bool hidden)
+// Drops a screen-door pixel once its quad has finished every texture read. A blended
+// pipeline has hardware blending off, so every return mixes with the colour behind here.
+static inline float4 shownPixel(float4 colour, bool hidden, float4 behind, uint additiveBlend)
 {
     if (hidden) {
         discard_fragment();
     }
-    return colour;
+    return alphaBlendEnabled && additiveBlend == 0 ? gammaBlend(colour, behind) : colour;
 }
 
 fragment float4 staticMeshFragment(
@@ -416,13 +417,15 @@ fragment float4 staticMeshFragment(
         DebugSurface surface = {
             in.worldPosition, in.normal, in.texcoord,
             diffuseMap.calculate_unclamped_lod(trilinear, in.texcoord), draw.layerCategory};
-        return shownPixel(debugViewColor(frame, surface), screenDoorHidden);
+        return shownPixel(
+            debugViewColor(frame, surface), screenDoorHidden, behind, draw.additiveBlend);
     }
     if (hasTerm(terms, ShadingTermRefraction)) {
         RefractionInput refraction = {in.position.xy, uv, alpha, terms};
         float3 refractedColour =
             refracted(refraction, frame, draw, normalMap, sceneColour, trilinear);
-        return shownPixel(float4(refractedColour, 1.0), screenDoorHidden);
+        return shownPixel(
+            float4(refractedColour, 1.0), screenDoorHidden, behind, draw.additiveBlend);
     }
     if (isEffect) {
         EffectLightInput light = {draw.effectFlags,
@@ -433,7 +436,7 @@ fragment float4 staticMeshFragment(
                                   in.instanceColor};
         float3 lit = effect.rgb * effectLight(light, frame, pointLights, draw.pointLightCount);
         float4 effectColour = blendOutput(lit, alpha, in.worldPosition, frame, draw);
-        return shownPixel(effectColour, screenDoorHidden);
+        return shownPixel(effectColour, screenDoorHidden, behind, draw.additiveBlend);
     }
     SurfaceNormal normal = surfaceNormal(in, tangentFrame, uv, terms, maps, trilinear);
     float shadow =
@@ -446,7 +449,8 @@ fragment float4 staticMeshFragment(
                 ? rayTracedSunShadow(in.worldPosition, normalize(in.normal), frame, rayScene)
                 : 1.0;
         if (rayShadowView) {
-            return shownPixel(float4(float3(traced), 1.0), screenDoorHidden);
+            return shownPixel(
+                float4(float3(traced), 1.0), screenDoorHidden, behind, draw.additiveBlend);
         }
         shadow = min(shadow, traced);
     }
@@ -507,10 +511,7 @@ fragment float4 staticMeshFragment(
     if (!alphaBlendEnabled && draw.additiveBlend == 0) {
         output.a = snowCoverageAlpha(snowMask);
     }
-    if (alphaBlendEnabled && draw.additiveBlend == 0) {
-        output = gammaBlend(output, behind);
-    }
-    return shownPixel(output, screenDoorHidden);
+    return shownPixel(output, screenDoorHidden, behind, draw.additiveBlend);
 }
 
 // Sun-shadow depth pre-pass: each caster renders into one cascade slice,
