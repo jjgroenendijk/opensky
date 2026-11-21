@@ -86,7 +86,7 @@ category list stays above the option rows. In the game a click still reaches the
 the option rows.
 
 An alpha-0 clip with a mouse handler of its own is a hit area: it catches the pointer over its
-bounds, and `Mouse.getTopMostEntity()` answers it. The Tween menu needs this. Each of its four
+shapes, and `Mouse.getTopMostEntity()` answers it. The Tween menu needs this. Each of its four
 entries has an `InputRect` clip at alpha 0 above the entry, and its `onMouseDown` opens the entry
 only when `getTopMostEntity()` is that clip.
 
@@ -95,9 +95,12 @@ A clip is mouse-enabled when it has `onPress`, `onRelease`, `onReleaseOutside`, 
 handler. Flash sends a mouse event to a clip only when it can handle one, and CLIK sets exactly these
 in `configUI`.
 
-Hits use bounding boxes, not shapes. That matches `MovieClip.hitTest` in Flash, and every
-mouse-enabled CLIK control is a rectangular button or list row. A rotated or odd-shaped control gets
-a slightly large hit area.
+A shape is hit on its fill and stroke triangles, the ones the renderer draws, so a point in the
+empty corner of an L-shaped clip misses it. A clip is hit where any visible child is hit. Text
+fields, static text, and buttons use their bounding box. A mask still cuts by its bounding box.
+
+`MovieClip.hitTest(x, y, true)` tests the shapes the same way, with `x` and `y` in stage pixels.
+`hitTest(x, y)` and `hitTest(clip)` keep the bounding box, as in Flash.
 
 ## Focus and menu navigation
 

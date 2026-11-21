@@ -1,6 +1,6 @@
 // Pointer hit testing: walks paint order in reverse, respecting `_visible`,
-// the matrix chain, and clip layers. Hits use bounding boxes, as Flash
-// `hitTest` does; vanilla CLIK controls are rectangles, so this is enough.
+// the matrix chain, and clip layers. A shape is hit on its triangles and a clip
+// through what it holds, as Flash routes the mouse; text and buttons use their box.
 
 import Foundation
 import simd
@@ -87,10 +87,13 @@ nonisolated extension SWFMovieRuntime {
             target != nil && topmost != nil
         }
 
-        mutating func walk(node: SWFDisplayObject, transform: SWFTransform, depth: Int) {
+        /// True when something under the node draws at the point.
+        @discardableResult
+        mutating func walk(node: SWFDisplayObject, transform: SWFTransform, depth: Int) -> Bool {
             guard depth < SWFDisplayObject.maximumTreeDepth, !isSettled else {
-                return
+                return false
             }
+            var hit = false
             let masks = maskRanges(of: node, transform: transform)
             for child in node.children.reversed() where child.isVisible && child.clipDepth == nil {
                 guard !isMasked(child, by: masks) else {
@@ -98,27 +101,30 @@ nonisolated extension SWFMovieRuntime {
                 }
                 let childTransform = transform
                     .concatenating(SWFTransform(matrix: child.matrix))
-                if child.isTransparent {
-                    visitHitArea(child, transform: childTransform)
-                } else {
-                    visit(child, transform: childTransform, depth: depth)
-                }
+                let childHit = child.isTransparent
+                    ? visitHitArea(child, transform: childTransform)
+                    : visit(child, transform: childTransform, depth: depth)
+                hit = hit || childHit
                 if isSettled {
-                    return
+                    return true
                 }
             }
+            return hit
         }
 
         /// An alpha-0 clip with its own mouse handler is a hit area, as in Flash: it
-        /// catches the pointer over its bounds. Nothing inside it is tested, so a
+        /// catches the pointer where its shapes lie. Nothing inside it is a target, so a
         /// page faded to alpha 0 does not take its rows' clicks.
-        private mutating func visitHitArea(_ child: SWFDisplayObject, transform: SWFTransform) {
+        private mutating func visitHitArea(
+            _ child: SWFDisplayObject,
+            transform: SWFTransform
+        ) -> Bool {
             guard
                 runtime.isMouseEnabled(child),
                 let inverse = transform.inverted,
-                runtime.containsLocally(child, localPoint: inverse.apply(point))
+                runtime.draws(child, at: inverse.apply(point))
             else {
-                return
+                return false
             }
             if topmost == nil {
                 topmost = child
@@ -126,24 +132,26 @@ nonisolated extension SWFMovieRuntime {
             if target == nil {
                 target = child
             }
+            return true
         }
 
         private mutating func visit(
             _ child: SWFDisplayObject,
             transform: SWFTransform,
             depth: Int
-        ) {
+        ) -> Bool {
+            var hit = false
             if child.isClip {
-                walk(node: child, transform: transform, depth: depth + 1)
+                hit = walk(node: child, transform: transform, depth: depth + 1)
                 if isSettled {
-                    return
+                    return true
                 }
             }
-            guard
-                let inverse = transform.inverted,
-                runtime.containsLocally(child, localPoint: inverse.apply(point))
-            else {
-                return
+            if !child.isClip || child.isButton, let inverse = transform.inverted {
+                hit = runtime.draws(child, at: inverse.apply(point))
+            }
+            guard hit else {
+                return false
             }
             // A clip draws nothing itself; what it holds was tested above.
             if topmost == nil, !child.isClip {
@@ -152,6 +160,7 @@ nonisolated extension SWFMovieRuntime {
             if target == nil, runtime.isMouseEnabled(child) {
                 target = child
             }
+            return true
         }
 
         /// The clip layers active in a node's child list, each as the depth range it
