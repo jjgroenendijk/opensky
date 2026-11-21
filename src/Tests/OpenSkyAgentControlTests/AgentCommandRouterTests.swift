@@ -99,6 +99,14 @@ struct AgentCommandRouterTests {
         #expect(world.inputLog == ["text Brynja"])
     }
 
+    @Test func keySendsOneKeyboardKey() throws {
+        let request = try AgentCommandLine.request(["input", "key", "0x39"])
+        #expect(request.command == "input.key")
+        let pressed = try #require(result(run(request.command, request.args)))
+        #expect(try pressed.get()["key"] == "0x39")
+        #expect(world.inputLog == ["key 0x39"])
+    }
+
     @Test func clickTakesAPointAsFractionsOfTheView() throws {
         let request = try AgentCommandLine.request(["input", "click", "--x", "0.5", "--y", "0.25"])
         #expect(request.command == "input.click")

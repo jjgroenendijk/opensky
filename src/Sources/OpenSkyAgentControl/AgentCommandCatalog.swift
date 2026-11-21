@@ -164,6 +164,13 @@ nonisolated public enum AgentCommandCatalog {
             positionals: [requiredText("text", "The text.")]
         ),
         command(
+            "input.key", "Press and release one keyboard key, as in the game window.",
+            positionals: [required(
+                "key",
+                "A key name such as Space or E, or a scan code such as 0x39."
+            )]
+        ),
+        command(
             "input.point", "Move the cursor over the open menu.", options: viewPoint
         ),
         command("input.click", "Click the open menu.", options: viewPoint)

@@ -11,6 +11,9 @@ nonisolated public final class FakeSystemMenuPort: SystemMenuPort {
     public var model: SystemMenuModel = FakeSystemMenuModelPort()
     public var movieDiagnostics: SystemMenuMovieDiagnostics?
     public var movieMainPage: SystemMenuPageSnapshot?
+    public var controls: ControlsPageReadout?
+    public var captureKeyCalls: [UInt32] = []
+    public var captureKeyResult = false
     public var openCallCount = 0
     public var quicksaveCallCount = 0
     public var routeEventMenuInputEventCalls: [MenuInputEvent] = []
@@ -24,6 +27,11 @@ nonisolated public final class FakeSystemMenuPort: SystemMenuPort {
 nonisolated extension FakeSystemMenuPort {
     public func tick(now: Double) {
         tickCalls.append(now)
+    }
+
+    public func captureKey(scanCode: UInt32) -> Bool {
+        captureKeyCalls.append(scanCode)
+        return captureKeyResult
     }
 
     public func open() {

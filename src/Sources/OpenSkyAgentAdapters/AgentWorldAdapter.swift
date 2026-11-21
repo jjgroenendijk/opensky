@@ -171,6 +171,10 @@ extension AgentWorldAdapter: AgentControlWorld {
         try input.typeText(text)
     }
 
+    public func pressKey(_ key: String) throws(AgentFailure) -> AgentJSON {
+        try input.pressKey(key)
+    }
+
     public func captureScreenshot(_ request: AgentScreenshotRequest) throws(AgentFailure)
         -> AgentHandling
     {
