@@ -290,6 +290,8 @@ the detail and the sources it did find.
 | Main menu smoke and start | Placement checked by eye | [main menu](/engine/main-menu.md) |
 | Race menu camera | OpenSky's framing | [race menu](/engine/race-menu.md) |
 | `WarHorseMode` HUD rule | Inferred | [HUD](/rendering/hud.md) |
+| Container and training HUD modes | Taken off when the menu closes, as for the other menus | [HUD](/rendering/hud.md#hud-under-menus) |
+| Text with no matching font | Draws nothing | [SWF text](/formats/swf-text.md#finding-a-font-in-the-game) |
 | `RFCT` rotate-to-face flag | Not used | [visual effects](/rendering/visual-effects.md) |
 
 ## Scripts and saves

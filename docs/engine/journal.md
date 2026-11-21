@@ -288,6 +288,8 @@ The stats are saved in the `MSTS` chunk. OpenSky counts these:
 the one its name gives: main quests count "Main Quests Completed", Dawnguard quests (type 10)
 "Dawnguard Quests Completed", and so on. Every other stat stays 0 until a script counts it.
 
+What raises each stat in the game is on [General stats](/engine/statistics.md).
+
 ## HUD notices
 
 When a quest starts, completes, or fails, the HUD shows its title over `sHUDStarted`,
