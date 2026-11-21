@@ -8,6 +8,7 @@ import OpenSkyGameData
 public import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
+import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 /// What the chosen ingredients would make.
@@ -161,6 +162,7 @@ extension InventoryCoordinator.AlchemyLab {
             return noteAlchemy(.brewFailed(reason: String(describing: error)))
         }
         runtime.store.set(state, for: .player)
+        runtime.store.incrementMiscStat(CraftingStats.brewStat(isPoison: brew.isPoison))
         let discovered = newEffectNames(brew.learned)
         learn(brew.learned)
         reportAlchemySkillUse(brew.skillUse)

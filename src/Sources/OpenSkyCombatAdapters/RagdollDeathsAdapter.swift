@@ -29,6 +29,7 @@ public protocol RagdollDeathsHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var inventory: any InventoryPort { get }
     var magic: any MagicPort { get }
+    var magicWorld: any MagicWorldPort { get }
     var scripts: any ScriptPort { get }
     var storyWorld: any StoryWorldPort { get }
     var streamer: any CellStreamerPort { get }
@@ -49,6 +50,9 @@ extension RagdollDeathsAdapter {
         }
         game.scripts.bridge?.recordKill(victim: key, killer: killer)
         game.magic.soulTrapping.noteDeath(of: key, killer: killer)
+        if killer == .player {
+            countKill(of: key)
+        }
         clearLocations(afterDeathOf: key)
         grantDeathItem(to: key)
         return game.scripts.runtime?.queueActorDeath(actor: key, killer: killer) ?? 0
@@ -78,6 +82,14 @@ extension RagdollDeathsAdapter {
             bridge.markLocationCleared(
                 ReferenceKey(resolved: location), playsMusic: store.playsClearedMusic(location)
             )
+        }
+    }
+
+    private func countKill(of victim: ReferenceKey) {
+        guard let holder = poseReads.holder(of: victim) else { return }
+        let magicWorld = game.magicWorld
+        for stat in KillStats.stats(hasKeyword: { magicWorld.actorHasKeyword($0, on: holder) }) {
+            game.worldState.incrementMiscStat(stat)
         }
     }
 

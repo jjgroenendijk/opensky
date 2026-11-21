@@ -282,7 +282,19 @@ The stats are saved in the `MSTS` chunk. OpenSky counts these:
 | Quests Completed, and the quest type's own stat | A journal quest is completed the first time |
 | Misc Objectives Completed | An objective of a misc quest is completed the first time |
 | Locations Discovered | A map marker is discovered |
+| Dungeons Cleared | A location clears |
+| Skill Increases | A skill gains a level |
+| Training Sessions | A trainer trains the player |
 | Bribes, Intimidations, Persuasions | The player wins a speech check |
+| Diseases Contracted | The player catches a disease |
+| People, Animals, Creatures, Undead, Daedra, and Automatons Killed | The player kills an actor of that type |
+| Weapons Made, Armor Made, Weapons Improved, Armor Improved | The player crafts or tempers one |
+| Potions Mixed, Poisons Mixed | The player brews one, or cooks food |
+| Locks Picked | The player picks a lock |
+| Pockets Picked, Items Pickpocketed | The player pickpockets |
+| Total Lifetime Bounty, Largest Bounty, Fines Paid | A bounty is placed or paid |
+| Times Jailed, Days Jailed, Jail Escapes | The player is jailed, serves, or escapes |
+| Items Stolen, Horses Stolen, Assaults, Murders, Trespasses | The player commits the crime |
 
 `Game.IncrementStat` and `Game.QueryStat` change and read any of them. The quest type's stat is
 the one its name gives: main quests count "Main Quests Completed", Dawnguard quests (type 10)

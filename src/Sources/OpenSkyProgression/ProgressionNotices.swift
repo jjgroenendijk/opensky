@@ -40,6 +40,9 @@ final class ProgressionNotices {
         if report.didAdvance {
             storyEvents?.reportStoryEvent(.skillIncrease(skill: report.skill))
             show(texts.skillIncreasedText(skill: skillName, level: Int(report.level)))
+            for _ in 0 ..< max(1, Int(report.level) - Int(report.previousLevel)) {
+                incrementStat("Skill Increases")
+            }
         }
         if let levelUp = report.levelUp {
             reportLevel(levelUp)

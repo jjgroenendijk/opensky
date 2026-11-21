@@ -140,6 +140,20 @@ Quitting a Thieves Guild special job lowers its stat by one.
 The page also shows the bounty in each hold where the player has one, and one shared bounty for the
 Orc strongholds.
 
-## OpenSky
+## How OpenSky counts
 
-Which stats OpenSky counts so far is on [journal](/engine/journal.md#stats-page).
+Which stats OpenSky counts so far is on [journal](/engine/journal.md#stats-page). Some rules
+above leave a choice, and OpenSky reads them like this:
+
+- A kill counts only when the player is the killer. The victim's `ActorType*` keywords, on its
+  race or its base, pick the stats: `ActorTypeNPC` is People, `ActorTypeAnimal` Animals,
+  `ActorTypeUndead` Undead, `ActorTypeDaedra` Daedra, and `ActorTypeDwarven` Automatons.
+  `ActorTypeCreature` counts as Creatures only without the animal and undead keywords. So a
+  victim with both the Daedra and the creature keywords raises both stats.
+- A location counts on Dungeons Cleared the first time it clears, whether its last boss dies or a
+  script calls `Location.SetCleared`.
+- Skill Increases rises once for each level a skill gains, training included.
+- A forge craft raises Weapons Made or Armor Made by the made item's type; jewellery is armour.
+  A cooking craft raises Potions Mixed. A temper raises Weapons Improved or Armor Improved.
+- A brew at an alchemy lab raises Potions Mixed or Poisons Mixed once, whatever number of potions
+  it makes.

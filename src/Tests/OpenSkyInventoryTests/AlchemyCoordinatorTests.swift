@@ -11,6 +11,7 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
+import OpenSkyQuestsInterface
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing
@@ -72,6 +73,19 @@ struct AlchemyCoordinatorTests {
         #expect(!coordinator.isCrafting)
     }
 
+    @Test func aCraftAtTheOpenStationMakesTheItem() throws {
+        let harness = try Self.harness()
+        let station = try CraftingSessionTests.harness()
+        try station.inventory.add(InventoryBaselineFixture.lockpick, count: 2, to: .player)
+        harness.coordinator.crafting = station.session
+        let outcome = harness.coordinator.craftingBench.craft(CraftingSessionTests.swordRecipe)
+        guard case .crafted(count: 1, item: _) = outcome else {
+            Issue.record("no craft: \(outcome)")
+            return
+        }
+        #expect(station.inventory.count(of: InventoryBaselineFixture.sword, in: .player) == 1)
+    }
+
     @Test func craftingWithNoOpenStationSaysSo() throws {
         let coordinator = try Self.harness().coordinator
         let recipe = ResolvedFormID(plugin: "Base.esm", objectID: 0x10)
@@ -105,6 +119,7 @@ struct AlchemyCoordinatorTests {
         #expect(harness.inventory.count(of: Fixture.wheat, in: .player) == 1)
         #expect(harness.inventory.baselines.items.ingestibles[potion.id.rawValue] != nil)
         #expect(lab.alchemyLab.ingredientKnowledge.knows(0, of: Fixture.flower))
+        #expect(harness.store.miscStats.value("Potions Mixed") == 1)
         // Value 5 plus 1 for the created potion (UESP "Skyrim:Leveling").
         #expect(harness.skills.uses.map(\.amount) == [6])
         let alchemy = InventoryCoordinator.AlchemyLab.alchemySkill

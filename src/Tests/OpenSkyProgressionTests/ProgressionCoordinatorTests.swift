@@ -215,6 +215,7 @@ struct ProgressionCoordinatorTests {
             return
         }
         #expect(first.hasPrefix("\(name) rose to "))
+        #expect(commands.filter { $0 == .incrementStat("Skill Increases") }.count == 1)
         #expect(commands.contains(.showNotification(ProgressionTexts.vanilla.levelUpAvailable)))
     }
 }
