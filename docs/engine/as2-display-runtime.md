@@ -225,7 +225,6 @@ reports `onLoadError` on the next tick. Flash reports later too, and a component
 - A Swift copy of the CLIK and `gfx` library. None is needed: `EventDispatcher`, `FocusHandler`,
   `NavigationCode`, `InputDelegate`, and the controls ship inside the movies as bytecode the
   interpreter runs.
-- Shape-level hit testing. Both `MovieClip.hitTest` and pointer routing use bounding boxes.
 - Text input. No key event edits a field.
 - Device fonts. `createTextField` makes a field with the given name, depth, position, and size, and
   the runtime keeps its definition under a character id counted down from 65535. Flash draws such a

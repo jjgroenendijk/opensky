@@ -251,8 +251,8 @@ nonisolated extension SWFMovieRuntime {
         return .undefined
     }
 
-    /// Bounding-box hit test in the clip's parent space. Shape-level hit
-    /// testing is not implemented; vanilla CLIK uses the box form.
+    /// `hitTest(x, y)` and `hitTest(clip)` test boxes in the clip's parent space;
+    /// `hitTest(x, y, true)` tests the shapes at a stage point.
     private static func hitTest(_ context: AS2CallContext) -> Bool {
         guard let owner = movieRuntime(context), let node = node(context) else {
             return false
@@ -265,7 +265,13 @@ nonisolated extension SWFMovieRuntime {
                 Float(owner.runtime.coercion.toNumber(context.argument(1)))
                     * SWFMovieRuntime.twipsPerPixel
             )
-            return box.contains(point)
+            guard owner.runtime.coercion.toBoolean(context.argument(2)) else {
+                return box.contains(point)
+            }
+            guard let toLocal = owner.transform(of: node)?.inverted else {
+                return false
+            }
+            return owner.draws(node, at: toLocal.apply(point))
         }
         let target = owner.parentBounds(of: other)
         guard !box.isEmpty, !target.isEmpty else {
