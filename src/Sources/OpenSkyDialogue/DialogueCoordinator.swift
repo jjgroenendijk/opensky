@@ -39,6 +39,8 @@ public final class DialogueCoordinator {
     /// How often NPCs speak outside a conversation.
     public let speechTimers: SpeechTimerSettings
     var speechClock = NPCSpeechClock()
+    /// Each combat group's record of its target, and its detection line waits.
+    public internal(set) var detectionDialogue = DetectionDialogueState()
     var speechRandom = ConditionRandom()
     private var cachedStrings: LocalizedStrings?
     private var stringsResolved = false

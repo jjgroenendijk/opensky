@@ -123,6 +123,7 @@ the detail and the sources it did find.
 | Default `NAM7` weight | 50 | [actor resolution](/engine/actor-resolution.md) |
 | Combat weapon choice | Picked once, not scored again in a fight | [actor resolution](/engine/actor-resolution.md) |
 | Idle naming and entry side rules | Read from names seen on the install | [idle runtime](/engine/idle-runtime.md) |
+| Hearing range of a combat detection line | 4096 units from the player | [combat detection dialogue](/engine/combat-detection-dialogue.md#in-opensky) |
 | Furniture rotation | Reset on standing up | [furniture](/engine/furniture.md) |
 | Height limit for arriving at furniture | 128 units | [furniture](/engine/furniture.md#arriving-at-the-seat) |
 | Longest wait for the turn to a seat's heading | 3 s, then the actor sits | [furniture](/engine/furniture.md#arriving-at-the-seat) |

@@ -8,6 +8,9 @@ public protocol DialoguePort: AnyObject {
     associatedtype DialogueRuntime: DialogueRuntimePort
     func ambientLines(_ frame: AmbientSpeechFrame, seconds: Float) -> [AmbientLine]
     func claimForceGreet(speaker: ReferenceKey, now: Double) -> Bool
+    func detectionLines(_ frame: DetectionDialogueFrame) -> [DetectionLine]
+    /// Each combat group's record of its target, by target.
+    var detectionRecords: [ReferenceKey: DetectionRecord] { get }
     func combatLine(_ line: NPCSpeechLine, speaker: ReferenceKey, now: Double) -> FormID?
     func commentOnPlayer(
         _ line: NPCSpeechLine,

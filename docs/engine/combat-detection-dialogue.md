@@ -12,7 +12,8 @@ During a fight, NPCs bark short lines about what they detect, for example when t
 target or find it again. Each line is a dialogue topic of the
 detection category. The subtype says when it fits.
 
-OpenSky does not build this yet.
+OpenSky builds the lines of a record change and the two idle lines
+([in OpenSky](#in-opensky)).
 
 | Subtype | Number |
 | --- | --- |
@@ -122,3 +123,28 @@ flowchart TD
     C -- yes --> D[Start combat with the killer,<br/>search near the killer]
     D --> E[Say DetectFriendDie about the victim]
 ```
+
+## In OpenSky
+
+OpenSky has no combat groups. It treats the actors that fight one target as one group, and
+derives the group's record from them a few times a second:
+
+| Members | Record |
+| --- | --- |
+| None | Normal |
+| At least one fights a target it detects | Combat |
+| All search, and the record was Combat or Lost | Lost |
+| All search, and the record was Normal or Alert | Alert |
+
+A change of the record says the line from the diagram above, and a searching group says its
+idle line on each search update. The waits are kept per group and per subtype, and a wait
+starts only when a line was found. The idle wait comes from the two game settings.
+
+`openskycli game state social` lists each group's record under `detection`.
+
+- [WARNING] A fighter counts as within hearing range inside 4096 units of the player. The
+  game's range was not found ([unverified values](/engine/unverified-values.md)).
+- [WARNING] A group drops a target when OpenSky's own combat gives up the search. The 30 and
+  60 second rules above are not built.
+- [WARNING] DetectFriendDie is not built: OpenSky has no murder witness path that starts
+  combat with the killer.
