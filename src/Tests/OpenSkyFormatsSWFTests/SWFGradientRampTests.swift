@@ -53,4 +53,18 @@ struct SWFGradientRampTests {
         #expect(empty.rampColors(width: 2).allSatisfy { $0.alpha == 0 })
         #expect(gradient(.normalRGB).rampColors(width: 1) == [red])
     }
+
+    @Test func aShapeListsTheGradientsOfItsFillsInFillOrder() {
+        let linear = gradient(.normalRGB), radial = gradient(.linearRGB)
+        let shape = SWFShapeDefinition(
+            characterId: 1, bounds: SWFRect(xMin: 0, xMax: 0, yMin: 0, yMax: 0),
+            edgeBounds: nil, usesFillWindingRule: false,
+            fillStyles: [
+                .linearGradient(matrix: .identity, gradient: linear), .solid(red),
+                .radialGradient(matrix: .identity, gradient: radial)
+            ],
+            lineStyles: [], segments: []
+        )
+        #expect(shape.gradients == [linear, radial])
+    }
 }
