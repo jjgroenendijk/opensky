@@ -78,12 +78,40 @@ extension MagicCoordinator.MagicMenu {
         return coordinator.effects?.allows(list, on: player) ?? true
     }
 
-    /// The names of the effects on the player, for the menu's last tab.
-    public var magicMenuActiveEffects: [String] {
+    /// The effects on the player, for the menu's last tab. An effect with an end shows
+    /// the whole seconds it has left.
+    public var magicMenuActiveEffects: [MagicMenuSpell] {
         guard let runtime = coordinator.effects else { return [] }
         return runtime.active(on: .player).map { effect in
-            coordinator.effectsPanel.readout(of: effect, runtime: runtime).name
+            let name = coordinator.effectsPanel.readout(of: effect, runtime: runtime).name
+            let secondsLeft = effect.lifetime > 0 ? Int(effect.remaining.rounded(.down)) : nil
+            return MagicMenuSpell(
+                name: name, isReadied: false, card: MagicMenuSpellCard(
+                    kind: .activeEffect(secondsLeft: secondsLeft),
+                    effects: activeEffectText(of: effect, runtime: runtime, name: name)
+                )
+            )
         }
+    }
+
+    /// The effect's own description with its running magnitude and duration filled in,
+    /// or its name and magnitude when it has none.
+    private func activeEffectText(
+        of effect: ActiveEffect, runtime: ActiveEffectRuntime, name: String
+    ) -> String {
+        let record = runtime.effects.effect(key: effect.effect)
+        let flags = record?.effect.data?.flags ?? []
+        let magnitude = effect.values.first?.magnitude
+        let filled = MagicDescriptionText.Values(
+            magnitude: flags.contains(.noMagnitude) ? nil : magnitude,
+            duration: flags.contains(.noDuration) ? nil : effect.duration,
+            area: nil
+        )
+        guard let template = record?.localizedDescription, !template.isEmpty else {
+            return [name, filled.magnitude.map(MagicDescriptionText.number)]
+                .compactMap(\.self).joined(separator: " ")
+        }
+        return MagicDescriptionText.filled(template, values: filled)
     }
 
     public var magicMenuCategoryOrder: [String] {

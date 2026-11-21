@@ -87,9 +87,11 @@ nonisolated extension InventoryMenuMovieBridge {
     }
 
     /// A spell's card: `ICT_SPELL`, or `ICT_SPELL_DEFAULT` for a power, which shows no
-    /// cost. A row with no card hides the card, as an empty list does.
+    /// cost. A row with no card hides the card, as an empty list does. `soulSpent` on a
+    /// shout plays the last unlocked word's `Learn` animation.
     public static func publishSpellCard(
-        _ card: MagicMenuSpellCard?, name: String, runtime: SWFMovieRuntime
+        _ card: MagicMenuSpellCard?, name: String, soulSpent: Bool = false,
+        runtime: SWFMovieRuntime
     ) {
         guard let card else {
             send(["type": .integer(0)], runtime: runtime)
@@ -109,12 +111,44 @@ nonisolated extension InventoryMenuMovieBridge {
                 "castTime": .integer(card.costIsPerSecond ? 0 : 1),
                 "castLevel": .string(card.level)
             ], runtime: runtime)
+        case let .shout(words):
+            var info = shoutCardInfo(card, words: words, name: name)
+            if soulSpent {
+                info["soulSpent"] = .boolean(true)
+            }
+            send(info, runtime: runtime)
+        case let .activeEffect(secondsLeft):
+            // The movie hides the time when `timeRemaining` is 0.
+            send([
+                "type": .integer(activeEffectType), "name": .string(name),
+                "effects": .string(card.effects), "timeRemaining": .integer(secondsLeft ?? 0)
+            ], runtime: runtime)
         }
+    }
+
+    /// `word0` to `word2` hold the translation, `dragonWord0` to `dragonWord2` the dragon
+    /// letters, and `unlocked0` to `unlocked2` whether the player unlocked the word.
+    static func shoutCardInfo(
+        _ card: MagicMenuSpellCard, words: [MagicMenuShoutWord], name: String
+    ) -> [String: AS2Value] {
+        var info: [String: AS2Value] = [
+            "type": .integer(shoutType), "name": .string(name),
+            "effects": .string(card.effects), "spellCost": .integer(card.cost)
+        ]
+        for (index, word) in words.prefix(3).enumerated() {
+            info["word\(index)"] = .string(word.translation)
+            info["dragonWord\(index)"] = .string(word.dragon)
+            info["unlocked\(index)"] = .boolean(word.isUnlocked)
+        }
+        return info
     }
 
     /// `ICT_SPELL` and `ICT_SPELL_DEFAULT` in the movie's `InventoryDefines`.
     public static let spellType = 7
     public static let spellDefaultType = 13
+    /// `ICT_SHOUT` and `ICT_ACTIVE_EFFECT` in the movie's `InventoryDefines`.
+    public static let shoutType = 10
+    public static let activeEffectType = 11
 
     /// `ICT_LIST` in the movie's `InventoryDefines`.
     public static let soulGemListType = 14

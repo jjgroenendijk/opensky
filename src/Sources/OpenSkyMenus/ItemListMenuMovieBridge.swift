@@ -91,9 +91,13 @@ nonisolated public enum ItemListMenuMovieBridge: Sendable {
         }
     }
 
-    /// The CLI's way in: `categories` with the first tab and row selected.
-    public static func publish(_ categories: [ItemListCategory], runtime: SWFMovieRuntime) {
-        publish(ItemListMenuModel(categories: categories), runtime: runtime)
+    /// The CLI's way in: `categories` with the first tab and row `row` selected.
+    public static func publish(
+        _ categories: [ItemListCategory], row: Int = 0, runtime: SWFMovieRuntime
+    ) {
+        var model = ItemListMenuModel(categories: categories)
+        model.selectRow(row)
+        publish(model, runtime: runtime)
     }
 
     public static func prepare(runtime: SWFMovieRuntime) {
