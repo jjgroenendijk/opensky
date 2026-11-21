@@ -9,7 +9,7 @@ nonisolated extension AgentCommandCatalog {
     static let worldChanges: [AgentCommandSpec] = [
         command(
             "debug.imod", "Apply or remove an image space modifier, as ImageSpaceModifier does.",
-            positionals: [required("modifier", "The IMAD. " + formHelp)],
+            positionals: [requiredText("modifier", "The IMAD. " + formHelp)],
             options: [
                 value("strength", "x", "Strength, 1 by default."),
                 value("fade", "s", "Seconds to fade in, or out with --off. 0 by default."),
@@ -19,7 +19,7 @@ nonisolated extension AgentCommandCatalog {
         ),
         command(
             "debug.cast", "Cast a spell, as Spell.Cast does.",
-            positionals: [required("spell", "The SPEL. " + formHelp)],
+            positionals: [requiredText("spell", "The SPEL. " + formHelp)],
             options: [
                 value("ref", "ref", "The caster. Default: player."),
                 value("target", "ref", "The target. Default: none.")
@@ -28,27 +28,27 @@ nonisolated extension AgentCommandCatalog {
         command(
             "debug.spell", "Give an actor a spell or take it away, as AddSpell does.",
             positionals: [
-                required("spell", "The SPEL. " + formHelp),
+                requiredText("spell", "The SPEL. " + formHelp),
                 optional("on", "Either on to give it or off to take it; on by default.")
             ],
             options: [value("ref", "ref", "The actor. Default: player.")]
         ),
         command(
             "debug.enable", "Enable a reference, as ObjectReference.Enable does.",
-            positionals: [required("ref", anyRefHelp)]
+            positionals: [requiredText("ref", anyRefHelp)]
         ),
         command(
             "debug.disable", "Disable a reference, as ObjectReference.Disable does.",
-            positionals: [required("ref", anyRefHelp)]
+            positionals: [requiredText("ref", anyRefHelp)]
         ),
         command(
             "debug.delete", "Delete a reference, as ObjectReference.Delete does.",
-            positionals: [required("ref", anyRefHelp)]
+            positionals: [requiredText("ref", anyRefHelp)]
         ),
         command(
             "debug.lock", "Lock or unlock a reference, as ObjectReference.Lock does.",
             positionals: [
-                required("ref", anyRefHelp),
+                requiredText("ref", anyRefHelp),
                 optional("on", "Either on to lock it or off to unlock it; on by default.")
             ]
         ),
@@ -58,21 +58,21 @@ nonisolated extension AgentCommandCatalog {
         ),
         command(
             "debug.grab", "Hold a loose object or a dead body as holding Activate does.",
-            positionals: [optional("ref", "The reference to hold; none lets go.")]
+            positionals: [optionalText("ref", "The reference to hold; none lets go.")]
         ),
         command(
             "debug.activate", "Activate a reference, as ObjectReference.Activate does.",
-            positionals: [required("ref", anyRefHelp)],
+            positionals: [requiredText("ref", anyRefHelp)],
             options: [value("by", "ref", "The activator. Default: player.")]
         ),
         command(
             "debug.decal", "Strike a loaded actor with a blade hit on its side facing you.",
-            positionals: [required("ref", "The actor: target or a loaded reference's FormID.")],
+            positionals: [requiredText("ref", "The actor: target or a loaded reference's FormID.")],
             options: [value("height", "units", "Height above the feet; 100 by default.")]
         ),
         command(
             "debug.spawn", "Place a new reference of a base object, as PlaceAtMe does.",
-            positionals: [required("base", "The base object. " + formHelp)],
+            positionals: [requiredText("base", "The base object. " + formHelp)],
             options: [value("at", "ref", "Where to place it. Default: player.")]
         )
     ]

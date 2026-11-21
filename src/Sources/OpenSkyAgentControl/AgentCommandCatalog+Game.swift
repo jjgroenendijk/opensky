@@ -24,19 +24,19 @@ nonisolated extension AgentCommandCatalog {
         command("state.social", "NPC conversations, walks, fight watchers, and checked bodies."),
         command(
             "state.scripts", "The script queue, waits, events, faults, and missing natives.",
-            positionals: [optional("ref", "Also list the scripts on this reference or quest.")]
+            positionals: [optionalText("ref", "Also list the scripts on this reference or quest.")]
         ),
         command(
             "state.packages", "An actor's package, procedure, and mover state.",
-            positionals: [required("ref", refHelp)]
+            positionals: [requiredText("ref", refHelp)]
         ),
         command(
             "state.furniture", "An actor's seat, or a piece of furniture's markers.",
-            positionals: [optional("ref", "Default: player.")]
+            positionals: [optionalText("ref", "Default: player.")]
         ),
         command(
             "state.flight", "Each actor in the air, or one actor's flight, and the ridden dragon.",
-            positionals: [optional("ref", refHelp)]
+            positionals: [optionalText("ref", refHelp)]
         ),
         command(
             "state.mount", "The player's mount: kind, phase, motion, and a dragon's orders."
@@ -57,17 +57,17 @@ nonisolated extension AgentCommandCatalog {
         ),
         command(
             "state.objects", "Each running object graph; with a reference, also its bones.",
-            positionals: [optional("ref", refHelp)]
+            positionals: [optionalText("ref", refHelp)]
         ),
         command(
             "state.effects",
             "Each running effect or armour addon graph: its actor, state, and last event.",
-            positionals: [optional("ref", "Only the sub-graphs on this actor.")]
+            positionals: [optionalText("ref", "Only the sub-graphs on this actor.")]
         ),
         command(
             "state.nodes",
             "Placed meshes playing node controllers, or the nodes of one.",
-            positionals: [optional("ref", refHelp)]
+            positionals: [optionalText("ref", refHelp)]
         ),
         command(
             "state.changes", "The newest world-state writes and any rebuild in flight.",
@@ -75,7 +75,7 @@ nonisolated extension AgentCommandCatalog {
         ),
         command(
             "state.av", "One actor value: base, current, and modifiers.",
-            positionals: [required("name", "The actor value, such as Health.")],
+            positionals: [requiredText("name", "The actor value, such as Health.")],
             options: [value("ref", "ref", "The actor. Default: player.")]
         ),
         command(
@@ -85,7 +85,7 @@ nonisolated extension AgentCommandCatalog {
         command(
             "state.condition", "What one condition function returns now, run on a reference.",
             positionals: [
-                required("function", "The function's Creation Kit name, such as GetLocked.")
+                requiredText("function", "The function's Creation Kit name, such as GetLocked.")
             ],
             options: [
                 value("ref", "ref", "The reference it runs on. Default: player."),
@@ -161,7 +161,7 @@ nonisolated extension AgentCommandCatalog {
     private static let actorChanges: [AgentCommandSpec] = [
         command(
             "debug.av", "Set or change an actor value. Give --value or --mod.",
-            positionals: [required("name", "The actor value, such as Health.")],
+            positionals: [requiredText("name", "The actor value, such as Health.")],
             options: [
                 value("value", "v", "The new base value."),
                 value("mod", "d", "Add this to the current value."),
@@ -182,15 +182,19 @@ nonisolated extension AgentCommandCatalog {
             "debug.quest", "Set a quest stage.",
             positionals: [required("id", "The quest editor ID."), required("stage", "The stage.")]
         ),
-        command("debug.kill", "Kill an actor.", positionals: [required("ref", refHelp)]),
-        command("debug.resurrect", "Resurrect an actor.", positionals: [required("ref", refHelp)]),
+        command("debug.kill", "Kill an actor.", positionals: [requiredText("ref", refHelp)]),
+        command(
+            "debug.resurrect",
+            "Resurrect an actor.",
+            positionals: [requiredText("ref", refHelp)]
+        ),
         command(
             "debug.decapitate", "Cut a dead actor's head off, as a severing killing blow does.",
-            positionals: [required("ref", refHelp)]
+            positionals: [requiredText("ref", refHelp)]
         ),
         command(
             "debug.subgraph", "Send an event or set a variable on an actor's sub-graphs.",
-            positionals: [required("ref", refHelp)],
+            positionals: [requiredText("ref", refHelp)],
             options: [
                 value("event", "name", "The event, as PlaySubGraphAnimation sends it."),
                 value("var", "name", "The variable, as SetSubGraphFloatVariable sets it."),
@@ -199,16 +203,16 @@ nonisolated extension AgentCommandCatalog {
         ),
         command(
             "debug.sit", "Seat an actor in furniture.",
-            positionals: [optional("ref", "The actor. Default: player.")],
+            positionals: [optionalText("ref", "The actor. Default: player.")],
             options: [value("furniture", "ref", "Default: the nearest loaded free seat.")]
         ),
         command(
             "debug.stand", "Get an actor up from its seat.",
-            positionals: [optional("ref", "The actor. Default: player.")]
+            positionals: [optionalText("ref", "The actor. Default: player.")]
         ),
         command(
             "debug.favor", "Put a follower in command mode, as its do-something topic does.",
-            positionals: [required("ref", refHelp)],
+            positionals: [requiredText("ref", refHelp)],
             options: [
                 value("target", "ref", "Then command it to use this reference, or go to x,y,z."),
                 flag("exit", "Leave command mode instead, as the pause key does.")
@@ -216,22 +220,22 @@ nonisolated extension AgentCommandCatalog {
         ),
         command(
             "debug.teammate", "Make an actor a player teammate, as SetPlayerTeammate does.",
-            positionals: [required("ref", refHelp)],
+            positionals: [requiredText("ref", refHelp)],
             options: [flag("off", "Clear the teammate flag instead.")]
         ),
         command(
             "debug.relationship",
             "Set an actor's relationship rank toward the player, as SetRelationshipRank does.",
             positionals: [
-                required("ref", refHelp),
+                requiredText("ref", refHelp),
                 required("rank", "The rank, from -4 (Archnemesis) to 4 (Lover).")
             ]
         ),
         command(
             "debug.flight", "Force an actor that flies to take off, land, or perch.",
             positionals: [
-                required("ref", refHelp),
-                required("order", "One of takeoff, land, perch, hasty, or crash.")
+                requiredText("ref", refHelp),
+                requiredText("order", "One of takeoff, land, perch, hasty, or crash.")
             ]
         ),
         command(
@@ -240,24 +244,27 @@ nonisolated extension AgentCommandCatalog {
         ),
         command(
             "debug.setting", "Apply player settings over the saved ones until the next call.",
-            positionals: [optional("values", "Comma-separated id=value pairs; none restores them.")]
+            positionals: [optionalText(
+                "values",
+                "Comma-separated id=value pairs; none restores them."
+            )]
         ),
         command(
             "debug.drunk", "Start or stop an actor's drunk state, as IdleDrunkStart does.",
-            positionals: [required("ref", refHelp), required("on", "Either on or off.")]
+            positionals: [requiredText("ref", refHelp), required("on", "Either on or off.")]
         ),
         command(
             "debug.paired", "Play an idle with a target, as PlayIdleWithTarget does.",
             positionals: [
-                required("ref", refHelp),
+                requiredText("ref", refHelp),
                 required("target", "The actor that plays the other half of a paired idle."),
-                required("idle", "The IDLE editor ID, such as 1HMKillMoveC.")
+                requiredText("idle", "The IDLE editor ID, such as 1HMKillMoveC.")
             ]
         ),
         command(
             "debug.translate", "Move a reference over time, as TranslateTo does.",
             positionals: [
-                required("ref", refHelp),
+                requiredText("ref", refHelp),
                 required("to", "The target position as x,y,z; the rotation stays."),
                 optional("speed", "Units a second; 100 by default.")
             ]
@@ -265,42 +272,45 @@ nonisolated extension AgentCommandCatalog {
         command(
             "debug.knock", "Knock an actor back as a melee hit from the player would.",
             positionals: [
-                required("ref", refHelp),
+                requiredText("ref", refHelp),
                 required("damage", "The hit's damage; a killing hit does not knock.")
             ]
         ),
         command(
             "debug.knockdown", "Knock an actor down as a ragdoll, away from the player.",
             positionals: [
-                required("ref", refHelp),
+                requiredText("ref", refHelp),
                 optional("magnitude", "Havok metres a second; 10 by default, negative pulls.")
             ]
         ),
         command(
             "debug.perk", "Give the player a perk or take it away, as Actor.AddPerk does.",
             positionals: [
-                required("perk", "The perk's editor ID, such as ShieldCharge."),
+                requiredText("perk", "The perk's editor ID, such as ShieldCharge."),
                 optional("on", "Either on to give it or off to take it; on by default.")
             ]
         ),
         command(
             "debug.form", "Put the player in a beast form, or end it.",
-            positionals: [required("form", "One of werewolf, vampirelord, or none.")]
+            positionals: [requiredText("form", "One of werewolf, vampirelord, or none.")]
         ),
         command(
             "debug.link",
             "Hold two ragdolls' bones together, as AddHavokBallAndSocketConstraint does.",
             positionals: [
-                required("ref", refHelp), required("node", "The bone of the first ragdoll."),
-                required("other", "The second actor, as ref takes it."),
-                required("othernode", "The bone of the second ragdoll."),
+                requiredText("ref", refHelp), requiredText(
+                    "node",
+                    "The bone of the first ragdoll."
+                ),
+                requiredText("other", "The second actor, as ref takes it."),
+                requiredText("othernode", "The bone of the second ragdoll."),
                 optional("on", "Either on to link or off to unlink; on by default.")
             ]
         ),
         command(
             "debug.eyes", "Draw an actor's eyes with a texture set, as SetEyeTexture does.",
             positionals: [
-                required("ref", refHelp), required("set", "The TXST, as a hex FormID.")
+                requiredText("ref", refHelp), requiredText("set", "The TXST, as a hex FormID.")
             ]
         )
     ]
@@ -327,20 +337,23 @@ nonisolated extension AgentCommandCatalog {
         command(
             "debug.overlay", "Turn a debug overlay or render layer on or off.",
             positionals: [
-                required("name", "One of navmesh, path, detection, hud, ui, or a render layer."),
+                requiredText(
+                    "name",
+                    "One of navmesh, path, detection, hud, ui, or a render layer."
+                ),
                 required("on", "Either on or off.")
             ]
         ),
         command(
             "debug.channel", "Show one debug channel of the scene pass.",
-            positionals: [required(
+            positionals: [requiredText(
                 "mode",
                 "One of off, wireframe, worldnormals, miplevel, and more."
             )]
         ),
         command(
             "debug.shadows", "Set the sun shadow tier until the renderer is rebuilt.",
-            positionals: [required("quality", "One of off, low, or high.")]
+            positionals: [requiredText("quality", "One of off, low, or high.")]
         ),
         command(
             "debug.fade", "Fade the screen as Papyrus Game.FadeOutGame does.",
@@ -362,17 +375,17 @@ nonisolated extension AgentCommandCatalog {
         command(
             "debug.fasttravel",
             "Fast travel to a map marker, as the map does, without its refusals.",
-            positionals: [required("marker", "The map marker's name, such as Riverwood.")]
+            positionals: [requiredText("marker", "The map marker's name, such as Riverwood.")]
         ),
         command(
             "debug.playbink", "Play a Bink movie from Data/Video, as Game.PlayBink does.",
-            positionals: [required("file", "The movie file, such as BGS_Logo.bik.")],
+            positionals: [requiredText("file", "The movie file, such as BGS_Logo.bik.")],
             options: [flag("interruptible", "Let a key skip the movie.")]
         ),
         command("debug.skipbink", "End the playing movie, even one a key cannot skip."),
         command(
             "debug.titles", "Show or hide the opening titles, or play one, as MQ101 does.",
-            positionals: [required("step", "Either show, hide, or a clip such as Sequence1.")]
+            positionals: [requiredText("step", "Either show, hide, or a clip such as Sequence1.")]
         )
     ]
 }

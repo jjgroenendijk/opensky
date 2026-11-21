@@ -28,7 +28,9 @@ nonisolated public enum AgentCommandLine {
                         .invalidArgument, "\(spec.name): unexpected argument '\(word)'"
                     )
                 }
-                args[positionals.removeFirst()] = typed(word)
+                let key = positionals.removeFirst()
+                let isText = spec.positionals.first { $0.key == key }?.isText ?? false
+                args[key] = isText ? .string(word) : typed(word)
                 continue
             }
             let (key, value) = try option(word, of: spec)
