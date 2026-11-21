@@ -94,3 +94,56 @@ not handle Up and Down itself; `PreviousCommand` and `NextCommand` are there for
 The output keeps only its last `HistoryCharBufferSize` characters. When text passes the limit,
 the oldest characters are cut. Example: with the default 8192 and an output of 8000 characters,
 adding 300 characters leaves the last 8192 of the 8300.
+
+## What the engine does
+
+### Opening and closing
+
+The Console control event toggles the console on a fresh press: it opens a closed console and
+closes an open one. The toggle opens the console over other menus. The console menu pauses the
+game and shows the mouse cursor. It draws at depth 12, above the book menu's 10.
+
+When the console menu is first made, the engine queues the history line "Use of some commands will
+disable achievements". Each open then calls the movie in this order:
+
+| Call | Value |
+| --- | --- |
+| `SetSize` | 40, percent of the screen height |
+| `SetTextColor` | `0xFFFFFF`, white |
+| `SetTextSize` | 20 |
+| `SetHistoryTextColor` | `0x999999`, grey |
+| `SetHistoryCharBufferSize` | 16384 |
+| `Show` | No arguments |
+| `AddHistory` | The queued history text, in one call |
+
+A minimised state calls `Minimize` instead of `Show`. What turns it on is not known.
+
+To close, the engine asks `QShown`. When it is true, the engine calls `Hide` and waits for
+`HideComplete`. While `QHiding` is true it keeps waiting. Otherwise the menu closes at once.
+
+### Keys
+
+| Key | What the engine does |
+| --- | --- |
+| Up | Calls `PreviousCommand`; the movie does not get the key |
+| Down | Calls `NextCommand`; the movie does not get the key |
+| Ctrl+V | Pastes the clipboard, one character at a time into the movie |
+| Ctrl+C | Copies the selected reference as `'name' (0001A2B3)`, the form ID in 8 hex digits, and prints a line; without a selection it prints an error line |
+| `` ` `` without Ctrl | Dropped, so the toggle key's own character never reaches the entry. `~` is not dropped |
+| PickNext, PickPrevious | Step the selection through the references under the mouse |
+| Any other key | Goes to the movie |
+
+Escape is not handled by the engine; the movie gets it like any other key.
+
+### Output
+
+`ExecuteCommand` queues the line to run on the selected reference. The engine does not echo the
+line; the movie's own `AddHistory` call does. Each printed line is cut to 1023 characters and ends
+with one line feed, no carriage return. Lines collect in a buffer, and the next update sends the
+buffer in one `AddHistory` call, so one call can hold several lines. A line that would make the
+buffer 65534 characters or more is dropped.
+
+- An unknown command prints `Script command "<word>" not found.`
+- A command that reports a value prints its long name, ` >> `, and the value with two decimals,
+  in the shape `Name >> 100.00`. Some put a colon and an argument name after the command name.
+- A command that reports nothing prints nothing.

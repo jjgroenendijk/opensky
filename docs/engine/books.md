@@ -50,17 +50,65 @@ same rule as taking any item ([crime](/engine/crime.md)).
 
 ## The 3D book
 
-In the game the book is a 3D model with the movie drawn on its pages:
+In the game the book is a 3D model with the movie drawn on its pages.
 
-- The model sits at 0.5 of the screen width and 0.445 of its height, turned -25 degrees about the
-  X axis. Its distance is 110 for a book and 90 for a note, times the screen width over its height.
-  It moves, turns, and scales from its start to that place over 1 s.
+### The model
+
+The model is the `STAT` that the `BOOK` record's `INAM` (inventory art) names. A book without
+`INAM` uses `Meshes\Clutter\Books\Book01\Character Assets\Book01.nif`. The model decides book or
+note: when any of the nodes `Base Page1` to `Base Page4` is missing, the menu runs as a note. The
+`BOOK` `DATA` type byte plays no part. In vanilla data, notes name statics such as
+`Clutter\Books\Note01\Note01.nif`, and books name models under `Clutter\Books\Book01` and
+`Book02`.
+
+A note turns 1 page per step instead of 2, sits at the note distance, also takes up and down, and
+plays `ITMNotePageTurn` on each turn.
+
+### The pages
+
+The page movie is `Book`, a second movie beside the menu's own `BookMenu`. The engine makes four
+square render targets, one per page node, each as wide and high as the screen is high in pixels,
+in 8-bit RGBA. Page node `Base Page<i+1>` shows target `i` as its colour texture. For each page
+`i` from 0 to 3 the engine:
+
+1. fills the target with the texture already on `Base Page1`, the blank paper;
+2. calls `BookMenu.BookMenuInstance.ShowPageAtOffset(i)` on the movie;
+3. draws the whole movie stage into one rectangle of the target.
+
+The rectangle is the UV range of the node `PageText`, clamped to 0 to 1, times the target size.
+Without a `PageText` node with UVs, the rectangle is the whole target.
+
+The movie splits the text into pages and keeps the first and last page; the engine does not.
+
+### Placement and lights
+
+- The book sits on the view ray through 0.5 of the screen width and 0.445 of its height, at a
+  distance of 110 for a book and 90 for a note, times the screen width over its height. It faces
+  the camera, turned -25 degrees about the X axis, at scale 1. A book is centred on its bounds; a
+  note is not.
+- The book is placed in the world and fixed to the player camera. The camera holds still at its
+  current place. The paused world keeps drawing behind the book, without a blur or darkening, and
+  the HUD switches to its `BookMode`.
 - Two lights of colour (0.98, 0.95, 0.83) and radius 400 light it: one at (100, -350, 100) with
   dimmer 1.75, one at (10, -75, 10) with dimmer 1.
-- The pages are the model's nodes `Base Page1` to `Base Page4`. A model without `Base Page1` opens
-  as a note. For each page the engine calls `BookMenu.BookMenuInstance.ShowPageAtOffset(i)` and
-  draws the movie onto that node.
-- The movie splits the text into pages and keeps the first and last page; the engine does not.
+
+### Animation
+
+The engine plays no NIF controller sequence on the model. It sends behaviour graph events instead,
+and the model's animation data sets how long each takes:
+
+| Event | When |
+| --- | --- |
+| `Open` | The model is set up |
+| `PageForward`, `PageBack` | `TurnPage` turned the page |
+| `Close` | The menu closes, right after `PrepForClose` |
+
+Page turns are ignored while the graph variable `bPageFlipping` is true.
+
+The engine moves the book itself. 5 frames after the model loads, the book eases from where it
+loaded to its place over 1 s, and on close it eases back over the same time. The ease is
+`0.5 × (1 − cos(π t))`, with `t` from 0 to 1. Example: at a quarter of the time, `t = 0.25`, the
+book has moved 0.146 of the way.
 
 ```mermaid
 flowchart TD
@@ -69,7 +117,7 @@ flowchart TD
     Flip -->|no| Turn["TurnPage(±2 for a book, ±1 for a note)"]
     Turn --> Moved{Did the movie turn the page?}
     Moved -->|no| Stay[Nothing more]
-    Moved -->|yes| Anim[Play the page animation on the model]
+    Moved -->|yes| Anim[Send PageForward or PageBack to the model]
     Anim --> Note{A note?}
     Note -->|yes| Sound[Play ITMNotePageTurn]
 ```

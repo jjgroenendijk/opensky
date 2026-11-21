@@ -140,6 +140,93 @@ Quitting a Thieves Guild special job lowers its stat by one.
 The page also shows the bounty in each hold where the player has one, and one shared bounty for the
 Orc strongholds.
 
+## How the game counts
+
+The game keeps one whole-number counter per stat name. A rule can add one, add an amount, or set
+the value. Some changes also send the stat-changed notice that drives the milestone messages; the
+others are silent.
+
+### Stats only scripts raise
+
+Persuasions, Bribes, and Intimidations rise only through `Game.IncrementStat`. A speech check in
+dialogue does not count on its own; the vanilla dialogue scripts raise the stat. Horses Owned,
+Houses Owned, Stores Invested In, Standing Stones Found, Necks Bitten, Werewolf Transformations,
+Brawls Won, Questlines Completed, Vampirism Cures, and Wings Plucked are raised by vanilla
+scripts too.
+
+### Days
+
+The clock adds the frame's real seconds times the timescale, over 3600, to the hour. When the
+hour passes 24, it takes 24 off, repeating while the hour is still over 24, and moves the date on.
+Then one day-passed event with a count of 1 fires, even when one update jumped more than a day.
+On that event:
+
+- Days Passed rises by 1.
+- Days as a Vampire rises by 1 when the global that the `PIVV` default object names is not 0.
+- Days as a Werewolf rises by 1 when the global that the `PIWV` default object names is not 0.
+
+No race or keyword check is made. All three are silent.
+
+### Kills
+
+A kill counts when the player is the killer and there is a victim:
+
+- Mauls rises by 1 while the player's beast form flag is on. `Game.SetBeastForm` sets and clears
+  the flag, and a transformation effect on the player turns it on. The same flag stops a shout
+  from the favourites menu.
+- Bunnies Slaughtered rises by 1 when the victim is in the faction that the `Bunny Faction`
+  default object names. No race, keyword, or form is checked.
+
+### Critical hits
+
+A weapon hit by the player on another actor sends up to two critical-hit events: one when the hit
+is critical, and one when it is a sneak attack. Each event:
+
+- raises Critical Strikes by 1;
+- raises Sneak Attacks by 1 when it is the sneak attack event;
+- raises Backstabs by 1 when the player has any perk with a `Mod Sneak Attack Mult` entry, whatever
+  its conditions, and the weapon's animation type is hand to hand, one-handed sword, dagger,
+  one-handed axe, one-handed mace, or staff (`WEAP` animation types 0 to 4, and 8).
+
+Example: a critical sneak attack with a dagger, by a player with the Backstab perk, raises
+Critical Strikes by 2, Sneak Attacks by 1, and Backstabs by 2. A bow sneak attack raises
+Critical Strikes and Sneak Attacks, and never Backstabs. All three are silent.
+
+### Other engine counts
+
+- Weapons Disarmed rises by 1 when the player disarms an actor, by any perk or shout effect.
+- Dragon Souls Collected rises by 1 each time the Dragon Souls actor value rises, by any amount.
+  So 3 souls given at once count once. It sends the notice.
+- `Game.TeachWord` on a word the player did not know raises Words Of Power Learned by 1. When the
+  word gives the player a shout they did not have, Shouts Learned also rises by 1. Both send the
+  notice.
+- `Game.UnlockWord` raises Words Of Power Unlocked by 1. For each shout with that word, Shouts
+  Unlocked rises by 1 when it is the shout's first word, and Shouts Mastered by 1 when it is the
+  shout's last word, the highest slot with both a word and a spell. Whether the earlier words are
+  unlocked is not checked.
+- In the magic menu, a dragon soul spent on a word that leaves the whole shout unlocked plays
+  `UIShoutLearnAll` and raises Shouts Mastered by 1. Any other unlock plays `UIShoutLearnSingle`.
+
+### Favourites
+
+The four "Favorite" stats are names in the counter table, but the game never writes them, so
+`Game.QueryStat` reads 0. The save keeps three lists instead, of the last 100 weapons, spells, and
+shouts the player used. A full list drops its oldest entry.
+
+- A weapon enters the list on each attack: a melee weapon on the swing, a bow, crossbow, or staff
+  when it fires. A hit is not needed.
+- A spell enters on each cast, when it is a spell, a power, a lesser power, an ability, a levelled
+  spell, or a scroll. Diseases, poisons, enchantments, potions, ingredients, addictions, voice
+  powers, and staff enchantments do not enter.
+- A shout enters each time the player shouts.
+
+The Stats page counts how often each form is in its list and shows the name of the most frequent
+one. A tie has no fixed winner. An empty list, or a form with no name, shows "None".
+
+Favorite School uses the spell list, without powers, lesser powers, addictions, and scrolls. Each
+spell counts for the skill of its main effect, and the page shows the name of the most frequent
+skill.
+
 ## How OpenSky counts
 
 Which stats OpenSky counts so far is on [journal](/engine/journal.md#stats-page). Some rules
