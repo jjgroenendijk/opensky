@@ -188,6 +188,8 @@ the detail and the sources it did find.
 | Skill Increases from training | Training counts, one per level the skill rises | [statistics](/engine/statistics.md#how-opensky-counts) |
 | Books Read | A note counts, and only the first reading of each book counts | [statistics](/engine/statistics.md#how-opensky-counts) |
 | Spells Learned | Only a spell tome counts, not a spell a script adds | [statistics](/engine/statistics.md#how-opensky-counts) |
+| Gold Found | Only gold taken from the world, a container, or a body | [statistics](/engine/statistics.md#how-opensky-counts) |
+| Chests Looted | Every opening of a container counts, a sack or a barrel too | [statistics](/engine/statistics.md#how-opensky-counts) |
 | Dungeons Cleared | Every location that clears counts, by its last boss or by `Location.SetCleared` | [statistics](/engine/statistics.md#how-opensky-counts) |
 
 ## World, time, and sound

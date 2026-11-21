@@ -291,6 +291,8 @@ The stats are saved in the `MSTS` chunk. OpenSky counts these:
 | Weapons Made, Armor Made, Weapons Improved, Armor Improved | The player crafts or tempers one |
 | Potions Mixed, Poisons Mixed | The player brews one, or cooks food |
 | Food Eaten, Potions Used, Ingredients Eaten, Poisons Used | The player eats, drinks, or uses one |
+| Gold Found, Most Gold Carried | The player picks up gold, or carries more than before |
+| Barters, Chests Looted | The player trades, or opens a container |
 | Books Read, Skill Books Read, Spells Learned | The player reads a book the first time |
 | Locks Picked | The player picks a lock |
 | Pockets Picked, Items Pickpocketed | The player pickpockets |

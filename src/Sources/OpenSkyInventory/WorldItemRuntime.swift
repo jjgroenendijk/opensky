@@ -141,6 +141,7 @@ public final class WorldItemRuntime {
         try inventory.add(
             interaction.base, count: count, to: player, stolen: verdict.isTheft, copies: copies
         )
+        inventory.countPickUp(of: interaction.base, count: count, by: player)
         // Reported before the reference leaves the world, for the reason the
         // verdict is read before the item moves: the crime is located by where
         // the stolen thing stood, and only a resident reference can say where
