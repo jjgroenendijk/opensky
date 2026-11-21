@@ -374,10 +374,8 @@ nonisolated struct SWFFrameBuilder {
         }
     }
 
-    /// Text draws: glyphs rasterize at the on-screen pixel size and the quads
-    /// are laid out in pixel space (axis-aligned — glyph quads follow the
-    /// transform's position and scale, not its rotation/skew; vanilla UI text
-    /// is unrotated).
+    /// Text draws: glyphs rasterize upright at the on-screen pixel size, and each quad's
+    /// corners follow the transform's rotation and skew (`SWFTextQuad`).
     private mutating func appendTextDraw(item: SWFSceneItem, clipCount: Int, commandIndex: Int) {
         guard let runs = movie.textPlans[commandIndex], !runs.isEmpty else { return }
         let textToPixels = stageToPixels.concatenating(item.transform)
@@ -466,7 +464,8 @@ nonisolated extension SWFFrameBuilder {
         textToPixels: SWFTransform
     ) {
         let twipsPerPixel: Float = 20
-        let bottom = run.clipBottom.map { textToPixels.apply(SIMD2(0, $0)).y }
+        let scale = textToPixels.approximateScale
+        let shape = SWFTextQuad.shape(of: textToPixels)
         for placement in run.inlineImages {
             guard
                 let id = movie.scene.movie.exportedNames[placement.image.source],
@@ -477,24 +476,24 @@ nonisolated extension SWFFrameBuilder {
                 skipped += 1
                 continue
             }
-            let origin = SIMD2(placement.x, placement.y)
-            let extent = SIMD2(placement.image.width, placement.image.height) * twipsPerPixel
-            let minCorner = textToPixels.apply(origin)
-            var maxCorner = textToPixels.apply(origin + extent)
-            let size = maxCorner - minCorner
+            let anchor = SIMD2(placement.x, placement.y)
+            let origin = textToPixels.apply(anchor)
+            let size = SIMD2(placement.image.width, placement.image.height) * twipsPerPixel * scale
             guard size.x > 0, size.y > 0 else { continue }
-            if let bottom, maxCorner.y > bottom {
-                guard bottom > minCorner.y else { continue }
-                maxCorner.y = bottom
-            }
-            let quadStart = glyphQuadCount
-            appendQuad(minCorner: minCorner, maxCorner: maxCorner, uvMin: .zero, uvMax: .one)
-            glyphQuadCount += 1
+            let bottom = run.clipBottom.map { ($0 - anchor.y) * scale }
             // The shader reads the bitmap at the pixel position mapped to 0...1 of the picture.
-            let toUV = SWFTransform(
-                scaleX: 1 / size.x, scaleY: 1 / size.y,
-                translateX: -minCorner.x / size.x, translateY: -minCorner.y / size.y
-            )
+            guard
+                let quad = SWFTextQuad(
+                    origin: origin, shape: shape, localMin: .zero, localMax: size,
+                    localBottom: bottom, uvMin: .zero, uvMax: .one
+                ),
+                let toUV = SWFTextQuad.pixelsToUnit(
+                    origin: origin, shape: shape, localMin: .zero, localSize: size
+                )
+            else { continue }
+            let quadStart = glyphQuadCount
+            glyphVertices.append(contentsOf: quad.vertices)
+            glyphQuadCount += 1
             uniforms.append(makeUniforms(
                 transform: pixelsToClip,
                 fill: .bitmap(characterId: id, toUV: toUV, tiled: false),
@@ -518,7 +517,8 @@ nonisolated extension SWFFrameBuilder {
         textToPixels: SWFTransform
     ) {
         let font = run.font
-        let bottom = run.clipBottom.map { textToPixels.apply(SIMD2(0, $0)).y }
+        let scale = textToPixels.approximateScale
+        let shape = SWFTextQuad.shape(of: textToPixels)
         for glyph in run.glyphs {
             guard
                 glyphQuadCount < movie.glyphQuadCapacity,
@@ -546,38 +546,21 @@ nonisolated extension SWFFrameBuilder {
                 }
                 continue
             }
-            let pen = textToPixels.apply(SIMD2(glyph.x, glyph.y))
-            let minCorner = SIMD2(pen.x + entry.bearing.x, pen.y - entry.bearing.y)
-            var maxCorner = minCorner + entry.size
-            var uvMax = entry.uvMax
-            if let bottom, maxCorner.y > bottom {
-                // A line the field's bottom edge cuts shows only its top part, as in Flash.
-                guard bottom > minCorner.y else { continue }
-                let kept = (bottom - minCorner.y) / (maxCorner.y - minCorner.y)
-                uvMax.y = entry.uvMin.y + (uvMax.y - entry.uvMin.y) * kept
-                maxCorner.y = bottom
-            }
-            appendQuad(minCorner: minCorner, maxCorner: maxCorner, uvMin: entry.uvMin, uvMax: uvMax)
+            let localMin = SIMD2(entry.bearing.x, -entry.bearing.y)
+            // A line the field's bottom edge cuts shows only its top part, as in Flash.
+            guard
+                let quad = SWFTextQuad(
+                    origin: textToPixels.apply(SIMD2(glyph.x, glyph.y)),
+                    shape: shape,
+                    localMin: localMin,
+                    localMax: localMin + entry.size,
+                    localBottom: run.clipBottom.map { ($0 - glyph.y) * scale },
+                    uvMin: entry.uvMin,
+                    uvMax: entry.uvMax
+                )
+            else { continue }
+            glyphVertices.append(contentsOf: quad.vertices)
             glyphQuadCount += 1
         }
-    }
-
-    private mutating func appendQuad(
-        minCorner: SIMD2<Float>,
-        maxCorner: SIMD2<Float>,
-        uvMin: SIMD2<Float>,
-        uvMax: SIMD2<Float>
-    ) {
-        let topLeft = SWFVertex(position: minCorner, uv: uvMin)
-        let topRight = SWFVertex(
-            position: SIMD2(maxCorner.x, minCorner.y), uv: SIMD2(uvMax.x, uvMin.y)
-        )
-        let bottomLeft = SWFVertex(
-            position: SIMD2(minCorner.x, maxCorner.y), uv: SIMD2(uvMin.x, uvMax.y)
-        )
-        let bottomRight = SWFVertex(position: maxCorner, uv: uvMax)
-        glyphVertices.append(contentsOf: [
-            topLeft, topRight, bottomLeft, topRight, bottomRight, bottomLeft
-        ])
     }
 }
