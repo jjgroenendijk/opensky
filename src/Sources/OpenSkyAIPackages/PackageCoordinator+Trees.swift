@@ -100,6 +100,7 @@ extension PackageCoordinator {
     /// schedule walk stops with it, unless a fight now moves the actor.
     func leaveExecution(of actor: ReferenceKey) {
         movement.forget(actor)
+        seatTurns[actor] = nil
         guard let execution = executions.removeValue(forKey: actor) else { return }
         if runtime?.completing(for: actor) == execution.package {
             runtime?.setCompleting(nil, actor: actor)

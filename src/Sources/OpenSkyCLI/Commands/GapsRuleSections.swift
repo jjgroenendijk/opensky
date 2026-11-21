@@ -120,6 +120,7 @@ extension GapsGatherer {
             _ = SandboxSettings.resolve(store: store)
             _ = BumpReactionSettings.resolve(store: store)
             _ = FollowSettings.resolve(store: store)
+            _ = FurnitureArrivalSettings.resolve(store: store)
             _ = FollowerCommandSettings.resolve(store: store)
             _ = DeathSettings.resolve(store: store)
             _ = ImpulseSettings.resolve(store: store)

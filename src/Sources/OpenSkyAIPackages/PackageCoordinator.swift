@@ -47,6 +47,11 @@ public protocol PackageWorld: AnyObject {
     func packageSandboxSeat(for actor: ReferenceKey, in request: SandboxSeatRequest) -> PackageSeat?
     /// The actor sits down in `seat`.
     func seatPackageActor(_ actor: ReferenceKey, in seat: PackageSeat)
+    /// Turns a standing actor to `heading` and returns the turn still left, in radians.
+    /// Nil when the actor cannot turn.
+    func turnPackageActor(
+        _ actor: ReferenceKey, toHeading heading: Float, within tolerance: Float
+    ) -> Float?
     /// The actor leaves `seat`, or nil when it never sat, and frees every seat it reserved.
     func unseatPackageActor(_ actor: ReferenceKey, from seat: PackageSeat?)
     /// A held package started, finished, or was left. Its fragments run here.
@@ -107,6 +112,12 @@ extension PackageWorld {
     }
 
     public func seatPackageActor(_: ReferenceKey, in _: PackageSeat) {}
+
+    public func turnPackageActor(
+        _: ReferenceKey, toHeading _: Float, within _: Float
+    ) -> Float? {
+        nil
+    }
 
     public func unseatPackageActor(_: ReferenceKey, from _: PackageSeat?) {}
 
@@ -265,6 +276,8 @@ public final class PackageCoordinator {
     var stepDepth: [ReferenceKey: Int] = [:]
     /// Results that came back too deep; each reaches its procedure on the next tick.
     var heldSteps: [ReferenceKey: [(event: PackageProcedureEvent, leaf: Int)]] = [:]
+    /// Actors at their seat that still turn to its heading.
+    var seatTurns: [ReferenceKey: FurnitureSeatTurn] = [:]
     static let maxStepDepth = 16
 
     public init(world: (any PackageWorld)?, data: PackageSessionData?) {
@@ -306,6 +319,7 @@ public final class PackageCoordinator {
             registeredActors.removeValue(forKey: actor)
             executions.removeValue(forKey: actor)
             heldSteps.removeValue(forKey: actor)
+            seatTurns.removeValue(forKey: actor)
             mounts.removeValue(forKey: actor)
             movement.drop(actor)
         }
@@ -437,7 +451,7 @@ public final class PackageCoordinator {
         let event: PackageProcedureEvent
         switch reason {
         case .arrival: event = .arrived
-        case .giveUp: event = .movementFailed
+        case .giveUp: event = reachedFurniture(actor) ? .arrived : .movementFailed
         default: return
         }
         let rider = mounts.first { $0.value == actor }?.key ?? actor

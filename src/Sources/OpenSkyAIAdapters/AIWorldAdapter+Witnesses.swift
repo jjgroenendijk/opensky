@@ -68,6 +68,12 @@ extension AIWorldAdapter {
             seating.seatPackageActor(actor, in: seat)
         }
 
+        public func turnPackageActor(
+            _ actor: ReferenceKey, toHeading heading: Float, within tolerance: Float
+        ) -> Float? {
+            seating.turnPackageActor(actor, toHeading: heading, within: tolerance)
+        }
+
         public func unseatPackageActor(_ actor: ReferenceKey, from seat: PackageSeat?) {
             seating.unseatPackageActor(actor, from: seat)
         }

@@ -128,6 +128,8 @@ struct PackageSettings {
     let follow: FollowSettings
     /// The fast walk and jog speeds between walk and run.
     let speeds: MovementSpeedSettings
+    /// The arrival radius and facing angle of a walk to furniture.
+    let furnitureArrival: FurnitureArrivalSettings
 
     init(_ data: PackageSessionData?) {
         guardWarnings = data?.guardWarnings ?? .vanilla
@@ -135,5 +137,6 @@ struct PackageSettings {
         bump = data?.bumpSettings ?? .vanilla
         follow = data?.followSettings ?? .vanilla
         speeds = data?.movementSpeeds ?? .vanilla
+        furnitureArrival = data?.furnitureArrival ?? .vanilla
     }
 }

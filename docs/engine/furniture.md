@@ -54,9 +54,7 @@ the package frees the seat, even when the actor never sat down.
 
 ## Arriving at the seat
 
-In the game, a walk counts as arrived by the kind of goal it walks to. OpenSky does not build
-this yet. It uses one fixed arrival distance for every walk, and snaps the actor to the marker's
-heading.
+In the game, a walk counts as arrived by the kind of goal it walks to.
 
 - A furniture reference: the arrival radius is the larger of the game's furniture radius (150
   units) and the radius the walk asks for.
@@ -85,6 +83,19 @@ flowchart TD
     T -- no --> Turn[Turn toward the marker heading] --> T
     T -- yes --> Clip[Play the entry clip]
 ```
+
+OpenSky builds the furniture part of this:
+
+- A walk to a seat that gives up inside the furniture radius counts as arrived. The radius is
+  the larger of the furniture radius and the radius the package asks for. A walk that reaches
+  the end of its path arrives as before.
+- At the seat, the actor turns to the seat's heading at the normal turn speed. The entry clip
+  starts when the turn left is inside the furniture angle.
+- The player and a flying dragon do not turn first.
+
+`openskycli gmst` prints the two settings. The height limit, and how long OpenSky waits for
+a blocked turn, are OpenSky's choices ([unverified values](/engine/unverified-values.md)). Other
+walk goals keep OpenSky's own arrival distance.
 
 ## Sitting down and standing up
 

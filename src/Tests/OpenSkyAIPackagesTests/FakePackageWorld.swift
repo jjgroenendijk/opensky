@@ -27,6 +27,10 @@ final class FakePackageWorld: PackageWorld {
     var hasRoom = true
     var holdsIdleMarker = false
     var flies = false
+    /// The turn still left that `turnPackageActor` answers. Nil: the actor cannot turn.
+    var turnLeft: Float?
+    var feet = SIMD3<Float>.zero
+    private(set) var seatings: [PackageSeat] = []
     private(set) var stops: [ReferenceKey] = []
     private(set) var scriptEvents: [PackageScriptEvent.Kind] = []
     private(set) var actions: [PackageAction] = []
@@ -42,7 +46,15 @@ final class FakePackageWorld: PackageWorld {
     )
 
     func packageActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>? {
-        .zero
+        feet
+    }
+
+    func seatPackageActor(_: ReferenceKey, in seat: PackageSeat) {
+        seatings.append(seat)
+    }
+
+    func turnPackageActor(_: ReferenceKey, toHeading _: Float, within _: Float) -> Float? {
+        turnLeft
     }
 
     func packagePlace(

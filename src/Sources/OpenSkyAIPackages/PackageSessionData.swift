@@ -13,6 +13,7 @@ public struct PackageSessionData {
     public var bumpSettings = BumpReactionSettings.vanilla
     public var followSettings = FollowSettings.vanilla
     public var movementSpeeds = MovementSpeedSettings.vanilla
+    public var furnitureArrival = FurnitureArrivalSettings.vanilla
 
     public init(store: PackageStore, conditionFunctions: ConditionFunctionRegistry) {
         self.store = store
