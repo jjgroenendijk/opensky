@@ -232,7 +232,8 @@ enum SWFSystemMenuCommand {
             for (index, frame) in sprite.timeline.frames.enumerated() {
                 let names = frame.steps.compactMap { step -> String? in
                     guard case let .place(placement) = step else { return "remove" }
-                    return "\(placement.depth):\(placement.name ?? "-")"
+                    let id = placement.characterId.map { "#\($0)" } ?? ""
+                    return "\(placement.depth):\(placement.name ?? "-")\(id)"
                 }
                 print(
                     "[INFO]   frame \(index) \(frame.label ?? "") \(names.joined(separator: " "))"
@@ -245,6 +246,9 @@ enum SWFSystemMenuCommand {
         printPlacement(node, runtime: runtime)
         for child in node.children {
             print("[INFO]   child \(child.depth) \(child.name ?? "-") \(child.content)")
+            if let id = child.characterId, let shape = runtime.movie.shape(id) {
+                print("[INFO]     fills \(shape.fillStyles)")
+            }
         }
     }
 
@@ -257,6 +261,10 @@ enum SWFSystemMenuCommand {
                 + "\(Float(matrix.translateX) / SWFMovieRuntime.twipsPerPixel) "
                 + "\(Float(matrix.translateY) / SWFMovieRuntime.twipsPerPixel)"
         )
+        if node.colorTransform != .identity {
+            let colour = node.colorTransform
+            print("[INFO]   colour multiply \(colour.multiply) add \(colour.add)")
+        }
         guard let transform = runtime.transform(of: node) else {
             return
         }
