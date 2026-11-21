@@ -39,6 +39,15 @@ struct ConditionReferenceStateFunctionTests {
         #expect(try Self.outcome(5, equals: 0, facts: open) == .true)
     }
 
+    @Test func lockLevelIsTheStoredLevelAndZeroWithNoLock() throws {
+        #expect(try Self.outcome(65, equals: 25, facts: Self.lockedDoor) == .true)
+        let keyOnly = ReferenceConditionFacts(
+            lock: ReferenceLockState(isLocked: true, level: 255, key: nil)
+        )
+        #expect(try Self.outcome(65, equals: 255, facts: keyOnly) == .true)
+        #expect(try Self.outcome(65, equals: 0, facts: ReferenceConditionFacts()) == .true)
+    }
+
     @Test func openStateUsesTheNativeCodes() throws {
         #expect(try Self
             .outcome(157, equals: 1, facts: ReferenceConditionFacts(isOpen: true)) == .true)
