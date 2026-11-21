@@ -57,6 +57,23 @@ Byte alignment: the spec says only RECT and MATRIX "must be byte aligned". OpenS
 aligns before the GRADIENT after a fill's MATRIX, and before `NumFillBits` after the style
 arrays. All vanilla shapes parse under this rule.
 
+## Gradients
+
+A GRADIENT holds a spread mode, an interpolation mode, and up to 15 GRADRECORD stops. Each
+stop has a ratio from 0 to 255 and a colour (spec chapter 7, pp. 134-136).
+
+- A gradient fill maps the shape through its MATRIX into a square from -16384 to 16384
+  twips. A linear fill reads its colour from x; a radial fill reads it from the distance to
+  the centre.
+- Between two stops the colour mixes by the ratio. Before the first stop and after the last
+  one, the colour is the stop's own (pad).
+- Interpolation mode 0 mixes the stored sRGB values. Mode 1, linear RGB, turns the colour
+  channels into linear light first, mixes them, and turns them back. Example: red to blue
+  half way is 128 in mode 0 and 188 in mode 1. Alpha always mixes straight.
+- A focal radial gradient (type 0x13) adds a FIXED8 focal point from -1 to 1 on the x axis
+  of the square. Ratio 0 sits at the focal point and ratio 255 on the circle of radius 1, so
+  the bright centre moves to one side.
+
 ## Tessellation
 
 OpenSky turns each shape into a triangle list in twips, grouped by fill style.

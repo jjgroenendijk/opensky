@@ -53,8 +53,7 @@ nonisolated extension SWFMovieResources {
         }
 
         /// Resolves one FILLSTYLE to renderer terms; nil for degenerate fill
-        /// matrices (counted as skipped). Focal radial gradients render as plain
-        /// radial (the FIXED8 focal point is ignored — documented deferral).
+        /// matrices (counted as skipped).
         private mutating func resolveFill(_ style: SWFFillStyle) -> SWFMovieResources
             .ResolvedFill?
         {
@@ -88,6 +87,7 @@ nonisolated extension SWFMovieResources {
                     row: gradientRows.count - 1,
                     toSquare: toSquare,
                     radial: radial,
+                    focal: gradient.focalPoint,
                     spread: Self.spread(gradient.spreadMode)
                 )
             }
@@ -143,9 +143,7 @@ nonisolated extension SWFMovieResources {
             return result
         }
 
-        /// One 256-texel row per gradient fill, colors linearly interpolated
-        /// between the GRADRECORD stops (pad at the ends). The linearRGB
-        /// interpolation mode is treated as normal RGB (documented deferral).
+        /// One 256-texel row per gradient fill (`SWFGradient.rampColors`).
         public static func makeGradientRamp(
             device: any MTLDevice,
             rows: [SWFGradient]
@@ -183,55 +181,13 @@ nonisolated extension SWFMovieResources {
             row: Int,
             width: Int
         ) {
-            let stops = gradient.records.sorted { $0.ratio < $1.ratio }
-            for texel in 0 ..< width {
-                let ratio = Float(texel) / Float(width - 1) * 255
-                let color = interpolatedColor(stops: stops, ratio: ratio)
+            for (texel, color) in gradient.rampColors(width: width).enumerated() {
                 let base = (row * width + texel) * 4
                 pixels[base] = color.red
                 pixels[base + 1] = color.green
                 pixels[base + 2] = color.blue
                 pixels[base + 3] = color.alpha
             }
-        }
-
-        private static func interpolatedColor(
-            stops: [SWFGradientRecord],
-            ratio: Float
-        ) -> SWFColor {
-            guard let first = stops.first else {
-                return SWFColor(red: 0, green: 0, blue: 0, alpha: 0)
-            }
-            var previous = first
-            for stop in stops {
-                if ratio <= Float(stop.ratio) {
-                    let span = Float(stop.ratio) - Float(previous.ratio)
-                    guard span > 0 else { return stop.color }
-                    let fraction = (ratio - Float(previous.ratio)) / span
-                    return blend(previous.color, stop.color, fraction: fraction)
-                }
-                previous = stop
-            }
-            return previous.color
-        }
-
-        private static func blend(
-            _ from: SWFColor,
-            _ to: SWFColor,
-            fraction: Float
-        ) -> SWFColor {
-            func mix(_ start: UInt8, _ end: UInt8) -> UInt8 {
-                UInt8(max(
-                    0,
-                    min(255, (Float(start) + (Float(end) - Float(start)) * fraction).rounded())
-                ))
-            }
-            return SWFColor(
-                red: mix(from.red, to.red),
-                green: mix(from.green, to.green),
-                blue: mix(from.blue, to.blue),
-                alpha: mix(from.alpha, to.alpha)
-            )
         }
     }
 }

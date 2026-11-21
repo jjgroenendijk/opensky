@@ -130,6 +130,22 @@ vertex SWFVertexOut swfVertex(
     return out;
 }
 
+/// A focal radial gradient's parameter: the distance from the focal point F = (f, 0) to p,
+/// over the distance from F to the unit circle along the same ray (spec p. 136).
+static inline float swfFocalParameter(float2 p, float focal)
+{
+    float2 f = float2(clamp(focal, -0.999, 0.999), 0.0);
+    float2 offset = p - f;
+    float distance = length(offset);
+    if (distance < 1e-6) {
+        return 0.0;
+    }
+    float2 direction = offset / distance;
+    float along = dot(f, direction);
+    float reach = -along + sqrt(along * along - dot(f, f) + 1.0);
+    return distance / reach;
+}
+
 /// SpreadMode folding of the raw gradient parameter into 0..1 (spec p. 135).
 static inline float swfSpread(float t, uint mode)
 {
@@ -167,12 +183,15 @@ fragment float4 swfFragment(
         break;
     }
     case SWFFillModeLinearGradient:
-    case SWFFillModeRadialGradient: {
+    case SWFFillModeRadialGradient:
+    case SWFFillModeFocalRadialGradient: {
         // Gradient square: fillPosition is normalized to -1..1; the linear
         // parameter runs left -> right, the radial one out from the center
         // (spec chapter 7, pp. 134-136).
         float raw = draw.fillMode == SWFFillModeLinearGradient ? in.fillPosition.x * 0.5 + 0.5
-                                                               : length(in.fillPosition);
+                    : draw.fillMode == SWFFillModeRadialGradient
+                        ? length(in.fillPosition)
+                        : swfFocalParameter(in.fillPosition, draw.gradientFocal);
         float t = swfSpread(raw, draw.gradientSpread);
         straight = gradientRamp.sample(clampSampler, float2(t, draw.gradientV));
         break;
