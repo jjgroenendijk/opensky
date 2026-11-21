@@ -105,6 +105,12 @@ enum SWFCommand {
             "[INFO] swf sweep shapes: \(content.shapeCount) decoded (\(shapeBreakdown)), "
                 + "\(content.triangleCount) triangles, \(content.shapeFailureCount) failed"
         )
+        print(
+            "[INFO] swf sweep strokes: \(content.strokedShapeCount) shapes stroke "
+                + "\(content.strokedSegmentCount) edges; gradients: "
+                + "\(content.focalGradientCount) focal, "
+                + "\(content.linearRGBGradientCount) linear RGB"
+        )
         let bitmapBreakdown = content.bitmapCountByFormat.sorted { $0.key < $1.key }
             .map { "\($0.key) \($0.value)" }
             .joined(separator: ", ")
@@ -139,6 +145,10 @@ private struct SWFContentTally {
     var shapeCountByTag: [String: Int] = [:]
     var triangleCount = 0
     var shapeFailureCount = 0
+    var strokedShapeCount = 0
+    var strokedSegmentCount = 0
+    var focalGradientCount = 0
+    var linearRGBGradientCount = 0
     var bitmapCount = 0
     var bitmapCountByFormat: [String: Int] = [:]
     var bitmapFailureCount = 0
@@ -165,6 +175,10 @@ private struct SWFContentTally {
             shapeCount += 1
             shapeCountByTag[name, default: 0] += 1
             triangleCount += mesh.triangleCount
+            strokedSegmentCount += shape.strokedSegmentCount
+            strokedShapeCount += shape.strokedSegmentCount > 0 ? 1 : 0
+            focalGradientCount += shape.gradients.count { $0.focalPoint != nil }
+            linearRGBGradientCount += shape.gradients.count { $0.interpolationMode == .linearRGB }
         } catch {
             shapeFailureCount += 1
             failures.append(("\(path) \(name)", String(describing: error)))

@@ -30,7 +30,8 @@ nonisolated public struct SWFPlacement: Equatable, Sendable {
     /// PlaceObject3 BlendMode byte (0/1 = normal), recorded + ignored.
     var blendMode: UInt8?
     /// PlaceObject3 SurfaceFilterList entry count, recorded + ignored.
-    var filterCount = 0
+    /// The FilterID of each filter in the list, in order.
+    var filterIDs: [UInt8] = []
     /// PlaceObject2/3 `PlaceFlagHasClipActions`.
     var hasClipActions = false
     /// The decoded CLIPACTIONS block, non-nil whenever `hasClipActions` is set.
@@ -147,7 +148,7 @@ nonisolated public enum SWFDisplayListParser: Sendable {
         }
         try parseCommonFields(&bits, flags: flags, into: &placement)
         if flags2 & 0x01 != 0 {
-            placement.filterCount = try skipFilterList(&bits)
+            placement.filterIDs = try skipFilterList(&bits)
         }
         if flags2 & 0x02 != 0 {
             placement.blendMode = try bits.readAlignedUInt8()
@@ -214,10 +215,12 @@ nonisolated public enum SWFDisplayListParser: Sendable {
     /// determines. Filters are not rendered — this only frames past them so
     /// the fields after the list stay readable — but the count is returned so
     /// the sweep can tally the deferral.
-    static func skipFilterList(_ bits: inout SWFBitReader) throws -> Int {
+    static func skipFilterList(_ bits: inout SWFBitReader) throws -> [UInt8] {
         let count = try Int(bits.readAlignedUInt8())
+        var ids: [UInt8] = []
         for _ in 0 ..< count {
             let filterID = try bits.readAlignedUInt8()
+            ids.append(filterID)
             let fixedSize: Int
             switch filterID {
             case 0: fixedSize = 23 // DropShadow
@@ -236,7 +239,7 @@ nonisolated public enum SWFDisplayListParser: Sendable {
             }
             try skipBytes(&bits, count: fixedSize)
         }
-        return count
+        return ids
     }
 
     private static func skipBytes(_ bits: inout SWFBitReader, count: Int) throws {

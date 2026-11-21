@@ -24,6 +24,8 @@ struct SWFFontTextTally {
     var editTextCount = 0
     var editTextWithText = 0
     var htmlEditTextCount = 0
+    /// Tag name and attribute names, such as `font color size`, per HTML initial text.
+    var htmlTags: [String: Int] = [:]
     var textRecordGlyphs = 0
     var failures: [(String, String)] = []
 
@@ -83,6 +85,9 @@ struct SWFFontTextTally {
             }
             if edit.flags.html {
                 htmlEditTextCount += 1
+                for tag in Self.htmlTagShapes(edit.initialText ?? "") {
+                    htmlTags[tag, default: 0] += 1
+                }
             }
         } catch {
             failures.append(("\(path) edit text tag \(tag.code)", String(describing: error)))
@@ -102,6 +107,23 @@ struct SWFFontTextTally {
                 + "DefineEditText \(editTextCount) (\(editTextWithText) with text, "
                 + "\(htmlEditTextCount) HTML), \(textFailureCount) failed"
         )
+        let tags = htmlTags.sorted { $0.key < $1.key }.map { "\($0.key): \($0.value)" }
+        print("[INFO] swf sweep HTML tags: \(tags.joined(separator: ", "))")
+    }
+
+    /// Each tag as its lowercased name and attribute names, closing tags with their slash.
+    static func htmlTagShapes(_ html: String) -> [String] {
+        html.split(separator: "<").dropFirst().compactMap { piece in
+            guard let body = piece.split(separator: ">", omittingEmptySubsequences: false).first
+            else { return nil }
+            let unquoted = body.replacingOccurrences(
+                of: "(\"[^\"]*\"|'[^']*')", with: "", options: .regularExpression
+            )
+            let words = unquoted.split(separator: " ").map { word in
+                word.split(separator: "=").first.map { $0.lowercased() } ?? ""
+            }
+            return words.joined(separator: " ")
+        }
     }
 
     /// Font-only failures, split for the two report lines.

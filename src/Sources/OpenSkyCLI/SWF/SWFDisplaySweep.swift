@@ -132,6 +132,12 @@ struct SWFDisplayTally {
                 + "\(tags.blendModes) blend modes, \(tags.clipActions) ClipActions, "
                 + "\(tags.danglingPlacements) dangling placements"
         )
+        let kinds = { (counts: [UInt8: Int]) in
+            counts.sorted { $0.key < $1.key }.map { "\($0.key): \($0.value)" }
+                .joined(separator: ", ")
+        }
+        print("[INFO] swf sweep display filters by FilterID: \(kinds(tags.filtersByID))")
+        print("[INFO] swf sweep display blend modes by value: \(kinds(tags.blendModesByValue))")
         print(
             "[INFO] swf sweep display text: \(editTextGlyphs) glyphs laid out, "
                 + "\(missingGlyphs) missing glyphs, "
