@@ -94,7 +94,7 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public private(set) var despawnRequests = 0
     /// True when `recoilMagnitude` was written before `recoilStart` was raised,
     /// which is the write-then-raise order the graph depends on.
-    public private(set) var wroteMagnitudeBeforeRecoil = false
+    public private(set) var wroteMagnitudeBeforeStagger = false
 
     /// Moves one actor to `feet`, which is what a fake mover that actually
     /// walked would have done by the next step.
@@ -226,10 +226,10 @@ public final class FakeCombatWorld: CombatLoopWorld {
     @discardableResult
     public func raiseCombatEvent(_ name: String, on target: ReferenceKey?) -> Bool {
         if
-            name == CombatGraphNames.recoilStart,
-            variables[CombatGraphNames.recoilMagnitude] != nil
+            name == CombatGraphNames.staggerStart,
+            variables[CombatGraphNames.staggerMagnitude] != nil
         {
-            wroteMagnitudeBeforeRecoil = true
+            wroteMagnitudeBeforeStagger = true
         }
         raised.append(name)
         return target == nil

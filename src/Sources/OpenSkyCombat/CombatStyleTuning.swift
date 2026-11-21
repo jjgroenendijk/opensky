@@ -25,6 +25,8 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
     /// `CSFL` hover, ground attack, and perch attack times, and the perch chance, 0 to 1.
     /// UESP gives 0.5 as the default of each.
     public var flight = FlightStyle()
+    /// `CSGD` Avoid Threat Chance, 0 to 1: the chance to sidestep a danger.
+    public var avoidThreatChance: Float = 0.2
     /// The style's editor ID, for the readout.
     public var name: String?
 
@@ -71,6 +73,7 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
                 ?? neutral.magicScoreMultiplier,
             name: style.editorID
         )
+        avoidThreatChance = style.value(.avoidThreatChance) ?? avoidThreatChance
         flight.hoverTime = style.value(.hoverTime) ?? flight.hoverTime
         flight.groundAttackTime = style.value(.groundAttackTime) ?? flight.groundAttackTime
         flight.perchAttackChance = style.value(.perchAttackChance) ?? flight.perchAttackChance

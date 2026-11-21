@@ -119,6 +119,36 @@ extension CombatShared {
             shared.world.ownsPerk(editorID: "PowerBash", on: .player)
         }
 
+        /// What the stagger magnitude reads. An attack with no attack data keeps the
+        /// weapon's own stagger, so a load order without race attacks still staggers.
+        func hitFacts(
+            attacker: ReferenceKey, target: ReferenceKey, event: String, weaponStagger: Float
+        ) -> HitReactionFacts {
+            let world = shared.world
+            var facts = HitReactionFacts()
+            facts.attackStagger = world.attackStagger(of: attacker, event: event) ?? weaponStagger
+            facts.attackerBlock = combatBlockSkill(of: attacker)
+            facts.targetMass = ActorValueIdentity.index(named: "Mass")
+                .flatMap { world.actorValues(of: target)?($0) } ?? 1
+            let phase = shared.loop?.behaviors[target]?.phase
+            facts.targetRecoils = shared.loop?.isRecoiling(target) ?? false
+            facts.targetStaggered = phase == .staggered && !facts.targetRecoils
+            facts.targetRuns = target == .player ? world.playerRuns : phase == .approaching
+            func place(_ key: ReferenceKey) -> (feet: SIMD3<Float>, facing: Float)? {
+                if key == .player {
+                    return (shared.meleeAttacker.feet, shared.meleeAttacker.facing)
+                }
+                return world.residentActor(key: key).map { ($0.feet, $0.facing) }
+            }
+            if let struck = place(target) {
+                facts.direction = HitReactionFacts.direction(
+                    targetFacing: struck.facing, target: struck.feet,
+                    attacker: place(attacker)?.feet
+                )
+            }
+            return facts
+        }
+
         func combatBlockSkill(of key: ReferenceKey) -> Float {
             ActorValueIdentity.index(named: "Block")
                 .flatMap { shared.world.actorValues(of: key)?($0) } ?? MeleeDamage.defaultBlockSkill

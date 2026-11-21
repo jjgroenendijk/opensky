@@ -109,6 +109,12 @@ nonisolated public struct RaceDetails: Equatable, Sendable {
         attacks.compactMap { $0.properties?.spell }
     }
 
+    /// The stagger value of the attack `event` starts (ATKE), or nil when no attack does.
+    public func attackStagger(event: String) -> Float? {
+        attacks.first { $0.event?.caseInsensitiveCompare(event) == .orderedSame }?
+            .properties?.stagger
+    }
+
     var bodyParts = GenderPair<[RaceBodyPart]>(male: [], female: [])
     /// HNAM, HDPT records.
     var hairs: [FormID] = []

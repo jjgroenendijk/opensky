@@ -91,6 +91,12 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     func applyCombatHitSpell(_ blow: CombatBlow, on target: ReferenceKey)
     /// Lands the spell `target`'s perk applies when an enemy starts `blow` at it.
     func applyCombatSwingSpell(_ blow: CombatBlow, at target: ReferenceKey)
+    /// What the stagger magnitude reads of `attacker`'s attack on `target`.
+    func combatHitFacts(
+        from attacker: ReferenceKey, on target: ReferenceKey, weaponStagger: Float
+    ) -> HitReactionFacts
+    /// Keeps one hit and its reaction for the readout.
+    func noteCombatHitReaction(_ report: HitReactionReport)
     /// The Disease spell `attacker`'s race attacks carry, or nil.
     func combatAttackDisease(of attacker: ReferenceKey) -> ReferenceKey?
     /// `target`'s disease resistance, or nil when it has no actor values.
@@ -118,6 +124,10 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// reads it — whether to break off — is stated as a fraction and computing
     /// it at the call site would let two callers disagree about the same actor.
     func combatHealthFraction(of key: ReferenceKey) -> Float
+    /// `key`'s current `Health`.
+    func combatHealth(of key: ReferenceKey) -> Float
+    /// The projectiles and explosions on their way that are a danger to stand near.
+    func combatDangerThreats() -> [DangerThreat]
 
     /// The profile `key` swings with, which sizes its reach and its damage.
     func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile
@@ -266,6 +276,24 @@ nonisolated extension CombatLoopWorld {
     /// formula, which is the value the term had before either existed.
     public func combatBlockMultiplier(of key: ReferenceKey) -> Float {
         1
+    }
+
+    public func combatHitFacts(
+        from _: ReferenceKey, on _: ReferenceKey, weaponStagger: Float
+    ) -> HitReactionFacts {
+        var facts = HitReactionFacts()
+        facts.attackStagger = weaponStagger
+        return facts
+    }
+
+    public func noteCombatHitReaction(_: HitReactionReport) {}
+
+    public func combatHealth(of _: ReferenceKey) -> Float {
+        100
+    }
+
+    public func combatDangerThreats() -> [DangerThreat] {
+        []
     }
 
     public func combatBlockSkill(of _: ReferenceKey) -> Float {

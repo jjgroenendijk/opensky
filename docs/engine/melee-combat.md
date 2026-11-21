@@ -162,28 +162,10 @@ the [melee damage](/engine/melee-damage.md) page.
 A hit that staggers writes `staggerMagnitude` on the target's graph, then raises `staggerStart`.
 Writing first means the stagger reads this hit's magnitude, not the last one's.
 
-UESP "Skyrim:Combat#Staggering" (<https://en.uesp.net/wiki/Skyrim:Combat#Staggering>) says a hit
-has "a chance" to stagger and that a stagger interrupts what the target was doing. The install's
-`fStagger*` settings give the numbers. How they combine is OpenSky's reading, made before a source
-stated it. The game's own rule is in [hit reactions](/engine/hit-reactions.md):
-
-```text
-magnitude = source * perk multiplier * block factor * mass factor
-source    = WEAP DNAM stagger                          for a swing or a power attack
-          = fStaggerBlockAttackShieldBase
-            + fStaggerBlockAttackShieldMult * armour rating   for a shield bash
-          = stagger * (1 + fStaggerBlockAttackMult * Block)  for a weapon bash
-block factor = fStaggerBlockingMult (0) when blocked, unless a power attack or power bash
-mass factor  = base / (base + mass - 1), base fStaggerMassOffsetBase (2.1),
-               mass fStaggerPlayerMassMult (2.5) for the player, 1 for an NPC
-```
-
-A hit staggers when its magnitude is above `fStaggerMin` and a seeded percent roll is below
-`iStaggerAttackChance` (50). A swing the player blocks may recoil its attacker with magnitude
-`fStaggerBlockBase + fStaggerBlockMult * Block` of the blocker, through the same test. An NPC blow
-on the player tries a stagger first and plays the recoil only when the stagger does not happen.
-A player hit interrupts an NPC only when it staggered. An arrow has no magnitude of its own, so it
-uses the chance roll alone.
+Which hit staggers, with what magnitude and direction, follows the game's rule in
+[hit reactions](/engine/hit-reactions.md). A bash gives its target a large recoil
+(`recoilLargeStart`) and never staggers. A blocked hit raises `blockHitStart` on the target and
+`recoilStart` on the attacker. `staggerDirection` is written with the magnitude.
 
 The Disarm perk spells only fire on a second roll: `iPerkAttackDisarmChance` (50) for an attack,
 `iPerkBlockDisarmChance` (50) for a bash. UESP "Skyrim:Block" gives the 50% chance for Disarming

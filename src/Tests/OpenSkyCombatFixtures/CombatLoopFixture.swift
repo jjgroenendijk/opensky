@@ -28,11 +28,14 @@ public enum CombatLoopFixture {
     public static func session(
         weaponDamage: Float = 12,
         feet: SIMD3<Float> = closeFeet,
-        blockChance: Float = 0
+        blockChance: Float = 0,
+        stagger: Float = 0
     ) -> (runtime: CombatLoopRuntime, world: FakeCombatWorld) {
         let world = FakeCombatWorld()
         world.actors = [CombatActorObservation(key: opponent, feet: feet, name: "Opponent")]
-        world.weapons[opponent] = MeleeWeaponProfile(damage: weaponDamage, reach: 1)
+        world.weapons[opponent] = MeleeWeaponProfile(
+            damage: weaponDamage, reach: 1, stagger: stagger
+        )
         let runtime = CombatLoopRuntime(settings: .synthetic, world: world)
         runtime.behaviorSettings = CombatBehaviorSettings(blockChance: blockChance)
         return (runtime, world)

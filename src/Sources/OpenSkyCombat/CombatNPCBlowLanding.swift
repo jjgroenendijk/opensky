@@ -63,16 +63,26 @@ struct CombatNPCBlowLanding {
         ))
         guard target == world.combatPlayer.key else { return nil }
         noteSkillUse(from: actor, weapon: weapon, result: (damage, landed))
-        let recoils = damage.wasBlocked && rollsBlockRecoil(blockedBy: target, random: &random)
-        // The magnitude is written before the event so the recoil behavior
-        // reads this blow's number rather than the previous one's, which is the
-        // same write-then-raise order the melee runtime uses for a stagger.
-        let played = damage.applied > 0
-            && (raiseStagger(weapon: weapon, damage: damage, random: &random)
-                || raiseRecoil(magnitude: damage.applied))
+        var hit = HitReactionHit()
+        hit.facts = world.combatHitFacts(from: actor, on: target, weaponStagger: weapon.stagger)
+        hit.handType = weapon.handType
+        hit.wasBlocked = damage.wasBlocked
+        hit.isPlayerTarget = true
+        hit.perkMultiplier = damage.strike.staggerMultiplier
+        let reaction = HitReactionRule.reaction(hit, roll: random.percent(), settings: staggers)
+        world.noteCombatHitReaction(HitReactionReport(
+            attacker: actor, target: target, hit: hit, reaction: reaction
+        ))
+        var played = false
+        if reaction.blockHit {
+            played = world.raiseCombatEvent(CombatGraphNames.blockHitStart, on: nil)
+        }
+        if let magnitude = reaction.staggerMagnitude {
+            played = raiseStagger(magnitude: magnitude, direction: hit.facts.direction) || played
+        }
         return PlayerReaction(
             hit: CombatIncomingHit(damage: damage, playedReaction: played),
-            recoils: recoils
+            recoils: reaction.attackerRecoils
         )
     }
 
@@ -133,36 +143,11 @@ struct CombatNPCBlowLanding {
         }
     }
 
-    /// An NPC blow staggers the player by `StaggerRule`, the player's mass included.
-    /// Returns whether the graph declared the event, which is the graph's own answer.
-    private func raiseStagger(
-        weapon: MeleeWeaponProfile, damage: MeleeDamageResult, random: inout ConditionRandom
-    ) -> Bool {
-        var hit = StaggerHit(weaponStagger: weapon.stagger)
-        hit.perkMultiplier = damage.strike.staggerMultiplier
-        hit.wasBlocked = damage.wasBlocked
-        hit.isPlayerTarget = true
-        let magnitude = StaggerRule.magnitude(hit, settings: staggers)
-        let roll = random.percent()
-        guard StaggerRule.staggers(magnitude: magnitude, roll: roll, settings: staggers)
-        else { return false }
+    /// The values are written before the event, so the stagger behaviour reads this
+    /// blow's numbers. Returns whether the graph declared the event.
+    private func raiseStagger(magnitude: Float, direction: Float) -> Bool {
         world.writeCombatVariable(.real(magnitude), named: CombatGraphNames.staggerMagnitude)
+        world.writeCombatVariable(.real(direction), named: CombatGraphNames.staggerDirection)
         return world.raiseCombatEvent(CombatGraphNames.staggerStart, on: nil)
-    }
-
-    /// A swing the player blocked recoils its attacker by the player's Block skill.
-    private func rollsBlockRecoil(
-        blockedBy blocker: ReferenceKey, random: inout ConditionRandom
-    ) -> Bool {
-        let magnitude = StaggerRule.blockRecoil(
-            blockerSkill: world.combatBlockSkill(of: blocker), settings: staggers
-        )
-        let roll = random.percent()
-        return StaggerRule.staggers(magnitude: magnitude, roll: roll, settings: staggers)
-    }
-
-    private func raiseRecoil(magnitude: Float) -> Bool {
-        world.writeCombatVariable(.real(magnitude), named: CombatGraphNames.recoilMagnitude)
-        return world.raiseCombatEvent(CombatGraphNames.recoilStart, on: nil)
     }
 }

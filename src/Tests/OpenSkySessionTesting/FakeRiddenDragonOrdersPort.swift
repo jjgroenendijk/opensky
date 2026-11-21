@@ -11,6 +11,7 @@ nonisolated public final class FakeRiddenDragonOrdersPort: RiddenDragonOrdersPor
     public var isAttacking = false
     public var landingRequested = false
     public var lockedTarget: ReferenceKey?
+    public var lockSteer: Float = 0
     public var switchedTarget: ReferenceKey?
 
     public init() {}

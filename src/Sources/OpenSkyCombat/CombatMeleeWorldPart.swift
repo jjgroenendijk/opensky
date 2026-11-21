@@ -33,6 +33,18 @@ final class CombatMeleeWorldPart: CombatSharedPart, MeleeCombatWorld {
         shared.strikes.meleeBlock(of: target)
     }
 
+    func meleeHitFacts(
+        on target: ReferenceKey, event: String, weaponStagger: Float
+    ) -> HitReactionFacts {
+        shared.strikes.hitFacts(
+            attacker: .player, target: target, event: event, weaponStagger: weaponStagger
+        )
+    }
+
+    func noteHitReaction(_ report: HitReactionReport) {
+        shared.note(report)
+    }
+
     func meleeBlockSkill(of target: ReferenceKey) -> Float {
         shared.strikes.combatBlockSkill(of: target)
     }

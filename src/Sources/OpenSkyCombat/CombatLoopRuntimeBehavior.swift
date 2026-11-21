@@ -133,6 +133,10 @@ extension CombatLoopRuntime {
         world: any CombatLoopWorld
     ) {
         targets[actor.key] = target.key
+        if behaviors[actor.key]?.phase != .staggered {
+            recoilers.remove(actor.key)
+        }
+        guard !dodges(actor, world: world) else { return }
         let right = world.combatWeapon(of: actor.key)
         let shoots = right.handType == .bow
         let left = shoots ? nil : world.combatLeftWeapon(of: actor.key)
@@ -160,6 +164,10 @@ extension CombatLoopRuntime {
         if behaviors[actor.key]?.pendingCast?.purpose == .shout {
             world.turnCombatActor(actor.key, toward: target.feet)
         }
+        trackAttack(
+            by: actor, at: target,
+            attack: (step.startedAttack && !shoots, inputs.reach), world: world
+        )
         if step.startedAttack, startSwing(swing, by: actor, at: target, world: world) {
             parkBehavior(of: actor.key)
             return
@@ -183,6 +191,31 @@ extension CombatLoopRuntime {
         if let command = step.command {
             route(command, walks: step.walks, actor: actor.key, world: world)
         }
+    }
+
+    /// From the start of a melee attack to its end the attacker faces the aim, which
+    /// the track refreshes on its timer.
+    private func trackAttack(
+        by actor: CombatActorObservation, at target: MeleeTarget,
+        attack: (started: Bool, reach: Float), world: any CombatLoopWorld
+    ) {
+        let reach = attack.reach
+        if attack.started {
+            attackTracks[actor.key] = CombatAttackTrack(target: target.key, aim: target.feet)
+        }
+        guard
+            var track = attackTracks[actor.key], track.target == target.key,
+            behaviors[actor.key]?.phase.isMeleeAttack == true
+        else {
+            attackTracks[actor.key] = nil
+            return
+        }
+        let aim = track.advance(
+            by: Self.fixedStepSeconds, targetFeet: target.feet,
+            distance: simd_distance(actor.feet, target.feet), reach: reach
+        )
+        attackTracks[actor.key] = track
+        world.turnCombatActor(actor.key, toward: aim)
     }
 
     /// Notes where `target` stands this step; a second actor in the same step reads the
@@ -317,6 +350,7 @@ extension CombatLoopRuntime {
         else { return }
         if reaction.recoils {
             noteStagger(of: actor.key)
+            recoilers.insert(actor.key)
         }
         append(reaction.hit)
     }

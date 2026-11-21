@@ -11,8 +11,7 @@ tags: [engine, combat, animation, behaviour-graph]
 A hit can make its target recoil, stagger, or play a block reaction. The game picks the reaction
 from the hit as a whole. It does not pick a reaction by the body part that was hit.
 
-OpenSky's own stagger rule is in [melee combat](/engine/melee-combat.md#stagger). It is a reading of
-the game settings, with no source for how they combine. This page gives the game's rule.
+OpenSky follows this rule; [in OpenSky](#in-opensky) says what it leaves out.
 
 All values below are the ones that apply in play. Where `Skyrim.esm` overrides the program's
 built-in default, the page gives the plugin value.
@@ -84,3 +83,22 @@ Example: an attacker with 40 `Block` bashes with a shield (W = 1, S = 1) at a ru
    target's heading to the attacker, as a part of a full turn (0 to 1). With no attacker it is 0.
 5. The target performs Stagger Start (`AAS1`). On success it is marked staggered, for at most 3
    seconds.
+
+## In OpenSky
+
+Both the player's hit on an NPC and an NPC's blow on the player go through the rule above.
+
+- S comes from the attack data of the attacker's race for the attack's graph event. An attacker
+  without attack data uses its weapon's stagger value.
+- A target runs when it is the player at a run or sprint, or an NPC that closes on its target.
+- A target recoils while it plays the recoil of its own blocked blow.
+
+`openskycli game state assist` lists the last 8 hits under `hitReactions`, each with the values
+of the magnitude, the `staggerMagnitude` and `staggerDirection` written to the graph, and which
+of `largeRecoil`, `blockHit`, and `attackerRecoils` it gave.
+
+- [WARNING] A projectile hit does not go through the rule yet. An arrow staggers by the chance
+  roll alone.
+- [WARNING] The two "always stagger" hit flags are not read. The critical and sneak attack
+  messages are shown by the damage code, not here.
+- [INFO] The staggered mark lasts as long as the combat machine's stagger phase, not 3 seconds.

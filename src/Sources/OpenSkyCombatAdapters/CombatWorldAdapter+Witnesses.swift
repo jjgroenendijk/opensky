@@ -67,6 +67,10 @@ extension CombatWorldAdapter {
         impactEffects.actorFlies(actor)
     }
 
+    public func attackStagger(of key: ReferenceKey, event: String) -> Float? {
+        impactEffects.attackStagger(of: key, event: event)
+    }
+
     public func attackDisease(of key: ReferenceKey) -> ReferenceKey? {
         spellCasts.disease(among: impactEffects.attackSpells(of: key))
     }
@@ -106,6 +110,14 @@ extension CombatWorldAdapter {
 
     public var playerShooter: ProjectileShooter? {
         actorFacts.playerShooter
+    }
+
+    public var playerViewFOVYRadians: Float? {
+        actorFacts.playerViewFOVYRadians
+    }
+
+    public var playerRuns: Bool {
+        actorFacts.playerRuns
     }
 
     public func residentActors() -> [CombatActorObservation] {

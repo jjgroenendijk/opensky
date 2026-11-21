@@ -33,6 +33,14 @@ final class CombatShared {
     var allowsActorCasting = true
     var appliesCombatGameSettings = false
     var actorCastCount = 0
+    /// The last hits and their reactions, oldest first, for the readout.
+    var hitReactions: [HitReactionReport] = []
+
+    func note(_ report: HitReactionReport) {
+        hitReactions.append(report)
+        hitReactions.removeFirst(max(0, hitReactions.count - 8))
+    }
+
     /// Draws an NPC archer's aim noise and spread.
     var archeryRandom = ConditionRandom()
 

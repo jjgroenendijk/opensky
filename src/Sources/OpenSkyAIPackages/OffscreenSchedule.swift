@@ -85,22 +85,34 @@ public protocol OffscreenScheduleWorld: AnyObject {
     /// when no loaded door leads out of it.
     func loadedExit(from cell: FormID) -> OffscreenPlace?
     func placeOffscreenActor(_ actor: ReferenceKey, at place: OffscreenPlace)
+    /// The game's `TimeScale` now.
+    var offscreenTimescale: Float { get }
+    /// A reading of milliseconds spent since the call, for the frame budget.
+    func offscreenStopwatch() -> () -> Double
+}
+
+extension OffscreenScheduleWorld {
+    public var offscreenTimescale: Float {
+        GameClock.defaultTimescale
+    }
+
+    /// A session without a clock never runs over its budget.
+    public func offscreenStopwatch() -> () -> Double {
+        { 0 }
+    }
 }
 
 nonisolated public enum OffscreenScheduleCore {
-    /// An actor whose cell is not loaded updates every 0.3 / timescale game hours.
-    static let lowUpdateHours = 0.3
-
-    /// Game seconds between two updates of one actor: 54 at the default timescale of 20.
+    /// Game seconds between two updates of one actor, the Low level's interval: 54 at
+    /// the default timescale of 20.
     public static func updateSeconds(timescale: Float = GameClock.defaultTimescale) -> Double {
-        lowUpdateHours * 3600 / Double(max(timescale, 1))
+        AIProcessLevel.low.updateSeconds(timescale: timescale) ?? 0
     }
 
     /// True when an update is due: the first one, one after the interval, or after the
     /// clock went backwards.
     public static func isDue(now: Double, last: Double?, interval: Double) -> Bool {
-        guard let last else { return true }
-        return now < last || now - last >= interval
+        AIProcessRule.isDue(now: now, last: last, interval: interval)
     }
 
     public enum Decision: Equatable, Sendable {
@@ -135,6 +147,11 @@ public final class OffscreenSchedule {
     public private(set) var registered: [ReferenceKey: FormID] = [:]
     public private(set) var steps: [ReferenceKey: OffscreenStep] = [:]
     private var lastUpdate: Double?
+    /// The pass over the Low list, which goes on from its saved place next frame.
+    public private(set) var turn = AIProcessTurn<ReferenceKey>()
+    private var turnActors: [ReferenceKey: OffscreenActor] = [:]
+    /// The budget of the last frame, in milliseconds.
+    public private(set) var lastBudget: Double = 0
 
     public func readout(for actor: ReferenceKey) -> String? {
         steps[actor]?.readout
@@ -146,26 +163,38 @@ public final class OffscreenSchedule {
         }
     }
 
-    /// One low-level update of every actor outside `residents`, when one is due.
+    /// The Low level's update. A pass starts when one is due: every actor outside
+    /// `residents` takes its package, and then each is placed in turn inside the
+    /// frame's budget. A pass that runs over goes on in the next frame.
     public func advance(
-        world: any OffscreenScheduleWorld, clock: GameClock,
+        world: any OffscreenScheduleWorld, clock: GameClock, frameSeconds: Float = 0,
         residents: Set<ReferenceKey>, context: () -> ConditionContext
     ) {
         let now = clock.totalGameSeconds
-        guard
-            var runtime,
-            OffscreenScheduleCore.isDue(
-                now: now, last: lastUpdate, interval: OffscreenScheduleCore.updateSeconds()
-            )
-        else { return }
-        lastUpdate = now
-        let actors = world.offscreenActors().filter { !residents.contains($0.key) }
-        reconcile(&runtime, with: actors)
-        let shared = context()
-        runtime.advance(clock: clock) { _ in shared }
-        self.runtime = runtime
-        for actor in actors where registered[actor.key] != nil {
-            update(actor, package: runtime.currentPackage(for: actor.key), world: world, now: now)
+        lastBudget = AIProcessRule.budgetMilliseconds(frameSeconds: frameSeconds)
+        if !turn.isRunning {
+            let interval = OffscreenScheduleCore.updateSeconds(timescale: world.offscreenTimescale)
+            guard
+                var runtime,
+                OffscreenScheduleCore.isDue(now: now, last: lastUpdate, interval: interval)
+            else { return }
+            lastUpdate = now
+            let actors = world.offscreenActors().filter { !residents.contains($0.key) }
+            reconcile(&runtime, with: actors)
+            let shared = context()
+            runtime.advance(clock: clock) { _ in shared }
+            self.runtime = runtime
+            let listed = actors.filter { registered[$0.key] != nil }
+            turnActors = Dictionary(listed.map { ($0.key, $0) }) { first, _ in first }
+            turn.begin(listed.map(\.key))
+        }
+        guard let runtime else { return }
+        turn.run(budget: lastBudget, spent: world.offscreenStopwatch(), update: { key in
+            guard let actor = turnActors[key], !residents.contains(key) else { return }
+            update(actor, package: runtime.currentPackage(for: key), world: world, now: now)
+        })
+        if !turn.isRunning {
+            turnActors = [:]
         }
     }
 

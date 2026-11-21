@@ -30,6 +30,7 @@ nonisolated public final class FakePackagePort: PackagePort {
     public var readoutsResult: [PackageActorReadout] = []
     public var offscreenReadoutCalls: [ReferenceKey] = []
     public var offscreenReadoutResult: String?
+    public var processReadout: [String: Double] = [:]
     public var recordMoveCalls: [(result: NPCMoveCommandResult, actor: ReferenceKey)] = []
     public var releaseCommandedCalls: [ReferenceKey] = []
     public var resumeCalls: [ReferenceKey] = []
