@@ -29,6 +29,8 @@ nonisolated public struct ResolvedSpell: Sendable {
     public let cost: SpellCostResult
     /// FULL from the plugin's string table, when the store had the tables.
     public internal(set) var localizedName: String?
+    /// DESC from the plugin's DLSTRINGS table; nil when the record has none.
+    public internal(set) var localizedDescription: String?
 
     public var editorID: String? {
         record.editorID
@@ -130,6 +132,9 @@ nonisolated public struct SpellStore: Sendable {
                     id: id, record: decoded, sourcePlugin: sourcePlugin, effects: effects
                 )
                 spell.localizedName = names.text(decoded.name, plugin: sourcePlugin)
+                spell.localizedDescription = names.text(
+                    decoded.description, plugin: sourcePlugin, kind: .dlstrings
+                )
                 return spell
             }
         )

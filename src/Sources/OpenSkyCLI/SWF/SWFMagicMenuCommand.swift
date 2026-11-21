@@ -53,7 +53,8 @@ enum SWFMagicMenuCommand {
     private static func texts(under node: SWFDisplayObject?) -> [String] {
         guard let node, node.isVisible else { return [] }
         let own = node.textOverride.map { $0.trimmingCharacters(in: .whitespaces) } ?? ""
-        return (own.isEmpty ? [] : [own]) + node.children.flatMap { texts(under: $0) }
+        let shown = own.isEmpty ? [] : [node.name.map { "\($0)=\(own)" } ?? own]
+        return shown + node.children.flatMap { texts(under: $0) }
     }
 
     private static let flames = ItemListRow(
@@ -63,7 +64,7 @@ enum SWFMagicMenuCommand {
         )
     )
     private static let healing = ItemListRow(tag: 1, name: "Healing", spellCard: MagicMenuSpellCard(
-        kind: .spell, effects: "Restore Health 10", cost: 12, costIsPerSecond: true,
+        kind: .spell, effects: "Restore Health 10", cost: 12, costIsPerSecond: false,
         level: "Novice"
     ))
     private static let seed = [

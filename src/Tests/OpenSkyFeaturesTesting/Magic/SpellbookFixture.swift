@@ -56,6 +56,9 @@ public enum SpellbookFixture {
         public static let healOther: UInt32 = 0x02D0
         /// A disease, which sends `INFC` when caught and `CURE` when removed.
         public static let rockjoint: UInt32 = 0x02E0
+        /// Fire and forget, self: a restore entry, and a resist entry whose condition
+        /// the fixture cannot evaluate, so it never holds.
+        public static let wardedHeal: UInt32 = 0x02F0
     }
 
     public enum Book {

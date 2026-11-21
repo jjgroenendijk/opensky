@@ -12,6 +12,8 @@ nonisolated public struct ResolvedMagicEffect: Equatable, Sendable {
     public let sourcePlugin: String
     /// FULL from the plugin's string table, when the store had the tables.
     public internal(set) var localizedName: String?
+    /// DNAM from the plugin's STRINGS table (not DLSTRINGS), with its `<mag>` tags unfilled.
+    public internal(set) var localizedDescription: String?
 
     /// Runtime identity of this record, which is how an active effect names its MGEF.
     public var key: ReferenceKey {
@@ -62,7 +64,8 @@ nonisolated public struct MagicEffectStore: Sendable {
             resolve: { id, effect, plugin in
                 ResolvedMagicEffect(
                     id: id, effect: effect, sourcePlugin: plugin,
-                    localizedName: names.text(effect.name, plugin: plugin)
+                    localizedName: names.text(effect.name, plugin: plugin),
+                    localizedDescription: names.text(effect.description, plugin: plugin)
                 )
             }
         )

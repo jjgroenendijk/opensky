@@ -332,3 +332,6 @@ the detail and the sources it did find.
 | Menu controller count | One controller, GFx's default, whatever is connected | [AS2 input](/engine/as2-input.md#who-sets-the-focus) |
 | Tween camera turn direction | Skills turns the view up, Magic left, Items right, and Map down, as the entries sit | [Tween menu](/engine/tween-menu.md#camera) |
 | Installed Content list | Always the seven-entry `HMCC` list, never the Anniversary Edition `HMAE` one | [system menu](/engine/system-menu.md#help-and-installed-content) |
+| Spell card effect lines | Each shown effect's description, joined with one space | [magic](/engine/magic.md#magic-menu) |
+| Spell card numbers | A whole number shows no decimals; any other shows up to two | [magic](/engine/magic.md#magic-menu) |
+| Spell card `castTime` | 1 for a spell that is not concentration; the movie only tests for 0 | [magic](/engine/magic.md#magic-menu) |

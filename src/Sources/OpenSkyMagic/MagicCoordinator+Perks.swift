@@ -31,6 +31,19 @@ extension MagicCoordinator.PerkEffects {
         )
     }
 
+    /// `entries` of `spell` as the player would cast them, for the magic menu: the
+    /// caster's perks only, because no target is known yet.
+    func perkScaledForMenu(
+        _ entries: [MagicItemEffect], of spell: ResolvedSpell
+    ) -> [MagicItemEffect] {
+        guard let spells = coordinator.caster?.spellbook.spells else { return entries }
+        var seams = ConditionContext()
+        seams[resolution: SpellEvaluationResolution.self] = SpellEvaluationResolution(spell: spell)
+        return perkScaled(
+            entries, spell: (spells.conditionSubject(of: spell), seams), caster: .player, on: nil
+        )
+    }
+
     /// `entries` of the potion `item` that `drinker` consumes. Catalyst tests the
     /// potion's effect keywords, so the potion binds as the spell subject.
     func perkScaledPotion(
