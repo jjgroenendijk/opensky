@@ -73,6 +73,7 @@ public final class FakeRendererPort: RendererPort {
     public private(set) var menuScenes: [MenuScene?] = []
     public private(set) var overlayUpdates = 0
     public private(set) var replacedImages: [String] = []
+    public private(set) var replacedImagePixels: [Data] = []
 
     /// Nil when the machine has no Metal device at all.
     public init?() {
@@ -115,8 +116,9 @@ public final class FakeRendererPort: RendererPort {
         return swfRuntime
     }
 
-    public func replaceSWFImage(_ name: String, rgba _: Data, width _: Int, height _: Int) -> Bool {
+    public func replaceSWFImage(_ name: String, rgba: Data, width _: Int, height _: Int) -> Bool {
         replacedImages.append(name)
+        replacedImagePixels.append(rgba)
         return false
     }
 

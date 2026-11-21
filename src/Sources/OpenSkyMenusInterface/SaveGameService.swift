@@ -21,6 +21,8 @@ public protocol SaveGameService: AnyObject {
     /// Loads `slot` even though the load order changed since it was written, after the
     /// player answered `sSaveGameContentIsMissing`.
     func loadGame(slot: String, acceptingChangedContent: Bool) async throws
+    /// A picture of the frame drawn now, for the New Save row; nil without a renderer.
+    func currentFramePicture() -> SaveSlotPicture?
 }
 
 extension SaveGameService {
@@ -30,6 +32,10 @@ extension SaveGameService {
 
     public var isSavingDisabled: Bool {
         false
+    }
+
+    public func currentFramePicture() -> SaveSlotPicture? {
+        nil
     }
 
     public func loadGame(slot: String, acceptingChangedContent _: Bool) async throws {

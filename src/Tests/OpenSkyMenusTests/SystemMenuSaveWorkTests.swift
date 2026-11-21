@@ -1,6 +1,7 @@
 // The save list the system menu's movie shows, and the file jobs a row starts.
 
 import Foundation
+import OpenSkyEngineTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
 import OpenSkyMenusInterface
@@ -44,6 +45,27 @@ struct SystemMenuSaveWorkTests {
         #expect(work.movieRows.isEmpty)
         work.showScreenshot(index: nil, renderer: nil) { _ in updates += 1 }
         #expect(updates == 3)
+    }
+
+    /// While saving, the New Save row (-1) shows the frame drawn now; while loading, -1 is
+    /// no row and shows the grey fill.
+    @Test func theNewSaveRowShowsTheCurrentFrame() throws {
+        let saves = FakeSaves()
+        saves.saveRows = Self.rows
+        let size = TitleMenuLoadBridge.screenshotWidth * TitleMenuLoadBridge.screenshotHeight
+        let red = Data(Array(repeatElement([0xFF, 0, 0, 0xFF] as [UInt8], count: size).joined()))
+        saves.framePicture = SaveSlotPicture(
+            width: TitleMenuLoadBridge.screenshotWidth,
+            height: TitleMenuLoadBridge.screenshotHeight, rgba: red
+        )
+        let work = Self.work(saves)
+        let renderer = try #require(FakeRendererPort())
+        work.fillSaveList(saving: true) { _ in }
+        work.showScreenshot(index: -1, renderer: renderer) { _ in }
+        #expect(renderer.replacedImagePixels.last == red)
+        work.fillSaveList(saving: false) { _ in }
+        work.showScreenshot(index: -1, renderer: renderer) { _ in }
+        #expect(renderer.replacedImagePixels.last == TitleMenuLoadBridge.screenshotPixels(nil))
     }
 
     @Test func aRowStartsItsFileJob() {
