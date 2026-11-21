@@ -108,7 +108,7 @@ calls the engine, and the engine answers with data, as the game does. Calls meas
 | --- | --- |
 | `SAVE` or `LOAD` with the list and a batch size | Fills the `SaveLoadPanel` list, newest first, then `onSaveLoadBatchComplete`. Saving adds a `[NEW SAVE]` row at the top |
 | `SaveGame`, `LoadGame`, `DeleteSave` with a row | Writes, loads, or deletes that save. When saving, row 0 is a new save |
-| `ShowScreenshot` | Puts the save's `THMB` picture in the movie's image slot, then `ScreenshotReady` |
+| `PrepSaveGameScreenshot` with a row | Puts the save's `THMB` picture in the movie's image slot, then `ScreenshotReady`. While saving, the movie sends the row minus 1, so the New Save row is -1: it shows a picture of the frame drawn now, the picture a new save would get |
 | `RequestInputMappings` with the list | One entry per remappable gameplay event: its text, its key art, the key code, and a sort index |
 | `StartRemapMode` with an event | The engine waits for the next key, rebinds it, and calls `FinishRemapMode(true)`; a reserved key gives `false` |
 | `ResetControlsToDefaults` | Restores the default bindings and fills the list again |
@@ -269,7 +269,3 @@ A clean-room read of `SkyrimSE.exe`, 2026-11-15, found that the engine fills the
 of these two default objects, and that it reads no other file for it. The Creations download
 menu keeps a separate `ContentCatalog.txt`, which this list does not use. The default object
 tags were read from `Update.esm` on the install.
-
-## Not done yet
-
-- `PrepSaveGameScreenshot` is answered without a fresh picture of the current frame.

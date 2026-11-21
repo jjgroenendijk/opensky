@@ -40,6 +40,7 @@ final class FakeSaves: SaveGameService {
     var loaded: [String] = []
     var deleted: [String] = []
     var exports = 0
+    var framePicture: SaveSlotPicture?
 
     func refreshSaveRows() async -> [SaveSlotRow] {
         saveRows
@@ -56,6 +57,10 @@ final class FakeSaves: SaveGameService {
 
     func deleteSave(slot: String) async throws {
         deleted.append(slot)
+    }
+
+    func currentFramePicture() -> SaveSlotPicture? {
+        framePicture
     }
 
     func exportSkyrimSave() async throws -> String {

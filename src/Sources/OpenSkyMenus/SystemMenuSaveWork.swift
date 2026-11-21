@@ -174,13 +174,16 @@ final class SystemMenuSaveWork {
         index.flatMap { movieRows.indices.contains($0) ? movieRows[$0] : nil }
     }
 
+    /// While saving, the movie sends -1 for its New Save row, which shows the frame drawn
+    /// now, as the save will.
     func showScreenshot(
         index: Int?, renderer: (any RendererPort)?, update: SystemMenuMovieUpdate
     ) {
-        let row = movieRow(index)
+        let picture = movieListSaving && index == -1
+            ? saves?.currentFramePicture() : movieRow(index)?.picture
         renderer?.replaceSWFImage(
             TitleMenuLoadBridge.screenshotSlot,
-            rgba: TitleMenuLoadBridge.screenshotPixels(row?.picture),
+            rgba: TitleMenuLoadBridge.screenshotPixels(picture),
             width: TitleMenuLoadBridge.screenshotWidth,
             height: TitleMenuLoadBridge.screenshotHeight
         )

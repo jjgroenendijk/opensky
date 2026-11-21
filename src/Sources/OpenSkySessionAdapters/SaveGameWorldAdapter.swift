@@ -261,6 +261,10 @@ public final class SaveGameWorldAdapter: SaveGameService {
         snapshot.summary(playSeconds: playSecondsBefore + now().timeIntervalSince(sessionStart))
     }
 
+    public func currentFramePicture() -> SaveSlotPicture? {
+        thumbnail().map { SaveSlotPicture(width: $0.width, height: $0.height, rgba: $0.rgba) }
+    }
+
     private func thumbnail() -> SaveThumbnail? {
         snapshot.thumbnail()
     }
