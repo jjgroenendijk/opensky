@@ -321,6 +321,7 @@ final class StoryLocationEvents {
     /// `KILL`. The murder is settled first, so the crime status can say whether
     /// it was reported. The rank is unchanged by the death.
     func reportKill(victim: ReferenceKey, killer: ReferenceKey?) {
+        storyManager.social.noteKill(victim: victim, killer: killer)
         game.crime.reportMurder(of: victim)
         var rank: Int8 = 0
         if

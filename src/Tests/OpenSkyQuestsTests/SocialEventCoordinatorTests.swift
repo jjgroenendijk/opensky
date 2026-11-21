@@ -1,4 +1,4 @@
-// The shell of the social pass: the pass every 30 frames, a `DialogueActivate`
+// The shell of the social pass: the pass every frame, a `DialogueActivate`
 // conversation, and the state a save restores.
 
 import OpenSkyConditions
@@ -59,7 +59,7 @@ struct SocialEventCoordinatorTests {
         saved.conversations = [SocialConversation(
             speaker: first, partner: second, startedAt: 0, phase: .approaching
         )]
-        saved.spectators[third] = SocialSpectator(fighter: first, lastSeenFighting: 0)
+        saved.spectators[third] = SocialSpectator(threats: [], startedAt: 0)
         social.restore(saved)
         #expect(social.approachingSpeakers == [first])
         #expect(social.isWatchingCombat(third))
@@ -102,7 +102,7 @@ struct SocialEventCoordinatorTests {
         #expect(social.state.conversations.isEmpty)
     }
 
-    @Test func thePassRunsEveryThirtyFramesWhileAWorldIsLoaded() {
+    @Test func thePassRunsEveryFrameWhileAWorldIsLoaded() {
         let world = World()
         let social = SocialEventCoordinator(world: world)
         let body = SocialActor(
@@ -112,12 +112,24 @@ struct SocialEventCoordinatorTests {
             actors: [SocialActor(key: first, feet: .zero, interruptFlags: 0x08), body],
             now: 0, isInterior: false, playerInConversation: false, player: .zero
         )
-        for _ in 1 ..< SocialEventCoordinator.frameInterval {
-            #expect(social.tick().isEmpty)
-        }
         #expect(events(social.tick()) == ["DEAD"])
         world.frame = nil
-        social.runPass()
         #expect(social.tick().isEmpty, "no world, no pass")
+    }
+
+    @Test func theStoryManagersAnswerEndsAPairAndAKillIsRemembered() {
+        let social = SocialEventCoordinator(world: World())
+        var saved = SocialState()
+        saved.conversations = [SocialConversation(speaker: first, partner: second, startedAt: 0)]
+        social.restore(saved)
+        var event = StoryEventData(event: "ADIA")
+        event.actor1 = first
+        event.actor2 = second
+        social.storyEventAnswered(StoryEventData(event: "AHEL"), startedQuest: false)
+        #expect(social.state.conversations.count == 1)
+        social.storyEventAnswered(event, startedQuest: false)
+        #expect(social.state.conversations.isEmpty)
+        social.noteKill(victim: third, killer: first)
+        #expect(social.state.bodyKillers[third] == first)
     }
 }

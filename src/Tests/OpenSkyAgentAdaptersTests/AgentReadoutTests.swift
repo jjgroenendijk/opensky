@@ -89,11 +89,15 @@ struct AgentReadoutTests {
         saved.conversations = [SocialConversation(
             speaker: speaker, partner: partner, startedAt: 3, phase: .approaching
         )]
-        saved.spectators[partner] = SocialSpectator(fighter: speaker, lastSeenFighting: 1)
+        saved.spectators[partner] = SocialSpectator(
+            threats: [SocialThreat(attacker: speaker, target: nil, lastSeen: 1)], startedAt: 1
+        )
         saved.bodyChecks[partner] = 4
         saved.socialTimers[speaker] = 9
         saved.recentPartners[speaker] = [partner]
-        saved.lookTargets[speaker] = partner
+        var look = SocialLook(nextCheck: 1, feet: .zero, checkedAt: 0)
+        look.target = partner
+        saved.looks[speaker] = look
         let social = FakeSocialEventPort()
         social.state = saved
         social.sentCounts = ["ADIA": 1]
@@ -111,7 +115,10 @@ struct AgentReadoutTests {
             Issue.record("no watcher")
             return
         }
-        #expect(object(watcher)["lastComment"] == .null)
+        #expect(object(watcher)["threats"] == .array([.string(speaker.description)]))
+        #expect(object(watcher)["backsOff"] == .bool(false))
+        #expect(state["lookTargets"] ==
+            .object([speaker.description: .string(partner.description)]))
     }
 
     @Test func theMenuStateShowsEachScreen() throws {
@@ -257,7 +264,9 @@ struct AgentReadoutTests {
         }
         #expect(rows.count == 1)
     }
+}
 
+extension AgentReadoutTests {
     /// A dead actor lists each ragdoll body with its bone, so a body far from the drawn
     /// actor shows up; a living one shows null.
     @Test func aDeadActorListsItsRagdollBodies() throws {

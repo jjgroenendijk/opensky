@@ -71,6 +71,29 @@ struct StoryWorldTests {
         #expect(host.fakeHeadTracking.setLookTargetCalls.count == 1)
     }
 
+    @Test func theSocialCommandsStandUpFaceAndSheathe() {
+        let social = FakeSocialEventPort()
+        social.tickResult = [
+            .standUp(Self.actor), .face(Self.actor, toward: SIMD3(0, 100, 0)),
+            .sheathe(Self.actor)
+        ]
+        host.fakeStoryManager.social = social
+        host.fakeStreamer.actors.npcTransformResult = ReferenceTransformOverride(position: .zero)
+        adapter.socialActs.tick()
+        #expect(host.fakeFurniture.standCalls == [Self.actor])
+        #expect(host.fakeStreamer.actors.turnActorCalls.map(\.heading) == [0])
+    }
+
+    @Test func aSocialEventsAnswerGoesBackToTheSocialPass() {
+        let social = FakeSocialEventPort()
+        var event = StoryEventData(event: "ADIA")
+        event.actor1 = Self.actor
+        social.tickResult = [.reportStoryEvent(event)]
+        host.fakeStoryManager.social = social
+        adapter.socialActs.tick()
+        #expect(social.storyEventAnsweredCalls.map(\.startedQuest) == [false])
+    }
+
     @Test func aDialogueActivatePackageAsksTheSocialPass() {
         let social = FakeSocialEventPort()
         social.requestConversationResult = true

@@ -203,7 +203,8 @@ extension AIPackageActsAdapter.Speech {
         return game.dialogueMenu.isOpen ? .done : .failed
     }
 
-    /// DialogueActivate: with the player, the actor opens the conversation; with an NPC,
+    /// DialogueActivate: with the player, the actor has walked up and opens the
+    /// conversation; with an NPC,
     /// it sends `ADIA` and waits for a quest to answer, and the social pass walks it to
     /// the partner (docs/engine/random-conversations.md#the-dialogueactivate-procedure).
     func talk(to target: ReferenceKey, from actor: ReferenceKey) -> PackageActionResult {

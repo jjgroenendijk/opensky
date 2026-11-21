@@ -98,17 +98,18 @@ nonisolated extension SocialEventCore {
             switch talk.phase {
             case .waitingForAnswer:
                 guard inScene else {
-                    if frame.now - talk.startedAt >= talk.answerSeconds {
-                        commands += end(talk, settings: settings, state: &state)
-                    } else {
-                        kept.append(talk)
-                    }
+                    let waits = frame.now - talk.startedAt < talk.answerSeconds
+                    commands += waits ? [] : end(talk, settings: settings, state: &state)
+                    kept += waits ? [talk] : []
                     continue
                 }
                 let trigger = triggerDistance(speaker, partner, settings: settings, canSee: canSee)
+                commands.append(.hold(partner.key))
                 if simd_distance(speaker.feet, partner.feet) > trigger {
                     talk.phase = .approaching
-                    commands.append(.hold(partner.key))
+                    if speaker.posture != .standing {
+                        commands.append(.standUp(speaker.key))
+                    }
                     commands += walk(&talk, speaker: speaker, partner: partner)
                 } else {
                     talk.phase = .talking
@@ -142,14 +143,39 @@ nonisolated extension SocialEventCore {
         return commands
     }
 
-    /// `iAISocialDistanceToTriggerEvent`, or 500 units when the speaker sees the partner.
+    /// `iAISocialDistanceToTriggerEvent`, raised to 500 units when the speaker sees the
+    /// partner or both sit or sleep, plus 20 when the speaker sits.
     static func triggerDistance(
         _ speaker: SocialActor, _ partner: SocialActor, settings: SocialSettings,
         canSee: (SocialActor, SocialActor) -> Bool
     ) -> Float {
-        canSee(speaker, partner)
+        let bothRest = speaker.posture != .standing && partner.posture != .standing
+        let base = bothRest || canSee(speaker, partner)
             ? max(settings.triggerDistance, SocialLimits.seenTriggerDistance)
             : settings.triggerDistance
+        return speaker.posture == .sitting ? base + SocialLimits.seatedTriggerAllowance : base
+    }
+
+    /// The story manager's walk for a pair's `ADIA` ended. With no quest the pair ends
+    /// at once and the speaker rolls a new timer; with a quest both roll new timers.
+    /// A package's request keeps its own wait.
+    static func answer(
+        pair: (speaker: ReferenceKey, partner: ReferenceKey), started: Bool,
+        settings: SocialSettings, state: inout SocialState
+    ) {
+        let (speaker, partner) = pair
+        guard
+            let index = state.conversations.firstIndex(where: {
+                $0.speaker == speaker && $0.partner == partner && $0.phase == .waitingForAnswer
+            })
+        else { return }
+        if started {
+            state.socialTimers[speaker] = rollTimer(settings, &state.random)
+            state.socialTimers[partner] = rollTimer(settings, &state.random)
+        } else if !state.conversations[index].isPackageRequest {
+            state.conversations.remove(at: index)
+            state.socialTimers[speaker] = rollTimer(settings, &state.random)
+        }
     }
 
     /// 170 units, and 20 more when the pair's heights differ by more than 20.
@@ -180,7 +206,6 @@ nonisolated extension SocialEventCore {
         switch talk.phase {
         case .waitingForAnswer:
             state.socialTimers[talk.speaker] = rollTimer(settings, &state.random)
-            state.socialTimers[talk.partner] = rollTimer(settings, &state.random)
             return []
         case .approaching:
             return [.stopWalking(talk.speaker), .release(talk.partner)]

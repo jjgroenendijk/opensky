@@ -68,6 +68,14 @@ extension AgentHost {
         fakeControllerRumble
     }
 
+    var dialogue: any DialoguePort {
+        fakeDialogue
+    }
+
+    var faceMorphs: any FaceMorphPort {
+        fakeFaceMorphs
+    }
+
     var dialogueMenu: any DialogueMenuPort {
         fakeDialogueMenu
     }

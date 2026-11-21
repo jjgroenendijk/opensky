@@ -3,6 +3,7 @@
 import Foundation
 import OpenSkyAudio
 import OpenSkyConditions
+import OpenSkyDialogueInterface
 import OpenSkyGameData
 import OpenSkyMenusInterface
 import OpenSkyQuestsInterface
@@ -27,7 +28,13 @@ final class SessionHost: AudioListenerHost, AudioMixHost, AudioWorldHost,
     let fakeCombatWorld = FakeCombatWorldPort()
     let fakeControllerRumble = FakeControllerRumblePort()
     let fakeCrime = FakeCrimePort()
-    let fakeDialogue = FakeDialoguePort()
+    /// The live seams and the social readout read the dialogue mode timers.
+    let fakeDialogue: FakeDialoguePort = {
+        let fake = FakeDialoguePort()
+        fake.dialogueMode = DialogueModeState()
+        return fake
+    }()
+
     let fakeDialogueMenu = FakeDialogueMenuPort()
     let fakeDialogueWorld = FakeDialogueWorldPort()
     let fakeDragonFlight = FakeDragonFlightPort()

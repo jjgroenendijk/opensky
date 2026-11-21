@@ -41,6 +41,8 @@ extension PackageProcedureInputs {
         case .hover: result.setup.destination = result.setup.destination.map { $0 + height }
         // SuspiciousOf is usually PlayerFaction, which names no one reference.
         case .guardArea where result.setup.watched == nil: result.setup.watched = .player
+        // With the player as target the actor walks up before it talks.
+        case .dialogueActivate where targets.first == .player: result.setup.watched = .player
         default: break
         }
         if let seat = result.seat {

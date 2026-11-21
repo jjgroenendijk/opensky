@@ -37,7 +37,7 @@ public typealias AgentWorldHosts =
     AgentEventsHost & AgentFrameReadoutHost & AgentInputHost & AgentItemsHost &
     AgentMenuReadoutHost &
     AgentMotionHost & AgentObjectsHost & AgentPlayerReadoutHost & AgentRenderHost &
-    AgentScreensHost & AgentViewHost & AgentWorldHost
+    AgentScreensHost & AgentSocialHost & AgentViewHost & AgentWorldHost
 
 /// What the parts of `AgentWorldAdapter` share: the hosts, the event tap state, and the
 /// reads every part uses. A value, so a part holds no reference back to its owner.

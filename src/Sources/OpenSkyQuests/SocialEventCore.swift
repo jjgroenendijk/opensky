@@ -21,6 +21,11 @@ nonisolated public struct SocialActor: Equatable, Sendable {
     public let isInScene: Bool
     public let isInCombat: Bool
     public let combatTarget: ReferenceKey?
+    /// The body's heading in radians, 0 along +Y and growing toward +X.
+    public var heading: Float = 0
+    public var posture: SocialPosture = .standing
+    /// It fights with a bow, a crossbow, a staff, or a spell.
+    public var fightsRanged = false
 
     public init(
         key: ReferenceKey, feet: SIMD3<Float>, interruptFlags: UInt16?,
@@ -59,6 +64,10 @@ nonisolated public struct SocialActor: Equatable, Sendable {
     }
 }
 
+nonisolated public enum SocialPosture: Equatable, Sendable {
+    case standing, sitting, sleeping
+}
+
 /// The world facts of one social pass.
 nonisolated public struct SocialFrame: Sendable {
     public var actors: [SocialActor]
@@ -95,55 +104,103 @@ nonisolated public enum SocialEventCore {
         frame.actors.sort { $0.key < $1.key }
         let elapsed = state.lastPass.map { max(0, frame.now - $0) } ?? 0
         state.lastPass = frame.now
-        let moving = movingActors(frame.actors, state: &state)
-        var commands = bodies(frame, settings: settings, state: &state, canSee: canSee)
-        commands += spectators(frame, settings: settings, state: &state, canSee: canSee)
+        let reacts = frame.now >= state.nextReaction
+        if reacts {
+            state.nextReaction = frame.now + SocialLimits.reactionSeconds
+        }
+        var commands: [SocialEventCommand] = []
+        if reacts {
+            commands += bodies(frame, settings: settings, state: &state, canSee: canSee)
+        }
+        commands += finders(frame, state: &state)
+        commands += spectators(
+            frame, timing: WatchTiming(settings: settings, elapsed: elapsed, reacts: reacts),
+            state: &state, canSee: canSee
+        )
         if !frame.playerInConversation {
-            commands += hellos(frame.actors, moving: moving, state: &state)
+            commands += hellos(frame, state: &state, canSee: canSee)
             commands += conversations(frame, settings: settings, elapsed: elapsed, state: &state)
         }
         commands += progress(frame, settings: settings, state: &state, canSee: canSee)
         return commands
     }
 
-    static func movingActors(
-        _ actors: [SocialActor],
-        state: inout SocialState
-    ) -> Set<ReferenceKey> {
-        var moving: Set<ReferenceKey> = []
-        for actor in actors {
-            if
-                let last = state.lastPosition[actor.key],
-                simd_distance(last, actor.feet) >= SocialLimits.movingDistance
-            {
-                moving.insert(actor.key)
-            }
-            state.lastPosition[actor.key] = actor.feet
-        }
-        return moving
-    }
-
-    /// `AHEL`: a walker with flag 0x02 looks at the nearest other free NPC, and a new
-    /// look target sends the event. A walker that stops forgets its target.
+    /// The default look target of each free actor near the player, checked every 1.0 to
+    /// 1.5 s and held 5 s. A walker with flag 0x02 whose new target is an NPC sends `AHEL`.
     static func hellos(
-        _ actors: [SocialActor], moving: Set<ReferenceKey>, state: inout SocialState
+        _ frame: SocialFrame, state: inout SocialState,
+        canSee: (SocialActor, SocialActor) -> Bool
     ) -> [SocialEventCommand] {
+        guard let playerFeet = frame.player else { return [] }
+        let player = SocialActor(key: .player, feet: playerFeet, interruptFlags: nil)
         var commands: [SocialEventCommand] = []
-        for walker in actors where walker.isFree && walker.allowsConversation {
-            guard moving.contains(walker.key), !state.isBusy(walker.key) else {
-                state.lookTargets[walker.key] = nil
+        var checks = 0
+        for looker in frame.actors where looker.isFree {
+            guard
+                checks < SocialLimits.lookChecksPerPass,
+                simd_distance(looker.feet, playerFeet) <= SocialLimits.lookPlayerDistance
+            else { continue }
+            let last = state.looks[looker.key]
+            guard frame.now >= (last?.nextCheck ?? -.infinity) else { continue }
+            checks += 1
+            let span = SocialLimits.lookCheckSeconds
+            let unit = Double(state.random.next() % 1000) / 1000
+            var look = SocialLook(
+                nextCheck: frame.now + span.lowerBound + (span.upperBound - span.lowerBound) * unit,
+                feet: looker.feet, checkedAt: frame.now
+            )
+            look.target = last?.target
+            look.heldUntil = last?.heldUntil ?? -.infinity
+            defer { state.looks[looker.key] = look }
+            guard !state.isBusy(looker.key) else {
+                look.target = nil
                 continue
             }
-            let target = actors.filter { other in
-                other.key != walker.key && other.isFree
-                    && simd_distance(other.feet, walker.feet) <= SocialLimits.lookDistance
-            }.min { simd_distance($0.feet, walker.feet) < simd_distance($1.feet, walker.feet) }
-            guard let target, state.lookTargets[walker.key] != target.key else { continue }
-            state.lookTargets[walker.key] = target.key
-            commands.append(.look(walker.key, at: target.key))
-            commands.append(.reportStoryEvent(event("AHEL", walker.key, target.key)))
+            guard frame.now >= look.heldUntil else { continue }
+            let old = look.target
+            let candidates = [player] + frame.actors
+            let target = candidates.first {
+                isLookTarget($0, of: looker, old: old) && canSee(looker, $0)
+            }
+            look.target = target?.key
+            guard let target else { continue }
+            look.heldUntil = frame.now + SocialLimits.lookHoldSeconds
+            guard target.key != .player else { continue }
+            commands.append(.look(looker.key, at: target.key))
+            let walks = last.map {
+                isMoving(from: $0.feet, at: $0.checkedAt, to: looker.feet, now: frame.now)
+            } ?? false
+            if target.key != old, walks, looker.allowsConversation, !target.isInScene {
+                commands.append(.reportStoryEvent(event("AHEL", looker.key, target.key)))
+            }
         }
         return commands
+    }
+
+    /// The rules of docs/engine/head-tracking.md#the-default-target, without detection.
+    static func isLookTarget(
+        _ target: SocialActor, of looker: SocialActor, old: ReferenceKey?
+    ) -> Bool {
+        guard target.key != looker.key, !target.isDead else { return false }
+        let offset = target.feet - looker.feet
+        let distance = simd_length(offset)
+        guard distance <= SocialLimits.lookDistance else { return false }
+        if target.key != .player, distance < SocialLimits.lookNearDistance {
+            return false
+        }
+        if looker.posture != .standing, target.posture != .standing {
+            return false
+        }
+        guard target.key != old else { return true }
+        let turn = (atan2(offset.x, offset.y) - looker.heading).remainder(dividingBy: 2 * .pi)
+        return abs(turn) <= SocialLimits.lookHalfAngle
+    }
+
+    static func isMoving(
+        from old: SIMD3<Float>, at then: Double, to feet: SIMD3<Float>, now: Double
+    ) -> Bool {
+        let seconds = Float(now - then)
+        return seconds > 0 && simd_distance(old, feet) / seconds >= SocialLimits.movingSpeed
     }
 
     static func rollTimer(_ settings: SocialSettings, _ random: inout SplitMix64) -> Double {

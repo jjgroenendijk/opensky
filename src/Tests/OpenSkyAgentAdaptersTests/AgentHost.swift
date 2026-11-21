@@ -2,6 +2,7 @@
 
 import CoreGraphics
 import OpenSkyAgentAdapters
+import OpenSkyDialogueInterface
 import OpenSkyEngineTesting
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -18,7 +19,8 @@ import OpenSkyWorldState
 final class AgentHost: RendererSlotHost, AgentActorReadoutHost, AgentActorsHost, AgentBehaviourHost,
     AgentCaptureHost, AgentChangesHost, AgentEventsHost, AgentFrameReadoutHost, AgentInputHost,
     AgentItemsHost,
-    AgentMenuReadoutHost, AgentMotionHost, AgentObjectsHost, AgentPlayerReadoutHost,
+    AgentMenuReadoutHost, AgentMotionHost, AgentObjectsHost, AgentSocialHost,
+    AgentPlayerReadoutHost,
     AgentRenderHost, AgentScreensHost, AgentViewHost, AgentWorldHost, BenchmarkTourSettingsHost,
     BenchmarkWorldHost
 {
@@ -37,6 +39,13 @@ final class AgentHost: RendererSlotHost, AgentActorReadoutHost, AgentActorsHost,
     let fakeCombatWorld = FakeCombatWorldPort()
     let fakeContainerMenu = FakeContainerMenuPort()
     let fakeControllerRumble = FakeControllerRumblePort()
+    /// The live seams and the social readout read the dialogue mode timers.
+    let fakeDialogue: FakeDialoguePort = {
+        let fake = FakeDialoguePort()
+        fake.dialogueMode = DialogueModeState()
+        return fake
+    }()
+
     let fakeDialogueMenu = FakeDialogueMenuPort()
     let fakeDialogueWorld = FakeDialogueWorldPort()
     let fakeDragonFlight: FakeDragonFlightPort = {
@@ -50,6 +59,7 @@ final class AgentHost: RendererSlotHost, AgentActorReadoutHost, AgentActorsHost,
     let fakeEffectModelPoser = FakeEffectModelPoserPort()
     let fakeEffects = FakeEffectsPort()
     let fakeEffectsWorld = FakeEffectsWorldPort()
+    let fakeFaceMorphs = FakeFaceMorphPort()
     let fakeFactions = FakeFactionPort()
     let fakeFollowerCommandWorld = FakeFollowerCommandWorldPort()
     let fakeFollowerCommands = FakeFollowerCommandPort()

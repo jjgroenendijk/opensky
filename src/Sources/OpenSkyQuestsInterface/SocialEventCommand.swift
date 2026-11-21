@@ -19,4 +19,10 @@ nonisolated public enum SocialEventCommand: Equatable, Sendable {
     case walk(ReferenceKey, to: SIMD3<Float>)
     /// The actor stops its walk, and its package runs again.
     case stopWalking(ReferenceKey)
+    /// The actor leaves its seat or bed.
+    case standUp(ReferenceKey)
+    /// The actor turns its body to the point. Sent each pass until the reason ends.
+    case face(ReferenceKey, toward: SIMD3<Float>)
+    /// The actor puts its weapon away.
+    case sheathe(ReferenceKey)
 }
