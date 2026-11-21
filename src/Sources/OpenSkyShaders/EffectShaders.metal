@@ -156,15 +156,6 @@ fragment float4 particleFragment(PARTICLE_FRAGMENT_ARGUMENTS)
         in, frame, effect, pointLights, sourceMap, palette, sceneDepth, auxiliary, trilinear);
 }
 
-// The alpha pipelines mix in gamma space with hardware blending off.
-fragment float4 particleGammaFragment(PARTICLE_FRAGMENT_ARGUMENTS, float4 behind [[color(0)]])
-{
-    return gammaBlend(
-        particleColor(
-            in, frame, effect, pointLights, sourceMap, palette, sceneDepth, auxiliary, trilinear),
-        behind);
-}
-
 // Decals (docs/rendering/decals.md): a flat quad on the struck surface, lit by the
 // sun and ambient with the surface normal, drawn after the opaque scene with a depth
 // bias so it wins the depth test against the surface under it.
