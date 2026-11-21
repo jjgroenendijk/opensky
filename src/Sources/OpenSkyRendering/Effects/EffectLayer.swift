@@ -71,6 +71,8 @@ public final class EffectLayer {
     public internal(set) var loadingCover: RenderScene?
     /// The cover's own camera, when it is a scene apart from the world.
     public internal(set) var loadingCoverCamera: LoadingCoverCamera?
+    /// The cover's own image space, which replaces the world's while the cover shows.
+    var loadingCoverImageSpace: ImageSpaceParameters?
     /// Wall time for the cover's particle systems, which run while a menu pauses the world.
     var loadingCoverClock = FrameSimClock()
     /// Membranes the last frame drew, for the readout.

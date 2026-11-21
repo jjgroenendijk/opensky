@@ -25,17 +25,20 @@ public struct LoadingCoverScene {
     public var pointLights: [RenderPointLight]
     public var lighting: RenderLighting?
     public var camera: LoadingCoverCamera?
+    /// Replaces the world's image space, its modifiers and the screen fade while it shows.
+    public var imageSpace: ImageSpaceParameters?
 
     public init(
         placements: [RenderPlacement], particles: [ParticlePlayback] = [],
         pointLights: [RenderPointLight] = [], lighting: RenderLighting? = nil,
-        camera: LoadingCoverCamera? = nil
+        camera: LoadingCoverCamera? = nil, imageSpace: ImageSpaceParameters? = nil
     ) {
         self.placements = placements
         self.particles = particles
         self.pointLights = pointLights
         self.lighting = lighting
         self.camera = camera
+        self.imageSpace = imageSpace
     }
 }
 
@@ -62,6 +65,7 @@ extension Renderer {
             )
         }
         effects.loadingCoverCamera = cover?.camera
+        effects.loadingCoverImageSpace = cover?.imageSpace
         let retiring = effects.loadingCover?.residencyAllocations ?? []
         effects.loadingCover = next
         if let next {
@@ -86,6 +90,14 @@ extension Renderer {
     /// The cover's lights while a cover shows, else the loaded scene's.
     var activePointLights: [RenderPointLight] {
         effects.loadingCover?.pointLights ?? scene.pointLights
+    }
+
+    /// This frame's image space: the cover's own while a cover with one shows, else the
+    /// world's. A loading screen draws over the screen fade, so it leaves the fade out.
+    var activeImageSpace: ImageSpaceParameters {
+        guard effects.loadingCover != nil else { return frameInput.imageSpace.current }
+        return effects.loadingCoverImageSpace
+            ?? frameInput.imageSpace.current(withScreenFade: false)
     }
 
     /// The cover's camera replaces the player's view and field of view.

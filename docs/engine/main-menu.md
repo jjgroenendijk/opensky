@@ -71,6 +71,7 @@ the loading screen's cover layer, so the world is hidden.
 | Logo | At the origin, turned 180 degrees about Z, scale 1; on a screen wider than 16:9 its scale shrinks by (16/9) / aspect |
 | Smoke | At the origin, turned -180 degrees about Z |
 | Light | The loading screen's three point lights; a black ambient light from every side |
+| Image space | The `LSIS` default object, `LoadScreenIS` ([loading screens](/engine/loading-screens.md#image-space)) |
 
 The logo has no inventory marker, so the 180-degree turn is all its rotation. Its bounds
 run from 4 to 43 on X, so after the turn it sits 26 units to the camera's left. In a
@@ -87,8 +88,6 @@ the logo. So only a small part of the smoke shows, mostly at the edges.
 - The cover's particle systems run on wall time, because the menu pauses the world.
 - When the menu closes, the game sends the smoke the `StopEffect` event, so it can fade
   out. OpenSky removes the smoke at once.
-- While the menu is open, the game uses the `LSIS` default object (`LoadScreenIS`) as the
-  image space. OpenSky keeps its own image space.
 
 ## The held world
 

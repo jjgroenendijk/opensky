@@ -155,6 +155,10 @@ At most 16 modifiers run at once. The oldest goes first. This is OpenSky's own l
 A spell hit on another actor starts no modifier, because the modifier describes what the
 player sees.
 
+The main menu and loading screen scenes do not use the world's image space. They draw through the
+`LSIS` default object's image space. OpenSky applies no modifier and no screen fade to them
+([loading screens](/engine/loading-screens.md#image-space)).
+
 ## Low health
 
 Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0 on 2026-11-06 (only the

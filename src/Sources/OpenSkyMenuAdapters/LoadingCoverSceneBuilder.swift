@@ -25,7 +25,8 @@ struct LoadingCoverSceneBuilder {
             camera: LoadingCoverCamera(
                 view: LoadingScreenScene.camera(pathNode: cameraPathNode(frame)),
                 horizontalFieldOfView: LoadingScreenScene.horizontalFieldOfView(frame.fieldOfView)
-            )
+            ),
+            imageSpace: game.menuRecords?.loadScreenImageSpace
         )
         guard let meshes = meshLibrary(renderer: renderer) else { return scene }
         let mist = mist(meshes: meshes)

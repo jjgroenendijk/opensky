@@ -54,13 +54,16 @@ final class MenuTitleBackdrop {
 
     /// A logo that fails to load still hides the world behind a dark screen.
     private func backdrop(renderer: any RendererPort) -> LoadingCoverScene {
+        var scene: LoadingCoverScene
         do {
-            return try backdropScene(renderer: renderer)
+            scene = try backdropScene(renderer: renderer)
         } catch {
             MenusLog.logger
                 .error("[ERROR] title logo: \(String(describing: error), privacy: .public)")
-            return Self.emptyScene
+            scene = Self.emptyScene
         }
+        scene.imageSpace = game.menuRecords?.loadScreenImageSpace
+        return scene
     }
 
     private func place(_ backdrop: LoadingCoverScene?, renderer: any RendererPort) {
