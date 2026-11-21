@@ -1,5 +1,5 @@
 // Reference-state condition functions, indices from xEdit wbDefinitionsTES5.pas: 5
-// GetLocked, 157 GetOpenState, 624 GetInContainer, 718 IsUnlockedDoor, 726
+// GetLocked, 65 GetLockLevel, 157 GetOpenState, 624 GetInContainer, 718 IsUnlockedDoor, 726
 // DoesNotExist. See docs/engine/condition-functions-world.md#reference-state.
 
 import Foundation
@@ -71,6 +71,16 @@ nonisolated public enum ConditionFunctionsReferenceState {
     public static func installReferenceState(_ registry: inout ConditionFunctionRegistry) {
         registry.register(ConditionFunction(index: 5, name: "GetLocked") { call in
             referenceFacts(call) { ConditionFunctions.isTrue($0.lock?.isLocked == true) }
+        })
+        // The lock a perk question binds wins; any other reference answers from its own
+        // state, and 0 with no lock, as the Papyrus native does.
+        registry.register(ConditionFunction(index: 65, name: "GetLockLevel") { call in
+            call.referenceKey().flatMap { key in
+                if let bound = call.context.locks.level(of: key) {
+                    return .success(Float(bound))
+                }
+                return referenceFacts(call) { Float($0.lock?.level ?? 0) }
+            }
         })
         registry.register(ConditionFunction(index: 157, name: "GetOpenState") { call in
             referenceFacts(call) { $0.openState }

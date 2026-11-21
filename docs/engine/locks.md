@@ -156,8 +156,9 @@ A seen success, or a seen broken pick, on a lock the player may not open is a
 [crime](/engine/crime.md). A reported broken pick closes the menu. A success counts "Locks Picked".
 
 The perk runtime binds the lock as the locked reference, and the condition function
-`GetLockLevel` (65) answers with its level. "Locksmith starts near the sweet spot" is OpenSky's
-reading of the entry point name.
+`GetLockLevel` (65) answers with its level. On any other reference, the function answers from
+the reference's own lock: its stored level, 255 for a lock that needs a key, and 0 with no lock.
+"Locksmith starts near the sweet spot" is OpenSky's reading of the entry point name.
 
 ## Skill use
 
