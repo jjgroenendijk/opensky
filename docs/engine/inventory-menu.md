@@ -134,9 +134,38 @@ each tab, All and Favorites included, from these bits; the engine has no list fo
 | Keys | 256 |
 | Anything else: gold, soul gems, lockpicks, torches, misc items | 512 |
 
-One keyword moves a potion that is not food to 512. In the container, barter, and gift menus the
-other side's items get the whole value shifted left by 10 bits, so a bit at 1024 or above marks a
-row of the other side when the list is split in two.
+A potion that is not food goes to 512 when it has the keyword in the default object `FORG`, which
+`Skyrim.esm` fills with `CraftingSmithingForge`. A row also gets bit 1 when one of its stacks is a
+favourite. In the container, barter, and gift menus the other side's rows get the whole value
+shifted left by 10 bits, so a bit at 1024 or above marks a row of the other side.
+
+The engine sends the tabs as `text`, `flag`, and `bDontHide` triples after one null value. The text
+comes from the localized strings. Only an
+all tab and the divider have `bDontHide` true.
+
+| Tab, English text | `flag`, player side | `flag`, other side |
+| --- | --- | --- |
+| FAVORITES | 1 | - |
+| ALL | 0x3FF | 0xFFC00 |
+| WEAPONS | 2 | 0x800 |
+| APPAREL | 4 | 0x1000 |
+| POTIONS | 8 | 0x2000 |
+| SCROLLS | 16 | 0x4000 |
+| FOOD | 32 | 0x8000 |
+| INGREDIENTS | 64 | 0x10000 |
+| BOOKS | 128 | 0x20000 |
+| KEYS | 256 | 0x40000 |
+| MISC | 512 | 0x80000 |
+
+Each menu sends its own list:
+
+- Inventory: Favorites, then the player block, whose all tab reads ALL.
+- Barter: the merchant's block with the merchant's name on its all tab, a divider (`""`, 0, true),
+  then the player's block under the player's name.
+- Container: when a follower's items are exchanged, the container's whole block under its name;
+  otherwise one tab with the container's name and flag 0xFFC00. Then the divider and the player's
+  block under the player's name.
+- Gift: one block, the player's when the items come from the player, else the other side's.
 
 The game has no warning for an item with a low value for its weight. The inventory, barter, and
 container movies have only the plain value and weight fields.

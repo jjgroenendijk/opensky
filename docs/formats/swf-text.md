@@ -134,7 +134,8 @@ The game looks for a font in this order:
 
 The operating system's fonts are never used. A text field with no font named asks for
 `Times New Roman`, size 12, black, by the same order, so it shows only through a `map` line or a
-font library. The game's own debug text uses `$ConsoleFont`.
+font library. When nothing matches, the game logs the missing font once per field. The text is
+laid out but draws no glyphs. The game's own debug text uses `$ConsoleFont`.
 
 ## HTML text
 
