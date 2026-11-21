@@ -69,8 +69,8 @@ grade and the measurement still run. An image space with no white point skips th
 The game stores gamma-space colour, so the hardware mixes a translucent surface with the
 colour behind it as stored values. OpenSky's target holds linear colour, and a hardware blend
 there would mix linear light. For a dim card with low alpha that gives a much brighter pixel.
-So each alpha-blended pipeline (alpha particles, ribbons, and blended meshes) turns hardware
-blending off. Its fragment function reads the colour behind it from tile memory and writes:
+So each blended mesh pipeline turns hardware blending off. Its fragment function reads the
+colour behind it from tile memory and writes:
 
 ```text
 result = linear( mix( gamma(behind), gamma(source), alpha ) )
@@ -81,6 +81,12 @@ Example: a grey card of stored value 0.6 at alpha 0.05 over black. Mixed in gamm
 pixel is 0.03, about 8 out of 255. Mixed in linear light and then encoded, it is about 0.13,
 about 33 out of 255. Additive and multiply blends keep the hardware blend: they are not
 mixes, and the sum or product is what the game draws.
+
+Particles and ribbons keep the hardware blend in linear light. The main menu smoke stacks many
+cards of very low alpha. Each card moves the stored value by less than one step of the 8-bit
+target, so a gamma-space mix rounds every step away, and the smoke vanished: the region below
+the logo read 0 out of 255, where the reference game reads 18. The linear blend reads 14. The
+game renders into a float target, where these steps add up.
 
 ## Combining modifiers
 

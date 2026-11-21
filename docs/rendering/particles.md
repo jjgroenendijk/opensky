@@ -110,7 +110,7 @@ in the fog color, because the sum already shows the fogged scene behind it.
 | `DEST_COLOR`, `ZERO` (4 and 1) | Multiply | Modulation effects |
 | Anything else, or none | Alpha | Smoke, steam, water |
 
-The alpha pipeline mixes in gamma space, as the game does
+The alpha pipeline blends in linear light, unlike blended meshes
 ([blending](/rendering/image-space.md#blending)).
 
 Placed and effect systems draw far to near, by the distance from the camera to the emitter
