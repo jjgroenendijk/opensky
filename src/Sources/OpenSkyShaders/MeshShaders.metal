@@ -313,9 +313,8 @@ static float3 litSurface(
     return toLinear(toGamma(input.albedo) * illumination + specular);
 }
 
-// The additive pipelines add the colour as it is, so the shader applies the source
-// factor. Opaque: alpha only gates the test. The frame is premultiplied, so a lower
-// alpha would show as white or black. The blended pass blends it.
+// Additive pipelines add the colour as it is, so the shader applies the source factor.
+// Opaque: alpha only gates the test, as the premultiplied frame shows a lower one as white.
 static inline float4 blendOutput(
     float3 colour,
     float alpha,
@@ -330,8 +329,7 @@ static inline float4 blendOutput(
     return float4(applyFog(colour, worldPosition, frame), alphaBlendEnabled ? alpha : 1.0);
 }
 
-// Drops a screen-door pixel once its quad has finished every texture read. A blended
-// pipeline has hardware blending off, so every return mixes with the colour behind here.
+// Drops a screen-door pixel after its quad's texture reads; mixes a blended pixel.
 static inline float4 shownPixel(float4 colour, bool hidden, float4 behind, uint additiveBlend)
 {
     if (hidden) {
