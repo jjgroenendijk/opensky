@@ -145,8 +145,9 @@ for the same reason.
   glow, gradient bevel, convolution, and colour matrix filters are not drawn, and neither are inner
   and knockout shadows. Blend modes other than add draw as normal. ActionScript `filters` and
   `blendMode` are not read.
-- Glyph quads follow a transform's position and scale, but not rotation or skew. Vanilla UI text is
-  not rotated.
+- A glyph is rasterized upright at the text's even scale, then its quad turns, slants, and
+  stretches with the transform. A strongly stretched or slanted glyph is sampled from that upright
+  picture, so it looks softer than a glyph drawn at its own shape.
 
 ## Checking it
 
