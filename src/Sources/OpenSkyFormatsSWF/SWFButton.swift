@@ -112,7 +112,7 @@ nonisolated public struct SWFButton: Equatable, Sendable {
         let matrix = try SWFShapeParser.parseMatrix(&bits)
         let colorTransform = try SWFColorTransform.parse(&bits, hasAlpha: true)
         if flags & 0x10 != 0 {
-            _ = try SWFDisplayListParser.skipFilterList(&bits)
+            _ = try SWFFilter.parseList(&bits)
         }
         if flags & 0x20 != 0 {
             _ = try bits.readAlignedUInt8()

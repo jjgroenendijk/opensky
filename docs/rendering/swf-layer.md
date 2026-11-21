@@ -71,6 +71,30 @@ turned back to straight alpha), linear, radial, or focal radial gradient with th
 spread mode, or glyph coverage. It does this in straight alpha, applies the color transform, then
 premultiplies for the blend.
 
+## Filters and blend modes
+
+A `PlaceObject3` filter list and blend mode apply to every draw of the object's subtree. The layer
+has no offscreen pass, so it draws each effect as extra copies of those draws:
+
+- A drop shadow or glow draws copies under the object. Each copy has the colour transform's red,
+  green, and blue multipliers set to zero and the filter colour added, so it is a flat silhouette.
+  Its alpha is the object's alpha times the filter alpha times the strength, at most 1.
+- A drop shadow moves its copies by the distance, along the angle: an angle of 45 degrees points
+  down and to the right. The distance is in stage pixels, 20 twips each.
+- A blur of 1.5 pixels or more spreads 8 copies on an ellipse whose radii are half the blur on each
+  axis. Each copy is faded so that the 8 together reach 0.99 alpha where they all overlap. A blur
+  filter does this to the object itself; a shadow or glow does it to its silhouette.
+- A shadow with `CompositeSource` clear draws only the shadow, not the object.
+- An inner shadow and a knockout shadow are not drawn. The object still draws.
+- Blend mode 8, add, draws with a pipeline that adds the premultiplied colour to the target
+  instead of blending over it. Every other blend mode draws as normal.
+
+Masks inside the subtree stay where they are: a moved copy is cut by the same mask as the object.
+
+Vanilla frame 1 places 234 drop shadows and 4 blurs, and no other filter. Every shadow is an outer
+one that draws its object, with a blur of at most 2 pixels and a distance of at most 3. It sets
+blend mode 2, layer, 19 times, and 8, add, 6 times (`openskycli swf sweep`).
+
 ## A running movie
 
 The layer draws frame 1 until something runs the movie's ActionScript. The
@@ -117,7 +141,10 @@ for the same reason.
 
 ## Known visual gaps
 
-- `PlaceObject3` filters and blend modes are ignored.
+- Filters are drawn as copies, not as a real blur, so a wide blur shows steps. Bevel, gradient
+  glow, gradient bevel, convolution, and colour matrix filters are not drawn, and neither are inner
+  and knockout shadows. Blend modes other than add draw as normal. ActionScript `filters` and
+  `blendMode` are not read.
 - Glyph quads follow a transform's position and scale, but not rotation or skew. Vanilla UI text is
   not rotated.
 

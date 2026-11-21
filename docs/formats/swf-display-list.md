@@ -43,6 +43,26 @@ PlaceObject3 adds a second flag byte, MSB to LSB: reserved, `OpaqueBackground`,
 GradientBevel (size depends on `NumColors`) and Convolution (size depends on the matrix
 size) (spec pp. 42-47).
 
+## Filters
+
+`SurfaceFilterList` starts with `NumberOfFilters` UI8. Each filter is a `FilterID` UI8 and a body
+(spec pp. 42-47). FIXED is a signed 16.16 number, and FIXED8 a signed 8.8 number.
+
+| FilterID | filter | body |
+| --- | --- | --- |
+| 0 | drop shadow | RGBA, `BlurX` FIXED, `BlurY` FIXED, `Angle` FIXED, `Distance` FIXED, `Strength` FIXED8, flags |
+| 1 | blur | `BlurX` FIXED, `BlurY` FIXED, `Passes` UB[5], 3 reserved bits |
+| 2 | glow | RGBA, `BlurX` FIXED, `BlurY` FIXED, `Strength` FIXED8, flags |
+| 3 | bevel | 27 bytes |
+| 4, 7 | gradient glow, gradient bevel | `NumColors` UI8, then 5 bytes a colour and 19 more |
+| 5 | convolution | `MatrixX` UI8, `MatrixY` UI8, then FLOATs and a flag byte |
+| 6 | colour matrix | 20 FLOATs |
+
+The flags byte of a drop shadow, MSB to LSB: `InnerShadow`, `Knockout`, `CompositeSource`, then
+`Passes` UB[5]. A glow has `InnerGlow`, `Knockout`, `CompositeSource`, and `Passes` the same way.
+`Angle` is in radians and the blur and distance in pixels. The
+[SWF render layer](/rendering/swf-layer.md#filters-and-blend-modes) draws them.
+
 ## Place rules
 
 From spec p. 34:

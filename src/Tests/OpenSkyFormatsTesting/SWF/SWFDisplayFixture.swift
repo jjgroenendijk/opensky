@@ -89,6 +89,8 @@ public enum SWFDisplayFixture: Sendable {
         public var blendMode: UInt8?
         /// Encoded as blur filters (FilterID 1, 9-byte bodies).
         public var blurFilterCount = 0
+        /// Whole filter entries, each a FilterID and its body, written before the blurs.
+        public var filters: [[UInt8]] = []
 
         public init(
             place: Place2 = Place2(),
@@ -162,7 +164,8 @@ public enum SWFDisplayFixture: Sendable {
         var writer = SWFBitWriter()
         writer.appendByte(place2Flags(place3.place))
         var flags2: UInt8 = 0
-        if place3.blurFilterCount > 0 {
+        let filterCount = place3.blurFilterCount + place3.filters.count
+        if filterCount > 0 {
             flags2 |= 0x01
         }
         if place3.blendMode != nil {
@@ -177,8 +180,11 @@ public enum SWFDisplayFixture: Sendable {
             writeString(&writer, className)
         }
         writeCommonFields(&writer, place3.place)
-        if place3.blurFilterCount > 0 {
-            writer.appendByte(UInt8(place3.blurFilterCount))
+        if filterCount > 0 {
+            writer.appendByte(UInt8(filterCount))
+            for filter in place3.filters {
+                writer.appendBytes(filter)
+            }
             for _ in 0 ..< place3.blurFilterCount {
                 writer.appendByte(1) // FilterID Blur
                 writer.appendBytes([UInt8](repeating: 0, count: 9))

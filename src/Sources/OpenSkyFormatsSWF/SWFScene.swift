@@ -16,8 +16,8 @@ nonisolated public struct SWFSceneItem: Equatable, Sendable {
     }
 
     public let content: Content
-    public let transform: SWFTransform
-    public let colorTransform: SWFColorTransform
+    public var transform: SWFTransform
+    public var colorTransform: SWFColorTransform
     /// Runtime text for an `editText` item, overriding the character's
     /// `InitialText`. nil means "draw the character as authored", which is what
     /// the static path always produces. Declared last so the memberwise
@@ -35,6 +35,8 @@ nonisolated public struct SWFSceneItem: Equatable, Sendable {
     public var textImages: [SWFInlineImage] = []
     /// The `<font>` and `<p>` styles of the `textOverride`.
     public var textStyles = SWFTextStyles.none
+    /// Blend mode add: the draw adds its colour to what lies under it.
+    public var isAdditive = false
 }
 
 /// Ordered render commands for one frame. Masks carry the geometry items the
@@ -117,6 +119,7 @@ nonisolated private struct SceneBuilder {
                 commands.append(.beginClip(masks: masks))
                 active.append((placement.clipDepth ?? placement.depth, masks))
             } else {
+                let start = commands.count
                 emit(
                     placement: placement,
                     state: SWFWalkState(
@@ -124,6 +127,7 @@ nonisolated private struct SceneBuilder {
                         clipCount: parent.clipCount + active.count, spriteDepth: parent.spriteDepth
                     )
                 )
+                commands.apply(placement.effects, from: start)
             }
         }
         for entry in active.reversed() {

@@ -4,6 +4,7 @@
 // Reference: Adobe SWF File Format Specification v19, chapters 3, 5 and 13.
 
 import Foundation
+import simd
 
 /// One entry of the character dictionary, keyed by character id.
 nonisolated public enum SWFCharacter: Sendable {
@@ -42,6 +43,7 @@ nonisolated public struct SWFPlacedObject: Equatable, Sendable {
     var ratio: UInt16?
     var name: String?
     var clipDepth: UInt16?
+    var effects = SWFSceneEffects()
 }
 
 /// Feature counters accumulated while decoding a movie's display list —
@@ -63,6 +65,10 @@ nonisolated public struct SWFMovieTally: Equatable, Sendable {
     public var filtersByID: [UInt8: Int] = [:]
     /// Placements per BlendMode value (spec PlaceObject3, p. 40).
     public var blendModesByValue: [UInt8: Int] = [:]
+    /// Drop shadows and glows per flag: `inner`, `knockout`, `hides object`.
+    public var shadowFlags: [String: Int] = [:]
+    /// The largest shadow or glow blur and distance, in pixels.
+    public var shadowLargest = SIMD2<Float>.zero
     public var clipActions = 0
     /// Placements naming a character id absent from the dictionary, or a
     /// modify targeting an empty depth — skipped, never fatal.
@@ -105,6 +111,8 @@ nonisolated public struct SWFMovieTally: Equatable, Sendable {
         blendModes += other.blendModes
         filtersByID.merge(other.filtersByID, uniquingKeysWith: +)
         blendModesByValue.merge(other.blendModesByValue, uniquingKeysWith: +)
+        shadowFlags.merge(other.shadowFlags, uniquingKeysWith: +)
+        shadowLargest = simd_max(shadowLargest, other.shadowLargest)
         clipActions += other.clipActions
         danglingPlacements += other.danglingPlacements
         actionBlocks += other.actionBlocks
@@ -136,6 +144,7 @@ nonisolated public struct SWFDisplayListBuilder: Sendable {
         for id in placement.filterIDs {
             tally.filtersByID[id, default: 0] += 1
         }
+        tally.count(shadows: placement.filters ?? [])
         if let mode = placement.blendMode {
             tally.blendModes += 1
             tally.blendModesByValue[mode, default: 0] += 1
@@ -168,6 +177,7 @@ nonisolated public struct SWFDisplayListBuilder: Sendable {
         if let clipDepth = placement.clipDepth {
             object.clipDepth = clipDepth
         }
+        object.effects.update(from: placement)
         byDepth[placement.depth] = object
     }
 

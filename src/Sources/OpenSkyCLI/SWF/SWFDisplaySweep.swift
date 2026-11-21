@@ -138,6 +138,12 @@ struct SWFDisplayTally {
         }
         print("[INFO] swf sweep display filters by FilterID: \(kinds(tags.filtersByID))")
         print("[INFO] swf sweep display blend modes by value: \(kinds(tags.blendModesByValue))")
+        let flags = tags.shadowFlags.sorted { $0.key < $1.key }.map { "\($0.key): \($0.value)" }
+        print("[INFO] swf sweep display shadow flags: \(flags.joined(separator: ", "))")
+        print(
+            "[INFO] swf sweep display shadow largest: blur \(tags.shadowLargest.x) px, "
+                + "distance \(tags.shadowLargest.y) px"
+        )
         print(
             "[INFO] swf sweep display text: \(editTextGlyphs) glyphs laid out, "
                 + "\(missingGlyphs) missing glyphs, "
