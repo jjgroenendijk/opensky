@@ -221,6 +221,23 @@ the game does not play it.
   its fade-out at frame 21, so the text fades in over about 0.63 seconds and out over about
   0.33 seconds.
 
+### Image space
+
+The scene draws through the image space that the `LSIS` default object names, in place of the
+world's image space. OpenSky also leaves out the world's image space modifiers and the screen
+fade while the scene shows. In
+`Skyrim.esm` that is `LoadScreenIS` (`0FF9DB`):
+
+| Term | Value |
+| --- | --- |
+| Saturation, brightness, contrast | 0.75, 0.9, 1.0 |
+| Tint amount | 0 |
+| Bloom scale, threshold, blur radius | 3.0, 0.7, 7 |
+| Eye adaptation strength | 0 |
+
+So the scene shows slightly greyed and dimmed colours, with a strong bloom on bright parts.
+When no plugin names an image space that decodes, the scene keeps the world's image space.
+
 ## The loading movie
 
 The tip and the level meter come from the game's own movie, `interface\loadingmenu.swf`, so

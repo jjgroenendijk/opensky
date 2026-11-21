@@ -335,3 +335,4 @@ the detail and the sources it did find.
 | Spell card effect lines | Each shown effect's description, joined with one space | [magic](/engine/magic.md#magic-menu) |
 | Spell card numbers | A whole number shows no decimals; any other shows up to two | [magic](/engine/magic.md#magic-menu) |
 | Spell card `castTime` | 1 for a spell that is not concentration; the movie only tests for 0 | [magic](/engine/magic.md#magic-menu) |
+| Loading screen image space | A loading screen draws through `LSIS`, as the main menu does; the name says so, but only the main menu was read. The world's modifiers and screen fade are left out | [loading screens](/engine/loading-screens.md#image-space) |

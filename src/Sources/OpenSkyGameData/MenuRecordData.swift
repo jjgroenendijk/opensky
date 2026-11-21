@@ -58,6 +58,8 @@ nonisolated public struct MenuRecordData: Sendable {
     public static let helpManualTag = "HMPC"
     /// The Creations list without the Anniversary Edition upgrade; `HMAE` names the longer one.
     public static let installedContentTag = "HMCC"
+    /// The image space the main menu and loading screen scenes draw through.
+    public static let loadScreenImageSpaceTag = "LSIS"
 
     /// A string setting the fast-travel, race, or alchemy menus or the HUD show.
     public static func isMenuText(_ editorID: String) -> Bool {
@@ -87,10 +89,11 @@ nonisolated public struct MenuRecordData: Sendable {
         let worldspaceIDs: [String: ResolvedFormID]
     }
 
-    /// The System page's lists and the title light, decoded on first use.
+    /// The System page's lists and the loading screen image space, decoded on first use.
     private struct Content: Sendable {
         let installedContent: ResolvedFormID?
         let helpManual: ResolvedFormID?
+        let loadScreenImageSpace: ImageSpace?
     }
 
     private let races: FirstUseValue<Races>
@@ -143,6 +146,11 @@ nonisolated public struct MenuRecordData: Sendable {
         content.value.helpManual
     }
 
+    /// The `LSIS` default object's `IMGS`, or nil when no plugin names one that decodes.
+    public var loadScreenImageSpace: ImageSpace? {
+        content.value.loadScreenImageSpace
+    }
+
     /// The highest type each race and sex's chargen TRI holds, by `NAMA` index. Empty
     /// until `readChargenTypes(with:)` names how to read them.
     public var chargenTypes: [ChargenTypeKey: [Int: Int]] {
@@ -176,7 +184,10 @@ nonisolated public struct MenuRecordData: Sendable {
             let defaultObjects = DefaultObjectStore(plugins: loadOrder.files)
             return Content(
                 installedContent: defaultObjects.object(tag: Self.installedContentTag),
-                helpManual: defaultObjects.object(tag: Self.helpManualTag)
+                helpManual: defaultObjects.object(tag: Self.helpManualTag),
+                loadScreenImageSpace: Self.imageSpace(
+                    defaultObjects.object(tag: Self.loadScreenImageSpaceTag), loadOrder
+                )
             )
         }
         mapSettings = MenuMapSettings(store: settings)
@@ -275,5 +286,15 @@ nonisolated extension MenuRecordData {
         guard let world = worldspaces[editorID] else { return nil }
         let byID = Dictionary(worldspaces.values.map { ($0.formID.rawValue, $0) }) { _, new in new }
         return world.source(of: .useMapData, in: byID)
+    }
+}
+
+nonisolated extension MenuRecordData {
+    static func imageSpace(_ id: ResolvedFormID?, _ loadOrder: LoadOrderPlugins) -> ImageSpace? {
+        guard
+            let id, let formID = loadOrder.space.localFormID(of: id),
+            let found = loadOrder.record(withFormID: formID), found.record.type == "IMGS"
+        else { return nil }
+        return attempt { try found.decode { try ImageSpace(record: $0) } }
     }
 }

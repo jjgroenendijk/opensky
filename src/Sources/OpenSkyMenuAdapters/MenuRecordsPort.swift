@@ -4,6 +4,7 @@
 public import OpenSkyCells
 public import OpenSkyGameData
 public import OpenSkyPlayer
+public import OpenSkyRenderCore
 
 /// The loaded records and tuning a menu adapter reads.
 nonisolated public protocol MenuRecordsPort: WorldRecordsPort {
@@ -14,3 +15,10 @@ nonisolated public protocol MenuRecordsPort: WorldRecordsPort {
 }
 
 extension WorldDataStores: MenuRecordsPort {}
+
+nonisolated extension MenuRecordsPort {
+    /// The image space the main menu and loading screen scenes draw through.
+    public var loadScreenImageSpace: ImageSpaceParameters? {
+        menuRecords?.loadScreenImageSpace.map(ImageSpaceParameters.init)
+    }
+}

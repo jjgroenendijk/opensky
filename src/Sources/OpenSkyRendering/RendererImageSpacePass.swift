@@ -210,8 +210,7 @@ struct ImageSpaceGrade {
 extension Renderer {
     /// The grade this frame draws, or nil when the pass is off or would change nothing.
     func imageSpaceGrade(descriptor: MTL4RenderPassDescriptor, slot: Int) -> ImageSpaceGrade? {
-        let parameters = frameInput.imageSpace
-            .current(withScreenFade: effects.loadingCover == nil).clampedForDisplay
+        let parameters = activeImageSpace.clampedForDisplay
         let toneMaps = frameInput.imageSpace.passEnabled && frameInput.imageSpace.toneMapping
             .enabled
             && ToneMappingState.isActive(parameters.hdr)
