@@ -45,9 +45,9 @@ list of nearby actors with full AI wins. There is no nearest-first order. A vali
 A non-player actor that walks along a path and picks a new NPC as its default target may greet
 it in passing ([random conversations](/engine/random-conversations.md#hellos-in-passing-ahel)).
 
-In OpenSky the default target is only the player, within 384 units and for
-`fAIHoldDefaultHeadTrackTimer` seconds after the player leaves that distance. Walkers look at
-NPCs by the rule for hellos in passing
+In OpenSky the head tracking of an actor takes only the player as default target, within 384
+units and for `fAIHoldDefaultHeadTrackTimer` seconds after the player leaves that distance. The
+social pass adds the rules above for NPC targets
 ([random conversations](/engine/random-conversations.md#where-opensky-differs)).
 
 ## How the head turns

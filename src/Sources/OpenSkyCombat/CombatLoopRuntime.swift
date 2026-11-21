@@ -199,6 +199,12 @@ public final class CombatLoopRuntime: CombatControlling {
         return key == .player ? state.target : targets[key] ?? .player
     }
 
+    /// Whether `key` fights from range: with a bow, a crossbow, a staff, or a spell.
+    public func fightsRanged(_ key: ReferenceKey) -> Bool {
+        guard let type = world?.combatWeapon(of: key).handType else { return false }
+        return type.isRanged || type == .staff || type == .spell
+    }
+
     /// Whether `key` engages without having to perceive its target: a script
     /// called `StartCombat`, the player hit it and it has not detected the player yet,
     /// or it is an ally sent at its commander's foe.

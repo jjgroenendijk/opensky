@@ -293,18 +293,23 @@ no hello look targets, which the next pass finds again.
 
 ## Where OpenSky differs
 
-- The social pass runs every 30 frames, not every frame. Times are counted in real seconds.
-- A pair waits 2 s for a quest to answer its `ADIA` with a scene, instead of the end of the
-  event's walk. A `DialogueActivate` package waits the game's 20 s.
-- A hello in passing needs a walker that moved 8 units since the last pass. Its look target is
-  the nearest free NPC within 384 units, with no angle, detection, or hold rule, and the
-  player does not take precedence. A new target sends `AHEL` and turns the head for 10 s.
-- The partner's wait package, the watcher's Spectator package, and ReactToDead are not
-  packages: the actor's own package is held, and its head turns to the other actor. The finder
-  of a body says its `NoticeCorpse` line where it stands; it does not walk to the body.
-- A watcher keeps no threat list and does not back off from the fight. It stops at 1000 units
-  from the fighter, and rolls its comment chance once per pass.
-- The speaker's sitting and sleeping are not read: the extra 20 units for a seated speaker and
-  the stand-up step of `DialogueActivate` are not built.
-- With the player as its target, `DialogueActivate` opens the conversation where the actor
-  stands.
+OpenSky runs the social pass every frame and counts times in real seconds. It follows the rules
+above, with these differences:
+
+- The story manager answers an `ADIA` in the frame of the event, so a pair with no quest ends
+  in that frame. A pair whose quest started waits 2 s for the quest's scene to take the speaker,
+  then ends. The game has no such timer.
+- New watchers and new finders are searched once a second, not on each actor's own detection
+  pass. Detection is a clear sight line.
+- The default look target follows the game's rules for a free NPC within 2000 units of the
+  player. The 12000 unit distance of a large creature is not built. The look lasts 10 s and is
+  renewed at each pick. A walker is an actor that moved at 5 units a second or more since its
+  last check.
+- The partner's wait package, the watcher's Spectator package, and ReactToDead are not package
+  records. The social pass holds the actor's own package and moves the actor itself. An actor
+  base's spectator and dead-body override packages are not read.
+- A finder that cannot reach its body gives up after 30 s. It still says its line within 400
+  units. The package ends when the line starts, not when it ends.
+- A watcher's comment is rolled without a check that the watcher is talking.
+- `DialogueActivate` with the player as target walks to within 150 units of the player, the
+  distance of a forced greeting.

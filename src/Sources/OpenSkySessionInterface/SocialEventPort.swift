@@ -1,3 +1,4 @@
+public import OpenSkyConditions
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyQuestsInterface
@@ -11,6 +12,9 @@ public protocol SocialEventPort: AnyObject {
     @discardableResult func requestConversation(
         speaker: ReferenceKey, partner: ReferenceKey, now: Double
     ) -> Bool
+    func meetForScene(speaker: ReferenceKey, partner: ReferenceKey, now: Double) -> Bool
+    func storyEventAnswered(_ event: StoryEventData, startedQuest: Bool)
+    func noteKill(victim: ReferenceKey, killer: ReferenceKey?)
     func reset()
     func restore(_ saved: SocialState)
     func tick() -> [SocialEventCommand]

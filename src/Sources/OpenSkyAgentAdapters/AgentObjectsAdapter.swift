@@ -31,10 +31,8 @@ import simd
 @MainActor
 public protocol AgentObjectsHost: AnyObject, SendableMetatype {
     var clothReadout: ClothReadout { get }
-    var dialogue: any DialoguePort { get }
     var effectGraphs: any EffectGraphPort { get }
     var effectModelPoser: any EffectModelPoserPort { get }
-    var faceMorphs: any FaceMorphPort { get }
     var factions: any FactionPort { get }
     var followerCommandWorld: any FollowerCommandWorldPort { get }
     var followerCommands: any FollowerCommandPort { get }
@@ -124,69 +122,6 @@ extension AgentObjectsAdapter {
             ]
         }
         return ["fired": .object(fired), "recent": .array(recent), "rejected": .array(rejected)]
-    }
-
-    /// The answer to `openskycli game state social`: each conversation and its phase,
-    /// the fight watchers, the checked bodies, the social timers, and the events sent.
-    public func socialState() -> AgentJSON {
-        let social = game.storyManager.social
-        let state = social.state
-        func key(_ key: ReferenceKey?) -> AgentJSON {
-            key.map { .string($0.description) } ?? .null
-        }
-        func keyed(_ values: [ReferenceKey: Double]) -> AgentJSON {
-            let pairs = values.map { ($0.key.description, AgentJSON.number($0.value)) }
-            return .object(Dictionary(uniqueKeysWithValues: pairs))
-        }
-        let conversations = state.conversations.map { talk -> AgentJSON in
-            let phase = switch talk.phase {
-            case .waitingForAnswer: "waitingForAnswer"
-            case .approaching: "approaching"
-            case .talking: "talking"
-            }
-            return [
-                "speaker": key(talk.speaker), "partner": key(talk.partner),
-                "phase": .string(phase), "startedAt": .number(talk.startedAt)
-            ]
-        }
-        let watchers = state.spectators.sorted { $0.key < $1.key }.map { watcher -> AgentJSON in
-            [
-                "watcher": key(watcher.key), "fighter": key(watcher.value.fighter),
-                "lastComment": watcher.value.lastComment.map { .number($0) } ?? .null
-            ]
-        }
-        var sent: [String: AgentJSON] = [:]
-        for (code, count) in social.sentCounts {
-            sent[code.description] = .number(Double(count))
-        }
-        return [
-            "conversations": .array(conversations),
-            "watchers": .array(watchers),
-            "bodyChecks": keyed(state.bodyChecks),
-            "socialTimers": keyed(state.socialTimers),
-            "recentPartners": .object(Dictionary(uniqueKeysWithValues: state.recentPartners.map {
-                ($0.key.description, .array($0.value.sorted().map { .string($0.description) }))
-            })),
-            "lookTargets": .object(Dictionary(uniqueKeysWithValues: state.lookTargets.map {
-                ($0.key.description, .string($0.value.description))
-            })),
-            "sent": .object(sent),
-            "emotions": .object(Dictionary(
-                uniqueKeysWithValues: game.faceMorphs.emotionValues.map {
-                    ($0.key.description, .number(Double($0.value)))
-                }
-            )),
-            "dialogueMode": .object(Dictionary(
-                uniqueKeysWithValues: game.dialogue.dialogueMode.countdowns.map {
-                    ($0.key.description, .number(Double($0.value)))
-                }
-            )),
-            "detection": .object(Dictionary(
-                uniqueKeysWithValues: game.dialogue.detectionRecords.map {
-                    ($0.key.description, .string($0.value.rawValue))
-                }
-            ))
-        ]
     }
 
     /// The answer to `openskycli game state scripts`: queue, waits, the newest events,

@@ -27,6 +27,8 @@ final class StoryHost: CrimeActorsHost, CrimeFactionsHost, CrimeJailHost, CrimeW
     let fakeDialogueWorld = FakeDialogueWorldPort()
     let fakeFaceMorphs = FakeFaceMorphPort()
     let fakeFactions = FakeFactionPort()
+    let fakeFurniture = FakeFurniturePort()
+    let fakeActorGraphWorld = FakeActorGraphWorldPort()
     let fakeFollowerCommandWorld = FakeFollowerCommandWorldPort()
     let fakeHeadTracking = FakeHeadTrackingPort()
     let fakeHud = FakeHUDPort()
@@ -178,6 +180,14 @@ final class StoryHost: CrimeActorsHost, CrimeFactionsHost, CrimeJailHost, CrimeW
 
     var streamer: any CellStreamerPort {
         fakeStreamer
+    }
+
+    var furniture: any FurniturePort {
+        fakeFurniture
+    }
+
+    var actorGraphWorld: any ActorGraphWorldPort {
+        fakeActorGraphWorld
     }
 
     var menuWorld: any MenuWorldPort {

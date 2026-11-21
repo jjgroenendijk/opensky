@@ -4,6 +4,7 @@
 import OpenSkyConditions
 public import OpenSkyDialogue
 import OpenSkyFormatsESM
+import OpenSkyQuestsInterface
 import OpenSkySessionInterface
 
 public final class StoryPartState {
@@ -21,11 +22,14 @@ public final class StoryPartState {
 
 extension StoryManagerPort {
     /// An event with no `L1` takes the location of its `R1`, or the player's.
-    func fireLocated(_ event: StoryEventData, context: () -> ConditionContext) {
+    @discardableResult
+    func fireLocated(
+        _ event: StoryEventData, context: () -> ConditionContext
+    ) -> StoryManagerWalk? {
         var event = event
         if event.location1 == nil {
             event.location1 = context().data.currentLocation(of: event.actor1 ?? .player)
         }
-        fire(event)
+        return fire(event)
     }
 }

@@ -65,6 +65,7 @@ protocol SessionPortSet:
     RagdollWorldHost, RuntimeStateWorldHost, SaveGameWorldHost, ScriptWorldHost,
     SkyrimSaveExportHost, SkyrimSaveImportHost, StoryWorldHost, VehicleWorldHost, SystemMenuWorld,
     AgentRenderHost, AgentActorsHost, AgentMotionHost, AgentBehaviourHost, AgentObjectsHost,
+    AgentSocialHost,
     AgentMenuReadoutHost, AgentScreensHost, AgentEventsHost, AgentPlayerReadoutHost,
     AgentFrameReadoutHost, AgentActorReadoutHost, AgentItemsHost, AgentViewHost, AgentInputHost,
     AgentCaptureHost, AgentChangesHost, ScriptActorBindingsHost, ScriptPerkBindingsHost,

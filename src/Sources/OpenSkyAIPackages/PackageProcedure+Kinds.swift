@@ -44,7 +44,8 @@ nonisolated extension PackageProcedureMachine {
 
     /// Kinds that watch their target and move when it does.
     private static let watchers: Set<PackageProcedureKind> = [
-        .follow, .followTo, .escort, .flee, .forceGreet, .keepAnEyeOn, .guardArea
+        .follow, .followTo, .escort, .flee, .forceGreet, .keepAnEyeOn, .guardArea,
+        .dialogueActivate
     ]
 
     var watchesTarget: Bool {
@@ -82,6 +83,9 @@ nonisolated extension PackageProcedureMachine {
             return []
         case .follow, .forceGreet:
             // A follower or greeter waits for its first sense, which says where the target is.
+            state = .waiting
+            return []
+        case .dialogueActivate where setup.watched != nil:
             state = .waiting
             return []
         case .flee where setup.flag:
@@ -196,6 +200,8 @@ nonisolated extension PackageProcedureMachine {
             return flee(from: target, actor: senses.actor, distance: distance)
         case .forceGreet:
             return greet(target, distance: distance)
+        case .dialogueActivate:
+            return walkUpToTalk(target, distance: distance)
         case .guardArea:
             return guardArea(intruder: target)
         default:
@@ -266,6 +272,18 @@ nonisolated extension PackageProcedureMachine {
         }
         let inTrigger = radius <= 0 || simd_distance(player, center) <= radius
         guard inTrigger else { return [] }
+        let moved = lastGoal.map { simd_distance($0, player) > Self.followSlack } ?? true
+        return moved ? move(to: player) : []
+    }
+
+    /// DialogueActivate at the player: walks up wherever the player is, then talks.
+    private mutating func walkUpToTalk(
+        _ player: SIMD3<Float>, distance: Float
+    ) -> [PackageProcedureCommand] {
+        guard state == .waiting || state == .moving, let target = setup.watched else { return [] }
+        if distance <= Self.greetDistance {
+            return act(.talk(to: target))
+        }
         let moved = lastGoal.map { simd_distance($0, player) > Self.followSlack } ?? true
         return moved ? move(to: player) : []
     }

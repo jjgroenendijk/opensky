@@ -1,4 +1,4 @@
-// The shell of the social pass: every few frames it asks the world for the loaded
+// The shell of the social pass: every frame it asks the world for the loaded
 // actors, lets `SocialEventCore` decide what NPCs do with each other, and hands the
 // commands to the world. See docs/engine/random-conversations.md.
 
@@ -19,8 +19,8 @@ public protocol SocialEventWorld: AnyObject {
 
 @MainActor
 public final class SocialEventCoordinator {
-    /// Frames between passes. Each pass reads every loaded actor.
-    public static let frameInterval = 30
+    /// The pass runs every frame, as the game's does.
+    public static let frameInterval = 1
     public static let historyLimit = 12
 
     public let settings: SocialSettings
@@ -80,7 +80,7 @@ public final class SocialEventCoordinator {
         }
         state.conversations.append(SocialConversation(
             speaker: speaker, partner: partner, startedAt: now,
-            answerSeconds: SocialLimits.dialogueActivateAnswerSeconds
+            answerSeconds: SocialLimits.dialogueActivateAnswerSeconds, isPackageRequest: true
         ))
         state.recentPartners[speaker, default: []].insert(partner)
         state.recentPartners[partner, default: []].insert(speaker)
@@ -89,6 +89,21 @@ public final class SocialEventCoordinator {
         recent = Array((recent + [event]).suffix(Self.historyLimit))
         pendingCommands.append(.reportStoryEvent(event))
         return true
+    }
+
+    /// The story manager's walk for a social event ended. Only `ADIA` has an answer.
+    public func storyEventAnswered(_ event: StoryEventData, startedQuest: Bool) {
+        guard event.event == "ADIA", let speaker = event.actor1, let partner = event.actor2
+        else { return }
+        SocialEventCore.answer(
+            pair: (speaker, partner), started: startedQuest, settings: settings,
+            state: &state
+        )
+    }
+
+    /// The body remembers who killed it, and that actor says no line over it.
+    public func noteKill(victim: ReferenceKey, killer: ReferenceKey?) {
+        state.bodyKillers[victim] = killer
     }
 
     /// A conversation scene that has not begun asks its two partners to meet: one

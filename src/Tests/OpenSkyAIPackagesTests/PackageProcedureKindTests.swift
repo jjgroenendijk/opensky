@@ -142,6 +142,21 @@ struct PackageProcedureKindTests {
             == [.act(.forceGreet(topic: nil))])
     }
 
+    /// With the player as target, DialogueActivate walks up before it talks.
+    @Test func aTalkerWalksUpToThePlayerFirst() {
+        var machine = Self.machine(.dialogueActivate) {
+            $0.targets = [.player]
+            $0.watched = .player
+        }
+        #expect(machine.start().isEmpty)
+        let player = SIMD3<Float>(1000, 0, 0)
+        #expect(machine
+            .handle(.sensed(.init(actor: .zero, watched: player))) == [.move(to: player)])
+        let near = SIMD3<Float>(100, 0, 0)
+        #expect(machine.handle(.sensed(.init(actor: .zero, watched: near)))
+            == [.act(.talk(to: .player))])
+    }
+
     @Test func everyCensusProcedureIsRunnable() {
         let names = [
             "UnlockDoors",

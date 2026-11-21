@@ -25,6 +25,7 @@ public protocol StorySocialSearchHost: AnyObject, SendableMetatype {
     var aiWorld: any AIWorldPort { get }
     var combat: any CombatPort { get }
     var dialogue: any DialoguePort { get }
+    var furniture: any FurniturePort { get }
     var gameSession: (any GameSessionPort)? { get }
     var packages: any PackagePort { get }
     var scripts: any ScriptPort { get }
@@ -32,7 +33,6 @@ public protocol StorySocialSearchHost: AnyObject, SendableMetatype {
     var worldState: any WorldStateStorePort { get }
     var scenes: any ScenePort { get }
     var dialogueWorld: any DialogueWorldPort { get }
-    var storyManager: any StoryManagerPort { get }
 }
 
 /// Part of `StoryWorldAdapter`, over its own narrow host.
@@ -106,13 +106,14 @@ extension StorySocialSearchAdapter {
     public func socialFrame() -> SocialFrame? {
         let inScenes = game.scenes.actorsInScenes()
         let combat = game.combat.loop
+        let seats = game.furniture.occupancies
         let actors = game.actorWorld.combatActors().map { actor in
             var flags = game.packages.runtime?.currentPackage(for: actor.key)?
                 .package.general.interruptFlags
             if flags != nil, game.packages.allowsSandboxConversation(actor.key) {
                 flags = (flags ?? 0) | SocialActor.conversationFlag
             }
-            return SocialActor(
+            var social = SocialActor(
                 key: actor.key,
                 feet: actor.feet,
                 interruptFlags: flags,
@@ -121,6 +122,10 @@ extension StorySocialSearchAdapter {
                 isInCombat: (combat?.activity(of: actor.key) ?? .notFighting) != .notFighting,
                 combatTarget: combat?.combatTarget(of: actor.key)
             )
+            social.heading = game.streamer.npcTransform(for: actor.key)?.placement.rotation.z ?? 0
+            social.posture = Self.posture(of: seats[actor.key])
+            social.fightsRanged = combat?.fightsRanged(actor.key) ?? false
+            return social
         }
         return SocialFrame(
             actors: actors,
@@ -129,6 +134,18 @@ extension StorySocialSearchAdapter {
             playerInConversation: game.dialogue.conversationSpeaker != nil,
             player: game.gameSession?.walkController.feetPosition
         )
+    }
+
+    /// xEdit's furniture animation enum: 1 sit, 2 lay. A lean counts as standing.
+    static let sitAnimation: UInt16 = 1
+    static let layAnimation: UInt16 = 2
+
+    static func posture(of occupancy: FurnitureOccupancy?) -> SocialPosture {
+        let type = occupancy?.seat.seat.animationType
+        if type == Self.sitAnimation {
+            return .sitting
+        }
+        return type == Self.layAnimation ? .sleeping : .standing
     }
 
     /// Eye to the body's chest, about half a standing actor's eye height.

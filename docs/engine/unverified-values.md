@@ -113,9 +113,9 @@ the detail and the sources it did find.
 | Scene package wait | A scene does not wait forever on its package | [scenes](/engine/scenes.md) |
 | Conversation scene gap | Starts when the conversation ends | [scenes](/engine/scenes.md#conversation-scenes) |
 | Conversation scene meeting | Begins when both partners have a loaded body, at any distance | [scenes](/engine/scenes.md#conversation-scenes) |
-| Random conversation answer wait | 2 s for a quest to answer `ADIA` with a scene | [random conversations](/engine/random-conversations.md#where-opensky-differs) |
-| Hello in passing look target | The nearest free NPC within 384 units of a walker that moved 8 units; the head turns for 10 s | [random conversations](/engine/random-conversations.md#where-opensky-differs) |
-| Fight comment roll | The comment chance is rolled once per social pass | [random conversations](/engine/random-conversations.md#where-opensky-differs) |
+| Random conversation answer wait | 2 s for the scene of a started quest to take the speaker | [random conversations](/engine/random-conversations.md#where-opensky-differs) |
+| Social look and reaction timing | A look lasts 10 s; a walker moves 5 units a second; watchers and finders are searched once a second | [random conversations](/engine/random-conversations.md#where-opensky-differs) |
+| Body finder walk limit | A finder gives up its walk after 30 s | [random conversations](/engine/random-conversations.md#where-opensky-differs) |
 | Sandbox Allow Conversation default | On when the package sets no value | [sandbox](/engine/sandbox.md) |
 | Idle line search miss | The NPC waits the idle-line window before it searches again | [dialogue](/engine/dialogue.md) |
 | Follower commands | 0.5 s wait; acts at 128 units | [follower commands](/engine/follower-commands.md) |
