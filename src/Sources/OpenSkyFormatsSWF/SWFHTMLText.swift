@@ -1,5 +1,6 @@
-// The HTML text a script assigns to `htmlText`. Tags are dropped, except `<img>`, which
-// GFx draws inline in the line of text. See docs/engine/as2-display-runtime.md#text.
+// The HTML text a script assigns to `htmlText`. `<img>` draws inline in the line of
+// text, as GFx does; the styles are in SWFHTMLStyles.swift. See
+// docs/engine/as2-display-runtime.md#text.
 
 import Foundation
 
@@ -34,25 +35,8 @@ nonisolated public enum SWFHTMLText: Sendable {
     /// The plain text with one `imageMarker` per `<img>` tag, and those images in order.
     /// A missing `width` or `height` is 0; the caller fills it from the bitmap.
     public static func parse(_ html: String) -> (text: String, images: [SWFInlineImage]) {
-        var text = ""
-        var images: [SWFInlineImage] = []
-        var tag: String?
-        for character in html {
-            if character == "<" {
-                tag = ""
-            } else if character == ">", let body = tag {
-                if let image = image(fromTag: body) {
-                    text.append(imageMarker)
-                    images.append(image)
-                }
-                tag = nil
-            } else if tag != nil {
-                tag?.append(character)
-            } else {
-                text.append(character)
-            }
-        }
-        return (text, images)
+        let content = parseStyled(html)
+        return (content.text, content.images)
     }
 
     /// The tags back in place of the image markers, so a script that reads `htmlText`
@@ -71,7 +55,7 @@ nonisolated public enum SWFHTMLText: Sendable {
         return result
     }
 
-    private static func image(fromTag body: String) -> SWFInlineImage? {
+    static func image(fromTag body: String) -> SWFInlineImage? {
         let trimmed = body.trimmingCharacters(in: .whitespaces)
         guard trimmed.lowercased().hasPrefix("img"), trimmed.count > 3 else { return nil }
         let attributes = attributes(of: String(trimmed.dropFirst(3)))
@@ -86,7 +70,7 @@ nonisolated public enum SWFHTMLText: Sendable {
     }
 
     /// `name='value'` and `name="value"` pairs; names are lowercased.
-    private static func attributes(of text: String) -> [String: String] {
+    static func attributes(of text: String) -> [String: String] {
         var result: [String: String] = [:]
         var rest = Substring(text)
         while let equals = rest.firstIndex(of: "=") {

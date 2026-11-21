@@ -149,10 +149,11 @@ to hold its lines, so it draws every line too. The journal's quest description i
 When the bottom edge cuts the next line, that line is drawn too, clipped at the edge.
 It does not count for `bottomScroll` or `maxscroll`.
 
-`htmlText` drops its tags, except `<img src='name' width='w' height='h' vspace='v'>`. That tag
-draws the bitmap the movie exports under `name` in the line, `w` by `h` pixels. A size the tag
-leaves out comes from the bitmap. The picture takes its width in the line. Reading `htmlText`
-back gives the tags again, so a script that assigns it again keeps its pictures.
+`htmlText` takes its styles from the tags ([HTML text](/formats/swf-text.md#html-text)).
+`<img src='name' width='w' height='h' vspace='v'>` draws the bitmap the movie exports under
+`name` in the line, `w` by `h` pixels. A size the tag leaves out comes from the bitmap. The
+picture takes its width in the line. Reading `htmlText` back gives the HTML as it was assigned,
+or the field's authored HTML, so a script that adds to it keeps its styles and pictures.
 
 Three GFx text methods read the field's layout, in pixels from the field's top-left corner:
 

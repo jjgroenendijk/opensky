@@ -33,6 +33,8 @@ nonisolated public struct SWFSceneItem: Equatable, Sendable {
     public var textBounds: SWFRect?
     /// The inline `<img>` pictures of an `editText` item's `textOverride`.
     public var textImages: [SWFInlineImage] = []
+    /// The `<font>` and `<p>` styles of the `textOverride`.
+    public var textStyles = SWFTextStyles.none
 }
 
 /// Ordered render commands for one frame. Masks carry the geometry items the

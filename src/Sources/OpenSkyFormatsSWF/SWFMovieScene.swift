@@ -50,6 +50,16 @@ nonisolated public struct SWFMovieScene: Sendable {
         return nil
     }
 
+    /// A font an HTML `<font face>` names: a substituted font, else one in the movie.
+    public func font(named name: String) -> SWFFontDefinition? {
+        externalFont(named: name) ?? movie.characters.values.lazy.compactMap { character in
+            if case let .font(font) = character, font.name == name, !font.glyphs.isEmpty {
+                return font
+            }
+            return nil
+        }.first
+    }
+
     private func externalFont(named name: String) -> SWFFontDefinition? {
         externalFonts[name] ?? externalFonts[name.lowercased()]
     }
@@ -93,6 +103,12 @@ nonisolated public struct SWFMovieScene: Sendable {
                 externalFonts[name] = resolved.font
             } else {
                 unresolvedFontNames.append(name)
+            }
+        }
+        // A script's `<font face>` may name any alias, so each one resolves up front.
+        for map in config.maps where externalFonts[map.alias] == nil {
+            if let resolved = library.resolve(alias: map.alias, config: config) {
+                externalFonts[map.alias] = resolved.font
             }
         }
     }

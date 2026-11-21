@@ -43,7 +43,8 @@ struct SWFTextLayoutTests {
         text: String,
         bounds: SWFRect = SWFRect(xMin: 0, xMax: 4000, yMin: 0, yMax: 2000),
         wordWrap: Bool = false,
-        align: UInt8? = nil
+        align: UInt8? = nil,
+        html: Bool = false
     ) throws -> SWFEditText {
         var builder = SWFEditTextBodyBuilder()
         builder.bounds = bounds
@@ -54,6 +55,7 @@ struct SWFTextLayoutTests {
         builder.fontID = 1
         builder.fontHeight = 1024 // scale 1: glyph units == twips
         builder.initialText = text
+        builder.flags.html = html
         if let align {
             builder.flags.hasLayout = true
             builder.layout = SWFEditTextLayout(
@@ -231,5 +233,59 @@ struct SWFTextLayoutTests {
         let text = try SWFEditText.parse(tag: SWFTag(code: 37, body: builder.build()))
         let layout = SWFTextLayout.editText(text, font: font)
         #expect(layout.runs.isEmpty)
+    }
+
+    @Test func anHTMLFieldDrawsEachFontSpanAsARunAndAlignsItsParagraph() throws {
+        let text = try Self.makeEditText(
+            text: "<p align='right'><font color='#FF0000'>A</font>B</p>",
+            bounds: SWFRect(xMin: 0, xMax: 2000, yMin: 0, yMax: 2000), html: true
+        )
+        let layout = try SWFTextLayout.editText(text, font: Self.makeFont())
+        #expect(layout.runs.count == 2)
+        #expect(layout.runs.first?.color == SWFColor(red: 255, green: 0, blue: 0, alpha: 255))
+        #expect(layout.runs.first?.glyphs.first?.x == 900, "no kerning across two spans")
+        #expect(layout.runs.last?.glyphs.first?.x == 1500)
+    }
+
+    @Test func aFontSizeAndLetterSpacingChangeTheAdvances() throws {
+        let font = try Self.makeFont()
+        let sized = try SWFTextLayout.editText(
+            Self.makeEditText(text: "<font size='25.6'>A</font>B", html: true), font: font
+        )
+        #expect(sized.runs.first?.emTwips == 512)
+        #expect(sized.runs.last?.glyphs.first?.x == 300)
+        let spaced = try SWFTextLayout.editText(
+            Self.makeEditText(text: "<font letterSpacing='1'>AB</font>", html: true), font: font
+        )
+        #expect(spaced.runs.first?.glyphs.last?.x == 520, "600 + 20 spacing - 100 kerning")
+    }
+
+    @Test func eachParagraphIsALineAndAFaceDrawsInItsFont() throws {
+        let font = try Self.makeFont()
+        let text = try Self.makeEditText(
+            text: "<p>A</p><p><font face='Other'>B</font></p>",
+            html: true
+        )
+        #expect(text.plainText == "A\rB")
+        let layout = SWFTextLayout.editText(text, font: font, fonts: { $0 == "Other" ? font : nil })
+        #expect(layout.lineCount == 2)
+        #expect(layout.runs.last?.face == "Other")
+        let unresolved = SWFTextLayout.editText(text, font: font)
+        #expect(unresolved.runs.allSatisfy { $0.face == nil })
+    }
+
+    @Test func aRuntimeTextTakesTheStylesTheCallerPasses() throws {
+        let text = try Self.makeEditText(text: "AB")
+        let styles = SWFTextStyles(spans: [
+            SWFTextStyleSpan(start: 1, color: SWFColor(red: 0, green: 255, blue: 0, alpha: 255))
+        ])
+        let layout = try SWFTextLayout.editText(
+            text,
+            font: Self.makeFont(),
+            content: "AB",
+            styles: styles
+        )
+        #expect(layout.runs.count == 2)
+        #expect(layout.runs.last?.color.green == 255)
     }
 }

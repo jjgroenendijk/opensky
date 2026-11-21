@@ -63,6 +63,9 @@ nonisolated public final class SWFDisplayObject {
     public var textOverride: String?
     /// The `<img>` pictures of the last `htmlText`, one per image marker in the text.
     public var textImages: [SWFInlineImage] = []
+    /// The styles of the last `htmlText`, and that HTML as assigned, which `htmlText` reads back.
+    public var textStyles = SWFTextStyles.none
+    public var textHTML: String?
     /// A text field's own box after a script set `_width` or `_height`; nil keeps the
     /// character's bounds.
     public var textBounds: SWFRect?

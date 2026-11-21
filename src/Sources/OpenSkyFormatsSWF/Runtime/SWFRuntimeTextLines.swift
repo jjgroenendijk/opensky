@@ -71,8 +71,8 @@ nonisolated extension SWFMovieRuntime {
             return nil
         }
         return SWFTextLayout.editText(
-            field, font: font, content: text(of: node) ?? "", images: node.textImages,
-            measuresCharacters: characters
+            field, font: font, content: text(of: node) ?? "", images: textImages(of: node),
+            styles: textStyles(of: node), measuresCharacters: characters
         )
     }
 }
