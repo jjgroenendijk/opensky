@@ -79,6 +79,10 @@ ever draws. A draw that does not finish within 3 seconds is given up. A dead, dy
 player, a menu that pauses the game, and a script lock on the player's controls all stop the press
 before this check.
 
+The rule holds for a bow and a crossbow too: the first press draws the weapon, and the next press
+draws the string. With a bow or crossbow out, the attack button belongs to archery alone. It starts
+no melee swing and no power attack.
+
 Hand items, as `GetEquippedItemType` numbers them: −1 nothing, 0 fists, 1 to 6 melee weapons, 7
 bow, 8 staff, 9 spell, 10 shield, 11 torch, 12 crossbow.
 

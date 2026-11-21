@@ -16,9 +16,9 @@ extension MeleeCombatRuntime {
 
     /// Latches this frame's presses into the hold clock. A press is dropped rather
     /// than queued when the weapon is away: a press in a latch would fire a swing the
-    /// moment the draw finished. Mid-swing it may chain.
+    /// moment the draw finished. Mid-swing it may chain. A drawn bow's button is archery's.
     func latchPresses(blocking: Bool) {
-        let right = pendingAttack
+        let right = pendingAttack && !weapon.handType.isRanged
         let left = pendingLeftAttack && leftWeapon != nil
         pendingAttack = false
         pendingLeftAttack = false
@@ -97,6 +97,10 @@ extension MeleeCombatRuntime {
 }
 
 nonisolated extension CombatHandType {
+    var isRanged: Bool {
+        self == .bow || self == .crossbow
+    }
+
     /// A sword, dagger, war axe, or mace: what dual wielding takes.
     var isOneHandedMelee: Bool {
         switch self {
