@@ -53,6 +53,7 @@ nonisolated public struct FaceAnimationSettings: Equatable, Sendable {
     public var eyeTrackZ: Float = 20
     /// `fAIHeadTrackPickNewOffsetTimer`: seconds between two eye drifts.
     public var eyePickNewOffset: Float = 2
+    public var speakingEmotion = SpeakingEmotionSettings()
 
     public static let vanilla = Self()
 
@@ -86,6 +87,14 @@ nonisolated public struct FaceAnimationSettings: Equatable, Sendable {
         store.read("fTrackEyeXY", into: &settings, \.eyeTrackXY)
         store.read("fTrackEyeZ", into: &settings, \.eyeTrackZ)
         store.read("fAIHeadTrackPickNewOffsetTimer", into: &settings, \.eyePickNewOffset)
+        var speaking = settings.speakingEmotion
+        store.read("iGameplayiSpeakingEmotionListenValue", into: &speaking, \.listenValue)
+        store.read("iGameplayiSpeakingEmotionDeltaChange", into: &speaking, \.settleStep)
+        store.read("fGameplayiSpeakingEmotionMinDeltaChange", into: &speaking, \.minDeltaPercent)
+        store.read("fGameplayiSpeakingEmotionMaxDeltaChange", into: &speaking, \.maxDeltaPercent)
+        store.read("fGameplaySpeakingEmotionMinChangeValue", into: &speaking, \.changeSecondsMin)
+        store.read("fGameplaySpeakingEmotionMaxChangeValue", into: &speaking, \.changeSecondsMax)
+        settings.speakingEmotion = speaking
         return settings
     }
 }

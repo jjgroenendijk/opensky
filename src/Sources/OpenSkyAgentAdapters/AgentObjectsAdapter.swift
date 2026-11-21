@@ -34,6 +34,7 @@ public protocol AgentObjectsHost: AnyObject, SendableMetatype {
     var dialogue: any DialoguePort { get }
     var effectGraphs: any EffectGraphPort { get }
     var effectModelPoser: any EffectModelPoserPort { get }
+    var faceMorphs: any FaceMorphPort { get }
     var factions: any FactionPort { get }
     var followerCommandWorld: any FollowerCommandWorldPort { get }
     var followerCommands: any FollowerCommandPort { get }
@@ -170,6 +171,11 @@ extension AgentObjectsAdapter {
                 ($0.key.description, .string($0.value.description))
             })),
             "sent": .object(sent),
+            "emotions": .object(Dictionary(
+                uniqueKeysWithValues: game.faceMorphs.emotionValues.map {
+                    ($0.key.description, .number(Double($0.value)))
+                }
+            )),
             "dialogueMode": .object(Dictionary(
                 uniqueKeysWithValues: game.dialogue.dialogueMode.countdowns.map {
                     ($0.key.description, .number(Double($0.value)))

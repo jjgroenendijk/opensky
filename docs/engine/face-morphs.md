@@ -114,8 +114,10 @@ Source: a clean-room read of `SkyrimSE.exe` on 2026-11-07. These rules never set
 
 ### Emotion while speaking
 
-In the game, a speaker's emotion value moves at random around the line's value while it talks.
-OpenSky does not build this yet. It holds one value for the whole line.
+In the game, a speaker's emotion value can jump to a random value around the line's value while
+it talks. OpenSky follows the rules below. It reads the roll range and the timer from the game
+settings, and `openskycli game state social` shows each speaker's value under `emotions`. After
+the line, OpenSky lowers the value once per frame.
 
 - Each actor keeps a current emotion value (0 to 100), a base value, and a change timer.
 - When a line starts, the actor's emotion type and value come from the response's `TRDT` emotion
