@@ -12,7 +12,8 @@ This page covers the shape tags and the bitmap tags in a SWF movie. The containe
 [SWF](/formats/swf.md).
 
 References: Adobe SWF File Format Specification v19, chapter 6 "Shapes" (pp. 119-133),
-chapter 7 "Gradients" (pp. 134-136), and chapter 8 "Bitmaps" (pp. 137-143).
+chapter 7 "Gradients" (pp. 134-136), chapter 8 "Bitmaps" (pp. 137-143), and the chapter
+"Shape Morphing".
 
 ## Shape tags
 
@@ -107,6 +108,52 @@ round caps and round joins.
   width past the end, and no cap stops at the end. A closed path has no caps; its first
   corner gets a join unless `NoClose` is set.
 - A line thinner than one pixel draws one pixel wide, which is how Flash draws a hairline.
+
+## Morph shapes
+
+DefineMorphShape (46) and DefineMorphShape2 (84) hold one shape in two forms, a start and an
+end. A placement's `Ratio` picks a form between them: 0 is the start and 65535 the end.
+
+| Field | Type | Note |
+| --- | --- | --- |
+| `CharacterId` | UI16 | |
+| `StartBounds`, `EndBounds` | RECT | |
+| `StartEdgeBounds`, `EndEdgeBounds` | RECT | DefineMorphShape2 only |
+| Flags | UI8 | DefineMorphShape2 only: 6 reserved bits, then the two stroke scaling flags |
+| `Offset` | UI32 | Bytes from the end of this field to `EndEdges` |
+| `MorphFillStyles` | MORPHFILLSTYLEARRAY | UI8 count, 0xFF escapes to a UI16 count |
+| `MorphLineStyles` | MORPHLINESTYLEARRAY | The same count rule |
+| `StartEdges`, `EndEdges` | SHAPE | Index bit widths, then the records |
+
+Each morph style holds a start and an end value of every field, in that order: two RGBA
+colours, two matrices, and gradient records of start ratio, start colour, end ratio, end
+colour. A bitmap fill has one bitmap id and two matrices. MORPHLINESTYLE holds two widths and
+two colours. MORPHLINESTYLE2 holds two widths, the LINESTYLE2 flag bits, the miter limit when
+the join is a miter, and then two colours or a morph fill. Colours are always RGBA.
+
+The two forms must have the same number of edges. The start form carries the styles; the end
+form only moves the pen. So edge n of the start pairs with edge n of the end. At a ratio, each
+point, colour, width, matrix term, and gradient stop moves in a straight line from its start
+value to its end value. A straight edge paired with a curve becomes a curve whose control
+point is the middle of the line.
+
+Two layout facts the spec leaves open:
+
+- The spec gives the MORPHGRADIENT count as a full byte. OpenSky reads it as GRADIENT packs it:
+  2 bits spread mode, 2 bits interpolation, and a 4-bit count. The two readings agree for a
+  file that sets no spread or interpolation bits.
+- A focal radial morph fill (type 0x13) reads a start and an end FIXED8 focal point after the
+  records.
+
+No vanilla movie holds a morph shape (`openskycli swf sweep`), so neither fact is confirmed
+on the install. A form pair with different edge counts fails to parse and loses only its own
+character.
+
+Only timeline placements set a ratio, so the ratios a movie uses are known once it is decoded.
+OpenSky turns each pair of morph and ratio into a plain shape character with a free id, and
+points the placements at it. A move that only changes the ratio then swaps the shape at that
+depth, and every later step draws shapes alone. A morph placed by a button record is not
+expanded and draws nothing.
 
 ## Lossless bitmaps
 

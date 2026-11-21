@@ -87,6 +87,13 @@ nonisolated public struct SWFBitReader: Sendable {
         return UInt16(high << 8 | low)
     }
 
+    /// Aligns to the next byte boundary and reads a little-endian UI32.
+    public mutating func readAlignedUInt32() throws -> UInt32 {
+        let low = try UInt32(readAlignedUInt16())
+        let high = try UInt32(readAlignedUInt16())
+        return high << 16 | low
+    }
+
     /// The backing bytes from the current byte position to the end, for handing
     /// a byte-oriented sub-read (such as a null-terminated string) to a
     /// `BinaryReader`. Callers `align()` first; a mid-byte cursor drops the

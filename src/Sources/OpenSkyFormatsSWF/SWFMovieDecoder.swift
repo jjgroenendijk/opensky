@@ -10,6 +10,9 @@ nonisolated public struct SWFMovieDecoder: Sendable {
     public let version: UInt8
     public let jpegTables: Data?
     public var characters: [UInt16: SWFCharacter] = [:]
+    /// Morph shapes, which become shape characters once the ratios they are
+    /// placed at are known (`SWFMorphExpansion`).
+    public var morphShapes: [UInt16: SWFMorphShapeDefinition] = [:]
     public var importedNames: [UInt16: String] = [:]
     /// Every ImportAssets/ImportAssets2 tag with its source movie URL, in tag
     /// order. `importedNames` loses the URL, and resolving a non-font import
@@ -42,6 +45,11 @@ nonisolated public struct SWFMovieDecoder: Sendable {
         if SWFShapeDefinition.tagCodes.contains(tag.code) {
             let shape = try SWFShapeDefinition.parse(tag: tag)
             characters[shape.characterId] = .shape(shape)
+        } else if SWFMorphShapeDefinition.tagCodes.contains(tag.code) {
+            // A malformed morph costs its own character, never the movie.
+            if let morph = parsed({ try SWFMorphShapeDefinition.parse(tag: tag) }) {
+                morphShapes[morph.characterId] = morph
+            }
         } else if SWFBitmapDecoder.tagCodes.contains(tag.code) {
             let bitmap = try SWFBitmapDecoder.decode(tag: tag, jpegTables: jpegTables)
             characters[bitmap.characterId] = .bitmap(bitmap)
