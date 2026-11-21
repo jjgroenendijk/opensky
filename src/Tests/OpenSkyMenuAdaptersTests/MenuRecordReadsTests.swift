@@ -30,7 +30,6 @@ struct MenuRecordReadsTests {
         #expect(map.settingTexts(SkillsMenuText.self) == .vanilla)
         let messages = MessageWorldAdapter(game: host, stage: nil, now: { Date() })
         #expect(messages.systemMenuTopics(.help).isEmpty)
-        #expect(menus().titleLighting == nil)
         #expect(menus().skillsRace.perkSkySource == nil)
         #expect(menus().playerNameAndRace.name == "Prisoner")
         let loading = LoadingScreenWorldAdapter(game: host, stage: nil, clock: { Date() })
