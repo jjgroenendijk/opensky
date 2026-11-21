@@ -17,6 +17,7 @@ struct AgentCommandListTests {
             let copy = try #require(list.spec(spec.name))
             #expect(copy.summary == spec.summary)
             #expect(copy.positionals.map(\.key) == spec.positionals.map(\.key))
+            #expect(copy.positionals.map(\.isText) == spec.positionals.map(\.isText))
             #expect(copy.options.map(\.key) == spec.options.map(\.key))
             #expect(copy.options.map(\.kind) == spec.options.map(\.kind))
         }

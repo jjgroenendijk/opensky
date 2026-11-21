@@ -73,6 +73,15 @@ struct AgentCommandLineTests {
         #expect(request.args == ["name": "navmesh", "on": false])
     }
 
+    @Test func aTextPositionalKeepsTheWordAsTyped() throws {
+        let channel = try AgentCommandLine.request(["debug", "channel", "off"])
+        #expect(channel.args == ["mode": "off"])
+        let shadows = try AgentCommandLine.request(["debug", "shadows", "off"])
+        #expect(shadows.args == ["quality": "off"])
+        let typed = try AgentCommandLine.request(["input", "text", "007"])
+        #expect(typed.args == ["text": "007"])
+    }
+
     @Test func actorValueStateDefaultsToThePlayer() throws {
         let request = try AgentCommandLine.request(["state", "av", "Health"])
         #expect(request.args == ["name": "Health", "ref": "player"])

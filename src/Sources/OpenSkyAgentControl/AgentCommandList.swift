@@ -38,7 +38,7 @@ nonisolated extension AgentCommandSpec {
             "positionals": .array(positionals.map { positional in
                 [
                     "key": .string(positional.key), "optional": .bool(positional.optional),
-                    "help": .string(positional.help)
+                    "help": .string(positional.help), "text": .bool(positional.isText)
                 ]
             }),
             "options": .array(options.map(\.json))
@@ -58,7 +58,8 @@ nonisolated extension AgentCommandSpec {
                 item["key"]?.stringValue.map { key in
                     Positional(
                         key: key, optional: item["optional"]?.boolValue ?? false,
-                        help: item["help"]?.stringValue ?? ""
+                        help: item["help"]?.stringValue ?? "",
+                        isText: item["text"]?.boolValue ?? false
                     )
                 }
             },

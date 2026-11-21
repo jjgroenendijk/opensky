@@ -27,6 +27,8 @@ nonisolated public struct AgentCommandSpec: Sendable {
         public let key: String
         public let optional: Bool
         let help: String
+        /// The command reads the word as typed, so `off` or `007` stays text.
+        public var isText = false
     }
 
     /// The protocol name, such as `state.av`.
@@ -93,7 +95,7 @@ nonisolated public enum AgentCommandCatalog {
         command(
             "benchmark",
             "Fly the benchmark tour in the open window; reply when it ends.",
-            positionals: [optional("preset", "One of quick, standard, or full.")],
+            positionals: [optionalText("preset", "One of quick, standard, or full.")],
             options: [
                 value("scenes", "ids", "Scene ids, comma-separated."),
                 value("set", "id=value,...", "Player settings for this run, comma-separated."),
@@ -129,16 +131,16 @@ nonisolated public enum AgentCommandCatalog {
 
     private static let input: [AgentCommandSpec] = [
         command(
-            "input.press", "Press an action.", positionals: [required("action", actionHelp)]
+            "input.press", "Press an action.", positionals: [requiredText("action", actionHelp)]
         ),
         command(
             "input.release", "Release a held action.",
-            positionals: [required("action", actionHelp)]
+            positionals: [requiredText("action", actionHelp)]
         ),
         command(
             "input.hold",
             "Hold an action for some frames or seconds, then release it.",
-            positionals: [required("action", actionHelp)],
+            positionals: [requiredText("action", actionHelp)],
             options: [
                 value("frames", "n", "Frames to hold, 1 to 100000."),
                 value("seconds", "s", "Seconds to hold, up to 600.")
@@ -155,11 +157,11 @@ nonisolated public enum AgentCommandCatalog {
         command(
             "input.select",
             "Move the open menu's selection to the row with this label.",
-            positionals: [required("label", "The row label, such as a message box button.")]
+            positionals: [requiredText("label", "The row label, such as a message box button.")]
         ),
         command(
             "input.text", "Type into the open menu that takes text.",
-            positionals: [required("text", "The text.")]
+            positionals: [requiredText("text", "The text.")]
         ),
         command(
             "input.point", "Move the cursor over the open menu.", options: viewPoint
@@ -207,5 +209,13 @@ nonisolated public enum AgentCommandCatalog {
 
     static func optional(_ key: String, _ help: String) -> AgentCommandSpec.Positional {
         .init(key: key, optional: true, help: help)
+    }
+
+    static func requiredText(_ key: String, _ help: String) -> AgentCommandSpec.Positional {
+        .init(key: key, optional: false, help: help, isText: true)
+    }
+
+    static func optionalText(_ key: String, _ help: String) -> AgentCommandSpec.Positional {
+        .init(key: key, optional: true, help: help, isText: true)
     }
 }
