@@ -229,6 +229,8 @@ public final class AgentCommandRouter {
             return try .done(.success(world.selectMenuRow(label: args.string("label"))))
         case "text":
             return try .done(.success(world.typeText(args.string("text"))))
+        case "key":
+            return try .done(.success(world.pressKey(args.string("key"))))
         case "point", "click":
             return try .done(.success(world.pointMenu(
                 x: viewFraction("x", args), y: viewFraction("y", args), click: name == "click"

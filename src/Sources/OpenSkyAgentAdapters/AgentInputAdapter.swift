@@ -42,7 +42,9 @@ public protocol AgentInputHost: AnyObject, SendableMetatype {
     var menuMode: any MenuModePort { get }
     var messages: any MessageCoordinatorPort { get }
     var playerControlLocks: PlayerControlLocks { get }
+    var playerSettings: any PlayerSettingsPort { get }
     var raceMenu: any RaceMenuPort { get }
+    var systemMenu: any SystemMenuPort { get }
     func runCommand(_ action: GameInputAction)
     func showControlRefusal(_ refusal: PlayerControlRefusal)
 }
@@ -145,6 +147,42 @@ extension AgentInputAdapter {
             ))
         }
         return ["x": .init(x), "y": .init(y), "clicked": .bool(click)]
+    }
+
+    /// One keyboard key, down and up, on the path a key in the window takes: the
+    /// Controls page's key wait first, then the action the key is bound to.
+    public func pressKey(_ key: String) throws(AgentFailure) -> AgentJSON {
+        let settings = game.playerSettings
+        guard let code = settings.scanCode(named: key) else {
+            throw AgentFailure(
+                .invalidArgument,
+                "no keyboard key '\(key)'; give its name or scan code"
+            )
+        }
+        var result: [String: AgentJSON] = [
+            "key": .string(settings.keyName(code)), "scanCode": .init(Int(code))
+        ]
+        let inMenu = game.menuMode.isMenuMode
+        if inMenu, game.systemMenu.captureKey(scanCode: code) {
+            result["bound"] = .bool(true)
+            return .object(result)
+        }
+        guard let action = settings.action(forScanCode: code, inMenu: inMenu) else {
+            result["action"] = .null
+            return .object(result)
+        }
+        if !inMenu, let event = action.helpEvent {
+            game.messages.noteInputEvent(event)
+        }
+        dispatcher.apply(action, .press)
+        if inMenu, settings.action(forScanCode: code, inMenu: false) == .activate {
+            dispatcher.apply(.activate, .press)
+        }
+        if inMenu || action.sendsRelease {
+            dispatcher.apply(action, .release)
+        }
+        result["action"] = .string(action.rawValue)
+        return .object(result)
     }
 
     public func typeText(_ text: String) throws(AgentFailure) -> AgentJSON {

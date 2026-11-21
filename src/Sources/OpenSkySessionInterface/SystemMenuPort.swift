@@ -8,6 +8,9 @@ public protocol SystemMenuPort: AnyObject {
     var model: SystemMenuModel { get }
     var movieDiagnostics: SystemMenuMovieDiagnostics? { get }
     var movieMainPage: SystemMenuPageSnapshot? { get }
+    /// Nil off the Controls page.
+    var controls: ControlsPageReadout? { get }
+    func captureKey(scanCode: UInt32) -> Bool
     func open()
     func quicksave()
     func route(_ event: MenuInputEvent)

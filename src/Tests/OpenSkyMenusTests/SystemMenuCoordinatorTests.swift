@@ -286,19 +286,6 @@ struct SystemMenuCoordinatorTests {
     }
 
     @Test @MainActor
-    func controlsPageRebindsTheNextKey() {
-        let harness = Harness()
-        harness.open(.controls)
-        #expect(harness.menu.snapshot.page.rows == harness.settings.controlsRows, "no movie")
-        #expect(!harness.menu.movieMappingRows().isEmpty)
-        harness.menu.route(.button(.accept))
-        #expect(harness.menu.isWaitingForKey)
-        #expect(harness.menu.captureKey(scanCode: 0x48))
-        #expect(harness.settings.bindings.scanCode(for: .forward) == 0x48)
-        #expect(!harness.menu.captureKey(scanCode: 0x11), "not waiting any more")
-    }
-
-    @Test @MainActor
     func inputWhileClosedIsIgnored() {
         let harness = Harness()
         harness.menu.route(.move(.down))
@@ -410,5 +397,37 @@ extension SystemMenuCoordinatorTests {
         harness.menu.pendingMovieCalls = [.init(request: .quitToDesktop, index: nil, text: nil)]
         harness.menu.answerMovieCalls()
         #expect(harness.world.quitCount == 1)
+    }
+}
+
+/// The Controls page: the key wait and the readout of each row's key.
+struct SystemMenuControlsTests {
+    @Test @MainActor
+    func controlsPageRebindsTheNextKey() {
+        let harness = Harness()
+        harness.open(.controls)
+        #expect(harness.menu.snapshot.page.rows == harness.settings.controlsRows, "no movie")
+        #expect(!harness.menu.movieMappingRows().isEmpty)
+        harness.menu.route(.button(.accept))
+        #expect(harness.menu.isWaitingForKey)
+        #expect(harness.menu.captureKey(scanCode: 0x48))
+        #expect(harness.settings.bindings.scanCode(for: .forward) == 0x48)
+        #expect(!harness.menu.captureKey(scanCode: 0x11), "not waiting any more")
+    }
+
+    @Test @MainActor
+    func controlsReadoutShowsTheWaitAndEachKey() throws {
+        let harness = Harness()
+        #expect(harness.menu.controls == nil, "closed")
+        harness.open(.controls)
+        harness.menu.route(.button(.accept))
+        let waiting = try #require(harness.menu.controls)
+        #expect(waiting.waitingForKey)
+        #expect(waiting.rows.count == InputBindings.slots.count)
+        _ = harness.menu.captureKey(scanCode: 0x48)
+        let bound = try #require(harness.menu.controls)
+        #expect(!bound.waitingForKey)
+        let first = InputBindings.slots[0].event
+        #expect(bound.rows.first == .init(action: first, key: harness.settings.keyName(0x48)))
     }
 }

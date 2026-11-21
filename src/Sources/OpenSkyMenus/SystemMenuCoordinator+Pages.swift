@@ -6,7 +6,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyGameData
-import OpenSkyMenusInterface
+public import OpenSkyMenusInterface
 import OpenSkyRendering
 
 extension SystemMenuCoordinator {
@@ -184,7 +184,7 @@ extension SystemMenuCoordinator {
             let shown = movieSettingsRows ?? settings.settingsRows(settingsPage)
             return page(rows: shown.rows, selected: shown.selected)
         case .controls:
-            return page(rows: controlsRowsShown, selected: controlsPage.selectedIndex)
+            return controlsRowsShown
         case .save, .load:
             return saveLoadRowsShown
         case .quit:
@@ -199,15 +199,36 @@ extension SystemMenuCoordinator {
         }
     }
 
-    /// With the movie, the rows its Controls list draws, so an empty page reads empty.
-    private var controlsRowsShown: [String] {
+    /// With the movie, the rows its Controls list draws and its highlight, which the
+    /// keys move, so an empty page reads empty.
+    private var controlsRowsShown: SystemMenuPageSnapshot {
         guard movieLoaded, let runtime = renderer?.swfRuntime else {
-            return settings.controlsRows
+            return page(rows: settings.controlsRows, selected: controlsPage.selectedIndex)
         }
-        guard SystemMenuMovieBridge.shownMappingRows(runtime: runtime) > 0 else { return [] }
-        return MenuMovieEntryList.labels(
+        guard SystemMenuMovieBridge.shownMappingRows(runtime: runtime) > 0 else {
+            return page(rows: [], selected: -1)
+        }
+        return SystemMenuMovieBridge.listRows(
             atPath: SystemMenuMovieBridge.mappingListPath, runtime: runtime
         )
+    }
+
+    /// The rows the page shows: with the movie, only the ones it lists.
+    public var controls: ControlsPageReadout? {
+        guard model.isOpen, model.page == .controls else { return nil }
+        let rows: [ControlsPageReadout.Row] = if movieLoaded {
+            movieMappingRows().map {
+                .init(action: $0.text, key: $0.buttonName.isEmpty ? nil : $0.buttonName)
+            }
+        } else {
+            InputBindings.slots.map { slot in
+                .init(
+                    action: slot.event,
+                    key: settings.bindings.scanCode(for: slot.action).map(settings.keyName)
+                )
+            }
+        }
+        return ControlsPageReadout(waitingForKey: controlsPage.waitingForKey, rows: rows)
     }
 
     /// The engine rows carry the place and play time; the movie's list has the highlight.

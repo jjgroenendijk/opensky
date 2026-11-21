@@ -66,6 +66,8 @@ public protocol AgentControlWorld: AnyObject {
     func pointMenu(x: Float, y: Float, click: Bool) throws(AgentFailure) -> AgentJSON
     /// Types into the open menu that takes text, such as the race menu's name row.
     func typeText(_ text: String) throws(AgentFailure) -> AgentJSON
+    /// Presses and releases one keyboard key, as a key in the game window does.
+    func pressKey(_ key: String) throws(AgentFailure) -> AgentJSON
 
     /// A window capture waits for the next presented frame, so it may return a wait.
     func captureScreenshot(_ request: AgentScreenshotRequest) throws(AgentFailure) -> AgentHandling

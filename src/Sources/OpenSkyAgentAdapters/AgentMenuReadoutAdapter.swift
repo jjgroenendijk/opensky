@@ -73,6 +73,14 @@ extension AgentMenuReadoutAdapter {
         if game.systemMenu.isOpen {
             result["systemPage"] = .string(game.systemMenu.model.page.rawValue)
             result["topic"] = .init(game.systemMenu.topicPage?.openTopic?.title)
+            if let controls = game.systemMenu.controls {
+                result["controls"] = [
+                    "waitingForKey": .bool(controls.waitingForKey),
+                    "bindings": .array(controls.rows.map {
+                        ["action": .string($0.action), "key": .init($0.key)]
+                    })
+                ]
+            }
             if let movie = game.systemMenu.movieDiagnostics {
                 result["systemMovie"] = [
                     "state": movie.state.map { .init($0) } ?? .null, "faults": .init(movie.faults),

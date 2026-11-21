@@ -5,7 +5,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyFormatsSWF
 import OpenSkyGameData
-import OpenSkyMenusInterface
+public import OpenSkyMenusInterface
 import OpenSkyProgressionInterface
 import OpenSkyRendering
 import simd
@@ -62,5 +62,28 @@ extension PlayerSettingsCoordinator {
 
     func binds(_ action: GameInputAction, to scanCode: UInt32) -> Bool {
         bindings.scanCode(for: action) == scanCode
+    }
+}
+
+extension PlayerSettingsCoordinator {
+    /// Only keyboard keys: a code the key table has, by number or by its shown name.
+    public func scanCode(named name: String) -> UInt32? {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        let lowered = trimmed.lowercased()
+        let number = lowered.hasPrefix("0x")
+            ? UInt32(lowered.dropFirst(2), radix: 16) : UInt32(lowered)
+        if let number {
+            return DirectInputKeyCodes.macKeyCode(number) == nil ? nil : number
+        }
+        return DirectInputKeyCodes.macKeyCodes.keys.sorted().first {
+            keyName($0).caseInsensitiveCompare(trimmed) == .orderedSame
+        }
+    }
+
+    /// The action the key fires, as from the keyboard.
+    public func action(forScanCode scanCode: UInt32, inMenu: Bool) -> GameInputAction? {
+        DirectInputKeyCodes.macKeyCode(scanCode).flatMap {
+            bindings.action(forMacKey: $0, inMenu: inMenu)
+        }
     }
 }
