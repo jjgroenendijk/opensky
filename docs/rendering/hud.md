@@ -109,6 +109,52 @@ the modes again.
 `openskycli game debug cartmode on|off` sets cart mode. `state menu` shows `hud.cartMode` and the
 stack as `hud.modes`.
 
+## HUD under menus
+
+The game keeps drawing the HUD under every menu. No menu closes it. A menu changes only the HUD
+mode: when it opens it puts its mode on the movie's stack through `ShowElements(mode, true)`, and
+when it closes it takes the mode off. The movie decides which parts each mode shows. Mode changes
+are queued and applied in order on the HUD's next update.
+
+| Menu | Mode |
+| --- | --- |
+| Dialogue | `DialogueMode`; taken off while the dialogue menu hides itself, put on again when it shows |
+| Barter, container, gift, inventory, magic, crafting stations | `InventoryMode` |
+| Lockpicking | `InventoryMode`, once its movie has loaded |
+| Training | `BarterMode`; no other menu uses it |
+| Tween menu | `TweenMode`, put on when the menu shows |
+| Journal and system menu (`Quest_Journal`) | `JournalMode` |
+| Map | `WorldMapMode` |
+| Book and note | `BookMode` |
+| Sleep and wait | `SleepWaitMode` |
+| Favourites, level-up, skills, console, message box, loading screen | No mode |
+
+Modes stack. With the Tween menu open, opening the inventory puts `InventoryMode` above
+`TweenMode`, and closing the inventory leaves `TweenMode` on top. While the loading screen is
+open, the HUD ignores its data updates but still applies mode changes.
+
+The map fades the screen as it opens and closes. The fade on opening lasts 0.7 times the map
+transition time, the fade on closing 0.75 times.
+
+Some modes follow the player, not a menu:
+
+| Mode | On while |
+| --- | --- |
+| `StealthMode` | The player sneaks; the stealth meter also gets `FadeIn` or `FadeOut` |
+| `Swimming` | The player swims; checked on every HUD update |
+| `MovementDisabled` | Player movement is disabled; not changed while dialogue is open |
+| `HorseMode`, `WarHorseMode` | The player rides |
+| `VATSPlayback` | A kill camera plays |
+| `CartMode` | A script turns it on |
+| `Favor` | Follower command mode |
+
+When the HUD resets, it empties the movie's `HUDModes` array, puts `All` on, then `HorseMode` and
+`WarHorseMode` when the player rides, then `MovementDisabled` when movement is disabled.
+
+The HUD root's alpha is the HUD opacity setting times 100. The crosshair state is set to `Alert`
+or `Normal`, then the movie's `ValidateCrosshair` runs. `SetCrosshairEnabled` passes the
+crosshair setting.
+
 ## Timing
 
 HUD changes are collected and applied once between frames. A target change only marks the prompt
@@ -124,7 +170,6 @@ Resume ([system menu](/engine/system-menu.md)).
 
 ## Where OpenSky differs
 
-- The movie's `Favor` mode, for follower command mode, and its menu modes (`DialogueMode`,
-  `BarterMode`, `InventoryMode`, `BookMode`, `TweenMode`, and `WorldMapMode`) are not driven.
+- The `Favor` mode and the menu modes ([HUD under menus](#hud-under-menus)) are not driven.
   [Follower command mode](/engine/follower-commands.md) does not switch the HUD, and a menu takes
   the one SWF layer, so the HUD is not drawn under a menu at all.

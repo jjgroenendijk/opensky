@@ -117,6 +117,30 @@ delegate, then sets the selection. Calling it on a display path instead finds no
 Gold and carry weight are text fields on the player info card, not properties of the bottom bar.
 They are set with the GFx `SetText` extension.
 
+## Item kinds and tabs
+
+In the game each item row carries a `filterFlag`, a bit chosen by the item's kind. The movie fills
+each tab, All and Favorites included, from these bits; the engine has no list for them.
+
+| Item kind | `filterFlag` |
+| --- | --- |
+| Weapons and ammunition | 2 |
+| Armour and clothing | 4 |
+| Potions that are not food | 8 |
+| Scrolls | 16 |
+| Food: a potion with the food flag | 32 |
+| Ingredients | 64 |
+| Books | 128 |
+| Keys | 256 |
+| Anything else: gold, soul gems, lockpicks, torches, misc items | 512 |
+
+One keyword moves a potion that is not food to 512. In the container, barter, and gift menus the
+other side's items get the whole value shifted left by 10 bits, so a bit at 1024 or above marks a
+row of the other side when the list is split in two.
+
+The game has no warning for an item with a low value for its weight. The inventory, barter, and
+container movies have only the plain value and weight fields.
+
 ## Navigation
 
 The movie owns the focus, as in the game. It opens on the category list alone, in the

@@ -119,6 +119,23 @@ the font libraries: exact match first, then without regard to case. It is not kn
 GFx matches a `map` name against a font's export name (see ExportAssets on
 [SWF display list](/formats/swf-display-list.md)) or its internal name, so both are tried.
 
+### Finding a font in the game
+
+The game reads the file one command per line, without regard to case. A line that starts with `[`
+is skipped. A style word after a `map` line forces that style on the text; with no style word, or
+an unknown one, the text keeps its own style. `validNameChars` sets the characters a name may use.
+
+The game looks for a font in this order:
+
+1. The `map` lines turn the asked name into the font's real name.
+2. The movie's own fonts and its imports. An import can lead on to a font library.
+3. The font libraries.
+4. The font libraries again, now also taking fonts that are not marked as device fonts.
+
+The operating system's fonts are never used. A text field with no font named asks for
+`Times New Roman`, size 12, black, by the same order, so it shows only through a `map` line or a
+font library. The game's own debug text uses `$ConsoleFont`.
+
 ## HTML text
 
 An HTML field's `InitialText`, and a string a script assigns to `htmlText`, is a small set of
