@@ -248,6 +248,36 @@ struct RendererSWFStaticAcceptanceTests {
         #expect(pixel(middle, x: 5000, y: 1500) == pixel(start, x: 5000, y: 1500))
     }
 
+    /// Flash blends gamma values: black at 60% alpha over grey 128 reads back
+    /// 0.4 x 128, about 51. A blend of linear values gave about 82.
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
+    func aTranslucentPartBlendsInGamma() throws {
+        let grey = SWFColor(red: 128, green: 128, blue: 128, alpha: 255)
+        let black = SWFColor(red: 0, green: 0, blue: 0, alpha: 255)
+        let movie = try SWFDisplayFixture.movie(tags: [
+            SWFDisplayFixture.rectangleShapeTag(
+                characterId: 1, width: 60000, height: 60000, color: grey
+            ),
+            SWFDisplayFixture.rectangleShapeTag(
+                characterId: 2, width: 60000, height: 60000, color: black
+            ),
+            SWFDisplayFixture.placeObject2Tag(.init(depth: 1, characterId: 1)),
+            SWFDisplayFixture.placeObject2Tag(.init(
+                depth: 2, characterId: 2,
+                cxform: .init(multiplyTerms: [256, 256, 256, 154])
+            )),
+            SWFDisplayFixture.showFrameTag
+        ])
+        let renderer = try Self.canvas.makeRenderer()
+        try renderer.setSWFMovie(SWFMovieScene(movie: movie))
+        let pixels = try Self.canvas.render(renderer)
+        let offset = (Self.canvas.height / 2 * Self.canvas.width + Self.canvas.width / 2) * 4
+        for channel in 0 ..< 3 {
+            #expect(abs(Int(pixels[offset + channel]) - 51) <= 3, "channel \(channel)")
+        }
+    }
+
     /// Reassigning the same movie must land on the same frame: the acceptance
     /// path in the app swaps movies repeatedly through the picker.
     @Test(.enabled(if: Self.hasMetal4Device))

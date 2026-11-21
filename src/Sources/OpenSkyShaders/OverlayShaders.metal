@@ -159,14 +159,16 @@ static inline float swfSpread(float t, uint mode)
     return saturate(t);
 }
 
-fragment float4 swfFragment(
-    SWFVertexOut in [[stage_in]],
-    constant SWFDrawUniforms &draw [[buffer(BufferIndexSWFUniforms)]],
-    texture2d<float> glyphAtlas [[texture(TextureIndexUIAtlas)]],
-    texture2d<float> bitmap [[texture(TextureIndexSWFBitmap)]],
-    texture2d<float> gradientRamp [[texture(TextureIndexSWFGradient)]],
-    sampler clampSampler [[sampler(SamplerIndexUIAtlas)]],
-    sampler repeatSampler [[sampler(SamplerIndexSWFRepeat)]])
+/// The draw's colour before blending: straight alpha, in gamma values, as Flash
+/// and every colour a movie holds use them.
+static float4 swfStraightColor(
+    SWFVertexOut in,
+    constant SWFDrawUniforms &draw,
+    texture2d<float> glyphAtlas,
+    texture2d<float> bitmap,
+    texture2d<float> gradientRamp,
+    sampler clampSampler,
+    sampler repeatSampler)
 {
     float4 straight = draw.baseColor;
     switch (draw.fillMode) {
@@ -199,10 +201,44 @@ fragment float4 swfFragment(
     default:
         break;
     }
-    // Flash colours and the colour transform are gamma values; the drawable
-    // encodes on write, so the colour goes out linear.
-    straight = saturate(straight * draw.colorMultiply + draw.colorAdd);
-    return float4(toLinear(straight.rgb) * straight.a, straight.a);
+    return saturate(straight * draw.colorMultiply + draw.colorAdd);
+}
+
+// Flash blends gamma values. The shader reads the target, which holds linear
+// values, blends in gamma, and writes linear, so the pipeline blend is off.
+fragment float4 swfFragment(
+    SWFVertexOut in [[stage_in]],
+    float4 target [[color(0)]],
+    constant SWFDrawUniforms &draw [[buffer(BufferIndexSWFUniforms)]],
+    texture2d<float> glyphAtlas [[texture(TextureIndexUIAtlas)]],
+    texture2d<float> bitmap [[texture(TextureIndexSWFBitmap)]],
+    texture2d<float> gradientRamp [[texture(TextureIndexSWFGradient)]],
+    sampler clampSampler [[sampler(SamplerIndexUIAtlas)]],
+    sampler repeatSampler [[sampler(SamplerIndexSWFRepeat)]])
+{
+    float4 source =
+        swfStraightColor(in, draw, glyphAtlas, bitmap, gradientRamp, clampSampler, repeatSampler);
+    float3 below = toGamma(saturate(target.rgb));
+    float3 blended = source.rgb * source.a + below * (1.0 - source.a);
+    return float4(toLinear(blended), source.a + target.a * (1.0 - source.a));
+}
+
+/// Blend mode add: the source adds to the target, in gamma values too.
+fragment float4 swfAddFragment(
+    SWFVertexOut in [[stage_in]],
+    float4 target [[color(0)]],
+    constant SWFDrawUniforms &draw [[buffer(BufferIndexSWFUniforms)]],
+    texture2d<float> glyphAtlas [[texture(TextureIndexUIAtlas)]],
+    texture2d<float> bitmap [[texture(TextureIndexSWFBitmap)]],
+    texture2d<float> gradientRamp [[texture(TextureIndexSWFGradient)]],
+    sampler clampSampler [[sampler(SamplerIndexUIAtlas)]],
+    sampler repeatSampler [[sampler(SamplerIndexSWFRepeat)]])
+{
+    float4 source =
+        swfStraightColor(in, draw, glyphAtlas, bitmap, gradientRamp, clampSampler, repeatSampler);
+    float3 below = toGamma(saturate(target.rgb));
+    float3 added = saturate(below + source.rgb * source.a);
+    return float4(toLinear(added), saturate(target.a + source.a));
 }
 
 /// Stencil-only mask draws: zero premultiplied output leaves the color

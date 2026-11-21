@@ -68,8 +68,7 @@ under the premultiplied blend, so no color write mask is needed. The scene pass 
 
 The fragment shader works out solid color, bitmap (clamp or repeat, with a premultiplied source
 turned back to straight alpha), linear, radial, or focal radial gradient with the gradient's
-spread mode, or glyph coverage. It does this in straight alpha, applies the color transform, then
-premultiplies for the blend.
+spread mode, or glyph coverage. It does this in straight alpha and applies the color transform.
 
 Every colour a movie holds is a gamma value: shape colours, bitmaps, gradient stops, and the
 colour transform's terms. The shader applies the transform to the gamma value, then turns the
@@ -78,6 +77,14 @@ Without that step every mid-tone draws too bright. For example, the inventory ti
 category column with multiply 0.66 and add 0.34 while the item list has focus. Its black
 background at 60% alpha then turns into grey 0.34 at 60% alpha: about 54 of 255 over a dark
 scene, as in the game. Written out without the step, the same pixel came out at 125.
+
+Flash blends gamma values too, so the blend runs in the shader, not in the pipeline. The shader
+reads the colour already in the target, which holds linear values, turns it into gamma, and
+blends there: the source colour times its alpha, plus the target times one minus that alpha.
+Blend mode add adds the source colour times its alpha instead. The result goes back out linear.
+For example, black at 60% alpha over a scene at gamma 0.5 gives 0.4 x 0.5 = 0.2. A blend of
+linear values gave 0.32, which drew translucent parts too light. Apple GPUs read the target in
+the fragment shader at little cost, and the layer draws with one sample per pixel.
 
 ## Filters and blend modes
 
@@ -94,7 +101,7 @@ has no offscreen pass, so it draws each effect as extra copies of those draws:
   filter does this to the object itself; a shadow or glow does it to its silhouette.
 - A shadow with `CompositeSource` clear draws only the shadow, not the object.
 - An inner shadow and a knockout shadow are not drawn. The object still draws.
-- Blend mode 8, add, draws with a pipeline that adds the premultiplied colour to the target
+- Blend mode 8, add, draws with a shader that adds the colour times its alpha to the target
   instead of blending over it. Every other blend mode draws as normal.
 
 Masks inside the subtree stay where they are: a moved copy is cut by the same mask as the object.
@@ -168,9 +175,6 @@ for the same reason.
 - A glyph is rasterized upright at the text's even scale, then its quad turns, slants, and
   stretches with the transform. A strongly stretched or slanted glyph is sampled from that upright
   picture, so it looks softer than a glyph drawn at its own shape.
-- The blend runs on linear values, but Flash blends gamma values. A part that is not fully opaque
-  therefore draws a little lighter than in the game over a dark scene. Black at 60% alpha over a
-  scene at gamma 0.5 gives 0.32, where the game gives 0.2.
 
 ## Checking it
 
