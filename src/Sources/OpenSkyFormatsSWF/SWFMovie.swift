@@ -58,6 +58,11 @@ nonisolated public struct SWFMovieTally: Equatable, Sendable {
     public var clipLayers = 0
     public var filters = 0
     public var blendModes = 0
+    /// Placements per FilterID (0 drop shadow, 1 blur, 2 glow, 3 bevel, 4 gradient glow,
+    /// 5 convolution, 6 colour matrix, 7 gradient bevel).
+    public var filtersByID: [UInt8: Int] = [:]
+    /// Placements per BlendMode value (spec PlaceObject3, p. 40).
+    public var blendModesByValue: [UInt8: Int] = [:]
     public var clipActions = 0
     /// Placements naming a character id absent from the dictionary, or a
     /// modify targeting an empty depth — skipped, never fatal.
@@ -98,6 +103,8 @@ nonisolated public struct SWFMovieTally: Equatable, Sendable {
         clipLayers += other.clipLayers
         filters += other.filters
         blendModes += other.blendModes
+        filtersByID.merge(other.filtersByID, uniquingKeysWith: +)
+        blendModesByValue.merge(other.blendModesByValue, uniquingKeysWith: +)
         clipActions += other.clipActions
         danglingPlacements += other.danglingPlacements
         actionBlocks += other.actionBlocks
@@ -125,9 +132,13 @@ nonisolated public struct SWFDisplayListBuilder: Sendable {
     }
 
     mutating func apply(_ placement: SWFPlacement) {
-        tally.filters += placement.filterCount
-        if placement.blendMode != nil {
+        tally.filters += placement.filterIDs.count
+        for id in placement.filterIDs {
+            tally.filtersByID[id, default: 0] += 1
+        }
+        if let mode = placement.blendMode {
             tally.blendModes += 1
+            tally.blendModesByValue[mode, default: 0] += 1
         }
         if placement.hasClipActions {
             tally.clipActions += 1

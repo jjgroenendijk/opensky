@@ -159,7 +159,7 @@ struct SWFPlacementDecodeTests {
         )
         #expect(placement.className == "Widget")
         #expect(placement.blendMode == 3)
-        #expect(placement.filterCount == 2)
+        #expect(placement.filterIDs == [1, 1], "two blur filters")
         #expect(placement.clipDepth == 8)
         #expect(placement.characterId == 6)
     }

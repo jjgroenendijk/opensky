@@ -202,6 +202,8 @@ struct SWFMovieTests {
         #expect(movie.tally.placeObject3 == 1)
         #expect(movie.tally.blendModes == 1)
         #expect(movie.tally.filters == 3)
+        #expect(movie.tally.filtersByID == [1: 3])
+        #expect(movie.tally.blendModesByValue == [5: 1])
     }
 }
 

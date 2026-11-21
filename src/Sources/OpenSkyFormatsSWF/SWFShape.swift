@@ -25,7 +25,8 @@ nonisolated public struct SWFShapeSegment: Equatable, Sendable {
     public let fillStyle0: Int
     /// Fill on the right of the travel direction.
     public let fillStyle1: Int
-    let lineStyle: Int
+    /// The line style index, with the same 0-means-none rule as the fills.
+    public let lineStyle: Int
 
     var endPoint: (x: Int32, y: Int32) {
         switch edge {
@@ -53,6 +54,27 @@ nonisolated public struct SWFShapeDefinition: Equatable, Sendable {
     public let fillStyles: [SWFFillStyle]
     public let lineStyles: [SWFLineStyle]
     public let segments: [SWFShapeSegment]
+
+    /// Edges drawn with a line style wider than zero.
+    public var strokedSegmentCount: Int {
+        segments.count { segment in
+            lineStyles.indices.contains(segment.lineStyle - 1)
+                && lineStyles[segment.lineStyle - 1].width > 0
+        }
+    }
+
+    /// The gradients of the fills, in fill order.
+    public var gradients: [SWFGradient] {
+        fillStyles.compactMap { style in
+            switch style {
+            case let .linearGradient(_, gradient), let .radialGradient(_, gradient),
+                 let .focalRadialGradient(_, gradient):
+                gradient
+            default:
+                nil
+            }
+        }
+    }
 
     /// Decodes a DefineShape/2/3/4 tag body.
     public static func parse(tag: SWFTag) throws -> SWFShapeDefinition {
