@@ -24,30 +24,27 @@ Values from `openskycli gmst list fsneak` on the local install:
 | `fSneakRunningMult` | 2 | How much louder running is than walking |
 | `fSneakActionMult` | 2 | Scales an action sound |
 | `fSneakSkillMult` | 0.5 | Turns a skill level into a skill factor |
-| `fSneakPerceptionSkillMin` | 0 | Bottom of the skill clamp |
-| `fSneakPerceptionSkillMax` | 100 | Top of the skill clamp |
+| `fSneakPerceptionSkillMin` | 0 | Noticer skill at skill 0 |
+| `fSneakPerceptionSkillMax` | 100 | Noticer skill at skill 100 |
 | `iSoundLevelSilent` | 10 | Action sound of a silent weapon or spell |
 | `fSneakLightMult` | 0.33 | Scales the light term |
-| `fSneakLightExteriorMult` | 0.5 | Scales the light term outdoors (OpenSky's reading) |
-| `fDetectionSneakLightMod` | 15 | Added to the light level in the light term |
-| `iLightLevelInteriorMod` | 25 | Added to an interior light level |
+| `fSneakLightExteriorMult` | 0.5 | Scales the light level outdoors, in place of `fSneakLightMult` |
+| `fDetectionSneakLightMod` | 15 | Added to the scaled light level |
+| `iLightLevelInteriorMod` | 25 | Taken off an interior light level |
 | `iLightLevelMax` | 300 | Cap on the light level |
 | `fSneakLightMoveMult` | 0.01 | Visual term bonus for a moving target |
 | `fSneakLightRunMult` | 0.2 | Visual term bonus for a running target |
-| `fSneakStealthBoyMult` | 0 | Visual term of an invisible target |
-| `fSneakAlertMod` | 0 | Noticer skill weight of a suspicious observer |
-| `fSneakSleepBonus` | 0 | Noticer skill weight of a sleeping observer |
+| `fSneakAlertMod` | 0 | Noticer skill weight of an observer in combat |
+| `fSneakSleepBonus` | 0 | Scales the sound a sleeping observer hears |
 | `fSneakCombatMod` | -0.4 | Noticer skill weight of an observer fighting someone else |
-| `fSneakSleepMod` | 0 | Added to a sleeping observer's value (OpenSky's reading) |
-| `fPlayerDetectionSneakBase` | 10 | Base of the player's sneaker factor (OpenSky's reading) |
-| `fPlayerDetectionSneakMult` | 0.4 | Skill weight of the player's sneaker factor (OpenSky's reading) |
-| `fPlayerDetectActorValue` | -30 | Lowest value against the player (OpenSky's reading) |
+| `fSneakSleepMod` | 0 | Noticer skill weight of a sleeping observer |
+| `fPlayerDetectionSneakBase` | 10 | Base of the player's sneaker skill |
+| `fPlayerDetectionSneakMult` | 0.4 | Skill weight of the player's sneaker skill |
 | `fSneakFlyingDistanceMult` | 3 | Range multiplier of a flying observer |
 
 The values are from `openskycli gmst list` on the local install. `Skyrim.esm` does not set
-`fSneakLightMoveMult`, `fSneakLightRunMult`, `fSneakStealthBoyMult`, or `fSneakCombatMod`, so the
-engine's own default applies. A plugin that sets one wins. "OpenSky's reading" marks a setting whose
-use no source states.
+`fSneakLightMoveMult`, `fSneakLightRunMult`, or `fSneakCombatMod`, so the engine's own default
+applies. A plugin that sets one wins.
 
 ## OpenSky's own constants
 
@@ -61,8 +58,7 @@ cone, how loud a crouching target is, how fast a guard decides, or how long it t
 | `equippedWeightMult` | 0.5 | Noise per point of equipped weight |
 | `sneakMovementMult` | 0.75 | Movement noise while crouched |
 | `sprintMovementMult` | 3 | Movement noise while sprinting |
-| `viewConeHalfAngleDegrees` | 90 | Half the view cone angle |
-| `sneakVisualMult` | 0.5 | Visual term while crouched; the CK wiki's visual factor has none |
+| `viewConeHalfAngleDegrees` | 95 | Half the view cone angle |
 | `normalActionSound` | 25 | Action sound at the normal level |
 | `loudActionSound` | 50 | Action sound at the loud level |
 | `veryLoudActionSound` | 100 | Action sound at the very loud level |

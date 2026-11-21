@@ -50,91 +50,123 @@ can grow later without changing the evaluation.
 
 ## The formula
 
-UESP gives the whole shape, and it is used as written:
+The game computes one value for an observer and a target. The formula is the same for every
+target:
 
 ```text
-Detection Value = fSneakBaseValue
-    + (Sound factor + Visual factor + Noticer skill factor) * attenuation
-    + (Noticer skill factor - Sneaker skill factor)
+Detection Value = fSneakBaseValue + Sound + Visual + Skill
 
-attenuation  = ((fSneakMaxDistance - distance) / fSneakMaxDistance) ^ exponent
-Sound Factor = fSneakSoundsMult * (Movement + Action)
-               * (1 with line of sight, fSneakSoundLosMult without)
-Movement     = (equippedWeightBase + equippedWeightMult * weight)
-               * gait multiplier * muffle,   0 when not moving
-Action       = ActionSound * fSneakActionMult
+attenuation = ((range - distance) / range) ^ 2, never below 0
+range       = fSneakMaxDistance, times fSneakExteriorDistanceMult for an observer outdoors,
+              times fSneakFlyingDistanceMult when the observer or the target flies
+
+Skill  = fSneakSkillMult * (attenuation * Weight * Noticer - Sneaking * Sneaker)
+Sound  = fSneakSoundsMult * (Action + Movement) * attenuation
+         * (1 with line of sight, fSneakSoundLosMult without)
+         * (1 + Sleeping * fSneakSleepBonus)
+Visual = InViewCone * attenuation * Moving * Light * Blindness * Size
 ```
 
-Both skill factors are a Sneak skill, clamped to `fSneakPerceptionSkillMin` to
-`fSneakPerceptionSkillMax` and multiplied by `fSneakSkillMult`. The noticer is the observer, and the
-sneaker is the target. So a skilled sneaker lowers the value at every distance, through the last
-term.
+Sound and Visual are never below 0.
 
-The CK wiki weights the noticer skill by the observer's state:
+Skill:
 
-```text
-Noticer = skill factor * (1 + Alert * fSneakAlertMod + Sleeping * fSneakSleepBonus
-                            + NotCombatTarget * fSneakCombatMod)
-```
+- Noticer is the observer's Sneak skill, mapped onto `fSneakPerceptionSkillMin` to
+  `fSneakPerceptionSkillMax`: `min + (max - min) * skill / 100`. This is a line, not a clamp.
+  The install sets 0 and 100, so Noticer is the skill itself.
+- Weight is `1 + InCombat * fSneakAlertMod + Sleeping * fSneakSleepMod + FightingAnother *
+  fSneakCombatMod`. InCombat is an observer in combat. FightingAnother is an observer whose
+  combat target is another actor. On the install the first two settings are 0 and
+  `fSneakCombatMod` is -0.4, so only a busy fighter notices less.
+- An observer that runs an Ambush package adds 2.5 to Weight for its ambush target, and 0 for
+  any other target.
+- Sneaking is 1 for a target in sneak mode, and 0 for any other target. So **a target that
+  does not sneak loses nothing for its Sneak skill**. A standing player in plain view is seen
+  even in a dark room.
+- Sneaker is the target's Sneak skill. For the player it is first `fPlayerDetectionSneakBase +
+  fPlayerDetectionSneakMult * skill` (10 and 0.4). Then the perk entry point Modify Detection
+  Sneak Skill runs. The same player rule applies to Noticer when the observer is the player.
+- Only the observer's part is attenuated.
 
-Alert is a suspicious pair. Sleeping is an observer running a sleep package. NotCombatTarget is an
-observer that fights an actor other than this target. On the install the alert and sleep settings
-are 0 and `fSneakCombatMod` is -0.4, so only a busy fighter notices less.
+Sound:
 
-When the target is the player, the sneaker factor is `fPlayerDetectionSneakBase +
-fPlayerDetectionSneakMult * skill`, with the skill clamped as above, and the whole value never falls
-below `fPlayerDetectActorValue`. A sleeping observer adds `fSneakSleepMod` to the value. No source
-says where these three apply. Their names say whom they are for, so the placement is OpenSky's
-reading.
+- Movement is `(12 + 0.5 * equipped weight) * Movement Noise Mult`, times `fSneakRunningMult`
+  when running, and 0 when the target does not move.
+- Action is the sound level of the attack or cast the target makes now, times the whole part
+  of `fSneakActionMult`.
+- An ambush target is heard as if in line of sight.
 
-At or past the maximum distance the value is `fSneakBaseValue` alone, so nothing is perceived. The
-last term is not attenuated. Without this cut, an observer with a much higher Sneak skill than the
-target would detect it at any range. UESP does not say how the game limits this; OpenSky's rule
-follows the observed behaviour that nobody notices a target outside the detection range.
+Visual:
 
-Muffle follows UESP "Skyrim:Muffle (effect)" and not the shorter Sneak page: it scales the armour
-weight by `1 - muffle`, so a fully muffled target still makes the base noise of its steps. Muffle
-is the `Movement Noise Mult` actor value, which every Muffle effect raises
-(`PerkMuffleConstantSelf` is a value modifier on it). Effects stack, and values over 1 do nothing
-more.
+- InViewCone is tested only with a line of sight. It is 0 when the target's Invisibility is
+  above 0, so an invisible target can only be heard.
+- Moving is `1 + running * fSneakLightRunMult + moving * fSneakLightMoveMult`. Then the perk
+  entry point Mod Detection Movement runs.
+- Light is `light level * multiplier + fDetectionSneakLightMod`. The multiplier is
+  `fSneakLightMult` indoors and `fSneakLightExteriorMult` outdoors. So a fully dark interior
+  still gives 15.
+- Blindness is `(100 - observer Blindness) / 100`, and 0 for a sleeping observer.
+- Size is 0.5, 1, 1.5, or 2 for a small, normal, large, or very large target.
+- Crouching does not change Visual. It works only through the Sneaker term.
 
-`ActionSound` is the sound level of the attack or cast the target makes right now. A swing uses the
-weapon's `WEAP` `VNAM` level, and a cast uses the casting sound level of the spell's first effect.
-The sound lasts as long as the swing or the cast.
+Rounding: a total between 0 and 1 becomes 1. Any other total loses its fraction. A result of
+exactly 0 becomes -1. So sight never gives 0; the value 0 means "noticed an event" (below).
 
-Outdoors, the attenuation range is multiplied by `fSneakExteriorDistanceMult`. So the same
-distance counts for less in the open than in a corridor. A flying observer's range is also
-multiplied by `fSneakFlyingDistanceMult`. No actor flies yet, so this term waits for flight.
+### Range and view cone
 
-The visual factor follows the CK wiki:
+- Inside the range the formula always runs. Beyond it, it does not run at all.
+- The range is multiplied by 0.75 for an observer in combat when the target is not the player
+  and not its combat target.
+- More than 60 degrees off the observer's facing, the range for a line of sight shrinks in a
+  straight line, down to 0.75 times (indoors) or 0.5 times (outdoors) directly behind.
+- The view cone is 190 degrees wide: 95 degrees on each side of the facing.
+- No rule detects a target only because it is in line of sight.
 
-```text
-Visual Factor = 0 without a sight line, outside the view cone, or for a sleeping observer
-              = Light * Movement * Blindness * Invisibility * (sneakVisualMult while crouched)
-Light         = (fDetectionSneakLightMod + light level) * fSneakLightMult
-                * (fSneakLightExteriorMult outdoors)
-Movement      = 1 + moving * fSneakLightMoveMult + running * fSneakLightRunMult
-Blindness     = (100 - int(observer Blindness)) / 100
-Invisibility  = fSneakStealthBoyMult when the target's Invisibility is above 0, else 1
-```
+### Detection events
 
-The wiki names the light offset `fSneakDetectionLightMult`. The install has no such setting, but
-it has `fDetectionSneakLightMod`, which OpenSky reads in its place. The exterior factor is
-OpenSky's reading of `fSneakLightExteriorMult`, whose use no source states. Moving and running are
-0 or 1; a sprint counts as running. The crouch factor `sneakVisualMult` is OpenSky's own: the wiki's
-visual factor has none. `fSneakStealthBoyMult` is 0 on the install, so an invisible target can
-still only be heard.
+When the sight value is not positive, or the target is out of range, the observer checks the
+target's last sound event:
+
+- The event counts within 1,536 units for the player's sound and 512 units for another
+  actor's. A very loud sound (level 200 or more) doubles the distance.
+- A sound-only form of the formula runs. Its light level is fixed at 225 indoors and 75
+  outdoors, and is used only when the event position is in view. Its range for a very loud
+  event is 3,072 units.
+- The observer then checks the target's projectiles within 1,024 units (player) or 512 units
+  (another actor), at sound level 50.
+- A positive result gives the detection value 0, at the event position.
 
 ### Light level
 
-The light level is sampled at the middle of the target's body from the light the scene pass shades
-it with: the ambient colour, the sun (or the cell's directional light indoors), and the 8 nearest
-point lights with the shader's `(1 - d / r) ^ falloff`. The Rec. 709 luminance of that sum,
-divided by `fullLightLuminance`, times 100, is the level. Indoors `iLightLevelInteriorMod` (25) is
-added. The level is capped at `iLightLevelMax` (300). The CK wiki gives the scale: `GetLightLevel`
-reads about 100 for a lit day outdoors, and Mod Detection Light names the interior offset and the
-cap. Mapping one luminance unit to level 100 is OpenSky's own choice. There is no shadow test and
-no facing term. So a target in the shade of a wall at noon still counts as lit.
+In the game:
+
+- The level starts as a light value stored for the actor, as a whole number. Asking for a
+  detection marks the target, so its light is sampled.
+- An observer with a Night Eye value above 0 multiplies it by 3.
+- An offset is then **taken off**, not added. Indoors it is the smaller of
+  `iLightLevelInteriorMod` (25) and 100 times the largest channel of the cell's ambient
+  colour. Outdoors it is 0. That it is the ambient colour is inferred.
+- The level is held in 0 to `iLightLevelMax` (300). Then the perk entry point Mod Detection
+  Light runs, and the level is rounded to a whole number.
+- `GetLightLevel` returns the level times the indoor or outdoor multiplier.
+
+OpenSky samples the stored light value itself. It is sampled at the middle of the target's
+body from the light the scene pass shades it with: the ambient colour, the sun (or the cell's
+directional light indoors), and the 8 nearest point lights with the shader's
+`(1 - d / r) ^ falloff`. The Rec. 709 luminance of that sum, divided by `fullLightLuminance`,
+times 100, is the value. Mapping one luminance unit to 100 is OpenSky's own choice. There is no
+shadow test and no facing term. So a target in the shade of a wall at noon still counts as
+lit.
+
+### What OpenSky leaves out
+
+- The Ambush package weight, the target's size, and the Night Eye multiplier.
+- The three perk entry points named above.
+- The indoor offset is always 25; it is not capped by the cell's ambient colour.
+- The smaller range behind the observer and for a fighter's other targets.
+- The sound-event fallback. A landed projectile makes OpenSky's only detection event
+  ([stealth points](#stealth-points)).
+- Weight uses a suspicious pair for InCombat.
 
 ### Gait multipliers
 
@@ -146,14 +178,14 @@ no facing term. So a target in the shade of a wall at noon still counts as lit.
 | Run | `fSneakRunningMult` = 2 | `Skyrim.esm` |
 | Sprint | `sprintMovementMult` = 3 | OpenSky |
 
-Vanilla's movement term has no crouch factor. Vanilla uses the Sneak skill on the other side of
-the formula instead, and OpenSky does that too. The sneak multiplier stays, because the sneak walk
-is slower than a walk. Swimming uses the walking value instead of a new unmeasured constant.
+The game's movement term has no crouch or sprint factor. The two OpenSky multipliers stay,
+because the sneak walk is slower than a walk and a sprint is faster than a run. Swimming uses the walking value instead of a new unmeasured constant.
 
 ### Noise radius
 
 The noise radius is how far a target at one gait can be heard, in world units. It is the
-distance where the sound and skill terms exactly cancel `fSneakBaseValue`. The evaluation does
+distance where the sound and the observer's skill exactly cancel `fSneakBaseValue` and the
+sneaker's skill. The evaluation does
 not use it. Zero is a
 real answer: a target too quiet to notice even up close has no radius.
 
@@ -213,6 +245,62 @@ alone.
 The pool sets the pair's state, which combat reads. Crime witnesses read the level's own state,
 because the wiki says the pool is for aggression, not for seeing a theft.
 
+## Keeping a combat target
+
+In the game, each combat group keeps one record per target. It holds the best detection value
+any member has now, the target's stealth points, which start at 99, and two states: noticed
+and lost.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Hidden
+    Hidden --> Noticed: a sighting counts
+    Noticed --> Noticed: a sighting counts
+    Noticed --> Lost: 10 s after the last known position stopped moving
+    Lost --> Noticed: a sighting counts
+    Lost --> [*]: 30 s lost, target dropped
+```
+
+- A sighting counts when the value is above 0 and either the points are 0 or the value is over
+  the threshold: 25 for a standing target and 70 for a sneaking one. It sets the points to 0
+  and stores the time and the target's true position.
+- Every 0.1 s, a value above 0 takes `value * 3 * seconds` off the points.
+- For 10 s after a counting sighting, while the target stays within 768 units of where it was
+  seen, the group's last known position follows the target's true position. This holds even
+  when the value is 0 or less. It is the main reason a fighter keeps a target that steps into
+  the dark.
+- The target is lost when one of these holds:
+  1. 10 s pass after the last known position stopped following. So a target that stands still
+     is kept for about 20 s.
+  2. The value is below 0, a member has the target in its view cone with a line of sight, and
+     the target is no longer noticed or is invisible.
+  3. The value is below 0, the target is not noticed, and a member within 256 units of the
+     last known position has a clear line to it.
+  4. The value is positive but does not count.
+- The points refill only while the target is lost: 5 per second, or 0.2 per point of value
+  below 0 when that is more. The refill waits 10 s after the target was lost, and the
+  [waits](#stealth-points) after an attack or a detection event.
+- A member hit by the target caps the points at 50 and adds the attacker's position as a
+  place to search. It does not force a sighting. A detection event caps the points at 75 and
+  adds a place to search.
+- The group searches only when every target on its list is lost and a member is engaged on at
+  least one. `GetCombatState` returns 2 during the search. The search ends when any target is
+  no longer lost. A line plays when a target is found again and when one is dropped.
+- A lost target is dropped after 30 s. One with engaged members also needs 60 s with no member
+  within 4,096 units.
+- A member below the high process level counts every group target within 4,096 units as
+  detected.
+
+A hostility reaction, such as starting combat, runs on every detection result of 0 or more.
+That includes 0, an event heard and not seen. A teammate further than 4,000 units from the
+player is skipped for one of the reasons. An actor whose warning turns into an attack detects
+its target at 100 with a line of sight.
+
+OpenSky keeps one pool per target and one state per pair ([stealth points](#stealth-points)).
+An observer keeps a detected target through the 10 s wait after the last positive value. The
+768-unit limit, the four lost rules, the caps at 50 and 75, and the removal times are not
+built.
+
 ## Sneak training
 
 A crouched target trains Sneak while it stays hidden. Each frame, the target earns
@@ -241,8 +329,22 @@ becoming hidden is not defined.
   a set range, and others. Without a reason the detection state of the pair is dropped. An old
   state expires after `fDetectionStateExpireTime`.
 - An actor that runs its warn package for the aggro radius skips one of the hostility reasons.
-- The detection level at which combat starts was not found. `iAICombatMinDetection` is never
-  read. How the aggro radius acts beyond the warn package check was not found either.
+- Combat can start on any result of 0 or more ([keeping a combat target](#keeping-a-combat-target)).
+  `iAICombatMinDetection`, `fPlayerDetectActorValue`, `fSneakStealthBoyMult`, and
+  `fSneakNoticeMin` are never read. The aggro radius rule is in
+  [combat behaviour](/engine/combat-behavior.md#aggro-radius).
+
+A pair's check then repeats at an interval that depends on who asks:
+
+| Who asks | Interval | A stored result is reused when younger than |
+| --- | --- | --- |
+| A combat group, for a target beyond 2,048 units | 1.5 s | 3 s |
+| The actor itself, or its group for the player or a target within 2,048 units | 1 s | 2 s |
+| A group member whose own combat target is another NPC | 0.5 s | 1 s |
+| A group member whose own combat target is the player | 0.25 s | 1 s |
+
+The shortest interval any asker gives wins. Checks run only while the observer and the target
+are both within 8,192 units of the player.
 
 ## Limits and repeatability
 
