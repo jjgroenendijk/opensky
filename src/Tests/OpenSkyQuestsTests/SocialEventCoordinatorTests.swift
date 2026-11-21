@@ -69,6 +69,39 @@ struct SocialEventCoordinatorTests {
         #expect(social.approachingSpeakers.isEmpty)
     }
 
+    /// A waiting conversation scene asks its pair to meet: the speaker walks, and the
+    /// pair counts as met once it stands near. A meeting nobody asks for ends.
+    @Test func aSceneMeetingWalksThePairTogether() {
+        let world = World()
+        let social = SocialEventCoordinator(world: world)
+        func frame(_ distance: Float, now: Double) -> SocialFrame {
+            SocialFrame(
+                actors: [
+                    SocialActor(key: first, feet: .zero, interruptFlags: 0x02),
+                    SocialActor(key: second, feet: SIMD3(distance, 0, 0), interruptFlags: 0x02)
+                ],
+                now: now, isInterior: false, playerInConversation: false, player: .zero
+            )
+        }
+        #expect(!social.meetForScene(speaker: first, partner: second, now: 0))
+        #expect(social.state.sceneMeetings == [first])
+        world.frame = frame(2000, now: 0)
+        social.runPass()
+        #expect(social.state.conversations.first?.phase == .approaching)
+        #expect(social.approachingSpeakers.isEmpty, "the scene has not begun, so nothing pauses")
+        #expect(social.tick().contains(.walk(first, to: SIMD3(2000, 0, 0))))
+
+        world.frame = frame(100, now: 1)
+        #expect(!social.meetForScene(speaker: second, partner: first, now: 1))
+        social.runPass()
+        #expect(social.meetForScene(speaker: first, partner: second, now: 1))
+
+        world.frame = frame(100, now: 10)
+        social.runPass()
+        #expect(social.state.sceneMeetings.isEmpty)
+        #expect(social.state.conversations.isEmpty)
+    }
+
     @Test func thePassRunsEveryThirtyFramesWhileAWorldIsLoaded() {
         let world = World()
         let social = SocialEventCoordinator(world: world)

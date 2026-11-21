@@ -78,6 +78,9 @@ nonisolated public struct SocialState: Equatable, Sendable {
     public var lastPass: Double?
     /// Where each actor stood at the last pass, to see who walks. Not saved.
     public var lastPosition: [ReferenceKey: SIMD3<Float>] = [:]
+    /// The speakers a waiting conversation scene asked to meet their partner. Their
+    /// scene has not begun, so the pass does not wait for it. Not saved.
+    public var sceneMeetings: Set<ReferenceKey> = []
     public var random = SplitMix64(seed: 0x50C1A1)
 
     public init() {}

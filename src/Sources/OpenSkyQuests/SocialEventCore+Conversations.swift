@@ -94,9 +94,10 @@ nonisolated extension SocialEventCore {
                 commands += end(talk, settings: settings, state: &state)
                 continue
             }
+            let inScene = speaker.isInScene || state.sceneMeetings.contains(speaker.key)
             switch talk.phase {
             case .waitingForAnswer:
-                guard speaker.isInScene else {
+                guard inScene else {
                     if frame.now - talk.startedAt >= talk.answerSeconds {
                         commands += end(talk, settings: settings, state: &state)
                     } else {
@@ -114,7 +115,7 @@ nonisolated extension SocialEventCore {
                     commands += face(speaker.key, partner.key)
                 }
             case .approaching:
-                guard !speaker.isInCombat, speaker.isInScene else {
+                guard !speaker.isInCombat, inScene else {
                     commands += end(talk, settings: settings, state: &state)
                     continue
                 }
@@ -129,7 +130,7 @@ nonisolated extension SocialEventCore {
                     commands += walk(&talk, speaker: speaker, partner: partner)
                 }
             case .talking:
-                guard speaker.isInScene || partner.isInScene else {
+                guard inScene || partner.isInScene else {
                     commands += end(talk, settings: settings, state: &state)
                     continue
                 }
@@ -137,6 +138,7 @@ nonisolated extension SocialEventCore {
             kept.append(talk)
         }
         state.conversations = kept
+        state.sceneMeetings.formIntersection(kept.map(\.speaker))
         return commands
     }
 

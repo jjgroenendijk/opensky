@@ -51,6 +51,30 @@ extension StorySceneLinesAdapter {
         actor == .player || game.streamer.residentActorEntry(key: actor) != nil
     }
 
+    /// The game's limit before a scene line: 20 degrees, and 80 while the speaker
+    /// walks (docs/engine/random-conversations.md#walking-together). The game tests
+    /// the head; OpenSky turns and tests the body.
+    public func sceneSpeakerFaces(_ speaker: ReferenceKey, _ listener: ReferenceKey) -> Bool {
+        let standing: Float = 20 * .pi / 180
+        let walking: Float = 80 * .pi / 180
+        guard
+            speaker != .player,
+            let from = game.dialogueWorld.headPosition(of: speaker),
+            let to = game.dialogueWorld.headPosition(of: listener)
+        else { return true }
+        let heading = atan2(to.x - from.x, to.y - from.y)
+        if game.streamer.isActorWalking(speaker) {
+            guard let facing = game.streamer.npcTransform(for: speaker)?.rotation.z else {
+                return true
+            }
+            let turn = (heading - facing).remainder(dividingBy: 2 * .pi)
+            return abs(turn) <= walking
+        }
+        guard let left = game.streamer.turnActor(speaker, toHeading: heading, within: standing)
+        else { return true }
+        return abs(left) <= standing
+    }
+
     public func lineDuration(of info: TopicInfo, speaker: ReferenceKey) -> Float? {
         guard hasLoadedBody(speaker) else { return 0 }
         let texts = responseTexts(of: info)

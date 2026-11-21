@@ -236,6 +236,16 @@ final class FakeSceneHost: SceneWorld {
     private(set) var running: [ReferenceKey: [FormID]] = [:]
     private(set) var released: [ReferenceKey] = []
     var statuses: [ReferenceKey: SceneActorStatus] = [:]
+    var partnersMet = true
+    var faces = true
+
+    func conversationPartnersMeet(_: ReferenceKey, _: ReferenceKey) -> Bool {
+        partnersMet
+    }
+
+    func sceneSpeakerFaces(_: ReferenceKey, _: ReferenceKey) -> Bool {
+        faces
+    }
 
     func lineDuration(of info: TopicInfo, speaker: ReferenceKey) -> Float? {
         lineSeconds

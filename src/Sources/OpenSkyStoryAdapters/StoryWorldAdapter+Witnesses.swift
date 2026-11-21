@@ -112,6 +112,14 @@ extension StoryWorldAdapter {
         sceneLines.hasLoadedBody(actor)
     }
 
+    public func conversationPartnersMeet(_ speaker: ReferenceKey, _ partner: ReferenceKey) -> Bool {
+        sceneCast.conversationPartnersMeet(speaker, partner)
+    }
+
+    public func sceneSpeakerFaces(_ speaker: ReferenceKey, _ listener: ReferenceKey) -> Bool {
+        sceneLines.sceneSpeakerFaces(speaker, listener)
+    }
+
     public func voicePaths(of info: FormID, speaker: ReferenceKey) -> [String] {
         sceneLines.voicePaths(of: info, speaker: speaker)
     }

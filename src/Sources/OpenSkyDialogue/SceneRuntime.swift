@@ -27,6 +27,22 @@ public protocol SceneHost: AnyObject {
     func sceneActorStatus(_ actor: ReferenceKey) -> SceneActorStatus
     /// The actor has a loaded body, so it can walk to a partner and face it.
     func hasLoadedBody(_ actor: ReferenceKey) -> Bool
+    /// Brings the two partners of a conversation scene together before its first
+    /// phase. Asked each tick. True once they stand near each other.
+    func conversationPartnersMeet(_ speaker: ReferenceKey, _ partner: ReferenceKey) -> Bool
+    /// Turns `speaker` toward `listener` before a line. True once it faces it
+    /// closely enough, or cannot turn.
+    func sceneSpeakerFaces(_ speaker: ReferenceKey, _ listener: ReferenceKey) -> Bool
+}
+
+extension SceneHost {
+    public func conversationPartnersMeet(_: ReferenceKey, _: ReferenceKey) -> Bool {
+        true
+    }
+
+    public func sceneSpeakerFaces(_: ReferenceKey, _: ReferenceKey) -> Bool {
+        true
+    }
 }
 
 /// The scene action that holds an actor's packages.
@@ -53,6 +69,12 @@ final class ScenePendingLines {
     var lines: [ScenePackageOwner: SceneLine] = [:]
     /// Scene seconds from which the next conversation scene may begin. Not saved.
     var conversationFreeAt: Double = 0
+    /// The conversation scene whose partners walk together now, and since when.
+    var meeting: (scene: FormID, since: Double)?
+    /// Scenes whose partners did not meet in time, and when each may try again.
+    var meetingRetryAt: [FormID: Double] = [:]
+    /// When each waiting line began to turn its speaker to the listener.
+    var facingSince: [ScenePackageOwner: Double] = [:]
 
     init() {}
 

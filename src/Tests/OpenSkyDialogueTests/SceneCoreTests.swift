@@ -21,6 +21,8 @@ struct SceneCoreTests {
         (.repeated, "repeated"),
         (.waitingForActors, "waiting for actors in another scene"),
         (.waitingForConversation, "waiting for its conversation partners or its turn"),
+        (.waitingForPartners, "waiting for its partners to meet"),
+        (.turningToListener(2), "action 2: speaker turns to the listener"),
         (.paused, "paused by an actor"),
         (.resumed, "resumed"),
         (.ended(.finished), "ended (finished)"),
