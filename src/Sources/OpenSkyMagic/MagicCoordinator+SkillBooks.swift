@@ -8,6 +8,7 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
+import OpenSkyQuestsInterface
 
 extension MagicCoordinator.SpellTomes {
     /// What reading `item` does: a skill book raises its skill, a spell tome teaches its
@@ -21,7 +22,19 @@ extension MagicCoordinator.SpellTomes {
         if let spell = items.teachesSpell(item) {
             return coordinator.controlPanels.readSpellTome(item, spell: spell)
         }
+        if let caster = coordinator.caster, let key = bookKey(item) {
+            let reading = caster.spellbook.read(book: key, teaching: nil, on: .player)
+            countReading(reading, isSkillBook: false)
+        }
         return nil
+    }
+
+    /// Raises the book stats the first time a book is read.
+    func countReading(_ reading: SpellTomeReading, isSkillBook: Bool) {
+        guard !reading.alreadyRead, let store = coordinator.caster?.spellbook.store else { return }
+        for stat in ItemUseStats.bookStats(isSkillBook: isSkillBook, taughtSpell: reading.taught) {
+            store.incrementMiscStat(stat)
+        }
     }
 
     /// Marks `item` read and raises `skill`. A book read before raises nothing.
@@ -31,9 +44,11 @@ extension MagicCoordinator.SpellTomes {
         guard let caster = coordinator.caster, let key = bookKey(item) else {
             return coordinator.recordCasting(.unresolvedBook(name))
         }
-        guard !caster.spellbook.read(book: key, teaching: nil, on: .player).alreadyRead else {
+        let reading = caster.spellbook.read(book: key, teaching: nil, on: .player)
+        guard !reading.alreadyRead else {
             return coordinator.recordCasting(.bookAlreadyRead(name))
         }
+        countReading(reading, isSkillBook: true)
         let subject = coordinator.world.inventory?.baselines.items.conditionSubject(of: item)
         let points = coordinator.world.perkModified(
             1,
@@ -48,7 +63,7 @@ extension MagicCoordinator.SpellTomes {
         return coordinator.recordCasting(.readSkillBook(name, levelsRaised: raised))
     }
 
-    private func bookKey(_ item: FormID) -> ReferenceKey? {
+    func bookKey(_ item: FormID) -> ReferenceKey? {
         coordinator.caster?.spellbook.spells.resolvedID(
             item,
             fromPlugin: coordinator.spellPluginName ?? coordinator.pluginName

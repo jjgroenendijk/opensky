@@ -186,6 +186,8 @@ the detail and the sources it did find.
 | Kill stat of an actor | Its `ActorType*` keywords on the race or the base pick the stats; one kill can raise two | [statistics](/engine/statistics.md#how-opensky-counts) |
 | Potions Mixed per brew | One per brew, whatever number of potions it makes | [statistics](/engine/statistics.md#how-opensky-counts) |
 | Skill Increases from training | Training counts, one per level the skill rises | [statistics](/engine/statistics.md#how-opensky-counts) |
+| Books Read | A note counts, and only the first reading of each book counts | [statistics](/engine/statistics.md#how-opensky-counts) |
+| Spells Learned | Only a spell tome counts, not a spell a script adds | [statistics](/engine/statistics.md#how-opensky-counts) |
 | Dungeons Cleared | Every location that clears counts, by its last boss or by `Location.SetCleared` | [statistics](/engine/statistics.md#how-opensky-counts) |
 
 ## World, time, and sound

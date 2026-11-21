@@ -38,6 +38,7 @@ extension MagicCoordinator.ControlPanels {
             ))
         }
         let reading = caster.spellbook.read(book: bookKey, teaching: spellKey, on: .player)
+        coordinator.spellTomes.countReading(reading, isSkillBook: false)
         let known = caster.spellbook.knownSpells(of: .player).first { $0.key == spellKey }
         if let known, reading.taught {
             coordinator.world.announceSpellLearned(known.displayName)

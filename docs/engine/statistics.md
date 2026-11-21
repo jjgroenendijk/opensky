@@ -157,3 +157,9 @@ above leave a choice, and OpenSky reads them like this:
   A cooking craft raises Potions Mixed. A temper raises Weapons Improved or Armor Improved.
 - A brew at an alchemy lab raises Potions Mixed or Poisons Mixed once, whatever number of potions
   it makes.
+- Eating food raises Food Eaten, and drinking a potion Potions Used. The food flag on the `ALCH`
+  record tells them apart. Drinking a poison raises nothing. Eating an ingredient raises
+  Ingredients Eaten. Putting a poison on a weapon raises Poisons Used.
+- A book counts the first time the player reads it. A skill book raises Skill Books Read, and any
+  other book, a note or a spell tome too, raises Books Read. A tome that teaches a new spell also
+  raises Spells Learned. A spell from a script does not count.

@@ -8,6 +8,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
+import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 extension InventoryCoordinator.Consumables {
@@ -73,6 +74,7 @@ extension InventoryCoordinator.Consumables {
         } catch {
             return coordinator.alchemyLab.noteAlchemy(.noneCarried(poisonName))
         }
+        runtime.store.incrementMiscStat("Poisons Used")
         let doses = poisonDoses(of: poison)
         runtime.store.set(
             playerWeaponPoisons.applying(WeaponPoison(poison: poison, doses: doses), to: weapon),
