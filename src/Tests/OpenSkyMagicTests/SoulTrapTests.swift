@@ -106,6 +106,7 @@ struct SoulTrapTests {
         #expect(trap.inventory.copies(of: Gems.petty, in: .player) == [ItemCopy(soul: 1)])
         #expect(trap.inventory.copies(of: Gems.common, in: .player) == [.plain])
         #expect(trap.world.notifications == ["Soul captured!"])
+        #expect(trap.coordinator.journalStat("Souls Trapped") == 1)
     }
 
     /// A black gem links its filled record, so the trap swaps the item as the game does.

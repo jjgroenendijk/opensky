@@ -137,6 +137,12 @@ extension MagicSummonedActorsAdapter {
     }
 
     public func changeShoutKnowledge(_ change: ShoutKnowledgeChange) {
+        if
+            case let .unlockWord(word) = change, let bridge = game.scripts.bridge,
+            bridge.scriptedState(of: .player).flag(ScriptedStateName.wordUnlocked(word)) != true
+        {
+            game.worldState.incrementMiscStat("Words Of Power Unlocked")
+        }
         game.scripts.bridge?.updateScriptedState(of: .player) { state in
             switch change {
             case let .addShout(shout): state.setFlag(ScriptedStateName.shout(shout), true)

@@ -293,6 +293,10 @@ The stats are saved in the `MSTS` chunk. OpenSky counts these:
 | Food Eaten, Potions Used, Ingredients Eaten, Poisons Used | The player eats, drinks, or uses one |
 | Gold Found, Most Gold Carried | The player picks up gold, or carries more than before |
 | Barters, Chests Looted | The player trades, or opens a container |
+| Hours Slept, Hours Waiting | The player rests |
+| Words Of Power Learned, Words Of Power Unlocked, Times Shouted | The player learns, unlocks, or shouts |
+| Souls Trapped, Soul Gems Used, Magic Items Made | The player traps a soul, recharges, or enchants |
+| Ingredients Harvested, Nirnroots Found | The player harvests a plant |
 | Books Read, Skill Books Read, Spells Learned | The player reads a book the first time |
 | Locks Picked | The player picks a lock |
 | Pockets Picked, Items Pickpocketed | The player pickpockets |

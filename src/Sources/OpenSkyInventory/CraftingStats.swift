@@ -2,7 +2,7 @@
 // docs/engine/statistics.md, Crafting.
 
 public import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
@@ -34,6 +34,20 @@ nonisolated public enum CraftingStats {
         let family = items.definition(outcome.created.item)?.family
         if let stat = stat(of: family, improved: outcome.improved != nil) {
             store.incrementMiscStat(stat)
+        }
+    }
+
+    /// A harvest's ingredients, one each, and a nirnroot also on its own stat. Crimson
+    /// nirnroot is a different record and does not count as one.
+    public static func harvestStats(
+        of granted: [InventoryStack], items: ItemDefinitionStore
+    ) -> [(name: String, count: Int32)] {
+        granted.flatMap { stack -> [(name: String, count: Int32)] in
+            guard let definition = items.definition(stack.item), definition.family == .ingredient
+            else { return [] }
+            let ingredient = ("Ingredients Harvested", stack.count)
+            return definition.editorID == "Nirnroot"
+                ? [ingredient, ("Nirnroots Found", stack.count)] : [ingredient]
         }
     }
 }

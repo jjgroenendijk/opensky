@@ -6,6 +6,7 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
+import OpenSkyQuestsInterface
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 
@@ -41,6 +42,12 @@ extension InventoryCoordinator.CraftingBench {
             let outcome = try runtime.harvest(
                 interaction, at: harvestMoment, count: harvestCount(of: interaction)
             )
+            let stats = CraftingStats.harvestStats(
+                of: outcome.granted, items: runtime.inventory.baselines.items
+            )
+            for stat in stats {
+                runtime.store.incrementMiscStat(stat.name, by: stat.count)
+            }
             let items = outcome.granted.map { "\($0.count) × \(coordinator.name(of: $0.item))" }
             return InventoryResult(
                 coordinator.note(.harvested(plant: interaction.name, items: items)),

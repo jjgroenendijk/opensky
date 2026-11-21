@@ -85,7 +85,7 @@ protocol SessionPortSet:
     StorySocialActsHost, StorySocialSearchHost, StorySceneLinesHost, StorySceneCastHost,
     MenuWorldSettingsApplyHost,
     MenuWorldSkillsRaceHost, MenuWorldNewGameHost, MenuWorldScriptMenusHost,
-    MenuWorldTeleportsHost, MenuScreensCraftingDeskHost, MenuScreensGuidesHost,
+    MenuWorldTeleportsHost, MenuScreensCraftingDeskHost, MenuScreensGuidesHost, MenuScreensRestHost,
     MenuScreensGiftListsHost, DragonFlightCandidatesHost, LoadingScreenPresentationHost,
     ActorGraphGraphEventsHost, BenchmarkTourSettingsHost, DialogueMenuSpeechHost,
     LockpickingBoardHost, MountDragonRidingHost, MessageCameraEffectsHost,

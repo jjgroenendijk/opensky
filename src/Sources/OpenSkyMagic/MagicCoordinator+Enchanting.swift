@@ -68,6 +68,7 @@ extension MagicCoordinator.EnchantingTable {
                 Self.making(id)
             )
             spendGem(gem, in: inventory)
+            coordinator.incrementStat("Magic Items Made")
             coordinator.enchantingRecords.reportEnchantingUse(EnchantingRules.enchantExperience)
             coordinator.weaponEnchantments.refreshWornEnchantments(on: .player)
             let charge = EnchantmentCharge(

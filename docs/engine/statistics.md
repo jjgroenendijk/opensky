@@ -165,6 +165,14 @@ above leave a choice, and OpenSky reads them like this:
   each such take and each trade, when it is higher.
 - Each buy and each sell with a merchant raises Barters, whatever the number of items.
 - Opening a container that is not a body raises Chests Looted, each time.
+- Each hour the player sleeps or waits in the rest menu raises Hours Slept or Hours Waiting.
+- A word of power counts on Words Of Power Learned the first time the player knows it, and on Words
+  Of Power Unlocked the first time it is unlocked, by a dragon soul or by `Game.UnlockWord`.
+- Each shout raises Times Shouted, at any length. A soul a soul trap puts in a gem raises Souls
+  Trapped. A soul gem that recharges a weapon raises Soul Gems Used. Each enchanted item raises
+  Magic Items Made.
+- A harvest raises Ingredients Harvested by the number of ingredients it gives, so the Green Thumb
+  perk counts twice. A harvested `Nirnroot` also raises Nirnroots Found.
 - A book counts the first time the player reads it. A skill book raises Skill Books Read, and any
   other book, a note or a spell tome too, raises Books Read. A tome that teaches a new spell also
   raises Spells Learned. A spell from a script does not count.

@@ -190,6 +190,7 @@ the detail and the sources it did find.
 | Spells Learned | Only a spell tome counts, not a spell a script adds | [statistics](/engine/statistics.md#how-opensky-counts) |
 | Gold Found | Only gold taken from the world, a container, or a body | [statistics](/engine/statistics.md#how-opensky-counts) |
 | Chests Looted | Every opening of a container counts, a sack or a barrel too | [statistics](/engine/statistics.md#how-opensky-counts) |
+| Ingredients Harvested | One per ingredient a harvest gives, so a perk that doubles the harvest doubles the count | [statistics](/engine/statistics.md#how-opensky-counts) |
 | Dungeons Cleared | Every location that clears counts, by its last boss or by `Location.SetCleared` | [statistics](/engine/statistics.md#how-opensky-counts) |
 
 ## World, time, and sound

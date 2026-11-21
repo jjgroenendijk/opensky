@@ -101,6 +101,7 @@ struct ShoutTests {
             words: 2,
             cooldown: 45
         ))
+        #expect(trial.coordinator.journalStat("Times Shouted") == 1)
     }
 
     @Test func theGraphHearsTheWishOnlyWhileInhaling() throws {
