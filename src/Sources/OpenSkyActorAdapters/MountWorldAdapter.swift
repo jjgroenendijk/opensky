@@ -133,7 +133,7 @@ public final class MountWorldAdapter {
         case let .releaseMount(mount):
             game.streamer.releaseRiddenActor(mount)
             game.actorGraphWorld.graphs.giveBack(mount)
-        case .askToSteal, .reportTheft, .refused, .notify, .dragonBreath:
+        case .askToSteal, .reportTheft, .refused, .notify, .dragonBreath, .turnRiderView:
             applyOutcome(command)
         }
     }
@@ -149,6 +149,7 @@ public final class MountWorldAdapter {
             _ = game.messages.postNotification("Cannot mount: \(reason.rawValue).")
         case let .notify(text): _ = game.messages.postNotification(text)
         case let .dragonBreath(mount, target): dragonRiding.breathe(from: mount, at: target)
+        case let .turnRiderView(radians): game.gameSession?.freeFlyCamera.yaw += radians
         default: break
         }
     }

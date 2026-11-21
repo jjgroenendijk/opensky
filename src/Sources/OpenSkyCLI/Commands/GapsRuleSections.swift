@@ -110,6 +110,7 @@ extension GapsGatherer {
             _ = WeaponDamageSettings.resolve(store: store)
             _ = PowerAttackSettings.resolve(store: store)
             _ = StaggerSettings.resolve(store: store)
+            _ = DangerSettings.resolve(store: store)
             _ = FriendlyFireSettings.resolve(store: store)
             _ = CombatAISettings.resolve(store: store)
             _ = DoorSettings.resolve(store: store)

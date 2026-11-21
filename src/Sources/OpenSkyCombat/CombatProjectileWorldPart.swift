@@ -23,6 +23,34 @@ final class CombatProjectileWorldPart: CombatSharedPart, ProjectileWorld {
         )
     }
 
+    /// The candidates are the living hostile actors in combat. The mount of the player
+    /// is not left out, because a mount does not fight its rider.
+    func projectileAutoAim(from shooter: ProjectileShooter) -> ProjectileAimPick? {
+        let world = shared.world
+        guard let loop = shared.loop, let fovY = world.playerViewFOVYRadians else { return nil }
+        let candidates = world.residentActors().compactMap { actor -> ProjectileAimCandidate? in
+            guard
+                !actor.isDead, world.hostility(of: actor.key) == .hostile,
+                loop.activity(of: actor.key) != .notFighting
+            else { return nil }
+            let height = actor.capsule.height * actor.scale
+            return ProjectileAimCandidate(
+                key: actor.key, centre: actor.feet + SIMD3(0, 0, height / 2),
+                top: actor.feet + SIMD3(0, 0, height)
+            )
+        }
+        guard
+            let target = ProjectileAutoAim.pick(
+                candidates, from: shooter.origin, forward: shooter.aim, fovYRadians: fovY
+            )
+        else { return nil }
+        let hand = shared.melee?.weapon.handType ?? .handToHand
+        return ProjectileAimPick(
+            target: target,
+            rightHandIsFree: !(hand.isRanged || hand == .staff || hand == .spell)
+        )
+    }
+
     func projectileTargets() -> [MeleeTarget] {
         shared.world.residentActors().map { MeleeTarget(key: $0.key, feet: $0.feet) }
     }

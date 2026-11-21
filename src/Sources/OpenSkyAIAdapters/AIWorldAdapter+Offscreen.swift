@@ -1,8 +1,11 @@
 // The off-screen schedule's world, forwarded to its adapter.
 
 public import OpenSkyAIPackages
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkySessionInterface
+import OpenSkyWorldState
 
 extension AIWorldAdapter.Worlds {
     var offscreen: AIOffscreenScheduleAdapter {
@@ -29,5 +32,14 @@ extension AIWorldAdapter.Worlds {
 
     public func placeOffscreenActor(_ actor: ReferenceKey, at place: OffscreenPlace) {
         offscreen.placeOffscreenActor(actor, at: place)
+    }
+
+    public var offscreenTimescale: Float {
+        packageState.game.gameSession?.currentTimescale ?? GameClock.defaultTimescale
+    }
+
+    public func offscreenStopwatch() -> () -> Double {
+        let watch = Stopwatch()
+        return { watch.milliseconds }
     }
 }

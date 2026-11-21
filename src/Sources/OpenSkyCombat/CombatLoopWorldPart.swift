@@ -143,6 +143,19 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
         shared.perks.applyPerkSwingSpell(blow, at: target)
     }
 
+    func combatHitFacts(
+        from attacker: ReferenceKey, on target: ReferenceKey, weaponStagger: Float
+    ) -> HitReactionFacts {
+        shared.strikes.hitFacts(
+            attacker: attacker, target: target, event: CombatGraphNames.attackStart,
+            weaponStagger: weaponStagger
+        )
+    }
+
+    func noteCombatHitReaction(_ report: HitReactionReport) {
+        shared.note(report)
+    }
+
     func combatAttackDisease(of attacker: ReferenceKey) -> ReferenceKey? {
         shared.world.attackDisease(of: attacker)
     }
@@ -165,6 +178,23 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
     func combatHealthFraction(of key: ReferenceKey) -> Float {
         guard let health = shared.world.health(of: key) else { return 1 }
         return CombatCore.healthFraction(current: health.current, maximum: health.maximum)
+    }
+
+    func combatHealth(of key: ReferenceKey) -> Float {
+        shared.world.health(of: key)?.current ?? 100
+    }
+
+    func combatDangerThreats() -> [DangerThreat] {
+        guard let projectiles = shared.archery?.projectiles, let explosions = projectiles.explosions
+        else { return [] }
+        return projectiles.live.compactMap { shot in
+            guard let spec = explosions.spec(itemLink: shot.profile.explosion) else { return nil }
+            return DangerRule.threat(
+                id: shot.id, source: shot.shooter,
+                motion: (shot.position, shot.state.velocity),
+                explosion: (spec.damage, spec.radius)
+            )
+        }
     }
 
     /// The weapon in `key`'s right hand, with its tempering; unarmed without one.
@@ -307,6 +337,7 @@ extension CombatLoopWorldPart {
         let runtime = CombatLoopRuntime(settings: data.combat, world: self)
         runtime.skillUses = data.skillUses
         runtime.staggers = data.staggers
+        runtime.danger = data.danger
         runtime.friendlyFire = CombatLoopRuntime.FriendlyFire(settings: data.friendlyFire)
         runtime.combatAI = data.combatAI
         runtime.applyingGameSettings = shared.appliesCombatGameSettings

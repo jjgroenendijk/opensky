@@ -42,6 +42,8 @@ public final class ProjectileRuntime {
     /// spawned under.
     public private(set) var stuck: [(arrow: StuckProjectile, key: ReferenceKey?)] = []
     public private(set) var firedCount = 0
+    /// The auto-aim target of the player's last shot, or nil when it had none.
+    public private(set) var lastAutoAim: ProjectileAimPick?
     private(set) var impactCount = 0
 
     /// Resolves the IPCT chain for a landed arrow. Nil in a synthetic session,
@@ -87,9 +89,19 @@ public final class ProjectileRuntime {
         let tilt = shot.usesArcheryTilt
             ? settings.tiltUpAngle(firstPerson: shooter.isFirstPerson, bolt: shot.isBolt).value
             : 0
-        let direction = ProjectileFlight.aimDirection(
+        var direction = ProjectileFlight.aimDirection(
             cameraForward: shooter.aim, tiltDegrees: tilt
         )
+        lastAutoAim = shooter.key == .player ? world.projectileAutoAim(from: shooter) : nil
+        if let pick = lastAutoAim {
+            direction = ProjectileAutoAim.turned(
+                direction, toward: pick.target.centre - shooter.origin,
+                atMost: ProjectileAutoAim.largestTurn(
+                    spellWithFreeAim: shot.payload.arrow == nil && pick.rightHandIsFree,
+                    firstPerson: shooter.isFirstPerson
+                )
+            )
+        }
         let projectile = LiveProjectile(
             id: nextID,
             shooter: shooter.key,

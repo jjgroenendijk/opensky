@@ -11,8 +11,7 @@ tags: [engine, combat, projectiles, ai, input]
 The game gives the player's aim a small push toward a target, but only for projectiles. Melee
 swings get no help. NPCs keep facing their target while they attack.
 
-OpenSky does not build any of this yet. A projectile flies exactly where the player aims
-([spell delivery](/engine/spell-delivery.md)).
+OpenSky builds the three rules; [in OpenSky](#in-opensky) says how and what it leaves out.
 
 All values below are the ones that apply in play. Where `Skyrim.esm` overrides the program's
 built-in default, the page gives the plugin value.
@@ -104,3 +103,24 @@ While locked, each frame the game steers the mount:
 
 The steering stops while the target is gone or dead, all inputs are zero, the target is the
 player's own mount, or the weapon is sheathed and the target is an actor.
+
+## In OpenSky
+
+- An NPC that starts a melee attack turns to its aim each step until the attack's follow-through
+  ends. The aim is the target's place at the last refresh, on the game's two timers. Outside the
+  band the 0.25 second timer is used.
+- A player shot picks its target when it is fired, from the hostile living actors in combat, and
+  turns by the largest angle of the table.
+- The lock on a ridden dragon turns the rider's view by the heading change of the rule, with the
+  factors of a locked actor.
+
+`openskycli game state assist` shows each attacker's `attackTracks` entry with its `aim` and the
+count of `refreshes`, and `autoAim`, the target the last player shot turned toward.
+`state mount` shows `lockSteer`, the heading change of the last step in radians.
+
+- [WARNING] The auto-aim window is measured against the screen height on both axes.
+- [WARNING] The player's own mount is not left out of the auto-aim candidates.
+- [WARNING] The lock has no hold-to-lock option, no look factors, no locked objects, and no stop
+  for a sheathed weapon. The lock does not turn the dragon: its flight follows its orders
+  ([dragon flight](/engine/dragon-flight.md#riding)).
+- [INFO] The NPC turn uses the actor's own turn step, not a rate from the graph.

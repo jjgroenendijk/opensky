@@ -24,6 +24,10 @@ nonisolated extension AgentCommandCatalog {
         command("state.social", "NPC conversations, walks, fight watchers, and checked bodies."),
         command("state.stats", "The journal's misc stats counted so far, by name."),
         command(
+            "state.assist",
+            "Attack tracking, auto-aim, dodges, hit reactions, and AI process levels."
+        ),
+        command(
             "state.scripts", "The script queue, waits, events, faults, and missing natives.",
             positionals: [optionalText("ref", "Also list the scripts on this reference or quest.")]
         ),

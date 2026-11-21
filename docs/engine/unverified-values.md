@@ -357,3 +357,7 @@ the detail and the sources it did find.
 | Shouts Learned | A taught word counts for a shout the player could not use before; the game's "adds a shout" check is read that way | [general stats](/engine/statistics.md#how-opensky-counts) |
 | Conversation scene meeting | A pair may walk together for 30 s; after that its scene waits 60 s before it tries again; a meeting no scene asks for in 2 s ends | [scenes](/engine/scenes.md#conversation-scenes) |
 | Scene line facing wait | A line waits at most 3 s for its speaker to turn to the listener | [scenes](/engine/scenes.md#conversation-scenes) |
+| Dodge limit | A fighter dodges at any threat score above 0; the game's limit is not known | [danger avoidance](/engine/danger-avoidance.md#in-opensky) |
+| Dodge move speed | 370 units a second times the move of a sidestep for every actor | [danger avoidance](/engine/danger-avoidance.md#in-opensky) |
+| Avoid Threat Chance default | 0.2 for a combat style that leaves the value out | [danger avoidance](/engine/danger-avoidance.md#in-opensky) |
+| Auto-aim window axis | The window is measured against the screen height on both axes | [combat assist](/engine/combat-assist.md#in-opensky) |

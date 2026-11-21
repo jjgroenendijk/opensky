@@ -218,5 +218,6 @@ with the rider's orders and the breath step.
 - [INFO] An injured dragon lands at once; the game may first try to reach a safe spot
   (`FlyStopInjuredSafe`).
 - [INFO] The flight heights, the climb rate, the radii, the lock and switch cones, and the breath
-  timing are OpenSky's numbers.
+  timing are OpenSky's numbers. The lock range and its steering are the game's
+  ([combat assist](/engine/combat-assist.md#flying-mount-lock)).
 - [INFO] The rider's spell rule is OpenSky's, built from the UESP list.

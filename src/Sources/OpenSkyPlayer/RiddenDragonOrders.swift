@@ -47,6 +47,33 @@ nonisolated public struct RiddenDragonOrders: Equatable, Sendable {
     public var breath = BreathPhase.ready
     /// The sneak toggle at the last step: a change is the attack key.
     var lastSneak: Bool?
+    /// Where the locked target stood at the last step, to read its travel.
+    var lastTargetFeet: SIMD3<Float>?
+    /// The heading change the lock gave the rider's view at the last step, in radians.
+    public var lockSteer: Float = 0
+
+    /// The lock's steering for this step. A target that is gone steers nothing.
+    mutating func steer(
+        toward target: SIMD3<Float>?, from rider: (feet: SIMD3<Float>, yaw: Float),
+        input: (speed: Float, strafe: Float), deltaTime: Float
+    ) -> Float {
+        let (speed, strafe) = input
+        defer { lastTargetFeet = target }
+        lockSteer = 0
+        guard let target, deltaTime > 0 else { return 0 }
+        var frame = FlyingMountLock.Frame()
+        frame.speed = speed
+        frame.strafe = strafe
+        frame.heading = rider.yaw
+        frame.distance = simd_distance(rider.feet, target)
+        frame.deltaTime = deltaTime
+        if let last = lastTargetFeet {
+            frame.targetVelocity = SIMD2(target.x - last.x, target.y - last.y) / deltaTime
+        }
+        guard strafe != 0 || frame.targetVelocity != .zero else { return 0 }
+        lockSteer = FlyingMountLock.headingChange(frame)
+        return lockSteer
+    }
 
     public init() {}
 

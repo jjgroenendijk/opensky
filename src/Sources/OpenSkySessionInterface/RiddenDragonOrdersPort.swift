@@ -8,5 +8,6 @@ public protocol RiddenDragonOrdersPort {
     var isAttacking: Bool { get set }
     var landingRequested: Bool { get set }
     var lockedTarget: ReferenceKey? { get }
+    var lockSteer: Float { get }
     var switchedTarget: ReferenceKey? { get }
 }

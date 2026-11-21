@@ -20,6 +20,8 @@ public protocol PackagePort: AnyObject {
     func readouts() -> [PackageActorReadout]
     /// The last off-screen update of an actor no loaded cell holds, as one line.
     func offscreenReadout(for actor: ReferenceKey) -> String?
+    /// The AI process levels in numbers: the actors on each level, the Low pass, the budget.
+    var processReadout: [String: Double] { get }
     func recordMove(_ result: NPCMoveCommandResult, for actor: ReferenceKey)
     func releaseCommanded(_ actor: ReferenceKey)
     func resume(_ actor: ReferenceKey)

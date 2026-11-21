@@ -23,6 +23,8 @@ nonisolated public enum MountCommand: Equatable, Sendable {
     case notify(String)
     /// The ridden dragon breathes at its locked target.
     case dragonBreath(ReferenceKey, at: ReferenceKey)
+    /// The lock on a flying mount turns the rider's view by this many radians.
+    case turnRiderView(Float)
 }
 
 nonisolated public enum MountPhase: Equatable, Sendable {

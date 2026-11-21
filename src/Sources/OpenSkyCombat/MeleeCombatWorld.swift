@@ -117,11 +117,28 @@ public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponE
     /// The Block skill of the blocker, which scales the blocked fraction.
     func meleeBlockSkill(of target: ReferenceKey) -> Float
 
+    /// What the stagger magnitude reads of the player's attack that `event` starts.
+    func meleeHitFacts(on target: ReferenceKey, event: String, weaponStagger: Float)
+        -> HitReactionFacts
+    /// Keeps one hit and its reaction for the readout.
+    func noteHitReaction(_ report: HitReactionReport)
+
     /// Starts a paired kill move on `target` in place of the swing. False plays the swing.
     func startMeleeKillMove(on target: ReferenceKey, damage: Float, action: String) -> Bool
 }
 
 extension MeleeCombatWorld {
+    public func noteHitReaction(_: HitReactionReport) {}
+
+    /// A world with no races and no actor values reads the weapon's own stagger.
+    public func meleeHitFacts(
+        on _: ReferenceKey, event _: String, weaponStagger: Float
+    ) -> HitReactionFacts {
+        var facts = HitReactionFacts()
+        facts.attackStagger = weaponStagger
+        return facts
+    }
+
     /// A world with no actor graphs writes only the player's.
     public func writeCombatVariable(
         _ value: BehaviorVariableValue, named name: String, on target: ReferenceKey?

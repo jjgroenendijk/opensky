@@ -94,6 +94,10 @@ public protocol CombatWorld: AnyObject {
     var playerAttacker: MeleeAttacker? { get }
     /// Where a player shot leaves from and which way. Nil without a renderer.
     var playerShooter: ProjectileShooter? { get }
+    /// The vertical field of view the player sees with, in radians. Nil without a view.
+    var playerViewFOVYRadians: Float? { get }
+    /// True while the player runs or sprints.
+    var playerRuns: Bool { get }
     /// Every resident actor, with its current pose and death state.
     func residentActors() -> [CombatActorObservation]
     /// The resident actor `key`, as `residentActors()` lists it.
@@ -195,6 +199,8 @@ public protocol CombatWorld: AnyObject {
     func startKillMove(_ attempt: KillMoveAttempt) -> Bool
     /// True while `key` plays either half of a kill move.
     func isInKillMove(_ key: ReferenceKey) -> Bool
+    /// The stagger value of the race attack that `event` starts on `key`, or nil.
+    func attackStagger(of key: ReferenceKey, event: String) -> Float?
     /// The Disease spell among `key`'s race attack spells, or nil.
     func attackDisease(of key: ReferenceKey) -> ReferenceKey?
     /// Gives `key` the disease spell; on the player, the notice and the statistic too.
@@ -204,6 +210,18 @@ public protocol CombatWorld: AnyObject {
 }
 
 extension CombatWorld {
+    public var playerViewFOVYRadians: Float? {
+        nil
+    }
+
+    public var playerRuns: Bool {
+        false
+    }
+
+    public func attackStagger(of _: ReferenceKey, event _: String) -> Float? {
+        nil
+    }
+
     /// A world without races carries no disease.
     public func attackDisease(of _: ReferenceKey) -> ReferenceKey? {
         nil

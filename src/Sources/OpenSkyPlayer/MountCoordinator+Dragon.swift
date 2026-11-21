@@ -35,6 +35,13 @@ extension MountCoordinator {
             .steerMount(drive.mount, feet: pose.feet, yaw: pose.yaw),
             .reportMountEvents(drive.mount, step.graph)
         ]
+        let turn = dragonOrders.steer(
+            toward: target, from: (pose.feet, pose.yaw),
+            input: (drive.motion.speed, input.moveRight), deltaTime: input.dt
+        )
+        if turn != 0 {
+            commands.append(.turnRiderView(turn))
+        }
         let fired = step.graph.contains {
             $0.caseInsensitiveCompare(DragonFlightGraphNames.breathFire) == .orderedSame
         }

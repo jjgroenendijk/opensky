@@ -217,15 +217,17 @@ struct CombatLoopRuntimeTests {
         #expect(world.damage[.player] == nil)
     }
 
-    @Test func aLandedBlowRaisesTheCensusNamedHitReactionMagnitudeFirst() {
-        let (runtime, world) = Fixture.session(weaponDamage: 7)
+    @Test func aLandedBlowWritesTheStaggerMagnitudeBeforeItsEvent() {
+        let (runtime, world) = Fixture.session(weaponDamage: 7, stagger: 1)
+        runtime.staggers.attackChance = 100
         Fixture.engage(runtime, world)
 
         Fixture.run(runtime, seconds: Fixture.cycleSeconds)
 
-        #expect(world.raised.contains(CombatGraphNames.recoilStart))
-        #expect(world.variables[CombatGraphNames.recoilMagnitude] == .real(7))
-        #expect(world.wroteMagnitudeBeforeRecoil)
+        // Skill factor 0.5, mass 1, weapon factor 1 for no weapon, attack stagger 1.
+        #expect(world.raised.contains(CombatGraphNames.staggerStart))
+        #expect(world.variables[CombatGraphNames.staggerMagnitude] == .real(0.5))
+        #expect(world.wroteMagnitudeBeforeStagger)
         #expect(runtime.incomingTrace.last?.playedReaction == true)
     }
 

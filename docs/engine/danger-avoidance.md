@@ -12,7 +12,8 @@ The game keeps one list of threats. A threat is something that will explode near
 fighter checks the list and sidesteps when the danger is large. A civilian who watches a fight
 keeps a distance from it.
 
-OpenSky does not build this yet. Its AI does not move away from explosions or projectiles.
+OpenSky builds the threat list for projectiles, the score, and the sidestep;
+[in OpenSky](#in-opensky) says what it leaves out.
 
 All values below are the ones that apply in play. Where `Skyrim.esm` overrides the program's
 built-in default, the page gives the plugin value.
@@ -109,3 +110,22 @@ radius set by the source's weapon. A higher level replaces a lower one, never th
 What the onlooker then does is in
 [random conversations](/engine/random-conversations.md#what-a-watcher-does): it head-tracks the
 fight, says the ObserveCombat line, and steps away.
+
+## In OpenSky
+
+Each fighter looks at the threat list every 0.125 to 0.25 seconds. The list holds every
+projectile in flight whose explosion passes the test above. A threat from the fighter's own side
+does not count: the player and the player's followers are one side, and all other fighters the
+other. With a score above 0 over the next 2 seconds, the fighter rolls its combat style's Avoid
+Threat Chance. On success it takes the dodge step above and walks to the escape point. Its combat
+machine waits until the move's time has passed.
+
+`openskycli game state assist` shows the list under `danger.threats`, and under `danger.watches`
+each fighter's last `score`, the `dodgePoint`, the `dodgeSeconds` left, and the count of `dodges`.
+
+- [WARNING] A destructible object is never a threat: OpenSky has no destruction stages yet.
+- [WARNING] A moving fighter does not check its path first. It is scored where it stands.
+- [WARNING] The score along the move samples 8 moments of it. The game's own sweep was not read.
+- [INFO] The "Check Should Dodge" limit is not known. OpenSky dodges at any score above 0.
+- [INFO] The move's time uses 370 units a second for every actor, and the move runs at the
+  actor's own speed without the dodge acceleration settings.

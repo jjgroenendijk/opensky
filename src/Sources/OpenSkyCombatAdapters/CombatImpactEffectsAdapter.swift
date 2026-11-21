@@ -59,6 +59,21 @@ extension CombatImpactEffectsAdapter {
         return races[other.rawValue]?.details.attackSpells ?? []
     }
 
+    /// The stagger of the race attack that `event` starts, from the `ATKR` race when
+    /// the actor's own race has no attacks.
+    public func attackStagger(of actor: ReferenceKey, event: String) -> Float? {
+        guard
+            let race = game.menuWorld.race(of: actor),
+            let races = game.combatRecords?.actorValueBaselines?.resolver?.races,
+            let details = races[race.rawValue]?.details
+        else { return nil }
+        if let stagger = details.attackStagger(event: event) {
+            return stagger
+        }
+        return details.attackRace
+            .flatMap { races[$0.rawValue]?.details.attackStagger(event: event) }
+    }
+
     public func impactMaterial(of actor: ReferenceKey) -> FormID? {
         guard
             let race = game.menuWorld.race(of: actor),

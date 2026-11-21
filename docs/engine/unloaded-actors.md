@@ -123,8 +123,9 @@ places again by the hour.
 
 ## In OpenSky
 
-OpenSky runs the low level only. Every 54 game seconds (0.3 / 20 game hours), it updates each
-unique persistent actor that no loaded cell holds:
+OpenSky runs the low level only. Every 0.3 / timescale game hours, 54 game seconds at the default,
+a pass starts over each unique persistent actor that no loaded cell holds. The pass places the
+actors in turn inside the frame budget ([AI process levels](/engine/ai-process-levels.md#in-opensky)):
 
 1. It picks the actor's package by the same rules as for a loaded actor.
 2. It finds the place of the package's first location input: a reference, the editor place, or

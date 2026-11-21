@@ -18,6 +18,22 @@ extension CombatCoordinator {
     public var combatLoopSnapshot: CombatLoopSnapshot {
         CombatLoopSnapshot(shared: shared)
     }
+
+    public var assistReadout: CombatAssistReadout {
+        var readout = CombatAssistReadout()
+        if let loop = shared.loop {
+            readout.tracks = loop.attackTracks.keys.sorted().compactMap { key in
+                loop.attackTracks[key].map {
+                    .init(attacker: key, target: $0.target, aim: $0.aim, refreshes: $0.refreshes)
+                }
+            }
+            readout.watches = loop.dangerWatches
+            readout.threats = loopWorld.combatDangerThreats()
+        }
+        readout.autoAim = shared.archery?.projectiles.lastAutoAim
+        readout.reactions = shared.hitReactions
+        return readout
+    }
 }
 
 extension MeleeCombatRuntime {

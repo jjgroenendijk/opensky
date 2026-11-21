@@ -11,7 +11,8 @@ tags: [engine, ai, performance, actors]
 The game does not update every actor's AI every frame. It sorts actors into four process levels.
 Near actors update every frame. Far actors update less often, inside a time budget per frame.
 
-OpenSky does not build this yet.
+OpenSky builds the rule and runs the Low level by it; [in OpenSky](#in-opensky) says what it
+leaves out.
 
 | Level | Name |
 | --- | --- |
@@ -94,3 +95,22 @@ Most likely, the actor update does nothing unless the actor's cell is fully atta
 in a cell that is loaded but not attached, the middle-high level, runs no packages and no
 detection. The update also skips an actor without 3D and an actor in certain life states. What
 the middle-low and low levels skip in detail was not found.
+
+## In OpenSky
+
+OpenSky loads and attaches a cell in one step, so a loaded actor is always High, and the two
+middle levels stay empty. An actor that no loaded cell holds is Low
+([unloaded actors](/engine/unloaded-actors.md#in-opensky)).
+
+The Low level updates by the rule: every 0.30 / `TimeScale` game hours a pass starts. Each actor
+takes its package, and then the actors are placed in turn. The time is read after every 10
+actors. Over the frame's budget, the pass stops and goes on in the next frame from the same
+place.
+
+`openskycli game state assist` shows under `processLevels` the count of actors on each level,
+`lowUpdateGameSeconds`, the pass (`lowPassPlace` of `lowPassLength`), `budgetMilliseconds`, and
+`overBudgetCount`, the passes that stopped over budget.
+
+- [WARNING] The package choice of a pass runs for all Low actors at its start, outside the budget.
+- [WARNING] A persistent-cell actor over 40960 units away is never loaded, so it is Low, not
+  Middle-low.

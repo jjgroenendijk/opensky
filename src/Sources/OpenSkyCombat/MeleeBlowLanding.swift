@@ -119,39 +119,61 @@ struct MeleeBlowLanding {
         }
     }
 
-    /// Tells the target's graph to stagger when the hit's magnitude passes `fStaggerMin`
-    /// and the `iStaggerAttackChance` roll passes.
+    /// The reaction the game's rule gives this hit: a bash gives a large recoil, and
+    /// any other hit with a magnitude staggers on the `iStaggerAttackChance` roll.
     ///
-    /// `staggerMagnitude` is written before the event so the stagger behavior reads
-    /// this hit's magnitude rather than the previous one's.
+    /// `staggerMagnitude` and `staggerDirection` are written before the event, so the
+    /// stagger behaviour reads this hit's values.
     private func stagger(
         _ target: ReferenceKey, damage: MeleeDamageResult, random: inout ConditionRandom
     ) -> Bool {
-        guard damage.applied > 0 else { return false }
-        let magnitude = StaggerRule.magnitude(
-            staggerHit(damage: damage), settings: staggers
-        )
-        let roll = random.percent()
-        guard StaggerRule.staggers(magnitude: magnitude, roll: roll, settings: staggers)
-        else { return false }
+        guard damage.applied > 0 || damage.wasBlocked else { return false }
+        let hit = reactionHit(on: target, damage: damage)
+        let reaction = HitReactionRule.reaction(hit, roll: random.percent(), settings: staggers)
+        world.noteHitReaction(HitReactionReport(
+            attacker: world.meleeAttacker.key, target: target, hit: hit, reaction: reaction
+        ))
+        if reaction.blockHit {
+            _ = world.raiseCombatEvent(CombatGraphNames.blockHitStart, on: target)
+        }
+        if reaction.attackerRecoils {
+            _ = world.raiseCombatEvent(CombatGraphNames.recoilStart, on: nil)
+        }
+        if reaction.largeRecoil {
+            return world.raiseCombatEvent(CombatGraphNames.recoilLargeStart, on: target)
+        }
+        guard let magnitude = reaction.staggerMagnitude else { return false }
         world.writeCombatVariable(
             .real(magnitude), named: CombatGraphNames.staggerMagnitude, on: target
+        )
+        world.writeCombatVariable(
+            .real(hit.facts.direction), named: CombatGraphNames.staggerDirection, on: target
         )
         return world.raiseCombatEvent(CombatGraphNames.staggerStart, on: target)
     }
 
-    private func staggerHit(damage: MeleeDamageResult) -> StaggerHit {
-        var hit = StaggerHit(weaponStagger: weapon.stagger)
-        hit.perkMultiplier = damage.strike.staggerMultiplier
+    private func reactionHit(on target: ReferenceKey, damage: MeleeDamageResult) -> HitReactionHit {
+        var hit = HitReactionHit()
+        hit.facts = world.meleeHitFacts(
+            on: target, event: kind.attackEvent, weaponStagger: weapon.stagger
+        )
+        hit.handType = weapon.handType
+        hit.isBash = kind.isBash
+        hit.bashesWithShield = kind.isBash && world.meleeBashSource().shieldRating != nil
         hit.wasBlocked = damage.wasBlocked
-        hit.isPowerBash = kind == .powerBash
-        if kind.isBash {
-            let source = world.meleeBashSource()
-            hit.kind = .bash(shieldRating: source.shieldRating)
-            hit.attackerBlockSkill = source.blockSkill
-        } else {
-            hit.kind = kind == .power ? .power : .swing
-        }
+        hit.perkMultiplier = damage.strike.staggerMultiplier
         return hit
+    }
+}
+
+nonisolated extension MeleeStrikeKind {
+    /// The graph event whose race attack data holds the strike's stagger value.
+    var attackEvent: String {
+        switch self {
+        case .normal: CombatGraphNames.attackStart
+        case .power: CombatGraphNames.attackPowerStartInPlace
+        case .bash: CombatGraphNames.bashStart
+        case .powerBash: CombatGraphNames.bashPowerStart
+        }
     }
 }

@@ -56,6 +56,20 @@ public final class CombatLoopRuntime: CombatControlling {
     public var applyingGameSettings = false
     /// Seeded, so a fight replays; drawn from only for the `iStaggerAttackChance` roll.
     var staggerRandom = ConditionRandom()
+    /// The `fCombatDodge*` numbers a fighter sidesteps a threat by.
+    public var danger = DangerSettings.vanilla
+    /// Seeded like the stagger roll; drawn from for the sample time, the chance, and the side.
+    var dangerRandom = ConditionRandom(seed: 0xD0D6_E000)
+    /// Attackers whose blocked blow made them recoil, until their machine leaves the phase.
+    var recoilers: Set<ReferenceKey> = []
+
+    /// True while `key` plays the recoil of a blocked blow.
+    func isRecoiling(_ key: ReferenceKey) -> Bool {
+        recoilers.contains(key) && behaviors[key]?.phase == .staggered
+    }
+
+    /// Each fighter's watch on the threat list.
+    public internal(set) var dangerWatches: [ReferenceKey: CombatDangerWatch] = [:]
     /// Each target's feet at the last two steps, for an archer's lead.
     var targetTracks: [ReferenceKey: TargetTrack] = [:]
 
@@ -93,6 +107,8 @@ public final class CombatLoopRuntime: CombatControlling {
     public internal(set) var targets: [ReferenceKey: ReferenceKey] = [:]
     /// The hand of each actor's swing in progress, and how many swings it started.
     public internal(set) var strikes: [ReferenceKey: NPCStrikes] = [:]
+    /// The NPCs that keep facing their target through a melee attack.
+    public internal(set) var attackTracks: [ReferenceKey: CombatAttackTrack] = [:]
     /// Allies walking back to their commander, with the point each walks to.
     public internal(set) var following: [ReferenceKey: SIMD3<Float>] = [:]
 
@@ -320,6 +336,9 @@ public final class CombatLoopRuntime: CombatControlling {
         provoked.remove(key)
         targets.removeValue(forKey: key)
         strikes.removeValue(forKey: key)
+        attackTracks.removeValue(forKey: key)
+        dangerWatches.removeValue(forKey: key)
+        recoilers.remove(key)
         following.removeValue(forKey: key)
     }
 

@@ -262,7 +262,8 @@ struct MeleeCombatRuntimeTests {
         Self.drawAndSwing(runtime)
 
         #expect(world.raisedOnTarget[.player]?.contains(CombatGraphNames.staggerStart) == true)
-        #expect(world.variables[CombatGraphNames.staggerMagnitude] == .real(0.75))
+        // Skill factor 0.5, mass 1, weapon factor 1 for no weapon, attack stagger 0.75.
+        #expect(world.variables[CombatGraphNames.staggerMagnitude] == .real(0.375))
         #expect(runtime.trace.last?.staggered == true)
     }
 

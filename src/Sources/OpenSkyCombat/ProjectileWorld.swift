@@ -90,6 +90,10 @@ public protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHit
     /// Where the player is aiming from, this frame.
     var projectileShooter: ProjectileShooter { get }
 
+    /// The auto-aim target of a player shot from `shooter`, or nil when no hostile
+    /// actor in combat shows inside the window around the crosshair.
+    func projectileAutoAim(from shooter: ProjectileShooter) -> ProjectileAimPick?
+
     /// Every actor a shot could hit. Actors only — the caller's filter, not the
     /// runtime's, exactly as `MeleeCombatWorld.meleeTargets()` is. The same
     /// `MeleeTarget` value, because a capsule is a capsule and a second type
@@ -179,5 +183,12 @@ extension ProjectileWorld {
 
     public func projectileIsSneakAttack(by _: ReferenceKey, on _: ReferenceKey) -> Bool {
         false
+    }
+}
+
+extension ProjectileWorld {
+    /// A world that knows no hostile actors aims nothing.
+    public func projectileAutoAim(from _: ProjectileShooter) -> ProjectileAimPick? {
+        nil
     }
 }

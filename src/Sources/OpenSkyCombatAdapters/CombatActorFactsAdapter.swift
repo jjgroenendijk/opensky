@@ -246,3 +246,14 @@ struct CombatStyleReader {
 }
 
 extension CombatActorFactsAdapter: CombatPerkReads {}
+
+extension CombatActorFactsAdapter {
+    var playerViewFOVYRadians: Float? {
+        game.gameSession?.viewFOVYRadians
+    }
+
+    var playerRuns: Bool {
+        let gait = game.gameSession?.locomotion.status.gait
+        return gait == .run || gait == .sprint
+    }
+}

@@ -254,6 +254,23 @@ public final class PackageCoordinator {
         offscreen.readout(for: actor)
     }
 
+    public var processReadout: [String: Double] {
+        let turn = offscreen.turn
+        let timescale = (world as? any OffscreenScheduleWorld)?.offscreenTimescale
+            ?? GameClock.defaultTimescale
+        return [
+            "high": Double(registeredActors.count),
+            "middleHigh": 0,
+            "middleLow": 0,
+            "low": Double(offscreen.registered.count),
+            "lowUpdateGameSeconds": OffscreenScheduleCore.updateSeconds(timescale: timescale),
+            "lowPassPlace": Double(turn.place),
+            "lowPassLength": Double(turn.waiting.count),
+            "overBudgetCount": Double(turn.overBudgetCount),
+            "budgetMilliseconds": offscreen.lastBudget
+        ]
+    }
+
     weak let world: (any PackageWorld)?
     let store: PackageStore?
     /// Real seconds until the alias stacks are read again.
@@ -351,7 +368,8 @@ public final class PackageCoordinator {
         self.runtime = runtime
         if let offscreenWorld = world as? any OffscreenScheduleWorld {
             offscreen.advance(
-                world: offscreenWorld, clock: clock, residents: Set(bases.keys), context: live
+                world: offscreenWorld, clock: clock, frameSeconds: delta,
+                residents: Set(bases.keys), context: live
             )
         }
         advanceTrees(by: delta)

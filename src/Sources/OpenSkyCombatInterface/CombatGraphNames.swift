@@ -49,9 +49,10 @@ nonisolated public enum CombatGraphNames: Sendable {
     /// `staggerbehavior.hkx` reads `staggerMagnitude` alongside it.
     public static let staggerStart = "staggerStart"
     public static let staggerStop = "staggerStop"
-    /// The hit reaction for a blow that did not stagger, raised on the struck actor's
-    /// graph. `recoilLargeStart` is not raised: no source gives its threshold.
+    /// The recoil of an attacker whose melee hit was blocked, and the large recoil of
+    /// a bashed actor (docs/engine/hit-reactions.md).
     public static let recoilStart = "recoilStart"
+    public static let recoilLargeStart = "recoilLargeStart"
     public static let recoilStop = "recoilStop"
 
     /// Every event the melee runtime raises, in the order the bridge raises
@@ -132,6 +133,8 @@ nonisolated public enum CombatGraphNames: Sendable {
     public static let isStaggering = "IsStaggering"
     /// How hard the stagger is. Real, 0...1 in vanilla authoring.
     public static let staggerMagnitude = "staggerMagnitude"
+    /// Where the attacker stands, as a part of a full turn from the heading. Real, 0...1.
+    public static let staggerDirection = "staggerDirection"
     /// Whether a hit reaction plays (bool), and how hard the blow was (real).
     public static let isRecoiling = "IsRecoiling"
     public static let recoilMagnitude = "recoilMagnitude"
