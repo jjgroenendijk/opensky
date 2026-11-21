@@ -3,6 +3,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagicInterface
 @testable import OpenSkyMenuAdapters
 import OpenSkyMenus
 import OpenSkyMenusInterface
@@ -42,5 +43,31 @@ struct MenuAdapterPartsTests {
         #expect(map.playerSetMarker == nil)
         let tamriel = ResolvedFormID(plugin: "base.esm", objectID: 0x3C)
         #expect(map.mapMarkerSites(in: tamriel).isEmpty)
+    }
+
+    @Test func theMagicTabsCarryEachRowsCardAndTheEffectsTab() {
+        let card = MagicMenuSpellCard(kind: .activeEffect(secondsLeft: 5), effects: "Burns")
+        let menu = host.fakeMagic.magicMenu
+        menu.magicMenuCategoryOrder = ["DESTRUCTION", "SHOUTS"]
+        menu.magicMenuSpells = [MagicMenuSpell(
+            name: "Flames",
+            isReadied: true,
+            category: "DESTRUCTION"
+        )]
+        menu.magicMenuShouts = [MagicMenuSpell(
+            name: "Force", isReadied: false, category: "SHOUTS",
+            card: MagicMenuSpellCard(kind: .shout(words: []), effects: "Push")
+        )]
+        var burn = MagicMenuSpell(name: "Burning", isReadied: false, card: card)
+        burn.isNegative = true
+        menu.magicMenuActiveEffects = [burn]
+        menu.magicMenuActiveEffectsTitle = "ACTIVE EFFECTS"
+        let tabs = MenuScreensGiftListsAdapter(game: host).magicMenuCategories
+        #expect(tabs.map(\.label) == ["All", "DESTRUCTION", "SHOUTS", "ACTIVE EFFECTS"])
+        #expect(tabs[2].rows.first?.spellCard?.effects == "Push")
+        let effect = tabs[3].rows.first
+        #expect(effect?.spellCard == card)
+        #expect(effect?.isNegative == true)
+        #expect(effect?.tag == 1)
     }
 }

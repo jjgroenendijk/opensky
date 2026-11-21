@@ -145,6 +145,28 @@ struct MagicCoordinatorTests {
         #expect(FakeMagicWorld().displayName(of: .player) == nil)
     }
 
+    @Test func anEffectOnThePlayerShowsItsTimeAndText() throws {
+        let coordinator = try Self.effectsWired(FakeMagicWorld())
+        let entry = MagicItemEffect(
+            effect: FormID(ActiveEffectFixture.damageHealth), magnitude: 5, area: 0,
+            duration: 30, conditions: ConditionList()
+        )
+        coordinator.withEffects { runtime in
+            runtime.apply(
+                [entry], fromPlugin: ActiveEffectFixture.pluginName,
+                source: ActiveEffectSource(
+                    kind: .spell, record: .plugin(name: "base.esm", objectID: 0x600)
+                ),
+                caster: .player, on: .player
+            )
+        }
+        let row = try #require(coordinator.magicMenu.magicMenuActiveEffects.first)
+        #expect(row.isNegative)
+        #expect(!row.name.isEmpty)
+        #expect(row.card?.kind == .activeEffect(secondsLeft: 30))
+        #expect(row.card?.effects.contains("5") == true)
+    }
+
     @Test func selectionCyclesOverTheKnownSpells() throws {
         let coordinator = try Self.castingWired(FakeMagicWorld())
         #expect(coordinator.controlPanels.selectNextKnownSpell()
