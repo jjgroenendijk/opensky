@@ -95,6 +95,8 @@ nonisolated extension SWFTimelineFrame {
         if let clipDepth = placement.clipDepth {
             existing.clipDepth = clipDepth
         }
+        existing.filters = placement.filters ?? existing.filters
+        existing.blendMode = placement.blendMode ?? existing.blendMode
         if let clipActions = placement.clipActions {
             existing.clipActions = clipActions
         }

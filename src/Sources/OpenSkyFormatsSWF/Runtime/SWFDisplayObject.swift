@@ -54,6 +54,8 @@ nonisolated public final class SWFDisplayObject {
     var scriptOwnsColor = false
     /// PlaceObject `ClipDepth`: this node masks depths (depth, clipDepth].
     var clipDepth: UInt16?
+    /// PlaceObject3 filters and blend mode.
+    var effects = SWFSceneEffects()
     public var isVisible = true
     /// A DefineButton2 instance: its frames are its states, and its actions run
     /// on the parent timeline.

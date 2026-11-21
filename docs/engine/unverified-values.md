@@ -229,6 +229,7 @@ the detail and the sources it did find.
 | Far shadow cascade reuse | A far cascade map kept while it covers its slice, at most 2 or 4 frames, 0.25 degrees of sun turn, 10% wider fit | [shadows](/rendering/shadows.md#far-cascade-reuse) |
 | Particle lifetime and limits | OpenSky's policies | [particles](/rendering/particles.md) |
 | Interface HTML text lines | A line's height and baseline come from the field's own font and size, whatever size its `<font>` tags set | [SWF text](/formats/swf-text.md#html-text) |
+| Interface filters | A shadow, glow, or blur of 1.5 pixels or more draws 8 copies on an ellipse of half the blur, which together reach 0.99 alpha; the shadow alpha is the colour alpha times the strength, at most 1 | [SWF render layer](/rendering/swf-layer.md#filters-and-blend-modes) |
 | Interface line strokes | A line thinner than 20 twips (one pixel) draws 20 twips wide; round caps and joins step until the arc strays at most 1 twip; overlapping pieces of a translucent line blend twice | [SWF shapes](/formats/swf-shapes.md#strokes) |
 | Lightning bolt between sequences | A sequence that leaves the generation unset keeps the bolt, its tree, and its track values; at most 2,048 quads per bolt tree | [particles](/rendering/particles.md#lightning) |
 | Ribbon texture direction | U along the band for strips | [particles](/rendering/particles.md#ribbons) |

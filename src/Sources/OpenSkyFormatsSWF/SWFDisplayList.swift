@@ -1,5 +1,4 @@
 // Display-list tags: PlaceObject 1-3, RemoveObject 1-2, SetBackgroundColor.
-// PlaceObject3 filters and blend mode are framed but not rendered.
 // Layout and sources: docs/formats/swf-display-list.md.
 
 import Foundation
@@ -27,11 +26,15 @@ nonisolated public struct SWFPlacement: Equatable, Sendable {
     var clipDepth: UInt16?
     /// PlaceObject3 only.
     var className: String?
-    /// PlaceObject3 BlendMode byte (0/1 = normal), recorded + ignored.
+    /// PlaceObject3 BlendMode byte (0/1 = normal).
     var blendMode: UInt8?
-    /// PlaceObject3 SurfaceFilterList entry count, recorded + ignored.
+    /// PlaceObject3 SurfaceFilterList; nil when the tag has none, so a move keeps the old one.
+    var filters: [SWFFilter]?
     /// The FilterID of each filter in the list, in order.
-    var filterIDs: [UInt8] = []
+    var filterIDs: [UInt8] {
+        filters?.map(\.id) ?? []
+    }
+
     /// PlaceObject2/3 `PlaceFlagHasClipActions`.
     var hasClipActions = false
     /// The decoded CLIPACTIONS block, non-nil whenever `hasClipActions` is set.
@@ -148,7 +151,7 @@ nonisolated public enum SWFDisplayListParser: Sendable {
         }
         try parseCommonFields(&bits, flags: flags, into: &placement)
         if flags2 & 0x01 != 0 {
-            placement.filterIDs = try skipFilterList(&bits)
+            placement.filters = try SWFFilter.parseList(&bits)
         }
         if flags2 & 0x02 != 0 {
             placement.blendMode = try bits.readAlignedUInt8()
@@ -208,38 +211,6 @@ nonisolated public enum SWFDisplayListParser: Sendable {
         if flags & 0x40 != 0 {
             placement.clipDepth = try bits.readAlignedUInt16()
         }
-    }
-
-    /// FILTERLIST framing (spec pp. 143-151): NumberOfFilters UI8, then one
-    /// FILTER per entry, each a FilterID byte plus a body whose size the ID
-    /// determines. Filters are not rendered — this only frames past them so
-    /// the fields after the list stay readable — but the count is returned so
-    /// the sweep can tally the deferral.
-    static func skipFilterList(_ bits: inout SWFBitReader) throws -> [UInt8] {
-        let count = try Int(bits.readAlignedUInt8())
-        var ids: [UInt8] = []
-        for _ in 0 ..< count {
-            let filterID = try bits.readAlignedUInt8()
-            ids.append(filterID)
-            let fixedSize: Int
-            switch filterID {
-            case 0: fixedSize = 23 // DropShadow
-            case 1: fixedSize = 9 // Blur
-            case 2: fixedSize = 15 // Glow
-            case 3: fixedSize = 27 // Bevel
-            case 4, 7: // GradientGlow / GradientBevel: NumColors UI8 + 5/color
-                let colors = try Int(bits.readAlignedUInt8())
-                fixedSize = colors * 5 + 19
-            case 5: // Convolution: MatrixX/Y UI8 + FLOAT matrix + fixed tail
-                let matrixX = try Int(bits.readAlignedUInt8())
-                let matrixY = try Int(bits.readAlignedUInt8())
-                fixedSize = 4 + 4 + matrixX * matrixY * 4 + 4 + 1
-            case 6: fixedSize = 80 // ColorMatrix: 20 FLOATs
-            default: throw SWFDisplayListError.unknownFilterID(filterID)
-            }
-            try skipBytes(&bits, count: fixedSize)
-        }
-        return ids
     }
 
     private static func skipBytes(_ bits: inout SWFBitReader, count: Int) throws {

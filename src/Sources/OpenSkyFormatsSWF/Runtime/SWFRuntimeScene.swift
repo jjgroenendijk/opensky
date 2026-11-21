@@ -55,6 +55,12 @@ nonisolated extension SWFMovieRuntime {
                 let transform = parent.transform
                     .concatenating(SWFTransform(matrix: child.matrix))
                 let color = parent.color.concatenating(child.colorTransform)
+                let start = commands.count
+                defer {
+                    if child.clipDepth == nil {
+                        commands.apply(child.effects, from: start)
+                    }
+                }
                 if let clipDepth = child.clipDepth {
                     let masks = maskItems(
                         node: child, transform: transform, color: color,

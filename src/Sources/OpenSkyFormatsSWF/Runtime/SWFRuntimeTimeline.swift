@@ -132,6 +132,7 @@ nonisolated extension SWFMovieRuntime {
             node.colorTransform = existing.colorTransform
             node.name = existing.name
             node.clipDepth = existing.clipDepth
+            node.effects = existing.effects
         }
         apply(placement, to: node)
         if let replaced = parent.child(atDepth: placement.depth) {
@@ -155,6 +156,7 @@ nonisolated extension SWFMovieRuntime {
         if let clipDepth = placement.clipDepth {
             node.clipDepth = clipDepth
         }
+        node.effects.update(from: placement)
         if let clipActions = placement.clipActions {
             node.clipActions = clipActions
             globalMouseHandlers.refresh(node)

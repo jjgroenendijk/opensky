@@ -194,8 +194,10 @@ extension Renderer {
             * MemoryLayout<SWFVertex>.stride
         for op in frame.ops {
             switch op.kind {
-            case let .content(clipCount):
-                encoder.setRenderPipelineState(swf.contentPipeline)
+            case let .content(clipCount, additive):
+                encoder.setRenderPipelineState(
+                    additive ? swf.additivePipeline ?? swf.contentPipeline : swf.contentPipeline
+                )
                 encoder.setDepthStencilState(swf.contentDepthState)
                 encoder.setStencilReferenceValue(UInt32(clamping: clipCount))
             case .maskIncrement:
@@ -236,7 +238,7 @@ extension Renderer {
 /// One encoded draw of the SWF layer.
 nonisolated struct SWFDrawOp: Sendable {
     enum Kind: Sendable {
-        case content(clipCount: Int)
+        case content(clipCount: Int, additive: Bool)
         case maskIncrement
         case maskDecrement
     }
@@ -361,7 +363,7 @@ nonisolated struct SWFFrameBuilder {
                 nil
             }
             ops.append(SWFDrawOp(
-                kind: .content(clipCount: clipCount),
+                kind: .content(clipCount: clipCount, additive: item.isAdditive),
                 usesGlyphBuffer: false,
                 vertexStart: run.vertexStart,
                 vertexCount: run.vertexCount,
@@ -401,7 +403,7 @@ nonisolated struct SWFFrameBuilder {
                     fillMode: .glyph
                 ))
                 ops.append(SWFDrawOp(
-                    kind: .content(clipCount: clipCount),
+                    kind: .content(clipCount: clipCount, additive: item.isAdditive),
                     usesGlyphBuffer: true,
                     vertexStart: quadStart * 6,
                     vertexCount: quadCount * 6,
@@ -499,7 +501,7 @@ nonisolated extension SWFFrameBuilder {
                 colorTransform: item.colorTransform
             ))
             ops.append(SWFDrawOp(
-                kind: .content(clipCount: clipCount),
+                kind: .content(clipCount: clipCount, additive: item.isAdditive),
                 usesGlyphBuffer: true,
                 vertexStart: quadStart * 6,
                 vertexCount: 6,

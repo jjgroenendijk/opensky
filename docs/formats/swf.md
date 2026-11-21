@@ -106,5 +106,6 @@ because a rendered vanilla movie contains game art.
 
 - `ZWS` (LZMA) decompression.
 - `Ratio` morph shapes.
-- PlaceObject3 filters and blend modes (decoded and counted, not applied).
+- PlaceObject3 filters other than drop shadow, glow, and blur, and blend modes other than add
+  ([SWF render layer](/rendering/swf-layer.md#filters-and-blend-modes)).
 - DoABC (82), ActionScript 3, and GFx extension tags.
