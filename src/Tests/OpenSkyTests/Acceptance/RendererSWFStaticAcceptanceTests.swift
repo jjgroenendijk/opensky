@@ -195,6 +195,31 @@ struct RendererSWFStaticAcceptanceTests {
         #expect(first == second)
     }
 
+    /// A movie colour is a gamma value: an opaque grey of 128 reads back as 128 from the
+    /// sRGB target, not as the brighter value a linear write would give.
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
+    func anOpaqueColourReadsBackAsAuthored() throws {
+        let grey = SWFColor(red: 128, green: 128, blue: 128, alpha: 255)
+        var place = SWFDisplayFixture.Place2()
+        place.depth = 1
+        place.characterId = 1
+        let movie = try SWFDisplayFixture.movie(tags: [
+            SWFDisplayFixture.rectangleShapeTag(
+                characterId: 1, width: 60000, height: 60000, color: grey
+            ),
+            SWFDisplayFixture.placeObject2Tag(place),
+            SWFDisplayFixture.showFrameTag
+        ])
+        let renderer = try Self.canvas.makeRenderer()
+        try renderer.setSWFMovie(SWFMovieScene(movie: movie))
+        let pixels = try Self.canvas.render(renderer)
+        let offset = (Self.canvas.height / 2 * Self.canvas.width + Self.canvas.width / 2) * 4
+        for channel in 0 ..< 3 {
+            #expect(abs(Int(pixels[offset + channel]) - 128) <= 2, "channel \(channel)")
+        }
+    }
+
     /// Reassigning the same movie must land on the same frame: the acceptance
     /// path in the app swaps movies repeatedly through the picker.
     @Test(.enabled(if: Self.hasMetal4Device))

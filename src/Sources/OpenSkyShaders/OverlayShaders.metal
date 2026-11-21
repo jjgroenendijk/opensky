@@ -199,8 +199,10 @@ fragment float4 swfFragment(
     default:
         break;
     }
+    // Flash colours and the colour transform are gamma values; the drawable
+    // encodes on write, so the colour goes out linear.
     straight = saturate(straight * draw.colorMultiply + draw.colorAdd);
-    return float4(straight.rgb * straight.a, straight.a);
+    return float4(toLinear(straight.rgb) * straight.a, straight.a);
 }
 
 /// Stencil-only mask draws: zero premultiplied output leaves the color
