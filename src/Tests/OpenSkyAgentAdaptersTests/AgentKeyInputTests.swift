@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyAgentAdapters
 import OpenSkyAgentControl
 import OpenSkyMenusInterface
+import OpenSkySessionInterface
 import OpenSkySessionTesting
 import Testing
 
@@ -44,5 +45,31 @@ struct AgentKeyInputTests {
 
     @Test func anUnknownKeyFails() {
         #expect(throws: AgentFailure.self) { try input.pressKey("NoSuchKey") }
+    }
+
+    @Test func theControlsPageShowsItsWaitAndKeys() throws {
+        host.fakeMovies.readout = MoviePlaybackReadout(loading: false, interruptible: true)
+        host.fakeMapMenu.snapshot = MapMenuSnapshot(
+            selected: nil, cameraHeight: nil, questTargets: [], lastResult: nil
+        )
+        host.fakeSystemMenu.isOpen = true
+        host.fakeSystemMenu.model.page = .controls
+        host.fakeSystemMenu.controls = ControlsPageReadout(
+            waitingForKey: true,
+            rows: [.init(action: "Jump", key: "Space"), .init(action: "Wait", key: nil)]
+        )
+        let world = AgentWorldAdapter(game: host, now: { Date(timeIntervalSinceReferenceDate: 0) })
+        guard
+            case let .object(state) = try world.query(.menu),
+            case let .object(controls) = state["controls"],
+            case let .array(rows) = controls["bindings"], rows.count == 2,
+            case let .object(first) = rows[0], case let .object(second) = rows[1]
+        else {
+            Issue.record("no Controls readout")
+            return
+        }
+        #expect(controls["waitingForKey"] == .bool(true))
+        #expect(first["key"] == .string("Space"))
+        #expect(second["key"] == .null)
     }
 }

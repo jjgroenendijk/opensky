@@ -109,22 +109,37 @@ extension SystemMenuCoordinator {
     fileprivate func sendSelect(_ entry: SystemMenuEntry) {
         model.select(entry)
     }
+
+    fileprivate func showControls() {
+        model.show(.controls)
+    }
+}
+
+/// A menu whose movie the fake renderer starts, from a fixture with no Controls list.
+/// The menu holds its world weakly, so the caller keeps it.
+@MainActor
+private func loadedMovieMenu(
+    _ port: FakeRendererPort
+) throws -> (menu: SystemMenuCoordinator, world: FakeSystemMenuWorld) {
+    port.startsMenuMovies = true
+    port.swfRuntime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
+    let world = FakeSystemMenuWorld()
+    world.renderer = port
+    let movies = try ImmediateMovies()
+    let menu = SystemMenuCoordinator(
+        menuMode: MenuModeController(), movies: movies, hud: HUDCoordinator(movies: movies),
+        settings: PlayerSettingsCoordinator(store: PlayerSettingsStore(persistence: nil)),
+        saves: FakeSaves(), world: world
+    )
+    return (menu, world)
 }
 
 struct SystemMenuCoordinatorTests {
     @Test @MainActor
     func aLoadedMovieReportsItsDiagnostics() throws {
         let port = try #require(FakeRendererPort())
-        port.startsMenuMovies = true
-        port.swfRuntime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
-        let world = FakeSystemMenuWorld()
-        world.renderer = port
-        let movies = try ImmediateMovies()
-        let menu = SystemMenuCoordinator(
-            menuMode: MenuModeController(), movies: movies, hud: HUDCoordinator(movies: movies),
-            settings: PlayerSettingsCoordinator(store: PlayerSettingsStore(persistence: nil)),
-            saves: FakeSaves(), world: world
-        )
+        let (menu, world) = try loadedMovieMenu(port)
+        defer { withExtendedLifetime(world) {} }
         #expect(menu.movieDiagnostics == nil)
         menu.open()
         #expect(menu.movieLoaded)
@@ -429,5 +444,19 @@ struct SystemMenuControlsTests {
         #expect(!bound.waitingForKey)
         let first = InputBindings.slots[0].event
         #expect(bound.rows.first == .init(action: first, key: harness.settings.keyName(0x48)))
+    }
+
+    /// The fixture movie has no Controls list, so the page reads empty, and the readout
+    /// lists the rows the movie would.
+    @Test @MainActor
+    func aLoadedMovieReadsTheControlsListItDraws() throws {
+        let port = try #require(FakeRendererPort())
+        let (menu, world) = try loadedMovieMenu(port)
+        defer { withExtendedLifetime(world) {} }
+        menu.open()
+        menu.showControls()
+        #expect(menu.snapshot.page == SystemMenuPageSnapshot(rows: [], selectedIndex: -1))
+        let controls = try #require(menu.controls)
+        #expect(controls.rows.map(\.action) == menu.movieMappingRows().map(\.text))
     }
 }
