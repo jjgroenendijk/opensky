@@ -8,6 +8,7 @@ import OpenSkyActorAdapters
 import OpenSkyActorPresentation
 import OpenSkyAgentAdapters
 import OpenSkyAIAdapters
+import OpenSkyAIPackages
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatAdapters
@@ -286,7 +287,10 @@ struct GameSessionScopeBuild {
             sneaking: scope.player.isSneaking,
             swimming: gameSession.walkController.isSwimming,
             ridingHorse: scope.mounts.drive?.kind == .horse,
-            weaponDrawn: scope.combat.isWeaponDrawn
+            weaponDrawn: scope.combat.isWeaponDrawn,
+            favor: scope.followerCommands.isChoosing,
+            menus: scope.menuMode.stack.identifiers,
+            worldPaused: scope.menuMode.isWorldSimPaused
         )
     }
 

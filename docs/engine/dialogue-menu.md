@@ -139,7 +139,7 @@ holder is an empty box on screen. The HUD's `SubtitleText` property is the field
 variable, so OpenSky writes both the drawn text and the variable. The vanilla movie ships a
 sample text in this field, so it stays hidden until a line is set.
 
-The renderer has one SWF layer, so the HUD and the dialogue menu never show together. While a
+The HUD stays under the dialogue menu in `DialogueMode`, which hides the HUD's subtitle. While a
 conversation is open, the menu's own `SubtitleText` shows the line. A line is cleared when the
 player moves on and when the conversation ends.
 

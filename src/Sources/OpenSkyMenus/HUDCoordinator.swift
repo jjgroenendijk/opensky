@@ -28,7 +28,7 @@ public final class HUDCoordinator {
     public private(set) var isCovered = false
 
     private let movies: any MenuMovieLoading
-    /// Bumped by each start and suspend, so only the newest start shows the HUD.
+    /// Bumped by each start, so only the newest start shows the HUD.
     private var startRequest = 0
     /// The menu movies holding the layer, the one drawn last on top.
     var layerHolders: [WeakLayerHolder] = []
@@ -48,10 +48,10 @@ public final class HUDCoordinator {
     }
 
     /// Hides the HUD while a loading screen is up, and shows it again after.
-    /// The loading movie draws on the overlay layer, so only the main movie hides.
+    /// The loading movie draws on the overlay layer, so only the HUD layer hides.
     public func setCovered(_ covered: Bool) {
         isCovered = covered
-        renderer?.swfMainMovieHidden = covered
+        renderer?.swfHUDHidden = covered || !layerVisible
     }
 
     /// `Game.SetHudCartMode` sets `cart`; the frame sets the rest from the player.
@@ -119,15 +119,7 @@ public final class HUDCoordinator {
         settings.layerEnabled
     }
 
-    /// Takes the HUD off the SWF layer, so a menu that owns the layer next can
-    /// never be changed by a HUD update.
-    public func suspend() {
-        isLoaded = false
-        startRequest += 1
-    }
-
-    /// The HUD shows once its movie is decoded. A menu that takes the layer first
-    /// cancels it, through `suspend()`.
+    /// The HUD shows once its movie is decoded, on its own layer under the menus.
     public func start() {
         guard let renderer else { return }
         guard movies.isAvailable else {
@@ -147,12 +139,11 @@ public final class HUDCoordinator {
         guard let renderer else { return }
         do {
             let scene = try result.get()
-            try renderer.setSWFMovie(scene)
-            renderer.swfEnabled = layerVisible
-            renderer.swfScale = settings.scale
-            guard let runtime = try renderer.startSWFRuntime() else {
+            guard let runtime = try renderer.setSWFHUD(scene, prepare: nil) else {
                 return
             }
+            renderer.swfHUDHidden = isCovered || !layerVisible
+            renderer.swfScale = settings.scale
             try HUDMovieBridge.validate(runtime: runtime)
             isLoaded = true
             loadError = nil
@@ -174,7 +165,7 @@ public final class HUDCoordinator {
         )
         guard !update.isEmpty else { return }
         do {
-            try renderer.updateSWFRuntime { runtime in
+            try renderer.updateSWFHUD { runtime in
                 if update.prompt {
                     HUDMovieBridge.setActivationPrompt(
                         effectivePrompt, stat: shownStat, runtime: runtime
@@ -218,7 +209,7 @@ public final class HUDCoordinator {
     func callMovie(_ body: (SWFMovieRuntime) -> Void) {
         guard isLoaded, let renderer else { return }
         do {
-            try renderer.updateSWFRuntime(body)
+            try renderer.updateSWFHUD(body)
         } catch {
             fail(error, renderer: renderer)
         }
@@ -240,7 +231,7 @@ public final class HUDCoordinator {
         change(&settings)
         settings.scale = HUDCore.clampedScale(settings.scale)
         guard isLoaded, let renderer else { return }
-        renderer.swfEnabled = layerVisible
+        renderer.swfHUDHidden = isCovered || !layerVisible
         renderer.swfScale = settings.scale
         var presentation = settings
         presentation.layerEnabled = old.layerEnabled
@@ -258,7 +249,7 @@ public final class HUDCoordinator {
         let camera = world?.viewCamera ?? renderer.frameInput.view
         let heading = HUDCore.headingDegrees(camera.yaw)
         let markers = effectiveMarkers(cameraPosition: camera.position)
-        try renderer.updateSWFRuntime { runtime in
+        try renderer.updateSWFHUD { runtime in
             if initialize {
                 HUDMovieBridge.initialize(
                     runtime: runtime,
@@ -293,7 +284,7 @@ public final class HUDCoordinator {
     }
 
     private func fail(_ error: any Error, renderer: any RendererPort) {
-        attempt { try renderer.setSWFMovie(nil) }
+        attempt { try renderer.setSWFHUD(nil, prepare: nil) }
         isLoaded = false
         loadError = String(describing: error)
         Self.logger.error("[ERROR] HUD disabled: \(String(describing: error), privacy: .public)")

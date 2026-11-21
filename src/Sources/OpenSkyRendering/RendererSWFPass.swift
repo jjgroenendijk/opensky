@@ -18,11 +18,11 @@ extension Renderer {
         set { swf.enabled = newValue }
     }
 
-    /// Hides the main movie and keeps the overlay movie, as a loading screen
-    /// hides the HUD under its own movie.
-    public var swfMainMovieHidden: Bool {
-        get { swf.mainMovieHidden }
-        set { swf.mainMovieHidden = newValue }
+    /// Hides the HUD layer and keeps the others, as a loading screen hides the HUD
+    /// under its own movie.
+    public var swfHUDHidden: Bool {
+        get { swf.hudHidden }
+        set { swf.hudHidden = newValue }
     }
 
     /// Centered SWF presentation scale. The HUD acceptance readout uses this for
@@ -35,7 +35,7 @@ extension Renderer {
         }
     }
 
-    /// Alpha over the whole layer, 0 to 1: the HUD Opacity setting.
+    /// Alpha over the HUD layer, 0 to 1: the HUD Opacity setting.
     public var swfOpacity: Float {
         get { swf.opacity }
         set { swf.opacity = newValue.isFinite ? min(max(newValue, 0), 1) : 1 }
@@ -65,6 +65,7 @@ extension Renderer {
             swf.gamepadCount = newValue
             swf.runtime?.setGamepadCount(newValue)
             swf.overlay?.runtime.setGamepadCount(newValue)
+            swf.hud?.runtime.setGamepadCount(newValue)
         }
     }
 
@@ -125,23 +126,26 @@ extension Renderer {
             Float(colorTexture?.width ?? 0), Float(colorTexture?.height ?? 0)
         )
         guard viewport.x > 0, viewport.y > 0 else { return }
-        let main = swf.mainMovieHidden ? nil : swf.movie
-        for movie in [main, swf.overlay?.movie].compactMap(\.self) {
-            encodeSWFMovie(movie, viewport: viewport, state: &state, stats: &stats)
+        if !swf.hudHidden, let hud = swf.hud?.movie {
+            encodeSWFMovie((hud, swf.opacity), viewport: viewport, state: &state, stats: &stats)
+        }
+        for movie in [swf.movie, swf.overlay?.movie].compactMap(\.self) {
+            encodeSWFMovie((movie, 1), viewport: viewport, state: &state, stats: &stats)
         }
     }
 
     private func encodeSWFMovie(
-        _ movie: SWFMovieResources, viewport: SIMD2<Float>,
+        _ layer: (movie: SWFMovieResources, opacity: Float), viewport: SIMD2<Float>,
         state: inout ScenePassState, stats: inout SWFDrawStats
     ) {
+        let movie = layer.movie
         var frame = SWFFrameBuilder(
             movie: movie,
             viewport: viewport,
             contentScale: swf.scale,
             glyphAtlas: uiResources.glyphAtlas
         )
-        frame.opacity = swf.opacity
+        frame.opacity = layer.opacity
         frame.build()
         stats.skippedItems += frame.skipped + movie.buildSkipped
         uploadUIAtlasIfNeeded()

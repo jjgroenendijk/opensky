@@ -31,7 +31,12 @@ public protocol RendererPort: AnyObject {
         height: Int
     ) -> Bool
     var swfScale: Float { get set }
-    var swfMainMovieHidden: Bool { get set }
+    var swfHUDHidden: Bool { get set }
+    var swfHUDRuntime: SWFMovieRuntime? { get }
+    @discardableResult func setSWFHUD(
+        _ scene: SWFMovieScene?, prepare: ((SWFMovieRuntime) -> Void)?
+    ) throws -> SWFMovieRuntime?
+    func updateSWFHUD(_ body: (SWFMovieRuntime) -> Void) throws
     var swfGamepadCount: Int { get set }
     var swfSoundPlayer: (@MainActor (String?) -> Void)? { get set }
     func addWaterRipple(at position: SIMD3<Float>, strength: Float)

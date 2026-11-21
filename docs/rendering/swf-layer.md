@@ -119,6 +119,18 @@ movie swap. Draws past the ring size are counted as skipped, not dropped silentl
 
 Text set at run time reaches the renderer as an override on the scene item, and is laid out again.
 
+## Layers
+
+The renderer draws three movies, in this order:
+
+1. The HUD layer: `hudmenu.swf`, which stays loaded under every menu
+   ([HUD](/rendering/hud.md#the-hud-layer)). The HUD Opacity setting fades only this layer, and a
+   loading screen hides it.
+2. The menu layer: the main movie, which the open menu's movie takes.
+3. The overlay, below.
+
+The HUD layer has its own package and its own running movie, as the overlay does.
+
 ## Overlay movie
 
 Some game menus show two movies at once. The book menu draws its pages from `book.swf` and its
@@ -127,7 +139,7 @@ second movie:
 
 - It has its own package and its own running movie, built when it is set and freed when it is
   cleared.
-- It draws after the main movie, with the same fit to the viewport, scale, and opacity.
+- It draws after the main movie, with the same fit to the viewport and scale.
 - Setting or clearing the main movie leaves it alone. The menu that set it clears it.
 - It takes no pointer input.
 

@@ -136,14 +136,13 @@ extension DialogueMenuController.SpeechAdapter {
         }
     }
 
-    /// Reaches the HUD only after the menu closed; this clears a line so it
-    /// does not outlive its menu. While the menu is up, its own
-    /// `SubtitleText` carries the line.
+    /// Clears a line so it does not outlive its menu. While the menu is up, its
+    /// own `SubtitleText` carries the line.
     func publishSubtitle() {
         guard game.hud.isLoaded, let renderer = game.renderer else { return }
         let subtitle = owner.isOpen && game.subtitles.settings.dialogue ? owner.model.subtitle : nil
         do {
-            try renderer.updateSWFRuntime { runtime in
+            try renderer.updateSWFHUD { runtime in
                 HUDMovieBridge.setSubtitleText(subtitle, runtime: runtime)
             }
         } catch {

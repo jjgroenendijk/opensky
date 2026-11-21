@@ -60,8 +60,8 @@ nonisolated public final class SWFPassResources {
 
     /// A/B toggle mirrored by `Renderer.swfEnabled`.
     public var enabled = true
-    /// Mirrored by `Renderer.swfMainMovieHidden`.
-    public var mainMovieHidden = false
+    /// Mirrored by `Renderer.swfHUDHidden`.
+    public var hudHidden = false
     /// Centered scale multiplier over the fit-to-viewport mapping.
     var scale: Float = 1
     var opacity: Float = 1
@@ -74,6 +74,8 @@ nonisolated public final class SWFPassResources {
     public var runtime: SWFMovieRuntime?
     /// A second running movie drawn over `movie`.
     public var overlay: SWFOverlayLayer?
+    /// The HUD movie, drawn under `movie`, so it stays on screen under a menu.
+    public var hud: SWFOverlayLayer?
     public var lastDrawStats = SWFDrawStats()
     /// Bumped per setSWFMovie: namespaces glyph-atlas font keys so two loaded
     /// movies (or reloads) never collide in the shared atlas cache.

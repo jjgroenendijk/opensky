@@ -2,8 +2,8 @@
 type: Subsystem
 title: Gameplay HUD
 description: How the vanilla hudmenu.swf becomes the gameplay HUD - the observed engine-to-movie
-  functions and argument shapes, compass heading mapping, authored placeholder clips, who owns the
-  single SWF layer.
+  functions and argument shapes, compass heading mapping, authored placeholder clips, and the HUD's
+  own SWF layer under the menus.
 tags: [rendering, ui, swf, hud]
 ---
 
@@ -180,14 +180,31 @@ and marker dirty, and the frame hook changes the renderer. The HUD timeline is n
 display rate: the direct functions set the state it needs, and one AS2 tick per 60 or 120 Hz frame
 would make behavior depend on the monitor. Timed HUD animation needs its own movie frame rate.
 
-## Who owns the SWF layer
+## The HUD layer
 
-There is one SWF layer, and the HUD owns it by default. The system menu's vanilla movie takes it:
-it shows `quest_journal.swf` on its System page while the menu is open, and brings the HUD back on
-Resume ([system menu](/engine/system-menu.md)).
+The HUD draws on its own SWF layer, under the menu layer
+([SWF layer](/rendering/swf-layer.md#layers)). A menu movie takes the menu layer and leaves the HUD
+running under it. The HUD Opacity setting and a loading screen's cover reach only the HUD layer.
+
+OpenSky puts the menu modes on in the order the menus opened, above the modes that follow the
+player. `Favor` is on while the player chooses a target in
+[follower command mode](/engine/follower-commands.md), and goes below the other player modes, in
+the order of the reset above. `Favor` hides the three meters. The menu modes hide every part
+OpenSky also switches: the meters, the enemy health bar, and the item info. Which parts each menu
+mode shows comes from the movie's element list:
+
+| Mode | Shows |
+| --- | --- |
+| `InventoryMode`, `TweenMode`, `BookMode` | Messages, quest updates |
+| `DialogueMode` | Messages, quest updates, compass |
+| `BarterMode` | Messages, quest updates |
+| `WorldMapMode` | Messages |
+| `JournalMode`, `SleepWaitMode` | Nothing: no element names them |
+| `Favor` | All but the three meters |
 
 ## Where OpenSky differs
 
-- The `Favor` mode and the menu modes ([HUD under menus](#hud-under-menus)) are not driven.
-  [Follower command mode](/engine/follower-commands.md) does not switch the HUD, and a menu takes
-  the one SWF layer, so the HUD is not drawn under a menu at all.
+- Lockpicking puts `InventoryMode` on as soon as the menu opens, not once its movie has loaded.
+- OpenSky builds the stack in a fixed order: the player modes, then the menu modes. The game
+  stacks each mode in the order its event happened, so sneaking with a menu open puts
+  `StealthMode` above the menu's mode there.
