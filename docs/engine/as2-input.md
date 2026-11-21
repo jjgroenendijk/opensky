@@ -102,6 +102,31 @@ fields, static text, and buttons use their bounding box. A mask still cuts by it
 `MovieClip.hitTest(x, y, true)` tests the shapes the same way, with `x` and `y` in stage pixels.
 `hitTest(x, y)` and `hitTest(clip)` keep the bounding box, as in Flash.
 
+## Keys the game sends
+
+The game sends a movie key events, never navigation names. The movie's own script turns the codes
+into `NavigationCode` values. The keys bound to the menu controls become these codes, whichever
+device pressed them:
+
+| Menu control | Key code |
+| --- | --- |
+| Up, Down, Left, Right | 38, 40, 37, 39 |
+| Accept | 13 |
+| Cancel | 9 |
+| Page Up, Page Down | 33, 34 |
+
+A press sends key down, and a release sends key up. A held direction repeats as key down: the first
+repeat comes 0.5 seconds after the press, then one about every 0.1 seconds. While the journal is
+open, the two times are 0.2 and 0.075 seconds. A key bound to a menu control is not also sent with
+its own code, so one press never arrives twice.
+
+A keyboard key that no menu control binds goes through with its own code. Of those, only Backspace,
+Delete, and the arrow keys repeat when held: after 0.3 seconds, then every 0.05 seconds. A gamepad
+button that no menu control binds arrives as a code from 96 to 107. That is the only sign of the
+device: the event carries no field that says keyboard or gamepad.
+
+Each mouse wheel notch is a wheel event at the cursor, with a delta of +1 up and -1 down.
+
 ## Focus and menu navigation
 
 Vanilla menus navigate through CLIK: `NavigationCode` is used 1,669 times across 34 movies and
@@ -183,12 +208,15 @@ follow the install's `interface\controls\pc\controlmap.txt`: in "Menu Mode", Acc
 Cancel is B (`0x2000`), the D-pad is Up, Down, Left, and Right (`0x0001` to `0x0008`), and the left
 stick (`0x000b`) moves too; in "Item Menus", XButton is X (`0x4000`) and YButton is Y (`0x8000`). The
 codes are the XInput button masks. A gamepad press becomes the same menu event as the matching key.
-OpenSky repeats a held direction after half a second, then every 0.12 seconds.
+A held direction repeats as the keyboard's does ([keys the game sends](#keys-the-game-sends)).
 
 Button art comes from `SetPlatform(platform, ...)`. `Shared.ButtonChange` sets `PLATFORM_PC` to 0
-and `PLATFORM_PC_GAMEPAD` to 1. While a gamepad is connected, the runtime sends 1 in every
-`SetPlatform` call, and it sends the movie's last call again when a gamepad connects or leaves. The
-game may instead follow the last device used; that is not confirmed.
+and `PLATFORM_PC_GAMEPAD` to 1. The game sends 0 while no gamepad is active and 1 while one is, with
+`false` as the second argument on PC. A gamepad is active when one is present and turned on in the
+settings. The game sends the call when a movie loads, right after `InitExtensions`, and again to every
+open menu when a gamepad connects or leaves. It does not follow the last device used: a key press
+with a gamepad connected keeps 1. In the same step, a menu that shows the cursor shows it with 0 and
+hides it with 1. OpenSky does the same.
 
 ### Gamepads in the world
 
