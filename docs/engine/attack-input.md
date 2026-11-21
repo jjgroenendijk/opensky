@@ -71,6 +71,14 @@ stateDiagram-v2
 - Dual press: with spells in both hands, it starts a dual cast, or draws first. Else it sends Dual
   Attack and arms the power timer. The melee dual press does not check for a sheathed weapon.
 
+With the weapon sheathed, a press of either button only draws, as Ready Weapon does: the same draw,
+with the same clip and sounds. It sends no attack and arms no power timer. A press while the draw
+runs is dropped too, and holding the button through the draw starts nothing: the player presses again
+once the weapon is out. Ready Weapon toggles between drawn and sheathed, but an attack button only
+ever draws. A draw that does not finish within 3 seconds is given up. A dead, dying, or bleeding-out
+player, a menu that pauses the game, and a script lock on the player's controls all stop the press
+before this check.
+
 Hand items, as `GetEquippedItemType` numbers them: −1 nothing, 0 fists, 1 to 6 melee weapons, 7
 bow, 8 staff, 9 spell, 10 shield, 11 torch, 12 crossbow.
 

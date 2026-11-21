@@ -186,6 +186,13 @@ stateDiagram-v2
     Saving --> [*]: 1000 ms passed / SaveControls
 ```
 
+The list is a `Shared.BSScrollingList`, and the game never scrolls it: the engine fills it and
+leaves the rest to the movie. On PC with no gamepad, the platform is 0. There an Up or Down key moves
+the selection and its highlight, but the list scrolls only on a mouse wheel notch. So moving past the
+last row on screen with the keys selects a row that stays out of view, as in the game. With a gamepad
+active the platform is 1, and the same key scrolls the list to keep the selection in view
+([keys the game sends](/engine/as2-input.md#keys-the-game-sends)).
+
 The game keeps changed bindings in a custom control map file beside the default
 `Interface/Controls/PC/ControlMap.txt`, so they last after a restart.
 
