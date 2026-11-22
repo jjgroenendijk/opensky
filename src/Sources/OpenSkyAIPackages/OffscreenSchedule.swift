@@ -245,17 +245,21 @@ public final class OffscreenSchedule {
         steps[actor.key] = step
     }
 
-    /// The first location input of the package that names a place OpenSky can find.
+    /// The first input of the package that names a place OpenSky can find: a location, or
+    /// a target that is one reference, such as the seat of a sit package.
     private func firstPlace(
         of package: ResolvedPackage, actor: OffscreenActor, world: any OffscreenScheduleWorld
     ) -> OffscreenPlace? {
         let values = PackageOverrideExecution(package: package).values
         for index in values.keys.sorted() {
-            guard
-                case let .location(location)? = values[index],
-                let place = world.offscreenPlace(of: location, actor: actor)
-            else { continue }
-            return place
+            let location: Package.Location? = switch values[index] {
+            case let .location(location)?: location
+            case let .target(target)?: target.referenceLocation
+            default: nil
+            }
+            if let place = location.flatMap({ world.offscreenPlace(of: $0, actor: actor) }) {
+                return place
+            }
         }
         return nil
     }

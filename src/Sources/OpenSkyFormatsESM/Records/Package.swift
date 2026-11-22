@@ -135,6 +135,12 @@ nonisolated public struct Package: Equatable, Sendable {
         public var kind: TargetKind? {
             TargetKind(rawValue: rawKind)
         }
+
+        /// The place of a target that names one reference, as a location at it.
+        public var referenceLocation: Location? {
+            guard kind == .specificReference, value != 0 else { return nil }
+            return Location(rawKind: LocationKind.nearReference.rawValue, value: value, radius: 0)
+        }
     }
 
     public enum DataValue: Equatable, Sendable {

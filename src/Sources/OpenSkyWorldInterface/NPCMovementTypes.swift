@@ -42,6 +42,9 @@ nonisolated public struct NPCMovementReadout: Equatable, Sendable {
     public let waypointCount: Int
     public let gait: LocomotionGait
     public let repathCount: Int
+    /// The waypoint the mover walks to now, and the end of its path.
+    public var nextWaypoint: SIMD3<Float>?
+    public var target: SIMD3<Float>?
 
     public init(
         actor: ReferenceKey,

@@ -47,6 +47,8 @@ nonisolated public struct LocationStore: Sendable {
     /// Every persistent placed reference of the load order, loaded or not, which an
     /// alias search outside the loaded area reads.
     public let persistentPlacements: [PersistentPlacement]
+    /// Each worldspace's own `XLCN` location (docs/formats/locations.md#cell-link).
+    public let worldspaceLocations: [ResolvedFormID: ResolvedFormID]
 
     public init(index: RecordIndex, persistentPlacements: [PersistentPlacement] = []) {
         self.index = index
@@ -71,6 +73,7 @@ nonisolated public struct LocationStore: Sendable {
             listing: bossType, in: table.values.values, index: index
         )
         descendants = Self.descendants(in: table, index: index)
+        worldspaceLocations = Self.worldspaceLocations(index: index)
     }
 
     /// The ref types `reference` is listed under in any location's `LCSR` or `ACSR`.

@@ -128,8 +128,9 @@ a pass starts over each unique persistent actor that no loaded cell holds. The p
 actors in turn inside the frame budget ([AI process levels](/engine/ai-process-levels.md#in-opensky)):
 
 1. It picks the actor's package by the same rules as for a loaded actor.
-2. It finds the place of the package's first location input: a reference, the editor place, or
-   the editor cell. A location it cannot place, such as an alias, keeps the actor where it is.
+2. It finds the place of the package's first input that names one: a location (a reference,
+   the editor place, or the editor cell), or a target that is one reference, such as the seat
+   of a sit package. An input it cannot place, such as an alias, keeps the actor where it is.
 3. An actor already in that cell and inside the location radius stays.
 4. When the place is in a loaded cell and the actor is in an interior, the actor comes out of
    the loaded door that leads into its interior. The loaded package then walks it to the place.

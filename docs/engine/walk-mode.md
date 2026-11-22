@@ -61,7 +61,7 @@ leftover step time. Its settings are fixed when the renderer is set up, from the
 | Gravity | 1,400 units/s²; 1.35 times while falling, 4 times on the ground |
 | Largest walkable slope | 47 degrees, on the surface the body touches |
 | Ground search | 69.99 units (1 physics unit) below the feet |
-| Step height | 32 units. No confirmed Skyrim SE game setting |
+| Step height | 36 units. No confirmed Skyrim SE game setting. The plank stairs of Riften have risers of up to 33.2 units, and NPCs walk them in the game |
 | Physics step | 1/120 s |
 | Longest accepted frame | 0.1 s |
 

@@ -21,7 +21,7 @@ struct PlayerMovementConfigurationTests {
         )
         #expect(configuration.walkSpeed == MovementSetting(value: 125, source: "Tuning.esp"))
         #expect(configuration.runSpeed == MovementSetting(value: 370, source: "engine default"))
-        #expect(configuration.stepHeight.value == 32)
+        #expect(configuration.stepHeight.value == 36)
         #expect(configuration.stepHeight.source.contains("no confirmed"))
     }
 }

@@ -1,5 +1,6 @@
 // The location a built cell belongs to: its `XLCN` link, else the location whose cell
-// list holds the exterior cell. See docs/formats/locations.md#cell-link.
+// list holds the exterior cell, else its worldspace's location. See
+// docs/formats/locations.md#cell-link.
 
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
@@ -34,6 +35,7 @@ nonisolated public struct CellLocationResolver: Sendable {
             })
         else { return nil }
         return cells.location(worldspace: worldspace, x: coordinate.x, y: coordinate.y)
+            ?? store.worldspaceLocations[worldspace]
     }
 
     /// The `NAM1` music type of the cell's location, in the load-order FormID space.

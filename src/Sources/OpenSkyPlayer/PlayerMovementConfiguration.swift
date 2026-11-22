@@ -94,7 +94,7 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
             ),
             runSpeed: run,
             stepHeight: MovementSetting(
-                value: 32,
+                value: 36,
                 source: "OpenSky fallback (no confirmed Skyrim SE GMST)"
             ),
             sprintSpeed: gait(
