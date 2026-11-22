@@ -59,6 +59,29 @@ struct SceneConversationTests {
         #expect(steps(begun, of: talk).contains(.phaseStarted(0)))
     }
 
+    /// The game stops a waiting scene whose speaker has no body, once its turn has come.
+    @Test func itEndsWhenTheSpeakerCannotTalk() throws {
+        let talk = try scene(0x4200)
+        let host = FakeSceneHost()
+        host.unloaded = [speaker]
+        let pending = ScenePendingLines()
+        pending.conversationFreeAt = 10
+        let store = WorldStateStore()
+        let waiting = try runtime(store, [talk], host: host, pending: pending, partner: partner)
+            .start(talk.formID)
+        #expect(steps(waiting, of: talk) == [.began, .waitingForConversation])
+        let ended = try runtime(
+            store, [talk], host: host, pending: pending, now: 11, partner: partner
+        ).tick()
+        #expect(steps(ended, of: talk).last == .ended(.stopped))
+
+        let fighting = FakeSceneHost()
+        fighting.statuses[partner] = .inCombat
+        let events = try runtime(WorldStateStore(), [talk], host: fighting, partner: partner)
+            .start(talk.formID)
+        #expect(steps(events, of: talk).last == .ended(.stopped))
+    }
+
     /// One partner walks to the other first. One pair walks at a time, and a pair that
     /// does not meet in time gives its turn away.
     @Test func itWaitsWhileThePartnersWalkTogether() throws {
