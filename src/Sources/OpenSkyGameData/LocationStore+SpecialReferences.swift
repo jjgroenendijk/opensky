@@ -1,6 +1,7 @@
 // The references a location lists by location ref type (`LCRT`), which a quest alias
 // of the "location alias reference" kind fills from. See docs/formats/locations.md.
 
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 
 nonisolated extension LocationStore {
@@ -105,5 +106,17 @@ nonisolated extension LocationStore {
             }
         }
         return types
+    }
+
+    static func worldspaceLocations(index: RecordIndex) -> [ResolvedFormID: ResolvedFormID] {
+        ResolvedRecordTable<ResolvedFormID?>(
+            index: index,
+            types: ["WRLD"],
+            decode: { try Worldspace(record: $0.record, localized: $0.localized) },
+            editorID: \.editorID,
+            resolve: { _, world, plugin in
+                world.details.location.flatMap { index.resolvedID($0, fromPlugin: plugin) }
+            }
+        ).values.compactMapValues(\.self)
     }
 }

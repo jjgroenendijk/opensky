@@ -73,8 +73,16 @@ Most exterior cells have no `XLCN`. For those, the location lists the cell itsel
 On the install, `HelgenLocation` lists its 8 town cells in `LCEC`, and
 `FalkreathHoldLocation` lists none. So OpenSky reads `XLCN` first, then the cell lists.
 When two locations list one cell, the one deeper in the `PNAM` chain wins, so a town wins
-over its hold. [WARNING] That tie rule is inferred, not taken from an open spec. A cell
-that no location claims has no location.
+over its hold. [WARNING] That tie rule is inferred, not taken from an open spec.
+
+A worldspace can name a location too, in `WRLD XLCN`. The Creation Kit calls it the
+location "for the entire worldspace"
+([World Spaces](https://ck.uesp.net/wiki/World_Spaces)). On the install the city
+worldspaces do: `RiftenWorld` names `RiftenLocation`, and its cells carry no `XLCN` and
+sit in no cell list. `Tamriel` names none. So a cell that no location claims takes its
+worldspace's location, and has no location when the worldspace names none. A story
+manager branch such as `RiftenCityScenes` tests `GetInCurrentLoc` on an actor in the
+city, so without this step no scene under it can start.
 
 ## Editor location
 

@@ -57,7 +57,7 @@ extension NPCMover {
     /// The same readout with the state overridden, for a mover the crowd
     /// registry stopped rather than one that ran to its own conclusion.
     public func readout(as state: NPCMovementState) -> NPCMovementReadout {
-        NPCMovementReadout(
+        var readout = NPCMovementReadout(
             actor: actor,
             state: state,
             feetPosition: controller.feetPosition,
@@ -67,6 +67,10 @@ extension NPCMover {
             gait: gait,
             repathCount: repathCount
         )
+        readout.nextWaypoint = path.waypoints.indices.contains(waypointIndex)
+            ? path.waypoints[waypointIndex] : nil
+        readout.target = path.target
+        return readout
     }
 
     public func persistence(reason: NPCMovementSettleReason) -> NPCMovementPersistence {

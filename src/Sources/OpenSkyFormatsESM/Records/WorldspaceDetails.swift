@@ -72,7 +72,7 @@ nonisolated public struct WorldspaceDetails: Equatable, Sendable {
     /// LTMP, an LGTM.
     var interiorLighting: FormID?
     /// XLCN, an LCTN.
-    var location: FormID?
+    public var location: FormID?
     /// NAM3, a WATR, and NAM4.
     public var lodWater: FormID?
     public var lodWaterHeight: Float?

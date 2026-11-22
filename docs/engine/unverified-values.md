@@ -338,7 +338,7 @@ the detail and the sources it did find.
 | Player shove efficiency | 0.175 of the player's momentum, before the game's mass and layer factor | [dynamic bodies](/engine/dynamic-bodies.md#the-players-shove) |
 | Contact warm start | A contact within 2 units of last substep's starts with 90% of its impulse; passes alternate direction | [dynamic contacts](/engine/dynamic-narrowphase.md#warm-starting) |
 | Swim settle | A rising swimmer stops at the 10-unit rest depth; above it, gravity pulls the float point back down | [walk mode](/engine/walk-mode.md#gaits-jump-and-swim) |
-| Walk step height | 32 units, though the game has none | [walk mode](/engine/walk-mode.md#settings) |
+| Walk step height | 36 units, though the game has none; the plank stairs of Riften have risers of up to 33.2 units | [walk mode](/engine/walk-mode.md#settings) |
 | Long body end lift | End spheres ride 32 units, the walk step height, above the feet | [character shapes](/engine/character-shapes.md#long-bodies) |
 | Swim breadcrumb trail | A point every 128 units, the last 64 kept; joined within 1,024 units, serves targets within 512 of its end | [navigation](/engine/navigation.md#swimming-after-the-player) |
 | Already-known tome notice | `sAlreadyKnown`, a space, the spell name, and a full stop | [spellcasting](/engine/spellcasting.md#reading-a-tome) |

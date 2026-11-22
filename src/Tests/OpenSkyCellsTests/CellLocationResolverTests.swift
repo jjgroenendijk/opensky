@@ -29,6 +29,14 @@ struct CellLocationResolverTests {
     }
 
     @Test
+    func anUnclaimedCellTakesItsWorldspaceLocation() throws {
+        let resolver = try Self.resolver()
+        let city = Self.scene(.exterior(CellCoordinate(x: 1, y: 1)), worldspace: Self.city)
+
+        #expect(resolver.location(of: city) == Self.fort)
+    }
+
+    @Test
     func musicFollowsTheResolvedLocation() throws {
         let resolver = try Self.resolver()
         let linked = Self.scene(.exterior(CellCoordinate(x: 4, y: -20)), link: 0x30)
@@ -40,6 +48,7 @@ struct CellLocationResolverTests {
     // MARK: - Fixtures
 
     private static let world: UInt32 = 0x3C
+    private static let city: UInt32 = 0x3D
     private static let fort = ResolvedFormID(plugin: "Base.esm", objectID: 0x30)
 
     private static func resolver() throws -> CellLocationResolver {
@@ -50,11 +59,17 @@ struct CellLocationResolverTests {
             ]),
             LocationFixture.recordBytes(0x30, "Fort", music: 0x50)
         ].reduce(Data(), +))
+        data += ESMFixture.topGroup("WRLD", contents: ESMFixture.recordBytes(
+            "WRLD", formID: city,
+            fields: [("EDID", ESMFixture.zstring("City")), ("XLCN", ESMFixture.words([0x30]))]
+        ))
         let file = try ESMFile(data: data)
         return CellLocationResolver(store: LocationStore(plugins: [("Base.esm", file)]))
     }
 
-    private static func scene(_ location: CellSceneLocation, link: UInt32? = nil) -> CellScene {
+    private static func scene(
+        _ location: CellSceneLocation, link: UInt32? = nil, worldspace: UInt32 = world
+    ) -> CellScene {
         CellScene(
             renderScene: RenderScene(instances: []),
             summary: CellLoadSummary(
@@ -68,7 +83,7 @@ struct CellLocationResolverTests {
             location: location,
             locationLink: link.map { FormID($0) },
             ownerPluginName: "Base.esm",
-            worldspace: FormID(world)
+            worldspace: FormID(worldspace)
         )
     }
 }

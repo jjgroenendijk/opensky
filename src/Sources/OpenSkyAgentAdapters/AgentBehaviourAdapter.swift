@@ -232,6 +232,8 @@ struct AgentPackageReadout {
                 .string("\($0.state) waypoint \($0.waypointIndex) of \($0.waypointCount)"
                     + " at \($0.feetPosition)")
             } ?? .null,
+            "moverNext": mover?.nextWaypoint.map { .string("\($0)") } ?? .null,
+            "moverTarget": mover?.target.map { .string("\($0)") } ?? .null,
             "movement": movementReadout(key),
             "vehicle": vehicleReadout(key),
             "vehicleLinks": .array(links.keys.sorted()

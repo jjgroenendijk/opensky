@@ -39,11 +39,11 @@ settings:
 | --- | --- | --- | --- |
 | Walk speed | `fMoveCharWalkBase` | world units per second | 100 |
 | Run speed | `fMoveCharRunBase` | world units per second | 370 |
-| Step height | none found | world units | 32 |
+| Step height | none found | world units | 36 |
 
 `Skyrim.esm` has `fMoveCharWalkBase = 100`. It has no `fMoveCharRunBase`, so OpenSky uses
 the documented default. No source and no official plugin gives a GMST for step height. So
-OpenSky uses 32 and labels it as its own fallback. It does not guess a name.
+OpenSky uses 36 and labels it as its own fallback. It does not guess a name.
 
 In one physics step, the player moves `(running ? runSpeed : walkSpeed) * fixedTimeStep`.
 

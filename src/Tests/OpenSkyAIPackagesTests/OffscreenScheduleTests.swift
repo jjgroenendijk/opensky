@@ -125,6 +125,15 @@ struct OffscreenScheduleTests {
         #expect(coordinator.offscreenReadout(for: Self.actor) == nil)
     }
 
+    @Test func aSitPackageNamesItsPlaceByItsSeat() throws {
+        let (coordinator, world) = try Self.coordinator(packages: [0x103])
+        world.offscreenActorList = [OffscreenActor(
+            key: Self.actor, base: FormID(0x600), place: Self.house
+        )]
+        coordinator.advance()
+        #expect(world.offscreenMoves.map(\.place) == [FakePackageWorld.stall])
+    }
+
     @Test func aLoadedPlaceIsReachedThroughTheHouseDoor() throws {
         let (coordinator, world) = try Self.coordinator(packages: [0x102])
         world.offscreenActorList = [OffscreenActor(
@@ -163,12 +172,18 @@ struct OffscreenScheduleTests {
                 Package.Location(rawKind: 0, value: 0x700, radius: 0)
             ))]
         )
+        let sit = try PackageRuntimeFixture.package(
+            id: 0x103, editorID: "SitAtStall", procedureNames: ["Sit"],
+            dataInputs: [Package.DataInput(index: 0, type: "SingleRef", value: .target(
+                Package.Target(rawKind: 0, value: 0x700, countOrDistance: 0)
+            ))]
+        )
         let actor = try PackageRuntimeFixture.actorBase(id: 0x600, packages: packages)
         let world = FakePackageWorld()
         let coordinator = PackageCoordinator(
             world: world,
             data: PackageSessionData(store: PackageStore(
-                packages: [fallback, walk],
+                packages: [fallback, walk, sit],
                 actorTemplates: ActorTemplateResolver(actors: [0x600: actor], leveledActors: [:])
             ), conditionFunctions: .standard)
         )
