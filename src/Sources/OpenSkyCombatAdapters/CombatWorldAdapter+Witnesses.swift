@@ -148,6 +148,10 @@ extension CombatWorldAdapter {
         actorFacts.aggroRadius(of: key)
     }
 
+    public func sayWarning(by key: ReferenceKey, to target: ReferenceKey) {
+        reports.sayWarning(by: key, to: target)
+    }
+
     @discardableResult
     public func setHostility(_ hostility: ActorHostility, on key: ReferenceKey) -> Bool {
         actorFacts.setHostility(hostility, on: key)

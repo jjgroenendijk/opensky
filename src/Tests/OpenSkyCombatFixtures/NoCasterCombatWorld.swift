@@ -29,6 +29,8 @@ extension NoCasterCombatWorld {
         false
     }
 
+    public func sayCombatWarning(by _: ReferenceKey, to _: ReferenceKey) {}
+
     public func combatReaction(toPlayerOf _: ReferenceKey) -> ActorReaction? {
         nil
     }

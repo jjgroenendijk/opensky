@@ -238,6 +238,8 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     func combatReaction(toPlayerOf key: ReferenceKey) -> ActorReaction?
     /// `key`'s aggro radius, or nil when its AI data switches the behaviour off.
     func combatAggroRadius(of key: ReferenceKey) -> AggroRadius?
+    /// `key` says its aggro radius warning line to `target`, when it has one to say now.
+    func sayCombatWarning(by key: ReferenceKey, to target: ReferenceKey)
     /// Looses an NPC's arrow. False when it has no arrow or nothing can fly.
     @discardableResult
     func fireCombatArrow(_ shot: CombatArrowShot) -> Bool

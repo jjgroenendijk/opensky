@@ -8,6 +8,8 @@ public protocol CombatLoopRuntimePort: CombatControlling {
     func actionFacts(of key: ReferenceKey) -> ActorActionFacts?
     /// The aggro radius zone `key` holds the player in, or nil when it does not warn.
     func aggroZone(of key: ReferenceKey) -> AggroZone?
+    /// Each actor that warns a target inside its aggro radius, with its count of warnings.
+    var aggroWatches: [ReferenceKey: AggroWatch] { get }
     func activity(of key: ReferenceKey) -> ActorCombatActivity
     var behaviors: [ReferenceKey: CombatBehaviorMachine] { get }
     func combatTarget(of key: ReferenceKey) -> ReferenceKey?

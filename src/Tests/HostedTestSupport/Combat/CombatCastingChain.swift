@@ -151,6 +151,8 @@ extension CombatCastingChain: CombatLoopWorld {
         MeleeAttacker(key: .player, feet: playerFeet, facing: 0)
     }
 
+    public func sayCombatWarning(by _: ReferenceKey, to _: ReferenceKey) {}
+
     public func combatReaction(toPlayerOf _: ReferenceKey) -> ActorReaction? {
         nil
     }

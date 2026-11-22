@@ -2,6 +2,8 @@
 // attacks one that comes nearer or stays. docs/engine/combat-behavior.md#aggro-radius.
 
 import Foundation
+public import OpenSkyFormatsESM
+import simd
 
 /// The three distances of one actor, in game units. Zero switches a distance off.
 nonisolated public struct AggroRadius: Equatable, Sendable {
@@ -30,11 +32,27 @@ nonisolated public struct AggroWatch: Equatable, Sendable {
     public var timer: Float = 0
     /// Warnings given inside the warn-or-attack distance.
     public var warnings = 0
+    /// Whom the actor warns: the player or one of the player's teammates.
+    public var target: ReferenceKey?
 
     public init() {}
 }
 
+/// What one step of a watch asks of the actor.
+nonisolated public enum AggroStepOutcome: Equatable, Sendable {
+    case waits
+    /// An interval ended: the actor says its warning line.
+    case warns
+    case attacks
+}
+
 nonisolated public enum AggroRadiusRule {
+    /// The actor says its line only while it faces the target within this angle.
+    public static let lineFacingRadians: Float = 20 * .pi / 180
+    /// The weapon events of the warning, as a guard's warning raises them.
+    public static let drawEvent = "WeapEquip"
+    public static let sheatheEvent = "Unequip"
+
     /// Seconds between two warnings.
     public static let warnInterval: Float = 5
     /// The actor attacks at the first interval that ends with more warnings than this.
@@ -56,20 +74,31 @@ nonisolated public enum AggroRadiusRule {
     /// interval ends in a warning, which counts only inside the warn-or-attack distance.
     public static func advance(
         _ watch: AggroWatch, zone: AggroZone, by seconds: Float
-    ) -> (watch: AggroWatch, attacks: Bool) {
-        guard zone != .outside else { return (AggroWatch(), false) }
+    ) -> (watch: AggroWatch, outcome: AggroStepOutcome) {
+        guard zone != .outside else { return (AggroWatch(), .waits) }
         var next = watch
         next.zone = zone
-        guard zone != .attack else { return (next, true) }
+        guard zone != .attack else { return (next, .attacks) }
         next.timer += max(0, seconds)
-        guard next.timer >= warnInterval else { return (next, false) }
+        guard next.timer >= warnInterval else { return (next, .waits) }
         next.timer = 0
         if next.warnings > maximumWarnings {
-            return (next, true)
+            return (next, .attacks)
         }
         if zone == .warnOrAttack {
             next.warnings += 1
         }
-        return (next, false)
+        return (next, .warns)
+    }
+
+    /// True when an actor at `feet` with `yaw`, counter-clockwise from +X, faces `target`
+    /// closely enough to say its line.
+    public static func faces(
+        _ target: SIMD3<Float>, from feet: SIMD3<Float>, yaw: Float
+    ) -> Bool {
+        let offset = SIMD2(target.x - feet.x, target.y - feet.y)
+        guard simd_length_squared(offset) > 0 else { return true }
+        let turn = atan2f(offset.y, offset.x) - yaw
+        return abs(atan2f(sinf(turn), cosf(turn))) <= lineFacingRadians
     }
 }

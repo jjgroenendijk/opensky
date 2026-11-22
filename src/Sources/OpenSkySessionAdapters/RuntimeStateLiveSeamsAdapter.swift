@@ -2,6 +2,7 @@ import Foundation
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
+import OpenSkyCombatInterface
 public import OpenSkyConditions
 import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
@@ -27,6 +28,7 @@ import OpenSkyWorldState
 public protocol RuntimeStateLiveSeamsHost: AnyObject, SendableMetatype {
     var actorGraphWorld: any ActorGraphWorldPort { get }
     var aiWorld: any AIWorldPort { get }
+    var combat: any CombatPort { get }
     var dialogue: any DialoguePort { get }
     var gameSession: (any GameSessionPort)? { get }
     var idleWorld: any IdleWorldPort { get }
@@ -60,10 +62,11 @@ extension RuntimeStateLiveSeamsAdapter {
         context.setDeferred { [game] in game.idleWorld.idles.furnitureResolution }
         context.setDeferred { [game] in game.actorGraphWorld.graphVariableResolution() }
         context.transform(CrimeConditionResolution.self) { [game] crime in
+            let watches = (game.combat.loop?.aggroWatches ?? [:]).mapValues(\.warnings)
             let warnings = game.packages.trespassWarnings
-            guard !warnings.isEmpty else { return crime }
+            guard !warnings.isEmpty || !watches.isEmpty else { return crime }
             var crime = crime
-            crime.situation?.trespassWarnings = warnings
+            crime.situation?.note(guardWarnings: warnings, aggroWarnings: watches)
             return crime
         }
         let magicSource = context
