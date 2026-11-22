@@ -181,13 +181,15 @@ nonisolated public enum QuestAliasFiller: Sendable {
             return found
         }
 
-        /// `ALUA` names an NPC base; its one placed reference fills the alias.
+        /// `ALUA` names an NPC base; its one placed reference fills the alias. A base
+        /// with no persistent actor takes its one loaded actor.
         private func uniqueReference(of alias: Quest.Alias) -> ReferenceKey? {
             guard
                 let base = alias.uniqueActor
                     .flatMap({ ReferenceKey.resolve($0, using: resolver) })
             else { return nil }
             return locations?.uniqueActorReferences[base]
+                ?? scope?.search.loadedActor(ofBase: base)
         }
 
         /// ALFA names a location alias and ALRT a location ref type. The first reference

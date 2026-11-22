@@ -226,9 +226,12 @@ Unique Actor (`ALUA`) names an `NPC_` base. The reference comes from the `LCUN` 
 2,900 Unique Actor aliases in `Skyrim.esm`. They miss some actors, such as `Ralof` and `Hadvar`.
 For a base the lists miss, OpenSky takes the one placed actor of that base in the persistent
 cell children of the load order. `Ralof` and `Hadvar` each have exactly one, in the `Tamriel`
-persistent cell. A base with no persistent actor, or with more than one, is still counted and
-left empty and never fails the start, the same as an unimplemented fill. Every other fill type
-is counted and left empty, and an unimplemented fill type never fails a quest start.
+persistent cell. A base placed more than once takes its one actor that starts enabled. A base
+with no persistent actor takes its one loaded actor: `Madesi` stands at his Riften market stall
+as a temporary reference, so only the loaded cell knows him. A base with no answer is still
+counted and left empty and never fails the start, the same as an unimplemented fill. Every
+other fill type is counted and left empty, and an unimplemented fill type never fails a quest
+start.
 Location Alias Reference (`ALFA` plus `ALRT`) names a location alias and a location ref type
 (`LCRT`). The reference comes from that location's `LCSR` and `ACSR` lists: the first one of that
 type that no other alias of the quest holds. The opening's cart drivers fill this way: two

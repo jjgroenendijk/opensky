@@ -21,6 +21,13 @@ nonisolated public struct PersistentPlacement: Sendable {
     public let record: Record
     /// The resolved NPC base of a placed actor.
     public let actorBase: ReferenceKey?
+
+    var startsDisabled: Bool {
+        switch record {
+        case let .reference(reference): reference.isInitiallyDisabled
+        case let .actor(actor): actor.isInitiallyDisabled
+        }
+    }
 }
 
 nonisolated public enum PersistentActorIndex {
@@ -45,17 +52,24 @@ nonisolated public enum PersistentActorIndex {
         return byKey.keys.sorted().compactMap { byKey[$0] }
     }
 
-    /// Each base that has exactly one persistent placed actor, mapped to that actor. A
-    /// base placed twice has no single answer, so it is left out.
+    /// Each base with one persistent placed actor, mapped to that actor. A base placed
+    /// more than once takes its one actor that starts enabled; with several or none of
+    /// those it has no single answer and is left out.
     public static func singleReferences(
         in placements: [PersistentPlacement]
     ) -> [ReferenceKey: ReferenceKey] {
-        var placed: [ReferenceKey: Set<ReferenceKey>] = [:]
+        var placed: [ReferenceKey: [PersistentPlacement]] = [:]
         for placement in placements {
             guard let base = placement.actorBase else { continue }
-            placed[base, default: []].insert(placement.key)
+            placed[base, default: []].append(placement)
         }
-        return placed.compactMapValues { $0.count == 1 ? $0.first : nil }
+        return placed.compactMapValues { copies in
+            if copies.count == 1 {
+                return copies[0].key
+            }
+            let enabled = copies.filter { !$0.startsDisabled }
+            return enabled.count == 1 ? enabled[0].key : nil
+        }
     }
 
     private static func placement(
