@@ -1,6 +1,7 @@
 // The light level, alert, sleep, player, and flying terms of the detection formula
 // (CK wiki "Category:Detection"), with the install's values from `synthetic`.
 
+import OpenSkyFormatsESM
 @testable import OpenSkyPerception
 @testable import OpenSkyPerceptionInterface
 import OpenSkyPhysics
@@ -168,5 +169,28 @@ struct DetectionTermsTests {
         #expect(DetectionFormula.sneakerFactor(inputs: given, settings: settings)
             == 60 * settings.skillMult.value)
         #expect(byRule == 30 * settings.skillMult.value)
+    }
+
+    /// docs/engine/detection.md, "Range and view cone".
+    @Test func theSightRangeShrinksBehindTheObserver() {
+        #expect(PerceptionSight.sightRangeShare(degreesOffFacing: 30, isExterior: true) == 1)
+        #expect(PerceptionSight.sightRangeShare(degreesOffFacing: 60, isExterior: true) == 1)
+        #expect(PerceptionSight.sightRangeShare(degreesOffFacing: 120, isExterior: true) == 0.75)
+        #expect(PerceptionSight.sightRangeShare(degreesOffFacing: 180, isExterior: true) == 0.5)
+        #expect(PerceptionSight.sightRangeShare(degreesOffFacing: 180, isExterior: false) == 0.75)
+        #expect(PerceptionSight.sightRangeShare(degreesOffFacing: .nan, isExterior: false) == 1)
+        let observer = PerceptionObserver(key: .player, feet: .zero)
+        func target(_ feet: SIMD3<Float>) -> PerceptionTarget {
+            PerceptionTarget(key: .player, feet: feet)
+        }
+        #expect(PerceptionSight.degreesOffFacing(observer: observer, target: target(.zero)) == 0)
+        let side = PerceptionSight.degreesOffFacing(
+            observer: observer, target: target(SIMD3(0, 100, 0))
+        )
+        #expect(abs(side - 90) < 0.01)
+        let behind = PerceptionSight.degreesOffFacing(
+            observer: observer, target: target(SIMD3(-100, 0, 0))
+        )
+        #expect(abs(behind - 180) < 0.01)
     }
 }

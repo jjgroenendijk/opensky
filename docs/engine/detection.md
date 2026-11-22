@@ -163,7 +163,7 @@ lit.
 - The Ambush package weight and its sound rule. OpenSky runs no Ambush package yet.
 - Mod Detection Movement changes the movement noise of the Sound term here, not the Moving
   term of sight.
-- The smaller range behind the observer and for a fighter's other targets.
+- The smaller range for a fighter's other targets. The only target is the player.
 - The sound-event fallback. A landed projectile makes OpenSky's only detection event
   ([stealth points](#stealth-points)).
 
