@@ -13,6 +13,9 @@ nonisolated public struct DynamicHullTopology: Sendable {
     let edges: [SIMD2<Int32>]
     /// Unit edge directions with the parallel ones merged: a box has three.
     let edgeDirections: [SIMD3<Float>]
+    /// Per edge direction, the points on the hull's outline when seen along it. Only
+    /// these can be the highest or lowest point along an axis square to the direction.
+    let outlines: [[Int32]]
 
     /// How far a point may sit from a plane and still be on its face, as a share of
     /// the hull's size. A decoded hull's points are rounded.
@@ -44,7 +47,9 @@ nonisolated public struct DynamicHullTopology: Sendable {
         guard faces.contains(where: { $0.count >= 3 }) else { return nil }
         self.faces = faces
         self.edges = edges
-        edgeDirections = Self.directions(of: edges, points: points)
+        let directions = Self.directions(of: edges, points: points)
+        edgeDirections = directions
+        outlines = directions.map { Self.outline(along: $0, points: points, slack: tolerance) }
     }
 
     private static func face(
@@ -83,6 +88,50 @@ nonisolated public struct DynamicHullTopology: Sendable {
             }
         }
         return directions
+    }
+}
+
+nonisolated extension DynamicHullTopology {
+    private typealias FlatPoint = (index: Int32, place: SIMD2<Float>)
+
+    /// The convex outline of the points pressed flat along `direction`. Points that
+    /// land within `slack` of each other count once, and a point stays unless it lies
+    /// inside the outline by more than `slack`.
+    static func outline(
+        along direction: SIMD3<Float>, points: [SIMD3<Float>], slack: Float
+    ) -> [Int32] {
+        let reference = abs(direction.x) < 0.9 ? SIMD3<Float>(1, 0, 0) : SIMD3(0, 1, 0)
+        let across = simd_normalize(simd_cross(direction, reference))
+        let up = simd_cross(direction, across)
+        var flat: [FlatPoint] = []
+        for (index, point) in points.enumerated() {
+            let place = SIMD2(simd_dot(point, across), simd_dot(point, up))
+            if !flat.contains(where: { simd_distance($0.place, place) <= slack }) {
+                flat.append((Int32(index), place))
+            }
+        }
+        flat.sort { $0.place.x == $1.place.x ? $0.place.y < $1.place.y : $0.place.x < $1.place.x }
+        let lower = chain(flat, slack: slack)
+        let upper = chain(flat.reversed(), slack: slack)
+        return Array(Set(lower + upper)).sorted()
+    }
+
+    /// One half of the outline: a point leaves when the turn at it bends inward.
+    private static func chain(_ ordered: [FlatPoint], slack: Float) -> [Int32] {
+        var kept: [FlatPoint] = []
+        for point in ordered {
+            while kept.count >= 2 {
+                let start = kept[kept.count - 2].place
+                let middle = kept[kept.count - 1].place
+                let span = point.place - start
+                let offset = middle - start
+                let inward = span.x * offset.y - span.y * offset.x
+                guard inward > slack * simd_length(span) else { break }
+                kept.removeLast()
+            }
+            kept.append(point)
+        }
+        return kept.map(\.index)
     }
 }
 

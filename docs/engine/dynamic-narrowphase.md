@@ -94,6 +94,10 @@ because a face gives steadier contacts.
 
 A hull's faces and edges are found once per body. The points that lie on each plane, sorted around
 the plane's centre, make its face. Parallel edge directions are merged, so a box has three.
+For each edge direction the hull also keeps its outline: the points on the convex outline when
+the hull is seen along that direction. An edge axis is square to both edge directions, so only
+the outline points can be the highest or lowest on it. A box has four outline points per
+direction, so an edge axis costs half the dot products.
 
 ## Contact patches
 

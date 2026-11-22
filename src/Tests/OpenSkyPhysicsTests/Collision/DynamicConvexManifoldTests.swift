@@ -35,6 +35,35 @@ struct DynamicConvexManifoldTests {
         #expect(xs == [-7, 13], "the upper box's corners, clipped to nothing")
     }
 
+    /// Seen along one of its edges a box shows four corners, and those four reach as
+    /// far as all eight along any axis square to that edge.
+    @Test
+    func aBoxOutlineAlongAnEdgeReachesAsFarAsTheWholeBox() throws {
+        let box = DynamicBodyScene.cube(key: .generated(1), center: SIMD3(4, 5, 6), half: 10)
+        let topology = try #require(box.definition.hullTopologies[0])
+        guard case let .hull(points, planes) = box.definition.volumes[0] else {
+            Issue.record("the cube is a hull")
+            return
+        }
+        let hull = DynamicPosedHull(
+            points: points, planes: planes, topology: topology,
+            position: box.position, orientation: simd_quatf(angle: 0.7, axis: SIMD3(0, 0, 1))
+        )
+        #expect(topology.edgeDirections.count == 3)
+        for (edge, direction) in hull.edgeDirections.enumerated() {
+            #expect(topology.outlines[edge].count == 4)
+            for other in [SIMD3<Float>(1, 0.3, 0.2), SIMD3(-0.4, 1, 0.1), SIMD3(0.2, -0.5, 1)] {
+                let cross = simd_cross(direction, other)
+                guard simd_length(cross) > 1e-3 else { continue }
+                let axis = simd_normalize(cross)
+                let high = hull.highest(along: axis, outlineOf: edge)
+                let low = hull.lowest(along: axis, outlineOf: edge)
+                #expect(abs(high - hull.highest(along: axis)) < 1e-3)
+                #expect(abs(low - hull.lowest(along: axis)) < 1e-3)
+            }
+        }
+    }
+
     @Test
     func aBoxHangingOverAnEdgeIsClippedToTheLowerFace() {
         let lower = DynamicBodyScene.cube(key: .generated(1), center: .zero, half: 20)
