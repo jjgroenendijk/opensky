@@ -35,6 +35,18 @@ struct PackageScheduleTreeTests {
         #expect(world.stops == [Self.guardKey])
     }
 
+    @Test func aWalkThatGaveUpStartsAgainAfterTheWait() throws {
+        let (coordinator, world) = try Self.coordinator(base: 0x610)
+        coordinator.advance()
+        coordinator.movementSettled(actor: Self.guardKey, reason: .giveUp)
+        coordinator.advance(by: 4)
+        #expect(world.moves.count == 1)
+        coordinator.advance(by: 7)
+        coordinator.advance(by: 0.1)
+        #expect(world.moves.count == 2)
+        #expect(coordinator.failedWalkSeconds.isEmpty)
+    }
+
     @Test func treesStartedInOneAdvanceShareOneConditionContext() throws {
         let (coordinator, world) = try Self.coordinator(base: 0x614)
         // Each tree checks a branch condition when it starts.
