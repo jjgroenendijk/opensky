@@ -168,8 +168,10 @@ public final class OffscreenSchedule {
     private var turnActors: [ReferenceKey: OffscreenActor] = [:]
     /// The budget of the last frame, in milliseconds.
     public private(set) var lastBudget: Double = 0
-    /// True during a new game's placement, when no actor steps out of a door first.
+    /// True during a new game's or a rest's placement, when no actor steps out of a door.
     private var placesDirectly = false
+    /// The packages each quest alias gives its actor; they go before the actor's own.
+    public var aliasStacks: [ReferenceKey: PackageAliasStack] = [:]
 
     public func readout(for actor: ReferenceKey) -> String? {
         steps[actor]?.readout
@@ -213,16 +215,17 @@ public final class OffscreenSchedule {
         }
     }
 
-    /// A new game's placement: every listed actor, one in a loaded cell too, takes its
-    /// package for the hour and stands at that package's place at once.
+    /// A new game's or a rest's placement: every listed actor outside `busy`, one in a
+    /// loaded cell too, takes its package for the hour and stands at that package's place.
     public func placeAll(
-        world: any OffscreenScheduleWorld, clock: GameClock, context: ConditionContext
+        world: any OffscreenScheduleWorld, clock: GameClock, busy: Set<ReferenceKey>,
+        context: ConditionContext
     ) {
         guard runtime != nil else { return }
         placesDirectly = true
         defer { placesDirectly = false }
-        for actor in world.offscreenActors()
-            where choosePackage(for: actor, clock: clock, context: context)
+        for actor in world.offscreenActors() where !busy.contains(actor.key)
+            && choosePackage(for: actor, clock: clock, context: context)
         {
             update(
                 actor, package: runtime?.currentPackage(for: actor.key), world: world,
@@ -274,6 +277,9 @@ public final class OffscreenSchedule {
                 attempt({ try runtime?.register(actor: actor.key, base: actor.base) }) != nil
             else { return false }
             registered[actor.key] = actor.base
+        }
+        runtime?.setAliasStack(aliasStacks[actor.key], actor: actor.key, clock: clock) {
+            context
         }
         runtime?.advance(actor: actor.key, clock: clock, context: context)
         return true

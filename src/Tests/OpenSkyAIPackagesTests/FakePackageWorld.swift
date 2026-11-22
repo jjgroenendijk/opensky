@@ -24,6 +24,7 @@ final class FakePackageWorld: PackageWorld {
     var moverSlotsFull = false
     var drivesPlayer = false
     var activity: PackageActorActivity = .free
+    var aliasStacks: [ReferenceKey: PackageAliasStack] = [:]
     var hasRoom = true
     var holdsIdleMarker = false
     var flies = false
@@ -124,6 +125,12 @@ final class FakePackageWorld: PackageWorld {
     func packageConditionContext(clock _: GameClock) -> ConditionContext {
         contextReads += 1
         return ConditionContext()
+    }
+}
+
+extension FakePackageWorld {
+    func packageAliasStacks() -> [ReferenceKey: PackageAliasStack] {
+        aliasStacks
     }
 }
 

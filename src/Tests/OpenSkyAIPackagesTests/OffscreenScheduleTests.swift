@@ -175,9 +175,9 @@ struct OffscreenScheduleTests {
         world.offscreenLoaded = true
         world.offscreenExit = Self.door
         coordinator.placeActorsAtPackagePlaces()
-        #expect(coordinator.newGamePlacementDue)
+        #expect(coordinator.placementDue)
         coordinator.advance()
-        #expect(!coordinator.newGamePlacementDue)
+        #expect(!coordinator.placementDue)
         let placed = world.offscreenMoves.prefix(2)
         #expect(placed.map(\.actor) == [Self.actor, loaded])
         #expect(placed.allSatisfy { $0.place == FakePackageWorld.stall })
@@ -186,6 +186,34 @@ struct OffscreenScheduleTests {
         let moves = world.offscreenMoves.count
         coordinator.advance()
         #expect(world.offscreenMoves.count == moves, "the placement runs once")
+    }
+
+    @Test func aPlacementLeavesAFightingActorWhereItIs() throws {
+        let (coordinator, world) = try Self.coordinator(packages: [0x102])
+        let loaded = PackageRuntimeFixture.key(0x501)
+        world.offscreenActorList = [
+            OffscreenActor(key: loaded, base: FormID(0x600), place: Self.house)
+        ]
+        world.residents = try [PackageRuntimeFixture.residentActor(0x501, base: 0x600)]
+        coordinator.advance()
+        world.activity = .fighting
+        coordinator.placeActorsAtPackagePlaces()
+        coordinator.advance()
+        #expect(world.offscreenMoves.isEmpty)
+        #expect(!coordinator.placementDue)
+    }
+
+    @Test func aQuestAliasPackageGoesBeforeTheActorsOwn() throws {
+        let (coordinator, world) = try Self.coordinator(packages: [0x101])
+        world.offscreenActorList = [OffscreenActor(
+            key: Self.actor, base: FormID(0x600), place: Self.house
+        )]
+        world.aliasStacks = [
+            Self.actor: PackageAliasStack(packages: [FormID(0x102)], quest: FormID(0x900))
+        ]
+        coordinator.advance()
+        #expect(world.offscreenMoves.map(\.place) == [FakePackageWorld.stall])
+        #expect(coordinator.offscreen.steps[Self.actor]?.package == FormID(0x102))
     }
 
     static func coordinator(

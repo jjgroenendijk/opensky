@@ -133,7 +133,7 @@ public struct AIOffscreenScheduleAdapter {
         guard
             let bridge = game.scripts.bridge,
             let resolver = bridge.formIDResolver,
-            let key = ReferenceKey.resolve(formID, using: resolver),
+            let key = ReferenceKey.resolve(formID, using: resolver), key != .player,
             let placement = bridge.placement(of: key),
             let location = placement.location
         else { return nil }

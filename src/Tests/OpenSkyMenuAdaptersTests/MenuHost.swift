@@ -57,6 +57,7 @@ final class MenuHost: LoadingScreenPresentationHost, LoadingScreenWorldHost, Map
     let fakeRaceMenu = FakeRaceMenuPort()
     let fakeRuntimeState = FakeRuntimeStatePort()
     let fakeRuntimeStateWorld = FakeRuntimeStateWorldPort()
+    let fakePackages = FakePackagePort()
     let fakeSaveGames = FakeSaveGameWorldPort()
     let fakeScripts = FakeScriptPort()
     let fakeSimulationClock = FakeSteppedWallClockPort()
@@ -238,6 +239,10 @@ final class MenuHost: LoadingScreenPresentationHost, LoadingScreenWorldHost, Map
 
     var streamer: any CellStreamerPort {
         fakeStreamer
+    }
+
+    var packages: any PackagePort {
+        fakePackages
     }
 
     var subtitles: any SubtitlePort {
