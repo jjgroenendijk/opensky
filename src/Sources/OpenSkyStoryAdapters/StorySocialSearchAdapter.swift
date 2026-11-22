@@ -125,6 +125,7 @@ extension StorySocialSearchAdapter {
             social.heading = game.streamer.npcTransform(for: actor.key)?.placement.rotation.z ?? 0
             social.posture = Self.posture(of: seats[actor.key])
             social.fightsRanged = combat?.fightsRanged(actor.key) ?? false
+            social.isLargeCreature = sceneCast.isLargeCreature(actor.key)
             return social
         }
         return SocialFrame(

@@ -33,6 +33,7 @@ public protocol StorySceneCastHost: AnyObject, SendableMetatype {
     var worldState: any WorldStateStorePort { get }
     var scenes: any ScenePort { get }
     var storyManager: any StoryManagerPort { get }
+    var effectsWorld: any EffectsWorldPort { get }
 }
 
 /// Part of `StoryWorldAdapter`, over its own narrow host.
@@ -99,5 +100,13 @@ extension StorySceneCastAdapter {
             let runtime = (game.scripts.bridge?.questRuntime as? QuestRuntime),
             let key = runtime.quests.key(for: quest) else { return }
         attempt { try game.scripts.bridge?.stopQuest(for: key) }
+    }
+}
+
+extension StorySceneCastAdapter {
+    /// A race of the size Extra Large (docs/engine/head-tracking.md#the-default-target).
+    func isLargeCreature(_ actor: ReferenceKey) -> Bool {
+        game.effectsWorld.race(of: actor)?.details.properties?.size
+            == SocialLimits.largeCreatureRaceSize
     }
 }
