@@ -56,13 +56,12 @@ nonisolated public struct ActorFactionBaselineResolver: Sendable {
     /// The baseline for one actor-value subject, which is what a runtime
     /// holding an `ActorValueHolder` actually has in hand.
     ///
-    /// The player has no NPC_ record in this engine and therefore no authored
-    /// memberships: every faction the player is in was joined at runtime, which
-    /// is exactly what the component records.
+    /// The player reads the `Player` actor record, whose factions include `PlayerFaction`.
     func baseline(for subject: ActorValueSubject) -> ActorFactionBaseline {
         switch subject {
         case let .actor(base): baseline(for: base)
-        case .player, .generated: .none
+        case .player: baseline(for: MenuRecordData.playerBase)
+        case .generated: .none
         }
     }
 }

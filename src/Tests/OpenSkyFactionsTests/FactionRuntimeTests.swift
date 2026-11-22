@@ -133,6 +133,39 @@ struct FactionRuntimeTests {
         #expect(calmed.source == .runtimeOverride)
     }
 
+    /// The player's own record puts it in its factions, so an enemy of one of them that
+    /// is only Aggressive attacks.
+    @Test
+    func thePlayerIsSeededFromItsOwnActorRecord() throws {
+        var runtime = try makeRuntime(
+            withBaselines: true,
+            aggression: 1,
+            relations: [
+                Fixture.Relation(Fixture.Factions.bandit, Fixture.Factions.guards, .enemy)
+            ]
+        )
+        let toward = runtime.decide(holder(Fixture.Actors.bandit), toward: .player)
+        #expect(toward.isHostile && toward.source == .faction)
+        let guards = try #require(runtime.factions.resolve(
+            FormID(Fixture.Factions.guards), fromPlugin: Fixture.pluginName
+        ))
+        #expect(runtime.isMember(.player, of: ReferenceKey(resolved: guards.id)))
+    }
+
+    /// A new game or a loaded save drops what the seed wrote, so the next ask seeds again.
+    @Test
+    func anActorIsSeededAgainAfterTheStoreIsRestored() throws {
+        var runtime = try makeRuntime(withBaselines: true)
+        let bandit = holder(Fixture.Actors.bandit)
+        _ = runtime.seed(bandit)
+        runtime.store.restore(from: .empty)
+        #expect(runtime.state(of: bandit.key).isEmpty)
+        #expect(runtime.needsSeeding(bandit.key))
+        let again = runtime.seed(bandit)
+        #expect(again.added.count == 1 && runtime.state(of: bandit.key).count == 1)
+        #expect(!runtime.needsSeeding(bandit.key))
+    }
+
     /// Without a baseline resolver — every synthetic scene — seeding is a
     /// no-op rather than a crash, and nothing is written.
     @Test
@@ -183,7 +216,16 @@ struct FactionRuntimeTests {
             )),
             localized: false
         )
-        let actors = [bandit].compactMap(\.self)
+        let player = try? ActorBase(
+            record: FactionFixture.decode(FactionFixture.actor(
+                formID: MenuRecordData.playerBase.rawValue,
+                editorID: "Player",
+                factions: [(Fixture.Factions.guards, 0)],
+                aiData: FactionFixture.aiData(aggression: 0)
+            )),
+            localized: false
+        )
+        let actors = [bandit, player].compactMap(\.self)
         return ActorFactionBaselineResolver(templates: ActorTemplateResolver(
             actors: Dictionary(uniqueKeysWithValues: actors.map { ($0.formID.rawValue, $0) }),
             leveledActors: [:]

@@ -106,6 +106,14 @@ The derivation reads the runtime faction membership component
 added to the Companions stays in after a reload, and an actor the player was never near costs
 nothing until something asks.
 
+The player's memberships are seeded from the `Player` actor record (`Skyrim.esm` `000007`). That
+record lists `PlayerFaction`, which many `FACT` relations name. For example,
+`RiftenRatwayFactionEnemy` is an enemy of `PlayerFaction`, so an Aggressive member attacks the
+player on sight.
+
+A new game and a loaded save replace the stored memberships. An actor is then seeded again the
+first time something asks, as after a restart of the app.
+
 Seeding walks the actor's template chain once per actor per session. The derivation itself is not
 cached. It is two component reads, a pair lookup, and a walk of two short lists. A cache would have
 to be cleared on every world state write, and actor values are written sixty times a second.
