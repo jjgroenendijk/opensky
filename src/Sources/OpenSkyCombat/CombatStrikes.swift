@@ -138,7 +138,7 @@ extension CombatShared {
                 if key == .player {
                     return (shared.meleeAttacker.feet, shared.meleeAttacker.facing)
                 }
-                return world.residentActor(key: key).map { ($0.feet, $0.facing) }
+                return world.residentActor(key: key).map { ($0.feet, $0.yaw) }
             }
             if let struck = place(target) {
                 facts.direction = HitReactionFacts.direction(

@@ -13,9 +13,14 @@ nonisolated public struct CombatActorObservation: Equatable, Sendable {
     /// Capsule bottom, world space.
     public let feet: SIMD3<Float>
     public let capsule: PlayerCapsule
-    /// Facing yaw in radians, in the locomotion bridge's convention. Used to
-    /// aim its own hit volume.
+    /// The placement's heading in radians: clockwise from north, as `angleZ`.
     public let facing: Float
+    /// The same direction as a yaw, counter-clockwise from +X, which the view cone
+    /// and the aim of an attack read (docs/engine/player-camera.md).
+    public var yaw: Float {
+        .pi / 2 - facing
+    }
+
     /// The actor's scale, which multiplies its reach.
     public let scale: Float
     /// Whether `ActorDeathState` has latched. A dead actor is never a combat
