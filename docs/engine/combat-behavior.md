@@ -166,8 +166,8 @@ game uses them, so each use is OpenSky's reading.
 | `fCombatDistance` | 141 | The base spacing the follow radius scales |
 | `fCombatFollowRadiusMult` | 3 | An NPC's ally farther than spacing times this walks back |
 | `fCombatTeammateFollowRadiusMult` | 3 | The same for the player's allies |
-| `fCombatAdvanceOuterRadius...` | 128, 256, 512 | An approach walks inside this; note 1 |
-| `fCombatAdvanceInnerRadius...` | 0, 0, 256 | A caster backs off to this first; note 2 |
+| `fCombatAdvanceOuterRadius...` | 128, 256, 512 | An approach slows inside this; note 1 |
+| `fCombatAdvanceInnerRadius...` | 0, 0, 256 | A caster backs off to this first; note 1 |
 | `fCombatCurrentWeaponAbsoluteMaxRangeMult` | 1.25 | Striking distance times this keeps a fighter waiting |
 | `fCombatAbsoluteMaxRangeMult` | 4 | Past striking distance times this, a closer casts |
 | `fAIUseWeaponDistance` | 15,000 | No spell or shout at a target farther than this |
@@ -180,11 +180,8 @@ game uses them, so each use is OpenSky's reading.
 | `fCombatPerchAttackTimeMin` | 4 s | The shortest perch stage |
 | `fCombatGroundAttackTimeMin`, `...Max` | 8 s, 17 s | The ground stage, by the style's ground time |
 
-Note 1: the three radii are `Min`, `Mid`, and `Max`. Offense 1 picks `Min`, 0.5 `Mid`, and 0
-`Max`, blended in between.
-
-Note 2: defense 0 picks `Min`, 0.5 `Mid`, and 1 `Max`. The back-off lasts at most 2 s, which is
-OpenSky's own number.
+Note 1: [combat approach](/engine/combat-approach.md) gives the game's rule for both radii and
+for the speed in each band. A caster's back-off lasts at most 2 s, which is OpenSky's own number.
 
 The advance, range, healing, shout, and flight settings reach the fights that start while the switch
 "Game combat settings" is on. Off keeps OpenSky's own numbers, which is what the older behaviour
@@ -314,15 +311,17 @@ While it warns:
 - At a timer end with more than 2 warnings counted, the actor attacks. So it warns three
   times and attacks after about 20 s. Inside the Warn distance alone it warns for ever.
 - Inside the Attack distance it attacks at once.
-- An actor with Aggression 0 and Confidence 0 flees where another would attack.
+- An actor with Aggression 0 and Confidence 0, both together, flees where another would attack.
+- A warning actor can change to a nearer actor that it detects now, or detected in the last 5 s,
+  inside the largest distance.
 - When the target leaves all three distances, the count and the timer are cleared, the actor
   sheathes, and it keeps its head on the target for 5 s. The warning ends when the target is
   gone or dead, or when the actor has not detected it for more than 5 s.
 - An actor that is attacked while it warns attacks (the wiki).
 
-A second path is for the player only: a recent player action within the larger of the
-Warn/Attack and Attack distances makes the actor attack at once. Which action counts was not
-found.
+The line has the Trespass subtype (`TRES`) and is aimed at the target. A package can give its
+own warning count in place of 2; that part is not confirmed. A second read on 2026-11-22 found
+no path that only the player can start.
 
 OpenSky runs the rule each step for every living actor that is not hostile and is not the
 player's teammate:
@@ -337,7 +336,7 @@ player's teammate:
   returns the larger of a guard's count and this count.
 - An actor with Confidence 0 is provoked and then flees, whatever its Aggression.
 - Not built: the 5 s of head tracking after the target leaves, a ranged actor's aim, the 80
-  degrees for a moving actor, and the player-action path.
+  degrees for a moving actor, and the change to a nearer actor.
 - `state actors` shows each actor's zone as `aggro`.
 
 ## Searching and giving up

@@ -84,8 +84,10 @@ flowchart TD
 ## Flying-mount lock
 
 While the player rides a mount whose race flies, as on a dragon, the Jump button locks a target.
-By default each press flips the lock. With the toggle option off, the lock holds while the button
-is held. Candidates are gathered within 7500 units on the ground plane.
+By default each press flips the lock. With the INI setting `bTargetLockIsToggle` off, the lock
+holds while the button is held. Candidates are the living actors with AI process data within
+`fTargetLockXYRange`, 7500 units, on the ground plane, without the player and the player's own
+mount. No object was found that can become the target in normal play.
 
 While locked, each frame the game steers the mount:
 
@@ -94,7 +96,8 @@ While locked, each frame the game steers the mount:
   player's heading, folded into −90° to 90°, × the target's speed / 350 × −2/π;
 - f = 1 − distance / 750. While f is above 0, the heading changes by (target term − strafe term)
   × the strafe-heading factor × the frame time × f;
-- the look input turns the heading and pitch, each scaled by its own factor.
+- the look input is scaled by 1/π and by the frame time. Its horizontal part turns the heading,
+  times the heading factor. Its vertical part turns the pitch, times the look factor.
 
 | Target | Strafe-heading factor | Heading factor | Look factor |
 | --- | --- | --- | --- |
@@ -120,7 +123,7 @@ count of `refreshes`, and `autoAim`, the target the last player shot turned towa
 `state mount` shows `lockSteer`, the heading change of the last step in radians.
 
 - The lock steers nothing while the rider's weapon is sheathed.
-- [WARNING] The lock has no hold-to-lock option, no look factors, and no locked objects. The
+- [WARNING] The lock has no hold-to-lock option and no look factors. The
   lock does not turn the dragon: its flight follows its orders
   ([dragon flight](/engine/dragon-flight.md#riding)).
 - [INFO] The NPC turn uses the actor's own turn step, not a rate from the graph.
