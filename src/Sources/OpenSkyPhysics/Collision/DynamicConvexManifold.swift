@@ -36,6 +36,24 @@ nonisolated struct DynamicPosedHull {
         points.reduce(Float.greatestFiniteMagnitude) { min($0, simd_dot(direction, $1)) }
     }
 
+    /// `highest(along:)` for an axis square to edge direction `edge`.
+    func highest(along direction: SIMD3<Float>, outlineOf edge: Int) -> Float {
+        var best = -Float.greatestFiniteMagnitude
+        for index in topology.outlines[edge] {
+            best = max(best, simd_dot(direction, points[Int(index)]))
+        }
+        return best
+    }
+
+    /// `lowest(along:)` for an axis square to edge direction `edge`.
+    func lowest(along direction: SIMD3<Float>, outlineOf edge: Int) -> Float {
+        var best = Float.greatestFiniteMagnitude
+        for index in topology.outlines[edge] {
+            best = min(best, simd_dot(direction, points[Int(index)]))
+        }
+        return best
+    }
+
     func polygon(_ face: Int) -> [SIMD3<Float>] {
         topology.faces[face].map { points[$0] }
     }
@@ -123,8 +141,8 @@ nonisolated enum DynamicConvexManifold {
     ) -> (Axis, Float)? {
         var best: (Axis, Float) = (.firstFace(0), -.greatestFiniteMagnitude)
         let towardSecond = second.centre - first.centre
-        for firstEdge in first.edgeDirections {
-            for secondEdge in second.edgeDirections {
+        for (firstIndex, firstEdge) in first.edgeDirections.enumerated() {
+            for (secondIndex, secondEdge) in second.edgeDirections.enumerated() {
                 let cross = simd_cross(firstEdge, secondEdge)
                 let length = simd_length(cross)
                 guard length > 1e-3 else { continue }
@@ -132,7 +150,8 @@ nonisolated enum DynamicConvexManifold {
                 if simd_dot(axis, towardSecond) < 0 {
                     axis = -axis
                 }
-                let separation = second.lowest(along: axis) - first.highest(along: axis)
+                let separation = second.lowest(along: axis, outlineOf: secondIndex)
+                    - first.highest(along: axis, outlineOf: firstIndex)
                 guard separation <= margin else { return nil }
                 if separation > best.1 {
                     best = (.edges(axis, firstEdge, secondEdge), separation)
