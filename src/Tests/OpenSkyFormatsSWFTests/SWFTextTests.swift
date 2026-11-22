@@ -130,6 +130,22 @@ struct SWFTextTests {
         #expect(edit.plainText == nil)
     }
 
+    /// The HTML is taken apart once per field, and two fields with the same values are
+    /// equal whether or not one of them was asked.
+    @Test func remembersTheParsedHTMLOfAField() throws {
+        var builder = SWFEditTextBodyBuilder()
+        builder.flags.hasText = true
+        builder.flags.html = true
+        builder.initialText = "<font size=\"24\">Health</font>"
+        let tag = SWFTag(code: 37, body: builder.build())
+        let asked = try SWFEditText.parse(tag: tag)
+        let fresh = try SWFEditText.parse(tag: tag)
+        #expect(asked.htmlContent?.text == "Health")
+        #expect(asked.htmlContent == asked.htmlContent)
+        #expect(asked == fresh)
+        #expect(asked.withBounds(asked.bounds).htmlContent?.text == "Health")
+    }
+
     @Test func stripsHTMLMarkupForPlainText() throws {
         var builder = SWFEditTextBodyBuilder()
         builder.flags.hasText = true

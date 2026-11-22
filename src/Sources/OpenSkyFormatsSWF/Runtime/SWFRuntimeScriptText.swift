@@ -36,7 +36,8 @@ nonisolated extension SWFMovieRuntime {
             ),
             flags: SWFEditTextFlags(), fontID: nil, fontClass: Self.defaultTextFont,
             fontHeight: 240,
-            color: nil, maxLength: nil, layout: nil, variableName: "", initialText: nil
+            color: nil, maxLength: nil, layout: nil, variableName: "", initialText: nil,
+            htmlParse: SWFHTMLParse()
         )
         let created = SWFDisplayObject(content: .editText(characterId))
         created.object.prototype = textFieldPrototype
