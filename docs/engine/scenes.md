@@ -308,7 +308,12 @@ While a conversation scene waits for its first phase, the game checks the pair o
 4. When the check fails, the scene stops. A conversation scene stops its quest when it ends
    (`FNAM` flag 0x02), so the quest stops too, and the gap is set to 0.
 5. When it passes, one partner starts the walk to the other: the speaker when its AI allows
-   it, else the partner. The scene then pauses for 2 seconds.
+   it, else the partner. The walk is asked for whatever the partner's loaded state is. The
+   scene then marks itself as meeting and pauses for `fAIWalkAwayTimerForConversation`,
+   2 seconds.
+6. The first phase starts only after the signal that the two have met. With a partner that has
+   no loaded body the scene neither begins at once nor ends. Whether that walk can finish was
+   not found.
 
 So a scene whose speaker has no loaded body, or is too far from the player, ends at once. A
 scene only waits without end when a partner is held by a scene that cannot be interrupted, and
@@ -378,4 +383,4 @@ its two speakers and ends.
 - A speaker does not wait to face its look target before its line.
 - The check on a waiting conversation pair follows the game's list. An actor with no running
   package is not held back by the package flag, and a sandbox that allows conversation counts
-  as the flag. A partner with no loaded body makes the scene wait, which the game does not do.
+  as the flag. A partner with no loaded body makes the scene wait and starts no walk.

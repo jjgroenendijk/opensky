@@ -170,12 +170,18 @@ letter: 88 X, 89 Y, 90 Z.
   units per second.
 - `IsPathing` (704) is 1 while the actor walks to a waypoint. `GetPathingTargetSpeed` (621) is
   the speed it walks there at, and 0 with no waypoint.
-- `GetHeadingAngle` (99) is the angle from the run-on's heading to the parameter reference.
-- `GetWithinDistance` (639) takes the distance as a float in parameter 2.
-- `GetRelativeAngle` (584) about Z is the heading angle. About X it is the pitch up to the
-  other reference.
-- `GetTargetHeight` (720) and `GetActivatorHeight` (680) are how far the other reference
-  stands above the run-on.
+- `GetHeadingAngle` (99) is the angle from the run-on's heading to the direction of the
+  parameter reference, from −180 to 180.
+- `GetWithinDistance` (639) takes the distance as a float in parameter 2. It is 1 when the
+  distance is below it.
+- `GetRelativeAngle` (584) is the run-on's rotation about the given axis minus the reference's
+  rotation about it, wrapped into 0 to 360. It compares where the two face, not where they
+  stand. Example: about Z, a victim that faces its attacker gives about 180, and one that shows
+  its back gives about 0.
+- `GetTargetHeight` (720) is the reference's height minus the run-on's, and 0 with no
+  reference. `GetActivatorHeight` (680) is how far the other reference stands above the run-on.
+- A null reference parameter of these functions means
+  [the other reference](/engine/conditions.md#the-other-reference).
 
 ## Spells
 

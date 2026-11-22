@@ -1,25 +1,49 @@
 ---
 type: Subsystem
 title: Combat assist
-description: How the game helps an attack find its target - no melee magnetism for the player,
+description: How the game helps an attack find its target - melee magnetism for the player,
   NPC attack tracking, the soft auto-aim of the player's projectiles, and the flying-mount lock.
 tags: [engine, combat, projectiles, ai, input]
 ---
 
 # Combat assist
 
-The game gives the player's aim a small push toward a target, but only for projectiles. Melee
-swings get no help. NPCs keep facing their target while they attack.
+The game gives the player's aim a small push toward a target: a turn toward the object under the
+crosshair on foot, and a soft auto-aim for projectiles. NPCs keep facing their target while they
+attack.
 
-OpenSky builds the three rules; [in OpenSky](#in-opensky) says how and what it leaves out.
+OpenSky builds the other three rules; [in OpenSky](#in-opensky) says how and what it leaves out.
 
 All values below are the ones that apply in play. Where `Skyrim.esm` overrides the program's
 built-in default, the page gives the plugin value.
 
-## Melee: no magnetism
+## Melee magnetism
 
-The player's swings do not turn or slide the player toward a target. This holds for normal, power,
-and sprint attacks, in first and third person. No such rule was found in the program.
+Read from the game program. While the player is on foot, a rule turns the player toward the
+object under the crosshair. It does not run while the player rides. The target can be an actor
+or another object. Each frame:
+
+- strafe term = the player's speed × the strafe input / `fMagnetismStrafeBaseSpeed`;
+- target term, only for a moving actor: the angle between the target's direction of travel and the
+  player's heading, folded into −90° to 90°, × the target's speed / the same base speed × −2/π;
+- f = 1 − distance / `fMagnetismStrafeMaxDistance`. While f is above 0, the heading changes by
+  (target term − strafe term) × the strafe-heading factor × the frame time × f;
+- the look input is scaled by the turning speed in radians per second / π and by the frame time.
+  Its horizontal part turns the heading, times the heading factor. Its vertical part turns the
+  pitch, times the look factor.
+
+The values are INI settings of the section `Combat`:
+
+| Setting | Value |
+| --- | --- |
+| `fMagnetismStrafeMaxDistance` | 750 |
+| `fMagnetismStrafeBaseSpeed` | 350 |
+| `fMagnetismStrafeHeadingMult`, `fMagnetismObjStrafeHeadingMult` | 0.5 for an actor, 0 for an object |
+| `fMagnetismHeadingMult`, `fMagnetismObjHeadingMult` | 1 for an actor, 0.5 for an object |
+| `fMagnetismLookingMult`, `fMagnetismObjLookingMult` | 10 for an actor, 0.5 for an object |
+
+The rule stops while the target is gone or dead, all inputs are zero, the target is the
+player's own mount, or the weapon is sheathed and the target is an actor.
 
 ## NPC attack tracking
 
@@ -84,28 +108,20 @@ flowchart TD
 ## Flying-mount lock
 
 While the player rides a mount whose race flies, as on a dragon, the Jump button locks a target.
-By default each press flips the lock. With the INI setting `bTargetLockIsToggle` off, the lock
-holds while the button is held. Candidates are the living actors with AI process data within
-`fTargetLockXYRange`, 7500 units, on the ground plane, without the player and the player's own
-mount. No object was found that can become the target in normal play.
+By default each press flips the lock. With the INI setting `bTargetLockIsToggle` (section
+`Gameplay`, default 1) off, the lock holds while the button is held.
 
-While locked, each frame the game steers the mount:
-
-- strafe term = the player's speed × the strafe input / 350;
-- target term, only for a moving actor: the angle between the target's direction of travel and the
-  player's heading, folded into −90° to 90°, × the target's speed / 350 × −2/π;
-- f = 1 − distance / 750. While f is above 0, the heading changes by (target term − strafe term)
-  × the strafe-heading factor × the frame time × f;
-- the look input is scaled by 1/π and by the frame time. Its horizontal part turns the heading,
-  times the heading factor. Its vertical part turns the pitch, times the look factor.
-
-| Target | Strafe-heading factor | Heading factor | Look factor |
-| --- | --- | --- | --- |
-| An actor | 0.5 | 1 | 10 |
-| An object | 0 | 0.5 | 0.5 |
-
-The steering stops while the target is gone or dead, all inputs are zero, the target is the
-player's own mount, or the weapon is sheathed and the target is an actor.
+- Candidates are actors only, within `fTargetLockXYRange` (section `Gameplay`, 7500 units) on
+  the ground plane. The range is centred on the mount's combat target when it has one, else on
+  the player. The mount is left out.
+- The first candidate is locked. With no candidate there is no lock, and a notification says so.
+- No way to lock an object was found.
+- While locked, Sneak orders the mount to attack the target, and spells and shouts aim at it.
+- The target is dropped when it is gone, dead, the mount, the player, not in an attached cell,
+  or without AI process data. The lock then moves to the next stored candidate, and wraps
+  around the list. With none left the lock is off. No range, line-of-sight, or time test ends it.
+- The lock does not steer the player or the mount. The magnetism rule above does not run while
+  riding.
 
 ## In OpenSky
 
@@ -126,7 +142,8 @@ count of `refreshes`, and `autoAim`, the target the last player shot turned towa
 - The launcher's "Dragon target lock toggles" switch is the toggle option. With it off, a press
   of Jump locks the actor in view, and the lock ends when Jump comes up. `state mount` shows it
   as `lockIsToggle`, and `debug setting world.flyingMountLockToggle=off` turns it off for a run.
-- [WARNING] The lock has no look factors. The
-  lock does not turn the dragon: its flight follows its orders
-  ([dragon flight](/engine/dragon-flight.md#riding)).
+- [WARNING] Melee magnetism is not built. The lock on a ridden dragon uses its strafe and target
+  terms to turn the rider's view, which the game does not do while riding.
+- [WARNING] A lock whose target drops ends. It does not move to the next candidate, and the
+  candidate range is centred on the player only.
 - [INFO] The NPC turn uses the actor's own turn step, not a rate from the graph.
