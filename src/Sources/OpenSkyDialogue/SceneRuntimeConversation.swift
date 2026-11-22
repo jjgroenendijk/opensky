@@ -39,12 +39,16 @@ extension SceneRuntime.Playback {
             end(.actorBehavior)
             return false
         }
+        let free = runtime.playingConversation(except: entry.formID) == nil
+            && runtime.now >= runtime.pendingLines.conversationFreeAt
+        if free, partners.count == 2, !mayStillTalk(partners[0], partners[1]) {
+            end(.stopped)
+            return false
+        }
         let ready = partners.count == 2 && partners.allSatisfy { partner in
             runtime.holder(of: partner, except: entry.formID) == nil
                 && runtime.host?.hasLoadedBody(partner) != false
         }
-        let free = runtime.playingConversation(except: entry.formID) == nil
-            && runtime.now >= runtime.pendingLines.conversationFreeAt
         if !ready, runtime.pendingLines.meeting?.scene == entry.formID {
             runtime.pendingLines.meeting = nil
         }
@@ -56,6 +60,19 @@ extension SceneRuntime.Playback {
             return false
         }
         return partnersMet(partners[0], partners[1])
+    }
+
+    /// The game's check on a waiting pair, run once its turn has come and no other scene
+    /// holds a partner. False ends the scene, and with it the quest.
+    private func mayStillTalk(_ speaker: ReferenceKey, _ partner: ReferenceKey) -> Bool {
+        guard let host = runtime.host else { return true }
+        let held = [speaker, partner].contains {
+            runtime.holder(of: $0, except: entry.formID) != nil
+        }
+        guard !held else { return true }
+        return host.hasLoadedBody(speaker)
+            && !host.sceneActorStatus(speaker).contains(.inPlayerDialogue)
+            && !host.sceneActorStatus(partner).contains(.inCombat)
     }
 
     /// One pair walks together at a time, and a pair that did not meet waits its turn.

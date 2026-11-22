@@ -311,6 +311,7 @@ While a conversation scene waits for its first phase, the game checks the pair o
 So a scene whose speaker has no loaded body, or is too far from the player, ends at once. A
 scene only waits without end when a partner is held by a scene that cannot be interrupted, and
 that partner's alias is not optional.
+
 - The scene counts as interruptible, with or without flag 0x10.
 
 The quest starts when two actors fire the event
@@ -373,3 +374,7 @@ its two speakers and ends.
 - A conversation partner does not walk to the other partner before the scene begins. The game's
   walk is in [walking together](/engine/random-conversations.md#walking-together).
 - A speaker does not wait to face its look target before its line.
+- The check on a waiting conversation pair ends the scene when the speaker has no loaded body
+  or is in dialogue with the player, or when the partner is in combat. The 3000 units to the
+  player, the package flags, and the seat and bed states are not checked there. A partner with
+  no loaded body makes the scene wait.
