@@ -70,6 +70,8 @@ struct RecordDetailTests {
         #expect(details.skeletons.female?.textureHashes?.count == 12)
         #expect(details.attacks.map(\.event) == ["attackStart", "bashStart"])
         #expect(details.attackSpells.isEmpty)
+        #expect(details.attackStagger(event: "AttackStart") == 0)
+        #expect(details.attackStagger(event: "attackPowerStart") == nil)
         #expect(details.bodyParts.male.map(\.index) == [0, 1])
         #expect(details.bodyParts.male[1].model?.path == "lower.nif")
         #expect(details.bipedObjectNames == ["Head"])

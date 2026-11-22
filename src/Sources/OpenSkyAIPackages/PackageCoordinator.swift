@@ -113,12 +113,6 @@ extension PackageWorld {
 
     public func seatPackageActor(_: ReferenceKey, in _: PackageSeat) {}
 
-    public func turnPackageActor(
-        _: ReferenceKey, toHeading _: Float, within _: Float
-    ) -> Float? {
-        nil
-    }
-
     public func unseatPackageActor(_: ReferenceKey, from _: PackageSeat?) {}
 
     public func packageProcedure(_: PackageScriptEvent) {}

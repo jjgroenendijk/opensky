@@ -35,16 +35,6 @@ public protocol SceneHost: AnyObject {
     func sceneSpeakerFaces(_ speaker: ReferenceKey, _ listener: ReferenceKey) -> Bool
 }
 
-extension SceneHost {
-    public func conversationPartnersMeet(_: ReferenceKey, _: ReferenceKey) -> Bool {
-        true
-    }
-
-    public func sceneSpeakerFaces(_: ReferenceKey, _: ReferenceKey) -> Bool {
-        true
-    }
-}
-
 /// The scene action that holds an actor's packages.
 nonisolated public struct ScenePackageOwner: Hashable, Sendable {
     public let scene: FormID

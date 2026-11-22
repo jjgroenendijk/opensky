@@ -164,6 +164,11 @@ struct DetectionDialogueTests {
         )
         #expect(coordinator.detectionLines(frame).isEmpty)
         #expect(coordinator.detectionDialogue.records[.player] == .combat)
+        #expect(coordinator.detectionRecords[.player] == .combat)
+        let request = DetectionLineRequest(
+            subtype: .alertIdle, speaker: DialogueRuntimeFixture.speakerKey, about: .player
+        )
+        #expect(DetectionLine(info: FormID(0x90), request: request).request == request)
         #expect(SpeechTimerSettings.vanilla.detectionIdleWait == 10 ... 25)
     }
 }
