@@ -5,6 +5,7 @@
 
 import Foundation
 public import OpenSkyFormatsESM
+import OpenSkyGameData
 public import OpenSkyWorldState
 import Synchronization
 
@@ -290,6 +291,22 @@ nonisolated public struct ConditionCall: Sendable {
         }
     }
 
+    /// The reference a null parameter 1 stands for: the other side of the run-on.
+    /// See docs/engine/conditions.md#the-other-reference.
+    public func otherReference() -> ReferenceKey? {
+        let flags = condition.flags
+        guard !flags.contains(.useAliases), !flags.contains(.usePackData) else { return nil }
+        var pair = (subject: context.subject, target: context.target)
+        if flags.contains(.swapSubjectAndTarget), pair.subject != nil, pair.target != nil {
+            pair = (pair.target, pair.subject)
+        }
+        return switch condition.runOn {
+        case .subject, .reference: pair.target
+        case .target, .combatTarget: pair.subject
+        default: nil
+        }
+    }
+
     /// True for `PlayerRef` (`00000014`), which no loaded cell holds: the engine knows the
     /// player only as `.player`. `MQ101Scene1` waits on `HasLoaded3D` run on it.
     private func namesPlayer(_ formID: FormID) -> Bool {
@@ -298,6 +315,15 @@ nonisolated public struct ConditionCall: Sendable {
             return formID.rawValue == 0x14
         }
         return ReferenceKey.resolve(formID, using: target)?.namingPlayer == .player
+    }
+
+    /// True for the player's actor record, `Skyrim.esm:000007`.
+    public func namesPlayerBase(_ formID: FormID) -> Bool {
+        guard let target = context.formIDTranslation?.target else {
+            return formID == MenuRecordData.playerBase
+        }
+        return ReferenceKey.resolve(formID, using: target)
+            == .plugin(name: "skyrim.esm", objectID: MenuRecordData.playerBase.rawValue)
     }
 
     /// The reference the subject is fighting (run-on type 3), from the actor seam.

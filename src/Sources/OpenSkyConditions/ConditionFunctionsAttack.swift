@@ -45,7 +45,7 @@ nonisolated extension ConditionFunctions {
                 index: 678, name: "ShouldAttackKill", parameter1: .formID
             ) { call in
                 let named = (call.parameter1?.rawValue ?? 0) != 0
-                let target = named ? ConditionFunctions.parameterReference(call) : nil
+                let target = ConditionFunctions.parameterReference(call)
                 if named, target == nil {
                     return .failure(.unresolvedParameter(678))
                 }
