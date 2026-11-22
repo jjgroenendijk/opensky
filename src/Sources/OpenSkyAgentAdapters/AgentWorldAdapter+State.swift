@@ -42,7 +42,8 @@ extension AgentWorldAdapter {
         switch query {
         case .player: try playerReadout.playerState()
         case .target: actorReadout.targetState()
-        case let .actors(radius): try actorReadout.actorsState(radius: radius)
+        case let .actors(radius, detailed):
+            try actorReadout.actorsState(radius: radius, detailed: detailed)
         case .menu: menuReadout.menuState
         case let .quest(editorID): try menuReadout.questState(editorID)
         case .scenes: objects.scenesState()

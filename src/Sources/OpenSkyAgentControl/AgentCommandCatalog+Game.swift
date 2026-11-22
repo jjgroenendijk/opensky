@@ -12,7 +12,10 @@ nonisolated extension AgentCommandCatalog {
         command(
             "state.actors",
             "Loaded actors near the player, with their leveled rolls and behaviour graphs.",
-            options: [value("radius", "units", "Search radius in game units. Default: 4096.")]
+            options: [
+                value("radius", "units", "Search radius in game units. Default: 4096."),
+                value("detailed", "count", "Nearest actors that get a full row. Default: 8.")
+            ]
         ),
         command("state.menu", "The open menus and the selected rows."),
         command(
