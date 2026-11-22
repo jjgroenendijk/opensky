@@ -276,8 +276,8 @@ between two townspeople. These scenes follow extra rules:
 ```mermaid
 stateDiagram-v2
     [*] --> Waiting: scene starts
-    Waiting --> Waiting: a partner is in a scene,\nor has no loaded body,\nor another conversation plays,\nor the gap has not passed
-    Waiting --> [*]: a partner is dead
+    Waiting --> Waiting: a partner is in a scene,\nor another conversation plays,\nor the gap has not passed
+    Waiting --> [*]: a partner is dead,\nor the pair may no longer talk
     Waiting --> Meeting: both partners free
     Meeting --> Playing: the partners are near\nand face each other
     Playing --> [*]: scene ends, gap starts
@@ -290,8 +290,27 @@ stateDiagram-v2
   waits until it is over.
 - One partner walks to the other before the first phase, and the scene stays paused until
   they are near and face each other
-  ([walking together](/engine/random-conversations.md#walking-together)). Partners with no
-  loaded body never meet, so the scene waits for as long as they are far away.
+  ([walking together](/engine/random-conversations.md#walking-together)). The walk and the
+  phases have no time limit.
+- After its last phase, a conversation scene waits 2 seconds before it ends, and holds its
+  actors for that time.
+
+While a conversation scene waits for its first phase, the game checks the pair on every update:
+
+1. While the gap is above 0, nothing is checked.
+2. A partner that is in a scene sets the gap to 1 second, so the check runs again a second
+   later.
+3. Else the pair must still be allowed to talk. The speaker has a loaded body, is not the
+   player, is not in dialogue, and is within 3000 units of the player. Both packages allow
+   conversation (flag 0x02). The partner is not in combat, and is not part way into or out of a
+   seat or a bed.
+4. When the check fails, the scene stops. A conversation scene stops its quest when it ends
+   (`FNAM` flag 0x02), so the quest stops too, and the gap is set to 0.
+5. When it passes, one partner starts the walk to the other.
+
+So a scene whose speaker has no loaded body, or is too far from the player, ends at once. A
+scene only waits without end when a partner is held by a scene that cannot be interrupted, and
+that partner's alias is not optional.
 - The scene counts as interruptible, with or without flag 0x10.
 
 The quest starts when two actors fire the event

@@ -27,7 +27,8 @@ A dead actor does not look at anything.
 ### The default target
 
 Each actor checks its default head-tracking target every 1.0 to 1.5 s. At most 10 actors check
-in one frame, and only actors within 2000 units of the player check at all. An actor picks a
+in one frame, and only actors within 2000 units of the player check at all. A large creature
+checks within 12000 units of the player. An actor picks a
 new target only when no stronger look target is active, such as one from a script, dialogue,
 or combat, and its hold time is over. The hold time is 5 s from each pick, so an actor looks at
 a target for at least 5 s. It may pick the same target again.
@@ -36,7 +37,9 @@ The player is tested first and always wins when valid. Otherwise the first valid
 list of nearby actors with full AI wins. There is no nearest-first order. A valid target:
 
 - is a loaded, enabled actor other than the looker;
-- is within 400 units, or 12000 units for a large creature looker;
+- is within 400 units, or 12000 units for a large creature looker. A large creature is an
+  actor whose race has the size Extra Large (`RACE DATA` size 3), such as a dragon, a giant, or
+  a mammoth. A race of size Large does not count;
 - is within 120 degrees either side of the looker's heading, when it is a new target;
 - is not a non-player actor closer than 100 units;
 - is detected by the looker;
