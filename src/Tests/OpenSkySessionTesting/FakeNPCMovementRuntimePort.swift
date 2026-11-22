@@ -11,6 +11,8 @@ nonisolated public final class FakeNPCMovementRuntimePort: NPCMovementRuntimePor
     public var hasRoomResult = false
     public var motionFactsCallCount = 0
     public var motionFactsResult: [ReferenceKey: ReferenceMotionFacts] = [:]
+    public var swimmingActorsCallCount = 0
+    public var swimmingActorsResult: Set<ReferenceKey> = []
     public var movementBandCalls: [ReferenceKey] = []
     public var movementBandResult: UpdateBand?
 
@@ -26,6 +28,11 @@ nonisolated extension FakeNPCMovementRuntimePort {
     public func motionFacts() -> [ReferenceKey: ReferenceMotionFacts] {
         motionFactsCallCount += 1
         return motionFactsResult
+    }
+
+    public func swimmingActors() -> Set<ReferenceKey> {
+        swimmingActorsCallCount += 1
+        return swimmingActorsResult
     }
 
     public func movementBand(of actor: ReferenceKey) -> UpdateBand? {
