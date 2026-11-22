@@ -3,7 +3,7 @@
 
 import OpenSkyConditions
 public import OpenSkyDialogue
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
 import OpenSkySessionInterface
 
@@ -15,6 +15,9 @@ public final class StoryPartState {
     /// Lines waiting out `fSpeechDelay`, and the ambient speech pass's frame count.
     public var delayedLines: [DelayedLine] = []
     public var framesSinceAmbientSpeech = 0
+    /// The dead actors of the last pass. Nil before the first pass, so bodies that lie
+    /// there at a load have no witnesses.
+    public var knownDead: Set<ReferenceKey>?
     public var lastAmbientSpeechSeconds: Double?
 
     public init() {}

@@ -9,6 +9,8 @@ public protocol DialoguePort: AnyObject {
     func ambientLines(_ frame: AmbientSpeechFrame, seconds: Float) -> [AmbientLine]
     func claimForceGreet(speaker: ReferenceKey, now: Double) -> Bool
     func detectionLines(_ frame: DetectionDialogueFrame) -> [DetectionLine]
+    /// The line `speaker` says when it sees a friend die, recorded as said, or nil.
+    func friendDeathLine(speaker: ReferenceKey) -> FormID?
     /// Each combat group's record of its target, by target.
     var detectionRecords: [ReferenceKey: DetectionRecord] { get }
     func combatLine(_ line: NPCSpeechLine, speaker: ReferenceKey, now: Double) -> FormID?

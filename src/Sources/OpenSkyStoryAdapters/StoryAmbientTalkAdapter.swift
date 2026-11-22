@@ -4,12 +4,14 @@ import OpenSkyAIPackages
 import OpenSkyCombatInterface
 import OpenSkyDialogue
 public import OpenSkyDialogueInterface
+import OpenSkyFactionsInterface
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -21,6 +23,8 @@ public protocol StoryAmbientTalkHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }
     var dialogue: any DialoguePort { get }
+    var factions: any FactionPort { get }
+    var scripts: any ScriptPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var packages: any PackagePort { get }
     var perception: any PerceptionPort { get }
@@ -84,6 +88,9 @@ extension StoryAmbientTalkAdapter {
             let player = game.gameSession?.walkController.feetPosition
         else { return }
         let actors = game.actorWorld.combatActors()
+        witnessDeaths(among: actors) { [scripts = game.scripts] victim in
+            scripts.bridge?.scriptedState(of: victim).form(ScriptedStateName.killer)
+        }
         let free = Dictionary(ambient.speakers.map { ($0.key, $0) }) { first, _ in first }
         var positions: [ReferenceKey: SIMD3<Float>] = [.player: player]
         for actor in actors {
@@ -111,6 +118,53 @@ extension StoryAmbientTalkAdapter {
                 info: line.info, speaker: line.request.speaker, lookAt: nil, seconds: seconds
             )
         }
+    }
+
+    /// Each actor that died since the last pass is seen by the living actors near it.
+    /// A witness the rule turns on the killer starts combat with it and says its line.
+    func witnessDeaths(
+        among actors: [CombatActorObservation], killer: (ReferenceKey) -> ReferenceKey?
+    ) {
+        let dead = Set(actors.filter(\.isDead).map(\.key))
+        defer { state.knownDead = dead }
+        guard let known = state.knownDead, let loop = game.combat.loop else { return }
+        for victim in actors where victim.isDead && !known.contains(victim.key) {
+            guard let killer = killer(victim.key) else { continue }
+            for actor in actors where !actor.isDead && actor.key != killer {
+                guard
+                    simd_distance(actor.feet, victim.feet) <= FriendDeathRule.witnessDistance,
+                    FriendDeathRule.turnsOnKiller(witness(actor.key, of: victim.key, by: killer)),
+                    loop.startCombat(actor.key, with: killer),
+                    let info = game.dialogue.friendDeathLine(speaker: actor.key)
+                else {
+                    continue
+                }
+                sceneLines.speak(
+                    info: info, speaker: actor.key, lookAt: nil, seconds: SceneLine.defaultSeconds
+                )
+            }
+        }
+    }
+
+    private func witness(
+        _ actor: ReferenceKey, of victim: ReferenceKey, by killer: ReferenceKey
+    ) -> FriendDeathWitness {
+        let factions = game.factions
+        func isFriend(of other: ReferenceKey) -> Bool {
+            factions.reaction(of: actor, toward: other).map { $0 <= .friend } ?? false
+        }
+        var witness = FriendDeathWitness()
+        witness.isFriendOfVictim = isFriend(of: victim)
+        witness.isFriendOfKiller = isFriend(of: killer)
+        witness.isInCrimeFaction = factions.profile(of: actor)?.crimeFaction != nil
+        if killer == .player {
+            witness.isHostileToKiller = factions.hostility(of: actor) == .hostile
+            witness.detectsKiller = game.perception.runtime?
+                .state(observer: actor, target: .player).state == .detected
+        } else {
+            witness.isHostileToKiller = factions.reaction(of: actor, toward: killer) == .enemy
+        }
+        return witness
     }
 
     /// A witness near the player comments on `line`, such as a shout or a bow shot.

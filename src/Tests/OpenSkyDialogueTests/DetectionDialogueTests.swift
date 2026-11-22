@@ -163,6 +163,7 @@ struct DetectionDialogueTests {
             members: [Self.member(DialogueRuntimeFixture.speakerKey, searching: false)], now: 0
         )
         #expect(coordinator.detectionLines(frame).isEmpty)
+        #expect(coordinator.friendDeathLine(speaker: DialogueRuntimeFixture.speakerKey) == nil)
         #expect(coordinator.detectionDialogue.records[.player] == .combat)
         #expect(coordinator.detectionRecords[.player] == .combat)
         let request = DetectionLineRequest(
