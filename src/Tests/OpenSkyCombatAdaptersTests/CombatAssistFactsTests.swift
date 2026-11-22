@@ -19,6 +19,10 @@ struct CombatAssistFactsTests {
         #expect(adapter.aggroRadius(of: Self.foe) == nil)
         #expect(adapter.playerViewFOVYRadians == nil)
         #expect(!adapter.playerRuns)
+        #expect(adapter.playerViewAspect == nil)
+        #expect(adapter.playerMount == nil)
+        host.fakeMountWorld.riddenMount = Self.foe
+        #expect(adapter.playerMount == Self.foe)
         #expect(adapter.attackStagger(of: Self.foe, event: "attackStart") == nil)
     }
 }

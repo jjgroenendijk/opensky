@@ -33,12 +33,27 @@ struct ProjectileAutoAimTests {
         let outside = candidate(3, at: SIMD3(1000, 300, 0))
         let far = candidate(4, at: SIMD3(2000, 0, 0))
         let pick = ProjectileAutoAim.pick(
-            [near, nearer, outside, far], from: .zero, forward: forward, fovYRadians: fovY
+            [near, nearer, outside, far], from: .zero, forward: forward,
+            view: ProjectileAimView(fovYRadians: fovY)
         )
         #expect(pick == nearer)
         #expect(ProjectileAutoAim.pick(
-            [outside, far], from: .zero, forward: forward, fovYRadians: fovY
+            [outside, far], from: .zero, forward: forward,
+            view: ProjectileAimView(fovYRadians: fovY)
         ) == nil)
+    }
+
+    /// On a wide screen the window is wider in world units than it is high.
+    @Test func theWindowIsAPartOfTheScreenOnEachAxis() {
+        let side = candidate(5, at: SIMD3(1000, 50, 0))
+        func pick(aspect: Float) -> ProjectileAimCandidate? {
+            ProjectileAutoAim.pick(
+                [side], from: .zero, forward: forward,
+                view: ProjectileAimView(fovYRadians: fovY, aspect: aspect)
+            )
+        }
+        #expect(pick(aspect: 1) == nil)
+        #expect(pick(aspect: 16 / 9) == side)
     }
 
     @Test func theLargestTurnDependsOnTheShotAndTheCamera() {

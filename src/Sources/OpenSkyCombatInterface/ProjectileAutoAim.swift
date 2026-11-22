@@ -31,6 +31,18 @@ nonisolated public struct ProjectileAimPick: Equatable, Sendable {
     }
 }
 
+/// The view the player aims through: its vertical field of view, and its width over
+/// its height.
+nonisolated public struct ProjectileAimView: Equatable, Sendable {
+    public var fovYRadians: Float
+    public var aspect: Float
+
+    public init(fovYRadians: Float, aspect: Float = 1) {
+        self.fovYRadians = fovYRadians
+        self.aspect = aspect
+    }
+}
+
 nonisolated public enum ProjectileAutoAim {
     /// A candidate farther away is not picked.
     public static let range: Float = 1800
@@ -64,8 +76,11 @@ nonisolated public enum ProjectileAutoAim {
     /// those in range whose centre and top both lie in the window.
     public static func pick(
         _ candidates: [ProjectileAimCandidate], from origin: SIMD3<Float>,
-        forward: SIMD3<Float>, fovYRadians: Float
+        forward: SIMD3<Float>, view: ProjectileAimView
     ) -> ProjectileAimCandidate? {
+        // The window is a part of the screen on each axis, so x counts in screen widths.
+        let parts = SIMD2<Float>(1 / max(view.aspect, .leastNonzeroMagnitude), 1)
+        let fovYRadians = view.fovYRadians
         var best: (candidate: ProjectileAimCandidate, score: Float)?
         for candidate in candidates where simd_distance(candidate.centre, origin) <= range {
             guard
@@ -75,10 +90,10 @@ nonisolated public enum ProjectileAutoAim {
                 let top = screenOffset(
                     of: candidate.top, from: origin, forward: forward, fovYRadians: fovYRadians
                 ),
-                simd_reduce_max(simd_abs(centre)) <= windowHalfWidth,
-                simd_reduce_max(simd_abs(top)) <= windowHalfWidth
+                simd_reduce_max(simd_abs(centre * parts)) <= windowHalfWidth,
+                simd_reduce_max(simd_abs(top * parts)) <= windowHalfWidth
             else { continue }
-            let score = abs(centre.x) + abs(centre.y)
+            let score = simd_reduce_add(simd_abs(centre * parts))
             if best.map({ score < $0.score }) ?? true {
                 best = (candidate, score)
             }

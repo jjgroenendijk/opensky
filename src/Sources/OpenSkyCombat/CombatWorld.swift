@@ -96,6 +96,10 @@ public protocol CombatWorld: AnyObject {
     var playerShooter: ProjectileShooter? { get }
     /// The vertical field of view the player sees with, in radians. Nil without a view.
     var playerViewFOVYRadians: Float? { get }
+    /// The width of the player's view over its height. Nil without a view.
+    var playerViewAspect: Float? { get }
+    /// The actor the player rides, or nil.
+    var playerMount: ReferenceKey? { get }
     /// True while the player runs or sprints.
     var playerRuns: Bool { get }
     /// Every resident actor, with its current pose and death state.

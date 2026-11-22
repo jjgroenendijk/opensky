@@ -93,6 +93,10 @@ public final class MountWorldAdapter {
         candidates.flyingMounts
     }
 
+    public var riddenMount: ReferenceKey? {
+        mounts.isActive ? mounts.lastMount : nil
+    }
+
     /// `sRide` on an actor the player can mount, else nil.
     public func promptLabel(for key: ReferenceKey) -> String? {
         guard case .mount = MountRules.decide(mountCandidate(key), isRiding: mounts.isActive)

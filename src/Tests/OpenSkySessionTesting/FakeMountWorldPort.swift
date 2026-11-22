@@ -9,6 +9,7 @@ nonisolated public final class FakeMountWorldPort: MountWorldPort {
     public var dismountCalls: [ReferenceKey] = []
     public var dismountResult = false
     public var flyingMounts: Set<ReferenceKey> = []
+    public var riddenMount: ReferenceKey?
     public var mountOnActivationCalls: [ReferenceKey] = []
     public var mountOnActivationResult = false
     public var promptLabelCalls: [ReferenceKey] = []

@@ -43,6 +43,26 @@ struct CombatAssistPartsTests {
         #expect(coordinator.assistReadout.autoAim == nil)
     }
 
+    @Test func autoAimLeavesOutTheMountThePlayerRides() throws {
+        let world = FakeCoordinatorWorld()
+        world.actors = [CombatActorObservation(key: Self.foe, feet: SIMD3(1700, 0, -120))]
+        world.hostilities[Self.foe] = .hostile
+        world.playerViewFOVYRadians = 1.2
+        world.playerViewAspect = 16 / 9
+        let coordinator = Self.coordinator(world)
+        let shooter = ProjectileShooter(
+            key: .player, origin: .zero, aim: SIMD3(1, 0, 0), isFirstPerson: true, location: nil
+        )
+        #expect(coordinator.projectileWorld.projectileAutoAim(from: shooter) == nil)
+        let loop = try #require(coordinator.loop)
+        loop.startCombat(Self.foe, with: .player)
+        CombatLoopFixture.run(loop, seconds: 0.1)
+        #expect(coordinator.projectileWorld.projectileAutoAim(from: shooter)?.target.key == Self
+            .foe)
+        world.playerMount = Self.foe
+        #expect(coordinator.projectileWorld.projectileAutoAim(from: shooter) == nil)
+    }
+
     @Test func withoutShotsOrRecordsThereIsNoDangerAndNoRadius() {
         let world = FakeCoordinatorWorld()
         let loop = Self.coordinator(world).loopWorld

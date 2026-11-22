@@ -21,6 +21,9 @@ final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
 {
     var actors: [CombatActorObservation] = []
     var selected: ReferenceKey?
+    var playerViewFOVYRadians: Float?
+    var playerViewAspect: Float?
+    var playerMount: ReferenceKey?
     var hostilities: [ReferenceKey: ActorHostility] = [:]
     var values: [ReferenceKey: [Int32: Float]] = [:]
     var perkMultipliers: [ReferenceKey: Float] = [:]

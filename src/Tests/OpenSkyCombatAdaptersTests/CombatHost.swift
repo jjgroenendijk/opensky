@@ -62,6 +62,11 @@ final class CombatHost: CinematicCameraWorldHost, CombatActorFactsHost, CombatGe
     var combatRecords: (any CombatRecordsPort)?
     var renderer: (any RendererPort)?
     var gameSession: (any GameSessionPort)?
+    let fakeMountWorld = FakeMountWorldPort()
+    var mountWorld: any MountWorldPort {
+        fakeMountWorld
+    }
+
     var audioFileSystem: (any GameFileSource)?
     var animationClips: ActorClipLoader?
     var animatedPoses: [ReferenceKey: [String: float4x4]] = [:]

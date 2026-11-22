@@ -5,6 +5,8 @@ public import OpenSkyWorldInterface
 public protocol MountWorldPort: AnyObject {
     func dismount(_ actor: ReferenceKey) -> Bool
     var flyingMounts: Set<ReferenceKey> { get }
+    /// The actor the player rides now, or nil.
+    var riddenMount: ReferenceKey? { get }
     func mountOnActivation(_ key: ReferenceKey) -> Bool
     func promptLabel(for key: ReferenceKey) -> String?
     func run(_ commands: [MountCommand])

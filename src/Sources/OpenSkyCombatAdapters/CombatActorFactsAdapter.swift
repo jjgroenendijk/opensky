@@ -36,6 +36,7 @@ public protocol CombatActorFactsHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var factions: any FactionPort { get }
     var gameSession: (any GameSessionPort)? { get }
+    var mountWorld: any MountWorldPort { get }
     var perception: any PerceptionPort { get }
     var perks: any PerkPort { get }
     var ragdoll: any RagdollPort { get }
@@ -260,6 +261,14 @@ extension CombatActorFactsAdapter: CombatPerkReads {}
 extension CombatActorFactsAdapter {
     var playerViewFOVYRadians: Float? {
         game.gameSession?.viewFOVYRadians
+    }
+
+    var playerViewAspect: Float? {
+        game.gameSession?.renderer.drawableAspectRatio
+    }
+
+    var playerMount: ReferenceKey? {
+        game.mountWorld.riddenMount
     }
 
     var playerRuns: Bool {
