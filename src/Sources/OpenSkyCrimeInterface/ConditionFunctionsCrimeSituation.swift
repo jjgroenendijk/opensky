@@ -1,5 +1,6 @@
 // Crime-encounter condition functions, indices from xEdit wbDefinitionsTES5.pas: 61
-// GetAlarmed, 125 IsGuard, 144 GetTrespassWarningLevel, 145 IsTrespassing, 278
+// GetAlarmed, 118 GetActorAggroRadiusViolated, 125 IsGuard, 144 GetTrespassWarningLevel, 145
+// IsTrespassing, 278
 // IsOwner, 314 IsActorAVictim, 497 CanPayCrimeGold, 499 GetDaysInJail, 656
 // GetArrestedState, 657 GetArrestingActor. See docs/engine/condition-functions-world.md#crime.
 
@@ -14,6 +15,7 @@ nonisolated public enum ConditionFunctionsCrimeSituation {
         let membership: [String: (index: UInt16, read: Read)] = [
             "GetAlarmed": (61, { $0.alarmed.contains($1) }),
             "IsTrespassing": (145, { $0.trespassers.contains($1) }),
+            "GetActorAggroRadiusViolated": (118, { $0.aggroWarners.contains($1) }),
             "IsActorAVictim": (314, { $0.victims.contains($1) }),
             "GetArrestingActor": (657, { $0.arrestingGuard == $1 }),
             "GetArrestedState": (656, { $1 == .player && $0.arrestingGuard != nil })

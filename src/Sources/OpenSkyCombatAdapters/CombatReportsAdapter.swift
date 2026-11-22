@@ -10,6 +10,7 @@ import OpenSkyConditions
 import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
 import OpenSkyFactionsInterface
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
@@ -106,6 +107,12 @@ extension CombatReportsAdapter {
                 seconds: seconds ?? SceneLine.defaultSeconds
             )
         }
+    }
+
+    /// The trespass line a guard's warning also says. An actor with no such line stays
+    /// silent, as a skeever does.
+    public func sayWarning(by key: ReferenceKey, to target: ReferenceKey) {
+        game.storyWorld.sayTopic("TRES", speaker: key, lookAt: target)
     }
 
     @discardableResult

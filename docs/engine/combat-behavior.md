@@ -327,13 +327,17 @@ found.
 OpenSky runs the rule each step for every living actor that is not hostile and is not the
 player's teammate:
 
-- A distance of 0 is off. A friend or an ally of the player never warns.
-- The actor must have noticed the player: a suspicious or a detected pair.
+- A distance of 0 is off. A friend or an ally of the player never warns. The target is the
+  nearest noticed one of the player and the player's teammates, never another stranger.
 - The timer, the count, and the attack follow the game's numbers above.
-- A warning actor only stops and turns. Its warning lines, its drawn weapon, its head
-  tracking, the two condition functions, the flee case, and the player-action path are not
-  built.
-- The rule runs toward the player only, not between two NPCs.
+- A warning actor stops, turns, and draws. It sheathes when the target leaves without a fight.
+- At each interval it says a Trespass line (`TRES`) when it faces the target within 20 degrees
+  and detects it. An actor with no such line, such as a skeever, stays silent.
+- `GetActorAggroRadiusViolated` returns 1 while the actor warns. `GetTrespassWarningLevel`
+  returns the larger of a guard's count and this count.
+- An actor with Confidence 0 is provoked and then flees, whatever its Aggression.
+- Not built: the 5 s of head tracking after the target leaves, a ranged actor's aim, the 80
+  degrees for a moving actor, and the player-action path.
 - `state actors` shows each actor's zone as `aggro`.
 
 ## Searching and giving up

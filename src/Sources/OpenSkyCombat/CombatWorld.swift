@@ -198,6 +198,8 @@ public protocol CombatWorld: AnyObject {
     func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction?
     /// `key`'s aggro radius from its AI data, or nil when the behaviour is off.
     func aggroRadius(of key: ReferenceKey) -> AggroRadius?
+    /// `key` says its aggro radius warning line to `target`, when it has one to say now.
+    func sayWarning(by key: ReferenceKey, to target: ReferenceKey)
     /// False for an actor zero health does not kill: essential, or protected from all
     /// but the player.
     func canBeKilled(_ target: ReferenceKey, by attacker: ReferenceKey) -> Bool

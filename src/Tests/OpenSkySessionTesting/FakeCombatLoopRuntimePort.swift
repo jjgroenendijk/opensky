@@ -12,6 +12,7 @@ nonisolated public final class FakeCombatLoopRuntimePort: CombatLoopRuntimePort 
     public var actionFactsResult: ActorActionFacts?
     public var aggroZoneCalls: [ReferenceKey] = []
     public var aggroZoneResult: AggroZone?
+    public var aggroWatches: [ReferenceKey: AggroWatch] = [:]
     public var activityCalls: [ReferenceKey] = []
     public var activityResult: ActorCombatActivity?
     public var behaviors: [ReferenceKey: CombatBehaviorMachine] = [:]

@@ -74,6 +74,20 @@ nonisolated public struct CrimeSituation: Equatable, Sendable {
     public var owners: [ReferenceKey: ReferenceOwner]
     /// The warnings each guard gave a trespasser, for `GetTrespassWarningLevel`.
     public var trespassWarnings: [ReferenceKey: Int] = [:]
+    /// Actors that warn a target inside their aggro radius now.
+    public var aggroWarners: Set<ReferenceKey> = []
+
+    /// Adds the warnings guards gave and the counts of actors that warn by their aggro
+    /// radius. `GetTrespassWarningLevel` reads the larger count of the two.
+    public mutating func note(
+        guardWarnings: [ReferenceKey: Int], aggroWarnings: [ReferenceKey: Int]
+    ) {
+        trespassWarnings = guardWarnings
+        for (actor, count) in aggroWarnings {
+            aggroWarners.insert(actor)
+            trespassWarnings[actor] = max(trespassWarnings[actor] ?? 0, count)
+        }
+    }
 
     public init(
         guardFaction: ReferenceKey? = nil,

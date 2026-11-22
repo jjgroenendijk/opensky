@@ -69,6 +69,8 @@ struct CombatAssistPartsTests {
         #expect(loop.combatDangerThreats().isEmpty)
         #expect(loop.combatHealth(of: Self.foe) == 100)
         #expect(loop.combatAggroRadius(of: Self.foe) == nil)
+        loop.sayCombatWarning(by: Self.foe, to: .player)
+        #expect(world.warnings == [[Self.foe, .player]])
     }
 
     /// A threat from the actor itself does not count, so its score stays 0.

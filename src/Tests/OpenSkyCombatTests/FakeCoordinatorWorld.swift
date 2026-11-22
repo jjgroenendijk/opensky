@@ -56,6 +56,7 @@ final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
     private(set) var staminaDamage: [(key: ReferenceKey, amount: Float)] = []
     private(set) var castingQueries: [ReferenceKey] = []
     private(set) var cancelledCasts: [ReferenceKey] = []
+    private(set) var warnings: [[ReferenceKey]] = []
     private(set) var raisedEvents: [String] = []
     private(set) var spawned: [ReferenceSpawnState] = []
     private var nextKey: UInt64 = 100
@@ -203,6 +204,10 @@ final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
 
     func releaseCast(by _: ReferenceKey) -> Bool {
         finishesCasts
+    }
+
+    func sayWarning(by key: ReferenceKey, to target: ReferenceKey) {
+        warnings.append([key, target])
     }
 
     func cancelCast(by key: ReferenceKey) {

@@ -58,6 +58,16 @@ struct ConditionCrimeSituationFunctionTests {
         #expect(try Self.outcome(144, equals: 2, situation: warned) == .true)
     }
 
+    /// An actor that warns by its aggro radius answers 1, and its count is the warning
+    /// level when that is larger than a guard's.
+    @Test func anAggroRadiusWarningSetsTheStateAndTheLevel() throws {
+        var situation = CrimeSituation()
+        #expect(try Self.outcome(118, equals: 0, situation: situation) == .true)
+        situation.note(guardWarnings: [Self.subject: 1], aggroWarnings: [Self.subject: 3])
+        #expect(try Self.outcome(118, equals: 1, situation: situation) == .true)
+        #expect(try Self.outcome(144, equals: 3, situation: situation) == .true)
+    }
+
     @Test func aGuardPolicesItsCrimeFaction() throws {
         let guardProfile = ActorSocialProfile(
             key: Self.subject,

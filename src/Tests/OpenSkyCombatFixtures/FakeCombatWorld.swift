@@ -23,6 +23,9 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public var shieldless: Set<ReferenceKey> = []
     public var awareness: [ReferenceKey: CombatAwareness] = [:]
     public var aggroRadii: [ReferenceKey: AggroRadius] = [:]
+    /// Each warning line said: the speaker, then its target.
+    public var warningLines: [[ReferenceKey]] = []
+    public var temperaments: [ReferenceKey: CombatTemperament] = [:]
     public var dangerThreats: [DangerThreat] = []
     public var healthFractions: [ReferenceKey: Float] = [:]
     public var influences: [ReferenceKey: ActorMagicInfluence] = [:]
@@ -139,6 +142,16 @@ public final class FakeCombatWorld: CombatLoopWorld {
 
     public func combatActors() -> [CombatActorObservation] {
         actors
+    }
+
+    public func combatTemperament(
+        of key: ReferenceKey, toward _: ReferenceKey
+    ) -> CombatTemperament? {
+        temperaments[key]
+    }
+
+    public func sayCombatWarning(by key: ReferenceKey, to target: ReferenceKey) {
+        warningLines.append([key, target])
     }
 
     public func combatReaction(toPlayerOf key: ReferenceKey) -> ActorReaction? {
