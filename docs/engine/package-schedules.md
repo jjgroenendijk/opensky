@@ -336,6 +336,19 @@ A walk that ends reports its rest pose after the movement runtime has stored its
 listener may start the next move right away, as a patrol does at each marker. If the report came
 during the runtime's update, that update would write back its older copy and drop the new move.
 
+## A walk whose path fails
+
+The game counts path failures per actor. A path that works sets the count to 0. A failure
+more than 50 units from the last one starts the count again at 1, so only failures at about the
+same spot add up.
+
+At 3 failures the game asks for two fallback paths to the goal, one of them for a very thin
+actor of radius 5. It takes a point on the path that works, 100 units back along it. The actor
+is moved to that point as soon as the point is off screen, or after 5 seconds.
+
+When the game tries a failed path again, and whether a travel package ends after a failure,
+was not found.
+
 ## Actors far from the player
 
 In the game, an actor's packages keep running while its cell is not loaded. It walks its path

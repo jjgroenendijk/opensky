@@ -256,8 +256,10 @@ An alias with no fill subrecord but with match conditions, or with a near alias 
 Find Matching Reference fill ([Quest Alias Tab](https://ck.uesp.net/wiki/Quest_Alias_Tab)). Each
 candidate runs the alias's match conditions with the candidate as subject, the quest as the
 alias quest, and the aliases filled so far. A dead candidate needs "Allow Dead" (`FNAM` bit 4),
-and a disabled one "Allow Disabled" (bit 7). A destroyed candidate needs "Allow Destroyed", and
-one that another quest's alias reserves needs "Allow Reserved". A reference another alias of
+and a disabled one "Allow Disabled" (bit 7). A destroyed candidate needs "Allow Destroyed". Most
+likely it is a reference with the destroyed mark that `SetDestroyed` sets and `GetDestroyed`
+reads; its health and its destruction stage are not read. A candidate that another quest's alias
+reserves needs "Allow Reserved". A reference another alias of
 the quest holds needs "Allow Reuse in Quest". "Closest" (bit 13) takes the candidate nearest the
 player; otherwise a random match fills the alias. The conditions run first, then these flag
 checks. A deleted reference and the player are never candidates.

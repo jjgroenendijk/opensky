@@ -218,6 +218,11 @@ whether it pauses or ends ([scenes](/engine/scenes.md#actor-behaviour-flags)).
 
 A watcher is not free for a random conversation, because its new package has no flag 0x02.
 
+The Spectator package and the package of a body finder are built by the game. They are not
+forms in the data. An override package can point at two targets the game fills in: the
+fighter the watcher looks at, and the body the finder found. The game's own stop rule below
+does not run for an override package. How an override package ends was not found.
+
 ### What a watcher does
 
 The Spectator package has one step and never walks toward the fight. When it starts, the
