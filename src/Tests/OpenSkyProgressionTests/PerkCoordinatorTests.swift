@@ -18,13 +18,14 @@ struct PerkCoordinatorTests {
 
     private func coordinator(
         world: FakeProgressionWorld,
-        baselines: ActorPerkBaselineResolver? = nil
+        baselines: ActorPerkBaselineResolver? = nil,
+        store: WorldStateStore = WorldStateStore()
     ) throws -> PerkCoordinator {
         let index = try PerkRuntimeFixture.index()
         return PerkCoordinator(
             world: world,
             runtime: PerkRuntime(
-                store: WorldStateStore(),
+                store: store,
                 perks: PerkRuntimeFixture.perkStore(index: index),
                 conditions: ConditionContext(functions: .empty)
             ),
@@ -114,5 +115,20 @@ struct PerkCoordinatorTests {
         #expect(coordinator.ownership(of: bandit) == [blocking])
         #expect(coordinator.seed(banditHolder) == 0)
         #expect(world.reconciled == [bandit])
+    }
+
+    /// A new game or a loaded save drops the seeded perks, so the next ask seeds again.
+    @Test func anActorIsSeededAgainAfterTheStoreIsRestored() throws {
+        let world = FakeProgressionWorld()
+        world.residents[bandit] = banditHolder
+        let baselines = try ActorSpellFixture.perkResolver(npcs: [
+            ActorSpellFixture.npc(formID: banditBase, perks: [PerkRuntimeFixture.Perk.blocking])
+        ])
+        let store = WorldStateStore()
+        let coordinator = try coordinator(world: world, baselines: baselines, store: store)
+        #expect(coordinator.seed(banditHolder) == 1)
+        store.restore(from: .empty)
+        #expect(coordinator.seed(banditHolder) == 1)
+        #expect(coordinator.ownership(of: bandit) == [blocking])
     }
 }

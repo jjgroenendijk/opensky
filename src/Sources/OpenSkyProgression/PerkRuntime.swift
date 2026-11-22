@@ -65,6 +65,11 @@ public struct PerkRuntime: PerkAccess {
         worldState.frozenLeveledLevel(of: key)
     }
 
+    /// The store's restore count: a restore drops the perks a seed wrote.
+    var restoreCount: Int {
+        worldState.restoreCount
+    }
+
     public func owns(_ perk: ReferenceKey, on holder: ActorValueHolder) -> Bool {
         state(of: holder).owns(perk) || effectPerks[holder.key]?.contains(perk) == true
     }

@@ -21,6 +21,8 @@ public final class PerkCoordinator {
     /// An NPC is seeded the first time anything asks about it, not at cell
     /// build, so townsfolk who never fight write no perks into the save.
     private var seededActors: Set<ReferenceKey> = []
+    /// The store's restore count when `seededActors` was filled.
+    private var seedRestoreCount = 0
 
     let world: any PerkWorld
 
@@ -82,12 +84,13 @@ public final class PerkCoordinator {
     /// - Returns: how many perks the seed added, which is zero after the first call.
     @discardableResult
     public func seed(_ holder: ActorValueHolder) -> Int {
-        guard
-            var runtime,
-            let baselines,
-            let pluginName,
-            !seededActors.contains(holder.key)
-        else { return 0 }
+        guard var runtime, let baselines, let pluginName else { return 0 }
+        // A new game or a loaded save dropped the seeded perks.
+        if seedRestoreCount != runtime.restoreCount {
+            seededActors = []
+            seedRestoreCount = runtime.restoreCount
+        }
+        guard !seededActors.contains(holder.key) else { return 0 }
         seededActors.insert(holder.key)
         let report = runtime.seed(
             baselines.baseline(
