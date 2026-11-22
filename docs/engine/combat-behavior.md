@@ -107,7 +107,7 @@ So they are chosen in the open, with a reason each. An actor's
 | Flee health | 0.2 of maximum | Visible before the kill, not set off by the first blow |
 | Flee distance | from the install | See [game settings](#game-settings) |
 | Flee break distance | flee distance + 400 units | More than one flee hop, so a path the navmesh cut short is tried again |
-| Search time | 8 s | Long enough to hear it end, short enough not to pin a hidden player |
+| Search time | 30 s | The time after which the game drops a lost target ([detection](/engine/detection.md#keeping-a-combat-target)) |
 | Cast chance | 0.5 | Even odds in weapon reach. A caster that never swings is pinned by an opponent who closes in. One that always swings never looks like a mage |
 | Ranged cast chance | 1 | Out of weapon reach a caster with a spell to throw throws it |
 | Held spell time | 1.5 s | Two applications of a once-a-second effect: long enough to see a beam, short enough to decide again |

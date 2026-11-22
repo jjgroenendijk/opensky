@@ -32,12 +32,14 @@ public final class PerceptionRuntime {
     public let settings: DetectionSettings
     public let stealthPoints: StealthPointSettings
     /// Each target's stealth points.
-    private(set) var pools: [ReferenceKey: StealthPointPool] = [:]
+    var pools: [ReferenceKey: StealthPointPool] = [:]
+    /// What the hostile observers of each target remember of it.
+    var tracks: [ReferenceKey: CombatTargetTrack] = [:]
     /// Pairs whose observer has the target detected through the pool.
-    private var detectedPairs: Set<DetectionPairKey> = []
+    var detectedPairs: Set<DetectionPairKey> = []
 
     /// Every tracked pair's state, keyed by the pair.
-    public private(set) var pairs: [DetectionPairKey: DetectionPairState] = [:]
+    public internal(set) var pairs: [DetectionPairKey: DetectionPairState] = [:]
     /// The observers the last roster refresh found, in evaluation order.
     public private(set) var observers: [PerceptionObserver] = []
     /// The targets the last roster refresh found, in evaluation order.
@@ -46,7 +48,7 @@ public final class PerceptionRuntime {
     public private(set) var droppedPairCount = 0
     /// Line-of-sight rays cast since construction, cumulative. The pass's cost
     /// in the one unit that matters.
-    public private(set) var lineOfSightQueryCount = 0
+    public internal(set) var lineOfSightQueryCount = 0
     /// Whole fixed steps run since construction.
     private(set) var stepCount = 0
 
@@ -57,12 +59,12 @@ public final class PerceptionRuntime {
     private var targetOrder = ReferenceKeyOrder()
     /// Evaluation order. It is rebuilt only when the roster's members change, or
     /// when the cap applies and the nearest pairs can change.
-    private var order: [DetectionPairKey] = []
+    var order: [DetectionPairKey] = []
     /// The roster keys `order` was built from.
     private var orderRoster: (observers: [ReferenceKey], targets: [ReferenceKey])?
     /// The roster by key, built once per frame for every step of that frame.
-    private var observerIndex: [ReferenceKey: PerceptionObserver] = [:]
-    private var targetIndex: [ReferenceKey: PerceptionTarget] = [:]
+    var observerIndex: [ReferenceKey: PerceptionObserver] = [:]
+    var targetIndex: [ReferenceKey: PerceptionTarget] = [:]
     /// Where the next slice starts in `order`.
     private var cursor = 0
     /// Step index each pair was last advanced at, so a sliced evaluation knows
@@ -104,17 +106,6 @@ public final class PerceptionRuntime {
 
     // MARK: - Events
 
-    /// `target` struck someone: its pool waits `fCombatStealthPointRegenAttackedWaitTime`.
-    public func noteAttack(by target: ReferenceKey) {
-        holdRefill(of: target, for: stealthPoints.attackedWait)
-    }
-
-    private func holdRefill(of target: ReferenceKey, for seconds: Float) {
-        var pool = pools[target] ?? StealthPointPool(settings: stealthPoints)
-        pool.holdRefill(for: seconds)
-        pools[target] = pool
-    }
-
     // MARK: - Frames
 
     /// Advances perception by a wall delta, running whole fixed steps only. A zero,
@@ -146,6 +137,7 @@ public final class PerceptionRuntime {
     func reset() {
         pairs = [:]
         pools = [:]
+        tracks = [:]
         detectedPairs = []
         observers = []
         targets = []
@@ -228,43 +220,7 @@ public final class PerceptionRuntime {
             evaluate(key: key, observer: observer, target: target, world: world)
         }
         cursor = (cursor + count) % order.count
-        updateStealthPoints()
-    }
-
-    /// Drains or refills each target's pool from the highest detection value of an
-    /// aggressive observer, then reads those pairs through the pool.
-    private func updateStealthPoints() {
-        detectedPairs = detectedPairs.filter { observerIndex[$0.observer]?.isAggressive == true }
-        for target in targets {
-            let keys = order.filter {
-                $0.target == target.key && observerIndex[$0.observer]?.isAggressive == true
-            }
-            let values = keys.map { pairs[$0]?.breakdown.value ?? 0 }
-            let threshold = stealthPoints.threshold(isSneaking: target.isSneaking)
-            var pool = pools[target.key] ?? StealthPointPool(settings: stealthPoints)
-            pool.advance(
-                highestValue: values.max() ?? 0,
-                overThreshold: values.contains { $0 >= threshold },
-                by: Self.fixedStepSeconds,
-                settings: stealthPoints
-            )
-            pools[target.key] = pool
-            for key in keys {
-                guard var pair = pairs[key] else { continue }
-                let detected = pool.detects(
-                    value: pair.breakdown.value, isSneaking: target.isSneaking,
-                    wasDetected: detectedPairs.contains(key), settings: stealthPoints
-                )
-                if detected {
-                    detectedPairs.insert(key)
-                    pair.state = .detected
-                } else {
-                    detectedPairs.remove(key)
-                    pair.state = pair.levelState == .detected ? .suspicious : pair.levelState
-                }
-                pairs[key] = pair
-            }
-        }
+        updateStealthPoints(world: world)
     }
 
     /// One pair, advanced by the simulated time since it was last looked at.
@@ -340,31 +296,3 @@ public final class PerceptionRuntime {
 }
 
 extension PerceptionRuntime: DetectionObserving {}
-
-extension PerceptionRuntime {
-    /// A detection event of `owner` at `position`, such as a landed arrow (CK wiki
-    /// "Category:Detection"). An aggressive observer within range makes the pool wait
-    /// and turns alert: suspicious of the owner, with the event as the place to search.
-    public func noteDetectionEvent(owner: ReferenceKey, at position: SIMD3<Float>) {
-        let hearing = observers.filter { observer in
-            observer.isAggressive && observer.key != owner
-                && DetectionFormula.isInRange(
-                    distance: simd_distance(observer.feet, position), settings: settings,
-                    isExterior: observer.isExterior, isFlying: observer.isFlying
-                )
-        }
-        guard !hearing.isEmpty else { return }
-        holdRefill(of: owner, for: stealthPoints.detectedEventWait)
-        for observer in hearing {
-            let key = DetectionPairKey(observer: observer.key, target: owner)
-            var pair = pairs[key] ?? .unaware
-            if pair.state == .unaware {
-                pair.level = max(pair.level, settings.suspiciousLevel.value)
-                pair.state = .suspicious
-                pair.levelState = .suspicious
-            }
-            pair.lastKnownPosition = position
-            pairs[key] = pair
-        }
-    }
-}

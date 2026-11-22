@@ -88,12 +88,9 @@ nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
     /// 1.5 s shows the beam and lets the caster re-decide soon.
     public var concentrationSeconds: Float = 1.5
 
-    /// How long an actor that lost its target searches the last place it saw it
-    /// before giving up.
-    ///
-    /// Eight seconds is long enough for a player to hear the search end and
-    /// short enough that a hidden player is not pinned in place by it.
-    public var searchSeconds: Float = 8
+    /// How long an actor that lost its target searches before it gives up: the time
+    /// after which the game drops a lost target (docs/engine/detection.md).
+    public var searchSeconds: Float = 30
 
     /// Inside this distance an approach walks instead of running. 0 always runs.
     public var walkRadius: Float = 0
