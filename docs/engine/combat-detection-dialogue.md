@@ -147,5 +147,9 @@ starts only when a line was found. The idle wait comes from the two game setting
   game's range was not found ([unverified values](/engine/unverified-values.md)).
 - [WARNING] A group drops a target when OpenSky's own combat gives up the search. The 30 and
   60 second rules above are not built.
-- [WARNING] DetectFriendDie is not built: OpenSky has no murder witness path that starts
-  combat with the killer.
+- DetectFriendDie: a few times a second OpenSky looks for actors that died since the last look
+  and have a killer. Each living actor within 2048 units of the victim is a witness
+  ([unverified values](/engine/unverified-values.md)). A witness the rule above turns on the
+  killer starts combat with it and says its line.
+- [WARNING] A witness starts combat only with the player as the killer, and gets no search
+  point. A witness counts as detecting the victim by distance alone.

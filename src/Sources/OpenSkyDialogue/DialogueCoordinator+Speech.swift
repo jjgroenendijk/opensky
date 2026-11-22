@@ -103,6 +103,12 @@ extension DialogueCoordinator {
         return lines
     }
 
+    public func friendDeathLine(speaker: ReferenceKey) -> FormID? {
+        sayAlone(
+            runtime?.topics(subtype: FriendDeathRule.subtype, speaker: speaker), speaker: speaker
+        )
+    }
+
     /// Whether the shared wait of `line` has passed, so a caller can skip building a frame.
     public func isSharedReady(_ line: NPCSpeechLine, now: Double) -> Bool {
         speechClock.isSharedReady(line, now: now)

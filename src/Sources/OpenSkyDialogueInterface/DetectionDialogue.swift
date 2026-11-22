@@ -115,3 +115,36 @@ nonisolated public struct DetectionLine: Equatable, Sendable {
         self.request = request
     }
 }
+
+/// What a witness of a death knows, for the DetectFriendDie rule.
+nonisolated public struct FriendDeathWitness: Equatable, Sendable {
+    public var detectsKiller = false
+    public var isInCrimeFaction = false
+    public var isHostileToKiller = false
+    public var isFriendOfVictim = false
+    public var isFriendOfKiller = false
+
+    public init() {}
+}
+
+/// docs/engine/combat-detection-dialogue.md#detectfrienddie.
+nonisolated public enum FriendDeathRule {
+    /// The topic subtype of the line a witness says about the victim.
+    public static let subtype: FourCC = "DFDA"
+    /// How near the victim a witness must stand to count as detecting it. OpenSky's
+    /// stand-in, because detection is kept only toward the player.
+    public static let witnessDistance: Float = 2048
+
+    /// True when the witness starts combat with the killer and says its line. A
+    /// witness of the crime faction that detects the killer takes the guard path.
+    public static func turnsOnKiller(_ witness: FriendDeathWitness) -> Bool {
+        if witness.detectsKiller, witness.isInCrimeFaction {
+            return false
+        }
+        if witness.isHostileToKiller {
+            return true
+        }
+        guard witness.isFriendOfVictim else { return false }
+        return !witness.isFriendOfKiller || witness.isInCrimeFaction
+    }
+}

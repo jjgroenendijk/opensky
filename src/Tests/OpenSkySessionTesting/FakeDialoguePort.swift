@@ -15,6 +15,8 @@ nonisolated public final class FakeDialoguePort: DialoguePort {
     public var claimForceGreetResult = false
     public var detectionLinesCalls: [DetectionDialogueFrame] = []
     public var detectionLinesResult: [DetectionLine] = []
+    public var friendDeathLineCalls: [ReferenceKey] = []
+    public var friendDeathLineResult: FormID?
     public var detectionRecords: [ReferenceKey: DetectionRecord] = [:]
     public var combatLineCalls: [CombatLineCall] = []
     public var combatLineResult: FormID?
@@ -115,6 +117,11 @@ nonisolated extension FakeDialoguePort {
     public func detectionLines(_ frame: DetectionDialogueFrame) -> [DetectionLine] {
         detectionLinesCalls.append(frame)
         return detectionLinesResult
+    }
+
+    public func friendDeathLine(speaker: ReferenceKey) -> FormID? {
+        friendDeathLineCalls.append(speaker)
+        return friendDeathLineResult
     }
 
     public func combatLine(_ line: NPCSpeechLine, speaker: ReferenceKey, now: Double) -> FormID? {
