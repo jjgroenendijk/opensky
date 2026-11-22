@@ -33,7 +33,8 @@ fight. The combat loop fills this for NPCs, and the melee state for the player.
   ([melee combat](/engine/melee-combat.md#combos)).
 - `IsPowerAttacking` is 1 during the player's power attack. OpenSky has no knock-down while
   alive, and `IsRecoiling` is 0. `GetKnockedStateEnum` is 0, the standing state.
-- `IsWeaponMagicOut` is 1 when a weapon or a spell is drawn.
+- `IsWeaponMagicOut` is 1 when a weapon or a spell is drawn. OpenSky tracks the draw only for
+  the player. An NPC counts as drawn while it fights or searches, and as sheathed otherwise.
 - `IsCombatTarget` (513) is 1 when the run-on fights the parameter actor.
   `GetCombatTargetHasKeyword` (707) tests the keywords of the actor the run-on fights: its base
   record's and its race's, as `HasKeyword` does on an actor. With no target it is 0.

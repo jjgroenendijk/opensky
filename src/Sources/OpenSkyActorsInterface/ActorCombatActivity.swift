@@ -38,4 +38,10 @@ nonisolated public enum WeaponDrawState: String, Equatable, Sendable, CaseIterab
     public var canAttack: Bool {
         self == .drawn
     }
+
+    /// An NPC has no draw clips of its own state here: it holds its weapon while it
+    /// fights or searches, and has it away otherwise.
+    public static func ofNPC(_ activity: ActorCombatActivity) -> WeaponDrawState {
+        activity == .notFighting ? .sheathed : .drawn
+    }
 }
