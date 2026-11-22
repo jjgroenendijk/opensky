@@ -244,6 +244,10 @@ A sandbox procedure does not walk while the idle runtime has sent the actor to a
 ([idles](/engine/idle-runtime.md#marker-claim)). Its walk counts as done, so it waits and asks
 again, and the marker's idles play.
 
+A walk that gave up fails its tree. After 10 seconds the tree starts again from its root, so
+the actor tries the walk again. How long the game waits was not found, so the 10 seconds are
+OpenSky's own.
+
 Not done yet:
 
 - Aliases and linked references as package locations. They are decoded, but need their quest

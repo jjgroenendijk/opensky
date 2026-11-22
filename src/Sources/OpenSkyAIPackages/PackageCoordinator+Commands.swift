@@ -24,13 +24,34 @@ extension PackageCoordinator {
         apply(commands, actor: actor, endsBefore: before)
     }
 
+    /// True when the actor's package failed on a walk that gave up, and the wait before
+    /// the package starts again has passed. The tree is dropped, so the next pass over
+    /// the schedule starts it anew.
+    func retriesFailedWalk(_ actor: ReferenceKey, by delta: Float) -> Bool {
+        guard let waited = failedWalkSeconds[actor] else { return false }
+        guard executions[actor]?.runner.outcome == .failed else {
+            failedWalkSeconds[actor] = nil
+            return false
+        }
+        guard waited + delta >= Self.failedWalkRetrySeconds else {
+            failedWalkSeconds[actor] = waited + delta
+            return false
+        }
+        failedWalkSeconds[actor] = nil
+        leaveExecution(of: actor)
+        return true
+    }
+
     /// Senses then ticks every running procedure of the actor, in node order.
     func tick(_ actor: ReferenceKey, by delta: Float) {
         for held in heldSteps.removeValue(forKey: actor) ?? [] {
             step(actor, with: held.event, leaf: held.leaf)
         }
         turnToSeat(actor, by: delta)
-        guard let execution = executions[actor], let session = session(for: actor) else {
+        guard
+            !retriesFailedWalk(actor, by: delta), let execution = executions[actor],
+            let session = session(for: actor)
+        else {
             return
         }
         let hours = world?.packageClock.map { $0.totalGameSeconds / GameClock.secondsPerHour }

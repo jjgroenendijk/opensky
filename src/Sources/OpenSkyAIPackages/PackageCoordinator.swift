@@ -289,6 +289,10 @@ public final class PackageCoordinator {
     var heldSteps: [ReferenceKey: [(event: PackageProcedureEvent, leaf: Int)]] = [:]
     /// Actors at their seat that still turn to its heading.
     var seatTurns: [ReferenceKey: FurnitureSeatTurn] = [:]
+    /// Seconds since a walk of the actor gave up. Its failed package starts again after
+    /// `failedWalkRetrySeconds`. OpenSky's value (docs/engine/unverified-values.md).
+    var failedWalkSeconds: [ReferenceKey: Float] = [:]
+    static let failedWalkRetrySeconds: Float = 10
     static let maxStepDepth = 16
 
     public init(world: (any PackageWorld)?, data: PackageSessionData?) {
@@ -469,6 +473,9 @@ public final class PackageCoordinator {
         let rider = mounts.first { $0.value == actor }?.key ?? actor
         guard !commandedActors.contains(rider), let mover = executions[rider]?.runner.mover
         else { return }
+        if event == .movementFailed {
+            failedWalkSeconds[rider] = 0
+        }
         let atMarker = event == .arrived && arrivesAtIdleMarker(rider, leaf: mover)
         step(rider, with: atMarker ? .arrivedAtIdleMarker : event, leaf: mover)
     }
