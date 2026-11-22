@@ -72,7 +72,7 @@ final class WhiterunFight {
         combatWorld.actors = [CombatActorObservation(
             key: located.key,
             feet: guardFeet,
-            facing: facing,
+            heading: facing,
             scale: located.actor.scale,
             name: located.editorID
         )]

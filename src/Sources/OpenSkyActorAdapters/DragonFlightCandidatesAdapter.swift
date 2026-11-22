@@ -36,7 +36,7 @@ public struct DragonFlightCandidatesAdapter {
 extension DragonFlightCandidatesAdapter {
     public func candidate(_ actor: CombatActorObservation) -> DragonFlightCandidate {
         var candidate = DragonFlightCandidate(
-            key: actor.key, feet: actor.feet, yaw: NPCYawMath.heading(fromYaw: actor.facing)
+            key: actor.key, feet: actor.feet, yaw: actor.yaw
         )
         if
             let loop = game.combat.loop, let target = loop.targets[actor.key],

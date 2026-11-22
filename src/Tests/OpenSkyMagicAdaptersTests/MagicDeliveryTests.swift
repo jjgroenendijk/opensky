@@ -74,6 +74,18 @@ struct MagicDeliveryTests {
         #expect(host.fakeEffectsWorld.knockDownActorCalls.isEmpty)
     }
 
+    /// The foe stands east of the player. Its ward covers the player when it looks west.
+    @Test func aWardFacesAlongTheHoldersHeading() {
+        host.fakeActorWorld.combatActorsResult = [
+            CombatActorObservation(key: Self.foe, feet: SIMD3(100, 0, 0), heading: 1.5 * .pi)
+        ]
+        #expect(adapter.actor(Self.foe, faces: .player))
+        host.fakeActorWorld.combatActorsResult = [
+            CombatActorObservation(key: Self.foe, feet: SIMD3(100, 0, 0), heading: 0.5 * .pi)
+        ]
+        #expect(!adapter.actor(Self.foe, faces: .player))
+    }
+
     @Test func facingAndSightAnswerTrueForAnUnknownActor() {
         let stranger = ReferenceKey.plugin(name: "base.esm", objectID: 0x99)
         #expect(adapter.actor(stranger, faces: .player))

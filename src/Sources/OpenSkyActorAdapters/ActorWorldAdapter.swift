@@ -111,7 +111,7 @@ public final class ActorWorldAdapter {
         return CombatActorObservation(
             key: entry.key,
             feet: moved?.position ?? actor.placement.position,
-            facing: moved?.rotation.z ?? actor.placement.rotation.z,
+            heading: moved?.rotation.z ?? actor.placement.rotation.z,
             scale: actor.scale,
             isDead: worldState.component(ActorDeathState.self, for: entry.key)?.isDead
                 ?? false,

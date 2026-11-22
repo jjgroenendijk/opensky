@@ -394,7 +394,7 @@ extension AgentTeleportJob {
     {
         if let actor = game.actorWorld.combatActor(key: key) {
             // Rotation Z counts clockwise from north, so forward is (sin, cos).
-            let front = SIMD2<Float>(sin(actor.facing), cos(actor.facing)) * actorStandOff
+            let front = SIMD2<Float>(sin(actor.heading), cos(actor.heading)) * actorStandOff
             return actor.feet + SIMD3(front, 0)
         }
         let entry = game.streamer.referenceEntry(key: key)

@@ -211,7 +211,7 @@ extension CombatAcceptanceChain: NoCasterCombatWorld {
         [CombatActorObservation(
             key: Self.opponent,
             feet: opponentFeet,
-            facing: .pi,
+            heading: .pi,
             isDead: ragdolls.isDead(Self.opponent),
             name: "Opponent"
         )]

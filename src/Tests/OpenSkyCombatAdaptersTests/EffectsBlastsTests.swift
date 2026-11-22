@@ -52,6 +52,15 @@ struct EffectsBlastsTests {
         adapter.playExplosionImpact(Self.light, at: .zero)
     }
 
+    /// An actor that looks east has its model's +Y axis along world +X.
+    @Test func anEffectTurnsWithTheActorsHeading() throws {
+        host.fakeActorWorld.combatActorResult = CombatActorObservation(
+            key: Self.actor, feet: .zero, heading: .pi / 2
+        )
+        let transform = try #require(adapter.effectTransform(of: Self.actor))
+        #expect(simd_distance(transform.columns.1, SIMD4(1, 0, 0, 0)) < 1e-5)
+    }
+
     @Test func effectsPlaceOnActorsFromTheirObservation() {
         host.fakeActorWorld.combatActorResult = CombatActorObservation(
             key: Self.actor, feet: SIMD3(1, 2, 3)

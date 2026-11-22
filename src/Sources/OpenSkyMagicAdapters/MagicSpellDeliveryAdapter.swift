@@ -207,7 +207,7 @@ struct MagicSightChecks {
         guard let actor = game.actorWorld.combatActors().first(where: { $0.key == key })
         else { return nil }
         return StandingActor(
-            feet: actor.feet, facing: actor.facing, height: actor.capsule.height * actor.scale
+            feet: actor.feet, facing: actor.yaw, height: actor.capsule.height * actor.scale
         )
     }
 }
