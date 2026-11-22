@@ -287,8 +287,24 @@ public final class PerceptionRuntime {
                 isFlying: observer.isFlying
             )
         {
-            lineOfSightQueryCount += 1
-            hasLineOfSight = world.perceptionHasLineOfSight(from: observer.eye, to: target.eye)
+            // The range of a sight line is shorter to the sides and behind the observer.
+            let share = PerceptionSight.sightRangeShare(
+                degreesOffFacing: PerceptionSight.degreesOffFacing(
+                    observer: observer, target: target
+                ),
+                isExterior: observer.isExterior
+            )
+            let reach = DetectionFormula.maximumDistance(
+                settings: settings, isExterior: observer.isExterior, isFlying: observer.isFlying
+            ) * share
+            if distance < reach {
+                lineOfSightQueryCount += 1
+                hasLineOfSight = world.perceptionHasLineOfSight(
+                    from: observer.eye, to: target.eye
+                )
+            } else {
+                hasLineOfSight = false
+            }
         } else {
             hasLineOfSight = false
         }
