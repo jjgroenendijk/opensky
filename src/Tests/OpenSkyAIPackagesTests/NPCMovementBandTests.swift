@@ -55,6 +55,20 @@ struct NPCMovementBandTests {
         #expect(unseen.steps == near.steps)
     }
 
+    @Test func theRuntimeNamesTheActorsThatSwim() {
+        let path = NPCMovementRuntimeTests.path(
+            waypoints: [SIMD3(0, 0, 0), SIMD3(400, 0, 0)], target: SIMD3(400, 0, 0)
+        )
+        var runtime = NPCMovementRuntime()
+        _ = runtime.start(NPCMovementRuntimeTests.start(actor: actor, path: path))
+        var world = NPCMovementRuntimeTests.world()
+        runtime.advance(by: 0.05, world: world)
+        #expect(runtime.swimmingActors().isEmpty)
+        world.sampleWater = { _ in WaterReading(surface: 200) }
+        runtime.advance(by: 0.05, world: world)
+        #expect(runtime.swimmingActors() == [actor])
+    }
+
     @Test func aStandingActorHasNoMovementBand() {
         let runtime = NPCMovementRuntime()
         #expect(runtime.movementBand(of: actor) == nil)

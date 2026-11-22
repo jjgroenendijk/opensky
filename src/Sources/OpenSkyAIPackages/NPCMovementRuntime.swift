@@ -400,6 +400,10 @@ public struct NPCMovementRuntime {
         movers.mapValues(\.motionFacts)
     }
 
+    public func swimmingActors() -> Set<ReferenceKey> {
+        Set(movers.filter(\.value.isSwimming).keys)
+    }
+
     /// Records that `actor`'s cell is now built with it at `placement`, so its draw
     /// delta starts there, whether it is parked, walking or turning.
     public mutating func bake(_ actor: ReferenceKey, at placement: PlacedReference.Placement) {

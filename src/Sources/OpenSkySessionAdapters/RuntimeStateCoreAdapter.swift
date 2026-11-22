@@ -110,6 +110,11 @@ extension RuntimeStateCoreAdapter {
             .actorConditionState(holder: .player, values: values)
         inventoryFacts.playerTraits.fill(&player)
         var states = residentActorStates(values: values)
+        // An NPC swims while its mover does; one that stands has no mover and is on land.
+        let swimmers = game.streamer.npcMovement.swimmingActors()
+        for key in states.keys {
+            states[key]?.isSwimming = swimmers.contains(key)
+        }
         states[.player] = player
         return ActorStateResolution.fight(
             states: states, playerKey: .player, playerTarget: game.combat.loop?.state.target

@@ -51,6 +51,7 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
     /// Nil when nothing tracks the actor's gait; only the player's is.
     public var isSneaking: Bool?
     public var isSprinting: Bool?
+    /// The player's swim gait, or an NPC whose mover swims.
     public var isSwimming: Bool?
     /// Feet under the surface of a `WATR` with flag 0x1. Nil where nothing samples water.
     public var isInDangerousWater: Bool?
