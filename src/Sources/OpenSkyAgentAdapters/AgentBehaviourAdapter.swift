@@ -61,7 +61,19 @@ extension AgentBehaviourAdapter {
     }
 
     func pairedState() -> AgentJSON {
-        ["pairs": pairsJSON()]
+        ["pairs": pairsJSON(), "lastKillMoveMiss": killMoveMissJSON()]
+    }
+
+    /// The last killing swing with no kill move: each idle the tree tested and its answer.
+    private func killMoveMissJSON() -> AgentJSON {
+        guard let miss = game.idleWorld.idles.lastKillMoveMiss else { return .null }
+        return [
+            "attacker": .string("\(miss.attacker)"), "target": .string("\(miss.target)"),
+            "action": .string(miss.action),
+            "idles": .array(miss.trace.filter { $0.verdict != .notReached }.map { entry in
+                .string("\(entry.editorID ?? "\(entry.id)"): \(entry.verdict)")
+            })
+        ]
     }
 
     private func pairsJSON() -> AgentJSON {

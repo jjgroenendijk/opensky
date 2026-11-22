@@ -163,6 +163,8 @@ public final class IdleCoordinator {
     var dependents: [ReferenceKey: [ReferenceKey]] = [:]
     /// The paired animations playing now, oldest first.
     public internal(set) var pairs: [PairedAnimationPlay] = []
+    /// The last killing swing that started no kill move, for the readout.
+    public internal(set) var lastKillMoveMiss: KillMoveMiss?
     var reports: [ReferenceKey: IdleReport] = [:]
     /// Idles a save kept, played again once their actor is loaded.
     var savedPlays: [ReferenceKey: SavedIdlePlay] = [:]

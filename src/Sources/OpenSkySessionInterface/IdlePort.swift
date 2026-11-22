@@ -27,6 +27,7 @@ public protocol IdlePort: AnyObject {
     func leaveMarker(_ actor: ReferenceKey)
     func ownGraphEvent(_ name: String, from actor: ReferenceKey) -> String
     func pairedAnimation(of actor: ReferenceKey) -> PairedAnimationPlay?
+    var lastKillMoveMiss: KillMoveMiss? { get }
     var pairs: [PairedAnimationPlay] { get }
     func removeDependent(_ dependent: ReferenceKey, of owner: ReferenceKey)
     func rootMotion(of actor: ReferenceKey) -> (motion: AnimationRootMotion, elapsed: Float)?

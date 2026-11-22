@@ -36,3 +36,20 @@ nonisolated public struct IdleCandidateTrace: Equatable, Sendable {
         self.verdict = verdict
     }
 }
+
+/// A killing swing whose idle tree started no kill move, with what each idle answered.
+nonisolated public struct KillMoveMiss: Equatable, Sendable {
+    public let attacker: ReferenceKey
+    public let target: ReferenceKey
+    public let action: String
+    public let trace: [IdleCandidateTrace]
+
+    public init(
+        attacker: ReferenceKey, target: ReferenceKey, action: String, trace: [IdleCandidateTrace]
+    ) {
+        self.attacker = attacker
+        self.target = target
+        self.action = action
+        self.trace = trace
+    }
+}
