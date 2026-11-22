@@ -101,7 +101,7 @@ nonisolated public struct DetectionTargetTraits: Equatable, Sendable {
     public var sneakSkill: Float
     /// An invisible target cannot be seen, but it can still be heard.
     public var isInvisible: Bool
-    /// The target's Mod Detection Movement perks, a factor on its movement noise.
+    /// The target's Mod Detection Movement perks, a factor on the Moving term of sight.
     public var movementMultiplier: Float
     /// The Size term of sight: 0.5, 1, 1.5, or 2 by the size of the target's race.
     public var sizeFactor: Float = 1

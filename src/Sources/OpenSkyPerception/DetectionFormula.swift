@@ -87,7 +87,6 @@ nonisolated public enum DetectionFormula: Sendable {
         let carried = max(0, settings.equippedWeightBase.value)
             + max(0, settings.equippedWeightMult.value) * weight * unmuffled
         let movement = carried * movementMultiplier(gait: inputs.gait, settings: settings)
-            * finiteNonNegative(traits.movementMultiplier)
         let action = finiteNonNegative(traits.actionSound) * settings.actionMult.value
         let occlusion = inputs.hasLineOfSight ? 1 : max(0, settings.soundLosMult.value)
         return settings.soundsMult.value * (movement + action) * occlusion
@@ -108,7 +107,8 @@ nonisolated public enum DetectionFormula: Sendable {
     }
 
     /// `1 + moving * fSneakLightMoveMult + running * fSneakLightRunMult`, with moving
-    /// and running as 0 or 1. A sprint counts as running.
+    /// and running as 0 or 1, times the Mod Detection Movement perks. A sprint counts
+    /// as running.
     static func movementFactor(
         inputs: DetectionInputs, settings: DetectionSettings
     ) -> Float {
@@ -116,7 +116,7 @@ nonisolated public enum DetectionFormula: Sendable {
         let isRunning = gait == .run || gait == .sprint
         return max(
             0, 1 + settings.lightMoveMult.value + (isRunning ? settings.lightRunMult.value : 0)
-        )
+        ) * finiteNonNegative(inputs.traits.movementMultiplier)
     }
 
     /// `(100 - int(Blindness)) / 100`, so 100 Blindness sees nothing.

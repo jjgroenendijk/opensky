@@ -92,13 +92,18 @@ struct DetectionFormulaTests {
         #expect(DetectionFormula.soundFactor(
             inputs: DetectionInputs(distance: 0, gait: .sneak), settings: settings
         ) == 9)
-        // A Mod Detection Movement perk scales the movement part.
-        #expect(DetectionFormula.soundFactor(
-            inputs: DetectionInputs(
-                distance: 0, gait: .walk, traits: DetectionTargetTraits(movementMultiplier: 2)
-            ),
-            settings: settings
-        ) == 24)
+        // A Mod Detection Movement perk leaves the sound alone and scales the Moving
+        // term of sight.
+        let perked = DetectionInputs(
+            distance: 0, gait: .walk, traits: DetectionTargetTraits(movementMultiplier: 2)
+        )
+        #expect(DetectionFormula.soundFactor(inputs: perked, settings: settings) == 12)
+        #expect(
+            DetectionFormula.movementFactor(inputs: perked, settings: settings)
+                == 2 * DetectionFormula.movementFactor(
+                    inputs: DetectionInputs(distance: 0, gait: .walk), settings: settings
+                )
+        )
         // Nothing in the way multiplies by 1; a wall multiplies by
         // fSneakSoundLosMult.
         #expect(DetectionFormula.soundFactor(
