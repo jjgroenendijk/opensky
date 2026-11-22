@@ -150,6 +150,7 @@ extension AgentActorReadoutAdapter {
             "leveled": details.leveledState(of: actor.key, base: base),
             "height": .init(game.streamer.npcHeightScale?(actor.key) ?? 1),
             "detection": detection(by: actor.key),
+            "social": socialState(of: actor.key),
             "eyeTexture": actors.eyeTexture(of: actor.key),
             "severed": actors.severedState(of: actor.key),
             "soundLoops": .array(
