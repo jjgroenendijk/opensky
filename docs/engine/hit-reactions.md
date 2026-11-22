@@ -86,7 +86,8 @@ Example: an attacker with 40 `Block` bashes with a shield (W = 1, S = 1) at a ru
 
 ## In OpenSky
 
-Both the player's hit on an NPC and an NPC's blow on the player go through the rule above.
+The player's hit on an NPC, an NPC's blow on the player, and the player's arrow that lands on
+an NPC go through the rule above.
 
 - S comes from the attack data of the attacker's race for the attack's graph event. An attacker
   without attack data uses its weapon's stagger value.
@@ -97,8 +98,10 @@ Both the player's hit on an NPC and an NPC's blow on the player go through the r
 of the magnitude, the `staggerMagnitude` and `staggerDirection` written to the graph, and which
 of `largeRecoil`, `blockHit`, and `attackerRecoils` it gave.
 
-- [WARNING] A projectile hit does not go through the rule yet. An arrow staggers by the chance
-  roll alone.
+- An arrow has no attack data, so S is the stagger value of the bow. A bow always staggers when
+  the magnitude is above 0. A spell projectile has no stagger value, so it never staggers by
+  this rule; a spell staggers through its own effect.
+- [WARNING] An NPC's arrow that lands on the player does not go through the rule yet.
 - [WARNING] The two "always stagger" hit flags are not read. The critical and sneak attack
   messages are shown by the damage code, not here.
 - [INFO] The staggered mark lasts as long as the combat machine's stagger phase, not 3 seconds.

@@ -473,9 +473,4 @@ extension CombatLoopRuntime {
             now: stepSeconds
         )
     }
-
-    /// The `iStaggerAttackChance` roll for a hit with no magnitude of its own, an arrow.
-    public func rollsStagger() -> Bool {
-        staggerRandom.percent() < staggers.attackChance
-    }
 }
