@@ -43,18 +43,20 @@ flowchart TD
     M -- no --> E
 ```
 
-- The game files two hit flags together as "bash". One of them gives the Large Recoil, most
-  likely the bash itself. A hit with that flag never staggers.
+- A bash sets two hit flags. Every hit by an attacker whose attack state is "bash" gets the
+  first one. It also gets the second one when the target is winding up or swinging an attack
+  of its own at that moment. The second flag gives the Large Recoil, and such a hit never
+  staggers. A shield bash, a weapon bash, and a power bash are the same here.
 - A hit with a magnitude above 0 always staggers, with no roll, in these cases:
   - the target is the player and `bPlayerAlwaysStaggered` is on, which it is;
   - the hit has the first "blocked" flag;
-  - the hit has the second "bash" flag, the one that gives no Large Recoil;
+  - the hit is a bash on a target that is not starting an attack (the first bash flag alone);
   - the weapon is a bow, a staff, or a crossbow.
 - That a power attack always staggers is not confirmed.
 - Any other hit staggers on a roll: a whole number from 0 to 99 below `iStaggerAttackChance`, 50.
 - The hit's critical flag shows the "critical strike" message, and its sneak attack flag the
   "sneak attack" message.
-- One kind of melee hit does not make the attacker recoil when blocked. What it is was not found.
+- A blocked bash does not make the basher recoil.
 - How long a recoil or a block hit holds the actor was not found. A stagger marks the actor as
   staggered for at most `fStaggerMaxDuration`, 3 seconds.
 
@@ -103,6 +105,7 @@ of `largeRecoil`, `blockHit`, and `attackerRecoils` it gave.
   this rule; a spell staggers through its own effect.
 - The first "blocked" flag changes nothing in OpenSky: a blocking target has the state factor 0,
   so its magnitude is 0.
-- [WARNING] The second "bash" flag is not read, because which hit sets it is not known. The
-  critical and sneak attack messages are shown by the damage code, not here.
+- [WARNING] Every bash gives the Large Recoil. The stagger without a roll for a bash on a target
+  that is not starting an attack is not built. The critical and sneak attack messages are
+  shown by the damage code, not here.
 - [INFO] The staggered mark lasts as long as the combat machine's stagger phase, not 3 seconds.

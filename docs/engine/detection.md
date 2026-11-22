@@ -125,16 +125,8 @@ exactly 0 becomes -1. So sight never gives 0; the value 0 means "noticed an even
 ### Detection events
 
 When the sight value is not positive, or the target is out of range, the observer checks the
-target's last sound event:
-
-- The event counts within 1,536 units for the player's sound and 512 units for another
-  actor's. A very loud sound (level 200 or more) doubles the distance.
-- A sound-only form of the formula runs. Its light level is fixed at 225 indoors and 75
-  outdoors, and is used only when the event position is in view. Its range for a very loud
-  event is 3,072 units.
-- The observer then checks the target's projectiles within 1,024 units (player) or 512 units
-  (another actor), at sound level 50.
-- A positive result gives the detection value 0, at the event position.
+target's last sound event and its projectiles. [Detection events](/engine/detection-events.md)
+gives the distances, what makes an event, and the sound levels.
 
 ### Light level
 
@@ -161,8 +153,8 @@ lit.
 ### What OpenSky leaves out
 
 - The Ambush package weight and its sound rule. OpenSky runs no Ambush package yet.
-- Mod Detection Movement changes the movement noise of the Sound term here, not the Moving
-  term of sight.
+- Mod Detection Movement changes the movement noise of the Sound term here. The game applies
+  it to the Moving term of sight only.
 - The smaller range for a fighter's other targets. The only target is the player.
 - The sound-event fallback. A landed projectile makes OpenSky's only detection event
   ([stealth points](#stealth-points)).
