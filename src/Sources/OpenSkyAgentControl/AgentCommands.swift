@@ -7,7 +7,7 @@ import Foundation
 nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case player
     case target
-    case actors(radius: Float)
+    case actors(radius: Float, detailed: Int = AgentStateQuery.defaultDetailedActors)
     case menu
     case quest(String)
     case scenes
@@ -63,13 +63,17 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case condition(function: String, reference: String, parameter: String?)
 
     public static let defaultActorRadius: Float = 4096
+    /// A full row is about 2,500 characters, and one reply line holds 64 KiB.
+    public static let defaultDetailedActors = 8
 
     public static func parse(_ name: String, _ args: AgentArguments) throws(AgentFailure) -> Self {
         switch name {
         case "player": return .player
         case "target": return .target
-        case "actors": return try .actors(radius: args
-                .optionalFloat("radius") ?? defaultActorRadius)
+        case "actors": return try .actors(
+                radius: args.optionalFloat("radius") ?? defaultActorRadius,
+                detailed: args.optionalInt("detailed") ?? defaultDetailedActors
+            )
         case "menu": return .menu
         case "quest": return try .quest(args.string("id"))
         case "av": return try .actorValue(reference: args.string("ref"), name: args.string("name"))

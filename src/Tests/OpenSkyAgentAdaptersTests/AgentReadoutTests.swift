@@ -301,4 +301,28 @@ extension AgentReadoutTests {
         #expect(object(bodies[0])["bone"] != nil)
         #expect(object(rows[1])["ragdoll"] == .null)
     }
+
+    /// A town holds over 100 actors, and one reply line holds 64 KiB.
+    @Test func aCrowdGetsShortRowsPastTheNearest() throws {
+        let session = FakeGameSessionPort()
+        session.freeFlyCameraValue = FreeFlyCamera(position: [0, 0, 0], yaw: 0, pitch: 0)
+        host.gameSession = session
+        host.fakeFactions.hostilityResult = .neutral
+        host.fakeEffects.skinDecalsValue = SkinDecalRuntime()
+        host.fakeStreamer.dynamicBodiesValue = DynamicBodyWorld()
+        host.fakeActorWorld.combatActorsResult = (1 ... 100).map { index in
+            CombatActorObservation(
+                key: .generated(UInt64(index)), feet: [Float(index), 0, 0], name: "guard"
+            )
+        }
+        let reply = try world.query(.actors(radius: 1024, detailed: 3))
+        guard case let .array(rows)? = object(reply)["actors"], rows.count == 100 else {
+            Issue.record("no actor list")
+            return
+        }
+        #expect(object(rows[2])["bands"] != nil)
+        #expect(object(rows[3])["bands"] == nil)
+        #expect(object(rows[99])["distance"] == .init(Float(100)))
+        #expect(AgentLineCodec.encode(reply).count < AgentProtocol.maximumLineBytes)
+    }
 }

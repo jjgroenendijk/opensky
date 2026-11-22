@@ -95,39 +95,31 @@ extension AgentActorReadoutAdapter {
         ]
     }
 
-    public func actorsState(radius: Float) throws(AgentFailure) -> AgentJSON {
+    /// The nearest `detailed` actors get a full row and the others a short one, so the
+    /// reply stays under the size of one line with a town loaded.
+    public func actorsState(radius: Float, detailed: Int) throws(AgentFailure) -> AgentJSON {
         guard let gameSession = game.gameSession else { throw hub.notReady() }
         let origin = gameSession.freeFlyCamera.position
-        let rows = game.actorWorld.combatActors().compactMap { actor in
-            actorRow(actor, origin: origin, radius: radius)
+        let near = game.actorWorld.combatActors()
+            .map { (simd_distance($0.feet, origin), $0) }
+            .filter { $0.0 <= radius }
+            .sorted { $0.0 < $1.0 }
+        let rows = near.enumerated().map { index, entry in
+            var fields = shortRow(entry.1, distance: entry.0)
+            if index < detailed {
+                fields.merge(detailRow(entry.1, distance: entry.0)) { _, new in new }
+            }
+            return AgentJSON.object(fields)
         }
-        return ["actors": .array(rows.sorted { $0.0 < $1.0 }.map(\.1))]
+        return ["actors": .array(rows), "detailed": .init(min(detailed, rows.count))]
     }
 
-    private func actorRow(
-        _ actor: CombatActorObservation, origin: SIMD3<Float>, radius: Float
-    ) -> (Float, AgentJSON)? {
-        let distance = simd_distance(actor.feet, origin)
-        guard distance <= radius else { return nil }
-        let entry = game.streamer.referenceEntry(key: actor.key)
-        let formID = entry?.formID
-        var graph: AgentJSON = game.actorGraphs.readout(for: actor.key)
-            .map(details.graphState) ?? .null
-        if case var .object(fields) = graph {
-            let getUp = game.actorGraphs.variable(
-                named: ActorStateGraphNames.getUpType, on: actor.key
-            )
-            if case let .int(value) = getUp {
-                fields["iGetUpType"] = .init(Int(value))
-            }
-            graph = .object(fields)
-        }
-        return (distance, [
-            "leveled": details.leveledState(of: actor.key, base: entry?.placedActor?.base),
+    private func shortRow(_ actor: CombatActorObservation, distance: Float) -> [String: AgentJSON] {
+        let formID = game.streamer.referenceEntry(key: actor.key)?.formID
+        return [
             "ref": formID.map { .formID($0.rawValue) } ?? .null,
             "name": .string(game.dialogueWorld.speakerLabel(for: actor.key)),
             "position": .init(actor.feet),
-            "height": .init(game.streamer.npcHeightScale?(actor.key) ?? 1),
             "distance": .init(distance),
             "dead": .bool(actor.isDead),
             "hostility": .string("\(game.factions.hostility(of: actor.key))"),
@@ -136,7 +128,27 @@ extension AgentActorReadoutAdapter {
                 .map { .string($0.rawValue) } ?? .null,
             "detects": game.perception.runtime
                 .map { .string("\($0.state(observer: actor.key, target: .player).state)") }
-                ?? .null,
+                ?? .null
+        ]
+    }
+
+    private func graphState(of key: ReferenceKey) -> AgentJSON {
+        let graph: AgentJSON = game.actorGraphs.readout(for: key).map(details.graphState) ?? .null
+        guard case var .object(fields) = graph else { return graph }
+        let getUp = game.actorGraphs.variable(named: ActorStateGraphNames.getUpType, on: key)
+        if case let .int(value) = getUp {
+            fields["iGetUpType"] = .init(Int(value))
+        }
+        return .object(fields)
+    }
+
+    private func detailRow(
+        _ actor: CombatActorObservation, distance: Float
+    ) -> [String: AgentJSON] {
+        let base = game.streamer.referenceEntry(key: actor.key)?.placedActor?.base
+        return [
+            "leveled": details.leveledState(of: actor.key, base: base),
+            "height": .init(game.streamer.npcHeightScale?(actor.key) ?? 1),
             "detection": detection(by: actor.key),
             "eyeTexture": actors.eyeTexture(of: actor.key),
             "severed": actors.severedState(of: actor.key),
@@ -151,9 +163,9 @@ extension AgentActorReadoutAdapter {
                 (game.actorPlayback(for: actor.key)?.lagBoneOffsets ?? [:])
                     .mapValues(AgentJSON.init)
             ),
-            "graph": graph,
+            "graph": graphState(of: actor.key),
             "bands": details.bands(of: actor.key, distance: distance)
-        ])
+        ]
     }
 
     public func actorValueState(_ text: String, name: String) throws(AgentFailure) -> AgentJSON {
