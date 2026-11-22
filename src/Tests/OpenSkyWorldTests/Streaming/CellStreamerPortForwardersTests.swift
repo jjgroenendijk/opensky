@@ -32,6 +32,8 @@ struct CellStreamerPortForwardersTests {
         #expect(streamer.residentEntries().isEmpty)
         #expect(streamer.residentActorEntries().isEmpty)
         #expect(streamer.pluginPlacement(of: Self.actor) == nil)
+        // The second read answers from the remembered placement.
+        #expect(streamer.pluginPlacement(of: Self.actor) == nil)
         #expect(streamer.cellLocation(of: Self.actor) == nil)
         #expect(streamer.residentReferenceCount == 0)
         #expect(streamer.residentAnimatedVehicles().isEmpty)

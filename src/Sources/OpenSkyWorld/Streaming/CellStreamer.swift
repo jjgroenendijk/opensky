@@ -62,7 +62,13 @@ public final class CellStreamer {
     /// default is the plugin baseline.
     public var stateSource: () -> WorldStateSnapshot = { .empty }
     /// Plugin records for references no resident cell holds.
-    public var placedRecords: PlacedRecordLookup?
+    public var placedRecords: PlacedRecordLookup? {
+        didSet { pluginPlacements = [:] }
+    }
+
+    /// Plugin placements already read. A read decodes the reference's cell and
+    /// worldspace records, and the off-screen schedules ask for the same ones each step.
+    var pluginPlacements: [ReferenceKey: PluginPlacement?] = [:]
 
     /// Desired requests not yet submitted. Only one build reaches the runner
     /// at a time, so recentering can discard obsolete backlog before it does
