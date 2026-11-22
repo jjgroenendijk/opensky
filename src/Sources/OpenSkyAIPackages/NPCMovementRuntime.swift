@@ -138,6 +138,8 @@ public struct NPCMovementRuntime {
     private var movers: [ReferenceKey: NPCMover] = [:]
     /// When each mover's banded step is due (`NPCMovementRuntime+Bands.swift`).
     var moverClocks = NPCMoverClocks()
+    /// Walks started and stopped per actor, for the readout.
+    private var commandCounts: [ReferenceKey: NPCMoveCommandCounts] = [:]
     var parked: [ReferenceKey: NPCParkedMovement] = [:]
     /// Actors turning on the spot. Not counted against the mover
     /// cap: a turn runs no path, no collision sweep and no repath, so the CPU
@@ -168,6 +170,7 @@ public struct NPCMovementRuntime {
 
     public mutating func start(_ start: NPCMoveStart) -> Bool {
         guard ridden[start.actor] == nil, hasRoom(for: start.actor) else { return false }
+        commandCounts[start.actor, default: NPCMoveCommandCounts()].starts += 1
         var mover = NPCMover(start: start, drawnPlacement: drawnPlacement(of: start.actor))
         mover.turnRate = turnRate
         if let slide = slides.removeValue(forKey: start.actor) {
@@ -229,6 +232,7 @@ public struct NPCMovementRuntime {
     public mutating func stop(_ actor: ReferenceKey) -> Bool {
         moverClocks.remove(actor)
         guard let mover = movers.removeValue(forKey: actor) else { return false }
+        commandCounts[actor, default: NPCMoveCommandCounts()].stops += 1
         parked[actor] = NPCParkedMovement(mover, readout: mover.readout(as: .halted))
         onPersist?(mover.persistence(reason: .halt))
         // The same still-drive a mover publishes when it finishes on its own,
@@ -442,7 +446,11 @@ extension NPCMovementRuntime {
             + ridden.values.map(\.readout) + slides.values.map(\.readout)
         let held = parked.filter { facings[$0.key] == nil && slides[$0.key] == nil }
             .values.map(\.readout)
-        return (live + held).sorted { $0.actor < $1.actor }
+        return (live + held).sorted { $0.actor < $1.actor }.map { readout in
+            var readout = readout
+            readout.commands = commandCounts[readout.actor]
+            return readout
+        }
     }
 
     /// A parked actor keeps its delta until a cell build bakes its pose in (`bake`), so

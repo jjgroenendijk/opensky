@@ -33,6 +33,64 @@ nonisolated public enum NPCMovementSettleReason: String, Equatable, Sendable {
     case turn
 }
 
+/// One walk step of a mover, in world units: the move it asked for, what its long body
+/// took off, and how far its feet moved.
+nonisolated public struct NPCMoveStepReadout: Equatable, Sendable {
+    public var wanted = SIMD2<Float>.zero
+    public var bodyCorrection = SIMD2<Float>.zero
+    public var moved = SIMD3<Float>.zero
+    /// The speed the step planned, and the fixed steps the walk controller ran.
+    public var speed: Float = 0
+    public var steps = 0
+    public var yaw: Float = 0
+    /// The long body part that pushed back most in the last fixed step.
+    public var bodyPush: LongBodyPush?
+
+    public init(speed: Float = 0, yaw: Float = 0) {
+        self.speed = speed
+        self.yaw = yaw
+    }
+
+    /// Counts one fixed step that asked for `wanted`.
+    public mutating func note(wanted: SIMD2<Float>) {
+        self.wanted += wanted
+        steps += 1
+    }
+
+    public mutating func note(_ push: LongBodyPush) {
+        bodyCorrection += push.added
+        bodyPush = push
+    }
+
+    public func moving(by moved: SIMD3<Float>) -> NPCMoveStepReadout {
+        var step = self
+        step.moved = moved
+        return step
+    }
+
+    /// One line for the agent readout.
+    public var text: String {
+        var text = "wanted \(wanted) body \(bodyCorrection) moved \(moved)"
+            + " speed \(speed) steps \(steps) yaw \(yaw)"
+        if let part = bodyPush?.part, let resting = bodyPush?.resting {
+            text += " part \(part) resting \(resting)"
+        }
+        return text
+    }
+}
+
+/// How often one actor's walk was started, and stopped while it ran, since the load.
+nonisolated public struct NPCMoveCommandCounts: Equatable, Sendable {
+    public var starts = 0
+    public var stops = 0
+
+    public init() {}
+
+    public var text: String {
+        "starts \(starts) stops \(stops)"
+    }
+}
+
 nonisolated public struct NPCMovementReadout: Equatable, Sendable {
     public let actor: ReferenceKey
     public let state: NPCMovementState
@@ -45,6 +103,8 @@ nonisolated public struct NPCMovementReadout: Equatable, Sendable {
     /// The waypoint the mover walks to now, and the end of its path.
     public var nextWaypoint: SIMD3<Float>?
     public var target: SIMD3<Float>?
+    public var lastStep: NPCMoveStepReadout?
+    public var commands: NPCMoveCommandCounts?
 
     public init(
         actor: ReferenceKey,

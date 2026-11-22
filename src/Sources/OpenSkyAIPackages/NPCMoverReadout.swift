@@ -70,6 +70,7 @@ extension NPCMover {
         readout.nextWaypoint = path.waypoints.indices.contains(waypointIndex)
             ? path.waypoints[waypointIndex] : nil
         readout.target = path.target
+        readout.lastStep = lastStep
         return readout
     }
 

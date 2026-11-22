@@ -54,11 +54,15 @@ OpenSky keeps the upright capsule for the ground, the steps, and the slopes, and
 capsule and the two end capsules. Each step, they slide with the planned move against the same
 collision the upright capsule sees, and the largest push back changes the move:
 
-- Each end stands on the ground under it and follows that ground through the move.
+- Each end rides one step height above the ground under it and follows that ground through
+  the move. The upright capsule steps over a kerb or a stair of that height, so the ends must
+  pass it too. Without this a skeever's nose stops at the first low stone of a tunnel floor.
+  The game's rule for a long body at a step is not known; this one is OpenSky's choice.
 - The body capsule is a row of balls of its radius, no more than one radius apart, along its
   segment, so a beam that passes between two of them still meets one.
-- Only the push a move adds over standing still counts. So the slope an end stands on does not
-  push the horse back, and a horse that already touches a wall is not pushed away from it.
+- Each part first rests where the collision pushes it out, and the move starts there. So the
+  slope an end stands on does not push the body back, a horse that already touches a wall is
+  not pushed away from it, and a tail that a turn swung into a wall may walk out of it.
 
 So an escort horse stops with its nose at the prisoner cart instead of walking its head through
 it, and a low beam its legs pass under stops its back. The cart's bodies are on the props layer,
