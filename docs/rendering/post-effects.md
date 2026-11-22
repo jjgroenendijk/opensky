@@ -102,6 +102,12 @@ depth normals. The game blends `(v . N)(v . N_t)`; OpenSky turns the tap normal 
 surface facing back at the pixel counts. `state frame` shows it under
 `postEffects.indirectLight`.
 
+OpenSky traces one pixel in every 2 by 2 block and the composite reads the result with a
+linear filter. The light changes slowly across the screen, and the full-size trace cost up to
+9 ms of GPU time per frame at 1920 by 1080. The size the game traces at is not known. A tap
+past the radius, or one whose `|v . N| × |v|` cannot pass the bias, has weight 0, so the
+trace skips its normal and its colour. A pixel 10000 units away or more traces nothing.
+
 ## Volumetric light
 
 `[Display] bVolumetricLightingEnable` and `iVolumetricLightingQuality`. Sun light that falls
