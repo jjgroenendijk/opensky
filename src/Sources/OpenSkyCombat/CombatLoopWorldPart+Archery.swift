@@ -72,6 +72,8 @@ extension CombatLoopWorldPart {
             ammunition: arrow.item
         )
         payload.spendsAmmunition = false
+        payload.stagger = shot.bow.stagger
+        payload.handType = shot.bow.handType
         var fired = ProjectileShot(profile: arrow.profile, payload: .arrow(payload))
         fired.tiltsUp = false
         let shooter = ProjectileShooter(

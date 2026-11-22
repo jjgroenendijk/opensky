@@ -74,10 +74,12 @@ struct CombatFrameSteps {
         }
         // Every arrow provokes, a spell only when its effects are hostile.
         let struck = archery.advanceProjectiles(by: delta).filter(\.provokes)
-        let targets = struck.compactMap(\.target)
-        if !targets.isEmpty, let loop = shared.loop {
+        if let loop = shared.loop {
             let staggered = struck.compactMap { arrowStagger($0, bow: archery.bow, loop: loop) }
-            loop.notePlayerHits(targets, staggered: Set(staggered))
+            let targets = struck.filter { $0.shooter ?? .player == .player }.compactMap(\.target)
+            if !targets.isEmpty {
+                loop.notePlayerHits(targets, staggered: Set(staggered))
+            }
         }
         return shared.pendingCommands
     }
@@ -91,19 +93,33 @@ struct CombatFrameSteps {
         guard let target = trace.target, trace.spellHit == nil, trace.appliedDamage > 0
         else { return nil }
         var hit = HitReactionHit()
+        let attacker = trace.shooter ?? .player
+        let fromPlayer = attacker == .player
         hit.facts = shared.strikes.hitFacts(
-            attacker: .player, target: target, event: "", weaponStagger: bow.stagger
+            attacker: attacker, target: target, event: "",
+            weaponStagger: fromPlayer ? bow.stagger : trace.arrow?.stagger ?? 0
         )
-        hit.handType = bow.handType
+        hit.handType = fromPlayer ? bow.handType : trace.arrow?.handType ?? .bow
         hit.isMelee = false
+        hit.isPlayerTarget = target == .player
         let reaction = HitReactionRule.reaction(
             hit, roll: loop.staggerRandom.percent(), settings: loop.staggers
         )
         shared.note(HitReactionReport(
-            attacker: .player, target: target, hit: hit, reaction: reaction
+            attacker: attacker, target: target, hit: hit, reaction: reaction
         ))
         guard let magnitude = reaction.staggerMagnitude else { return nil }
         let world = shared.world
+        guard target != .player else {
+            world.writePlayerGraphVariable(
+                .real(magnitude), named: CombatGraphNames.staggerMagnitude
+            )
+            world.writePlayerGraphVariable(
+                .real(hit.facts.direction), named: CombatGraphNames.staggerDirection
+            )
+            world.raisePlayerGraphEvent(CombatGraphNames.staggerStart)
+            return target
+        }
         world.writeActorGraphVariable(
             .real(magnitude), named: CombatGraphNames.staggerMagnitude, on: target
         )

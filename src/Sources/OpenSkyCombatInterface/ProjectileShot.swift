@@ -1,4 +1,5 @@
 import Foundation
+public import OpenSkyActorsInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyMagicInterface
@@ -87,6 +88,9 @@ nonisolated public struct ArrowPayload: Equatable, Sendable {
     public let enchantment: ItemEnchantmentProfile?
     /// False for a shot a script fires: it spends no arrow, but one still sticks.
     public var spendsAmmunition = true
+    /// The stagger value and the kind of the weapon that fired it, for the hit reaction.
+    public var stagger: Float = 0
+    public var handType = CombatHandType.bow
 
     public init(
         damage: ArcheryDamageResult,

@@ -64,6 +64,9 @@ nonisolated public struct ProjectileTrace: Equatable, Sendable {
     /// spell whose effects are hostile. Read by the combat loop, so a healing
     /// spell cast at a follower does not start a fight.
     public let provokes: Bool
+    /// Who fired it, and the arrow it carried. Nil for a trace built without a shot.
+    public var shooter: ReferenceKey?
+    public var arrow: ArrowPayload?
 }
 
 /// One arrow left standing in whatever it hit.
