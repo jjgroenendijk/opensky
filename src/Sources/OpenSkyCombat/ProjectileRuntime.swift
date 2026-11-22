@@ -320,7 +320,7 @@ public final class ProjectileRuntime {
     ) -> ProjectileTrace {
         let aimed = projectile.launchPosition
             + projectile.launchDirection * projectile.state.travelled
-        let entry = ProjectileTrace(
+        var entry = ProjectileTrace(
             endPosition: position,
             flightTime: projectile.state.age,
             travelled: projectile.state.travelled,
@@ -335,6 +335,8 @@ public final class ProjectileRuntime {
             // never reached anybody to make angry.
             provokes: outcome.isImpact && projectile.payload.provokes
         )
+        entry.shooter = projectile.shooter
+        entry.arrow = projectile.payload.arrow
         trace.append(entry)
         if trace.count > Self.traceLimit {
             trace.removeFirst(trace.count - Self.traceLimit)

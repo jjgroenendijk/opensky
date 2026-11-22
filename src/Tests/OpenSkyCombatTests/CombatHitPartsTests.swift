@@ -219,6 +219,33 @@ struct CombatRulePartsTests {
         #expect(steps.arrowStagger(trace(damage: 5), bow: weak, loop: loop) == nil)
     }
 
+    /// An NPC's arrow uses the stagger value its own bow gave the arrow.
+    @Test func anNPCArrowStaggersThePlayerByTheHitRule() throws {
+        let world = FakeCoordinatorWorld()
+        let coordinator = Self.coordinator(world)
+        let loop = try #require(coordinator.loop)
+        let steps = CombatFrameSteps(shared: coordinator.shared)
+        var arrow = ArrowPayload(damage: ArcheryDamage.resolve(
+            bowDamage: 10, arrowDamage: 5, skill: 0
+        ))
+        arrow.stagger = 1
+        var trace = ProjectileTrace(
+            endPosition: .zero, flightTime: 0, travelled: 0, drop: 0, outcome: .hitActor,
+            target: .player, appliedDamage: 5, material: nil, stuck: false,
+            spellHit: nil, provokes: true
+        )
+        trace.shooter = Self.foe
+        trace.arrow = arrow
+        let unarmed = MeleeWeaponProfile(damage: 0, reach: 0)
+        #expect(steps.arrowStagger(trace, bow: unarmed, loop: loop) == .player)
+        #expect(world.raisedEvents.contains(CombatGraphNames.staggerStart))
+        let report = try #require(coordinator.shared.hitReactions.last)
+        #expect(report.attacker == Self.foe)
+        #expect(report.hit.isPlayerTarget)
+        trace.arrow?.stagger = 0
+        #expect(steps.arrowStagger(trace, bow: unarmed, loop: loop) == nil)
+    }
+
     @Test func thePanelSwitchesWriteTheSharedState() {
         let coordinator = Self.coordinator(FakeCoordinatorWorld())
         coordinator.panels.usesCombatTemperament = false
