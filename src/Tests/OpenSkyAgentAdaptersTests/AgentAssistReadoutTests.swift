@@ -25,6 +25,12 @@ struct AgentAssistReadoutTests {
         watch.score = 0.5
         watch.dodgeCount = 2
         readout.watches = [.generated(1): watch]
+        readout.reactions = [
+            HitReactionReport(
+                attacker: .player, target: .generated(1), hit: HitReactionHit(),
+                reaction: HitReaction()
+            )
+        ]
         host.fakeCombat.assistReadoutValue = readout
         host.fakePackages.processReadout = ["high": 3]
         let reply = try world.query(.assist)
@@ -32,6 +38,7 @@ struct AgentAssistReadoutTests {
         #expect(reply.value(atPath: "danger.watches.0.dodges") == .init(2))
         #expect(reply.value(atPath: "danger.threats") == .array([]))
         #expect(reply.value(atPath: "autoAim") == .null)
+        #expect(reply.value(atPath: "hitReactions.0.largeRecoil") == .bool(false))
         #expect(reply.value(atPath: "processLevels.high") == .number(3))
     }
 }

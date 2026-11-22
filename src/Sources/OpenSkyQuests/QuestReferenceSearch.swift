@@ -61,7 +61,7 @@ nonisolated struct QuestAliasMatch {
     let alias: Quest.Alias
     let quest: FormID
     let search: QuestReferenceSearch
-    var reserved: Set<ReferenceKey> = []
+    var reserved: Set<ReferenceKey>
     let aliases: QuestAliasResolution
     let translation: FormIDTranslation?
 

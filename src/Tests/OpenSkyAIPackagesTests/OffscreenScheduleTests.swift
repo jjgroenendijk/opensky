@@ -159,6 +159,8 @@ struct OffscreenScheduleTests {
         #expect(world.offscreenMoves.isEmpty)
         #expect(coordinator.offscreen.steps[Self.actor]?.kind == .stays)
         #expect(coordinator.offscreen.steps[Self.actor]?.place == nil)
+        #expect(coordinator.processReadout["low"] == 1)
+        #expect(coordinator.processReadout["middleHigh"] == 0)
         #expect(coordinator.offscreen.registered.keys.sorted() == [Self.actor])
     }
 

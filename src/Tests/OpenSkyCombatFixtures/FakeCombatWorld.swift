@@ -23,6 +23,7 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public var shieldless: Set<ReferenceKey> = []
     public var awareness: [ReferenceKey: CombatAwareness] = [:]
     public var aggroRadii: [ReferenceKey: AggroRadius] = [:]
+    public var dangerThreats: [DangerThreat] = []
     public var healthFractions: [ReferenceKey: Float] = [:]
     public var influences: [ReferenceKey: ActorMagicInfluence] = [:]
     /// Actors whose current package has the Ignore Combat flag.
@@ -146,6 +147,10 @@ public final class FakeCombatWorld: CombatLoopWorld {
 
     public func combatAggroRadius(of key: ReferenceKey) -> AggroRadius? {
         aggroRadii[key]
+    }
+
+    public func combatDangerThreats() -> [DangerThreat] {
+        dangerThreats
     }
 
     public func combatHostility(of key: ReferenceKey) -> ActorHostility {
