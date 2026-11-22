@@ -163,7 +163,11 @@ extension StoryWorldAdapter {
     }
 
     public func sceneActorStatus(_ actor: ReferenceKey) -> SceneActorStatus {
-        sceneCast.sceneActorStatus(actor)
+        var status = sceneCast.sceneActorStatus(actor)
+        if sceneLines.isFarFromPlayer(actor) {
+            status.insert(.farFromPlayer)
+        }
+        return status
     }
 
     public func stopQuest(_ quest: FormID) {

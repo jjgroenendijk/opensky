@@ -70,8 +70,9 @@ extension SceneRuntime.Playback {
             runtime.holder(of: $0, except: entry.formID) != nil
         }
         guard !held else { return true }
+        let status = host.sceneActorStatus(speaker)
         return host.hasLoadedBody(speaker)
-            && !host.sceneActorStatus(speaker).contains(.inPlayerDialogue)
+            && !status.contains(.inPlayerDialogue) && !status.contains(.farFromPlayer)
             && !host.sceneActorStatus(partner).contains(.inCombat)
     }
 

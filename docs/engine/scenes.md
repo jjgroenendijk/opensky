@@ -375,6 +375,6 @@ its two speakers and ends.
   walk is in [walking together](/engine/random-conversations.md#walking-together).
 - A speaker does not wait to face its look target before its line.
 - The check on a waiting conversation pair ends the scene when the speaker has no loaded body
-  or is in dialogue with the player, or when the partner is in combat. The 3000 units to the
-  player, the package flags, and the seat and bed states are not checked there. A partner with
-  no loaded body makes the scene wait.
+  or is in dialogue with the player or more than 3000 units from the player, or when the
+  partner is in combat. The package flags and the seat and bed states are not checked there. A
+  partner with no loaded body makes the scene wait.
