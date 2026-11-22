@@ -13,7 +13,10 @@ extension CombatLoopRuntime {
     static let dodgeSpeed: Float = 370
 
     /// True while `actor` sidesteps a threat, so its machine does not steer it.
-    func dodges(_ actor: CombatActorObservation, world: any CombatLoopWorld) -> Bool {
+    /// A fighter that closes on `goal` is scored along that path, not where it stands.
+    func dodges(
+        _ actor: CombatActorObservation, goal: SIMD3<Float>, world: any CombatLoopWorld
+    ) -> Bool {
         var watch = dangerWatches[actor.key] ?? CombatDangerWatch()
         defer { dangerWatches[actor.key] = watch }
         let step = Self.fixedStepSeconds
@@ -34,13 +37,16 @@ extension CombatLoopRuntime {
             feet: actor.feet, radius: actor.capsule.radius, health: health,
             speed: Self.dodgeSpeed
         )
-        watch.score = DangerRule.score(threats, for: fighter, seconds: danger.anticipateTime)
+        if behaviors[actor.key]?.phase == .approaching {
+            fighter.isMoving = true
+            fighter.goal = goal
+        }
+        watch.score = DangerRule.aheadScore(threats, for: fighter, seconds: danger.anticipateTime)
         guard watch.score > 0 else { return false }
         let chance = danger.chance(style: world.combatStyle(of: actor.key)?.avoidThreatChance
             ?? CombatStyleTuning.neutral.avoidThreatChance)
         guard Float(dangerRandom.percent()) < chance * 100 else { return false }
         let coin = dangerRandom.percent() < 50
-        fighter.isMoving = behaviors[actor.key]?.phase == .approaching
         let reaches: (SIMD3<Float>) -> Bool = { world.moveCombatActor(actor.key, to: $0) }
         let found = DangerRule.dodge(
             from: threats, for: fighter, settings: (danger, coin), reaches: reaches

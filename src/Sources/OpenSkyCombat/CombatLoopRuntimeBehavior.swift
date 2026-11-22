@@ -137,7 +137,7 @@ extension CombatLoopRuntime {
         if behaviors[actor.key]?.phase != .staggered {
             recoilers.remove(actor.key)
         }
-        guard !dodges(actor, world: world) else { return }
+        guard !dodges(actor, goal: target.feet, world: world) else { return }
         let right = world.combatWeapon(of: actor.key)
         let shoots = right.handType == .bow
         let left = shoots ? nil : world.combatLeftWeapon(of: actor.key)

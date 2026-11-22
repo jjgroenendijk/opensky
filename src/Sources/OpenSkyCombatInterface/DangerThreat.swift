@@ -41,6 +41,8 @@ nonisolated public struct DangerActor: Equatable, Sendable {
     public var speed: Float
     /// A moving actor reacts later than a standing one.
     public var isMoving = false
+    /// Where a moving actor walks to. Nil for a standing one.
+    public var goal: SIMD3<Float>?
 
     public init(feet: SIMD3<Float>, radius: Float, health: Float, speed: Float) {
         self.feet = feet
@@ -181,6 +183,38 @@ nonisolated public enum DangerRule {
         return damage / actor.health
     }
 
+    /// The score a moving actor collects on its straight path to its goal over the next
+    /// `seconds`, and the worst threat on it. A standing actor is scored where it stands.
+    public static func aheadScore(
+        _ threats: [DangerThreat], for actor: DangerActor, seconds: Float
+    ) -> Float {
+        guard let end = pathEnd(of: actor, seconds: seconds) else {
+            return score(threats, for: actor, seconds: seconds)
+        }
+        return movingScore(threats, for: actor, to: end, seconds: seconds)
+    }
+
+    /// Where the actor is on its path after `seconds`, or nil when it stands.
+    static func pathEnd(of actor: DangerActor, seconds: Float) -> SIMD3<Float>? {
+        guard actor.isMoving, let goal = actor.goal else { return nil }
+        let path = goal - actor.feet
+        let length = simd_length(path)
+        guard length > 1e-3 else { return nil }
+        return actor.feet + path / length * min(length, actor.speed * max(0, seconds))
+    }
+
+    /// The threats a look-ahead counts: on the path of a moving actor, else where it stands.
+    static func counted(
+        _ threats: [DangerThreat], for actor: DangerActor, seconds: Float
+    ) -> [DangerThreat] {
+        guard let end = pathEnd(of: actor, seconds: seconds) else {
+            return threats.filter {
+                counts($0, at: actor.feet, radius: actor.radius, seconds: seconds)
+            }
+        }
+        return threats.filter { movingScore([$0], for: actor, to: end, seconds: seconds) > 0 }
+    }
+
     /// The two escape points for the most significant threat, the preferred side first.
     /// Each is at a right angle to the threat's line of travel on the ground plane.
     /// `coin` picks the side when the actor is under half its radius from the line.
@@ -188,6 +222,10 @@ nonisolated public enum DangerRule {
         from threat: DangerThreat, for actor: DangerActor, settings: DangerSettings, coin: Bool
     ) -> [SIMD3<Float>] {
         var line = SIMD2(threat.velocity.x, threat.velocity.y)
+        if simd_length_squared(line) < 1e-6, actor.isMoving, let goal = actor.goal {
+            // A threat that waits on a walker's path: the walker's own travel is the line.
+            line = SIMD2(actor.feet.x - goal.x, actor.feet.y - goal.y)
+        }
         if simd_length_squared(line) < 1e-6 {
             // A threat that waits has no line: the actor leaves straight away from it.
             line = SIMD2(actor.feet.y - threat.position.y, threat.position.x - actor.feet.x)
@@ -215,13 +253,11 @@ nonisolated public enum DangerRule {
     ) -> DangerDodge? {
         let (settings, coin) = settings
         let ahead = settings.anticipateTime
-        let reference = score(threats, for: actor, seconds: ahead)
+        let reference = aheadScore(threats, for: actor, seconds: ahead)
         guard reference > 0, actor.speed > 0 else { return nil }
         let reaction = actor.isMoving ? settings.movingReactionTime : settings.reactionTime
         guard score(threats, for: actor, seconds: reaction) < reference else { return nil }
-        let counted = threats.filter {
-            counts($0, at: actor.feet, radius: actor.radius, seconds: ahead)
-        }
+        let counted = counted(threats, for: actor, seconds: ahead)
         guard let worst = counted.max(by: { ($0.damage, $1.id) < ($1.damage, $0.id) }) else {
             return nil
         }

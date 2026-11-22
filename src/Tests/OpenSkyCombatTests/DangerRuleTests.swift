@@ -99,6 +99,30 @@ struct DangerRuleTests {
         #expect(settings.chance(style: 0.2) == 0.2)
     }
 
+    /// A rune waits beside the middle of the path, away from both of its ends.
+    @Test func aMovingFighterIsScoredAlongItsPath() throws {
+        let rune = DangerThreat(id: 7, position: SIMD3(800, 0, 0), damage: 50, radius: 60)
+        #expect(DangerRule.aheadScore([rune], for: actor, seconds: 2) == 0)
+        var walker = actor
+        walker.isMoving = true
+        walker.goal = SIMD3(1100, 0, 0)
+        #expect(DangerRule.aheadScore([rune], for: walker, seconds: 2) == 0.5)
+        let dodge = try #require(DangerRule.dodge(
+            from: [rune], for: walker, settings: (settings, true)
+        ) { _ in true })
+        #expect(dodge.threat == 7)
+        #expect(abs(dodge.point.y) > 100)
+        // A path that ends before the rune is kept.
+        walker.goal = SIMD3(600, 0, 0)
+        #expect(DangerRule.aheadScore([rune], for: walker, seconds: 2) == 0)
+        #expect(DangerRule.dodge(from: [rune], for: walker, settings: (settings, true)) { _ in
+            true
+        } == nil)
+        // An actor at its goal counts as standing.
+        walker.goal = walker.feet
+        #expect(DangerRule.aheadScore([rune], for: walker, seconds: 2) == 0)
+    }
+
     private static func isNear(_ point: SIMD3<Float>?, _ expected: SIMD3<Float>) -> Bool {
         guard let point else { return false }
         return simd_distance(point, expected) < 0.01
