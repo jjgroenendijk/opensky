@@ -121,7 +121,8 @@ nonisolated struct SWFCharacterRemap: Sendable {
             maxLength: source.maxLength,
             layout: source.layout,
             variableName: source.variableName,
-            initialText: source.initialText
+            initialText: source.initialText,
+            htmlParse: source.htmlParse
         )
     }
 

@@ -4,6 +4,27 @@
 
 import Foundation
 import OpenSkyFormatsCore
+import Synchronization
+
+/// The HTML of one field, taken apart on the first ask. The scene walk asks for it on
+/// every frame, and the markup of a field never changes.
+nonisolated final class SWFHTMLParse: Sendable, Equatable {
+    private let parsed = Mutex<SWFHTMLContent??>(nil)
+
+    /// Two fields compare by their own values; this holds only a derived one.
+    static func == (_: SWFHTMLParse, _: SWFHTMLParse) -> Bool {
+        true
+    }
+
+    func content(orParse parse: () -> SWFHTMLContent?) -> SWFHTMLContent? {
+        if let known = parsed.withLock({ $0 }) {
+            return known
+        }
+        let content = parse()
+        parsed.withLock { $0 = .some(content) }
+        return content
+    }
+}
 
 /// The DefineEditText flag word (spec p. 176), one bit per capability.
 nonisolated public struct SWFEditTextFlags: Equatable, Sendable {
@@ -54,13 +75,16 @@ nonisolated public struct SWFEditText: Equatable, Sendable {
     /// The InitialText string exactly as stored (may contain HTML markup when
     /// `flags.html` is set), or nil when the field carries no initial text.
     public let initialText: String?
+    /// Shared by the copies of this field that keep its text.
+    let htmlParse: SWFHTMLParse
 
     /// The same field with another box, for a field a script resized.
     public func withBounds(_ box: SWFRect) -> SWFEditText {
         SWFEditText(
             characterId: characterId, bounds: box, flags: flags, fontID: fontID,
             fontClass: fontClass, fontHeight: fontHeight, color: color, maxLength: maxLength,
-            layout: layout, variableName: variableName, initialText: initialText
+            layout: layout, variableName: variableName, initialText: initialText,
+            htmlParse: htmlParse
         )
     }
 
@@ -74,7 +98,7 @@ nonisolated public struct SWFEditText: Equatable, Sendable {
     /// The HTML of `initialText` taken apart, for an HTML field.
     public var htmlContent: SWFHTMLContent? {
         guard flags.html, let initialText else { return nil }
-        return SWFHTMLText.parseStyled(initialText)
+        return htmlParse.content { SWFHTMLText.parseStyled(initialText) }
     }
 
     /// Decodes a DefineEditText (37) tag body.
@@ -98,7 +122,7 @@ nonisolated public struct SWFEditText: Equatable, Sendable {
             characterId: characterId, bounds: bounds, flags: flags,
             fontID: fonts.fontID, fontClass: fonts.fontClass, fontHeight: fonts.fontHeight,
             color: color, maxLength: maxLength.map(UInt16.init), layout: layout,
-            variableName: variableName, initialText: initialText
+            variableName: variableName, initialText: initialText, htmlParse: SWFHTMLParse()
         )
     }
 

@@ -37,7 +37,8 @@ nonisolated extension SWFEditText {
             fontHeight: format.size
                 .map { UInt16(clamping: Int(($0 * 20).rounded())) } ?? fontHeight,
             color: format.color ?? color, maxLength: maxLength,
-            layout: layout, variableName: variableName, initialText: initialText
+            layout: layout, variableName: variableName, initialText: initialText,
+            htmlParse: htmlParse
         )
     }
 }
