@@ -59,6 +59,7 @@ struct AgentAssistReadout {
             "targetMass": .init(facts.targetMass),
             "targetRuns": .bool(facts.targetRuns),
             "targetRecoils": .bool(facts.targetRecoils),
+            "targetAttacks": .bool(facts.targetAttacks),
             "weaponFactor": .init(HitReactionRule.weaponFactor(report.hit)),
             "staggerMagnitude": report.reaction.staggerMagnitude.map { .init($0) } ?? .null,
             "staggerDirection": .init(facts.direction),
