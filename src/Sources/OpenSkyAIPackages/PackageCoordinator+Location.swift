@@ -3,6 +3,7 @@
 
 public import OpenSkyFormatsESM
 import OpenSkyWorldInterface
+import OpenSkyWorldState
 import simd
 
 extension PackageCoordinator {
@@ -27,14 +28,32 @@ extension PackageCoordinator {
         else { return }
         placementDue = false
         offscreen.aliasStacks = world.packageAliasStacks()
-        let busy = registeredActors.keys.filter { actor in
-            commandedActors.contains(actor) || mounts[actor] != nil
-                || runtime?.isSuspended(actor) == true || runtime?.override(for: actor) != nil
-                || world.packageActorActivity(actor) != .free
-        }
-        offscreen.placeAll(
-            world: offscreenWorld, clock: clock, busy: Set(busy).union([.player]),
-            context: conditionContext(clock: clock)
+        offscreen.place(
+            offscreenWorld.offscreenActors().filter { !isBusy($0.key, world: world) },
+            world: offscreenWorld, clock: clock, context: conditionContext(clock: clock)
         )
+    }
+
+    /// An actor of a cell that just loaded starts at its package's place, as an actor
+    /// that rises to the loaded level does in the game (docs/engine/unloaded-actors.md).
+    func placeArrivals(_ arrived: [ReferenceKey], clock: GameClock) {
+        guard
+            !arrived.isEmpty, let world,
+            let offscreenWorld = world as? any OffscreenScheduleWorld
+        else { return }
+        let actors = arrived.filter { !isBusy($0, world: world) }
+            .compactMap { offscreenWorld.offscreenArrival($0) }
+        guard !actors.isEmpty else { return }
+        offscreen.place(
+            actors, world: offscreenWorld, clock: clock, context: conditionContext(clock: clock)
+        )
+    }
+
+    private func isBusy(_ actor: ReferenceKey, world: any PackageWorld) -> Bool {
+        guard actor != .player else { return true }
+        guard registeredActors[actor] != nil else { return false }
+        return commandedActors.contains(actor) || mounts[actor] != nil
+            || runtime?.isSuspended(actor) == true || runtime?.override(for: actor) != nil
+            || world.packageActorActivity(actor) != .free
     }
 }

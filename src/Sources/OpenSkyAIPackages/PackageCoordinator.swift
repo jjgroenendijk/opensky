@@ -367,15 +367,15 @@ public final class PackageCoordinator {
         aliasRefreshSeconds -= delta
         if aliasRefreshSeconds <= 0 || !change.arrived.isEmpty {
             aliasRefreshSeconds = Self.aliasRefreshInterval
-            let stacks = world.packageAliasStacks()
-            offscreen.aliasStacks = stacks
+            offscreen.aliasStacks = world.packageAliasStacks()
             runtime.setAliasStacks(
-                stacks, actors: registeredActors.keys.sorted(), clock: clock
+                offscreen.aliasStacks, actors: registeredActors.keys.sorted(), clock: clock
             ) { self.conditionContext(clock: clock) }
         }
         applySituations(to: &runtime, clock: clock, delta: delta, context: live)
         runtime.advance(clock: clock) { _ in live() }
         self.runtime = runtime
+        placeArrivals(change.arrived.map(\.actor), clock: clock)
         if let offscreenWorld = world as? any OffscreenScheduleWorld {
             offscreen.advance(
                 world: offscreenWorld, clock: clock, frameSeconds: delta,

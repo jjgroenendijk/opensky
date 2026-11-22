@@ -19,6 +19,9 @@ public final class OffscreenHomeCache {
     var homes: [ReferenceKey: PluginPlacement?] = [:]
     /// Every persistent placed actor of the load order, in key order.
     var roster: [ReferenceKey]?
+    var listed: Set<ReferenceKey> = []
+    /// Where an actor placed into an interior cell stands, by cell.
+    var entrances: [FormID: SIMD3<Float>]?
 
     public init() {}
 }
@@ -44,8 +47,25 @@ public struct AIOffscreenScheduleAdapter {
         }
     }
 
+    /// An actor the roster does not list, such as a guard placed as a temporary reference.
+    public func offscreenArrival(_ actor: ReferenceKey) -> OffscreenActor? {
+        guard
+            actor != .player, !isListed(actor),
+            game.worldState.component(ActorDeathState.self, for: actor)?.isDead != true,
+            let plugin = home(of: actor)
+        else { return nil }
+        return OffscreenRoster.actor(
+            actor, plugin: plugin, delta: game.worldState.delta(for: actor)
+        )
+    }
+
+    private func isListed(_ actor: ReferenceKey) -> Bool {
+        _ = roster()
+        return cache.listed.contains(actor)
+    }
+
     /// A reference where it stands now, or the actor's editor place. An "in cell" location
-    /// is found only when it is the actor's own editor cell.
+    /// is the editor place in the actor's own cell, else the entrance of an interior cell.
     public func offscreenPlace(
         of location: Package.Location, actor: OffscreenActor
     ) -> OffscreenPlace? {
@@ -53,14 +73,25 @@ public struct AIOffscreenScheduleAdapter {
         switch location.kind {
         case .nearReference:
             return location.formID.flatMap { place(ofFormID: $0, radius: radius) }
+        case .nearLinkedReference:
+            let links = home(of: actor.key)?.entry.placedActor?.details.linkedReferences ?? []
+            let keyword = FormID(location.value).nonNull
+            return links.first { $0.keyword == keyword }
+                .flatMap { place(ofFormID: $0.ref, radius: radius) }
         case .nearEditorLocation:
             return home(of: actor.key).map { OffscreenRoster.editorPlace(of: $0, radius: radius) }
         case .inCell:
-            guard
-                let cell = location.formID,
-                let home = home(of: actor.key), home.home == .interior(cell)
-            else { return nil }
-            return OffscreenRoster.editorPlace(of: home, radius: radius)
+            guard let cell = location.formID else { return nil }
+            if let home = home(of: actor.key), home.home == .interior(cell) {
+                return OffscreenRoster.editorPlace(of: home, radius: radius)
+            }
+            // Anywhere in the cell counts as being there.
+            return entrance(of: cell).map {
+                OffscreenPlace(
+                    location: .interior(cell), worldspace: nil, point: $0,
+                    radius: .greatestFiniteMagnitude
+                )
+            }
         default:
             return nil
         }
@@ -117,7 +148,23 @@ public struct AIOffscreenScheduleAdapter {
             placements: store.persistentPlacements, unique: store.uniqueActorReferences
         )
         cache.roster = roster
+        cache.listed = Set(roster)
         return roster
+    }
+
+    private func entrance(of cell: FormID) -> SIMD3<Float>? {
+        if let entrances = cache.entrances {
+            return entrances[cell]
+        }
+        guard
+            let store = game.aiRecords?.locationStore, let lookup = game.streamer.placedRecords
+        else { return nil }
+        let entrances = OffscreenRoster.entrances(
+            placements: store.persistentPlacements,
+            interiorCell: { lookup.interiorCell(holding: $0) }
+        )
+        cache.entrances = entrances
+        return entrances[cell]
     }
 
     private func home(of key: ReferenceKey) -> PluginPlacement? {

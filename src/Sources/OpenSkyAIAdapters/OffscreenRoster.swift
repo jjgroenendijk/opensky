@@ -17,6 +17,23 @@ nonisolated public enum OffscreenRoster {
         return Set(placed).union(unique.values).subtracting([.player]).sorted()
     }
 
+    /// Where someone who enters each interior cell arrives: the far side of the first
+    /// persistent door, in key order, that leads into it.
+    public static func entrances(
+        placements: [PersistentPlacement], interiorCell: (FormID) -> FormID?
+    ) -> [FormID: SIMD3<Float>] {
+        var entrances: [FormID: SIMD3<Float>] = [:]
+        for placement in placements {
+            guard
+                case let .reference(door) = placement.record,
+                let destination = door.teleportDestination,
+                let cell = interiorCell(destination.door), entrances[cell] == nil
+            else { continue }
+            entrances[cell] = destination.placement.position
+        }
+        return entrances
+    }
+
     /// The actor where its deltas put it, or nil when it is not an enabled actor.
     public static func actor(
         _ key: ReferenceKey, plugin: PluginPlacement, delta: ReferenceStateDelta?

@@ -77,6 +77,8 @@ nonisolated public struct OffscreenStep: Equatable, Sendable {
 public protocol OffscreenScheduleWorld: AnyObject {
     /// Every living, enabled persistent actor with packages, and where it stands now.
     func offscreenActors() -> [OffscreenActor]
+    /// A living, enabled actor outside that list whose cell just loaded, or nil.
+    func offscreenArrival(_ actor: ReferenceKey) -> OffscreenActor?
     /// The place a package location names for an actor that is not loaded, or nil.
     func offscreenPlace(of location: Package.Location, actor: OffscreenActor) -> OffscreenPlace?
     /// True when the cell of `place` is loaded now.
@@ -215,18 +217,16 @@ public final class OffscreenSchedule {
         }
     }
 
-    /// A new game's or a rest's placement: every listed actor outside `busy`, one in a
-    /// loaded cell too, takes its package for the hour and stands at that package's place.
-    public func placeAll(
-        world: any OffscreenScheduleWorld, clock: GameClock, busy: Set<ReferenceKey>,
+    /// A new game's, a rest's, or an arrival's placement: each actor takes its package for
+    /// the hour and stands at that package's place at once, one in a loaded cell too.
+    public func place(
+        _ actors: [OffscreenActor], world: any OffscreenScheduleWorld, clock: GameClock,
         context: ConditionContext
     ) {
         guard runtime != nil else { return }
         placesDirectly = true
         defer { placesDirectly = false }
-        for actor in world.offscreenActors() where !busy.contains(actor.key)
-            && choosePackage(for: actor, clock: clock, context: context)
-        {
+        for actor in actors where choosePackage(for: actor, clock: clock, context: context) {
             update(
                 actor, package: runtime?.currentPackage(for: actor.key), world: world,
                 now: clock.totalGameSeconds
@@ -249,8 +249,9 @@ public final class OffscreenSchedule {
         for level in due {
             lastUpdates[level] = now
         }
-        let actors = world.offscreenActors().filter { !residents.contains($0.key) }
-        forgetDeparted(present: Set(actors.map(\.key)))
+        let roster = world.offscreenActors()
+        let actors = roster.filter { !residents.contains($0.key) }
+        forgetDeparted(present: Set(actors.map(\.key)), listed: Set(roster.map(\.key)))
         levels = Dictionary(actors.map { ($0.key, world.offscreenLevel(of: $0)) }) { first, _ in
             first
         }
@@ -259,12 +260,13 @@ public final class OffscreenSchedule {
         turn.begin(listed.map(\.key))
     }
 
-    private func forgetDeparted(present: Set<ReferenceKey>) {
+    /// An actor that became loaded keeps its last step, for `state packages`.
+    private func forgetDeparted(present: Set<ReferenceKey>, listed: Set<ReferenceKey>) {
         for actor in registered.keys where !present.contains(actor) {
             runtime?.unregister(actor: actor)
             registered[actor] = nil
-            steps[actor] = nil
         }
+        steps = steps.filter { listed.contains($0.key) }
     }
 
     /// Registers the actor on its first turn and picks its package when one is due.

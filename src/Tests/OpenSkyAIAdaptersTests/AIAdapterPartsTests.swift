@@ -58,9 +58,11 @@ struct AIAdapterPartsTests {
         )
         let actor = OffscreenActor(key: Self.actor, base: FormID(0x600), place: place)
         #expect(worlds.offscreenActors().isEmpty)
+        #expect(worlds.offscreenArrival(Self.actor) == nil)
+        #expect(worlds.offscreenArrival(.player) == nil)
         #expect(!worlds.isLoaded(place))
         #expect(worlds.loadedExit(from: FormID(0x900)) == nil)
-        for kind: Int32 in [0, 1, 3, 4] {
+        for kind: Int32 in [0, 1, 3, 4, 6] {
             let location = Package.Location(rawKind: kind, value: 0x700, radius: 0)
             #expect(worlds.offscreenPlace(of: location, actor: actor) == nil)
         }
