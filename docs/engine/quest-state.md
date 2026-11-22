@@ -339,8 +339,6 @@ refuse thirteen quests `Skyrim.esm` ships that way.
 Also not done:
 
 - Near alias types other than "Linked Ref Child".
-- "Allow Destroyed": the flag is read, but OpenSky does not yet tell the alias search which
-  objects are destroyed.
 
 `Skyrim.esm` has 12,891 aliases across 1,607 quests. 5,591 fill: 2,688 specific references,
 162 direct locations, and 2,741 unique actors. No quest is blocked from starting. The largest
