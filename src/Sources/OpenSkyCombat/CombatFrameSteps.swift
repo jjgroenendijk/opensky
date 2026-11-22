@@ -2,7 +2,9 @@
 // gear, the intent handed to the runtimes, and the hits handed to the combat loop.
 
 import OpenSkyActorsInterface
+import OpenSkyBehavior
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
@@ -74,10 +76,42 @@ struct CombatFrameSteps {
         let struck = archery.advanceProjectiles(by: delta).filter(\.provokes)
         let targets = struck.compactMap(\.target)
         if !targets.isEmpty, let loop = shared.loop {
-            let staggered = targets.filter { _ in loop.rollsStagger() }
+            let staggered = struck.compactMap { arrowStagger($0, bow: archery.bow, loop: loop) }
             loop.notePlayerHits(targets, staggered: Set(staggered))
         }
         return shared.pendingCommands
+    }
+
+    /// The target of a landed arrow when the hit staggers it, by the rule of a melee
+    /// hit. A spell projectile has no stagger value, so its magnitude is 0.
+    /// docs/engine/hit-reactions.md.
+    func arrowStagger(
+        _ trace: ProjectileTrace, bow: MeleeWeaponProfile, loop: CombatLoopRuntime
+    ) -> ReferenceKey? {
+        guard let target = trace.target, trace.spellHit == nil, trace.appliedDamage > 0
+        else { return nil }
+        var hit = HitReactionHit()
+        hit.facts = shared.strikes.hitFacts(
+            attacker: .player, target: target, event: "", weaponStagger: bow.stagger
+        )
+        hit.handType = bow.handType
+        hit.isMelee = false
+        let reaction = HitReactionRule.reaction(
+            hit, roll: loop.staggerRandom.percent(), settings: loop.staggers
+        )
+        shared.note(HitReactionReport(
+            attacker: .player, target: target, hit: hit, reaction: reaction
+        ))
+        guard let magnitude = reaction.staggerMagnitude else { return nil }
+        let world = shared.world
+        world.writeActorGraphVariable(
+            .real(magnitude), named: CombatGraphNames.staggerMagnitude, on: target
+        )
+        world.writeActorGraphVariable(
+            .real(hit.facts.direction), named: CombatGraphNames.staggerDirection, on: target
+        )
+        _ = world.raiseActorGraphEvent(CombatGraphNames.staggerStart, on: target)
+        return target
     }
 
     func noteWeaponUse(_ use: CombatWeaponUse, changed: Bool) {

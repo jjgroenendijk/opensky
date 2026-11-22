@@ -193,6 +193,32 @@ struct CombatRulePartsTests {
         #expect(commands.isEmpty)
     }
 
+    /// A bow always staggers when its hit has a magnitude; a spell projectile has none.
+    @Test func aLandedArrowStaggersByTheHitRule() throws {
+        let world = FakeCoordinatorWorld()
+        world.actors = [CombatActorObservation(key: Self.foe, feet: SIMD3(100, 0, 0))]
+        let coordinator = Self.coordinator(world)
+        let loop = try #require(coordinator.loop)
+        let steps = CombatFrameSteps(shared: coordinator.shared)
+        let bow = MeleeWeaponProfile(damage: 10, reach: 0, stagger: 1, handType: .bow)
+        func trace(damage: Float, target: ReferenceKey? = Self.foe) -> ProjectileTrace {
+            ProjectileTrace(
+                endPosition: .zero, flightTime: 0, travelled: 0, drop: 0, outcome: .hitActor,
+                target: target, appliedDamage: damage, material: nil, stuck: false,
+                spellHit: nil, provokes: true
+            )
+        }
+        #expect(steps.arrowStagger(trace(damage: 5), bow: bow, loop: loop) == Self.foe)
+        #expect(world.actorGraphEvents[Self.foe] == [CombatGraphNames.staggerStart])
+        #expect(world.actorGraphVariables[Self.foe]?[CombatGraphNames.staggerMagnitude] != nil)
+        #expect(world.actorGraphVariables[Self.foe]?[CombatGraphNames.staggerDirection] != nil)
+        #expect(coordinator.shared.hitReactions.last?.hit.isMelee == false)
+        #expect(steps.arrowStagger(trace(damage: 0), bow: bow, loop: loop) == nil)
+        #expect(steps.arrowStagger(trace(damage: 5, target: nil), bow: bow, loop: loop) == nil)
+        let weak = MeleeWeaponProfile(damage: 10, reach: 0, handType: .bow)
+        #expect(steps.arrowStagger(trace(damage: 5), bow: weak, loop: loop) == nil)
+    }
+
     @Test func thePanelSwitchesWriteTheSharedState() {
         let coordinator = Self.coordinator(FakeCoordinatorWorld())
         coordinator.panels.usesCombatTemperament = false
