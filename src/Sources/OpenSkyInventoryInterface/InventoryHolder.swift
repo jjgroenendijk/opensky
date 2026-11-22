@@ -26,7 +26,7 @@ nonisolated public struct InventoryHolder: Equatable, Sendable {
 /// A `ReferenceKey` alone cannot answer this: the store keys state by identity
 /// and knows nothing about record types, so the caller that has the placement
 /// says which kind of owner it is holding.
-nonisolated public enum InventoryOwner: Equatable, Sendable {
+nonisolated public enum InventoryOwner: Hashable, Sendable {
     /// The player, whose baseline is empty.
     case player
     /// A placed CONT, identified by its base record.

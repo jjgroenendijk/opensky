@@ -333,3 +333,16 @@ struct InventoryRuntimeTests {
         return inventory.count(of: item)
     }
 }
+
+extension InventoryRuntimeTests {
+    /// The baseline of a placed owner is remembered by its roll, and stays the answer
+    /// the resolver gives.
+    @Test func aPlacedOwnersBaselineIsTheSameOnEveryRead() throws {
+        let inventory = try runtime(WorldStateStore())
+        let direct = inventory.baselines.baseline(of: chest(), frozenLevel: nil)
+        #expect(inventory.baseline(of: chest()) == direct)
+        #expect(inventory.baseline(of: chest()) == direct)
+        #expect(inventory.baseline(of: secondChest()) ==
+            inventory.baselines.baseline(of: secondChest(), frozenLevel: nil))
+    }
+}
