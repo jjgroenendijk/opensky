@@ -63,6 +63,10 @@ nonisolated public enum SocialLimits {
     public static let lookCheckSeconds: ClosedRange<Double> = 1.0 ... 1.5
     public static let lookChecksPerPass = 10
     public static let lookPlayerDistance: Float = 2000
+    /// Both distances for a large creature looker.
+    public static let largeCreatureLookDistance: Float = 12000
+    /// The `RACE DATA` size of a large creature: Extra Large.
+    public static let largeCreatureRaceSize: UInt32 = 3
     /// Game units a second an actor moves to count as walking, as for a scene line.
     public static let movingSpeed: Float = 5
     /// Added to the trigger distance when the speaker sits.

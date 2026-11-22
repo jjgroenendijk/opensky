@@ -26,6 +26,8 @@ nonisolated public struct SocialActor: Equatable, Sendable {
     public var posture: SocialPosture = .standing
     /// It fights with a bow, a crossbow, a staff, or a spell.
     public var fightsRanged = false
+    /// Its race has the size Extra Large, so it looks at actors from further away.
+    public var isLargeCreature = false
 
     public init(
         key: ReferenceKey, feet: SIMD3<Float>, interruptFlags: UInt16?,
@@ -138,7 +140,8 @@ nonisolated public enum SocialEventCore {
         for looker in frame.actors where looker.isFree {
             guard
                 checks < SocialLimits.lookChecksPerPass,
-                simd_distance(looker.feet, playerFeet) <= SocialLimits.lookPlayerDistance
+                simd_distance(looker.feet, playerFeet) <= (looker.isLargeCreature
+                    ? SocialLimits.largeCreatureLookDistance : SocialLimits.lookPlayerDistance)
             else { continue }
             let last = state.looks[looker.key]
             guard frame.now >= (last?.nextCheck ?? -.infinity) else { continue }
@@ -184,7 +187,9 @@ nonisolated public enum SocialEventCore {
         guard target.key != looker.key, !target.isDead else { return false }
         let offset = target.feet - looker.feet
         let distance = simd_length(offset)
-        guard distance <= SocialLimits.lookDistance else { return false }
+        let reach = looker.isLargeCreature
+            ? SocialLimits.largeCreatureLookDistance : SocialLimits.lookDistance
+        guard distance <= reach else { return false }
         if target.key != .player, distance < SocialLimits.lookNearDistance {
             return false
         }

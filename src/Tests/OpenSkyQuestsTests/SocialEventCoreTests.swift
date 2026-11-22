@@ -140,6 +140,10 @@ struct SocialEventCoreTests {
         let looker = actor(first, x: 0)
         #expect(SocialEventCore.isLookTarget(actor(second, x: 300), of: looker, old: nil))
         #expect(!SocialEventCore.isLookTarget(actor(second, x: 450), of: looker, old: nil))
+        var giant = looker
+        giant.isLargeCreature = true
+        #expect(SocialEventCore.isLookTarget(actor(second, x: 5000), of: giant, old: nil))
+        #expect(!SocialEventCore.isLookTarget(actor(second, x: 12500), of: giant, old: nil))
         #expect(!SocialEventCore.isLookTarget(actor(second, x: 50), of: looker, old: nil))
         let behind = SocialActor(key: second, feet: SIMD3(0, -300, 0), interruptFlags: 0)
         #expect(!SocialEventCore.isLookTarget(behind, of: looker, old: nil))

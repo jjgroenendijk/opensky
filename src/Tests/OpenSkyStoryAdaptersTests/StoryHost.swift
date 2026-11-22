@@ -94,6 +94,12 @@ final class StoryHost: CrimeActorsHost, CrimeFactionsHost, CrimeJailHost, CrimeW
         fakeDialogueMenu
     }
 
+    let fakeEffectsWorld = FakeEffectsWorldPort()
+
+    var effectsWorld: any EffectsWorldPort {
+        fakeEffectsWorld
+    }
+
     var dialogueWorld: any DialogueWorldPort {
         fakeDialogueWorld
     }

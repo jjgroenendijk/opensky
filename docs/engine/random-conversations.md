@@ -307,7 +307,7 @@ above, with these differences:
 - New watchers and new finders are searched once a second, not on each actor's own detection
   pass. Detection is a clear sight line.
 - The default look target follows the game's rules for a free NPC within 2000 units of the
-  player. The 12000 unit distance of a large creature is not built. The look lasts 10 s and is
+  player, or 12000 units for a large creature. The look lasts 10 s and is
   renewed at each pick. A walker is an actor that moved at 5 units a second or more since its
   last check.
 - A speaker that has moved less than 8 units in 1 s of its walk to the partner is asked to walk

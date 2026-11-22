@@ -71,6 +71,12 @@ struct StoryConversationSceneTests {
         #expect(StoryWorldAdapter.savedDead(in: store) == [Self.speaker])
     }
 
+    /// An actor whose race is not known is no large creature.
+    @Test func anActorWithoutARaceIsNoLargeCreature() {
+        #expect(!adapter.sceneCast.isLargeCreature(Self.speaker))
+        #expect(host.fakeEffectsWorld.raceCalls == [Self.speaker])
+    }
+
     @Test func theAliasSearchKnowsADestroyedObject() {
         let store = WorldStateStore()
         var state = ScriptedReferenceState()
