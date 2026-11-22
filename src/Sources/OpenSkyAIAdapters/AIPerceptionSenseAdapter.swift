@@ -82,6 +82,7 @@ extension AIPerceptionSenseAdapter {
             observer.isSleeping = sleepers.contains(actor.key)
             observer.isFlying = game.dragonFlightWorld.isFlying(actor.key)
             observer.blindness = detectionSense.blindness(of: actor.key)
+            observer.hasNightEye = detectionSense.hasNightEye(actor.key)
             observer.combatTarget = game.combat.loop?.combatTarget(of: actor.key)
             return PerceptionCandidate(
                 observer: observer,

@@ -65,6 +65,8 @@ nonisolated public struct DetectionObserverState: Equatable, Sendable {
     public var blindness: Float = 0
     /// In combat with an actor other than the target, the CK wiki's NotCombatTarget.
     public var isFightingAnother = false
+    /// A Night Eye value above 0: the observer sees a light level 3 times higher.
+    public var hasNightEye = false
 
     public init(
         isAlert: Bool = false, isSleeping: Bool = false, isFlying: Bool = false,
@@ -101,6 +103,19 @@ nonisolated public struct DetectionTargetTraits: Equatable, Sendable {
     public var isInvisible: Bool
     /// The target's Mod Detection Movement perks, a factor on its movement noise.
     public var movementMultiplier: Float
+    /// The Size term of sight: 0.5, 1, 1.5, or 2 by the size of the target's race.
+    public var sizeFactor: Float = 1
+    /// Indoors, 100 times the largest channel of the cell's ambient colour. The light
+    /// offset is never larger than this.
+    public var interiorLightCap: Float = .infinity
+    /// The player's skill after the player rule and the sneak skill perks. Nil: the
+    /// formula works it out from `sneakSkill`.
+    public var effectiveSneakSkill: Float?
+
+    /// The Size term for a race size of 0 (small) to 3 (very large).
+    public static func sizeFactor(raceSize: Int) -> Float {
+        0.5 * Float(min(max(raceSize, 0), 3) + 1)
+    }
 
     public init(
         equippedWeight: Float = 0,

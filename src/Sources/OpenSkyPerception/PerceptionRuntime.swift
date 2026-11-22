@@ -305,12 +305,13 @@ public final class PerceptionRuntime {
             noticerSkill: observer.sneakSkill
         )
         inputs.observer = DetectionObserverState(
-            isAlert: previous.state == .suspicious,
+            isAlert: observer.combatTarget != nil,
             isSleeping: observer.isSleeping,
             isFlying: observer.isFlying,
             blindness: observer.blindness,
             isFightingAnother: observer.combatTarget.map { $0 != target.key } ?? false
         )
+        inputs.observer.hasNightEye = observer.hasNightEye
         inputs.isPlayerTarget = target.key == .player
         pairs[key] = previous.advanced(
             inputs: inputs,

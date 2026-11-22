@@ -33,6 +33,8 @@ nonisolated public struct PerceptionObserver: Equatable, Sendable {
     public var isFlying = false
     /// The `Blindness` actor value; 100 sees nothing.
     public var blindness: Float = 0
+    /// A Night Eye actor value above 0.
+    public var hasNightEye = false
     /// Who the observer fights, if anyone. Another target than the one judged weights
     /// its skill by `fSneakCombatMod`.
     public var combatTarget: ReferenceKey?

@@ -104,6 +104,7 @@ nonisolated public enum DetectionFormula: Sendable {
         return lightFactor(inputs: inputs, settings: settings)
             * movementFactor(inputs: inputs, settings: settings)
             * blindnessFactor(inputs.observer.blindness)
+            * finiteNonNegative(inputs.traits.sizeFactor)
     }
 
     /// `1 + moving * fSneakLightMoveMult + running * fSneakLightRunMult`, with moving
@@ -124,13 +125,20 @@ nonisolated public enum DetectionFormula: Sendable {
         return min(max((100 - points) / 100, 0), 1)
     }
 
-    /// The target's light level: its 0...1 light times 100, less `iLightLevelInteriorMod`
-    /// indoors, held in 0...`iLightLevelMax`.
+    /// The target's light level: its 0...1 light times 100, times 3 for an observer
+    /// with Night Eye, less the indoor offset, held in 0...`iLightLevelMax`. The offset
+    /// is `iLightLevelInteriorMod`, or the cell's ambient light when that is smaller.
     static func lightLevel(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
-        let interior = inputs.isExterior ? 0 : settings.lightLevelInteriorMod.value
-        let level = finiteNonNegative(inputs.traits.lightLevel) * 100 - interior
+        let cap = inputs.traits.interiorLightCap
+        let interior = inputs.isExterior ? 0 : min(
+            settings.lightLevelInteriorMod.value, cap.isNaN ? .infinity : max(0, cap)
+        )
+        let seen = inputs.observer.hasNightEye ? nightEyeLightFactor : 1
+        let level = finiteNonNegative(inputs.traits.lightLevel) * 100 * seen - interior
         return min(max(0, level), max(0, settings.lightLevelMax.value)).rounded()
     }
+
+    static let nightEyeLightFactor: Float = 3
 
     /// `light level * multiplier + fDetectionSneakLightMod`. The multiplier is
     /// `fSneakLightMult` indoors and `fSneakLightExteriorMult` outdoors.
@@ -171,6 +179,9 @@ nonisolated public enum DetectionFormula: Sendable {
         settings: DetectionSettings
     ) -> Float {
         guard inputs.isSneaking else { return 0 }
+        if let effective = inputs.traits.effectiveSneakSkill, effective.isFinite {
+            return effective * settings.skillMult.value
+        }
         let raw = inputs.traits.sneakSkill
         let skill = raw.isFinite ? raw : DetectionTargetTraits.startingSkill
         let effective = inputs.isPlayerTarget

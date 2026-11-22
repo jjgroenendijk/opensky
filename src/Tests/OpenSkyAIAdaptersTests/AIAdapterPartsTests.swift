@@ -88,6 +88,9 @@ struct AIAdapterPartsTests {
     @Test func aPlayerAtRestMakesNoActionSound() {
         let traits = adapter.frames.detectionSense.playerDetectionTraits(at: .zero, eyeHeight: 120)
         #expect(traits.actionSound == 0)
+        #expect(traits.sizeFactor == 1)
+        #expect(traits.interiorLightCap == .infinity)
+        #expect(!adapter.frames.detectionSense.hasNightEye(.player))
     }
 
     @Test func withoutACameraThereIsNoGroundTarget() {

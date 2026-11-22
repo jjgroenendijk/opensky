@@ -160,13 +160,12 @@ lit.
 
 ### What OpenSky leaves out
 
-- The Ambush package weight, the target's size, and the Night Eye multiplier.
-- The three perk entry points named above.
-- The indoor offset is always 25; it is not capped by the cell's ambient colour.
+- The Ambush package weight and its sound rule. OpenSky runs no Ambush package yet.
+- Mod Detection Movement changes the movement noise of the Sound term here, not the Moving
+  term of sight.
 - The smaller range behind the observer and for a fighter's other targets.
 - The sound-event fallback. A landed projectile makes OpenSky's only detection event
   ([stealth points](#stealth-points)).
-- Weight uses a suspicious pair for InCombat.
 
 ### Gait multipliers
 
