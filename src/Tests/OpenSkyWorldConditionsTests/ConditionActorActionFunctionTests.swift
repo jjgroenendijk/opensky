@@ -123,4 +123,10 @@ struct ConditionActorActionFunctionTests {
             functionIndex: 707, 0, 1, parameter1: 0x35D59
         )) == .true)
     }
+
+    @Test func anNPCHoldsItsWeaponWhileItFights() {
+        #expect(WeaponDrawState.ofNPC(.fighting) == .drawn)
+        #expect(WeaponDrawState.ofNPC(.searching) == .drawn)
+        #expect(WeaponDrawState.ofNPC(.notFighting) == .sheathed)
+    }
 }

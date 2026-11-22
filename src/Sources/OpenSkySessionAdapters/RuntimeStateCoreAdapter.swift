@@ -43,10 +43,9 @@ struct ActorConditionReads {
     let game: any RuntimeStateWorldHost
     let inventoryFacts: RuntimeStateInventoryFactsAdapter
 
-    /// Only the player has a graph that tracks a draw state, so every other
-    /// actor carries nil and `IsWeaponOut` reports the gap. OpenSky draws no
-    /// torch, and a shield comes out only with a drawn weapon, so a sheathed or
-    /// peaceful actor holds nothing out.
+    /// Only the player has a graph that tracks a draw state; an NPC's follows its
+    /// fight. OpenSky draws no torch, and a shield comes out only with a drawn weapon,
+    /// so a sheathed or peaceful actor holds nothing out.
     func actorConditionState(
         holder: ActorValueHolder,
         values: any ActorValueRuntimePort,
@@ -54,7 +53,8 @@ struct ActorConditionReads {
     ) -> ActorConditionState {
         let baseline = values.baseline(of: holder)
         let activity = game.combat.loop?.activity(of: holder.key) ?? .notFighting
-        let drawState = holder.key == .player ? game.combat.melee?.state.drawState : nil
+        let drawState = holder.key == .player
+            ? game.combat.melee?.state.drawState : WeaponDrawState.ofNPC(activity)
         let handIsEmpty = drawState.map { !$0.isWeaponInHand } ?? (activity == .notFighting)
         var state = ActorConditionState(
             current: values.current(of: holder),
