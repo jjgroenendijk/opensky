@@ -39,6 +39,9 @@ final class FakePackageWorld: PackageWorld {
     var offscreenActorList: [OffscreenActor] = []
     var offscreenLoaded = false
     var offscreenExit: OffscreenPlace?
+    var offscreenMiddleLow: Set<ReferenceKey> = []
+    /// What the stopwatch of a pass reads, in milliseconds.
+    var offscreenSpent: Double = 0
     private(set) var offscreenMoves: [(actor: ReferenceKey, place: OffscreenPlace)] = []
     static let stall = OffscreenPlace(
         location: .exterior(CellCoordinate(x: 40, y: -24)), worldspace: "RiftenWorld",
@@ -143,5 +146,13 @@ extension FakePackageWorld: OffscreenScheduleWorld {
 
     func placeOffscreenActor(_ actor: ReferenceKey, at place: OffscreenPlace) {
         offscreenMoves.append((actor, place))
+    }
+
+    func offscreenLevel(of actor: OffscreenActor) -> AIProcessLevel {
+        offscreenMiddleLow.contains(actor.key) ? .middleLow : .low
+    }
+
+    func offscreenStopwatch() -> () -> Double {
+        { self.offscreenSpent }
     }
 }

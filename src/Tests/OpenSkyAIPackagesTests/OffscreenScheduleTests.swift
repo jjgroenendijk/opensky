@@ -13,8 +13,8 @@ import Testing
 
 @MainActor
 struct OffscreenScheduleTests {
-    private static let actor = PackageRuntimeFixture.key(0x500)
-    private static let house = OffscreenPlace(
+    static let actor = PackageRuntimeFixture.key(0x500)
+    static let house = OffscreenPlace(
         location: .interior(FormID(0x900)), worldspace: nil, point: .zero
     )
     private static let door = OffscreenPlace(
@@ -164,7 +164,7 @@ struct OffscreenScheduleTests {
         #expect(coordinator.offscreen.registered.keys.sorted() == [Self.actor])
     }
 
-    private static func coordinator(
+    static func coordinator(
         packages: [UInt32]
     ) throws -> (PackageCoordinator, FakePackageWorld) {
         let fallback = try PackageRuntimeFixture.package(id: 0x101, editorID: "Fallback")

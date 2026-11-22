@@ -255,8 +255,8 @@ public final class PackageCoordinator {
         return [
             "high": Double(registeredActors.count),
             "middleHigh": 0,
-            "middleLow": 0,
-            "low": Double(offscreen.registered.count),
+            "middleLow": Double(offscreen.count(of: .middleLow)),
+            "low": Double(offscreen.count(of: .low)),
             "lowUpdateGameSeconds": OffscreenScheduleCore.updateSeconds(timescale: timescale),
             "lowPassPlace": Double(turn.place),
             "lowPassLength": Double(turn.waiting.count),
