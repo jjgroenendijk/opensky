@@ -166,7 +166,7 @@ game uses them, so each use is OpenSky's reading.
 | `fCombatDistance` | 141 | The base spacing the follow radius scales |
 | `fCombatFollowRadiusMult` | 3 | An NPC's ally farther than spacing times this walks back |
 | `fCombatTeammateFollowRadiusMult` | 3 | The same for the player's allies |
-| `fCombatAdvanceOuterRadius...` | 128, 256, 512 | An approach slows inside this; note 1 |
+| `fCombatAdvanceOuterRadius...` | 128, 256, 512 | An approach runs beyond this; note 1 |
 | `fCombatAdvanceInnerRadius...` | 0, 0, 256 | A caster backs off to this first; note 1 |
 | `fCombatCurrentWeaponAbsoluteMaxRangeMult` | 1.25 | Striking distance times this keeps a fighter waiting |
 | `fCombatAbsoluteMaxRangeMult` | 4 | Past striking distance times this, a closer casts |

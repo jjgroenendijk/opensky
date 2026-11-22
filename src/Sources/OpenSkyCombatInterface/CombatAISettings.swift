@@ -28,12 +28,14 @@ nonisolated public struct CombatAISettings: Equatable, Sendable {
     /// past the far one, and stops at the near one.
     public var summonFollowNear: Float = 250
     public var summonFollowFar: Float = 400
-    /// `fCombatAdvanceInnerRadiusMin`, `...Mid`, `...Max`: how far a caster backs off before
-    /// it casts, picked by the style's defense.
+    /// `fCombatAdvanceInnerRadiusMin`, `...Mid`, `...Max`: where an approach reaches its
+    /// walk, and how far a caster backs off before it casts.
     public var advanceInnerRadius = CombatRadii(low: 0, mid: 0, high: 256)
-    /// `fCombatAdvanceOuterRadiusMin`, `...Mid`, `...Max`: inside this an approach walks,
-    /// picked by the style's offense.
+    /// `fCombatAdvanceOuterRadiusMin`, `...Mid`, `...Max`: beyond this an approach runs.
+    /// The style's defense less its offense picks both radii.
     public var advanceOuterRadius = CombatRadii(low: 128, mid: 256, high: 512)
+    /// `fCombatApproachTargetSlowdownDistance`: the slow band past the inner radius.
+    public var approachSlowdownDistance: Float = 96
     /// `fCombatAbsoluteMaxRangeMult`: past reach times this, a weapon is out of range.
     public var absoluteMaxRangeMult: Float = 4
     /// `fCombatCurrentWeaponAbsoluteMaxRangeMult`: the weapon in use keeps to reach times this.
@@ -154,6 +156,7 @@ nonisolated extension CombatAISettings {
             ("fCombatAdvanceOuterRadiusMin", \.advanceOuterRadius.low),
             ("fCombatAdvanceOuterRadiusMid", \.advanceOuterRadius.mid),
             ("fCombatAdvanceOuterRadiusMax", \.advanceOuterRadius.high),
+            ("fCombatApproachTargetSlowdownDistance", \.approachSlowdownDistance),
             ("fCombatAbsoluteMaxRangeMult", \.absoluteMaxRangeMult),
             ("fCombatCurrentWeaponAbsoluteMaxRangeMult", \.currentWeaponAbsoluteMaxRangeMult),
             ("fAIUseWeaponDistance", \.useWeaponDistance),

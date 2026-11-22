@@ -41,9 +41,9 @@ public struct NPCMover {
     /// Where `currentCell` was last looked up.
     var cellCheckedAt: SIMD3<Float>?
     public let ignoresStatics: Bool
-    public let preferredGait: LocomotionGait?
+    public internal(set) var preferredGait: LocomotionGait?
     let runSlowdown: FollowSettings?
-    let walkRunBlend: Float?
+    var walkRunBlend: Float?
     let longBody: LongBodyShape?
     let heightScale: Float
     /// This step's movement type speeds and their adjustments.

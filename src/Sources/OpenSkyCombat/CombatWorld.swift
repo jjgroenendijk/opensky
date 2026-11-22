@@ -150,9 +150,9 @@ public protocol CombatWorld: AnyObject {
 
     @discardableResult
     func moveActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool
-    /// The same with a gait; nil picks it by the length of each leg.
+    /// The same with a pace; nil picks the gait by the length of each leg.
     @discardableResult
-    func moveActor(_ key: ReferenceKey, to point: SIMD3<Float>, gait: LocomotionGait?) -> Bool
+    func moveActor(_ key: ReferenceKey, to point: SIMD3<Float>, pace: CombatPace?) -> Bool
     /// Turns `key` in place to face `point`.
     func faceActor(_ key: ReferenceKey, toward point: SIMD3<Float>)
     /// Whether `key`'s race flies (`RACE` flag 0x80).
@@ -323,7 +323,7 @@ extension CombatWorld {
 
     @discardableResult
     public func moveActor(
-        _ key: ReferenceKey, to point: SIMD3<Float>, gait _: LocomotionGait?
+        _ key: ReferenceKey, to point: SIMD3<Float>, pace _: CombatPace?
     ) -> Bool {
         moveActor(key, to: point)
     }

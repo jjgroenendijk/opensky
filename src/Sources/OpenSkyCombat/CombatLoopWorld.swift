@@ -10,7 +10,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyMagicInterface
 import OpenSkyPerceptionInterface
-public import OpenSkyPhysics
+import OpenSkyPhysics
 public import OpenSkyProgressionInterface
 import simd
 
@@ -166,9 +166,9 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     ///   unreachable point or a full mover cap; the machine then tries another point.
     @discardableResult
     func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool
-    /// The same with a gait; nil lets the mover pick it.
+    /// The same with a pace; nil lets the mover pick its gait.
     @discardableResult
-    func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>, gait: LocomotionGait?) -> Bool
+    func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>, pace: CombatPace?) -> Bool
     /// Turns `key` in place towards `point`, such as to aim a shout.
     func turnCombatActor(_ key: ReferenceKey, toward point: SIMD3<Float>)
     /// Whether `key`'s race flies.
@@ -248,7 +248,7 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
 extension CombatLoopWorld {
     @discardableResult
     public func moveCombatActor(
-        _ key: ReferenceKey, to point: SIMD3<Float>, gait _: LocomotionGait?
+        _ key: ReferenceKey, to point: SIMD3<Float>, pace _: CombatPace?
     ) -> Bool {
         moveCombatActor(key, to: point)
     }

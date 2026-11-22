@@ -562,14 +562,20 @@ extension NPCMovementRuntime {
         movers[actor] != nil
     }
 
-    /// True when `actor` already walks to `target` with the same gait. A repeated order
-    /// then keeps that walk, with its count of steps that made no progress.
-    public func isWalking(
-        _ actor: ReferenceKey, to target: SIMD3<Float>, gait: LocomotionGait?
+    /// Keeps `actor`'s running walk to `target` and gives it this gait and speed. A
+    /// repeated order then keeps its count of steps that made no progress.
+    /// - Returns: false when no walk to `target` runs.
+    public mutating func repace(
+        _ actor: ReferenceKey, to target: SIMD3<Float>, gait: LocomotionGait?,
+        walkRunBlend: Float?
     ) -> Bool {
-        guard let mover = movers[actor], mover.state == .moving, mover.preferredGait == gait
+        guard
+            let mover = movers[actor], mover.state == .moving,
+            simd_distance(mover.path.target, target) <= NPCMover.waypointTolerance
         else { return false }
-        return simd_distance(mover.path.target, target) <= NPCMover.waypointTolerance
+        movers[actor]?.preferredGait = gait
+        movers[actor]?.walkRunBlend = walkRunBlend
+        return true
     }
 }
 

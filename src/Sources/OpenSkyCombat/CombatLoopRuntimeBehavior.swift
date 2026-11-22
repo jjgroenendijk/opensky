@@ -190,7 +190,7 @@ extension CombatLoopRuntime {
             world.resumeCombatPackage(for: actor.key)
         }
         if let command = step.command {
-            route(command, walks: step.walks, actor: actor.key, world: world)
+            route(command, pace: step.pace, actor: actor.key, world: world)
         }
     }
 
@@ -251,7 +251,7 @@ extension CombatLoopRuntime {
     /// re-path interval is what asks again.
     private func route(
         _ command: CombatMovementCommand,
-        walks: Bool,
+        pace: CombatPace?,
         actor: ReferenceKey,
         world: any CombatLoopWorld
     ) {
@@ -259,7 +259,7 @@ extension CombatLoopRuntime {
             world.stopCombatMovement(of: actor)
             return
         }
-        world.moveCombatActor(actor, to: destination, gait: walks ? .walk : nil)
+        world.moveCombatActor(actor, to: destination, pace: pace)
     }
 
     /// The contact step: sweep the actor's reach at its target and apply

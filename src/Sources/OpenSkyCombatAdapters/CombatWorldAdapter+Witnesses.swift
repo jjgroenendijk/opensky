@@ -230,9 +230,9 @@ extension CombatWorldAdapter {
     public func moveActor(
         _ key: ReferenceKey,
         to point: SIMD3<Float>,
-        gait: LocomotionGait?
+        pace: CombatPace?
     ) -> Bool {
-        motion.moveActor(key, to: point, gait: gait)
+        motion.moveActor(key, to: point, pace: pace)
     }
 
     public func faceActor(_ key: ReferenceKey, toward point: SIMD3<Float>) {

@@ -89,9 +89,17 @@ run speeds of its own race. Whether a race without sprint data can sprint was no
 
 ## In OpenSky
 
-A fighter runs toward a target beyond its walk radius and walks inside it. The walk radius is
-the outer radius of step 2 with x taken from the Offensive Mult alone, at most 512 units.
+A fighter that approaches its target takes its pace from the bands above:
 
-- [WARNING] The radii do not follow steps 1 to 4, and the three speed bands, the sprint, and
-  the harder braking are not built. So a skeever 300 units from the player walks to it, where
-  the game's skeever runs.
+- Both radii follow steps 1, 2, and 4, without the stagger and group factors.
+- Beyond the outer radius it runs. In the middle band it moves at 1.33 times its walk speed.
+  In the slow band it blends down to its walk speed at the inner radius.
+- A new pace reaches a walk that already runs to the same place; the walk does not start over.
+- For example, a skeever 300 units from a standing player runs until 128 units plus its
+  reach, and then moves at 1.33 times its walk speed.
+
+`openskycli game state packages <ref>` shows the mover's gait under `mover`.
+
+- [WARNING] Not built: the target's retreat speed, the stagger and group factors, the fall
+  back to `Mid` in step 3, the half speed inside the inner radius, the sprint, and the harder
+  braking. The pace is worked out at each combat command, not on the two timers.

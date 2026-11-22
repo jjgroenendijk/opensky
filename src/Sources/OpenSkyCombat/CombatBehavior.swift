@@ -240,6 +240,6 @@ nonisolated struct CombatBehaviorStep: Equatable, Sendable {
     /// Where the actor should be heading, or nil when this step asked for no
     /// change in movement.
     var command: CombatMovementCommand?
-    /// True when the command's approach walks rather than runs.
-    var walks = false
+    /// The pace of the command's approach; nil lets the mover pick its gait.
+    var pace: CombatPace?
 }
