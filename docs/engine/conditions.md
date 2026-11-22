@@ -65,6 +65,29 @@ The run-on type picks the object that the function runs on.
   or an empty alias — fails as `unresolvedReference`. That means the caller gave a weak
   context.
 
+### The other reference
+
+Read from the game program. Besides the object it runs on, an evaluation settles one "other"
+reference from the run-on type:
+
+| Run on | The other reference |
+| --- | --- |
+| Subject | The target of the context |
+| Target | The subject of the context |
+| Reference | The target of the context |
+| Combat target | The subject of the context |
+| Linked reference, quest alias, package data, event data | None |
+
+The swap flag swaps the two when both exist. A function whose parameter 1 is a reference uses
+the other reference when that parameter is null. Parameter 2 never does. The rule is off when
+the condition has the use-aliases or the use-pack-data flag. A function that needs a reference
+and finds none answers false.
+
+Example: `GetTargetHeight` with a null parameter, run on the subject of an attack idle, measures
+the attack's target. `GetDistance`, `GetLineOfSight`, `GetInSameCell`, `GetHeadingAngle`,
+`GetRelativeAngle`, `GetWithinDistance`, `ShouldAttackKill`, and `IsHostileToActor` follow the
+same rule.
+
 Resolution is lazy. A function asks for a reference only when it needs one. So
 `GetCurrentTime` works with no subject at all.
 

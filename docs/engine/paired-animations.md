@@ -77,15 +77,23 @@ from the vanilla idle tree and a clean-room read of the game.
    dead target; the clean-room read says false.
 4. The idle tree runs under `ActionRightPowerAttack` for a power attack, else under
    `ActionRightAttack`, with that answer as `ShouldAttackKill`. A left or dual strike uses its
-   own action ([attack input](/engine/attack-input.md#kill-moves)). The vanilla roots run it on the
-   subject with an empty target, so it reads the subject's own attack. The kill-move roots sit
-   before the attack idles, and their other conditions test the angle, the target's height,
-   the `KillMove` global, and the last-enemy rule for the player.
+   own action ([attack input](/engine/attack-input.md#kill-moves)). The subject is the actor of
+   the action and the target is the action's target. A condition with a null reference reads
+   that target ([the other reference](/engine/conditions.md#the-other-reference)). The kill-move
+   roots sit before the attack idles, and their other conditions test the angle, the target's
+   height, the `KillMove` global, and the last-enemy rule for the player.
 5. When the chosen idle is paired, the pair starts and the swing does not. Otherwise the swing
    plays as usual.
 6. The victim dies when its half sends `2_KillActor`.
 
-An NPC plays kill moves on other NPCs through the same steps. While either actor plays a kill
+An NPC reaches the idle tree by another way. Its normal melee swing carries its own animation
+event and no target, so the swing skips the idle tree. Instead, a combat behaviour checks
+whether the next hit would kill the combat target. If so, the NPC closes in and performs
+`ActionRightPowerAttack` with the combat target as the action's target. The target can be the
+player. No chance roll, cooldown, camera rule, or first-person rule was found that stops an NPC
+kill move on the player; the target must be able to die and the hit must kill.
+
+While either actor plays a kill
 move, it leaves the fight, and any other hit on it deals ten times its damage. A player kill
 move always shows the [kill cam](/engine/kill-cam.md).
 
@@ -102,8 +110,8 @@ move always shows the [kill cam](/engine/kill-cam.md).
 
 Read from the game program, for the victim's side:
 
-- At the start, the victim's death waits. A safety timer of 15 seconds runs beside the 10 second
-  kill move timer.
+- At the start, the victim's death waits. A safety timer of 15 seconds (`fBetaDeferredKillTimer`,
+  INI section `General`) runs beside the 10 second kill move timer (`fKillMoveMaxDuration`).
 - The camera switch happens only when the killer is known, the kill camera is not playing, and the
   camera is in one of the basic modes, such as first person.
 - At the end of the pair, the flag clears. When the kill was set off during the move, the victim
@@ -141,7 +149,7 @@ OR.
 | Attacker | `GetAttackState` ≠ 6 | Not in that attack state |
 | Attacker | `IsStaggered` ≠ 1 | Not staggered |
 | Attacker | `ShouldAttackKill` = 1 | This swing kills |
-| Attacker | `GetRelativeAngle` from 90 to 270 | The angle to the target |
+| Attacker | `GetRelativeAngle` from 90 to 270 | The two headings differ by more than 90° |
 | Target | `GetPairedAnimation` = 0, and ≠ 1 | Not in a paired idle already |
 | Target | `IsFurnitureAnimType` ≠ 1, 2, and 4 | Not sitting, sleeping, or leaning |
 | Target | `GetIsID AstridEnd` = 0 | Not Astrid at the end of her quest |
