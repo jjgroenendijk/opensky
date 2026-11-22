@@ -306,12 +306,14 @@ struct ConditionActorFunctionTests {
             Self.getActorValuePercent, 0, 0.4,
             parameter1: Self.healthIndex, context: context
         ).outcome == .true)
-        // `GetIsID` under the same run-on does need the record, and says so.
-        let identity = try Self.evaluate(
-            Self.getIsID, 0, 1,
+        // `GetIsID` compares the player with its own actor record.
+        let other = try Self.evaluate(
+            Self.getIsID, 0, 0,
             parameter1: ConditionEvaluatorFixture.subjectBase, context: context
         )
-        #expect(identity.outcome.failures == [.unresolvedReference(.subject)])
+        #expect(other.outcome == .true)
+        let own = try Self.evaluate(Self.getIsID, 0, 1, parameter1: 0x7, context: context)
+        #expect(own.outcome == .true)
     }
 
     // MARK: - No actor seam at all

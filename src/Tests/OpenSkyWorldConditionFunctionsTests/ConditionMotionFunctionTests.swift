@@ -83,6 +83,54 @@ struct ConditionMotionFunctionTests {
         #expect(try Self.outcome(639, equals: 0, parameter1: target, parameter2: far) == .true)
     }
 
+    /// A null parameter 1 names the other reference of the run-on.
+    @Test func aNullParameterMeasuresToTheOtherReference() throws {
+        #expect(try Self.outcome(720, equals: 64) == .true)
+        let near = Float(120).bitPattern
+        #expect(try Self.outcome(639, equals: 1, parameter2: near) == .true)
+
+        var context = try ConditionEvaluatorFixture.populatedContext()
+        context.motion = MotionConditionResolution(facts: [
+            Self.subject: Self.walker,
+            Self.target: ReferenceMotionFacts(position: SIMD3(100, 0, 74))
+        ])
+        func height(runOn: UInt32, flags: UInt8 = 0) throws -> Condition {
+            try ConditionEvaluatorFixture.condition(
+                flags: flags, comparisonValue: Float(-64).bitPattern, functionIndex: 720,
+                runOn: runOn
+            )
+        }
+        var evaluator = ConditionEvaluator(context: context.using(Self.registry))
+        // Run on the target, the other reference is the subject.
+        #expect(try evaluator.evaluate(height(runOn: 1)) == .true)
+        // The swap flag swaps both, so the subject run-on reads the target's side.
+        #expect(try evaluator.evaluate(height(runOn: 0, flags: 0x10)) == .true)
+        // With the alias flag the rule is off.
+        #expect(try evaluator.evaluate(height(runOn: 1, flags: 0x02)) != .true)
+
+        context.target = nil
+        var alone = ConditionEvaluator(context: context.using(Self.registry))
+        let zero = try ConditionEvaluatorFixture.condition(functionIndex: 720)
+        #expect(alone.evaluate(zero) == .true)
+        let distance = try ConditionEvaluatorFixture.condition(functionIndex: 639)
+        #expect(alone.evaluate(distance).failures == [.unresolvedParameter(639)])
+    }
+
+    /// The relative angle compares the two rotations, not the two places.
+    @Test func theRelativeAngleIsTheDifferenceOfTheRotations() throws {
+        let facing = ReferenceMotionFacts(
+            position: SIMD3(100, 0, 74), rotation: SIMD3(0, 0, .pi)
+        )
+        #expect(try Self.outcome(584, equals: 180, other: facing, parameter2: Self.axisZ) == .true)
+        var turned = Self.walker
+        turned.rotation.z = .pi / 2
+        let same = ReferenceMotionFacts(position: .zero, rotation: SIMD3(0, 0, .pi))
+        #expect(try Self.outcome(
+            584, equals: 270, subject: turned, other: same, parameter2: Self.axisZ
+        ) == .true)
+        #expect(try Self.outcome(584, equals: 0, other: facing, parameter2: 7) == .true)
+    }
+
     /// A reference the table lacks is read through the lookup when a condition asks.
     @MainActor
     @Test func theLookupAnswersForAReferenceTheTableLacks() throws {

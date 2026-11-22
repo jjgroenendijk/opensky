@@ -47,6 +47,14 @@ nonisolated public struct ReferenceMotionFacts: Equatable, Sendable {
         return Self.wrappedDegrees(bearing - rotation.z)
     }
 
+    /// This rotation about `axis` minus the other's, in degrees from 0 up to 360.
+    package func relativeAngle(to other: ReferenceMotionFacts, axis: Int?) -> Float {
+        guard let axis, (0 ... 2).contains(axis) else { return 0 }
+        let degrees = (rotation[axis] - other.rotation[axis]) * 180 / .pi
+        let wrapped = degrees.truncatingRemainder(dividingBy: 360)
+        return wrapped < 0 ? wrapped + 360 : wrapped
+    }
+
     /// Degrees per second about Z: the turn rate while the path is off its heading.
     package func pathTurnRate(current: Bool) -> Float {
         guard let pathTarget else { return 0 }

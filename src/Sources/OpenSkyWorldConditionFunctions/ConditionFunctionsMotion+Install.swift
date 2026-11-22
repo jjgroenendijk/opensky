@@ -82,12 +82,7 @@ nonisolated public enum ConditionFunctionsMotion {
         ) { call in
             let axis = ReferenceMotionFacts.axisIndex(call.parameter2)
             return motionPair(call, index: 584) { facts, other in
-                let delta = other.position - facts.position
-                return switch axis {
-                case 2: facts.headingAngle(to: other.position)
-                case 0: atan2(delta.z, simd_length(SIMD2(delta.x, delta.y))) * 180 / .pi
-                default: 0
-                }
+                facts.relativeAngle(to: other, axis: axis)
             }
         })
         registry.register(ConditionFunction(
@@ -95,7 +90,7 @@ nonisolated public enum ConditionFunctionsMotion {
         ) { call in
             let limit = call.parameter2?.asFloat ?? 0
             return motionPair(call, index: 639) { facts, other in
-                ConditionFunctions.isTrue(simd_distance(facts.position, other.position) <= limit)
+                ConditionFunctions.isTrue(simd_distance(facts.position, other.position) < limit)
             }
         })
         registry.register(ConditionFunction(
@@ -103,7 +98,13 @@ nonisolated public enum ConditionFunctionsMotion {
             name: "GetTargetHeight",
             parameter1: .formID
         ) { call in
-            motionPair(call, index: 720) { facts, other in other.position.z - facts.position.z }
+            // No reference at all answers 0.
+            if (call.parameter1?.rawValue ?? 0) == 0, call.otherReference() == nil {
+                return .success(0)
+            }
+            return motionPair(call, index: 720) { facts, other in
+                other.position.z - facts.position.z
+            }
         })
         // The activator is the reference the condition's target names: the crosshair
         // reference in the live game.

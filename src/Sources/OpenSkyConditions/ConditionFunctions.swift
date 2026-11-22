@@ -48,6 +48,10 @@ nonisolated extension ConditionFunctionRegistry {
                 if let form = call.formSubject() {
                     return Self.formIsID(form, parameter, call: call)
                 }
+                // The player has no placement record; its base is the player actor.
+                if case .success(.player) = call.referenceKey() {
+                    return .success(Self.isTrue(call.namesPlayerBase(parameter.asFormID)))
+                }
                 return call.reference().map { entry in
                     Self.isTrue(Self.baseForm(of: entry) == parameter.asFormID)
                 }

@@ -5,14 +5,14 @@ import OpenSkyGameData
 import OpenSkyWorldState
 
 nonisolated extension ConditionFunctions {
-    /// The reference parameter 1 names.
-    ///
-    /// Honours the `useAliases` flag exactly as `ConditionCall.parameter1`
-    /// honours a CIS1 name override: with the flag set the word is a quest-alias
-    /// index and the reference is whatever fills it, and without it the word is
-    /// a FormID the runtime index resolves.
+    /// The reference parameter 1 names: an alias fill under `useAliases`, else a FormID.
+    /// A null parameter 1 names the other reference of the run-on.
+    /// See docs/engine/conditions.md#the-other-reference.
     public static func parameterReference(_ call: ConditionCall) -> ReferenceKey? {
-        parameterReference(call, call.parameter1)
+        guard let parameter = call.parameter1, parameter.rawValue != 0 else {
+            return call.otherReference()
+        }
+        return parameterReference(call, parameter)
     }
 
     /// The same resolution for either parameter word. `GetFactionRankDifference`
