@@ -335,8 +335,8 @@ player's teammate:
 - `GetActorAggroRadiusViolated` returns 1 while the actor warns. `GetTrespassWarningLevel`
   returns the larger of a guard's count and this count.
 - An actor with Confidence 0 is provoked and then flees, whatever its Aggression.
-- Not built: the 5 s of head tracking after the target leaves, a ranged actor's aim, the 80
-  degrees for a moving actor, and the change to a nearer actor.
+- The target is chosen again each step, so a nearer actor takes over at once.
+- Not built: the 5 s of head tracking after the target leaves and a ranged actor's aim.
 - `state actors` shows each actor's zone as `aggro`.
 
 ## Searching and giving up
