@@ -133,3 +133,41 @@ struct SocialEventCoordinatorTests {
         #expect(social.state.bodyKillers[third] == first)
     }
 }
+
+extension SocialEventCoordinatorTests {
+    /// A walk asked while a seat's exit clip plays is refused, so a speaker that
+    /// stands still is asked again; one that walks is not.
+    @Test func aSpeakerThatStandsStillIsAskedToWalkAgain() {
+        let world = World()
+        let social = SocialEventCoordinator(world: world)
+        func frame(speakerAt x: Float, now: Double) -> SocialFrame {
+            SocialFrame(
+                actors: [
+                    SocialActor(key: first, feet: SIMD3(x, 0, 0), interruptFlags: 0x02),
+                    SocialActor(key: second, feet: SIMD3(2000, 0, 0), interruptFlags: 0x02)
+                ],
+                now: now, isInterior: false, playerInConversation: false, player: .zero
+            )
+        }
+        let walk = SocialEventCommand.walk(first, to: SIMD3(2000, 0, 0))
+        _ = social.meetForScene(speaker: first, partner: second, now: 0)
+        world.frame = frame(speakerAt: 0, now: 0)
+        social.runPass()
+        #expect(social.tick().contains(walk))
+
+        _ = social.meetForScene(speaker: first, partner: second, now: 0.5)
+        world.frame = frame(speakerAt: 0, now: 0.5)
+        social.runPass()
+        #expect(!social.tick().contains(walk), "one second has not passed")
+
+        _ = social.meetForScene(speaker: first, partner: second, now: 1.5)
+        world.frame = frame(speakerAt: 0, now: 1.5)
+        social.runPass()
+        #expect(social.tick().contains(walk))
+
+        _ = social.meetForScene(speaker: first, partner: second, now: 3)
+        world.frame = frame(speakerAt: 100, now: 3)
+        social.runPass()
+        #expect(!social.tick().contains(walk), "the speaker walks")
+    }
+}

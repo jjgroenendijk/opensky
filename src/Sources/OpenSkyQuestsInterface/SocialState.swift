@@ -28,6 +28,9 @@ nonisolated public struct SocialConversation: Equatable, Sendable {
     public var phase: Phase
     /// Where the speaker walks; nil before the first walk.
     public var goal: SIMD3<Float>?
+    /// When the walk was last asked for, and where the speaker stood then.
+    public var walkAskedAt: Double?
+    public var walkAskedFeet: SIMD3<Float>?
 
     public init(
         speaker: ReferenceKey, partner: ReferenceKey, startedAt: Double,

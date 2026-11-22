@@ -305,6 +305,9 @@ above, with these differences:
   player. The 12000 unit distance of a large creature is not built. The look lasts 10 s and is
   renewed at each pick. A walker is an actor that moved at 5 units a second or more since its
   last check.
+- A speaker that has moved less than 8 units in 1 s of its walk to the partner is asked to walk
+  again. A seated speaker needs this: it stands up first, and a walk asked during the exit
+  clip of its seat is refused.
 - The partner's wait package, the watcher's Spectator package, and ReactToDead are not package
   records. The social pass holds the actor's own package and moves the actor itself. An actor
   base's spectator and dead-body override packages are not read.
