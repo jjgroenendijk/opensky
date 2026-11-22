@@ -6,6 +6,8 @@ public import OpenSkyFormatsESM
 public protocol CombatLoopRuntimePort: CombatControlling {
     associatedtype CombatBehaviorMachine: CombatBehaviorMachinePort
     func actionFacts(of key: ReferenceKey) -> ActorActionFacts?
+    /// The aggro radius zone `key` holds the player in, or nil when it does not warn.
+    func aggroZone(of key: ReferenceKey) -> AggroZone?
     func activity(of key: ReferenceKey) -> ActorCombatActivity
     var behaviors: [ReferenceKey: CombatBehaviorMachine] { get }
     func combatTarget(of key: ReferenceKey) -> ReferenceKey?

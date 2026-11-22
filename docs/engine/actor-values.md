@@ -107,6 +107,7 @@ An untouched value reads a baseline from records, where records give one:
 
 | Actor value | Source |
 | --- | --- |
+| Aggression, Confidence, Energy, Morality, Mood, Assistance (0 to 5) | `NPC_` `AIDT` bytes 0 to 5, through the template's Use AI Data flag; an actor with no `AIDT` reads Confidence 2 |
 | The eighteen skills (6 to 23) | 15 + `RACE` `DATA` skill bonus + the class spread |
 | `Speed Mult` (30) | `NPC_` `ACBS` 0x0E "Speed Multiplier" |
 | `Carry Weight` (32) | `RACE` `DATA` 0x30 "Base Carry Weight" |

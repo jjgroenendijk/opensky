@@ -134,6 +134,27 @@ struct ActorAIDataTests {
         #expect(baselines.baseline(for: .player) == .none)
     }
 
+    /// The six AI attributes are actor values 0 to 5, so Confidence reads from the sheet.
+    @Test
+    func theAttributesSeedActorValuesZeroToFive() throws {
+        let base = try actor(aiData: FactionFixture.aiData(
+            aggression: 2, confidence: 4, energy: 75, morality: 3, mood: 5, assistance: 1,
+            aggroRadiusBehavior: false, unknown: 0, warn: 0, warnOrAttack: 0, attack: 0
+        ))
+        let data = try #require(base.aiData)
+        #expect(data.actorValues == [0: 2, 1: 4, 2: 75, 3: 3, 4: 5, 5: 1])
+
+        let baselines = ActorValueBaselineResolver(resolver: ActorValueResolver(
+            templates: ActorTemplateResolver(
+                actors: [base.formID.rawValue: base], leveledActors: [:]
+            ),
+            races: [:]
+        ))
+        let general = baselines.baseline(for: .actor(base: base.formID)).general
+        #expect(general[1] == 4)
+        #expect(general[5] == 1)
+    }
+
     private func actor(
         formID: UInt32 = 0x600,
         editorID: String = "Actor",

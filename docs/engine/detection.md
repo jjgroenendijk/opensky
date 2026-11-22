@@ -179,7 +179,8 @@ lit.
 | Sprint | `sprintMovementMult` = 3 | OpenSky |
 
 The game's movement term has no crouch or sprint factor. The two OpenSky multipliers stay,
-because the sneak walk is slower than a walk and a sprint is faster than a run. Swimming uses the walking value instead of a new unmeasured constant.
+because the sneak walk is slower than a walk and a sprint is faster than a run. Swimming uses
+the walking value instead of a new unmeasured constant.
 
 ### Noise radius
 

@@ -111,6 +111,8 @@ public final class CombatLoopRuntime: CombatControlling {
     public internal(set) var attackTracks: [ReferenceKey: CombatAttackTrack] = [:]
     /// Allies walking back to their commander, with the point each walks to.
     public internal(set) var following: [ReferenceKey: SIMD3<Float>] = [:]
+    /// The actors that warn the player by their aggro radius.
+    public internal(set) var aggroWatches: [ReferenceKey: AggroWatch] = [:]
 
     public init(settings: CombatSettings, world: (any CombatLoopWorld)? = nil) {
         self.settings = settings

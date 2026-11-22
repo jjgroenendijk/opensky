@@ -54,25 +54,21 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
     /// caps it (CK wiki "Perk Entry Point", Mod Detection Light).
     public var lightLevelInteriorMod: MovementSetting
     public var lightLevelMax: MovementSetting
-    /// `fSneakAlertMod` and `fSneakSleepBonus` weight the noticer skill factor of an
-    /// alert or a sleeping observer (CK wiki "Category:Detection").
+    /// `fSneakAlertMod` and `fSneakSleepMod` weight the skill of an observer in combat
+    /// or asleep; `fSneakSleepBonus` scales the sound a sleeping observer hears.
     public var alertMod: MovementSetting
     public var sleepBonus: MovementSetting
-    /// `fSneakSleepMod`, added to a sleeping observer's detection value.
     public var sleepMod: MovementSetting
     /// `fPlayerDetectionSneakBase` and `fPlayerDetectionSneakMult` make the player's
-    /// sneaker skill factor; `fPlayerDetectActorValue` is the lowest value against it.
+    /// sneaker skill.
     public var playerSneakBase: MovementSetting
     public var playerSneakMult: MovementSetting
-    public var playerDetectFloor: MovementSetting
     /// `fSneakFlyingDistanceMult`: what a flying observer's range is multiplied by.
     public var flyingDistanceMult: MovementSetting
     /// `fSneakLightMoveMult` and `fSneakLightRunMult`: a moving or running target is
     /// easier to see, `1 + moving * move + running * run` (CK wiki "Category:Detection").
     public var lightMoveMult: MovementSetting
     public var lightRunMult: MovementSetting
-    /// `fSneakStealthBoyMult`: the visual term of an invisible target is multiplied by it.
-    public var stealthBoyMult: MovementSetting
     /// `fSneakCombatMod`: weights the skill of an observer that fights someone else.
     public var combatMod: MovementSetting
 
@@ -99,8 +95,6 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
     /// the cone a forward hemisphere: a target directly beside an observer is on
     /// the edge of sight and one behind it is not seen at all.
     public var viewConeHalfAngleDegrees: MovementSetting
-    /// What the visual term is multiplied by while the target is sneaking.
-    public var sneakVisualMult: MovementSetting
     /// The action sounds of the other three sound levels. The install has a
     /// game setting only for the silent level.
     public var normalActionSound: MovementSetting
@@ -209,19 +203,16 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
             sleepMod: vanilla("fSneakSleepMod", 0),
             playerSneakBase: vanilla("fPlayerDetectionSneakBase", 10),
             playerSneakMult: vanilla("fPlayerDetectionSneakMult", 0.4),
-            playerDetectFloor: vanilla("fPlayerDetectActorValue", -30),
             flyingDistanceMult: vanilla("fSneakFlyingDistanceMult", 3),
             lightMoveMult: engineDefault("fSneakLightMoveMult", 0.01),
             lightRunMult: engineDefault("fSneakLightRunMult", 0.2),
-            stealthBoyMult: engineDefault("fSneakStealthBoyMult", 0),
             combatMod: engineDefault("fSneakCombatMod", -0.4),
             distanceAttenuationExponent: ours(2),
             equippedWeightBase: ours(12),
             equippedWeightMult: ours(0.5),
             sneakMovementMult: ours(0.75),
             sprintMovementMult: ours(3),
-            viewConeHalfAngleDegrees: ours(90),
-            sneakVisualMult: ours(0.5),
+            viewConeHalfAngleDegrees: ours(95),
             normalActionSound: ours(25),
             loudActionSound: ours(50),
             veryLoudActionSound: ours(100),

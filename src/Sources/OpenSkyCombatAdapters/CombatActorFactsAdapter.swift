@@ -88,6 +88,16 @@ extension CombatActorFactsAdapter {
         game.factions.hostility(of: key)
     }
 
+    public func aggroRadius(of key: ReferenceKey) -> AggroRadius? {
+        guard let data = game.factions.profile(of: key)?.aiData, data.usesAggroRadiusBehavior
+        else { return nil }
+        return AggroRadius(
+            warn: Float(data.warnDistance ?? 0),
+            warnOrAttack: Float(data.warnOrAttackDistance ?? 0),
+            attack: Float(data.attackDistance ?? 0)
+        )
+    }
+
     @discardableResult
     public func setHostility(_ hostility: ActorHostility, on key: ReferenceKey) -> Bool {
         game.factions.setHostility(hostility, on: key)

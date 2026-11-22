@@ -333,6 +333,10 @@ extension CombatLoopWorldPart {
         shared.world.reaction(of: key, toward: .player)
     }
 
+    func combatAggroRadius(of key: ReferenceKey) -> AggroRadius? {
+        shared.world.aggroRadius(of: key)
+    }
+
     func makeRuntime(_ data: CombatSessionData) -> CombatLoopRuntime {
         let runtime = CombatLoopRuntime(settings: data.combat, world: self)
         runtime.skillUses = data.skillUses
