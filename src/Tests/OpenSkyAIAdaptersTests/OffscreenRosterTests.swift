@@ -7,7 +7,7 @@ import OpenSkyAIPackages
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
-import OpenSkyGameData
+@testable import OpenSkyGameData
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import OpenSkyWorldTesting
@@ -45,6 +45,30 @@ struct OffscreenRosterTests {
             .enableState: ReferenceEnableState.disabled.erased
         ])
         #expect(OffscreenRoster.actor(key, plugin: plugin, delta: disabled) == nil)
+    }
+
+    @Test func theRosterListsEachPersistentActorOnce() throws {
+        let door = try #require(Self.door(leadingTo: 0x901).placedReference)
+        let guardOne = PackageRuntimeFixture.key(0x500)
+        let guardTwo = PackageRuntimeFixture.key(0x501)
+        let listed = PackageRuntimeFixture.key(0x502)
+        let base = PackageRuntimeFixture.key(0x600)
+        let placements = try [0x501, 0x500].map { id in
+            let actor = try #require(
+                PackageRuntimeFixture.residentActor(UInt32(id), base: 0x600).placedActor
+            )
+            return PersistentPlacement(
+                key: PackageRuntimeFixture.key(UInt32(id)), formID: actor.formID,
+                record: .actor(actor), actorBase: base
+            )
+        } + [PersistentPlacement(
+            key: PackageRuntimeFixture.key(0x700), formID: door.formID,
+            record: .reference(door), actorBase: nil
+        )]
+        let keys = OffscreenRoster.keys(
+            placements: placements, unique: [base: listed, .player: .player]
+        )
+        #expect(keys == [guardOne, guardTwo, listed])
     }
 
     @Test func aPlacedObjectIsNoActor() throws {

@@ -38,6 +38,7 @@ public protocol StoryWorldHost: AnyObject, SendableMetatype {
     var followerCommandWorld: any FollowerCommandWorldPort { get }
     var hud: any HUDPort { get }
     var mapWorld: any MapWorldPort { get }
+    var packages: any PackagePort { get }
     var runtimeState: any RuntimeStatePort { get }
     var scripts: any ScriptPort { get }
 }
@@ -125,10 +126,12 @@ public final class StoryWorldAdapter {
         quests.questFailed(quest)
     }
 
-    /// A new game starts the same listed quests again over the cleared state.
+    /// A new game starts the same listed quests again over the cleared state, and its
+    /// actors start at their packages' places.
     public func rerunSessionStart() {
         storyManager.social.reset()
         runSessionStart(lists: sessionStartLists)
+        game.packages.placeActorsAtPackagePlaces()
     }
 }
 

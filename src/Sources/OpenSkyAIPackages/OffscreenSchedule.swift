@@ -168,6 +168,8 @@ public final class OffscreenSchedule {
     private var turnActors: [ReferenceKey: OffscreenActor] = [:]
     /// The budget of the last frame, in milliseconds.
     public private(set) var lastBudget: Double = 0
+    /// True during a new game's placement, when no actor steps out of a door first.
+    private var placesDirectly = false
 
     public func readout(for actor: ReferenceKey) -> String? {
         steps[actor]?.readout
@@ -208,6 +210,24 @@ public final class OffscreenSchedule {
         })
         if !turn.isRunning {
             turnActors = [:]
+        }
+    }
+
+    /// A new game's placement: every listed actor, one in a loaded cell too, takes its
+    /// package for the hour and stands at that package's place at once.
+    public func placeAll(
+        world: any OffscreenScheduleWorld, clock: GameClock, context: ConditionContext
+    ) {
+        guard runtime != nil else { return }
+        placesDirectly = true
+        defer { placesDirectly = false }
+        for actor in world.offscreenActors()
+            where choosePackage(for: actor, clock: clock, context: context)
+        {
+            update(
+                actor, package: runtime?.currentPackage(for: actor.key), world: world,
+                now: clock.totalGameSeconds
+            )
         }
     }
 
@@ -275,7 +295,8 @@ public final class OffscreenSchedule {
             return
         }
         let step = switch OffscreenScheduleCore.decide(
-            from: actor.place, to: target, targetLoaded: world.isLoaded(target),
+            from: actor.place, to: target,
+            targetLoaded: !placesDirectly && world.isLoaded(target),
             exit: { world.loadedExit(from: $0) }
         ) {
         case .stays:
