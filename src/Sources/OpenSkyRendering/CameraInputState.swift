@@ -21,6 +21,7 @@ public final class CameraInputState {
     private var jumpRequested = false
     private var attackRequested = false
     private var attackHeld = false
+    private var jumpHeld = false
     private var blocking = false
     private var shouting = false
     private var weaponToggleRequested = false
@@ -94,6 +95,11 @@ public final class CameraInputState {
     /// press.
     public func requestJump() {
         jumpRequested = true
+    }
+
+    /// Holds the jump button down. A flying mount's hold-to-lock option reads the level.
+    public func setJumpHeld(_ enabled: Bool) {
+        jumpHeld = enabled
     }
 
     /// Latches one attack press until the next frame drains it, like jump, so a
@@ -173,6 +179,7 @@ public final class CameraInputState {
         jumpRequested = false
         attackRequested = false
         attackHeld = false
+        jumpHeld = false
         blocking = false
         shouting = false
         weaponToggleRequested = false
@@ -198,6 +205,7 @@ public final class CameraInputState {
                 dt: dt
             )
             input.alwaysRun = alwaysRun
+            input.jumpHeld = jumpHeld
             return input
         }
         var input = CameraInput(
@@ -219,6 +227,7 @@ public final class CameraInputState {
             dt: dt
         )
         input.alwaysRun = alwaysRun
+        input.jumpHeld = jumpHeld
         pendingLookRight = 0
         pendingLookUp = 0
         jumpRequested = false

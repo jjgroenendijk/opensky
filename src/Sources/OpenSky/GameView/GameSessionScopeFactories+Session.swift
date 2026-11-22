@@ -18,6 +18,7 @@ import OpenSkyMagic
 import OpenSkyMagicAdapters
 import OpenSkyMagicInterface
 import OpenSkyMenuAdapters
+import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyScriptAdapters
 import OpenSkyScripting
@@ -138,6 +139,22 @@ extension GameSessionScopeFactories {
             furniture?.isEnabled = store.bool(.furniture)
         }
         return furniture
+    }
+
+    func makeMounts() -> MountCoordinator {
+        let mounts = MountCoordinator(
+            world: scope.mountWorld, settings: scope.mountSettings,
+            flightSettings: scope.dragonFlightSettings
+        )
+        guard scope.stage != nil else { return mounts }
+        let store = scope.playerSettingsStore
+        mounts.lockIsToggle = store.bool(.flyingMountLockToggle)
+        // The launcher page writes the switch while a session runs.
+        store.observe { [weak mounts, weak store] id in
+            guard id == .flyingMountLockToggle, let store else { return }
+            mounts?.lockIsToggle = store.bool(.flyingMountLockToggle)
+        }
+        return mounts
     }
 
     func makeLoadingWorld() -> LoadingScreenWorldAdapter {

@@ -123,7 +123,10 @@ count of `refreshes`, and `autoAim`, the target the last player shot turned towa
 `state mount` shows `lockSteer`, the heading change of the last step in radians.
 
 - The lock steers nothing while the rider's weapon is sheathed.
-- [WARNING] The lock has no hold-to-lock option and no look factors. The
+- The launcher's "Dragon target lock toggles" switch is the toggle option. With it off, a press
+  of Jump locks the actor in view, and the lock ends when Jump comes up. `state mount` shows it
+  as `lockIsToggle`, and `debug setting world.flyingMountLockToggle=off` turns it off for a run.
+- [WARNING] The lock has no look factors. The
   lock does not turn the dragon: its flight follows its orders
   ([dragon flight](/engine/dragon-flight.md#riding)).
 - [INFO] The NPC turn uses the actor's own turn step, not a rate from the graph.

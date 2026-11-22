@@ -8,6 +8,7 @@ public protocol MountPort: AnyObject {
     associatedtype RiddenDragonOrders: RiddenDragonOrdersPort
     associatedtype PlayerMountDrive: PlayerMountDrivePort
     var dragonOrders: RiddenDragonOrders { get }
+    var lockIsToggle: Bool { get }
     var drive: PlayerMountDrive? { get }
     var isActive: Bool { get }
     var lastMount: ReferenceKey? { get }

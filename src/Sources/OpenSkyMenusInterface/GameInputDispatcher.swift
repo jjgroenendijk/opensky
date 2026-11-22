@@ -215,7 +215,9 @@ public struct GameInputDispatcher {
     private func applyPress(_ action: GameInputAction) {
         switch action {
         case .sneak: input?.toggleSneak()
-        case .jump: input?.requestJump()
+        case .jump:
+            input?.requestJump()
+            input?.setJumpHeld(true)
         case .activate: input?.requestActivation()
         case .readyWeapon: input?.requestWeaponToggle()
         case .cameraMode: input?.requestCameraModeCycle()
@@ -236,8 +238,10 @@ public struct GameInputDispatcher {
     }
 
     private func applyRelease(_ action: GameInputAction) {
-        if action == .activate {
-            input?.releaseActivation()
+        switch action {
+        case .activate: input?.releaseActivation()
+        case .jump: input?.setJumpHeld(false)
+        default: break
         }
     }
 

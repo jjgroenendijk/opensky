@@ -127,5 +127,6 @@ protocol GameSessionParts {
     func makeEffects() -> EffectsCoordinator
     func makeCombat() -> CombatCoordinator
     func makeFurniture() -> FurnitureCoordinator
+    func makeMounts() -> MountCoordinator
     func makeLoadingWorld() -> LoadingScreenWorldAdapter
 }

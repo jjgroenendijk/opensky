@@ -10,6 +10,7 @@ nonisolated public final class FakeMountPort: MountPort {
     public typealias RiddenDragonOrders = FakeRiddenDragonOrdersPort
     public typealias PlayerMountDrive = FakePlayerMountDrivePort
     public var dragonOrders: RiddenDragonOrders = FakeRiddenDragonOrdersPort()
+    public var lockIsToggle = false
     public var drive: PlayerMountDrive?
     public var isActive = false
     public var lastMount: ReferenceKey?

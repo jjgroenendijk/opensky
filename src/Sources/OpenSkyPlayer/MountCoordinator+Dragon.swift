@@ -14,9 +14,9 @@ extension MountCoordinator {
     func advanceDragon(
         _ drive: PlayerMountDrive, input: CameraInput, world stepWorld: MountStepWorld
     ) -> [MountCommand] {
-        if input.jump {
-            dragonOrders.lock(world?.lockCandidate())
-        }
+        dragonOrders.takeLockButton(
+            (input.jump, input.jumpHeld), isToggle: lockIsToggle
+        ) { world?.lockCandidate() }
         if let last = dragonOrders.lastSneak, last != input.sneak {
             _ = dragonOrders.toggleAttack()
         }

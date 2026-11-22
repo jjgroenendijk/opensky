@@ -280,6 +280,8 @@ nonisolated extension PlayerSettingID {
     public static let furniture = Self("world.furniture")
     /// Holding Activate on a loose object or a dead body picks it up (docs/engine/grab.md).
     public static let playerGrab = Self("world.playerGrab")
+    /// Jump flips a flying mount's target lock; off, the lock holds while Jump is held.
+    public static let flyingMountLockToggle = Self("world.flyingMountLockToggle")
     /// NPCs and creatures run their own behaviour graphs.
     public static let actorGraphs = Self("characters.actorGraphs")
     /// Up to this many units from the camera an actor's graph steps every frame.
@@ -320,6 +322,13 @@ nonisolated extension PlayerSettingsCatalog {
         row(("world.objectAnimation", .opensky), .toggle, "Animated objects", 1, applied: true),
         row(("world.furniture", .opensky), .toggle, "Sit in furniture", 1, applied: true),
         row(("world.playerGrab", .opensky), .toggle, "Grab objects", 1, applied: true),
+        row(
+            ("world.flyingMountLockToggle", .opensky),
+            .toggle,
+            "Dragon target lock toggles",
+            1,
+            applied: true
+        ),
         row(
             ("combat.temperament", .opensky),
             .toggle,

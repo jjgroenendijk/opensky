@@ -37,6 +37,8 @@ public final class MountCoordinator {
     public private(set) var lastMount: ReferenceKey?
     /// What the rider asked of a ridden dragon.
     public internal(set) var dragonOrders = RiddenDragonOrders()
+    /// Off: a flying mount's lock holds only while Jump is held.
+    public var lockIsToggle = true
     public let settings: MountSettings
     public let flightSettings: DragonFlightSettings
     weak let world: (any MountWorld)?

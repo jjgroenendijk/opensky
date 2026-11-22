@@ -347,9 +347,7 @@ final class GameSessionScope {
     lazy var vehicles = VehicleCoordinator(world: vehicleWorld)
     /// The player's horse or dragon.
     lazy var mountWorld = MountWorldAdapter(game: ports, stage: stage)
-    lazy var mounts = MountCoordinator(
-        world: mountWorld, settings: mountSettings, flightSettings: dragonFlightSettings
-    )
+    lazy var mounts = factories.makeMounts()
     /// The werewolf and vampire lord forms.
     lazy var beastForms = BeastFormWorldAdapter(game: ports, stage: stage)
     lazy var activationRefusals = ActivationRefusalWorldAdapter(game: ports, stage: stage)

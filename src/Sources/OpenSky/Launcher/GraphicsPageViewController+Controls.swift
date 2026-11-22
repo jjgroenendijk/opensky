@@ -148,6 +148,10 @@ extension GraphicsPageViewController {
             "The player and package actors sit in chairs and lie in beds"
         )
         checkbox(
+            flyingMountLockControl, "FlyingMountLockToggle",
+            "Jump flips a ridden dragon's target lock; off, the lock holds while Jump is held"
+        )
+        checkbox(
             actorGraphsControl, "ActorGraphs",
             "NPCs and creatures run their own behaviour graphs"
         )
@@ -231,6 +235,7 @@ extension GraphicsPageViewController {
             (headTrackingControl, .characterHeadTracking),
             (objectAnimationControl, .objectAnimation), (furnitureControl, .furniture),
             (actorGraphsControl, .actorGraphs),
+            (flyingMountLockControl, .flyingMountLockToggle),
             (combatTemperamentControl, .combatTemperament),
             (combatGameSettingsControl, .combatGameSettings),
             (pipelineCacheControl, .pipelineCacheEnabled), (parallelDecodeControl, .parallelDecode),
