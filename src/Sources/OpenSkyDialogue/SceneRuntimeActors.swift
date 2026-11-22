@@ -25,6 +25,8 @@ nonisolated public struct SceneActorStatus: OptionSet, Equatable, Sendable {
     public static let observingCombat = SceneActorStatus(rawValue: 0x08)
     /// A speaker walking to its random conversation partner. The scene always waits.
     public static let walkingToPartner = SceneActorStatus(rawValue: 0x10)
+    /// More than 3000 units from the player. A waiting conversation scene stops for it.
+    public static let farFromPlayer = SceneActorStatus(rawValue: 0x20)
 }
 
 @MainActor

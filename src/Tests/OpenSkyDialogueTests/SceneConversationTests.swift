@@ -75,6 +75,12 @@ struct SceneConversationTests {
         ).tick()
         #expect(steps(ended, of: talk).last == .ended(.stopped))
 
+        let far = FakeSceneHost()
+        far.statuses[speaker] = .farFromPlayer
+        let gone = try runtime(WorldStateStore(), [talk], host: far, partner: partner)
+            .start(talk.formID)
+        #expect(steps(gone, of: talk).last == .ended(.stopped))
+
         let fighting = FakeSceneHost()
         fighting.statuses[partner] = .inCombat
         let events = try runtime(WorldStateStore(), [talk], host: fighting, partner: partner)

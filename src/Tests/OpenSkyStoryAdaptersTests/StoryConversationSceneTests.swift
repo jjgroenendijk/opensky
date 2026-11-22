@@ -44,6 +44,14 @@ struct StoryConversationSceneTests {
         #expect(adapter.sceneSpeakerFaces(Self.speaker, Self.partner))
     }
 
+    /// Every head is at one place here, so no actor is far; without heads none is.
+    @Test func aSpeakerNearThePlayerIsNotFar() {
+        #expect(!adapter.sceneActorStatus(Self.speaker).contains(.farFromPlayer))
+        host.fakeDialogueWorld.headPositionResult = .zero
+        #expect(!adapter.sceneActorStatus(Self.speaker).contains(.farFromPlayer))
+        #expect(!adapter.sceneActorStatus(.player).contains(.farFromPlayer))
+    }
+
     @Test func aStandingSpeakerTurnsToItsListener() {
         host.fakeDialogueWorld.headPositionResult = .zero
         host.fakeStreamer.actors.turnActorResult = 1

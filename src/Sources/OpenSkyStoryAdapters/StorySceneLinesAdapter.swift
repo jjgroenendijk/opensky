@@ -21,6 +21,7 @@ import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import OpenSkyWorldState
+import simd
 
 /// What `StorySceneLinesAdapter` reads from the session.
 @MainActor
@@ -49,6 +50,19 @@ extension StorySceneLinesAdapter {
     /// A speaker with no loaded body ends the line at once, as the reference game does.
     public func hasLoadedBody(_ actor: ReferenceKey) -> Bool {
         actor == .player || game.streamer.residentActorEntry(key: actor) != nil
+    }
+
+    /// How far from the player a conversation speaker may stand
+    /// (docs/engine/scenes.md#conversation-scenes).
+    static let conversationPlayerDistance: Float = 3000
+
+    public func isFarFromPlayer(_ actor: ReferenceKey) -> Bool {
+        guard
+            actor != .player,
+            let place = game.dialogueWorld.headPosition(of: actor),
+            let player = game.dialogueWorld.headPosition(of: .player)
+        else { return false }
+        return simd_distance(place, player) > Self.conversationPlayerDistance
     }
 
     /// The game's limit before a scene line: 20 degrees, and 80 while the speaker
