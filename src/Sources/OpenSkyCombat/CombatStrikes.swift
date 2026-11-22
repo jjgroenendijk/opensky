@@ -133,6 +133,7 @@ extension CombatShared {
             let phase = shared.loop?.behaviors[target]?.phase
             facts.targetRecoils = shared.loop?.isRecoiling(target) ?? false
             facts.targetStaggered = phase == .staggered && !facts.targetRecoils
+            facts.targetAttacks = phase == .windup
             facts.targetRuns = target == .player ? world.playerRuns : phase == .approaching
             func place(_ key: ReferenceKey) -> (feet: SIMD3<Float>, facing: Float)? {
                 if key == .player {

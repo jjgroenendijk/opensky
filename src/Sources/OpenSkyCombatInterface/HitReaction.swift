@@ -15,6 +15,8 @@ nonisolated public struct HitReactionFacts: Equatable, Sendable {
     public var targetMass: Float = 1
     public var targetRecoils = false
     public var targetRuns = false
+    /// The target winds up or swings an attack of its own.
+    public var targetAttacks = false
     /// A target that is staggered already does not start a second stagger.
     public var targetStaggered = false
     /// The angle from the target's heading to the attacker, as a part of a full turn.
@@ -51,7 +53,7 @@ nonisolated public struct HitReactionHit: Equatable, Sendable {
 }
 
 nonisolated public struct HitReaction: Equatable, Sendable {
-    /// The target performs Large Recoil. A bash never staggers.
+    /// The target performs Large Recoil: a bash on a target that starts an attack.
     public var largeRecoil = false
     /// The magnitude written to `staggerMagnitude`, at most 1. Nil: no stagger.
     public var staggerMagnitude: Float?
@@ -114,13 +116,14 @@ nonisolated public enum HitReactionRule {
         _ hit: HitReactionHit, roll: Int, settings: StaggerSettings
     ) -> HitReaction {
         var reaction = HitReaction()
-        if hit.isBash {
+        if hit.isBash, hit.facts.targetAttacks {
             reaction.largeRecoil = true
         } else {
             let magnitude = min(1, magnitude(hit) * finite(hit.perkMultiplier))
             let ranged = hit.handType == .bow || hit.handType == .crossbow
                 || hit.handType == .staff
             let forced = (hit.isPlayerTarget && settings.playerAlwaysStaggered) || ranged
+                || hit.isBash
             let open = magnitude > 0 && !hit.facts.targetStaggered
             if open, forced || roll < settings.attackChance {
                 reaction.staggerMagnitude = magnitude
@@ -128,7 +131,7 @@ nonisolated public enum HitReactionRule {
         }
         if hit.wasBlocked {
             reaction.blockHit = true
-            reaction.attackerRecoils = hit.isMelee
+            reaction.attackerRecoils = hit.isMelee && !hit.isBash
         }
         return reaction
     }

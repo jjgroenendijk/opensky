@@ -71,12 +71,22 @@ struct HitReactionRuleTests {
             .staggerMagnitude != nil)
     }
 
-    @Test func aBashGivesALargeRecoilAndNeverStaggers() {
+    @Test func aBashStaggersWithNoRollUnlessTheTargetStartsAnAttack() {
         var bash = hit(stagger: 1)
         bash.isBash = true
-        let reaction = HitReactionRule.reaction(bash, roll: 0, settings: settings)
-        #expect(reaction.largeRecoil)
-        #expect(reaction.staggerMagnitude == nil)
+        let plain = HitReactionRule.reaction(bash, roll: 99, settings: settings)
+        #expect(!plain.largeRecoil)
+        #expect(plain.staggerMagnitude != nil)
+
+        bash.facts.targetAttacks = true
+        let interrupting = HitReactionRule.reaction(bash, roll: 0, settings: settings)
+        #expect(interrupting.largeRecoil)
+        #expect(interrupting.staggerMagnitude == nil)
+
+        bash.facts.targetAttacks = false
+        bash.wasBlocked = true
+        let blocked = HitReactionRule.reaction(bash, roll: 0, settings: settings)
+        #expect(blocked.blockHit && !blocked.attackerRecoils)
     }
 
     @Test func aBlockedMeleeHitRecoilsItsAttacker() {

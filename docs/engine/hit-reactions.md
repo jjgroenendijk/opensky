@@ -105,7 +105,8 @@ of `largeRecoil`, `blockHit`, and `attackerRecoils` it gave.
   this rule; a spell staggers through its own effect.
 - The first "blocked" flag changes nothing in OpenSky: a blocking target has the state factor 0,
   so its magnitude is 0.
-- [WARNING] Every bash gives the Large Recoil. The stagger without a roll for a bash on a target
-  that is not starting an attack is not built. The critical and sneak attack messages are
-  shown by the damage code, not here.
+- A bash on an NPC that winds up a blow gives the Large Recoil. Any other bash staggers with no
+  roll, when its magnitude is above 0. A blocked bash gives the basher no recoil.
+- [INFO] The player is never the target of a bash, because NPCs do not bash yet. The critical
+  and sneak attack messages are shown by the damage code, not here.
 - [INFO] The staggered mark lasts as long as the combat machine's stagger phase, not 3 seconds.
