@@ -9,6 +9,22 @@ import Testing
 
 @Suite(.tags(.parser))
 struct ReferenceKeyTests {
+    /// The hash leaves the plugin name out, so keys that differ only in the name must
+    /// still be told apart by equality.
+    @Test func keysThatShareAnObjectIDStayDistinctInASet() {
+        let keys: Set<ReferenceKey> = [
+            .plugin(name: "skyrim.esm", objectID: 0x14),
+            .plugin(name: "update.esm", objectID: 0x14),
+            .plugin(name: "skyrim.esm", objectID: 0x15),
+            .generated(0x14)
+        ]
+        #expect(keys.count == 4)
+        #expect(keys.contains(.plugin(name: "update.esm", objectID: 0x14)))
+        #expect(!keys.contains(.plugin(name: "dawnguard.esm", objectID: 0x14)))
+        #expect(ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x14).hashValue
+            == ReferenceKey.playerReference.hashValue)
+    }
+
     @Test func sameRecordThroughDifferentMasterListsYieldsOneKey() throws {
         // "Skyrim.esm" at index 0 in one plugin, index 1 in another; the raw
         // FormIDs differ in their high byte but name the same record.

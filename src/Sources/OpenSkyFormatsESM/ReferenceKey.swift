@@ -46,6 +46,20 @@ nonisolated public enum ReferenceKey: Hashable, Sendable {
     }
 }
 
+nonisolated extension ReferenceKey {
+    /// The name's length stands in for the name. Hashing the whole plugin name on every
+    /// dictionary read was a measured cost; two plugins rarely share an object ID.
+    public func hash(into hasher: inout Hasher) {
+        switch self {
+        case let .plugin(name, objectID):
+            hasher.combine(objectID)
+            hasher.combine(name.utf8.count)
+        case let .generated(sequence):
+            hasher.combine(sequence)
+        }
+    }
+}
+
 nonisolated extension ReferenceKey: Comparable {
     public static func < (lhs: ReferenceKey, rhs: ReferenceKey) -> Bool {
         switch (lhs, rhs) {
