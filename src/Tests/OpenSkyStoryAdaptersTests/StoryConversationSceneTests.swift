@@ -7,6 +7,7 @@ import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyPhysics
+import OpenSkyScriptingInterface
 import OpenSkySessionTesting
 @testable import OpenSkyStoryAdapters
 import OpenSkyWorldState
@@ -68,5 +69,14 @@ struct StoryConversationSceneTests {
         store.set(ActorDeathState(isDead: true), for: Self.speaker)
         store.set(ActorDeathState(isDead: false), for: Self.partner)
         #expect(StoryWorldAdapter.savedDead(in: store) == [Self.speaker])
+    }
+
+    @Test func theAliasSearchKnowsADestroyedObject() {
+        let store = WorldStateStore()
+        var state = ScriptedReferenceState()
+        state.setFlag(ScriptedStateName.destroyed, true)
+        store.set(state, for: Self.speaker)
+        #expect(StoryWorldAdapter.isDestroyed(Self.speaker, in: store))
+        #expect(!StoryWorldAdapter.isDestroyed(Self.partner, in: store))
     }
 }

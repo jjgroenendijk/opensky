@@ -64,6 +64,7 @@ extension StoryWorldAdapter {
         runtime.referenceSearch = { [weak self] in
             var search = self?.questReferenceSearch()
             search?.persistent = persistent
+            search?.isDestroyed = { Self.isDestroyed($0, in: store) }
             if self != nil, let persistent {
                 let dead = Self.savedDead(in: store)
                 search?.savedDead = dead
@@ -75,6 +76,12 @@ extension StoryWorldAdapter {
             self?.createQuestReference(base, at: anchor)
         }
         return runtime
+    }
+
+    /// Whether a destruction stage or a script marked the object destroyed.
+    static func isDestroyed(_ key: ReferenceKey, in store: WorldStateStore) -> Bool {
+        store.component(ScriptedReferenceState.self, for: key)?
+            .flag(ScriptedStateName.destroyed) == true
     }
 
     /// Every actor the world state marks dead, in a loaded cell or not.
