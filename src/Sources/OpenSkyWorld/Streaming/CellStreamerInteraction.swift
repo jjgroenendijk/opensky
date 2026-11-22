@@ -133,6 +133,15 @@ extension CellStreamer.ResidentSteps {
     }
 
     public func pluginPlacement(of key: ReferenceKey) -> PluginPlacement? {
+        if let known = streamer.pluginPlacements[key] {
+            return known
+        }
+        let placement = readPluginPlacement(of: key)
+        streamer.pluginPlacements[key] = .some(placement)
+        return placement
+    }
+
+    private func readPluginPlacement(of key: ReferenceKey) -> PluginPlacement? {
         guard
             let placedRecords = streamer.placedRecords, let entry = placedRecords.entry(for: key),
             let home = placedRecords.home(of: entry)
