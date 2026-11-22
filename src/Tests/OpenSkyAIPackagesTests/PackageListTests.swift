@@ -18,9 +18,13 @@ struct PackageListTests {
     private static let clock = GameClock(hour: 9)
     private static let defaultList = FormID(0x700)
     private static let combatList = FormID(0x701)
+    private static let spectatorList = FormID(0x702)
+    private static let deadBodyList = FormID(0x703)
 
     /// Own package 0x101 runs only before 6:00, so at 9:00 the default list decides.
-    private func runtime(ownValid: Bool = true) throws -> ActorPackageRuntime {
+    private func runtime(
+        ownValid: Bool = true, hasWatchLists: Bool = false
+    ) throws -> ActorPackageRuntime {
         let own = try PackageRuntimeFixture.package(
             id: 0x101, editorID: "Own",
             schedule: ownValid ? .anytime : Package.Schedule(
@@ -32,17 +36,25 @@ struct PackageListTests {
             PackageRuntimeFixture.package(id: 0x102, editorID: "Default"),
             PackageRuntimeFixture.package(id: 0x103, editorID: "CombatOverride"),
             PackageRuntimeFixture.package(id: 0x104, editorID: "Script"),
-            PackageRuntimeFixture.package(id: 0x105, editorID: "Lasting", flags: .mustComplete)
+            PackageRuntimeFixture.package(id: 0x105, editorID: "Lasting", flags: .mustComplete),
+            PackageRuntimeFixture.package(id: 0x106, editorID: "Watch"),
+            PackageRuntimeFixture.package(id: 0x107, editorID: "FindBody")
         ]
         let fields = PackageRuntimeFixture.formIDField("DPLT", Self.defaultList.rawValue)
             + PackageRuntimeFixture.formIDField("ECOR", Self.combatList.rawValue)
+            + (hasWatchLists ? PackageRuntimeFixture.formIDField(
+                "SPOR", Self.spectatorList.rawValue
+            ) + PackageRuntimeFixture.formIDField("OCOR", Self.deadBodyList.rawValue) : Data())
         let base = try PackageRuntimeFixture.actorBase(
             id: 0x600, packages: [0x101], extraFields: fields
         )
         let store = PackageStore(
             packages: packages,
             actorTemplates: ActorTemplateResolver(actors: [0x600: base], leveledActors: [:]),
-            formLists: [Self.defaultList: [FormID(0x102)], Self.combatList: [FormID(0x103)]]
+            formLists: [
+                Self.defaultList: [FormID(0x102)], Self.combatList: [FormID(0x103)],
+                Self.spectatorList: [FormID(0x106)], Self.deadBodyList: [FormID(0x107)]
+            ]
         )
         var runtime = ActorPackageRuntime(store: store, conditionFunctions: .standard)
         try runtime.register(actor: Self.actor, base: base.formID)
@@ -71,6 +83,22 @@ struct PackageListTests {
         runtime.setSituation(.combat, actor: Self.actor, clock: Self.clock) { ConditionContext() }
         #expect(current(runtime) == FormID(0x103))
         #expect(runtime.source(for: Self.actor) == .situation(.combat))
+        runtime.setSituation(nil, actor: Self.actor, clock: Self.clock) { ConditionContext() }
+        #expect(current(runtime) == FormID(0x101))
+    }
+
+    @Test func aWatcherAndABodyFinderRunTheirOverrideLists() throws {
+        var runtime = try runtime(hasWatchLists: true)
+        runtime.setSituation(.spectator, actor: Self.actor, clock: Self.clock) {
+            ConditionContext()
+        }
+        #expect(current(runtime) == FormID(0x106))
+        #expect(runtime.source(for: Self.actor) == .situation(.spectator))
+        runtime.setSituation(.observeDeadBody, actor: Self.actor, clock: Self.clock) {
+            ConditionContext()
+        }
+        #expect(current(runtime) == FormID(0x107))
+        #expect(runtime.source(for: Self.actor) == .situation(.observeDeadBody))
         runtime.setSituation(nil, actor: Self.actor, clock: Self.clock) { ConditionContext() }
         #expect(current(runtime) == FormID(0x101))
     }
