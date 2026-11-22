@@ -21,6 +21,9 @@ public final class WorldStateStore {
     /// readout costs a dictionary lookup rather than a scan.
     private var dirtyCountsByCell: [CellSceneLocation: Int] = [:]
     private var changeJournal: WorldStateJournal
+    /// How many times `restore(from:)` ran. A cache of "already written" keys compares it,
+    /// because a restore drops what was written.
+    public private(set) var restoreCount = 0
     private var allocator: GeneratedReferenceAllocator
     /// Values `derived(_:from:build:)` keeps until the next delta write.
     let derivedCache = WorldStateDerivedCache()
@@ -258,6 +261,7 @@ public final class WorldStateStore {
     /// how a save becomes live. Nothing is journalled and the window is cleared, so
     /// `snapshot()` equals the input. One unattributed `onMutation` rebuilds all cells.
     public func restore(from snapshot: WorldStateSnapshot) {
+        restoreCount += 1
         derivedCache.invalidate(nil)
         deltas = [:]
         dirtyCountsByCell = [:]

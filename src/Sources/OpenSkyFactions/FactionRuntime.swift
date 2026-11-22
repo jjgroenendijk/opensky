@@ -30,6 +30,9 @@ public struct FactionRuntime: FactionAccess {
     /// Actors already seeded this session, so a lazy caller can seed on every
     /// query and pay for it once.
     public private(set) var seededActors: Set<ReferenceKey> = []
+    /// The store's restore count when `seededActors` was filled. A new game or a loaded
+    /// save drops the seeded memberships, so the actors are seeded again.
+    private var seedRestoreCount = 0
 
     private let worldState: WorldStateStore
     /// Walking the template chain is costly, and hostility asks every frame.
@@ -114,8 +117,12 @@ public struct FactionRuntime: FactionAccess {
     /// what lets the caller do it lazily the first time anything asks.
     @discardableResult
     public mutating func seed(_ holder: ActorValueHolder) -> FactionSeedReport {
-        guard !seededActors.contains(holder.key) else {
+        guard needsSeeding(holder.key) else {
             return FactionSeedReport(added: [], unresolved: 0, wasAlreadySeeded: true)
+        }
+        if seedRestoreCount != worldState.restoreCount {
+            seededActors = []
+            seedRestoreCount = worldState.restoreCount
         }
         seededActors.insert(holder.key)
         guard baselines != nil, let pluginName else { return .none }
@@ -194,7 +201,7 @@ public struct FactionRuntime: FactionAccess {
     /// `Set` membership test rather than a copy of this whole struct — and only
     /// pay for it the first time it sees an actor.
     public func needsSeeding(_ key: ReferenceKey) -> Bool {
-        !seededActors.contains(key)
+        !seededActors.contains(key) || seedRestoreCount != worldState.restoreCount
     }
 
     /// What `observer` makes of `target` from what is stored right now.
@@ -227,13 +234,22 @@ public struct FactionRuntime: FactionAccess {
     /// The authored baseline, resolved once per base record and leveled roll. Nil
     /// resolver reads `.none`.
     private func baseline(for holder: ActorValueHolder) -> ActorFactionBaseline {
-        guard let baselines, case let .actor(base) = holder.subject else { return .none }
+        guard let baselines, let base = Self.baseRecord(of: holder.subject) else { return .none }
         let roll = baselines.templates.leveling.roll(
             for: holder.key, base: base, cell: holder.cell,
             frozenLevel: worldState.frozenLeveledLevel(of: holder.key)
         )
         return baselineMemo.value(for: LeveledActorRollKey(base: base, roll: roll)) {
             baselines.rolling(roll).baseline(for: base)
+        }
+    }
+
+    /// The record that authors a subject's factions. The player's is the `Player` actor.
+    private static func baseRecord(of subject: ActorValueSubject) -> FormID? {
+        switch subject {
+        case let .actor(base): base
+        case .player: MenuRecordData.playerBase
+        case .generated: nil
         }
     }
 
