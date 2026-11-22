@@ -243,6 +243,8 @@ public final class PackageCoordinator {
     public internal(set) var commandedActors: Set<ReferenceKey> = []
     /// The schedules of the persistent actors no loaded cell holds.
     public let offscreen: OffscreenSchedule
+    /// Set by a new game; the next update then places every persistent actor.
+    public private(set) var newGamePlacementDue = false
 
     public func offscreenReadout(for actor: ReferenceKey) -> String? {
         offscreen.readout(for: actor)
@@ -310,9 +312,28 @@ public final class PackageCoordinator {
         }
     }
 
+    /// A new game puts every persistent actor at the place of its package for the hour
+    /// (docs/engine/unloaded-actors.md). It waits for the next update, when the start
+    /// hour is set.
+    public func placeActorsAtPackagePlaces() {
+        newGamePlacementDue = true
+    }
+
+    private func placeForNewGame() {
+        guard
+            newGamePlacementDue, let clock = world?.packageClock,
+            let offscreenWorld = world as? any OffscreenScheduleWorld
+        else { return }
+        newGamePlacementDue = false
+        offscreen.placeAll(
+            world: offscreenWorld, clock: clock, context: conditionContext(clock: clock)
+        )
+    }
+
     /// Reconciles residency, then evaluates scheduled boundaries. An actor
     /// that leaves residency stops being simulated.
     public func advance(by delta: Float = 0) {
+        placeForNewGame()
         guard
             var runtime,
             let world,

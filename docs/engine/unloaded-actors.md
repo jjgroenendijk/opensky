@@ -124,7 +124,7 @@ places again by the hour.
 ## In OpenSky
 
 OpenSky runs the low level only. Every 0.3 / timescale game hours, 54 game seconds at the default,
-a pass starts over each unique persistent actor that no loaded cell holds. The pass places the
+a pass starts over each persistent placed actor that no loaded cell holds. The pass places the
 actors in turn inside the frame budget ([AI process levels](/engine/ai-process-levels.md#in-opensky)):
 
 1. It picks the actor's package by the same rules as for a loaded actor.
@@ -136,9 +136,14 @@ actors in turn inside the frame budget ([AI process levels](/engine/ai-process-l
    the loaded door that leads into its interior. The loaded package then walks it to the place.
 5. Otherwise the actor is put straight at the place.
 
-The unique persistent actors are the ones the location records list, plus each base with one
-persistent placed actor. A dead or disabled actor does not move. A moved actor keeps the
-worldspace of its new cell, because a city world and Tamriel share grid coordinates.
+The pass covers every persistent placed actor, also when several actors share one base, as
+the city guards do. A dead or disabled actor does not move. A moved actor keeps the worldspace
+of its new cell, because a city world and Tamriel share grid coordinates.
+
+A new game runs steps 1, 2, 3, and 5 once for every such actor, one in a loaded cell too. Step 4
+is left out, so no actor walks out of a door at the start. The placement runs at the first
+update after the start hour is set. For example, a new game in Riften at 05:30 shows each guard
+at its gate or on its patrol, not in the area where the data places all of them.
 
 For example, at 10:00 Brand-Shei's package names his stall in the Riften market. With the
 player in the market, he comes out of the door of his house and walks to the stall. With the

@@ -16,6 +16,8 @@ public protocol PackagePort: AnyObject {
     func ignoresCombat(_ actor: ReferenceKey) -> Bool
     func movementSettled(actor: ReferenceKey, reason: NPCMovementSettleReason)
     func packageLocation(of actor: ReferenceKey) -> SIMD3<Float>?
+    /// A new game: every persistent actor goes to the place of its package for the hour.
+    func placeActorsAtPackagePlaces()
     func readout(for actor: ReferenceKey) -> PackageActorReadout?
     func readouts() -> [PackageActorReadout]
     /// The last off-screen update of an actor no loaded cell holds, as one line.

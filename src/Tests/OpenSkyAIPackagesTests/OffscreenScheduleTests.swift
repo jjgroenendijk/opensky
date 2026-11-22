@@ -164,6 +164,30 @@ struct OffscreenScheduleTests {
         #expect(coordinator.offscreen.registered.keys.sorted() == [Self.actor])
     }
 
+    @Test func aNewGamePutsEveryActorStraightAtItsPackagePlace() throws {
+        let (coordinator, world) = try Self.coordinator(packages: [0x102])
+        let loaded = PackageRuntimeFixture.key(0x501)
+        world.offscreenActorList = [
+            OffscreenActor(key: Self.actor, base: FormID(0x600), place: Self.house),
+            OffscreenActor(key: loaded, base: FormID(0x600), place: Self.house)
+        ]
+        world.residents = try [PackageRuntimeFixture.residentActor(0x501, base: 0x600)]
+        world.offscreenLoaded = true
+        world.offscreenExit = Self.door
+        coordinator.placeActorsAtPackagePlaces()
+        #expect(coordinator.newGamePlacementDue)
+        coordinator.advance()
+        #expect(!coordinator.newGamePlacementDue)
+        let placed = world.offscreenMoves.prefix(2)
+        #expect(placed.map(\.actor) == [Self.actor, loaded])
+        #expect(placed.allSatisfy { $0.place == FakePackageWorld.stall })
+        #expect(coordinator.offscreen.registered.keys.sorted() == [Self.actor])
+
+        let moves = world.offscreenMoves.count
+        coordinator.advance()
+        #expect(world.offscreenMoves.count == moves, "the placement runs once")
+    }
+
     static func coordinator(
         packages: [UInt32]
     ) throws -> (PackageCoordinator, FakePackageWorld) {

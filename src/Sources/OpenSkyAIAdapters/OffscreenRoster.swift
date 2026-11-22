@@ -8,6 +8,15 @@ public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 
 nonisolated public enum OffscreenRoster {
+    /// The persistent placed actors and the actors the location records name, in key
+    /// order, without the player.
+    public static func keys(
+        placements: [PersistentPlacement], unique: [ReferenceKey: ReferenceKey]
+    ) -> [ReferenceKey] {
+        let placed = placements.compactMap { $0.actorBase == nil ? nil : $0.key }
+        return Set(placed).union(unique.values).subtracting([.player]).sorted()
+    }
+
     /// The actor where its deltas put it, or nil when it is not an enabled actor.
     public static func actor(
         _ key: ReferenceKey, plugin: PluginPlacement, delta: ReferenceStateDelta?

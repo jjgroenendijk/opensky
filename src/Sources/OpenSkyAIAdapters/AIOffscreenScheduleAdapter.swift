@@ -17,6 +17,8 @@ import OpenSkyWorldState
 @MainActor
 public final class OffscreenHomeCache {
     var homes: [ReferenceKey: PluginPlacement?] = [:]
+    /// Every persistent placed actor of the load order, in key order.
+    var roster: [ReferenceKey]?
 
     public init() {}
 }
@@ -26,13 +28,10 @@ public struct AIOffscreenScheduleAdapter {
     let game: any AIPackageStateHost
     let cache: OffscreenHomeCache
 
-    /// The unique persistent actors the location records name, without the player, the
-    /// dead, and the disabled.
+    /// Every persistent placed actor, without the player, the dead, and the disabled. The
+    /// game keeps each of them at a process level, whether its base is placed once or often.
     public func offscreenActors() -> [OffscreenActor] {
-        guard let unique = game.aiRecords?.locationStore?.uniqueActorReferences else {
-            return []
-        }
-        return Set(unique.values).subtracting([.player]).sorted().compactMap { key in
+        roster().compactMap { key in
             guard
                 game.worldState.component(ActorDeathState.self, for: key)?.isDead != true,
                 let plugin = home(of: key)
@@ -107,6 +106,18 @@ public struct AIOffscreenScheduleAdapter {
             for: actor, in: place.location
         )
         bridge.relocate(actor, to: place.location, worldspace: place.worldspace)
+    }
+
+    private func roster() -> [ReferenceKey] {
+        if let roster = cache.roster {
+            return roster
+        }
+        guard let store = game.aiRecords?.locationStore else { return [] }
+        let roster = OffscreenRoster.keys(
+            placements: store.persistentPlacements, unique: store.uniqueActorReferences
+        )
+        cache.roster = roster
+        return roster
     }
 
     private func home(of key: ReferenceKey) -> PluginPlacement? {

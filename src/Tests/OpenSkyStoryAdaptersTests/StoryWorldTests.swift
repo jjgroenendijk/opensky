@@ -125,6 +125,12 @@ struct StoryWorldTests {
         #expect(host.fakeStoryManager.runSessionStartCalls.count == 1)
     }
 
+    @Test func aNewGameAsksForItsActorsAtTheirPackagePlaces() {
+        host.fakeStoryManager.runSessionStartResult = SessionStartReport()
+        adapter.rerunSessionStart()
+        #expect(host.fakePackages.placeActorsAtPackagePlacesCallCount == 1)
+    }
+
     @Test func scenesStartStopAndAnswerThroughTheScenePort() {
         host.fakeScenes.playing = [Self.scene]
         host.fakeScenes.sceneResult = Self.scene
