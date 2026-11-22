@@ -21,6 +21,7 @@ public protocol AIDetectionSenseHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }
+    var effectsWorld: any EffectsWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var inventory: any InventoryPort { get }
     var magic: any MagicPort { get }
@@ -51,13 +52,36 @@ extension AIDetectionSenseAdapter {
         actorValue(Self.blindnessIndex, of: actor) ?? 0
     }
 
+    public func hasNightEye(_ actor: ReferenceKey) -> Bool {
+        guard let index = ActorValueIdentity.index(named: "Night Eye") else { return false }
+        return (actorValue(index, of: actor) ?? 0) > 0
+    }
+
+    /// The player rule on the Sneak skill, then the sneak skill perks.
+    private func playerEffectiveSneak() -> Float? {
+        guard let settings = game.perception.runtime?.settings else { return nil }
+        return playerPerk(
+            settings.playerSneakBase.value
+                + settings.playerSneakMult.value * sneakSkill(of: .player),
+            at: .modDetectionSneakSkill
+        )
+    }
+
+    /// 100 times the largest channel of an interior's ambient colour. Infinite outdoors.
+    private func interiorLightCap() -> Float {
+        guard let ambient = game.renderer?.scene.lighting?.ambientColor else { return .infinity }
+        return Self.lightLevelScale * max(ambient.x, ambient.y, ambient.z)
+    }
+
+    private static let lightLevelScale: Float = 100
+
     /// The player's detection perks apply once a frame, with no observer bound:
     /// no vanilla perk at these entry points tests the observer tab.
     public func playerDetectionTraits(
         at feet: SIMD3<Float>,
         eyeHeight: Float
     ) -> DetectionTargetTraits {
-        DetectionTargetTraits(
+        var traits = DetectionTargetTraits(
             equippedWeight: game.inventory.armourWeights.playerWornArmourWeight,
             lightLevel: playerPerk(
                 lightLevel(at: feet + SIMD3(0, 0, PlayerCapsule.torsoHeight(eyeHeight: eyeHeight))),
@@ -65,10 +89,16 @@ extension AIDetectionSenseAdapter {
             ),
             muffle: actorValue(Self.movementNoiseMultIndex, of: .player) ?? 0,
             actionSound: sound.playerActionSound(),
-            sneakSkill: playerPerk(sneakSkill(of: .player), at: .modDetectionSneakSkill),
+            sneakSkill: sneakSkill(of: .player),
             isInvisible: (actorValue(Self.invisibilityIndex, of: .player) ?? 0) > 0,
             movementMultiplier: playerPerk(1, at: .modDetectionMovement)
         )
+        traits.effectiveSneakSkill = playerEffectiveSneak()
+        traits.interiorLightCap = interiorLightCap()
+        if let size = game.effectsWorld.race(of: .player)?.details.properties?.size {
+            traits.sizeFactor = DetectionTargetTraits.sizeFactor(raceSize: Int(size))
+        }
+        return traits
     }
 
     private func playerPerk(_ value: Float, at entryPoint: PerkEntryPoint) -> Float {

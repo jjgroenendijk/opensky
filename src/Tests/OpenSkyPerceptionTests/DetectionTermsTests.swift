@@ -131,4 +131,42 @@ struct DetectionTermsTests {
         inputs.observer.isFightingAnother = true
         #expect(abs(DetectionFormula.noticerFactor(inputs: inputs, settings: settings) - 12) < 1e-4)
     }
+
+    /// docs/engine/detection.md, "The formula" and "Light level".
+    @Test func sizeNightEyeAndTheAmbientCapChangeTheVisualTerm() {
+        func inputs(cap: Float = 10, size: Int = 1, nightEye: Bool = false) -> DetectionInputs {
+            var traits = DetectionTargetTraits(lightLevel: 0.5)
+            traits.interiorLightCap = cap
+            traits.sizeFactor = DetectionTargetTraits.sizeFactor(raceSize: size)
+            var inputs = DetectionInputs(distance: 0, isExterior: false, traits: traits)
+            inputs.observer.hasNightEye = nightEye
+            return inputs
+        }
+        func visual(_ inputs: DetectionInputs) -> Float {
+            DetectionFormula.visualFactor(inputs: inputs, settings: settings)
+        }
+        // Level 50, less the ambient cap 10 where the setting says 25.
+        #expect(DetectionFormula.lightLevel(inputs: inputs(), settings: settings) == 40)
+        #expect(DetectionFormula
+            .lightLevel(inputs: inputs(cap: .infinity), settings: settings) == 25)
+        #expect(DetectionFormula.lightLevel(inputs: inputs(cap: .nan), settings: settings) == 25)
+        #expect(DetectionFormula.lightLevel(inputs: inputs(nightEye: true), settings: settings)
+            == 140)
+        #expect(visual(inputs(size: 3)) == visual(inputs()) * 2)
+        #expect(DetectionTargetTraits.sizeFactor(raceSize: 0) == 0.5)
+        #expect(DetectionTargetTraits.sizeFactor(raceSize: 9) == 2)
+    }
+
+    @Test func aGivenEffectiveSneakSkillReplacesThePlayerRule() {
+        var traits = DetectionTargetTraits(sneakSkill: 50)
+        var inputs = DetectionInputs(distance: 0, isSneaking: true, traits: traits)
+        inputs.isPlayerTarget = true
+        let byRule = DetectionFormula.sneakerFactor(inputs: inputs, settings: settings)
+        traits.effectiveSneakSkill = 60
+        var given = DetectionInputs(distance: 0, isSneaking: true, traits: traits)
+        given.isPlayerTarget = true
+        #expect(DetectionFormula.sneakerFactor(inputs: given, settings: settings)
+            == 60 * settings.skillMult.value)
+        #expect(byRule == 30 * settings.skillMult.value)
+    }
 }
