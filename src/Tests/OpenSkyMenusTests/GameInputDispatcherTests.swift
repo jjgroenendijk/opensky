@@ -43,7 +43,11 @@ struct GameInputDispatcherTests {
         dispatcher.apply(.jump, .release)
         #expect(!input.makeInput(dt: 0.1).jump)
         dispatcher.apply(.jump, .press)
-        #expect(input.makeInput(dt: 0.1).jump)
+        let pressed = input.makeInput(dt: 0.1)
+        #expect(pressed.jump && pressed.jumpHeld)
+        #expect(input.makeInput(dt: 0.1).jumpHeld, "the level stays while the key is down")
+        dispatcher.apply(.jump, .release)
+        #expect(!input.makeInput(dt: 0.1).jumpHeld)
         dispatcher.apply(.activate, .press)
         #expect(input.consumeActivation())
     }

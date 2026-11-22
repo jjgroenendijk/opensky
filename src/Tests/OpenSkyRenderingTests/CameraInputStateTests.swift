@@ -98,6 +98,16 @@ struct CameraInputStateTests {
     }
 
     @Test
+    func theJumpLevelStaysUntilReleaseAndShowsWhilePaused() {
+        let state = CameraInputState()
+        state.setJumpHeld(true)
+        #expect(state.makeInput(dt: 0.016).jumpHeld)
+        #expect(state.makeInput(dt: 0).jumpHeld)
+        state.releaseAll()
+        #expect(!state.makeInput(dt: 0.016).jumpHeld)
+    }
+
+    @Test
     func jumpLatchesUntilOneFrameDrainsIt() {
         let state = CameraInputState()
         state.requestJump()

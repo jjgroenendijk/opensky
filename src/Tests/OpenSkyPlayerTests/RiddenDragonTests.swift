@@ -153,6 +153,35 @@ struct RiddenDragonTests {
         #expect(mounts.dragonOrders.lockedTarget == nil, "a dead target unlocks")
     }
 
+    @Test func withTheToggleOffTheLockHoldsOnlyWhileJumpIsHeld() {
+        let (mounts, world) = seated()
+        mounts.lockIsToggle = false
+        world.inView = FakeDragonMountWorld.enemy
+        fly(mounts, seconds: 6)
+        fly(mounts, seconds: 1.0 / 30) {
+            $0.jump = true
+            $0.jumpHeld = true
+        }
+        #expect(mounts.dragonOrders.lockedTarget == FakeDragonMountWorld.enemy)
+        fly(mounts, seconds: 1) { $0.jumpHeld = true }
+        #expect(mounts.dragonOrders.lockedTarget == FakeDragonMountWorld.enemy)
+        fly(mounts, seconds: 1.0 / 30)
+        #expect(mounts.dragonOrders.lockedTarget == nil, "the lock ends when Jump comes up")
+    }
+
+    @Test func aHeldLockDoesNotFlipOnASecondPressAndNeedsATargetInView() {
+        var orders = RiddenDragonOrders()
+        orders.takeLockButton((true, true), isToggle: false) { nil }
+        #expect(orders.lockedTarget == nil)
+        orders.takeLockButton((true, true), isToggle: false) { FakeDragonMountWorld.enemy }
+        orders.takeLockButton((true, true), isToggle: false) { FakeDragonMountWorld.enemy }
+        #expect(orders.lockedTarget == FakeDragonMountWorld.enemy)
+        orders.takeLockButton((false, false), isToggle: true) { nil }
+        #expect(orders.lockedTarget == FakeDragonMountWorld.enemy, "a toggled lock stays")
+        orders.takeLockButton((true, false), isToggle: true) { FakeDragonMountWorld.enemy }
+        #expect(orders.lockedTarget == nil)
+    }
+
     @Test func aDragonRiderShoutsAndCastsButSwingsNoWeapon() {
         var input = CameraInput(dt: 0.1)
         input.shout = true

@@ -103,6 +103,7 @@ extension AgentMotionAdapter {
                 "landingRequested": .bool(orders.landingRequested),
                 "lockedTarget": orders.lockedTarget.flatMap(behaviour.formID) ?? .null,
                 "lockSteer": .init(orders.lockSteer),
+                "lockIsToggle": .bool(mounts.lockIsToggle),
                 "switchedTarget": orders.switchedTarget.flatMap(behaviour.formID) ?? .null,
                 "attacking": .bool(orders.isAttacking),
                 "breath": .string("\(orders.breath)"),

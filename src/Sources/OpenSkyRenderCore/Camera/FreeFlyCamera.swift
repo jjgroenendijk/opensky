@@ -31,6 +31,8 @@ nonisolated public struct CameraInput: Sendable {
     public var sneak = false
     /// One-shot jump request, latched by the input state until a frame drains it.
     public var jump = false
+    /// The jump button as a level: a flying mount's lock can hold only while it is down.
+    public var jumpHeld = false
     /// One-shot request to advance one step around fly -> walk -> third person.
     public var cycleCameraMode = false
     /// One-shot attack request, latched like jump. Walk mode only; fly mode ignores it.

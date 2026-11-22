@@ -17,6 +17,7 @@ nonisolated public final class FakeCameraInputStatePort: CameraInputStatePort {
     public var toggleAutoMoveCallCount = 0
     public var toggleAlwaysRunCallCount = 0
     public var requestJumpCallCount = 0
+    public var setJumpHeldCalls: [Bool] = []
     public var requestAttackCallCount = 0
     public var setAttackHeldCalls: [Bool] = []
     public var setBlockingCalls: [Bool] = []
@@ -68,6 +69,10 @@ nonisolated extension FakeCameraInputStatePort {
 
     public func requestJump() {
         requestJumpCallCount += 1
+    }
+
+    public func setJumpHeld(_ enabled: Bool) {
+        setJumpHeldCalls.append(enabled)
     }
 
     public func requestAttack() {

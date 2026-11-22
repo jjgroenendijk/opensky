@@ -48,6 +48,7 @@ public protocol CameraInputReceiving: AnyObject {
     func toggleAutoMove()
     func toggleAlwaysRun()
     func requestJump()
+    func setJumpHeld(_ enabled: Bool)
     func requestAttack()
     func setAttackHeld(_ enabled: Bool)
     func setBlocking(_ enabled: Bool)

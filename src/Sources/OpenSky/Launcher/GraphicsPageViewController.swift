@@ -82,6 +82,9 @@ final class GraphicsPageViewController: NSViewController {
     let furnitureControl = NSButton(
         checkboxWithTitle: "Sit in furniture", target: nil, action: nil
     )
+    let flyingMountLockControl = NSButton(
+        checkboxWithTitle: "Dragon target lock toggles", target: nil, action: nil
+    )
     let actorGraphsControl = NSButton(
         checkboxWithTitle: "Actor behaviour graphs", target: nil, action: nil
     )
@@ -192,11 +195,10 @@ final class GraphicsPageViewController: NSViewController {
             layout.group("Surface shading", surfaceShadingControls.map { layout.toggle($0.0) }),
             layout.group("Characters and objects", [
                 layout.toggle(blinkingControl), layout.toggle(eyeMovementControl),
-                layout.toggle(expressionsControl),
-                layout.toggle(headTrackingControl), layout.toggle(objectAnimationControl),
-                layout.toggle(furnitureControl),
-                layout.toggle(actorGraphsControl), layout.toggle(combatTemperamentControl),
-                layout.toggle(combatGameSettingsControl)
+                layout.toggle(expressionsControl), layout.toggle(headTrackingControl),
+                layout.toggle(objectAnimationControl), layout.toggle(furnitureControl),
+                layout.toggle(flyingMountLockControl), layout.toggle(actorGraphsControl),
+                layout.toggle(combatTemperamentControl), layout.toggle(combatGameSettingsControl)
             ]),
             layout.group("Texture memory", [
                 layout.toggle(textureStreamingControl),

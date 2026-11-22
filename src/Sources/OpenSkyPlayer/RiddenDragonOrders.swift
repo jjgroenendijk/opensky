@@ -91,6 +91,26 @@ nonisolated public struct RiddenDragonOrders: Equatable, Sendable {
         }
     }
 
+    /// The Jump button of one step. As a toggle, each press flips the lock. Otherwise a
+    /// press locks and the lock ends when the button comes up.
+    mutating func takeLockButton(
+        _ button: (pressed: Bool, held: Bool), isToggle: Bool, candidate: () -> ReferenceKey?
+    ) {
+        guard !isToggle else {
+            if button.pressed {
+                lock(candidate())
+            }
+            return
+        }
+        if !button.held {
+            if lockedTarget != nil {
+                lock(nil)
+            }
+        } else if button.pressed, lockedTarget == nil {
+            lock(candidate())
+        }
+    }
+
     /// Switch Target (keys 1 and 2): locks the next actor in view, left to right, or the
     /// one before it. Switching calls the attack off (UESP "Skyrim:Dragon Riding").
     /// - Returns: false when nothing is in view.
