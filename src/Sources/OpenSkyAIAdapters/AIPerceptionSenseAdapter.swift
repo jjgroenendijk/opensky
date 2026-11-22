@@ -74,7 +74,7 @@ extension AIPerceptionSenseAdapter {
                 key: actor.key,
                 feet: actor.feet,
                 eye: actor.feet + SIMD3(0, 0, actor.capsule.eyeHeight * max(actor.scale, 0)),
-                facing: actor.facing,
+                facing: actor.yaw,
                 isExterior: isExterior,
                 label: actor.label,
                 sneakSkill: detectionSense.sneakSkill(of: actor.key)

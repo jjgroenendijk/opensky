@@ -329,7 +329,7 @@ extension CombatLoopRuntime {
         let volume = MeleeSwing.volume(
             feet: actor.feet,
             capsule: actor.capsule,
-            facing: facing(from: actor.feet, toward: target.feet, fallback: actor.facing),
+            facing: facing(from: actor.feet, toward: target.feet, fallback: actor.yaw),
             reach: MeleeSwing.reach(weapon: weapon, settings: settings, actorScale: actor.scale)
         )
         return !MeleeHitDetector.hits(swing: volume, targets: [target], attacker: actor.key)
@@ -367,7 +367,7 @@ extension CombatLoopRuntime {
         of actor: CombatActorObservation,
         toward point: SIMD3<Float>
     ) -> Float {
-        let turn = facing(from: actor.feet, toward: point, fallback: actor.facing) - actor.facing
+        let turn = facing(from: actor.feet, toward: point, fallback: actor.yaw) - actor.yaw
         return atan2f(sinf(turn), cosf(turn))
     }
 
