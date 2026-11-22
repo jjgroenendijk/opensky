@@ -27,6 +27,10 @@ extension CellNPCMovers {
         else {
             return .actorNotResident
         }
+        let plain = !direct && runSlowdown == nil && walkRunBlend == nil
+        if plain, streamer.actors.npcMovement.isWalking(actor, to: point, gait: gait) {
+            return .started
+        }
         let standing = streamer.actors.npcMovement.standingTransform(
             of: entry,
             in: streamer.stateSource()
