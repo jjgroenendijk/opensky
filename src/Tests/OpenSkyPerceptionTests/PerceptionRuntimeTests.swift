@@ -226,4 +226,33 @@ extension PerceptionRuntimeTests {
         #expect(pair.state == .suspicious)
         #expect(pair.lastKnownPosition == impact)
     }
+
+    /// A hostile observer keeps a target it saw while the target stays near, loses it
+    /// about 20 s later, and a hit by the target caps its points.
+    @Test func aHostileObserverKeepsThenLosesATargetItSaw() {
+        var observer = PerceptionFixture.observer(feet: SIMD3(0, 0, 0))
+        observer.isAggressive = true
+        let world = FakePerceptionWorld(
+            observers: [observer], targets: [PerceptionFixture.target(feet: SIMD3(300, 0, 0))]
+        )
+        let runtime = PerceptionRuntime(settings: settings, world: world)
+        advance(runtime, steps: 120)
+        #expect(runtime.targetTrack(of: .player).phase == .noticed)
+        #expect(runtime.state(observer: PerceptionFixture.guardKey, target: .player).state
+            == .detected)
+
+        world.blocked = PerceptionFixture.wall(atX: 200)
+        world.targets = [PerceptionFixture.target(feet: SIMD3(300, 0, 0), gait: nil)]
+        advance(runtime, steps: 60 * 5)
+        let kept = runtime.state(observer: PerceptionFixture.guardKey, target: .player)
+        #expect(kept.state == .detected)
+        #expect(kept.lastKnownPosition == SIMD3(300, 0, 0))
+        advance(runtime, steps: 60 * 16)
+        #expect(runtime.targetTrack(of: .player).phase == .lost)
+        #expect(runtime.state(observer: PerceptionFixture.guardKey, target: .player).state
+            != .detected)
+
+        runtime.noteAttack(by: .player)
+        #expect(runtime.pools[.player]?.points ?? 100 <= CombatTargetTrack.hitPointCap)
+    }
 }

@@ -11,7 +11,6 @@ struct StealthPointTests {
         var pool = StealthPointPool(settings: settings)
         pool.advance(highestValue: 10, overThreshold: false, by: 1, settings: settings)
         #expect(pool.points == 70)
-        #expect(!pool.isExposed)
     }
 
     @Test func theRefillWaitsTenSecondsAfterTheLastPositiveValue() {
@@ -21,30 +20,34 @@ struct StealthPointTests {
         #expect(pool.points == 70)
         pool.advance(highestValue: -10, overThreshold: false, by: 1, settings: settings)
         pool.advance(highestValue: -10, overThreshold: false, by: 1, settings: settings)
-        // 5 per second, plus 0.2 per point below zero.
-        #expect(pool.points == 77)
+        // 5 per second: 0.2 per point below zero is less here.
+        #expect(pool.points == 75)
+        pool.advance(highestValue: -50, overThreshold: false, by: 1, settings: settings)
+        #expect(pool.points == 85)
     }
 
-    @Test func anEmptyPoolDetectsUntilItIsFullAgain() {
+    @Test func aValueOverTheThresholdEmptiesThePool() {
         var pool = StealthPointPool(settings: settings)
-        pool.advance(highestValue: 20, overThreshold: false, by: 2, settings: settings)
-        #expect(pool.isExposed)
-        #expect(pool.detects(value: 1, isSneaking: true, wasDetected: false, settings: settings))
-        #expect(!pool.detects(value: -5, isSneaking: true, wasDetected: false, settings: settings))
-
-        pool.advance(highestValue: 0, overThreshold: false, by: 10, settings: settings)
-        pool.advance(highestValue: 0, overThreshold: false, by: 19, settings: settings)
-        #expect(pool.isExposed)
-        pool.advance(highestValue: 0, overThreshold: false, by: 1, settings: settings)
-        #expect(!pool.isExposed)
-    }
-
-    @Test func aValueOverTheThresholdDetectsAtOnce() {
-        var pool = StealthPointPool(settings: settings)
-        #expect(pool.detects(value: 25, isSneaking: false, wasDetected: false, settings: settings))
-        #expect(!pool.detects(value: 25, isSneaking: true, wasDetected: false, settings: settings))
         pool.advance(highestValue: 80, overThreshold: true, by: 0.1, settings: settings)
         #expect(pool.points == 0)
-        #expect(pool.isExposed)
+    }
+
+    @Test func aNoticedTargetDoesNotRefill() {
+        var pool = StealthPointPool(settings: settings)
+        pool.advance(highestValue: 10, overThreshold: false, by: 1, settings: settings)
+        pool.advance(
+            highestValue: -10, overThreshold: false, by: 60, settings: settings, mayRefill: false
+        )
+        #expect(pool.points == 70)
+    }
+
+    @Test func aHitAndAnEventCapThePoints() {
+        var pool = StealthPointPool(settings: settings)
+        pool.cap(at: CombatTargetTrack.eventPointCap)
+        #expect(pool.points == 75)
+        pool.cap(at: CombatTargetTrack.hitPointCap)
+        #expect(pool.points == 50)
+        pool.cap(at: CombatTargetTrack.eventPointCap)
+        #expect(pool.points == 50)
     }
 }

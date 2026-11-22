@@ -225,17 +225,18 @@ aggressive when it is hostile to the target or already fighting. Other observers
 alone.
 
 - A positive value drains `value x fCombatStealthPointDrainMult` points per second (3).
-- After `fCombatStealthPointRegenAlertWaitTime` seconds (10) with no positive value, the pool
-  refills at `fCombatStealthPointRegenMin` (5) plus `fCombatStealthPointRegenMult` (0.2) per point
-  below zero, up to `fCombatStealthPointMax` (100).
+- The pool refills only while the target is not noticed, after
+  `fCombatStealthPointRegenAlertWaitTime` seconds (10). The rate is `fCombatStealthPointRegenMin`
+  (5) per second, or `fCombatStealthPointRegenMult` (0.2) per point below zero when that is
+  more, up to `fCombatStealthPointMax` (100).
 - A value at or over `iCombatStealthPointDetectionThreshold` (25), or
   `iCombatStealthPointSneakDetectionThreshold` (70) while sneaking, detects at once and empties
   the pool.
-- At 0 points the target is detected. An observer that detected it keeps it through the alert
-  wait. When the pool starts to refill, the observer loses the target and searches. Until the
-  pool is full again, any positive value detects the target at once.
+- At 0 points the target is detected, and it stays so by the rules of
+  [keeping a combat target](#keeping-a-combat-target). Until the pool is full again, any positive
+  value detects the target at once.
 - When the target lands a blow, its pool waits `fCombatStealthPointRegenAttackedWaitTime` (15)
-  before it refills.
+  before it refills, and holds at most 50 points.
 - A detection event holds the refill for `fCombatStealthPointRegenDetectedEventWaitTime` (10). The
   CK wiki says a projectile that hits something makes a detection event. OpenSky makes one when
   the target's projectile lands and an aggressive observer is in detection range of the impact.
@@ -296,10 +297,12 @@ That includes 0, an event heard and not seen. A teammate further than 4,000 unit
 player is skipped for one of the reasons. An actor whose warning turns into an attack detects
 its target at 100 with a line of sight.
 
-OpenSky keeps one pool per target and one state per pair ([stealth points](#stealth-points)).
-An observer keeps a detected target through the 10 s wait after the last positive value. The
-768-unit limit, the four lost rules, the caps at 50 and 75, and the removal times are not
-built.
+OpenSky keeps one pool and one record per target, shared by every hostile observer, and one
+state per pair ([stealth points](#stealth-points)). The record follows the rules above: the
+768-unit limit, the four lost rules, the caps at 50 and 75, and both removal times. A fighter
+searches for 30 s and then gives up; the 60 s rule only delays the removal of the record. The
+rule for a member below the high process level is not built, because only loaded actors
+observe.
 
 ## Sneak training
 

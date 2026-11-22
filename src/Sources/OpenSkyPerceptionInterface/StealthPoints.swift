@@ -1,7 +1,6 @@
 // Stealth points: one pool per target, like hit points for staying hidden. The
 // highest detection value of any hostile observer drains it; it refills after a
-// wait. At 0 the target is detected; until the pool is full, any positive value
-// detects it again.
+// wait. At 0 the target is detected (`CombatTargetTrack`).
 // CK wiki "Stealth Points" (<https://ck.uesp.net/wiki/Stealth_Points>). See
 // docs/engine/detection.md.
 
@@ -16,7 +15,7 @@ nonisolated public struct StealthPointSettings: Equatable, Sendable {
     public var drainMult: Float = 3
     /// `fCombatStealthPointRegenMin`: points gained per second at a detection of 0.
     public var regenMin: Float = 5
-    /// `fCombatStealthPointRegenMult`: extra points per second per point below 0.
+    /// `fCombatStealthPointRegenMult`: points per second per point below 0, when more.
     public var regenMult: Float = 0.2
     /// `fCombatStealthPointRegenAlertWaitTime`: seconds without a positive detection
     /// before the pool refills.
@@ -71,19 +70,16 @@ nonisolated public struct StealthPointPool: Equatable, Sendable {
     public private(set) var points: Float
     /// Seconds left before the pool may refill.
     public private(set) var refillWait: Float = 0
-    /// The pool ran out and has not refilled yet: observers that perceive the target,
-    /// or detected it before, detect it.
-    public private(set) var isExposed = false
-
     public init(settings: StealthPointSettings = .vanilla) {
         points = max(0, settings.maximum)
     }
 
     /// One step. `highestValue` is the highest detection value of any observer, and
-    /// `overThreshold` says whether one passed the instant-detection threshold.
+    /// `overThreshold` says whether one passed the instant-detection threshold. The
+    /// pool refills only while `mayRefill` holds: the game refills a lost target only.
     public mutating func advance(
         highestValue: Float, overThreshold: Bool, by seconds: Float,
-        settings: StealthPointSettings
+        settings: StealthPointSettings, mayRefill: Bool = true
     ) {
         guard seconds.isFinite, seconds > 0 else { return }
         let maximum = max(0, settings.maximum)
@@ -93,16 +89,13 @@ nonisolated public struct StealthPointPool: Equatable, Sendable {
         if highestValue > 0 {
             points = max(0, points - highestValue * max(0, settings.drainMult) * seconds)
             refillWait = max(refillWait, settings.refillWait, 0)
+        } else if !mayRefill {
+            return
         } else if refillWait > 0 {
             refillWait = max(0, refillWait - seconds)
         } else {
-            let rate = max(0, settings.regenMin) + max(0, settings.regenMult) * -highestValue
+            let rate = max(0, settings.regenMin, settings.regenMult * -highestValue)
             points = min(maximum, points + rate * seconds)
-        }
-        if points <= 0 {
-            isExposed = true
-        } else if points >= maximum {
-            isExposed = false
         }
     }
 
@@ -112,15 +105,9 @@ nonisolated public struct StealthPointPool: Equatable, Sendable {
         refillWait = max(refillWait, seconds)
     }
 
-    /// Whether one observer detects the target now. `value` is its detection value
-    /// and `wasDetected` its state before this step. Once the alert wait ends the
-    /// observer loses the target and searches while the pool refills.
-    public func detects(
-        value: Float, isSneaking: Bool, wasDetected: Bool, settings: StealthPointSettings
-    ) -> Bool {
-        if value >= settings.threshold(isSneaking: isSneaking) {
-            return true
-        }
-        return isExposed && (value > 0 || (wasDetected && refillWait > 0))
+    /// Lowers the points to `limit`, as a hit by the target or a detection event does.
+    public mutating func cap(at limit: Float) {
+        guard limit.isFinite else { return }
+        points = min(points, max(0, limit))
     }
 }
