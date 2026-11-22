@@ -27,6 +27,9 @@ Values from `openskycli gmst list fsneak` on the local install:
 | `fSneakPerceptionSkillMin` | 0 | Noticer skill at skill 0 |
 | `fSneakPerceptionSkillMax` | 100 | Noticer skill at skill 100 |
 | `iSoundLevelSilent` | 10 | Action sound of a silent weapon or spell |
+| `iSoundLevelNormal` | 50 | Action sound at the normal level |
+| `iSoundLevelLoud` | 100 | Action sound at the loud level |
+| `iSoundLevelVeryLoud` | 200 | Action sound at the very loud level |
 | `fSneakLightMult` | 0.33 | Scales the light term |
 | `fSneakLightExteriorMult` | 0.5 | Scales the light level outdoors, in place of `fSneakLightMult` |
 | `fDetectionSneakLightMod` | 15 | Added to the scaled light level |
@@ -59,9 +62,6 @@ cone, how loud a crouching target is, how fast a guard decides, or how long it t
 | `sneakMovementMult` | 0.75 | Movement noise while crouched |
 | `sprintMovementMult` | 3 | Movement noise while sprinting |
 | `viewConeHalfAngleDegrees` | 95 | Half the view cone angle |
-| `normalActionSound` | 25 | Action sound at the normal level |
-| `loudActionSound` | 50 | Action sound at the loud level |
-| `veryLoudActionSound` | 100 | Action sound at the very loud level |
 | `fullLightLuminance` | 1 | Light luminance that reads as light level 100 |
 | `fullDetectionValue` | 25 | Value at which the level climbs at full speed |
 | `gainPerSecond` | 100 | Level gained per second at full speed |
@@ -74,9 +74,8 @@ UESP names three of these as game settings: `fSneakDistanceAttenuationExponent`,
 those editor IDs. When a secondary source and the shipped game disagree, the game wins, so these
 stay OpenSky constants.
 
-The install has a game setting for the silent sound level only. The other three levels have no
-`iSoundLevel*` setting in `Skyrim.esm`, so their values are ours. They keep the order the record
-enum implies: silent, normal, loud, very loud.
+`Skyrim.esm` holds a game setting for the silent sound level only. The other three levels use
+the game's own defaults ([detection events](/engine/detection-events.md#sound-levels)).
 
 ## Inputs
 

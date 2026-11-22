@@ -45,6 +45,8 @@ nonisolated public enum AgentWorldChange: Equatable, Sendable {
     case decal(reference: String, height: Float)
     /// Places a new reference of a base object at another reference, as `PlaceAtMe` does.
     case spawn(base: String, anchor: String)
+    /// A sound event of the player at the player's feet, as `CreateDetectionEvent` makes.
+    case detectionEvent(level: Float)
 
     static func parse(_ name: String, _ args: AgentArguments) throws(AgentFailure) -> Self? {
         switch name {
@@ -73,8 +75,19 @@ nonisolated public enum AgentWorldChange: Equatable, Sendable {
         case "decal": try parseDecal(args)
         case "spawn":
             try .spawn(base: args.string("base"), anchor: args.optionalString("at") ?? "player")
-        default: nil
+        default: try parseDetectionEvent(name, args)
         }
+    }
+
+    private static func parseDetectionEvent(
+        _ name: String, _ args: AgentArguments
+    ) throws(AgentFailure) -> Self? {
+        guard name == "detectionevent" else { return nil }
+        let level = try args.float("level")
+        guard level >= 0 else {
+            throw AgentFailure(.invalidArgument, "level must be 0 or more")
+        }
+        return .detectionEvent(level: level)
     }
 
     private static func parseModifier(_ args: AgentArguments) throws(AgentFailure) -> Self {

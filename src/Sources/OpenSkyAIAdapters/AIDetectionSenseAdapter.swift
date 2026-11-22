@@ -93,6 +93,7 @@ extension AIDetectionSenseAdapter {
             isInvisible: (actorValue(Self.invisibilityIndex, of: .player) ?? 0) > 0,
             movementMultiplier: playerPerk(1, at: .modDetectionMovement)
         )
+        traits.castingSound = sound.playerCastingSound()
         traits.effectiveSneakSkill = playerEffectiveSneak()
         traits.interiorLightCap = interiorLightCap()
         if let size = game.effectsWorld.race(of: .player)?.details.properties?.size {

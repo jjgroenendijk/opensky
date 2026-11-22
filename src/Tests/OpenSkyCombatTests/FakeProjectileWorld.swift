@@ -115,6 +115,11 @@ final class FakeProjectileWorld: ProjectileWorld {
         impacts.append(impact)
     }
 
+    var sounds: [(level: UInt32?, shooter: ReferenceKey)] = []
+    func noteProjectileSound(level: UInt32?, at _: SIMD3<Float>, by shooter: ReferenceKey) {
+        sounds.append((level, shooter))
+    }
+
     @discardableResult
     func consumeArrow(_ ammunition: FormID) -> Bool {
         guard arrowCount > 0 else { return false }

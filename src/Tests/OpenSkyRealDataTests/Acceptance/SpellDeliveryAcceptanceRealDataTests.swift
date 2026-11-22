@@ -135,6 +135,7 @@ struct SpellDeliveryAcceptanceRealDataTests {
         }
 
         func playProjectileImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {}
+        func noteProjectileSound(level _: UInt32?, at _: SIMD3<Float>, by _: ReferenceKey) {}
         @discardableResult
         func consumeArrow(_ ammunition: FormID) -> Bool {
             false

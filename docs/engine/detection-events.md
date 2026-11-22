@@ -74,7 +74,34 @@ target's last sound event:
 
 ## In OpenSky
 
-A landed projectile makes OpenSky's only detection event
-([stealth points](/engine/detection.md#stealth-points)).
+OpenSky keeps the last sound event of each actor and drops it after 5 seconds. The player is
+the only detection target, so only the player's events are checked.
 
-- [WARNING] No actor keeps a last sound event, so the check above does not run.
+| Action | Level |
+| --- | --- |
+| A spell cast | The casting sound level of the spell's first effect, for as long as the cast lasts |
+| A landed projectile | The sound level of its impact data, or Normal without one |
+| The explosion of a projectile | The explosion record's sound level, or Normal without one |
+| A summon | Loud, at the place of the summon |
+| `ObjectReference.CreateDetectionEvent` | The level given, at the reference |
+
+An aggressive observer whose formula value is not positive checks the event:
+
+- The event must be within 1,536 units, or 3,072 units for a very loud one.
+- The sound-only formula runs with the event's level as the Action sound, at the distance to
+  the event. A wall between the observer's eyes and the event multiplies the sound by
+  `fSneakSoundLosMult`. When the place is in view, the fixed light level adds a sight term.
+- On a positive result an unaware observer becomes suspicious, the event is the place it
+  searches, and the target's [stealth points](/engine/detection.md#stealth-points) wait. The
+  points wait once for one event. The observer stays suspicious for as long as the event lasts.
+
+`openskycli game state actors` shows the player's live event in an actor's `detection` as
+`soundEvent`, with its `level` and its `age` in seconds. `game debug detectionevent <level>`
+makes an event of the player at the player's feet.
+
+- [WARNING] A flying projectile makes no event, and the check of a target's projectiles within
+  1,024 units is not built.
+- [WARNING] An explosion that a spell or a script places without a projectile makes no event.
+- [WARNING] An observer that is not aggressive does not check an event. In the game every
+  observer does.
+- [INFO] The pair's detection value stays negative after a heard event. The game sets it to 0.

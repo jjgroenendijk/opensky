@@ -270,6 +270,22 @@ struct PapyrusNativeTrapTests {
         #expect(trapWorld.impulses.count == 1)
     }
 
+    @Test func createDetectionEventSoundsAtTheReceiverForItsOwner() throws {
+        let fixture = try Fixture.make()
+        let trapWorld = FakeTrapWorld()
+        fixture.session.bridge.ports.trapWorld = trapWorld
+        let result = fixture.call(
+            "CreateDetectionEvent", arguments: [.object(fixture.receiver), .integer(100)]
+        )
+        #expect(result == .returned(.none))
+        #expect(trapWorld.detectionEvents.map(\.level) == [100])
+        _ = fixture.call("CreateDetectionEvent", arguments: [.object(fixture.receiver)])
+        #expect(trapWorld.detectionEvents.last?.level == 0)
+        #expect(PapyrusWorldFixture.isInvalidArguments(
+            fixture.call("CreateDetectionEvent", arguments: [.none])
+        ))
+    }
+
     @Test func pushActorAwayKnocksDownFromTheReceiver() throws {
         let fixture = try Fixture.make()
         let trapWorld = FakeTrapWorld()

@@ -20,7 +20,6 @@ extension PapyrusNativeFunctions.TrapStubsNatives {
     }
 
     private static let trapStubs: [TrapStub] = [
-        TrapStub("ObjectReference", "CreateDetectionEvent", .none),
         TrapStub("ObjectReference", "SetActorCause", .none),
         TrapStub("ObjectReference", "CalculateEncounterLevel", .integer(1)),
         TrapStub("ObjectReference", "InterruptCast", .none),

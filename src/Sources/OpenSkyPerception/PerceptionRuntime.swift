@@ -37,6 +37,8 @@ public final class PerceptionRuntime {
     var tracks: [ReferenceKey: CombatTargetTrack] = [:]
     /// Pairs whose observer has the target detected through the pool.
     var detectedPairs: Set<DetectionPairKey> = []
+    /// Each target's last sound event.
+    var soundEvents: [ReferenceKey: HeardSoundEvent] = [:]
 
     /// Every tracked pair's state, keyed by the pair.
     public internal(set) var pairs: [DetectionPairKey: DetectionPairState] = [:]
@@ -52,7 +54,7 @@ public final class PerceptionRuntime {
     /// Whole fixed steps run since construction.
     private(set) var stepCount = 0
 
-    private weak var world: (any PerceptionWorld)?
+    private(set) weak var world: (any PerceptionWorld)?
     private var accumulator: Double = 0
     /// The roster in key order, kept between frames while its members stay.
     private var observerOrder = ReferenceKeyOrder()
@@ -120,6 +122,7 @@ public final class PerceptionRuntime {
         // actors and re-collecting it eight times would cost eight times as much
         // for a world that moved by a fraction of a step.
         refreshRoster(world: world)
+        noteCastingSounds()
         var steps = 0
         while accumulator >= Double(Self.fixedStepSeconds), steps < Self.maximumStepsPerAdvance {
             accumulator -= Double(Self.fixedStepSeconds)
@@ -139,6 +142,7 @@ public final class PerceptionRuntime {
         pools = [:]
         tracks = [:]
         detectedPairs = []
+        soundEvents = [:]
         observers = []
         targets = []
         order = []
@@ -220,6 +224,7 @@ public final class PerceptionRuntime {
             evaluate(key: key, observer: observer, target: target, world: world)
         }
         cursor = (cursor + count) % order.count
+        ageSoundEvents()
         updateStealthPoints(world: world)
     }
 
@@ -292,6 +297,7 @@ public final class PerceptionRuntime {
             settings: settings
         )
         lastEvaluatedStep[key] = stepCount
+        checkSoundEvent(key: key, observer: observer, target: target, inputs: inputs)
     }
 }
 

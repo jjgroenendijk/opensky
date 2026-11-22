@@ -49,14 +49,23 @@ public struct CombatOutcomesAdapter {
 }
 
 extension CombatOutcomesAdapter {
+    /// A record without a sound level sounds at the normal level.
+    private func noteSoundEvent(owner: ReferenceKey, level: UInt32?, at position: SIMD3<Float>) {
+        guard let runtime = game.perception.runtime else { return }
+        let level = level.flatMap(DetectionSoundLevel.init(rawValue:)) ?? .normal
+        runtime.noteSoundEvent(
+            owner: owner, level: runtime.settings.actionSound(for: level), at: position
+        )
+    }
+
     /// Runs what a combat step asked of the session.
     public func run(_ commands: [CombatCommand]) {
         for command in commands {
             switch command {
             case let .showNotification(text): game.hud.showNotification(text)
             case let .playImpact(impact, position): motion.playImpact(impact, at: position)
-            case let .detectionEvent(owner, position):
-                game.perception.runtime?.noteDetectionEvent(owner: owner, at: position)
+            case let .detectionEvent(owner, level, position):
+                noteSoundEvent(owner: owner, level: level, at: position)
             case let .removeReference(key): game.worldState.reset(key)
             case .resetRagdolls: game.ragdoll.runtime?.reset()
             case let .setCombatMusic(active): game.audio.musicDirector?.setCombatActive(active)

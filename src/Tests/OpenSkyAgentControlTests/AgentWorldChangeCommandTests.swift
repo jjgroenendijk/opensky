@@ -54,6 +54,8 @@ struct AgentWorldChangeCommandTests {
         #expect(try parse(["spawn", "1A2B", "--at", "target"])
             == .world(.spawn(base: "1A2B", anchor: "target")))
         #expect(throws: (any Error).self) { try parse(["decal", "target", "--height", "-5"]) }
+        #expect(try parse(["detectionevent", "50"]) == .world(.detectionEvent(level: 50)))
+        #expect(throws: (any Error).self) { try parse(["detectionevent", "-1"]) }
     }
 
     @Test func aConditionReadNamesItsFunctionReferenceAndParameter() throws {

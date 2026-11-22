@@ -27,6 +27,7 @@ public protocol EffectsTrapControlHost: AnyObject, SendableMetatype {
     var hazards: any HazardPort { get }
     var magic: any MagicPort { get }
     var magicWorld: any MagicWorldPort { get }
+    var perception: any PerceptionPort { get }
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
@@ -180,6 +181,12 @@ extension EffectsTrapControlAdapter {
 
     public func staggerActor(_ actor: ReferenceKey, magnitude: Float) -> Bool {
         game.magicWorld.staggerActor(actor, magnitude: magnitude)
+    }
+
+    public func createDetectionEvent(
+        owner: ReferenceKey, level: Float, at position: SIMD3<Float>
+    ) {
+        game.perception.runtime?.noteSoundEvent(owner: owner, level: level, at: position)
     }
 
     /// Any other base becomes `count` spawned references, and the last one is answered.

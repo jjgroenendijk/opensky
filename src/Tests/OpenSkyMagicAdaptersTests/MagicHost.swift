@@ -123,7 +123,13 @@ final class MagicHost: MagicWorldHost, MagicArchetypeEffectsHost, MagicSpellDeli
         fakeWorldState
     }
 
+    var fakeGameSession: FakeGameSessionPort?
     var gameSession: (any GameSessionPort)? {
-        nil
+        fakeGameSession
+    }
+
+    let fakePerception = FakePerceptionPort()
+    var perception: any PerceptionPort {
+        fakePerception
     }
 }

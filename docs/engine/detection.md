@@ -227,11 +227,11 @@ alone.
   value detects the target at once.
 - When the target lands a blow, its pool waits `fCombatStealthPointRegenAttackedWaitTime` (15)
   before it refills, and holds at most 50 points.
-- A detection event holds the refill for `fCombatStealthPointRegenDetectedEventWaitTime` (10). The
-  CK wiki says a projectile that hits something makes a detection event. OpenSky makes one when
-  the target's projectile lands and an aggressive observer is in detection range of the impact.
-  The event also puts each such observer in its Alert state: an unaware observer becomes
-  suspicious of the target, and the impact is the place it searches.
+- A detection event holds the refill for `fCombatStealthPointRegenDetectedEventWaitTime` (10).
+  In OpenSky the hold starts when an aggressive observer hears the target's
+  [sound event](/engine/detection-events.md#in-opensky). The event also puts that observer in
+  its Alert state: an unaware observer becomes suspicious of the target, and the place of the
+  event is the place it searches.
 
 The pool sets the pair's state, which combat reads. Crime witnesses read the level's own state,
 because the wiki says the pool is for aggression, not for seeing a theft.

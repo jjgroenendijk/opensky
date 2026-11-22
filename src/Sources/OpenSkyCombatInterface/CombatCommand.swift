@@ -7,9 +7,9 @@ nonisolated public enum CombatCommand: Equatable, Sendable {
     case showNotification(String)
     /// The impact sound and visual effect of a melee or projectile hit.
     case playImpact(ResolvedMeleeImpact, at: SIMD3<Float>)
-    /// A projectile of `owner` landed: observers near it may hear it (CK wiki
-    /// "Category:Detection", Detection Events).
-    case detectionEvent(owner: ReferenceKey, at: SIMD3<Float>)
+    /// A projectile of `owner` landed or exploded: observers near it may hear it.
+    /// `level` is the record's sound level: 0 loud, 1 normal, 2 silent, 3 very loud.
+    case detectionEvent(owner: ReferenceKey, level: UInt32?, at: SIMD3<Float>)
     /// Drops every stored change for the reference, which removes a spawned one.
     case removeReference(ReferenceKey)
     case resetRagdolls

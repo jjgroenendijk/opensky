@@ -267,7 +267,9 @@ extension AgentActorReadoutAdapter {
     private func detection(by key: ReferenceKey) -> AgentJSON {
         guard let pair = game.perception.runtime?.state(observer: key, target: .player)
         else { return .null }
+        let event = game.perception.runtime?.soundEvent(of: .player)
         return .object([
+            "soundEvent": event.map { ["level": .init($0.level), "age": .init($0.age)] } ?? .null,
             "level": .init(pair.level),
             "value": .init(pair.breakdown.value),
             "sound": .init(pair.breakdown.soundFactor),

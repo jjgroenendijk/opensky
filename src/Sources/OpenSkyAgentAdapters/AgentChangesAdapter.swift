@@ -25,6 +25,7 @@ public protocol AgentChangesHost: AnyObject, SendableMetatype {
     var combatWorld: any CombatWorldPort { get }
     var effects: any EffectsPort { get }
     var gameSession: (any GameSessionPort)? { get }
+    var perception: any PerceptionPort { get }
     var playerGrab: any PlayerGrabPort { get }
     var scripts: any ScriptPort { get }
 }
@@ -49,6 +50,7 @@ extension AgentChangesAdapter {
         case let .grab(reference): try grab(reference)
         case let .decal(reference, height): try placeDecal(on: reference, height: height)
         case let .spawn(base, anchor): try spawn(base, at: anchor)
+        case let .detectionEvent(level): try makeDetectionEvent(level)
         }
     }
 
@@ -256,5 +258,14 @@ extension AgentChangesAdapter {
             throw AgentFailure(.failed, "\(base) could not be placed")
         }
         return try ["ref": formJSON(placed), "base": .string(base)]
+    }
+
+    private func makeDetectionEvent(_ level: Float) throws(AgentFailure) -> AgentJSON {
+        guard
+            let runtime = game.perception.runtime,
+            let feet = game.gameSession?.walkController.feetPosition
+        else { throw hub.notReady() }
+        runtime.noteSoundEvent(owner: .player, level: level, at: feet)
+        return ["level": .init(level), "position": .init(feet)]
     }
 }

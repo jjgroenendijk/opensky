@@ -61,9 +61,10 @@ struct CombatHitPartsTests {
         coordinator.meleeWorld.playMeleeImpact(impact, at: at)
         #expect(coordinator.takeCommands() == [.playImpact(impact, at: at)])
         coordinator.projectileWorld.playProjectileImpact(impact, at: at)
+        coordinator.projectileWorld.noteProjectileSound(level: 3, at: at, by: .player)
         coordinator.projectileWorld.showArcheryNotice("No arrows")
         #expect(coordinator.takeCommands() == [
-            .playImpact(impact, at: at), .detectionEvent(owner: .player, at: at),
+            .playImpact(impact, at: at), .detectionEvent(owner: .player, level: 3, at: at),
             .showNotification("No arrows")
         ])
     }

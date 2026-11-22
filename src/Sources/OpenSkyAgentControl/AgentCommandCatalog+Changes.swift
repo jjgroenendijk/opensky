@@ -74,6 +74,14 @@ nonisolated extension AgentCommandCatalog {
             "debug.spawn", "Place a new reference of a base object, as PlaceAtMe does.",
             positionals: [requiredText("base", "The base object. " + formHelp)],
             options: [value("at", "ref", "Where to place it. Default: player.")]
+        ),
+        command(
+            "debug.detectionevent",
+            "Make a sound event of the player at the player's feet, for detection.",
+            positionals: [required(
+                "level",
+                "The sound level: 10 silent, 50 normal, 200 very loud."
+            )]
         )
     ]
 
