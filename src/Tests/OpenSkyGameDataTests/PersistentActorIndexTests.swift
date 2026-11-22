@@ -10,12 +10,12 @@ import Testing
 struct PersistentActorIndexTests {
     private static let cell: UInt32 = 0x100
 
-    private static func actor(_ formID: UInt32, base: UInt32) -> Data {
+    private static func actor(_ formID: UInt32, base: UInt32, flags: UInt32 = 0) -> Data {
         var name = Data()
         name.appendUInt32(base)
         let data = ESMFixture.f32([0, 0, 0, 0, 0, 0])
         return ESMFixture.record(
-            "ACHR", formID: formID,
+            "ACHR", formID: formID, flags: flags,
             data: ESMFixture.field("NAME", name) + ESMFixture.field("DATA", data)
         )
     }
@@ -34,6 +34,7 @@ struct PersistentActorIndexTests {
         let persistent = ESMFixture.childGroup(
             parent: cell, groupType: 8,
             contents: actor(0x200, base: 0x50) + actor(0x201, base: 0x60) + actor(0x202, base: 0x60)
+                + actor(0x205, base: 0x90) + actor(0x206, base: 0x90, flags: 0x800)
                 + reference(0x204, base: 0x80)
         )
         let temporary = ESMFixture.childGroup(
@@ -59,7 +60,8 @@ struct PersistentActorIndexTests {
                 fromPlugin: "Test.esm"
             )))
         }
-        #expect(try found == [key(0x50): key(0x200)])
+        // 0x60 has two enabled copies; 0x90 has one enabled and one that starts disabled.
+        #expect(try found == [key(0x50): key(0x200), key(0x90): key(0x205)])
         #expect(try LocationStore(plugins: plugins).uniqueActorReferences[key(0x50)] == key(0x200))
     }
 
@@ -67,7 +69,7 @@ struct PersistentActorIndexTests {
         let plugins = try [(name: "Test.esm", file: Self.plugin())]
         let index = RecordIndex(plugins: plugins, recordTypes: RecordIndex.referenceRecordTypes)
         let placements = PersistentActorIndex.placements(plugins: plugins, index: index)
-        #expect(placements.map(\.formID.rawValue) == [0x200, 0x201, 0x202, 0x204])
-        #expect(placements.last?.actorBase == nil)
+        #expect(placements.map(\.formID.rawValue) == [0x200, 0x201, 0x202, 0x204, 0x205, 0x206])
+        #expect(placements.first { $0.formID.rawValue == 0x204 }?.actorBase == nil)
     }
 }

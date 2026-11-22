@@ -71,6 +71,23 @@ nonisolated public struct QuestReferenceSearch: Sendable {
         return !actor.details.locationRefTypes.isEmpty && deadBases.contains(actor.base)
     }
 
+    /// The one loaded actor placed from `base` by the base's own plugin, or nil with
+    /// none or several. A unique actor placed as a temporary reference is in no
+    /// persistent index, so only the loaded cells know it.
+    public func loadedActor(ofBase base: ReferenceKey) -> ReferenceKey? {
+        guard case let .plugin(plugin, objectID) = base else { return nil }
+        let found = references.sortedEntries().filter { entry in
+            guard
+                let actor = entry.placedActor, case let .plugin(name, _) = entry.key
+            else { return false }
+            return name == plugin && actor.base.rawValue & Self.objectIDMask == objectID
+        }
+        return found.count == 1 ? found[0].key : nil
+    }
+
+    /// The low 24 bits of a FormID, without the plugin index.
+    private static let objectIDMask: UInt32 = 0x00FF_FFFF
+
     public func deletes(_ key: ReferenceKey) -> Bool {
         MainActor.assumeIsolated { isDeleted(key) }
     }
