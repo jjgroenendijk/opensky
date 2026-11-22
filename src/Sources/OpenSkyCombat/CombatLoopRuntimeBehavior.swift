@@ -319,7 +319,7 @@ extension CombatLoopRuntime {
         }
         return world.startCombatKillMove(
             by: actor.key, on: target.key, damage: damage,
-            action: KillMoveAttempt.action(hand: swing.hand, power: false)
+            action: KillMoveAttempt.action(hand: .right, power: true)
         )
     }
 
