@@ -364,10 +364,6 @@ public struct NPCMovementRuntime {
         transform(for: entry.key) ?? snapshot().resolvedState(for: entry).transform
     }
 
-    public func isWalking(_ actor: ReferenceKey) -> Bool {
-        movers[actor] != nil
-    }
-
     /// Parks an actor at `transform`, as root motion moves one that stands still. An actor
     /// that never moved is parked from its authored placement first.
     public mutating func place(_ start: NPCFaceStart, at transform: ReferenceTransformOverride) {
@@ -559,6 +555,22 @@ public struct NPCMoverEmissions {
     var doors: [(actor: ReferenceKey, reference: FormID)] = []
     /// A fall of the mover's actor that ended this step.
     public var landing: WalkLanding?
+}
+
+extension NPCMovementRuntime {
+    public func isWalking(_ actor: ReferenceKey) -> Bool {
+        movers[actor] != nil
+    }
+
+    /// True when `actor` already walks to `target` with the same gait. A repeated order
+    /// then keeps that walk, with its count of steps that made no progress.
+    public func isWalking(
+        _ actor: ReferenceKey, to target: SIMD3<Float>, gait: LocomotionGait?
+    ) -> Bool {
+        guard let mover = movers[actor], mover.state == .moving, mover.preferredGait == gait
+        else { return false }
+        return simd_distance(mover.path.target, target) <= NPCMover.waypointTolerance
+    }
 }
 
 public struct NPCMoverAdvanceOutcome {

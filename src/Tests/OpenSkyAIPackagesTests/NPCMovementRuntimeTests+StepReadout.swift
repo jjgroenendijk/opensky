@@ -2,12 +2,32 @@
 
 @testable import OpenSkyAIPackages
 import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyWorldInterface
 import simd
 import Testing
 
 extension NPCMovementRuntimeTests {
+    /// A second order to the same place keeps the running walk; a new place, another
+    /// gait, or a stopped walk starts a new one.
+    @Test
+    func aRepeatedOrderToTheSamePlaceKeepsTheWalk() {
+        let target = SIMD3<Float>(400, 0, 0)
+        var runtime = NPCMovementRuntime()
+        let started = runtime.start(
+            Self.start(actor: actor, path: Self.path(waypoints: [.zero, target], target: target))
+        )
+        #expect(started)
+        #expect(runtime.isWalking(actor, to: target + SIMD3(5, 0, 0), gait: nil))
+        #expect(!runtime.isWalking(actor, to: target + SIMD3(50, 0, 0), gait: nil))
+        #expect(!runtime.isWalking(actor, to: target, gait: .run))
+        let other = ReferenceKey.plugin(name: "movement.esm", objectID: 9)
+        #expect(!runtime.isWalking(other, to: target, gait: nil))
+        let stopped = runtime.stop(actor)
+        #expect(stopped && !runtime.isWalking(actor, to: target, gait: nil))
+    }
+
     @Test
     func aWalkStepReportsItsMoveAndItsLongBody() throws {
         let path = Self.path(
