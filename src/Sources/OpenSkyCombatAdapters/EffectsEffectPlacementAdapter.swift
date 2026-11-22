@@ -56,7 +56,7 @@ extension EffectsEffectPlacementAdapter {
             let look = renderer.camera.target - renderer.camera.eye
             return Self.transform(
                 feet: gameSession.locomotion.status.feetPosition,
-                yaw: atan2(look.y, look.x)
+                heading: CombatActorObservation.heading(fromYaw: atan2(look.y, look.x))
             )
         }
         guard let observed = game.actorWorld.combatActor(key: actor) else {
@@ -68,7 +68,7 @@ extension EffectsEffectPlacementAdapter {
                 )
             }
         }
-        return Self.transform(feet: observed.feet, yaw: observed.facing)
+        return Self.transform(feet: observed.feet, heading: observed.heading)
     }
 
     /// The pose in model space, placed where the actor's reference stands, as a script's
@@ -99,8 +99,9 @@ extension EffectsEffectPlacementAdapter {
         game.combat.explosions.detonate(spec, at: position, cause: .spell)
     }
 
-    private static func transform(feet: SIMD3<Float>, yaw: Float) -> float4x4 {
-        var matrix = float4x4(simd_quatf(angle: yaw, axis: SIMD3(0, 0, 1)))
+    /// An actor's model looks along +Y, and a heading turns it clockwise.
+    static func transform(feet: SIMD3<Float>, heading: Float) -> float4x4 {
+        var matrix = float4x4(ActorGraphCore.worldRotation(placementRotationZ: heading))
         matrix.columns.3 = SIMD4(feet, 1)
         return matrix
     }

@@ -103,7 +103,7 @@ struct AIActsSensesTests {
     /// A placement's heading is clockwise from north, so heading 0 looks along +Y.
     @Test func anObserverLooksAlongItsPlacementHeading() throws {
         host.fakeActorWorld.combatActorsResult = [
-            CombatActorObservation(key: Self.actor, feet: .zero, facing: 0)
+            CombatActorObservation(key: Self.actor, feet: .zero, heading: 0)
         ]
         host.fakeFactions.hostilityResult = .hostile
         host.fakeDragonFlightWorld.isFlyingResult = false

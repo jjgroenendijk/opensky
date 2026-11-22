@@ -66,6 +66,17 @@ struct CombatReportsTests {
         #expect(host.fakeCinematicCamera.playKillCamCalls.count == 1)
     }
 
+    /// An actor placed with heading 0 looks north, a yaw of a quarter turn.
+    @Test func anActorsAnchorTurnsWithItsYaw() {
+        host.gameSession = FakeGameSessionPort()
+        host.fakeActorWorld.combatActorResult = CombatActorObservation(
+            key: Self.foe, feet: SIMD3(1, 2, 3), heading: 0
+        )
+        let anchor = cinematic.cinematicAnchor(of: Self.foe)
+        #expect(anchor?.position == SIMD3(1, 2, 3))
+        #expect(anchor?.yaw == .pi / 2)
+    }
+
     @Test func withoutASessionTheCameraHasNoAnchors() {
         let camera = cinematic
         #expect(camera.anchorPosition(of: Self.foe) == nil)

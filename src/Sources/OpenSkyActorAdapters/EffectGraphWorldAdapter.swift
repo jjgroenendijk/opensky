@@ -56,7 +56,7 @@ extension EffectGraphWorldAdapter: EffectGraphWorld {
         guard let observed = game.actorWorld.combatActor(key: actor) else { return nil }
         let context = BehaviorCharacterContext(
             worldPosition: observed.feet,
-            worldRotation: ActorGraphCore.worldRotation(placementRotationZ: observed.facing)
+            worldRotation: ActorGraphCore.worldRotation(placementRotationZ: observed.heading)
         )
         return SubGraphCharacter(context: context, variables: nil)
     }

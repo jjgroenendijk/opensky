@@ -107,7 +107,7 @@ public final class FakeCombatWorld: CombatLoopWorld {
             key: previous.key,
             feet: feet,
             capsule: previous.capsule,
-            facing: previous.facing,
+            heading: previous.heading,
             scale: previous.scale,
             isDead: previous.isDead,
             name: previous.name
@@ -122,7 +122,7 @@ public final class FakeCombatWorld: CombatLoopWorld {
             key: previous.key,
             feet: previous.feet,
             capsule: previous.capsule,
-            facing: previous.facing,
+            heading: previous.heading,
             scale: previous.scale,
             isDead: true,
             name: previous.name

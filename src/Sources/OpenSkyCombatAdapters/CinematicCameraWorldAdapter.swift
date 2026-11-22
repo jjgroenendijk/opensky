@@ -186,7 +186,7 @@ struct CinematicAnchorReads {
         else { return nil }
         return CinematicAnchor(
             position: actor.feet,
-            yaw: actor.facing,
+            yaw: actor.yaw,
             focusHeight: CinematicAnchor.chestHeight * actor.scale
         )
     }

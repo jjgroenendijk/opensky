@@ -101,7 +101,7 @@ extension ActorGraphWorldAdapter: ActorGraphWorld {
                 let path = graphBase.path
             else { return nil }
             return ActorGraphCandidate(
-                key: actor.key, projectPath: path, feet: actor.feet, rotationZ: actor.facing,
+                key: actor.key, projectPath: path, feet: actor.feet, rotationZ: actor.heading,
                 weight: graphBase.weight, scale: placed.scale
             )
         }

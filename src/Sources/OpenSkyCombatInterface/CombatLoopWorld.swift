@@ -14,11 +14,16 @@ nonisolated public struct CombatActorObservation: Equatable, Sendable {
     public let feet: SIMD3<Float>
     public let capsule: PlayerCapsule
     /// The placement's heading in radians: clockwise from north, as `angleZ`.
-    public let facing: Float
+    public let heading: Float
     /// The same direction as a yaw, counter-clockwise from +X, which the view cone
     /// and the aim of an attack read (docs/engine/player-camera.md).
     public var yaw: Float {
-        .pi / 2 - facing
+        Self.heading(fromYaw: heading)
+    }
+
+    /// Turns a yaw into a heading, and a heading into a yaw: the two mirror each other.
+    public static func heading(fromYaw yaw: Float) -> Float {
+        .pi / 2 - yaw
     }
 
     /// The actor's scale, which multiplies its reach.
@@ -37,7 +42,7 @@ nonisolated public struct CombatActorObservation: Equatable, Sendable {
         key: ReferenceKey,
         feet: SIMD3<Float>,
         capsule: PlayerCapsule = .standard,
-        facing: Float = 0,
+        heading: Float = 0,
         scale: Float = 1,
         isDead: Bool = false,
         name: String = "—"
@@ -45,7 +50,7 @@ nonisolated public struct CombatActorObservation: Equatable, Sendable {
         self.key = key
         self.feet = feet
         self.capsule = capsule
-        self.facing = facing
+        self.heading = heading
         self.scale = scale
         self.isDead = isDead
         label = ActorLabel(name)
@@ -54,7 +59,7 @@ nonisolated public struct CombatActorObservation: Equatable, Sendable {
     public init(
         key: ReferenceKey,
         feet: SIMD3<Float>,
-        facing: Float,
+        heading: Float,
         scale: Float,
         isDead: Bool,
         label: ActorLabel
@@ -62,7 +67,7 @@ nonisolated public struct CombatActorObservation: Equatable, Sendable {
         self.key = key
         self.feet = feet
         capsule = .standard
-        self.facing = facing
+        self.heading = heading
         self.scale = scale
         self.isDead = isDead
         self.label = label

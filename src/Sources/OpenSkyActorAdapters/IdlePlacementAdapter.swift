@@ -103,7 +103,7 @@ extension IdlePlacementAdapter {
             )
         }
         return game.actorWorld.combatActor(key: actor)
-            .map { PairedActorPose(feet: $0.feet, heading: $0.facing) }
+            .map { PairedActorPose(feet: $0.feet, heading: $0.heading) }
     }
 
     public func placePairedActor(_ actor: ReferenceKey, at pose: PairedActorPose) {
