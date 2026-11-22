@@ -9,22 +9,27 @@ import Testing
 struct DetectionTermsTests {
     private let settings = DetectionSettings.synthetic
 
-    @Test func anInteriorAddsItsLightModBeforeTheCap() {
+    @Test func anInteriorTakesItsLightModOffTheLevel() {
         let inside = DetectionInputs(
             distance: 0, isExterior: false, traits: DetectionTargetTraits(lightLevel: 0.5)
         )
-        #expect(DetectionFormula.lightLevel(inputs: inside, settings: settings) == 75)
-        // No exterior halving indoors.
+        #expect(DetectionFormula.lightLevel(inputs: inside, settings: settings) == 25)
         let visual = DetectionFormula.visualFactor(inputs: inside, settings: settings)
-        #expect(abs(visual - 90 * 0.33) < 1e-4)
+        #expect(abs(visual - (25 * 0.33 + 15)) < 1e-4)
         let outside = DetectionInputs(distance: 0, traits: DetectionTargetTraits(lightLevel: 0.5))
         #expect(DetectionFormula.lightLevel(inputs: outside, settings: settings) == 50)
+        #expect(DetectionFormula.visualFactor(inputs: outside, settings: settings) == 40)
+        // A dark room still leaves the fixed part of the light term.
+        let dark = DetectionInputs(
+            distance: 0, isExterior: false, traits: DetectionTargetTraits(lightLevel: 0.1)
+        )
+        #expect(DetectionFormula.visualFactor(inputs: dark, settings: settings) == 15)
     }
 
     @Test func alertAndSleepWeightTheNoticerSkill() {
         var tuned = settings
         tuned.alertMod = MovementSetting(value: 1, source: "test")
-        tuned.sleepBonus = MovementSetting(value: -0.5, source: "test")
+        tuned.sleepMod = MovementSetting(value: -0.5, source: "test")
         var inputs = DetectionInputs(distance: 0, noticerSkill: 40)
         #expect(DetectionFormula.noticerFactor(inputs: inputs, settings: tuned) == 20)
         inputs.observer.isAlert = true
@@ -43,19 +48,34 @@ struct DetectionTermsTests {
     }
 
     @Test func thePlayerSneakerFactorUsesThePlayerDetectionSettings() {
-        var inputs = DetectionInputs(distance: 0, traits: DetectionTargetTraits(sneakSkill: 50))
+        var inputs = DetectionInputs(
+            distance: 0, isSneaking: true, traits: DetectionTargetTraits(sneakSkill: 50)
+        )
         #expect(DetectionFormula.sneakerFactor(inputs: inputs, settings: settings) == 25)
         inputs.isPlayerTarget = true
-        #expect(DetectionFormula.sneakerFactor(inputs: inputs, settings: settings) == 30)
+        #expect(DetectionFormula.sneakerFactor(inputs: inputs, settings: settings) == 15)
     }
 
-    @Test func thePlayerValueNeverFallsBelowTheFloor() {
-        var inputs = DetectionInputs(
-            distance: 0, hasLineOfSight: false,
-            traits: DetectionTargetTraits(sneakSkill: 100), noticerSkill: 0
+    @Test func aTargetThatDoesNotSneakLosesNoSkillTerm() {
+        let standing = DetectionInputs(
+            distance: 0, traits: DetectionTargetTraits(sneakSkill: 100)
         )
-        inputs.isPlayerTarget = true
-        #expect(DetectionFormula.breakdown(inputs: inputs, settings: settings).value == -30)
+        #expect(DetectionFormula.sneakerFactor(inputs: standing, settings: settings) == 0)
+        // A standing target in a dark room, in plain view at arm's length, is seen.
+        let dark = DetectionInputs(
+            distance: 160, isExterior: false,
+            traits: DetectionTargetTraits(lightLevel: 0, sneakSkill: 100)
+        )
+        #expect(DetectionFormula.breakdown(inputs: dark, settings: settings).value > 0)
+    }
+
+    @Test func theValueIsAWholeNumberAndNeverZero() {
+        #expect(DetectionFormula.rounded(0.2) == 1)
+        #expect(DetectionFormula.rounded(7.9) == 7)
+        #expect(DetectionFormula.rounded(0) == -1)
+        #expect(DetectionFormula.rounded(-0.4) == -1)
+        #expect(DetectionFormula.rounded(-3.7) == -3)
+        #expect(DetectionFormula.rounded(.nan) == -1)
     }
 
     @Test func aFlyingObserverReachesFurther() {
@@ -101,16 +121,9 @@ struct DetectionTermsTests {
         #expect(DetectionFormula.visualFactor(inputs: inputs, settings: settings) == 0)
     }
 
-    @Test func invisibilityScalesSightByTheStealthBoySetting() {
+    @Test func anInvisibleTargetIsNeverSeen() {
         let inputs = DetectionInputs(distance: 0, traits: DetectionTargetTraits(isInvisible: true))
         #expect(DetectionFormula.visualFactor(inputs: inputs, settings: settings) == 0)
-        var tuned = settings
-        tuned.stealthBoyMult = MovementSetting(value: 0.5, source: "test")
-        let visible = DetectionFormula.visualFactor(
-            inputs: DetectionInputs(distance: 0), settings: tuned
-        )
-        let half = DetectionFormula.visualFactor(inputs: inputs, settings: tuned)
-        #expect(abs(half - visible * 0.5) < 1e-4)
     }
 
     @Test func anObserverFightingSomeoneElseNoticesLess() {

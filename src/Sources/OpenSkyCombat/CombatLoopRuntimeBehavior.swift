@@ -38,6 +38,7 @@ extension CombatLoopRuntime {
         {
             holdStill(actor.key, world: world)
         }
+        watchAggroRadii(actors, hostility: &hostility, ignoring: ignoring, world: world)
         recruitAssistants(
             among: actors, hostility: &hostility, ignoring: ignoring, world: world
         )

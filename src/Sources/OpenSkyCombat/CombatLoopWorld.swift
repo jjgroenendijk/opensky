@@ -236,6 +236,8 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     ) -> Bool
     /// What `key` makes of the player through factions and relationships.
     func combatReaction(toPlayerOf key: ReferenceKey) -> ActorReaction?
+    /// `key`'s aggro radius, or nil when its AI data switches the behaviour off.
+    func combatAggroRadius(of key: ReferenceKey) -> AggroRadius?
     /// Looses an NPC's arrow. False when it has no arrow or nothing can fly.
     @discardableResult
     func fireCombatArrow(_ shot: CombatArrowShot) -> Bool
@@ -351,5 +353,9 @@ nonisolated extension CombatLoopWorld {
 
     public func combatAssists(_: ReferenceKey, ally _: ReferenceKey) -> Bool {
         false
+    }
+
+    public func combatAggroRadius(of _: ReferenceKey) -> AggroRadius? {
+        nil
     }
 }

@@ -10,6 +10,8 @@ nonisolated public final class FakeCombatLoopRuntimePort: CombatLoopRuntimePort 
     public typealias CombatBehaviorMachine = FakeCombatBehaviorMachinePort
     public var actionFactsCalls: [ReferenceKey] = []
     public var actionFactsResult: ActorActionFacts?
+    public var aggroZoneCalls: [ReferenceKey] = []
+    public var aggroZoneResult: AggroZone?
     public var activityCalls: [ReferenceKey] = []
     public var activityResult: ActorCombatActivity?
     public var behaviors: [ReferenceKey: CombatBehaviorMachine] = [:]
@@ -39,6 +41,11 @@ nonisolated extension FakeCombatLoopRuntimePort {
     public func actionFacts(of key: ReferenceKey) -> ActorActionFacts? {
         actionFactsCalls.append(key)
         return actionFactsResult
+    }
+
+    public func aggroZone(of key: ReferenceKey) -> AggroZone? {
+        aggroZoneCalls.append(key)
+        return aggroZoneResult
     }
 
     public func activity(of key: ReferenceKey) -> ActorCombatActivity {

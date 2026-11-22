@@ -24,7 +24,7 @@ struct DetectionFormulaTests {
         #expect(ours.map(\.editorID) == [
             "distanceAttenuationExponent", "equippedWeightBase", "equippedWeightMult",
             "sneakMovementMult", "sprintMovementMult", "viewConeHalfAngleDegrees",
-            "sneakVisualMult", "normalActionSound", "loudActionSound",
+            "normalActionSound", "loudActionSound",
             "veryLoudActionSound", "fullLightLuminance", "fullDetectionValue", "gainPerSecond",
             "decayPerSecond", "suspiciousLevel", "detectedLevel", "skillUseRange"
         ])
@@ -108,42 +108,49 @@ struct DetectionFormulaTests {
     }
 
     @Test func visualTermNeedsBothASightLineAndTheCone() {
-        // A lit target outdoors: (15 + 100) * 0.33, halved by fSneakLightExteriorMult.
+        // A lit target outdoors: 100 * fSneakLightExteriorMult + fDetectionSneakLightMod.
         let seen = DetectionInputs(distance: 0)
         let lit = DetectionFormula.visualFactor(inputs: seen, settings: settings)
-        #expect(abs(lit - 115 * 0.33 * 0.5) < 1e-4)
+        #expect(lit == 65)
         #expect(DetectionFormula.visualFactor(
             inputs: DetectionInputs(distance: 0, hasLineOfSight: false), settings: settings
         ) == 0)
         #expect(DetectionFormula.visualFactor(
             inputs: DetectionInputs(distance: 0, isInViewCone: false), settings: settings
         ) == 0)
-        // Crouching halves the silhouette, which is OpenSky's lever because
-        // vanilla spends the Sneak skill instead.
+        // Crouching does not change what is seen; it works through the Sneak skill.
         let crouched = DetectionFormula.visualFactor(
             inputs: DetectionInputs(distance: 0, isSneaking: true), settings: settings
         )
-        #expect(abs(crouched - lit / 2) < 1e-4)
+        #expect(crouched == lit)
     }
 
-    @Test func skillTermWeightsTheClampedLevelAndTheGapMovesTheValue() {
-        // 15 clamped into 0...100, times fSneakSkillMult.
-        #expect(DetectionFormula.skillFactor(settings: settings) == 7.5)
-        #expect(DetectionFormula.skillFactor(level: 250, settings: settings) == 50)
-        #expect(DetectionFormula.skillFactor(level: .nan, settings: settings) == 7.5)
-        func value(noticer: Float, sneaker: Float) -> Float {
+    @Test func theObserverSkillIsAttenuatedAndTheSneakerSkillCountsOnlyWhileSneaking() {
+        // The install maps the skill onto 0...100 unchanged, times fSneakSkillMult.
+        #expect(DetectionFormula.perception(15, settings: settings) == 15)
+        #expect(DetectionFormula.perception(250, settings: settings) == 250)
+        #expect(DetectionFormula.perception(.nan, settings: settings) == 15)
+        func value(noticer: Float, sneaker: Float, isSneaking: Bool = false) -> Float {
             DetectionFormula.breakdown(
                 inputs: DetectionInputs(
-                    distance: 0, hasLineOfSight: false,
+                    distance: 0, hasLineOfSight: false, isSneaking: isSneaking,
                     traits: DetectionTargetTraits(sneakSkill: sneaker), noticerSkill: noticer
                 ),
                 settings: settings
             ).value
         }
-        // Silent and unseen at zero distance: base + Noticer + (Noticer - Sneaker).
-        #expect(value(noticer: 15, sneaker: 15) == -15 + 7.5)
-        #expect(value(noticer: 15, sneaker: 75) == -15 + 7.5 + (7.5 - 37.5))
-        #expect(value(noticer: 55, sneaker: 15) == -15 + 27.5 + (27.5 - 7.5))
+        // Silent and unseen at zero distance: base + Noticer - Sneaker, as a whole number.
+        #expect(value(noticer: 15, sneaker: 75) == -7)
+        #expect(value(noticer: 15, sneaker: 75, isSneaking: true) == -45)
+        #expect(value(noticer: 55, sneaker: 15) == 12)
+        // Half the range leaves a quarter of the observer's skill.
+        let far = DetectionFormula.breakdown(
+            inputs: DetectionInputs(
+                distance: 1250, hasLineOfSight: false, isExterior: false, noticerSkill: 80
+            ),
+            settings: settings
+        )
+        #expect(far.value == -5)
     }
 
     @Test func nothingIsPerceivedPastTheMaximumDistanceWhateverTheSkillGap() {
@@ -199,11 +206,11 @@ struct DetectionFormulaTests {
                 inputs: DetectionInputs(distance: 0, traits: traits), settings: settings
             )
         }
-        // Outdoors: (fDetectionSneakLightMod + level) * fSneakLightMult * 0.5.
-        #expect(abs(visual(DetectionTargetTraits(lightLevel: 0.25)) - 40 * 0.165) < 1e-4)
-        #expect(abs(visual(DetectionTargetTraits(lightLevel: 0)) - 15 * 0.165) < 1e-4)
+        // Outdoors: level * fSneakLightExteriorMult + fDetectionSneakLightMod.
+        #expect(visual(DetectionTargetTraits(lightLevel: 0.25)) == 27.5)
+        #expect(visual(DetectionTargetTraits(lightLevel: 0)) == 15)
         // iLightLevelMax caps the level at 300.
-        #expect(abs(visual(DetectionTargetTraits(lightLevel: 4)) - 315 * 0.165) < 1e-4)
+        #expect(visual(DetectionTargetTraits(lightLevel: 4)) == 165)
         #expect(visual(DetectionTargetTraits(isInvisible: true)) == 0)
         // Invisible, but still heard.
         #expect(DetectionFormula.soundFactor(
@@ -230,12 +237,10 @@ struct DetectionFormulaTests {
         #expect(standing.isPerceiving)
         #expect(sneaking.isPerceiving)
         #expect(sneaking.value < standing.value)
-        // Both terms moved, not just one: crouching is quieter *and* smaller.
+        // The sneak walk is quieter; what is seen stays the same.
         #expect(sneaking.soundFactor < standing.soundFactor)
-        #expect(sneaking.visualFactor < standing.visualFactor)
-        // Standing in a lit room at 500 units is past the full-rate signal,
-        // so a standing target is picked up as fast as the model allows.
-        #expect(standing.value > settings.fullDetectionValue.value)
+        // Sound 12, sight 40.1, and skill 7.5, at 0.64 of full strength, less the base 15.
+        #expect(standing.value == 23)
     }
 
     @Test func aBlockedSightLineLeavesOnlyMuffledSoundAndUsuallyNotEnoughOfIt() {
@@ -262,8 +267,9 @@ struct DetectionFormulaTests {
             DetectionFormula.noiseRadius(gait: gait, settings: settings, isExterior: false)
         }
         #expect(radius(nil) == 0)
-        #expect(radius(.sneak) > 0)
-        #expect(radius(.sneak) < radius(.walk))
+        // A sneak walk is too quiet for its sound alone to beat the sneaker's skill.
+        #expect(radius(.sneak) == 0)
+        #expect(radius(.walk) > 0)
         #expect(radius(.walk) < radius(.run))
         #expect(radius(.run) < radius(.sprint))
         // Outdoors every radius grows with the range it attenuates over.

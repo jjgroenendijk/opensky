@@ -192,6 +192,8 @@ public protocol CombatWorld: AnyObject {
     func level(of key: ReferenceKey) -> Int?
     /// What `observer` makes of `target` through factions and relationships.
     func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction?
+    /// `key`'s aggro radius from its AI data, or nil when the behaviour is off.
+    func aggroRadius(of key: ReferenceKey) -> AggroRadius?
     /// False for an actor zero health does not kill: essential, or protected from all
     /// but the player.
     func canBeKilled(_ target: ReferenceKey, by attacker: ReferenceKey) -> Bool
@@ -360,6 +362,10 @@ extension CombatWorld {
 
     public func isKnockedDown(_: ReferenceKey) -> Bool {
         false
+    }
+
+    public func aggroRadius(of _: ReferenceKey) -> AggroRadius? {
+        nil
     }
 
     public func canBeKilled(_: ReferenceKey, by _: ReferenceKey) -> Bool {

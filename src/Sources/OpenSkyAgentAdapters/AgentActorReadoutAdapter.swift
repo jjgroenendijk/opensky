@@ -132,9 +132,12 @@ extension AgentActorReadoutAdapter {
             "dead": .bool(actor.isDead),
             "hostility": .string("\(game.factions.hostility(of: actor.key))"),
             "combat": game.combat.loop?.phase(of: actor.key).map { .string("\($0)") } ?? .null,
+            "aggro": game.combat.loop?.aggroZone(of: actor.key)
+                .map { .string($0.rawValue) } ?? .null,
             "detects": game.perception.runtime
                 .map { .string("\($0.state(observer: actor.key, target: .player).state)") }
                 ?? .null,
+            "detection": detection(by: actor.key),
             "eyeTexture": actors.eyeTexture(of: actor.key),
             "severed": actors.severedState(of: actor.key),
             "soundLoops": .array(
@@ -244,5 +247,21 @@ struct AgentActorDetails {
             "encounterLevel": .init(roll.encounterLevel),
             "difficulty": .string("\(roll.difficulty)")
         ]
+    }
+}
+
+extension AgentActorReadoutAdapter {
+    /// What the actor's last detection check of the player found.
+    private func detection(by key: ReferenceKey) -> AgentJSON {
+        guard let pair = game.perception.runtime?.state(observer: key, target: .player)
+        else { return .null }
+        return .object([
+            "level": .init(pair.level),
+            "value": .init(pair.breakdown.value),
+            "sound": .init(pair.breakdown.soundFactor),
+            "sight": .init(pair.breakdown.visualFactor),
+            "lineOfSight": .bool(pair.hasLineOfSight),
+            "inViewCone": .bool(pair.isInViewCone)
+        ])
     }
 }

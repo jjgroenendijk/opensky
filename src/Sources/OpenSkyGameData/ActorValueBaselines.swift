@@ -253,15 +253,20 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         else {
             return fallback
         }
+        let actor = attempt { try resolver.templates.resolve(base: base) }
+        // The AI attributes follow the template's Use AI Data flag, as the record does.
+        let aiData = attempt { try resolver.templates.resolveFactions(base: base) }?.aiData.value
+        let general = resolved.generalBaseValues
+            .merging((aiData ?? .absent).actorValues) { _, authored in authored }
         var baseline = ActorValueBaseline(
             maximums: resolved.maximums,
             regenPercentPerSecond: resolved.regenPercentPerSecond,
-            general: resolved.generalBaseValues,
+            general: general,
             level: resolved.level,
             isChild: resolved.race
                 .flatMap { resolver.races[$0.rawValue]?.flags.contains(.child) } ?? false,
             race: resolved.race,
-            isFemale: attempt { try resolver.templates.resolve(base: base) }?.isFemale.value
+            isFemale: actor?.isFemale.value
         )
         baseline.recordFlags = resolver.templates.actors[base.rawValue]?.flags ?? []
         let race = resolved.race.flatMap { resolver.races[$0.rawValue] }

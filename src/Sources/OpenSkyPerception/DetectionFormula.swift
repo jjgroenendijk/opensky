@@ -93,19 +93,17 @@ nonisolated public enum DetectionFormula: Sendable {
         return settings.soundsMult.value * (movement + action) * occlusion
     }
 
-    /// The CK wiki's visual term before distance attenuation: light, movement, the
-    /// observer's blindness, and invisibility. Zero without a clear sight line, outside
-    /// the cone, or for a sleeping observer, whose blindness the CK wiki sets to full.
+    /// The visual term before distance attenuation: light, movement, and the observer's
+    /// blindness. Zero without a clear sight line, outside the cone, for a sleeping
+    /// observer, and for an invisible target. Crouching does not change it.
     static func visualFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
-        guard inputs.hasLineOfSight, inputs.isInViewCone, !inputs.observer.isSleeping else {
-            return 0
-        }
-        let crouch = inputs.isSneaking ? max(0, settings.sneakVisualMult.value) : 1
-        let invisibility = inputs.traits.isInvisible ? max(0, settings.stealthBoyMult.value) : 1
+        guard
+            inputs.hasLineOfSight, inputs.isInViewCone, !inputs.observer.isSleeping,
+            !inputs.traits.isInvisible
+        else { return 0 }
         return lightFactor(inputs: inputs, settings: settings)
             * movementFactor(inputs: inputs, settings: settings)
             * blindnessFactor(inputs.observer.blindness)
-            * invisibility * crouch
     }
 
     /// `1 + moving * fSneakLightMoveMult + running * fSneakLightRunMult`, with moving
@@ -126,73 +124,78 @@ nonisolated public enum DetectionFormula: Sendable {
         return min(max((100 - points) / 100, 0), 1)
     }
 
-    /// `GetLightLevel` of the target: its 0...1 light times 100, plus
-    /// `iLightLevelInteriorMod` indoors, capped at `iLightLevelMax`.
+    /// The target's light level: its 0...1 light times 100, less `iLightLevelInteriorMod`
+    /// indoors, held in 0...`iLightLevelMax`.
     static func lightLevel(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
         let interior = inputs.isExterior ? 0 : settings.lightLevelInteriorMod.value
-        let level = finiteNonNegative(inputs.traits.lightLevel) * 100 + interior
-        return min(max(0, level), max(0, settings.lightLevelMax.value))
+        let level = finiteNonNegative(inputs.traits.lightLevel) * 100 - interior
+        return min(max(0, level), max(0, settings.lightLevelMax.value)).rounded()
     }
 
-    /// The CK wiki's light term, `(fDetectionSneakLightMod + light level) * fSneakLightMult`,
-    /// halved outdoors by `fSneakLightExteriorMult`.
+    /// `light level * multiplier + fDetectionSneakLightMod`. The multiplier is
+    /// `fSneakLightMult` indoors and `fSneakLightExteriorMult` outdoors.
     static func lightFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
-        let exterior = inputs.isExterior ? max(0, settings.lightExteriorMult.value) : 1
-        let light = (settings.lightMod.value + lightLevel(inputs: inputs, settings: settings))
-            * settings.lightMult.value * exterior
-        return max(0, light)
-    }
-
-    /// One skill level, clamped and weighted into a skill factor.
-    static func skillFactor(
-        level: Float = DetectionTargetTraits.startingSkill,
-        settings: DetectionSettings
-    ) -> Float {
-        clampedSkill(level, settings: settings) * settings.skillMult.value
-    }
-
-    /// A skill level clamped to `fSneakPerceptionSkillMin...Max`.
-    static func clampedSkill(_ level: Float, settings: DetectionSettings) -> Float {
-        let level = level.isFinite ? level : DetectionTargetTraits.startingSkill
-        return min(
-            max(level, settings.perceptionSkillMin.value),
-            settings.perceptionSkillMax.value
+        let multiplier = inputs.isExterior ? settings.lightExteriorMult.value
+            : settings.lightMult.value
+        return max(
+            0, lightLevel(inputs: inputs, settings: settings) * multiplier + settings.lightMod.value
         )
     }
 
-    /// The observer's skill factor, times `1 + alert * fSneakAlertMod + sleeping *
-    /// fSneakSleepBonus + notCombatTarget * fSneakCombatMod` (CK wiki "Category:Detection").
+    /// The observer's Sneak skill mapped onto `fSneakPerceptionSkillMin...Max`, a line
+    /// through both ends and not a clamp.
+    static func perception(_ level: Float, settings: DetectionSettings) -> Float {
+        let level = level.isFinite ? level : DetectionTargetTraits.startingSkill
+        let low = settings.perceptionSkillMin.value
+        return low + (settings.perceptionSkillMax.value - low) * level / 100
+    }
+
+    /// The observer's skill, times `1 + alert * fSneakAlertMod + sleeping *
+    /// fSneakSleepMod + fightingAnother * fSneakCombatMod`, times `fSneakSkillMult`.
     static func noticerFactor(
         inputs: DetectionInputs,
         settings: DetectionSettings
     ) -> Float {
         let state = inputs.observer
         let mod = 1 + (state.isAlert ? settings.alertMod.value : 0)
-            + (state.isSleeping ? settings.sleepBonus.value : 0)
+            + (state.isSleeping ? settings.sleepMod.value : 0)
             + (state.isFightingAnother ? settings.combatMod.value : 0)
-        return skillFactor(level: inputs.noticerSkill, settings: settings) * max(0, mod)
+        return perception(inputs.noticerSkill, settings: settings) * mod
+            * settings.skillMult.value
     }
 
-    /// The target's skill factor. The player's is `fPlayerDetectionSneakBase +
-    /// fPlayerDetectionSneakMult * skill`, with the skill clamped as for any actor.
+    /// The target's skill term: zero unless it sneaks. The player's skill is first
+    /// `fPlayerDetectionSneakBase + fPlayerDetectionSneakMult * skill`.
     static func sneakerFactor(
         inputs: DetectionInputs,
         settings: DetectionSettings
     ) -> Float {
-        guard inputs.isPlayerTarget else {
-            return skillFactor(level: inputs.traits.sneakSkill, settings: settings)
+        guard inputs.isSneaking else { return 0 }
+        let raw = inputs.traits.sneakSkill
+        let skill = raw.isFinite ? raw : DetectionTargetTraits.startingSkill
+        let effective = inputs.isPlayerTarget
+            ? settings.playerSneakBase.value + settings.playerSneakMult.value * skill
+            : skill
+        return effective * settings.skillMult.value
+    }
+
+    /// A value between 0 and 1 counts as 1, any other loses its fraction, and a plain 0
+    /// becomes -1: sight never gives exactly 0.
+    static func rounded(_ value: Float) -> Float {
+        guard value.isFinite else { return -1 }
+        if value > 0, value < 1 {
+            return 1
         }
-        let skill = clampedSkill(inputs.traits.sneakSkill, settings: settings)
-        return settings.playerSneakBase.value + settings.playerSneakMult.value * skill
+        let whole = value.rounded(.towardZero)
+        return whole == 0 ? -1 : whole
     }
 
     private static func finiteNonNegative(_ value: Float) -> Float {
         value.isFinite ? max(0, value) : 0
     }
 
-    /// The whole formula, with its terms. Past the maximum distance the value is
-    /// `fSneakBaseValue` alone: the unattenuated skill gap must not let a skilled
-    /// observer notice a target at any range.
+    /// The whole formula, with its terms. Past the maximum distance the formula does
+    /// not run, and the value is `fSneakBaseValue` alone.
     static func breakdown(
         inputs: DetectionInputs,
         settings: DetectionSettings
@@ -216,25 +219,19 @@ nonisolated public enum DetectionFormula: Sendable {
                 soundFactor: sound, visualFactor: visual, value: settings.sneakBaseValue.value
             )
         }
-        let noticer = noticerFactor(inputs: inputs, settings: settings)
-        let sneaker = sneakerFactor(inputs: inputs, settings: settings)
-        var value = settings.sneakBaseValue.value
-            + (sound + visual + noticer) * attenuation
-            + (noticer - sneaker)
-            + (inputs.observer.isSleeping ? settings.sleepMod.value : 0)
-        if inputs.isPlayerTarget {
-            value = max(value, settings.playerDetectFloor.value)
-        }
+        let asleep = inputs.observer.isSleeping ? max(0, 1 + settings.sleepBonus.value) : 1
+        let value = settings.sneakBaseValue.value
+            + (sound * asleep + visual) * attenuation
+            + noticerFactor(inputs: inputs, settings: settings) * attenuation
+            - sneakerFactor(inputs: inputs, settings: settings)
         return DetectionBreakdown(
-            soundFactor: sound,
-            visualFactor: visual,
-            value: value.isFinite ? value : settings.sneakBaseValue.value
+            soundFactor: sound, visualFactor: visual, value: rounded(value)
         )
     }
 
     /// How far a target moving at `gait` can be heard, in world units: where the
-    /// sound and skill terms cancel `fSneakBaseValue`. Closed form:
-    /// `max * (1 - needed^(1/exponent))`, with `needed = -base / (sound + skill)`.
+    /// sound and observer skill terms cancel `fSneakBaseValue` and the sneaker's skill.
+    /// Closed form: `max * (1 - needed^(1/exponent))`.
     /// Zero when even a touching target is too quiet. Shown as a readout only.
     static func noiseRadius(
         gait: LocomotionGait?,
@@ -249,14 +246,15 @@ nonisolated public enum DetectionFormula: Sendable {
             hasLineOfSight: hasLineOfSight,
             isInViewCone: false,
             isExterior: isExterior,
+            isSneaking: gait == .sneak,
             gait: gait,
             traits: traits,
             noticerSkill: noticerSkill
         )
-        let noticer = skillFactor(level: noticerSkill, settings: settings)
-        let sneaker = skillFactor(level: traits.sneakSkill, settings: settings)
+        let noticer = noticerFactor(inputs: inputs, settings: settings)
         let audible = soundFactor(inputs: inputs, settings: settings) + noticer
-        let deficit = -settings.sneakBaseValue.value - (noticer - sneaker)
+        let deficit = -settings.sneakBaseValue.value
+            + sneakerFactor(inputs: inputs, settings: settings)
         let exponent = max(0, settings.distanceAttenuationExponent.value)
         guard audible > 0, deficit > 0, exponent > 0, audible > deficit else {
             return audible > 0 && deficit <= 0
