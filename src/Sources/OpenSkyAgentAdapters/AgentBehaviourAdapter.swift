@@ -230,10 +230,12 @@ struct AgentPackageReadout {
                 .map { .string("\($0.carrier)") } ?? .null,
             "mover": mover.map {
                 .string("\($0.state) waypoint \($0.waypointIndex) of \($0.waypointCount)"
-                    + " at \($0.feetPosition)")
+                    + " at \($0.feetPosition) gait \($0.gait) repaths \($0.repathCount)")
             } ?? .null,
             "moverNext": mover?.nextWaypoint.map { .string("\($0)") } ?? .null,
             "moverTarget": mover?.target.map { .string("\($0)") } ?? .null,
+            "moverCommands": (mover?.commands?.text).map(AgentJSON.string) ?? .null,
+            "moverStep": (mover?.lastStep?.text).map(AgentJSON.string) ?? .null,
             "movement": movementReadout(key),
             "vehicle": vehicleReadout(key),
             "vehicleLinks": .array(links.keys.sorted()

@@ -29,6 +29,9 @@ nonisolated public struct LongBodyShape: Equatable, Sendable {
     public let bodyRadius: Float
     public let bodyHeight: Float
     public let bodyHalfLength: Float
+    /// The ends ride this far above the ground, so an obstacle the walk steps over does not
+    /// stop them.
+    public var stepHeight: Float = 0
 
     /// The half size the game uses for a skeleton without a `BBX` bound.
     public static let missingBoundHalfExtents = SIMD3<Float>(repeating: 25)
@@ -91,42 +94,71 @@ nonisolated public struct LongBodyShape: Equatable, Sendable {
         pose: (feet: SIMD3<Float>, yaw: Float), displacement: SIMD2<Float>,
         ground: (SIMD2<Float>) -> Float?, query: CapsuleWorldCollider.CandidateQuery
     ) -> SIMD2<Float> {
+        largestPush(pose: pose, displacement: displacement, ground: ground, query: query).added
+    }
+
+    /// The part whose push `correction` returns, with the push it meets standing still.
+    public func largestPush(
+        pose: (feet: SIMD3<Float>, yaw: Float), displacement: SIMD2<Float>,
+        ground: (SIMD2<Float>) -> Float?, query: CapsuleWorldCollider.CandidateQuery
+    ) -> LongBodyPush {
         let (feet, yaw) = pose
-        var correction = SIMD2<Float>.zero
-        func keepLarger(_ push: SIMD2<Float>) {
-            if simd_length_squared(push) > simd_length_squared(correction) {
-                correction = push
+        var largest = LongBodyPush()
+        func keepLarger(_ push: LongBodyPush) {
+            if simd_length_squared(push.added) > simd_length_squared(largest.added) {
+                largest = push
             }
         }
         let ends = CapsuleWorldCollider(capsule: endCapsule)
-        for start in endFeet(at: feet, yaw: yaw, lift: 0) {
+        for (index, start) in endFeet(at: feet, yaw: yaw, lift: 0).enumerated() {
             let here = SIMD2(start.x, start.y)
             let there = here + displacement
-            let standing = SIMD3(here.x, here.y, ground(here) ?? start.z)
-            let rise = (ground(there) ?? standing.z) - standing.z
-            keepLarger(Self.addedPush(
+            let standing = SIMD3(here.x, here.y, (ground(here) ?? start.z) + stepHeight)
+            let rise = (ground(there) ?? start.z) - (ground(here) ?? start.z)
+            var push = Self.push(
                 ends, from: standing, move: SIMD3(displacement.x, displacement.y, rise),
                 query: query
-            ))
+            )
+            push.part = .end(index)
+            keepLarger(push)
         }
         let body = CapsuleWorldCollider(capsule: .ball(radius: bodyRadius))
-        for start in bodyBallFeet(at: feet, yaw: yaw) {
-            keepLarger(Self.addedPush(
+        for (index, start) in bodyBallFeet(at: feet, yaw: yaw).enumerated() {
+            var push = Self.push(
                 body, from: start, move: SIMD3(displacement.x, displacement.y, 0), query: query
-            ))
+            )
+            push.part = .body(index)
+            keepLarger(push)
         }
-        return correction
+        return largest
     }
 
-    /// The horizontal push a move meets, less the push the same shape meets standing still.
-    private static func addedPush(
+    /// The horizontal push a move meets. The move starts where the shape rests after the
+    /// collision pushed it out, so a part that sits inside a wall may leave that wall.
+    private static func push(
         _ collider: CapsuleWorldCollider, from start: SIMD3<Float>, move: SIMD3<Float>,
         query: CapsuleWorldCollider.CandidateQuery
-    ) -> SIMD2<Float> {
+    ) -> LongBodyPush {
         let resting = collider.move(from: start, displacement: .zero, query: query).position
-        let moved = collider.move(from: start, displacement: move, query: query).position
-        let restPush = SIMD2(resting.x - start.x, resting.y - start.y)
-        let movePush = SIMD2(moved.x - start.x - move.x, moved.y - start.y - move.y)
-        return movePush - restPush
+        let moved = collider.move(from: resting, displacement: move, query: query).position
+        var push = LongBodyPush()
+        push.resting = resting - start
+        push.added = SIMD2(moved.x - resting.x - move.x, moved.y - resting.y - move.y)
+        return push
     }
+}
+
+/// One part of a long body, and what pushes it: `resting` while it stands still, and
+/// `added`, the horizontal push the move adds to that.
+nonisolated public struct LongBodyPush: Equatable, Sendable {
+    public enum Part: Equatable, Sendable {
+        case end(Int)
+        case body(Int)
+    }
+
+    public var part: Part?
+    public var resting = SIMD3<Float>.zero
+    public var added = SIMD2<Float>.zero
+
+    public init() {}
 }

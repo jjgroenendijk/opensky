@@ -32,6 +32,8 @@ public struct NPCMover {
     public var gait: LocomotionGait = .walk
     public var state: NPCMovementState = .moving
     public var repathCount = 0
+    /// The newest walk step: what it asked for and how far the body moved.
+    public var lastStep: NPCMoveStepReadout?
     private var secondsWithoutProgress: Float = 0
     private var bestWaypointDistance: Float = .greatestFiniteMagnitude
     private var occupiedTriggers: Set<ReferenceKey> = []
@@ -149,8 +151,11 @@ public struct NPCMover {
         let configuration = configuration
         let query: WalkController.CollisionQuery = ignoresStatics
             ? { _ in [] } : world.collisionQuery(for: actor)
-        let (longBody, yaw) = (longBody, yaw)
+        var (longBody, yaw) = (longBody, yaw)
+        longBody?.stepHeight = configuration.stepHeight.value
         let groundSampler = ignoresStatics ? staticFloorSampler(world: world) : world.sampleGround
+        let before = controller.feetPosition
+        var asked = NPCMoveStepReadout(speed: step.speed, yaw: yaw)
         controller.update(
             frameTime: frameTime,
             yaw: yaw,
@@ -171,11 +176,14 @@ public struct NPCMover {
                     neighbours: neighbours
                 ) : .zero
             plan.horizontalDisplacement = direction * wanted
+            asked.note(wanted: plan.horizontalDisplacement)
             if let longBody {
-                plan.horizontalDisplacement += longBody.correction(
+                let push = longBody.largestPush(
                     pose: (state.feetPosition, yaw), displacement: plan.horizontalDisplacement,
                     ground: { groundSampler($0)?.height }, query: query
                 )
+                asked.note(push)
+                plan.horizontalDisplacement += push.added
             }
             plan.swimSurfaceHeight = water.swimSurface
             plan.motionSource = wanted > 0 ? .configuredSpeed : .idle
@@ -184,6 +192,7 @@ public struct NPCMover {
             )
             return plan
         }
+        lastStep = asked.moving(by: controller.feetPosition - before)
     }
 
     private mutating func advancePastReachedWaypoints() {

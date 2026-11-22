@@ -98,6 +98,51 @@ struct LongBodyShapeTests {
         #expect(simd_length(correction) < 0.5, "correction \(correction)")
     }
 
+    /// A skeever's nose meets a 20-unit kerb. The walk steps over it, so the ends must too;
+    /// a wall taller than a step still stops them.
+    @Test
+    func anEndPassesWhatTheWalkStepsOver() throws {
+        var shape = try #require(LongBodyShape(halfExtents: SIMD3(15.23, 62.27, 28.42)))
+        let reach = shape.endOffset + shape.endRadius
+        let kerb = DynamicBodyScene.box(
+            center: SIMD3(reach + 51, 0, 10), half: SIMD3(50, 200, 10)
+        )
+        let wall = DynamicBodyScene.box(
+            center: SIMD3(reach + 51, 0, 40), half: SIMD3(50, 200, 40)
+        )
+        func push(_ box: StaticCollisionShape) -> LongBodyPush {
+            shape.largestPush(
+                pose: (.zero, 0), displacement: SIMD2(5, 0), ground: { _ in 0 },
+                query: DynamicBodyScene.candidateQuery([box])
+            )
+        }
+        let stopped = push(kerb)
+        #expect(stopped.added.x < -3.9 && stopped.part == .end(0), "push \(stopped)")
+        shape.stepHeight = 32
+        #expect(simd_length(push(kerb).added) < 0.01)
+        #expect(push(wall).added.x < -3.9)
+    }
+
+    /// After a turn the tail of a skeever's back sits 3 units inside the wall behind it.
+    /// It may walk away from that wall, and not deeper into it.
+    @Test
+    func aPartInsideAWallMayLeaveIt() throws {
+        let shape = try #require(LongBodyShape(halfExtents: SIMD3(15.23, 62.27, 28.42)))
+        let face = -(shape.bodyHalfLength + shape.bodyRadius) + 3
+        let wall = DynamicBodyScene.box(center: SIMD3(face - 50, 0, 40), half: SIMD3(50, 200, 40))
+        func push(_ move: SIMD2<Float>) -> LongBodyPush {
+            shape.largestPush(
+                pose: (.zero, 0), displacement: move, ground: { _ in 0 },
+                query: DynamicBodyScene.candidateQuery([wall])
+            )
+        }
+        let away = push(SIMD2(5, 0))
+        #expect(simd_length(away.added) < 0.01, "push \(away)")
+        let into = push(SIMD2(-5, 0))
+        #expect(into.added.x > 4.9 && into.part == .body(0), "push \(into)")
+        #expect(abs(into.resting.x - 3) < 0.1)
+    }
+
     /// A human skeleton's bound gives the game's radius 18 and height 128; scale grows both.
     @Test
     func anUprightBoundGivesTheGamesCapsule() throws {
