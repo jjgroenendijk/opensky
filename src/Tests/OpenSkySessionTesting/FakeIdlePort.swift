@@ -37,6 +37,7 @@ nonisolated public final class FakeIdlePort: IdlePort {
     public var ownGraphEventResult = ""
     public var pairedAnimationCalls: [ReferenceKey] = []
     public var pairedAnimationResult: PairedAnimationPlay?
+    public var lastKillMoveMiss: KillMoveMiss?
     public var pairs: [PairedAnimationPlay] = []
     public var removeDependentCalls: [(dependent: ReferenceKey, owner: ReferenceKey)] = []
     public var rootMotionCalls: [ReferenceKey] = []
