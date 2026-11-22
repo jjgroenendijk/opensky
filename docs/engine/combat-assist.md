@@ -109,8 +109,9 @@ player's own mount, or the weapon is sheathed and the target is an actor.
 - An NPC that starts a melee attack turns to its aim each step until the attack's follow-through
   ends. The aim is the target's place at the last refresh, on the game's two timers. Outside the
   band the 0.25 second timer is used.
-- A player shot picks its target when it is fired, from the hostile living actors in combat, and
-  turns by the largest angle of the table.
+- A player shot picks its target when it is fired, from the hostile living actors in combat
+  without the player's mount, and turns by the largest angle of the table. The window is
+  0.03 of the screen width to each side and 0.03 of its height up and down.
 - The lock on a ridden dragon turns the rider's view by the heading change of the rule, with the
   factors of a locked actor.
 
@@ -118,8 +119,6 @@ player's own mount, or the weapon is sheathed and the target is an actor.
 count of `refreshes`, and `autoAim`, the target the last player shot turned toward.
 `state mount` shows `lockSteer`, the heading change of the last step in radians.
 
-- [WARNING] The auto-aim window is measured against the screen height on both axes.
-- [WARNING] The player's own mount is not left out of the auto-aim candidates.
 - [WARNING] The lock has no hold-to-lock option, no look factors, no locked objects, and no stop
   for a sheathed weapon. The lock does not turn the dragon: its flight follows its orders
   ([dragon flight](/engine/dragon-flight.md#riding)).

@@ -116,6 +116,14 @@ extension CombatWorldAdapter {
         actorFacts.playerViewFOVYRadians
     }
 
+    public var playerViewAspect: Float? {
+        actorFacts.playerViewAspect
+    }
+
+    public var playerMount: ReferenceKey? {
+        actorFacts.playerMount
+    }
+
     public var playerRuns: Bool {
         actorFacts.playerRuns
     }
