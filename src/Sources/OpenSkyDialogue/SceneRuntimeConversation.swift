@@ -70,10 +70,11 @@ extension SceneRuntime.Playback {
             runtime.holder(of: $0, except: entry.formID) != nil
         }
         guard !held else { return true }
-        let status = host.sceneActorStatus(speaker)
+        let blocksSpeaker: SceneActorStatus = [.inPlayerDialogue, .farFromPlayer, .talkForbidden]
+        let blocksPartner: SceneActorStatus = [.inCombat, .talkForbidden, .changingSeat]
         return host.hasLoadedBody(speaker)
-            && !status.contains(.inPlayerDialogue) && !status.contains(.farFromPlayer)
-            && !host.sceneActorStatus(partner).contains(.inCombat)
+            && host.sceneActorStatus(speaker).isDisjoint(with: blocksSpeaker)
+            && host.sceneActorStatus(partner).isDisjoint(with: blocksPartner)
     }
 
     /// One pair walks together at a time, and a pair that did not meet waits its turn.

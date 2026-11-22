@@ -1,5 +1,6 @@
 // One host for every Story adapter part, each port a generated fake.
 
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
@@ -32,7 +33,12 @@ final class StoryHost: CrimeActorsHost, CrimeFactionsHost, CrimeJailHost, CrimeW
     let fakeFollowerCommandWorld = FakeFollowerCommandWorldPort()
     let fakeHeadTracking = FakeHeadTrackingPort()
     let fakeHud = FakeHUDPort()
-    let fakeIdles = FakeIdlePort()
+    let fakeIdles: FakeIdlePort = {
+        let idles = FakeIdlePort()
+        idles.furnitureResolutionValue = .empty
+        return idles
+    }()
+
     let fakeInventory = FakeInventoryPort()
     let fakeInventoryWorld = FakeInventoryWorldPort()
     let fakeMapWorld = FakeMapWorldPort()

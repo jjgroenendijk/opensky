@@ -86,7 +86,23 @@ extension StorySceneCastAdapter {
         if social.approachingSpeakers.contains(actor) {
             status.insert(.walkingToPartner)
         }
+        let flags = game.packages.runtime?.currentPackage(for: actor)?
+            .package.general.interruptFlags
+        if
+            Self.forbidsTalk(
+                flags: flags, sandboxAllows: game.packages.allowsSandboxConversation(actor)
+            )
+        {
+            status.insert(.talkForbidden)
+        }
         return status
+    }
+
+    /// True for a running package without interrupt flag 0x02, unless its sandbox allows
+    /// conversation. An actor with no package is not held back.
+    static func forbidsTalk(flags: UInt16?, sandboxAllows: Bool) -> Bool {
+        guard let flags, !sandboxAllows else { return false }
+        return flags & SocialActor.conversationFlag == 0
     }
 
     public func conversationPartnersMeet(_ speaker: ReferenceKey, _ partner: ReferenceKey) -> Bool {

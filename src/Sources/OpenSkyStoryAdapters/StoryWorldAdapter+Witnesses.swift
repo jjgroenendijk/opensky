@@ -167,6 +167,9 @@ extension StoryWorldAdapter {
         if sceneLines.isFarFromPlayer(actor) {
             status.insert(.farFromPlayer)
         }
+        if sceneLines.isChangingSeat(actor) {
+            status.insert(.changingSeat)
+        }
         return status
     }
 

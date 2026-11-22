@@ -65,6 +65,14 @@ extension StorySceneLinesAdapter {
         return simd_distance(place, player) > Self.conversationPlayerDistance
     }
 
+    /// True while the actor sits down or stands up, in a seat or a bed.
+    public func isChangingSeat(_ actor: ReferenceKey) -> Bool {
+        switch game.idles.furnitureResolution.uses[actor]?.sitState {
+        case .loading, .readyToSit, .readyToStand: true
+        case .sitting, .notSitting, nil: false
+        }
+    }
+
     /// The game's limit before a scene line: 20 degrees, and 80 while the speaker
     /// walks (docs/engine/random-conversations.md#walking-together). The game tests
     /// the head; OpenSky turns and tests the body.

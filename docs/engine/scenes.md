@@ -374,7 +374,7 @@ its two speakers and ends.
 - A conversation partner does not walk to the other partner before the scene begins. The game's
   walk is in [walking together](/engine/random-conversations.md#walking-together).
 - A speaker does not wait to face its look target before its line.
-- The check on a waiting conversation pair ends the scene when the speaker has no loaded body
-  or is in dialogue with the player or more than 3000 units from the player, or when the
-  partner is in combat. The package flags and the seat and bed states are not checked there. A
-  partner with no loaded body makes the scene wait.
+- The check on a waiting conversation pair follows the game's list. An actor with no running
+  package is not held back by the package flag, and a sandbox that allows conversation counts
+  as the flag. A partner with no loaded body makes the scene wait; what the game does then is
+  not known.
