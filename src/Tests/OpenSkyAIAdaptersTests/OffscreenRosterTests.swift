@@ -71,6 +71,20 @@ struct OffscreenRosterTests {
         #expect(keys == [guardOne, guardTwo, listed])
     }
 
+    @Test func anInteriorIsEnteredBesideItsFirstDoor() throws {
+        let door = try #require(Self.door(leadingTo: 0x901).placedReference)
+        let placement = PersistentPlacement(
+            key: PackageRuntimeFixture.key(0x700), formID: door.formID,
+            record: .reference(door), actorBase: nil
+        )
+        let inside = try #require(door.teleportDestination)
+        let entrances = OffscreenRoster.entrances(placements: [placement, placement]) {
+            $0 == inside.door ? FormID(0x900) : nil
+        }
+        #expect(entrances == [FormID(0x900): inside.placement.position])
+        #expect(OffscreenRoster.entrances(placements: [placement]) { _ in nil }.isEmpty)
+    }
+
     @Test func aPlacedObjectIsNoActor() throws {
         let door = try Self.door(leadingTo: 0x901)
         let plugin = PluginPlacement(entry: door, home: Self.square, worldspace: "RiftenWorld")

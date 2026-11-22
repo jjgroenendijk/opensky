@@ -25,6 +25,7 @@ final class FakePackageWorld: PackageWorld {
     var drivesPlayer = false
     var activity: PackageActorActivity = .free
     var aliasStacks: [ReferenceKey: PackageAliasStack] = [:]
+    var offscreenArrivals: [ReferenceKey: OffscreenActor] = [:]
     var hasRoom = true
     var holdsIdleMarker = false
     var flies = false
@@ -137,6 +138,10 @@ extension FakePackageWorld {
 extension FakePackageWorld: OffscreenScheduleWorld {
     func offscreenActors() -> [OffscreenActor] {
         offscreenActorList
+    }
+
+    func offscreenArrival(_ actor: ReferenceKey) -> OffscreenActor? {
+        offscreenArrivals[actor]
     }
 
     func offscreenPlace(of location: Package.Location, actor _: OffscreenActor) -> OffscreenPlace? {

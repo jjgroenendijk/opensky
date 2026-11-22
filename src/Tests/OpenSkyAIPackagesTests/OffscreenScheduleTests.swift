@@ -134,6 +134,15 @@ struct OffscreenScheduleTests {
         #expect(world.offscreenMoves.map(\.place) == [FakePackageWorld.stall])
     }
 
+    @Test func aSitPackageNamesItsPlaceByALinkedSeat() throws {
+        let (coordinator, world) = try Self.coordinator(packages: [0x104])
+        world.offscreenActorList = [OffscreenActor(
+            key: Self.actor, base: FormID(0x600), place: Self.house
+        )]
+        coordinator.advance()
+        #expect(world.offscreenMoves.map(\.place) == [FakePackageWorld.stall])
+    }
+
     @Test func aLoadedPlaceIsReachedThroughTheHouseDoor() throws {
         let (coordinator, world) = try Self.coordinator(packages: [0x102])
         world.offscreenActorList = [OffscreenActor(
@@ -203,6 +212,21 @@ struct OffscreenScheduleTests {
         #expect(!coordinator.placementDue)
     }
 
+    @Test func anActorOfACellThatLoadsStartsAtItsPackagePlace() throws {
+        let (coordinator, world) = try Self.coordinator(packages: [0x104])
+        let loaded = PackageRuntimeFixture.key(0x501)
+        world.offscreenArrivals = [
+            loaded: OffscreenActor(key: loaded, base: FormID(0x600), place: Self.house)
+        ]
+        world.residents = try [PackageRuntimeFixture.residentActor(0x501, base: 0x600)]
+        coordinator.advance()
+        #expect(world.offscreenMoves.map(\.actor) == [loaded])
+        #expect(world.offscreenMoves.map(\.place) == [FakePackageWorld.stall])
+
+        coordinator.advance()
+        #expect(world.offscreenMoves.count == 1, "an actor arrives once")
+    }
+
     @Test func aQuestAliasPackageGoesBeforeTheActorsOwn() throws {
         let (coordinator, world) = try Self.coordinator(packages: [0x101])
         world.offscreenActorList = [OffscreenActor(
@@ -232,12 +256,18 @@ struct OffscreenScheduleTests {
                 Package.Target(rawKind: 0, value: 0x700, countOrDistance: 0)
             ))]
         )
+        let post = try PackageRuntimeFixture.package(
+            id: 0x104, editorID: "SitAtPost", procedureNames: ["Sit"],
+            dataInputs: [Package.DataInput(index: 0, type: "SingleRef", value: .target(
+                Package.Target(rawKind: 3, value: 0x700, countOrDistance: 0)
+            ))]
+        )
         let actor = try PackageRuntimeFixture.actorBase(id: 0x600, packages: packages)
         let world = FakePackageWorld()
         let coordinator = PackageCoordinator(
             world: world,
             data: PackageSessionData(store: PackageStore(
-                packages: [fallback, walk, sit],
+                packages: [fallback, walk, sit, post],
                 actorTemplates: ActorTemplateResolver(actors: [0x600: actor], leveledActors: [:])
             ), conditionFunctions: .standard)
         )

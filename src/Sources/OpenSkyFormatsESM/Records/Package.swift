@@ -136,10 +136,18 @@ nonisolated public struct Package: Equatable, Sendable {
             TargetKind(rawValue: rawKind)
         }
 
-        /// The place of a target that names one reference, as a location at it.
+        /// The place of a target that names one reference, as a location at it: a
+        /// reference itself, or the actor's linked reference with the keyword in `value`.
         public var referenceLocation: Location? {
-            guard kind == .specificReference, value != 0 else { return nil }
-            return Location(rawKind: LocationKind.nearReference.rawValue, value: value, radius: 0)
+            switch kind {
+            case .specificReference where value != 0:
+                Location(rawKind: LocationKind.nearReference.rawValue, value: value, radius: 0)
+            case .linkedReference:
+                Location(
+                    rawKind: LocationKind.nearLinkedReference.rawValue, value: value, radius: 0
+                )
+            default: nil
+            }
         }
     }
 

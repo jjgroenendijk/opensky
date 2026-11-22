@@ -17,6 +17,10 @@ extension AIWorldAdapter.Worlds {
         offscreen.offscreenActors()
     }
 
+    public func offscreenArrival(_ actor: ReferenceKey) -> OffscreenActor? {
+        offscreen.offscreenArrival(actor)
+    }
+
     public func offscreenPlace(
         of location: Package.Location, actor: OffscreenActor
     ) -> OffscreenPlace? {

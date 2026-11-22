@@ -129,8 +129,10 @@ actors in turn inside the frame budget ([AI process levels](/engine/ai-process-l
 
 1. It picks the actor's package by the same rules as for a loaded actor.
 2. It finds the place of the package's first input that names one: a location (a reference,
-   the editor place, or the editor cell), or a target that is one reference, such as the seat
-   of a sit package. An input it cannot place, such as an alias, keeps the actor where it is.
+   a linked reference, the editor place, or a cell), or a target that is one reference or one
+   linked reference, such as the seat of a sit package. A location in an interior cell that is
+   not the actor's own puts it beside the first door into that cell. An input it cannot place,
+   such as an alias, keeps the actor where it is.
 3. An actor already in that cell and inside the location radius stays.
 4. When the place is in a loaded cell and the actor is in an interior, the actor comes out of
    the loaded door that leads into its interior. The loaded package then walks it to the place.
@@ -144,13 +146,16 @@ A new game, a Wait, and a Sleep run steps 1, 2, 3, and 5 once for every such act
 loaded cell too. Step 4 is left out, so no actor walks out of a door then. The placement runs at
 the first update after the new hour is set. Two examples:
 
-- A new game in Riften at 05:30 shows each guard at its gate or on its patrol, not in the area
-  where the data places all of them.
+- A new game in Riverwood at midday shows the blacksmith at his forge.
 - After a Wait from 06:00 to 10:00 in the Riften market, the stall owners stand at their stalls.
 
 The placement leaves an actor alone when it fights, is dead, talks, rides, follows a command,
 or runs a scene's package. A package that names the player as its place, such as a follower's,
 moves nobody.
+
+An actor that is not persistent is placed the same way once, when its cell loads. The Riften
+guards are such actors: the data places them together in one area, and each one starts at its
+post when the city loads.
 
 A quest alias's packages go before the actor's own, as for a loaded actor. An alias package
 whose place OpenSky cannot find keeps the actor where it is.
