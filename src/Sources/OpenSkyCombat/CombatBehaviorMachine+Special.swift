@@ -15,11 +15,15 @@ nonisolated extension CombatBehaviorPhase {
 }
 
 nonisolated extension CombatBehaviorMachine {
-    /// A step that closes on the target, walking once inside the walk radius.
+    /// A step that closes on the target, at the pace of its distance band.
     mutating func approach(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         var step = unchanged()
         step.command = command(.approach(inputs.targetPosition))
-        step.walks = inputs.distance <= settings.walkRadius
+        step.pace = CombatApproachRule.pace(
+            distance: inputs.distance, inner: settings.backOffRadius + inputs.reach,
+            outer: settings.walkRadius + inputs.reach,
+            slowdownDistance: settings.slowdownDistance
+        )
         return step
     }
 

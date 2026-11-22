@@ -19,13 +19,19 @@ extension NPCMovementRuntimeTests {
             Self.start(actor: actor, path: Self.path(waypoints: [.zero, target], target: target))
         )
         #expect(started)
-        #expect(runtime.isWalking(actor, to: target + SIMD3(5, 0, 0), gait: nil))
-        #expect(!runtime.isWalking(actor, to: target + SIMD3(50, 0, 0), gait: nil))
-        #expect(!runtime.isWalking(actor, to: target, gait: .run))
+        let near = target + SIMD3(5, 0, 0)
+        let far = target + SIMD3(50, 0, 0)
         let other = ReferenceKey.plugin(name: "movement.esm", objectID: 9)
-        #expect(!runtime.isWalking(other, to: target, gait: nil))
+        let kept = [
+            runtime.repace(actor, to: near, gait: .run, walkRunBlend: nil),
+            runtime.repace(actor, to: near, gait: .walk, walkRunBlend: 0.33),
+            runtime.repace(actor, to: far, gait: nil, walkRunBlend: nil),
+            runtime.repace(other, to: target, gait: nil, walkRunBlend: nil)
+        ]
+        #expect(kept == [true, true, false, false])
         let stopped = runtime.stop(actor)
-        #expect(stopped && !runtime.isWalking(actor, to: target, gait: nil))
+        let afterStop = runtime.repace(actor, to: target, gait: nil, walkRunBlend: nil)
+        #expect(stopped && !afterStop)
     }
 
     @Test

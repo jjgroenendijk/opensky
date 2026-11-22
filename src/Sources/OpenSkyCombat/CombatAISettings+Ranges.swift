@@ -6,15 +6,19 @@ import Foundation
 public import OpenSkyCombatInterface
 
 nonisolated extension CombatAISettings {
-    /// `settings` with these values. The style's offense picks the walk radius (more
-    /// offense, a smaller radius) and its defense the back-off radius.
+    /// `settings` with these values. The style's defense less its offense picks the walk
+    /// and back-off radii: a more offensive style has smaller ones.
     public func applyingRanges(
         to settings: CombatBehaviorSettings, tuning: CombatStyleTuning?
     ) -> CombatBehaviorSettings {
         let style = tuning ?? .neutral
         var settings = settings
-        settings.walkRadius = advanceOuterRadius.radius(at: 1 - style.offensiveMultiplier)
-        settings.backOffRadius = advanceInnerRadius.radius(at: style.defensiveMultiplier)
+        let level = CombatApproachRule.radiusLevel(
+            offensive: style.offensiveMultiplier, defensive: style.defensiveMultiplier
+        )
+        settings.walkRadius = advanceOuterRadius.radius(at: level)
+        settings.backOffRadius = advanceInnerRadius.radius(at: level)
+        settings.slowdownDistance = Self.nonNegative(approachSlowdownDistance)
         settings.weaponRangeHoldMult = Self.atLeastOne(currentWeaponAbsoluteMaxRangeMult)
         settings.weaponAbsoluteRangeMult = Self.atLeastOne(absoluteMaxRangeMult)
         settings.spellRangeCap = useWeaponDistance.isFinite ? max(0, useWeaponDistance) : .infinity

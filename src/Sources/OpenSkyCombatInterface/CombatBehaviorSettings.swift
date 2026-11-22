@@ -92,8 +92,10 @@ nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
     /// after which the game drops a lost target (docs/engine/detection.md).
     public var searchSeconds: Float = 30
 
-    /// Inside this distance an approach walks instead of running. 0 always runs.
+    /// Beyond this distance plus its reach an approach runs; inside it slows down.
     public var walkRadius: Float = 0
+    /// The band past the back-off radius in which an approach slows to a walk.
+    public var slowdownDistance: Float = 0
     /// A caster closer than this backs off before it casts from range. 0 never backs off.
     public var backOffRadius: Float = 0
     /// How long a caster may back off before it casts anyway. Ours.

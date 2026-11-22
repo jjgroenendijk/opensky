@@ -261,9 +261,9 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
 
     @discardableResult
     func moveCombatActor(
-        _ key: ReferenceKey, to point: SIMD3<Float>, gait: LocomotionGait?
+        _ key: ReferenceKey, to point: SIMD3<Float>, pace: CombatPace?
     ) -> Bool {
-        shared.world.moveActor(key, to: point, gait: gait)
+        shared.world.moveActor(key, to: point, pace: pace)
     }
 
     func turnCombatActor(_ key: ReferenceKey, toward point: SIMD3<Float>) {

@@ -68,9 +68,14 @@ extension CombatMotionAdapter {
     public func moveActor(
         _ key: ReferenceKey,
         to point: SIMD3<Float>,
-        gait: LocomotionGait?
+        pace: CombatPace?
     ) -> Bool {
-        game.streamer.moveActor(key, to: point, direct: false, gait: gait) == .started
+        guard let pace else { return game.streamer.moveActor(key, to: point) == .started }
+        // A whole level needs no blend: the gait alone gives the walk or the run speed.
+        let blend = pace == .walk || pace == .run ? nil : pace.walkRunBlend
+        return game.streamer.moveActor(
+            key, to: point, direct: false, gait: pace.runs ? .run : .walk, walkRunBlend: blend
+        ) == .started
     }
 
     public func faceActor(_ key: ReferenceKey, toward point: SIMD3<Float>) {

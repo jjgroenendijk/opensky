@@ -27,15 +27,16 @@ struct CombatGameSettingsBehaviorTests {
         return machine
     }
 
-    @Test func anApproachWalksInsideTheWalkRadius() {
+    @Test func anApproachSlowsDownInsideTheWalkRadius() {
         var settings = Fixture.neverCasting
         settings.walkRadius = 256
+        settings.slowdownDistance = 96
         var far = Self.engaged(settings, inputs: Fixture.inputs(distance: 1000))
         #expect(far.phase == .approaching)
         let running = Fixture.run(&far, seconds: 1, inputs: Fixture.inputs(distance: 1000))
-        #expect(running.contains { $0.command != nil && !$0.walks })
-        let walking = Fixture.run(&far, seconds: 1, inputs: Fixture.inputs(distance: 200))
-        #expect(walking.contains { $0.command != nil && $0.walks })
+        #expect(running.contains { $0.command != nil && $0.pace == .run })
+        let slower = Fixture.run(&far, seconds: 1, inputs: Fixture.inputs(distance: 300))
+        #expect(slower.contains { $0.command != nil && $0.pace == .fastWalk })
     }
 
     @Test func theWeaponInUseHoldsPastTheStrikingDistance() {
@@ -165,10 +166,16 @@ struct CombatGameSettingsMappingTests {
     @Test func anAggressiveStyleRunsInCloserAndADefensiveOneBacksOff() {
         var tuning = CombatStyleTuning.neutral
         tuning.offensiveMultiplier = 1
+        tuning.defensiveMultiplier = 0
+        let offensive = CombatAISettings.vanilla.applyingRanges(to: .standard, tuning: tuning)
+        #expect(offensive.walkRadius == 128)
+        #expect(offensive.backOffRadius == 0)
+        #expect(offensive.slowdownDistance == 96)
+        tuning.offensiveMultiplier = 0
         tuning.defensiveMultiplier = 1
-        let settings = CombatAISettings.vanilla.applyingRanges(to: .standard, tuning: tuning)
-        #expect(settings.walkRadius == 128)
-        #expect(settings.backOffRadius == 256)
+        let defensive = CombatAISettings.vanilla.applyingRanges(to: .standard, tuning: tuning)
+        #expect(defensive.walkRadius == 512)
+        #expect(defensive.backOffRadius == 256)
     }
 
     @Test func theFlightTimesFollowTheStyle() {

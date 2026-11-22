@@ -241,7 +241,7 @@ struct CombatLoopWorldPartTests {
         part.cancelCombatCast(by: Self.foe)
         #expect(world.cancelledCasts == [Self.foe])
         #expect(part.moveCombatActor(Self.foe, to: SIMD3(1, 0, 0)))
-        #expect(part.moveCombatActor(Self.foe, to: SIMD3(2, 0, 0), gait: nil))
+        #expect(part.moveCombatActor(Self.foe, to: SIMD3(2, 0, 0), pace: .run))
         part.turnCombatActor(Self.foe, toward: .zero)
         part.stopCombatMovement(of: Self.foe)
         part.resumeCombatPackage(for: Self.foe)
