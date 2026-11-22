@@ -243,8 +243,8 @@ public final class PackageCoordinator {
     public internal(set) var commandedActors: Set<ReferenceKey> = []
     /// The schedules of the persistent actors no loaded cell holds.
     public let offscreen: OffscreenSchedule
-    /// Set by a new game; the next update then places every persistent actor.
-    public private(set) var newGamePlacementDue = false
+    /// Set by a new game and by a rest; the next update then places every persistent actor.
+    public internal(set) var placementDue = false
 
     public func offscreenReadout(for actor: ReferenceKey) -> String? {
         offscreen.readout(for: actor)
@@ -312,28 +312,17 @@ public final class PackageCoordinator {
         }
     }
 
-    /// A new game puts every persistent actor at the place of its package for the hour
-    /// (docs/engine/unloaded-actors.md). It waits for the next update, when the start
-    /// hour is set.
+    /// A new game and a rest put every persistent actor at the place of its package for
+    /// the hour (docs/engine/unloaded-actors.md). It waits for the next update, when the
+    /// new hour is set.
     public func placeActorsAtPackagePlaces() {
-        newGamePlacementDue = true
-    }
-
-    private func placeForNewGame() {
-        guard
-            newGamePlacementDue, let clock = world?.packageClock,
-            let offscreenWorld = world as? any OffscreenScheduleWorld
-        else { return }
-        newGamePlacementDue = false
-        offscreen.placeAll(
-            world: offscreenWorld, clock: clock, context: conditionContext(clock: clock)
-        )
+        placementDue = true
     }
 
     /// Reconciles residency, then evaluates scheduled boundaries. An actor
     /// that leaves residency stops being simulated.
     public func advance(by delta: Float = 0) {
-        placeForNewGame()
+        placeAtPackagePlaces()
         guard
             var runtime,
             let world,
@@ -378,8 +367,10 @@ public final class PackageCoordinator {
         aliasRefreshSeconds -= delta
         if aliasRefreshSeconds <= 0 || !change.arrived.isEmpty {
             aliasRefreshSeconds = Self.aliasRefreshInterval
+            let stacks = world.packageAliasStacks()
+            offscreen.aliasStacks = stacks
             runtime.setAliasStacks(
-                world.packageAliasStacks(), actors: registeredActors.keys.sorted(), clock: clock
+                stacks, actors: registeredActors.keys.sorted(), clock: clock
             ) { self.conditionContext(clock: clock) }
         }
         applySituations(to: &runtime, clock: clock, delta: delta, context: live)

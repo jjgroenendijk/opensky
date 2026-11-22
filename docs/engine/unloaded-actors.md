@@ -140,10 +140,20 @@ The pass covers every persistent placed actor, also when several actors share on
 the city guards do. A dead or disabled actor does not move. A moved actor keeps the worldspace
 of its new cell, because a city world and Tamriel share grid coordinates.
 
-A new game runs steps 1, 2, 3, and 5 once for every such actor, one in a loaded cell too. Step 4
-is left out, so no actor walks out of a door at the start. The placement runs at the first
-update after the start hour is set. For example, a new game in Riften at 05:30 shows each guard
-at its gate or on its patrol, not in the area where the data places all of them.
+A new game, a Wait, and a Sleep run steps 1, 2, 3, and 5 once for every such actor, one in a
+loaded cell too. Step 4 is left out, so no actor walks out of a door then. The placement runs at
+the first update after the new hour is set. Two examples:
+
+- A new game in Riften at 05:30 shows each guard at its gate or on its patrol, not in the area
+  where the data places all of them.
+- After a Wait from 06:00 to 10:00 in the Riften market, the stall owners stand at their stalls.
+
+The placement leaves an actor alone when it fights, is dead, talks, rides, follows a command,
+or runs a scene's package. A package that names the player as its place, such as a follower's,
+moves nobody.
+
+A quest alias's packages go before the actor's own, as for a loaded actor. An alias package
+whose place OpenSky cannot find keeps the actor where it is.
 
 For example, at 10:00 Brand-Shei's package names his stall in the Riften market. With the
 player in the market, he comes out of the door of his house and walks to the stall. With the
@@ -156,5 +166,6 @@ player in Whiterun, he is put at the stall.
   so a long walk takes 54 game seconds, not its walking time. There is no middle level.
 - [WARNING] The place has no random point inside a location radius over 200 units, and no
   navmesh search on arrival.
-- [WARNING] A Wait, Sleep, or fast travel updates the actors once, at the end. It does not run
-  the hourly batch in between.
+- [WARNING] A Wait or a Sleep places the actors once, at the end. It does not move them along
+  their paths in 15-minute steps, so a wait shorter than a walk still ends at the place.
+- [WARNING] Fast travel updates the unloaded actors once, at the end.

@@ -141,6 +141,7 @@ struct MenuWorldScreensTests {
             "Hours Slept", "Hours Waiting"
         ])
         #expect(host.fakeWorldState.incrementMiscStatCalls.map(\.amount) == [3, 2])
+        #expect(host.fakePackages.placeActorsAtPackagePlacesCallCount == 2)
     }
 
     @Test func guidesReadMessagesAndTrainers() {

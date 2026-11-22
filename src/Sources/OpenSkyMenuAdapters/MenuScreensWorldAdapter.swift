@@ -38,9 +38,10 @@ public protocol MenuScreensWorldHost: MenuInputConsumer, SendableMetatype {
     var streamer: any CellStreamerPort { get }
 }
 
-/// What resting writes beside the clock: the journal's rest stats.
+/// What resting writes beside the clock: the journal's rest stats and the actors' places.
 @MainActor
 public protocol MenuScreensRestHost: AnyObject, SendableMetatype {
+    var packages: any PackagePort { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -158,6 +159,8 @@ extension MenuScreensWorldAdapter: SleepWaitWorld {
             )
         }
         game.actorValues.runtime?.restoreAll(on: .player)
+        // Each actor walked its path for the skipped hours (docs/engine/unloaded-actors.md).
+        hosts.packages.placeActorsAtPackagePlaces()
         game.saveGames.autosave(sleeping ? .rest : .wait)
     }
 }
