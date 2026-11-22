@@ -413,7 +413,7 @@ static inline float3 postApply(
         color = postDepthOfField(color, pixel, sky, frame.cameraPosition, scene, depth, post);
     }
     if ((post.effects & PostEffectFlagIndirectLight) != 0 && !sky) {
-        color += traced.indirect.sample(postNearest, pixel.uv).rgb;
+        color += traced.indirect.sample(postLinear, pixel.uv).rgb;
     }
     if ((post.effects & PostEffectFlagAmbientOcclusion) != 0 && !sky) {
         // The game darkens the whole lit colour: sun, point lights, and ambient alike.

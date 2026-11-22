@@ -176,6 +176,13 @@ kernel void indirectLightTrace(
     PostPixel pixel = {uv, texel, float2(gid) + 0.5, stored, postWorldPosition(uv, stored, post)};
     float3 camera = post.camera.xyz;
     float range = distance(pixel.world, camera);
+    float depthShare = min(range / 7000.0, 1.0);
+    // The light fades to 0 at 10000 units, so a pixel past it traces nothing.
+    if (range >= 10000.0) {
+        output.write(
+            float4(indirectBlend(0.0, pixel.world, depthShare, history, post), depthShare), gid);
+        return;
+    }
     float3 normal = postSurfaceNormal(pixel, camera, depth, post);
     float radius = post.indirectLight.x;
     float2 ndc = uv * 2.0 - 1.0;
@@ -197,6 +204,13 @@ kernel void indirectLightTrace(
         }
         PostPixel tapPixel = {
             tapUV, texel, tapUV / texel, tapStored, postWorldPosition(tapUV, tapStored, post)};
+        // The weight is 0 past the radius, and where |v . N| |v| cannot pass the bias
+        // whatever the tap normal is. Such a tap needs no normal and no colour.
+        float3 toTap = tapPixel.world - pixel.world;
+        float squared = dot(toTap, toTap);
+        if (squared >= radius * radius || abs(dot(toTap, normal)) * sqrt(squared) <= bias) {
+            continue;
+        }
         float3 tapNormal = postSurfaceNormal(tapPixel, camera, depth, post);
         float weight =
             indirectTapWeight(tapPixel.world - pixel.world, normal, tapNormal, bias, radius);
@@ -205,7 +219,6 @@ kernel void indirectLightTrace(
     float radiusCubed = radius * radius * radius;
     float3 light = max(sum / (radiusCubed * radiusCubed) * post.indirectLight.y / 3.0, 0.0);
     light *= smoothstep(0.0, 1.0, saturate((10000.0 - range) / 10000.0));
-    float depthShare = min(range / 7000.0, 1.0);
     output.write(
         float4(indirectBlend(light, pixel.world, depthShare, history, post), depthShare), gid);
 }

@@ -14,15 +14,17 @@ struct PostHistoryKernels {
     let blurs: (horizontal: String, vertical: String)?
     let historyFormat: MTLPixelFormat
     let resultFormat: MTLPixelFormat
+    /// The targets hold one pixel per this many scene pixels, on each axis.
+    let pixelStep: Int
 
     static let occlusion = Self(
         label: "Occlusion", trace: "occlusionTrace",
         blurs: ("occlusionBlurHorizontal", "occlusionBlurVertical"),
-        historyFormat: .rg16Float, resultFormat: .r16Float
+        historyFormat: .rg16Float, resultFormat: .r16Float, pixelStep: 1
     )
     static let indirectLight = Self(
         label: "IndirectLight", trace: "indirectLightTrace", blurs: nil,
-        historyFormat: .rgba16Float, resultFormat: .rgba16Float
+        historyFormat: .rgba16Float, resultFormat: .rgba16Float, pixelStep: 2
     )
 }
 
@@ -78,23 +80,32 @@ final class PostHistoryPass {
 
     /// Makes the targets match `target`. False when a texture cannot be made.
     func prepare(matching target: any MTLTexture, residency: TargetResidency) -> Bool {
+        let size = MTLSize(
+            width: max(target.width / kernels.pixelStep, 1),
+            height: max(target.height / kernels.pixelStep, 1), depth: 1
+        )
         if
-            let first = history.first, first.width == target.width,
-            first.height == target.height, history.count == 2
+            let first = history.first, first.width == size.width,
+            first.height == size.height, history.count == 2
         {
             return true
         }
         let old = history + [scratch, blurred].compactMap(\.self)
         let label = kernels.label
         guard
-            let first = Self.target(target, kernels.historyFormat, label + "HistoryA"),
-            let second = Self.target(target, kernels.historyFormat, label + "HistoryB")
+            let first = Self.target(target.device, size, kernels.historyFormat, label + "HistoryA"),
+            let second = Self.target(target.device, size, kernels.historyFormat, label + "HistoryB")
         else { return false }
         var made = [first, second]
         if kernels.blurs != nil {
             guard
-                let pass = Self.target(target, kernels.resultFormat, label + "BlurScratch"),
-                let final = Self.target(target, kernels.resultFormat, label + "Result")
+                let pass = Self.target(
+                    target.device,
+                    size,
+                    kernels.resultFormat,
+                    label + "BlurScratch"
+                ),
+                let final = Self.target(target.device, size, kernels.resultFormat, label + "Result")
             else { return false }
             (scratch, blurred) = (pass, final)
             made += [pass, final]
@@ -108,16 +119,17 @@ final class PostHistoryPass {
     }
 
     private static func target(
-        _ match: any MTLTexture,
+        _ device: any MTLDevice,
+        _ size: MTLSize,
         _ format: MTLPixelFormat,
         _ label: String
     ) -> any MTLTexture? {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
-            pixelFormat: format, width: match.width, height: match.height, mipmapped: false
+            pixelFormat: format, width: size.width, height: size.height, mipmapped: false
         )
         descriptor.usage = [.shaderRead, .shaderWrite]
         descriptor.storageMode = .private
-        let texture = match.device.makeTexture(descriptor: descriptor)
+        let texture = device.makeTexture(descriptor: descriptor)
         texture?.label = label
         return texture
     }

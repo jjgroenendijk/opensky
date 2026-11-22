@@ -32,6 +32,7 @@ the detail and the sources it did find.
 | How near a death an actor counts as its witness | 2048 units, with no detection check | [combat detection dialogue](/engine/combat-detection-dialogue.md#in-opensky) |
 | How long a package waits before it starts again after its walk gave up | 10 s | [package schedules](/engine/package-schedules.md#in-a-session) |
 | When a conversation speaker is asked to walk to its partner again | After 1 s in which it moved less than 8 units | [random conversations](/engine/random-conversations.md#where-opensky-differs) |
+| The size of the screen-space indirect light trace | Half the scene size on each axis, read with a linear filter | [post effects](/rendering/post-effects.md#indirect-light) |
 | Trainer tier thresholds | Journeyman from a maximum of 50, Expert at 75, Master above 75 | [training](/engine/training.md#training-menu) |
 | Time-span tag hours | Midnight 23-1, night 1-5, sunrise 5-8, morning 8-12, afternoon 12-17, sunset 17-19, evening 19-23 | [journal](/engine/journal.md#text-replacement) |
 | Global tag number format | A whole value as an integer, else two places, whatever the global's type | [journal](/engine/journal.md#text-replacement) |
