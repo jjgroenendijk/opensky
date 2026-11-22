@@ -175,6 +175,22 @@ struct AgentChangesTests {
         }
     }
 
+    @Test func aDetectionEventSoundsAtThePlayersFeet() throws {
+        #expect(throws: AgentFailure.self) {
+            try world.perform(.world(.detectionEvent(level: 50)))
+        }
+        let perception = FakePerceptionRuntimePort()
+        host.fakePerception.runtime = perception
+        let session = FakeGameSessionPort()
+        let walk = FakeWalkPort()
+        walk.feetPosition = SIMD3(10, 0, 0)
+        session.walkController = walk
+        host.gameSession = session
+        let state = try result(.detectionEvent(level: 50))
+        #expect(state["level"] == .init(Float(50)))
+        #expect(perception.noteSoundEventCalls.map(\.position) == [SIMD3(10, 0, 0)])
+    }
+
     @Test func aDecalNeedsALoadedActor() {
         #expect(throws: AgentFailure.self) {
             try world.perform(.world(.decal(reference: "player", height: 100)))

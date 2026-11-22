@@ -22,6 +22,7 @@ public protocol MagicSummonedActorsHost: AnyObject, SendableMetatype {
     var combat: any CombatPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var magic: any MagicPort { get }
+    var perception: any PerceptionPort { get }
     var perks: any PerkPort { get }
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
@@ -64,6 +65,7 @@ extension MagicSummonedActorsAdapter {
         game.worldState.set(spawn, for: key, in: location)
         streamer.requestRebuild(of: location)
         enlist(key, for: caster)
+        game.perception.runtime?.noteSummon(by: caster, at: position)
         return key
     }
 

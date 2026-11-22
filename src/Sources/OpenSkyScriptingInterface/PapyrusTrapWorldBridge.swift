@@ -27,6 +27,8 @@ public protocol PapyrusTrapWorldBridge: AnyObject {
     func setMotionType(_ motionType: ReferenceMotionType, of reference: ReferenceKey) -> Bool
     /// Puts an object back where its plugin placed it, or at `target`. False for an actor.
     func resetReference(_ reference: ReferenceKey, to target: ReferenceKey?) -> Bool
+    /// A sound of `owner` at `position`, for detection. `level` is 0 to 100 or more.
+    func createDetectionEvent(owner: ReferenceKey, level: Float, at position: SIMD3<Float>)
     /// Fires `weapon` with `ammunition` from `source`, along its facing. False when
     /// nothing flies.
     func fireWeapon(

@@ -207,6 +207,8 @@ struct ProjectileRuntimeTests {
 
         #expect(traces.first?.outcome == .hitStatic)
         #expect(traces.first?.material == wood)
+        // The impact also sounds for its shooter, for detection.
+        #expect(world.sounds.count == world.impacts.count)
     }
 
     /// A cone meets the world only through its look ahead, which finds the wall before

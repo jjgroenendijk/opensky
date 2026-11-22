@@ -33,6 +33,19 @@ struct MagicSummonedActorsTests {
         #expect(host.fakeWorldState.setCalls.isEmpty)
     }
 
+    /// A summon is a loud sound of its caster at the place of the summon.
+    @Test func aSummonLeavesALoudSoundEvent() {
+        let perception = FakePerceptionRuntimePort()
+        host.fakePerception.runtime = perception
+        host.fakeGameSession = FakeGameSessionPort()
+        host.fakeStreamer.currentCellLocation = Self.cell
+        host.fakeWorldState.allocateGeneratedKeyResult = .generated(9)
+        let point = SIMD3<Float>(40, 0, 0)
+        #expect(adapter.summonActor(FormID(0x30), at: point, for: .player) != nil)
+        #expect(perception.noteSummonCalls.map(\.position) == [point])
+        #expect(perception.noteSummonCalls.map(\.caster) == [.player])
+    }
+
     @Test func thePlayersAllyIsCalmAndCommanded() {
         adapter.commandActor(Self.actor, for: .player)
         #expect(loop.setHostilityCalls.map(\.hostility) == [.neutral])

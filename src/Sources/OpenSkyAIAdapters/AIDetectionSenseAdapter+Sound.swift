@@ -29,13 +29,20 @@ extension AIDetectionSenseAdapter {
         /// effect's casting sound level, for as long as it lasts.
         func playerActionSound() -> Float {
             guard let settings = game.perception.runtime?.settings else { return 0 }
-            var loudest: Float = 0
+            var loudest = playerCastingSound()
             if let melee = game.combat.melee, melee.state.attackPhase != .idle {
                 let level = melee.weapon.weapon
                     .flatMap { game.combat.items?.weapon($0)?.details.detectionSoundLevel }
                     .flatMap(DetectionSoundLevel.init(rawValue:)) ?? .normal
                 loudest = max(loudest, settings.actionSound(for: level))
             }
+            return loudest
+        }
+
+        /// The loudest cast in a hand, which also leaves a sound event.
+        func playerCastingSound() -> Float {
+            guard let settings = game.perception.runtime?.settings else { return 0 }
+            var loudest: Float = 0
             if let caster = game.magic.caster {
                 for hand in SpellHand.allCases where caster.phase(of: hand).isCasting {
                     let spell = caster.state(of: hand).spell

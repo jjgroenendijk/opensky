@@ -35,7 +35,7 @@ struct ProjectilePayloadLanding {
     func land(_ projectile: LiveProjectile, impact: ProjectileImpact) -> Report {
         let arrow = applyArrow(projectile, impact: impact)
         let spellHit = applySpell(projectile, impact: impact)
-        playImpact(of: impact, payload: projectile.payload)
+        playImpact(of: impact, projectile: projectile)
         pushStruckBody(projectile, impact: impact)
         detonateExplosion(of: projectile, at: impact.position, source: impact.reference)
         return Report(appliedDamage: arrow.damage, spellHit: spellHit, keptArrow: arrow.kept)
@@ -144,8 +144,9 @@ struct ProjectilePayloadLanding {
     }
 
     /// The IPCT chain for a hit, played where the world can play it.
-    private func playImpact(of impact: ProjectileImpact, payload: ProjectilePayload) {
+    private func playImpact(of impact: ProjectileImpact, projectile: LiveProjectile) {
         guard let world, let impacts else { return }
+        let payload = projectile.payload
         // A spell shows its MGEF impact data set. An arrow resolves through the
         // ammunition's chain; AMMO has no INAM, so it carries the unarmed profile's
         // nil data set.
@@ -163,6 +164,10 @@ struct ProjectilePayloadLanding {
         resolved.target = impact.target
         resolved.surfaceNormal = impact.normal
         world.playProjectileImpact(resolved, at: impact.position)
+        world.noteProjectileSound(
+            level: resolved.impact?.effect?.soundLevel, at: impact.position,
+            by: projectile.shooter
+        )
     }
 
     /// Sets off the projectile's explosion at `position`. A spell's projectile is a spell
@@ -180,6 +185,7 @@ struct ProjectilePayloadLanding {
             spec, at: position, cause: projectile.payload.spell == nil ? .projectile : .spell,
             source: source
         )
+        world?.noteProjectileSound(level: spec.soundLevel, at: position, by: projectile.shooter)
     }
 
     /// Pushes the loose body a projectile struck by its `PROJ` impact force, along its flight.

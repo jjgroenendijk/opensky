@@ -106,7 +106,10 @@ final class CombatProjectileWorldPart: CombatSharedPart, ProjectileWorld {
 
     func playProjectileImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
         shared.pendingCommands.append(.playImpact(impact, at: position))
-        shared.pendingCommands.append(.detectionEvent(owner: .player, at: position))
+    }
+
+    func noteProjectileSound(level: UInt32?, at position: SIMD3<Float>, by shooter: ReferenceKey) {
+        shared.pendingCommands.append(.detectionEvent(owner: shooter, level: level, at: position))
     }
 
     /// False on an empty quiver, which is ordinary play: the shot does not happen.

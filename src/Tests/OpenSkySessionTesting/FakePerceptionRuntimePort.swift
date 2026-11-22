@@ -7,7 +7,10 @@ public import OpenSkySessionInterface
 /// Stores each property and records each call to `PerceptionRuntimePort`.
 nonisolated public final class FakePerceptionRuntimePort: PerceptionRuntimePort {
     public var noteAttackCalls: [ReferenceKey] = []
-    public var noteDetectionEventCalls: [(owner: ReferenceKey, position: SIMD3<Float>)] = []
+    public var noteSoundEventCalls: [NoteSoundEventCall] = []
+    public var noteSummonCalls: [(caster: ReferenceKey, position: SIMD3<Float>)] = []
+    public var soundEventCalls: [ReferenceKey] = []
+    public var soundEventResult: DetectionSoundEvent?
     public var observersDetectingCalls: [ReferenceKey] = []
     public var observersDetectingResult: [ReferenceKey] = []
     public var settingsValue: DetectionSettings?
@@ -19,13 +22,42 @@ nonisolated public final class FakePerceptionRuntimePort: PerceptionRuntimePort 
     public init() {}
 }
 
+extension FakePerceptionRuntimePort {
+    nonisolated public struct NoteSoundEventCall: CustomStringConvertible {
+        public let owner: ReferenceKey
+        public let level: Float
+        public let position: SIMD3<Float>
+
+        public var description: String {
+            [
+                "owner: " + String(describing: owner),
+                "level: " + String(describing: level),
+                "position: " + String(describing: position)
+            ].joined(separator: ", ")
+        }
+    }
+}
+
 nonisolated extension FakePerceptionRuntimePort {
     public func noteAttack(by target: ReferenceKey) {
         noteAttackCalls.append(target)
     }
 
-    public func noteDetectionEvent(owner: ReferenceKey, at position: SIMD3<Float>) {
-        noteDetectionEventCalls.append((owner: owner, position: position))
+    public func noteSoundEvent(owner: ReferenceKey, level: Float, at position: SIMD3<Float>) {
+        noteSoundEventCalls.append(NoteSoundEventCall(
+            owner: owner,
+            level: level,
+            position: position
+        ))
+    }
+
+    public func noteSummon(by caster: ReferenceKey, at position: SIMD3<Float>) {
+        noteSummonCalls.append((caster: caster, position: position))
+    }
+
+    public func soundEvent(of owner: ReferenceKey) -> DetectionSoundEvent? {
+        soundEventCalls.append(owner)
+        return soundEventResult
     }
 
     public func observersDetecting(_ target: ReferenceKey) -> [ReferenceKey] {

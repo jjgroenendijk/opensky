@@ -95,8 +95,8 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
     /// the cone a forward hemisphere: a target directly beside an observer is on
     /// the edge of sight and one behind it is not seen at all.
     public var viewConeHalfAngleDegrees: MovementSetting
-    /// The action sounds of the other three sound levels. The install has a
-    /// game setting only for the silent level.
+    /// The action sounds of the other three sound levels. `Skyrim.esm` sets only the
+    /// silent level; these are the game's own defaults (docs/engine/detection-events.md).
     public var normalActionSound: MovementSetting
     public var loudActionSound: MovementSetting
     public var veryLoudActionSound: MovementSetting
@@ -213,9 +213,9 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
             sneakMovementMult: ours(0.75),
             sprintMovementMult: ours(3),
             viewConeHalfAngleDegrees: ours(95),
-            normalActionSound: ours(25),
-            loudActionSound: ours(50),
-            veryLoudActionSound: ours(100),
+            normalActionSound: vanilla("iSoundLevelNormal", 50),
+            loudActionSound: vanilla("iSoundLevelLoud", 100),
+            veryLoudActionSound: vanilla("iSoundLevelVeryLoud", 200),
             fullLightLuminance: ours(1),
             fullDetectionValue: ours(25),
             gainPerSecond: ours(100),

@@ -25,6 +25,7 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
         installActorActions(into: &registry)
         installOwnedDoors(into: &registry)
         installKnockAreaEffect(into: &registry)
+        installCreateDetectionEvent(into: &registry)
     }
 
     /// While a kill is deferred, zero health does not kill. Ending it lets the next
@@ -222,6 +223,26 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
             for actor in actors.map(\.key).sorted() where actor != key {
                 _ = trapWorld.knockDownActor(actor, awayFrom: key, magnitude: knock)
             }
+            return .returned(.none)
+        }
+    }
+
+    /// `CreateDetectionEvent(Actor akOwner, int aiSoundLevel = 0)`: a sound of the owner
+    /// at the receiver's place (docs/engine/detection-events.md).
+    private static func installCreateDetectionEvent(into registry: inout PapyrusNativeRegistry) {
+        scriptState(
+            "ObjectReference",
+            "CreateDetectionEvent",
+            into: &registry
+        ) { call, bridge, key in
+            guard
+                let owner = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)),
+                let place = PapyrusNativeFunctions.WorldPlaceNatives.position(of: key, bridge)
+            else { return failure(call, "CreateDetectionEvent needs an owner") }
+            guard let trapWorld = bridge.ports.trapWorld else { return .deviated(.none, .stubbed) }
+            trapWorld.createDetectionEvent(
+                owner: owner, level: Float(integer(call, at: 1) ?? 0), at: place
+            )
             return .returned(.none)
         }
     }

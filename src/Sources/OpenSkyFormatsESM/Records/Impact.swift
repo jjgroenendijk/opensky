@@ -14,7 +14,8 @@ nonisolated public struct Impact: Equatable, Sendable {
         public let orientation: UInt32
         let angleThreshold: Float
         let placementRadius: Float
-        let soundLevel: UInt32?
+        /// 0 loud, 1 normal, 2 silent, 3 very loud.
+        public let soundLevel: UInt32?
         /// Bit 0: no decal data.
         public let flags: UInt8?
         /// 0 default, 1 destroy, 2 bounce, 3 impale, 4 stick.

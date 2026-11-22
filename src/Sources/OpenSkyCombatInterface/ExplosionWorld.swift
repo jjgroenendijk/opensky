@@ -26,6 +26,8 @@ nonisolated public struct ExplosionSpec: Equatable, Sendable {
     public var knockdown = ExplosionKnockdown.never
     /// `DATA` flag `0x40`: the fixed swap modifier never plays.
     public var ignoresImageSpaceSwap = false
+    /// `DATA` sound level: 0 loud, 1 normal, 2 silent, 3 very loud.
+    public var soundLevel: UInt32?
 
     public init(
         name: String,

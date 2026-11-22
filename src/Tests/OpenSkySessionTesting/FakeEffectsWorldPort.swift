@@ -53,6 +53,7 @@ nonisolated public final class FakeEffectsWorldPort: EffectsWorldPort {
     public var setMotionTypeResult = false
     public var resetReferenceCalls: [(reference: ReferenceKey, target: ReferenceKey?)] = []
     public var resetReferenceResult = false
+    public var createDetectionEventCalls: [CreateDetectionEventCall] = []
     public var fireWeaponCalls: [FireWeaponCall] = []
     public var fireWeaponResult = false
 
@@ -174,6 +175,20 @@ extension FakeEffectsWorldPort {
                 "source: " + String(describing: source),
                 "direction: " + String(describing: direction),
                 "speed: " + String(describing: speed)
+            ].joined(separator: ", ")
+        }
+    }
+
+    nonisolated public struct CreateDetectionEventCall: CustomStringConvertible {
+        public let owner: ReferenceKey
+        public let level: Float
+        public let position: SIMD3<Float>
+
+        public var description: String {
+            [
+                "owner: " + String(describing: owner),
+                "level: " + String(describing: level),
+                "position: " + String(describing: position)
             ].joined(separator: ", ")
         }
     }
@@ -363,6 +378,14 @@ nonisolated extension FakeEffectsWorldPort {
     public func resetReference(_ reference: ReferenceKey, to target: ReferenceKey?) -> Bool {
         resetReferenceCalls.append((reference: reference, target: target))
         return resetReferenceResult
+    }
+
+    public func createDetectionEvent(owner: ReferenceKey, level: Float, at position: SIMD3<Float>) {
+        createDetectionEventCalls.append(CreateDetectionEventCall(
+            owner: owner,
+            level: level,
+            position: position
+        ))
     }
 
     public func fireWeapon(

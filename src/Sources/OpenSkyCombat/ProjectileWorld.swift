@@ -122,6 +122,9 @@ public protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHit
     func projectileLaunched(_ projectile: LiveProjectile)
     /// Plays one resolved impact at the contact point.
     func playProjectileImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>)
+    /// A projectile of `shooter` made a sound at `position` by its impact or its
+    /// explosion. `level` is the record's sound level.
+    func noteProjectileSound(level: UInt32?, at position: SIMD3<Float>, by shooter: ReferenceKey)
     /// The default blood of a hit on an actor whose impact data resolved nothing.
     func showDefaultBlood(on target: ReferenceKey, at position: SIMD3<Float>, melee: Bool)
 

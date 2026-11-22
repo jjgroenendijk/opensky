@@ -148,6 +148,12 @@ extension EffectsWorldAdapter {
         trapControl.staggerActor(actor, magnitude: magnitude)
     }
 
+    public func createDetectionEvent(
+        owner: ReferenceKey, level: Float, at position: SIMD3<Float>
+    ) {
+        trapControl.createDetectionEvent(owner: owner, level: level, at: position)
+    }
+
     public func playEffect(
         _ effect: ReferenceKey, on target: ReferenceKey, duration: Float?, facing: ReferenceKey?
     ) -> Bool {

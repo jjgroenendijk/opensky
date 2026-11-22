@@ -4,6 +4,7 @@ import OpenSkyCombat
 import OpenSkyCombatAdapters
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyPerceptionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkySessionTesting
@@ -25,14 +26,21 @@ struct CombatOutcomesTests {
     }
 
     @Test func commandsReachTheirPorts() {
+        let perception = FakePerceptionRuntimePort()
+        perception.settings = .synthetic
+        host.fakePerception.runtime = perception
         adapter.run([
             .showNotification("You are being attacked"),
             .removeReference(Self.foe),
             .resetRagdolls,
             .setCombatMusic(active: true),
             .playerAttackedOutsideCombat(.swing),
-            .detectionEvent(owner: .player, at: .zero)
+            .detectionEvent(owner: .player, level: 3, at: .zero),
+            .detectionEvent(owner: Self.foe, level: nil, at: .zero)
         ])
+        // A record's level becomes its sound value; no level is the normal one.
+        #expect(perception.noteSoundEventCalls.map(\.level) == [200, 50])
+        #expect(perception.noteSoundEventCalls.map(\.owner) == [.player, Self.foe])
         #expect(host.fakeHud.showNotificationCalls == ["You are being attacked"])
         #expect(host.fakeWorldState.resetKeyCalls == [Self.foe])
         #expect(host.fakeStoryWorld.commentOnPlayerCalls.count == 1)

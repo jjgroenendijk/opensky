@@ -24,7 +24,7 @@ nonisolated public struct Explosion: Equatable, Sendable {
         /// swap, 0x80 chain, 0x100 no controller vibration.
         public let flags: UInt32?
         /// 0 loud, 1 normal, 2 silent, 3 very loud.
-        let soundLevel: UInt32?
+        public let soundLevel: UInt32?
         let size: Int
     }
 

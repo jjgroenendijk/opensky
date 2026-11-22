@@ -4,6 +4,7 @@ import Foundation
 import OpenSkyCombatAdapters
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
@@ -46,6 +47,14 @@ struct EffectsTrapControlTests {
         #expect(!adapter.pushActor(Self.actor, awayFrom: Self.trap, along: nil, speed: 0))
         #expect(!adapter.pushActor(Self.actor, awayFrom: Self.trap, along: nil, speed: 5))
         #expect(!adapter.knockDownActor(Self.actor, awayFrom: Self.trap, magnitude: 1))
+    }
+
+    @Test func aScriptedDetectionEventReachesPerception() {
+        let perception = FakePerceptionRuntimePort()
+        host.fakePerception.runtime = perception
+        adapter.createDetectionEvent(owner: Self.actor, level: 100, at: SIMD3(1, 2, 3))
+        #expect(perception.noteSoundEventCalls.map(\.owner) == [Self.actor])
+        #expect(perception.noteSoundEventCalls.map(\.level) == [100])
     }
 
     @Test func aStaggerGoesThroughTheMagicWorld() {

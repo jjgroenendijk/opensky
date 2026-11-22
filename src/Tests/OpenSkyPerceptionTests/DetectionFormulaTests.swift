@@ -24,8 +24,7 @@ struct DetectionFormulaTests {
         #expect(ours.map(\.editorID) == [
             "distanceAttenuationExponent", "equippedWeightBase", "equippedWeightMult",
             "sneakMovementMult", "sprintMovementMult", "viewConeHalfAngleDegrees",
-            "normalActionSound", "loudActionSound",
-            "veryLoudActionSound", "fullLightLuminance", "fullDetectionValue", "gainPerSecond",
+            "fullLightLuminance", "fullDetectionValue", "gainPerSecond",
             "decayPerSecond", "suspiciousLevel", "detectedLevel", "skillUseRange"
         ])
         #expect(settings.silentActionSound.value == 10)

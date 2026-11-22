@@ -66,6 +66,11 @@ final class FakeTrapWorld: PapyrusTrapWorldBridge {
         return true
     }
 
+    var detectionEvents: [(owner: ReferenceKey, level: Float)] = []
+    func createDetectionEvent(owner: ReferenceKey, level: Float, at _: SIMD3<Float>) {
+        detectionEvents.append((owner, level))
+    }
+
     func staggerActor(_ actor: ReferenceKey, magnitude: Float) -> Bool {
         staggers.append((actor, magnitude))
         return true

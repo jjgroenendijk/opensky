@@ -200,6 +200,7 @@ public final class ExplosionRuntime {
         spec.impactDataSet = records.resolve(data?.impactDataSet, from: resolved)
         spec.knockdown = ExplosionKnockdown(flags: data?.flags)
         spec.ignoresImageSpaceSwap = (data?.flags ?? 0) & Self.ignoreSwapFlag != 0
+        spec.soundLevel = data?.soundLevel
         return spec
     }
 

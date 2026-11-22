@@ -20,36 +20,6 @@ extension PerceptionRuntime {
         }
     }
 
-    /// A detection event of `owner` at `position`, such as a landed arrow (CK wiki
-    /// "Category:Detection"). An aggressive observer within range makes the pool wait
-    /// and turns alert: suspicious of the owner, with the event as the place to search.
-    public func noteDetectionEvent(owner: ReferenceKey, at position: SIMD3<Float>) {
-        let hearing = observers.filter { observer in
-            observer.isAggressive && observer.key != owner
-                && DetectionFormula.isInRange(
-                    distance: simd_distance(observer.feet, position), settings: settings,
-                    isExterior: observer.isExterior, isFlying: observer.isFlying
-                )
-        }
-        guard !hearing.isEmpty else { return }
-        var pool = pools[owner] ?? StealthPointPool(settings: stealthPoints)
-        pool.holdRefill(for: stealthPoints.detectedEventWait)
-        pool.cap(at: CombatTargetTrack.eventPointCap)
-        pools[owner] = pool
-        tracks[owner, default: CombatTargetTrack()].addSearchPlace(position)
-        for observer in hearing {
-            let key = DetectionPairKey(observer: observer.key, target: owner)
-            var pair = pairs[key] ?? .unaware
-            if pair.state == .unaware {
-                pair.level = max(pair.level, settings.suspiciousLevel.value)
-                pair.state = .suspicious
-                pair.levelState = .suspicious
-            }
-            pair.lastKnownPosition = position
-            pairs[key] = pair
-        }
-    }
-
     /// The record hostile observers share of `target`.
     public func targetTrack(of target: ReferenceKey) -> CombatTargetTrack {
         tracks[target] ?? CombatTargetTrack()

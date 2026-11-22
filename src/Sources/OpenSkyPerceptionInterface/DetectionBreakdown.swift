@@ -97,6 +97,8 @@ nonisolated public struct DetectionTargetTraits: Equatable, Sendable {
     public var muffle: Float
     /// The loudness of the attack or cast the target is making now.
     public var actionSound: Float
+    /// The share of `actionSound` a spell cast makes. A cast also leaves a sound event.
+    public var castingSound: Float = 0
     /// The target's Sneak skill, which UESP calls the sneaker skill.
     public var sneakSkill: Float
     /// An invisible target cannot be seen, but it can still be heard.
