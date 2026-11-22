@@ -27,6 +27,10 @@ nonisolated public struct SceneActorStatus: OptionSet, Equatable, Sendable {
     public static let walkingToPartner = SceneActorStatus(rawValue: 0x10)
     /// More than 3000 units from the player. A waiting conversation scene stops for it.
     public static let farFromPlayer = SceneActorStatus(rawValue: 0x20)
+    /// Its package does not allow conversation (`PKDT` interrupt flag 0x02).
+    public static let talkForbidden = SceneActorStatus(rawValue: 0x40)
+    /// Part way into or out of a seat or a bed.
+    public static let changingSeat = SceneActorStatus(rawValue: 0x80)
 }
 
 @MainActor

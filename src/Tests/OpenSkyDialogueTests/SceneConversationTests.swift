@@ -81,11 +81,23 @@ struct SceneConversationTests {
             .start(talk.formID)
         #expect(steps(gone, of: talk).last == .ended(.stopped))
 
-        let fighting = FakeSceneHost()
-        fighting.statuses[partner] = .inCombat
-        let events = try runtime(WorldStateStore(), [talk], host: fighting, partner: partner)
+        let blocked: [(ReferenceKey, SceneActorStatus)] = [
+            (partner, .inCombat), (speaker, .talkForbidden), (partner, .talkForbidden),
+            (partner, .changingSeat)
+        ]
+        for (actor, status) in blocked {
+            let host = FakeSceneHost()
+            host.statuses[actor] = status
+            let events = try runtime(WorldStateStore(), [talk], host: host, partner: partner)
+                .start(talk.formID)
+            #expect(steps(events, of: talk).last == .ended(.stopped), "\(status)")
+        }
+        // A speaker that sits down may still be walked to.
+        let sitting = FakeSceneHost()
+        sitting.statuses[speaker] = .changingSeat
+        let waits = try runtime(WorldStateStore(), [talk], host: sitting, partner: partner)
             .start(talk.formID)
-        #expect(steps(events, of: talk).last == .ended(.stopped))
+        #expect(steps(waits, of: talk).last != .ended(.stopped))
     }
 
     /// One partner walks to the other first. One pair walks at a time, and a pair that
