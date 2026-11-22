@@ -50,6 +50,12 @@ struct FlyingMountLockTests {
         )
         #expect(second < 0)
         #expect(orders.lockSteer == second)
+        orders.weaponDrawn = false
+        let sheathed = orders.steer(
+            toward: SIMD3(100, 0, 0), from: rider, input: (700, 1), deltaTime: 1
+        )
+        #expect(sheathed == 0 && orders.lockSteer == 0)
+        orders.weaponDrawn = true
         let gone = orders.steer(toward: nil, from: rider, input: (700, 1), deltaTime: 1)
         #expect(gone == 0)
     }

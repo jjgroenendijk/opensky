@@ -119,7 +119,8 @@ player's own mount, or the weapon is sheathed and the target is an actor.
 count of `refreshes`, and `autoAim`, the target the last player shot turned toward.
 `state mount` shows `lockSteer`, the heading change of the last step in radians.
 
-- [WARNING] The lock has no hold-to-lock option, no look factors, no locked objects, and no stop
-  for a sheathed weapon. The lock does not turn the dragon: its flight follows its orders
+- The lock steers nothing while the rider's weapon is sheathed.
+- [WARNING] The lock has no hold-to-lock option, no look factors, and no locked objects. The
+  lock does not turn the dragon: its flight follows its orders
   ([dragon flight](/engine/dragon-flight.md#riding)).
 - [INFO] The NPC turn uses the actor's own turn step, not a rate from the graph.
