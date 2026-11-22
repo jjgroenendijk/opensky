@@ -74,13 +74,20 @@ nonisolated public struct ActorPackageRuntime {
         context: (ReferenceKey) -> ConditionContext
     ) {
         for actor in actors.keys.sorted() {
-            guard
-                let state = actors[actor],
-                !state.isSuspended,
-                state.needsEvaluation(at: clock)
-            else { continue }
+            guard needsEvaluation(actor, at: clock) else { continue }
             reevaluate(actor: actor, clock: clock, context: context(actor))
         }
+    }
+
+    /// The same for one actor, for a pass that spreads its actors over frames.
+    public mutating func advance(actor: ReferenceKey, clock: GameClock, context: ConditionContext) {
+        guard needsEvaluation(actor, at: clock) else { return }
+        reevaluate(actor: actor, clock: clock, context: context)
+    }
+
+    private func needsEvaluation(_ actor: ReferenceKey, at clock: GameClock) -> Bool {
+        guard let state = actors[actor], !state.isSuspended else { return false }
+        return state.needsEvaluation(at: clock)
     }
 
     /// Holds one actor out of scheduled selection, or releases it. A latch, not a saved

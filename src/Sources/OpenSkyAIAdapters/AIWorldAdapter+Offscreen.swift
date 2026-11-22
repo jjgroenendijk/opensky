@@ -5,6 +5,7 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkySessionInterface
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension AIWorldAdapter.Worlds {
@@ -36,6 +37,12 @@ extension AIWorldAdapter.Worlds {
 
     public var offscreenTimescale: Float {
         packageState.game.gameSession?.currentTimescale ?? GameClock.defaultTimescale
+    }
+
+    public func offscreenLevel(of actor: OffscreenActor) -> AIProcessLevel {
+        OffscreenScheduleCore.level(
+            of: actor.place, residentWorldspace: packageState.game.streamer.residentWorldspace
+        )
     }
 
     public func offscreenStopwatch() -> () -> Double {

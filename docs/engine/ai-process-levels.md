@@ -98,19 +98,17 @@ the middle-low and low levels skip in detail was not found.
 
 ## In OpenSky
 
-OpenSky loads and attaches a cell in one step, so a loaded actor is always High, and the two
-middle levels stay empty. An actor that no loaded cell holds is Low
-([unloaded actors](/engine/unloaded-actors.md#in-opensky)).
+OpenSky loads and attaches a cell in one step, so a loaded actor is always High, and
+Middle-high stays empty. An actor that no loaded cell holds is Low
+([unloaded actors](/engine/unloaded-actors.md#in-opensky)), or Middle-low when it stands in the
+exterior of the loaded worldspace: the game keeps a worldspace's persistent cell loaded, and
+OpenSky gives no such actor a body.
 
-The Low level updates by the rule: every 0.30 / `TimeScale` game hours a pass starts. Each actor
-takes its package, and then the actors are placed in turn. The time is read after every 10
-actors. Over the frame's budget, the pass stops and goes on in the next frame from the same
-place.
+Both levels update by the rule: every 0.15 / `TimeScale` game hours a Middle-low pass starts,
+and every 0.30 / `TimeScale` a Low pass. In a pass each actor in turn takes its package and its
+place. The time is read after every 10 actors. Over the frame's budget, the pass stops and goes
+on in the next frame from the same place.
 
 `openskycli game state assist` shows under `processLevels` the count of actors on each level,
 `lowUpdateGameSeconds`, the pass (`lowPassPlace` of `lowPassLength`), `budgetMilliseconds`, and
 `overBudgetCount`, the passes that stopped over budget.
-
-- [WARNING] The package choice of a pass runs for all Low actors at its start, outside the budget.
-- [WARNING] A persistent-cell actor over 40960 units away is never loaded, so it is Low, not
-  Middle-low.

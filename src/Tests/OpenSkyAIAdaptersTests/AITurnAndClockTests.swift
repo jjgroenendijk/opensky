@@ -2,7 +2,9 @@
 // reads the session's timescale.
 
 import OpenSkyAIAdapters
+import OpenSkyAIPackages
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkySessionTesting
 import Testing
 
@@ -25,5 +27,10 @@ struct AITurnAndClockTests {
         host.gameSession = session
         #expect(adapter.worlds.offscreenTimescale == 30)
         #expect(adapter.worlds.offscreenStopwatch()() >= 0)
+        let indoors = OffscreenActor(
+            key: Self.actor, base: FormID(0x600),
+            place: OffscreenPlace(location: .interior(FormID(0x900)), worldspace: nil, point: .zero)
+        )
+        #expect(adapter.worlds.offscreenLevel(of: indoors) == .low)
     }
 }

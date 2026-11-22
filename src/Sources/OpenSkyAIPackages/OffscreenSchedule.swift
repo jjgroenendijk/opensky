@@ -89,6 +89,8 @@ public protocol OffscreenScheduleWorld: AnyObject {
     var offscreenTimescale: Float { get }
     /// A reading of milliseconds spent since the call, for the frame budget.
     func offscreenStopwatch() -> () -> Double
+    /// The process level of an actor no loaded cell holds: Middle-low or Low.
+    func offscreenLevel(of actor: OffscreenActor) -> AIProcessLevel
 }
 
 extension OffscreenScheduleWorld {
@@ -113,6 +115,18 @@ nonisolated public enum OffscreenScheduleCore {
     /// clock went backwards.
     public static func isDue(now: Double, last: Double?, interval: Double) -> Bool {
         AIProcessRule.isDue(now: now, last: last, interval: interval)
+    }
+
+    /// The level of an unloaded actor. A worldspace's persistent cell is loaded with the
+    /// worldspace, so an actor that stands in the loaded worldspace is Middle-low.
+    public static func level(
+        of place: OffscreenPlace, residentWorldspace: String?
+    ) -> AIProcessLevel {
+        var facts = AIProcessFacts()
+        if let residentWorldspace, case .exterior = place.location {
+            facts.cellLoaded = place.worldspace?.lowercased() == residentWorldspace.lowercased()
+        }
+        return AIProcessRule.level(facts) ?? .low
     }
 
     public enum Decision: Equatable, Sendable {
@@ -146,7 +160,9 @@ public final class OffscreenSchedule {
     var runtime: ActorPackageRuntime?
     public private(set) var registered: [ReferenceKey: FormID] = [:]
     public private(set) var steps: [ReferenceKey: OffscreenStep] = [:]
-    private var lastUpdate: Double?
+    /// The level of each listed actor at the start of the last pass.
+    public private(set) var levels: [ReferenceKey: AIProcessLevel] = [:]
+    private var lastUpdates: [AIProcessLevel: Double] = [:]
     /// The pass over the Low list, which goes on from its saved place next frame.
     public private(set) var turn = AIProcessTurn<ReferenceKey>()
     private var turnActors: [ReferenceKey: OffscreenActor] = [:]
@@ -157,60 +173,90 @@ public final class OffscreenSchedule {
         steps[actor]?.readout
     }
 
+    /// The registered actors on `level`.
+    public func count(of level: AIProcessLevel) -> Int {
+        registered.keys.count { (levels[$0] ?? .low) == level }
+    }
+
     public init(data: PackageSessionData?) {
         runtime = data.map {
             ActorPackageRuntime(store: $0.store, conditionFunctions: $0.conditionFunctions)
         }
     }
 
-    /// The Low level's update. A pass starts when one is due: every actor outside
-    /// `residents` takes its package, and then each is placed in turn inside the
-    /// frame's budget. A pass that runs over goes on in the next frame.
+    /// The Middle-low and Low levels' update. A pass starts when a level is due. Each
+    /// actor of that level outside `residents` takes its package and its place in turn,
+    /// inside the frame's budget. A pass that runs over goes on in the next frame.
     public func advance(
         world: any OffscreenScheduleWorld, clock: GameClock, frameSeconds: Float = 0,
         residents: Set<ReferenceKey>, context: () -> ConditionContext
     ) {
         let now = clock.totalGameSeconds
         lastBudget = AIProcessRule.budgetMilliseconds(frameSeconds: frameSeconds)
+        guard runtime != nil else { return }
         if !turn.isRunning {
-            let interval = OffscreenScheduleCore.updateSeconds(timescale: world.offscreenTimescale)
-            guard
-                var runtime,
-                OffscreenScheduleCore.isDue(now: now, last: lastUpdate, interval: interval)
-            else { return }
-            lastUpdate = now
-            let actors = world.offscreenActors().filter { !residents.contains($0.key) }
-            reconcile(&runtime, with: actors)
-            let shared = context()
-            runtime.advance(clock: clock) { _ in shared }
-            self.runtime = runtime
-            let listed = actors.filter { registered[$0.key] != nil }
-            turnActors = Dictionary(listed.map { ($0.key, $0) }) { first, _ in first }
-            turn.begin(listed.map(\.key))
+            beginPass(world: world, now: now, residents: residents)
         }
-        guard let runtime else { return }
+        guard turn.isRunning else { return }
+        let shared = context()
         turn.run(budget: lastBudget, spent: world.offscreenStopwatch(), update: { key in
-            guard let actor = turnActors[key], !residents.contains(key) else { return }
-            update(actor, package: runtime.currentPackage(for: key), world: world, now: now)
+            guard
+                let actor = turnActors[key], !residents.contains(key),
+                choosePackage(for: actor, clock: clock, context: shared)
+            else { return }
+            update(actor, package: runtime?.currentPackage(for: key), world: world, now: now)
         })
         if !turn.isRunning {
             turnActors = [:]
         }
     }
 
-    private func reconcile(_ runtime: inout ActorPackageRuntime, with actors: [OffscreenActor]) {
-        let bases = Dictionary(actors.map { ($0.key, $0.base) }) { first, _ in first }
-        let change = PackageCore.reconcile(registered: registered, residents: bases)
-        for actor in change.departed {
-            runtime.unregister(actor: actor)
+    /// Lists the actors of each level whose update is due.
+    private func beginPass(
+        world: any OffscreenScheduleWorld, now: Double, residents: Set<ReferenceKey>
+    ) {
+        let timescale = world.offscreenTimescale
+        let due = [AIProcessLevel.middleLow, .low].filter { level in
+            OffscreenScheduleCore.isDue(
+                now: now, last: lastUpdates[level],
+                interval: level.updateSeconds(timescale: timescale) ?? 0
+            )
+        }
+        guard !due.isEmpty else { return }
+        for level in due {
+            lastUpdates[level] = now
+        }
+        let actors = world.offscreenActors().filter { !residents.contains($0.key) }
+        forgetDeparted(present: Set(actors.map(\.key)))
+        levels = Dictionary(actors.map { ($0.key, world.offscreenLevel(of: $0)) }) { first, _ in
+            first
+        }
+        let listed = actors.filter { due.contains(levels[$0.key] ?? .low) }
+        turnActors = Dictionary(listed.map { ($0.key, $0) }) { first, _ in first }
+        turn.begin(listed.map(\.key))
+    }
+
+    private func forgetDeparted(present: Set<ReferenceKey>) {
+        for actor in registered.keys where !present.contains(actor) {
+            runtime?.unregister(actor: actor)
             registered[actor] = nil
             steps[actor] = nil
         }
-        for arrival in change.arrived {
-            guard attempt({ try runtime.register(actor: arrival.actor, base: arrival.base) }) != nil
-            else { continue }
-            registered[arrival.actor] = arrival.base
+    }
+
+    /// Registers the actor on its first turn and picks its package when one is due.
+    /// False when the actor has no package stack.
+    private func choosePackage(
+        for actor: OffscreenActor, clock: GameClock, context: ConditionContext
+    ) -> Bool {
+        if registered[actor.key] == nil {
+            guard
+                attempt({ try runtime?.register(actor: actor.key, base: actor.base) }) != nil
+            else { return false }
+            registered[actor.key] = actor.base
         }
+        runtime?.advance(actor: actor.key, clock: clock, context: context)
+        return true
     }
 
     private func update(
