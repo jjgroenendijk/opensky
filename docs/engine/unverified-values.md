@@ -29,6 +29,7 @@ the detail and the sources it did find.
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
 | Which race attack spell a creature's blow rolls as its disease | The first Disease spell in the race's `ATKD` list, or in its `ATKR` race's | [Diseases](/engine/diseases.md#where-opensky-differs) |
+| When a conversation speaker is asked to walk to its partner again | After 1 s in which it moved less than 8 units | [random conversations](/engine/random-conversations.md#where-opensky-differs) |
 | Trainer tier thresholds | Journeyman from a maximum of 50, Expert at 75, Master above 75 | [training](/engine/training.md#training-menu) |
 | Time-span tag hours | Midnight 23-1, night 1-5, sunrise 5-8, morning 8-12, afternoon 12-17, sunset 17-19, evening 19-23 | [journal](/engine/journal.md#text-replacement) |
 | Global tag number format | A whole value as an integer, else two places, whatever the global's type | [journal](/engine/journal.md#text-replacement) |

@@ -25,6 +25,10 @@ nonisolated public enum SocialLimits {
     public static let seenTriggerDistance: Float = 500
     /// The speaker paths again when its goal is this far from the partner.
     public static let repathDistance: Float = 100
+    /// A speaker that moved less than `rewalkDistance` in this time is asked to walk
+    /// again: a walk asked during a seat's exit clip is refused.
+    public static let rewalkSeconds: Double = 1
+    public static let rewalkDistance: Float = 8
     /// How far an actor reacts to a body, and says its line.
     public static let bodyDistance: Float = 400
     /// How long a checked body waits before another actor reacts to it.

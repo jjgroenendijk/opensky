@@ -110,7 +110,7 @@ nonisolated extension SocialEventCore {
                     if speaker.posture != .standing {
                         commands.append(.standUp(speaker.key))
                     }
-                    commands += walk(&talk, speaker: speaker, partner: partner)
+                    commands += walk(&talk, speaker: speaker, partner: partner, now: frame.now)
                 } else {
                     talk.phase = .talking
                     commands += face(speaker.key, partner.key)
@@ -124,11 +124,8 @@ nonisolated extension SocialEventCore {
                     talk.phase = .talking
                     commands.append(.stopWalking(speaker.key))
                     commands += face(speaker.key, partner.key)
-                } else if
-                    let goal = talk.goal,
-                    simd_distance(goal, partner.feet) > SocialLimits.repathDistance
-                {
-                    commands += walk(&talk, speaker: speaker, partner: partner)
+                } else if needsNewWalk(talk, speaker: speaker, partner: partner, now: frame.now) {
+                    commands += walk(&talk, speaker: speaker, partner: partner, now: frame.now)
                 }
             case .talking:
                 guard inScene || partner.isInScene else {
@@ -186,10 +183,25 @@ nonisolated extension SocialEventCore {
     }
 
     private static func walk(
-        _ talk: inout SocialConversation, speaker: SocialActor, partner: SocialActor
+        _ talk: inout SocialConversation, speaker: SocialActor, partner: SocialActor, now: Double
     ) -> [SocialEventCommand] {
         talk.goal = partner.feet
+        talk.walkAskedAt = now
+        talk.walkAskedFeet = speaker.feet
         return [.walk(speaker.key, to: partner.feet)]
+    }
+
+    /// The partner moved away from the goal, or the speaker has not moved since the
+    /// last ask, as when the walk was refused during a seat's exit clip.
+    private static func needsNewWalk(
+        _ talk: SocialConversation, speaker: SocialActor, partner: SocialActor, now: Double
+    ) -> Bool {
+        if let goal = talk.goal, simd_distance(goal, partner.feet) > SocialLimits.repathDistance {
+            return true
+        }
+        guard let askedAt = talk.walkAskedAt, let feet = talk.walkAskedFeet else { return true }
+        return now - askedAt >= SocialLimits.rewalkSeconds
+            && simd_distance(feet, speaker.feet) < SocialLimits.rewalkDistance
     }
 
     private static func face(
