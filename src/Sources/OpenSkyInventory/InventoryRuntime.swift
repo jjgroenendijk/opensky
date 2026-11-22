@@ -23,6 +23,9 @@ public struct InventoryRuntime: InventoryAccess {
     /// constant, because a total-conversion load order need not use
     /// `Skyrim.esm`'s gold and the engine has no business assuming it does.
     public let goldFormID: FormID
+    /// A placed owner's plugin inventory by its roll. The per-frame weapon reads ask
+    /// for it several times per actor, and deriving it expands leveled lists.
+    private let placedBaselines = BaselineMemo<PlacedBaselineKey, ReferenceInventoryState>()
 
     public init(
         store: WorldStateStore,
@@ -40,11 +43,6 @@ public struct InventoryRuntime: InventoryAccess {
     /// its re-derived plugin baseline when it does not.
     public func inventory(of holder: InventoryHolder) -> ReferenceInventoryState {
         store.component(ReferenceInventoryState.self, for: holder.key) ?? baseline(of: holder)
-    }
-
-    /// `holder`'s plugin inventory, rolled at the level its cell froze.
-    public func baseline(of holder: InventoryHolder) -> ReferenceInventoryState {
-        baselines.baseline(of: holder, frozenLevel: store.frozenLeveledLevel(of: holder.key))
     }
 
     /// The roll `holder`'s leveled lists take: its own when placed, else its base's.
@@ -378,4 +376,26 @@ extension InventoryRuntime {
             for: holder.key, in: holder.cell
         )
     }
+}
+
+extension InventoryRuntime {
+    /// `holder`'s plugin inventory, rolled at the level its cell froze.
+    public func baseline(of holder: InventoryHolder) -> ReferenceInventoryState {
+        let frozenLevel = store.frozenLeveledLevel(of: holder.key)
+        guard let roll = baselines.roll(of: holder, frozenLevel: frozenLevel) else {
+            return baselines.baseline(of: holder, frozenLevel: frozenLevel)
+        }
+        let key = PlacedBaselineKey(holder: holder.key, owner: holder.owner, roll: roll)
+        return placedBaselines.value(for: key) {
+            baselines.baseline(of: holder, frozenLevel: frozenLevel)
+        }
+    }
+}
+
+/// One placed owner and the roll its leveled lists took. The roll holds the levels and
+/// the script-edit revision, so a change of either derives the baseline again.
+nonisolated private struct PlacedBaselineKey: Hashable {
+    let holder: ReferenceKey
+    let owner: InventoryOwner
+    let roll: LeveledRoll
 }
