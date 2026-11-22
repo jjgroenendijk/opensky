@@ -51,6 +51,8 @@ nonisolated public struct RiddenDragonOrders: Equatable, Sendable {
     var lastTargetFeet: SIMD3<Float>?
     /// The heading change the lock gave the rider's view at the last step, in radians.
     public var lockSteer: Float = 0
+    /// The rider's weapon at this step. The lock steers at an actor only with it drawn.
+    var weaponDrawn = true
 
     /// The lock's steering for this step. A target that is gone steers nothing.
     mutating func steer(
@@ -60,7 +62,7 @@ nonisolated public struct RiddenDragonOrders: Equatable, Sendable {
         let (speed, strafe) = input
         defer { lastTargetFeet = target }
         lockSteer = 0
-        guard let target, deltaTime > 0 else { return 0 }
+        guard let target, deltaTime > 0, weaponDrawn else { return 0 }
         var frame = FlyingMountLock.Frame()
         frame.speed = speed
         frame.strafe = strafe

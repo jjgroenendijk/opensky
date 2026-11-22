@@ -120,6 +120,7 @@ public final class MountCoordinator {
             return finishDismount()
         }
         if phase == .riding, drive.kind == .dragon {
+            dragonOrders.weaponDrawn = weaponDrawn
             return advanceDragon(drive, input: input, world: stepWorld)
         }
         let events = drive.advance(
