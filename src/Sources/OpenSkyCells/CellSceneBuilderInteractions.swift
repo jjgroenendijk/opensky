@@ -55,6 +55,7 @@ nonisolated extension CellSceneBuilder.CellSceneInteractions {
                 .seats(of: base, at: ref) : []
             // The game's verbs are string settings; `ActivationPrompt` lays them on at run time.
             let isBed = seats.contains { $0.animationType == FurnitureSeat.sleepAnimation }
+            let furnitureLabel = isBed ? "Sleep" : seats.isEmpty ? action.defaultLabel : "Sit"
             var interaction = PlacedInteraction(
                 reference: ref.formID,
                 base: ref.base,
@@ -62,7 +63,7 @@ nonisolated extension CellSceneBuilder.CellSceneInteractions {
                 name: ref.teleportDestination.flatMap { destinationName(door: $0.door) }
                     ?? name ?? base.editorID ?? base.formID.description,
                 action: action,
-                actionLabel: override ?? (isBed ? "Sleep" : action.defaultLabel),
+                actionLabel: override ?? furnitureLabel,
                 sounds: base.sounds,
                 voiceType: base.voiceType,
                 station: base.workbench.map {
