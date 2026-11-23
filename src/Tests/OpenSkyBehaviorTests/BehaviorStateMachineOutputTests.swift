@@ -97,6 +97,57 @@ struct BehaviorStateMachineOutputTests {
         #expect(graph.variable(named: "iSync") == .int(1))
     }
 
+    /// `weapequip.hkx` publishes `IsEquipping` from a referenced file; Havok shares one
+    /// variable set per character, so the parent reads it, and reads it clear once the
+    /// reference stops running.
+    @Test func aReferencedMachinesOutputReachesTheParent() {
+        let parent = Self.referencingParent(variables: [
+            BehaviorVariableSpec("iSelect", .int32, 0), BehaviorVariableSpec("bActive", .bool, 0)
+        ])
+        parent.update(deltaTime: Self.step)
+        #expect(parent.variable(named: "bActive") == .bool(true))
+        parent.setVariable(.int(1), named: "iSelect")
+        parent.update(deltaTime: Self.step)
+        parent.update(deltaTime: Self.step)
+        #expect(parent.variable(named: "bActive") == .bool(false))
+    }
+
+    /// `bIsSynced` is declared only in `1hm_behavior.hkx`; a read by name still finds it
+    /// while that graph runs.
+    @Test func aNameOnlyARunningReferencedGraphDeclaresCanBeRead() {
+        let parent = Self.referencingParent(variables: [BehaviorVariableSpec("iSelect", .int32, 0)])
+        #expect(parent.variable(named: "bActive") == nil)
+        parent.update(deltaTime: Self.step)
+        #expect(parent.variable(named: "bActive") == .bool(true))
+        parent.setVariable(.int(1), named: "iSelect")
+        parent.update(deltaTime: Self.step)
+        #expect(parent.variable(named: "bActive") == nil)
+    }
+
+    /// A selector over a reference to `graph()` and a plain clip.
+    private static func referencingParent(variables: [BehaviorVariableSpec])
+        -> BehaviorGraphInstance
+    {
+        var table = BehaviorObjectTable()
+        let reference = table.add(
+            HKBBehaviorReferenceGenerator(
+                node: BehaviorFixture.nodeHeader("reference"), behaviorName: "child.hkx",
+                unresolved: []
+            ),
+            at: 0x600
+        )
+        let root = Self.selector(over: reference, in: &table)
+        let parent = BehaviorFixture.instance(
+            root: root, table: table,
+            data: BehaviorFixture.graphData(
+                variables: variables, events: ["go"]
+            ),
+            clips: BehaviorFixture.staticClipPair(left: 0, right: 10)
+        )
+        parent.references = BehaviorReferenceTable(graphs: ["child.hkx": Self.graph()])
+        return parent
+    }
+
     @Test func aMachineThatStopsRunningReadsInactive() {
         let graph = Self.graph()
         graph.update(deltaTime: Self.step)

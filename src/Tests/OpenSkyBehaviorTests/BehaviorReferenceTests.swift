@@ -74,13 +74,31 @@ struct BehaviorReferenceTests {
         #expect(child.activeStates.contains { $0.stateName == "Waiting" })
     }
 
+    /// A kill move's event is declared in `1hm_behavior.hkx` alone, not in the master graph
+    /// that references it. Havok shares one event name space, so the name still reaches it.
+    @Test func anEventOnlyTheReferencedGraphDeclaresReachesIt() {
+        let child = Self.child()
+        let parent = Self.parent(
+            references: BehaviorReferenceTable(graphs: ["child.hkx": child]), events: ["other"]
+        )
+        #expect(!parent.raiseEvent(named: "poke"), "no child is built before the first update")
+        parent.update(deltaTime: 1 / 30)
+        #expect(parent.raiseEvent(named: "poke"))
+        #expect(!parent.raiseEvent(named: "nobody"))
+        for _ in 0 ..< 3 {
+            parent.update(deltaTime: 1 / 30)
+        }
+        #expect(child.activeStates.contains { $0.stateName == "Answered" })
+    }
+
     // MARK: - Graphs
 
     private static let events = ["poke", "pong"]
 
     /// A graph whose whole content is one reference to `child.hkx`.
     private static func parent(
-        references: some BehaviorGraphInstance.ReferenceSource
+        references: some BehaviorGraphInstance.ReferenceSource,
+        events: [String] = events
     ) -> BehaviorGraphInstance {
         var table = BehaviorObjectTable()
         let root = table.add(

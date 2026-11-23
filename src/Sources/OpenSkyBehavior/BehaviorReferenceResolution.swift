@@ -1,6 +1,7 @@
 // Resolves `hkbBehaviorReferenceGenerator`: each referenced file (`mt_behavior.hkx`)
 // becomes its own instance with the parent's skeleton and clip source. Variables pass
-// down by name; events pass both ways one update late. Only the child's `pending`
+// down by name, and each one the child writes passes back up; events pass both ways
+// one update late. Only the child's `pending`
 // queue goes up, so events do not echo forever. A reference reached twice runs once,
 // and an ancestor cycle is refused by name. See docs/engine/behavior-clips.md.
 
@@ -48,10 +49,13 @@ nonisolated extension BehaviorGraphInstance.ChildGraphs {
         graph.referencedResults[name] = result
         graph.unboundEvents += result.unboundEvents
         pullEvents(from: child, key: key)
+        pullVariables(from: child)
         graph.activeStatesThisUpdate += child.activeStates
         if let tag = child.stateTag {
             graph.noteStateTag(tag)
         }
+        graph.synchronizedMarkThisUpdate = graph.synchronizedMarkThisUpdate ?? child
+            .synchronizedMark
         return BehaviorPose(bones: result.bones, rootMotion: result.rootMotion)
     }
 
@@ -64,7 +68,13 @@ nonisolated extension BehaviorGraphInstance.ChildGraphs {
             graph.referencedResults[name] == nil else { return }
         let key = Self.referenceKey(name)
         graph.pulledEventNames[key] = nil
-        graph.referencedGraphs[key]??.deactivate()
+        guard let found = graph.referencedGraphs[key], let child = found, child.isActive else {
+            return
+        }
+        // The child is between updates, so its last update's writes must not count as fresh.
+        child.variablesWrittenThisUpdate = []
+        child.deactivate()
+        pullVariables(from: child)
     }
 
     /// The child instance for `name`, loaded once. A miss is remembered as a
@@ -102,6 +112,21 @@ nonisolated extension BehaviorGraphInstance.ChildGraphs {
         for name in child.variables.names {
             guard let name, let value = graph.variables.value(of: name) else { continue }
             child.setVariable(value, named: name)
+        }
+    }
+
+    /// Copies up each variable the child wrote that the parent also declares. Havok keeps
+    /// one variable set per character, so `IsEquipping`, which `weapequip.hkx` writes while
+    /// its equip machine runs, reaches the parent and the engine.
+    private func pullVariables(from child: BehaviorGraphInstance) {
+        for index in child.variablesWrittenThisUpdate.sorted() {
+            guard
+                child.variables.names.indices.contains(index),
+                let name = child.variables.names[index],
+                let value = child.variables.value(at: index),
+                let target = graph.variables.index(of: name)
+            else { continue }
+            graph.writeVariable(value, at: target)
         }
     }
 

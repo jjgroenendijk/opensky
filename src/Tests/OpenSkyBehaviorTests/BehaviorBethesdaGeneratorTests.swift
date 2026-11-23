@@ -1,7 +1,7 @@
 // `BSBoneSwitchGenerator` and `BSOffsetAnimationGenerator` over two static clips.
 
 import Foundation
-import OpenSkyBehavior
+@testable import OpenSkyBehavior
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsAnimation
 import simd
@@ -91,6 +91,36 @@ struct BehaviorBethesdaGeneratorTests {
         let graph = BehaviorFixture.instance(root: root, table: table, clips: Self.clipTable)
         #expect(abs(graph.update(deltaTime: 0.1).bones[1].translation.x - 10) < 1e-4)
         _ = graph.clipPlayback.pairedClipNames
+    }
+
+    /// A kill move's synchronized clip runs in `1hm_behavior.hkx`, a referenced file. The
+    /// actor's graph still reports its mark, which places the partner.
+    @Test func aSynchronizedClipInAReferencedGraphReportsItsMark() {
+        var table = BehaviorObjectTable()
+        let (_, right) = Self.clips(&table)
+        let sync = table.add(
+            BSSynchronizedClipGenerator(
+                node: BehaviorFixture.nodeHeader("sync"), clipGenerator: right,
+                syncAnimPrefix: "2_", syncClipIgnoreMarkPlacement: false, getToMarkTime: 0.25,
+                markErrorThreshold: 0, leadCharacter: false, reorientSupportChar: true,
+                applyMotionFromRoot: false, animationBindingIndex: -1, unresolved: []
+            ),
+            at: 0x150
+        )
+        let child = BehaviorFixture.instance(root: sync, table: table, clips: Self.clipTable)
+        var parentTable = BehaviorObjectTable()
+        let reference = parentTable.add(
+            HKBBehaviorReferenceGenerator(
+                node: BehaviorFixture.nodeHeader("reference"), behaviorName: "child.hkx",
+                unresolved: []
+            ),
+            at: 0x100
+        )
+        let parent = BehaviorFixture.instance(root: reference, table: parentTable)
+        parent.references = BehaviorReferenceTable(graphs: ["child.hkx": child])
+        parent.update(deltaTime: 0.1)
+        #expect(parent.synchronizedMark?.getToMarkTime == 0.25)
+        #expect(parent.clipPlayback.pairedClipNames == child.clipPlayback.pairedClipNames)
     }
 
     /// A blender child's bone mask limits it to the bones the mask covers.

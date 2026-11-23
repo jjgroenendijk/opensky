@@ -7,9 +7,12 @@ import Foundation
 import OpenSkyFormatsAnimation
 
 nonisolated extension BehaviorGraphInstance.Clips {
-    /// The paired clips this graph played, as the track prefix, `|`, and the clip.
+    /// The paired clips this graph and its running referenced graphs played, as the track
+    /// prefix, `|`, and the clip. A kill move's clip plays in `1hm_behavior.hkx`.
     public var pairedClipNames: [String] {
-        graph.nodeMemory.pairedClips.keys.sorted()
+        let children = graph.referencedGraphs.values.compactMap { $0?.isActive == true ? $0 : nil }
+        return Set(graph.nodeMemory.pairedClips.keys)
+            .union(children.flatMap(\.clipPlayback.pairedClipNames)).sorted()
     }
 
     /// The playback phase of the first clip generator below `target` that has

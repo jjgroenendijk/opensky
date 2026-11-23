@@ -263,6 +263,14 @@ The two instances are joined only by names:
 
 - Variables pass from parent to child before every child update, for every name both declare. A
   name only the child declares keeps its own value: that is the sub-behavior's private state.
+- Each variable the child writes in its update, or as its reference stops, passes back up to the
+  parent when the parent declares it. So `IsEquipping`, written in `weapequip.hkx`, reaches the
+  engine.
+- A read by name the parent does not declare is answered by the first running child that does,
+  such as `bIsSynced` or `IsAttackReady`. An event the parent does not declare is queued when a
+  built child declares it, and passes down by name.
+- The child's synchronized mark and paired clips are the parent's too, so `state paired` and the
+  partner's move see a kill move that plays in `1hm_behavior.hkx`.
 - Events pass both ways, once in each direction. The parent's active set is raised on the child
   before its update. What the child's own nodes raised during its update is raised on the parent,
   and seen on the parent's next update. The pull reads the child's waiting queue, not the active
