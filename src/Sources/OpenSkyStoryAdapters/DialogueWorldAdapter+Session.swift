@@ -61,11 +61,23 @@ extension DialogueWorldAdapter {
         game.dialogueMenu.begin(with: event.speaker)
     }
 
+    /// A dead actor cannot talk, so its death ends the conversation.
+    public func closeMenuOfDeadSpeaker() {
+        let menu = game.dialogueMenu
+        guard
+            menu.isOpen, let speaker = menu.speakerOrTarget,
+            hosts.actorWorld.combatActor(key: speaker)?.isDead == true
+        else { return }
+        menu.close()
+    }
+
     /// Runs after the actor systems in the world tick, so the camera reads
     /// this frame's pose.
     private func registerDialogueCamera(stage: SessionStage) {
         let gameSession = stage.gameSession
-        gameSession.worldTick.register(.dialogueCamera) { [weak game = cameraFocus.game] delta in
+        let game = cameraFocus.game
+        gameSession.worldTick.register(.dialogueCamera) { [weak self, weak game] delta in
+            self?.closeMenuOfDeadSpeaker()
             game?.dialogueCamera.refreshFocus()
             game?.faceMorphs.tick(now: game?.renderer?.animationTime ?? 0)
             game?.headTracking.tick(deltaTime: delta)
