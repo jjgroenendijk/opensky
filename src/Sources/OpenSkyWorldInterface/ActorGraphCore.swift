@@ -93,6 +93,11 @@ nonisolated public enum ActorGraphNames {
     public static let isPlayer = "IsPlayer"
     public static let isPlayerInt = "iIsPlayer"
     public static let isNPC = "IsNPC"
+    /// The perspective, declared three times in the vanilla graphs. An NPC is always in third
+    /// person; with the flags unset, the drawn weapon idle takes the first-person branch.
+    public static let isFirstPerson = "IsFirstPerson"
+    public static let firstPersonInt = "i1stPerson"
+    public static let firstPersonReal = "fIsFirstPerson"
     public static let timeDelta = "TimeDelta"
     /// The actor's weight as 0 to 1. `mt_behavior.hkx` turns it into the body-weight layer
     /// weights `bodyMorphWeight` and `bodyMorphMuscular` with an expression. Real.
@@ -178,6 +183,9 @@ nonisolated public enum ActorGraphCore {
             (Names.isPlayer, .bool(false)),
             (Names.isPlayerInt, .int(0)),
             (Names.isNPC, .bool(true)),
+            (Names.isFirstPerson, .bool(false)),
+            (Names.firstPersonInt, .int(0)),
+            (Names.firstPersonReal, .real(0)),
             (Names.combatStance, .int(input.motion.isInCombatStance ? 1 : 0)),
             (Names.timeDelta, .real(input.deltaTime)),
             (Names.weaponAdjust, .real(weaponAdjust(weight: input.weight)))

@@ -44,7 +44,9 @@ are OpenSky's; the game does not state its own. Movement, perception, and partic
 same distances ([update bands](/engine/update-bands.md)).
 
 Each step sets the locomotion variables from the actor's movement: `Speed`, `Direction`,
-`TurnDelta`, `IsSprinting`, `IsSneaking`, `IsNPC`, and the player flags set to false. It also
+`TurnDelta`, `IsSprinting`, `IsSneaking`, `IsNPC`, and the player flags set to false. It sets
+the three perspective flags to third person
+([first person](/engine/first-person.md)); unset, a drawn weapon takes the first-person states. It also
 sets `weapAdj` from the NPC's weight
 ([body-weight layer](/engine/behavior-clips.md#body-weight-layer)). A change of
 movement raises `moveStart`, `moveStop`, `SprintStart`, `SprintStop`, `SneakStart`, or

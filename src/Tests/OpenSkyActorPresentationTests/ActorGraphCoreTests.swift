@@ -52,6 +52,17 @@ struct ActorGraphCoreTests {
         #expect(npc == .bool(true))
     }
 
+    /// With the perspective unset, a drawn weapon takes the first-person branch of
+    /// `1hm_behavior.hkx`.
+    @Test func anActorIsAlwaysInThirdPerson() {
+        let input = ActorGraphStepInput(motion: .still, speed: 0, turnDelta: 0, deltaTime: 0.1)
+        let pairs = ActorGraphCore.variables(input).map { ($0.name, $0.value) }
+        let written = Dictionary(uniqueKeysWithValues: pairs)
+        #expect(written["IsFirstPerson"] == .bool(false))
+        #expect(written["i1stPerson"] == .int(0))
+        #expect(written["fIsFirstPerson"] == .real(0))
+    }
+
     /// `mt_behavior.hkx` turns `weapAdj` into the body-weight layer weights.
     @Test func theWeightReachesTheGraphAsAFraction() {
         #expect(ActorGraphCore.weaponAdjust(weight: 0) == 0)
