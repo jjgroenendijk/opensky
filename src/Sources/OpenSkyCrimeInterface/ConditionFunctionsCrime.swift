@@ -1,18 +1,19 @@
 // The crime condition functions (xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas):
 // 459 `GetCrimeGold`, 375 `GetCrimeGoldViolent`, 376 `GetCrimeGoldNonviolent`,
-// all `ptFactionNull`. A null parameter means the hold the subject stands in,
-// through `CrimeConditionResolution.currentCrimeFaction`. See
+// all `ptFactionNull`. Each reads the player's bounty. A null parameter means the
+// run-on actor's crime faction, else the hold the subject stands in. See
 // docs/engine/condition-functions.md and docs/engine/guard-response.md.
 
 import Foundation
 public import OpenSkyConditions
-import OpenSkyFormatsESM
+import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
 
 nonisolated public enum ConditionFunctionsCrime {
     public static func installCrime(_ registry: inout ConditionFunctionRegistry) {
-        // "Returns the amount of crime gold the player owes the specified
-        // faction." The run-on names the actor whose ledger is read, and
-        // parameter 1 names the FACT.
+        // "Returns the player's current crime gold. Uses the crime gold from the
+        // calling actor's crime faction unless the factionID is specified."
+        // (<https://ck.uesp.net/wiki/GetCrimeGold>)
         registerCrimeGold(index: 459, name: "GetCrimeGold", violent: nil, into: &registry)
         registerCrimeGold(
             index: 375, name: "GetCrimeGoldViolent", violent: true, into: &registry
@@ -39,19 +40,34 @@ nonisolated public enum ConditionFunctionsCrime {
             guard let parameter = call.parameter1 else {
                 return .failure(.unresolvedParameter(index))
             }
-            guard let faction = call.context.crime.key(of: parameter.asFormID) else {
-                return .failure(.unavailableCrime)
-            }
             return call.referenceKey().flatMap { actor in
                 let crime = call.context.crime
+                let faction = parameter.asFormID.isNull
+                    ? call.context.crimeFaction(of: actor)
+                    : crime.facts.key(of: parameter.asFormID)
+                guard let faction else { return .failure(.unavailableCrime) }
                 let gold = if let violent {
-                    crime.crimeGold(of: faction, violent: violent, on: actor)
+                    crime.crimeGold(of: faction, violent: violent, on: .player)
                 } else {
-                    crime.crimeGold(of: faction, on: actor)
+                    crime.crimeGold(of: faction, on: .player)
                 }
                 guard let gold else { return .failure(.unavailableCrime) }
                 return .success(Float(gold))
             }
         })
+    }
+}
+
+nonisolated extension ConditionContext {
+    /// The crime faction a null `ptFactionNull` parameter means for `actor`: its own, else
+    /// the hold it stands in.
+    func crimeFaction(of actor: ReferenceKey) -> ReferenceKey? {
+        factions.facts.fact(of: actor)?.crimeFaction ?? crime.currentCrimeFaction
+    }
+
+    /// The player's bounty with `actor`'s crime faction, as `<CrimeGold>` in a guard's
+    /// topic shows it. Nil without crime data or a faction.
+    public func playerCrimeGold(owedTo actor: ReferenceKey) -> Int32? {
+        crimeFaction(of: actor).flatMap { crime.crimeGold(of: $0, on: .player) }
     }
 }

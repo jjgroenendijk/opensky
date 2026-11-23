@@ -115,10 +115,13 @@ From xEdit `Core/wbDefinitionsTES5.pas`:
 (Index: 376; Name: 'GetCrimeGoldNonviolent'; ParamType1: ptFactionNull)
 ```
 
-The Creation Kit numbers are 4555, 4471, and 4472. The parameter may be null. A null parameter
-asks about the hold the subject stands in, not about no faction. These cases report "unavailable"
-instead of 0: no `FACT` data, a parameter naming a faction no plugin defines, and a null parameter
-outside any hold ([condition evaluation](/engine/conditions.md)).
+The Creation Kit numbers are 4555, 4471, and 4472. Each returns the player's bounty, whatever
+actor it runs on. The parameter may be null. A null parameter asks about the run-on actor's crime
+faction, not about no faction, and about the hold the subject stands in when the actor has no
+crime faction. The guard's arrest line `DGCrimeForcegreetTopic` runs `GetCrimeGold > 0` on the
+guard. These cases report "unavailable" instead of 0: no `FACT` data, a parameter naming a faction
+no plugin defines, and a null parameter for an actor with no crime faction outside any hold
+([condition evaluation](/engine/conditions.md)).
 
 ## Papyrus natives
 

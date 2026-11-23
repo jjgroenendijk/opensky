@@ -4,6 +4,7 @@
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyCrimeInterface
+import OpenSkyFactionsInterface
 @testable import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 import OpenSkyWorldConditions
@@ -19,7 +20,7 @@ struct ConditionFunctionsCrimeTests {
 
     private static let hold = CrimeFixture.key(CrimeFixture.Factions.hold)
 
-    /// A context whose subject owes the hold `gold`.
+    /// A context where the player owes the hold `gold`.
     private static func crimeContext(
         gold: Int32 = 40,
         violentGold: Int32 = 0,
@@ -30,7 +31,7 @@ struct ConditionFunctionsCrimeTests {
             factions: CrimeFixture.factionStore(),
             sourcePlugin: CrimeFixture.pluginName,
             currentCrimeFaction: currentCrimeFaction,
-            ledgers: [subject: CrimeLedgerState(entries: [
+            ledgers: [.player: CrimeLedgerState(entries: [
                 CrimeLedgerEntry(faction: hold, nonViolentGold: gold, violentGold: violentGold)
             ])]
         )
@@ -105,6 +106,19 @@ struct ConditionFunctionsCrimeTests {
         let inHold = try Self.crimeContext(currentCrimeFaction: Self.hold)
 
         #expect(try Self.evaluate(parameter1: 0, context: inHold, value: 40).outcome == .true)
+    }
+
+    /// A null parameter on an actor with a crime faction asks about that faction, and the
+    /// answer is the player's bounty, as a guard's arrest line reads it.
+    @Test func aNullParameterMeansTheCallingActorsCrimeFaction() throws {
+        var context = try Self.crimeContext()
+        context.factions = try FactionConditionResolution(
+            factions: CrimeFixture.factionStore(), sourcePlugin: CrimeFixture.pluginName,
+            profiles: [Self.subject: ActorSocialProfile(key: Self.subject, crimeFaction: Self.hold)]
+        )
+
+        #expect(try Self.evaluate(parameter1: 0, context: context, value: 40).outcome == .true)
+        #expect(context.playerCrimeGold(owedTo: Self.subject) == 40)
     }
 
     /// Outside any hold a null parameter has nothing to ask about, and the

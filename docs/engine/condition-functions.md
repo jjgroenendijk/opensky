@@ -339,9 +339,13 @@ context with no idle runtime fails with the furniture reason.
 - `IsHostileToActor` has no Creation Kit page. xEdit gives the name and parameter.
   `Actor.pex` declares `bool IsHostileToActor(Actor akActor) native`. OpenSky answers with
   the same hostility rules the combat loop uses.
-- `GetCrimeGold` with a null faction asks about the hold where the actor stands. No crime
-  data, an unknown faction, or no hold fails. The violent and non-violent parts add up to it
-  ([crime](/engine/crime.md)).
+- `GetCrimeGold` is always the player's bounty, whatever actor it runs on. A null faction asks
+  about the run-on actor's crime faction, and about the hold where the actor stands when it has
+  none. The Creation Kit wiki: "Returns the player's current crime gold. Uses the crime gold from
+  the calling actor's crime faction unless the factionID is specified"
+  (<https://ck.uesp.net/wiki/GetCrimeGold>). A guard's arrest line runs it on the guard. No crime
+  data, an unknown faction, or no faction at all fails. The violent and non-violent parts add up
+  to it ([crime](/engine/crime.md)).
 
 Not registered on purpose: `GetIsInFactionList` is not in xEdit's table. Four `GetPC*`
 faction functions (193, 195, 197, 199) need records of expulsion and faction crimes that
