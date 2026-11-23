@@ -72,7 +72,9 @@ extension DialogueMenuController.SpeechAdapter {
             info: id,
             runs: DialogueMenuModel.responseRuns(
                 owner.dialogue.index?.responseSource(ofInfo: id) ?? info,
-                strings: owner.dialogue.strings
+                strings: owner.dialogue.strings,
+                tags: owner.textTags,
+                topic: owner.dialogue.index?.topic(ofInfo: id)
             )
         )
         speakCurrentRun()
@@ -96,7 +98,8 @@ extension DialogueMenuController.SpeechAdapter {
                     DialogueMenuModel.rows(
                         selection,
                         runtime: runtime,
-                        strings: owner.dialogue.strings
+                        strings: owner.dialogue.strings,
+                        tags: owner.textTags
                     )
                 )
             }

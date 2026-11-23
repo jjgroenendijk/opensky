@@ -131,6 +131,11 @@ overrides the default text coming from the parent dialogue topic"
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/INFO>). A row with no text falls back to
 the topic's editor ID, then its FormID, because a row with no label cannot be chosen on purpose.
 
+A row and a spoken line fill their text-replacement tags, such as `<Global=HirelingGold>` in a
+hireling's prompt, as journal and message text do
+(<https://ck.uesp.net/wiki/Text_Replacement>). The tags are read against the quest that owns the
+topic, the `DIAL` `QNAM`.
+
 ## Subtitles
 
 The HUD subtitle is `/HUDMovieBaseInstance/SubtitleTextHolder/textField`. With no line, the
