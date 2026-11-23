@@ -38,9 +38,10 @@ nonisolated public enum NPCArcheryAim {
     /// The tracker's noise: each axis moves by up to variance × base units.
     public static let aimVariance: Float = 0.9
     public static let aimNoiseBase: Float = 16
-    /// How far an NPC archer shoots from instead of closing in, in game units. OpenSky's
-    /// value (docs/engine/unverified-values.md).
-    public static let shootingRange: Float = 2048
+    /// The tracker's variance for a spell: 0.5 for fire-and-forget, none for concentration.
+    public static func spellAimVariance(concentration: Bool) -> Float {
+        concentration ? 0 : 0.5
+    }
 
     /// Where to aim so a shot of `speed` meets a target at `point` moving at `velocity`.
     public static func lead(

@@ -30,3 +30,23 @@ nonisolated public struct ArcheryDamageResult: Equatable, Sendable {
         self.applied = applied
     }
 }
+
+nonisolated extension ArcheryDamageResult {
+    /// The lowest draw power, `fArrowMinPower`.
+    static let minimumPower: Float = 0.35
+    /// `fArrowWeakGravity`: the gravity a shot at no power falls with.
+    static let weakGravity: Float = 1.75
+
+    /// The share of the `PROJ` speed a shot leaves at: 0.2 at the lowest power, 1 at full.
+    public var launchSpeedShare: Float {
+        let power = min(max(drawFraction, Self.minimumPower), 1)
+        return 0.2 + 0.8 * (power - Self.minimumPower) / (1 - Self.minimumPower)
+    }
+
+    /// The gravity a shot falls with: the record's own at full power, mixed towards
+    /// `weakGravity` by the power.
+    public func gravity(recordGravity: Float) -> Float {
+        let power = min(max(drawFraction, 0), 1)
+        return Self.weakGravity - (Self.weakGravity - recordGravity) * power
+    }
+}

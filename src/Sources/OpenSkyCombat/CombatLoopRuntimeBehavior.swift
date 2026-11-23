@@ -136,7 +136,7 @@ extension CombatLoopRuntime {
             actorPosition: actor.feet,
             targetPosition: target.feet,
             awareness: world.combatAwareness(of: actor.key, toward: target.key),
-            reach: reach.shoots ? NPCArcheryAim.shootingRange : MeleeSwing.reach(
+            reach: MeleeSwing.reach(
                 weapon: reach.weapon, settings: settings, actorScale: actor.scale
             ),
             healthFraction: world.combatHealthFraction(of: actor.key),
@@ -146,6 +146,17 @@ extension CombatLoopRuntime {
             influence: influence,
             temperament: world.combatTemperament(of: actor.key, toward: target.key)
         )
+        if reach.shoots {
+            let range = NPCArcheryRange(
+                style: styleTuning(of: actor.key) ?? .neutral,
+                radius: actor.capsule.radius * actor.scale
+            )
+            inputs.archery = range
+            // The machine closes to its striking distance, which is the reach less the slack.
+            let slack = behaviors[actor.key]?.settings.reachSlack
+                ?? CombatBehaviorSettings.standard.reachSlack
+            inputs.reach = range.preferred + slack
+        }
         inputs.facingError = facingError(of: actor, toward: target.feet)
         inputs.flies = world.combatFlies(actor.key)
         inputs.canChain = reach.weapon.handType.isOneHandedMelee

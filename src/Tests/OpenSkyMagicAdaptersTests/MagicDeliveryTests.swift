@@ -4,7 +4,7 @@ import OpenSkyActorsInterface
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagicAdapters
+@testable import OpenSkyMagicAdapters
 @testable import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyRendering
@@ -75,6 +75,27 @@ struct MagicDeliveryTests {
     }
 
     /// The foe stands east of the player. Its ward covers the player when it looks west.
+    @Test func anNPCSpellCarriesTheTrackerNoiseOfItsCastingType() {
+        let archery = FakeArcheryRuntimePort()
+        archery.projectiles.npcSpellAimResult = SIMD3(0, 0, 50)
+        host.fakeCombat.archery = archery
+        let delivery = MagicSpellDeliveryAdapter(game: host)
+        let npc = ProjectileShooter(
+            key: Self.foe, origin: .zero, aim: SIMD3(1, 0, 0), isFirstPerson: false, location: nil
+        )
+        var concentration = Self.payload
+        concentration.isConcentration = true
+
+        let aimed = delivery.aimedWithNoise(npc, casting: concentration)
+
+        #expect(aimed.aim == SIMD3(0, 0, 1))
+        #expect(archery.projectiles.npcSpellAimCalls.first?.concentration == true)
+        let player = ProjectileShooter(
+            key: .player, origin: .zero, aim: SIMD3(1, 0, 0), isFirstPerson: true, location: nil
+        )
+        #expect(delivery.aimedWithNoise(player, casting: Self.payload).aim == SIMD3(1, 0, 0))
+    }
+
     @Test func aWardFacesAlongTheHoldersHeading() {
         host.fakeActorWorld.combatActorsResult = [
             CombatActorObservation(key: Self.foe, feet: SIMD3(100, 0, 0), heading: 1.5 * .pi)

@@ -34,8 +34,12 @@ nonisolated extension CombatBehaviorInputs {
     }
 
     /// The distance a fighter in reach keeps waiting at before it closes again.
+    /// An archer keeps its band up to `NPCArcheryRange.farthest`.
     func holdDistance(settings: CombatBehaviorSettings) -> Float {
-        strikingDistance(settings: settings) * max(1, settings.weaponRangeHoldMult)
+        if let archery {
+            return archery.farthest
+        }
+        return strikingDistance(settings: settings) * max(1, settings.weaponRangeHoldMult)
     }
 
     /// The spell this actor would cast now: the costliest it can afford and reach, ties

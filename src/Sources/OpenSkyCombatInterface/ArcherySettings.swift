@@ -14,10 +14,12 @@ nonisolated public struct ArcherySettings: Equatable, Sendable {
     public let firstPersonTiltUpAngle: MovementSetting
     /// `f3PArrowTiltUpAngle` — the same in third person. UESP gives 2.5.
     public let thirdPersonTiltUpAngle: MovementSetting
-    /// `f1PBoltTiltUpAngle` and `f3PBoltTiltUpAngle`: the same for a crossbow bolt. UESP
-    /// gives 1 for first person and no third-person default.
+    /// `f1PBoltTiltUpAngle` and `f3PBoltTiltUpAngle`: the same for a crossbow bolt. The game
+    /// program defaults them to 1 and 2.5.
     public var firstPersonBoltTiltUpAngle = MovementSetting(value: 1, source: "OpenSky synthetic")
-    public var thirdPersonBoltTiltUpAngle = MovementSetting(value: 1, source: "OpenSky synthetic")
+    public var thirdPersonBoltTiltUpAngle = MovementSetting(
+        value: 2.5, source: "OpenSky synthetic"
+    )
     /// `fVisibleNavmeshMoveDist` — the distance past which a shot stops being
     /// able to hit anything, world units. UESP gives 4096 and notes the
     /// Unofficial Patch triples it, which is exactly the kind of load-order
@@ -55,7 +57,11 @@ nonisolated public struct ArcherySettings: Equatable, Sendable {
             visibleMoveDistance: float("fVisibleNavmeshMoveDist", store: store, fallback: 4096)
         )
         settings.firstPersonBoltTiltUpAngle = float("f1PBoltTiltUpAngle", store: store, fallback: 1)
-        settings.thirdPersonBoltTiltUpAngle = float("f3PBoltTiltUpAngle", store: store, fallback: 1)
+        settings.thirdPersonBoltTiltUpAngle = float(
+            "f3PBoltTiltUpAngle",
+            store: store,
+            fallback: 2.5
+        )
         store.read("fBowZoomStaminaDrainMult", into: &settings, \.bowZoomStaminaDrain)
         store.read("fBowNPCSpreadAngle", into: &settings, \.npcSpreadDegrees)
         return settings

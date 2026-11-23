@@ -34,7 +34,15 @@ nonisolated public struct ProjectileShot: Equatable, Sendable {
     /// What the profile's launch speed is multiplied by. A partial draw slows
     /// an arrow; a spell always leaves at the PROJ's own speed.
     public var speedScale: Float {
-        payload.arrow?.damage.drawFraction ?? 1
+        payload.arrow?.damage.launchSpeedShare ?? 1
+    }
+
+    /// The profile a weak bow shot flies with: it falls faster.
+    public var flightProfile: ProjectileProfile {
+        guard let damage = payload.arrow?.damage else { return profile }
+        var flight = profile
+        flight.gravityFactor = damage.gravity(recordGravity: profile.gravityFactor)
+        return flight
     }
 
     /// Whether the archery tilt-up angle applies to this shot's aim ray.

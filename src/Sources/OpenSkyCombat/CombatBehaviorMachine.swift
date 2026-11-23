@@ -51,6 +51,10 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     private(set) var chainsNextAttack = false
     /// Swings so far in the current chain.
     private(set) var comboSwings = 0
+    /// Seconds since this archer last loosed a shot, for its shot chance.
+    var secondsSinceShot: Float = .infinity
+    /// How long the current bow attack holds its full draw.
+    var drawHold: Float = 0
 
     public init(settings: CombatBehaviorSettings = .standard, seed: UInt64) {
         self.settings = settings
@@ -78,6 +82,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         guard seconds > 0, seconds.isFinite else { return unchanged() }
         phaseSeconds += seconds
         secondsSinceCommand += seconds
+        secondsSinceShot += seconds
         shoutCooldown = max(0, shoutCooldown - seconds)
         advanceFlight(seconds: seconds, inputs: inputs)
         var step = advance(inputs)
@@ -114,14 +119,6 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         pendingCast = nil
         enter(.staggered)
         return true
-    }
-
-    /// Drops a charge the world refused to start, without ending the fight:
-    /// the actor lands in the gap between attacks and decides again from there.
-    mutating func abandonCast() {
-        guard phase == .casting else { return }
-        pendingCast = nil
-        enter(.spacing)
     }
 
     /// Ends the fight outright without touching the counts, for `StopCombat`
@@ -210,6 +207,9 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
             enter(.approaching)
             return approach(inputs)
         }
+        if let archer = advanceArcherSpacing(inputs) {
+            return archer
+        }
         guard phaseSeconds >= settings.attackIntervalSeconds, inputs.weaponOut
         else { return unchanged() }
         return startAttackOrCast(inputs)
@@ -253,8 +253,10 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     }
 
     private mutating func advanceWindup() -> CombatBehaviorStep {
-        guard phaseSeconds >= settings.windupSeconds else { return unchanged() }
+        guard phaseSeconds >= windupSeconds else { return unchanged() }
         contactCount += 1
+        secondsSinceShot = 0
+        drawHold = 0
         enter(.contact)
         var step = unchanged()
         step.reachedContact = true

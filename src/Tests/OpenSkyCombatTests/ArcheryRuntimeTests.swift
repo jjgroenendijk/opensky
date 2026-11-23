@@ -154,7 +154,8 @@ struct ArcheryRuntimeTests {
         )
         // A partial draw is slower as well as weaker.
         let speed = simd_length(launched.first?.state.velocity ?? SIMD3())
-        #expect(abs(speed - 3600 * ArcheryDamage.minimumDrawFraction) < 1)
+        // The weakest shot leaves at a fifth of the `PROJ` speed.
+        #expect(abs(speed - 3600 * 0.2) < 1)
     }
 
     /// The crossbow graph reports full draw at once, so even a snap shot is a full one.
@@ -175,13 +176,13 @@ struct ArcheryRuntimeTests {
         let launched = runtime.handleGraphEvents([ArcheryGraphNames.arrowRelease])
         #expect(launched.first?.payload.arrow?.damage.drawFraction == 1)
         #expect(runtime.settings.tiltUpAngle(firstPerson: true, bolt: true).value == 1)
-        #expect(runtime.settings.tiltUpAngle(firstPerson: false, bolt: true).value == 1)
+        #expect(runtime.settings.tiltUpAngle(firstPerson: false, bolt: true).value == 2.5)
     }
 
-    @Test func theBoltTiltSettingsFallBackToOneDegree() {
+    @Test func theBoltTiltSettingsFallBackToTheProgramDefaults() {
         let settings = ArcherySettings.resolve(store: GameSettingStore(plugins: []))
         #expect(settings.tiltUpAngle(firstPerson: true, bolt: true).value == 1)
-        #expect(settings.tiltUpAngle(firstPerson: false, bolt: true).value == 1)
+        #expect(settings.tiltUpAngle(firstPerson: false, bolt: true).value == 2.5)
         #expect(settings.tiltUpAngle(firstPerson: true).value == 2)
         #expect(settings.report.map(\.editorID).contains("f3PBoltTiltUpAngle"))
     }

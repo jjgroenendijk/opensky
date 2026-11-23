@@ -13,7 +13,7 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
     /// Launch speed, world units per second.
     public let speed: Float
     /// PROJ `gravity`, a dimensionless multiplier over world gravity.
-    public let gravityFactor: Float
+    public var gravityFactor: Float
     /// PROJ `range`, world units. Zero means the record bounds nothing and only
     /// the caller's own cap applies.
     public let range: Float
