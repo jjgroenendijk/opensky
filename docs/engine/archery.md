@@ -158,8 +158,10 @@ velocity = 0.2 + 0.8 x (power - 0.35) / 0.65
 
 Example: Speed 1 and a draw of 1.3 s. `elapsed` is 0.5 and `full` is 0.8667, so the power is
 `0.35 + 0.65 x 0.577 = 0.725`, and the launch speed is `0.2 + 0.8 x 0.577 = 0.66` of the `PROJ`
-speed. A weak shot also falls faster: its gravity mixes from the normal 0.3 at full power to 1.75
-at no power.
+speed. A weak shot also falls faster. Its gravity is `fArrowWeakGravity` (1.75) less
+(1.75 − the `PROJ` gravity) × the power. Example: a power of 0.35 with a `PROJ` gravity of 0.3 gives
+1.75 − 1.45 × 0.35 = 1.2425. The result replaces the `PROJ` gravity. Only the player's bow shots
+have a draw power; NPC shots and crossbows fly at power 1.
 
 The draw fraction scales the launch speed as well as the damage. A quick shot is slower and drops
 more, as well as hitting softer.
@@ -260,17 +262,38 @@ The aim follows what was read from the game program:
    The sine part goes to pitch and the cosine part to heading. Example: an NPC with Archery 40 shoots
    within 4 × 0.6 = 2.4 degrees of its aim. At Archery 100 there is no spread.
 
-How an NPC archer picks its range and its shots, from the game program:
+How an NPC archer picks its range and its shots, from the game program. Each value is a game
+setting that the masters do not override.
 
-| Rule | Value |
-| --- | --- |
-| Preferred ranged distance | 1024 units |
-| Closest it wants to be | 256 units |
-| Longest shot | 4096 units, used up to 0.9 of it; it aims to stand at 0.85 |
-| Chance to shoot | from 0.05 to 1, plus 0.5 for 10 s after its last shot |
-| Hold at full draw | 0.25 to 1.5 s, at least 0.1 s, at most 10 s |
-| Time between aim updates | 0.25 s |
-| Turn allowed while it keeps its distance | 20 degrees |
+- **Longest shot.** The ballistic range of the shot, speed² ÷ (gravity × world gravity), times
+  `fCombatProjectileMaxRangeMult` (0.9), at most `fCombatMaximumProjectileRange` (4096).
+- **Minimum range.** A longest shot past `fCombatRangedDistance` (1024) makes the weapon ranged.
+  Its minimum range is then `fCombatRangedMinimumRange` (256), and at least the explosion radius.
+  The minimum stays between 0 and the longest shot less 256. The 1024 is only this test; the archer
+  does not try to stand there.
+- **Preferred distance.** From the combat style: x is the defensive less the offensive multiplier.
+  At x ≤ 0 the distance is Min + (Mid − Min) × (x + 1); above 0 it is Mid + (Max − Mid) × x. Min,
+  Mid, and Max are `fCombatMaximumOptimalRangeMin`, `Mid`, and `Max` (1024, 1280, 1536).
+- The archer's radius is added to the minimum and the preferred distance.
+- **Where it stands.** It does not move while the target is between the minimum less
+  `fCombatOptimalRangeMinBufferDistance` (256) and the preferred distance plus
+  `fCombatOptimalRangeMaxBufferDistance` (512), at most the longest shot. Farther away, it walks
+  to the preferred distance. Closer, it steps back to the minimum range. A target closer than
+  `fCombatBackoffMinDistanceMult` (0.75) × the minimum range, inside a 60-degree view, makes it
+  step back by the minimum less the distance. It keeps its path while the target's direction stays
+  within `fCombatMaintainOptimalDistanceMaxAngle` (20 degrees).
+- **Chance to shoot.** base = `fCombatRangedAttackChanceMin` (0.05) + (`Max` (1) − 0.05) ×
+  the style's offensive multiplier. To that adds `fCombatRangedAttackChanceLastAttackBonus` (0.5) ×
+  base × min(t ÷ `fCombatRangedAttackChanceLastAttackBonusTime` (10), 1), where t is the time since
+  its last attack. Distance and line of sight play no part. Example: offense 0.5 gives a base of
+  0.525, and 0.7875 once 10 seconds have passed.
+- **Hold at full draw.** A random time from `fCombatRangedAttackHoldTimeAbsoluteMin` (0.1) up to
+  1.5 + (0.25 − 1.5) × the offensive multiplier, from `fCombatRangedAttackHoldTimeMax` and `Min`.
+  Within `fCombatRangedAttackHoldTimeMinDistance` (256) plus its radius, the offense counts as 1.
+  Past `fCombatRangedAttackMaximumHoldTime` (10) the attack ends.
+- The aim updates every `fCombatAimProjectileUpdateTime` (0.25 s).
+- `fCombatProjectileMaxRangeOptimalMult` (0.85) and `fCombatRangedStandoffTimer` (6) exist as
+  settings, but nothing reads them.
 
 The lead and the noise above also hold for spells: a fire-and-forget spell has a variance of 0.5,
 and a concentration spell 0.
