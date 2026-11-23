@@ -136,6 +136,14 @@ hireling's prompt, as journal and message text do
 (<https://ck.uesp.net/wiki/Text_Replacement>). The tags are read against the quest that owns the
 topic, the `DIAL` `QNAM`.
 
+The engine fills two more tags from the speaker. `<CrimeGold>` is the player's bounty with the
+speaker's crime faction: "\<CrimeGold\> will be text-replaced by the bounty amount"
+(<https://ck.uesp.net/wiki/Creating_a_Custom_Crime_Faction>). A guard's pay row reads "I'll pay
+off my bounty. (25 gold)". `<BribeCost>` is the gold the speaker asks as a bribe
+(<https://ck.uesp.net/wiki/Tutorial:_Dialogue_Speech_Checks>), the same amount
+[speech checks](/engine/speech-checks.md) test, in whole gold. A tag nothing fills stays as
+written, as the Creation Kit page says of a tag that fails to parse.
+
 ## Subtitles
 
 The HUD subtitle is `/HUDMovieBaseInstance/SubtitleTextHolder/textField`. With no line, the

@@ -1,3 +1,4 @@
+public import OpenSkyConditions
 public import OpenSkyDialogueInterface
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
@@ -10,4 +11,5 @@ public protocol DialogueRuntimePort: DialogueAccess {
     func topics(for speaker: ReferenceKey) -> DialogueSelection
     func topics(subtype: FourCC, speaker: ReferenceKey) -> DialogueSelection
     func topics(linked ids: [FormID], speaker: ReferenceKey) -> DialogueSelection
+    func conditionContext(speaker: ReferenceKey) -> ConditionContext
 }

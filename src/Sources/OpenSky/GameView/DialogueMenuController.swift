@@ -6,7 +6,10 @@
 
 import Foundation
 import OpenSkyActorPresentation
+import OpenSkyActorsInterface
 import OpenSkyAIPackages
+import OpenSkyConditions
+import OpenSkyCrimeInterface
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
@@ -77,12 +80,6 @@ final class DialogueMenuController {
         game.dialogue
     }
 
-    var textTags: DialogueTextTags {
-        guard let naming = game.journalMenu.currentAliasNaming else { return .none }
-        let quests = game.worldRecords?.questStore
-        return DialogueTextTags(naming: naming) { quests?.quest($0) }
-    }
-
     /// The open conversation's speaker, else the crosshair's Talk target.
     var speakerOrTarget: ReferenceKey? {
         model.speakerKey ?? game.streamer.talk.speaker
@@ -107,7 +104,7 @@ final class DialogueMenuController {
             name: game.dialogueWorld.speakerLabel(for: speaker),
             runtime: runtime,
             strings: dialogue.strings,
-            tags: textTags,
+            tags: textTags(speaker: speaker),
             greets: !continues
         )
         isOpen = true
@@ -208,5 +205,34 @@ extension DialogueMenuController {
     func tick(now: Double) {
         guard isOpen else { return }
         movie.advance(now: now)
+    }
+}
+
+/// The text-replacement tags of the open conversation, with the two the engine fills from
+/// the speaker ([text](docs/engine/dialogue-menu.md#text)).
+extension DialogueMenuController {
+    func textTags(speaker: ReferenceKey?) -> DialogueTextTags {
+        let quests = game.worldRecords?.questStore
+        return DialogueTextTags(
+            naming: game.journalMenu.currentAliasNaming ?? .none,
+            values: speaker.map(engineTagValues) ?? [:]
+        ) { quests?.quest($0) }
+    }
+
+    /// `<CrimeGold>`, the player's bounty with the speaker's crime faction, and
+    /// `<BribeCost>`, the gold the speaker asks as a bribe, in whole gold.
+    private func engineTagValues(_ speaker: ReferenceKey) -> [String: String] {
+        guard let context = dialogue.runtime?.conditionContext(speaker: speaker) else { return [:] }
+        var values: [String: String] = [:]
+        if let gold = context.playerCrimeGold(owedTo: speaker) {
+            values["CrimeGold"] = String(gold)
+        }
+        if
+            let bribe = context[resolution: SpeechCheckResolution.self]
+                .bribeAmount(of: speaker, actors: context.actors)
+        {
+            values["BribeCost"] = String(Int(max(bribe, 0)))
+        }
+        return values
     }
 }

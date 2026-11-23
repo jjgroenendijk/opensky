@@ -126,6 +126,15 @@ public struct DialogueRuntime: DialogueAccess {
         )
     }
 
+    /// The context a response of `speaker` is checked in, for text that reads the same
+    /// values its conditions do.
+    public func conditionContext(speaker: ReferenceKey) -> ConditionContext {
+        var context = context
+        context.subject = speaker
+        context.target = .player
+        return context
+    }
+
     /// The greeting `speaker` opens with, or nil. A blocking branch that answers
     /// greets with its starting topic. Otherwise greetings are the HELO subtype in
     /// DIAL SNAM; the highest-priority topic with a winning response wins, and ties

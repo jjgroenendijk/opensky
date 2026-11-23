@@ -73,7 +73,7 @@ extension DialogueMenuController.SpeechAdapter {
             runs: DialogueMenuModel.responseRuns(
                 owner.dialogue.index?.responseSource(ofInfo: id) ?? info,
                 strings: owner.dialogue.strings,
-                tags: owner.textTags,
+                tags: owner.textTags(speaker: owner.model.speakerKey),
                 topic: owner.dialogue.index?.topic(ofInfo: id)
             )
         )
@@ -99,7 +99,7 @@ extension DialogueMenuController.SpeechAdapter {
                         selection,
                         runtime: runtime,
                         strings: owner.dialogue.strings,
-                        tags: owner.textTags
+                        tags: owner.textTags(speaker: owner.model.speakerKey)
                     )
                 )
             }
