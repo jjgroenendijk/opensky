@@ -24,6 +24,57 @@ The explosion takes the projectile's position, rotation, shooter, and weapon. Th
 becomes the explosion's direction. An explosion makes a noise for detection at its `EXPL` sound
 level.
 
+## A spell's explosion
+
+A spell with several effects still sets off one explosion per impact. The explosion comes from
+the spell's main effect, the same effect that gives the hand art and the projectile
+([spellcasting](/engine/spellcasting.md#casting-cues)):
+
+- The main effect has the highest cost, cut to a whole number. On a tie, the earlier effect wins.
+- An effect with `MGEF` flag bit 24 (`0x01000000`) is skipped. For a concentration spell, an
+  effect with no projectile is skipped too.
+- The cost is the effect's stored cost, at least 0. No skill or perk changes it, so perks do not
+  change which effect is the main one.
+- The choice is made when the projectile is launched, not when it lands.
+
+Which explosion the projectile carries depends on the costliest effect with Aimed delivery. That
+choice uses the same cost rules, without the concentration rule. A spell with no Aimed effect
+launches no projectile.
+
+- Its area is 1 or more: the main effect's `MGEF` explosion. When the main effect has none, no
+  explosion goes off.
+- Its area is below 1: the `PROJ` record's own explosion.
+- An area counts as 0 when the `MGEF` has the No Area flag (bit 11, `0x800`).
+- The explosion of any other effect is never used.
+
+The explosion's radius is the area of the costliest effect of any delivery whose area is at least
+1, times 22, times the explosion's scale. Without such an effect it is the `EXPL` radius times the
+scale. When that costliest area effect is not Hostile, the explosion is not hostile either.
+
+Example: a Fireball has a fire damage effect, a cheap stagger effect, and a perk effect. Only the
+fire damage effect is the main one, so only its fire burst and its screen effect show. An Ice
+Spike never shows the burst of its Deep Freeze effect.
+
+### How the effects reach the targets
+
+The explosion does not carry the spell. The projectile's impact applies the effects, beside the
+explosion:
+
+- The actor the projectile hit directly gets every effect, whatever its area.
+- The search radius around the impact point is the largest whole-number area among the effects,
+  times 22. Effects with `MGEF` flag bit 25 (`0x02000000`) are left out of that largest area.
+  With a radius of 0 no search runs.
+- Each effect reaches each found actor within its own area times 22 of the impact point. An effect
+  with area 0 reaches only the direct target.
+- The caster, the direct target, and an actor with no loaded model are left out of the search.
+- Each effect is added through the normal path, so its own conditions decide whether it applies.
+- A chain explosion (`EXPL` flag `0x80`) on the largest-area effect, or on the projectile, skips
+  the search. An effect whose own explosion is a chain explosion is not spread to the area
+  targets.
+
+A flame projectile works differently: after its explosion, the spell reaches every actor inside
+the explosion's real radius, with no check per effect.
+
 ## Mines
 
 ```mermaid
