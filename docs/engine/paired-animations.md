@@ -277,7 +277,13 @@ as its identity, so the clips play ([animation](/formats/hka-animation.md#vector
 ## Where OpenSky differs
 
 - An NPC's killing swing on the player may play a kill move, as in the game. The camera leaves
-  first person for third person. [WARNING] The player dies at the clip's hit, not at the end of
-  the pair: OpenSky has no waiting death and no 15 second safety timer.
+  first person for third person. [WARNING] The player dies at its half's `KillActor`, not at the
+  end of the pair: OpenSky has no waiting death and no 15 second safety timer.
+- The partner moves to the mark by placement, not by a velocity on its controller. The player's
+  graph hears no `JumpFall` or `JumpLand` while it reports `bIsSynced`, and none on the step that
+  starts the idle, because that step may move the player before `bIsSynced` is set.
+- An NPC that seeks a kill move keeps trying it through its windup, while its weapon reach is
+  short of the target. Its weapon stays out while the pair plays, because a sheathe would take
+  its graph out of the paired state.
 - The dual-wield and left-hand kill moves, such as the DLC2 heart rip, are not tried. A
   swing tests only the right-hand action trees.

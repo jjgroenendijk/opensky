@@ -107,6 +107,9 @@ public final class CombatLoopRuntime: CombatControlling {
     public internal(set) var targets: [ReferenceKey: ReferenceKey] = [:]
     /// The hand of each actor's swing in progress, and how many swings it started.
     public internal(set) var strikes: [ReferenceKey: NPCStrikes] = [:]
+    /// The NPCs whose killing swing started out of reach, with the target each closes on.
+    /// A kill move can still start until the swing's wind-up ends.
+    public internal(set) var killMoveSeekers: [ReferenceKey: ReferenceKey] = [:]
     /// The NPCs that keep facing their target through a melee attack.
     public internal(set) var attackTracks: [ReferenceKey: CombatAttackTrack] = [:]
     /// Allies walking back to their commander, with the point each walks to.
@@ -336,6 +339,7 @@ public final class CombatLoopRuntime: CombatControlling {
     /// Forgets one machine outright, for an actor that is no longer resident.
     public func retireBehavior(of key: ReferenceKey) {
         behaviors.removeValue(forKey: key)
+        killMoveSeekers.removeValue(forKey: key)
         forcedTargets.removeValue(forKey: key)
         provoked.remove(key)
         targets.removeValue(forKey: key)

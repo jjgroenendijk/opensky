@@ -189,6 +189,10 @@ extension CombatLoopRuntime {
             parkBehavior(of: actor.key)
             return
         }
+        if !step.startedAttack, closesInToKill(swing, by: actor, at: target, world: world) {
+            parkBehavior(of: actor.key)
+            return
+        }
         resolveCast(step, actor: actor.key, world: world)
         if step.reachedContact, !influence.isEthereal {
             if shoots {
@@ -310,8 +314,12 @@ extension CombatLoopRuntime {
         _ swing: NPCSwing, by actor: CombatActorObservation, at target: MeleeTarget,
         world: any CombatLoopWorld
     ) -> Bool {
-        if !swing.shoots, startsKillMove(actor: actor, swing: swing, target: target, world: world) {
-            return true
+        if !swing.shoots {
+            switch startsKillMove(actor: actor, swing: swing, target: target, world: world) {
+            case .started: return true
+            case .outOfReach: killMoveSeekers[actor.key] = target.key
+            case .declined: break
+            }
         }
         world.playCombatClip(swing.hand == .left ? .leftAttack : .attack, on: actor.key)
         if !swing.shoots, let weapon = swing.weapons.first {
@@ -322,21 +330,42 @@ extension CombatLoopRuntime {
         return false
     }
 
+    /// A swing that starts a little out of reach closes in through its wind-up, so the
+    /// kill move is asked again at each step until the target is in reach
+    /// (docs/engine/paired-animations.md#kill-moves).
+    private func closesInToKill(
+        _ swing: NPCSwing, by actor: CombatActorObservation, at target: MeleeTarget,
+        world: any CombatLoopWorld
+    ) -> Bool {
+        guard killMoveSeekers[actor.key] != nil else { return false }
+        guard
+            killMoveSeekers[actor.key] == target.key, behaviors[actor.key]?.phase == .windup
+        else {
+            killMoveSeekers[actor.key] = nil
+            return false
+        }
+        let attempt = startsKillMove(actor: actor, swing: swing, target: target, world: world)
+        if attempt != .outOfReach {
+            killMoveSeekers[actor.key] = nil
+        }
+        return attempt == .started
+    }
+
     /// A swing whose target is in reach may play a kill move instead.
     private func startsKillMove(
         actor: CombatActorObservation, swing: NPCSwing, target: MeleeTarget,
         world: any CombatLoopWorld
-    ) -> Bool {
-        guard
-            let first = swing.weapons.first, reaches(actor: actor, weapon: first, target: target)
-        else { return false }
+    ) -> KillMoveStart {
+        guard let first = swing.weapons.first else { return .declined }
+        guard reaches(actor: actor, weapon: first, target: target) else { return .outOfReach }
         let damage = swing.weapons.reduce(0) {
             $0 + landing(world).appliedDamage(by: actor.key, weapon: $1, on: target.key)
         }
-        return world.startCombatKillMove(
+        let started = world.startCombatKillMove(
             by: actor.key, on: target.key, damage: damage,
             action: KillMoveAttempt.action(hand: .right, power: true)
         )
+        return started ? .started : .declined
     }
 
     private func reaches(
@@ -398,4 +427,13 @@ extension CombatLoopRuntime {
         guard simd_length_squared(SIMD2(offset.x, offset.y)) > 1e-6 else { return fallback }
         return atan2f(offset.y, offset.x)
     }
+}
+
+/// What asking for a kill move at a swing gave.
+private enum KillMoveStart {
+    case started
+    /// The swing's reach misses the target, so the attacker may still close in.
+    case outOfReach
+    /// The target is in reach, and the idle tree picked no kill move.
+    case declined
 }

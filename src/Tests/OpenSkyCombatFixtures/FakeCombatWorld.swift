@@ -105,10 +105,20 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public private(set) var castReleases: [(option: CombatSpellOption, key: ReferenceKey)] = []
     public private(set) var castCancels: [ReferenceKey] = []
     public private(set) var trimRequests = 0
+    /// Each kill move an NPC asked for, attacker first.
+    public private(set) var killMoveAttempts: [(actor: ReferenceKey, target: ReferenceKey)] = []
+    public var playsKillMoves = false
     public private(set) var despawnRequests = 0
     /// True when `recoilMagnitude` was written before `recoilStart` was raised,
     /// which is the write-then-raise order the graph depends on.
     public private(set) var wroteMagnitudeBeforeStagger = false
+
+    public func startCombatKillMove(
+        by actor: ReferenceKey, on target: ReferenceKey, damage _: Float, action _: String
+    ) -> Bool {
+        killMoveAttempts.append((actor: actor, target: target))
+        return playsKillMoves
+    }
 
     /// Moves one actor to `feet`, which is what a fake mover that actually
     /// walked would have done by the next step.
