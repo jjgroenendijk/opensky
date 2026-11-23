@@ -350,7 +350,8 @@ struct AgentFollowerCommands {
             "follower": commands.phase.follower.flatMap(behaviour.formID) ?? .null,
             "lastDecision": commands.lastDecision.map(decisionJSON) ?? .null,
             "lastOutcome": commands.lastOutcome.map { .string($0.rawValue) } ?? .null,
-            "pickDistance": .init(commands.settings.pickDistance)
+            "pickDistance": .init(commands.settings.pickDistance),
+            "pendingWalk": commands.pendingWalk.map { .init($0.asked) } ?? .null
         ]
         switch commands.phase {
         case let .walking(_, task):

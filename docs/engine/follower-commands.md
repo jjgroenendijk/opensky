@@ -144,6 +144,11 @@ Command mode has no time limit in OpenSky. It ends with an order, the pause key,
 
 The follower acts when it is 128 units from the target, which is OpenSky's choice.
 
+A follower that cannot start its walk yet, as while it gets up from a seat or a workbench, is
+asked again each frame. After 10 seconds the order ends as unreachable
+([unverified values](/engine/unverified-values.md)). `openskycli game state favor` shows the
+wait as `pendingWalk`.
+
 ## Checking it
 
 `openskycli game debug favor <follower>` starts command mode as the topic does.

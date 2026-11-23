@@ -63,7 +63,7 @@ struct FollowerCommandWorldTests {
     @Test func followersMoveStopHoldAndRelease() {
         host.fakeAiWorld.movePackageActorResult = .started
         host.fakeAiWorld.packageActorPositionResult = .one
-        #expect(adapter.moveFollower(Self.follower, to: .one))
+        #expect(adapter.moveFollower(Self.follower, to: .one) == .started)
         adapter.stopFollower(Self.follower)
         adapter.holdFollower(Self.follower)
         adapter.releaseFollower(Self.follower)

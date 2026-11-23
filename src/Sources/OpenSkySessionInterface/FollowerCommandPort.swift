@@ -11,6 +11,8 @@ public protocol FollowerCommandPort: AnyObject {
     var isChoosing: Bool { get }
     var lastDecision: FollowerCommandDecision? { get }
     var lastOutcome: FollowerCommandOutcome? { get }
+    /// A walk the follower could not start yet, and the seconds it has been asked for.
+    var pendingWalk: (goal: SIMD3<Float>, asked: Float)? { get }
     var phase: FollowerCommandPhase { get }
     var settings: FollowerCommandSettings { get }
     func tick(_ delta: Float)

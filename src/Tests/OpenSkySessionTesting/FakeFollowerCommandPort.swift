@@ -17,6 +17,7 @@ nonisolated public final class FakeFollowerCommandPort: FollowerCommandPort {
     public var isChoosing = false
     public var lastDecision: FollowerCommandDecision?
     public var lastOutcome: FollowerCommandOutcome?
+    public var pendingWalk: (goal: SIMD3<Float>, asked: Float)?
     public var phaseValue: FollowerCommandPhase?
     public var settingsValue: FollowerCommandSettings?
     public var tickCalls: [Float] = []
