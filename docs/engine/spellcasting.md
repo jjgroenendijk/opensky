@@ -233,7 +233,13 @@ confirmed; without it, the 0.4-second fallback releases the staff.
 In the game the spell-fire event is also where the magicka cost is checked. A cast that cannot pay
 then fails with the not-enough-magicka notice and the hand resets. A concentration spell enters its
 held state at the same event, not at the press. `BeginCastLeft` and `BeginCastRight` only start the
-charge. NPCs use the same events. OpenSky starts a concentration spell at the press.
+charge. NPCs use the same events.
+
+OpenSky holds the player's concentration hand in its ready phase, with no Ready sound, until the
+event. The event checks the cost and starts the spell, or resets the hand with the notice. A graph
+that raises nothing starts it after the same 0.4 seconds. A release before the event still casts
+the spell for its minimum time. NPC hands raise no events into the caster, so an NPC's
+concentration spell starts when its charge ends.
 
 The spell's main effect, defined under hand art below, gives the hand its sounds. CK wiki "Magic
 Effect":

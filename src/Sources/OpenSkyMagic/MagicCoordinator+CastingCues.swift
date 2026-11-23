@@ -9,19 +9,19 @@ import OpenSkyMagicInterface
 
 extension MagicCoordinator.CastingCueTracker {
     /// The hold each of the player's hands gets: a released hand waits for its event.
+    /// The event also starts a concentration hand that waits for it.
     func latched(_ intent: CastingIntent, events: [String]) -> CastingIntent {
         guard let caster = coordinator.caster else { return intent }
         var latched = intent
         for hand in SpellHand.allCases {
-            let names = coordinator.heldStaves.heldStaff(of: .player, in: hand) == nil
-                ? [SpellFireGraphNames.event(of: hand)]
-                : [SpellFireGraphNames.event(of: hand), SpellFireGraphNames.staff]
+            let fired = firedSpell(in: hand, events: events)
+            if fired, let holder = coordinator.world.actorValueHolder(for: .player) {
+                caster.fire(hand, on: holder)
+            }
             let held = coordinator.castingState.releaseLatch.hold(
                 hand,
                 state: (intent.isHeld(hand), caster.phase(of: hand)),
-                fired: events.contains { event in
-                    names.contains { $0.caseInsensitiveCompare(event) == .orderedSame }
-                },
+                fired: fired,
                 delta: intent.deltaTime
             )
             switch hand {
@@ -30,6 +30,16 @@ extension MagicCoordinator.CastingCueTracker {
             }
         }
         return latched
+    }
+
+    /// Whether the player's graph raised the spell-fire event of `hand` this frame.
+    private func firedSpell(in hand: SpellHand, events: [String]) -> Bool {
+        let names = coordinator.heldStaves.heldStaff(of: .player, in: hand) == nil
+            ? [SpellFireGraphNames.event(of: hand)]
+            : [SpellFireGraphNames.event(of: hand), SpellFireGraphNames.staff]
+        return events.contains { event in
+            names.contains { $0.caseInsensitiveCompare(event) == .orderedSame }
+        }
     }
 
     /// What the player's graph hears as `bWantCastLeft` or `bWantCastRight`: a hand
