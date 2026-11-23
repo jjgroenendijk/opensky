@@ -44,15 +44,9 @@ nonisolated extension ConditionFunctions {
                     return ConditionFunctions.formHasKeyword(form, keyword: keyword, store: store)
                 }
                 return call.reference().flatMap { entry in
-                    guard
-                        let base = store.resolvedID(
-                            ConditionFunctions.baseForm(of: entry),
-                            fromPlugin: ConditionFunctions.ConditionFunctionsData
-                                .basePlugin(of: entry.key)
-                        ),
-                        let answer = store.hasKeyword(keyword, on: base)
-                    else { return .failure(.unavailableData(.keyword)) }
-                    return .success(ConditionFunctions.isTrue(answer))
+                    ConditionFunctions.referenceHasKeyword(
+                        entry, keyword: keyword, store: store, aliases: call.context.aliasResolver
+                    )
                 }
             })
 

@@ -2,6 +2,7 @@
 
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyQuestsInterface
 
 extension PapyrusWorldStateBridge.FormLists {
     func pluginFormListEntries(of key: ReferenceKey) -> [ReferenceKey?]? {
@@ -39,9 +40,11 @@ extension PapyrusWorldStateBridge.FormLists {
             let base = keywordedForm(form, in: keywordStore),
             case let .plugin(keywordPlugin, keywordID) = keyword
         else { return nil }
-        return keywordStore.hasKeyword(
-            ResolvedFormID(plugin: keywordPlugin, objectID: keywordID), on: base
-        )
+        let resolved = ResolvedFormID(plugin: keywordPlugin, objectID: keywordID)
+        if bridge.questRuntime?.aliasResolution().aliasGivesKeyword(resolved, to: form) == true {
+            return true
+        }
+        return keywordStore.hasKeyword(resolved, on: base)
     }
 
     /// A placed reference's base, read in its plugin's space as `HasKeyword`

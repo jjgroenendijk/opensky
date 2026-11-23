@@ -5,6 +5,7 @@
 import Foundation
 public import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 /// One base form standing in as a run-on subject.
 nonisolated public struct ConditionFormSubject: Equatable, Sendable {
@@ -62,6 +63,26 @@ nonisolated extension ConditionFunctions {
         guard let answer = store.hasKeyword(keyword, on: form.id) else {
             return .failure(.unavailableData(.keyword))
         }
+        return .success(isTrue(answer))
+    }
+
+    /// `HasKeyword` on a placed reference: an alias that holds it gives keywords
+    /// (<https://ck.uesp.net/wiki/Quest_Alias_Tab>), else its base's `KWDA`.
+    static func referenceHasKeyword(
+        _ entry: RuntimeReferenceEntry,
+        keyword: ResolvedFormID,
+        store: KeywordStore,
+        aliases: (any ConditionAliasResolving)?
+    ) -> Result<Float, ConditionFailure> {
+        if aliases?.aliasGivesKeyword(keyword, to: entry.key) == true {
+            return .success(1)
+        }
+        guard
+            let base = store.resolvedID(
+                baseForm(of: entry), fromPlugin: ConditionFunctionsData.basePlugin(of: entry.key)
+            ),
+            let answer = store.hasKeyword(keyword, on: base)
+        else { return .failure(.unavailableData(.keyword)) }
         return .success(isTrue(answer))
     }
 
