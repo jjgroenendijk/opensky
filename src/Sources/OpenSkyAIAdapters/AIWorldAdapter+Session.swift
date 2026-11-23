@@ -144,7 +144,7 @@ extension AIFrameSteps {
             // After the pass, so a trespass is judged against this frame's detection.
             adapter.game.crime.advanceTrespass(by: Double(delta))
             adapter.game.crime.advanceFavour()
-            adapter.game.crime.advanceReports()
+            adapter.game.crime.advanceReports(by: Double(delta))
             adapter.game.crime.advanceJail()
             // After the trespass, so the guards see a bounty charged this frame.
             adapter.game.crimeWorld.run(adapter.game.crime.advanceGuardResponse())

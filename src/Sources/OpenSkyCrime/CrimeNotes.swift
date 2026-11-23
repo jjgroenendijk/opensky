@@ -8,10 +8,10 @@ nonisolated public enum CrimeNote: Equatable, Sendable {
     /// `label` names the crime, such as "Assault"; `faction` is nil when nobody tracks it.
     case recorded(CrimeOutcome, label: String, faction: String?)
     case trespassWarning(secondsLeft: Int)
-    /// Every witness died before a guard heard: the gold came off again.
+    /// Every witness died inside the window: the gold came off again.
     case reportLost(gold: Int32, faction: String)
-    /// A witness reached a guard, so the bounty stays.
-    case reportDelivered(faction: String, by: String)
+    /// The window closed, so the bounty stays.
+    case reportFinal(gold: Int32, faction: String)
 
     var text: String {
         switch self {
@@ -21,8 +21,8 @@ nonisolated public enum CrimeNote: Equatable, Sendable {
         case let .trespassWarning(seconds): "Trespass warning: \(seconds) s to leave."
         case let .reportLost(gold, faction):
             "Every witness died: \(gold) bounty removed from \(faction)."
-        case let .reportDelivered(faction, witness):
-            "\(witness) reported the crime to a \(faction) guard."
+        case let .reportFinal(gold, faction):
+            "The crime is final: \(gold) bounty stays with \(faction)."
         }
     }
 }

@@ -80,7 +80,7 @@ public final class CrimeCoordinator {
     var lastPlayerCell: CellSceneLocation?
     /// The warning and grace period of the current stay.
     public internal(set) var trespassWatch = TrespassWatch()
-    /// Crimes charged while no guard knows yet. Session state, as `assaultedActors` is.
+    /// Seen crimes whose window is still open. Session state, as `assaultedActors` is.
     public internal(set) var pendingReports: [PendingCrimeReport] = []
     /// The player's bounty per faction at the last tick; nil before the first look.
     var lastBounties: [ReferenceKey: Int32]?
@@ -152,6 +152,7 @@ public final class CrimeCoordinator {
         guard let data else { return }
         let reporter = CrimeReporter(runtime: data.runtime, world: owners)
         reporter.storyEvents = storyEvents
+        reporter.defersPlayerCrimeGold = true
         if let witnesses {
             reporter.witnesses = witnesses
         }

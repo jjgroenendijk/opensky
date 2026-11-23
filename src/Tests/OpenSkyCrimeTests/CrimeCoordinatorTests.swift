@@ -107,12 +107,12 @@ struct CrimeCoordinatorTests {
         coordinator.reportAssault(on: Self.victim, wasHostile: false)
         coordinator.reportMurder(of: Self.victim)
         coordinator.reportMurder(of: Self.victim)
+        #expect(recorder.events("ADCR").isEmpty)
+        coordinator.advanceReports(by: 31)
 
         #expect(recorder.events("ASSU").map(\.actor2) == [Self.victim])
         let gold = recorder.events("ADCR")
-        #expect(gold.map(\.value2) == [
-            Float(StoryCrimeType.assault.rawValue), Float(StoryCrimeType.murder.rawValue)
-        ])
+        #expect(gold.map(\.value2) == [Float(StoryCrimeType.murder.rawValue)])
         #expect(gold.allSatisfy { $0.actor1 == .player && $0.value1 > 0 && $0.form != nil })
         #expect(coordinator.killStatus(of: Self.victim, by: .player) == .reportedMurder)
         #expect(coordinator.killStatus(of: Self.victim, by: Self.guardKey) == .notMurder)

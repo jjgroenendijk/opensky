@@ -104,7 +104,7 @@ struct CrimeReportingTests {
 
     // MARK: - Reporting chain
 
-    @Test func aCrimeWhoseOnlyWitnessDiesCostsNothing() throws {
+    @Test func aCrimeWhoseOnlyWitnessDiesInsideTheWindowCostsNothing() throws {
         let world = FakeCrimeSessionWorld()
         let coordinator = try Self.coordinator(world)
         coordinator.reportAssault(on: Self.victim, wasHostile: false)
@@ -112,7 +112,9 @@ struct CrimeReportingTests {
         #expect(coordinator.pendingReports.count == 1)
 
         world.dead = [Self.victim]
-        coordinator.advanceReports()
+        coordinator.advanceReports(by: 0.5)
+        #expect(coordinator.pendingReports.count == 1)
+        coordinator.advanceReports(by: 20)
 
         #expect(coordinator.crimeGold(of: Self.hold) == 0)
         #expect(coordinator.pendingReports.isEmpty)
@@ -120,30 +122,48 @@ struct CrimeReportingTests {
         #expect(coordinator.takeCommands().contains(.showNotice("Last witness killed.")))
     }
 
-    @Test func aWitnessNearAGuardDeliversTheReport() throws {
+    @Test func killingTheOnlyWitnessAfterTheWindowLeavesTheBounty() throws {
         let world = FakeCrimeSessionWorld()
-        let coordinator = try Self.coordinator(world)
+        let recorder = StoryEventRecorder()
+        let coordinator = try Self.coordinator(world, storyEvents: recorder)
         coordinator.reportAssault(on: Self.victim, wasHostile: false)
         let gold = coordinator.crimeGold(of: Self.hold)
-        world.living = [
-            CrimeObserver(key: Self.victim, feet: .zero),
-            CrimeObserver(key: Self.guardKey, feet: [100, 0, 0])
-        ]
-        coordinator.advanceReports()
+        #expect(recorder.events("ADCR").isEmpty)
+
+        coordinator.advanceReports(by: 10)
+        coordinator.advanceReports(by: 15)
+        #expect(recorder.events("ADCR").isEmpty)
+        coordinator.advanceReports(by: 15)
         world.dead = [Self.victim]
-        coordinator.advanceReports()
+        coordinator.advanceReports(by: 1)
 
         #expect(coordinator.pendingReports.isEmpty)
         #expect(coordinator.crimeGold(of: Self.hold) == gold)
+        let final = recorder.events("ADCR")
+        #expect(final.count == 1)
+        #expect(final.first?.actor1 == .player)
+        #expect(final.first?.value1 == Float(gold))
     }
 
-    @Test func aGuardThatSawTheCrimeReportsItAtOnce() throws {
+    @Test func aGuardWitnessCanStillBeKilledInsideTheWindow() throws {
         let world = FakeCrimeSessionWorld()
         let coordinator = try Self.coordinator(world, witnesses: [Self.guardKey])
         coordinator.reportAssault(on: Self.victim, wasHostile: false)
+        #expect(coordinator.pendingReports.count == 1)
 
-        #expect(coordinator.crimeGold(of: Self.hold) > 0)
-        #expect(coordinator.pendingReports.isEmpty)
+        world.dead = [Self.guardKey]
+        coordinator.advanceReports(by: 5)
+        #expect(coordinator.crimeGold(of: Self.hold) == 0)
+    }
+
+    @Test func aPausedGameDoesNotRunTheWindow() throws {
+        let world = FakeCrimeSessionWorld()
+        let coordinator = try Self.coordinator(world)
+        coordinator.reportAssault(on: Self.victim, wasHostile: false)
+        for _ in 0 ..< 100 {
+            coordinator.advanceReports(by: 0)
+        }
+        #expect(coordinator.pendingReports.first?.age == 0)
     }
 
     @Test func ridingSomebodyElsesHorseIsATheftOfTheHorseValue() throws {
@@ -155,9 +175,9 @@ struct CrimeReportingTests {
         #expect(outcome?.gold ?? 0 > 0)
         #expect(coordinator.crimeGold(of: Self.hold) > 0)
     }
+}
 
-    // MARK: - Jail
-
+extension CrimeReportingTests {
     private static func jailedWorld() throws -> (FakeCrimeSessionWorld, FakeCrimeInventory) {
         let world = FakeCrimeSessionWorld()
         let inventory = try FakeCrimeInventory()

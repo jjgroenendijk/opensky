@@ -36,7 +36,7 @@ nonisolated public final class FakeCrimePort: CrimePort {
     public var theftBountyResult: Int32 = 0
     public var advanceTrespassCalls: [Double] = []
     public var advanceFavourCallCount = 0
-    public var advanceReportsCallCount = 0
+    public var advanceReportsCalls: [Double] = []
     public var advanceJailCallCount = 0
     public var advanceGuardResponseCallCount = 0
     public var advanceGuardResponseResult: [CrimeCommand] = []
@@ -150,8 +150,8 @@ nonisolated extension FakeCrimePort {
         advanceFavourCallCount += 1
     }
 
-    public func advanceReports() {
-        advanceReportsCallCount += 1
+    public func advanceReports(by seconds: Double) {
+        advanceReportsCalls.append(seconds)
     }
 
     public func advanceJail() {
