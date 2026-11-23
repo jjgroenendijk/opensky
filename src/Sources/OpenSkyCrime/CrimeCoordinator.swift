@@ -19,17 +19,21 @@ public struct CrimeSessionData {
     public let locations: LocationStore?
     public let pluginName: String
     public let texts: CrimeTexts
+    /// Where an encounter zone's owner is read. Nil leaves out the zone step of ownership.
+    public let encounterZones: EncounterZoneStore?
 
     public init(
         runtime: CrimeRuntime,
         locations: LocationStore?,
         pluginName: String,
-        texts: CrimeTexts = .vanilla
+        texts: CrimeTexts = .vanilla,
+        encounterZones: EncounterZoneStore? = nil
     ) {
         self.runtime = runtime
         self.locations = locations
         self.pluginName = pluginName
         self.texts = texts
+        self.encounterZones = encounterZones
     }
 }
 

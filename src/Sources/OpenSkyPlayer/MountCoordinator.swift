@@ -36,6 +36,8 @@ public final class MountCoordinator {
     public private(set) var phase = MountPhase.none
     /// The last actor the player mounted, kept after the dismount.
     public private(set) var lastMount: ReferenceKey?
+    /// The ridden mount is somebody else's, so it never becomes the player's last ridden horse.
+    public private(set) var ridesStolenMount = false
     /// What the rider asked of a ridden dragon.
     public internal(set) var dragonOrders = RiddenDragonOrders()
     /// Off: a flying mount's lock holds only while Jump is held.
@@ -58,17 +60,14 @@ public final class MountCoordinator {
         drive != nil
     }
 
-    /// Mounts `key`. A horse somebody else owns needs `stealConfirmed`; without it the
-    /// answer is `askToSteal`.
-    public func mount(_ key: ReferenceKey, stealConfirmed: Bool = false) -> [MountCommand] {
+    /// Mounts `key`. Mounting a horse somebody else owns is a theft, with no question first.
+    @discardableResult
+    public func mount(_ key: ReferenceKey) -> [MountCommand] {
         let decision = MountRules.decide(world?.mountCandidate(key), isRiding: isActive)
         switch decision {
         case let .refuse(reason):
             return [.refused(reason)]
         case let .mount(kind, saddle, steals):
-            if steals, !stealConfirmed {
-                return [.askToSteal(key)]
-            }
             guard let start = world?.takeMount(key, kind: kind, saddleBone: saddle) else {
                 return [.refused(.notLoaded)]
             }
@@ -79,6 +78,7 @@ public final class MountCoordinator {
             drive.bridge.raise(kind.events.mountEnter)
             self.drive = drive
             lastMount = key
+            ridesStolenMount = steals
             phase = .mounting(elapsed: 0)
             return [.boardPlayer(key), .raiseOnPlayer(kind.events.riderEnter)]
                 + (steals ? [.reportTheft(key)] : [])

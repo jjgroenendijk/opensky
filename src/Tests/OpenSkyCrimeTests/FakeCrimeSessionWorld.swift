@@ -17,6 +17,8 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
     var currentCellLocation: CellSceneLocation?
     var cellOwners: [CellSceneLocation: RecordOwnership] = [:]
     var cellLinks: [CellSceneLocation: FormID] = [:]
+    /// The `ECZN` each reference takes, written in the fixture plugin.
+    var zoneLinks: [ReferenceKey: FormID] = [:]
     var crosshairInteraction: PlacedInteraction?
     var hasFactionData = true
     var memberships: [ReferenceKey: ActorFactionState] = [:]
@@ -86,6 +88,10 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
 
     func cellLocationLink(at location: CellSceneLocation) -> (link: FormID, plugin: String)? {
         cellLinks[location].map { ($0, CrimeFixture.pluginName) }
+    }
+
+    func encounterZoneLink(of key: ReferenceKey) -> (link: FormID, plugin: String)? {
+        zoneLinks[key].map { ($0, CrimeFixture.pluginName) }
     }
 
     func itemValue(of _: FormID) -> Int64 {

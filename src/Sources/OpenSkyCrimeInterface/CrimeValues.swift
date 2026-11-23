@@ -244,6 +244,8 @@ nonisolated public struct CrimeActor: Equatable, Sendable {
     /// Everything the actor currently belongs to, which is what a faction-owned
     /// reference is checked against.
     public let memberships: ActorFactionState
+    /// The player: for a faction owner, membership alone is enough.
+    public var ignoresRequiredRank = false
 
     public init(
         base: ReferenceKey? = nil,
@@ -258,14 +260,16 @@ nonisolated public struct CrimeActor: Equatable, Sendable {
     static let player = CrimeActor()
 
     /// Whether property owned by `owner` is this actor's to use. An actor owner
-    /// matches the NPC_ base, so the player matches none. A faction owner matches a
-    /// member at or above the required rank. The one place this rule lives.
+    /// matches the NPC_ base, so the player matches none. A faction owner matches a member
+    /// at or above the required rank, or the player at any rank. The one place this rule lives.
     public func mayUse(_ owner: ReferenceOwner) -> Bool {
         switch owner {
         case let .actor(base):
             self.base == base
         case let .faction(faction, requiredRank):
-            memberships.rank(in: faction).map { Int32($0) >= requiredRank } ?? false
+            memberships.rank(in: faction).map {
+                ignoresRequiredRank || Int32($0) >= requiredRank
+            } ?? false
         }
     }
 

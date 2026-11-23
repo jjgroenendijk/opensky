@@ -9,8 +9,6 @@ nonisolated public struct MountSettings: Equatable, Sendable {
     public var turnRampUpDegreesPerSecond: Float = 80
     /// `fMountedMaxLookingDown`: how far, in degrees, a rider may look down.
     public var maximumLookDownDegrees: Float = 40
-    /// `sStealHorse`: the question before riding somebody else's horse.
-    public var stealQuestion = "Do you want to steal this horse?"
     /// `sNotAllowedToUseAutoDoorsWhileonHorse`: why a rider cannot use a door.
     public var doorRefusal = "Dismount Horse before going through door."
     /// `sRide`: the use-key prompt on a mount.
@@ -59,7 +57,6 @@ nonisolated public struct MountSettings: Equatable, Sendable {
         if let down = store.number("fMountedMaxLookingDown"), down > 0 {
             settings.maximumLookDownDegrees = down
         }
-        store.read("sStealHorse", into: &settings, \.stealQuestion, text: text)
         store.read(
             "sNotAllowedToUseAutoDoorsWhileonHorse", into: &settings, \.doorRefusal, text: text
         )

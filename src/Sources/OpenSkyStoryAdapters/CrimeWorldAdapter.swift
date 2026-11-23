@@ -94,7 +94,8 @@ public final class CrimeWorldAdapter {
             locations: provider.locationStore,
             pluginName: pluginName,
             texts: CrimeTexts
-                .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
+                .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) },
+            encounterZones: provider.rules.encounterZoneStore
         )
     }
 
@@ -126,6 +127,10 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
         -> (link: FormID, plugin: String)?
     {
         sessionReads.cellLocationLink(at: location)
+    }
+
+    public func encounterZoneLink(of key: ReferenceKey) -> (link: FormID, plugin: String)? {
+        sessionReads.encounterZoneLink(of: key)
     }
 
     public func itemValue(of item: FormID) -> Int64 {
@@ -236,6 +241,25 @@ struct CrimeSessionReads {
             let plugin = scene.ownerPluginName
         else { return nil }
         return (link, plugin)
+    }
+
+    /// Activators, doors, and furniture never take a zone's owner; an actor uses only its own.
+    func encounterZoneLink(of key: ReferenceKey) -> (link: FormID, plugin: String)? {
+        guard
+            let entry = game.streamer.referenceEntry(key: key),
+            let reference = entry.placedReference,
+            let location = game.streamer.cellLocation(of: key),
+            let scene = game.streamer.residentScene(at: location)
+        else { return nil }
+        let action = scene.interactions[entry.formID]?.action
+        guard action != .activate, action != .open, action != .use else { return nil }
+        if let own = reference.details.links["XEZN"] {
+            return (own, FormIDResolver.loadOrderSpaceName)
+        }
+        guard let zone = scene.encounterZone, let plugin = scene.ownerPluginName else {
+            return nil
+        }
+        return (zone, plugin)
     }
 
     func stolenPlayerStacks() -> [ItemStackReadout] {

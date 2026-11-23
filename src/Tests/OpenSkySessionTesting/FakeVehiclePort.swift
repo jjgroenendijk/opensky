@@ -34,12 +34,14 @@ extension FakeVehiclePort {
         public let rider: ReferenceKey
         public let horse: ReferenceKey
         public let bone: String
+        public let recordsLastMount: Bool
 
         public var description: String {
             [
                 "rider: " + String(describing: rider),
                 "horse: " + String(describing: horse),
-                "bone: " + String(describing: bone)
+                "bone: " + String(describing: bone),
+                "recordsLastMount: " + String(describing: recordsLastMount)
             ].joined(separator: ", ")
         }
     }
@@ -53,10 +55,15 @@ nonisolated extension FakeVehiclePort {
     }
 
     @discardableResult
-    public func seat(_ rider: ReferenceKey, on horse: ReferenceKey, bone: String)
-        -> Bool
-    {
-        seatCalls.append(SeatCall(rider: rider, horse: horse, bone: bone))
+    public func seat(
+        _ rider: ReferenceKey, on horse: ReferenceKey, bone: String, recordsLastMount: Bool
+    ) -> Bool {
+        seatCalls.append(SeatCall(
+            rider: rider,
+            horse: horse,
+            bone: bone,
+            recordsLastMount: recordsLastMount
+        ))
         return seatResult
     }
 
