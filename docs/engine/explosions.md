@@ -176,3 +176,6 @@ What the spawn projectile, the Always Uses World Orientation flag (`0x2`), and t
   player.
 - No placed reference, vertical offset, or water splash.
 - Explosions do not damage destructible objects.
+- A spell hit sets off the main effect's explosion at the struck actor. OpenSky does not choose
+  between that and the `PROJ` explosion by the area of the costliest Aimed effect, and skips no
+  effect without a projectile for a concentration spell.

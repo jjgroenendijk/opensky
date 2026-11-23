@@ -160,19 +160,10 @@ extension MagicCoordinator.CastingCueTracker {
         }
     }
 
-    /// Flag bit 24 of an effect keeps it from being the main one.
-    private static let notMainFlag: UInt32 = 1 << 24
-
     static func mainEffect(of spell: ResolvedSpell) -> ResolvedMagicEffect? {
-        let concentration = spell.data?.castingType == .concentration
-        let effects = spell.effects.map(\.effect)
-        let skipped = effects.map { effect in
-            guard let data = effect?.effect.data else { return effect == nil }
-            return data.flags.rawValue & notMainFlag != 0
-                || (concentration && data.projectile == nil)
-        }
-        return CastingCueRule.mainEffect(costs: spell.effects.map(\.cost), skipped: skipped)
-            .flatMap { effects[$0] }
+        MainMagicEffect.index(
+            of: spell.effects, concentration: spell.data?.castingType == .concentration
+        ).flatMap { spell.effects[$0].effect }
     }
 
     private static func name(of what: CastingCue.What) -> String {

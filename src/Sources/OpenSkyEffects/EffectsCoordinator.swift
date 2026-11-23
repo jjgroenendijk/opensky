@@ -263,9 +263,10 @@ public final class EffectsCoordinator {
         return attached
     }
 
-    /// The explosion of each area effect at the struck actor.
+    /// The main effect's explosion at the struck actor. One impact sets off one explosion;
+    /// the other effects still reach the targets, each by its own conditions.
     public func detonateAreaExplosions(of event: SpellHitEvent) {
-        for link in event.links {
+        for link in event.links where link.isMain {
             detonateAreaExplosion(link, hit: event.hit)
         }
     }

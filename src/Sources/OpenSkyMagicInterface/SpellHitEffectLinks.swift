@@ -23,6 +23,8 @@ nonisolated public struct SpellHitEffectLinks: Equatable, Sendable {
     public let duration: UInt32
     /// An Absorb effect, whose instant hit visual lasts `fMagicAbsorbVisualTimer`.
     public var isAbsorb = false
+    /// The spell's main effect, the only one whose explosion goes off.
+    public var isMain = false
 
     public init(
         plugin: String,
@@ -58,9 +60,13 @@ nonisolated extension MagicEffectStore {
     /// `SNDD` kind 5, On Hit (UESP "Skyrim Mod:Mod File Format/MGEF").
     static let onHitSoundKind: UInt32 = 5
 
-    /// The links of every entry in `payload` whose MGEF resolves.
+    /// The links of every entry in `payload` whose MGEF resolves, the main one marked.
     public func hitEffectLinks(of payload: SpellPayload) -> [SpellHitEffectLinks] {
-        payload.entries.compactMap { entry -> SpellHitEffectLinks? in
+        let effects = resolvedEffects(
+            payload.entries, fromPlugin: payload.sourcePlugin, castingType: .fireAndForget
+        )
+        let main = MainMagicEffect.index(of: effects, concentration: false)
+        return payload.entries.enumerated().compactMap { index, entry -> SpellHitEffectLinks? in
             guard
                 let resolved = resolve(entry, fromPlugin: payload.sourcePlugin),
                 let effect = resolved.effect.data
@@ -75,6 +81,7 @@ nonisolated extension MagicEffectStore {
                 duration: entry.duration
             )
             links.isAbsorb = effect.archetype == .absorb
+            links.isMain = index == main
             links.hitSound = resolved.effect.sounds.first { $0.kind == Self.onHitSoundKind }
                 .flatMap(\.descriptor)
                 .flatMap { resolvedID($0, fromPlugin: resolved.sourcePlugin) }
