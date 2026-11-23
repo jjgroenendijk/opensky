@@ -156,6 +156,7 @@ the detail and the sources it did find.
 | Two clip rules | Not confirmed | [behaviour clips](/engine/behavior-clips.md) |
 | Animation and skeleton split | A guess from the objects | [HKX behaviour](/formats/hkx-behavior.md) |
 | Paired idle and kill-move test | An `IDLE` event starting `pa_`, `pa_KillMove` | [paired animations](/engine/paired-animations.md) |
+| Fall at an idle start | The player's graph hears no fall or landing on the step that raises an idle, because the idle may move the player | [paired animations](/engine/paired-animations.md#where-opensky-differs) |
 | `NPC` and `2_` event prefixes | Come off a paired half's events | [paired animations](/engine/paired-animations.md) |
 | Paired animation time limit | 30 s without an end event | [paired animations](/engine/paired-animations.md) |
 | NaN in a clip track | Read as the part's identity | [animation](/formats/hka-animation.md) |

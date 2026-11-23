@@ -1,6 +1,7 @@
 // `AnimationEventWorldAdapter` built over the started session: it registers its frame steps and
 // session events as it is built (docs/decisions/session-scope.md).
 
+import Foundation
 import OpenSkyActorPresentation
 import OpenSkyCamera
 import OpenSkyFormatsESM
@@ -31,8 +32,18 @@ extension AnimationEventWorldAdapter {
             let idles = game?.idleWorld.idles
             let events = gameSession.audio.animationEvents
             let locomotion = gameSession.locomotion
+            // Read before the events below can end the pair.
+            let killer = idles?.pairedAnimation(of: .player)
+                .map { $0.lead == .player ? $0.partner : $0.lead }
             let names = locomotion.graphEvents.drain(locomotion.animationEventConsumer)
                 .map { idles?.ownGraphEvent($0, from: .player) ?? $0 }
+            // A kill move's victim half sends `2_KillActor`; the other actor of the pair is
+            // the killer (docs/engine/paired-animations.md#the-player-as-the-victim).
+            for name in names
+                where name.caseInsensitiveCompare(IdleCore.killEvent) == .orderedSame
+            {
+                game?.scripts.bridge?.killActor(.player, killer: killer)
+            }
             guard gameSession.movementMode.isPlayerControlled else { return }
             for name in names {
                 events?.handle(name, from: .player)
