@@ -34,8 +34,8 @@ private final class FakeMountWorld: MountWorld {
         SIMD3(-50, 0, 65)
     }
 
-    func lockCandidate() -> ReferenceKey? {
-        nil
+    func lockCandidates() -> [ReferenceKey] {
+        []
     }
 
     func allowsFlyingMountLandingRequests() -> Bool {

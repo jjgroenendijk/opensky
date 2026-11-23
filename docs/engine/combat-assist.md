@@ -131,19 +131,23 @@ By default each press flips the lock. With the INI setting `bTargetLockIsToggle`
 - A player shot picks its target when it is fired, from the hostile living actors in combat
   without the player's mount, and turns by the largest angle of the table. The window is
   0.03 of the screen width to each side and 0.03 of its height up and down.
-- The lock on a ridden dragon turns the rider's view by the heading change of the rule, with the
-  factors of a locked actor.
+- The lock on a ridden dragon gathers the living actors in range when Jump is pressed, locks
+  the first, and keeps the list. When the target drops, the lock moves to the next actor of the
+  list that still lives, and wraps round. A press with no actor in range shows a notification.
 
 `openskycli game state assist` shows each attacker's `attackTracks` entry with its `aim` and the
 count of `refreshes`, and `autoAim`, the target the last player shot turned toward.
-`state mount` shows `lockSteer`, the heading change of the last step in radians.
+`state mount` shows `lockedTarget` and `lockCandidates`, the stored list in its order.
 
-- The lock steers nothing while the rider's weapon is sheathed.
 - The launcher's "Dragon target lock toggles" switch is the toggle option. With it off, a press
-  of Jump locks the actor in view, and the lock ends when Jump comes up. `state mount` shows it
-  as `lockIsToggle`, and `debug setting world.flyingMountLockToggle=off` turns it off for a run.
-- [WARNING] Melee magnetism is not built. The lock on a ridden dragon uses its strafe and target
-  terms to turn the rider's view, which the game does not do while riding.
-- [WARNING] A lock whose target drops ends. It does not move to the next candidate, and the
-  candidate range is centred on the player only.
+  of Jump locks the first actor in range, and the lock ends when Jump comes up. `state mount`
+  shows it as `lockIsToggle`, and `debug setting world.flyingMountLockToggle=off` turns it off
+  for a run.
+- [WARNING] Melee magnetism is not built.
+- [INFO] The order of the lock's candidates is OpenSky's: nearest to the centre of the range
+  first. The game's order was not read.
+- [INFO] A lock that moves to the next candidate ends the attack order, as Switch Target does.
+  What the game does with the order was not read.
+- [INFO] The text of the notification, "No target in range.", is OpenSky's. No game setting
+  with this message was found in the plugins.
 - [INFO] The NPC turn uses the actor's own turn step, not a rate from the graph.

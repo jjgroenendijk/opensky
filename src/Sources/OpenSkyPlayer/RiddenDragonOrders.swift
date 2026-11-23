@@ -47,68 +47,70 @@ nonisolated public struct RiddenDragonOrders: Equatable, Sendable {
     public var breath = BreathPhase.ready
     /// The sneak toggle at the last step: a change is the attack key.
     var lastSneak: Bool?
-    /// Where the locked target stood at the last step, to read its travel.
-    var lastTargetFeet: SIMD3<Float>?
-    /// The heading change the lock gave the rider's view at the last step, in radians.
-    public var lockSteer: Float = 0
-    /// The rider's weapon at this step. The lock steers at an actor only with it drawn.
-    var weaponDrawn = true
-
-    /// The lock's steering for this step. A target that is gone steers nothing.
-    mutating func steer(
-        toward target: SIMD3<Float>?, from rider: (feet: SIMD3<Float>, yaw: Float),
-        input: (speed: Float, strafe: Float), deltaTime: Float
-    ) -> Float {
-        let (speed, strafe) = input
-        defer { lastTargetFeet = target }
-        lockSteer = 0
-        guard let target, deltaTime > 0, weaponDrawn else { return 0 }
-        var frame = FlyingMountLock.Frame()
-        frame.speed = speed
-        frame.strafe = strafe
-        frame.heading = rider.yaw
-        frame.distance = simd_distance(rider.feet, target)
-        frame.deltaTime = deltaTime
-        if let last = lastTargetFeet {
-            frame.targetVelocity = SIMD2(target.x - last.x, target.y - last.y) / deltaTime
-        }
-        guard strafe != 0 || frame.targetVelocity != .zero else { return 0 }
-        lockSteer = FlyingMountLock.headingChange(frame)
-        return lockSteer
-    }
+    /// The actors gathered when the lock was taken, in order. A dropped target passes
+    /// the lock to the next one.
+    public var lockCandidates: [ReferenceKey] = []
 
     public init() {}
 
-    /// Lock target (the jump key): locks the target in view, or unlocks when there is
-    /// none or it is the one already locked. Unlocking ends the attack.
-    mutating func lock(_ candidate: ReferenceKey?) {
-        if candidate == nil || candidate == lockedTarget {
-            lockedTarget = nil
-            isAttacking = false
-            breath = .ready
-        } else {
-            lockedTarget = candidate
+    /// Ends the lock and the attack on its target.
+    mutating func unlock() {
+        lockedTarget = nil
+        lockCandidates = []
+        isAttacking = false
+        breath = .ready
+    }
+
+    /// One press of the lock button: unlocks, or locks the first candidate.
+    /// - Returns: false when there was no lock and no candidate.
+    mutating func pressLock(_ candidates: () -> [ReferenceKey]) -> Bool {
+        guard lockedTarget == nil else {
+            unlock()
+            return true
         }
+        let gathered = candidates()
+        guard let first = gathered.first else { return false }
+        lockCandidates = gathered
+        lockedTarget = first
+        return true
     }
 
     /// The Jump button of one step. As a toggle, each press flips the lock. Otherwise a
     /// press locks and the lock ends when the button comes up.
+    /// - Returns: false when a press found no candidate.
     mutating func takeLockButton(
-        _ button: (pressed: Bool, held: Bool), isToggle: Bool, candidate: () -> ReferenceKey?
-    ) {
+        _ button: (pressed: Bool, held: Bool), isToggle: Bool,
+        candidates: () -> [ReferenceKey]
+    ) -> Bool {
         guard !isToggle else {
-            if button.pressed {
-                lock(candidate())
-            }
-            return
+            return button.pressed ? pressLock(candidates) : true
         }
         if !button.held {
-            if lockedTarget != nil {
-                lock(nil)
-            }
+            unlock()
         } else if button.pressed, lockedTarget == nil {
-            lock(candidate())
+            return pressLock(candidates)
         }
+        return true
+    }
+
+    /// The locked target dropped: the lock moves to the next stored candidate that
+    /// `isValid` accepts, wrapping round the list, or ends with none. The attack ends.
+    mutating func passLock(isValid: (ReferenceKey) -> Bool) {
+        guard let dropped = lockedTarget else { return }
+        let count = lockCandidates.count
+        let start = lockCandidates.firstIndex(of: dropped) ?? -1
+        let list = lockCandidates
+        let next = (0 ..< count)
+            .map { list[(start + 1 + $0) % count] }
+            .first { $0 != dropped && isValid($0) }
+        guard let next else {
+            unlock()
+            return
+        }
+        lockCandidates.removeAll { $0 == dropped }
+        lockedTarget = next
+        isAttacking = false
+        breath = .ready
     }
 
     /// Switch Target (keys 1 and 2): locks the next actor in view, left to right, or the

@@ -19,13 +19,14 @@ public protocol MountWorld: AnyObject {
         -> PlayerMountDriveStart?
     /// The race's dismount offset in the mount's frame: x right, y forward.
     func dismountOffset(of key: ReferenceKey) -> SIMD3<Float>
-    /// The actor in view a ridden dragon's rider locks, or nil.
-    func lockCandidate() -> ReferenceKey?
+    /// The actors a ridden dragon's rider can lock, in the order the lock takes them.
+    func lockCandidates() -> [ReferenceKey]
     /// The actors in view a rider can switch to, left to right.
     func switchCandidates() -> [ReferenceKey]
     /// `Game.SetAllowFlyingMountLandingRequests`; true until a script says otherwise.
     func allowsFlyingMountLandingRequests() -> Bool
-    /// Where a living, loaded actor stands; nil once it is dead or gone.
+    /// Where a living, loaded actor stands; nil once it is dead or gone, and for the
+    /// player and the mount.
     func livingActorFeet(_ key: ReferenceKey) -> SIMD3<Float>?
 }
 
@@ -122,7 +123,6 @@ public final class MountCoordinator {
             return finishDismount()
         }
         if phase == .riding, drive.kind == .dragon {
-            dragonOrders.weaponDrawn = weaponDrawn
             return advanceDragon(drive, input: input, world: stepWorld)
         }
         let events = drive.advance(

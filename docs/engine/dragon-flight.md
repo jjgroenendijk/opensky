@@ -172,7 +172,7 @@ The rider does not steer (UESP "Skyrim:Dragon Riding",
 
 | Key | Order |
 | --- | --- |
-| Jump | Lock the actor nearest the view centre, or unlock the one locked |
+| Jump | Lock the nearest actor in range, or unlock the one locked |
 | Sneak | Attack the locked target, or stop |
 | Use | In the air: land, or call the landing off. On the ground: dismount |
 | Hotkey 1 and 2 | Switch Target: the next actor to the left or the right |
@@ -217,7 +217,7 @@ with the rider's orders and the breath step.
 - [INFO] What sets a crash or hasty request is OpenSky's reading (see [landings](#landings)).
 - [INFO] An injured dragon lands at once; the game may first try to reach a safe spot
   (`FlyStopInjuredSafe`).
-- [INFO] The flight heights, the climb rate, the radii, the lock and switch cones, and the breath
-  timing are OpenSky's numbers. The lock range and its steering are the game's
+- [INFO] The flight heights, the climb rate, the radii, the switch cone, and the breath
+  timing are OpenSky's numbers. The lock range and what ends a lock are the game's
   ([combat assist](/engine/combat-assist.md#flying-mount-lock)).
 - [INFO] The rider's spell rule is OpenSky's, built from the UESP list.

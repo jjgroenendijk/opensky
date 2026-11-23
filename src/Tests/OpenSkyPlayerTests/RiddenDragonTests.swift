@@ -17,6 +17,9 @@ private final class FakeDragonMountWorld: MountWorld {
     static let other = ReferenceKey.generated(202)
     var inView: ReferenceKey?
     var enemyFeet: SIMD3<Float>? = SIMD3(0, 2000, 0)
+    var otherFeet: SIMD3<Float>?
+    /// The lock's candidates; nil means the actor in view alone.
+    var inRange: [ReferenceKey]?
     var allowsLanding = true
 
     func mountCandidate(_ key: ReferenceKey) -> MountCandidate? {
@@ -41,8 +44,8 @@ private final class FakeDragonMountWorld: MountWorld {
         SIMD3(-50, 0, 65)
     }
 
-    func lockCandidate() -> ReferenceKey? {
-        inView
+    func lockCandidates() -> [ReferenceKey] {
+        inRange ?? inView.map { [$0] } ?? []
     }
 
     func allowsFlyingMountLandingRequests() -> Bool {
@@ -54,7 +57,7 @@ private final class FakeDragonMountWorld: MountWorld {
     }
 
     func livingActorFeet(_ key: ReferenceKey) -> SIMD3<Float>? {
-        key == Self.enemy ? enemyFeet : nil
+        key == Self.enemy ? enemyFeet : (key == Self.other ? otherFeet : nil)
     }
 }
 
@@ -92,13 +95,13 @@ struct RiddenDragonTests {
         var orders = RiddenDragonOrders()
         let unlocked = orders.toggleAttack()
         #expect(!unlocked, "no attack without a lock")
-        orders.lock(FakeDragonMountWorld.enemy)
+        _ = orders.pressLock { [FakeDragonMountWorld.enemy] }
         let attacks = orders.toggleAttack()
         #expect(attacks && orders.isAttacking)
         let enemy = SIMD3<Float>(0, 2000, 0)
         #expect(orders.goal(home: .zero, target: enemy)
             == .circle(center: enemy, radius: RiddenDragonOrders.attackRadius))
-        orders.lock(FakeDragonMountWorld.enemy)
+        _ = orders.pressLock { [FakeDragonMountWorld.enemy] }
         #expect(orders.lockedTarget == nil && !orders.isAttacking)
         orders.landingRequested = true
         #expect(orders.goal(home: .zero, target: enemy) == .ground(nil))
@@ -171,15 +174,52 @@ struct RiddenDragonTests {
 
     @Test func aHeldLockDoesNotFlipOnASecondPressAndNeedsATargetInView() {
         var orders = RiddenDragonOrders()
-        orders.takeLockButton((true, true), isToggle: false) { nil }
-        #expect(orders.lockedTarget == nil)
-        orders.takeLockButton((true, true), isToggle: false) { FakeDragonMountWorld.enemy }
-        orders.takeLockButton((true, true), isToggle: false) { FakeDragonMountWorld.enemy }
+        let enemy = [FakeDragonMountWorld.enemy]
+        let found = orders.takeLockButton((true, true), isToggle: false) { [] }
+        #expect(!found && orders.lockedTarget == nil)
+        _ = orders.takeLockButton((true, true), isToggle: false) { enemy }
+        _ = orders.takeLockButton((true, true), isToggle: false) { enemy }
         #expect(orders.lockedTarget == FakeDragonMountWorld.enemy)
-        orders.takeLockButton((false, false), isToggle: true) { nil }
+        _ = orders.takeLockButton((false, false), isToggle: true) { [] }
         #expect(orders.lockedTarget == FakeDragonMountWorld.enemy, "a toggled lock stays")
-        orders.takeLockButton((true, false), isToggle: true) { FakeDragonMountWorld.enemy }
-        #expect(orders.lockedTarget == nil)
+        let unlocked = orders.takeLockButton((true, false), isToggle: true) { enemy }
+        #expect(unlocked && orders.lockedTarget == nil && orders.lockCandidates.isEmpty)
+    }
+
+    @Test func aDroppedTargetPassesTheLockToTheNextCandidateAndWraps() {
+        let keys = (1 ... 3).map { ReferenceKey.generated(UInt64(300 + $0)) }
+        var orders = RiddenDragonOrders()
+        _ = orders.pressLock { keys }
+        #expect(orders.lockedTarget == keys[0] && orders.lockCandidates == keys)
+        _ = orders.toggleAttack()
+        orders.passLock { $0 == keys[2] }
+        #expect(orders.lockedTarget == keys[2], "the dead second candidate is passed over")
+        #expect(!orders.isAttacking && orders.lockCandidates == [keys[1], keys[2]])
+        orders.passLock { $0 == keys[1] }
+        #expect(orders.lockedTarget == keys[1], "the list wraps round")
+        orders.passLock { _ in false }
+        #expect(orders.lockedTarget == nil && orders.lockCandidates.isEmpty)
+    }
+
+    @Test func aPressWithNoActorInRangeShowsTheNotification() {
+        let (mounts, world) = seated()
+        world.inRange = []
+        fly(mounts, seconds: 6)
+        let commands = fly(mounts, seconds: 1.0 / 30) { $0.jump = true }
+        #expect(commands.contains(.notify(mounts.settings.noLockTargetMessage)))
+        #expect(mounts.dragonOrders.lockedTarget == nil)
+    }
+
+    @Test func theLockMovesToTheNextActorWhenItsTargetDies() {
+        let (mounts, world) = seated()
+        world.inRange = [FakeDragonMountWorld.enemy, FakeDragonMountWorld.other]
+        world.otherFeet = SIMD3(500, 0, 0)
+        fly(mounts, seconds: 6)
+        fly(mounts, seconds: 1.0 / 30) { $0.jump = true }
+        #expect(mounts.dragonOrders.lockedTarget == FakeDragonMountWorld.enemy)
+        world.enemyFeet = nil
+        fly(mounts, seconds: 1.0 / 30)
+        #expect(mounts.dragonOrders.lockedTarget == FakeDragonMountWorld.other)
     }
 
     @Test func aDragonRiderShoutsAndCastsButSwingsNoWeapon() {
@@ -195,7 +235,7 @@ struct RiddenDragonTests {
 
     @Test func theBreathInhalesThenExhalesThenCastsOnTheClipEvent() {
         var orders = RiddenDragonOrders()
-        orders.lock(FakeDragonMountWorld.enemy)
+        _ = orders.pressLock { [FakeDragonMountWorld.enemy] }
         _ = orders.toggleAttack()
         let ahead = SIMD3<Float>(2000, 0, 0)
         let behind = SIMD3<Float>(-2000, 0, 0)

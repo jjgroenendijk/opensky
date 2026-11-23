@@ -102,7 +102,9 @@ extension AgentMotionAdapter {
             "orders": drive.kind == .dragon ? [
                 "landingRequested": .bool(orders.landingRequested),
                 "lockedTarget": orders.lockedTarget.flatMap(behaviour.formID) ?? .null,
-                "lockSteer": .init(orders.lockSteer),
+                "lockCandidates": .array(orders.lockCandidates.map {
+                    behaviour.formID(of: $0) ?? .string("\($0)")
+                }),
                 "lockIsToggle": .bool(mounts.lockIsToggle),
                 "switchedTarget": orders.switchedTarget.flatMap(behaviour.formID) ?? .null,
                 "attacking": .bool(orders.isAttacking),
@@ -130,7 +132,6 @@ extension AgentMotionAdapter {
             json["ridden"] = .bool(true)
             json["rider"] = [
                 "lockedTarget": orders.lockedTarget.flatMap(behaviour.formID) ?? .null,
-                "lockSteer": .init(orders.lockSteer),
                 "switchedTarget": orders.switchedTarget.flatMap(behaviour.formID) ?? .null,
                 "attacking": .bool(orders.isAttacking)
             ]
