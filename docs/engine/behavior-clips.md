@@ -251,6 +251,14 @@ built in code. The referenced file becomes its own instance over its own decode,
 skeleton and clip source. It has its own variables, events, and node state, like Havok's
 `hkbBehaviorGraph`.
 
+In the game, one name table joins them. When a character's behavior project first loads, the event,
+variable, and character property names of the root file and of every file it references are
+merged into one table per project. A get or a set of a variable by name, and an event sent by name,
+go through that table. So a name only a referenced file declares still reaches it. Examples from
+the vanilla files: `pa_KillMoveShieldBashSlash` and `IsAttackReady` are declared in
+`1hm_behavior.hkx` and not in `0_master.hkx`. `IsEquipping` is written by the `isActive` of
+`WeapEquipRoot` in `weapequip.hkx`.
+
 The two instances are joined only by names:
 
 - Variables pass from parent to child before every child update, for every name both declare. A

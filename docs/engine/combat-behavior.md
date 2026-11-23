@@ -38,7 +38,8 @@ run at 144 give the same fight. Each actor has its own machine.
 
 The attack phases match the player's own melee phases on purpose, so both sides of a fight can be
 read against each other. A stagger takes the attack away, as the graph's stagger transition does for
-the player.
+the player. The graph also decides when an attack may start
+([actor graphs](/engine/actor-graphs.md#when-an-attack-may-start)).
 
 The machine asks for movement and never moves anything. Its command goes to the navigation mover,
 which owns the capsule, the navmesh path, stuck recovery, and saving
