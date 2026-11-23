@@ -18,7 +18,8 @@ public protocol FollowerCommandWorld: AnyObject {
     func sayFavorLine(_ subtype: FourCC, follower: ReferenceKey)
     /// Clears the follower's doing-favour flag, saying its Exit line when `announces`.
     func endFavor(_ follower: ReferenceKey, announces: Bool)
-    func moveFollower(_ follower: ReferenceKey, to point: SIMD3<Float>) -> Bool
+    /// `.busy` means the follower cannot start yet, as while it leaves a seat.
+    func moveFollower(_ follower: ReferenceKey, to point: SIMD3<Float>) -> PackageMoveResult
     func stopFollower(_ follower: ReferenceKey)
     /// Stops every package of the follower until `releaseFollower`.
     func holdFollower(_ follower: ReferenceKey)
@@ -36,6 +37,11 @@ public final class FollowerCommandCoordinator {
     public private(set) var lastOutcome: FollowerCommandOutcome?
     /// A use-key press on a follower that is not yet a tap or a hold.
     public private(set) var pressedFollower: (follower: ReferenceKey, held: Float)?
+    /// A walk the follower could not start yet, and how long the coordinator has asked.
+    public private(set) var pendingWalk: (goal: SIMD3<Float>, asked: Float)?
+    /// How long a busy follower is asked again before the walk counts as failed.
+    /// OpenSky's choice (docs/engine/unverified-values.md).
+    static let busySeconds: Float = 10
 
     public init(world: any FollowerCommandWorld) {
         self.world = world
@@ -121,9 +127,7 @@ public final class FollowerCommandCoordinator {
         let start = world.followerCommandPosition(of: follower)
         let goal = task.action == .moveTo
             ? task.target.position : approach(to: task.target.position, from: start)
-        if !world.moveFollower(follower, to: goal) {
-            finish(.unreachable)
-        }
+        startWalk(of: follower, to: goal, asked: 0)
         return decision
     }
 
@@ -144,6 +148,8 @@ public final class FollowerCommandCoordinator {
         case let .walking(_, task):
             if isInReach(follower, of: task) {
                 act()
+            } else if let pending = pendingWalk {
+                startWalk(of: follower, to: pending.goal, asked: pending.asked + max(delta, 0))
             }
         case let .waiting(_, left):
             if left - delta <= 0 {
@@ -163,6 +169,16 @@ public final class FollowerCommandCoordinator {
         case .arrival: act()
         case .giveUp: finish(.unreachable)
         default: break
+        }
+    }
+
+    /// Asks for the walk. A busy follower is asked again each tick, for `busySeconds`.
+    private func startWalk(of follower: ReferenceKey, to goal: SIMD3<Float>, asked: Float) {
+        pendingWalk = nil
+        switch world?.moveFollower(follower, to: goal) {
+        case .started: break
+        case .busy where asked < Self.busySeconds: pendingWalk = (goal, asked)
+        default: finish(.unreachable)
         }
     }
 
@@ -198,6 +214,7 @@ public final class FollowerCommandCoordinator {
     }
 
     private func release(_ follower: ReferenceKey) {
+        pendingWalk = nil
         world?.releaseFollower(follower)
     }
 

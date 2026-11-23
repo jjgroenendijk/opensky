@@ -19,7 +19,7 @@ private final class FakeFollowerWorld: FollowerCommandWorld {
     var ended: [(ReferenceKey, Bool)] = []
     var moves: [SIMD3<Float>] = []
     var performed: [FollowerCommandTask] = []
-    var moveSucceeds = true
+    var moveResult = PackageMoveResult.started
 
     func followerCommandPosition(of actor: ReferenceKey) -> SIMD3<Float>? {
         positions[actor]
@@ -37,9 +37,9 @@ private final class FakeFollowerWorld: FollowerCommandWorld {
         ended.append((follower, announces))
     }
 
-    func moveFollower(_: ReferenceKey, to point: SIMD3<Float>) -> Bool {
+    func moveFollower(_: ReferenceKey, to point: SIMD3<Float>) -> PackageMoveResult {
         moves.append(point)
-        return moveSucceeds
+        return moveResult
     }
 
     func stopFollower(_: ReferenceKey) {}
@@ -250,16 +250,44 @@ struct FollowerCommandCoordinatorTests {
 
     @Test func aFailedWalkEndsTheTask() {
         let (commands, world) = setUp()
-        world.moveSucceeds = false
+        world.moveResult = .failed
         commands.command(leverTarget)
         #expect(commands.lastOutcome == .unreachable)
         #expect(commands.phase == .idle)
         commands.favorStarted(follower)
-        world.moveSucceeds = true
+        world.moveResult = .started
         commands.command(leverTarget)
         commands.movementSettled(actor: follower, reason: .giveUp)
         #expect(commands.lastOutcome == .unreachable)
         #expect(world.performed.isEmpty)
+    }
+
+    @Test func aBusyFollowerIsAskedAgainUntilItWalks() {
+        let (commands, world) = setUp()
+        world.moveResult = .busy
+        commands.command(leverTarget)
+        #expect(commands.lastOutcome != .unreachable)
+        #expect(commands.pendingWalk != nil)
+        commands.tick(0.5)
+        #expect(world.moves.count == 2)
+        world.moveResult = .started
+        commands.tick(0.5)
+        #expect(world.moves.count == 3)
+        #expect(commands.pendingWalk == nil)
+        commands.tick(0.5)
+        #expect(world.moves.count == 3)
+        #expect(commands.phase.follower == follower)
+    }
+
+    @Test func aFollowerThatStaysBusyEndsTheTask() {
+        let (commands, world) = setUp()
+        world.moveResult = .busy
+        commands.command(leverTarget)
+        for _ in 0 ..< 25 {
+            commands.tick(0.5)
+        }
+        #expect(commands.lastOutcome == .unreachable)
+        #expect(commands.phase == .idle)
     }
 
     @Test func aScriptThatClearsTheFavourStopsTheWalk() {
