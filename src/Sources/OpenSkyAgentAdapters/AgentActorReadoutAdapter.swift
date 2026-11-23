@@ -82,7 +82,8 @@ extension AgentActorReadoutAdapter {
             guard case .object = rayHit else { return .null }
             return ["rayHit": rayHit]
         }
-        let interaction = target.interaction
+        // The verb the HUD shows, laid on at run time, not the cell build's fallback.
+        let interaction = game.inventory.craftingBench.labelled(target.interaction)
         return [
             "ref": .formID(interaction.reference.rawValue),
             "base": .formID(interaction.base.rawValue),
