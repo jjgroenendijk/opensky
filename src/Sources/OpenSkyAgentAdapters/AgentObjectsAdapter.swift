@@ -90,7 +90,15 @@ extension AgentObjectsAdapter {
             "angry": .array(readout.angry.map(alarmRef)),
             "theftMarkDay": readout.theftMarkDay.map { .init($0) } ?? .null,
             "openCrimes": .init(readout.openCrimes),
-            "last": .string(readout.last)
+            "last": .string(readout.last),
+            "jail": readout.jail.map { stay in
+                [
+                    "sentenceDays": .init(stay.sentenceDays),
+                    "marker": alarmRef(stay.exteriorMarker),
+                    "inCell": .bool(stay.cell != nil)
+                ]
+            } ?? .null,
+            "jailFollowers": .array(readout.jailFollowers.map(alarmRef))
         ]
     }
 
