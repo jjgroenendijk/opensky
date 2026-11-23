@@ -100,6 +100,15 @@ public protocol CrimeSessionWorld: AnyObject {
     /// reference's own `XEZN`, else its cell's, else its worldspace's. Nil for an actor,
     /// an activator, a door, or furniture, which never take a zone's owner.
     func encounterZoneLink(of key: ReferenceKey) -> (link: FormID, plugin: String)?
+
+    /// The followers with the player now: living teammates whose package runs.
+    func playerFollowers() -> [ReferenceKey]
+    /// Stands `follower` at the door `marker` and holds it there. False when it cannot.
+    func parkFollower(_ follower: ReferenceKey, at marker: ReferenceKey) -> Bool
+    /// Lets a parked follower's package run again, so it follows the player.
+    func releaseFollower(_ follower: ReferenceKey)
+    /// Nil when the two do not stand in the same space.
+    func distance(of key: ReferenceKey, toMarker marker: ReferenceKey) -> Float?
 }
 
 extension CrimeSessionWorld {

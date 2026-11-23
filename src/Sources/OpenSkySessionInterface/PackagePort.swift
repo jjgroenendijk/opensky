@@ -30,6 +30,7 @@ public protocol PackagePort: AnyObject {
     func runOverride(_ override: PackageOverride, actor: ReferenceKey) -> PackageOverrideProgress
     var runtime: ActorPackageRuntime? { get }
     func suspend(_ actor: ReferenceKey)
+    func isSuspended(_ actor: ReferenceKey) -> Bool
     func template(of package: FormID) -> FormID?
     var trespassWarnings: [ReferenceKey: Int] { get }
     func sandboxArea(of actor: ReferenceKey) -> IdleSearchArea?

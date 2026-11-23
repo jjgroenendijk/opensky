@@ -39,7 +39,8 @@ extension FollowerCommandWorldAdapter {
             }
             let store = game.worldState
             let followers = store.sortedDirtyKeys().filter { key in
-                key != waiting && game.aiWorld.packageActorActivity(key) != .dead
+                key != waiting && !game.packages.isSuspended(key)
+                    && game.aiWorld.packageActorActivity(key) != .dead
                     && store.component(ScriptedReferenceState.self, for: key)?
                     .flag(ScriptedStateName.playerTeammate) == true
             }

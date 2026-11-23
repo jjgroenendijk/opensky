@@ -39,6 +39,8 @@ nonisolated public final class FakePackagePort: PackagePort {
     public var runOverrideResult: PackageOverrideProgress?
     public var runtime: ActorPackageRuntime?
     public var suspendCalls: [ReferenceKey] = []
+    public var isSuspendedCalls: [ReferenceKey] = []
+    public var isSuspendedResult = false
     public var templateCalls: [FormID] = []
     public var templateResult: FormID?
     public var trespassWarnings: [ReferenceKey: Int] = [:]
@@ -146,6 +148,11 @@ nonisolated extension FakePackagePort {
 
     public func suspend(_ actor: ReferenceKey) {
         suspendCalls.append(actor)
+    }
+
+    public func isSuspended(_ actor: ReferenceKey) -> Bool {
+        isSuspendedCalls.append(actor)
+        return isSuspendedResult
     }
 
     public func template(of package: FormID) -> FormID? {

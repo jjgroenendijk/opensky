@@ -20,7 +20,9 @@ extension CrimeCoordinator {
             let arrest = crimeArrest()
         else { return false }
         let arrestedIn = world.currentCellLocation
+        let followers = world.playerFollowers()
         guard world.enterJail(through: marker) else { return false }
+        jailFollowers = followers.filter { world.parkFollower($0, at: marker) }
         let belongings = keepsBelongings ? nil : arrest.belongingsChest(of: settlement.faction)
         let hidesQuestItems = hidesQuestItems
         keepsBelongings = false
@@ -73,6 +75,7 @@ extension CrimeCoordinator {
             maximumDays: reporter?.runtime.settings.maximumJailDays ?? stay.sentenceDays
         )
         world.returnBelongings(of: stay)
+        releaseJailFollowers(near: stay.exteriorMarker)
         let moved = world.leaveJail(to: stay.exteriorMarker)
             || world.movePlayer(toMarker: stay.exteriorMarker)
         pendingCommands.append(.incrementStat("Days Jailed", by: Int32(stay.sentenceDays)))
@@ -87,6 +90,7 @@ extension CrimeCoordinator {
     /// The bounty taken at the arrest is owed again, with the faction's escape price.
     func escape(_ stay: JailStay) {
         jailStay = nil
+        releaseJailFollowers(near: stay.exteriorMarker)
         guard let reporter else { return }
         reporter.modifyCrimeGold(by: stay.violentGold, violent: true, of: stay.faction)
         reporter.modifyCrimeGold(by: stay.nonViolentGold, violent: false, of: stay.faction)
@@ -104,6 +108,21 @@ extension CrimeCoordinator {
 }
 
 extension CrimeCoordinator {
+    /// The game's reach for followers waiting at the jail door.
+    static let jailFollowerReach: Float = 40000
+
+    /// Waiting followers near the door follow again. One farther away keeps waiting.
+    func releaseJailFollowers(near marker: ReferenceKey) {
+        jailFollowers = jailFollowers.filter { follower in
+            guard
+                let distance = world.distance(of: follower, toMarker: marker),
+                distance <= Self.jailFollowerReach
+            else { return true }
+            world.releaseFollower(follower)
+            return false
+        }
+    }
+
     /// A stay a save brought back. The jail cell is found again from the player's cell.
     public func restoreJailStay(_ stay: JailStay?) {
         jailStay = stay

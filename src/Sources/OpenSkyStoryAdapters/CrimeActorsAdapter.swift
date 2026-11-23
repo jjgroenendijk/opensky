@@ -27,6 +27,7 @@ public protocol CrimeActorsHost: AnyObject, SendableMetatype {
     var dialogueMenu: any DialogueMenuPort { get }
     var packages: any PackagePort { get }
     var perception: any PerceptionPort { get }
+    var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
 }
