@@ -368,9 +368,13 @@ extension GameSessionScopeBuild {
         cameraAt position: SIMD3<Float>, gameSession: GameSession, input: CameraInputState
     ) {
         let pressed = input.consumeActivation()
-        let takesPress = scope.mountWorld.takeActivation()
-            || scope.followerCommandWorld.takeActivation()
-            || (pressed && scope.playerGrab.takeActivation())
+        // Each handler takes a key-down; on a frame without one, a follower under the
+        // crosshair would read as a new press and a rider would dismount.
+        let takesPress = pressed && (
+            scope.mountWorld.takeActivation()
+                || scope.followerCommandWorld.takeActivation()
+                || scope.playerGrab.takeActivation()
+        )
         let activate = pressed && !takesPress
         scope.followerCommandWorld.advanceUseKey(
             by: gameSession.lastCameraDelta, isDown: input.isActivationHeld
