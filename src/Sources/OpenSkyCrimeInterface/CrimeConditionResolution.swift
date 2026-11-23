@@ -10,8 +10,9 @@ public import OpenSkyGameData
 /// against.
 nonisolated public struct CrimeConditionResolution: Sendable {
     public let facts: ActorConditionFacts<FactionStore, CrimeLedgerState>
-    /// What a null `ptFactionNull` parameter means: the hold the subject stands
-    /// in. The context carries no cell, so the caller resolves it.
+    /// What a null `ptFactionNull` parameter means when the subject has no crime
+    /// faction: the hold it stands in. The context carries no cell, so the caller
+    /// resolves it.
     public let currentCrimeFaction: ReferenceKey?
     /// Who is a victim, a trespasser, alarmed, or arresting. Nil without a crime runtime.
     public var situation: CrimeSituation?
@@ -28,10 +29,6 @@ nonisolated public struct CrimeConditionResolution: Sendable {
         facts = ActorConditionFacts(store: factions, sourcePlugin: sourcePlugin, facts: ledgers)
         self.currentCrimeFaction = currentCrimeFaction
         self.situation = situation
-    }
-
-    func key(of formID: FormID) -> ReferenceKey? {
-        formID.isNull ? currentCrimeFaction : facts.key(of: formID)
     }
 
     /// Nil when no crime data is wired. An actor with no ledger owes nothing:
