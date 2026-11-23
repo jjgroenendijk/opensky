@@ -73,3 +73,32 @@ nonisolated public enum ConditionFunctionsActorBody {
         }
     }
 }
+
+nonisolated extension ConditionFunctionsActorBody {
+    /// `HasKeyword` on an actor also tests its race's keywords. Run it after the data
+    /// family, whose `HasKeyword` answers for the base record.
+    public static func installActorKeywords(_ registry: inout ConditionFunctionRegistry) {
+        guard let base = registry[560] else { return }
+        registry.register(ConditionFunction(
+            index: base.index, name: base.name, parameter1: base.parameter1
+        ) { call in
+            if raceHasKeyword(call) {
+                return .success(1)
+            }
+            return base.body(&call)
+        })
+    }
+
+    private static func raceHasKeyword(_ call: ConditionCall) -> Bool {
+        guard
+            case let .success(key) = call.referenceKey(),
+            let race = call.context.actors.state(for: key)?.raceKeywords,
+            let store = call.context.data.keywords,
+            let plugin = call.context.data.sourcePlugin,
+            let keyword = call.parameter1.flatMap({
+                store.resolvedID($0.asFormID, fromPlugin: plugin)
+            })
+        else { return false }
+        return race.contains { store.resolvedID($0, fromPlugin: plugin) == keyword }
+    }
+}

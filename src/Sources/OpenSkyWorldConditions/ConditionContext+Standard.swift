@@ -73,6 +73,7 @@ nonisolated extension ConditionFunctionRegistry {
         ConditionFunctionsDialogue.installDialogue(&registry)
         ConditionFunctionsScene.installScene(&registry)
         ConditionFunctions.ConditionFunctionsData.installData(&registry)
+        ConditionFunctionsActorBody.installActorKeywords(&registry)
         ConditionFunctionsMagic.installMagic(&registry)
         ConditionFunctionsPerk.installPerk(&registry)
         ConditionFunctionsSkillUsage.installSkillUsage(&registry)

@@ -124,6 +124,28 @@ struct ConditionActorActionFunctionTests {
         )) == .true)
     }
 
+    @Test func hasKeywordOnAnActorAlsoTestsItsRace() throws {
+        let file = try KeywordFixture.plugin(keywords: [
+            KeywordFixture.recordBytes(formID: 0x13794, editorID: "ActorTypeNPC"),
+            KeywordFixture.recordBytes(formID: 0x35D59, editorID: "ActorTypeDragon")
+        ])
+        let health = ActorValues(repeating: 100)
+        var human = ActorConditionState(current: health, maximums: health)
+        human.raceKeywords = [FormID(0x13794)]
+        var context = try ConditionEvaluatorFixture.populatedContext()
+        context.actors = ActorStateResolution(states: [Self.subject: human])
+        context.data = ConditionDataResolution(
+            keywords: KeywordStore(plugins: [("Skyrim.esm", file)]), sourcePlugin: "Skyrim.esm"
+        )
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
+        #expect(try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
+            functionIndex: 560, 0, 1, parameter1: 0x13794
+        )) == .true)
+        #expect(try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
+            functionIndex: 560, 0, 1, parameter1: 0x35D59
+        )) != .true)
+    }
+
     @Test func anNPCHoldsItsWeaponWhileItFights() {
         #expect(WeaponDrawState.ofNPC(.fighting) == .drawn)
         #expect(WeaponDrawState.ofNPC(.searching) == .drawn)
