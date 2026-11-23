@@ -41,6 +41,17 @@ struct DialogueWorldTests {
         #expect(host.fakeDialogueMenu.beginCalls == [Self.speaker])
     }
 
+    @Test(arguments: [false, true])
+    func theMenuClosesWhenItsSpeakerDies(dead: Bool) {
+        host.fakeDialogueMenu.isOpen = true
+        host.fakeDialogueMenu.speakerOrTarget = Self.speaker
+        host.fakeActorWorld.combatActorResult = CombatActorObservation(
+            key: Self.speaker, feet: .zero, isDead: dead
+        )
+        adapter.closeMenuOfDeadSpeaker()
+        #expect(host.fakeDialogueMenu.closeCallCount == (dead ? 1 : 0))
+    }
+
     @Test func theConditionContextCarriesSpeechCheckFactors() {
         host.fakeRuntimeState.conditionContextResult = ConditionContext()
         host.fakeDialogue.conversationSpeaker = Self.speaker

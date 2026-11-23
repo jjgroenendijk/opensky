@@ -173,6 +173,10 @@ again would run the result scripts again. A response with no links goes back to 
 list, because a say-once line may have just changed it. A goodbye response closes the
 conversation.
 
+The speaker's death also closes it, on the next world step. The world keeps running under the
+menu, so another actor can kill the speaker. A dead actor cannot talk, which is the same rule
+talk targeting uses to leave dead actors out.
+
 ## Movie entry points not used
 
 The [AS2 scope decision](/decisions/swf-as2-scope.md) requires every host function OpenSky does
