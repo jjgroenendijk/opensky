@@ -37,6 +37,10 @@ nonisolated public struct CrimeAlarmReadout: Sendable {
     public let theftMarkDay: Int?
     public let openCrimes: Int
     public let last: String
+    /// The player's jail stay, from the arrest to release or escape.
+    public let jail: JailStay?
+    /// Followers waiting at the jail door.
+    public let jailFollowers: [ReferenceKey]
 
     public init(
         witnesses: [Witness] = [],
@@ -44,8 +48,12 @@ nonisolated public struct CrimeAlarmReadout: Sendable {
         angry: [ReferenceKey] = [],
         theftMarkDay: Int? = nil,
         openCrimes: Int = 0,
-        last: String = "none"
+        last: String = "none",
+        jail: JailStay? = nil,
+        jailFollowers: [ReferenceKey] = []
     ) {
+        self.jail = jail
+        self.jailFollowers = jailFollowers
         self.witnesses = witnesses
         self.fighters = fighters
         self.angry = angry

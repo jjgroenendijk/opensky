@@ -407,7 +407,9 @@ extension CrimeCoordinator {
             angry: alarm.angry.sorted(),
             theftMarkDay: alarm.theftMark.day,
             openCrimes: alarm.crimes.count,
-            last: lastAlarm.text
+            last: lastAlarm.text,
+            jail: jailStay,
+            jailFollowers: jailFollowers
         )
     }
 }
