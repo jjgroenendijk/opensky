@@ -98,8 +98,6 @@ public final class CrimeCoordinator {
     public internal(set) var jailFollowers: [ReferenceKey] = []
     /// Blows between actors other than the player: who struck whom first.
     var actorFirstStrikes: Set<ActorStrike> = []
-    /// Per crime faction, the actors whose guards fight them.
-    var actorCriminals: [ReferenceKey: Set<ReferenceKey>] = [:]
     /// The alarms seen crimes raised, and who fights whom because of them.
     public internal(set) var alarm = CrimeAlarmState() {
         didSet { conditionRevision &+= 1 }

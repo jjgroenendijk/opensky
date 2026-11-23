@@ -44,24 +44,18 @@ nonisolated public struct GuardCrimeHostility: CrimeHostilitySource, Equatable, 
     /// Crime factions the player resisted arrest with while owing them.
     public let resisted: Set<ReferenceKey>
     public let settings: CrimeSettings
-    /// Per crime faction, the actors other than the player that struck one of its
-    /// people first. Its guards fight them.
-    public var actorCriminals: [ReferenceKey: Set<ReferenceKey>] = [:]
+    /// Per witness, the criminals an alarm made it fight.
+    public var alarmFighters: [ReferenceKey: Set<ReferenceKey>] = [:]
 
     public func crimeReaction(
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile
     ) -> ActorReaction? {
-        if target.key != .player {
-            guard
-                let faction = GuardRecognition.policedFaction(
-                    of: observer, guardFaction: guardFaction
-                ),
-                actorCriminals[faction]?.contains(target.key) == true
-            else { return nil }
+        if alarmFighters[observer.key]?.contains(target.key) == true {
             return .enemy
         }
         guard
+            target.key == .player,
             let faction = GuardRecognition.policedFaction(
                 of: observer, guardFaction: guardFaction
             ),

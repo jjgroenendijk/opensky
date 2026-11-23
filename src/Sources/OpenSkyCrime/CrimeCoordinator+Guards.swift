@@ -28,6 +28,9 @@ extension CrimeCoordinator {
         for faction in guards.resisted where ledger.gold(for: faction) <= 0 {
             guards.forgive(faction)
         }
+        for faction in guards.expiredResistance(now: now) {
+            guards.forgive(faction)
+        }
         refreshGuardHostility()
         guard ledger.totalGold > 0, !world.isDialogueOpen else {
             releasePursuers(except: nil)
@@ -53,7 +56,7 @@ extension CrimeCoordinator {
         guard let runtime = reporter?.runtime else { return }
         pendingCommands.append(.applyGuardHostility(CrimeCore.guardHostility(
             ledger: runtime.ledger(), factions: runtime.factions, resisted: guards.resisted,
-            settings: runtime.settings, actorCriminals: actorCriminals
+            settings: runtime.settings, alarmFighters: alarm.fighters
         )))
     }
 
@@ -149,21 +152,28 @@ struct ActorStrike: Hashable {
 }
 
 extension CrimeCoordinator {
-    /// An actor other than the player strikes first at someone a crime faction
-    /// protects: its guards fight the aggressor. A blow back is self-defense. UESP
-    /// "Skyrim:Crime": "Self-defense against an unprovoked assault is legal".
+    /// An actor other than the player strikes someone a crime faction protects, and
+    /// struck first: each blow raises an alarm, so up to four guards answer. A blow back
+    /// is self-defense. UESP "Skyrim:Crime": "Self-defense against an unprovoked assault
+    /// is legal".
     func reportActorAssault(on target: ReferenceKey, by aggressor: ReferenceKey) {
         guard target != aggressor, aggressor != .player else { return }
         let strike = ActorStrike(aggressor: aggressor, target: target)
         let answered = ActorStrike(aggressor: target, target: aggressor)
         guard
             !actorFirstStrikes.contains(answered),
-            actorFirstStrikes.insert(strike).inserted,
             policedFaction(of: aggressor) == nil,
             let faction = crimeFaction(in: crimeCell(of: target) ?? world.currentCellLocation),
             target == .player || world.protects(faction, target)
         else { return }
-        actorCriminals[faction, default: []].insert(aggressor)
+        actorFirstStrikes.insert(strike)
+        raiseAlarm(
+            CrimeEvent(
+                kind: .assault, perpetrator: aggressor, victim: target, crimeFaction: faction,
+                witnessed: true
+            ),
+            faction: faction, gold: 0, direct: target == .player ? [] : [target]
+        )
         lastGuard = .actorCriminal(name: world.actorName(aggressor), faction: factionName(faction))
         refreshGuardHostility()
     }
