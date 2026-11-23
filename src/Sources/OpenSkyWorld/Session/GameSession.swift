@@ -41,6 +41,9 @@ public final class GameSession: RenderFrameDriver {
     /// The HUD, menus, and dev overlays the UI pass draws. Default empty -> zero draws.
     public var uiScene = UIScene.empty
     public var menuViewOffset = MenuViewOffset.none
+    /// Counts each time the player is put somewhere new: a door, a teleport, jail, or
+    /// fast travel. A conversation ends when it changes.
+    public internal(set) var playerPlacements = 0
     /// Menu-mode pause gate. True freezes the per-frame time advance while the frame and
     /// UI still draw. Clocks keep their marks fresh while paused, so resume has no jump.
     public var worldSimPaused = false

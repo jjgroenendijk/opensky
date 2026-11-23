@@ -51,6 +51,8 @@ public final class DialogueWorldAdapter {
     let voiceTypes = DialogueVoiceTypeCache()
 
     let hosts: any DialogueWorldHosts
+    /// The player move count the last world step saw.
+    var seenPlayerPlacements: Int?
 
     var cameraFocus: DialogueCameraFocusAdapter {
         DialogueCameraFocusAdapter(game: hosts)
