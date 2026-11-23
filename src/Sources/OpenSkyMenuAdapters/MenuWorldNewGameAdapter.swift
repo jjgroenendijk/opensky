@@ -163,6 +163,8 @@ extension MenuWorldNewGameAdapter {
         game.gameSession?.clearScriptScreenEffects()
         game.effectsWorld.fadeOutHealthCues()
         game.scripts.restore(instances: [], timers: [], calls: .empty)
+        game.messages.closeAll()
+        teleports.endPlayerDeath()
         game.messages.reloadHelpRecords()
         game.storyWorld.rerunSessionStart()
         game.saveGames.resetPlayTime()

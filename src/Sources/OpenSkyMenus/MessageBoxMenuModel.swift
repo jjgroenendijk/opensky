@@ -56,6 +56,12 @@ nonisolated public struct MessageBoxMenuModel: Equatable, Sendable {
         return answer
     }
 
+    /// Drops every box unanswered.
+    mutating func removeAll() {
+        queue.removeAll()
+        selection = 0
+    }
+
     /// Escape closes only a one-button box, as an OK. A question must be answered.
     public mutating func cancel() -> MessageBoxAnswer? {
         guard current?.buttons.count == 1 else { return nil }

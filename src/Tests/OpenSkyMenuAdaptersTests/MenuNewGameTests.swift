@@ -46,6 +46,12 @@ struct MenuNewGameTests {
         ))
     }
 
+    @Test func aNewGameBringsADeadPlayerBackAndClosesTheDeathBox() throws {
+        try menus.startNewGame(AgentNewGameRequest(start: "cell:QASmoke", opensRaceMenu: false))
+        #expect(host.fakeMessages.closeAllCallCount == 1)
+        #expect(host.fakeRagdoll.resetPlayerDeathCallCount == 1)
+    }
+
     @Test func aPlainPlaceStartChangesOnlyThePlace() throws {
         #expect(menus.lastNewGame == nil)
         try menus.startNewGame(AgentNewGameRequest(start: "cell:QASmoke", opensRaceMenu: false))

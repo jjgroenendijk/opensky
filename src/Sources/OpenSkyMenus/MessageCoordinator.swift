@@ -188,6 +188,15 @@ public final class MessageCoordinator {
         ))
     }
 
+    /// Closes every box without an answer, as a new game does: the session that asked is gone.
+    public func closeAll() {
+        guard boxes.isOpen else { return }
+        boxes.removeAll()
+        choiceHandlers.removeAll()
+        menuMode.dismiss(Self.identifier)
+        publish()
+    }
+
     private func open(_ request: MessageBoxRequest) {
         guard boxes.enqueue(request) else { return }
         menuMode.inputConsumer = world?.menuInputConsumer
