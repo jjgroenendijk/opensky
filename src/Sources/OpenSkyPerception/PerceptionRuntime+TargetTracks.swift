@@ -20,6 +20,24 @@ extension PerceptionRuntime {
         }
     }
 
+    /// `observer` detects `target` outright, as the target of a caught pickpocket does.
+    /// The level then decays as usual, and the shared record holds a hostile observer
+    /// on the target while it stays noticed.
+    public func reveal(_ target: ReferenceKey, to observer: ReferenceKey) {
+        let key = DetectionPairKey(observer: observer, target: target)
+        var pair = pairs[key] ?? .unaware
+        pair.level = max(pair.level, settings.detectedLevel.value)
+        pair.levelState = .detected
+        pair.state = .detected
+        let feet = targetIndex[target]?.feet
+        pair.lastKnownPosition = feet ?? pair.lastKnownPosition
+        pairs[key] = pair
+        detectedPairs.insert(key)
+        if let feet {
+            tracks[target, default: CombatTargetTrack()].notice(at: feet)
+        }
+    }
+
     /// The record hostile observers share of `target`.
     public func targetTrack(of target: ReferenceKey) -> CombatTargetTrack {
         tracks[target] ?? CombatTargetTrack()

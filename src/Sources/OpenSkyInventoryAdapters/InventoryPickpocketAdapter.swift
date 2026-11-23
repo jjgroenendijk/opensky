@@ -96,6 +96,10 @@ extension InventoryPickpocketAdapter {
         game.perception.runtime?.state(observer: observer, target: .player).state == .detected
     }
 
+    public func revealPlayer(to observer: ReferenceKey) {
+        game.perception.runtime?.reveal(.player, to: observer)
+    }
+
     public func applyPlacedPoison(_ poison: FormID, on target: ReferenceKey) -> Bool {
         game.magic.weaponEnchantments.applyPlacedPoison(poison, by: .player, on: target) != nil
     }

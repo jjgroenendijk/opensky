@@ -434,6 +434,7 @@ extension InventoryCoordinatorTests {
             from: chest,
             roll: 99
         )
+        #expect(harness.world.revealedTo == [chest.key])
         harness.world.gameDaysPassed = 11.9
         #expect(coordinator.pickpocketing.pickpocketRefused(by: chest.key))
         harness.world.gameDaysPassed = 12
@@ -465,6 +466,7 @@ extension InventoryCoordinatorTests {
         var gameDaysPassed: Float?
         var caughtDays: [ReferenceKey: Float] = [:]
         var caughtFactions: [ReferenceKey: ReferenceKey] = [:]
+        var revealedTo: [ReferenceKey] = []
         var questItems: Set<FormID> = []
         var hidesQuestItems = false
 
@@ -481,6 +483,10 @@ extension InventoryCoordinatorTests {
         ) {
             caughtDays[key] = day
             caughtFactions[key] = faction
+        }
+
+        func revealPlayer(to observer: ReferenceKey) {
+            revealedTo.append(observer)
         }
 
         func perkActivateLabel(for _: FormID) -> String? {
