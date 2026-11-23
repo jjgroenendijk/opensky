@@ -37,6 +37,10 @@ nonisolated public final class FakePapyrusWorldStateBridgePort: PapyrusWorldStat
     public var isHostileResult: Bool?
     public var isInFactionCalls: [(actor: ReferenceKey, faction: ReferenceKey)] = []
     public var isInFactionResult: Bool?
+    public var addToFactionCalls: [(actor: ReferenceKey, faction: ReferenceKey)] = []
+    public var addToFactionResult: Bool?
+    public var removeFromFactionCalls: [(actor: ReferenceKey, faction: ReferenceKey)] = []
+    public var removeFromFactionResult: Bool?
     public var isPlayerSunGazing = false
     public var killActorCalls: [(key: ReferenceKey, killer: ReferenceKey?)] = []
     public var killActorResult = false

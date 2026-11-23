@@ -124,6 +124,7 @@ extension QuestRuntime {
         let filled = creating(result)
         if !filled.state.isEmpty {
             store.set(filled.state, for: key)
+            reportAliasData(of: quest, old: .empty, new: filled.state)
         }
         return filled
     }
@@ -192,12 +193,14 @@ extension QuestRuntime {
             throw QuestError.unknownAlias(quest: id, alias: aliasID)
         }
         guard let key = quests.key(for: id) else { throw QuestError.unresolvedQuestKey(id) }
-        let state = change(store.component(QuestAliasState.self, for: key) ?? .empty)
+        let old = store.component(QuestAliasState.self, for: key) ?? .empty
+        let state = change(old)
         if state.isEmpty {
             store.reset(.questAliases, for: key)
         } else {
             store.set(state, for: key)
         }
+        reportAliasData(of: quest, old: old, new: state)
         return state
     }
 
@@ -209,6 +212,22 @@ extension QuestRuntime {
     /// - Returns: true when a table was actually removed.
     @discardableResult
     public func clearAliases(key: ReferenceKey) -> Bool {
-        store.reset(.questAliases, for: key)
+        let old = store.component(QuestAliasState.self, for: key)
+        let cleared = store.reset(.questAliases, for: key)
+        if let old, let quest = quests.quest(key: key) {
+            reportAliasData(of: quest, old: old, new: .empty)
+        }
+        return cleared
+    }
+
+    private func reportAliasData(of quest: Quest, old: QuestAliasState, new: QuestAliasState) {
+        guard let aliasDataChanged else { return }
+        let changes = QuestAliasData.changes(
+            aliases: quest.aliases, resolver: quests.sourceResolver(of: quest.formID),
+            old: old, new: new
+        )
+        if !changes.isEmpty {
+            aliasDataChanged(changes)
+        }
     }
 }

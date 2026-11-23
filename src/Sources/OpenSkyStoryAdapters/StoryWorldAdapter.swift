@@ -37,6 +37,7 @@ public protocol StoryWorldHost: AnyObject, SendableMetatype {
     var dialogueWorld: any DialogueWorldPort { get }
     var followerCommandWorld: any FollowerCommandWorldPort { get }
     var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
     var mapWorld: any MapWorldPort { get }
     var packages: any PackagePort { get }
     var runtimeState: any RuntimeStatePort { get }

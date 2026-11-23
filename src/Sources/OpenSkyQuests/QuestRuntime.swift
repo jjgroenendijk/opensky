@@ -24,6 +24,9 @@ public struct QuestRuntime: QuestAccess {
     /// Places a new reference of a base at an anchor, for "Create Reference to Object".
     /// Nil leaves those aliases empty.
     public var referenceCreator: (@MainActor (FormID, ReferenceKey) -> ReferenceKey?)?
+    /// Gives and takes the factions, spells, and items of the aliases a reference
+    /// enters and leaves. Nil gives nothing.
+    public var aliasDataChanged: (@MainActor ([QuestAliasDataChange]) -> Void)?
 
     public init(store: WorldStateStore, quests: QuestStore, locations: LocationStore? = nil) {
         self.store = store
