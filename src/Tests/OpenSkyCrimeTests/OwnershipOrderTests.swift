@@ -62,6 +62,41 @@ struct OwnershipOrderTests {
         #expect(coordinator.crimeOwner(of: Self.plate)?.key == Self.hold)
     }
 
+    /// A teleport door with no owner of its own takes the owner of the door it leads to.
+    @Test func aDoorTakesTheOwnerOfItsFarDoor() throws {
+        let world = FakeCrimeSessionWorld()
+        let coordinator = try Self.coordinator(world)
+        let references = FakeCrimeReferences(cell: Self.shop)
+        world.references = references
+        var link = Data()
+        link.appendUInt32(0x951)
+        link.append(Data(count: 28))
+        var owner = Data()
+        owner.appendUInt32(CrimeFixture.Factions.hold)
+        references.entries = try [
+            Self.door(0x950, fields: ESMFixture.field("XTEL", link)),
+            Self.door(0x951, fields: ESMFixture.field("XOWN", owner))
+        ]
+        #expect(coordinator.crimeOwner(of: references.entries[0].key)?.key == Self.hold)
+    }
+
+    private static func door(_ objectID: UInt32, fields: Data) throws -> RuntimeReferenceEntry {
+        var base = Data()
+        base.appendUInt32(0x700)
+        let reference = try PlacedReference(record: ESMFixture.parseRecord(ESMFixture.record(
+            "REFR",
+            formID: objectID,
+            data: ESMFixture.field("NAME", base) + ESMFixture.field("DATA", Data(count: 24))
+                + fields
+        )))
+        return RuntimeReferenceEntry(
+            key: .plugin(name: CrimeFixture.pluginName, objectID: objectID),
+            formID: FormID(objectID),
+            isPersistent: false,
+            record: .reference(reference)
+        )
+    }
+
     @Test func thePlayerNeedsOnlyMembershipInAnOwningFaction() {
         let owner = ReferenceOwner.faction(Self.hold, requiredRank: 3)
         let memberships = CrimeFixture.state([(CrimeFixture.Factions.hold, 0)])

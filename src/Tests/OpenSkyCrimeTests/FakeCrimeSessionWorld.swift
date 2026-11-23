@@ -177,20 +177,21 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
     }
 }
 
-/// Places every reference in one cell and decodes none of them.
+/// Places every reference in one cell and decodes only the entries a test adds.
 final class FakeCrimeReferences: PapyrusWorldReferenceSource {
     let cell: CellSceneLocation
+    var entries: [RuntimeReferenceEntry] = []
 
     init(cell: CellSceneLocation) {
         self.cell = cell
     }
 
-    func referenceEntry(formID _: FormID) -> RuntimeReferenceEntry? {
-        nil
+    func referenceEntry(formID: FormID) -> RuntimeReferenceEntry? {
+        entries.first { $0.formID == formID }
     }
 
-    func referenceEntry(key _: ReferenceKey) -> RuntimeReferenceEntry? {
-        nil
+    func referenceEntry(key: ReferenceKey) -> RuntimeReferenceEntry? {
+        entries.first { $0.key == key }
     }
 
     func cellLocation(of _: ReferenceKey) -> CellSceneLocation? {

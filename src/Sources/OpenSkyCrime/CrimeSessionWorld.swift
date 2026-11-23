@@ -134,10 +134,6 @@ extension CrimeSessionWorld {
     public var lockpickItem: FormID? {
         nil
     }
-
-    public func encounterZoneLink(of _: ReferenceKey) -> (link: FormID, plugin: String)? {
-        nil
-    }
 }
 
 /// One actor that sees the player, and where it stands.
