@@ -3,15 +3,29 @@
 public import OpenSkyPhysics
 public import OpenSkyRenderCore
 public import OpenSkySessionInterface
+public import OpenSkyWorldInterface
 public import simd
 
 /// Stores each property and records each call to `SessionMotionPort`.
 nonisolated public final class FakeSessionMotionPort: SessionMotionPort {
     public var collisionQuery: CapsuleWorldCollider.CandidateQuery?
+    public var magnetismValue: MeleeMagnetismTracker?
+    public var magnetismSighting: (@MainActor (InteractionRay) -> MeleeMagnetism.Sighting?)?
     public var playerSeat: float4x4?
     public var playerWalkIgnoresStatics = false
     public var playerWalkPath: [SIMD3<Float>] = []
     public var terrainSampler: ((SIMD2<Float>) -> TerrainGroundSample?)?
 
     public init() {}
+}
+
+nonisolated extension FakeSessionMotionPort {
+    public var magnetism: MeleeMagnetismTracker {
+        get {
+            guard let magnetismValue
+            else { preconditionFailure("FakeSessionMotionPort.magnetism is unset") }
+            return magnetismValue
+        }
+        set { magnetismValue = newValue }
+    }
 }

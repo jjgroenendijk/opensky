@@ -5,6 +5,7 @@ import OpenSkyAgentControl
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkySessionInterface
+import OpenSkyWorldInterface
 
 struct AgentAssistReadout {
     let hub: AgentHub
@@ -41,11 +42,25 @@ struct AgentAssistReadout {
             "autoAim": readout.autoAim.map {
                 ["target": key($0.target.key), "rightHandIsFree": .bool($0.rightHandIsFree)]
             } ?? .null,
+            "magnetism": magnetismJSON(),
             "danger": ["threats": .array(threats), "watches": .array(watches)],
             "hitReactions": .array(readout.reactions.map(Self.reactionJSON)),
             "processLevels": .object(
                 hub.hosts.packages.processReadout.mapValues { AgentJSON.number($0) }
             )
+        ]
+    }
+
+    /// The melee magnetism switch, and the target and turn of the last frame that turned.
+    private func magnetismJSON() -> AgentJSON {
+        guard let tracker = hub.hosts.gameSession?.motion.magnetism else { return .null }
+        return [
+            "enabled": .bool(tracker.isEnabled),
+            "turning": .bool(tracker.isTurning),
+            "target": tracker.lastTarget.map { .string($0.actor?.description ?? "object") }
+                ?? .null,
+            "heading": .init(tracker.lastChange.heading),
+            "pitch": .init(tracker.lastChange.pitch)
         ]
     }
 

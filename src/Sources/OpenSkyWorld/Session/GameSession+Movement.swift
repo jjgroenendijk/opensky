@@ -250,6 +250,7 @@ extension GameSession.MovementSteps {
             session.walkController.capsule, session.walkController.feetPosition
         ) ?? .zero
         session.walkController.mayMove = session.motion.borderCheck
+        let feetBefore = session.walkController.feetPosition
         session.walkController.update(
             camera: &session.freeFlyCamera,
             input: frameInput,
@@ -257,6 +258,7 @@ extension GameSession.MovementSteps {
             collisionQuery: walkCollisionQuery,
             plan: { [locomotion = session.locomotion] state in locomotion.plan(state) }
         )
+        applyMagnetism(frameInput, feetBefore: feetBefore)
         let atBorder = session.walkController.isHeldAtEdge
         if atBorder, !session.motion.wasAtBorder {
             session.motion.onBorderReached?()
@@ -272,6 +274,32 @@ extension GameSession.MovementSteps {
             yaw: session.freeFlyCamera.yaw,
             pitch: session.freeFlyCamera.pitch,
             collisionQuery: session.motion.collisionQuery ?? { _ in [] }
+        )
+    }
+
+    /// Melee magnetism: turns the view a little with the object under the crosshair.
+    private func applyMagnetism(_ input: CameraInput, feetBefore: SIMD3<Float>) {
+        let delta = session.lastCameraDelta
+        guard session.motion.magnetism.isEnabled, delta > 0 else { return }
+        let feet = session.walkController.feetPosition
+        var frame = MeleeMagnetism.Frame()
+        frame.speed = simd_length(SIMD2(feet.x - feetBefore.x, feet.y - feetBefore.y)) / delta
+        frame.strafe = input.moveRight
+        frame.heading = session.freeFlyCamera.yaw
+        frame.look = SIMD2(-input.lookRight, input.lookUp) * FreeFlyCamera.lookSensitivity
+        frame.weaponDrawn = session.locomotion.actorState.weaponDrawn
+        frame.deltaTime = delta
+        let ray = PlayerViewRay.make(
+            mode: session.movementMode, camera: session.freeFlyCamera, feetPosition: feet,
+            reach: MeleeMagnetism.maximumDistance
+        )
+        let sighting = ray.flatMap { session.motion.magnetismSighting?($0) }
+        let change = session.motion.magnetism.step(
+            frame, sighting: sighting, eye: ray?.origin ?? feet
+        )
+        session.freeFlyCamera.yaw += change.heading
+        session.freeFlyCamera.pitch = FreeFlyCamera.clampPitch(
+            session.freeFlyCamera.pitch + change.pitch
         )
     }
 }

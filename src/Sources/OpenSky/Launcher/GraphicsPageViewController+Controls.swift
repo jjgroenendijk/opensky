@@ -148,6 +148,10 @@ extension GraphicsPageViewController {
             "The player and package actors sit in chairs and lie in beds"
         )
         checkbox(
+            meleeMagnetismControl, "MeleeMagnetism",
+            "On foot, the view turns a little with the enemy or object under the crosshair"
+        )
+        checkbox(
             flyingMountLockControl, "FlyingMountLockToggle",
             "Jump flips a ridden dragon's target lock; off, the lock holds while Jump is held"
         )
@@ -235,6 +239,7 @@ extension GraphicsPageViewController {
             (headTrackingControl, .characterHeadTracking),
             (objectAnimationControl, .objectAnimation), (furnitureControl, .furniture),
             (actorGraphsControl, .actorGraphs),
+            (meleeMagnetismControl, .meleeMagnetism),
             (flyingMountLockControl, .flyingMountLockToggle),
             (combatTemperamentControl, .combatTemperament),
             (combatGameSettingsControl, .combatGameSettings),
