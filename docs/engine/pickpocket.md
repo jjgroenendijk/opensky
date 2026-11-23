@@ -116,5 +116,6 @@ flowchart TD
 
 ## Where OpenSky differs
 
-- The target does not turn hostile, speak its `PICC` or `PICN` line, or skip the crime for a faction
-  that ignores pickpocketing. The crime is charged, and the guards react as for any other bounty.
+- The target says its `PICC` line, or its `PICN` line and charges nothing when its faction ignores
+  pickpocketing. It then runs the alarm's decide step as any witness does, so it turns hostile
+  only through the hostility test or the theft mark.
