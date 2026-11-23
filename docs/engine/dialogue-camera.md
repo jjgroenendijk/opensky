@@ -1,66 +1,79 @@
 ---
 type: Subsystem
 title: Dialogue camera and speaker focus
-description: How a conversation frames the speaker's head without changing the camera mode,
-  where each framing number comes from, and how the speaker is stopped, turned, and held.
+description: How a conversation turns the first-person view to the speaker, how looking away is
+  limited while it lasts, and how the speaker is stopped, turned, and held.
 tags: [engine, dialogue, camera, npc, packages]
 ---
 
 # Dialogue camera and speaker focus
 
-While the dialogue menu is open, the view frames the speaker's head, and the speaker stops and
-faces the player. Leaving gives back the player's view and the speaker's routine. Topic
-selection is on the [dialogue runtime](/engine/dialogue.md) page.
+When a conversation starts in first person, the player turns to look at the speaker. The speaker
+stops and faces the player. The camera does not move to a new place, and nothing is given back
+when the conversation ends. Topic selection is on the [dialogue runtime](/engine/dialogue.md) page.
 
-## An override, not a camera mode
+## The turn to the speaker
 
-The camera mode is what the player chose to look through, and `F` (Toggle POV) changes it. A
-conversation is something that happens to the player. So the dialogue camera writes the camera pose
-on top of whatever mode is active, and remembers what was there. The mode itself never changes.
+The turn is set up once, when the conversation starts, and only in first person. In third person
+the view does not turn, and the camera does not zoom or change its field of view.
 
-The swap is undone at the start of each input frame, before anything simulates, and applied
-again at the end. That order matters. The walk controller reads the player's facing from this
-same pose, and the body is placed by its yaw. A frame that simulated with the dialogue pose would
-turn the player around to face themselves. Between frames the dialogue pose stands. The render
-passes read it, and so does the audio listener: a conversation is heard from where it is seen.
-
-## Where the framing comes from
-
-Nothing in the readable install describes conversation framing. `openskycli gmst list f`
-on `Skyrim.esm` has no `fDialogueCamera*`, no `fOverShoulder*`, and no camera framing setting at
-all. The only nearby distances are `fAIInDialogueModeWithPlayerDistance` (500) and
-`fAIInDialogueModewithPlayerTimer` (60), which decide when an actor thinks it is in a
-conversation, not where a camera stands. The `fAIHeadTrackDialogue*` family is head tracking. The
-rest is in the game executable, which OpenSky does not read.
-
-So the framing comes from the same two measured things as the
-[third-person camera](/engine/player-camera.md): the player capsule and the field of view. The one
-taste value, how much of the frame the subject fills, is the third-person camera's, so the engine
-makes that choice only once.
-
-| Quantity | Value | Source |
+| Quantity | Value | Setting |
 | --- | --- | --- |
-| Target | The speaker's `NPC Head [Head]` bone | The posed skeleton each frame. The capsule's eye height if the actor has no skeleton |
-| Framed height | 96 units | The head in the middle, down to the capsule's middle, and the same distance above the head |
-| Framing distance | about 126 units | `(span / 2 / fill) / tan(fov / 2)` at a 65 degree vertical field of view |
-| Shoulder offset | 24 units | The third-person shoulder offset, on the same side |
-| Space behind the player | 24 units | The third-person minimum distance, so the lens clears the player's body |
-| Field of view | 65 degrees | The shared world angle, whatever mode the conversation interrupted |
+| Aim point | The speaker's look-at node, else its head node, else 0.9 of its height above its feet | |
+| Eye | The first-person camera position, raised by the look-at offset | `fFirstPersonLookAtVertOffset` 0 |
+| Duration | 1 second | `fDialogueRotationSecs:Dialogue` |
+| Pitch offset | 0.17 radians (about 10 degrees) below the aim point | `fDialogueRotationPitchOffset:Dialogue` |
 
-The shot: the camera stands on the player's side of the speaker, one shoulder off the line of
-sight, so the view is three-quarter and not flat. It sits at the height of the player's eye, so a
-taller speaker is seen from below. Its distance from the speaker is the framing distance, or the
-player's own distance plus the space behind, if the player stands farther away. That keeps the
-player's body in the frame in third person. In first person the body stays hidden, as in the game:
-the eye is just behind the player's head, so a helmet would fill the view. Standing close gives a
-tight shot. Talking from across the room puts
-the camera at the player's shoulder, not floating between the two.
+The target yaw is the direction from the eye to the aim point, taken the short way round, so a
+speaker behind the player is a turn of up to 180 degrees. The target pitch looks at the aim point,
+then 0.17 radians further down, so the face sits a little above the middle of the view.
 
-The camera is pulled in by the same collision sweep as the third-person camera. It never comes
-closer to the target than one capsule radius, where it would be inside the speaker's head.
+The turn eases out. With `t` the share of the duration that has passed, the view is
+`sin(t * pi / 2)` of the way from the start angles to the target angles. It moves fast at first
+and slows down at the end. The player's body turns with the view, unless the player sits. The
+camera position never changes, and the aim is not updated if the speaker moves.
 
-The target is updated every frame, not fixed at the start. The head is a bone of a running
-animation, and the player can walk around the speaker during the conversation.
+```mermaid
+flowchart LR
+    start[Conversation starts] --> fp{First person?}
+    fp -- no --> limits[Look limits only]
+    fp -- yes --> turn[Turn view and body to the speaker over 1 s]
+    turn --> limits
+    limits --> stop[Conversation ends: the view stays]
+```
+
+## Looking away during a conversation
+
+After the turn, looking further away from the speaker is slowed and then stopped. Let `a` be
+the angle between the view's yaw and the direction to the speaker now. A yaw input that turns
+away from the speaker is scaled:
+
+| `a` | Scale |
+| --- | --- |
+| Up to the soft stop | 1 |
+| Between the soft and the hard stop | `0.33 * (1 - (a - soft) / (hard - soft))` |
+| Past the hard stop | 0 |
+
+| Camera | Soft stop | Hard stop | Settings |
+| --- | --- | --- | --- |
+| First person | 20 degrees | 45 degrees | `fDialogueSoftStopAngle1P:Controls`, `fDialogueHardStopAngle1P:Controls` |
+| Third person | 25 degrees | 55 degrees | `fDialogueSoftStopAngle3P:Controls`, `fDialogueHardStopAngle3P:Controls` |
+
+The 0.33 is `fOutsideDialogueAngleRotationDampen:Controls`. Turning back toward the speaker is
+never limited, and neither is looking up or down. With the mouse, the menu shows a pointer, and
+the view turns only when the pointer is within 25 pixels of a window edge
+(`fPCDialogueLookStart:Controls`), at speed 10 (`fPCDialogueLookSpeed:Controls`), in the
+direction from the screen centre to the pointer.
+
+`Skyrim.esm` also holds `fDialogZoomInSeconds`, `fDialogZoomOutSeconds`,
+`fDialogFocalDepthRange`, and `fDialogFocalDepthStrength`. The game does not use them: there is
+no dialogue zoom and no dialogue depth of field.
+
+## The race menu portrait
+
+The race menu shows the player's face from the front. OpenSky writes that view on top of the
+active camera mode and remembers the player's own pose, which it puts back when the menu closes.
+The game's race menu camera is not described here yet.
 
 ## Speaker focus
 
