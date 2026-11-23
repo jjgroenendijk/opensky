@@ -64,6 +64,18 @@ struct MeleeCombatStateTests {
         #expect(state.drawState == .drawn)
     }
 
+    /// The crossbow's unequip clip fires `BeginWeaponDraw` after `Unequip_Out`.
+    @Test func aDrawAnnotationAfterTheSheathEndKeepsTheWeaponSheathed() {
+        var state = drawn()
+        state.handle(CombatGraphNames.weaponSheathe)
+        state.handle(CombatGraphNames.beginWeaponSheathe)
+        state.handle(CombatGraphNames.unequipOut)
+
+        #expect(state.handle(CombatGraphNames.beginWeaponDraw) == nil)
+        #expect(state.drawState == .sheathed)
+        #expect(state.handle(CombatGraphNames.weaponDraw)?.drawState == .drawing)
+    }
+
     @Test func attackPhaseFollowsTheFiredEvents() {
         var state = drawn()
 

@@ -71,9 +71,12 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
         // Two names per edge, because only some equip clips carry `BeginWeaponDraw`
         // (`1HM_Equip.hkx` does, `Dag_Equip.hkx` does not). `WeapEquip_Out` fires for
         // all of them at the clip end, so it is the backstop; the annotation wins.
+        // Only a draw in progress ends on them: the crossbow's unequip clip also
+        // carries `BeginWeaponDraw`, after its `Unequip_Out`.
         case CombatGraphNames.beginWeaponDraw, CombatGraphNames.weapEquipOut,
              CombatGraphNames.magicEquipOut:
-            moved = !drawState.isWeaponInHand
+            guard drawState == .drawing || drawState == .drawn else { return nil }
+            moved = drawState == .drawing
             drawState = .drawn
         case CombatGraphNames.beginWeaponSheathe, CombatGraphNames.unequipOut,
              CombatGraphNames.magicUnequipOut:
