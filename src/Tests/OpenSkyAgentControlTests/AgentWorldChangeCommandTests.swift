@@ -60,14 +60,20 @@ struct AgentWorldChangeCommandTests {
 
     @Test func aConditionReadNamesItsFunctionReferenceAndParameter() throws {
         let request = try AgentCommandLine.request(
-            ["state", "condition", "GetLocked", "--ref", "1A2B", "--param", "3C"]
+            [
+                "state", "condition", "GetLocked", "--ref", "1A2B", "--param", "3C",
+                "--param2", "90", "--target", "player"
+            ]
         )
         let args = AgentArguments(command: "state.condition", values: request.args)
         #expect(try AgentStateQuery.parse("condition", args)
-            == .condition(function: "GetLocked", reference: "1A2B", parameter: "3C"))
+            == .condition(AgentConditionProbe(
+                function: "GetLocked", reference: "1A2B", parameter: "3C", parameter2: "90",
+                target: "player"
+            )))
         let bare = AgentArguments(command: "state.condition", values: ["function": "GetLocked"])
         #expect(try AgentStateQuery.parse("condition", bare)
-            == .condition(function: "GetLocked", reference: "player", parameter: nil))
+            == .condition(AgentConditionProbe(function: "GetLocked")))
     }
 
     @Test func musicIsAStateRead() throws {

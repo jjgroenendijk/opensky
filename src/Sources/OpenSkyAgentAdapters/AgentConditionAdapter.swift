@@ -8,22 +8,31 @@ import OpenSkyFormatsESM
 import OpenSkySessionInterface
 
 extension AgentWorldAdapter {
-    func conditionState(
-        function name: String, reference: String, parameter: String?
-    ) throws(AgentFailure) -> AgentJSON {
-        guard let index = Self.conditionFunctionIndex(named: name) else {
-            throw AgentFailure(.invalidArgument, "unknown condition function '\(name)'")
+    func conditionState(_ probe: AgentConditionProbe) throws(AgentFailure) -> AgentJSON {
+        guard let index = Self.conditionFunctionIndex(named: probe.function) else {
+            throw AgentFailure(
+                .invalidArgument, "unknown condition function '\(probe.function)'"
+            )
         }
-        let subject = try hub.resolveReference(reference)
-        var evaluator = ConditionEvaluator(
-            context: game.runtimeState.conditionContext(indexing: [subject.key])
-        )
+        let subject = try hub.resolveReference(probe.reference)
+        let target = try probe.target.map { text throws(AgentFailure) in
+            try hub.resolveReference(text)
+        }
+        var evaluator = ConditionEvaluator(context: game.runtimeState.conditionContext(
+            indexing: [subject.key] + (target.map { [$0.key] } ?? [])
+        ))
         evaluator.context.subject = subject.key
-        let takesForm = evaluator.context.functions[index]?.parameter1 == .formID
-        let raw = try parameter.map { text throws(AgentFailure) in
-            try Self.conditionParameter(text, isFormID: takesForm)
+        evaluator.context.target = target?.key
+        let function = evaluator.context.functions[index]
+        let raw = try probe.parameter.map { text throws(AgentFailure) in
+            try Self.conditionParameter(text, isFormID: function?.parameter1 == .formID)
         } ?? 0
-        let outcome = evaluator.value(of: Condition(probingFunction: index, parameter1: raw))
+        let raw2 = try probe.parameter2.map { text throws(AgentFailure) in
+            try Self.conditionParameter(text, isFormID: function?.parameter2 == .formID)
+        } ?? 0
+        let outcome = evaluator.value(
+            of: Condition(probingFunction: index, parameter1: raw, parameter2: raw2)
+        )
         var answer: [String: AgentJSON] = [
             "function": .init(ConditionFunctionNames.name(for: index)),
             "ref": .formID(subject.formID.rawValue),

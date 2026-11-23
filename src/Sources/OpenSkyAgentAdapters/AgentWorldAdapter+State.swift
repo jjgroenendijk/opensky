@@ -71,8 +71,8 @@ extension AgentWorldAdapter {
         case .social: socialState()
         case .stats: frameReadout.statsState()
         case .grab: try changes.grabState()
-        case let .condition(function, reference, parameter):
-            try conditionState(function: function, reference: reference, parameter: parameter)
+        case let .condition(probe):
+            try conditionState(probe)
         default: try view.viewState()
         }
     }
