@@ -243,6 +243,10 @@ final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
         actorGraphVariables[key, default: [:]][name] = value
     }
 
+    func actorGraphVariable(named name: String, on key: ReferenceKey) -> BehaviorVariableValue? {
+        actorGraphVariables[key]?[name]
+    }
+
     func playReaction(_: CombatActorClip, on _: ReferenceKey) -> Bool {
         false
     }

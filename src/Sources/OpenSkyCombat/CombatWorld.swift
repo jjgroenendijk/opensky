@@ -171,6 +171,8 @@ public protocol CombatWorld: AnyObject {
     /// Raises `name` on an NPC's running graph. False when it runs none or lacks the event.
     @discardableResult
     func raiseActorGraphEvent(_ name: String, on key: ReferenceKey) -> Bool
+    /// One variable of an NPC's running graph, or nil when it runs none or lacks the name.
+    func actorGraphVariable(named name: String, on key: ReferenceKey) -> BehaviorVariableValue?
     func writeActorGraphVariable(
         _ value: BehaviorVariableValue, named name: String, on key: ReferenceKey
     )

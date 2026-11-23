@@ -108,6 +108,12 @@ extension CombatMotionAdapter {
         game.actorGraphs.raise(name, on: key)
     }
 
+    public func actorGraphVariable(
+        named name: String, on key: ReferenceKey
+    ) -> BehaviorVariableValue? {
+        game.actorGraphs.variable(named: name, on: key)
+    }
+
     public func writeActorGraphVariable(
         _ value: BehaviorVariableValue, named name: String, on key: ReferenceKey
     ) {

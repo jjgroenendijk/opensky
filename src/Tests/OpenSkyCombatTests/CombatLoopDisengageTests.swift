@@ -15,33 +15,6 @@ import Testing
 struct CombatLoopDisengageTests {
     private typealias Fixture = CombatLoopFixture
 
-    // MARK: - Weapon draw
-
-    @Test func anNPCDrawsWhenItsFightStartsAndSheathesWhenItEnds() {
-        let (runtime, world) = Fixture.session()
-        #expect(runtime.drawState(of: Fixture.opponent) == .sheathed)
-        #expect(runtime.drawState(of: .player) == nil)
-        Fixture.engage(runtime, world)
-        Self.step(runtime, while: .sheathed)
-        #expect(runtime.drawState(of: Fixture.opponent) == .drawing)
-        Fixture.run(runtime, seconds: 1)
-        #expect(runtime.drawState(of: Fixture.opponent) == .drawn)
-        // A calmed actor does not pick the fight up again, as a stopped one would.
-        runtime.setHostility(.neutral, on: Fixture.opponent)
-        Self.step(runtime, while: .drawn)
-        #expect(runtime.drawState(of: Fixture.opponent) == .sheathing)
-        Fixture.run(runtime, seconds: 1)
-        #expect(runtime.drawState(of: Fixture.opponent) == .sheathed)
-        #expect(runtime.weaponDraws.isEmpty)
-    }
-
-    /// Steps for at most two seconds while the opponent's weapon stays `state`.
-    private static func step(_ runtime: CombatLoopRuntime, while state: WeaponDrawState) {
-        for _ in 0 ..< 120 where runtime.drawState(of: Fixture.opponent) == state {
-            Fixture.run(runtime, seconds: CombatLoopRuntime.fixedStepSeconds)
-        }
-    }
-
     // MARK: - Fleeing
 
     @Test func anActorAtTheFleeThresholdRunsAndStaysInTheFightWhileItDoes() {

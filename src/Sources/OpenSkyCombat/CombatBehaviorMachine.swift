@@ -210,12 +210,13 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
             enter(.approaching)
             return approach(inputs)
         }
-        guard phaseSeconds >= settings.attackIntervalSeconds else { return unchanged() }
+        guard phaseSeconds >= settings.attackIntervalSeconds, inputs.weaponOut
+        else { return unchanged() }
         return startAttackOrCast(inputs)
     }
 
     private mutating func advanceBlocking(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
-        guard phaseSeconds >= settings.blockSeconds else { return unchanged() }
+        guard phaseSeconds >= settings.blockSeconds, inputs.weaponOut else { return unchanged() }
         guard inputs.distance <= inputs.holdDistance(settings: settings) else {
             enter(.approaching)
             return approach(inputs)

@@ -36,7 +36,12 @@ fight. The combat loop fills this for NPCs, and the melee state for the player.
 - `IsWeaponMagicOut` is 1 when a weapon or a spell is drawn. The player's draw follows its
   own clips. An NPC draws when it starts to fight or search, and sheathes when that ends. Each
   takes 0.5 seconds, in which the NPC is drawing or sheathing
-  ([unverified values](/engine/unverified-values.md)). The weapon counts as out while drawn
+  ([unverified values](/engine/unverified-values.md)). A draw also waits while the NPC's graph
+  reports `IsEquipping`, its own output while the equip clip plays, for at most 2 more seconds.
+  The NPC starts no attack or cast before the draw ends, nor while its graph reports
+  `IsAttackReady` false ([when an attack may start](/engine/actor-graphs.md#when-an-attack-may-start)).
+  The game does not read `IsEquipping` for this; OpenSky holds the draw on it because the node
+  that writes `IsAttackReady` does not run during the draw. The weapon counts as out while drawn
   or sheathing, as for the player. The script read `IsWeaponDrawn` gives the same answer, and
   `openskycli game state actors` shows the state as `weapon`.
 - `IsCombatTarget` (513) is 1 when the run-on fights the parameter actor.

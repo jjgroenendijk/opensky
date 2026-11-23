@@ -148,6 +148,9 @@ nonisolated struct CombatBehaviorInputs: Equatable, Sendable {
     var flies = false
     /// The actor swings a one-handed weapon, whose attacks can chain.
     var canChain = false
+    /// False while the weapon is still being drawn, or the graph is in no state an attack
+    /// starts from; no attack or cast starts then.
+    var weaponOut = true
 
     init(
         actorPosition: SIMD3<Float>,

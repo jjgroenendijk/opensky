@@ -261,6 +261,12 @@ extension CombatWorldAdapter {
         motion.raiseActorGraphEvent(name, on: key)
     }
 
+    public func actorGraphVariable(
+        named name: String, on key: ReferenceKey
+    ) -> BehaviorVariableValue? {
+        motion.actorGraphVariable(named: name, on: key)
+    }
+
     public func writeActorGraphVariable(
         _ value: BehaviorVariableValue, named name: String, on key: ReferenceKey
     ) {

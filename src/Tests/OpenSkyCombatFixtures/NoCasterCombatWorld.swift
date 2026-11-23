@@ -1,5 +1,6 @@
 // The casting half of `CombatLoopWorld` for a world with no caster runtime.
 
+public import OpenSkyBehavior
 @testable public import OpenSkyCombat
 @testable public import OpenSkyFormatsESM
 public import OpenSkyGameData
@@ -11,6 +12,23 @@ public import OpenSkyGameData
 public protocol NoCasterCombatWorld: CombatLoopWorld {}
 
 extension NoCasterCombatWorld {
+    /// A world that runs no NPC graphs writes nothing, and its graphs never hold a draw.
+    public func writeCombatActorVariable(
+        _: BehaviorVariableValue, named _: String, on _: ReferenceKey
+    ) {}
+
+    public func combatGraphIsEquipping(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func combatIsInKillMove(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func combatGraphIsAttackReady(_: ReferenceKey) -> Bool? {
+        nil
+    }
+
     /// A melee-only world looses no arrows.
     public func fireCombatArrow(_: CombatArrowShot) -> Bool {
         false

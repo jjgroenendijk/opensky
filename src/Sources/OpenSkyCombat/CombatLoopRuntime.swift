@@ -346,21 +346,6 @@ public final class CombatLoopRuntime: CombatControlling {
         following.removeValue(forKey: key)
     }
 
-    /// Records how many hostile living actors the engagement cap refused.
-    func noteCrowdedOut(_ count: Int) {
-        crowdedOutCount = count
-    }
-
-    /// Appends one incoming hit to the trace, trimming to the limit.
-    func append(_ hit: CombatIncomingHit) {
-        incomingHitCount += 1
-        incomingTrace.append(hit)
-        if incomingTrace.count > Self.traceLimit {
-            incomingTrace.removeFirst(incomingTrace.count - Self.traceLimit)
-        }
-        playerDamageFlash = 1
-    }
-
     public func record(_ outcome: CombatLoopOutcome) {
         lastAction = outcome
     }
@@ -387,7 +372,7 @@ public final class CombatLoopRuntime: CombatControlling {
         guard let world else { return }
         stepSeconds += Double(Self.fixedStepSeconds)
         let hostility = driveBehaviors(world: world)
-        stepWeaponDraws()
+        stepWeaponDraws(world: world)
         state = CombatLoopState.derive(
             actors: world.combatActors(),
             hostility: { [weak world] key in
@@ -475,5 +460,22 @@ extension CombatLoopRuntime {
             inCombat: behaviors[target]?.phase.isEngaged == true,
             now: stepSeconds
         )
+    }
+}
+
+extension CombatLoopRuntime {
+    /// Records how many hostile living actors the engagement cap refused.
+    func noteCrowdedOut(_ count: Int) {
+        crowdedOutCount = count
+    }
+
+    /// Appends one incoming hit to the trace, trimming to the limit.
+    func append(_ hit: CombatIncomingHit) {
+        incomingHitCount += 1
+        incomingTrace.append(hit)
+        if incomingTrace.count > Self.traceLimit {
+            incomingTrace.removeFirst(incomingTrace.count - Self.traceLimit)
+        }
+        playerDamageFlash = 1
     }
 }

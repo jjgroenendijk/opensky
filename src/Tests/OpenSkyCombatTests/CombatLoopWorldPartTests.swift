@@ -306,6 +306,20 @@ struct CombatSharedPartTests {
         #expect(part.impactMaterial(of: Self.foe) == nil)
     }
 
+    @Test func anNPCGraphIsWrittenAndReadThroughTheWorld() {
+        let world = FakeCoordinatorWorld()
+        let part = CombatCoordinator(world: world, data: nil).loopWorld
+        #expect(part.combatGraphIsAttackReady(Self.foe) == nil)
+        #expect(!part.combatGraphIsEquipping(Self.foe))
+        part.writeCombatActorVariable(.bool(false), named: "IsAttackReady", on: Self.foe)
+        part.writeCombatActorVariable(.bool(true), named: "IsEquipping", on: Self.foe)
+        #expect(part.combatGraphIsAttackReady(Self.foe) == false)
+        #expect(part.combatGraphIsEquipping(Self.foe))
+        #expect(!part.combatIsInKillMove(Self.foe))
+        world.inKillMove = [Self.foe]
+        #expect(part.combatIsInKillMove(Self.foe))
+    }
+
     @Test func defaultBloodIsQueued() {
         let coordinator = CombatCoordinator(world: FakeCoordinatorWorld(), data: nil)
         coordinator.meleeWorld.showDefaultBlood(on: Self.foe, at: .zero, melee: true)
