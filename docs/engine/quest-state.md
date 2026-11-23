@@ -214,6 +214,30 @@ The fill follows four rules from the same page:
   aliases on the same quest with the same reference". The flag that allows it is checked on the
   second alias.
 
+## What an alias gives
+
+A filled reference alias can give its reference factions, spells, keywords, and items. The Creation
+Kit's alias tab page (<https://ck.uesp.net/wiki/Quest_Alias_Tab>) states each one:
+
+- Factions (`ALFC`): "The aliased reference will be considered a member of the specified factions
+  while in the alias." The faction goes when the reference leaves the alias: the alias is cleared,
+  the quest stops, or the alias is forced to another reference. "The behavior is as though
+  RemoveFromFaction is called on the reference as it is leaving the alias." The removal happens even
+  when another filled alias gives the same faction to the same actor.
+- Spells (`ALSP`): "added to the reference that fills the alias, and removed when the reference
+  leaves the alias."
+- Keywords (`KWDA`): "considered to have the specified keywords while in the alias."
+- Items (`CNTO`): "added to the reference's inventory when the reference is placed into the alias."
+  The page says nothing about taking them back, so they stay.
+- Factions and packages on a reference that is not an actor are ignored.
+
+A load restores the actor's factions, spells, and inventory from the save, so a load gives nothing
+again.
+
+Example: the follower quest forces the hired actor into its follower alias. That alias holds the
+current follower faction. Each follower topic, such as follow, wait, trade, and dismiss, needs that
+faction, so the actor offers them only while in the alias.
+
 ## What does not fill yet
 
 Specific Reference (`ALFR`) and Specific Location (`ALFL`) fill. From Event fills when the
