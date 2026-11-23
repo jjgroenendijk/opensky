@@ -20,6 +20,9 @@ public final class CellStreamerDoorState {
     /// mutation inside it can be rebuilt through the door-transition path.
     public var interiorSourceDoor: FormID?
     public internal(set) var doorTransitionFailureCount = 0
+    /// Where the last finished door put the player. The walk controller takes the
+    /// place a frame later, so the door's own followers read it here.
+    public internal(set) var lastArrival: SIMD3<Float>?
     /// Source placement retained across an asynchronous door build. Runtime
     /// state rebuilds have no player interaction and leave this nil.
     public var doorMotionInteraction: PlacedInteraction?

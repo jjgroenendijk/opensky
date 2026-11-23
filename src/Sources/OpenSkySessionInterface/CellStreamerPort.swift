@@ -45,6 +45,8 @@ public protocol CellStreamerPort: AnyObject, PapyrusWorldReferenceSource {
     var interiorScene: CellScene? { get }
     var isHeld: Bool { get set }
     var isInterior: Bool { get }
+    /// Where the last finished door put the player.
+    var lastDoorArrival: SIMD3<Float>? { get }
     func leaveInterior(camera: SceneCamera)
     func registerCellAttached(_ phase: CellAttachStep, _ step: @escaping (CellAttachment) -> Void)
     var pendingCompletionCount: Int { get }

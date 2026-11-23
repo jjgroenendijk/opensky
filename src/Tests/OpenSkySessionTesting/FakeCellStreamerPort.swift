@@ -45,6 +45,7 @@ nonisolated public final class FakeCellStreamerPort: CellStreamerPort {
     public var interiorScene: CellScene?
     public var isHeld = false
     public var isInterior = false
+    public var lastDoorArrival: SIMD3<Float>?
     public var leaveInteriorCalls: [SceneCamera] = []
     public var registerCellAttachedCalls: [CellAttachStep] = []
     public var pendingCompletionCount = 0

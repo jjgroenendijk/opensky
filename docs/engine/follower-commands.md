@@ -129,6 +129,11 @@ says a zone change (a loading screen) brings followers to the player
 (<https://en.uesp.net/wiki/Skyrim:Followers>). OpenSky moves each one into the destination
 cell, 64 units apart beside the player. A follower that waits on a command stays.
 
+The followers stand beside the door's arrival point. The player's own move to that point lands a
+frame later, so the player's feet at that moment are still on the other side of the door. An
+exterior the player returns to is still loaded from before, so OpenSky builds the destination
+cell again after the move. Otherwise the cell would not draw the followers it now holds.
+
 ## Settings
 
 The Creation Kit wiki settings table lists three `fFavorRequest*` settings without a use. Each
