@@ -125,6 +125,35 @@ extension CombatLoopRuntime {
         world.stopCombatMovement(of: key)
     }
 
+    /// What the actor's machine is told this step.
+    private func behaviorInputs(
+        of fight: (actor: CombatActorObservation, target: MeleeTarget),
+        influence: ActorMagicInfluence,
+        reach: (weapon: MeleeWeaponProfile, shoots: Bool), world: any CombatLoopWorld
+    ) -> CombatBehaviorInputs {
+        let (actor, target) = fight
+        var inputs = CombatBehaviorInputs(
+            actorPosition: actor.feet,
+            targetPosition: target.feet,
+            awareness: world.combatAwareness(of: actor.key, toward: target.key),
+            reach: reach.shoots ? NPCArcheryAim.shootingRange : MeleeSwing.reach(
+                weapon: reach.weapon, settings: settings, actorScale: actor.scale
+            ),
+            healthFraction: world.combatHealthFraction(of: actor.key),
+            isTargetAlive: true,
+            isForced: engagesWithoutPerceiving(actor.key),
+            casting: world.combatCasting(of: actor.key),
+            influence: influence,
+            temperament: world.combatTemperament(of: actor.key, toward: target.key)
+        )
+        inputs.facingError = facingError(of: actor, toward: target.feet)
+        inputs.flies = world.combatFlies(actor.key)
+        inputs.canChain = reach.weapon.handType.isOneHandedMelee
+        inputs.weaponOut = drawState(of: actor.key) == .drawn
+            && world.combatGraphIsAttackReady(actor.key) ?? true
+        return inputs
+    }
+
     /// One actor: build what it knows, step its machine, act on the answer. The
     /// target is the player or its ally for a foe, and a foe for an ally.
     func drive(
@@ -143,23 +172,10 @@ extension CombatLoopRuntime {
         let left = shoots ? nil : world.combatLeftWeapon(of: actor.key)
         let reachWeapon = strikes[actor.key]?.weapon(right: right, left: left) ?? right
         track(target)
-        var inputs = CombatBehaviorInputs(
-            actorPosition: actor.feet,
-            targetPosition: target.feet,
-            awareness: world.combatAwareness(of: actor.key, toward: target.key),
-            reach: shoots ? NPCArcheryAim.shootingRange : MeleeSwing.reach(
-                weapon: reachWeapon, settings: settings, actorScale: actor.scale
-            ),
-            healthFraction: world.combatHealthFraction(of: actor.key),
-            isTargetAlive: true,
-            isForced: engagesWithoutPerceiving(actor.key),
-            casting: world.combatCasting(of: actor.key),
-            influence: influence,
-            temperament: world.combatTemperament(of: actor.key, toward: target.key)
+        let inputs = behaviorInputs(
+            of: (actor, target), influence: influence,
+            reach: (weapon: reachWeapon, shoots: shoots), world: world
         )
-        inputs.facingError = facingError(of: actor, toward: target.feet)
-        inputs.flies = world.combatFlies(actor.key)
-        inputs.canChain = reachWeapon.handType.isOneHandedMelee
         let step = stepBehavior(of: actor.key, inputs: inputs)
         let swing = swing(of: actor.key, started: step.startedAttack, right: right, left: left)
         if behaviors[actor.key]?.pendingCast?.purpose == .shout {

@@ -51,6 +51,9 @@ nonisolated public enum WeaponDrawState: String, Equatable, Sendable, CaseIterab
 nonisolated public struct NPCWeaponDraw: Equatable, Sendable {
     /// How long a draw or a sheathe lasts. OpenSky's choice (docs/engine/unverified-values.md).
     public static let transitionSeconds: Float = 0.5
+    /// The longest a graph that still plays its equip clip holds the draw past
+    /// `transitionSeconds`, so a graph stuck in it cannot stop the fight. OpenSky's choice.
+    public static let longestGraphHoldSeconds: Float = 2
 
     public private(set) var state = WeaponDrawState.sheathed
     private var left: Float = 0
@@ -59,7 +62,12 @@ nonisolated public struct NPCWeaponDraw: Equatable, Sendable {
 
     /// One step. `wantsDrawn` is true while the actor fights or searches. A draw that is
     /// called off goes back to sheathed, and a sheathe that is called off to drawn.
-    public mutating func advance(wantsDrawn: Bool, by seconds: Float) {
+    /// `graphEquipping` holds a draw until the actor's graph ends its equip clip.
+    public mutating func advance(
+        wantsDrawn: Bool,
+        by seconds: Float,
+        graphEquipping: Bool = false
+    ) {
         switch state {
         case .sheathed:
             if wantsDrawn {
@@ -70,7 +78,10 @@ nonisolated public struct NPCWeaponDraw: Equatable, Sendable {
                 begin(.sheathing)
             }
         case .drawing:
-            finish(wantsDrawn ? .drawn : nil, else: .sheathed, after: seconds)
+            finish(
+                wantsDrawn ? .drawn : nil, else: .sheathed, after: seconds,
+                holding: graphEquipping
+            )
         case .sheathing:
             finish(wantsDrawn ? nil : .sheathed, else: .drawn, after: seconds)
         }
@@ -82,14 +93,15 @@ nonisolated public struct NPCWeaponDraw: Equatable, Sendable {
     }
 
     private mutating func finish(
-        _ end: WeaponDrawState?, else calledOff: WeaponDrawState, after seconds: Float
+        _ end: WeaponDrawState?, else calledOff: WeaponDrawState, after seconds: Float,
+        holding: Bool = false
     ) {
         guard let end else {
             state = calledOff
             return
         }
         left -= max(seconds, 0)
-        if left <= 0 {
+        if left <= 0, !holding || left <= -Self.longestGraphHoldSeconds {
             state = end
         }
     }

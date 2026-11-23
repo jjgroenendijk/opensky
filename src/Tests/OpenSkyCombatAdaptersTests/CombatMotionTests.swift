@@ -47,6 +47,11 @@ struct CombatMotionTests {
         adapter.writeActorGraphVariable(.real(1), named: "staggerMagnitude", on: Self.foe)
         #expect(host.fakeActorGraphs.raiseCalls.map(\.event) == ["staggerStart"])
         #expect(host.fakeActorGraphs.setVariableCalls.map(\.name) == ["staggerMagnitude"])
+        host.fakeActorGraphs.variableResult = .bool(true)
+        #expect(adapter.actorGraphVariable(named: "IsAttackReady", on: Self.foe) == .bool(true))
+        #expect(adapter.motion
+            .actorGraphVariable(named: "IsEquipping", on: Self.foe) == .bool(true))
+        #expect(host.fakeActorGraphs.variableCalls.map(\.name) == ["IsAttackReady", "IsEquipping"])
     }
 
     @Test func withoutASessionThePlayerGraphIsUntouched() {

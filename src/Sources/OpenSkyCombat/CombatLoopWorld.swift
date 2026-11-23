@@ -195,6 +195,20 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// Writes one census-named variable on the player's graph.
     func writeCombatVariable(_ value: BehaviorVariableValue, named name: String)
 
+    /// Writes one census-named variable on an NPC's graph.
+    func writeCombatActorVariable(
+        _ value: BehaviorVariableValue, named name: String, on actor: ReferenceKey
+    )
+
+    /// True while the NPC's graph still plays its equip clip.
+    func combatGraphIsEquipping(_ actor: ReferenceKey) -> Bool
+
+    /// True while the actor plays either half of a kill move.
+    func combatIsInKillMove(_ actor: ReferenceKey) -> Bool
+
+    /// The graph's `IsAttackReady`, or nil when no running graph of the actor declares it.
+    func combatGraphIsAttackReady(_ actor: ReferenceKey) -> Bool?
+
     /// Plays one single-clip reaction on a resident actor.
     ///
     /// - Returns: true when playback took the clip. False is the honest answer

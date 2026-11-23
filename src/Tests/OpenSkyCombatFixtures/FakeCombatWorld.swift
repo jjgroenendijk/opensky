@@ -85,6 +85,15 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public private(set) var damage: [ReferenceKey: Float] = [:]
     public private(set) var raised: [String] = []
     public private(set) var variables: [String: BehaviorVariableValue] = [:]
+    /// Each event raised on an actor's graph, by name and actor.
+    public private(set) var actorEvents: [(name: String, key: ReferenceKey)] = []
+    public private(set) var actorVariables: [ReferenceKey: [String: BehaviorVariableValue]] = [:]
+    /// Actors whose graph still plays its equip clip.
+    public var equipping: Set<ReferenceKey> = []
+    /// Actors that play a half of a kill move.
+    public var inKillMove: Set<ReferenceKey> = []
+    /// Actors whose graph reports `IsAttackReady` false.
+    public var notAttackReady: Set<ReferenceKey> = []
     public private(set) var clips: [(clip: CombatActorClip, key: ReferenceKey)] = []
     public private(set) var arrowShots: [CombatArrowShot] = []
     public private(set) var musicChanges: [Bool] = []
@@ -255,11 +264,10 @@ public final class FakeCombatWorld: CombatLoopWorld {
             wroteMagnitudeBeforeStagger = true
         }
         raised.append(name)
+        if let target {
+            actorEvents.append((name: name, key: target))
+        }
         return target == nil
-    }
-
-    public func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {
-        variables[name] = value
     }
 
     @discardableResult
@@ -305,5 +313,30 @@ public final class FakeCombatWorld: CombatLoopWorld {
 
     public func combatIgnoredByPackage(_ key: ReferenceKey) -> Bool {
         ignoringCombat.contains(key)
+    }
+}
+
+/// The actor graph reads and writes.
+extension FakeCombatWorld {
+    public func writeCombatActorVariable(
+        _ value: BehaviorVariableValue, named name: String, on actor: ReferenceKey
+    ) {
+        actorVariables[actor, default: [:]][name] = value
+    }
+
+    public func combatGraphIsAttackReady(_ actor: ReferenceKey) -> Bool? {
+        notAttackReady.contains(actor) ? false : nil
+    }
+
+    public func combatIsInKillMove(_ actor: ReferenceKey) -> Bool {
+        inKillMove.contains(actor)
+    }
+
+    public func combatGraphIsEquipping(_ actor: ReferenceKey) -> Bool {
+        equipping.contains(actor)
+    }
+
+    public func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {
+        variables[name] = value
     }
 }

@@ -2,6 +2,7 @@
 // weapon it has equipped (docs/engine/combat.md).
 
 import OpenSkyActorsInterface
+import OpenSkyBehavior
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -329,6 +330,25 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
 }
 
 extension CombatLoopWorldPart {
+    func writeCombatActorVariable(
+        _ value: BehaviorVariableValue, named name: String, on actor: ReferenceKey
+    ) {
+        shared.world.writeActorGraphVariable(value, named: name, on: actor)
+    }
+
+    func combatGraphIsAttackReady(_ actor: ReferenceKey) -> Bool? {
+        shared.world.actorGraphVariable(named: CombatGraphNames.isAttackReady, on: actor)?.boolValue
+    }
+
+    func combatIsInKillMove(_ actor: ReferenceKey) -> Bool {
+        shared.world.isInKillMove(actor)
+    }
+
+    func combatGraphIsEquipping(_ actor: ReferenceKey) -> Bool {
+        shared.world.actorGraphVariable(named: CombatGraphNames.isEquipping, on: actor)?
+            .boolValue ?? false
+    }
+
     func combatReaction(toPlayerOf key: ReferenceKey) -> ActorReaction? {
         shared.world.reaction(of: key, toward: .player)
     }

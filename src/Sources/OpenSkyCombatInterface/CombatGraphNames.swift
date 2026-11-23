@@ -81,6 +81,11 @@ nonisolated public enum CombatGraphNames: Sendable {
     /// The graph's own "equip finished" events. Observed beside the two annotations,
     /// because five vanilla equip clips carry none.
     public static let weapEquipOut = "WeapEquip_Out"
+    /// The graph's own output, 1 while an equip clip plays. The kill-move roots test it.
+    public static let isEquipping = "IsEquipping"
+    /// The graph's own output, true in the states an attack may start from. Declared and
+    /// written only by `1hm_behavior.hkx`.
+    public static let isAttackReady = "IsAttackReady"
     public static let unequipOut = "Unequip_Out"
     /// The end of a readied spell's equip clip, the spell hand's `WeapEquip_Out`.
     public static let magicEquipOut = "Magic_Equip_Out"
