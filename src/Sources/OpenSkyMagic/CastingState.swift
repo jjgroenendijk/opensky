@@ -89,6 +89,13 @@ nonisolated public struct SpellCastState: Equatable, Sendable {
         age += delta
     }
 
+    /// Seconds a concentration hand has waited in `.ready` for its spell-fire event.
+    private(set) var fireWait: Float = 0
+
+    mutating func addFireWait(_ delta: Float) {
+        fireWait += delta
+    }
+
     mutating func addCharge(_ delta: Float) {
         charged += delta
     }

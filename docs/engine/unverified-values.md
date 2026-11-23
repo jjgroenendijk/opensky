@@ -68,6 +68,7 @@ the detail and the sources it did find.
 | Kill cam focus | 96 units above the feet, times the actor's scale; a frame steps the shot by at most 0.1 s | [kill cam](/engine/kill-cam.md) |
 | Splash ripple strength | 1 for a heavy splash, 0.6 for the others | [sky and water](/engine/sky-water.md) |
 | NPC archer range and ammunition | Shoots from up to 2048 units; needs one arrow and spends none | [archery](/engine/archery.md#npc-archers) |
+| Spell-fire fallback | A hand whose graph raises no spell-fire event releases or starts its spell after 0.4 s | [spellcasting](/engine/spellcasting.md#casting-cues) |
 
 ## Magic
 

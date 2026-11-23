@@ -9,6 +9,57 @@ public import OpenSkyGameData
 public import OpenSkyMagicInterface
 
 extension CasterRuntime {
+    /// The spell-fire event reached a concentration hand waiting in `.ready`: the cost
+    /// is checked here, and a cast that cannot pay resets the hand.
+    @discardableResult
+    public func fire(_ hand: SpellHand, on caster: ActorValueHolder) -> SpellCastOutcome {
+        let hand = leadHand(of: hand, on: caster.key)
+        let state = state(of: hand, on: caster.key)
+        guard
+            state.phase == .ready, let key = state.spell, let spell = castable(key),
+            spell.data?.castingType == .concentration
+        else { return .ignored }
+        let cost = castCost(of: spell, dual: state.isDualCast, caster: caster)
+        let available = pool(for: spell, caster: caster)
+        guard cost <= available else {
+            casts[slot(hand, caster)] = SpellCastState()
+            endDualPartner(of: hand, lead: state, caster: caster)
+            return record(hand, on: caster, .failed(spell.isStaff
+                    ? .staffOutOfCharge(cost: cost, available: available)
+                    : .insufficientMagicka(cost: cost, available: available)))
+        }
+        return record(hand, on: caster, startConcentration(hand, spell: spell, caster: caster))
+    }
+
+    /// A concentration hand in `.ready` whose graph raised no spell-fire event fires
+    /// after the same wait a fire-and-forget release gets.
+    func awaitSpellFire(
+        _ hand: SpellHand, spell: ResolvedSpell, delta: Float, caster: ActorValueHolder
+    ) {
+        guard spell.data?.castingType == .concentration else { return }
+        var state = state(of: hand, on: caster.key)
+        state.addFireWait(delta)
+        casts[slot(hand, caster)] = state
+        guard state.fireWait >= SpellReleaseLatch.fireWithoutGraphAfter else { return }
+        fire(hand, on: caster)
+    }
+
+    /// Enters the held state: the drain starts and the first application lands now
+    /// rather than a second later, so a maintained heal heals when it starts costing.
+    func startConcentration(
+        _ hand: SpellHand, spell: ResolvedSpell, caster: ActorValueHolder
+    ) -> SpellCastOutcome {
+        var state = state(of: hand, on: caster.key)
+        state.beginConcentration()
+        casts[slot(hand, caster)] = state
+        world?.spellWasCast(spell.key, by: caster.key)
+        applyOnce(hand, spell: spell, caster: caster)
+        return .concentrating(
+            spell: spell.key,
+            costPerSecond: castCost(of: spell, dual: state.isDualCast, caster: caster)
+        )
+    }
+
     /// One frame of a maintained cast: drain, apply the whole seconds that
     /// elapsed, and stop when the magicka runs out or the release is due.
     func maintain(

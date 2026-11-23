@@ -107,6 +107,7 @@ public final class MagicCoordinator {
                 spellbook: spellbook, values: casting.values, world: casterBridge
             )
             runtime.costSettings = rules.spellCost
+            runtime.spellFireCasters = [.player]
             caster = runtime
             runtime.staffs = casterBridge
         }

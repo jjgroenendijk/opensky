@@ -114,7 +114,7 @@ nonisolated enum CastingCueRule {
         switch hand.phase {
         case .idle: nil
         case .charging: hand.isConcentration ? nil : .charge
-        case .ready: .ready
+        case .ready: hand.isConcentration ? nil : .ready
         case .concentrating: .castLoop
         }
     }

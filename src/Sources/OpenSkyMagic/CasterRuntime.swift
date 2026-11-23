@@ -169,6 +169,9 @@ public final class CasterRuntime {
     public weak var staffs: (any StaffCharging)?
     /// Every staff spell a hand began, by key, so a later frame finds it again.
     public var staffSpells: [ReferenceKey: ResolvedSpell] = [:]
+    /// Casters whose concentration spell waits in `.ready` for the graph's spell-fire
+    /// event. Others start at the end of the charge, as no graph event reaches them.
+    public var spellFireCasters: Set<ReferenceKey> = []
 
     public init(
         spellbook: SpellbookRuntime,
@@ -245,6 +248,11 @@ public final class CasterRuntime {
             casts[slot(hand, caster)] = SpellCastState()
             endDualPartner(of: hand, lead: state, caster: caster)
             return record(hand, on: caster, .failed(.notCharged(remaining: remaining)))
+        case .ready where spell.data?.castingType == .concentration:
+            guard case .concentrating = fire(hand, on: caster) else {
+                return .ignored
+            }
+            return release(hand, on: caster)
         case .ready:
             return record(hand, on: caster, cast(hand, spell: spell, caster: caster))
         case .concentrating:
@@ -322,8 +330,10 @@ public final class CasterRuntime {
         casts[slot(hand, caster)] = state
         guard state.dualRole != .partner else { return }
         switch state.phase {
-        case .idle, .ready:
+        case .idle:
             return
+        case .ready:
+            awaitSpellFire(hand, spell: spell, delta: delta, caster: caster)
         case .charging:
             state.addCharge(delta)
             casts[slot(hand, caster)] = state
@@ -334,29 +344,21 @@ public final class CasterRuntime {
         }
     }
 
-    /// The charge finished: a fire-and-forget spell waits for the release, a
-    /// concentration spell starts draining immediately.
+    /// The charge finished: a fire-and-forget spell waits for the release. A concentration
+    /// spell starts, or waits for the spell-fire event when its caster's graph raises one.
     private func finishCharge(
         _ hand: SpellHand,
         spell: ResolvedSpell,
         caster: ActorValueHolder
     ) -> SpellCastOutcome {
         var state = state(of: hand, on: caster.key)
-        guard spell.data?.castingType == .concentration else {
+        let concentration = spell.data?.castingType == .concentration
+        guard concentration, !spellFireCasters.contains(caster.key) else {
             state.makeReady()
             casts[slot(hand, caster)] = state
             return .ready(hand: hand, spell: state.spell ?? spell.key)
         }
-        state.beginConcentration()
-        casts[slot(hand, caster)] = state
-        world?.spellWasCast(spell.key, by: caster.key)
-        // The first application lands on entry rather than a second later, so a
-        // maintained heal starts healing when it starts costing.
-        applyOnce(hand, spell: spell, caster: caster)
-        return .concentrating(
-            spell: spell.key,
-            costPerSecond: castCost(of: spell, dual: state.isDualCast, caster: caster)
-        )
+        return startConcentration(hand, spell: spell, caster: caster)
     }
 
     /// One fire-and-forget cast: check the cost again, take it, apply the list.
