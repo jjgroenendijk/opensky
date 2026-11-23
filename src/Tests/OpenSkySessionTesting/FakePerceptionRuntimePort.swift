@@ -7,6 +7,7 @@ public import OpenSkySessionInterface
 /// Stores each property and records each call to `PerceptionRuntimePort`.
 nonisolated public final class FakePerceptionRuntimePort: PerceptionRuntimePort {
     public var noteAttackCalls: [ReferenceKey] = []
+    public var revealCalls: [(target: ReferenceKey, observer: ReferenceKey)] = []
     public var noteSoundEventCalls: [NoteSoundEventCall] = []
     public var noteSummonCalls: [(caster: ReferenceKey, position: SIMD3<Float>)] = []
     public var soundEventCalls: [ReferenceKey] = []
@@ -41,6 +42,10 @@ extension FakePerceptionRuntimePort {
 nonisolated extension FakePerceptionRuntimePort {
     public func noteAttack(by target: ReferenceKey) {
         noteAttackCalls.append(target)
+    }
+
+    public func reveal(_ target: ReferenceKey, to observer: ReferenceKey) {
+        revealCalls.append((target: target, observer: observer))
     }
 
     public func noteSoundEvent(owner: ReferenceKey, level: Float, at position: SIMD3<Float>) {

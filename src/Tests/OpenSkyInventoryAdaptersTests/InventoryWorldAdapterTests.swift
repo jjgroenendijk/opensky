@@ -42,6 +42,14 @@ struct InventoryWorldAdapterTests {
         #expect(adapter.pickpocketCaughtDay(of: Self.key) == nil)
     }
 
+    @Test func aRevealReachesPerception() {
+        let perception = FakePerceptionRuntimePort()
+        host.fakePerception.runtime = perception
+        adapter.revealPlayer(to: Self.key)
+        #expect(perception.revealCalls.map(\.target) == [.player])
+        #expect(perception.revealCalls.map(\.observer) == [Self.key])
+    }
+
     @Test func readoutsForwardToTheirPorts() {
         host.fakePlayer.isSneaking = true
         host.fakeStreamer.residents.appearanceSkipReasonsResult = ["no skeleton"]

@@ -240,6 +240,12 @@ struct AlchemyCoordinatorTests {
         #expect(AlchemyActionOutcome.noWeapon.text(.vanilla) == PoisonText.noWeapon.fallback)
     }
 
+    @Test func aWorldWithoutSensesNeitherSeesNorRevealsThePlayer() {
+        let world = FakeAlchemyWorld()
+        world.revealPlayer(to: .player)
+        #expect(!world.detectsPlayer(.player))
+    }
+
     @Test func aLoadPutsTheSavedPotionsBackInTheItemIndex() throws {
         let harness = try Self.harness()
         let items = harness.inventory.baselines.items

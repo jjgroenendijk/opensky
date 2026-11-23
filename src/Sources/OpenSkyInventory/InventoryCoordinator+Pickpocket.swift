@@ -46,6 +46,9 @@ extension InventoryCoordinator.Pickpocketing {
     private func caught(
         by target: InventoryHolder, item: String, chance: Float, runtime: WorldItemRuntime
     ) -> PickpocketOutcome {
+        // The target detects the thief before the crime, so it can fight a sneaking one
+        // (docs/engine/pickpocket.md#a-failure-in-the-game).
+        coordinator.world.revealPlayer(to: target.key)
         let crime = runtime.crime?.reportPickpocket(of: target.key, by: .player)
         coordinator.world.notePickpocketCatch(
             on: coordinator.world.gameDaysPassed, chargedTo: crime?.faction, by: target.key

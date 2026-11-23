@@ -65,11 +65,7 @@ nonisolated public struct CombatTargetTrack: Equatable, Sendable {
     public mutating func advance(_ sighting: CombatTargetSighting, by seconds: Float) -> Bool {
         guard seconds.isFinite, seconds > 0 else { return false }
         if sighting.counts {
-            self = Self()
-            phase = .noticed
-            isListed = true
-            seenAt = sighting.position
-            lastKnown = sighting.position
+            notice(at: sighting.position)
             return false
         }
         if phase == .noticed {
@@ -85,6 +81,15 @@ nonisolated public struct CombatTargetTrack: Equatable, Sendable {
         guard lostSeconds >= Self.dropSeconds, isFarLongEnough else { return false }
         self = Self()
         return true
+    }
+
+    /// The group notices the target at `position`, as a sighting that counts does.
+    public mutating func notice(at position: SIMD3<Float>) {
+        self = Self()
+        phase = .noticed
+        isListed = true
+        seenAt = position
+        lastKnown = position
     }
 
     /// A place to search, from a hit or a detection event. A noticed target keeps its own.

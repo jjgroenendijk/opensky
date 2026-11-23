@@ -91,6 +91,10 @@ extension InventoryWorldAdapter {
         pickpocket.settlePickpocketCatches(chargedTo: faction, forgotten: forgotten)
     }
 
+    public func revealPlayer(to observer: ReferenceKey) {
+        pickpocket.revealPlayer(to: observer)
+    }
+
     public func detectsPlayer(_ observer: ReferenceKey) -> Bool {
         pickpocket.detectsPlayer(observer)
     }

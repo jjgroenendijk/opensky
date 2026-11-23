@@ -47,6 +47,8 @@ public protocol InventoryWorld: AnyObject {
     func notePickpocketCatch(on day: Float?, chargedTo faction: ReferenceKey?, by key: ReferenceKey)
     /// Whether `observer` has detected the player right now.
     func detectsPlayer(_ observer: ReferenceKey) -> Bool
+    /// `observer` detects the player outright from now on.
+    func revealPlayer(to observer: ReferenceKey)
     /// Lands the poison `poison` on `target`, from the player. False when nothing landed.
     func applyPlacedPoison(_ poison: FormID, on target: ReferenceKey) -> Bool
     /// `effect`'s name in the load order's language.
@@ -89,6 +91,8 @@ extension InventoryWorld {
     public func detectsPlayer(_: ReferenceKey) -> Bool {
         false
     }
+
+    public func revealPlayer(to _: ReferenceKey) {}
 
     public func applyPlacedPoison(_: FormID, on _: ReferenceKey) -> Bool {
         false

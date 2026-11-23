@@ -256,4 +256,26 @@ extension PerceptionRuntimeTests {
         runtime.noteAttack(by: .player)
         #expect(runtime.pools[.player]?.points ?? 100 <= CombatTargetTrack.hitPointCap)
     }
+
+    /// A revealed target is detected at once, and a hostile observer keeps it
+    /// through the shared record although it perceives nothing.
+    @Test func aRevealedTargetStaysDetectedByAHostileObserver() {
+        var observer = PerceptionFixture.observer(feet: SIMD3(0, 0, 0))
+        observer.isAggressive = true
+        let world = FakePerceptionWorld(
+            observers: [observer],
+            targets: [PerceptionFixture.target(feet: SIMD3(300, 0, 0), gait: nil, isSneaking: true)]
+        )
+        world.blocked = PerceptionFixture.wall(atX: 200)
+        let runtime = PerceptionRuntime(settings: settings, world: world)
+        advance(runtime, steps: 1)
+        #expect(!runtime.state(observer: PerceptionFixture.guardKey, target: .player).isDetected)
+
+        runtime.reveal(.player, to: PerceptionFixture.guardKey)
+        #expect(runtime.state(observer: PerceptionFixture.guardKey, target: .player).isDetected)
+        advance(runtime, steps: 60 * 5)
+        let kept = runtime.state(observer: PerceptionFixture.guardKey, target: .player)
+        #expect(kept.isDetected)
+        #expect(kept.lastKnownPosition == SIMD3(300, 0, 0))
+    }
 }
