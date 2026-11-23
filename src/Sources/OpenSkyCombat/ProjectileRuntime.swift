@@ -96,8 +96,11 @@ public final class ProjectileRuntime {
         var direction = ProjectileFlight.aimDirection(
             cameraForward: shooter.aim, tiltDegrees: tilt
         )
-        lastAutoAim = shooter.key == .player ? world.projectileAutoAim(from: shooter) : nil
-        if let pick = lastAutoAim {
+        let pick = shooter.key == .player ? world.projectileAutoAim(from: shooter) : nil
+        if shooter.key == .player {
+            lastAutoAim = pick
+        }
+        if let pick {
             direction = ProjectileAutoAim.turned(
                 direction, toward: pick.target.centre - shooter.origin,
                 atMost: ProjectileAutoAim.largestTurn(

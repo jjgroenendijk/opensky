@@ -45,6 +45,35 @@ struct ProjectileTrapShotTests {
         #expect(world.spawned.map(\.base) == [dart])
     }
 
+    /// The readout keeps the player's pick when an NPC or a trap fires after it.
+    @Test func anotherShooterLeavesThePlayersAimPick() {
+        let foe = ReferenceKey.generated(91)
+        let world = FakeProjectileWorld()
+        world.autoAimPick = ProjectileAimPick(
+            target: ProjectileAimCandidate(
+                key: foe, centre: SIMD3(500, 0, 0), top: SIMD3(500, 0, 64)
+            ),
+            rightHandIsFree: false
+        )
+        let runtime = ProjectileRuntime(settings: .synthetic, world: world)
+        let shot = ProjectileShot(
+            profile: ProjectileProfile(speed: 1000, gravityFactor: 0, range: 4000),
+            payload: .arrow(ArrowPayload(
+                damage: ArcheryDamage.resolve(bowDamage: 10, arrowDamage: 5, skill: 0),
+                ammunition: FormID(0x0001_397D)
+            ))
+        )
+        #expect(runtime.fire(shot) != nil)
+        #expect(runtime.lastAutoAim?.target.key == foe)
+
+        let trap = ProjectileShooter(
+            key: .generated(90), origin: .zero, aim: SIMD3(1, 0, 0), isFirstPerson: false,
+            location: .exterior(CellCoordinate(x: 0, y: 0))
+        )
+        #expect(runtime.fire(shot, from: trap) != nil)
+        #expect(runtime.lastAutoAim?.target.key == foe)
+    }
+
     /// Pinewatch02's dart ports: X turned +90 or -90 degrees, heading 81.4 or 263.1.
     /// Both walls fire across the corridor, level.
     @Test func aDartPortFiresAlongItsHeading() {

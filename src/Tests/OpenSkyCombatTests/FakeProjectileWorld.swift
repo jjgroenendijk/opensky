@@ -80,6 +80,12 @@ final class FakeProjectileWorld: ProjectileWorld {
 
     private var spawnedKeys: [ReferenceKey] = []
 
+    var autoAimPick: ProjectileAimPick?
+
+    func projectileAutoAim(from _: ProjectileShooter) -> ProjectileAimPick? {
+        autoAimPick
+    }
+
     var projectileShooter: ProjectileShooter {
         shooter
     }
