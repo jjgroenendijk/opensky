@@ -182,11 +182,13 @@ struct CrimeSessionReads {
 
     func witnesses() -> PerceptionCrimeWitnesses {
         let store = game.worldState
+        let factions = game.factions
         return PerceptionCrimeWitnesses(
             perception: game.perception.runtime,
             isAlive: { [weak store] key in
                 store?.component(ActorDeathState.self, for: key)?.isDead != true
-            }
+            },
+            hasCrimeFaction: { key in factions.profile(of: key)?.crimeFaction != nil }
         )
     }
 

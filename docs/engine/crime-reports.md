@@ -233,7 +233,10 @@ The vanilla scripts count only these statistics:
 - OpenSky does not move the crime gold to the faction of the guard that answers, and has no cap on
   the guards that answer.
 - OpenSky's guards do not fight NPC criminals, and an NPC criminal does not flee from them.
-- Followers' thefts and trespasses are not charged to the player. Animals are not witnesses.
+- A theft is charged to the place's crime faction, not the victim's. A follower's take is charged
+  to the player, but a follower's trespass is not.
+- OpenSky reads "has no crime faction" in place of "is an animal": such a witness must be killed
+  to erase a crime, but adds no bounty.
 - OpenSky has no "bounty changed" event. Once per frame it compares the player's bounties with
   the last frame's and applies the statistics rule above to each change. It counts "Horses
   Stolen", "Assaults", "Murders", and "Locks Picked" itself, as the game does.

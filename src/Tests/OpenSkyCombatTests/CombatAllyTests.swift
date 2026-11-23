@@ -54,6 +54,15 @@ struct CombatAllyTests {
         #expect(world.hostility[Self.ally] == nil)
     }
 
+    @Test func anAllyNeverPicksAChildAsItsTarget() {
+        let (runtime, world) = Self.session(ally: SIMD3(60, 80, 0))
+        world.children = [Fixture.opponent]
+        Fixture.engage(runtime, world)
+        Fixture.run(runtime, seconds: Fixture.cycleSeconds * 3)
+        #expect(runtime.combatTarget(of: Self.ally) != Fixture.opponent)
+        #expect((world.damage[Fixture.opponent] ?? 0) == 0)
+    }
+
     @Test func aFoeTurnsOnANearerAlly() {
         let (runtime, world) = Self.session(ally: SIMD3(100, 0, 0))
         Fixture.engage(runtime, world)

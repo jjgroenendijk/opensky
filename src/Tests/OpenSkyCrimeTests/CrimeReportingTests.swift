@@ -166,6 +166,56 @@ struct CrimeReportingTests {
         #expect(coordinator.pendingReports.first?.age == 0)
     }
 
+    @Test func anAssaultIsChargedToTheWitnesssCrimeFaction() throws {
+        let world = FakeCrimeSessionWorld()
+        let townsman = CrimeFixture.key(0x5F0)
+        let tolerant = CrimeFixture.key(CrimeFixture.Factions.tolerant)
+        let coordinator = try Self.coordinator(world, witnesses: [townsman])
+        world.profiles[townsman] = ActorSocialProfile(
+            key: townsman, memberships: ActorFactionState(), crimeFaction: tolerant
+        )
+        coordinator.reportAssault(on: Self.victim, wasHostile: false)
+
+        #expect(coordinator.crimeGold(of: Self.hold) == 0)
+        #expect(coordinator.crimeGold(of: tolerant) > 0)
+    }
+
+    @Test func aGuardAmongTheWitnessesTakesTheAssaultFirst() throws {
+        let world = FakeCrimeSessionWorld()
+        let townsman = CrimeFixture.key(0x5F0)
+        let tolerant = CrimeFixture.key(CrimeFixture.Factions.tolerant)
+        let coordinator = try Self.coordinator(world, witnesses: [townsman, Self.guardKey])
+        world.profiles[townsman] = ActorSocialProfile(
+            key: townsman, memberships: ActorFactionState(), crimeFaction: tolerant
+        )
+        coordinator.reportAssault(on: Self.victim, wasHostile: false)
+
+        #expect(coordinator.crimeGold(of: tolerant) == 0)
+        #expect(coordinator.crimeGold(of: Self.hold) > 0)
+    }
+
+    @Test func aWitnessWithNoCrimeFactionAddsNoBountyButMustStillDie() throws {
+        let world = FakeCrimeSessionWorld()
+        let dog = CrimeFixture.key(0x5F1)
+        var witnesses = FixedCrimeWitnesses(watching: .player, by: [dog])
+        witnesses.silent = [dog]
+        let coordinator = try CrimeCoordinator(
+            world: world,
+            data: CrimeSessionData(
+                runtime: CrimeFixture.runtime(),
+                locations: CrimeFixture.locationStore(),
+                pluginName: CrimeFixture.pluginName
+            ),
+            witnesses: witnesses,
+            storyEvents: nil
+        )
+        world.currentCellLocation = Self.shop
+        world.references = FakeCrimeReferences(cell: Self.shop)
+        world.cellLinks[Self.shop] = FormID(CrimeFixture.Locations.shop)
+        #expect(coordinator.reporter?.witnesses.witnesses(of: .player) == [dog])
+        #expect(coordinator.reporter?.witnesses.isWitnessed(.player) == false)
+    }
+
     @Test func ridingSomebodyElsesHorseIsATheftOfTheHorseValue() throws {
         let world = FakeCrimeSessionWorld()
         let coordinator = try Self.coordinator(world, witnesses: [Self.guardKey])

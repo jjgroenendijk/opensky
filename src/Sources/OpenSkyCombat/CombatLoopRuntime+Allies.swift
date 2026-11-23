@@ -35,7 +35,7 @@ extension CombatLoopRuntime {
         world: any CombatLoopWorld
     ) {
         let player = world.combatPlayer
-        let foes = engaging.foes
+        let foes = engaging.foes.filter { !world.combatIsChild($0.key) }
         var budget = engaging.budget
         for actor in actors where !actor.isDead {
             guard

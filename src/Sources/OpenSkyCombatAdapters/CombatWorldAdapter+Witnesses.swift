@@ -67,6 +67,10 @@ extension CombatWorldAdapter {
         impactEffects.actorFlies(actor)
     }
 
+    public func actorIsChild(_ actor: ReferenceKey) -> Bool {
+        impactEffects.actorIsChild(actor)
+    }
+
     public func attackStagger(of key: ReferenceKey, event: String) -> Float? {
         impactEffects.attackStagger(of: key, event: event)
     }
