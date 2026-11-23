@@ -274,12 +274,15 @@ reported. Quick Hands sets it to 0, so nothing is reported.
 
 ## The reporting chain
 
-A seen crime charges the bounty at once. The report then stays open until a witness reaches a
-guard. A witness reaches a guard when it is one, or when it stands within
-`iCrimeAlarmRecDistance` (4000 units) of a living guard who polices the crime's faction. If every
-witness dies first, the bounty comes off again. The HUD shows `sWitnessKilled` ("Last witness
-killed.") and then the bounty removed. The Creation Kit's Crime page:
-"If the last Actor who viewed a crime is killed before guards arrive, the crime gold is removed".
+A seen crime charges the bounty at once. It then stays open for 30 seconds of real time, as in
+[crime reports](/engine/crime-reports.md#killing-the-witnesses). The clock stops while the game is
+paused. A crime is not checked in its first second. If every witness is dead inside the window,
+the bounty comes off again, and the HUD shows `sWitnessKilled` ("Last witness killed.") and then
+the bounty removed. When the window ends, the crime is final and sends `ADCR` once. Killing a
+witness after that changes nothing.
+
+Example: the player steals in front of one shopkeeper. Killing the shopkeeper 20 seconds later
+removes the bounty. Killing the shopkeeper 40 seconds later leaves it.
 
 The open reports live in the session, not in a save. A loaded save keeps the bounty.
 
@@ -301,8 +304,7 @@ disagree about what is a first strike.
 The game's own rules for alarms, witnesses, guards, and statistics are in
 [crime reports](/engine/crime-reports.md).
 
-- The alarm, the Alarm package, followers' crimes, and animal witnesses are not modelled. A crime
-  reports only when a guard is near a witness already.
+- The alarm, the Alarm package, followers' crimes, and animal witnesses are not modelled.
 - For an `NPC_`-owned victim, `doNotReportCrimesAgainstMembers` reads the base record's authored
   factions. A faction a script gave that actor later is not seen.
 - A script-set owner on an exterior cell is not read.

@@ -29,7 +29,7 @@ public protocol CrimePort: CrimeArrestSession {
 
     func advanceFavour()
 
-    func advanceReports()
+    func advanceReports(by seconds: Double)
 
     func advanceJail()
 

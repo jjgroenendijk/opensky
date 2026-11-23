@@ -29,6 +29,9 @@ public final class CrimeReporter: CrimeReporting {
     public var onCrimeCharged: ((CrimeEvent, CrimeOutcome, [ReferenceKey]) -> Void)?
     /// Each crime recorded, seen or not, for the journal's crime stats.
     public var onCrimeRecorded: ((CrimeEvent, CrimeOutcome) -> Void)?
+    /// A seen crime by the player stays open for a window and sends `ADCR` when it
+    /// becomes final, so the reporter leaves that event to whoever tracks the window.
+    public var defersPlayerCrimeGold = false
 
     public init(runtime: CrimeRuntime, world: (any CrimeWorld)? = nil) {
         self.runtime = runtime
@@ -233,6 +236,9 @@ public final class CrimeReporter: CrimeReporting {
             }
             onCrimeCharged?(event, outcome, witnesses)
             lastCrimeTypes[faction] = event.kind.storyCrimeType
+            if defersPlayerCrimeGold, event.perpetrator == .player, !witnesses.isEmpty {
+                return outcome
+            }
             storyEvents?.reportStoryEvent(.crimeGold(
                 (event.perpetrator, event.victim),
                 crimeFaction: faction,

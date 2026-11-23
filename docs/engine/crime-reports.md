@@ -228,10 +228,8 @@ The vanilla scripts count only these statistics:
 
 ## Where OpenSky differs
 
-- OpenSky's witness reports only when a guard is within 4000 units of it. In the game the alarm
-  reaches every actor in range at once, and a non-guard witness fights, takes back, or flees.
-- OpenSky's report stays open until a guard is reached. In the game a crime becomes final after
-  30 seconds, and only then sends `ADCR`.
+- OpenSky raises no alarm. In the game the alarm reaches every actor in range at once, and a
+  non-guard witness fights, takes back, or flees.
 - OpenSky does not move the crime gold to the faction of the guard that answers, and has no cap on
   the guards that answer.
 - OpenSky's guards do not fight NPC criminals, and an NPC criminal does not flee from them.
