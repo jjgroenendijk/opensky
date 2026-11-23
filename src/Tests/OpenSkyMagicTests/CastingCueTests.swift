@@ -39,14 +39,6 @@ struct CastingCueTests {
         ])
     }
 
-    @Test func theMainEffectIsTheCostliestOneNotSkipped() {
-        #expect(CastingCueRule
-            .mainEffect(costs: [3.9, 3.2, 1], skipped: [false, false, false]) == 0)
-        #expect(CastingCueRule.mainEffect(costs: [2, 9, 4], skipped: [false, true, false]) == 2)
-        #expect(CastingCueRule.mainEffect(costs: [5, 5.5], skipped: [false, false]) == 0)
-        #expect(CastingCueRule.mainEffect(costs: [1], skipped: [true]) == nil)
-    }
-
     @Test func reachingReadySwapsTheChargeSoundForTheReadySound() {
         let cues = CastingCueRule.cues(from: Self.hand(.charging), to: Self.hand(.ready), cast: nil)
         #expect(cues == [

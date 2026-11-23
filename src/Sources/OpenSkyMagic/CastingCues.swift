@@ -99,21 +99,6 @@ nonisolated enum CastingCueRule {
         ].compactMap(\.self)
     }
 
-    /// The spell's main effect: the highest whole-number cost, the earlier one on a tie.
-    /// `skipped` marks effects with flag bit 24, and a concentration spell's effects
-    /// with no projectile.
-    static func mainEffect(costs: [Float], skipped: [Bool]) -> Int? {
-        var best: (index: Int, cost: Int)?
-        for (index, cost) in costs.enumerated() where !skipped[index] {
-            let whole = cost.isFinite ? Int(cost) : 0
-            if let current = best, whole <= current.cost {
-                continue
-            }
-            best = (index, whole)
-        }
-        return best?.index
-    }
-
     /// "The sound that plays when the player draws or sheathes their weapons with this
     /// spell in either hand."
     static func drawCues(
