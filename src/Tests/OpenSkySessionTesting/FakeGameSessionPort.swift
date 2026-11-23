@@ -48,6 +48,9 @@ nonisolated public final class FakeGameSessionPort: GameSessionPort {
     public var setCinematicCameraCalls: [(pose: CinematicCameraPose?, shakeOffset: SIMD3<Float>)] =
         []
     public var setDialogueCameraFocusCalls: [DialogueCameraFocus?] = []
+    public var setDialogueSpeakerAimCalls: [SIMD3<Float>?] = []
+    public var dialogueTurnProgress: Float?
+    public var dialogueSpeakerAim: SIMD3<Float>?
     public var setFirstPersonFOVYCalls: [Float] = []
     public var setMovementModeCalls: [CameraMovementMode] = []
     public var settlePlayerOnGroundCallCount = 0
@@ -170,6 +173,10 @@ nonisolated extension FakeGameSessionPort {
 
     public func setDialogueCameraFocus(_ focus: DialogueCameraFocus?) {
         setDialogueCameraFocusCalls.append(focus)
+    }
+
+    public func setDialogueSpeakerAim(_ aim: SIMD3<Float>?) {
+        setDialogueSpeakerAimCalls.append(aim)
     }
 
     public func setFirstPersonFOVY(radians: Float) {

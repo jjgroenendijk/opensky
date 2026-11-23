@@ -1,5 +1,6 @@
-// The dialogue camera and its control controls. The camera frames the speaker's
-// head every frame, because the head moves. The speaker focus that holds the
+// The dialogue camera and its control controls. A conversation turns the first-person
+// view to the speaker's head, and the race menu frames the player's face. The speaker focus that
+// holds the
 // speaker still is a `DialogueCoordinator` call. See docs/engine/dialogue-camera.md.
 
 import Foundation
@@ -60,15 +61,16 @@ final class DialogueCameraController {
         portraitYaw = nil
         portraitZoom = 1
         lastPortraitTime = nil
+        gameSession.setDialogueCameraFocus(nil)
         guard
             let speaker = speaker(),
             let head = game.dialogueWorld.headPosition(of: speaker)
         else {
-            gameSession.setDialogueCameraFocus(nil)
+            gameSession.setDialogueSpeakerAim(nil)
             game.dialogueWorld.run(game.dialogue.releaseSpeakerFocus())
             return
         }
-        gameSession.setDialogueCameraFocus(DialogueCameraFocus(headPosition: head))
+        gameSession.setDialogueSpeakerAim(head)
         game.dialogueWorld.run(game.dialogue.focus(
             on: speaker,
             playerEye: gameSession.playerEyePosition

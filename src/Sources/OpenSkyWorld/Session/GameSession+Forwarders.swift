@@ -40,6 +40,18 @@ extension GameSession {
         dialogueCameraSteps.setDialogueCameraFocus(focus)
     }
 
+    public func setDialogueSpeakerAim(_ aim: SIMD3<Float>?) {
+        dialogueCameraSteps.setDialogueSpeakerAim(aim)
+    }
+
+    public var dialogueTurnProgress: Float? {
+        dialogueCameraSteps.dialogueTurnProgress
+    }
+
+    public var dialogueSpeakerAim: SIMD3<Float>? {
+        rigs.dialogueCameraState.speakerAim
+    }
+
     public var playerEyePosition: SIMD3<Float> {
         dialogueCameraSteps.playerEyePosition
     }
