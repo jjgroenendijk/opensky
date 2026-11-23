@@ -103,7 +103,7 @@ extension StorySocialSearchAdapter.QuestReferences {
 }
 
 extension StorySocialSearchAdapter {
-    public func socialFrame() -> SocialFrame? {
+    public func socialFrame(partners: [ReferenceKey]) -> SocialFrame? {
         let inScenes = game.scenes.actorsInScenes()
         let combat = game.combat.loop
         let seats = game.furniture.occupancies
@@ -128,13 +128,18 @@ extension StorySocialSearchAdapter {
             social.isLargeCreature = sceneCast.isLargeCreature(actor.key)
             return social
         }
-        return SocialFrame(
+        var frame = SocialFrame(
             actors: actors,
             now: sceneCast.sceneSeconds,
             isInterior: game.streamer.interiorScene != nil,
             playerInConversation: game.dialogue.conversationSpeaker != nil,
             player: game.gameSession?.walkController.feetPosition
         )
+        let loaded = Set(actors.map(\.key))
+        for partner in partners where !loaded.contains(partner) {
+            frame.absentPartners[partner] = game.aiWorld.packageActorPosition(partner)
+        }
+        return frame
     }
 
     /// xEdit's furniture animation enum: 1 sit, 2 lay. A lean counts as standing.

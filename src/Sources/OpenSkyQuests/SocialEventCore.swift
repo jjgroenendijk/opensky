@@ -80,6 +80,8 @@ nonisolated public struct SocialFrame: Sendable {
     public var playerInConversation: Bool
     /// The player's feet. Nil: no player, and no actor is near enough to talk.
     public var player: SIMD3<Float>?
+    /// Where a conversation partner with no loaded body stands, when the world knows.
+    public var absentPartners: [ReferenceKey: SIMD3<Float>] = [:]
 
     public init(
         actors: [SocialActor], now: Double, isInterior: Bool, playerInConversation: Bool,

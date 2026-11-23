@@ -44,18 +44,41 @@ struct SceneConversationTests {
         events.filter { $0.scene == scene.formID }.map(\.step)
     }
 
-    @Test func itWaitsWhileAPartnerHasNoLoadedBody() throws {
+    /// The walk is asked whatever the partner's loaded state is, and the scene neither
+    /// begins nor ends while the two have not met.
+    @Test func itAsksForTheWalkToAPartnerWithNoLoadedBody() throws {
         let store = WorldStateStore()
         let host = FakeSceneHost()
         host.unloaded = [partner]
+        host.partnersMet = false
+        let pending = ScenePendingLines()
         let talk = try scene(0x4200)
-        let waiting = try runtime(store, [talk], host: host, partner: partner)
+        let waiting = try runtime(store, [talk], host: host, pending: pending, partner: partner)
             .start(talk.formID)
-        #expect(steps(waiting, of: talk) == [.began, .waitingForConversation])
-        #expect(try runtime(store, [talk], host: host, now: 45, partner: partner).tick().isEmpty)
+        #expect(steps(waiting, of: talk) == [.began, .waitingForPartners])
+        #expect(pending.meeting?.scene == talk.formID)
+        let later = try runtime(
+            store, [talk], host: host, pending: pending, now: 20, partner: partner
+        ).tick()
+        #expect(later.isEmpty)
+    }
 
-        host.unloaded = []
-        let begun = try runtime(store, [talk], host: host, now: 46, partner: partner).tick()
+    /// After the walk is asked, the scene pauses 2 seconds before it can begin.
+    @Test func itPausesAfterItAskedForTheWalk() throws {
+        let store = WorldStateStore()
+        let host = FakeSceneHost()
+        host.partnersMet = false
+        let pending = ScenePendingLines()
+        let talk = try scene(0x4200)
+        _ = try runtime(store, [talk], host: host, pending: pending, partner: partner)
+            .start(talk.formID)
+        host.partnersMet = true
+        #expect(try runtime(
+            store, [talk], host: host, pending: pending, now: 1, partner: partner
+        ).tick().isEmpty)
+        let begun = try runtime(
+            store, [talk], host: host, pending: pending, now: 2.5, partner: partner
+        ).tick()
         #expect(steps(begun, of: talk).contains(.phaseStarted(0)))
     }
 

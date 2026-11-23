@@ -15,6 +15,8 @@ extension SceneRuntime {
     static let meetingRetrySeconds: Double = 60
     /// How long a line waits for its speaker to face the listener. OpenSky's choice.
     static let facingSeconds: Double = 3
+    /// `fAIWalkAwayTimerForConversation`: a scene that asked for the walk pauses this long.
+    static let meetingPauseSeconds: Double = 2
 
     /// The conversation scene that has begun, other than `scene`.
     func playingConversation(except scene: FormID) -> CatalogScene? {
@@ -45,10 +47,10 @@ extension SceneRuntime.Playback {
             end(.stopped)
             return false
         }
+        // Only the speaker needs a loaded body: the walk is asked whatever the partner's is.
         let ready = partners.count == 2 && partners.allSatisfy { partner in
             runtime.holder(of: partner, except: entry.formID) == nil
-                && runtime.host?.hasLoadedBody(partner) != false
-        }
+        } && runtime.host?.hasLoadedBody(partners[0]) != false
         if !ready, runtime.pendingLines.meeting?.scene == entry.formID {
             runtime.pendingLines.meeting = nil
         }
@@ -86,11 +88,12 @@ extension SceneRuntime.Playback {
         return runtime.now >= (lines.meetingRetryAt[entry.formID] ?? 0)
     }
 
-    /// False while one partner still walks to the other. A pair that does not meet
-    /// in `meetingSeconds` gives its turn to another scene.
+    /// False while one partner still walks to the other, and for the pause after the walk
+    /// was asked. A pair that does not meet in `meetingSeconds` gives its turn away.
     private mutating func partnersMet(_ speaker: ReferenceKey, _ partner: ReferenceKey) -> Bool {
         let lines = runtime.pendingLines
-        if runtime.host?.conversationPartnersMeet(speaker, partner) != false {
+        let paused = lines.meeting.map { runtime.now - $0.since < SceneRuntime.meetingPauseSeconds }
+        if runtime.host?.conversationPartnersMeet(speaker, partner) != false, paused != true {
             lines.meeting = nil
             return true
         }

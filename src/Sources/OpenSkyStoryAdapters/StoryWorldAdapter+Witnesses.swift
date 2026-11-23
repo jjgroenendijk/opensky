@@ -103,8 +103,8 @@ extension StoryWorldAdapter {
         socialSearch.createQuestReference(base, at: anchor)
     }
 
-    public func socialFrame() -> SocialFrame? {
-        socialSearch.socialFrame()
+    public func socialFrame(partners: [ReferenceKey]) -> SocialFrame? {
+        socialSearch.socialFrame(partners: partners)
     }
 
     public func socialCanSee(_ observer: SocialActor, _ body: SocialActor) -> Bool {

@@ -22,7 +22,7 @@ struct StoryManagerCoordinatorTests {
             ConditionContext()
         }
 
-        func socialFrame() -> SocialFrame? {
+        func socialFrame(partners _: [ReferenceKey]) -> SocialFrame? {
             nil
         }
 
