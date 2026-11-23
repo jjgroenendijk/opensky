@@ -87,11 +87,24 @@ nonisolated extension SocialEventCore {
         var commands: [SocialEventCommand] = []
         var kept: [SocialConversation] = []
         for var talk in state.conversations {
+            // A partner with no loaded body is walked to where it stands, and never met.
+            let absent = byKey[talk.partner] == nil
+            let stand = frame.absentPartners[talk.partner].map {
+                SocialActor(key: talk.partner, feet: $0, interruptFlags: nil)
+            }
             guard
-                let speaker = byKey[talk.speaker], let partner = byKey[talk.partner],
+                let speaker = byKey[talk.speaker], let partner = byKey[talk.partner] ?? stand,
                 !speaker.isDead, !partner.isDead
             else {
                 commands += end(talk, settings: settings, state: &state)
+                continue
+            }
+            if absent {
+                let asked = walkToAbsent(
+                    &talk, pair: (speaker, partner), now: frame.now, state: state
+                )
+                commands += asked ?? end(talk, settings: settings, state: &state)
+                kept += asked == nil ? [] : [talk]
                 continue
             }
             let inScene = speaker.isInScene || state.sceneMeetings.contains(speaker.key)
@@ -104,17 +117,9 @@ nonisolated extension SocialEventCore {
                     continue
                 }
                 let trigger = triggerDistance(speaker, partner, settings: settings, canSee: canSee)
-                commands.append(.hold(partner.key))
-                if simd_distance(speaker.feet, partner.feet) > trigger {
-                    talk.phase = .approaching
-                    if speaker.posture != .standing {
-                        commands.append(.standUp(speaker.key))
-                    }
-                    commands += walk(&talk, speaker: speaker, partner: partner, now: frame.now)
-                } else {
-                    talk.phase = .talking
-                    commands += face(speaker.key, partner.key)
-                }
+                commands += answer(
+                    &talk, pair: (speaker, partner), trigger: trigger, now: frame.now
+                )
             case .approaching:
                 guard !speaker.isInCombat, inScene else {
                     commands += end(talk, settings: settings, state: &state)
@@ -138,6 +143,24 @@ nonisolated extension SocialEventCore {
         state.conversations = kept
         state.sceneMeetings.formIntersection(kept.map(\.speaker))
         return commands
+    }
+
+    /// The quest answered: the partner holds, and the speaker walks over when the pair
+    /// stands further apart than `trigger`.
+    private static func answer(
+        _ talk: inout SocialConversation, pair: (speaker: SocialActor, partner: SocialActor),
+        trigger: Float, now: Double
+    ) -> [SocialEventCommand] {
+        var commands: [SocialEventCommand] = [.hold(pair.partner.key)]
+        guard simd_distance(pair.speaker.feet, pair.partner.feet) > trigger else {
+            talk.phase = .talking
+            return commands + face(pair.speaker.key, pair.partner.key)
+        }
+        talk.phase = .approaching
+        if pair.speaker.posture != .standing {
+            commands.append(.standUp(pair.speaker.key))
+        }
+        return commands + walk(&talk, speaker: pair.speaker, partner: pair.partner, now: now)
     }
 
     /// `iAISocialDistanceToTriggerEvent`, raised to 500 units when the speaker sees the
@@ -180,6 +203,21 @@ nonisolated extension SocialEventCore {
         abs(speaker.feet.z - partner.feet.z) > SocialLimits.heightAllowance
             ? SocialLimits.stopDistance + SocialLimits.heightAllowance
             : SocialLimits.stopDistance
+    }
+
+    /// The walk to a partner with no loaded body, asked once. Nil ends the conversation:
+    /// no scene asked for it, or the speaker fights.
+    private static func walkToAbsent(
+        _ talk: inout SocialConversation, pair: (speaker: SocialActor, partner: SocialActor),
+        now: Double, state: SocialState
+    ) -> [SocialEventCommand]? {
+        let (speaker, partner) = pair
+        guard state.sceneMeetings.contains(speaker.key), !speaker.isInCombat else { return nil }
+        guard talk.phase != .approaching else { return [] }
+        talk.phase = .approaching
+        let stands = speaker.posture == .standing
+        return (stands ? [] : [.standUp(speaker.key)])
+            + walk(&talk, speaker: speaker, partner: partner, now: now)
     }
 
     private static func walk(

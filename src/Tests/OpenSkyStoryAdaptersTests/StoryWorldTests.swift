@@ -184,7 +184,7 @@ struct StoryWorldTests {
             CombatActorObservation(key: Self.actor, feet: .zero),
             CombatActorObservation(key: Self.killer, feet: .zero, isDead: true)
         ]
-        let frame = try #require(adapter.socialFrame())
+        let frame = try #require(adapter.socialFrame(partners: []))
         #expect(frame.actors.map(\.isInScene) == [true, false])
         #expect(frame.actors.map(\.isDead) == [false, true])
         #expect(!frame.isInterior)

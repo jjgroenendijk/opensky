@@ -13,7 +13,7 @@ struct SocialEventCoordinatorTests {
     private final class World: SocialEventWorld {
         var frame: SocialFrame?
 
-        func socialFrame() -> SocialFrame? {
+        func socialFrame(partners _: [ReferenceKey]) -> SocialFrame? {
             frame
         }
 
@@ -100,6 +100,38 @@ struct SocialEventCoordinatorTests {
         social.runPass()
         #expect(social.state.sceneMeetings.isEmpty)
         #expect(social.state.conversations.isEmpty)
+    }
+
+    @Test func theSpeakerWalksToAPartnerWithNoLoadedBodyAndNeverMeetsIt() {
+        let world = World()
+        let social = SocialEventCoordinator(world: world)
+        func frame(speakerAt distance: Float, now: Double, place: SIMD3<Float>?) -> SocialFrame {
+            var frame = SocialFrame(
+                actors: [SocialActor(
+                    key: first,
+                    feet: SIMD3(distance, 0, 0),
+                    interruptFlags: 0x02
+                )],
+                now: now, isInterior: false, playerInConversation: false, player: .zero
+            )
+            frame.absentPartners[second] = place
+            return frame
+        }
+        let place = SIMD3<Float>(900, 0, 0)
+        #expect(!social.meetForScene(speaker: first, partner: second, now: 0))
+        #expect(social.sceneMeetingPartners == [second])
+        world.frame = frame(speakerAt: 0, now: 0, place: place)
+        #expect(social.tick().contains(.walk(first, to: place)))
+        #expect(social.state.conversations.first?.phase == .approaching)
+
+        #expect(!social.meetForScene(speaker: first, partner: second, now: 1))
+        world.frame = frame(speakerAt: 890, now: 1, place: place)
+        #expect(social.tick().isEmpty, "the walk is asked once")
+        #expect(!social.meetForScene(speaker: first, partner: second, now: 1))
+
+        world.frame = frame(speakerAt: 890, now: 2, place: nil)
+        _ = social.tick()
+        #expect(social.state.conversations.isEmpty, "a partner with no known place ends it")
     }
 
     @Test func thePassRunsEveryFrameWhileAWorldIsLoaded() {

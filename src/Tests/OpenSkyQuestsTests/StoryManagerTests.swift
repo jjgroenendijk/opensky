@@ -230,7 +230,7 @@ struct StoryManagerTests {
             ConditionContext().using(ConditionFunctionRegistry())
         }
 
-        func socialFrame() -> SocialFrame? {
+        func socialFrame(partners _: [ReferenceKey]) -> SocialFrame? {
             nil
         }
 

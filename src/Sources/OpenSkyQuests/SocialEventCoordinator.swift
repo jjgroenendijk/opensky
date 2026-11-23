@@ -11,8 +11,9 @@ public import OpenSkyQuestsInterface
 /// What `SocialEventCoordinator` reads from the running session.
 @MainActor
 public protocol SocialEventWorld: AnyObject {
-    /// Nil while no world is loaded.
-    func socialFrame() -> SocialFrame?
+    /// Nil while no world is loaded. Each of `partners` with no loaded body gets its
+    /// package position in `SocialFrame.absentPartners`.
+    func socialFrame(partners: [ReferenceKey]) -> SocialFrame?
     /// Whether `observer` has a clear sight line to `other`.
     func socialCanSee(_ observer: SocialActor, _ other: SocialActor) -> Bool
 }
@@ -52,7 +53,7 @@ public final class SocialEventCoordinator {
 
     /// One pass now, whatever the frame count. The next `tick()` returns its commands.
     public func runPass() {
-        guard let frame = world.socialFrame() else { return }
+        guard let frame = world.socialFrame(partners: sceneMeetingPartners) else { return }
         dropStaleMeetings(now: frame.now)
         let world = world
         let commands = SocialEventCore.pass(frame, settings: settings, state: &state) {
@@ -127,6 +128,11 @@ public final class SocialEventCoordinator {
         state.sceneMeetings.insert(speaker)
         meetingAsked[speaker] = now
         return false
+    }
+
+    /// The partners of the meetings scenes asked for, to find those with no loaded body.
+    public var sceneMeetingPartners: [ReferenceKey] {
+        state.conversations.filter { state.sceneMeetings.contains($0.speaker) }.map(\.partner)
     }
 
     /// A meeting no scene has asked for in this time ends by the normal rules.

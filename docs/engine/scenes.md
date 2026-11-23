@@ -346,18 +346,24 @@ ends, and shows all text. Each line sits in its own phase, and the next phase st
 line ends. A voiced line gets 0.25 s more. No limit on the number of scenes at once was found
 beyond the one-at-a-time rule above.
 
-In OpenSky, a conversation scene whose partners are loaded and free asks the
-[social pass](/engine/random-conversations.md#walking-together) to bring them together. The first
-partner walks to the second, by the same distances as after an `ADIA` event, and the scene
-begins when they stand together. Before each line of any scene, the speaker turns to its
-listener: the action's look target, or the other partner of a conversation scene. The line
-starts within 20 degrees, or 80 degrees while the speaker walks. The trace of
-`openskycli game state scenes` shows "waiting for its partners to meet" and "speaker turns to
-the listener".
+In OpenSky, a conversation scene whose partners are free, and whose speaker has a loaded body,
+asks the [social pass](/engine/random-conversations.md#walking-together) to bring them together.
+The first partner walks to the second, by the same distances as after an `ADIA` event. After it
+asked for the walk, the scene pauses for 2 seconds, and it begins when the two stand together.
+Before each line of any scene, the speaker turns to its listener: the action's look target, or
+the other partner of a conversation scene. The line starts within 20 degrees, or 80 degrees
+while the speaker walks. The trace of `openskycli game state scenes` shows "waiting for its
+partners to meet" and "speaker turns to the listener".
+
+A partner with no loaded body does not stop the walk. When a loaded cell holds the partner's
+place, the speaker walks there once. The two never count as met, so the scene neither begins
+nor ends, as in the game.
 
 OpenSky differs in these points:
 
 - It tests and turns the body, where the game tests the head.
+- A pair that stands together when the scene asks begins at once, without the 2 second pause.
+- A partner whose place no loaded cell holds gets no walk.
 - One pair walks together at a time. A pair that has not met after 30 seconds gives its turn to
   another scene and tries again 60 seconds later. A line waits at most 3 seconds for its speaker
   to turn. These times are OpenSky's choices ([unverified values](/engine/unverified-values.md)).
@@ -369,6 +375,11 @@ market and both speakers load, the scene begins, if no other conversation plays 
 after the last one is over.
 
 ## Observed on the install
+
+In a new game in the Riften market at 06:00, after 4 hours of rest, the plaza scenes took
+turns over 160 seconds: `RiftenGrandPlazaScene40` waited about 20 seconds for its pair and
+played its lines, and `RiftenGrandPlazaScene05` and `03` ended while they waited. None waited
+longer than a walk across the market.
 
 `Skyrim.esm` has 1,706 scenes the catalog can name. Of the scenes whose actors are all
 forced-reference aliases and whose actions are dialogue or timers, 26 were played with no
