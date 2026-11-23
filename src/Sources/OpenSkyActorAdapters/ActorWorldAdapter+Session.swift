@@ -51,6 +51,9 @@ extension ActorWorldAdapter {
         gameSession.motion.playerMovement = PlayerSpeedScale.provider(
             settings: settings, game: game
         )
+        gameSession.motion.magnetismSighting = { [weak self] ray in
+            self?.magnetismSighting(along: ray)
+        }
         gameSession.worldTick.register(.breath) { [weak self, weak gameSession] delta in
             guard let gameSession else { return }
             self?.breathStep.advanceBreath(delta: delta, gameSession: gameSession)

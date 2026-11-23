@@ -9,6 +9,11 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWorld
 
+/// A checkbox whose target and action are set when the page wires its controls.
+private func launcherCheckbox(_ title: String) -> NSButton {
+    NSButton(checkboxWithTitle: title, target: nil, action: nil)
+}
+
 final class GraphicsPageViewController: NSViewController {
     private(set) var store: PlayerSettingsStore
     private(set) var presets: GraphicsPresetFiles
@@ -70,21 +75,12 @@ final class GraphicsPageViewController: NSViewController {
 
     let blinkingControl = NSButton(checkboxWithTitle: "Blinking", target: nil, action: nil)
     let eyeMovementControl = NSButton(checkboxWithTitle: "Eye movement", target: nil, action: nil)
-    let expressionsControl = NSButton(
-        checkboxWithTitle: "Dialogue expressions", target: nil, action: nil
-    )
-    let headTrackingControl = NSButton(
-        checkboxWithTitle: "Head tracking", target: nil, action: nil
-    )
-    let objectAnimationControl = NSButton(
-        checkboxWithTitle: "Animated objects", target: nil, action: nil
-    )
-    let furnitureControl = NSButton(
-        checkboxWithTitle: "Sit in furniture", target: nil, action: nil
-    )
-    let flyingMountLockControl = NSButton(
-        checkboxWithTitle: "Dragon target lock toggles", target: nil, action: nil
-    )
+    let expressionsControl = launcherCheckbox("Dialogue expressions")
+    let headTrackingControl = launcherCheckbox("Head tracking")
+    let objectAnimationControl = launcherCheckbox("Animated objects")
+    let furnitureControl = launcherCheckbox("Sit in furniture")
+    let meleeMagnetismControl = launcherCheckbox("Melee magnetism")
+    let flyingMountLockControl = launcherCheckbox("Dragon target lock toggles")
     let actorGraphsControl = NSButton(
         checkboxWithTitle: "Actor behaviour graphs", target: nil, action: nil
     )
@@ -197,7 +193,8 @@ final class GraphicsPageViewController: NSViewController {
                 layout.toggle(blinkingControl), layout.toggle(eyeMovementControl),
                 layout.toggle(expressionsControl), layout.toggle(headTrackingControl),
                 layout.toggle(objectAnimationControl), layout.toggle(furnitureControl),
-                layout.toggle(flyingMountLockControl), layout.toggle(actorGraphsControl),
+                layout.toggle(meleeMagnetismControl), layout.toggle(flyingMountLockControl),
+                layout.toggle(actorGraphsControl),
                 layout.toggle(combatTemperamentControl), layout.toggle(combatGameSettingsControl)
             ]),
             layout.group("Texture memory", [

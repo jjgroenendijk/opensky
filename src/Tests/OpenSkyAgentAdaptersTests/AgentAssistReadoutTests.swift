@@ -6,6 +6,7 @@ import OpenSkyAgentControl
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkySessionTesting
+import OpenSkyWorldInterface
 import Testing
 
 @MainActor
@@ -38,7 +39,28 @@ struct AgentAssistReadoutTests {
         #expect(reply.value(atPath: "danger.watches.0.dodges") == .init(2))
         #expect(reply.value(atPath: "danger.threats") == .array([]))
         #expect(reply.value(atPath: "autoAim") == .null)
+        #expect(reply.value(atPath: "magnetism") == .null, "no session runs")
         #expect(reply.value(atPath: "hitReactions.0.largeRecoil") == .bool(false))
         #expect(reply.value(atPath: "processLevels.high") == .number(3))
+    }
+
+    @Test func theAssistReadShowsTheLastMagnetismTurn() throws {
+        let session = FakeGameSessionPort()
+        var tracker = MeleeMagnetismTracker()
+        var frame = MeleeMagnetism.Frame()
+        frame.speed = 350
+        frame.strafe = 1
+        frame.deltaTime = 1
+        frame.weaponDrawn = true
+        let enemy = MeleeMagnetism.Sighting(actor: .generated(9), position: .zero)
+        _ = tracker.step(frame, sighting: enemy, eye: .zero)
+        session.motion.magnetismValue = tracker
+        host.gameSession = session
+        host.fakeCombat.assistReadoutValue = CombatAssistReadout()
+        let reply = try world.query(.assist)
+        #expect(reply.value(atPath: "magnetism.enabled") == .bool(true))
+        #expect(reply.value(atPath: "magnetism.turning") == .bool(true))
+        #expect(reply.value(atPath: "magnetism.target") == .string("\(ReferenceKey.generated(9))"))
+        #expect(reply.value(atPath: "magnetism.heading") == .init(Float(0.5)))
     }
 }

@@ -8,7 +8,7 @@ public import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWeather
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 public import simd
 
 /// What moves the player besides the walk controller: ground, seat, mount, package walk, and carry.
@@ -55,6 +55,10 @@ public final class SessionMotion {
     public var playerWalkIgnoresStatics = false
     /// Called once when the player reaches the last waypoint of `playerWalkPath`.
     public var onPlayerWalkArrived: (() -> Void)?
+    /// Melee magnetism, and the object under the crosshair it turns with
+    /// (docs/engine/combat-assist.md#melee-magnetism).
+    public var magnetism = MeleeMagnetismTracker()
+    public var magnetismSighting: (@MainActor (InteractionRay) -> MeleeMagnetism.Sighting?)?
     /// Paralysis: the player can look around but not move, jump, or attack.
     public var isPlayerParalysed = false
 

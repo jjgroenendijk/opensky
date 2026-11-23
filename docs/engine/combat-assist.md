@@ -12,7 +12,7 @@ The game gives the player's aim a small push toward a target: a turn toward the 
 crosshair on foot, and a soft auto-aim for projectiles. NPCs keep facing their target while they
 attack.
 
-OpenSky builds the other three rules; [in OpenSky](#in-opensky) says how and what it leaves out.
+[In OpenSky](#in-opensky) says how OpenSky builds each rule and what it leaves out.
 
 All values below are the ones that apply in play. Where `Skyrim.esm` overrides the program's
 built-in default, the page gives the plugin value.
@@ -125,6 +125,10 @@ By default each press flips the lock. With the INI setting `bTargetLockIsToggle`
 
 ## In OpenSky
 
+- Melee magnetism runs each frame the player moves on foot. The target is the nearest living
+  actor the view ray passes through, up to 750 units away and not behind a wall. With no actor
+  there, it is the object the crosshair can activate. The target's travel is read from its
+  place in this frame and the one before.
 - An NPC that starts a melee attack turns to its aim each step until the attack's follow-through
   ends. The aim is the target's place at the last refresh, on the game's two timers. Outside the
   band the 0.25 second timer is used.
@@ -137,13 +141,25 @@ By default each press flips the lock. With the INI setting `bTargetLockIsToggle`
 
 `openskycli game state assist` shows each attacker's `attackTracks` entry with its `aim` and the
 count of `refreshes`, and `autoAim`, the target the last player shot turned toward.
+`magnetism` shows the switch (`enabled`), whether the last frame turned the view (`turning`), and
+the `target`, `heading`, and `pitch` of the last turn, in radians.
 `state mount` shows `lockedTarget` and `lockCandidates`, the stored list in its order.
 
 - The launcher's "Dragon target lock toggles" switch is the toggle option. With it off, a press
   of Jump locks the first actor in range, and the lock ends when Jump comes up. `state mount`
   shows it as `lockIsToggle`, and `debug setting world.flyingMountLockToggle=off` turns it off
   for a run.
-- [WARNING] Melee magnetism is not built.
+- The launcher's "Melee magnetism" switch turns the rule off, and
+  `debug setting world.meleeMagnetism=off` does it for a run.
+- [INFO] The signs of the strafe term and the target term are OpenSky's. Both turn the view
+  toward the target: a strafe to the right, and a target that moves to the left, turn the view
+  to the left. The game's sign convention for the heading and the strafe input was not read.
+- [INFO] The look input is the angle the pointer turned the view in this frame. The turning
+  speed in its scale is 2π radians a second, the general actor turn speed. Example: at 60
+  frames a second the pitch of a look at an actor grows by 10 × 2 / 60, one third.
+- [INFO] The look term fades in the same range as the strafe term: it stops at 750 units.
+- [INFO] An object counts as a target only within the crosshair's activation reach, 192 units.
+  In the game any object under the crosshair counts.
 - [INFO] The order of the lock's candidates is OpenSky's: nearest to the centre of the range
   first. The game's order was not read.
 - [INFO] A lock that moves to the next candidate ends the attack order, as Switch Target does.

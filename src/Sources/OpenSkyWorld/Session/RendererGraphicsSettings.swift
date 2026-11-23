@@ -6,6 +6,7 @@ public import OpenSkyCells
 public import OpenSkyGameData
 public import OpenSkyRenderCore
 public import OpenSkyRendering
+import OpenSkyWorldInterface
 
 extension RenderScale {
     public init(store: PlayerSettingsStore) {
@@ -45,6 +46,7 @@ extension GameSession {
         func apply(_ store: PlayerSettingsStore) {
             session.renderer.applyGraphicsSettings(store)
             session.imageSpace.toneMapping.enabled = store.bool(.toneMapping)
+            session.motion.magnetism.isEnabled = store.bool(.meleeMagnetism)
         }
     }
 }

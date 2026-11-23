@@ -280,6 +280,8 @@ nonisolated extension PlayerSettingID {
     public static let furniture = Self("world.furniture")
     /// Holding Activate on a loose object or a dead body picks it up (docs/engine/grab.md).
     public static let playerGrab = Self("world.playerGrab")
+    /// On foot, the view turns a little with the object under the crosshair.
+    public static let meleeMagnetism = Self("world.meleeMagnetism")
     /// Jump flips a flying mount's target lock; off, the lock holds while Jump is held.
     public static let flyingMountLockToggle = Self("world.flyingMountLockToggle")
     /// NPCs and creatures run their own behaviour graphs.
@@ -322,6 +324,7 @@ nonisolated extension PlayerSettingsCatalog {
         row(("world.objectAnimation", .opensky), .toggle, "Animated objects", 1, applied: true),
         row(("world.furniture", .opensky), .toggle, "Sit in furniture", 1, applied: true),
         row(("world.playerGrab", .opensky), .toggle, "Grab objects", 1, applied: true),
+        row(("world.meleeMagnetism", .opensky), .toggle, "Melee magnetism", 1, applied: true),
         row(
             ("world.flyingMountLockToggle", .opensky),
             .toggle,
