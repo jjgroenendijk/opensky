@@ -145,7 +145,10 @@ A multiline field that wraps shows only the lines that fit its bounds, from `scr
 scroll it. A field
 with the `AutoSize` flag, or with GFx `textAutoSize` set by script, sizes its text to fit instead, so
 it draws every line. A field with GFx `verticalAutoSize` set to `top`, `center`, or `bottom` grows
-to hold its lines, so it draws every line too. The journal's quest description is one.
+to hold its lines, so it draws every line too. Its height becomes the lines' height plus a
+2-pixel gutter at the top and bottom. `top` keeps the top edge in place, `bottom` the bottom edge,
+and `center` the middle, and `_height` reports the new size. The journal's quest description is
+one. The dialogue topic rows are another: a row that wraps to two lines pushes the next row down.
 When the bottom edge cuts the next line, that line is drawn too, clipped at the edge.
 It does not count for `bottomScroll` or `maxscroll`.
 
