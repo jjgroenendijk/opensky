@@ -126,6 +126,8 @@ extension AgentActorReadoutAdapter {
             "combat": game.combat.loop?.phase(of: actor.key).map { .string("\($0)") } ?? .null,
             "aggro": game.combat.loop?.aggroZone(of: actor.key)
                 .map { .string($0.rawValue) } ?? .null,
+            "weapon": game.combat.loop?.drawState(of: actor.key)
+                .map { .string($0.rawValue) } ?? .null,
             "detects": game.perception.runtime
                 .map { .string("\($0.state(observer: actor.key, target: .player).state)") }
                 ?? .null

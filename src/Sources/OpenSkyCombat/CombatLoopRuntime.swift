@@ -113,6 +113,8 @@ public final class CombatLoopRuntime: CombatControlling {
     public internal(set) var following: [ReferenceKey: SIMD3<Float>] = [:]
     /// The actors that warn the player by their aggro radius.
     public internal(set) var aggroWatches: [ReferenceKey: AggroWatch] = [:]
+    /// The draw state of each NPC whose weapon is not away.
+    public internal(set) var weaponDraws: [ReferenceKey: NPCWeaponDraw] = [:]
 
     public init(settings: CombatSettings, world: (any CombatLoopWorld)? = nil) {
         self.settings = settings
@@ -385,6 +387,7 @@ public final class CombatLoopRuntime: CombatControlling {
         guard let world else { return }
         stepSeconds += Double(Self.fixedStepSeconds)
         let hostility = driveBehaviors(world: world)
+        stepWeaponDraws()
         state = CombatLoopState.derive(
             actors: world.combatActors(),
             hostility: { [weak world] key in

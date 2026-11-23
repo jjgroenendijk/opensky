@@ -54,6 +54,8 @@ struct ActorViewKey: Hashable {
     let actors: [ActorViewMember]
     /// Nil without a combat loop, where an NPC reports no action at all.
     let phases: [ReferenceKey: CombatBehaviorPhase]?
+    /// A draw moves on inside one phase, so it keys the view too.
+    let draws: [ReferenceKey: WeaponDrawState]?
 }
 
 struct ActorViewMember: Hashable {

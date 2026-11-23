@@ -33,11 +33,11 @@ extension ScriptActorBindingsAdapter {
             .actorValueRuntime = { [weak game = self.game] in game?.actorValues.runtime }
         bridge.natives.actor.ragdollRuntime = { [weak game = self.game] in game?.ragdoll.runtime }
         bridge.natives.actor.combatRuntime = { [weak game = self.game] in game?.combat.loop }
-        // Only the player tracks a draw state, so `IsWeaponDrawn` fails with a
-        // reason for everyone else instead of claiming sheathed.
+        // The same answer as the condition `IsWeaponMagicOut` reads.
         bridge.natives.actor.weaponDrawState = { [weak game = self.game] key in
-            guard key == .player else { return nil }
-            return game?.combat.melee?.state.drawState
+            guard key != .player else { return game?.combat.melee?.state.drawState }
+            guard let loop = game?.combat.loop else { return nil }
+            return loop.drawState(of: key)
         }
         bridge.natives.session.conditionData = { [weak game = self.game] in
             game?.runtimeStateWorld.conditionData() ?? .empty

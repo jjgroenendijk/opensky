@@ -39,9 +39,58 @@ nonisolated public enum WeaponDrawState: String, Equatable, Sendable, CaseIterab
         self == .drawn
     }
 
-    /// An NPC has no draw clips of its own state here: it holds its weapon while it
-    /// fights or searches, and has it away otherwise.
+    /// The state of an NPC nobody tracks a draw for: it holds its weapon while it fights
+    /// or searches, and has it away otherwise.
     public static func ofNPC(_ activity: ActorCombatActivity) -> WeaponDrawState {
         activity == .notFighting ? .sheathed : .drawn
+    }
+}
+
+/// An NPC's weapon over time. It draws when a fight or a search starts, and sheathes
+/// when that ends. See docs/engine/condition-functions-world.md#combat-actions.
+nonisolated public struct NPCWeaponDraw: Equatable, Sendable {
+    /// How long a draw or a sheathe lasts. OpenSky's choice (docs/engine/unverified-values.md).
+    public static let transitionSeconds: Float = 0.5
+
+    public private(set) var state = WeaponDrawState.sheathed
+    private var left: Float = 0
+
+    public init() {}
+
+    /// One step. `wantsDrawn` is true while the actor fights or searches. A draw that is
+    /// called off goes back to sheathed, and a sheathe that is called off to drawn.
+    public mutating func advance(wantsDrawn: Bool, by seconds: Float) {
+        switch state {
+        case .sheathed:
+            if wantsDrawn {
+                begin(.drawing)
+            }
+        case .drawn:
+            if !wantsDrawn {
+                begin(.sheathing)
+            }
+        case .drawing:
+            finish(wantsDrawn ? .drawn : nil, else: .sheathed, after: seconds)
+        case .sheathing:
+            finish(wantsDrawn ? nil : .sheathed, else: .drawn, after: seconds)
+        }
+    }
+
+    private mutating func begin(_ next: WeaponDrawState) {
+        state = next
+        left = Self.transitionSeconds
+    }
+
+    private mutating func finish(
+        _ end: WeaponDrawState?, else calledOff: WeaponDrawState, after seconds: Float
+    ) {
+        guard let end else {
+            state = calledOff
+            return
+        }
+        left -= max(seconds, 0)
+        if left <= 0 {
+            state = end
+        }
     }
 }

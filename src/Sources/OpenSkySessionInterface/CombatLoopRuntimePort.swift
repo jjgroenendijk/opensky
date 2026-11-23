@@ -15,6 +15,8 @@ public protocol CombatLoopRuntimePort: CombatControlling {
     func combatTarget(of key: ReferenceKey) -> ReferenceKey?
     func command(_ actor: ReferenceKey, by commander: ReferenceKey)
     func dismiss(_ actor: ReferenceKey)
+    /// Where an NPC's weapon is, or nil when the loop tracks no draw for `key`.
+    func drawState(of key: ReferenceKey) -> WeaponDrawState?
     /// True when `key` fights with a bow or a crossbow.
     func fightsRanged(_ key: ReferenceKey) -> Bool
     func hostility(of key: ReferenceKey) -> ActorHostility
