@@ -45,8 +45,15 @@ nonisolated extension DialogueMenuModel {
     /// A run whose text does not resolve becomes an empty string rather than
     /// being dropped, because the runs are also the count a readout reports and
     /// silently shortening a three-line response to two would misreport it.
-    public static func responseRuns(_ info: TopicInfo, strings: LocalizedStrings?) -> [String] {
-        info.responses.map { text($0.text, kind: .ilstrings, strings: strings) ?? "" }
+    public static func responseRuns(
+        _ info: TopicInfo,
+        strings: LocalizedStrings?,
+        tags: DialogueTextTags = .none,
+        topic: DialogueTopic? = nil
+    ) -> [String] {
+        info.responses.map {
+            tags.fill(text($0.text, kind: .ilstrings, strings: strings) ?? "", topic: topic)
+        }
     }
 
     /// Resolves one lstring, with or without string tables; a plugin that is
@@ -76,7 +83,8 @@ extension DialogueMenuModel {
     public static func rows(
         _ selection: DialogueSelection,
         runtime: any DialogueAccess,
-        strings: LocalizedStrings?
+        strings: LocalizedStrings?,
+        tags: DialogueTextTags = .none
     ) -> [DialogueTopicEntry] {
         selection.offers.compactMap { offer in
             guard let topic = runtime.dialogue.topic(offer.topic) else { return nil }
@@ -84,7 +92,10 @@ extension DialogueMenuModel {
             let shared = runtime.dialogue.responseSource(ofInfo: offer.info)
             return DialogueTopicEntry(
                 info: offer.info,
-                text: rowText(topic: topic, info: info, shared: shared, strings: strings),
+                text: tags.fill(
+                    rowText(topic: topic, info: info, shared: shared, strings: strings),
+                    topic: topic
+                ),
                 endsConversation: info?.flags.contains(.goodbye) ?? false,
                 isNew: !runtime.hasBeenSaid(offer.info)
             )
@@ -99,12 +110,15 @@ extension DialogueMenuModel {
         name: String,
         runtime: any DialogueAccess,
         strings: LocalizedStrings?,
+        tags: DialogueTextTags = .none,
         greets: Bool = true
     ) -> DialogueMenuModel {
         var model = DialogueMenuModel(
             speaker: name.isEmpty ? speaker.description : name,
             speakerKey: speaker,
-            topics: rows(runtime.topics(for: speaker), runtime: runtime, strings: strings)
+            topics: rows(
+                runtime.topics(for: speaker), runtime: runtime, strings: strings, tags: tags
+            )
         )
         if
             greets,
@@ -113,7 +127,10 @@ extension DialogueMenuModel {
         {
             model.beginResponse(
                 info: greeting.info,
-                runs: responseRuns(info, strings: strings),
+                runs: responseRuns(
+                    info, strings: strings, tags: tags,
+                    topic: runtime.dialogue.topic(ofInfo: greeting.info)
+                ),
                 isGreeting: true
             )
         }

@@ -32,8 +32,10 @@ protocol DialogueMenuHost: MenuInputConsumer, SendableMetatype {
     var headTracking: any HeadTrackingPort { get }
     var menuMode: any MenuModePort { get }
     var storyWorld: any StoryWorldPort { get }
+    var journalMenu: any JournalMenuPort { get }
     var streamer: any CellStreamerPort { get }
     var swfMovies: any SWFMovieSourcePort { get }
+    var worldRecords: (any WorldRecordsPort)? { get }
 }
 
 /// Holds the conversation's menu model and movie state for `game`.
@@ -75,6 +77,12 @@ final class DialogueMenuController {
         game.dialogue
     }
 
+    var textTags: DialogueTextTags {
+        guard let naming = game.journalMenu.currentAliasNaming else { return .none }
+        let quests = game.worldRecords?.questStore
+        return DialogueTextTags(naming: naming) { quests?.quest($0) }
+    }
+
     /// The open conversation's speaker, else the crosshair's Talk target.
     var speakerOrTarget: ReferenceKey? {
         model.speakerKey ?? game.streamer.talk.speaker
@@ -99,6 +107,7 @@ final class DialogueMenuController {
             name: game.dialogueWorld.speakerLabel(for: speaker),
             runtime: runtime,
             strings: dialogue.strings,
+            tags: textTags,
             greets: !continues
         )
         isOpen = true
