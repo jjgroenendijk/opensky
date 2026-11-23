@@ -42,8 +42,8 @@ once.
 
 - An actor hears the alarm when it is within 4000 units of the criminal.
 - An actor in a cell with less AI processing than the criminal's can still hear it. It must be
-  within 2000 units of a load door that leads into its own cell, and that door must be within 4000
-  units of the crime.
+  within 2000 units of one of the references the alarm carries, which look like the load doors near
+  the crime.
 
 These actors are skipped:
 
@@ -56,16 +56,14 @@ These actors are skipped:
 A guard hears the alarm with no other test, but only while no guard has taken the crime yet. Any
 other actor must pass two tests:
 
-1. It cares about the crime's faction: its own crime faction is the crime's faction, or the crime's
-   faction is in its faction's shared crime list.
-2. It is willing to be hostile to the criminal. This depends on its Aggression actor value: 0 only
-   for an enemy, 1 for a hostile relationship, 2 for some more cases, and 3 always. A criminal
-   already marked by crime counts as an enemy: an active faction enemy timer, the "alerted" mark,
-   or a recent theft.
+1. It cares about the crime's faction. Its crime faction is the one set on the reference, else the
+   `CRIF` of its base. It cares when that faction is the crime's faction, or when the crime's
+   faction is in that faction's shared crime list: the form list (`FLST`) its `CRGR` field names.
+   Only the hearer's list is read. A summoned or commanded actor has no crime faction.
+2. It is hostile to the criminal by the hostility test below.
 
 So a bystander that does not care about the faction, or that would not be hostile, does nothing.
-The victim and the direct witness of a pickpocket or an assault get the alarm directly, without
-these tests.
+The victim and the direct witnesses of the crime get the alarm directly, without these tests.
 
 Each actor that hears the alarm joins the witness list. When the crime is the player's ongoing
 assault, it goes straight into combat. Otherwise it gets an Alarm package aimed at the criminal. If
@@ -75,42 +73,105 @@ Example: a guard 3500 units from a thief hears the alarm. A guard 4200 units awa
 
 The crime gold is added when the crime is recorded, not when it is reported later.
 
+## The hostility test
+
+The test asks whether witness W is hostile to criminal C. It reads W's Aggression, from 0 to 3, and
+a reaction R: Neutral, Enemy, Ally, or Friend.
+
+1. Aggression 3 is always hostile.
+2. When C is an NPC that is in combat with W as its target and is not fleeing, W is hostile,
+   unless R is Ally or Friend.
+3. When C is the player, W is hostile if W is angry with the player (see the Alarm package below).
+4. Otherwise the table decides:
+
+| Aggression | Hostile when |
+| --- | --- |
+| 0 | R is Enemy and the player is marked to be attacked on sight |
+| 1 | R is Enemy |
+| 2 | R is Enemy or Neutral |
+| 3 | always |
+
+R comes from these steps:
+
+- For the player, R is Enemy at once when W, or one of W's factions, has the player as a faction
+  enemy, or when W is alerted. A faction keeps the player as an enemy for 24 game hours after the
+  last crime. W is alerted when it is angry with the player, when its crime faction has the player
+  as an enemy, or when the crimes W saw itself add up to a value of 100 or more. A theft counts the
+  item value times the count, and a stolen horse counts 100.
+- Otherwise R starts from the relationship rank: Lover, Ally, or Confidant give Ally, and the
+  factions are not read. Friend gives Friend. Acquaintance, Rival, and Foe give Neutral. Enemy and
+  Archnemesis give Enemy.
+- Then each faction of W is compared with each faction of C. A Neutral R takes the faction
+  reaction. An Enemy R takes any faction reaction that is not Neutral, so an allied faction beats a
+  personal enemy. A Friend R becomes Ally when a faction says Ally. The steps stop at Ally.
+
+Example: a shopkeeper with Aggression 1 and a Neutral reaction sees a theft. The shopkeeper is not
+hostile, so it does not fight.
+
 ## The Alarm package
 
 ```mermaid
 stateDiagram-v2
     [*] --> Decide
-    Decide --> Fight: victim of a violent crime, or hostile enough
     Decide --> Pursue: is a guard
-    Decide --> TakeBack: owner or pickpocket target of the player's theft
-    Decide --> Done: a guard has taken the crime, and this is not a guard
-    Decide --> Flee: any other witness
-    TakeBack --> Fight: the thief carries the recent theft mark
+    Decide --> Fight: hostile, or the victim of a violent crime
+    Decide --> Done: a guard has taken a crime
+    Decide --> Flee: may not take anything back
+    Decide --> Fight: may take back, and the player has the theft mark
+    Decide --> TakeBack: may take back
     TakeBack --> Done: reached the player / items returned
     TakeBack --> Decide: 20 s passed
     Pursue --> Fight: attack conditions met
     Fight --> Done
-    Flee --> Done: far enough, or reached its flee target
+    Flee --> Done
     Done --> [*]
 ```
 
-Each time the package decides, it sends the alarm again while no guard has taken the crime.
+A guard always pursues. A non-guard goes through each crime in its package once:
 
-- **Fight.** The witness was the victim of an assault, a murder, or worse, or it passes the
-  hostility test for a lesser crime. It starts combat with the criminal.
+1. When no guard has taken the crime, it sends the alarm again, with the same hearing rules. A guard
+   can take the crime during this. When the crime is still not taken, the witness may take back
+   when the crime is a theft or a pickpocket by the player, and the witness is the pickpocket
+   target, the item's owner, or a member of the owning faction (rank 0 or higher).
+2. A theft, a pickpocket, or a trespass makes it fight when it passes the hostility test. An
+   assault, a murder, or worse makes it fight only when it is the victim.
+
+Then the first match wins:
+
+1. **Fight.** A crime passed the fight test. This comes before taking back, so a hostile owner
+   attacks.
+2. **Done.** A guard has taken one of the crimes. When the player is still trespassing, the witness
+   turns to its trespass warning instead.
+3. **Flee.** The witness may not take anything back. When the player is trespassing, it turns to
+   its trespass warning instead. The Alarm package gives the flee no radius, so the witness does not
+   run: it says a reaction line and stays where it is. Confidence is not read.
+4. **Fight.** The player has the recent theft mark. The witness also becomes angry with the
+   player, which makes later hostility tests pass.
+5. **Take back.** It walks to the player and says its Steal line (`STEA`). When it reaches the
+   player, the stolen items go back to it and those crimes are deleted. After 20 seconds without
+   reaching the player it decides again.
+
 - **Pursue.** Only a guard. It goes after the criminal and says its Pursue idle line (`DIAL`
   subtype `PURS`) every 3 seconds.
-- **Take back.** The witness is the victim of the player's theft or pickpocket: the owner, a member
-  of the owning faction, or the pickpocket target. It walks to the player and says its Steal line
-  (`STEA`). When it reaches the player, the stolen items go back to it, those crimes are deleted,
-  and the theft mark goes. If the thief carries a recent theft mark, the victim attacks instead.
-  After 20 seconds without reaching the player it falls back to a normal alarm.
-- **Done.** A non-guard ends its package once a guard has taken the crime. The exception is a
-  trespass by the player: the witness then turns to the player.
-- **Flee.** It runs from the criminal. Outside it flees to 5000 units and is done at 2500; inside
-  to 3000 and done at 600. It counts as safe after 30 seconds.
 
 The package also ends when the witness enters combat.
+
+Example: a shopkeeper with Aggression 1 sees the player steal from its counter. It is not hostile,
+so it walks over to take the item back. If the player already has the theft mark, it attacks.
+
+## The recent theft mark
+
+The player gets the mark from a theft of an item whose owner leads to an actor, seen or not, a
+theft by a follower included. A caught pickpocket gives it too, and so does a witness that becomes
+alerted through the value of 100.
+
+The mark has no timer. It keeps the game day it was set. At the next theft or caught pickpocket, if
+the day has changed, that event only clears the mark, and the event after it sets the mark again. A
+guard that sees the player in combat with the mark clears it and raises an alarm against the player
+at once.
+
+Example: the player steals at 23:00 on day 5 and again at 01:00 on day 6. The second theft clears
+the mark, and a third theft sets it again.
 
 ## Killing the witnesses
 
