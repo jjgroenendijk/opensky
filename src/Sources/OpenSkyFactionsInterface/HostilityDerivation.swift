@@ -19,10 +19,13 @@ nonisolated public struct HostilityDerivation: Sendable {
     ) -> HostilityDecision {
         let resolved = resolveReaction(observer, toward: target)
         guard let stored = observer.hostilityOverride else {
+            // A crime makes even an unaggressive witness attack: the alarm's Fight is an
+            // attack, not a hostility test (docs/engine/crime-reports.md#the-alarm-package).
+            let attacks = resolved.source == .crime
+                ? resolved.reaction == .enemy
+                : resolved.reaction.provokesAttack(at: observer.aiData.aggression)
             return HostilityDecision(
-                hostility: resolved.reaction.provokesAttack(at: observer.aiData.aggression)
-                    ? .hostile
-                    : .neutral,
+                hostility: attacks ? .hostile : .neutral,
                 reaction: resolved.reaction,
                 source: resolved.source
             )
