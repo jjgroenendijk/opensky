@@ -95,6 +95,7 @@ Bad or unknown input must not stop the world, so these are counted, never faults
 | `undefinedEventFunction` | No script in the chain defines the function. This is the common case |
 | `unknownSaveScript` | A saved instance names a script this session cannot make |
 | `unknownSaveVariable` | A saved variable does not exist on the instance |
+| `unrestorableSaveCall` | A saved call names a script, function, or instance that is not there |
 
 A repeat `OnInit` is also a counted no-op.
 
@@ -215,6 +216,30 @@ Loading restores Papyrus last, after the world state and the game clock. The wor
 only queues rebuilds, and those rebuilds read the fired `OnInit` set. Restoring that set first is
 what stops every script running `OnInit` again on load.
 
+### Calls that wait
+
+A save also keeps every script call that waits: a call inside `Utility.Wait`, a call that
+waits for a quest to start, and a call whose turn has not come yet. They are the `PCAL` chunk.
+For each call the save holds its stack of functions, the place in each function, and the
+values of each function's variables. After the load the call goes on from the same place.
+
+Example: a script calls `Utility.Wait(10)` and the player saves 4 seconds later. After the
+load the script goes on 6 seconds later, at the line after the wait.
+
+- A function is found again by its script's name and its place in the script. When the
+  script's file changed between the save and the load, the call is dropped and counted as
+  `unrestorableSaveCall`.
+- A wait on a timer keeps the time it had left. A wait on a quest's start or on a stage's
+  fragments is answered when that start or stage ends in the new session.
+- Any other wait, such as one on an animation or on a moving reference, is not kept. The
+  call goes on at the next step, and the function it waited in answers with the default of
+  its return type: `None`, `False`, 0, or an empty string.
+- An object in a variable is saved as what it stands for: a script instance, a reference or
+  form, or a quest alias. An array is saved once, so two variables that shared it share it
+  again.
+- A call whose script is not loaded yet waits until the library has read the script.
+- A load drops the calls of the session it replaces.
+
 ## Lazy script library
 
 Decoding every `.pex` in an install costs far more than a session uses. The library asks a provider
@@ -226,8 +251,12 @@ used. A scene with no file system gets no VM, rather than a VM with an empty lib
 
 ## Stated simplifications
 
-- Objects and arrays are not saved. Their identity is made at run time and means nothing in the
-  world, so they save as `None` and restore to the compiled default.
+- Objects and arrays in a script's own variables are not saved. They save as `None` and restore
+  to the compiled default. The variables of a waiting call do keep them.
+- A waiting call of a magic effect's script is not saved. A load attaches the effect's script
+  again and starts it anew.
+- A saved call keeps an object of a kind with no place in the world, such as a sound instance,
+  as `None`.
 - A persistent reference's instances are never retired, not even by a world space change.
 - Only the player gets `OnLocationChange`. In the game, every actor's scripts get it when that actor
   moves to another location.

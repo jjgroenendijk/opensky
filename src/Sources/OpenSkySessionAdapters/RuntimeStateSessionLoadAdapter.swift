@@ -83,7 +83,7 @@ extension RuntimeStateSessionLoadAdapter {
         game.gameSession?.clearScriptScreenEffects()
         // After the world state, so the fired `OnInit` set is in place before the
         // queued cell rebuilds re-attach scripts.
-        game.scripts.restore(instances: file.scripts, timers: file.timers)
+        game.scripts.restore(instances: file.scripts, timers: file.timers, calls: file.calls)
         game.scripts.bridge?.publishFactionReactions()
         game.scripts.bridge?.publishLeveledEdits()
         saveContents.restoreRuntimeExtras()

@@ -27,6 +27,8 @@ nonisolated public struct OpenSkySaveFile: Equatable, Sendable {
     /// Pending Papyrus update timers at save time; empty without a `PTMR` chunk, so no
     /// `OnUpdate` is pending.
     public let timers: [PapyrusTimerState]
+    /// Papyrus calls that were running or waiting; empty without a `PCAL` chunk.
+    public let calls: PapyrusCallSnapshot
     /// Where the player stood; nil without a `PLOC` chunk.
     public let playerPlace: SavePlayerPlace?
 
@@ -39,6 +41,7 @@ nonisolated public struct OpenSkySaveFile: Equatable, Sendable {
         clock: GameClock? = nil,
         scripts: [PapyrusInstanceState] = [],
         timers: [PapyrusTimerState] = [],
+        calls: PapyrusCallSnapshot = .empty,
         playerPlace: SavePlayerPlace? = nil
     ) {
         self.formatVersion = formatVersion
@@ -49,6 +52,7 @@ nonisolated public struct OpenSkySaveFile: Equatable, Sendable {
         self.clock = clock
         self.scripts = scripts
         self.timers = timers
+        self.calls = calls
         self.playerPlace = playerPlace
     }
 

@@ -86,6 +86,7 @@ extension RuntimeStateSaveContentsAdapter {
             clock: game.gameSession?.gameClock,
             scripts: game.scripts.runtime?.instanceStates() ?? [],
             timers: game.scripts.runtime?.timerStates() ?? [],
+            calls: game.scripts.runtime?.callStates() ?? .empty,
             summary: summary,
             thumbnail: thumbnail,
             playerPlace: sessionClock.playerPlace()

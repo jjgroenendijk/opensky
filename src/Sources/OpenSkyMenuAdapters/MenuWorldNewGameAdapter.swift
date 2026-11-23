@@ -162,7 +162,7 @@ extension MenuWorldNewGameAdapter {
         game.gameSession?.gameClock = GameClock()
         game.gameSession?.clearScriptScreenEffects()
         game.effectsWorld.fadeOutHealthCues()
-        game.scripts.restore(instances: [], timers: [])
+        game.scripts.restore(instances: [], timers: [], calls: .empty)
         game.messages.reloadHelpRecords()
         game.storyWorld.rerunSessionStart()
         game.saveGames.resetPlayTime()

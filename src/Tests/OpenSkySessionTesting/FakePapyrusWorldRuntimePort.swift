@@ -46,6 +46,8 @@ nonisolated public final class FakePapyrusWorldRuntimePort: PapyrusWorldRuntimeP
     public var scriptVariableResolutionResult: ScriptVariableResolution?
     public var timerStatesCallCount = 0
     public var timerStatesResult: [PapyrusTimerState] = []
+    public var callStatesCallCount = 0
+    public var callStatesResult: PapyrusCallSnapshot?
     public var waitsCalls: [ReferenceKey] = []
     public var waitsResult: [PapyrusWaitReadout] = []
     public var instancesCalls: [ReferenceKey] = []
@@ -238,6 +240,14 @@ nonisolated extension FakePapyrusWorldRuntimePort {
     public func timerStates() -> [PapyrusTimerState] {
         timerStatesCallCount += 1
         return timerStatesResult
+    }
+
+    public func callStates() -> PapyrusCallSnapshot {
+        callStatesCallCount += 1
+        guard let callStatesResult else {
+            preconditionFailure("FakePapyrusWorldRuntimePort.callStates has no result")
+        }
+        return callStatesResult
     }
 
     public func waits(on key: ReferenceKey) -> [PapyrusWaitReadout] {

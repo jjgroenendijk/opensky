@@ -48,6 +48,15 @@ nonisolated extension OpenSkySaveFormat {
     /// optional, so this is also the size of every entry whose names are
     /// empty.
     static let minimumTimerEntrySize = 26
+    /// Smallest `PCAL` array: an empty element type (2) and a zero element count (4).
+    static let minimumCallArraySize = 6
+    /// Smallest `PCAL` call: the flag byte (1), three empty strings (6), a wake tag (1),
+    /// a return tag (1), and a zero frame count (4).
+    static let minimumCallEntrySize = 13
+    /// Smallest `PCAL` frame: an empty script name (2), the ordinal (4), the instruction
+    /// count (4), the instance flag (1), a return tag (1), the instruction index (4), and
+    /// a zero slot count (4).
+    static let minimumCallFrameSize = 20
     /// Smallest number of bytes a single `QSTS` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the running/completed flag byte (1), a
     /// zero stage count (4) and a zero objective count (4).

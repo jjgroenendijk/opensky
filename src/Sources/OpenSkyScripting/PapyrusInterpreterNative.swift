@@ -19,7 +19,7 @@ extension PapyrusNativeCalls {
             id: id,
             nativeCall: call,
             request: request,
-            continuation: PapyrusContinuation(resume: interpreter.resume(id:returning:)),
+            continuation: PapyrusContinuation(interpreter: interpreter),
             holdsInstance: holdsInstance
         )
     }

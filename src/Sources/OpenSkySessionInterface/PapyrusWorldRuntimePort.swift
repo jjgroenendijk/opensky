@@ -39,6 +39,7 @@ public protocol PapyrusWorldRuntimePort: AnyObject {
     var scheduler: PapyrusScheduler { get }
     func scriptVariableResolution() -> ScriptVariableResolution
     func timerStates() -> [PapyrusTimerState]
+    func callStates() -> PapyrusCallSnapshot
 
     func waits(on key: ReferenceKey) -> [PapyrusWaitReadout]
     func instances(on key: ReferenceKey) -> [PapyrusInstanceReadout]

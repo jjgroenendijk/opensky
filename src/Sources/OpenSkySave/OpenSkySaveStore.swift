@@ -117,6 +117,7 @@ nonisolated public struct OpenSkySaveStore: Sendable {
         clock: GameClock? = nil,
         scripts: [PapyrusInstanceState] = [],
         timers: [PapyrusTimerState] = [],
+        calls: PapyrusCallSnapshot = .empty,
         summary: SaveSummary? = nil,
         thumbnail: SaveThumbnail? = nil,
         playerPlace: SavePlayerPlace? = nil,
@@ -130,6 +131,7 @@ nonisolated public struct OpenSkySaveStore: Sendable {
             clock: clock,
             scripts: scripts,
             timers: timers,
+            calls: calls,
             summary: summary,
             thumbnail: thumbnail,
             playerPlace: playerPlace

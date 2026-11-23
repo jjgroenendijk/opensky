@@ -99,6 +99,7 @@ chunk cannot read into the next.
 | `PLOC` | the player's cell, position, and facing | world |
 | `PSCR` | Papyrus script instance state | world |
 | `PTMR` | pending Papyrus update timers | world |
+| `PCAL` | Papyrus calls that were running or waiting | world |
 | `INVN` | inventories | world |
 | `SPWN` | spawned references | world |
 | `QSTS` | quest running, stages, objectives | world |

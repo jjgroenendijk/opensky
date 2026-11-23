@@ -136,13 +136,17 @@ public final class ScriptCoordinator {
         runtime?.timers.advanceMenuTime(delta: delta)
     }
 
-    /// Quest instances first, so saved variables have somewhere to go. Timers
-    /// last, because each one names an instance that must already exist. The
+    /// Quest instances first, so saved variables have somewhere to go. Timers and
+    /// calls last, because each one names an instance that must already exist. The
     /// player's scripts then hear `OnPlayerLoadGame`.
-    public func restore(instances: [PapyrusInstanceState], timers: [PapyrusTimerState]) {
+    public func restore(
+        instances: [PapyrusInstanceState], timers: [PapyrusTimerState],
+        calls: PapyrusCallSnapshot = .empty
+    ) {
         bridge?.attachRunningQuestScripts()
         runtime?.lifecycle.restore(instanceStates: instances)
         runtime?.lifecycle.restore(timerStates: timers)
+        runtime?.lifecycle.restore(calls: calls)
         runtime?.scriptEvents.queuePlayerLoadGame()
         bridge?.skipJournals()
         lastPlayerLocation = nil

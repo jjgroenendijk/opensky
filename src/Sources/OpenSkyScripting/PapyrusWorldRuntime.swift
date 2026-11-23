@@ -119,6 +119,8 @@ public final class PapyrusWorldRuntime {
     public var lastQuestFragment: String?
     /// `SetStage` and `Start` calls waiting for their quest's fragments to run.
     var latentQuestWaits: [PapyrusLatentQuestWait] = []
+    /// Saved calls a load could not restore yet, because a script of theirs still loads.
+    var heldCallRestores = PapyrusHeldCallRestores()
     /// High, so these tokens never meet the shell's own wait tokens.
     var nextLatentQuestToken: UInt64 = 1 << 62
     /// Quests a shut-down stage stopped; their instances retire once the fragments ran.
@@ -431,6 +433,12 @@ nonisolated public final class PapyrusWorldSuspensionTracker {
         instanceByID = instanceByID.filter { $0.value != key }
         holdingIDs.subtract(ids)
         return ids
+    }
+
+    /// Forgets every suspension, as a load does.
+    func reset() {
+        instanceByID.removeAll()
+        holdingIDs.removeAll()
     }
 
     /// Follows one woken call: a re-suspension is tracked under its new id, a

@@ -31,6 +31,7 @@ nonisolated extension OpenSkySaveStore {
             clock: contents.clock,
             scripts: contents.scripts,
             timers: contents.timers,
+            calls: contents.calls,
             summary: contents.summary,
             thumbnail: contents.thumbnail,
             playerPlace: contents.playerPlace,

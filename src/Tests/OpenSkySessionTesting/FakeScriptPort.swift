@@ -11,12 +11,28 @@ nonisolated public final class FakeScriptPort: ScriptPort {
     public var advanceRestStepCallCount = 0
     public var bridge: PapyrusWorldStateBridge?
     public var reportSleepCalls: [(start: Double, end: Double)] = []
-    public var restoreCalls: [(instances: [PapyrusInstanceState], timers: [PapyrusTimerState])] = []
+    public var restoreCalls: [RestoreCall] = []
     public var runtime: PapyrusWorldRuntime?
     public var scriptsSnapshotValue: ScriptsSnapshot?
     public var advanceMenuTimeCalls: [Float] = []
 
     public init() {}
+}
+
+extension FakeScriptPort {
+    nonisolated public struct RestoreCall: CustomStringConvertible {
+        public let instances: [PapyrusInstanceState]
+        public let timers: [PapyrusTimerState]
+        public let calls: PapyrusCallSnapshot
+
+        public var description: String {
+            [
+                "instances: " + String(describing: instances),
+                "timers: " + String(describing: timers),
+                "calls: " + String(describing: calls)
+            ].joined(separator: ", ")
+        }
+    }
 }
 
 nonisolated extension FakeScriptPort {
@@ -32,8 +48,10 @@ nonisolated extension FakeScriptPort {
         reportSleepCalls.append((start: start, end: end))
     }
 
-    public func restore(instances: [PapyrusInstanceState], timers: [PapyrusTimerState]) {
-        restoreCalls.append((instances: instances, timers: timers))
+    public func restore(
+        instances: [PapyrusInstanceState], timers: [PapyrusTimerState], calls: PapyrusCallSnapshot
+    ) {
+        restoreCalls.append(RestoreCall(instances: instances, timers: timers, calls: calls))
     }
 
     public var scriptsSnapshot: ScriptsSnapshot {

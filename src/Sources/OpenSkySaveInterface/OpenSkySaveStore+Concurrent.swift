@@ -10,6 +10,7 @@ nonisolated public struct OpenSkySaveContents: Sendable {
     public let clock: GameClock?
     public let scripts: [PapyrusInstanceState]
     public let timers: [PapyrusTimerState]
+    public let calls: PapyrusCallSnapshot
     public let summary: SaveSummary?
     public let thumbnail: SaveThumbnail?
     public let playerPlace: SavePlayerPlace?
@@ -20,6 +21,7 @@ nonisolated public struct OpenSkySaveContents: Sendable {
         clock: GameClock? = nil,
         scripts: [PapyrusInstanceState] = [],
         timers: [PapyrusTimerState] = [],
+        calls: PapyrusCallSnapshot = .empty,
         summary: SaveSummary? = nil,
         thumbnail: SaveThumbnail? = nil,
         playerPlace: SavePlayerPlace? = nil
@@ -29,6 +31,7 @@ nonisolated public struct OpenSkySaveContents: Sendable {
         self.clock = clock
         self.scripts = scripts
         self.timers = timers
+        self.calls = calls
         self.summary = summary
         self.thumbnail = thumbnail
         self.playerPlace = playerPlace

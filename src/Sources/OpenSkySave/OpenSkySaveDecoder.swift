@@ -35,6 +35,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
             clock: body.clock,
             scripts: body.scripts,
             timers: body.timers,
+            calls: body.calls,
             playerPlace: body.playerPlace
         )
     }
@@ -125,6 +126,8 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
             body.scripts = try OpenSkySaveScriptDecoder.decodeScripts(payload)
         case OpenSkySaveFormat.ChunkTag.papyrusTimers:
             body.timers = try OpenSkySaveTimerDecoder.decodeTimers(payload)
+        case OpenSkySaveFormat.ChunkTag.papyrusCalls:
+            body.calls = try OpenSkySaveCallDecoder.decodeCalls(payload)
         default:
             // The gameplay-state chunks, in their own pass: the switch above is
             // at the strict cyclomatic-complexity limit, and a new chunk tag

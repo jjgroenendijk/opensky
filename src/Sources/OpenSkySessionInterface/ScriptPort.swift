@@ -8,7 +8,9 @@ public protocol ScriptPort: AnyObject {
     func advanceRestStep()
     var bridge: PapyrusWorldStateBridge? { get }
     func reportSleep(start: Double, end: Double)
-    func restore(instances: [PapyrusInstanceState], timers: [PapyrusTimerState])
+    func restore(
+        instances: [PapyrusInstanceState], timers: [PapyrusTimerState], calls: PapyrusCallSnapshot
+    )
     var runtime: PapyrusWorldRuntime? { get }
     var scriptsSnapshot: ScriptsSnapshot { get }
     func advanceMenuTime(delta: Float)
