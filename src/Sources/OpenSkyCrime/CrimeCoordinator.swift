@@ -21,19 +21,23 @@ public struct CrimeSessionData {
     public let texts: CrimeTexts
     /// Where an encounter zone's owner is read. Nil leaves out the zone step of ownership.
     public let encounterZones: EncounterZoneStore?
+    /// Where a faction's shared crime list (`CRGR`) is read. Nil: no faction shares.
+    public let formLists: FormListStore?
 
     public init(
         runtime: CrimeRuntime,
         locations: LocationStore?,
         pluginName: String,
         texts: CrimeTexts = .vanilla,
-        encounterZones: EncounterZoneStore? = nil
+        encounterZones: EncounterZoneStore? = nil,
+        formLists: FormListStore? = nil
     ) {
         self.runtime = runtime
         self.locations = locations
         self.pluginName = pluginName
         self.texts = texts
         self.encounterZones = encounterZones
+        self.formLists = formLists
     }
 }
 
@@ -96,6 +100,12 @@ public final class CrimeCoordinator {
     var actorFirstStrikes: Set<ActorStrike> = []
     /// Per crime faction, the actors whose guards fight them.
     var actorCriminals: [ReferenceKey: Set<ReferenceKey>] = [:]
+    /// The alarms seen crimes raised, and who fights whom because of them.
+    public internal(set) var alarm = CrimeAlarmState() {
+        didSet { conditionRevision &+= 1 }
+    }
+
+    public internal(set) var lastAlarm = AlarmNote.idle
     /// The player stands in a cell whose owner they may not use.
     public internal(set) var isPlayerTrespassing = false {
         didSet { conditionRevision &+= 1 }
@@ -164,8 +174,8 @@ public final class CrimeCoordinator {
         reporter.onCrimeCharged = { [weak self] event, outcome, witnesses in
             self?.track(event, outcome: outcome, witnesses: witnesses)
         }
-        reporter.onCrimeRecorded = { [weak self] event, _ in
-            self?.count(event)
+        reporter.onCrimeRecorded = { [weak self] event, outcome in
+            self?.recorded(event, outcome: outcome)
         }
         self.reporter = reporter
     }
@@ -273,7 +283,7 @@ public final class CrimeCoordinator {
             lastCrime = .trespassWarning(secondsLeft: Int(remaining.rounded(.up)))
             pendingCommands.append(.showNotice(crimeTexts.trespassWarning))
             if let witness = reporter.witnesses.witnesses(of: .player).first {
-                pendingCommands.append(.speakTrespassWarning(by: witness))
+                pendingCommands.append(.sayTopic("TRES", by: witness))
             }
         } else if step.charges {
             reportTrespass(in: location)

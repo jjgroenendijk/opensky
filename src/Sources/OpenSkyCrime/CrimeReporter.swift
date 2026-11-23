@@ -267,6 +267,7 @@ public final class CrimeReporter: CrimeReporting {
             stolenValue: unitValue * Int64(max(0, count))
         )
         event.stolenCount = max(0, count)
+        event.stolenItem = item
         return event
     }
 

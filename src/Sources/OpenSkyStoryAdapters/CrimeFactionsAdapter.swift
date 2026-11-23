@@ -44,6 +44,20 @@ extension CrimeFactionsAdapter {
     }
 
     /// The same derivation the combat loop asks.
+    public func alarmReaction(
+        of observer: ReferenceKey, toward target: ReferenceKey
+    ) -> AlarmReactionTerms? {
+        guard
+            let derivation = game.factions.runtime?.derivation,
+            let mine = game.factions.profile(of: observer),
+            let theirs = game.factions.profile(of: target)
+        else { return nil }
+        return AlarmReactionTerms(
+            relationship: derivation.relationshipReaction(of: mine, toward: theirs),
+            faction: derivation.factionReaction(of: mine, toward: theirs)
+        )
+    }
+
     public func reactionTerms(of observer: ActorSocialProfile) -> ReactionTermsReadout? {
         guard
             let player = game.factions.profile(of: .player),

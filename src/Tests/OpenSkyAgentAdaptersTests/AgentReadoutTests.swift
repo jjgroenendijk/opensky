@@ -10,6 +10,7 @@ import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyCombatInterface
 import OpenSkyConditions
+import OpenSkyCrimeInterface
 import OpenSkyEngineTesting
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -192,6 +193,27 @@ struct AgentReadoutTests {
             return
         }
         #expect(flying.count == 1)
+    }
+
+    @Test func theAlarmStateListsWitnessesFightsAndTheMark() throws {
+        let witness = ReferenceKey.generated(7)
+        host.crimeAlarmReadout = CrimeAlarmReadout(
+            witnesses: [.init(key: witness, role: "takeBack", criminal: .player, crimes: 1)],
+            fighters: [.init(witness: witness, criminals: [.player])],
+            angry: [witness], theftMarkDay: 3, openCrimes: 1, last: "Actor: takeBack"
+        )
+        let state = try object(world.query(.alarm))
+        #expect(state["theftMarkDay"] == AgentJSON(3))
+        #expect(state["openCrimes"] == AgentJSON(1))
+        #expect(state["last"] == .string("Actor: takeBack"))
+        guard case let .array(witnesses)? = state["witnesses"] else {
+            Issue.record("no witness list")
+            return
+        }
+        #expect(witnesses.first?.objectValue?["role"] == .string("takeBack"))
+        #expect(witnesses.first?.objectValue?["criminal"] == .string("player"))
+        #expect(state["fighters"]?.arrayValue?.count == 1)
+        #expect(state["angry"]?.arrayValue?.count == 1)
     }
 
     @Test func theClothStateListsEachCape() throws {

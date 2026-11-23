@@ -21,6 +21,7 @@ final class CrimeOwnershipWorld: CrimeWorld {
     let pluginName: String?
     let runtime: CrimeRuntime?
     let encounterZones: EncounterZoneStore?
+    let formLists: FormListStore?
     /// The owner a script set on a reference with `SetActorOwner` or `SetFactionOwner`.
     /// `.some(nil)` means a script cleared the owner; nil means no script set one.
     var scriptedOwner: ((ReferenceKey) -> ReferenceOwner??)?
@@ -30,6 +31,7 @@ final class CrimeOwnershipWorld: CrimeWorld {
         pluginName = data?.pluginName
         runtime = data?.runtime
         encounterZones = data?.encounterZones
+        formLists = data?.formLists
         ownership = data.map {
             OwnershipResolver(factions: $0.runtime.factions, pluginName: $0.pluginName)
         }

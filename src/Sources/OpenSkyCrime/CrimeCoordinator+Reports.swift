@@ -16,7 +16,7 @@ struct AssaultBlows: Equatable {
 
 /// One charged crime whose witnesses can still be killed to erase it.
 nonisolated public struct PendingCrimeReport: Equatable, Sendable {
-    public let faction: ReferenceKey
+    public internal(set) var faction: ReferenceKey
     public let gold: Int32
     public let violent: Bool
     public let witnesses: [ReferenceKey]
@@ -35,20 +35,37 @@ nonisolated public struct PendingCrimeReport: Equatable, Sendable {
 extension CrimeCoordinator {
     /// A seen crime by the player that cost gold. It stays open for the window.
     func track(_ event: CrimeEvent, outcome: CrimeOutcome, witnesses: [ReferenceKey]) {
-        guard
-            event.perpetrator == .player, outcome.gold > 0, let faction = outcome.faction,
-            !witnesses.isEmpty
-        else { return }
-        pendingReports.append(PendingCrimeReport(
-            faction: faction, gold: outcome.gold, violent: event.kind.isViolent,
-            witnesses: witnesses, victim: event.victim, crime: event.kind.storyCrimeType
-        ))
+        guard outcome.gold > 0, let faction = outcome.faction, !witnesses.isEmpty else { return }
+        if event.perpetrator == .player {
+            pendingReports.append(PendingCrimeReport(
+                faction: faction, gold: outcome.gold, violent: event.kind.isViolent,
+                witnesses: witnesses, victim: event.victim, crime: event.kind.storyCrimeType
+            ))
+        }
+        raiseAlarm(event, faction: faction, gold: outcome.gold, direct: witnesses)
+        // After the alarm, so this theft's own witnesses decide without its mark.
+        if event.kind == .theft, event.perpetrator == .player, event.victim != nil {
+            noteTheftMark()
+        }
+    }
+
+    /// What every recorded crime changes besides the bounty: the stats, and the theft
+    /// mark of a theft no witness charged.
+    func recorded(_ event: CrimeEvent, outcome: CrimeOutcome) {
+        count(event)
+        if
+            event.kind == .theft, event.perpetrator == .player, event.victim != nil,
+            outcome.gold <= 0
+        {
+            noteTheftMark()
+        }
     }
 
     /// One tick of `seconds` real time: erases each open crime whose witnesses all
     /// died inside the window, and makes each crime past the window final.
     public func advanceReports(by seconds: Double = 0) {
         countBountyChanges()
+        advanceAlarms(by: seconds)
         guard !pendingReports.isEmpty, let reporter else { return }
         pendingReports = pendingReports.compactMap { report in
             var report = report

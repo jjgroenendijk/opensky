@@ -35,6 +35,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case paired
     /// Follower command mode: its phase, the follower, and the last decision and outcome.
     case favor
+    /// The alarms a seen crime raised: each witness's role, the fights, and the theft mark.
+    case alarm
     /// The push and splash settings, and the newest knocks, pushes, and splashes.
     case impulses
     /// The newest world-state writes, and whether the streamer is loading or rebuilding.
@@ -129,7 +131,7 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "sounds": .sounds
         case "story": .story
         case "social": .social
-        default: name == "stats" ? .stats : (name == "assist" ? .assist : nil)
+        default: ["stats": .stats, "assist": .assist, "alarm": .alarm][name]
         }
     }
 }

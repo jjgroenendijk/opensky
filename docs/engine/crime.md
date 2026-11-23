@@ -304,7 +304,8 @@ disagree about what is a first strike.
 The game's own rules for alarms, witnesses, guards, and statistics are in
 [crime reports](/engine/crime-reports.md).
 
-- The alarm, the Alarm package, followers' crimes, and animal witnesses are not modelled.
+- Followers' crimes and animal witnesses are not modelled. Where the alarm differs is in
+  [crime reports](/engine/crime-reports.md#where-opensky-differs).
 - For an `NPC_`-owned victim, `doNotReportCrimesAgainstMembers` reads the base record's authored
   factions. A faction a script gave that actor later is not seen.
 - A script-set owner on an exterior cell is not read.

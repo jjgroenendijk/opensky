@@ -98,6 +98,8 @@ nonisolated public struct CrimeEvent: Equatable, Sendable {
     public var stolenCount: Int32 = 0
     /// True for riding an owned horse, which counts "Horses Stolen" instead.
     public var isHorseTheft = false
+    /// The item a theft took, so a victim can take it back. Nil for a horse.
+    public var stolenItem: FormID?
 
     public init(
         kind: CrimeKind,

@@ -109,6 +109,16 @@ extension CrimeWorldAdapter {
         actors.stopActor(key)
     }
 
+    public func isInCombat(_ key: ReferenceKey) -> Bool {
+        actors.isInCombat(key)
+    }
+
+    public func alarmReaction(
+        of observer: ReferenceKey, toward target: ReferenceKey
+    ) -> AlarmReactionTerms? {
+        factions.alarmReaction(of: observer, toward: target)
+    }
+
     public func playerFollowers() -> [ReferenceKey] {
         actors.playerFollowers()
     }

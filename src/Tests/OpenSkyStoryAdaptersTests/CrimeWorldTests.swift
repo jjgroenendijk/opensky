@@ -28,7 +28,7 @@ struct CrimeWorldTests {
             .showNotice("Caught"),
             .incrementStat("Bounties", by: 2),
             .settlePickpocketCatches(Self.faction, forgotten: true),
-            .speakTrespassWarning(by: Self.guardKey),
+            .sayTopic("TRES", by: Self.guardKey),
             .stoleFromFaction(Self.faction, value: 10, witnessed: false)
         ])
         #expect(host.fakeHud.showNotificationCalls == ["Caught"])
@@ -38,6 +38,19 @@ struct CrimeWorldTests {
             .map(\.faction) == [Self.faction])
         #expect(host.fakeStoryWorld.sayTopicCalls.map(\.speaker) == [Self.guardKey])
         #expect(host.fakeStoryWorld.sayTopicCalls.map(\.lookAt) == [.player])
+    }
+
+    @Test func alarmAndFollowerReadsReachTheirPorts() {
+        host.fakeActorWorld.isInCombatResult = true
+        #expect(adapter.isInCombat(Self.guardKey))
+        #expect(adapter.alarmReaction(of: Self.guardKey, toward: .player) == nil)
+        #expect(adapter.playerFollowers().isEmpty)
+        #expect(!adapter.parkFollower(Self.guardKey, at: Self.faction))
+        #expect(adapter.distance(of: Self.guardKey, toMarker: Self.faction) == nil)
+        adapter.releaseFollower(Self.guardKey)
+        #expect(host.fakePackages.resumeCalls == [Self.guardKey])
+        #expect(!adapter.giveBack(FormID(0x10), count: 1, to: Self.guardKey))
+        #expect(adapter.encounterZoneLink(of: Self.guardKey) == nil)
     }
 
     @Test func aRaisedStatOnlyGrows() {

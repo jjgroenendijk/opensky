@@ -95,7 +95,8 @@ public final class CrimeWorldAdapter {
             pluginName: pluginName,
             texts: CrimeTexts
                 .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) },
-            encounterZones: provider.rules.encounterZoneStore
+            encounterZones: provider.rules.encounterZoneStore,
+            formLists: provider.formListStore
         )
     }
 
@@ -153,6 +154,21 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
         game.inventory.runtime?.inventory
     }
 
+    /// The items go back clean, because their owner holds them again.
+    public func giveBack(_ item: FormID, count: Int32, to actor: ReferenceKey) -> Bool {
+        guard
+            let runtime = game.inventory.runtime,
+            let holder = game.streamer.inventoryHolder(of: actor)
+        else { return false }
+        let inventory = runtime.inventory
+        let held = min(count, inventory.count(of: item, in: runtime.player))
+        guard held > 0 else { return false }
+        inventory.clearStolen(item, count: held, in: runtime.player)
+        return attempt {
+            try inventory.transfer(item, count: held, from: runtime.player, to: holder)
+        } != nil
+    }
+
     public func targetOwnership() -> ReferenceOwnershipReadout? {
         game.inventory.itemPanels.targetOwnership()
     }
@@ -208,8 +224,8 @@ struct CrimeSessionReads {
                     chargedTo: faction,
                     forgotten: forgotten
                 )
-            case let .speakTrespassWarning(witness):
-                game.storyWorld.sayTopic("TRES", speaker: witness, lookAt: .player)
+            case let .sayTopic(subtype, speaker):
+                game.storyWorld.sayTopic(FourCC(code: subtype), speaker: speaker, lookAt: .player)
             case let .setStat(name, value):
                 let current = game.worldState.miscStats.value(name)
                 game.worldState.incrementMiscStat(

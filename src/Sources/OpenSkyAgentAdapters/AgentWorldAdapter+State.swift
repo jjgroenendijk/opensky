@@ -48,7 +48,7 @@ extension AgentWorldAdapter {
         case let .quest(editorID): try menuReadout.questState(editorID)
         case .scenes: objects.scenesState()
         case .scripts, .packages, .furniture, .objects, .effects, .nodes, .changes, .flight,
-             .mount, .paired, .favor, .impulses, .cloth, .assist:
+             .mount, .paired, .favor, .alarm, .impulses, .cloth, .assist:
             try inspection(query)
         case let .actorValue(reference, name): try actorReadout.actorValueState(
                 reference,
@@ -98,6 +98,7 @@ extension AgentWorldAdapter {
         case .mount: motion.mountState()
         case .paired: behaviour.pairedState()
         case .favor: objects.favorState()
+        case .alarm: objects.alarmState()
         case .impulses: motion.impulsesState()
         case .cloth: objects.clothState()
         case .assist: AgentAssistReadout(hub: hub).assistState()

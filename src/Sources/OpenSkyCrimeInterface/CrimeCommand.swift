@@ -12,8 +12,9 @@ nonisolated public enum CrimeCommand: Equatable, Sendable {
     case setStat(String, to: Int32)
     /// Raises a stat to `value` when it is lower, such as "Largest Bounty".
     case raiseStat(String, to: Int32)
-    /// A witness of a trespass speaks its warning (`TRES`).
-    case speakTrespassWarning(by: ReferenceKey)
+    /// An actor says its line of this `DIAL` subtype to the player, such as a trespass
+    /// warning (`TRES`) or a caught pickpocket's line (`PICC`).
+    case sayTopic(String, by: ReferenceKey)
     /// The player stole this much from a faction: Papyrus `GetStolenItemValueCrime`
     /// counts the witnessed thefts and `GetStolenItemValueNoCrime` the others.
     case stoleFromFaction(ReferenceKey, value: Int64, witnessed: Bool)
