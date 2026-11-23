@@ -137,6 +137,7 @@ extension CellStreamerTests {
 
         #expect(streamer.doorState.doorTransitionFailureCount == 1)
         #expect(!streamer.coverage.isInterior)
+        #expect(streamer.lastDoorArrival == nil)
     }
 
     @Test

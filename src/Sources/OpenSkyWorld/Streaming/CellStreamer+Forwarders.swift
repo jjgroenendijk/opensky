@@ -145,6 +145,10 @@ extension CellStreamer {
         set { events.onDoorTransitionStarted = newValue }
     }
 
+    public var lastDoorArrival: SIMD3<Float>? {
+        doorState.lastArrival
+    }
+
     public var onDoorTransitionFinished: ((CellScene?) -> Void)? {
         get { events.onDoorTransitionFinished }
         set { events.onDoorTransitionFinished = newValue }

@@ -5,8 +5,10 @@ import OpenSkyAIPackages
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyScriptingInterface
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
+import OpenSkyWorldState
 import Testing
 
 @MainActor
@@ -78,6 +80,36 @@ struct FollowerCommandWorldTests {
         #expect(adapter.followerCommandPlayerPosition == nil)
         _ = adapter.followerCommandSettings
         adapter.doors.bringFollowers(into: FakeCellScenePort())
+    }
+
+    /// A load door moves each teammate into the destination and rebuilds that cell, which
+    /// an exterior the player returns to needs to draw them.
+    @Test func aLoadDoorMovesTeammatesAndRebuildsTheDestination() {
+        let bridge = FakePapyrusWorldStateBridgePort()
+        host.fakeScripts.bridge = bridge
+        let session = FakeGameSessionPort()
+        host.gameSession = session
+        host.fakeWorldState.sortedDirtyKeysResult = [Self.follower]
+        host.fakeWorldState.componentResult = ScriptedReferenceState(
+            flags: [ScriptedStateName.playerTeammate: true]
+        )
+        host.fakeAiWorld.packageActorActivityResult = .free
+        host.fakeFollowerCommands.phaseValue = .idle
+        host.fakeStreamer.lastDoorArrival = SIMD3(100, 0, 0)
+        let scene = FakeCellScenePort()
+        let destination = CellSceneLocation.exterior(CellCoordinate(x: 6, y: -2))
+        scene.location = destination
+        adapter.doors.bringFollowers(into: scene)
+        #expect(bridge.relocateKeyToCalls.map(\.key) == [Self.follower])
+        let placed = host.fakeWorldState.setCalls.compactMap { call in
+            (call.component as? ReferenceTransformOverride).map { ($0.position, call.cell) }
+        }
+        #expect(placed.map(\.0) == [SIMD3(164, 0, 0)])
+        #expect(placed.map(\.1) == [destination])
+        let actors = host.fakeStreamer.actors
+        #expect(actors.stopActorCalls == [Self.follower])
+        #expect(actors.restActorCalls.map(\.transform.position) == [SIMD3(164, 0, 0)])
+        #expect(host.fakeStreamer.requestRebuildCalls == [destination])
     }
 
     @Test func anUnknownTargetCannotBeCommanded() {

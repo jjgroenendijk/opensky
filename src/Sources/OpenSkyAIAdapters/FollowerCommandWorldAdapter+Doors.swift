@@ -27,7 +27,8 @@ extension FollowerCommandWorldAdapter {
             guard
                 let bridge = game.scripts.bridge,
                 let destination = scene.location,
-                let feet = game.gameSession?.walkController.feetPosition
+                let feet = game.streamer.lastDoorArrival
+                ?? game.gameSession?.walkController.feetPosition
             else { return }
             let waiting: ReferenceKey? = if
                 case let .waiting(follower, _) = game.followerCommands
@@ -47,11 +48,18 @@ extension FollowerCommandWorldAdapter {
             for (index, follower) in followers.enumerated() {
                 let offset = SIMD3<Float>(Self.followerSpacing * Float(index + 1), 0, 0)
                 let scale = bridge.placement(of: follower)?.state.transform.scale ?? 1
-                bridge.write(
-                    ReferenceTransformOverride(position: feet + offset, scale: scale).erased,
-                    for: follower
-                )
+                let placed = ReferenceTransformOverride(position: feet + offset, scale: scale)
+                // The walk runtime keeps where the follower last stood, and a cell draws an
+                // actor there first, so the move must replace that pose too.
+                game.streamer.stopActor(follower)
+                game.streamer.restActor(follower, at: placed)
+                store.set(placed, for: follower, in: destination)
                 bridge.relocate(follower, to: destination)
+            }
+            // An exterior the player returns to is still loaded, so it only draws the
+            // followers once it is built again. An interior rebuilds on its own.
+            if !followers.isEmpty {
+                game.streamer.requestRebuild(of: destination)
             }
         }
 

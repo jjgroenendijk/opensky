@@ -49,6 +49,7 @@ extension CellStreamer.TransitionSteps {
             }
             apply(transition: transition, sourceDoor: entry.sourceDoor, isRebuild: isRebuild)
             if !isRebuild {
+                streamer.doorState.lastArrival = transition.destinationPlacement.position
                 streamer.events.onDoorTransitionFinished?(transition.scene)
             }
             return true
