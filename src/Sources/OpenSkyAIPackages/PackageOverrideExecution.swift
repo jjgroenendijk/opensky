@@ -108,7 +108,10 @@ nonisolated extension PackageOverrideExecution {
             state: machine.map { "\($0.state)" },
             pathIndex: machine?.pathIndex,
             pathCount: machine?.path.count,
-            running: runner.runningMachines.map { "\($0.kind.name) \($0.state)" }
+            running: runner.runningMachines.map { machine in
+                "\(machine.kind.name) \(machine.state)"
+                    + (machine.setup.watched.map { " watching \($0)" } ?? "")
+            }
         )
     }
 }

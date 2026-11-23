@@ -4,7 +4,8 @@ nonisolated public struct PackageExecutionReadout: Equatable, Sendable {
     public let state: String?
     public let pathIndex: Int?
     public let pathCount: Int?
-    /// Each running procedure as its kind and state, such as `travel moving`.
+    /// Each running procedure as its kind and state, and the actor it watches, such as
+    /// `follow waiting watching player`.
     public let running: [String]
 
     public init(state: String?, pathIndex: Int?, pathCount: Int?, running: [String]) {
