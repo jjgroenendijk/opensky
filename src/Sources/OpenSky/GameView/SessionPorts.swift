@@ -10,6 +10,7 @@ import OpenSkyAIAdapters
 import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyCombatInterface
+import OpenSkyCrime
 import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
 import OpenSkyFactionsInterface
@@ -346,6 +347,10 @@ extension SessionPorts {
 
     var clothReadout: ClothReadout {
         scope.clothWorld.coordinator.readout
+    }
+
+    var crimeAlarmReadout: CrimeAlarmReadout {
+        scope.crime.alarmReadout
     }
 
     var movieWorld: any MovieWorldPort {

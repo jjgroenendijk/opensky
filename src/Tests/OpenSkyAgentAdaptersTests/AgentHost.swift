@@ -2,6 +2,7 @@
 
 import CoreGraphics
 import OpenSkyAgentAdapters
+import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
 import OpenSkyEngineTesting
 import OpenSkyFormatsCore
@@ -25,6 +26,7 @@ final class AgentHost: RendererSlotHost, AgentActorReadoutHost, AgentActorsHost,
     BenchmarkWorldHost
 {
     var clothReadout = ClothReadout(isEnabled: true, steppedCount: 0, capes: [])
+    var crimeAlarmReadout = CrimeAlarmReadout()
     let fakeActorGraphs = FakeActorGraphPort()
     let fakeActorValues = FakeActorValuePort()
     let fakeActorWorld = FakeActorWorldPort()

@@ -101,6 +101,14 @@ public protocol CrimeSessionWorld: AnyObject {
     /// an activator, a door, or furniture, which never take a zone's owner.
     func encounterZoneLink(of key: ReferenceKey) -> (link: FormID, plugin: String)?
 
+    /// Whether `key` fights anyone now. An actor in combat does not hear an alarm.
+    func isInCombat(_ key: ReferenceKey) -> Bool
+    /// What the alarm's hostility test reads of `observer` toward `target`.
+    func alarmReaction(of observer: ReferenceKey, toward target: ReferenceKey)
+        -> AlarmReactionTerms?
+    /// Moves up to `count` of `item` from the player to `actor`, no longer stolen.
+    func giveBack(_ item: FormID, count: Int32, to actor: ReferenceKey) -> Bool
+
     /// The followers with the player now: living teammates whose package runs.
     func playerFollowers() -> [ReferenceKey]
     /// Stands `follower` at the door `marker` and holds it there. False when it cannot.
@@ -153,5 +161,17 @@ nonisolated public struct CrimeObserver: Equatable, Sendable {
     public init(key: ReferenceKey, feet: SIMD3<Float>) {
         self.key = key
         self.feet = feet
+    }
+}
+
+/// The two parts of a reaction the alarm's hostility test reads: the relationship rank's,
+/// and the factions'.
+nonisolated public struct AlarmReactionTerms: Equatable, Sendable {
+    public let relationship: ActorReaction?
+    public let faction: ActorReaction?
+
+    public init(relationship: ActorReaction?, faction: ActorReaction?) {
+        self.relationship = relationship
+        self.faction = faction
     }
 }

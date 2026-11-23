@@ -27,6 +27,21 @@ nonisolated public enum CrimeNote: Equatable, Sendable {
     }
 }
 
+/// What the alarm did last, for the readouts.
+nonisolated public enum AlarmNote: Equatable, Sendable {
+    case idle
+    case decided(name: String, role: AlarmRole)
+    case tookBack(name: String, items: Int)
+
+    public var text: String {
+        switch self {
+        case .idle: "none"
+        case let .decided(name, role): "\(name): \(role.rawValue)"
+        case let .tookBack(name, items): "\(name) took back \(items) item(s)"
+        }
+    }
+}
+
 nonisolated public enum GuardNote: Equatable, Sendable {
     case idle
     case arrestRefused(faction: String, ArrestRefusal)

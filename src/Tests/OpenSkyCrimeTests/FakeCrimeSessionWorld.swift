@@ -50,6 +50,24 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
     /// Each actor's distance to any marker; nil is another space.
     var markerDistances: [ReferenceKey: Float] = [:]
     private(set) var lostProgress: [(days: Int, maximum: Int)] = []
+    var fighting: Set<ReferenceKey> = []
+    var reactions: [ReferenceKey: AlarmReactionTerms] = [:]
+    var itemValues: [FormID: Int64] = [:]
+    /// Each item given back, by the actor that took it.
+    private(set) var givenBack: [ReferenceKey: [FormID]] = [:]
+
+    func isInCombat(_ key: ReferenceKey) -> Bool {
+        fighting.contains(key)
+    }
+
+    func alarmReaction(of observer: ReferenceKey, toward _: ReferenceKey) -> AlarmReactionTerms? {
+        reactions[observer]
+    }
+
+    func giveBack(_ item: FormID, count: Int32, to actor: ReferenceKey) -> Bool {
+        givenBack[actor, default: []].append(contentsOf: Array(repeating: item, count: Int(count)))
+        return true
+    }
 
     func cellTrespassFlags(at location: CellSceneLocation) -> CellTrespassFlags {
         trespassFlags[location] ?? CellTrespassFlags()
@@ -116,8 +134,8 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
         zoneLinks[key].map { ($0, CrimeFixture.pluginName) }
     }
 
-    func itemValue(of _: FormID) -> Int64 {
-        0
+    func itemValue(of item: FormID) -> Int64 {
+        itemValues[item] ?? 0
     }
 
     func actorName(_ key: ReferenceKey) -> String {

@@ -289,11 +289,12 @@ The vanilla scripts count only these statistics:
 
 ## Where OpenSky differs
 
-- OpenSky raises no alarm. In the game the alarm reaches every actor in range at once, and a
-  non-guard witness fights, takes back, or flees.
-- OpenSky does not move the crime gold to the faction of the guard that answers, and has no cap on
-  the guards that answer.
-- OpenSky's guards do not fight NPC criminals, and an NPC criminal does not flee from them.
+- The alarm does not pass through a door to an actor in another cell, as the 2000-unit door
+  rule above allows.
+- The hostility test combines the factions' reactions by taking the most hostile one, and the
+  "attack on sight" mark that Aggression 0 also needs is not kept, so an unaggressive witness
+  is never hostile through it.
+- An NPC criminal that a guard answers runs a fixed 2000 units straight away from the guard.
 - A theft is charged to the place's crime faction, not the victim's. A follower's take is charged
   to the player, but a follower's trespass is not.
 - OpenSky reads "has no crime faction" in place of "is an animal": such a witness must be killed

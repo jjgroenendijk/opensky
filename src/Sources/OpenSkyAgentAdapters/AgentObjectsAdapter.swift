@@ -3,6 +3,7 @@ import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyAIPackages
 import OpenSkyConditions
+public import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
 import OpenSkyEffects
 import OpenSkyFactionsInterface
@@ -31,6 +32,7 @@ import simd
 @MainActor
 public protocol AgentObjectsHost: AnyObject, SendableMetatype {
     var clothReadout: ClothReadout { get }
+    var crimeAlarmReadout: CrimeAlarmReadout { get }
     var effectGraphs: any EffectGraphPort { get }
     var effectModelPoser: any EffectModelPoserPort { get }
     var factions: any FactionPort { get }
@@ -67,6 +69,35 @@ extension AgentObjectsAdapter {
 
     func favorState() -> AgentJSON {
         followers.favorState()
+    }
+
+    func alarmState() -> AgentJSON {
+        let readout = game.crimeAlarmReadout
+        return [
+            "witnesses": .array(readout.witnesses.map { witness in
+                [
+                    "ref": alarmRef(witness.key), "role": .string(witness.role),
+                    "criminal": witness.criminal.map(alarmRef) ?? .null,
+                    "crimes": .init(witness.crimes)
+                ]
+            }),
+            "fighters": .array(readout.fighters.map { fighter in
+                [
+                    "ref": alarmRef(fighter.witness),
+                    "fights": .array(fighter.criminals.map(alarmRef))
+                ]
+            }),
+            "angry": .array(readout.angry.map(alarmRef)),
+            "theftMarkDay": readout.theftMarkDay.map { .init($0) } ?? .null,
+            "openCrimes": .init(readout.openCrimes),
+            "last": .string(readout.last)
+        ]
+    }
+
+    private func alarmRef(_ key: ReferenceKey) -> AgentJSON {
+        key == .player ? .string("player") : AgentBehaviourAdapter(hub: hub, game: hub.hosts)
+            .formID(of: key)
+            ?? .string("\(key)")
     }
 
     public func followerDebug(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {

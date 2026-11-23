@@ -34,6 +34,8 @@ public protocol CrimePort: CrimeArrestSession {
     func advanceJail()
 
     func advanceGuardResponse() -> [CrimeCommand]
+
+    var alarmReadout: CrimeAlarmReadout { get }
 }
 
 /// The default arguments a protocol requirement cannot carry.

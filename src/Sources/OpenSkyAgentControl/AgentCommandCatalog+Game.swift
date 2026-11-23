@@ -60,6 +60,10 @@ nonisolated extension AgentCommandCatalog {
             "Hit knockback, explosion push, and splash settings, with the newest events."
         ),
         command(
+            "state.alarm",
+            "Each alarm witness and its role, the fights, and the theft mark."
+        ),
+        command(
             "state.favor",
             "Follower command mode: the phase, follower, last decision, and last outcome."
         ),
