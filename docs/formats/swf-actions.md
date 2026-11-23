@@ -137,6 +137,14 @@ fields. Read as a little-endian word, the bits are: `ClipEventLoad` 0, `EnterFra
 of the long form. OpenSky keeps `AllEventFlags` as written, even when it does not match the
 handlers.
 
+A placed clip with a registered class takes the class prototype first. Then its `Initialize`
+and `Construct` handlers run, then the class constructor, then `Load`. Flash writes a
+component's parameters into its `Construct` handler, and they must reach the class's setters
+before the constructor reads them. For example, `dialoguemenu.swf` sets the topic list's
+`numTopHalfEntries` to 4 there. The setter stores `iNumTopHalfEntries`, which the list's
+constructor reads to find its centre row. Run after the constructor, the centre is `NaN`, and
+every row is drawn at the same height.
+
 ## Vanilla bytecode
 
 Measured with `openskycli swf action-sweep` over the 53 vanilla movies:
