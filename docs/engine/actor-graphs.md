@@ -102,3 +102,14 @@ graph when the reference has no object graph.
 An idle on a graph-driven actor is sent as its graph event, and the graph plays it. A held idle
 ends with `IdleForceDefaultState`. No open spec names that event. The human graph of the install
 declares it, next to `WeapEquip` (draw) and `Unequip` (sheathe).
+
+## When an attack may start
+
+The game starts an NPC's attack only when the actor is ready for it. With no attack running, the
+graph bool `IsAttackReady` must be true. With an attack running, the attack state must be the
+window for the next attack; bows and crossbows have their own window. The attack step does not
+read `IsEquipping` or `WeapEquip_Out`. So an NPC waits for its draw only while its graph keeps
+`IsAttackReady` false. In the vanilla graphs, a `BSIsActiveModifier` in `1hm_behavior.hkx` writes
+it, and that file runs only once the weapon is out.
+
+A combat change of the equipped items is allowed only while the graph bool `bEquipOk` is true.

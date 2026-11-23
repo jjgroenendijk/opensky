@@ -102,8 +102,13 @@ move always shows the [kill cam](/engine/kill-cam.md).
 - A kill move starts when a paired idle whose animation event begins with `pa_Kill` starts. Both
   actors enter a kill move state, and the victim records the attacker as its partner. A failsafe
   timer of 10 seconds starts.
-- While the victim is in that state, every hit on it deals ten times its damage. So the player
-  dies from the clip's own hit, not when the clip starts.
+- While the victim is in that state, every hit on it deals ten times its damage.
+- The victim dies from an event its own graph sends, not from a hit: its half sends `KillActor`
+  (as `2_KillActor`). On it, the game asks for the victim's death with damage 0. The other actor
+  of the pair is the killer. The request is queued and runs later in the frame, and a second
+  request while one waits is ignored.
+- On `KillMoveEnd`, when a killer is recorded, the game asks for the death again, and the kill
+  move state clears. `KillMoveStart` does nothing.
 - The kill move end event clears the state and ends the pair.
 - When the player is the victim and the camera is in first person, the game switches to the
   third-person camera.
@@ -112,6 +117,10 @@ Read from the game program, for the victim's side:
 
 - At the start, the victim's death waits. A safety timer of 15 seconds (`fBetaDeferredKillTimer`,
   INI section `General`) runs beside the 10 second kill move timer (`fKillMoveMaxDuration`).
+- The weapon kill moves keep their victim states, such as `NPC_KillMoveShieldBashSlash`, only in
+  `1hm_behavior.hkx`, next to the lead's `Player_KillMove_...` states. That file runs while the
+  weapon is out. So the victim takes the event only with its weapon drawn; with it sheathed, the
+  graph is in `mt_behavior.hkx`, which has no such state.
 - The camera switch happens only when the killer is known, the kill camera is not playing, and the
   camera is in one of the basic modes, such as first person.
 - At the end of the pair, the flag clears. When the kill was set off during the move, the victim
@@ -173,8 +182,45 @@ way. Without it, it keeps its heading and stands on the mark at once. A get-to-m
 a partner whose graph shows no synchronized clip after one update, stands on the mark at once.
 
 The rules come from a clean-room read of the game that returned behaviour only: the move is
-linear in time, with no easing. Which of the two actors the game moves, and how it places the
-mark, were not found. OpenSky keeps the lead still.
+linear in time, with no easing. OpenSky keeps the lead still.
+
+The game waits until every actor has joined the pair. Then it picks the lead. Each other actor's
+target is the lead's whole world transform, height included, combined with the clip's start
+offsets. No ground probe takes part, so the partner's height follows the lead's. When the player
+is in the pair, the player's heading is set to match.
+
+## Synced movement
+
+An actor that joins a pair is marked as synced, and so is its character controller. The
+controller is not frozen and not keyframed. Each frame, while the actor's graph bool `bIsSynced`
+is true, the game takes the frame's motion from the synced clip, the height and the turn
+included. It hands that motion to the controller as a velocity. When the pair ends, the marks
+clear and the controller's stored velocity is set to zero.
+
+The game asks for the actions `Jump`, `Fall`, and `Land`, and the idle data turns them into
+graph events. It refuses every such action while `bIsSynced` is true and the actor is in a pair.
+So a victim that drops a little on the mark does not fall, and its graph stays in the paired
+state. `bAnimationDriven` plays no part in this.
+
+In the vanilla graphs, `bIsSynced` is the output of each kill move machine in
+`1hm_behavior.hkx`, such as `NPC_KillMoveBehavior` and `Player_KillMove_SneakBackA_Behavior`.
+The machine's `isActive` writes it, so it is true exactly while a half plays.
+
+```mermaid
+sequenceDiagram
+    participant G as Victim graph
+    participant E as Engine
+    participant C as Controller
+    G->>E: bIsSynced = true (kill move machine runs)
+    loop every frame
+        E->>C: velocity from the synced clip
+        E--xG: Fall / Land refused
+    end
+    G->>E: KillActor
+    E->>E: kill the victim, killer = the other actor
+    G->>E: PairEnd
+    E->>C: stored velocity = 0
+```
 
 ## Whose event is it
 
@@ -199,6 +245,9 @@ changes no graph state. OpenSky sends it, like every annotation, to the scripts 
 graphs that listen on the actor. [WARNING] What else the game does with it is not known.
 
 ## Ending a pair
+
+When the game ends a pair, each actor's graph gets `PairEnd`. An actor whose graph does not take
+`PairEnd`, while no actor of the pair is dead, gets `PairedStop`.
 
 The pair ends when either half sends `PairEnd` or `pairedStop` (any case), after its prefix
 comes off. A pair whose end event never comes ends after `PairedAnimationCore.maximumSeconds`
