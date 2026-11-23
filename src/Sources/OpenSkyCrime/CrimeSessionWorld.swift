@@ -95,6 +95,11 @@ public protocol CrimeSessionWorld: AnyObject {
     var isDialogueOpen: Bool { get }
     var lastDialogueOutcome: String? { get }
     func beginDialogue(with speaker: ReferenceKey)
+
+    /// The `ECZN` link that answers for `key`, and the plugin it is written in: the
+    /// reference's own `XEZN`, else its cell's, else its worldspace's. Nil for an actor,
+    /// an activator, a door, or furniture, which never take a zone's owner.
+    func encounterZoneLink(of key: ReferenceKey) -> (link: FormID, plugin: String)?
 }
 
 extension CrimeSessionWorld {
@@ -127,6 +132,10 @@ extension CrimeSessionWorld {
     }
 
     public var lockpickItem: FormID? {
+        nil
+    }
+
+    public func encounterZoneLink(of _: ReferenceKey) -> (link: FormID, plugin: String)? {
         nil
     }
 }

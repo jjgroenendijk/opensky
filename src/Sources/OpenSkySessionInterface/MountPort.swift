@@ -23,15 +23,9 @@ public protocol MountPort: AnyObject {
     ) -> [MountCommand]
     func dismount() -> [MountCommand]
     func handleRiderEvents(_ names: [String]) -> [MountCommand]
-    func mount(_ key: ReferenceKey, stealConfirmed: Bool) -> [MountCommand]
+    @discardableResult func mount(_ key: ReferenceKey) -> [MountCommand]
+    var ridesStolenMount: Bool { get }
     var settings: MountSettings { get }
-}
-
-/// The default arguments a protocol requirement cannot carry.
-extension MountPort {
-    @discardableResult public func mount(_ key: ReferenceKey) -> [MountCommand] {
-        mount(key, stealConfirmed: false)
-    }
 }
 
 extension MountPort {

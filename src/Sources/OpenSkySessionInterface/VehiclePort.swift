@@ -9,8 +9,9 @@ public protocol VehiclePort: AnyObject {
     @discardableResult func board(_ rider: ReferenceKey, on vehicle: ReferenceKey) -> Bool
     var lastPoses: [ReferenceKey: ReferenceTransformOverride] { get }
     var playersLastMount: ReferenceKey? { get }
-    @discardableResult func seat(_ rider: ReferenceKey, on horse: ReferenceKey, bone: String)
-        -> Bool
+    @discardableResult func seat(
+        _ rider: ReferenceKey, on horse: ReferenceKey, bone: String, recordsLastMount: Bool
+    ) -> Bool
 
     func advance(dt: Float) -> [VehicleCommand]
     func animationEvent(_ name: String, from actor: ReferenceKey) -> [VehicleCommand]
@@ -23,5 +24,11 @@ public protocol VehiclePort: AnyObject {
 extension VehiclePort {
     @discardableResult public func detach(_ follower: ReferenceKey) -> [VehicleCommand] {
         detach(follower, standing: false)
+    }
+
+    @discardableResult public func seat(
+        _ rider: ReferenceKey, on horse: ReferenceKey, bone: String
+    ) -> Bool {
+        seat(rider, on: horse, bone: bone, recordsLastMount: true)
     }
 }

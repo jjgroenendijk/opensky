@@ -119,7 +119,9 @@ public final class MountWorldAdapter {
                 locomotion.drainMountEvents()
             }
             vehicles.board(.player, on: mount)
-        case let .seatPlayer(mount, bone): vehicles.seat(.player, on: mount, bone: bone)
+        case let .seatPlayer(mount, bone): vehicles.seat(
+                .player, on: mount, bone: bone, recordsLastMount: !mounts.ridesStolenMount
+            )
         case .detachPlayer:
             game.vehicleWorld.detach(.player)
             game.gameSession?.playerSeat = nil
@@ -137,7 +139,7 @@ public final class MountWorldAdapter {
         case let .releaseMount(mount):
             game.streamer.releaseRiddenActor(mount)
             game.actorGraphWorld.graphs.giveBack(mount)
-        case .askToSteal, .reportTheft, .refused, .notify, .dragonBreath:
+        case .reportTheft, .refused, .notify, .dragonBreath:
             applyOutcome(command)
         }
     }
@@ -145,7 +147,6 @@ public final class MountWorldAdapter {
     /// The commands that reach crime, messages, and magic rather than the bodies.
     private func applyOutcome(_ command: MountCommand) {
         switch command {
-        case let .askToSteal(mount): askToSteal(mount)
         case let .reportTheft(mount):
             let owner = game.crime.ownershipVerdict(on: mount).owner
             game.crime.reporter?.reportHorseTheft(of: mount, owner: owner)
@@ -155,18 +156,6 @@ public final class MountWorldAdapter {
         case let .dragonBreath(mount, target): dragonRiding.breathe(from: mount, at: target)
         default: break
         }
-    }
-
-    private func askToSteal(_ mount: ReferenceKey) {
-        let settings = mounts.settings
-        let answered: (Int) -> Void = { [weak self] answer in
-            guard answer == 0, let self else { return }
-            run(mounts.mount(mount, stealConfirmed: true))
-        }
-        game.messages.presentChoices(
-            title: nil, text: settings.stealQuestion, buttons: [settings.yes, settings.no],
-            answer: answered
-        )
     }
 }
 

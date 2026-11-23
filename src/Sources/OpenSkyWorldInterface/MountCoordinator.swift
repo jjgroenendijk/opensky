@@ -15,8 +15,7 @@ nonisolated public enum MountCommand: Equatable, Sendable {
     case reportMountEvents(ReferenceKey, [String])
     /// Gives the mount back to its packages and its graph runner.
     case releaseMount(ReferenceKey)
-    /// Riding somebody else's horse is a theft: ask first, with `sStealHorse`.
-    case askToSteal(ReferenceKey)
+    /// Riding somebody else's horse is a theft, charged with no question first.
     case reportTheft(ReferenceKey)
     case refused(MountRefusal)
     /// A short message on screen, such as the landing order.

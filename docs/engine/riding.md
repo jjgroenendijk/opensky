@@ -22,9 +22,9 @@ An actor can be mounted when all of these pass:
 - A dragon (keyword `ActorTypeDragon`) passes the perk entry point Allow Mount Actor (91), with the
   dragon as the target ([perk entry points](/engine/perk-entry-points.md#activation)).
 
-A horse somebody else owns asks `sStealHorse` ("Do you want to steal this horse?") first. Yes
-mounts it and reports a theft worth `iCrimeGoldStealHorse` (100), with the owner as the victim
-([crime](/engine/crime.md)). The crosshair prompt on a mountable actor reads `sRide`.
+Mounting a horse somebody else owns is a theft worth `iCrimeGoldStealHorse` (100), with the owner
+as the victim ([crime](/engine/crime.md)). No question comes first, and the stolen horse does not
+become the player's last ridden horse. The crosshair prompt on a mountable actor reads `sRide`.
 
 In the game:
 

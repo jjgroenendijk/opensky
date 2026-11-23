@@ -9,6 +9,8 @@ public import OpenSkyWorldState
 public protocol CellScenePort {
     associatedtype CellLoadSummary: CellLoadSummaryPort
     var doors: [PlacedDoor] { get }
+    var encounterZone: FormID? { get }
+    var interactions: [FormID: PlacedInteraction] { get }
     var forbidsWaiting: Bool { get }
     var isInterior: Bool { get }
     var location: CellSceneLocation? { get }

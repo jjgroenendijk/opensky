@@ -31,7 +31,12 @@ nonisolated public struct OwnershipResolver: Sendable {
     /// does not make a shop free to loot. Nil only when the link's plugin is not
     /// loaded.
     public func owner(of ownership: RecordOwnership) -> ReferenceOwner? {
-        guard let resolved = factions.resolvedID(ownership.owner, fromPlugin: pluginName) else {
+        owner(of: ownership, inPlugin: pluginName)
+    }
+
+    /// The owner a pair written in `plugin` names, such as an `ECZN` owner.
+    public func owner(of ownership: RecordOwnership, inPlugin plugin: String) -> ReferenceOwner? {
+        guard let resolved = factions.resolvedID(ownership.owner, fromPlugin: plugin) else {
             return nil
         }
         let key = ReferenceKey(resolved: resolved)

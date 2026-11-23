@@ -65,10 +65,12 @@ public final class VehicleCoordinator {
 
     /// Seats `rider` on the horse's saddle bone, facing the way the horse faces.
     @discardableResult
-    public func seat(_ rider: ReferenceKey, on horse: ReferenceKey, bone: String) -> Bool {
+    public func seat(
+        _ rider: ReferenceKey, on horse: ReferenceKey, bone: String, recordsLastMount: Bool = true
+    ) -> Bool {
         lastPoses[rider] = nil
         guard core.seat(rider, on: horse, bone: bone) else { return false }
-        if rider == .player {
+        if rider == .player, recordsLastMount {
             playersLastMount = horse
         }
         return true

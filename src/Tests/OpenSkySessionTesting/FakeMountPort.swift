@@ -25,8 +25,9 @@ nonisolated public final class FakeMountPort: MountPort {
     public var dismountResult: [MountCommand] = []
     public var handleRiderEventsCalls: [[String]] = []
     public var handleRiderEventsResult: [MountCommand] = []
-    public var mountCalls: [(key: ReferenceKey, stealConfirmed: Bool)] = []
+    public var mountCalls: [ReferenceKey] = []
     public var mountResult: [MountCommand] = []
+    public var ridesStolenMount = false
     public var settingsValue: MountSettings?
 
     public init() {}
@@ -94,8 +95,9 @@ nonisolated extension FakeMountPort {
         return handleRiderEventsResult
     }
 
-    public func mount(_ key: ReferenceKey, stealConfirmed: Bool) -> [MountCommand] {
-        mountCalls.append((key: key, stealConfirmed: stealConfirmed))
+    @discardableResult
+    public func mount(_ key: ReferenceKey) -> [MountCommand] {
+        mountCalls.append(key)
         return mountResult
     }
 

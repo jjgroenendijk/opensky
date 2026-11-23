@@ -21,13 +21,20 @@ The first match wins:
 1. The owner a script set on the reference with `SetActorOwner` or `SetFactionOwner`, including
    no owner ([script state](/engine/papyrus-script-state.md#ownership)).
 2. The reference's own `XOWN`.
-3. The owner a script set on the cell it stands in with `Cell.SetActorOwner` or
+3. For a door with a teleport link: the `XOWN` of the door at the other end, loaded or not.
+4. Except for actors, activators, doors, and furniture: the owner of the encounter zone (`ECZN`).
+   That is the reference's own `XEZN`, else the cell's, else the worldspace's. The zone's rank is
+   not checked.
+5. The owner a script set on the cell it stands in with `Cell.SetActorOwner` or
    `Cell.SetFactionOwner`, including no owner. Only an interior cell is checked, because OpenSky
    names an exterior cell by its grid, not by its `CELL` record.
-4. The `XOWN` of the cell it stands in.
-5. No owner.
+6. The `XOWN` of the cell it stands in.
+7. No owner.
 
-Trespass reads steps 3 and 4 for the player's cell. Example: a quest script calls
+Example: a plate with no owner stands in a cell whose encounter zone is owned by a faction. Taking
+it is theft from that faction, even when the cell itself has no owner.
+
+Trespass reads steps 5 and 6 for the player's cell. Example: a quest script calls
 `SetFactionOwner(None)` on a house cell; the house is then free to enter, and its unowned chests
 free to take.
 
@@ -52,6 +59,7 @@ Who may use it:
 - A faction owner matches a member at or above the rank in `XRNK`. With no `XRNK`, the rank is 0,
   the lowest rank vanilla uses, so any member may use it. A negative rank, which vanilla writes for
   "a member the rank titles do not name", does not meet a rank 0 requirement.
+- The player needs only membership in an owning faction. The required rank is not checked.
 
 The answer is one of: no owner, permitted, forbidden. Only forbidden is theft.
 
@@ -78,7 +86,7 @@ lives there. A door in the same house skips step 3.
   not checked.
 - Only the reference's own rank requirement is checked, never one for the cell or the zone.
 
-OpenSky has no door step and no encounter zone step, and checks the rank for the player too.
+OpenSky follows this order. It reads an actor's owner the same way as any other reference's.
 
 ### Friends let the player take cheap things
 

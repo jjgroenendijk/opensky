@@ -20,6 +20,7 @@ final class CrimeOwnershipWorld: CrimeWorld {
     let crimeFactions: CrimeFactionResolver?
     let pluginName: String?
     let runtime: CrimeRuntime?
+    let encounterZones: EncounterZoneStore?
     /// The owner a script set on a reference with `SetActorOwner` or `SetFactionOwner`.
     /// `.some(nil)` means a script cleared the owner; nil means no script set one.
     var scriptedOwner: ((ReferenceKey) -> ReferenceOwner??)?
@@ -28,6 +29,7 @@ final class CrimeOwnershipWorld: CrimeWorld {
         self.world = world
         pluginName = data?.pluginName
         runtime = data?.runtime
+        encounterZones = data?.encounterZones
         ownership = data.map {
             OwnershipResolver(factions: $0.runtime.factions, pluginName: $0.pluginName)
         }
@@ -61,20 +63,56 @@ final class CrimeOwnershipWorld: CrimeWorld {
         runtime?.favourAllowance(in: faction) { [world] in world.factionMemberships(of: $0) }
     }
 
-    /// A script-set owner first, then the reference's own `XOWN`, then the owner of the
-    /// cell it stands in, which a script may have set too.
+    /// The game's order: a script-set owner, the reference's own `XOWN`, the owner of the
+    /// door at the other end of a teleport link, the encounter zone's owner, then the
+    /// owner of the cell, which a script may have set too.
     func crimeOwner(of key: ReferenceKey) -> ReferenceOwner? {
         if let scripted = scriptedOwner?(key) {
             return scripted
         }
         let reference = world.references?.referenceEntry(key: key)?.placedReference
-        if
-            let authored = reference.flatMap(RecordOwnership.init(reference:)),
-            let owner = ownership?.owner(of: authored)
-        {
+        if let owner = reference.flatMap(ownOwner(of:)) {
+            return owner
+        }
+        if let door = reference?.teleportDestination?.door, let owner = partnerOwner(door) {
+            return owner
+        }
+        if let owner = zoneOwner(of: key) {
             return owner
         }
         return cellOwner(at: crimeCell(of: key))
+    }
+
+    private func ownOwner(of reference: PlacedReference) -> ReferenceOwner? {
+        RecordOwnership(reference: reference).flatMap { ownership?.owner(of: $0) }
+    }
+
+    /// The far door's own owner, loaded or not.
+    private func partnerOwner(_ door: FormID) -> ReferenceOwner? {
+        let resident = world.references?.referenceEntry(formID: door)?.placedReference
+        if let resident {
+            return ownOwner(of: resident)
+        }
+        guard
+            let pluginName,
+            let resolved = runtime?.factions.resolvedID(door, fromPlugin: pluginName),
+            let placed = world.references?.pluginPlacement(of: ReferenceKey(resolved: resolved))?
+                .entry.placedReference
+        else { return nil }
+        return ownOwner(of: placed)
+    }
+
+    /// An `ECZN` owner. Only a reference's own required rank is checked, so the zone's
+    /// rank is not.
+    private func zoneOwner(of key: ReferenceKey) -> ReferenceOwner? {
+        guard
+            let link = world.encounterZoneLink(of: key),
+            let zone = encounterZones?.resolve(link.link, fromPlugin: link.plugin),
+            let owner = zone.zone.owner, !owner.isNull
+        else { return nil }
+        return ownership?.owner(
+            of: RecordOwnership(owner: owner), inPlugin: zone.sourcePlugin
+        )
     }
 
     func crimeFaction(in cell: CellSceneLocation?) -> ReferenceKey? {
@@ -100,10 +138,12 @@ final class CrimeOwnershipWorld: CrimeWorld {
     /// theirs. Memberships are seeded first, so an actor nobody asked about
     /// answers from its authored `SNAM` run.
     func crimeActor(_ key: ReferenceKey) -> CrimeActor {
-        CrimeActor(
+        var actor = CrimeActor(
             base: actorBaseKey(of: key),
             memberships: world.factionMemberships(of: key) ?? ActorFactionState()
         )
+        actor.ignoresRequiredRank = key == .player
+        return actor
     }
 
     /// The runtime identity of the `NPC_` record `key` was placed from, which

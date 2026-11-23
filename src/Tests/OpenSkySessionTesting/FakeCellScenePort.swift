@@ -12,6 +12,8 @@ public import OpenSkyWorldState
 nonisolated public final class FakeCellScenePort: CellScenePort {
     public typealias CellLoadSummary = FakeCellLoadSummaryPort
     public var doors: [PlacedDoor] = []
+    public var encounterZone: FormID?
+    public var interactions: [FormID: PlacedInteraction] = [:]
     public var forbidsWaiting = false
     public var isInterior = false
     public var location: CellSceneLocation?

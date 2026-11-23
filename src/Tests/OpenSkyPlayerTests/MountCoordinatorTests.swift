@@ -122,13 +122,12 @@ struct MountCoordinatorTests {
         #expect(mounts.phase == .riding)
     }
 
-    @Test func anOwnedHorseAsksFirstAndIsATheft() {
+    @Test func anOwnedHorseIsATheftWithNoQuestion() {
         let world = world(ownership: .other)
         let mounts = MountCoordinator(world: world)
-        #expect(mounts.mount(Self.horse) == [.askToSteal(Self.horse)])
-        #expect(!mounts.isActive)
-        #expect(mounts.mount(Self.horse, stealConfirmed: true).last
-            == .reportTheft(Self.horse))
+        #expect(mounts.mount(Self.horse).last == .reportTheft(Self.horse))
+        #expect(mounts.isActive)
+        #expect(mounts.ridesStolenMount)
     }
 
     @Test func aDeadMountDropsTheRider() {
