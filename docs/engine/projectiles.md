@@ -221,4 +221,3 @@ Example: in first person a target sits 0.6 degrees off the crosshair. The shot t
   material, and a deflected arrow sticks where it struck.
 - An actor shows every arrow stuck in it, not at most 3, and the stick depth is the same for
   bolts.
-- The player's shots get no aim help.
