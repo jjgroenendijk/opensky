@@ -246,6 +246,29 @@ struct HostilityDerivationTests {
         #expect(derivation.decide(angered, toward: target).isHostile)
     }
 
+    /// A shopkeeper the alarm sends to fight attacks, though Unaggressive turns down
+    /// the same Enemy reaction from a faction.
+    @Test
+    func aCrimeEnemyIsAttackedWhateverTheAggression() throws {
+        var derivation = try Fixture.derivation(
+            relations: [Fixture.Relation(Fixture.Factions.bandit, Fixture.Factions.guards, .enemy)]
+        )
+        let shopkeeper = Fixture.profile(
+            actor: Fixture.Actors.townsfolk,
+            memberships: [(Fixture.Factions.guards, 0)],
+            aggression: .unaggressive
+        )
+        let bandit = Fixture.profile(
+            actor: Fixture.Actors.bandit,
+            memberships: [(Fixture.Factions.bandit, 0)]
+        )
+        #expect(derivation.decide(shopkeeper, toward: bandit).reaction == .enemy)
+        #expect(!derivation.decide(shopkeeper, toward: bandit).isHostile)
+
+        derivation.crime = FixedCrime(reaction: .enemy)
+        #expect(derivation.decide(shopkeeper, toward: Fixture.player()).isHostile)
+    }
+
     /// The default crime seam answers nothing until it is replaced.
     @Test
     func theDefaultCrimeSourceHasNoOpinion() throws {
