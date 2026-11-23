@@ -60,7 +60,7 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     /// The combat and AI helper rules: tracking, auto-aim, danger, reactions, levels.
     case assist
     /// What one condition function returns now, run on a reference.
-    case condition(function: String, reference: String, parameter: String?)
+    case condition(AgentConditionProbe)
 
     public static let defaultActorRadius: Float = 4096
     /// A full row is about 2,500 characters, and one reply line holds 64 KiB.
@@ -104,11 +104,13 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "changes": try .changes(limit: args.optionalInt("limit") ?? 20)
         case "flight": try .flight(reference: args.optionalString("ref"))
         case "condition":
-            try .condition(
+            try .condition(AgentConditionProbe(
                 function: args.string("function"),
                 reference: args.optionalString("ref") ?? "player",
-                parameter: args.optionalString("param")
-            )
+                parameter: args.optionalString("param"),
+                parameter2: args.optionalString("param2"),
+                target: args.optionalString("target")
+            ))
         default: session(name)
         }
     }

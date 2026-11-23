@@ -24,6 +24,12 @@ struct AgentConditionTests {
         ) { call in
             .success(Float(call.parameter1?.asFormID.rawValue ?? 0))
         })
+        functions.register(ConditionFunction(
+            index: 584, name: "GetRelativeAngle", parameter1: .formID, parameter2: .integer
+        ) { call in
+            guard call.context.target == .player else { return .failure(.unresolvedParameter(584)) }
+            return .success(Float(call.parameter2?.asInt32 ?? 0))
+        })
         functions.register(ConditionFunction(index: 35, name: "GetDisabled") { _ in
             .failure(.unknownFunction(35))
         })
@@ -31,10 +37,12 @@ struct AgentConditionTests {
         world = AgentWorldAdapter(game: host, now: { Date(timeIntervalSinceReferenceDate: 0) })
     }
 
-    private func answer(_ function: String, param: String? = nil) throws -> [String: AgentJSON] {
-        let query = AgentStateQuery.condition(
-            function: function, reference: "player", parameter: param
-        )
+    private func answer(
+        _ function: String, param: String? = nil, param2: String? = nil, target: String? = nil
+    ) throws -> [String: AgentJSON] {
+        let query = AgentStateQuery.condition(AgentConditionProbe(
+            function: function, parameter: param, parameter2: param2, target: target
+        ))
         guard case let .object(fields) = try world.query(query) else {
             Issue.record("no object")
             return [:]
@@ -53,6 +61,13 @@ struct AgentConditionTests {
     @Test func aFormParameterIsReadAsHex() throws {
         #expect(try answer("GetInCell", param: "1A")["value"] == .init(Float(0x1A)))
         #expect(throws: AgentFailure.self) { try answer("GetInCell", param: "cell") }
+    }
+
+    @Test func theSecondParameterAndTheOtherReferenceReachTheFunction() throws {
+        let fields = try answer("GetRelativeAngle", param2: "90", target: "player")
+        #expect(fields["value"] == .init(Float(90)))
+        #expect(host.fakeRuntimeState.conditionContextCalls == [[.player, .player]])
+        #expect(throws: AgentFailure.self) { try answer("GetRelativeAngle", param2: "Z") }
     }
 
     @Test func aFailureIsNamedAndAnUnknownNameRefused() throws {
