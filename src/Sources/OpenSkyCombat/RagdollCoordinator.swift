@@ -157,11 +157,19 @@ public final class RagdollCoordinator {
         runtime.startFall(of: .player)
     }
 
-    /// A load or the main menu brings the player back: alive, and off the floor.
+    /// A load or the main menu brings the player back: alive, off the floor, and with a
+    /// graph out of its death states. A living player's graph keeps its state.
     public func resetPlayerDeath() {
+        let fell = runtime.map {
+            $0.world.isRagdolling(.player) || $0.pendingHandOffs.contains(.player)
+        } ?? false
+        let wasDown = playerDeath.phase != .alive || fell
         playerDeath.reset()
         runtime?.removeRagdoll(.player)
         deathImpulses[.player] = nil
+        if wasDown {
+            world.restartPlayerGraph()
+        }
     }
 
     /// A sweep, not a hook, because health reaches zero from several places.

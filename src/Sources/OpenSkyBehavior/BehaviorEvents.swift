@@ -60,6 +60,12 @@ nonisolated public struct BehaviorEventQueue: Equatable, Sendable {
         indexByName[name.lowercased()]
     }
 
+    /// Drops every queued and active event, so a restarted graph hears none of them.
+    public mutating func discardAll() {
+        pending = []
+        active = []
+    }
+
     // MARK: - Raising
 
     /// Queues the event at `id` for the next update. An id outside the declared

@@ -133,6 +133,10 @@ extension RagdollPoseReadsAdapter {
         return gameSession.locomotion.status.raisedEvents.contains(name)
     }
 
+    public func restartPlayerGraph() {
+        game.gameSession?.locomotion.restartGraphs()
+    }
+
     /// The same static broadphase the player capsule queries.
     var ragdollStepWorld: DynamicStepWorld {
         let streamer = game.streamer

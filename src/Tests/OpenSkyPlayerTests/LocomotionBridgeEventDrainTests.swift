@@ -63,6 +63,20 @@ struct LocomotionBridgeEventDrainTests {
         #expect(bridge.graphEvents.drain(bridge.footstepEventConsumer).isEmpty)
     }
 
+    @Test func restartingTheGraphsKeepsThemRunningAndDropsQueuedEvents() throws {
+        let bridge = LocomotionBridge(configuration: .synthetic)
+        let graph = try Self.triggeringGraph()
+        bridge.attach(graph: graph)
+        for _ in 0 ..< 60 {
+            _ = bridge.plan(Self.state())
+        }
+
+        bridge.restartGraphs()
+
+        #expect(graph.isActive)
+        #expect(bridge.graphEvents.drain(bridge.footstepEventConsumer).isEmpty)
+    }
+
     @Test func pausedFrameQueuesNothing() throws {
         let bridge = LocomotionBridge(configuration: .synthetic)
         try bridge.attach(graph: Self.triggeringGraph())

@@ -85,7 +85,17 @@ struct RagdollWorldTests {
         #expect(adapter.animatedPose(of: .player) == nil)
         #expect(adapter.animatedPose(of: Self.actor) == nil)
         #expect(!adapter.raisePlayerGraphEvent("GetUpStart"))
+        adapter.restartPlayerGraph()
         _ = adapter.ragdollStepWorld
+    }
+
+    @Test func aDeathResetRestartsThePlayersGraphs() {
+        let session = FakeGameSessionPort()
+        let locomotion = FakeLocomotionBridgePort()
+        session.locomotion = locomotion
+        host.gameSession = session
+        adapter.restartPlayerGraph()
+        #expect(locomotion.restartGraphsCallCount == 1)
     }
 
     /// A walked actor's bodies spawn where it walked to, at its drawn height.

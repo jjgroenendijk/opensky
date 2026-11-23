@@ -217,6 +217,14 @@ nonisolated public final class LocomotionBridge {
         reset()
     }
 
+    /// Both graphs start again from their start states, as after a death the player
+    /// stands up from a load or a new game.
+    public func restartGraphs() {
+        graph?.restart()
+        firstPersonGraph?.restart()
+        reset()
+    }
+
     /// Forgets the edge state so the next step raises no stale transition.
     /// Called when walk mode is entered or the player is teleported.
     public func reset() {
