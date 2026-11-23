@@ -183,13 +183,47 @@ struct PapyrusOpaqueHandleTests {
                 op(.returnValue, .identifier("owned"))
             ]
         )
+        #expect(try runThroughStoppedQuest(quest, run: function) == .integer(2))
+    }
+
+    /// A dialogue fragment calls a method on a stopped quest's script through a property.
+    /// The call attaches the quest's scripts, so the method reads its own variables.
+    @Test func aMethodCallRunsOnTheInstanceAttachedOnUse() throws {
+        let owned = PexFixture.runtimeFunction(
+            returnType: "Int",
+            instructions: [op(.returnValue, .identifier("::SolitudeHouseVar_var"))]
+        )
+        let quest = PexFixture.runtimeObject(
+            name: "ProbeHouseScript",
+            variables: [PexVariable(
+                name: "::SolitudeHouseVar_var", typeName: "Int", userFlags: 0,
+                initialValue: .integer(2)
+            )],
+            states: [Support.state(functions: [("Owned", owned)])]
+        )
+        let function = PexFixture.runtimeFunction(
+            returnType: "Int",
+            locals: [PexTypedName(name: "count", typeName: "Int")],
+            instructions: [
+                op(
+                    .callMethod, .identifier("Owned"), .identifier("house"),
+                    .identifier("count"), .integer(0)
+                ),
+                op(.returnValue, .identifier("count"))
+            ]
+        )
+        #expect(try runThroughStoppedQuest(quest, run: function) == .integer(2))
+    }
+
+    /// Runs `function` as `Run` on a script whose `house` variable holds handle 900, a
+    /// stopped quest with no instance. First use attaches `quest`'s script to it.
+    private func runThroughStoppedQuest(
+        _ quest: PexObject, run function: PexFunction
+    ) throws -> PapyrusValue? {
         let script = PexFixture.runtimeObject(
             name: "OpaqueScript",
             variables: [PexVariable(
-                name: "house",
-                typeName: "ProbeHouseScript",
-                userFlags: 0,
-                initialValue: .null
+                name: "house", typeName: "ProbeHouseScript", userFlags: 0, initialValue: .null
             )],
             states: [Support.state(functions: [("Run", function)])]
         )
@@ -197,11 +231,11 @@ struct PapyrusOpaqueHandleTests {
         let attached = try runtime.makeInstance(scriptName: quest.name, initialValues: [:])
         runtime
             .siblingInstance = { handle, _ in handle == PapyrusObjectHandle(900) ? attached : nil }
-        let reader = try runtime.makeInstance(
+        let caller = try runtime.makeInstance(
             scriptName: script.name,
             initialValues: ["house": .object(PapyrusObjectHandle(900))]
         )
-        #expect(Support.value(runtime.invoke("Run", on: reader)) == .integer(2))
+        return Support.value(runtime.invoke("Run", on: caller))
     }
 
     private func op(_ opcode: PexOpcode, _ operands: PexValue...) -> PexInstruction {

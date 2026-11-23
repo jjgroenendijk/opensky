@@ -153,8 +153,11 @@ extension PapyrusRuntime.Interpreter {
         guard case let .object(typeName) = declaredType(of: operand, frame: frame) else {
             return handle
         }
+        // A stopped quest's handle has no instance until first use, which attaches its
+        // scripts as the game keeps them, so a method called on it reads its variables.
         guard runtime.instance(for: handle) != nil else {
-            return runtime.aliasSlotInstance?(handle, typeName) ?? handle
+            return runtime.aliasSlotInstance?(handle, typeName)
+                ?? runtime.siblingInstance?(handle, typeName) ?? handle
         }
         guard
             !runtime.resolvesObject(handle, as: typeName),
