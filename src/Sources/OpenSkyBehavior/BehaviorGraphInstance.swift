@@ -313,6 +313,14 @@ nonisolated public final class BehaviorGraphInstance {
         isActive = false
     }
 
+    /// Starts the graph again from every machine's start state. The events that leaving
+    /// the old states raised are dropped, and the variables stay, as `deactivate()` keeps them.
+    public func restart() {
+        deactivate()
+        events.discardAll()
+        activate()
+    }
+
     /// Advances the graph by one fixed timestep and returns the pose, root travel,
     /// and events. Order: queued events become active; the tree is walked depth
     /// first, bindings applied just before each node; nodes not reached are

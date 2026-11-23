@@ -16,6 +16,7 @@ public protocol LocomotionBridgePort: AnyObject {
     var pose: SkinnedPoseBuffer { get }
     func raise(_ name: String)
     @discardableResult func raiseGraphEvent(named name: String) -> Bool
+    func restartGraphs()
     var status: LocomotionStatus { get }
     func write(_ value: BehaviorVariableValue, to name: String)
 }

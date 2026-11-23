@@ -155,6 +155,21 @@ struct BehaviorStateMachineTests {
         #expect(graph.activeStates.map(\.stateName) == ["Right"])
     }
 
+    @Test func aRestartReturnsTheMachineToItsStartStateAndDropsQueuedEvents() {
+        let graph = TwoStateGraph(
+            leftTransitions: [BehaviorTransitionSpec(eventId: 0, toStateId: 1)]
+        ).instance()
+        graph.raiseEvent(named: "go")
+        graph.update(deltaTime: Self.step)
+        #expect(graph.activeStates.map(\.stateName) == ["Right"])
+        graph.raiseEvent(named: "go")
+        graph.restart()
+        #expect(graph.isActive)
+        #expect(graph.events.pending.isEmpty)
+        #expect(graph.update(deltaTime: Self.step).bones[1].translation.x == 0)
+        #expect(graph.activeStates.map(\.stateName) == ["Left"])
+    }
+
     @Test func anEventNoTransitionNamesChangesNothing() {
         let graph = TwoStateGraph(
             leftTransitions: [BehaviorTransitionSpec(eventId: 0, toStateId: 1)]

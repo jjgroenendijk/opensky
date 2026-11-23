@@ -64,6 +64,8 @@ public protocol RagdollSessionWorld: AnyObject {
     func animatedPose(of key: ReferenceKey) -> [String: float4x4]?
     /// Only the player has a graph. True when the graph declared the name.
     func raisePlayerGraphEvent(_ name: String) -> Bool
+    /// Puts the player's graph back in its start states, out of a death or a bleedout.
+    func restartPlayerGraph()
     var ragdollStepWorld: DynamicStepWorld { get }
     /// - Returns: how many script events were queued; 0 without a script VM.
     func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int

@@ -20,6 +20,7 @@ nonisolated public final class FakeLocomotionBridgePort: LocomotionBridgePort {
     public var raiseCalls: [String] = []
     public var raiseGraphEventCalls: [String] = []
     public var raiseGraphEventResult = false
+    public var restartGraphsCallCount = 0
     public var status: LocomotionStatus = FakeLocomotionStatusPort()
     public var writeCalls: [(value: BehaviorVariableValue, name: String)] = []
 
@@ -50,6 +51,10 @@ nonisolated extension FakeLocomotionBridgePort {
     public func raiseGraphEvent(named name: String) -> Bool {
         raiseGraphEventCalls.append(name)
         return raiseGraphEventResult
+    }
+
+    public func restartGraphs() {
+        restartGraphsCallCount += 1
     }
 
     public func write(_ value: BehaviorVariableValue, to name: String) {

@@ -111,6 +111,10 @@ extension RagdollWorldAdapter {
         poseReads.raisePlayerGraphEvent(name)
     }
 
+    public func restartPlayerGraph() {
+        poseReads.restartPlayerGraph()
+    }
+
     public var ragdollStepWorld: DynamicStepWorld {
         poseReads.ragdollStepWorld
     }

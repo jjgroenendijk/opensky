@@ -73,5 +73,14 @@ struct RagdollPlayerFallTests {
         #expect(coordinator.playerDeath.phase == .alive)
         #expect(Self.playerBones(coordinator.publishPoses())?.isEmpty == true)
         #expect(Self.playerBones(coordinator.publishPoses()) == nil)
+        #expect(world.playerGraphRestarts == 1)
+    }
+
+    @Test
+    func aLoadKeepsTheGraphOfALivingPlayer() {
+        let world = FakeRagdollSessionWorld()
+        let coordinator = Self.coordinator(world: world)
+        coordinator.resetPlayerDeath()
+        #expect(world.playerGraphRestarts == 0)
     }
 }

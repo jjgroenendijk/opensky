@@ -31,6 +31,7 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
     var skeletonMeshPath = "meshes\\actors\\character\\character assets\\skeleton.nif"
     var scale: Float = 1
     var declaredPlayerEvents: Set<String> = []
+    var playerGraphRestarts = 0
     var selectedRagdollActor: ReferenceKey?
     var playerFeetPosition: SIMD3<Float>? = .zero
     var acceptsCorpseSearch = true
@@ -89,6 +90,10 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
 
     func raisePlayerGraphEvent(_ name: String) -> Bool {
         declaredPlayerEvents.contains(name)
+    }
+
+    func restartPlayerGraph() {
+        playerGraphRestarts += 1
     }
 
     func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int {
