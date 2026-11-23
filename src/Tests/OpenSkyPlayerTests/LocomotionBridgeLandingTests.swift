@@ -2,6 +2,8 @@
 // player who still moves must start its walk or run again.
 
 @testable import OpenSkyBehavior
+import OpenSkyEngineTesting
+import OpenSkyFormatsAnimation
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
 import OpenSkyRenderCore
@@ -28,5 +30,25 @@ extension LocomotionBridgeTests {
         #expect(Self.raised(bridge, LocomotionGraphNames.moveStart) == 0)
         Self.advance(&controller, camera: &camera, bridge: bridge, steps: 1)
         #expect(Self.raised(bridge, LocomotionGraphNames.moveStart) == 1)
+    }
+}
+
+extension LocomotionBridgeTests {
+    /// A kill move's victim half places the player by its clip. A gap under the feet
+    /// then is no fall, which would pull the graph out of the paired state.
+    @Test(arguments: [false, true])
+    func aSyncedGraphHearsNoFall(synced: Bool) {
+        var camera = Self.camera()
+        var controller = WalkController(cameraPosition: camera.position)
+        let graph = Self.graph(declaring: [
+            BehaviorVariableSpec(LocomotionGraphNames.isSynced, .bool, synced ? 1 : 0)
+        ])
+        let bridge = LocomotionBridge(configuration: .synthetic, graph: graph)
+        Self.settle(&controller, camera: &camera, bridge: bridge)
+        bridge.updateStatus { $0.raisedEvents = [] }
+        camera.position.z += 200
+        controller = WalkController(cameraPosition: camera.position)
+        Self.advance(&controller, camera: &camera, bridge: bridge, steps: 2)
+        #expect(Self.raised(bridge, LocomotionGraphNames.jumpFall) == (synced ? 0 : 1))
     }
 }

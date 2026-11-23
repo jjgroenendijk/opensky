@@ -37,6 +37,9 @@ nonisolated public enum LocomotionGraphNames: Sendable {
     /// `1hm_behavior.hkx` reaches its weapon idle only through `i1stPerson == 1`.
     public static let firstPersonInt = "i1stPerson"
     public static let firstPersonReal = "fIsFirstPerson"
+    /// The graph's own output, true while a paired machine such as a kill move's victim
+    /// half runs. The clip then places the player, so a fall or a landing is not news.
+    public static let isSynced = "bIsSynced"
 
     /// Every variable the bridge writes, in write order.
     /// Which kind of actor runs the graph, as bool and int, for the player graph.

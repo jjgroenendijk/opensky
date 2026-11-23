@@ -112,6 +112,8 @@ nonisolated public final class LocomotionBridge {
     /// start once standing.
     private var hasGroundSample = false
     private var isAirborneFromJump = false
+    /// True on the step that raises a requested idle, whose start may move the player.
+    private var idleStartsThisStep = false
     private var pendingJump = false
     /// An idle the graph has not taken yet, because its current state has no
     /// transition for it, such as a landing, and the state the idle enters.
@@ -162,6 +164,7 @@ nonisolated public final class LocomotionBridge {
         let moving = direction != SIMD2<Float>()
 
         writeVariables(state: state, gait: gait, direction: direction, moving: moving)
+        idleStartsThisStep = pendingIdle != nil
         if let pendingIdle {
             raise(pendingIdle.event)
             self.pendingIdle = nil
@@ -346,42 +349,6 @@ nonisolated public final class LocomotionBridge {
         writeCharacterVariables(state: state)
         writeActorState(gait: gait)
     }
-
-    /// Raises the transitions this step crossed, in a fixed order so a step
-    /// that changes several things at once still produces the same event
-    /// sequence on every run.
-    private func raiseEdgeEvents(
-        moving: Bool,
-        gait: LocomotionGait,
-        swimming: Bool,
-        footing: (jumping: Bool, grounded: Bool)
-    ) {
-        let (jumping, grounded) = footing
-        if moving != wasMoving {
-            raise(moving ? LocomotionGraphNames.moveStart : LocomotionGraphNames.moveStop)
-        }
-        let sprinting = gait == .sprint
-        if sprinting != wasSprinting {
-            raise(sprinting ? LocomotionGraphNames.sprintStart : LocomotionGraphNames.sprintStop)
-        }
-        let sneaking = isSneakingNow
-        if sneaking != wasSneaking {
-            raise(sneaking ? LocomotionGraphNames.sneakStart : LocomotionGraphNames.sneakStop)
-        }
-        if swimming != wasGraphSwimming {
-            raise(swimming ? LocomotionGraphNames.swimStart : LocomotionGraphNames.swimStop)
-        }
-        if jumping {
-            raise(LocomotionGraphNames.jumpUp)
-        } else if hasGroundSample, grounded, !wasGrounded {
-            // Landing is the controller's observation, not the graph's: the
-            // graph is told that the capsule arrived.
-            isAirborneFromJump = false
-            raise(LocomotionGraphNames.jumpLand)
-        } else if hasGroundSample, !grounded, wasGrounded {
-            raise(LocomotionGraphNames.jumpFall)
-        }
-    }
 }
 
 nonisolated extension LocomotionBridge {
@@ -436,5 +403,48 @@ nonisolated extension LocomotionBridge {
         graphEvents.enqueue(result.firedEvents, unbound: result.unboundEvents)
         pose.publish(result.bones)
         return result.rootMotion
+    }
+}
+
+nonisolated extension LocomotionBridge {
+    /// Raises the transitions this step crossed, in a fixed order so a step
+    /// that changes several things at once still produces the same event
+    /// sequence on every run.
+    private func raiseEdgeEvents(
+        moving: Bool,
+        gait: LocomotionGait,
+        swimming: Bool,
+        footing: (jumping: Bool, grounded: Bool)
+    ) {
+        let (jumping, grounded) = footing
+        if moving != wasMoving {
+            raise(moving ? LocomotionGraphNames.moveStart : LocomotionGraphNames.moveStop)
+        }
+        let sprinting = gait == .sprint
+        if sprinting != wasSprinting {
+            raise(sprinting ? LocomotionGraphNames.sprintStart : LocomotionGraphNames.sprintStop)
+        }
+        let sneaking = isSneakingNow
+        if sneaking != wasSneaking {
+            raise(sneaking ? LocomotionGraphNames.sneakStart : LocomotionGraphNames.sneakStop)
+        }
+        if swimming != wasGraphSwimming {
+            raise(swimming ? LocomotionGraphNames.swimStart : LocomotionGraphNames.swimStop)
+        }
+        // An idle that starts this step, or a paired clip that runs, places the player.
+        let synced = idleStartsThisStep
+            || graph?.variable(named: LocomotionGraphNames.isSynced)?.boolValue ?? false
+        if jumping {
+            raise(LocomotionGraphNames.jumpUp)
+        } else if synced {
+            return
+        } else if hasGroundSample, grounded, !wasGrounded {
+            // Landing is the controller's observation, not the graph's: the
+            // graph is told that the capsule arrived.
+            isAirborneFromJump = false
+            raise(LocomotionGraphNames.jumpLand)
+        } else if hasGroundSample, !grounded, wasGrounded {
+            raise(LocomotionGraphNames.jumpFall)
+        }
     }
 }

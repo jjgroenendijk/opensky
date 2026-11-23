@@ -38,8 +38,8 @@ extension LocomotionBridgeTests {
 
     /// A graph declaring the census names the bridge writes, minus `SpeedWalk`
     /// and `SpeedRun`, so one missing name is exercised too.
-    static func graph() -> BehaviorGraphInstance {
-        let variables = [
+    static func graph(declaring extra: [BehaviorVariableSpec] = []) -> BehaviorGraphInstance {
+        let variables = extra + [
             BehaviorVariableSpec(LocomotionGraphNames.speed, .real, 0),
             BehaviorVariableSpec(LocomotionGraphNames.speedSampled, .real, 0),
             BehaviorVariableSpec(LocomotionGraphNames.direction, .real, 0),
