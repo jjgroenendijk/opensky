@@ -53,10 +53,8 @@ nonisolated public struct PapyrusActorState: ActorValueReadable, Equatable, Send
     /// Whether the actor is actually in a fight, per 16.7's behavior phase.
     /// Searching counts; being hostile without having noticed anybody does not.
     public let isInCombat: Bool
-    /// Where the actor's weapon is, or nil when nothing in this session
-    /// observes a draw state for it. Only the player carries a behavior graph
-    /// that tracks one today, so every other actor answers nil and
-    /// `IsWeaponDrawn` fails with a reason rather than claiming sheathed.
+    /// Where the actor's weapon is, or nil when nothing in this session observes a draw
+    /// state for it. `IsWeaponDrawn` then fails with a reason rather than claiming sheathed.
     public let weaponDrawState: WeaponDrawState?
     /// Non-primary actor values this actor has moved off its baseline, so
     /// `GetActorValue("Resist Fire")` answers.

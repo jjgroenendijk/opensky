@@ -43,8 +43,8 @@ struct ActorConditionReads {
     let game: any RuntimeStateWorldHost
     let inventoryFacts: RuntimeStateInventoryFactsAdapter
 
-    /// Only the player has a graph that tracks a draw state; an NPC's follows its
-    /// fight. OpenSky draws no torch, and a shield comes out only with a drawn weapon,
+    /// The player's graph tracks its draw state; an NPC's follows its fight, through
+    /// the combat loop. OpenSky draws no torch, and a shield comes out only with a drawn weapon,
     /// so a sheathed or peaceful actor holds nothing out.
     func actorConditionState(
         holder: ActorValueHolder,
@@ -54,7 +54,8 @@ struct ActorConditionReads {
         let baseline = values.baseline(of: holder)
         let activity = game.combat.loop?.activity(of: holder.key) ?? .notFighting
         let drawState = holder.key == .player
-            ? game.combat.melee?.state.drawState : WeaponDrawState.ofNPC(activity)
+            ? game.combat.melee?.state.drawState
+            : game.combat.loop?.drawState(of: holder.key) ?? WeaponDrawState.ofNPC(activity)
         let handIsEmpty = drawState.map { !$0.isWeaponInHand } ?? (activity == .notFighting)
         var state = ActorConditionState(
             current: values.current(of: holder),
@@ -136,7 +137,12 @@ extension RuntimeStateCoreAdapter {
             playerLevel: values.baselines.playerLevel.level,
             hasInventory: game.inventory.equipment != nil,
             actors: members,
-            phases: game.combat.loop?.behaviors.mapValues(\.phase)
+            phases: game.combat.loop?.behaviors.mapValues(\.phase),
+            draws: game.combat.loop.map { loop in
+                members.reduce(into: [:]) { draws, member in
+                    draws[member.holder.key] = loop.drawState(of: member.holder.key)
+                }
+            }
         )
         return state.conditionCaches.actors.value(for: key) {
             members.reduce(into: [:]) { states, member in

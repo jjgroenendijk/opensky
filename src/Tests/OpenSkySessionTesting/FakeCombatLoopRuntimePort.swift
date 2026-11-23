@@ -18,6 +18,8 @@ nonisolated public final class FakeCombatLoopRuntimePort: CombatLoopRuntimePort 
     public var behaviors: [ReferenceKey: CombatBehaviorMachine] = [:]
     public var commandCalls: [(actor: ReferenceKey, commander: ReferenceKey)] = []
     public var dismissCalls: [ReferenceKey] = []
+    public var drawStateCalls: [ReferenceKey] = []
+    public var drawStateResult: WeaponDrawState?
     public var fightsRangedCalls: [ReferenceKey] = []
     public var fightsRangedResult = false
     public var hostilityCalls: [ReferenceKey] = []
@@ -63,6 +65,11 @@ nonisolated extension FakeCombatLoopRuntimePort {
 
     public func dismiss(_ actor: ReferenceKey) {
         dismissCalls.append(actor)
+    }
+
+    public func drawState(of key: ReferenceKey) -> WeaponDrawState? {
+        drawStateCalls.append(key)
+        return drawStateResult
     }
 
     public func fightsRanged(_ key: ReferenceKey) -> Bool {

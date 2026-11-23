@@ -129,4 +129,32 @@ struct ConditionActorActionFunctionTests {
         #expect(WeaponDrawState.ofNPC(.searching) == .drawn)
         #expect(WeaponDrawState.ofNPC(.notFighting) == .sheathed)
     }
+
+    @Test func anNPCTakesHalfASecondToDrawAndToSheathe() {
+        var draw = NPCWeaponDraw()
+        draw.advance(wantsDrawn: false, by: 1)
+        #expect(draw.state == .sheathed)
+        draw.advance(wantsDrawn: true, by: 0.1)
+        #expect(draw.state == .drawing && !draw.state.isWeaponInHand)
+        draw.advance(wantsDrawn: true, by: 0.3)
+        #expect(draw.state == .drawing)
+        draw.advance(wantsDrawn: true, by: 0.3)
+        #expect(draw.state == .drawn)
+        draw.advance(wantsDrawn: false, by: 0.1)
+        #expect(draw.state == .sheathing && draw.state.isWeaponInHand)
+        draw.advance(wantsDrawn: false, by: 0.6)
+        #expect(draw.state == .sheathed)
+    }
+
+    @Test func aDrawOrASheatheThatIsCalledOffGoesBack() {
+        var draw = NPCWeaponDraw()
+        draw.advance(wantsDrawn: true, by: 0.1)
+        draw.advance(wantsDrawn: false, by: 0.1)
+        #expect(draw.state == .sheathed)
+        draw.advance(wantsDrawn: true, by: 0.1)
+        draw.advance(wantsDrawn: true, by: 1)
+        draw.advance(wantsDrawn: false, by: 0.1)
+        draw.advance(wantsDrawn: true, by: 0.1)
+        #expect(draw.state == .drawn)
+    }
 }

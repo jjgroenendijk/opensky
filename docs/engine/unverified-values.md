@@ -367,3 +367,4 @@ the detail and the sources it did find.
 | Auto-aim window axis | The window is measured against the screen height on both axes | [combat assist](/engine/combat-assist.md#in-opensky) |
 | Long body end lift | The end spheres of a long body ride one step height above the ground | [character shapes](/engine/character-shapes.md#long-bodies) |
 | Aggro warning line | An actor that warns by its aggro radius says a line of the Trespass subtype | [combat behavior](/engine/combat-behavior.md#aggro-radius) |
+| NPC weapon draw time | An NPC takes 0.5 s to draw and 0.5 s to sheathe; the game times both by the clips | [condition functions](/engine/condition-functions-world.md#combat-actions) |

@@ -130,7 +130,7 @@ extension PapyrusNativeFunctions.ActorNatives {
     /// `bool IsDead()`, `bool IsInCombat()`, `bool IsWeaponDrawn()`, and
     /// `Kill(Actor akKiller = None)`. `IsDead` reads the death latch.
     /// `IsInCombat` reads the behavior phase, so searching counts.
-    /// `IsWeaponDrawn` answers only for the player; others fail with a reason. The
+    /// `IsWeaponDrawn` fails with a reason for an actor nothing tracks a draw for. The
     /// killer may be `None` (<https://www.creationkit.com/index.php?title=Kill_-_Actor>).
     private static func installActorStatus(into registry: inout PapyrusNativeRegistry) {
         let flags: [(String, @Sendable (PapyrusActorState) -> Bool?)] = [
