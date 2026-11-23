@@ -143,4 +143,14 @@ struct SWFRuntimeTextScrollTests {
         field.object.assign(.string("top"), for: "verticalAutoSize")
         #expect(firstLine(runtime) == nil)
     }
+
+    /// The grown field reports its height: four 1000-twip lines and two 2-pixel gutters
+    /// make 204 pixels, where the authored box is 100. A list stacks rows by this height.
+    @Test func aVerticallyAutoSizedFieldReportsItsGrownHeight() throws {
+        let (runtime, field) = try Self.started()
+        #expect(runtime.displayProperty(.height, of: field) == .number(100))
+        field.object.assign(.string("top"), for: "verticalAutoSize")
+        #expect(runtime.displayProperty(.height, of: field) == .number(204))
+        #expect(runtime.displayProperty(.positionY, of: field) == .number(0))
+    }
 }

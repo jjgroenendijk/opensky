@@ -96,7 +96,7 @@ nonisolated extension SWFMovieRuntime {
         case .shape, .staticText:
             return movie.characterBounds(of: node.content) ?? .empty
         case .editText:
-            return textField(of: node).map { SWFBoundsBox(rect: $0.bounds) } ?? .empty
+            return textField(of: node).map { autoSizedBounds(of: node, field: $0) } ?? .empty
         case .clip:
             guard remainingDepth > 0 else {
                 return .empty

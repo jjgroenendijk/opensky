@@ -19,6 +19,35 @@ nonisolated extension SWFMovieRuntime {
             && isOff(node.object.lookup("verticalAutoSize")?.property.value)
     }
 
+    /// The field's box. GFx `verticalAutoSize` fits the height to the laid-out lines plus
+    /// the 2-pixel gutter at each edge, keeping the named edge (or the centre) in place, so
+    /// `_height` reports a wrapped row's real size and a list can stack its rows.
+    func autoSizedBounds(of node: SWFDisplayObject, field: SWFEditText) -> SWFBoundsBox {
+        var box = SWFBoundsBox(rect: field.bounds)
+        guard
+            case let .string(mode) = node.object.lookup("verticalAutoSize")?.property.value
+            ?? .undefined,
+            ["top", "center", "bottom"].contains(mode),
+            let layout = measuredLayout(of: node, characters: false), layout.lineCount > 0
+        else {
+            return box
+        }
+        let gutter = 2 * Self.twipsPerPixel
+        let height = Float(layout.lineCount - 1) * layout.lineAdvance + layout.lineHeight
+            + 2 * gutter
+        switch mode {
+        case "top":
+            box.maxY = box.minY + height
+        case "bottom":
+            box.minY = box.maxY - height
+        default:
+            let centre = (box.minY + box.maxY) / 2
+            box.minY = centre - height / 2
+            box.maxY = centre + height / 2
+        }
+        return box
+    }
+
     /// An auto-size mode that is unset or "none".
     private func isOff(_ mode: AS2Value?) -> Bool {
         switch mode ?? .undefined {
