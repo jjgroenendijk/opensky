@@ -24,4 +24,19 @@ struct DialogueTextTagsTests {
         #expect(DialogueTextTags.none.fill("(<Global=HirelingGold>)", topic: topic)
             == "(<Global=HirelingGold>)")
     }
+
+    /// The engine fills `<CrimeGold>` and `<BribeCost>` from the speaker, with or without a
+    /// quest, and leaves a tag it has no value for as written.
+    @Test func theSpeakerTagsShowTheirGold() {
+        let tags = DialogueTextTags(
+            naming: .none, values: ["CrimeGold": "25", "BribeCost": "120"]
+        ) { _ in nil }
+        #expect(
+            tags.fill("You caught me. I'll pay off my bounty. (<CrimeGold> gold)", topic: nil)
+                == "You caught me. I'll pay off my bounty. (25 gold)"
+        )
+        #expect(tags.fill("(<BribeCost> gold)", topic: nil) == "(120 gold)")
+        #expect(DialogueTextTags.none
+            .fill("(<CrimeGold> gold)", topic: nil) == "(<CrimeGold> gold)")
+    }
 }

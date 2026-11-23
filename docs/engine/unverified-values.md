@@ -374,3 +374,4 @@ the detail and the sources it did find.
 | Follower command busy wait | A follower that cannot start its walk is asked again for 10 s, then the order ends | [follower commands](/engine/follower-commands.md) |
 | Melee magnetism signs and look scale | Both terms turn toward the target; the look input is the frame's view turn, scaled by a turn speed of 2π rad/s; an object counts within 192 units | [combat assist](/engine/combat-assist.md#in-opensky) |
 | Alarm flee distance | An NPC criminal that a guard answers runs 2000 units straight away from the guard, along the ground | [crime reports](/engine/crime-reports.md#where-opensky-differs) |
+| Bribe cost text | `<BribeCost>` shows the bribe amount rounded down to whole gold, as `Actor.GetBribeAmount` returns an integer | [dialogue menu](/engine/dialogue-menu.md#text) |
