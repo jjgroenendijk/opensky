@@ -99,6 +99,7 @@ extension GameSession.MovementSteps {
             frameInput = frameInput.holdingStill
         }
         steerPlayerWalk(&frameInput)
+        session.dialogueCameraSteps.steerDialogueTurn(&frameInput)
         if frameInput.cycleCameraMode {
             setMovementMode(session.movementMode.next)
         }

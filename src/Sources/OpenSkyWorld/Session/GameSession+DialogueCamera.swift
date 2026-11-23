@@ -65,6 +65,58 @@ extension GameSession.DialogueCameraSteps {
         guard wasEngaged != isDialogueCameraEngaged else { return }
     }
 
+    /// The speaker a conversation looks at, or nil when none is open. The first call of a
+    /// conversation sets up the turn, in first person only; later calls move the aim, and the
+    /// rest of the turn and the look limits follow it. Ending it restores nothing.
+    public func setDialogueSpeakerAim(_ aim: SIMD3<Float>?) {
+        let state = session.rigs.dialogueCameraState
+        guard let aim else {
+            session.rigs.dialogueCameraState.speakerAim = nil
+            session.rigs.dialogueCameraState.turn = nil
+            return
+        }
+        session.rigs.dialogueCameraState.speakerAim = aim
+        let view = session.freeFlyCamera
+        if state.turn != nil {
+            session.rigs.dialogueCameraState.turn?.retarget(eye: view.position, aim: aim)
+            return
+        }
+        guard state.speakerAim == nil, session.movementMode == .walk else { return }
+        session.rigs.dialogueCameraState.turn = DialogueTurn(
+            eye: view.position, yaw: view.yaw, pitch: view.pitch, aim: aim
+        )
+    }
+
+    /// How far the turn to the speaker has come, 0 to 1, or nil when no turn runs.
+    public var dialogueTurnProgress: Float? {
+        session.rigs.dialogueCameraState.turn.map { $0.elapsed / DialogueTurn.duration }
+    }
+
+    /// Runs the turn to the speaker, which owns the view while it lasts, then damps look
+    /// input that turns away from the speaker.
+    func steerDialogueTurn(_ frameInput: inout CameraInput) {
+        guard
+            session.movementMode.isPlayerControlled,
+            let aim = session.rigs.dialogueCameraState.speakerAim
+        else { return }
+        if var turn = session.rigs.dialogueCameraState.turn, !turn.isDone {
+            let angles = turn.advance(by: session.lastTransitionDelta)
+            session.rigs.dialogueCameraState.turn = turn
+            session.freeFlyCamera.yaw = angles.yaw
+            session.freeFlyCamera.pitch = angles.pitch
+            frameInput.lookRight = 0
+            frameInput.lookUp = 0
+            return
+        }
+        let offset = DialogueTurn.speakerOffset(
+            yaw: session.freeFlyCamera.yaw, eye: playerEyePosition, aim: aim
+        )
+        frameInput.lookRight *= DialogueTurn.lookScale(
+            lookRight: frameInput.lookRight, offset: offset,
+            stops: session.movementMode == .walk ? .firstPerson : .thirdPerson
+        )
+    }
+
     /// Puts the player's own pose back. Safe to call when nothing is applied,
     /// which is what lets the input frame start with it unconditionally.
     public func restorePlayerCameraPose() {

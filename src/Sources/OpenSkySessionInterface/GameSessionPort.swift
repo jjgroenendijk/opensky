@@ -48,6 +48,11 @@ public protocol GameSessionPort: AnyObject {
     var sessionFOVYRadians: Float { get }
     func setCinematicCamera(_ pose: CinematicCameraPose?, shakeOffset: SIMD3<Float>)
     func setDialogueCameraFocus(_ focus: DialogueCameraFocus?)
+    /// The speaker a conversation looks at, or nil when none is open.
+    func setDialogueSpeakerAim(_ aim: SIMD3<Float>?)
+    /// How far the turn to the speaker has come, 0 to 1, or nil when no turn runs.
+    var dialogueTurnProgress: Float? { get }
+    var dialogueSpeakerAim: SIMD3<Float>? { get }
     func setFirstPersonFOVY(radians: Float)
     func setMovementMode(_ mode: CameraMovementMode)
     @discardableResult func settlePlayerOnGround() -> Bool

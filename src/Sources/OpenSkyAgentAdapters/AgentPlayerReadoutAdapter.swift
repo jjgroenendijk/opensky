@@ -167,6 +167,8 @@ struct AgentPlayerStatusReadout {
                 game.actorValues.runtime?.regenerationPause(.stamina, of: .player) ?? 0
             )
         ]
+        result["dialogueTurn"] = gameSession.dialogueTurnProgress.map { .init($0) } ?? .null
+        result["dialogueAim"] = gameSession.dialogueSpeakerAim.map { .init($0) } ?? .null
         return result
     }
 

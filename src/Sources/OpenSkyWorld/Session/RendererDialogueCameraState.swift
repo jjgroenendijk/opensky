@@ -14,4 +14,8 @@ public struct RendererDialogueCameraState {
     /// The player's own view pose, held while the override stands in for it.
     /// Non-nil exactly while the swap is applied.
     public var restorePose: FreeFlyCamera?
+    /// The speaker's look-at point while a conversation is open.
+    public var speakerAim: SIMD3<Float>?
+    /// The first-person turn to the speaker, set up when the conversation starts.
+    public var turn: DialogueTurn?
 }
