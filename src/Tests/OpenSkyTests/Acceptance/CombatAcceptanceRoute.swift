@@ -176,6 +176,8 @@ extension CombatAcceptanceTests {
         )
         #expect(chain.visitedStates.contains(State.bowDraw.name))
         #expect(chain.melee.swingCount == swings, "a sheathed weapon still swung")
+        // Held to full power, so the shot flies at full speed and the record's gravity.
+        _ = chain.run(frames: 60)
 
         chain.releaseAttack()
         #expect(

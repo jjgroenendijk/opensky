@@ -243,8 +243,8 @@ Where OpenSky differs:
 
 An NPC with a bow equipped stands off and shoots instead of closing to melee reach. It keeps the
 combat loop's attack timing ([combat behaviour](/engine/combat-behavior.md)): the attack starts the
-attack clip, and the contact step looses the arrow. It shoots from up to 2048 units, an OpenSky
-value. The arrow is the first `AMMO` it has equipped or carries. A shot needs one, and does not use
+attack clip, and the contact step looses the arrow. The range rules below decide where it stands.
+The arrow is the first `AMMO` it has equipped or carries. A shot needs one, and does not use
 it up.
 
 The aim follows what was read from the game program:
@@ -306,5 +306,14 @@ what sets it was not found, so OpenSky never sets it.
 ## Not done yet
 
 Explosive projectiles ([explosions](/engine/explosions.md)). NPC archers do not drive the bow graph
-events above: they play the combat loop's attack clip. They shoot from up to 2048 units, not the
-game's range rules above. A bolt tilts up 1 degree in third person, not 2.5.
+events above: they play the combat loop's attack clip. Their windup is the attack's windup plus the
+hold at full draw.
+
+How OpenSky's NPC archers differ from the range rules above:
+
+- The longest shot is always 4096. Every vanilla arrow's ballistic range is far longer.
+- The shot chance is rolled each time the gap between attacks ends; how often the game rolls it
+  was not found. A failed roll waits one more gap.
+- The style's group offensive multiplier is not applied, and an explosion radius does not raise
+  the minimum range.
+- The back-off has no 60-degree view check, and the path is not kept by the 20-degree rule.

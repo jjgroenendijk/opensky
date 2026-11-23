@@ -196,4 +196,14 @@ struct ProjectileBounceTests {
         settings.holdingMaterials = nil
         #expect(settings.holds(material: Self.stone))
     }
+
+    @Test func aNPCSpellAimsWithNoiseOnlyWhenItIsNotConcentration() {
+        let runtime = ProjectileRuntime(settings: .synthetic, world: nil)
+        let point = SIMD3<Float>(100, 0, 0)
+
+        #expect(runtime.npcSpellAim(at: point, concentration: true) == point)
+        let aimed = runtime.npcSpellAim(at: point, concentration: false)
+        let reach: Float = 0.5 * 16 * 1.7321 + 0.001
+        #expect(simd_length(aimed - point) <= reach)
+    }
 }

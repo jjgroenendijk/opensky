@@ -39,6 +39,8 @@ nonisolated public struct SpellPayload: Equatable, Sendable {
 
     /// Both hands cast it, so `entries` already carry the dual cast scaling.
     public var isDualCast = false
+    /// A concentration spell, which an NPC aims with no noise.
+    public var isConcentration = false
     /// The magicka an absorbing target gains: the spell's base cost.
     public var baseCost: Float = 0
     /// `SPIT` "Disallow Spell Absorb/Reflect": an absorption chance never stops it.

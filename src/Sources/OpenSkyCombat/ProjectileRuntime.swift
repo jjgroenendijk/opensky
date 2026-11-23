@@ -6,6 +6,7 @@
 
 import Foundation
 public import OpenSkyCombatInterface
+import OpenSkyConditions
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyMagicInterface
@@ -33,6 +34,8 @@ public final class ProjectileRuntime {
     /// The cone look-ahead distance and timer; the coordinator sets them.
     var magicWorld = MagicWorldSettings.vanilla
     var attached = AttachedArrows()
+    /// The seeded generator an NPC spell's aim noise draws from.
+    var spellAimRandom = ConditionRandom()
     /// Arrows that bounced this step, which fly on from the next one.
     var pendingBounces: [LiveProjectile] = []
     /// Projectiles in the air, in id order.
@@ -106,7 +109,7 @@ public final class ProjectileRuntime {
         var projectile = LiveProjectile(
             id: nextID,
             shooter: shooter.key,
-            profile: shot.profile,
+            profile: shot.flightProfile,
             payload: shot.payload,
             launchPosition: shooter.origin,
             launchDirection: direction,
@@ -114,7 +117,7 @@ public final class ProjectileRuntime {
             state: ProjectileFlight.launch(
                 from: shooter.origin,
                 along: direction,
-                profile: shot.profile,
+                profile: shot.flightProfile,
                 speedScale: shot.speedScale
             )
         )

@@ -44,7 +44,7 @@ extension MagicSpellDeliveryAdapter {
         else { return false }
         return runtime.projectiles.fire(
             ProjectileShot.spell(profile: profile, payload: payload),
-            from: shooter
+            from: aimedWithNoise(shooter, casting: payload)
         ) != nil
     }
 
@@ -84,6 +84,22 @@ extension MagicSpellDeliveryAdapter {
         MagicCore.castReach(
             within: range,
             ceiling: game.combat.archery?.settings.visibleMoveDistance.value ?? 0
+        )
+    }
+
+    /// An NPC's shot aimed with the tracker noise of its spell's casting type. The player
+    /// aims with the crosshair.
+    func aimedWithNoise(
+        _ shooter: ProjectileShooter, casting payload: SpellPayload
+    ) -> ProjectileShooter {
+        guard shooter.key != .player, let projectiles = game.combat.archery?.projectiles
+        else { return shooter }
+        let target = castTarget(of: shooter.key)
+        let aimed = projectiles.npcSpellAim(at: target, concentration: payload.isConcentration)
+        return ProjectileShooter(
+            key: shooter.key, origin: shooter.origin,
+            aim: ProjectileFlight.normalized(aimed - shooter.origin),
+            isFirstPerson: false, location: shooter.location
         )
     }
 

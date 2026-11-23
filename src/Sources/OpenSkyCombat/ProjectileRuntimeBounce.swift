@@ -63,6 +63,17 @@ extension ProjectileRuntime {
 }
 
 extension ProjectileRuntime {
+    /// Where an NPC aims a spell at `point`: the tracker noise of
+    /// `NPCArcheryAim.spellAimVariance`. See docs/engine/archery.md#npc-archers.
+    public func npcSpellAim(at point: SIMD3<Float>, concentration: Bool) -> SIMD3<Float> {
+        NPCArcheryAim.noisy(
+            point, random: &spellAimRandom,
+            variance: NPCArcheryAim.spellAimVariance(concentration: concentration)
+        )
+    }
+}
+
+extension ProjectileRuntime {
     /// The shots in the air, the arrows standing, and the newest landings.
     public var readout: ProjectileReadout {
         var readout = ProjectileReadout()
