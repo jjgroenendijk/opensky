@@ -31,6 +31,12 @@ nonisolated public struct MaterialType: Equatable, Sendable {
     public let buoyancy: Float?
     /// FNAM bit 0 stair material, bit 1 arrows stick.
     public let flags: UInt32
+
+    /// FNAM bit 1: an arrow that lands on this material sticks; on any other it bounces.
+    public var holdsArrows: Bool {
+        flags & 0x2 != 0
+    }
+
     public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
@@ -55,10 +61,7 @@ nonisolated public struct MaterialType: Equatable, Sendable {
                 parent = try Self.readLink(&reader, size: field.data.count)
             case "HNAM":
                 impactDataSet = try Self.readLink(&reader, size: field.data.count)
-            // Skipped: CNAM (Havok display colour, a Creation Kit affordance),
-            // BNAM (buoyancy) and FNAM (stair/arrow flags). Nothing floats or
-            // sticks arrows yet, and a field this decoder does not read cannot
-            // go stale against the spec.
+            // CNAM, BNAM and FNAM are read after the loop.
             default:
                 return false
             }
@@ -80,7 +83,8 @@ nonisolated public struct MaterialType: Equatable, Sendable {
         editorID: String? = nil,
         materialName: String?,
         parent: FormID? = nil,
-        impactDataSet: FormID? = nil
+        impactDataSet: FormID? = nil,
+        flags: UInt32 = 0
     ) {
         self.formID = formID
         self.editorID = editorID
@@ -89,7 +93,7 @@ nonisolated public struct MaterialType: Equatable, Sendable {
         self.impactDataSet = impactDataSet
         havokDisplayColor = nil
         buoyancy = nil
-        flags = 0
+        self.flags = flags
         skipped = FieldTally()
     }
 

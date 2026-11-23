@@ -217,7 +217,12 @@ Example: in first person a target sits 0.6 degrees off the crosshair. The shot t
 
 ## Where OpenSky differs
 
-- Spent arrows cannot be picked up, and no arrow bounces: every arrow sticks, whatever the
-  material, and a deflected arrow sticks where it struck.
-- An actor shows every arrow stuck in it, not at most 3, and the stick depth is the same for
-  bolts.
+- A bounce does not make a physics object. The arrow flies on as a projectile, with no more
+  damage. Where it lands next, it lies at the contact point; one that falls on an actor is gone.
+- A surface whose material OpenSky cannot name holds the arrow, and so does every surface when the
+  load order has no material records.
+- The `PROJ` flags Can Be Picked Up and Can Be Disabled are not read. A stuck arrow is a placed
+  `AMMO`, so every one can be taken with the item rules.
+- An arrow sticks in an actor at the actor's position when it hit, not on a bone. No arrow
+  impales.
+- Any hit on an actor with a shield can be deflected, not only a hit on the shield's own body.

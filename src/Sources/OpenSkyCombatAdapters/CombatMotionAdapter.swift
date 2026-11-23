@@ -174,6 +174,9 @@ extension CombatMotionAdapter {
     ) -> ReferenceKey? {
         let key = game.worldState.allocateGeneratedKey()
         game.worldState.set(reference, for: key, in: location)
+        // The AMMO model carries a movable body. A stuck arrow stays where it hit, so
+        // physics must not drop it out of the wall.
+        game.worldState.set(ReferenceMotionType.keyframed, for: key, in: location)
         return key
     }
 

@@ -32,6 +32,8 @@ final class FakeProjectileWorld: ProjectileWorld {
     )
     var targets: [MeleeTarget] = []
     var wall: Wall?
+    /// A shield deflects every arrow: no damage lands.
+    var deflects = false
     /// How many arrows the fake quiver holds. Zero makes `consumeArrow` fail,
     /// which is what an empty quiver does.
     var arrowCount = 10
@@ -89,14 +91,14 @@ final class FakeProjectileWorld: ProjectileWorld {
     func sweepProjectile(_ query: ShapeSweepQuery) -> ShapeSweepHit? {
         guard let wall else { return nil }
         let direction = query.normalizedDirection
-        guard direction.x > 0 else { return nil }
+        guard direction.x != 0 else { return nil }
         let distance = (wall.x - query.first.x) / direction.x
         guard distance >= 0, distance <= query.maximumDistance else { return nil }
         return ShapeSweepHit(
             reference: wall.reference,
             distance: distance,
             position: query.first + direction * distance,
-            normal: SIMD3(-1, 0, 0),
+            normal: SIMD3(direction.x > 0 ? -1 : 1, 0, 0),
             startsOverlapping: false,
             material: wall.material
         )
@@ -106,6 +108,7 @@ final class FakeProjectileWorld: ProjectileWorld {
     func applyProjectileDamage(
         _ amount: Float, to target: ReferenceKey, from shooter: ReferenceKey
     ) -> Bool {
+        guard !deflects else { return false }
         damage[target, default: 0] += amount
         damagedBy[target] = shooter
         return true

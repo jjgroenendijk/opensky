@@ -43,6 +43,11 @@ nonisolated public struct MaterialTypeIndex: Sendable {
         }
     }
 
+    /// Every material an arrow sticks in (`FNAM` bit 1).
+    public var arrowHoldingMaterials: Set<FormID> {
+        Set(materials.values.filter(\.holdsArrows).map(\.formID))
+    }
+
     /// Test seam. A nil value keeps an LTEX with no MNAM known.
     public init(
         materials: [MaterialType],

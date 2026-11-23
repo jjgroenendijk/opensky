@@ -84,3 +84,22 @@ struct AgentAssistReadout {
         ]
     }
 }
+
+extension AgentAssistReadout {
+    /// `state projectiles`: docs/engine/projectiles.md.
+    func projectilesState() -> AgentJSON {
+        let readout = hub.hosts.combat.projectileReadout
+        return [
+            "inFlight": .init(readout.inFlight), "bouncing": .init(readout.bouncing),
+            "stuck": .array(readout.stuck.map { .string($0.description) }),
+            "landings": .array(readout.landings.map { landing in
+                [
+                    "outcome": .string(landing.outcome), "position": .init(landing.position),
+                    "target": landing.target.map { .string($0.description) } ?? .null,
+                    "material": landing.material.map { .string($0.description) } ?? .null,
+                    "stuck": .bool(landing.stuck), "bounced": .bool(landing.bounced)
+                ]
+            })
+        ]
+    }
+}

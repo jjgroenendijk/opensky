@@ -17,8 +17,7 @@ public final class ProjectileRuntime {
     /// How many finished shots the trace keeps. A handful, because the readout
     /// shows the newest and a reader is looking at the last thing they did.
     public static let traceLimit = 16
-    /// How many arrows may stay stuck in the world at once; the oldest despawns. It
-    /// applies to every stuck arrow, because arrow retrieval is not modeled.
+    /// How many arrows may stay stuck in the world at once; the oldest despawns.
     static let stuckLimit = CombatTransientLimits.standard.stuckProjectiles
     /// Ceiling on fixed steps run for one frame, so a long stall costs bounded
     /// time. The same bound `PhysicsStep.maximumFrameTime` puts on the
@@ -34,13 +33,15 @@ public final class ProjectileRuntime {
     /// The cone look-ahead distance and timer; the coordinator sets them.
     var magicWorld = MagicWorldSettings.vanilla
     var attached = AttachedArrows()
+    /// Arrows that bounced this step, which fly on from the next one.
+    var pendingBounces: [LiveProjectile] = []
     /// Projectiles in the air, in id order.
     public private(set) var live: [LiveProjectile] = []
     /// The most recent finished shots, oldest first.
     public private(set) var trace: [ProjectileTrace] = []
     /// Arrows standing in the world, oldest first, with the key each was
     /// spawned under.
-    public private(set) var stuck: [(arrow: StuckProjectile, key: ReferenceKey?)] = []
+    public internal(set) var stuck: [(arrow: StuckProjectile, key: ReferenceKey?)] = []
     public private(set) var firedCount = 0
     /// The auto-aim target of the player's last shot, or nil when it had none.
     public private(set) var lastAutoAim: ProjectileAimPick?
@@ -102,7 +103,7 @@ public final class ProjectileRuntime {
                 )
             )
         }
-        let projectile = LiveProjectile(
+        var projectile = LiveProjectile(
             id: nextID,
             shooter: shooter.key,
             profile: shot.profile,
@@ -117,6 +118,7 @@ public final class ProjectileRuntime {
                 speedScale: shot.speedScale
             )
         )
+        projectile.isBolt = shot.isBolt
         nextID += 1
         firedCount += 1
         live.append(projectile)
@@ -202,7 +204,8 @@ public final class ProjectileRuntime {
             }
             survivors.append(projectile)
         }
-        live = survivors
+        live = survivors + pendingBounces
+        pendingBounces = []
         return finished
     }
 
@@ -222,7 +225,7 @@ public final class ProjectileRuntime {
                 radius: projectile.profile.collisionRadius
             ),
             targets: world.projectileTargets(),
-            shooter: projectile.shooter,
+            shooter: projectile.bouncedOff ?? projectile.shooter,
             sweep: { world.sweepProjectile($0) }
         )
     }
@@ -250,14 +253,21 @@ public final class ProjectileRuntime {
         detonated: Bool = false
     ) -> ProjectileTrace {
         impactCount += 1
+        if projectile.hasBounced {
+            return settle(projectile, at: impact)
+        }
         let landing = ProjectilePayloadLanding(
             world: world, areaSettings: areaSettings, impacts: impacts, explosions: explosions
         ).land(projectile, impact: impact)
         if let world, let kept = landing.keptArrow {
             recoverArrow(kept.arrow, from: projectile.shooter, into: kept.target, world: world)
         }
-        let didStick = !detonated && stick(projectile, at: impact)
-        return record(
+        let bounces = !detonated && bounces(projectile, at: impact, landing: landing)
+        if bounces {
+            bounce(projectile, off: impact)
+        }
+        let didStick = !detonated && !bounces && stick(projectile, at: impact)
+        var trace = record(
             projectile,
             outcome: detonated ? .detonated : (impact.isActor ? .hitActor : .hitStatic),
             at: impact.position,
@@ -266,44 +276,11 @@ public final class ProjectileRuntime {
             stuck: didStick,
             spellHit: landing.spellHit
         )
-    }
-
-    /// Leaves the arrow standing in what it hit, evicting the oldest at the cap. Only an
-    /// arrow sticks; a spell projectile is spent on impact.
-    private func stick(_ projectile: LiveProjectile, at impact: ProjectileImpact) -> Bool {
-        guard
-            let world,
-            let base = projectile.payload.arrow?.ammunition,
-            let location = projectile.location
-        else { return false }
-        let arrow = StuckProjectile(
-            base: base,
-            location: location,
-            position: stuckPosition(of: projectile, at: impact),
-            rotation: ProjectileImpactQuery.stuckRotation(
-                alongFlight: projectile.state.velocity
-            ),
-            host: impact.reference
-        )
-        guard let key = world.spawnStuckProjectile(arrow) else { return false }
-        stuck.append((arrow, key))
-        trackAttached(key, inActor: impact.isActor)
-        if stuck.count > Self.stuckLimit {
-            removeStuckArrows(Array(stuck.indices.prefix(stuck.count - Self.stuckLimit)))
+        if bounces {
+            trace.bounced = true
+            self.trace[self.trace.count - 1] = trace
         }
-        return true
-    }
-
-    /// Removes the stuck arrows at `indices` from the world and from the registry.
-    /// Internal, so `ProjectileRuntimeBounds.swift` can reach it.
-    public func removeStuckArrows(_ indices: [Int]) {
-        guard !indices.isEmpty else { return }
-        let doomed = Set(indices)
-        for index in indices.sorted() {
-            guard let key = stuck[index].key else { continue }
-            world?.removeStuckProjectile(key)
-        }
-        stuck = stuck.indices.filter { !doomed.contains($0) }.map { stuck[$0] }
+        return trace
     }
 
     /// Files one finished projectile in the trace.

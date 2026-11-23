@@ -20,6 +20,7 @@ final class FakeCombatRecords: CombatRecordsPort {
     var leveledScriptEdits: LeveledScriptEdits?
     var scriptFileSystem: (any GameFileSource)?
     var footstepStore: FootstepStore?
+    var materialTypes: MaterialTypeIndex?
     var soundStore: SoundRecordStore?
     var actorValueBaselines: ActorValueBaselineResolver?
     var speechCheckSettings = SpeechCheckSettings.fallback

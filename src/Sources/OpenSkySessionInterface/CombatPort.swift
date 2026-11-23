@@ -25,6 +25,7 @@ public protocol CombatPort: AnyObject {
     var archery: ArcheryRuntime? { get }
     /// What `state assist` shows of the combat helper rules.
     var assistReadout: CombatAssistReadout { get }
+    var projectileReadout: ProjectileReadout { get }
     func combatActor(key: ReferenceKey) -> CombatActorObservation?
     var combatLoopSnapshot: CombatLoopSnapshot { get }
     var difficulty: DifficultyLevel { get set }

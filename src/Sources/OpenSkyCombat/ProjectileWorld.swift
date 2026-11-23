@@ -57,6 +57,8 @@ nonisolated public struct ProjectileTrace: Equatable, Sendable {
     public var material: FormID?
     /// Whether the arrow was left in the world at the impact point.
     public let stuck: Bool
+    /// Whether the arrow bounced off instead of sticking.
+    public var bounced = false
     /// What a landed spell applied, or nil for an arrow and for a spell that reached
     /// nobody.
     public let spellHit: SpellHitReport?

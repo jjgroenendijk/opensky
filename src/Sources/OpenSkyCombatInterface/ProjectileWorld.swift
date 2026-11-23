@@ -64,6 +64,12 @@ nonisolated public struct LiveProjectile: Equatable, Sendable {
     public var coneWallMaterial: FormID?
     /// The flight age of a cone's next look ahead.
     public var nextConeLook: Float = 0
+    /// A crossbow bolt, which sticks less deep than an arrow.
+    public var isBolt = false
+    /// An arrow that bounced: it does no more harm and lies where it next lands.
+    public var hasBounced = false
+    /// The actor a bounce left, which the bounced arrow cannot strike again.
+    public var bouncedOff: ReferenceKey?
 
     /// Where the shot is now, which is what a readout draws.
     public var position: SIMD3<Float> {

@@ -4,8 +4,10 @@ import OpenSkyBehavior
 import OpenSkyCombatAdapters
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
+import OpenSkyWorldState
 import Testing
 
 @MainActor
@@ -57,6 +59,19 @@ struct CombatMotionTests {
     @Test func withoutASessionThePlayerGraphIsUntouched() {
         #expect(!adapter.raisePlayerGraphEvent("attackStart"))
         adapter.writePlayerGraphVariable(.bool(true), named: "IsAttacking")
+    }
+
+    @Test func aStuckArrowIsHeldInPlace() {
+        let arrow = ReferenceSpawnState(
+            base: FormID(0x1397D), location: .interior(FormID(0x165A7)),
+            placement: PlacedReference.Placement(position: .zero, rotation: .zero)
+        )
+        host.fakeWorldState.allocateGeneratedKeyResult = .generated(7)
+        #expect(adapter.spawn(arrow, in: arrow.location) == .generated(7))
+        let motion = host.fakeWorldState.setCalls.compactMap {
+            $0.component as? ReferenceMotionType
+        }
+        #expect(motion == [.keyframed])
     }
 
     @Test func withoutFootstepRecordsThereIsNoImpact() {
