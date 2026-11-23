@@ -54,7 +54,7 @@ struct ActorMountPlayerTests {
         #expect(mounts.flyingMounts.isEmpty)
         #expect(mounts.riddenMount == nil)
         #expect(mounts.mountKind == nil)
-        #expect(mounts.lockCandidate() == nil)
+        #expect(mounts.lockCandidates().isEmpty)
         #expect(mounts.switchCandidates().isEmpty)
         #expect(mounts.allowsFlyingMountLandingRequests())
     }

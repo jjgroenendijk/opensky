@@ -14,6 +14,7 @@ import simd
 @MainActor
 public protocol MountDragonRidingHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
+    var combat: any CombatPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var magic: any MagicPort { get }
     var magicWorld: any MagicWorldPort { get }
@@ -27,9 +28,17 @@ public struct MountDragonRidingAdapter {
 }
 
 extension MountDragonRidingAdapter {
-    /// The living actor closest to the view centre, inside the lock cone and range.
-    public func lockCandidate() -> ReferenceKey? {
-        actorsInView(within: MountTargeting.lockCone).min { $0.view.angle < $1.view.angle }?.key
+    /// The living actors in the lock range, nearest first. The range is centred on the
+    /// mount's combat target when it has one, else on the player.
+    public func lockCandidates() -> [ReferenceKey] {
+        guard let session = game.gameSession else { return [] }
+        let mount = game.mounts.drive?.mount
+        let fought = mount.flatMap { game.combat.loop?.combatTarget(of: $0) }
+        let centre = fought.flatMap(livingActorFeet) ?? session.walkController.feetPosition
+        let actors = game.actorWorld.combatActors()
+            .filter { !$0.isDead && $0.key != .player && $0.key != mount }
+            .map { (key: $0.key, feet: $0.feet) }
+        return MountTargeting.lockOrder(of: actors, around: centre)
     }
 
     /// The living actors in view and range, left to right as the rider sees them.
@@ -55,9 +64,10 @@ extension MountDragonRidingAdapter {
     }
 
     public func livingActorFeet(_ key: ReferenceKey) -> SIMD3<Float>? {
-        guard let actor = game.actorWorld.combatActor(key: key), !actor.isDead else {
-            return nil
-        }
+        guard
+            key != .player, key != game.mounts.drive?.mount,
+            let actor = game.actorWorld.combatActor(key: key), !actor.isDead
+        else { return nil }
         return actor.feet
     }
 

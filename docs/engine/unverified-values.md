@@ -135,7 +135,7 @@ the detail and the sources it did find.
 | Vehicle trailer and gait clips | An approximation of the game | [vehicles](/engine/vehicles.md) |
 | Cart tow line | Spring 6 rad/s at damping 0.35, play 24 units, wheel drag 0.4 per second, front axle swing 7 rad/s at damping 0.5 | [vehicles](/engine/vehicles.md#towing) |
 | Dragon animation | A guess; its graph does not run | [actor animation](/engine/actor-animation.md) |
-| Dragon rider target lock | 0.25 rad off the view centre, up to 8000 units; Switch Target looks 60 degrees | [riding](/engine/riding.md) |
+| Dragon rider target lock | The candidates are taken nearest first; a lock that moves ends the attack order; the notification text is "No target in range."; Switch Target looks 60 degrees | [combat assist](/engine/combat-assist.md#in-opensky) |
 | Dismount without race data | 50 units left of the saddle, 65 up | [riding](/engine/riding.md#mounting-and-dismounting) |
 | Driven actor stands still | Below 0.5 units per second | [riding](/engine/riding.md) |
 | Follower without a Morality value | Morality 3: commits no crime | [package schedules](/engine/package-schedules.md) |

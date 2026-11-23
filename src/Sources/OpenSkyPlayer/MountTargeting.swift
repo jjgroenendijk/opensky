@@ -1,4 +1,6 @@
-// Which actor a dragon rider can lock: the cone and range of the view it searches.
+// Which actors a dragon rider can lock or switch to: the range of the lock and the
+// cone of the view Switch Target searches.
+// docs/engine/combat-assist.md#flying-mount-lock.
 
 import simd
 
@@ -11,10 +13,8 @@ nonisolated public struct MountTargetView: Equatable, Sendable {
 }
 
 nonisolated public enum MountTargeting {
-    /// How far from the view centre, in radians, an actor can be locked.
-    public static let lockCone: Float = 0.25
-    /// The farthest a rider locks a target from, in units on the ground plane.
-    public static let lockRange: Float = FlyingMountLock.candidateRange
+    /// `fTargetLockXYRange`: candidates are gathered this far away, on the ground plane.
+    public static let lockRange: Float = 7500
     /// How far from the view centre, in radians, Switch Target looks: about the view.
     public static let switchCone: Float = .pi / 3
     /// Closer than this, in units, the direction to the actor means nothing.
@@ -33,5 +33,20 @@ nonisolated public enum MountTargeting {
         let heading = atan2(forward.y, forward.x)
         let bearing = remainder(atan2(offset.y, offset.x) - heading, 2 * Float.pi)
         return MountTargetView(angle: angle, bearing: bearing)
+    }
+
+    /// The actors the lock can take, nearest to `centre` first: those within the lock
+    /// range of it on the ground plane. The order is OpenSky's.
+    public static func lockOrder<Key>(
+        of actors: [(key: Key, feet: SIMD3<Float>)], around centre: SIMD3<Float>
+    ) -> [Key] {
+        actors
+            .map { actor in
+                let offset = SIMD2(actor.feet.x - centre.x, actor.feet.y - centre.y)
+                return (key: actor.key, distance: simd_length(offset))
+            }
+            .filter { $0.distance <= lockRange }
+            .sorted { $0.distance < $1.distance }
+            .map(\.key)
     }
 }

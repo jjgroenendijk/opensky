@@ -25,6 +25,8 @@ nonisolated public struct MountSettings: Equatable, Sendable {
     public var cancelLandingMessage = "Landing cancelled."
     /// `sTESVDLC2FlyingMountCannotLandMessage`: a script refuses landing requests here.
     public var cannotLandMessage = "You cannot land here."
+    /// The lock button found no actor in range. No setting with this text was found.
+    public var noLockTargetMessage = "No target in range."
 
     public static let vanilla = Self()
 

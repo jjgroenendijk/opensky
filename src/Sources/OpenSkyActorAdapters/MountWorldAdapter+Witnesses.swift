@@ -11,8 +11,8 @@ import simd
 
 /// Witnesses that forward to the narrow parts of `MountWorldAdapter`.
 extension MountWorldAdapter {
-    public func lockCandidate() -> ReferenceKey? {
-        dragonRiding.lockCandidate()
+    public func lockCandidates() -> [ReferenceKey] {
+        dragonRiding.lockCandidates()
     }
 
     public func switchCandidates() -> [ReferenceKey] {

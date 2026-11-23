@@ -14,17 +14,17 @@ extension MountCoordinator {
     func advanceDragon(
         _ drive: PlayerMountDrive, input: CameraInput, world stepWorld: MountStepWorld
     ) -> [MountCommand] {
-        dragonOrders.takeLockButton(
+        let foundCandidate = dragonOrders.takeLockButton(
             (input.jump, input.jumpHeld), isToggle: lockIsToggle
-        ) { world?.lockCandidate() }
+        ) { world?.lockCandidates() ?? [] }
         if let last = dragonOrders.lastSneak, last != input.sneak {
             _ = dragonOrders.toggleAttack()
         }
         dragonOrders.lastSneak = input.sneak
-        let target = dragonOrders.lockedTarget.flatMap { world?.livingActorFeet($0) }
-        if dragonOrders.lockedTarget != nil, target == nil {
-            dragonOrders.lock(nil)
+        if let locked = dragonOrders.lockedTarget, world?.livingActorFeet(locked) == nil {
+            dragonOrders.passLock { world?.livingActorFeet($0) != nil }
         }
+        let target = dragonOrders.lockedTarget.flatMap { world?.livingActorFeet($0) }
         let home = dragonOrders.home ?? drive.transform.feet
         let step = drive.fly(
             toward: dragonOrders.goal(home: home, target: target), deltaTime: input.dt,
@@ -35,12 +35,8 @@ extension MountCoordinator {
             .steerMount(drive.mount, feet: pose.feet, yaw: pose.yaw),
             .reportMountEvents(drive.mount, step.graph)
         ]
-        let turn = dragonOrders.steer(
-            toward: target, from: (pose.feet, pose.yaw),
-            input: (drive.motion.speed, input.moveRight), deltaTime: input.dt
-        )
-        if turn != 0 {
-            commands.append(.turnRiderView(turn))
+        if !foundCandidate {
+            commands.append(.notify(settings.noLockTargetMessage))
         }
         let fired = step.graph.contains {
             $0.caseInsensitiveCompare(DragonFlightGraphNames.breathFire) == .orderedSame
