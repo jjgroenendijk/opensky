@@ -67,6 +67,19 @@ extension AgentMenuReadoutAdapter {
             result["rows"] = .array(rows.rows.map { .string($0) })
             result["selected"] = .init(rows.selected)
         }
+        if game.menuMode.topMenu == .dialogueMenu {
+            let snapshot = game.dialogueMenu.snapshot
+            result["dialogue"] = [
+                "subtitle": .init(snapshot.subtitle),
+                "unresolvedConditions": .init(snapshot.unresolvedConditionCount),
+                "rejected": .array(snapshot.rejections.map { row in
+                    [
+                        "topic": .string("\(row.topic)"),
+                        "reasons": .array(row.reasons.map { .string($0) })
+                    ]
+                })
+            ]
+        }
         if game.menuMode.topMenu == MenuIdentifier.statsMenu {
             result["skills"] = skillsMenuState(game.skillsMenu.snapshot)
         }
