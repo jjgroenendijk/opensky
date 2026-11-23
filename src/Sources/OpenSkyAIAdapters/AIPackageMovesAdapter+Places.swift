@@ -124,7 +124,7 @@ extension AIPackageMovesAdapter {
             switch target.kind {
             case .specificReference:
                 game.scripts.bridge?.formIDResolver.flatMap {
-                    ReferenceKey.resolve(FormID(target.value), using: $0)
+                    ReferenceKey.resolve(FormID(target.value), using: $0)?.namingPlayer
                 }
             case .referenceAlias:
                 aliasQuest.flatMap {

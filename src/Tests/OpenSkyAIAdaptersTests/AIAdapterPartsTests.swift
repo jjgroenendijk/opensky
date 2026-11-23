@@ -45,6 +45,16 @@ struct AIAdapterPartsTests {
         #expect(adapter.packageMoves.places.packageTargetKey(target, aliasQuest: nil) == nil)
     }
 
+    /// A package that names `PlayerRef` targets the one player identity, whose position
+    /// the follow procedure can read.
+    @Test func aPackageTargetOnPlayerRefIsThePlayer() {
+        let bridge = FakePapyrusWorldStateBridgePort()
+        bridge.formIDResolver = FormIDResolver(pluginName: "Skyrim.esm", masters: [])
+        host.fakeScripts.bridge = bridge
+        let target = Package.Target(rawKind: 0, value: 0x14, countOrDistance: 0)
+        #expect(adapter.packageMoves.places.packageTargetKey(target, aliasQuest: nil) == .player)
+    }
+
     @Test func theWorldsForwardActivationAndSituations() {
         #expect(adapter.worlds.activate(Self.actor, by: Self.actor) == .failed)
         #expect(adapter.worlds.packageSituations(of: []).isEmpty)
