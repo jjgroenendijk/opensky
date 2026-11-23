@@ -75,6 +75,9 @@ extension StoryWorldAdapter {
         runtime.referenceCreator = { [weak self] base, anchor in
             self?.createQuestReference(base, at: anchor)
         }
+        runtime.aliasDataChanged = { [weak self] changes in
+            self?.giveAliasData(changes)
+        }
         return runtime
     }
 

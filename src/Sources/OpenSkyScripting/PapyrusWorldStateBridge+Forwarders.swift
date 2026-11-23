@@ -69,6 +69,16 @@ extension PapyrusWorldStateBridge {
         factions.isInFaction(actor, faction: faction)
     }
 
+    @discardableResult
+    public func addToFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
+        factions.addToFaction(actor, faction: faction)
+    }
+
+    @discardableResult
+    public func removeFromFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
+        factions.removeFromFaction(actor, faction: faction)
+    }
+
     public func relationshipRank(of actor: ReferenceKey, toward other: ReferenceKey) -> Int8?? {
         factions.relationshipRank(of: actor, toward: other)
     }

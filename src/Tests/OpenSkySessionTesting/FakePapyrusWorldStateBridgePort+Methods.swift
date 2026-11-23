@@ -118,6 +118,18 @@ nonisolated extension FakePapyrusWorldStateBridgePort {
     }
 
     @discardableResult
+    public func addToFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
+        addToFactionCalls.append((actor: actor, faction: faction))
+        return addToFactionResult
+    }
+
+    @discardableResult
+    public func removeFromFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
+        removeFromFactionCalls.append((actor: actor, faction: faction))
+        return removeFromFactionResult
+    }
+
+    @discardableResult
     public func killActor(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool {
         killActorCalls.append((key: key, killer: killer))
         return killActorResult

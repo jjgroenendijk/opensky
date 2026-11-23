@@ -158,8 +158,8 @@ nonisolated extension Quest {
         public var declaredItemCount: UInt32?
         /// CNTO: items given to the target for the quest's duration.
         public var items: [AliasItem] = []
-        var spells: [FormID] = [] // ALSP
-        var factions: [FormID] = [] // ALFC
+        public var spells: [FormID] = [] // ALSP
+        public var factions: [FormID] = [] // ALFC
         public var packages: [FormID] = [] // ALPC
         var displayName: FormID? // ALDN
         var voiceTypes: FormID? // VTCK

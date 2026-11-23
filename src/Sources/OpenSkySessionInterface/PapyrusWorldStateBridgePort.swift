@@ -33,6 +33,8 @@ public protocol PapyrusWorldStateBridgePort: AnyObject {
     var gameNatives: PapyrusGameNatives { get set }
     func isHostile(_ actor: ReferenceKey, toward other: ReferenceKey) -> Bool?
     func isInFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool?
+    @discardableResult func addToFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool?
+    @discardableResult func removeFromFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool?
     var isPlayerSunGazing: Bool { get }
     @discardableResult func killActor(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool
     func localFormID(of key: ReferenceKey) -> FormID?
