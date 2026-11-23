@@ -57,7 +57,7 @@ struct SWFRuntimeEventTests {
 
     /// A movie whose sprite is placed with the given CLIPACTIONS handlers.
     /// `removing` adds a second frame that takes the placement away again.
-    private static func lifecycleTags(
+    static func lifecycleTags(
         _ handlers: [SWFActionFixture.ClipHandler],
         removing: Bool = true
     ) -> [SWFFixture.Tag] {
@@ -85,7 +85,7 @@ struct SWFRuntimeEventTests {
         ] : [])
     }
 
-    private func log(_ runtime: SWFMovieRuntime) -> String {
+    func log(_ runtime: SWFMovieRuntime) -> String {
         guard
             case let .string(text) = runtime.root.object.lookup("log")?.property.value ?? .undefined
         else {
@@ -96,8 +96,7 @@ struct SWFRuntimeEventTests {
 
     // MARK: - CLIPACTIONS lifecycle
 
-    /// The order the `ClipEventFlags` table implies: `initialize` before the
-    /// registered class constructor, then `construct`, then `load`.
+    /// `initialize` and `construct` before the registered class constructor, then `load`.
     @Test func clipEventsFireInLifecycleOrderAroundTheConstructor() throws {
         let runtime = try SWFRuntimeFixture.started(
             tags: Self.lifecycleTags([

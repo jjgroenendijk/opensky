@@ -196,7 +196,6 @@ nonisolated extension SWFMovieRuntime {
         let placed = pendingConstructions
         pendingConstructions = outer
         for node in placed {
-            dispatchPlacementLifecycle(node, phase: .initialize)
             constructRegisteredClass(for: node)
         }
         for node in placed {

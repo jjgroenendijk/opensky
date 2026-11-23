@@ -86,15 +86,16 @@ nonisolated extension SWFMovieRuntime {
         markDirty()
     }
 
-    /// The lifecycle a newly placed instance runs through, in the order the
-    /// `ClipEventFlags` table implies: `initialize` before the registered
-    /// class's constructor, then `construct`, then `load`.
+    /// The lifecycle a newly placed instance runs through: `initialize` and
+    /// `construct` before the registered class's constructor, then `load`. Flash
+    /// writes a component's parameters into its `construct` handler, and the
+    /// constructor reads them.
     func dispatchPlacementLifecycle(_ node: SWFDisplayObject, phase: SWFClipLifecycle) {
         switch phase {
         case .initialize:
             dispatchClipEvent(.initialize, to: node)
-        case .constructed:
             dispatchClipEvent(.construct, to: node)
+        case .constructed:
             dispatchClipEvent(.load, to: node)
         case .unloaded:
             dispatchClipEvent(.unload, to: node)

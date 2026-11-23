@@ -226,22 +226,29 @@ nonisolated public final class SWFMovieRuntime {
 
     /// Runs the class registered against a placed character's linkage name,
     /// with the display object as `this`. This plus running DoInitAction first
-    /// is the whole reason a vanilla menu comes alive.
+    /// is the whole reason a vanilla menu comes alive. The instance takes the class
+    /// prototype before its `initialize` and `construct` handlers, so a component
+    /// parameter they set reaches the class's setter before the constructor reads it.
     func constructRegisteredClass(for node: SWFDisplayObject) {
-        guard
-            let characterId = node.characterId,
-            let linkage = movie.exportedIds[characterId],
-            let constructor = runtime.registeredClass(named: linkage)
-        else {
-            return
+        let constructor = node.characterId
+            .flatMap { movie.exportedIds[$0] }
+            .flatMap { runtime.registeredClass(named: $0) }
+        if let constructor {
+            if let prototype = constructor.lookup("prototype")?.property.value.objectValue {
+                node.object.prototype = prototype
+            }
+            node.object.define(
+                .object(constructor), for: "__constructor__", flags: [.dontEnumerate, .dontDelete]
+            )
         }
-        if let prototype = constructor.lookup("prototype")?.property.value.objectValue {
-            node.object.prototype = prototype
+        dispatchPlacementLifecycle(node, phase: .initialize)
+        if let constructor {
+            AS2Interpreter.invoke(
+                in: runtime,
+                .object(constructor),
+                thisValue: .object(node.object)
+            )
         }
-        node.object.define(
-            .object(constructor), for: "__constructor__", flags: [.dontEnumerate, .dontDelete]
-        )
-        AS2Interpreter.invoke(in: runtime, .object(constructor), thisValue: .object(node.object))
     }
 
     /// `attachMovie(linkageName, instanceName, depth)`: instantiates an exported
