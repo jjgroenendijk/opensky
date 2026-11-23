@@ -63,7 +63,7 @@ struct AgentSocialReadoutTests {
         let idles = FakeIdlePort()
         idles.lastKillMoveMiss = KillMoveMiss(
             attacker: .generated(9), target: .player, action: "ActionRightPowerAttack",
-            trace: [
+            kills: true, trace: [
                 IdleCandidateTrace(
                     id: idle, editorID: "KillMoveFrontSideRoot", depth: 0,
                     verdict: .rejected("GetTargetHeight")
@@ -74,6 +74,7 @@ struct AgentSocialReadoutTests {
         host.fakeIdleWorld.idles = idles
         let miss = try object(object(world.query(.paired))["lastKillMoveMiss"])
         #expect(miss["action"] == .string("ActionRightPowerAttack"))
+        #expect(miss["kills"] == .bool(true))
         #expect(miss["idles"] == .array([
             .string("KillMoveFrontSideRoot: rejected(\"GetTargetHeight\")")
         ]))

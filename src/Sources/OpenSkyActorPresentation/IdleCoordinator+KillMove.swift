@@ -27,11 +27,10 @@ extension IdleCoordinator {
             let event = chosen.record.animationEvent,
             PairedAnimationCore.isPaired(event: event)
         else {
-            if kills {
-                lastKillMoveMiss = KillMoveMiss(
-                    attacker: attacker, target: target, action: action, trace: selection.trace
-                )
-            }
+            lastKillMoveMiss = KillMoveMiss(
+                attacker: attacker, target: target, action: action, kills: kills,
+                trace: selection.trace
+            )
             return false
         }
         firePaired(PairedAnimationPlay(
