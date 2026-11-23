@@ -550,10 +550,6 @@ nonisolated extension BehaviorGraphInstance {
         variables = store
     }
 
-    public func variable(named name: String) -> BehaviorVariableValue? {
-        variables.value(of: name)
-    }
-
     /// Writes a variable by index from inside the graph. A non-negative `bit`
     /// sets or clears that bit of the stored word.
     func writeVariable(_ value: BehaviorVariableValue, at index: Int, bit: Int = -1) {
@@ -567,12 +563,6 @@ nonisolated extension BehaviorGraphInstance {
         let mask = 1 << bit
         let word = value.boolValue ? current.intValue | mask : current.intValue & ~mask
         variables.setValue(.int(Int32(truncatingIfNeeded: word)), at: index)
-    }
-
-    /// Raises an event by name, visible to the *next* update.
-    @discardableResult
-    public func raiseEvent(named name: String, payload: String? = nil) -> Bool {
-        events.raise(named: name, payload: payload)
     }
 }
 

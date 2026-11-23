@@ -88,6 +88,18 @@ nonisolated public struct BehaviorEventQueue: Equatable, Sendable {
         return true
     }
 
+    /// The id of an event this graph does not declare but a graph it references does. No
+    /// transition, counter, or pose matcher here holds it, so only the name travels down.
+    public static let undeclaredId = Int.min
+
+    /// Queues an event by name alone, for the referenced graph that declares it.
+    public mutating func raise(undeclared name: String, payload: String? = nil) {
+        pending.append(BehaviorEvent(id: Self.undeclaredId, name: name, payload: payload))
+        if pending.count > Self.capacity {
+            pending.removeFirst(pending.count - Self.capacity)
+        }
+    }
+
     // MARK: - Update phases
 
     /// Promotes everything raised since the last update into the active set and
