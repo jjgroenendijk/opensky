@@ -186,9 +186,34 @@ again would run the result scripts again. A response with no links goes back to 
 list, because a say-once line may have just changed it. A goodbye response closes the
 conversation.
 
-The speaker's death also closes it, on the next world step. The world keeps running under the
-menu, so another actor can kill the speaker. A dead actor cannot talk, which is the same rule
-talk targeting uses to leave dead actors out.
+### What ends a conversation
+
+A goodbye line is not the only end. The game also ends the conversation and closes the menu
+when one of these happens:
+
+| Event | Example |
+| --- | --- |
+| The player is put somewhere new | A load door, a script's `MoveTo` on the player, being sent to jail, serving time, or fast travel. A move inside the same cell counts too, with or without a loading screen |
+| The speaker dies | Another actor kills it while the menu is open, because the world keeps running |
+| The speaker stops being a full actor | It unloads, is disabled, or its AI package is stopped and reset |
+| Another actor force-greets the player | The new speaker takes over the menu |
+
+So an arrest line without the goodbye flag still leaves no menu open in the jail cell: the move
+to the cell ends the conversation. The game does not end a conversation because the player walks
+away from the speaker; only the player's cancel key does that. Opening the barter, gift,
+container, or journal menu from the conversation does not end it.
+
+```mermaid
+flowchart LR
+    move[Player is moved] --> endc[Conversation ends]
+    death[Speaker dies] --> endc
+    gone[Speaker unloads or is disabled] --> endc
+    endc --> close[Dialogue menu closes]
+```
+
+OpenSky ends a conversation on the next world step after the player is moved or the speaker
+dies. A dead actor cannot talk, which is the same rule talk targeting uses to leave dead actors
+out.
 
 ## Movie entry points not used
 
