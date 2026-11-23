@@ -56,6 +56,10 @@ nonisolated struct GuardResponseState: Equatable, Sendable {
     private(set) var cooldownUntil: [ReferenceKey: Double] = [:]
     /// Crime factions whose guards the player resisted.
     private(set) var resisted: Set<ReferenceKey> = []
+    /// Game time of the last resistance per faction. A faction keeps the player as an
+    /// enemy for `enemyGameSeconds` after it.
+    private(set) var resistedAt: [ReferenceKey: Double] = [:]
+    static let enemyGameSeconds: Double = 24 * 3600
 
     init() {}
 
@@ -120,6 +124,7 @@ nonisolated struct GuardResponseState: Equatable, Sendable {
     /// The player refused arrest: every guard of that faction turns hostile.
     mutating func resist(_ crimeFaction: ReferenceKey, now: Double) {
         resisted.insert(crimeFaction)
+        resistedAt[crimeFaction] = now
         end(settled: true, now: now)
     }
 
@@ -127,6 +132,12 @@ nonisolated struct GuardResponseState: Equatable, Sendable {
     /// does not leave the guards angry forever.
     mutating func forgive(_ crimeFaction: ReferenceKey) {
         resisted.remove(crimeFaction)
+        resistedAt[crimeFaction] = nil
+    }
+
+    /// The factions whose enemy time ran out at `now`.
+    func expiredResistance(now: Double) -> [ReferenceKey] {
+        resisted.filter { (resistedAt[$0] ?? now) + Self.enemyGameSeconds <= now }.sorted()
     }
 
     /// Drops every cooldown and resistance, for a new game or a dev reset.

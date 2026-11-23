@@ -104,7 +104,7 @@ nonisolated enum CrimeCore {
         factions store: FactionStore,
         resisted: Set<ReferenceKey>,
         settings: CrimeSettings = .vanilla,
-        actorCriminals: [ReferenceKey: Set<ReferenceKey>] = [:]
+        alarmFighters: [ReferenceKey: Set<ReferenceKey>] = [:]
     ) -> GuardCrimeHostility {
         var bounties: [ReferenceKey: CrimeLedgerEntry] = [:]
         var values: [ReferenceKey: Faction.CrimeValues] = [:]
@@ -119,7 +119,7 @@ nonisolated enum CrimeCore {
             resisted: resisted,
             settings: settings
         )
-        hostility.actorCriminals = actorCriminals
+        hostility.alarmFighters = alarmFighters
         return hostility
     }
 
