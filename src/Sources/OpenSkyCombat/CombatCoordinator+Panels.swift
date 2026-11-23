@@ -19,6 +19,10 @@ extension CombatCoordinator {
         CombatLoopSnapshot(shared: shared)
     }
 
+    public var projectileReadout: ProjectileReadout {
+        shared.archery?.projectiles.readout ?? ProjectileReadout()
+    }
+
     public var assistReadout: CombatAssistReadout {
         var readout = CombatAssistReadout()
         if let loop = shared.loop {

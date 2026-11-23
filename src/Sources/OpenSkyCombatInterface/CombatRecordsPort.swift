@@ -2,6 +2,7 @@
 // host can pass them without the whole world data.
 
 public import OpenSkyAudio
+public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
 
@@ -9,6 +10,7 @@ public import OpenSkyInventoryInterface
 nonisolated public protocol CombatRecordsPort: WorldRecordsPort {
     var scriptFileSystem: (any GameFileSource)? { get }
     var footstepStore: FootstepStore? { get }
+    var materialTypes: MaterialTypeIndex? { get }
     var soundStore: SoundRecordStore? { get }
     var presentationRecords: PresentationRecordStore? { get }
     var inventoryBaselines: InventoryBaselineResolver? { get }

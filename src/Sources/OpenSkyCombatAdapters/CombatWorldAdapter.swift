@@ -126,7 +126,9 @@ public struct CombatSessionBuilder {
         data.danger = DangerSettings.resolve(store: settings)
         data.friendlyFire = FriendlyFireSettings.resolve(store: settings)
         data.combatAI = CombatAISettings.resolve(store: settings)
-        data.arrows = ArrowSettings.resolve(store: settings, text: text)
+        data.arrows = ArrowSettings.resolve(
+            store: settings, materials: provider.materialTypes, text: text
+        )
         data.falls = FallDamageSettings.resolve(store: settings)
         data.magicWorld = MagicWorldSettings.resolve(store: settings)
         return data

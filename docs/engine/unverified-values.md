@@ -69,6 +69,7 @@ the detail and the sources it did find.
 | Splash ripple strength | 1 for a heavy splash, 0.6 for the others | [sky and water](/engine/sky-water.md) |
 | NPC archer range and ammunition | Shoots from up to 2048 units; needs one arrow and spends none | [archery](/engine/archery.md#npc-archers) |
 | Spell-fire fallback | A hand whose graph raises no spell-fire event releases or starts its spell after 0.4 s | [spellcasting](/engine/spellcasting.md#casting-cues) |
+| Bounced arrow | Flies on as a harmless projectile and lies where it lands; one that lands on an actor is gone | [projectiles](/engine/projectiles.md#where-opensky-differs) |
 
 ## Magic
 

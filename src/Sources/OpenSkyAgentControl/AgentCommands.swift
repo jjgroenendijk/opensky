@@ -61,6 +61,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case stats
     /// The combat and AI helper rules: tracking, auto-aim, danger, reactions, levels.
     case assist
+    /// The shots in the air, the arrows standing, and how the newest shots ended.
+    case projectiles
     /// What one condition function returns now, run on a reference.
     case condition(AgentConditionProbe)
 
@@ -131,7 +133,7 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "sounds": .sounds
         case "story": .story
         case "social": .social
-        default: ["stats": .stats, "assist": .assist, "alarm": .alarm][name]
+        default: inspections[name]
         }
     }
 }
@@ -500,4 +502,11 @@ nonisolated public struct AgentRagdollLink: Equatable, Sendable {
     public let node: String
     public let other: String
     public let otherNode: String
+}
+
+nonisolated extension AgentStateQuery {
+    /// The reads named by one word that the switch above does not list.
+    static let inspections: [String: AgentStateQuery] = [
+        "stats": .stats, "assist": .assist, "alarm": .alarm, "projectiles": .projectiles
+    ]
 }

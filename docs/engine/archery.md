@@ -174,8 +174,10 @@ uses the same ground model a spent arrow would be picked up as. The transform is
 turned along the flight direction. Roll is zero, because an arrow is round around its shaft.
 
 The limit is UESP's: "Only 15 missed arrows or bolts can be present at once, once a 16th has been
-fired the first one fired will despawn." It counts every stuck arrow, not only misses, because there
-is no retrieval from a corpse and so no second kind to count.
+fired the first one fired will despawn." It counts every stuck arrow, not only misses. An actor
+shows at most 3, and a bolt sits 5 units deep instead of 20
+([projectiles](/engine/projectiles.md#pick-up-bounce-and-stick-in-the-game)). A stuck arrow is a
+placed `AMMO`, so the player takes it back with Take, or Steal where the item rules make it a theft.
 
 - A cell that unloads takes its stuck arrows with it. Once per frame the loaded cells are compared,
   and arrows in cells that are gone are removed. An empty loaded set means nothing is streamed, and
@@ -303,7 +305,6 @@ what sets it was not found, so OpenSky never sets it.
 
 ## Not done yet
 
-Explosive projectiles ([explosions](/engine/explosions.md)) and picking up spent arrows
-([projectiles](/engine/projectiles.md#pick-up-bounce-and-stick-in-the-game)). NPC archers do not
-drive the bow graph events above: they play the combat loop's attack clip. They shoot from up to
-2048 units, not the game's range rules above. A bolt tilts up 1 degree in third person, not 2.5.
+Explosive projectiles ([explosions](/engine/explosions.md)). NPC archers do not drive the bow graph
+events above: they play the combat loop's attack clip. They shoot from up to 2048 units, not the
+game's range rules above. A bolt tilts up 1 degree in third person, not 2.5.

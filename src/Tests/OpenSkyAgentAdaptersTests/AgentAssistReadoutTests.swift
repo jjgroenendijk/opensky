@@ -63,4 +63,24 @@ struct AgentAssistReadoutTests {
         #expect(reply.value(atPath: "magnetism.target") == .string("\(ReferenceKey.generated(9))"))
         #expect(reply.value(atPath: "magnetism.heading") == .init(Float(0.5)))
     }
+
+    @Test func theProjectilesReadListsShotsArrowsAndLandings() throws {
+        var readout = ProjectileReadout()
+        readout.inFlight = 2
+        readout.bouncing = 1
+        readout.stuck = [.generated(9)]
+        var landing = ProjectileReadout.Landing(outcome: "hitStatic", position: [1, 2, 3])
+        landing.bounced = true
+        landing.material = FormID(0x0001_0002)
+        readout.landings = [landing]
+        host.fakeCombat.projectileReadoutValue = readout
+
+        let reply = try world.query(.projectiles)
+
+        #expect(reply.value(atPath: "inFlight") == .init(2))
+        #expect(reply.value(atPath: "bouncing") == .init(1))
+        #expect(reply.value(atPath: "landings.0.bounced") == .bool(true))
+        #expect(reply.value(atPath: "landings.0.target") == .null)
+        #expect(reply.value(atPath: "stuck.0") == .string(ReferenceKey.generated(9).description))
+    }
 }

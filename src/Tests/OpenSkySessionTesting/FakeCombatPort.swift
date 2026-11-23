@@ -27,6 +27,7 @@ nonisolated public final class FakeCombatPort: CombatPort {
     public var applyHealthDamageResult = false
     public var archery: ArcheryRuntime?
     public var assistReadoutValue: CombatAssistReadout?
+    public var projectileReadoutValue: ProjectileReadout?
     public var combatActorCalls: [ReferenceKey] = []
     public var combatActorResult: CombatActorObservation?
     public var combatLoopSnapshotValue: CombatLoopSnapshot?
@@ -174,6 +175,15 @@ nonisolated extension FakeCombatPort {
             return assistReadoutValue
         }
         set { assistReadoutValue = newValue }
+    }
+
+    public var projectileReadout: ProjectileReadout {
+        get {
+            guard let projectileReadoutValue
+            else { preconditionFailure("FakeCombatPort.projectileReadout is unset") }
+            return projectileReadoutValue
+        }
+        set { projectileReadoutValue = newValue }
     }
 
     public func combatActor(key: ReferenceKey) -> CombatActorObservation? {
