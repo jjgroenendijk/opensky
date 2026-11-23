@@ -32,6 +32,7 @@ public protocol MenuWorldTeleportsHost: AnyObject, SendableMetatype {
     var hud: any HUDPort { get }
     var loadingScreens: any LoadingScreenPort { get }
     var raceMenu: any RaceMenuPort { get }
+    var ragdoll: any RagdollPort { get }
     var renderer: (any RendererPort)? { get }
     var simulationClock: any SteppedWallClockPort { get }
     var streamer: any CellStreamerPort { get }
@@ -49,6 +50,11 @@ extension MenuWorldTeleportsAdapter {
         movePlayer(openingRaceMenu: openingRaceMenu) { [game] () throws(AgentFailure) in
             try game.agentWorld.teleportJob(to: target)
         }
+    }
+
+    /// A new game brings a dead player back, as a load does.
+    public func endPlayerDeath() {
+        game.ragdoll.resetPlayerDeath()
     }
 
     /// A load puts the player back where the save was made, behind the loading screen.

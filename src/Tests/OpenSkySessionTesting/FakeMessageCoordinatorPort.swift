@@ -12,6 +12,7 @@ nonisolated public final class FakeMessageCoordinatorPort: MessageCoordinatorPor
     public var postWorldNoticeCalls: [WorldNotice] = []
     public var postWorldNoticeResult = false
     public var presentChoicesCalls: [PresentChoicesCall] = []
+    public var closeAllCallCount = 0
     public var noteInputEventCalls: [String] = []
     public var presentation: MessageBoxPresentation?
     public var reloadHelpRecordsCallCount = 0
@@ -83,6 +84,10 @@ nonisolated extension FakeMessageCoordinatorPort {
         answer: @escaping (Int) -> Void
     ) {
         presentChoicesCalls.append(PresentChoicesCall(title: title, text: text, buttons: buttons))
+    }
+
+    public func closeAll() {
+        closeAllCallCount += 1
     }
 
     public func noteInputEvent(_ event: String) {

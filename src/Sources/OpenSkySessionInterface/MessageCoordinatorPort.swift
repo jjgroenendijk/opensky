@@ -11,6 +11,8 @@ public protocol MessageCoordinatorPort: AnyObject, PapyrusPresenting {
         buttons: [String],
         answer: @escaping (Int) -> Void
     )
+    /// Closes every box without an answer.
+    func closeAll()
     func noteInputEvent(_ event: String)
     var presentation: MessageBoxPresentation? { get }
     func reloadHelpRecords()

@@ -47,6 +47,7 @@ final class MenuHost: LoadingScreenPresentationHost, LoadingScreenWorldHost, Map
     let fakeMenuScreens = FakeMenuScreensPort()
     let fakeMessageWorld = FakeMessageWorldPort()
     let fakeMessages = FakeMessageCoordinatorPort()
+    let fakeRagdoll = FakeRagdollPort()
     let fakeMovies = FakeMoviePlayerPort()
     let fakePerkActivation = FakePerkActivationPort()
     let fakePerks = FakePerkPort()
@@ -179,6 +180,10 @@ final class MenuHost: LoadingScreenPresentationHost, LoadingScreenWorldHost, Map
 
     var messages: any MessageCoordinatorPort {
         fakeMessages
+    }
+
+    var ragdoll: any RagdollPort {
+        fakeRagdoll
     }
 
     var movies: any MoviePlayerPort {

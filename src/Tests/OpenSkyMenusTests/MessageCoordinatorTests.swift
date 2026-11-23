@@ -132,6 +132,24 @@ struct MessageCoordinatorTests {
         #expect(!messages.boxes.isOpen)
     }
 
+    @Test func closingAllDropsEveryBoxUnanswered() {
+        let menuMode = MenuModeController()
+        let world = Self.world()
+        let messages = MessageCoordinator(menuMode: menuMode, world: world)
+        var answer: Int?
+        messages.presentChoices(title: nil, text: "Reload?", buttons: ["Reload", "Main Menu"]) {
+            answer = $0
+        }
+        _ = messages.showMessage(Self.question, arguments: [])
+        messages.closeAll()
+        #expect(!messages.boxes.isOpen)
+        #expect(menuMode.topMenu == nil)
+        messages.choose(row: 0)
+        #expect(answer == nil)
+        #expect(world.answers.isEmpty)
+        messages.closeAll()
+    }
+
     @Test func notificationsReachTheHUDInOrder() {
         let world = Self.world()
         let messages = MessageCoordinator(menuMode: MenuModeController(), world: world)
