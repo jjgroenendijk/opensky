@@ -77,6 +77,44 @@ public final class PapyrusScheduler {
         entries.map(\.call)
     }
 
+    /// What one waiting call waits for, with the time it still has to wait.
+    public enum PendingWake: Equatable {
+        case realSeconds(Double, answer: PapyrusValue?)
+        case menuSeconds(Double)
+        case gameHours(Double)
+        /// An answer is set once the engine gave one and the call has not resumed yet.
+        case external(UInt64, answer: PapyrusValue?)
+    }
+
+    /// The waiting calls with their waits, oldest first. A save reads this.
+    var pendingWaits: [(call: SuspendedCall, wake: PendingWake)] {
+        entries.map { entry in
+            let wake: PendingWake = switch entry.wake {
+            case let .realSteps(startTick, duration, answer):
+                .realSeconds(
+                    max(0, duration - Double(tickCount - startTick) * fixedStepSeconds),
+                    answer: answer
+                )
+            case let .menuAwareSteps(startTick, duration):
+                .menuSeconds(
+                    max(0, duration - Double(menuAwareTickCount - startTick) * fixedStepSeconds)
+                )
+            case let .gameHours(due):
+                .gameHours(max(0, due - elapsedGameHours))
+            case let .external(token):
+                .external(token, answer: answers[token])
+            }
+            return (entry.call, wake)
+        }
+    }
+
+    /// Drops every waiting call, as a load does before it restores the saved ones.
+    func cancelAll() {
+        entries.removeAll()
+        answers.removeAll()
+        pendingCount = 0
+    }
+
     /// The tokens calls wait on, oldest first.
     var waitingTokens: [UInt64] {
         entries.compactMap { entry in

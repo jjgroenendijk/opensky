@@ -18,6 +18,10 @@ extension PapyrusWorldRuntime {
         lifecycle.timerStates()
     }
 
+    public func callStates() -> PapyrusCallSnapshot {
+        lifecycle.callStates()
+    }
+
     @discardableResult
     public func queueOnHit(_ hit: ScriptHitEvent) -> Int {
         scriptEvents.queueOnHit(hit)

@@ -18,6 +18,8 @@ final class PapyrusScriptIndex {
     private let functionsByState: [String: [String: PapyrusCompiledFunction]]
     private let readHandlers: [String: PapyrusCompiledFunction]
     private let writeHandlers: [String: PapyrusCompiledFunction]
+    /// Every function and property handler, at its `ordinal`.
+    private let functionsByOrdinal: [PapyrusCompiledFunction]
     private var functionsBySpelling: [String: [String: PapyrusCompiledFunction?]] = [:]
     /// Folded names of the functions declared native in any state.
     private let nativeFunctions: Set<String>
@@ -63,6 +65,13 @@ final class PapyrusScriptIndex {
         }
         readHandlers = reads
         writeHandlers = writes
+        let all = states.values.flatMap(\.values) + reads.values + writes.values
+        functionsByOrdinal = all.sorted { $0.ordinal < $1.ordinal }
+    }
+
+    /// The function a saved frame names, or nil when the script has fewer functions now.
+    func function(ordinal: Int) -> PapyrusCompiledFunction? {
+        functionsByOrdinal.indices.contains(ordinal) ? functionsByOrdinal[ordinal] : nil
     }
 
     func function(named name: String, state: String) -> PapyrusCompiledFunction? {

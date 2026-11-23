@@ -159,6 +159,8 @@ nonisolated public enum PapyrusWorldSkipReason: SkipTallyKind {
     case unknownSaveScript
     case unknownSaveVariable
     case unknownSaveTimerTarget
+    /// A saved call names a script, a function, or an instance that is not there now.
+    case unrestorableSaveCall
     /// A stage fragment named a script the quest has no live instance of.
     case missingQuestFragmentInstance
 
@@ -173,6 +175,7 @@ nonisolated public enum PapyrusWorldSkipReason: SkipTallyKind {
         case .unknownSaveScript: "saved script unknown"
         case .unknownSaveVariable: "saved variable unknown"
         case .unknownSaveTimerTarget: "saved timer target unknown"
+        case .unrestorableSaveCall: "saved call cannot continue"
         case .missingQuestFragmentInstance: "quest fragment instance missing"
         }
     }

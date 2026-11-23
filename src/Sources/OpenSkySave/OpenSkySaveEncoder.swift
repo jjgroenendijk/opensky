@@ -13,8 +13,7 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
     /// Serializes a snapshot, its fingerprint and header metadata, byte-deterministic:
     /// key order, ascending tags, no clock or hash seed. Only the header depends on
     /// `metadata`. A nil `clock`, `summary`, `thumbnail`, or `playerPlace`, or empty
-    /// `scripts`/`timers`,
-    /// writes no chunk.
+    /// `scripts`, `timers`, or `calls`, writes no chunk.
     public static func encode(
         snapshot: WorldStateSnapshot,
         fingerprint: [SavePluginFingerprint],
@@ -22,6 +21,7 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         clock: GameClock? = nil,
         scripts: [PapyrusInstanceState] = [],
         timers: [PapyrusTimerState] = [],
+        calls: PapyrusCallSnapshot = .empty,
         summary: SaveSummary? = nil,
         thumbnail: SaveThumbnail? = nil,
         playerPlace: SavePlayerPlace? = nil
@@ -78,6 +78,7 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
                 }
             }
         }
+        OpenSkySaveCallWriter.write(calls, into: &writer)
         if let playerPlace {
             OpenSkySavePlayerPlaceWriter.writePlayerPlace(playerPlace, into: &writer)
         }
@@ -199,7 +200,7 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
     /// `none` tag: `instanceStates()` already snapshots them that way, and
     /// writing a runtime handle that means nothing after a reload would be
     /// worse than writing the type's default.
-    private static func writeScriptValue(
+    static func writeScriptValue(
         _ value: PapyrusValue,
         into writer: inout BinaryWriter
     ) {

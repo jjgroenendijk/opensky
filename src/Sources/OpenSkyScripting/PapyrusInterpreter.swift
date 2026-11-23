@@ -21,11 +21,12 @@ nonisolated enum PapyrusResumeTarget: Sendable {
 }
 
 final class PapyrusContinuation {
-    private let resumeInterpreter: (UInt64, PapyrusValue) -> PapyrusRunOutcome
+    /// The suspended stack, which a save reads.
+    let interpreter: PapyrusRuntime.Interpreter
     private var consumed = false
 
-    init(resume: @escaping (UInt64, PapyrusValue) -> PapyrusRunOutcome) {
-        resumeInterpreter = resume
+    init(interpreter: PapyrusRuntime.Interpreter) {
+        self.interpreter = interpreter
     }
 
     func resume(id: UInt64, returning value: PapyrusValue) -> PapyrusRunOutcome {
@@ -33,7 +34,7 @@ final class PapyrusContinuation {
             return .faulted(.invalidResume)
         }
         consumed = true
-        return resumeInterpreter(id, value)
+        return interpreter.resume(id: id, returning: value)
     }
 }
 

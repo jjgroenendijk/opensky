@@ -34,6 +34,8 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         /// Pending Papyrus update timers, one entry per armed slot of a persistent
         /// instance. No armed timer writes no chunk.
         public static let papyrusTimers = "PTMR"
+        /// Papyrus calls that were running or waiting, with the arrays they share.
+        public static let papyrusCalls = "PCAL"
         /// Runtime inventories: stacks and equipped set per deviating owner. Kept out of
         /// `RDLT` (an entry whose only component is inventory is omitted there), so older
         /// builds still load the save. The decoder merges both back into one delta.

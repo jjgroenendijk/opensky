@@ -34,6 +34,8 @@ nonisolated extension OpenSkySaveDecoder {
         public var scripts: [PapyrusInstanceState] = []
         /// Absent `PTMR`: no update timer was pending.
         public var timers: [PapyrusTimerState] = []
+        /// Absent `PCAL`: no script call was running or waiting.
+        public var calls = PapyrusCallSnapshot.empty
         /// Absent `INVN`: every container and actor re-derives its contents from records.
         var inventories: [SaveInventoryEntry] = []
         /// Absent `SPWN`: no dropped item or summon rejoins the world.

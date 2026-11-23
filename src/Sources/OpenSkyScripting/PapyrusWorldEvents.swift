@@ -21,6 +21,7 @@ extension PapyrusWorldRuntime.ScriptEvents {
             world.lastStepDelayedCalls = world.runtime.tally.delayedNativeTotal - delayedBefore
             world.runtime.stepInstructionsLeft = .max
         }
+        world.lifecycle.resumeHeldCallRestores()
         world.advanceQuestStarts()
         _ = world.scheduler.tick(gameClock: gameClock)
         let resumes = world.suspensionTracker.drainStep()

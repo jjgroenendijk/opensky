@@ -92,6 +92,61 @@ byte is the raw value of `PapyrusUpdateTimerSlot`
 interval or remaining time that is negative or not finite is read as 0.0, so the timer fires
 on the next step. Minimum entry size: 26 bytes.
 
+## PCAL: script calls
+
+The Papyrus calls that were running or waiting when the save was written
+([script state in a save](/engine/papyrus-world.md#script-state-in-a-save)). The chunk is
+left out when no call waits.
+
+A uint32 array count, then per array: string element type, uint32 value count, the values.
+Then a uint32 call count, then per call:
+
+| type | field | notes |
+| --- | --- | --- |
+| uint8 | flags | bit 0: an owner follows. Bit 1: the call holds its instance |
+| instance | owner | only with bit 0: the instance whose event started the call |
+| string | nativeScript | the native function the call waits in |
+| string | nativeFunction | |
+| string | returnType | the native's return type, as Papyrus spells it |
+| wake | wake | what the call waits for |
+| return | resume | where the native's answer goes |
+| uint32 | frameCount | the frames that follow, bottom of the stack first |
+
+Each frame: string script, uint32 function ordinal, uint32 instruction count, uint8 instance
+flag, an instance when the flag is 1, a return, uint32 instruction index, uint32 value count,
+and the values of the function's slots. The ordinal is the function's place in its script.
+The instruction count tells a changed script from the saved one.
+
+An instance is a reference key and a string script name. A value is a uint8 tag and a
+payload. Tags 0 to 4 are those of `PSCR`. The others:
+
+| tag | kind | payload |
+| --- | --- | --- |
+| 5 | script instance | an instance |
+| 6 | reference or form | a reference key |
+| 7 | quest alias | the quest's key, uint32 alias ID |
+| 8 | array | uint32 index into the chunk's arrays |
+
+Two values with one array index share one array after the load, as before the save.
+
+A return is a uint8 tag: 0 the result of the whole call, 1 thrown away, 2 a value nobody
+reads, 3 a variable, followed by its name as a string.
+
+A wake is a uint8 tag and a payload:
+
+| tag | waits for | payload |
+| --- | --- | --- |
+| 0 | real seconds of world time | float64 seconds left, uint8 answer flag, a value when the flag is 1 |
+| 1 | real seconds that also pass in a menu | float64 seconds left |
+| 2 | game hours | float64 hours left |
+| 3 | the fragments of a quest stage | the quest's key, the value to answer with |
+| 4 | the queued start of a quest | the quest's key, uint8: 1 when the stage fragments follow |
+| 5 | something the save does not keep | nothing |
+
+A time is relative to the save, as in `PTMR`. A time that is negative or not finite is read
+as 0.0. An unknown value, return, or wake tag is `invalidValue`. Minimum sizes: 6 bytes per
+array, 13 bytes per call, 20 bytes per frame, 1 byte per value.
+
 ## INVN: inventories
 
 One entry per owner whose items differ from the plugins:
