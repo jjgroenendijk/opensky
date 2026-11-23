@@ -49,10 +49,11 @@ extension CrimeCoordinator {
         }
     }
 
-    /// What every recorded crime changes besides the bounty: the stats, and the theft
-    /// mark of a theft no witness charged.
+    /// What every recorded crime changes besides the bounty: the stats, a caught
+    /// pickpocket's line, and the theft mark of a theft no witness charged.
     func recorded(_ event: CrimeEvent, outcome: CrimeOutcome) {
         count(event)
+        reactToPickpocket(event, outcome: outcome)
         if
             event.kind == .theft, event.perpetrator == .player, event.victim != nil,
             outcome.gold <= 0

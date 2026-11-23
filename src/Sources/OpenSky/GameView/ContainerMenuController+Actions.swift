@@ -248,7 +248,8 @@ struct ContainerMenuDeals {
         _ entry: InventoryMenuEntry, count: Int32, side: ContainerMenuModel.Side,
         target: InventoryHolder
     ) -> (text: String, result: (took: Bool, caught: Bool)) {
-        let roll = Float.random(in: 0 ..< 100)
+        // A whole number, so a chance capped at 90 still fails on 90 to 99.
+        let roll = Float(Int.random(in: 0 ... 99))
         let outcome = side == .container
             ? game.inventory.pickpocketing.pickpocket(
                 entry.item, count: count, named: entry.name, from: target, roll: roll

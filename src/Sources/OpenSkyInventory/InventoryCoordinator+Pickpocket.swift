@@ -138,8 +138,8 @@ extension InventoryCoordinator.Pickpocketing {
         return .placed(item: name, chance: Int(chance))
     }
 
-    /// One take from `target`'s pocket. `roll` is in 0 to 100; a roll below the
-    /// chance succeeds.
+    /// One take from `target`'s pocket. `roll` is a whole number from 0 to 99; a roll
+    /// below the chance succeeds.
     @discardableResult
     public func pickpocket(
         _ item: FormID, count: Int32 = 1, named name: String, from target: InventoryHolder,

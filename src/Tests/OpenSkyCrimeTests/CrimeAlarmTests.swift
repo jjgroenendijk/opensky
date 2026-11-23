@@ -156,6 +156,30 @@ struct CrimeAlarmTests {
         #expect(coordinator.crimeGold(of: Self.hold) > 0)
     }
 
+    @Test func aCaughtPickpocketsTargetSpeaksAndMarksThePlayer() throws {
+        let world = FakeCrimeSessionWorld()
+        world.living = [CrimeObserver(key: Self.owner, feet: SIMD3(50, 0, 0))]
+        let coordinator = try Self.coordinator(world, witnesses: [Self.owner])
+        coordinator.reporter?.reportPickpocket(of: Self.owner)
+
+        #expect(coordinator.takeCommands().contains(.sayTopic("PICC", by: Self.owner)))
+        #expect(coordinator.alarm.theftMark.isSet)
+    }
+
+    @Test func aFactionThatIgnoresPickpocketingLetsTheThiefGo() throws {
+        let world = FakeCrimeSessionWorld()
+        let coordinator = try Self.coordinator(world, witnesses: [Self.owner])
+        let event = CrimeEvent(kind: .pickpocket, perpetrator: .player, victim: Self.owner)
+        coordinator.reactToPickpocket(event, outcome: .refused(.factionIgnoresKind))
+        coordinator.reactToPickpocket(
+            CrimeEvent(kind: .theft, perpetrator: .player, victim: Self.owner),
+            outcome: .refused(.factionIgnoresKind)
+        )
+
+        #expect(coordinator.takeCommands() == [.sayTopic("PICN", by: Self.owner)])
+        #expect(!coordinator.alarm.theftMark.isSet)
+    }
+
     @Test func aWitnessInCombatOrFollowingThePlayerHearsNothing() throws {
         let world = FakeCrimeSessionWorld()
         world.living = [

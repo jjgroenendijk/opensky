@@ -373,6 +373,19 @@ extension CrimeCoordinator {
         let day = Int((world.gameSeconds ?? 0) / 86400)
         alarm.theftMark.note(day: day)
     }
+
+    /// A caught pickpocket: the target says its line. A faction that ignores
+    /// pickpocketing charges nothing, and the target lets it go.
+    func reactToPickpocket(_ event: CrimeEvent, outcome: CrimeOutcome) {
+        guard event.kind == .pickpocket, event.perpetrator == .player, let target = event.victim
+        else { return }
+        if outcome.refusal == .factionIgnoresKind {
+            pendingCommands.append(.sayTopic("PICN", by: target))
+            return
+        }
+        pendingCommands.append(.sayTopic("PICC", by: target))
+        noteTheftMark()
+    }
 }
 
 extension CrimeCoordinator {
