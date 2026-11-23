@@ -270,18 +270,25 @@ public final class CrimeReporter: CrimeReporting {
         return event
     }
 
-    /// An event against one actor, located by where that actor stands.
+    /// An event against one actor, located by where that actor stands. A pickpocket or
+    /// an assault is charged to a witness's crime faction, the victim's for a pickpocket.
     private func event(
         _ kind: CrimeKind,
         victim: ReferenceKey,
         by actor: ReferenceKey
     ) -> CrimeEvent {
         let cell = world?.crimeCell(of: victim) ?? world?.crimeCell(of: actor)
+        let witnesses: [ReferenceKey]? = switch kind {
+        case .pickpocket: [victim]
+        case .assault: runtime.witnesses.witnesses(of: actor)
+        default: nil
+        }
+        let witnessFaction = witnesses.flatMap { world?.crimeFaction(ofWitnesses: $0) }
         return CrimeEvent(
             kind: kind,
             perpetrator: actor,
             victim: victim,
-            crimeFaction: world?.crimeFaction(in: cell),
+            crimeFaction: witnessFaction ?? world?.crimeFaction(in: cell),
             cell: cell
         )
     }

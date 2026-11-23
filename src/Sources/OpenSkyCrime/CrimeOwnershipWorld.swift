@@ -126,6 +126,21 @@ final class CrimeOwnershipWorld: CrimeWorld {
         return ReferenceKey(resolved: faction.id)
     }
 
+    /// `.some(nil)` when the witnesses are known and none has a crime faction.
+    func crimeFaction(ofWitnesses witnesses: [ReferenceKey]) -> ReferenceKey?? {
+        let profiles = witnesses.compactMap { world.socialProfile(of: $0) }
+        guard !profiles.isEmpty else { return nil }
+        if
+            let guardFaction = runtime?.factions.guardFactionKey,
+            let policed = profiles.lazy.compactMap({
+                GuardRecognition.policedFaction(of: $0, guardFaction: guardFaction)
+            }).first
+        {
+            return .some(policed)
+        }
+        return .some(profiles.lazy.compactMap(\.crimeFaction).first)
+    }
+
     func crimeCell(of key: ReferenceKey) -> CellSceneLocation? {
         world.references?.cellLocation(of: key)
     }

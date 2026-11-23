@@ -157,6 +157,8 @@ public protocol CombatWorld: AnyObject {
     func faceActor(_ key: ReferenceKey, toward point: SIMD3<Float>)
     /// Whether `key`'s race flies (`RACE` flag 0x80).
     func actorFlies(_ key: ReferenceKey) -> Bool
+    /// Whether `key`'s race is a child race (`RACE` flag Child).
+    func actorIsChild(_ key: ReferenceKey) -> Bool
     /// `key` shouts the word spell `spell` along its facing. True when it went off.
     @discardableResult
     func shout(_ spell: ReferenceKey, by key: ReferenceKey) -> Bool
@@ -333,6 +335,10 @@ extension CombatWorld {
     public func faceActor(_: ReferenceKey, toward _: SIMD3<Float>) {}
 
     public func actorFlies(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func actorIsChild(_: ReferenceKey) -> Bool {
         false
     }
 

@@ -31,6 +31,7 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public var influences: [ReferenceKey: ActorMagicInfluence] = [:]
     /// Actors whose current package has the Ignore Combat flag.
     public var ignoringCombat: Set<ReferenceKey> = []
+    public var children: Set<ReferenceKey> = []
     public var weapons: [ReferenceKey: MeleeWeaponProfile] = [:]
     public var leftWeapons: [ReferenceKey: MeleeWeaponProfile] = [:]
     public var styles: [ReferenceKey: CombatStyleTuning] = [:]
@@ -153,6 +154,10 @@ public final class FakeCombatWorld: CombatLoopWorld {
 
     public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
         styles[key]
+    }
+
+    public func combatIsChild(_ key: ReferenceKey) -> Bool {
+        children.contains(key)
     }
 
     public var combatPlayer: MeleeAttacker {

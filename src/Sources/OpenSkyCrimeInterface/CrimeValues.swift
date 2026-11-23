@@ -126,10 +126,19 @@ public protocol CrimeWorld: AnyObject {
     /// The most one item may be worth for the player to take it from `faction`
     /// without theft, or nil when no friend of the player belongs to it.
     func favourAllowance(in faction: ReferenceKey) -> Int32?
+
+    /// The crime faction a pickpocket or an assault is charged to: the faction the first
+    /// guard among `witnesses` polices, else the first other witness's crime faction. Nil
+    /// when the world cannot tell, so the place's faction answers.
+    func crimeFaction(ofWitnesses witnesses: [ReferenceKey]) -> ReferenceKey??
 }
 
 extension CrimeWorld {
     public func favourAllowance(in _: ReferenceKey) -> Int32? {
+        nil
+    }
+
+    public func crimeFaction(ofWitnesses _: [ReferenceKey]) -> ReferenceKey?? {
         nil
     }
 }

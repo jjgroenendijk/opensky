@@ -271,10 +271,6 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
         shared.world.faceActor(key, toward: point)
     }
 
-    func combatFlies(_ key: ReferenceKey) -> Bool {
-        shared.world.actorFlies(key)
-    }
-
     func stopCombatMovement(of key: ReferenceKey) {
         shared.world.stopActor(key)
     }
@@ -330,6 +326,14 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
 }
 
 extension CombatLoopWorldPart {
+    func combatFlies(_ key: ReferenceKey) -> Bool {
+        shared.world.actorFlies(key)
+    }
+
+    func combatIsChild(_ key: ReferenceKey) -> Bool {
+        shared.world.actorIsChild(key)
+    }
+
     func writeCombatActorVariable(
         _ value: BehaviorVariableValue, named name: String, on actor: ReferenceKey
     ) {

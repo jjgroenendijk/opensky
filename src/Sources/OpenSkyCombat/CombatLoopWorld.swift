@@ -174,6 +174,9 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// Whether `key`'s race flies.
     func combatFlies(_ key: ReferenceKey) -> Bool
 
+    /// Whether `key` is a child, whom the player's allies never pick as a target.
+    func combatIsChild(_ key: ReferenceKey) -> Bool
+
     /// Stops `key` where it stands, which is what an actor does when it is in
     /// reach, blocking, staggered or done fighting.
     func stopCombatMovement(of key: ReferenceKey)
@@ -270,6 +273,10 @@ extension CombatLoopWorld {
     public func turnCombatActor(_: ReferenceKey, toward _: SIMD3<Float>) {}
 
     public func combatFlies(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func combatIsChild(_: ReferenceKey) -> Bool {
         false
     }
 

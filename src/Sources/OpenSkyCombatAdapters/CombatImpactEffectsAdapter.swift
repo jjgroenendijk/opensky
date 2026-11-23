@@ -115,6 +115,10 @@ extension CombatImpactEffectsAdapter {
         raceFlags(of: actor)?.contains(.flies) ?? false
     }
 
+    public func actorIsChild(_ actor: ReferenceKey) -> Bool {
+        raceFlags(of: actor)?.contains(.child) ?? false
+    }
+
     public func canBeKilled(_ target: ReferenceKey, by attacker: ReferenceKey) -> Bool {
         game.ragdollWorld.zeroHealthOutcome(of: target, killer: attacker) == .dies
     }
