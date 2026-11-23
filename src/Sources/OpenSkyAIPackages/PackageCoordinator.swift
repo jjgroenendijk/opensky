@@ -390,6 +390,11 @@ public final class PackageCoordinator {
         runtime?.setSuspended(true, actor: actor)
     }
 
+    /// Whether `actor` is held out of scheduled selection.
+    public func isSuspended(_ actor: ReferenceKey) -> Bool {
+        runtime?.isSuspended(actor) ?? false
+    }
+
     /// Lifts the suspension and selects `actor`'s package for the current time
     /// now, because the world moved on while it was held.
     public func resume(_ actor: ReferenceKey) {

@@ -71,6 +71,7 @@ struct PackageCoordinatorTests {
         coordinator.advance()
         coordinator.suspend(Self.guardKey)
         #expect(coordinator.readout(for: Self.guardKey)?.isSuspended == true)
+        #expect(coordinator.isSuspended(Self.guardKey))
 
         world.packageClock = GameClock(hour: 13)
         coordinator.advance()
@@ -79,6 +80,7 @@ struct PackageCoordinatorTests {
         coordinator.resume(Self.guardKey)
         let readout = try #require(coordinator.readout(for: Self.guardKey))
         #expect(readout.isSuspended == false)
+        #expect(!coordinator.isSuspended(Self.guardKey))
         #expect(readout.editorID == "Fallback")
     }
 

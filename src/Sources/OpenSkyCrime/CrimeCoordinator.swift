@@ -90,6 +90,8 @@ public final class CrimeCoordinator {
     var hidesQuestItems = true
     /// The player's stay in jail, from the cell door to release or escape.
     public internal(set) var jailStay: JailStay?
+    /// Followers waiting at the jail door. Session state: a reloaded save lets them follow.
+    public internal(set) var jailFollowers: [ReferenceKey] = []
     /// Blows between actors other than the player: who struck whom first.
     var actorFirstStrikes: Set<ActorStrike> = []
     /// Per crime faction, the actors whose guards fight them.

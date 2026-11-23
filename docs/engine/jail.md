@@ -138,5 +138,4 @@ cell the player stands in counts as the jail cell.
 
 ## Not done yet
 
-- Followers do not wait at the `JAIL` marker, and do not follow again after the stay.
 - Cidhna Mine's pickaxe-and-ore way of serving time is a quest script, not part of this.

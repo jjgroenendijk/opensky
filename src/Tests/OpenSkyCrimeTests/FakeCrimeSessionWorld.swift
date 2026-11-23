@@ -44,6 +44,11 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
     var jailCell: CellSceneLocation?
     var lockpick: FormID?
     private(set) var leftJail: [ReferenceKey] = []
+    var followers: [ReferenceKey] = []
+    private(set) var parked: [ReferenceKey: ReferenceKey] = [:]
+    private(set) var released: [ReferenceKey] = []
+    /// Each actor's distance to any marker; nil is another space.
+    var markerDistances: [ReferenceKey: Float] = [:]
     private(set) var lostProgress: [(days: Int, maximum: Int)] = []
 
     func cellTrespassFlags(at location: CellSceneLocation) -> CellTrespassFlags {
@@ -60,6 +65,23 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
 
     func enterJail(through _: ReferenceKey) -> Bool {
         jailCell != nil
+    }
+
+    func playerFollowers() -> [ReferenceKey] {
+        followers
+    }
+
+    func parkFollower(_ follower: ReferenceKey, at marker: ReferenceKey) -> Bool {
+        parked[follower] = marker
+        return true
+    }
+
+    func releaseFollower(_ follower: ReferenceKey) {
+        released.append(follower)
+    }
+
+    func distance(of key: ReferenceKey, toMarker _: ReferenceKey) -> Float? {
+        markerDistances[key]
     }
 
     func leaveJail(to marker: ReferenceKey) -> Bool {

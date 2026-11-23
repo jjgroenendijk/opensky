@@ -109,6 +109,22 @@ extension CrimeWorldAdapter {
         actors.stopActor(key)
     }
 
+    public func playerFollowers() -> [ReferenceKey] {
+        actors.playerFollowers()
+    }
+
+    public func parkFollower(_ follower: ReferenceKey, at marker: ReferenceKey) -> Bool {
+        actors.parkFollower(follower, at: marker)
+    }
+
+    public func releaseFollower(_ follower: ReferenceKey) {
+        actors.releaseFollower(follower)
+    }
+
+    public func distance(of key: ReferenceKey, toMarker marker: ReferenceKey) -> Float? {
+        actors.distance(of: key, toMarker: marker)
+    }
+
     public func suspendPackage(for key: ReferenceKey) {
         actors.suspendPackage(for: key)
     }
