@@ -30,6 +30,9 @@ nonisolated public struct DialogueControlSnapshot: Equatable, Sendable {
     /// is worth, and the readout states how many it dropped rather than growing
     /// without bound.
     public static let rowLimit = 12
+    /// Rejected topics a snapshot carries. A guard has dozens of failing topics, and the
+    /// one a check asks about must still be in the list.
+    public static let rejectionLimit = 64
 
     public static let empty = DialogueControlSnapshot(
         isOpen: false,

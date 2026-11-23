@@ -28,8 +28,8 @@ import Testing
 
 @MainActor
 struct AgentReadoutTests {
-    private let host = AgentHost()
-    private let world: AgentWorldAdapter
+    let host = AgentHost()
+    let world: AgentWorldAdapter
 
     init() {
         host.fakeMovies.readout = MoviePlaybackReadout(loading: false, interruptible: true)
@@ -39,7 +39,7 @@ struct AgentReadoutTests {
         world = AgentWorldAdapter(game: host, now: { Date(timeIntervalSinceReferenceDate: 0) })
     }
 
-    private func object(_ json: AgentJSON) -> [String: AgentJSON] {
+    func object(_ json: AgentJSON) -> [String: AgentJSON] {
         guard case let .object(fields) = json else { return [:] }
         return fields
     }
