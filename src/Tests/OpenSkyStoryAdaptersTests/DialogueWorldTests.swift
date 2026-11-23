@@ -48,8 +48,18 @@ struct DialogueWorldTests {
         host.fakeActorWorld.combatActorResult = CombatActorObservation(
             key: Self.speaker, feet: .zero, isDead: dead
         )
-        adapter.closeMenuOfDeadSpeaker()
+        adapter.closeMenuWhenConversationEnds(playerPlacements: 0)
         #expect(host.fakeDialogueMenu.closeCallCount == (dead ? 1 : 0))
+    }
+
+    @Test(arguments: [false, true])
+    func theMenuClosesWhenThePlayerIsMoved(moved: Bool) {
+        adapter.closeMenuWhenConversationEnds(playerPlacements: 3)
+        host.fakeDialogueMenu.isOpen = true
+        host.fakeDialogueMenu.speakerOrTarget = Self.speaker
+        adapter.closeMenuWhenConversationEnds(playerPlacements: 3)
+        adapter.closeMenuWhenConversationEnds(playerPlacements: moved ? 4 : 3)
+        #expect(host.fakeDialogueMenu.closeCallCount == (moved ? 1 : 0))
     }
 
     @Test func theConditionContextCarriesSpeechCheckFactors() {

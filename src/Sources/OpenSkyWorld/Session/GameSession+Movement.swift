@@ -22,6 +22,7 @@ extension GameSession.MovementSteps {
     }
 
     public func reseedMovement(camera newCamera: SceneCamera) {
+        session.playerPlacements += 1
         // A held dialogue pose describes a place the player is no longer in,
         // and restoring it after the reseed would undo the teleport.
         session.dialogueCameraSteps.restorePlayerCameraPose()
