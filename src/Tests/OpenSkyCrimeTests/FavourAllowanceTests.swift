@@ -104,6 +104,10 @@ struct FavourAllowanceTests {
         #expect(reporter.verdict(on: chest, item: Self.cheap, by: Self.stranger).isTheft)
     }
 
+    @Test func aWorldThatCannotTellLeavesTheWitnessesFactionToThePlace() {
+        #expect(World().crimeFaction(ofWitnesses: [CrimeFixture.key(0x700)]) == .none)
+    }
+
     @Test func anItemTheFriendOwnsThemselvesIsStillTheft() throws {
         let world = World()
         world.owner = .actor(Self.friend)

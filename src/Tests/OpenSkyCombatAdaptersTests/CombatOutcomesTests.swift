@@ -74,6 +74,7 @@ struct CombatOutcomesTests {
         adapter.run([.showDefaultBlood(on: Self.foe, at: .zero, melee: true)])
         #expect(host.fakeEffects.showDefaultBloodCalls.count == 1)
         #expect(!adapter.actorFlies(Self.foe))
+        #expect(!adapter.actorIsChild(Self.foe))
         #expect(adapter.impactMaterial(of: Self.foe) == nil)
     }
 

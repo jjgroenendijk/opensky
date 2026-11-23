@@ -55,6 +55,7 @@ struct CombatRecordsTests {
     @Test func theRaceRecordSaysTheActorFliesAndKeepsWeaponsClean() {
         let combat = CombatWorldAdapter(game: host)
         #expect(combat.actorFlies(Self.actor))
+        #expect(!combat.actorIsChild(Self.actor))
         #expect(combat.impactMaterial(of: Self.actor) == nil)
         combat.run([.drewBlood(
             CombatHitRecord(damage: 5, kind: .melee, attacker: .player), target: Self.actor
