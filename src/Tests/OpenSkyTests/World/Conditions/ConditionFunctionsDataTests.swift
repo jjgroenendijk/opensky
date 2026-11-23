@@ -273,7 +273,9 @@ struct ConditionFunctionsDataTests {
         ) + QuestFixture.alias(
             id: 1,
             name: "OtherReference",
-            fill: QuestFixture.word("ALFR", FixtureID.targetReference)
+            fill: QuestFixture.word("ALFR", FixtureID.targetReference),
+            extras: ESMFixture.field("KSIZ", ESMFixture.words([1]))
+                + ESMFixture.field("KWDA", ESMFixture.words([FixtureID.otherKeyword]))
         )
         return try QuestRuntime(
             store: WorldStateStore(),
@@ -288,6 +290,22 @@ struct ConditionFunctionsDataTests {
 
 @MainActor
 extension ConditionFunctionsDataTests {
+    /// The target fills an alias that lists the other keyword, and its base lists none.
+    @Test func aQuestAliasGivesItsReferenceTheAliasKeywords() throws {
+        var context = try makeFixture().context()
+        context.subject = ConditionEvaluatorFixture.key(
+            FixtureID.targetReference,
+            plugin: "test.esm"
+        )
+        let given = try evaluate(DataCase(560, FixtureID.otherKeyword), context: context)
+        let notGiven = try evaluate(DataCase(560, FixtureID.keyword), context: context)
+        context.aliases = .empty
+        let cleared = try evaluate(DataCase(560, FixtureID.otherKeyword), context: context)
+        #expect(given.isTrue)
+        #expect(!notGiven.isTrue)
+        #expect(!cleared.isTrue)
+    }
+
     private func pluginData() -> Data {
         ESMFixture.tes4()
             + ESMFixture.topGroup("KYWD", contents: keywordRecords())

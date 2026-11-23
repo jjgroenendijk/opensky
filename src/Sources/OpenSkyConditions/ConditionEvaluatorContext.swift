@@ -25,6 +25,8 @@ nonisolated public protocol ConditionAliasResolving: Sendable {
     func aliasID(named name: String, in quest: FormID) -> UInt32?
     func reference(alias aliasID: UInt32, in quest: FormID) -> ReferenceKey?
     func location(alias aliasID: UInt32, in quest: FormID) -> ResolvedFormID?
+    /// Whether an alias holding `reference` gives it `keyword`.
+    func aliasGivesKeyword(_ keyword: ResolvedFormID, to reference: ReferenceKey) -> Bool
 }
 
 /// The combat-target lookup the Combat Target run-on needs. The actor module

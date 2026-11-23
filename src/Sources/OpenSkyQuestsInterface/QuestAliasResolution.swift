@@ -57,6 +57,22 @@ nonisolated public struct QuestAliasResolution: Sendable {
         return flags
     }
 
+    /// The reference counts as having its aliases' keywords while it is in them
+    /// (<https://ck.uesp.net/wiki/Quest_Alias_Tab>).
+    public func aliasGivesKeyword(_ keyword: ResolvedFormID, to reference: ReferenceKey) -> Bool {
+        for (questKey, table) in tables where table.holds(reference) {
+            guard let quest = defaults.quest(key: questKey) else { continue }
+            let resolver = defaults.sourceResolver(of: quest.formID)
+            for fill in table.fills where fill.reference == reference {
+                let keywords = quest.alias(id: fill.aliasID)?.keywords.keywords ?? []
+                if keywords.contains(where: { resolver.resolve($0) == keyword }) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
     /// The filled table of the quest stored under `key`, empty when nothing filled it.
     public func table(forKey key: ReferenceKey) -> QuestAliasState {
         tables[key] ?? .empty
