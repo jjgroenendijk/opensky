@@ -33,8 +33,8 @@ extension CombatLoopRuntime {
                 ignoring.insert(actor.key)
             }
         }
-        for actor in actors
-            where influences[actor.key]?.refusesCombat == true || ignoring.contains(actor.key)
+        for actor in actors where influences[actor.key]?.refusesCombat == true
+            || ignoring.contains(actor.key)
         {
             holdStill(actor.key, world: world)
         }
@@ -42,31 +42,32 @@ extension CombatLoopRuntime {
         recruitAssistants(
             among: actors, hostility: &hostility, ignoring: ignoring, world: world
         )
+        scanFoes(actors, world: world)
+        let foes = actorFoes(among: actors, world: world)
         let candidates = actors
             .filter { actor in
                 guard let stance = hostility[actor.key], commanders[actor.key] != player.key
                 else { return false }
-                let influence = influences[actor.key] ?? .none
-                guard !influence.refusesCombat, !ignoring.contains(actor.key) else {
-                    return false
-                }
-                return stance == .hostile || influence.isFrenzied
-                    || engagesWithoutPerceiving(actor.key)
+                return fights(
+                    actor.key, stance: stance, influence: influences[actor.key] ?? .none,
+                    hasFoe: foes[actor.key] != nil
+                ) && !ignoring.contains(actor.key)
             }
             .sorted {
                 (simd_distance($0.feet, player.feet), $0.key)
                     < (simd_distance($1.feet, player.feet), $1.key)
             }
         noteCrowdedOut(max(0, candidates.count - Self.maximumEngagedActors))
-        let allies = Self.meleeTargets(
-            actors.filter { !$0.isDead && commanders[$0.key] == player.key }
-        )
+        let allies = playerAllies(among: actors, player: player.key)
         let driven = candidates.prefix(Self.maximumEngagedActors)
         for actor in driven {
+            let influence = influences[actor.key] ?? .none
+            var choices = TargetChoices(allies: allies, foe: foes[actor.key])
+            choices.fightsPlayer = hostility[actor.key] == .hostile || influence.isFrenzied
+                || (engagesWithoutPerceiving(actor.key) && !retaliating.contains(actor.key))
             drive(
-                actor: actor,
-                influence: influences[actor.key] ?? .none,
-                target: target(of: actor, player: player, allies: allies, world: world),
+                actor: actor, influence: influence,
+                target: target(of: actor, player: player, choices: choices, world: world),
                 world: world
             )
         }
@@ -79,6 +80,23 @@ extension CombatLoopRuntime {
             influences: influences, world: world
         )
         return hostility
+    }
+
+    /// The living allies of the player, as targets.
+    private func playerAllies(
+        among actors: [CombatActorObservation], player: ReferenceKey
+    ) -> [MeleeTarget] {
+        Self.meleeTargets(actors.filter { !$0.isDead && commanders[$0.key] == player })
+    }
+
+    /// Whether an actor that is free to fight does: it is hostile to the player, frenzied,
+    /// pushed in, or has an NPC foe.
+    private func fights(
+        _ key: ReferenceKey, stance: ActorHostility, influence: ActorMagicInfluence, hasFoe: Bool
+    ) -> Bool {
+        guard !influence.refusesCombat else { return false }
+        return stance == .hostile || influence.isFrenzied || engagesWithoutPerceiving(key)
+            || hasFoe
     }
 
     /// Retires the machines of actors that left and parks those of the dead.
@@ -101,20 +119,28 @@ extension CombatLoopRuntime {
         actors.map { MeleeTarget(key: $0.key, feet: $0.feet, capsule: $0.capsule) }
     }
 
-    /// A foe fights the nearest of the player and the player's allies it has seen. A
+    /// A foe of the player fights the nearest of the player, the player's allies it has
+    /// seen, and its NPC foe. An actor that is no foe of the player fights its NPC foe. A
     /// script's `StartCombat` keeps it on the player.
     private func target(
         of actor: CombatActorObservation,
         player: MeleeAttacker,
-        allies: [MeleeTarget],
+        choices: TargetChoices,
         world: any CombatLoopWorld
     ) -> MeleeTarget {
         let you = MeleeTarget(key: player.key, feet: player.feet, capsule: player.capsule)
-        guard !allies.isEmpty, !isForcedOntoPlayer(actor.key) else { return you }
-        let seen = allies.filter {
+        if !choices.fightsPlayer, let foe = choices.foe {
+            return foe
+        }
+        guard !isForcedOntoPlayer(actor.key) else { return you }
+        let seen = choices.allies.filter {
             world.combatAwareness(of: actor.key, toward: $0.key).isDetected
         }
-        return CombatAllyRule.nearest([you] + seen, to: actor.feet) ?? you
+        // An undetected player does not pull the actor away from a foe it fights.
+        let knowsPlayer = choices.foe == nil || engagesWithoutPerceiving(actor.key)
+            || world.combatAwareness(of: actor.key, toward: player.key).isDetected
+        let options = (knowsPlayer ? [you] : []) + seen + (choices.foe.map { [$0] } ?? [])
+        return CombatAllyRule.nearest(options, to: actor.feet) ?? you
     }
 
     /// Calm "lowers the Aggression" and Paralysis stops all movement: an actor in a
@@ -459,6 +485,16 @@ extension CombatLoopRuntime {
         guard simd_length_squared(SIMD2(offset.x, offset.y)) > 1e-6 else { return fallback }
         return atan2f(offset.y, offset.x)
     }
+}
+
+/// Whom one actor may fight this step.
+private struct TargetChoices {
+    /// The player's allies.
+    let allies: [MeleeTarget]
+    /// The nearest NPC the actor fights, if any.
+    let foe: MeleeTarget?
+    /// The actor fights the player's side: it is hostile, frenzied, or pushed in.
+    var fightsPlayer = false
 }
 
 /// What asking for a kill move at a swing gave.

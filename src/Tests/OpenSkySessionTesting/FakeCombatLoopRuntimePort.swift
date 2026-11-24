@@ -22,6 +22,7 @@ nonisolated public final class FakeCombatLoopRuntimePort: CombatLoopRuntimePort 
     public var drawStateResult: WeaponDrawState?
     public var fightsRangedCalls: [ReferenceKey] = []
     public var fightsRangedResult = false
+    public var foePairs: Set<CombatFoePair> = []
     public var hostilityCalls: [ReferenceKey] = []
     public var hostilityResult: ActorHostility?
     public var isPlayerInCombat = false

@@ -55,8 +55,8 @@ not a target.
 ## Combat state is derived
 
 "Is the player in combat?" is not stored. It is derived every fixed step from the actors in loaded
-cells: the player is in combat when some actor is engaged, meaning fighting the player or searching
-for them.
+cells: the player is in combat when some actor is engaged against the player or the player's allies,
+meaning fighting them or searching for them.
 
 This is not the same as "some actor is hostile". An actor that has not noticed the player, and one
 that searched, gave up, and went back to work, are both hostile and both out of the fight. Deriving
@@ -100,6 +100,28 @@ The CK wiki puts it "under the caster's control". The loop calls such an actor a
 - An NPC that casts at an ally or a foe aims at that actor, not at the player.
 - Allies take what is left of the engagement cap after the foes.
 
+## NPC foes
+
+An NPC fights another NPC as well as the player. The rule is the game's
+[hostility test](/engine/hostility.md#aggression-draws-the-weapon): an actor attacks on sight the
+actors its aggression and reaction make it hostile to, and it is hostile to a target that fights it,
+unless it counts that target an Ally or a Friend.
+
+- Once a second the loop finds each pair of living NPCs within 4096 units where the first is
+  hostile to the second. The player's allies are left out; they keep the rules above.
+- Perception tracks each such pair. When the observer detects its foe, it fights it.
+- An actor that an NPC fights, fights back. It engages without having to see the attacker.
+- A calm actor that helps an ally fighting an NPC fights that NPC too, through Assistance
+  ([Confidence and Assistance](/engine/combat-behavior.md#confidence-and-assistance)).
+- An actor that fights the player picks the nearest of the player, the player's allies it has seen,
+  and its NPC foe. While it has a foe, a player it has not detected does not pull it away.
+- The player is in combat only while an actor fights the player or the player's allies. A fight
+  between two NPCs plays no combat music.
+- `openskycli game state actors` shows each actor's combat `target`.
+
+The interval and the range are OpenSky values. The game checks detection every 1 to 2 seconds per
+actor ([detection](/engine/detection.md#who-runs-detection-in-the-game)).
+
 ## Who an assisting actor fights
 
 Each actor asks one question of each other actor near the player: would it help that actor? The
@@ -128,6 +150,11 @@ B's side.
 A witness to an assault or a murder can help the victim against the attacker. That needs the
 witness to help the victim and not help the attacker. When the attacker is the player, the
 witness also stays angry with the player after the fight.
+
+In OpenSky, a helper is asked within 2,048 units of its ally, because perception tracks only the
+player and combat foes, not allies. A helper of an ally fighting an NPC takes that NPC as its foe,
+unless it would help that NPC too. The Morality filter and the follower rules are not built.
+
 ## Starting and stopping from a script
 
 `StartCombat(Actor akTarget)` and `StopCombat()` are `Actor` natives
@@ -220,9 +247,8 @@ shows the last fall under `lastFall`.
 - NPCs do not power attack, bash, or dodge. The player power attacks, sneak attacks, and bashes.
 - Actors cast only spells, and only the deliveries [magic](/engine/magic.md) carries out. Powers,
   lesser powers, and shouts are skipped.
-- No group tactics or morale. Assistance is decoded and unread.
-- Derived hostility is only asked about the player. The derivation takes any two actors, but
-  engagement, perception, and the dialogue filter are all relative to the player.
+- No group tactics or morale.
+- The dialogue filter and the stored hostility override are relative to the player only.
 - An NPC swings the first weapon it has equipped, with its `WEAP` damage and reach and its
   tempering, as the player's weapon is read. With none it swings unarmed. An NPC with a bow shoots
   ([archery](/engine/archery.md#npc-archers)).
@@ -230,5 +256,3 @@ shows the last fall under `lastFall`.
   behaviour graph ([actor graphs](/engine/actor-graphs.md)). An NPC that runs no graph, or whose
   graph lacks the event, answers false, and the trace says it did not play. The combat loop's own
   reactions are single clips ([actor animation](/engine/actor-animation.md)).
-- Detection tracks observers against the player only, so an actor cannot lose a target that is not
-  the player.

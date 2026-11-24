@@ -92,6 +92,26 @@ struct AIActsSensesTests {
         #expect(host.fakeStreamer.actors.stopActorCalls == [Self.actor])
     }
 
+    /// The player leads the targets, then each living NPC another NPC attacks on sight.
+    @Test func anNPCFoeIsAPerceptionTargetAfterThePlayer() {
+        let loop = FakeCombatLoopRuntimePort()
+        loop.foePairs = [CombatFoePair(observer: Self.actor, target: Self.other)]
+        host.fakeCombat.loop = loop
+        host.fakeActorWorld.combatActorsResult = [
+            CombatActorObservation(key: Self.actor, feet: .zero),
+            CombatActorObservation(key: Self.other, feet: SIMD3(100, 0, 0), name: "Bandit")
+        ]
+        let session = FakeGameSessionPort()
+        session.locomotion.status.gaitValue = ScriptPathWaits.gait(forSpeed: 0)
+        session.locomotion.status.lastPlanValue = LocomotionStepPlan()
+        host.gameSession = session
+        let targets = adapter.worlds.perceptionTargets()
+        #expect(targets.map(\.key) == [.player, Self.other])
+        #expect(targets.last?.traits.isInvisible == false)
+        #expect(adapter.worlds.perceptionActorPairs()
+            == [DetectionPairKey(observer: Self.actor, target: Self.other)])
+    }
+
     @Test func candidatesCarryHostilityFlightAndPackages() {
         host.fakeActorWorld.combatActorsResult = [
             CombatActorObservation(key: Self.actor, feet: .zero),

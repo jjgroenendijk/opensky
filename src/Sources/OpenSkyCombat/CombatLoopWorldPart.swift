@@ -101,16 +101,18 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
         )
     }
 
-    /// `Assistance` is actor value 5 (UESP "Actor Value Indices").
+    /// `Assistance` is actor value 5 and `Aggression` 0 (UESP "Actor Value Indices").
     func combatAssists(_ helper: ReferenceKey, ally: ReferenceKey) -> Bool {
         guard
             shared.usesTemperament,
             let value = shared.world.actorValues(of: helper)?(Self.assistanceIndex),
             let reaction = shared.world.reaction(of: helper, toward: ally)
         else { return false }
-        return CombatAssistance(value: value).helps(reaction)
+        let aggression = shared.world.actorValues(of: ally)?(Self.aggressionIndex) ?? 0
+        return CombatAssistance(value: value).helps(reaction, allyAggression: aggression)
     }
 
+    static let aggressionIndex: Int32 = 0
     static let confidenceIndex: Int32 = 1
     static let assistanceIndex: Int32 = 5
 
@@ -363,6 +365,14 @@ extension CombatLoopWorldPart {
 
     func combatReaction(toPlayerOf key: ReferenceKey) -> ActorReaction? {
         shared.world.reaction(of: key, toward: .player)
+    }
+
+    func combatReaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction? {
+        shared.world.reaction(of: observer, toward: target)
+    }
+
+    func combatIsHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool {
+        shared.world.isHostile(observer, toward: target)
     }
 
     func combatAggroRadius(of key: ReferenceKey) -> AggroRadius? {

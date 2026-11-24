@@ -111,5 +111,6 @@ struct FactionCoordinatorTests {
         let decision = try #require(coordinator.socialDecision(of: Self.bandit, toward: .player))
         #expect(!decision.isHostile)
         #expect(decision.factionReaction == .neutral)
+        #expect(!coordinator.isHostile(Self.bandit, toward: .player))
     }
 }

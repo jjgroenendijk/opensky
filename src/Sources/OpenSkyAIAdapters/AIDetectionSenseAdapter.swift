@@ -112,6 +112,22 @@ extension AIDetectionSenseAdapter {
         )
     }
 
+    /// An NPC as a target: its light, muffle, Sneak skill, and invisibility. Its armour
+    /// weight is left out, because a target is seen standing still.
+    public func actorDetectionTraits(of actor: ReferenceKey, torso: SIMD3<Float>)
+        -> DetectionTargetTraits
+    {
+        DetectionTargetTraits(
+            equippedWeight: 0,
+            lightLevel: lightLevel(at: torso),
+            muffle: actorValue(Self.movementNoiseMultIndex, of: actor) ?? 0,
+            actionSound: 0,
+            sneakSkill: sneakSkill(of: actor),
+            isInvisible: (actorValue(Self.invisibilityIndex, of: actor) ?? 0) > 0,
+            movementMultiplier: 1
+        )
+    }
+
     private func actorValue(_ index: Int32, of actor: ReferenceKey) -> Float? {
         guard
             let runtime = game.actorValues.runtime,

@@ -133,6 +133,15 @@ public final class CombatCastingChain {
 extension CombatCastingChain: CombatLoopWorld {
     public func damageCombatDestructible(_: ReferenceKey, amount _: Float) {}
 
+    /// One caster and one target: no NPC fights another.
+    public func combatReaction(of _: ReferenceKey, toward _: ReferenceKey) -> ActorReaction? {
+        nil
+    }
+
+    public func combatIsHostile(_: ReferenceKey, toward _: ReferenceKey) -> Bool {
+        false
+    }
+
     /// A world that runs no NPC graphs writes nothing, and its graphs never hold a draw.
     public func writeCombatActorVariable(
         _: BehaviorVariableValue, named _: String, on _: ReferenceKey

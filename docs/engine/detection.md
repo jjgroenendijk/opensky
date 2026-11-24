@@ -45,8 +45,10 @@ no thickness. A pair beyond the range of both senses is skipped before the ray, 
 attenuation would make everything zero anyway.
 
 Observers are actors something already simulates: hostile to the player, engaged by the combat
-behavior, or running a package. The only target is the player. The target list is a list so it
-can grow later without changing the evaluation.
+behavior, or running a package. Every observer tracks the player. An observer also tracks each NPC
+it attacks on sight, within 4096 units, as the combat loop finds them once a second
+([NPC foes](/engine/combat.md#npc-foes)). Past the cap of 64 pairs, the player's pairs come first.
+An NPC target is seen standing still, so it makes no movement noise.
 
 ## The formula
 
@@ -153,7 +155,7 @@ lit.
 ### What OpenSky leaves out
 
 - The Ambush package weight and its sound rule. OpenSky runs no Ambush package yet.
-- The smaller range for a fighter's other targets. The only target is the player.
+- The smaller range for a fighter's other targets.
 - The sound-event check runs only for an aggressive observer, and no flying projectile is
   checked ([detection events](/engine/detection-events.md#in-opensky)).
 

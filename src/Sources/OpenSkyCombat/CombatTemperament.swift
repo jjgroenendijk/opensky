@@ -83,9 +83,15 @@ nonisolated enum CombatAssistance: Equatable, Sendable {
         }
     }
 
-    /// Whether this actor helps one it regards with `reaction`.
-    func helps(_ reaction: ActorReaction) -> Bool {
-        switch self {
+    /// Aggression 3 is frenzied (<https://ck.uesp.net/wiki/AI_Data_Tab>). Nobody helps a
+    /// frenzied actor (docs/engine/combat.md, Who an assisting actor fights).
+    static let frenzied: Float = 3
+
+    /// Whether this actor helps one it regards with `reaction`, whose Aggression is
+    /// `allyAggression`.
+    func helps(_ reaction: ActorReaction, allyAggression: Float = 0) -> Bool {
+        guard allyAggression < Self.frenzied else { return false }
+        return switch self {
         case .helpsNobody: false
         case .helpsAllies: reaction == .ally
         case .helpsFriendsAndAllies: reaction == .ally || reaction == .friend

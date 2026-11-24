@@ -221,6 +221,10 @@ extension CombatWorldAdapter {
         actorFacts.reaction(of: observer, toward: target)
     }
 
+    public func isHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool {
+        actorFacts.isHostile(observer, toward: target)
+    }
+
     public func packageIgnoresCombat(_ key: ReferenceKey) -> Bool {
         motion.packageIgnoresCombat(key)
     }

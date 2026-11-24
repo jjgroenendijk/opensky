@@ -83,4 +83,9 @@ struct CombatTemperamentTests {
         #expect(CombatAssistance(value: 2).helps(.friend))
         #expect(!CombatAssistance(value: 2).helps(.neutral))
     }
+
+    @Test func nobodyHelpsAFrenziedAlly() {
+        #expect(CombatAssistance(value: 2).helps(.ally, allyAggression: 2))
+        #expect(!CombatAssistance(value: 2).helps(.ally, allyAggression: 3))
+    }
 }

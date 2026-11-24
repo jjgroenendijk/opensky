@@ -118,6 +118,14 @@ public final class CombatLoopRuntime: CombatControlling {
     public internal(set) var aggroWatches: [ReferenceKey: AggroWatch] = [:]
     /// The draw state of each NPC whose weapon is not away.
     public internal(set) var weaponDraws: [ReferenceKey: NPCWeaponDraw] = [:]
+    /// NPC pairs whose observer attacks its target on sight, from the last foe scan.
+    public internal(set) var foePairs: Set<CombatFoePair> = []
+    /// Seconds until the next foe scan.
+    var foeScanWait: Float = 0
+    /// Actors that fight an NPC that fights them, this step. They engage unseen.
+    var retaliating: Set<ReferenceKey> = []
+    /// Calm actors that joined an ally's fight against an NPC, with that NPC.
+    var npcAssists: [ReferenceKey: ReferenceKey] = [:]
 
     public init(settings: CombatSettings, world: (any CombatLoopWorld)? = nil) {
         self.settings = settings
@@ -195,20 +203,21 @@ public final class CombatLoopRuntime: CombatControlling {
         behaviors[key]?.blockKind
     }
 
-    /// `key`'s combat state as `GetCombatState` and `IsInCombat` read it.
-    /// Every fight is against the player, so it fights while any actor is engaged.
+    /// The player's combat state as `GetCombatState` and `IsInCombat` read it: it fights
+    /// while an actor fights it or its allies.
     public var isPlayerInCombat: Bool {
-        behaviors.values.contains { $0.phase.isEngaged }
+        behaviors.contains { $0.value.phase.isEngaged && fightsPlayerSide($0.key) }
     }
 
-    /// The player has no machine: every fight is against the player, so it fights while
-    /// any actor fights, and searches while the engaged ones only search.
+    /// The player has no machine: it fights while an actor fights it or its allies, and
+    /// searches while those actors only search.
     public func activity(of key: ReferenceKey) -> ActorCombatActivity {
         guard key == .player else {
             guard let phase = behaviors[key]?.phase, phase.isEngaged else { return .notFighting }
             return phase == .searching ? .searching : .fighting
         }
-        let engaged = behaviors.values.lazy.map(\.phase).filter(\.isEngaged)
+        let engaged = behaviors.lazy.filter { self.fightsPlayerSide($0.key) }
+            .map(\.value.phase).filter(\.isEngaged)
         if engaged.contains(where: { $0 != .searching }) {
             return .fighting
         }
@@ -230,9 +239,10 @@ public final class CombatLoopRuntime: CombatControlling {
 
     /// Whether `key` engages without having to perceive its target: a script
     /// called `StartCombat`, the player hit it and it has not detected the player yet,
-    /// or it is an ally sent at its commander's foe.
+    /// it is an ally sent at its commander's foe, or it fights back an NPC that attacks it.
     func engagesWithoutPerceiving(_ key: ReferenceKey) -> Bool {
         forcedTargets[key] != nil || provoked.contains(key) || commanders[key] != nil
+            || retaliating.contains(key)
     }
 
     /// Whether a script named the player as `key`'s target.
@@ -382,7 +392,10 @@ public final class CombatLoopRuntime: CombatControlling {
             hostility: { [weak world] key in
                 hostility[key] ?? world?.combatHostility(of: key) ?? .neutral
             },
-            phase: { [weak self] key in self?.behaviors[key]?.phase },
+            phase: { [weak self] key in
+                guard let self, fightsPlayerSide(key) else { return nil }
+                return behaviors[key]?.phase
+            },
             playerFeet: world.combatPlayer.feet
         )
         if state.isPlayerInCombat != wasInCombat {

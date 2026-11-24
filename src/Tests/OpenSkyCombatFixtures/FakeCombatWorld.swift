@@ -23,6 +23,14 @@ public final class FakeCombatWorld: CombatLoopWorld {
     /// Actors with no shield; every other actor wears one.
     public var shieldless: Set<ReferenceKey> = []
     public var awareness: [ReferenceKey: CombatAwareness] = [:]
+    /// One observer's awareness of one target, read before `awareness`.
+    public var pairAwareness: [CombatFoePair: CombatAwareness] = [:]
+    /// The NPC pairs whose observer attacks its target on sight.
+    public var hostilePairs: Set<CombatFoePair> = []
+    /// What an observer makes of another actor.
+    public var pairReactions: [CombatFoePair: ActorReaction] = [:]
+    /// Helper and ally pairs: the observer helps its target in a fight.
+    public var assistPairs: Set<CombatFoePair> = []
     public var aggroRadii: [ReferenceKey: AggroRadius] = [:]
     /// Each warning line said: the speaker, then its target.
     public var warningLines: [[ReferenceKey]] = []
@@ -179,16 +187,8 @@ public final class FakeCombatWorld: CombatLoopWorld {
         temperaments[key]
     }
 
-    public func sayCombatWarning(by key: ReferenceKey, to target: ReferenceKey) {
-        warningLines.append([key, target])
-    }
-
     public func combatReaction(toPlayerOf key: ReferenceKey) -> ActorReaction? {
         reactions[key]
-    }
-
-    public func combatAggroRadius(of key: ReferenceKey) -> AggroRadius? {
-        aggroRadii[key]
     }
 
     public func combatDangerThreats() -> [DangerThreat] {
@@ -226,7 +226,8 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public func combatAwareness(
         of observer: ReferenceKey, toward target: ReferenceKey
     ) -> CombatAwareness {
-        awareness[observer] ?? .unaware
+        pairAwareness[CombatFoePair(observer: observer, target: target)]
+            ?? awareness[observer] ?? .unaware
     }
 
     public func combatHealthFraction(of key: ReferenceKey) -> Float {
@@ -343,6 +344,34 @@ extension FakeCombatWorld {
     ) {
         actorVariables[actor, default: [:]][name] = value
     }
+}
+
+extension FakeCombatWorld {
+    public func sayCombatWarning(by key: ReferenceKey, to target: ReferenceKey) {
+        warningLines.append([key, target])
+    }
+
+    public func combatAggroRadius(of key: ReferenceKey) -> AggroRadius? {
+        aggroRadii[key]
+    }
+
+    public func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {
+        variables[name] = value
+    }
+
+    public func combatReaction(
+        of observer: ReferenceKey, toward target: ReferenceKey
+    ) -> ActorReaction? {
+        pairReactions[CombatFoePair(observer: observer, target: target)]
+    }
+
+    public func combatIsHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool {
+        hostilePairs.contains(CombatFoePair(observer: observer, target: target))
+    }
+
+    public func combatAssists(_ helper: ReferenceKey, ally: ReferenceKey) -> Bool {
+        assistPairs.contains(CombatFoePair(observer: helper, target: ally))
+    }
 
     public func combatGraphIsAttackReady(_ actor: ReferenceKey) -> Bool? {
         notAttackReady.contains(actor) ? false : nil
@@ -356,12 +385,6 @@ extension FakeCombatWorld {
         equipping.contains(actor)
     }
 
-    public func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {
-        variables[name] = value
-    }
-}
-
-extension FakeCombatWorld {
     public func combatDestructibles(
         within radius: Float,
         of center: SIMD3<Float>

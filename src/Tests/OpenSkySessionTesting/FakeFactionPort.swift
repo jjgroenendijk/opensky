@@ -24,6 +24,8 @@ nonisolated public final class FakeFactionPort: FactionPort {
     public var profileResult: ActorSocialProfile?
     public var reactionCalls: [(observer: ReferenceKey, target: ReferenceKey)] = []
     public var reactionResult: ActorReaction?
+    public var isHostileCalls: [(observer: ReferenceKey, target: ReferenceKey)] = []
+    public var isHostileResult = false
     public var relationships: RelationshipRuntime?
     public var runtime: FactionRuntime?
     public var setCrimeHostilityCalls: [any CrimeHostilitySource] = []
@@ -95,6 +97,11 @@ nonisolated extension FakeFactionPort {
     public func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction? {
         reactionCalls.append((observer: observer, target: target))
         return reactionResult
+    }
+
+    public func isHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool {
+        isHostileCalls.append((observer: observer, target: target))
+        return isHostileResult
     }
 
     public func setCrimeHostility(_ source: any CrimeHostilitySource) {

@@ -168,6 +168,10 @@ extension AIWorldAdapter {
             perceptionSense.perceptionTargets()
         }
 
+        public func perceptionActorPairs() -> [DetectionPairKey] {
+            perceptionSense.perceptionActorPairs()
+        }
+
         public func perceptionHasLineOfSight(
             from origin: SIMD3<Float>,
             to destination: SIMD3<Float>

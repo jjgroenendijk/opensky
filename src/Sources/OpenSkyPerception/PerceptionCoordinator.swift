@@ -44,12 +44,19 @@ public protocol PerceptionSessionWorld: AnyObject {
     func perceptionCandidates(
         isDue: (ReferenceKey, SIMD3<Float>) -> Bool
     ) -> (present: [ReferenceKey], fresh: [PerceptionCandidate])
-    /// The player, and nothing else: NPC-versus-NPC perception is out of scope.
+    /// The player, and each NPC another NPC attacks on sight.
     func perceptionTargets() -> [PerceptionTarget]
+    /// The observer and NPC target pairs to track.
+    func perceptionActorPairs() -> [DetectionPairKey]
     func perceptionHasLineOfSight(from origin: SIMD3<Float>, to destination: SIMD3<Float>) -> Bool
 }
 
 extension PerceptionSessionWorld {
+    /// A world without NPC foes tracks the player only.
+    public func perceptionActorPairs() -> [DetectionPairKey] {
+        []
+    }
+
     /// Builds every candidate and keeps the due ones, for a world where one is cheap.
     public func perceptionCandidates(
         isDue: (ReferenceKey, SIMD3<Float>) -> Bool
@@ -130,6 +137,10 @@ extension PerceptionCoordinator: PerceptionWorld {
     /// The targets the observers were measured from, read once per roster refresh.
     public func perceptionTargets() -> [PerceptionTarget] {
         bandedRoster.takeTargets() ?? world.perceptionTargets()
+    }
+
+    public func perceptionActorPairs() -> [DetectionPairKey] {
+        world.perceptionActorPairs()
     }
 
     public func perceptionHasLineOfSight(

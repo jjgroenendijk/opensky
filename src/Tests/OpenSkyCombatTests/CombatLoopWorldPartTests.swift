@@ -198,6 +198,13 @@ struct CombatLoopWorldPartTests {
         #expect(part.combatReaction(toPlayerOf: Self.ally) == nil)
     }
 
+    /// A world without factions gives two NPCs no reaction and no hostility.
+    @Test func twoNPCsWithoutFactionsAreNoFoes() {
+        let part = Self.coordinator(FakeCoordinatorWorld()).loopWorld
+        #expect(part.combatReaction(of: Self.ally, toward: Self.foe) == nil)
+        #expect(!part.combatIsHostile(Self.ally, toward: Self.foe))
+    }
+
     @Test func theBlockAndItsTermsComeFromTheSharedParts() {
         let world = FakeCoordinatorWorld()
         world.perkMultipliers[Self.foe] = 0.5
