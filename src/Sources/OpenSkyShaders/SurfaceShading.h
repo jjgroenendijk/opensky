@@ -177,17 +177,14 @@ static float3 sparkleLight(
     return lightColour * glint * facing * input.mask;
 }
 
-// The game's character light, white and fixed to the camera: a rim on faces that turn
-// away from it and a fill on faces that look at it. View space is x right, y up, z ahead.
-static inline float3 characterLight(float3 normal, constant FrameUniforms &frame)
+// The game's character light: a grey fill on every actor, not shadowed. The primary lobe
+// faces the camera; the secondary lights faces that look down, as light bounced off the ground.
+static inline float3 characterLight(float3 normal, float3 toEye, constant FrameUniforms &frame)
 {
-    float3 view = float3(
-        dot(normal, frame.cameraRight), dot(normal, frame.cameraUp),
-        dot(normal, frame.cameraForward));
-    float rim = saturate(dot(view, float3(0.57735027)));
-    float fill = saturate(view.y * 0.1644 - view.z * 0.9864);
+    float primary = saturate(dot(normal, toEye));
+    float secondary = saturate(dot(normal, float3(0.0, 0.164399, -0.986394)));
     float4 light = frame.characterLight;
-    return float3((light.x * rim + light.y * fill) * light.z);
+    return float3((light.x * primary + light.y * secondary) * light.z);
 }
 
 // Screen-door fade: the game's 4x4 ordered dither, indexed by x then y, turns alpha into a
