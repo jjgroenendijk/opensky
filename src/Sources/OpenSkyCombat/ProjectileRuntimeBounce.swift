@@ -5,6 +5,7 @@
 
 import Foundation
 public import OpenSkyCombatInterface
+import OpenSkyMagicInterface
 import OpenSkyPhysics
 import simd
 
@@ -88,6 +89,12 @@ extension ProjectileRuntime {
             landing.material = entry.material
             landing.stuck = entry.stuck
             landing.bounced = entry.bounced
+            landing.damage = entry.appliedDamage
+            landing.spellTargets = entry.spellHit?.targetCount
+            landing.spellEntries = entry.spellHit?.entryCount
+            landing.spellRefusals = entry.spellHit?.refusals.count
+            landing.spellMagnitudes = entry.spellHit?.adjustments
+                .map { $0.baseMagnitude * $0.multiplier } ?? []
             return landing
         }
         return readout
