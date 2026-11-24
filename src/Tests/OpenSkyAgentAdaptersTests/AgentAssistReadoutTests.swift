@@ -72,7 +72,12 @@ struct AgentAssistReadoutTests {
         var landing = ProjectileReadout.Landing(outcome: "hitStatic", position: [1, 2, 3])
         landing.bounced = true
         landing.material = FormID(0x0001_0002)
-        readout.landings = [landing]
+        var spell = ProjectileReadout.Landing(outcome: "hitActor", position: [1, 2, 3])
+        spell.spellTargets = 1
+        spell.spellEntries = 2
+        spell.spellRefusals = 0
+        spell.spellMagnitudes = [25]
+        readout.landings = [landing, spell]
         host.fakeCombat.projectileReadoutValue = readout
 
         let reply = try world.query(.projectiles)
@@ -81,6 +86,10 @@ struct AgentAssistReadoutTests {
         #expect(reply.value(atPath: "bouncing") == .init(1))
         #expect(reply.value(atPath: "landings.0.bounced") == .bool(true))
         #expect(reply.value(atPath: "landings.0.target") == .null)
+        #expect(reply.value(atPath: "landings.0.spellTargets") == .null)
+        #expect(reply.value(atPath: "landings.0.damage") == .init(Float(0)))
+        #expect(reply.value(atPath: "landings.1.spellEntries") == .init(2))
+        #expect(reply.value(atPath: "landings.1.spellMagnitudes.0") == .init(Float(25)))
         #expect(reply.value(atPath: "stuck.0") == .string(ReferenceKey.generated(9).description))
     }
 }

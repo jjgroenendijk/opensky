@@ -97,7 +97,12 @@ extension AgentAssistReadout {
                     "outcome": .string(landing.outcome), "position": .init(landing.position),
                     "target": landing.target.map { .string($0.description) } ?? .null,
                     "material": landing.material.map { .string($0.description) } ?? .null,
-                    "stuck": .bool(landing.stuck), "bounced": .bool(landing.bounced)
+                    "stuck": .bool(landing.stuck), "bounced": .bool(landing.bounced),
+                    "damage": .init(landing.damage),
+                    "spellTargets": landing.spellTargets.map { .init($0) } ?? .null,
+                    "spellEntries": landing.spellEntries.map { .init($0) } ?? .null,
+                    "spellRefusals": landing.spellRefusals.map { .init($0) } ?? .null,
+                    "spellMagnitudes": .array(landing.spellMagnitudes.map { .init($0) })
                 ]
             })
         ]

@@ -13,6 +13,16 @@ nonisolated public struct ProjectileReadout: Equatable, Sendable {
         public var material: FormID?
         public var stuck = false
         public var bounced = false
+        /// Health an arrow took off. A spell's damage goes through its effects instead.
+        public var damage: Float = 0
+        /// For a spell: the actors it was applied to, the effect entries it handed on,
+        /// and the targets that refused it. Nil for an arrow or a spell that reached
+        /// nobody.
+        public var spellTargets: Int?
+        public var spellEntries: Int?
+        public var spellRefusals: Int?
+        /// Each hostile entry's magnitude after resistance, in application order.
+        public var spellMagnitudes: [Float] = []
 
         public init(outcome: String, position: SIMD3<Float>) {
             self.outcome = outcome
