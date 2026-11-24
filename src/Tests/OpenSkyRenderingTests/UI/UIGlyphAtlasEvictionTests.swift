@@ -44,18 +44,36 @@ struct UIGlyphAtlasEvictionTests {
         return packed
     }
 
+    /// 24-pixel squares take 26 by 26 texels with padding: more than the atlas holds.
+    private static let overCapacity = (UIGlyphAtlas.dimension / 26) * (
+        UIGlyphAtlas.dimension / 26
+    ) +
+        100
+
     @Test func packingBeyondCapacityIsCountedNotOverrun() {
         let atlas = UIGlyphAtlas()
-        // 512x512 atlas, 26x26 cells with padding -> well over capacity.
-        let packed = Self.packSquares(into: atlas, generation: 1, count: 600)
+        let packed = Self.packSquares(into: atlas, generation: 1, count: Self.overCapacity)
         #expect(atlas.packFailures > 0)
-        #expect(packed < 600)
+        #expect(packed < Self.overCapacity)
         #expect(atlas.occupancy <= 1)
+    }
+
+    @Test func aGlyphThatDidNotFitPacksAfterAnEviction() {
+        let atlas = UIGlyphAtlas()
+        Self.packSquares(into: atlas, generation: 1, count: Self.overCapacity)
+        let late = {
+            atlas.swfEntry(fontKey: Self.fontKey(generation: 2), glyphIndex: 0, emPixelSize: 24) {
+                Self.squarePath(side: 24)
+            }
+        }
+        #expect(late().isEmpty)
+        atlas.releaseSWFGlyphs { SWFMovieResources.TextPlanner.generation(forFontKey: $0) == 1 }
+        #expect(!late().isEmpty)
     }
 
     @Test func releasingAGenerationReclaimsItsCells() {
         let atlas = UIGlyphAtlas()
-        Self.packSquares(into: atlas, generation: 1, count: 600)
+        Self.packSquares(into: atlas, generation: 1, count: Self.overCapacity)
         #expect(atlas.packFailures > 0)
         let occupied = atlas.occupancy
 

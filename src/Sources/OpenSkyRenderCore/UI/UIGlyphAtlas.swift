@@ -53,7 +53,8 @@ nonisolated public struct UIGlyphEntry: Equatable, Sendable {
 }
 
 nonisolated public final class UIGlyphAtlas {
-    public static let dimension = 512
+    /// Every HUD and menu movie shares this atlas; 512 filled during the opening HUD hints.
+    public static let dimension = 2048
     public static let padding = 1
     public static let whiteBlock = 4
 
@@ -134,12 +135,13 @@ nonisolated public final class UIGlyphAtlas {
         }
         var glyph = glyphID
         let bounds = unsafe CTFontGetBoundingRectsForGlyphs(ctFont, .default, &glyph, nil, 1)
+        let failures = packFailures
         let packed = rasterize(bounds: bounds) { context, box in
             var mutableGlyph = glyph
             var position = CGPoint(x: Double(box.drawX), y: Double(box.drawY))
             unsafe CTFontDrawGlyphs(ctFont, &mutableGlyph, &position, 1, context)
         }
-        cache[key] = packed
+        remember(packed, for: key, failuresBefore: failures)
         return packed.entry
     }
 
@@ -162,6 +164,7 @@ nonisolated public final class UIGlyphAtlas {
         if let cached = cache[key] {
             return cached.entry
         }
+        let failures = packFailures
         let packed: PackedGlyph = if let path = makePath() {
             rasterize(bounds: path.boundingBoxOfPath) { context, box in
                 context.translateBy(x: CGFloat(box.drawX), y: CGFloat(box.drawY))
@@ -171,8 +174,15 @@ nonisolated public final class UIGlyphAtlas {
         } else {
             .empty
         }
-        cache[key] = packed
+        remember(packed, for: key, failuresBefore: failures)
         return packed.entry
+    }
+
+    /// A glyph that did not fit is not cached, so it packs once an eviction frees room.
+    private func remember(_ packed: PackedGlyph, for key: UIGlyphKey, failuresBefore: Int) {
+        if packFailures == failuresBefore {
+            cache[key] = packed
+        }
     }
 
     /// Clears the image to its initial state: everything transparent except the
