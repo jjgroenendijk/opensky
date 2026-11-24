@@ -34,6 +34,7 @@ enum SWFCommand {
             }
         }
         print("[INFO] buttons \(buttons), nine-slice sprites \(grids)")
+        print("[INFO] exports: \(movie.exportedNames.keys.sorted().joined(separator: ", "))")
     }
 
     /// Enumerates every `interface\*.swf` archive path, parses each through
