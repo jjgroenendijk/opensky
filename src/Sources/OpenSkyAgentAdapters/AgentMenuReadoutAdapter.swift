@@ -29,6 +29,7 @@ public protocol AgentMenuReadoutHost: AnyObject, SendableMetatype {
     var dialogueMenu: any DialogueMenuPort { get }
     var inventoryMenu: any InventoryMenuPort { get }
     var journalMenu: any JournalMenuPort { get }
+    var menuScreens: any MenuScreensPort { get }
     var menuMode: any MenuModePort { get }
     var messages: any MessageCoordinatorPort { get }
     var progression: any ProgressionPort { get }
@@ -66,6 +67,16 @@ extension AgentMenuReadoutAdapter {
         if let rows = menuRows() {
             result["rows"] = .array(rows.rows.map { .string($0) })
             result["selected"] = .init(rows.selected)
+        }
+        if game.menuMode.topMenu == .craftingMenu {
+            let crafting = game.menuScreens.crafting
+            result["crafting"] = [
+                "tab": .string(crafting.readout.title),
+                "result": .string(crafting.lastResult),
+                "movieLoaded": .bool(crafting.movieState.isLoaded),
+                "movieError": .init(crafting.movieState.error),
+                "skill": .init(crafting.skillBar)
+            ]
         }
         if game.menuMode.topMenu == .dialogueMenu {
             let snapshot = game.dialogueMenu.snapshot
@@ -260,8 +271,14 @@ struct AgentMenuRowsReadout {
                 selected: box.selection
             )
         default:
-            return nil
+            return craftingRows(top)
         }
+    }
+
+    func craftingRows(_ top: MenuIdentifier) -> AgentMenuRows? {
+        guard top == .craftingMenu else { return nil }
+        let panel = game.menuScreens.crafting.readout
+        return AgentMenuRows(menu: top.name, rows: panel.lines, selected: panel.selection ?? -1)
     }
 
     func titleMenuRows(_ top: MenuIdentifier) -> AgentMenuRows {

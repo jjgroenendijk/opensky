@@ -20,10 +20,12 @@ nonisolated public enum ItemListMovieEvent: Equatable, Sendable {
 
 /// Where a list movie keeps its category list and its item list.
 nonisolated struct ItemListMovieLayout: Equatable, Sendable {
+    let listsPath: String
     let categoryListPath: String
     let itemListPath: String
 
     init(listsPath: String) {
+        self.listsPath = listsPath
         categoryListPath = "\(listsPath)/CategoriesListHolder/List_mc"
         itemListPath = "\(listsPath)/ItemsListHolder/List_mc"
     }
@@ -82,8 +84,8 @@ nonisolated public enum ItemListMenuMovieBridge: Sendable {
         write(model, layout: layout, runtime: runtime)
         let card = ItemCardSubMenuBridge.self
         guard let selected = model.selected else { return }
-        if card.listsState(runtime: runtime) != card.twoPanelsState {
-            card.showItemsList(runtime: runtime)
+        if card.listsState(atPath: layout.listsPath, runtime: runtime) != card.twoPanelsState {
+            card.showItemsList(atPath: layout.listsPath, runtime: runtime)
             write(model, layout: layout, runtime: runtime)
         }
         card.fadeInCard(runtime: runtime)
@@ -147,7 +149,7 @@ nonisolated public enum ItemListMenuMovieBridge: Sendable {
             },
             atPath: layout.itemListPath, runtime: runtime
         )
-        bridge.invalidate(runtime: runtime)
+        bridge.invalidate(categoryListAt: layout.categoryListPath, runtime: runtime)
         bridge.select(
             model.selectedCategory, count: model.categories.count,
             atPath: layout.categoryListPath, runtime: runtime

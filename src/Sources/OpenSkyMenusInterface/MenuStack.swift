@@ -90,4 +90,16 @@ nonisolated extension MenuIdentifier {
     public static let systemMenu = MenuIdentifier("SystemMenu")
     public static let raceMenu = MenuIdentifier("RaceSex Menu")
     public static let messageBoxMenu = MenuIdentifier("MessageBoxMenu")
+    public static let craftingMenu = MenuIdentifier("Crafting Menu")
+}
+
+/// Whether a menu's movie loaded, and the error that stopped it.
+nonisolated public struct MenuMovieState: Equatable, Sendable {
+    public let isLoaded: Bool
+    public let error: String?
+
+    public init(isLoaded: Bool, error: String?) {
+        self.isLoaded = isLoaded
+        self.error = error
+    }
 }
