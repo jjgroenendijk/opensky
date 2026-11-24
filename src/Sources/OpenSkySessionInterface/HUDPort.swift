@@ -19,6 +19,7 @@ public protocol HUDPort: AnyObject, MenuLayerOwner {
     var shownModes: [HUDMode] { get }
     var shownNotifications: [String] { get }
     func shows(_ clip: HUDModeClip) -> Bool
+    func tick(now: Double)
     func update(_ change: (inout HUDSettings) -> Void)
     func updatePlayerSetMarker(_ position: SIMD3<Float>?)
     func updateCompassLocations(_ locations: [CompassLocation])

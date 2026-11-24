@@ -26,6 +26,7 @@ protocol MenuHotkeyHost: AnyObject, SendableMetatype {
 /// The menus that advance their movies each frame.
 @MainActor
 protocol MenuTickHost: AnyObject, SendableMetatype {
+    var hud: any HUDPort { get }
     var mapMenu: any MapMenuPort { get }
     var menuMode: any MenuModePort { get }
     var menuScreens: any MenuScreensPort { get }
@@ -140,6 +141,7 @@ struct MenuFrameTick {
         }
         game.menuMode.repeatHeldDirection(now: now)
         game.movies.tick(now: now)
+        game.hud.tick(now: now)
         game.titleSequence.tick(now: now)
         game.titleMenu.tick(now: now)
         game.raceMenu.tick(now: now)
