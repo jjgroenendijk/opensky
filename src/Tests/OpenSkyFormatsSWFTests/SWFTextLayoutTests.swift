@@ -11,40 +11,13 @@ import Testing
 
 @Suite(.tags(.parser))
 struct SWFTextLayoutTests {
-    /// A DefineFont2 with glyphs for "A" (advance 600), "B" (advance 500),
-    /// and space (advance 300), layout ascent 800 / descent 200, and one
-    /// kerning pair AB = -100 (all glyph units, EM 1024).
-    private static func makeFont() throws -> SWFFontDefinition {
-        var builder = SWFFontBodyBuilder()
-        builder.fontID = 1
-        builder.flags.hasLayout = true
-        builder.codes = [65, 66, 32]
-        builder.shapes = [
-            SWFFontBodyBuilder.triangleGlyphShape(size: 700),
-            SWFFontBodyBuilder.triangleGlyphShape(size: 600),
-            SWFFontBodyBuilder.glyphShape { _ in }
-        ]
-        builder.layout = SWFFontBodyBuilder.Layout(
-            ascent: 800,
-            descent: 200,
-            leading: 0,
-            advances: [600, 500, 300],
-            bounds: [
-                SWFRect(xMin: 0, xMax: 700, yMin: -700, yMax: 0),
-                SWFRect(xMin: 0, xMax: 600, yMin: -600, yMax: 0),
-                SWFRect(xMin: 0, xMax: 0, yMin: 0, yMax: 0)
-            ],
-            kerning: [SWFKerningRecord(code1: 65, code2: 66, adjustment: -100)]
-        )
-        return try SWFFontParser.parse(tag: SWFTag(code: 48, body: builder.build()))
-    }
-
     private static func makeEditText(
         text: String,
         bounds: SWFRect = SWFRect(xMin: 0, xMax: 4000, yMin: 0, yMax: 2000),
         wordWrap: Bool = false,
         align: UInt8? = nil,
-        html: Bool = false
+        html: Bool = false,
+        indent: Int16 = 0
     ) throws -> SWFEditText {
         var builder = SWFEditTextBodyBuilder()
         builder.bounds = bounds
@@ -59,7 +32,7 @@ struct SWFTextLayoutTests {
         if let align {
             builder.flags.hasLayout = true
             builder.layout = SWFEditTextLayout(
-                align: align, leftMargin: 0, rightMargin: 0, indent: 0, leading: 0
+                align: align, leftMargin: 0, rightMargin: 0, indent: indent, leading: 0
             )
         }
         return try SWFEditText.parse(tag: SWFTag(code: 37, body: builder.build()))
@@ -287,5 +260,58 @@ struct SWFTextLayoutTests {
         )
         #expect(layout.runs.count == 2)
         #expect(layout.runs.last?.color.green == 255)
+    }
+}
+
+extension SWFTextLayoutTests {
+    /// A negative indent, as a vanilla skill label stores, keeps the line in the field.
+    @Test func aNegativeIndentStaysInsideTheField() throws {
+        let font = try Self.makeFont()
+        var builder = SWFEditTextBodyBuilder()
+        builder.flags.hasLayout = true
+        builder.layout = SWFEditTextLayout(
+            align: 1, leftMargin: 0, rightMargin: 0, indent: -2, leading: 0
+        )
+        let parsed = try SWFEditText.parse(tag: SWFTag(code: 37, body: builder.build()))
+        let text = try Self.makeEditText(
+            text: "A",
+            bounds: SWFRect(xMin: 0, xMax: 2000, yMin: 0, yMax: 2000),
+            align: 1,
+            indent: -2
+        )
+        let layout = SWFTextLayout.editText(text, font: font)
+
+        #expect(parsed.layout?.indent == -2)
+        #expect(layout.runs.first?.glyphs.first?.x == 1400)
+    }
+}
+
+extension SWFTextLayoutTests {
+    /// A DefineFont2 with glyphs for "A" (advance 600), "B" (advance 500),
+    /// and space (advance 300), layout ascent 800 / descent 200, and one
+    /// kerning pair AB = -100 (all glyph units, EM 1024).
+    private static func makeFont() throws -> SWFFontDefinition {
+        var builder = SWFFontBodyBuilder()
+        builder.fontID = 1
+        builder.flags.hasLayout = true
+        builder.codes = [65, 66, 32]
+        builder.shapes = [
+            SWFFontBodyBuilder.triangleGlyphShape(size: 700),
+            SWFFontBodyBuilder.triangleGlyphShape(size: 600),
+            SWFFontBodyBuilder.glyphShape { _ in }
+        ]
+        builder.layout = SWFFontBodyBuilder.Layout(
+            ascent: 800,
+            descent: 200,
+            leading: 0,
+            advances: [600, 500, 300],
+            bounds: [
+                SWFRect(xMin: 0, xMax: 700, yMin: -700, yMax: 0),
+                SWFRect(xMin: 0, xMax: 600, yMin: -600, yMax: 0),
+                SWFRect(xMin: 0, xMax: 0, yMin: 0, yMax: 0)
+            ],
+            kerning: [SWFKerningRecord(code1: 65, code2: 66, adjustment: -100)]
+        )
+        return try SWFFontParser.parse(tag: SWFTag(code: 48, body: builder.build()))
     }
 }

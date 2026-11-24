@@ -52,7 +52,9 @@ nonisolated public struct SWFEditTextLayout: Equatable, Sendable {
     public let align: UInt8
     public let leftMargin: UInt16
     public let rightMargin: UInt16
-    public let indent: UInt16
+    /// SI16, though the spec says UI16: vanilla movies store small negative indents,
+    /// and a field read unsigned draws thousands of pixels away.
+    public let indent: Int16
     public let leading: Int16
 }
 
@@ -175,7 +177,7 @@ nonisolated public struct SWFEditText: Equatable, Sendable {
             align: bits.readAlignedUInt8(),
             leftMargin: bits.readAlignedUInt16(),
             rightMargin: bits.readAlignedUInt16(),
-            indent: bits.readAlignedUInt16(),
+            indent: Int16(bitPattern: bits.readAlignedUInt16()),
             leading: Int16(bitPattern: bits.readAlignedUInt16())
         )
     }
