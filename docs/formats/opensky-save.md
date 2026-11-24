@@ -136,6 +136,7 @@ chunk cannot read into the next.
 | `LOCK` | changed locks | world |
 | `RLOC` | references moved into another cell | world |
 | `RMOT` | motion types scripts set | world |
+| `RDMG` | models and damage stages destruction set | world |
 | `RDLK` | doors random doors linked to | world |
 | `LVRL` | player level each leveled roll froze | world |
 | `SUMM` | save list row: name, level, race, location, play time | below |
@@ -166,6 +167,12 @@ moved back to its plugin cell writes no entry. See
 `RMOT` is a uint32 entry count, then per reference: the key, the cell, and a motion byte, 1
 for dynamic or 4 for keyframed. Any other byte fails the load. A reference no script set a
 motion type on writes no entry. See [traps](/engine/traps.md#motion-type).
+
+`RDMG` is a uint32 entry count, then per reference: the key, the cell, the model path as a
+string, and the damage stage as a uint32. An empty path keeps the base's model. The stage is
+stored plus one, so 0 means the mesh draws every `BSDamageStage` child. A reference no
+destruction stage changed writes no entry. See
+[destruction](/engine/papyrus-destruction.md#in-the-game).
 
 `RDLK` is a uint32 entry count, then per linked door: the key, the cell, and the key of the
 door it leads to. Both doors of a link write an entry. A door with no link writes none. See
