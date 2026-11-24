@@ -319,9 +319,15 @@ no item, or an item no longer carried, shows a notice and does nothing.
 
 ## Item card
 
-The item card describes the selected row: its name and kind, value and weight, base damage or
+The item card describes the selected row: its name and kind, value and weight, damage or
 armour rating, its effects, and whether it is a favourite or stolen. An ingredient's unknown effect
-shows as `?`. The rating is the `ARMO` `DNAM` value divided by 100, before skill and perks.
+shows as `?`. The damage and rating are the player's own, after the weapon's or armour type's
+skill and the perks ([UESP Weapons](https://en.uesp.net/wiki/Skyrim:Weapons#overview),
+[UESP Armor](https://en.uesp.net/wiki/Skyrim:Armor)):
+
+- Damage: `round((WEAP DATA damage + tempering) × (1 + skill / 200) × Mod Attack Damage perks)`.
+- Armour: `ceiling((ARMO DNAM / 100 + tempering) × (1 + 0.4 × skill / 100))` × the piece's
+  perks, such as Agile Defender. Clothing has no skill term. The barter bar adds armour spells.
 
 The movie shows the same card. On a change of row, the menu calls `RequestItemCardInfo` through
 `GameDelegate`. The engine answers through the `UpdateItemCardInfo` callback the menu registers,
