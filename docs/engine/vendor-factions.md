@@ -86,9 +86,9 @@ What the vendor buys from the player:
 5. A stolen copy is left out, unless the faction has "Only Buys Stolen Goods", or the player's
    `BypassVendorStolenCheck` actor value (93) is not zero.
 
-OpenSky differs: the vendor trades from the `VENC` chest alone, not the chest and its own
-inventory together, and the two bypass actor values are not read, so the Merchant perk does not
-open every vendor.
+OpenSky follows these rules. A buy takes the chest's copies first, then the vendor's own; a sale
+puts the item in the chest and pays from the chest's gold first, then the vendor's own. The
+vendor's own side leaves out what it wears.
 
 Investor is not a rule of the barter menu. It is a quest stage the perk sets, and the dialogue and
 scripts do the rest.

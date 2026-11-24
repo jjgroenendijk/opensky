@@ -108,17 +108,19 @@ the weapon it refuses is OpenSky's reading. In the inventory menu, a poison the 
 asks first, with Yes and No: `sPoisonConfirmMessage` and the weapon's name ("Do you want to
 poison the Iron Dagger?"), or for a bow or crossbow `sPoisonBowConfirmMessage` and the poison's
 name. Both texts end in "the ", so the name and a question mark follow. A favourites hotkey puts
-the poison on without asking. Mod Poison Dose
-Count (entry point 83, the Concentrated Poison perk) sets
-how many hits it lasts, with the poison bound as the item. Each landed melee hit or arrow from
-that weapon spends one dose and applies the poison's effects to the target. The state is saved in
-`WPSN`.
+the poison on without asking. Mod Poison Dose Count (entry point 83, the Concentrated Poison perk)
+sets how many hits it lasts, with the poison bound as the item. Each landed or blocked melee swing,
+not a bash, or arrow from that weapon spends one dose and applies the poison's effects to the
+target. The poison sits on the wielded copy of the weapon, the best copy, and the save keeps it with
+that copy in `ICPY`.
 
 In the game a poison lasts 1 dose, then Mod Poison Dose Count, rounded down, at least 1.
 Concentrated Poison multiplies by 2. The doses are kept on the weapon copy
 ([item copies](/engine/item-copies.md#names-and-poisons-in-the-game)). A dose is used only by a hit
 that lands: the poison is cast on the target, the count drops by 1, and at 0 the poison goes. A miss
-uses nothing. What a blocked hit does, and whether NPCs ever poison their weapons, was not found.
+uses nothing. A blocked melee hit still applies the poison and uses a dose; a bash does not. NPCs
+never poison their own weapons. These two rules come from a clean-room read of `SkyrimSE.exe` on
+2026-11-24.
 
 ## Where OpenSky differs
 

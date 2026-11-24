@@ -42,7 +42,7 @@ The trade list hides the outfit's copies, as the game does; an extra copy shows.
 The game program defines both messages, `sTeammateCantGiveOutfit` and `sTeammateCantTakeOutfit`,
 but no part of it reads either one. So the game never shows them, and hiding the outfit rows is
 what keeps the outfit with the follower. A follower's quest items are also left out of its list.
-OpenSky still shows `sTeammateCantTakeOutfit` for a take that would reach an outfit copy.
+OpenSky shows neither message.
 
 ## The price formula
 

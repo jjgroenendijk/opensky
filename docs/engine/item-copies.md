@@ -16,6 +16,9 @@ An inventory counts items by base form ID. Some facts belong to one copy, not to
 | Trapped soul | [Soul trap](/engine/soul-trap.md) | Recharging and enchanting |
 | Enchantment charge | A hit with an enchanted weapon | [Item enchantments](/engine/item-enchantments.md) |
 | Made enchantment | [Enchanting](/engine/enchanting.md) | Item enchantments |
+| Custom name | The enchanter's name field | The inventory rows and the item card |
+| Poison and doses | [Alchemy](/engine/alchemy.md#poison-on-a-weapon) | A landed weapon hit |
+| Chosen mark | A menu row action | The order below |
 
 The game keeps these in an extra data list on each copy. OpenSky keeps them per owner in one
 component, apart from the counts: per item, a list of the copies that differ from the record.
@@ -24,9 +27,10 @@ a take or a drop needs no change to the list.
 
 ## Order
 
-The list is kept best first: higher temper, then a made enchantment, then a bigger soul. Charge
-does not count, and copies that tie keep their order. So a hit that spends charge does not move
-the equipped role to another copy of the same weapon. The order decides two things:
+The list is kept best first: the chosen copy, then higher temper, then a made enchantment, then a
+bigger soul. Charge, name, and poison do not count, and copies that tie keep their order. So a hit
+that spends charge does not move the equipped role to another copy of the same weapon. The order
+decides two things:
 
 - An equip wears the best copy, because the equipped set names a base item, not a copy.
 - A move takes the plainest copies first, so the owner keeps the best one.
@@ -52,5 +56,8 @@ The game keeps two more facts on each copy:
 - **A poison.** The poison and its doses left belong to the weapon copy it was put on, not to the
   base weapon. Taking the weapon off keeps the poison on that copy.
 
-OpenSky keeps neither on the copy. A made enchantment takes the name, the inventory shows one row
-per base item, and a poison sits on the base weapon of its owner.
+OpenSky keeps both on the copy. The inventory, its favourites tab, and the container and barter
+lists show one row per kind of copy, best first, with the copy's name and value. The best copy's
+row holds the equipped mark. An action on a row acts on that row's copy: OpenSky marks the copy
+chosen, so an equip wears it, and a move takes that copy first. The mark leaves the copy when it
+moves.
