@@ -1,11 +1,31 @@
 // The `itemInfo` object the vanilla item card reads, built from an engine card.
 
+import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyInventoryInterface
 @testable import OpenSkyMenus
 import Testing
 
 struct InventoryMenuItemCardBridgeTests {
+    /// A row's card is its item's card; a row for one copy shows that copy's name and
+    /// value, and no row shows no card.
+    @Test func aRowsCardTakesTheCopysNameAndValue() {
+        let sword = InventoryItemCard(
+            layout: .weapon, name: "Iron Sword", kind: "Weapon", value: 25, weight: 9
+        )
+        var entry = InventoryMenuEntry(
+            item: FormID(0x10), name: "Biter", count: 1, weight: 9, value: 633,
+            isEquipped: false, family: nil
+        )
+        let lookup: (FormID) -> InventoryItemCard? = { $0 == FormID(0x10) ? sword : nil }
+        #expect(InventoryMenuMovieBridge.card(for: entry, lookup: lookup)?.name == "Iron Sword")
+        entry.copy = ItemCopy(enchantment: FormID(0xFF00_0800))
+        let copy = InventoryMenuMovieBridge.card(for: entry, lookup: lookup)
+        #expect(copy?.name == "Biter")
+        #expect(copy?.value == 633)
+        #expect(InventoryMenuMovieBridge.card(for: nil, lookup: lookup) == nil)
+    }
+
     @Test func aWeaponCardNamesItsPageDamageAndPrice() {
         let card = InventoryItemCard(
             layout: .weapon,

@@ -125,10 +125,8 @@ final class InventoryMenuController {
     private func publishModel() {
         let model = model
         let item = model.selectedEntry?.item
-        var card = itemDetails.card(for: item)
-        if let entry = model.selectedEntry, entry.copy != nil {
-            card?.name = entry.name
-            card?.value = entry.value
+        let card = InventoryMenuMovieBridge.card(for: model.selectedEntry) {
+            itemDetails.card(for: $0)
         }
         let charge = itemDetails.chargePercent(of: item)
         movie.publish {

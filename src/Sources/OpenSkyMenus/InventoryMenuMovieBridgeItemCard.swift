@@ -4,6 +4,7 @@
 // See docs/engine/inventory-menu.md#item-card.
 
 import Foundation
+public import OpenSkyFormatsESM
 public import OpenSkyFormatsSWF
 public import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
@@ -54,6 +55,19 @@ nonisolated extension InventoryMenuMovieBridge {
             info["effects"] = .string(lines.joined(separator: ", "))
         }
         return info
+    }
+
+    /// The card of a row: the item's card, with the copy's own name and value when the
+    /// row stands for one copy.
+    public static func card(
+        for entry: InventoryMenuEntry?, lookup: (FormID) -> InventoryItemCard?
+    ) -> InventoryItemCard? {
+        guard let entry, var card = lookup(entry.item) else { return nil }
+        if entry.copy != nil {
+            card.name = entry.name
+            card.value = entry.value
+        }
+        return card
     }
 
     /// Sends the selected row's card to the movie, or hides the card with no row. A
