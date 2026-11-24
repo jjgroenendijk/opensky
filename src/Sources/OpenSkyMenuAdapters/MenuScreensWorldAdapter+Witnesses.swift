@@ -4,7 +4,7 @@ import OpenSkyCells
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
@@ -47,6 +47,18 @@ extension MenuScreensWorldAdapter {
 
     public var craftingStation: CraftingStationInfo? {
         craftingDesk.craftingStation
+    }
+
+    public var craftingDescription: String? {
+        craftingDesk.craftingDescription
+    }
+
+    public var craftingSkill: CraftingSkillBar? {
+        craftingDesk.craftingSkill
+    }
+
+    public func craftingItemCard(_ item: FormID) -> InventoryItemCard? {
+        craftingDesk.craftingItemCard(item)
     }
 
     public var craftingButtonTexts: GameSettingTexts<CraftingButtonText> {

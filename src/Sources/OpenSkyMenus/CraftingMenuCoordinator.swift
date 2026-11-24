@@ -7,6 +7,7 @@ import Foundation
 public import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 public import OpenSkyMenusInterface
 
 /// One recipe of the open station.
@@ -18,6 +19,10 @@ nonisolated public struct CraftingMenuRecipe: Equatable, Sendable {
     public let category: String?
     /// The tab's place in the forge's fixed tab order.
     public let categoryRank: Int
+    /// The item the recipe makes, for the item card.
+    public var created: FormID?
+    /// The components with the counts carried and needed, under the item card.
+    public var requirements: String?
 
     public init(
         id: ResolvedFormID, name: String, canMake: Bool, category: String? = nil,
@@ -63,6 +68,12 @@ public protocol CraftingMenuWorld: MenuScreenWorld {
     /// Brews the chosen ingredients; the outcome text.
     func brewChosenIngredients() -> String
     var enchanter: any CraftingMenuEnchanter { get }
+    /// What the open station is for, the line at the top of the menu.
+    var craftingDescription: String? { get }
+    /// The open station's skill, for the bottom bar; nil when it trains none.
+    var craftingSkill: CraftingSkillBar? { get }
+    /// The card of `item` as the inventory shows it.
+    func craftingItemCard(_ item: FormID) -> InventoryItemCard?
     /// Asks a yes or no question; `answer` gets true for yes.
     func confirm(_ text: String, answer: @escaping (Bool) -> Void)
     /// A message box with one OK button.
@@ -83,13 +94,15 @@ public protocol CraftingMenuEnchanter {
 }
 
 public final class CraftingMenuCoordinator: ItemListMenuScreen {
-    public static let identifier: MenuIdentifier = "Crafting Menu"
+    public static let identifier: MenuIdentifier = .craftingMenu
     public static let hint = "W/S: row   A/D: tab   E: make or choose   R: brew   Esc: leave"
 
-    private var recipes: [CraftingMenuRecipe] = []
-    private var ingredients: [CraftingMenuIngredient] = []
+    private(set) var recipes: [CraftingMenuRecipe] = []
+    private(set) var ingredients: [CraftingMenuIngredient] = []
     var enchanting = CraftingMenuEnchanting()
-    private weak var world: (any CraftingMenuWorld)?
+    /// The enchanting slider is open in the movie, so the arrow keys move it.
+    private(set) var isSliderOpen = false
+    private(set) weak var world: (any CraftingMenuWorld)?
     /// Where the player types an enchanted item's name.
     public weak var nameEntry: TextEntryMenuCoordinator?
 
@@ -107,6 +120,18 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
             ),
             menuMode: menuMode, layer: (movies, hud), world: world
         )
+    }
+
+    public var readout: MenuTextPanel {
+        panel
+    }
+
+    public var skillBar: String? {
+        world?.craftingSkill.map { "\($0.name) \($0.level), \(Int($0.progress * 100))%" }
+    }
+
+    public var movieState: MenuMovieState {
+        MenuMovieState(isLoaded: movie.session.isLoaded, error: movie.session.error)
     }
 
     override var layout: ItemListMovieLayout {
@@ -190,6 +215,7 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
             }
             if let slider = enchanting.takeSliderRequest() {
                 movie.publish { CraftingMenuMovieBridge.showSlider(slider, runtime: $0) }
+                isSliderOpen = true
                 let magnitude = "magnitude \(slider.value) of \(slider.maximum)"
                 return "\(text); \(magnitude), \(slider.uses) uses"
             }
@@ -257,7 +283,18 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
 
     override func slider(_ value: Int, accepted: Bool?) -> String {
         guard let world, mode == .enchanting else { return "No slider" }
-        return enchanting.slide(to: value, accepted: accepted, enchanter: world.enchanter)
+        isSliderOpen = accepted == nil
+        let text = enchanting.slide(to: value, accepted: accepted, enchanter: world.enchanter)
+        movie.publish { [weak self] in self?.publishCard($0) }
+        return text
+    }
+
+    override func handleKey(_ event: MenuInputEvent) {
+        guard isSliderOpen else {
+            super.handleKey(event)
+            return
+        }
+        movie.publish { ItemCardSubMenuBridge.handle(event, runtime: $0) }
     }
 
     /// Alchemy clears the chosen ingredients; enchanting names the item to make.
@@ -301,9 +338,15 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
         }
     }
 
+    /// While the slider is open only the card changes: a list redraw takes the focus
+    /// from the slider.
     override func publishMovie(_ runtime: SWFMovieRuntime) {
-        super.publishMovie(runtime)
-        CraftingMenuMovieBridge.publish(buttons, runtime: runtime)
+        if !isSliderOpen {
+            super.publishMovie(runtime)
+            CraftingMenuMovieBridge.publish(buttons, runtime: runtime)
+            publishHeader(runtime)
+        }
+        publishCard(runtime)
     }
 
     override func prepareMovie(
@@ -316,6 +359,7 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
     override func activateMovie(_ runtime: SWFMovieRuntime) {
         let station = world?.craftingStationName ?? ""
         CraftingMenuMovieBridge.activate(station: station, buttons: buttons, runtime: runtime)
+        publishHeader(runtime)
     }
 
     override func didClose() {

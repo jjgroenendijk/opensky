@@ -181,6 +181,44 @@ drops an ingredient, a chosen one shows as equipped, and R brews. The game shows
 (`ShowItem3D`) and lets the player set an enchantment's charge; OpenSky answers those calls
 and does nothing.
 
+## Item card and skill bar
+
+The movie's own text stays on screen until the engine replaces it: "Select items to craft" at
+the top, "Additional Description" under the card, and example values in the bottom bar. The
+names below were read from `interface\craftingmenu.swf`.
+
+- The top line, `/Menu/MenuDescriptionHolder/MenuDescription`, gets the station's description:
+  `sConstructibleMenuDescription` at a forge, `sSmithingMenuDescription` at a grindstone or an
+  armour table, `sAlchemyMenuDescription` at a lab, and `sEnchantMenuDescription` at an
+  enchanter.
+- The card is `/Menu/ItemInfoHolder/ItemInfo`. Its `itemInfo` setter takes the same object as
+  the [inventory's item card](/engine/inventory-menu.md#item-card). The menu's `FadeInfoCard(true)`
+  then fades the card in, and `FadeInfoCard(false)` fades it out.
+- `FadeInfoCard` also shows or hides the line under the card,
+  `.../AdditionalDescriptionHolder/AdditionalDescription`, unless the menu's
+  `bHideAdditionalDescription` is set.
+- The bottom bar's `UpdateCraftingInfo(skill, level, percent)` turns the player card into the
+  skill bar: the skill's name, its level, and the progress to the next level in percent.
+
+OpenSky fills them so:
+
+| Station | The card shows | The line under the card |
+| --- | --- | --- |
+| Forge, grindstone, armour table | The item the recipe makes | Each component, carried and needed, such as "Iron Ingot (3/1)" |
+| Alchemy lab | The ingredient | Hidden |
+| Arcane enchanter | The item, or the soul gem; no card for an enchantment | Hidden |
+| Arcane enchanter, slider open | The item to make, below | Hidden |
+
+The skill bar shows the skill the bench trains (`WBDT`).
+
+The card has its own enchanting type, `ICT_CRAFT_ENCHANTING` (15) in the movie's
+`InventoryDefines`. With `sliderShown` set, the card goes to its `Craft_Enchanting` frame. That
+frame shows `name`, `totalCharges` beside "Charges", and `effects` under it. While the slider is
+open OpenSky sends the made item's name, the uses at the chosen magnitude, and the chosen
+enchantments' names, and the arrow keys move the slider instead of changing the tab. Without
+`sliderShown`, the same type shows a weapon (`damage`), apparel (`armor`), a soul gem (`soulLVL`),
+or an enchantment (`usedCharge` and `totalCharges`).
+
 ## Buttons and questions
 
 The movie keeps its four bottom-bar labels in `/Menu.ButtonText`: select, exit, aux, and craft.
@@ -210,5 +248,11 @@ potion".
 
 ## Not modeled yet
 
+- An enchantment row at the enchanter shows no card, and the lab and the enchanter leave the
+  line under the card hidden. The enchanter's rows use the inventory card, not the enchanting
+  type, and the slider card names the enchantments instead of their effects with the chosen
+  magnitude. What the game shows there is not yet checked.
+- The bottom bar's skill name is set in the movie but not drawn, and at 0% progress the meter
+  draws full, though the movie puts it on its empty frame.
 - Perk entry points that change crafting other than Mod Tempering Health, such as Arcane
   Blacksmith.

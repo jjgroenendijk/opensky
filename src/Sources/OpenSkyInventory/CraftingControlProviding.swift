@@ -22,6 +22,9 @@ extension InventoryCoordinator.CraftingReadout {
             recipes: session?.statuses.map(recipeReadout) ?? []
         )
         snapshot.station = session?.station
+        snapshot.description = session.map {
+            CraftingMenuText.description(station: $0.station, texts: coordinator.texts.crafting)
+        }
         return snapshot
     }
 
@@ -30,22 +33,43 @@ extension InventoryCoordinator.CraftingReadout {
         let itemName = recipe.created.map(coordinator.name(of:)) ?? recipe.editorID ?? recipe.id
             .description
         guard let temper = status.temper else {
-            return CraftingRecipeReadout(
+            var readout = CraftingRecipeReadout(
                 id: recipe.id,
                 name: itemName,
                 isEligible: status.isReady,
                 isOffered: status.eligibility.isOffered,
                 category: category(of: recipe)
             )
+            readout.created = recipe.created
+            readout.requirements = requirements(of: recipe)
+            return readout
         }
         let copies = temper.copies.map { qualityName($0, of: temper.item) }
             .joined(separator: ", ")
-        return CraftingRecipeReadout(
+        var readout = CraftingRecipeReadout(
             id: recipe.id,
             name: "\(itemName) (\(copies))",
             isEligible: status.isReady,
             isOffered: true
         )
+        readout.created = recipe.created
+        readout.requirements = requirements(of: recipe)
+        return readout
+    }
+
+    /// "Iron Ingot (3/1), Leather Strips (0/2)": carried, then needed.
+    private func requirements(of recipe: CraftingRecipe) -> String? {
+        guard let session = coordinator.crafting else { return nil }
+        let parts = recipe.components.compactMap { component -> String? in
+            guard let item = component.item ?? component.choices.first else { return nil }
+            let held = component.choices.isEmpty
+                ? session.inventory.count(of: item, in: session.player)
+                : component.choices.reduce(0) {
+                    $0 + session.inventory.count(of: $1, in: session.player)
+                }
+            return "\(coordinator.name(of: item)) (\(held)/\(component.count))"
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
     }
 
     private func category(of recipe: CraftingRecipe) -> CraftingCategoryText? {

@@ -6,6 +6,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 public import OpenSkyMenus
 import OpenSkyMenusInterface
+import OpenSkyProgressionInterface
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 
@@ -16,6 +17,7 @@ public protocol MenuScreensCraftingDeskHost: AnyObject, SendableMetatype {
     var magic: any MagicPort { get }
     var mapWorld: any MapWorldPort { get }
     var messages: any MessageCoordinatorPort { get }
+    var progression: any ProgressionPort { get }
     var scripts: any ScriptPort { get }
 }
 
@@ -70,6 +72,25 @@ extension MenuScreensCraftingDeskAdapter {
         game.inventory.craftingReadout.craftingSnapshot.station
     }
 
+    var craftingDescription: String? {
+        game.inventory.craftingReadout.craftingSnapshot.description
+    }
+
+    /// The bench's `WBDT` skill with the player's level and progress in it.
+    var craftingSkill: CraftingSkillBar? {
+        guard
+            let index = craftingStation?.skill,
+            let skill = game.progression.skillsMenuSkills.first(where: { $0.index == index })
+        else { return nil }
+        return CraftingSkillBar(
+            name: skill.name, level: Int(skill.level), progress: skill.progress
+        )
+    }
+
+    func craftingItemCard(_ item: FormID) -> InventoryItemCard? {
+        game.inventory.itemCards.itemCard(for: item)
+    }
+
     var craftingButtonTexts: GameSettingTexts<CraftingButtonText> {
         game.mapWorld.settingTexts()
     }
@@ -81,10 +102,13 @@ extension MenuScreensCraftingDeskAdapter {
     var craftingRecipes: [CraftingMenuRecipe] {
         let titles: GameSettingTexts<CraftingCategoryText> = game.mapWorld.settingTexts()
         return game.inventory.craftingReadout.craftingSnapshot.recipes.filter(\.isOffered).map {
-            CraftingMenuRecipe(
+            var recipe = CraftingMenuRecipe(
                 id: $0.id, name: $0.name, canMake: $0.isEligible,
                 category: $0.category.map { titles[$0] }, categoryRank: $0.category?.rank ?? 0
             )
+            recipe.created = $0.created
+            recipe.requirements = $0.requirements
+            return recipe
         }
     }
 
