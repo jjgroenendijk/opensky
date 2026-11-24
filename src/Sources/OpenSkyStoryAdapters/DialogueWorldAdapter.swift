@@ -53,6 +53,8 @@ public final class DialogueWorldAdapter {
     let hosts: any DialogueWorldHosts
     /// The player move count the last world step saw.
     var seenPlayerPlacements: Int?
+    /// The speaker of the open conversation while it is a resident actor.
+    var residentSpeaker: ReferenceKey?
 
     var cameraFocus: DialogueCameraFocusAdapter {
         DialogueCameraFocusAdapter(game: hosts)

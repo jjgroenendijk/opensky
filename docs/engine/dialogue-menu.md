@@ -211,9 +211,11 @@ flowchart LR
     endc --> close[Dialogue menu closes]
 ```
 
-OpenSky ends a conversation on the next world step after the player is moved or the speaker
-dies. A dead actor cannot talk, which is the same rule talk targeting uses to leave dead actors
-out.
+OpenSky ends a conversation on the next world step after the player is moved, or the speaker
+dies or leaves the loaded actors. A disabled actor leaves them too. A speaker that was never a
+loaded actor, such as a talking activator, keeps its menu. A dead actor cannot talk, which is the
+same rule talk targeting uses to leave dead actors out. An actor that force-greets the player
+during another conversation closes it and opens its own.
 
 ## Movie entry points not used
 

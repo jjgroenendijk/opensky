@@ -199,6 +199,10 @@ extension AIPackageActsAdapter.Speech {
     func greet(_ actor: ReferenceKey) -> PackageActionResult {
         guard game.dialogue.claimForceGreet(speaker: actor, now: game.storyWorld.sceneSeconds)
         else { return .failed }
+        // The new speaker takes over a conversation the player is in.
+        if game.dialogueMenu.isOpen, game.dialogueMenu.speakerOrTarget != actor {
+            game.dialogueMenu.close()
+        }
         game.dialogueMenu.begin(with: actor)
         return game.dialogueMenu.isOpen ? .done : .failed
     }
