@@ -28,7 +28,11 @@ private final class FeetWorld: EffectsWorld {
         nil
     }
 
-    func detonateEffectExplosion(_: ReferenceKey, at _: SIMD3<Float>) {}
+    private(set) var blasts: [SIMD3<Float>] = []
+
+    func detonateEffectExplosion(_: ReferenceKey, at position: SIMD3<Float>) {
+        blasts.append(position)
+    }
 }
 
 @MainActor
@@ -46,6 +50,12 @@ struct EffectsCoordinatorImpactTests {
         let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
         guard case let .record(record)? = children.first else { throw ESMError.malformed("none") }
         return try Impact(record: record)
+    }
+
+    @Test func aBlastOnAnActorGoesOffAtItsFeet() {
+        let world = FeetWorld()
+        world.detonateEffectExplosion(.player, onActor: .player, from: .player)
+        #expect(world.blasts == [SIMD3(10, 20, -5)])
     }
 
     @Test func anActorHitMarksTheActorWhileSkinDecalsAreOn() throws {

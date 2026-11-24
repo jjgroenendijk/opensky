@@ -55,6 +55,7 @@ nonisolated struct PlacedRune: Equatable, Sendable {
     let proximity: Float
     /// Seconds since it was placed.
     var age: Float = 0
+    var fuse = MineFuse()
 }
 
 nonisolated enum RuneCore {
@@ -111,12 +112,21 @@ nonisolated enum RuneCore {
     static func trigger(
         of rune: PlacedRune, among triggers: [MeleeTarget], settings: RuneSettings = .vanilla
     ) -> MeleeTarget? {
-        guard rune.age >= settings.armSeconds else { return nil }
+        nearby(rune, among: triggers, settings: settings).first
+    }
+
+    /// The triggers inside the rune's proximity, nearest first. A player the rune's roll
+    /// already spared is left out.
+    static func nearby(
+        _ rune: PlacedRune, among triggers: [MeleeTarget], settings: RuneSettings = .vanilla
+    ) -> [MeleeTarget] {
+        guard rune.age >= settings.armSeconds else { return [] }
         return triggers
             .filter { $0.key != rune.payload.caster || settings.casterCanTrigger != 0 }
+            .filter { !(rune.fuse.ignoresPlayer && $0.key == .player) }
             .map { (target: $0, distance: SpellHitTargeting.distance(from: rune.position, to: $0)) }
             .filter { $0.distance <= rune.proximity }
-            .min { ($0.distance, $0.target.key) < ($1.distance, $1.target.key) }?
-            .target
+            .sorted { ($0.distance, $0.target.key) < ($1.distance, $1.target.key) }
+            .map(\.target)
     }
 }

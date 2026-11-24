@@ -35,7 +35,9 @@ extension ExplosionRuntime {
             }
         }
         guard spec.knockdown != .never else { return }
-        for target in world.impulseActors() {
+        for target in world.impulseActors()
+            where !(spec.knockdown == .alwaysButPlayer && target.key == .player)
+        {
             let distance = Self.distance(position, target)
             guard
                 let health = world.actorHealth(of: target.key),

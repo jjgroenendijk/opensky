@@ -99,6 +99,27 @@ extension EffectsEffectPlacementAdapter {
         game.combat.explosions.detonate(spec, at: position, cause: .spell)
     }
 
+    /// The blast sits the spec's vertical offset share of the actor's height above its feet.
+    public func detonateEffectExplosion(
+        _ explosion: ReferenceKey, onActor actor: ReferenceKey, from caster: ReferenceKey
+    ) {
+        let combat = game.combat
+        guard
+            let spec = combat.explosions.spec(for: explosion),
+            let body = actor == .player
+            ? MeleeTarget(
+                key: .player, feet: combat.meleeAttacker.feet,
+                capsule: combat.meleeAttacker.capsule
+            )
+            : combat.projectileTargets().first(where: { $0.key == actor })
+        else { return }
+        let lift = body.capsule.height * spec.verticalOffset
+        combat.explosions.detonate(
+            spec, at: body.feet + SIMD3(0, 0, lift), cause: .spell,
+            origin: ExplosionOrigin(shooter: caster)
+        )
+    }
+
     /// An actor's model looks along +Y, and a heading turns it clockwise.
     static func transform(feet: SIMD3<Float>, heading: Float) -> float4x4 {
         var matrix = float4x4(ActorGraphCore.worldRotation(placementRotationZ: heading))

@@ -125,6 +125,9 @@ public final class ProjectileRuntime {
             )
         )
         projectile.isBolt = shot.isBolt
+        if shooter.key == .player {
+            turnForKillCam(&projectile, shot: shot, aimTarget: pick?.target.key)
+        }
         nextID += 1
         firedCount += 1
         live.append(projectile)
@@ -198,7 +201,7 @@ public final class ProjectileRuntime {
                 finished.append(resolve(projectile, impact: impact))
                 continue
             }
-            if let detonation = alternateDetonation(of: projectile) {
+            if let detonation = alternateDetonation(of: &projectile, dt: dt) {
                 finished.append(resolve(projectile, impact: detonation, detonated: true))
                 continue
             }

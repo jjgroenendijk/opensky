@@ -265,6 +265,8 @@ struct MagicRuneReads {
             let profile = game.combat.items?.projectileProfile(link),
             let spec = explosions.spec(itemLink: profile.explosion)
         else { return }
-        explosions.detonate(spec, at: position, cause: .spell)
+        explosions.detonate(
+            spec, at: position, cause: .spell, origin: ExplosionOrigin(shooter: payload.caster)
+        )
     }
 }

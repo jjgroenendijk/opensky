@@ -51,6 +51,10 @@ public final class MagicCoordinator {
     var brokenWardSeconds: [ReferenceKey: Float] = [:]
     /// The absorption roll, in 0 ..< 100. A test fixes it.
     var spellDefenceRoll = WardShields.seededDefenceRoll()
+    /// The player's mine roll, in 0 ..< 100, from a fixed seed. A test replaces it.
+    var mineRoll: () -> Float = { [stream = RandomStream(seed: 0x4D49_4E45)] in
+        stream.float(in: 0 ..< 100)
+    }
 
     /// Every SHOU in the load order, by key.
     public let shouts: [ReferenceKey: ResolvedShout]
@@ -222,6 +226,10 @@ extension MagicCoordinator {
 
     var weaponRecharge: WeaponRecharge {
         WeaponRecharge(coordinator: self)
+    }
+
+    public var runeMarkers: [RuneMarker] {
+        runePlacement.markers
     }
 
     var runePlacement: RunePlacement {

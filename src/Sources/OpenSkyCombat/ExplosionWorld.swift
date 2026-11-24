@@ -2,8 +2,9 @@
 // runtime decides; the session applies damage, plays sounds, starts the
 // image-space modifier, and places hazards. See docs/formats/explosions.md.
 
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
+import OpenSkyGameData
 public import OpenSkyPhysics
 import simd
 
@@ -27,9 +28,35 @@ public protocol ExplosionWorld: AnyObject {
     func showExplosionLight(_ light: ReferenceKey, at position: SIMD3<Float>)
     /// Plays an `IPDS` on the surface under the blast.
     func playExplosionImpact(_ dataSet: ReferenceKey, at position: SIMD3<Float>)
+    /// How far along the line from `start` to `end` the first wall is, or nil when clear.
+    func explosionObstruction(from start: SIMD3<Float>, to end: SIMD3<Float>) -> Float?
+    /// The resident destructible objects within `radius` of `center`, by their origin.
+    func explosionObjects(within radius: Float, of center: SIMD3<Float>) -> [MeleeTarget]
+    /// Deals `amount` destruction damage to `object`. False when it is not destructible.
+    @discardableResult
+    func applyDestructionDamage(_ amount: Float, to object: ReferenceKey) -> Bool
+    /// Puts the new reference in the world. False when it cannot.
+    @discardableResult
+    func placeExplosionObject(_ placement: ExplosionObjectPlacement) -> Bool
 }
 
 extension ExplosionWorld {
     public func showExplosionLight(_: ReferenceKey, at _: SIMD3<Float>) {}
     public func playExplosionImpact(_: ReferenceKey, at _: SIMD3<Float>) {}
+
+    public func explosionObstruction(from _: SIMD3<Float>, to _: SIMD3<Float>) -> Float? {
+        nil
+    }
+
+    public func explosionObjects(within _: Float, of _: SIMD3<Float>) -> [MeleeTarget] {
+        []
+    }
+
+    public func applyDestructionDamage(_: Float, to _: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func placeExplosionObject(_: ExplosionObjectPlacement) -> Bool {
+        false
+    }
 }

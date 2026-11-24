@@ -10,6 +10,7 @@ import OpenSkyFormatsTesting
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
 import OpenSkyPhysics
+import OpenSkyProgressionInterface
 import Testing
 
 @MainActor
@@ -125,6 +126,8 @@ struct RuneTests {
         #expect(coordinator.runePlacement.land(Self.payload(), at: aim) == 0)
         #expect(coordinator.runeState.runes.map(\.position) == [SIMD3(300, 0, 0)])
         #expect(coordinator.runeState.runes.first?.proximity == RuneCore.defaultProximity)
+        #expect(coordinator.runeMarkers.map(\.position) == [SIMD3(300, 0, 0)])
+        #expect(coordinator.runeMarkers.first?.isLit == false)
     }
 
     @Test func aHostileActorSetsTheRuneOff() throws {
@@ -146,6 +149,20 @@ struct RuneTests {
             return
         }
         #expect(hit.hit.targets.map(\.key) == [Self.victim])
+    }
+
+    /// Calculate Mine Explode Chance at 0: the player fails the roll at an NPC's rune.
+    @Test func thePlayerCanFailTheRollAtAHostileRune() throws {
+        let coordinator = try makeCoordinator()
+        world.perkValues[.calculateMineExplodeChance] = 0
+        coordinator.mineRoll = { 10 }
+        let aim = SpellAim(target: nil, position: SIMD3(300, 0, 0), candidates: [])
+        coordinator.runePlacement.land(Self.payload(caster: Self.victim), at: aim)
+        world.runeTargets = [MeleeTarget(key: .player, feet: SIMD3(320, 0, 0))]
+        coordinator.runePlacement.advanceRunes(delta: 1)
+        #expect(coordinator.runeState.runes.first?.fuse.ignoresPlayer == true)
+        #expect(world.perkOwners[.calculateMineExplodeChance] == .player)
+        #expect(coordinator.runePlacement.runeText.contains("0 burning"))
     }
 
     /// Without the rune keyword the spell lands at once on whoever stands there.

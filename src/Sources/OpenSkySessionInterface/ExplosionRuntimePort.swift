@@ -7,8 +7,11 @@ public protocol ExplosionRuntimePort: AnyObject {
         _ spec: ExplosionSpec,
         at position: SIMD3<Float>,
         cause: ExplosionCause,
-        source: FormID?
+        origin: ExplosionOrigin
     ) -> ExplosionReport
+    @discardableResult func throwDebris(
+        _ key: ReferenceKey, at position: SIMD3<Float>, force: Float, count: Int?
+    ) -> Int
     func spec(itemLink id: FormID?) -> ExplosionSpec?
     func spec(for key: ReferenceKey) -> ExplosionSpec?
 
@@ -24,6 +27,6 @@ extension ExplosionRuntimePort {
         at position: SIMD3<Float>,
         cause: ExplosionCause
     ) -> ExplosionReport {
-        detonate(spec, at: position, cause: cause, source: nil)
+        detonate(spec, at: position, cause: cause, origin: ExplosionOrigin())
     }
 }
