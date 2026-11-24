@@ -30,9 +30,15 @@ nonisolated public enum InputCode {
         code >= mouseBase ? Int(code - mouseBase) : nil
     }
 
-    /// The button art symbol for a mouse code: `Mouse1` is the left button.
+    /// The button art symbol for a mouse code: `Mouse1` is the left button. The control
+    /// map's mouse column uses 8 and 9 for the wheel and 10 for moving the mouse.
     static func mouseName(_ code: UInt32) -> String? {
-        mouseButton(code).map { "Mouse\($0 + 1)" }
+        switch mouseButton(code) {
+        case nil: nil
+        case 8, 9: "Wheel"
+        case 10: "MouseMove"
+        case let button?: "Mouse\(button + 1)"
+        }
     }
 }
 
