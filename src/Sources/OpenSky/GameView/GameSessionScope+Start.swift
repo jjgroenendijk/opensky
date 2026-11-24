@@ -38,6 +38,9 @@ extension GameSessionScope {
     func start() {
         guard let stage else { return }
         effects.applyGraphicsSettings(playerSettings.store)
+        hud.buttonName = { [weak playerSettings] event, gamepad in
+            playerSettings?.buttonName(forUserEvent: event, gamepad: gamepad)
+        }
         hud.start()
         controllerRumble.settings = ShoutRumbleSettings.resolve(store: stage.data.gameSettings)
         controllerRumble.isEnabled = { [store = playerSettings.store] in
