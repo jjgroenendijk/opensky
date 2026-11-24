@@ -138,7 +138,7 @@ extension CombatMotionAdapter {
             let assets = game.audio.assets,
             let sounds = game.combatRecords?.soundStore,
             let sound = attempt({ try sounds.resolveAny(impact.sound) }),
-            let path = sound.filePaths.first
+            let path = engine.filePicker.path(for: sound)
         else { return }
         let request = AudioPlayRequest(
             name: path, category: sound.audioCategory ?? .footsteps, worldPosition: position,

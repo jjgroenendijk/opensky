@@ -116,13 +116,12 @@ extension WorldAudioPlayback {
         return SoundRumble(small: small, big: big)
     }
 
-    /// A descriptor with several files plays one of them at random, as the game does.
+    /// A descriptor with several files plays one of them as the game picks it.
     private func resolveSound(id: FormID) -> ResolvedSoundFile? {
         guard
             let soundStore = director.soundStore,
             let resolved = attempt({ try soundStore.resolveAny(id) }),
-            !resolved.filePaths.isEmpty else { return nil }
-        let path = resolved.filePaths[director.regionSounds.pick(count: resolved.filePaths.count)]
+            let path = director.engine.filePicker.path(for: resolved) else { return nil }
         return ResolvedSoundFile(
             path: path,
             category: resolved.audioCategory ?? .effects,
