@@ -16,6 +16,8 @@ nonisolated public final class FakeHUDPort: HUDPort {
     public var publishMetersCalls: [(meters: ActorValues, enemy: HUDEnemyHealth?)] = []
     public var setCartModeCalls: [Bool] = []
     public var setCoveredCalls: [Bool] = []
+    public var isUnderTitle = false
+    public var setUnderTitleCalls: [Bool] = []
     public var setHelpMessageCalls: [String?] = []
     public var showNotificationCalls: [String] = []
     public var shownBigNotices: [HUDBigNotice] = []
@@ -47,6 +49,10 @@ nonisolated extension FakeHUDPort {
 
     public func setCovered(_ covered: Bool) {
         setCoveredCalls.append(covered)
+    }
+
+    public func setUnderTitle(_ underTitle: Bool) {
+        setUnderTitleCalls.append(underTitle)
     }
 
     public func setHelpMessage(_ text: String?) {

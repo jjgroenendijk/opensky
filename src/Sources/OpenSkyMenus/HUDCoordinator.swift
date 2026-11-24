@@ -51,11 +51,24 @@ public final class HUDCoordinator {
         world?.renderer
     }
 
+    /// The title screen shows no compass, crosshair, or meters, though the HUD stays open.
+    public private(set) var isUnderTitle = false
+
+    public func setUnderTitle(_ underTitle: Bool) {
+        guard underTitle != isUnderTitle else { return }
+        isUnderTitle = underTitle
+        renderer?.swfHUDHidden = isHiddenLayer
+    }
+
+    var isHiddenLayer: Bool {
+        isCovered || isUnderTitle || !layerVisible
+    }
+
     /// Hides the HUD while a loading screen is up, and shows it again after.
     /// The loading movie draws on the overlay layer, so only the HUD layer hides.
     public func setCovered(_ covered: Bool) {
         isCovered = covered
-        renderer?.swfHUDHidden = covered || !layerVisible
+        renderer?.swfHUDHidden = isHiddenLayer
     }
 
     /// `Game.SetHudCartMode` sets `cart`; the frame sets the rest from the player.
@@ -146,7 +159,7 @@ public final class HUDCoordinator {
             guard let runtime = try renderer.setSWFHUD(scene, prepare: registerButtonArt) else {
                 return
             }
-            renderer.swfHUDHidden = isCovered || !layerVisible
+            renderer.swfHUDHidden = isHiddenLayer
             renderer.swfScale = settings.scale
             try HUDMovieBridge.validate(runtime: runtime)
             frameRate = Double(runtime.movie.frameRate)
@@ -237,7 +250,7 @@ public final class HUDCoordinator {
         change(&settings)
         settings.scale = HUDCore.clampedScale(settings.scale)
         guard isLoaded, let renderer else { return }
-        renderer.swfHUDHidden = isCovered || !layerVisible
+        renderer.swfHUDHidden = isHiddenLayer
         renderer.swfScale = settings.scale
         var presentation = settings
         presentation.layerEnabled = old.layerEnabled
