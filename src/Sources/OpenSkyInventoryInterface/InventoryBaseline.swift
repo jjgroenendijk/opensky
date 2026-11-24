@@ -174,8 +174,8 @@ nonisolated public struct InventoryBaselineResolver {
     }
 
     /// An actor's carried `CNTO` items plus its default outfit. The baseline equipped
-    /// set is the outfit plus the carried items `carriedPicks` chooses, so an NPC does
-    /// not start naked or empty-handed. A broken template chain yields an empty
+    /// set is the outfit plus the best carried weapon, so an NPC does not start
+    /// empty-handed; only a teammate wears carried armour. A broken template chain yields an empty
     /// baseline; the appearance path already reports it.
     private func actorBaseline(
         _ base: FormID, templates: ActorTemplateResolver
@@ -190,9 +190,9 @@ nonisolated public struct InventoryBaselineResolver {
         }
         let outfit = worn.map(\.item)
         let style = attempt { try templates.resolveCombatStyle(base: base) }?.value
-        let picks = equipment.carriedPicks(
+        let picks = equipment.weaponPicks(
             worn: outfit,
-            carried: carriedStacks.filter { $0.count >= 1 }.map(\.item),
+            held: carriedStacks.filter { $0.count >= 1 }.map(\.item),
             preference: style.flatMap { combatStyles[$0.rawValue] }
                 .map(WeaponPreference.init(style:))
         )

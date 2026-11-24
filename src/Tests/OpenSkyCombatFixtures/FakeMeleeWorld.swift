@@ -32,7 +32,14 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
     /// converted.
     public private(set) var skillUses: [SkillUseEvent] = []
 
+    /// Each hit the runtime asked to carry the weapon's poison.
+    public private(set) var poisonHits: [WeaponPoisonHit] = []
+
     public init() {}
+
+    public func applyWeaponPoison(_ hit: WeaponPoisonHit) {
+        poisonHits.append(hit)
+    }
 
     @discardableResult
     public func reportSkillUse(_ use: SkillUseEvent) -> Float {

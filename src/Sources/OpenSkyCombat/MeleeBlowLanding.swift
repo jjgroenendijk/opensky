@@ -36,8 +36,8 @@ struct MeleeBlowLanding {
         noteSkillUse(hit, damage: damage, landed: landed)
         if landed {
             world.applyMeleeHitSpell(blow, on: hit.target)
-            applyWeaponRiders(on: hit.target)
         }
+        applyWeaponRiders(on: hit.target, landed: landed, blocked: damage.wasBlocked)
         applyEnchantment(hit)
         // After the damage, so an `OnHit` script sees the new health. `abHitBlocked`
         // comes from the damage formula's block term.
@@ -109,12 +109,15 @@ struct MeleeBlowLanding {
         ))
     }
 
-    /// A landed hit carries the weapon's poison and any Enhance Weapon enchantment.
-    private func applyWeaponRiders(on target: ReferenceKey) {
-        world.applyWeaponPoison(WeaponPoisonHit(
-            attacker: world.meleeAttacker.key, weapon: weapon.weapon, target: target
-        ))
-        if weapon.weapon != nil {
+    /// A landed hit carries any Enhance Weapon enchantment. The poison goes on a landed or
+    /// a blocked swing, but never on a bash (docs/engine/inventory-equipment.md).
+    private func applyWeaponRiders(on target: ReferenceKey, landed: Bool, blocked: Bool) {
+        if landed || blocked, !kind.isBash {
+            world.applyWeaponPoison(WeaponPoisonHit(
+                attacker: world.meleeAttacker.key, weapon: weapon.weapon, target: target
+            ))
+        }
+        if landed, weapon.weapon != nil {
             world.applyWeaponEnhancement(attacker: world.meleeAttacker.key, target: target)
         }
     }

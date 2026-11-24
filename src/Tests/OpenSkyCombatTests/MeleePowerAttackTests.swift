@@ -96,6 +96,7 @@ struct MeleePowerAttackTests {
         #expect(world.skillUses.first?.action == .bash)
         #expect(world.skillUses.first?.amount == 5)
         #expect(world.skillUses.first?.advanceAction == .bash)
+        #expect(world.poisonHits.isEmpty, "a bash never carries the poison")
     }
 
     @Test func bashDamageFollowsTheBlockSkill() {

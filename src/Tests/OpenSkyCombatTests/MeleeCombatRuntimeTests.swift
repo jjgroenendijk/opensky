@@ -96,6 +96,7 @@ struct MeleeCombatRuntimeTests {
         let applied = world.damage[.player] ?? 0
         #expect(abs(applied - 10 * (1 - 0.326)) < 0.001)
         #expect(runtime.trace.last?.damage.wasBlocked == true)
+        #expect(world.poisonHits.map(\.target) == [.player], "a blocked swing still poisons")
     }
 
     @Test func aSwingWithTheWeaponSheathedResolvesNothing() {

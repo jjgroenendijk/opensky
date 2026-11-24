@@ -26,7 +26,7 @@ nonisolated extension ActorOutfitResolver {
     /// Deepest leveled-list nesting a carried entry follows, as the inventory baseline.
     static let maximumCarriedDepth = 8
 
-    /// The outfit, then the carried items `EquipmentCatalog.carriedPicks` chooses.
+    /// The outfit, then the carried weapon `EquipmentCatalog.weaponPicks` chooses.
     /// Leveled entries roll as the inventory baseline rolls them.
     func defaultEquipment(
         of appearance: ResolvedActorAppearance,
@@ -44,8 +44,8 @@ nonisolated extension ActorOutfitResolver {
         let preference = carried.combatStyle
             .flatMap { combatStyles[$0.rawValue] }
             .map(WeaponPreference.init(style:))
-        let picks = equipment.carriedPicks(
-            worn: outfit.map(\.formID), carried: items, preference: preference
+        let picks = equipment.weaponPicks(
+            worn: outfit.map(\.formID), held: items, preference: preference
         )
         let extra = wornEquipment(picks, skips: &skips)
         return WornEquipment(armors: outfit + extra.armors, attachments: extra.attachments)
