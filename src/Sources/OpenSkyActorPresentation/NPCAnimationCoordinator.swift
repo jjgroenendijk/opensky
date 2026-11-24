@@ -25,6 +25,10 @@ public final class NPCAnimationCoordinator {
     private var waiting: [ReferenceKey: ActorClipKey] = [:]
     /// Each horse's rider, which plays the rider clip of the horse's gait.
     public private(set) var riders: [ReferenceKey: ReferenceKey] = [:]
+    /// Each rider's gait, nil for standing, and the body its rider clip was set on. A
+    /// body that loads later or is rebuilt starts on its own idle, so it gets the clip again.
+    private var riderGaits: [ReferenceKey: LocomotionGait?] = [:]
+    private var riderBodies: [ReferenceKey: ObjectIdentifier] = [:]
 
     weak let world: (any NPCAnimationWorld)?
 
@@ -61,7 +65,12 @@ public final class NPCAnimationCoordinator {
     }
 
     private func playRiderClip(_ rider: ReferenceKey, gait: LocomotionGait?) {
-        guard let playback = actorPlayback(rider) else { return }
+        riderGaits[rider] = gait
+        guard let playback = actorPlayback(rider) else {
+            riderBodies[rider] = nil
+            return
+        }
+        riderBodies[rider] = ObjectIdentifier(playback)
         waiting[rider] = nil
         let key = ActorClipKey(
             skeletonMeshPath: playback.clip.skeletonMeshPath,
@@ -73,12 +82,22 @@ public final class NPCAnimationCoordinator {
     /// Hands a rider that got off back to its own clips.
     public func dismount(_ rider: ReferenceKey) {
         riders = riders.filter { $0.value != rider }
+        riderGaits[rider] = nil
+        riderBodies[rider] = nil
         waiting[rider] = nil
         actorPlayback(rider)?.setLocomotionClip(nil)
     }
 
-    /// Sets the clip of each mover whose clip arrived. Runs after the loader drains.
+    /// Sets the clip of each mover whose clip arrived, and of each rider whose body is
+    /// new. Runs each frame after the loader drains.
     public func applyArrivedClips() {
+        for rider in riders.values.sorted() {
+            guard
+                let playback = actorPlayback(rider),
+                riderBodies[rider] != ObjectIdentifier(playback)
+            else { continue }
+            playRiderClip(rider, gait: riderGaits[rider].flatMap(\.self))
+        }
         for actor in waiting.keys.sorted() {
             guard let key = waiting[actor] else { continue }
             waiting[actor] = nil

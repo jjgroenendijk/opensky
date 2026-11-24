@@ -67,4 +67,23 @@ struct NPCAnimationCoordinatorTests {
         coordinator.dismount(rider)
         #expect(coordinator.riders.isEmpty)
     }
+
+    @Test func aRiderWhoseBodyIsNotLoadedIsTriedAgainEachFrame() {
+        let coordinator = NPCAnimationCoordinator(world: FakeNPCAnimationWorld())
+        let rider = ReferenceKey.plugin(name: "ride.esm", objectID: 1)
+        let horse = ReferenceKey.plugin(name: "ride.esm", objectID: 2)
+        var asked: [ReferenceKey] = []
+        coordinator.actorPlayback = { key in
+            asked.append(key)
+            return nil
+        }
+        coordinator.ride(rider, on: horse)
+        coordinator.applyArrivedClips()
+        coordinator.applyArrivedClips()
+        #expect(asked == [rider, rider, rider])
+        coordinator.dismount(rider)
+        asked = []
+        coordinator.applyArrivedClips()
+        #expect(asked.isEmpty)
+    }
 }
