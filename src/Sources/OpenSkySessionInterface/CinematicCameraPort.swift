@@ -13,6 +13,8 @@ public protocol CinematicCameraPort: AnyObject {
     @discardableResult func startShake(source: SIMD3<Float>?, strength: Float, duration: Float)
         -> Bool
     func tick(realSeconds: Double) -> CinematicFrame
+    @discardableResult func playRangedKillCam(projectile id: Int, target: ReferenceKey) -> Bool
+    func killCamWasDecided(for target: ReferenceKey) -> Bool
 }
 
 /// The default arguments a protocol requirement cannot carry.
