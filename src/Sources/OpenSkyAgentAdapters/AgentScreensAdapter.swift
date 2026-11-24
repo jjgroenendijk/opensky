@@ -158,6 +158,7 @@ extension AgentScreensAdapter {
     var hudState: AgentJSON {
         [
             "loaded": .bool(game.hud.isLoaded), "cartMode": .bool(game.hud.isCartMode),
+            "underTitle": .bool(game.hud.isUnderTitle),
             "modes": .array(game.hud.shownModes.map { .string($0.rawValue) }),
             "activatePrompt": .init(game.hud.effectivePrompt),
             "activateLocked": .bool(game.hud.isActivateLocked),

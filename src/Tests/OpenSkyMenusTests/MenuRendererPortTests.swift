@@ -123,6 +123,50 @@ struct MenuRendererPortTests {
         #expect(!port.swfHUDHidden)
     }
 
+    /// The title screen hides the HUD layer; the HUD movie answers key art and runs by time.
+    /// The HUD coordinator holds its world weakly, so the test keeps it.
+    private struct StartedHUD {
+        let hud: HUDCoordinator
+        let port: FakeRendererPort
+        let world: FakeSWFLayerWorld
+        let runtime: SWFMovieRuntime
+    }
+
+    private func startedHUD() throws -> StartedHUD {
+        let port = try #require(FakeRendererPort())
+        let harness = try HUDMovieBridgeTests.makeRuntime()
+        port.swfHUDRuntime = harness.runtime
+        let world = FakeSWFLayerWorld(renderer: port)
+        let hud = try HUDCoordinator(movies: ImmediateMovies(), world: world)
+        hud.buttonName = { event, gamepad in gamepad ? nil : "\(event)Art" }
+        hud.start()
+        hud.takeLayer(for: LayerHolder())
+        return StartedHUD(hud: hud, port: port, world: world, runtime: harness.runtime)
+    }
+
+    @Test func theHUDLayerHidesUnderTheTitle() throws {
+        let started = try startedHUD()
+        started.hud.setUnderTitle(true)
+        #expect(started.port.swfHUDHidden)
+        started.hud.setUnderTitle(false)
+        #expect(!started.port.swfHUDHidden)
+    }
+
+    @Test func aHUDHintAsksForTheKeyArt() throws {
+        let started = try startedHUD()
+        let art = started.runtime.callHost("GetButtonFromUserEvent", arguments: [.string("Look")])
+        #expect(art == .string("LookArt"))
+    }
+
+    @Test func theHUDMovieRunsItsOwnTimeline() throws {
+        let started = try startedHUD()
+        let before = started.runtime.tickCount
+        started.hud.tick(now: 0)
+        started.hud.tick(now: 1)
+        // One second is many movie frames, but one update moves at most 1/24 s.
+        #expect(started.runtime.tickCount > before)
+    }
+
     @Test func aHUDWithoutAMovieLoaderFailsThroughThePort() throws {
         let port = try #require(FakeRendererPort())
         let world = FakeSWFLayerWorld(renderer: port)

@@ -107,10 +107,14 @@ public final class FakeRendererPort: RendererPort {
     }
 
     public func setSWFHUD(
-        _ scene: SWFMovieScene?, prepare _: ((SWFMovieRuntime) -> Void)?
+        _ scene: SWFMovieScene?, prepare: ((SWFMovieRuntime) -> Void)?
     ) throws -> SWFMovieRuntime? {
         swfHUDScenes.append(scene)
-        return scene == nil ? nil : swfHUDRuntime
+        guard scene != nil else { return nil }
+        if let swfHUDRuntime {
+            prepare?(swfHUDRuntime)
+        }
+        return swfHUDRuntime
     }
 
     public func updateSWFHUD(_ body: (SWFMovieRuntime) -> Void) throws {

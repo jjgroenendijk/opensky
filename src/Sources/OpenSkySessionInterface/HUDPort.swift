@@ -13,6 +13,8 @@ public protocol HUDPort: AnyObject, MenuLayerOwner {
     func publishMeters(_ meters: ActorValues, enemy: HUDEnemyHealth?)
     func setCartMode(_ enabled: Bool)
     func setCovered(_ covered: Bool)
+    var isUnderTitle: Bool { get }
+    func setUnderTitle(_ underTitle: Bool)
     func setHelpMessage(_ text: String?)
     func showNotification(_ text: String)
     var shownBigNotices: [HUDBigNotice] { get }

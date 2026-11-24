@@ -141,6 +141,7 @@ struct MenuFrameTick {
         }
         game.menuMode.repeatHeldDirection(now: now)
         game.movies.tick(now: now)
+        game.hud.setUnderTitle(game.titleMenu.isOpen || game.titleSequence.isShown)
         game.hud.tick(now: now)
         game.titleSequence.tick(now: now)
         game.titleMenu.tick(now: now)
