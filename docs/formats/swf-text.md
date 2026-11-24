@@ -111,8 +111,10 @@ vanilla file shows:
   on them.
 - `#` starts a comment to the end of the line, outside quotes. Blank lines are ignored.
 
-Other lines, such as `mapdefault` and `validNameChars`, are kept and reported as not
-understood.
+- `validNameChars <characters>` lists the characters a typed name may use: everything after the
+  keyword to the end of the line, read as written, quotes and spaces included.
+
+Other lines, such as `mapdefault`, are kept and reported as not understood.
 
 To resolve an alias, OpenSky finds its `map` line, then looks for a font with that name in
 the font libraries: exact match first, then without regard to case. It is not known whether

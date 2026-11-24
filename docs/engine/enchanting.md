@@ -22,6 +22,7 @@ apparel and spends a filled soul gem. A made enchantment then acts like any othe
   every formula below.
 - UESP "Skyrim:Leveling" (<https://en.uesp.net/wiki/Skyrim:Leveling>), for the skill experience.
 - The install's perk records, read with `openskycli record`, for the entry points.
+- A clean-room read of `SkyrimSE.exe` on 2026-11-24, for the check on a typed name.
 
 ## Disenchanting
 
@@ -78,14 +79,10 @@ costs:
 charges per use = 3 * (base enchantment cost)^1.1 * (1 - sqrt(skill/200))
 ```
 
-The costs of two bases add up. The skill term is capped below 200, where a use would cost nothing.
-UESP says the charge per use is "calculated at the moment of the usage". So a made enchantment keeps
-its cost without the skill term, and each hit applies the wielder's Enchanting at that moment. Raising
-Enchanting after making a weapon lowers its cost per hit.
-"If the soul is so small that the Number of Uses cannot reach 1", the power drops until one use
-costs the whole soul: a use at power share `s` costs `s^1.1` of the full cost, so
-`s = (soul / full cost)^(1/1.1)`. The game also has a slider to choose a lower magnitude. OpenSky
-always uses the highest magnitude the soul allows.
+The costs of two bases add up before the power of 1.1. The skill term is capped below 200,
+where a use would cost nothing. UESP says the charge per use is "calculated at the moment of the
+usage", but the game stores the cost with the skill of the moment of making, as the next section
+says. OpenSky follows the game.
 
 ## The magnitude slider in the game
 
@@ -187,16 +184,22 @@ second key makes the item. Without an item, an enchantment, and a gem it shows
 and an empty gem `sEnchantInsufficientCharge`. Otherwise it asks `sEnchantItem` and makes the
 item on Yes.
 
+Choosing a weapon base with a weapon chosen opens the movie's magnitude slider when the
+slider applies: OpenSky calls `ShowSlider(maximum, 1, value, step)` on the menu. The movie calls
+`CalculateCharge([value])` as the slider moves, and `SliderClose([value, accepted])` when it
+closes. A cancel keeps the value from before. The readout shows the magnitude and the uses.
+
 With a full choice, the third key opens the [name field](/engine/text-entry.md) titled by the
 `sEnterItemName` button text. The name takes at most 32 characters, the PC limit on
 [UESP](https://en.uesp.net/wiki/Skyrim:Enchanting). Without a name, the made enchantment is named
-after its bases, joined by ` + `.
+after its bases, joined by ` + `. A typed name goes on the made [copy](/engine/item-copies.md),
+and the enchantment keeps the names of its bases.
 
-## Where OpenSky differs
-
-- The magnitude slider is not modelled: a weapon always gets the highest magnitude the soul allows.
-  The game keeps the full maximum for any soul, and stores the per-use cost with the skill term of
-  the moment of making, where OpenSky applies the wielder's skill at each hit.
-- A new name from the enchanter names the enchantment only. The game also shows it in the
-  inventory and favourites menus; OpenSky shows one inventory row per item, not per copy, so the
-  row keeps the item's own name.
+The game checks a typed name only against a list of allowed characters. There is no word
+filter on PC. The list is the rest of the `validNameChars` line in the interface font
+configuration ([SWF text](/formats/swf-text.md#fontconfigtxt)). Every character of the name must
+be in the list, matched exactly and with case. An empty name fails. A name that fails is dropped
+with no message: the field closes and the item keeps the name it had, the made one or an earlier
+typed one. A cancel keeps it too. The game uses the same check for the character name in the race
+menu. With the Japanese or Chinese language, the game also takes characters in fixed code-point
+ranges; OpenSky does not, because those ranges were not read.

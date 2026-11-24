@@ -110,22 +110,22 @@ rebuild picks up equipment changes ([runtime state](/engine/runtime-state.md)).
 
 ## Carried items
 
-An NPC also equips items it carries in its `CNTO` list, beside its outfit. The game picks the
-best item of each kind it carries
+An NPC also holds a weapon it carries in its `CNTO` list, beside its outfit. The game picks the
+best weapon it carries
 ([UESP Skyrim:Followers](https://en.uesp.net/wiki/Skyrim:Followers#Follower_Equipment)).
 OpenSky reads "best" as the highest WEAP base damage or ARMO armour rating:
 
-1. One weapon that fits the hands the outfit leaves free. A shield in the outfit leaves room
-   for a one-handed weapon only. The weapon with the highest damage times its combat style
-   multiplier wins: the `CSGD` Equipment Score Mults for melee, ranged, and staff
-   ([CK wiki Combat Style](https://ck.uesp.net/wiki/Combat_Style)). Faendal's
+1. One weapon that fits the hands the outfit leaves free. A shield in the outfit leaves room for a
+   one-handed weapon only. The weapon with the highest damage times its speed, a bow or crossbow at
+   a fifth, times its combat style multiplier wins: the `CSGD` Equipment Score Mults for melee,
+   ranged, and staff ([CK wiki Combat Style](https://ck.uesp.net/wiki/Combat_Style)). Faendal's
    `csHumanMissile` has melee 0.83 and ranged 3.2, so he holds his hunting bow, not his dagger.
    An NPC with no combat style takes a melee weapon before a bow, crossbow, or staff.
    Hand-to-hand is never picked.
 2. A bow brings its best carried arrows, and a crossbow its best bolts (`AMMO` damage). Arrows
    without a bow stay carried.
-3. Then each armour piece, best first, whose slots and hands are still free. A shield comes
-   with a one-handed weapon, not with a two-handed one or a bow.
+3. Carried armour stays in the pack. Only a teammate wears it, after a trade with the player
+   ([what an NPC wears](/engine/inventory-equipment.md#what-an-npc-wears)).
 
 The inventory baseline equips the same picks, so combat and the inventory menu see the
 weapon that is drawn. Lydia (`HousecarlWhiterun`) carries a `SteelSword`, so she wears it at

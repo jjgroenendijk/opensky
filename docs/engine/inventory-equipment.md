@@ -97,6 +97,37 @@ The skips for one actor are found by filtering the loaded cells' lists by the pr
 with the trailing space. A cell has few actors, and a rebuild rewrites the whole list. A separate
 map per actor would be a second structure to keep in step, for no gain.
 
+## What an NPC wears
+
+One routine decides what an NPC wears. It takes off what the NPC wears, except items a script
+locked on, then puts on the items of its current outfit. It adds an outfit item the NPC no longer
+holds. Then two picks follow:
+
+- Armour, for a teammate only: for each body slot, low bit first, the held armour with the
+  highest armour rating for that actor, its temper, skill, and perks included. Clothing scores 0.
+  The score starts below any rating, and only a strictly higher one wins. On a tie the item held
+  in the larger count wins, then the first one found. A later slot's pick can take off an earlier
+  one it overlaps. Enchantment and value do not count.
+- A weapon, for every NPC: the score is the weapon's damage for that actor, times its speed, times
+  1.0 for melee or 0.2 for a bow or crossbow, times the combat style's melee or ranged weight. A
+  weapon only the player may use, or one the race cannot use, is skipped. The score starts at 0,
+  and only a strictly higher one wins; on a tie the larger count wins. Of two two-handed kinds the
+  higher one stays. One weapon is worn, and a bow or crossbow also takes the first matching
+  ammunition found. A dead or dying NPC, or one whose package puts weapons away or sleeps in a
+  bed, skips this step.
+
+The routine runs when the NPC's 3D is built fresh with nothing worn, such as after a cell change or
+a load. It runs when armour or a weapon that is not bound moves between the player and a teammate,
+either way. It also runs on a reset or respawn, when a script changes the outfit, and when a worn
+item is removed. It has no timer, and the start of combat does not run it. So an NPC that is not a
+teammate never wears armour it is given, and a dismissed follower goes back to its outfit at its
+next run. This comes from a clean-room read of `SkyrimSE.exe` on 2026-11-24.
+
+OpenSky runs the routine after a trade with a follower, and builds every NPC's starting set from it:
+its outfit and its best carried weapon ([carried items](/engine/actor-resolution.md#carried-items)).
+The armour rating is the record's own, without temper, skill, or perks. The weapon's damage is the
+record's base damage. A tie on either pick keeps the first item found, whatever the counts.
+
 ## Budgets
 
 The loop adds no budget of its own. The cell build and fly budgets check a cell whose actor wears
