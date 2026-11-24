@@ -13,6 +13,10 @@ nonisolated public final class FakeCinematicCameraPort: CinematicCameraPort {
     public var startShakeResult = false
     public var tickCalls: [Double] = []
     public var tickResult: CinematicFrame?
+    public var playRangedKillCamCalls: [(id: Int, target: ReferenceKey)] = []
+    public var playRangedKillCamResult = false
+    public var killCamWasDecidedCalls: [ReferenceKey] = []
+    public var killCamWasDecidedResult = false
 
     public init() {}
 }
@@ -84,5 +88,16 @@ nonisolated extension FakeCinematicCameraPort {
             preconditionFailure("FakeCinematicCameraPort.tick has no result")
         }
         return tickResult
+    }
+
+    @discardableResult
+    public func playRangedKillCam(projectile id: Int, target: ReferenceKey) -> Bool {
+        playRangedKillCamCalls.append((id: id, target: target))
+        return playRangedKillCamResult
+    }
+
+    public func killCamWasDecided(for target: ReferenceKey) -> Bool {
+        killCamWasDecidedCalls.append(target)
+        return killCamWasDecidedResult
     }
 }

@@ -23,6 +23,31 @@ public protocol CinematicCameraWorld: AnyObject {
     var playerPosition: SIMD3<Float>? { get }
     @discardableResult
     func startImageSpaceModifier(_ key: ReferenceKey) -> Bool
+    /// Where a projectile in flight is and faces; nil once its impact is resolved.
+    func cinematicProjectileAnchor(_ id: Int) -> CinematicAnchor?
+    func cinematicTargetIsDead(_ key: ReferenceKey) -> Bool
+}
+
+extension CinematicCameraWorld {
+    public func cinematicProjectileAnchor(_: Int) -> CinematicAnchor? {
+        nil
+    }
+
+    public func cinematicTargetIsDead(_: ReferenceKey) -> Bool {
+        true
+    }
+}
+
+/// The time limits of a kill cam that follows a projectile.
+nonisolated public enum RangedKillCamLimits {
+    public static let longestSeconds = 20.0
+    /// While the target still lives, as when the shot misses after all.
+    public static let longestWhileAliveSeconds = 6.0
+
+    /// Whether a shot `elapsed` real seconds old must end.
+    public static func ends(elapsed: Double, targetIsDead: Bool) -> Bool {
+        elapsed >= longestSeconds || (!targetIsDead && elapsed >= longestWhileAliveSeconds)
+    }
 }
 
 public final class CinematicCameraCoordinator {
@@ -37,6 +62,12 @@ public final class CinematicCameraCoordinator {
     public private(set) var shake: CameraShake?
     public private(set) var time: Double = 0
     public private(set) var playedCount = 0
+    /// The projectile a ranged kill cam follows, until its impact.
+    public private(set) var projectile: Int?
+    /// Targets whose kill cam was decided at a release, so their death starts no second one.
+    public private(set) var rangedTargets: Set<ReferenceKey> = []
+    private var shotSeconds: Double = 0
+    private var isRangedShot = false
     private var random = ConditionRandom()
     weak let world: (any CinematicCameraWorld)?
 
@@ -80,12 +111,33 @@ public final class CinematicCameraCoordinator {
         }
         self.attacker = attacker
         self.target = target
+        projectile = nil
+        shotSeconds = 0
+        isRangedShot = false
         player = CinematicShotPlayer(stages: stages)
         playedCount += 1
         startStageEffects()
         return note(
             "playing \(stages.count) shots from \(lastSelection.path?.record.editorID ?? "a path")"
         )
+    }
+
+    /// The release check passed for the player's shot `projectile`, which will kill `target`:
+    /// the kill cam follows the projectile. The check already did the odds and the enemy count.
+    @discardableResult
+    public func playRangedKillCam(projectile id: Int, target: ReferenceKey) -> Bool {
+        rangedTargets.insert(target)
+        guard !isPlaying else { return note("a kill cam already plays") }
+        guard playKillCam(attacker: .player, target: target, remainingHostiles: 0, force: true)
+        else { return false }
+        projectile = id
+        isRangedShot = true
+        return true
+    }
+
+    /// Whether a death should leave its kill cam to the one its release decided.
+    public func killCamWasDecided(for target: ReferenceKey) -> Bool {
+        rangedTargets.remove(target) != nil
     }
 
     private func pathCheck(
@@ -122,8 +174,14 @@ public final class CinematicCameraCoordinator {
         if var current = player, !current.isFinished {
             let before = current.stageIndex
             current.advance(realSeconds: realSeconds)
+            shotSeconds += max(0, realSeconds)
+            if let id = projectile, world?.cinematicProjectileAnchor(id) == nil {
+                // The impact is resolved: the fly stage ends and the camera leaves the shot.
+                projectile = nil
+                current.endStageEarly()
+            }
             player = current
-            if current.isFinished {
+            if current.isFinished || rangedShotEnds() {
                 finish()
             } else {
                 if current.stageIndex != before {
@@ -148,7 +206,15 @@ public final class CinematicCameraCoordinator {
             let from = world.cinematicAnchor(of: attacker) else { return nil }
         return CinematicAnchors(
             attacker: from,
-            target: target.flatMap { world.cinematicAnchor(of: $0) }
+            target: target.flatMap { world.cinematicAnchor(of: $0) },
+            projectile: projectile.flatMap { world.cinematicProjectileAnchor($0) }
+        )
+    }
+
+    private func rangedShotEnds() -> Bool {
+        guard isRangedShot, let target else { return false }
+        return RangedKillCamLimits.ends(
+            elapsed: shotSeconds, targetIsDead: world?.cinematicTargetIsDead(target) ?? true
         )
     }
 
@@ -165,6 +231,9 @@ public final class CinematicCameraCoordinator {
         player = nil
         attacker = nil
         target = nil
+        projectile = nil
+        shotSeconds = 0
+        isRangedShot = false
     }
 
     @discardableResult

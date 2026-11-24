@@ -63,7 +63,8 @@ public final class CinematicCameraWorldAdapter {
     public func actorDied(_ key: ReferenceKey) {
         // A kill move started its own kill cam, which keeps playing.
         guard
-            key != .player, !game.cinematicCamera.isPlaying,
+            key != .player, !game.cinematicCamera.killCamWasDecided(for: key),
+            !game.cinematicCamera.isPlaying,
             game.factions.hostility(of: key) == .hostile
         else { return }
         let remaining = game.actorWorld.combatActors().filter {
@@ -103,6 +104,21 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
 
     public func cinematicAnchor(of key: ReferenceKey) -> CinematicAnchor? {
         anchors.cinematicAnchor(of: key)
+    }
+
+    /// Behind the shot, facing along its flight.
+    public func cinematicProjectileAnchor(_ id: Int) -> CinematicAnchor? {
+        guard let shot = game.combat.liveProjectiles.first(where: { $0.id == id }) else {
+            return nil
+        }
+        let velocity = shot.state.velocity
+        return CinematicAnchor(
+            position: shot.position, yaw: atan2(-velocity.x, velocity.y), focusHeight: 0
+        )
+    }
+
+    public func cinematicTargetIsDead(_ key: ReferenceKey) -> Bool {
+        game.actorWorld.combatActor(key: key)?.isDead ?? true
     }
 
     public var playerPosition: SIMD3<Float>? {

@@ -96,10 +96,15 @@ nonisolated public struct CinematicStage: Sendable {
 nonisolated enum CinematicTimeScale {
     static let minimum: Float = 0.01
 
+    /// A player or target multiplier of 0 or less falls back to these.
+    static let playerFallback: Float = 6
+    static let targetFallback: Float = 1
+
     static func worldScale(_ multipliers: SIMD3<Float>?) -> Float {
         guard let multipliers else { return 1 }
-        let actors = min(multipliers.x, multipliers.y)
-        let scale = multipliers.z * (actors > 0 ? actors : 1)
+        let player = multipliers.x > 0 ? multipliers.x : playerFallback
+        let target = multipliers.y > 0 ? multipliers.y : targetFallback
+        let scale = multipliers.z * min(player, target)
         guard scale.isFinite, scale > 0 else { return 1 }
         return min(max(scale, minimum), 1)
     }

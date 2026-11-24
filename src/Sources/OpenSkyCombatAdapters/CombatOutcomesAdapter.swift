@@ -73,6 +73,8 @@ extension CombatOutcomesAdapter {
                 game.storyWorld.commentOnPlayer(.playerAction(use == .swing ? "SWMW" : "FIWE"))
             case .drewBlood, .showDefaultBlood, .muzzleFlash: showImpact(command)
             case .incrementStat, .playerUsedWeapon: countStat(command)
+            case let .rangedKillCam(projectile, target):
+                impactEffects.playRangedKillCam(projectile: projectile, target: target)
             case let .playerBowShot(weapon, ammunition, power):
                 game.scripts.runtime?.queuePlayerBowShot(
                     weapon: weapon, ammunition: ammunition, power: power,

@@ -23,6 +23,8 @@ nonisolated public enum CombatCommand: Equatable, Sendable {
     case showDefaultBlood(on: ReferenceKey, at: SIMD3<Float>, melee: Bool)
     /// A projectile left with a muzzle flash: its `NAM1` model and light at the launch.
     case muzzleFlash(ProjectileVisuals, at: SIMD3<Float>, along: SIMD3<Float>)
+    /// The player's shot `projectile` will kill `target`, and a kill cam follows it.
+    case rangedKillCam(projectile: Int, target: ReferenceKey)
     /// The player loosed an arrow; `power` below 1 is a dud.
     case playerBowShot(weapon: FormID?, ammunition: FormID?, power: Float)
     /// Raises the misc stat with this name by one.

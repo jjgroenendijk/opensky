@@ -143,6 +143,11 @@ extension CombatImpactEffectsAdapter {
         return true
     }
 
+    /// The release check passed: the kill cam follows the shot.
+    public func playRangedKillCam(projectile: Int, target: ReferenceKey) {
+        game.cinematicCamera.playRangedKillCam(projectile: projectile, target: target)
+    }
+
     public func isInKillMove(_ key: ReferenceKey) -> Bool {
         game.idleWorld.idles.pairedAnimation(of: key)?.isKillMove == true
     }
