@@ -116,14 +116,7 @@ nonisolated enum CrimeAlarmRules {
 
     /// The witness's reaction to the criminal from its relationship rank, then its factions.
     static func reaction(relationship: ActorReaction?, faction: ActorReaction?) -> ActorReaction {
-        let start = relationship ?? .neutral
-        guard start != .ally, let faction else { return start }
-        return switch start {
-        case .neutral: faction
-        case .enemy: faction == .neutral ? .enemy : faction
-        case .friend: faction == .ally ? .ally : .friend
-        case .ally: .ally
-        }
+        ActorReaction.merged(relationship ?? .neutral, faction) ?? .neutral
     }
 
     /// Whether the witness is hostile to the criminal. `criminalTargetsWitness`: an NPC
