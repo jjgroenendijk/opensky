@@ -56,12 +56,50 @@ unless one of them is Very Aggressive, which is how strangers are treated too.
 A raw value outside either named range gives no reaction, not a guessed one, and the relation index
 counts the `XNAM` entries it dropped. The vanilla install has none.
 
-When an actor's memberships disagree about the same target, the most hostile one wins. That is
-OpenSky's rule: no source says what an actor in both an allied and an enemy faction thinks. Leaning
-to the enemy reading keeps a quest faction that marks someone an enemy from being cancelled by an
-unrelated friendly membership, which would be invisible in play. Both directions of a pair are read,
-because vanilla does not always write the mirror `XNAM`, and a relation that names the pair at all
-is an opinion about it.
+## How the game combines rank and factions
+
+In the game the relationship rank and the faction relations are not separate rows. The rank gives a
+start value, and every faction pair then merges into it. The friendliest reaction that is not
+Neutral wins:
+
+```mermaid
+flowchart TD
+    A[Rank of the observer toward the target<br/>none: Acquaintance] --> B{Confidant or higher?}
+    B -- yes --> ALLY[Ally, factions not read]
+    B -- no --> C["Start value: Friend for Friend,<br/>Enemy for Enemy or Archnemesis,<br/>else Neutral"]
+    C --> D[Each pair: a faction of the observer,<br/>a faction of the target]
+    D --> E["The observer's faction XNAM entry<br/>for the target's faction<br/>missing: Neutral"]
+    E --> F{Merge}
+    F --> G[Neutral is replaced by anything]
+    F --> H[Enemy is replaced by Friend or Ally]
+    F --> I[Friend is replaced only by Ally]
+    F --> J[Ally ends the loop]
+```
+
+- A membership with rank -1 takes no part.
+- Only one direction is read: the observer's factions' relations toward the target's factions. The
+  target's relations back are not read.
+- So one Friend pair beats any number of Enemy pairs, and a faction Friend also beats an Enemy that
+  came from the rank.
+- The same combined reaction feeds the aggression test below and Assistance: "helps allies" helps an
+  Ally only, "helps friends and allies" an Ally or a Friend.
+- Toward the player, a crime faction or a faction that marks the player as an enemy makes the
+  observer regard the player as an Enemy before the rank and factions are read.
+
+Vanilla depends on this rule. At Helgen, the Imperial soldiers and the Stormcloak prisoners are in
+`CWImperialFaction` and `CWSonsFaction`, which are enemies, and both sides are also in
+`MQ101TemporaryFriendsFaction`, whose only relation is Friend to itself. The shared Friend pair makes
+them Friends, so nobody fights during the execution. `MQ103TemporaryFriendsFaction` and
+`MQ306TemporaryFriendsFaction` work the same way.
+
+Worked example: an Imperial Soldier regards a Stormcloak prisoner. No `RELA` record names them, so
+the start value is Neutral. `CWImperialFaction` toward `CWSonsFaction` gives Enemy, which replaces
+Neutral. `MQ101TemporaryFriendsFaction` toward itself gives Friend, which replaces Enemy. The result
+is Friend, and an Aggressive soldier attacks only an Enemy.
+
+OpenSky differs: when memberships disagree, the most hostile reaction wins, and both directions of
+a pair are read. With the new NPC-against-NPC combat this makes the Helgen soldiers attack the
+prisoners, and the execution scene stops.
 
 A script-set rank wins over the written one inside row 3. That is what `Actor.SetRelationshipRank`
 means, and it is the only way a relationship with the player can count: the player has no `NPC_`

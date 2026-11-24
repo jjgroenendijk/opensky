@@ -109,6 +109,11 @@ stack as `hud.modes`.
 
 ## HUD under menus
 
+The main menu is the exception to what the HUD shows, not to whether it is open. When the game
+closes all menus, for example on a quit to the main menu, it keeps the HUD open, and the main menu
+does not hide the menus below it. Even so, the title screen shows no compass, crosshair, or meters.
+What hides them there, and what shows them again when a game starts or loads, is not known yet.
+
 The game keeps drawing the HUD under every menu. No menu closes it. A menu changes only the HUD
 mode: when it opens it puts its mode on the movie's stack through `ShowElements(mode, true)`, and
 when it closes it takes the mode off. The movie decides which parts each mode shows. Mode changes
