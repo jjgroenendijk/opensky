@@ -2,6 +2,7 @@
 
 public import OpenSkyCombatInterface
 public import OpenSkyConditions
+public import OpenSkyCrimeInterface
 public import OpenSkyDialogueInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
@@ -95,6 +96,12 @@ nonisolated public final class FakePapyrusWorldStateBridgePort: PapyrusWorldStat
     public var silentDeath: ReferenceKey?
     public var spawnReferenceCalls: [(base: ReferenceKey, anchor: ReferenceKey)] = []
     public var spawnReferenceResult: ReferenceKey?
+    public var damageDestructibleCalls: [DamageDestructibleCall] = []
+    public var damageDestructibleResult = false
+    public var destructionHealthLeftCalls: [ReferenceKey] = []
+    public var destructionHealthLeftResult: Float?
+    public var takeDestructionChangesCallCount = 0
+    public var takeDestructionChangesResult: [DestructionStageChange] = []
     public var startActorCombatCalls: [(key: ReferenceKey, target: ReferenceKey)] = []
     public var startActorCombatResult = false
     public var stopActorCombatCalls: [ReferenceKey] = []
@@ -102,6 +109,7 @@ nonisolated public final class FakePapyrusWorldStateBridgePort: PapyrusWorldStat
     public var stopQuestCalls: [ReferenceKey] = []
     public var stopQuestError: (any Error)?
     public var updateScriptedStateCalls: [ReferenceKey] = []
+    public var setScriptedOwnerCalls: [(owner: ReferenceOwner, key: ReferenceKey)] = []
     public var writeCalls: [(component: WorldStateComponentValue, key: ReferenceKey)] = []
     public var writeResult = false
 
@@ -221,6 +229,20 @@ extension FakePapyrusWorldStateBridgePort {
                 "key: " + String(describing: key),
                 "index: " + String(describing: index),
                 "activation: " + String(describing: activation)
+            ].joined(separator: ", ")
+        }
+    }
+
+    nonisolated public struct DamageDestructibleCall: CustomStringConvertible {
+        public let key: ReferenceKey
+        public let amount: Float
+        public let forced: Bool
+
+        public var description: String {
+            [
+                "key: " + String(describing: key),
+                "amount: " + String(describing: amount),
+                "forced: " + String(describing: forced)
             ].joined(separator: ", ")
         }
     }
