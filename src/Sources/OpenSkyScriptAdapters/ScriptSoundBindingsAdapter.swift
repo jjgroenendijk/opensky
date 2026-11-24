@@ -23,6 +23,7 @@ import OpenSkyWorldState
 /// What `ScriptSoundBindingsAdapter` reads from the session.
 @MainActor
 public protocol ScriptSoundBindingsHost: AnyObject, SendableMetatype {
+    var actorWorld: any ActorWorldPort { get }
     var audio: any AudioPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var scripts: any ScriptPort { get }

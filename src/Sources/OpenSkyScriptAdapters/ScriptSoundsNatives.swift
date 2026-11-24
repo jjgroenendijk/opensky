@@ -6,6 +6,7 @@ import OpenSkyActorPresentation
 import OpenSkyAgentControl
 import OpenSkyAIPackages
 import OpenSkyCells
+import OpenSkyCombatInterface
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -26,10 +27,16 @@ extension ScriptSoundBindingsAdapter {
     /// Fills these natives as the bridge is built.
     public func fillSounds(_ hooks: inout PapyrusGameNatives) {
         hooks.playSound = { [weak game = self.game] sound, source, token in
+            // The live pose first: the player, the usual source of a 2D sound such as the
+            // opening ride's cart loop, has no placed reference.
             guard
                 let game, let director = game.gameSession?.soundDirector,
-                let id = game.scripts.bridge?.localFormID(of: sound),
-                let position = game.scripts.bridge?.referenceState(for: source)?.transform.position
+                let bridge = game.scripts.bridge,
+                let id = bridge.localFormID(of: sound),
+                let position = (source == .player
+                    ? game.gameSession?.locomotion.status.feetPosition
+                    : game.actorWorld.combatActor(key: source)?.feet)
+                ?? bridge.referenceState(for: source)?.transform.position
             else { return 0 }
             return director.playScriptSound(formID: id, at: position, waitToken: token)
         }
