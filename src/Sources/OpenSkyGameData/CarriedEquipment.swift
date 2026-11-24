@@ -29,11 +29,16 @@ nonisolated public struct WeaponPreference: Equatable, Sendable {
         )
     }
 
+    /// Damage times speed, a bow or crossbow at a fifth, times the style's weight.
+    /// A ranged weapon's speed counts at this share of a melee weapon's.
+    static let rangedSpeedFactor: Float = 0.2
+
     func score(_ item: EquippableItem) -> Float {
-        switch item.animationType {
-        case .bow, .crossbow: item.rating * ranged
-        case .staff: item.rating * staff
-        default: item.rating * melee
+        let base = item.rating * item.speed
+        return switch item.animationType {
+        case .bow, .crossbow: base * Self.rangedSpeedFactor * ranged
+        case .staff: base * staff
+        default: base * melee
         }
     }
 }

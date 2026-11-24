@@ -246,6 +246,8 @@ public protocol InventoryTeammateTradesPort {
         count: Int32,
         teammate: InventoryHolder
     ) -> TeammateTradeText?
+    /// Dresses `teammate` again after `item` moved between it and the player.
+    @discardableResult func redress(_ teammate: InventoryHolder, after item: FormID) -> Bool
 }
 
 /// The default arguments a protocol requirement cannot carry.

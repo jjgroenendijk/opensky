@@ -12,6 +12,8 @@ nonisolated public final class FakeInventoryTeammateTradesPort: InventoryTeammat
     public var teammateOutfitResult: [FormID: Int32] = [:]
     public var teammateRefusalCalls: [TeammateRefusalCall] = []
     public var teammateRefusalResult: TeammateTradeText?
+    public var redressCalls: [(teammate: InventoryHolder, item: FormID)] = []
+    public var redressResult = false
 
     public init() {}
 }
@@ -61,5 +63,11 @@ nonisolated extension FakeInventoryTeammateTradesPort {
             teammate: teammate
         ))
         return teammateRefusalResult
+    }
+
+    @discardableResult
+    public func redress(_ teammate: InventoryHolder, after item: FormID) -> Bool {
+        redressCalls.append((teammate: teammate, item: item))
+        return redressResult
     }
 }

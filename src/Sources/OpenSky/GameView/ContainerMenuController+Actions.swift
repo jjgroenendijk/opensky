@@ -43,6 +43,7 @@ extension ContainerMenuController {
         game.dialogueMenu.close()
         close()
         target(partner.holder, name: partner.name, vendor: partner.vendor, merchant: actor)
+        vendorOwnStock = partner.ownStock
         setMode(.barter)
         open()
         return note(found.line)
@@ -109,16 +110,7 @@ extension ContainerMenuController {
             return
         }
         if pickpocketTarget != nil, mode == .container {
-            let outcome = deals.pickpocket(entry, count: count, side: model.side, target: container)
-            note(outcome.text)
-            if outcome.result.took, !pickedOpenPockets {
-                pickedOpenPockets = true
-                deals.notePocketsPicked()
-            }
-            if outcome.result.caught {
-                close()
-            }
-            refreshModel()
+            pickpocket(entry, count: count, from: container)
             return
         }
         let transfer: ContainerTransfer = switch (mode, model.side) {
@@ -138,11 +130,15 @@ extension ContainerMenuController {
             return
         }
         do {
-            let deal = ContainerDeal(
+            var deal = ContainerDeal(
                 transfer: transfer, move: (entry, count), container: container,
                 vendor: vendor, merchant: merchant
             )
+            deal.ownStock = vendorOwnStock
             let reply = try deals.transfer(deal, acceptingLess: acceptingLess)
+            if isTeammateTrade {
+                game.inventory.teammateTrades.redress(container, after: entry.item)
+            }
             if reply.merchantShort {
                 pendingSale = (entry, count)
                 if !showMovieConfirm(reply.text, count: count) {
@@ -154,6 +150,23 @@ extension ContainerMenuController {
             }
         } catch {
             note("\(model.transferLabel) refused: \(String(describing: error))")
+        }
+        refreshModel()
+    }
+
+    private func pickpocket(
+        _ entry: InventoryMenuEntry,
+        count: Int32,
+        from container: InventoryHolder
+    ) {
+        let outcome = deals.pickpocket(entry, count: count, side: model.side, target: container)
+        note(outcome.text)
+        if outcome.result.took, !pickedOpenPockets {
+            pickedOpenPockets = true
+            deals.notePocketsPicked()
+        }
+        if outcome.result.caught {
+            close()
         }
         refreshModel()
     }
@@ -210,11 +223,12 @@ struct ContainerMenuDeals {
         case let .failure(.notTrading(factionName, reason)):
             return (nil, "\(factionName) is not trading: \(reason.text).")
         }
-        let partner = ContainerDealPartner(
+        var partner = ContainerDealPartner(
             holder: counterparty.holder,
             name: game.dialogueWorld.speakerLabel(for: actor),
             vendor: counterparty.vendor
         )
+        partner.ownStock = counterparty.ownStock
         return (partner, "Bartering with \(counterparty.vendor.factionName).")
     }
 
@@ -291,6 +305,11 @@ struct ContainerMenuDeals {
 
     /// Equips or unequips the row's item on the player, and returns the outcome line.
     func toggleEquip(_ entry: InventoryMenuEntry) -> String {
+        guard let inventory = game.inventory.runtime?.inventory else { return equipToggle(entry) }
+        return inventory.acting(on: entry.copy, of: entry.item, in: .player) { equipToggle(entry) }
+    }
+
+    private func equipToggle(_ entry: InventoryMenuEntry) -> String {
         entry.isEquipped
             ? game.inventoryWorld.run(game.inventory.equipmentChanges.unequipItem(
                 entry.item,
@@ -314,8 +333,15 @@ struct ContainerMenuDeals {
         request.count = deal.move.count
         request.merchant = deal.merchant
         request.acceptingLess = acceptingLess
+        request.ownStock = deal.ownStock
         let trade = game.inventory.containerTrade
-        let outcome = try trade.transfer(request)
+        let source = deal.transfer == .take || deal.transfer == .buy ? deal.container : .player
+        let entry = deal.move.entry
+        let outcome = try game.inventory.runtime.map { runtime in
+            try runtime.inventory.acting(on: entry.copy, of: entry.item, in: source) {
+                try trade.transfer(request)
+            }
+        } ?? trade.transfer(request)
         let text = outcome.text(texts: trade.tradeTexts)
         if case .merchantShort = outcome {
             return (text, true)
@@ -337,6 +363,8 @@ struct ContainerDealPartner {
     let holder: InventoryHolder
     let name: String
     var vendor: Vendor?
+    /// A chest vendor's own inventory, which trades beside the chest.
+    var ownStock: InventoryHolder?
 }
 
 /// One move the container menu asks for: what, how many, with whom, and for barter the
@@ -347,4 +375,5 @@ struct ContainerDeal {
     let container: InventoryHolder
     let vendor: Vendor?
     let merchant: ReferenceKey?
+    var ownStock: InventoryHolder?
 }

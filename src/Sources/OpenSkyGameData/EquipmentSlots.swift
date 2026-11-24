@@ -75,6 +75,8 @@ nonisolated public struct EquippableItem: Equatable, Sendable {
     /// How good the item is when an NPC picks what to wear: the WEAP or AMMO
     /// base damage, or the ARMO armour rating.
     public let rating: Float
+    /// WEAP DNAM speed, which scales a weapon's score when an NPC picks one; 1 otherwise.
+    public var speed: Float = 1
 
     public init(
         occupancy: EquipmentOccupancy,
@@ -160,12 +162,14 @@ nonisolated public struct EquipmentCatalog: Sendable {
             if resolved == nil {
                 unresolved += 1
             }
-            items[id] = EquippableItem(
+            var entry = EquippableItem(
                 occupancy: EquipmentOccupancy(hands: resolved ?? defaultWeaponHands),
                 modelPath: weapon.fields.modelPath,
                 animationType: weapon.animationType,
                 rating: Float(weapon.damage)
             )
+            entry.speed = weapon.speed.isFinite && weapon.speed > 0 ? weapon.speed : 1
+            items[id] = entry
         }
         let ammunition = loadOrder.indexRecords(of: "AMMO", skipped: &skipped) {
             try Ammunition(record: $0, localized: $1)

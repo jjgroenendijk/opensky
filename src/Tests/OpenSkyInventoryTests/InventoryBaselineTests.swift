@@ -52,14 +52,14 @@ struct InventoryBaselineTests {
         #expect(try Fixture.resolver().skippedRecords.isEmpty)
     }
 
-    /// An actor carries its `CNTO` items, leveled entries rolled at its level. With
-    /// no outfit, the carried cuirass fills the free body slot; the gold is never worn.
-    @Test func anActorWearsCarriedArmourInAFreeSlot() throws {
+    /// An actor carries its `CNTO` items, leveled entries rolled at its level. Only a
+    /// teammate wears carried armour, so the carried cuirass stays in the pack.
+    @Test func anActorDoesNotWearCarriedArmour() throws {
         let resolver = try Fixture.resolver()
         let baseline = resolver.baseline(for: .actor(base: Fixture.lootedActor))
         #expect(baseline.count(of: Fixture.gold) == 5)
         #expect(baseline.count(of: Fixture.cuirass) == 1)
-        #expect(baseline.equipped == [Fixture.cuirass])
+        #expect(baseline.equipped.isEmpty)
     }
 
     /// The outfit stays worn and the NPC holds the carried weapon with the higher
