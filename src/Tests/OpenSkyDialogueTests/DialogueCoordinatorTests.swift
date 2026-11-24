@@ -139,6 +139,16 @@ struct DialogueCoordinatorTests {
         #expect(coordinator.selection == selection)
     }
 
+    /// "He'll have nothing else to say when he's done here", so the line ends the talk.
+    @Test func aLineThatLeavesNothingToSayEndsTheConversation() throws {
+        let world = try world()
+        let coordinator = try coordinator(world: world)
+        _ = coordinator.begin(with: speaker)
+        _ = coordinator.choose(FormID(DialogueRuntimeFixture.urgentFirstInfo), speaker: speaker)
+        world.quests = QuestResolution(defaults: .empty)
+        #expect(coordinator.finishResponse(speaker: speaker) == .close)
+    }
+
     @Test func anUnknownResponseIsRefusedWithItsFormID() throws {
         let world = try world()
         let coordinator = try coordinator(world: world)

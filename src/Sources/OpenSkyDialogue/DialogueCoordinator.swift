@@ -161,7 +161,8 @@ public final class DialogueCoordinator {
 
     /// Ends the response being said. Without topic links the speaker offers
     /// what they generally offer, selected again, because a say-once line
-    /// just changed it.
+    /// just changed it. With nothing left to offer the conversation ends
+    /// (<https://ck.uesp.net/wiki/Bethesda_Tutorial_Dialogue>).
     public func finishResponse(speaker: ReferenceKey?) -> DialogueResponseEnd {
         let follow = followUp
         let info = followInfo
@@ -184,7 +185,7 @@ public final class DialogueCoordinator {
         }
         guard let speaker else { return .unchanged }
         selection = runtime.topics(for: speaker)
-        return .topics(selection)
+        return selection.offers.isEmpty ? .close : .topics(selection)
     }
 
     public func endConversation() {
