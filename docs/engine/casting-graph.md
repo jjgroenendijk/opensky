@@ -60,13 +60,14 @@ The right hand of an aimed spell, in order:
 ## A concentration cast
 
 1. The start event is raised, as above.
-2. The charge clip waits for `MRh_SpellRelease_Event`, from the right release action. The action
-   most likely fires when the charge finishes.
+2. The charge clip waits for `MRh_SpellRelease_Event`, from the right release action. The caster
+   sends that action when the charge finishes, without a ready action and without waiting for
+   the button. A spell with no charge time, such as Flames, sends it in the same update as the
+   start event.
 3. The graph enters its loop. Entering the loop raises `MRh_SpellFire_Event`, and the effect starts.
 4. The cast stops when `bWantCastRight` turns false, or on the right interrupt action
-   (`MRh_Equipped_Event`). The graph then raises `CastStop`.
-
-[WARNING] The read is unsure about the order of steps 2 and 4.
+   (`MRh_Equipped_Event`). The graph then raises `CastStop`. Letting go of the button ends the cast
+   this way; it sends no second release.
 
 ## A dual cast
 
@@ -80,6 +81,19 @@ that the actor is dual casting. The events have the prefix `DualMagic_`:
 There is no dual telekinesis event. After the start, the ready and release events use the left
 prefix (`MLh_SpellReady_Event`, `MLh_SpellRelease_Event`), and the clips raise
 `MLh_SpellFire_Event`. The dual concentration clip raises it 0.17 seconds in.
+
+The game holds back the first press while a dual cast is possible. That is when both hands hold
+the same spell, neither hand casts yet, and a perk lets the actor dual cast the spell:
+
+- The first press goes through once its button has been held for more than 0.05 seconds.
+- A press of the other button inside that window starts one dual cast. No single start event is
+  raised.
+- A second press after the window cannot join. The first hand already casts alone, and the second
+  hand starts its own single cast.
+- A tap shorter than the window can start nothing.
+
+A dual cast runs on the left caster only, and both buttons drive it. `ActionDualRelease` holds
+no magic branch; it is only used for a staff bash.
 
 ## NPCs
 

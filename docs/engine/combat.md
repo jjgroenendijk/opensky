@@ -100,6 +100,34 @@ The CK wiki puts it "under the caster's control". The loop calls such an actor a
 - An NPC that casts at an ally or a foe aims at that actor, not at the player.
 - Allies take what is left of the engagement cap after the foes.
 
+## Who an assisting actor fights
+
+Each actor asks one question of each other actor near the player: would it help that actor? The
+`GetShouldHelp` condition function asks the same question
+(<https://ck.uesp.net/wiki/GetShouldHelp>). With A as the helper and B as the actor it helps:
+
+- A helps B when its Assistance is "helps allies" and its reaction to B is ally, or when its
+  Assistance is "helps friends and allies" and the reaction is ally or friend.
+- A never helps a frenzied B, an actor whose Aggression is 3.
+- A follower B counts as the player: A helps B when it would help the player.
+- A follower A helps B when the player would help B, unless the player or A is already one of the
+  opponents of B's fight.
+- A summoned or commanded actor is judged through its owner.
+- A helper with any Morality but "any crime" does not help an actor that started the fight or
+  committed a crime. It still helps when it is itself hostile to one of that actor's opponents.
+  [WARNING] What marks the actor that started the fight is not known.
+
+A asks only while B is alive and in a fight, while both are loaded near the player, and while A
+detects B. No distance is checked. A joins the fight on B's side and takes no target from B. It
+then picks its own target from everyone B's side fights. So it turns against the player only when
+the player is one of B's opponents, and only for that fight; no faction or relationship changes.
+
+A does not join when it would also help one of B's opponents, or when it is hostile to anyone on
+B's side.
+
+A witness to an assault or a murder can help the victim against the attacker. That needs the
+witness to help the victim and not help the attacker. When the attacker is the player, the
+witness also stays angry with the player after the fight.
 ## Starting and stopping from a script
 
 `StartCombat(Actor akTarget)` and `StopCombat()` are `Actor` natives
