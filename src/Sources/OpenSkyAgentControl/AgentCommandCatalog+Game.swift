@@ -31,6 +31,10 @@ nonisolated extension AgentCommandCatalog {
             "The shots in the air, the arrows standing, and how the newest shots ended."
         ),
         command(
+            "state.destruction",
+            "Destructible objects near you, the newest blasts, runes, and the kill cam."
+        ),
+        command(
             "state.assist",
             "Attack tracking, auto-aim, dodges, hit reactions, and AI process levels."
         ),

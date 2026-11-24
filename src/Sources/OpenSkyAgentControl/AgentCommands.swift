@@ -63,6 +63,8 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case assist
     /// The shots in the air, the arrows standing, and how the newest shots ended.
     case projectiles
+    /// The destructible objects near the player, the newest explosions, and the runes.
+    case destruction
     /// What one condition function returns now, run on a reference.
     case condition(AgentConditionProbe)
 
@@ -507,6 +509,7 @@ nonisolated public struct AgentRagdollLink: Equatable, Sendable {
 nonisolated extension AgentStateQuery {
     /// The reads named by one word that the switch above does not list.
     static let inspections: [String: AgentStateQuery] = [
-        "stats": .stats, "assist": .assist, "alarm": .alarm, "projectiles": .projectiles
+        "stats": .stats, "assist": .assist, "alarm": .alarm, "projectiles": .projectiles,
+        "destruction": .destruction
     ]
 }
