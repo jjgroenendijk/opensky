@@ -73,8 +73,8 @@ its `UNAM` index. An actor that runs no package has no data, so each data functi
 
 - `GetSleeping` (49) is 3, "is sleeping", while the sleep procedure runs, and 0 otherwise.
   OpenSky has no lie-down or wake-up phase, so 1, 2, and 4 never occur.
-- `GetOffersServicesNow` (255) reads the `PKDT` general flag 0x01, "Offers Services"
-  (UESP "Skyrim Mod:Mod File Format/PACK").
+- `GetOffersServicesNow` (255) does not read the package. It is 1 while the actor has a vendor
+  faction with a buy and sell list ([offers services](/engine/vendor-factions.md#offers-services)).
 - `GetAllowWorldInteractions` (503) reads the `PKDT` interrupt flag bit 9, "World
   Interactions" (xEdit `wbPKDTInterruptFlags`).
 - `GetCurrentAIProcedure` (143) answers a number for the procedure the actor runs. The CK
