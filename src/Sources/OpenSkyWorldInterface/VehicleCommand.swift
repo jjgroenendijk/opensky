@@ -8,8 +8,9 @@ nonisolated public enum VehicleCommand: Equatable, Sendable {
     case publishVehiclePoses([UInt32: float4x4])
     /// Every follower but the player, so other systems read where it rides.
     case publishCarriedPoses([ReferenceKey: ReferenceTransformOverride])
-    /// The riders and the actors linked to a towed cart, which do not collide with the vehicles.
-    case publishLinks(Set<ReferenceKey>)
+    /// The riders and the actors linked to a towed cart, each with the FormIDs of the carts
+    /// of its own group, whose moving collision it does not collide with.
+    case publishLinks([ReferenceKey: Set<UInt32>])
     case placePlayer(ReferenceTransformOverride)
     /// A follower that is not the player is at the pose this frame.
     case followerMoved(ReferenceKey, to: ReferenceTransformOverride)

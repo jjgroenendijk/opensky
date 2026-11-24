@@ -150,7 +150,7 @@ public struct NPCMover {
         let race = world.waterPushRace(actor)
         let configuration = configuration
         let query: WalkController.CollisionQuery = ignoresStatics
-            ? { _ in [] } : world.collisionQuery(for: actor)
+            ? world.vehicleQuery(for: actor) : world.collisionQuery(for: actor)
         var (longBody, yaw) = (longBody, yaw)
         longBody?.stepHeight = configuration.stepHeight.value
         let groundSampler = ignoresStatics ? staticFloorSampler(world: world) : world.sampleGround

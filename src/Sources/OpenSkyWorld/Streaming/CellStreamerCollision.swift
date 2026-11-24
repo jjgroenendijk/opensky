@@ -66,12 +66,14 @@ extension CellStreamer.CollisionSteps {
             + doorCollisionCandidates(overlapping: bounds)
     }
 
-    /// A character's candidates but the vehicles' moving collision, for an actor that
-    /// rides or pulls a vehicle.
-    func collisionCandidatesIgnoringVehicles(
-        overlapping bounds: ModelBounds
+    /// A character's candidates but the moving collision of `own`, the carts an actor
+    /// rides or pulls, by FormID.
+    func collisionCandidates(
+        overlapping bounds: ModelBounds,
+        ignoringVehicles own: Set<UInt32>
     ) -> [StaticCollisionShape] {
         fixedCollisionCandidates(overlapping: bounds)
+            + vehicleCollisionCandidates(overlapping: bounds, excluding: own)
             + doorCollisionCandidates(overlapping: bounds)
             + streamer.dynamicBodies.characterShapes(overlapping: bounds)
     }
@@ -129,11 +131,12 @@ extension CellStreamer.CollisionSteps {
     /// Each vehicle follower's collision at its live pose; at the build's pose until
     /// the vehicle pass first moves it.
     public func vehicleCollisionCandidates(
-        overlapping bounds: ModelBounds
+        overlapping bounds: ModelBounds,
+        excluding own: Set<UInt32> = []
     ) -> [StaticCollisionShape] {
         let vehicles = streamer.interiorScene.map(\.vehicleCollision)
             ?? streamer.composition.cells.values.flatMap(\.vehicleCollision)
-        return vehicles.flatMap { vehicle in
+        return vehicles.filter { !own.contains($0.reference.rawValue) }.flatMap { vehicle in
             vehicle.shapes(
                 at: streamer.npcMovementState.vehiclePoses[vehicle.reference] ?? vehicle.placement,
                 overlapping: bounds

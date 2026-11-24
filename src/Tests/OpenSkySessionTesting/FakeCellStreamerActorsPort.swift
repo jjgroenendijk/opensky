@@ -24,7 +24,7 @@ nonisolated public final class FakeCellStreamerActorsPort: CellStreamerActorsPor
     public var npcMovementReadoutsResult: [NPCMovementReadout] = []
     public var npcMovementSpeeds: ((ReferenceKey) -> ActorMovementSpeeds)?
     public var publishCarriedPosesCalls: [[ReferenceKey: ReferenceTransformOverride]] = []
-    public var publishVehicleLinksCalls: [Set<ReferenceKey>] = []
+    public var publishVehicleLinksCalls: [[ReferenceKey: Set<UInt32>]] = []
     public var setVehiclePoseCalls: [(pose: float4x4, formID: FormID)] = []
     public var npcTransformCalls: [ReferenceKey] = []
     public var npcTransformResult: ReferenceTransformOverride?
@@ -140,7 +140,7 @@ nonisolated extension FakeCellStreamerActorsPort {
         publishCarriedPosesCalls.append(poses)
     }
 
-    public func publishVehicleLinks(_ linked: Set<ReferenceKey>) {
+    public func publishVehicleLinks(_ linked: [ReferenceKey: Set<UInt32>]) {
         publishVehicleLinksCalls.append(linked)
     }
 

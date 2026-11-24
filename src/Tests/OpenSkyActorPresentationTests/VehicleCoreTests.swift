@@ -239,5 +239,8 @@ struct VehicleCoreTests {
         core.board(driver, on: Self.cart)
         core.seat(escort, on: escortHorse, bone: "SaddleBone")
         #expect(core.cartGroups == [Self.cart, Self.horse, driver, escort])
+        #expect(core.ownCarts[Self.horse] == [Self.cart])
+        #expect(core.ownCarts[driver] == [Self.cart])
+        #expect(core.ownCarts[escort]?.isEmpty == true)
     }
 }
