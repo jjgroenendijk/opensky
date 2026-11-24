@@ -58,6 +58,13 @@ public final class VendorCoordinator {
         trading(actor)?.vendor
     }
 
+    /// `GetOffersServicesNow`: the first vendor faction that trades now has a
+    /// buy and sell list. See docs/engine/vendor-factions.md#offers-services.
+    public func offersServices(_ actor: ReferenceKey) -> Bool {
+        guard let trading = trading(actor), trading.refusal == nil else { return false }
+        return trading.vendor.listKeywords != nil
+    }
+
     /// Why `vendor` does not trade with `actor` as the merchant now, or nil.
     public func unavailability(of vendor: Vendor, merchant actor: ReferenceKey)
         -> VendorUnavailability?
@@ -67,7 +74,7 @@ public final class VendorCoordinator {
             hour: world?.hourOfDay,
             allowsPlace: vendor.location.map { rule in
                 rule.allows(world?.vendorPlaceFacts(of: actor, for: rule.place))
-            } ?? true,
+            } ?? false,
             failingCondition: vendor.conditions.conditions.isEmpty ? nil
                 : world?.failingVendorCondition(
                     vendor.conditions, sourcePlugin: vendor.sourcePlugin, merchant: actor

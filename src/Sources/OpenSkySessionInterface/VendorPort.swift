@@ -8,6 +8,7 @@ public protocol VendorPort: AnyObject {
     func counterparty(for actor: ReferenceKey, vendorFaction override: ReferenceKey?)
         -> Result<BarterCounterparty, BarterOpenRefusal>
     func vendor(of actor: ReferenceKey) -> Vendor?
+    func offersServices(_ actor: ReferenceKey) -> Bool
 }
 
 /// The default arguments a protocol requirement cannot carry.

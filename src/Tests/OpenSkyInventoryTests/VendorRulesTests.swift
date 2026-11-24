@@ -18,6 +18,7 @@ struct VendorRulesTests {
         static let fence: UInt32 = 0x11
         static let townsfolk: UInt32 = 0x12
         static let listless: UInt32 = 0x13
+        static let leftover: UInt32 = 0x14
         static let miscList: UInt32 = 0x20
         static let nestedList: UInt32 = 0x21
         static let noSale: UInt32 = 0x30
@@ -49,13 +50,15 @@ struct VendorRulesTests {
         _ formID: UInt32,
         _ editorID: String,
         list: UInt32?,
-        values: Data
+        values: Data,
+        flagged: Bool = true
     ) -> Data {
-        var body = FactionFixture.flags(Faction.Flags.vendor.rawValue)
+        var body = FactionFixture.flags(flagged ? Faction.Flags.vendor.rawValue : 0)
         if let list {
             body += FactionFixture.link("VEND", list)
         }
         body += FactionFixture.link("VENC", IDs.chest) + values
+            + FactionFixture.vendorLocation(type: 12, value: 0, radius: 0)
         return FactionFixture.record(formID: formID, editorID: editorID, body: body)
     }
 
@@ -89,6 +92,10 @@ struct VendorRulesTests {
             vendorFaction(
                 IDs.listless, "ListlessFaction", list: nil,
                 values: FactionFixture.vendorValues()
+            ),
+            vendorFaction(
+                IDs.leftover, "LeftoverFaction", list: IDs.miscList,
+                values: FactionFixture.vendorValues(startHour: 0, endHour: 24), flagged: false
             ),
             FactionFixture.record(formID: IDs.townsfolk, editorID: "TownsfolkFaction")
         ].reduce(Data(), +))
@@ -166,22 +173,28 @@ struct VendorRulesTests {
         #expect(!plain.trades(keywords: []))
     }
 
-    @Test func hoursAreStartInclusiveEndExclusiveAndCanWrap() {
+    @Test func hoursAreStrictOnBothSidesAndNeverWrap() {
         let day = VendorHours(start: 8, end: 20)
-        #expect(!day.isOpen(atHour: 7.99))
-        #expect(day.isOpen(atHour: 8))
+        #expect(!day.isOpen(atHour: 8))
+        #expect(day.isOpen(atHour: 8.01))
         #expect(day.isOpen(atHour: 19.5))
         #expect(!day.isOpen(atHour: 20))
 
         let always = VendorHours(start: 0, end: 24)
-        #expect(always.isOpen(atHour: 0) && always.isOpen(atHour: 23.9))
-        #expect(VendorHours(start: 0, end: 25).isOpen(atHour: 23.9))
+        #expect(!always.isOpen(atHour: 0))
+        #expect(always.isOpen(atHour: 0.01) && always.isOpen(atHour: 23.9))
         #expect(!VendorHours(start: 0, end: 0).isOpen(atHour: 12))
         #expect(!VendorHours(start: 9, end: 9).isOpen(atHour: 9))
 
         let night = VendorHours(start: 20, end: 4)
-        #expect(night.isOpen(atHour: 22) && night.isOpen(atHour: 3))
-        #expect(!night.isOpen(atHour: 12))
+        #expect(!night.isOpen(atHour: 22) && !night.isOpen(atHour: 3))
+    }
+
+    @Test func aFactionThatKeptItsVendorDataStillMakesAVendor() throws {
+        let resolver = try Self.resolver()
+        let vendor = try #require(resolver.vendor(memberships: Self.memberships([IDs.leftover])))
+        #expect(vendor.faction == Self.key(IDs.leftover))
+        #expect(resolver.vendor(memberships: Self.memberships([IDs.townsfolk])) == nil)
     }
 
     @Test func aVendorWithNoHoursIsNeverOpen() throws {
@@ -197,15 +210,28 @@ struct VendorRulesTests {
 
     // MARK: - Location
 
-    @Test func aRadiusRuleAllowsOnlyNearItsTarget() {
+    @Test func aNearRuleUsesAtLeastAHundredUnits() {
         let rule = VendorLocationRule(place: .nearEditorLocation, radius: 500)
         let near = VendorPlaceFacts(position: [100, 0, 0], cell: nil, target: [0, 0, 0])
         let far = VendorPlaceFacts(position: [900, 0, 0], cell: nil, target: [0, 0, 0])
+        let edge = VendorPlaceFacts(position: [0, 0, 100], cell: nil, target: [0, 0, 0])
         #expect(rule.allows(near))
         #expect(!rule.allows(far))
         #expect(rule.allows(nil))
-        #expect(VendorLocationRule(place: .nearEditorLocation, radius: 0).allows(far))
+        #expect(VendorLocationRule(place: .nearEditorLocation, radius: 0).allows(edge))
+        #expect(!VendorLocationRule(place: .nearEditorLocation, radius: 0).allows(far))
         #expect(rule.allows(VendorPlaceFacts(position: [900, 0, 0], cell: nil, target: nil)))
+    }
+
+    @Test func aReferenceRuleNeedsItsReferenceWithinTheRadius() {
+        let rule = VendorLocationRule(place: .nearReference(Self.key(0x900)), radius: 50)
+        #expect(rule.allows(VendorPlaceFacts(position: [0, 50, 0], cell: nil, target: .zero)))
+        #expect(!rule.allows(VendorPlaceFacts(position: [0, 51, 0], cell: nil, target: .zero)))
+        #expect(!rule.allows(VendorPlaceFacts(position: .zero, cell: nil, target: nil)))
+        let unread = VendorLocationRule(place: .unread(type: 5), radius: 0)
+        #expect(!unread.allows(VendorPlaceFacts(position: .zero, cell: nil, target: nil)))
+        let anywhere = VendorLocationRule(place: .nearSelf, radius: 0)
+        #expect(anywhere.allows(VendorPlaceFacts(position: .zero, cell: nil, target: nil)))
     }
 
     @Test func aCellRuleComparesTheCell() {

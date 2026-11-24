@@ -100,7 +100,7 @@ extension InventoryVendorAdapter {
     ) -> String? {
         var context = game.runtimeState.conditionContext()
         context.subject = merchant
-        context.target = .player
+        context.target = merchant
         var evaluator = ConditionEvaluator(context: context)
         return evaluator.firstFailure(in: conditions.conditions).map(evaluator.functionName(of:))
     }

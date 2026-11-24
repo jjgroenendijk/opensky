@@ -26,10 +26,16 @@ nonisolated public struct VendorResolver: Sendable {
         memberships.memberships.compactMap { membership in
             guard
                 let resolved = factions.faction(key: membership.faction),
-                resolved.faction.isVendor
+                resolved.faction.isVendor || Self.keepsVendorData(resolved.faction)
             else { return nil }
             return vendor(faction: resolved)
         }
+    }
+
+    /// A faction whose vendor flag was cleared but whose hours and place remain
+    /// still makes a vendor, as the CK wiki's Faction page warns.
+    static func keepsVendorData(_ faction: Faction) -> Bool {
+        faction.vendorValues != nil && faction.vendorLocation != nil
     }
 
     public func vendor(faction resolved: ResolvedFaction) -> Vendor {
