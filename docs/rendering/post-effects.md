@@ -130,10 +130,19 @@ with no depth test. The composite adds the blurred light to the scene colour; it
 multiply it by the albedo or the occlusion. The sky gets no light because the distance fade is 0
 there.
 
-OpenSky differs from this rule: it uses a strength of 400, flips the sign of `v . N_t`, spreads
-the taps by the projection instead of `100 R / z`, turns them by its own noise, traces at half
-size, and does not blur. Its pixel normals come from the depth, because it has no normal
-buffer. `state frame` shows the switch under `postEffects.indirectLight`.
+OpenSky follows this rule at full size, with these differences:
+
+- It turns the tap normal around, so a surface facing back at the pixel counts. The game's tap
+  normal comes from the derivatives of taps that each pixel turns differently, so it is noise.
+  A clean normal with the game's sign would reject nearly every facing tap.
+- Its normals come from the depth, because it has no normal buffer, and its taps read the
+  full-size depth, because it has no depth pyramid.
+- The blur weights are a Gaussian of deviation 7 / 3; the game's table is not known.
+- The per-frame turn comes from a hash of the frame counter.
+
+A tap past the radius, or one whose `|v . N| × |v|` cannot pass the bias, has weight 0, so the
+trace skips its normal and its colour. `state frame` shows the switch under
+`postEffects.indirectLight`.
 
 ## Volumetric light
 

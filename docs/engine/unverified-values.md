@@ -33,7 +33,6 @@ the detail and the sources it did find.
 | How near a death an actor counts as its witness | 2048 units, with no detection check | [combat detection dialogue](/engine/combat-detection-dialogue.md#in-opensky) |
 | How long a package waits before it starts again after its walk gave up | 10 s | [package schedules](/engine/package-schedules.md#in-a-session) |
 | When a conversation speaker is asked to walk to its partner again | After 1 s in which it moved less than 8 units | [random conversations](/engine/random-conversations.md#where-opensky-differs) |
-| The size of the screen-space indirect light trace | Half the scene size on each axis, read with a linear filter | [post effects](/rendering/post-effects.md#indirect-light) |
 | Trainer tier thresholds | Journeyman from a maximum of 50, Expert at 75, Master above 75 | [training](/engine/training.md#training-menu) |
 | Time-span tag hours | Midnight 23-1, night 1-5, sunrise 5-8, morning 8-12, afternoon 12-17, sunset 17-19, evening 19-23 | [journal](/engine/journal.md#text-replacement) |
 | Global tag number format | A whole value as an integer, else two places, whatever the global's type | [journal](/engine/journal.md#text-replacement) |
@@ -247,6 +246,7 @@ the detail and the sources it did find.
 | Far particle systems | Stepped in the update bands, waiting at most 1/15 s | [update bands](/engine/update-bands.md#systems-that-use-the-bands) |
 | Grass near lists | The draw distance plus 1,024 units, built again after the camera moves 512 to 1,024 units | [update bands](/engine/update-bands.md#grass) |
 | Actor camera fade shapes | Each drawn shape's world box grown by the probe radius; half its diagonal as the radius; the player's capsule radius 24 at the centre of its drawn shapes; the pivot 112 over the feet in place of the `Cam3` node height | [graphics options](/engine/actor-camera-fade.md) |
+| Indirect light blur weights | A Gaussian of deviation 7 / 3 over the 15 taps | [post effects](/rendering/post-effects.md#indirect-light) |
 | Far shadow cascade reuse | A far cascade map kept while it covers its slice, at most 2 or 4 frames, 0.25 degrees of sun turn, 10% wider fit | [shadows](/rendering/shadows.md#far-cascade-reuse) |
 | Particle lifetime and limits | OpenSky's policies | [particles](/rendering/particles.md) |
 | Interface HTML text lines | A line's height and baseline come from the field's own font and size, whatever size its `<font>` tags set | [SWF text](/formats/swf-text.md#html-text) |
@@ -285,7 +285,6 @@ the detail and the sources it did find.
 | Skin decal size and limit | At most 16 units; 35 kept when unset | [decals](/rendering/decals.md#skin-decals) |
 | Sky gradient heights | Horizon colour at 0 degrees, sky-lower at 17.5, sky-upper from 35 | [celestial sky](/engine/celestial-sky.md#drawing) |
 | Depth of field target focus ring | 8 points 5 percent of the screen from the centre; the centre weight times 8 against them | [post effects](/rendering/post-effects.md#focus-on-the-view-centre) |
-| Indirect light strength and bias | Strength 400, centre bias 2.5, added to the lit colour | [post effects](/rendering/post-effects.md#indirect-light) |
 | Character light space and luminance | View-space normal, x right, y up, z ahead; eye adaptation luminance as the scene value | [surface shading](/rendering/surface-shading.md#character-light) |
 | Camera far plane | 350,000 units: the LOD reach plus half a level-32 block; the game's own far plane is not known | [coordinates](/decisions/coordinates.md#nearfar-planes-at-skyrim-scale) |
 | Terrain split distance | `fSplitDistanceMult` scales the level 4, 8, and 16 reach; level 32 keeps `fBlockMaximumDistance` | [graphics options](/engine/graphics-options.md) |
