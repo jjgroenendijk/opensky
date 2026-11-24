@@ -301,8 +301,29 @@ extension CombatLoopRuntime {
         target: MeleeTarget,
         world: any CombatLoopWorld
     ) {
+        strikeObjects(actor: actor, weapon: weapon, toward: target.feet, world: world)
         guard reaches(actor: actor, weapon: weapon, target: target) else { return }
         apply(from: actor, weapon: weapon, to: target.key, world: world)
+    }
+
+    /// A destructible object inside the swing takes the blow's damage, as from the player.
+    private func strikeObjects(
+        actor: CombatActorObservation, weapon: MeleeWeaponProfile, toward point: SIMD3<Float>,
+        world: any CombatLoopWorld
+    ) {
+        let reach = MeleeSwing.reach(weapon: weapon, settings: settings, actorScale: actor.scale)
+        let objects = world.combatDestructibles(
+            within: reach + actor.capsule.height, of: actor.feet
+        )
+        guard !objects.isEmpty else { return }
+        let volume = MeleeSwing.volume(
+            feet: actor.feet, capsule: actor.capsule,
+            facing: facing(from: actor.feet, toward: point, fallback: actor.yaw), reach: reach
+        )
+        for hit in MeleeHitDetector.hits(swing: volume, targets: objects, attacker: actor.key) {
+            let damage = landing(world).appliedDamage(by: actor.key, weapon: weapon, on: hit.target)
+            world.damageCombatDestructible(hit.target, amount: damage)
+        }
     }
 
     /// Which hand a swing that starts now uses, and with which weapons. A bow always
