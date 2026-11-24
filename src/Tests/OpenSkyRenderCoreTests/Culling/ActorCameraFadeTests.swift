@@ -1,106 +1,178 @@
-// The actor the camera's probe runs into fades out over half a second and back in when
-// the camera leaves; the player fades at once when the eye touches its capsule.
+// The actor the camera's sweep touches near the eye fades out, its drawn alpha following
+// at 1 per second; the player fades when the eye is inside its capsule, never below 0.1.
 
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyRenderCore
 import simd
 import Testing
 
 struct ActorCameraFadeTests {
-    /// A body 40 wide and 128 tall standing at `x`, `y`.
-    private static func actor(_ formID: UInt32, x: Float, y: Float = 0, player: Bool = false)
+    private static let frame: Float = 1.0 / 60
+    private static let pivot = SIMD3<Float>(0, 0, 120)
+
+    /// An upright capsule of radius 18 and height 128 standing at `x`, `y`.
+    private static func actor(_ formID: UInt32, x: Float, y: Float = 0)
         -> ActorCameraFade.Candidate
     {
-        ActorCameraFade.Candidate(
-            formID: formID,
-            shapes: [ModelBounds(min: SIMD3(x - 20, y - 20, 0), max: SIMD3(x + 20, y + 20, 128))],
-            isPlayer: player
+        ActorCameraFade.Candidate(formID: formID, bodies: [
+            ActorCameraFade.Body(
+                start: SIMD3(x, y, 18), end: SIMD3(x, y, 110), radius: 18, boundRadius: 64
+            )
+        ])
+    }
+
+    private static let player = ActorCameraFade.Target(
+        formID: 0x14, feet: .zero, radius: 18, height: 128, seatedHead: nil
+    )
+
+    private static func scene(
+        eye: SIMD3<Float>, actors: [ActorCameraFade.Candidate],
+        camera: ActorCameraFade.Camera = .startsFades, target: ActorCameraFade.Target? = player
+    ) -> ActorCameraFade.Scene {
+        ActorCameraFade.Scene(
+            camera: camera,
+            eye: eye,
+            pivot: pivot,
+            actors: actors,
+            target: target
         )
     }
 
-    @Test func aNeighbourBesideAFirstPersonEyeStaysSolid() {
-        // Riders on one cart bench: the eye is 40 units from the next rider's body.
-        let eye = SIMD3<Float>(0, 0, 100)
-        let riders = [Self.actor(2, x: 40), Self.actor(3, x: -45)]
-        #expect(ActorCameraFade.choose(eye: eye, pivot: nil, among: riders) == nil)
-        // A third-person orbit behind the player does not pass through them either.
-        let pivot = SIMD3<Float>(0, 0, 112)
-        let behind = SIMD3<Float>(0, -180, 130)
-        #expect(ActorCameraFade.choose(eye: behind, pivot: pivot, among: riders) == nil)
+    private static func run(
+        _ fade: inout ActorCameraFade, _ scene: ActorCameraFade.Scene?, seconds: Float
+    ) {
+        for _ in 0 ..< Int((seconds / frame).rounded()) {
+            fade.advance(scene: scene, seconds: frame)
+        }
     }
 
-    @Test func anEyePushedIntoABodyPicksThatBody() {
-        let pivot = SIMD3<Float>(0, 0, 112)
-        // A wall holds the eye 10 units inside the NPC that stands behind the player.
-        let eye = SIMD3<Float>(0, -70, 100)
+    @Test func aNeighbourBesideTheSweepStaysSolid() {
+        // Riders on one bench: the orbit behind the player passes 40 units from each.
+        let riders = [Self.actor(2, x: 60), Self.actor(3, x: -65)]
+        let eye = SIMD3<Float>(0, -180, 130)
+        #expect(ActorCameraFade
+            .choose(eye: eye, pivot: Self.pivot, actors: riders, target: nil) == nil)
+    }
+
+    @Test func anEyeNearABodyPicksThatBody() {
         let npc = Self.actor(5, x: 0, y: -80)
-        #expect(ActorCameraFade.choose(eye: eye, pivot: pivot, among: [npc])?.formID == 5)
-        // The probe passes the NPC far from the eye: it stays solid.
+        let eye = SIMD3<Float>(0, -70, 100)
+        #expect(ActorCameraFade
+            .choose(eye: eye, pivot: Self.pivot, actors: [npc], target: nil) == 5)
+        // The sweep passes the NPC far from the eye: it stays solid.
         let far = SIMD3<Float>(0, -400, 100)
-        #expect(ActorCameraFade.choose(eye: far, pivot: pivot, among: [npc]) == nil)
+        #expect(ActorCameraFade
+            .choose(eye: far, pivot: Self.pivot, actors: [npc], target: nil) == nil)
     }
 
-    @Test func theLastBodyAlongTheProbeWins() {
-        let pivot = SIMD3<Float>(0, 0, 100)
-        let eye = SIMD3<Float>(0, -120, 100)
-        let near = Self.actor(6, x: 0, y: -50)
-        let atEye = Self.actor(7, x: 0, y: -115)
-        #expect(ActorCameraFade.choose(eye: eye, pivot: pivot, among: [atEye, near])?.formID == 7)
+    @Test func theLastActorAlongTheSweepWins() {
+        let eye = SIMD3<Float>(0, -140, 100)
+        let actors = [Self.actor(7, x: 0, y: -130), Self.actor(6, x: 0, y: -50)]
+        #expect(ActorCameraFade
+            .choose(eye: eye, pivot: Self.pivot, actors: actors, target: nil) == 7)
     }
 
-    @Test func chosenActorFadesOutOverHalfASecondAndBackIn() {
+    @Test func aSweepFromInsideABodyTouchesItAtTheStart() {
+        let body = ActorCameraFade.Body(start: SIMD3(0, 0, 0), end: SIMD3(0, 0, 100), radius: 10)
+        let hit = ActorCameraFade.sweep(
+            from: SIMD3(0, 0, 50),
+            to: SIMD3(0, -200, 50),
+            against: body
+        )
+        #expect(hit?.along == 0)
+        let side = ActorCameraFade.sweep(
+            from: SIMD3(-100, 0, 50),
+            to: SIMD3(100, 0, 50),
+            against: body
+        )
+        // The sphere of 15 touches the capsule of 10 at x = -25.
+        #expect(side.map { abs($0.along - 0.375) < 1e-3 } == true)
+        #expect(side.map { abs($0.contact.x + 10) < 1e-2 } == true)
+    }
+
+    @Test func anActorFadesOutAndBackInAtTheDrawnRate() {
         var fade = ActorCameraFade()
-        let pivot = SIMD3<Float>(0, 0, 112)
         let near = [Self.actor(7, x: 0, y: -80)]
-        let inside = SIMD3<Float>(0, -70, 100)
-        fade.advance(eye: inside, pivot: pivot, candidates: near, seconds: 0.25)
-        #expect(abs((fade.fadeOuts[7] ?? 0) - 0.5) < 1e-5)
-        fade.advance(eye: inside, pivot: pivot, candidates: near, seconds: 1)
+        let inside = Self.scene(eye: SIMD3(0, -70, 100), actors: near)
+        Self.run(&fade, inside, seconds: 0.5)
+        // The amount is 0 after 0.5 s; the drawn alpha has moved 0.5.
+        #expect(abs((fade.fadeOuts[7] ?? 0) - 0.5) < 0.02)
+        Self.run(&fade, inside, seconds: 0.6)
         #expect(fade.fadeOuts[7] == 1)
-        fade.advance(eye: SIMD3(500, 0, 50), pivot: pivot, candidates: near, seconds: 0.25)
-        #expect(abs((fade.fadeOuts[7] ?? 0) - 0.5) < 1e-5)
-        fade.advance(eye: SIMD3(500, 0, 50), pivot: pivot, candidates: near, seconds: 0.25)
+        let away = Self.scene(eye: SIMD3(0, 200, 150), actors: near)
+        Self.run(&fade, away, seconds: 0.5)
+        #expect(fade.chosen == nil)
+        #expect(abs((fade.fadeOuts[7] ?? 0) - 0.5) < 0.02)
+        Self.run(&fade, away, seconds: 0.6)
         #expect(fade.fadeOuts[7] == nil)
     }
 
-    @Test func playerFadesAtOnceWhenTheEyeTouchesItsCapsule() {
+    @Test func theDrawnAlphaMovesAtMostATenthInAFrame() {
         var fade = ActorCameraFade()
-        let pivot = SIMD3<Float>(0, 0, 112)
-        let player = [Self.actor(0x14, x: 0, player: true)]
-        fade.advance(eye: SIMD3(30, 0, 100), pivot: pivot, candidates: player, seconds: 1.0 / 60)
-        #expect(fade.fadeOuts[0x14] == 1)
-        #expect(ActorCameraFade.choose(eye: SIMD3(60, 0, 100), pivot: pivot, among: player) == nil)
+        let inside = Self.scene(eye: SIMD3(0, -70, 100), actors: [Self.actor(7, x: 0, y: -80)])
+        fade.advance(scene: inside, seconds: 1)
+        #expect(abs((fade.fadeOuts[7] ?? 0) - 0.1) < 1e-5)
     }
 
-    @Test func firstPersonStartsNoFadeAndRestoresAFadedActor() {
+    @Test func thePlayerFadesToATenthWhenTheEyeIsInsideIt() {
         var fade = ActorCameraFade()
-        let pivot = SIMD3<Float>(0, 0, 112)
-        let near = [Self.actor(7, x: 0, y: -80), Self.actor(0x14, x: 0, player: true)]
-        fade.advance(eye: SIMD3(0, -70, 100), pivot: pivot, candidates: near, seconds: 1)
-        #expect(fade.fadeOuts[7] == 1)
-        // The view switches to first person with the eye in the same place.
-        fade.advance(eye: SIMD3(0, -70, 100), pivot: nil, candidates: near, seconds: 0.25)
-        #expect(fade.chosen == nil)
-        #expect(abs((fade.fadeOuts[7] ?? 0) - 0.5) < 1e-5)
+        let inside = Self.scene(eye: SIMD3(30, 0, 100), actors: [])
+        Self.run(&fade, inside, seconds: 2)
+        #expect(fade.chosen == 0x14)
+        #expect(abs((fade.fadeOuts[0x14] ?? 0) - 0.9) < 1e-4)
+        #expect(ActorCameraFade.choose(
+            eye: SIMD3(60, 0, 100), pivot: Self.pivot, actors: [], target: Self.player
+        ) == nil)
     }
 
     @Test func aTallerPlayerFadesSoonerFromAbove() {
-        let pivot = SIMD3<Float>(0, 0, 160)
-        let tall = ActorCameraFade.Candidate(
-            formID: 0x14,
-            shapes: [ModelBounds(min: SIMD3(-20, -20, 0), max: SIMD3(20, 20, 184))],
-            isPlayer: true
+        let tall = ActorCameraFade.Target(
+            formID: 0x14, feet: .zero, radius: 18, height: 184, seatedHead: nil
         )
         // 30 units out from the axis and 30 above the head, lowered by 184 - 124 = 60.
         let eye = SIMD3<Float>(0, 30, 214)
-        #expect(ActorCameraFade.choose(eye: eye, pivot: pivot, among: [tall])?.formID == 0x14)
-        #expect(ActorCameraFade.touchesPlayer(SIMD3(0, 30, 214), Self.actor(0x14, x: 0)) == false)
+        #expect(ActorCameraFade.isInside(eye: eye, target: tall))
+        #expect(!ActorCameraFade.isInside(eye: eye, target: Self.player))
     }
 
-    @Test func aProbeOfNoLengthHitsNothing() {
-        let box = ModelBounds(min: SIMD3(-10, -10, 0), max: SIMD3(10, 10, 10))
-        #expect(ActorCameraFade.entry(from: .zero, to: .zero, into: box) == nil)
-        let entry = ActorCameraFade.entry(from: SIMD3(-100, 0, 5), to: SIMD3(100, 0, 5), into: box)
-        #expect(entry.map { abs($0 - 0.375) < 1e-5 } == true)
+    @Test func aSeatedPlayerFadesNearItsHead() {
+        let seated = ActorCameraFade.Target(
+            formID: 0x14, feet: .zero, radius: 18, height: 128, seatedHead: SIMD3(0, 0, 90)
+        )
+        #expect(ActorCameraFade.isInside(eye: SIMD3(0, -40, 90), target: seated))
+        #expect(!ActorCameraFade.isInside(eye: SIMD3(0, -50, 90), target: seated))
+    }
+
+    @Test func firstPersonStartsNoFadeAndLetsTheHeldActorGo() {
+        var fade = ActorCameraFade()
+        let near = [Self.actor(7, x: 0, y: -80)]
+        Self.run(&fade, Self.scene(eye: SIMD3(0, -70, 100), actors: near), seconds: 1.1)
+        #expect(fade.fadeOuts[7] == 1)
+        let firstPerson = Self.scene(eye: SIMD3(0, -70, 100), actors: near, camera: .holdsFades)
+        fade.advance(scene: firstPerson, seconds: Self.frame)
+        #expect(fade.chosen == nil)
+        Self.run(&fade, firstPerson, seconds: 1.1)
+        #expect(fade.fadeOuts[7] == nil)
+    }
+
+    @Test func aFrozenCameraChoosesNothing() {
+        var fade = ActorCameraFade()
+        let near = [Self.actor(7, x: 0, y: -80)]
+        let frozen = Self.scene(eye: SIMD3(0, -70, 100), actors: near, camera: .frozen)
+        Self.run(&fade, frozen, seconds: 0.5)
+        #expect(fade.chosen == nil)
+        #expect(fade.fadeOuts.isEmpty)
+    }
+
+    @Test func anActorStillFadingInWaitsBeforeItFadesAgain() {
+        var fade = ActorCameraFade()
+        let near = [Self.actor(7, x: 0, y: -80)]
+        let inside = Self.scene(eye: SIMD3(0, -70, 100), actors: near)
+        Self.run(&fade, inside, seconds: 1.1)
+        Self.run(&fade, Self.scene(eye: SIMD3(0, 200, 150), actors: near), seconds: 0.25)
+        // Back inside while its amount is still rising: not held this frame.
+        fade.advance(scene: inside, seconds: Self.frame)
+        #expect(fade.chosen == nil)
+        Self.run(&fade, inside, seconds: 0.4)
+        #expect(fade.chosen == 7)
     }
 }

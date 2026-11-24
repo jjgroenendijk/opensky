@@ -245,7 +245,7 @@ the detail and the sources it did find.
 | --- | --- | --- |
 | Far particle systems | Stepped in the update bands, waiting at most 1/15 s | [update bands](/engine/update-bands.md#systems-that-use-the-bands) |
 | Grass near lists | The draw distance plus 1,024 units, built again after the camera moves 512 to 1,024 units | [update bands](/engine/update-bands.md#grass) |
-| Actor camera fade shapes | Each drawn shape's world box grown by the probe radius; half its diagonal as the radius; the player's capsule radius 24 at the centre of its drawn shapes; the pivot 112 over the feet in place of the `Cam3` node height | [graphics options](/engine/actor-camera-fade.md) |
+| Actor camera fade bodies | A bone body's node bound is half its length plus its radius; a movement capsule's bound is half its height; a hull is the sphere around its points | [actor camera fade](/engine/actor-camera-fade.md#opensky) |
 | Indirect light blur weights | A Gaussian of deviation 7 / 3 over the 15 taps | [post effects](/rendering/post-effects.md#indirect-light) |
 | Far shadow cascade reuse | A far cascade map kept while it covers its slice, at most 2 or 4 frames, 0.25 degrees of sun turn, 10% wider fit | [shadows](/rendering/shadows.md#far-cascade-reuse) |
 | Particle lifetime and limits | OpenSky's policies | [particles](/rendering/particles.md) |

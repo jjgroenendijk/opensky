@@ -43,6 +43,14 @@ public final class SessionMotion {
     /// The seat idle's last `head` bone, in the seat's space. A seat idle that ended, or
     /// one still loading, keeps the eye there.
     var seatedHead: SIMD3<Float>?
+
+    /// The seated player's head in the world; nil on foot.
+    var seatedHeadInWorld: SIMD3<Float>? {
+        guard let seat = playerSeat else { return nil }
+        let head = seat * SIMD4(seatedHead ?? SIMD3(0, 0, PlayerCapsule.standard.eyeHeight), 1)
+        return SIMD3(head.x, head.y, head.z)
+    }
+
     /// The player's mount; while one is under the player it moves instead of the
     /// player (docs/engine/riding.md).
     public weak var playerMount: (any PlayerMountDriving)?

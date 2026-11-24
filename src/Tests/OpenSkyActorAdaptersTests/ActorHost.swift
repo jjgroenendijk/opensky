@@ -12,7 +12,8 @@ import OpenSkyWorldInterface
 import simd
 
 @MainActor
-final class ActorHost: ActorGraphGraphEventsHost, ActorGraphWorldHost, ActorWorldHost,
+final class ActorHost: ActorCameraBodiesHost, ActorGraphGraphEventsHost, ActorGraphWorldHost,
+    ActorWorldHost,
     AnimationEventWorldHost, ClothWorldHost, BeastFormWorldHost, DragonFlightCandidatesHost,
     DragonFlightWorldHost,
     EffectGraphWorldHost, IdlePlacementHost, IdleWorldHost, MountDragonRidingHost, MountWorldHost,
@@ -52,6 +53,7 @@ final class ActorHost: ActorGraphGraphEventsHost, ActorGraphWorldHost, ActorWorl
     let fakeMenuWorld = FakeMenuWorldPort()
     let fakeMessages = FakeMessageCoordinatorPort()
     let fakeMounts = FakeMountPort()
+    let fakeMountWorld = FakeMountWorldPort()
     let fakeNodeControllers = FakeNodeControllerPort()
     let fakeObjectAnimationWorld = FakeObjectAnimationWorldPort()
     let fakeObjectBehaviors = FakeObjectBehaviorPort()
@@ -219,6 +221,10 @@ final class ActorHost: ActorGraphGraphEventsHost, ActorGraphWorldHost, ActorWorl
 
     var sequenceDoors: any SequenceDoorPort {
         fakeSequenceDoors
+    }
+
+    var mountWorld: any MountWorldPort {
+        fakeMountWorld
     }
 
     var ragdoll: any RagdollPort {

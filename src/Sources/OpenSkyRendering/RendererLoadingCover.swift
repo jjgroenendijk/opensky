@@ -104,7 +104,7 @@ extension Renderer {
     func applyLoadingCoverCamera(to input: inout RenderFrameInput) {
         guard effects.loadingCover != nil, let camera = effects.loadingCoverCamera else { return }
         input.view = camera.view
-        input.cameraPivot = nil
+        input.actorCameraScene = nil
         input.horizontalFOVRadians = camera.horizontalFieldOfView
     }
 

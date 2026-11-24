@@ -117,6 +117,7 @@ struct GameSessionScopeBuild {
         _ = scope.objectAnimationWorld
         _ = scope.effectGraphWorld
         _ = scope.clothWorld
+        _ = scope.actorCameraBodies
         _ = scope.playerGrab
         _ = scope.animationEvents
         _ = scope.dialogueWorld

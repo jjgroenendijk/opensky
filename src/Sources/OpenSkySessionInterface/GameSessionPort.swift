@@ -35,6 +35,7 @@ public protocol GameSessionPort: AnyObject {
     var gameTime: RendererGameTime { get set }
     var imageSpace: ImageSpaceState { get set }
     var instancePoses: RenderInstancePoses { get set }
+    var actorCameraBodies: [ActorCameraFade.Candidate] { get set }
     var isCinematicCameraEngaged: Bool { get }
     var lastScriptUpdateMS: Double { get set }
     var lastSimulationMS: Double { get set }

@@ -13,14 +13,21 @@ public import OpenSkyWorldInterface
 import simd
 
 extension GameSession.DialogueCameraSteps {
-    /// Where the camera looks from: the player's eye height over its feet, the orbit point
-    /// of the third-person and dialogue cameras. Nil in first person and the free camera.
-    var cameraPivot: SIMD3<Float>? {
-        guard
-            session.movementMode == .thirdPerson || isDialogueCameraEngaged,
-            session.movementMode.isPlayerControlled
-        else { return nil }
-        return ThirdPersonCamera.pivot(feetPosition: session.walkController.feetPosition)
+    /// What the actor camera fade tests this frame: the sweep from the player's orbit point
+    /// to `eye`, the published actors, and the player. Nil in the free camera.
+    func actorCameraScene(eye: SIMD3<Float>) -> ActorCameraFade.Scene? {
+        guard session.movementMode.isPlayerControlled else { return nil }
+        let feet = session.walkController.feetPosition
+        let capsule = session.walkController.capsule
+        let target = ActorCameraFade.Target(
+            formID: PlayerBody.referenceFormID, feet: feet, radius: capsule.radius,
+            height: capsule.height, seatedHead: session.motion.seatedHeadInWorld
+        )
+        return ActorCameraFade.Scene(
+            camera: session.movementMode == .thirdPerson ? .startsFades : .holdsFades,
+            eye: eye, pivot: ThirdPersonCamera.pivot(feetPosition: feet),
+            actors: session.actorCameraBodies, target: target
+        )
     }
 
     public var restorePose: FreeFlyCamera? {

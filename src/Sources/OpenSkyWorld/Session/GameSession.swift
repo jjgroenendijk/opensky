@@ -36,6 +36,9 @@ public final class GameSession: RenderFrameDriver {
     /// Where physics, NPCs, vehicles, and scripts have moved references. Published
     /// once per frame by their ticks; empty without them.
     public var instancePoses = RenderInstancePoses()
+    /// The living actors near the camera with their collision bodies, published once per
+    /// frame for the actor camera fade.
+    public var actorCameraBodies: [ActorCameraFade.Candidate] = []
     /// The post-process values and running modifiers the composite pass applies.
     public var imageSpace = ImageSpaceState()
     /// The HUD, menus, and dev overlays the UI pass draws. Default empty -> zero draws.
@@ -207,7 +210,7 @@ public final class GameSession: RenderFrameDriver {
             fromDegrees: menuViewOffset.horizontalFOVDegrees
         )
         input.movementMode = movementMode
-        input.cameraPivot = dialogueCameraSteps.cameraPivot
+        input.actorCameraScene = dialogueCameraSteps.actorCameraScene(eye: view.position)
         input.fovYRadians = viewFOVYRadians
         input.horizontalFOVRadians = rigs.cinematicCameraState.pose?.horizontalFieldOfView
         input.timeOfDay = timeOfDay
