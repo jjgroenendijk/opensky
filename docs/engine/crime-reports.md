@@ -291,8 +291,7 @@ The vanilla scripts count only these statistics:
 
 - The alarm does not pass through a door to an actor in another cell, as the 2000-unit door
   rule above allows.
-- The hostility test combines the factions' reactions by taking the most hostile one, and the
-  "attack on sight" mark that Aggression 0 also needs is not kept, so an unaggressive witness
+- The "attack on sight" mark that Aggression 0 also needs is not kept, so an unaggressive witness
   is never hostile through it.
 - An NPC criminal that a guard answers runs a fixed 2000 units straight away from the guard.
 - A theft is charged to the place's crime faction, not the victim's. A follower's take is charged

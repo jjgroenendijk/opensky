@@ -103,11 +103,20 @@ places those shapes at the follower's live pose, moved from the pose the build p
 
 A horse is not blocked by the cart it pulls, and a rider by the cart it sits on. Every rider,
 and every actor linked by any chain of links to a towed cart, walks with a collision query that
-leaves out the vehicles' moving collision. A rider moves with its seat, so it cannot drift into
+leaves out the moving collision of the towed carts in its own group. Another group's cart still
+blocks it, so at Helgen the second cart's horse stops behind the first cart, where both horses'
+patrols lead. A patrol leg that ignores static collision still meets the carts that are not its
+own. A rider moves with its seat, so it cannot drift into
 a cart. A mounted escort's horse is neither, so a cart blocks it, with the front and back of its
 long body ([character shapes](/engine/character-shapes.md)). The cart's own ground search
 also leaves it out. A seated player does not walk, so the cart cannot push
 the player out of the seat.
+
+The cart has no rolling sound of its own. Its physics bodies play only impact sounds, as every
+physics body does: a new contact slower than 60 units a second is silent; above that, each side
+plays its own material's impact sound, the heavy sound above 160 units a second when the material
+has one, and each material pair plays at most once every 150 ms. The steady creak of the opening
+ride is a quest sound ([sounds](/engine/papyrus-session-natives.md#sounds)).
 
 When a follower leaves its carrier, it rests at its last pose. Until its cell is rebuilt, its
 collision stays at that pose; after the rebuild it is static again.
@@ -137,6 +146,12 @@ clips in `meshes\actors\character\animations\horse_rider\`: `idle.hkx` while the
 `walkforward.hkx` or `runforward.hkx` as the horse walks or runs. [WARNING] The walk and run names
 follow the horse's own folder; `idle.hkx` was seen on the install. A clip that does not load leaves
 the rider in the clip it plays.
+
+The mounted pose comes from the rider's own behaviour graph. Mounting sends the rider's graph a
+mount event, or an instant mount event that skips the mount animation, and puts the rider in the
+same sit state as a cart passenger. The horse drives no pose of the rider. A rider whose body
+loads after it was put on the horse still needs its riding clip, so OpenSky plays it again when
+the body arrives.
 
 The player mounts and steers a horse through the mount coordinator ([riding](/engine/riding.md)).
 
@@ -261,12 +276,19 @@ wildcards. So the player always rides in seat C. `IdleCartPrisonerCIdle` puts th
 camera in a cart view mode that drops the cart's roll, and `IdleCartPrisonerCExit` ends it. The
 C exit state also sends `ZeroOutCameraPitch`, which levels the camera.
 
-The rider's root is still on the cart's root at that moment, but the exit clip has carried the
-body off the cart. So the rider stands where the clip left its `NPC COM [COM ]` bone, read on the
-last frame before the event, at the ground height there. Without that, every passenger would
-stand in the middle of the cart. The rider also turns the way that bone faces, compared with the
-bind pose, where the body faces +Y. So a prisoner who steps off the side of the cart faces away
-from it, not along the cart.
+The exit clips themselves keep the root still: only the body moves. The travel in the table above
+is in the project's motion table ([animation data](/formats/animation-data.md)). So from
+`ExitCartBegin` OpenSky holds the rider at the seat pose it had then, and moves its root by the
+motion table's offset and turn at the clip's current time, in that pose's frame, on the ground
+under it. The cart is stopped by then, so the start pose does not move. Worked example: seat A
+starts at the cart's root facing the cart's way, and ends 380 units behind it and 16 to its left,
+turned about 170 degrees, at the back of the cart.
+
+`ExitCartEnd` clears the link and the sitting state and does not place the rider anywhere: it
+stays where the travel left it. An exit idle with no motion-table travel is OpenSky's fallback
+case. Then the rider stands where the clip left its `NPC COM [COM ]` bone, read on the last frame
+before the event, at the ground height there, and turns the way that bone faces, compared with
+the bind pose, where the body faces +Y.
 
 The player stands at that point too. Its body bone comes from the exit idle's clip, because the
 player's body has no clip playback of its own. The player's view keeps its heading.

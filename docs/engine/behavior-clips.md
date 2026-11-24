@@ -68,6 +68,12 @@ generator, so:
 - its time is measured in the animation, so the window start is subtracted before the test;
 - an annotation outside the window was cut away and never fires.
 
+Inside a blend, every child with a weight above 0 raises its own triggers and annotations. Two
+blended walk clips that both mark `FootLeft` raise it twice in one cycle, a few frames apart. A
+clip that starts fresh begins at its authored start; only a child that joins a running
+synchronised blend takes the blend's phase. So a walk that stops and starts again often plays its
+first foot mark each time.
+
 A graph that declares no event by the annotation's name does not react to it. This is not an error:
 one animation is played by behavior files that care about different marks. The name still leaves
 the update in `unboundEvents`, because the engine reads some annotations no graph declares, such as

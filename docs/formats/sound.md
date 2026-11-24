@@ -41,9 +41,6 @@ example, a footstep descriptor with 4 files that last played file 2 and rolls 2 
 no two steps in a row use the same file. The same rule holds for footsteps, swings, and every
 other descriptor.
 
-OpenSky differs: footsteps, melee swing sounds, and menu sounds always play the first file. Region
-sounds already pick at random, without the no-repeat rule.
-
 `LNAM` byte 1: `0` no loop, `8` loop, `16` fast envelope, `32` slow envelope. OpenSky keeps
 any other value as unknown. It does not guess what it means.
 
