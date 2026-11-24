@@ -68,8 +68,10 @@ nonisolated extension InventoryMenuMovieBridge {
     /// delegate. It rebuilds the category list without handing the new array to
     /// that list's filter, which then matches no row; the category list's own
     /// `InvalidateData` does, as `SetCategoriesList` does.
-    public static func invalidate(runtime: SWFMovieRuntime) {
-        runtime.callMovie(categoryInvalidateName, atPath: categoryListPath)
+    public static func invalidate(
+        categoryListAt path: String = categoryListPath, runtime: SWFMovieRuntime
+    ) {
+        runtime.callMovie(categoryInvalidateName, atPath: path)
         runtime.callMovie(invalidateCallback)
     }
 

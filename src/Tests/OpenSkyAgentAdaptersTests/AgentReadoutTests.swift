@@ -202,7 +202,10 @@ struct AgentReadoutTests {
             fighters: [.init(witness: witness, criminals: [.player])],
             angry: [witness], theftMarkDay: 3, openCrimes: 1, last: "Actor: takeBack"
         )
+        host.crimeAlarmReadout.trespass = .init(isTrespassing: true, isCellOpened: false)
         let state = try object(world.query(.alarm))
+        #expect(state["trespass"]?.objectValue?["trespassing"] == .bool(true))
+        #expect(state["trespass"]?.objectValue?["cellOpened"] == .bool(false))
         #expect(state["theftMarkDay"] == AgentJSON(3))
         #expect(state["openCrimes"] == AgentJSON(1))
         #expect(state["last"] == .string("Actor: takeBack"))
@@ -289,6 +292,26 @@ struct AgentReadoutTests {
 }
 
 extension AgentReadoutTests {
+    @Test func anOpenCraftingMenuShowsItsTabRowsAndResult() throws {
+        let crafting = FakeCraftingMenuPort()
+        crafting.readoutValue = MenuTextPanel(
+            title: "Enchanting: Item", lines: ["Iron Sword"], selection: 0, hint: ""
+        )
+        crafting.lastResult = "Uses: 12"
+        crafting.skillBar = "Enchanting 15, 40%"
+        crafting.movieStateValue = MenuMovieState(isLoaded: false, error: "no movie")
+        host.fakeMenuScreens.crafting = crafting
+        host.fakeMenuMode.topMenu = .craftingMenu
+        let state = try object(world.query(.menu))
+        #expect(state["rows"] == .array([.string("Iron Sword")]))
+        #expect(state["selected"] == .number(0))
+        let readout = object(state["crafting"] ?? .null)
+        #expect(readout["tab"] == .string("Enchanting: Item"))
+        #expect(readout["result"] == .string("Uses: 12"))
+        #expect(readout["movieError"] == .string("no movie"))
+        #expect(readout["skill"] == .string("Enchanting 15, 40%"))
+    }
+
     /// A dead actor lists each ragdoll body with its bone, so a body far from the drawn
     /// actor shows up; a living one shows null.
     @Test func aDeadActorListsItsRagdollBodies() throws {
