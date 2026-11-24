@@ -141,6 +141,15 @@ struct ImpulseRulesTests {
         #expect(ExplosionKnockdown(flags: 0x149) == .byFormula)
         #expect(ExplosionKnockdown(flags: 0x1) == .never)
         #expect(ExplosionKnockdown(flags: nil) == .never)
+        #expect(ExplosionKnockdown(flags: 0xC) == .alwaysButPlayer)
+    }
+
+    @Test func bothFlagsKnockEveryActorButThePlayerDown() {
+        let blast = ImpulseBlast(force: 6, radius: 100, center: .zero)
+        #expect(GameplayImpulse.explosionKnocksDown(
+            blast, knockdown: (.alwaysButPlayer, 10),
+            hit: KnockdownHit(damage: 0, health: (100, 100), roll: 1), settings: settings
+        ))
     }
 
     @Test func anExplosionKnocksDownOnlyNearItsCentre() {

@@ -43,6 +43,10 @@ public protocol ImpulseWorld: ImpulseBodyWorld {
     func waterContacts(_ contacts: [WaterSample])
     /// Plays the sound of a loose body hitting something.
     func playCollision(_ collision: BodyCollision)
+    /// The resident destructible objects within `radius` of `center`, by their origin.
+    func impulseDestructibles(within radius: Float, of center: SIMD3<Float>) -> [MeleeTarget]
+    /// Deals destruction damage from a body's impact. False when `object` is not destructible.
+    func applyPhysicsDestruction(_ amount: Float, to object: ReferenceKey) -> Bool
 }
 
 extension ImpulseWorld {
@@ -138,11 +142,24 @@ public final class ImpulseRuntime {
                 nowTouching.insert(pair)
                 guard !touching.contains(pair), world.applyPhysicsDamage(damage, to: actor.key)
                 else { continue }
-                record(.physicsDamage(body: body.key, actor: actor.key, damage: damage))
+                record(.physicsDamage(body: body.key, struck: actor.key, damage: damage))
+            }
+            for object in world.impulseDestructibles(
+                within: body.boundingRadius + Self.objectReach, of: body.position
+            ) where object.key != body.key && Self.touches(body, object) {
+                let pair = [body.key, object.key]
+                nowTouching.insert(pair)
+                guard !touching.contains(pair) else { continue }
+                if world.applyPhysicsDestruction(damage, to: object.key) {
+                    record(.physicsDamage(body: body.key, struck: object.key, damage: damage))
+                }
             }
         }
         touching = nowTouching
     }
+
+    /// How far from a body's bounds a destructible object's origin is looked for.
+    static let objectReach: Float = 128
 
     private func knockInFastWater(_ actors: [MeleeTarget], world: any ImpulseWorld) {
         var stillIn: Set<ReferenceKey> = []

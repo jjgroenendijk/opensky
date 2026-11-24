@@ -129,14 +129,15 @@ nonisolated extension CellSceneBuilder.CellReferenceStateBuilder {
                 }
                 continue
             }
-            guard resolved.overriddenKinds.contains(.transform) else {
-                effective.append(ref)
-                continue
+            var placed = ref
+            let damage = deltas[entry.key]?.component(ReferenceDamageModel.self)
+            placed.modelOverride = damage?.path
+            placed.damageStage = damage?.stage
+            if resolved.overriddenKinds.contains(.transform) {
+                placed.placement = resolved.transform.placement
+                placed.scale = resolved.transform.scale
             }
-            var moved = ref
-            moved.placement = resolved.transform.placement
-            moved.scale = resolved.transform.scale
-            effective.append(moved)
+            effective.append(placed)
         }
         return effective
     }

@@ -8,7 +8,8 @@ nonisolated public enum ImpulseEvent: Equatable, Sendable {
     case knock(ReferenceKey, speed: Float, knockdown: Bool, cause: ImpulseCause)
     case push(ReferenceKey, impulse: Float, cause: ImpulseCause)
     case splash(SplashEvent)
-    case physicsDamage(body: ReferenceKey, actor: ReferenceKey, damage: Float)
+    /// A fast body hit an actor or a destructible object.
+    case physicsDamage(body: ReferenceKey, struck: ReferenceKey, damage: Float)
     case collision(BodyCollision)
 }
 

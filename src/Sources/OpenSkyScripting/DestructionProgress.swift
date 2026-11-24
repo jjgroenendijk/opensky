@@ -1,6 +1,6 @@
 // How damage moves a reference through the stages of its base form's `DEST` data. Pure:
-// the natives store the result in the script state. Stage flags are from xEdit
-// `wbDefinitionsTES5.pas` (`DSTD`). See docs/engine/papyrus-destruction.md.
+// the natives and the hits store the result in the script state. Stage flags are from
+// xEdit `wbDefinitionsTES5.pas` (`DSTD`). See docs/engine/papyrus-destruction.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -15,36 +15,64 @@ nonisolated struct DestructionProgress: Equatable, Sendable {
     static let capDamage: UInt8 = 0x01
     static let disable: UInt8 = 0x02
     static let destroy: UInt8 = 0x04
+    static let ignoreExternalDamage: UInt8 = 0x08
 
-    /// The stage passed when health falls to its percent, in the order health falls.
-    private static func stages(of data: Destructible) -> [Destructible.Stage] {
-        data.stages.sorted { $0.healthPercent > $1.healthPercent }
+    /// The health share a stage is reached at.
+    private static func threshold(_ stage: Destructible.Stage, health: Float) -> Float {
+        health * Float(stage.healthPercent) / 100
     }
 
-    /// Adds `amount` of damage. A stage with the cap flag holds health at its percent,
-    /// so later damage stops there. True in the result when the reached stage disables.
-    mutating func apply(damage amount: Float, to data: Destructible) -> Bool {
-        guard amount > 0, amount.isFinite, data.health > 0, !isDestroyed else { return false }
+    /// How many stages, in record order, `damage` has reached.
+    private static func reachedCount(damage: Float, data: Destructible) -> Int {
         let health = Float(data.health)
+        var count = 0
+        for stage in data.stages {
+            guard health - damage <= threshold(stage, health: health) else { break }
+            count += 1
+        }
+        return count
+    }
+
+    /// Adds `amount` of damage and returns the stages it passed, in record order. Forced
+    /// damage, such as a script's, passes the Ignore External Damage flag; other damage
+    /// does nothing in such a stage and stops before the next one.
+    mutating func apply(
+        damage amount: Float, to data: Destructible, forced: Bool = true
+    ) -> [Destructible.Stage] {
+        let health = Float(data.health)
+        guard amount > 0, amount.isFinite, health > 0, !isDestroyed, damage < health else {
+            return []
+        }
+        let start = Self.reachedCount(damage: damage, data: data)
+        if !forced, start > 0, data.stages[start - 1].flags & Self.ignoreExternalDamage != 0 {
+            return []
+        }
         var newDamage = damage + amount
-        var reached: Destructible.Stage?
-        for stage in Self.stages(of: data) {
-            let threshold = health * Float(stage.healthPercent) / 100
+        var passed: [Destructible.Stage] = []
+        for stage in data.stages.dropFirst(start) {
+            let threshold = Self.threshold(stage, health: health)
             guard health - newDamage <= threshold else { break }
-            reached = stage
+            if !forced, stage.flags & Self.ignoreExternalDamage != 0 {
+                newDamage = min(newDamage, max(damage, health - threshold - Self.holdMargin))
+                break
+            }
+            passed.append(stage)
             if stage.flags & Self.capDamage != 0 {
                 newDamage = min(newDamage, health - threshold)
                 break
             }
         }
-        damage = newDamage
-        guard let reached else { return false }
-        stage = max(stage, Int(reached.index))
-        if reached.flags & Self.destroy != 0 {
+        damage = min(newDamage, health)
+        guard let last = passed.last else { return [] }
+        stage = Int(last.index)
+        if passed.contains(where: { $0.flags & Self.destroy != 0 }) {
             isDestroyed = true
         }
-        return reached.flags & Self.disable != 0
+        return passed
     }
+
+    /// Health kept above a stage that external damage may not reach.
+    private static let holdMargin: Float = 0.001
 
     /// `SetDestroyed(true)` jumps to the last stage; false makes the object whole again.
     static func destroyed(_ isDestroyed: Bool, data: Destructible?) -> DestructionProgress {

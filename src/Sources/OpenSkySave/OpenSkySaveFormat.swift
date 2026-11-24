@@ -160,6 +160,8 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         static let relocations = "RLOC"
         /// Motion types scripts set with `SetMotionType`.
         static let motionTypes = "RMOT"
+        /// Models destruction stages swapped in.
+        static let damageModels = "RDMG"
         /// The doors random doors linked to.
         static let doorLinks = "RDLK"
         /// The player level each placed actor and container froze for its leveled lists.

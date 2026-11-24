@@ -8,6 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
+import simd
 
 extension PapyrusNativeFunctions.DestructionNatives {
     static func installDestruction(into registry: inout PapyrusNativeRegistry) {
@@ -16,13 +17,7 @@ extension PapyrusNativeFunctions.DestructionNatives {
             guard let amount = float(call, at: 0), amount.isFinite else {
                 return failure(call, "DamageObject needs a finite number")
             }
-            guard let data = bridge.referenceEvents.destructibleData(of: key)
-            else { return .returned(.none) }
-            var progress = bridge.referenceEvents.destruction(of: key)
-            if progress.apply(damage: amount, to: data) {
-                bridge.write(ReferenceEnableState.disabled.erased, for: key)
-            }
-            bridge.referenceEvents.storeDestruction(progress, of: key)
+            bridge.referenceEvents.damageDestructible(key, amount: amount, forced: true)
             return .returned(.none)
         }
         // `SetDestroyed(bool abDestroyed = true)`.
@@ -49,6 +44,12 @@ extension PapyrusNativeFunctions.DestructionNatives {
 extension PapyrusWorldStateBridge.ReferenceEvents {
     /// The `DEST` data of the reference's base, read in its plugin's space.
     func destructibleData(of key: ReferenceKey) -> Destructible? {
+        destructibleBase(of: key)?.data
+    }
+
+    private func destructibleBase(
+        of key: ReferenceKey
+    ) -> (base: ResolvedFormID, data: Destructible)? {
         guard
             let keywordStore = bridge.stores.keywordStore,
             let base = bridge.baseObject(of: key) else { return nil }
@@ -57,8 +58,51 @@ extension PapyrusWorldStateBridge.ReferenceEvents {
         } else {
             FormIDResolver.loadOrderSpaceName
         }
-        return keywordStore.resolvedID(base, fromPlugin: space)
-            .flatMap(keywordStore.destructible(of:))
+        guard
+            let resolved = keywordStore.resolvedID(base, fromPlugin: space),
+            let data = keywordStore.destructible(of: resolved)
+        else { return nil }
+        return (resolved, data)
+    }
+
+    /// Damages `key` through its stages. A disabled or deleted reference takes none.
+    /// The stages passed are queued for the session. False when it has no `DEST` data.
+    @discardableResult
+    func damageDestructible(_ key: ReferenceKey, amount: Float, forced: Bool) -> Bool {
+        guard let (base, data) = destructibleBase(of: key) else { return false }
+        guard bridge.referenceState(for: key)?.isVisible != false else { return true }
+        var progress = destruction(of: key)
+        let passed = progress.apply(damage: amount, to: data, forced: forced)
+        storeDestruction(progress, of: key)
+        guard !passed.isEmpty else { return true }
+        if passed.contains(where: { $0.flags & DestructionProgress.disable != 0 }) {
+            bridge.write(ReferenceEnableState.disabled.erased, for: key)
+        }
+        let resolve = { (id: FormID?) in
+            id.flatMap { bridge.stores.keywordStore?.resolvedID($0, fromPlugin: base.plugin) }
+                .map(ReferenceKey.init(resolved:))
+        }
+        var change = DestructionStageChange(
+            reference: key,
+            stages: passed.map { stage in
+                var change = DestructionStageChange.Stage(
+                    index: stage.index, model: stage.model?.path,
+                    selfDamagePerSecond: Float(stage.selfDamagePerSecond),
+                    explosion: resolve(stage.explosion), debris: resolve(stage.debris),
+                    debrisCount: Int(stage.debrisCount)
+                )
+                change.modelDamageStage = Int(stage.modelDamageStage)
+                return change
+            }
+        )
+        if let bounds = bridge.stores.keywordStore?.bounds(of: base), !bounds.isEmpty {
+            let low = SIMD3<Float>(bounds.minimum)
+            let high = SIMD3<Float>(bounds.maximum)
+            change.boundsCentre = (low + high) / 2
+            change.boundRadius = simd_length(high - low) / 2
+        }
+        bridge.runState.destructionChanges.append(change)
+        return true
     }
 
     func destruction(of key: ReferenceKey) -> DestructionProgress {

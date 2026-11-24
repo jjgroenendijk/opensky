@@ -54,6 +54,10 @@ nonisolated public struct PlacedReference: Sendable {
     /// XSCL — uniform scale, defaulting to 1 when the field is absent. `var`
     /// for the same runtime-override reason as `placement`.
     public var scale: Float
+    /// A model the runtime swapped in, such as a destruction stage's; nil draws the base's.
+    public var modelOverride: String?
+    /// The destruction stage whose `BSDamageStage` nodes the model draws; nil draws all.
+    public var damageStage: Int?
     /// XTEL — present only on teleporting door references.
     public let teleportDestination: TeleportDestination?
     /// XRDS — per-reference point-light radius override.

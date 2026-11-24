@@ -51,8 +51,7 @@ struct PapyrusNativeDestructionTests {
     @Test func damagePassesTheStagesAndTheLastDestroys() throws {
         let data = try Self.data()
         var progress = DestructionProgress()
-        let disables = progress.apply(damage: 40, to: data)
-        #expect(!disables)
+        #expect(progress.apply(damage: 40, to: data).isEmpty)
         #expect(progress.stage == 0)
         _ = progress.apply(damage: 20, to: data)
         #expect(progress.stage == 1 && !progress.isDestroyed)
@@ -66,6 +65,31 @@ struct PapyrusNativeDestructionTests {
         var progress = DestructionProgress()
         _ = progress.apply(damage: 500, to: capped)
         #expect(progress.stage == 1 && progress.damage == 50 && !progress.isDestroyed)
+    }
+
+    /// The game checks the stages in record order, so a stage listed after a lower one
+    /// is never reached first.
+    @Test func theStagesAreCheckedInRecordOrder() throws {
+        var data = try Self.data()
+        data.stages.swapAt(0, 1)
+        var progress = DestructionProgress()
+        #expect(progress.apply(damage: 60, to: data).isEmpty)
+        #expect(progress.apply(damage: 40, to: data).map(\.index) == [2, 1])
+        #expect(progress.isDestroyed)
+    }
+
+    /// Damage that is not forced stops before a stage with Ignore External Damage, and
+    /// does nothing once such a stage holds.
+    @Test func ignoreExternalDamageHoldsAgainstAHit() throws {
+        var data = try Self.data()
+        data.stages[0].flags = DestructionProgress.ignoreExternalDamage
+        var progress = DestructionProgress()
+        #expect(progress.apply(damage: 80, to: data, forced: false).isEmpty)
+        #expect(progress.damage < 50)
+        #expect(progress.apply(damage: 80, to: data).map(\.index) == [1, 2])
+        var held = DestructionProgress(damage: 50, stage: 1)
+        #expect(held.apply(damage: 80, to: data, forced: false).isEmpty)
+        #expect(held.damage == 50)
     }
 
     private static func fixture() throws -> Fixture {

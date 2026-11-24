@@ -65,6 +65,17 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
         targets
     }
 
+    public var destructibles: [MeleeTarget] = []
+    public private(set) var objectDamage: [ReferenceKey: Float] = [:]
+
+    public func meleeDestructibles(within _: Float, of _: SIMD3<Float>) -> [MeleeTarget] {
+        destructibles
+    }
+
+    public func damageMeleeDestructible(_ object: ReferenceKey, amount: Float) {
+        objectDamage[object, default: 0] += amount
+    }
+
     public func meleeSweeps(_: CombatBlow) -> Bool {
         sweeps
     }

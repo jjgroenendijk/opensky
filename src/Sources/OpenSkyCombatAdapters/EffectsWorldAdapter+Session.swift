@@ -64,6 +64,7 @@ extension EffectsFrameStep {
             lastFrame = paused ? nil : now
             frameLooks.attachRaceEffects()
             hosts.combat.explosions.advance(seconds)
+            EffectsDestructionAdapter(game: hosts).step(seconds, burns: &state.burns)
             EffectsEffectPlacementAdapter(game: hosts, state: state).stepHealthCues(
                 seconds,
                 gameSession: gameSession

@@ -69,6 +69,8 @@ nonisolated extension OpenSkySaveDecoder {
             body.side.relocations = try OpenSkySaveRelocationDecoder.decodeRelocations(payload)
         case OpenSkySaveFormat.ChunkTag.motionTypes:
             body.side.motionTypes = try OpenSkySaveMotionTypeDecoder.decodeMotionTypes(payload)
+        case OpenSkySaveFormat.ChunkTag.damageModels:
+            body.side.damageModels = try OpenSkySaveDamageModelDecoder.decodeDamageModels(payload)
         case OpenSkySaveFormat.ChunkTag.doorLinks:
             body.side.doorLinks = try OpenSkySaveDoorLinkDecoder.decodeDoorLinks(payload)
         case OpenSkySaveFormat.ChunkTag.leveledRolls:

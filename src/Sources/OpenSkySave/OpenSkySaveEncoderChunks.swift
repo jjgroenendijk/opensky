@@ -69,6 +69,7 @@ nonisolated enum OpenSkySaveItemAndWorldChunks {
         OpenSkySaveVendorRestockWriter.writeVendorRestocks(entries, into: &writer)
         OpenSkySaveRelocationWriter.writeRelocations(entries, into: &writer)
         OpenSkySaveMotionTypeWriter.writeMotionTypes(entries, into: &writer)
+        OpenSkySaveDamageModelWriter.writeDamageModels(entries, into: &writer)
         OpenSkySaveDoorLinkWriter.writeDoorLinks(entries, into: &writer)
         OpenSkySaveLeveledRollWriter.writeLeveledRolls(entries, into: &writer)
         OpenSkySaveJournalWriter.writeSceneChunks(entries, into: &writer)

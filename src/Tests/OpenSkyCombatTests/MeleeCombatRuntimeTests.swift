@@ -333,12 +333,12 @@ struct MeleeCombatRuntimeTests {
         return runtime
     }
 
-    private static func drawAndSwing(_ runtime: MeleeCombatRuntime) {
+    static func drawAndSwing(_ runtime: MeleeCombatRuntime) {
         runtime.handleGraphEvents(drawEvents)
         swing(runtime)
     }
 
-    private static func swing(_ runtime: MeleeCombatRuntime) {
+    static func swing(_ runtime: MeleeCombatRuntime) {
         runtime.acceptFrame(MeleeIntent(attack: true))
         runtime.handleGraphEvents([
             CombatGraphNames.attackStart,
