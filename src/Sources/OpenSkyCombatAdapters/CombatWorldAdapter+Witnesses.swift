@@ -16,7 +16,7 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 import OpenSkyMenusInterface
 import OpenSkyNavigation
 import OpenSkyPerceptionInterface
@@ -213,6 +213,10 @@ extension CombatWorldAdapter {
         actorFacts.level(of: key)
     }
 
+    public func spellHealthDamage(_ spell: SpellPayload) -> Float {
+        spellCasts.game.magic.healthDamage(of: spell)
+    }
+
     public func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction? {
         actorFacts.reaction(of: observer, toward: target)
     }
@@ -321,6 +325,20 @@ extension CombatWorldAdapter {
         in location: CellSceneLocation
     ) -> ReferenceKey? {
         motion.spawn(reference, in: location)
+    }
+
+    public func destructibleObjects(within radius: Float, of center: SIMD3<Float>)
+        -> [MeleeTarget]
+    {
+        motion.destructibleObjects(within: radius, of: center)
+    }
+
+    public func damageDestructible(_ object: ReferenceKey, amount: Float) -> Bool {
+        motion.damageDestructible(object, amount: amount)
+    }
+
+    public func destructibleKey(reference: FormID) -> ReferenceKey? {
+        motion.destructibleKey(reference: reference)
     }
 
     public var bodyTransients: CombatTransientCounts {

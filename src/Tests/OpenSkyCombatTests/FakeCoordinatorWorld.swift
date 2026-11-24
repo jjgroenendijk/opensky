@@ -85,6 +85,13 @@ final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
         styles[key]
     }
 
+    /// The health every spell takes, for the kill cam's release check.
+    var spellDamage: Float = 0
+
+    func spellHealthDamage(_: SpellPayload) -> Float {
+        spellDamage
+    }
+
     func hostility(of key: ReferenceKey) -> ActorHostility {
         hostilities[key] ?? .neutral
     }

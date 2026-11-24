@@ -34,6 +34,10 @@ public protocol MagicPort: AnyObject {
     @discardableResult func applySpellHit(_ hit: SpellHit) -> SpellHitReport
     var caster: CasterRuntime? { get }
     var commanded: [CommandedActor] { get }
+    /// The runes waiting on the ground.
+    var runeMarkers: [RuneMarker] { get }
+    /// The health `spell` takes from the actor it lands on, before resistance.
+    func healthDamage(of spell: SpellPayload) -> Float
     var effects: ActiveEffectRuntime? { get }
     var holdSettings: MagicHoldSettings { get }
     func magicConditionResolution() -> MagicConditionResolution
