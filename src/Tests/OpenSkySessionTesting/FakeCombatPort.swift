@@ -70,6 +70,11 @@ nonisolated public final class FakeCombatPort: CombatPort {
     public var bowZoomTimeScale: Float = 0
     public var combatHostilityCalls: [ReferenceKey] = []
     public var combatHostilityResult: ActorHostility?
+    public var shownDamageCalls: [(item: FormID, temperLevel: Int32)] = []
+    public var shownDamageResult: Int?
+    public var shownArmourRatingCalls: [(item: FormID, temperLevel: Int32)] = []
+    public var shownArmourRatingResult: Float?
+    public var shownArmourBonus: Float = 0
 
     public init() {}
 }
@@ -322,5 +327,15 @@ nonisolated extension FakeCombatPort {
             preconditionFailure("FakeCombatPort.combatHostility has no result")
         }
         return combatHostilityResult
+    }
+
+    public func shownDamage(of item: FormID, temperLevel: Int32) -> Int? {
+        shownDamageCalls.append((item: item, temperLevel: temperLevel))
+        return shownDamageResult
+    }
+
+    public func shownArmourRating(of item: FormID, temperLevel: Int32) -> Float? {
+        shownArmourRatingCalls.append((item: item, temperLevel: temperLevel))
+        return shownArmourRatingResult
     }
 }

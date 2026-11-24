@@ -12,14 +12,17 @@ nonisolated extension ContainerMenuMovieBridge {
     public static let playerInfoObjectName = "PlayerInfoObj"
 
     /// The `damage` and `armor` the bar shows: the best equipped weapon's damage and
-    /// the worn armour's summed rating, both before skill and perks, as the cards show.
+    /// the worn armour's summed rating plus the armour bonus, after skill and perks.
     public static func playerInfo(
-        of entries: [InventoryMenuEntry], lookup: (FormID) -> InventoryItemCard?
+        of entries: [InventoryMenuEntry],
+        stats: ShownGearStats = .base,
+        lookup: (FormID) -> InventoryItemCard?
     ) -> [String: AS2Value] {
         var damage = 0
-        var armour: Float = 0
+        var armour = stats.armourBonus
         for entry in entries where entry.isEquipped {
-            guard let card = lookup(entry.item) else { continue }
+            let card = InventoryMenuMovieBridge.card(for: entry, stats: stats, lookup: lookup)
+            guard let card else { continue }
             damage = max(damage, card.damage ?? 0)
             armour += card.armourRating ?? 0
         }
