@@ -222,6 +222,9 @@ while that hand casts, and `IsInCastState` is 1 while either does.
 
 ## Casting cues
 
+The events a cast raises in the behaviour graph are on the
+[casting graph events](/engine/casting-graph.md) page.
+
 A released fire-and-forget hand waits for its spell-fire event before the spell leaves:
 `MRh_SpellFire_Event` for the right hand and `MLh_SpellFire_Event` for the left. The release clips
 raise them. While it waits, the hand's `bWantCast` is false, so the graph plays the throw. A graph
