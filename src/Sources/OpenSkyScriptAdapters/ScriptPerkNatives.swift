@@ -58,6 +58,9 @@ extension ScriptPerkBindingsAdapter {
         bridge.natives.crime.arrestSession = { [weak game = self.game] in game?.crime }
         game.crime
             .scriptedOwner = { [weak bridge] key in bridge?.stateLinks.scriptedOwner(of: key) }
+        game.crime.scriptedCellOpened = { [weak bridge] key in
+            bridge?.stateLinks.isCellOpened(key) ?? false
+        }
         let worldState = game.worldState
         game.crime.scriptedOwnerRevision = { [weak worldState] in
             worldState?.revision(of: [.scriptedState]) ?? 0

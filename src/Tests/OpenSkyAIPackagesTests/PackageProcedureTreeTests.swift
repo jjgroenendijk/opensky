@@ -116,6 +116,24 @@ struct PackageProcedureTreeTests {
         #expect(runner.completions == 1)
     }
 
+    /// The shopkeeper template: walk to the shop, unlock its doors, then sandbox.
+    @Test func aShopkeeperUnlocksAfterItsWalk() throws {
+        var runner = try Self.runner([
+            Self.branch("Sequence", children: 3),
+            Self.procedure("Travel"),
+            Self.procedure("UnlockDoors"),
+            Self.branch("Simultaneous", children: 2),
+            Self.procedure("Sandbox"),
+            Self.procedure("KeepAnEyeOn")
+        ])
+        var host = FakeTreeHost()
+        _ = runner.start(host: &host)
+        let unlock = runner.handle(.arrived, leaf: 1, host: &host)
+        #expect(unlock.contains(.init(
+            leaf: 2, command: .act(.setDoorsLocked(false, center: .zero, radius: 0))
+        )))
+    }
+
     @Test func aStackedBranchRunsItsFirstValidChild() throws {
         var runner = try Self.runner([
             Self.branch("Stacked", children: 2),

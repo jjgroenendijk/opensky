@@ -363,3 +363,9 @@ The game's own rules for alarms, witnesses, guards, and statistics are in
 - For an `NPC_`-owned victim, `doNotReportCrimesAgainstMembers` reads the base record's authored
   factions. A faction a script gave that actor later is not seen.
 - A script-set owner on an exterior cell is not read.
+- Trespass reads only the cell's own owner. The encounter zone's owner, which the game takes
+  when the cell has none, is not read. A friend counts only while a resident actor of the
+  owner's base is that friend; the record's default relationships are not read.
+- An owner's door locks skip the faction rank the door asks for, and do not check that the NPC
+  is alive. LockDoors does not look for a stranger to warn first, and an owner who leaves does
+  not lock the doors behind it. A procedure acts once the NPC reaches its place.

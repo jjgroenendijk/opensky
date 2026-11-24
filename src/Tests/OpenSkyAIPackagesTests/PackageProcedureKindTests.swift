@@ -22,6 +22,19 @@ struct PackageProcedureKindTests {
         return PackageProcedureMachine(setup: setup)
     }
 
+    /// A Travel is done inside its area, though its walk would end at the centre.
+    @MainActor @Test func aTravelEndsInsideItsArea() {
+        var machine = Self.machine(.travel)
+        #expect(!machine.hasReachedArea(Self.place), "not walking yet")
+        _ = machine.start()
+        #expect(machine.hasReachedArea(Self.place + SIMD3(200, 200, 90)))
+        #expect(!machine.hasReachedArea(Self.place + SIMD3(250, 250, 0)), "too far across")
+        #expect(!machine.hasReachedArea(Self.place + SIMD3(0, 0, 150)), "too far up")
+        var wait = Self.machine(.wait)
+        _ = wait.start()
+        #expect(!wait.hasReachedArea(Self.place))
+    }
+
     @Test func lockDoorsActsWithoutAWalk() {
         var machine = Self.machine(.lockDoors)
         #expect(machine.start() == [.act(.setDoorsLocked(true, center: Self.place, radius: 300))])

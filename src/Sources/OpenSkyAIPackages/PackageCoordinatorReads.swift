@@ -131,6 +131,18 @@ extension PackageProcedureMachine {
         state == .sandboxing(.wandering)
     }
 
+    /// A walking Travel with a radius is done once the actor stands in its area: within
+    /// the radius across and 100 units up or down, wherever its path would end
+    /// (docs/engine/package-schedules.md#travel-arrival).
+    func hasReachedArea(_ feet: SIMD3<Float>) -> Bool {
+        guard kind == .travel, state == .moving, radius > 0 else { return false }
+        let goal = destination ?? center
+        let across = simd_distance(SIMD2(feet.x, feet.y), SIMD2(goal.x, goal.y))
+        return across <= radius && abs(feet.z - goal.z) <= Self.areaHeightTolerance
+    }
+
+    static let areaHeightTolerance: Float = 100
+
     /// The cylinder round the sandbox's place, with `fSandboxCylinderBottom` and
     /// `fSandboxCylinderTop` as its height.
     func idleArea(defaults: SandboxSettings) -> IdleSearchArea {

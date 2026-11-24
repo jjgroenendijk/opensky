@@ -64,7 +64,7 @@ extension PapyrusNativeFunctions.ScriptStateNatives {
         ScriptedFlag("ActorBase", "SetInvulnerable", ScriptedStateName.invulnerable),
         ScriptedFlag("ActorBase", "SetProtected", ScriptedStateName.protected),
         ScriptedFlag("Location", "SetCleared", "IsCleared", ScriptedStateName.cleared),
-        ScriptedFlag("Cell", "SetPublic", "public"),
+        ScriptedFlag("Cell", "SetPublic", ScriptedStateName.publicCell),
         ScriptedFlag("Quest", "SetActive", "IsActive", "active")
     ]
 

@@ -32,6 +32,7 @@ nonisolated public final class FakeCrimePort: CrimePort {
     public var restoreJailStayCalls: [JailStay?] = []
     public var scriptedOwner: ((ReferenceKey) -> ReferenceOwner??)?
     public var scriptedOwnerRevision: (() -> UInt64)?
+    public var scriptedCellOpened: ((ReferenceKey) -> Bool)?
     public var theftBountyCalls: [(item: FormID, reference: ReferenceKey)] = []
     public var theftBountyResult: Int32 = 0
     public var advanceTrespassCalls: [Double] = []

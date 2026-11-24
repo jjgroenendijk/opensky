@@ -57,6 +57,12 @@ public final class CrimeCoordinator {
         }
     }
 
+    /// Whether the owner opened the interior cell `key` or a script made it public.
+    public var scriptedCellOpened: ((ReferenceKey) -> Bool)? {
+        get { owners.scriptedCellOpened }
+        set { owners.scriptedCellOpened = newValue }
+    }
+
     /// Rises whenever a script sets or clears an owner, so the crime seam is rebuilt.
     public var scriptedOwnerRevision: (() -> UInt64)?
     /// The reporter's world: who owns what, and which faction polices where.
@@ -80,7 +86,7 @@ public final class CrimeCoordinator {
     /// Takes `ARRT` and `JAIL`, and is passed on to the reporter.
     public weak let storyEvents: (any StoryEventReporting)?
 
-    /// So a trespass is noticed on arrival rather than once per frame.
+    /// So a new cell starts a new warning watch.
     var lastPlayerCell: CellSceneLocation?
     /// The warning and grace period of the current stay.
     public internal(set) var trespassWatch = TrespassWatch()
@@ -251,24 +257,27 @@ public final class CrimeCoordinator {
         return (murders[victim]?.gold ?? 0) > 0 ? .reportedMurder : .murder
     }
 
-    /// Runs every tick with the real seconds since the last. The ownership lookup
-    /// runs only when the cell changes; then a seen trespasser is warned and, after
-    /// the grace period, charged (`TrespassWatch`).
     /// Warned to leave a trespassed cell, with the grace period still running.
     public var isPlayerWarnedToLeave: Bool {
         isPlayerTrespassing && trespassWatch.sinceWarning != nil && !trespassWatch.isCharged
     }
 
+    /// Runs every tick with the real seconds since the last. The state is checked every
+    /// tick, as the game does, so an owner opening the shop ends it at once. A seen
+    /// trespasser is warned and, after the grace period, charged (`TrespassWatch`).
     public func advanceTrespass(by seconds: Double = 0) {
         let location = world.currentCellLocation
-        if lastPlayerCell != location {
+        let trespassing = isTrespass(at: location)
+        let entered = lastPlayerCell != location
+        if entered || (trespassing && !isPlayerTrespassing) {
             lastPlayerCell = location
             trespassWatch.enterNewCell()
-            isPlayerTrespassing = !world.isPublicArea(location)
-                && owners.cellOwner(at: location).map { !crimeActor(.player).mayUse($0) } == true
-            if isPlayerTrespassing {
+            if trespassing {
                 storyEvents?.reportStoryEvent(.trespass(witness: nil, location: nil, crimeGold: 0))
             }
+        }
+        if trespassing != isPlayerTrespassing {
+            isPlayerTrespassing = trespassing
         }
         guard isPlayerTrespassing, let reporter else { return }
         let step = trespassWatch.advance(
@@ -288,10 +297,19 @@ public final class CrimeCoordinator {
         }
     }
 
+    /// An owned interior the owner has not opened and the player may not be in.
+    func isTrespass(at location: CellSceneLocation?) -> Bool {
+        guard
+            !world.isPublicArea(location), !owners.isCellOpened(at: location),
+            let owner = owners.cellOwner(at: location)
+        else { return false }
+        return !owners.playerMayEnter(owner)
+    }
+
     public func reportTrespass(in location: CellSceneLocation?) {
         guard
             let reporter, let owner = owners.cellOwner(at: location),
-            !crimeActor(.player).mayUse(owner) else { return }
+            !owners.playerMayEnter(owner) else { return }
         note(reporter.reportTrespass(in: location, owner: owner), as: "Trespass")
     }
 
