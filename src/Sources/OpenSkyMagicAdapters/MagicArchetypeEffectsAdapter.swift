@@ -20,6 +20,7 @@ import simd
 @MainActor
 public protocol MagicArchetypeEffectsHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
+    var actorGraphs: any ActorGraphPort { get }
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }
     var controllerRumble: any ControllerRumblePort { get }
@@ -80,6 +81,9 @@ extension MagicArchetypeEffectsAdapter {
         case let .spawnHazard(hazard, key): spawnHazard(hazard, at: key)
         case let .playerGrab(body, held): game.scripts.runtime?.queueGrab(of: body, held: held)
         case let .playerGraphEvent(name): game.gameSession?.locomotion.raise(name)
+        case let .actorGraphEvent(name, actor): game.actorGraphs.raise(name, on: actor)
+        case let .actorGraphFlag(name, value, actor):
+            game.actorGraphs.setVariable(.bool(value), named: name, on: actor)
         case let .detonateRune(payload, position): spellDelivery.detonateRune(
                 payload,
                 at: position

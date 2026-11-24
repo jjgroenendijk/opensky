@@ -53,4 +53,21 @@ extension MagicCoordinator {
     public func playerStaff() -> (staff: HeldStaff, charge: EnchantmentCharge)? {
         heldStaves.playerStaff()
     }
+
+    public func playerCasting() -> PlayerCastingReadout? {
+        guard let caster else { return nil }
+        let book = world.actorValueHolder(for: .player).map(caster.spellbook.state(of:))
+        let hands = SpellHand.allCases.map { hand in
+            PlayerCastingHand(
+                hand: hand,
+                phase: caster.phase(of: hand, on: .player),
+                spell: caster.state(of: hand, on: .player).spell,
+                readied: book?.spell(in: hand),
+                pressed: castingState.castPressed.contains(hand),
+                heldBySheathedPress: castingState.sheathedPress.contains(hand),
+                wantsCast: castingCues.wantsCast(hand)
+            )
+        }
+        return PlayerCastingReadout(hands: hands, cues: castingCues.castingCueText)
+    }
 }

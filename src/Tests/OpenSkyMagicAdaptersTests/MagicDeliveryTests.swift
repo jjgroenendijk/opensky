@@ -142,6 +142,15 @@ struct MagicDeliveryTests {
         #expect(host.fakeControllerRumble.shoutCalls == [2])
     }
 
+    @Test func anNPCsCastEventsAndFlagsReachItsGraph() {
+        adapter.archetypeEffects.run([
+            .actorGraphFlag("bWantCastRight", value: true, actor: Self.foe),
+            .actorGraphEvent("MRh_SpellAimedStart", actor: Self.foe)
+        ])
+        #expect(host.fakeActorGraphs.raiseCalls.map(\.event) == ["MRh_SpellAimedStart"])
+        #expect(host.fakeActorGraphs.setVariableCalls.map(\.name) == ["bWantCastRight"])
+    }
+
     @Test func aHandsArtGoesToItsMagicNodeAndItsLightToTheHand() throws {
         let effects = FakeEffectsPort()
         effects.recordsValue = EffectRecordStore(plugins: [])

@@ -99,3 +99,24 @@ no magic branch; it is only used for a staff bash.
 
 NPCs use the same trees and the same events. [WARNING] The read did not confirm whether a staff or
 a scroll uses other idles; most likely they use the same ones.
+
+## In OpenSky
+
+- A hand that begins a cast raises its start event one step later, so the graph has entered its
+  casting state from the rising `bWantCast` first. A hand that becomes the lead of a dual cast
+  raises the `DualMagic_` start event, and a single start still waiting is dropped. The player's
+  single start waits while the other hand may still join, up to the 0.05 second window.
+- A fire-and-forget hand raises its ready event when the charge is full, and its release event
+  when the button is let go. The spell then waits for the spell-fire event
+  ([casting cues](/engine/spellcasting.md#casting-cues)).
+- A concentration hand raises its release event when the charge is full. A spell with no charge
+  time, such as Flames, raises it right after its start event. The graph's loop then
+  raises the spell-fire event that starts the spell.
+- A dual cast raises the left hand's ready and release events, and either hand's spell-fire event
+  releases it.
+- An NPC's graph gets the same events, and its `bWantCastLeft` and `bWantCastRight` flags. An NPC's
+  spell still leaves when its charge ends; its graph's spell-fire event is not read.
+- A spell counts as a ward or telekinesis when any of its effects carries the keyword. Lesser
+  Ward has an armour effect beside its ward effect, and only the ward effect carries `MagicWard`.
+- The ritual spell and bleed-out branches are not used.
+- The readout's casting cue line names the last graph event a cast raised.

@@ -15,6 +15,12 @@ extension MagicCoordinator {
         var castPressed: Set<SpellHand> = []
         /// Each casting hand as the cues saw it last frame; an idle hand is left out.
         var castingViews: [CastSlot: CastingHandView] = [:]
+        /// Each casting hand as the graph event rule saw it last frame.
+        var graphHands: [CastSlot: CastingGraphHand] = [:]
+        /// Start events raised a step after their cast began, once the graph is casting.
+        var pendingStarts: [(slot: CastSlot, event: String)] = []
+        /// The last graph event a cast raised, for the readout.
+        var lastGraphEvent: String?
         var releaseLatch = SpellReleaseLatch()
         /// Hands pressed while the hands were away; each stays still until released.
         var sheathedPress: Set<SpellHand> = []

@@ -46,6 +46,8 @@ public protocol MagicPort: AnyObject {
     var playerGrabbedReference: ReferenceKey? { get }
     func playerKnownSpells() -> [ResolvedSpell]
     func playerStaff() -> (staff: HeldStaff, charge: EnchantmentCharge)?
+    /// The player's casting hands, for the agent's `state player`; nil without a caster.
+    func playerCasting() -> PlayerCastingReadout?
     func raceEffectLinks(base: FormID, actor: ReferenceKey) -> [SpellHitEffectLinks]
     var shoutMachine: ShoutMachine { get }
     var shouts: [ReferenceKey: ResolvedShout] { get }
