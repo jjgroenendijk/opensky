@@ -27,7 +27,10 @@ no pose, because only a loop in plugin or script data can make one.
 ## Towing
 
 In the game, a towed cart is a set of physics bodies pulled by the horse
-([the game's tow rig](/engine/cart-tow-rig.md)). OpenSky does not build those six bodies. It moves
+([the game's tow rig](/engine/cart-tow-rig.md)). The cart does not steer or brake by itself: it
+is dragged, so a cart stops because its horse stops. Its bodies collide like any other physics
+body, so in a line of carts nothing but the horses' own stopping places keeps a cart from running
+into the one in front. OpenSky does not build those six bodies. It moves
 the cart as a trailer on a tow line that has mass, play, and drag:
 
 - `TetherToHorse` first moves a standing horse 200 units ahead of the cart's origin, on the cart's

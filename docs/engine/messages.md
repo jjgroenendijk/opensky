@@ -58,6 +58,18 @@ identifies and ends the help message". Rules:
   `Message.ResetHelpMessage(event)`.
 - Event names match without case.
 
+What counts as doing the event:
+
+- The event is the control name the input maps to in the control map of the current input
+  context. Inside a menu, the mouse maps to menu events, so it cannot end a `Look` message.
+- `Look` comes from the mouse whenever it moves at all; there is no minimum. It also comes from
+  the gamepad's right stick when the stick is outside its dead zone.
+- An input whose control group is disabled gets no name, so it ends nothing. In the opening ride
+  movement and fighting are disabled, but looking is not, so turning the view ends the `Look`
+  message at once.
+- Once an event is done, a later `ShowAsHelpMessage` for it does nothing, even when its message was
+  not the one on screen.
+
 The count of times shown and the done flag per event are saved in the
 [`HELP` save chunk](/formats/opensky-save-world-chunks.md), so a done tutorial stays done after
 a load. OpenSky reports the `Jump`, `Sneak`, and `Activate` events from their keys, and the
