@@ -1,4 +1,4 @@
-// Records for the enchanting suites: two effects that power changes, a weapon base and
+// Records for the enchanting suites: two effects that power changes, two weapon bases and
 // two apparel bases, one enchanted sword whose ENCH links the weapon base, a plain
 // sword, a plain ring, and the soul gems. Every byte is built here.
 
@@ -11,6 +11,8 @@ public enum EnchantingFixture {
     public static let fireStrong = FormID(0x71)
     public static let healthBase = FormID(0x72)
     public static let magickaBase = FormID(0x73)
+    /// A weapon base whose cost the effects give, with a fraction.
+    public static let fireAutoBase = FormID(0x74)
 
     public static let fireSword = FormID(0x0000_0800)
     public static let ironSword = FormID(0x0000_0801)
@@ -58,6 +60,11 @@ public enum EnchantingFixture {
                     cost: 30, flags: manual, amount: 1000, baseEnchantment: fireBase.rawValue
                 ),
                 effects: [.init(0x60, magnitude: 20)]
+            ),
+            EnchantmentFixture.record(
+                formID: fireAutoBase.rawValue, editorID: "EnchWeaponFireAutoBase",
+                name: "Fire Damage", enit: EnchantmentFixture.enit(),
+                effects: [.init(0x60, magnitude: 10)]
             ),
             apparelBase(healthBase, "EnchArmorFortifyHealthBase", "Fortify Health", magnitude: 30),
             apparelBase(
