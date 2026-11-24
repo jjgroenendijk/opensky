@@ -77,8 +77,12 @@ final class ContainerMenuController {
         ContainerMenuDeals(game: game)
     }
 
-    init(game: any ContainerMenuHost) {
+    /// The player's own damage and armour, for the card and the barter bar.
+    let shownGearStats: () -> ShownGearStats
+
+    init(game: any ContainerMenuHost, shownGearStats: @escaping () -> ShownGearStats) {
         self.game = game
+        self.shownGearStats = shownGearStats
         movie = MenuMovieSession(
             movies: game.swfMovies, hud: game.hud, label: "container menu movie",
             logger: ContainerMenuLog.logger
@@ -206,12 +210,14 @@ final class ContainerMenuController {
     private func publishModel() {
         let model = model
         let cards = game.inventory.itemCards
-        let card = InventoryMenuMovieBridge.card(for: model.selectedEntry) {
+        let stats = shownGearStats()
+        let card = InventoryMenuMovieBridge.card(for: model.selectedEntry, stats: stats) {
             cards.itemCard(for: $0)
         }
-        let player = ContainerMenuMovieBridge.playerInfo(of: model.player.allEntries) {
-            cards.itemCard(for: $0)
-        }
+        let player = ContainerMenuMovieBridge
+            .playerInfo(of: model.player.allEntries, stats: stats) {
+                cards.itemCard(for: $0)
+            }
         movie.publish {
             ContainerMenuMovieBridge.publish(model, runtime: $0)
             ContainerMenuMovieBridge.publishPlayerInfo(player, runtime: $0)

@@ -65,6 +65,12 @@ public protocol CombatPort: AnyObject {
     ) -> [CombatCommand]
     var bowZoomTimeScale: Float { get }
     func combatHostility(of key: ReferenceKey) -> ActorHostility
+    /// A weapon's damage as the item card shows it, after the player's skill and perks.
+    func shownDamage(of item: FormID, temperLevel: Int32) -> Int?
+    /// An armour piece's rating as the item card shows it, after skill and perks.
+    func shownArmourRating(of item: FormID, temperLevel: Int32) -> Float?
+    /// The armour the bar adds to the worn pieces, from spells such as Oakflesh.
+    var shownArmourBonus: Float { get }
 }
 
 extension CombatPort {

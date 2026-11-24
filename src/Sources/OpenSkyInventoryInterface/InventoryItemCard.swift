@@ -15,10 +15,10 @@ nonisolated public struct InventoryItemCard: Equatable, Sendable {
     public let kind: String
     public var value: Int32
     public let weight: Float
-    /// A weapon's base damage, before skill and perks.
-    public let damage: Int?
-    /// An armour piece's base rating, before skill and perks.
-    public let armourRating: Float?
+    /// A weapon's damage: the base, until the menu applies skill and perks.
+    public var damage: Int?
+    /// An armour piece's rating: the base, until the menu applies skill and perks.
+    public var armourRating: Float?
     /// One line per effect, or "?" for an ingredient effect the player does not know.
     public let effects: [String]
     /// The enchantment and its charge, for a worn or held piece.

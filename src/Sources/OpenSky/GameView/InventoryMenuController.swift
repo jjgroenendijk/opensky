@@ -125,7 +125,8 @@ final class InventoryMenuController {
     private func publishModel() {
         let model = model
         let item = model.selectedEntry?.item
-        let card = InventoryMenuMovieBridge.card(for: model.selectedEntry) {
+        let stats = game.combat.shownGearStats
+        let card = InventoryMenuMovieBridge.card(for: model.selectedEntry, stats: stats) {
             itemDetails.card(for: $0)
         }
         let charge = itemDetails.chargePercent(of: item)

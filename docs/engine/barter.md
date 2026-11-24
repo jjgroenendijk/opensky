@@ -179,9 +179,10 @@ value. The barter movie scales the card's value by `fBuyMult` or `fSellMult` its
 
 The barter bottom bar also compares the item with what the player wears. It reads `damage`,
 `armor`, and `warmth` from `BarterMenu.PlayerInfoObj`, which `UpdatePlayerInfo` stores. OpenSky
-sets `damage` to the best equipped weapon's base damage and `armor` to the sum of the worn
-pieces' ratings, both before skill and perks. It leaves `warmth` unset, so the movie hides that
-line.
+sets `damage` to the best equipped weapon's damage and `armor` to the sum of the worn pieces'
+ratings plus the `Damage Resist` actor value, each after skill and perks as the
+[item card](inventory-menu.md#item-card) shows them. It leaves `warmth` unset, so the movie hides
+that line.
 
 ## The two-pane list
 
@@ -267,7 +268,6 @@ navigation step, and one transaction from each side:
 - Category changes are made by the engine, as in the inventory menu, for the same measured
   reason.
 - The two movie rules listed under [quantity](#quantity-and-selling-for-less).
-- The card and the bar show base damage and armour, not the values after skill and perks.
 
 ## Checking it
 

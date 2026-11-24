@@ -198,7 +198,10 @@ final class GameSessionScope {
     lazy var dialogueMenu = DialogueMenuController(game: ports)
     lazy var dialogueCamera = DialogueCameraController(game: ports)
     /// Container and barter menu two-pane list, merchant nomination and presentation state.
-    lazy var containerMenu = ContainerMenuController(game: ports)
+    lazy var containerMenu = ContainerMenuController(game: ports) { [unowned self] in
+        combat.shownGearStats
+    }
+
     lazy var lockpickingMenu = LockpickingMenuController(game: ports)
     /// Notifications, help messages, and message boxes for scripts and agent control.
     lazy var messages = MessageCoordinator(
