@@ -248,11 +248,22 @@ extension SWFArguments {
         public var movie: String
         @Option(parsing: .unconditional, help: ArgumentHelp("Frames to run.", valueName: "n"))
         public var ticks = 10
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp(
+                "Draw the stage after the steps into this PNG file, at 1280 by 720.",
+                valueName: "file"
+            )
+        )
+        public var out: String?
 
         public init() {}
 
         public func validate() throws {
             try OptionCheck.atLeast(ticks, 0, "--ticks")
+            if let out, !out.lowercased().hasSuffix(".png") {
+                throw ValidationError("--out must name a .png file")
+            }
         }
     }
 }
