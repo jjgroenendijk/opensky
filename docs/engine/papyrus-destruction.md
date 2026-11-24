@@ -90,9 +90,7 @@ Whether a spell without an explosion deals destruction damage was not found.
 
 ## Where OpenSky differs
 
-- Only scripts deal destruction damage. Weapons, spells, and explosions do not damage
-  destructible objects yet.
-- A stage change does not swap the model, spawn debris, play the explosion, or apply self
-  damage over time.
-- OpenSky walks the stages from the highest health percent down and stops at the first one not
-  reached. The game walks them in record order. OpenSky has no Ignore External Damage rule.
+- Spells without an explosion deal no destruction damage.
+- A fast body damages a destructible object it touches, with the same damage it deals an actor
+  ([impulses](/engine/impulses.md#physics-damage)). The body itself takes no destruction damage
+  from the impact.

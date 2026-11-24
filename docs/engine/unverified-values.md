@@ -376,3 +376,14 @@ the detail and the sources it did find.
 | Alarm flee distance | An NPC criminal that a guard answers runs 2000 units straight away from the guard, along the ground | [crime reports](/engine/crime-reports.md#where-opensky-differs) |
 | Bribe cost text | `<BribeCost>` shows the bribe amount rounded down to whole gold, as `Actor.GetBribeAmount` returns an integer | [dialogue menu](/engine/dialogue-menu.md#text) |
 | Dialogue edge look speed unit | `fPCDialogueLookSpeed` 10 is read as 10 pointer points of look input per 1/60 s | [dialogue camera](/engine/dialogue-camera.md) |
+| When an explosion points almost straight down | Its unit direction has a z below -0.95 | [explosions](/engine/explosions.md#damage) |
+| Explosion line of sight width | A sphere of radius 1 swept from the start to the actor | [explosions](/engine/explosions.md#damage) |
+| Stage debris force | A destruction stage throws its debris with a force of 100 | [destruction](/engine/papyrus-destruction.md#in-the-game) |
+| Ignore External Damage hold | Damage that is not forced leaves the health 0.001 percent above the flagged stage | [destruction](/engine/papyrus-destruction.md#in-the-game) |
+| Wider kill cam target search | With no aim help target, an actor counts when the aim line passes within its capsule radius plus 32 units | [kill cam](/engine/kill-cam.md#bow-and-spell-kill-cams-in-the-game) |
+| Physics impact reach on objects | A fast body checks the destructible objects whose origin is within its bounding radius plus 128 units | [destruction](/engine/papyrus-destruction.md#where-opensky-differs) |
+| Placed explosion object rotation | Pitch tips it along the flight's rise and the heading turns clockwise from north to the flight; there is no roll | [explosions](/engine/explosions.md#where-opensky-differs) |
+| Placed explosion object owner | The crime owner of the explosion's source: the destroyed reference, or else the shooter | [explosions](/engine/explosions.md#where-opensky-differs) |
+| Stage explosion offset | A uniform random direction, times a uniform random share of the bound radius | [destruction](/engine/papyrus-destruction.md#in-the-game) |
+| Spell kill cam damage | The release check sums the spell's harmful Health value modifiers, before resistance | [kill cam](/engine/kill-cam.md#bow-and-spell-kill-cams-in-the-game) |
+| Damage stage node range | A `BSDamageStage` node shows from its minimum to its maximum stage, both included | [NIF](/formats/nif.md) |

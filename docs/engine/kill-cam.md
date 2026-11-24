@@ -30,10 +30,9 @@ death at the end of the kill move starts no second kill cam.
 
 Differences from the game:
 
-- The game also knows the weapon and plays bow, spell, and melee paths. OpenSky has no
-  projectile anchor yet, so a shot placed on the projectile uses the target instead.
-- The game starts a bow or spell kill cam at the release, before the projectile lands, with the
-  rules below. OpenSky starts every kill cam after the death.
+- For a spell, the release check counts the spell's harmful Health value modifiers before
+  resistance, so a target that resists the spell can still get a kill cam that ends with it
+  alive.
 - A melee kill without a kill move finds no kill-cam path and ends on an `Exit` path: no
   kill cam plays.
 

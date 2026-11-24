@@ -170,12 +170,8 @@ What the spawn projectile, the Always Uses World Orientation flag (`0x2`), and t
 
 ## Where OpenSky differs
 
-- No mine trigger beyond the timer and the proximity check; no perk roll for the player and no
-  blinking light.
-- No line of sight check and no skill scaling. Both knockdown flags together do not spare the
-  player.
-- No placed reference, vertical offset, or water splash.
-- Explosions do not damage destructible objects.
+- The placed object faces along the projectile's flight, or has no rotation for an explosion
+  with no direction. Its owner is the crime owner of the explosion's source.
 - A spell hit sets off the main effect's explosion at the struck actor. OpenSky does not choose
   between that and the `PROJ` explosion by the area of the costliest Aimed effect, and skips no
   effect without a projectile for a concentration spell.

@@ -135,8 +135,9 @@ node.
 | `BSMasterParticleSystem` | uint16 maximum emitter objects, then a Ref list of particle systems |
 | `NiBillboardNode` | uint16 billboard mode. Turns to the camera ([billboard nodes](/formats/nif-sequences.md#billboard-nodes)) |
 
-A destructible mesh holds one `BSDamageStage` per stage. The walk draws every stage that is
-not hidden; picking the stage by the object's damage is not done yet.
+A destructible mesh holds one `BSDamageStage` per stage. A reference at a damage stage draws
+only the `BSDamageStage` nodes whose minimum to maximum range holds that stage. With no stage
+set, the walk draws every stage that is not hidden.
 
 ## Multi-bounds
 
