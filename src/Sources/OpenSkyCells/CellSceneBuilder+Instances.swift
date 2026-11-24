@@ -42,7 +42,8 @@ nonisolated extension CellSceneBuilder.CellInstanceResolver {
             let resolved = owner.modelIndex.resolveBase(
                 formID: ref.base.rawValue, statIndex: statIndex, modelBaseIndex: modelBaseIndex
             )
-            return resolved?.isEditorMarker == false ? resolved?.modelPath : nil
+            return resolved?.isEditorMarker == false
+                ? ref.modelOverride ?? resolved?.modelPath : nil
         })
     }
 
@@ -77,7 +78,8 @@ nonisolated extension CellSceneBuilder.CellInstanceResolver {
                 )
                 continue
             }
-            guard let modelPath = resolved.modelPath, !resolved.isEditorMarker else {
+            guard let modelPath = ref.modelOverride ?? resolved.modelPath, !resolved.isEditorMarker
+            else {
                 counts.markers += 1
                 let base = resolved.formID.description
                 let type = resolved.recordType.description
@@ -136,7 +138,9 @@ nonisolated extension CellSceneBuilder.CellInstanceResolver {
                 sortKey: attempt { try VirtualFileSystem.normalize(modelPath) } ?? modelPath,
                 formID: ref.formID.rawValue,
                 modelPath: modelPath,
-                model: animated ?? owner.meshes.model(path: modelPath, surface: surface),
+                model: animated ?? owner.meshes.model(
+                    path: modelPath, surface: surface, damageStage: ref.damageStage
+                ),
                 surface: surface,
                 transform: MatrixMath.placement(
                     position: ref.placement.position,
