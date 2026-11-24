@@ -141,7 +141,7 @@ public final class VehicleCoordinator {
         guard !core.links.isEmpty else {
             guard hasDeltas else { return [] }
             hasDeltas = false
-            return [.publishVehiclePoses([:]), .publishCarriedPoses([:]), .publishLinks([])]
+            return [.publishVehiclePoses([:]), .publishCarriedPoses([:]), .publishLinks([:])]
         }
         loadWheels(world: world)
         readRiderBodies(world: world)
@@ -171,7 +171,7 @@ public final class VehicleCoordinator {
         commands += [
             .publishVehiclePoses(placements),
             .publishCarriedPoses(lastPoses.filter { $0.key != .player }),
-            .publishLinks(core.cartGroups)
+            .publishLinks(core.ownCarts.mapValues { Set($0.compactMap(world.vehicleFormID)) })
         ]
         hasDeltas = true
         return commands

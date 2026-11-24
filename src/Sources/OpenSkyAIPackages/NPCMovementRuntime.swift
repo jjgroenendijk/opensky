@@ -1,6 +1,7 @@
 // Fixed-clock NPC capsule movement, path following, bounded recovery, sparse
 // persistence, and actor trigger occupancy.
 
+public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyPhysics
@@ -28,10 +29,15 @@ public struct NPCMovementWorld {
     public var sampleWater: (SIMD3<Float>) -> WaterReading? = { _ in nil }
     /// The size and movement facts of an actor's race that decide a current's push.
     public var waterPushRace: (ReferenceKey) -> WaterPushRace = { _ in .normal }
-    /// The carriers and riders of the vehicle links, and the query they collide with:
-    /// one without the vehicles' moving collision.
-    public var vehicleActors: Set<ReferenceKey> = []
-    public var collisionQueryIgnoringVehicles: WalkController.CollisionQuery?
+    /// The carriers and riders of the vehicle links, each with the FormIDs of its own
+    /// carts, and the query they collide with: one without those carts' moving collision.
+    public var vehicleActors: [ReferenceKey: Set<UInt32>] = [:]
+    public var collisionQueryIgnoringVehicles: VehicleCollisionQuery?
+    /// The vehicles' moving collision alone, but the given carts. A walk that ignores
+    /// statics still meets a cart it does not ride or pull.
+    public var vehicleCollisionQuery: VehicleCollisionQuery?
+
+    public typealias VehicleCollisionQuery = (ModelBounds, Set<UInt32>) -> [StaticCollisionShape]
     /// The speeds of the movement type an actor's graph state names; nil keeps the
     /// default type's (docs/engine/navigation.md#npc-path-following).
     public var movementSpeeds: (ReferenceKey) -> ActorMovementSpeeds = { _ in
@@ -48,8 +54,9 @@ public struct NPCMovementWorld {
         standingActors: @escaping () -> [NPCNeighbour] = { [] },
         sampleWater: @escaping (SIMD3<Float>) -> WaterReading? = { _ in nil },
         waterPushRace: @escaping (ReferenceKey) -> WaterPushRace = { _ in .normal },
-        vehicleActors: Set<ReferenceKey> = [],
-        collisionQueryIgnoringVehicles: WalkController.CollisionQuery? = nil,
+        vehicleActors: [ReferenceKey: Set<UInt32>] = [:],
+        collisionQueryIgnoringVehicles: VehicleCollisionQuery? = nil,
+        vehicleCollisionQuery: VehicleCollisionQuery? = nil,
         movementSpeeds: @escaping (ReferenceKey) -> ActorMovementSpeeds = { _ in
             ActorMovementSpeeds()
         }
@@ -65,14 +72,22 @@ public struct NPCMovementWorld {
         self.waterPushRace = waterPushRace
         self.vehicleActors = vehicleActors
         self.collisionQueryIgnoringVehicles = collisionQueryIgnoringVehicles
+        self.vehicleCollisionQuery = vehicleCollisionQuery
         self.movementSpeeds = movementSpeeds
     }
 
     /// A horse is not blocked by the cart it pulls, nor a rider by the cart it sits on.
     func collisionQuery(for actor: ReferenceKey) -> WalkController.CollisionQuery {
-        guard vehicleActors.contains(actor), let ignoring = collisionQueryIgnoringVehicles
+        guard let own = vehicleActors[actor], let ignoring = collisionQueryIgnoringVehicles
         else { return collisionQuery }
-        return ignoring
+        return { ignoring($0, own) }
+    }
+
+    /// What a walk that ignores statics still collides with: the carts not its own.
+    func vehicleQuery(for actor: ReferenceKey) -> WalkController.CollisionQuery {
+        guard let query = vehicleCollisionQuery else { return { _ in [] } }
+        let own = vehicleActors[actor] ?? []
+        return { query($0, own) }
     }
 }
 

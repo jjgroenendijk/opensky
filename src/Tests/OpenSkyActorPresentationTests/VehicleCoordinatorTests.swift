@@ -63,7 +63,7 @@ struct VehicleCoordinatorTests {
             .placePlayer(seat),
             .publishVehiclePoses([:]),
             .publishCarriedPoses([:]),
-            .publishLinks([.player])
+            .publishLinks([.player: []])
         ])
     }
 
@@ -78,7 +78,7 @@ struct VehicleCoordinatorTests {
         #expect(vehicles.detach(.player) == [.followerRests(.player, at: seat)])
         #expect(vehicles.detach(.player).isEmpty)
         #expect(vehicles.advance() == [
-            .publishVehiclePoses([:]), .publishCarriedPoses([:]), .publishLinks([])
+            .publishVehiclePoses([:]), .publishCarriedPoses([:]), .publishLinks([:])
         ])
         #expect(vehicles.advance().isEmpty)
     }

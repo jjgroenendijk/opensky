@@ -12,7 +12,7 @@ extension CellStreamer.ActorSteps {
         streamer.npcMovementState.carried = poses
     }
 
-    public func publishVehicleLinks(_ linked: Set<ReferenceKey>) {
+    public func publishVehicleLinks(_ linked: [ReferenceKey: Set<UInt32>]) {
         streamer.npcMovementState.vehicleLinkedActors = linked
     }
 

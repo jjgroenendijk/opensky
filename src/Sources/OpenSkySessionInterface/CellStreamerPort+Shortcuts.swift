@@ -47,7 +47,7 @@ extension CellStreamerPort {
         actors.publishCarriedPoses(poses)
     }
 
-    public func publishVehicleLinks(_ linked: Set<ReferenceKey>) {
+    public func publishVehicleLinks(_ linked: [ReferenceKey: Set<UInt32>]) {
         actors.publishVehicleLinks(linked)
     }
 

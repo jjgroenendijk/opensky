@@ -44,7 +44,7 @@ public struct CellStreamerNPCMovementState {
     public var vehiclePoses: [FormID: float4x4] = [:]
     /// The carriers and riders of every vehicle link. Their own walks do not collide
     /// with a vehicle's collision, so a horse is not blocked by the cart it pulls.
-    public var vehicleLinkedActors: Set<ReferenceKey> = []
+    public var vehicleLinkedActors: [ReferenceKey: Set<UInt32>] = [:]
 }
 
 /// One NPC pose written to the store and drawn through a delta until the cell

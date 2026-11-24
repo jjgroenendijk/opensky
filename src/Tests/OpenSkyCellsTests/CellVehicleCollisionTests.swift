@@ -63,10 +63,20 @@ struct CellVehicleCollisionTests {
             cellAt: { _ in nil },
             triggersAt: { _ in [] }
         )
-        world.vehicleActors = [horse]
-        world.collisionQueryIgnoringVehicles = { _ in [] }
+        world.vehicleActors = [horse: [Self.cart.rawValue]]
+        world
+            .collisionQueryIgnoringVehicles = { _, own in
+                own.contains(Self.cart.rawValue) ? [] : [cartShape]
+            }
+        world
+            .vehicleCollisionQuery = { _, own in
+                own.contains(Self.cart.rawValue) ? [] : [cartShape]
+            }
         let bounds = ModelBounds(min: SIMD3(repeating: -1), max: SIMD3(repeating: 1))
         #expect(world.collisionQuery(for: horse)(bounds).isEmpty)
         #expect(world.collisionQuery(for: guardActor)(bounds).count == 1)
+        // A walk that ignores statics still meets a cart that is not its own.
+        #expect(world.vehicleQuery(for: horse)(bounds).isEmpty)
+        #expect(world.vehicleQuery(for: guardActor)(bounds).count == 1)
     }
 }

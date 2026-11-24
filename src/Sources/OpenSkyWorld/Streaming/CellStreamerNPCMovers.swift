@@ -126,8 +126,13 @@ extension CellNPCMovers {
                 streamer?.actors.npcWaterPushRace?(actor) ?? .normal
             },
             vehicleActors: streamer.npcMovementState.vehicleLinkedActors,
-            collisionQueryIgnoringVehicles: { [weak streamer] bounds in
-                streamer?.collision.collisionCandidatesIgnoringVehicles(overlapping: bounds) ?? []
+            collisionQueryIgnoringVehicles: { [weak streamer] bounds, own in
+                streamer?.collision
+                    .collisionCandidates(overlapping: bounds, ignoringVehicles: own) ?? []
+            },
+            vehicleCollisionQuery: { [weak streamer] bounds, own in
+                streamer?.collision
+                    .vehicleCollisionCandidates(overlapping: bounds, excluding: own) ?? []
             },
             movementSpeeds: { [weak streamer] actor in
                 streamer?.npcMovementState.movementSpeeds?(actor) ?? ActorMovementSpeeds()

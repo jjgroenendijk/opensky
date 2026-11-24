@@ -31,10 +31,10 @@ struct CellStreamerSeamTests {
             position: SIMD3(300, 50, 0), rotation: SIMD3(0, 0, 1), scale: 1
         )
         streamer.actors.publishCarriedPoses([Self.actor: pose])
-        streamer.actors.publishVehicleLinks([Self.actor])
+        streamer.actors.publishVehicleLinks([Self.actor: [0x9100]])
         streamer.actors.setVehiclePose(matrix_identity_float4x4, for: FormID(0x9100))
         #expect(streamer.npcMovementState.carried[Self.actor]?.position == pose.position)
-        #expect(streamer.npcMovementState.vehicleLinkedActors == [Self.actor])
+        #expect(streamer.npcMovementState.vehicleLinkedActors == [Self.actor: [0x9100]])
         #expect(streamer.npcMovementState.vehiclePoses[FormID(0x9100)] == matrix_identity_float4x4)
     }
 

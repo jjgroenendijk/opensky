@@ -29,7 +29,7 @@ public protocol CellStreamerActorsPort {
     func npcMovementReadouts() -> [NPCMovementReadout]
     var npcMovementSpeeds: ((ReferenceKey) -> ActorMovementSpeeds)? { get }
     func publishCarriedPoses(_ poses: [ReferenceKey: ReferenceTransformOverride])
-    func publishVehicleLinks(_ linked: Set<ReferenceKey>)
+    func publishVehicleLinks(_ linked: [ReferenceKey: Set<UInt32>])
     func setVehiclePose(_ pose: float4x4, for formID: FormID)
     func npcTransform(for actor: ReferenceKey) -> ReferenceTransformOverride?
     func persistNPCMovementForSave()
