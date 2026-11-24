@@ -187,6 +187,13 @@ public protocol CombatWorld: AnyObject {
     func residentCells() -> Set<CellSceneLocation>
     /// Spawns a stuck arrow. Nil when the store refused it.
     func spawn(_ reference: ReferenceSpawnState, in location: CellSceneLocation) -> ReferenceKey?
+    /// The resident destructible objects within `radius` of `center`, by their origin.
+    func destructibleObjects(within radius: Float, of center: SIMD3<Float>) -> [MeleeTarget]
+    /// Deals `amount` of hit damage to a destructible object. False when it is not one.
+    @discardableResult
+    func damageDestructible(_ object: ReferenceKey, amount: Float) -> Bool
+    /// The key of the resident placed object `reference`, or nil.
+    func destructibleKey(reference: FormID) -> ReferenceKey?
 
     /// Ragdoll and dynamic-body counts. The projectile fields stay zero.
     var bodyTransients: CombatTransientCounts { get }
@@ -198,6 +205,8 @@ public protocol CombatWorld: AnyObject {
     func isKnockedDown(_ key: ReferenceKey) -> Bool
     /// `key`'s level, or nil when it has no actor values.
     func level(of key: ReferenceKey) -> Int?
+    /// The health `spell` takes from the actor it lands on, before resistance.
+    func spellHealthDamage(_ spell: SpellPayload) -> Float
     /// What `observer` makes of `target` through factions and relationships.
     func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction?
     /// `key`'s aggro radius from its AI data, or nil when the behaviour is off.
@@ -345,6 +354,18 @@ extension CombatWorld {
     @discardableResult
     public func shout(_: ReferenceKey, by _: ReferenceKey) -> Bool {
         false
+    }
+
+    public func destructibleObjects(within _: Float, of _: SIMD3<Float>) -> [MeleeTarget] {
+        []
+    }
+
+    public func damageDestructible(_: ReferenceKey, amount _: Float) -> Bool {
+        false
+    }
+
+    public func destructibleKey(reference _: FormID) -> ReferenceKey? {
+        nil
     }
 
     public func cellLocation(of _: ReferenceKey) -> CellSceneLocation? {

@@ -34,6 +34,9 @@ nonisolated public final class FakeMagicPort: MagicPort {
     public var applySpellHitResult: SpellHitReport?
     public var caster: CasterRuntime?
     public var commanded: [CommandedActor] = []
+    public var runeMarkers: [RuneMarker] = []
+    public var healthDamageCalls: [SpellPayload] = []
+    public var healthDamageResult: Float = 0
     public var effects: ActiveEffectRuntime?
     public var holdSettingsValue: MagicHoldSettings?
     public var magicConditionResolutionCallCount = 0
@@ -65,6 +68,11 @@ nonisolated extension FakeMagicPort {
             preconditionFailure("FakeMagicPort.applySpellHit has no result")
         }
         return applySpellHitResult
+    }
+
+    public func healthDamage(of spell: SpellPayload) -> Float {
+        healthDamageCalls.append(spell)
+        return healthDamageResult
     }
 
     public var holdSettings: MagicHoldSettings {
