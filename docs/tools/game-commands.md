@@ -210,7 +210,7 @@ both games. A reference may also be one outside the loaded cells.
 | `debug lock <ref> [on\|off]` | Locks or unlocks a reference, as `ObjectReference.Lock` does. A reference with no lock gets level 1. Answers `locked` and `level` |
 | `debug decal <ref> [--height <units>]` | Strikes a loaded actor as a one-handed blade does: the blade's impact for the actor's race material plays on its side facing the player, 100 units above the feet by default, and leaves its decal on the body. Answers `placed` and `skinDecals`, the bone each decal rides |
 | `debug detectionevent <level>` | Makes a sound event of the player at the player's feet, as `CreateDetectionEvent` does ([detection events](/engine/detection-events.md)). `level` is 10 for a silent sound, 50 for a normal one, and 200 for a very loud one. Answers the `level` and the `position` |
-| `debug spawn <base> [--at <ref>]` | Places a new reference of a base object at a reference (default `player`), as `PlaceAtMe` does. Answers the new `ref` |
+| `debug spawn <base> [--at <ref>]` | Places a new reference of a base object at a reference (default `player`), as `PlaceAtMe` does. At the player it stands 128 units ahead, facing the player. Answers the new `ref`, which `state actors` and `--ref` use |
 
 ### Menus and screens
 

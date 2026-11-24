@@ -330,8 +330,15 @@ nonisolated extension FakePapyrusWorldStateBridgePort {
     }
 
     public func spawnReference(of base: ReferenceKey, at anchor: ReferenceKey) -> ReferenceKey? {
-        spawnReferenceCalls.append((base: base, anchor: anchor))
-        return spawnReferenceResult
+        spawnReferenceOfAtCalls.append((base: base, anchor: anchor))
+        return spawnReferenceOfAtResult
+    }
+
+    public func spawnReference(of base: ReferenceKey, placement: PlacedReference.Placement)
+        -> ReferenceKey?
+    {
+        spawnReferenceOfPlacementCalls.append((base: base, placement: placement))
+        return spawnReferenceOfPlacementResult
     }
 
     @discardableResult

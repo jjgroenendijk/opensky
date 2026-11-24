@@ -4,9 +4,11 @@
 import Foundation
 import OpenSkyCombatInterface
 import OpenSkyConditions
+import OpenSkyFeaturesTesting
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
+import OpenSkyGameData
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
@@ -66,6 +68,28 @@ struct PapyrusWorldStateBridgePortTests {
         #expect(!bridge.isPlayerSunGazing)
         _ = bridge.playerControlLocks
         bridge.noteStolenValue(10, from: key, witnessed: false)
+    }
+
+    @Test func aSpawnAtThePlayerStandsWhereThePlayerIsInThePlayersCell() throws {
+        let fixture = try PapyrusNativeReferenceFixture.make()
+        let bridge = fixture.session.bridge
+        #expect(bridge.spawnReference(of: fixture.key, at: .player) == nil)
+        let cell = CellSceneLocation.exterior(CellCoordinate(x: 2, y: 3))
+        fixture.session.references.playerCellLocation = cell
+        bridge.natives.perception.livePosition = { $0 == .player ? SIMD3(7, 8, 9) : nil }
+
+        let placed = try #require(bridge.spawnReference(of: fixture.key, at: .player))
+        let spawn = try #require(
+            fixture.session.worldState.component(ReferenceSpawnState.self, for: placed)
+        )
+        #expect(spawn.location == cell)
+        #expect(spawn.placement.position == SIMD3(7, 8, 9))
+        let ahead = PlacedReference.Placement(position: [1, 1, 1], rotation: [0, 0, 1])
+        let second = try #require(bridge.spawnReference(of: fixture.key, placement: ahead))
+        #expect(fixture.session.worldState.component(ReferenceSpawnState.self, for: second)?
+            .placement == ahead)
+        fixture.session.references.playerCellLocation = nil
+        #expect(bridge.spawnReference(of: fixture.key, placement: ahead) == nil)
     }
 
     @Test func theScriptEventMembersQueueNothingWithoutQuests() throws {

@@ -110,6 +110,12 @@ extension PapyrusWorldStateBridge {
         referencePlacement.spawnReference(of: base, at: anchor)
     }
 
+    public func spawnReference(
+        of base: ReferenceKey, placement: PlacedReference.Placement
+    ) -> ReferenceKey? {
+        referencePlacement.spawnReference(of: base, placement: placement)
+    }
+
     @discardableResult
     public func damageDestructible(_ key: ReferenceKey, amount: Float, forced: Bool) -> Bool {
         referenceEvents.damageDestructible(key, amount: amount, forced: forced)

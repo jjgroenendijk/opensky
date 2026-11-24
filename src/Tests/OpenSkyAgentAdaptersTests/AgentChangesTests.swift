@@ -125,10 +125,32 @@ struct AgentChangesTests {
     }
 
     @Test func aSpawnAnswersTheNewReference() throws {
-        bridge.spawnReferenceResult = .generated(4)
+        bridge.spawnReferenceOfAtResult = .generated(4)
         let answer = try result(.spawn(base: "B8780", anchor: "player"))
-        #expect(bridge.spawnReferenceCalls.map(\.anchor) == [.player])
-        #expect(answer["ref"] != nil)
+        #expect(bridge.spawnReferenceOfAtCalls.map(\.anchor) == [.player])
+        #expect(answer["ref"] == .formID(0xFF00_0004))
+    }
+
+    @Test func aSpawnAtThePlayerStandsInFrontFacingBack() throws {
+        let session = FakeGameSessionPort()
+        session.freeFlyCameraValue = FreeFlyCamera(position: .zero, yaw: 0, pitch: 0)
+        let walk = FakeWalkPort()
+        walk.feetPosition = [10, 20, 30]
+        session.walkController = walk
+        host.gameSession = session
+        bridge.spawnReferenceOfPlacementResult = .generated(5)
+        let answer = try result(.spawn(base: "B8780", anchor: "player"))
+        let placement = try #require(bridge.spawnReferenceOfPlacementCalls.first?.placement)
+        #expect(placement.position == [138, 20, 30])
+        #expect(abs(placement.rotation.z + .pi / 2) < 1e-5)
+        #expect(bridge.spawnReferenceOfAtCalls.isEmpty)
+        #expect(answer["ref"] == .formID(0xFF00_0005))
+    }
+
+    @Test func aSpawnThatFindsNoPlaceFails() {
+        #expect(throws: AgentFailure.self) {
+            try result(.spawn(base: "B8780", anchor: "player"))
+        }
     }
 
     @Test func aModifierStartsAndStopsOnTheImageSpace() throws {

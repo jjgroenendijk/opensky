@@ -94,8 +94,13 @@ nonisolated public final class FakePapyrusWorldStateBridgePort: PapyrusWorldStat
     public var setQuestStageError: (any Error)?
     public var setQuestStageResult = false
     public var silentDeath: ReferenceKey?
-    public var spawnReferenceCalls: [(base: ReferenceKey, anchor: ReferenceKey)] = []
-    public var spawnReferenceResult: ReferenceKey?
+    public var spawnReferenceOfAtCalls: [(base: ReferenceKey, anchor: ReferenceKey)] = []
+    public var spawnReferenceOfAtResult: ReferenceKey?
+    public var spawnReferenceOfPlacementCalls: [(
+        base: ReferenceKey,
+        placement: PlacedReference.Placement
+    )] = []
+    public var spawnReferenceOfPlacementResult: ReferenceKey?
     public var damageDestructibleCalls: [DamageDestructibleCall] = []
     public var damageDestructibleResult = false
     public var destructionHealthLeftCalls: [ReferenceKey] = []

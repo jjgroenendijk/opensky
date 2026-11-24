@@ -98,6 +98,9 @@ extension AgentChangesAdapter {
         if key == .player {
             return .formID(FormID.playerReference.rawValue)
         }
+        if let spawned = SpawnedReferenceIdentity.formID(for: key) {
+            return .formID(spawned.rawValue)
+        }
         return try bridge.localFormID(of: key).map { .formID($0.rawValue) } ?? .null
     }
 
@@ -254,10 +257,29 @@ extension AgentChangesAdapter {
     private func spawn(_ base: String, at anchor: String) throws(AgentFailure) -> AgentJSON {
         let baseKey = try form(base)
         let anchorKey = try reference(anchor)
-        guard let placed = try bridge.spawnReference(of: baseKey, at: anchorKey) else {
+        let scripts = try bridge
+        let placed = if anchorKey == .player, let session = game.gameSession {
+            scripts.spawnReference(of: baseKey, placement: Self.spotInFront(of: session))
+        } else {
+            scripts.spawnReference(of: baseKey, at: anchorKey)
+        }
+        guard let placed else {
             throw AgentFailure(.failed, "\(base) could not be placed")
         }
         return try ["ref": formJSON(placed), "base": .string(base)]
+    }
+
+    /// How far in front of the player a spawn stands, so it does not start inside the player.
+    private static let spawnDistance: Float = 128
+
+    /// The spot ahead of the player, facing back toward the player.
+    private static func spotInFront(of session: any GameSessionPort) -> PlacedReference.Placement {
+        let yaw = session.freeFlyCamera.yaw
+        let ahead = SIMD3<Float>(cosf(yaw), sinf(yaw), 0) * spawnDistance
+        let heading = atan2f(-ahead.x, -ahead.y)
+        return .init(
+            position: session.walkController.feetPosition + ahead, rotation: [0, 0, heading]
+        )
     }
 
     private func makeDetectionEvent(_ level: Float) throws(AgentFailure) -> AgentJSON {

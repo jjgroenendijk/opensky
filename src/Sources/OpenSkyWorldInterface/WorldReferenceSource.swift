@@ -24,6 +24,8 @@ nonisolated public protocol PapyrusWorldReferenceSource: AnyObject {
     func residentActorEntries() -> [RuntimeReferenceEntry]
     /// The editor ID of the worldspace whose exterior cells are resident; nil in an interior.
     var residentWorldspace: String? { get }
+    /// The cell the player stands in, where anything placed at the player belongs.
+    var playerCellLocation: CellSceneLocation? { get }
 }
 
 nonisolated extension PapyrusWorldReferenceSource {
@@ -36,6 +38,10 @@ nonisolated extension PapyrusWorldReferenceSource {
     }
 
     public func pluginPlacement(of _: ReferenceKey) -> PluginPlacement? {
+        nil
+    }
+
+    public var playerCellLocation: CellSceneLocation? {
         nil
     }
 
