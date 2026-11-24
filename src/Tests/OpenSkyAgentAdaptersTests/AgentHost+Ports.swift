@@ -52,6 +52,10 @@ extension AgentHost {
         fakeCameraInput
     }
 
+    var cinematicCamera: any CinematicCameraPort {
+        fakeCinematicCamera
+    }
+
     var combat: any CombatPort {
         fakeCombat
     }

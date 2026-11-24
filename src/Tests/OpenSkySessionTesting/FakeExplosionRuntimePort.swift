@@ -16,6 +16,7 @@ nonisolated public final class FakeExplosionRuntimePort: ExplosionRuntimePort {
     public var specForResult: ExplosionSpec?
     public var advanceCalls: [Float] = []
     public var debris: [DebrisPiece] = []
+    public var reports: [ExplosionReport] = []
     public var itemPlugin = ""
 
     public init() {}

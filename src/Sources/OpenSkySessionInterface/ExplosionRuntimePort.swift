@@ -17,6 +17,8 @@ public protocol ExplosionRuntimePort: AnyObject {
 
     func advance(_ seconds: Float)
     var debris: [DebrisPiece] { get }
+    /// The newest detonations, oldest first, for the readout.
+    var reports: [ExplosionReport] { get }
     var itemPlugin: String { get }
 }
 

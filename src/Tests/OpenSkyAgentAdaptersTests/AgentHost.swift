@@ -20,7 +20,7 @@ import OpenSkyWorldState
 final class AgentHost: RendererSlotHost, AgentActorReadoutHost, AgentActorsHost, AgentBehaviourHost,
     AgentCaptureHost, AgentChangesHost, AgentEventsHost, AgentFrameReadoutHost, AgentInputHost,
     AgentItemsHost,
-    AgentMenuReadoutHost, AgentMotionHost, AgentObjectsHost, AgentSocialHost,
+    AgentMenuReadoutHost, AgentMotionHost, AgentDestructionHost, AgentObjectsHost, AgentSocialHost,
     AgentPlayerReadoutHost,
     AgentRenderHost, AgentScreensHost, AgentViewHost, AgentWorldHost, BenchmarkTourSettingsHost,
     BenchmarkWorldHost
@@ -38,6 +38,7 @@ final class AgentHost: RendererSlotHost, AgentActorReadoutHost, AgentActorsHost,
     let fakeBenchmarkWorld = FakeBenchmarkWorldPort()
     let fakeCameraInput = FakeCameraInputStatePort()
     let fakeCombat = FakeCombatPort()
+    let fakeCinematicCamera = FakeCinematicCameraPort()
     let fakeCombatWorld = FakeCombatWorldPort()
     let fakeContainerMenu = FakeContainerMenuPort()
     let fakeControllerRumble = FakeControllerRumblePort()
