@@ -134,6 +134,7 @@ extension AgentActorReadoutAdapter {
             "hostility": .string("\(game.factions.hostility(of: actor.key))"),
             "combat": game.combat.loop?.phase(of: actor.key).map { .string("\($0)") } ?? .null,
             "target": combatTarget(of: actor.key),
+            "startedFight": .bool(game.combat.loop?.aggressors.contains(actor.key) == true),
             "aggro": game.combat.loop?.aggroZone(of: actor.key)
                 .map { .string($0.rawValue) } ?? .null,
             "weapon": game.combat.loop?.drawState(of: actor.key)

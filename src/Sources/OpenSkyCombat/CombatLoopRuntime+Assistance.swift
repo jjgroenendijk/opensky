@@ -11,14 +11,15 @@ extension CombatLoopRuntime {
     /// no range.
     static let assistRadius: Float = 2048
 
-    /// Only living, calm actors within `assistRadius` of an engaged one are asked, so
-    /// the faction check runs for few pairs.
+    /// Only living, calm actors within `assistRadius` of an engaged one are asked, and
+    /// only about an ally they detect. Perception tracks those pairs for the next step.
     func recruitAssistants(
         among actors: [CombatActorObservation],
         hostility: inout [ReferenceKey: ActorHostility],
         ignoring: Set<ReferenceKey>,
         world: any CombatLoopWorld
     ) {
+        allyWatchPairs = []
         let fighting = actors.filter { !$0.isDead && behaviors[$0.key]?.isEngaged == true }
         guard !fighting.isEmpty else { return }
         let player = world.combatPlayer.key
@@ -28,24 +29,38 @@ extension CombatLoopRuntime {
                 hostility[actor.key] == .neutral,
                 !ignoring.contains(actor.key), behaviors[actor.key]?.isEngaged != true
             else { continue }
-            let ally = fighting.first { other in
+            let near = fighting.filter { other in
                 other.key != actor.key
                     && simd_distance(other.feet, actor.feet) <= Self.assistRadius
-                    && world.combatAssists(actor.key, ally: other.key)
+            }
+            for other in near {
+                allyWatchPairs.insert(CombatFoePair(observer: actor.key, target: other.key))
+            }
+            let ally = near.first { other in
+                world.combatAwareness(of: actor.key, toward: other.key).isDetected
+                    && helps(actor.key, other.key, world: world)
             }
             guard let ally else { continue }
-            if fightsPlayerSide(ally.key) {
-                joinFight(actor.key, assisting: ally.key)
-                hostility[actor.key] = .hostile
-            } else if
-                let foe = targets[ally.key], npcAssists[actor.key] == nil,
-                !world.combatAssists(actor.key, ally: foe)
-            {
-                // The ally fights an NPC: the helper takes that NPC on, not the player.
-                // One that would help that NPC too stays out.
-                npcAssists[actor.key] = foe
-                record(.assisted(actor.key, ally: ally.key))
-            }
+            assist(actor.key, ally: ally.key, hostility: &hostility, world: world)
+        }
+    }
+
+    private func assist(
+        _ helper: ReferenceKey, ally: ReferenceKey,
+        hostility: inout [ReferenceKey: ActorHostility], world: any CombatLoopWorld
+    ) {
+        if fightsPlayerSide(ally) {
+            joinFight(helper, assisting: ally)
+            hostility[helper] = .hostile
+        } else if
+            let foe = targets[ally], npcAssists[helper] == nil,
+            !helps(helper, foe, world: world)
+        {
+            // The ally fights an NPC: the helper takes that NPC on, not the player.
+            // One that would help that NPC too stays out.
+            npcAssists[helper] = foe
+            joinedGroups[helper] = ally
+            record(.assisted(helper, ally: ally))
         }
     }
 }

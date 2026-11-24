@@ -131,6 +131,28 @@ public final class CombatCastingChain {
 // MARK: - The fight
 
 extension CombatCastingChain: CombatLoopWorld {
+    public func combatIsTeammate(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func combatMorality(of _: ReferenceKey) -> Float {
+        0
+    }
+
+    public func combatCrimeStanding(
+        of _: ReferenceKey, judgedBy _: ReferenceKey
+    ) -> CombatCrimeStanding {
+        .clean
+    }
+
+    public func combatIsGuard(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func combatAttacksPlayerOnSightForCrimes(_: ReferenceKey) -> Bool {
+        false
+    }
+
     public func damageCombatDestructible(_: ReferenceKey, amount _: Float) {}
 
     /// One caster and one target: no NPC fights another.

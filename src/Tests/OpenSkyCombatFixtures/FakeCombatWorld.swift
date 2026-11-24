@@ -31,6 +31,12 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public var pairReactions: [CombatFoePair: ActorReaction] = [:]
     /// Helper and ally pairs: the observer helps its target in a fight.
     public var assistPairs: Set<CombatFoePair> = []
+    public var teammates: Set<ReferenceKey> = []
+    public var moralities: [ReferenceKey: Float] = [:]
+    /// What each helper (observer) makes of each actor (target) as a criminal.
+    public var crimeStandings: [CombatFoePair: CombatCrimeStanding] = [:]
+    public var guards: Set<ReferenceKey> = []
+    public var crimeAttackers: Set<ReferenceKey> = []
     public var aggroRadii: [ReferenceKey: AggroRadius] = [:]
     /// Each warning line said: the speaker, then its target.
     public var warningLines: [[ReferenceKey]] = []
@@ -163,14 +169,6 @@ public final class FakeCombatWorld: CombatLoopWorld {
             isDead: true,
             name: previous.name
         )
-    }
-
-    public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
-        styles[key]
-    }
-
-    public func combatIsChild(_ key: ReferenceKey) -> Bool {
-        children.contains(key)
     }
 
     public var combatPlayer: MeleeAttacker {
@@ -369,8 +367,12 @@ extension FakeCombatWorld {
         hostilePairs.contains(CombatFoePair(observer: observer, target: target))
     }
 
-    public func combatAssists(_ helper: ReferenceKey, ally: ReferenceKey) -> Bool {
-        assistPairs.contains(CombatFoePair(observer: helper, target: ally))
+    public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
+        styles[key]
+    }
+
+    public func combatIsChild(_ key: ReferenceKey) -> Bool {
+        children.contains(key)
     }
 
     public func combatGraphIsAttackReady(_ actor: ReferenceKey) -> Bool? {
@@ -394,5 +396,33 @@ extension FakeCombatWorld {
 
     public func damageCombatDestructible(_ object: ReferenceKey, amount: Float) {
         objectDamage[object, default: 0] += amount
+    }
+}
+
+extension FakeCombatWorld {
+    public func combatAssists(_ helper: ReferenceKey, ally: ReferenceKey) -> Bool {
+        assistPairs.contains(CombatFoePair(observer: helper, target: ally))
+    }
+
+    public func combatIsTeammate(_ key: ReferenceKey) -> Bool {
+        teammates.contains(key)
+    }
+
+    public func combatMorality(of key: ReferenceKey) -> Float {
+        moralities[key] ?? 0
+    }
+
+    public func combatCrimeStanding(
+        of actor: ReferenceKey, judgedBy helper: ReferenceKey
+    ) -> CombatCrimeStanding {
+        crimeStandings[CombatFoePair(observer: helper, target: actor)] ?? .clean
+    }
+
+    public func combatIsGuard(_ key: ReferenceKey) -> Bool {
+        guards.contains(key)
+    }
+
+    public func combatAttacksPlayerOnSightForCrimes(_ key: ReferenceKey) -> Bool {
+        crimeAttackers.contains(key)
     }
 }

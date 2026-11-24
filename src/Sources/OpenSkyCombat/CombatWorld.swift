@@ -211,6 +211,15 @@ public protocol CombatWorld: AnyObject {
     func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction?
     /// True when `observer` attacks `target` on sight.
     func isHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool
+    /// Whether `key` is the player's follower.
+    func isPlayerTeammate(_ key: ReferenceKey) -> Bool
+    /// Whether `helper` counts `actor` a criminal.
+    func crimeStanding(of actor: ReferenceKey, judgedBy helper: ReferenceKey)
+        -> CombatCrimeStanding
+    /// Whether `key` polices a crime faction as a guard.
+    func isGuard(_ key: ReferenceKey) -> Bool
+    /// Whether `key` attacks the player on sight for the player's crimes.
+    func attacksPlayerOnSightForCrimes(_ key: ReferenceKey) -> Bool
     /// `key`'s aggro radius from its AI data, or nil when the behaviour is off.
     func aggroRadius(of key: ReferenceKey) -> AggroRadius?
     /// `key` says its aggro radius warning line to `target`, when it has one to say now.
@@ -327,6 +336,24 @@ extension CombatWorld where Self: CombatReporting {
 }
 
 extension CombatWorld {
+    public func isPlayerTeammate(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func crimeStanding(
+        of _: ReferenceKey, judgedBy _: ReferenceKey
+    ) -> CombatCrimeStanding {
+        .clean
+    }
+
+    public func isGuard(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func attacksPlayerOnSightForCrimes(_: ReferenceKey) -> Bool {
+        false
+    }
+
     @discardableResult
     public func raiseActorGraphEvent(_: String, on _: ReferenceKey) -> Bool {
         false

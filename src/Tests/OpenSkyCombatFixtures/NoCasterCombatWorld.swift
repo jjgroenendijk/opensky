@@ -21,6 +21,29 @@ extension NoCasterCombatWorld {
         false
     }
 
+    /// No followers, no Morality, and no crimes: every helper helps by Assistance alone.
+    public func combatIsTeammate(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func combatMorality(of _: ReferenceKey) -> Float {
+        0
+    }
+
+    public func combatCrimeStanding(
+        of _: ReferenceKey, judgedBy _: ReferenceKey
+    ) -> CombatCrimeStanding {
+        .clean
+    }
+
+    public func combatIsGuard(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func combatAttacksPlayerOnSightForCrimes(_: ReferenceKey) -> Bool {
+        false
+    }
+
     /// A world without destructible objects damages none.
     public func damageCombatDestructible(_: ReferenceKey, amount _: Float) {}
 

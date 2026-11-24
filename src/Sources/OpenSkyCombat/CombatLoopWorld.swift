@@ -258,6 +258,17 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// True when `observer`'s aggression and its reaction to `target` make it attack
     /// `target` on sight ([hostility](/engine/hostility.md#aggression-draws-the-weapon)).
     func combatIsHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool
+    /// Whether `key` is the player's follower.
+    func combatIsTeammate(_ key: ReferenceKey) -> Bool
+    /// `key`'s Morality actor value: 0 any crime through 3 no crime.
+    func combatMorality(of key: ReferenceKey) -> Float
+    /// Whether `helper` counts `actor` a criminal.
+    func combatCrimeStanding(of actor: ReferenceKey, judgedBy helper: ReferenceKey)
+        -> CombatCrimeStanding
+    /// Whether `key` polices a crime faction as a guard.
+    func combatIsGuard(_ key: ReferenceKey) -> Bool
+    /// Whether `key` attacks the player on sight for the player's crimes.
+    func combatAttacksPlayerOnSightForCrimes(_ key: ReferenceKey) -> Bool
     /// `key`'s aggro radius, or nil when its AI data switches the behaviour off.
     func combatAggroRadius(of key: ReferenceKey) -> AggroRadius?
     /// `key` says its aggro radius warning line to `target`, when it has one to say now.

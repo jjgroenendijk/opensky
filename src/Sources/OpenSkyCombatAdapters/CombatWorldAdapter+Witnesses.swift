@@ -229,6 +229,24 @@ extension CombatWorldAdapter {
         motion.packageIgnoresCombat(key)
     }
 
+    public func isPlayerTeammate(_ key: ReferenceKey) -> Bool {
+        reports.isPlayerTeammate(key)
+    }
+
+    public func crimeStanding(
+        of actor: ReferenceKey, judgedBy helper: ReferenceKey
+    ) -> CombatCrimeStanding {
+        reports.crimeStanding(of: actor, judgedBy: helper)
+    }
+
+    public func isGuard(_ key: ReferenceKey) -> Bool {
+        reports.isGuard(key)
+    }
+
+    public func attacksPlayerOnSightForCrimes(_ key: ReferenceKey) -> Bool {
+        reports.attacksPlayerOnSightForCrimes(key)
+    }
+
     public func isKnockedDown(_ key: ReferenceKey) -> Bool {
         motion.isKnockedDown(key)
     }

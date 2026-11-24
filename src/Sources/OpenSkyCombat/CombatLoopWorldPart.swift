@@ -114,6 +114,7 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
 
     static let aggressionIndex: Int32 = 0
     static let confidenceIndex: Int32 = 1
+    static let moralityIndex: Int32 = 3
     static let assistanceIndex: Int32 = 5
 
     func combatBlock(of key: ReferenceKey) -> MeleeBlockKind? {
@@ -392,5 +393,31 @@ extension CombatLoopWorldPart {
         runtime.combatAI = data.combatAI
         runtime.applyingGameSettings = shared.appliesCombatGameSettings
         return runtime
+    }
+}
+
+extension CombatLoopWorldPart {
+    func combatIsTeammate(_ key: ReferenceKey) -> Bool {
+        shared.world.isPlayerTeammate(key)
+    }
+
+    /// `Morality` is actor value 3 (UESP "Actor Value Indices").
+    func combatMorality(of key: ReferenceKey) -> Float {
+        guard shared.usesTemperament else { return 0 }
+        return shared.world.actorValues(of: key)?(Self.moralityIndex) ?? 0
+    }
+
+    func combatCrimeStanding(
+        of actor: ReferenceKey, judgedBy helper: ReferenceKey
+    ) -> CombatCrimeStanding {
+        shared.world.crimeStanding(of: actor, judgedBy: helper)
+    }
+
+    func combatIsGuard(_ key: ReferenceKey) -> Bool {
+        shared.world.isGuard(key)
+    }
+
+    func combatAttacksPlayerOnSightForCrimes(_ key: ReferenceKey) -> Bool {
+        shared.world.attacksPlayerOnSightForCrimes(key)
     }
 }

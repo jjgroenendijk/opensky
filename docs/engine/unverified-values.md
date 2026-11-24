@@ -50,7 +50,8 @@ the detail and the sources it did find.
 | Melee hit volume | Half height 0.25 x capsule height, radius 0.75 x capsule radius | [melee combat](/engine/melee-combat.md) |
 | NPC combo chance | 0.3 per swing, at most 3 swings, no Offensive Mult term | [combat behaviour](/engine/combat-behavior.md) |
 | NPC back-off time | At most 2 s | [combat behaviour](/engine/combat-behavior.md) |
-| Assistance range | A helper is asked within 2,048 units of its ally, in place of the game's check that it detects the ally | [combat](/engine/combat.md#who-an-assisting-actor-fights) |
+| Assistance range | A helper is asked within 2,048 units of its ally; perception tracks only those pairs for the detection check | [combat](/engine/combat.md#who-an-assisting-actor-fights) |
+| Resisted-arrest crime window | The 300 seconds after resisting arrest are game seconds, and every fight target counts as having AI | [combat](/engine/combat.md#who-an-assisting-actor-fights) |
 | Combat setting formulas | Read from the setting names | [combat](/engine/combat.md) |
 | Melee knockdown magnitude | The knockback slide speed over 69.99 | [impulses](/engine/impulses.md#hits) |
 | Explosion knockdown magnitude | The `EXPL` force | [impulses](/engine/impulses.md#explosions) |

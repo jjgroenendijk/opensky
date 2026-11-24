@@ -192,9 +192,12 @@ A witness to an assault or a murder can help the victim against the attacker. Th
 witness to help the victim and not help the attacker. When the attacker is the player, the
 witness also stays angry with the player after the fight.
 
-In OpenSky, a helper is asked within 2,048 units of its ally, because perception tracks only the
-player and combat foes, not allies. A helper of an ally fighting an NPC takes that NPC as its foe,
-unless it would help that NPC too.
+In OpenSky, the checks above run in this order for each calm actor within 2,048 units of an ally
+in a fight. Perception tracks each such pair, so the helper asks only once it detects the ally.
+The follower is the actor a script made the player's teammate, and the owner is the actor that
+commands a summon. The 300 seconds of resisting arrest are counted in game seconds. Every target
+counts as having AI. A helper of an ally fighting an NPC takes that NPC as its foe, unless it
+would help that NPC too.
 
 ## Starting and stopping from a script
 

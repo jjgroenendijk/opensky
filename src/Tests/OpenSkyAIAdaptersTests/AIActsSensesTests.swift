@@ -92,10 +92,10 @@ struct AIActsSensesTests {
         #expect(host.fakeStreamer.actors.stopActorCalls == [Self.actor])
     }
 
-    /// The player leads the targets, then each living NPC another NPC attacks on sight.
+    /// The player leads the targets, then each living NPC another NPC watches.
     @Test func anNPCFoeIsAPerceptionTargetAfterThePlayer() {
         let loop = FakeCombatLoopRuntimePort()
-        loop.foePairs = [CombatFoePair(observer: Self.actor, target: Self.other)]
+        loop.watchedPairs = [CombatFoePair(observer: Self.actor, target: Self.other)]
         host.fakeCombat.loop = loop
         host.fakeActorWorld.combatActorsResult = [
             CombatActorObservation(key: Self.actor, feet: .zero),
