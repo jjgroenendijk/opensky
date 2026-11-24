@@ -9,6 +9,7 @@
 @testable public import OpenSkyFormatsESM
 public import OpenSkyGameData
 @testable public import OpenSkyMagicInterface
+@testable public import OpenSkyPhysics
 @testable public import OpenSkyProgressionInterface
 import simd
 
@@ -67,6 +68,10 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public func combatDiseaseResist(of target: ReferenceKey) -> Float? {
         diseaseResists[target]
     }
+
+    /// Destructible objects in the world, and the damage each took from a swing.
+    public var destructibles: [MeleeTarget] = []
+    public private(set) var objectDamage: [ReferenceKey: Float] = [:]
 
     @discardableResult
     public func contractCombatDisease(_ disease: ReferenceKey, on target: ReferenceKey) -> Bool {
@@ -353,5 +358,18 @@ extension FakeCombatWorld {
 
     public func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {
         variables[name] = value
+    }
+}
+
+extension FakeCombatWorld {
+    public func combatDestructibles(
+        within radius: Float,
+        of center: SIMD3<Float>
+    ) -> [MeleeTarget] {
+        destructibles.filter { simd_distance($0.feet, center) <= radius }
+    }
+
+    public func damageCombatDestructible(_ object: ReferenceKey, amount: Float) {
+        objectDamage[object, default: 0] += amount
     }
 }

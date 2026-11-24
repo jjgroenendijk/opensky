@@ -131,6 +131,8 @@ public final class CombatCastingChain {
 // MARK: - The fight
 
 extension CombatCastingChain: CombatLoopWorld {
+    public func damageCombatDestructible(_: ReferenceKey, amount _: Float) {}
+
     /// A world that runs no NPC graphs writes nothing, and its graphs never hold a draw.
     public func writeCombatActorVariable(
         _: BehaviorVariableValue, named _: String, on _: ReferenceKey

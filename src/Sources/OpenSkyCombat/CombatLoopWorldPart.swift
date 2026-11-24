@@ -326,6 +326,14 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
 }
 
 extension CombatLoopWorldPart {
+    func combatDestructibles(within radius: Float, of center: SIMD3<Float>) -> [MeleeTarget] {
+        shared.world.destructibleObjects(within: radius, of: center)
+    }
+
+    func damageCombatDestructible(_ object: ReferenceKey, amount: Float) {
+        shared.world.damageDestructible(object, amount: amount)
+    }
+
     func combatFlies(_ key: ReferenceKey) -> Bool {
         shared.world.actorFlies(key)
     }

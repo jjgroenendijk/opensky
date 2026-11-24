@@ -10,7 +10,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyMagicInterface
 import OpenSkyPerceptionInterface
-import OpenSkyPhysics
+public import OpenSkyPhysics
 public import OpenSkyProgressionInterface
 import simd
 
@@ -260,6 +260,10 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// Looses an NPC's arrow. False when it has no arrow or nothing can fly.
     @discardableResult
     func fireCombatArrow(_ shot: CombatArrowShot) -> Bool
+    /// The resident destructible objects within `radius` of `center`, by their origin.
+    func combatDestructibles(within radius: Float, of center: SIMD3<Float>) -> [MeleeTarget]
+    /// Deals an NPC blow's damage to a destructible object.
+    func damageCombatDestructible(_ object: ReferenceKey, amount: Float)
 }
 
 extension CombatLoopWorld {
@@ -271,6 +275,10 @@ extension CombatLoopWorld {
     }
 
     public func turnCombatActor(_: ReferenceKey, toward _: SIMD3<Float>) {}
+
+    public func combatDestructibles(within _: Float, of _: SIMD3<Float>) -> [MeleeTarget] {
+        []
+    }
 
     public func combatFlies(_: ReferenceKey) -> Bool {
         false
