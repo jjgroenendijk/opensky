@@ -116,7 +116,8 @@ kernel void occlusionBlurVertical(
 }
 
 // The game's indirect light tap: how much the two surfaces face each other, less a bias,
-// over |v|^4, times (R^2 - |v|^2)^3 and a linear falloff to the radius.
+// over |v|^4, times (R^2 - |v|^2)^3 and a linear falloff to the radius. The tap normal is
+// turned around: the game's comes out as noise, and a clean one would reject every facing tap.
 static inline float
 indirectTapWeight(float3 toTap, float3 normal, float3 tapNormal, float bias, float radius)
 {
@@ -129,7 +130,8 @@ indirectTapWeight(float3 toTap, float3 normal, float3 tapNormal, float bias, flo
 }
 
 // Last frame's indirect light at this world position. The game's weight: 0.3 times how
-// alike the depth is, times how alike each colour channel is; 0 near the screen edge.
+// alike the depth is, times the sum over the channels of how alike each is; 0 near the
+// screen edge.
 static inline float3 indirectBlend(
     float3 current,
     float3 world,
@@ -152,8 +154,25 @@ static inline float3 indirectBlend(
     return mix(current, previous.rgb, weight);
 }
 
-// One bounce of colour from nearby surfaces: 15 taps on a spiral, faded out by 10,000
-// units. Writes the light and the camera distance over 7,000; the sky writes nothing.
+// The game's per-pixel turn of the taps: an integer hash of the pixel, read as radians.
+static inline float indirectPixelTurn(uint2 pixel)
+{
+    uint hash = (3u * pixel.x) ^ ((pixel.x + 1u) * pixel.y);
+    return fmod(float(hash) * 10.0, 6.2831853);
+}
+
+// A new turn from 0 to pi each frame, from the frame counter.
+static inline float indirectFrameTurn(float frame)
+{
+    uint state = uint(frame) * 747796405u + 2891336453u;
+    state = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    state = (state >> 22u) ^ state;
+    return float(state) * (3.14159265 / 4294967296.0);
+}
+
+// One bounce of colour from nearby surfaces: 15 taps on a spiral `100 R / z` pixels wide,
+// blended with last frame, then faded out by 10,000 units. Writes the light and the view
+// depth over 7,000, capped at 1, which the history compares.
 kernel void indirectLightTrace(
     uint2 gid [[thread_position_in_grid]],
     constant PostEffectUniforms &post [[buffer(BufferIndexPostEffectUniforms)]],
@@ -175,26 +194,30 @@ kernel void indirectLightTrace(
     }
     PostPixel pixel = {uv, texel, float2(gid) + 0.5, stored, postWorldPosition(uv, stored, post)};
     float3 camera = post.camera.xyz;
-    float range = distance(pixel.world, camera);
-    float depthShare = min(range / 7000.0, 1.0);
-    // The light fades to 0 at 10000 units, so a pixel past it traces nothing.
-    if (range >= 10000.0) {
-        output.write(
-            float4(indirectBlend(0.0, pixel.world, depthShare, history, post), depthShare), gid);
+    float3 forward = normalize(postWorldPosition(float2(0.5), 0.5, post) - camera);
+    float viewDepth = max(dot(pixel.world - camera, forward), 1.0);
+    float depthShare = min(viewDepth / 7000.0, 1.0);
+    // The fade is 0 from 10000 units on, so such a pixel traces nothing.
+    if (viewDepth >= 10000.0) {
+        output.write(float4(0.0, 0.0, 0.0, depthShare), gid);
         return;
     }
     float3 normal = postSurfaceNormal(pixel, camera, depth, post);
     float radius = post.indirectLight.x;
     float2 ndc = uv * 2.0 - 1.0;
-    float bias = post.indirectLight.z + 5.0 * dot(ndc, ndc) + 10.0 * max(range / 7000.0 - 0.3, 0.0);
-    // The taps reach R in world units at any range. A cap on screen would squeeze them
-    // close to a near pixel, where the 1/|v|^2 falloff makes the light blow up.
-    float2 reach = radius * post.projection.xy * 0.5 / max(range, 1.0);
-    float turn = (postNoise(pixel.pixel) + post.camera.w * 0.618034) * 6.2831853;
+    float bias = post.indirectLight.z + 5.0 * dot(ndc, ndc) + 10.0 * max(depthShare - 0.3, 0.0);
+    float spread = 100.0 * radius / viewDepth;
+    float turn = indirectPixelTurn(gid);
+    if (viewDepth <= 3500.0) {
+        turn += indirectFrameTurn(post.camera.w);
+    }
     float3 sum = 0.0;
     for (int tap = 0; tap < 15; ++tap) {
-        float angle = turn + (float(tap) + 0.5) * 3.3493;
-        float2 tapUV = uv + float2(cos(angle), sin(angle)) * reach * ((float(tap) + 0.5) / 15.0);
+        float angle = turn + (float(tap) + 0.5) * 3.349334;
+        float2 offset = float2(cos(angle), sin(angle)) * spread * ((float(tap) + 0.5) / 15.0);
+        // The game rebuilds a tap from the pixel it lands in.
+        float2 tapPixelCentre = float2(gid) + trunc(offset) + 0.5;
+        float2 tapUV = tapPixelCentre * texel;
         if (any(tapUV < 0.0) || any(tapUV > 1.0)) {
             continue;
         }
@@ -203,7 +226,7 @@ kernel void indirectLightTrace(
             continue;
         }
         PostPixel tapPixel = {
-            tapUV, texel, tapUV / texel, tapStored, postWorldPosition(tapUV, tapStored, post)};
+            tapUV, texel, tapPixelCentre, tapStored, postWorldPosition(tapUV, tapStored, post)};
         // The weight is 0 past the radius, and where |v . N| |v| cannot pass the bias
         // whatever the tap normal is. Such a tap needs no normal and no colour.
         float3 toTap = tapPixel.world - pixel.world;
@@ -212,13 +235,50 @@ kernel void indirectLightTrace(
             continue;
         }
         float3 tapNormal = postSurfaceNormal(tapPixel, camera, depth, post);
-        float weight =
-            indirectTapWeight(tapPixel.world - pixel.world, normal, tapNormal, bias, radius);
+        float weight = indirectTapWeight(toTap, normal, tapNormal, bias, radius);
         sum += weight * scene.sample(postLinear, tapUV).rgb;
     }
     float radiusCubed = radius * radius * radius;
     float3 light = max(sum / (radiusCubed * radiusCubed) * post.indirectLight.y / 3.0, 0.0);
-    light *= smoothstep(0.0, 1.0, saturate((10000.0 - range) / 10000.0));
-    output.write(
-        float4(indirectBlend(light, pixel.world, depthShare, history, post), depthShare), gid);
+    light = indirectBlend(light, pixel.world, depthShare, history, post);
+    light *= smoothstep(0.0, 1.0, saturate((10000.0 - viewDepth) / 10000.0));
+    output.write(float4(light, depthShare), gid);
+}
+
+// The engine's plain separable blur: 15 taps one pixel apart, with no depth test. The
+// weights are a Gaussian of deviation 7 / 3, which the game's table is not known to be.
+static inline float4 indirectBlur(uint2 gid, int2 axis, texture2d<float> source)
+{
+    constexpr float weights[8] = {0.1712, 0.1562, 0.1186, 0.0749, 0.0394, 0.0172, 0.0063, 0.0019};
+    int2 last = int2(source.get_width(), source.get_height()) - 1;
+    float4 sum = source.read(gid) * weights[0];
+    for (int step = 1; step < 8; ++step) {
+        for (int side = -1; side <= 1; side += 2) {
+            uint2 tap = uint2(clamp(int2(gid) + axis * (step * side), int2(0), last));
+            sum += source.read(tap) * weights[step];
+        }
+    }
+    return sum;
+}
+
+kernel void indirectBlurHorizontal(
+    uint2 gid [[thread_position_in_grid]],
+    texture2d<float> source [[texture(PostComputeTextureIndexSource)]],
+    texture2d<float, access::write> output [[texture(PostComputeTextureIndexOutput)]])
+{
+    if (any(gid >= uint2(output.get_width(), output.get_height()))) {
+        return;
+    }
+    output.write(indirectBlur(gid, int2(1, 0), source), gid);
+}
+
+kernel void indirectBlurVertical(
+    uint2 gid [[thread_position_in_grid]],
+    texture2d<float> source [[texture(PostComputeTextureIndexSource)]],
+    texture2d<float, access::write> output [[texture(PostComputeTextureIndexOutput)]])
+{
+    if (any(gid >= uint2(output.get_width(), output.get_height()))) {
+        return;
+    }
+    output.write(indirectBlur(gid, int2(0, 1), source), gid);
 }

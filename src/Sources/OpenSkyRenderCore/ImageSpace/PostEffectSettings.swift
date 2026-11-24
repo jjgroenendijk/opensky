@@ -45,9 +45,9 @@ nonisolated public struct PostEffectSettings: Equatable, Sendable {
     public static let ambientOcclusionHistoryDepth: Float = 200
     /// The game's indirect light reach in world units.
     public static let indirectLightRadius: Float = 100
-    /// The game's strength is not known. 400 bounces about 0.3 of a lit wall into a corner.
-    public static let indirectLightStrength: Float = 400
-    /// The bias at the screen centre, as the occlusion's; the game's value is not known.
+    /// The game's default indirect light strength.
+    public static let indirectLightStrength: Float = 50
+    /// The game's default indirect light bias at the screen centre.
     public static let indirectLightBias: Float = 2.5
     /// Past this distance depth precision makes the normals noisy, so occlusion fades
     /// out by here; unverified.

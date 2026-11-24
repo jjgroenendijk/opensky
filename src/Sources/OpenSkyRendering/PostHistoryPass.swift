@@ -23,8 +23,9 @@ struct PostHistoryKernels {
         historyFormat: .rg16Float, resultFormat: .r16Float, pixelStep: 1
     )
     static let indirectLight = Self(
-        label: "IndirectLight", trace: "indirectLightTrace", blurs: nil,
-        historyFormat: .rgba16Float, resultFormat: .rgba16Float, pixelStep: 2
+        label: "IndirectLight", trace: "indirectLightTrace",
+        blurs: ("indirectBlurHorizontal", "indirectBlurVertical"),
+        historyFormat: .rgba16Float, resultFormat: .rgba16Float, pixelStep: 1
     )
 }
 
