@@ -46,7 +46,7 @@ groups the wiki gives:
 | Reaction | Relationship ranks |
 | --- | --- |
 | `ally` | Lover, Ally |
-| `friend` | Confidant, Friend |
+| `friend` | Confidant, Friend; the game starts a Confidant at `ally` (below) |
 | `neutral` | Acquaintance, Rival, Foe |
 | `enemy` | Enemy, Archnemesis |
 
@@ -96,10 +96,6 @@ Worked example: an Imperial Soldier regards a Stormcloak prisoner. No `RELA` rec
 the start value is Neutral. `CWImperialFaction` toward `CWSonsFaction` gives Enemy, which replaces
 Neutral. `MQ101TemporaryFriendsFaction` toward itself gives Friend, which replaces Enemy. The result
 is Friend, and an Aggressive soldier attacks only an Enemy.
-
-OpenSky differs: when memberships disagree, the most hostile reaction wins, and both directions of
-a pair are read. With the new NPC-against-NPC combat this makes the Helgen soldiers attack the
-prisoners, and the execution scene stops.
 
 A script-set rank wins over the written one inside row 3. That is what `Actor.SetRelationshipRank`
 means, and it is the only way a relationship with the player can count: the player has no `NPC_`

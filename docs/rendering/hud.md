@@ -113,6 +113,8 @@ The main menu is the exception to what the HUD shows, not to whether it is open.
 closes all menus, for example on a quit to the main menu, it keeps the HUD open, and the main menu
 does not hide the menus below it. Even so, the title screen shows no compass, crosshair, or meters.
 What hides them there, and what shows them again when a game starts or loads, is not known yet.
+OpenSky hides the HUD layer while the title menu or the title sequence is shown, and shows it
+again when they close; `state menu` shows this as `hud.underTitle`.
 
 The game keeps drawing the HUD under every menu. No menu closes it. A menu changes only the HUD
 mode: when it opens it puts its mode on the movie's stack through `ShowElements(mode, true)`, and
@@ -181,9 +183,19 @@ crosshair setting.
 ## Timing
 
 HUD changes are collected and applied once between frames. A target change only marks the prompt
-and marker dirty, and the frame hook changes the renderer. The HUD timeline is not ticked at the
-display rate: the direct functions set the state it needs, and one AS2 tick per 60 or 120 Hz frame
-would make behavior depend on the monitor. Timed HUD animation needs its own movie frame rate.
+and marker dirty, and the frame hook changes the renderer.
+
+The HUD movie's timeline runs by real time, also while a menu pauses the game. OpenSky steps it
+in whole movie frames at the movie's own frame rate, and moves it by at most 1/24 s of time in one
+display frame, so a stall does not play seconds of animation at once. The timeline matters
+because the movie animates its own changes. A tutorial
+hint hidden with `ShowTutorialHintText("", false)` does not vanish at once: it starts a fade-out
+that takes movie frames. Probed offscreen with the installed movie, the hint is still fully drawn
+after 0 and 1 movie frames and gone after 40. Notification lines from `ShowMessage` fade out the
+same way.
+
+The HUD movie asks the engine for key art with `GetButtonFromUserEvent`, as the help menu does. A
+hint such as `Use [Look] to look around.` shows the key bound to `Look` in place of the tag.
 
 ## The HUD layer
 
