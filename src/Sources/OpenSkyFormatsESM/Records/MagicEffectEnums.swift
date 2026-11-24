@@ -24,6 +24,16 @@ nonisolated public enum MagicEffectCastingType: Equatable, CustomStringConvertib
         }
     }
 
+    public var rawValue: UInt32 {
+        switch self {
+        case .constantEffect: 0
+        case .fireAndForget: 1
+        case .concentration: 2
+        case .scroll: 3
+        case let .unknown(raw): raw
+        }
+    }
+
     public var description: String {
         switch self {
         case .constantEffect: "constant effect"
@@ -51,6 +61,17 @@ nonisolated public enum MagicEffectDelivery: Equatable, CustomStringConvertible,
         case 3: .targetActor
         case 4: .targetLocation
         default: .unknown(raw: rawValue)
+        }
+    }
+
+    public var rawValue: UInt32 {
+        switch self {
+        case .selfTarget: 0
+        case .touch: 1
+        case .aimed: 2
+        case .targetActor: 3
+        case .targetLocation: 4
+        case let .unknown(raw): raw
         }
     }
 

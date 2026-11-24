@@ -92,6 +92,7 @@ extension AgentAssistReadout {
         return [
             "inFlight": .init(readout.inFlight), "bouncing": .init(readout.bouncing),
             "stuck": .array(readout.stuck.map { .string($0.description) }),
+            "lastKillCamCheck": readout.lastKillCamCheck.map(killCamCheckJSON) ?? .null,
             "landings": .array(readout.landings.map { landing in
                 [
                     "outcome": .string(landing.outcome), "position": .init(landing.position),
@@ -109,6 +110,18 @@ extension AgentAssistReadout {
                     "spellOutcomes": .array(landing.spellOutcomes.map { .string($0) })
                 ]
             })
+        ]
+    }
+
+    private func killCamCheckJSON(_ check: ProjectileReadout.KillCamCheck) -> AgentJSON {
+        [
+            "target": .string(check.target.description),
+            "enemiesInCombat": .init(check.enemiesInCombat),
+            "targetAlive": .bool(check.targetAlive), "hitKills": .bool(check.hitKills),
+            "damage": .init(check.damage), "clearLine": .bool(check.clearLine),
+            "distance": .init(check.distance),
+            "chance": check.chance.map { .init($0) } ?? .null,
+            "roll": .init(check.roll), "plays": .bool(check.plays)
         ]
     }
 }

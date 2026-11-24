@@ -4,6 +4,9 @@ public import OpenSkyWorldInterface
 /// What the world adapters use of `CinematicCameraCoordinator`.
 public protocol CinematicCameraPort: AnyObject {
     var isPlaying: Bool { get }
+    var playedCount: Int { get }
+    /// Why the last kill cam played or did not.
+    var lastOutcome: String? { get }
     @discardableResult func playKillCam(
         attacker: ReferenceKey,
         target: ReferenceKey,

@@ -51,7 +51,17 @@ extension CombatProjectileWorldPart {
             && shared.strikes.isSneakAttack(by: .player, on: target.key)
         facts.targetIsHostileThreat = enemies.contains { $0.key == target.key }
         let roll = Float(shared.archeryRandom.percent())
-        guard RangedKillCam.plays(facts, roll: roll) else { return nil }
+        let plays = RangedKillCam.plays(facts, roll: roll)
+        var check = ProjectileReadout.KillCamCheck(
+            target: target.key, enemiesInCombat: facts.enemiesInCombat,
+            targetAlive: facts.targetAlive, hitKills: facts.hitKills, damage: damage,
+            clearLine: facts.clearLine, distance: facts.distance
+        )
+        check.chance = RangedKillCam.chance(facts)
+        check.roll = roll
+        check.plays = plays
+        shared.lastKillCamCheck = check
+        guard plays else { return nil }
         shared.pendingCommands.append(.rangedKillCam(projectile: projectile.id, target: target.key))
         return centre
     }

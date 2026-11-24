@@ -76,6 +76,32 @@ struct CameraShotSelectionRealDataTests {
         )
     }
 
+    /// An aimed fire-and-forget missile, as Firebolt casts, walks the magic branch to shots.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
+    func aSpellKillFindsShotsNearAndFar() throws {
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let store = try CameraPathStore(plugins: VanillaMasters.load(root: root))
+        let target = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x0001_A67C)
+        for distance: Float in [130, 900] {
+            var context = ConditionContext()
+            var facts = CameraShotFacts.resolution(
+                weapon: nil, target: (nil, distance), yaw: 0
+            ) { _ in 1000 }
+            CameraShotFacts.noteSpell(
+                &facts, projectile: .missile, delivery: .aimed, castingType: .fireAndForget
+            )
+            context.camera = facts
+            let check = CameraShotSelector.conditionCheck(
+                context: context.using(.standard), attacker: .player, target: target
+            )
+            var seeded = ConditionRandom(seed: 27)
+            let kill = CameraShotSelector(store: store, check: check).select(random: &seeded)
+            let path = kill.path?.record.editorID ?? "none"
+            #expect(!path.hasPrefix("Exit"), "\(distance): \(path)")
+            #expect(!kill.sequence.isEmpty, "\(path)")
+        }
+    }
+
     private static func tree(
         _ id: ResolvedFormID,
         depth: Int,

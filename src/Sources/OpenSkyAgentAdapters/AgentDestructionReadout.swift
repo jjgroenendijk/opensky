@@ -39,7 +39,9 @@ struct AgentDestructionReadout {
                     "lit": .bool(rune.isLit)
                 ]
             }),
-            "killCamPlaying": .bool(game.cinematicCamera.isPlaying)
+            "killCamPlaying": .bool(game.cinematicCamera.isPlaying),
+            "killCamsPlayed": .init(game.cinematicCamera.playedCount),
+            "killCamOutcome": game.cinematicCamera.lastOutcome.map { .string($0) } ?? .null
         ]
     }
 

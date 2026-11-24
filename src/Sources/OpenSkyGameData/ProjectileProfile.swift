@@ -32,6 +32,8 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
     public var impactForce: Float = 0
     /// A flame or cone PROJ: a spray that a wall stops through a look ahead, not a body.
     public var isCone = false
+    /// PROJ DATA type, which the kill cam paths test; nil in a synthetic profile.
+    public var kind: Projectile.Kind?
     /// What the player sees of it (docs/engine/spell-delivery.md#what-a-projectile-shows).
     public var visuals = ProjectileVisuals()
 
@@ -63,6 +65,7 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
         )
         impactForce = Self.clean(record.impactForce)
         isCone = record.kind == .flame || record.kind == .cone
+        kind = record.kind
         visuals = ProjectileVisuals(record: record)
         // A trap dart names `FireBallExp01` but leaves the explosion flag off.
         explosion = record.flags.contains(.explosion) ? record.explosion : nil

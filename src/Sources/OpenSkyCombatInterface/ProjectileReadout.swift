@@ -36,6 +36,37 @@ nonisolated public struct ProjectileReadout: Equatable, Sendable {
         }
     }
 
+    /// The facts of the last player shot's kill cam release check, and its verdict.
+    nonisolated public struct KillCamCheck: Equatable, Sendable {
+        public var target: ReferenceKey
+        public var enemiesInCombat: Int
+        public var targetAlive: Bool
+        public var hitKills: Bool
+        public var damage: Float
+        public var clearLine: Bool
+        public var distance: Float
+        /// The chance in percent, or nil when the check passes at once.
+        public var chance: Float?
+        public var roll: Float
+        public var plays: Bool
+
+        public init(
+            target: ReferenceKey, enemiesInCombat: Int, targetAlive: Bool, hitKills: Bool,
+            damage: Float, clearLine: Bool, distance: Float
+        ) {
+            self.target = target
+            self.enemiesInCombat = enemiesInCombat
+            self.targetAlive = targetAlive
+            self.hitKills = hitKills
+            self.damage = damage
+            self.clearLine = clearLine
+            self.distance = distance
+            chance = nil
+            roll = 0
+            plays = false
+        }
+    }
+
     public var inFlight = 0
     /// Arrows in the air after a bounce.
     public var bouncing = 0
@@ -43,6 +74,7 @@ nonisolated public struct ProjectileReadout: Equatable, Sendable {
     public var stuck: [ReferenceKey] = []
     /// The newest finished shots, oldest first.
     public var landings: [Landing] = []
+    public var lastKillCamCheck: KillCamCheck?
 
     public init() {}
 }

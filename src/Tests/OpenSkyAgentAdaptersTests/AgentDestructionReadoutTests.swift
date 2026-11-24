@@ -28,6 +28,8 @@ struct AgentDestructionReadoutTests {
         host.fakeCombat.explosions.reports = [report]
         host.fakeMagic.runeMarkers = [RuneMarker(position: [4, 5, 6], projectile: nil, isLit: true)]
         host.fakeCinematicCamera.isPlaying = true
+        host.fakeCinematicCamera.playedCount = 2
+        host.fakeCinematicCamera.lastOutcome = "a kill cam already plays"
 
         let reply = try world.query(.destruction)
 
@@ -39,5 +41,7 @@ struct AgentDestructionReadoutTests {
         ]))
         #expect(reply.value(atPath: "runes.0.lit") == .bool(true))
         #expect(reply.value(atPath: "killCamPlaying") == .bool(true))
+        #expect(reply.value(atPath: "killCamsPlayed") == .init(2))
+        #expect(reply.value(atPath: "killCamOutcome") == .string("a kill cam already plays"))
     }
 }

@@ -20,7 +20,9 @@ extension CombatCoordinator {
     }
 
     public var projectileReadout: ProjectileReadout {
-        shared.archery?.projectiles.readout ?? ProjectileReadout()
+        var readout = shared.archery?.projectiles.readout ?? ProjectileReadout()
+        readout.lastKillCamCheck = shared.lastKillCamCheck
+        return readout
     }
 
     public var assistReadout: CombatAssistReadout {

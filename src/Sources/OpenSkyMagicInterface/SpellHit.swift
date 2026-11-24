@@ -41,6 +41,9 @@ nonisolated public struct SpellPayload: Equatable, Sendable {
     public var isDualCast = false
     /// A concentration spell, which an NPC aims with no noise.
     public var isConcentration = false
+    /// The spell's own casting type and delivery, which the kill cam paths test.
+    public var castingType = MagicEffectCastingType.fireAndForget
+    public var delivery = MagicEffectDelivery.aimed
     /// The magicka an absorbing target gains: the spell's base cost.
     public var baseCost: Float = 0
     /// `SPIT` "Disallow Spell Absorb/Reflect": an absorption chance never stops it.
@@ -63,6 +66,9 @@ nonisolated public struct SpellPayload: Equatable, Sendable {
             projectile: projectile, name: name
         )
         payload.isDualCast = true
+        payload.isConcentration = isConcentration
+        payload.castingType = castingType
+        payload.delivery = delivery
         payload.baseCost = baseCost
         payload.disallowsAbsorb = disallowsAbsorb
         payload.areaIgnoresLineOfSight = areaIgnoresLineOfSight

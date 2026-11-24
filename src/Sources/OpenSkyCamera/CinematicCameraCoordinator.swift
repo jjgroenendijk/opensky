@@ -15,7 +15,10 @@ public protocol CinematicCameraWorld: AnyObject {
     var cameraPaths: CameraPathStore? { get }
     func cameraConditionContext() -> ConditionContext
     /// The weapon and free-space facts the path conditions read for this pair.
-    func cameraShotFacts(attacker: ReferenceKey, target: ReferenceKey?) -> CameraConditionResolution
+    /// `projectile` is the live shot a ranged kill cam follows, or nil for a melee kill.
+    func cameraShotFacts(
+        attacker: ReferenceKey, target: ReferenceKey?, projectile: Int?
+    ) -> CameraConditionResolution
     /// The camera track in a CAMS model, or nil when the model has none.
     func cameraTrack(model: String) -> NIFCameraTrack?
     /// Where an actor stands and faces, or nil when it is not loaded.
@@ -58,7 +61,8 @@ public final class CinematicCameraCoordinator {
     public private(set) var attacker: ReferenceKey?
     public private(set) var target: ReferenceKey?
     public private(set) var lastSelection = CameraShotSelection.none
-    private(set) var lastOutcome: String?
+    /// Why the last kill cam played or did not.
+    public private(set) var lastOutcome: String?
     public private(set) var shake: CameraShake?
     public private(set) var time: Double = 0
     public private(set) var playedCount = 0
@@ -93,10 +97,16 @@ public final class CinematicCameraCoordinator {
         else {
             return note("no kill cam: odds or other enemies left")
         }
+        return startKillCam(attacker: attacker, target: target, projectile: nil)
+    }
+
+    private func startKillCam(
+        attacker: ReferenceKey, target: ReferenceKey, projectile shot: Int?
+    ) -> Bool {
         guard
             let world,
             let store = world.cameraPaths else { return note("no camera paths loaded") }
-        let check = pathCheck(world, attacker: attacker, target: target)
+        let check = pathCheck(world, attacker: attacker, target: target, projectile: shot)
         lastSelection = CameraShotSelector(store: store, check: check).select(random: &random)
         let stages = lastSelection.sequence.map { shot in
             CinematicStage(
@@ -105,9 +115,9 @@ public final class CinematicCameraCoordinator {
             )
         }.filter { $0.duration > 0 }
         guard !stages.isEmpty else {
-            return note(lastSelection
-                .path == nil ? "no camera path passed its conditions" :
-                "the path asks for no kill cam")
+            return note(lastSelection.path.map {
+                "the path \($0.record.editorID ?? "?") asks for no kill cam"
+            } ?? "no camera path passed its conditions")
         }
         self.attacker = attacker
         self.target = target
@@ -128,8 +138,7 @@ public final class CinematicCameraCoordinator {
     public func playRangedKillCam(projectile id: Int, target: ReferenceKey) -> Bool {
         rangedTargets.insert(target)
         guard !isPlaying else { return note("a kill cam already plays") }
-        guard playKillCam(attacker: .player, target: target, remainingHostiles: 0, force: true)
-        else { return false }
+        guard startKillCam(attacker: .player, target: target, projectile: id) else { return false }
         projectile = id
         isRangedShot = true
         return true
@@ -141,10 +150,13 @@ public final class CinematicCameraCoordinator {
     }
 
     private func pathCheck(
-        _ world: any CinematicCameraWorld, attacker: ReferenceKey, target: ReferenceKey?
+        _ world: any CinematicCameraWorld, attacker: ReferenceKey, target: ReferenceKey?,
+        projectile: Int?
     ) -> CameraShotSelector.Check {
         var context = world.cameraConditionContext()
-        context.camera = world.cameraShotFacts(attacker: attacker, target: target)
+        context.camera = world.cameraShotFacts(
+            attacker: attacker, target: target, projectile: projectile
+        )
         return CameraShotSelector.conditionCheck(
             context: context,
             attacker: attacker,

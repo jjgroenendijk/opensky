@@ -7,6 +7,8 @@ public import OpenSkyWorldInterface
 /// Stores each property and records each call to `CinematicCameraPort`.
 nonisolated public final class FakeCinematicCameraPort: CinematicCameraPort {
     public var isPlaying = false
+    public var playedCount = 0
+    public var lastOutcome: String?
     public var playKillCamCalls: [PlayKillCamCall] = []
     public var playKillCamResult = false
     public var startShakeCalls: [StartShakeCall] = []

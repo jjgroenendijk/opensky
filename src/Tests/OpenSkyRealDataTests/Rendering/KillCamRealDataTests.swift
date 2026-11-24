@@ -47,7 +47,8 @@ private final class RealKillCamWorld: CinematicCameraWorld {
 
     func cameraShotFacts(
         attacker: ReferenceKey,
-        target: ReferenceKey?
+        target: ReferenceKey?,
+        projectile: Int?
     ) -> CameraConditionResolution {
         CameraShotFacts
             .resolution(weapon: bow, target: (nil, 900), yaw: 0) { _ in 1000 }

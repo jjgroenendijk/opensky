@@ -43,6 +43,8 @@ final class CombatShared {
 
     /// Draws an NPC archer's aim noise and spread.
     var archeryRandom = ConditionRandom()
+    /// The last release check of a player's ranged kill cam, for `state projectiles`.
+    var lastKillCamCheck: ProjectileReadout.KillCamCheck?
 
     init(world: any CombatWorld, data: CombatSessionData?, explosions: ExplosionRuntime) {
         self.world = world
