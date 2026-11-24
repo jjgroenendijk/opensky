@@ -18,17 +18,27 @@ enum SWFMovieProbeCommand {
         let steps = arguments.probe.then?.split(separator: ";").map(String.init) ?? []
         let dumps = arguments.probe.dump?.split(separator: ",").map(String.init) ?? []
 
-        let vfs = context.makeFileSystem()
-        let runtime = try SWFMovieRuntime(movieScene: SWFMovieLoader(fileSystem: vfs)
-            .load(path: movie))
-        SystemMenuMovieBridge.prepare(runtime: runtime)
-        for name in captures {
-            runtime.registerHostFunction(name) { call in
-                SWFSystemMenuCommand.printArguments(name, call.arguments)
-                return .undefined
+        let scene = try SWFMovieLoader(fileSystem: context.makeFileSystem()).load(path: movie)
+        let prepare = { (runtime: SWFMovieRuntime) in
+            SystemMenuMovieBridge.prepare(runtime: runtime)
+            for name in captures {
+                runtime.registerHostFunction(name) { call in
+                    SWFSystemMenuCommand.printArguments(name, call.arguments)
+                    return .undefined
+                }
             }
         }
-        runtime.start()
+        let picture = try arguments.out.map { _ in
+            try SWFProbePicture(scene: scene, prepare: prepare)
+        }
+        let runtime: SWFMovieRuntime
+        if let picture {
+            runtime = picture.runtime
+        } else {
+            runtime = SWFMovieRuntime(movieScene: scene)
+            prepare(runtime)
+            runtime.start()
+        }
         SWFSystemMenuCommand.tick(runtime, ticks)
         SWFSystemMenuCommand.printLog(runtime, stage: "start")
         for (index, step) in steps.enumerated() {
@@ -49,6 +59,10 @@ enum SWFMovieProbeCommand {
         print("[INFO] swf probe callbacks: \(runtime.movieCallbackNames.joined(separator: " "))")
         let missing = runtime.tally.missingNames.keys.sorted()
         print("[INFO] swf probe missing: \(missing.joined(separator: " "))")
+        if let picture, let out = arguments.out {
+            try picture.write(to: URL(filePath: out))
+            print("[INFO] swf probe picture: \(out)")
+        }
     }
 
     /// `call:<path>:<method>[:<JSON array of arguments>]`, `focus:<path>`,

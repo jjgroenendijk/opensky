@@ -291,3 +291,16 @@ extension CommandLineTests {
         return code
     }
 }
+
+extension CommandLineTests {
+    @Test func movieProbeDrawsOnlyIntoAPNG() throws {
+        let probe = try command(
+            ["swf", "movie-probe", "--movie", "a.swf", "--out", ".logs/a.png"],
+            as: SWFArguments.MovieProbe.self
+        )
+        #expect(probe.out == ".logs/a.png")
+        #expect(throws: (any Error).self) {
+            try SWFArguments.MovieProbe.parse(["--movie", "a.swf", "--out", "a.txt"])
+        }
+    }
+}

@@ -54,6 +54,7 @@ extension SWFSystemMenuCommand {
                     + " wordWrap \(flags.wordWrap) multiline \(flags.multiline)"
                     + " autoSize \(flags.autoSize) align \(field.layout?.align ?? 0)"
             )
+            printLayout(field, content: runtime.text(of: node), runtime: runtime)
         }
         printPlacement(node, runtime: runtime)
         for child in node.children {
@@ -84,5 +85,22 @@ extension SWFSystemMenuCommand {
         let pixels = [box.minX, box.minY, box.maxX, box.maxY]
             .map { unsafe String(format: "%.1f", $0 / SWFMovieRuntime.twipsPerPixel) }
         print("[INFO]   stage bounds px \(pixels.joined(separator: " "))")
+    }
+
+    /// The field's text laid out as the renderer lays it out: runs, glyphs, and the
+    /// first glyph's place in the field, in twips.
+    static func printLayout(_ field: SWFEditText, content: String?, runtime: SWFMovieRuntime) {
+        guard let font = runtime.movieScene.resolvedFont(for: field) else {
+            print("[INFO]   layout: the font does not resolve")
+            return
+        }
+        let layout = SWFTextLayout.editText(field, font: font, content: content)
+        let glyphs = layout.runs.flatMap(\.glyphs)
+        let first = glyphs.first.map { "\($0.x),\($0.y)" } ?? "-"
+        print(
+            "[INFO]   layout: \(layout.runs.count) runs, \(glyphs.count) glyphs, first at \(first),"
+                + " \(layout.missingGlyphs) missing, font \(font.name) glyphs \(font.glyphs.count),"
+                + " bounds \(field.bounds)"
+        )
     }
 }
