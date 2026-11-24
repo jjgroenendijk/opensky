@@ -75,7 +75,7 @@ extension MagicCoordinator.Enchanter {
             return coordinator.texts.enchanting[.mustChoose]
         }
         let preview = coordinator.enchantingTable.preview(
-            parts.item, with: selection.bases, gem: parts.gem, name: selection.name
+            parts.item, with: selection.bases, gem: parts.gem, options: options(of: selection)
         )
         if case let .failure(refusal) = preview {
             return text(of: refusal)
@@ -89,7 +89,7 @@ extension MagicCoordinator.Enchanter {
             return EnchanterAnswer(text: coordinator.texts.enchanting[.mustChoose], done: false)
         }
         let outcome = coordinator.enchantingTable.enchant(
-            parts.item, with: selection.bases, gem: parts.gem, name: selection.name
+            parts.item, with: selection.bases, gem: parts.gem, options: options(of: selection)
         )
         switch outcome {
         case let .enchanted(item, name, _):
@@ -99,6 +99,41 @@ extension MagicCoordinator.Enchanter {
         default:
             return EnchanterAnswer(text: "Cannot enchant: no game running.", done: false)
         }
+    }
+
+    /// The magnitude slider for `selection`, or nil when it shows none. Before a gem is
+    /// chosen, it previews with the largest carried soul.
+    public func slider(of selection: EnchanterSelection) -> EnchanterSlider? {
+        guard
+            let item = selection.item, !selection.bases.isEmpty,
+            let inventory = coordinator.world.inventory,
+            let gem = gem(of: selection, in: inventory)
+        else { return nil }
+        return coordinator.enchantingTable.slider(
+            item, with: selection.bases, gem: gem, magnitude: selection.magnitude
+        ).map { found in
+            var slider = EnchanterSlider(
+                maximum: found.maximum,
+                step: found.step,
+                value: found.value
+            )
+            slider.uses = found.uses
+            return slider
+        }
+    }
+
+    private func options(of selection: EnchanterSelection) -> EnchantingOptions {
+        EnchantingOptions(name: selection.name, magnitude: selection.magnitude)
+    }
+
+    private func gem(
+        of selection: EnchanterSelection, in inventory: any InventoryAccess
+    ) -> SoulGemCandidate? {
+        let carried = coordinator.soulTrapping.carriedGems(inventory).filter { $0.soul != .empty }
+        guard let chosen = selection.gem else {
+            return carried.max { SoulTrap.charge(of: $0.soul) < SoulTrap.charge(of: $1.soul) }
+        }
+        return carried.first { $0.item == chosen.item && $0.soul.rawValue == chosen.soul }
     }
 
     private func parts(of selection: EnchanterSelection) -> (item: FormID, gem: SoulGemCandidate)? {

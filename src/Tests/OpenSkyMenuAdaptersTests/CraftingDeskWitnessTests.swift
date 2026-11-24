@@ -54,6 +54,9 @@ struct CraftingDeskWitnessTests {
         #expect(screens.enchanter.disenchant(FormID(1)) == answer)
         #expect(screens.enchanter.enchant(EnchanterSelection()) == answer)
         #expect(screens.enchanter.enchantRefusal(EnchanterSelection()) == "Choose")
+        let slider = EnchanterSlider(maximum: 30, step: 1, value: 30)
+        enchanter.sliderResult = slider
+        #expect(screens.enchanter.enchantingSlider(EnchanterSelection()) == slider)
         let readout = host.fakeInventory.craftingReadout
         var snapshot = CraftingControlSnapshot(stationName: "Enchanter", recipes: [])
         var station = CraftingStationInfo(keywords: [], skill: nil)

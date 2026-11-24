@@ -10,10 +10,10 @@ nonisolated public struct InventoryItemCard: Equatable, Sendable {
     }
 
     public let layout: Layout
-    public let name: String
+    public var name: String
     /// The record family's word, such as "Weapon" or "Potion".
     public let kind: String
-    public let value: Int32
+    public var value: Int32
     public let weight: Float
     /// A weapon's base damage, before skill and perks.
     public let damage: Int?

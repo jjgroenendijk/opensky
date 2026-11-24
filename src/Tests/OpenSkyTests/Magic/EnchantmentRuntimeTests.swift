@@ -214,7 +214,7 @@ struct EnchantmentRuntimeTests {
             ],
             powers: [1, 1],
             capacity: 0,
-            unskilledCostPerUse: 0,
+            costPerUse: 0,
             name: "Two Rings"
         )
         let profile = try #require(ItemEnchantmentProfile.made(

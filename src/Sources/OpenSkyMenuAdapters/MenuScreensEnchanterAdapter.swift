@@ -35,4 +35,8 @@ extension MenuScreensEnchanterAdapter: CraftingMenuEnchanter {
     func enchant(_ selection: EnchanterSelection) -> EnchanterAnswer {
         game.magic.enchanter.enchant(selection)
     }
+
+    func enchantingSlider(_ selection: EnchanterSelection) -> EnchanterSlider? {
+        game.magic.enchanter.slider(of: selection)
+    }
 }

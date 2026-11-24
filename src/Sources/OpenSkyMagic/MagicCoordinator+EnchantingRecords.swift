@@ -60,11 +60,7 @@ extension MagicCoordinator.EnchantingRecords {
             EnchantingState.isMade(id),
             let made = enchantingState.made[id]
         else { return nil }
-        let wielder = coordinator.world.actorValueHolder(for: holder.key)
-        return ItemEnchantmentProfile.made(
-            made, item: item, using: store,
-            skill: wielder.map(coordinator.enchantingTable.enchantingSkill(of:)) ?? 0
-        )
+        return ItemEnchantmentProfile.made(made, item: item, using: store)
     }
 
     /// The last link of `profile`'s base chain, which disenchanting teaches.

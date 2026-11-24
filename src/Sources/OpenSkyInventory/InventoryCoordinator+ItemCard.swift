@@ -19,7 +19,7 @@ extension InventoryCoordinator.ItemCards {
             layout: Self.layout(of: definition, items: items),
             name: coordinator.name(of: item),
             kind: Self.kind(of: definition, items: items),
-            value: items.gameValue(of: item),
+            value: runtime.inventory.bestCopyValue(of: item, in: runtime.player),
             weight: definition.weight,
             damage: items.weapons[item.rawValue].map { Int($0.damage) },
             // DNAM holds the rating times 100.

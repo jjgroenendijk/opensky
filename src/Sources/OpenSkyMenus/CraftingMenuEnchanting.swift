@@ -3,6 +3,7 @@
 // See docs/engine/enchanting.md#enchanting-menu.
 
 import OpenSkyFormatsESM
+import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyMenusInterface
 
@@ -16,6 +17,9 @@ struct CraftingMenuEnchanting {
     }
 
     private(set) var selection = EnchanterSelection()
+    /// The slider the current choice offers, so a new maximum can reset the value.
+    private(set) var slider: EnchanterSlider?
+    private var sliderRequested = false
     private var picks: [Pick] = []
     private var known: Set<FormID> = []
 
@@ -95,11 +99,44 @@ struct CraftingMenuEnchanting {
                 selection.bases.remove(at: index)
             } else {
                 selection.bases.append(key)
+                sliderRequested = true
             }
         case let .gem(gem):
             selection.gem = selection.gem == gem ? nil : gem
         }
+        offerSlider(world.enchanter)
         return "Chose \(row.name)"
+    }
+
+    /// The slider to open now: a base was just chosen and the choice has one.
+    mutating func takeSliderRequest() -> EnchanterSlider? {
+        defer { sliderRequested = false }
+        return sliderRequested ? slider : nil
+    }
+
+    /// The movie's slider moved (`accepted` nil) or closed. A move previews the value; a
+    /// close keeps it, and a cancel keeps the value from before.
+    mutating func slide(
+        to value: Int, accepted: Bool?, enchanter: any CraftingMenuEnchanter
+    ) -> String {
+        guard let current = slider else { return "No slider" }
+        var probe = selection
+        probe.magnitude = min(max(1, value), current.maximum)
+        if accepted == true {
+            selection = probe
+        }
+        slider = enchanter.enchantingSlider(accepted == nil ? probe : selection)
+        guard let shown = slider else { return "No slider" }
+        return "Magnitude \(shown.value) of \(shown.maximum), \(shown.uses) uses"
+    }
+
+    /// When the maximum changes, the chosen value jumps to the new maximum.
+    private mutating func offerSlider(_ enchanter: any CraftingMenuEnchanter) {
+        let offered = enchanter.enchantingSlider(selection)
+        if offered?.maximum != slider?.maximum {
+            selection.magnitude = nil
+        }
+        slider = enchanter.enchantingSlider(selection)
     }
 
     /// Something is chosen, so leaving asks first.
@@ -117,9 +154,11 @@ struct CraftingMenuEnchanting {
     /// The longest name the game takes on PC (UESP "Skyrim:Enchanting").
     static let nameLimit = 32
 
-    /// Names the item to make; nil or empty keeps the made name.
-    mutating func rename(_ name: String?) {
-        selection.name = name.flatMap { $0.isEmpty ? nil : String($0.prefix(Self.nameLimit)) }
+    /// Names the item to make. A cancel, an empty name, or a character outside `allowed`
+    /// keeps the name from before, with no message (docs/engine/enchanting.md).
+    mutating func rename(_ name: String?, allowed: String? = nil) {
+        guard let name, SWFFontConfig.accepts(name: name, allowed: allowed) else { return }
+        selection.name = String(name.prefix(Self.nameLimit))
     }
 
     private mutating func make(
@@ -132,6 +171,7 @@ struct CraftingMenuEnchanting {
         }
         let chosen = selection
         selection = EnchanterSelection()
+        slider = nil
         world.confirm(world.enchanter.enchantingTexts[.confirmEnchant]) { yes in
             guard yes else { return }
             let answer = world.enchanter.enchant(chosen)

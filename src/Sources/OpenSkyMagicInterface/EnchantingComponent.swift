@@ -4,6 +4,7 @@
 
 import Foundation
 public import OpenSkyFormatsESM
+public import OpenSkyGameData
 public import OpenSkyWorldState
 
 /// One enchantment the player made: each base record scaled by its power.
@@ -14,9 +15,9 @@ nonisolated public struct MadeEnchantment: Equatable, Sendable {
     public let powers: [Float]
     /// A weapon's full charge; zero on apparel.
     public let capacity: Float
-    /// What one hit spends at Enchanting 0; zero on apparel. The skill term applies
-    /// at each use, because UESP says the charge is "calculated at the moment of the usage".
-    public let unskilledCostPerUse: Float
+    /// What one hit spends, with the maker's skill at the moment of making. Apparel
+    /// spends nothing, but the cost still adds to its value.
+    public let costPerUse: Float
     /// What the readouts call it, from the first base.
     public let name: String
 
@@ -25,7 +26,7 @@ nonisolated public struct MadeEnchantment: Equatable, Sendable {
         bases: [ReferenceKey],
         powers: [Float],
         capacity: Float,
-        unskilledCostPerUse: Float,
+        costPerUse: Float,
         name: String
     ) {
         self.bases = bases
@@ -34,8 +35,17 @@ nonisolated public struct MadeEnchantment: Equatable, Sendable {
             return power.isFinite ? max(0, power) : 0
         }
         self.capacity = capacity.isFinite ? max(0, capacity) : 0
-        self.unskilledCostPerUse = unskilledCostPerUse.isFinite ? max(0, unskilledCostPerUse) : 0
+        self.costPerUse = costPerUse.isFinite ? max(0, costPerUse) : 0
         self.name = name
+    }
+
+    /// What this enchantment adds to its item's gold value: on a weapon the charge and
+    /// the cost, fraction dropped; on apparel the cost, rounded half up.
+    public func addedValue(isWeapon: Bool, settings: EnchantedValueSettings) -> Int32 {
+        let added = isWeapon
+            ? (settings.chargeMult * capacity + settings.costMult * costPerUse).rounded(.down)
+            : (costPerUse + 0.5).rounded(.down)
+        return added.isFinite ? Int32(clamping: Int(max(0, min(added, Float(Int32.max))))) : 0
     }
 
     /// The skill must stay below 200, where a use would cost nothing.
@@ -45,11 +55,6 @@ nonisolated public struct MadeEnchantment: Equatable, Sendable {
     public static func skillCostFactor(_ skill: Float) -> Float {
         let clamped = skill.isFinite ? min(max(0, skill), skillCap) : 0
         return 1 - (clamped / 200).squareRoot()
-    }
-
-    /// What one hit spends for a wielder whose Enchanting is `skill` now.
-    public func costPerUse(atSkill skill: Float) -> Float {
-        unskilledCostPerUse * Self.skillCostFactor(skill)
     }
 }
 

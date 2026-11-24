@@ -13,6 +13,8 @@ nonisolated public final class FakeMagicEnchanterPort: MagicEnchanterPort {
     public var refusalResult: String?
     public var enchantCalls: [EnchanterSelection] = []
     public var enchantResult: EnchanterAnswer?
+    public var sliderCalls: [EnchanterSelection] = []
+    public var sliderResult: EnchanterSlider?
 
     public init() {}
 }
@@ -46,5 +48,10 @@ nonisolated extension FakeMagicEnchanterPort {
             preconditionFailure("FakeMagicEnchanterPort.enchant has no result")
         }
         return enchantResult
+    }
+
+    public func slider(of selection: EnchanterSelection) -> EnchanterSlider? {
+        sliderCalls.append(selection)
+        return sliderResult
     }
 }

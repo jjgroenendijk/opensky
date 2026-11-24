@@ -78,6 +78,8 @@ public protocol CraftingMenuEnchanter {
     /// Why `selection` cannot be made, or nil when it can.
     func enchantRefusal(_ selection: EnchanterSelection) -> String?
     func enchant(_ selection: EnchanterSelection) -> EnchanterAnswer
+    /// A weapon enchantment's magnitude slider for `selection`, or nil when it has none.
+    func enchantingSlider(_ selection: EnchanterSelection) -> EnchanterSlider?
 }
 
 public final class CraftingMenuCoordinator: ItemListMenuScreen {
@@ -183,9 +185,15 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
 
     override func choose(_ row: ItemListRow, alternate: Bool) -> String {
         if let world, world.enchanter.enchanterChoices != nil {
-            return enchanting.choose(row, alternate: alternate, world: world) { [weak self] in
+            let text = enchanting.choose(row, alternate: alternate, world: world) { [weak self] in
                 self?.reload()
             }
+            if let slider = enchanting.takeSliderRequest() {
+                movie.publish { CraftingMenuMovieBridge.showSlider(slider, runtime: $0) }
+                let magnitude = "magnitude \(slider.value) of \(slider.maximum)"
+                return "\(text); \(magnitude), \(slider.uses) uses"
+            }
+            return text
         }
         if !ingredients.isEmpty || world?.alchemyIngredients != nil {
             if alternate {
@@ -247,6 +255,11 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
         return CraftingMenuButtons.make(state, texts: world?.craftingButtonTexts ?? .vanilla)
     }
 
+    override func slider(_ value: Int, accepted: Bool?) -> String {
+        guard let world, mode == .enchanting else { return "No slider" }
+        return enchanting.slide(to: value, accepted: accepted, enchanter: world.enchanter)
+    }
+
     /// Alchemy clears the chosen ingredients; enchanting names the item to make.
     override func auxiliary() -> String? {
         guard let world else { return nil }
@@ -264,7 +277,7 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
             nameEntry?.open(
                 title: title, limit: CraftingMenuEnchanting.nameLimit
             ) { [weak self] name in
-                self?.enchanting.rename(name)
+                self?.enchanting.rename(name, allowed: self?.movie.session.validNameCharacters)
             }
             return "Naming the item"
         case .create, .improve:

@@ -1,4 +1,5 @@
 import OpenSkyFormatsESM
+import OpenSkyFormatsSWF
 import OpenSkyGameData
 @testable import OpenSkyMenus
 import OpenSkyMenusInterface
@@ -42,7 +43,12 @@ struct CraftingMenuEnchantingTests {
         enchanting.rename(String(repeating: "a", count: 40))
         #expect(enchanting.selection.name?.count == CraftingMenuEnchanting.nameLimit)
         enchanting.rename("")
-        #expect(enchanting.selection.name == nil)
+        #expect(enchanting.selection.name?.count == CraftingMenuEnchanting.nameLimit)
+        enchanting.rename("Blade", allowed: "Blade")
+        enchanting.rename("Bläde", allowed: "Blade")
+        #expect(enchanting.selection.name == "Blade", "a refused character keeps the name")
+        enchanting.rename(nil)
+        #expect(enchanting.selection.name == "Blade")
         _ = enchanting.choose(tabs[0].rows[0], alternate: false, world: world) {}
         #expect(world.questions.map(\.text) == [EnchantingMenuText.confirmDisenchant.fallback])
         world.questions[0].answer(true)
@@ -98,5 +104,54 @@ struct CraftingMenuEnchantingTests {
         menu.route(.button(.cancel))
         #expect(world.questions.map(\.text) == [CraftingButtonText.quitEnchanting.fallback])
         #expect(menu.isOpen)
+    }
+
+    /// Choosing a base opens the slider at its maximum; a move previews, a close keeps,
+    /// and a cancel keeps the value from before.
+    @Test func theSliderPreviewsKeepsAndCancels() throws {
+        let world = world()
+        world.enchantingSliderOffer = EnchanterSlider(maximum: 10, step: 1, value: 10)
+        var enchanting = CraftingMenuEnchanting()
+        let tabs = try enchanting.categories(
+            #require(world.enchanterChoices),
+            texts: world.enchantingTexts
+        )
+        #expect(enchanting.slide(to: 3, accepted: nil, enchanter: world.enchanter) == "No slider")
+        _ = enchanting.choose(tabs[1].rows[0], alternate: false, world: world) {}
+        #expect(enchanting.takeSliderRequest() == nil)
+        _ = enchanting.choose(tabs[2].rows[0], alternate: false, world: world) {}
+        #expect(enchanting.takeSliderRequest()?.value == 10)
+        #expect(enchanting.takeSliderRequest() == nil)
+        #expect(enchanting.slide(to: 4, accepted: nil, enchanter: world.enchanter)
+            .hasPrefix("Magnitude 4 of 10"))
+        #expect(enchanting.selection.magnitude == nil)
+        _ = enchanting.slide(to: 6, accepted: true, enchanter: world.enchanter)
+        #expect(enchanting.selection.magnitude == 6)
+        #expect(enchanting.slide(to: 2, accepted: false, enchanter: world.enchanter)
+            .hasPrefix("Magnitude 6"))
+        #expect(enchanting.selection.magnitude == 6)
+        world.enchantingSliderOffer = EnchanterSlider(maximum: 20, step: 1, value: 20)
+        _ = enchanting.choose(tabs[3].rows[0], alternate: false, world: world) {}
+        #expect(enchanting.selection.magnitude == nil, "a new maximum resets the value")
+    }
+
+    @Test func theMovieSliderReachesTheEnchanter() throws {
+        let runtime = try MenuMovieCallLog.emptyRuntime()
+        let events = MenuMovieEventLog<ItemListMovieEvent>()
+        CraftingMenuMovieBridge.prepare(runtime: runtime) { events.append($0) }
+        runtime.callHost("CalculateCharge", arguments: [.number(4.4)])
+        runtime.callHost("SliderClose", arguments: [.number(5), .boolean(false)])
+        runtime.callHost("SliderClose", arguments: [.string("x")])
+        #expect(events.events == [
+            .sliderMoved(4), .sliderClosed(5, accepted: false), .sliderClosed(0, accepted: true)
+        ])
+        CraftingMenuMovieBridge.showSlider(
+            EnchanterSlider(maximum: 10, step: 1, value: 10), runtime: runtime
+        )
+        let menu = CraftingMenuCoordinator(menuMode: MenuModeController(), world: world())
+        menu.handle(.sliderMoved(3))
+        #expect(menu.lastResult == "No slider")
+        menu.handle(.sliderClosed(3, accepted: true))
+        #expect(menu.lastResult == "No slider")
     }
 }
