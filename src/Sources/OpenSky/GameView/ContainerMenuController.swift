@@ -201,9 +201,22 @@ final class ContainerMenuController {
         refreshModel()
     }
 
+    /// The rows, and the selected row's card: the movie fades the card in with the
+    /// panel and asks for its item, so a card left empty reads "undefined".
     private func publishModel() {
         let model = model
-        movie.publish { ContainerMenuMovieBridge.publish(model, runtime: $0) }
+        let cards = game.inventory.itemCards
+        let card = InventoryMenuMovieBridge.card(for: model.selectedEntry) {
+            cards.itemCard(for: $0)
+        }
+        let player = ContainerMenuMovieBridge.playerInfo(of: model.player.allEntries) {
+            cards.itemCard(for: $0)
+        }
+        movie.publish {
+            ContainerMenuMovieBridge.publish(model, runtime: $0)
+            ContainerMenuMovieBridge.publishPlayerInfo(player, runtime: $0)
+            InventoryMenuMovieBridge.publishItemCard(card, runtime: $0)
+        }
     }
 
     // MARK: - Movie
@@ -224,7 +237,7 @@ final class ContainerMenuController {
                 // The panel opens on the rows, and the item card with it; it moves the
                 // selection, so the rows are written again after it.
                 self?.publishModel()
-                self?.movie.publish(ItemCardSubMenuBridge.showItemsList(runtime:))
+                self?.movie.publish { ItemCardSubMenuBridge.showItemsList(runtime: $0) }
                 self?.publishModel()
             }
         ))
