@@ -268,14 +268,14 @@ static float3 litSurface(
     addPointLights(
         sums, geometry, in.worldPosition, pointLights, draw.pointLightCount, terms,
         input.pointShadows);
+    if (draw.layerCategory == RenderLayerBitActors) {
+        sums.diffuse += characterLight(normal.world, input.toEye, frame);
+    }
     if (hasTerm(terms, ShadingTermHairSoftLighting)) {
         // nif.xml: keeps hair from going too bright under lights.
         sums.diffuse = min(sums.diffuse, 1.0);
     }
     float3 ambient = directionalAmbient(normal.world, frame) + baseAmbient(frame);
-    if (draw.layerCategory == RenderLayerBitActors) {
-        ambient += characterLight(normal.world, frame);
-    }
     float3 emitted = emittedLight(in, input, draw, maps, trilinear);
     float3 lightMask = maps.glow.sample(trilinear, input.uv).rgb;
     float3 back = 0.0;
