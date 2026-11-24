@@ -145,16 +145,9 @@ struct AlchemyRulesTests {
         #expect(other.ingestible.flags.contains(.poison))
     }
 
-    @Test func knowledgeAndPoisonStateCountAsExpected() {
+    @Test func knowledgeCountsAsExpected() {
         let knowledge = IngredientKnowledgeState().learning([0, 2], of: Fixture.wheat)
         #expect(knowledge.knownIndices(of: Fixture.wheat) == [0, 2])
         #expect(!knowledge.knows(1, of: Fixture.wheat))
-        let poisons = WeaponPoisonState()
-            .applying(WeaponPoison(poison: Fixture.poison, doses: 2), to: Fixture.wheat)
-        let (once, first) = poisons.spendingDose(of: Fixture.wheat)
-        let (twice, second) = once.spendingDose(of: Fixture.wheat)
-        #expect(first == Fixture.poison && second == Fixture.poison)
-        #expect(twice.isEmpty)
-        #expect(twice.spendingDose(of: Fixture.wheat).poison == nil)
     }
 }

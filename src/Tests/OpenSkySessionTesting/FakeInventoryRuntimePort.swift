@@ -12,6 +12,7 @@ public final class FakeInventoryRuntimePort: InventoryRuntimePort {
     public var addError: (any Error)?
     public var addResult: ReferenceInventoryState?
     public var baselinesValue: InventoryBaselineResolver?
+    public var actingCalls: [ActingCall] = []
     public var countCalls: [(item: FormID, holder: InventoryHolder)] = []
     public var countResult: Int32 = 0
     public var goldCountCalls: [InventoryHolder] = []
@@ -33,6 +34,8 @@ public final class FakeInventoryRuntimePort: InventoryRuntimePort {
     public var transferError: (any Error)?
     public var copiesCalls: [(item: FormID, holder: InventoryHolder)] = []
     public var copiesResult: [ItemCopy] = []
+    public var valueCalls: [(item: FormID, copy: ItemCopy)] = []
+    public var valueResult: Int32 = 0
     public var editCopyCalls: [(item: FormID, holder: InventoryHolder)] = []
     public var editCopyResult = false
     public var clearStolenCalls: [ClearStolenCall] = []
@@ -54,6 +57,20 @@ extension FakeInventoryRuntimePort {
             [
                 "item: " + String(describing: item),
                 "count: " + String(describing: count),
+                "holder: " + String(describing: holder)
+            ].joined(separator: ", ")
+        }
+    }
+
+    nonisolated public struct ActingCall: CustomStringConvertible {
+        public let copy: ItemCopy?
+        public let item: FormID
+        public let holder: InventoryHolder
+
+        public var description: String {
+            [
+                "copy: " + String(describing: copy),
+                "item: " + String(describing: item),
                 "holder: " + String(describing: holder)
             ].joined(separator: ", ")
         }
@@ -128,6 +145,14 @@ extension FakeInventoryRuntimePort {
             return baselinesValue
         }
         set { baselinesValue = newValue }
+    }
+
+    public func acting<Result>(
+        on copy: ItemCopy?, of item: FormID, in holder: InventoryHolder,
+        _ body: () throws -> Result
+    ) rethrows -> Result {
+        actingCalls.append(ActingCall(copy: copy, item: item, holder: holder))
+        return try body()
     }
 
     public func count(of item: FormID, in holder: InventoryHolder) -> Int32 {
@@ -220,6 +245,11 @@ extension FakeInventoryRuntimePort {
     public func copies(of item: FormID, in holder: InventoryHolder) -> [ItemCopy] {
         copiesCalls.append((item: item, holder: holder))
         return copiesResult
+    }
+
+    public func value(of item: FormID, copy: ItemCopy) -> Int32 {
+        valueCalls.append((item: item, copy: copy))
+        return valueResult
     }
 
     @discardableResult

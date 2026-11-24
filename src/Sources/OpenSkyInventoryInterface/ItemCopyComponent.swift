@@ -17,6 +17,13 @@ nonisolated public struct ItemCopy: Hashable, Sendable {
     public var charge: Float?
     /// The `ENCH` an enchanting table put on this copy.
     public var enchantment: FormID?
+    /// The name typed at the enchanter; nil shows the record's name.
+    public var name: String?
+    /// The poison on this weapon copy and the hits it has left.
+    public var poison: WeaponPoison?
+    /// The copy the player last picked from a menu row. It sorts first, so an equip
+    /// wears it.
+    public var isChosen = false
 
     public init(
         level: Int32 = 0,
@@ -36,10 +43,20 @@ nonisolated public struct ItemCopy: Hashable, Sendable {
         self == .plain
     }
 
-    /// Best first: higher temper, then a made enchantment, then a bigger soul. Charge
-    /// does not count, so a hit does not hand the equipped role to another copy; the
-    /// sort is stable, so ties keep their stored order.
+    /// This copy with the menu's choice mark cleared, as a move hands it on.
+    public var unchosen: ItemCopy {
+        var copy = self
+        copy.isChosen = false
+        return copy
+    }
+
+    /// Best first: the chosen copy, then higher temper, then a made enchantment, then a
+    /// bigger soul. Charge, name, and poison do not count, so a hit does not hand the
+    /// equipped role to another copy; the sort is stable, so ties keep their stored order.
     static func isBefore(_ lhs: ItemCopy, _ rhs: ItemCopy) -> Bool {
+        if lhs.isChosen != rhs.isChosen {
+            return lhs.isChosen
+        }
         if lhs.level != rhs.level {
             return lhs.level > rhs.level
         }
@@ -126,15 +143,26 @@ nonisolated public struct ItemCopyState: WorldStateComponent, Sendable {
     }
 
     /// This state after `count` of the `held` copies of `item` leave, and each copy that
-    /// left. The plainest copies leave first, so the owner keeps the best one.
+    /// left. Copies equal to `preferring` leave first, as a move from a menu row takes
+    /// that row's copies; then the plainest, so the owner keeps the best one.
     public func taking(
-        _ count: Int32, of item: FormID, held: Int32
+        _ count: Int32, of item: FormID, held: Int32, preferring: ItemCopy? = nil
     ) -> (remaining: ItemCopyState, taken: [ItemCopy]) {
-        let held = copies(of: item, held: held)
+        var held = copies(of: item, held: held)
         let leaving = min(Int(max(0, count)), held.count)
+        var taken: [ItemCopy] = []
+        while
+            let preferring, taken.count < leaving,
+            let index = held.lastIndex(where: { $0.unchosen == preferring.unchosen })
+        {
+            taken.append(held.remove(at: index))
+        }
+        let rest = leaving - taken.count
+        taken += held.suffix(rest)
+        held.removeLast(rest)
         var updated = copies
-        updated[item.rawValue] = Array(held.dropLast(leaving))
-        return (ItemCopyState(copies: updated), Array(held.suffix(leaving)))
+        updated[item.rawValue] = held
+        return (ItemCopyState(copies: updated), taken.map(\.unchosen))
     }
 
     /// This state after `arriving` copies join the `held` copies of `item`.

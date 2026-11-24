@@ -2,7 +2,7 @@
 type: File Format
 title: OpenSky save chunks — actors
 description: Payload layouts of the AVAL, AVDM, AVOV, DETH, CBTS, DLGS, DLGT, AEFF, ECHG, SPLB, PRKS,
-  PLVL, PLGD, PTRN, FCTN, RELS, RELF, CRIM, STOL, STOF, TMPR, ICPY, CRVG, CPOT, INGK, WPSN, FAVS,
+  PLVL, PLGD, PTRN, FCTN, RELS, RELF, CRIM, STOL, STOF, TMPR, ICPY, CRVG, CPOT, INGK, FAVS,
   and ENCK chunks in an .osav save.
 tags: [format, save, world-state, actors, magic, crime]
 ---
@@ -244,10 +244,12 @@ chunk and every copy reads plain. Sizes: 12 bytes minimum per entry, 8 per item,
 
 ## ICPY: item copies
 
-Written only for an owner with a copy that holds more than a level: a soul, a charge, or a made
-enchantment ([item copies](/engine/item-copies.md)). Key, cell, uint32 item count, then per
-item: uint32 FormID, uint32 copy count, and per copy an int32 level, a uint8 soul, and a uint8
-flags byte. Flag 1 adds a float32 charge, flag 2 a uint32 enchantment FormID. The same owner
+Written only for an owner with a copy that holds more than a level: a soul, a charge, a made
+enchantment, a name, a poison, or the chosen mark ([item copies](/engine/item-copies.md)). Key,
+cell, uint32 item count, then per item: uint32 FormID, uint32 copy count, and per copy an int32
+level, a uint8 soul, and a uint8 flags byte. Flag 1 adds a float32 charge, flag 2 a uint32
+enchantment FormID, flag 4 the name as a string, and flag 8 a uint32 poison FormID and an int32
+doses left. Flag 16 marks the chosen copy and adds nothing. The same owner
 also gets a `TMPR` entry with its levels, so an older build keeps the quality. On load `ICPY`
 is merged after `TMPR` and replaces that owner's state. Sizes: 12 bytes minimum per entry, 8 per
 item, 6 per copy.
@@ -277,12 +279,6 @@ Key (the player), cell, uint32 row count, then rows of uint32 `INGR` FormID and 
 `n` set when effect `n` is known, for the four effects of an `INGR`. Sizes: 12 bytes minimum per
 entry, 5 per row.
 
-## WPSN: weapon poisons
-
-Key (the actor), cell, uint32 row count, then rows of uint32 weapon FormID, uint32 poison FormID,
-and int32 doses left. A row with no doses left is dropped. Sizes: 12 bytes minimum per entry, 12
-per row.
-
 ## FAVS: favourites
 
 Key (the player), cell, uint32 item count, then uint32 FormIDs in the order they were marked, then
@@ -294,7 +290,7 @@ minimum per entry, 5 per hotkey.
 ## ENCK: enchanting
 
 Key (the player), cell, uint32 known count and that many base enchantment keys, then a uint32 made
-count and per made enchantment: uint32 FormID, the name as a string, float32 capacity, float32
-cost per use, uint32 base count, and per base its key and a float32 power. Made enchantments
-ascend by FormID, from `0xFF600000` up ([enchanting](/engine/enchanting.md)). Sizes: 16 bytes
-minimum per entry, 18 minimum per made enchantment, 11 minimum per base.
+count and per made enchantment: uint32 FormID, the name as a string, float32 capacity, float32 cost
+per use at the maker's skill, uint32 base count, and per base its key and a float32 power. Made
+enchantments ascend by FormID, from `0xFF600000` up ([enchanting](/engine/enchanting.md)). Sizes: 16
+bytes minimum per entry, 18 minimum per made enchantment, 11 minimum per base.

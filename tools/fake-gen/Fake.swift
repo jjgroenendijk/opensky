@@ -173,14 +173,18 @@ struct FakeWriter {
             out.append("    public var \(key)Calls: [\(recordName)] = []")
         }
         let effects = function.signature.effectSpecifiers
-        let throwsClause = effects?.throwsClause
+        // A `rethrows` member runs the closure it was given, so it throws only what that throws.
+        let rethrownBody = rethrownClosure(function)
+        let throwsClause = rethrownBody == nil ? effects?.throwsClause : nil
         if let throwsClause {
             let errorType = throwsClause.type.map(\.trimmedDescription) ?? "any Error"
             out.append("    public var \(key)Error: (\(errorType))?")
         }
         let returnType = function.signature.returnClause?.type
         var answer: [String] = []
-        if let returnType, returnType.trimmedDescription != "Void" {
+        if let rethrownBody {
+            answer = ["        return try \(rethrownBody)()"]
+        } else if let returnType, returnType.trimmedDescription != "Void" {
             let stored = context.storable(returnType)
             if context.mentionsGeneric(returnType) {
                 out.append("    public var \(key)Result: Any?")
@@ -236,6 +240,17 @@ struct FakeWriter {
         out += answer
         out.append("    }")
         return Part(stored: stored, members: out, record: record)
+    }
+
+    /// The name of the closure a `rethrows` function runs, or nil for any other function.
+    private func rethrownClosure(_ function: FunctionDeclSyntax) -> String? {
+        guard function.signature.effectSpecifiers?.throwsClause?.throwsSpecifier.tokenKind
+            == .keyword(.rethrows)
+        else { return nil }
+        return function.signature.parameterClause.parameters.last {
+            $0.type.is(FunctionTypeSyntax.self)
+                || $0.type.as(AttributedTypeSyntax.self)?.baseType.is(FunctionTypeSyntax.self) == true
+        }.map(localName)
     }
 
     /// `routeEvent` for `route(_ event:)`: the name and each label.

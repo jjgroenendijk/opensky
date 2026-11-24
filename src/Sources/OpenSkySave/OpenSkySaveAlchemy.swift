@@ -1,5 +1,5 @@
-// CPOT, INGK, and WPSN chunks: brewed potions, known ingredient effects, and weapon
-// poisons, each merged into the `RDLT` deltas by key. Rows ascend by FormID, so equal
+// CPOT and INGK chunks: brewed potions and known ingredient effects, each merged into
+// the `RDLT` deltas by key. Rows ascend by FormID, so equal
 // state gives equal bytes. Layout: docs/formats/opensky-save-actor-chunks.md.
 
 import Foundation
@@ -53,25 +53,6 @@ nonisolated enum OpenSkySaveAlchemyWriter {
             }
         }
     }
-
-    /// Per weapon: its FormID, the poison's FormID, and the doses left.
-    static func writeWeaponPoisons(
-        _ entries: [WorldStateSnapshotEntry],
-        into writer: inout BinaryWriter
-    ) {
-        OpenSkySaveStoryWriter.writeStory(
-            (WeaponPoisonState.self, OpenSkySaveFormat.ChunkTag.weaponPoisons),
-            entries, &writer
-        ) { state, payload in
-            let rows = state.poisons.sorted { $0.key.rawValue < $1.key.rawValue }
-            payload.writeUInt32(UInt32(clamping: rows.count))
-            for (weapon, poison) in rows {
-                payload.writeUInt32(weapon.rawValue)
-                payload.writeUInt32(poison.poison.rawValue)
-                payload.writeUInt32(UInt32(bitPattern: poison.doses))
-            }
-        }
-    }
 }
 
 nonisolated extension OpenSkySaveStoryDecoder {
@@ -107,27 +88,6 @@ nonisolated extension OpenSkySaveStoryDecoder {
                 known[ingredient] = try reader.uint8("INGK effects")
             }
             return IngredientKnowledgeState(known: known)
-        }
-    }
-
-    static func decodeWeaponPoisons(
-        _ payload: Data
-    ) throws -> [SaveStoryEntry<WeaponPoisonState>] {
-        let tag = OpenSkySaveFormat.ChunkTag.weaponPoisons
-        return try decode(
-            payload, tag: tag, minimumSize: OpenSkySaveFormat.minimumAlchemyEntrySize
-        ) { reader in
-            let count = try reader.uint32("WPSN row count")
-            try validate(count, OpenSkySaveFormat.weaponPoisonRowSize, reader, tag)
-            var poisons: [FormID: WeaponPoison] = [:]
-            for _ in 0 ..< count {
-                let weapon = try FormID(reader.uint32("WPSN weapon"))
-                poisons[weapon] = try WeaponPoison(
-                    poison: FormID(reader.uint32("WPSN poison")),
-                    doses: Int32(bitPattern: reader.uint32("WPSN doses"))
-                )
-            }
-            return WeaponPoisonState(poisons: poisons)
         }
     }
 
@@ -170,8 +130,6 @@ nonisolated extension OpenSkySaveDecoder {
         case OpenSkySaveFormat.ChunkTag.ingredientKnowledge:
             body.side.ingredientKnowledge = try OpenSkySaveStoryDecoder
                 .decodeIngredientKnowledge(payload)
-        case OpenSkySaveFormat.ChunkTag.weaponPoisons:
-            body.side.weaponPoisons = try OpenSkySaveStoryDecoder.decodeWeaponPoisons(payload)
         case OpenSkySaveFormat.ChunkTag.favourites:
             body.side.favourites = try OpenSkySaveStoryDecoder.decodeFavourites(payload)
         case OpenSkySaveFormat.ChunkTag.enchanting:
@@ -186,7 +144,7 @@ nonisolated extension OpenSkySaveDecoder {
 }
 
 nonisolated extension OpenSkySaveDecoder.Body {
-    /// `CPOT`, `INGK`, `WPSN`, `FAVS`, `PRUL`, `ENCK`, and `STOF`: state of the player and
+    /// `CPOT`, `INGK`, `FAVS`, `PRUL`, `ENCK`, and `STOF`: state of the player and
     /// its items.
     static func mergePlayerState(
         _ body: Self,
@@ -194,7 +152,6 @@ nonisolated extension OpenSkySaveDecoder.Body {
     ) -> [WorldStateSnapshotEntry] {
         var entries = OpenSkySaveDeltaMerge.merge(body.side.createdPotions, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.side.ingredientKnowledge, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.side.weaponPoisons, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.side.favourites, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.side.playerRules, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.side.stolenOrigins, into: entries)

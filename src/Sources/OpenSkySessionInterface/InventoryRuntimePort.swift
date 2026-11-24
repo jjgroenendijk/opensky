@@ -11,6 +11,11 @@ public protocol InventoryRuntimePort: InventoryAccess, Sendable {
         to holder: InventoryHolder
     ) throws -> ReferenceInventoryState
     var baselines: InventoryBaselineResolver { get }
+    /// Runs `body` as an action on one menu row's `copy`: an equip wears it, a move takes it first.
+    func acting<Result>(
+        on copy: ItemCopy?, of item: FormID, in holder: InventoryHolder,
+        _ body: () throws -> Result
+    ) rethrows -> Result
     func count(of item: FormID, in holder: InventoryHolder) -> Int32
     func goldCount(of holder: InventoryHolder) -> Int32
     var goldFormID: FormID { get }

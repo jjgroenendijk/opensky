@@ -91,4 +91,19 @@ struct SWFFontConfigTests {
         #expect(library.font(named: "futura condensed")?.font.fontID == 3) // case-insensitive
         #expect(library.font(named: "absent") == nil)
     }
+
+    /// The rest of the `validNameChars` line, read as written, is the whole check: a name
+    /// passes when every character is in it, case-sensitive, and an empty name fails.
+    @Test func validNameCharsListsWhatANameMayUse() {
+        let config = SWFFontConfig
+            .parse("fontlib \"fonts_en.swf\"\nVALIDNAMECHARS \"abc#\nvalidNameCharsX ab")
+        #expect(config.validNameCharacters == " \"abc#")
+        #expect(config.unrecognizedLines == ["validNameCharsX ab"])
+        #expect(SWFFontConfig.parse("").validNameCharacters == nil)
+        let allowed = config.validNameCharacters
+        #expect(SWFFontConfig.accepts(name: "ab c", allowed: allowed))
+        #expect(!SWFFontConfig.accepts(name: "Abc", allowed: allowed))
+        #expect(!SWFFontConfig.accepts(name: "", allowed: allowed))
+        #expect(SWFFontConfig.accepts(name: "Any", allowed: nil))
+    }
 }

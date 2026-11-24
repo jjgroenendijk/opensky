@@ -96,8 +96,6 @@ nonisolated struct OpenSkySaveSideChunks: Sendable {
     var createdPotions: [SaveStoryEntry<CreatedPotionState>] = []
     /// Absent `INGK`: no ingredient effect is known.
     var ingredientKnowledge: [SaveStoryEntry<IngredientKnowledgeState>] = []
-    /// Absent `WPSN`: no weapon is poisoned.
-    var weaponPoisons: [SaveStoryEntry<WeaponPoisonState>] = []
     /// Absent `FAVS`: no item is a favourite.
     var favourites: [SaveStoryEntry<FavouritesState>] = []
     /// Absent `ENCK`: no enchantment is known or made.

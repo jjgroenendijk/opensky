@@ -19,6 +19,24 @@ nonisolated public struct SWFFontConfig: Equatable, Sendable {
     public let maps: [FontMap]
     /// Non-empty lines that matched no recognized directive.
     public let unrecognizedLines: [String]
+    /// The characters a typed name may use: everything after `validNameChars` on its
+    /// line, read as written. nil when the file has no such line.
+    public var validNameCharacters: String?
+
+    init(fontlibs: [String], maps: [FontMap], unrecognizedLines: [String]) {
+        self.fontlibs = fontlibs
+        self.maps = maps
+        self.unrecognizedLines = unrecognizedLines
+    }
+
+    /// Whether the game takes `name`: not empty, and every character in `allowed`,
+    /// matched exactly. With no list every name passes.
+    public static func accepts(name: String, allowed: String?) -> Bool {
+        guard !name.isEmpty else { return false }
+        guard let allowed else { return true }
+        let characters = Set(allowed.unicodeScalars)
+        return name.unicodeScalars.allSatisfy(characters.contains)
+    }
 
     /// Parses fontconfig.txt text. Never throws: unrecognized content is
     /// collected rather than failing, so a mod's extra directives cannot break
@@ -27,7 +45,12 @@ nonisolated public struct SWFFontConfig: Equatable, Sendable {
         var fontlibs: [String] = []
         var maps: [FontMap] = []
         var unrecognized: [String] = []
+        var nameCharacters: String?
         for rawLine in text.split(whereSeparator: \.isNewline) {
+            if let characters = nameCharactersDirective(rawLine) {
+                nameCharacters = characters
+                continue
+            }
             let line = stripComment(String(rawLine)).trimmingCharacters(in: .whitespaces)
             if line.isEmpty {
                 continue
@@ -41,7 +64,20 @@ nonisolated public struct SWFFontConfig: Equatable, Sendable {
                 unrecognized.append(line)
             }
         }
-        return SWFFontConfig(fontlibs: fontlibs, maps: maps, unrecognizedLines: unrecognized)
+        var config = SWFFontConfig(fontlibs: fontlibs, maps: maps, unrecognizedLines: unrecognized)
+        config.validNameCharacters = nameCharacters
+        return config
+    }
+
+    /// `validNameChars <characters>`: the rest of the line after the keyword, which
+    /// matches without regard to case.
+    private static func nameCharactersDirective(_ line: Substring) -> String? {
+        let keyword = "validnamechars"
+        let start = line.drop { $0 == " " || $0 == "\t" }
+        guard start.prefix(keyword.count).lowercased() == keyword else { return nil }
+        let rest = start.dropFirst(keyword.count)
+        guard rest.first.map({ $0 == " " || $0 == "\t" }) ?? true else { return nil }
+        return String(rest)
     }
 
     /// Drops a `#` comment (outside quotes) to the end of the line.

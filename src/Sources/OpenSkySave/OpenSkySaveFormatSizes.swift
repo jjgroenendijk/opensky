@@ -291,7 +291,7 @@ nonisolated extension OpenSkySaveFormat {
     static let temperedLevelSize = 4
     /// Smallest `ICPY` copy: the level, the soul, and the flags byte.
     static let minimumItemCopySize = 6
-    /// Smallest `CPOT`, `INGK`, or `WPSN` entry: the smallest key and cell (8) and a
+    /// Smallest `CPOT` or `INGK` entry: the smallest key and cell (8) and a
     /// zero row count (4).
     static let minimumAlchemyEntrySize = 12
     /// Smallest `CPOT` potion: FormID, an empty name (2), the poison byte, the value,
@@ -306,8 +306,6 @@ nonisolated extension OpenSkySaveFormat {
     static let createdPotionEffectSize = 16
     /// One `INGK` row: the ingredient and its effect bits.
     static let ingredientKnowledgeRowSize = 5
-    /// One `WPSN` row: weapon, poison, and doses.
-    static let weaponPoisonRowSize = 12
     /// Smallest `FAVS` entry: the smallest key and cell (8), a zero item count (4), and
     /// a zero hotkey count (4).
     static let minimumFavouritesEntrySize = 16

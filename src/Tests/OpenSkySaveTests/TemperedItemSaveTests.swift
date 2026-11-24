@@ -13,6 +13,15 @@ struct TemperedItemSaveTests {
     private let owner = ReferenceKey.player
     private let sword = FormID(0x0001_2EB7)
 
+    /// A renamed, poisoned copy the menu chose: the name, poison, and mark ride in `ICPY`.
+    private static var namedPoisonedCopy: ItemCopy {
+        var copy = ItemCopy()
+        copy.name = "Biter"
+        copy.poison = WeaponPoison(poison: FormID(0x0003_EB2E), doses: 2)
+        copy.isChosen = true
+        return copy
+    }
+
     private func encode(_ state: ItemCopyState) -> Data {
         let snapshot = WorldStateSnapshot(
             entries: [
@@ -44,7 +53,8 @@ struct TemperedItemSaveTests {
         let state = ItemCopyState(copies: [
             sword.rawValue: [
                 ItemCopy(level: 2, charge: 120, enchantment: FormID(0xFF00_0001)),
-                ItemCopy(level: 1)
+                ItemCopy(level: 1),
+                Self.namedPoisonedCopy
             ],
             gem.rawValue: [ItemCopy(soul: 1)]
         ])

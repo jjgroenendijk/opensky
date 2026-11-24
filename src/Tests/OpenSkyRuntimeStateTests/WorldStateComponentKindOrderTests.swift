@@ -22,7 +22,7 @@ struct WorldStateComponentKindOrderTests {
         .harvest, .lock, .scene, .storyManager, .dialogueBranch, .helpMessages,
         .playerIdentity, .mapMarker, .localMapFog, .actorPresentation, .itemCopies,
         .relocation, .vehicleLink, .miscStats, .questTracking, .scriptedState, .cellReset,
-        .createdPotions, .ingredientKnowledge, .weaponPoison, .favourites, .vendorRestock,
+        .createdPotions, .ingredientKnowledge, .favourites, .vendorRestock,
         .enchanting, .playerSetMapMarker, .doorLink
     ]
 

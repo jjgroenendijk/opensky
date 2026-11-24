@@ -42,6 +42,9 @@ public protocol InventoryAccess {
     /// Each held copy of `item`, best first. See docs/engine/item-copies.md.
     func copies(of item: FormID, in holder: InventoryHolder) -> [ItemCopy]
 
+    /// One copy's gold value: its record, a made enchantment on it, and its temper.
+    func value(of item: FormID, copy: ItemCopy) -> Int32
+
     /// Changes the first held copy of `item` that `matches`. False when none matches.
     @discardableResult
     func editCopy(

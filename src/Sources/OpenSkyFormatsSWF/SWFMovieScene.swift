@@ -12,6 +12,8 @@ nonisolated public struct SWFMovieScene: Sendable {
     public var externalFonts: [String: SWFFontDefinition] = [:]
     /// Font names/classes that could not be resolved anywhere (tally).
     public var unresolvedFontNames: [String] = []
+    /// The characters a typed name may use, from the font configuration.
+    public var validNameCharacters: String?
 
     public init(
         movie: SWFMovie,
@@ -96,6 +98,7 @@ nonisolated public struct SWFMovieScene: Sendable {
     /// directly as a registered font name. Unresolved names are recorded, not
     /// fatal — the affected texts fall out with a renderer tally.
     public mutating func resolveExternalFonts(config: SWFFontConfig, library: SWFFontLibrary) {
+        validNameCharacters = config.validNameCharacters
         for name in referencedExternalFontNames {
             let resolved = library.resolve(alias: name, config: config)
                 ?? library.font(named: name)
