@@ -19,6 +19,7 @@ nonisolated public final class FakeHUDPort: HUDPort {
     public var isUnderTitle = false
     public var setUnderTitleCalls: [Bool] = []
     public var setHelpMessageCalls: [String?] = []
+    public var shownHelpMessage: String?
     public var showNotificationCalls: [String] = []
     public var shownBigNotices: [HUDBigNotice] = []
     public var shownModes: [HUDMode] = []

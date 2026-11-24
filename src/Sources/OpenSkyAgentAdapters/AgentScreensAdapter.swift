@@ -159,6 +159,7 @@ extension AgentScreensAdapter {
         [
             "loaded": .bool(game.hud.isLoaded), "cartMode": .bool(game.hud.isCartMode),
             "underTitle": .bool(game.hud.isUnderTitle),
+            "helpMessage": .init(game.hud.shownHelpMessage),
             "modes": .array(game.hud.shownModes.map { .string($0.rawValue) }),
             "activatePrompt": .init(game.hud.effectivePrompt),
             "activateLocked": .bool(game.hud.isActivateLocked),

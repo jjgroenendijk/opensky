@@ -221,7 +221,11 @@ public final class HUDCoordinator {
 
     public private(set) var shownSubtitle: String?
 
+    /// The help message text last sent to the movie; nil once it is hidden.
+    public private(set) var shownHelpMessage: String?
+
     public func setHelpMessage(_ text: String?) {
+        shownHelpMessage = text
         callMovie { HUDMovieBridge.setHelpMessage(text, runtime: $0) }
     }
 

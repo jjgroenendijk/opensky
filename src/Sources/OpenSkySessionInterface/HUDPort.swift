@@ -16,6 +16,7 @@ public protocol HUDPort: AnyObject, MenuLayerOwner {
     var isUnderTitle: Bool { get }
     func setUnderTitle(_ underTitle: Bool)
     func setHelpMessage(_ text: String?)
+    var shownHelpMessage: String? { get }
     func showNotification(_ text: String)
     var shownBigNotices: [HUDBigNotice] { get }
     var shownModes: [HUDMode] { get }
