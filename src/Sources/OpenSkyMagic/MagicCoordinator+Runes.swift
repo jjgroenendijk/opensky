@@ -74,12 +74,13 @@ extension MagicCoordinator.RunePlacement {
                 (casterMay ? coordinator.world.spellHitCandidates()
                     .filter { $0.key == caster } : [])
             triggers[caster] = near
-            if let trigger = RuneCore.trigger(
-                of: rune,
-                among: near,
-                settings: coordinator.rules.runes
-            ) {
-                fired.append((rune: rune, struck: trigger.key))
+            for target in RuneCore.nearby(rune, among: near, settings: coordinator.rules.runes)
+                where !rune.fuse.isBurning
+            {
+                rune.fuse.notice(target.key, playerRoll: playerSetsOffMine)
+            }
+            if rune.fuse.burn(step), let struck = rune.fuse.trigger {
+                fired.append((rune: rune, struck: struck))
             } else {
                 waiting.append(rune)
             }
@@ -90,13 +91,36 @@ extension MagicCoordinator.RunePlacement {
         }
     }
 
-    /// The readout line: placed runes against the player's limit, and how many went off.
+    /// Every rune waiting on the ground, for the renderer.
+    var markers: [RuneMarker] {
+        coordinator.runeState.runes.map {
+            RuneMarker(
+                position: $0.position,
+                projectile: $0.payload.projectile,
+                isLit: $0.fuse.isLit
+            )
+        }
+    }
+
+    /// The readout line: placed runes against the player's limit, how many burn a fuse,
+    /// and how many went off.
     var runeText: String {
         let state = coordinator.runeState
         let mine = state.runes.count { $0.payload.caster == .player }
+        let burning = state.runes.count(where: \.fuse.isBurning)
         let limit = coordinator.rules.runes.maximumPlayerRunes
         return "Runes: \(mine) of \(limit) placed by the player, "
-            + "\(state.runes.count - mine) by others, \(state.detonatedRunes) went off"
+            + "\(state.runes.count - mine) by others, \(burning) burning, "
+            + "\(state.detonatedRunes) went off"
+    }
+
+    /// The player's roll against Calculate Mine Explode Chance, from 100.
+    private func playerSetsOffMine() -> Bool {
+        let chance = coordinator.world.perkModified(
+            100, at: .calculateMineExplodeChance, on: .player,
+            subjects: PerkEvaluationSubjects(owner: .player), seams: ConditionContext()
+        )
+        return MineFuse.playerPasses(chance: chance, roll: coordinator.mineRoll())
     }
 
     /// The struck actor takes every entry; others inside an entry's area take theirs.

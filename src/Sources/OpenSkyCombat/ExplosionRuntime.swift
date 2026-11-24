@@ -15,6 +15,8 @@ public final class ExplosionRuntime {
     public static let reportLimit = 8
     /// `EXPL` `DATA` flag Ignore Image Space Swap.
     static let ignoreSwapFlag: UInt32 = 0x40
+    /// `EXPL` `DATA` flag Ignore LOS.
+    static let ignoreLineOfSightFlag: UInt32 = 0x10
 
     public weak let world: (any ExplosionWorld)?
     /// The load-order effect records. Empty without game data.
@@ -24,12 +26,12 @@ public final class ExplosionRuntime {
     public private(set) var reports: [ExplosionReport] = []
     public private(set) var debris: [DebrisPiece] = []
     public private(set) var detonationTotal = 0
-    /// Placed objects that were neither a hazard nor debris.
-    private(set) var skippedPlacements = 0
     var seed: UInt64 = 0x0E5D_1A57
     /// The push settings and the readout log. Nil pushes nothing.
     public var impulses: ImpulseRuntime?
     public var imageSpaceSwap = ExplosionImageSpaceSwap()
+    /// Placed objects the session could not put into the world.
+    private(set) var skippedPlacements = 0
 
     public init(
         records: EffectRecordStore = .empty,
@@ -51,28 +53,18 @@ public final class ExplosionRuntime {
         return Self.spec(resolved, key: key, records: records)
     }
 
-    /// Detonates `spec` at `position` and returns what it did. `source` is the
-    /// reference a projectile struck, which takes `fExplosionSourceRefMult` more push.
+    /// Detonates `spec` at `position` and returns what it did.
     @discardableResult
     public func detonate(
         _ spec: ExplosionSpec,
         at position: SIMD3<Float>,
         cause: ExplosionCause,
-        source: FormID? = nil
+        origin: ExplosionOrigin = ExplosionOrigin()
     ) -> ExplosionReport {
         detonationTotal += 1
         let radius = spec.radius
-        var damaged: [ReferenceKey: Float] = [:]
-        if spec.damage > 0, let world {
-            for target in world.explosionTargets() {
-                let amount = ExplosionFalloff.damage(
-                    spec.damage, radius: radius, distance: Self.distance(position, target)
-                )
-                if amount > 0, world.applyExplosionDamage(amount, to: target.key) {
-                    damaged[target.key] = amount
-                }
-            }
-        }
+        let (damaged, shielded) = damage(spec, at: position, origin: origin)
+        let broken = damageObjects(spec, at: position, origin: origin)
         for sound in spec.sounds {
             world?.playExplosionSound(sound, at: position)
         }
@@ -85,16 +77,20 @@ public final class ExplosionRuntime {
         if let dataSet = spec.impactDataSet {
             world?.playExplosionImpact(dataSet, at: position)
         }
-        push(spec, radius: radius, at: position, source: source)
+        push(spec, radius: radius, at: position, source: origin.struck)
         let strength = startImageSpace(spec, at: position)
         let swapped = startImageSpaceSwap(spec, at: position)
         let (hazard, thrown) = place(spec, at: position)
+        let objectPlaced = placeObject(spec, at: position, origin: origin)
         var report = ExplosionReport(
             name: spec.name, cause: cause, position: position, damaged: damaged,
             soundsPlayed: world == nil ? 0 : spec.sounds.count, imageSpaceStrength: strength,
             hazardPlaced: hazard, debrisThrown: thrown
         )
         report.swapApplied = swapped
+        report.shielded = shielded
+        report.objectsDamaged = broken
+        report.objectPlaced = objectPlaced
         reports.append(report)
         if reports.count > Self.reportLimit {
             reports.removeFirst(reports.count - Self.reportLimit)
@@ -102,12 +98,17 @@ public final class ExplosionRuntime {
         return report
     }
 
-    /// Throws `count` pieces of one DEBR record at `position`, for a forced test.
+    /// Throws pieces of one DEBR record at `position`: the blast's six, or `count`.
     @discardableResult
-    func throwDebris(_ key: ReferenceKey, at position: SIMD3<Float>, force: Float) -> Int {
+    public func throwDebris(
+        _ key: ReferenceKey, at position: SIMD3<Float>, force: Float, count: Int? = nil
+    ) -> Int {
         guard let record = records.debris.record(key)?.record else { return 0 }
         seed &+= 1
-        let pieces = DebrisSelection.launch(record.models, from: position, force: force, seed: seed)
+        let pieces = DebrisSelection.launch(
+            record.models, from: position, force: force, seed: seed,
+            count: count ?? DebrisSelection.pieceCount
+        )
         debris += pieces
         return pieces.count
     }
@@ -116,6 +117,73 @@ public final class ExplosionRuntime {
     public func advance(_ seconds: Float) {
         guard !debris.isEmpty else { return }
         debris = DebrisSelection.step(debris, seconds: seconds)
+    }
+
+    /// Health off each actor in reach, scaled by the shooter's skill. The shooter takes
+    /// none, and an actor behind a wall none unless the blast ignores line of sight.
+    private func damage(
+        _ spec: ExplosionSpec, at position: SIMD3<Float>, origin: ExplosionOrigin
+    ) -> (damaged: [ReferenceKey: Float], shielded: [ReferenceKey]) {
+        guard spec.damage > 0, let world else { return ([:], []) }
+        let scale = ExplosionSkill.scale(skill: origin.skill, isPlayer: origin.shooter == .player)
+        let start = ExplosionSight.start(center: position, direction: origin.direction)
+        var damaged: [ReferenceKey: Float] = [:]
+        var shielded: [ReferenceKey] = []
+        for target in world.explosionTargets() where target.key != origin.shooter {
+            let amount = ExplosionFalloff.damage(
+                spec.damage, radius: spec.radius, distance: Self.distance(position, target)
+            ) * scale
+            guard amount > 0 else { continue }
+            if !spec.ignoresLineOfSight {
+                let centre = target.feet + SIMD3(0, 0, target.capsule.height / 2)
+                let end = target.key == .player ? world.explosionViewer() ?? centre : centre
+                let hit = world.explosionObstruction(from: start, to: end)
+                if ExplosionSight.blocks(hitDistance: hit, direction: origin.direction) {
+                    shielded.append(target.key)
+                    continue
+                }
+            }
+            if world.applyExplosionDamage(amount, to: target.key) {
+                damaged[target.key] = amount
+            }
+        }
+        return (damaged, shielded)
+    }
+
+    /// Destruction damage on each destructible object in the radius: the blast's damage
+    /// times its falloff and the shooter's skill.
+    private func damageObjects(
+        _ spec: ExplosionSpec, at position: SIMD3<Float>, origin: ExplosionOrigin
+    ) -> [ReferenceKey: Float] {
+        guard spec.damage > 0, spec.radius > 0, let world else { return [:] }
+        let scale = ExplosionSkill.scale(skill: origin.skill, isPlayer: origin.shooter == .player)
+        var damaged: [ReferenceKey: Float] = [:]
+        for object in world.explosionObjects(within: spec.radius, of: position) {
+            let amount = ExplosionFalloff.damage(
+                spec.damage, radius: spec.radius, distance: simd_distance(object.feet, position)
+            ) * scale
+            if amount > 0, world.applyDestructionDamage(amount, to: object.key) {
+                damaged[object.key] = amount
+            }
+        }
+        return damaged
+    }
+
+    /// A placed object that is neither a hazard nor debris becomes a new reference.
+    private func placeObject(
+        _ spec: ExplosionSpec, at position: SIMD3<Float>, origin: ExplosionOrigin
+    ) -> Bool {
+        guard case let .other(base, _) = spec.placement else { return false }
+        let placement = ExplosionObjectPlacement(
+            base: base, position: position, location: origin.location,
+            rotation: ExplosionObjectPlacement.rotation(facing: origin.direction),
+            ownerSource: origin.owner ?? origin.shooter
+        )
+        guard world?.placeExplosionObject(placement) == true else {
+            skippedPlacements += 1
+            return false
+        }
+        return true
     }
 
     private func startImageSpace(_ spec: ExplosionSpec, at position: SIMD3<Float>) -> Float? {
@@ -147,14 +215,13 @@ public final class ExplosionRuntime {
     private func place(_ spec: ExplosionSpec, at position: SIMD3<Float>) -> (Bool, Int) {
         switch spec.placement {
         case let .hazard(key):
-            return (world?.placeExplosionHazard(key, at: position) ?? false, 0)
+            (world?.placeExplosionHazard(key, at: position) ?? false, 0)
         case let .debris(key):
-            return (false, throwDebris(key, at: position, force: spec.force))
+            (false, throwDebris(key, at: position, force: spec.force))
         case .other:
-            skippedPlacements += 1
-            return (false, 0)
+            (false, 0)
         case nil:
-            return (false, 0)
+            (false, 0)
         }
     }
 
@@ -201,6 +268,8 @@ public final class ExplosionRuntime {
         spec.knockdown = ExplosionKnockdown(flags: data?.flags)
         spec.ignoresImageSpaceSwap = (data?.flags ?? 0) & Self.ignoreSwapFlag != 0
         spec.soundLevel = data?.soundLevel
+        spec.ignoresLineOfSight = (data?.flags ?? 0) & Self.ignoreLineOfSightFlag != 0
+        spec.verticalOffset = Self.clean(data?.verticalOffsetMultiplier)
         return spec
     }
 

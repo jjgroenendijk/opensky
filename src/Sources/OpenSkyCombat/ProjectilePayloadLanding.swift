@@ -37,7 +37,8 @@ struct ProjectilePayloadLanding {
         let spellHit = applySpell(projectile, impact: impact)
         playImpact(of: impact, projectile: projectile)
         pushStruckBody(projectile, impact: impact)
-        detonateExplosion(of: projectile, at: impact.position, source: impact.reference)
+        damageStruckObject(projectile, impact: impact)
+        detonateExplosion(of: projectile, impact: impact)
         return Report(appliedDamage: arrow.damage, spellHit: spellHit, keptArrow: arrow.kept)
     }
 
@@ -172,20 +173,31 @@ struct ProjectilePayloadLanding {
 
     /// Sets off the projectile's explosion at `position`. A spell's projectile is a spell
     /// cause; anything else is a projectile cause.
-    private func detonateExplosion(
-        of projectile: LiveProjectile,
-        at position: SIMD3<Float>,
-        source: FormID?
-    ) {
+    private func detonateExplosion(of projectile: LiveProjectile, impact: ProjectileImpact) {
+        let position = impact.position
         guard
             let explosions,
             let spec = explosions.spec(itemLink: projectile.profile.explosion)
         else { return }
+        let skill = projectile.payload.arrow == nil
+            ? nil : world?.explosiveShotSkill(of: projectile.shooter)
         _ = explosions.detonate(
             spec, at: position, cause: projectile.payload.spell == nil ? .projectile : .spell,
-            source: source
+            origin: ExplosionOrigin(
+                shooter: projectile.shooter, skill: skill, direction: impact.normal,
+                location: projectile.location, struck: impact.reference
+            )
         )
         world?.noteProjectileSound(level: spec.soundLevel, at: position, by: projectile.shooter)
+    }
+
+    /// An arrow that strikes a destructible object deals it the same damage as an actor.
+    private func damageStruckObject(_ projectile: LiveProjectile, impact: ProjectileImpact) {
+        guard
+            !impact.isActor, !projectile.hasBounced, let arrow = projectile.payload.arrow,
+            let reference = impact.reference
+        else { return }
+        world?.applyProjectileDestruction(arrow.damage.applied, to: reference)
     }
 
     /// Pushes the loose body a projectile struck by its `PROJ` impact force, along its flight.

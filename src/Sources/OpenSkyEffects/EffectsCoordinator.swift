@@ -25,11 +25,24 @@ public protocol EffectsWorld: AnyObject {
     /// The meshes a membrane on `actor` covers; nil when none are drawn.
     func membraneTarget(of actor: ReferenceKey) -> MembraneTarget?
     func detonateEffectExplosion(_ explosion: ReferenceKey, at position: SIMD3<Float>)
+    /// Sets `explosion` off on `actor`, raised by its vertical offset, for `caster`.
+    func detonateEffectExplosion(
+        _ explosion: ReferenceKey, onActor actor: ReferenceKey, from caster: ReferenceKey
+    )
 }
 
 extension EffectsWorld {
     public func effectBones(of _: ReferenceKey) -> [String: float4x4] {
         [:]
+    }
+
+    /// Without actor heights the blast goes off at the actor's feet.
+    public func detonateEffectExplosion(
+        _ explosion: ReferenceKey, onActor actor: ReferenceKey, from _: ReferenceKey
+    ) {
+        guard let transform = effectTransform(of: actor) else { return }
+        let feet = transform.columns.3
+        detonateEffectExplosion(explosion, at: SIMD3(feet.x, feet.y, feet.z))
     }
 }
 
@@ -275,11 +288,9 @@ public final class EffectsCoordinator {
         guard
             link.area > 0,
             let explosion = records.resolve(link.explosion, fromPlugin: link.plugin),
-            let struck = hit.targets.first(where: \.isDirect) ?? hit.targets.first,
-            let transform = world?.effectTransform(of: struck.key)
+            let struck = hit.targets.first(where: \.isDirect) ?? hit.targets.first
         else { return }
-        let center = transform.columns.3
-        world?.detonateEffectExplosion(explosion, at: SIMD3(center.x, center.y, center.z))
+        world?.detonateEffectExplosion(explosion, onActor: struck.key, from: hit.payload.caster)
     }
 
     static func locate(_ anchor: EffectAnchor, world: (any EffectsWorld)?) -> float4x4? {

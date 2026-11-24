@@ -81,6 +81,32 @@ final class FakeProjectileWorld: ProjectileWorld {
     private var spawnedKeys: [ReferenceKey] = []
 
     var autoAimPick: ProjectileAimPick?
+    var outdoors = false
+    var playerRollPasses = true
+    private(set) var playerRolls = 0
+    /// What the kill cam's release check returns: the point the shot turns toward.
+    var killCamAim: SIMD3<Float>?
+    private(set) var objectDamage: [FormID: Float] = [:]
+
+    var projectileIsOutdoors: Bool {
+        outdoors
+    }
+
+    func playerSetsOffMine() -> Bool {
+        playerRolls += 1
+        return playerRollPasses
+    }
+
+    func projectileKillCamAim(
+        for _: LiveProjectile, aimTarget _: ReferenceKey?
+    ) -> SIMD3<Float>? {
+        killCamAim
+    }
+
+    func applyProjectileDestruction(_ amount: Float, to object: FormID) -> Bool {
+        objectDamage[object, default: 0] += amount
+        return true
+    }
 
     func projectileAutoAim(from _: ProjectileShooter) -> ProjectileAimPick? {
         autoAimPick

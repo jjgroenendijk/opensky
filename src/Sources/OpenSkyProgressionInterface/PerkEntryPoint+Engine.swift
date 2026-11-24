@@ -71,6 +71,7 @@ nonisolated extension PerkEntryPoint {
     public static let modPlayerMagicSlowdown = PerkEntryPoint(rawValue: 70)
     public static let modBowZoom = PerkEntryPoint(rawValue: 20)
     public static let modSpellRangeTargetLoc = PerkEntryPoint(rawValue: 88)
+    public static let calculateMineExplodeChance = PerkEntryPoint(rawValue: 3)
     public static let modCommandedActorLimit = PerkEntryPoint(rawValue: 68)
     public static let applyReanimateSpell = PerkEntryPoint(rawValue: 53)
     public static let activate = PerkEntryPoint(rawValue: 14)

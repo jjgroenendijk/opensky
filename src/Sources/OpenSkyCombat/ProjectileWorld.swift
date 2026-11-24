@@ -168,6 +168,22 @@ public protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHit
     func arrowRecoveryMultiplier(of shooter: ReferenceKey) -> Float
     /// Whether a shot from `shooter` would land on `target` unseen, read before the damage.
     func projectileIsSneakAttack(by shooter: ReferenceKey, on target: ReferenceKey) -> Bool
+    /// The living actors hostile to `shooter` that can set off its mine.
+    func mineTriggers(for shooter: ReferenceKey) -> [MeleeTarget]
+    /// The player's roll against a mine: true when the mine goes off for the player.
+    func playerSetsOffMine() -> Bool
+    /// True in an exterior cell, where a mine reaches farther.
+    var projectileIsOutdoors: Bool { get }
+    /// The shooter's skill for the weapon that fired an explosive shot, or nil.
+    func explosiveShotSkill(of shooter: ReferenceKey) -> Float?
+    /// Deals destruction damage to the placed object `reference`. False when it is not
+    /// destructible.
+    @discardableResult
+    func applyProjectileDestruction(_ amount: Float, to reference: FormID) -> Bool
+    /// Where the player's shot is aimed when a kill cam follows it, or nil when none
+    /// plays. `aimTarget` is the aim help's actor.
+    func projectileKillCamAim(for projectile: LiveProjectile, aimTarget: ReferenceKey?)
+        -> SIMD3<Float>?
 }
 
 extension ProjectileWorld {
@@ -191,6 +207,20 @@ extension ProjectileWorld {
 
     public func projectileIsSneakAttack(by _: ReferenceKey, on _: ReferenceKey) -> Bool {
         false
+    }
+
+    public func mineTriggers(for shooter: ReferenceKey) -> [MeleeTarget] {
+        projectileTargets().filter { $0.key != shooter }
+    }
+
+    public func explosiveShotSkill(of _: ReferenceKey) -> Float? {
+        nil
+    }
+
+    public func projectileKillCamAim(for _: LiveProjectile, aimTarget _: ReferenceKey?)
+        -> SIMD3<Float>?
+    {
+        nil
     }
 }
 

@@ -3,7 +3,7 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyCells
 import OpenSkyCombat
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 import OpenSkyEffects
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
@@ -29,9 +29,13 @@ public protocol EffectsBlastsHost: AnyObject, SendableMetatype {
     var audio: any AudioPort { get }
     var combat: any CombatPort { get }
     var combatWorld: any CombatWorldPort { get }
+    var crime: any CrimePort { get }
     var gameSession: (any GameSessionPort)? { get }
     var hazardWorld: any HazardWorldPort { get }
     var hazards: any HazardPort { get }
+    var scripts: any ScriptPort { get }
+    var streamer: any CellStreamerPort { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 /// Part of `EffectsWorldAdapter`, over its own narrow host.
@@ -76,9 +80,65 @@ extension EffectsBlastsAdapter {
         return true
     }
 
+    /// A thin sphere swept along the line through the static world.
+    public func explosionObstruction(from start: SIMD3<Float>, to end: SIMD3<Float>) -> Float? {
+        let offset = end - start
+        let length = simd_length(offset)
+        guard length > Self.sightProbeRadius else { return nil }
+        return game.combat.sweepProjectile(.sphere(
+            center: start, radius: Self.sightProbeRadius, direction: offset / length,
+            maximumDistance: length
+        ))?.distance
+    }
+
+    /// The resident placed objects with `DEST` data inside the radius. Actors are left out.
+    public func explosionObjects(within radius: Float, of center: SIMD3<Float>) -> [MeleeTarget] {
+        guard radius > 0, let bridge = game.scripts.bridge else { return [] }
+        let streamer = game.streamer
+        let entries = streamer.interiorScene.map { $0.references.sortedEntries() }
+            ?? streamer.composition.cells.values.flatMap { $0.references.sortedEntries() }
+        return entries.compactMap { entry in
+            guard let placed = entry.placedReference else { return nil }
+            let position = placed.placement.position
+            guard
+                simd_distance(position, center) <= radius,
+                bridge.destructionHealthLeft(of: entry.key) != nil
+            else { return nil }
+            return MeleeTarget(key: entry.key, feet: position)
+        }
+    }
+
+    public func applyDestructionDamage(_ amount: Float, to object: ReferenceKey) -> Bool {
+        game.scripts.bridge?.damageDestructible(object, amount: amount, forced: false) ?? false
+    }
+
+    /// A new reference at the blast, in its cell or the cell around the point, owned
+    /// as its source is.
+    public func placeExplosionObject(_ placement: ExplosionObjectPlacement) -> Bool {
+        guard let formID = game.effects.records.loadOrderFormID(placement.base) else {
+            return false
+        }
+        let position = placement.position
+        let cell = placement.location ?? game.streamer.interiorScene?.location
+            ?? .exterior(CellCoordinate(containing: position))
+        let spawn = ReferenceSpawnState(
+            base: formID, location: cell,
+            placement: PlacedReference.Placement(position: position, rotation: placement.rotation)
+        )
+        let key = game.worldState.allocateGeneratedKey()
+        game.worldState.set(spawn, for: key, in: cell)
+        if let source = placement.ownerSource, let owner = game.crime.crimeOwner(of: source) {
+            game.scripts.bridge?.setScriptedOwner(owner, of: key)
+        }
+        return true
+    }
+
     public func showExplosionModel(_ path: String, at position: SIMD3<Float>) {
         game.effects.showModel(path, at: .point(position), cause: .explosion)
     }
+
+    /// The radius of the sphere that tests a blast's line of sight.
+    private static let sightProbeRadius: Float = 1
 
     /// Above every visual effect instance id, so a projectile keeps its own particles.
     static let projectileInstanceBase = 1 << 30

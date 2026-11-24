@@ -8,6 +8,8 @@ public import OpenSkySessionInterface
 nonisolated public final class FakeExplosionRuntimePort: ExplosionRuntimePort {
     public var detonateCalls: [DetonateCall] = []
     public var detonateResult: ExplosionReport?
+    public var throwDebrisCalls: [ThrowDebrisCall] = []
+    public var throwDebrisResult = 0
     public var specItemLinkCalls: [FormID?] = []
     public var specItemLinkResult: ExplosionSpec?
     public var specForCalls: [ReferenceKey] = []
@@ -24,14 +26,30 @@ extension FakeExplosionRuntimePort {
         public let spec: ExplosionSpec
         public let position: SIMD3<Float>
         public let cause: ExplosionCause
-        public let source: FormID?
+        public let origin: ExplosionOrigin
 
         public var description: String {
             [
                 "spec: " + String(describing: spec),
                 "position: " + String(describing: position),
                 "cause: " + String(describing: cause),
-                "source: " + String(describing: source)
+                "origin: " + String(describing: origin)
+            ].joined(separator: ", ")
+        }
+    }
+
+    nonisolated public struct ThrowDebrisCall: CustomStringConvertible {
+        public let key: ReferenceKey
+        public let position: SIMD3<Float>
+        public let force: Float
+        public let count: Int?
+
+        public var description: String {
+            [
+                "key: " + String(describing: key),
+                "position: " + String(describing: position),
+                "force: " + String(describing: force),
+                "count: " + String(describing: count)
             ].joined(separator: ", ")
         }
     }
@@ -43,18 +61,31 @@ nonisolated extension FakeExplosionRuntimePort {
         _ spec: ExplosionSpec,
         at position: SIMD3<Float>,
         cause: ExplosionCause,
-        source: FormID?
+        origin: ExplosionOrigin
     ) -> ExplosionReport {
         detonateCalls.append(DetonateCall(
             spec: spec,
             position: position,
             cause: cause,
-            source: source
+            origin: origin
         ))
         guard let detonateResult else {
             preconditionFailure("FakeExplosionRuntimePort.detonate has no result")
         }
         return detonateResult
+    }
+
+    @discardableResult
+    public func throwDebris(
+        _ key: ReferenceKey, at position: SIMD3<Float>, force: Float, count: Int?
+    ) -> Int {
+        throwDebrisCalls.append(ThrowDebrisCall(
+            key: key,
+            position: position,
+            force: force,
+            count: count
+        ))
+        return throwDebrisResult
     }
 
     public func spec(itemLink id: FormID?) -> ExplosionSpec? {

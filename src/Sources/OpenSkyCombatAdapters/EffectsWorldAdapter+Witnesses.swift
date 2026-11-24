@@ -208,7 +208,7 @@ extension EffectsWorldAdapter {
     }
 
     public func projectileAndFlashLights() -> [RenderPointLight] {
-        blasts.projectileAndFlashLights()
+        blasts.projectileAndFlashLights() + frames.frameLooks.runeLights()
     }
 
     public func renderLight(
@@ -231,6 +231,33 @@ extension EffectsWorldAdapter {
         blasts.playExplosionImpact(dataSet, at: position)
     }
 
+    public func explosionObstruction(from start: SIMD3<Float>, to end: SIMD3<Float>) -> Float? {
+        blasts.explosionObstruction(from: start, to: end)
+    }
+
+    public func explosionObjects(within radius: Float, of center: SIMD3<Float>) -> [MeleeTarget] {
+        blasts.explosionObjects(within: radius, of: center)
+    }
+
+    public func applyDestructionDamage(_ amount: Float, to object: ReferenceKey) -> Bool {
+        blasts.applyDestructionDamage(amount, to: object)
+    }
+
+    public func placeExplosionObject(_ placement: ExplosionObjectPlacement) -> Bool {
+        blasts.placeExplosionObject(placement)
+    }
+
+    public func impulseDestructibles(
+        within radius: Float,
+        of center: SIMD3<Float>
+    ) -> [MeleeTarget] {
+        blasts.explosionObjects(within: radius, of: center)
+    }
+
+    public func applyPhysicsDestruction(_ amount: Float, to object: ReferenceKey) -> Bool {
+        blasts.applyDestructionDamage(amount, to: object)
+    }
+
     public var effectCamera: VisualEffectRuntime.CameraPose? {
         effectPlacement.effectCamera
     }
@@ -249,6 +276,12 @@ extension EffectsWorldAdapter {
 
     public func detonateEffectExplosion(_ explosion: ReferenceKey, at position: SIMD3<Float>) {
         effectPlacement.detonateEffectExplosion(explosion, at: position)
+    }
+
+    public func detonateEffectExplosion(
+        _ explosion: ReferenceKey, onActor actor: ReferenceKey, from caster: ReferenceKey
+    ) {
+        effectPlacement.detonateEffectExplosion(explosion, onActor: actor, from: caster)
     }
 
     public func resetHealthCues() {

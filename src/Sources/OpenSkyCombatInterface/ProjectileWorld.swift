@@ -1,6 +1,7 @@
 import OpenSkyBehavior
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyMagicInterface
 import OpenSkyPhysics
 import simd
 
@@ -70,6 +71,8 @@ nonisolated public struct LiveProjectile: Equatable, Sendable {
     public var hasBounced = false
     /// The actor a bounce left, which the bounced arrow cannot strike again.
     public var bouncedOff: ReferenceKey?
+    /// The fuse of an alternate-trigger shot that waits for an actor to come near.
+    public var fuse = MineFuse()
 
     /// Where the shot is now, which is what a readout draws.
     public var position: SIMD3<Float> {

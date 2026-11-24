@@ -28,6 +28,8 @@ import simd
 // MARK: - Melee
 
 extension CombatAcceptanceChain: MeleeCombatWorld {
+    func damageMeleeDestructible(_: ReferenceKey, amount _: Float) {}
+
     /// Both combat worlds declare it; one answer settles which default applies.
     func showDefaultBlood(on _: ReferenceKey, at _: SIMD3<Float>, melee _: Bool) {}
 
@@ -91,6 +93,18 @@ extension CombatAcceptanceChain: MeleeCombatWorld {
 // MARK: - Archery
 
 extension CombatAcceptanceChain: ProjectileWorld {
+    var projectileIsOutdoors: Bool {
+        false
+    }
+
+    func playerSetsOffMine() -> Bool {
+        true
+    }
+
+    func applyProjectileDestruction(_: Float, to _: FormID) -> Bool {
+        false
+    }
+
     var projectileShooter: ProjectileShooter {
         ProjectileShooter(
             key: Self.player,

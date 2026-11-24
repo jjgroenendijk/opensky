@@ -40,6 +40,18 @@ struct SpellDeliveryAcceptanceRealDataTests {
     /// effect runtime exactly as `GameViewController` does.
     @MainActor
     private final class AcceptanceWorld: CasterWorld, ProjectileWorld {
+        var projectileIsOutdoors: Bool {
+            false
+        }
+
+        func playerSetsOffMine() -> Bool {
+            true
+        }
+
+        func applyProjectileDestruction(_: Float, to _: FormID) -> Bool {
+            false
+        }
+
         var effects: ActiveEffectRuntime
         let items: ItemDefinitionStore
         /// Built here, because it resolves against this world from the start.

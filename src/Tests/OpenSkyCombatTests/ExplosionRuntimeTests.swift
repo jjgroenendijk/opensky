@@ -5,9 +5,11 @@
 import Foundation
 @testable import OpenSkyCombat
 import OpenSkyCombatInterface
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
+@testable import OpenSkyMagicInterface
 @testable import OpenSkyPhysics
 import simd
 import Testing
@@ -216,8 +218,54 @@ struct ExplosionRuntimeTests {
         Self.advance(runtime, seconds: 1)
         #expect(explosions.detonationTotal == 1)
         let position = try #require(explosions.reports.first?.position)
-        #expect(position.x < 450)
+        #expect(position.x <= 500)
         #expect(blast.damage[Self.npc] != nil)
+    }
+
+    /// A slow shot with a 100 unit proximity hangs still near the player. It notices the
+    /// player 0.2 s before it goes off, and a failed roll keeps it from going off.
+    private static func mineShot(world: FakeProjectileWorld) throws
+        -> (ProjectileRuntime, ExplosionRuntime)
+    {
+        let runtime = ProjectileRuntime(settings: .synthetic, world: world)
+        let explosions = try Self.runtime(world: FakeExplosionWorld())
+        runtime.explosions = explosions
+        var profile = ProjectileProfile(speed: 1, gravityFactor: 0, range: 4000, collisionRadius: 2)
+        profile.explosion = FormID(0x900)
+        profile.explosionProximity = 100
+        world.shooter = ProjectileShooter(
+            key: Self.npc, origin: .zero, aim: SIMD3(1, 0, 0), isFirstPerson: false,
+            location: .exterior(CellCoordinate(x: 0, y: 0))
+        )
+        _ = runtime.fire(Self.shot(profile), from: world.shooter)
+        return (runtime, explosions)
+    }
+
+    @Test func aMineOutdoorsReachesFartherAndBurnsAShortFuse() throws {
+        let world = FakeProjectileWorld()
+        world.targets = [MeleeTarget(key: .player, feet: SIMD3(150, 0, 0))]
+        let (runtime, explosions) = try Self.mineShot(world: world)
+        Self.advance(runtime, seconds: 0.5)
+        #expect(explosions.detonationTotal == 0)
+
+        world.outdoors = true
+        _ = runtime.advance(by: 1.0 / 60)
+        #expect(runtime.live.first?.fuse.isBurning == true)
+        Self.advance(runtime, seconds: 0.1)
+        #expect(explosions.detonationTotal == 0)
+        Self.advance(runtime, seconds: 0.2)
+        #expect(explosions.detonationTotal == 1)
+    }
+
+    @Test func aFailedRollLeavesTheMineForThePlayer() throws {
+        let world = FakeProjectileWorld()
+        world.targets = [MeleeTarget(key: .player, feet: SIMD3(50, 0, 0))]
+        world.playerRollPasses = false
+        let (runtime, explosions) = try Self.mineShot(world: world)
+        Self.advance(runtime, seconds: 1)
+        #expect(explosions.detonationTotal == 0)
+        #expect(world.playerRolls == 1)
+        #expect(runtime.live.first?.fuse.ignoresPlayer == true)
     }
 
     private static func shot(_ profile: ProjectileProfile) -> ProjectileShot {

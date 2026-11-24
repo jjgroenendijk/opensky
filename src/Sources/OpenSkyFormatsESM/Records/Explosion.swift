@@ -18,7 +18,7 @@ nonisolated public struct Explosion: Equatable, Sendable {
         public let damage: Float
         public let radius: Float
         public let imageSpaceRadius: Float
-        let verticalOffsetMultiplier: Float?
+        public let verticalOffsetMultiplier: Float?
         /// 0x02 world orientation, 0x04 always knock down, 0x08 knock down by
         /// formula, 0x10 ignore LOS, 0x20 push source only, 0x40 ignore image-space
         /// swap, 0x80 chain, 0x100 no controller vibration.
