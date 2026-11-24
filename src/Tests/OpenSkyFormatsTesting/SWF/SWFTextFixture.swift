@@ -225,7 +225,7 @@ public struct SWFEditTextBodyBuilder: Sendable {
         writer.appendByte(layout.align)
         writer.appendUInt16LE(layout.leftMargin)
         writer.appendUInt16LE(layout.rightMargin)
-        writer.appendUInt16LE(layout.indent)
+        writer.appendUInt16LE(UInt16(bitPattern: layout.indent))
         writer.appendUInt16LE(UInt16(bitPattern: layout.leading))
     }
 

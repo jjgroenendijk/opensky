@@ -85,7 +85,7 @@ The flags turn on these fields, in order:
 | `FontHeight` UI16 | `HasFont` or `HasFontClass` |
 | `TextColor` RGBA | `HasTextColor` |
 | `MaxLength` UI16 | `HasMaxLength` |
-| align, margins, indent, leading | `HasLayout` |
+| `Align` UI8, `LeftMargin` UI16, `RightMargin` UI16, `Indent` SI16, `Leading` SI16 | `HasLayout` |
 | `VariableName` STRING | always |
 | `InitialText` STRING | `HasText` |
 
@@ -93,6 +93,10 @@ STRINGs end with a zero byte. SWF 6 and later say strings are UTF-8, but older m
 code-page bytes, so OpenSky decodes them leniently
 ([string decoding](/decisions/string-decoding.md)). An HTML field keeps its markup; see
 [HTML text](#html-text).
+
+The spec gives `Indent` as UI16, but `craftingmenu.swf` stores 65534 there for the bottom bar's
+skill label. Read unsigned, the name lands about 3,000 pixels to the right; the game draws it in
+place, so OpenSky reads `Indent` as SI16 (-2 twips).
 
 Byte alignment: the spec says only RECT and MATRIX align. OpenSky aligns before the flag
 word and reads it as two whole bytes, so the UI16 fields after it are aligned. All vanilla

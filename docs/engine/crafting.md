@@ -252,7 +252,5 @@ potion".
   line under the card hidden. The enchanter's rows use the inventory card, not the enchanting
   type, and the slider card names the enchantments instead of their effects with the chosen
   magnitude. What the game shows there is not yet checked.
-- The bottom bar's skill name is set in the movie but not drawn, and at 0% progress the meter
-  draws full, though the movie puts it on its empty frame.
 - Perk entry points that change crafting other than Mod Tempering Health, such as Arcane
   Blacksmith.
