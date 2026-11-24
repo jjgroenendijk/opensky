@@ -25,6 +25,8 @@ final class CrimeOwnershipWorld: CrimeWorld {
     /// The owner a script set on a reference with `SetActorOwner` or `SetFactionOwner`.
     /// `.some(nil)` means a script cleared the owner; nil means no script set one.
     var scriptedOwner: ((ReferenceKey) -> ReferenceOwner??)?
+    /// Whether the owner opened the cell `key`, or a script made it public.
+    var scriptedCellOpened: ((ReferenceKey) -> Bool)?
 
     init(world: any CrimeSessionWorld, data: CrimeSessionData?) {
         self.world = world
@@ -52,13 +54,34 @@ final class CrimeOwnershipWorld: CrimeWorld {
         return self.ownership?.owner(of: ownership)
     }
 
-    /// Only an interior is named by its `CELL` FormID here; an exterior is a grid.
     private func scriptedCellOwner(at location: CellSceneLocation?) -> ReferenceOwner?? {
+        interiorCellKey(location).flatMap { scriptedOwner?($0) }
+    }
+
+    /// The owner unlocked the cell's doors, or a script called `Cell.SetPublic`.
+    func isCellOpened(at location: CellSceneLocation?) -> Bool {
+        interiorCellKey(location).map { scriptedCellOpened?($0) == true } ?? false
+    }
+
+    /// Only an interior is named by its `CELL` FormID here; an exterior is a grid.
+    private func interiorCellKey(_ location: CellSceneLocation?) -> ReferenceKey? {
         guard
             case let .interior(cell)? = location, let pluginName,
             let resolved = runtime?.factions.resolvedID(cell, fromPlugin: pluginName)
         else { return nil }
-        return scriptedOwner?(ReferenceKey(resolved: resolved))
+        return ReferenceKey(resolved: resolved)
+    }
+
+    /// Whether the player may stay where `owner` owns the cell: they may use what it
+    /// owns, or a resident actor from the owner's base is their friend or closer.
+    func playerMayEnter(_ owner: ReferenceOwner) -> Bool {
+        if crimeActor(.player).mayUse(owner) {
+            return true
+        }
+        guard case let .actor(base) = owner, let runtime else { return false }
+        return runtime.relationships(of: .player).overrides.contains {
+            $0.rank >= 1 && actorBaseKey(of: $0.other) == base
+        }
     }
 
     func favourAllowance(in faction: ReferenceKey) -> Int32? {

@@ -16,6 +16,8 @@ nonisolated public struct Package: Equatable, Sendable {
         public static let offersServices = GeneralFlags(rawValue: 0x0000_0001)
         public static let mustComplete = GeneralFlags(rawValue: 0x0000_0004)
         static let maintainSpeedAtGoal = GeneralFlags(rawValue: 0x0000_0008)
+        public static let unlockDoorsAtStart = GeneralFlags(rawValue: 0x0000_0040)
+        public static let unlockDoorsOnChange = GeneralFlags(rawValue: 0x0000_0080)
         public static let oncePerDay = GeneralFlags(rawValue: 0x0000_0400)
         public static let usesPreferredSpeed = GeneralFlags(rawValue: 0x0000_2000)
         static let alwaysSneak = GeneralFlags(rawValue: 0x0002_0000)

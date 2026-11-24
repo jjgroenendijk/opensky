@@ -67,6 +67,12 @@ extension PackageCoordinator {
                 }
                 step(actor, with: .sensed(senses), leaf: leaf)
             }
+            if
+                let machine, let feet = world?.packageActorPosition(actor),
+                machine.hasReachedArea(feet)
+            {
+                step(actor, with: .arrived, leaf: leaf)
+            }
             if machine?.isSandbox == true, let hours {
                 step(actor, with: .clock(hours: hours), leaf: leaf)
             }

@@ -119,31 +119,116 @@ extension AIPackageActsAdapter {
             .filter { $0.distance <= reach }
         }
 
+        /// The procedures ignore the radius: they reach every door of the interior the
+        /// owner stands in at the place, and none outdoors
+        /// (docs/engine/crime.md#owners-lock-and-unlock).
         public func setDoorsLocked(
-            _ locked: Bool, around center: SIMD3<Float>, radius: Float, owner actor: ReferenceKey
+            _ locked: Bool, around center: SIMD3<Float>, radius _: Float, owner actor: ReferenceKey
         ) -> PackageActionResult {
-            guard let bridge = game.scripts.bridge else { return .failed }
-            let base = game.streamer.referenceEntry(key: actor)?.placedActor?.base
-            let reach = radius > 0 ? radius : AIPackageActsAdapter.doorReach
-            for (entry, _) in residentPlaced(near: center, within: reach) {
-                guard
-                    let door = entry.placedReference, door.teleportDestination != nil,
-                    let lock = bridge.lockState(for: entry.key), lock.isLocked != locked,
-                    let owner = door.owner, owns(owner, actor: actor, base: base)
-                else { continue }
-                var state = lock
-                state.isLocked = locked
-                _ = bridge.write(state.erased, for: entry.key)
+            guard game.scripts.bridge != nil else { return .failed }
+            guard let place = game.streamer.cellLocation(of: actor), case .interior = place else {
+                return .done
             }
+            let doors = residentPlacedUnsorted(near: center, within: .infinity).map(\.entry)
+                .filter { game.streamer.cellLocation(of: $0.key) == place }
+            setLocked(locked, doors: doors, owner: actor)
             return .done
         }
 
-        /// A door is the actor's when its base, or a faction the actor is in, owns it.
-        private func owns(_ owner: FormID, actor: ReferenceKey, base: FormID?) -> Bool {
+        /// The package door flags reach the owner's doors within 5000 units: in an interior
+        /// only its own cell, outdoors every loaded cell.
+        func unlockOwnedDoors(of actor: ReferenceKey) -> PackageActionResult {
+            guard
+                let place = game.streamer.cellLocation(of: actor),
+                let center = packageMoves.packageActorPosition(actor)
+            else { return .failed }
+            var doors = residentPlacedUnsorted(
+                near: center, within: AIPackageActsAdapter.ownerDoorReach
+            ).map(\.entry)
+            if case .interior = place {
+                doors = doors.filter { game.streamer.cellLocation(of: $0.key) == place }
+            }
+            setLocked(false, doors: doors, owner: actor)
+            return .done
+        }
+
+        /// Locks or unlocks each door the actor owns that has lock data, and the door
+        /// behind a load door with it.
+        private func setLocked(
+            _ locked: Bool, doors: [RuntimeReferenceEntry], owner actor: ReferenceKey
+        ) {
+            guard game.scripts.bridge != nil else { return }
+            let base = game.streamer.referenceEntry(key: actor)?.placedActor?.base
+            for entry in doors {
+                guard let owned = ownedDoor(entry, actor: actor, base: base) else { continue }
+                if writeLock(locked, keys: owned.keys), owned.isLoadDoor {
+                    markOpened(!locked, cellsOf: owned.keys)
+                }
+            }
+        }
+
+        /// The door and the door behind it when the actor owns them, and whether it is
+        /// a load door. A door without an owner takes the linked door's.
+        private func ownedDoor(
+            _ entry: RuntimeReferenceEntry, actor: ReferenceKey, base: FormID?
+        ) -> (keys: [ReferenceKey], isLoadDoor: Bool)? {
+            guard let door = entry.placedReference, isDoor(entry) else { return nil }
+            let isLoadDoor = door.teleportDestination != nil
+            let partner = door.teleportDestination.flatMap {
+                game.streamer.referenceEntry(formID: $0.door)
+            }
+            guard
+                let owner = door.owner ?? partner?.placedReference?.owner,
+                owns(owner, actor: actor, base: base, isLoadDoor: isLoadDoor)
+            else { return nil }
+            return ([entry.key, partner?.key].compactMap(\.self), isLoadDoor)
+        }
+
+        /// Writes the lock state of each key that has lock data; true when one had.
+        private func writeLock(_ locked: Bool, keys: [ReferenceKey]) -> Bool {
+            guard let bridge = game.scripts.bridge else { return false }
+            var changed = false
+            for key in keys {
+                guard var state = bridge.lockState(for: key) else { continue }
+                changed = true
+                if state.isLocked != locked {
+                    state.isLocked = locked
+                    _ = bridge.write(state.erased, for: key)
+                }
+            }
+            return changed
+        }
+
+        private func isDoor(_ entry: RuntimeReferenceEntry) -> Bool {
+            entry.placedReference?.teleportDestination != nil
+                || game.streamer.residentInteraction(reference: entry.formID)?.action == .open
+        }
+
+        /// An owner's lock or unlock closes or opens the interiors on both sides to the
+        /// player (docs/engine/crime.md#opened-by-the-owner).
+        private func markOpened(_ opened: Bool, cellsOf doors: [ReferenceKey]) {
+            guard let bridge = game.scripts.bridge else { return }
+            for door in doors {
+                guard
+                    case let .interior(cell)? = game.streamer.cellLocation(of: door),
+                    let key = bridge.referenceKey(forFormID: cell)
+                else { continue }
+                bridge.updateScriptedState(of: key) {
+                    $0.setFlag(ScriptedStateName.openedByOwner, opened ? true : nil)
+                }
+            }
+        }
+
+        /// A door is the actor's when its base owns it, or, for a load door only, a
+        /// faction the actor is in.
+        private func owns(
+            _ owner: FormID, actor: ReferenceKey, base: FormID?, isLoadDoor: Bool
+        ) -> Bool {
             if owner == base {
                 return true
             }
             guard
+                isLoadDoor,
                 let bridge = game.scripts.bridge,
                 let faction = bridge.referenceKey(forFormID: owner)
             else { return false }

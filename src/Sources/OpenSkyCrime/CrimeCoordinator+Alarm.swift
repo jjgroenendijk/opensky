@@ -390,7 +390,7 @@ extension CrimeCoordinator {
 
 extension CrimeCoordinator {
     public var alarmReadout: CrimeAlarmReadout {
-        CrimeAlarmReadout(
+        var readout = CrimeAlarmReadout(
             witnesses: alarm.witnesses.keys.sorted().compactMap { key in
                 alarm.witnesses[key].map {
                     CrimeAlarmReadout.Witness(
@@ -411,5 +411,10 @@ extension CrimeCoordinator {
             jail: jailStay,
             jailFollowers: jailFollowers
         )
+        readout.trespass = CrimeAlarmReadout.Trespass(
+            isTrespassing: isPlayerTrespassing, isWarnedToLeave: isPlayerWarnedToLeave,
+            isCellOpened: owners.isCellOpened(at: world.currentCellLocation)
+        )
+        return readout
     }
 }

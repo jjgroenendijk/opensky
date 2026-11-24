@@ -23,6 +23,8 @@ public protocol CrimePort: CrimeArrestSession {
     func restoreJailStay(_ stay: JailStay?)
     var scriptedOwner: ((ReferenceKey) -> ReferenceOwner??)? { get set }
     var scriptedOwnerRevision: (() -> UInt64)? { get set }
+    /// Whether the owner opened the interior cell `key`, or a script made it public.
+    var scriptedCellOpened: ((ReferenceKey) -> Bool)? { get set }
     func theftBounty(of item: FormID, from reference: ReferenceKey) -> Int32
     func advanceTrespass(by seconds: Double)
     @discardableResult func serveSentence() -> Bool

@@ -198,7 +198,8 @@ page <https://ck.uesp.net/wiki/Category:Package_Templates>:
 
 A repeating tree can restart in the same frame when its act ends at once, such as a
 LockDoors that the world finishes in one call. Each restart reaches the next act, so the
-tree would never give the frame back. OpenSky lets one actor go 16 steps deep in one call.
+tree would never give the frame back. OpenSky lets one actor go 20 steps deep in one call, the
+game's limit per update ([Travel arrival](#travel-arrival)).
 A result that comes back deeper waits, and it reaches its procedure on the actor's next tick.
 
 Each procedure reads its parameters through its `PKC2` indexes. A Find writes what it found
@@ -355,27 +356,26 @@ was not found.
 
 ## Travel arrival
 
-A Travel to a place with a radius ends when the actor stands in its area. The actor must be in
-the same cell or worldspace as the place, within the radius across, ignoring height, and within
-a height difference of at least 100 units. The game checks this when the step starts and on
-each update, so an actor that already stands in the area ends the step at once. A loaded actor
-also ends it when its path ends. For a loaded actor that cannot reach the area, the game asks
-for the path again; no time-out was found.
+A Travel to a place with a radius ends when the actor stands in its area: in the place's cell or
+worldspace, within the radius across, and within a height difference of at least 100 units. The
+game checks this when the step starts and on each update. A loaded actor also ends the step when
+its path ends; one that cannot reach the area asks for the path again, with no time-out.
 
-A Sequence goes on in the same update: the game runs up to 20 steps of a tree in one update.
-In the vanilla shop template, Sequence[Travel, UnlockDoors, Simultaneous[Sandbox,
-KeepAnEyeOn]], the doors open in the update the Travel ends
-([owners lock and unlock](/engine/crime.md#owners-lock-and-unlock)).
+A Sequence goes on in the same update, up to 20 tree steps. In the shop template,
+Sequence[Travel, UnlockDoors, Simultaneous[Sandbox, KeepAnEyeOn]], the doors open in the update
+the Travel ends ([owners lock and unlock](/engine/crime.md#owners-lock-and-unlock)).
 
 While the actor's cell is not loaded, the tree keeps running. Travel walks the actor over game
-time; it does not place the actor at once. An actor outdoors, or in no cell, whose position
-gives no path data is moved straight to the destination instead. UnlockDoors acts while the
-actor is unloaded too. When the cell's actors attach, the game asks the current step where the
-actor belongs. A Travel names its destination only when its radius is more than 200 units. The
-actor goes to a navmesh point in that area: the radius is capped at 5000 units, and the search
-round the centre is half the radius, capped at 256. An actor already in the area is only put
-on the navmesh where it stands. Steps before the current one are not run again, and this pass
-never unlocks doors. Source: a clean-room read of the game's behaviour.
+time. An actor outdoors, or in no cell, whose position gives no path data is moved straight to
+the destination. UnlockDoors acts while the actor is unloaded too. When the cell's actors attach,
+a Travel with a radius over 200 units puts the actor on a navmesh point in its area: the radius
+is capped at 5000 units, and the search round the centre is half the radius, capped at 256. An
+actor already in the area is only put on the navmesh where it stands. Earlier steps do not run
+again, and this pass never unlocks doors.
+
+OpenSky ends a walking Travel in its area on the actor's tick. It runs no trees while the cell
+is not loaded ([in OpenSky](/engine/unloaded-actors.md#in-opensky)), so a shopkeeper unlocks
+once the shop is loaded and she stands in the Travel's area.
 
 ## Actors far from the player
 

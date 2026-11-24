@@ -43,8 +43,8 @@ public struct AIPackageActsAdapter {
 }
 
 extension AIPackageActsAdapter {
-    /// How far LockDoors and UnlockDoors reach when the package place has no radius.
-    public static let doorReach: Float = 2048
+    /// How far an owner unlocks its doors when a package flag asks it to.
+    static let ownerDoorReach: Float = 5000
     /// How far a find looks when its place has no radius.
     public static let findReach: Float = 2048
 

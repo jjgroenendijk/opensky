@@ -168,6 +168,13 @@ extension PapyrusNativeFunctions.ScriptStateLinksNatives {
 }
 
 extension PapyrusWorldStateBridge.StateLinks {
+    /// Whether the interior cell `key` is open to anyone: public, or opened by its owner.
+    public func isCellOpened(_ key: ReferenceKey) -> Bool {
+        let state = bridge.scriptedState(of: key)
+        return state.flag(ScriptedStateName.publicCell) == true
+            || state.flag(ScriptedStateName.openedByOwner) == true
+    }
+
     /// The owner a script set on `key`: nil when no script set one, `.some(nil)` when a
     /// script cleared it.
     public func scriptedOwner(of key: ReferenceKey) -> ReferenceOwner?? {

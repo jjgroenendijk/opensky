@@ -91,6 +91,20 @@ struct PapyrusNativeScriptStateTests {
         #expect(fixture.session.bridge.stateLinks.scriptedOwner(of: fixture.key) == .some(nil))
     }
 
+    @Test func aPublicCellOrOneItsOwnerOpenedIsOpen() throws {
+        let fixture = try Fixture.make()
+        let links = fixture.session.bridge.stateLinks
+        #expect(!links.isCellOpened(fixture.key))
+        _ = call(fixture, "Cell", "SetPublic", [.boolean(true)])
+        #expect(links.isCellOpened(fixture.key))
+        _ = call(fixture, "Cell", "SetPublic", [.boolean(false)])
+        #expect(!links.isCellOpened(fixture.key))
+        fixture.session.bridge.updateScriptedState(of: fixture.key) {
+            $0.setFlag(ScriptedStateName.openedByOwner, true)
+        }
+        #expect(links.isCellOpened(fixture.key))
+    }
+
     @Test func playerControlsUseEachNativesDefaults() throws {
         let fixture = try Fixture.make()
         func isEnabled(_ control: String) -> PapyrusNativeResult {

@@ -53,6 +53,10 @@ nonisolated public enum ScriptedStateName: Sendable {
     public static let alerted = "alerted"
     public static let bribed = "bribed"
     public static let cleared = "cleared"
+    /// On an interior cell: `Cell.SetPublic` made it public.
+    public static let publicCell = "public"
+    /// On an interior cell: its owner unlocked a door into it, so the player may enter.
+    public static let openedByOwner = "openedByOwner"
     public static let essential = "essential"
     public static let protected = "protected"
     /// On an actor: `UnequipShout` took off the shout its record readies.

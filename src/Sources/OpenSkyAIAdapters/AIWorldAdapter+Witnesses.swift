@@ -259,6 +259,9 @@ extension AIWorldAdapter {
         }
 
         public func packageProcedure(_ event: PackageScriptEvent) {
+            if event.unlocksDoors {
+                _ = packageActs.references.unlockOwnedDoors(of: event.actor)
+            }
             packageMoves.packageProcedure(event)
         }
 

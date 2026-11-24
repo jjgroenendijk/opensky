@@ -185,6 +185,16 @@ nonisolated public struct PackageScriptEvent: Equatable, Sendable {
     public let actor: ReferenceKey
     public let package: Package
 
+    /// The package's flags ask the actor to unlock its doors now: at the start, or as the
+    /// package changes (docs/engine/crime.md#opened-by-the-owner).
+    public var unlocksDoors: Bool {
+        switch kind {
+        case .begin: package.general.flags.contains(.unlockDoorsAtStart)
+        case .change: package.general.flags.contains(.unlockDoorsOnChange)
+        case .end: false
+        }
+    }
+
     /// The PACK fragment flag: 0x01 begin, 0x02 end, 0x04 change (docs/formats/vmad.md).
     public var fragmentSlot: UInt32 {
         switch kind {
@@ -295,7 +305,9 @@ public final class PackageCoordinator {
     /// `failedWalkRetrySeconds`. OpenSky's value (docs/engine/unverified-values.md).
     var failedWalkSeconds: [ReferenceKey: Float] = [:]
     static let failedWalkRetrySeconds: Float = 10
-    static let maxStepDepth = 16
+    /// The game runs up to 20 steps of a tree in one update
+    /// (docs/engine/package-schedules.md#travel-arrival).
+    static let maxStepDepth = 20
 
     public init(world: (any PackageWorld)?, data: PackageSessionData?) {
         self.world = world

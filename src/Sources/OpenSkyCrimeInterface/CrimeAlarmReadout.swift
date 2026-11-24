@@ -41,6 +41,26 @@ nonisolated public struct CrimeAlarmReadout: Sendable {
     public let jail: JailStay?
     /// Followers waiting at the jail door.
     public let jailFollowers: [ReferenceKey]
+    /// The player's trespass state in the cell they stand in.
+    public var trespass = Trespass()
+
+    /// See docs/engine/crime.md#who-may-be-in-a-private-cell.
+    nonisolated public struct Trespass: Equatable, Sendable {
+        public var isTrespassing = false
+        public var isWarnedToLeave = false
+        /// The owner opened the cell through its doors, or a script made it public.
+        public var isCellOpened = false
+
+        public init(
+            isTrespassing: Bool = false,
+            isWarnedToLeave: Bool = false,
+            isCellOpened: Bool = false
+        ) {
+            self.isTrespassing = isTrespassing
+            self.isWarnedToLeave = isWarnedToLeave
+            self.isCellOpened = isCellOpened
+        }
+    }
 
     public init(
         witnesses: [Witness] = [],

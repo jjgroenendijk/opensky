@@ -98,7 +98,12 @@ extension AgentObjectsAdapter {
                     "inCell": .bool(stay.cell != nil)
                 ]
             } ?? .null,
-            "jailFollowers": .array(readout.jailFollowers.map(alarmRef))
+            "jailFollowers": .array(readout.jailFollowers.map(alarmRef)),
+            "trespass": [
+                "trespassing": .bool(readout.trespass.isTrespassing),
+                "warned": .bool(readout.trespass.isWarnedToLeave),
+                "cellOpened": .bool(readout.trespass.isCellOpened)
+            ]
         ]
     }
 
