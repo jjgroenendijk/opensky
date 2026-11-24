@@ -100,6 +100,16 @@ nonisolated public final class MeshLibrary {
         try loadModel(path: path, terrainLODClipMask: nil, surface: surface.isEmpty ? nil : surface)
     }
 
+    /// A destructible's model at one damage stage, cached apart from the whole model.
+    public func model(
+        path: String, surface: ModelSurfaceOverride, damageStage: Int?
+    ) throws -> RenderModel {
+        try loadModel(
+            path: path, terrainLODClipMask: nil, surface: surface.isEmpty ? nil : surface,
+            damageStage: damageStage
+        )
+    }
+
     /// Loads one terrain LOD variant with geometry clipped to exact visible
     /// cells. Variants cache independently from full BTR models.
     public func model(
@@ -133,10 +143,11 @@ nonisolated public final class MeshLibrary {
         attachmentSubtree: String? = nil,
         surface: ModelSurfaceOverride? = nil,
         bodyWeight: Float? = nil,
-        keeping cut: DismemberCut? = nil
+        keeping cut: DismemberCut? = nil,
+        damageStage: Int? = nil
     ) throws -> RenderModel {
         let pathKey = try meshKey(for: path)
-        let key = cacheKey(
+        let key = (damageStage.map { "|damage-stage:\($0)" } ?? "") + cacheKey(
             path: pathKey,
             terrainLODClipMask: terrainLODClipMask,
             actorSkeletonKey: explicitActorSkeleton ? actorSkeleton?.pathKey ?? "none" : nil,
@@ -154,17 +165,18 @@ nonisolated public final class MeshLibrary {
 
         return try loadPhases.measure(.mesh) {
             let plain = terrainLODClipMask == nil && surface == nil && attachmentBone == nil
-                && !explicitActorSkeleton && cut == nil
+                && !explicitActorSkeleton && cut == nil && damageStage == nil
             if plain, let ready = readyModel(key: key, pathKey: pathKey) {
                 return ready
             }
-            let decoded = try decode(
-                pathKey: pathKey,
-                actorSkeleton: actorSkeleton,
-                explicitActorSkeleton: explicitActorSkeleton,
-                keepingRoot: attachmentBone != nil,
-                subtree: attachmentSubtree
-            )
+            let decoded = try damageStage.map { try decode(pathKey: pathKey, damageStage: $0) }
+                ?? decode(
+                    pathKey: pathKey,
+                    actorSkeleton: actorSkeleton,
+                    explicitActorSkeleton: explicitActorSkeleton,
+                    keepingRoot: attachmentBone != nil,
+                    subtree: attachmentSubtree
+                )
             let decodedParticles = decoded.particles
             var model = terrainLODClipMask
                 .map { TerrainLODClipper.clipped(decoded.model, to: $0) } ?? decoded.model
@@ -174,12 +186,8 @@ nonisolated public final class MeshLibrary {
                     actorSkeleton: actorSkeleton
                 )
             }
-            if let cut {
-                model = model.keeping(cut)
-            }
-            if let surface {
-                model = surface.applied(to: model)
-            }
+            model = cut.map { model.keeping($0) } ?? model
+            model = surface?.applied(to: model) ?? model
             if let attachmentBone {
                 model = MeshExtraData.riding(model, bone: attachmentBone, skeleton: actorSkeleton)
             }
@@ -438,6 +446,21 @@ nonisolated extension MeshLibrary {
     /// The NIF behind one normalized key, flattened. Skeleton choice: an
     /// explicit actor skeleton when the caller supplied one, otherwise the
     /// shared character rig for skinned character meshes, otherwise none.
+    /// A placed object's mesh at one destruction stage, parsed apart from the caches.
+    private func decode(
+        pathKey: String, damageStage: Int
+    ) throws -> (model: Model, particles: [ParticleSystemDefinition]) {
+        guard let data = attempt({ try fileSystem.contents(forPath: pathKey) }) else {
+            throw MeshLibraryError.fileNotFound(path: pathKey)
+        }
+        do {
+            let file = try NIFFile(data: data)
+            return try (file.model(damageStage: damageStage), file.particleSystems())
+        } catch {
+            throw MeshLibraryError.parseFailed(path: pathKey, reason: String(describing: error))
+        }
+    }
+
     private func decode(
         pathKey: String,
         actorSkeleton: ActorSkeletonAsset?,

@@ -15,8 +15,12 @@ nonisolated extension NIFFile {
     /// Flattens the block tree into drawable meshes with model-space
     /// transforms and deduplicated material slots. A bone attachment passes
     /// `keepingRoot`; see `walkParent(ofRoot:keepingRoot:)`.
-    public func model(skeleton: NIFSkeleton? = nil, keepingRoot: Bool = false) throws -> Model {
+    /// `damageStage` draws only the `BSDamageStage` nodes for that stage; nil draws all.
+    public func model(
+        skeleton: NIFSkeleton? = nil, keepingRoot: Bool = false, damageStage: Int? = nil
+    ) throws -> Model {
         var flattener = try Flattener(file: self, skeleton: skeleton, keepingRoot: keepingRoot)
+        flattener.damageStage = damageStage
         for root in roots {
             try flattener.walk(from: root)
         }
@@ -40,6 +44,8 @@ nonisolated extension NIFFile {
         var slotIndexes: [FlattenerSlotKey: Int] = [:]
         public var skippedShapeCount = 0
         public var editorMarkerShapeCount = 0
+        /// The destruction stage whose `BSDamageStage` nodes are drawn; nil draws them all.
+        public var damageStage: Int?
 
         /// Types that carry drawable geometry rather than children.
         public static let shapeTypes: Set = [
@@ -120,6 +126,11 @@ nonisolated extension NIFFile {
         private func drawableNode(_ block: NIFBlock) throws -> NIFNode? {
             if block.typeName == NIFSwitchNode.typeName {
                 return try NIFSwitchNode(data: block.data, header: file.header).activeNode
+            }
+            if let damageStage, block.typeName == NIFRangeNode.damageStageType {
+                var reader = BinaryReader(block.data)
+                let range = try NIFRangeNode(reader: &reader, header: file.header)
+                return range.contains(stage: damageStage) ? range.node : nil
             }
             guard block.typeName == "BSMultiBoundNode" else {
                 return try NIFNode(data: block.data, header: file.header)

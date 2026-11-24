@@ -38,6 +38,26 @@ struct NIFModelSwitchAndEffectTests {
         #expect(try file.model().meshes.isEmpty)
     }
 
+    @Test func aDamageStageDrawsOnlyTheStageNodesThatHoldIt() throws {
+        func stage(_ child: Int32, from low: UInt8, to high: UInt8) -> Data {
+            var data = NIFFixture.niNode(children: [child])
+            data.append(contentsOf: [low, high, 0])
+            return data
+        }
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("NiNode", NIFFixture.niNode(children: [1, 2])),
+            .init("BSDamageStage", stage(3, from: 0, to: 1)),
+            .init("BSDamageStage", stage(4, from: 2, to: 2)),
+            .init("BSTriShape", shape(shaderPropertyRef: 5)),
+            .init("BSTriShape", shape(shaderPropertyRef: 5)),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
+        ]))
+        #expect(try file.model().meshes.count == 2)
+        #expect(try file.model(damageStage: 1).meshes.count == 1)
+        #expect(try file.model(damageStage: 2).meshes.count == 1)
+        #expect(try file.model(damageStage: 3).meshes.isEmpty)
+    }
+
     @Test func waterShaderShapeGetsTheWaterSurfaceMaterial() throws {
         // The block body is not decoded: the cell's WATR gives the look.
         let file = try NIFFile(data: NIFFixture.file(blocks: [
