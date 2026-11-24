@@ -1,5 +1,5 @@
 // The facts camera-path conditions read: sides come from the attacker's
-// heading, and an unarmed attack is a melee action.
+// heading, an unarmed attack is a melee action, and a cast spell is a magic one.
 
 @testable import OpenSkyCamera
 import OpenSkyConditions
@@ -30,5 +30,22 @@ struct CameraShotFactsTests {
         #expect(facts.action == CameraShotFacts.meleeAction)
         #expect(facts.weaponType == nil)
         #expect(facts.targetBase == FormID(0x1234))
+    }
+
+    @Test func aSpellShotIsAMagicActionWithItsProjectileType() {
+        var facts = CameraShotFacts.resolution(weapon: nil, target: (nil, 130), yaw: 0) { _ in 0 }
+        CameraShotFacts.noteSpell(
+            &facts, projectile: .beam, delivery: .aimed, castingType: .concentration
+        )
+        #expect(facts.action == CameraShotFacts.magicAction)
+        #expect(facts.projectileType == 2)
+        #expect(facts.delivery == 2)
+        #expect(facts.castingType == 2)
+        CameraShotFacts.noteSpell(
+            &facts, projectile: nil, delivery: .selfTarget, castingType: .fireAndForget
+        )
+        #expect(facts.projectileType == nil)
+        #expect(facts.delivery == 0)
+        #expect(facts.castingType == 1)
     }
 }

@@ -34,6 +34,8 @@ nonisolated extension ResolvedSpell {
         )
         payload.baseCost = Float(cost.cost)
         payload.isConcentration = data?.castingType == .concentration
+        payload.castingType = data?.castingType ?? .fireAndForget
+        payload.delivery = data?.delivery ?? .aimed
         payload.disallowsAbsorb = data?.flags.contains(.disallowAbsorbReflect) ?? false
         payload.areaIgnoresLineOfSight = data?.flags
             .contains(.areaEffectIgnoresLineOfSight) ?? false

@@ -24,7 +24,8 @@ final class FakeCinematicWorld: CinematicCameraWorld {
 
     func cameraShotFacts(
         attacker: ReferenceKey,
-        target: ReferenceKey?
+        target: ReferenceKey?,
+        projectile: Int?
     ) -> CameraConditionResolution {
         .empty
     }

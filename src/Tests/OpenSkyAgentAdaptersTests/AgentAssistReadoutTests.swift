@@ -99,4 +99,28 @@ struct AgentAssistReadoutTests {
         #expect(reply.value(atPath: "landings.0.spellLanded") == .null)
         #expect(reply.value(atPath: "stuck.0") == .string(ReferenceKey.generated(9).description))
     }
+
+    @Test func theProjectilesReadShowsTheLastKillCamCheck() throws {
+        var readout = ProjectileReadout()
+        host.fakeCombat.projectileReadoutValue = readout
+        #expect(try world.query(.projectiles).value(atPath: "lastKillCamCheck") == .null)
+        var check = ProjectileReadout.KillCamCheck(
+            target: .generated(4), enemiesInCombat: 1, targetAlive: true, hitKills: true,
+            damage: 25, clearLine: true, distance: 130
+        )
+        check.chance = 50
+        check.roll = 31
+        check.plays = true
+        readout.lastKillCamCheck = check
+        host.fakeCombat.projectileReadoutValue = readout
+
+        let reply = try world.query(.projectiles)
+
+        #expect(reply
+            .value(atPath: "lastKillCamCheck.target") == .string("\(ReferenceKey.generated(4))"))
+        #expect(reply.value(atPath: "lastKillCamCheck.enemiesInCombat") == .init(1))
+        #expect(reply.value(atPath: "lastKillCamCheck.chance") == .init(Float(50)))
+        #expect(reply.value(atPath: "lastKillCamCheck.roll") == .init(Float(31)))
+        #expect(reply.value(atPath: "lastKillCamCheck.plays") == .bool(true))
+    }
 }

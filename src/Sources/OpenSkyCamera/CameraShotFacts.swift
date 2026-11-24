@@ -15,6 +15,7 @@ nonisolated public enum CameraShotFacts {
     /// xEdit's VATS action values.
     public static let meleeAction: UInt32 = 1
     public static let rangedAction: UInt32 = 4
+    public static let magicAction: UInt32 = 3
 
     /// `room` gets a world-space offset from the attacker's chest and returns
     /// how far a camera could move along it. `yaw` follows `FreeFlyCamera`.
@@ -44,6 +45,18 @@ nonisolated public enum CameraShotFacts {
             .targetVisibleSides = Set([.right, .left]
                 .filter { (facts.freeDistance[$0] ?? 0) >= visibleClearance })
         return facts
+    }
+
+    /// The facts of a cast spell's shot: a magic action, and the projectile type as
+    /// the bit index of the PROJ type, so 0 missile, 2 beam, 6 arrow.
+    public static func noteSpell(
+        _ facts: inout CameraConditionResolution, projectile: Projectile.Kind?,
+        delivery: MagicEffectDelivery, castingType: MagicEffectCastingType
+    ) {
+        facts.action = magicAction
+        facts.projectileType = projectile.map { UInt32($0.rawValue.trailingZeroBitCount) }
+        facts.delivery = delivery.rawValue
+        facts.castingType = castingType.rawValue
     }
 
     public static func direction(

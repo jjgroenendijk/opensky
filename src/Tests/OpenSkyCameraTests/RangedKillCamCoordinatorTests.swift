@@ -19,6 +19,7 @@ final class FakeRangedCinematicWorld: CinematicCameraWorld {
     var projectiles: [Int: CinematicAnchor] = [:]
     var targetIsDead = false
     var playerPosition: SIMD3<Float>? = .zero
+    var factProjectiles: [Int?] = []
 
     func cameraConditionContext() -> ConditionContext {
         ConditionContext(functions: .standard)
@@ -26,9 +27,11 @@ final class FakeRangedCinematicWorld: CinematicCameraWorld {
 
     func cameraShotFacts(
         attacker: ReferenceKey,
-        target: ReferenceKey?
+        target: ReferenceKey?,
+        projectile: Int?
     ) -> CameraConditionResolution {
-        .empty
+        factProjectiles.append(projectile)
+        return .empty
     }
 
     func cameraTrack(model: String) -> NIFCameraTrack? {
@@ -82,6 +85,7 @@ struct RangedKillCamCoordinatorTests {
         let camera = CinematicCameraCoordinator(world: world)
         #expect(camera.playRangedKillCam(projectile: 7, target: Self.target))
         #expect(camera.projectile == 7)
+        #expect(world.factProjectiles == [7])
         let flying = camera.tick(realSeconds: 0.05)
         #expect(flying.pose?.eye.x ?? 0 > 0)
 

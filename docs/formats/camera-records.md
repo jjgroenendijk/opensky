@@ -129,6 +129,8 @@ For a kill, the coordinator fills these facts:
 
 - Action: 4 (ranged) with a bow or crossbow, else 1 (one-hand melee). Projectile type 6
   (arrow) with a bow or crossbow.
+- For a spell kill cam that follows a cast projectile: action 3, the spell's delivery and
+  casting type, and the projectile type of its `PROJ`.
 - Weapon and weapon type: the first weapon the player has equipped.
 - The room on a side is how far the camera collision probe moves from the attacker's chest
   in that direction, up to 512 units.
@@ -137,6 +139,7 @@ For a kill, the coordinator fills these facts:
 
 With these facts, a bow kill on the real install picks `PlayerActionShot01RBasic02` and plays its
 shoot, fly, and hit stages.
+An aimed missile spell kill at 130 or 900 units picks a path with shots, not an `Exit` path.
 
 The other functions the vanilla paths use, named by the same xEdit table. The Creation Kit
 number is the index plus 4096:

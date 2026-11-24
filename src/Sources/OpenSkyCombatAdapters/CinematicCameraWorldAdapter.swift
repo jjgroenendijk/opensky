@@ -14,6 +14,7 @@ import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 public import OpenSkyFormatsMesh
 public import OpenSkyGameData
+import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
@@ -93,9 +94,21 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
 
     public func cameraShotFacts(
         attacker: ReferenceKey,
-        target: ReferenceKey?
+        target: ReferenceKey?,
+        projectile: Int?
     ) -> CameraConditionResolution {
-        anchors.cameraShotFacts(attacker: attacker, target: target)
+        var facts = anchors.cameraShotFacts(attacker: attacker, target: target)
+        if
+            facts.isAvailable,
+            let shot = game.combat.liveProjectiles.first(where: { $0.id == projectile }),
+            let spell = shot.payload.spell
+        {
+            CameraShotFacts.noteSpell(
+                &facts, projectile: shot.profile.kind,
+                delivery: spell.delivery, castingType: spell.castingType
+            )
+        }
+        return facts
     }
 
     public func cameraTrack(model: String) -> NIFCameraTrack? {
