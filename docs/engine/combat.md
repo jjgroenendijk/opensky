@@ -126,18 +126,59 @@ actor ([detection](/engine/detection.md#who-runs-detection-in-the-game)).
 
 Each actor asks one question of each other actor near the player: would it help that actor? The
 `GetShouldHelp` condition function asks the same question
-(<https://ck.uesp.net/wiki/GetShouldHelp>). With A as the helper and B as the actor it helps:
+(<https://ck.uesp.net/wiki/GetShouldHelp>). With A as the helper and B as the actor it helps, the
+checks run in this order. Some of them ask the question again with another actor in A's or B's
+place, and every check runs again for the new pair.
 
-- A helps B when its Assistance is "helps allies" and its reaction to B is ally, or when its
-  Assistance is "helps friends and allies" and the reaction is ally or friend.
-- A never helps a frenzied B, an actor whose Aggression is 3.
-- A follower B counts as the player: A helps B when it would help the player.
-- A follower A helps B when the player would help B, unless the player or A is already one of the
-  opponents of B's fight.
-- A summoned or commanded actor is judged through its owner.
-- A helper with any Morality but "any crime" does not help an actor that started the fight or
-  committed a crime. It still helps when it is itself hostile to one of that actor's opponents.
-  [WARNING] What marks the actor that started the fight is not known.
+1. A always helps itself.
+2. A commanded actor, such as a summon, is judged through its owner. When B has an owner, the
+   answer is whether A helps that owner. Then, when A has an owner, the answer is whether that
+   owner helps B.
+3. The Morality filter, for a helper whose Morality is not "any crime". All three other values
+   act the same. It stops A from helping a B that started its fight or committed a crime. When it
+   stops A, a follower B is judged as the player instead; any other B gets no help.
+4. A follower A helps the player, unless A would attack the player on sight for crimes. A
+   follower A never helps a B in a fight against the player or against A. Otherwise it helps B
+   when the player would help B, judged with the player's own Assistance and Morality.
+5. A follower B counts as the player: A helps B when it would help the player.
+6. A never helps a frenzied B, an actor whose Aggression is 3.
+7. A helps B when its Assistance is "helps allies" and its reaction to B is ally, or when its
+   Assistance is "helps friends and allies" and the reaction is ally or friend.
+
+A follower is an actor in the player-teammate state. The check itself has no chance, no timer, no
+detection, and no distance.
+
+### Started the fight
+
+An actor gets the mark of having started a fight when it starts fighting while it fights nobody:
+
+- It attacks an actor that is not hostile to it and carries no mark itself. So a victim that
+  fights back gets no mark, and two enemies that meet get none.
+- It attacks the player while hostile to the player by its own Aggression and reaction. Fighting
+  the player for the player's crimes gives no mark.
+- It joins a fight on a side whose first fighter has the mark: it takes that fighter's mark.
+- A script starts its fight, and it is not a guard.
+
+The mark goes when that actor's fight ends. A helper still helps a marked B when the helper
+already fights, or is hostile to, one of B's opponents.
+
+### Committed a crime
+
+B has committed a crime for the filter in two cases, and the hostility exception above does not
+apply to them:
+
+- B is the player, and the player resists arrest by the helper's crime faction. While that faction
+  counts the player as an enemy, this holds for 300 seconds after the player resisted. Otherwise
+  it holds while a guard fights the player.
+- At least one guard responds to B's crime. At most 4 guards respond to one actor's crime. The
+  count goes back to 0 when the crime alarm on B ends, such as at an arrest or a paid fine.
+
+A would attack the player on sight for crimes when:
+
+- A is a guard and the player's violent bounty with A's crime faction is above 2,999 gold, or the
+  non-violent bounty is above its own line, which is off in the vanilla game.
+- A is not a guard, and A's crime faction counts the player as an enemy, for 24 game hours after
+  it began, or the crimes A knows the player committed are worth 100 gold or more.
 
 A asks only while B is alive and in a fight, while both are loaded near the player, and while A
 detects B. No distance is checked. A joins the fight on B's side and takes no target from B. It
@@ -153,7 +194,7 @@ witness also stays angry with the player after the fight.
 
 In OpenSky, a helper is asked within 2,048 units of its ally, because perception tracks only the
 player and combat foes, not allies. A helper of an ally fighting an NPC takes that NPC as its foe,
-unless it would help that NPC too. The Morality filter and the follower rules are not built.
+unless it would help that NPC too.
 
 ## Starting and stopping from a script
 
