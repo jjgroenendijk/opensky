@@ -191,7 +191,15 @@ An `MGEF` can go on after its duration ends. The Creation Kit wiki gives three n
 - Taper Curve: how fast the share falls. A negative curve makes it grow.
 
 At `t` seconds after the duration, the magnitude is
-`magnitude * weight * (1 - t / taper duration) ^ curve`.
+`magnitude * weight * (1 - t / taper duration) ^ curve`. Over the whole taper, a damage effect
+takes about `magnitude * weight * taper duration / (curve + 1)`
+(<https://en.uesp.net/wiki/Skyrim:Magic_Overview>, Tapering Durations).
+
+An effect with no duration still tapers. Firebolt "deals fire damage and sets targets on fire,
+dealing 30% damage and scaling down quadratically over 1 second"
+(<https://en.uesp.net/wiki/Skyrim:Firebolt>). Its fire damage effect has weight 0.3, curve 2, and
+a taper duration of 1. So the hit takes the full 25 at once, and the burn adds about 2.5 over the
+next second.
 
 OpenSky applies it to an effect that pays out each second (Recover clear). The payout at whole
 second `n` uses `t = n - duration`, so a payout inside the duration gets the full magnitude.
