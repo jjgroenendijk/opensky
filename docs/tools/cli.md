@@ -154,7 +154,7 @@ the number. A summary line goes to stderr.
 | `audio sweep` | Frames and decodes every `.xwm`, one file at a time, keeping only counts ([audio](/engine/audio.md)) |
 | `audio voice-sweep [--limit n] [--names-only]` | Checks the voice file naming rule against the archive listing, and frames every `.fuz` ([FUZ](/formats/fuz.md)) |
 | `audio aac-check [--per-category n] [--out file]` | Encodes a fixed sample of each cached sound category as AAC and prints the AAC or ALAC verdict ([asset cache](/engine/asset-cache.md)) |
-| `swf show <path>` | One movie's header and every tag |
+| `swf show <path>` | One movie's header, every tag, and the names it exports |
 | `swf sweep` | Every `interface\*.swf`: tags, shapes, bitmaps, fonts, text, frame 1 display lists, and fontconfig aliases. LZMA movies are counted as unsupported, not failed ([SWF container](/formats/swf.md)) |
 | `swf render-sweep [--size WxH] [--movie text] [--out dir]` | Renders each movie's frame 1 over a movie-free baseline and counts changed pixels ([SWF layer](/rendering/swf-layer.md)) |
 | `swf action-sweep [--movie text] [--limit n]` | Every movie's ActionScript: opcode counts, unknown opcodes (expect none), host API names, clip events, and structure ([SWF actions](/formats/swf-actions.md)) |
