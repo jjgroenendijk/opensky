@@ -254,8 +254,10 @@ slot is rebuilt on the first frame its holder is loaded again.
 The magic menu (`Interface\magicmenu.swf`) uses the same list clips as the inventory movie
 (`/Menu_mc/InventoryLists_mc`), filled through `EntriesA` as the
 [inventory menu](/engine/inventory-menu.md#list-data) does. The first tab holds every known
-spell and power. The other tabs follow in this order: the five schools (Alteration, Illusion,
-Destruction, Conjuration, Restoration), shouts, powers, and the effects on the player. A spell
+spell and power. An ability or a disease is not listed, so it cannot be readied; it shows only
+under the effects on the player. The other tabs follow in this order: the five schools
+(Alteration, Illusion, Destruction, Conjuration, Restoration), shouts, powers, and the effects on
+the player. A spell
 goes under the school of its costliest effect, and a lesser power goes under powers. A tab
 with nothing in it is left out. The titles are string settings, because
 `interface\translate_english.txt` has no `$` key for them: `sAlteration` to `sRestoration`,

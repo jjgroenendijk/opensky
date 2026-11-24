@@ -11,7 +11,7 @@ extension MagicCoordinator.MagicMenu {
         guard let caster = coordinator.caster else { return [] }
         let book = caster.spellbook.state(of: .player)
         let texts = coordinator.texts.magic
-        return coordinator.controlPanels.playerKnownSpells().map { spell in
+        return listedSpells.map { spell in
             var row = MagicMenuSpell(
                 name: spell.displayName,
                 isReadied: !book.hands(of: spell.key).isEmpty,
@@ -130,11 +130,25 @@ extension MagicCoordinator.MagicMenu {
     /// Selects the known spell at `index` and readies it in `hand`.
     @discardableResult
     func readyKnownSpell(at index: Int, in hand: SpellHand) -> CastingActionOutcome {
-        guard coordinator.controlPanels.playerKnownSpells().indices.contains(index) else {
-            return coordinator.recordCasting(.noSpellSelected)
-        }
-        coordinator.castingState.selection = index
+        let listed = listedSpells
+        guard
+            listed.indices.contains(index),
+            let position = coordinator.controlPanels.playerKnownSpells()
+                .firstIndex(where: { $0.key == listed[index].key })
+        else { return coordinator.recordCasting(.noSpellSelected) }
+        coordinator.castingState.selection = position
         return coordinator.controlPanels.readySelectedSpell(in: hand)
+    }
+
+    /// The menu lists spells and powers. An ability or a disease shows only under the
+    /// effects on the player, so it can never be readied in a hand.
+    var listedSpells: [ResolvedSpell] {
+        coordinator.controlPanels.playerKnownSpells().filter { spell in
+            switch spell.spellType {
+            case .spell, .power, .lesserPower: true
+            default: false
+            }
+        }
     }
 }
 
