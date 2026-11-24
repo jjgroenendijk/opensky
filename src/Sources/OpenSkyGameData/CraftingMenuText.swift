@@ -33,16 +33,34 @@ nonisolated public enum CraftingMenuText: String, GameSettingTextKey {
     public static func header(
         station: CraftingStationInfo, name: String, texts: GameSettingTexts<Self>
     ) -> String {
+        "\(title(station: station, name: name, texts: texts)): "
+            + description(station: station, texts: texts)
+    }
+
+    public static func title(
+        station: CraftingStationInfo, name: String, texts: GameSettingTexts<Self>
+    ) -> String {
         if station.brews {
-            return "\(texts[.alchemy]): \(texts[.alchemyDescription])"
+            return texts[.alchemy]
         }
         if station.enchants {
-            return "\(texts[.enchanting]): \(texts[.enchantingDescription])"
+            return texts[.enchanting]
         }
         if station.improves {
-            let title = texts[station.improvesArmor ? .armorSmithing : .weaponSmithing]
-            return "\(title): \(texts[.smithingDescription])"
+            return texts[station.improvesArmor ? .armorSmithing : .weaponSmithing]
         }
-        return "\(name): \(texts[.constructibleDescription])"
+        return name
+    }
+
+    public static func description(
+        station: CraftingStationInfo, texts: GameSettingTexts<Self>
+    ) -> String {
+        if station.brews {
+            return texts[.alchemyDescription]
+        }
+        if station.enchants {
+            return texts[.enchantingDescription]
+        }
+        return texts[station.improves ? .smithingDescription : .constructibleDescription]
     }
 }

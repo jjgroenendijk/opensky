@@ -73,6 +73,19 @@ struct AlchemyCoordinatorTests {
         #expect(!coordinator.isCrafting)
     }
 
+    /// A recipe row names the item it makes and each component, carried then needed.
+    @Test func aRecipeRowCarriesItsItemAndComponents() throws {
+        let harness = try Self.harness()
+        let station = try CraftingSessionTests.harness()
+        try station.inventory.add(InventoryBaselineFixture.lockpick, count: 1, to: .player)
+        harness.coordinator.crafting = station.session
+        let snapshot = harness.coordinator.craftingReadout.craftingSnapshot
+        let sword = try #require(snapshot.recipes
+            .first { $0.created == InventoryBaselineFixture.sword })
+        #expect(sword.requirements?.hasSuffix("(1/2)") == true)
+        #expect(snapshot.description?.isEmpty == false)
+    }
+
     @Test func aCraftAtTheOpenStationMakesTheItem() throws {
         let harness = try Self.harness()
         let station = try CraftingSessionTests.harness()

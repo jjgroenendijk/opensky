@@ -11,6 +11,11 @@ nonisolated public struct CraftingRecipeReadout: Equatable, Sendable {
     public let isOffered: Bool
     /// The tab the created item goes under, or nil for none of its own.
     public let category: CraftingCategoryText?
+    /// The item the recipe makes, for the menu's item card.
+    public var created: FormID?
+    /// Each component with the count carried and the count needed, such as
+    /// "Iron Ingot (3/1)"; nil for a recipe with none.
+    public var requirements: String?
 
     public init(
         id: ResolvedFormID, name: String, isEligible: Bool, isOffered: Bool = true,
@@ -29,6 +34,8 @@ nonisolated public struct CraftingControlSnapshot: Equatable, Sendable {
     public let header: String?
     /// What the open station does; nil with none open.
     public var station: CraftingStationInfo?
+    /// The line that says what the station is for, such as "Create".
+    public var description: String?
     public let recipes: [CraftingRecipeReadout]
 
     public static let unavailable = CraftingControlSnapshot(

@@ -44,6 +44,36 @@ struct CraftingDeskWitnessTests {
         #expect(screens.enchanter.enchantingTexts == .vanilla)
     }
 
+    @Test func theCraftingDeskReadsTheSkillBarTheCardAndTheComponents() {
+        let screens = MenuScreensWorldAdapter(game: host)
+        host.fakeInventory.craftingReadout.craftingSnapshotValue =
+            CraftingControlSnapshot(stationName: nil, recipes: [])
+        #expect(screens.craftingSkill == nil, "no station is open")
+        var recipe = CraftingRecipeReadout(
+            id: ResolvedFormID(plugin: "base.esm", objectID: 1), name: "Iron Dagger",
+            isEligible: true
+        )
+        recipe.created = FormID(0x1397E)
+        recipe.requirements = "Iron Ingot (3/1)"
+        var snapshot = CraftingControlSnapshot(stationName: "Forge", recipes: [recipe])
+        snapshot.station = CraftingStationInfo(keywords: [], skill: 10)
+        snapshot.description = "Create"
+        host.fakeInventory.craftingReadout.craftingSnapshotValue = snapshot
+        host.fakeProgression.skillsMenuSkills = [SkillsMenuSkill(
+            index: 10, name: "Smithing", description: "", level: 15, progress: 0.5,
+            legendaryCount: 0, canMakeLegendary: false
+        )]
+        #expect(screens.craftingDescription == "Create")
+        #expect(screens.craftingSkill == CraftingSkillBar(
+            name: "Smithing", level: 15, progress: 0.5
+        ))
+        #expect(screens.craftingItemCard(FormID(0x1397E)) == nil)
+        host.fakeMapWorld.settingTextsResult = GameSettingTexts<CraftingCategoryText>.vanilla
+        let row = screens.craftingRecipes.first
+        #expect(row?.created == FormID(0x1397E))
+        #expect(row?.requirements == "Iron Ingot (3/1)")
+    }
+
     @Test func theEnchanterCallsReachTheMagicPort() {
         let screens = MenuScreensWorldAdapter(game: host)
         let enchanter = host.fakeMagic.enchanter

@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 @testable import OpenSkyMenus
 import OpenSkyMenusInterface
@@ -36,6 +37,14 @@ final class FakeMenuScreenWorld: MenuScreenWorld, MenuInputConsumer {
     var categories: [ItemListCategory] = []
 
     var craftingStationName: String?
+    var craftingDescription: String?
+    var craftingSkill: CraftingSkillBar?
+    var itemCards: [FormID: InventoryItemCard] = [:]
+
+    func craftingItemCard(_ item: FormID) -> InventoryItemCard? {
+        itemCards[item]
+    }
+
     var craftingRecipes: [CraftingMenuRecipe] = []
     var giftRefusalText: String?
     var craftingStation: CraftingStationInfo?

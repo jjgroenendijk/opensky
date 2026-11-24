@@ -12,6 +12,11 @@ nonisolated public enum CraftingMenuMovieBridge: Sendable {
     static let menuPath = "/Menu"
     static let layout = ItemListMovieLayout(listsPath: "\(menuPath)/InventoryLists")
     static let menuNamePath = "\(menuPath)/MenuNameHolder/MenuName"
+    static let menuDescriptionPath = "\(menuPath)/MenuDescriptionHolder/MenuDescription"
+    static let itemInfoPath = "\(menuPath)/ItemInfoHolder/ItemInfo"
+    static let additionalDescriptionPath =
+        "\(menuPath)/ItemInfoHolder/AdditionalDescriptionHolder/AdditionalDescription"
+    static let bottomBarPath = "\(menuPath)/BottomBarInfo"
     /// Calls that change nothing in OpenSky: the 3D item view and the movie's own
     /// rename field.
     static let sinkHostFunctions = [
