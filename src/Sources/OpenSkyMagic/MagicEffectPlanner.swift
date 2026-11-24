@@ -44,6 +44,12 @@ nonisolated public struct MagicEffectApplication: Equatable, Sendable {
         mode != .constant && duration <= 0 && taper.duration <= 0
     }
 
+    /// Whether the magnitude moves the value when the effect lands: no duration, even
+    /// with a taper still to come, as Firebolt's hit does (docs/engine/magic.md#tapering).
+    public var hitsAtOnce: Bool {
+        mode != .constant && duration <= 0
+    }
+
     /// The EFIT magnitude, which a level cap or a cloak radius reads.
     var magnitude: Float {
         values.first?.magnitude ?? 0

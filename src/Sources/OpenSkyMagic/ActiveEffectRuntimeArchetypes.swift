@@ -141,10 +141,10 @@ extension ActiveEffectRuntime {
     ) {
         switch application.rule {
         case nil, .actorValues, .valueAndParts:
-            guard application.isInstant else { return }
+            guard application.hitsAtOnce else { return }
             moveValues(application, caster: caster, on: target)
         case .absorb:
-            guard application.isInstant else { return }
+            guard application.hitsAtOnce else { return }
             for value in application.values {
                 absorb(
                     value.magnitude,

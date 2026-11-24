@@ -24,6 +24,18 @@ struct EffectTaperTests {
         #expect(EffectTaper(weight: .nan, curve: .infinity, duration: -3) == .none)
     }
 
+    /// UESP: the whole taper pays `weight * duration / (curve + 1)` of the magnitude.
+    @Test func theMeanShareIsTheCurvesIntegral() {
+        let burn = EffectTaper(weight: 0.3, curve: 2, duration: 1)
+        #expect(abs(burn.meanShare(from: 0, to: 1) - 0.1) < 0.0001)
+        #expect(burn.meanShare(from: -1, to: 0) == 1)
+        #expect(abs(burn.meanShare(from: -0.5, to: 0.5) - (0.5 + 0.3 * (1 - 0.125) / 3)) < 0.0001)
+        #expect(burn.meanShare(from: 1, to: 2) == 0)
+        let flat = EffectTaper(weight: 1, curve: -1, duration: 4)
+        #expect(abs(flat.meanShare(from: 0, to: 2) - 4 * logf(2) / 2) < 0.0001)
+        #expect(burn.meanShare(from: 0.5, to: 0.5) == burn.share(after: 0.5))
+    }
+
     @Test func aTaperedEffectLivesLongerAndPaysLess() {
         let effect = ActiveEffect(
             sequence: 1,
@@ -38,7 +50,9 @@ struct EffectTaperTests {
         #expect(effect.lifetime == 9)
         #expect(effect.remaining == 9)
         #expect(effect.payoutShare(ofSecond: 5) == 1)
-        #expect(effect.payoutShare(ofSecond: 6) == 0.375)
+        #expect(effect.payoutShare(ofSecond: 6) == 0.4375)
+        let taperPaid = (6 ... 9).map { effect.payoutShare(ofSecond: UInt32($0)) }.reduce(0, +)
+        #expect(abs(taperPaid - 1) < 0.0001)
         var moved = effect
         for _ in 0 ..< 7 {
             moved = moved.advanced(by: 1)
@@ -74,5 +88,6 @@ struct EffectTaperTests {
         }
         #expect(application.taper == taper)
         #expect(!application.isInstant)
+        #expect(application.hitsAtOnce)
     }
 }

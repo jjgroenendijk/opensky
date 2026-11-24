@@ -30,4 +30,30 @@ nonisolated public struct EffectTaper: Equatable, Hashable, Sendable {
         let share = weight * (curve == 0 ? 1 : powf(left, curve))
         return share.isFinite ? share : 0
     }
+
+    /// The mean share over `start ... end` seconds after the duration ended: 1 before it
+    /// ended, the curve's integral inside the taper, 0 after. A whole taper then pays
+    /// `weight * duration / (curve + 1)` of the magnitude, as UESP gives.
+    public func meanShare(from start: Float, to end: Float) -> Float {
+        guard end > start else { return share(after: end) }
+        var area = max(0, min(end, 0) - start)
+        let lower = max(start, 0)
+        let upper = min(end, duration)
+        if duration > 0, upper > lower {
+            area += integral(from: lower, to: upper)
+        }
+        let mean = area / (end - start)
+        return mean.isFinite ? mean : share(after: end)
+    }
+
+    /// The integral of the share from `lower` to `upper`, both inside the taper.
+    private func integral(from lower: Float, to upper: Float) -> Float {
+        let low = 1 - lower / duration
+        let high = 1 - upper / duration
+        let power = curve + 1
+        if abs(power) < 1e-6 {
+            return weight * duration * (logf(low) - logf(high))
+        }
+        return weight * duration / power * (powf(low, power) - powf(high, power))
+    }
 }

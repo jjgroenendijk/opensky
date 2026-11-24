@@ -77,6 +77,10 @@ struct AgentAssistReadoutTests {
         spell.spellEntries = 2
         spell.spellRefusals = 0
         spell.spellMagnitudes = [25]
+        spell.spellLanded = 1
+        spell.spellSkipped = 1
+        spell.spellHealthTaken = 25
+        spell.spellOutcomes = ["landed", "entryConditions"]
         readout.landings = [landing, spell]
         host.fakeCombat.projectileReadoutValue = readout
 
@@ -90,6 +94,9 @@ struct AgentAssistReadoutTests {
         #expect(reply.value(atPath: "landings.0.damage") == .init(Float(0)))
         #expect(reply.value(atPath: "landings.1.spellEntries") == .init(2))
         #expect(reply.value(atPath: "landings.1.spellMagnitudes.0") == .init(Float(25)))
+        #expect(reply.value(atPath: "landings.1.spellHealthTaken") == .init(Float(25)))
+        #expect(reply.value(atPath: "landings.1.spellOutcomes.1") == .string("entryConditions"))
+        #expect(reply.value(atPath: "landings.0.spellLanded") == .null)
         #expect(reply.value(atPath: "stuck.0") == .string(ReferenceKey.generated(9).description))
     }
 }

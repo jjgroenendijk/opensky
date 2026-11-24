@@ -60,6 +60,7 @@ public enum SpellHitApplication {
                 using: runtime,
                 resistances: resistances
             )
+            let healthBefore = runtime.values.current(of: holder).health
             let stored = runtime.apply(
                 scaled.entries,
                 fromPlugin: hit.payload.sourcePlugin,
@@ -73,6 +74,11 @@ public enum SpellHitApplication {
                 stored: stored.count
             )
             let tally = runtime.lastApplication
+            report.noteOutcome(
+                landed: tally.landed, skipped: tally.skipped,
+                healthTaken: healthBefore - runtime.values.current(of: holder).health,
+                outcomes: tally.outcomes
+            )
             if tally.refused > 0 {
                 report.noteRefusal(SpellTargetRefusal(
                     target: target.key, aboveLevelCap: tally.aboveLevelCap,
