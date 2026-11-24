@@ -31,6 +31,8 @@ public final class HUDCoordinator {
     /// Bumped by each start, so only the newest start shows the HUD.
     private var startRequest = 0
     var framePacer = MenuMovieFramePacer()
+    /// Answers the movie's `GetButtonFromUserEvent`, which turns `[Look]` into key art.
+    public var buttonName: (@MainActor @Sendable (_ userEvent: String, _ gamepad: Bool) -> String?)?
     var frameRate = 0.0
     /// The menu movies holding the layer, the one drawn last on top.
     var layerHolders: [WeakLayerHolder] = []
@@ -141,7 +143,7 @@ public final class HUDCoordinator {
         guard let renderer else { return }
         do {
             let scene = try result.get()
-            guard let runtime = try renderer.setSWFHUD(scene, prepare: nil) else {
+            guard let runtime = try renderer.setSWFHUD(scene, prepare: registerButtonArt) else {
                 return
             }
             renderer.swfHUDHidden = isCovered || !layerVisible

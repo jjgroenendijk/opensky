@@ -25,3 +25,12 @@ extension HUDCoordinator {
         }
     }
 }
+
+extension HUDCoordinator {
+    func registerButtonArt(runtime: SWFMovieRuntime) {
+        MenuMovieButtonArt.register(runtime: runtime) { [weak self] event in
+            let gamepad = (self?.renderer?.swfGamepadCount ?? 0) > 0
+            return self?.buttonName?(event, gamepad)
+        }
+    }
+}
