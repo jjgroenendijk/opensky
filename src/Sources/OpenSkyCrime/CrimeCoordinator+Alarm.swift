@@ -339,6 +339,7 @@ extension CrimeCoordinator {
         }) {
             alarm.crimes[id] = nil
         }
+        alarm.releaseAnswering()
     }
 
     /// A fight ends when either side is gone, or for the player once nothing is owed.
