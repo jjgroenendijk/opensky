@@ -15,8 +15,9 @@ extension PapyrusWorldStateBridge.Factions {
     @discardableResult
     public func addToFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
         guard let runtime = bridge.natives.faction.runtime(actor) else { return nil }
-        // "If the Actor is already in the faction, this function does nothing."
-        guard !runtime.isMember(actor, of: faction) else { return false }
+        // "If the Actor is already in the faction, this function does nothing." It asks
+        // IsInFaction, which is false at rank -1, so a rank -1 listing rises to rank 0.
+        guard (runtime.rank(of: actor, in: faction) ?? -1) < 0 else { return false }
         return runtime.join(actor, to: faction, rank: 0, in: bridge.cellLocation(of: actor))
     }
 

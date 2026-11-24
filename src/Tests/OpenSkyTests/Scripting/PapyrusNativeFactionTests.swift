@@ -57,6 +57,32 @@ struct PapyrusNativeFactionTests {
         #expect(member == .returned(.boolean(false)))
     }
 
+    /// "This function checks if you're in the passed in faction by calling IsInFaction,
+    /// and if not, calls SetFactionRank and sets your rank to 0."
+    /// (<https://ck.uesp.net/wiki/AddToFaction_-_Actor>)
+    @Test func addToFactionRaisesARankMinusOneListingToZero() throws {
+        let fixture = try Self.fixture()
+        let guards = try handle(fixture, faction: Self.guards)
+        fixture.factions.join(fixture.actorKey, to: Self.guards, rank: -1)
+
+        call("Actor", "AddToFaction", fixture, receiver: fixture.actor, arguments: [
+            .object(guards)
+        ])
+
+        #expect(fixture.factions.rank(of: fixture.actorKey, in: Self.guards) == 0)
+    }
+
+    /// A quest alias joins and leaves its factions through the bridge, not a script call.
+    @Test func theBridgeAddsAndRemovesAFactionMembership() throws {
+        let fixture = try Self.fixture()
+        let bridge = fixture.session.bridge
+
+        bridge.addToFaction(fixture.actorKey, faction: Self.guards)
+        #expect(fixture.factions.rank(of: fixture.actorKey, in: Self.guards) == 0)
+        bridge.removeFromFaction(fixture.actorKey, faction: Self.guards)
+        #expect(bridge.isInFaction(fixture.actorKey, faction: Self.guards) == false)
+    }
+
     /// "If the Actor is already in the faction, this function does nothing." —
     /// so a second add must not demote a promoted member back to rank 0.
     @Test func addToFactionDoesNotDemoteAnExistingMember() throws {
