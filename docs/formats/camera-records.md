@@ -115,6 +115,16 @@ action 3 or action 4, and `RangedKills` asks that the projectile type is not 2 (
 casting type is not 2 (concentration). Member 4 is compared with distances, so it is a
 distance.
 
+The magic branch reads the spell. Under `MagicOrBowCams`, `IsMagicCastForBadnessTesting` asks
+for action 3, so every spell kill enters it first. Its child `SelfCastTest` asks for delivery 0
+(self). Its last child, `ExitInvalidProjectileOrCastingType02`, is an `Exit` path that asks for a
+delivery other than 2 (aimed), or projectile type 4 (cone). An aimed missile spell, such as
+Firebolt, passes neither. The branch yields no shots, and the walk goes on to `RangedKills`,
+which needs 768 units, then to `IsUsingBowOrMagicCloseCheck`, which has no conditions. Paths
+such as `F12BulletTimeRight01NearMagic` then pick the magic variant of a shot with action 3.
+The member values match the `MGEF` delivery and casting type numbers, and the projectile type
+is the bit number of the `PROJ` type: 0 missile, 2 beam, 4 cone, 6 arrow.
+
 For a kill, the coordinator fills these facts:
 
 - Action: 4 (ranged) with a bow or crossbow, else 1 (one-hand melee). Projectile type 6
