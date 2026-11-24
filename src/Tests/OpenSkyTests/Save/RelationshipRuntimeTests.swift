@@ -121,24 +121,24 @@ struct RelationshipRuntimeTests {
 
     // MARK: - Hostility
 
-    /// "Relationships override factions" (<https://ck.uesp.net/wiki/Relationship>),
-    /// and a scripted rank is a relationship — so setting one to Archnemesis
-    /// makes an otherwise allied pair read as enemies.
+    /// A scripted rank is a relationship, and a rank of Confidant or higher gives
+    /// Ally before any faction is read, so it turns faction enemies into allies
+    /// (docs/engine/hostility.md#how-the-game-combines-rank-and-factions).
     @Test func aScriptedRankMovesTheDerivedReaction() throws {
         let derivation = try Fixture.derivation(relations: [
-            Fixture.Relation(Fixture.Factions.guards, Fixture.Factions.bandit, .ally)
+            Fixture.Relation(Fixture.Factions.guards, Fixture.Factions.bandit, .enemy)
         ])
         let observer = Fixture.profile(
             actor: Fixture.Actors.cityGuard,
             memberships: [(Fixture.Factions.guards, 0)],
-            relationships: [(Fixture.key(Fixture.Actors.bandit), -4)]
+            relationships: [(Fixture.key(Fixture.Actors.bandit), 4)]
         )
         let target = Fixture.profile(
             actor: Fixture.Actors.bandit,
             memberships: [(Fixture.Factions.bandit, 0)]
         )
 
-        #expect(derivation.reaction(of: observer, toward: target) == .enemy)
+        #expect(derivation.reaction(of: observer, toward: target) == .ally)
         #expect(derivation.decide(observer, toward: target).source == .relationship)
     }
 

@@ -79,30 +79,26 @@ struct HostilityDerivationTests {
         #expect(bandit.source == .defaultNeutral)
     }
 
-    /// "Relationships override factions" (Creation Kit wiki), in both
-    /// directions: a RELA can make two friendly-faction actors enemies and two
-    /// enemy-faction actors allies.
+    /// The rank is the start value and the factions merge into it: a Friend faction
+    /// pair still beats an Archnemesis rank, and a Lover rank ends the merge as Ally.
     @Test
-    func aRelationshipOverridesWhateverTheFactionsSay() throws {
+    func theRankStartsTheMergeAndAFriendFactionStillWins() throws {
         let friendly = try Fixture.derivation(
             relations: [
                 Fixture.Relation(Fixture.Factions.town, Fixture.Factions.guards, .friend)
             ],
             pairs: [Fixture.Pair(Fixture.Actors.townsfolk, Fixture.Actors.cityGuard, .archnemesis)]
         )
-        let feud = friendly.decide(
-            Fixture.profile(
-                actor: Fixture.Actors.townsfolk,
-                memberships: [(Fixture.Factions.town, 0)]
-            ),
-            toward: Fixture.profile(
-                actor: Fixture.Actors.cityGuard,
-                memberships: [(Fixture.Factions.guards, 0)]
-            )
+        let townsfolk = Fixture.profile(
+            actor: Fixture.Actors.townsfolk, memberships: [(Fixture.Factions.town, 0)]
         )
-        #expect(feud.reaction == .enemy)
-        #expect(feud.source == .relationship)
-        #expect(feud.isHostile)
+        let cityGuard = Fixture.profile(
+            actor: Fixture.Actors.cityGuard, memberships: [(Fixture.Factions.guards, 0)]
+        )
+        let feud = friendly.decide(townsfolk, toward: cityGuard)
+        #expect(feud.reaction == .friend)
+        #expect(feud.source == .faction)
+        #expect(!feud.isHostile)
 
         let hostileFactions = try Fixture.derivation(
             relations: [
@@ -115,14 +111,32 @@ struct HostilityDerivationTests {
                 actor: Fixture.Actors.bandit,
                 memberships: [(Fixture.Factions.bandit, 0)]
             ),
+            toward: cityGuard
+        )
+        #expect(truce.reaction == .ally)
+        #expect(truce.source == .relationship)
+        #expect(!truce.isHostile)
+    }
+
+    /// The game starts a Confidant at Ally, so no faction is read.
+    @Test
+    func aConfidantRankIsAnAlly() throws {
+        let derivation = try Fixture.derivation(
+            relations: [Fixture.Relation(Fixture.Factions.bandit, Fixture.Factions.guards, .enemy)],
+            pairs: [Fixture.Pair(Fixture.Actors.bandit, Fixture.Actors.cityGuard, .confidant)]
+        )
+        let decision = derivation.decide(
+            Fixture.profile(
+                actor: Fixture.Actors.bandit,
+                memberships: [(Fixture.Factions.bandit, 0)]
+            ),
             toward: Fixture.profile(
                 actor: Fixture.Actors.cityGuard,
                 memberships: [(Fixture.Factions.guards, 0)]
             )
         )
-        #expect(truce.reaction == .ally)
-        #expect(truce.source == .relationship)
-        #expect(!truce.isHostile)
+        #expect(decision.reaction == .ally)
+        #expect(decision.source == .relationship)
     }
 
     /// The pair index is order-free, so the override works whichever side the
@@ -152,48 +166,6 @@ struct HostilityDerivationTests {
         )
         #expect(decision.source == .defaultNeutral)
         #expect(decision.reaction == .neutral)
-    }
-
-    /// Several memberships disagreeing: the most hostile of them wins, which is
-    /// this engine's rule rather than a documented one.
-    @Test
-    func theMostHostileMembershipPairWins() throws {
-        let derivation = try Fixture.derivation(relations: [
-            Fixture.Relation(Fixture.Factions.town, Fixture.Factions.guards, .ally),
-            Fixture.Relation(Fixture.Factions.bandit, Fixture.Factions.guards, .enemy)
-        ])
-        let decision = derivation.decide(
-            Fixture.profile(
-                actor: Fixture.Actors.bandit,
-                memberships: [(Fixture.Factions.town, 0), (Fixture.Factions.bandit, 2)]
-            ),
-            toward: Fixture.profile(
-                actor: Fixture.Actors.cityGuard,
-                memberships: [(Fixture.Factions.guards, 0)]
-            )
-        )
-        #expect(decision.reaction == .enemy)
-        #expect(decision.source == .faction)
-    }
-
-    /// An XNAM authored on one side only is still an opinion about the pair.
-    @Test
-    func aRelationAuthoredOnEitherSideCounts() throws {
-        let derivation = try Fixture.derivation(relations: [
-            Fixture.Relation(Fixture.Factions.guards, Fixture.Factions.bandit, .enemy)
-        ])
-        let decision = derivation.decide(
-            Fixture.profile(
-                actor: Fixture.Actors.bandit,
-                memberships: [(Fixture.Factions.bandit, 0)]
-            ),
-            toward: Fixture.profile(
-                actor: Fixture.Actors.cityGuard,
-                memberships: [(Fixture.Factions.guards, 0)]
-            )
-        )
-        #expect(decision.reaction == .enemy)
-        #expect(decision.source == .faction)
     }
 
     /// The whole precedence list, walked from the bottom up: each term added in
@@ -251,7 +223,7 @@ struct HostilityDerivationTests {
     @Test
     func aCrimeEnemyIsAttackedWhateverTheAggression() throws {
         var derivation = try Fixture.derivation(
-            relations: [Fixture.Relation(Fixture.Factions.bandit, Fixture.Factions.guards, .enemy)]
+            relations: [Fixture.Relation(Fixture.Factions.guards, Fixture.Factions.bandit, .enemy)]
         )
         let shopkeeper = Fixture.profile(
             actor: Fixture.Actors.townsfolk,

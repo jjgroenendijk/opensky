@@ -1,16 +1,15 @@
 // How one actor regards another: Enemy, Neutral, Friend or Ally. A FACT relation
 // names one (<https://ck.uesp.net/wiki/Faction>); a RELA rank maps onto them
-// (<https://ck.uesp.net/wiki/Relationship>). One enum, so "most hostile wins" is
-// written once. See docs/engine/hostility.md.
+// (<https://ck.uesp.net/wiki/Relationship>). One enum, so the merge of several
+// is written once. See docs/engine/hostility.md.
 
 import Foundation
 public import OpenSkyFormatsESM
 
 /// One actor's regard for another, friendliest first.
 ///
-/// `Comparable` on purpose, and the order is the point: `max` of two reactions
-/// is the more hostile one, which is the rule the derivation applies when an
-/// actor's several factions disagree about the same target.
+/// `Comparable` from friendliest to most hostile, so `max` is the more hostile.
+/// Several factions merge with `merged`, not `max`.
 nonisolated public enum ActorReaction: UInt8, Comparable, CaseIterable, Sendable {
     case ally = 0
     case friend = 1
@@ -27,6 +26,24 @@ nonisolated public enum ActorReaction: UInt8, Comparable, CaseIterable, Sendable
         case .neutral: self = .neutral
         case .enemy: self = .enemy
         case .unknown: return nil
+        }
+    }
+
+    /// The game's merge of a new reaction into the one so far: Neutral is replaced by
+    /// anything, Enemy by Friend or Ally, Friend only by Ally. So the result is the
+    /// highest of Ally, Friend, Enemy, Neutral (docs/engine/hostility.md).
+    public static func merged(_ current: Self?, _ next: Self?) -> Self? {
+        guard let current else { return next }
+        guard let next else { return current }
+        return next.mergeRank > current.mergeRank ? next : current
+    }
+
+    private var mergeRank: Int {
+        switch self {
+        case .neutral: 0
+        case .enemy: 1
+        case .friend: 2
+        case .ally: 3
         }
     }
 

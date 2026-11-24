@@ -37,7 +37,7 @@ struct ActorReactionTests {
         #expect(ActorReaction(RelationshipRank.unknown(raw: 42)) == nil)
     }
 
-    /// Ordering is the derivation's "most hostile wins" rule, so it is pinned.
+    /// The order runs from friendliest to most hostile, so `max` is the more hostile.
     @Test
     func ordersFromFriendliestToMostHostile() {
         #expect(ActorReaction.allCases == [.ally, .friend, .neutral, .enemy])
@@ -45,6 +45,19 @@ struct ActorReactionTests {
         #expect(ActorReaction.friend < ActorReaction.neutral)
         #expect(ActorReaction.neutral < ActorReaction.enemy)
         #expect(max(ActorReaction.ally, .enemy) == .enemy)
+    }
+
+    /// Neutral is replaced by anything, Enemy by Friend or Ally, Friend only by Ally.
+    @Test
+    func mergesTheGamesWay() {
+        #expect(ActorReaction.merged(.neutral, .enemy) == .enemy)
+        #expect(ActorReaction.merged(.enemy, .neutral) == .enemy)
+        #expect(ActorReaction.merged(.enemy, .friend) == .friend)
+        #expect(ActorReaction.merged(.friend, .enemy) == .friend)
+        #expect(ActorReaction.merged(.friend, .ally) == .ally)
+        #expect(ActorReaction.merged(.ally, .enemy) == .ally)
+        #expect(ActorReaction.merged(nil, .neutral) == .neutral)
+        #expect(ActorReaction.merged(.friend, nil) == .friend)
     }
 
     /// The whole Creation Kit aggression table, one row per reaction.

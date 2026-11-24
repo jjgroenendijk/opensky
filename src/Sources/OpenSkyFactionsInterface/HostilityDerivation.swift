@@ -47,21 +47,27 @@ nonisolated public struct HostilityDerivation: Sendable {
         resolveReaction(observer, toward: target).reaction
     }
 
-    /// The most hostile reaction any membership pair declares, in either direction.
-    /// Most hostile wins (our rule; no source states one), so a friendly membership
-    /// cannot silently cancel an enemy one. Vanilla does not always mirror an XNAM.
+    /// The observer's factions' relations toward the target's factions, merged the
+    /// game's way: a Friend pair beats any Enemy pair. The target's relations back are
+    /// not read, and a membership at rank -1 takes no part.
     public func factionReaction(
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile
     ) -> ActorReaction? {
-        var worst: ActorReaction?
-        for mine in observer.memberships.factions {
-            for theirs in target.memberships.factions {
-                worst = Self.moreHostile(worst, relations.reaction(of: mine, toward: theirs))
-                worst = Self.moreHostile(worst, relations.reaction(of: theirs, toward: mine))
+        var merged: ActorReaction?
+        for mine in Self.counted(observer) {
+            for theirs in Self.counted(target) {
+                merged = ActorReaction.merged(merged, relations.reaction(of: mine, toward: theirs))
+                if merged == .ally {
+                    return merged
+                }
             }
         }
-        return worst
+        return merged
+    }
+
+    private static func counted(_ profile: ActorSocialProfile) -> [ReferenceKey] {
+        profile.memberships.memberships.filter { $0.rank != -1 }.map(\.faction)
     }
 
     /// The reaction for the pair's relationship rank, or nil when nothing names it.
@@ -71,15 +77,18 @@ nonisolated public struct HostilityDerivation: Sendable {
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile
     ) -> ActorReaction? {
-        if let scripted = scriptedRank(of: observer, toward: target) {
-            return RelationshipRank(signedRank: Int(scripted)).flatMap(ActorReaction.init)
+        let rank: RelationshipRank? = if let scripted = scriptedRank(of: observer, toward: target) {
+            RelationshipRank(signedRank: Int(scripted))
+        } else if let mine = observer.base, let theirs = target.base {
+            relationships.rank(between: mine, and: theirs)
+        } else {
+            nil
         }
-        guard
-            let mine = observer.base,
-            let theirs = target.base,
-            let rank = relationships.rank(between: mine, and: theirs)
-        else { return nil }
-        return ActorReaction(rank)
+        // The game starts a Confidant at Ally, where the wiki groups it with Friend.
+        if rank == .confidant {
+            return .ally
+        }
+        return rank.flatMap(ActorReaction.init)
     }
 
     /// The scripted rank between the pair, from either actor's component. Both
@@ -96,16 +105,6 @@ nonisolated public struct HostilityDerivation: Sendable {
 
     // MARK: - Private
 
-    /// The more hostile of two reactions, either of which may be absent.
-    private static func moreHostile(
-        _ left: ActorReaction?,
-        _ right: ActorReaction?
-    ) -> ActorReaction? {
-        guard let left else { return right }
-        guard let right else { return left }
-        return max(left, right)
-    }
-
     private func resolveReaction(
         _ observer: ActorSocialProfile,
         toward target: ActorSocialProfile
@@ -113,13 +112,23 @@ nonisolated public struct HostilityDerivation: Sendable {
         if let crimeReaction = crime.crimeReaction(of: observer, toward: target) {
             return (crimeReaction, .crime)
         }
-        if let related = relationshipReaction(of: observer, toward: target) {
-            return (related, .relationship)
+        // The rank is the start value, and the factions merge into it; an Ally rank
+        // ends the merge before any faction is read.
+        let related = relationshipReaction(of: observer, toward: target)
+        if related == .ally {
+            return (.ally, .relationship)
         }
-        if let declared = factionReaction(of: observer, toward: target) {
+        let declared = factionReaction(of: observer, toward: target)
+        if
+            let declared,
+            ActorReaction.merged(related ?? .neutral, declared) != related ?? .neutral
+        {
             return (declared, .faction)
         }
-        return (.neutral, .defaultNeutral)
+        if let related {
+            return (related, .relationship)
+        }
+        return declared.map { ($0, .faction) } ?? (.neutral, .defaultNeutral)
     }
 
     public init(
