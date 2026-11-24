@@ -104,7 +104,7 @@ These sit on the faction model behind [hostility](/engine/hostility.md).
 
 | Native | What it does | Source |
 | --- | --- | --- |
-| `AddToFaction(Faction)` | Joins at rank 0. Nothing if already a member | [AddToFaction - Actor](https://ck.uesp.net/wiki/AddToFaction_-_Actor) |
+| `AddToFaction(Faction)` | Joins at rank 0. Nothing if already a member at rank 0 or above; a rank -1 listing rises to 0 | [AddToFaction - Actor](https://ck.uesp.net/wiki/AddToFaction_-_Actor) |
 | `RemoveFromFaction(Faction)` | Drops the membership | [RemoveFromFaction - Actor](https://ck.uesp.net/wiki/RemoveFromFaction_-_Actor) |
 | `bool IsInFaction(Faction)` | Membership at rank 0 or above | [IsInFaction - Actor](https://ck.uesp.net/wiki/IsInFaction_-_Actor) |
 | `int GetFactionRank(Faction)` | The rank. -2 for a non-member, -1 for a member ranked -1 | [GetFactionRank - Actor](https://ck.uesp.net/wiki/GetFactionRank_-_Actor) |
