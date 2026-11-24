@@ -14,6 +14,7 @@ import simd
 final class CombatHost: CinematicCameraWorldHost, CombatActorFactsHost, CombatGearHost,
     CombatImpactEffectsHost, CombatMotionHost, CombatOutcomesHost, CombatReportsHost,
     CombatSpellCastsHost, CombatWorldHost, EffectsBlastsHost, EffectsBodyImpulsesHost,
+    EffectsDestructionHost,
     EffectsEffectPlacementHost, EffectsLocatorHost, EffectsTrapControlHost, EffectsWorldHost,
     RagdollDeathsHost, RagdollPlayerFallHost, RagdollPoseReadsHost, RagdollRecoveryHost,
     RagdollRemainsHost, RagdollWorldHost

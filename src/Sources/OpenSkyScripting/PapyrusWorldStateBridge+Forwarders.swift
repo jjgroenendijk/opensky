@@ -3,7 +3,7 @@
 import Foundation
 public import OpenSkyCombatInterface
 public import OpenSkyConditions
-import OpenSkyCrimeInterface
+public import OpenSkyCrimeInterface
 public import OpenSkyDialogueInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
@@ -110,6 +110,22 @@ extension PapyrusWorldStateBridge {
         referencePlacement.spawnReference(of: base, at: anchor)
     }
 
+    @discardableResult
+    public func damageDestructible(_ key: ReferenceKey, amount: Float, forced: Bool) -> Bool {
+        referenceEvents.damageDestructible(key, amount: amount, forced: forced)
+    }
+
+    public func destructionHealthLeft(of key: ReferenceKey) -> Float? {
+        referenceEvents.destructibleData(of: key).map {
+            Float($0.health) - referenceEvents.destruction(of: key).damage
+        }
+    }
+
+    public func takeDestructionChanges() -> [DestructionStageChange] {
+        defer { runState.destructionChanges = [] }
+        return runState.destructionChanges
+    }
+
     public func relocate(_ key: ReferenceKey, to location: CellSceneLocation) {
         referencePlacement.relocate(key, to: location)
     }
@@ -140,6 +156,20 @@ extension PapyrusWorldStateBridge {
         of key: ReferenceKey, _ change: (inout ScriptedReferenceState) -> Void
     ) {
         scriptState.updateScriptedState(of: key, change)
+    }
+
+    public func setScriptedOwner(_ owner: ReferenceOwner, of key: ReferenceKey) {
+        scriptState.updateScriptedState(of: key) { state in
+            state.setFlag(Self.ownerSetName, true)
+            switch owner {
+            case let .actor(actor):
+                state.setForm("actorOwner", actor)
+                state.setForm("factionOwner", nil)
+            case let .faction(faction, _):
+                state.setForm("actorOwner", nil)
+                state.setForm("factionOwner", faction)
+            }
+        }
     }
 
     public func publishLeveledEdits() {

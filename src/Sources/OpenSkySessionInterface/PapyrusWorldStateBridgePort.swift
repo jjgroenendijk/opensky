@@ -1,5 +1,6 @@
 public import OpenSkyCombatInterface
 public import OpenSkyConditions
+public import OpenSkyCrimeInterface
 public import OpenSkyDialogueInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
@@ -88,10 +89,21 @@ public protocol PapyrusWorldStateBridgePort: AnyObject {
     @discardableResult func setQuestStage(_ stage: UInt16, for key: ReferenceKey) throws -> Bool
     var silentDeath: ReferenceKey? { get }
     func spawnReference(of base: ReferenceKey, at anchor: ReferenceKey) -> ReferenceKey?
+    /// Damages a destructible reference through its stages; forced damage passes the
+    /// Ignore External Damage flag. False when it has no `DEST` data.
+    @discardableResult func damageDestructible(
+        _ key: ReferenceKey, amount: Float, forced: Bool
+    ) -> Bool
+    /// Health left on a destructible reference; nil when it has no `DEST` data.
+    func destructionHealthLeft(of key: ReferenceKey) -> Float?
+    /// The destruction stages passed since the last call, oldest first.
+    func takeDestructionChanges() -> [DestructionStageChange]
     @discardableResult func startActorCombat(_ key: ReferenceKey, target: ReferenceKey) -> Bool
     @discardableResult func stopActorCombat(_ key: ReferenceKey) -> Bool
     func stopQuest(for key: ReferenceKey) throws
     func updateScriptedState(of key: ReferenceKey, _ change: (inout ScriptedReferenceState) -> Void)
+    /// Sets `key`'s owner as `SetActorOwner` or `SetFactionOwner` would.
+    func setScriptedOwner(_ owner: ReferenceOwner, of key: ReferenceKey)
     @discardableResult func write(_ component: WorldStateComponentValue, for key: ReferenceKey)
         -> Bool
 }

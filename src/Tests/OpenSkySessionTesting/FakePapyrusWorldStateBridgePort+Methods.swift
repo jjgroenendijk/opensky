@@ -2,6 +2,7 @@
 
 public import OpenSkyCombatInterface
 public import OpenSkyConditions
+public import OpenSkyCrimeInterface
 public import OpenSkyDialogueInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
@@ -334,6 +335,28 @@ nonisolated extension FakePapyrusWorldStateBridgePort {
     }
 
     @discardableResult
+    public func damageDestructible(
+        _ key: ReferenceKey, amount: Float, forced: Bool
+    ) -> Bool {
+        damageDestructibleCalls.append(DamageDestructibleCall(
+            key: key,
+            amount: amount,
+            forced: forced
+        ))
+        return damageDestructibleResult
+    }
+
+    public func destructionHealthLeft(of key: ReferenceKey) -> Float? {
+        destructionHealthLeftCalls.append(key)
+        return destructionHealthLeftResult
+    }
+
+    public func takeDestructionChanges() -> [DestructionStageChange] {
+        takeDestructionChangesCallCount += 1
+        return takeDestructionChangesResult
+    }
+
+    @discardableResult
     public func startActorCombat(_ key: ReferenceKey, target: ReferenceKey) -> Bool {
         startActorCombatCalls.append((key: key, target: target))
         return startActorCombatResult
@@ -357,6 +380,10 @@ nonisolated extension FakePapyrusWorldStateBridgePort {
         _ change: (inout ScriptedReferenceState) -> Void
     ) {
         updateScriptedStateCalls.append(key)
+    }
+
+    public func setScriptedOwner(_ owner: ReferenceOwner, of key: ReferenceKey) {
+        setScriptedOwnerCalls.append((owner: owner, key: key))
     }
 
     @discardableResult
