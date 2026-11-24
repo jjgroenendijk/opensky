@@ -222,7 +222,7 @@ public final class WorldAudioFootstepDirector {
         guard let soundStore else { return refuse(.noSoundRecords) }
         guard
             let sound = attempt({ try soundStore.resolveAny(resolved.sound) }),
-            let path = sound.filePaths.first
+            let path = engine.filePicker.path(for: sound)
         else { return refuse(.soundUnresolved(tag: tag, sound: resolved.sound)) }
         if culls, isOutOfRange(sound, at: position) {
             return nil

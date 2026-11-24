@@ -77,6 +77,8 @@ public final class WorldAudioEngine {
     /// the FIFO eviction walks). Written only by WorldAudioEngineSources.swift;
     /// internal rather than private(set) because that file is a satellite.
     public var sources: [ActiveAudioSource] = []
+    /// Shared by every caller, so a descriptor never plays the same file twice in a row.
+    public var filePicker = SoundFilePicker()
     /// The newest sources started, oldest first, so a short sound is still seen after it ends.
     public internal(set) var recentStarts: [StartedAudioSource] = []
     /// The sound category mix; nil plays every category at full level.

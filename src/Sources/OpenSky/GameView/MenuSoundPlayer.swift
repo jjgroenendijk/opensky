@@ -58,7 +58,7 @@ final class MenuSoundPlayer {
             let sounds = dependencies.worldData()?.soundStore,
             let formID = soundID(editorID, in: sounds),
             let resolved = try? sounds.resolveAny(formID),
-            let path = resolved.filePaths.first
+            let path = engine.filePicker.path(for: resolved)
         else { return }
         let request = AudioPlayRequest(
             name: path,
