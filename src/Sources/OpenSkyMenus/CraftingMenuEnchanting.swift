@@ -17,6 +17,18 @@ struct CraftingMenuEnchanting {
     }
 
     private(set) var selection = EnchanterSelection()
+
+    /// The item a row stands for: the weapon or armour, or the soul gem. An
+    /// enchantment row has none.
+    func item(of row: ItemListRow) -> FormID? {
+        guard picks.indices.contains(Int(row.tag)) else { return nil }
+        switch picks[Int(row.tag)] {
+        case let .destroy(item), let .item(item): return item
+        case let .gem(gem): return gem.item
+        case .base: return nil
+        }
+    }
+
     /// The slider the current choice offers, so a new maximum can reset the value.
     private(set) var slider: EnchanterSlider?
     private var sliderRequested = false
@@ -115,13 +127,13 @@ struct CraftingMenuEnchanting {
     }
 
     /// The movie's slider moved (`accepted` nil) or closed. A move previews the value; a
-    /// close keeps it, and a cancel keeps the value from before.
+    /// close keeps the last value shown, and a cancel keeps the value from before.
     mutating func slide(
         to value: Int, accepted: Bool?, enchanter: any CraftingMenuEnchanter
     ) -> String {
         guard let current = slider else { return "No slider" }
         var probe = selection
-        probe.magnitude = min(max(1, value), current.maximum)
+        probe.magnitude = min(max(1, accepted == nil ? value : current.value), current.maximum)
         if accepted == true {
             selection = probe
         }

@@ -186,8 +186,10 @@ item on Yes.
 
 Choosing a weapon base with a weapon chosen opens the movie's magnitude slider when the
 slider applies: OpenSky calls `ShowSlider(maximum, 1, value, step)` on the menu. The movie calls
-`CalculateCharge([value])` as the slider moves, and `SliderClose([value, accepted])` when it
-closes. A cancel keeps the value from before. The readout shows the magnitude and the uses.
+`CalculateCharge([value])` as the slider moves, and `SliderClose([accepted])` when it
+closes. The kept value is the last one `CalculateCharge` sent; a cancel keeps the value from
+before. While the slider is open, the arrow, accept, and cancel keys go to the slider. The
+readout shows the magnitude and the uses.
 
 With a full choice, the third key opens the [name field](/engine/text-entry.md) titled by the
 `sEnterItemName` button text. The name takes at most 32 characters, the PC limit on

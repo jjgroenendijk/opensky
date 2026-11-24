@@ -26,11 +26,13 @@ nonisolated public enum ItemCardSubMenuBridge: Sendable {
     /// opens beside the categories. The card fades in, and the movie asks for the 3D
     /// item through `UpdateItem3D(true)`. The lists ignore keys until the slide ends
     /// in `TWO_PANELS`, so the slide is played to its end here.
-    public static func showItemsList(runtime: SWFMovieRuntime) {
+    public static func showItemsList(atPath path: String = listsPath, runtime: SWFMovieRuntime) {
         runtime.callMovie(
-            "ShowItemsList", atPath: listsPath, arguments: [.boolean(false), .boolean(true)]
+            "ShowItemsList", atPath: path, arguments: [.boolean(false), .boolean(true)]
         )
-        for _ in 0 ..< slideTickLimit where listsState(runtime: runtime) != twoPanelsState {
+        for _ in 0 ..< slideTickLimit
+            where listsState(atPath: path, runtime: runtime) != twoPanelsState
+        {
             runtime.advance()
         }
     }
@@ -51,9 +53,11 @@ nonisolated public enum ItemCardSubMenuBridge: Sendable {
     }
 
     /// `InventoryLists.iCurrentState`: 0 no panels, 1 one, 2 two, then the transitions.
-    public static func listsState(runtime: SWFMovieRuntime) -> Int? {
+    public static func listsState(
+        atPath path: String = listsPath, runtime: SWFMovieRuntime
+    ) -> Int? {
         guard
-            let lists = runtime.node(atPath: listsPath, from: runtime.root),
+            let lists = runtime.node(atPath: path, from: runtime.root),
             case let .number(state) = lists.object.lookup("iCurrentState")?.property.value
         else { return nil }
         return Int(state)
