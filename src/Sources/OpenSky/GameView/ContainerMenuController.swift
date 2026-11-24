@@ -53,6 +53,8 @@ final class ContainerMenuController {
     private(set) var vendor: Vendor?
     /// The actor the player barters with, whom the price perks name.
     private(set) var merchant: ReferenceKey?
+    /// A chest vendor's own inventory; its unworn items and gold join the vendor's side.
+    var vendorOwnStock: InventoryHolder?
     /// The living actor whose pockets are open. Each take then rolls the chance.
     var pickpocketTarget: ReferenceKey?
     /// The follower whose own items are open, which keeps its outfit and carry weight.
@@ -142,6 +144,7 @@ final class ContainerMenuController {
         containerName = name
         self.vendor = vendor
         self.merchant = merchant
+        vendorOwnStock = nil
     }
 
     /// The vanilla menus show no action line, so the outcome goes to the log.
@@ -176,6 +179,13 @@ final class ContainerMenuController {
             runtime: inventory,
             categories: InventoryMenuCategory.tabs(texts: game.inventory.itemCards.menuTexts)
         )
+        if let own = vendorOwnStock {
+            let ownModel = InventoryMenuModel.build(
+                holder: own, runtime: inventory,
+                categories: InventoryMenuCategory.tabs(texts: game.inventory.itemCards.menuTexts)
+            )
+            refreshed.container = refreshed.container.adding(ownModel.unworn)
+        }
         refreshed.player.carriedWeight = game.inventory.armourWeights.playerCarriedWeight
         if teammateTarget != nil {
             refreshed.container = refreshed.container

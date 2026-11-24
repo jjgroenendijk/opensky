@@ -69,4 +69,8 @@ struct InventoryVendorAdapterTests {
         adapter.restockMerchantChest(Self.key)
         #expect(host.fakeWorldState.resetKindForCalls.map(\.kind) == [.inventory, .itemCopies])
     }
+
+    @Test func thePlayerBypassesNothingWithoutActorValues() {
+        #expect(adapter.playerVendorBypass == VendorBypass())
+    }
 }
