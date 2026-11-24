@@ -258,10 +258,12 @@ nonisolated public struct ActiveEffect: Equatable, Sendable {
         return copy
     }
 
-    /// The share of the magnitude the `second`-th payout gives, one-based. A payout
-    /// inside the duration gives all of it; one in the taper gives the taper's share.
+    /// The share of the magnitude the `second`-th payout gives, one-based: the mean share
+    /// over that second. A payout inside the duration gives all of it; one in the taper
+    /// gives the taper's mean share.
     public func payoutShare(ofSecond second: UInt32) -> Float {
-        taper.share(after: Float(second) - duration)
+        let end = Float(second) - duration
+        return taper.meanShare(from: end - 1, to: end)
     }
 
     /// The signed change one application of `value` makes to an actor value.

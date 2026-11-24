@@ -95,6 +95,10 @@ extension ProjectileRuntime {
             landing.spellRefusals = entry.spellHit?.refusals.count
             landing.spellMagnitudes = entry.spellHit?.adjustments
                 .map { $0.baseMagnitude * $0.multiplier } ?? []
+            landing.spellLanded = entry.spellHit?.landedCount
+            landing.spellSkipped = entry.spellHit?.skippedCount
+            landing.spellHealthTaken = entry.spellHit?.healthTaken
+            landing.spellOutcomes = entry.spellHit?.entryOutcomes ?? []
             return landing
         }
         return readout

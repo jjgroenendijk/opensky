@@ -23,6 +23,12 @@ nonisolated public struct ProjectileReadout: Equatable, Sendable {
         public var spellRefusals: Int?
         /// Each hostile entry's magnitude after resistance, in application order.
         public var spellMagnitudes: [Float] = []
+        /// For a spell: entries that landed, entries skipped for their conditions or an
+        /// unresolved effect, and the health the hit took off.
+        public var spellLanded: Int?
+        public var spellSkipped: Int?
+        public var spellHealthTaken: Float?
+        public var spellOutcomes: [String] = []
 
         public init(outcome: String, position: SIMD3<Float>) {
             self.outcome = outcome

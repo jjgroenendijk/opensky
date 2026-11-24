@@ -122,6 +122,8 @@ public struct ActiveEffectRuntime {
         for entry in entries {
             guard let resolved = effects.resolve(entry, fromPlugin: pluginName) else {
                 tally.noteUnresolvedEffect()
+                lastApplication.skipped += 1
+                lastApplication.outcomes.append("unresolved")
                 continue
             }
             // "Effect-side conditions are checked when an effect is applied and
@@ -130,11 +132,15 @@ public struct ActiveEffectRuntime {
             // (<https://ck.uesp.net/wiki/Magic_Effect>)
             guard allows(resolved.effect.conditions, on: target) else {
                 tally.noteEffectConditionSkipped()
+                lastApplication.skipped += 1
+                lastApplication.outcomes.append("effectConditions")
                 continue
             }
             let entryHolds = allows(entry.conditions, on: target)
             guard entryHolds || isConstant else {
                 tally.noteConditionSkipped()
+                lastApplication.skipped += 1
+                lastApplication.outcomes.append("entryConditions")
                 continue
             }
             let outcome = effects.plan(
@@ -143,6 +149,7 @@ public struct ActiveEffectRuntime {
             switch outcome {
             case let .skip(reason):
                 tally.note(reason)
+                lastApplication.outcomes.append("planSkip: \(reason)")
             case let .apply(application):
                 if let reason = refusal(of: application, on: target) {
                     tally.note(reason)
@@ -150,6 +157,7 @@ public struct ActiveEffectRuntime {
                     continue
                 }
                 lastApplication.landed += 1
+                lastApplication.outcomes.append(application.isInstant ? "landed" : "stored")
                 if entryHolds {
                     actOnce(application, caster: caster, on: target)
                 }

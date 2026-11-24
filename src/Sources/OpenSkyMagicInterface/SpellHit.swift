@@ -156,6 +156,14 @@ nonisolated public struct SpellHitReport: Equatable, Sendable {
     public private(set) var wardHits: [SpellWardHit] = []
     /// Targets that refused an entry, in target order.
     public private(set) var refusals: [SpellTargetRefusal] = []
+    /// Entries that landed, and entries skipped for their conditions or an unresolved
+    /// effect, across every target.
+    public private(set) var landedCount = 0
+    public private(set) var skippedCount = 0
+    /// Health the hit took off its targets, read from the values the effects wrote.
+    public private(set) var healthTaken: Float = 0
+    /// What became of each entry on each target, in order.
+    public private(set) var entryOutcomes: [String] = []
 
     public static let none = SpellHitReport()
 
@@ -173,6 +181,15 @@ nonisolated public struct SpellHitReport: Equatable, Sendable {
             brokenWards.append(holder)
         }
         wardHits.append(SpellWardHit(holder: holder, status: broken ? .broken : .absorbed))
+    }
+
+    public mutating func noteOutcome(
+        landed: Int, skipped: Int, healthTaken: Float, outcomes: [String] = []
+    ) {
+        entryOutcomes += outcomes
+        landedCount += landed
+        skippedCount += skipped
+        self.healthTaken += healthTaken
     }
 
     public mutating func noteRefusal(_ refusal: SpellTargetRefusal) {

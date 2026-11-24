@@ -102,7 +102,11 @@ extension AgentAssistReadout {
                     "spellTargets": landing.spellTargets.map { .init($0) } ?? .null,
                     "spellEntries": landing.spellEntries.map { .init($0) } ?? .null,
                     "spellRefusals": landing.spellRefusals.map { .init($0) } ?? .null,
-                    "spellMagnitudes": .array(landing.spellMagnitudes.map { .init($0) })
+                    "spellMagnitudes": .array(landing.spellMagnitudes.map { .init($0) }),
+                    "spellLanded": landing.spellLanded.map { .init($0) } ?? .null,
+                    "spellSkipped": landing.spellSkipped.map { .init($0) } ?? .null,
+                    "spellHealthTaken": landing.spellHealthTaken.map { .init($0) } ?? .null,
+                    "spellOutcomes": .array(landing.spellOutcomes.map { .string($0) })
                 ]
             })
         ]

@@ -202,15 +202,17 @@ a taper duration of 1. So the hit takes the full 25 at once, and the burn adds a
 next second.
 
 OpenSky applies it to an effect that pays out each second (Recover clear). The payout at whole
-second `n` uses `t = n - duration`, so a payout inside the duration gets the full magnitude.
+second `n` pays the mean share over that second, from `t = n - 1 - duration` to `t = n - duration`.
+A payout inside the duration gets the full magnitude, and the whole taper pays UESP's total.
 For example, a 5 second Damage Health of 10 with weight 0.5, curve 1, and taper duration 4 pays
-10 for five seconds, then 3.75, 2.5, and 1.25. At `t = 4` the taper has ended and pays nothing.
+10 for five seconds, then 4.375, 3.125, 1.875, and 0.625: 10 in all, as `10 * 0.5 * 4 / 2` gives.
+An effect with no duration also moves the value when it lands, so Firebolt's hit takes 25 at once
+and its burn pays 2.5 one second later.
 
 The wiki says a Recover effect keeps its magnitude in the taper: "taper weight is always 1 and
 taper curve is always 0". The taper duration still makes it last longer. So a held effect keeps
 its full modifier for the whole taper duration, then hands it back. A constant effect has no
-duration, so it has no taper. A zero-duration effect with a taper is stored, and pays only the
-taper.
+duration, so it has no taper.
 
 ## Hit notices
 
