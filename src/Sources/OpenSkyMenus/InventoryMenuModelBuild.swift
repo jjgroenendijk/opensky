@@ -16,7 +16,8 @@ nonisolated extension InventoryMenuModel {
         items: ItemDefinitionStore,
         goldFormID: FormID = ItemDefinitionStore.vanillaGoldFormID,
         categories: [InventoryMenuCategory] = InventoryMenuCategory.engineOrder,
-        favourites: FavouritesState = FavouritesState()
+        favourites: FavouritesState = FavouritesState(),
+        copies: InventoryMenuCopies = InventoryMenuCopies()
     ) -> InventoryMenuModel {
         var rows: [InventoryMenuEntry] = []
         var weight = 0.0
@@ -44,7 +45,8 @@ nonisolated extension InventoryMenuModel {
             row.isMiscPotion = isMiscPotion(
                 definition, isFood: row.isFood, keyword: items.miscPotionKeyword
             )
-            rows.append(row)
+            let held = copies.state.copies(of: stack.item, held: total)
+            rows += copies.rows(splitting: row, held: held)
         }
         return InventoryMenuModel(
             allEntries: rows.sorted(by: precedes),
@@ -98,6 +100,53 @@ nonisolated extension InventoryMenuModel {
     }
 }
 
+/// Each owner's item copies and what one copy is worth, so a row can stand for a copy.
+nonisolated public struct InventoryMenuCopies {
+    public var state: ItemCopyState
+    /// One copy's gold value; nil keeps the row's item value.
+    public var value: ((FormID, ItemCopy) -> Int32)?
+
+    public init(
+        state: ItemCopyState = ItemCopyState(), value: ((FormID, ItemCopy) -> Int32)? = nil
+    ) {
+        self.state = state
+        self.value = value
+    }
+
+    /// One row per kind of copy, best first, when the copies differ; else `row` alone.
+    /// The best copy holds the equipped role, and stolen copies count from the plainest.
+    func rows(splitting row: InventoryMenuEntry, held: [ItemCopy]) -> [InventoryMenuEntry] {
+        var groups: [(copy: ItemCopy, count: Int32)] = []
+        for copy in held.map(\.unchosen) {
+            if let last = groups.last, last.copy == copy {
+                groups[groups.count - 1].count += 1
+            } else {
+                groups.append((copy, 1))
+            }
+        }
+        guard groups.count > 1 || groups.first.map({ !$0.copy.isPlain }) == true
+        else { return [row] }
+        var stolen = row.stolenCount
+        var split: [InventoryMenuEntry] = []
+        for (index, group) in groups.enumerated().reversed() {
+            let mine = min(stolen, group.count)
+            stolen -= mine
+            var entry = InventoryMenuEntry(
+                item: row.item, name: group.copy.name ?? row.name, count: group.count,
+                weight: row.weight, value: value?(row.item, group.copy) ?? row.value,
+                isEquipped: row.isEquipped && index == 0, family: row.family,
+                stolenCount: mine, isFood: row.isFood, isFavourite: row.isFavourite
+            )
+            entry.isQuestItem = row.isQuestItem
+            entry.hands = index == 0 ? row.hands : []
+            entry.isMiscPotion = row.isMiscPotion
+            entry.copy = group.copy
+            split.insert(entry, at: 0)
+        }
+        return split
+    }
+}
+
 @MainActor
 extension InventoryMenuModel {
     /// The live model for `holder`, read through the runtime that owns both the
@@ -113,7 +162,19 @@ extension InventoryMenuModel {
             items: runtime.baselines.items,
             goldFormID: runtime.goldFormID,
             categories: categories,
-            favourites: favourites
+            favourites: favourites,
+            copies: copies(of: holder, runtime: runtime)
         )
+    }
+
+    /// Every held copy of each item `holder` carries, with the runtime's copy values.
+    static func copies(of holder: InventoryHolder, runtime: any InventoryAccess)
+        -> InventoryMenuCopies
+    {
+        let items = Set(runtime.inventory(of: holder).stacks.map(\.item))
+        let state = ItemCopyState(copies: Dictionary(uniqueKeysWithValues: items.map {
+            ($0.rawValue, runtime.copies(of: $0, in: holder))
+        }))
+        return InventoryMenuCopies(state: state) { runtime.value(of: $0, copy: $1) }
     }
 }

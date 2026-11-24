@@ -5,6 +5,7 @@
 import Foundation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 /// One item row: the stack plus everything the row displays.
 ///
@@ -39,6 +40,9 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
     public var hands: HandSlots = []
     /// A potion the game files under Misc, by its forge keyword.
     public var isMiscPotion = false
+    /// The copy this row stands for when the item's copies differ, one row per kind as
+    /// the game shows them; nil when every copy is alike. A row action acts on it.
+    public var copy: ItemCopy?
 
     public init(
         item: FormID,

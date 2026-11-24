@@ -52,6 +52,8 @@ struct MenuMovieRefusal: Error, CustomStringConvertible {
 public final class MenuMovieSession {
     public private(set) var isLoaded = false
     public private(set) var error: String?
+    /// The characters a typed name may use in the shown movie; nil keeps every name.
+    public private(set) var validNameCharacters: String?
     /// The movie requested last, loaded or not; nil after `stop()`.
     public private(set) var path: String?
     public private(set) var holdsLayer = false
@@ -187,6 +189,7 @@ public final class MenuMovieSession {
         guard let renderer = renderer() else { return }
         do {
             let scene = try movie.adaptScene(result.get())
+            validNameCharacters = scene.validNameCharacters
             guard try renderer.startMenuMovie(scene, prepare: movie.prepare) else {
                 isLoaded = false
                 error = "SWF runtime unavailable."

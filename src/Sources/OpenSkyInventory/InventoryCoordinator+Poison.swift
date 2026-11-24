@@ -1,5 +1,5 @@
-// Weapon poison: using a poison puts it on the weapon in the right hand, for as many
-// hits as Mod Poison Dose Count gives. The hit side lives in the magic feature.
+// Weapon poison: using a poison puts it on the wielded copy of the weapon in the right
+// hand, for as many hits as Mod Poison Dose Count gives. The hit side lives in the magic feature.
 // CK wiki "Perk Entry Point": <https://ck.uesp.net/wiki/Perk_Entry_Point>.
 // See docs/engine/alchemy.md.
 
@@ -12,10 +12,10 @@ import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 extension InventoryCoordinator.Consumables {
-    /// The poisons on the player's weapons.
-    public var playerWeaponPoisons: WeaponPoisonState {
-        coordinator.runtime?.store
-            .component(WeaponPoisonState.self, for: .player) ?? WeaponPoisonState()
+    /// The poison on the copy of `weapon` the player wields, which is the best copy.
+    public func playerPoison(on weapon: FormID) -> WeaponPoison? {
+        guard let runtime = coordinator.runtime else { return nil }
+        return runtime.inventory.copies(of: weapon, in: runtime.player).first?.poison
     }
 
     /// Whether `item` is an `ALCH` with the Poison flag, which a use puts on a weapon.
@@ -41,7 +41,7 @@ extension InventoryCoordinator.Consumables {
         guard
             let runtime = coordinator.runtime, isPoison(poison),
             let weapon = poisonableWeapon,
-            playerWeaponPoisons.poisons[weapon] == nil,
+            playerPoison(on: weapon) == nil,
             runtime.inventory.count(of: poison, in: runtime.player) > 0
         else { return nil }
         let type = runtime.inventory.baselines.items.weapon(weapon)?.animationType
@@ -66,7 +66,7 @@ extension InventoryCoordinator.Consumables {
         if runtime.inventory.baselines.items.weapon(weapon)?.animationType == .staff {
             return coordinator.alchemyLab.noteAlchemy(.cannotPoison)
         }
-        if playerWeaponPoisons.poisons[weapon] != nil {
+        if playerPoison(on: weapon) != nil {
             return coordinator.alchemyLab.noteAlchemy(.alreadyPoisoned)
         }
         do {
@@ -76,9 +76,9 @@ extension InventoryCoordinator.Consumables {
         }
         runtime.store.incrementMiscStat("Poisons Used")
         let doses = poisonDoses(of: poison)
-        runtime.store.set(
-            playerWeaponPoisons.applying(WeaponPoison(poison: poison, doses: doses), to: weapon),
-            for: .player
+        runtime.inventory.editCopy(
+            of: weapon, in: runtime.player, where: { _ in true },
+            { $0.poison = WeaponPoison(poison: poison, doses: doses) }
         )
         return coordinator.alchemyLab.noteAlchemy(.poisoned(
             weapon: coordinator.name(of: weapon),

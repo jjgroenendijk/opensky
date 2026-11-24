@@ -51,6 +51,10 @@ final class FakeCrimeInventory: InventoryAccess {
     }
 
     /// Every copy is plain: jail tests never temper or fill one.
+    func value(of item: FormID, copy _: ItemCopy) -> Int32 {
+        baselines.items.gameValue(of: item)
+    }
+
     func copies(of item: FormID, in holder: InventoryHolder) -> [ItemCopy] {
         Array(repeating: .plain, count: Int(count(of: item, in: holder)))
     }

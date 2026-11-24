@@ -58,7 +58,6 @@ nonisolated enum OpenSkySaveItemAndWorldChunks {
         OpenSkySaveItemCopies.write(entries, into: &writer)
         OpenSkySaveAlchemyWriter.writeCreatedPotions(entries, into: &writer)
         OpenSkySaveAlchemyWriter.writeIngredientKnowledge(entries, into: &writer)
-        OpenSkySaveAlchemyWriter.writeWeaponPoisons(entries, into: &writer)
         OpenSkySaveFavouritesWriter.writeFavourites(entries, into: &writer)
         OpenSkySaveEnchantingWriter.writeEnchanting(entries, into: &writer)
         OpenSkySaveStolenOriginsWriter.writeStolenOrigins(entries, into: &writer)

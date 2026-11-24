@@ -134,7 +134,6 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         /// The ingredient effects the player has learned, one bit per effect.
         static let ingredientKnowledge = "INGK"
         /// The poison on each weapon and the doses it has left.
-        static let weaponPoisons = "WPSN"
         /// The player's favourite items and the hotkeys bound to them.
         static let favourites = "FAVS"
         /// The enchantments the player knows and the ones made at an enchanter.

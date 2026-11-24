@@ -125,7 +125,11 @@ final class InventoryMenuController {
     private func publishModel() {
         let model = model
         let item = model.selectedEntry?.item
-        let card = itemDetails.card(for: item)
+        var card = itemDetails.card(for: item)
+        if let entry = model.selectedEntry, entry.copy != nil {
+            card?.name = entry.name
+            card?.value = entry.value
+        }
         let charge = itemDetails.chargePercent(of: item)
         movie.publish {
             InventoryMenuMovieBridge.publish(model, runtime: $0)
@@ -303,7 +307,13 @@ final class InventoryMenuController {
             lastActionText = "No row selected."
             return
         }
-        lastActionText = action(entry)
+        if let inventory = game.inventory.runtime?.inventory {
+            lastActionText = inventory.acting(on: entry.copy, of: entry.item, in: .player) {
+                action(entry)
+            }
+        } else {
+            lastActionText = action(entry)
+        }
         refreshModel()
     }
 

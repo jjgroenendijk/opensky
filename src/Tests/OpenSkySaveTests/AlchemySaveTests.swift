@@ -1,5 +1,5 @@
-// CPOT, INGK, and WPSN chunks: brewed potions, known ingredient effects, the
-// poison on a weapon, and the day the player left each cell come back on the player.
+// CPOT and INGK chunks: brewed potions, known ingredient effects, and the day the
+// player left each cell come back on the player.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -12,8 +12,6 @@ import Testing
 @MainActor
 struct AlchemySaveTests {
     private static let ingredient = FormID(0x0006_BC02)
-    private static let weapon = FormID(0x0001_2EB7)
-    private static let poison = FormID(0x0003_EB2E)
 
     private func snapshot(_ components: [WorldStateComponentValue]) -> WorldStateSnapshot {
         OpenSkySaveFixture.snapshot(
@@ -52,24 +50,20 @@ struct AlchemySaveTests {
         #expect(poison.id.rawValue == CreatedPotionState.firstObjectID + 1)
     }
 
-    @Test func knownEffectsAndWeaponPoisonsSurvive() throws {
+    @Test func knownEffectsSurvive() throws {
         let knowledge = IngredientKnowledgeState().learning([0, 3], of: Self.ingredient)
-        let poisons = WeaponPoisonState()
-            .applying(WeaponPoison(poison: Self.poison, doses: 3), to: Self.weapon)
-        let data = OpenSkySaveFixture.encode(snapshot([knowledge.erased, poisons.erased]))
+        let data = OpenSkySaveFixture.encode(snapshot([knowledge.erased]))
         #expect(data.range(of: Data("INGK".utf8)) != nil)
-        #expect(data.range(of: Data("WPSN".utf8)) != nil)
         let file = try OpenSkySaveDecoder.decode(data)
         let restored = file.snapshot[.player]
         #expect(restored?.component(IngredientKnowledgeState.self) == knowledge)
-        #expect(restored?.component(WeaponPoisonState.self) == poisons)
     }
 
     @Test func noAlchemyWritesNoChunk() {
         let data = OpenSkySaveFixture.encode(
             OpenSkySaveFixture.snapshot([], bystanderCell: OpenSkySaveFixture.riverwood)
         )
-        for chunk in ["CPOT", "INGK", "WPSN"] {
+        for chunk in ["CPOT", "INGK"] {
             #expect(data.range(of: Data(chunk.utf8)) == nil)
         }
     }

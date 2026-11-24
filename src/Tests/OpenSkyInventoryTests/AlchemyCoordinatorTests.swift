@@ -230,8 +230,9 @@ struct AlchemyCoordinatorTests {
             return
         }
         #expect(doses == 2)
-        #expect(lab.consumables.playerWeaponPoisons.poisons[InventoryBaselineFixture.sword]?
-            .doses == 2)
+        #expect(lab.consumables.playerPoison(on: InventoryBaselineFixture.sword)?.doses == 2)
+        let copy = harness.inventory.copies(of: InventoryBaselineFixture.sword, in: .player).first
+        #expect(copy?.poison?.poison == Fixture.poison, "the poison rides on the wielded copy")
         #expect(harness.inventory.count(of: Fixture.poison, in: .player) == 1)
         #expect(harness.store.miscStats.value("Poisons Used") == 1)
         #expect(lab.consumables.applyPoison(Fixture.poison) == .alreadyPoisoned)

@@ -26,6 +26,8 @@ public struct InventoryRuntime: InventoryAccess {
     /// A placed owner's plugin inventory by its roll. The per-frame weapon reads ask
     /// for it several times per actor, and deriving it expands leveled lists.
     private let placedBaselines = BaselineMemo<PlacedBaselineKey, ReferenceInventoryState>()
+    /// The copy a menu row acts on, shared by every copy of this runtime value.
+    let actingCopy = ActingCopy()
 
     public init(
         store: WorldStateStore,

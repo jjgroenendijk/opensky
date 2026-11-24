@@ -135,7 +135,7 @@ nonisolated public struct IngredientKnowledgeState: WorldStateComponent, Sendabl
 }
 
 /// The poison on one weapon and the hits it has left.
-nonisolated public struct WeaponPoison: Equatable, Sendable {
+nonisolated public struct WeaponPoison: Hashable, Sendable {
     public let poison: FormID
     public let doses: Int32
 
@@ -145,46 +145,11 @@ nonisolated public struct WeaponPoison: Equatable, Sendable {
     }
 }
 
-/// The poisons on an actor's weapons, by weapon FormID.
-nonisolated public struct WeaponPoisonState: WorldStateComponent, Sendable {
-    public private(set) var poisons: [FormID: WeaponPoison]
-
-    public static var componentKind: WorldStateComponentKind {
-        .weaponPoison
-    }
-
-    public init(poisons: [FormID: WeaponPoison] = [:]) {
-        self.poisons = poisons.filter { $0.value.doses > 0 }
-    }
-
-    public var isEmpty: Bool {
-        poisons.isEmpty
-    }
-
-    /// A new poison replaces the one the weapon carries.
-    public func applying(_ poison: WeaponPoison, to weapon: FormID) -> WeaponPoisonState {
-        var updated = poisons
-        updated[weapon] = poison
-        return WeaponPoisonState(poisons: updated)
-    }
-
-    /// The state after one hit with `weapon`, and the poison that hit delivers.
-    public func spendingDose(of weapon: FormID) -> (state: WeaponPoisonState, poison: FormID?) {
-        guard let current = poisons[weapon] else { return (self, nil) }
-        var updated = poisons
-        updated[weapon] = WeaponPoison(poison: current.poison, doses: current.doses - 1)
-        return (WeaponPoisonState(poisons: updated), current.poison)
-    }
-}
-
 nonisolated extension WorldStateComponentKind {
     public static let createdPotions = Self(
         rawValue: "createdPotions", order: 37, affectsCellBuild: false
     )
     public static let ingredientKnowledge = Self(
         rawValue: "ingredientKnowledge", order: 38, affectsCellBuild: false
-    )
-    public static let weaponPoison = Self(
-        rawValue: "weaponPoison", order: 39, affectsCellBuild: false
     )
 }

@@ -11,10 +11,14 @@ import OpenSkyWorldState
 nonisolated enum OpenSkySaveItemCopies: Sendable {
     private static let hasCharge: UInt8 = 1
     private static let hasEnchantment: UInt8 = 2
+    private static let hasName: UInt8 = 4
+    private static let hasPoison: UInt8 = 8
+    private static let isChosen: UInt8 = 16
 
     /// Per owner: key, cell, item count, then per item the FormID, a copy count, and per
-    /// copy an int32 level, a soul byte, a flags byte, then the charge and the
-    /// enchantment FormID the flags name. Items ascend, so equal state gives equal bytes.
+    /// copy an int32 level, a soul byte, a flags byte, then the charge, the enchantment
+    /// FormID, the name, and the poison the flags name. Items ascend, so equal state gives equal
+    /// bytes.
     /// Only owners with a copy `TMPR` cannot hold are written.
     static func write(
         _ entries: [WorldStateSnapshotEntry],
@@ -61,7 +65,8 @@ nonisolated enum OpenSkySaveItemCopies: Sendable {
     }
 
     private static func needsThisChunk(_ copy: ItemCopy) -> Bool {
-        copy.soul != 0 || copy.charge != nil || copy.enchantment != nil
+        copy.soul != 0 || copy.charge != nil || copy.enchantment != nil || copy.name != nil
+            || copy.poison != nil || copy.isChosen
     }
 
     private static func write(_ copy: ItemCopy, into payload: inout BinaryWriter) {
@@ -69,12 +74,22 @@ nonisolated enum OpenSkySaveItemCopies: Sendable {
         payload.writeUInt8(copy.soul)
         let flags = (copy.charge == nil ? 0 : hasCharge)
             | (copy.enchantment == nil ? 0 : hasEnchantment)
+            | (copy.name == nil ? 0 : hasName)
+            | (copy.poison == nil ? 0 : hasPoison)
+            | (copy.isChosen ? isChosen : 0)
         payload.writeUInt8(flags)
         if let charge = copy.charge {
             payload.writeFloat32(charge)
         }
         if let enchantment = copy.enchantment {
             payload.writeUInt32(enchantment.rawValue)
+        }
+        if let name = copy.name {
+            payload.writeString(name)
+        }
+        if let poison = copy.poison {
+            payload.writeUInt32(poison.poison.rawValue)
+            payload.writeUInt32(UInt32(bitPattern: poison.doses))
         }
     }
 
@@ -105,7 +120,18 @@ nonisolated enum OpenSkySaveItemCopies: Sendable {
         if flags & hasEnchantment != 0 {
             enchantment = try FormID(reader.uint32("ICPY enchantment"))
         }
-        return ItemCopy(level: level, soul: soul, charge: charge, enchantment: enchantment)
+        var copy = ItemCopy(level: level, soul: soul, charge: charge, enchantment: enchantment)
+        if flags & hasName != 0 {
+            copy.name = try reader.string("ICPY name")
+        }
+        if flags & hasPoison != 0 {
+            copy.poison = try WeaponPoison(
+                poison: FormID(reader.uint32("ICPY poison")),
+                doses: Int32(bitPattern: reader.uint32("ICPY doses"))
+            )
+        }
+        copy.isChosen = flags & isChosen != 0
+        return copy
     }
 
     private static func validate(_ count: UInt32, _ size: Int, _ reader: SaveReader) throws {
