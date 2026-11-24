@@ -353,6 +353,30 @@ is moved to that point as soon as the point is off screen, or after 5 seconds.
 When the game tries a failed path again, and whether a travel package ends after a failure,
 was not found.
 
+## Travel arrival
+
+A Travel to a place with a radius ends when the actor stands in its area. The actor must be in
+the same cell or worldspace as the place, within the radius across, ignoring height, and within
+a height difference of at least 100 units. The game checks this when the step starts and on
+each update, so an actor that already stands in the area ends the step at once. A loaded actor
+also ends it when its path ends. For a loaded actor that cannot reach the area, the game asks
+for the path again; no time-out was found.
+
+A Sequence goes on in the same update: the game runs up to 20 steps of a tree in one update.
+In the vanilla shop template, Sequence[Travel, UnlockDoors, Simultaneous[Sandbox,
+KeepAnEyeOn]], the doors open in the update the Travel ends
+([owners lock and unlock](/engine/crime.md#owners-lock-and-unlock)).
+
+While the actor's cell is not loaded, the tree keeps running. Travel walks the actor over game
+time; it does not place the actor at once. An actor outdoors, or in no cell, whose position
+gives no path data is moved straight to the destination instead. UnlockDoors acts while the
+actor is unloaded too. When the cell's actors attach, the game asks the current step where the
+actor belongs. A Travel names its destination only when its radius is more than 200 units. The
+actor goes to a navmesh point in that area: the radius is capped at 5000 units, and the search
+round the centre is half the radius, capped at 256. An actor already in the area is only put
+on the navmesh where it stands. Steps before the current one are not run again, and this pass
+never unlocks doors. Source: a clean-room read of the game's behaviour.
+
 ## Actors far from the player
 
 In the game, an actor's packages keep running while its cell is not loaded. It walks its path

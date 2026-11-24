@@ -46,9 +46,12 @@ the procedure tree belong to one branch.
 | 8 | uint16 | Interrupt flags |
 | 10 | uint16 | Skipped |
 
-OpenSky names these flags: must complete, keep speed at goal, once per day, use preferred
-speed, always sneak, ignore combat, weapons unequipped, weapon drawn, and wear sleep
-outfit. It keeps the other bits as raw values.
+OpenSky names these flags: must complete, keep speed at goal, unlock doors at package start
+(`0x40`), unlock doors on package change (`0x80`), once per day, use preferred speed, always
+sneak, ignore combat, weapons unequipped, weapon drawn, and wear sleep outfit
+([UESP PACK](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PACK)). It keeps the other
+bits as raw values. The two door flags open the owner's cell to the player
+([trespass](/engine/crime.md#opened-by-the-owner)).
 
 ## PSDT: schedule, 12 bytes
 

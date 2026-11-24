@@ -265,6 +265,60 @@ The cell's flags change this (UESP "Skyrim Mod:Mod File Format/CELL"):
 - A Public Area cell (`DATA` flag `0x20`), such as an inn, is never trespass.
 - An Off Limits cell (record header flag `0x20000`) charges at once, with no warning.
 
+### Who may be in a private cell
+
+The player trespasses in an interior cell when all of these hold:
+
+- crime reporting is on;
+- the cell has an owner: the cell's own, else its encounter zone's, else the worldspace's zone;
+- the cell is not a Public Area, and the owner has not opened it (below);
+- the player may not be there.
+
+The player may be there when the owner is an NPC whose relationship rank with the player is
+Friend (1) or higher, or a faction the player belongs to at the required rank. The game checks the
+state again every frame, so becoming a friend or joining the faction ends it at once. Time of day,
+doors, locks, and whether the owner is home are not checked. Followers never trespass.
+
+### Opened by the owner
+
+A shop is open while its owner has unlocked its doors. When an NPC unlocks or locks a load door it
+owns, which has a lock and leads to another cell, both cells behind the door are marked opened or
+closed. A cell with no owner keeps no mark. The owner does this:
+
+- when a package with "At Package Start Unlock Doors" (`0x40`) starts;
+- when a package with "On Package Change Unlock Doors" (`0x80`) ends and the next starts;
+- when a package runs the UnlockDoors or LockDoors procedure;
+- when the owner leaves and locks the doors behind it.
+
+A key or a lockpick does not open the cell. The mark also clears when a script changes the cell's
+owner, and a script's `Cell.SetPublic` makes the cell public. Source: a clean-room read of the
+game's behaviour.
+
+### Owners lock and unlock
+
+Each of these ways uses the same test for a door:
+
+- the NPC is alive;
+- the reference is a door with lock data, its own or, for a load door, the linked door's;
+- the door has an owner, its own or, for a load door, the linked door's; the cell's owner does
+  not count;
+- the owner is the NPC's base, or a faction the NPC is in at the door's rank. A faction owner
+  counts only on a load door.
+
+A load door's linked door is locked or unlocked with it. The doors need not be loaded or near the
+NPC. Which doors a way reaches:
+
+- The UnlockDoors and LockDoors procedures reach every such door in the cell of the procedure's
+  location. The location's radius is not used. A location outdoors reaches no door, and the
+  procedure still ends.
+- The two package flags reach the doors within 5000 units of the NPC: in an interior only its own
+  cell, outdoors every loaded cell.
+
+LockDoors first looks for a stranger in the NPC's cell. A stranger is alive, does not own the
+cell, and the NPC sees them now or saw them in the last 5 seconds. With one there, the NPC warns
+them, unlocks the doors instead, and tries again on the next update. A Public Area cell skips
+this. Source: a clean-room read of the game's behaviour.
+
 ## Lockpicking
 
 UESP "Skyrim:Lockpicking": a seen success or a seen broken pick on an owned lock is a crime, and it
