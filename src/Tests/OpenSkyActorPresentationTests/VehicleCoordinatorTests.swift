@@ -37,6 +37,12 @@ private final class FakeVehicleWorld: VehicleWorld {
     func vehicleWheels(of _: ReferenceKey) -> [SIMD2<Float>]? {
         nil
     }
+
+    var travel: VehicleRiderTravel?
+
+    func vehicleRiderTravel(of _: ReferenceKey) -> VehicleRiderTravel? {
+        travel
+    }
 }
 
 @MainActor
@@ -110,6 +116,30 @@ struct VehicleCoordinatorTests {
             at: seat
         )])
         #expect(vehicles.core.links[rider] == nil)
+    }
+
+    /// After `ExitCartBegin` the exit clip's travel carries the passenger off backwards from
+    /// its seat, turned by the clip's yaw, and it rests where the travel ended.
+    @Test func theExitTravelCarriesThePassengerOff() throws {
+        let world = FakeVehicleWorld()
+        world.poses[cart] = ReferenceTransformOverride(position: SIMD3(10, 0, 0))
+        let vehicles = VehicleCoordinator(world: world)
+        #expect(vehicles.setVehicle(rider, vehicle: cart).isEmpty)
+        _ = vehicles.advance()
+        #expect(vehicles.animationEvent("ExitCartBegin", from: rider).isEmpty)
+        world.travel = VehicleRiderTravel(offset: SIMD3(0, -300, 0), yaw: .pi)
+        _ = vehicles.advance()
+        let pose = try #require(vehicles.lastPoses[rider])
+        #expect(simd_distance(pose.position, SIMD3(10, -300, 0)) < 0.01)
+        #expect(abs(pose.rotation.z + .pi) < 0.0001)
+        world.poses[cart] = ReferenceTransformOverride(position: SIMD3(500, 0, 0))
+        _ = vehicles.advance()
+        let held = try #require(vehicles.lastPoses[rider])
+        #expect(simd_distance(held.position, SIMD3(10, -300, 0)) < 0.01)
+        #expect(vehicles.animationEvent("ExitCartEnd", from: rider) == [.followerRests(
+            rider,
+            at: held
+        )])
     }
 
     @Test func theCartExitEndOfAnActorOnNoVehicleDoesNothing() {

@@ -2,6 +2,8 @@
 // each answers its empty default and drives no port.
 
 @testable import OpenSkyActorAdapters
+import OpenSkyActorPresentation
+import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -35,6 +37,20 @@ struct ActorAdapterPartsTests {
     @Test func withoutALoaderAVehicleHasNoWheels() {
         let vehicles = VehicleWorldAdapter(game: host, stage: nil)
         #expect(vehicles.vehicleWheels(of: Self.actor)?.isEmpty == true)
+    }
+
+    /// A rider's exit travel comes from the idle's root motion, held inside the clip.
+    @Test func aRiderTravelReadsTheIdleRootMotion() {
+        let vehicles = VehicleWorldAdapter(game: host, stage: nil)
+        let idles = FakeIdlePort()
+        host.fakeIdleWorld.idles = idles
+        #expect(vehicles.vehicleRiderTravel(of: Self.actor) == nil)
+        idles.rootMotionResult = (
+            AnimationRootMotion(duration: 2, translations: [], rotations: []), elapsed: 5
+        )
+        let travel = vehicles.vehicleRiderTravel(of: Self.actor)
+        #expect(travel?.offset == .zero)
+        #expect(travel?.yaw == 0)
     }
 
     @Test func aWorldStepTicksTheControllersWithoutTraps() {
