@@ -82,7 +82,7 @@ public final class PlayerSettingsCoordinator {
         if gamepad {
             let code = slot.flatMap { bindings.gamepadCodes(for: $0.action).first }
                 ?? controlMapCode(of: event, device: .gamepad)
-            return code.flatMap { GamepadButton(controlMapCode: $0)?.artName }
+            return code.flatMap { GamepadButton(controlMapCode: $0)?.artName ?? Self.stickArt[$0] }
         }
         if let slot, let scanCode = bindings.scanCode(for: slot.action) {
             return keyName(scanCode)
@@ -97,6 +97,9 @@ public final class PlayerSettingsCoordinator {
     public func buttonName(forUserEvent event: String) -> String? {
         buttonName(forUserEvent: event, gamepad: false)
     }
+
+    /// The control map's gamepad codes for the left and right sticks, as in `Move` and `Look`.
+    private static let stickArt: [UInt32: String] = [0x000B: "360_LS", 0x000C: "360_RS"]
 
     private func controlMapCode(of event: String, device: ControlDevice) -> UInt32? {
         guard let controlMap else { return nil }

@@ -62,7 +62,10 @@ file's order. A row can take a key, and a mouse button where its mouse flag is 1
 rows are listed too: Right Attack/Block, the left mouse button by default, attacks, and Left
 Attack/Block, the right button, blocks. A mouse button is stored as 256 plus its number, as
 SKSE's `Input.psc` numbers it, and its button art is `Mouse1` for the left button up to
-`Mouse8`. The key name table has no mouse rows.
+`Mouse8`. The key name table has no mouse rows. The mouse column also uses `0x8` and `0x9`
+for the wheel (`Zoom In`, `Zoom Out`), with the art `Wheel`, and `0xa` for moving the mouse
+(`Look`), with the art `MouseMove`. In the gamepad column, `0x000b` and `0x000c` are the
+left and right sticks (`Move`, `Look`), with the art `360_LS` and `360_RS`.
 
 Auto-Move walks forward until it is pressed again or Forward or Back is pressed. Toggle Always
 Run flips whether the player runs; Run, held, gives the other speed. The install's

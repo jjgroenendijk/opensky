@@ -54,6 +54,8 @@ struct InputBindingsMouseTests {
         #expect(bindings.scanCode(for: .favorites) == 0x10)
         #expect(InputCode.mouseName(InputCode.mouse(0)) == "Mouse1")
         #expect(InputCode.mouseName(0x11) == nil)
+        #expect(InputCode.mouseName(InputCode.mouse(8)) == "Wheel")
+        #expect(InputCode.mouseName(InputCode.mouse(10)) == "MouseMove")
     }
 
     @Test @MainActor
