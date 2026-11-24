@@ -6,6 +6,7 @@ import Foundation
 public import OpenSkyActorPresentation
 import OpenSkyAIPackages
 import OpenSkyCells
+import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
@@ -143,6 +144,12 @@ extension VehicleWorldAdapter: VehicleWorld {
 
     public func vehicleWheels(of key: ReferenceKey) -> [SIMD2<Float>]? {
         wheelContacts.vehicleWheels(of: key)
+    }
+
+    public func vehicleRiderTravel(of key: ReferenceKey) -> VehicleRiderTravel? {
+        guard let (motion, elapsed) = game.idleWorld.idles.rootMotion(of: key) else { return nil }
+        let time = min(max(elapsed, 0), motion.duration)
+        return VehicleRiderTravel(offset: motion.offset(at: time), yaw: motion.yaw(at: time))
     }
 
     public func spinVehicleWheels(of key: ReferenceKey, turns: VehicleWheelTurns) {

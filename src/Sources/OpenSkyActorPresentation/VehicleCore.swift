@@ -13,6 +13,7 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
     /// The cart exit idles send this when the rider stands beside the cart, which
     /// takes it off the vehicle. See docs/engine/vehicles.md.
     public static let exitEvent = "ExitCartEnd"
+    public static let exitBeginEvent = "ExitCartBegin"
     /// A chain longer than this is a loop in plugin or script data.
     private static let maximumDepth = 8
     /// How far above a towed follower or its carrier the ground search starts, so a road

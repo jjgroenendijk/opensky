@@ -10,6 +10,26 @@ nonisolated extension VehicleCore {
     /// The seat pose moved to where `body` stands, a bone in the rider's root frame, so
     /// the rider stays where the exit clip left it instead of at the cart's centre.
     /// `ground` answers the floor height under a point; without one the seat height stays.
+    /// `start` moved by an exit clip's travel in its own frame (+x right, +y forward) and
+    /// turned by its counter-clockwise yaw, upright on the ground under it.
+    public static func travelled(
+        _ start: ReferenceTransformOverride,
+        by travel: VehicleRiderTravel,
+        ground: (SIMD3<Float>) -> Float?
+    ) -> ReferenceTransformOverride {
+        let heading = start.rotation.z
+        let forward = SIMD2(sin(heading), cos(heading))
+        let right = SIMD2(forward.y, -forward.x)
+        let step = right * travel.offset.x + forward * travel.offset.y
+        var position = start.position + SIMD3(step.x, step.y, travel.offset.z)
+        if let floor = ground(position + SIMD3(0, 0, groundSearchHeight)) {
+            position.z = floor
+        }
+        return ReferenceTransformOverride(
+            position: position, rotation: SIMD3(0, 0, heading - travel.yaw), scale: start.scale
+        )
+    }
+
     public static func standingPose(
         seat: ReferenceTransformOverride,
         body: VehicleRiderBody,
@@ -27,6 +47,18 @@ nonisolated extension VehicleCore {
             rotation.z += atan2(forward.x, forward.y)
         }
         return ReferenceTransformOverride(position: position, rotation: rotation, scale: seat.scale)
+    }
+}
+
+/// How far an idle's motion table has carried the rider's root: an offset in the frame
+/// the idle started in, and a counter-clockwise turn in radians.
+nonisolated public struct VehicleRiderTravel: Equatable, Sendable {
+    public let offset: SIMD3<Float>
+    public let yaw: Float
+
+    public init(offset: SIMD3<Float>, yaw: Float) {
+        self.offset = offset
+        self.yaw = yaw
     }
 }
 

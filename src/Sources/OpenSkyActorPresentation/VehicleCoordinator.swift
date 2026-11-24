@@ -25,6 +25,9 @@ public protocol VehicleWorld: AnyObject {
     /// `VehicleWheels.contacts` of the reference's model: nil while it loads, empty
     /// when it has no wheels or no model.
     func vehicleWheels(of key: ReferenceKey) -> [SIMD2<Float>]?
+    /// How far the idle the rider plays has carried its root since the idle started, from
+    /// the motion table; nil when the idle has no root motion.
+    func vehicleRiderTravel(of key: ReferenceKey) -> VehicleRiderTravel?
 }
 
 @MainActor
@@ -36,6 +39,10 @@ public final class VehicleCoordinator {
     /// Each seated rider's body bone in its root frame, read last frame. The exit clip
     /// moves it from the seat to the ground beside the cart.
     private var riderBodies: [ReferenceKey: VehicleRiderBody] = [:]
+    /// Each passenger getting off: the seat it left, which its exit clip's travel starts from.
+    private var exits: [ReferenceKey: ReferenceTransformOverride?] = [:]
+    /// Passengers whose exit clip has motion-table travel; they rest where it ends.
+    private var travelled: Set<ReferenceKey> = []
     weak let world: (any VehicleWorld)?
     private var hasDeltas = false
 
@@ -57,8 +64,15 @@ public final class VehicleCoordinator {
         return []
     }
 
-    /// The cart exit state's `ExitCartEnd` takes the rider off its vehicle.
+    /// `ExitCartBegin` stops pinning a passenger to its seat, so its exit clip's travel
+    /// carries it off; `ExitCartEnd` takes it off its vehicle.
     public func animationEvent(_ name: String, from actor: ReferenceKey) -> [VehicleCommand] {
+        if name.caseInsensitiveCompare(VehicleCore.exitBeginEvent) == .orderedSame {
+            if case .fixed? = core.links[actor]?.seat {
+                exits[actor] = .some(nil)
+            }
+            return []
+        }
         guard name.caseInsensitiveCompare(VehicleCore.exitEvent) == .orderedSame else { return [] }
         return detach(actor, standing: true)
     }
@@ -93,12 +107,16 @@ public final class VehicleCoordinator {
         return [.carrierHitched(horse, at: hitched)]
     }
 
-    /// `standing` rests the rider where its exit idle left its body, not on its seat.
+    /// `standing` rests a passenger where its exit clip's travel ended, as the game does.
+    /// An exit with no travel rests where the clip left the body, not on the seat.
     public func detach(_ follower: ReferenceKey, standing: Bool = false) -> [VehicleCommand] {
         guard core.links[follower] != nil else { return [] }
         let linked = linkedReferences
         let rest = lastPoses[follower].map { seat in
-            guard standing, let body = riderBodies[follower], let world else { return seat }
+            guard
+                standing, !travelled.contains(follower), let body = riderBodies[follower],
+                let world
+            else { return seat }
             return VehicleCore.standingPose(seat: seat, body: body) {
                 world.vehicleGround(at: $0, excluding: linked)
             }
@@ -106,6 +124,8 @@ public final class VehicleCoordinator {
         core.detach(follower)
         lastPoses[follower] = nil
         riderBodies[follower] = nil
+        exits[follower] = nil
+        travelled.remove(follower)
         return rest.map { [VehicleCommand.followerRests(follower, at: $0)] } ?? []
     }
 
@@ -132,6 +152,7 @@ public final class VehicleCoordinator {
             ground: { world.vehicleGround(at: $0, excluding: linked) },
             dt: dt
         )
+        applyExitTravel(world: world, linked: linked)
         var commands: [VehicleCommand] = []
         var placements: [UInt32: float4x4] = [:]
         for (key, pose) in lastPoses {
@@ -181,6 +202,24 @@ public final class VehicleCoordinator {
             )
         }
         riderBodies = bodies
+    }
+
+    /// A passenger getting off leaves its seat where the exit began and follows its
+    /// clip's travel from there, on the ground under it.
+    private func applyExitTravel(world: any VehicleWorld, linked: Set<ReferenceKey>) {
+        for (key, start) in exits {
+            guard let seat = lastPoses[key] else { continue }
+            let from = start ?? seat
+            exits[key] = from
+            guard let travel = world.vehicleRiderTravel(of: key) else {
+                lastPoses[key] = from
+                continue
+            }
+            travelled.insert(key)
+            lastPoses[key] = VehicleCore.travelled(from, by: travel) {
+                world.vehicleGround(at: $0, excluding: linked)
+            }
+        }
     }
 
     private func currentPose(of key: ReferenceKey) -> ReferenceTransformOverride? {
