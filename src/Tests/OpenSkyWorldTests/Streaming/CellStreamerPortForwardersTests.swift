@@ -38,6 +38,12 @@ struct CellStreamerPortForwardersTests {
         #expect(streamer.residentReferenceCount == 0)
         #expect(streamer.residentAnimatedVehicles().isEmpty)
         #expect(streamer.residentWorldspace == streamer.worldspaceEditorID)
+        #expect(streamer.playerCellLocation == nil, "no cell has streamed in")
+    }
+
+    @Test func aReferenceSourceWithoutCellsNamesNoPlayerCell() {
+        #expect(BareReferenceSource().playerCellLocation == nil)
+        #expect(BareReferenceSource().residentWorldspace == nil)
     }
 
     /// An exterior home names its worldspace, so a city cell is not read as Tamriel's.
@@ -101,5 +107,24 @@ struct CellStreamerPortForwardersTests {
         #expect(actors.npcHeightScale?(Self.actor) == 1.1)
         #expect(actors.npcWaterPushRace?(Self.actor) == .normal)
         #expect(actors.cellStreamer === streamer)
+    }
+}
+
+/// A reference source that knows no reference, so every default member answers.
+private final class BareReferenceSource: PapyrusWorldReferenceSource {
+    func referenceEntry(formID _: FormID) -> RuntimeReferenceEntry? {
+        nil
+    }
+
+    func referenceEntry(key _: ReferenceKey) -> RuntimeReferenceEntry? {
+        nil
+    }
+
+    func cellLocation(of _: ReferenceKey) -> CellSceneLocation? {
+        nil
+    }
+
+    func activateChildren(of _: ReferenceKey) -> [ActivateChild] {
+        []
     }
 }

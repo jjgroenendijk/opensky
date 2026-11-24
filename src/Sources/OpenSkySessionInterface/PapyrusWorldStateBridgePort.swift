@@ -89,6 +89,9 @@ public protocol PapyrusWorldStateBridgePort: AnyObject {
     @discardableResult func setQuestStage(_ stage: UInt16, for key: ReferenceKey) throws -> Bool
     var silentDeath: ReferenceKey? { get }
     func spawnReference(of base: ReferenceKey, at anchor: ReferenceKey) -> ReferenceKey?
+    /// A new reference of `base` at `placement`, in the cell the player stands in.
+    func spawnReference(of base: ReferenceKey, placement: PlacedReference.Placement)
+        -> ReferenceKey?
     /// Damages a destructible reference through its stages; forced damage passes the
     /// Ignore External Damage flag. False when it has no `DEST` data.
     @discardableResult func damageDestructible(

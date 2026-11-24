@@ -300,6 +300,10 @@ extension CellStreamer.ResidentSteps {
 }
 
 /// The streamer is the app's answer to "what does this reference decode to,
-/// and where is it right now" for the Papyrus world bridge. The
-/// three members it needs already existed; the conformance only names them.
-extension CellStreamer: PapyrusWorldReferenceSource {}
+/// and where is it right now" for the Papyrus world bridge. Only the player's
+/// cell needs a new name here; the other members already existed.
+extension CellStreamer: PapyrusWorldReferenceSource {
+    public var playerCellLocation: CellSceneLocation? {
+        currentCellLocation
+    }
+}

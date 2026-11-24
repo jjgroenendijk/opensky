@@ -21,6 +21,8 @@ nonisolated public final class FakeWorldReferences: PapyrusWorldReferenceSource 
     public var pluginPlacements: [ReferenceKey: PluginPlacement] = [:]
     /// The worldspace of the resident exterior cells; nil models an interior.
     public var residentWorldspace: String?
+    /// The cell the player stands in; nil before any cell streamed in.
+    public var playerCellLocation: CellSceneLocation?
 
     public init(
         entries: [RuntimeReferenceEntry],

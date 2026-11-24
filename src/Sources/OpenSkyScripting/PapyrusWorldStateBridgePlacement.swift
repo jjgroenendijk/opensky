@@ -40,19 +40,38 @@ extension PapyrusWorldStateBridge.Placements {
     /// the save keeps it and the cell build places it, an actor included. Nil when the
     /// base has no load-order FormID or the anchor has no cell.
     public func spawnReference(of base: ReferenceKey, at anchor: ReferenceKey) -> ReferenceKey? {
+        if anchor == bridge.playerKey {
+            // The player has no placed record: it stands where it walked to now.
+            guard let position = bridge.natives.perception.livePosition?(anchor) else { return nil }
+            return spawnReference(of: base, placement: .init(position: position, rotation: .zero))
+        }
+        guard let placement = placement(of: anchor), let location = placement.location
+        else { return nil }
+        return spawn(base, placement: placement.state.transform.placement, in: location)
+    }
+
+    /// A new reference of `base` at `placement`, in the cell the player stands in.
+    public func spawnReference(
+        of base: ReferenceKey, placement: PlacedReference.Placement
+    ) -> ReferenceKey? {
+        guard let location = bridge.ports.references?.playerCellLocation else { return nil }
+        return spawn(base, placement: placement, in: location)
+    }
+
+    private func spawn(
+        _ base: ReferenceKey, placement: PlacedReference.Placement, in location: CellSceneLocation
+    ) -> ReferenceKey? {
         guard
             case let .plugin(name, objectID) = base,
             let formID = bridge.formIDResolver?.localFormID(
                 of: ResolvedFormID(plugin: name, objectID: objectID)
-            ),
-            let placement = placement(of: anchor),
-            let location = placement.location
+            )
         else { return nil }
-        let spawn = ReferenceSpawnState(
-            base: formID, location: location, placement: placement.state.transform.placement
-        )
         let key = bridge.worldState.allocateGeneratedKey()
-        bridge.worldState.set(spawn, for: key, in: location)
+        bridge.worldState.set(
+            ReferenceSpawnState(base: formID, location: location, placement: placement),
+            for: key, in: location
+        )
         return key
     }
 
