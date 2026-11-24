@@ -73,18 +73,16 @@ struct ConditionPackageFunctionTests {
         #expect(try Self.outcome(325, equals: 0, parameter1: 1, facts: Self.running) == .true)
     }
 
-    @Test func packageFlagsAnswerServicesSleepAndInteractions() throws {
+    @Test func packageFlagsAnswerSleepAndInteractions() throws {
         let vendor: [ReferenceKey: ActorPackageFacts] = [
             Self.subject: ActorPackageFacts(
                 package: Self.package, procedure: .sleep,
-                flags: .offersServices, interruptFlags: 0x200
+                interruptFlags: 0x200
             )
         ]
         #expect(try Self.outcome(49, equals: 3, facts: vendor) == .true)
-        #expect(try Self.outcome(255, equals: 1, facts: vendor) == .true)
         #expect(try Self.outcome(503, equals: 1, facts: vendor) == .true)
         #expect(try Self.outcome(49, equals: 0, facts: Self.running) == .true)
-        #expect(try Self.outcome(255, equals: 0, facts: Self.running) == .true)
         #expect(try Self.outcome(503, equals: 0, facts: [:]) == .true)
     }
 

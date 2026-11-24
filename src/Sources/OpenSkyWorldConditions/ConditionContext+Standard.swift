@@ -83,6 +83,7 @@ nonisolated extension ConditionFunctionRegistry {
         ConditionFunctions.ConditionFunctionsLock.installLock(&registry)
         ConditionFunctions.ConditionFunctionsAttack.installAttack(&registry)
         ConditionFunctionsReferenceState.installReferenceState(&registry)
+        ConditionFunctionsServices.installServices(&registry)
         ConditionFunctions.ConditionFunctionsCamera.installCamera(&registry)
         ConditionFunctions.ConditionFunctionsFurniture.installFurniture(&registry)
         ConditionFunctionsScriptState.installScriptState(&registry)

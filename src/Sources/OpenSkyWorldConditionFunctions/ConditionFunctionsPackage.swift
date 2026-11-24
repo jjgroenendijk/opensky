@@ -1,7 +1,7 @@
 // Package condition functions, indices from xEdit wbDefinitionsTES5.pas: 161
 // GetIsCurrentPackage, 325 GetWithinPackageLocation, 611 IsNullPackageData, 612
-// GetNumericPackageData, 49 GetSleeping, 255 GetOffersServicesNow, 503
-// GetAllowWorldInteractions, 143 GetCurrentAIProcedure.
+// GetNumericPackageData, 49 GetSleeping, 503 GetAllowWorldInteractions,
+// 143 GetCurrentAIProcedure.
 // See docs/engine/condition-functions-world.md#packages.
 
 import Foundation
@@ -93,11 +93,6 @@ nonisolated public enum ConditionFunctionsPackage {
         // never occur.
         registry.register(ConditionFunction(index: 49, name: "GetSleeping") { call in
             packageFacts(call) { $0?.procedure == .sleep ? 3 : 0 }
-        })
-        registry.register(ConditionFunction(index: 255, name: "GetOffersServicesNow") { call in
-            packageFacts(call) {
-                ConditionFunctions.isTrue($0?.flags.contains(.offersServices) == true)
-            }
         })
         registry.register(ConditionFunction(index: 503, name: "GetAllowWorldInteractions") { call in
             packageFacts(call) { facts in

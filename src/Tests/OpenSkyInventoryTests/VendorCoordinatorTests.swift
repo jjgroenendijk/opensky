@@ -125,6 +125,20 @@ struct VendorCoordinatorTests {
         )))
     }
 
+    @Test func servicesNeedATradingFactionWithAList() throws {
+        let world = FakeWorld()
+        world.memberships[Self.merchant] = VendorRulesTests.memberships([IDs.pawnbroker])
+        world.hourOfDay = 12
+        let coordinator = try Self.coordinator(world)
+        #expect(coordinator.offersServices(Self.merchant))
+        world.hourOfDay = 21
+        #expect(!coordinator.offersServices(Self.merchant))
+        world.memberships[Self.merchant] = VendorRulesTests.memberships([IDs.listless])
+        world.hourOfDay = 12
+        #expect(!coordinator.offersServices(Self.merchant))
+        #expect(!coordinator.offersServices(VendorRulesTests.key(0x901)))
+    }
+
     @Test func aChestRestocksOnlyAfterTheInterval() throws {
         let world = FakeWorld()
         world.memberships[Self.merchant] = VendorRulesTests.memberships([IDs.pawnbroker])

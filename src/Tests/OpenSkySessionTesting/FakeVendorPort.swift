@@ -12,6 +12,8 @@ nonisolated public final class FakeVendorPort: VendorPort {
     public var counterpartyResult: Result<BarterCounterparty, BarterOpenRefusal>?
     public var vendorCalls: [ReferenceKey] = []
     public var vendorResult: Vendor?
+    public var offersServicesCalls: [ReferenceKey] = []
+    public var offersServicesResult = false
 
     public init() {}
 }
@@ -30,5 +32,10 @@ nonisolated extension FakeVendorPort {
     public func vendor(of actor: ReferenceKey) -> Vendor? {
         vendorCalls.append(actor)
         return vendorResult
+    }
+
+    public func offersServices(_ actor: ReferenceKey) -> Bool {
+        offersServicesCalls.append(actor)
+        return offersServicesResult
     }
 }

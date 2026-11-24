@@ -12,19 +12,10 @@ nonisolated public struct VendorHours: Equatable, Sendable {
     public let start: UInt16
     public let end: UInt16
 
-    /// Whether `hour` (0 up to 24) falls inside the window.
-    ///
-    /// Start inclusive, end exclusive. An end of 24 or more runs to midnight; a
-    /// start after the end wraps past midnight; a start equal to the end is no
-    /// window at all, so the vendor never trades.
+    /// Whether `hour` (0 up to 24) falls strictly between the start and the end. The
+    /// window never wraps past midnight, so a start at or after the end never trades.
     public func isOpen(atHour hour: Float) -> Bool {
-        guard start != end else { return false }
-        let open = Float(start)
-        let close = Float(min(end, 24))
-        if open < close {
-            return hour >= open && hour < close
-        }
-        return hour >= open || hour < close
+        Float(start) < hour && hour < Float(end)
     }
 
     public init(start: UInt16, end: UInt16) {
@@ -48,7 +39,7 @@ nonisolated public enum VendorPlace: Equatable, Sendable {
     case linkedReference(keyword: ReferenceKey?)
     /// 12: anywhere.
     case nearSelf
-    /// A type OpenSky does not read, such as an alias. It never refuses.
+    /// Any other type, such as an alias. It never passes.
     case unread(type: Int32)
 
     public init(type: Int32, link: ReferenceKey?) {
@@ -66,9 +57,11 @@ nonisolated public enum VendorPlace: Equatable, Sendable {
 
 nonisolated public struct VendorLocationRule: Equatable, Sendable {
     public let place: VendorPlace
-    /// The `VENV` radius in world units. Zero sets no distance limit: vanilla
-    /// vendors author 0 and still trade, so 0 cannot mean "on the exact spot".
+    /// The `VENV` radius in world units. Types 0 and 6 have no minimum; types 2 and
+    /// 3 use at least `minimumNearRadius`; type 1 does not read it.
     public let radius: Float
+
+    public static let minimumNearRadius: Float = 100
 
     public init(place: VendorPlace, radius: Float) {
         self.place = place
@@ -80,14 +73,19 @@ nonisolated public struct VendorLocationRule: Equatable, Sendable {
     public func allows(_ facts: VendorPlaceFacts?) -> Bool {
         guard let facts else { return true }
         switch place {
-        case .nearSelf, .unread:
+        case .nearSelf:
             return true
+        case .unread:
+            return false
         case let .inCell(cell):
-            return cell == nil || facts.cell == cell
-        case .nearReference, .nearPackageStart, .nearEditorLocation, .linkedReference:
-            // A point the world cannot place is allowed, for the reason above.
-            guard let target = facts.target, radius > 0 else { return true }
+            return cell != nil && facts.cell == cell
+        case .nearReference, .linkedReference:
+            guard let target = facts.target else { return false }
             return simd_distance(target, facts.position) <= radius
+        case .nearPackageStart, .nearEditorLocation:
+            // OpenSky cannot place a package start, so an unplaced point passes.
+            guard let target = facts.target else { return true }
+            return simd_distance(target, facts.position) <= max(radius, Self.minimumNearRadius)
         }
     }
 }

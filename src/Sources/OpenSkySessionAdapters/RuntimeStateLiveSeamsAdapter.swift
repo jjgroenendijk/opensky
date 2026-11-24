@@ -32,6 +32,7 @@ public protocol RuntimeStateLiveSeamsHost: AnyObject, SendableMetatype {
     var dialogue: any DialoguePort { get }
     var gameSession: (any GameSessionPort)? { get }
     var idleWorld: any IdleWorldPort { get }
+    var inventory: any InventoryPort { get }
     var menuMode: any MenuModePort { get }
     var packages: any PackagePort { get }
     var scenes: any ScenePort { get }
@@ -99,6 +100,11 @@ extension RuntimeStateLiveSeamsAdapter {
             game.packages.runtime?.conditionResolution { location, actor in
                 game.aiWorld.isWithin(location, actor: actor)
             } ?? PackageConditionResolution.empty
+        }
+        context.setDeferred { [game] in
+            ServicesConditionResolution { [game] actor in
+                game.inventory.vendors?.offersServices(actor) ?? false
+            }
         }
     }
 
