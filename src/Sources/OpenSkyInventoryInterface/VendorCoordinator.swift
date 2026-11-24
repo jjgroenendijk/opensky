@@ -16,6 +16,8 @@ nonisolated public enum BarterOpenRefusal: Error, Equatable, Sendable {
 nonisolated public struct BarterCounterparty: Equatable, Sendable {
     public let vendor: Vendor
     public let holder: InventoryHolder
+    /// The vendor's own inventory when `holder` is its chest: both trade together.
+    public var ownStock: InventoryHolder?
 
     public init(
         vendor: Vendor,

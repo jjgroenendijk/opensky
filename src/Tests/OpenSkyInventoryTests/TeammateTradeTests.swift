@@ -5,16 +5,12 @@ import OpenSkyInventoryInterface
 import Testing
 
 struct TeammateTradeTests {
-    @Test func theStartingOutfitStaysButAnExtraCopyMayGo() {
+    /// The game shows no outfit message: the hidden rows keep the outfit instead.
+    @Test func aTakeIsNeverRefused() {
         var facts = TeammateTradeFacts()
-        facts.outfit = 1
-        facts.carried = 1
-        #expect(TeammateTradeRule.refusal(.take, count: 1, facts) == .cannotTakeOutfit)
-        facts.carried = 2
-        #expect(TeammateTradeRule.refusal(.take, count: 1, facts) == nil)
-        #expect(TeammateTradeRule.refusal(.take, count: 2, facts) == .cannotTakeOutfit)
-        facts.outfit = 0
-        #expect(TeammateTradeRule.refusal(.take, count: 2, facts) == nil)
+        facts.capacity = 0
+        #expect(TeammateTradeRule.refusal(.take, count: 5, facts) == nil)
+        #expect(TeammateTradeRule.refusal(.buy, count: 1, facts) == nil)
     }
 
     @Test func aGiftPastTheCarryWeightIsRefused() {

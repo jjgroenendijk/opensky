@@ -31,6 +31,8 @@ public protocol VendorWorld: AnyObject {
     var vendorRestockLedger: VendorRestockLedger { get set }
     /// Returns `chest` to its plugin stock and gold.
     func restockMerchantChest(_ chest: ReferenceKey)
+    /// The player's vendor bypass actor values now.
+    var playerVendorBypass: VendorBypass { get }
 }
 
 /// The shell of the vendor domain: reads the world through `VendorWorld` and
@@ -96,7 +98,15 @@ public final class VendorCoordinator {
             restockIfDue(chest)
         }
         let vendorStock = vendor.flatMap { stock(at: VendorCore.stockKey(of: $0, actor: actor)) }
-        return VendorCore.counterparty(vendor: vendor, actor: actor, stock: vendorStock)
+        var found = VendorCore.counterparty(vendor: vendor, actor: actor, stock: vendorStock)
+        if
+            case var .success(counterparty) = found, vendor?.merchantChest != nil,
+            let own = stock(at: actor)
+        {
+            counterparty.ownStock = InventoryHolder(key: actor, owner: own.owner, cell: own.cell)
+            found = .success(counterparty)
+        }
+        return found
     }
 
     /// The rules a trade with `vendor` runs under. A nil vendor is a nominated
@@ -104,9 +114,11 @@ public final class VendorCoordinator {
     func rules(for vendor: Vendor?) -> BarterRules {
         guard let vendor else { return .unrestricted }
         let core = core
-        return BarterRules(vendor: vendor, hour: world?.hourOfDay) { [weak world] item in
+        var rules = BarterRules(vendor: vendor, hour: world?.hourOfDay) { [weak world] item in
             core.keywords(world?.itemKeywords(of: item))
         }
+        rules.bypass = world?.playerVendorBypass ?? VendorBypass()
+        return rules
     }
 
     /// A chest first seen now counts as stocked now; one stocked a full interval ago

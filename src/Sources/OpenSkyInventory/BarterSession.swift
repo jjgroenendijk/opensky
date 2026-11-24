@@ -31,6 +31,8 @@ nonisolated public enum BarterError: Error, Equatable {
     case vendorDoesNotTrade(item: FormID)
     /// Stolen copies offered to a vendor that is not a fence.
     case vendorRefusesStolen(item: FormID, stolen: Int32)
+    /// A vendor never buys a key.
+    case vendorRefusesKey(item: FormID)
 }
 
 /// The vendor rules one session trades under.
@@ -43,18 +45,29 @@ nonisolated public struct BarterRules {
     public let hour: Float?
     /// An item's keywords as `Vendor.trades(keywords:)` compares them.
     public let keywords: (FormID) -> Set<ReferenceKey>
+    /// The player's bypass values, which open what the vendor buys.
+    public var bypass = VendorBypass()
 
     public static var unrestricted: BarterRules {
         BarterRules(vendor: nil, hour: nil) { _ in [] }
     }
 
-    /// Why this vendor will not trade `item` at all, or nil when it will.
-    public func refusal(for item: FormID) -> BarterError? {
+    /// Why this vendor will not trade `item` at all, or nil when it will. On a sale the
+    /// keyword bypass skips the list, as the Merchant perk does.
+    public func refusal(for item: FormID, selling: Bool = false) -> BarterError? {
         guard let vendor else { return nil }
         if let hour, !vendor.isOpen(atHour: hour) {
             return .vendorClosed(opens: vendor.hours?.start ?? 0, closes: vendor.hours?.end ?? 0)
         }
+        if selling, bypass.keywords {
+            return nil
+        }
         return vendor.trades(keywords: keywords(item)) ? nil : .vendorDoesNotTrade(item: item)
+    }
+
+    /// Whether this vendor takes stolen copies: a fence, or the stolen bypass.
+    var buysStolen: Bool {
+        vendor?.buysStolen == true || bypass.stolen
     }
 }
 
@@ -78,6 +91,8 @@ public final class BarterSession {
     /// the caller, so a plugin that retunes barter retunes this session.
     public let pricing: BarterPricing
     public let rules: BarterRules
+    /// A chest vendor's own inventory, which trades beside the chest; nil for any other.
+    public var ownStock: InventoryHolder?
 
     private let runtime: WorldItemRuntime
 
@@ -100,8 +115,10 @@ public final class BarterSession {
 
     // MARK: - Reading
 
+    /// The gold in the chest and in the vendor's own inventory.
     public var merchantGold: Int32 {
-        inventory.goldCount(of: merchant)
+        let own = ownStock.map { inventory.goldCount(of: $0) } ?? 0
+        return Int32(clamping: Int64(inventory.goldCount(of: merchant)) + Int64(own))
     }
 
     public var playerGold: Int32 {
@@ -121,12 +138,10 @@ public final class BarterSession {
     /// The item's gold value with its enchantment, or zero when no loaded plugin
     /// describes the form — the same answer `InventoryRuntime.carriedValue` gives,
     /// because inventing a value would put a number the data never authored into a
-    /// price. A tempered copy is worth the UESP value multiplier more.
-    private func value(of item: FormID, level: Int32 = 0) -> Int32 {
-        let base = inventory.baselines.items.gameValue(of: item)
-        guard level > 0 else { return base }
-        let tempered = (Float(base) * Tempering.valueMultiplier(level: level)).rounded(.down)
-        return Int32(clamping: Int(min(tempered, Float(Int32.max))))
+    /// price. A tempered copy is worth the UESP value multiplier more, and a made
+    /// enchantment adds its own worth.
+    private func value(of item: FormID, copy: ItemCopy = .plain) -> Int32 {
+        inventory.value(of: item, copy: copy)
     }
 
     /// The whole price of the `count` copies a move from `holder` takes, each one priced
@@ -134,10 +149,10 @@ public final class BarterSession {
     private func price(
         of item: FormID, count: Int32, from holder: InventoryHolder, buying: Bool
     ) -> Int64 {
-        var levels = inventory.leavingCopies(count, of: item, in: holder).map(\.level)
-        levels += Array(repeating: 0, count: max(0, Int(count) - levels.count))
-        return levels.reduce(Int64(0)) { total, level in
-            let value = value(of: item, level: level)
+        var copies = inventory.leavingCopies(count, of: item, in: holder)
+        copies += Array(repeating: .plain, count: max(0, Int(count) - copies.count))
+        return copies.reduce(Int64(0)) { total, copy in
+            let value = value(of: item, copy: copy)
             let one = buying ? pricing.buyPrice(value: value) : pricing.sellPrice(value: value)
             return total + Int64(one)
         }
@@ -155,22 +170,36 @@ public final class BarterSession {
         if let refusal = rules.refusal(for: item) {
             throw refusal
         }
-        let available = inventory.count(of: item, in: merchant)
-        guard available >= count else {
-            throw BarterError.notStocked(item: item, wanted: count, available: available)
+        let inChest = inventory.count(of: item, in: merchant)
+        let own = ownStock.map { inventory.count(of: item, in: $0) } ?? 0
+        guard inChest + own >= count else {
+            throw BarterError.notStocked(item: item, wanted: count, available: inChest + own)
         }
-        let price = try wholePrice(price(of: item, count: count, from: merchant, buying: true))
+        // The chest's copies go first, then the vendor's own.
+        let legs = [
+            (merchant, min(count, inChest)),
+            (ownStock ?? merchant, count - min(count, inChest))
+        ]
+        .filter { $0.1 > 0 }
+        var prices: [Int32] = []
+        for (holder, legCount) in legs {
+            let legPrice = price(of: item, count: legCount, from: holder, buying: true)
+            try prices.append(wholePrice(legPrice))
+        }
+        let price = try wholePrice(prices.reduce(Int64(0)) { $0 + Int64($1) })
         let gold = playerGold
         guard gold >= price else {
             throw BarterError.playerCannotAfford(price: Int64(price), gold: gold)
         }
-        try inventory.exchange(
-            giving: (inventory.goldFormID, price),
-            taking: (item, count),
-            from: player,
-            to: merchant,
-            laundering: rules.vendor != nil
-        )
+        for (leg, legPrice) in zip(legs, prices) {
+            try inventory.exchange(
+                giving: (inventory.goldFormID, legPrice),
+                taking: (item, leg.1),
+                from: player,
+                to: leg.0,
+                laundering: rules.vendor != nil
+            )
+        }
         inventory.countBarter()
         return BarterTransaction(count: count, gold: price, unitValue: value(of: item))
     }
@@ -186,7 +215,10 @@ public final class BarterSession {
         _ item: FormID, count: Int32 = 1, acceptingLess: Bool = false
     ) throws -> BarterTransaction {
         try requirePositive(count)
-        if let refusal = rules.refusal(for: item) {
+        if rules.vendor != nil, inventory.baselines.items.definition(item)?.family == .key {
+            throw BarterError.vendorRefusesKey(item: item)
+        }
+        if let refusal = rules.refusal(for: item, selling: true) {
             throw refusal
         }
         let available = inventory.count(of: item, in: player)
@@ -194,7 +226,7 @@ public final class BarterSession {
             throw BarterError.notCarried(item: item, wanted: count, available: available)
         }
         let stolen = inventory.inventory(of: player).split(taking: count, of: item).stolen
-        if let vendor = rules.vendor, stolen > 0, !vendor.buysStolen {
+        if rules.vendor != nil, stolen > 0, !rules.buysStolen {
             throw BarterError.vendorRefusesStolen(item: item, stolen: stolen)
         }
         let asked = try wholePrice(price(of: item, count: count, from: player, buying: false))
@@ -203,6 +235,7 @@ public final class BarterSession {
             throw BarterError.merchantCannotAfford(price: Int64(asked), gold: gold)
         }
         let price = min(asked, max(0, gold))
+        try gatherGold(price)
         try inventory.exchange(
             giving: (item, count),
             taking: (inventory.goldFormID, price),
@@ -212,6 +245,16 @@ public final class BarterSession {
         )
         inventory.countBarter()
         return BarterTransaction(count: count, gold: price, unitValue: value(of: item))
+    }
+
+    /// Moves gold from the vendor's own inventory into the chest when the chest alone
+    /// cannot pay `price`.
+    private func gatherGold(_ price: Int32) throws {
+        let short = price - inventory.goldCount(of: merchant)
+        guard short > 0, let ownStock else { return }
+        let moved = min(short, inventory.goldCount(of: ownStock))
+        guard moved > 0 else { return }
+        try inventory.transfer(inventory.goldFormID, count: moved, from: ownStock, to: merchant)
     }
 
     private func requirePositive(_ count: Int32) throws {

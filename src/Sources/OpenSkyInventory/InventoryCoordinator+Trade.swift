@@ -37,7 +37,7 @@ extension InventoryCoordinator.ContainerTrade {
             request.count,
             request.name
         )
-        let (container, vendor) = (request.container, request.vendor)
+        let container = request.container
         let (merchant, acceptingLess) = (request.merchant, request.acceptingLess)
         guard let runtime = coordinator.runtime else { return .unavailable }
         if transfer == .store || transfer == .sell, coordinator.scriptItems.isQuestItem(item) {
@@ -62,8 +62,7 @@ extension InventoryCoordinator.ContainerTrade {
         case .buy:
             let bought: BarterTransaction
             do {
-                bought = try barterSession(runtime, container, vendor, merchant)
-                    .buy(item, count: count)
+                bought = try barterSession(runtime, request).buy(item, count: count)
             } catch BarterError.playerCannotAfford {
                 return .tooExpensive
             }
@@ -75,7 +74,7 @@ extension InventoryCoordinator.ContainerTrade {
         case .sell:
             let sold: BarterTransaction
             do {
-                sold = try barterSession(runtime, container, vendor, merchant)
+                sold = try barterSession(runtime, request)
                     .sell(item, count: count, acceptingLess: acceptingLess)
             } catch let BarterError.merchantCannotAfford(price, gold) {
                 return .merchantShort(price: price, gold: gold)
@@ -101,17 +100,16 @@ extension InventoryCoordinator.ContainerTrade {
     }
 
     private func barterSession(
-        _ runtime: WorldItemRuntime,
-        _ container: InventoryHolder,
-        _ vendor: Vendor?,
-        _ merchant: ReferenceKey?
+        _ runtime: WorldItemRuntime, _ request: ContainerTransferRequest
     ) -> BarterSession {
-        BarterSession(
+        let session = BarterSession(
             runtime: runtime,
-            merchant: container,
-            pricing: barterPricing(with: merchant),
-            rules: coordinator.vendors?.rules(for: vendor) ?? .unrestricted
+            merchant: request.container,
+            pricing: barterPricing(with: request.merchant),
+            rules: coordinator.vendors?.rules(for: request.vendor) ?? .unrestricted
         )
+        session.ownStock = request.ownStock
+        return session
     }
 
     /// The prices the player trades at with `merchant`: the player's live Speech skill,

@@ -186,6 +186,10 @@ extension InventoryWorldAdapter {
         vendor.restockMerchantChest(chest)
     }
 
+    public var playerVendorBypass: VendorBypass {
+        vendor.playerVendorBypass
+    }
+
     public func addItem(_ item: FormID, count: Int32, to holder: ReferenceKey) -> Bool {
         papyrus.addItem(item, count: count, to: holder)
     }

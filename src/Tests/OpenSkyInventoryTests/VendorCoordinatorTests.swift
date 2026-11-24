@@ -55,6 +55,8 @@ struct VendorCoordinatorTests {
         func restockMerchantChest(_ chest: ReferenceKey) {
             restocked.append(chest)
         }
+
+        var playerVendorBypass = VendorBypass()
     }
 
     private static let merchant = ReferenceKey.plugin(name: "vendors.esm", objectID: 0x900)

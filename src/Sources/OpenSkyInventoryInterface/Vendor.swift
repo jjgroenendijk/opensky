@@ -108,6 +108,18 @@ nonisolated public struct VendorPlaceFacts: Equatable, Sendable {
     }
 }
 
+/// The player's two vendor actor values: `Bypass Vendor Keyword Check` (94), which the
+/// Merchant perk sets, and `Bypass Vendor Stolen Check` (93). Each counts when not zero.
+nonisolated public struct VendorBypass: Equatable, Sendable {
+    public var keywords: Bool
+    public var stolen: Bool
+
+    public init(keywords: Bool = false, stolen: Bool = false) {
+        self.keywords = keywords
+        self.stolen = stolen
+    }
+}
+
 /// One actor's vendor role, resolved from its vendor faction.
 nonisolated public struct Vendor: Equatable, Sendable {
     public let faction: ReferenceKey

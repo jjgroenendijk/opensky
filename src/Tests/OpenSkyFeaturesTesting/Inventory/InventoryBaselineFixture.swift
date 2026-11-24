@@ -11,6 +11,7 @@ public import OpenSkyInventoryInterface
 public enum InventoryBaselineFixture {
     public static let gold = FormID(0x0000_000F)
     public static let lockpick = FormID(0x0000_0100)
+    public static let key = FormID(0x0000_0110)
     public static let sword = FormID(0x0000_0200)
     public static let greatsword = FormID(0x0000_0210)
     public static let cuirass = FormID(0x0000_0300)
@@ -290,6 +291,9 @@ extension InventoryBaselineFixture {
     public static func pluginBytes(playerOutfit: FormID? = nil) -> Data {
         var contents = ESMFixture.tes4()
         contents += ESMFixture.topGroup("MISC", contents: miscRecords())
+        contents += ESMFixture.topGroup(
+            "KEYM", contents: item("KEYM", formID: key.rawValue, editorID: "TestKey", value: 0)
+        )
         contents += ESMFixture.topGroup("WEAP", contents: weaponRecord())
         contents += ESMFixture.topGroup("ARMO", contents: armorRecords())
         contents += ESMFixture.topGroup("EQUP", contents: equipSlotRecords())

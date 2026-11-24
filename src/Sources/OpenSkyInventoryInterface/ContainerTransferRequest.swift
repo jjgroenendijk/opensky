@@ -10,6 +10,8 @@ public struct ContainerTransferRequest {
     public var vendor: Vendor?
     public var merchant: ReferenceKey?
     public var acceptingLess = false
+    /// A chest vendor's own inventory, which trades beside its chest.
+    public var ownStock: InventoryHolder?
 
     public init(
         _ transfer: ContainerTransfer, item: FormID, name: String,

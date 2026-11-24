@@ -23,6 +23,7 @@ import simd
 /// What `InventoryVendorAdapter` reads from the session.
 @MainActor
 public protocol InventoryVendorHost: AnyObject, SendableMetatype {
+    var actorValues: any ActorValuePort { get }
     var factions: any FactionPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var inventory: any InventoryPort { get }
@@ -117,6 +118,18 @@ extension InventoryVendorAdapter {
         for kind: WorldStateComponentKind in [.inventory, .itemCopies] {
             game.worldState.reset(kind, for: chest)
         }
+    }
+
+    var playerVendorBypass: VendorBypass {
+        let values = game.actorValues.runtime
+        func isSet(_ name: String) -> Bool {
+            guard let index = ActorValueIdentity.index(named: name) else { return false }
+            return (values?.value(at: index, on: .player) ?? 0) != 0
+        }
+        return VendorBypass(
+            keywords: isSet("Bypass Vendor Keyword Check"),
+            stolen: isSet("Bypass Vendor Stolen Check")
+        )
     }
 
     /// A record link from the loaded plugin as the identity a `PLVD` rule holds.
