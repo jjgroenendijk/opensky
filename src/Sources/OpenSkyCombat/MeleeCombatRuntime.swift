@@ -316,8 +316,29 @@ public final class MeleeCombatRuntime {
             attacker: attacker.key,
             alreadyHit: hitThisSwing
         )
+        strikeObjects(in: volume, near: attacker, world: world)
         return struck(hits, world: world).flatMap { hit in
             strikeWeapons.map { apply(hit, weapon: $0, world: world) }
+        }
+    }
+
+    /// A swing that reaches a destructible object deals it the same damage as an actor.
+    private func strikeObjects(
+        in volume: ShapeSweepQuery, near attacker: MeleeAttacker, world: any MeleeCombatWorld
+    ) {
+        let search = strikeReach(actorScale: attacker.scale) + attacker.capsule.height
+        let objects = MeleeHitDetector.hits(
+            swing: volume,
+            targets: world.meleeDestructibles(within: search, of: attacker.feet),
+            attacker: attacker.key,
+            alreadyHit: hitThisSwing
+        )
+        for object in objects {
+            hitThisSwing.insert(object.target)
+            for weapon in strikeWeapons {
+                let damage = resolveDamage(on: object.target, weapon: weapon, world: world)
+                world.damageMeleeDestructible(object.target, amount: damage.applied)
+            }
         }
     }
 

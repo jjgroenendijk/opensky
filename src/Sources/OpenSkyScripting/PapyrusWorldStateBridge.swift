@@ -490,6 +490,8 @@ extension PapyrusWorldStateBridge {
         /// Quests whose alias fill failed while scripts were attached at wire-up. Counted,
         /// not thrown: a quest running from its DNAM flag has no `Start` call to refuse.
         public var questAliasFillFailures = 0
+        /// Destruction stages passed since the session last took them.
+        public var destructionChanges: [DestructionStageChange] = []
         /// Who stands in each trigger volume, kept from the enter and leave events.
         public var triggerOccupants: [ReferenceKey: Set<ReferenceKey>] = [:]
         /// Seconds since the last `OnTrigger` repeat.

@@ -113,6 +113,8 @@ nonisolated extension OpenSkySaveFormat {
     static let minimumRelocationEntrySize = 15
     /// Smallest `RMOT` entry: the smallest key and cell (8) and the motion byte.
     static let minimumMotionTypeEntrySize = 9
+    /// Smallest `RDMG` entry: the smallest key and cell (8) and an empty path (2).
+    static let minimumDamageModelEntrySize = 14
     /// Smallest `RDLK` entry: the smallest key and cell (8) and a plugin key with an
     /// empty name (1 + 2 + 4).
     static let minimumDoorLinkEntrySize = 15

@@ -22,11 +22,18 @@ nonisolated public struct HitKnock: Equatable, Sendable {
 
 /// How an explosion knocks down the actors in it, from its `EXPL` flags.
 nonisolated public enum ExplosionKnockdown: Equatable, Sendable {
-    case never, always, byFormula
+    /// `alwaysButPlayer`: both flags, every actor but the player.
+    case never, always, byFormula, alwaysButPlayer
 
     /// Flag 0x4 knocks down always, 0x8 by the knockdown formula.
     public init(flags: UInt32?) {
-        let flags = flags ?? 0
-        self = flags & 0x4 != 0 ? .always : flags & 0x8 != 0 ? .byFormula : .never
+        let always = (flags ?? 0) & 0x4 != 0
+        let formula = (flags ?? 0) & 0x8 != 0
+        self = switch (always, formula) {
+        case (true, true): .alwaysButPlayer
+        case (true, false): .always
+        case (false, true): .byFormula
+        case (false, false): .never
+        }
     }
 }

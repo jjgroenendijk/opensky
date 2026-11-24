@@ -29,6 +29,14 @@ final class CombatMeleeWorldPart: CombatSharedPart, MeleeCombatWorld {
         shared.world.residentActors().map { MeleeTarget(key: $0.key, feet: $0.feet) }
     }
 
+    func meleeDestructibles(within radius: Float, of center: SIMD3<Float>) -> [MeleeTarget] {
+        shared.world.destructibleObjects(within: radius, of: center)
+    }
+
+    func damageMeleeDestructible(_ object: ReferenceKey, amount: Float) {
+        shared.world.damageDestructible(object, amount: amount)
+    }
+
     func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {
         shared.strikes.meleeBlock(of: target)
     }

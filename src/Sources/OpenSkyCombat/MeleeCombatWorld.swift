@@ -53,6 +53,10 @@ public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponE
 
     /// Every actor a swing could reach. Actors only — the caller's filter, not
     /// the runtime's, because only the session knows what is an ACHR.
+    /// The destructible objects within `radius` of `center` a swing can strike.
+    func meleeDestructibles(within radius: Float, of center: SIMD3<Float>) -> [MeleeTarget]
+    /// Deals a swing's damage to a destructible object.
+    func damageMeleeDestructible(_ object: ReferenceKey, amount: Float)
     func meleeTargets() -> [MeleeTarget]
 
     /// What `target` is blocking with, or nil when it is not blocking.
@@ -129,6 +133,10 @@ public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponE
 
 extension MeleeCombatWorld {
     public func noteHitReaction(_: HitReactionReport) {}
+
+    public func meleeDestructibles(within _: Float, of _: SIMD3<Float>) -> [MeleeTarget] {
+        []
+    }
 
     /// A world with no races and no actor values reads the weapon's own stagger.
     public func meleeHitFacts(

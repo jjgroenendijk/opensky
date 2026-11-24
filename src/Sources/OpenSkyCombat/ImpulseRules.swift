@@ -188,7 +188,7 @@ nonisolated public enum GameplayImpulse {
         else { return false }
         switch mode {
         case .never: return false
-        case .always: return true
+        case .always, .alwaysButPlayer: return true
         case .byFormula:
             return HitKnockback.knocksDown(
                 damage: hit.damage, health: hit.health, roll: hit.roll, settings: settings

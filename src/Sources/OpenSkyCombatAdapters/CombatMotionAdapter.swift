@@ -38,6 +38,7 @@ public protocol CombatMotionHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var packages: any PackagePort { get }
     var ragdoll: any RagdollPort { get }
+    var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
     var combatRecords: (any CombatRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }

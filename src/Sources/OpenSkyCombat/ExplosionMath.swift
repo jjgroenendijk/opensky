@@ -75,12 +75,14 @@ nonisolated public enum DebrisSelection {
         _ models: [Debris.Model],
         from center: SIMD3<Float>,
         force: Float,
-        seed: UInt64
+        seed: UInt64,
+        count: Int = pieceCount
     ) -> [DebrisPiece] {
         var random = SplitMix64(seed: seed ^ 0xD3B5)
         let speed = 300 + min(max(force.isFinite ? force : 0, 0), 2000) * 0.25
-        return pick(models, count: pieceCount, seed: seed).enumerated().map { index, model in
-            let angle = 2 * Float.pi * (Float(index) + unit(&random)) / Float(pieceCount)
+        let pieces = max(count, 0)
+        return pick(models, count: pieces, seed: seed).enumerated().map { index, model in
+            let angle = 2 * Float.pi * (Float(index) + unit(&random)) / Float(max(pieces, 1))
             let lift = 0.5 + 0.5 * unit(&random)
             let direction = simd_normalize(SIMD3(cos(angle), sin(angle), lift))
             let axis = simd_normalize(SIMD3(unit(&random), unit(&random), 1) - 0.5)
@@ -108,5 +110,39 @@ nonisolated public enum DebrisSelection {
 
     private static func unit(_ random: inout SplitMix64) -> Float {
         Float(random.next() >> 40) / Float(1 << 24)
+    }
+}
+
+/// Whether a blast reaches an actor: a clear line from just off its centre.
+/// See docs/engine/explosions.md#damage.
+nonisolated public enum ExplosionSight {
+    /// The line starts this far from the centre, along the blast's direction.
+    static let startOffset: Float = 24
+    /// A blast pointing almost straight down ignores a hit this close to the start.
+    static let downwardSlack: Float = 3
+    /// Below this z, a unit direction counts as almost straight down.
+    static let downwardZ: Float = -0.95
+
+    public static func start(center: SIMD3<Float>, direction: SIMD3<Float>?) -> SIMD3<Float> {
+        guard let direction, simd_length_squared(direction) > 0 else { return center }
+        return center + simd_normalize(direction) * startOffset
+    }
+
+    /// Whether the first hit along the line, `hitDistance` from the start, blocks it.
+    public static func blocks(hitDistance: Float?, direction: SIMD3<Float>?) -> Bool {
+        guard let hitDistance else { return false }
+        let downward = direction.map {
+            simd_length_squared($0) > 0 && simd_normalize($0).z < downwardZ
+        } ?? false
+        return !(downward && hitDistance < downwardSlack)
+    }
+}
+
+nonisolated public enum ExplosionSkill {
+    /// The damage factor of the shooter's skill: `1 + 0.5 x skill / 100` for the player,
+    /// `1 + 2 x skill / 100` for an NPC, and 1 for a source with no skill.
+    public static func scale(skill: Float?, isPlayer: Bool) -> Float {
+        guard let skill, skill.isFinite else { return 1 }
+        return 1 + (isPlayer ? 0.5 : 2) * max(skill, 0) / 100
     }
 }

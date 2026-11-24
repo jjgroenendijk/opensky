@@ -73,6 +73,18 @@ final class FakeImpulseWorld: ImpulseWorld, ExplosionWorld {
         return true
     }
 
+    var destructibles: [MeleeTarget] = []
+    private(set) var objectDamage: [ReferenceKey: Float] = [:]
+
+    func impulseDestructibles(within _: Float, of _: SIMD3<Float>) -> [MeleeTarget] {
+        destructibles
+    }
+
+    func applyPhysicsDestruction(_ amount: Float, to object: ReferenceKey) -> Bool {
+        objectDamage[object, default: 0] += amount
+        return true
+    }
+
     func showSplash(_ splash: SplashEvent) {
         splashes.append(splash)
     }
@@ -178,6 +190,17 @@ struct ImpulseRuntimeTests {
         runtime.advance()
         runtime.advance()
         #expect(abs((world.damage[.player] ?? 0) - 5.5) < 0.0001)
+    }
+
+    @Test func aFastHeavyBodyDamagesADestructibleObjectOncePerContact() {
+        let runtime = ImpulseRuntime(world: world)
+        world.surface = nil
+        let barrel = ReferenceKey.generated(70)
+        world.destructibles = [MeleeTarget(key: barrel, feet: SIMD3(0, 0, 0))]
+        world.bodies = [body(at: SIMD3(10, 0, 50), mass: 60, speed: 1000)]
+        runtime.advance()
+        runtime.advance()
+        #expect(abs((world.objectDamage[barrel] ?? 0) - 5.5) < 0.0001)
     }
 
     @Test func fastWaterKnocksDownAlongItsFlow() {

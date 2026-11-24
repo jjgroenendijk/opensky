@@ -9,6 +9,8 @@ public final class EffectsPartState {
     var lastImpulseStep: TimeInterval?
     /// The heartbeat's script-sound instance; 0 when none plays.
     public var heartbeatSound: Int32 = 0
+    /// The destructible objects a stage keeps damaging.
+    public var burns = DestructionBurns()
     private var spawnedHazards: UInt64 = 0
 
     public init() {}

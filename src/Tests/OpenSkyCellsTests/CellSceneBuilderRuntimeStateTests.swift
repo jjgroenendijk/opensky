@@ -118,6 +118,22 @@ extension CellSceneBuilderTests {
         #expect(scene.summary.summaryLine.contains("1 skipped (1 runtime-deleted)"))
     }
 
+    // MARK: - Destruction stage model
+
+    /// Only the stage's model exists on disk, so the reference draws only through it.
+    @Test(.enabled(if: Self.hasDevice))
+    func aDamageModelReplacesTheBaseModel() throws {
+        try writeLooseFile("meshes/arch/broken.nif", collisionRenderNIF())
+        let pluginData = collisionPlugin(position: SIMD3(10, 20, 30))
+        #expect(try build(pluginData: pluginData).renderScene.instanceCount == 0)
+        let scene = try build(pluginData: pluginData, state: runtimeState([
+            0x200: ReferenceStateDelta(components: [
+                .damageModel: ReferenceDamageModel(path: "arch\\broken.nif").erased
+            ])
+        ]))
+        #expect(instanceTranslations(scene) == [SIMD3(10, 20, 30)])
+    }
+
     // MARK: - Untouched references
 
     @Test(.enabled(if: Self.hasDevice))

@@ -241,6 +241,8 @@ struct MeleeCombatRealDataTests {
 /// this suite is about the graph rather than about the cell.
 @MainActor
 final class GraphBackedMeleeWorld: MeleeCombatWorld {
+    func damageMeleeDestructible(_: ReferenceKey, amount _: Float) {}
+
     private let bridge: LocomotionBridge
     private(set) var raised: [String] = []
 
