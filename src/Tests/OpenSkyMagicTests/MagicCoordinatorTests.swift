@@ -136,6 +136,27 @@ struct MagicCoordinatorTests {
         #expect(MagicCoordinator(world: FakeMagicWorld()).magicMenu.magicMenuSpells.isEmpty)
     }
 
+    @Test func theMagicMenuLeavesOutAnAbilityAndReadiesTheListedRow() throws {
+        let coordinator = try Self.castingWired(FakeMagicWorld())
+        let caster = try #require(coordinator.caster)
+        caster.spellbook.grant(
+            [
+                SpellbookFixture.Spell.resistFire,
+                SpellbookFixture.Spell.rockjoint,
+                SpellbookFixture.Spell.healing
+            ].map(SpellbookFixture.key),
+            to: .player
+        )
+        #expect(coordinator.controlPanels.playerKnownSpells().count > 1)
+        let healing = try #require(caster.spellbook.record(
+            SpellbookFixture.key(SpellbookFixture.Spell.healing)
+        ))
+        #expect(coordinator.magicMenu.magicMenuSpells.map(\.name) == [healing.displayName])
+        _ = coordinator.menuLines.readyKnownSpellLine(at: 0, in: .right)
+        #expect(caster.spellbook.state(of: .player).spell(in: .right) == healing.key)
+        #expect(coordinator.magicMenu.readyKnownSpell(at: 1, in: .right) == .noSpellSelected)
+    }
+
     @Test func theMagicMenuNamesItsTabsAndTheActiveEffects() throws {
         let menu = try Self.effectsWired(FakeMagicWorld()).magicMenu
         #expect(menu.magicMenuCategoryOrder.last == "POWERS")
