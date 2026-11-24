@@ -104,12 +104,12 @@ extension AIPerceptionSenseAdapter {
     }
 
     public func perceptionActorPairs() -> [DetectionPairKey] {
-        (game.combat.loop?.foePairs ?? []).sorted()
+        (game.combat.loop?.watchedPairs ?? []).sorted()
             .map { DetectionPairKey(observer: $0.observer, target: $0.target) }
     }
 
     private func actorTargets() -> [PerceptionTarget] {
-        let wanted = Set((game.combat.loop?.foePairs ?? []).map(\.target))
+        let wanted = Set((game.combat.loop?.watchedPairs ?? []).map(\.target))
         guard !wanted.isEmpty else { return [] }
         return game.actorWorld.combatActors()
             .filter { wanted.contains($0.key) && !$0.isDead }

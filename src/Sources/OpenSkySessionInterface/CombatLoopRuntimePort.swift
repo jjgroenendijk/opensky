@@ -21,6 +21,11 @@ public protocol CombatLoopRuntimePort: CombatControlling {
     func fightsRanged(_ key: ReferenceKey) -> Bool
     /// NPC pairs whose observer attacks its target on sight.
     var foePairs: Set<CombatFoePair> { get }
+    /// The NPC pairs perception tracks: the foe pairs, and each calm actor beside an
+    /// ally in a fight.
+    var watchedPairs: Set<CombatFoePair> { get }
+    /// The actors that started the fight they are in.
+    var aggressors: Set<ReferenceKey> { get }
     func hostility(of key: ReferenceKey) -> ActorHostility
     var isPlayerInCombat: Bool { get }
     func noteStagger(of key: ReferenceKey)

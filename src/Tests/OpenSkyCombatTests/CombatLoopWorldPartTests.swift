@@ -193,6 +193,21 @@ struct CombatLoopWorldPartTests {
         #expect(!Self.coordinator(world).loopWorld.combatAssists(Self.ally, ally: Self.foe))
     }
 
+    @Test func theHelpFactsReadTheWorldAndTheMorality() {
+        let world = FakeCoordinatorWorld()
+        let coordinator = Self.coordinator(world)
+        let part = coordinator.loopWorld
+        #expect(!part.combatIsTeammate(Self.ally))
+        #expect(part.combatCrimeStanding(of: Self.foe, judgedBy: Self.ally) == .clean)
+        #expect(!part.combatIsGuard(Self.ally))
+        #expect(!part.combatAttacksPlayerOnSightForCrimes(Self.ally))
+        #expect(part.combatMorality(of: Self.ally) == 0)
+        world.values[Self.ally] = [CombatLoopWorldPart.moralityIndex: 3]
+        #expect(part.combatMorality(of: Self.ally) == 3)
+        coordinator.shared.usesTemperament = false
+        #expect(part.combatMorality(of: Self.ally) == 0)
+    }
+
     @Test func anActorWithoutAReactionCountsAsNoFriendOfThePlayer() {
         let part = Self.coordinator(FakeCoordinatorWorld()).loopWorld
         #expect(part.combatReaction(toPlayerOf: Self.ally) == nil)

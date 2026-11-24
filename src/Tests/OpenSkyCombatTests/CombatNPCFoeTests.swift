@@ -54,6 +54,7 @@ struct CombatNPCFoeTests {
         world.weapons[helper] = MeleeWeaponProfile(damage: 5, reach: 1)
         world.assistPairs = [CombatFoePair(observer: helper, target: Self.guardKey)]
         world.pairAwareness[Self.guardSeesBandit] = .detected(at: SIMD3(560, 0, 0))
+        world.awareness[helper] = .detected(at: SIMD3(500, 0, 0))
         Fixture.run(runtime, seconds: Fixture.cycleSeconds * 3)
 
         #expect(runtime.combatTarget(of: helper) == Self.bandit)
@@ -75,6 +76,7 @@ struct CombatNPCFoeTests {
             CombatFoePair(observer: helper, target: Self.bandit)
         ]
         world.pairAwareness[Self.guardSeesBandit] = .detected(at: SIMD3(560, 0, 0))
+        world.awareness[helper] = .detected(at: SIMD3(500, 0, 0))
         Fixture.run(runtime, seconds: Fixture.cycleSeconds * 3)
         #expect(runtime.combatTarget(of: helper) == nil)
         #expect(runtime.npcAssists.isEmpty)

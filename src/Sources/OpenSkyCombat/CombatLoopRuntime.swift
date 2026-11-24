@@ -126,6 +126,16 @@ public final class CombatLoopRuntime: CombatControlling {
     var retaliating: Set<ReferenceKey> = []
     /// Calm actors that joined an ally's fight against an NPC, with that NPC.
     var npcAssists: [ReferenceKey: ReferenceKey] = [:]
+    /// Each calm actor beside an ally in a fight, which perception tracks so the actor
+    /// helps only an ally it detects.
+    public internal(set) var allyWatchPairs: Set<CombatFoePair> = []
+    /// The actors that started the fight they are in.
+    public internal(set) var aggressors: Set<ReferenceKey> = []
+    /// Actors whose mark this fight was decided. A swing parks the machine, so a fighter
+    /// re-enters combat many times in one fight.
+    var markJudged: Set<ReferenceKey> = []
+    /// Actors that joined an ally's fight, with that ally, until they enter combat.
+    var joinedGroups: [ReferenceKey: ReferenceKey] = [:]
 
     public init(settings: CombatSettings, world: (any CombatLoopWorld)? = nil) {
         self.settings = settings
@@ -160,29 +170,6 @@ public final class CombatLoopRuntime: CombatControlling {
     public func provoke(_ key: ReferenceKey) -> Bool {
         guard key != .player, hostility(of: key) != .hostile else { return false }
         return setHostility(.hostile, on: key)
-    }
-
-    /// `actor` joins `ally`'s fight against the player, as Assistance asks: it turns
-    /// hostile and engages without first having to see the player.
-    func joinFight(_ actor: ReferenceKey, assisting ally: ReferenceKey) {
-        guard provoke(actor) else { return }
-        provoked.insert(actor)
-        record(.assisted(actor, ally: ally))
-    }
-
-    /// Interrupts `key`'s attack and plays its stagger clip.
-    ///
-    /// A charge in the actor's hand goes with the attack: the same blow that
-    /// takes a swing away takes a cast away, which is why `isAttacking` counts
-    /// the casting phase.
-    public func noteStagger(of key: ReferenceKey) {
-        var machine = behaviors[key] ?? makeMachine(for: key)
-        if machine.pendingCast != nil {
-            world?.cancelCombatCast(by: key)
-        }
-        guard machine.stagger() else { return }
-        behaviors[key] = machine
-        world?.playCombatClip(.stagger, on: key)
     }
 
     // MARK: - Reading
@@ -301,8 +288,14 @@ public final class CombatLoopRuntime: CombatControlling {
         of key: ReferenceKey, inputs: CombatBehaviorInputs
     ) -> CombatBehaviorStep {
         var machine = behaviors[key] ?? makeMachine(for: key)
+        let wasEngaged = machine.isEngaged
         let step = machine.step(seconds: Self.fixedStepSeconds, inputs: inputs)
         behaviors[key] = machine
+        if !wasEngaged, machine.isEngaged, let world {
+            noteEnteredCombat(key, provoked: provoked.contains(key), world: world)
+        } else if wasEngaged, !machine.isEngaged {
+            forgetMark(of: key)
+        }
         if machine.isEngaged, inputs.awareness.isDetected {
             provoked.remove(key)
         }
@@ -358,6 +351,7 @@ public final class CombatLoopRuntime: CombatControlling {
         dangerWatches.removeValue(forKey: key)
         recoilers.remove(key)
         following.removeValue(forKey: key)
+        forgetMark(of: key)
     }
 
     public func record(_ outcome: CombatLoopOutcome) {
@@ -371,6 +365,7 @@ public final class CombatLoopRuntime: CombatControlling {
     private func endFight(of key: ReferenceKey, world: any CombatLoopWorld) {
         forcedTargets.removeValue(forKey: key)
         provoked.remove(key)
+        forgetMark(of: key)
         guard behaviors[key] != nil else { return }
         if behaviors[key]?.pendingCast != nil {
             world.cancelCombatCast(by: key)
@@ -494,5 +489,31 @@ extension CombatLoopRuntime {
             incomingTrace.removeFirst(incomingTrace.count - Self.traceLimit)
         }
         playerDamageFlash = 1
+    }
+}
+
+extension CombatLoopRuntime {
+    /// `actor` joins `ally`'s fight against the player, as Assistance asks: it turns
+    /// hostile and engages without first having to see the player.
+    func joinFight(_ actor: ReferenceKey, assisting ally: ReferenceKey) {
+        guard provoke(actor) else { return }
+        provoked.insert(actor)
+        joinedGroups[actor] = ally
+        record(.assisted(actor, ally: ally))
+    }
+
+    /// Interrupts `key`'s attack and plays its stagger clip.
+    ///
+    /// A charge in the actor's hand goes with the attack: the same blow that
+    /// takes a swing away takes a cast away, which is why `isAttacking` counts
+    /// the casting phase.
+    public func noteStagger(of key: ReferenceKey) {
+        var machine = behaviors[key] ?? makeMachine(for: key)
+        if machine.pendingCast != nil {
+            world?.cancelCombatCast(by: key)
+        }
+        guard machine.stagger() else { return }
+        behaviors[key] = machine
+        world?.playCombatClip(.stagger, on: key)
     }
 }

@@ -42,6 +42,12 @@ nonisolated public final class FakeCrimePort: CrimePort {
     public var advanceGuardResponseCallCount = 0
     public var advanceGuardResponseResult: [CrimeCommand] = []
     public var alarmReadoutValue: CrimeAlarmReadout?
+    public var assistStandingCalls: [(actor: ReferenceKey, helper: ReferenceKey)] = []
+    public var assistStandingResult: CrimeAssistStanding?
+    public var isGuardCalls: [ReferenceKey] = []
+    public var isGuardResult = false
+    public var attacksPlayerOnSightForCrimesCalls: [ReferenceKey] = []
+    public var attacksPlayerOnSightForCrimesResult = false
     public var canPayCrimeGoldCalls: [ReferenceKey] = []
     public var canPayCrimeGoldResult: Bool?
     public var settleArrestCalls: [(faction: ReferenceKey, outcome: ArrestOutcome)] = []
@@ -172,6 +178,26 @@ nonisolated extension FakeCrimePort {
             return alarmReadoutValue
         }
         set { alarmReadoutValue = newValue }
+    }
+
+    public func assistStanding(of actor: ReferenceKey, judgedBy helper: ReferenceKey)
+        -> CrimeAssistStanding
+    {
+        assistStandingCalls.append((actor: actor, helper: helper))
+        guard let assistStandingResult else {
+            preconditionFailure("FakeCrimePort.assistStanding has no result")
+        }
+        return assistStandingResult
+    }
+
+    public func isGuard(_ key: ReferenceKey) -> Bool {
+        isGuardCalls.append(key)
+        return isGuardResult
+    }
+
+    public func attacksPlayerOnSightForCrimes(_ key: ReferenceKey) -> Bool {
+        attacksPlayerOnSightForCrimesCalls.append(key)
+        return attacksPlayerOnSightForCrimesResult
     }
 
     public func canPayCrimeGold(to faction: ReferenceKey) -> Bool? {

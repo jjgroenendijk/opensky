@@ -4,6 +4,7 @@ import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyCombatAdapters
 import OpenSkyCombatInterface
+import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import OpenSkyPerceptionInterface
@@ -42,6 +43,23 @@ struct CombatWorldFactsTests {
         host.fakeFactions.isHostileResult = true
         #expect(adapter.isHostile(Self.foe, toward: .player))
         #expect(host.fakeFactions.isHostileCalls.map(\.observer) == [Self.foe])
+    }
+
+    @Test func theHelpFactsGoThroughTheScriptsAndTheCrimeState() {
+        #expect(!adapter.isPlayerTeammate(Self.foe))
+        host.fakeCrime.assistStandingResult = .clean
+        #expect(adapter.crimeStanding(of: .player, judgedBy: Self.foe) == .clean)
+        host.fakeCrime.assistStandingResult = .criminal
+        #expect(adapter.crimeStanding(of: .player, judgedBy: Self.foe) == .criminal)
+        host.fakeCrime.assistStandingResult = .criminalWhileAGuardFights
+        #expect(
+            adapter.crimeStanding(of: .player, judgedBy: Self.foe) == .criminalWhileAGuardFights
+        )
+        host.fakeCrime.isGuardResult = true
+        host.fakeCrime.attacksPlayerOnSightForCrimesResult = true
+        #expect(adapter.isGuard(Self.foe))
+        #expect(adapter.attacksPlayerOnSightForCrimes(Self.foe))
+        #expect(host.fakeCrime.isGuardCalls == [Self.foe])
     }
 
     @Test func withoutRuntimesTheActorFactsAreEmpty() {

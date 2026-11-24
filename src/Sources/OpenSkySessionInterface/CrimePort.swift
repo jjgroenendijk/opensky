@@ -38,6 +38,13 @@ public protocol CrimePort: CrimeArrestSession {
     func advanceGuardResponse() -> [CrimeCommand]
 
     var alarmReadout: CrimeAlarmReadout { get }
+
+    func assistStanding(of actor: ReferenceKey, judgedBy helper: ReferenceKey)
+        -> CrimeAssistStanding
+
+    func isGuard(_ key: ReferenceKey) -> Bool
+
+    func attacksPlayerOnSightForCrimes(_ key: ReferenceKey) -> Bool
 }
 
 /// The default arguments a protocol requirement cannot carry.

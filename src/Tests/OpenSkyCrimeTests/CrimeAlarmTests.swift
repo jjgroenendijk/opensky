@@ -20,7 +20,7 @@ struct CrimeAlarmTests {
     private static let guardKey = CrimeFixture.key(CrimeFixture.Actors.shopkeeper)
     private static let ring = FormID(0x7A0)
 
-    private static func coordinator(
+    static func coordinator(
         _ world: FakeCrimeSessionWorld, witnesses: [ReferenceKey]
     ) throws -> CrimeCoordinator {
         let coordinator = try CrimeCoordinator(
