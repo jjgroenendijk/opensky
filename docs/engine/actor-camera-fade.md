@@ -130,10 +130,20 @@ The distance fade of a reference, an actor included, is separate
 
 ## OpenSky
 
-OpenSky follows the rule with what the renderer has. The probe tests each drawn shape of an
-actor: its world box, grown by the probe radius, and the radius is half the box's diagonal. The
-shapes are drawn where their pose puts them, so riders who share one root on a cart stay apart.
-The pivot is the player's feet plus its eye height, 112, in place of the pivot height. The
-player's capsule stands at the centre of its drawn shapes, with radius 24. OpenSky does not
-yet use the seated test, the dead bodies that block the game's probe, or the mount rule.
-`state frame` lists the faded actors under `actorCameraFade`.
+OpenSky follows the rule, with these choices:
+
+- Each frame, every living actor near the sweep but the ridden mount publishes its bodies: its
+  ragdoll's bone capsules where its animation holds them, so riders who share one root on a cart
+  stay apart. An actor without a ragdoll publishes its movement capsule. A hull body becomes the
+  sphere around its points.
+- A bone body's node bound is taken as the body's own bound: half its length plus its radius. A
+  movement capsule's bound is half its height.
+- The pivot is the player's feet plus the third-person pivot height. The target is the player's
+  movement capsule, and its height is the capsule height.
+- A seated player measures from the seat idle's head bone.
+- Third person starts fades; first person holds them; the free camera and a loading screen
+  freeze them. A blocker before an actor does not end the sweep, because the third-person
+  camera has already pulled the eye in front of it.
+- Invisibility, a script's alpha, and the high process level do not change the camera fade yet.
+
+`state frame` lists the faded actors under `actorCameraFade`, with how far each is drawn faded.

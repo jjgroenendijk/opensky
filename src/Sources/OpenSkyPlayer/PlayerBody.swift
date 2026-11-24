@@ -24,6 +24,8 @@ nonisolated public final class PlayerBody {
     /// reference (`ReferenceKey.player`), so it carries the null FormID here and
     /// the assembly's reason-tagged skips name it as "player" in the readout.
     public static let actorFormID = FormID(0)
+    /// The player's placed reference, which keys the body's fades in the renderer.
+    public static let referenceFormID: UInt32 = 0x14
 
     public let assembly: ActorAssembly<ActorRenderAsset>
     public let animation: SkinnedPosePlayback
@@ -55,7 +57,8 @@ nonisolated public final class PlayerBody {
         )
         render = RenderScene(instances: assembly.renderPlacements(
             at: matrix_identity_float4x4,
-            faceMorphs: faceMorphs.merging(cloth?.renderBinding ?? [:]) { face, _ in face }
+            faceMorphs: faceMorphs.merging(cloth?.renderBinding ?? [:]) { face, _ in face },
+            reference: Self.referenceFormID
         ))
     }
 
@@ -77,7 +80,8 @@ nonisolated public final class PlayerBody {
         transform = wanted
         render = RenderScene(instances: assembly.renderPlacements(
             at: wanted,
-            faceMorphs: faceMorphs.merging(cloth?.renderBinding ?? [:]) { face, _ in face }
+            faceMorphs: faceMorphs.merging(cloth?.renderBinding ?? [:]) { face, _ in face },
+            reference: Self.referenceFormID
         ))
     }
 

@@ -24,6 +24,8 @@ public enum FrameStep: Int, FramePhase {
     case ragdoll
     case animationEvents
     case cinematicCamera
+    /// After the actors' poses, for the actor camera fade the renderer runs.
+    case actorCameraBodies
     case loadingScreen
     case sessionStartTiming
     /// After streaming, so the HUD reads this frame's streamer update.

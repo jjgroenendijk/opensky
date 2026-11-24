@@ -1,6 +1,7 @@
 // The state a new session's audio, sky, rig, and motion parts start with.
 
 @testable import OpenSkyWorld
+import simd
 import Testing
 
 @MainActor
@@ -27,5 +28,15 @@ struct SessionPartsTests {
         let motion = SessionMotion()
         #expect(!motion.isPlayerParalysed)
         #expect(motion.playerWalkPath.isEmpty)
+    }
+
+    @Test func aSeatedPlayerHeadMovesWithTheSeat() {
+        let motion = SessionMotion()
+        #expect(motion.seatedHeadInWorld == nil)
+        var seat = matrix_identity_float4x4
+        seat.columns.3 = SIMD4(100, 0, 50, 1)
+        motion.playerSeat = seat
+        motion.seatedHead = SIMD3(0, 10, 90)
+        #expect(motion.seatedHeadInWorld == SIMD3(100, 10, 140))
     }
 }

@@ -34,6 +34,7 @@ nonisolated public final class FakeGameSessionPort: GameSessionPort {
     public var gameTimeValue: RendererGameTime?
     public var imageSpaceValue: ImageSpaceState?
     public var instancePosesValue: RenderInstancePoses?
+    public var actorCameraBodies: [ActorCameraFade.Candidate] = []
     public var isCinematicCameraEngaged = false
     public var lastScriptUpdateMS: Double = 0
     public var lastSimulationMS: Double = 0

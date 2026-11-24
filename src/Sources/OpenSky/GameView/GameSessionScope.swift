@@ -383,6 +383,8 @@ final class GameSessionScope {
         game: ports, stage: stage,
         isEnabled: playerSettings.store.bool(.characterCapeCloth)
     )
+    /// The living actors' bodies the actor camera fade sweeps against.
+    lazy var actorCameraBodies = ActorCameraBodiesAdapter(game: ports, stage: stage)
     /// The behaviour graphs of the effects on actors, which hear the actors' events.
     lazy var effectGraphWorld = EffectGraphWorldAdapter(game: ports, stage: stage)
     lazy var effectGraphs = EffectGraphCoordinator(
