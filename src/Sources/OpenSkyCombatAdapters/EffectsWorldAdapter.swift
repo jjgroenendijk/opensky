@@ -43,7 +43,7 @@ public protocol EffectsWorldHost: AnyObject, SendableMetatype {
 
 /// Every host an `EffectsWorldAdapter` part reads, all one object.
 public typealias EffectsWorldHosts = EffectsBlastsHost & EffectsBodyImpulsesHost &
-    EffectsEffectPlacementHost &
+    EffectsDestructionHost & EffectsEffectPlacementHost &
     EffectsLocatorHost & EffectsTrapControlHost & EffectsWorldHost
 
 public final class EffectsWorldAdapter {
@@ -241,7 +241,30 @@ final class EffectsFrameLooks {
                 transform.columns.3 = SIMD4(hazard.position, 1)
                 return VisualEffectModel(path: path, transform: transform)
             }
-        return debris + hazards + blasts.projectileModels()
+        return debris + hazards + blasts.projectileModels() + runeModels()
+    }
+
+    /// Each placed rune's projectile model, standing where it waits.
+    func runeModels() -> [VisualEffectModel] {
+        game.magic.runeMarkers.compactMap { rune in
+            guard
+                let link = rune.projectile,
+                let model = game.combat.items?.projectileProfile(link)?.visuals.model
+            else { return nil }
+            var transform = matrix_identity_float4x4
+            transform.columns.3 = SIMD4(rune.position, 1)
+            return VisualEffectModel(path: model, transform: transform)
+        }
+    }
+
+    /// The projectile light of each rune whose fuse blink is lit.
+    func runeLights() -> [RenderPointLight] {
+        let plugin = game.combat.explosions.itemPlugin
+        return game.magic.runeMarkers.filter(\.isLit).compactMap { rune in
+            rune.projectile.flatMap { game.combat.items?.projectileProfile($0)?.visuals.light }
+                .flatMap { game.effects.records.resolve($0, fromPlugin: plugin) }
+                .flatMap { blasts.renderLight($0, at: rune.position, strength: 1) }
+        }
     }
 
     /// Lasting race-ability looks for actors that arrived, and their removal for
