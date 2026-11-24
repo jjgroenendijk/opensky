@@ -20,4 +20,11 @@ struct MenuMovieFramePacerTests {
         #expect(pacer.ticks(at: 5.125, frameRate: 0) == 3)
         #expect(pacer.ticks(at: 4, frameRate: 30) == 0)
     }
+
+    /// The HUD moves at most 1/24 s in one update: a stall of 5 s plays one 24 fps frame.
+    @Test func aMaximumIntervalCapsOneCall() {
+        var pacer = MenuMovieFramePacer()
+        _ = pacer.ticks(at: 0, frameRate: 24, maximumInterval: 1.0 / 24)
+        #expect(pacer.ticks(at: 5, frameRate: 24, maximumInterval: 1.0 / 24) == 1)
+    }
 }

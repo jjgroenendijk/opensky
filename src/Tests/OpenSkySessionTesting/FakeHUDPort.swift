@@ -23,6 +23,7 @@ nonisolated public final class FakeHUDPort: HUDPort {
     public var shownNotifications: [String] = []
     public var showsCalls: [HUDModeClip] = []
     public var showsResult = false
+    public var tickCalls: [Double] = []
     public var updateCallCount = 0
     public var updatePlayerSetMarkerCalls: [SIMD3<Float>?] = []
     public var updateCompassLocationsCalls: [[CompassLocation]] = []
@@ -59,6 +60,10 @@ nonisolated extension FakeHUDPort {
     public func shows(_ clip: HUDModeClip) -> Bool {
         showsCalls.append(clip)
         return showsResult
+    }
+
+    public func tick(now: Double) {
+        tickCalls.append(now)
     }
 
     public func update(_ change: (inout HUDSettings) -> Void) {
