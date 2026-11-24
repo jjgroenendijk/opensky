@@ -21,10 +21,11 @@ struct EnchantingPerks {
         modified(1, at: .modEnchantmentPower, base: base, tab: .enchantment)
     }
 
-    /// The `ENIT` cost under the manual cost flag, else the effects' sum, then
-    /// `Mod Spell Cost` (38).
+    /// The `ENIT` cost under the manual cost flag, else the effects' sum with no
+    /// fraction dropped, then `Mod Spell Cost` (38).
     func cost(of base: ResolvedEnchantment) -> Float {
-        let raw = base.cost.isManual ? Float(base.cost.cost) : base.cost.autoCalculated
+        let raw = base.cost.isManual
+            ? Float(base.cost.cost) : base.effects.reduce(0) { $0 + $1.cost }
         return modified(raw, at: .modSpellCost, base: base, tab: .spell)
     }
 

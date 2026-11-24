@@ -35,6 +35,21 @@ extension EnchantingTests {
         #expect(copy.enchantment != nil)
     }
 
+    /// An effect-priced base keeps its fraction: 10^1.1 = 12.59, so at skill 100 a use
+    /// costs 3 * 12.59^1.1 * 0.2929 = 14.27, where a whole 12 would give 13.
+    @Test func anEffectPricedBaseKeepsTheFractionOfItsCost() throws {
+        let trial = try session(carrying: [Records.ironSword, Gems.grandFilled])
+        trial.knowing([Records.fireAutoBase])
+        try trial.coordinator.enchantingTable.enchant(
+            Records.ironSword, with: [trial.key(Records.fireAutoBase)],
+            gem: trial.gem(Gems.grandFilled)
+        )
+        let charge = try #require(trial.coordinator.weaponEnchantments.enchantmentCharge(
+            of: Records.ironSword, on: .player
+        ))
+        #expect(charge.costPerUse == 14)
+    }
+
     @Test func apparelAndAnUnfinishedChoiceShowNoSlider() throws {
         let trial = try session(carrying: [Records.ring, Gems.grandFilled])
         trial.knowing([Records.healthBase])
