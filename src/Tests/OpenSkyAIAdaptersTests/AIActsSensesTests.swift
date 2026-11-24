@@ -62,6 +62,16 @@ struct AIActsSensesTests {
         #expect(adapter.worlds.packageAction(.forceGreet(topic: nil), actor: Self.actor) == .failed)
     }
 
+    /// A force-greet takes over the conversation of another speaker, and keeps its own.
+    @Test(arguments: [false, true])
+    func aForcedGreetingTakesOverAnotherConversation(ownConversation: Bool) {
+        host.fakeDialogue.claimForceGreetResult = true
+        host.fakeDialogueMenu.isOpen = true
+        host.fakeDialogueMenu.speakerOrTarget = ownConversation ? Self.actor : Self.other
+        _ = adapter.worlds.packageAction(.forceGreet(topic: nil), actor: Self.actor)
+        #expect(host.fakeDialogueMenu.closeCallCount == (ownConversation ? 0 : 1))
+    }
+
     @Test func withoutScriptsScriptedActsFail() {
         #expect(adapter.worlds.packageAction(.activate(Self.other), actor: Self.actor) == .failed)
         #expect(adapter.worlds.packageAction(.pickUp(Self.other), actor: Self.actor) == .failed)

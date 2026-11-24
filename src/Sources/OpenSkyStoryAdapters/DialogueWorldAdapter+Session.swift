@@ -61,15 +61,21 @@ extension DialogueWorldAdapter {
         game.dialogueMenu.begin(with: event.speaker)
     }
 
-    /// A conversation ends when its speaker dies, and when the player is put somewhere
-    /// new: a door, a teleport, jail, or fast travel. `playerPlacements` counts those moves.
+    /// A conversation ends when its speaker dies, unloads, or is disabled, and when the
+    /// player is put somewhere new: a door, a teleport, jail, or fast travel.
+    /// `playerPlacements` counts those moves. A disabled actor leaves the resident set.
     public func closeMenuWhenConversationEnds(playerPlacements: Int) {
         defer { seenPlayerPlacements = playerPlacements }
         let menu = game.dialogueMenu
-        guard menu.isOpen, let speaker = menu.speakerOrTarget else { return }
+        guard menu.isOpen, let speaker = menu.speakerOrTarget else {
+            residentSpeaker = nil
+            return
+        }
         let moved = seenPlayerPlacements.map { $0 != playerPlacements } ?? false
-        let dead = hosts.actorWorld.combatActor(key: speaker)?.isDead == true
-        if moved || dead {
+        let actor = hosts.actorWorld.combatActor(key: speaker)
+        let gone = actor == nil && residentSpeaker == speaker
+        residentSpeaker = actor == nil ? nil : speaker
+        if moved || gone || actor?.isDead == true {
             menu.close()
         }
     }

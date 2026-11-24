@@ -41,6 +41,23 @@ struct DialogueWorldTests {
         #expect(host.fakeDialogueMenu.beginCalls == [Self.speaker])
     }
 
+    /// An unloaded or disabled speaker leaves the resident actors; a talking activator,
+    /// never resident, keeps its menu.
+    @Test(arguments: [false, true])
+    func theMenuClosesWhenItsSpeakerLeavesTheResidentActors(wasResident: Bool) {
+        host.fakeDialogueMenu.isOpen = true
+        host.fakeDialogueMenu.speakerOrTarget = Self.speaker
+        if wasResident {
+            host.fakeActorWorld.combatActorResult = CombatActorObservation(
+                key: Self.speaker, feet: .zero, isDead: false
+            )
+        }
+        adapter.closeMenuWhenConversationEnds(playerPlacements: 0)
+        host.fakeActorWorld.combatActorResult = nil
+        adapter.closeMenuWhenConversationEnds(playerPlacements: 0)
+        #expect(host.fakeDialogueMenu.closeCallCount == (wasResident ? 1 : 0))
+    }
+
     @Test(arguments: [false, true])
     func theMenuClosesWhenItsSpeakerDies(dead: Bool) {
         host.fakeDialogueMenu.isOpen = true
