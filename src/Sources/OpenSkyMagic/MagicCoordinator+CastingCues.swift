@@ -32,11 +32,16 @@ extension MagicCoordinator.CastingCueTracker {
         return latched
     }
 
-    /// Whether the player's graph raised the spell-fire event of `hand` this frame.
+    /// Whether the player's graph raised the spell-fire event of `hand` this frame. A dual
+    /// cast fires from the left hand's clips, whichever hand leads.
     private func firedSpell(in hand: SpellHand, events: [String]) -> Bool {
-        let names = coordinator.heldStaves.heldStaff(of: .player, in: hand) == nil
-            ? [SpellFireGraphNames.event(of: hand)]
-            : [SpellFireGraphNames.event(of: hand), SpellFireGraphNames.staff]
+        var names = [SpellFireGraphNames.event(of: hand)]
+        if coordinator.caster?.state(of: hand, on: .player).isDualCast == true {
+            names.append(SpellFireGraphNames.event(of: hand.other))
+        }
+        if coordinator.heldStaves.heldStaff(of: .player, in: hand) != nil {
+            names.append(SpellFireGraphNames.staff)
+        }
         return events.contains { event in
             names.contains { $0.caseInsensitiveCompare(event) == .orderedSame }
         }
@@ -55,6 +60,7 @@ extension MagicCoordinator.CastingCueTracker {
         let completed = caster.takeCompletedCasts()
         var slots = Set(coordinator.castingState.castingViews.keys)
             .union(coordinator.castingState.handArt.keys)
+            .union(coordinator.castingState.graphHands.keys)
         for key in caster.castingActors + [.player] {
             for hand in SpellHand.allCases {
                 slots.insert(CastSlot(caster: key, hand: hand))
@@ -63,12 +69,16 @@ extension MagicCoordinator.CastingCueTracker {
         let ordered = slots.sorted {
             ($0.caster, $0.hand.rawValue) < ($1.caster, $1.hand.rawValue)
         }
+        raisePendingStarts()
         for slot in ordered {
-            let new = view(of: caster.state(of: slot.hand, on: slot.caster))
+            let state = caster.state(of: slot.hand, on: slot.caster)
+            let new = view(of: state)
+            let cast = completed.last { $0.slot == slot }?.spell
+            advanceGraphEvents(of: slot, state: state, cast: cast != nil)
             let cues = CastingCueRule.cues(
                 from: coordinator.castingState.castingViews[slot] ?? CastingHandView(),
                 to: new,
-                cast: completed.last { $0.slot == slot }?.spell
+                cast: cast
             )
             emit(cues, by: slot.caster)
             coordinator.castingState.castingViews[slot] = new.phase == .idle ? nil : new
@@ -113,7 +123,8 @@ extension MagicCoordinator.CastingCueTracker {
         let waiting = SpellHand.allCases.filter(coordinator.castingState.releaseLatch.isWaiting)
             .map { "; release waits for \(SpellFireGraphNames.event(of: $0))" }
             .joined()
-        return "Casting cues: \(coordinator.castingState.castingCueCount)\(last)\(waiting)"
+        let event = coordinator.castingState.lastGraphEvent.map { "; graph: \($0)" } ?? ""
+        return "Casting cues: \(coordinator.castingState.castingCueCount)\(last)\(waiting)\(event)"
     }
 
     private func view(of state: SpellCastState) -> CastingHandView {

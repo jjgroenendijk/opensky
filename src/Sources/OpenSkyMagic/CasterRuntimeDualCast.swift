@@ -18,9 +18,9 @@ extension SpellHand {
 }
 
 extension CasterRuntime {
-    /// How long after the first hand the second may begin and still join it.
-    /// OpenSky's choice: no record states a window.
-    static let dualCastWindowSeconds: Float = 0.25
+    /// How long after the first hand the second may begin and still join it
+    /// (docs/engine/casting-graph.md, A dual cast).
+    static let dualCastWindowSeconds: Float = 0.05
 
     /// Joins `hand` to a young cast of the same spell in the other hand. Returns
     /// false when the two stay single casts.
@@ -42,6 +42,20 @@ extension CasterRuntime {
         casts[slot(hand, caster)] = partner
         tally.noteDualCast()
         return true
+    }
+
+    /// Whether the other hand may still join `hand`'s young single cast: it holds the same
+    /// spell, casts nothing, and a perk allows the dual cast.
+    func awaitsDualPartner(_ hand: SpellHand, on caster: ActorValueHolder) -> Bool {
+        let lead = state(of: hand, on: caster.key)
+        guard
+            lead.phase.isCasting, !lead.isDualCast,
+            lead.age <= Self.dualCastWindowSeconds,
+            !state(of: hand.other, on: caster.key).phase.isCasting,
+            let key = lead.spell, spellbook.state(of: caster).spell(in: hand.other) == key,
+            let spell = castable(key), !spell.isStaff
+        else { return false }
+        return canDualCast(spell, caster: caster)
     }
 
     /// The hand that runs `hand`'s cast: the other hand for a dual partner.

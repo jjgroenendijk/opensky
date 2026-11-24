@@ -12,6 +12,10 @@ nonisolated public enum MagicCommand: Equatable, Sendable {
     case spawnHazard(ReferenceKey, at: ReferenceKey)
     /// Raise this event on the player's behaviour graph.
     case playerGraphEvent(String)
+    /// Raise this event on an NPC's behaviour graph.
+    case actorGraphEvent(String, actor: ReferenceKey)
+    /// Write this boolean variable of an NPC's behaviour graph, such as `bWantCastRight`.
+    case actorGraphFlag(String, value: Bool, actor: ReferenceKey)
     /// A rune went off: set off its `PROJ`'s explosion at the point.
     case detonateRune(SpellPayload, at: SIMD3<Float>)
     /// Start or stop a casting hand's sound, a load-order `SNDR`, at the caster.

@@ -87,7 +87,6 @@ the detail and the sources it did find.
 | Ward order | A ward applies before absorption | [spell delivery](/engine/spell-delivery.md) |
 | Ward charge rate and break stagger | OpenSky's numbers | [spell delivery](/engine/spell-delivery.md) |
 | Area and range cost terms | Area: `1 + mult x area`; range: a multiplier on aimed and target spells | [spellcasting](/engine/spellcasting.md) |
-| Dual cast window | OpenSky's window | [spellcasting](/engine/spellcasting.md) |
 | Staffs | Right hand only; whether the staff graph raises the cast event is not confirmed | [spellcasting](/engine/spellcasting.md) |
 | Rune range | Read as feet | [spell delivery](/engine/spell-delivery.md) |
 | Light and other spell radii | OpenSky's radius | [magic archetypes](/engine/magic-archetypes.md) |

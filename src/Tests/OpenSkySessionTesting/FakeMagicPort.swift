@@ -48,6 +48,8 @@ nonisolated public final class FakeMagicPort: MagicPort {
     public var playerKnownSpellsResult: [ResolvedSpell] = []
     public var playerStaffCallCount = 0
     public var playerStaffResult: (staff: HeldStaff, charge: EnchantmentCharge)?
+    public var playerCastingCallCount = 0
+    public var playerCastingResult: PlayerCastingReadout?
     public var raceEffectLinksCalls: [(base: FormID, actor: ReferenceKey)] = []
     public var raceEffectLinksResult: [SpellHitEffectLinks] = []
     public var shoutMachine: ShoutMachine = FakeShoutMachinePort()
@@ -104,6 +106,11 @@ nonisolated extension FakeMagicPort {
     public func playerStaff() -> (staff: HeldStaff, charge: EnchantmentCharge)? {
         playerStaffCallCount += 1
         return playerStaffResult
+    }
+
+    public func playerCasting() -> PlayerCastingReadout? {
+        playerCastingCallCount += 1
+        return playerCastingResult
     }
 
     public func raceEffectLinks(base: FormID, actor: ReferenceKey) -> [SpellHitEffectLinks] {

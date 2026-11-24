@@ -126,8 +126,9 @@ dual-casting perk has been taken, relevant spells can be 'overcharged' by castin
 right and left hands at the same time, resulting in a single, more powerful effect. The formula
 seems to be: 2.2x spell effectiveness for 2.8x spell cost".
 
-- The same spell must be readied in both hands, and the second hand must begin within 0.25 s of the
-  first. The window is OpenSky's choice; no record states one.
+- The same spell must be readied in both hands, and the second hand must begin within 0.05 s of the
+  first ([casting graph](/engine/casting-graph.md#a-dual-cast)). OpenSky starts the first hand at
+  once and joins the second to it, instead of holding the first press back.
 - A perk must pass `Can Dual Cast Spell` for the spell. Each vanilla school perk, such as
   `DestructionDualCasting`, sets it to 1 when `EPMagic_SpellHasSkill` names its school. Without
   such a perk, the two hands stay two casts.

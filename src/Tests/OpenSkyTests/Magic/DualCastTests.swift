@@ -65,6 +65,25 @@ struct DualCastTests {
         #expect(harness.world.appliedEntries.first?.first?.magnitude == 10)
     }
 
+    @Test func aYoungSingleCastAwaitsItsPartnerOnlyInsideTheWindow() throws {
+        let harness = try harness(dualCastPerk: true)
+        harness.runtime.begin(.right, on: .player)
+        #expect(harness.runtime.awaitsDualPartner(.right, on: .player))
+        harness.runtime.advance(delta: 0.1, on: .player)
+        #expect(!harness.runtime.awaitsDualPartner(.right, on: .player))
+
+        let without = try self.harness(dualCastPerk: false)
+        without.runtime.begin(.right, on: .player)
+        #expect(!without.runtime.awaitsDualPartner(.right, on: .player))
+    }
+
+    @Test func aJoinedCastAwaitsNoPartner() throws {
+        let harness = try harness(dualCastPerk: true)
+        harness.runtime.begin(.right, on: .player)
+        harness.runtime.begin(.left, on: .player)
+        #expect(!harness.runtime.awaitsDualPartner(.right, on: .player))
+    }
+
     @Test func withThePerkBothHandsCastOneStrongerSpell() throws {
         let harness = try harness(dualCastPerk: true)
         harness.runtime.begin(.right, on: .player)

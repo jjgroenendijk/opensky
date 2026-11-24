@@ -158,6 +158,7 @@ struct AgentPlayerStatusReadout {
                 "capacity": .init(held.charge.capacity)
             ]
         } ?? .null
+        result["casting"] = playerCasting()
         result["bowZoom"] = [
             "zoomed": .bool(gameSession.bowZoomViewShare < 1),
             "viewShare": .init(gameSession.bowZoomViewShare),
@@ -240,5 +241,28 @@ struct AgentPlayerStatusReadout {
 
     var actors: AgentActorsAdapter {
         AgentActorsAdapter(hub: hub, game: hub.hosts)
+    }
+}
+
+extension AgentPlayerStatusReadout {
+    /// Each casting hand: its phase, spell, readied spell, and press, then the cue line.
+    func playerCasting() -> AgentJSON {
+        guard let readout = game.magic.playerCasting() else { return .null }
+        let name: (ReferenceKey?) -> AgentJSON = { key in
+            guard let key else { return .null }
+            return .string(game.magic.caster?.spellbook.record(key)?.editorID ?? "\(key)")
+        }
+        var hands: [String: AgentJSON] = [:]
+        for hand in readout.hands {
+            hands[hand.hand == .left ? "left" : "right"] = [
+                "phase": .string(hand.phase.rawValue),
+                "spell": name(hand.spell),
+                "readied": name(hand.readied),
+                "pressed": .bool(hand.pressed),
+                "heldBySheathedPress": .bool(hand.heldBySheathedPress),
+                "wantsCast": .bool(hand.wantsCast)
+            ]
+        }
+        return ["hands": .object(hands), "cues": .string(readout.cues)]
     }
 }

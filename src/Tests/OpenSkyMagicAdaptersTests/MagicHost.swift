@@ -10,6 +10,7 @@ import OpenSkySessionTesting
 final class MagicHost: MagicWorldHost, MagicArchetypeEffectsHost, MagicSpellDeliveryHost,
     MagicHeldMagicHost, MagicSummonedActorsHost, MagicWorldFactsHost
 {
+    let fakeActorGraphs = FakeActorGraphPort()
     let fakeActorValues = FakeActorValuePort()
     let fakeActorWorld = FakeActorWorldPort()
     let fakeCombat = FakeCombatPort()
@@ -34,6 +35,10 @@ final class MagicHost: MagicWorldHost, MagicArchetypeEffectsHost, MagicSpellDeli
     let fakeWorldState = FakeWorldStateStorePort()
     var worldRecords: (any WorldRecordsPort)?
     var renderer: (any RendererPort)?
+
+    var actorGraphs: any ActorGraphPort {
+        fakeActorGraphs
+    }
 
     var actorValues: any ActorValuePort {
         fakeActorValues
