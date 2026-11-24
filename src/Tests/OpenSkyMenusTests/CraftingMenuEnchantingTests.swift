@@ -125,8 +125,9 @@ struct CraftingMenuEnchantingTests {
         #expect(enchanting.slide(to: 4, accepted: nil, enchanter: world.enchanter)
             .hasPrefix("Magnitude 4 of 10"))
         #expect(enchanting.selection.magnitude == nil)
-        _ = enchanting.slide(to: 6, accepted: true, enchanter: world.enchanter)
-        #expect(enchanting.selection.magnitude == 6)
+        _ = enchanting.slide(to: 6, accepted: nil, enchanter: world.enchanter)
+        _ = enchanting.slide(to: 0, accepted: true, enchanter: world.enchanter)
+        #expect(enchanting.selection.magnitude == 6, "a close keeps the last value shown")
         #expect(enchanting.slide(to: 2, accepted: false, enchanter: world.enchanter)
             .hasPrefix("Magnitude 6"))
         #expect(enchanting.selection.magnitude == 6)
@@ -135,15 +136,41 @@ struct CraftingMenuEnchantingTests {
         #expect(enchanting.selection.magnitude == nil, "a new maximum resets the value")
     }
 
+    /// While the slider is open the arrow keys go to it, not to the tabs, and the card
+    /// shows the item to make.
+    @Test func anOpenSliderTakesTheArrowKeysAndFillsTheCard() throws {
+        let world = world()
+        world.enchantingSliderOffer = EnchanterSlider(maximum: 10, step: 1, value: 10)
+        let menu = CraftingMenuCoordinator(menuMode: MenuModeController(), world: world)
+        menu.open()
+        try menu.publishMovie(MenuMovieCallLog.emptyRuntime())
+        menu.route(.move(.right))
+        menu.route(.button(.accept))
+        menu.route(.move(.right))
+        menu.route(.button(.accept))
+        #expect(menu.isSliderOpen)
+        let tab = menu.model.selectedCategory
+        menu.route(.move(.right))
+        #expect(menu.model.selectedCategory == tab)
+        let card = try #require(menu.sliderCard())
+        #expect(card["type"] == .integer(CraftingMenuMovieBridge.craftEnchantingCardType))
+        #expect(card["sliderShown"] == .boolean(true))
+        menu.handle(.sliderMoved(4))
+        #expect(menu.isSliderOpen)
+        menu.handle(.sliderClosed(4, accepted: true))
+        #expect(!menu.isSliderOpen)
+        #expect(menu.sliderCard() == nil)
+    }
+
     @Test func theMovieSliderReachesTheEnchanter() throws {
         let runtime = try MenuMovieCallLog.emptyRuntime()
         let events = MenuMovieEventLog<ItemListMovieEvent>()
         CraftingMenuMovieBridge.prepare(runtime: runtime) { events.append($0) }
         runtime.callHost("CalculateCharge", arguments: [.number(4.4)])
-        runtime.callHost("SliderClose", arguments: [.number(5), .boolean(false)])
+        runtime.callHost("SliderClose", arguments: [.boolean(false), .undefined])
         runtime.callHost("SliderClose", arguments: [.string("x")])
         #expect(events.events == [
-            .sliderMoved(4), .sliderClosed(5, accepted: false), .sliderClosed(0, accepted: true)
+            .sliderMoved(4), .sliderClosed(0, accepted: false), .sliderClosed(0, accepted: true)
         ])
         CraftingMenuMovieBridge.showSlider(
             EnchanterSlider(maximum: 10, step: 1, value: 10), runtime: runtime

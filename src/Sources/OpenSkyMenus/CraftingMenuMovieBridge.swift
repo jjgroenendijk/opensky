@@ -46,20 +46,20 @@ nonisolated public enum CraftingMenuMovieBridge: Sendable {
             MainActor.assumeIsolated { onEvent(.close) }
             return .undefined
         }
-        // `CalculateCharge([value])` as the slider moves, `SliderClose([value, accepted])`.
+        // `CalculateCharge([value])` as the slider moves, `SliderClose([accepted])` when it
+        // closes; the kept value is the last one `CalculateCharge` sent.
         runtime.registerHostFunction("CalculateCharge") { call in
             let value = sliderValue(call.arguments.first)
             MainActor.assumeIsolated { onEvent(.sliderMoved(value)) }
             return .undefined
         }
         runtime.registerHostFunction("SliderClose") { call in
-            let value = sliderValue(call.arguments.first)
-            let accepted = if case let .boolean(flag)? = call.arguments.dropFirst().first {
+            let accepted = if case let .boolean(flag)? = call.arguments.first {
                 flag
             } else {
                 true
             }
-            MainActor.assumeIsolated { onEvent(.sliderClosed(value, accepted: accepted)) }
+            MainActor.assumeIsolated { onEvent(.sliderClosed(0, accepted: accepted)) }
             return .undefined
         }
     }
