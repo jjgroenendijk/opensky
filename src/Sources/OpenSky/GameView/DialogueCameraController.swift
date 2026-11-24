@@ -7,6 +7,7 @@ import Foundation
 import OpenSkyDialogue
 import OpenSkyFormatsESM
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
@@ -25,6 +26,7 @@ protocol DialogueCameraHost: AnyObject, SendableMetatype {
     var dialogueWorld: any DialogueWorldPort { get }
     var raceMenu: any RaceMenuPort { get }
     var gameSession: (any GameSessionPort)? { get }
+    var menuMode: any MenuModePort { get }
     var streamer: any CellStreamerPort { get }
 }
 
@@ -67,10 +69,13 @@ final class DialogueCameraController {
             let head = game.dialogueWorld.headPosition(of: speaker)
         else {
             gameSession.setDialogueSpeakerAim(nil)
+            gameSession.setDialoguePointer(nil, viewSize: .zero)
             game.dialogueWorld.run(game.dialogue.releaseSpeakerFocus())
             return
         }
         gameSession.setDialogueSpeakerAim(head)
+        let pointer = game.menuMode.topMenu == .dialogueMenu ? game.menuMode.lastPointer : nil
+        gameSession.setDialoguePointer(pointer?.location, viewSize: pointer?.viewSize ?? .zero)
         game.dialogueWorld.run(game.dialogue.focus(
             on: speaker,
             playerEye: gameSession.playerEyePosition

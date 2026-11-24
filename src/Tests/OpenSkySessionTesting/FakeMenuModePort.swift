@@ -13,6 +13,7 @@ nonisolated public final class FakeMenuModePort: MenuModePort {
     public var presentResult = false
     public var routeMenuPointerCalls: [MenuPointerEvent] = []
     public var routeMenuPointerResult = false
+    public var lastPointer: MenuPointerEvent?
     public var stackValue: MenuStack?
     public var topMenu: MenuIdentifier?
     public var inputConsumer: (any MenuInputConsumer)?

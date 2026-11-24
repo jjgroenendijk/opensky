@@ -18,4 +18,6 @@ public struct RendererDialogueCameraState {
     public var speakerAim: SIMD3<Float>?
     /// The first-person turn to the speaker, set up when the conversation starts.
     public var turn: DialogueTurn?
+    /// The menu pointer and the view size while a conversation is open, for the edge look.
+    public var pointer: (location: SIMD2<Float>, viewSize: SIMD2<Float>)?
 }

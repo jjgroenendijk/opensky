@@ -135,11 +135,14 @@ public final class MenuModeController {
     }
 
     private var keyRepeat = MenuKeyRepeat()
+    /// The last pointer event a menu received.
+    public private(set) var lastPointer: MenuPointerEvent?
 
     /// The pointer twin of `routeMenuInput`.
     @discardableResult
     public func routeMenuPointer(_ event: MenuPointerEvent) -> Bool {
         guard stack.isMenuMode else { return false }
+        lastPointer = event
         inputConsumer?.handleMenuPointer(event)
         return true
     }

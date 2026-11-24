@@ -40,6 +40,19 @@ struct DialogueTurnTests {
         #expect(abs(turn.targetPitch + DialogueTurn.pitchOffset) < 1e-5)
     }
 
+    /// A pointer within 25 points of an edge turns the view from the centre toward it,
+    /// 10 points per 1/60 s.
+    @Test func thePointerAtAnEdgeTurnsTheView() {
+        let size = SIMD2<Float>(800, 600)
+        let step: Float = 1.0 / 60
+        let left = DialogueTurn.edgeLook(pointer: SIMD2(10, 300), viewSize: size, deltaTime: step)
+        let corner = DialogueTurn.edgeLook(pointer: SIMD2(700, 10), viewSize: size, deltaTime: step)
+        let middle = DialogueTurn.edgeLook(pointer: SIMD2(400, 50), viewSize: size, deltaTime: step)
+        #expect(simd_distance(left, SIMD2(-10, 0)) < 1e-4)
+        #expect(simd_distance(corner, simd_normalize(SIMD2(300, 290)) * 10) < 1e-4)
+        #expect(middle == .zero)
+    }
+
     /// Looking away is untouched inside the soft stop, damped between the stops, and
     /// stopped past the hard stop. Turning back is never limited.
     @Test(arguments: zip([Float(10), 30, 50], [Float(1), 0.198, 0]))

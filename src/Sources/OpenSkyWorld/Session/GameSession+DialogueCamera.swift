@@ -87,6 +87,11 @@ extension GameSession.DialogueCameraSteps {
         )
     }
 
+    /// The menu pointer while a conversation is open; nil stops the edge look.
+    public func setDialoguePointer(_ location: SIMD2<Float>?, viewSize: SIMD2<Float>) {
+        session.rigs.dialogueCameraState.pointer = location.map { ($0, viewSize) }
+    }
+
     /// How far the turn to the speaker has come, 0 to 1, or nil when no turn runs.
     public var dialogueTurnProgress: Float? {
         session.rigs.dialogueCameraState.turn.map { $0.elapsed / DialogueTurn.duration }
@@ -107,6 +112,14 @@ extension GameSession.DialogueCameraSteps {
             frameInput.lookRight = 0
             frameInput.lookUp = 0
             return
+        }
+        if let pointer = session.rigs.dialogueCameraState.pointer {
+            let edge = DialogueTurn.edgeLook(
+                pointer: pointer.location, viewSize: pointer.viewSize,
+                deltaTime: session.lastTransitionDelta
+            )
+            frameInput.lookRight += edge.x
+            frameInput.lookUp += edge.y
         }
         let offset = DialogueTurn.speakerOffset(
             yaw: session.freeFlyCamera.yaw, eye: playerEyePosition, aim: aim

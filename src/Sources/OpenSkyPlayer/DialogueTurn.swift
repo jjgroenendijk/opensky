@@ -12,6 +12,11 @@ nonisolated public struct DialogueTurn: Equatable, Sendable {
     public static let pitchOffset: Float = 0.17
     /// `fOutsideDialogueAngleRotationDampen:Controls`.
     public static let dampen: Float = 0.33
+    /// `fPCDialogueLookStart:Controls`: a pointer this many points from a window edge
+    /// turns the view.
+    public static let edgeMargin: Float = 25
+    /// `fPCDialogueLookSpeed:Controls`, read as pointer points per 1/60 s.
+    public static let edgeSpeed: Float = 10
 
     /// The soft and hard look stops, in radians, for one kind of camera.
     public struct Stops: Equatable, Sendable {
@@ -62,6 +67,18 @@ nonisolated public struct DialogueTurn: Equatable, Sendable {
             startYaw + (targetYaw - startYaw) * weight,
             startPitch + (targetPitch - startPitch) * weight
         )
+    }
+
+    /// The look a pointer at a window edge adds over `deltaTime`, from the view's centre
+    /// toward the pointer: x to the right, y up, in pointer points. `pointer` counts from
+    /// the top left of a view of `viewSize`.
+    public static func edgeLook(
+        pointer: SIMD2<Float>, viewSize: SIMD2<Float>, deltaTime: Float
+    ) -> SIMD2<Float> {
+        let nearEdge = simd_reduce_min(simd_min(pointer, viewSize - pointer)) < edgeMargin
+        let fromCentre = (pointer - viewSize / 2) * SIMD2(1, -1)
+        guard nearEdge, simd_length(fromCentre) > 0 else { return .zero }
+        return simd_normalize(fromCentre) * edgeSpeed * deltaTime * 60
     }
 
     /// The speaker's heading from `eye` minus the view's `yaw`; positive is to the left.
