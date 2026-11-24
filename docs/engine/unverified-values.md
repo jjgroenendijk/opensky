@@ -375,3 +375,4 @@ the detail and the sources it did find.
 | Melee magnetism signs and look scale | Both terms turn toward the target; the look input is the frame's view turn, scaled by a turn speed of 2π rad/s; an object counts within 192 units | [combat assist](/engine/combat-assist.md#in-opensky) |
 | Alarm flee distance | An NPC criminal that a guard answers runs 2000 units straight away from the guard, along the ground | [crime reports](/engine/crime-reports.md#where-opensky-differs) |
 | Bribe cost text | `<BribeCost>` shows the bribe amount rounded down to whole gold, as `Actor.GetBribeAmount` returns an integer | [dialogue menu](/engine/dialogue-menu.md#text) |
+| Dialogue edge look speed unit | `fPCDialogueLookSpeed` 10 is read as 10 pointer points of look input per 1/60 s | [dialogue camera](/engine/dialogue-camera.md) |

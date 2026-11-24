@@ -7,6 +7,7 @@ public protocol MenuModePort: AnyObject, MenuInputRouting {
     var isWorldSimPaused: Bool { get }
     @discardableResult func present(_ identifier: MenuIdentifier, policy: MenuWorldPolicy) -> Bool
     @discardableResult func routeMenuPointer(_ event: MenuPointerEvent) -> Bool
+    var lastPointer: MenuPointerEvent? { get }
     var stack: MenuStack { get }
     var topMenu: MenuIdentifier? { get }
     var inputConsumer: (any MenuInputConsumer)? { get set }

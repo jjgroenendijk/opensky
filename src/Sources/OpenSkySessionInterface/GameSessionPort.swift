@@ -53,6 +53,7 @@ public protocol GameSessionPort: AnyObject {
     /// How far the turn to the speaker has come, 0 to 1, or nil when no turn runs.
     var dialogueTurnProgress: Float? { get }
     var dialogueSpeakerAim: SIMD3<Float>? { get }
+    func setDialoguePointer(_ location: SIMD2<Float>?, viewSize: SIMD2<Float>)
     func setFirstPersonFOVY(radians: Float)
     func setMovementMode(_ mode: CameraMovementMode)
     @discardableResult func settlePlayerOnGround() -> Bool

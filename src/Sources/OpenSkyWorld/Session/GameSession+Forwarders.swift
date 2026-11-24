@@ -48,6 +48,10 @@ extension GameSession {
         dialogueCameraSteps.dialogueTurnProgress
     }
 
+    public func setDialoguePointer(_ location: SIMD2<Float>?, viewSize: SIMD2<Float>) {
+        dialogueCameraSteps.setDialoguePointer(location, viewSize: viewSize)
+    }
+
     public var dialogueSpeakerAim: SIMD3<Float>? {
         rigs.dialogueCameraState.speakerAim
     }
