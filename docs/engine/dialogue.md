@@ -168,6 +168,11 @@ Topic Info gives two more flags that act when a response ends:
   spoken as dialogue ends." The topic is `INFO` `TWAT`. Walk Away Invisible in Menu keeps it off
   the choice list. The line is voiced and subtitled outside the menu after it closes.
 
+A response with neither flag and no topic links returns to the speaker's topic list, selected
+again. When nothing in it passes, the conversation ends. The Creation Kit's dialogue tutorial says
+a response without the Goodbye flag needs none when the speaker has "nothing else to say when he's
+done here" (<https://ck.uesp.net/wiki/Bethesda_Tutorial_Dialogue>).
+
 ## Favour lines
 
 The Favors tab topics (category 4: `SHOW`, `AGRE`, `REFU`, `MREF`, `FEXT`) "play in response to
