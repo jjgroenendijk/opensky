@@ -131,6 +131,8 @@ public protocol MagicEnchanterPort {
     func disenchant(_ item: FormID) -> EnchanterAnswer
     func refusal(of selection: EnchanterSelection) -> String?
     func enchant(_ selection: EnchanterSelection) -> EnchanterAnswer
+    /// The magnitude slider for `selection`, or nil when it has one step or fewer.
+    func slider(of selection: EnchanterSelection) -> EnchanterSlider?
 }
 
 /// The lines a menu shows for a read book or a readied spell.

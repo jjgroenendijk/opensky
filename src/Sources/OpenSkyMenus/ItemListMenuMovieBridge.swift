@@ -12,6 +12,10 @@ nonisolated public enum ItemListMovieEvent: Equatable, Sendable {
     case close
     /// The movie's third bottom-bar button.
     case aux
+    /// The enchanting slider moved to this value.
+    case sliderMoved(Int)
+    /// The enchanting slider closed at this value; `accepted` is false on cancel.
+    case sliderClosed(Int, accepted: Bool)
 }
 
 /// Where a list movie keeps its category list and its item list.

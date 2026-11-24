@@ -5,18 +5,19 @@
 
 import Foundation
 import OpenSkyFormatsSWF
+import OpenSkyGameData
 
 nonisolated public enum CraftingMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\craftingmenu.swf"
     static let menuPath = "/Menu"
     static let layout = ItemListMovieLayout(listsPath: "\(menuPath)/InventoryLists")
     static let menuNamePath = "\(menuPath)/MenuNameHolder/MenuName"
-    /// Calls that change nothing in OpenSky: the 3D item view, the movie's own rename
-    /// field, and the enchanting charge slider.
+    /// Calls that change nothing in OpenSky: the 3D item view and the movie's own
+    /// rename field.
     static let sinkHostFunctions = [
         "PlaySound", "myLog", "SetSelectedItem", "SetSelectedCategory", "ChooseItem",
         "ShowItem3D", "StartMouseRotation", "StopMouseRotation",
-        "CanFadeItemInfo", "EndItemRename", "CalculateCharge", "SliderClose"
+        "CanFadeItemInfo", "EndItemRename"
     ]
 
     static func prepare(
@@ -40,6 +41,36 @@ nonisolated public enum CraftingMenuMovieBridge: Sendable {
             MainActor.assumeIsolated { onEvent(.close) }
             return .undefined
         }
+        // `CalculateCharge([value])` as the slider moves, `SliderClose([value, accepted])`.
+        runtime.registerHostFunction("CalculateCharge") { call in
+            let value = sliderValue(call.arguments.first)
+            MainActor.assumeIsolated { onEvent(.sliderMoved(value)) }
+            return .undefined
+        }
+        runtime.registerHostFunction("SliderClose") { call in
+            let value = sliderValue(call.arguments.first)
+            let accepted = if case let .boolean(flag)? = call.arguments.dropFirst().first {
+                flag
+            } else {
+                true
+            }
+            MainActor.assumeIsolated { onEvent(.sliderClosed(value, accepted: accepted)) }
+            return .undefined
+        }
+    }
+
+    /// `ShowSlider(maximum, minimum, value, snap)` opens the enchanting slider.
+    static func showSlider(_ slider: EnchanterSlider, runtime: SWFMovieRuntime) {
+        runtime.callMovie(
+            "ShowSlider",
+            atPath: menuPath,
+            arguments: [slider.maximum, 1, slider.value, slider.step].map { .number(Double($0)) }
+        )
+    }
+
+    private static func sliderValue(_ value: AS2Value?) -> Int {
+        guard case let .number(number)? = value, number.isFinite else { return 0 }
+        return Int(number.rounded())
     }
 
     /// `Initialize` builds the lists and the bottom bar; `bCanCraft` labels the button.

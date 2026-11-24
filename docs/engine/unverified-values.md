@@ -387,3 +387,11 @@ the detail and the sources it did find.
 | Stage explosion offset | A uniform random direction, times a uniform random share of the bound radius | [destruction](/engine/papyrus-destruction.md#in-the-game) |
 | Spell kill cam damage | The release check sums the spell's harmful Health value modifiers, before resistance | [kill cam](/engine/kill-cam.md#bow-and-spell-kill-cams-in-the-game) |
 | Damage stage node range | A `BSDamageStage` node shows from its minimum to its maximum stage, both included | [NIF](/formats/nif.md) |
+| Enchanting slider opening | The magnitude slider opens when a weapon base is chosen while a weapon is chosen | [enchanting](/engine/enchanting.md#enchanting-menu) |
+| Enchanting slider base | With two bases, the slider's maximum comes from the first base's first effect | [enchanting](/engine/enchanting.md#the-magnitude-slider-in-the-game) |
+| Made apparel cost | A made apparel enchantment stores the weapon cost formula at the soul's share of the maximum, for its value | [enchanting](/engine/enchanting.md#the-magnitude-slider-in-the-game) |
+| Enchanting spell cost tab | `Mod Spell Cost` on an enchantment base binds the base to the spell tab | [enchanting](/engine/enchanting.md#the-magnitude-slider-in-the-game) |
+| Made value and temper | A tempered copy's value multiplier applies after a made enchantment's worth is added | [enchanting](/engine/enchanting.md#the-magnitude-slider-in-the-game) |
+| Vendor stock order | A buy takes the chest's copies before the vendor's own, and a sale pays from the chest's gold first | [vendor factions](/engine/vendor-factions.md#stock-gold-and-what-a-vendor-takes-in-the-game) |
+| Vendor's worn items | The vendor's own side leaves out the items it wears | [vendor factions](/engine/vendor-factions.md#stock-gold-and-what-a-vendor-takes-in-the-game) |
+| Copy row stolen count | A row per copy counts the stolen copies from the plainest row up | [item copies](/engine/item-copies.md#names-and-poisons-in-the-game) |

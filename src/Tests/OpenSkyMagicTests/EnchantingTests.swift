@@ -16,11 +16,11 @@ import Testing
 
 @MainActor
 struct EnchantingTests {
-    private typealias Records = EnchantingFixture
-    private typealias Gems = SoulGemFixture
+    typealias Records = EnchantingFixture
+    typealias Gems = SoulGemFixture
 
     @MainActor
-    private struct Session {
+    struct Session {
         let coordinator: MagicCoordinator
         let world: FakeMagicWorld
         let inventory: FakeInventory
@@ -42,7 +42,7 @@ struct EnchantingTests {
         }
     }
 
-    private func session(skill: Float = 100, carrying items: [FormID]) throws -> Session {
+    func session(skill: Float = 100, carrying items: [FormID]) throws -> Session {
         let file = try Records.plugin()
         let plugin = ActiveEffectFixture.pluginName
         let enchantments = EnchantmentStore(plugins: [(plugin, file)])
@@ -82,29 +82,72 @@ struct EnchantingTests {
         #expect(abs(EnchantingRules.skillMultiplier(100, factor: 1.5) - 1.505_88) < 0.000_01)
     }
 
-    /// At skill 0 one use of a cost-100 base costs 3 * 100^1.1, about 475; a petty
-    /// soul holds 250, so the power drops until one use costs the whole soul.
-    @Test func aSmallSoulLowersAWeaponsPowerToBuyOneUse() {
+    /// The game keeps the full maximum for any soul: a petty soul only gives less charge.
+    @Test func aSmallSoulKeepsAWeaponsFullPower() {
         let input = EnchantingInput(skill: 0, soul: .petty, bases: [EnchantingBase(cost: 100)])
         let scale = EnchantingRules.weapon(input)
         #expect(scale.capacity == 250)
-        #expect(scale.costPerUse == 250)
-        #expect(abs(scale.powers[0] - pow(250 / (3 * pow(100, 1.1)), 1 / 1.1)) < 0.000_1)
+        #expect(scale.powers == [1])
+        // 3 x 100^1.1 = 475.47, fraction dropped.
+        #expect(scale.costPerUse == 475)
+        #expect(scale.uses == 0)
     }
 
-    /// UESP: the charge per use is "calculated at the moment of the usage", so a weapon
-    /// made at skill 15 costs less once Enchanting reaches 100.
-    @Test func aMadeWeaponsCostFollowsTheSkillAtEachUse() {
-        let input = EnchantingInput(skill: 15, soul: .grand, bases: [EnchantingBase(cost: 100)])
-        let scale = EnchantingRules.weapon(input)
-        let made = MadeEnchantment(
-            bases: [.player], powers: scale.powers, capacity: scale.capacity,
-            unskilledCostPerUse: scale.unskilledCostPerUse, name: "Fire"
+    /// The page's example: Fire Damage with magnitude 10 and cost 0.9 x 10^1.1, at
+    /// Enchanting 15 with a grand soul.
+    private func fireSword(chosen: Int?) -> EnchantingInput {
+        var input = EnchantingInput(
+            skill: 15, soul: .grand, bases: [EnchantingBase(cost: 0.9 * pow(10, 1.1))]
         )
-        #expect(abs(made.costPerUse(atSkill: 15) - scale.costPerUse) < 0.01)
-        let atMaster = 3 * pow(Float(100), 1.1) * (1 - Float(0.5).squareRoot())
-        #expect(abs(made.costPerUse(atSkill: 100) - atMaster) < 0.01)
-        #expect(made.costPerUse(atSkill: 100) < made.costPerUse(atSkill: 15))
+        input.baseMagnitude = 10
+        input.chosen = chosen
+        return input
+    }
+
+    @Test func theSliderRunsFromOneToTheMaximumInStepsOfOne() throws {
+        let slider = try #require(EnchantingRules.slider(fireSword(chosen: nil)))
+        #expect(slider == EnchantingSlider(maximum: 10, step: 1, value: 10))
+        #expect(EnchantingRules.slider(fireSword(chosen: 40))?.value == 10)
+        #expect(EnchantingRules.slider(fireSword(chosen: -3))?.value == 1)
+    }
+
+    @Test func theChosenShareSetsTheCostAndTheUses() {
+        let full = EnchantingRules.weapon(fireSword(chosen: 10))
+        #expect(full.costPerUse == 31)
+        #expect(full.uses == 95)
+        #expect(full.capacity == 3000)
+        let half = EnchantingRules.weapon(fireSword(chosen: 5))
+        #expect(half.costPerUse == 14)
+        #expect(half.uses == 204)
+        #expect(abs(half.powers[0] - full.powers[0] / 2) < 0.000_1)
+    }
+
+    @Test func theStepGrowsWithTheMaximum() {
+        #expect([30, 31, 60, 61, 120, 121].map(EnchantingRules.sliderStep) == [1, 2, 2, 5, 5, 10])
+    }
+
+    @Test func aMaximumOfOneShowsNoSlider() {
+        var input = fireSword(chosen: nil)
+        input.baseMagnitude = 1
+        #expect(EnchantingRules.slider(input) == nil)
+    }
+
+    /// The made sword's value: 25 + 0.12 x 3000 + 8 x 31 = 633. Apparel adds its cost.
+    @Test func aMadeEnchantmentAddsTheGamesValue() {
+        let made = MadeEnchantment(
+            bases: [.player], powers: [1], capacity: 3000, costPerUse: 31, name: "Fire"
+        )
+        #expect(25 + made.addedValue(isWeapon: true, settings: .vanilla) == 633)
+        #expect(made.addedValue(isWeapon: false, settings: .vanilla) == 31)
+    }
+
+    /// Apparel at a common soul: the maximum times a third, at least 1.
+    @Test func apparelTakesTheSoulsShareOfTheMaximum() {
+        var input = EnchantingInput(skill: 0, soul: .common, bases: [EnchantingBase(cost: 10)])
+        input.baseMagnitude = 30
+        #expect(abs(EnchantingRules.apparel(input).powers[0] * 30 - 10) < 0.001)
+        input.baseMagnitude = 2
+        #expect(abs(EnchantingRules.apparel(input).powers[0] * 2 - 1) < 0.001)
     }
 
     @Test func disenchantingTeachesTheRootBaseAndDestroysTheItem() throws {
@@ -168,7 +211,8 @@ struct EnchantingTests {
         #expect(profile.entries.map(\.magnitude) == [75])
     }
 
-    /// The grand soul gives the charge; at skill 100 a use costs 3 * 100^1.1 * 0.2929.
+    /// The grand soul gives the charge; at skill 100 a use costs 3 * 100^1.1 * 0.2929,
+    /// stored with its fraction dropped.
     @Test func aWeaponGetsTheSoulAsItsCharge() throws {
         let trial = try session(carrying: [Records.ironSword, Gems.grandFilled])
         trial.knowing([Records.fireBase])
@@ -183,8 +227,8 @@ struct EnchantingTests {
         )
         #expect(charge.capacity == 3000)
         let fullCost = 3 * pow(Float(100), 1.1)
-        let expected = fullCost * (1 - Float(0.5).squareRoot())
-        #expect(abs(charge.costPerUse - expected) < 0.01)
+        let expected = (fullCost * (1 - Float(0.5).squareRoot())).rounded(.down)
+        #expect(charge.costPerUse == expected)
         let profile = try #require(
             trial.coordinator.weaponEnchantments.enchantmentProfile(
                 of: Records.ironSword,

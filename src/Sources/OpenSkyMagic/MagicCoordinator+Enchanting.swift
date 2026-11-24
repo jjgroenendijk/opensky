@@ -30,6 +30,14 @@ nonisolated enum EnchantingRefusal: Error, Equatable, Sendable {
     case emptyGem
 }
 
+/// What the player set besides the item, bases, and gem.
+nonisolated struct EnchantingOptions: Equatable, Sendable {
+    /// A typed name; nil names the enchantment after its bases.
+    var name: String?
+    /// The slider's magnitude; nil is the highest.
+    var magnitude: Int?
+}
+
 nonisolated enum EnchantingOutcome: Equatable, Sendable {
     case idle
     case learned(item: String, base: String)
@@ -51,11 +59,12 @@ extension MagicCoordinator.EnchantingTable {
     /// Puts `bases` on the best plain copy of `item`, spending `gem`.
     @discardableResult
     func enchant(
-        _ item: FormID, with bases: [ReferenceKey], gem: SoulGemCandidate, name: String? = nil
+        _ item: FormID, with bases: [ReferenceKey], gem: SoulGemCandidate,
+        options: EnchantingOptions = EnchantingOptions()
     ) -> EnchantingOutcome {
         guard let inventory = coordinator.world.inventory
         else { return coordinator.enchantingRecords.noteEnchanting(.unavailable) }
-        switch preview(item, with: bases, gem: gem, name: name) {
+        switch preview(item, with: bases, gem: gem, options: options) {
         case let .failure(refusal):
             return coordinator.enchantingRecords.noteEnchanting(.refused(refusal))
         case let .success(made):
@@ -65,16 +74,13 @@ extension MagicCoordinator.EnchantingTable {
                 of: item,
                 in: .player,
                 where: { $0.enchantment == nil },
-                Self.making(id)
+                Self.making(id, named: options.name)
             )
             spendGem(gem, in: inventory)
             coordinator.incrementStat("Magic Items Made")
             coordinator.enchantingRecords.reportEnchantingUse(EnchantingRules.enchantExperience)
             coordinator.weaponEnchantments.refreshWornEnchantments(on: .player)
-            let charge = EnchantmentCharge(
-                capacity: made.capacity,
-                costPerUse: made.costPerUse(atSkill: enchantingSkill(of: .player))
-            )
+            let charge = EnchantmentCharge(capacity: made.capacity, costPerUse: made.costPerUse)
             return coordinator.enchantingRecords.noteEnchanting(.enchanted(
                 item: coordinator.world.itemName(item), name: made.name, charge: charge
             ))
@@ -83,8 +89,39 @@ extension MagicCoordinator.EnchantingTable {
 
     /// What enchanting `item` with `bases` and `gem` would make, or why it cannot.
     func preview(
-        _ item: FormID, with bases: [ReferenceKey], gem: SoulGemCandidate, name: String? = nil
+        _ item: FormID, with bases: [ReferenceKey], gem: SoulGemCandidate,
+        options: EnchantingOptions = EnchantingOptions()
     ) -> Result<MadeEnchantment, EnchantingRefusal> {
+        let order: EnchantingOrder
+        switch input(item, with: bases, gem: gem, magnitude: options.magnitude) {
+        case let .failure(refusal): return .failure(refusal)
+        case let .success(found): order = found
+        }
+        let scale = order.isWeapon
+            ? EnchantingRules.weapon(order.input) : EnchantingRules.apparel(order.input)
+        return .success(MadeEnchantment(
+            bases: bases, powers: scale.powers, capacity: scale.capacity,
+            costPerUse: scale.costPerUse,
+            name: order.records.map(\.displayName).joined(separator: " + ")
+        ))
+    }
+
+    /// The magnitude slider for `item` with `bases`, or nil for apparel or a maximum of 1.
+    func slider(
+        _ item: FormID, with bases: [ReferenceKey], gem: SoulGemCandidate, magnitude: Int?
+    ) -> EnchantingSlider? {
+        guard
+            case let .success(order) = input(item, with: bases, gem: gem, magnitude: magnitude),
+            order.isWeapon, var slider = EnchantingRules.slider(order.input)
+        else { return nil }
+        slider.uses = EnchantingRules.weapon(order.input).uses
+        return slider
+    }
+
+    /// The rules' input for this choice, or why the enchanter refuses it.
+    private func input(
+        _ item: FormID, with bases: [ReferenceKey], gem: SoulGemCandidate, magnitude: Int?
+    ) -> Result<EnchantingOrder, EnchantingRefusal> {
         guard
             let store = coordinator.enchantmentStore, let inventory = coordinator.world.inventory,
             inventory.count(
@@ -106,23 +143,29 @@ extension MagicCoordinator.EnchantingTable {
             return .failure(.baseDoesNotFit(misfit.displayName))
         }
         guard gem.soul != .empty else { return .failure(.emptyGem) }
-        let input = EnchantingInput(
+        let perks = EnchantingPerks(table: self, item: item, store: store)
+        var input = EnchantingInput(
             skill: enchantingSkill(of: .player),
             soul: gem.soul,
             bases: records.map { record in
-                EnchantingBase(
-                    cost: Float(record.cost.cost),
-                    perkFactor: enchantmentPower(of: record, on: item, using: store)
-                )
+                EnchantingBase(cost: perks.cost(of: record), perkFactor: perks.power(of: record))
             },
             skillFactor: coordinator.enchantingSkillFactor
         )
-        let scale = isWeapon ? EnchantingRules.weapon(input) : EnchantingRules.apparel(input)
-        return .success(MadeEnchantment(
-            bases: bases, powers: scale.powers, capacity: scale.capacity,
-            unskilledCostPerUse: scale.unskilledCostPerUse,
-            name: name ?? records.map(\.displayName).joined(separator: " + ")
-        ))
+        input.charge = perks.charge(of: gem.soul, first: records[0])
+        input.baseMagnitude = Self.scaledValue(of: records[0])
+        input.chosen = magnitude
+        return .success(EnchantingOrder(input: input, isWeapon: isWeapon, records: records))
+    }
+
+    /// The first effect's magnitude, or its duration where power changes only that.
+    static func scaledValue(of base: ResolvedEnchantment) -> Float {
+        guard let first = base.effects.first else { return 0 }
+        let flags = first.effect?.effect.data?.flags ?? []
+        if flags.contains(.powerAffectsDuration), !flags.contains(.powerAffectsMagnitude) {
+            return Float(first.item.duration)
+        }
+        return first.item.magnitude
     }
 
     /// True for a weapon, false for apparel, nil for anything an enchanter refuses.
@@ -158,31 +201,19 @@ extension MagicCoordinator.EnchantingTable {
         base.data?.castingType == .fireAndForget && base.data?.delivery == .touch
     }
 
-    /// Entry point 77 with the base and the item bound.
-    private func enchantmentPower(
-        of base: ResolvedEnchantment, on item: FormID, using store: EnchantmentStore
-    ) -> Float {
-        let subject = coordinator.world.inventory?.baselines.items.conditionSubject(of: item)
-        return coordinator.world.perkModified(
-            1, at: .modEnchantmentPower, on: .player,
-            subjects: PerkEvaluationSubjects(owner: .player)
-                .binding(.enchantment, to: store.conditionSubject(of: base))
-                .binding(.item, to: subject),
-            seams: ConditionContext()
-        )
-    }
-
     /// The Enchanting value as it is now, so a Fortify Enchanting potion counts.
     func enchantingSkill(of player: ActorValueHolder) -> Float {
         guard let index = ActorValueIdentity.index(named: "Enchanting") else { return 0 }
         return coordinator.effects?.values.value(at: index, on: player) ?? 0
     }
 
-    /// Puts the made enchantment on a copy; the copy's old charge belongs to nothing now.
-    private static func making(_ id: FormID) -> (inout ItemCopy) -> Void {
+    /// Puts the made enchantment and the typed name on a copy; the copy's old charge
+    /// belongs to nothing now.
+    private static func making(_ id: FormID, named name: String?) -> (inout ItemCopy) -> Void {
         { copy in
             copy.enchantment = id
             copy.charge = nil
+            copy.name = name
         }
     }
 }
@@ -201,4 +232,12 @@ extension MagicCoordinator.EnchantingTable {
         guard !coordinator.world.itemHasKeyword("ReusableSoulGem", on: gem.item) else { return }
         _ = attempt { try inventory.remove(gem.item, count: 1, from: .player) }
     }
+}
+
+/// One enchanter choice as the rules read it: their input, whether the item is a weapon,
+/// and the base records.
+struct EnchantingOrder {
+    let input: EnchantingInput
+    let isWeapon: Bool
+    let records: [ResolvedEnchantment]
 }

@@ -35,16 +35,11 @@ extension MagicCoordinator.WeaponEnchantments {
                 .residentHolders(of: [SpellHitTarget(key: hit.target)])[hit.target]
         else { return }
         let plugin = coordinator.pluginName
+        guard
+            let spent = spendPoisonDose(on: weapon, of: hit.attacker),
+            let potion = items.ingestibles[spent.rawValue]
+        else { return }
         let landed = coordinator.withEffects { runtime -> Bool in
-            let poisons = runtime.store.component(WeaponPoisonState.self, for: hit.attacker)
-            guard let poisons else { return false }
-            let (left, spent) = poisons.spendingDose(of: weapon)
-            guard let spent, let potion = items.ingestibles[spent.rawValue] else { return false }
-            if left.isEmpty {
-                runtime.store.reset(WeaponPoisonState.componentKind, for: hit.attacker)
-            } else {
-                runtime.store.set(left, for: hit.attacker)
-            }
             _ = MagicCoordinator.PoisonDoses.land(
                 PoisonDose(potion: potion, id: spent, plugin: plugin),
                 caster: hit.attacker, on: target, using: &runtime
@@ -54,6 +49,23 @@ extension MagicCoordinator.WeaponEnchantments {
         if landed == true, hit.target == .player {
             coordinator.pendingCommands.append(.notice(coordinator.texts.hitNotices[.poisoned]))
         }
+    }
+
+    /// Takes one dose off the poison on the attacker's wielded copy of `weapon`, which is
+    /// its best copy; the poison goes at 0. The poison that hit delivers, or nil.
+    private func spendPoisonDose(on weapon: FormID, of attacker: ReferenceKey) -> FormID? {
+        guard
+            let inventory = coordinator.world.inventory,
+            let wielder = coordinator.world.actorValueHolder(for: attacker)
+        else { return nil }
+        let holder = InventoryHolder(actor: wielder)
+        guard let poison = inventory.copies(of: weapon, in: holder).first?.poison else {
+            return nil
+        }
+        let left = poison.doses > 1
+            ? WeaponPoison(poison: poison.poison, doses: poison.doses - 1) : nil
+        inventory.editCopy(of: weapon, in: holder, where: { _ in true }, { $0.poison = left })
+        return poison.poison
     }
 
     /// Applies `poison` straight to `target`, as a poison the Poisoned perk lets the

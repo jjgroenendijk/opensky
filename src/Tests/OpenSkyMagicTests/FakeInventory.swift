@@ -48,6 +48,10 @@ final class FakeInventory: InventoryAccess {
         return updated
     }
 
+    func value(of item: FormID, copy _: ItemCopy) -> Int32 {
+        baselines.items.gameValue(of: item)
+    }
+
     func copies(of item: FormID, in holder: InventoryHolder) -> [ItemCopy] {
         copyState(holder).copies(of: item, held: count(of: item, in: holder))
     }

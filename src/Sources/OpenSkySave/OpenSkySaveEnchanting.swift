@@ -28,7 +28,7 @@ nonisolated enum OpenSkySaveEnchantingWriter {
                 payload.writeUInt32(id.rawValue)
                 payload.writeString(enchantment.name)
                 payload.writeFloat32(enchantment.capacity)
-                payload.writeFloat32(enchantment.unskilledCostPerUse)
+                payload.writeFloat32(enchantment.costPerUse)
                 payload.writeUInt32(UInt32(clamping: enchantment.bases.count))
                 for (base, power) in zip(enchantment.bases, enchantment.powers) {
                     payload.writeKey(base)
@@ -67,7 +67,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
     private static func decodeMade(_ reader: inout SaveReader) throws -> MadeEnchantment {
         let name = try reader.string("ENCK name")
         let capacity = try reader.float32("ENCK capacity")
-        let cost = try reader.float32("ENCK unskilled cost per use")
+        let cost = try reader.float32("ENCK cost per use")
         let count = try reader.uint32("ENCK base count")
         try check(count, OpenSkySaveFormat.minimumSpellbookKeySize + 4, reader)
         var bases: [ReferenceKey] = []
@@ -77,7 +77,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
             try powers.append(reader.float32("ENCK power"))
         }
         return MadeEnchantment(
-            bases: bases, powers: powers, capacity: capacity, unskilledCostPerUse: cost, name: name
+            bases: bases, powers: powers, capacity: capacity, costPerUse: cost, name: name
         )
     }
 

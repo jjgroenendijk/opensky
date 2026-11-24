@@ -102,10 +102,27 @@ nonisolated public struct EnchanterSelection: Equatable, Sendable {
     public var gem: EnchanterGem?
     /// A name the player typed; nil keeps the made name.
     public var name: String?
+    /// The magnitude the slider chose; nil is the highest.
+    public var magnitude: Int?
 
     public init() {}
 
     public var isComplete: Bool {
         item != nil && !bases.isEmpty && gem != nil
+    }
+}
+
+/// A weapon enchantment's magnitude slider: from 1 to `maximum` in steps of `step`.
+nonisolated public struct EnchanterSlider: Equatable, Sendable {
+    public let maximum: Int
+    public let step: Int
+    public let value: Int
+    /// The uses the menu shows at `value`.
+    public var uses = 0
+
+    public init(maximum: Int, step: Int, value: Int) {
+        self.maximum = maximum
+        self.step = step
+        self.value = value
     }
 }

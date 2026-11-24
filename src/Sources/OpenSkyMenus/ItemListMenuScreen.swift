@@ -77,6 +77,11 @@ public class ItemListMenuScreen: MenuScreen<ItemListMovieEvent> {
             requestClose()
         case .aux:
             runAuxiliary()
+        case let .sliderMoved(value):
+            lastResult = slider(value, accepted: nil)
+        case let .sliderClosed(value, accepted):
+            lastResult = slider(value, accepted: accepted)
+            reload()
         }
     }
 
@@ -130,6 +135,11 @@ public class ItemListMenuScreen: MenuScreen<ItemListMovieEvent> {
     /// The third button's action; nil when the screen has none.
     func auxiliary() -> String? {
         nil
+    }
+
+    /// The movie's slider moved (`accepted` nil) or closed; the readout text.
+    func slider(_ value: Int, accepted: Bool?) -> String {
+        "No slider"
     }
 
     /// The cancel key and the movie's close; a screen that asks first overrides it.

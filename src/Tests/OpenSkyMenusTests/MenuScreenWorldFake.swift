@@ -45,6 +45,8 @@ final class FakeMenuScreenWorld: MenuScreenWorld, MenuInputConsumer {
     var enchanterChoices: EnchanterChoices?
     var enchantingTexts = GameSettingTexts<EnchantingMenuText>.vanilla
     var enchantRefusalText: String?
+    /// The slider the fake offers once an item and a base are chosen.
+    var enchantingSliderOffer: EnchanterSlider?
     var questions: [(text: String, answer: (Bool) -> Void)] = []
     var shoutSteps: [Int: ShoutUnlockStep] = [:]
     var boxes: [String] = []
@@ -171,6 +173,13 @@ extension FakeMenuScreenWorld: MagicMenuWorld, GiftMenuWorld, CraftingMenuWorld,
 
     func enchantRefusal(_: EnchanterSelection) -> String? {
         enchantRefusalText
+    }
+
+    func enchantingSlider(_ selection: EnchanterSelection) -> EnchanterSlider? {
+        guard selection.item != nil, !selection.bases.isEmpty, let offer = enchantingSliderOffer
+        else { return nil }
+        let value = min(max(1, selection.magnitude ?? offer.maximum), offer.maximum)
+        return EnchanterSlider(maximum: offer.maximum, step: offer.step, value: value)
     }
 
     func enchant(_ selection: EnchanterSelection) -> EnchanterAnswer {
