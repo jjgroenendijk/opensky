@@ -79,34 +79,61 @@ the sky reaches.
 ## Indirect light
 
 "Screen-space indirect light" on the launcher, off by default as in the game. Lit surfaces
-bounce some of their colour onto the surfaces that face them. It runs as one compute pass
-beside the occlusion trace, and the composite adds its colour before the occlusion. The
-steps follow a clean-room read of the game's shaders (2026-11-06, behaviour only):
+bounce some of their colour onto the surfaces that face them. The game traces it at full size,
+blends it with last frame, blurs it, and adds it to the scene colour before tone mapping.
 
-- 15 taps on a spiral, at angles `(i + 0.5) × 3.3493` radians plus the per-pixel turn, out to
-  a radius `R` of 100 units. The reach is in world units at every distance, so close to the
-  camera the taps spread across much of the screen. A tap off the screen adds nothing.
-- Each tap adds its scene colour times
-  `max(((v . N)(-v . N_t) - b) / (|v|⁴ + 0.01), 0) × max(R² - |v|², 0)³ × (1 - |v| / R)`,
-  where `v` runs from the pixel to the tap and `N_t` is the tap's normal. The bias is
-  `b = 2.5 + 5 × (x² + y²) + 10 × max(d / 7000 - 0.3, 0)`.
-- The light is `max(sum / R⁶ × s / 3, 0)`, faded by a smoothstep of `(10000 - d) / 10000`.
-- Blend over time: `out = light + h × (history - light)`, with
-  `h = 0.3 × max(1 - 200 × |Δd| / 7000, 0) × Σ max(1 - 0.7 × |Δc|, 0)` over the three colour
-  channels. `h` is 0 when last frame's point lies within 1 percent of the screen edge.
+```mermaid
+flowchart TD
+    A[Trace: 15 taps per pixel] --> B[Blend with last frame's unblurred trace]
+    B --> C[Fade out by distance]
+    C --> D[Keep as next frame's history]
+    C --> E[Blur: 15 taps across, then 15 down]
+    E --> F[Composite: scene colour + light]
+```
 
-The game's strength `s`, its bias at the centre, and how the result joins the lighting are
-not known. OpenSky uses `s = 400`, the occlusion's bias 2.5, and adds the light to the lit
-colour. The game reads its normals partly from a normal buffer; OpenSky has none and uses the
-depth normals. The game blends `(v . N)(v . N_t)`; OpenSky turns the tap normal around, so a
-surface facing back at the pixel counts. `state frame` shows it under
-`postEffects.indirectLight`.
+All lengths are game units, and `z` is the pixel's linear view depth. The defaults are a
+strength `s` of 50, a radius `R` of 100, and a base bias of 2.5. A half-size option exists and
+is off by default.
 
-OpenSky traces one pixel in every 2 by 2 block and the composite reads the result with a
-linear filter. The light changes slowly across the screen, and the full-size trace cost up to
-9 ms of GPU time per frame at 1920 by 1080. The size the game traces at is not known. A tap
-past the radius, or one whose `|v . N| × |v|` cannot pass the bias, has weight 0, so the
-trace skips its normal and its colour. A pixel 10000 units away or more traces nothing.
+The trace:
+
+- Tap `i`, 0 to 14, sits `(100 R / z) × (i + 0.5) / 15` pixels from the pixel, at the angle
+  `(i + 0.5) × 3.349334 + φ_pixel + φ_frame` radians. The 100 is fixed: it does not follow the
+  field of view or the screen size. Nothing caps the spread.
+- `φ_pixel = 10 × ((3 px) XOR ((px + 1) py))`, in wrapping 32-bit integers with `px` and `py`
+  the pixel's column and row, then read as radians. It does not change between frames.
+- `φ_frame` is a new random angle from 0 to π each frame. Only pixels with `z` up to 3500 add it.
+- A tap reads its depth from a depth pyramid at level `clamp(floor(log2 h) - 3, 0, 4)`, with
+  `h` its distance in pixels, and rebuilds its position from the pixel it lands in.
+- `v` runs from the pixel to the tap. The pixel's normal `N` comes from the normal buffer; the
+  tap's normal `N_t` comes from the 2 x 2 derivatives of the tap positions. A tap adds its
+  scene colour times
+  `max(((v . N)(v . N_t) - b) / (|v|⁴ + 0.01), 0) × max(R² - |v|², 0)³ × (1 - |v| / R)`.
+  There is no minus sign before either dot product.
+- The bias is `b = 2.5 + 5 × (x² + y²) + 10 × max(min(z / 7000, 1) - 0.3, 0)`, with `x` and `y`
+  the pixel's place on the screen from -1 to 1.
+- The light is `max(sum / R⁶ × s / 3, 0)`. Nothing else clamps a tap, the sum, or the light.
+
+Because `(v . N)(v . N_t)` is at most `|v|²`, a tap nearer than about 1.6 units is rejected, and
+one tap's `((v . N)(v . N_t) - b) / |v|⁴` is at most `1 / (4b)`, 0.1 at the centre bias. So at
+the default strength one tap adds at most `0.1 × 50 / 3`, about 1.7 times its colour, and the
+blur spreads it.
+
+The blend with last frame: `out = cur + w × (history - cur)`, with
+`w = 0.3 × max(1 - 200 × |dn - dn_last|, 0) × Σ max(1 - 0.7 × |Δc|, 0)` over the three colour
+channels and `dn = min(z / 7000, 1)`. `w` is 0 when last frame's point is within 1 percent of the
+screen edge. The result is then faded by the smoothstep of `(10000 - z) / 10000`. That faded,
+unblurred value, with `dn`, is next frame's history.
+
+The blur is the engine's plain separable blur: 15 taps at -7 to +7 pixels across, then 15 down,
+with no depth test. The composite adds the blurred light to the scene colour; it does not
+multiply it by the albedo or the occlusion. The sky gets no light because the distance fade is 0
+there.
+
+OpenSky differs from this rule: it uses a strength of 400, flips the sign of `v . N_t`, spreads
+the taps by the projection instead of `100 R / z`, turns them by its own noise, traces at half
+size, and does not blur. Its pixel normals come from the depth, because it has no normal
+buffer. `state frame` shows the switch under `postEffects.indirectLight`.
 
 ## Volumetric light
 
