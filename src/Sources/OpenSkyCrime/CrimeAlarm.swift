@@ -218,4 +218,12 @@ nonisolated public struct CrimeAlarmState: Equatable, Sendable {
     mutating func fight(_ witness: ReferenceKey, against criminal: ReferenceKey) {
         fighters[witness, default: []].insert(criminal)
     }
+
+    /// The guard count of a criminal resets once no crime of it is left in the alarm.
+    mutating func releaseAnswering() {
+        let wanted = Set(crimes.values.map(\.criminal))
+        for criminal in answering.keys where !wanted.contains(criminal) {
+            answering[criminal] = nil
+        }
+    }
 }
