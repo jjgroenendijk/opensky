@@ -95,11 +95,42 @@ extension AIPerceptionSenseAdapter {
         return (present: actors.map(\.key), fresh: fresh)
     }
 
+    /// The player, then each NPC that another NPC attacks on sight.
     public func perceptionTargets() -> [PerceptionTarget] {
         guard let gameSession = game.gameSession else { return [] }
         let status = gameSession.locomotion.status
         let isMoving = simd_length_squared(status.lastPlan.horizontalDisplacement) > 0
-        return [PerceptionTarget(
+        return [playerTarget(status: status, isMoving: isMoving)] + actorTargets()
+    }
+
+    public func perceptionActorPairs() -> [DetectionPairKey] {
+        (game.combat.loop?.foePairs ?? []).sorted()
+            .map { DetectionPairKey(observer: $0.observer, target: $0.target) }
+    }
+
+    private func actorTargets() -> [PerceptionTarget] {
+        let wanted = Set((game.combat.loop?.foePairs ?? []).map(\.target))
+        guard !wanted.isEmpty else { return [] }
+        return game.actorWorld.combatActors()
+            .filter { wanted.contains($0.key) && !$0.isDead }
+            .map { actor in
+                let eye = actor.capsule.eyeHeight * max(actor.scale, 0)
+                return PerceptionTarget(
+                    key: actor.key, feet: actor.feet, eye: actor.feet + SIMD3(0, 0, eye),
+                    traits: detectionSense.actorDetectionTraits(
+                        of: actor.key,
+                        torso: actor.feet + SIMD3(0, 0, PlayerCapsule.torsoHeight(eyeHeight: eye))
+                    ),
+                    name: actor.name
+                )
+            }
+    }
+
+    private func playerTarget(
+        status: any LocomotionStatusPort,
+        isMoving: Bool
+    ) -> PerceptionTarget {
+        PerceptionTarget(
             key: .player,
             feet: status.feetPosition,
             eye: status.feetPosition + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight),
@@ -109,7 +140,7 @@ extension AIPerceptionSenseAdapter {
                 at: status.feetPosition, eyeHeight: PlayerCapsule.standard.eyeHeight
             ),
             name: "Player"
-        )]
+        )
     }
 
     public func perceptionHasLineOfSight(

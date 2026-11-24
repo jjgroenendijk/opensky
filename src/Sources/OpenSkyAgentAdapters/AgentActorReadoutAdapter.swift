@@ -115,6 +115,14 @@ extension AgentActorReadoutAdapter {
         return ["actors": .array(rows), "detailed": .init(min(detailed, rows.count))]
     }
 
+    /// The actor's combat target: `player`, the target's reference, or null.
+    private func combatTarget(of key: ReferenceKey) -> AgentJSON {
+        guard let target = game.combat.loop?.combatTarget(of: key) else { return .null }
+        guard target != .player else { return .string("player") }
+        return game.streamer.referenceEntry(key: target).map { .formID($0.formID.rawValue) }
+            ?? .null
+    }
+
     private func shortRow(_ actor: CombatActorObservation, distance: Float) -> [String: AgentJSON] {
         let formID = game.streamer.referenceEntry(key: actor.key)?.formID
         return [
@@ -125,6 +133,7 @@ extension AgentActorReadoutAdapter {
             "dead": .bool(actor.isDead),
             "hostility": .string("\(game.factions.hostility(of: actor.key))"),
             "combat": game.combat.loop?.phase(of: actor.key).map { .string("\($0)") } ?? .null,
+            "target": combatTarget(of: actor.key),
             "aggro": game.combat.loop?.aggroZone(of: actor.key)
                 .map { .string($0.rawValue) } ?? .null,
             "weapon": game.combat.loop?.drawState(of: actor.key)

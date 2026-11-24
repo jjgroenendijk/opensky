@@ -13,6 +13,8 @@ import simd
 public final class FakePerceptionWorld: PerceptionWorld {
     public var observers: [PerceptionObserver]
     public var targets: [PerceptionTarget]
+    /// The pairs with an NPC target the world asks to be tracked.
+    public var actorPairs: [DetectionPairKey] = []
     /// Segments this predicate answers true for are blocked.
     public var blocked: (SIMD3<Float>, SIMD3<Float>) -> Bool
     /// Every line-of-sight query asked of this world, in order.
@@ -37,6 +39,10 @@ public final class FakePerceptionWorld: PerceptionWorld {
 
     public func perceptionTargets() -> [PerceptionTarget] {
         targets
+    }
+
+    public func perceptionActorPairs() -> [DetectionPairKey] {
+        actorPairs
     }
 
     public func perceptionHasLineOfSight(

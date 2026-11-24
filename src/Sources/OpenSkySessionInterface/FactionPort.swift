@@ -18,6 +18,7 @@ public protocol FactionPort: AnyObject {
     func memberships(of key: ReferenceKey) -> ActorFactionState?
     func profile(of key: ReferenceKey) -> ActorSocialProfile?
     func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction?
+    func isHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool
     var relationships: RelationshipRuntime? { get }
     var runtime: FactionRuntime? { get }
     func setCrimeHostility(_ source: any CrimeHostilitySource)

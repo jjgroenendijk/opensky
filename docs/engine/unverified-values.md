@@ -28,6 +28,7 @@ the detail and the sources it did find.
 
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
+| How often NPC foes are found, and how far apart | Once a second, within 4096 units | [combat loop](/engine/combat.md#npc-foes) |
 | Which race attack spell a creature's blow rolls as its disease | The first Disease spell in the race's `ATKD` list, or in its `ATKR` race's | [Diseases](/engine/diseases.md#where-opensky-differs) |
 | How near a death an actor counts as its witness | 2048 units, with no detection check | [combat detection dialogue](/engine/combat-detection-dialogue.md#in-opensky) |
 | How long a package waits before it starts again after its walk gave up | 10 s | [package schedules](/engine/package-schedules.md#in-a-session) |
@@ -49,6 +50,7 @@ the detail and the sources it did find.
 | Melee hit volume | Half height 0.25 x capsule height, radius 0.75 x capsule radius | [melee combat](/engine/melee-combat.md) |
 | NPC combo chance | 0.3 per swing, at most 3 swings, no Offensive Mult term | [combat behaviour](/engine/combat-behavior.md) |
 | NPC back-off time | At most 2 s | [combat behaviour](/engine/combat-behavior.md) |
+| Assistance range | A helper is asked within 2,048 units of its ally, in place of the game's check that it detects the ally | [combat](/engine/combat.md#who-an-assisting-actor-fights) |
 | Combat setting formulas | Read from the setting names | [combat](/engine/combat.md) |
 | Melee knockdown magnitude | The knockback slide speed over 69.99 | [impulses](/engine/impulses.md#hits) |
 | Explosion knockdown magnitude | The `EXPL` force | [impulses](/engine/impulses.md#explosions) |

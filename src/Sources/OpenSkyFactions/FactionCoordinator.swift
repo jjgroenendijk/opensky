@@ -161,6 +161,11 @@ public final class FactionCoordinator {
 
     // MARK: - Hostility
 
+    /// Whether `observer` attacks `target` on sight. False when either has no profile.
+    public func isHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool {
+        socialDecision(of: observer, toward: target)?.isHostile ?? false
+    }
+
     /// What `key` makes of the player. Nil without a runtime or for the player.
     public func derivedHostilityDecision(of key: ReferenceKey) -> HostilityDecision? {
         guard key != .player, let observer = world.actorValueHolder(for: key) else { return nil }

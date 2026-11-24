@@ -64,6 +64,8 @@ public final class PerceptionRuntime {
     var order: [DetectionPairKey] = []
     /// The roster keys `order` was built from.
     private var orderRoster: (observers: [ReferenceKey], targets: [ReferenceKey])?
+    /// The NPC-target pairs the session asked for at the last refresh.
+    private var actorPairs: Set<DetectionPairKey> = []
     /// The roster by key, built once per frame for every step of that frame.
     var observerIndex: [ReferenceKey: PerceptionObserver] = [:]
     var targetIndex: [ReferenceKey: PerceptionTarget] = [:]
@@ -147,6 +149,7 @@ public final class PerceptionRuntime {
         targets = []
         order = []
         orderRoster = nil
+        actorPairs = []
         observerIndex = [:]
         targetIndex = [:]
         lastEvaluatedStep = [:]
@@ -167,38 +170,44 @@ public final class PerceptionRuntime {
         observerIndex = Dictionary(observers.map { ($0.key, $0) }) { first, _ in first }
         targetIndex = Dictionary(targets.map { ($0.key, $0) }) { first, _ in first }
         let roster = (observers: observers.map(\.key), targets: targets.map(\.key))
+        let asked = Set(world.perceptionActorPairs())
         if
             droppedPairCount == 0,
             let orderRoster,
             orderRoster.observers == roster.observers,
-            orderRoster.targets == roster.targets
+            orderRoster.targets == roster.targets,
+            asked == actorPairs
         {
             return
         }
         orderRoster = roster
+        actorPairs = asked
         rebuildOrder()
     }
 
-    /// Builds the capped pair order and drops the state of every pair outside it.
+    /// Builds the capped pair order and drops the state of every pair outside it. A pair
+    /// with an NPC target is tracked only when the session asked for it.
     private func rebuildOrder() {
-        var candidates: [(key: DetectionPairKey, distance: Float)] = []
+        var candidates: [(key: DetectionPairKey, rank: (Int, Float))] = []
         for observer in observers {
             for target in targets where target.key != observer.key {
+                let key = DetectionPairKey(observer: observer.key, target: target.key)
+                let isPlayer = target.key == .player
+                guard isPlayer || actorPairs.contains(key) else { continue }
                 candidates.append((
-                    DetectionPairKey(observer: observer.key, target: target.key),
-                    PerceptionSight.distance(observer: observer, target: target)
+                    key,
+                    (isPlayer ? 0 : 1, PerceptionSight.distance(observer: observer, target: target))
                 ))
             }
         }
-        // Nearest first past the cap, then back to key order so evaluation stays
-        // stable while actors move: a slice cursor over a distance-sorted list
-        // would re-slice differently every frame.
-        // Under the cap the loops above already built key order, so nothing sorts.
+        // Past the cap the player's pairs win, then the nearest, then back to key order so
+        // evaluation stays stable while actors move: a slice cursor over a distance-sorted
+        // list would re-slice differently every frame.
         droppedPairCount = max(0, candidates.count - Self.maximumPairs)
         if droppedPairCount == 0 {
-            order = candidates.map(\.key)
+            order = candidates.map(\.key).sorted()
         } else {
-            candidates.sort { ($0.distance, $0.key) < ($1.distance, $1.key) }
+            candidates.sort { ($0.rank.0, $0.rank.1, $0.key) < ($1.rank.0, $1.rank.1, $1.key) }
             order = candidates.prefix(Self.maximumPairs).map(\.key).sorted()
         }
         let live = Set(order)

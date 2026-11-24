@@ -135,6 +135,10 @@ public protocol PerceptionWorld: AnyObject {
     /// Every actor that may be perceived, in `ReferenceKey` order.
     func perceptionTargets() -> [PerceptionTarget]
 
+    /// The pairs with an NPC target that are tracked: an observer and an NPC it attacks
+    /// on sight. Every observer tracks the player.
+    func perceptionActorPairs() -> [DetectionPairKey]
+
     /// Whether the segment from `origin` to `destination` is clear of static
     /// collision. An exact ray, because a sight line has no thickness. Actors are
     /// not obstacles: a guard behind a guard can still see you.
@@ -142,4 +146,11 @@ public protocol PerceptionWorld: AnyObject {
         from origin: SIMD3<Float>,
         to destination: SIMD3<Float>
     ) -> Bool
+}
+
+extension PerceptionWorld {
+    /// A world without NPC foes tracks the player only.
+    public func perceptionActorPairs() -> [DetectionPairKey] {
+        []
+    }
 }

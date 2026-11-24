@@ -12,6 +12,15 @@ public import OpenSkyGameData
 public protocol NoCasterCombatWorld: CombatLoopWorld {}
 
 extension NoCasterCombatWorld {
+    /// A world without factions has no NPC foes.
+    public func combatReaction(of _: ReferenceKey, toward _: ReferenceKey) -> ActorReaction? {
+        nil
+    }
+
+    public func combatIsHostile(_: ReferenceKey, toward _: ReferenceKey) -> Bool {
+        false
+    }
+
     /// A world without destructible objects damages none.
     public func damageCombatDestructible(_: ReferenceKey, amount _: Float) {}
 

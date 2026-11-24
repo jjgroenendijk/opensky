@@ -52,3 +52,31 @@ extension PerceptionRuntimeTests {
         #expect(Set(runtime.pairs.keys.map(\.observer)) == [PerceptionFixture.secondGuardKey])
     }
 }
+
+@MainActor
+extension PerceptionRuntimeTests {
+    /// An NPC target is tracked only by the observer the world names for it.
+    @Test func anNPCTargetIsTrackedOnlyForTheAskedPair() {
+        let bandit = ReferenceKey.plugin(name: "perception.esm", objectID: 3)
+        let first = PerceptionFixture.observer(feet: SIMD3(0, 0, 0))
+        let second = PerceptionFixture.observer(
+            key: PerceptionFixture.secondGuardKey, feet: SIMD3(0, 50, 0), name: "Second"
+        )
+        let world = FakePerceptionWorld(
+            observers: [first, second],
+            targets: [
+                PerceptionFixture.target(feet: SIMD3(100, 0, 0)),
+                PerceptionTarget(key: bandit, feet: SIMD3(150, 0, 0), name: "Bandit")
+            ]
+        )
+        let runtime = PerceptionRuntime(settings: settings, world: world)
+        advance(runtime, steps: 30)
+        #expect(!runtime.pairs.keys.contains { $0.target == bandit })
+
+        world.actorPairs = [DetectionPairKey(observer: PerceptionFixture.guardKey, target: bandit)]
+        advance(runtime, steps: 30)
+        #expect(runtime.pairs.keys.filter { $0.target == bandit }.map(\.observer)
+            == [PerceptionFixture.guardKey])
+        #expect(runtime.pairs.keys.count { $0.target == .player } == 2)
+    }
+}

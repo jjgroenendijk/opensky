@@ -1,4 +1,4 @@
-// Assistance: a calm actor near an ally that fights the player joins the fight
+// Assistance: a calm actor near an ally in a fight joins it on the ally's side
 // (<https://ck.uesp.net/wiki/AI_Data_Tab>, "Assistance").
 
 import OpenSkyActorsInterface
@@ -34,8 +34,18 @@ extension CombatLoopRuntime {
                     && world.combatAssists(actor.key, ally: other.key)
             }
             guard let ally else { continue }
-            joinFight(actor.key, assisting: ally.key)
-            hostility[actor.key] = .hostile
+            if fightsPlayerSide(ally.key) {
+                joinFight(actor.key, assisting: ally.key)
+                hostility[actor.key] = .hostile
+            } else if
+                let foe = targets[ally.key], npcAssists[actor.key] == nil,
+                !world.combatAssists(actor.key, ally: foe)
+            {
+                // The ally fights an NPC: the helper takes that NPC on, not the player.
+                // One that would help that NPC too stays out.
+                npcAssists[actor.key] = foe
+                record(.assisted(actor.key, ally: ally.key))
+            }
         }
     }
 }

@@ -253,6 +253,11 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     ) -> Bool
     /// What `key` makes of the player through factions and relationships.
     func combatReaction(toPlayerOf key: ReferenceKey) -> ActorReaction?
+    /// What `observer` makes of `target`, another actor.
+    func combatReaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction?
+    /// True when `observer`'s aggression and its reaction to `target` make it attack
+    /// `target` on sight ([hostility](/engine/hostility.md#aggression-draws-the-weapon)).
+    func combatIsHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool
     /// `key`'s aggro radius, or nil when its AI data switches the behaviour off.
     func combatAggroRadius(of key: ReferenceKey) -> AggroRadius?
     /// `key` says its aggro radius warning line to `target`, when it has one to say now.

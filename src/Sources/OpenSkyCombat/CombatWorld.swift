@@ -209,6 +209,8 @@ public protocol CombatWorld: AnyObject {
     func spellHealthDamage(_ spell: SpellPayload) -> Float
     /// What `observer` makes of `target` through factions and relationships.
     func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction?
+    /// True when `observer` attacks `target` on sight.
+    func isHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool
     /// `key`'s aggro radius from its AI data, or nil when the behaviour is off.
     func aggroRadius(of key: ReferenceKey) -> AggroRadius?
     /// `key` says its aggro radius warning line to `target`, when it has one to say now.
@@ -389,6 +391,10 @@ extension CombatWorld {
 
     public func reaction(of _: ReferenceKey, toward _: ReferenceKey) -> ActorReaction? {
         nil
+    }
+
+    public func isHostile(_: ReferenceKey, toward _: ReferenceKey) -> Bool {
+        false
     }
 
     public func packageIgnoresCombat(_: ReferenceKey) -> Bool {

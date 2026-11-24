@@ -39,6 +39,9 @@ struct CombatWorldFactsTests {
         #expect(host.fakeFactions.setHostilityCalls.map(\.key) == [Self.foe])
         #expect(adapter.reaction(of: Self.foe, toward: .player) == nil)
         #expect(host.fakeFactions.reactionCalls.map(\.observer) == [Self.foe])
+        host.fakeFactions.isHostileResult = true
+        #expect(adapter.isHostile(Self.foe, toward: .player))
+        #expect(host.fakeFactions.isHostileCalls.map(\.observer) == [Self.foe])
     }
 
     @Test func withoutRuntimesTheActorFactsAreEmpty() {

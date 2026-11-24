@@ -227,6 +227,10 @@ extension CombatActorFactsAdapter {
     public func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction? {
         game.factions.reaction(of: observer, toward: target)
     }
+
+    public func isHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool {
+        game.factions.isHostile(observer, toward: target)
+    }
 }
 
 extension CombatActorFactsAdapter {

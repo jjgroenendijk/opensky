@@ -184,9 +184,8 @@ game uses them, so each use is OpenSky's reading.
 Note 1: [combat approach](/engine/combat-approach.md) gives the game's rule for both radii and
 for the speed in each band. A caster's back-off lasts at most 2 s, which is OpenSky's own number.
 
-The advance, range, healing, shout, and flight settings reach the fights that start while the switch
-"Game combat settings" is on. Off keeps OpenSky's own numbers, which is what the older behaviour
-tests run on.
+The advance, range, healing, shout, and flight settings reach the fights that start while the
+switch "Game combat settings" is on. Off keeps OpenSky's own numbers, for the older tests.
 
 Healing: a spell counts as a heal when it is a hand-cast spell aimed at the caster, carries no
 hostile effect, and one of its effects is a value modifier on Health that is not detrimental, such
@@ -255,9 +254,10 @@ An actor whose Confidence breaks it off flees as soon as it detects its enemy, i
 starting a fight. Without actor values, the flee health fraction below is the rule.
 
 Assistance decides who joins. A calm living actor within 2,048 units of an engaged one joins
-the fight when it helps that actor: "helps allies" for an ally reaction, "helps friends and
-allies" for a friend too. The reaction is the faction and relationship one
-([hostility](/engine/hostility.md)). The radius is OpenSky's; the wiki names none.
+the fight on that actor's side when it helps it: "helps allies" for an ally reaction, "helps
+friends and allies" for a friend too ([hostility](/engine/hostility.md)). The radius is
+OpenSky's; the wiki names none. Against an NPC the helper fights that NPC and stays calm toward
+the player ([NPC foes](/engine/combat.md#npc-foes)).
 
 Members of one faction are allies only when the faction lists itself as one
 (<https://ck.uesp.net/wiki/Faction>). On the install, `BanditFaction` does, so bandits help each
