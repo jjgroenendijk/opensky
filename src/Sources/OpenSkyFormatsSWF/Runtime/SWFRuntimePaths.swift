@@ -57,36 +57,7 @@ nonisolated extension SWFMovieRuntime {
 
     /// A member of a display object the property table does not hold.
     public func member(_ name: String, of node: SWFDisplayObject) -> AS2Value? {
-        if let property = AS2DisplayProperty.named(name) {
-            return displayProperty(property, of: node)
-        }
-        switch name {
-        case "_root", "_level0":
-            return .object(node.rootObject.object)
-        case "_parent":
-            return node.parent.map { .object($0.object) }
-        case "text", "htmlText":
-            return textMember(of: node, html: name == "htmlText")
-        case "scroll", "maxscroll", "bottomScroll", "numLines":
-            return scrollMember(name, of: node)
-        case "selectable":
-            if case let .editText(id) = node.content, let field = editText(id) {
-                return .boolean(!field.flags.noSelect)
-            }
-        case "border":
-            if case let .editText(id) = node.content, let field = editText(id) {
-                return .boolean(field.flags.border)
-            }
-        default:
-            break
-        }
-        if let child = node.child(named: name) {
-            return .object(child.object)
-        }
-        if Self.unsetComponentMembers.contains(name) {
-            return .undefined
-        }
-        return builtinMethod(name, of: node)
+        TextMembers(owner: self).member(name, of: node)
     }
 
     /// CLIK members a movie reads before it sets them, where Flash also answers `undefined`.
@@ -116,40 +87,13 @@ nonisolated extension SWFMovieRuntime {
     /// `__width` / `__height` pair — ordinary properties, not display
     /// properties — behave.
     public func setMember(_ name: String, of node: SWFDisplayObject, to value: AS2Value) -> Bool {
-        if let property = AS2DisplayProperty.named(name) {
-            return setDisplayProperty(property, of: node, to: value)
-        }
-        switch name {
-        case "text", "htmlText":
-            guard case .editText = node.content else {
-                return false
-            }
-            let text = runtime.coercion.toString(value)
-            if name == "htmlText" {
-                setHTMLText(text, of: node)
-            } else {
-                setText(text, of: node)
-            }
-            return true
-        case "scroll":
-            return setTextScroll(value, of: node)
-        default:
-            return false
-        }
+        TextMembers(owner: self).setMember(name, of: node, to: value)
     }
 
     // MARK: - Text
 
     private func textMember(of node: SWFDisplayObject, html: Bool) -> AS2Value? {
-        guard case .editText = node.content else {
-            return nil
-        }
-        let plain = text(of: node) ?? ""
-        if html, let source = node.textHTML ?? authoredHTML(of: node) {
-            return .string(source)
-        }
-        guard html, !node.textImages.isEmpty else { return .string(plain) }
-        return .string(SWFHTMLText.restoringImages(in: plain, images: node.textImages))
+        TextMembers(owner: self).textMember(of: node, html: html)
     }
 
     /// Assigns a field's runtime content and writes the bound variable back, so
@@ -172,38 +116,22 @@ nonisolated extension SWFMovieRuntime {
     /// Assigns `htmlText`: the tags drop out, and each `<img>` keeps its place in the line.
     /// A size the tag leaves out comes from the bitmap the movie exports under that name.
     public func setHTMLText(_ html: String, of node: SWFDisplayObject) {
-        let parsed = SWFHTMLText.parseStyled(html)
-        setText(parsed.text, of: node)
-        node.textStyles = parsed.styles
-        node.textHTML = html
-        node.textImages = parsed.images.map { image in
-            var sized = image
-            if let id = movie.exportedNames[image.source], let bitmap = movie.bitmap(id) {
-                sized.width = sized.width > 0 ? sized.width : Float(bitmap.width)
-                sized.height = sized.height > 0 ? sized.height : Float(bitmap.height)
-            }
-            return sized
-        }
+        TextMembers(owner: self).setHTMLText(html, of: node)
     }
 
     private func authoredHTML(of node: SWFDisplayObject) -> String? {
-        guard
-            node.textOverride == nil, let field = node.characterId.flatMap(editText),
-            field.flags.html else { return nil }
-        return field.initialText
+        TextMembers(owner: self).authoredHTML(of: node)
     }
 
     /// The pictures a field draws in its lines: those of the last `htmlText`, else those of
     /// its authored HTML.
     func textImages(of node: SWFDisplayObject) -> [SWFInlineImage] {
-        guard node.textOverride == nil else { return node.textImages }
-        return node.characterId.flatMap(editText)?.htmlContent?.images ?? []
+        TextMembers(owner: self).textImages(of: node)
     }
 
     /// The styles a field draws in, from the same source as `textImages(of:)`.
     func textStyles(of node: SWFDisplayObject) -> SWFTextStyles {
-        guard node.textOverride == nil else { return node.textStyles }
-        return node.characterId.flatMap(editText)?.htmlContent?.styles ?? .none
+        TextMembers(owner: self).textStyles(of: node)
     }
 
     /// The string a field currently draws: an explicit assignment first, then
@@ -213,19 +141,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     private func rawText(of node: SWFDisplayObject) -> String? {
-        if let override = node.textOverride {
-            return override
-        }
-        guard let characterId = node.characterId, let field = editText(characterId) else {
-            return nil
-        }
-        if
-            !field.variableName.isEmpty, let bound = readVariable(field.variableName, from: node),
-            bound != .undefined
-        {
-            return runtime.coercion.toString(bound)
-        }
-        return field.plainText
+        TextMembers(owner: self).rawText(of: node)
     }
 
     // MARK: - Variable bindings
@@ -261,5 +177,136 @@ nonisolated extension SWFMovieRuntime {
             return
         }
         binding.container.assign(value, for: binding.property)
+    }
+}
+
+extension SWFMovieRuntime {
+    /// Reads and writes clip members and text field text.
+    nonisolated struct TextMembers {
+        let owner: SWFMovieRuntime
+
+        func member(_ name: String, of node: SWFDisplayObject) -> AS2Value? {
+            if let property = AS2DisplayProperty.named(name) {
+                return owner.displayProperty(property, of: node)
+            }
+            switch name {
+            case "_root", "_level0":
+                return .object(node.rootObject.object)
+            case "_parent":
+                return node.parent.map { .object($0.object) }
+            case "text", "htmlText":
+                return owner.textMember(of: node, html: name == "htmlText")
+            case "scroll", "maxscroll", "bottomScroll", "numLines":
+                return owner.scrollMember(name, of: node)
+            case "selectable":
+                if case let .editText(id) = node.content, let field = owner.editText(id) {
+                    return .boolean(!field.flags.noSelect)
+                }
+            case "border":
+                if case let .editText(id) = node.content, let field = owner.editText(id) {
+                    return .boolean(field.flags.border)
+                }
+            default:
+                break
+            }
+            if let child = node.child(named: name) {
+                return .object(child.object)
+            }
+            if SWFMovieRuntime.unsetComponentMembers.contains(name) {
+                return .undefined
+            }
+            return owner.builtinMethod(name, of: node)
+        }
+
+        func setMember(_ name: String, of node: SWFDisplayObject, to value: AS2Value) -> Bool {
+            let runtime = owner.runtime
+            if let property = AS2DisplayProperty.named(name) {
+                return owner.setDisplayProperty(property, of: node, to: value)
+            }
+            switch name {
+            case "text", "htmlText":
+                guard case .editText = node.content else {
+                    return false
+                }
+                let text = runtime.coercion.toString(value)
+                if name == "htmlText" {
+                    owner.setHTMLText(text, of: node)
+                } else {
+                    owner.setText(text, of: node)
+                }
+                return true
+            case "scroll":
+                return owner.setTextScroll(value, of: node)
+            default:
+                return false
+            }
+        }
+
+        func textMember(of node: SWFDisplayObject, html: Bool) -> AS2Value? {
+            guard case .editText = node.content else {
+                return nil
+            }
+            let plain = owner.text(of: node) ?? ""
+            if html, let source = node.textHTML ?? owner.authoredHTML(of: node) {
+                return .string(source)
+            }
+            guard html, !node.textImages.isEmpty else { return .string(plain) }
+            return .string(SWFHTMLText.restoringImages(in: plain, images: node.textImages))
+        }
+
+        func setHTMLText(_ html: String, of node: SWFDisplayObject) {
+            let parsed = SWFHTMLText.parseStyled(html)
+            owner.setText(parsed.text, of: node)
+            node.textStyles = parsed.styles
+            node.textHTML = html
+            node.textImages = parsed.images.map { image in
+                var sized = image
+                if
+                    let id = owner.movie.exportedNames[image.source],
+                    let bitmap = owner.movie.bitmap(id)
+                {
+                    sized.width = sized.width > 0 ? sized.width : Float(bitmap.width)
+                    sized.height = sized.height > 0 ? sized.height : Float(bitmap.height)
+                }
+                return sized
+            }
+        }
+
+        func authoredHTML(of node: SWFDisplayObject) -> String? {
+            guard
+                node.textOverride == nil, let field = node.characterId.flatMap(owner.editText),
+                field.flags.html else { return nil }
+            return field.initialText
+        }
+
+        func textImages(of node: SWFDisplayObject) -> [SWFInlineImage] {
+            guard node.textOverride == nil else { return node.textImages }
+            return node.characterId.flatMap(owner.editText)?.htmlContent?.images ?? []
+        }
+
+        func textStyles(of node: SWFDisplayObject) -> SWFTextStyles {
+            guard node.textOverride == nil else { return node.textStyles }
+            return node.characterId.flatMap(owner.editText)?.htmlContent?.styles ?? .none
+        }
+
+        func rawText(of node: SWFDisplayObject) -> String? {
+            let runtime = owner.runtime
+            if let override = node.textOverride {
+                return override
+            }
+            guard let characterId = node.characterId, let field = owner.editText(characterId) else {
+                return nil
+            }
+            if
+                !field.variableName.isEmpty, let bound = owner.readVariable(
+                    field.variableName,
+                    from: node
+                ),
+                bound != .undefined
+            {
+                return runtime.coercion.toString(bound)
+            }
+            return field.plainText
+        }
     }
 }

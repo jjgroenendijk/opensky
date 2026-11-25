@@ -58,21 +58,7 @@ nonisolated extension SWFMovieRuntime {
     /// `keyUp`, or `keyHold`.
     @discardableResult
     func routeToFocusHandler(code: Int, value: String) -> Bool {
-        guard
-            let handler = focusHandler,
-            let function = handler.lookup("handleInput")?.property.value.functionValue,
-            let details = makeInputDetails(code: code, value: value)
-        else {
-            return false
-        }
-        markDirty()
-        let result = AS2Interpreter.invoke(
-            in: runtime,
-            .object(function),
-            thisValue: .object(handler),
-            arguments: [details]
-        )
-        return runtime.coercion.toBoolean(result.value)
+        HandlerRoutes(owner: self).routeToFocusHandler(code: code, value: value)
     }
 
     /// Hands a key to the menu's own `handleInput(details, pathToFocus)`. Every
@@ -83,30 +69,7 @@ nonisolated extension SWFMovieRuntime {
     /// `pathToFocus` from there.
     @discardableResult
     func routeToMenuHandler(code: Int, value: String) -> Bool {
-        guard
-            let node = menuInputHandler,
-            let function = node.object.lookup("handleInput")?.property.value.functionValue,
-            let details = makeInputDetails(code: code, value: value)
-        else {
-            return false
-        }
-        markDirty()
-        // The path carries only clips that define `handleInput`. Vanilla nests a
-        // list under a plain holder clip (`startmenu.swf`:
-        // `[MainListHolder, List_mc]`); the movie's own `handleInput` forwards
-        // down `pathToFocus[0]`, so an unfiltered path hands it a clip that
-        // defines none and the key is dropped.
-        let path = runtime.makeArray(
-            focusChain(under: node).filter { definesHandleInput($0) }
-                .map { .object($0.object) }
-        )
-        let result = AS2Interpreter.invoke(
-            in: runtime,
-            .object(function),
-            thisValue: .object(node.object),
-            arguments: [details, .object(path)]
-        )
-        return runtime.coercion.toBoolean(result.value)
+        HandlerRoutes(owner: self).routeToMenuHandler(code: code, value: value)
     }
 
     /// The outermost clip that defines `handleInput`, found breadth-first from
@@ -229,5 +192,61 @@ nonisolated extension AS2Interpreter {
             arguments: arguments
         )
         return result.value.objectValue.map(AS2Value.object) ?? .object(instance)
+    }
+}
+
+extension SWFMovieRuntime {
+    /// Routes a key to the focus or menu handler.
+    nonisolated struct HandlerRoutes {
+        let owner: SWFMovieRuntime
+
+        @discardableResult
+        func routeToFocusHandler(code: Int, value: String) -> Bool {
+            let runtime = owner.runtime
+            guard
+                let handler = owner.focusHandler,
+                let function = handler.lookup("handleInput")?.property.value.functionValue,
+                let details = owner.makeInputDetails(code: code, value: value)
+            else {
+                return false
+            }
+            owner.markDirty()
+            let result = AS2Interpreter.invoke(
+                in: runtime,
+                .object(function),
+                thisValue: .object(handler),
+                arguments: [details]
+            )
+            return runtime.coercion.toBoolean(result.value)
+        }
+
+        @discardableResult
+        func routeToMenuHandler(code: Int, value: String) -> Bool {
+            let runtime = owner.runtime
+            guard
+                let node = owner.menuInputHandler,
+                let function = node.object.lookup("handleInput")?.property.value.functionValue,
+                let details = owner.makeInputDetails(code: code, value: value)
+            else {
+                return false
+            }
+            owner.markDirty()
+            // The path carries only clips that define `handleInput`. Vanilla nests a
+            // list under a plain holder clip (`startmenu.swf`:
+            // `[MainListHolder, List_mc]`); the movie's own `handleInput` forwards
+            // down `pathToFocus[0]`, so an unfiltered path hands it a clip that
+            // defines none and the key is dropped.
+            let path = runtime.makeArray(
+                owner.focusChain(under: node).filter { owner.definesHandleInput($0) }
+                    .map { .object($0.object) }
+            )
+            let result = AS2Interpreter.invoke(
+                in: runtime,
+                .object(function),
+                thisValue: .object(node.object),
+                arguments: [details, .object(path)]
+            )
+            return runtime.coercion.toBoolean(result.value)
+        }
     }
 }

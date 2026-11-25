@@ -74,10 +74,10 @@ nonisolated extension SWFMovieRuntime {
         let mouse = runtime.makeObject()
         mouse.define(.boolean(true), for: "_visible", flags: .dontEnumerate)
         AS2Runtime.method(runtime, on: mouse, name: "show") { context in
-            setCursorVisible(context, to: true)
+            CursorNatives.setCursorVisible(context, to: true)
         }
         AS2Runtime.method(runtime, on: mouse, name: "hide") { context in
-            setCursorVisible(context, to: false)
+            CursorNatives.setCursorVisible(context, to: false)
         }
         // Scaleform's extension: the object under the cursor, so a row can tell which
         // of its parts was clicked.
@@ -102,15 +102,20 @@ nonisolated extension SWFMovieRuntime {
         case .shape, .staticText: return hit.parent
         }
     }
+}
 
-    /// `Mouse.show()` / `Mouse.hide()` answer the *previous* visibility as 1 or
-    /// 0, which is what the ActionScript 2 reference specifies.
-    private static func setCursorVisible(_ context: AS2CallContext, to visible: Bool) -> AS2Value {
-        guard let mouse = context.thisObject else {
-            return .integer(0)
+extension SWFMovieRuntime {
+    /// Shows or hides the mouse cursor.
+    nonisolated enum CursorNatives {
+        /// `Mouse.show()` / `Mouse.hide()` answer the *previous* visibility as 1 or
+        /// 0, which is what the ActionScript 2 reference specifies.
+        static func setCursorVisible(_ context: AS2CallContext, to visible: Bool) -> AS2Value {
+            guard let mouse = context.thisObject else {
+                return .integer(0)
+            }
+            let previous = mouse.lookup("_visible")?.property.value
+            mouse.define(.boolean(visible), for: "_visible", flags: .dontEnumerate)
+            return .integer(previous == .boolean(true) ? 1 : 0)
         }
-        let previous = mouse.lookup("_visible")?.property.value
-        mouse.define(.boolean(visible), for: "_visible", flags: .dontEnumerate)
-        return .integer(previous == .boolean(true) ? 1 : 0)
     }
 }

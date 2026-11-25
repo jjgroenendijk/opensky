@@ -57,19 +57,7 @@ nonisolated extension SWFMovieRuntime {
         on node: SWFDisplayObject,
         keyCode: UInt8?
     ) -> Bool {
-        guard let actions = node.clipActions?.actions(for: event, keyCode: keyCode) else {
-            return false
-        }
-        var ran = false
-        for block in actions {
-            let target = node.isButton ? (node.parent ?? node) : node
-            AS2Interpreter.execute(in: runtime, block, target: target.object)
-            ran = true
-        }
-        if ran {
-            markDirty()
-        }
-        return ran
+        ClipActionRuns(owner: self).runClipActions(event, on: node, keyCode: keyCode)
     }
 
     /// A button shows the state the pointer left it in: over after a rollover
@@ -203,5 +191,33 @@ nonisolated extension SWFClipActions {
             guard event == .keyPress, let trapped = record.keyCode else { return true }
             return trapped == keyCode
         }.map(\.actions)
+    }
+}
+
+extension SWFMovieRuntime {
+    /// Runs the clip actions of one event.
+    nonisolated struct ClipActionRuns {
+        let owner: SWFMovieRuntime
+
+        func runClipActions(
+            _ event: SWFClipEventFlags,
+            on node: SWFDisplayObject,
+            keyCode: UInt8?
+        ) -> Bool {
+            let runtime = owner.runtime
+            guard let actions = node.clipActions?.actions(for: event, keyCode: keyCode) else {
+                return false
+            }
+            var ran = false
+            for block in actions {
+                let target = node.isButton ? (node.parent ?? node) : node
+                AS2Interpreter.execute(in: runtime, block, target: target.object)
+                ran = true
+            }
+            if ran {
+                owner.markDirty()
+            }
+            return ran
+        }
     }
 }

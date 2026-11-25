@@ -27,26 +27,12 @@ nonisolated extension SWFMovieRuntime {
         depth: UInt16,
         frame: SWFRect
     ) -> SWFDisplayObject {
-        let characterId = nextScriptCharacterID()
-        scriptEditTexts[characterId] = SWFEditText(
-            characterId: characterId,
-            bounds: SWFRect(
-                xMin: 0, xMax: frame.xMax - frame.xMin,
-                yMin: 0, yMax: frame.yMax - frame.yMin
-            ),
-            flags: SWFEditTextFlags(), fontID: nil, fontClass: Self.defaultTextFont,
-            fontHeight: 240,
-            color: nil, maxLength: nil, layout: nil, variableName: "", initialText: nil,
-            htmlParse: SWFHTMLParse()
+        TextFieldCreation(owner: self).createTextField(
+            named: name,
+            in: parent,
+            depth: depth,
+            frame: frame
         )
-        let created = SWFDisplayObject(content: .editText(characterId))
-        created.object.prototype = textFieldPrototype
-        created.object.typeOverride = nil
-        created.name = name
-        created.moveTo(twipsX: frame.xMin, twipsY: frame.yMin)
-        parent.addChild(created, atDepth: depth)
-        markDirty()
-        return created
     }
 
     private func nextScriptCharacterID() -> UInt16 {
@@ -55,5 +41,41 @@ nonisolated extension SWFMovieRuntime {
             id -= 1
         }
         return id
+    }
+}
+
+extension SWFMovieRuntime {
+    /// Creates a text field from a script.
+    nonisolated struct TextFieldCreation {
+        let owner: SWFMovieRuntime
+
+        func createTextField(
+            named name: String,
+            in parent: SWFDisplayObject,
+            depth: UInt16,
+            frame: SWFRect
+        ) -> SWFDisplayObject {
+            let textFieldPrototype = owner.textFieldPrototype
+            let characterId = owner.nextScriptCharacterID()
+            owner.scriptEditTexts[characterId] = SWFEditText(
+                characterId: characterId,
+                bounds: SWFRect(
+                    xMin: 0, xMax: frame.xMax - frame.xMin,
+                    yMin: 0, yMax: frame.yMax - frame.yMin
+                ),
+                flags: SWFEditTextFlags(), fontID: nil, fontClass: SWFMovieRuntime.defaultTextFont,
+                fontHeight: 240,
+                color: nil, maxLength: nil, layout: nil, variableName: "", initialText: nil,
+                htmlParse: SWFHTMLParse()
+            )
+            let created = SWFDisplayObject(content: .editText(characterId))
+            created.object.prototype = textFieldPrototype
+            created.object.typeOverride = nil
+            created.name = name
+            created.moveTo(twipsX: frame.xMin, twipsY: frame.yMin)
+            parent.addChild(created, atDepth: depth)
+            owner.markDirty()
+            return created
+        }
     }
 }

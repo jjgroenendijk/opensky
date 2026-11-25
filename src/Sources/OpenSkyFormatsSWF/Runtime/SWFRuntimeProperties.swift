@@ -73,34 +73,7 @@ nonisolated extension SWFMovieRuntime {
         of node: SWFDisplayObject,
         to value: AS2Value
     ) -> Bool {
-        let number = runtime.coercion.toNumber(value)
-        switch property {
-        case .positionX:
-            node.moveTo(twipsX: Self.twips(number), twipsY: nil)
-        case .positionY:
-            node.moveTo(twipsX: nil, twipsY: Self.twips(number))
-        case .scaleX:
-            node.setBasisScale(Float(number) / 100, horizontal: true)
-        case .scaleY:
-            node.setBasisScale(Float(number) / 100, horizontal: false)
-        case .alpha:
-            node.alpha = Self.finite(Float(number) / 100)
-        case .visible:
-            node.isVisible = runtime.coercion.toBoolean(value)
-        case .width:
-            setExtent(of: node, to: Float(number), horizontal: true)
-        case .height:
-            setExtent(of: node, to: Float(number), horizontal: false)
-        case .rotation:
-            node.setRotation(degrees: Float(number))
-        case .name:
-            node.name = runtime.coercion.toString(value)
-            node.parent?.bindName(of: node)
-        default:
-            return false
-        }
-        markDirty()
-        return true
+        DisplayProperties(owner: self).setDisplayProperty(property, of: node, to: value)
     }
 
     /// `_width = n` on a clip rescales its matrix so the transformed box is `n` pixels
@@ -271,6 +244,50 @@ nonisolated extension SWFDisplayObject {
         } else {
             matrix.rotateSkew1 *= factor
             matrix.scaleY *= factor
+        }
+    }
+}
+
+extension SWFMovieRuntime {
+    /// Writes a display property of a clip.
+    nonisolated struct DisplayProperties {
+        let owner: SWFMovieRuntime
+
+        @discardableResult
+        func setDisplayProperty(
+            _ property: AS2DisplayProperty,
+            of node: SWFDisplayObject,
+            to value: AS2Value
+        ) -> Bool {
+            let runtime = owner.runtime
+            let number = runtime.coercion.toNumber(value)
+            switch property {
+            case .positionX:
+                node.moveTo(twipsX: SWFMovieRuntime.twips(number), twipsY: nil)
+            case .positionY:
+                node.moveTo(twipsX: nil, twipsY: SWFMovieRuntime.twips(number))
+            case .scaleX:
+                node.setBasisScale(Float(number) / 100, horizontal: true)
+            case .scaleY:
+                node.setBasisScale(Float(number) / 100, horizontal: false)
+            case .alpha:
+                node.alpha = SWFMovieRuntime.finite(Float(number) / 100)
+            case .visible:
+                node.isVisible = runtime.coercion.toBoolean(value)
+            case .width:
+                owner.setExtent(of: node, to: Float(number), horizontal: true)
+            case .height:
+                owner.setExtent(of: node, to: Float(number), horizontal: false)
+            case .rotation:
+                node.setRotation(degrees: Float(number))
+            case .name:
+                node.name = runtime.coercion.toString(value)
+                node.parent?.bindName(of: node)
+            default:
+                return false
+            }
+            owner.markDirty()
+            return true
         }
     }
 }

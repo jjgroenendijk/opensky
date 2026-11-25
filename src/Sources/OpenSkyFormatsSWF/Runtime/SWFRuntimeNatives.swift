@@ -254,31 +254,7 @@ nonisolated extension SWFMovieRuntime {
     /// `hitTest(x, y)` and `hitTest(clip)` test boxes in the clip's parent space;
     /// `hitTest(x, y, true)` tests the shapes at a stage point.
     private static func hitTest(_ context: AS2CallContext) -> Bool {
-        guard let owner = movieRuntime(context), let node = node(context) else {
-            return false
-        }
-        let box = owner.parentBounds(of: node)
-        guard let other = SWFDisplayObject.resolve(context.argument(0).objectValue) else {
-            let point = SIMD2(
-                Float(owner.runtime.coercion.toNumber(context.argument(0)))
-                    * SWFMovieRuntime.twipsPerPixel,
-                Float(owner.runtime.coercion.toNumber(context.argument(1)))
-                    * SWFMovieRuntime.twipsPerPixel
-            )
-            guard owner.runtime.coercion.toBoolean(context.argument(2)) else {
-                return box.contains(point)
-            }
-            guard let toLocal = owner.transform(of: node)?.inverted else {
-                return false
-            }
-            return owner.draws(node, at: toLocal.apply(point))
-        }
-        let target = owner.parentBounds(of: other)
-        guard !box.isEmpty, !target.isEmpty else {
-            return false
-        }
-        return box.minX <= target.maxX && box.maxX >= target.minX
-            && box.minY <= target.maxY && box.maxY >= target.minY
+        HitTestNative.hitTest(context)
     }
 
     /// An ActionScript depth as a SWF depth, clamped into the `UI16` domain, so script
@@ -289,5 +265,41 @@ nonisolated extension SWFMovieRuntime {
         }
         let depth = number.rounded() + Double(SWFDisplayObject.scriptDepthBase)
         return UInt16(max(0, min(Double(UInt16.max), depth)))
+    }
+}
+
+extension SWFMovieRuntime {
+    /// Runs the `hitTest` method of a movie clip.
+    nonisolated enum HitTestNative {
+        static func hitTest(_ context: AS2CallContext) -> Bool {
+            guard
+                let owner = SWFMovieRuntime.movieRuntime(context),
+                let node = SWFMovieRuntime.node(context)
+            else {
+                return false
+            }
+            let box = owner.parentBounds(of: node)
+            guard let other = SWFDisplayObject.resolve(context.argument(0).objectValue) else {
+                let point = SIMD2(
+                    Float(owner.runtime.coercion.toNumber(context.argument(0)))
+                        * SWFMovieRuntime.twipsPerPixel,
+                    Float(owner.runtime.coercion.toNumber(context.argument(1)))
+                        * SWFMovieRuntime.twipsPerPixel
+                )
+                guard owner.runtime.coercion.toBoolean(context.argument(2)) else {
+                    return box.contains(point)
+                }
+                guard let toLocal = owner.transform(of: node)?.inverted else {
+                    return false
+                }
+                return owner.draws(node, at: toLocal.apply(point))
+            }
+            let target = owner.parentBounds(of: other)
+            guard !box.isEmpty, !target.isEmpty else {
+                return false
+            }
+            return box.minX <= target.maxX && box.maxX >= target.minX
+                && box.minY <= target.maxY && box.maxY >= target.minY
+        }
     }
 }

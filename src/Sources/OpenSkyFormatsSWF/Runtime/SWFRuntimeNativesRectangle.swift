@@ -61,34 +61,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     private static func installRectangleQueries(_ runtime: AS2Runtime, prototype: AS2Object) {
-        AS2Runtime.method(runtime, on: prototype, name: "isEmpty") { context in
-            let box = try rectangle(context.thisObject, context)
-            return .boolean(box.width <= 0 || box.height <= 0)
-        }
-        AS2Runtime.method(runtime, on: prototype, name: "contains") { context in
-            let box = try rectangle(context.thisObject, context)
-            let (px, py) = try (context.number(0), context.number(1))
-            return .boolean(
-                px >= box.x && px < box.x + box.width && py >= box.y && py < box.y + box.height
-            )
-        }
-        AS2Runtime.method(runtime, on: prototype, name: "equals") { context in
-            let lhs = try rectangle(context.thisObject, context)
-            let rhs = try rectangle(context.argument(0).objectValue, context)
-            return .boolean(lhs == rhs)
-        }
-        AS2Runtime.method(runtime, on: prototype, name: "intersects") { context in
-            let lhs = try rectangle(context.thisObject, context)
-            let rhs = try rectangle(context.argument(0).objectValue, context)
-            return .boolean(overlap(lhs, rhs) != nil)
-        }
-        AS2Runtime.method(runtime, on: prototype, name: "toString") { context in
-            let box = try rectangle(context.thisObject, context)
-            let text = { context.runtime.coercion.toString(.number($0)) }
-            return .string(
-                "(x=\(text(box.x)), y=\(text(box.y)), w=\(text(box.width)), h=\(text(box.height)))"
-            )
-        }
+        RectangleNatives.installRectangleQueries(runtime, prototype: prototype)
     }
 
     private static func installRectangleChanges(_ runtime: AS2Runtime, prototype: AS2Object) {
@@ -181,5 +154,40 @@ nonisolated extension SWFMovieRuntime {
         return try RectangleBox(
             x: read("x"), y: read("y"), width: read("width"), height: read("height")
         )
+    }
+}
+
+extension SWFMovieRuntime {
+    /// Installs the `Rectangle` queries.
+    nonisolated enum RectangleNatives {
+        static func installRectangleQueries(_ runtime: AS2Runtime, prototype: AS2Object) {
+            AS2Runtime.method(runtime, on: prototype, name: "isEmpty") { context in
+                let box = try SWFMovieRuntime.rectangle(context.thisObject, context)
+                return .boolean(box.width <= 0 || box.height <= 0)
+            }
+            AS2Runtime.method(runtime, on: prototype, name: "contains") { context in
+                let box = try SWFMovieRuntime.rectangle(context.thisObject, context)
+                let (px, py) = try (context.number(0), context.number(1))
+                return .boolean(
+                    px >= box.x && px < box.x + box.width && py >= box.y && py < box.y + box.height
+                )
+            }
+            AS2Runtime.method(runtime, on: prototype, name: "equals") { context in
+                let lhs = try SWFMovieRuntime.rectangle(context.thisObject, context)
+                let rhs = try SWFMovieRuntime.rectangle(context.argument(0).objectValue, context)
+                return .boolean(lhs == rhs)
+            }
+            AS2Runtime.method(runtime, on: prototype, name: "intersects") { context in
+                let lhs = try SWFMovieRuntime.rectangle(context.thisObject, context)
+                let rhs = try SWFMovieRuntime.rectangle(context.argument(0).objectValue, context)
+                return .boolean(SWFMovieRuntime.overlap(lhs, rhs) != nil)
+            }
+            AS2Runtime.method(runtime, on: prototype, name: "toString") { context in
+                let box = try SWFMovieRuntime.rectangle(context.thisObject, context)
+                let text = { context.runtime.coercion.toString(.number($0)) }
+                let size = "w=\(text(box.width)), h=\(text(box.height))"
+                return .string("(x=\(text(box.x)), y=\(text(box.y)), \(size))")
+            }
+        }
     }
 }
