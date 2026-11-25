@@ -86,22 +86,7 @@ nonisolated extension CellSceneBuilder.CellDoorTransitionBuilder {
         in world: FoundWorld,
         localized: Bool
     ) -> EnableParentPool {
-        let key = world.formID.rawValue
-        if let cached = owner.caches.exteriorPersistentPools[key] {
-            return cached
-        }
-        let pool = owner.loadPhases.measure(.cellLookup) {
-            var pool = EnableParentPool()
-            for ref in persistentReferences(in: world, localized: localized) {
-                pool.references[ref.formID] = ref
-            }
-            for actor in owner.actorBuilder.persistentActors(in: world, localized: localized) {
-                pool.actors[actor.formID] = actor
-            }
-            return pool
-        }
-        owner.caches.exteriorPersistentPools[key] = pool
-        return pool
+        ParentPool(host: self).persistentParentPool(in: world, localized: localized)
     }
 
     nonisolated func persistentReferences(
@@ -138,7 +123,8 @@ nonisolated extension CellSceneBuilder.CellDoorTransitionBuilder {
         }
         let source = try Self.placedReference(sourceRecord)
         guard let teleport = source.teleportDestination else {
-            let target = try randomDoorTarget(source: source, index: index, state: state)
+            let target = try RandomDoors(host: self, owner: owner)
+                .randomDoorTarget(source: source, index: index, state: state)
             var transition = try buildTransition(
                 from: sourceDoor,
                 to: (target.door, target.arrival),
@@ -213,5 +199,35 @@ nonisolated extension CellSceneBuilder.CellDoorTransitionBuilder {
     ) -> String? {
         index.worldFormID(containing: formID)
             .flatMap { owner.waterBuilder.worldspaceIndexBuildingIfNeeded()[$0.rawValue]?.editorID }
+    }
+}
+
+extension CellSceneBuilder.CellDoorTransitionBuilder {
+    /// Finds the persistent parent of a door's target.
+    nonisolated struct ParentPool {
+        let host: CellSceneBuilder.CellDoorTransitionBuilder
+
+        func persistentParentPool(
+            in world: FoundWorld,
+            localized: Bool
+        ) -> EnableParentPool {
+            let owner = host.owner
+            let key = world.formID.rawValue
+            if let cached = owner.caches.exteriorPersistentPools[key] {
+                return cached
+            }
+            let pool = owner.loadPhases.measure(.cellLookup) {
+                var pool = EnableParentPool()
+                for ref in host.persistentReferences(in: world, localized: localized) {
+                    pool.references[ref.formID] = ref
+                }
+                for actor in owner.actorBuilder.persistentActors(in: world, localized: localized) {
+                    pool.actors[actor.formID] = actor
+                }
+                return pool
+            }
+            owner.caches.exteriorPersistentPools[key] = pool
+            return pool
+        }
     }
 }
