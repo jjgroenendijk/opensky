@@ -145,15 +145,6 @@ extension MagicHeldMagicAdapter {
         guides.guidePath(for: caster)
     }
 
-    @discardableResult
-    public func placeHazard(_ hazard: ReferenceKey, at point: SIMD3<Float>) -> Bool {
-        guard let spec = game.hazardWorld.store?.spec(for: hazard) else { return false }
-        game.hazards.spawn(HazardPlacement(
-            id: game.effectsWorld.nextHazardKey(), spec: spec, position: point
-        ))
-        return true
-    }
-
     /// Detect Life's `EFSH` on a painted actor, until the paint ends.
     func paintActor(_ actor: ReferenceKey, shader: FormID, plugin: String, shown: Bool) {
         let effects = game.effectsWorld.effects
@@ -278,5 +269,20 @@ struct MagicGuideReadout {
         guard key != .player else { return game.gameSession?.walkController.feetPosition }
         return game.streamer.npcTransform(for: key)?.position
             ?? game.scripts.bridge?.referenceState(for: key)?.transform.position
+    }
+}
+
+/// Places a spell's hazard at a point.
+@MainActor
+struct MagicHazardPlacement {
+    let game: any MagicHeldMagicHost
+
+    @discardableResult
+    func placeHazard(_ hazard: ReferenceKey, at point: SIMD3<Float>) -> Bool {
+        guard let spec = game.hazardWorld.store?.spec(for: hazard) else { return false }
+        game.hazards.spawn(HazardPlacement(
+            id: game.effectsWorld.nextHazardKey(), spec: spec, position: point
+        ))
+        return true
     }
 }
