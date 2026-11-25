@@ -85,7 +85,10 @@ struct ActorGraphRealDataTests {
     }
 
     /// The body-weight layers draw a thin NPC's arms in (`MT_Idle_Skinny`) and push a heavy
-    /// NPC's arms out (`MT_IdleMuscularOffset`), so the hands sit closer on a thin NPC.
+    /// NPC's arms out (`MT_IdleMuscularOffset`), so each hand sits further out on a heavy NPC.
+    /// On the graph's standing pose the elbow turn takes back part of the forearm's move, so
+    /// the gap between the hands grows by about 4.5 units, not by the sum of the clips'
+    /// changes on `mt_idle.hkx` (docs/engine/behavior-clips.md#body-weight-layer).
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func aThinNPCHoldsItsHandsCloserThanAHeavyOne() throws {
         let root = try #require(RealDataEnvironment.dataRoot)
@@ -95,7 +98,7 @@ struct ActorGraphRealDataTests {
             try Race(record: $0, localized: $1)
         }
         let vfs = VirtualFileSystem(root: root)
-        func handGap(weight: Float) throws -> Float {
+        func hands(weight: Float) throws -> [SIMD3<Float>] {
             let nord = try run(
                 race: "NordRace",
                 races: races,
@@ -109,11 +112,14 @@ struct ActorGraphRealDataTests {
                 skeleton.boneNames.firstIndex { $0.hasPrefix(name) }
             }
             try #require(hands.count == 2, "no hands")
-            return simd_distance(model[hands[0]], model[hands[1]])
+            return hands.map { model[$0] }
         }
-        let thin = try handGap(weight: 0), heavy = try handGap(weight: 100)
-        print("[INFO] hand gap: weight 0 \(thin), weight 100 \(heavy)")
-        #expect(thin + 5 < heavy, "the body-weight layers do not reach the pose")
+        let thin = try hands(weight: 0), heavy = try hands(weight: 100)
+        let thinGap = simd_distance(thin[0], thin[1]), heavyGap = simd_distance(heavy[0], heavy[1])
+        print("[INFO] hand gap: weight 0 \(thinGap), weight 100 \(heavyGap)")
+        #expect(heavy[0].x < thin[0].x - 1, "the left hand does not move out")
+        #expect(heavy[1].x > thin[1].x + 1, "the right hand does not move out")
+        #expect(thinGap + 3 < heavyGap, "the body-weight layers do not reach the pose")
     }
 
     /// Degrees the shoulder-to-elbow line points below the model's horizontal plane.
