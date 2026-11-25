@@ -26,13 +26,13 @@ nonisolated public struct ESSActorData: Equatable, Sendable {
     public let primaryValues: [ESSActorValueModifiers]
 
     /// The life states that mean the actor is dead.
-    public static let deadLifeStates: Set<UInt8> = [1, 2, 5]
+    static let deadLifeStates: Set<UInt8> = [1, 2, 5]
 
     public var isDead: Bool {
         Self.deadLifeStates.contains(lifeState)
     }
 
-    public var health: ESSActorValueModifiers? {
+    var health: ESSActorValueModifiers? {
         primaryValues.first
     }
 

@@ -23,7 +23,7 @@ nonisolated public struct SavedIdlePlay: WorldStateComponent, Sendable {
 
 nonisolated extension WorldStateComponentKind {
     /// The idle an actor played when the game saved. Keyed by the actor.
-    public static let savedIdlePlay = Self(
+    static let savedIdlePlay = Self(
         rawValue: "savedIdlePlay", order: 49, affectsCellBuild: false
     )
 }

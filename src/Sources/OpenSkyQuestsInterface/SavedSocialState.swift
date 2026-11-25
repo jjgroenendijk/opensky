@@ -54,7 +54,7 @@ nonisolated public struct SavedSocialState: WorldStateComponent, Sendable {
 
 nonisolated extension WorldStateComponentKind {
     /// One actor's social timers and conversation. Keyed by the actor.
-    public static let savedSocialState = Self(
+    static let savedSocialState = Self(
         rawValue: "savedSocialState", order: 51, affectsCellBuild: false
     )
 }

@@ -2,7 +2,7 @@
 // docs/engine/detection.md#keeping-a-combat-target.
 
 public import OpenSkyFormatsESM
-public import OpenSkyPerceptionInterface
+import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import simd
 
@@ -39,7 +39,7 @@ extension PerceptionRuntime {
     }
 
     /// The record hostile observers share of `target`.
-    public func targetTrack(of target: ReferenceKey) -> CombatTargetTrack {
+    func targetTrack(of target: ReferenceKey) -> CombatTargetTrack {
         tracks[target] ?? CombatTargetTrack()
     }
 

@@ -26,7 +26,7 @@ nonisolated extension InputBindings {
     }
 
     /// The gameplay action a gamepad button fires.
-    public func action(forGamepadCode code: UInt32) -> GameInputAction? {
+    func action(forGamepadCode code: UInt32) -> GameInputAction? {
         Self.slots.first { $0.context == .gameplay && gamepadCodes(for: $0.action).contains(code) }?
             .action
     }

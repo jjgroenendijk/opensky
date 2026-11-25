@@ -141,7 +141,7 @@ nonisolated public struct NavmeshGeometry: Sendable {
     }
 
     /// Total triangle indices across every grid square.
-    public var gridTriangleIndexCount: Int {
+    var gridTriangleIndexCount: Int {
         gridSquares.reduce(0) { $0 + $1.count }
     }
 

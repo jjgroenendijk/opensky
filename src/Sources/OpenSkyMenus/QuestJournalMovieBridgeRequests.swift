@@ -101,7 +101,7 @@ nonisolated extension QuestJournalMovieBridge {
 
     /// Shows `model` as a fresh page start. `bUpdated` is cleared first,
     /// because `startPage` asks for the rows only once per open.
-    public static func show(_ model: JournalMenuModel, runtime: SWFMovieRuntime) {
+    static func show(_ model: JournalMenuModel, runtime: SWFMovieRuntime) {
         registerRequests(runtime: runtime) { model }
         runtime.node(atPath: pagePath, from: runtime.root)?.object
             .assign(.boolean(false), for: "bUpdated")

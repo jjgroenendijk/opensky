@@ -4,7 +4,7 @@
 // See docs/engine/projectiles.md#pick-up-bounce-and-stick-in-the-game.
 
 import Foundation
-public import OpenSkyCombatInterface
+import OpenSkyCombatInterface
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 import simd
@@ -76,7 +76,7 @@ extension ProjectileRuntime {
 
 extension ProjectileRuntime {
     /// The shots in the air, the arrows standing, and the newest landings.
-    public var readout: ProjectileReadout {
+    var readout: ProjectileReadout {
         var readout = ProjectileReadout()
         readout.inFlight = live.count
         readout.bouncing = live.count(where: \.hasBounced)

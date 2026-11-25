@@ -35,7 +35,7 @@ nonisolated public struct ParticleLightning: Equatable, Sendable {
             || sequenceTracks.values.contains { !$0.generation.isEmpty }
     }
 
-    public init(
+    init(
         subdivisions: Int = 0, branches: Int = 0, branchVariation: Int = 0, length: Float = 0,
         lengthVariation: Float = 0, width: Float = 0, childWidthMultiplier: Float = 1,
         arcOffset: Float = 0, fadesMainBolt: Bool = false, fadesChildBolts: Bool = false,

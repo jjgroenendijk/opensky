@@ -33,7 +33,7 @@ nonisolated public enum AlarmNote: Equatable, Sendable {
     case decided(name: String, role: AlarmRole)
     case tookBack(name: String, items: Int)
 
-    public var text: String {
+    var text: String {
         switch self {
         case .idle: "none"
         case let .decided(name, role): "\(name): \(role.rawValue)"

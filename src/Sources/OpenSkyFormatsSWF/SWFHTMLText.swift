@@ -34,7 +34,7 @@ nonisolated public enum SWFHTMLText: Sendable {
 
     /// The plain text with one `imageMarker` per `<img>` tag, and those images in order.
     /// A missing `width` or `height` is 0; the caller fills it from the bitmap.
-    public static func parse(_ html: String) -> (text: String, images: [SWFInlineImage]) {
+    static func parse(_ html: String) -> (text: String, images: [SWFInlineImage]) {
         let content = parseStyled(html)
         return (content.text, content.images)
     }

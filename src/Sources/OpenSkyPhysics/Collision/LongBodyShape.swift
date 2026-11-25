@@ -90,7 +90,7 @@ nonisolated public struct LongBodyShape: Equatable, Sendable {
     /// `query`'s shapes. Each end stands on the ground under it, from `ground`, and follows
     /// that ground. Only the push a move adds over standing still counts, so the slope an
     /// end stands on does not push the body back.
-    public func correction(
+    func correction(
         pose: (feet: SIMD3<Float>, yaw: Float), displacement: SIMD2<Float>,
         ground: (SIMD2<Float>) -> Float?, query: CapsuleWorldCollider.CandidateQuery
     ) -> SIMD2<Float> {
