@@ -210,47 +210,7 @@ extension PapyrusWorldRuntime.Lifecycle {
         _ item: PapyrusAttachItem,
         formIDResolver: FormIDResolver
     ) {
-        guard
-            let handle = world.instancesByKey[item.key],
-            let instance = world.runtime.instance(for: handle),
-            let chain = attempt({ try world.runtime.scriptChain(from: item.script.name) })
-        else {
-            world.skips.note(.bindingFailed)
-            return
-        }
-        do {
-            let binding = try item.script.binding(
-                in: world.runtime,
-                formIDResolver: formIDResolver,
-                aliases: world.aliasResolution,
-                aliasHandle: {
-                    world.activationRuns.aliasInstanceHandle(for: $0) ?? world.objectHandle(for: $0)
-                },
-                aliasSlot: { quest, aliasID in
-                    let slot = PapyrusAliasSlot(quest: quest, aliasID: aliasID)
-                    return world.questRuns.aliasSlotHandle(slot)
-                },
-                objectHandle: { world.objectHandle(for: $0) }
-            )
-            world.bindingSkips.merge(binding.skipped)
-            for (name, value) in binding.initialValues.sorted(by: { $0.key < $1.key })
-                where !instance.applyInitialValue(
-                    value, named: name, scriptChain: chain
-                )
-            {
-                world.skips.note(.bindingFailed)
-            }
-            for setting in binding.propertySettings {
-                let outcome = world.runtime.setProperty(
-                    setting.propertyName, on: handle, to: setting.value
-                )
-                if world.scriptEvents.settle(outcome, target: item.key) {
-                    world.skips.note(.bindingFailed)
-                }
-            }
-        } catch {
-            world.skips.note(.bindingFailed)
-        }
+        ScriptBinding(owner: self).bind(item, formIDResolver: formIDResolver)
     }
 
     private func enqueueAttachEvents(
@@ -282,26 +242,88 @@ extension PapyrusWorldRuntime.Lifecycle {
     /// Another script may still hold the handle, for example a property naming a quest
     /// that stopped, so the handle stays a name for its reference.
     public func retire(_ key: PapyrusInstanceKey) {
-        guard let handle = world.removeInstance(for: key) else {
-            return
+        ScriptBinding(owner: self).retire(key)
+    }
+}
+
+extension PapyrusWorldRuntime.Lifecycle {
+    /// Binds the property values of attached scripts and retires scripts.
+    struct ScriptBinding {
+        let owner: PapyrusWorldRuntime.Lifecycle
+
+        func bind(
+            _ item: PapyrusAttachItem,
+            formIDResolver: FormIDResolver
+        ) {
+            let world = owner.world
+            guard
+                let handle = world.instancesByKey[item.key],
+                let instance = world.runtime.instance(for: handle),
+                let chain = attempt({ try world.runtime.scriptChain(from: item.script.name) })
+            else {
+                world.skips.note(.bindingFailed)
+                return
+            }
+            do {
+                let binding = try item.script.binding(
+                    in: world.runtime,
+                    formIDResolver: formIDResolver,
+                    aliases: world.aliasResolution,
+                    aliasHandle: {
+                        world.activationRuns.aliasInstanceHandle(for: $0) ?? world
+                            .objectHandle(for: $0)
+                    },
+                    aliasSlot: { quest, aliasID in
+                        let slot = PapyrusAliasSlot(quest: quest, aliasID: aliasID)
+                        return world.questRuns.aliasSlotHandle(slot)
+                    },
+                    objectHandle: { world.objectHandle(for: $0) }
+                )
+                world.bindingSkips.merge(binding.skipped)
+                for (name, value) in binding.initialValues.sorted(by: { $0.key < $1.key })
+                    where !instance.applyInitialValue(
+                        value, named: name, scriptChain: chain
+                    )
+                {
+                    world.skips.note(.bindingFailed)
+                }
+                for setting in binding.propertySettings {
+                    let outcome = world.runtime.setProperty(
+                        setting.propertyName, on: handle, to: setting.value
+                    )
+                    if world.scriptEvents.settle(outcome, target: item.key) {
+                        world.skips.note(.bindingFailed)
+                    }
+                }
+            } catch {
+                world.skips.note(.bindingFailed)
+            }
         }
-        world.opaqueKeysByHandle[handle] = key.reference
-        world.runtime.instances.removeValue(forKey: handle)
-        if let cursor = world.drainCursor {
-            world.drainCursor = cursor - world.eventQueue.prefix(cursor).count { $0.target == key }
+
+        func retire(_ key: PapyrusInstanceKey) {
+            let world = owner.world
+            guard let handle = world.removeInstance(for: key) else {
+                return
+            }
+            world.opaqueKeysByHandle[handle] = key.reference
+            world.runtime.instances.removeValue(forKey: handle)
+            if let cursor = world.drainCursor {
+                world.drainCursor = cursor - world.eventQueue.prefix(cursor)
+                    .count { $0.target == key }
+            }
+            world.eventQueue.removeAll { $0.target == key }
+            world.updateTimers.removeAll(for: key)
+            // A stopped quest drops its registrations (CK wiki "RegisterForSleep - Form").
+            world.sleepListeners.remove(key)
+            world.trackedStatListeners.remove(key)
+            world.pendingOnInit.remove(key)
+            world.retiringKeys.remove(key)
+            world.handledEvents[key] = nil
+            // A later run of the effect makes a new instance, which gets its own `OnInit`.
+            if world.effectScripts.forget(instance: key) {
+                world.firedOnInit.remove(key)
+            }
+            world.scheduler.cancel(world.suspensionTracker.forget(instance: key))
         }
-        world.eventQueue.removeAll { $0.target == key }
-        world.updateTimers.removeAll(for: key)
-        // A stopped quest drops its registrations (CK wiki "RegisterForSleep - Form").
-        world.sleepListeners.remove(key)
-        world.trackedStatListeners.remove(key)
-        world.pendingOnInit.remove(key)
-        world.retiringKeys.remove(key)
-        world.handledEvents[key] = nil
-        // A later run of the effect makes a new instance, which gets its own `OnInit`.
-        if world.effectScripts.forget(instance: key) {
-            world.firedOnInit.remove(key)
-        }
-        world.scheduler.cancel(world.suspensionTracker.forget(instance: key))
     }
 }
