@@ -109,13 +109,18 @@ extension AgentRenderAdapter {
         }
     }
 
+    /// `editorID` may also be a weather's hex FormID, as `debug view --weather` takes it.
     public func forceWeather(_ editorID: String?) throws(AgentFailure) -> AgentJSON {
-        guard game.gameSession?.weather != nil else {
+        guard let system = game.gameSession?.weather else {
             throw AgentFailure(.notReady, "no weather data is loaded")
         }
         guard let editorID else {
             game.renderControls.forceWeather(named: nil, transition: .instant)
             return ["forced": .null]
+        }
+        if let formID = FormID(hexText: editorID), let weather = system.store.weather(formID) {
+            system.forceWeather(formID, transition: .instant)
+            return ["forced": .init(weather.editorID ?? editorID)]
         }
         let names = game.renderControls.selectableWeatherNames
         guard let match = names.first(where: { $0.lowercased() == editorID.lowercased() }) else {
