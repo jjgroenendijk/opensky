@@ -165,7 +165,7 @@ nonisolated extension AgentCommandCatalog {
         ),
         command(
             "debug.weather", "Force a weather; no ID clears it.",
-            positionals: [optional("id", "The weather editor ID.")]
+            positionals: [optional("id", "The weather editor ID, or its hex FormID.")]
         ),
         command(
             "debug.newgame", "Start a new game at a place, as the launcher's Play does.",

@@ -6,6 +6,7 @@ import Foundation
 @testable import OpenSkyAgentAdapters
 import OpenSkyAgentControl
 import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyRenderCore
@@ -100,7 +101,6 @@ struct AgentDebugTests {
         #expect(world.detachCalls == [.player])
     }
 
-    @Test func aTeleportBeforeTheWorldLoadsIsRefused() {
     @Test func aFormConditionParameterTakesPlayerOrHex() throws {
         #expect(try AgentWorldAdapter.conditionParameter("player", isFormID: true) == 0x14)
         #expect(try AgentWorldAdapter.conditionParameter("Player", isFormID: true) == 0x14)
@@ -111,11 +111,32 @@ struct AgentDebugTests {
         }
     }
 
+    @Test func aTeleportBeforeTheWorldLoadsIsRefused() {
         #expect(throws: AgentFailure.self) { try world.perform(.teleport(.position([0, 0, 0]))) }
     }
 
     @Test func anUnknownInputIsRefused() {
         #expect(throws: AgentFailure.self) { try world.applyInput("no such input", phase: .press) }
+    }
+
+    @Test func aWeatherCanBeForcedByItsFormID() throws {
+        let fields = ESMFixture.field("EDID", ESMFixture.zstring("SkyrimStormRain"))
+        let plugin = ESMFixture.tes4()
+            + ESMFixture.topGroup(
+                "WTHR",
+                contents: ESMFixture.record("WTHR", formID: 0xC8220, data: fields)
+            )
+        let session = FakeGameSessionPort()
+        let weather = FakeWeatherSystemPort()
+        weather.store = try WeatherStore(file: ESMFile(data: plugin))
+        session.weather = weather
+        host.gameSession = session
+        guard case let .done(.success(answer)) = try world.perform(.weather("000C8220")) else {
+            Issue.record("expected an answer")
+            return
+        }
+        #expect(answer["forced"] == "SkyrimStormRain")
+        #expect(weather.forceWeatherCalls.map(\.weather) == [FormID(0xC8220)])
     }
 
     private func view(weather: UInt32?) -> AgentDebugCommand {
