@@ -251,13 +251,29 @@ extension AIPackageActsAdapter {
                 }.map(\.key)
             case .objectType:
                 guard let type = PackageObjectType(rawValue: selector.value) else { return [] }
-                return candidates.filter { matches($0, type) }.map(\.key)
+                let match = ObjectTypeMatch(game: game)
+                return candidates.filter { match.matches($0, type) }.map(\.key)
             default:
                 return []
             }
         }
+    }
+}
 
-        private func matches(_ entry: RuntimeReferenceEntry, _ type: PackageObjectType) -> Bool {
+extension AIPackageActsAdapter {
+    func packageReference(
+        _ target: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
+    ) -> ReferenceKey? {
+        references.packageReference(target, actor: actor, aliasQuest: aliasQuest)
+    }
+}
+
+extension AIPackageActsAdapter {
+    /// Whether a reference is of a package's object type.
+    struct ObjectTypeMatch {
+        let game: any AIPackageActsHost
+
+        func matches(_ entry: RuntimeReferenceEntry, _ type: PackageObjectType) -> Bool {
             let base = ConditionFunctions.baseForm(of: entry).rawValue
             let items = game.inventory.runtime?.inventory.baselines.items
             switch type {
@@ -273,13 +289,5 @@ extension AIPackageActsAdapter {
                 return seats.contains { wanted == nil || $0.animationType == wanted }
             }
         }
-    }
-}
-
-extension AIPackageActsAdapter {
-    func packageReference(
-        _ target: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
-    ) -> ReferenceKey? {
-        references.packageReference(target, actor: actor, aliasQuest: aliasQuest)
     }
 }
