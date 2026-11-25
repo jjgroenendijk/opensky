@@ -132,6 +132,45 @@ Progress is the distance to the next waypoint. Getting at least one unit closer 
 timer. After two seconds with no progress, the mover searches again once, from where it is to the
 original target. A second stall, or a failed search, gives up. There is no loop of retries.
 
+## Blocked walks
+
+The game checks a walker that cannot go on in three ways. None of them ends the package.
+
+- Steering. Each frame the walker checks whether its wanted direction hits something within
+  1 s, and at least 0.25 s ahead. If it does, it tries a few other headings and may slow to half
+  speed. It takes a clear heading, and its blocked time goes back to 0. With no clear heading it
+  keeps pushing in its wanted direction, and the frame time adds to its blocked time.
+- Other actors. The walker watches up to 10 actors within its speed times 3 s, kept between
+  256 and 512 units, plus half its own radius. An actor slower than 5 units a second counts as
+  standing. A standing actor, or one watched for over 1 s, gets an avoid zone of its radius
+  plus 11 units, and the path is planned again around it. A walker blocked for over 1 s by
+  actors without a zone fails its path.
+- Stuck check. Over a window of at least 1 s the game compares where the walker wanted to go
+  with where it went. Less than 10% of the wanted move counts as stuck. When the wanted move
+  was small, at most 0.66 times the walker's radius, path following only starts again.
+  Otherwise the path fails, and an avoid zone goes just ahead of the walker, so the next path
+  goes round that spot. A cart is not an actor, so a horse behind a cart meets this check.
+
+None of the three runs within about half the walker's radius of the path's end. A search that
+finds no route also fails the path. A walk has no overall time limit. Repeated failures at one
+spot lead to the fallback in [package schedules](/engine/package-schedules.md#a-walk-whose-path-fails).
+
+A Patrol procedure does not fail when its path fails. On a later update it asks for a new walk
+to the same point. It does not skip the point and does not turn back, so a blocked horse stands
+and pushes against what blocks it. A point is reached when the path completes, or when the
+walker is within the patrol radius plus 50 units across and about 180 units up or down. A
+walker blocked just short of a point therefore goes on. A patrol fails only when its start
+reference, its point list, or its current point cannot be found. A running or resumed patrol
+keeps its points and its place along them. A new package starts at the start point, or at the
+nearest point when Start At Nearest is set. Riders and towed carts have no rules of their own.
+
+Example: in the Helgen opening the second cart's horse reaches the first cart, which waits at
+the gate. The horse stands behind it and asks for the same point again until the way is free.
+
+OpenSky keeps its own stuck rule above: two seconds without progress, one new search, then the
+walk gives up. A Patrol then walks to the same point again on the next update. Other procedures
+fail as [package schedules](/engine/package-schedules.md#in-a-session) describes.
+
 ## Position and triggers
 
 While an actor walks, drawing, melee targeting, and combat read the mover's position. The saved

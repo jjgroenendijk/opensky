@@ -120,7 +120,7 @@ unless it counts that target an Ally or a Friend.
 - `openskycli game state actors` shows each actor's combat `target`.
 
 The interval and the range are OpenSky values. The game checks detection every 1 to 2 seconds per
-actor ([detection](/engine/detection.md#who-runs-detection-in-the-game)).
+actor ([detection](/engine/detection-schedule.md#who-runs-detection-in-the-game)).
 
 ## Who an assisting actor fights
 

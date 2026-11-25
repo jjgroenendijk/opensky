@@ -80,8 +80,9 @@ Skill:
   fSneakCombatMod`. InCombat is an observer in combat. FightingAnother is an observer whose
   combat target is another actor. On the install the first two settings are 0 and
   `fSneakCombatMod` is -0.4, so only a busy fighter notices less.
-- An observer that runs an Ambush package adds 2.5 to Weight for its ambush target, and 0 for
-  any other target.
+- An observer whose running package has type 9 (Ambush) in `PKDT` adds 2.5 to Weight for its
+  [ambush target](#ambush-packages). Any other target adds `fSneakAmbushNonTargetMod`: -0.25
+  by default, but `Skyrim.esm` sets it to 0.
 - Sneaking is 1 for a target in sneak mode, and 0 for any other target. So **a target that
   does not sneak loses nothing for its Sneak skill**. A standing player in plain view is seen
   even in a dark room.
@@ -96,7 +97,7 @@ Sound:
   when running, and 0 when the target does not move.
 - Action is the sound level of the attack or cast the target makes now, times the whole part
   of `fSneakActionMult`.
-- An ambush target is heard as if in line of sight.
+- An ambush target is heard as if in line of sight: `fSneakSoundLosMult` is skipped.
 
 Visual:
 
@@ -113,6 +114,32 @@ Visual:
 
 Rounding: a total between 0 and 1 becomes 1. Any other total loses its fraction. A result of
 exactly 0 becomes -1. So sight never gives 0; the value 0 means "noticed an event" (below).
+
+### Ambush packages
+
+The ambush term needs the observer's running package to have type 9 in `PKDT`. Nothing else
+turns it on: no procedure, flag, furniture, or location. The observer also gets no test that it
+stands inside the package's location.
+
+The target is the ambush target when it matches the package's target data, the same target data
+other packages use:
+
+1. The target must be in the same interior cell, or the same worldspace, as the package target.
+2. A target spec that names a reference, an object, or an object type decides the match.
+3. Otherwise the target matches when it is inside the target's radius around the target position.
+4. A package with no target data makes every target the ambush target.
+
+Nothing else changes for the ambush target. The range, the view cone, the light, and the visual
+term stay as for any target, and the visual term still needs a real line of sight.
+
+Every package in the three masters and the DLC has type 18 or 19, and the game builds no type 9
+package at run time. Vanilla ambushes, such as a draugr in a coffin, use Sleep, Sit, Sandbox, or
+Patrol packages, so they never get the term. Only a plugin's type 9 package reaches it.
+
+Worked example: an observer with Sneak 50 runs a type 9 package whose target is the player.
+The player, not sneaking, stands at half the range, so the attenuation is 0.5^2 = 0.25. Weight
+is 1 + 2.5 = 3.5, so the observer's part of the skill term is 0.25 *3.5* 50 = 43.75 instead
+of 12.5, before `fSneakSkillMult`.
 
 ### Range and view cone
 
@@ -154,10 +181,10 @@ lit.
 
 ### What OpenSky leaves out
 
-- The Ambush package weight and its sound rule. OpenSky runs no Ambush package yet.
-- The smaller range for a fighter's other targets.
-- The sound-event check runs only for an aggressive observer, and no flying projectile is
-  checked ([detection events](/engine/detection-events.md#in-opensky)).
+- An Ambush package's target matching is partial. OpenSky reads the package's first location
+  input as a place and a radius, and makes everyone the target when the package has no
+  location or target input. A package with a target input matches nobody yet, and the cell
+  and worldspace test is skipped. The weight and the sound rule work as above.
 
 ### Gait multipliers
 
@@ -305,55 +332,10 @@ tracks it and no observer has detected it. UESP "Skyrim:Leveling" gives the rate
 becoming hidden. OpenSky does not give those, because no setting holds them and the moment of
 becoming hidden is not defined.
 
-## Who runs detection in the game
+## Who runs detection
 
-- Each actor runs its detection pass inside its own AI update. The update must not have ended
-  early: the actor has 3D, its cell is attached, it is not the player, and it is not held in
-  [dialogue mode](/engine/dialogue-mode.md).
-- A pass runs when the real time since the actor's last pass is over its interval. The next
-  interval is random between `fDetectionUpdateTimeMin` (1 second) and `fDetectionUpdateTimeMax`
-  (2 seconds). In a complex scene it is between 2.5 and 5 seconds. A scene is most likely complex
-  with more than `iAINumberActorsComplexScene` (20) actors in the high process level.
-- `iUpdateDetectionsAllowedPerFrame` (100) limits the checks in one frame. Each observer and
-  target pair counts as one. Once the limit is reached, no new pass starts, and the actor tries
-  again on the next frame.
-- A pass checks each actor in the high process level that has 3D, then the player.
-- The observer keeps tracking a target only for a reason. There are nine: the observer is
-  [hostile](/engine/hostility.md#aggression-draws-the-weapon) to it, the target is in combat, a
-  teammate is involved, the observer watches for crime or trespass, the target is a corpse within
-  a set range, and others. Without a reason the detection state of the pair is dropped. An old
-  state expires after `fDetectionStateExpireTime`.
-- An actor that runs its warn package for the aggro radius skips one of the hostility reasons.
-- Combat can start on any result of 0 or more ([keeping a combat target](#keeping-a-combat-target)).
-  `iAICombatMinDetection`, `fPlayerDetectActorValue`, `fSneakStealthBoyMult`, and
-  `fSneakNoticeMin` are never read. The aggro radius rule is in
-  [combat behaviour](/engine/combat-behavior.md#aggro-radius).
-
-A pair's check then repeats at an interval that depends on who asks:
-
-| Who asks | Interval | A stored result is reused when younger than |
-| --- | --- | --- |
-| A combat group, for a target beyond 2,048 units | 1.5 s | 3 s |
-| The actor itself, or its group for the player or a target within 2,048 units | 1 s | 2 s |
-| A group member whose own combat target is another NPC | 0.5 s | 1 s |
-| A group member whose own combat target is the player | 0.25 s | 1 s |
-
-The shortest interval any asker gives wins. Checks run only while the observer and the target
-are both within 8,192 units of the player.
-
-## Limits and repeatability
-
-Every observer against every target, with a ray per pair, grows fast with the world. Three
-limits keep it bounded, and each reports what it cut:
-
-- At most 64 pairs. The nearest pairs win, and a counter shows how many were dropped. A silent cut
-  would read as "nothing else was near".
-- At most 8 pairs evaluated per step, in turn, in a fixed order. A pair gets the time since its
-  last evaluation. So slicing changes when a level is computed, not where it ends up.
-- At most 8 steps per frame, like combat and actor values.
-
-The list of actors is refreshed once per frame and sorted by `ReferenceKey`. Every change is a
-pure function of the elapsed time. So two runs with the same inputs give the same levels.
+When the game checks a pair, and the limits OpenSky puts on the pass, are on the
+[detection schedule](/engine/detection-schedule.md) page.
 
 ## Condition functions
 

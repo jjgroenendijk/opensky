@@ -284,6 +284,12 @@ under it. The cart is stopped by then, so the start pose does not move. Worked e
 starts at the cart's root facing the cart's way, and ends 380 units behind it and 16 to its left,
 turned about 170 degrees, at the back of the cart.
 
+A rider whose exit idle plays without a live graph leaves at the same time. OpenSky reads from
+the graph which of the clip's triggers leave the state: an event that a transition of the exit
+state, or of a state that holds it, fires on, or a global wildcard in any of the actor's
+behaviour files. The idle ends at the first such trigger, and `ExitCartEnd` goes out then. For
+seat B that is 9.0 s into the 11.0 s clip.
+
 `ExitCartEnd` clears the link and the sitting state and does not place the rider anywhere: it
 stays where the travel left it. An exit idle with no motion-table travel is OpenSky's fallback
 case. Then the rider stands where the clip left its `NPC COM [COM ]` bone, read on the last frame
@@ -303,6 +309,3 @@ before it got on no longer counts as where it is.
 ## Where OpenSky differs
 
 - The cart is not a set of joined physics bodies: it follows the horse on the tow line above.
-- A rider with a live graph leaves `Cart_State` at the clip's trigger, as in the game. A rider
-  whose exit idle plays without a graph gets its `ExitCartEnd` when the clip ends. For seat B
-  that is 2 seconds later than in the game.
