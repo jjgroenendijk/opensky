@@ -39,28 +39,7 @@ public struct AgentReference {
 
 extension AgentWorldAdapter {
     public func query(_ query: AgentStateQuery) throws(AgentFailure) -> AgentJSON {
-        switch query {
-        case .player: try playerReadout.playerState()
-        case .target: actorReadout.targetState()
-        case let .actors(radius, detailed):
-            try actorReadout.actorsState(radius: radius, detailed: detailed)
-        case .menu: AgentMenuState(owner: menuReadout).menuState
-        case let .quest(editorID): try menuReadout.questState(editorID)
-        case .scenes: objects.scenesState()
-        case .scripts, .packages, .furniture, .objects, .effects, .nodes, .changes, .flight,
-             .mount, .paired, .favor, .alarm, .impulses, .cloth, .assist, .projectiles,
-             .destruction:
-            try inspection(query)
-        case let .actorValue(reference, name): try actorReadout.actorValueState(
-                reference,
-                name: name
-            )
-        case let .global(editorID): try frameReadout.globalState(editorID)
-        case .time: frameReadout.timeState()
-        case .frame: frameReadout.frameState()
-        case .view, .newGame, .music, .sounds, .condition, .grab, .story, .social, .stats:
-            try sessionState(query)
-        }
+        try StateQueries(owner: self).query(query)
     }
 
     private func sessionState(_ query: AgentStateQuery) throws(AgentFailure) -> AgentJSON {
@@ -95,19 +74,7 @@ extension AgentWorldAdapter {
 
     /// The reads of what a rider, a pair, or the player's favours hold.
     private func riderInspection(_ query: AgentStateQuery) throws(AgentFailure) -> AgentJSON {
-        switch query {
-        case .mount: motion.mountState()
-        case .paired: behaviour.pairedState()
-        case .favor: objects.favorState()
-        case .alarm:
-            AgentAlarmReadout(hub: objects.hub, game: objects.game).alarmState()
-        case .impulses: motion.impulsesState()
-        case .cloth: objects.clothState()
-        case .assist: AgentAssistReadout(hub: hub).assistState()
-        case .projectiles: AgentAssistReadout(hub: hub).projectilesState()
-        case .destruction: AgentDestructionReadout(game: hub.hosts).destructionState()
-        default: throw AgentFailure(.invalidArgument, "not an inspection query")
-        }
+        try StateQueries(owner: self).riderInspection(query)
     }
 }
 
@@ -156,5 +123,54 @@ extension AgentHub {
             throw AgentFailure(.invalidArgument, "unknown actor value '\(name)'")
         }
         return index
+    }
+}
+
+extension AgentWorldAdapter {
+    /// Answers the agent's state queries.
+    struct StateQueries {
+        let owner: AgentWorldAdapter
+
+        func query(_ query: AgentStateQuery) throws(AgentFailure) -> AgentJSON {
+            switch query {
+            case .player: try owner.playerReadout.playerState()
+            case .target: owner.actorReadout.targetState()
+            case let .actors(radius, detailed):
+                try owner.actorReadout.actorsState(radius: radius, detailed: detailed)
+            case .menu: AgentMenuState(owner: owner.menuReadout).menuState
+            case let .quest(editorID): try owner.menuReadout.questState(editorID)
+            case .scenes: owner.objects.scenesState()
+            case .scripts, .packages, .furniture, .objects, .effects, .nodes, .changes, .flight,
+                 .mount, .paired, .favor, .alarm, .impulses, .cloth, .assist, .projectiles,
+                 .destruction:
+                try owner.inspection(query)
+            case let .actorValue(reference, name): try owner.actorReadout.actorValueState(
+                    reference,
+                    name: name
+                )
+            case let .global(editorID): try owner.frameReadout.globalState(editorID)
+            case .time: owner.frameReadout.timeState()
+            case .frame: owner.frameReadout.frameState()
+            case .view, .newGame, .music, .sounds, .condition, .grab, .story, .social, .stats:
+                try owner.sessionState(query)
+            }
+        }
+
+        func riderInspection(_ query: AgentStateQuery) throws(AgentFailure) -> AgentJSON {
+            let hub = owner.hub
+            return switch query {
+            case .mount: owner.motion.mountState()
+            case .paired: owner.behaviour.pairedState()
+            case .favor: owner.objects.favorState()
+            case .alarm:
+                AgentAlarmReadout(hub: owner.objects.hub, game: owner.objects.game).alarmState()
+            case .impulses: owner.motion.impulsesState()
+            case .cloth: owner.objects.clothState()
+            case .assist: AgentAssistReadout(hub: hub).assistState()
+            case .projectiles: AgentAssistReadout(hub: hub).projectilesState()
+            case .destruction: AgentDestructionReadout(game: hub.hosts).destructionState()
+            default: throw AgentFailure(.invalidArgument, "not an inspection query")
+            }
+        }
     }
 }

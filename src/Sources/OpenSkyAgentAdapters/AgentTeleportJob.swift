@@ -57,7 +57,7 @@ public final class AgentTeleportJob {
         guard streamer.transitionInFlight == nil else {
             throw AgentFailure(.notReady, "a door transition is still loading")
         }
-        Self.leaveCartSeat(vehicleWorld: hub.hosts.vehicleWorld, session: hub.game.gameSession)
+        CartSeats.leaveCartSeat(vehicleWorld: hub.hosts.vehicleWorld, session: hub.game.gameSession)
         switch target {
         case let .position(position, world):
             worldspace = world
@@ -80,7 +80,7 @@ public final class AgentTeleportJob {
                 try startReferenceLookup(formID)
                 return
             }
-            guard let feet = Self.standingSpot(of: reference.key, game: hub.game) else {
+            guard let feet = StandingSpots.standingSpot(of: reference.key, game: hub.game) else {
                 throw AgentFailure(.notFound, "the reference has no placement")
             }
             phase = .settling(untilFrame: 0)
@@ -111,7 +111,7 @@ public final class AgentTeleportJob {
         guard streamer.transitionInFlight == nil else {
             throw AgentFailure(.notReady, "a door transition is still loading")
         }
-        Self.leaveCartSeat(vehicleWorld: hub.hosts.vehicleWorld, session: hub.game.gameSession)
+        CartSeats.leaveCartSeat(vehicleWorld: hub.hosts.vehicleWorld, session: hub.game.gameSession)
         exactFeet = place.feet
         exactYaw = place.yaw
         exactPitch = pitch
@@ -325,7 +325,7 @@ extension AgentTeleportJob {
         lookedUpReference = nil
         guard
             let reference = attempt({ try hub.resolveReference(text) }),
-            let spot = Self.standingSpot(of: reference.key, game: game)
+            let spot = StandingSpots.standingSpot(of: reference.key, game: game)
         else { return }
         exactFeet = spot
     }
@@ -390,39 +390,45 @@ extension AgentTeleportJob {
         grid.centre
     }
 
-    /// Next to a loaded actor, where it stands now, or on a loaded reference.
-    private static func standingSpot(of key: ReferenceKey, game: any AgentWorldHost)
-        -> SIMD3<Float>?
-    {
-        if let actor = game.actorWorld.combatActor(key: key) {
-            // Rotation Z counts clockwise from north, so forward is (sin, cos).
-            let front = SIMD2<Float>(sin(actor.heading), cos(actor.heading)) * actorStandOff
-            return actor.feet + SIMD3(front, 0)
+    /// Finds where the player stands next to an actor or a reference.
+    enum StandingSpots {
+        /// Next to a loaded actor, where it stands now, or on a loaded reference.
+        static func standingSpot(of key: ReferenceKey, game: any AgentWorldHost)
+            -> SIMD3<Float>?
+        {
+            if let actor = game.actorWorld.combatActor(key: key) {
+                // Rotation Z counts clockwise from north, so forward is (sin, cos).
+                let front = SIMD2<Float>(sin(actor.heading), cos(actor.heading)) * actorStandOff
+                return actor.feet + SIMD3(front, 0)
+            }
+            let entry = game.streamer.referenceEntry(key: key)
+            return entry?.placedReference?.placement.position
+                ?? entry?.placedActor?.placement.position
         }
-        let entry = game.streamer.referenceEntry(key: key)
-        return entry?.placedReference?.placement.position
-            ?? entry?.placedActor?.placement.position
-    }
 
-    /// About two arm lengths: close enough to talk, far enough not to overlap.
-    private static let actorStandOff: Float = 100
+        /// About two arm lengths: close enough to talk, far enough not to overlap.
+        private static let actorStandOff: Float = 100
+    }
 }
 
 extension AgentTeleportJob {
-    /// A cart seat pins the player to the cart every frame, so a teleport that kept
-    /// it would put the player back at the cart's exterior spot inside the target cell.
-    static func leaveCartSeat(
-        vehicleWorld: any VehicleWorldPort, session: (any GameSessionPort)?
-    ) {
-        guard sitsOnCart(.player, links: vehicleWorld.vehicles.core.links) else { return }
-        vehicleWorld.detach(.player)
-        session?.playerSeat = nil
-    }
+    /// Takes the player off a cart seat before a teleport.
+    enum CartSeats {
+        /// A cart seat pins the player to the cart every frame, so a teleport that kept
+        /// it would put the player back at the cart's exterior spot inside the target cell.
+        static func leaveCartSeat(
+            vehicleWorld: any VehicleWorldPort, session: (any GameSessionPort)?
+        ) {
+            guard sitsOnCart(.player, links: vehicleWorld.vehicles.core.links) else { return }
+            vehicleWorld.detach(.player)
+            session?.playerSeat = nil
+        }
 
-    /// A fixed seat is a cart passenger's; a horse rider sits on a bone.
-    static func sitsOnCart(_ rider: ReferenceKey, links: [ReferenceKey: VehicleLink]) -> Bool {
-        guard case .fixed? = links[rider]?.seat else { return false }
-        return true
+        /// A fixed seat is a cart passenger's; a horse rider sits on a bone.
+        static func sitsOnCart(_ rider: ReferenceKey, links: [ReferenceKey: VehicleLink]) -> Bool {
+            guard case .fixed? = links[rider]?.seat else { return false }
+            return true
+        }
     }
 }
 
