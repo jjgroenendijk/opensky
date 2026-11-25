@@ -22,7 +22,10 @@ struct NPCStandingTransformTests {
 
     @Test func withoutASavedPoseTheActorStartsAtItsRecord() throws {
         let entry = try Self.actorEntry(at: SIMD3(10, 0, 0))
-        let standing = NPCMovementRuntime().standingTransform(of: entry, in: .empty)
+        let standing = NPCStandingTransform(movement: NPCMovementRuntime()).standingTransform(
+            of: entry,
+            in: .empty
+        )
         #expect(standing.position == SIMD3(10, 0, 0))
         #expect(standing.scale == 1)
     }
@@ -32,7 +35,10 @@ struct NPCStandingTransformTests {
         let store = WorldStateStore()
         store.set(saved, for: entry.key, in: cell)
         var runtime = NPCMovementRuntime()
-        let standing = runtime.standingTransform(of: entry, in: store.snapshot())
+        let standing = NPCStandingTransform(movement: runtime).standingTransform(
+            of: entry,
+            in: store.snapshot()
+        )
         #expect(standing.position == saved.position)
         #expect(standing.rotation == saved.rotation)
         #expect(standing.scale == saved.scale)
@@ -64,7 +70,10 @@ struct NPCStandingTransformTests {
         ))
         let store = WorldStateStore()
         store.set(saved, for: entry.key, in: cell)
-        let standing = runtime.standingTransform(of: entry, in: store.snapshot())
+        let standing = NPCStandingTransform(movement: runtime).standingTransform(
+            of: entry,
+            in: store.snapshot()
+        )
         #expect(standing.position == SIMD3(20, 0, 0))
     }
 
