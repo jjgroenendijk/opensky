@@ -128,13 +128,11 @@ extension InventoryMenuController {
         guard previewEnabled, let renderer = game.renderer else { return }
         // A live movie decides through `UpdateItem3D`; without one the row shows.
         let shown = movie.loadedRenderer == nil || movieShowsItem3D
-        let path = model.selectedEntry.flatMap {
-            game.inventory.runtime?.inventory.baselines.items.definition($0.item)?.modelPath
-        }
+        let path = InventoryPreviewReads.modelPath(of: model.selectedEntry, game: game)
         preview.show(shown ? path : nil)
         preview.tick(now: now)
-        if previewSource == nil, let files = game.worldData?.scriptFileSystem {
-            previewSource = InventoryItemPreviewSource(fileSystem: files)
+        if previewSource == nil {
+            previewSource = InventoryPreviewReads.source(game: game)
         }
         let scene = previewSource?.scene(for: preview, device: renderer.device)
         guard scene != nil || previewShown else { return }
@@ -147,5 +145,19 @@ extension InventoryMenuController {
         guard previewShown else { return }
         previewShown = false
         game.renderer?.setMenuScene(nil)
+    }
+}
+
+/// The world reads behind the inventory menu's item preview.
+@MainActor
+enum InventoryPreviewReads {
+    static func modelPath(of entry: InventoryMenuEntry?, game: any InventoryMenuHost) -> String? {
+        entry.flatMap {
+            game.inventory.runtime?.inventory.baselines.items.definition($0.item)?.modelPath
+        }
+    }
+
+    static func source(game: any InventoryMenuHost) -> InventoryItemPreviewSource? {
+        game.worldData?.scriptFileSystem.map { InventoryItemPreviewSource(fileSystem: $0) }
     }
 }

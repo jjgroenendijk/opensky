@@ -100,7 +100,7 @@ final class ContainerMenuController {
     /// else on the nearest corpse.
     func open() {
         guard !isOpen else { return }
-        guard resolveTarget() else {
+        guard ContainerMenuTarget(owner: self).resolveTarget() else {
             noteAction("No container selected. Look at one, or nominate a merchant.")
             return
         }
@@ -154,19 +154,6 @@ final class ContainerMenuController {
     /// The vanilla menus show no action line, so the outcome goes to the log.
     func noteAction(_ text: String) {
         ContainerMenuLog.note(text)
-    }
-
-    private func resolveTarget() -> Bool {
-        if container != nil {
-            return true
-        }
-        if
-            let interaction = game.hud.interactionTarget?.interaction,
-            interaction.action == .search
-        {
-            return nominate(interaction)
-        }
-        return game.ragdoll.searchNearestCorpse()
     }
 
     /// Re-reads both inventories. Every transaction calls this, so the list and
@@ -342,5 +329,24 @@ extension ContainerMenuController {
     func tick(now: Double) {
         guard isOpen else { return }
         movie.advance(now: now)
+    }
+}
+
+/// Finds what the container menu opens on: the searched target, else the nearest corpse.
+@MainActor
+struct ContainerMenuTarget {
+    let owner: ContainerMenuController
+
+    func resolveTarget() -> Bool {
+        if owner.container != nil {
+            return true
+        }
+        if
+            let interaction = owner.game.hud.interactionTarget?.interaction,
+            interaction.action == .search
+        {
+            return owner.nominate(interaction)
+        }
+        return owner.game.ragdoll.searchNearestCorpse()
     }
 }
