@@ -57,6 +57,17 @@ struct EffectsTrapControlTests {
         #expect(perception.noteSoundEventCalls.map(\.level) == [100])
     }
 
+    /// An owned blast is a detection event at its record's sound level, or Normal.
+    @Test func anOwnedExplosionIsADetectionEvent() {
+        adapter.noteExplosionSound(owner: Self.actor, level: 0, at: .zero)
+        let perception = FakePerceptionRuntimePort()
+        perception.settingsValue = .synthetic
+        host.fakePerception.runtime = perception
+        adapter.noteExplosionSound(owner: Self.actor, level: 0, at: .zero)
+        adapter.noteExplosionSound(owner: Self.actor, level: nil, at: SIMD3(1, 2, 3))
+        #expect(perception.noteSoundEventCalls.map(\.level) == [100, 50])
+    }
+
     @Test func aStaggerGoesThroughTheMagicWorld() {
         host.fakeMagicWorld.staggerActorResult = true
         #expect(adapter.staggerActor(Self.actor, magnitude: 0.5))

@@ -16,6 +16,7 @@ public protocol PackagePort: AnyObject {
     func ignoresCombat(_ actor: ReferenceKey) -> Bool
     func movementSettled(actor: ReferenceKey, reason: NPCMovementSettleReason)
     func packageLocation(of actor: ReferenceKey) -> SIMD3<Float>?
+    func ambushArea(of actor: ReferenceKey) -> PackageAmbushArea?
     /// A new game: every persistent actor goes to the place of its package for the hour.
     func placeActorsAtPackagePlaces()
     func readout(for actor: ReferenceKey) -> PackageActorReadout?

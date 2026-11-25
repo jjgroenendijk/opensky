@@ -2,7 +2,7 @@
 // (<https://ck.uesp.net/wiki/MoveToPackageLocation_-_Actor>).
 
 public import OpenSkyFormatsESM
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
@@ -15,6 +15,32 @@ extension PackageCoordinator {
         }
         guard let world, let package = runtime?.currentPackage(for: actor) else { return nil }
         return world.firstLocation(of: package, actor: actor)
+    }
+}
+
+extension PackageCoordinator {
+    /// Whom the actor's running Ambush package waits for, or nil when its package has
+    /// another type. Its first location input gives a place and a radius; a reference
+    /// or object target is not matched yet (docs/engine/detection.md#ambush-packages).
+    public func ambushArea(of actor: ReferenceKey) -> PackageAmbushArea? {
+        guard
+            let world, let package = runtime?.currentPackage(for: actor),
+            package.package.general.isAmbush
+        else { return nil }
+        let values = PackageOverrideExecution(package: package).values
+        for index in values.keys.sorted() {
+            switch values[index] {
+            case let .location(location)?:
+                guard let place = world.packagePlace(of: location, actor: actor, aliasQuest: nil)
+                else { return .unmatched }
+                return .within(center: place.point, radius: Float(place.radius))
+            case .target?:
+                return .unmatched
+            default:
+                continue
+            }
+        }
+        return .everyone
     }
 }
 

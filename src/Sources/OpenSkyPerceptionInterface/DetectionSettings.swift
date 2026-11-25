@@ -71,6 +71,10 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
     public var lightRunMult: MovementSetting
     /// `fSneakCombatMod`: weights the skill of an observer that fights someone else.
     public var combatMod: MovementSetting
+    /// `fSneakAmbushTargetMod` and `fSneakAmbushNonTargetMod` weight the skill of an
+    /// observer that runs an Ambush package, for its ambush target and for any other.
+    public var ambushTargetMod: MovementSetting
+    public var ambushNonTargetMod: MovementSetting
 
     // MARK: - OpenSky's own
 
@@ -207,6 +211,8 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
             lightMoveMult: engineDefault("fSneakLightMoveMult", 0.01),
             lightRunMult: engineDefault("fSneakLightRunMult", 0.2),
             combatMod: engineDefault("fSneakCombatMod", -0.4),
+            ambushTargetMod: vanilla("fSneakAmbushTargetMod", 2.5),
+            ambushNonTargetMod: vanilla("fSneakAmbushNonTargetMod", 0),
             distanceAttenuationExponent: ours(2),
             equippedWeightBase: ours(12),
             equippedWeightMult: ours(0.5),

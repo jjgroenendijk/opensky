@@ -24,6 +24,8 @@ nonisolated public final class FakePackagePort: PackagePort {
     public var movementSettledCalls: [(actor: ReferenceKey, reason: NPCMovementSettleReason)] = []
     public var packageLocationCalls: [ReferenceKey] = []
     public var packageLocationResult: SIMD3<Float>?
+    public var ambushAreaCalls: [ReferenceKey] = []
+    public var ambushAreaResult: PackageAmbushArea?
     public var placeActorsAtPackagePlacesCallCount = 0
     public var readoutCalls: [ReferenceKey] = []
     public var readoutResult: PackageActorReadout?
@@ -102,6 +104,11 @@ nonisolated extension FakePackagePort {
     public func packageLocation(of actor: ReferenceKey) -> SIMD3<Float>? {
         packageLocationCalls.append(actor)
         return packageLocationResult
+    }
+
+    public func ambushArea(of actor: ReferenceKey) -> PackageAmbushArea? {
+        ambushAreaCalls.append(actor)
+        return ambushAreaResult
     }
 
     public func placeActorsAtPackagePlaces() {

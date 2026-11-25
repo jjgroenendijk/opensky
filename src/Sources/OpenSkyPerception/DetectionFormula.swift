@@ -88,7 +88,8 @@ nonisolated public enum DetectionFormula: Sendable {
             + max(0, settings.equippedWeightMult.value) * weight * unmuffled
         let movement = carried * movementMultiplier(gait: inputs.gait, settings: settings)
         let action = finiteNonNegative(traits.actionSound) * settings.actionMult.value
-        let occlusion = inputs.hasLineOfSight ? 1 : max(0, settings.soundLosMult.value)
+        let heard = inputs.hasLineOfSight || inputs.observer.ambush == .target
+        let occlusion = heard ? 1 : max(0, settings.soundLosMult.value)
         return settings.soundsMult.value * (movement + action) * occlusion
     }
 
@@ -159,7 +160,8 @@ nonisolated public enum DetectionFormula: Sendable {
     }
 
     /// The observer's skill, times `1 + alert * fSneakAlertMod + sleeping *
-    /// fSneakSleepMod + fightingAnother * fSneakCombatMod`, times `fSneakSkillMult`.
+    /// fSneakSleepMod + fightingAnother * fSneakCombatMod` plus the ambush term, times
+    /// `fSneakSkillMult`.
     static func noticerFactor(
         inputs: DetectionInputs,
         settings: DetectionSettings
@@ -168,8 +170,17 @@ nonisolated public enum DetectionFormula: Sendable {
         let mod = 1 + (state.isAlert ? settings.alertMod.value : 0)
             + (state.isSleeping ? settings.sleepMod.value : 0)
             + (state.isFightingAnother ? settings.combatMod.value : 0)
+            + ambushMod(state.ambush, settings: settings)
         return perception(inputs.noticerSkill, settings: settings) * mod
             * settings.skillMult.value
+    }
+
+    static func ambushMod(_ role: DetectionAmbushRole?, settings: DetectionSettings) -> Float {
+        switch role {
+        case .target: settings.ambushTargetMod.value
+        case .other: settings.ambushNonTargetMod.value
+        case nil: 0
+        }
     }
 
     /// The target's skill term: zero unless it sneaks. The player's skill is first

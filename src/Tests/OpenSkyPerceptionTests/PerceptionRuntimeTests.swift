@@ -228,6 +228,21 @@ extension PerceptionRuntimeTests {
         #expect(pair.lastKnownPosition == impact)
     }
 
+    /// Without an event, the target's flying arrow near the observer is heard.
+    @Test func aFlyingProjectileNearTheObserverIsHeard() {
+        var observer = PerceptionFixture.observer(feet: SIMD3(0, 0, 0), facing: .pi)
+        observer.isAggressive = true
+        var target = PerceptionFixture.target(feet: SIMD3(3000, 0, 0), gait: nil, isSneaking: true)
+        let arrow = SIMD3<Float>(60, 0, 0)
+        target.projectiles = [arrow]
+        let world = FakePerceptionWorld(observers: [observer], targets: [target])
+        let runtime = PerceptionRuntime(settings: settings, world: world)
+        advance(runtime, steps: 2)
+        let pair = runtime.state(observer: PerceptionFixture.guardKey, target: .player)
+        #expect(pair.state == .suspicious)
+        #expect(pair.lastKnownPosition == arrow)
+    }
+
     /// A hostile observer keeps a target it saw while the target stays near, loses it
     /// about 20 s later, and a hit by the target caps its points.
     @Test func aHostileObserverKeepsThenLosesATargetItSaw() {

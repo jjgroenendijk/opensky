@@ -68,6 +68,11 @@ public final class ExplosionRuntime {
         for sound in spec.sounds {
             world?.playExplosionSound(sound, at: position)
         }
+        // A projectile's blast is its shooter's event already; a spell's or a script's
+        // blast is one only when it has an owner (docs/engine/detection-events.md).
+        if cause != .projectile, let owner = origin.shooter {
+            world?.noteExplosionSound(owner: owner, level: spec.soundLevel, at: position)
+        }
         if let model = spec.model {
             world?.showExplosionModel(model, at: position)
         }

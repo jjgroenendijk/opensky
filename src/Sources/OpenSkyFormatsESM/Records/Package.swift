@@ -63,6 +63,11 @@ nonisolated public struct Package: Equatable, Sendable {
         let interruptOverride: UInt8
         public let preferredSpeed: PreferredSpeed
         public let interruptFlags: UInt16
+
+        /// `PKDT` type 9, an Ambush package. No vanilla package has it.
+        public var isAmbush: Bool {
+            kind == .unknown(9)
+        }
     }
 
     public struct Schedule: Equatable, Sendable {

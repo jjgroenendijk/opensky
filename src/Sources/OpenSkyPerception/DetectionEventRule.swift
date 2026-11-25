@@ -3,8 +3,10 @@
 // See docs/engine/detection-events.md.
 
 import Foundation
+import OpenSkyFormatsESM
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
+import simd
 
 /// What one observer perceives of an event's place.
 nonisolated struct DetectionEventSight: Equatable, Sendable {
@@ -24,6 +26,41 @@ nonisolated public enum DetectionEventRule: Sendable {
     /// The light level the sound-only formula uses when the event's place is in view.
     static let interiorLightLevel: Float = 225
     static let exteriorLightLevel: Float = 75
+
+    /// How far an observer looks for a target's flying projectiles.
+    static let projectileScanRange: Float = 1024
+
+    /// Whether an observer checks a target's events: not a friend or an ally of the
+    /// target, and the observer or the target fights, or the target is the player and
+    /// the observer is aggressive: hostile or fighting
+    /// (docs/engine/detection-events.md#who-checks-an-event).
+    static func checks(observer: PerceptionObserver, target: PerceptionTarget) -> Bool {
+        let isPlayer = target.key == .player
+        guard !(isPlayer && observer.isFriendToPlayer) else { return false }
+        return observer.combatTarget != nil || target.isInCombat
+            || (isPlayer && observer.isAggressive)
+    }
+
+    /// The nearest of the target's flying projectiles within the scan range. The scan
+    /// is skipped for a target that is neither the player nor in combat.
+    static func nearestProjectile(
+        of target: PerceptionTarget, from observer: SIMD3<Float>
+    ) -> SIMD3<Float>? {
+        guard target.key == .player || target.isInCombat else { return nil }
+        return target.projectiles
+            .filter { simd_distance($0, observer) <= projectileScanRange }
+            .min { simd_distance($0, observer) < simd_distance($1, observer) }
+    }
+
+    /// An observer in combat checks a target that is neither the player nor its combat
+    /// target at this share of the range.
+    static let otherTargetRangeShare: Float = 0.75
+
+    static func rangeShare(observer: PerceptionObserver, target: ReferenceKey) -> Float {
+        guard let fighting = observer.combatTarget, target != .player, target != fighting
+        else { return 1 }
+        return otherTargetRangeShare
+    }
 
     /// How far from an event an observer still checks it.
     public static func hearingDistance(level: Float, isPlayerSound: Bool) -> Float {

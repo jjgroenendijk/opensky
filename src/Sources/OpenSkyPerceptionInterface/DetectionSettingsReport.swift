@@ -35,6 +35,8 @@ nonisolated extension DetectionSettings {
             ("fSneakLightMoveMult", lightMoveMult),
             ("fSneakLightRunMult", lightRunMult),
             ("fSneakCombatMod", combatMod),
+            ("fSneakAmbushTargetMod", ambushTargetMod),
+            ("fSneakAmbushNonTargetMod", ambushNonTargetMod),
             ("distanceAttenuationExponent", distanceAttenuationExponent),
             ("equippedWeightBase", equippedWeightBase),
             ("equippedWeightMult", equippedWeightMult),

@@ -16,7 +16,8 @@ public enum PackageRuntimeFixture {
         template: UInt32? = nil,
         procedureNames: [String] = [],
         dataInputs: [Package.DataInput] = [],
-        flags: Package.GeneralFlags = []
+        flags: Package.GeneralFlags = [],
+        kind: Package.Kind = .package
     ) throws -> Package {
         var conditions = ConditionList()
         if let condition {
@@ -27,7 +28,7 @@ public enum PackageRuntimeFixture {
             editorID: editorID,
             general: Package.GeneralData(
                 flags: flags,
-                kind: .package,
+                kind: kind,
                 interruptOverride: 0,
                 preferredSpeed: .walk,
                 interruptFlags: 0

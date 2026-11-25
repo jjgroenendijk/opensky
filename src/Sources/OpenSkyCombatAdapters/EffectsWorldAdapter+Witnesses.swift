@@ -195,6 +195,10 @@ extension EffectsWorldAdapter {
         blasts.playExplosionSound(sound, at: position)
     }
 
+    public func noteExplosionSound(owner: ReferenceKey, level: UInt32?, at position: SIMD3<Float>) {
+        blasts.noteExplosionSound(owner: owner, level: level, at: position)
+    }
+
     public func startExplosionImageSpace(_ modifier: ReferenceKey, strength: Float) {
         blasts.startExplosionImageSpace(modifier, strength: strength)
     }

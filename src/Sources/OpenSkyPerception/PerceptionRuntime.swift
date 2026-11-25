@@ -246,7 +246,9 @@ public final class PerceptionRuntime {
     ) {
         let previous = pairs[key] ?? .unaware
         let elapsedSteps = lastEvaluatedStep[key].map { stepCount - $0 } ?? 1
+        // A share of the range works as a longer distance in the same formula.
         let distance = PerceptionSight.distance(observer: observer, target: target)
+            / DetectionEventRule.rangeShare(observer: observer, target: target.key)
         // The ray is the expensive half, so it is skipped outright for a pair
         // already past the range where either sense could reach. The formula
         // would multiply everything by a zero attenuation anyway.
@@ -290,14 +292,7 @@ public final class PerceptionRuntime {
             traits: target.traits,
             noticerSkill: observer.sneakSkill
         )
-        inputs.observer = DetectionObserverState(
-            isAlert: observer.combatTarget != nil,
-            isSleeping: observer.isSleeping,
-            isFlying: observer.isFlying,
-            blindness: observer.blindness,
-            isFightingAnother: observer.combatTarget.map { $0 != target.key } ?? false
-        )
-        inputs.observer.hasNightEye = observer.hasNightEye
+        inputs.observer = Self.observerState(observer, judging: target)
         inputs.isPlayerTarget = target.key == .player
         pairs[key] = previous.advanced(
             inputs: inputs,
@@ -307,6 +302,21 @@ public final class PerceptionRuntime {
         )
         lastEvaluatedStep[key] = stepCount
         checkSoundEvent(key: key, observer: observer, target: target, inputs: inputs)
+    }
+
+    private static func observerState(
+        _ observer: PerceptionObserver, judging target: PerceptionTarget
+    ) -> DetectionObserverState {
+        var state = DetectionObserverState(
+            isAlert: observer.combatTarget != nil,
+            isSleeping: observer.isSleeping,
+            isFlying: observer.isFlying,
+            blindness: observer.blindness,
+            isFightingAnother: observer.combatTarget.map { $0 != target.key } ?? false
+        )
+        state.hasNightEye = observer.hasNightEye
+        state.ambush = observer.ambush.map { $0.contains(target.feet) ? .target : .other }
+        return state
     }
 }
 
