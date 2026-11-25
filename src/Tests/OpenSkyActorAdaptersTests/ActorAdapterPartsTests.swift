@@ -8,15 +8,37 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPlayer
+import OpenSkySessionInterface
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import OpenSkyWorldState
+import simd
 import Testing
 
 @MainActor
 struct ActorAdapterPartsTests {
     private let host = ActorHost()
     private static let actor = ReferenceKey.plugin(name: "base.esm", objectID: 0x20)
+
+    @Test func leavingEveryVehicleFreesTheRidingPlayer() {
+        let session = FakeGameSessionPort()
+        session.playerSeat = matrix_identity_float4x4
+        session.playerWalkPath = [SIMD3(1, 2, 3)]
+        host.gameSession = session
+        let vehicles = VehicleWorldAdapter(game: host, stage: nil)
+        vehicles.setPlayerAIDriven(true)
+        vehicles.ridesPlayer = true
+        vehicles.leaveAllVehicles()
+        #expect(!vehicles.isPlayerAIDriven)
+        #expect(!vehicles.ridesPlayer)
+        #expect(session.playerSeat == nil)
+        #expect(session.playerWalkPath.isEmpty)
+        #expect(host.fakeHud.setCartModeCalls == [false])
+        // A chair, not a ride, holds this seat, so it stays.
+        session.playerSeat = matrix_identity_float4x4
+        vehicles.leaveAllVehicles()
+        #expect(session.playerSeat != nil)
+    }
 
     @Test func withoutASessionTheSeatViewTurnsNothing() {
         let vehicles = VehicleWorldAdapter(game: host, stage: nil)

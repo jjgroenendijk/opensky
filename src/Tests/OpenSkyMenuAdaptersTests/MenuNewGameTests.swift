@@ -52,6 +52,18 @@ struct MenuNewGameTests {
         #expect(host.fakeRagdoll.resetPlayerDeathCallCount == 1)
     }
 
+    /// A new game started during the opening ride leaves the carts and the cart HUD behind.
+    @Test func aNewGameEndsEveryRideAndTheCartHUD() throws {
+        let session = FakeGameSessionPort()
+        let locomotion = FakeLocomotionBridgePort()
+        session.locomotion = locomotion
+        host.gameSession = session
+        try menus.startNewGame(AgentNewGameRequest(start: "cell:QASmoke", opensRaceMenu: false))
+        #expect(host.fakeVehicleWorld.leaveAllVehiclesCallCount == 1)
+        // The ride's script left the body in the cart idle; a new player starts standing.
+        #expect(locomotion.restartGraphsCallCount == 1)
+    }
+
     @Test func aPlainPlaceStartChangesOnlyThePlace() throws {
         #expect(menus.lastNewGame == nil)
         try menus.startNewGame(AgentNewGameRequest(start: "cell:QASmoke", opensRaceMenu: false))

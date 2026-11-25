@@ -66,6 +66,7 @@ final class MenuHost: LoadingScreenPresentationHost, LoadingScreenWorldHost, Map
     let fakeStreamer = FakeCellStreamerPort()
     let fakeSubtitles = FakeSubtitlePort()
     let fakeSwfMovies = FakeSWFMovieSourcePort()
+    let fakeVehicleWorld = FakeVehicleWorldPort()
     let fakeWorldState = FakeWorldStateStorePort()
     var audioFileSystem: (any GameFileSource)?
     var gameSession: (any GameSessionPort)?
@@ -256,6 +257,10 @@ final class MenuHost: LoadingScreenPresentationHost, LoadingScreenWorldHost, Map
 
     var swfMovies: any SWFMovieSourcePort {
         fakeSwfMovies
+    }
+
+    var vehicleWorld: any VehicleWorldPort {
+        fakeVehicleWorld
     }
 
     var worldState: any WorldStateStorePort {

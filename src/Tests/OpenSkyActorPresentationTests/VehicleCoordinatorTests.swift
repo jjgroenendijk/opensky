@@ -95,6 +95,24 @@ struct VehicleCoordinatorTests {
         return try (vehicles, #require(vehicles.lastPoses[rider]))
     }
 
+    /// A reset ends every link without resting anyone, and the next frame clears once.
+    @Test func aResetEndsEveryLinkWithoutARest() {
+        let world = FakeVehicleWorld()
+        world.poses[cart] = ReferenceTransformOverride(position: SIMD3(10, 0, 0))
+        let vehicles = VehicleCoordinator(world: world)
+        vehicles.board(.player, on: cart)
+        _ = vehicles.advance()
+
+        vehicles.reset()
+
+        #expect(vehicles.core.links.isEmpty)
+        #expect(vehicles.lastPoses.isEmpty)
+        #expect(vehicles.advance() == [
+            .publishVehiclePoses([:]), .publishCarriedPoses([:]), .publishLinks([:])
+        ])
+        #expect(vehicles.advance().isEmpty)
+    }
+
     @Test func setVehicleNoneTakesTheRiderOff() throws {
         let (vehicles, seat) = try seatedRider()
         #expect(vehicles.setVehicle(rider, vehicle: nil) == [.followerRests(rider, at: seat)])

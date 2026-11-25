@@ -6,6 +6,7 @@ public import OpenSkySessionInterface
 /// Stores each property and records each call to `VehicleWorldPort`.
 nonisolated public final class FakeVehicleWorldPort: VehicleWorldPort {
     public var detachCalls: [ReferenceKey] = []
+    public var leaveAllVehiclesCallCount = 0
     public var handleBodyEventCalls: [(name: String, actor: ReferenceKey)] = []
     public var handleIdleAnimationEventCalls: [(name: String, actor: ReferenceKey)] = []
     public var isPlayerAIDriven = false
@@ -79,6 +80,10 @@ extension FakeVehicleWorldPort {
 nonisolated extension FakeVehicleWorldPort {
     public func detach(_ follower: ReferenceKey) {
         detachCalls.append(follower)
+    }
+
+    public func leaveAllVehicles() {
+        leaveAllVehiclesCallCount += 1
     }
 
     public func handleBodyEvent(_ name: String, from actor: ReferenceKey) {

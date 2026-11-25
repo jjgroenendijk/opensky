@@ -25,6 +25,7 @@ nonisolated public final class FakeVehiclePort: VehiclePort {
     public var setVehicleResult: [VehicleCommand] = []
     public var towCalls: [(cart: ReferenceKey, horse: ReferenceKey)] = []
     public var towResult: [VehicleCommand] = []
+    public var resetCallCount = 0
 
     public init() {}
 }
@@ -90,5 +91,9 @@ nonisolated extension FakeVehiclePort {
     public func tow(_ cart: ReferenceKey, by horse: ReferenceKey) -> [VehicleCommand] {
         towCalls.append((cart: cart, horse: horse))
         return towResult
+    }
+
+    public func reset() {
+        resetCallCount += 1
     }
 }

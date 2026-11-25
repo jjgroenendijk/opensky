@@ -72,6 +72,7 @@ extension AgentPlayerReadoutAdapter {
             "yaw": .init(MatrixMath.signedDegrees(fromRadians: camera.yaw)),
             "pitch": .init(MatrixMath.degrees(fromRadians: camera.pitch)),
             "movementMode": .string(String(describing: gameSession.movementMode)),
+            "seated": .bool(gameSession.playerSeat != nil),
             "cell": actorReadout.cellState(at: camera.position),
             "worldspace": .string(game.streamer.worldspaceEditorID),
             "bodyFailure": .init(game.player.failureReason),

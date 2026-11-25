@@ -158,6 +158,7 @@ extension MenuWorldNewGameAdapter {
     /// A fresh session: empty world state, the start clock, and the start-up quests.
     private func resetSession() {
         game.worldState.restore(from: .empty)
+        teleports.endRides()
         game.inventory.alchemyLab.registerCreatedPotions()
         game.gameSession?.gameClock = GameClock()
         game.gameSession?.clearScriptScreenEffects()
