@@ -4,7 +4,8 @@
 import Foundation
 import OpenSkyFormatsSWF
 
-extension SWFSystemMenuCommand {
+/// The steps and dump lines both movie probes share.
+enum SWFMovieProbeSteps {
     static func printNode(_ path: String, runtime: SWFMovieRuntime) {
         guard let node = runtime.node(atPath: path, from: runtime.root) else {
             print("[INFO] swf probe dump \(path): not found")
@@ -121,6 +122,41 @@ extension SWFSystemMenuCommand {
         if step.hasPrefix("click:") {
             runtime.handle(.pointerPressed(x: pointX, y: pointY))
             runtime.handle(.pointerReleased(x: pointX, y: pointY))
+        }
+    }
+
+    /// Each argument, and one level into every array element's own properties.
+    /// An array prints its elements, so a stepper's option list shows.
+    nonisolated static func describeDeep(_ value: AS2Value) -> String {
+        guard case let .object(object) = value, object.lookup("0") != nil else {
+            return SWFInvokeLog.describe(value)
+        }
+        let items = object.ownPropertyNames.compactMap { name in Int(name).map { ($0, name) } }
+            .sorted { $0.0 < $1.0 }
+            .map { SWFInvokeLog.describe(object.lookup($0.1)?.property.value ?? .undefined) }
+        return "[\(items.joined(separator: ", "))]"
+    }
+
+    nonisolated static func printArguments(_ name: String, _ arguments: [AS2Value]) {
+        print("[INFO] swf probe capture \(name): \(arguments.count) arguments")
+        for (index, argument) in arguments.enumerated() {
+            print("[INFO]   arg \(index) = \(SWFInvokeLog.describe(argument))")
+            guard case let .object(array) = argument else { continue }
+            for key in array.ownPropertyNames.sorted() {
+                let element = array.lookup(key)?.property.value ?? .undefined
+                guard case let .object(row) = element else {
+                    print("[INFO]     [\(key)] = \(SWFInvokeLog.describe(element))")
+                    continue
+                }
+                if row.lookup("value") == nil {
+                    row.assign(.number(0), for: "value")
+                }
+                let fields = row.ownPropertyNames.sorted().map { field in
+                    let value = row.lookup(field)?.property.value ?? .undefined
+                    return "\(field)=\(describeDeep(value))"
+                }
+                print("[INFO]     [\(key)] \(fields.joined(separator: " "))")
+            }
         }
     }
 }

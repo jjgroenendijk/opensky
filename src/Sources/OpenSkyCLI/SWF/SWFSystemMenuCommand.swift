@@ -60,7 +60,7 @@ enum SWFSystemMenuCommand {
             printLog(runtime, stage: "step \(index) \(step)")
         }
         for path in dumps {
-            printNode(path, runtime: runtime)
+            SWFMovieProbeSteps.printNode(path, runtime: runtime)
         }
         print(
             "[INFO] swf probe controls rows shown: "
@@ -75,7 +75,7 @@ enum SWFSystemMenuCommand {
         SettingsMovieBridge.registerDefaults(runtime: runtime)
         for name in captures {
             runtime.registerHostFunction(name) { call in
-                printArguments(name, call.arguments)
+                SWFMovieProbeSteps.printArguments(name, call.arguments)
                 return .undefined
             }
         }
@@ -108,7 +108,7 @@ enum SWFSystemMenuCommand {
     /// `point:<x>/<y>`, or `click:<x>/<y>`.
     private static func perform(_ step: String, runtime: SWFMovieRuntime) throws {
         if step.hasPrefix("point:") || step.hasPrefix("click:") {
-            try pointer(step, runtime: runtime)
+            try SWFMovieProbeSteps.pointer(step, runtime: runtime)
         } else if step.hasPrefix("state:") {
             let name = String(step.dropFirst(6))
             guard
@@ -173,40 +173,5 @@ enum SWFSystemMenuCommand {
         }
         let focus = runtime.focusTarget?.targetPath ?? "none"
         print("[INFO]   focus: \(focus)")
-    }
-
-    /// Each argument, and one level into every array element's own properties.
-    /// An array prints its elements, so a stepper's option list shows.
-    nonisolated static func describeDeep(_ value: AS2Value) -> String {
-        guard case let .object(object) = value, object.lookup("0") != nil else {
-            return SWFInvokeLog.describe(value)
-        }
-        let items = object.ownPropertyNames.compactMap { name in Int(name).map { ($0, name) } }
-            .sorted { $0.0 < $1.0 }
-            .map { SWFInvokeLog.describe(object.lookup($0.1)?.property.value ?? .undefined) }
-        return "[\(items.joined(separator: ", "))]"
-    }
-
-    nonisolated static func printArguments(_ name: String, _ arguments: [AS2Value]) {
-        print("[INFO] swf probe capture \(name): \(arguments.count) arguments")
-        for (index, argument) in arguments.enumerated() {
-            print("[INFO]   arg \(index) = \(SWFInvokeLog.describe(argument))")
-            guard case let .object(array) = argument else { continue }
-            for key in array.ownPropertyNames.sorted() {
-                let element = array.lookup(key)?.property.value ?? .undefined
-                guard case let .object(row) = element else {
-                    print("[INFO]     [\(key)] = \(SWFInvokeLog.describe(element))")
-                    continue
-                }
-                if row.lookup("value") == nil {
-                    row.assign(.number(0), for: "value")
-                }
-                let fields = row.ownPropertyNames.sorted().map { field in
-                    let value = row.lookup(field)?.property.value ?? .undefined
-                    return "\(field)=\(describeDeep(value))"
-                }
-                print("[INFO]     [\(key)] \(fields.joined(separator: " "))")
-            }
-        }
     }
 }
