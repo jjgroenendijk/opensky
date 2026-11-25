@@ -143,15 +143,27 @@ extension PapyrusWorldStateBridge {
     /// Starts a move to `position` that keeps the reference's rotation. False for a
     /// reference no resident cell holds.
     public func translate(_ key: ReferenceKey, to position: SIMD3<Float>, speed: Float) -> Bool {
-        guard let rotation = referenceState(for: key)?.transform.rotation else { return false }
-        return scriptedMoves.startTranslation(
-            of: key, to: ReferenceTransformOverride(position: position, rotation: rotation),
-            speed: speed, maxRotationSpeed: 0
-        )
+        TranslationStarts(host: self).translate(key, to: position, speed: speed)
     }
 
     /// The scripted moves a save kept, after the scripts are restored.
     public func restoreTranslations(_ saved: [ReferenceKey: SavedTranslation]) {
         scriptedMoves.restoreTranslations(saved)
+    }
+}
+
+extension PapyrusWorldStateBridge {
+    /// Starts a translation.
+    struct TranslationStarts {
+        let host: PapyrusWorldStateBridge
+
+        func translate(_ key: ReferenceKey, to position: SIMD3<Float>, speed: Float) -> Bool {
+            guard let rotation = host.referenceState(for: key)?.transform.rotation
+            else { return false }
+            return host.scriptedMoves.startTranslation(
+                of: key, to: ReferenceTransformOverride(position: position, rotation: rotation),
+                speed: speed, maxRotationSpeed: 0
+            )
+        }
     }
 }

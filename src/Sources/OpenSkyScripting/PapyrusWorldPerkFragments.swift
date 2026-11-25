@@ -52,7 +52,7 @@ extension PapyrusWorldRuntime.FragmentRuns {
 }
 
 @MainActor
-extension PapyrusWorldStateBridge.StoryEvents {
+extension PapyrusWorldStateBridge.StoryEvents: PapyrusPerkFragmentRunning {
     @discardableResult
     public func runPerkFragment(
         of perk: Perk, key: ReferenceKey, index: UInt16, activation: PerkFragmentActivation
