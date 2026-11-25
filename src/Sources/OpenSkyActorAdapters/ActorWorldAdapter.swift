@@ -77,20 +77,7 @@ public final class ActorWorldAdapter {
     /// Each pose is the NPC movement transform, then a stored override, then
     /// the placement.
     public func combatActors() -> [CombatActorObservation] {
-        let streamer = game.streamer
-        let key = ActorListKey(
-            streamer: ObjectIdentifier(streamer),
-            poses: streamer.actorPoseRevision,
-            deltas: game.worldState.deltaRevision,
-            namesResolve: game.journal.strings != nil
-        )
-        if let actorList, actorList.key == key {
-            return actorList.actors
-        }
-        let actors = streamer.residentActorEntries()
-            .compactMap { observation(of: $0, in: streamer) }
-        actorList = (key, actors)
-        return actors
+        ActorRosterReads(owner: self).combatActors()
     }
 
     /// One resident actor from `combatActors()`, found by key in constant time.
@@ -173,8 +160,7 @@ extension ActorWorldAdapter: ActorValueWorld {
     }
 
     public func riddenHorse() -> ActorValueHolder? {
-        guard let drive = game.mounts.drive, drive.kind == .horse else { return nil }
-        return actorValueHolder(for: drive.mount)
+        ActorRosterReads(owner: self).riddenHorse()
     }
 
     public func isRiddenHorseSprinting() -> Bool {
@@ -182,11 +168,11 @@ extension ActorWorldAdapter: ActorValueWorld {
     }
 
     public func setRiddenHorseSprintAllowed(_ allowed: Bool) {
-        game.mounts.allowRiddenHorseSprint(allowed)
+        ActorRosterReads(owner: self).setRiddenHorseSprintAllowed(allowed)
     }
 
     public func playerCarriedWeight() -> Float? {
-        game.inventory.runtime == nil ? nil : game.inventory.armourWeights.playerCarriedWeight
+        ActorRosterReads(owner: self).playerCarriedWeight()
     }
 
     public func setPlayerOverencumbered(_ overencumbered: Bool) {
@@ -371,5 +357,47 @@ struct ActorHUDMeters {
         let name = game.streamer.residentActorPlacement(key: actor.key)
             .flatMap { world.displayName(of: actor.key, base: $0.base) } ?? ""
         return HUDEnemyHealth(name: name, health: runtime.fractions(of: holder).health)
+    }
+}
+
+extension ActorWorldAdapter {
+    /// Reads the combat actors, the ridden horse, and the player's carried weight.
+    struct ActorRosterReads {
+        let owner: ActorWorldAdapter
+
+        func combatActors() -> [CombatActorObservation] {
+            let game = owner.game
+            let streamer = game.streamer
+            let key = ActorListKey(
+                streamer: ObjectIdentifier(streamer),
+                poses: streamer.actorPoseRevision,
+                deltas: game.worldState.deltaRevision,
+                namesResolve: game.journal.strings != nil
+            )
+            if let actorList = owner.actorList, actorList.key == key {
+                return actorList.actors
+            }
+            let actors = streamer.residentActorEntries()
+                .compactMap { owner.observation(of: $0, in: streamer) }
+            owner.actorList = (key, actors)
+            return actors
+        }
+
+        func riddenHorse() -> ActorValueHolder? {
+            let game = owner.game
+            guard let drive = game.mounts.drive, drive.kind == .horse else { return nil }
+            return owner.actorValueHolder(for: drive.mount)
+        }
+
+        func setRiddenHorseSprintAllowed(_ allowed: Bool) {
+            let game = owner.game
+            game.mounts.allowRiddenHorseSprint(allowed)
+        }
+
+        func playerCarriedWeight() -> Float? {
+            let game = owner.game
+            return game.inventory.runtime == nil ? nil : game.inventory.armourWeights
+                .playerCarriedWeight
+        }
     }
 }
