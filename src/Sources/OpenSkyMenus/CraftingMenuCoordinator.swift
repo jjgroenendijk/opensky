@@ -369,3 +369,9 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
         world?.closeCraftingStation()
     }
 }
+
+/// The card of the item the enchanting slider makes.
+@MainActor
+struct CraftingSliderCard {
+    let owner: CraftingMenuCoordinator
+}
