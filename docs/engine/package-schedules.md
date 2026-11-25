@@ -245,9 +245,9 @@ A sandbox procedure does not walk while the idle runtime has sent the actor to a
 ([idles](/engine/idle-runtime.md#marker-claim)). Its walk counts as done, so it waits and asks
 again, and the marker's idles play.
 
-A walk that gave up fails its tree. After 10 seconds the tree starts again from its root, so
-the actor tries the walk again. How long the game waits was not found, so the 10 seconds are
-OpenSky's own.
+A walk that gave up fails its tree, except a patrol's ([blocked](/engine/navigation.md#blocked-walks)).
+After 10 s the tree starts again from its root, so the actor tries the walk again. How long
+the game waits was not found, so the 10 s are OpenSky's own.
 
 Not done yet:
 
@@ -351,8 +351,8 @@ At 3 failures the game asks for two fallback paths to the goal, one of them for 
 actor of radius 5. It takes a point on the path that works, 100 units back along it. The actor
 is moved to that point as soon as the point is off screen, or after 5 seconds.
 
-When the game tries a failed path again, and whether a travel package ends after a failure,
-was not found.
+A patrol walks to the same point again ([blocked walks](/engine/navigation.md#blocked-walks)).
+Whether a travel package ends after a failure was not found.
 
 ## Travel arrival
 

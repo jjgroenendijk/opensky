@@ -245,6 +245,20 @@ from the mirrored right arm's change. Neither order was clearly more symmetric, 
 reference pose both orders gave the same result. So OpenSky keeps `base * change`, the bone's own
 frame.
 
+The table's distances are for the first frame of `mt_idle.hkx`. On the character graph's standing
+pose the layers move the hands less, because the arm hangs differently and the elbow turn takes
+back part of the forearm's move. A run of the Nord graph standing still, measured in the model
+frame, gave these moves from weight 0 to weight 100:
+
+| Bone | Outward move |
+| --- | --- |
+| Left forearm | 3.8 units |
+| Left hand | 1.5 units |
+| Right hand | 2.7 units |
+
+The gap between the hands grew from 40.5 to 44.9 units. The graph set `bodyMorphWeight` to 1 at
+weight 0 and `bodyMorphMuscular` to 1 at weight 100, as the expression gives.
+
 ## Behavior references
 
 `0_master.hkx` is a shell. Its jump, movement, combat, and magic branches are

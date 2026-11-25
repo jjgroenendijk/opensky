@@ -269,76 +269,8 @@ health rule and lone fighters.
 
 ## Aggro radius
 
-The AI Data tab has an Aggro Radius Behavior box with three distances: Warn, Warn/Attack, and
-Attack (<https://ck.uesp.net/wiki/AI_Data_Tab>). A vanilla skeever is unaggressive and uses
-this rule, with 2,048 and 1,024 units for the two outer distances. So it attacks a player who
-stays near it, although its faction reaction to the player is neutral.
-
-The game runs the rule on each [detection](/engine/detection.md) result of 0 or more, so the
-actor must at least have noticed the target. The rule starts a warning when all of these hold:
-
-- the box is ticked;
-- the target is nearer than the largest of the three distances, measured in 3D;
-- the target is alive and is not already a target of the actor's combat group;
-- the actor would attack the target if its Aggression were Aggressive;
-- the actor is not already warning.
-
-An actor already in combat uses the Attack distance alone and starts combat at once. The
-target can be the player or an NPC.
-
-```mermaid
-flowchart TD
-    A[Noticed target inside a distance] --> B{Inside Attack?}
-    B -- yes --> H[Attacks]
-    B -- no --> W[Stands, faces the target,<br/>draws, tracks it with the head]
-    W --> T{5 s passed?}
-    T -- no --> W
-    T -- yes --> C{More than 2 warnings given?}
-    C -- yes --> H
-    C -- no --> L[Says a warning line;<br/>counts it inside Warn/Attack]
-    L --> W
-    W -- target leaves all distances --> R[Count and timer cleared,<br/>weapon sheathed]
-```
-
-While it warns:
-
-- The actor stands idle, turns to face the target, draws its weapon, and tracks the target
-  with its head. A ranged actor aims.
-- A timer runs while the target is inside any distance. Every 5 s the actor says a warning
-  line. The line needs the actor to face the target within 20 degrees (80 while moving) and to
-  detect it. The timer then starts again.
-- The warning counts only inside the Warn/Attack distance. `GetTrespassWarningLevel` returns
-  the count, and `GetActorAggroRadiusViolated` returns 1 while the actor warns.
-- At a timer end with more than 2 warnings counted, the actor attacks. So it warns three
-  times and attacks after about 20 s. Inside the Warn distance alone it warns for ever.
-- Inside the Attack distance it attacks at once.
-- An actor with Aggression 0 and Confidence 0, both together, flees where another would attack.
-- A warning actor can change to a nearer actor that it detects now, or detected in the last 5 s,
-  inside the largest distance.
-- When the target leaves all three distances, the count and the timer are cleared, the actor
-  sheathes, and it keeps its head on the target for 5 s. The warning ends when the target is
-  gone or dead, or when the actor has not detected it for more than 5 s.
-- An actor that is attacked while it warns attacks (the wiki).
-
-The line has the Trespass subtype (`TRES`) and is aimed at the target. A package can give its
-own warning count in place of 2; that part is not confirmed. A second read on 2026-11-22 found
-no path that only the player can start.
-
-OpenSky runs the rule each step for every living actor that is not hostile and is not the
-player's teammate:
-
-- A distance of 0 is off. A friend or an ally of the player never warns. The target is the
-  nearest noticed one of the player and the player's teammates, never another stranger.
-- The timer, the count, and the attack follow the game's numbers above.
-- A warning actor stops, turns, and draws. It sheathes when the target leaves without a fight.
-- At each interval it says a Trespass line (`TRES`) when it faces the target within 20 degrees
-  and detects it. An actor with no such line, such as a skeever, stays silent.
-- `GetActorAggroRadiusViolated` returns 1 while the actor warns. `GetTrespassWarningLevel`
-  returns the larger of a guard's count and this count.
-- An actor with Confidence 0 is provoked and then flees, whatever its Aggression.
-- The target is chosen again each step, so a nearer actor takes over at once.
-- Not built: the 5 s of head tracking after the target leaves and a ranged actor's aim.
-- `state actors` shows each actor's zone as `aggro`.
+An actor that is not hostile warns a stranger near it and may attack it. The rule is on the
+[aggro radius](/engine/aggro-radius.md) page.
 
 ## Searching and giving up
 

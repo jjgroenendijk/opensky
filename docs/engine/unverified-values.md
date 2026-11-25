@@ -370,7 +370,7 @@ the detail and the sources it did find.
 | Avoid Threat Chance default | 0.2 for a combat style that leaves the value out | [danger avoidance](/engine/danger-avoidance.md#in-opensky) |
 | Auto-aim window axis | The window is measured against the screen height on both axes | [combat assist](/engine/combat-assist.md#in-opensky) |
 | Long body end lift | The end spheres of a long body ride one step height above the ground | [character shapes](/engine/character-shapes.md#long-bodies) |
-| Aggro warning line | An actor that warns by its aggro radius says a line of the Trespass subtype | [combat behavior](/engine/combat-behavior.md#aggro-radius) |
+| Aggro warning line | An actor that warns by its aggro radius says a line of the Trespass subtype | [combat behavior](/engine/aggro-radius.md) |
 | NPC weapon draw time | An NPC takes 0.5 s to draw and 0.5 s to sheathe; the game times both by the clips. A graph that reports `IsEquipping` holds the draw at most 2 s longer | [condition functions](/engine/condition-functions-world.md#combat-actions) |
 | Follower command busy wait | A follower that cannot start its walk is asked again for 10 s, then the order ends | [follower commands](/engine/follower-commands.md) |
 | Melee magnetism signs and look scale | Both terms turn toward the target; the look input is the frame's view turn, scaled by a turn speed of 2π rad/s; an object counts within 192 units | [combat assist](/engine/combat-assist.md#in-opensky) |
