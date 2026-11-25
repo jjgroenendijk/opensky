@@ -21,10 +21,16 @@ extension AnimationEventWorldAdapter {
     public convenience init(game: any AnimationEventWorldHost, stage: SessionStage?) {
         self.init(game: game)
         guard let stage else { return }
-        registerAnimationEvent(stage: stage)
+        PlayerAnimationEventStep(game: game).registerAnimationEvent(stage: stage)
     }
+}
 
-    private func registerAnimationEvent(stage: SessionStage) {
+/// The frame step that hands the player's graph events to audio and scripts.
+@MainActor
+struct PlayerAnimationEventStep {
+    let game: any AnimationEventWorldHost
+
+    func registerAnimationEvent(stage: SessionStage) {
         let gameSession = stage.gameSession
         let game = game
         gameSession.frameSteps.register(.animationEvents) { [weak gameSession, weak game] _ in
