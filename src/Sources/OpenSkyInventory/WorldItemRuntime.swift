@@ -65,6 +65,12 @@ public final class WorldItemRuntime {
     public static let dropForwardOffset: Float = 60
 
     public let inventory: InventoryRuntime
+
+    /// The weight of one item of a base form, or nil when no item record has it.
+    public func weight(of base: FormID) -> Float? {
+        inventory.baselines.items.definition(base)?.weight
+    }
+
     /// Resident reference index, for resolving an activated FormID to its key and
     /// cell. Weak, because the owner also owns the streamer. It reuses
     /// `PapyrusWorldReferenceSource`, which has the three lookups needed.

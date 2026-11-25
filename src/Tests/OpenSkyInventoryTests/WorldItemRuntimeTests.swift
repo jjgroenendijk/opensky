@@ -102,6 +102,13 @@ struct WorldItemRuntimeTests {
         ])
     }
 
+    @Test func anItemsWeightComesFromItsRecord() throws {
+        let harness = try Self.standardHarness()
+
+        #expect(harness.runtime.weight(of: Fixture.lockpick) == 0)
+        #expect(harness.runtime.weight(of: FormID(0x00AB_CDEF)) == nil)
+    }
+
     // MARK: - Take
 
     @Test func takeMovesTheWholeStackAndDeletesTheReference() throws {
