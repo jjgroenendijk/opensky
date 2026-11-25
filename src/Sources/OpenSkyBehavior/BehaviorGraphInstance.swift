@@ -329,64 +329,7 @@ nonisolated public final class BehaviorGraphInstance {
     /// deactivated; the event set is returned.
     @discardableResult
     public func update(deltaTime: Float) -> BehaviorUpdateResult {
-        if !isActive {
-            activate()
-        }
-        let step = deltaTime.isFinite ? max(deltaTime, 0) : 0
-        tally.noteUpdate()
-        for event in events.beginUpdate() {
-            eventLastSeen[event.id] = tally.updatesRun
-        }
-        time += step
-
-        let previouslyReached = reachedThisUpdate
-        reachedThisUpdate = []
-        activeStatesThisUpdate = []
-        stateTagThisUpdate = nil
-        gamebryoSequencesThisUpdate = []
-        synchronizedMarkThisUpdate = nil
-        referencedResults = [:]
-        pendingClipPhase = nil
-        unboundEvents = []
-        pendingNestedStateIds = []
-        isWaitingForClip = false
-        physics.poweredRagdollControls = nil
-        physics.ragdollContactEvent = nil
-        physics.physicsRequests = BehaviorPhysicsRequests()
-        variablesWrittenThisUpdate = []
-        generatedThisUpdate = [:]
-        let pose = skeleton.absolute(evaluateGenerator(at: root, depth: 0, deltaTime: step))
-        generatedThisUpdate = nil
-        activeStates = activeStatesThisUpdate
-        stateTag = stateTagThisUpdate
-        gamebryoSequences = gamebryoSequencesThisUpdate
-        raiseSequenceKeys(step: step)
-        synchronizedMark = synchronizedMarkThisUpdate
-        deactivateNodes(previouslyReached.subtracting(reachedThisUpdate))
-        // The memo names the references this update ran; stale, it would keep a
-        // later deactivation from stopping a child.
-        referencedResults = [:]
-
-        var bones = pose.bones
-        if
-            bones.indices.contains(skeleton.rootBoneIndex),
-            skeleton.referencePose.indices.contains(skeleton.rootBoneIndex)
-        {
-            bones[skeleton.rootBoneIndex] = skeleton.referencePose[skeleton.rootBoneIndex]
-        }
-        if isWaitingForClip, let held = lastCompleteBones {
-            return BehaviorUpdateResult(
-                bones: held, rootMotion: .identity, firedEvents: events.endUpdate(),
-                unboundEvents: unboundEvents
-            )
-        }
-        lastCompleteBones = bones
-        return BehaviorUpdateResult(
-            bones: bones,
-            rootMotion: pose.rootMotion,
-            firedEvents: events.endUpdate(),
-            unboundEvents: unboundEvents
-        )
+        UpdateStep(owner: self).update(deltaTime: deltaTime)
     }
 
     // MARK: - Object access
@@ -399,25 +342,7 @@ nonisolated public final class BehaviorGraphInstance {
 
     /// The node at `target` with its children and bindings resolved, built once.
     public func compiledNode(at target: HKXPointerTarget) -> BehaviorCompiledNode? {
-        if let cached = compiled[target] {
-            return cached
-        }
-        guard let object = source.object(at: target) else {
-            compiled[target] = BehaviorCompiledNode?.none
-            tally.noteUndecodableObject(source.className(at: target))
-            return nil
-        }
-        let references = object.references
-        let bindingSet = references
-            .first { $0.field == "m_variableBindingSet" }
-            .flatMap { self.object(at: $0.target, as: HKBVariableBindingSet.self) }
-        let node = BehaviorCompiledNode(
-            object: object,
-            children: references.map(\.target),
-            bindings: bindingSet.map(BehaviorCompiledBindings.init)
-        )
-        compiled[target] = node
-        return node
+        UpdateStep(owner: self).compiledNode(at: target)
     }
 
     /// The clip a generator names, or nil: a wait while it loads, else one tally entry.
@@ -569,12 +494,100 @@ nonisolated extension BehaviorGraphInstance {
     }
 }
 
-nonisolated extension BehaviorGraphInstance {
-    /// Packfile order: section first, then offset. Only used to make the
-    /// deactivation sweep deterministic.
-    static func isOrderedBefore(_ lhs: HKXPointerTarget, _ rhs: HKXPointerTarget) -> Bool {
-        lhs.sectionIndex == rhs.sectionIndex
-            ? lhs.dataOffset < rhs.dataOffset
-            : lhs.sectionIndex < rhs.sectionIndex
+extension BehaviorGraphInstance {
+    /// Updates the graph by one step and compiles its nodes.
+    nonisolated struct UpdateStep {
+        let owner: BehaviorGraphInstance
+
+        @discardableResult
+        func update(deltaTime: Float) -> BehaviorUpdateResult {
+            let root = owner.root
+            let skeleton = owner.skeleton
+            if !owner.isActive {
+                owner.activate()
+            }
+            let step = deltaTime.isFinite ? max(deltaTime, 0) : 0
+            owner.tally.noteUpdate()
+            for event in owner.events.beginUpdate() {
+                owner.eventLastSeen[event.id] = owner.tally.updatesRun
+            }
+            owner.time += step
+
+            let previouslyReached = owner.reachedThisUpdate
+            owner.reachedThisUpdate = []
+            owner.activeStatesThisUpdate = []
+            owner.stateTagThisUpdate = nil
+            owner.gamebryoSequencesThisUpdate = []
+            owner.synchronizedMarkThisUpdate = nil
+            owner.referencedResults = [:]
+            owner.pendingClipPhase = nil
+            owner.unboundEvents = []
+            owner.pendingNestedStateIds = []
+            owner.isWaitingForClip = false
+            owner.physics.poweredRagdollControls = nil
+            owner.physics.ragdollContactEvent = nil
+            owner.physics.physicsRequests = BehaviorPhysicsRequests()
+            owner.variablesWrittenThisUpdate = []
+            owner.generatedThisUpdate = [:]
+            let pose = skeleton.absolute(owner.evaluateGenerator(
+                at: root,
+                depth: 0,
+                deltaTime: step
+            ))
+            owner.generatedThisUpdate = nil
+            owner.activeStates = owner.activeStatesThisUpdate
+            owner.stateTag = owner.stateTagThisUpdate
+            owner.gamebryoSequences = owner.gamebryoSequencesThisUpdate
+            owner.raiseSequenceKeys(step: step)
+            owner.synchronizedMark = owner.synchronizedMarkThisUpdate
+            owner.deactivateNodes(previouslyReached.subtracting(owner.reachedThisUpdate))
+            // The memo names the references this update ran; stale, it would keep a
+            // later deactivation from stopping a child.
+            owner.referencedResults = [:]
+
+            var bones = pose.bones
+            if
+                bones.indices.contains(skeleton.rootBoneIndex),
+                skeleton.referencePose.indices.contains(skeleton.rootBoneIndex)
+            {
+                bones[skeleton.rootBoneIndex] = skeleton.referencePose[skeleton.rootBoneIndex]
+            }
+            if owner.isWaitingForClip, let held = owner.lastCompleteBones {
+                return BehaviorUpdateResult(
+                    bones: held, rootMotion: .identity, firedEvents: owner.events.endUpdate(),
+                    unboundEvents: owner.unboundEvents
+                )
+            }
+            owner.lastCompleteBones = bones
+            return BehaviorUpdateResult(
+                bones: bones,
+                rootMotion: pose.rootMotion,
+                firedEvents: owner.events.endUpdate(),
+                unboundEvents: owner.unboundEvents
+            )
+        }
+
+        func compiledNode(at target: HKXPointerTarget) -> BehaviorCompiledNode? {
+            let source = owner.source
+            if let cached = owner.compiled[target] {
+                return cached
+            }
+            guard let object = source.object(at: target) else {
+                owner.compiled[target] = BehaviorCompiledNode?.none
+                owner.tally.noteUndecodableObject(source.className(at: target))
+                return nil
+            }
+            let references = object.references
+            let bindingSet = references
+                .first { $0.field == "m_variableBindingSet" }
+                .flatMap { owner.object(at: $0.target, as: HKBVariableBindingSet.self) }
+            let node = BehaviorCompiledNode(
+                object: object,
+                children: references.map(\.target),
+                bindings: bindingSet.map(BehaviorCompiledBindings.init)
+            )
+            owner.compiled[target] = node
+            return node
+        }
     }
 }

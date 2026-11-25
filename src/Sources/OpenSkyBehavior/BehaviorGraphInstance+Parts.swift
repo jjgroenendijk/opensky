@@ -76,3 +76,13 @@ nonisolated extension BehaviorGraphInstance {
         let graph: BehaviorGraphInstance
     }
 }
+
+nonisolated extension BehaviorGraphInstance {
+    /// Packfile order: section first, then offset. Only used to make the
+    /// deactivation sweep deterministic.
+    static func isOrderedBefore(_ lhs: HKXPointerTarget, _ rhs: HKXPointerTarget) -> Bool {
+        lhs.sectionIndex == rhs.sectionIndex
+            ? lhs.dataOffset < rhs.dataOffset
+            : lhs.sectionIndex < rhs.sectionIndex
+    }
+}
