@@ -57,16 +57,7 @@ extension QuestRuntime {
     /// References in a filled alias with the Quest Object flag. Only a running
     /// quest has an alias table, so a stopped quest frees its items.
     public func questObjectReferences() -> Set<ReferenceKey> {
-        var references: Set<ReferenceKey> = []
-        for (key, table) in aliasTables() {
-            guard let quest = quests.quest(key: key) else { continue }
-            for fill in table.fills
-                where quest.alias(id: fill.aliasID)?.flags.contains(.questObject) == true
-            {
-                references.insert(fill.reference)
-            }
-        }
-        return references
+        AliasFill(owner: self).questObjectReferences()
     }
 
     func aliasTables() -> [ReferenceKey: QuestAliasState] {
@@ -96,56 +87,13 @@ extension QuestRuntime {
         key: ReferenceKey,
         event: StoryEventData?
     ) throws -> QuestAliasFillResult {
-        if let existing = store.component(QuestAliasState.self, for: key), !existing.isEmpty {
-            return QuestAliasFillResult(
-                state: existing, skipped: QuestAliasTally(), unfilledRequired: []
-            )
-        }
-        let scope = referenceSearch?().map { found in
-            let search = withSavedState(found)
-            return QuestAliasSearchScope(
-                search: search, questKey: key, quests: quests, otherTables: aliasTables(),
-                translation: quests.translation(of: quest.formID)
-            )
-        }
-        let result = QuestAliasFiller.fill(
-            quest,
-            resolver: quests.sourceResolver(of: quest.formID),
-            locations: locations,
-            event: event,
-            scope: scope,
-            translation: quests.translation(of: quest.formID)
-        )
-        guard result.canStartQuest else {
-            throw QuestError.aliasFillFailed(
-                quest: quest.formID, aliases: result.unfilledRequired
-            )
-        }
-        let filled = creating(result)
-        if !filled.state.isEmpty {
-            store.set(filled.state, for: key)
-            reportAliasData(of: quest, old: .empty, new: filled.state)
-        }
-        return filled
+        try AliasFill(owner: self).fillAliases(of: quest, key: key, event: event)
     }
 
     /// Adds what the world state knows about references outside the loaded area:
     /// the enable state, through the enable parent, and the deleted flag.
     private func withSavedState(_ search: QuestReferenceSearch) -> QuestReferenceSearch {
-        var search = search
-        let store = store
-        search.isDeleted = { key in
-            store.component(ReferenceDeletionState.self, for: key)?.isDeleted ?? false
-        }
-        if let persistent = search.persistent {
-            search.isDisabledOutside = { key in
-                let enable = EnableParentResolver(
-                    delta: { store.delta(for: $0) }, parent: { persistent.entry(for: $0) }
-                )
-                return persistent[key].map { !enable.isEnabled($0) } ?? false
-            }
-        }
-        return search
+        AliasFill(owner: self).withSavedState(search)
     }
 
     /// Makes each requested reference only once the quest may start, so a refused
@@ -228,6 +176,86 @@ extension QuestRuntime {
         )
         if !changes.isEmpty {
             aliasDataChanged(changes)
+        }
+    }
+}
+
+extension QuestRuntime {
+    /// Fills quest aliases and lists the references they hold.
+    struct AliasFill {
+        let owner: QuestRuntime
+
+        func questObjectReferences() -> Set<ReferenceKey> {
+            let quests = owner.quests
+            var references: Set<ReferenceKey> = []
+            for (key, table) in owner.aliasTables() {
+                guard let quest = quests.quest(key: key) else { continue }
+                for fill in table.fills
+                    where quest.alias(id: fill.aliasID)?.flags.contains(.questObject) == true
+                {
+                    references.insert(fill.reference)
+                }
+            }
+            return references
+        }
+
+        @discardableResult
+        func fillAliases(
+            of quest: Quest,
+            key: ReferenceKey,
+            event: StoryEventData?
+        ) throws -> QuestAliasFillResult {
+            let locations = owner.locations
+            let quests = owner.quests
+            let store = owner.store
+            if let existing = store.component(QuestAliasState.self, for: key), !existing.isEmpty {
+                return QuestAliasFillResult(
+                    state: existing, skipped: QuestAliasTally(), unfilledRequired: []
+                )
+            }
+            let scope = owner.referenceSearch?().map { found in
+                let search = owner.withSavedState(found)
+                return QuestAliasSearchScope(
+                    search: search, questKey: key, quests: quests, otherTables: owner.aliasTables(),
+                    translation: quests.translation(of: quest.formID)
+                )
+            }
+            let result = QuestAliasFiller.fill(
+                quest,
+                resolver: quests.sourceResolver(of: quest.formID),
+                locations: locations,
+                event: event,
+                scope: scope,
+                translation: quests.translation(of: quest.formID)
+            )
+            guard result.canStartQuest else {
+                throw QuestError.aliasFillFailed(
+                    quest: quest.formID, aliases: result.unfilledRequired
+                )
+            }
+            let filled = owner.creating(result)
+            if !filled.state.isEmpty {
+                store.set(filled.state, for: key)
+                owner.reportAliasData(of: quest, old: .empty, new: filled.state)
+            }
+            return filled
+        }
+
+        func withSavedState(_ search: QuestReferenceSearch) -> QuestReferenceSearch {
+            var search = search
+            let store = owner.store
+            search.isDeleted = { key in
+                store.component(ReferenceDeletionState.self, for: key)?.isDeleted ?? false
+            }
+            if let persistent = search.persistent {
+                search.isDisabledOutside = { key in
+                    let enable = EnableParentResolver(
+                        delta: { store.delta(for: $0) }, parent: { persistent.entry(for: $0) }
+                    )
+                    return persistent[key].map { !enable.isEnabled($0) } ?? false
+                }
+            }
+            return search
         }
     }
 }
