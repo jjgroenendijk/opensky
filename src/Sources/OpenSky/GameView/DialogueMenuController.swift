@@ -90,40 +90,7 @@ final class DialogueMenuController {
     /// A speaker with nothing to say still opens the menu. The condition trace
     /// beside the list says why, and the use key does not seem dead.
     func begin(with speaker: ReferenceKey) {
-        guard !isOpen else { return }
-        if let goodbye = dialogue.forcedGoodbye(for: speaker) {
-            game.storyWorld.say(goodbye, speaker: speaker)
-            return
-        }
-        // An actor still in dialogue mode goes on without a new greeting.
-        let continues = dialogue.dialogueMode.isTalking(speaker)
-        guard let runtime = dialogue.begin(with: speaker) else { return }
-        game.furniture.greet(speaker)
-        model = DialogueMenuModel.build(
-            speaker: speaker,
-            name: game.dialogueWorld.speakerLabel(for: speaker),
-            runtime: runtime,
-            strings: dialogue.strings,
-            tags: textTags(speaker: speaker),
-            greets: !continues
-        )
-        isOpen = true
-        if model.state == .greeting, let info = model.line?.info {
-            game.dialogueWorld.run(dialogue.recordGreeting(info, speaker: speaker))
-            speech.speakCurrentRun()
-        }
-        game.headTracking.setLookTarget(.player, for: speaker, dialogue: true)
-        dialogue.lastOutcome = DialogueCore.openedText(
-            speaker: model.speaker,
-            topicCount: model.topics.count,
-            rejectedCount: dialogue.selection.rejected.count
-        )
-        game.menuMode.inputConsumer = game
-        // Voice, facing, lip sync, and the camera run on the world clock.
-        game.menuMode.present(Self.identifier, policy: .leavesWorldRunning)
-        // The first frame under the menu is already the conversation's shot.
-        game.dialogueCamera.refreshFocus()
-        speech.startMovie()
+        Opening(owner: self).begin(with: speaker)
     }
 
     func openFromCrosshair() {
@@ -234,5 +201,50 @@ extension DialogueMenuController {
             values["BribeCost"] = String(Int(max(bribe, 0)))
         }
         return values
+    }
+}
+
+extension DialogueMenuController {
+    /// Opens the dialogue menu with a speaker.
+    struct Opening {
+        let owner: DialogueMenuController
+
+        func begin(with speaker: ReferenceKey) {
+            let game = owner.game
+            guard !owner.isOpen else { return }
+            if let goodbye = owner.dialogue.forcedGoodbye(for: speaker) {
+                game.storyWorld.say(goodbye, speaker: speaker)
+                return
+            }
+            // An actor still in dialogue mode goes on without a new greeting.
+            let continues = owner.dialogue.dialogueMode.isTalking(speaker)
+            guard let runtime = owner.dialogue.begin(with: speaker) else { return }
+            game.furniture.greet(speaker)
+            owner.model = DialogueMenuModel.build(
+                speaker: speaker,
+                name: game.dialogueWorld.speakerLabel(for: speaker),
+                runtime: runtime,
+                strings: owner.dialogue.strings,
+                tags: owner.textTags(speaker: speaker),
+                greets: !continues
+            )
+            owner.isOpen = true
+            if owner.model.state == .greeting, let info = owner.model.line?.info {
+                game.dialogueWorld.run(owner.dialogue.recordGreeting(info, speaker: speaker))
+                owner.speech.speakCurrentRun()
+            }
+            game.headTracking.setLookTarget(.player, for: speaker, dialogue: true)
+            owner.dialogue.lastOutcome = DialogueCore.openedText(
+                speaker: owner.model.speaker,
+                topicCount: owner.model.topics.count,
+                rejectedCount: owner.dialogue.selection.rejected.count
+            )
+            game.menuMode.inputConsumer = game
+            // Voice, facing, lip sync, and the camera run on the world clock.
+            game.menuMode.present(DialogueMenuController.identifier, policy: .leavesWorldRunning)
+            // The first frame under the menu is already the conversation's shot.
+            game.dialogueCamera.refreshFocus()
+            owner.speech.startMovie()
+        }
     }
 }
