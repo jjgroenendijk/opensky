@@ -105,14 +105,7 @@ public final class MenuScreensWorldAdapter {
 
 extension MenuScreensWorldAdapter: TweenMenuWorld {
     public var tweenLevel: TweenMenuLevel {
-        let progression = hosts.progression
-        let player = progression.skillsMenuPlayer
-        let leveling = progression.leveling
-        return TweenMenuLevel(
-            level: player.level, progress: player.levelProgress,
-            levelsReady: leveling?.levelsReady ?? 0,
-            pendingAttributePicks: leveling?.state.pendingAttributePicks ?? 0
-        )
+        RestAndLevel(owner: self).tweenLevel
     }
 
     public func setMenuViewOffset(_ offset: MenuViewOffset) {
@@ -135,34 +128,59 @@ extension MenuScreensWorldAdapter: SleepWaitWorld {
     /// The clock moves in 15-minute steps. Each step ages the weather and runs the
     /// scripts' game-time timers; health, magicka, and stamina refill at the end.
     public func passTime(hours: Int, sleeping: Bool) {
-        guard let gameSession = game.gameSession else { return }
-        hosts.worldState.incrementMiscStat(
-            sleeping ? "Hours Slept" : "Hours Waiting",
-            by: Int32(hours)
-        )
-        let start = gameSession.gameClock
-        let timescale = Double(max(gameSession.currentTimescale, 1))
-        for step in RestTimeSteps.steps(hours: hours) {
-            let before = gameSession.gameClock.totalGameSeconds
-            gameSession.gameTime.passTime(to: GameClock(
-                totalGameSeconds: start.totalGameSeconds + step * GameClock.secondsPerHour
-            ))
-            gameSession.updateWeather(deltaTime: 0)
-            game.scripts.advanceRestStep()
-            // Effect durations are real seconds: game seconds over the timescale.
-            let skipped = gameSession.gameClock.totalGameSeconds - before
-            game.magic.frameStep.elapseRestTime(seconds: skipped / timescale)
-        }
-        if sleeping {
-            game.scripts.reportSleep(
-                start: Double(start.daysPassed), end: Double(gameSession.gameClock.daysPassed)
-            )
-        }
-        game.actorValues.runtime?.restoreAll(on: .player)
-        // Each actor walked its path for the skipped hours (docs/engine/unloaded-actors.md).
-        hosts.packages.placeActorsAtPackagePlaces()
-        game.saveGames.autosave(sleeping ? .rest : .wait)
+        RestAndLevel(owner: self).passTime(hours: hours, sleeping: sleeping)
     }
 }
 
 extension MenuScreensWorldAdapter: MenuScreensWorldPort {}
+
+extension MenuScreensWorldAdapter {
+    /// Passes time for waiting and sleeping and reads the level shown in the tween menu.
+    struct RestAndLevel {
+        let owner: MenuScreensWorldAdapter
+
+        var tweenLevel: TweenMenuLevel {
+            let hosts = owner.hosts
+            let progression = hosts.progression
+            let player = progression.skillsMenuPlayer
+            let leveling = progression.leveling
+            return TweenMenuLevel(
+                level: player.level, progress: player.levelProgress,
+                levelsReady: leveling?.levelsReady ?? 0,
+                pendingAttributePicks: leveling?.state.pendingAttributePicks ?? 0
+            )
+        }
+
+        func passTime(hours: Int, sleeping: Bool) {
+            let game = owner.game
+            let hosts = owner.hosts
+            guard let gameSession = game.gameSession else { return }
+            hosts.worldState.incrementMiscStat(
+                sleeping ? "Hours Slept" : "Hours Waiting",
+                by: Int32(hours)
+            )
+            let start = gameSession.gameClock
+            let timescale = Double(max(gameSession.currentTimescale, 1))
+            for step in RestTimeSteps.steps(hours: hours) {
+                let before = gameSession.gameClock.totalGameSeconds
+                gameSession.gameTime.passTime(to: GameClock(
+                    totalGameSeconds: start.totalGameSeconds + step * GameClock.secondsPerHour
+                ))
+                gameSession.updateWeather(deltaTime: 0)
+                game.scripts.advanceRestStep()
+                // Effect durations are real seconds: game seconds over the timescale.
+                let skipped = gameSession.gameClock.totalGameSeconds - before
+                game.magic.frameStep.elapseRestTime(seconds: skipped / timescale)
+            }
+            if sleeping {
+                game.scripts.reportSleep(
+                    start: Double(start.daysPassed), end: Double(gameSession.gameClock.daysPassed)
+                )
+            }
+            game.actorValues.runtime?.restoreAll(on: .player)
+            // Each actor walked its path for the skipped hours (docs/engine/unloaded-actors.md).
+            hosts.packages.placeActorsAtPackagePlaces()
+            game.saveGames.autosave(sleeping ? .rest : .wait)
+        }
+    }
+}

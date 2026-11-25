@@ -47,38 +47,14 @@ extension SystemMenuCoordinator {
     }
 
     func routePage(_ event: MenuInputEvent) {
-        switch model.page {
-        case .main:
-            break
-        case .settings:
-            routeSettings(event)
-        case .controls:
-            routeControls(controlsPage.handle(event))
-        case .save, .load:
-            if saving.route(event, close: { [weak self] in self?.close() }) {
-                showPage(.main)
-            }
-        case .quit:
-            routeQuit(event)
-        case .installedContent, .help:
-            if topicPage?.handle(event) == .back {
-                topicPage = nil
-                showPage(.main)
-            }
-        }
+        PageRoutes(owner: self).routePage(event)
     }
 
     /// The movie's request for a category opens it here too.
     /// The movie asked for a category's rows; it shows them with these values.
     @discardableResult
     func openSettingsCategory(_ group: PlayerSettingGroup) -> [SettingsMovieBridge.Row] {
-        settingsPage.openCategory(group)
-        return settingsPage.rows.enumerated().compactMap { index, id in
-            guard !SettingsMovieBridge.hiddenRows.contains(id) else { return nil }
-            return settings.store.catalog.definition(id).map {
-                SettingsMovieBridge.Row(id: index, definition: $0, value: settings.store.value(id))
-            }
-        }
+        PageRoutes(owner: self).openSettingsCategory(group)
     }
 
     /// The movie changed a row itself, after a click, an arrow key, or its Defaults
@@ -106,15 +82,7 @@ extension SystemMenuCoordinator {
 
     /// A gamepad button pressed while the Controls page waits. True when taken.
     public func captureGamepad(code: UInt32) -> Bool {
-        guard
-            model.isOpen, model.page == .controls, controlsPage.waitingForKey,
-            let slot = controlsPage.selectedSlot
-        else { return false }
-        _ = controlsPage.capture(scanCode: code)
-        let result = settings.rebindGamepad(slot.action, to: code)
-        lastMessage = result == .notRemappable ? "\(slot.action.rawValue) cannot be remapped" : nil
-        finishMovieRemap(succeeded: result != .notRemappable && result != .unknownKey)
-        return true
+        PageRoutes(owner: self).captureGamepad(code: code)
     }
 
     var isWaitingForKey: Bool {
@@ -130,17 +98,6 @@ extension SystemMenuCoordinator {
         saveLoadPage?.requestDelete()
     }
 
-    private func routeSettings(_ event: MenuInputEvent) {
-        switch settingsPage.handle(event) {
-        case let .adjust(id, direction):
-            settings.store.step(id, by: direction)
-        case .back:
-            showPage(.main)
-        case nil:
-            break
-        }
-    }
-
     private func routeControls(_ action: ControlsPageAction?) {
         switch action {
         case let .rebind(action, scanCode):
@@ -149,25 +106,6 @@ extension SystemMenuCoordinator {
             settings.resetBindings()
             lastMessage = "Controls reset"
         case .back:
-            showPage(.main)
-        case nil:
-            break
-        }
-    }
-
-    private func routeQuit(_ event: MenuInputEvent) {
-        guard var page = quitPage else { return }
-        let choice = page.handle(event)
-        quitPage = page
-        switch choice {
-        case .chose(0):
-            close()
-            world?.quitToMainMenu()
-        case .chose(1):
-            close()
-            world?.quitApplication()
-        case .chose, .cancelled:
-            quitPage = nil
             showPage(.main)
         case nil:
             break
@@ -215,20 +153,7 @@ extension SystemMenuCoordinator {
 
     /// The rows the page shows: with the movie, only the ones it lists.
     public var controls: ControlsPageReadout? {
-        guard model.isOpen, model.page == .controls else { return nil }
-        let rows: [ControlsPageReadout.Row] = if movieLoaded {
-            movieMappingRows().map {
-                .init(action: $0.text, key: $0.buttonName.isEmpty ? nil : $0.buttonName)
-            }
-        } else {
-            InputBindings.slots.map { slot in
-                .init(
-                    action: slot.event,
-                    key: settings.bindings.scanCode(for: slot.action).map(settings.keyName)
-                )
-            }
-        }
-        return ControlsPageReadout(waitingForKey: controlsPage.waitingForKey, rows: rows)
+        PageRoutes(owner: self).controls
     }
 
     /// The engine rows carry the place and play time; the movie's list has the highlight.
@@ -269,5 +194,116 @@ extension SystemMenuCoordinator {
 
     private func page(rows: [String], selected: Int) -> SystemMenuPageSnapshot {
         SystemMenuPageSnapshot(rows: rows, selectedIndex: selected)
+    }
+}
+
+extension SystemMenuCoordinator {
+    /// Routes input on the pages and builds the controls readout.
+    struct PageRoutes {
+        unowned let owner: SystemMenuCoordinator
+
+        func routePage(_ event: MenuInputEvent) {
+            let host = owner
+            switch host.model.page {
+            case .main:
+                break
+            case .settings:
+                routeSettings(event)
+            case .controls:
+                host.routeControls(host.controlsPage.handle(event))
+            case .save, .load:
+                if host.saving.route(event, close: { [weak host] in host?.close() }) {
+                    host.showPage(.main)
+                }
+            case .quit:
+                routeQuit(event)
+            case .installedContent, .help:
+                if host.topicPage?.handle(event) == .back {
+                    host.topicPage = nil
+                    host.showPage(.main)
+                }
+            }
+        }
+
+        @discardableResult
+        func openSettingsCategory(_ group: PlayerSettingGroup) -> [SettingsMovieBridge.Row] {
+            let settings = owner.settings
+            owner.settingsPage.openCategory(group)
+            return owner.settingsPage.rows.enumerated().compactMap { index, id in
+                guard !SettingsMovieBridge.hiddenRows.contains(id) else { return nil }
+                return settings.store.catalog.definition(id).map {
+                    SettingsMovieBridge.Row(
+                        id: index,
+                        definition: $0,
+                        value: settings.store.value(id)
+                    )
+                }
+            }
+        }
+
+        func captureGamepad(code: UInt32) -> Bool {
+            let settings = owner.settings
+            guard
+                owner.model.isOpen, owner.model.page == .controls, owner.controlsPage.waitingForKey,
+                let slot = owner.controlsPage.selectedSlot
+            else { return false }
+            _ = owner.controlsPage.capture(scanCode: code)
+            let result = settings.rebindGamepad(slot.action, to: code)
+            owner
+                .lastMessage = result == .notRemappable ?
+                "\(slot.action.rawValue) cannot be remapped" : nil
+            owner.finishMovieRemap(succeeded: result != .notRemappable && result != .unknownKey)
+            return true
+        }
+
+        func routeSettings(_ event: MenuInputEvent) {
+            let settings = owner.settings
+            switch owner.settingsPage.handle(event) {
+            case let .adjust(id, direction):
+                settings.store.step(id, by: direction)
+            case .back:
+                owner.showPage(.main)
+            case nil:
+                break
+            }
+        }
+
+        func routeQuit(_ event: MenuInputEvent) {
+            let world = owner.world
+            guard var page = owner.quitPage else { return }
+            let choice = page.handle(event)
+            owner.quitPage = page
+            switch choice {
+            case .chose(0):
+                owner.close()
+                world?.quitToMainMenu()
+            case .chose(1):
+                owner.close()
+                world?.quitApplication()
+            case .chose, .cancelled:
+                owner.quitPage = nil
+                owner.showPage(.main)
+            case nil:
+                break
+            }
+        }
+
+        var controls: ControlsPageReadout? {
+            let settings = owner.settings
+            guard owner.model.isOpen, owner.model.page == .controls else { return nil }
+            let rows: [ControlsPageReadout.Row] = if owner.movieLoaded {
+                owner.movieMappingRows().map {
+                    .init(action: $0.text, key: $0.buttonName.isEmpty ? nil : $0.buttonName)
+                }
+            } else {
+                InputBindings.slots.map { slot in
+                    .init(
+                        action: slot.event,
+                        key: settings.bindings.scanCode(for: slot.action).map(settings.keyName)
+                    )
+                }
+            }
+            return ControlsPageReadout(waitingForKey: owner.controlsPage.waitingForKey, rows: rows)
+        }
     }
 }

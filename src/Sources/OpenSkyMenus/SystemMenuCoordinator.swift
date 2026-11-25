@@ -146,24 +146,7 @@ public final class SystemMenuCoordinator {
     /// On the main page the movie moves its own highlight, and accept opens the
     /// engine row the movie shows. A sub-page has its own model.
     public func route(_ event: MenuInputEvent) {
-        guard model.isOpen else { return }
-        if sendsToMovie(event) {
-            sendToMovie(event)
-            return
-        }
-        guard model.page == .main else {
-            routePage(event)
-            return
-        }
-        if
-            movieLoaded, event == .button(.accept),
-            let entry = renderer?.swfRuntime.flatMap(SystemMenuMovieBridge.selectedEntry(runtime:))
-        {
-            model.select(entry)
-        }
-        if let outcome = model.handle(event) {
-            apply(outcome)
-        }
+        InputRoutes(owner: self).route(event)
     }
 
     /// A sub-page is state on the model, not a second menu on the stack.
@@ -223,5 +206,34 @@ public final class SystemMenuCoordinator {
             movieEnabled: movieEnabled,
             page: pageSnapshot
         )
+    }
+}
+
+extension SystemMenuCoordinator {
+    /// Routes one input event.
+    struct InputRoutes {
+        unowned let owner: SystemMenuCoordinator
+
+        func route(_ event: MenuInputEvent) {
+            guard owner.model.isOpen else { return }
+            if owner.sendsToMovie(event) {
+                owner.sendToMovie(event)
+                return
+            }
+            guard owner.model.page == .main else {
+                owner.routePage(event)
+                return
+            }
+            if
+                owner.movieLoaded, event == .button(.accept),
+                let entry = owner.renderer?.swfRuntime
+                    .flatMap(SystemMenuMovieBridge.selectedEntry(runtime:))
+            {
+                owner.model.select(entry)
+            }
+            if let outcome = owner.model.handle(event) {
+                owner.apply(outcome)
+            }
+        }
     }
 }
