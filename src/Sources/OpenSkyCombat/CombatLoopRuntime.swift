@@ -158,7 +158,7 @@ public final class CombatLoopRuntime: CombatControlling {
         guard let world else { return false }
         let changed = world.setCombatHostility(hostility, on: key)
         if hostility == .neutral {
-            endFight(of: key, world: world)
+            FightSteps(owner: self).endFight(of: key, world: world)
         }
         return changed
     }
@@ -220,8 +220,7 @@ public final class CombatLoopRuntime: CombatControlling {
 
     /// Whether `key` fights from range: with a bow, a crossbow, a staff, or a spell.
     public func fightsRanged(_ key: ReferenceKey) -> Bool {
-        guard let type = world?.combatWeapon(of: key).handType else { return false }
-        return type.isRanged || type == .staff || type == .spell
+        FightSteps(owner: self).fightsRanged(key)
     }
 
     /// Whether `key` engages without having to perceive its target: a script
@@ -287,19 +286,7 @@ public final class CombatLoopRuntime: CombatControlling {
     func stepBehavior(
         of key: ReferenceKey, inputs: CombatBehaviorInputs
     ) -> CombatBehaviorStep {
-        var machine = behaviors[key] ?? makeMachine(for: key)
-        let wasEngaged = machine.isEngaged
-        let step = machine.step(seconds: Self.fixedStepSeconds, inputs: inputs)
-        behaviors[key] = machine
-        if !wasEngaged, machine.isEngaged, let world {
-            noteEnteredCombat(key, provoked: provoked.contains(key), world: world)
-        } else if wasEngaged, !machine.isEngaged {
-            forgetMark(of: key)
-        }
-        if machine.isEngaged, inputs.awareness.isDetected {
-            provoked.remove(key)
-        }
-        return step
+        FightSteps(owner: self).stepBehavior(of: key, inputs: inputs)
     }
 
     /// A new machine for `key`, with its combat style folded into the settings.
@@ -360,21 +347,6 @@ public final class CombatLoopRuntime: CombatControlling {
 
     // MARK: - Private
 
-    /// Ends one actor's fight: parks its machine, stops it walking, drops any
-    /// script override, and hands it back to its package.
-    private func endFight(of key: ReferenceKey, world: any CombatLoopWorld) {
-        forcedTargets.removeValue(forKey: key)
-        provoked.remove(key)
-        forgetMark(of: key)
-        guard behaviors[key] != nil else { return }
-        if behaviors[key]?.pendingCast != nil {
-            world.cancelCombatCast(by: key)
-        }
-        behaviors[key]?.park()
-        world.stopCombatMovement(of: key)
-        world.resumeCombatPackage(for: key)
-    }
-
     /// One fixed step: every engaged actor acts, the state is re-derived, music
     /// follows the edge, the flash decays, and the caps are enforced.
     private func step() {
@@ -400,18 +372,7 @@ public final class CombatLoopRuntime: CombatControlling {
         playerDamageFlash = max(
             0, playerDamageFlash - Self.fixedStepSeconds / Self.damageFlashSeconds
         )
-        enforceLimits(world: world)
-    }
-
-    private func enforceLimits(world: any CombatLoopWorld) {
-        guard limits.needsTrim(world.combatTransients) else { return }
-        let removed = world.trimCombatTransients(to: limits)
-        trimmedTransients = CombatTransientCounts(
-            liveProjectiles: trimmedTransients.liveProjectiles + removed.liveProjectiles,
-            stuckProjectiles: trimmedTransients.stuckProjectiles + removed.stuckProjectiles,
-            activeRagdolls: trimmedTransients.activeRagdolls + removed.activeRagdolls,
-            awakeBodies: trimmedTransients.awakeBodies + removed.awakeBodies
-        )
+        FightSteps(owner: self).enforceLimits(world: world)
     }
 }
 
@@ -443,7 +404,7 @@ extension CombatLoopRuntime {
             forcedTargets.removeValue(forKey: actor)
             return false
         }
-        endFight(of: actor, world: world)
+        FightSteps(owner: self).endFight(of: actor, world: world)
         record(.scriptStopped(actor))
         return true
     }
@@ -454,24 +415,13 @@ extension CombatLoopRuntime {
     /// puts it in the fight. A hit that staggered also interrupts what it was doing.
     public func notePlayerHits(_ targets: [ReferenceKey], staggered: Set<ReferenceKey> = []) {
         for target in targets where target != .player && commanders[target] != .player {
-            guard turnsOnPlayer(target) else { continue }
+            guard FightSteps(owner: self).turnsOnPlayer(target) else { continue }
             provoke(target)
             provoked.insert(target)
             if staggered.contains(target) {
                 noteStagger(of: target)
             }
         }
-    }
-
-    /// False while a friend or an ally takes the blow without fighting back.
-    private func turnsOnPlayer(_ target: ReferenceKey) -> Bool {
-        guard hostility(of: target) != .hostile else { return true }
-        return friendlyFire.noteHit(
-            on: target,
-            reaction: world?.combatReaction(toPlayerOf: target),
-            inCombat: behaviors[target]?.phase.isEngaged == true,
-            now: stepSeconds
-        )
     }
 }
 
@@ -508,12 +458,84 @@ extension CombatLoopRuntime {
     /// takes a swing away takes a cast away, which is why `isAttacking` counts
     /// the casting phase.
     public func noteStagger(of key: ReferenceKey) {
-        var machine = behaviors[key] ?? makeMachine(for: key)
-        if machine.pendingCast != nil {
-            world?.cancelCombatCast(by: key)
+        FightSteps(owner: self).noteStagger(of: key)
+    }
+}
+
+extension CombatLoopRuntime {
+    /// Steps the behaviour machines and ends fights.
+    struct FightSteps {
+        let owner: CombatLoopRuntime
+
+        func fightsRanged(_ key: ReferenceKey) -> Bool {
+            guard let type = owner.world?.combatWeapon(of: key).handType else { return false }
+            return type.isRanged || type == .staff || type == .spell
         }
-        guard machine.stagger() else { return }
-        behaviors[key] = machine
-        world?.playCombatClip(.stagger, on: key)
+
+        func stepBehavior(
+            of key: ReferenceKey, inputs: CombatBehaviorInputs
+        ) -> CombatBehaviorStep {
+            var machine = owner.behaviors[key] ?? owner.makeMachine(for: key)
+            let wasEngaged = machine.isEngaged
+            let step = machine.step(seconds: CombatLoopRuntime.fixedStepSeconds, inputs: inputs)
+            owner.behaviors[key] = machine
+            if !wasEngaged, machine.isEngaged, let world = owner.world {
+                owner.noteEnteredCombat(key, provoked: owner.provoked.contains(key), world: world)
+            } else if wasEngaged, !machine.isEngaged {
+                owner.forgetMark(of: key)
+            }
+            if machine.isEngaged, inputs.awareness.isDetected {
+                owner.provoked.remove(key)
+            }
+            return step
+        }
+
+        /// Ends one actor's fight: parks its machine, stops it walking, drops any
+        /// script override, and hands it back to its package.
+        func endFight(of key: ReferenceKey, world: any CombatLoopWorld) {
+            owner.forcedTargets.removeValue(forKey: key)
+            owner.provoked.remove(key)
+            owner.forgetMark(of: key)
+            guard owner.behaviors[key] != nil else { return }
+            if owner.behaviors[key]?.pendingCast != nil {
+                world.cancelCombatCast(by: key)
+            }
+            owner.behaviors[key]?.park()
+            world.stopCombatMovement(of: key)
+            world.resumeCombatPackage(for: key)
+        }
+
+        func enforceLimits(world: any CombatLoopWorld) {
+            guard owner.limits.needsTrim(world.combatTransients) else { return }
+            let removed = world.trimCombatTransients(to: owner.limits)
+            owner.trimmedTransients = CombatTransientCounts(
+                liveProjectiles: owner.trimmedTransients.liveProjectiles + removed.liveProjectiles,
+                stuckProjectiles: owner.trimmedTransients.stuckProjectiles + removed
+                    .stuckProjectiles,
+                activeRagdolls: owner.trimmedTransients.activeRagdolls + removed.activeRagdolls,
+                awakeBodies: owner.trimmedTransients.awakeBodies + removed.awakeBodies
+            )
+        }
+
+        /// False while a friend or an ally takes the blow without fighting back.
+        func turnsOnPlayer(_ target: ReferenceKey) -> Bool {
+            guard owner.hostility(of: target) != .hostile else { return true }
+            return owner.friendlyFire.noteHit(
+                on: target,
+                reaction: owner.world?.combatReaction(toPlayerOf: target),
+                inCombat: owner.behaviors[target]?.phase.isEngaged == true,
+                now: owner.stepSeconds
+            )
+        }
+
+        func noteStagger(of key: ReferenceKey) {
+            var machine = owner.behaviors[key] ?? owner.makeMachine(for: key)
+            if machine.pendingCast != nil {
+                owner.world?.cancelCombatCast(by: key)
+            }
+            guard machine.stagger() else { return }
+            owner.behaviors[key] = machine
+            owner.world?.playCombatClip(.stagger, on: key)
+        }
     }
 }

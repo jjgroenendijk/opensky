@@ -46,7 +46,7 @@ extension CombatLoopRuntime {
 
     /// Whether `helper` joins `ally`'s fight on `ally`'s side.
     func helps(_ helper: ReferenceKey, _ ally: ReferenceKey, world: any CombatLoopWorld) -> Bool {
-        CombatHelpRule.helps(helper, ally, facts: helpView(world: world))
+        HelpRules(owner: self).helps(helper, ally, world: world)
     }
 
     /// The help rule's facts for the fight as it is now.
@@ -132,5 +132,20 @@ struct CombatHelpView: CombatHelpFacts {
 
     private func isFighting(_ key: ReferenceKey) -> Bool {
         isEngaged(key)
+    }
+}
+
+extension CombatLoopRuntime {
+    /// Decides whether one actor helps another in a fight.
+    struct HelpRules {
+        let owner: CombatLoopRuntime
+
+        func helps(
+            _ helper: ReferenceKey,
+            _ ally: ReferenceKey,
+            world: any CombatLoopWorld
+        ) -> Bool {
+            CombatHelpRule.helps(helper, ally, facts: owner.helpView(world: world))
+        }
     }
 }

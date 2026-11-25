@@ -77,11 +77,11 @@ extension CombatCoordinator {
 
     @discardableResult
     public func notePlayerSneaking(_ isSneaking: Bool) -> SpellHitReport? {
-        shared.perks.notePlayerSneaking(isSneaking)
+        PerkNotes(owner: self).notePlayerSneaking(isSneaking)
     }
 
     public func perkGraphFlagChanges() -> [String: Bool] {
-        shared.perks.perkGraphFlagChanges()
+        PerkNotes(owner: self).perkGraphFlagChanges()
     }
 
     /// The first weapon the player has equipped, or nil when unarmed.
@@ -91,5 +91,23 @@ extension CombatCoordinator {
 
     public var bowZoomTimeScale: Float {
         shared.gear.bowZoomTimeScale
+    }
+}
+
+extension CombatCoordinator {
+    /// Notes sneaking for perks and reads the perk graph flags.
+    struct PerkNotes {
+        let owner: CombatCoordinator
+
+        @discardableResult
+        func notePlayerSneaking(_ isSneaking: Bool) -> SpellHitReport? {
+            let shared = owner.shared
+            return shared.perks.notePlayerSneaking(isSneaking)
+        }
+
+        func perkGraphFlagChanges() -> [String: Bool] {
+            let shared = owner.shared
+            return shared.perks.perkGraphFlagChanges()
+        }
     }
 }

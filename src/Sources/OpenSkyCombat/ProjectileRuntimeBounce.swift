@@ -77,30 +77,41 @@ extension ProjectileRuntime {
 extension ProjectileRuntime {
     /// The shots in the air, the arrows standing, and the newest landings.
     var readout: ProjectileReadout {
-        var readout = ProjectileReadout()
-        readout.inFlight = live.count
-        readout.bouncing = live.count(where: \.hasBounced)
-        readout.stuck = stuck.compactMap(\.key)
-        readout.landings = trace.map { entry in
-            var landing = ProjectileReadout.Landing(
-                outcome: entry.outcome.rawValue, position: entry.endPosition
-            )
-            landing.target = entry.target
-            landing.material = entry.material
-            landing.stuck = entry.stuck
-            landing.bounced = entry.bounced
-            landing.damage = entry.appliedDamage
-            landing.spellTargets = entry.spellHit?.targetCount
-            landing.spellEntries = entry.spellHit?.entryCount
-            landing.spellRefusals = entry.spellHit?.refusals.count
-            landing.spellMagnitudes = entry.spellHit?.adjustments
-                .map { $0.baseMagnitude * $0.multiplier } ?? []
-            landing.spellLanded = entry.spellHit?.landedCount
-            landing.spellSkipped = entry.spellHit?.skippedCount
-            landing.spellHealthTaken = entry.spellHit?.healthTaken
-            landing.spellOutcomes = entry.spellHit?.entryOutcomes ?? []
-            return landing
+        BounceReadout(owner: self).readout
+    }
+}
+
+extension ProjectileRuntime {
+    /// Builds the projectile readout.
+    struct BounceReadout {
+        let owner: ProjectileRuntime
+
+        var readout: ProjectileReadout {
+            var readout = ProjectileReadout()
+            readout.inFlight = owner.live.count
+            readout.bouncing = owner.live.count(where: \.hasBounced)
+            readout.stuck = owner.stuck.compactMap(\.key)
+            readout.landings = owner.trace.map { entry in
+                var landing = ProjectileReadout.Landing(
+                    outcome: entry.outcome.rawValue, position: entry.endPosition
+                )
+                landing.target = entry.target
+                landing.material = entry.material
+                landing.stuck = entry.stuck
+                landing.bounced = entry.bounced
+                landing.damage = entry.appliedDamage
+                landing.spellTargets = entry.spellHit?.targetCount
+                landing.spellEntries = entry.spellHit?.entryCount
+                landing.spellRefusals = entry.spellHit?.refusals.count
+                landing.spellMagnitudes = entry.spellHit?.adjustments
+                    .map { $0.baseMagnitude * $0.multiplier } ?? []
+                landing.spellLanded = entry.spellHit?.landedCount
+                landing.spellSkipped = entry.spellHit?.skippedCount
+                landing.spellHealthTaken = entry.spellHit?.healthTaken
+                landing.spellOutcomes = entry.spellHit?.entryOutcomes ?? []
+                return landing
+            }
+            return readout
         }
-        return readout
     }
 }

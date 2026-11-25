@@ -16,54 +16,7 @@ extension CombatProjectileWorldPart {
     func projectileKillCamAim(
         for projectile: LiveProjectile, aimTarget: ReferenceKey?
     ) -> SIMD3<Float>? {
-        guard let loop = shared.loop else { return nil }
-        let arrow = projectile.payload.arrow
-        let spell = projectile.payload.spell
-        guard arrow != nil || spell != nil else { return nil }
-        let world = shared.world
-        let enemies = world.residentActors().filter {
-            !$0.isDead && world.hostility(of: $0.key) == .hostile
-                && loop.activity(of: $0.key) != .notFighting
-        }
-        let origin = projectile.launchPosition
-        let candidates = world.residentActors().filter { !$0.isDead && $0.key != .player }
-        guard
-            let target = candidates.first(where: { $0.key == aimTarget })
-            ?? Self.nearestOnLine(candidates, from: origin, along: projectile.launchDirection)
-        else { return nil }
-        let centre = target.feet + SIMD3(0, 0, target.capsule.height * target.scale / 2)
-        var facts = RangedKillCamFacts()
-        facts.enemiesInCombat = enemies.count
-        let health = world.health(of: target.key)
-        facts.targetAlive = (health?.current ?? 0) > 0
-        let damage = arrow?.damage.applied ?? spell.map { world.spellHealthDamage($0) } ?? 0
-        facts.hitKills = damage > 0 && damage >= (health?.current ?? .infinity)
-        // Spells and crossbows have no draw to check.
-        facts.draw = arrow.flatMap { $0.handType == .crossbow ? nil : $0.damage.drawFraction }
-        facts.clearLine = clearLine(from: origin, to: centre)
-        facts.distance = simd_distance(origin, centre)
-        facts.targetLevel = world.level(of: target.key)
-        facts.playerLevel = world.level(of: .player)
-        facts.playerHealthShare = world.health(of: .player).map {
-            $0.maximum > 0 ? $0.current / $0.maximum : 1
-        } ?? 1
-        facts.undetectedSneakShot = arrow != nil
-            && shared.strikes.isSneakAttack(by: .player, on: target.key)
-        facts.targetIsHostileThreat = enemies.contains { $0.key == target.key }
-        let roll = Float(shared.archeryRandom.percent())
-        let plays = RangedKillCam.plays(facts, roll: roll)
-        var check = ProjectileReadout.KillCamCheck(
-            target: target.key, enemiesInCombat: facts.enemiesInCombat,
-            targetAlive: facts.targetAlive, hitKills: facts.hitKills, damage: damage,
-            clearLine: facts.clearLine, distance: facts.distance
-        )
-        check.chance = RangedKillCam.chance(facts)
-        check.roll = roll
-        check.plays = plays
-        shared.lastKillCamCheck = check
-        guard plays else { return nil }
-        shared.pendingCommands.append(.rangedKillCam(projectile: projectile.id, target: target.key))
-        return centre
+        KillCamAim(owner: self).projectileKillCamAim(for: projectile, aimTarget: aimTarget)
     }
 
     private func clearLine(from start: SIMD3<Float>, to end: SIMD3<Float>) -> Bool {
@@ -90,5 +43,72 @@ extension CombatProjectileWorldPart {
             return miss <= reach ? (actor, along) : nil
         }
         .min { $0.1 < $1.1 }?.0
+    }
+}
+
+extension CombatProjectileWorldPart {
+    /// Decides whether a shot starts the ranged kill camera.
+    struct KillCamAim {
+        let owner: CombatProjectileWorldPart
+
+        func projectileKillCamAim(
+            for projectile: LiveProjectile, aimTarget: ReferenceKey?
+        ) -> SIMD3<Float>? {
+            guard let loop = owner.shared.loop else { return nil }
+            let arrow = projectile.payload.arrow
+            let spell = projectile.payload.spell
+            guard arrow != nil || spell != nil else { return nil }
+            let world = owner.shared.world
+            let enemies = world.residentActors().filter {
+                !$0.isDead && world.hostility(of: $0.key) == .hostile
+                    && loop.activity(of: $0.key) != .notFighting
+            }
+            let origin = projectile.launchPosition
+            let candidates = world.residentActors().filter { !$0.isDead && $0.key != .player }
+            guard
+                let target = candidates.first(where: { $0.key == aimTarget })
+                ?? CombatProjectileWorldPart.nearestOnLine(
+                    candidates,
+                    from: origin,
+                    along: projectile.launchDirection
+                )
+            else { return nil }
+            let centre = target.feet + SIMD3(0, 0, target.capsule.height * target.scale / 2)
+            var facts = RangedKillCamFacts()
+            facts.enemiesInCombat = enemies.count
+            let health = world.health(of: target.key)
+            facts.targetAlive = (health?.current ?? 0) > 0
+            let damage = arrow?.damage.applied ?? spell.map { world.spellHealthDamage($0) } ?? 0
+            facts.hitKills = damage > 0 && damage >= (health?.current ?? .infinity)
+            // Spells and crossbows have no draw to check.
+            facts.draw = arrow.flatMap { $0.handType == .crossbow ? nil : $0.damage.drawFraction }
+            facts.clearLine = owner.clearLine(from: origin, to: centre)
+            facts.distance = simd_distance(origin, centre)
+            facts.targetLevel = world.level(of: target.key)
+            facts.playerLevel = world.level(of: .player)
+            facts.playerHealthShare = world.health(of: .player).map {
+                $0.maximum > 0 ? $0.current / $0.maximum : 1
+            } ?? 1
+            facts.undetectedSneakShot = arrow != nil
+                && owner.shared.strikes.isSneakAttack(by: .player, on: target.key)
+            facts.targetIsHostileThreat = enemies.contains { $0.key == target.key }
+            let roll = Float(owner.shared.archeryRandom.percent())
+            let plays = RangedKillCam.plays(facts, roll: roll)
+            var check = ProjectileReadout.KillCamCheck(
+                target: target.key, enemiesInCombat: facts.enemiesInCombat,
+                targetAlive: facts.targetAlive, hitKills: facts.hitKills, damage: damage,
+                clearLine: facts.clearLine, distance: facts.distance
+            )
+            check.chance = RangedKillCam.chance(facts)
+            check.roll = roll
+            check.plays = plays
+            owner.shared.lastKillCamCheck = check
+            guard plays else { return nil }
+            owner.shared.pendingCommands.append(.rangedKillCam(
+                projectile: projectile.id,
+                target: target.key
+            ))
+            return centre
+        }
     }
 }

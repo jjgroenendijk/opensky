@@ -57,18 +57,11 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
     /// An NPC's blow keeps its attacker, so its death push points away from it.
     @discardableResult
     func applyCombatBlow(_ amount: Float, to key: ReferenceKey, blow: CombatBlow) -> Bool {
-        let damage = shared.damage
-        let severs = blow.kind == .power && damage.canSever(
-            handType: blow.handType,
-            attacker: blow.attacker
-        )
-        return damage.applyHealthDamage(
-            amount, to: key, attacker: blow.attacker, kind: .melee, canSever: severs
-        )
+        CombatSteps(owner: self).applyCombatBlow(amount, to: key, blow: blow)
     }
 
     func combatInfluence(of key: ReferenceKey) -> ActorMagicInfluence {
-        shared.world.gearReads.magicInfluence(of: key)
+        ActorReads(owner: self).combatInfluence(of: key)
     }
 
     /// A package that ignores combat, a knockdown, or a kill move holds the actor out of
@@ -82,34 +75,12 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
     func combatTemperament(
         of key: ReferenceKey, toward target: ReferenceKey
     ) -> CombatTemperament? {
-        guard
-            shared.usesTemperament,
-            let confidence = shared.world.actorValues(of: key)?(Self.confidenceIndex)
-        else { return nil }
-        return CombatTemperament(
-            confidence: confidence,
-            modifier: CombatTemperament.modifier(
-                for: key, range: shared.combatAI.confidenceModifierRange
-            ),
-            strengthRatio: CombatTemperament.strengthRatio(
-                level: shared.world.level(of: key) ?? 1,
-                healthFraction: combatHealthFraction(of: key),
-                targetLevel: shared.world.level(of: target) ?? 1,
-                targetHealthFraction: combatHealthFraction(of: target)
-            ),
-            settings: shared.combatAI
-        )
+        CombatSteps(owner: self).combatTemperament(of: key, toward: target)
     }
 
     /// `Assistance` is actor value 5 and `Aggression` 0 (UESP "Actor Value Indices").
     func combatAssists(_ helper: ReferenceKey, ally: ReferenceKey) -> Bool {
-        guard
-            shared.usesTemperament,
-            let value = shared.world.actorValues(of: helper)?(Self.assistanceIndex),
-            let reaction = shared.world.reaction(of: helper, toward: ally)
-        else { return false }
-        let aggression = shared.world.actorValues(of: ally)?(Self.aggressionIndex) ?? 0
-        return CombatAssistance(value: value).helps(reaction, allyAggression: aggression)
+        ActorReads(owner: self).combatAssists(helper, ally: ally)
     }
 
     static let aggressionIndex: Int32 = 0
@@ -150,8 +121,9 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
     func combatHitFacts(
         from attacker: ReferenceKey, on target: ReferenceKey, weaponStagger: Float
     ) -> HitReactionFacts {
-        shared.strikes.hitFacts(
-            attacker: attacker, target: target, event: CombatGraphNames.attackStart,
+        ActorReads(owner: self).combatHitFacts(
+            from: attacker,
+            on: target,
             weaponStagger: weaponStagger
         )
     }
@@ -165,7 +137,7 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
     }
 
     func combatDiseaseResist(of target: ReferenceKey) -> Float? {
-        DiseaseContraction.resistIndex.flatMap { shared.world.actorValues(of: target)?($0) }
+        ActorReads(owner: self).combatDiseaseResist(of: target)
     }
 
     @discardableResult
@@ -176,7 +148,7 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
     func combatAwareness(
         of observer: ReferenceKey, toward target: ReferenceKey
     ) -> CombatAwareness {
-        shared.world.awareness(of: observer, toward: target)
+        CombatSteps(owner: self).combatAwareness(of: observer, toward: target)
     }
 
     func combatHealthFraction(of key: ReferenceKey) -> Float {
@@ -189,40 +161,16 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
     }
 
     func combatDangerThreats() -> [DangerThreat] {
-        guard let projectiles = shared.archery?.projectiles, let explosions = projectiles.explosions
-        else { return [] }
-        return projectiles.live.compactMap { shot in
-            guard let spec = explosions.spec(itemLink: shot.profile.explosion) else { return nil }
-            return DangerRule.threat(
-                id: shot.id, source: shot.shooter,
-                motion: (shot.position, shot.state.velocity),
-                explosion: (spec.damage, spec.radius)
-            )
-        }
+        CombatSteps(owner: self).combatDangerThreats()
     }
 
     /// The weapon in `key`'s right hand, with its tempering; unarmed without one.
     func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile {
-        handWeapon(of: key, \.right) ?? .unarmed
+        ActorReads(owner: self).handWeapon(of: key, \.right) ?? .unarmed
     }
 
     func combatLeftWeapon(of key: ReferenceKey) -> MeleeWeaponProfile? {
-        handWeapon(of: key, \.left).flatMap { $0.handType.isOneHandedMelee ? $0 : nil }
-    }
-
-    /// One hand's weapon by the inventory's hand rule.
-    private func handWeapon(
-        of key: ReferenceKey, _ hand: KeyPath<WornWeapons, FormID?>
-    ) -> MeleeWeaponProfile? {
-        guard let items = shared.items else { return nil }
-        let reads = shared.world.gearReads
-        let worn = reads.equippedItems(of: key)
-        let hands = WornWeapons.resolve(in: worn.map(\.item), leftHand: reads.leftHand(of: key)) {
-            items.weapon($0) == nil ? nil : reads.equipment?.occupancy(of: $0).hands ?? .rightHand
-        }
-        guard let item = hands[keyPath: hand], let weapon = items.weapon(item) else { return nil }
-        let level = worn.first { $0.item == item }?.temperLevel ?? 0
-        return MeleeWeaponProfile(weapon: weapon).tempered(level: level)
+        ActorReads(owner: self).combatLeftWeapon(of: key)
     }
 
     func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
@@ -289,32 +237,20 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
     }
 
     var combatTransients: CombatTransientCounts {
-        var counts = shared.world.bodyTransients
-        counts.liveProjectiles = shared.archery?.projectiles.live.count ?? 0
-        counts.stuckProjectiles = shared.archery?.projectiles.stuck.count ?? 0
-        return counts
+        CombatSteps(owner: self).combatTransients
     }
 
     @discardableResult
     func trimCombatTransients(to limits: CombatTransientLimits) -> CombatTransientCounts {
-        var removed = CombatTransientCounts()
-        if let projectiles = shared.archery?.projectiles {
-            removed.liveProjectiles = projectiles.trimLive(to: limits.liveProjectiles)
-            removed.stuckProjectiles = projectiles.trimStuck(to: limits.stuckProjectiles)
-        }
-        let bodies = shared.world.trimBodyTransients(to: limits)
-        removed.activeRagdolls = bodies.activeRagdolls
-        removed.awakeBodies = bodies.awakeBodies
-        return removed
+        CombatSteps(owner: self).trimCombatTransients(to: limits)
     }
 
     func despawnCombatTransients() {
-        shared.archery?.projectiles.despawnAll()
-        shared.pendingCommands.append(.resetRagdolls)
+        CombatSteps(owner: self).despawnCombatTransients()
     }
 
     func setCombatMusicActive(_ active: Bool) {
-        shared.pendingCommands.append(.setCombatMusic(active: active))
+        CombatSteps(owner: self).setCombatMusicActive(active)
     }
 
     func combatBlockSkill(of key: ReferenceKey) -> Float {
@@ -385,14 +321,7 @@ extension CombatLoopWorldPart {
     }
 
     func makeRuntime(_ data: CombatSessionData) -> CombatLoopRuntime {
-        let runtime = CombatLoopRuntime(settings: data.combat, world: self)
-        runtime.skillUses = data.skillUses
-        runtime.staggers = data.staggers
-        runtime.danger = data.danger
-        runtime.friendlyFire = CombatLoopRuntime.FriendlyFire(settings: data.friendlyFire)
-        runtime.combatAI = data.combatAI
-        runtime.applyingGameSettings = shared.appliesCombatGameSettings
-        return runtime
+        CombatSteps(owner: self).makeRuntime(data)
     }
 }
 
@@ -410,7 +339,7 @@ extension CombatLoopWorldPart {
     func combatCrimeStanding(
         of actor: ReferenceKey, judgedBy helper: ReferenceKey
     ) -> CombatCrimeStanding {
-        shared.world.crimeStanding(of: actor, judgedBy: helper)
+        CombatSteps(owner: self).combatCrimeStanding(of: actor, judgedBy: helper)
     }
 
     func combatIsGuard(_ key: ReferenceKey) -> Bool {
@@ -419,5 +348,198 @@ extension CombatLoopWorldPart {
 
     func combatAttacksPlayerOnSightForCrimes(_ key: ReferenceKey) -> Bool {
         shared.world.attacksPlayerOnSightForCrimes(key)
+    }
+}
+
+extension CombatLoopWorldPart {
+    /// Reads the combat facts of one actor: its influence, temperament, awareness, hands, and crime
+    /// standing.
+    struct ActorReads {
+        unowned let owner: CombatLoopWorldPart
+
+        func combatInfluence(of key: ReferenceKey) -> ActorMagicInfluence {
+            owner.shared.world.gearReads.magicInfluence(of: key)
+        }
+
+        func combatTemperament(
+            of key: ReferenceKey, toward target: ReferenceKey
+        ) -> CombatTemperament? {
+            guard
+                owner.shared.usesTemperament,
+                let confidence = owner.shared.world
+                    .actorValues(of: key)?(CombatLoopWorldPart.confidenceIndex)
+            else { return nil }
+            return CombatTemperament(
+                confidence: confidence,
+                modifier: CombatTemperament.modifier(
+                    for: key, range: owner.shared.combatAI.confidenceModifierRange
+                ),
+                strengthRatio: CombatTemperament.strengthRatio(
+                    level: owner.shared.world.level(of: key) ?? 1,
+                    healthFraction: owner.combatHealthFraction(of: key),
+                    targetLevel: owner.shared.world.level(of: target) ?? 1,
+                    targetHealthFraction: owner.combatHealthFraction(of: target)
+                ),
+                settings: owner.shared.combatAI
+            )
+        }
+
+        func combatAssists(_ helper: ReferenceKey, ally: ReferenceKey) -> Bool {
+            guard
+                owner.shared.usesTemperament,
+                let value = owner.shared.world
+                    .actorValues(of: helper)?(CombatLoopWorldPart.assistanceIndex),
+                let reaction = owner.shared.world.reaction(of: helper, toward: ally)
+            else { return false }
+            let aggression = owner.shared.world
+                .actorValues(of: ally)?(CombatLoopWorldPart.aggressionIndex) ?? 0
+            return CombatAssistance(value: value).helps(reaction, allyAggression: aggression)
+        }
+
+        func combatHitFacts(
+            from attacker: ReferenceKey, on target: ReferenceKey, weaponStagger: Float
+        ) -> HitReactionFacts {
+            owner.shared.strikes.hitFacts(
+                attacker: attacker, target: target, event: CombatGraphNames.attackStart,
+                weaponStagger: weaponStagger
+            )
+        }
+
+        func combatDiseaseResist(of target: ReferenceKey) -> Float? {
+            DiseaseContraction.resistIndex
+                .flatMap { owner.shared.world.actorValues(of: target)?($0) }
+        }
+
+        func combatAwareness(
+            of observer: ReferenceKey, toward target: ReferenceKey
+        ) -> CombatAwareness {
+            owner.shared.world.awareness(of: observer, toward: target)
+        }
+
+        func combatLeftWeapon(of key: ReferenceKey) -> MeleeWeaponProfile? {
+            handWeapon(of: key, \.left).flatMap { $0.handType.isOneHandedMelee ? $0 : nil }
+        }
+
+        func handWeapon(
+            of key: ReferenceKey, _ hand: KeyPath<WornWeapons, FormID?>
+        ) -> MeleeWeaponProfile? {
+            guard let items = owner.shared.items else { return nil }
+            let reads = owner.shared.world.gearReads
+            let worn = reads.equippedItems(of: key)
+            let hands = WornWeapons.resolve(
+                in: worn.map(\.item),
+                leftHand: reads.leftHand(of: key)
+            ) {
+                items.weapon($0) == nil ? nil : reads.equipment?.occupancy(of: $0)
+                    .hands ?? .rightHand
+            }
+            guard
+                let item = hands[keyPath: hand],
+                let weapon = items.weapon(item) else { return nil }
+            let level = worn.first { $0.item == item }?.temperLevel ?? 0
+            return MeleeWeaponProfile(weapon: weapon).tempered(level: level)
+        }
+
+        func combatCrimeStanding(
+            of actor: ReferenceKey, judgedBy helper: ReferenceKey
+        ) -> CombatCrimeStanding {
+            owner.shared.world.crimeStanding(of: actor, judgedBy: helper)
+        }
+    }
+}
+
+extension CombatLoopWorldPart {
+    /// Applies blows, reads dangers and temperament, and trims the fight's transients.
+    struct CombatSteps {
+        unowned let owner: CombatLoopWorldPart
+        var shared: CombatShared {
+            owner.shared
+        }
+
+        @discardableResult
+        func applyCombatBlow(_ amount: Float, to key: ReferenceKey, blow: CombatBlow) -> Bool {
+            let damage = shared.damage
+            let severs = blow.kind == .power && damage.canSever(
+                handType: blow.handType,
+                attacker: blow.attacker
+            )
+            return damage.applyHealthDamage(
+                amount, to: key, attacker: blow.attacker, kind: .melee, canSever: severs
+            )
+        }
+
+        func combatTemperament(
+            of key: ReferenceKey, toward target: ReferenceKey
+        ) -> CombatTemperament? {
+            ActorReads(owner: owner).combatTemperament(of: key, toward: target)
+        }
+
+        func combatAwareness(
+            of observer: ReferenceKey, toward target: ReferenceKey
+        ) -> CombatAwareness {
+            ActorReads(owner: owner).combatAwareness(of: observer, toward: target)
+        }
+
+        func combatDangerThreats() -> [DangerThreat] {
+            guard
+                let projectiles = shared.archery?.projectiles,
+                let explosions = projectiles.explosions
+            else { return [] }
+            return projectiles.live.compactMap { shot in
+                guard let spec = explosions.spec(itemLink: shot.profile.explosion)
+                else { return nil }
+                return DangerRule.threat(
+                    id: shot.id, source: shot.shooter,
+                    motion: (shot.position, shot.state.velocity),
+                    explosion: (spec.damage, spec.radius)
+                )
+            }
+        }
+
+        var combatTransients: CombatTransientCounts {
+            var counts = shared.world.bodyTransients
+            counts.liveProjectiles = shared.archery?.projectiles.live.count ?? 0
+            counts.stuckProjectiles = shared.archery?.projectiles.stuck.count ?? 0
+            return counts
+        }
+
+        @discardableResult
+        func trimCombatTransients(to limits: CombatTransientLimits) -> CombatTransientCounts {
+            var removed = CombatTransientCounts()
+            if let projectiles = shared.archery?.projectiles {
+                removed.liveProjectiles = projectiles.trimLive(to: limits.liveProjectiles)
+                removed.stuckProjectiles = projectiles.trimStuck(to: limits.stuckProjectiles)
+            }
+            let bodies = shared.world.trimBodyTransients(to: limits)
+            removed.activeRagdolls = bodies.activeRagdolls
+            removed.awakeBodies = bodies.awakeBodies
+            return removed
+        }
+
+        func despawnCombatTransients() {
+            shared.archery?.projectiles.despawnAll()
+            shared.pendingCommands.append(.resetRagdolls)
+        }
+
+        func setCombatMusicActive(_ active: Bool) {
+            shared.pendingCommands.append(.setCombatMusic(active: active))
+        }
+
+        func makeRuntime(_ data: CombatSessionData) -> CombatLoopRuntime {
+            let runtime = CombatLoopRuntime(settings: data.combat, world: owner)
+            runtime.skillUses = data.skillUses
+            runtime.staggers = data.staggers
+            runtime.danger = data.danger
+            runtime.friendlyFire = CombatLoopRuntime.FriendlyFire(settings: data.friendlyFire)
+            runtime.combatAI = data.combatAI
+            runtime.applyingGameSettings = shared.appliesCombatGameSettings
+            return runtime
+        }
+
+        func combatCrimeStanding(
+            of actor: ReferenceKey, judgedBy helper: ReferenceKey
+        ) -> CombatCrimeStanding {
+            ActorReads(owner: owner).combatCrimeStanding(of: actor, judgedBy: helper)
+        }
     }
 }

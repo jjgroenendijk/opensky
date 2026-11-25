@@ -80,8 +80,11 @@ public final class CombatCoordinator {
     public func advanceMelee(
         events: [String], intent: MeleeIntent, isPlayerControlled: Bool
     ) -> [CombatCommand] {
-        CombatFrameSteps(shared: shared)
-            .advanceMelee(events: events, intent: intent, isPlayerControlled: isPlayerControlled)
+        FrameAdvances(owner: self).advanceMelee(
+            events: events,
+            intent: intent,
+            isPlayerControlled: isPlayerControlled
+        )
     }
 
     /// One frame of archery. Projectiles fly on outside player control, so an
@@ -92,8 +95,11 @@ public final class CombatCoordinator {
         isPlayerControlled: Bool,
         delta: Float
     ) -> [CombatCommand] {
-        CombatFrameSteps(shared: shared).advanceArchery(
-            events: events, intent: intent, isPlayerControlled: isPlayerControlled, delta: delta
+        FrameAdvances(owner: self).advanceArchery(
+            events: events,
+            intent: intent,
+            isPlayerControlled: isPlayerControlled,
+            delta: delta
         )
     }
 
@@ -115,5 +121,36 @@ public final class CombatCoordinator {
     public func takeCommands() -> [CombatCommand] {
         defer { shared.pendingCommands = [] }
         return shared.pendingCommands
+    }
+}
+
+extension CombatCoordinator {
+    /// Runs one frame of melee and archery.
+    struct FrameAdvances {
+        let owner: CombatCoordinator
+
+        func advanceMelee(
+            events: [String], intent: MeleeIntent, isPlayerControlled: Bool
+        ) -> [CombatCommand] {
+            let shared = owner.shared
+            return CombatFrameSteps(shared: shared)
+                .advanceMelee(
+                    events: events,
+                    intent: intent,
+                    isPlayerControlled: isPlayerControlled
+                )
+        }
+
+        func advanceArchery(
+            events: [String],
+            intent: ArcheryIntent,
+            isPlayerControlled: Bool,
+            delta: Float
+        ) -> [CombatCommand] {
+            let shared = owner.shared
+            return CombatFrameSteps(shared: shared).advanceArchery(
+                events: events, intent: intent, isPlayerControlled: isPlayerControlled, delta: delta
+            )
+        }
     }
 }

@@ -32,31 +32,40 @@ extension CombatLoopRuntime {
                 graphEquipping: draw.state == .drawing && world.combatGraphIsEquipping(key)
             )
             weaponDraws[key] = draw.state == .sheathed && !wantsDrawn ? nil : draw
-            tellGraph(of: key, drawGoing: (before, draw.state), world: world)
+            WeaponDrawGraph().tellGraph(
+                of: key,
+                drawGoing: (before, draw.state),
+                world: world
+            )
         }
     }
+}
 
-    private func tellGraph(
-        of key: ReferenceKey, drawGoing change: (from: WeaponDrawState, to: WeaponDrawState),
-        world: any CombatLoopWorld
-    ) {
-        switch change {
-        case (.sheathed, .drawing):
-            let right = world.combatWeapon(of: key)
-            let left = world.combatLeftWeapon(of: key)?.handType
-                ?? (world.combatWearsShield(key) ? .shield : nil)
-            world.writeCombatActorVariable(
-                right.handType.graphValue, named: CombatGraphNames.rightHandType, on: key
-            )
-            world.writeCombatActorVariable(
-                left?.graphValue ?? .int(0), named: CombatGraphNames.leftHandType,
-                on: key
-            )
-            world.raiseCombatEvent(CombatGraphNames.weapEquip, on: key)
-        case (.drawn, .sheathing):
-            world.raiseCombatEvent(CombatGraphNames.unequip, on: key)
-        default:
-            break
+extension CombatLoopRuntime {
+    /// Tells an actor's graph to draw or sheathe its weapon.
+    struct WeaponDrawGraph {
+        func tellGraph(
+            of key: ReferenceKey, drawGoing change: (from: WeaponDrawState, to: WeaponDrawState),
+            world: any CombatLoopWorld
+        ) {
+            switch change {
+            case (.sheathed, .drawing):
+                let right = world.combatWeapon(of: key)
+                let left = world.combatLeftWeapon(of: key)?.handType
+                    ?? (world.combatWearsShield(key) ? .shield : nil)
+                world.writeCombatActorVariable(
+                    right.handType.graphValue, named: CombatGraphNames.rightHandType, on: key
+                )
+                world.writeCombatActorVariable(
+                    left?.graphValue ?? .int(0), named: CombatGraphNames.leftHandType,
+                    on: key
+                )
+                world.raiseCombatEvent(CombatGraphNames.weapEquip, on: key)
+            case (.drawn, .sheathing):
+                world.raiseCombatEvent(CombatGraphNames.unequip, on: key)
+            default:
+                break
+            }
         }
     }
 }

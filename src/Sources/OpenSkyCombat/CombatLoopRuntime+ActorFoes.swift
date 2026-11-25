@@ -53,78 +53,93 @@ extension CombatLoopRuntime {
     func actorFoes(
         among actors: [CombatActorObservation], world: any CombatLoopWorld
     ) -> [ReferenceKey: MeleeTarget] {
-        retaliating = []
-        let player = world.combatPlayer.key
-        let living = Dictionary(
-            actors.filter { !$0.isDead && $0.key != player && commanders[$0.key] != player }
-                .map { ($0.key, $0) }
-        ) { first, _ in first }
-        var options: [ReferenceKey: [CombatActorObservation]] = [:]
-        var seen: Set<CombatFoePair> = []
-        for pair in foePairs.sorted() {
-            guard
-                let target = living[pair.target], living[pair.observer] != nil,
-                world.combatAwareness(of: pair.observer, toward: pair.target).isDetected
-            else { continue }
-            options[pair.observer, default: []].append(target)
-            seen.insert(pair)
-        }
-        var attacked: Set<ReferenceKey> = []
-        for (attacker, victim) in targets.sorted(by: { $0.key < $1.key }) {
-            guard
-                let attacking = living[attacker], living[victim] != nil,
-                behaviors[attacker]?.isEngaged == true,
-                world.combatReaction(of: victim, toward: attacker).map(\.isFriendly) != true
-            else { continue }
-            if options[victim]?.contains(where: { $0.key == attacker }) != true {
-                options[victim, default: []].append(attacking)
-                attacked.insert(victim)
-            }
-        }
-        addAssistedFoes(to: &options, attacked: &attacked, living: living)
-        var foes: [ReferenceKey: MeleeTarget] = [:]
-        for (key, choices) in options {
-            guard
-                let actor = living[key],
-                let foe = CombatAllyRule.nearest(
-                    choices.map { MeleeTarget(key: $0.key, feet: $0.feet, capsule: $0.capsule) },
-                    to: actor.feet
-                )
-            else { continue }
-            foes[key] = foe
-            if attacked.contains(key), !seen.contains(CombatFoePair(
-                observer: key,
-                target: foe.key
-            )) {
-                retaliating.insert(key)
-            }
-        }
-        return foes
+        FoeScan(owner: self).actorFoes(among: actors, world: world)
     }
 }
 
-extension CombatLoopRuntime {
-    /// A helper fights the NPC its ally fights, unseen, while both live.
-    private func addAssistedFoes(
-        to options: inout [ReferenceKey: [CombatActorObservation]],
-        attacked: inout Set<ReferenceKey>,
-        living: [ReferenceKey: CombatActorObservation]
-    ) {
-        for (helper, foe) in npcAssists.sorted(by: { $0.key < $1.key }) {
-            guard living[helper] != nil, let target = living[foe] else {
-                npcAssists[helper] = nil
-                continue
-            }
-            guard options[helper]?.contains(where: { $0.key == foe }) != true else { continue }
-            options[helper, default: []].append(target)
-            attacked.insert(helper)
-        }
-    }
-}
+extension CombatLoopRuntime {}
 
 extension ActorReaction {
     /// Ally and Friend: a target the observer does not fight back.
     var isFriendly: Bool {
         self == .ally || self == .friend
+    }
+}
+
+extension CombatLoopRuntime {
+    /// Finds the foes each actor fights among the observed actors.
+    struct FoeScan {
+        let owner: CombatLoopRuntime
+
+        func actorFoes(
+            among actors: [CombatActorObservation], world: any CombatLoopWorld
+        ) -> [ReferenceKey: MeleeTarget] {
+            owner.retaliating = []
+            let player = world.combatPlayer.key
+            let living = Dictionary(
+                actors
+                    .filter { !$0.isDead && $0.key != player && owner.commanders[$0.key] != player }
+                    .map { ($0.key, $0) }
+            ) { first, _ in first }
+            var options: [ReferenceKey: [CombatActorObservation]] = [:]
+            var seen: Set<CombatFoePair> = []
+            for pair in owner.foePairs.sorted() {
+                guard
+                    let target = living[pair.target], living[pair.observer] != nil,
+                    world.combatAwareness(of: pair.observer, toward: pair.target).isDetected
+                else { continue }
+                options[pair.observer, default: []].append(target)
+                seen.insert(pair)
+            }
+            var attacked: Set<ReferenceKey> = []
+            for (attacker, victim) in owner.targets.sorted(by: { $0.key < $1.key }) {
+                guard
+                    let attacking = living[attacker], living[victim] != nil,
+                    owner.behaviors[attacker]?.isEngaged == true,
+                    world.combatReaction(of: victim, toward: attacker).map(\.isFriendly) != true
+                else { continue }
+                if options[victim]?.contains(where: { $0.key == attacker }) != true {
+                    options[victim, default: []].append(attacking)
+                    attacked.insert(victim)
+                }
+            }
+            addAssistedFoes(to: &options, attacked: &attacked, living: living)
+            var foes: [ReferenceKey: MeleeTarget] = [:]
+            for (key, choices) in options {
+                guard
+                    let actor = living[key],
+                    let foe = CombatAllyRule.nearest(
+                        choices
+                            .map { MeleeTarget(key: $0.key, feet: $0.feet, capsule: $0.capsule) },
+                        to: actor.feet
+                    )
+                else { continue }
+                foes[key] = foe
+                if attacked.contains(key), !seen.contains(CombatFoePair(
+                    observer: key,
+                    target: foe.key
+                )) {
+                    owner.retaliating.insert(key)
+                }
+            }
+            return foes
+        }
+
+        /// A helper fights the NPC its ally fights, unseen, while both live.
+        func addAssistedFoes(
+            to options: inout [ReferenceKey: [CombatActorObservation]],
+            attacked: inout Set<ReferenceKey>,
+            living: [ReferenceKey: CombatActorObservation]
+        ) {
+            for (helper, foe) in owner.npcAssists.sorted(by: { $0.key < $1.key }) {
+                guard living[helper] != nil, let target = living[foe] else {
+                    owner.npcAssists[helper] = nil
+                    continue
+                }
+                guard options[helper]?.contains(where: { $0.key == foe }) != true else { continue }
+                options[helper, default: []].append(target)
+                attacked.insert(helper)
+            }
+        }
     }
 }
