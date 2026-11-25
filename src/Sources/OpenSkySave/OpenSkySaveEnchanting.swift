@@ -43,25 +43,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
     static func decodeEnchanting(
         _ payload: Data
     ) throws -> [SaveStoryEntry<EnchantingState>] {
-        let tag = OpenSkySaveFormat.ChunkTag.enchanting
-        return try decode(
-            payload, tag: tag, minimumSize: OpenSkySaveFormat.minimumEnchantingEntrySize
-        ) { reader in
-            let knownCount = try reader.uint32("ENCK known count")
-            try check(knownCount, OpenSkySaveFormat.minimumSpellbookKeySize, reader)
-            var known: [ReferenceKey] = []
-            for _ in 0 ..< knownCount {
-                try known.append(OpenSkySaveEntryDecoder.decodeKey(&reader))
-            }
-            let madeCount = try reader.uint32("ENCK made count")
-            try check(madeCount, OpenSkySaveFormat.minimumMadeEnchantmentSize, reader)
-            var made: [FormID: MadeEnchantment] = [:]
-            for _ in 0 ..< madeCount {
-                let id = try FormID(reader.uint32("ENCK made id"))
-                made[id] = try decodeMade(&reader)
-            }
-            return EnchantingState(known: known, made: made)
-        }
+        try EnchantingDecode.decodeEnchanting(payload)
     }
 
     private static func decodeMade(_ reader: inout SaveReader) throws -> MadeEnchantment {
@@ -86,5 +68,42 @@ nonisolated extension OpenSkySaveStoryDecoder {
             count: count, minimumElementSize: size, remaining: reader.bytesRemaining,
             chunk: OpenSkySaveFormat.ChunkTag.enchanting
         )
+    }
+}
+
+extension OpenSkySaveStoryDecoder {
+    /// Decodes the enchanting state.
+    nonisolated enum EnchantingDecode {
+        static func decodeEnchanting(
+            _ payload: Data
+        ) throws -> [SaveStoryEntry<EnchantingState>] {
+            let tag = OpenSkySaveFormat.ChunkTag.enchanting
+            return try OpenSkySaveStoryDecoder.decode(
+                payload, tag: tag, minimumSize: OpenSkySaveFormat.minimumEnchantingEntrySize
+            ) { reader in
+                let knownCount = try reader.uint32("ENCK known count")
+                try OpenSkySaveStoryDecoder.check(
+                    knownCount,
+                    OpenSkySaveFormat.minimumSpellbookKeySize,
+                    reader
+                )
+                var known: [ReferenceKey] = []
+                for _ in 0 ..< knownCount {
+                    try known.append(OpenSkySaveEntryDecoder.decodeKey(&reader))
+                }
+                let madeCount = try reader.uint32("ENCK made count")
+                try OpenSkySaveStoryDecoder.check(
+                    madeCount,
+                    OpenSkySaveFormat.minimumMadeEnchantmentSize,
+                    reader
+                )
+                var made: [FormID: MadeEnchantment] = [:]
+                for _ in 0 ..< madeCount {
+                    let id = try FormID(reader.uint32("ENCK made id"))
+                    made[id] = try OpenSkySaveStoryDecoder.decodeMade(&reader)
+                }
+                return EnchantingState(known: known, made: made)
+            }
+        }
     }
 }

@@ -133,7 +133,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
                 socialTimer: times[0], recentTimer: times[1], bodyCheckAge: times[2]
             )
             if flags & OpenSkySaveFormat.SocialFlag.conversation != 0 {
-                social.conversation = try conversation(&reader)
+                social.conversation = try RunningState.conversation(&reader)
             }
             return social
         }
@@ -143,33 +143,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
     static func decodeImportedDamage(
         _ payload: Data
     ) throws -> [SaveStoryEntry<ImportedActorDamage>] {
-        try decode(
-            payload, tag: OpenSkySaveFormat.ChunkTag.importedDamage,
-            minimumSize: OpenSkySaveFormat.minimumImportedDamageEntrySize
-        ) { reader in
-            try ImportedActorDamage(amounts: ActorValues(
-                health: reader.float32("AVDM health"),
-                magicka: reader.float32("AVDM magicka"),
-                stamina: reader.float32("AVDM stamina")
-            ))
-        }
-    }
-
-    private static func conversation(
-        _ reader: inout SaveReader
-    ) throws -> SavedSocialState.Conversation? {
-        let partner = try OpenSkySaveEntryDecoder.decodeKey(&reader)
-        let raw = try reader.uint8("SOCL phase")
-        guard let phase = SocialConversation.Phase(rawValue: raw) else {
-            throw OpenSkySaveError.invalidValue(context: "SOCL phase \(raw) is unknown")
-        }
-        let age = try finite(reader.uint64("SOCL age"))
-        let answer = try finite(reader.uint64("SOCL answer seconds"))
-        let goal = try reader.bool("SOCL has goal") ? vector(&reader, "SOCL goal") : nil
-        guard let age, let answer else { return nil }
-        return SavedSocialState.Conversation(
-            partner: partner, phase: phase, age: age, answerSeconds: answer, goal: goal
-        )
+        try RunningState.decodeImportedDamage(payload)
     }
 
     private static func finite(_ bits: UInt64) -> Double? {
@@ -218,5 +192,45 @@ nonisolated extension OpenSkySaveDecoder.Body {
         merged = OpenSkySaveDeltaMerge.merge(body.side.translations, into: merged)
         merged = OpenSkySaveDeltaMerge.merge(body.side.importedDamage, into: merged)
         return OpenSkySaveDeltaMerge.merge(body.side.socialStates, into: merged)
+    }
+}
+
+extension OpenSkySaveStoryDecoder {
+    /// Decodes the imported damage and the running conversation.
+    nonisolated enum RunningState {
+        static func decodeImportedDamage(
+            _ payload: Data
+        ) throws -> [SaveStoryEntry<ImportedActorDamage>] {
+            try OpenSkySaveStoryDecoder.decode(
+                payload, tag: OpenSkySaveFormat.ChunkTag.importedDamage,
+                minimumSize: OpenSkySaveFormat.minimumImportedDamageEntrySize
+            ) { reader in
+                try ImportedActorDamage(amounts: ActorValues(
+                    health: reader.float32("AVDM health"),
+                    magicka: reader.float32("AVDM magicka"),
+                    stamina: reader.float32("AVDM stamina")
+                ))
+            }
+        }
+
+        static func conversation(
+            _ reader: inout SaveReader
+        ) throws -> SavedSocialState.Conversation? {
+            let partner = try OpenSkySaveEntryDecoder.decodeKey(&reader)
+            let raw = try reader.uint8("SOCL phase")
+            guard let phase = SocialConversation.Phase(rawValue: raw) else {
+                throw OpenSkySaveError.invalidValue(context: "SOCL phase \(raw) is unknown")
+            }
+            let age = try OpenSkySaveStoryDecoder.finite(reader.uint64("SOCL age"))
+            let answer = try OpenSkySaveStoryDecoder.finite(reader.uint64("SOCL answer seconds"))
+            let goal = try reader.bool("SOCL has goal") ? OpenSkySaveStoryDecoder.vector(
+                &reader,
+                "SOCL goal"
+            ) : nil
+            guard let age, let answer else { return nil }
+            return SavedSocialState.Conversation(
+                partner: partner, phase: phase, age: age, answerSeconds: answer, goal: goal
+            )
+        }
     }
 }
