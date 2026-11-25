@@ -108,7 +108,8 @@ the object's own mesh, such as `AnimIdle` of the windmill fan
 The rig of a graph mesh poses each node a sequence of the mesh moves. Each step, the
 coordinator samples every sequence the graph's generators played, at the seconds since the
 graph reached it. A loop wraps and a clamp holds its last key. A sequence the graph comes back
-to starts again at its first key.
+to starts again at its first key. Each text key the sequence passes goes to the graph as an
+event ([effect graphs](/engine/effect-graphs.md#sequence-text-keys)).
 
 ## Moving collision
 
