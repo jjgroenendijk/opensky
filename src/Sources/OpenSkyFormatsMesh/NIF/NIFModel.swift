@@ -124,22 +124,7 @@ nonisolated extension NIFFile {
         /// The node a traversed block contributes, or `nil` for a subtree the
         /// flatten deliberately drops.
         private func drawableNode(_ block: NIFBlock) throws -> NIFNode? {
-            if block.typeName == NIFSwitchNode.typeName {
-                return try NIFSwitchNode(data: block.data, header: file.header).activeNode
-            }
-            if let damageStage, block.typeName == NIFRangeNode.damageStageType {
-                var reader = BinaryReader(block.data)
-                let range = try NIFRangeNode(reader: &reader, header: file.header)
-                return range.contains(stage: damageStage) ? range.node : nil
-            }
-            guard block.typeName == "BSMultiBoundNode" else {
-                return try NIFNode(data: block.data, header: file.header)
-            }
-            let multi = try NIFMultiBoundNode(data: block.data, header: file.header)
-            // Terrain LOD stores water in a sibling subtree. Water has its own
-            // pipeline; drawing it as opaque geometry would cover land.
-            guard multi.object.name?.uppercased() != "WATER" else { return nil }
-            return NIFNode(object: multi.object, children: multi.children)
+            try NodeDraws(owner: self).drawableNode(block)
         }
 
         private mutating func appendShape(
@@ -258,59 +243,7 @@ nonisolated extension NIFFile.Flattener {
     /// effect or no ref gives `Material.fallback`.
     /// Out-of-range refs are malformed, same as the walk.
     private func resolveMaterial(key: NIFFile.FlattenerSlotKey) throws -> Material {
-        var shader: NIFLightingShaderProperty?
-        var textures: NIFShaderTextureSet?
-        if let index = key.shaderPropertyBlock {
-            let block = try block(at: index)
-            if
-                block.typeName == NIFFile.effectShaderType,
-                let material = attempt({
-                    try effectMaterial(
-                        block: block,
-                        alphaBlock: key.alphaPropertyBlock,
-                        animation: shaderAnimation(key)
-                    )
-                })
-            {
-                return material
-            }
-            if block.typeName == NIFFile.waterShaderType {
-                return .waterSurface
-            }
-            if block.typeName == NIFSkyShaderProperty.typeName {
-                var reader = BinaryReader(block.data)
-                return try NIFSkyShaderProperty(reader: &reader, header: file.header).material
-            }
-            if block.typeName == "BSLightingShaderProperty" {
-                (shader, textures) = try lightingShader(block)
-            }
-        }
-        let alpha = try alphaProperty(at: key.alphaPropertyBlock)
-
-        let fallback = Material.fallback
-        // A refraction shape's slot 0 is the normal map that bends the scene.
-        let refracts = shader?.isRefraction ?? false
-        return Material(
-            diffuseTexture: refracts ? nil : textures?.diffusePath,
-            normalTexture: refracts ? textures?.diffusePath : textures?.normalPath,
-            uvOffset: shader?.uvOffset ?? fallback.uvOffset,
-            uvScale: shader?.uvScale ?? fallback.uvScale,
-            alpha: shader?.alpha ?? fallback.alpha,
-            glossiness: shader?.glossiness ?? fallback.glossiness,
-            specularColor: shader?.specularColor ?? fallback.specularColor,
-            specularStrength: shader?.specularStrength
-                ?? fallback.specularStrength,
-            doubleSided: shader?.isDoubleSided ?? false,
-            alphaBlend: alpha?.blendEnabled ?? false,
-            alphaTestThreshold: (alpha?.testEnabled ?? false)
-                ? alpha?.testThreshold : nil,
-            additiveBlend: alpha?.additiveBlend,
-            tintTexture: shader?.isFaceGen == true ? textures?.faceTintPath : nil,
-            tintsSkin: shader?.isSkinTint ?? false,
-            shading: shader?.surfaceShading(textures: textures) ?? .plain,
-            drawState: shader?.drawState ?? .standard,
-            animation: shaderAnimation(key)
-        )
+        try NodeDraws(owner: self).resolveMaterial(key: key)
     }
 
     private func lightingShader(
@@ -400,5 +333,89 @@ nonisolated extension NIFFile.Flattener {
         let block = try block(at: index)
         guard block.typeName == "NiAlphaProperty" else { return nil }
         return try NIFAlphaProperty(data: block.data, header: file.header)
+    }
+}
+
+extension NIFFile.Flattener {
+    /// Builds the drawable of a node and resolves its material.
+    nonisolated struct NodeDraws {
+        let owner: NIFFile.Flattener
+
+        func drawableNode(_ block: NIFBlock) throws -> NIFNode? {
+            let file = owner.file
+            if block.typeName == NIFSwitchNode.typeName {
+                return try NIFSwitchNode(data: block.data, header: file.header).activeNode
+            }
+            if let damageStage = owner.damageStage, block.typeName == NIFRangeNode.damageStageType {
+                var reader = BinaryReader(block.data)
+                let range = try NIFRangeNode(reader: &reader, header: file.header)
+                return range.contains(stage: damageStage) ? range.node : nil
+            }
+            guard block.typeName == "BSMultiBoundNode" else {
+                return try NIFNode(data: block.data, header: file.header)
+            }
+            let multi = try NIFMultiBoundNode(data: block.data, header: file.header)
+            // Terrain LOD stores water in a sibling subtree. Water has its own
+            // pipeline; drawing it as opaque geometry would cover land.
+            guard multi.object.name?.uppercased() != "WATER" else { return nil }
+            return NIFNode(object: multi.object, children: multi.children)
+        }
+
+        func resolveMaterial(key: NIFFile.FlattenerSlotKey) throws -> Material {
+            let file = owner.file
+            var shader: NIFLightingShaderProperty?
+            var textures: NIFShaderTextureSet?
+            if let index = key.shaderPropertyBlock {
+                let block = try owner.block(at: index)
+                if
+                    block.typeName == NIFFile.effectShaderType,
+                    let material = attempt({
+                        try owner.effectMaterial(
+                            block: block,
+                            alphaBlock: key.alphaPropertyBlock,
+                            animation: owner.shaderAnimation(key)
+                        )
+                    })
+                {
+                    return material
+                }
+                if block.typeName == NIFFile.waterShaderType {
+                    return .waterSurface
+                }
+                if block.typeName == NIFSkyShaderProperty.typeName {
+                    var reader = BinaryReader(block.data)
+                    return try NIFSkyShaderProperty(reader: &reader, header: file.header).material
+                }
+                if block.typeName == "BSLightingShaderProperty" {
+                    (shader, textures) = try owner.lightingShader(block)
+                }
+            }
+            let alpha = try owner.alphaProperty(at: key.alphaPropertyBlock)
+
+            let fallback = Material.fallback
+            // A refraction shape's slot 0 is the normal map that bends the scene.
+            let refracts = shader?.isRefraction ?? false
+            return Material(
+                diffuseTexture: refracts ? nil : textures?.diffusePath,
+                normalTexture: refracts ? textures?.diffusePath : textures?.normalPath,
+                uvOffset: shader?.uvOffset ?? fallback.uvOffset,
+                uvScale: shader?.uvScale ?? fallback.uvScale,
+                alpha: shader?.alpha ?? fallback.alpha,
+                glossiness: shader?.glossiness ?? fallback.glossiness,
+                specularColor: shader?.specularColor ?? fallback.specularColor,
+                specularStrength: shader?.specularStrength
+                    ?? fallback.specularStrength,
+                doubleSided: shader?.isDoubleSided ?? false,
+                alphaBlend: alpha?.blendEnabled ?? false,
+                alphaTestThreshold: (alpha?.testEnabled ?? false)
+                    ? alpha?.testThreshold : nil,
+                additiveBlend: alpha?.additiveBlend,
+                tintTexture: shader?.isFaceGen == true ? textures?.faceTintPath : nil,
+                tintsSkin: shader?.isSkinTint ?? false,
+                shading: shader?.surfaceShading(textures: textures) ?? .plain,
+                drawState: shader?.drawState ?? .standard,
+                animation: owner.shaderAnimation(key)
+            )
+        }
     }
 }
