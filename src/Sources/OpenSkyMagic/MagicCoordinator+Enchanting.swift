@@ -143,7 +143,7 @@ extension MagicCoordinator.EnchantingTable {
             return .failure(.baseDoesNotFit(misfit.displayName))
         }
         guard gem.soul != .empty else { return .failure(.emptyGem) }
-        let perks = EnchantingPerks(table: self, item: item, store: store)
+        let perks = EnchantingPerks(world: coordinator.world, item: item, store: store)
         var input = EnchantingInput(
             skill: enchantingSkill(of: .player),
             soul: gem.soul,

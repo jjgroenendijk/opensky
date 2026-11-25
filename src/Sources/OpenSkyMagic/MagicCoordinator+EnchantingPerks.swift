@@ -12,7 +12,7 @@ import OpenSkyProgressionInterface
 
 /// The player's perks over one item at the enchanter.
 struct EnchantingPerks {
-    let table: MagicCoordinator.EnchantingTable
+    let world: any MagicWorld
     let item: FormID
     let store: EnchantmentStore
 
@@ -43,7 +43,6 @@ struct EnchantingPerks {
         _ value: Float, at entryPoint: PerkEntryPoint, base: ResolvedEnchantment,
         tab: PerkConditionSubject
     ) -> Float {
-        let world = table.coordinator.world
         let subject = world.inventory?.baselines.items.conditionSubject(of: item)
         return world.perkModified(
             value, at: entryPoint, on: .player,
