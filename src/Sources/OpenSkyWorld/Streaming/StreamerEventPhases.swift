@@ -39,6 +39,20 @@ extension CellStreamer {
     public func registerCellAttached(
         _ phase: CellAttachStep, _ step: @escaping (CellAttachment) -> Void
     ) {
-        events.onCellAttached.register(phase, step)
+        AttachRegistration(owner: self).registerCellAttached(phase, step)
+    }
+}
+
+extension CellStreamer {
+    /// Registers an attached cell.
+    struct AttachRegistration {
+        let owner: CellStreamer
+
+        func registerCellAttached(
+            _ phase: CellAttachStep, _ step: @escaping (CellAttachment) -> Void
+        ) {
+            let events = owner.events
+            events.onCellAttached.register(phase, step)
+        }
     }
 }
