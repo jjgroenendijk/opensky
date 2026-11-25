@@ -146,9 +146,7 @@ extension AgentFrameReadoutAdapter {
             "hiddenLargeReferenceLOD": .init(game.streamer.hiddenLargeReferenceSegments),
             "coverage": coverageState(),
             "screenFade": render.screenFadeState(),
-            "imageSpaceModifiers": game.gameSession.map {
-                AgentChangesAdapter.modifiersJSON($0.imageSpace.modifiers)
-            } ?? .null,
+            "imageSpaceModifiers": game.gameSession.map(\.imageSpace.modifiers.agentJSON) ?? .null,
             "postEffects": render.postEffectState(),
             "lighting": render.lightingState(),
             "projectileVisuals": render.projectileVisualState(),

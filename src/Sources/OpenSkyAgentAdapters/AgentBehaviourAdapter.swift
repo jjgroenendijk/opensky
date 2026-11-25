@@ -209,7 +209,7 @@ extension AgentBehaviourAdapter {
     }
 
     func formID(of key: ReferenceKey) -> AgentJSON? {
-        game.streamer.referenceEntry(key: key).map { .formID($0.formID.rawValue) }
+        hub.formID(of: key)
     }
 }
 
