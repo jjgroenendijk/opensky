@@ -369,16 +369,6 @@ public struct NPCMovementRuntime {
         return hold
     }
 
-    /// Moves a ridden actor. A cell crossing persists it, as a walk's does.
-    /// Where an actor stands: its movement pose, else the pose a cell build draws
-    /// from `snapshot`, which is the saved transform when one exists, then the record.
-    public func standingTransform(
-        of entry: RuntimeReferenceEntry,
-        in snapshot: @autoclosure () -> WorldStateSnapshot
-    ) -> ReferenceTransformOverride {
-        transform(for: entry.key) ?? snapshot().resolvedState(for: entry).transform
-    }
-
     /// Parks an actor at `transform`, as root motion moves one that stands still. An actor
     /// that never moved is parked from its authored placement first.
     public mutating func place(_ start: NPCFaceStart, at transform: ReferenceTransformOverride) {
