@@ -10,6 +10,8 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyRenderCore
 import OpenSkySessionTesting
+import OpenSkyWorldInterface
+import simd
 import Testing
 
 @MainActor
@@ -71,6 +73,31 @@ struct AgentDebugTests {
         #expect(AgentTeleportJob.gridGround(at: .zero, in: collision) == -14112)
         collision.topCollisionSurfaceResult = [0, 0, -2704]
         #expect(AgentTeleportJob.gridGround(at: .zero, in: collision) == -2704)
+    }
+
+    @Test func aTeleportTakesThePlayerOffACartSeatOnly() {
+        let cart = ReferenceKey.plugin(name: "test.esp", objectID: 0x20)
+        let horse = ReferenceKey.plugin(name: "test.esp", objectID: 0x21)
+        let seated = [
+            ReferenceKey.player: VehicleLink(carrier: cart, seat: .fixed(matrix_identity_float4x4))
+        ]
+        let mounted = [
+            ReferenceKey.player: VehicleLink(carrier: horse, seat: .bone("SaddleBone"))
+        ]
+
+        #expect(AgentTeleportJob.sitsOnCart(.player, links: seated))
+        #expect(!AgentTeleportJob.sitsOnCart(.player, links: mounted))
+        #expect(!AgentTeleportJob.sitsOnCart(.player, links: [:]))
+
+        let vehicles = FakeVehiclePort()
+        let world = FakeVehicleWorldPort()
+        world.vehicles = vehicles
+        vehicles.core.links = mounted
+        AgentTeleportJob.leaveCartSeat(vehicleWorld: world, session: nil)
+        #expect(world.detachCalls.isEmpty)
+        vehicles.core.links = seated
+        AgentTeleportJob.leaveCartSeat(vehicleWorld: world, session: nil)
+        #expect(world.detachCalls == [.player])
     }
 
     @Test func aTeleportBeforeTheWorldLoadsIsRefused() {

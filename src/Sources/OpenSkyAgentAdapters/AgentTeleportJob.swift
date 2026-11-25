@@ -57,6 +57,7 @@ public final class AgentTeleportJob {
         guard streamer.transitionInFlight == nil else {
             throw AgentFailure(.notReady, "a door transition is still loading")
         }
+        Self.leaveCartSeat(vehicleWorld: hub.hosts.vehicleWorld, session: hub.game.gameSession)
         switch target {
         case let .position(position, world):
             worldspace = world
@@ -110,6 +111,7 @@ public final class AgentTeleportJob {
         guard streamer.transitionInFlight == nil else {
             throw AgentFailure(.notReady, "a door transition is still loading")
         }
+        Self.leaveCartSeat(vehicleWorld: hub.hosts.vehicleWorld, session: hub.game.gameSession)
         exactFeet = place.feet
         exactYaw = place.yaw
         exactPitch = pitch
@@ -404,6 +406,24 @@ extension AgentTeleportJob {
 
     /// About two arm lengths: close enough to talk, far enough not to overlap.
     private static let actorStandOff: Float = 100
+}
+
+extension AgentTeleportJob {
+    /// A cart seat pins the player to the cart every frame, so a teleport that kept
+    /// it would put the player back at the cart's exterior spot inside the target cell.
+    static func leaveCartSeat(
+        vehicleWorld: any VehicleWorldPort, session: (any GameSessionPort)?
+    ) {
+        guard sitsOnCart(.player, links: vehicleWorld.vehicles.core.links) else { return }
+        vehicleWorld.detach(.player)
+        session?.playerSeat = nil
+    }
+
+    /// A fixed seat is a cart passenger's; a horse rider sits on a bone.
+    static func sitsOnCart(_ rider: ReferenceKey, links: [ReferenceKey: VehicleLink]) -> Bool {
+        guard case .fixed? = links[rider]?.seat else { return false }
+        return true
+    }
 }
 
 extension AgentTeleportJob: AgentTeleportJobPort {}
