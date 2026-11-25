@@ -8,19 +8,7 @@ public import OpenSkyMagicInterface
 
 extension MagicCoordinator.MagicMenu {
     public var magicMenuSpells: [MagicMenuSpell] {
-        guard let caster = coordinator.caster else { return [] }
-        let book = caster.spellbook.state(of: .player)
-        let texts = coordinator.texts.magic
-        return listedSpells.map { spell in
-            var row = MagicMenuSpell(
-                name: spell.displayName,
-                isReadied: !book.hands(of: spell.key).isEmpty,
-                category: texts.menuCategory(of: spell.spellType, magicSkill: spell.magicSkill),
-                card: card(of: spell, caster: caster, texts: texts)
-            )
-            row.hands = book.hands(of: spell.key)
-            return row
-        }
+        SpellCards(owner: self).magicMenuSpells
     }
 
     /// The level is the minimum skill level of the costliest effect, the effect that
@@ -28,15 +16,7 @@ extension MagicCoordinator.MagicMenu {
     private func card(
         of spell: ResolvedSpell, caster: CasterRuntime, texts: MagicTexts
     ) -> MagicMenuSpellCard {
-        let costliest = spell.effects.max { $0.cost < $1.cost }
-        let isPower = spell.spellType == .power || spell.spellType == .lesserPower
-        return MagicMenuSpellCard(
-            kind: isPower ? .power : .spell,
-            effects: cardText(of: spell),
-            cost: Int(caster.cost(of: spell, caster: .player).rounded()),
-            costIsPerSecond: spell.data?.castingType == .concentration,
-            level: texts.level(minimumSkill: costliest?.effect?.effect.data?.minimumSkillLevel ?? 0)
-        )
+        SpellCards(owner: self).card(of: spell, caster: caster, texts: texts)
     }
 
     /// The spell's own description, or else the description of each effect the player
@@ -83,19 +63,7 @@ extension MagicCoordinator.MagicMenu {
     /// The effects on the player, for the menu's last tab. An effect with an end shows
     /// the whole seconds it has left.
     public var magicMenuActiveEffects: [MagicMenuSpell] {
-        guard let runtime = coordinator.effects else { return [] }
-        return runtime.active(on: .player).map { effect in
-            let name = coordinator.effectsPanel.readout(of: effect, runtime: runtime).name
-            let secondsLeft = effect.lifetime > 0 ? Int(effect.remaining.rounded(.down)) : nil
-            var row = MagicMenuSpell(
-                name: name, isReadied: false, card: MagicMenuSpellCard(
-                    kind: .activeEffect(secondsLeft: secondsLeft),
-                    effects: activeEffectText(of: effect, runtime: runtime, name: name)
-                )
-            )
-            row.isNegative = effect.isDetrimental
-            return row
-        }
+        SpellCards(owner: self).magicMenuActiveEffects
     }
 
     /// The effect's own description with its running magnitude and duration filled in,
@@ -163,6 +131,62 @@ extension MagicCoordinator.MagicMenu {
         return runtime.active(on: .player).contains { effect in
             effect.isDetrimental && effect.mode == .perSecond
                 && effect.values.contains { $0.index == health && $0.magnitude > 0 }
+        }
+    }
+}
+
+extension MagicCoordinator.MagicMenu {
+    /// Builds the spell list and the active effects of the magic menu.
+    struct SpellCards {
+        let owner: MagicCoordinator.MagicMenu
+
+        var magicMenuSpells: [MagicMenuSpell] {
+            let coordinator = owner.coordinator
+            guard let caster = coordinator.caster else { return [] }
+            let book = caster.spellbook.state(of: .player)
+            let texts = coordinator.texts.magic
+            return owner.listedSpells.map { spell in
+                var row = MagicMenuSpell(
+                    name: spell.displayName,
+                    isReadied: !book.hands(of: spell.key).isEmpty,
+                    category: texts.menuCategory(of: spell.spellType, magicSkill: spell.magicSkill),
+                    card: owner.card(of: spell, caster: caster, texts: texts)
+                )
+                row.hands = book.hands(of: spell.key)
+                return row
+            }
+        }
+
+        func card(
+            of spell: ResolvedSpell, caster: CasterRuntime, texts: MagicTexts
+        ) -> MagicMenuSpellCard {
+            let costliest = spell.effects.max { $0.cost < $1.cost }
+            let isPower = spell.spellType == .power || spell.spellType == .lesserPower
+            return MagicMenuSpellCard(
+                kind: isPower ? .power : .spell,
+                effects: owner.cardText(of: spell),
+                cost: Int(caster.cost(of: spell, caster: .player).rounded()),
+                costIsPerSecond: spell.data?.castingType == .concentration,
+                level: texts
+                    .level(minimumSkill: costliest?.effect?.effect.data?.minimumSkillLevel ?? 0)
+            )
+        }
+
+        var magicMenuActiveEffects: [MagicMenuSpell] {
+            let coordinator = owner.coordinator
+            guard let runtime = coordinator.effects else { return [] }
+            return runtime.active(on: .player).map { effect in
+                let name = coordinator.effectsPanel.readout(of: effect, runtime: runtime).name
+                let secondsLeft = effect.lifetime > 0 ? Int(effect.remaining.rounded(.down)) : nil
+                var row = MagicMenuSpell(
+                    name: name, isReadied: false, card: MagicMenuSpellCard(
+                        kind: .activeEffect(secondsLeft: secondsLeft),
+                        effects: owner.activeEffectText(of: effect, runtime: runtime, name: name)
+                    )
+                )
+                row.isNegative = effect.isDetrimental
+                return row
+            }
         }
     }
 }

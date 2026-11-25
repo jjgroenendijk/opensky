@@ -160,32 +160,12 @@ extension MagicCoordinator.EnchantingTable {
 
     /// The first effect's magnitude, or its duration where power changes only that.
     static func scaledValue(of base: ResolvedEnchantment) -> Float {
-        guard let first = base.effects.first else { return 0 }
-        let flags = first.effect?.effect.data?.flags ?? []
-        if flags.contains(.powerAffectsDuration), !flags.contains(.powerAffectsMagnitude) {
-            return Float(first.item.duration)
-        }
-        return first.item.magnitude
+        EnchantingKinds.scaledValue(of: base)
     }
 
     /// True for a weapon, false for apparel, nil for anything an enchanter refuses.
     func enchantableKind(of item: FormID) -> Bool? {
-        guard
-            let items = coordinator.world.inventory?.baselines.items,
-            let definition = items.definition(item),
-            !coordinator.world.itemHasKeyword(
-                "MagicDisallowEnchanting",
-                on: item
-            ) else { return nil }
-        switch definition.family {
-        case .weapon:
-            let animation = items.weapon(item)?.animationType
-            return animation == .staff ? nil : true
-        case .armor:
-            return false
-        default:
-            return nil
-        }
+        EnchantingKinds(owner: self).enchantableKind(of: item)
     }
 
     /// A weapon takes fire-and-forget contact bases; apparel takes constant effects. The
@@ -240,4 +220,40 @@ struct EnchantingOrder {
     let input: EnchantingInput
     let isWeapon: Bool
     let records: [ResolvedEnchantment]
+}
+
+extension MagicCoordinator.EnchantingTable {
+    /// Scales an enchantment's value and finds the kind of item it fits.
+    struct EnchantingKinds {
+        let owner: MagicCoordinator.EnchantingTable
+
+        static func scaledValue(of base: ResolvedEnchantment) -> Float {
+            guard let first = base.effects.first else { return 0 }
+            let flags = first.effect?.effect.data?.flags ?? []
+            if flags.contains(.powerAffectsDuration), !flags.contains(.powerAffectsMagnitude) {
+                return Float(first.item.duration)
+            }
+            return first.item.magnitude
+        }
+
+        func enchantableKind(of item: FormID) -> Bool? {
+            let coordinator = owner.coordinator
+            guard
+                let items = coordinator.world.inventory?.baselines.items,
+                let definition = items.definition(item),
+                !coordinator.world.itemHasKeyword(
+                    "MagicDisallowEnchanting",
+                    on: item
+                ) else { return nil }
+            switch definition.family {
+            case .weapon:
+                let animation = items.weapon(item)?.animationType
+                return animation == .staff ? nil : true
+            case .armor:
+                return false
+            default:
+                return nil
+            }
+        }
+    }
 }

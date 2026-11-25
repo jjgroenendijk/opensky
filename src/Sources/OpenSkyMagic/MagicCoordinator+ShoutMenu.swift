@@ -42,67 +42,96 @@ extension MagicCoordinator.MagicMenu {
     /// The recharge is that of the last unlocked word, or of the first word with none
     /// unlocked, after the player's Shout Recovery Mult (docs/engine/unverified-values.md).
     private func shoutCard(of shout: ResolvedShout) -> MagicMenuSpellCard {
-        let voice = coordinator.shoutVoice
-        let unlocked = voice.unlockedWordCount(of: shout)
-        let words = shout.words.enumerated().map { index, word in
-            MagicMenuShoutWord(
-                dragon: word.dragonName, translation: word.word?.translationText ?? "",
-                isUnlocked: index < unlocked
-            )
-        }
-        let multiplier = ActorValueIdentity.index(named: "Shout Recovery Mult")
-            .flatMap { coordinator.effects?.values.value(at: $0, on: .player) } ?? 1
-        let recharge = shout.words.indices.contains(max(unlocked, 1) - 1)
-            ? ShoutCore.cooldown(
-                recovery: shout.words[max(unlocked, 1) - 1].entry.recoveryTime,
-                multiplier: multiplier
-            )
-            : 0
-        return MagicMenuSpellCard(
-            kind: .shout(words: words), effects: shout.descriptionText,
-            cost: Int(recharge.rounded())
-        )
+        ShoutCards(owner: self).shoutCard(of: shout)
     }
 
     /// Equips the shout; a shout in progress keeps the old one.
     public func readyShout(at index: Int, texts: GameSettingTexts<ShoutMenuText>) -> String {
-        let shouts = menuShouts
-        guard shouts.indices.contains(index) else { return "No shout selected." }
-        guard coordinator.shoutMachine.isIdle else { return texts[.failShouting] }
-        coordinator.shoutReadout.equipShout(shouts[index].key)
-        return "Equipped \(shouts[index].shout.displayName)."
+        ShoutCards(owner: self).readyShout(at: index, texts: texts)
     }
 
     /// Nil when the shout has no learned word left to unlock.
     public func shoutUnlockStep(
         at index: Int, texts: GameSettingTexts<ShoutMenuText>
     ) -> ShoutUnlockStep? {
-        let shouts = menuShouts
-        guard shouts.indices.contains(index) else { return nil }
-        let shout = shouts[index].shout
-        let voice = coordinator.shoutVoice
-        let unlocked = voice.unlockedWordCount(of: shout)
-        let words = voice.wordKeys(of: shout)
-        guard
-            words.indices.contains(unlocked), let word = words[unlocked],
-            coordinator.world.shoutKnowledge.knownWords.contains(word)
-        else { return nil }
-        return coordinator.shoutReadout.dragonSouls >= 1
-            ? .ask(texts[.confirmSpendSoul]) : .refuse(texts[.failSpendSoul])
+        ShoutCards(owner: self).shoutUnlockStep(at: index, texts: texts)
     }
 
     public func unlockShout(at index: Int) -> ShoutUnlockReply {
-        let shouts = menuShouts
-        guard shouts.indices.contains(index) else {
-            return ShoutUnlockReply(text: "No shout selected.")
+        ShoutCards(owner: self).unlockShout(at: index)
+    }
+}
+
+extension MagicCoordinator.MagicMenu {
+    /// Builds the shout cards and unlocks words of power.
+    struct ShoutCards {
+        let owner: MagicCoordinator.MagicMenu
+
+        func shoutCard(of shout: ResolvedShout) -> MagicMenuSpellCard {
+            let coordinator = owner.coordinator
+            let voice = coordinator.shoutVoice
+            let unlocked = voice.unlockedWordCount(of: shout)
+            let words = shout.words.enumerated().map { index, word in
+                MagicMenuShoutWord(
+                    dragon: word.dragonName, translation: word.word?.translationText ?? "",
+                    isUnlocked: index < unlocked
+                )
+            }
+            let multiplier = ActorValueIdentity.index(named: "Shout Recovery Mult")
+                .flatMap { coordinator.effects?.values.value(at: $0, on: .player) } ?? 1
+            let recharge = shout.words.indices.contains(max(unlocked, 1) - 1)
+                ? ShoutCore.cooldown(
+                    recovery: shout.words[max(unlocked, 1) - 1].entry.recoveryTime,
+                    multiplier: multiplier
+                )
+                : 0
+            return MagicMenuSpellCard(
+                kind: .shout(words: words), effects: shout.descriptionText,
+                cost: Int(recharge.rounded())
+            )
         }
-        let outcome = coordinator.shoutReadout.unlockNextWord(of: shouts[index].key)
-        guard case let .unlocked(word, soulsLeft, mastered) = outcome else {
-            return ShoutUnlockReply(text: "\(outcome)")
+
+        func readyShout(at index: Int, texts: GameSettingTexts<ShoutMenuText>) -> String {
+            let coordinator = owner.coordinator
+            let shouts = owner.menuShouts
+            guard shouts.indices.contains(index) else { return "No shout selected." }
+            guard coordinator.shoutMachine.isIdle else { return texts[.failShouting] }
+            coordinator.shoutReadout.equipShout(shouts[index].key)
+            return "Equipped \(shouts[index].shout.displayName)."
         }
-        return ShoutUnlockReply(
-            text: "Unlocked \(word); \(soulsLeft) dragon souls left.",
-            sound: mastered ? ShoutUnlockReply.learnAllSound : ShoutUnlockReply.learnSingleSound
-        )
+
+        func shoutUnlockStep(
+            at index: Int, texts: GameSettingTexts<ShoutMenuText>
+        ) -> ShoutUnlockStep? {
+            let coordinator = owner.coordinator
+            let shouts = owner.menuShouts
+            guard shouts.indices.contains(index) else { return nil }
+            let shout = shouts[index].shout
+            let voice = coordinator.shoutVoice
+            let unlocked = voice.unlockedWordCount(of: shout)
+            let words = voice.wordKeys(of: shout)
+            guard
+                words.indices.contains(unlocked), let word = words[unlocked],
+                coordinator.world.shoutKnowledge.knownWords.contains(word)
+            else { return nil }
+            return coordinator.shoutReadout.dragonSouls >= 1
+                ? .ask(texts[.confirmSpendSoul]) : .refuse(texts[.failSpendSoul])
+        }
+
+        func unlockShout(at index: Int) -> ShoutUnlockReply {
+            let coordinator = owner.coordinator
+            let shouts = owner.menuShouts
+            guard shouts.indices.contains(index) else {
+                return ShoutUnlockReply(text: "No shout selected.")
+            }
+            let outcome = coordinator.shoutReadout.unlockNextWord(of: shouts[index].key)
+            guard case let .unlocked(word, soulsLeft, mastered) = outcome else {
+                return ShoutUnlockReply(text: "\(outcome)")
+            }
+            return ShoutUnlockReply(
+                text: "Unlocked \(word); \(soulsLeft) dragon souls left.",
+                sound: mastered ? ShoutUnlockReply.learnAllSound : ShoutUnlockReply.learnSingleSound
+            )
+        }
     }
 }
