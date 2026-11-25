@@ -10,7 +10,7 @@ import OpenSkyWorldState
 public import simd
 
 /// What the world adapters use of `CellStreamer`.
-public protocol CellStreamerPort: AnyObject, PapyrusWorldReferenceSource {
+public protocol CellStreamerPort: CellStreamerReadoutsPort, PapyrusWorldReferenceSource {
     associatedtype Actors: CellStreamerActorsPort
     var actors: Actors { get }
     associatedtype Residents: CellStreamerResidentsPort
@@ -20,9 +20,7 @@ public protocol CellStreamerPort: AnyObject, PapyrusWorldReferenceSource {
     associatedtype Events: CellStreamerEventsPort
     var events: Events { get }
     associatedtype ActivationGateSeam: ActivationGateSeamPort
-    associatedtype CellAnimatedVehicle: CellAnimatedVehiclePort
     associatedtype CellAttachment: CellAttachmentPort
-    associatedtype CellGridManager: CellGridManagerPort
     associatedtype CellScene: CellScenePort
     associatedtype CellSceneComposition: CellSceneCompositionPort
     associatedtype TalkTargetingSeam: TalkTargetingSeamPort
@@ -32,12 +30,6 @@ public protocol CellStreamerPort: AnyObject, PapyrusWorldReferenceSource {
     var currentCellLocation: CellSceneLocation? { get }
     var dynamicBodies: DynamicBodyWorld { get set }
     func enterWorldspace(_ editorID: String, camera: SceneCamera)
-    var fullLODReferenceCount: Int { get }
-    var generatedTerrainBlockCount: Int { get }
-    var grid: CellGridManager { get }
-    var hiddenLargeReferenceSegments: Int { get }
-    var coverageReadout: CellCoverageReadout { get }
-    var inFlightCellCount: Int { get }
     var interactionTarget: InteractionTarget? { get }
     var interactionRayHit: InteractionRayHit? { get }
     var interiorMutationSequence: UInt64 { get }
@@ -49,25 +41,18 @@ public protocol CellStreamerPort: AnyObject, PapyrusWorldReferenceSource {
     var lastDoorArrival: SIMD3<Float>? { get }
     func leaveInterior(camera: SceneCamera)
     func registerCellAttached(_ phase: CellAttachStep, _ step: @escaping (CellAttachment) -> Void)
-    var pendingCompletionCount: Int { get }
     var placedRecords: PlacedRecordLookup? { get }
     var playerRegions: [FormID] { get }
     func poseMovingCollision(bones: (UInt32) -> [simd_float4x4]?)
-    var queuedRequestCount: Int { get }
-    func residentAnimatedVehicles() -> [CellAnimatedVehicle]
     var residentCellLocations: Set<CellSceneLocation> { get }
-    var residentReferenceCount: Int { get }
     var sequenceDoorLeaves: [UInt32: [float4x4]] { get set }
     func setActorProp(_ prop: ActorPropAttachment?, on actor: FormID)
     var startAreaReady: Bool { get }
     var talk: TalkTargetingSeam { get set }
     var transitionInFlight: FormID? { get }
     var worldspaceEditorID: String { get }
-    var cachedAssetCounts: CachedAssetCounts? { get }
 
     func moveStart(to position: SIMD3<Float>)
-    func findPath(_ query: NavigationPathQuery) -> NavigationPathResult
-    var largeReferenceCount: Int { get }
     @discardableResult func requestDoorTransition(from sourceDoor: FormID) -> Bool
     func requestRebuild(of location: CellSceneLocation)
     /// A rebuild that goes before the first loads still queued.
