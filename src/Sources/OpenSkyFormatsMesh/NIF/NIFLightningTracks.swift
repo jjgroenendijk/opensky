@@ -4,71 +4,73 @@
 import Foundation
 import OpenSkyFormatsCore
 
-nonisolated struct LightningTrackDecoder {
-    let file: NIFFile
-    let sequences: [NIFFile.DecodedSequence]
+nonisolated extension NIFFile {
+    struct LightningTrackDecoder {
+        let file: NIFFile
+        let sequences: [NIFFile.DecodedSequence]
 
-    /// Sets the default tracks and the tracks of each sequence that feeds the controller.
-    func fill(
-        _ lightning: inout ParticleLightning,
-        controller: NIFLightningController,
-        index: Int32
-    ) {
-        var fed: [(sequence: NIFFile.DecodedSequence, tracks: LightningTracks)] = []
-        for sequence in sequences {
-            guard let feed = sequence.feeds[index] else { continue }
-            let tracks = tracks(feed)
-            fed.append((sequence, tracks))
-            if let name = sequence.name?.lowercased(), lightning.sequenceTracks[name] == nil {
-                lightning.sequenceTracks[name] = tracks
+        /// Sets the default tracks and the tracks of each sequence that feeds the controller.
+        func fill(
+            _ lightning: inout ParticleLightning,
+            controller: NIFLightningController,
+            index: Int32
+        ) {
+            var fed: [(sequence: NIFFile.DecodedSequence, tracks: LightningTracks)] = []
+            for sequence in sequences {
+                guard let feed = sequence.feeds[index] else { continue }
+                let tracks = tracks(feed)
+                fed.append((sequence, tracks))
+                if let name = sequence.name?.lowercased(), lightning.sequenceTracks[name] == nil {
+                    lightning.sequenceTracks[name] = tracks
+                }
             }
+            // A sequence that leaves the generation unset cannot start a bolt.
+            let starting = fed.filter { !$0.tracks.generation.isEmpty }
+            let chosen = NIFFile.ControllerSequenceDecoder.defaultSequence(starting.map(\.sequence))
+            lightning.tracks = starting.first { $0.sequence == chosen }?.tracks ?? own(controller)
         }
-        // A sequence that leaves the generation unset cannot start a bolt.
-        let starting = fed.filter { !$0.tracks.generation.isEmpty }
-        let chosen = NIFFile.ControllerSequenceDecoder.defaultSequence(starting.map(\.sequence))
-        lightning.tracks = starting.first { $0.sequence == chosen }?.tracks ?? own(controller)
-    }
 
-    /// The interpolator IDs seen in the vanilla meshes. The other four values
-    /// (subdivisions, branches, branch variation, length variation) have none there.
-    private func tracks(_ feed: SequenceFeed) -> LightningTracks {
-        var tracks = LightningTracks(timing: feed.timing)
-        tracks.generation = bools(feed.interpolators["Generation"])
-        tracks.mutation = bools(feed.interpolators["Mutation"])
-        tracks.length = floats(feed.interpolators["Length"])
-        tracks.width = floats(feed.interpolators["Width"])
-        tracks.arcOffset = floats(feed.interpolators["ArcOffset"])
-        return tracks
-    }
+        /// The interpolator IDs seen in the vanilla meshes. The other four values
+        /// (subdivisions, branches, branch variation, length variation) have none there.
+        private func tracks(_ feed: SequenceFeed) -> LightningTracks {
+            var tracks = LightningTracks(timing: feed.timing)
+            tracks.generation = bools(feed.interpolators["Generation"])
+            tracks.mutation = bools(feed.interpolators["Mutation"])
+            tracks.length = floats(feed.interpolators["Length"])
+            tracks.width = floats(feed.interpolators["Width"])
+            tracks.arcOffset = floats(feed.interpolators["ArcOffset"])
+            return tracks
+        }
 
-    /// The controller's own interpolators, in nif.xml order; nil when none keys the
-    /// generation.
-    private func own(_ controller: NIFLightningController) -> LightningTracks? {
-        let refs = controller.interpolatorRefs
-        guard refs.count == 9 else { return nil }
-        var tracks = LightningTracks(timing: controller.base.timing)
-        tracks.generation = bools(refs[0])
-        tracks.mutation = bools(refs[1])
-        tracks.subdivisions = floats(refs[2])
-        tracks.branches = floats(refs[3])
-        tracks.branchVariation = floats(refs[4])
-        tracks.length = floats(refs[5])
-        tracks.lengthVariation = floats(refs[6])
-        tracks.width = floats(refs[7])
-        tracks.arcOffset = floats(refs[8])
-        return tracks.generation.isEmpty ? nil : tracks
-    }
+        /// The controller's own interpolators, in nif.xml order; nil when none keys the
+        /// generation.
+        private func own(_ controller: NIFLightningController) -> LightningTracks? {
+            let refs = controller.interpolatorRefs
+            guard refs.count == 9 else { return nil }
+            var tracks = LightningTracks(timing: controller.base.timing)
+            tracks.generation = bools(refs[0])
+            tracks.mutation = bools(refs[1])
+            tracks.subdivisions = floats(refs[2])
+            tracks.branches = floats(refs[3])
+            tracks.branchVariation = floats(refs[4])
+            tracks.length = floats(refs[5])
+            tracks.lengthVariation = floats(refs[6])
+            tracks.width = floats(refs[7])
+            tracks.arcOffset = floats(refs[8])
+            return tracks.generation.isEmpty ? nil : tracks
+        }
 
-    private func bools(_ ref: Int32?) -> [NIFKey<Bool>] {
-        ref.flatMap { ref in
-            attempt { try NIFFile.ParticleControllerDecoder.boolKeys(ref, file: file) }
-        } ?? []
-    }
+        private func bools(_ ref: Int32?) -> [NIFKey<Bool>] {
+            ref.flatMap { ref in
+                attempt { try NIFFile.ParticleControllerDecoder.boolKeys(ref, file: file) }
+            } ?? []
+        }
 
-    private func floats(_ ref: Int32?) -> [NIFKey<Float>] {
-        ref.flatMap { ref in
-            attempt { try NIFFile.ParticleControllerDecoder.floatKeys(ref, file: file) }
-        } ?? []
+        private func floats(_ ref: Int32?) -> [NIFKey<Float>] {
+            ref.flatMap { ref in
+                attempt { try NIFFile.ParticleControllerDecoder.floatKeys(ref, file: file) }
+            } ?? []
+        }
     }
 }
 
