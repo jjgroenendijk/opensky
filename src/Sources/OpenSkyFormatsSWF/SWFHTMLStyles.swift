@@ -124,109 +124,111 @@ nonisolated extension SWFHTMLText {
     }
 }
 
-/// The running state of `parseStyled`: the text so far, the `<font>` stack, and the spans.
-nonisolated private struct StyledParser {
-    var content = SWFHTMLContent()
-    var fonts: [SWFTextStyleSpan] = []
-    var paragraph = 0
-    var endsWithParagraph = false
+nonisolated extension SWFHTMLText {
+    /// The running state of `parseStyled`: the text so far, the `<font>` stack, and the spans.
+    private struct StyledParser {
+        var content = SWFHTMLContent()
+        var fonts: [SWFTextStyleSpan] = []
+        var paragraph = 0
+        var endsWithParagraph = false
 
-    var offset: Int {
-        content.text.utf16.count
-    }
-
-    mutating func append(
-        character: Character, tag: inout String?, entity: inout String?
-    ) {
-        switch character {
-        case "<": tag = ""
-        case "&": entity = ""
-        default: append(text: String(character))
+        var offset: Int {
+            content.text.utf16.count
         }
-    }
 
-    mutating func append(text: String) {
-        content.text += text
-        endsWithParagraph = false
-    }
-
-    mutating func apply(tag body: String) {
-        let trimmed = body.trimmingCharacters(in: .whitespaces)
-        let name = String(trimmed.lowercased().prefix { !$0.isWhitespace })
-        let attributes = SWFHTMLText.attributes(of: String(trimmed.dropFirst(name.count)))
-        switch name {
-        case "font":
-            openFont(attributes)
-        case "/font":
-            _ = fonts.popLast()
-            markStyle(fonts.last ?? SWFTextStyleSpan(start: 0))
-        case "p":
-            if let align = attributes["align"].flatMap(Self.alignCode) {
-                content.styles.alignments[paragraph] = align
+        mutating func append(
+            character: Character, tag: inout String?, entity: inout String?
+        ) {
+            switch character {
+            case "<": tag = ""
+            case "&": entity = ""
+            default: append(text: String(character))
             }
-        case "/p", "br", "br/":
-            content.text.append(SWFHTMLText.paragraphEnd)
-            paragraph += 1
-            endsWithParagraph = name == "/p"
-        case "img":
-            if let image = SWFHTMLText.image(fromTag: trimmed) {
-                append(text: String(SWFHTMLText.imageMarker))
-                content.images.append(image)
+        }
+
+        mutating func append(text: String) {
+            content.text += text
+            endsWithParagraph = false
+        }
+
+        mutating func apply(tag body: String) {
+            let trimmed = body.trimmingCharacters(in: .whitespaces)
+            let name = String(trimmed.lowercased().prefix { !$0.isWhitespace })
+            let attributes = SWFHTMLText.attributes(of: String(trimmed.dropFirst(name.count)))
+            switch name {
+            case "font":
+                openFont(attributes)
+            case "/font":
+                _ = fonts.popLast()
+                markStyle(fonts.last ?? SWFTextStyleSpan(start: 0))
+            case "p":
+                if let align = attributes["align"].flatMap(Self.alignCode) {
+                    content.styles.alignments[paragraph] = align
+                }
+            case "/p", "br", "br/":
+                content.text.append(SWFHTMLText.paragraphEnd)
+                paragraph += 1
+                endsWithParagraph = name == "/p"
+            case "img":
+                if let image = SWFHTMLText.image(fromTag: trimmed) {
+                    append(text: String(SWFHTMLText.imageMarker))
+                    content.images.append(image)
+                }
+            default:
+                break
             }
-        default:
-            break
         }
-    }
 
-    private mutating func openFont(_ attributes: [String: String]) {
-        var style = fonts.last ?? SWFTextStyleSpan(start: 0)
-        if let color = attributes["color"].flatMap(SWFHTMLText.color) {
-            style.color = color
+        private mutating func openFont(_ attributes: [String: String]) {
+            var style = fonts.last ?? SWFTextStyleSpan(start: 0)
+            if let color = attributes["color"].flatMap(SWFHTMLText.color) {
+                style.color = color
+            }
+            if
+                let size = attributes["size"]
+                    .flatMap({ Float($0.trimmingCharacters(in: .whitespaces)) })
+            {
+                style.sizeTwips = size * SWFTextLayout.twipsPerPixel
+            }
+            if let face = attributes["face"], !face.isEmpty {
+                style.face = face
+            }
+            if let spacing = attributes["letterspacing"].flatMap({ Float($0) }) {
+                style.letterSpacingTwips = spacing * SWFTextLayout.twipsPerPixel
+            }
+            fonts.append(style)
+            markStyle(style)
         }
-        if
-            let size = attributes["size"]
-                .flatMap({ Float($0.trimmingCharacters(in: .whitespaces)) })
-        {
-            style.sizeTwips = size * SWFTextLayout.twipsPerPixel
-        }
-        if let face = attributes["face"], !face.isEmpty {
-            style.face = face
-        }
-        if let spacing = attributes["letterspacing"].flatMap({ Float($0) }) {
-            style.letterSpacingTwips = spacing * SWFTextLayout.twipsPerPixel
-        }
-        fonts.append(style)
-        markStyle(style)
-    }
 
-    /// Starts `style` at the current offset. A span with no text yet is replaced.
-    private mutating func markStyle(_ style: SWFTextStyleSpan) {
-        let span = style.restarted(at: offset)
-        if content.styles.spans.last?.start == offset {
-            content.styles.spans.removeLast()
+        /// Starts `style` at the current offset. A span with no text yet is replaced.
+        private mutating func markStyle(_ style: SWFTextStyleSpan) {
+            let span = style.restarted(at: offset)
+            if content.styles.spans.last?.start == offset {
+                content.styles.spans.removeLast()
+            }
+            let current = content.styles.spans.last ?? SWFTextStyleSpan(start: 0)
+            if current.restarted(at: offset) != span {
+                content.styles.spans.append(span)
+            }
         }
-        let current = content.styles.spans.last ?? SWFTextStyleSpan(start: 0)
-        if current.restarted(at: offset) != span {
-            content.styles.spans.append(span)
-        }
-    }
 
-    private static func alignCode(_ value: String) -> UInt8? {
-        switch value.lowercased() {
-        case "left": 0
-        case "right": 1
-        case "center", "centre": 2
-        case "justify": 3
-        default: nil
+        private static func alignCode(_ value: String) -> UInt8? {
+            switch value.lowercased() {
+            case "left": 0
+            case "right": 1
+            case "center", "centre": 2
+            case "justify": 3
+            default: nil
+            }
         }
-    }
 
-    mutating func finished() -> SWFHTMLContent {
-        if endsWithParagraph, content.text.last == SWFHTMLText.paragraphEnd {
-            content.text.removeLast()
+        mutating func finished() -> SWFHTMLContent {
+            if endsWithParagraph, content.text.last == SWFHTMLText.paragraphEnd {
+                content.text.removeLast()
+            }
+            let end = offset
+            content.styles.spans.removeAll { $0.start >= end }
+            return content
         }
-        let end = offset
-        content.styles.spans.removeAll { $0.start >= end }
-        return content
     }
 }
