@@ -96,6 +96,11 @@ the skin. Vanilla body files have dummy nodes without bind translations, so they
 full pose source. FaceGen's own `NPC Head` and `NPC Spine2` nodes hold the current pose,
 which moves the mouth up to head height.
 
+A skin and the animation skeleton can spell one bone in different case. The chicken's
+skin and `skeleton.nif` name the head bone `HEAD`, and its `skeleton.hkx` names it `Head`.
+The head moves with the animation in the game, so a bone name matches without regard to
+case. OpenSky tries the exact name first, then the name in any case.
+
 The Gamebryo skin matrix, from the
 [public NiSkinInstance help](https://morrowind-nif.github.io/Notes_EN/module_2_3_2_38_4.htm):
 
