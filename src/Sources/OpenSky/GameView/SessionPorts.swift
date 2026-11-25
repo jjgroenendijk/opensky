@@ -342,7 +342,7 @@ extension SessionPorts {
     }
 
     func itemWeight(of base: FormID) -> Float? {
-        scope.inventory.runtime?.inventory.baselines.items.definition(base)?.weight
+        scope.inventory.runtime?.weight(of: base)
     }
 
     var clothReadout: ClothReadout {
