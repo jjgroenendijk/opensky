@@ -151,7 +151,7 @@ extension MagicWorldAdapter {
 
     @discardableResult
     public func placeHazard(_ hazard: ReferenceKey, at point: SIMD3<Float>) -> Bool {
-        heldMagic.placeHazard(hazard, at: point)
+        MagicHazardPlacement(game: heldMagic.game).placeHazard(hazard, at: point)
     }
 
     public func perkChoices(
