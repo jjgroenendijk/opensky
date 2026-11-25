@@ -129,7 +129,7 @@ extension GameSessionScopeFactories {
     }
 
     func makeFurniture() -> FurnitureCoordinator {
-        let furniture = FurnitureCoordinator(world: scope.aiWorld.worlds)
+        let furniture = FurnitureCoordinator(world: scope.aiWorld.furnitureWorlds)
         guard scope.stage != nil else { return furniture }
         let store = scope.playerSettingsStore
         furniture.isEnabled = store.bool(.furniture)
