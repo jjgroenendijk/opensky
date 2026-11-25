@@ -37,6 +37,30 @@ struct WorldAudioSoundDirectorTests {
         #expect(director.lastSFXError == nil)
     }
 
+    @Test func anActorLoopStartsFollowsItsActorAndStops() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = Fixture.makeDirector(
+            engine: engine,
+            soundStore: Fixture.makeSoundStore(
+                soundID: 0xAAA, descriptorID: 0xBBB, tracks: ["fx/breath.xwm"], loops: true,
+                editorID: "NPCBreath"
+            )
+        )
+        let sounds = ActorSounds(types: [ActorSoundType(
+            type: ActorSoundKind.consciousLoop.rawValue, entries: [.init(sound: FormID(0xBBB))]
+        )])
+        let actor = ReferenceKey.generated(1)
+        let near = ActorSoundSource(key: actor, position: .zero, sounds: sounds, isConscious: true)
+        director.updateActorLoops([near], listener: .zero)
+        #expect(director.actorLoops.count == 1)
+        var moved = near
+        moved.position = SIMD3(10, 0, 0)
+        director.updateActorLoops([moved], listener: .zero)
+        #expect(director.actorLoops.values.first == SIMD3(10, 0, 0))
+        director.updateActorLoops([], listener: .zero)
+        #expect(director.actorLoops.isEmpty)
+    }
+
     @Test func handleInteractionNoOpWithoutSounds() throws {
         let engine = try Fixture.makeRunningEngine()
         let director = Fixture.makeDirector(engine: engine, soundStore: nil)

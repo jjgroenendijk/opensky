@@ -244,10 +244,26 @@ extension CellStreamer.ResidentSteps {
         activate(interactionTarget)
     }
 
+    public func activate(_ target: InteractionTarget, offeringPerkChoices: Bool = true) {
+        CellStreamer.Activation(streamer: streamer)
+            .activate(target, offeringPerkChoices: offeringPerkChoices)
+    }
+}
+
+/// The streamer is the app's answer to "what does this reference decode to,
+/// and where is it right now" for the Papyrus world bridge. Only the player's
+/// cell needs a new name here; the other members already existed.
+extension CellStreamer: PapyrusWorldReferenceSource {
+    public var playerCellLocation: CellSceneLocation? {
+        currentCellLocation
+    }
+}
+
+extension CellStreamer.Activation {
     /// One activation of `target`: the gate first, then the perk choices, the event,
     /// talk, and door. The lockpicking menu calls this again after a lock opens, and
     /// the perk choice menu with `offeringPerkChoices` false.
-    public func activate(_ target: InteractionTarget, offeringPerkChoices: Bool = true) {
+    func activate(_ target: InteractionTarget, offeringPerkChoices: Bool = true) {
         if let refusal = streamer.activationGate.refusal(for: target) {
             streamer.activationGate.refusals(ActivationRefusalEvent(
                 target: target,
@@ -266,7 +282,10 @@ extension CellStreamer.ResidentSteps {
             let event = TalkActivationEvent(
                 interaction: target.interaction,
                 pickedSpeaker: streamer.talk.speaker,
-                placedKey: { referenceEntry(formID: target.interaction.reference)?.key }
+                placedKey: {
+                    CellStreamer.ResidentSteps(streamer: streamer)
+                        .referenceEntry(formID: target.interaction.reference)?.key
+                }
             )
         {
             streamer.talk.activations(event)
@@ -296,14 +315,5 @@ extension CellStreamer.ResidentSteps {
             return interiorScene.doors.first { $0.reference == reference }
         }
         return streamer.composition.door(reference: reference)
-    }
-}
-
-/// The streamer is the app's answer to "what does this reference decode to,
-/// and where is it right now" for the Papyrus world bridge. Only the player's
-/// cell needs a new name here; the other members already existed.
-extension CellStreamer: PapyrusWorldReferenceSource {
-    public var playerCellLocation: CellSceneLocation? {
-        currentCellLocation
     }
 }

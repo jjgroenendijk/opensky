@@ -190,3 +190,10 @@ struct WorldAudioPlayback {
 struct WorldAudioInteractionSounds {
     let director: WorldAudioSoundDirector
 }
+
+extension WorldAudioSoundDirector {
+    /// The actor loop update, apart from the director's other sounds.
+    struct ActorLoopUpdate {
+        let director: WorldAudioSoundDirector
+    }
+}
