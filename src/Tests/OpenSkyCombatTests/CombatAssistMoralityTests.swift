@@ -71,7 +71,7 @@ struct CombatAssistMoralityTests {
 
     @Test func theHelpViewAsksTheWorldAboutCrimes() {
         let (runtime, world) = Self.session()
-        let view = CombatHelpView(runtime: runtime, world: world)
+        let view = runtime.helpView(world: world)
         #expect(!view.attacksPlayerOnSightForCrimes(Self.helper))
         world.crimeAttackers = [Self.helper]
         #expect(view.attacksPlayerOnSightForCrimes(Self.helper))
