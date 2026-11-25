@@ -54,16 +54,35 @@ nonisolated public struct SkinningPalette: Sendable {
     }
 
     /// Composes an animated skeleton-world pose, keyed by bone name, into a
-    /// palette. Unmatched helper and NIF-only bones keep their bind matrix.
+    /// palette. Unmatched helper and NIF-only bones keep their bind matrix. A name
+    /// that differs only in case matches, as `SkeletonBoneIndex` does.
     public func posed(by transformsByName: [String: float4x4]) -> Posed {
         var matrices = bindPoseMatrices
         var matchedBoneCount = 0
+        var folded: [String: float4x4]?
         for index in boneNames.indices {
-            guard let current = transformsByName[boneNames[index]] else { continue }
+            var found = transformsByName[boneNames[index]]
+            if found == nil {
+                let byFoldedName = folded ?? Self.foldingNames(of: transformsByName)
+                folded = byFoldedName
+                found = byFoldedName[boneNames[index].lowercased()]
+            }
+            guard let current = found else { continue }
             matrices[index] = rootParentToSkin * current * skinToBoneMatrices[index]
             matchedBoneCount += 1
         }
         return Posed(matrices: matrices, matchedBoneCount: matchedBoneCount)
+    }
+
+    private static func foldingNames(of named: [String: float4x4]) -> [String: float4x4] {
+        var folded: [String: float4x4] = [:]
+        for (name, matrix) in named.sorted(by: { $0.key < $1.key }) {
+            let key = name.lowercased()
+            if folded[key] == nil {
+                folded[key] = matrix
+            }
+        }
+        return folded
     }
 
     /// The skeleton bone each palette bone takes its pose from, or -1 when the
