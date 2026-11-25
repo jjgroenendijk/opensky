@@ -182,11 +182,11 @@ struct PapyrusRuntimeTests {
         }
         #expect(call.nativeCall.qualifiedName == "SyntheticLatent.Wait")
         #expect(
-            Support.value(runtime.resume(call, returning: PapyrusValue.integer(17)))
+            Support.value(call.resume(returning: PapyrusValue.integer(17)))
                 == .integer(17)
         )
         #expect(
-            Support.fault(runtime.resume(call, returning: PapyrusValue.integer(18)))
+            Support.fault(call.resume(returning: PapyrusValue.integer(18)))
                 == .invalidResume
         )
         #expect(runtime.tally.suspensionTotal == 1)

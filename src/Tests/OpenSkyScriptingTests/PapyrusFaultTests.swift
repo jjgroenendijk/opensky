@@ -24,7 +24,7 @@ struct PapyrusFaultTests {
         }
         #expect(call.request == .realSeconds(0))
         #expect(runtime.tally.instructionsExecuted == 25)
-        guard case .suspended = runtime.resume(call, returning: nil) else {
+        guard case .suspended = call.resume(returning: nil) else {
             Issue.record("expected a second yield")
             return
         }

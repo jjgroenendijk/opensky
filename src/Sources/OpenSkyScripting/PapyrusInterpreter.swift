@@ -312,3 +312,10 @@ nonisolated public struct SuspendedCall {
     /// other events on it run meanwhile (CK wiki "Threading Notes (Papyrus)").
     public let holdsInstance: Bool
 }
+
+extension SuspendedCall {
+    /// Runs the call on from where it stopped. A nil `value` returns the native's default.
+    func resume(returning value: PapyrusValue? = nil) -> PapyrusRunOutcome {
+        continuation.resume(id: id, returning: value ?? nativeCall.returnType.defaultValue)
+    }
+}
