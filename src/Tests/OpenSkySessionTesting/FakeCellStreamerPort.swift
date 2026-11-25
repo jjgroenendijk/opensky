@@ -16,12 +16,12 @@ nonisolated public final class FakeCellStreamerPort: CellStreamerPort {
     public typealias Collision = FakeCellStreamerCollisionPort
     public typealias Events = FakeCellStreamerEventsPort
     public typealias ActivationGateSeam = FakeActivationGateSeamPort
-    public typealias CellAnimatedVehicle = FakeCellAnimatedVehiclePort
     public typealias CellAttachment = FakeCellAttachmentPort
-    public typealias CellGridManager = FakeCellGridManagerPort
     public typealias CellScene = FakeCellScenePort
     public typealias CellSceneComposition = FakeCellSceneCompositionPort
     public typealias TalkTargetingSeam = FakeTalkTargetingSeamPort
+    public typealias CellAnimatedVehicle = FakeCellAnimatedVehiclePort
+    public typealias CellGridManager = FakeCellGridManagerPort
     public var actors: Actors = FakeCellStreamerActorsPort()
     public var residents: Residents = FakeCellStreamerResidentsPort()
     public var collision: Collision = FakeCellStreamerCollisionPort()
@@ -32,12 +32,6 @@ nonisolated public final class FakeCellStreamerPort: CellStreamerPort {
     public var currentCellLocation: CellSceneLocation?
     public var dynamicBodiesValue: DynamicBodyWorld?
     public var enterWorldspaceCalls: [(editorID: String, camera: SceneCamera)] = []
-    public var fullLODReferenceCount = 0
-    public var generatedTerrainBlockCount = 0
-    public var grid: CellGridManager = FakeCellGridManagerPort()
-    public var hiddenLargeReferenceSegments = 0
-    public var coverageReadoutValue: CellCoverageReadout?
-    public var inFlightCellCount = 0
     public var interactionTarget: InteractionTarget?
     public var interactionRayHit: InteractionRayHit?
     public var interiorMutationSequence: UInt64 = 0
@@ -48,30 +42,36 @@ nonisolated public final class FakeCellStreamerPort: CellStreamerPort {
     public var lastDoorArrival: SIMD3<Float>?
     public var leaveInteriorCalls: [SceneCamera] = []
     public var registerCellAttachedCalls: [CellAttachStep] = []
-    public var pendingCompletionCount = 0
     public var placedRecords: PlacedRecordLookup?
     public var playerRegions: [FormID] = []
     public var poseMovingCollisionCallCount = 0
-    public var queuedRequestCount = 0
-    public var residentAnimatedVehiclesCallCount = 0
-    public var residentAnimatedVehiclesResult: [CellAnimatedVehicle] = []
     public var residentCellLocations: Set<CellSceneLocation> = []
-    public var residentReferenceCount = 0
     public var sequenceDoorLeaves: [UInt32: [float4x4]] = [:]
     public var setActorPropCalls: [(prop: ActorPropAttachment?, actor: FormID)] = []
     public var startAreaReady = false
     public var talk: TalkTargetingSeam = FakeTalkTargetingSeamPort()
     public var transitionInFlight: FormID?
     public var worldspaceEditorID = ""
-    public var cachedAssetCounts: CachedAssetCounts?
     public var moveStartCalls: [SIMD3<Float>] = []
-    public var findPathCalls: [NavigationPathQuery] = []
-    public var findPathResult: NavigationPathResult?
-    public var largeReferenceCount = 0
     public var requestDoorTransitionCalls: [FormID] = []
     public var requestDoorTransitionResult = false
     public var requestRebuildCalls: [CellSceneLocation] = []
     public var requestUrgentRebuildCalls: [CellSceneLocation] = []
+    public var fullLODReferenceCount = 0
+    public var generatedTerrainBlockCount = 0
+    public var grid: CellGridManager = FakeCellGridManagerPort()
+    public var hiddenLargeReferenceSegments = 0
+    public var coverageReadoutValue: CellCoverageReadout?
+    public var inFlightCellCount = 0
+    public var pendingCompletionCount = 0
+    public var queuedRequestCount = 0
+    public var residentAnimatedVehiclesCallCount = 0
+    public var residentAnimatedVehiclesResult: [CellAnimatedVehicle] = []
+    public var residentReferenceCount = 0
+    public var cachedAssetCounts: CachedAssetCounts?
+    public var findPathCalls: [NavigationPathQuery] = []
+    public var findPathResult: NavigationPathResult?
+    public var largeReferenceCount = 0
     public var referenceEntryFormIDCalls: [FormID] = []
     public var referenceEntryFormIDResult: RuntimeReferenceEntry?
     public var referenceEntryKeyCalls: [ReferenceKey] = []
@@ -98,15 +98,6 @@ nonisolated extension FakeCellStreamerPort {
         enterWorldspaceCalls.append((editorID: editorID, camera: camera))
     }
 
-    public var coverageReadout: CellCoverageReadout {
-        get {
-            guard let coverageReadoutValue
-            else { preconditionFailure("FakeCellStreamerPort.coverageReadout is unset") }
-            return coverageReadoutValue
-        }
-        set { coverageReadoutValue = newValue }
-    }
-
     public func leaveInterior(camera: SceneCamera) {
         leaveInteriorCalls.append(camera)
     }
@@ -122,25 +113,12 @@ nonisolated extension FakeCellStreamerPort {
         poseMovingCollisionCallCount += 1
     }
 
-    public func residentAnimatedVehicles() -> [CellAnimatedVehicle] {
-        residentAnimatedVehiclesCallCount += 1
-        return residentAnimatedVehiclesResult
-    }
-
     public func setActorProp(_ prop: ActorPropAttachment?, on actor: FormID) {
         setActorPropCalls.append((prop: prop, actor: actor))
     }
 
     public func moveStart(to position: SIMD3<Float>) {
         moveStartCalls.append(position)
-    }
-
-    public func findPath(_ query: NavigationPathQuery) -> NavigationPathResult {
-        findPathCalls.append(query)
-        guard let findPathResult else {
-            preconditionFailure("FakeCellStreamerPort.findPath has no result")
-        }
-        return findPathResult
     }
 
     @discardableResult
@@ -155,6 +133,28 @@ nonisolated extension FakeCellStreamerPort {
 
     public func requestUrgentRebuild(of location: CellSceneLocation) {
         requestUrgentRebuildCalls.append(location)
+    }
+
+    public var coverageReadout: CellCoverageReadout {
+        get {
+            guard let coverageReadoutValue
+            else { preconditionFailure("FakeCellStreamerPort.coverageReadout is unset") }
+            return coverageReadoutValue
+        }
+        set { coverageReadoutValue = newValue }
+    }
+
+    public func residentAnimatedVehicles() -> [CellAnimatedVehicle] {
+        residentAnimatedVehiclesCallCount += 1
+        return residentAnimatedVehiclesResult
+    }
+
+    public func findPath(_ query: NavigationPathQuery) -> NavigationPathResult {
+        findPathCalls.append(query)
+        guard let findPathResult else {
+            preconditionFailure("FakeCellStreamerPort.findPath has no result")
+        }
+        return findPathResult
     }
 
     public func referenceEntry(formID: FormID) -> RuntimeReferenceEntry? {
