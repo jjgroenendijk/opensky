@@ -205,6 +205,9 @@ public final class ObjectBehaviorCoordinator {
             clips: clips
         )
         instance.characterProperties = object.asset.characterProperties
+        instance.sequenceClock = GamebryoSequenceClock(
+            timings: GamebryoSequenceTiming.byName(object.nodes?.nodes?.sequences ?? [])
+        )
         instance.activate()
         instance.prefetchReachableClips()
         return Running(object: object, instance: instance, clips: clips)

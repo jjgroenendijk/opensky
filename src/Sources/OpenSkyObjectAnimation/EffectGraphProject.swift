@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyBehavior
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 
@@ -10,6 +11,7 @@ import OpenSkyGameData
 nonisolated struct LoadedEffectGraphProject: Sendable {
     let asset: BehaviorProjectAsset
     let referencePaths: [String: String]
+    let sequenceTimings: [String: GamebryoSequenceTiming]
 
     /// Nil when the model names no behaviour project, the common case.
     static func load(
@@ -28,8 +30,30 @@ nonisolated struct LoadedEffectGraphProject: Sendable {
             let references = InstallBehaviorReferenceSource.index(
                 files, rootPath: asset.behaviorPath
             )
-            return Self(asset: asset, referencePaths: references)
+            let timings = attempt { try file.sequences() } ?? []
+            return Self(
+                asset: asset, referencePaths: references,
+                sequenceTimings: GamebryoSequenceTiming.byName(timings)
+            )
         }
+    }
+}
+
+nonisolated extension GamebryoSequenceTiming {
+    /// The timing of each sequence of a mesh, its text keys in seconds from its start.
+    static func byName(_ sequences: [NIFSequence]) -> [String: GamebryoSequenceTiming] {
+        var timings: [String: GamebryoSequenceTiming] = [:]
+        for sequence in sequences {
+            let timing = sequence.timing
+            let rate = max(timing.frequency, .ulpOfOne)
+            let keys = sequence.textKeys.map {
+                Key(time: ($0.time - timing.startTime) / rate, name: $0.value)
+            }
+            timings[sequence.name] = GamebryoSequenceTiming(
+                duration: sequence.duration, loops: timing.cycle != .clamp, keys: keys
+            )
+        }
+        return timings
     }
 }
 
@@ -37,6 +61,7 @@ nonisolated struct LoadedEffectGraphProject: Sendable {
 @MainActor
 final class EffectGraphProject {
     let asset: BehaviorProjectAsset
+    let sequenceTimings: [String: GamebryoSequenceTiming]
     let clips: InstallBehaviorClipSource
     let references: InstallBehaviorReferenceSource
     let skeleton: BehaviorSkeleton
@@ -46,6 +71,7 @@ final class EffectGraphProject {
 
     init(_ loaded: LoadedEffectGraphProject, files: any GameFileSource) {
         asset = loaded.asset
+        sequenceTimings = loaded.sequenceTimings
         objects = SharedBehaviorObjectSource(graph: loaded.asset.objectGraph)
         let worker = SerialAssetLoadWorker<String, SplineBehaviorClip>(
             queue: AssetLoadQueue.background,
@@ -66,6 +92,7 @@ final class EffectGraphProject {
         )
         instance.references = references
         instance.characterProperties = asset.characterProperties
+        instance.sequenceClock = GamebryoSequenceClock(timings: sequenceTimings)
         instance.activate()
         if !hasPrefetched {
             hasPrefetched = true

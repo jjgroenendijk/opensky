@@ -51,6 +51,7 @@ nonisolated extension BehaviorGraphInstance.ChildGraphs {
         pullEvents(from: child, key: key)
         pullVariables(from: child)
         graph.activeStatesThisUpdate += child.activeStates
+        graph.gamebryoSequencesThisUpdate += child.gamebryoSequences
         if let tag = child.stateTag {
             graph.noteStateTag(tag)
         }
