@@ -229,8 +229,10 @@ nonisolated public final class LocomotionBridge {
     }
 
     /// Forgets the edge state so the next step raises no stale transition.
-    /// Called when walk mode is entered or the player is teleported.
-    public func reset() {
+    /// Called when walk mode is entered or the player is teleported. The feet stay
+    /// where the player now stands, because fly mode never steps to set them again.
+    public func reset(feet: SIMD3<Float>? = nil) {
+        let feet = feet ?? status.feetPosition
         previousYaw = nil
         wasMoving = false
         wasSprinting = false
@@ -251,6 +253,7 @@ nonisolated public final class LocomotionBridge {
         status = LocomotionStatus(
             graphAvailable: graph != nil, firstPersonGraphAvailable: firstPersonGraph != nil
         )
+        status.feetPosition = feet
         pose.clear()
         firstPersonPose.clear()
         seedPerspectiveVariables()
