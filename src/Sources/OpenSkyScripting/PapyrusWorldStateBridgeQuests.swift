@@ -86,7 +86,8 @@ extension PapyrusWorldStateBridge.QuestScripts {
         let resolved = try resolveQuest(key)
         let id = resolved.quest.formID
         let before = try resolved.runtime.state(of: id)
-        let items = passingItems(of: resolved.quest, stage: stage)
+        let items = PapyrusWorldStateBridge.StageItems(bridge: bridge)
+            .passingItems(of: resolved.quest, stage: stage)
         let state = try resolved.runtime.setStage(stage, on: id, items: items)
         if state.isRunning || !before.isRunning {
             attachQuestScripts(resolved.quest, key: key)
@@ -229,19 +230,6 @@ extension PapyrusWorldStateBridge.QuestScripts {
         return ResolvedQuestBridge(quest: quest, runtime: questRuntime)
     }
 
-    /// Every stage item whose conditions pass: "The script fragments will be run for all
-    /// entries where the conditions pass" (<https://ck.uesp.net/wiki/Quest_Stages_Tab>).
-    /// Nil without an evaluator.
-    func passingItems(of quest: Quest, stage: UInt16) -> [Int]? {
-        let entries = quest.stages.first { $0.index == stage }?.logEntries ?? []
-        guard var evaluator = bridge.natives.session.conditionEvaluator?() else { return nil }
-        evaluator.context.subject = .player
-        evaluator.context.aliasQuest = quest.formID
-        evaluator.context.formIDTranslation = bridge.questRuntime?.quests
-            .translation(of: quest.formID)
-        return entries.indices.filter { evaluator.evaluate(entries[$0].conditions).isTrue }
-    }
-
     /// In the game a quest's scripts exist whether it runs or not, and a persistent
     /// reference keeps its scripts while unloaded. OpenSky attaches them on first use.
     func attachOnUse(_ key: ReferenceKey) -> Bool {
@@ -314,3 +302,23 @@ extension PapyrusWorldStateBridge.QuestScripts {
 }
 
 extension PapyrusWorldStateBridge.QuestScripts: PapyrusWorldQuestBridge {}
+
+extension PapyrusWorldStateBridge {
+    /// The stage items whose conditions pass.
+    struct StageItems {
+        let bridge: PapyrusWorldStateBridge
+
+        /// Every stage item whose conditions pass: "The script fragments will be run for all
+        /// entries where the conditions pass" (<https://ck.uesp.net/wiki/Quest_Stages_Tab>).
+        /// Nil without an evaluator.
+        func passingItems(of quest: Quest, stage: UInt16) -> [Int]? {
+            let entries = quest.stages.first { $0.index == stage }?.logEntries ?? []
+            guard var evaluator = bridge.natives.session.conditionEvaluator?() else { return nil }
+            evaluator.context.subject = .player
+            evaluator.context.aliasQuest = quest.formID
+            evaluator.context.formIDTranslation = bridge.questRuntime?.quests
+                .translation(of: quest.formID)
+            return entries.indices.filter { evaluator.evaluate(entries[$0].conditions).isTrue }
+        }
+    }
+}

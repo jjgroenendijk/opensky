@@ -72,39 +72,9 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
         }
     }
 
-    private static func installCombatSpellApply(into registry: inout PapyrusNativeRegistry) {
-        // `DoCombatSpellApply(Spell akSpell, ObjectReference akTarget)`: the spell lands
-        // on the target as this actor's cast, so resistances and hit events apply. A
-        // disease rolls against the target's resistance first (docs/engine/diseases.md).
-        registry.register(PapyrusNativeFunction(
-            scriptName: "Actor", functionName: "DoCombatSpellApply"
-        ) { call, context in
-            guard
-                let bridge = context.world as? PapyrusWorldStateBridge,
-                let key = call.receiver.flatMap(bridge.referenceKey(for:))
-            else { return needsWorld(call) }
-            guard
-                let spell = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)),
-                let target = objectArgument(call, at: 1).flatMap(bridge.referenceKey(for:))
-            else { return failure(call, "DoCombatSpellApply needs a spell and a target") }
-            if bridge.spellEffects.isDisease(spell) {
-                let resist = DiseaseContraction.resistIndex.flatMap {
-                    bridge.roles.actors.actorState(for: target)?.value(at: $0)
-                }
-                if DiseaseContraction.contracts(resist: resist, roll: context.random.percent()) {
-                    bridge.spellEffects.contractDisease(spell, on: target)
-                }
-                return .returned(.none)
-            }
-            guard bridge.roles.magic.castSpell(spell, from: key, at: target) else {
-                return failure(call, "DoCombatSpellApply has no caster runtime or no such spell")
-            }
-            return .returned(.none)
-        })
-    }
-
     private static func installActorActions(into registry: inout PapyrusNativeRegistry) {
-        installCombatSpellApply(into: &registry)
+        PapyrusNativeFunctions.CombatSpellApplyNatives
+            .installCombatSpellApply(into: &registry)
         // A paired idle plays the target's half too. With no target the idle uses the
         // actor's combat target, and with neither it plays alone.
         scriptState("Actor", "PlayIdleWithTarget", into: &registry) { call, bridge, key in
@@ -245,5 +215,43 @@ extension PapyrusNativeFunctions.ActorRulesNatives {
             )
             return .returned(.none)
         }
+    }
+}
+
+extension PapyrusNativeFunctions {
+    /// `DoCombatSpellApply`, apart from the other actor rules.
+    enum CombatSpellApplyNatives: PapyrusNativeArguments {}
+}
+
+extension PapyrusNativeFunctions.CombatSpellApplyNatives {
+    static func installCombatSpellApply(into registry: inout PapyrusNativeRegistry) {
+        // `DoCombatSpellApply(Spell akSpell, ObjectReference akTarget)`: the spell lands
+        // on the target as this actor's cast, so resistances and hit events apply. A
+        // disease rolls against the target's resistance first (docs/engine/diseases.md).
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Actor", functionName: "DoCombatSpellApply"
+        ) { call, context in
+            guard
+                let bridge = context.world as? PapyrusWorldStateBridge,
+                let key = call.receiver.flatMap(bridge.referenceKey(for:))
+            else { return needsWorld(call) }
+            guard
+                let spell = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)),
+                let target = objectArgument(call, at: 1).flatMap(bridge.referenceKey(for:))
+            else { return failure(call, "DoCombatSpellApply needs a spell and a target") }
+            if bridge.spellEffects.isDisease(spell) {
+                let resist = DiseaseContraction.resistIndex.flatMap {
+                    bridge.roles.actors.actorState(for: target)?.value(at: $0)
+                }
+                if DiseaseContraction.contracts(resist: resist, roll: context.random.percent()) {
+                    bridge.spellEffects.contractDisease(spell, on: target)
+                }
+                return .returned(.none)
+            }
+            guard bridge.roles.magic.castSpell(spell, from: key, at: target) else {
+                return failure(call, "DoCombatSpellApply has no caster runtime or no such spell")
+            }
+            return .returned(.none)
+        })
     }
 }
