@@ -68,7 +68,7 @@ extension CombatReportsAdapter {
             game.perception.runtime?.noteAttack(by: .player)
         }
         game.scripts.bridge?.recordHit(hit, targetWasHostile: wasHostile)
-        speakCombatLines(for: hit)
+        CombatHitLines(game: game, actorFacts: actorFacts).speakCombatLines(for: hit)
         rumbleWeapon(for: hit)
         return game.scripts.runtime?.queueOnHit(hit) ?? 0
     }
@@ -81,32 +81,6 @@ extension CombatReportsAdapter {
             let weapon = game.combatRecords?.inventoryBaselines?.items.weapon(source)
         else { return }
         game.controllerRumble.weapon(weapon.rumble)
-    }
-
-    /// An NPC aggressor may call out its attack and an NPC target its hurt, each held back
-    /// by its own `SpeechTimerSettings` window and chance. A hit below
-    /// `fCombatSpeakHitThreshold` of the target's health stays silent; a spell hit carries
-    /// no damage yet, so it is not held back.
-    private func speakCombatLines(for hit: ScriptHitEvent) {
-        let now = game.storyWorld.sceneSeconds
-        let maximum = actorFacts.health(of: hit.target)?.maximum ?? 0
-        let hurtSpeaks = hit.delivery == .spell
-            || game.dialogue.speechTimers.hitSpeaks(damage: hit.damage, maximumHealth: maximum)
-        var lines: [(NPCSpeechLine, ReferenceKey)] = [(.combatAttack, hit.aggressor)]
-        if hurtSpeaks {
-            lines.append((.combatHit, hit.target))
-        }
-        for (line, speaker) in lines where speaker != .player {
-            guard
-                let id = game.dialogue.combatLine(line, speaker: speaker, now: now),
-                let info = game.dialogue.runtime?.dialogue.info(id)
-            else { continue }
-            let seconds = game.storyWorld.lineDuration(of: info, speaker: speaker)
-            game.storyWorld.speak(
-                info: id, speaker: speaker, lookAt: nil,
-                seconds: seconds ?? SceneLine.defaultSeconds
-            )
-        }
     }
 
     /// The trespass line a guard's warning also says. An actor with no such line stays
@@ -141,5 +115,38 @@ extension CombatReportsAdapter {
 
     public func spellLanded(_ payload: SpellPayload, at point: SIMD3<Float>) {
         game.magic.worldArchetypeActions.spellLanded(payload, at: point)
+    }
+}
+
+/// The combat lines a landed blow makes its aggressor and its target say.
+@MainActor
+struct CombatHitLines {
+    let game: any CombatReportsHost
+    let actorFacts: CombatActorFactsAdapter
+
+    /// An NPC aggressor may call out its attack and an NPC target its hurt, each held back
+    /// by its own `SpeechTimerSettings` window and chance. A hit below
+    /// `fCombatSpeakHitThreshold` of the target's health stays silent; a spell hit carries
+    /// no damage yet, so it is not held back.
+    func speakCombatLines(for hit: ScriptHitEvent) {
+        let now = game.storyWorld.sceneSeconds
+        let maximum = actorFacts.health(of: hit.target)?.maximum ?? 0
+        let hurtSpeaks = hit.delivery == .spell
+            || game.dialogue.speechTimers.hitSpeaks(damage: hit.damage, maximumHealth: maximum)
+        var lines: [(NPCSpeechLine, ReferenceKey)] = [(.combatAttack, hit.aggressor)]
+        if hurtSpeaks {
+            lines.append((.combatHit, hit.target))
+        }
+        for (line, speaker) in lines where speaker != .player {
+            guard
+                let id = game.dialogue.combatLine(line, speaker: speaker, now: now),
+                let info = game.dialogue.runtime?.dialogue.info(id)
+            else { continue }
+            let seconds = game.storyWorld.lineDuration(of: info, speaker: speaker)
+            game.storyWorld.speak(
+                info: id, speaker: speaker, lookAt: nil,
+                seconds: seconds ?? SceneLine.defaultSeconds
+            )
+        }
     }
 }

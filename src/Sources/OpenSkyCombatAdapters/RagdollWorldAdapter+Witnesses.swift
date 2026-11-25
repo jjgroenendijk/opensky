@@ -56,7 +56,7 @@ extension RagdollWorldAdapter {
     }
 
     public func dropWeapon(of key: ReferenceKey) -> Bool {
-        remains.dropWeapon(of: key)
+        RagdollWeaponDrop(game: remains.game, poseReads: remains.poseReads).dropWeapon(of: key)
     }
 
     public func severableNode(of key: ReferenceKey) -> String? {

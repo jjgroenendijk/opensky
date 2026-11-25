@@ -37,7 +37,8 @@ extension CombatWorldAdapter: CombatWorld {}
 /// Witnesses that forward to the narrow parts of `CombatWorldAdapter`.
 extension CombatWorldAdapter {
     public func castingFacts(of key: ReferenceKey) -> CombatCastingFacts? {
-        spellCasts.castingFacts(of: key)
+        CombatSpellCastsAdapter.CastingFactsReads(game: spellCasts.game)
+            .castingFacts(of: key)
     }
 
     @discardableResult
