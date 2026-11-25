@@ -17,38 +17,14 @@ extension PapyrusWorldRuntime.Lifecycle {
     /// Every waiting call, oldest first. A call of a magic effect's script is left
     /// out, because a load attaches the effect's script again and starts it anew.
     public func callStates() -> PapyrusCallSnapshot {
-        var saver = PapyrusCallSaver(world: world)
-        var snapshot = PapyrusCallSnapshot()
-        for (call, wake) in world.scheduler.pendingWaits {
-            if let state = saver.state(of: call, wake: wake) {
-                snapshot.calls.append(state)
-            }
-        }
-        // An element is never an array, so the list does not grow in this loop.
-        for array in saver.arrays {
-            snapshot.arrays.append(PapyrusSavedArray(
-                elementType: array.elementType.name,
-                elements: array.elements.map { saver.saved($0) }
-            ))
-        }
-        return snapshot
+        CallRestore(owner: self).callStates()
     }
 
     /// Replaces the waiting calls with the saved ones. Tolerant by design: a call that
     /// names a script, a function, or an instance that is not there is counted
     /// (`unrestorableSaveCall`) and dropped. A call whose script still loads waits.
     public func restore(calls snapshot: PapyrusCallSnapshot) {
-        world.scheduler.cancelAll()
-        world.suspensionTracker.reset()
-        world.latentQuestWaits.removeAll()
-        let arrays = snapshot.arrays.map { array in
-            PapyrusArray(
-                elementType: PapyrusType(name: array.elementType),
-                elements: array.elements.map { runtimeValue($0, arrays: []) }
-            )
-        }
-        world.heldCallRestores = PapyrusHeldCallRestores(arrays: arrays, calls: snapshot.calls)
-        resumeHeldCallRestores()
+        CallRestore(owner: self).restore(calls: snapshot)
     }
 
     /// Restores each held call whose scripts are loaded now.
@@ -72,63 +48,11 @@ extension PapyrusWorldRuntime.Lifecycle {
     }
 
     private func restoreCall(_ state: PapyrusCallState, arrays: [PapyrusArray]) -> Bool {
-        if let owner = state.owner, world.instancesByKey[owner] == nil {
-            return false
-        }
-        let interpreter = PapyrusRuntime.Interpreter(runtime: world.runtime)
-        for saved in state.frames {
-            guard let frame = frame(saved, arrays: arrays) else { return false }
-            interpreter.frames.append(frame)
-        }
-        guard !interpreter.frames.isEmpty || state.resume == .root else { return false }
-        let returnType = PapyrusType(name: state.returnType)
-        let call = PapyrusNativeCall(
-            kind: .staticFunction,
-            scriptName: state.nativeScript,
-            functionName: state.nativeFunction,
-            receiver: nil,
-            arguments: [],
-            returnType: returnType
-        )
-        let suspended = interpreter.natives.suspend(
-            call: call,
-            request: request(for: state.wake, returnType: returnType, arrays: arrays),
-            target: state.resume == .root ? .root : .assign(destination(state.resume)),
-            holdsInstance: state.holdsInstance
-        )
-        if let owner = state.owner {
-            world.suspensionTracker.begin(suspended, instance: owner)
-        }
-        world.scheduler.schedule(.suspended(suspended))
-        return true
+        CallRestore(owner: self).restoreCall(state, arrays: arrays)
     }
 
     private func frame(_ saved: PapyrusFrameState, arrays: [PapyrusArray]) -> PapyrusFrame? {
-        guard
-            let index = world.runtime.index(named: saved.script),
-            let function = index.function(ordinal: saved.functionOrdinal),
-            function.function.instructions.count == saved.instructionCount,
-            function.slotDefaults.count == saved.slots.count,
-            (0 ... saved.instructionCount).contains(saved.instructionIndex)
-        else { return nil }
-        var handle: PapyrusObjectHandle?
-        if let instance = saved.instance {
-            guard let live = world.instancesByKey[instance] else { return nil }
-            handle = live
-        }
-        let completion: PapyrusFrameCompletion = switch saved.completion {
-        case .root: .root
-        case .discard: .discard
-        case .assign: .assign(destination(saved.completion))
-        }
-        let frame = PapyrusFrame(
-            owner: index, compiled: function, instanceHandle: handle, completion: completion
-        )
-        frame.instructionIndex = saved.instructionIndex
-        for (slot, value) in saved.slots.enumerated() {
-            frame.setSlot(slot, to: runtimeValue(value, arrays: arrays))
-        }
-        return frame
+        CallRestore(owner: self).frame(saved, arrays: arrays)
     }
 
     private func destination(_ saved: PapyrusSavedReturn) -> PexValue {
@@ -174,18 +98,7 @@ extension PapyrusWorldRuntime.Lifecycle {
     }
 
     private func runtimeValue(_ saved: PapyrusSavedValue, arrays: [PapyrusArray]) -> PapyrusValue {
-        switch saved {
-        case .none: .none
-        case let .boolean(flag): .boolean(flag)
-        case let .integer(number): .integer(number)
-        case let .float(number): .float(number)
-        case let .string(text): .string(text)
-        case let .instance(key): world.instancesByKey[key].map { .object($0) } ?? .none
-        case let .reference(key): .object(world.activationRuns.objectHandle(for: key))
-        case let .alias(quest, id):
-            .object(world.questRuns.aliasSlotHandle(PapyrusAliasSlot(quest: quest, aliasID: id)))
-        case let .array(index): arrays.indices.contains(index) ? .array(arrays[index]) : .none
-        }
+        CallRestore(owner: self).runtimeValue(saved, arrays: arrays)
     }
 }
 
@@ -303,5 +216,127 @@ private struct PapyrusCallSaver {
             return .alias(quest: slot.quest, id: slot.aliasID)
         }
         return .none
+    }
+}
+
+extension PapyrusWorldRuntime.Lifecycle {
+    /// Saves the running script calls and restores them from a save.
+    struct CallRestore {
+        let owner: PapyrusWorldRuntime.Lifecycle
+
+        func callStates() -> PapyrusCallSnapshot {
+            let world = owner.world
+            var saver = PapyrusCallSaver(world: world)
+            var snapshot = PapyrusCallSnapshot()
+            for (call, wake) in world.scheduler.pendingWaits {
+                if let state = saver.state(of: call, wake: wake) {
+                    snapshot.calls.append(state)
+                }
+            }
+            // An element is never an array, so the list does not grow in this loop.
+            for array in saver.arrays {
+                snapshot.arrays.append(PapyrusSavedArray(
+                    elementType: array.elementType.name,
+                    elements: array.elements.map { saver.saved($0) }
+                ))
+            }
+            return snapshot
+        }
+
+        func restore(calls snapshot: PapyrusCallSnapshot) {
+            let world = owner.world
+            world.scheduler.cancelAll()
+            world.suspensionTracker.reset()
+            world.latentQuestWaits.removeAll()
+            let arrays = snapshot.arrays.map { array in
+                PapyrusArray(
+                    elementType: PapyrusType(name: array.elementType),
+                    elements: array.elements.map { owner.runtimeValue($0, arrays: []) }
+                )
+            }
+            world.heldCallRestores = PapyrusHeldCallRestores(arrays: arrays, calls: snapshot.calls)
+            owner.resumeHeldCallRestores()
+        }
+
+        func restoreCall(_ state: PapyrusCallState, arrays: [PapyrusArray]) -> Bool {
+            let world = owner.world
+            if let owner = state.owner, world.instancesByKey[owner] == nil {
+                return false
+            }
+            let interpreter = PapyrusRuntime.Interpreter(runtime: world.runtime)
+            for saved in state.frames {
+                guard let frame = owner.frame(saved, arrays: arrays) else { return false }
+                interpreter.frames.append(frame)
+            }
+            guard !interpreter.frames.isEmpty || state.resume == .root else { return false }
+            let returnType = PapyrusType(name: state.returnType)
+            let call = PapyrusNativeCall(
+                kind: .staticFunction,
+                scriptName: state.nativeScript,
+                functionName: state.nativeFunction,
+                receiver: nil,
+                arguments: [],
+                returnType: returnType
+            )
+            let suspended = interpreter.natives.suspend(
+                call: call,
+                request: owner.request(for: state.wake, returnType: returnType, arrays: arrays),
+                target: state.resume == .root ? .root : .assign(owner.destination(state.resume)),
+                holdsInstance: state.holdsInstance
+            )
+            if let owner = state.owner {
+                world.suspensionTracker.begin(suspended, instance: owner)
+            }
+            world.scheduler.schedule(.suspended(suspended))
+            return true
+        }
+
+        func frame(_ saved: PapyrusFrameState, arrays: [PapyrusArray]) -> PapyrusFrame? {
+            let world = owner.world
+            guard
+                let index = world.runtime.index(named: saved.script),
+                let function = index.function(ordinal: saved.functionOrdinal),
+                function.function.instructions.count == saved.instructionCount,
+                function.slotDefaults.count == saved.slots.count,
+                (0 ... saved.instructionCount).contains(saved.instructionIndex)
+            else { return nil }
+            var handle: PapyrusObjectHandle?
+            if let instance = saved.instance {
+                guard let live = world.instancesByKey[instance] else { return nil }
+                handle = live
+            }
+            let completion: PapyrusFrameCompletion = switch saved.completion {
+            case .root: .root
+            case .discard: .discard
+            case .assign: .assign(owner.destination(saved.completion))
+            }
+            let frame = PapyrusFrame(
+                owner: index, compiled: function, instanceHandle: handle, completion: completion
+            )
+            frame.instructionIndex = saved.instructionIndex
+            for (slot, value) in saved.slots.enumerated() {
+                frame.setSlot(slot, to: owner.runtimeValue(value, arrays: arrays))
+            }
+            return frame
+        }
+
+        func runtimeValue(_ saved: PapyrusSavedValue, arrays: [PapyrusArray]) -> PapyrusValue {
+            let world = owner.world
+            return switch saved {
+            case .none: .none
+            case let .boolean(flag): .boolean(flag)
+            case let .integer(number): .integer(number)
+            case let .float(number): .float(number)
+            case let .string(text): .string(text)
+            case let .instance(key): world.instancesByKey[key].map { .object($0) } ?? .none
+            case let .reference(key): .object(world.activationRuns.objectHandle(for: key))
+            case let .alias(quest, id):
+                .object(world.questRuns.aliasSlotHandle(PapyrusAliasSlot(
+                    quest: quest,
+                    aliasID: id
+                )))
+            case let .array(index): arrays.indices.contains(index) ? .array(arrays[index]) : .none
+            }
+        }
     }
 }

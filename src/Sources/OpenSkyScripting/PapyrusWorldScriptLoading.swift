@@ -28,16 +28,7 @@ extension PapyrusWorldRuntime.Lifecycle {
     /// The scripts of the quests and references that `scripts`' object properties name.
     /// An attach waits for them too, so a first use can attach them at once (`attachOnUse`).
     func targetScripts(of scripts: [AttachedScript], resolver: FormIDResolver) -> [String] {
-        guard let scriptsOfTarget = world.scriptsOfTarget else { return [] }
-        let objects = scripts.flatMap(\.properties).flatMap { property -> [ScriptObjectReference] in
-            switch property.value {
-            case let .object(object): [object]
-            case let .objects(objects): objects
-            default: []
-            }
-        }
-        let keys = Set(objects.compactMap { $0.directReferenceKey(using: resolver) })
-        return keys.sorted().flatMap(scriptsOfTarget)
+        TargetScripts(owner: self).targetScripts(of: scripts, resolver: resolver)
     }
 
     /// Requests every named script, the reference types, and the scripts their code calls
@@ -100,6 +91,28 @@ extension PapyrusWorldRuntime.Lifecycle {
         world.deferredScriptWork = []
         for work in waiting {
             work.run()
+        }
+    }
+}
+
+extension PapyrusWorldRuntime.Lifecycle {
+    /// Finds the scripts a reference's targets carry.
+    struct TargetScripts {
+        let owner: PapyrusWorldRuntime.Lifecycle
+
+        func targetScripts(of scripts: [AttachedScript], resolver: FormIDResolver) -> [String] {
+            let world = owner.world
+            guard let scriptsOfTarget = world.scriptsOfTarget else { return [] }
+            let objects = scripts.flatMap(\.properties)
+                .flatMap { property -> [ScriptObjectReference] in
+                    switch property.value {
+                    case let .object(object): [object]
+                    case let .objects(objects): objects
+                    default: []
+                    }
+                }
+            let keys = Set(objects.compactMap { $0.directReferenceKey(using: resolver) })
+            return keys.sorted().flatMap(scriptsOfTarget)
         }
     }
 }
