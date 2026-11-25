@@ -38,6 +38,12 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public var guards: Set<ReferenceKey> = []
     public var crimeAttackers: Set<ReferenceKey> = []
     public var aggroRadii: [ReferenceKey: AggroRadius] = [:]
+    /// The last head-look target each actor was given, and for how many seconds.
+    public var looks: [ReferenceKey: AggroLook] = [:]
+    /// The last point each actor turned toward.
+    public var turns: [ReferenceKey: SIMD3<Float>] = [:]
+    /// Where each archer's arrow would meet its target.
+    public var aimPoints: [ReferenceKey: SIMD3<Float>] = [:]
     /// Each warning line said: the speaker, then its target.
     public var warningLines: [[ReferenceKey]] = []
     public var temperaments: [ReferenceKey: CombatTemperament] = [:]
@@ -349,6 +355,20 @@ extension FakeCombatWorld {
         warningLines.append([key, target])
     }
 
+    public func lookCombatActor(_ key: ReferenceKey, at target: ReferenceKey?, seconds: Float?) {
+        looks[key] = AggroLook(target: target, seconds: seconds)
+    }
+
+    public func turnCombatActor(_ key: ReferenceKey, toward point: SIMD3<Float>) {
+        turns[key] = point
+    }
+
+    public func combatAimPoint(
+        of shooter: CombatActorObservation, at _: SIMD3<Float>, velocity _: SIMD3<Float>
+    ) -> SIMD3<Float>? {
+        aimPoints[shooter.key]
+    }
+
     public func combatAggroRadius(of key: ReferenceKey) -> AggroRadius? {
         aggroRadii[key]
     }
@@ -424,5 +444,16 @@ extension FakeCombatWorld {
 
     public func combatAttacksPlayerOnSightForCrimes(_ key: ReferenceKey) -> Bool {
         crimeAttackers.contains(key)
+    }
+}
+
+/// One head-look call the fake recorded.
+public struct AggroLook: Equatable, Sendable {
+    public let target: ReferenceKey?
+    public let seconds: Float?
+
+    public init(target: ReferenceKey?, seconds: Float?) {
+        self.target = target
+        self.seconds = seconds
     }
 }

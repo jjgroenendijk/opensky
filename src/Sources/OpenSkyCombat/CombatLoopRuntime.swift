@@ -120,6 +120,8 @@ public final class CombatLoopRuntime: CombatControlling {
     public internal(set) var weaponDraws: [ReferenceKey: NPCWeaponDraw] = [:]
     /// NPC pairs whose observer attacks its target on sight, from the last foe scan.
     public internal(set) var foePairs: Set<CombatFoePair> = []
+    /// NPC pairs an aggro radius turned into a fight: the observer attacks its target.
+    var aggroFoePairs: Set<CombatFoePair> = []
     /// Seconds until the next foe scan.
     var foeScanWait: Float = 0
     /// Actors that fight an NPC that fights them, this step. They engage unseen.

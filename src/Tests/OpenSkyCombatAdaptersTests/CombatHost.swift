@@ -38,6 +38,7 @@ final class CombatHost: CinematicCameraWorldHost, CombatActorFactsHost, CombatGe
     let fakeFactions = FakeFactionPort()
     let fakeHazardWorld = FakeHazardWorldPort()
     let fakeHazards = FakeHazardPort()
+    let fakeHeadTracking = FakeHeadTrackingPort()
     let fakeHud = FakeHUDPort()
     let fakeIdleWorld = FakeIdleWorldPort()
     let fakeInventory = FakeInventoryPort()
@@ -148,6 +149,10 @@ final class CombatHost: CinematicCameraWorldHost, CombatActorFactsHost, CombatGe
 
     var hazards: any HazardPort {
         fakeHazards
+    }
+
+    var headTracking: any HeadTrackingPort {
+        fakeHeadTracking
     }
 
     var hud: any HUDPort {

@@ -44,7 +44,11 @@ extension CombatLoopRuntime {
                 pairs.insert(CombatFoePair(observer: observer.key, target: target.key))
             }
         }
-        foePairs = pairs
+        let keys = Set(living.map(\.key))
+        aggroFoePairs = aggroFoePairs.filter {
+            keys.contains($0.observer) && keys.contains($0.target)
+        }
+        foePairs = pairs.union(aggroFoePairs)
     }
 
     /// The NPC each actor fights: the nearest one it attacks on sight and has detected,

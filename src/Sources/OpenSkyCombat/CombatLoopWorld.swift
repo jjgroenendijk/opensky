@@ -171,6 +171,13 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>, pace: CombatPace?) -> Bool
     /// Turns `key` in place towards `point`, such as to aim a shout.
     func turnCombatActor(_ key: ReferenceKey, toward point: SIMD3<Float>)
+    /// Holds `key`'s head on `target` for `seconds`, or until changed when nil.
+    func lookCombatActor(_ key: ReferenceKey, at target: ReferenceKey?, seconds: Float?)
+    /// Where `shooter`'s arrow would meet a target at `point` moving at `velocity`, led by
+    /// the arrow's speed. Nil when it carries no arrow.
+    func combatAimPoint(
+        of shooter: CombatActorObservation, at point: SIMD3<Float>, velocity: SIMD3<Float>
+    ) -> SIMD3<Float>?
     /// Whether `key`'s race flies.
     func combatFlies(_ key: ReferenceKey) -> Bool
 

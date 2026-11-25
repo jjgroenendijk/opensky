@@ -222,6 +222,10 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
         shared.world.faceActor(key, toward: point)
     }
 
+    func lookCombatActor(_ key: ReferenceKey, at target: ReferenceKey?, seconds: Float?) {
+        shared.world.lookActor(key, at: target, seconds: seconds)
+    }
+
     func stopCombatMovement(of key: ReferenceKey) {
         shared.world.stopActor(key)
     }
