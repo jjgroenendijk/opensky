@@ -10,32 +10,7 @@ import OpenSkyWorldState
 
 extension StoryWorldAdapter {
     func giveAliasData(_ changes: [QuestAliasDataChange]) {
-        guard let bridge = game.scripts.bridge else { return }
-        for change in changes {
-            if change.entered {
-                give(change, through: bridge)
-            } else {
-                take(change, through: bridge)
-            }
-        }
-    }
-
-    private func give(
-        _ change: QuestAliasDataChange,
-        through bridge: some PapyrusWorldStateBridgePort
-    ) {
-        for faction in change.factions {
-            bridge.addToFaction(change.reference, faction: ReferenceKey(resolved: faction))
-        }
-        for spell in change.spells {
-            bridge.addSpell(ReferenceKey(resolved: spell), to: change.reference)
-        }
-        for entry in change.items {
-            guard let item = bridge.formIDResolver?.localFormID(of: entry.item) else { continue }
-            _ = game.inventory.scriptItems.scriptAddItem(
-                item, count: entry.count, to: change.reference
-            )
-        }
+        AliasGifts(host: self).giveAliasData(changes)
     }
 
     private func take(
@@ -47,6 +22,45 @@ extension StoryWorldAdapter {
         }
         for spell in change.spells {
             bridge.removeSpell(ReferenceKey(resolved: spell), from: change.reference)
+        }
+    }
+}
+
+extension StoryWorldAdapter {
+    /// Gives a quest alias its items.
+    struct AliasGifts {
+        let host: StoryWorldAdapter
+
+        func giveAliasData(_ changes: [QuestAliasDataChange]) {
+            let game = host.game
+            guard let bridge = game.scripts.bridge else { return }
+            for change in changes {
+                if change.entered {
+                    give(change, through: bridge)
+                } else {
+                    host.take(change, through: bridge)
+                }
+            }
+        }
+
+        func give(
+            _ change: QuestAliasDataChange,
+            through bridge: some PapyrusWorldStateBridgePort
+        ) {
+            let game = host.game
+            for faction in change.factions {
+                bridge.addToFaction(change.reference, faction: ReferenceKey(resolved: faction))
+            }
+            for spell in change.spells {
+                bridge.addSpell(ReferenceKey(resolved: spell), to: change.reference)
+            }
+            for entry in change.items {
+                guard let item = bridge.formIDResolver?.localFormID(of: entry.item)
+                else { continue }
+                _ = game.inventory.scriptItems.scriptAddItem(
+                    item, count: entry.count, to: change.reference
+                )
+            }
         }
     }
 }

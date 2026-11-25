@@ -113,7 +113,7 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     }
 
     public var currentCellLocation: CellSceneLocation? {
-        game.streamer.currentCellLocation
+        CrimeItemReads(owner: self).currentCellLocation
     }
 
     public func cellOwnership(at location: CellSceneLocation) -> RecordOwnership? {
@@ -135,11 +135,11 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     }
 
     public func itemValue(of item: FormID) -> Int64 {
-        Int64(game.inventory.itemDefinitions?.gameValue(of: item) ?? 0)
+        CrimeItemReads(owner: self).itemValue(of: item)
     }
 
     public func actorName(_ key: ReferenceKey) -> String {
-        game.dialogueWorld.speakerLabel(for: key)
+        CrimeItemReads(owner: self).actorName(key)
     }
 
     public var crosshairInteraction: PlacedInteraction? {
@@ -151,22 +151,12 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     // MARK: - Items and vendors
 
     public var inventory: (any InventoryAccess)? {
-        game.inventory.runtime?.inventory
+        CrimeItemReads(owner: self).inventory
     }
 
     /// The items go back clean, because their owner holds them again.
     public func giveBack(_ item: FormID, count: Int32, to actor: ReferenceKey) -> Bool {
-        guard
-            let runtime = game.inventory.runtime,
-            let holder = game.streamer.inventoryHolder(of: actor)
-        else { return false }
-        let inventory = runtime.inventory
-        let held = min(count, inventory.count(of: item, in: runtime.player))
-        guard held > 0 else { return false }
-        inventory.clearStolen(item, count: held, in: runtime.player)
-        return attempt {
-            try inventory.transfer(item, count: held, from: runtime.player, to: holder)
-        } != nil
+        CrimeItemReads(owner: self).giveBack(item, count: count, to: actor)
     }
 
     public func targetOwnership() -> ReferenceOwnershipReadout? {
@@ -178,7 +168,7 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     }
 
     public func vendor(faction key: ReferenceKey) -> Vendor? {
-        game.inventory.vendors?.core.vendor(faction: key)
+        CrimeItemReads(owner: self).vendor(faction: key)
     }
 
     public func vendor(of actor: ReferenceKey) -> Vendor? {
@@ -291,5 +281,52 @@ struct CrimeSessionReads {
 extension CrimeWorldAdapter {
     var sessionReads: CrimeSessionReads {
         CrimeSessionReads(game: game)
+    }
+}
+
+extension CrimeWorldAdapter {
+    /// Reads the cell, item values, names, and vendors for crimes.
+    struct CrimeItemReads {
+        let owner: CrimeWorldAdapter
+
+        var currentCellLocation: CellSceneLocation? {
+            let game = owner.game
+            return game.streamer.currentCellLocation
+        }
+
+        func itemValue(of item: FormID) -> Int64 {
+            let game = owner.game
+            return Int64(game.inventory.itemDefinitions?.gameValue(of: item) ?? 0)
+        }
+
+        func actorName(_ key: ReferenceKey) -> String {
+            let game = owner.game
+            return game.dialogueWorld.speakerLabel(for: key)
+        }
+
+        var inventory: (any InventoryAccess)? {
+            let game = owner.game
+            return game.inventory.runtime?.inventory
+        }
+
+        func giveBack(_ item: FormID, count: Int32, to actor: ReferenceKey) -> Bool {
+            let game = owner.game
+            guard
+                let runtime = game.inventory.runtime,
+                let holder = game.streamer.inventoryHolder(of: actor)
+            else { return false }
+            let inventory = runtime.inventory
+            let held = min(count, inventory.count(of: item, in: runtime.player))
+            guard held > 0 else { return false }
+            inventory.clearStolen(item, count: held, in: runtime.player)
+            return attempt {
+                try inventory.transfer(item, count: held, from: runtime.player, to: holder)
+            } != nil
+        }
+
+        func vendor(faction key: ReferenceKey) -> Vendor? {
+            let game = owner.game
+            return game.inventory.vendors?.core.vendor(faction: key)
+        }
     }
 }

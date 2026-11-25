@@ -252,7 +252,7 @@ extension GameSessionScopeFactories {
         StoryManagerCoordinator(
             world: scope.storyWorld,
             social: SocialEventCoordinator(
-                world: scope.storyWorld,
+                world: scope.storyWorld.socialWorlds,
                 settings: scope.worldData?.storyData.social ?? .documentedDefaults
             ),
             story: scope.worldData?.storyData.storyManager

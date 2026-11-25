@@ -15,7 +15,7 @@ import OpenSkyMenusInterface
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-public import OpenSkyQuests
+import OpenSkyQuests
 public import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
@@ -27,8 +27,6 @@ import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 public import OpenSkyWorldState
 import simd
-
-extension StoryWorldAdapter: SocialEventWorld {}
 
 /// Witnesses that forward to the narrow parts of `StoryWorldAdapter`.
 extension StoryWorldAdapter {
@@ -50,9 +48,7 @@ extension StoryWorldAdapter {
     }
 
     public func requestConversation(speaker: ReferenceKey, partner: ReferenceKey) -> Bool {
-        storyManager.social.requestConversation(
-            speaker: speaker, partner: partner, now: sceneSeconds
-        )
+        SceneAndDeathReads(host: self).requestConversation(speaker: speaker, partner: partner)
     }
 
     public func questAccess(
@@ -83,19 +79,12 @@ extension StoryWorldAdapter {
 
     /// Whether a destruction stage or a script marked the object destroyed.
     static func isDestroyed(_ key: ReferenceKey, in store: WorldStateStore) -> Bool {
-        store.component(ScriptedReferenceState.self, for: key)?
-            .flag(ScriptedStateName.destroyed) == true
+        SceneAndDeathReads.isDestroyed(key, in: store)
     }
 
     /// Every actor the world state marks dead, in a loaded cell or not.
     static func savedDead(in store: WorldStateStore) -> Set<ReferenceKey> {
-        var dead: Set<ReferenceKey> = []
-        for key in store.sortedDirtyKeys()
-            where store.component(ActorDeathState.self, for: key)?.isDead == true
-        {
-            dead.insert(key)
-        }
-        return dead
+        SceneAndDeathReads.savedDead(in: store)
     }
 
     public func questReferenceSearch() -> QuestReferenceSearch? {
@@ -104,14 +93,6 @@ extension StoryWorldAdapter {
 
     public func createQuestReference(_ base: FormID, at anchor: ReferenceKey) -> ReferenceKey? {
         socialSearch.createQuestReference(base, at: anchor)
-    }
-
-    public func socialFrame(partners: [ReferenceKey]) -> SocialFrame? {
-        socialSearch.socialFrame(partners: partners)
-    }
-
-    public func socialCanSee(_ observer: SocialActor, _ body: SocialActor) -> Bool {
-        socialSearch.socialCanSee(observer, body)
     }
 
     public func lineDuration(of info: TopicInfo, speaker: ReferenceKey) -> Float? {
@@ -158,7 +139,7 @@ extension StoryWorldAdapter {
     public func runScenePackages(
         _ packages: [FormID], actor: ReferenceKey, owner: ScenePackageOwner
     ) -> ScenePackageState {
-        sceneCast.runScenePackages(packages, actor: actor, owner: owner)
+        SceneAndDeathReads(host: self).runScenePackages(packages, actor: actor, owner: owner)
     }
 
     public func releaseScenePackages(actor: ReferenceKey, owner: ScenePackageOwner) {
@@ -178,5 +159,39 @@ extension StoryWorldAdapter {
 
     public func stopQuest(_ quest: FormID) {
         sceneCast.stopQuest(quest)
+    }
+}
+
+extension StoryWorldAdapter {
+    /// Requests conversations, reads destroyed and dead references, and runs scene packages.
+    struct SceneAndDeathReads {
+        let host: StoryWorldAdapter
+
+        func requestConversation(speaker: ReferenceKey, partner: ReferenceKey) -> Bool {
+            host.storyManager.social.requestConversation(
+                speaker: speaker, partner: partner, now: host.sceneSeconds
+            )
+        }
+
+        static func isDestroyed(_ key: ReferenceKey, in store: WorldStateStore) -> Bool {
+            store.component(ScriptedReferenceState.self, for: key)?
+                .flag(ScriptedStateName.destroyed) == true
+        }
+
+        static func savedDead(in store: WorldStateStore) -> Set<ReferenceKey> {
+            var dead: Set<ReferenceKey> = []
+            for key in store.sortedDirtyKeys()
+                where store.component(ActorDeathState.self, for: key)?.isDead == true
+            {
+                dead.insert(key)
+            }
+            return dead
+        }
+
+        func runScenePackages(
+            _ packages: [FormID], actor: ReferenceKey, owner: ScenePackageOwner
+        ) -> ScenePackageState {
+            host.sceneCast.runScenePackages(packages, actor: actor, owner: owner)
+        }
     }
 }
