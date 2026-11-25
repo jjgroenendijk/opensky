@@ -114,13 +114,7 @@ extension VehicleWorldAdapter: VehicleWorld {
 
     /// A new game ends every ride and hands the player back to the controls.
     public func leaveAllVehicles() {
-        vehicles.reset()
-        setPlayerAIDriven(false)
-        if ridesPlayer {
-            game.gameSession?.playerSeat = nil
-        }
-        ridesPlayer = false
-        game.hud.setCartMode(false)
+        RiderReads(host: self).leaveAllVehicles()
     }
 
     public func placePlayer(at pose: ReferenceTransformOverride) {
@@ -159,9 +153,7 @@ extension VehicleWorldAdapter: VehicleWorld {
     }
 
     public func vehicleRiderTravel(of key: ReferenceKey) -> VehicleRiderTravel? {
-        guard let (motion, elapsed) = game.idleWorld.idles.rootMotion(of: key) else { return nil }
-        let time = min(max(elapsed, 0), motion.duration)
-        return VehicleRiderTravel(offset: motion.offset(at: time), yaw: motion.yaw(at: time))
+        RiderReads(host: self).vehicleRiderTravel(of: key)
     }
 
     public func spinVehicleWheels(of key: ReferenceKey, turns: VehicleWheelTurns) {
@@ -188,7 +180,7 @@ extension VehicleWorldAdapter: VehicleWorld {
 
 extension VehicleWorldAdapter: PapyrusActorAIBridge {
     public func evaluatePackage(_ actor: ReferenceKey) {
-        game.packages.evaluate(actor)
+        RiderReads(host: self).evaluatePackage(actor)
     }
 
     public func setVehicle(_ rider: ReferenceKey, vehicle: ReferenceKey?) {
@@ -473,5 +465,36 @@ struct VehicleBodyReads {
 extension VehicleWorldAdapter {
     var reads: VehicleBodyReads {
         VehicleBodyReads(game: game)
+    }
+}
+
+extension VehicleWorldAdapter {
+    /// Leaves vehicles, reads rider travel, and evaluates packages.
+    struct RiderReads {
+        let host: VehicleWorldAdapter
+
+        func leaveAllVehicles() {
+            let game = host.game
+            host.vehicles.reset()
+            host.setPlayerAIDriven(false)
+            if host.ridesPlayer {
+                game.gameSession?.playerSeat = nil
+            }
+            host.ridesPlayer = false
+            game.hud.setCartMode(false)
+        }
+
+        func vehicleRiderTravel(of key: ReferenceKey) -> VehicleRiderTravel? {
+            let game = host.game
+            guard let (motion, elapsed) = game.idleWorld.idles.rootMotion(of: key)
+            else { return nil }
+            let time = min(max(elapsed, 0), motion.duration)
+            return VehicleRiderTravel(offset: motion.offset(at: time), yaw: motion.yaw(at: time))
+        }
+
+        func evaluatePackage(_ actor: ReferenceKey) {
+            let game = host.game
+            game.packages.evaluate(actor)
+        }
     }
 }
