@@ -30,7 +30,7 @@ extension PapyrusWorldStateBridge.QuestScripts {
     /// `Start()` returns with the quest at that stage
     /// (<https://ck.uesp.net/wiki/Start_-_Quest>). A running quest keeps its instances.
     @discardableResult
-    public func startQuest(for key: ReferenceKey) throws -> Bool {
+    func startQuest(for key: ReferenceKey) throws -> Bool {
         let resolved = try resolveQuest(key)
         let wasRunning = try resolved.runtime.state(of: resolved.quest.formID).isRunning
         let state = try resolved.runtime.startQuest(resolved.quest.formID)

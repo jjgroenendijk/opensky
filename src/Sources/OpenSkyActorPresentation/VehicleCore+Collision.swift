@@ -30,7 +30,7 @@ nonisolated extension VehicleCore {
         return result
     }
 
-    public var cartGroups: Set<ReferenceKey> {
+    var cartGroups: Set<ReferenceKey> {
         Set(ownCarts.keys)
     }
 }

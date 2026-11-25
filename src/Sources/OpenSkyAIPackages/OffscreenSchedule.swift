@@ -109,7 +109,7 @@ extension OffscreenScheduleWorld {
 nonisolated public enum OffscreenScheduleCore {
     /// Game seconds between two updates of one actor, the Low level's interval: 54 at
     /// the default timescale of 20.
-    public static func updateSeconds(timescale: Float = GameClock.defaultTimescale) -> Double {
+    static func updateSeconds(timescale: Float = GameClock.defaultTimescale) -> Double {
         AIProcessLevel.low.updateSeconds(timescale: timescale) ?? 0
     }
 
@@ -180,7 +180,7 @@ public final class OffscreenSchedule {
     }
 
     /// The registered actors on `level`.
-    public func count(of level: AIProcessLevel) -> Int {
+    func count(of level: AIProcessLevel) -> Int {
         registered.keys.count { (levels[$0] ?? .low) == level }
     }
 

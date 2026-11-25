@@ -177,13 +177,13 @@ public final class WorldAudioEngine {
         applyCategoryGains()
     }
 
-    public func isMuted(_ category: AudioCategory) -> Bool {
+    func isMuted(_ category: AudioCategory) -> Bool {
         mutedCategories.contains(category)
     }
 
     /// Mutes or unmutes one category. The category's volume is untouched, so
     /// unmuting restores exactly the level the slider was left at.
-    public func setMuted(_ muted: Bool, for category: AudioCategory) {
+    func setMuted(_ muted: Bool, for category: AudioCategory) {
         let changed: Bool = if muted {
             mutedCategories.insert(category).inserted
         } else {

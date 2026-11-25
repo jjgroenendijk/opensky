@@ -80,7 +80,7 @@ public final class StoryWorldAdapter {
         frames.socialSearch
     }
 
-    public var socialActs: StorySocialActsAdapter {
+    var socialActs: StorySocialActsAdapter {
         frames.socialActs
     }
 

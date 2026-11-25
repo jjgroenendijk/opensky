@@ -100,7 +100,7 @@ extension GameSession.DialogueCameraSteps {
     }
 
     /// How far the turn to the speaker has come, 0 to 1, or nil when no turn runs.
-    public var dialogueTurnProgress: Float? {
+    var dialogueTurnProgress: Float? {
         session.rigs.dialogueCameraState.turn.map { $0.elapsed / DialogueTurn.duration }
     }
 

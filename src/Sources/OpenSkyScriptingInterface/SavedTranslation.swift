@@ -39,7 +39,7 @@ nonisolated public struct SavedTranslation: WorldStateComponent, Sendable {
 nonisolated extension WorldStateComponentKind {
     /// A running scripted move. Keyed by the moving reference. A cell build does not
     /// read it: the renderer draws the move from the published poses.
-    public static let savedTranslation = Self(
+    static let savedTranslation = Self(
         rawValue: "savedTranslation", order: 50, affectsCellBuild: false
     )
 }

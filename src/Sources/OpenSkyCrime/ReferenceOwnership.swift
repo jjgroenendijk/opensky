@@ -46,7 +46,7 @@ nonisolated public struct OwnershipResolver: Sendable {
 
     /// The owner in force for a reference, applying the reference-then-cell
     /// precedence.
-    public func owner(reference: RecordOwnership?, cell: RecordOwnership?) -> ReferenceOwner? {
+    func owner(reference: RecordOwnership?, cell: RecordOwnership?) -> ReferenceOwner? {
         if let reference, let owner = owner(of: reference) {
             return owner
         }

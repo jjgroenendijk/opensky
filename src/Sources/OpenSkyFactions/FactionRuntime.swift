@@ -64,7 +64,7 @@ public struct FactionRuntime: FactionAccess {
         worldState.component(ActorFactionState.self, for: key) ?? ActorFactionState()
     }
 
-    public func isMember(_ key: ReferenceKey, of faction: ReferenceKey) -> Bool {
+    func isMember(_ key: ReferenceKey, of faction: ReferenceKey) -> Bool {
         state(of: key).isMember(of: faction)
     }
 

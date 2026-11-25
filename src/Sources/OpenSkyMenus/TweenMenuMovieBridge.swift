@@ -80,7 +80,7 @@ nonisolated public enum TweenMenuMovieBridge: Sendable {
     }
 
     /// Plays the close animation; the movie calls `CloseMenu` at its end.
-    public static func startClose(runtime: SWFMovieRuntime) {
+    static func startClose(runtime: SWFMovieRuntime) {
         runtime.callMovie("StartCloseMenuAnim")
     }
 

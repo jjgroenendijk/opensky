@@ -26,12 +26,12 @@ nonisolated public struct DetectionDialogueState: Equatable, Sendable {
     public init() {}
 
     /// Each target a group has a record of, for a state read.
-    public var records: [ReferenceKey: DetectionRecord] {
+    var records: [ReferenceKey: DetectionRecord] {
         groups.mapValues(\.record)
     }
 
     /// Seconds until `subtype` may be said about `target`; 0 when it may be said now.
-    public func wait(for subtype: DetectionSubtype, about target: ReferenceKey, now: Double)
+    func wait(for subtype: DetectionSubtype, about target: ReferenceKey, now: Double)
         -> Double
     {
         max(0, (groups[target]?.readyAt[subtype] ?? 0) - now)

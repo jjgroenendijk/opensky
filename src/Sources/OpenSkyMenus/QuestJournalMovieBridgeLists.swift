@@ -4,7 +4,7 @@
 // entry and an empty readout, never a crash.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 public import OpenSkyFormatsSWF
 
 nonisolated extension QuestJournalMovieBridge {
@@ -63,7 +63,7 @@ nonisolated extension QuestJournalMovieBridge {
     /// `questTitleEndpieces` frame label for one quest type, from the movie's own
     /// table, which `onQuestHighlight` indexes with the row's `type`. A type the
     /// movie predates falls back to `Misc`.
-    public static func endpieceFrame(for kind: Quest.Kind) -> String {
+    static func endpieceFrame(for kind: Quest.Kind) -> String {
         let index = Int(kind.rawValue)
         return endpieceByType.indices.contains(index) ? endpieceByType[index] : "Misc"
     }

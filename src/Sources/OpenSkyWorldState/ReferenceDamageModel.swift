@@ -21,5 +21,5 @@ nonisolated public struct ReferenceDamageModel: WorldStateComponent, Hashable, S
 }
 
 nonisolated extension WorldStateComponentKind {
-    public static let damageModel = Self(rawValue: "damageModel", order: 53)
+    static let damageModel = Self(rawValue: "damageModel", order: 53)
 }

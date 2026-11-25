@@ -33,7 +33,7 @@ nonisolated public struct MaterialType: Equatable, Sendable {
     public let flags: UInt32
 
     /// FNAM bit 1: an arrow that lands on this material sticks; on any other it bounces.
-    public var holdsArrows: Bool {
+    var holdsArrows: Bool {
         flags & 0x2 != 0
     }
 
