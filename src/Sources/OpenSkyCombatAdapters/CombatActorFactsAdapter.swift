@@ -90,13 +90,7 @@ extension CombatActorFactsAdapter {
     }
 
     public func aggroRadius(of key: ReferenceKey) -> AggroRadius? {
-        guard let data = game.factions.profile(of: key)?.aiData, data.usesAggroRadiusBehavior
-        else { return nil }
-        return AggroRadius(
-            warn: Float(data.warnDistance ?? 0),
-            warnOrAttack: Float(data.warnOrAttackDistance ?? 0),
-            attack: Float(data.attackDistance ?? 0)
-        )
+        SensesReads(owner: self).aggroRadius(of: key)
     }
 
     @discardableResult
@@ -108,9 +102,7 @@ extension CombatActorFactsAdapter {
         of observer: ReferenceKey,
         toward target: ReferenceKey
     ) -> CombatAwareness {
-        guard let runtime = game.perception.runtime else { return .unaware }
-        let pair = runtime.state(observer: observer, target: target)
-        return CombatAwareness(state: pair.state, lastKnownPosition: pair.lastKnownPosition)
+        SensesReads(owner: self).awareness(of: observer, toward: target)
     }
 
     public func actorValues(of key: ReferenceKey) -> ((Int32) -> Float?)? {
@@ -276,7 +268,40 @@ extension CombatActorFactsAdapter {
     }
 
     var playerRuns: Bool {
-        let gait = game.gameSession?.locomotion.status.gait
-        return gait == .run || gait == .sprint
+        SensesReads(owner: self).playerRuns
+    }
+}
+
+extension CombatActorFactsAdapter {
+    /// Reads an actor's aggro radius, awareness, and whether the player runs.
+    struct SensesReads {
+        let owner: CombatActorFactsAdapter
+
+        func aggroRadius(of key: ReferenceKey) -> AggroRadius? {
+            let game = owner.game
+            guard let data = game.factions.profile(of: key)?.aiData, data.usesAggroRadiusBehavior
+            else { return nil }
+            return AggroRadius(
+                warn: Float(data.warnDistance ?? 0),
+                warnOrAttack: Float(data.warnOrAttackDistance ?? 0),
+                attack: Float(data.attackDistance ?? 0)
+            )
+        }
+
+        func awareness(
+            of observer: ReferenceKey,
+            toward target: ReferenceKey
+        ) -> CombatAwareness {
+            let game = owner.game
+            guard let runtime = game.perception.runtime else { return .unaware }
+            let pair = runtime.state(observer: observer, target: target)
+            return CombatAwareness(state: pair.state, lastKnownPosition: pair.lastKnownPosition)
+        }
+
+        var playerRuns: Bool {
+            let game = owner.game
+            let gait = game.gameSession?.locomotion.status.gait
+            return gait == .run || gait == .sprint
+        }
     }
 }

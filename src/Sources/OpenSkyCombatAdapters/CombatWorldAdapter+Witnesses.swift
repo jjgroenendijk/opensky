@@ -37,8 +37,7 @@ extension CombatWorldAdapter: CombatWorld {}
 /// Witnesses that forward to the narrow parts of `CombatWorldAdapter`.
 extension CombatWorldAdapter {
     public func castingFacts(of key: ReferenceKey) -> CombatCastingFacts? {
-        CombatSpellCastsAdapter.CastingFactsReads(game: spellCasts.game)
-            .castingFacts(of: key)
+        WitnessReads(owner: self).castingFacts(of: key)
     }
 
     @discardableResult
@@ -166,7 +165,7 @@ extension CombatWorldAdapter {
         of observer: ReferenceKey,
         toward target: ReferenceKey
     ) -> CombatAwareness {
-        actorFacts.awareness(of: observer, toward: target)
+        WitnessReads(owner: self).awareness(of: observer, toward: target)
     }
 
     public func actorValues(of key: ReferenceKey) -> ((Int32) -> Float?)? {
@@ -215,7 +214,7 @@ extension CombatWorldAdapter {
     }
 
     public func spellHealthDamage(_ spell: SpellPayload) -> Float {
-        spellCasts.game.magic.healthDamage(of: spell)
+        WitnessReads(owner: self).spellHealthDamage(spell)
     }
 
     public func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction? {
@@ -237,7 +236,7 @@ extension CombatWorldAdapter {
     public func crimeStanding(
         of actor: ReferenceKey, judgedBy helper: ReferenceKey
     ) -> CombatCrimeStanding {
-        reports.crimeStanding(of: actor, judgedBy: helper)
+        WitnessReads(owner: self).crimeStanding(of: actor, judgedBy: helper)
     }
 
     public func isGuard(_ key: ReferenceKey) -> Bool {
@@ -309,18 +308,11 @@ extension CombatWorldAdapter {
     }
 
     public func impact(dataSet: FormID, material: FormID?) -> ResolvedMeleeImpact? {
-        game.combatRecords?.footstepStore.flatMap {
-            MeleeImpactResolver(footsteps: $0).resolve(dataSet: dataSet, material: material)
-        }
+        WitnessReads(owner: self).impact(dataSet: dataSet, material: material)
     }
 
     public func impact(dataSetEditorID: String, material: FormID?) -> ResolvedMeleeImpact? {
-        guard
-            let impacts = game.combatRecords?.footstepStore
-                .map(MeleeImpactResolver.init(footsteps:)),
-            let set = impacts.dataSet(editorID: dataSetEditorID)
-        else { return nil }
-        return impacts.resolve(dataSet: set, material: material)
+        WitnessReads(owner: self).impact(dataSetEditorID: dataSetEditorID, material: material)
     }
 
     public func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
@@ -374,5 +366,51 @@ extension CombatWorldAdapter {
 
     public func run(_ commands: [CombatCommand]) {
         outcomes.run(commands)
+    }
+}
+
+extension CombatWorldAdapter {
+    /// Reads casting, awareness, crime and impact facts for combat.
+    struct WitnessReads {
+        let owner: CombatWorldAdapter
+
+        func castingFacts(of key: ReferenceKey) -> CombatCastingFacts? {
+            CombatSpellCastsAdapter.CastingFactsReads(game: owner.spellCasts.game)
+                .castingFacts(of: key)
+        }
+
+        func awareness(
+            of observer: ReferenceKey,
+            toward target: ReferenceKey
+        ) -> CombatAwareness {
+            owner.actorFacts.awareness(of: observer, toward: target)
+        }
+
+        func spellHealthDamage(_ spell: SpellPayload) -> Float {
+            owner.spellCasts.game.magic.healthDamage(of: spell)
+        }
+
+        func crimeStanding(
+            of actor: ReferenceKey, judgedBy helper: ReferenceKey
+        ) -> CombatCrimeStanding {
+            owner.reports.crimeStanding(of: actor, judgedBy: helper)
+        }
+
+        func impact(dataSet: FormID, material: FormID?) -> ResolvedMeleeImpact? {
+            let game = owner.game
+            return game.combatRecords?.footstepStore.flatMap {
+                MeleeImpactResolver(footsteps: $0).resolve(dataSet: dataSet, material: material)
+            }
+        }
+
+        func impact(dataSetEditorID: String, material: FormID?) -> ResolvedMeleeImpact? {
+            let game = owner.game
+            guard
+                let impacts = game.combatRecords?.footstepStore
+                    .map(MeleeImpactResolver.init(footsteps:)),
+                let set = impacts.dataSet(editorID: dataSetEditorID)
+            else { return nil }
+            return impacts.resolve(dataSet: set, material: material)
+        }
     }
 }

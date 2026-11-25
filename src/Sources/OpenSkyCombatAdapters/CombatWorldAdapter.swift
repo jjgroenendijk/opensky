@@ -54,7 +54,7 @@ public typealias CombatWorldHosts = CombatActorFactsHost & CombatGearHost &
 public final class CombatWorldAdapter {
     public let game: any CombatWorldHost
     let frames: CombatFrameSteps
-    let reactions: CombatReactionClips
+    let reactions: ReactionClips
 
     public var spellCasts: CombatSpellCastsAdapter {
         frames.spellCasts
@@ -91,7 +91,7 @@ public final class CombatWorldAdapter {
     public init(game: some CombatWorldHosts) {
         self.game = game
         frames = CombatFrameSteps(hosts: game)
-        reactions = CombatReactionClips(game: game)
+        reactions = ReactionClips(game: game)
     }
 
     public func playReaction(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool {
@@ -191,54 +191,56 @@ final class CombatFrameSteps {
     }
 }
 
-/// Plays the hit and stagger reactions, and warms each rig's clips once.
-final class CombatReactionClips {
-    let game: any CombatWorldHost
-    /// Rigs whose reaction clips were requested, because a room of actors shares one rig.
-    private var warmedSkeletons: Set<String> = []
+extension CombatWorldAdapter {
+    /// Plays the hit and stagger reactions, and warms each rig's clips once.
+    final class ReactionClips {
+        let game: any CombatWorldHost
+        /// Rigs whose reaction clips were requested, because a room of actors shares one rig.
+        private var warmedSkeletons: Set<String> = []
 
-    init(game: any CombatWorldHost) {
-        self.game = game
-    }
-
-    /// Plays one reaction clip on a resident actor. False when the actor has
-    /// no playback or its rig has no such animation.
-    func playReaction(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool {
-        guard
-            let renderer = game.renderer,
-            let playback = game.actorPlayback(for: key),
-            let loaded = reactionClip(clip, skeletonMeshPath: playback.clip.skeletonMeshPath)
-        else { return false }
-        playback.play(
-            loaded,
-            startingAt: renderer.animationTime,
-            forSeconds: ActorAnimationClipLoader.holdSeconds(for: clip)
-        )
-        return true
-    }
-
-    /// The clip when it is loaded. The first ask for a skeleton warms every reaction
-    /// of that rig off the main actor; a hit before it arrives plays no reaction.
-    private func reactionClip(
-        _ clip: CombatActorClip,
-        skeletonMeshPath: String
-    ) -> ActorAnimationClip? {
-        guard let clips = game.animationClips else { return nil }
-        if warmedSkeletons.insert(skeletonMeshPath).inserted {
-            for other in CombatActorClip.allCases where other != clip {
-                clips.prefetch(Self.reactionKey(other, skeletonMeshPath: skeletonMeshPath))
-            }
+        init(game: any CombatWorldHost) {
+            self.game = game
         }
-        return clips.value(for: Self.reactionKey(clip, skeletonMeshPath: skeletonMeshPath))
-    }
 
-    private static func reactionKey(
-        _ clip: CombatActorClip,
-        skeletonMeshPath: String
-    ) -> ActorClipKey {
-        ActorClipKey(
-            skeletonMeshPath: skeletonMeshPath,
-            animationPath: ActorAnimationClipLoader.animationPath(for: clip)
-        )
+        /// Plays one reaction clip on a resident actor. False when the actor has
+        /// no playback or its rig has no such animation.
+        func playReaction(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool {
+            guard
+                let renderer = game.renderer,
+                let playback = game.actorPlayback(for: key),
+                let loaded = reactionClip(clip, skeletonMeshPath: playback.clip.skeletonMeshPath)
+            else { return false }
+            playback.play(
+                loaded,
+                startingAt: renderer.animationTime,
+                forSeconds: ActorAnimationClipLoader.holdSeconds(for: clip)
+            )
+            return true
+        }
+
+        /// The clip when it is loaded. The first ask for a skeleton warms every reaction
+        /// of that rig off the main actor; a hit before it arrives plays no reaction.
+        private func reactionClip(
+            _ clip: CombatActorClip,
+            skeletonMeshPath: String
+        ) -> ActorAnimationClip? {
+            guard let clips = game.animationClips else { return nil }
+            if warmedSkeletons.insert(skeletonMeshPath).inserted {
+                for other in CombatActorClip.allCases where other != clip {
+                    clips.prefetch(Self.reactionKey(other, skeletonMeshPath: skeletonMeshPath))
+                }
+            }
+            return clips.value(for: Self.reactionKey(clip, skeletonMeshPath: skeletonMeshPath))
+        }
+
+        private static func reactionKey(
+            _ clip: CombatActorClip,
+            skeletonMeshPath: String
+        ) -> ActorClipKey {
+            ActorClipKey(
+                skeletonMeshPath: skeletonMeshPath,
+                animationPath: ActorAnimationClipLoader.animationPath(for: clip)
+            )
+        }
     }
 }

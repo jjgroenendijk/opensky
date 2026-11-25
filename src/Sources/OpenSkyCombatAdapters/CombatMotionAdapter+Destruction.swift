@@ -13,16 +13,7 @@ extension CombatMotionAdapter {
     public func destructibleObjects(
         within radius: Float, of center: SIMD3<Float>
     ) -> [MeleeTarget] {
-        guard radius > 0, let bridge = game.scripts.bridge else { return [] }
-        return residentEntries().compactMap { entry in
-            guard let placed = entry.placedReference else { return nil }
-            let position = placed.placement.position
-            guard
-                simd_distance(position, center) <= radius,
-                bridge.destructionHealthLeft(of: entry.key) != nil
-            else { return nil }
-            return MeleeTarget(key: entry.key, feet: position)
-        }
+        DestructibleReads(owner: self).destructibleObjects(within: radius, of: center)
     }
 
     /// A weapon hit is external damage, so Ignore External Damage holds it.
@@ -40,5 +31,28 @@ extension CombatMotionAdapter {
             return interior.references.sortedEntries()
         }
         return streamer.composition.cells.values.flatMap { $0.references.sortedEntries() }
+    }
+}
+
+extension CombatMotionAdapter {
+    /// Finds the destructible objects in a radius.
+    struct DestructibleReads {
+        let owner: CombatMotionAdapter
+
+        func destructibleObjects(
+            within radius: Float, of center: SIMD3<Float>
+        ) -> [MeleeTarget] {
+            let game = owner.game
+            guard radius > 0, let bridge = game.scripts.bridge else { return [] }
+            return owner.residentEntries().compactMap { entry in
+                guard let placed = entry.placedReference else { return nil }
+                let position = placed.placement.position
+                guard
+                    simd_distance(position, center) <= radius,
+                    bridge.destructionHealthLeft(of: entry.key) != nil
+                else { return nil }
+                return MeleeTarget(key: entry.key, feet: position)
+            }
+        }
     }
 }

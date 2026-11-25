@@ -132,21 +132,7 @@ extension CombatMotionAdapter {
     }
 
     public func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>, gain: Float) {
-        impactEffects.showImpact(impact, at: position)
-        guard
-            let engine = game.gameSession?.worldAudio, engine.isRunning,
-            let assets = game.audio.assets,
-            let sounds = game.combatRecords?.soundStore,
-            let sound = attempt({ try sounds.resolveAny(impact.sound) }),
-            let path = engine.filePicker.path(for: sound)
-        else { return }
-        let request = AudioPlayRequest(
-            name: path, category: sound.audioCategory ?? .footsteps, worldPosition: position,
-            gain: gain, soundCategory: sound.descriptor.category
-        )
-        assets.request(path) { result in
-            _ = attempt { try engine.playPositional(asset: result.get(), request: request) }
-        }
+        ImpactPlayback(owner: self).playImpact(impact, at: position, gain: gain)
     }
 
     public func sweep(_ query: ShapeSweepQuery) -> ShapeSweepHit? {
@@ -195,5 +181,32 @@ extension CombatMotionAdapter {
             activeRagdolls: game.ragdoll.runtime?.trim(to: limits.activeRagdolls) ?? 0,
             awakeBodies: game.streamer.dynamicBodies.sleepExcessBodies(over: limits.awakeBodies)
         )
+    }
+}
+
+extension CombatMotionAdapter {
+    /// Plays the impact effects of a hit.
+    struct ImpactPlayback {
+        let owner: CombatMotionAdapter
+
+        func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>, gain: Float) {
+            let game = owner.game
+            let impactEffects = owner.impactEffects
+            impactEffects.showImpact(impact, at: position)
+            guard
+                let engine = game.gameSession?.worldAudio, engine.isRunning,
+                let assets = game.audio.assets,
+                let sounds = game.combatRecords?.soundStore,
+                let sound = attempt({ try sounds.resolveAny(impact.sound) }),
+                let path = engine.filePicker.path(for: sound)
+            else { return }
+            let request = AudioPlayRequest(
+                name: path, category: sound.audioCategory ?? .footsteps, worldPosition: position,
+                gain: gain, soundCategory: sound.descriptor.category
+            )
+            assets.request(path) { result in
+                _ = attempt { try engine.playPositional(asset: result.get(), request: request) }
+            }
+        }
     }
 }
