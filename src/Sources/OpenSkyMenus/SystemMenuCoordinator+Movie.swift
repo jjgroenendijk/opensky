@@ -25,33 +25,13 @@ extension SystemMenuCoordinator {
 
     /// Cancel on the main page is Resume; every other page is the movie's.
     func sendsToMovie(_ event: MenuInputEvent) -> Bool {
-        guard movieLoaded else { return false }
-        switch model.page {
-        case .main:
-            if case .move = event {
-                return true
-            }
-            return event == .button(.accept)
-        case .settings, .save, .load, .controls, .quit, .installedContent, .help:
-            return true
-        }
+        MovieRoutes(owner: self).sendsToMovie(event)
     }
 
     /// The cursor goes to the movie, as in the game: its rows, sliders, steppers, and
     /// check boxes take clicks and drags. Without the movie a click is accept.
     public func route(_ event: MenuPointerEvent) {
-        guard model.isOpen else { return }
-        guard movieLoaded, let renderer else {
-            if event.phase == .pressed {
-                route(.button(.accept))
-            }
-            return
-        }
-        attempt {
-            try renderer.updateSWFRuntime { _ = TitleMenuMovieBridge.handle(event, runtime: $0) }
-        }
-        answerMovieCalls()
-        followMovieState()
+        MovieRoutes(owner: self).route(event)
     }
 
     func sendToMovie(_ event: MenuInputEvent) {
@@ -237,5 +217,41 @@ extension SystemMenuMovieDiagnostics {
             faults: runtime.tally.faultTotal,
             missingNames: runtime.tally.missingNames.keys.sorted()
         )
+    }
+}
+
+extension SystemMenuCoordinator {
+    /// Routes input and pointer events to the movie.
+    struct MovieRoutes {
+        unowned let owner: SystemMenuCoordinator
+
+        func sendsToMovie(_ event: MenuInputEvent) -> Bool {
+            guard owner.movieLoaded else { return false }
+            switch owner.model.page {
+            case .main:
+                if case .move = event {
+                    return true
+                }
+                return event == .button(.accept)
+            case .settings, .save, .load, .controls, .quit, .installedContent, .help:
+                return true
+            }
+        }
+
+        func route(_ event: MenuPointerEvent) {
+            guard owner.model.isOpen else { return }
+            guard owner.movieLoaded, let renderer = owner.renderer else {
+                if event.phase == .pressed {
+                    owner.route(.button(.accept))
+                }
+                return
+            }
+            attempt {
+                try renderer
+                    .updateSWFRuntime { _ = TitleMenuMovieBridge.handle(event, runtime: $0) }
+            }
+            owner.answerMovieCalls()
+            owner.followMovieState()
+        }
     }
 }
