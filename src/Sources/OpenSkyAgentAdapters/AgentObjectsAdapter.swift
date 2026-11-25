@@ -108,9 +108,7 @@ extension AgentObjectsAdapter {
     }
 
     private func alarmRef(_ key: ReferenceKey) -> AgentJSON {
-        key == .player ? .string("player") : AgentBehaviourAdapter(hub: hub, game: hub.hosts)
-            .formID(of: key)
-            ?? .string("\(key)")
+        key == .player ? .string("player") : hub.formID(of: key) ?? .string("\(key)")
     }
 
     public func followerDebug(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
@@ -391,7 +389,7 @@ struct AgentFollowerCommands {
         let commands = game.followerCommands
         var json: [String: AgentJSON] = [
             "phase": .string(Self.phaseName(commands.phase)),
-            "follower": commands.phase.follower.flatMap(behaviour.formID) ?? .null,
+            "follower": commands.phase.follower.flatMap(hub.formID) ?? .null,
             "lastDecision": commands.lastDecision.map(decisionJSON) ?? .null,
             "lastOutcome": commands.lastOutcome.map { .string($0.rawValue) } ?? .null,
             "pickDistance": .init(commands.settings.pickDistance),
@@ -498,15 +496,11 @@ struct AgentFollowerCommands {
     private func taskJSON(_ task: FollowerCommandTask) -> AgentJSON {
         [
             "action": .string(task.action.rawValue),
-            "target": task.target.key.flatMap(behaviour.formID) ?? .null,
+            "target": task.target.key.flatMap(hub.formID) ?? .null,
             "position": .init(task.target.position),
             "kind": .string(task.target.kind.rawValue),
             "unlocks": .bool(task.unlocks),
             "crime": task.crime.map { .string($0.rawValue) } ?? .null
         ]
-    }
-
-    private var behaviour: AgentBehaviourAdapter {
-        AgentBehaviourAdapter(hub: hub, game: hub.hosts)
     }
 }

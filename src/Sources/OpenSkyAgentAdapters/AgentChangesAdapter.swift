@@ -118,20 +118,7 @@ extension AgentChangesAdapter {
                 throw AgentFailure(.notFound, "\(request.modifier) is no image space modifier")
             }
         }
-        return ["modifiers": Self.modifiersJSON(session.imageSpace.modifiers)]
-    }
-
-    /// Each running modifier, its strength now, and how long it has run.
-    static func modifiersJSON(_ modifiers: ImageSpaceModifierRuntime) -> AgentJSON {
-        .array(modifiers.instances.map { instance in
-            [
-                "name": .string(instance.name), "strength": .init(instance.strength),
-                "currentStrength": .init(instance.currentStrength),
-                "elapsed": .init(instance.elapsed), "held": .bool(instance.looping),
-                "fadeIn": .init(instance.fadeIn),
-                "remaining": instance.remaining.map { .init($0) } ?? .null
-            ]
-        })
+        return ["modifiers": session.imageSpace.modifiers.agentJSON]
     }
 
     private func cast(

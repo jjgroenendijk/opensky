@@ -67,6 +67,11 @@ public struct AgentHub {
         game.dataRoot
     }
 
+    /// The load-order FormID of a loaded reference, as the console names it.
+    func formID(of key: ReferenceKey) -> AgentJSON? {
+        hosts.streamer.referenceEntry(key: key).map { .formID($0.formID.rawValue) }
+    }
+
     /// True once a cell is in the scene and no door transition is loading.
     var isWorldReady: Bool {
         isWorldLoaded && !game.loadingScreens.isCovering
