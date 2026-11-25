@@ -25,7 +25,11 @@ nonisolated extension ConditionFunctions {
         if call.condition.flags.contains(.useAliases) {
             return call.aliasReference(parameter)
         }
-        return call.referenceEntry(parameter.asFormID)?.key
+        if let entry = call.referenceEntry(parameter.asFormID) {
+            return entry.key
+        }
+        // `PlayerRef` has no placed entry in the index, but it is a valid actor parameter.
+        return call.namesPlayer(parameter.asFormID) ? .player : nil
     }
 }
 

@@ -311,7 +311,7 @@ nonisolated public struct ConditionCall: Sendable {
 
     /// True for `PlayerRef` (`00000014`), which no loaded cell holds: the engine knows the
     /// player only as `.player`. `MQ101Scene1` waits on `HasLoaded3D` run on it.
-    private func namesPlayer(_ formID: FormID) -> Bool {
+    func namesPlayer(_ formID: FormID) -> Bool {
         guard let target = context.formIDTranslation?.target else {
             // Load-order space: index 00 is `Skyrim.esm`.
             return formID.rawValue == 0x14

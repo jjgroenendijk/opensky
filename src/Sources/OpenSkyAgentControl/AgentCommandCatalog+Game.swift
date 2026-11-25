@@ -109,8 +109,14 @@ nonisolated extension AgentCommandCatalog {
             ],
             options: [
                 value("ref", "ref", "The reference it runs on. Default: player."),
-                value("param", "value", "The first parameter: a hex FormID or a number."),
-                value("param2", "value", "The second parameter: a hex FormID or a number."),
+                value(
+                    "param", "value",
+                    "The first parameter: a hex FormID, player for the player, or a number."
+                ),
+                value(
+                    "param2", "value",
+                    "The second parameter: a hex FormID, player for the player, or a number."
+                ),
                 value(
                     "target", "ref",
                     "The other reference, which a function with no reference parameter reads."
