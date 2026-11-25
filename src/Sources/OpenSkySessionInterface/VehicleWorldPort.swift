@@ -4,6 +4,7 @@ public import OpenSkyScriptingInterface
 /// What the world adapters use of `VehicleWorldAdapter`.
 public protocol VehicleWorldPort: AnyObject, PapyrusActorAIBridge {
     func detach(_ follower: ReferenceKey)
+    func leaveAllVehicles()
     func handleBodyEvent(_ name: String, from actor: ReferenceKey)
     func handleIdleAnimationEvent(_ name: String, from actor: ReferenceKey)
     var isPlayerAIDriven: Bool { get }

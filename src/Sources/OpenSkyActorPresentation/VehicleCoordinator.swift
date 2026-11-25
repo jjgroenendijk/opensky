@@ -50,6 +50,16 @@ public final class VehicleCoordinator {
         self.world = world
     }
 
+    /// Ends every link at once, for a new game: nothing rests anywhere, because the world
+    /// state the rest would write has just been cleared.
+    public func reset() {
+        core = VehicleCore()
+        lastPoses = [:]
+        riderBodies = [:]
+        exits = [:]
+        travelled = []
+    }
+
     /// Puts `rider` in its seat on `vehicle`, as `SetVehicle` does.
     @discardableResult
     public func board(_ rider: ReferenceKey, on vehicle: ReferenceKey) -> Bool {

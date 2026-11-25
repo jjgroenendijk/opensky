@@ -36,6 +36,7 @@ public protocol MenuWorldTeleportsHost: AnyObject, SendableMetatype {
     var renderer: (any RendererPort)? { get }
     var simulationClock: any SteppedWallClockPort { get }
     var streamer: any CellStreamerPort { get }
+    var vehicleWorld: any VehicleWorldPort { get }
 }
 
 /// Part of `MenuWorldAdapter`, over its own narrow host.
@@ -55,6 +56,14 @@ extension MenuWorldTeleportsAdapter {
     /// A new game brings a dead player back, as a load does.
     public func endPlayerDeath() {
         game.ragdoll.resetPlayerDeath()
+    }
+
+    /// A new game takes the player off the opening ride. Its links, seat, AI-driven
+    /// player, and cart HUD live outside the world state, and its script leaves the
+    /// body in the cart idle.
+    public func endRides() {
+        game.vehicleWorld.leaveAllVehicles()
+        game.gameSession?.locomotion.restartGraphs()
     }
 
     /// A load puts the player back where the save was made, behind the loading screen.

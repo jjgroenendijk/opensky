@@ -18,6 +18,7 @@ public protocol VehiclePort: AnyObject {
     func detach(_ follower: ReferenceKey, standing: Bool) -> [VehicleCommand]
     func setVehicle(_ rider: ReferenceKey, vehicle: ReferenceKey?) -> [VehicleCommand]
     func tow(_ cart: ReferenceKey, by horse: ReferenceKey) -> [VehicleCommand]
+    func reset()
 }
 
 /// The default arguments a protocol requirement cannot carry.

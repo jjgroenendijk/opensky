@@ -31,6 +31,7 @@ public protocol VehicleWorldHost: AnyObject, SendableMetatype {
     var packages: any PackagePort { get }
     var renderer: (any RendererPort)? { get }
     var gameSession: (any GameSessionPort)? { get }
+    var hud: any HUDPort { get }
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
     var vehicles: any VehiclePort { get }
@@ -109,6 +110,17 @@ extension VehicleWorldAdapter: VehicleWorld {
 
     public func detach(_ follower: ReferenceKey) {
         run(vehicles.detach(follower))
+    }
+
+    /// A new game ends every ride and hands the player back to the controls.
+    public func leaveAllVehicles() {
+        vehicles.reset()
+        setPlayerAIDriven(false)
+        if ridesPlayer {
+            game.gameSession?.playerSeat = nil
+        }
+        ridesPlayer = false
+        game.hud.setCartMode(false)
     }
 
     public func placePlayer(at pose: ReferenceTransformOverride) {
