@@ -19,8 +19,6 @@ public protocol CombatLoopRuntimePort: CombatControlling {
     func drawState(of key: ReferenceKey) -> WeaponDrawState?
     /// True when `key` fights with a bow or a crossbow.
     func fightsRanged(_ key: ReferenceKey) -> Bool
-    /// NPC pairs whose observer attacks its target on sight.
-    var foePairs: Set<CombatFoePair> { get }
     /// The NPC pairs perception tracks: the foe pairs, and each calm actor beside an
     /// ally in a fight.
     var watchedPairs: Set<CombatFoePair> { get }

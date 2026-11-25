@@ -33,14 +33,11 @@ nonisolated public enum QuestJournalMovieBridge: Sendable {
     public static let objectiveListPath = "\(pagePath)/objectiveList"
     public static let titleTextPath = "\(pagePath)/questTitleText"
     public static let descriptionTextPath = "\(pagePath)/questDescriptionText"
-    public static let endpiecesPath = "\(pagePath)/questTitleEndpieces"
 
     /// The list base's selection, shared by both lists.
     public static let selectedIndexName = "iSelectedIndex"
     /// Method on the list base that rebuilds entry clips from `EntriesA`.
     public static let invalidateMethod = "InvalidateData"
-    /// Method on the list base that empties every entry clip.
-    public static let clearMethod = "ClearList"
 
     /// Frame label of a completed objective entry clip, measured off the clip's
     /// own timeline.

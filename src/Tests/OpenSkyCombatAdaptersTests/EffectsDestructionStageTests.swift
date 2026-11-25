@@ -54,8 +54,8 @@ struct EffectsDestructionStageTests {
         bridge.takeDestructionChangesResult = [DestructionStageChange(
             reference: Self.barrel,
             stages: [
-                .init(index: 1, model: "barrel01.nif", debris: Self.shards, debrisCount: 3),
-                .init(index: 2, selfDamagePerSecond: 4, explosion: Self.blast)
+                .init(model: "barrel01.nif", debris: Self.shards, debrisCount: 3),
+                .init(selfDamagePerSecond: 4, explosion: Self.blast)
             ]
         )]
         var burns = DestructionBurns()

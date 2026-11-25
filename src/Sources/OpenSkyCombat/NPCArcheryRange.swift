@@ -17,8 +17,6 @@ nonisolated struct NPCArcheryRange: Equatable, Sendable {
     static let optimalMinimum: Float = 1024
     static let optimalMiddle: Float = 1280
     static let optimalMaximum: Float = 1536
-    /// `fCombatOptimalRangeMinBufferDistance` and `MaxBufferDistance`.
-    static let minimumBuffer: Float = 256
     static let maximumBuffer: Float = 512
     /// `fCombatBackoffMinDistanceMult`.
     static let backOffMult: Float = 0.75

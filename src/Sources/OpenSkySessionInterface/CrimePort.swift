@@ -37,8 +37,6 @@ public protocol CrimePort: CrimeArrestSession {
 
     func advanceGuardResponse() -> [CrimeCommand]
 
-    var alarmReadout: CrimeAlarmReadout { get }
-
     func assistStanding(of actor: ReferenceKey, judgedBy helper: ReferenceKey)
         -> CrimeAssistStanding
 

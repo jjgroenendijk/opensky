@@ -23,13 +23,6 @@ public protocol PapyrusWorldQuestBridge: Sendable {
     /// has one, its plugin baseline when it does not.
     func questState(for key: ReferenceKey) throws -> QuestRuntimeState
 
-    /// Starts the quest. Starting one that already runs is a no-op.
-    ///
-    /// - Returns: true when the quest is running afterwards, which is the
-    ///   `bool Function Start()` return value.
-    @discardableResult
-    func startQuest(for key: ReferenceKey) throws -> Bool
-
     /// Queues the start of a stopped quest, as a script call does. `stage` and
     /// `objective` are set once the quest runs.
     func requestQuestStart(

@@ -19,13 +19,9 @@ nonisolated public struct TeammateTradeFacts: Equatable, Sendable {
 }
 
 nonisolated public enum TeammateTradeRule {
-    /// The refusal of moving `count` of an item, or nil to let it through. A take is never
-    /// refused: the trade list hides the outfit's copies, and the game shows no message.
-    public static func refusal(
-        _ transfer: ContainerTransfer,
-        count: Int32,
-        _ facts: TeammateTradeFacts
-    )
+    /// The refusal of a move whose weight `facts` holds, or nil to let it through. A take is
+    /// never refused: the trade list hides the outfit's copies, and the game shows no message.
+    public static func refusal(_ transfer: ContainerTransfer, _ facts: TeammateTradeFacts)
         -> TeammateTradeText?
     {
         switch transfer {
@@ -48,7 +44,7 @@ extension InventoryCoordinator.TeammateTrades {
         facts.carriedWeight = inventory.carriedWeight(of: teammate)
         facts.addedWeight = (inventory.baselines.items.definition(item)?.weight ?? 0) * Float(count)
         facts.capacity = coordinator.world.carryWeight(of: teammate.key)
-        return TeammateTradeRule.refusal(transfer, count: count, facts)
+        return TeammateTradeRule.refusal(transfer, facts)
     }
 
     /// Takes everything but the follower's starting outfit.

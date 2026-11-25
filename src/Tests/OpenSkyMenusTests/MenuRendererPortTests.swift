@@ -146,6 +146,7 @@ struct MenuRendererPortTests {
 
     @Test func theHUDLayerHidesUnderTheTitle() throws {
         let started = try startedHUD()
+        #expect(started.world.renderer != nil)
         started.hud.setUnderTitle(true)
         #expect(started.port.swfHUDHidden)
         started.hud.setUnderTitle(false)

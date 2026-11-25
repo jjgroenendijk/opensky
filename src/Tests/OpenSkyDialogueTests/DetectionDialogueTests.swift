@@ -69,7 +69,7 @@ struct DetectionDialogueTests {
             Self.member(Self.archer, searching: true, x: 90)
         ], now: 5, state: &state)
         #expect(lines == [
-            DetectionLineRequest(subtype: .combatToLost, speaker: Self.archer, about: .player)
+            DetectionLineRequest(subtype: .combatToLost, speaker: Self.archer)
         ])
         #expect(state.records[.player] == .lost)
         #expect(state.wait(for: .lostIdle, about: .player, now: 5) >= 10)
@@ -112,7 +112,7 @@ struct DetectionDialogueTests {
         _ = Self.pass([Self.member(Self.bandit, searching: true)], now: 1, state: &state)
         let lost = Self.pass([], now: 40, state: &state)
         #expect(lost == [
-            DetectionLineRequest(subtype: .lostToNormal, speaker: Self.bandit, about: .player)
+            DetectionLineRequest(subtype: .lostToNormal, speaker: Self.bandit)
         ])
         _ = Self.pass([Self.member(Self.archer, searching: true)], now: 50, state: &state)
         #expect(Self.pass([], now: 60, state: &state).map(\.subtype) == [.alertToNormal])
@@ -167,7 +167,7 @@ struct DetectionDialogueTests {
         #expect(coordinator.detectionDialogue.records[.player] == .combat)
         #expect(coordinator.detectionRecords[.player] == .combat)
         let request = DetectionLineRequest(
-            subtype: .alertIdle, speaker: DialogueRuntimeFixture.speakerKey, about: .player
+            subtype: .alertIdle, speaker: DialogueRuntimeFixture.speakerKey
         )
         #expect(DetectionLine(info: FormID(0x90), request: request).request == request)
         #expect(SpeechTimerSettings.vanilla.detectionIdleWait == 10 ... 25)

@@ -86,7 +86,7 @@ extension PapyrusWorldStateBridge.ReferenceEvents {
             reference: key,
             stages: passed.map { stage in
                 var change = DestructionStageChange.Stage(
-                    index: stage.index, model: stage.model?.path,
+                    model: stage.model?.path,
                     selfDamagePerSecond: Float(stage.selfDamagePerSecond),
                     explosion: resolve(stage.explosion), debris: resolve(stage.debris),
                     debrisCount: Int(stage.debrisCount)

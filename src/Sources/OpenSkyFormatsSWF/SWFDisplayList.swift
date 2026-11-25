@@ -213,16 +213,6 @@ nonisolated public enum SWFDisplayListParser: Sendable {
         }
     }
 
-    private static func skipBytes(_ bits: inout SWFBitReader, count: Int) throws {
-        bits.align()
-        guard bits.remainingData.count >= count else {
-            throw SWFBitReaderError.outOfBounds(
-                bitsRequested: count * 8, bitsRemaining: bits.remainingData.count * 8
-            )
-        }
-        bits.advance(byteCount: count)
-    }
-
     /// Null-terminated STRING under the engine-wide `GameText` policy, matching
     /// the SWFEditText string convention.
     private static func readString(_ bits: inout SWFBitReader) throws -> String {

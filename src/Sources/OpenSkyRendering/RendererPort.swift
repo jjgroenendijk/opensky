@@ -32,7 +32,6 @@ public protocol RendererPort: AnyObject {
     ) -> Bool
     var swfScale: Float { get set }
     var swfHUDHidden: Bool { get set }
-    var swfHUDRuntime: SWFMovieRuntime? { get }
     @discardableResult func setSWFHUD(
         _ scene: SWFMovieScene?, prepare: ((SWFMovieRuntime) -> Void)?
     ) throws -> SWFMovieRuntime?

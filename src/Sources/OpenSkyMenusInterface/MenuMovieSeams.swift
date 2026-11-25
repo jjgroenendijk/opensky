@@ -24,7 +24,6 @@ public protocol MenuLayerHolder: AnyObject {
 /// The HUD, which keeps the stack of menu movies on the menu layer. The HUD itself
 /// draws on its own layer under it.
 public protocol MenuLayerOwner: AnyObject {
-    func start()
     /// `holder` takes the menu layer from whatever holds it now.
     func takeLayer(for holder: any MenuLayerHolder)
     /// `holder` lets go. The holder below it gets the layer back, or else the layer

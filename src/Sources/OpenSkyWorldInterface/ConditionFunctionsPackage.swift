@@ -26,8 +26,6 @@ nonisolated public struct ActorPackageFacts: Equatable, Sendable {
     public var dataInputs: [Int8: Package.DataValue]
     /// Data indices whose location the actor stands inside.
     public var withinLocations: Set<Int8>
-    /// The `PKDT` general flags.
-    public var flags: Package.GeneralFlags
     /// The `PKDT` interrupt flags.
     public var interruptFlags: UInt16
 
@@ -36,14 +34,12 @@ nonisolated public struct ActorPackageFacts: Equatable, Sendable {
         procedure: PackageProcedureKind,
         dataInputs: [Int8: Package.DataValue] = [:],
         withinLocations: Set<Int8> = [],
-        flags: Package.GeneralFlags = [],
         interruptFlags: UInt16 = 0
     ) {
         self.package = package
         self.procedure = procedure
         self.dataInputs = dataInputs
         self.withinLocations = withinLocations
-        self.flags = flags
         self.interruptFlags = interruptFlags
     }
 
