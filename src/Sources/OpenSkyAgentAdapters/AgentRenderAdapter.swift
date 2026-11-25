@@ -57,31 +57,6 @@ extension AgentRenderAdapter {
     static let overlayNames = ["navmesh", "path", "detection", "hud", "ui"]
         + RenderLayer.ordered.map { $0.identifierFragment.lowercased() }
 
-    /// Applies `pairs` over a copy of the saved settings, so nothing is written to disk.
-    private func applySettings(_ pairs: [String]) throws(AgentFailure) -> AgentJSON {
-        guard let session = game.gameSession else { throw hub.notReady() }
-        let saved = game.playerSettings.store
-        var overrides: [PlayerSettingID: Double] = [:]
-        for pair in pairs {
-            let parsed: (id: String, value: Double)
-            do {
-                parsed = try BenchmarkRequest.parseSetting(pair, catalog: saved.catalog)
-            } catch {
-                throw AgentFailure(.invalidArgument, String(describing: error))
-            }
-            let id = PlayerSettingID(parsed.id)
-            guard let value = saved.catalog.definition(id)?.clamp(parsed.value) else {
-                throw AgentFailure(.invalidArgument, "value out of range: \(pair)")
-            }
-            overrides[id] = value
-        }
-        let store = PlayerSettingsStore(copying: saved, overrides: overrides)
-        session.applyGraphicsSettings(store)
-        game.effects.applyGraphicsSettings(store)
-        let applied = overrides.map { ($0.key.rawValue, AgentJSON.number($0.value)) }
-        return ["settings": .object(Dictionary(uniqueKeysWithValues: applied))]
-    }
-
     private func setSound(_ on: Bool) -> AgentJSON {
         game.audio.outputMuted = !on
         return ["muted": .bool(game.audio.outputMuted)]
@@ -104,7 +79,8 @@ extension AgentRenderAdapter {
         case let .titles(step): try driveTitles(step)
         case let .loadScreen(editorID): try forceLoadScreen(editorID)
         case let .sound(on): setSound(on)
-        case let .settings(pairs): try applySettings(pairs)
+        case let .settings(pairs):
+            try AgentGraphicsSettings(hub: hub, game: game).applySettings(pairs)
         default: throw AgentFailure(.invalidArgument, "not a render debug command")
         }
     }
@@ -281,5 +257,37 @@ extension AgentRenderAdapter {
 
     private var screens: AgentScreensAdapter {
         AgentScreensAdapter(hub: hub, game: hub.hosts)
+    }
+}
+
+/// Applies graphics settings for one agent call, without writing them to disk.
+@MainActor
+struct AgentGraphicsSettings {
+    let hub: AgentHub
+    let game: any AgentRenderHost
+
+    /// Applies `pairs` over a copy of the saved settings, so nothing is written to disk.
+    func applySettings(_ pairs: [String]) throws(AgentFailure) -> AgentJSON {
+        guard let session = game.gameSession else { throw hub.notReady() }
+        let saved = game.playerSettings.store
+        var overrides: [PlayerSettingID: Double] = [:]
+        for pair in pairs {
+            let parsed: (id: String, value: Double)
+            do {
+                parsed = try BenchmarkRequest.parseSetting(pair, catalog: saved.catalog)
+            } catch {
+                throw AgentFailure(.invalidArgument, String(describing: error))
+            }
+            let id = PlayerSettingID(parsed.id)
+            guard let value = saved.catalog.definition(id)?.clamp(parsed.value) else {
+                throw AgentFailure(.invalidArgument, "value out of range: \(pair)")
+            }
+            overrides[id] = value
+        }
+        let store = PlayerSettingsStore(copying: saved, overrides: overrides)
+        session.applyGraphicsSettings(store)
+        game.effects.applyGraphicsSettings(store)
+        let applied = overrides.map { ($0.key.rawValue, AgentJSON.number($0.value)) }
+        return ["settings": .object(Dictionary(uniqueKeysWithValues: applied))]
     }
 }

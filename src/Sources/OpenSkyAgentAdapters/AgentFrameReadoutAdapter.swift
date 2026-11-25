@@ -77,39 +77,7 @@ extension AgentFrameReadoutAdapter {
             "month": .string(clock.monthName),
             "year": .init(clock.year), "daysPassed": .init(clock.daysPassed),
             "timescale": .init(clock.timescale), "simulation": hub.agentTimeline.json,
-            "sky": skyState()
-        ]
-    }
-
-    /// The sun path, the moons, and the aurora this frame draws; null without weather.
-    private func skyState() -> AgentJSON {
-        guard let sky = game.gameSession?.celestialSky else { return .null }
-        let drawn = game.renderer?.skyCelestial?.drawnObjectCount
-        let clouds: AgentJSON = if let skyClouds = game.renderer?.skyClouds {
-            Self.cloudState(
-                velocities: game.gameSession?.currentResolvedWeather?.cloudVelocities ?? [],
-                drift: skyClouds.drift, drawnLayers: skyClouds.drawnLayerCount
-            )
-        } else {
-            .null
-        }
-        return [
-            "sunDirection": .init(sky.sunDirection), "lightDirection": .init(sky.lightDirection),
-            "sunAlpha": .init(sky.sunAlpha), "glareScale": .init(sky.glareScale),
-            "starsAngleDegrees": .init(MatrixMath.degrees(fromRadians: sky.starsAngle)),
-            "moonGlare": game.gameSession?.currentResolvedWeather
-                .map { .init($0.moonGlare) } ?? .null,
-            "moons": .array(sky.moons.map { moon in
-                [
-                    "moon": .string(moon.moon.rawValue), "phase": .string(moon.phase.textureSuffix),
-                    "direction": .init(moon.direction), "alpha": .init(moon.alpha)
-                ]
-            }),
-            "auroras": .array(sky.auroras.map { aurora in
-                ["model": .string(aurora.model), "alpha": .init(aurora.alpha)]
-            }),
-            "drawnObjects": drawn.map { .init($0) } ?? .null,
-            "clouds": clouds
+            "sky": AgentSkyReadout(game: game).skyState()
         ]
     }
 
@@ -255,5 +223,43 @@ extension AgentFrameReadoutAdapter {
 extension AgentFrameReadoutAdapter {
     private var render: AgentRenderAdapter {
         AgentRenderAdapter(hub: hub, game: hub.hosts)
+    }
+}
+
+/// The sun path, the moons, and the aurora this frame draws.
+@MainActor
+struct AgentSkyReadout {
+    let game: any AgentFrameReadoutHost
+
+    /// The sun path, the moons, and the aurora this frame draws; null without weather.
+    func skyState() -> AgentJSON {
+        guard let sky = game.gameSession?.celestialSky else { return .null }
+        let drawn = game.renderer?.skyCelestial?.drawnObjectCount
+        let clouds: AgentJSON = if let skyClouds = game.renderer?.skyClouds {
+            AgentFrameReadoutAdapter.cloudState(
+                velocities: game.gameSession?.currentResolvedWeather?.cloudVelocities ?? [],
+                drift: skyClouds.drift, drawnLayers: skyClouds.drawnLayerCount
+            )
+        } else {
+            .null
+        }
+        return [
+            "sunDirection": .init(sky.sunDirection), "lightDirection": .init(sky.lightDirection),
+            "sunAlpha": .init(sky.sunAlpha), "glareScale": .init(sky.glareScale),
+            "starsAngleDegrees": .init(MatrixMath.degrees(fromRadians: sky.starsAngle)),
+            "moonGlare": game.gameSession?.currentResolvedWeather
+                .map { .init($0.moonGlare) } ?? .null,
+            "moons": .array(sky.moons.map { moon in
+                [
+                    "moon": .string(moon.moon.rawValue), "phase": .string(moon.phase.textureSuffix),
+                    "direction": .init(moon.direction), "alpha": .init(moon.alpha)
+                ]
+            }),
+            "auroras": .array(sky.auroras.map { aurora in
+                ["model": .string(aurora.model), "alpha": .init(aurora.alpha)]
+            }),
+            "drawnObjects": drawn.map { .init($0) } ?? .null,
+            "clouds": clouds
+        ]
     }
 }
