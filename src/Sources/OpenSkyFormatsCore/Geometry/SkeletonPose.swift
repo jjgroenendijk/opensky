@@ -5,23 +5,34 @@
 public import simd
 
 /// One skeleton's bone names and a name-to-index map, built once per skeleton.
-/// A repeated name resolves to its first bone, the order skinning has always used.
+/// A repeated name resolves to its first bone. A name that differs only in case
+/// matches too, as a skin's `HEAD` binds to a Havok skeleton's `Head`.
 nonisolated public final class SkeletonBoneIndex: Sendable {
     public let names: [String]
     private let firstIndexByName: [String: Int]
+    private let firstIndexByFoldedName: [String: Int]
 
     public init(names: [String]) {
         self.names = names
         var indices: [String: Int] = [:]
+        var folded: [String: Int] = [:]
         indices.reserveCapacity(names.count)
-        for (index, name) in names.enumerated() where indices[name] == nil {
-            indices[name] = index
+        folded.reserveCapacity(names.count)
+        for (index, name) in names.enumerated() {
+            if indices[name] == nil {
+                indices[name] = index
+            }
+            let key = name.lowercased()
+            if folded[key] == nil {
+                folded[key] = index
+            }
         }
         firstIndexByName = indices
+        firstIndexByFoldedName = folded
     }
 
     public func index(of name: String) -> Int? {
-        firstIndexByName[name]
+        firstIndexByName[name] ?? firstIndexByFoldedName[name.lowercased()]
     }
 }
 
