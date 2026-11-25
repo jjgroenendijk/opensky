@@ -144,45 +144,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
         from loadOrder: LoadOrderPlugins,
         leveling: LeveledListRoller = LeveledListRoller()
     ) -> ActorVisualResolver {
-        var skipped = SkippedRecords()
-        var resolver = ActorVisualResolver(
-            races: loadOrder.indexRecordsInParallel(of: "RACE", skipped: &skipped) {
-                try Race(record: $0, localized: $1)
-            },
-            armors: loadOrder.indexRecordsInParallel(of: "ARMO", skipped: &skipped) {
-                try Armor(record: $0, localized: $1)
-            },
-            armorAddons: loadOrder.indexRecordsInParallel(of: "ARMA", skipped: &skipped) {
-                try ArmorAddon(record: $0)
-            },
-            outfits: loadOrder
-                .indexRecordsInParallel(of: "OTFT", skipped: &skipped) { try Outfit(record: $0) },
-            leveledItems: loadOrder.indexRecordsInParallel(of: "LVLI", skipped: &skipped) {
-                try LeveledList(record: $0)
-            },
-            formIDResolver: loadOrder.space,
-            equipment: EquipmentCatalog.build(from: loadOrder),
-            headParts: loadOrder.indexRecordsInParallel(of: "HDPT", skipped: &skipped) {
-                try HeadPart(record: $0, localized: $1)
-            },
-            formLists: loadOrder.indexRecordsInParallel(of: "FLST", skipped: &skipped) {
-                try FormList(record: $0)
-            },
-            textureSets: loadOrder.indexRecordsInParallel(of: "TXST", skipped: &skipped) {
-                try TextureSet(record: $0)
-            },
-            colors: loadOrder.indexRecordsInParallel(of: "CLFM", skipped: &skipped) {
-                try ColorForm(record: $0, localized: $1)
-            }
-        )
-        resolver.combatStyles = loadOrder.indexRecordsInParallel(of: "CSTY", skipped: &skipped) {
-            try CombatStyle(record: $0)
-        }
-        resolver.skippedRecords = skipped
-        resolver.leveling = leveling
-        resolver.verletCapeArmor = DefaultObjectStore(plugins: loadOrder.files)
-            .object(tag: "AIVC").flatMap { loadOrder.space.localFormID(of: $0) }
-        return resolver
+        BodyBuild.build(from: loadOrder, leveling: leveling)
     }
 
     /// One actor's renderable inputs. A runtime `equipped` set replaces the DOFT
@@ -195,73 +157,13 @@ nonisolated public struct ActorVisualResolver: Sendable {
         roll: LeveledRoll? = nil,
         carried: CarriedItems = .none
     ) throws -> ResolvedActorVisual {
-        guard
-            let raceID = appearance.race.value,
-            let race = races[raceID.rawValue]
-        else {
-            throw ActorVisualError.missingRace(appearance.race.value, npc: appearance.base)
-        }
-        var skips: [AppearanceSkip] = []
-        let female = appearance.isFemale.value
-        let skeletonPath = female ? race.femaleSkeletonPath : race.maleSkeletonPath
-        if skeletonPath == nil {
-            skips.append(AppearanceSkip(subject: race.formID, reason: .noSkeletonForGender))
-        }
-
-        let worn = try equipped.map { outfitter.wornEquipment($0, leftHand, skips: &skips) }
-            ?? outfitter.defaultEquipment(
-                of: appearance, roll: roll, carried: carried, skips: &skips
-            )
-        let equippedSlots = Self.slotMask(of: worn.armors, skips: &skips)
-        var seenArmatures: Set<UInt32> = []
-        let wornSplit = outfitter.heldArmour(wornParts(
-            worn.armors, for: (raceID, female), seen: &seenArmatures, skips: &skips
-        ))
-        var parts = wornSplit.parts
-
-        let skinID = appearance.wornArmor.value ?? race.defaultSkin
-        guard let skinID, let skin = armors[skinID.rawValue] else {
-            throw ActorVisualError.missingSkin(skinID, npc: appearance.base)
-        }
-        let skinSelection = PartSelection(
-            origin: .skin(skin.formID), race: raceID, female: female, mask: equippedSlots
-        )
-        // Skin armatures append after the ordered worn parts rather than
-        // sorting among them: the naked body is priority 0, so ordering would
-        // put it first, and what actually decides whether covered skin renders
-        // at all is the equipped-slot mask above.
-        parts += bodyParts(
-            of: skin, selection: skinSelection, seen: &seenArmatures, skips: &skips
-        ).map(\.part)
-        parts = skinTextures.withSkinTextures(parts, skin: skin, race: raceID, female: female)
-
-        let face = faceGenSource(of: appearance, race: race)
-        var visual = ResolvedActorVisual(
+        try VisualResolve(owner: self).resolve(
             appearance: appearance,
-            skeletonPath: skeletonPath,
-            skin: skinID,
-            equippedSlots: equippedSlots,
-            parts: parts,
-            attachments: worn.attachments + wornSplit.attachments,
-            usesRuntimeEquipment: equipped != nil,
-            faceGenMeshPath: face.map(FaceGenPaths.mesh(for:)),
-            faceGenTintPath: face.map(FaceGenPaths.tint(for:)),
-            skips: skips
+            equipped: equipped,
+            leftHand: leftHand,
+            roll: roll,
+            carried: carried
         )
-        visual.heightScale = ActorHeight.scale(
-            npcHeight: appearance.height, race: race, isFemale: female
-        )
-        if race.flags.contains(.faceGenHead) {
-            visual.headParts = headPartResolver.resolve(
-                raceDefaults: female ? race.femaleHeadParts : race.maleHeadParts,
-                npcParts: appearance.headParts.value,
-                race: raceID,
-                hairColor: appearance.hairColor.value
-            )
-            visual.headParts = visual.headParts
-                .withFaceTextures(complexion(appearance, race: race, female: female))
-        }
-        return visual
     }
 
     /// Every worn piece's race-compatible armatures, in ARMA DNAM draw order.
@@ -302,59 +204,12 @@ nonisolated public struct ActorVisualResolver: Sendable {
         seen: inout Set<UInt32>,
         skips: inout [AppearanceSkip]
     ) -> [PrioritizedPart] {
-        var parts: [PrioritizedPart] = []
-        var anyCompatible = false
-        for armatureID in armor.armatures {
-            guard let armature = armorAddons[armatureID.rawValue] else {
-                skips.append(AppearanceSkip(subject: armatureID, reason: .danglingArmature))
-                continue
-            }
-            guard
-                armature.primaryRace == selection.race
-                || armature.additionalRaces.contains(selection.race)
-            else { continue }
-            anyCompatible = true
-            // ARMA slots decide masking; fall back to the owning ARMO's
-            // slots when the armature has no body template of its own.
-            let slots = armature.bodyTemplate?.slots
-                ?? armor.bodyTemplate?.slots
-                ?? BodySlots()
-            if let mask = selection.mask, slots.overlaps(mask) {
-                skips.append(AppearanceSkip(subject: armatureID, reason: .maskedByOutfit))
-                continue
-            }
-            guard seen.insert(armatureID.rawValue).inserted else {
-                skips.append(AppearanceSkip(subject: armatureID, reason: .duplicateArmature))
-                continue
-            }
-            // Gendered model with cross-gender fallback: many vanilla ARMAs
-            // carry only MOD2 and the game shows it on both genders
-            // (e.g. StormCloakBootsAA) — skip only when neither exists.
-            let preferred = selection.female
-                ? armature.femaleModelPath
-                : armature.maleModelPath
-            guard let path = preferred ?? armature.maleModelPath ?? armature.femaleModelPath
-            else {
-                skips.append(AppearanceSkip(subject: armatureID, reason: .noModel))
-                continue
-            }
-            parts.append(PrioritizedPart(
-                part: ResolvedBodyPart(
-                    origin: selection.origin, armature: armatureID,
-                    modelPath: path,
-                    firstPersonModelPath: armature.firstPersonModelPath(
-                        female: selection.female
-                    ),
-                    slots: slots,
-                    textureSwaps: skinTextures.textureSwaps(of: armature, female: selection.female)
-                ),
-                priority: armature.priority(female: selection.female)
-            ))
-        }
-        if !anyCompatible {
-            skips.append(AppearanceSkip(subject: armor.formID, reason: .noCompatibleArmature))
-        }
-        return parts
+        BodyBuild(owner: self).bodyParts(
+            of: armor,
+            selection: selection,
+            seen: &seen,
+            skips: &skips
+        )
     }
 }
 
@@ -365,15 +220,7 @@ nonisolated extension ActorVisualResolver {
         of armors: [Armor],
         skips: inout [AppearanceSkip]
     ) -> BodySlots {
-        var mask = BodySlots()
-        for armor in armors {
-            if let slots = armor.bodyTemplate?.slots {
-                mask.formUnion(slots)
-            } else {
-                skips.append(AppearanceSkip(subject: armor.formID, reason: .missingBodySlots))
-            }
-        }
-        return mask
+        BodyBuild.slotMask(of: armors, skips: &skips)
     }
 
     public var headPartResolver: HeadPartResolver {
@@ -428,7 +275,243 @@ nonisolated extension ActorVisualResolver {
         of appearance: ResolvedActorAppearance,
         race: Race
     ) -> ResolvedFormID? {
-        race.flags.contains(.faceGenHead) ? formIDResolver
-            .resolve(appearance.headParts.source) : nil
+        BodyBuild(owner: self).faceGenSource(of: appearance, race: race)
+    }
+}
+
+extension ActorVisualResolver {
+    /// Builds the visual and picks body parts and the face source.
+    nonisolated struct BodyBuild {
+        let owner: ActorVisualResolver
+
+        static func build(
+            from loadOrder: LoadOrderPlugins,
+            leveling: LeveledListRoller = LeveledListRoller()
+        ) -> ActorVisualResolver {
+            var skipped = SkippedRecords()
+            var resolver = ActorVisualResolver(
+                races: loadOrder.indexRecordsInParallel(of: "RACE", skipped: &skipped) {
+                    try Race(record: $0, localized: $1)
+                },
+                armors: loadOrder.indexRecordsInParallel(of: "ARMO", skipped: &skipped) {
+                    try Armor(record: $0, localized: $1)
+                },
+                armorAddons: loadOrder.indexRecordsInParallel(of: "ARMA", skipped: &skipped) {
+                    try ArmorAddon(record: $0)
+                },
+                outfits: loadOrder
+                    .indexRecordsInParallel(of: "OTFT", skipped: &skipped) { try Outfit(record: $0)
+                    },
+                leveledItems: loadOrder.indexRecordsInParallel(of: "LVLI", skipped: &skipped) {
+                    try LeveledList(record: $0)
+                },
+                formIDResolver: loadOrder.space,
+                equipment: EquipmentCatalog.build(from: loadOrder),
+                headParts: loadOrder.indexRecordsInParallel(of: "HDPT", skipped: &skipped) {
+                    try HeadPart(record: $0, localized: $1)
+                },
+                formLists: loadOrder.indexRecordsInParallel(of: "FLST", skipped: &skipped) {
+                    try FormList(record: $0)
+                },
+                textureSets: loadOrder.indexRecordsInParallel(of: "TXST", skipped: &skipped) {
+                    try TextureSet(record: $0)
+                },
+                colors: loadOrder.indexRecordsInParallel(of: "CLFM", skipped: &skipped) {
+                    try ColorForm(record: $0, localized: $1)
+                }
+            )
+            resolver.combatStyles = loadOrder
+                .indexRecordsInParallel(of: "CSTY", skipped: &skipped) {
+                    try CombatStyle(record: $0)
+                }
+            resolver.skippedRecords = skipped
+            resolver.leveling = leveling
+            resolver.verletCapeArmor = DefaultObjectStore(plugins: loadOrder.files)
+                .object(tag: "AIVC").flatMap { loadOrder.space.localFormID(of: $0) }
+            return resolver
+        }
+
+        func bodyParts(
+            of armor: Armor,
+            selection: PartSelection,
+            seen: inout Set<UInt32>,
+            skips: inout [AppearanceSkip]
+        ) -> [PrioritizedPart] {
+            let armorAddons = owner.armorAddons
+            var parts: [PrioritizedPart] = []
+            var anyCompatible = false
+            for armatureID in armor.armatures {
+                guard let armature = armorAddons[armatureID.rawValue] else {
+                    skips.append(AppearanceSkip(subject: armatureID, reason: .danglingArmature))
+                    continue
+                }
+                guard
+                    armature.primaryRace == selection.race
+                    || armature.additionalRaces.contains(selection.race)
+                else { continue }
+                anyCompatible = true
+                // ARMA slots decide masking; fall back to the owning ARMO's
+                // slots when the armature has no body template of its own.
+                let slots = armature.bodyTemplate?.slots
+                    ?? armor.bodyTemplate?.slots
+                    ?? BodySlots()
+                if let mask = selection.mask, slots.overlaps(mask) {
+                    skips.append(AppearanceSkip(subject: armatureID, reason: .maskedByOutfit))
+                    continue
+                }
+                guard seen.insert(armatureID.rawValue).inserted else {
+                    skips.append(AppearanceSkip(subject: armatureID, reason: .duplicateArmature))
+                    continue
+                }
+                // Gendered model with cross-gender fallback: many vanilla ARMAs
+                // carry only MOD2 and the game shows it on both genders
+                // (e.g. StormCloakBootsAA) — skip only when neither exists.
+                let preferred = selection.female
+                    ? armature.femaleModelPath
+                    : armature.maleModelPath
+                guard let path = preferred ?? armature.maleModelPath ?? armature.femaleModelPath
+                else {
+                    skips.append(AppearanceSkip(subject: armatureID, reason: .noModel))
+                    continue
+                }
+                parts.append(PrioritizedPart(
+                    part: ResolvedBodyPart(
+                        origin: selection.origin, armature: armatureID,
+                        modelPath: path,
+                        firstPersonModelPath: armature.firstPersonModelPath(
+                            female: selection.female
+                        ),
+                        slots: slots,
+                        textureSwaps: owner.skinTextures.textureSwaps(
+                            of: armature,
+                            female: selection.female
+                        )
+                    ),
+                    priority: armature.priority(female: selection.female)
+                ))
+            }
+            if !anyCompatible {
+                skips.append(AppearanceSkip(subject: armor.formID, reason: .noCompatibleArmature))
+            }
+            return parts
+        }
+
+        static func slotMask(
+            of armors: [Armor],
+            skips: inout [AppearanceSkip]
+        ) -> BodySlots {
+            var mask = BodySlots()
+            for armor in armors {
+                if let slots = armor.bodyTemplate?.slots {
+                    mask.formUnion(slots)
+                } else {
+                    skips.append(AppearanceSkip(subject: armor.formID, reason: .missingBodySlots))
+                }
+            }
+            return mask
+        }
+
+        func faceGenSource(
+            of appearance: ResolvedActorAppearance,
+            race: Race
+        ) -> ResolvedFormID? {
+            let formIDResolver = owner.formIDResolver
+            return race.flags.contains(.faceGenHead) ? formIDResolver
+                .resolve(appearance.headParts.source) : nil
+        }
+    }
+}
+
+extension ActorVisualResolver {
+    /// Resolves an actor's visual.
+    nonisolated struct VisualResolve {
+        let owner: ActorVisualResolver
+
+        func resolve(
+            appearance: ResolvedActorAppearance,
+            equipped: [FormID]? = nil,
+            leftHand: LeftHandHold? = nil,
+            roll: LeveledRoll? = nil,
+            carried: CarriedItems = .none
+        ) throws -> ResolvedActorVisual {
+            guard
+                let raceID = appearance.race.value,
+                let race = owner.races[raceID.rawValue]
+            else {
+                throw ActorVisualError.missingRace(appearance.race.value, npc: appearance.base)
+            }
+            var skips: [AppearanceSkip] = []
+            let female = appearance.isFemale.value
+            let skeletonPath = female ? race.femaleSkeletonPath : race.maleSkeletonPath
+            if skeletonPath == nil {
+                skips.append(AppearanceSkip(subject: race.formID, reason: .noSkeletonForGender))
+            }
+
+            let worn = try equipped
+                .map { owner.outfitter.wornEquipment($0, leftHand, skips: &skips) }
+                ?? owner.outfitter.defaultEquipment(
+                    of: appearance, roll: roll, carried: carried, skips: &skips
+                )
+            let equippedSlots = ActorVisualResolver.slotMask(of: worn.armors, skips: &skips)
+            var seenArmatures: Set<UInt32> = []
+            let wornSplit = owner.outfitter.heldArmour(owner.wornParts(
+                worn.armors, for: (raceID, female), seen: &seenArmatures, skips: &skips
+            ))
+            var parts = wornSplit.parts
+
+            let skinID = appearance.wornArmor.value ?? race.defaultSkin
+            guard let skinID, let skin = owner.armors[skinID.rawValue] else {
+                throw ActorVisualError.missingSkin(skinID, npc: appearance.base)
+            }
+            let skinSelection = PartSelection(
+                origin: .skin(skin.formID), race: raceID, female: female, mask: equippedSlots
+            )
+            // Skin armatures append after the ordered worn parts rather than
+            // sorting among them: the naked body is priority 0, so ordering would
+            // put it first, and what actually decides whether covered skin renders
+            // at all is the equipped-slot mask above.
+            parts += owner.bodyParts(
+                of: skin, selection: skinSelection, seen: &seenArmatures, skips: &skips
+            ).map(\.part)
+            parts = owner.skinTextures.withSkinTextures(
+                parts,
+                skin: skin,
+                race: raceID,
+                female: female
+            )
+
+            let face = owner.faceGenSource(of: appearance, race: race)
+            var visual = ResolvedActorVisual(
+                appearance: appearance,
+                skeletonPath: skeletonPath,
+                skin: skinID,
+                equippedSlots: equippedSlots,
+                parts: parts,
+                attachments: worn.attachments + wornSplit.attachments,
+                usesRuntimeEquipment: equipped != nil,
+                faceGenMeshPath: face.map(FaceGenPaths.mesh(for:)),
+                faceGenTintPath: face.map(FaceGenPaths.tint(for:)),
+                skips: skips
+            )
+            visual.heightScale = ActorHeight.scale(
+                npcHeight: appearance.height, race: race, isFemale: female
+            )
+            if race.flags.contains(.faceGenHead) {
+                visual.headParts = headParts(of: appearance, race: race, female: female)
+            }
+            return visual
+        }
+
+        private func headParts(
+            of appearance: ResolvedActorAppearance, race: Race, female: Bool
+        ) -> HeadPartSet {
+            owner.headPartResolver.resolve(
+                raceDefaults: female ? race.femaleHeadParts : race.maleHeadParts,
+                npcParts: appearance.headParts.value,
+                race: race.formID,
+                hairColor: appearance.hairColor.value
+            )
+            .withFaceTextures(owner.complexion(appearance, race: race, female: female))
+        }
     }
 }

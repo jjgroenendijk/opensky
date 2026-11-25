@@ -56,26 +56,7 @@ extension IdleCoordinator {
     /// Moves each partner toward its mark. A partner whose graph shows no synchronized
     /// clip one update after the start stands on the mark at once.
     func approachMarks(now: Float) {
-        for index in pairs.indices where !pairs[index].isAtMark {
-            let play = pairs[index]
-            guard
-                let world, let start = play.partnerStart,
-                let mark = world.pairedActorPose(of: play.lead)
-            else { continue }
-            let synchronized = world.synchronizedMark(of: play.partner)
-            if synchronized == nil, !play.waitedForMark, play.partnerTookEvent {
-                pairs[index].waitedForMark = true
-                continue
-            }
-            let rule = synchronized
-                ?? BehaviorSynchronizedMark(getToMarkTime: 0, reorientsSupportCharacter: true)
-            let seconds = now - play.start
-            world.placePairedActor(
-                play.partner,
-                at: PairedAnimationCore.approach(from: start, to: mark, after: seconds, rule)
-            )
-            pairs[index].isAtMark = PairedAnimationCore.reachesMark(after: seconds, rule)
-        }
+        PairedApproach(host: self).approachMarks(now: now)
     }
 
     func expirePairs(now: Float) {
@@ -86,5 +67,35 @@ extension IdleCoordinator {
 
     func endPairs(involving actor: ReferenceKey) {
         pairs.removeAll { $0.involves(actor) }
+    }
+}
+
+extension IdleCoordinator {
+    /// Moves actors to their paired idle marks.
+    struct PairedApproach {
+        let host: IdleCoordinator
+
+        func approachMarks(now: Float) {
+            for index in host.pairs.indices where !host.pairs[index].isAtMark {
+                let play = host.pairs[index]
+                guard
+                    let world = host.world, let start = play.partnerStart,
+                    let mark = world.pairedActorPose(of: play.lead)
+                else { continue }
+                let synchronized = world.synchronizedMark(of: play.partner)
+                if synchronized == nil, !play.waitedForMark, play.partnerTookEvent {
+                    host.pairs[index].waitedForMark = true
+                    continue
+                }
+                let rule = synchronized
+                    ?? BehaviorSynchronizedMark(getToMarkTime: 0, reorientsSupportCharacter: true)
+                let seconds = now - play.start
+                world.placePairedActor(
+                    play.partner,
+                    at: PairedAnimationCore.approach(from: start, to: mark, after: seconds, rule)
+                )
+                host.pairs[index].isAtMark = PairedAnimationCore.reachesMark(after: seconds, rule)
+            }
+        }
     }
 }

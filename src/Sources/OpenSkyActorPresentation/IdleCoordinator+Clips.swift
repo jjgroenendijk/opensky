@@ -107,20 +107,7 @@ enum IdleConditionChecks {
 
 extension IdleCoordinator {
     func conditionContext(for actor: ReferenceKey) -> ConditionContext {
-        var context = worldConditionContext()
-        context.subject = actor
-        context.furniture = furnitureResolution
-        // A furniture idle tests the furniture as its Target, such as its keywords.
-        context.target = furnitureUses[actor]?.furniture
-        // An actor whose graph does not run reads 0 for every variable.
-        if
-            context[resolution: GraphVariableResolution.self].graphs[actor] == nil,
-            actor != .player
-        {
-            context[resolution: GraphVariableResolution.self].values[actor] = [:]
-            context[resolution: GraphVariableResolution.self].floats[actor] = [:]
-        }
-        return context
+        ClipConditions(host: self).conditionContext(for: actor)
     }
 
     /// Within one `advance`, actors share the world's context until a state write.
@@ -227,5 +214,29 @@ extension IdleCoordinator {
     func record(_ report: IdleReport) -> IdleReport {
         reports[report.actor] = report
         return report
+    }
+}
+
+extension IdleCoordinator {
+    /// Builds the condition context of an idle.
+    struct ClipConditions {
+        let host: IdleCoordinator
+
+        func conditionContext(for actor: ReferenceKey) -> ConditionContext {
+            var context = host.worldConditionContext()
+            context.subject = actor
+            context.furniture = host.furnitureResolution
+            // A furniture idle tests the furniture as its Target, such as its keywords.
+            context.target = host.furnitureUses[actor]?.furniture
+            // An actor whose graph does not run reads 0 for every variable.
+            if
+                context[resolution: GraphVariableResolution.self].graphs[actor] == nil,
+                actor != .player
+            {
+                context[resolution: GraphVariableResolution.self].values[actor] = [:]
+                context[resolution: GraphVariableResolution.self].floats[actor] = [:]
+            }
+            return context
+        }
     }
 }
