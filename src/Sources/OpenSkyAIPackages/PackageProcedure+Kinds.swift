@@ -138,6 +138,11 @@ nonisolated extension PackageProcedureMachine {
         }
     }
 
+    /// The point the patrol walks to now: its first point, then each of `path` in turn.
+    var patrolGoal: SIMD3<Float> {
+        pathIndex > 0 && pathIndex <= path.count ? path[pathIndex - 1] : goal
+    }
+
     private mutating func nextPatrolPoint() -> [PackageProcedureCommand] {
         guard pathIndex < path.count else {
             // A one-point patrol has nowhere to go back from, so it ends.

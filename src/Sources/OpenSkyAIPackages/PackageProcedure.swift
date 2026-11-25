@@ -27,6 +27,8 @@ nonisolated enum PackageProcedureState: Equatable, Sendable {
     case acting(secondsRemaining: Float?)
     /// A sandbox does one activity until its game-hour timer runs out.
     case sandboxing(SandboxActivity)
+    /// A patrol walk that gave up asks for a walk to the same point on the next update.
+    case rewalking(SIMD3<Float>)
     case complete
     case failed
 }
@@ -222,9 +224,15 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
     }
 
     /// A sandbox never completes, so it waits where it stands and then tries a new point.
+    /// A patrol keeps its point: a blocked walk does not end it
+    /// (docs/engine/navigation.md#blocked-walks).
     private mutating func handleMovementFailure() -> [PackageProcedureCommand] {
         if kind == .sandbox {
             return leaveSandboxSeat() + beginSandboxActivity(.wandering)
+        }
+        if kind == .patrol {
+            state = .rewalking(patrolGoal)
+            return []
         }
         state = .failed
         return []
@@ -249,6 +257,8 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
             state = remaining - delta <= 0 ? stateAfterAct :
                 .acting(secondsRemaining: remaining - delta)
             return []
+        case let .rewalking(point):
+            return move(to: point)
         case .waiting:
             guard let left = timer else { return [] }
             timer = left - delta

@@ -19,7 +19,7 @@ struct PackageProcedureReadoutTests {
             .procedureStateText(for: machine) == "Procedure: patrol, moving, point 2 of 3")
         _ = machine.handle(.movementFailed)
         #expect(AIPackageReadout
-            .procedureStateText(for: machine) == "Procedure: patrol, failed, point 2 of 3")
+            .procedureStateText(for: machine) == "Procedure: patrol, blocked, point 2 of 3")
     }
 
     @Test func aTravelHasNoPoints() {
