@@ -78,12 +78,7 @@ public protocol PapyrusWorldStateBridgePort: AnyObject {
         slot: UInt32,
         actor: ReferenceKey
     ) -> Bool
-    @discardableResult func runPerkFragment(
-        of perk: Perk,
-        key: ReferenceKey,
-        index: UInt16,
-        activation: PerkFragmentActivation
-    ) -> Bool
+    var perkFragments: any PapyrusPerkFragmentRunning { get }
     func scriptedState(of key: ReferenceKey) -> ScriptedReferenceState
     func scriptedStateResolution() -> ScriptedStateConditionResolution
     @discardableResult func setQuestStage(_ stage: UInt16, for key: ReferenceKey) throws -> Bool

@@ -122,9 +122,7 @@ extension PapyrusWorldStateBridge {
     }
 
     public func destructionHealthLeft(of key: ReferenceKey) -> Float? {
-        referenceEvents.destructibleData(of: key).map {
-            Float($0.health) - referenceEvents.destruction(of: key).damage
-        }
+        DestructionReads(host: self).destructionHealthLeft(of: key)
     }
 
     public func takeDestructionChanges() -> [DestructionStageChange] {
@@ -236,11 +234,8 @@ extension PapyrusWorldStateBridge {
         storyEvents.runPackageFragment(of: package, slot: slot, actor: actor)
     }
 
-    @discardableResult
-    public func runPerkFragment(
-        of perk: Perk, key: ReferenceKey, index: UInt16, activation: PerkFragmentActivation
-    ) -> Bool {
-        storyEvents.runPerkFragment(of: perk, key: key, index: index, activation: activation)
+    public var perkFragments: any PapyrusPerkFragmentRunning {
+        storyEvents
     }
 
     public var gameNatives: PapyrusGameNatives {
@@ -329,5 +324,18 @@ extension PapyrusWorldStateBridge {
     @discardableResult
     public func handleTriggerTransition(_ event: TriggerTransitionEvent) -> Int {
         triggers.handleTriggerTransition(event)
+    }
+}
+
+extension PapyrusWorldStateBridge {
+    /// Reads the destruction health left.
+    struct DestructionReads {
+        let host: PapyrusWorldStateBridge
+
+        func destructionHealthLeft(of key: ReferenceKey) -> Float? {
+            host.referenceEvents.destructibleData(of: key).map {
+                Float($0.health) - host.referenceEvents.destruction(of: key).damage
+            }
+        }
     }
 }

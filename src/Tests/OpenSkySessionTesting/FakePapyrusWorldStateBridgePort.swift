@@ -84,8 +84,7 @@ nonisolated public final class FakePapyrusWorldStateBridgePort: PapyrusWorldStat
     public var resurrectActorResult = false
     public var runPackageFragmentCalls: [RunPackageFragmentCall] = []
     public var runPackageFragmentResult = false
-    public var runPerkFragmentCalls: [RunPerkFragmentCall] = []
-    public var runPerkFragmentResult = false
+    public var perkFragmentsValue: any PapyrusPerkFragmentRunning?
     public var scriptedStateCalls: [ReferenceKey] = []
     public var scriptedStateResult: ScriptedReferenceState?
     public var scriptedStateResolutionCallCount = 0
@@ -218,22 +217,6 @@ extension FakePapyrusWorldStateBridgePort {
                 "package: " + String(describing: package),
                 "slot: " + String(describing: slot),
                 "actor: " + String(describing: actor)
-            ].joined(separator: ", ")
-        }
-    }
-
-    nonisolated public struct RunPerkFragmentCall: CustomStringConvertible {
-        public let perk: Perk
-        public let key: ReferenceKey
-        public let index: UInt16
-        public let activation: PerkFragmentActivation
-
-        public var description: String {
-            [
-                "perk: " + String(describing: perk),
-                "key: " + String(describing: key),
-                "index: " + String(describing: index),
-                "activation: " + String(describing: activation)
             ].joined(separator: ", ")
         }
     }

@@ -47,7 +47,7 @@ struct PapyrusPerkFragmentTests {
         PapyrusWorldFixture.drain(session.world)
         let target = ReferenceKey.plugin(name: PapyrusWorldFixture.pluginName, objectID: 0x9001)
 
-        #expect(try session.bridge.runPerkFragment(
+        #expect(try session.bridge.perkFragments.runPerkFragment(
             of: perk(), key: perkKey, index: 1,
             activation: PerkFragmentActivation(actor: .player, target: target)
         ))
@@ -66,7 +66,7 @@ struct PapyrusPerkFragmentTests {
 
     @Test func anIndexTheTableDoesNotNameRunsNothing() throws {
         let session = PapyrusWorldFixture.session(objects: [fragmentScript()], entries: [])
-        #expect(try !session.bridge.runPerkFragment(
+        #expect(try !session.bridge.perkFragments.runPerkFragment(
             of: perk(), key: perkKey, index: 7,
             activation: PerkFragmentActivation(actor: .player, target: perkKey)
         ))

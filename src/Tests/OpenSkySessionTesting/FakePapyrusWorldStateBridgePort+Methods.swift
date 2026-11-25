@@ -286,20 +286,15 @@ nonisolated extension FakePapyrusWorldStateBridgePort {
         return runPackageFragmentResult
     }
 
-    @discardableResult
-    public func runPerkFragment(
-        of perk: Perk,
-        key: ReferenceKey,
-        index: UInt16,
-        activation: PerkFragmentActivation
-    ) -> Bool {
-        runPerkFragmentCalls.append(RunPerkFragmentCall(
-            perk: perk,
-            key: key,
-            index: index,
-            activation: activation
-        ))
-        return runPerkFragmentResult
+    public var perkFragments: any PapyrusPerkFragmentRunning {
+        get {
+            guard let perkFragmentsValue
+            else {
+                preconditionFailure("FakePapyrusWorldStateBridgePort.perkFragments is unset")
+            }
+            return perkFragmentsValue
+        }
+        set { perkFragmentsValue = newValue }
     }
 
     public func scriptedState(of key: ReferenceKey) -> ScriptedReferenceState {
