@@ -5,6 +5,7 @@ import Foundation
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyScriptingInterface
 
 nonisolated extension BinaryWriter {
     /// Writes `tag` plus the length-prefixed bytes `body` produces, so a
@@ -63,5 +64,30 @@ nonisolated extension BinaryWriter {
             end -= 1
         }
         return Data(bytes.prefix(end))
+    }
+
+    /// A tag byte plus the value's payload. Floats go out as their IEEE
+    /// bit pattern rather than through a decimal conversion, so the byte shape
+    /// is exact and deterministic. `.object` and `.array` are written as the
+    /// `none` tag: `instanceStates()` already snapshots them that way, and
+    /// writing a runtime handle that means nothing after a reload would be
+    /// worse than writing the type's default.
+    mutating func writeScriptValue(_ value: PapyrusValue) {
+        switch value {
+        case .none, .object, .array:
+            writeUInt8(OpenSkySaveFormat.ValueTag.none)
+        case let .boolean(flag):
+            writeUInt8(OpenSkySaveFormat.ValueTag.boolean)
+            writeUInt8(flag ? 1 : 0)
+        case let .integer(number):
+            writeUInt8(OpenSkySaveFormat.ValueTag.integer)
+            writeUInt32(UInt32(bitPattern: number))
+        case let .float(number):
+            writeUInt8(OpenSkySaveFormat.ValueTag.float)
+            writeUInt32(number.bitPattern)
+        case let .string(text):
+            writeUInt8(OpenSkySaveFormat.ValueTag.string)
+            writeString(text)
+        }
     }
 }
