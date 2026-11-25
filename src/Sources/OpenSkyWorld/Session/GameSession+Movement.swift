@@ -38,7 +38,7 @@ extension GameSession.MovementSteps {
         // A reseed is a teleport: the bridge's edge state describes a place the
         // player is no longer in, so it must not raise a landing or a swim exit
         // on the next step.
-        session.locomotion.reset()
+        session.locomotion.reset(feet: session.walkController.feetPosition)
         session.rigs.thirdPersonCamera.reset()
     }
 
@@ -153,7 +153,7 @@ extension GameSession.MovementSteps {
         guard !wasPlayerControlled else { return }
         session.walkController.reset(cameraPosition: session.freeFlyCamera.position)
         settlePlayerOnGround()
-        session.locomotion.reset()
+        session.locomotion.reset(feet: session.walkController.feetPosition)
     }
 
     /// Stands the player's feet on the ground under them, as `coc` does, so a placement

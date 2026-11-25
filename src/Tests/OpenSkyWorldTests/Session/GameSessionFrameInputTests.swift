@@ -75,6 +75,23 @@ struct GameSessionFrameInputTests {
         #expect(simd_distance(gameSession.walkController.feetPosition, spot) < 0.01)
     }
 
+    /// Fly mode never steps the locomotion, so the teleport itself must say where the
+    /// player stands; conditions and perception read it from there.
+    @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
+    @MainActor
+    func aFlyTeleportReportsTheNewFeet() throws {
+        let gameSession = try Self.makeSession()
+        gameSession.movementSteps.setMovementMode(.fly)
+        let spot = SIMD3<Float>(4000, -2000, 68)
+        gameSession.movementSteps.reseedMovement(camera: .teleport(placement: .init(
+            position: spot,
+            rotation: .zero
+        )))
+        let reported = gameSession.locomotion.status.feetPosition
+        #expect(simd_distance(reported, gameSession.walkController.feetPosition) < 0.01)
+        #expect(simd_length(reported) > 1000)
+    }
+
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
     @MainActor
     func aRendererWithoutASessionDrawsTheInputItsCallerSets() throws {
