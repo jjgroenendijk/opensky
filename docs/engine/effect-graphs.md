@@ -56,8 +56,27 @@ two natives, and SKSE adds no native for them.
   that graph keeps the script's value and no longer takes the actor's.
 - A `BGSGamebryoSequenceGenerator` the graph reaches names a NIF sequence of the effect's own
   mesh. The effect's particle systems play it ([particles](/rendering/particles.md#sequences)).
+  A generator in a referenced behaviour file counts as its parent graph's.
+- Each text key a played sequence passes goes to its graph as an event. A sequence the graph has
+  just reached stands at 0 s. A clamped sequence passes each key once; a looped one passes them
+  again on each lap.
 - An event that an effect graph fires goes back to `handle` as an event of the actor. It does
   not go back to the effect graphs, so a graph cannot hear its own event twice.
+
+### Sequence text keys
+
+The hand effect behaviour `castingwintrofxbehavior01.hkx` shows that sequence text keys reach
+the graph. Each hand art mesh, such as `fireball01handeffects.nif`, has the sequences `mIntro`,
+`mIdle`, `mReady`, `mCharge`, `mCast`, and `mIdleStaff`. Each sequence has a `start` key at its
+first frame and an `end` key at its last. Three sequences are clamped: `mIntro` (0.033 s),
+`mCast` (0.667 s), and `mCharge` (6.667 s). The graph declares `end` as an event. Four of its
+transitions take it, to `mIdleState` twice, `mReadyState`, and `mReadySelfCast`. These targets
+fit the ends of the clamped sequences: the intro and the cast end in idle, and a charge ends
+ready.
+
+The hand art appears in its intro state when the draw ends, after the hand's
+`MRh_Equipped_Event` or `MLh_Equipped_Event` has passed. Its intro's `end` key then takes it to
+idle.
 
 ## Armour addon poses
 
