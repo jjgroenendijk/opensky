@@ -147,10 +147,6 @@ nonisolated extension WalkController {
         return simd_dot(SIMD2<Float>(delta.x, delta.y), horizontal / length)
     }
 
-    func hasWalkableContact(_ contacts: [CapsuleCollisionContact]) -> Bool {
-        contacts.contains { isWalkable($0.normal) }
-    }
-
     /// The material of the flattest walkable contact, which is the one the
     /// weight is on: several shapes can touch the capsule at once — a floor and
     /// the wall beside it — and only the floor is what is being stood on.

@@ -36,10 +36,6 @@ extension Renderer {
         return swf.hud?.runtime
     }
 
-    public var swfHUDRuntime: SWFMovieRuntime? {
-        swf.hud?.runtime
-    }
-
     /// Applies one engine change to the HUD movie and pushes what it changed.
     public func updateSWFHUD(_ body: (SWFMovieRuntime) -> Void) throws {
         guard let hud = swf.hud else { return }

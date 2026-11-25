@@ -32,7 +32,6 @@ nonisolated public final class FakeHUDPort: HUDPort {
     public var updateCompassLocationsCalls: [[CompassLocation]] = []
     public var updateQuestTargetsCalls: [[SIMD3<Float>]] = []
     public var updateTargetCalls: [InteractionTarget?] = []
-    public var startCallCount = 0
     public var takeLayerCalls: [any MenuLayerHolder] = []
     public var releaseCalls: [any MenuLayerHolder] = []
 
@@ -91,10 +90,6 @@ nonisolated extension FakeHUDPort {
 
     public func updateTarget(_ target: InteractionTarget?) {
         updateTargetCalls.append(target)
-    }
-
-    public func start() {
-        startCallCount += 1
     }
 
     public func takeLayer(for holder: any MenuLayerHolder) {

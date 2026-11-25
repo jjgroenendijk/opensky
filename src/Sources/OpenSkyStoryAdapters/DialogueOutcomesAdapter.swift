@@ -32,10 +32,8 @@ public protocol DialogueOutcomesHost: AnyObject, SendableMetatype {
     var packages: any PackagePort { get }
     var perks: any PerkPort { get }
     var progression: any ProgressionPort { get }
-    var storyWorld: any StoryWorldPort { get }
     var streamer: any CellStreamerPort { get }
     var worldRecords: (any WorldRecordsPort)? { get }
-    var worldState: any WorldStateStorePort { get }
     var scripts: any ScriptPort { get }
 }
 

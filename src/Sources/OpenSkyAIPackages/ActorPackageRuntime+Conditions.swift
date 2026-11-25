@@ -15,7 +15,6 @@ nonisolated extension ActorPackageRuntime {
             guard let running = currentPackage(for: readout.actor) else { continue }
             var actorFacts = ActorPackageFacts(
                 package: running.package.formID, procedure: running.procedure,
-                flags: running.package.general.flags,
                 interruptFlags: running.package.general.interruptFlags
             )
             for input in running.package.dataInputs {

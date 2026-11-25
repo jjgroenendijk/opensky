@@ -19,8 +19,6 @@ nonisolated public enum SwimRule {
     public static let characterFloatLevel: Float = 1.6
     /// The float level of the player in first person.
     public static let firstPersonFloatLevel: Float = 1.3
-    /// The float level of a character with the `WaterWalking` actor value.
-    public static let waterWalkingFloatLevel: Float = 0.1
 
     /// How deep the feet are, as a fraction of the body height, from 0 to 1.
     /// Example: feet 96 units under the surface of a 128-unit body give 0.75.

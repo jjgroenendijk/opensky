@@ -16,7 +16,7 @@ struct CrimeAlarmRulesTests {
         -> AlarmCrime
     {
         AlarmCrime(
-            id: 0, kind: .theft, criminal: .player, faction: faction, victim: nil, gold: 25,
+            kind: .theft, criminal: .player, faction: faction, victim: nil, gold: 25,
             violent: false, stolenItem: nil, stolenCount: 1, takenBy: takenBy
         )
     }

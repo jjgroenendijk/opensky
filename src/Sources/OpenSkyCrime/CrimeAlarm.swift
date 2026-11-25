@@ -9,7 +9,6 @@ import simd
 
 /// One crime an alarm carries.
 nonisolated public struct AlarmCrime: Equatable, Sendable {
-    public let id: Int
     public let kind: CrimeKind
     public let criminal: ReferenceKey
     /// The crime's faction. The first guard to take it may move it to its own.
@@ -196,7 +195,7 @@ nonisolated public struct CrimeAlarmState: Equatable, Sendable {
         let id = nextID
         nextID += 1
         crimes[id] = AlarmCrime(
-            id: id, kind: event.kind, criminal: event.perpetrator, faction: faction,
+            kind: event.kind, criminal: event.perpetrator, faction: faction,
             victim: event.victim, gold: gold, violent: event.kind.isViolent,
             stolenItem: event.stolenItem, stolenCount: event.stolenCount
         )

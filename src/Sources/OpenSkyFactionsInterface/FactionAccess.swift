@@ -30,8 +30,6 @@ public protocol FactionAccess {
     /// Load-order FACT lookup behind every stored membership.
     var factions: FactionStore { get }
 
-    func isMember(_ key: ReferenceKey, of faction: ReferenceKey) -> Bool
-
     /// The rank `key` holds, or nil when it is not a member.
     func rank(of key: ReferenceKey, in faction: ReferenceKey) -> Int8?
 

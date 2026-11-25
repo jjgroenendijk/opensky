@@ -1,4 +1,3 @@
-public import OpenSkyConditions
 public import OpenSkyDialogueInterface
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
@@ -17,7 +16,6 @@ public protocol StoryWorldPort: AnyObject, PapyrusStoryBridge {
         store: WorldStateStore, quests: QuestStore, locations: LocationStore?
     ) -> any QuestAccess
     func reportKill(victim: ReferenceKey, killer: ReferenceKey?)
-    func reportStoryEvent(_ event: StoryEventData)
     func rerunSessionStart()
     /// A `DialogueActivate` package's conversation with an NPC. False when either is busy.
     func requestConversation(speaker: ReferenceKey, partner: ReferenceKey) -> Bool

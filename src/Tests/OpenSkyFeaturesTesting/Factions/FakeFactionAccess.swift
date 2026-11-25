@@ -13,10 +13,6 @@ public final class FakeFactionAccess: FactionAccess {
 
     public init() {}
 
-    public func isMember(_ key: ReferenceKey, of faction: ReferenceKey) -> Bool {
-        ranks[key]?[faction] != nil
-    }
-
     public func rank(of key: ReferenceKey, in faction: ReferenceKey) -> Int8? {
         ranks[key]?[faction]
     }

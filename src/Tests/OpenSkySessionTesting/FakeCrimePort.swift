@@ -41,7 +41,6 @@ nonisolated public final class FakeCrimePort: CrimePort {
     public var advanceJailCallCount = 0
     public var advanceGuardResponseCallCount = 0
     public var advanceGuardResponseResult: [CrimeCommand] = []
-    public var alarmReadoutValue: CrimeAlarmReadout?
     public var assistStandingCalls: [(actor: ReferenceKey, helper: ReferenceKey)] = []
     public var assistStandingResult: CrimeAssistStanding?
     public var isGuardCalls: [ReferenceKey] = []
@@ -169,15 +168,6 @@ nonisolated extension FakeCrimePort {
     public func advanceGuardResponse() -> [CrimeCommand] {
         advanceGuardResponseCallCount += 1
         return advanceGuardResponseResult
-    }
-
-    public var alarmReadout: CrimeAlarmReadout {
-        get {
-            guard let alarmReadoutValue
-            else { preconditionFailure("FakeCrimePort.alarmReadout is unset") }
-            return alarmReadoutValue
-        }
-        set { alarmReadoutValue = newValue }
     }
 
     public func assistStanding(of actor: ReferenceKey, judgedBy helper: ReferenceKey)

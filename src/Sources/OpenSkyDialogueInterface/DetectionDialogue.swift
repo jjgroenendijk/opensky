@@ -96,12 +96,10 @@ nonisolated public enum DetectionSubtype: String, Equatable, Sendable, CaseItera
 nonisolated public struct DetectionLineRequest: Equatable, Sendable {
     public let subtype: DetectionSubtype
     public let speaker: ReferenceKey
-    public let about: ReferenceKey
 
-    public init(subtype: DetectionSubtype, speaker: ReferenceKey, about: ReferenceKey) {
+    public init(subtype: DetectionSubtype, speaker: ReferenceKey) {
         self.subtype = subtype
         self.speaker = speaker
-        self.about = about
     }
 }
 

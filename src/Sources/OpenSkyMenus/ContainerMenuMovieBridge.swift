@@ -54,8 +54,6 @@ nonisolated public enum ContainerMenuMovieBridge: Sendable {
     /// `PLATFORM_PC_KBMOUSE`, the same constant the other two menus pass.
     public static let pcPlatform = 0.0
 
-    public static let invalidateCallback = InventoryMenuMovieBridge.invalidateCallback
-
     // MARK: - The barter contract
 
     /// Purse properties `BarterMenu` defines on its menu instance, read back off

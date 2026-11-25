@@ -10,7 +10,6 @@ public import simd
 nonisolated public final class FakeSessionMotionPort: SessionMotionPort {
     public var collisionQuery: CapsuleWorldCollider.CandidateQuery?
     public var magnetismValue: MeleeMagnetismTracker?
-    public var magnetismSighting: (@MainActor (InteractionRay) -> MeleeMagnetism.Sighting?)?
     public var playerSeat: float4x4?
     public var playerWalkIgnoresStatics = false
     public var playerWalkPath: [SIMD3<Float>] = []

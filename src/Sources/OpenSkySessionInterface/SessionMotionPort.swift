@@ -13,7 +13,6 @@ public import simd
 public protocol SessionMotionPort: AnyObject {
     var collisionQuery: CapsuleWorldCollider.CandidateQuery? { get }
     var magnetism: MeleeMagnetismTracker { get set }
-    var magnetismSighting: (@MainActor (InteractionRay) -> MeleeMagnetism.Sighting?)? { get set }
     var playerSeat: float4x4? { get set }
     var playerWalkIgnoresStatics: Bool { get set }
     var playerWalkPath: [SIMD3<Float>] { get set }

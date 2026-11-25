@@ -181,7 +181,7 @@ nonisolated extension DetectionDialogueCore {
         ) {
             let (subtype, speaker) = line
             guard frame.now >= group.readyAt[subtype] ?? 0 else { return }
-            let request = DetectionLineRequest(subtype: subtype, speaker: speaker, about: target)
+            let request = DetectionLineRequest(subtype: subtype, speaker: speaker)
             guard say(request) else { return }
             let range = subtype.isIdle ? idleWait : DetectionDialogueCore.changeWait
             group.readyAt[subtype] = frame.now + DetectionDialogueCore.roll(range, &random)

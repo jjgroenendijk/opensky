@@ -230,6 +230,8 @@ struct RegionRecordTests {
             Region.GrassEntry(grass: FormID(0x400), landTexture: FormID(0x500)),
             Region.GrassEntry(grass: FormID(0x401), landTexture: FormID(0x501))
         ])
+        #expect(region.grasses.last?.grass == FormID(0x401))
+        #expect(region.grasses.last?.landTexture == FormID(0x501))
         #expect(region.skipped.total == 1)
     }
 

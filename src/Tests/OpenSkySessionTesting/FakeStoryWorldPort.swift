@@ -18,7 +18,6 @@ nonisolated public final class FakeStoryWorldPort: StoryWorldPort {
     public var questAccessCalls: [QuestAccessCall] = []
     public var questAccessResult: any QuestAccess?
     public var reportKillCalls: [(victim: ReferenceKey, killer: ReferenceKey?)] = []
-    public var reportStoryEventCalls: [StoryEventData] = []
     public var rerunSessionStartCallCount = 0
     public var requestConversationCalls: [(speaker: ReferenceKey, partner: ReferenceKey)] = []
     public var requestConversationResult = false
@@ -116,10 +115,6 @@ nonisolated extension FakeStoryWorldPort {
 
     public func reportKill(victim: ReferenceKey, killer: ReferenceKey?) {
         reportKillCalls.append((victim: victim, killer: killer))
-    }
-
-    public func reportStoryEvent(_ event: StoryEventData) {
-        reportStoryEventCalls.append(event)
     }
 
     public func rerunSessionStart() {

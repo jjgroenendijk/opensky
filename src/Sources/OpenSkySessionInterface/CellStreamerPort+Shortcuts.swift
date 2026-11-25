@@ -178,10 +178,6 @@ extension CellStreamerPort {
         collision.staticCollisionCandidates(overlapping: bounds)
     }
 
-    public func topCollisionSurface(at position: SIMD2<Float>) -> SIMD3<Float>? {
-        collision.topCollisionSurface(at: position)
-    }
-
     public var onCellDetached: FrameSchedule<CellDetachStep, CellSceneLocation> {
         events.onCellDetached
     }

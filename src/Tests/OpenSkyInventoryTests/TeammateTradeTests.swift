@@ -9,18 +9,18 @@ struct TeammateTradeTests {
     @Test func aTakeIsNeverRefused() {
         var facts = TeammateTradeFacts()
         facts.capacity = 0
-        #expect(TeammateTradeRule.refusal(.take, count: 5, facts) == nil)
-        #expect(TeammateTradeRule.refusal(.buy, count: 1, facts) == nil)
+        #expect(TeammateTradeRule.refusal(.take, facts) == nil)
+        #expect(TeammateTradeRule.refusal(.buy, facts) == nil)
     }
 
     @Test func aGiftPastTheCarryWeightIsRefused() {
         var facts = TeammateTradeFacts()
         facts.carriedWeight = 280
         facts.addedWeight = 20
-        #expect(TeammateTradeRule.refusal(.store, count: 1, facts) == nil)
+        #expect(TeammateTradeRule.refusal(.store, facts) == nil)
         facts.capacity = 300
-        #expect(TeammateTradeRule.refusal(.store, count: 1, facts) == nil)
+        #expect(TeammateTradeRule.refusal(.store, facts) == nil)
         facts.addedWeight = 21
-        #expect(TeammateTradeRule.refusal(.store, count: 1, facts) == .overencumbered)
+        #expect(TeammateTradeRule.refusal(.store, facts) == .overencumbered)
     }
 }

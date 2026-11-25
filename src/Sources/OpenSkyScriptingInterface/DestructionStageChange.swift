@@ -6,7 +6,6 @@ public import OpenSkyFormatsESM
 
 nonisolated public struct DestructionStageChange: Equatable, Sendable {
     nonisolated public struct Stage: Equatable, Sendable {
-        public let index: UInt8
         /// The stage's `DMDL` model, which replaces the reference's own.
         public let model: String?
         /// The `BSDamageStage` nodes a stage without a model shows in the reference's mesh.
@@ -17,10 +16,9 @@ nonisolated public struct DestructionStageChange: Equatable, Sendable {
         public let debrisCount: Int
 
         public init(
-            index: UInt8, model: String? = nil, selfDamagePerSecond: Float = 0,
+            model: String? = nil, selfDamagePerSecond: Float = 0,
             explosion: ReferenceKey? = nil, debris: ReferenceKey? = nil, debrisCount: Int = 0
         ) {
-            self.index = index
             self.model = model
             self.selfDamagePerSecond = selfDamagePerSecond
             self.explosion = explosion

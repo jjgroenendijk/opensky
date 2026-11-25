@@ -23,6 +23,8 @@ struct ESSActorDataTests {
         #expect(data.isDead)
         #expect(data.killer == ESSRefID(kind: .default, value: 0x14))
         #expect(data.health == ESSActorValueModifiers(permanent: 10, temporary: 0, damage: -40))
+        #expect(data.health?.permanent == 10)
+        #expect(data.health?.temporary == 0)
         #expect(data.primaryValues.count == 4)
     }
 

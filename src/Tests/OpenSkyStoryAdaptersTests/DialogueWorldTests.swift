@@ -139,9 +139,8 @@ struct DialogueWorldTests {
 
     /// The game sends no `BRIB` for a win and leaves the stat to the dialogue scripts
     /// (docs/engine/statistics.md, How the game counts).
-    @Test func aWonBribeCountsTheSkillButNoStatAndSendsNoEvent() {
+    @Test func aWonBribeCountsTheSkillButNoStat() {
         adapter.run([.speechChallengeWon(.bribe, speaker: Self.speaker)])
-        #expect(host.fakeStoryWorld.reportStoryEventCalls.isEmpty)
         #expect(host.fakeWorldState.incrementMiscStatCalls.isEmpty)
         #expect(host.fakeProgression.reportSpeechCheckWonCallCount == 1)
     }
