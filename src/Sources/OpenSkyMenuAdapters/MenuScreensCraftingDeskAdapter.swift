@@ -4,7 +4,7 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
-public import OpenSkyMenus
+import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyProgressionInterface
 import OpenSkyScriptingInterface
@@ -27,30 +27,12 @@ public struct MenuScreensCraftingDeskAdapter {
 }
 
 extension MenuScreensCraftingDeskAdapter {
-    private var items: ItemDefinitionStore? {
+    var items: ItemDefinitionStore? {
         game.inventory.runtime?.inventory.baselines.items
-    }
-
-    public func bookContent(_ item: FormID) -> BookContent? {
-        guard let book = items?.books[item.rawValue] else { return nil }
-        return BookContent(
-            title: game.inventory.name(of: item),
-            text: game.mapWorld.text(book.text, kind: .dlstrings) ?? "",
-            isNote: book.kind == .note
-        )
     }
 
     public func readBook(_ item: FormID) -> String? {
         game.magic.menuLines.readBookLine(item)
-    }
-
-    public func noteBookRead(_ item: FormID, reference: FormID?) {
-        guard let bridge = game.scripts.bridge else { return }
-        if let reference, let key = bridge.referenceKey(forFormID: reference) {
-            game.scripts.runtime?.queueRead(on: key)
-        } else if let base = bridge.referenceKey(forFormID: item) {
-            bridge.queueItemRead(base: base)
-        }
     }
 
     var carriedBooks: [FormID] {
@@ -151,5 +133,30 @@ extension MenuScreensCraftingDeskAdapter {
     public func inform(_ text: String) {
         let words = game.mapWorld.settingTexts(MessageBoxText.self)
         game.messages.presentChoices(title: nil, text: text, buttons: [words[.ok]]) { _ in }
+    }
+}
+
+/// A book's text, and the script event of reading it.
+@MainActor
+struct MenuBookReads {
+    let game: any MenuScreensCraftingDeskHost
+    let items: ItemDefinitionStore?
+
+    func bookContent(_ item: FormID) -> BookContent? {
+        guard let book = items?.books[item.rawValue] else { return nil }
+        return BookContent(
+            title: game.inventory.name(of: item),
+            text: game.mapWorld.text(book.text, kind: .dlstrings) ?? "",
+            isNote: book.kind == .note
+        )
+    }
+
+    func noteBookRead(_ item: FormID, reference: FormID?) {
+        guard let bridge = game.scripts.bridge else { return }
+        if let reference, let key = bridge.referenceKey(forFormID: reference) {
+            game.scripts.runtime?.queueRead(on: key)
+        } else if let base = bridge.referenceKey(forFormID: item) {
+            bridge.queueItemRead(base: base)
+        }
     }
 }

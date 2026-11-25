@@ -54,7 +54,7 @@ extension MenuWorldNewGameAdapter {
     public func startNewGame(at start: NewGameStart) {
         switch start {
         case .vanilla:
-            resetSession()
+            NewGameSessionReset(game: game, state: state, teleports: teleports).resetSession()
             teleports.coverUntilFirstMove()
             if !game.storyWorld.startOpeningQuest() {
                 teleports.abandonNewGameCover()
@@ -123,7 +123,7 @@ extension MenuWorldNewGameAdapter {
     }
 
     private func begin(_ plan: LaunchNewGame, at destination: Destination) {
-        resetSession()
+        NewGameSessionReset(game: game, state: state, teleports: teleports).resetSession()
         state.lastNewGame = plan
         switch plan.story {
         case .notStarted: break
@@ -155,8 +155,24 @@ extension MenuWorldNewGameAdapter {
         }
     }
 
+    public func holdWorldLoading() {
+        game.streamer.isHeld = true
+    }
+
+    public func quitApplication() {
+        state.terminateApp()
+    }
+}
+
+/// Resets the session for a new game.
+@MainActor
+struct NewGameSessionReset {
+    let game: any MenuWorldNewGameHost
+    let state: MenuPartState
+    let teleports: MenuWorldTeleportsAdapter
+
     /// A fresh session: empty world state, the start clock, and the start-up quests.
-    private func resetSession() {
+    func resetSession() {
         game.worldState.restore(from: .empty)
         teleports.endRides()
         game.inventory.alchemyLab.registerCreatedPotions()
@@ -171,13 +187,5 @@ extension MenuWorldNewGameAdapter {
         game.saveGames.resetPlayTime()
         game.player.refreshBody()
         state.coverNextTeleport = true
-    }
-
-    public func holdWorldLoading() {
-        game.streamer.isHeld = true
-    }
-
-    public func quitApplication() {
-        state.terminateApp()
     }
 }
