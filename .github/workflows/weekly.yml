@@ -114,7 +114,8 @@ jobs:
       - run: tools/vendor-astcenc.sh
       - name: Wait for the Metal Toolchain
         run: tools/ci/metal-toolchain.sh wait
-      - run: make design-groups
+      # The index build needs the index store, but no signing identity on the runner.
+      - run: make design-groups XCODEBUILD_FLAGS="${BUILD_FLAGS/COMPILER_INDEX_STORE_ENABLE=NO /}"
       - name: Upload the report
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
