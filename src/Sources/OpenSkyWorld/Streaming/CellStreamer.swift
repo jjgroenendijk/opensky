@@ -381,6 +381,11 @@ extension CellStreamer {
         let streamer: CellStreamer
     }
 
+    /// One activation, apart from the resident reads.
+    struct Activation {
+        let streamer: CellStreamer
+    }
+
     /// Ground, water, and collision queries against the resident cells.
     public struct CollisionSteps {
         let streamer: CellStreamer

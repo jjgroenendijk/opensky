@@ -35,10 +35,11 @@ extension CellNPCMovers {
         {
             return .started
         }
-        let standing = streamer.actors.npcMovement.standingTransform(
-            of: entry,
-            in: streamer.stateSource()
-        )
+        let standing = NPCStandingTransform(movement: streamer.actors.npcMovement)
+            .standingTransform(
+                of: entry,
+                in: streamer.stateSource()
+            )
         let result = direct ? .path(.straight(to: point)) : streamer.navigation
             .findPath(NavigationPathQuery(
                 start: standing.position,

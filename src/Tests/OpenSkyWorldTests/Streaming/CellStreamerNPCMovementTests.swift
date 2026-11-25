@@ -74,7 +74,7 @@ struct CellStreamerNPCMovementTests {
         let streamer = try Self.streamerWithWalker()
         streamer.actors.moveStandingActor(Self.actor, by: SIMD2(5, 0), turning: 0.25)
         let entry = try #require(streamer.residents.referenceEntry(key: Self.actor))
-        let moved = streamer.actors.npcMovement.standingTransform(
+        let moved = NPCStandingTransform(movement: streamer.actors.npcMovement).standingTransform(
             of: entry,
             in: streamer.stateSource()
         )
@@ -83,6 +83,14 @@ struct CellStreamerNPCMovementTests {
         #expect(streamer.actors.moveActor(Self.actor, to: SIMD3(150, 30, 0)) == .started)
         streamer.actors.moveStandingActor(Self.actor, by: SIMD2(100, 0), turning: 0)
         #expect(streamer.actors.isActorWalking(Self.actor))
+    }
+
+    @Test
+    func aStandingActorCanBeKnockedAndTakenForARide() throws {
+        let streamer = try Self.streamerWithWalker()
+        _ = streamer.actors.knockActor(Self.actor, velocity: SIMD3(0, 0, 100))
+        #expect(streamer.actors.takeRiddenActor(.generated(999)) == nil, "no such resident")
+        _ = streamer.actors.takeRiddenActor(Self.actor)
     }
 
     /// `beforeAttach` runs on the streamer before its one cell attaches.

@@ -165,7 +165,8 @@ extension CellStreamer.ActorSteps {
             return false
         }
         bindNPCMovementCallbacks()
-        let standing = npcMovement.standingTransform(of: entry, in: streamer.stateSource())
+        let standing = NPCStandingTransform(movement: npcMovement)
+            .standingTransform(of: entry, in: streamer.stateSource())
         npcMovement.face(NPCFaceStart(
             actor: actor,
             formID: entry.formID,
@@ -214,7 +215,8 @@ extension CellStreamer.ActorSteps {
             let entry = streamer.residents.referenceEntry(key: actor), entry.placedActor != nil
         else { return }
         bindNPCMovementCallbacks()
-        let standing = npcMovement.standingTransform(of: entry, in: streamer.stateSource())
+        let standing = NPCStandingTransform(movement: npcMovement)
+            .standingTransform(of: entry, in: streamer.stateSource())
         let target = moved(standing)
         npcMovement.place(
             NPCFaceStart(
@@ -245,7 +247,8 @@ extension CellStreamer.ActorSteps {
             let entry = streamer.residents.referenceEntry(key: actor), entry.placedActor != nil
         else { return nil }
         guard !npcMovement.isWalking(actor) else { return .pi }
-        let standing = npcMovement.standingTransform(of: entry, in: streamer.stateSource())
+        let standing = NPCStandingTransform(movement: npcMovement)
+            .standingTransform(of: entry, in: streamer.stateSource())
         let remaining = NPCYawMath.shortestTurn(from: standing.rotation.z, to: heading)
         guard abs(remaining) > tolerance else {
             releaseActorFacing(actor)
@@ -277,7 +280,8 @@ extension CellStreamer.ActorSteps {
             let entry = streamer.residents.referenceEntry(key: actor), entry.placedActor != nil
         else { return false }
         bindNPCMovementCallbacks()
-        let standing = npcMovement.standingTransform(of: entry, in: streamer.stateSource())
+        let standing = NPCStandingTransform(movement: npcMovement)
+            .standingTransform(of: entry, in: streamer.stateSource())
         let knocked = npcMovement.knock(
             NPCFaceStart(
                 actor: actor, formID: entry.formID, placement: standing.placement,
@@ -298,7 +302,8 @@ extension CellStreamer.ActorSteps {
             let entry = streamer.residents.referenceEntry(key: actor), entry.placedActor != nil
         else { return nil }
         bindNPCMovementCallbacks()
-        let standing = npcMovement.standingTransform(of: entry, in: streamer.stateSource())
+        let standing = NPCStandingTransform(movement: npcMovement)
+            .standingTransform(of: entry, in: streamer.stateSource())
         let hold = movers.holdingRests {
             npcMovement.takeRidden(NPCFaceStart(
                 actor: actor, formID: entry.formID, placement: standing.placement,
