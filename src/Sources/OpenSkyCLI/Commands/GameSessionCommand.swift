@@ -11,7 +11,9 @@ enum GameLaunch {
     static func run(arguments: GameArguments.Launch) throws {
         let options = GameCommandOptions(arguments.game)
         let wait = arguments.wait
-        // An app already serving the socket is attached to, not launched twice.
+        // An app already serving the socket is attached to, not launched twice. One that
+        // is closing after `game quit` is waited out, then a new one starts.
+        try waitForQuittingApp(options, seconds: wait)
         if (try? AgentClientSession(path: options.socketPath, connectTimeout: 2)) == nil {
             try open(
                 app: locateApp(arguments.app),
@@ -71,6 +73,27 @@ enum GameLaunch {
         guard process.terminationStatus == 0 else {
             throw CLIError.failure("open failed with status \(process.terminationStatus)")
         }
+    }
+
+    /// Waits while the app on the socket answers that it is quitting.
+    private static func waitForQuittingApp(
+        _ options: GameCommandOptions, seconds: Double
+    ) throws {
+        let deadline = Date().addingTimeInterval(seconds)
+        while isQuitting(options) {
+            guard Date() < deadline else {
+                throw CLIError.failure("timeout: the old app did not quit within \(Int(seconds)) s")
+            }
+            Thread.sleep(forTimeInterval: retrySeconds)
+        }
+    }
+
+    private static func isQuitting(_ options: GameCommandOptions) -> Bool {
+        guard
+            let session = try? AgentClientSession(path: options.socketPath, connectTimeout: 2),
+            let reply = try? session.call("status", timeout: 10)
+        else { return false }
+        return reply.result?["quitting"]?.boolValue == true
     }
 
     /// Retries the connection until the app reports a loaded world, or the main

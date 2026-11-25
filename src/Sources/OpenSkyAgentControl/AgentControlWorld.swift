@@ -35,11 +35,16 @@ nonisolated public struct AgentWorldStatus: Equatable, Sendable {
     /// The main menu is open. It loads no world, so a launch on it waits for this.
     public var titleMenuOpen: Bool
     public var dataRoot: String?
+    /// `game quit` was accepted and the app is closing, so a launch must not attach to it.
+    public var quitting: Bool
 
-    public init(worldReady: Bool, titleMenuOpen: Bool = false, dataRoot: String?) {
+    public init(
+        worldReady: Bool, titleMenuOpen: Bool = false, dataRoot: String?, quitting: Bool = false
+    ) {
         self.worldReady = worldReady
         self.titleMenuOpen = titleMenuOpen
         self.dataRoot = dataRoot
+        self.quitting = quitting
     }
 }
 

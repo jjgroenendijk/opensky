@@ -133,6 +133,7 @@ public final class AgentCommandRouter {
             "running": .bool(world != nil),
             "worldReady": .bool(status?.worldReady ?? false),
             "titleMenuOpen": .bool(status?.titleMenuOpen ?? false),
+            "quitting": .bool(status?.quitting ?? false),
             "dataRoot": .init(status?.dataRoot)
         ]
         if let timeline = world?.agentTimeline {
