@@ -25,12 +25,13 @@ struct PapyrusStageItemTests {
     @Test func everyPassingItemIsChosen() throws {
         let bridge = PapyrusWorldStateBridge(worldState: WorldStateStore())
         let quest = try Self.quest(firstItemConditioned: true)
-        #expect(bridge.questScripts.passingItems(of: quest, stage: 10) == nil)
+        let items = PapyrusWorldStateBridge.StageItems(bridge: bridge)
+        #expect(items.passingItems(of: quest, stage: 10) == nil)
         bridge.natives.session.conditionEvaluator = {
             ConditionEvaluator(context: ConditionContext().using(.empty))
         }
-        #expect(bridge.questScripts.passingItems(of: quest, stage: 10) == [1])
+        #expect(items.passingItems(of: quest, stage: 10) == [1])
         let open = try Self.quest(firstItemConditioned: false)
-        #expect(bridge.questScripts.passingItems(of: open, stage: 10) == [0, 1])
+        #expect(items.passingItems(of: open, stage: 10) == [0, 1])
     }
 }
