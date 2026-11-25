@@ -226,3 +226,8 @@ nonisolated enum ESSImportDrop: Error, Hashable {
         }
     }
 }
+
+/// The created references and the inventories of an import.
+nonisolated struct ESSSpawnAndInventoryImport {
+    let importer: ESSImporter
+}

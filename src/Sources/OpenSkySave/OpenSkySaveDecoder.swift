@@ -166,40 +166,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         default:
             // The actor-side chunks continue in a second pass, which is what
             // keeps this switch inside the strict cyclomatic-complexity cap.
-            try applyActorGameplay(tag: tag, payload: payload, to: &body)
-        }
-    }
-
-    /// The half of the gameplay chunks keyed by an actor rather than by a
-    /// quest, a container or a placement. Split from `applyGameplay` only for
-    /// the complexity cap; the tolerance rule is the same, and an unknown tag
-    /// reaching here is skipped by its declared length.
-    private static func applyActorGameplay(
-        tag: String,
-        payload: Data,
-        to body: inout Body
-    ) throws {
-        switch tag {
-        case OpenSkySaveFormat.ChunkTag.deaths:
-            body.deaths = try OpenSkySaveDeathDecoder.decodeDeaths(payload)
-        case OpenSkySaveFormat.ChunkTag.combatStates:
-            body.combatStates = try OpenSkySaveCombatDecoder.decodeCombatStates(payload)
-        case OpenSkySaveFormat.ChunkTag.dialogueStates:
-            body.dialogue = try OpenSkySaveDecoder.DialogueDecoder.decodeDialogueStates(payload)
-        case OpenSkySaveFormat.ChunkTag.dialogueSaidDays:
-            body.dialogueSaidDays = try OpenSkySaveDecoder.DialogueDecoder.decodeSaidDays(payload)
-        case OpenSkySaveFormat.ChunkTag.activeEffects:
-            body.activeEffects = try OpenSkySaveActiveEffectDecoder.decodeActiveEffects(payload)
-        case OpenSkySaveFormat.ChunkTag.spellbooks:
-            body.spellbooks = try OpenSkySaveSpellbookDecoder.decodeSpellbooks(payload)
-        case OpenSkySaveFormat.ChunkTag.enchantedItems:
-            body.enchantedItems = try OpenSkySaveEnchantedItemDecoder
-                .decodeEnchantedItems(payload)
-        case OpenSkySaveFormat.ChunkTag.perks:
-            body.perks = try OpenSkySavePerkDecoder.decodePerks(payload)
-        default:
-            // Split again for the complexity cap, on the same rule.
-            try applySocialGameplay(tag: tag, payload: payload, to: &body)
+            try ActorChunks.applyActorGameplay(tag: tag, payload: payload, to: &body)
         }
     }
 }
@@ -360,5 +327,45 @@ nonisolated extension OpenSkySaveDecoder.Body {
         // After `INVN`: `STOL` re-flags stacks the inventory merge has already
         // restored, so it cannot run before those totals are in place.
         return OpenSkySaveCrimeDecoder.mergeStolen(body.stolenGoods, into: entries)
+    }
+}
+
+nonisolated extension OpenSkySaveDecoder {
+    /// The actor-side gameplay chunks.
+    enum ActorChunks {}
+}
+
+nonisolated extension OpenSkySaveDecoder.ActorChunks {
+    /// The half of the gameplay chunks keyed by an actor rather than by a
+    /// quest, a container or a placement. Split from `applyGameplay` only for
+    /// the complexity cap; the tolerance rule is the same, and an unknown tag
+    /// reaching here is skipped by its declared length.
+    static func applyActorGameplay(
+        tag: String,
+        payload: Data,
+        to body: inout OpenSkySaveDecoder.Body
+    ) throws {
+        switch tag {
+        case OpenSkySaveFormat.ChunkTag.deaths:
+            body.deaths = try OpenSkySaveDeathDecoder.decodeDeaths(payload)
+        case OpenSkySaveFormat.ChunkTag.combatStates:
+            body.combatStates = try OpenSkySaveCombatDecoder.decodeCombatStates(payload)
+        case OpenSkySaveFormat.ChunkTag.dialogueStates:
+            body.dialogue = try OpenSkySaveDecoder.DialogueDecoder.decodeDialogueStates(payload)
+        case OpenSkySaveFormat.ChunkTag.dialogueSaidDays:
+            body.dialogueSaidDays = try OpenSkySaveDecoder.DialogueDecoder.decodeSaidDays(payload)
+        case OpenSkySaveFormat.ChunkTag.activeEffects:
+            body.activeEffects = try OpenSkySaveActiveEffectDecoder.decodeActiveEffects(payload)
+        case OpenSkySaveFormat.ChunkTag.spellbooks:
+            body.spellbooks = try OpenSkySaveSpellbookDecoder.decodeSpellbooks(payload)
+        case OpenSkySaveFormat.ChunkTag.enchantedItems:
+            body.enchantedItems = try OpenSkySaveEnchantedItemDecoder
+                .decodeEnchantedItems(payload)
+        case OpenSkySaveFormat.ChunkTag.perks:
+            body.perks = try OpenSkySavePerkDecoder.decodePerks(payload)
+        default:
+            // Split again for the complexity cap, on the same rule.
+            try OpenSkySaveDecoder.applySocialGameplay(tag: tag, payload: payload, to: &body)
+        }
     }
 }

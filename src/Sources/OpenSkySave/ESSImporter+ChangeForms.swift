@@ -62,7 +62,7 @@ nonisolated extension ESSChangeFormImport {
         }
         importReferenceState(decoded, change: change, key: key)
         if let items = decoded.inventory {
-            importInventory(items, key: key)
+            ESSSpawnAndInventoryImport(importer: importer).importInventory(items, key: key)
         }
         for case let .aliasInstances(instances) in decoded.extraData?.entries ?? [] {
             collectAliases(instances, key: key, into: &aliases)
@@ -88,7 +88,8 @@ nonisolated extension ESSChangeFormImport {
             return
         }
         if let base = placement.createdBase {
-            importSpawn(base: base, placement: placement, scale: decoded.scale, key: key)
+            ESSSpawnAndInventoryImport(importer: importer)
+                .importSpawn(base: base, placement: placement, scale: decoded.scale, key: key)
         } else if relocated {
             importer.report.update("references") { $0.drop("moved to another cell") }
         } else {
@@ -130,65 +131,6 @@ nonisolated extension ESSChangeFormImport {
         return ActorValues(
             health: -values[0].damage, magicka: -values[1].damage, stamina: -values[2].damage
         )
-    }
-
-    private func importSpawn(
-        base: ESSRefID, placement: ESSPlacement, scale: Float?, key: ReferenceKey
-    ) {
-        guard
-            case let .form(baseForm) = importer.mapping.resolve(base),
-            let baseID = importer.mapping.currentFormID(baseForm),
-            case let .form(space) = importer.mapping.resolve(placement.space),
-            let location = importer.records.cellLocation(
-                space: space,
-                position: placement.position
-            )
-        else {
-            importer.report
-                .update("created forms") {
-                    $0.drop("created reference with an unmapped base or cell")
-                }
-            return
-        }
-        importer.add(
-            ReferenceSpawnState(
-                base: baseID, location: location,
-                placement: PlacedReference.Placement(
-                    position: placement.position, rotation: placement.rotation
-                ),
-                scale: scale ?? 1
-            ),
-            to: key
-        )
-        importer.report.update("created forms") { $0.imported += 1 }
-    }
-
-    /// `.ess` counts change the base container's counts, so they add to the baseline.
-    private func importInventory(_ items: [ESSInventoryItem], key: ReferenceKey) {
-        var counts: [FormID: Int64] = [:]
-        for stack in importer.records.baselineInventory(of: key).stacks {
-            counts[stack.item, default: 0] += Int64(stack.count)
-        }
-        var equipped: [FormID] = []
-        for item in items {
-            guard
-                case let .form(form) = importer.mapping.resolve(item.item),
-                let id = importer.mapping.currentFormID(form)
-            else {
-                importer.report.update("inventories") { $0.drop("item that is not a plugin form") }
-                continue
-            }
-            counts[id, default: 0] += Int64(item.count)
-            if item.isWorn {
-                equipped.append(id)
-            }
-        }
-        let stacks = counts.map { InventoryStack(item: $0.key, count: Int32(clamping: $0.value)) }
-        importer.add(ReferenceInventoryState(stacks: stacks, equipped: equipped), to: key)
-        importer.report.update("inventories") { category in
-            category.imported += items.count
-            category.skip("stolen marks (ownership extra data is not mapped)")
-        }
     }
 
     private func collectAliases(
@@ -253,5 +195,66 @@ nonisolated extension ESSChangeFormImport {
         guard change.form != ESSActorBaseChange.playerBase else { return }
         importer.report
             .update("actors") { $0.drop("actor base change (state lives on the placed actor)") }
+    }
+}
+
+nonisolated extension ESSSpawnAndInventoryImport {
+    func importSpawn(
+        base: ESSRefID, placement: ESSPlacement, scale: Float?, key: ReferenceKey
+    ) {
+        guard
+            case let .form(baseForm) = importer.mapping.resolve(base),
+            let baseID = importer.mapping.currentFormID(baseForm),
+            case let .form(space) = importer.mapping.resolve(placement.space),
+            let location = importer.records.cellLocation(
+                space: space,
+                position: placement.position
+            )
+        else {
+            importer.report
+                .update("created forms") {
+                    $0.drop("created reference with an unmapped base or cell")
+                }
+            return
+        }
+        importer.add(
+            ReferenceSpawnState(
+                base: baseID, location: location,
+                placement: PlacedReference.Placement(
+                    position: placement.position, rotation: placement.rotation
+                ),
+                scale: scale ?? 1
+            ),
+            to: key
+        )
+        importer.report.update("created forms") { $0.imported += 1 }
+    }
+
+    /// `.ess` counts change the base container's counts, so they add to the baseline.
+    func importInventory(_ items: [ESSInventoryItem], key: ReferenceKey) {
+        var counts: [FormID: Int64] = [:]
+        for stack in importer.records.baselineInventory(of: key).stacks {
+            counts[stack.item, default: 0] += Int64(stack.count)
+        }
+        var equipped: [FormID] = []
+        for item in items {
+            guard
+                case let .form(form) = importer.mapping.resolve(item.item),
+                let id = importer.mapping.currentFormID(form)
+            else {
+                importer.report.update("inventories") { $0.drop("item that is not a plugin form") }
+                continue
+            }
+            counts[id, default: 0] += Int64(item.count)
+            if item.isWorn {
+                equipped.append(id)
+            }
+        }
+        let stacks = counts.map { InventoryStack(item: $0.key, count: Int32(clamping: $0.value)) }
+        importer.add(ReferenceInventoryState(stacks: stacks, equipped: equipped), to: key)
+        importer.report.update("inventories") { category in
+            category.imported += items.count
+            category.skip("stolen marks (ownership extra data is not mapped)")
+        }
     }
 }
