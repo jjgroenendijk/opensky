@@ -45,7 +45,7 @@ extension CraftingMenuCoordinator {
     }
 
     func publishCard(_ runtime: SWFMovieRuntime) {
-        if let info = sliderCard() {
+        if let info = CraftingSliderCard(owner: self).sliderCard() {
             CraftingMenuMovieBridge.publishCard(info, line: nil, runtime: runtime)
             return
         }
@@ -54,22 +54,6 @@ extension CraftingMenuCoordinator {
         let card = subject.item.flatMap { world?.craftingItemCard($0) }
         CraftingMenuMovieBridge.publishCard(
             card.map(InventoryMenuMovieBridge.itemCardInfo), line: subject.line, runtime: runtime
-        )
-    }
-}
-
-extension CraftingMenuCoordinator {
-    /// While the slider is open the card shows the item to make: its name, the uses at
-    /// the chosen magnitude, and the chosen enchantments.
-    func sliderCard() -> [String: AS2Value]? {
-        guard isSliderOpen, let slider = enchanting.slider else { return nil }
-        let selection = enchanting.selection
-        let name = selection.name
-            ?? selection.item.flatMap { world?.craftingItemCard($0)?.name } ?? ""
-        let effects = (world?.enchanter.enchanterChoices?.enchantments ?? [])
-            .filter { selection.bases.contains($0.key) }.map(\.name)
-        return CraftingMenuMovieBridge.sliderCardInfo(
-            name: name, uses: slider.uses, effects: effects.joined(separator: ", ")
         )
     }
 }
@@ -126,6 +110,22 @@ nonisolated extension CraftingMenuMovieBridge {
                 .string(skill.name), .integer(skill.level),
                 .number(Double(skill.progress * 100))
             ]
+        )
+    }
+}
+
+extension CraftingSliderCard {
+    /// While the slider is open the card shows the item to make: its name, the uses at
+    /// the chosen magnitude, and the chosen enchantments.
+    func sliderCard() -> [String: AS2Value]? {
+        guard owner.isSliderOpen, let slider = owner.enchanting.slider else { return nil }
+        let selection = owner.enchanting.selection
+        let name = selection.name
+            ?? selection.item.flatMap { owner.world?.craftingItemCard($0)?.name } ?? ""
+        let effects = (owner.world?.enchanter.enchanterChoices?.enchantments ?? [])
+            .filter { selection.bases.contains($0.key) }.map(\.name)
+        return CraftingMenuMovieBridge.sliderCardInfo(
+            name: name, uses: slider.uses, effects: effects.joined(separator: ", ")
         )
     }
 }

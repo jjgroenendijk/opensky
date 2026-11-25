@@ -152,14 +152,14 @@ struct CraftingMenuEnchantingTests {
         let tab = menu.model.selectedCategory
         menu.route(.move(.right))
         #expect(menu.model.selectedCategory == tab)
-        let card = try #require(menu.sliderCard())
+        let card = try #require(CraftingSliderCard(owner: menu).sliderCard())
         #expect(card["type"] == .integer(CraftingMenuMovieBridge.craftEnchantingCardType))
         #expect(card["sliderShown"] == .boolean(true))
         menu.handle(.sliderMoved(4))
         #expect(menu.isSliderOpen)
         menu.handle(.sliderClosed(4, accepted: true))
         #expect(!menu.isSliderOpen)
-        #expect(menu.sliderCard() == nil)
+        #expect(CraftingSliderCard(owner: menu).sliderCard() == nil)
     }
 
     @Test func theMovieSliderReachesTheEnchanter() throws {
