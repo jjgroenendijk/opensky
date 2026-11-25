@@ -197,7 +197,7 @@ public final class PapyrusScheduler {
             let index = entries.firstIndex(where: { eligible($0.wake) && isDue($0.wake) })
         {
             let entry = entries.remove(at: index)
-            let outcome = runtime.resume(entry.call, returning: answer(for: entry.wake))
+            let outcome = entry.call.resume(returning: answer(for: entry.wake))
             onResume?(entry.call, outcome)
             route(outcome)
         }

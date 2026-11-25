@@ -152,16 +152,6 @@ public final class PapyrusRuntime {
         )
     }
 
-    func resume(
-        _ suspendedCall: SuspendedCall,
-        returning value: PapyrusValue? = nil
-    ) -> PapyrusRunOutcome {
-        suspendedCall.continuation.resume(
-            id: suspendedCall.id,
-            returning: value ?? suspendedCall.nativeCall.returnType.defaultValue
-        )
-    }
-
     public func script(named name: String) -> PexObject? {
         scripts[Self.key(name)]
     }
