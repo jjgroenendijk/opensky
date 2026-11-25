@@ -29,23 +29,35 @@ nonisolated extension OpenSkySaveStoryDecoder {
     static func decodeHelpMessages(
         _ payload: Data
     ) throws -> [SaveStoryEntry<HelpMessageState>] {
-        let tag = OpenSkySaveFormat.ChunkTag.helpMessages
-        return try decode(
-            payload, tag: tag, minimumSize: OpenSkySaveFormat.minimumHelpMessageEntrySize
-        ) { reader in
-            let count = try reader.uint32("HELP record count")
-            try SaveCountCheck.validate(
-                count: count, minimumElementSize: OpenSkySaveFormat.minimumHelpMessageRecordSize,
-                remaining: reader.bytesRemaining, chunk: tag
-            )
-            var records: [String: HelpMessageRecord] = [:]
-            for _ in 0 ..< count {
-                let event = try reader.string("HELP event")
-                let shown = try reader.uint32("HELP times shown")
-                let done = try reader.bool("HELP done")
-                records[event] = HelpMessageRecord(timesShown: Int(shown), isDone: done)
+        try HelpMessages.decodeHelpMessages(payload)
+    }
+}
+
+extension OpenSkySaveStoryDecoder {
+    /// Decodes the help messages already shown.
+    nonisolated enum HelpMessages {
+        static func decodeHelpMessages(
+            _ payload: Data
+        ) throws -> [SaveStoryEntry<HelpMessageState>] {
+            let tag = OpenSkySaveFormat.ChunkTag.helpMessages
+            return try OpenSkySaveStoryDecoder.decode(
+                payload, tag: tag, minimumSize: OpenSkySaveFormat.minimumHelpMessageEntrySize
+            ) { reader in
+                let count = try reader.uint32("HELP record count")
+                try SaveCountCheck.validate(
+                    count: count,
+                    minimumElementSize: OpenSkySaveFormat.minimumHelpMessageRecordSize,
+                    remaining: reader.bytesRemaining, chunk: tag
+                )
+                var records: [String: HelpMessageRecord] = [:]
+                for _ in 0 ..< count {
+                    let event = try reader.string("HELP event")
+                    let shown = try reader.uint32("HELP times shown")
+                    let done = try reader.bool("HELP done")
+                    records[event] = HelpMessageRecord(timesShown: Int(shown), isDone: done)
+                }
+                return HelpMessageState(records: records)
             }
-            return HelpMessageState(records: records)
         }
     }
 }

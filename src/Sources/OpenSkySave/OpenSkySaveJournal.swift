@@ -63,44 +63,13 @@ nonisolated enum OpenSkySaveJournalWriter {
 
 nonisolated extension OpenSkySaveStoryDecoder {
     static func decodeMiscStats(_ payload: Data) throws -> [SaveStoryEntry<MiscStatsState>] {
-        let tag = OpenSkySaveFormat.ChunkTag.miscStats
-        return try decode(
-            payload, tag: tag, minimumSize: OpenSkySaveFormat.minimumMiscStatsEntrySize
-        ) { reader in
-            let count = try reader.uint32("MSTS stat count")
-            try SaveCountCheck.validate(
-                count: count, minimumElementSize: OpenSkySaveFormat.minimumMiscStatRecordSize,
-                remaining: reader.bytesRemaining, chunk: tag
-            )
-            var values: [String: Int32] = [:]
-            for _ in 0 ..< count {
-                let name = try reader.string("MSTS stat name")
-                values[name] = try Int32(bitPattern: reader.uint32("MSTS stat value"))
-            }
-            var uses: [FavoriteUse: [ReferenceKey]] = [:]
-            for use in FavoriteUse.allCases {
-                let forms = try reader.uint32("MSTS recent use count")
-                try SaveCountCheck.validate(
-                    count: forms, minimumElementSize: OpenSkySaveFormat.minimumSpellbookKeySize,
-                    remaining: reader.bytesRemaining, chunk: tag
-                )
-                uses[use] = try (0 ..< forms).map { _ in
-                    try OpenSkySaveEntryDecoder.decodeKey(&reader)
-                }
-            }
-            return MiscStatsState(values: values, recentUses: uses.filter { !$0.value.isEmpty })
-        }
+        try JournalState.decodeMiscStats(payload)
     }
 
     static func decodeQuestTracking(
         _ payload: Data
     ) throws -> [SaveStoryEntry<QuestTrackingState>] {
-        try decode(
-            payload, tag: OpenSkySaveFormat.ChunkTag.questTracking,
-            minimumSize: OpenSkySaveFormat.questTrackingEntrySize
-        ) { reader in
-            try QuestTrackingState(isTracked: reader.bool("QTRK tracked"))
-        }
+        try JournalState.decodeQuestTracking(payload)
     }
 }
 
@@ -137,5 +106,51 @@ nonisolated extension OpenSkySaveSideChunks {
     /// `SCNS` scenes with their `SCNP` pause times laid on.
     var pausedScenes: [SaveStoryEntry<SceneRuntimeState>] {
         OpenSkySaveStoryDecoder.applying(scenePauses, to: scenes)
+    }
+}
+
+extension OpenSkySaveStoryDecoder {
+    /// Decodes the misc stats and the quest tracking.
+    nonisolated enum JournalState {
+        static func decodeMiscStats(_ payload: Data) throws -> [SaveStoryEntry<MiscStatsState>] {
+            let tag = OpenSkySaveFormat.ChunkTag.miscStats
+            return try OpenSkySaveStoryDecoder.decode(
+                payload, tag: tag, minimumSize: OpenSkySaveFormat.minimumMiscStatsEntrySize
+            ) { reader in
+                let count = try reader.uint32("MSTS stat count")
+                try SaveCountCheck.validate(
+                    count: count, minimumElementSize: OpenSkySaveFormat.minimumMiscStatRecordSize,
+                    remaining: reader.bytesRemaining, chunk: tag
+                )
+                var values: [String: Int32] = [:]
+                for _ in 0 ..< count {
+                    let name = try reader.string("MSTS stat name")
+                    values[name] = try Int32(bitPattern: reader.uint32("MSTS stat value"))
+                }
+                var uses: [FavoriteUse: [ReferenceKey]] = [:]
+                for use in FavoriteUse.allCases {
+                    let forms = try reader.uint32("MSTS recent use count")
+                    try SaveCountCheck.validate(
+                        count: forms, minimumElementSize: OpenSkySaveFormat.minimumSpellbookKeySize,
+                        remaining: reader.bytesRemaining, chunk: tag
+                    )
+                    uses[use] = try (0 ..< forms).map { _ in
+                        try OpenSkySaveEntryDecoder.decodeKey(&reader)
+                    }
+                }
+                return MiscStatsState(values: values, recentUses: uses.filter { !$0.value.isEmpty })
+            }
+        }
+
+        static func decodeQuestTracking(
+            _ payload: Data
+        ) throws -> [SaveStoryEntry<QuestTrackingState>] {
+            try OpenSkySaveStoryDecoder.decode(
+                payload, tag: OpenSkySaveFormat.ChunkTag.questTracking,
+                minimumSize: OpenSkySaveFormat.questTrackingEntrySize
+            ) { reader in
+                try QuestTrackingState(isTracked: reader.bool("QTRK tracked"))
+            }
+        }
     }
 }
