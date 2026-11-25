@@ -10,6 +10,11 @@ public import simd
 nonisolated public struct NIFKey<Value: Equatable & Sendable>: Equatable, Sendable {
     public let time: Float
     public let value: Value
+
+    public init(time: Float, value: Value) {
+        self.time = time
+        self.value = value
+    }
 }
 
 nonisolated enum NIFKeyType: UInt32, Equatable, Sendable {

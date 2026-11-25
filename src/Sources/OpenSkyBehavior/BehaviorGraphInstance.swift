@@ -221,6 +221,8 @@ nonisolated public final class BehaviorGraphInstance {
     /// walk order: the graph's own mesh plays them, not the skeleton.
     public private(set) var gamebryoSequences: [String] = []
     var gamebryoSequencesThisUpdate: [String] = []
+    /// Times the played sequences and raises their text keys; nil raises none.
+    public var sequenceClock: GamebryoSequenceClock?
     /// How the last update's synchronized clip brings its actor to the mark, or nil.
     public private(set) var synchronizedMark: BehaviorSynchronizedMark?
     var synchronizedMarkThisUpdate: BehaviorSynchronizedMark?
@@ -358,6 +360,7 @@ nonisolated public final class BehaviorGraphInstance {
         activeStates = activeStatesThisUpdate
         stateTag = stateTagThisUpdate
         gamebryoSequences = gamebryoSequencesThisUpdate
+        raiseSequenceKeys(step: step)
         synchronizedMark = synchronizedMarkThisUpdate
         deactivateNodes(previouslyReached.subtracting(reachedThisUpdate))
         // The memo names the references this update ran; stale, it would keep a
