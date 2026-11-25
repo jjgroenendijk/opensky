@@ -46,22 +46,41 @@ extension CombatLoopRuntime {
 
     /// Whether `helper` joins `ally`'s fight on `ally`'s side.
     func helps(_ helper: ReferenceKey, _ ally: ReferenceKey, world: any CombatLoopWorld) -> Bool {
-        CombatHelpRule.helps(helper, ally, facts: CombatHelpView(runtime: self, world: world))
+        CombatHelpRule.helps(helper, ally, facts: helpView(world: world))
+    }
+
+    /// The help rule's facts for the fight as it is now.
+    func helpView(world: any CombatLoopWorld) -> CombatHelpView {
+        CombatHelpView(
+            world: world,
+            aggressors: aggressors,
+            fighters: Array(behaviors.keys),
+            commander: { [commanders] in commanders[$0] },
+            isEngaged: { [behaviors] in behaviors[$0]?.isEngaged == true },
+            combatTarget: { self.combatTarget(of: $0) },
+            hostileToPlayer: { self.hostility(of: $0) == .hostile }
+        )
     }
 }
 
-/// The help rule's facts, read from the running fight and its world.
+/// The help rule's facts, read from the running fight and its world. It takes the fight's
+/// facts as values and closures, so it does not depend back on the runtime.
 @MainActor
 struct CombatHelpView: CombatHelpFacts {
-    let runtime: CombatLoopRuntime
     let world: any CombatLoopWorld
+    let aggressors: Set<ReferenceKey>
+    let fighters: [ReferenceKey]
+    let commander: (ReferenceKey) -> ReferenceKey?
+    let isEngaged: (ReferenceKey) -> Bool
+    let combatTarget: (ReferenceKey) -> ReferenceKey?
+    let hostileToPlayer: (ReferenceKey) -> Bool
 
     var player: ReferenceKey {
         world.combatPlayer.key
     }
 
     func owner(of key: ReferenceKey) -> ReferenceKey? {
-        runtime.commanders[key]
+        commander(key)
     }
 
     func isTeammate(_ key: ReferenceKey) -> Bool {
@@ -73,7 +92,7 @@ struct CombatHelpView: CombatHelpFacts {
     }
 
     func startedFight(_ key: ReferenceKey) -> Bool {
-        runtime.aggressors.contains(key)
+        aggressors.contains(key)
     }
 
     func committedCrime(_ key: ReferenceKey, judgedBy helper: ReferenceKey) -> Bool {
@@ -85,21 +104,21 @@ struct CombatHelpView: CombatHelpFacts {
     }
 
     func opponents(of key: ReferenceKey) -> [ReferenceKey] {
-        var foes = Set(runtime.behaviors.keys.filter { fighter in
-            fighter != key && isFighting(fighter) && runtime.combatTarget(of: fighter) == key
+        var foes = Set(fighters.filter { fighter in
+            fighter != key && isFighting(fighter) && combatTarget(fighter) == key
         })
-        if key != player, isFighting(key), let target = runtime.combatTarget(of: key) {
+        if key != player, isFighting(key), let target = combatTarget(key) {
             foes.insert(target)
         }
         return foes.sorted()
     }
 
     func opposes(_ helper: ReferenceKey, _ opponent: ReferenceKey) -> Bool {
-        if isFighting(helper), runtime.combatTarget(of: helper) == opponent {
+        if isFighting(helper), combatTarget(helper) == opponent {
             return true
         }
         return opponent == player
-            ? runtime.hostility(of: helper) == .hostile
+            ? hostileToPlayer(helper)
             : world.combatIsHostile(helper, toward: opponent)
     }
 
@@ -112,6 +131,6 @@ struct CombatHelpView: CombatHelpFacts {
     }
 
     private func isFighting(_ key: ReferenceKey) -> Bool {
-        runtime.behaviors[key]?.isEngaged == true
+        isEngaged(key)
     }
 }
