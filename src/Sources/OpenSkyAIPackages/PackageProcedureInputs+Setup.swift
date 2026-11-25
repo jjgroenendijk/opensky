@@ -86,7 +86,9 @@ extension PackageProcedureInputs {
     ) -> PackageLeafSetup {
         let flags = (2 ... 5).map { (number(at: $0) ?? 0) != 0 }
         let walk = target(at: 0).flatMap(resolver.patrolPath(from:)) ?? []
-        return Self.patrolSetup(base, walk: walk, flags: flags, start: start)
+        var result = Self.patrolSetup(base, walk: walk, flags: flags, start: start)
+        result.setup.radius = max(0, number(at: 1) ?? 0)
+        return result
     }
 
     static func patrolSetup(

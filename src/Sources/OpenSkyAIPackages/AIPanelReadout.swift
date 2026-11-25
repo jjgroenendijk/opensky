@@ -65,6 +65,7 @@ nonisolated enum AIPackageReadout: Sendable {
         case .searching: "searching"
         case .acting: "acting"
         case let .sandboxing(activity): activity.rawValue
+        case .rewalking: "blocked"
         case .complete: "done"
         case .failed: "failed"
         }

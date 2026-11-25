@@ -134,7 +134,16 @@ extension PackageProcedureMachine {
     /// A walking Travel with a radius is done once the actor stands in its area: within
     /// the radius across and 100 units up or down, wherever its path would end
     /// (docs/engine/package-schedules.md#travel-arrival).
+    /// A patrol point is reached within the patrol radius plus 50 across and 180 up or
+    /// down, so a walker blocked just short of it goes on
+    /// (docs/engine/navigation.md#blocked-walks).
     func hasReachedArea(_ feet: SIMD3<Float>) -> Bool {
+        if kind == .patrol, state == .moving {
+            let goal = patrolGoal
+            let across = simd_distance(SIMD2(feet.x, feet.y), SIMD2(goal.x, goal.y))
+            return across <= radius + Self.patrolArrivalSlack
+                && abs(feet.z - goal.z) <= Self.patrolHeightTolerance
+        }
         guard kind == .travel, state == .moving, radius > 0 else { return false }
         let goal = destination ?? center
         let across = simd_distance(SIMD2(feet.x, feet.y), SIMD2(goal.x, goal.y))
@@ -142,6 +151,8 @@ extension PackageProcedureMachine {
     }
 
     static let areaHeightTolerance: Float = 100
+    static let patrolArrivalSlack: Float = 50
+    static let patrolHeightTolerance: Float = 180
 
     /// The cylinder round the sandbox's place, with `fSandboxCylinderBottom` and
     /// `fSandboxCylinderTop` as its height.
