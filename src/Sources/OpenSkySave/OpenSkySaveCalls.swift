@@ -130,15 +130,15 @@ nonisolated enum OpenSkySaveCallWriter {
     private static func writeValue(_ value: PapyrusSavedValue, into writer: inout BinaryWriter) {
         switch value {
         case .none:
-            OpenSkySaveEncoder.writeScriptValue(.none, into: &writer)
+            writer.writeScriptValue(.none)
         case let .boolean(flag):
-            OpenSkySaveEncoder.writeScriptValue(.boolean(flag), into: &writer)
+            writer.writeScriptValue(.boolean(flag))
         case let .integer(number):
-            OpenSkySaveEncoder.writeScriptValue(.integer(number), into: &writer)
+            writer.writeScriptValue(.integer(number))
         case let .float(number):
-            OpenSkySaveEncoder.writeScriptValue(.float(number), into: &writer)
+            writer.writeScriptValue(.float(number))
         case let .string(text):
-            OpenSkySaveEncoder.writeScriptValue(.string(text), into: &writer)
+            writer.writeScriptValue(.string(text))
         case let .instance(key):
             writer.writeUInt8(CallTag.scriptInstance)
             writeInstance(key, into: &writer)

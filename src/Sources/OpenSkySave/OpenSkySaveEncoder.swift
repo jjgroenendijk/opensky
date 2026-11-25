@@ -190,35 +190,7 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         for variable in state.variables {
             writer.writeString(variable.declaringScript)
             writer.writeString(variable.name)
-            writeScriptValue(variable.value, into: &writer)
-        }
-    }
-
-    /// A tag byte plus the value's payload. Floats go out as their IEEE
-    /// bit pattern rather than through a decimal conversion, so the byte shape
-    /// is exact and deterministic. `.object` and `.array` are written as the
-    /// `none` tag: `instanceStates()` already snapshots them that way, and
-    /// writing a runtime handle that means nothing after a reload would be
-    /// worse than writing the type's default.
-    static func writeScriptValue(
-        _ value: PapyrusValue,
-        into writer: inout BinaryWriter
-    ) {
-        switch value {
-        case .none, .object, .array:
-            writer.writeUInt8(OpenSkySaveFormat.ValueTag.none)
-        case let .boolean(flag):
-            writer.writeUInt8(OpenSkySaveFormat.ValueTag.boolean)
-            writer.writeUInt8(flag ? 1 : 0)
-        case let .integer(number):
-            writer.writeUInt8(OpenSkySaveFormat.ValueTag.integer)
-            writer.writeUInt32(UInt32(bitPattern: number))
-        case let .float(number):
-            writer.writeUInt8(OpenSkySaveFormat.ValueTag.float)
-            writer.writeUInt32(number.bitPattern)
-        case let .string(text):
-            writer.writeUInt8(OpenSkySaveFormat.ValueTag.string)
-            writer.writeString(text)
+            writer.writeScriptValue(variable.value)
         }
     }
 
