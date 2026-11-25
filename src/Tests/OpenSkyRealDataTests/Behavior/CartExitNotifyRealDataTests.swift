@@ -29,6 +29,27 @@ struct CartExitNotifyRealDataTests {
         }
     }
 
+    /// Each exit clip's trigger near its end is the event that takes the graph out of the
+    /// cart state, read from the graph's transitions (docs/engine/vehicles.md).
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
+    func eachExitClipLeavesOnItsTrigger() throws {
+        let index = try Self.masterIndex()
+        let expected = [
+            "IdleCartPrisonerAExit": "OffsetBoundStandingStart",
+            "IdleCartPrisonerBExit": "OffsetBoundStandingCartStart",
+            "IdleCartPrisonerCExit": "OffsetBoundStandingCartStart",
+            "IdleCartPrisonerDExit": "OffsetBoundStandingCartStart",
+            "IdleCartDriverExit": "CartExit"
+        ]
+        for (event, trigger) in expected {
+            let clip = try #require(
+                index.clip(forEvent: event, behaviorFile: "0_master.hkx"),
+                "\(event)"
+            )
+            #expect(clip.leavingTriggers.map(\.name) == [trigger], "\(event)")
+        }
+    }
+
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theCartSeatStatesLoop() throws {
         let index = try Self.masterIndex()

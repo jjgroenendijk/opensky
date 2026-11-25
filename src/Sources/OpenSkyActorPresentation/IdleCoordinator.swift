@@ -450,7 +450,7 @@ extension IdleCoordinator {
         _ chain: Chain, plan: IdlePlaybackPlan,
         on actor: ReferenceKey, at time: (now: Float, seconds: Float)
     ) {
-        let (now, seconds) = time
+        let (now, planned) = time
         let segment = chain.first
         let clip = segment.clip
         leaveState(of: actor, now: now)
@@ -462,6 +462,12 @@ extension IdleCoordinator {
         // A graph that took the event plays the clips and sends their annotations; the
         // idle only times them, to show its animation objects.
         let graphPlays = raised && playback != nil
+        // Without a live graph, the trigger that would leave the state ends the idle, and
+        // no clip of the state plays after it.
+        let leave = graphPlays ? nil
+            : plan.leaveTime(clipDuration: segment.duration, before: planned)
+        let seconds = leave ?? planned
+        let followUps = leave == nil ? chain.followUps : []
         if !graphPlays {
             playback?.play(clip, startingAt: now, forSeconds: seconds)
         }
@@ -472,7 +478,7 @@ extension IdleCoordinator {
         let held = !seconds.isFinite
         let duration = segment.duration
         let marks = segment.marks
-        let lastExit = held || !chain.followUps.isEmpty
+        let lastExit = held || !followUps.isEmpty
         let events = IdleCore.playEvents(
             marks: marks,
             notify: lastExit ? BehaviorStateNotify(enter: plan.notify.enter) : plan.notify,
@@ -482,7 +488,7 @@ extension IdleCoordinator {
             clip: clip, start: now, end: now + seconds, hasProp: prop != nil,
             exitEvents: plan.notify.exit, loopEnd: held && duration > 0 ? now + duration : nil,
             playback: playback.map(ObjectIdentifier.init), events: events, marks: marks,
-            followUps: chain.followUps, holdsLast: chain.holdsLast,
+            followUps: followUps, holdsLast: chain.holdsLast,
             animationObjects: plan.animationObjects, throughGraph: graphPlays,
             rootMotion: plan.rootMotion
         )
